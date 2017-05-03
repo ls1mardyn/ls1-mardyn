@@ -39,7 +39,7 @@ void CollectiveCommunicationTest::testCollectiveCommunication() {
 }
 
 void CollectiveCommunicationTest::testCollectiveCommunicationNonBlocking() {
-#if MPI_VERSION >= 3
+#if MPI_VERSION >= 4
 	CollectiveCommunicationNonBlocking collComm;
 
 	testSingleIteration(collComm);

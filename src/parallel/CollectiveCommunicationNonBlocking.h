@@ -52,6 +52,8 @@ public:
 			// this happens, if the key is already existent.
 			global_log->debug() << "CollectiveCommunicationNonBlocking: key "
 					<< _currentKey << " already existent. Reusing information." << std::endl;
+		}else{
+		_comms.at(_currentKey).insta();
 		}
 		_comms.at(_currentKey).init(communicator, numValues, _currentKey);
 	}

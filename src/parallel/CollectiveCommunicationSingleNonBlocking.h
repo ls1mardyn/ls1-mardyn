@@ -23,17 +23,23 @@ public:
 	 */
 	CollectiveCommunicationSingleNonBlocking(int key = 0) {
 		_key = key;
-		_request = MPI_REQUEST_NULL;
 		_communicationInitiated = false;
 		_valuesValid = false;
 		_firstComm = true;
 	}
+	
+	void insta(){
 
+		_request = new MPI_Request();
+	}
+
+	void dest(){
+		MPI_Wait(_request, MPI_STATUS_IGNORE);
+	}
 	/**
 	 * Destructor
 	 */
 	virtual ~CollectiveCommunicationSingleNonBlocking() {
-		MPI_Wait(&_request, MPI_STATUS_IGNORE);
 		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
@@ -95,7 +101,7 @@ private:
 	 * Waits for communication to end and also sets the data in the correct place (values)
 	 */
 	void waitAndUpdateData() {
-		MPI_CHECK(MPI_Wait(&_request, MPI_STATUS_IGNORE));
+		MPI_CHECK(MPI_Wait(_request, MPI_STATUS_IGNORE));
 		// copy the temporary values to the real values!
 		_values = _tempValues;
 
@@ -117,7 +123,7 @@ private:
 				MPI_Op_create((MPI_User_function * ) CollectiveCommunication::add, commutative,
 						&agglomeratedTypeAddOperator));
 		MPI_CHECK(
-				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, agglomeratedTypeAddOperator, _communicator, & _request));
+				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, agglomeratedTypeAddOperator, _communicator, _request));
 		MPI_CHECK(MPI_Op_free(&agglomeratedTypeAddOperator));
 		MPI_CHECK(MPI_Type_free(&_agglomeratedType));
 #else
@@ -129,7 +135,7 @@ private:
 	}
 
 	int _key;
-	MPI_Request _request;
+	MPI_Request* _request;
 	bool _communicationInitiated;
 	bool _valuesValid;
 	std::vector<valType> _tempValues;
