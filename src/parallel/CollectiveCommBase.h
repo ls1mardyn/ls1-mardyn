@@ -17,7 +17,7 @@
 //! by the domain decomp and the values can be read again. This class just has to
 //! ensure that this also works if there is no real domain decomposition but the
 //! class DomainDecompBase is used.
-class CollectiveCommBase : public CollectiveCommBaseInterface{
+class CollectiveCommBase : public virtual CollectiveCommBaseInterface{
 
 protected:
 	//! As in C++ arrays have to contain only one type of variable,

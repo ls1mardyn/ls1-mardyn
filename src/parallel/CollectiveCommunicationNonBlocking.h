@@ -6,11 +6,11 @@
  */
 #pragma once
 
-#include "CollectiveCommunicationInterface.h"
 #include "CollectiveCommBaseInterface.h"
 #include "CollectiveCommunicationSingleNonBlocking.h"
 #include <map>
 #include <utils/Logger.h>
+#include "CollectiveCommunicationInterface.h"
 #include "Simulation.h"
 
 #if MPI_VERSION >= 3

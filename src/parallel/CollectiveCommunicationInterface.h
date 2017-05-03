@@ -7,10 +7,12 @@
 
 #pragma once
 
+#include "CollectiveCommBaseInterface.h"
+
 //! @brief This class provides an interface for the collective communication classes.
 //! @details It provides all methods, that are NOT YET provided by CollectiveCommBaseInterface
 //! @author Steffen Seckler
-class CollectiveCommunicationInterface{
+class CollectiveCommunicationInterface : public virtual CollectiveCommBaseInterface{
 public:
 	//! @brief virtual destructor
 	virtual ~CollectiveCommunicationInterface() {
@@ -26,4 +28,5 @@ public:
 	//! @return MPI communicator
 	virtual MPI_Comm getTopology() = 0;
 };
+
 

@@ -3,8 +3,9 @@
 
 #include "utils/Logger.h"
 #include "CollectiveCommBase.h"
-#include "CollectiveCommunicationInterface.h"
 #include <mpi.h>
+
+#include "CollectiveCommunicationInterface.h"
 #include "utils/mardyn_assert.h"
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
