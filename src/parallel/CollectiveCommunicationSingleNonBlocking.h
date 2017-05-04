@@ -27,6 +27,7 @@ public:
 		_communicationInitiated = false;
 		_valuesValid = false;
 		_firstComm = true;
+		_agglomeratedTypeAddOperator = MPI_OP_NULL;
 	}
 
 	void instantiate() {
@@ -40,12 +41,18 @@ public:
 			}
 			delete _request;
 		}
+		if (_agglomeratedTypeAddOperator != MPI_OP_NULL) {
+			MPI_CHECK(MPI_Op_free(&_agglomeratedTypeAddOperator));
+		}
+		if (_agglomeratedType != MPI_DATATYPE_NULL) {
+			MPI_CHECK(MPI_Type_free(&_agglomeratedType));
+		}
 	}
 	/**
 	 * Destructor
 	 */
 	virtual ~CollectiveCommunicationSingleNonBlocking() {
-		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		//mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
 	void allreduceSumAllowPrevious() override {
@@ -91,7 +98,8 @@ public:
 
 	// documentation in base class
 	virtual void finalize() override {
-		CollectiveCommunication::finalize();
+		CollectiveCommBase::finalize();
+		_types.clear();
 	}
 
 private:
@@ -120,27 +128,30 @@ private:
 		// this is necessary to maintain the validity of the data from previous steps
 		_tempValues = values;
 #if ENABLE_AGGLOMERATED_REDUCE
-		setMPIType();
-		MPI_Op agglomeratedTypeAddOperator;
+		if (_agglomeratedType == MPI_DATATYPE_NULL) {
+			setMPIType();
+		}
 		const int commutative = 1;
 		valType * startOfValues = &(_tempValues[0]);
+		if (_agglomeratedTypeAddOperator == MPI_OP_NULL) {
+			MPI_CHECK(
+					MPI_Op_create((MPI_User_function * ) CollectiveCommunication::add, commutative,
+							&_agglomeratedTypeAddOperator));
+		}
 		MPI_CHECK(
-				MPI_Op_create((MPI_User_function * ) CollectiveCommunication::add, commutative,
-						&agglomeratedTypeAddOperator));
-		MPI_CHECK(
-				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, agglomeratedTypeAddOperator, _communicator, _request));
-		MPI_CHECK(MPI_Op_free(&agglomeratedTypeAddOperator));
-		MPI_CHECK(MPI_Type_free(&_agglomeratedType));
+				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, _agglomeratedTypeAddOperator, _communicator, _request));
+		_communicationInitiated = true;
 #else
 		for( int i = 0; i < _numValues; i++ ) {
 			MPI_CHECK( MPI_Allreduce( MPI_IN_PLACE, &(_values[i]), 1, _types[i], MPI_SUM, _communicator ) );
 		}
 #endif
-		_communicationInitiated = true;
+
 	}
 
 	int _key;
 	MPI_Request* _request;
+	MPI_Op _agglomeratedTypeAddOperator;
 	bool _communicationInitiated;
 	bool _valuesValid;
 	std::vector<valType> _tempValues;

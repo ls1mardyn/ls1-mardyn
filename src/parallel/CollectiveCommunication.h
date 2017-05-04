@@ -68,7 +68,7 @@ public:
 	}
 
 	virtual ~CollectiveCommunication() {
-		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		//mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
 	//! @brief allocate memory for the values to be sent, initialize counters

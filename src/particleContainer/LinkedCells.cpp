@@ -895,7 +895,7 @@ void LinkedCells::getBoundaryRegionPerDirection(int direction, double (*startReg
 		startIndex[dim] = _haloWidthInNumCells[dim];
 		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
 	}
-	else {
+	else {  // direction > 0
 		stopIndex[dim] = _boxWidthInNumCells[dim];
 		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
 	}

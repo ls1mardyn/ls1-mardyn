@@ -75,7 +75,7 @@ protected:
 	 * @note The caller is responsible for deleting the particle container.
 	 * @see ParticleContainerFactory::createInitializedParticleContainer()
 	 */
-	ParticleContainer* initializeFromFile(ParticleContainerFactory::type type, const char* fileName, double cutoff);
+	ParticleContainer* initializeFromFile(ParticleContainerFactory::Type type, const char* fileName, double cutoff);
 
 	int _rank;
 
