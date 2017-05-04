@@ -15,7 +15,6 @@
 
 #if MPI_VERSION >= 3
 
-
 using Log::global_log;
 /**
  * CollectiveCommunicationNonBlocking provides an interface to access multiple CollectiveCommunicationSingleNonBlocking objects.
@@ -32,6 +31,9 @@ public:
 	 * Destructor
 	 */
 	virtual ~CollectiveCommunicationNonBlocking() {
+		for (auto i : _comms){
+			i.second.destroy();
+		}
 	}
 
 	//! @brief allocate memory for the values to be sent, initialize counters for specific
@@ -39,7 +41,7 @@ public:
 	//! @param communicator MPI communicator for the
 	//! @param numValues number of values that shall be communicated
 	void init(MPI_Comm communicator, int numValues, int key = 0) override {
-		if(_currentKey != -1){
+		if (_currentKey != -1) {
 			global_log->error() << "CollectiveCommunicationNonBlocking: previous communication with key " << _currentKey
 					<< " not yet finalized" << std::endl;
 			Simulation::exit(234);
@@ -48,12 +50,12 @@ public:
 		_currentKey = key;
 
 		// add the key, if it is not yet existent:
-		if (! _comms.emplace(_currentKey, _currentKey).second) {
+		if (!_comms.emplace(_currentKey, _currentKey).second) {
 			// this happens, if the key is already existent.
-			global_log->debug() << "CollectiveCommunicationNonBlocking: key "
-					<< _currentKey << " already existent. Reusing information." << std::endl;
-		}else{
-		_comms.at(_currentKey).insta();
+			global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
+					<< " already existent. Reusing information." << std::endl;
+		} else {
+			_comms.at(_currentKey).instantiate();
 		}
 		_comms.at(_currentKey).init(communicator, numValues, _currentKey);
 	}
@@ -62,9 +64,9 @@ public:
 	//! @param key The key of the collective communication
 	void finalize() override {
 		_comms.at(_currentKey).finalize();
-		if(_currentKey == 0){
-			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key "
-								<< _currentKey << ", thus the entry is removed." << std::endl;
+		if (_currentKey == 0) {
+			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key " << _currentKey
+					<< ", thus the entry is removed." << std::endl;
 			_comms.erase(_currentKey);
 		}
 		_currentKey = -1;
@@ -166,7 +168,7 @@ public:
 	//! By allowing values from previous iterations, overlapping communication is possible.
 	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
 	virtual void allreduceSumAllowPrevious() override {
-		mardyn_assert(_currentKey > 0);  // _currentKey has to be positive non-zero and should be unique for allreduceSumAllowPrevious
+		mardyn_assert(_currentKey > 0); // _currentKey has to be positive non-zero and should be unique for allreduceSumAllowPrevious
 		_comms.at(_currentKey).allreduceSumAllowPrevious();
 	}
 
@@ -179,14 +181,13 @@ public:
 	 * @param key The key of the collective communication
 	 */
 	/*
-	void waitSpecific(int key) {
-		_comms[key].waitAndUpdateData();
-	}*/
+	 void waitSpecific(int key) {
+	 _comms[key].waitAndUpdateData();
+	 }*/
 
 private:
 	int _currentKey;
 	std::map<int, CollectiveCommunicationSingleNonBlocking> _comms;
 };
-
 
 #endif // MPI_VERSION >= 3

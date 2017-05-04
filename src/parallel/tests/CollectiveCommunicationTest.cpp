@@ -39,7 +39,7 @@ void CollectiveCommunicationTest::testCollectiveCommunication() {
 }
 
 void CollectiveCommunicationTest::testCollectiveCommunicationNonBlocking() {
-#if MPI_VERSION >= 4
+#if MPI_VERSION >= 3
 	CollectiveCommunicationNonBlocking collComm;
 
 	testSingleIteration(collComm);
@@ -71,6 +71,34 @@ void CollectiveCommunicationTest::testCollectiveCommunicationNonBlocking() {
 	val1 = collComm.getDouble();
 	collComm.finalize();
 	ASSERT_DOUBLES_EQUAL(3. * _commSize, val1, 1e-8);
+
+	collComm.init(MPI_COMM_WORLD, 1, 2);
+	collComm.appendDouble(-1.);
+	collComm.allreduceSumAllowPrevious();
+	val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(-1. * _commSize, val1, 1e-8);
+
+	collComm.init(MPI_COMM_WORLD, 1, 3);
+	collComm.appendDouble(-1.);
+	collComm.allreduceSumAllowPrevious();
+	val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(-1. * _commSize, val1, 1e-8);
+
+	collComm.init(MPI_COMM_WORLD, 1, 2);
+	collComm.appendDouble(-2.);
+	collComm.allreduceSumAllowPrevious();
+	val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(-1. * _commSize, val1, 1e-8);
+
+	collComm.init(MPI_COMM_WORLD, 1, 1);
+	collComm.appendDouble(5.);
+	collComm.allreduceSumAllowPrevious();
+	val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(4. * _commSize, val1, 1e-8);
 #else
 #pragma message "CollectiveCommunicationNonBlocking not supported and not tested. MPI_Version is too old."
 #endif

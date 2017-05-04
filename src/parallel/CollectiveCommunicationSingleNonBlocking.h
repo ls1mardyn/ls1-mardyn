@@ -22,19 +22,24 @@ public:
 	 * @param key the key of the collective operation
 	 */
 	CollectiveCommunicationSingleNonBlocking(int key = 0) {
+		_request = nullptr;
 		_key = key;
 		_communicationInitiated = false;
 		_valuesValid = false;
 		_firstComm = true;
 	}
-	
-	void insta(){
 
+	void instantiate() {
 		_request = new MPI_Request();
 	}
 
-	void dest(){
-		MPI_Wait(_request, MPI_STATUS_IGNORE);
+	void destroy() {
+		if (_request) {
+			if (_communicationInitiated) {
+				MPI_Wait(_request, MPI_STATUS_IGNORE);
+			}
+			delete _request;
+		}
 	}
 	/**
 	 * Destructor
