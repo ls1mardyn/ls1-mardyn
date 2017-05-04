@@ -21,42 +21,25 @@ using Log::global_log;
 //################################################
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
-		double cutoffRadius, double LJCutoffRadius, double cellsInCutoffRadius) :
+		double cutoffRadius) :
 		ParticleContainer(bBoxMin, bBoxMax) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
-	_LJCutoffRadius = LJCutoffRadius;
 
 	global_log->debug() << "cutoff: " << cutoffRadius << endl;
-	global_log->debug() << "LJ cutoff:" << LJCutoffRadius << endl;
-	global_log->debug() << "# cells in cutoff: " << cellsInCutoffRadius << endl;
-
-	_cellsInCutoff = ceil(cellsInCutoffRadius);
-
-	if (_cellsInCutoff != 1) {
-		global_log->error()
-				<< "With the recent release only 1 cell per cutoff radius is supported,"
-				<< " but the input file prescribes " << _cellsInCutoff
-				<< " cells per cutoff radius." << endl
-				<< "\tThe support has been dropped, since no speedup can be expected using"
-				<< " multiple cells per cutoff radius." << endl
-				<< "\tIf you can provide a case, where this is not true, please contact us."
-				<< endl;
-		Simulation::exit(-1);
-	}
+	global_log->debug() << "# cells in cutoff hardcoded to 1 " << endl;
 
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor(
-				(_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius
-						* cellsInCutoffRadius);
+				(_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius);
 		// in each dimension at least one layer of (inner+boundary) cells is necessary
 		if (_boxWidthInNumCells[d] == 0) {
 			_boxWidthInNumCells[d] = 1;
 		}
 		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d])
 				/ _boxWidthInNumCells[d];
-		_haloWidthInNumCells[d] = ceil(cellsInCutoffRadius);
+		_haloWidthInNumCells[d] = 1;
 		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
 		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloLength[d];
 		_haloBoundingBoxMax[d] = _boundingBoxMax[d] + _haloLength[d];
@@ -111,26 +94,15 @@ LinkedCells::~LinkedCells() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-	xmlconfig.getNodeValue("cellsInCutoffRadius", _cellsInCutoff);
-	if (_cellsInCutoff != 1) {
-		global_log->error()
-				<< "With the recent release only 1 cell per cutoff radius is supported,"
-				<< " but the input file prescribes " << _cellsInCutoff
-				<< " cells per cutoff radius." << endl
-				<< "\tThe support has been dropped, since no speedup can be expected using"
-				<< " multiple cells per cutoff radius." << endl
-				<< "\tIf you can provide a case, where this is not true, please contact us."
-				<< endl;
-		Simulation::exit(-1);
-	}
-	global_log->info() << "Cells in cut-off radius: " << _cellsInCutoff << endl;
+	global_log->info() << "Cells in cut-off radius hardcoded to 1." << endl;
 }
 
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
 		this->_boundingBoxMax[i] = bBoxMax[i];
-		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff); /* TODO: Single value?! */
+//		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff);
+		_haloWidthInNumCells[i] = 1;
 	}
 	int numberOfCells = 1;
 
@@ -383,92 +355,6 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 	global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<endl;
 
 	return numberOfAddedParticles;
-}
-
-/**
- * @todo replace this by a call to component->getNumMolecules() !?
- */
-unsigned LinkedCells::countParticles(unsigned int cid) {
-	unsigned N = 0;
-	for (unsigned i = 0; i < _cells.size(); i++) {
-		ParticleCell& currentCell = _cells[i];
-		if (!currentCell.isHaloCell()) {
-			const int numMols = currentCell.getMoleculeCount();
-			for (int i = 0; i < numMols; ++i) {
-				Molecule& m = currentCell.moleculesAt(i);
-				if(m.componentid() == cid)
-					++N;
-			}
-		}
-	}
-	return N;
-}
-
-// @todo: couldn't this use getRegion?
-unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* ctop) {
-	int minIndex[3];
-	int maxIndex[3];
-	for (int d = 0; d < 3; d++) {
-		if (cbottom[d] < this->_haloBoundingBoxMin[d])
-			minIndex[d] = 0;
-		else
-			minIndex[d] = (int) floor((cbottom[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]);
-
-		if (ctop[d] > this->_haloBoundingBoxMax[d])
-			maxIndex[d] = (int) floor((this->_haloBoundingBoxMax[d] - _haloBoundingBoxMin[d]) / this->_cellLength[d]);
-		else
-			maxIndex[d] = (int) floor((ctop[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]);
-
-		if (minIndex[d] < 0)
-			minIndex[d] = 0;
-		if (maxIndex[d] >= _cellsPerDimension[d])
-			maxIndex[d] = _cellsPerDimension[d] - 1;
-	}
-
-	unsigned N = 0;
-	int cix[3];
-	bool individualCheck;
-	int cellid;
-
-	for (cix[0] = minIndex[0]; maxIndex[0] >= cix[0]; (cix[0])++) {
-		for (cix[1] = minIndex[1]; maxIndex[1] >= cix[1]; (cix[1])++) {
-			for (cix[2] = minIndex[2]; maxIndex[2] >= cix[2]; (cix[2])++) {
-				individualCheck = (cix[0] == minIndex[0])
-						|| (cix[0] == minIndex[0] + 1)
-						|| (cix[0] == maxIndex[0])
-						|| (cix[0] == maxIndex[0] - 1)
-						|| (cix[1] == minIndex[1])
-						|| (cix[1] == minIndex[1] + 1)
-						|| (cix[1] == maxIndex[1])
-						|| (cix[1] == maxIndex[1] - 1)
-						|| (cix[2] == minIndex[2])
-						|| (cix[2] == minIndex[2] + 1)
-						|| (cix[2] == maxIndex[2])
-						|| (cix[2] == maxIndex[2] - 1);
-				cellid = this->cellIndexOf3DIndex(cix[0], cix[1], cix[2]);
-				ParticleCell& currentCell = _cells[cellid];
-				if (currentCell.isHaloCell())
-					continue;
-
-				const int numMols = currentCell.getMoleculeCount();
-				if (individualCheck) {
-					for (int i = 0; i < numMols; ++i) {
-						Molecule& m = currentCell.moleculesAt(i);
-						if(m.inBox(cbottom, ctop) and m.componentid() == cid)
-							++N;
-					}
-				} else {
-					for (int i = 0; i < numMols; ++i) {
-						Molecule& m = currentCell.moleculesAt(i);
-						if(m.componentid() == cid)
-							++N;
-					}
-				}
-			}
-		}
-	}
-
-	return N;
 }
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
@@ -1009,7 +895,7 @@ void LinkedCells::getBoundaryRegionPerDirection(int direction, double (*startReg
 		startIndex[dim] = _haloWidthInNumCells[dim];
 		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
 	}
-	else {
+	else {  // direction > 0
 		stopIndex[dim] = _boxWidthInNumCells[dim];
 		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
 	}
@@ -1043,77 +929,7 @@ bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[
 	return true;
 }
 
-int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR) {
-        int m1neigh = 0;
-        mardyn_assert(_cellsValid);
-        unsigned long cellIndex = getCellIndexOfMolecule(m1);
-        ParticleCell& currentCell = _cells[cellIndex];
-
-        cellProcessor.initTraversal();
-
-        // extend the window of cells with cache activated
-        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
-                cellProcessor.preprocessCell(_cells[windowCellIndex]);
-        }
-
-        m1neigh += cellProcessor.countNeighbours(m1, currentCell, RR);
-
-        // forward neighbours
-        for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
-        {
-                ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
-        }
-        // backward neighbours
-        for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
-        {
-                ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
-                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
-        }
-
-        // close the window of cells activated
-        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1; windowCellIndex++) {
-                cellProcessor.postprocessCell(_cells[windowCellIndex]);
-        }
-
-        cellProcessor.endTraversal();
-        return m1neigh;
-}
-
-unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm) {
-   return ce->communicateNumCavities(comm);
-}
-
-void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, CellProcessor& cellProcessor) {
-   ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
-   map<unsigned long, Molecule*>* pc = ce->particleContainer();
-   double RR = ce->getRR();
-   
-   for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
-      mardyn_assert(pcit->second != NULL);
-      Molecule* m1 = pcit->second;
-      unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
-      unsigned long m1id = pcit->first;
-      mardyn_assert(m1id == m1->id());
-      ce->decideActivity(neigh, m1id);
-   }
-}
-
-RegionParticleIterator LinkedCells::iterateRegionBegin(const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex, IterateType type) {
-	// parameter "type" not yet used
-	// add functionality in a future version...
-	double startRegion[3];
-	double endRegion[3];
-
-	for(int d=0; d<3; d++){
-		startRegion[d] = _cells[startRegionCellIndex].getBoxMin(d);
-		endRegion[d] = _cells[endRegionCellIndex].getBoxMax(d);
-	}
-
-	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
-}
-
-RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[3], const double endRegion[3], IterateType type) {
+RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
 	// parameter "type" not yet used
 	// add functionality in a future version...
 	unsigned int startRegionCellIndex;
@@ -1121,7 +937,7 @@ RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[
 
 	getCellIndicesOfRegion(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
 
-	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
+	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex, type);
 }
 
 RegionParticleIterator LinkedCells::iterateRegionEnd() {
@@ -1480,7 +1296,10 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	endIndex = getCellIndexOfPoint(endRegion);
 }
 
-RegionParticleIterator LinkedCells::getRegionParticleIterator(const double startRegion[3], const double endRegion[3], const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex){
+RegionParticleIterator LinkedCells::getRegionParticleIterator(
+		const double startRegion[3], const double endRegion[3],
+		const unsigned int startRegionCellIndex,
+		const unsigned int endRegionCellIndex, ParticleIterator::Type type) {
 	int start3DIndices[3], end3DIndices[3];
 	int regionDimensions[3];
 	threeDIndexOfCellIndex(startRegionCellIndex, start3DIndices, _cellsPerDimension);
@@ -1491,7 +1310,7 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(const double start
 	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
 	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
 
-	return RegionParticleIterator(&_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
+	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {

@@ -13,6 +13,7 @@
 class DomainDecompBaseTest: public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(DomainDecompBaseTest);
+	TEST_METHOD(testExchangeMoleculesSimple);
 	TEST_METHOD(testExchangeMolecules);
 	TEST_SUITE_END();
 
@@ -21,6 +22,7 @@ public:
 
 	virtual ~DomainDecompBaseTest();
 
+	void testExchangeMoleculesSimple();
 	void testExchangeMolecules();
 };
 

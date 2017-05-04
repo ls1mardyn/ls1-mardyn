@@ -7,13 +7,14 @@
 //class Domain;
 //class Planar;
 //class Homogeneous;
-
+class XMLfileUnits;
 class LongRangeCorrection{
 
 public:
 	LongRangeCorrection() {}
 	virtual ~LongRangeCorrection() {}
-//	void initializeLongRange();
+	virtual void init() = 0;
+	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 	virtual void calculateLongRange() = 0;
 /*
 private:

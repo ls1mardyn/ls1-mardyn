@@ -228,6 +228,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			if (token == "LinkedCells") {
 				int cellsInCutoffRadius;
 				inputfilestream >> cellsInCutoffRadius;
+//				cellsInCutoffRadius - Not used anymore. Read it for backwards compatibility with
+				// the to-be-removed .cfg files
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
@@ -236,8 +238,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				}
 				if (this->_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = this->_cutoffRadius;
-				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-						cellsInCutoffRadius);
+				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
 				global_log->error() << "AdaptiveSubCells no longer supported." << std::endl;
 				global_simulation->exit(-1);
@@ -783,6 +784,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> slabs;
 			_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition,
 					_moleculeContainer, slabs, global_simulation);
+			_longRangeCorrection->init();
 		} else if (token == "NumberOfFluidComponents") {
 			double numFluidComp;
 			inputfilestream >> numFluidComp;

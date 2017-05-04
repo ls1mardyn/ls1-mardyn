@@ -10,6 +10,14 @@
 using Log::global_log;
 using namespace std;
 
+BinaryCheckpointWriter::BinaryCheckpointWriter()
+	: _outputPrefix("unknown"),
+	  _writeFrequency(1),
+	  _incremental(1),
+	  _appendTimestamp(false)
+{
+}
+
 BinaryCheckpointWriter::BinaryCheckpointWriter(unsigned long writeFrequency,
 		string outputPrefix, bool incremental) {
 	_outputPrefix = outputPrefix;
@@ -31,6 +39,11 @@ void BinaryCheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
 
+	if(_writeFrequency == 0 ){
+		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
+		Simulation::exit(-1);
+	}
+
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
@@ -42,9 +55,7 @@ void BinaryCheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
-	if (appendTimestamp > 0) {
-		_appendTimestamp = true;
-	}
+	_appendTimestamp = (appendTimestamp > 0);
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 

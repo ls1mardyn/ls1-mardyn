@@ -1,8 +1,7 @@
-#ifndef COLLECTIVECOMMBASE_H_
-#define COLLECTIVECOMMBASE_H_
+#pragma once
 
 #include <vector>
-
+#include "CollectiveCommBaseInterface.h"
 //! @brief This class is a dummy class which ensures that the collective communication
 //!        commands also work if the program is executed sequentially without MPI.
 //! @details Refactored to increase code-reuse
@@ -18,7 +17,7 @@
 //! by the domain decomp and the values can be read again. This class just has to
 //! ensure that this also works if there is no real domain decomposition but the
 //! class DomainDecompBase is used.
-class CollectiveCommBase {
+class CollectiveCommBase : public virtual CollectiveCommBaseInterface{
 
 protected:
 	//! As in C++ arrays have to contain only one type of variable,
@@ -47,7 +46,7 @@ public:
 
 	//! Append an int value to the list of values to be stored
 	//! @param intValue the value
-	virtual void appendInt(int intValue) {
+	virtual void appendInt(int intValue) override {
 		valType toPush;
 		toPush.v_int = intValue;
 		_values.push_back(toPush);
@@ -55,7 +54,7 @@ public:
 
 	//! Append a unsigned long value to the list of values to be stored
 	//! @param unsLongValue the value
-	virtual void appendUnsLong(unsigned long unsLongValue) {
+	virtual void appendUnsLong(unsigned long unsLongValue) override {
 		valType toPush;
 		toPush.v_unsLong = unsLongValue;
 		_values.push_back(toPush);
@@ -63,7 +62,7 @@ public:
 
 	//! Append a float value to the list of values to be stored
 	//! @param floatValue the value
-	virtual void appendFloat(float floatValue) {
+	virtual void appendFloat(float floatValue) override {
 		valType toPush;
 		toPush.v_float = floatValue;
 		_values.push_back(toPush);
@@ -71,7 +70,7 @@ public:
 
 	//! Append a double value to the list of values to be stored
 	//! @param doubleValue the value
-	virtual void appendDouble(double doubleValue) {
+	virtual void appendDouble(double doubleValue) override {
 		valType toPush;
 		toPush.v_double = doubleValue;
 		_values.push_back(toPush);
@@ -79,7 +78,7 @@ public:
 
 	//! Append a long double value to the list of values to be stored
 	//! @param longDoubleValue the value
-	virtual void appendLongDouble(long double longDoubleValue) {
+	virtual void appendLongDouble(long double longDoubleValue) override {
 		valType toPush;
 		toPush.v_longDouble = longDoubleValue;
 		_values.push_back(toPush);
@@ -87,15 +86,22 @@ public:
 
 	//! Performs a broadcast of the values to all processes in the communicator
 	//! @param root of the broadcast
-	virtual void broadcast(int /*root*/ = 0) {
+	virtual void broadcast(int /*root*/ = 0) override {
 	}
 
 	//! Performs an all-reduce (sum)
-	virtual void allreduceSum() {
+	virtual void allreduceSum() override {
+	}
+
+
+	//! Performs an all-reduce (sum), however values of previous iterations are permitted.
+	//! By allowing values from previous iterations, overlapping communication is possible.
+	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
+	virtual void allreduceSumAllowPrevious() override {
 	}
 
 	//! Performs a scan (sum)
-	virtual void scanSum() {
+	virtual void scanSum() override {
 	}
 
 	//! Get the next value from the list, which must be int
@@ -103,7 +109,7 @@ public:
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order3
 	//! @return the value
-	int getInt() {
+	virtual int getInt() override {
 		return (_getter++)->v_int;
 	}
 
@@ -112,7 +118,7 @@ public:
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
-	unsigned long getUnsLong() {
+	virtual unsigned long getUnsLong() override {
 		return (_getter++)->v_unsLong;
 	}
 
@@ -121,7 +127,7 @@ public:
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
-	float getFloat() {
+	virtual float getFloat() override {
 		return (_getter++)->v_float;
 	}
 
@@ -130,7 +136,7 @@ public:
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
-	double getDouble() {
+	virtual double getDouble() override {
 		return (_getter++)->v_double;
 	}
 
@@ -139,13 +145,13 @@ public:
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
-	long double getLongDouble() {
+	virtual long double getLongDouble() override {
 		return (_getter++)->v_longDouble;
 	}
 
 	//! @brief delete memory and MPI_Type
 	//! @return the value
-	virtual void finalize() {
+	virtual void finalize() override {
 		_values.clear();
 	}
 
@@ -158,4 +164,3 @@ protected:
 
 };
 
-#endif /* COLLECTIVECOMMBASE_H_ */

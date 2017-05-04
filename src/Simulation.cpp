@@ -330,6 +330,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			Simulation::exit(1);
 		}
 
+		/* thermostats */
 		if(xmlconfig.changecurrentnode("thermostats")) {
 			long numThermostats = 0;
 			XMLfile::Query query = xmlconfig.query("thermostat");
@@ -362,7 +363,21 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << endl;
 					}
 				}
-				else {
+				else if(thermostattype == "TemperatureControl")
+				{
+					if(NULL == _temperatureControl)
+					{
+						_temperatureControl = new TemperatureControl(_domain, _domainDecomposition);
+						_temperatureControl->readXML(xmlconfig);
+					}
+					else
+					{
+						global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..." << endl;
+						Simulation::exit(-1);
+					}
+				}
+				else
+				{
 					global_log->warning() << "Unknown thermostat " << thermostattype << endl;
 					continue;
 				}
@@ -374,17 +389,37 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->warning() << "Thermostats section missing." << endl;
 		}
 		
-		
-	/*	if(xmlconfig.changecurrentnode("planarLRC")) {
-			XMLfile::Query query = xmlconfig.query("slabs");
-			unsigned slabs = query.card();
-			_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, slabs, global_simulation);
-			_domainDecomposition->readXML(xmlconfig);
+		/* long range correction */
+		if(xmlconfig.changecurrentnode("longrange") )
+		{
+			std::string type;
+			if( !xmlconfig.getNodeValue("@type", type) )
+			{
+				global_log->error() << "LongRangeCorrection: Missing type specification. Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			if("planar" == type)
+			{
+				unsigned int nSlabs = 10;
+				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
+				_longRangeCorrection->readXML(xmlconfig);
+			}
+			else if("homogeneous" == type)
+			{
+				/*
+				 * Needs to be initialized later for some reason, done in Simulation::prepare_start()
+				 * TODO: perhabs work on this, to make it more robust 
+				 *
+				 *_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
+                 */
+			}
+			else
+			{
+				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar. Program exit ..." << endl;
+                Simulation::exit(-1);
+			}
 			xmlconfig.changecurrentnode("..");
 		}
-		else {
-			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);	
-		}*/
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
 	}
@@ -405,12 +440,23 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query::const_iterator outputPluginIter;
 	for( outputPluginIter = query.begin(); outputPluginIter; outputPluginIter++ ) {
 		xmlconfig.changecurrentnode( outputPluginIter );
-		OutputBase *outputPlugin;
+		OutputBase *outputPlugin = NULL;
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 		if(pluginname == "CheckpointWriter") {
-			outputPlugin = new CheckpointWriter();
+			std::string strType = "unknown";
+			xmlconfig.getNodeValue("@type", strType);
+
+			if("ASCII" == strType)
+				outputPlugin = new CheckpointWriter();
+			else if("binary" == strType)
+				outputPlugin = new BinaryCheckpointWriter();
+			else
+			{
+				global_log->error() << "Unknown CheckpointWriter type, expected: ASCII|binary. Program exit... " << endl;
+				Simulation::exit(-1);
+			}
 		}
 		else if(pluginname == "DecompWriter") {
 			outputPlugin = new DecompWriter();
@@ -422,6 +468,23 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if(pluginname == "MmspdWriter") {
 			outputPlugin = new MmspdWriter();
+		}
+		else if(pluginname == "MmspdBinWriter") {
+			outputPlugin = new MmspdBinWriter();
+		}
+		else if(pluginname == "MmpldWriter") {
+			std::string strType = "unknown";
+			xmlconfig.getNodeValue("@type", strType);
+
+			if("simple" == strType)
+				outputPlugin = new MmpldWriterSimpleSphere();
+			else if("multi" == strType)
+				outputPlugin = new MmpldWriterMultiSphere ();
+			else
+			{
+				global_log->error() << "MmpldWriter: wrong attribute, expected type=simple|multi. Program exit... " << endl;
+				Simulation::exit(-1);
+			}
 		}
 		else if(pluginname == "PovWriter") {
 			outputPlugin = new PovWriter();
@@ -439,9 +502,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "VISWriter") {
 			outputPlugin = new VISWriter();
 		}
-		else if(pluginname == "MmspdBinWriter") {
-			outputPlugin = new MmspdBinWriter();
-		}
 #ifdef VTK
 		else if(pluginname == "VTKMoleculeWriter") {
 			outputPlugin = new VTKMoleculeWriter();
@@ -456,6 +516,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "CavityWriter") {
 			outputPlugin = new CavityWriter();
 		}
+        else if(pluginname == "GammaWriter") {
+            outputPlugin = new GammaWriter();
+        }
 		/* temporary */
 		else if(pluginname == "MPICheckpointWriter") {
 			outputPlugin = new MPICheckpointWriter();
@@ -468,9 +531,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			continue;
 		}
 
-
-		outputPlugin->readXML(xmlconfig);
-		_outputPlugins.push_back(outputPlugin);
+		if(NULL != outputPlugin)
+		{
+			outputPlugin->readXML(xmlconfig);
+			_outputPlugins.push_back(outputPlugin);
+		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
 }
@@ -531,19 +596,42 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		readXML(inp);
 
 		string pspfile;
-		if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
-			pspfile.insert(0, inp.getDir());
-			global_log->info() << "phasespacepoint description file:\t"
-					<< pspfile << endl;
-
-			string pspfiletype("ASCII");
-			inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype);
-			global_log->info() << "       phasespacepoint file type:\t"
-					<< pspfiletype << endl;
+		string pspfileheader;
+		string pspfiletype("ASCII");
+		if (inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype) ){
 			if (pspfiletype == "ASCII") {
+				if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
+					pspfile.insert(0, inp.getDir());
+					global_log->info() << "phasespacepoint description file:\t"
+							<< pspfile << endl;
+				}
 				_inputReader = (InputBase*) new InputOldstyle();
 				_inputReader->setPhaseSpaceFile(pspfile);
 			}
+			else if (pspfiletype == "binary") {
+				if (inp.getNodeValue("ensemble/phasespacepoint/file/header", pspfileheader)) {
+					pspfileheader.insert(0, inp.getDir());
+					global_log->info() << "phasespacepoint description file:\t"
+							<< pspfileheader << endl;
+				}
+				if (inp.getNodeValue("ensemble/phasespacepoint/file/data", pspfile)) {
+					pspfile.insert(0, inp.getDir());
+				}
+				_inputReader = (InputBase*) new BinaryReader();
+				_inputReader->setPhaseSpaceHeaderFile(pspfileheader);
+				_inputReader->setPhaseSpaceFile(pspfile);
+
+				// read header
+				double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			}
+			else {
+				global_log->error() << "Unknown type in node: ensemble/phasespacepoint/file, "
+						"expected: ASCII|binary. Programm exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			global_log->info() << "       phasespacepoint file type:\t"
+					<< pspfiletype << endl;
 		}
 		string oldpath = inp.getcurrentnodepath();
 		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
@@ -753,7 +841,7 @@ void Simulation::prepare_start() {
 
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
-	// or should we better call the integrator->eventForcesCalculated?
+	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -1162,10 +1250,8 @@ void Simulation::simulate() {
 
 
 
-#ifdef ENABLE_MPI
-		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		bool overlapCommComp = false; // change back to true after testing!
-		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#if defined(ENABLE_MPI) && defined(ENABLE_OVERLAPPING)
+		bool overlapCommComp = true;
 #else
 		bool overlapCommComp = false;
 #endif
@@ -1249,18 +1335,22 @@ void Simulation::simulate() {
 		if(_simstep >= _initStatistics) {
 			map<unsigned, CavityEnsemble>::iterator ceit;
 			for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
-				if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
-					global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
 
-					this->_moleculeContainer->cavityStep(
-							&ceit->second, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
-					);
+				unsigned cavityComponentID = ceit->first;
+				CavityEnsemble & cavEns = ceit->second;
+
+				if (!((_simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
+					global_log->debug() << "Cavity ensemble for component " << cavityComponentID << ".\n";
+
+					cavEns.cavityStep(this->_moleculeContainer);
 				}
 
-				if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
-						(!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
-						(!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) ) {
-					this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
+				if( (!((_simstep + 2 * cavityComponentID + 7) % cavEns.getInterval())) ||
+					(!((_simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) ||
+					(!((_simstep + 2 * cavityComponentID - 1) % cavEns.getInterval())) ) {
+
+					// warning, return value is ignored!
+					/*unsigned long ret = */ cavEns.communicateNumCavities(this->_domainDecomposition);
 				}
 			}
 		}
@@ -1628,8 +1718,6 @@ void Simulation::updateParticleContainerAndDecomposition() {
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep() {
 	bool forceRebalancing = false;
-
-	//TODO: exchange the constructor for a real non-blocking version
 
 	#ifdef ENABLE_MPI
 		#ifdef ENABLE_OVERLAPPING

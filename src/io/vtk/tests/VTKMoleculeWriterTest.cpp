@@ -34,7 +34,7 @@ VTKMoleculeWriterTest::~VTKMoleculeWriterTest() {
 void VTKMoleculeWriterTest::testDoOutput() {
 	double boundings_min[] = {-1., -1., -1. };
 	double boundings_max[] = {10.0, 10.0, 10.0 };
-	LinkedCells container(boundings_min, boundings_max, 1, 1, 1);
+	LinkedCells container(boundings_min, boundings_max, 1);
 
 	std::vector<Component> components;
 	Component dummyComponent(0);
@@ -102,9 +102,9 @@ void VTKMoleculeWriterTest::testDoOutput() {
 		Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
 
 		ASSERT_EQUAL_MSG("check number of point coordinates", 12, (int) coordinates_iterator->size());
-		ASSERT_EQUAL_MSG("check point coordinates", 2.2, coordinates_iterator->at(9));
-		ASSERT_EQUAL_MSG("check point coordinates", 3., coordinates_iterator->at(10));
-		ASSERT_EQUAL_MSG("check point coordinates", 3.4, coordinates_iterator->at(11));
+		ASSERT_DOUBLES_EQUAL_MSG("check point coordinates", 2.2, coordinates_iterator->at(9),1e-7);
+		ASSERT_DOUBLES_EQUAL_MSG("check point coordinates", 3., coordinates_iterator->at(10),1e-7);
+		ASSERT_DOUBLES_EQUAL_MSG("check point coordinates", 3.4, coordinates_iterator->at(11),1e-7);
 	} catch (const xml_schema::exception& e) {
 		// todo printing the exception works only for ostream -> find some way to use our logger
 		std::cerr << e << std::endl;

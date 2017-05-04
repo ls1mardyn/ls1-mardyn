@@ -5,6 +5,9 @@
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 #include "Simulation.h"
+#include "Domain.h"
+
+#include <vector>
 
 using namespace std;
 using Log::global_log;
@@ -51,6 +54,26 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		}
 		mixingrule->readXML(xmlconfig);
 		_mixingrules.push_back(mixingrule);
+
+		/*
+		 * Mixing coefficients
+		 *
+		 * TODO: information of mixing rules (eta, xi) is stored in Domain class and its actually in use
+		 * --> we need to decide where this information should be stored in future, in ensemble class,
+		 * in the way it is done above?
+		 *
+		 */
+		std::vector<double>& dmixcoeff = global_simulation->getDomain()->getmixcoeff();
+		dmixcoeff.clear();
+		for( unsigned int i = 1; i < numComponents; i++ ) {
+			for( unsigned int j = i + 1; j <= numComponents; j++ ) {
+				double xi, eta;
+				xmlconfig.getNodeValue("xi", xi);
+				xmlconfig.getNodeValue("eta", eta);
+				dmixcoeff.push_back( xi );
+				dmixcoeff.push_back( eta );
+			}
+		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
 

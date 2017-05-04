@@ -152,16 +152,19 @@ struct paramLineHeat
 	unsigned int nWriteFreqRegions;
 };
 
+class XMLfileUnits;
 class Domain;
 class DomainDecompBase;
 class TemperatureControl : public ControlInstance
 {
 public:
+	TemperatureControl(Domain* domain, DomainDecompBase* domainDecomp);
     TemperatureControl(Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
     ~TemperatureControl();
 
     std::string GetShortName() {return "TeC";}
     void AddRegion(tec::ControlRegion* region);
+	void readXML(XMLfileUnits& xmlconfig);
     int GetNumRegions() {return _vecControlRegions.size();}
     tec::ControlRegion* GetControlRegion(unsigned short nRegionID) {return _vecControlRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
 

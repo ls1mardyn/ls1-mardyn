@@ -18,33 +18,33 @@ public:
 		AlignedArrayTriplet<T>::resize(initialSize);
 	}
 
-	T* xBegin() { return _numEntriesPerArray > 0 ? this->_p + (0 * _numEntriesPerArray) : nullptr; }
-	T* yBegin() { return _numEntriesPerArray > 0 ? this->_p + (1 * _numEntriesPerArray) : nullptr; }
-	T* zBegin() { return _numEntriesPerArray > 0 ? this->_p + (2 * _numEntriesPerArray) : nullptr; }
-	T* xBegin() const { return _numEntriesPerArray > 0 ? this->_p + (0 * _numEntriesPerArray) : nullptr; }
-	T* yBegin() const { return _numEntriesPerArray > 0 ? this->_p + (1 * _numEntriesPerArray) : nullptr; }
-	T* zBegin() const { return _numEntriesPerArray > 0 ? this->_p + (2 * _numEntriesPerArray) : nullptr; }
+	T* xBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; }
+	T* yBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (1 * _numEntriesPerArray) : nullptr; }
+	T* zBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (2 * _numEntriesPerArray) : nullptr; }
+	T* xBegin() const { return _numEntriesPerArray > 0 ? this->_vec_ptr->data() + (0 * _numEntriesPerArray) : nullptr; }
+	T* yBegin() const { return _numEntriesPerArray > 0 ? this->_vec_ptr->data() + (1 * _numEntriesPerArray) : nullptr; }
+	T* zBegin() const { return _numEntriesPerArray > 0 ? this->_vec_ptr->data() + (2 * _numEntriesPerArray) : nullptr; }
 
-	T& x(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
-	T& y(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
-	T& z(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
-	T& x(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
-	T& y(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
-	T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
+	T& x(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 0 * _numEntriesPerArray]; }
+	T& y(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 1 * _numEntriesPerArray]; }
+	T& z(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 2 * _numEntriesPerArray]; }
+	T& x(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return (*this->_vec_ptr)[i + 0 * _numEntriesPerArray]; }
+	T& y(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return (*this->_vec_ptr)[i + 1 * _numEntriesPerArray]; }
+	T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return (*this->_vec_ptr)[i + 2 * _numEntriesPerArray]; }
 
 	size_t dimensionToOffset(int i) const {
 		mardyn_assert(i >= 0 and i < 3);
 		return i * _numEntriesPerArray;
 	}
 
-	T& linearCrossAccess(size_t i) { mardyn_assert(i < 3*_numEntriesPerArray); return this->_p[i];}
+	T& linearCrossAccess(size_t i) { mardyn_assert(i < 3*_numEntriesPerArray); return this->_vec[i];}
 
 	size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = this->_round_up(exact_size);
 		size_t size_rounded_up_x3 = size_rounded_up * 3;
 		_numEntriesPerArray = size_rounded_up;
 
-		bool need_resize = size_rounded_up_x3 > this->_capacity or (allow_shrink and size_rounded_up_x3 < this->_capacity);
+		bool need_resize = size_rounded_up_x3 > this->_vec.size() or (allow_shrink and size_rounded_up_x3 < this->_vec.size());
 
 		if (need_resize) {
 			AlignedArray<T>::resize(size_rounded_up_x3);
@@ -120,3 +120,4 @@ private:
 };
 
 #endif /* ALIGNEDARRAYTRIPLET_H */
+

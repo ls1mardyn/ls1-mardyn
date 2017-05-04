@@ -32,6 +32,8 @@ public:
 
 	virtual bool isEmpty() const = 0;
 
+	bool isNotEmpty() const {return not isEmpty();}
+
 	bool deleteMoleculeByID(unsigned long molid);
 
 	virtual bool deleteMoleculeByIndex(size_t index) = 0;

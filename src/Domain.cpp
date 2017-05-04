@@ -63,12 +63,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_globalUSteps = 0;
 	this->_globalSigmaU = 0.0;
 	this->_globalSigmaUU = 0.0;
-#ifdef COMPLEX_POTENTIAL_SET
-	this->_universalConstantAccelerationTimesteps = 30;
-	if(!rank)
-		for(int d = 0; d < 3; d++)
-			this->_globalVelocitySum[d] = map<unsigned, long double>();
-#endif
 	this->_componentwiseThermostat = false;
 #ifdef COMPLEX_POTENTIAL_SET
 	this->_universalUndirectedThermostat = map<int, bool>();

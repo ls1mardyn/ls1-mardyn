@@ -4,6 +4,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
+#include "utils/xmlfileUnits.h"
 
 #include <ctime>
 using std::ios_base;
@@ -16,6 +17,17 @@ GammaWriter::GammaWriter(unsigned long writeFrequency, string outputPrefix)
 { }
 
 GammaWriter::~GammaWriter(){}
+
+void GammaWriter::readXML(XMLfileUnits& xmlconfig)
+{
+    _writeFrequency = 1;
+    xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+    global_log->info() << "GammaWriter: Write frequency: " << _writeFrequency << endl;
+
+    _outputPrefix = "gamma";
+    xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+    global_log->info() << "GammaWriter: Output prefix: " << _outputPrefix << endl;
+}
 
 void GammaWriter::initOutput(ParticleContainer* /*particleContainer*/,
 			      DomainDecompBase* domainDecomp, Domain* /*domain*/){
