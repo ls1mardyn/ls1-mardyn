@@ -27,10 +27,6 @@
 
 #include "molecules/MoleculeForwardDeclaration.h"
 class CellProcessor;
-class ChemicalPotential;
-class Domain;
-class DomainDecompBase;
-class ParticleContainer;
 class ParticlePairsHandler;
 class XMLfileUnits;
 

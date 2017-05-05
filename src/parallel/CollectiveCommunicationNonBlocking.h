@@ -50,12 +50,12 @@ public:
 		_currentKey = key;
 
 		// add the key, if it is not yet existent:
-		if (!_comms.emplace(_currentKey, _currentKey).second) {
+		if (_comms.count(_currentKey) == 1) {
 			// this happens, if the key is already existent.
 			global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
 					<< " already existent. Reusing information." << std::endl;
 		} else {
-			_comms.at(_currentKey).instantiate();
+			_comms[_currentKey].instantiate();  // also creates the CollectiveCommunicationSingleNonBlocking object
 		}
 		_comms.at(_currentKey).init(communicator, numValues, _currentKey);
 	}

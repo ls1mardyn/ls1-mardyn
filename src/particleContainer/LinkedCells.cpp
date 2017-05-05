@@ -675,7 +675,7 @@ void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProc
 			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 			cellProcessor.processCellPair(currentCell, neighbourCell);
 		}
-	} else if (currentCell.isHaloCell()) {
+	} /*else if (currentCell.isHaloCell()) {
 		cellProcessor.processCell(currentCell);
 		for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
@@ -689,7 +689,7 @@ void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProc
 
 			cellProcessor.processCellPair(currentCell, neighbourCell);
 		}
-	} else
+	} */else
 	// loop over all boundary cells and calculate forces to forward and backward neighbours
 	if (currentCell.isBoundaryCell()) {
 		cellProcessor.processCell(currentCell);

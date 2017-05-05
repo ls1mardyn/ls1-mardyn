@@ -21,9 +21,8 @@ public:
 	 * Constructor
 	 * @param key the key of the collective operation
 	 */
-	CollectiveCommunicationSingleNonBlocking(int key = 0) {
+	CollectiveCommunicationSingleNonBlocking() {
 		_request = nullptr;
-		_key = key;
 		_communicationInitiated = false;
 		_valuesValid = false;
 		_firstComm = true;
@@ -149,7 +148,6 @@ private:
 
 	}
 
-	int _key;
 	MPI_Request* _request;
 	MPI_Op _agglomeratedTypeAddOperator;
 	bool _communicationInitiated;
