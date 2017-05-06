@@ -240,6 +240,13 @@ public:
 		return false;
 	}
 
+	/**
+	 * @brief Gets a molecule by its position.
+	 * @param pos Molecule position
+	 * @param result Molecule will be returned by this pointer if found
+	 * @return Molecule was found?
+	 */
+	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0;
 
 protected:
 

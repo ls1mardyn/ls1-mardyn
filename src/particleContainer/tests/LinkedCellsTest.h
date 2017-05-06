@@ -61,6 +61,8 @@ public:
 	void testParticleIteratorBeginNextEndParticleIteratorSequential();
 	void testTraversalMethods();
 //	void testGetHaloBoundaryParticlesDirection();
+
+	void testHalfShell();
 };
 
 #endif /* LINKEDCELLSTEST_H_ */

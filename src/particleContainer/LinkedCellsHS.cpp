@@ -7,7 +7,7 @@
 
 #include "particleContainer/LinkedCellsHS.h"
 #include "particleContainer/adapter/CellProcessor.h"
-#include "Simulation.h" //TODO: ___Remove when traverseCellsC08 is implemented
+#include "utils/mardyn_assert.h"
 
 // Traverse single cell (will be called when not parallelized with OpenMP)
 void LinkedCellsHS::traverseCell(long int cellIndex, CellProcessor& cellProcessor){
@@ -56,5 +56,5 @@ void LinkedCellsHS::traverseCell(long int cellIndex, CellProcessor& cellProcesso
 void LinkedCellsHS::traverseCellsC08(CellProcessor& cellProcessor) {
 	//TODO ___Implement me
 	std::cout << "Not yet implemented\n\n\n\n\n";
- 	Simulation::exit(1);
+ 	mardyn_exit(1);
 }

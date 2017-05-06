@@ -320,3 +320,9 @@ void LinkedCellsTest::testTraversalMethods() {
 	cpStub.inverseSign();
 
 }
+
+
+void LinkedCellsTest::testHalfShell(){
+	//TODO ___Add unit test
+
+}

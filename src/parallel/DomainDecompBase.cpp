@@ -4,6 +4,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "utils/mardyn_assert.h"
 
 #include <fstream>
 #include <cmath>
@@ -29,18 +30,58 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 }
 
 void DomainDecompBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain){
-	// Exchange forces if it's required by the cell container.
+	// Skip force exchange if it's not required by the cell container.
 	if(!moleculeContainer->requiresForceExchange()) return;
 
 	for (unsigned d = 0; d < 3; ++d) {
-		std::cout << "Doing force exchange!"<<std::endl;
 		handleForceExchange(d,moleculeContainer);
-		std::cout << "Done with force exchange!"<<std::endl;
 	}
 }
 
 void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const {
-	//TODO: ___Implement me (see handleDomainLeavingparticles)
+	//TODO: ___Test me
+	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
+
+	// direction +1 for dim 0, +2 for dim 1, +3 for dim 2
+	const int direction = dim+1;
+
+	// Loop over all halo particles in the positive direction
+	double startRegion[3];
+	double endRegion[3];
+
+	moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
+
+	#if defined (_OPENMP)
+	#pragma omp parallel shared(startRegion, endRegion)
+	#endif
+	{
+		auto begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+		auto end = moleculeContainer->iterateRegionEnd();
+
+		double shiftedPosition[3];
+
+		for(auto i = begin; i != end; ++i){
+			Molecule& molHalo = *i;
+			// Add force of halo particle to original particle (or other duplicates)
+			// that have a distance of -'shiftMagnitude' in the current direction
+			shiftedPosition[0] = molHalo.r(0);
+			shiftedPosition[1] = molHalo.r(1);
+			shiftedPosition[2] = molHalo.r(2);
+			shiftedPosition[dim] -= shiftMagnitude;
+
+			Molecule* original;
+
+			if(!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)){
+				// This should not happen
+				std::cout << "Original molecule not found";
+				mardyn_exit(1);
+			}
+
+			mardyn_assert(original->id() == molHalo.id());
+
+			original->Fadd(molHalo.F_vec());
+		}
+	}
 }
 
 void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const {

@@ -1343,3 +1343,23 @@ void LinkedCells::updateMoleculeCaches() {
 		_cells[cellIndex].buildSoACaches();
 	}
 }
+
+bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
+	const double epsi = 0.00000001; //TODO: ___Is epsilon small enough?
+	auto index = getCellIndexOfPoint(pos);
+	auto& cell = getCell(index);
+
+	// iterate through cell and compare position of molecules with given position
+	int numMolecules = cell.getMoleculeCount();
+	for (int i = 0; i < numMolecules; ++i) {
+		auto& mol = cell.moleculesAt(i);
+
+		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {
+			// found
+			*result = &mol;
+			return true;
+		}
+	}
+	// not found
+	return false;
+}
