@@ -139,7 +139,7 @@ public:
 
 	void traverseCellsOrig(CellProcessor& cellProcessor);
 
-	void traverseCellsC08(CellProcessor& cellProcessor);
+	virtual void traverseCellsC08(CellProcessor& cellProcessor);
 
 	void traverseNonInnermostCells(CellProcessor& cellProcessor);
 
@@ -255,7 +255,7 @@ public:
 	}
 	RegionParticleIterator iterateRegionEnd ();
 
-private:
+protected:
 	//####################################
 	//######### PRIVATE METHODS ##########
 	//####################################
@@ -322,7 +322,7 @@ private:
 	 * @param cellProcessor
 	 * @return
 	 */
-	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
+	virtual void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
 
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
 

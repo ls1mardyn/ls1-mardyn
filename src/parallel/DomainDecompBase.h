@@ -70,6 +70,13 @@ public:
 	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	/**
+	 * @brief Exchanges forces at the domain boundaries if it's required by the cell container.
+	 * @param moleculeContainer The particle container
+	 * @param domain TODO ___Remove if never used
+	 */
+	void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain);
+
+	/**
 	 * Specifies the amount of non-blocking stages, when performing overlapping balanceAndExchange and computation.
 	 * For a communication scheme, where only direct neighbours communicate, 3 stages of communication are necessary,
 	 * since the particles have to be transmitted in the x-direction first, then in the y-direction, then in the z-direction.
@@ -234,7 +241,15 @@ public:
 #endif
 
 protected:
+
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
+
+	/**
+	 * @brief Does the force exchange for each dimension. Will be called for dim=0, 1 and 2.
+	 * @param dim The dimension (0,1 or 2)
+	 * @param moleculeContainer The particle container
+	 */
+	virtual void handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const;
 
 	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
 

@@ -28,6 +28,21 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 	}
 }
 
+void DomainDecompBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain){
+	// Exchange forces if it's required by the cell container.
+	if(!moleculeContainer->requiresForceExchange()) return;
+
+	for (unsigned d = 0; d < 3; ++d) {
+		std::cout << "Doing force exchange!"<<std::endl;
+		handleForceExchange(d,moleculeContainer);
+		std::cout << "Done with force exchange!"<<std::endl;
+	}
+}
+
+void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const {
+	//TODO: ___Implement me (see handleDomainLeavingparticles)
+}
+
 void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const {
 	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 

@@ -19,6 +19,7 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
+#include "particleContainer/LinkedCellsHS.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/NonBlockingMPIHandlerBase.h"
 #include "parallel/NonBlockingMPIMultiStepHandler.h"
@@ -288,10 +289,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@type", datastructuretype);
 			global_log->info() << "Datastructure type: " << datastructuretype << endl;
 			if(datastructuretype == "LinkedCells") {
-				_moleculeContainer = new LinkedCells();
+							_moleculeContainer = new LinkedCells();
+							/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
+							global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
+							LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+							lc->setCutoff(_cutoffRadius);
+			} else if(datastructuretype == "LinkedCellsHS") {
+				_moleculeContainer = new LinkedCellsHS();
 				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
-				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
-				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+				global_log->info() << "Setting cell cutoff radius for linked cell hs datastructure to " << _cutoffRadius << endl;
+				LinkedCellsHS *lc = static_cast<LinkedCellsHS*>(_moleculeContainer);
 				lc->setCutoff(_cutoffRadius);
 			}
 			else if(datastructuretype == "AdaptiveSubCells") {
@@ -622,6 +629,21 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	}
 }
 
+void Simulation::calculateForces() {
+	// here we have to call calcFM() manually, otherwise force and moment are not
+	// updated inside the molecule
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
+		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+		for (ParticleIterator i = begin; i != end; ++i) {
+			i->calcFM();
+		}
+	} // end pragma omp parallel
+}
+
 void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
 
@@ -729,19 +751,9 @@ void Simulation::prepare_start() {
     _longRangeCorrection->calculateLongRange();
 
 	// here we have to call calcFM() manually, otherwise force and moment are not
-	// updated inside the molecule (actually this is done in upd_postF)
+	// updated inside the molecule
 	// or should we better call the integrator->eventForcesCalculated?
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-		const ParticleIterator end = _moleculeContainer->iteratorEnd();
-
-		for (ParticleIterator i = begin; i != end; ++i){
-			i->calcFM();
-		}
-	} // end pragma omp parallel
+	calculateForces();
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
@@ -997,6 +1009,15 @@ void Simulation::simulate() {
 			forceCalculationTimer.stop();
 			//#endif
 			computationTimer.stop();
+
+			decompositionTimer.start();
+			// Update forces in molecules so they can be exchanged
+			calculateForces();
+
+			// Exchange forces if it's required by the cell container.
+			_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+			decompositionTimer.stop();
+
 			_loopCompTime += computationTimer.get_etime() - startEtime;
 			_loopCompTimeSteps ++;
 		}

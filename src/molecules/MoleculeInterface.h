@@ -173,7 +173,7 @@ public:
 	}
 	void ee_upd_postF(double dt, double& summv2) {
 
-		calcFM();
+		//calcFM(); //NOTE: This was moved to simulation.cpp calculateForces() and is called in simulate()
 
 #ifndef MARDYN_WR
 		double dtInvM = dt / component()->m();

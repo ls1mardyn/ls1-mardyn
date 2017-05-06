@@ -234,6 +234,13 @@ public:
 	//! @brief Update the caches of the molecules.
 	virtual void updateMoleculeCaches() = 0;
 
+	//! @brief Should the domain decomposition exchange calculated forces at the boundaries,
+	//  or does this particle container calculate all forces.
+	virtual inline bool requiresForceExchange(){
+		return false;
+	}
+
+
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

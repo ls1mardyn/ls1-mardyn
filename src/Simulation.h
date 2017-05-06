@@ -103,7 +103,8 @@ class Simulation {
 private:
 	Simulation(Simulation &simulation);
 	Simulation& operator=(Simulation &simulation);
-	
+	void calculateForces();
+
 public:
 	/** Instantiate simulation object */
 	Simulation();
