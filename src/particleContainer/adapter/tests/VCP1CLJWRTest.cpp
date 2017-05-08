@@ -258,9 +258,9 @@ void VCP1CLJWRTest::testProcessCell() {
 		double WR_f_z = cell_wr.moleculesAt(i).F(2);
 
 		std::array<vcp_real_calc, 3> triple = full_SoA.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
-		double full_f_x = static_cast<double>triple[0];
-		double full_f_y = static_cast<double>triple[1];
-		double full_f_z = static_cast<double>triple[2];
+		double full_f_x = static_cast<double>(triple[0]);
+		double full_f_y = static_cast<double>(triple[1]);
+		double full_f_z = static_cast<double>(triple[2]);
 		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
@@ -334,8 +334,8 @@ void VCP1CLJWRTest::testProcessCellPair() {
 
 		std::array<vcp_real_calc, 3> triple = full_SoA1.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
-		double full_f_y = static_cast<double>(triple[1])
-		double full_f_z = static_cast<double>(triple[2])
+		double full_f_y = static_cast<double>(triple[1]);
+		double full_f_z = static_cast<double>(triple[2]);
 		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
@@ -348,9 +348,9 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		double WR_f_z = cell_wr2.moleculesAt(i).F(2);
 
 		std::array<vcp_real_calc, 3> triple = full_SoA2.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
-		double full_f_x = static_cast<double>triple[0];
-		double full_f_y = static_cast<double>triple[1];
-		double full_f_z = static_cast<double>triple[2];
+		double full_f_x = static_cast<double>(triple[0]);
+		double full_f_y = static_cast<double>(triple[1]);
+		double full_f_z = static_cast<double>(triple[2]);
 		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
