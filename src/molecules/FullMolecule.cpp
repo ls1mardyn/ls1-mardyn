@@ -126,93 +126,69 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 std::array<double, 3> FullMolecule::ljcenter_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double,3> ret;
-	vcp_real_calc* rx = _soa->ljc_r_xBegin();
-	vcp_real_calc* ry = _soa->ljc_r_yBegin();
-	vcp_real_calc* rz = _soa->ljc_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+
 	return ret;
 }
 
 std::array<double, 3> FullMolecule::charge_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
-	vcp_real_calc* rx = _soa->charges_r_xBegin();
-	vcp_real_calc* ry = _soa->charges_r_yBegin();
-	vcp_real_calc* rz = _soa->charges_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+
 	return ret;
 }
 
 std::array<double, 3> FullMolecule::dipole_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
-	vcp_real_calc* rx = _soa->dipoles_r_xBegin();
-	vcp_real_calc* ry = _soa->dipoles_r_yBegin();
-	vcp_real_calc* rz = _soa->dipoles_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+
 	return ret;
 }
 
 std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
-	vcp_real_calc* rx = _soa->quadrupoles_r_xBegin();
-	vcp_real_calc* ry = _soa->quadrupoles_r_yBegin();
-	vcp_real_calc* rz = _soa->quadrupoles_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+
 	return ret;
 }
 
 std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->ljc_f_xBegin();
-	vcp_real_calc* fy = _soa->ljc_f_yBegin();
-	vcp_real_calc* fz = _soa->ljc_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+
 	return ret;
 }
 std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->charges_f_xBegin();
-	vcp_real_calc* fy = _soa->charges_f_yBegin();
-	vcp_real_calc* fz = _soa->charges_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+
 	return ret;
 }
 std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
-	vcp_real_calc* fy = _soa->dipoles_f_yBegin();
-	vcp_real_calc* fz = _soa->dipoles_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+
 	return ret;
 }
 std::array<double, 3> FullMolecule::quadrupole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
-	vcp_real_calc* fy = _soa->quadrupoles_f_yBegin();
-	vcp_real_calc* fz = _soa->quadrupoles_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
+
+	ret = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+
 	return ret;
 }
 
@@ -235,42 +211,46 @@ std::array<double, 3> FullMolecule::quadrupole_e(unsigned int i) const {
 
 void FullMolecule::Fljcenteradd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_lj;
-	vcp_real_calc* fx = _soa->ljc_f_xBegin();
-	vcp_real_calc* fy = _soa->ljc_f_yBegin();
-	vcp_real_calc* fz = _soa->ljc_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
+	std::array<double, 3> temp;
+
+	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	temp[0] += a[0];
+	temp[1] += a[1];
+	temp[2] += a[2];
+	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
 }
 
 void FullMolecule::Fchargeadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_c;
-	vcp_real_calc* fx = _soa->charges_f_xBegin();
-	vcp_real_calc* fy = _soa->charges_f_yBegin();
-	vcp_real_calc* fz = _soa->charges_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
+	std::array<double, 3> temp;
+
+	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	temp[0] += a[0];
+	temp[1] += a[1];
+	temp[2] += a[2];
+	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
 }
 
 void FullMolecule::Fdipoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_d;
-	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
-	vcp_real_calc* fy = _soa->dipoles_f_yBegin();
-	vcp_real_calc* fz = _soa->dipoles_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
+	std::array<double, 3> temp;
+
+	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	temp[0] += a[0];
+	temp[1] += a[1];
+	temp[2] += a[2];
+	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
 }
 
 void FullMolecule::Fquadrupoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_q;
-	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
-	vcp_real_calc* fy = _soa->quadrupoles_f_yBegin();
-	vcp_real_calc* fz = _soa->quadrupoles_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
+	std::array<double, 3> temp;
+
+	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	temp[0] += a[0];
+	temp[1] += a[1];
+	temp[2] += a[2];
+	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
 }
 
 void FullMolecule::Fljcentersub(unsigned int i, double a[]) {
@@ -436,36 +416,30 @@ void FullMolecule::clearFM() {
 	_M[0] = _M[1] = _M[2] = 0.;
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
 
+	std::array<double, 3> clearance = {0.0, 0.0, 0.0};
+
 	// clear SoA-cache (quickest way)
 	unsigned ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_lj;
-		_soa->ljc_f_xBegin()[index_in_soa] = 0.0;
-		_soa->ljc_f_yBegin()[index_in_soa] = 0.0;
-		_soa->ljc_f_zBegin()[index_in_soa] = 0.0;
-		_soa->ljc_V_xBegin()[index_in_soa] = 0.0;
-		_soa->ljc_V_yBegin()[index_in_soa] = 0.0;
-		_soa->ljc_V_zBegin()[index_in_soa] = 0.0;
+
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_c;
-		_soa->charges_f_xBegin()[index_in_soa] = 0.0;
-		_soa->charges_f_yBegin()[index_in_soa] = 0.0;
-		_soa->charges_f_zBegin()[index_in_soa] = 0.0;
-		_soa->charges_V_xBegin()[index_in_soa] = 0.0;
-		_soa->charges_V_yBegin()[index_in_soa] = 0.0;
-		_soa->charges_V_zBegin()[index_in_soa] = 0.0;
+
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_d;
-		_soa->dipoles_f_xBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_f_yBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_f_zBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_V_xBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_V_yBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_V_zBegin()[index_in_soa] = 0.0;
+
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+
 		_soa->_dipoles_M.x(index_in_soa) = 0.0;
 		_soa->_dipoles_M.y(index_in_soa) = 0.0;
 		_soa->_dipoles_M.z(index_in_soa) = 0.0;
@@ -473,12 +447,10 @@ void FullMolecule::clearFM() {
 	ns = numQuadrupoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_q;
-		_soa->quadrupoles_f_xBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_f_yBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_f_zBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_V_xBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_V_yBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_V_zBegin()[index_in_soa] = 0.0;
+
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+
 		_soa->_quadrupoles_M.x(index_in_soa) = 0.0;
 		_soa->_quadrupoles_M.y(index_in_soa) = 0.0;
 		_soa->_quadrupoles_M.z(index_in_soa) = 0.0;
@@ -519,26 +491,34 @@ void FullMolecule::calcFM() {
 	double temp_M[3] = { 0., 0., 0. };
 	double temp_Vi[3] = { 0., 0., 0. };
 
+	std::array<double, 3> interim;
+
 	ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_lj;
-		temp_Vi[0] += _soa->ljc_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->ljc_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->ljc_V_zBegin()[index_in_soa];
+		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+
+		temp_Vi[0] += interim[0];
+		temp_Vi[1] += interim[1];
+		temp_Vi[2] += interim[2];
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_c;
-		temp_Vi[0] += _soa->charges_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->charges_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->charges_V_zBegin()[index_in_soa];
+		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+
+		temp_Vi[0] += interim[0];
+		temp_Vi[1] += interim[1];
+		temp_Vi[2] += interim[2];
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_d;
-		temp_Vi[0] += _soa->dipoles_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->dipoles_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->dipoles_V_zBegin()[index_in_soa];
+		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+
+		temp_Vi[0] += interim[0];
+		temp_Vi[1] += interim[1];
+		temp_Vi[2] += interim[2];
 		temp_M[0] += _soa->_dipoles_M.x(index_in_soa);
 		temp_M[1] += _soa->_dipoles_M.y(index_in_soa);
 		temp_M[2] += _soa->_dipoles_M.z(index_in_soa);
@@ -546,9 +526,11 @@ void FullMolecule::calcFM() {
 	ns = numQuadrupoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_q;
-		temp_Vi[0] += _soa->quadrupoles_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->quadrupoles_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->quadrupoles_V_zBegin()[index_in_soa];
+		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+
+		temp_Vi[0] += interim[0];
+		temp_Vi[1] += interim[1];
+		temp_Vi[2] += interim[2];
 		temp_M[0] += _soa->_quadrupoles_M.x(index_in_soa);
 		temp_M[1] += _soa->_quadrupoles_M.y(index_in_soa);
 		temp_M[2] += _soa->_quadrupoles_M.z(index_in_soa);
@@ -648,62 +630,52 @@ void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigne
 	for (unsigned j = 0; j < ns; ++j) {
 		double centerPos[3];
 		computeLJcenter_d(j, centerPos);
+		centerPos[0] += _r[0];
+		centerPos[1] += _r[1];
+		centerPos[2] += _r[2];
+
 		const unsigned ind = _soa_index_lj + j;
-		_soa->ljc_m_r_xBegin()[ind] = _r[0];
-		_soa->ljc_m_r_yBegin()[ind] = _r[1];
-		_soa->ljc_m_r_zBegin()[ind] = _r[2];
-		_soa->ljc_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->ljc_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->ljc_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_ljc_id[ind] = getComponentLookUpID() + j;
+
+		_soa->pushBackLJC(ind, _r, centerPos, getComponentLookUpID() + j);
 	}
 	ns = numCharges();
 	for (unsigned j = 0; j < ns; ++j) {
 		double centerPos[3];
 		computeCharge_d(j, centerPos);
+		centerPos[0] += _r[0];
+		centerPos[1] += _r[1];
+		centerPos[2] += _r[2];
+
 		const unsigned ind = _soa_index_c + j;
-		_soa->charges_m_r_xBegin()[ind] = _r[0];
-		_soa->charges_m_r_yBegin()[ind] = _r[1];
-		_soa->charges_m_r_zBegin()[ind] = _r[2];
-		_soa->charges_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->charges_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->charges_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_charges_q[ind] = component()->charge(j).q();
+
+		_soa->pushBackCharge(ind, _r, centerPos, component()->charge(j).q());
 	}
 	ns = numDipoles();
 	for (unsigned j = 0; j < ns; ++j) {
 		double centerPos[3];
 		computeDipole_d(j, centerPos);
+		centerPos[0] += _r[0];
+		centerPos[1] += _r[1];
+		centerPos[2] += _r[2];
+
 		double orientation[3];
 		computeDipole_e(j, orientation);
 		const unsigned ind = _soa_index_d + j;
-		_soa->dipoles_m_r_xBegin()[ind] = _r[0];
-		_soa->dipoles_m_r_yBegin()[ind] = _r[1];
-		_soa->dipoles_m_r_zBegin()[ind] = _r[2];
-		_soa->dipoles_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->dipoles_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->dipoles_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_dipoles_p[ind] = component()->dipole(j).absMy();
-		_soa->_dipoles_e.x(ind) = orientation[0];
-		_soa->_dipoles_e.y(ind) = orientation[1];
-		_soa->_dipoles_e.z(ind) = orientation[2];
+
+		_soa->pushBackDipole(ind, _r, centerPos, component()->dipole(j).absMy(), orientation);
 	}
 	ns = numQuadrupoles();
 	for (unsigned j = 0; j < ns; ++j) {
 		double centerPos[3];
 		computeQuadrupole_d(j, centerPos);
+		centerPos[0] += _r[0];
+		centerPos[1] += _r[1];
+		centerPos[2] += _r[2];
+
 		double orientation[3];
 		computeQuadrupole_e(j, orientation);
 		const unsigned ind = _soa_index_q + j;
-		_soa->quadrupoles_m_r_xBegin()[ind] = _r[0];
-		_soa->quadrupoles_m_r_yBegin()[ind] = _r[1];
-		_soa->quadrupoles_m_r_zBegin()[ind] = _r[2];
-		_soa->quadrupoles_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->quadrupoles_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->quadrupoles_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_quadrupoles_m[ind] = component()->quadrupole(j).absQ();
-		_soa->_quadrupoles_e.x(ind) = orientation[0];
-		_soa->_quadrupoles_e.y(ind) = orientation[1];
-		_soa->_quadrupoles_e.z(ind) = orientation[2];
+
+		_soa->pushBackQuadrupole(ind, _r, centerPos, component()->quadrupole(j).absQ(), orientation);
 	}
 }

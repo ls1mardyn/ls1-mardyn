@@ -757,74 +757,80 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
 	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
+	//for better readability:
+	typedef ConcatenatedSites<vcp_real_calc>::SiteType 		SiteType;
+	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
+	typedef CellDataSoA::QuantityType							QuantityType;
+
 	// Pointer for LJ centers
-	const vcp_real_calc * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
-	const vcp_real_calc * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
-	const vcp_real_calc * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
-	      vcp_real_calc * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
-	      vcp_real_calc * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
-	      vcp_real_calc * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
-	      vcp_real_calc * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
-	      vcp_real_calc * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
-	      vcp_real_calc * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
+	const vcp_real_calc * const soa1_ljc_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::LJC, Coordinate::X);
+	const vcp_real_calc * const soa1_ljc_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::LJC, Coordinate::Y);
+	const vcp_real_calc * const soa1_ljc_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::LJC, Coordinate::Z);
+		  vcp_real_calc * const soa1_ljc_f_x = soa1.getBegin(QuantityType::FORCE, SiteType::LJC, Coordinate::X);
+		  vcp_real_calc * const soa1_ljc_f_y = soa1.getBegin(QuantityType::FORCE, SiteType::LJC, Coordinate::Y);
+		  vcp_real_calc * const soa1_ljc_f_z = soa1.getBegin(QuantityType::FORCE, SiteType::LJC, Coordinate::Z);
+		  vcp_real_calc * const soa1_ljc_V_x = soa1.getBegin(QuantityType::VIRIAL, SiteType::LJC, Coordinate::X);
+		  vcp_real_calc * const soa1_ljc_V_y = soa1.getBegin(QuantityType::VIRIAL, SiteType::LJC, Coordinate::Y);
+		  vcp_real_calc * const soa1_ljc_V_z = soa1.getBegin(QuantityType::VIRIAL, SiteType::LJC, Coordinate::Z);
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
-	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
-	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
-	const vcp_real_calc * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
-	const vcp_real_calc * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
-	const vcp_real_calc * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
-	      vcp_real_calc * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
-	      vcp_real_calc * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
-	      vcp_real_calc * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
-	      vcp_real_calc * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
-	      vcp_real_calc * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
-	      vcp_real_calc * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
+
+	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::LJC, Coordinate::Z);
+	const vcp_real_calc * const soa2_ljc_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::LJC, Coordinate::Z);
+		  vcp_real_calc * const soa2_ljc_f_x = soa2.getBegin(QuantityType::FORCE, SiteType::LJC, Coordinate::X);
+		  vcp_real_calc * const soa2_ljc_f_y = soa2.getBegin(QuantityType::FORCE, SiteType::LJC, Coordinate::Y);
+		  vcp_real_calc * const soa2_ljc_f_z = soa2.getBegin(QuantityType::FORCE, SiteType::LJC, Coordinate::Z);
+		  vcp_real_calc * const soa2_ljc_V_x = soa2.getBegin(QuantityType::VIRIAL, SiteType::LJC, Coordinate::X);
+		  vcp_real_calc * const soa2_ljc_V_y = soa2.getBegin(QuantityType::VIRIAL, SiteType::LJC, Coordinate::Y);
+		  vcp_real_calc * const soa2_ljc_V_z = soa2.getBegin(QuantityType::VIRIAL, SiteType::LJC, Coordinate::Z);
 	const vcp_ljc_id_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
 	// Pointer for charges
-	const vcp_real_calc * const soa1_charges_r_x = soa1.charges_r_xBegin();
-	const vcp_real_calc * const soa1_charges_r_y = soa1.charges_r_yBegin();
-	const vcp_real_calc * const soa1_charges_r_z = soa1.charges_r_zBegin();
-	      vcp_real_calc * const soa1_charges_f_x = soa1.charges_f_xBegin();
-	      vcp_real_calc * const soa1_charges_f_y = soa1.charges_f_yBegin();
-	      vcp_real_calc * const soa1_charges_f_z = soa1.charges_f_zBegin();
-	      vcp_real_calc * const soa1_charges_V_x = soa1.charges_V_xBegin();
-	      vcp_real_calc * const soa1_charges_V_y = soa1.charges_V_yBegin();
-	      vcp_real_calc * const soa1_charges_V_z = soa1.charges_V_zBegin();
+	const vcp_real_calc * const soa1_charges_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa1_charges_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa1_charges_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa1_charges_f_x = soa1.getBegin(QuantityType::FORCE, SiteType::CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa1_charges_f_y = soa1.getBegin(QuantityType::FORCE, SiteType::CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa1_charges_f_z = soa1.getBegin(QuantityType::FORCE, SiteType::CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa1_charges_V_x = soa1.getBegin(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa1_charges_V_y = soa1.getBegin(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa1_charges_V_z = soa1.getBegin(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
-	const vcp_real_calc * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
-	const vcp_real_calc * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
-	const vcp_real_calc * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
-	const vcp_real_calc * const soa2_charges_r_x   = soa2.charges_r_xBegin();
-	const vcp_real_calc * const soa2_charges_r_y   = soa2.charges_r_yBegin();
-	const vcp_real_calc * const soa2_charges_r_z   = soa2.charges_r_zBegin();
-	      vcp_real_calc * const soa2_charges_f_x   = soa2.charges_f_xBegin();
-	      vcp_real_calc * const soa2_charges_f_y   = soa2.charges_f_yBegin();
-	      vcp_real_calc * const soa2_charges_f_z   = soa2.charges_f_zBegin();
-	      vcp_real_calc * const soa2_charges_V_x   = soa2.charges_V_xBegin();
-	      vcp_real_calc * const soa2_charges_V_y   = soa2.charges_V_yBegin();
-	      vcp_real_calc * const soa2_charges_V_z   = soa2.charges_V_zBegin();
+	const vcp_real_calc * const soa2_charges_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa2_charges_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa2_charges_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::CHARGE, Coordinate::Z);
+	const vcp_real_calc * const soa2_charges_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa2_charges_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa2_charges_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa2_charges_f_x = soa2.getBegin(QuantityType::FORCE, SiteType::CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa2_charges_f_y = soa2.getBegin(QuantityType::FORCE, SiteType::CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa2_charges_f_z = soa2.getBegin(QuantityType::FORCE, SiteType::CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa2_charges_V_x = soa2.getBegin(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa2_charges_V_y = soa2.getBegin(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa2_charges_V_z = soa2.getBegin(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 
 	// Pointer for dipoles
-	const vcp_real_calc * const soa1_dipoles_r_x = soa1.dipoles_r_xBegin();
-	const vcp_real_calc * const soa1_dipoles_r_y = soa1.dipoles_r_yBegin();
-	const vcp_real_calc * const soa1_dipoles_r_z = soa1.dipoles_r_zBegin();
-	      vcp_real_calc * const soa1_dipoles_f_x = soa1.dipoles_f_xBegin();
-	      vcp_real_calc * const soa1_dipoles_f_y = soa1.dipoles_f_yBegin();
-	      vcp_real_calc * const soa1_dipoles_f_z = soa1.dipoles_f_zBegin();
-	      vcp_real_calc * const soa1_dipoles_V_x = soa1.dipoles_V_xBegin();
-	      vcp_real_calc * const soa1_dipoles_V_y = soa1.dipoles_V_yBegin();
-	      vcp_real_calc * const soa1_dipoles_V_z = soa1.dipoles_V_zBegin();
+	const vcp_real_calc * const soa1_dipoles_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::DIPOLE, Coordinate::X);
+	const vcp_real_calc * const soa1_dipoles_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::DIPOLE, Coordinate::Y);
+	const vcp_real_calc * const soa1_dipoles_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::DIPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa1_dipoles_f_x = soa1.getBegin(QuantityType::FORCE, SiteType::DIPOLE, Coordinate::X);
+		  vcp_real_calc * const soa1_dipoles_f_y = soa1.getBegin(QuantityType::FORCE, SiteType::DIPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa1_dipoles_f_z = soa1.getBegin(QuantityType::FORCE, SiteType::DIPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa1_dipoles_V_x = soa1.getBegin(QuantityType::VIRIAL, SiteType::DIPOLE, Coordinate::X);
+		  vcp_real_calc * const soa1_dipoles_V_y = soa1.getBegin(QuantityType::VIRIAL, SiteType::DIPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa1_dipoles_V_z = soa1.getBegin(QuantityType::VIRIAL, SiteType::DIPOLE, Coordinate::Z);
 	const vcp_real_calc * const soa1_dipoles_p = soa1._dipoles_p;
 	const vcp_real_calc * const soa1_dipoles_e_x = soa1._dipoles_e.xBegin();
 	const vcp_real_calc * const soa1_dipoles_e_y = soa1._dipoles_e.yBegin();
@@ -834,18 +840,18 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 	vcp_real_calc * const soa1_dipoles_M_z = soa1._dipoles_M.zBegin();
 	const int * const soa1_mol_dipoles_num = soa1._mol_dipoles_num;
 
-	const vcp_real_calc * const soa2_dipoles_m_r_x = soa2.dipoles_m_r_xBegin();
-	const vcp_real_calc * const soa2_dipoles_m_r_y = soa2.dipoles_m_r_yBegin();
-	const vcp_real_calc * const soa2_dipoles_m_r_z = soa2.dipoles_m_r_zBegin();
-	const vcp_real_calc * const soa2_dipoles_r_x   = soa2.dipoles_r_xBegin();
-	const vcp_real_calc * const soa2_dipoles_r_y   = soa2.dipoles_r_yBegin();
-	const vcp_real_calc * const soa2_dipoles_r_z   = soa2.dipoles_r_zBegin();
-	      vcp_real_calc * const soa2_dipoles_f_x   = soa2.dipoles_f_xBegin();
-	      vcp_real_calc * const soa2_dipoles_f_y   = soa2.dipoles_f_yBegin();
-	      vcp_real_calc * const soa2_dipoles_f_z   = soa2.dipoles_f_zBegin();
-	      vcp_real_calc * const soa2_dipoles_V_x   = soa2.dipoles_V_xBegin();
-	      vcp_real_calc * const soa2_dipoles_V_y   = soa2.dipoles_V_yBegin();
-	      vcp_real_calc * const soa2_dipoles_V_z   = soa2.dipoles_V_zBegin();
+	const vcp_real_calc * const soa2_dipoles_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::DIPOLE, Coordinate::X);
+	const vcp_real_calc * const soa2_dipoles_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::DIPOLE, Coordinate::Y);
+	const vcp_real_calc * const soa2_dipoles_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::DIPOLE, Coordinate::Z);
+	const vcp_real_calc * const soa2_dipoles_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::DIPOLE, Coordinate::X);
+	const vcp_real_calc * const soa2_dipoles_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::DIPOLE, Coordinate::Y);
+	const vcp_real_calc * const soa2_dipoles_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::DIPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa2_dipoles_f_x = soa2.getBegin(QuantityType::FORCE, SiteType::DIPOLE, Coordinate::X);
+		  vcp_real_calc * const soa2_dipoles_f_y = soa2.getBegin(QuantityType::FORCE, SiteType::DIPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa2_dipoles_f_z = soa2.getBegin(QuantityType::FORCE, SiteType::DIPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa2_dipoles_V_x = soa2.getBegin(QuantityType::VIRIAL, SiteType::DIPOLE, Coordinate::X);
+		  vcp_real_calc * const soa2_dipoles_V_y = soa2.getBegin(QuantityType::VIRIAL, SiteType::DIPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa2_dipoles_V_z = soa2.getBegin(QuantityType::VIRIAL, SiteType::DIPOLE, Coordinate::Z);
 	const vcp_real_calc * const soa2_dipoles_p = soa2._dipoles_p;
 	const vcp_real_calc * const soa2_dipoles_e_x = soa2._dipoles_e.xBegin();
 	const vcp_real_calc * const soa2_dipoles_e_y = soa2._dipoles_e.yBegin();
@@ -857,15 +863,15 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = my_threadData._dipoles_dist_lookup;
 
 	// Pointer for quadrupoles
-	const vcp_real_calc * const soa1_quadrupoles_r_x = soa1.quadrupoles_r_xBegin();
-	const vcp_real_calc * const soa1_quadrupoles_r_y = soa1.quadrupoles_r_yBegin();
-	const vcp_real_calc * const soa1_quadrupoles_r_z = soa1.quadrupoles_r_zBegin();
-	      vcp_real_calc * const soa1_quadrupoles_f_x = soa1.quadrupoles_f_xBegin();
-	      vcp_real_calc * const soa1_quadrupoles_f_y = soa1.quadrupoles_f_yBegin();
-	      vcp_real_calc * const soa1_quadrupoles_f_z = soa1.quadrupoles_f_zBegin();
-	      vcp_real_calc * const soa1_quadrupoles_V_x = soa1.quadrupoles_V_xBegin();
-	      vcp_real_calc * const soa1_quadrupoles_V_y = soa1.quadrupoles_V_yBegin();
-	      vcp_real_calc * const soa1_quadrupoles_V_z = soa1.quadrupoles_V_zBegin();
+	const vcp_real_calc * const soa1_quadrupoles_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, Coordinate::X);
+	const vcp_real_calc * const soa1_quadrupoles_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, Coordinate::Y);
+	const vcp_real_calc * const soa1_quadrupoles_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa1_quadrupoles_f_x = soa1.getBegin(QuantityType::FORCE, SiteType::QUADRUPOLE, Coordinate::X);
+		  vcp_real_calc * const soa1_quadrupoles_f_y = soa1.getBegin(QuantityType::FORCE, SiteType::QUADRUPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa1_quadrupoles_f_z = soa1.getBegin(QuantityType::FORCE, SiteType::QUADRUPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa1_quadrupoles_V_x = soa1.getBegin(QuantityType::VIRIAL, SiteType::QUADRUPOLE, Coordinate::X);
+		  vcp_real_calc * const soa1_quadrupoles_V_y = soa1.getBegin(QuantityType::VIRIAL, SiteType::QUADRUPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa1_quadrupoles_V_z = soa1.getBegin(QuantityType::VIRIAL, SiteType::QUADRUPOLE, Coordinate::Z);
 	const vcp_real_calc * const soa1_quadrupoles_m = soa1._quadrupoles_m;
 	const vcp_real_calc * const soa1_quadrupoles_e_x = soa1._quadrupoles_e.xBegin();
 	const vcp_real_calc * const soa1_quadrupoles_e_y = soa1._quadrupoles_e.yBegin();
@@ -875,18 +881,19 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 	      vcp_real_calc * const soa1_quadrupoles_M_z = soa1._quadrupoles_M.zBegin();
 	const int * const soa1_mol_quadrupoles_num = soa1._mol_quadrupoles_num;
 
-	const vcp_real_calc * const soa2_quadrupoles_m_r_x = soa2.quadrupoles_m_r_xBegin();
-	const vcp_real_calc * const soa2_quadrupoles_m_r_y = soa2.quadrupoles_m_r_yBegin();
-	const vcp_real_calc * const soa2_quadrupoles_m_r_z = soa2.quadrupoles_m_r_zBegin();
-	const vcp_real_calc * const soa2_quadrupoles_r_x   = soa2.quadrupoles_r_xBegin();
-	const vcp_real_calc * const soa2_quadrupoles_r_y   = soa2.quadrupoles_r_yBegin();
-	const vcp_real_calc * const soa2_quadrupoles_r_z   = soa2.quadrupoles_r_zBegin();
-	      vcp_real_calc * const soa2_quadrupoles_f_x   = soa2.quadrupoles_f_xBegin();
-	      vcp_real_calc * const soa2_quadrupoles_f_y   = soa2.quadrupoles_f_yBegin();
-	      vcp_real_calc * const soa2_quadrupoles_f_z   = soa2.quadrupoles_f_zBegin();
-	      vcp_real_calc * const soa2_quadrupoles_V_x   = soa2.quadrupoles_V_xBegin();
-	      vcp_real_calc * const soa2_quadrupoles_V_y   = soa2.quadrupoles_V_yBegin();
-	      vcp_real_calc * const soa2_quadrupoles_V_z   = soa2.quadrupoles_V_zBegin();
+
+	const vcp_real_calc * const soa2_quadrupoles_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, Coordinate::X);
+	const vcp_real_calc * const soa2_quadrupoles_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, Coordinate::Y);
+	const vcp_real_calc * const soa2_quadrupoles_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, Coordinate::Z);
+	const vcp_real_calc * const soa2_quadrupoles_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, Coordinate::X);
+	const vcp_real_calc * const soa2_quadrupoles_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, Coordinate::Y);
+	const vcp_real_calc * const soa2_quadrupoles_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa2_quadrupoles_f_x = soa2.getBegin(QuantityType::FORCE, SiteType::QUADRUPOLE, Coordinate::X);
+		  vcp_real_calc * const soa2_quadrupoles_f_y = soa2.getBegin(QuantityType::FORCE, SiteType::QUADRUPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa2_quadrupoles_f_z = soa2.getBegin(QuantityType::FORCE, SiteType::QUADRUPOLE, Coordinate::Z);
+		  vcp_real_calc * const soa2_quadrupoles_V_x = soa2.getBegin(QuantityType::VIRIAL, SiteType::QUADRUPOLE, Coordinate::X);
+		  vcp_real_calc * const soa2_quadrupoles_V_y = soa2.getBegin(QuantityType::VIRIAL, SiteType::QUADRUPOLE, Coordinate::Y);
+		  vcp_real_calc * const soa2_quadrupoles_V_z = soa2.getBegin(QuantityType::VIRIAL, SiteType::QUADRUPOLE, Coordinate::Z);
 	const vcp_real_calc * const soa2_quadrupoles_m = soa2._quadrupoles_m;
 	const vcp_real_calc * const soa2_quadrupoles_e_x = soa2._quadrupoles_e.xBegin();
 	const vcp_real_calc * const soa2_quadrupoles_e_y = soa2._quadrupoles_e.yBegin();
