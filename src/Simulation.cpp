@@ -1503,6 +1503,10 @@ void Simulation::setDomainDecomposition(DomainDecompBase* domainDecomposition) {
 	_domainDecomposition = domainDecomposition;
 }
 
+unsigned long Simulation::getTotalNumberOfMolecules() const {
+	return _domain->N();
+}
+
 /* FIXME: we should provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
 	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical - _initSimulation);
