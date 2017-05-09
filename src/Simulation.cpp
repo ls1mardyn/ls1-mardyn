@@ -1378,6 +1378,7 @@ void Simulation::simulate() {
 			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
 		}
 		_longRangeCorrection->calculateLongRange();
+		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 		
 		/*
 		 * radial distribution function

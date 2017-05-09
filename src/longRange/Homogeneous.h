@@ -19,7 +19,8 @@ public:
 
 	virtual void init() {}
 	virtual void readXML(XMLfileUnits& xmlconfig) {}
-	void calculateLongRange();
+	virtual void calculateLongRange();
+	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {}
 
 private:
 	double _UpotCorr;

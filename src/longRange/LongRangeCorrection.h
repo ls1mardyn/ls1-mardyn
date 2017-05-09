@@ -16,6 +16,7 @@ public:
 	virtual void init() = 0;
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 	virtual void calculateLongRange() = 0;
+	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) = 0;
 /*
 private:
 	unsigned _type;
