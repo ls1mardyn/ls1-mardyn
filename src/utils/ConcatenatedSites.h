@@ -8,6 +8,7 @@
 
 #include "AlignedArrayTriplet.h"
 #include "utils/mardyn_assert.h"
+#include <array>
 
 /**
  * \brief	Class to manage the storage of ljc-, charge-, dipole- and quadrupole-data in one single AlignedArrayTriplet

@@ -13,6 +13,7 @@
 #include "utils/ConcatenatedSites.h"
 #include "vectorization/SIMD_TYPES.h"
 #include <cstdint>
+#include <array>
 
 /**
  * \brief Structure of Arrays for vectorized force calculation.
