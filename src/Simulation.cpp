@@ -510,6 +510,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "VectorizationTuner") {
 			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
 		}
+		else if(pluginname == "FlopRateWriter") {
+			outputPlugin = new FlopRateWriter(_cutoffRadius, _LJCutoffRadius);
+		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 			continue;
@@ -1030,6 +1033,7 @@ void Simulation::simulate() {
 
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
+		global_simulation->incrementTimerTimestepCounter();
 
 		computationTimer->start();
 

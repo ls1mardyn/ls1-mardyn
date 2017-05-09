@@ -389,6 +389,14 @@ public:
 		_timerProfiler.setOutputString(timerName, outputString);
 	}
 
+	void incrementTimerTimestepCounter() {
+		_timerProfiler.incrementTimerTimestepCounter();
+	}
+
+	unsigned long getTimerTimestepCounter() const {
+		return _timerProfiler.getNumElapsedIterations();
+	}
+
 private:
 
 

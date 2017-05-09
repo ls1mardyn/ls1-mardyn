@@ -12,10 +12,13 @@
 #include "io/SysMonOutput.h"
 #include "io/VISWriter.h"
 #include "io/MmspdBinWriter.h"
+#include "io/FlopRateWriter.h"
+
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
 #include "io/vtk/VTKGridWriter.h"
 #endif
+
 #include "io/XyzWriter.h"
 #include "io/MPICheckpointWriter.h"
 #include "io/GammaWriter.h"

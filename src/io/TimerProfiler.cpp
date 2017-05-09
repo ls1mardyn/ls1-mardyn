@@ -18,7 +18,7 @@ using Log::global_log;
 
 const string TimerProfiler::_baseTimerName = "_baseTimer";
 
-TimerProfiler::TimerProfiler(): _timerCount(0){
+TimerProfiler::TimerProfiler(): _timerCount(0), _numElapsedIterations(0) {
 	_timers[_baseTimerName] = _Timer(_timerCount, _baseTimerName);
 	_timerCount++;
 	readInitialTimersFromFile("");
@@ -113,6 +113,10 @@ void TimerProfiler::reset(string timerName){
 }
 
 void TimerProfiler::resetTimers(string startingTimerName){
+	if (startingTimerName.compare("_baseTimer")) {
+		_numElapsedIterations = 0;
+	}
+
 	if (!_timers.count(startingTimerName)) return ;
 	reset(startingTimerName);
 	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){

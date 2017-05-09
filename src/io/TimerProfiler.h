@@ -158,6 +158,23 @@ public:
 	*/
 	double getTime(std::string timerName);
 
+	/**
+	 @fn void incrementTimerTimestepCounter()
+	 @brief Increment the timestep-counter.
+	 */
+	void incrementTimerTimestepCounter() {
+		++_numElapsedIterations;
+	}
+
+	/**
+	 @fn unsigned long getNumElapsedIterations() const
+	 @brief get the number of iterations since the last resetting of all timers.
+	 @return Number of iterations since last resetting of timers.
+	 */
+	unsigned long getNumElapsedIterations() const {
+		return _numElapsedIterations;
+	}
+
 private:
 	/**
 	@var static const std::string _baseTimerName
@@ -257,6 +274,8 @@ private:
 	If no key matches the ones already in the map a new element will be (default-)constructed and inserted in the container.
 	*/
 	std::map<std::string, _Timer> _timers;
+
+	unsigned long _numElapsedIterations;
 };
 
 #endif /* SRC_IO_TIMERPROFILER_H_ */

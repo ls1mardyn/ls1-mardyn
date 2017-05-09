@@ -198,13 +198,11 @@
         <outputprefix>default</outputprefix>
       </outputplugin>
 
-      <!-- LJ flop counter plugin
-      This writer outputs the actual FLOPS rate of the LJ calculations. -->
-      <outputplugin name="LJFLOPCounter">
-        <!-- TODO: make the LJ flop counter a real output plugin
+      <!-- Flop counter plugin
+      This writer outputs the actual FLOPS rate of the force calculations. -->
+      <outputplugin name="FlopRateWriter">
+		<mode>stdout</mode>
         <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-        -->
       </outputplugin>
 
       <!-- SysMonOutput
