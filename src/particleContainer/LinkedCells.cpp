@@ -1,6 +1,6 @@
+#include <cmath>
 #include "particleContainer/LinkedCells.h"
 
-#include <cmath>
 
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"

@@ -710,6 +710,26 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	}
 }
 
+//returns size of cached memory in kB (0 if error occurs)
+unsigned long long getCachedSize(){
+	size_t MAXLEN=1024;
+	FILE *fp;
+	char buf[MAXLEN];
+	fp = fopen("/proc/meminfo", "r");
+	while (fgets(buf, MAXLEN, fp)) {
+		char *p1 = strstr(buf, "Cached:");
+		if (p1 != NULL) {
+			int colon = ':';
+			char *p1 = strchr(buf, colon)+1;
+			//std::cout << p1 << endl;
+			unsigned long long t = strtoull(p1, NULL, 10);
+			//std::cout << t << endl;
+			return t;
+		}
+	}
+	return 0;
+}
+
 void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
 
@@ -782,12 +802,30 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
 
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 	// temporary addition until MPI communication is parallelized with OpenMP
 	//we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
 	global_simulation->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 	updateParticleContainerAndDecomposition();
 	global_simulation->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 
 #ifndef MARDYN_WR
 	global_log->info() << "Performing initial force calculation" << endl;
@@ -897,25 +935,6 @@ void Simulation::prepare_start() {
 
 }
 
-//returns size of cached memory in kB (0 if error occurs)
-unsigned long long getCachedSize(){
-	size_t MAXLEN=1024;
-	FILE *fp;
-	char buf[MAXLEN];
-	fp = fopen("/proc/meminfo", "r");
-	while (fgets(buf, MAXLEN, fp)) {
-		char *p1 = strstr(buf, "Cached:");
-		if (p1 != NULL) {
-			int colon = ':';
-			char *p1 = strchr(buf, colon)+1;
-			//std::cout << p1 << endl;
-			unsigned long long t = strtoull(p1, NULL, 10);
-			//std::cout << t << endl;
-			return t;
-		}
-	}
-	return 0;
-}
 
 void Simulation::simulate() {
 	global_log->info() << "Started simulation" << endl;
