@@ -1585,7 +1585,7 @@ void Simulation::initialize() {
 	_profileOutputTimesteps = 12500;
 	_profileOutputPrefix = "out";
 	_collectThermostatDirectedVelocity = 100;
-	_initCanonical = 5000;
+	_initCanonical = _initSimulation + 1;  // default: simulate canonical (with Tfactor == 1.) from begin on!
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;
 	h = 0.0;
