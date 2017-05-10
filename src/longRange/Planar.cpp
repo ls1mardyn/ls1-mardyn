@@ -11,6 +11,7 @@
 
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/FileUtils.h"
 
 using namespace std;
 using Log::global_log;
@@ -29,6 +30,8 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 void Planar::init()
 {
 	_smooth=true; // Deactivate this for transient simulations!
+	_smooth=false;  //true; <-- only applicable to static density profiles
+	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
@@ -931,4 +934,67 @@ double Planar::lrcLJ(Molecule* mol){
 
 void Planar::directDensityProfile(){
 	_smooth = false;
+}
+
+void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep)
+{
+	/*
+	if(false == _SamplingEnabledProfiles)
+		return;
+
+	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
+	if( simstep <= _initSamplingProfiles )
+		return;
+
+	if ( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
+		return;
+
+	// calc global values
+	this->CalcGlobalValuesProfiles(domainDecomp, domain);
+*/
+
+	if( 0 != simstep % 10)
+		return;
+
+	// reset local values
+//	this->ResetLocalValuesProfiles();
+
+	// writing .dat-files
+	std::stringstream filenamestream;
+	filenamestream << "LRC" << "_TS" << fill_width('0', 9) << simstep << ".dat";
+
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	std::stringstream outputstream;
+
+	// header
+//		outputstream << "                     pos";
+	for(uint32_t si=0; si<numLJSum; ++si)
+	{
+		outputstream << "            rho_l_LRC[" << si << "]";
+		outputstream << "                F_LRC[" << si << "]";
+	}
+	outputstream << endl;
+
+	// data
+	for(uint32_t pi=0; pi<_slabs; ++pi)
+	{
+		for(uint32_t si=0; si<numLJSum; ++si)
+		{
+			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
+			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+		}
+		outputstream << std::endl;
+	} // loop: pos
+
+	// open file for writing
+	// scalar
+	ofstream fileout(filenamestream.str().c_str(), ios::out);
+	fileout << outputstream.str();
+	fileout.close();
 }

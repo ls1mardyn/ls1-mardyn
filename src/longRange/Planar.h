@@ -24,10 +24,12 @@ public:
 
 	virtual void init();
 	virtual void readXML(XMLfileUnits& xmlconfig);
-	void calculateLongRange();
+	virtual void calculateLongRange();
 	double lrcLJ(Molecule* mol);
 	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
 	void directDensityProfile();
+	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
+	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
 
 private:
 
