@@ -395,6 +395,12 @@ public:
 		_timerProfiler.setOutputString(timerName, outputString);
 	}
 
+	// NEMD features
+	DriftControl*   GetDriftControl()   {return _driftControl;}
+	DistControl*    GetDistControl()    {return _distControl;}
+	RegionSampling* GetRegionSampling() {return _regionSampling;}
+	DensityControl* GetDensityControl() {return _densityControl;}
+
 private:
 
 

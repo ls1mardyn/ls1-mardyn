@@ -37,7 +37,7 @@ namespace tec
 class ControlRegion : public CuboidRegionObs
 {
 public:
-    ControlRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
+    ControlRegion( TemperatureControl* const parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
                    double* dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
                    int nTemperatureControlType, unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq );
     virtual ~ControlRegion();
@@ -182,7 +182,9 @@ public:
     void DoLoopsOverMolecules(ParticleContainer* particleContainer, unsigned long simstep);
 
     // heat supply
+	void SetSubdivisionHeat(const uint32_t& nSubdivisionHeatType);
 	void SetDeltaEkinParameters(const paramLineHeat &paramLine);
+	void PrepareDatastructuresHeat();
 	void SampleDeltaEkin(Molecule* mol, const double &dAdded2EkinTrans, const double &dAdded2EkinRot);
 	void CalcGlobalValuesDeltaEkin();
 	void ResetLocalValuesDeltaEkin();

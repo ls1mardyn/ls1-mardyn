@@ -11,6 +11,7 @@
 #include "utils/ObserverBase.h"
 #include <string>
 #include <ostream>
+#include <cstdint>
 
 enum SubdivisionOption
 {
@@ -31,6 +32,7 @@ public:
 
     Domain* GetDomain() {return _domain;}
     DomainDecompBase* GetDomainDecomposition() {return _domainDecomp;}
+	void SetDomainDecomposition(DomainDecompBase* domainDecomp) {_domainDecomp = domainDecomp;}
 
 private:
     Domain* _domain;
@@ -118,7 +120,7 @@ public:
 
     // ObserverBase methods
 	virtual void set(double dMidpointLeft, double dMidpointRight);
-	void PrepareAsObserver(const unsigned short refCoords[6]);
+	void PrepareAsObserver(const uint32_t refCoords[6]);
 
 private:
     // observer

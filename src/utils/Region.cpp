@@ -71,7 +71,7 @@ void CuboidRegionObs::set(double dMidpointLeft, double dMidpointRight)
 	_dUpperCorner[2] = _dDistToRefCoords[5] + _bMaskMidpointLeft[5] * dMidpointLeft + _bMaskMidpointRight[5] * dMidpointRight;
 }
 
-void CuboidRegionObs::PrepareAsObserver(const unsigned short refCoords[6])
+void CuboidRegionObs::PrepareAsObserver(const uint32_t refCoords[6])
 {
 	_dDistToRefCoords[0] = _dLowerCorner[0];
 	_dDistToRefCoords[1] = _dLowerCorner[1];

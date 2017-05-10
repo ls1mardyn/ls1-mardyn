@@ -6,6 +6,7 @@
 #include <iterator>
 #include <limits>
 #include <sstream>
+#include <cstdint>
 
 #include "Common.h"
 #include "Domain.h"
@@ -980,7 +981,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			                			                                     nTemperatureControlType, nStartAdjust, nStopAdjust, nAdjustFreq );
 			                	_temperatureControl->AddRegion(region);
 
-			                    unsigned short refCoords[6];
+			                    uint32_t refCoords[6];
 
 			                    for(unsigned short d=0; d<6; d++)
 			                        inputfilestream >> refCoords[d];
@@ -1095,7 +1096,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			                	 drc::ControlRegion* region = new drc::ControlRegion(_driftControl, dLowerCorner, dUpperCorner, nTargetComponent, dDirection, dDriftVeloTargetVal);
 			                     _driftControl->AddRegion(region);
 
-			                     unsigned short refCoords[6];
+			                     uint32_t refCoords[6];
 
 			                     for(unsigned short d=0; d<6; d++)
 			                         inputfilestream >> refCoords[d];
@@ -1184,7 +1185,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			                     dec::ControlRegion* region = new dec::ControlRegion(_densityControl, dLowerCorner, dUpperCorner, nTargetComponent, dTargetDensity);
 			                     _densityControl->AddRegion(region);
 
-			                     unsigned short refCoords[6];
+			                     uint32_t refCoords[6];
 
 			                     for(unsigned short d=0; d<6; d++)
 			                    	 inputfilestream >> refCoords[d];
@@ -1345,7 +1346,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			                 SampleRegion* region = new SampleRegion(_regionSampling, dLowerCorner, dUpperCorner);
 			                 _regionSampling->AddRegion(region);
 
-			                 unsigned short refCoords[6];
+			                 uint32_t refCoords[6];
 
 			                 for(unsigned short d=0; d<6; d++)
 			                     inputfilestream >> refCoords[d];

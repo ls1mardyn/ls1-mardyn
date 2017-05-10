@@ -207,6 +207,36 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		Simulation::exit(1);
 	}
 
+	/* NEMD */
+	{
+		long numFeaturesNEMD = 0;
+		XMLfile::Query query = xmlconfig.query("NEMD/feature");
+		numFeaturesNEMD = query.card();
+		global_log->info() << "Number of NEMD features: " << numFeaturesNEMD << endl;
+		if(numFeaturesNEMD < 1) {
+			global_log->info() << "No NEMD features specified." << endl;
+		}
+
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator featureNEMDIter;
+		for( featureNEMDIter = query.begin(); featureNEMDIter; featureNEMDIter++ ) {
+			xmlconfig.changecurrentnode( featureNEMDIter );
+			std::string featureName("unknown");
+			xmlconfig.getNodeValue("@name", featureName);
+			global_log->info() << "Enabling NEMD feature: " << featureName << endl;
+			if(featureName == "DistControl") {
+				_distControl = new DistControl(_domainDecomposition, _domain);
+				_distControl->readXML(xmlconfig);
+				_distControl->Init(_moleculeContainer);
+			}
+			else {
+				global_log->error() << "Unknown NEMD feature: " <<  featureName << "! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+		}
+		xmlconfig.changecurrentnode(oldpath);
+	}
+
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
 		/* cutoffs */
@@ -912,16 +942,13 @@ void Simulation::prepare_start() {
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
     // Init NEMD feature objects
-    if(NULL != _distControl)
-        _distControl->Init(_moleculeContainer);
-
-    // mheinen 2016-11-03 --> DISTANCE_CONTROL
-    if(NULL != _distControl)
-    {
+	if(NULL != _distControl)
+	{
+		_distControl->SetDomainDecomposition(_domainDecomposition);
 		_distControl->UpdatePositionsInit(_moleculeContainer);
-    	_distControl->WriteData(0);
-    }
-    // <-- DISTANCE_CONTROL
+		_distControl->WriteHeader();
+		_distControl->WriteData(0);
+	}
 
     // Init control instances (data structures)
     if(NULL != _regionSampling)

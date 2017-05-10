@@ -14,6 +14,7 @@
 #include "utils/DynAlloc.h"
 #include "utils/FileUtils.h"
 #include "utils/xmlfileUnits.h"
+#include "NEMD/DistControl.h"
 
 #include <iostream>
 #include <fstream>
@@ -34,7 +35,7 @@ unsigned short tec::ControlRegion::_nStaticID = 0;
 
 // class tec::ControlRegion
 
-tec::ControlRegion::ControlRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
+tec::ControlRegion::ControlRegion( TemperatureControl* const parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
                                    double* dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
                                    int nTemperatureControlType, unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq)
 : CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
@@ -395,13 +396,19 @@ void tec::ControlRegion::PrepareSubdivision()
 	// catch errors
 	if( (0 == _nNumSlabs && 0. == _dSlabWidthInit) || (0 != _nNumSlabs && 0. != _dSlabWidthInit) )
 	{
-		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dSlabWidthInit nor _nNumSlabs was set correctly! Programm exit..." << endl;
-		exit(-1);
+		global_log->error() << "tec::ControlRegion::PrepareSubdivision(): Neither _dSlabWidthInit nor _nNumSlabs was set correctly! Programm exit..." << endl;
+		Simulation::exit(-1);
 	}
 
     // calc slab width
 	if(0. == _dSlabWidthInit)
     	_dSlabWidthInit = this->GetWidth(1) / ( (double)(_nNumSlabs) );
+
+	if(_dSlabWidthInit > this->GetWidth(1) )
+	{
+		global_log->error() << "tec::ControlRegion::PrepareSubdivision(): Subdivision of region not possible! Programm exit..." << endl;
+		Simulation::exit(-1);
+	}
 
 	this->UpdateSlabParameters();
 
@@ -761,20 +768,65 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
     xmlconfig.getNodeValue("control/start", _nStart);
     xmlconfig.getNodeValue("control/frequency", _nControlFreq);
     xmlconfig.getNodeValue("control/stop", _nStop);
-    global_log->info() << "Start control from simstep: " << _nStart << endl;
-    global_log->info() << "Control with frequency: " << _nControlFreq << endl;
-    global_log->info() << "Stop control at simstep: " << _nStop << endl;	
+    global_log->info() << "TemperatureControl: Start control from simstep: " << _nStart << endl;
+    global_log->info() << "TemperatureControl: Control with frequency: " << _nControlFreq << endl;
+    global_log->info() << "TemperatureControl: Stop control at simstep: " << _nStop << endl;
 
 	// turn on/off explosion heuristics
     //_domain->SetExplosionHeuristics(bUseExplosionHeuristics);
 
+	// heat sampling
+	_bWriteDataDeltaEkin = false;
+	bool bRet1 = xmlconfig.getNodeValue("heat/writefrequency[target='system']", _nWriteFreqDeltaEkin);
+	bool bRet2 = xmlconfig.getNodeValue("heat/writefrequency[target='region']", _nWriteFreqDeltaEkinRegions);
+	_bWriteDataDeltaEkin = (bRet1 && bRet2);
+	// subdivision
+	uint32_t nSubdivisionHeatType = SDOPT_UNKNOWN;
+	std::string strSubdivisionHeatType;
+	if( !xmlconfig.getNodeValue("heat/subdivision@type", strSubdivisionHeatType) )
+	{
+		global_log->error() << "TemperatureControl: Missing attribute: \"heat/subdivision@type\"! Programm exit..." << endl;
+		exit(-1);
+	}
+	if("number" == strSubdivisionHeatType)
+	{
+		nSubdivisionHeatType = SDOPT_BY_NUM_SLABS;
+		unsigned int nNumSlabs = 0;
+		if( !xmlconfig.getNodeValue("heat/subdivision/number", _nNumSlabsDeltaEkin) )
+		{
+			global_log->error() << "TemperatureControl: Missing element: \"heat/subdivision/number\"! Programm exit..." << endl;
+			exit(-1);
+		}
+		else
+			this->SetSubdivisionHeat(nSubdivisionHeatType);
+	}
+	else if("width" == strSubdivisionHeatType)
+	{
+		nSubdivisionHeatType = SDOPT_BY_SLAB_WIDTH;
+		double dSlabWidth = 0.;
+		if( !xmlconfig.getNodeValue("heat/subdivision/width", dSlabWidth) )
+		{
+			global_log->error() << "TemperatureControl: Missing element: \"heat/subdivision/width\"! Programm exit..." << endl;
+			exit(-1);
+		}
+		else
+			this->SetSubdivisionHeat(nSubdivisionHeatType);
+	}
+	else
+	{
+		global_log->error() << "TemperatureControl: Wrong attribute: \"heat/subdivision@type\", expected: type=\"number|width\"! Programm exit..." << endl;
+		exit(-1);
+	}
+	this->PrepareDatastructuresHeat();
+
 	// add regions
+	uint32_t nRegID = 0;
     uint32_t numRegions = 0;
     XMLfile::Query query = xmlconfig.query("regions/region");
     numRegions = query.card();
-    global_log->info() << "Number of control regions: " << numRegions << endl;
+    global_log->info() << "TemperatureControl: Number of control regions: " << numRegions << endl;
     if(numRegions < 1) {
-        global_log->warning() << "No region parameters specified." << endl;
+        global_log->warning() << "TemperatureControl: No region parameters specified." << endl;
     }
     string oldpath = xmlconfig.getcurrentnodepath();
     XMLfile::Query::const_iterator outputRegionIter;
@@ -784,11 +836,15 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
         double lc[3];
 		double uc[3];
 		std::string strVal[3];
-		double dTemperature;
+		double dTemperature[2];
 		double dExponent;
 		std::string strDirections;
 		uint32_t nNumSlabs;
 		uint32_t nCompID;
+		std::string strControlType;
+		int nControlType;
+		unsigned long nAdjustStart, nAdjustStop, nAdjustFreq;
+		nAdjustStart = nAdjustStop = nAdjustFreq = 0;
 
 		// coordinates
 		xmlconfig.getNodeValue("coords/lcx", lc[0]);
@@ -801,23 +857,115 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		for(uint8_t d=0; d<3; ++d)
 			uc[d] = (strVal[d] == "box") ? GetDomain()->getGlobalLength(d) : atof(strVal[d].c_str() );
 
-//#ifndef NDEBUG
-		global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
-//#endif
+		global_log->info() << "TemperatureControl->region["<<nRegID<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << endl;
+		global_log->info() << "TemperatureControl->region["<<nRegID<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
 
-		xmlconfig.getNodeValue("target/temperature", dTemperature);
+		xmlconfig.getNodeValue("target@type", strControlType);
+		xmlconfig.getNodeValue("target/temperature", dTemperature[0]);
 		xmlconfig.getNodeValue("target/component", nCompID);
-		xmlconfig.getNodeValue("settings/numslabs", nNumSlabs);
+		xmlconfig.getNodeValue("target/adjust/start", nAdjustStart);
+		xmlconfig.getNodeValue("target/adjust/frequency", nAdjustFreq);
+		xmlconfig.getNodeValue("target/adjust/stop", nAdjustStop);
 		xmlconfig.getNodeValue("settings/exponent", dExponent);
 		xmlconfig.getNodeValue("settings/directions", strDirections);
 
-		/*
-		 * TODO: adapt XML-I/O for this advanced version of TemperatureControl
-		 *
-		this->AddRegion(lc, uc, nNumSlabs, nCompID, dTemperature,
-				dExponent, strDirections);
-		*/
-    }
+		global_log->info() << "TemperatureControl->region["<<nRegID<<"]: Control type: " << strControlType << ", "
+				"target temperature: " << dTemperature[0] << endl;
+
+		// control type
+		// TODO: adjust XML-I/O for all different control types
+
+		if("constant" == strControlType)
+			nControlType = TCT_CONSTANT_TEMPERATURE;
+		else if ("adjust" == strControlType)
+			nControlType = TCT_TEMPERATURE_ADJUST;
+		else if ("gradient" == strControlType)
+			nControlType = TCT_TEMPERATURE_GRADIENT;
+		else if ("gradient_lower" == strControlType)
+			nControlType = TCT_TEMPERATURE_GRADIENT_LOWER;
+		else if ("gradient_raise" == strControlType)
+			nControlType = TCT_TEMPERATURE_GRADIENT_RAISE;
+		else
+			nControlType = TCT_UNKNOWN;
+
+		if(TCT_UNKNOWN == nControlType)
+		{
+			global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Unknown control type (attribute: target@type)! Programm exit..." << endl;
+			exit(-1);
+		}
+
+		// add regions
+		tec::ControlRegion* region = new tec::ControlRegion( this, lc, uc, nCompID, dTemperature, dExponent, strDirections,
+				nControlType, nAdjustStart, nAdjustStop, nAdjustFreq );
+		this->AddRegion(region);
+
+		// subdivision of region
+		uint32_t nSubdivisionType = SDOPT_UNKNOWN;
+		std::string strSubdivisionType;
+		if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
+		{
+			global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Missing attribute subdivision@type! Programm exit..." << endl;
+			Simulation::exit(-1);
+		}
+		if("number" == strSubdivisionType)
+		{
+			unsigned int nNumSlabs = 0;
+			if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
+			{
+				global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Missing element subdivision/number! Programm exit..." << endl;
+				Simulation::exit(-1);
+			}
+			else
+			{
+				region->SetSubdivision(nNumSlabs);
+				global_log->info() << "TemperatureControl->region["<<nRegID<<"]: subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
+			}
+		}
+		else if("width" == strSubdivisionType)
+		{
+			double dSlabWidth = 0.;
+			if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
+			{
+				global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Missing element subdivision/width! Programm exit..." << endl;
+				Simulation::exit(-1);
+			}
+			else
+			{
+				region->SetSubdivision(dSlabWidth);
+				global_log->info() << "TemperatureControl->region["<<nRegID<<"]: subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
+			}
+		}
+		else
+		{
+			global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Wrong attribute subdivision@type. Expected type=\"number|width\"! Programm exit..." << endl;
+			Simulation::exit(-1);
+		}
+
+		// observer mechanism
+		uint32_t refCoordsID[6] = {0, 0, 0, 0, 0, 0};
+		xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID[0]);
+		xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID[1]);
+		xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID[2]);
+		xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID[3]);
+		xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID[4]);
+		xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID[5]);
+
+		bool bIsObserver = (refCoordsID[0]+refCoordsID[1]+refCoordsID[2]+refCoordsID[3]+refCoordsID[4]+refCoordsID[5]) > 0;
+
+		if(true == bIsObserver)
+		{
+			region->PrepareAsObserver(refCoordsID);
+
+			if(global_simulation->GetDistControl() != NULL)
+				global_simulation->GetDistControl()->registerObserver(region);
+			else
+			{
+				global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Initialization of feature DistControl is needed before! Programm exit..." << endl;
+				exit(-1);
+			}
+		}
+		nRegID++;
+	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 }
 
 void TemperatureControl::AddRegion(tec::ControlRegion* region)
@@ -928,6 +1076,30 @@ void TemperatureControl::DoLoopsOverMolecules(ParticleContainer* particleContain
     }
 }
 
+void TemperatureControl::SetSubdivisionHeat(const uint32_t& nSubdivisionHeatType)
+{
+	double dBoxWidth = this->GetDomain()->getGlobalLength(1);
+	double dNum, dSlabWidth;
+
+	switch(nSubdivisionHeatType)
+	{
+	case SDOPT_BY_NUM_SLABS:
+		dNum = (double)(_nNumSlabsDeltaEkin);
+		_dSlabWidthDeltaEkin = dBoxWidth / dNum;
+		break;
+	case SDOPT_BY_SLAB_WIDTH:
+		dSlabWidth = _dSlabWidthDeltaEkin;
+		_nNumSlabsDeltaEkin = round(dBoxWidth / dSlabWidth);
+		dNum = (double)(_nNumSlabsDeltaEkin);
+		_dSlabWidthDeltaEkin = dBoxWidth / dNum;
+		break;
+	case SDOPT_UNKNOWN:
+	default:
+		global_log->error() << "TemperatureControl: Unknown subdivision option for heat sampling! Programm exit..." << endl;
+		Simulation::exit(-1);
+	}
+}
+
 void TemperatureControl::SetDeltaEkinParameters(const paramLineHeat &paramLine)
 {
 	double dBoxWidth = this->GetDomain()->getGlobalLength(1);
@@ -951,6 +1123,11 @@ void TemperatureControl::SetDeltaEkinParameters(const paramLineHeat &paramLine)
 	_bWriteDataDeltaEkin = true;
 
 	// prepare data structures
+	this->PrepareDatastructuresHeat();
+}
+
+void TemperatureControl::PrepareDatastructuresHeat()
+{
 	uint8_t nNumComponents = this->GetDomain()->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
 	std::vector<unsigned long> vn(_nNumSlabsDeltaEkin, 0);
 	std::vector<double> vd(_nNumSlabsDeltaEkin, 0);

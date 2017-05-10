@@ -18,6 +18,7 @@
 
 using namespace std;
 
+class XMLfileUnits;
 class Domain;
 class ParticleContainer;
 class DomainDecompBase;
@@ -43,10 +44,12 @@ enum DistControlInitMethods
 class DistControl : public ControlInstance, public SubjectBase
 {
 public:
+	DistControl(DomainDecompBase* domainDecomp, Domain* domain);
     DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigned int nUpdateFreq, unsigned int nWriteFreqProfiles);
     ~DistControl();
 
     std::string GetShortName() {return "DiC";}
+	void readXML(XMLfileUnits& xmlconfig);
 
     // set subdivision
 	void SetSubdivision(unsigned int nNumSlabs) {_nNumShells = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}

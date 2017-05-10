@@ -13,6 +13,7 @@
 #include "utils/Region.h"
 #include "utils/DynAlloc.h"
 #include "utils/Math.h"
+#include "utils/xmlfileUnits.h"
 
 #include <iostream>
 #include <fstream>
@@ -24,6 +25,13 @@
 using namespace std;
 
 
+DistControl::DistControl(DomainDecompBase* domainDecomp, Domain* domain)
+		: ControlInstance(domain, domainDecomp)
+{
+	// number of components
+	_nNumComponents = this->GetDomain()->getNumberOfComponents() + 1;  // +1: because 0 stands for sum of all components;
+}
+
 DistControl::DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigned int nUpdateFreq, unsigned int nWriteFreqProfiles)
 		: ControlInstance(domain, domainDecomp), _dInterfaceMidLeft(0.), _dInterfaceMidRight(0.),
 		_nNumComponents(0), _nTargetCompID(0), _nNumValuesScalar(0), _nOffsets(NULL)
@@ -31,17 +39,13 @@ DistControl::DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigne
 	// number of components
 	_nNumComponents = this->GetDomain()->getNumberOfComponents() + 1;  // +1: because 0 stands for sum of all components;
 
-	// update frequency
-    _nUpdateFreq = nUpdateFreq;
+	// write data
+	_nWriteFreq = _nUpdateFreq;
 
-    // write data
-    _nWriteFreq = _nUpdateFreq;
-    _nWriteFreqProfiles = nWriteFreqProfiles;
+	_strFilename = "DistControl.dat";
+	_strFilenameProfilesPrefix = "DistControlProfiles";
 
-    _strFilename = "DistControl.dat";
-    _strFilenameProfilesPrefix = "DistControlProfiles";
-
-    // init method variables
+	// init method variables
 	_strFilenameInit = "unknown";
 	_nRestartTimestep = 0;
 
@@ -52,6 +56,174 @@ DistControl::DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigne
 DistControl::~DistControl()
 {
 
+}
+
+void DistControl::readXML(XMLfileUnits& xmlconfig)
+{
+	// control
+	_nUpdateFreq = 5000;
+	_nWriteFreqProfiles = 50000;
+	xmlconfig.getNodeValue("control/update", _nUpdateFreq);
+	xmlconfig.getNodeValue("control/writeprofiles", _nWriteFreqProfiles);
+	_nWriteFreq = _nUpdateFreq;
+
+	// filenames
+	_strFilename = "DistControl.dat";
+	_strFilenameProfilesPrefix = "DistControlProfiles";
+	xmlconfig.getNodeValue("filenames/control",  _strFilename);
+	xmlconfig.getNodeValue("filenames/profiles", _strFilenameProfilesPrefix);
+	global_log->error() << "DistControl: Writing control data to file: " << _strFilename << endl;
+	global_log->error() << "DistControl: Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << endl;
+
+	// subdivision of system
+	uint32_t nSubdivisionType = SDOPT_UNKNOWN;
+	std::string strSubdivisionType;
+	if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
+	{
+		global_log->error() << "DistControl: Missing attribute \"subdivision@type\"! Programm exit..." << endl;
+		exit(-1);
+	}
+	if("number" == strSubdivisionType)
+	{
+		unsigned int nNumSlabs = 0;
+		if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
+		{
+			global_log->error() << "DistControl: Missing element \"subdivision/number\"! Programm exit..." << endl;
+			exit(-1);
+		}
+		else
+			this->SetSubdivision(nNumSlabs);
+	}
+	else if("width" == strSubdivisionType)
+	{
+		double dSlabWidth = 0.;
+		if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
+		{
+			global_log->error() << "DistControl: Missing element \"subdivision/width\"! Programm exit..." << endl;
+			exit(-1);
+		}
+		else
+			this->SetSubdivision(dSlabWidth);
+	}
+	else
+	{
+		global_log->error() << "DistControl: Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << endl;
+		exit(-1);
+	}
+
+	// init method
+	_nMethodInit = DCIM_UNKNOWN;
+	_dInterfaceMidLeft  = 10.0;
+	_dInterfaceMidRight = 20.0;
+	_strFilenameInit = "unknown";
+	_nRestartTimestep = 1;
+	std::string strInitMethodType;
+
+	xmlconfig.getNodeValue("init@type", strInitMethodType);
+	if("startconfig" == strInitMethodType)
+	{
+		_nMethodInit = DCIM_START_CONFIGURATION;
+		global_log->info() << "DistControl: Init method 'startconfig', dertermining interface midpoints from start configuration." << endl;
+	}
+	else if("values" == strInitMethodType)
+	{
+		_nMethodInit = DCIM_MIDPOINT_VALUES;
+		bool bInputIsValid = true;
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/values/left",  _dInterfaceMidLeft);
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/values/right", _dInterfaceMidRight);
+		if(true == bInputIsValid)
+		{
+			global_log->info() << "DistControl: Init method 'values' => interface midpoint left: " << _dInterfaceMidLeft << ", "
+					"right: " << _dInterfaceMidRight << "." << endl;
+		}
+		else
+		{
+			global_log->error() << "DistControl: Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << endl;
+			exit(-1);
+		}
+	}
+	else if("file" == strInitMethodType)
+	{
+		_nMethodInit = DCIM_READ_FROM_FILE;
+		bool bInputIsValid = true;
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/file",    _strFilenameInit);
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/simstep", _nRestartTimestep);
+		if(true == bInputIsValid)
+		{
+			global_log->info() << "DistControl: Init method 'file', reading from file: " << _strFilenameInit << ", "
+					"goto line with simstep == " << _nRestartTimestep << "." << endl;
+		}
+		else
+		{
+			global_log->error() << "DistControl: Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << endl;
+			exit(-1);
+		}
+	}
+	else
+	{
+		global_log->error() << "DistControl: Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
+				"expected: type=\"startconfig|values|file\"! Programm exit..." << endl;
+		exit(-1);
+	}
+
+	// update method
+	_nMethod = DCUM_UNKNOWN;
+	_nTargetCompID = 0;
+	_dVaporDensity = 0.01;
+	_nNeighbourValsSmooth   = 2;
+	_nNeighbourValsDerivate = 2;
+	std::string strUpdateMethodType;
+
+	xmlconfig.getNodeValue("method@type", strUpdateMethodType);
+	if("density" == strUpdateMethodType)
+	{
+		_nMethod = DCUM_DENSITY_PROFILE;
+		bool bInputIsValid = true;
+		uint32_t nTargetCompID = 0;
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("method/componentID", nTargetCompID);
+		_nTargetCompID = (unsigned short)(nTargetCompID);
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("method/density",     _dVaporDensity);
+		if(true == bInputIsValid)
+		{
+			global_log->info() << "DistControl: Update method 'density', using constant value for vapor density rho_vap == " << _dVaporDensity << ", "
+					"target componentID: " << _nTargetCompID << "." << endl;
+		}
+		else
+		{
+			global_log->error() << "DistControl: Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
+			exit(-1);
+		}
+	}
+	else if("denderiv" == strUpdateMethodType)
+	{
+		_nMethod = DCUM_DENSITY_PROFILE_DERIVATION;
+		bool bInputIsValid = true;
+		uint32_t nTargetCompID = 0;
+		uint32_t nNeighbourValsSmooth = 0;
+		uint32_t nNeighbourValsDerivate = 0;
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("method/componentID", nTargetCompID);
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("method/neighbourvals[@algorithm='smooth']",   nNeighbourValsSmooth);
+		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("method/neighbourvals[@algorithm='derivate']", nNeighbourValsDerivate);
+		_nTargetCompID = (unsigned short)(nTargetCompID);
+		_nNeighbourValsSmooth = (unsigned short)(nNeighbourValsSmooth);
+		_nNeighbourValsDerivate = (unsigned short)(nNeighbourValsDerivate);
+		if(true == bInputIsValid)
+		{
+			global_log->info() << "DistControl: Update method 'denderiv', using " << _nNeighbourValsSmooth << " neigbour values for smoothing "
+					" and " << _nNeighbourValsDerivate << " neigbour values for derivation of the density profile, target componentID: " << _nTargetCompID << "." << endl;
+		}
+		else
+		{
+			global_log->error() << "DistControl: Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
+			exit(-1);
+		}
+	}
+	else
+	{
+		global_log->error() << "DistControl: Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
+				"expected: type=\"density|denderiv\"! Programm exit..." << endl;
+		exit(-1);
+	}
 }
 
 void DistControl::PrepareSubdivision()
@@ -791,8 +963,9 @@ void DistControl::WriteDataProfiles(unsigned long simstep)
 
 void DistControl::Init(ParticleContainer* particleContainer)
 {
-    // write output file with header
-    this->WriteHeader();
+	this->InitDataStructurePointers();
+	this->PrepareSubdivision();
+	this->PrepareDataStructures();
 }
 
 
