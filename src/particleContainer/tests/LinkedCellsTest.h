@@ -21,6 +21,7 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testUpdateAndDeleteOuterParticles8Particles);
 	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
 	TEST_METHOD(testParticleIteratorBeginNextEndParticleIteratorSequential);
+	TEST_METHOD(testHalfShell);
 //	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
 #ifdef ENABLE_OVERLAPPING
 	TEST_METHOD(testTraversalMethods);

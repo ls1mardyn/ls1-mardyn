@@ -11,6 +11,11 @@
 #include "particleContainer/adapter/CellProcessor.h"
 #include <vector>
 
+#include "ensemble/PressureGradient.h"
+#include "particleContainer/LinkedCellsHS.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
+
 TEST_SUITE_REGISTRATION(LinkedCellsTest);
 
 LinkedCellsTest::LinkedCellsTest() {
@@ -323,6 +328,108 @@ void LinkedCellsTest::testTraversalMethods() {
 
 
 void LinkedCellsTest::testHalfShell(){
-	//TODO ___Add unit test
+	//TODO: ___Extract to separate test class
+	//------------------------------------------------------------
+	// Setup
+	//------------------------------------------------------------
 
+	auto domainDecomposition = new DomainDecompBase();
+	auto cutoff = 1;
+	auto filename = "LinkedCellsHS.inp"; //TODO ___ Change input file?
+	LinkedCellsHS* containerHS = static_cast<LinkedCellsHS*> (
+			initializeFromFile(ParticleContainerFactory::LinkedCellHS, filename, cutoff));
+	LinkedCells* container = static_cast<LinkedCells*> (
+			initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
+
+	auto ownrank = 0;
+	auto pressureGradient = new PressureGradient(ownrank);
+	auto domain = new Domain(ownrank, pressureGradient);
+
+	auto ppHandler = new ParticlePairs2PotForceAdapter(*domain);
+	auto cellProcessor = new LegacyCellProcessor(cutoff, containerHS->_LJCutoffRadius, ppHandler);
+
+	//------------------------------------------------------------
+	// Prepare molecule containers
+	//------------------------------------------------------------
+
+	container->update();
+	containerHS->update();
+
+	bool forceRebalancing = false;
+	domainDecomposition->balanceAndExchange(forceRebalancing, container, domain);
+	domainDecomposition->balanceAndExchange(forceRebalancing, containerHS, domain);
+
+	container->updateMoleculeCaches();
+	containerHS->updateMoleculeCaches();
+
+	std::cout << "\nFoo\n";
+	//------------------------------------------------------------
+	// Do calculation with HS
+	//------------------------------------------------------------
+	{
+	containerHS->traverseCells(*cellProcessor);
+
+	std::cout << "\nFoo2\n";
+	// calculate forces
+	const ParticleIterator& begin = containerHS->iteratorBegin();
+	const ParticleIterator& end = containerHS->iteratorEnd();
+	for (ParticleIterator i = begin; i != end; ++i) {
+		i->calcFM();
+	}
+	std::cout << "\nFoo3\n";
+
+	domainDecomposition->exchangeForces(containerHS, domain);
+	std::cout << "\nFoo4\n";
+	}
+	//------------------------------------------------------------
+	// Do calculation with FS
+	//------------------------------------------------------------
+	{
+	container->traverseCells(*cellProcessor);
+
+	// calculate forces
+	const ParticleIterator& begin = container->iteratorBegin();
+	const ParticleIterator& end = container->iteratorEnd();
+	for (auto i = begin; i != end; ++i) {
+		i->calcFM();
+	}
+	}
+	//------------------------------------------------------------
+
+
+	// Compare calculated forces
+	{
+	const ParticleIterator& begin = container->iteratorBegin();
+	const ParticleIterator& end = container->iteratorEnd();
+	for (auto i = begin; i != end; ++i) {
+
+		const ParticleIterator& beginHS = containerHS->iteratorBegin();
+		const ParticleIterator& endHS = containerHS->iteratorEnd();
+		for(auto j = begin; j != end; ++j){
+			if(j->id() != i->id())
+				continue;
+
+			std::cout << i->F(0) << ", " << j->F(0) << "\n";
+			std::cout << i->F(1) << ", " << j->F(1) << "\n"; //TODO ___Remove
+			std::cout << i->F(2) << ", " << j->F(2) << "\n";
+
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), 0.000000001);
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), 0.000000001);
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), 0.000000001);
+
+		}
+
+
+	}
+	}
+
+	//------------------------------------------------------------
+	// Cleanup
+	//------------------------------------------------------------
+
+	delete domainDecomposition;
+	delete pressureGradient;
+	delete domain;
+	delete ppHandler;
+	delete cellProcessor;
 }

@@ -22,7 +22,7 @@ class ParticleContainerFactory {
 
 public:
 
-	enum type {LinkedCell};
+	enum type {LinkedCell, LinkedCellHS};
 
 	/**
 	 * creates a small, empty particleContainer. For the moment, only LinkedCell is supported.

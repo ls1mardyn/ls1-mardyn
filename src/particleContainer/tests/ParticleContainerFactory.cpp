@@ -8,6 +8,7 @@
 #include "particleContainer/tests/ParticleContainerFactory.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
+#include "particleContainer/LinkedCellsHS.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
@@ -35,6 +36,17 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(type t
 		                                         cellsInCutoffRadius);
 		return container;
 
+	} else if (type == LinkedCellHS) {
+		double bBoxMin[] = {0.0, 0.0, 0.0, 0.0};
+		double bBoxMax[] = {2.0, 2.0, 2.0, 2.0};
+		double cutoffRadius = 1.0;
+		double LJCutoffRadius = 1.0;
+		double cellsInCutoffRadius = 1.0;
+
+		LinkedCellsHS* container = new LinkedCellsHS(bBoxMin, bBoxMax, cutoffRadius, LJCutoffRadius,
+		                                         cellsInCutoffRadius);
+		return container;
+
 	} else {
 		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
 		return NULL;
@@ -59,7 +71,16 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 
 	ParticleContainer* moleculeContainer;
 	if (type == LinkedCell) {
-		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
+			moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
+			#if ENABLE_MPI
+			DomainDecomposition * temp = 0;
+			temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
+			if (temp != 0) {
+				temp->initCommunicationPartners(cutoff, domain);
+			}
+			#endif
+	} else if (type == LinkedCellHS) {
+		moleculeContainer = new LinkedCellsHS(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
 		#if ENABLE_MPI
 		DomainDecomposition * temp = 0;
 		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);

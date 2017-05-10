@@ -636,8 +636,8 @@ void Simulation::calculateForces() {
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+		const ParticleIterator& begin = _moleculeContainer->iteratorBegin();
+		const ParticleIterator& end = _moleculeContainer->iteratorEnd();
 		for (ParticleIterator i = begin; i != end; ++i) {
 			i->calcFM();
 		}
