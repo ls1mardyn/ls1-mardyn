@@ -51,6 +51,7 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+class MemoryProfiler;
 
 // by Stefan Becker
 const int ANDERSEN_THERMOSTAT = 2;
@@ -341,6 +342,10 @@ public:
 	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
 
+	MemoryProfiler* getMemoryProfiler() {
+		return _memoryProfiler;
+	}
+
 	Timer* getTimer(std::string timerName){
 		return _timerProfiler.getTimer(timerName);
 	}
@@ -544,6 +549,9 @@ private:
 
 	/** manager for all timers in the project except the MarDyn main timer */
 	TimerProfiler _timerProfiler;
+
+	//! used to get information about the memory consumed by the process and the overall system.
+	MemoryProfiler* _memoryProfiler;
 
 public:
 	//! computational time for one execution of traverseCell

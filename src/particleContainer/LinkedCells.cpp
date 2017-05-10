@@ -52,7 +52,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	}
 	global_log->debug() << "Cell size (" << _cellLength[0] << ", "
 			<< _cellLength[1] << ", " << _cellLength[2] << ")" << endl;
-	global_log->debug() << "Cells per dimension (incl. halo): "
+	global_log->info() << "Cells per dimension (incl. halo): "
 			<< _cellsPerDimension[0] << " x " << _cellsPerDimension[1] << " x "
 			<< _cellsPerDimension[2] << endl;
 
@@ -94,7 +94,6 @@ LinkedCells::~LinkedCells() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "Cells in cut-off radius hardcoded to 1." << endl;
 }
 
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
