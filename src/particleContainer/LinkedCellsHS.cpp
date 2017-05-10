@@ -37,7 +37,7 @@ void LinkedCellsHS::traverseCell(long int cellIndex, CellProcessor& cellProcesso
 
 			cellProcessor.processCellPair(currentCell, neighbourCell);
 		}
-	} */
+	}*/
 	else
 	// loop over all boundary cells and calculate forces to forward and backward neighbours
 	if (currentCell.isBoundaryCell()) {

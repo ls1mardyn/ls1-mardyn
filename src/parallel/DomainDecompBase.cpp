@@ -43,43 +43,47 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// direction +1 for dim 0, +2 for dim 1, +3 for dim 2
-	const int direction = dim+1;
+	//const int direction = dim+1;
+	const int sDim = dim + 1;
+	for (int direction = -sDim; direction < 2 * sDim; direction += 2 * sDim) {
+		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
-	// Loop over all halo particles in the positive direction
-	double startRegion[3];
-	double endRegion[3];
+		// Loop over all halo particles in the positive direction
+		double startRegion[3];
+		double endRegion[3];
 
-	moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
+		moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
 
-	#if defined (_OPENMP)
-	#pragma omp parallel shared(startRegion, endRegion)
-	#endif
-	{
-		auto begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
-		auto end = moleculeContainer->iterateRegionEnd();
+#if defined (_OPENMP)
+#pragma omp parallel shared(startRegion, endRegion)
+#endif
+		{
+			auto begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+			auto end = moleculeContainer->iterateRegionEnd();
 
-		double shiftedPosition[3];
+			double shiftedPosition[3];
 
-		for(auto i = begin; i != end; ++i){
-			Molecule& molHalo = *i;
-			// Add force of halo particle to original particle (or other duplicates)
-			// that have a distance of -'shiftMagnitude' in the current direction
-			shiftedPosition[0] = molHalo.r(0);
-			shiftedPosition[1] = molHalo.r(1);
-			shiftedPosition[2] = molHalo.r(2);
-			shiftedPosition[dim] -= shiftMagnitude;
+			for (auto i = begin; i != end; ++i) {
+				Molecule& molHalo = *i;
+				// Add force of halo particle to original particle (or other duplicates)
+				// that have a distance of -'shiftMagnitude' in the current direction
+				shiftedPosition[0] = molHalo.r(0);
+				shiftedPosition[1] = molHalo.r(1);
+				shiftedPosition[2] = molHalo.r(2);
+				shiftedPosition[dim] += shift;
 
-			Molecule* original;
+				Molecule* original;
 
-			if(!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)){
-				// This should not happen
-				std::cout << "Original molecule not found";
-				mardyn_exit(1);
+				if (!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)) {
+					// This should not happen
+					std::cout << "Original molecule not found";
+					mardyn_exit(1);
+				}
+
+				mardyn_assert(original->id() == molHalo.id());
+
+				original->Fadd(molHalo.F_vec());
 			}
-
-			mardyn_assert(original->id() == molHalo.id());
-
-			original->Fadd(molHalo.F_vec());
 		}
 	}
 }
