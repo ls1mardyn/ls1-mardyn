@@ -145,6 +145,36 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
 	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
 
+	// write control
+	_nStartWritingProfiles = 0;
+	_nWriteFreqProfiles = 0;
+	_nStopWritingProfiles = 0;
+	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
+	bool bRet2 = xmlconfig.getNodeValue("writecontrol/frequency", _nWriteFreqProfiles);
+	bool bRet3 = xmlconfig.getNodeValue("writecontrol/stop", _nStopWritingProfiles);
+	if(_nWriteFreqProfiles < 1)
+	{
+		global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << endl;
+		Simulation::exit(-1);
+	}
+	if(_nStopWritingProfiles <= _nStartWritingProfiles)
+	{
+		global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << endl;
+		Simulation::exit(-1);
+	}
+	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
+	if(true == bInputIsValid)
+	{
+		global_log->error() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << endl;
+		global_log->error() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << endl;
+		global_log->error() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << endl;
+	}
+	else
+	{
+		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << endl;
+		Simulation::exit(-1);
+	}
+
 	// init
 	this->init();
 }
@@ -938,26 +968,8 @@ void Planar::directDensityProfile(){
 
 void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep)
 {
-	/*
-	if(false == _SamplingEnabledProfiles)
+	if( 0 != simstep % _nWriteFreqProfiles || simstep < _nStartWritingProfiles || simstep > _nStopWritingProfiles)
 		return;
-
-	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
-	if( simstep <= _initSamplingProfiles )
-		return;
-
-	if ( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
-		return;
-
-	// calc global values
-	this->CalcGlobalValuesProfiles(domainDecomp, domain);
-*/
-
-	if( 0 != simstep % 10)
-		return;
-
-	// reset local values
-//	this->ResetLocalValuesProfiles();
 
 	// writing .dat-files
 	std::stringstream filenamestream;
