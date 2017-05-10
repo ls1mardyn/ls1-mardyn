@@ -138,12 +138,7 @@ int main(int argc, char** argv) {
 	Simulation simulation;
 	simulation.setName(op.prog());
 
-	/** @todo remove unnamed options, present as --steps, --output-prefix below */
-	if (numargs > 1) {
-		unsigned long steps = 0;
-		istringstream(args[1]) >> steps;
-		simulation.setNumTimesteps(steps);
-	}
+	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
 	if( numargs > 2 ) {
 		simulation.setOutputPrefix(args[2]);
 	}
@@ -156,6 +151,14 @@ int main(int argc, char** argv) {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
 		Simulation::exit(-54);
 	}
+
+	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
+	if (numargs > 1) {
+		unsigned long steps = 0;
+		istringstream(args[1]) >> steps;
+		simulation.setNumTimesteps(steps);
+	}
+
 
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
