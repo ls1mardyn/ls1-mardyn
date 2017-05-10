@@ -1235,7 +1235,7 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 		// ignore a bit of rounding, if the point is outside of the box.
 		if (localPoint[dim] <= _haloBoundingBoxMin[dim]){
 			localPoint[dim] += _cellLength[dim]/2;
-		} 
+		}
 		else if(localPoint[dim] >= _haloBoundingBoxMax[dim]){
 			localPoint[dim] -= _cellLength[dim]/2;
 		}
@@ -1250,12 +1250,12 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 			Simulation::exit(1);
 		}
 		#endif
-		
+
 		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
 		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
 		cellIndex[dim] = min(max(((int) floor((localPoint[dim] - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim],0),_cellsPerDimension[dim]-1);
 	}
-	
+
 	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
 	// in very rare cases rounding is stupid, thus we need a check...
 	//TODO: check if this can in any way be done better...
@@ -1430,4 +1430,58 @@ void LinkedCells::updateMoleculeCaches() {
 	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
 		_cells[cellIndex].buildSoACaches();
 	}
+}
+
+size_t LinkedCells::getTotalSize() {
+	size_t totalSize = sizeof(LinkedCells);
+	for (auto cell : _cells) {
+		totalSize += sizeof(ParticleCell);
+		totalSize += cell.getCellDataSoA().getDynamicSize();
+		totalSize += cell.getMoleculeVectorDynamicSize();
+	}
+	totalSize += _innerMostCellIndices.size() * sizeof(unsigned long);
+	totalSize += _innerCellIndices.size() * sizeof(unsigned long);
+	totalSize += _boundaryCellIndices.size() * sizeof(unsigned long);
+	totalSize += _haloCellIndices.size() * sizeof(unsigned long);
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 2; j++) {
+			for (int k = 0; k < 2; k++) {
+				totalSize += _borderCellIndices[i][j][k].size() * sizeof(unsigned long);
+			}
+		}
+	}
+	return totalSize;
+}
+void LinkedCells::printSubInfo(int offset) {
+	size_t ownSize = sizeof(LinkedCells), cellTotal = 0, cellSoA = 0, cellMoleculeVectors = 0;
+	for (auto cell : _cells) {
+		cellTotal += sizeof(ParticleCell);
+		cellSoA += cell.getCellDataSoA().getDynamicSize();
+		cellMoleculeVectors += cell.getMoleculeVectorDynamicSize();
+	}
+	cellTotal += cellSoA + cellMoleculeVectors;
+	size_t indexVectors = 0;
+	indexVectors += _innerMostCellIndices.size() * sizeof(unsigned long);
+	indexVectors += _innerCellIndices.size() * sizeof(unsigned long);
+	indexVectors += _boundaryCellIndices.size() * sizeof(unsigned long);
+	indexVectors += _haloCellIndices.size() * sizeof(unsigned long);
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 2; j++) {
+			for (int k = 0; k < 2; k++) {
+				indexVectors += _borderCellIndices[i][j][k].size() * sizeof(unsigned long);
+			}
+		}
+	}
+	std::stringstream offsetstream;
+	for (int i = 0; i < offset; i++) {
+		offsetstream << "\t";
+	}
+	global_log->info() << offsetstream.str() << "own datastructures:\t" << ownSize << std::endl;
+	global_log->info() << offsetstream.str() << "cells total:\t\t" << cellTotal << std::endl;
+	global_log->info() << offsetstream.str() << "cells SoAs:\t\t" << cellSoA << std::endl;
+	global_log->info() << offsetstream.str() << "cells molecule vectors:\t" << cellMoleculeVectors << std::endl;
+	global_log->info() << offsetstream.str() << "indexVectors:\t\t" << indexVectors << std::endl;
+}
+std::string LinkedCells::getName() {
+	return "LinkedCells";
 }

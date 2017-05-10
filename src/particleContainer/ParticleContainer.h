@@ -24,8 +24,8 @@
 #include <vector>
 #include "ParticleIterator.h"
 #include "RegionParticleIterator.h"
-
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "io/MemoryProfiler.h"
 class CellProcessor;
 class ParticlePairsHandler;
 class XMLfileUnits;
@@ -63,7 +63,7 @@ class XMLfileUnits;
 //! methods a class implementing this kind of datastructure has to provide to
 //! be used by the framework. Such a class should
 //! be implemented as a subclass of this class.
-class ParticleContainer {
+class ParticleContainer: public MemoryProfilable {
 private:
 	/* Copy operator private */
 	ParticleContainer& operator=(const ParticleContainer&);

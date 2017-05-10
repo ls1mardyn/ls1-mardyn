@@ -75,7 +75,11 @@ using namespace std;
 Simulation* global_simulation;
 
 Simulation::Simulation()
-	: _simulationTime(0),
+	:
+	_simulationTime(0),
+	_initSimulation(0),
+	_initCanonical(0),
+	_initGrandCanonical(0),
 	_initStatistics(0),
 	_ensemble(NULL),
 	_rdf(NULL),
@@ -97,7 +101,8 @@ Simulation::Simulation()
 	_programName("")
 {
 	_ensemble = new CanonicalEnsemble();
-
+	_memoryProfiler = new MemoryProfiler();
+	_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
 	initialize();
 }
 

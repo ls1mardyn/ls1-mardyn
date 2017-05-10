@@ -17,19 +17,28 @@
 
 #include "utils/Logger.h"
 
-MemoryProfiler::MemoryProfiler() {
+MemoryProfiler::MemoryProfiler() :
+		_list() {
 
 }
 
-template<typename T>
-void MemoryProfiler::registerObject(T* object) {
-	_list.push_back(static_cast<void*>(object));
+void MemoryProfiler::registerObject(MemoryProfilable** object) {
+	_list.push_back(object);
+	Log::global_log->info() << "MemoryProfiler: added object" << std::endl;
 }
 
 void MemoryProfiler::doOutput(const std::string& string) {
 	printGeneralInfo(string);
 
 	// further info
+	Log::global_log->debug() << "MemoryProfiler: number of objects: " << _list.size() << std::endl;
+	for (auto item : _list) {
+		if ((*item) == nullptr) {
+			continue;
+		}
+		Log::global_log->info() << "\t\t" << (*item)->getName() << ":" << (*item)->getTotalSize() << "Bytes" << std::endl;
+		(*item)->printSubInfo(3);
+	}
 }
 
 unsigned long long MemoryProfiler::getCachedSize() {

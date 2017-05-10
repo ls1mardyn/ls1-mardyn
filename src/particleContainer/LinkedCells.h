@@ -241,6 +241,11 @@ public:
 	}
 	RegionParticleIterator iterateRegionEnd ();
 
+	virtual size_t getTotalSize() override;
+	virtual void printSubInfo(int offset) override;
+	virtual std::string getName() override;
+
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########
