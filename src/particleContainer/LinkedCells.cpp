@@ -1476,11 +1476,12 @@ void LinkedCells::printSubInfo(int offset) {
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";
 	}
-	global_log->info() << offsetstream.str() << "own datastructures:\t" << ownSize << std::endl;
-	global_log->info() << offsetstream.str() << "cells total:\t\t" << cellTotal << std::endl;
-	global_log->info() << offsetstream.str() << "cells SoAs:\t\t" << cellSoA << std::endl;
-	global_log->info() << offsetstream.str() << "cells molecule vectors:\t" << cellMoleculeVectors << std::endl;
-	global_log->info() << offsetstream.str() << "indexVectors:\t\t" << indexVectors << std::endl;
+	global_log->info() << offsetstream.str() << "own datastructures:\t" << ownSize / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "cells total:\t\t" << cellTotal / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "cells SoAs:\t\t" << cellSoA / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "cells molecule vectors:\t" << cellMoleculeVectors / 1.e6 << " MB"
+			<< std::endl;
+	global_log->info() << offsetstream.str() << "indexVectors:\t\t" << indexVectors / 1.e6 << " MB" << std::endl;
 }
 std::string LinkedCells::getName() {
 	return "LinkedCells";

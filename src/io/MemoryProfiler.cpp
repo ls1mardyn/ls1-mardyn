@@ -36,7 +36,7 @@ void MemoryProfiler::doOutput(const std::string& string) {
 		if ((*item) == nullptr) {
 			continue;
 		}
-		Log::global_log->info() << "\t\t" << (*item)->getName() << ":" << (*item)->getTotalSize() << "Bytes" << std::endl;
+		Log::global_log->info() << "\t\t" << (*item)->getName() << ": " << (*item)->getTotalSize()/1.e6 << " MB" << std::endl;
 		(*item)->printSubInfo(3);
 	}
 }
