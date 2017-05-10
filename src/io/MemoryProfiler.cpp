@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cstring>
 #include "sys/types.h"
 #include "sys/sysinfo.h"
 
