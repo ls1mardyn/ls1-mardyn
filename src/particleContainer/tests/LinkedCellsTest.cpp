@@ -414,9 +414,9 @@ void LinkedCellsTest::testHalfShell() {
 				std::cout << i->F(1) << ", " << j->F(1) << "\n"; //TODO ___Remove
 				std::cout << i->F(2) << ", " << j->F(2) << "\n";
 
-				//CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), 0.000000001);
-				//CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), 0.000000001);
-				//CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), 0.000000001);
+				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), 0.000000001);
+				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), 0.000000001);
+				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), 0.000000001);
 
 			}
 
