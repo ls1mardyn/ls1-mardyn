@@ -15,6 +15,7 @@
 #include "particleContainer/LinkedCellsHS.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "particleContainer/adapter/VectorizedCellProcessor.h"
 
 TEST_SUITE_REGISTRATION(LinkedCellsTest);
 
@@ -29,7 +30,8 @@ void LinkedCellsTest::testUpdateAndDeleteOuterParticlesFilename(const char * fil
 	// original pointer will be deleted by tearDown()
 	_domainDecomposition = new DomainDecompBase();
 
-	LinkedCells* container = static_cast<LinkedCells*> (initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
+	LinkedCells* container = static_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
 	int numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->exchangeMolecules(container, _domain);
@@ -54,10 +56,10 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	// NOTE: we do not open an OpenMP parallel region!
 	// Hence, this test is always executed sequentially!
 
-	Molecule dummyMolecule1(1, &_components[0], 1.0,1.0,1.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule2(2, &_components[0], 2.0,2.0,2.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule3(3, &_components[0], 3.0,3.0,3.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule4(4, &_components[0], 5.1,5.1,5.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule1(1, &_components[0], 1.0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule2(2, &_components[0], 2.0, 2.0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule3(3, &_components[0], 3.0, 3.0, 3.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule4(4, &_components[0], 5.1, 5.1, 5.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 	LinkedCells LC;
 	ParticleIterator molIt;
@@ -70,7 +72,7 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 
 	// cell[1] contains 1,2,3
 	{
-		double l[3] = {0., 0., 0.}, u[3] = {5., 5., 5.};
+		double l[3] = { 0., 0., 0. }, u[3] = { 5., 5., 5. };
 		cells[1].setBoxMin(l);
 		cells[1].setBoxMax(u);
 	}
@@ -82,7 +84,7 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 
 	// cell[3] contains 4
 	{
-		double l[3] = {5., 5., 5.}, u[3] = {5.5, 5.5, 5.5};
+		double l[3] = { 5., 5., 5. }, u[3] = { 5.5, 5.5, 5.5 };
 		cells[3].setBoxMin(l);
 		cells[3].setBoxMax(u);
 	}
@@ -111,13 +113,17 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	// DELETECURRENT:
 	molIt = LC.iteratorBegin();
 
-	molIt.deleteCurrentParticle(); ++molIt;
+	molIt.deleteCurrentParticle();
+	++molIt;
 	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->id()); // 3 copied in place of 1
-	molIt.deleteCurrentParticle(); ++molIt;
+	molIt.deleteCurrentParticle();
+	++molIt;
 	ASSERT_TRUE_MSG("delete() within cell", molIt->id() == 2ul); // 2 copied in place of 3
-	molIt.deleteCurrentParticle(); ++molIt;
+	molIt.deleteCurrentParticle();
+	++molIt;
 	ASSERT_TRUE_MSG("delete() across cells", molIt->id() == 4ul); // cell 1 became empty, we advanced to cell 3
-	molIt.deleteCurrentParticle(); ++molIt;
+	molIt.deleteCurrentParticle();
+	++molIt;
 	ASSERT_TRUE_MSG("delete() last", molIt == LC.iteratorEnd()); // cell 4 became empty, we arrived at end()
 }
 
@@ -125,10 +131,10 @@ void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential
 	// NOTE: we do not open an OpenMP parallel region!
 	// Hence, this test is always executed sequentially!
 
-	Molecule dummyMolecule1(1, &_components[0], 1.0,1.0,1.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule2(2, &_components[0], 2.0,2.0,2.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule3(3, &_components[0], 3.0,3.0,3.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule4(4, &_components[0], 5.1,5.1,5.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule1(1, &_components[0], 1.0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule2(2, &_components[0], 2.0, 2.0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule3(3, &_components[0], 3.0, 3.0, 3.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule4(4, &_components[0], 5.1, 5.1, 5.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 	LinkedCells LC;
 
@@ -140,7 +146,7 @@ void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential
 
 	// cell[1] contains 1,2,3
 	{
-		double l[3] = {0., 0., 0.}, u[3] = {5., 5., 5.};
+		double l[3] = { 0., 0., 0. }, u[3] = { 5., 5., 5. };
 		cells[1].setBoxMin(l);
 		cells[1].setBoxMax(u);
 	}
@@ -152,7 +158,7 @@ void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential
 
 	// cell[3] contains 4
 	{
-		double l[3] = {5., 5., 5.}, u[3] = {5.5, 5.5, 5.5};
+		double l[3] = { 5., 5., 5. }, u[3] = { 5.5, 5.5, 5.5 };
 		cells[3].setBoxMin(l);
 		cells[3].setBoxMax(u);
 	}
@@ -185,7 +191,6 @@ void LinkedCellsTest::testGetHaloBoundaryParticlesDirection() {
 	_domainDecomposition = new DomainDecompBase();
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "Ethan_equilibrated.inp", rCut);
 
-
 	double regionLow[3] = {-rCut, -rCut, -rCut};
 	double regionHigh[3] = {rCut, 571.607759, 571.607759};
 
@@ -202,7 +207,7 @@ void LinkedCellsTest::testGetHaloBoundaryParticlesDirection() {
 	for (int i = 0; i < partsHaloAndBoundary.size(); ++i) {
 		Molecule * m = partsHaloAndBoundary[i];
 		if (m->r(0) < rCut)
-			partsFiltered.push_back(m);
+		partsFiltered.push_back(m);
 	}
 
 	ASSERT_EQUAL(partsRegion.size(), partsFiltered.size());
@@ -326,8 +331,7 @@ void LinkedCellsTest::testTraversalMethods() {
 
 }
 
-
-void LinkedCellsTest::testHalfShell(){
+void LinkedCellsTest::testHalfShell() {
 	//TODO: ___Extract to separate test class
 	//------------------------------------------------------------
 	// Setup
@@ -336,17 +340,15 @@ void LinkedCellsTest::testHalfShell(){
 	auto domainDecomposition = new DomainDecompBase();
 	auto cutoff = 1;
 	auto filename = "LinkedCellsHS.inp"; //TODO ___ Change input file?
-	LinkedCellsHS* containerHS = static_cast<LinkedCellsHS*> (
-			initializeFromFile(ParticleContainerFactory::LinkedCellHS, filename, cutoff));
-	LinkedCells* container = static_cast<LinkedCells*> (
-			initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
+	LinkedCellsHS* containerHS = static_cast<LinkedCellsHS*>(initializeFromFile(ParticleContainerFactory::LinkedCellHS,
+			filename, cutoff));
+	LinkedCells* container = static_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
 
-	auto ownrank = 0;
-	auto pressureGradient = new PressureGradient(ownrank);
-	auto domain = new Domain(ownrank, pressureGradient);
+	//auto ppHandler = new ParticlePairs2PotForceAdapter(*_domain);
+	//auto cellProcessor = new LegacyCellProcessor(cutoff, containerHS->_LJCutoffRadius, ppHandler);
 
-	auto ppHandler = new ParticlePairs2PotForceAdapter(*domain);
-	auto cellProcessor = new LegacyCellProcessor(cutoff, containerHS->_LJCutoffRadius, ppHandler);
+	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
 
 	//------------------------------------------------------------
 	// Prepare molecule containers
@@ -356,8 +358,8 @@ void LinkedCellsTest::testHalfShell(){
 	containerHS->update();
 
 	bool forceRebalancing = false;
-	domainDecomposition->balanceAndExchange(forceRebalancing, container, domain);
-	domainDecomposition->balanceAndExchange(forceRebalancing, containerHS, domain);
+	domainDecomposition->balanceAndExchange(forceRebalancing, container, _domain);
+	domainDecomposition->balanceAndExchange(forceRebalancing, containerHS, _domain);
 
 	container->updateMoleculeCaches();
 	containerHS->updateMoleculeCaches();
@@ -367,60 +369,58 @@ void LinkedCellsTest::testHalfShell(){
 	// Do calculation with HS
 	//------------------------------------------------------------
 	{
-	containerHS->traverseCells(*cellProcessor);
+		containerHS->traverseCells(*vectorizedCellProcessor);
 
-	std::cout << "\nFoo2\n";
-	// calculate forces
-	const ParticleIterator& begin = containerHS->iteratorBegin();
-	const ParticleIterator& end = containerHS->iteratorEnd();
-	for (ParticleIterator i = begin; i != end; ++i) {
-		i->calcFM();
-	}
-	std::cout << "\nFoo3\n";
+		std::cout << "\nFoo2\n";
+		// calculate forces
+		const ParticleIterator& begin = containerHS->iteratorBegin();
+		const ParticleIterator& end = containerHS->iteratorEnd();
+		for (ParticleIterator i = begin; i != end; ++i) {
+			i->calcFM();
+		}
+		std::cout << "\nFoo3\n";
 
-	domainDecomposition->exchangeForces(containerHS, domain);
-	std::cout << "\nFoo4\n";
+		domainDecomposition->exchangeForces(containerHS, _domain);
+		std::cout << "\nFoo4\n";
 	}
 	//------------------------------------------------------------
 	// Do calculation with FS
 	//------------------------------------------------------------
 	{
-	container->traverseCells(*cellProcessor);
+		container->traverseCells(*vectorizedCellProcessor);
 
-	// calculate forces
-	const ParticleIterator& begin = container->iteratorBegin();
-	const ParticleIterator& end = container->iteratorEnd();
-	for (auto i = begin; i != end; ++i) {
-		i->calcFM();
-	}
+		// calculate forces
+		const ParticleIterator begin = container->iteratorBegin();
+		const ParticleIterator end = container->iteratorEnd();
+		for (auto i = begin; i != end; ++i) {
+			i->calcFM();
+		}
 	}
 	//------------------------------------------------------------
-
-
+	container->deleteOuterParticles();
+	containerHS->deleteOuterParticles();
 	// Compare calculated forces
 	{
-	const ParticleIterator& begin = container->iteratorBegin();
-	const ParticleIterator& end = container->iteratorEnd();
-	for (auto i = begin; i != end; ++i) {
+		const ParticleIterator begin = container->iteratorBegin();
+		const ParticleIterator end = container->iteratorEnd();
+		for (auto i = begin; i != end; ++i) {
+			const ParticleIterator beginHS = containerHS->iteratorBegin();
+			const ParticleIterator endHS = containerHS->iteratorEnd();
+			for (auto j = beginHS; j != endHS; ++j) {
+				if (j->id() != i->id())
+					continue;
+				std::cout << "particleid:" << i->id() << std::endl;
+				std::cout << i->F(0) << ", " << j->F(0) << "\n";
+				std::cout << i->F(1) << ", " << j->F(1) << "\n"; //TODO ___Remove
+				std::cout << i->F(2) << ", " << j->F(2) << "\n";
 
-		const ParticleIterator& beginHS = containerHS->iteratorBegin();
-		const ParticleIterator& endHS = containerHS->iteratorEnd();
-		for(auto j = begin; j != end; ++j){
-			if(j->id() != i->id())
-				continue;
+				//CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), 0.000000001);
+				//CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), 0.000000001);
+				//CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), 0.000000001);
 
-			std::cout << i->F(0) << ", " << j->F(0) << "\n";
-			std::cout << i->F(1) << ", " << j->F(1) << "\n"; //TODO ___Remove
-			std::cout << i->F(2) << ", " << j->F(2) << "\n";
-
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), 0.000000001);
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), 0.000000001);
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), 0.000000001);
+			}
 
 		}
-
-
-	}
 	}
 
 	//------------------------------------------------------------
@@ -428,8 +428,5 @@ void LinkedCellsTest::testHalfShell(){
 	//------------------------------------------------------------
 
 	delete domainDecomposition;
-	delete pressureGradient;
-	delete domain;
-	delete ppHandler;
-	delete cellProcessor;
+	delete vectorizedCellProcessor;
 }
