@@ -19,7 +19,9 @@ using Log::global_log;
 Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation)
 {
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
+	_nStartWritingProfiles = 0;
 	_nWriteFreqProfiles = 1;
+	_nStopWritingProfiles = 0;
 	cutoff = cutoffLJ;
 	_domain = domain;
 	_domainDecomposition = domainDecomposition;
