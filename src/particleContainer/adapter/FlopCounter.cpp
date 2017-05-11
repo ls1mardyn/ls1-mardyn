@@ -5,6 +5,7 @@
  */
 
 #include "FlopCounter.h"
+#include "WrapOpenMP.h"
 
 #include "particleContainer/ParticleCell.h"
 #include "molecules/Molecule.h"
@@ -114,14 +115,49 @@ double FlopCounter::_Counts::process() const {
 
 FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius),
 		_currentCounts(), _totalFlopCount(0.), _myFlopCount(0.), _synchronized(true){
+
+	const int numThreads = mardyn_get_max_threads();
+
+	global_log->info() << "FlopCounter: allocate data for " << numThreads << " threads." << std::endl;
+
+	_threadData.resize(numThreads);
+
+	#if defined (_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		_Counts * myown = new _Counts();
+		const int myid = mardyn_get_thread_num();
+		_threadData[myid] = myown;
+	}
 }
 
 void FlopCounter::initTraversal() {
-	_currentCounts.clear();
+	#if defined (_OPENMP)
+	#pragma omp master
+	#endif
+	{
+		_currentCounts.clear();
+	}
 }
 
-
 void FlopCounter::endTraversal() {
+	_Counts sum_omp_values;
+	sum_omp_values.clear();
+
+	#if defined (_OPENMP)
+	#pragma omp declare reduction(myadd : _Counts : omp_out.addCounts(omp_in))
+	#pragma omp parallel reduction(myadd : sum_omp_values)
+	#endif
+	{
+		const int myid = mardyn_get_thread_num();
+		_Counts & myown = *_threadData[myid];
+		sum_omp_values.addCounts(myown);
+		myown.clear();
+	}
+
+	_currentCounts = sum_omp_values;
+
 	_myFlopCount = _currentCounts.getTotalFlops();
 	if(_synchronized){
 		_currentCounts.allReduce();
@@ -135,51 +171,6 @@ void FlopCounter::endTraversal() {
 //			<< "Accumulated FLOP counts in force calculation:" << std::endl;
 //	_totalFlopCount = _totalCounts.process();
 }
-
-void FlopCounter::preprocessCell(ParticleCell & /*c*/) {
-}
-
-void FlopCounter::postprocessCell(ParticleCell & /*c*/) {
-}
-
-void FlopCounter::handlePair(const Molecule& Mi, const Molecule& Mj, bool addMacro) {
-	// Have to compare the distance between 2 molecules.
-	_currentCounts._moleculeDistances += 1.;
-
-	double distSquared = 0.0;
-	for (int dim = 0; dim < 3; ++dim) {
-		const double dist = Mi.r(dim) - Mj.r(dim);
-		distSquared += dist * dist;
-	}
-
-	const size_t numLJcenters_i 	= Mi.numLJcenters();
-	const size_t numCharges_i 		= Mi.numCharges();
-	const size_t numDipoles_i 		= Mi.numDipoles();
-	const size_t numQuadrupoles_i 	= Mi.numQuadrupoles();
-
-	const size_t numLJcenters_j 	= Mj.numLJcenters();
-	const size_t numCharges_j 		= Mj.numCharges();
-	const size_t numDipoles_j 		= Mj.numDipoles();
-	const size_t numQuadrupoles_j 	= Mj.numQuadrupoles();
-
-
-	if (distSquared < _LJCutoffRadiusSquare) {
-		_currentCounts.addKernelAndMacro(I_LJ, numLJcenters_i * numLJcenters_j, addMacro);
-	}
-
-	if (distSquared < _cutoffRadiusSquare) {
-		_currentCounts.addKernelAndMacro(I_CHARGE, numCharges_i * numCharges_j, addMacro);
-
-		_currentCounts.addKernelAndMacro(I_CHARGE_DIPOLE, numCharges_i * numDipoles_j + numDipoles_i * numCharges_j, addMacro);
-		_currentCounts.addKernelAndMacro(I_DIPOLE, numDipoles_i * numDipoles_j, addMacro);
-
-		_currentCounts.addKernelAndMacro(I_CHARGE_QUADRUPOLE, numCharges_i * numQuadrupoles_j + numQuadrupoles_i * numCharges_j, addMacro);
-		_currentCounts.addKernelAndMacro(I_DIPOLE_QUADRUPOLE, numDipoles_i * numQuadrupoles_j + numQuadrupoles_i * numDipoles_j, addMacro);
-		_currentCounts.addKernelAndMacro(I_QUADRUPOLE, numQuadrupoles_i * numQuadrupoles_j, addMacro);
-	}
-
-}
-
 
 class CellPairPolicy_ {
 public:
@@ -349,17 +340,20 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 		}
 	}
 
-	_currentCounts._moleculeDistances += i_mm;
-	_currentCounts.addKernelAndMacro(I_LJ, i_lj, CalculateMacroscopic);
+	const int tid = mardyn_get_thread_num();
+	_Counts &my_threadData = *_threadData[tid];
 
-	_currentCounts.addKernelAndMacro(I_CHARGE, i_charge, CalculateMacroscopic);
+	my_threadData._moleculeDistances += i_mm;
+	my_threadData.addKernelAndMacro(I_LJ, i_lj, CalculateMacroscopic);
 
-	_currentCounts.addKernelAndMacro(I_CHARGE_DIPOLE, i_charge_dipole, CalculateMacroscopic);
-	_currentCounts.addKernelAndMacro(I_DIPOLE, i_dipole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_CHARGE, i_charge, CalculateMacroscopic);
 
-	_currentCounts.addKernelAndMacro(I_CHARGE_QUADRUPOLE, i_charge_quadrupole, CalculateMacroscopic);
-	_currentCounts.addKernelAndMacro(I_DIPOLE_QUADRUPOLE, i_dipole_quadrupole, CalculateMacroscopic);
-	_currentCounts.addKernelAndMacro(I_QUADRUPOLE, i_quadrupole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_CHARGE_DIPOLE, i_charge_dipole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_DIPOLE, i_dipole, CalculateMacroscopic);
+
+	my_threadData.addKernelAndMacro(I_CHARGE_QUADRUPOLE, i_charge_quadrupole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_DIPOLE_QUADRUPOLE, i_dipole_quadrupole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_QUADRUPOLE, i_quadrupole, CalculateMacroscopic);
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic>
@@ -410,6 +404,9 @@ void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA
 		}
 	}
 
-	_currentCounts._moleculeDistances += i_mm;
-	_currentCounts.addKernelAndMacro(I_LJ, i_lj, CalculateMacroscopic);
+	const int tid = mardyn_get_thread_num();
+	_Counts &my_threadData = *_threadData[tid];
+
+	my_threadData._moleculeDistances += i_mm;
+	my_threadData.addKernelAndMacro(I_LJ, i_lj, CalculateMacroscopic);
 }

@@ -77,7 +77,7 @@ public:
 	/**
 	 * \brief Only pass through to child.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& cell) {}
 
 	/**
 	 * \brief Count flops for this pair.
@@ -94,7 +94,7 @@ public:
 	/**
 	 * \brief Only pass through to child.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& cell) {}
 
 	/**
 	 * \brief Print results.
@@ -205,7 +205,7 @@ private:
 				_potCounts[i].clear();
 			}
 		}
-		void addCounts(const _Counts c) {
+		void addCounts(const _Counts& c) {
 			_moleculeDistances += c._moleculeDistances;
 
 			for (int i = 0; i < NUM_POTENTIALS; ++i) {
@@ -270,6 +270,8 @@ private:
 
 		_PotentialCounts _potCounts[NUM_POTENTIALS];
 	};
+
+	std::vector<_Counts *> _threadData;
 
 	_Counts _currentCounts;
 //	_Counts _totalCounts; TODO: is this needed?
