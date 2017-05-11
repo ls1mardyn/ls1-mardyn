@@ -311,9 +311,11 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 		const int numDipoles_i 		= soa1_mol_dipoles_num[i];
 		const int numQuadrupoles_i 	= soa1_mol_quadrupoles_num[i];
 
+		#if defined(_OPENMP)
 		#pragma omp simd reduction(+ : i_lj, i_charge, i_charge_dipole, i_dipole, i_charge_quadrupole, i_dipole_quadrupole, i_quadrupole, i_mm) \
 		aligned(soa1_mol_pos_x, soa1_mol_pos_y, soa1_mol_pos_z, soa1_mol_ljc_num, soa1_mol_charges_num, soa1_mol_dipoles_num, soa1_mol_quadrupoles_num, \
 				soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z, soa2_mol_ljc_num, soa2_mol_charges_num, soa2_mol_dipoles_num, soa2_mol_quadrupoles_num: 64)
+		#endif
 		for (size_t j = ForcePolicy::InitJ(i); j < end_j ; ++j) {
 			const double m2_x = soa2_mol_pos_x[j];
 			const double m2_y = soa2_mol_pos_y[j];
@@ -383,9 +385,11 @@ void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA
 
 		const int numLJcenters_i 	= 1;
 
+		#if defined(_OPENMP)
 		#pragma omp simd reduction(+ : i_lj, i_mm) \
 		aligned(soa1_mol_pos_x, soa1_mol_pos_y, soa1_mol_pos_z, \
 				soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z: 64)
+		#endif
 		for (size_t j = ForcePolicy::InitJ(i); j < end_j ; ++j) {
 			const double m2_x = soa2_mol_pos_x[j];
 			const double m2_y = soa2_mol_pos_y[j];
