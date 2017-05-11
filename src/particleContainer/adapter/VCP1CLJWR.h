@@ -63,6 +63,10 @@ public:
 		_dtInvm = static_cast<vcp_real_calc>(dtInvm);
 	}
 
+	double getDtInvm() const {
+		return _dtInvm;
+	}
+
 private:
 	/**
 	 * \brief The Domain where macroscopic values will be stored.

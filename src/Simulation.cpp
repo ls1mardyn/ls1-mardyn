@@ -31,7 +31,7 @@
 #include "particleContainer/adapter/VCP1CLJWR.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
-#include "integrators/ExplicitEuler.h"
+#include "integrators/LeapfrogWR.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -134,9 +134,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Integrator type: " << integratorType << endl;
 		if(integratorType == "Leapfrog") {
 			_integrator = new Leapfrog();
-		} else if (integratorType == "ExplicitEuler") {
-			global_log->info() << "Integrator type: Explicit Euler (WR mode only)" << endl;
-			_integrator = new ExplicitEuler();
+
+#ifdef MARDYN_WR
+			global_log->error() << "WR mode requires the Leapfrog_WR integrator" << endl;
+			Simulation::exit(-1);
+#endif
+
+		} else if (integratorType == "Leapfrog_WR") {
+			global_log->info() << "Integrator type: Leapfrog_WR (WR mode only)" << endl;
+			global_log->info() << "" << endl;
+			_integrator = new Leapfrog_WR();
 		} else {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
 			Simulation::exit(1);
@@ -790,18 +797,28 @@ void Simulation::prepare_start() {
 
 	_memoryProfiler->doOutput("with halo copies");
 
-#ifndef MARDYN_WR
+#ifdef MARDYN_WR
+	// the leapfrog integration requires that we move the velocities by one half-timestep
+	// so we halve vcp1clj_wr_cellProcessor::_dtInvm
+	VCP1CLJ_WR * vcp1clj_wr_cellProcessor = static_cast<VCP1CLJ_WR * >(_cellProcessor);
+	double dt_inv_m = vcp1clj_wr_cellProcessor->getDtInvm();
+	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m * 0.5);
+#endif /* MARDYN_WR */
+
 	global_log->info() << "Performing initial force calculation" << endl;
 	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
 
+#ifdef MARDYN_WR
+	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
+	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m);
+#endif /* MARDYN_WR */
+
 	_loopCompTime = global_simulation->getTime("SIMULATION_FORCE_CALCULATION");
 	global_simulation->resetTimer("SIMULATION_FORCE_CALCULATION");
 	++_loopCompTimeSteps;
-#else
-	global_log->info() << "No initial force calculation needed in WR mode" << endl;
-#endif /* MARDYN_WR */
+
 
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;

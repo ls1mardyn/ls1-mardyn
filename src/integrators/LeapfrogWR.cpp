@@ -5,7 +5,7 @@
  *      Author: tchipevn
  */
 
-#include "ExplicitEuler.h"
+#include "LeapfrogWR.h"
 
 #include "Simulation.h"
 #include "utils/Logger.h"
@@ -21,18 +21,18 @@
 using namespace std;
 using Log::global_log;
 
-ExplicitEuler::ExplicitEuler(double timestepLength) :
+Leapfrog_WR::Leapfrog_WR(double timestepLength) :
 		Integrator(timestepLength) {
 }
 
-void ExplicitEuler::readXML(XMLfileUnits & xmlconfig) {
+void Leapfrog_WR::readXML(XMLfileUnits & xmlconfig) {
 	_timestepLength = 0;
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
 	global_log->info() << "Timestep: " << _timestepLength << endl;
 	mardyn_assert(_timestepLength > 0);
 }
 
-void ExplicitEuler::computePositions(ParticleContainer* molCont, Domain* dom) {
+void Leapfrog_WR::computePositions(ParticleContainer* molCont, Domain* dom) {
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -45,7 +45,7 @@ void ExplicitEuler::computePositions(ParticleContainer* molCont, Domain* dom) {
 	}
 }
 
-void ExplicitEuler::computeVelocities(ParticleContainer* molCont, Domain* dom) {
+void Leapfrog_WR::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 	// TODO: I hate this piece of code. It will be rewritten from within the Leapfrog integrator ASAP.
 	map<int, unsigned long> N;
 	map<int, unsigned long> rotDOF;
