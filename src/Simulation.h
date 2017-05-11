@@ -53,6 +53,7 @@ class Homogeneous;
 class Planar;
 class TemperatureControl;
 class ParticleTracker;
+class MemoryProfiler;
 
 // by Stefan Becker
 const int ANDERSEN_THERMOSTAT = 2;
@@ -299,6 +300,7 @@ public:
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
 	double getLJCutoff() const { return _LJCutoffRadius; }
 	void setLJCutoff(double LJCutoffRadius) { _LJCutoffRadius = LJCutoffRadius; }
+	unsigned long getTotalNumberOfMolecules() const;
 
 	/** @brief Temperature increase factor function during automatic equilibration.
 	 * @param[in]  current simulation time step
@@ -346,6 +348,10 @@ public:
 
 	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
+
+	MemoryProfiler* getMemoryProfiler() {
+		return _memoryProfiler;
+	}
 
 	Timer* getTimer(std::string timerName){
 		return _timerProfiler.getTimer(timerName);
@@ -400,6 +406,14 @@ public:
 	DistControl*    GetDistControl()    {return _distControl;}
 	RegionSampling* GetRegionSampling() {return _regionSampling;}
 	DensityControl* GetDensityControl() {return _densityControl;}
+
+	void incrementTimerTimestepCounter() {
+		_timerProfiler.incrementTimerTimestepCounter();
+	}
+
+	unsigned long getTimerTimestepCounter() const {
+		return _timerProfiler.getNumElapsedIterations();
+	}
 
 private:
 
@@ -554,6 +568,9 @@ private:
 
 	/** manager for all timers in the project except the MarDyn main timer */
 	TimerProfiler _timerProfiler;
+
+	//! used to get information about the memory consumed by the process and the overall system.
+	MemoryProfiler* _memoryProfiler;
 
 public:
 	//! computational time for one execution of traverseCell

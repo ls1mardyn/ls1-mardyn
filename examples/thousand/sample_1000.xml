@@ -10,7 +10,7 @@
     <run>
       <currenttime>0</currenttime>
       <production>
-        <steps>10</steps>
+        <steps>20</steps>
       </production>
     </run>
 
@@ -66,6 +66,10 @@
         <expression>procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
         <expression>procselfstatm:size 1048576. /</expression>
+        <writefrequency>10</writefrequency>
+      </outputplugin>
+      <outputplugin name="FlopRateWriter">
+		<mode>stdout</mode>
         <writefrequency>10</writefrequency>
       </outputplugin>
 	  <!--

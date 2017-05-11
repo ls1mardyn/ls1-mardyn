@@ -138,12 +138,7 @@ int main(int argc, char** argv) {
 	Simulation simulation;
 	simulation.setName(op.prog());
 
-	/** @todo remove unnamed options, present as --steps, --output-prefix below */
-	if (numargs > 1) {
-		unsigned long steps = 0;
-		istringstream(args[1]) >> steps;
-		simulation.setNumTimesteps(steps);
-	}
+	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
 	if( numargs > 2 ) {
 		simulation.setOutputPrefix(args[2]);
 	}
@@ -156,6 +151,14 @@ int main(int argc, char** argv) {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
 		exit(-54); // Simulation::exit(-54);
 	}
+
+	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
+	if (numargs > 1) {
+		unsigned long steps = 0;
+		istringstream(args[1]) >> steps;
+		simulation.setNumTimesteps(steps);
+	}
+
 
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
@@ -194,6 +197,11 @@ int main(int argc, char** argv) {
 	sim_timer.stop();
 	double runtime = sim_timer.get_etime();
 	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
+
+	// print out total simulation speed
+	const unsigned long numForceCalculations = simulation.getNumTimesteps() + 1ul;
+	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
+	global_log->info() << "Simulation speed: " << scientific << speed << " Molecule-updates per second." << endl;
 
 	simulation.finalize();
 

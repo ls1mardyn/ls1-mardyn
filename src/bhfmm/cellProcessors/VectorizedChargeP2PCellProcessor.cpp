@@ -135,18 +135,23 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 
-	vcp_real_calc* const soa_charges_m_r_x = soa.charges_m_r_xBegin();
-	vcp_real_calc* const soa_charges_m_r_y = soa.charges_m_r_yBegin();
-	vcp_real_calc* const soa_charges_m_r_z = soa.charges_m_r_zBegin();
-	vcp_real_calc* const soa_charges_r_x = soa.charges_r_xBegin();
-	vcp_real_calc* const soa_charges_r_y = soa.charges_r_yBegin();
-	vcp_real_calc* const soa_charges_r_z = soa.charges_r_zBegin();
-	vcp_real_calc* const soa_charges_f_x = soa.charges_f_xBegin();
-	vcp_real_calc* const soa_charges_f_y = soa.charges_f_yBegin();
-	vcp_real_calc* const soa_charges_f_z = soa.charges_f_zBegin();
-	vcp_real_calc* const soa_charges_V_x = soa.charges_V_xBegin();
-	vcp_real_calc* const soa_charges_V_y = soa.charges_V_yBegin();
-	vcp_real_calc* const soa_charges_V_z = soa.charges_V_zBegin();
+	//for better readability:
+	constexpr ConcatenatedSites<vcp_real_calc>::SiteType CHARGE = ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE;
+	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
+	typedef CellDataSoA::QuantityType							QuantityType;
+
+	vcp_real_calc* const soa_charges_m_r_x = soa.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_m_r_y = soa.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_m_r_z = soa.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Z);
+	vcp_real_calc* const soa_charges_r_x = soa.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_r_y = soa.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_r_z = soa.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
+	vcp_real_calc* const soa_charges_f_x = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_f_y = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_f_z = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
+	vcp_real_calc* const soa_charges_V_x = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_V_y = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_V_z = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 
 	size_t iCharges = 0;
 	// For each molecule iterate over all its centers.
@@ -190,12 +195,17 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
-	vcp_real_calc* const soa_charges_f_x = soa.charges_f_xBegin();
-	vcp_real_calc* const soa_charges_f_y = soa.charges_f_yBegin();
-	vcp_real_calc* const soa_charges_f_z = soa.charges_f_zBegin();
-	vcp_real_calc* const soa_charges_V_x = soa.charges_V_xBegin();
-	vcp_real_calc* const soa_charges_V_y = soa.charges_V_yBegin();
-	vcp_real_calc* const soa_charges_V_z = soa.charges_V_zBegin();
+	//for better readability:
+	constexpr ConcatenatedSites<vcp_real_calc>::SiteType CHARGE = ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE;
+	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
+	typedef CellDataSoA::QuantityType							QuantityType;
+
+	vcp_real_calc* const soa_charges_f_x = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_f_y = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_f_z = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
+	vcp_real_calc* const soa_charges_V_x = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_V_y = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_V_z = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
@@ -301,31 +311,36 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
 	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
+	//for better readability:
+	constexpr ConcatenatedSites<vcp_real_calc>::SiteType CHARGE = ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE;
+	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
+	typedef CellDataSoA::QuantityType							QuantityType;
+
 	// Pointer for charges
-	const vcp_real_calc * const soa1_charges_r_x = soa1.charges_r_xBegin();
-	const vcp_real_calc * const soa1_charges_r_y = soa1.charges_r_yBegin();
-	const vcp_real_calc * const soa1_charges_r_z = soa1.charges_r_zBegin();
-	      vcp_real_calc * const soa1_charges_f_x = soa1.charges_f_xBegin();
-	      vcp_real_calc * const soa1_charges_f_y = soa1.charges_f_yBegin();
-	      vcp_real_calc * const soa1_charges_f_z = soa1.charges_f_zBegin();
-	      vcp_real_calc * const soa1_charges_V_x = soa1.charges_V_xBegin();
-	      vcp_real_calc * const soa1_charges_V_y = soa1.charges_V_yBegin();
-	      vcp_real_calc * const soa1_charges_V_z = soa1.charges_V_zBegin();
+	const vcp_real_calc * const soa1_charges_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa1_charges_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa1_charges_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa1_charges_f_x = soa1.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa1_charges_f_y = soa1.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa1_charges_f_z = soa1.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa1_charges_V_x = soa1.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa1_charges_V_y = soa1.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa1_charges_V_z = soa1.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
-	const vcp_real_calc * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
-	const vcp_real_calc * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
-	const vcp_real_calc * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
-	const vcp_real_calc * const soa2_charges_r_x   = soa2.charges_r_xBegin();
-	const vcp_real_calc * const soa2_charges_r_y   = soa2.charges_r_yBegin();
-	const vcp_real_calc * const soa2_charges_r_z   = soa2.charges_r_zBegin();
-	      vcp_real_calc * const soa2_charges_f_x   = soa2.charges_f_xBegin();
-	      vcp_real_calc * const soa2_charges_f_y   = soa2.charges_f_yBegin();
-	      vcp_real_calc * const soa2_charges_f_z   = soa2.charges_f_zBegin();
-	      vcp_real_calc * const soa2_charges_V_x   = soa2.charges_V_xBegin();
-	      vcp_real_calc * const soa2_charges_V_y   = soa2.charges_V_yBegin();
-	      vcp_real_calc * const soa2_charges_V_z   = soa2.charges_V_zBegin();
+	const vcp_real_calc * const soa2_charges_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa2_charges_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa2_charges_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Z);
+	const vcp_real_calc * const soa2_charges_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa2_charges_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa2_charges_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa2_charges_f_x = soa2.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa2_charges_f_y = soa2.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa2_charges_f_z = soa2.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
+		  vcp_real_calc * const soa2_charges_V_x = soa2.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+		  vcp_real_calc * const soa2_charges_V_y = soa2.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+		  vcp_real_calc * const soa2_charges_V_z = soa2.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;

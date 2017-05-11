@@ -20,7 +20,7 @@
 #include "utils/Logger.h"
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>

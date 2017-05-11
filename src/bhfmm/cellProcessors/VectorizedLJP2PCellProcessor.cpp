@@ -243,31 +243,36 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
 	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
+	//for better readability:
+	constexpr ConcatenatedSites<vcp_real_calc>::SiteType LJC = ConcatenatedSites<vcp_real_calc>::SiteType::LJC;
+	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
+	typedef CellDataSoA::QuantityType							QuantityType;
+
 	// Pointer for LJ centers
-	const vcp_real_calc * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
-	const vcp_real_calc * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
-	const vcp_real_calc * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
-	      vcp_real_calc * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
-	      vcp_real_calc * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
-	      vcp_real_calc * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
-	      vcp_real_calc * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
-	      vcp_real_calc * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
-	      vcp_real_calc * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
+	const vcp_real_calc * const soa1_ljc_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa1_ljc_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa1_ljc_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa1_ljc_f_x = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::X);
+	      vcp_real_calc * const soa1_ljc_f_y = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa1_ljc_f_z = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa1_ljc_V_x = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::X);
+	      vcp_real_calc * const soa1_ljc_V_y = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa1_ljc_V_z = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Z);
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
-	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
-	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
-	const vcp_real_calc * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
-	const vcp_real_calc * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
-	const vcp_real_calc * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
-	      vcp_real_calc * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
-	      vcp_real_calc * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
-	      vcp_real_calc * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
-	      vcp_real_calc * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
-	      vcp_real_calc * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
-	      vcp_real_calc * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
+	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z);
+	const vcp_real_calc * const soa2_ljc_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa2_ljc_f_x = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::X);
+	      vcp_real_calc * const soa2_ljc_f_y = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa2_ljc_f_z = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa2_ljc_V_x = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::X);
+	      vcp_real_calc * const soa2_ljc_V_y = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa2_ljc_V_z = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Z);
 	const vcp_ljc_id_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;

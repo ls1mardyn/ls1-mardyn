@@ -50,7 +50,7 @@ void SysMonOutput::doOutput(ParticleContainer* /*particleContainer*/, DomainDeco
 		SysMon* sysmon = SysMon::getSysMon();
 		sysmon->updateExpressionValues();
 		ostringstream oss;
-		oss << "System Monitor ( simulation step " << simstep << ")" << endl;
+		oss << "System Monitor (simulation step " << simstep << ")" << endl;
 		global_log->info() << sysmon->InfoString(oss.str(),"\t");
 	}
 }

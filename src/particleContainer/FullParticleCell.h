@@ -61,25 +61,25 @@ public:
 	~FullParticleCell();
 
 	//! removes and deallocates all elements
-	void deallocateAllParticles();
+	void deallocateAllParticles() override;
 
 	//! insert a single molecule into this cell
-	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false);
+	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) override;
 
-	Molecule& moleculesAt(size_t i) {
+	Molecule& moleculesAt(size_t i) override{
 		return _molecules.at(i);
 	}
 
-	const Molecule& moleculesAtConst(size_t i) const {
+	const Molecule& moleculesAtConst(size_t i) const override{
 		return _molecules.at(i);
 	}
 
-	bool isEmpty() const;
+	bool isEmpty() const override;
 
-	bool deleteMoleculeByIndex(size_t index);
+	bool deleteMoleculeByIndex(size_t index) override;
 
 	//! return the number of molecules contained in this cell
-	int getMoleculeCount() const;
+	int getMoleculeCount() const override;
 
 	/**
 	 * \brief Get the structure of arrays for VectorizedCellProcessor.
@@ -89,35 +89,33 @@ public:
 		return _cellDataSoA;
 	}
 
-	bool testPointInCell(const double point[3]) const {
-		return _boxMin[0] <= point[0] && _boxMin[1] <= point[1] && _boxMin[2] <= point[2] &&
-				point[0] < _boxMax[0] && point[1] < _boxMax[1] && point[2] < _boxMax[2];
-	}
-
-	bool testInBox(const Molecule& particle) const {
-		return particle.inBox(_boxMin, _boxMax);
-	}
 	/**
 	 * filter molecules which have left the box
 	 * @return field vector containing leaving molecules
 	 */
 	//std::vector<Molecule> & filterLeavingMolecules();
-	void preUpdateLeavingMolecules();
+	void preUpdateLeavingMolecules() override;
 
-	void updateLeavingMoleculesBase(ParticleCellBase& otherCell);
+	void updateLeavingMoleculesBase(ParticleCellBase& otherCell) override;
+
+	void postUpdateLeavingMolecules() override;
+
+	void getRegion(double lowCorner[3], double highCorner[3],
+			std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false) override;
+
+	void buildSoACaches() override;
+
+	void reserveMoleculeStorage(size_t numMols) override;
+
+	virtual size_t getMoleculeVectorDynamicSize() const override {
+		return _molecules.size() * sizeof(Molecule) + _leavingMolecules.size() * sizeof(Molecule);
+	}
+
+private:
 
 	void updateLeavingMolecules(FullParticleCell& otherCell);
 
-	void postUpdateLeavingMolecules();
 
-	void getRegion(double lowCorner[3], double highCorner[3],
-			std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
-
-	void buildSoACaches();
-
-	void reserveMoleculeStorage(size_t numMols);
-
-private:
 	/**
 	 * \brief A vector of pointers to the Molecules in this cell.
 	 */

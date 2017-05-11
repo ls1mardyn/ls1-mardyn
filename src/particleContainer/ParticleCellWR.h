@@ -16,31 +16,31 @@ public:
 	ParticleCell_WR();
 	~ParticleCell_WR();
 
-	void deallocateAllParticles();
+	void deallocateAllParticles() override;
 
-	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false);
+	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) override;
 
-	Molecule& moleculesAt(size_t i);
+	Molecule& moleculesAt(size_t i) override;
 
-	const Molecule& moleculesAtConst(size_t i) const;
+	const Molecule& moleculesAtConst(size_t i) const override;
 
-	bool isEmpty() const;
+	bool isEmpty() const override;
 
-	bool deleteMoleculeByIndex(size_t index);
+	bool deleteMoleculeByIndex(size_t index) override;
 
-	int getMoleculeCount() const;
+	int getMoleculeCount() const override;
 
-	void preUpdateLeavingMolecules() {}
+	void preUpdateLeavingMolecules() override {}
 
-	void updateLeavingMoleculesBase(ParticleCellBase& otherCell);
+	void updateLeavingMoleculesBase(ParticleCellBase& otherCell) override ;
 
-	void postUpdateLeavingMolecules() {}
+	void postUpdateLeavingMolecules() override {}
 
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false) override;
 
-	void buildSoACaches() {}
+	void buildSoACaches() override {}
 
-	void reserveMoleculeStorage(size_t numMols);
+	void reserveMoleculeStorage(size_t numMols) override;
 
 	int countInRegion(double lowCorner[3], double highCorner[3]) const;
 
@@ -49,6 +49,8 @@ public:
 	void swapMolecules(int i, ParticleCell_WR& other, int j);
 
 	CellDataSoA_WR & getCellDataSoA() {return _cellDataSoA_WR;}
+
+	virtual size_t getMoleculeVectorDynamicSize() const override {return 0;}
 
 private:
 	/**

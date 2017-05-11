@@ -99,15 +99,15 @@ double FlopCounter::_Counts::process() const {
 	using std::endl;
 	using Log::global_log;
 
-	global_log->info() << " Molecule distance: " << getMoleculeDistanceFlops() << endl;
-	global_log->info() << " Center distance: " << getCenterDistanceFlops() << endl;
+//	global_log->info() << " Molecule distance: " << getMoleculeDistanceFlops() << endl;
+//	global_log->info() << " Center distance: " << getCenterDistanceFlops() << endl;
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {
 		std::string str = _potCounts[i].printNameKernelAndMacroFlops();
-		if(str.length() > 0) global_log->info() << str;
+//		if(str.length() > 0) global_log->info() << str;
 	}
-	global_log->info() << " Force/Torque Sum: " << getForceTorqueSumFlops() << endl;
-	global_log->info() << " Macroscopic value sum: " << getMacroValueSumFlops() << endl;
-	global_log->info() << "Total: " << getTotalFlops() << endl;
+//	global_log->info() << " Force/Torque Sum: " << getForceTorqueSumFlops() << endl;
+//	global_log->info() << " Macroscopic value sum: " << getMacroValueSumFlops() << endl;
+//	global_log->info() << "Total: " << getTotalFlops() << endl;
 
 	return getTotalFlops();
 }
@@ -127,8 +127,7 @@ void FlopCounter::endTraversal() {
 		_currentCounts.allReduce();
 	}
 
-	Log::global_log->info()
-				<< "FLOP counts in force calculation for this iteration:" << std::endl;
+//	Log::global_log->info() << "FLOP counts in force calculation for this iteration:" << std::endl;
 	_totalFlopCount = _currentCounts.process();
 
 //	_totalCounts.addCounts(_currentCounts);

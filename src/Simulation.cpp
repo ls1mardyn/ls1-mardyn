@@ -10,9 +10,6 @@
 #include <sstream>
 #include <string>
 
-#include "sys/types.h"
-#include "sys/sysinfo.h"
-
 #include "WrapOpenMP.h"
 
 #include "Common.h"
@@ -45,6 +42,7 @@
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
 #include "io/TimerProfiler.h"
+#include "io/MemoryProfiler.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -84,7 +82,11 @@ using namespace std;
 Simulation* global_simulation;
 
 Simulation::Simulation()
-	: _simulationTime(0),
+	:
+	_simulationTime(0),
+	_initSimulation(0),
+	_initCanonical(0),
+	_initGrandCanonical(0),
 	_initStatistics(0),
 	_ensemble(NULL),
 	_rdf(NULL),
@@ -107,7 +109,8 @@ Simulation::Simulation()
 	_flagsNEMD(0)
 {
 	_ensemble = new CanonicalEnsemble();
-
+	_memoryProfiler = new MemoryProfiler();
+	_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
 
     // NEMD features
     _driftControl = NULL;
@@ -556,6 +559,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "VectorizationTuner") {
 			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
 		}
+		else if(pluginname == "FlopRateWriter") {
+			outputPlugin = new FlopRateWriter(_cutoffRadius, _LJCutoffRadius);
+		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 			continue;
@@ -828,12 +834,15 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
 
+	_memoryProfiler->doOutput("without halo copies");
+
 	// temporary addition until MPI communication is parallelized with OpenMP
 	//we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
 	global_simulation->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 	updateParticleContainerAndDecomposition();
 	global_simulation->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 
+	_memoryProfiler->doOutput("with halo copies");
 
 #ifndef MARDYN_WR
 	global_log->info() << "Performing initial force calculation" << endl;
@@ -977,26 +986,6 @@ void Simulation::prepare_start() {
 	}
 }
 
-//returns size of cached memory in kB (0 if error occurs)
-unsigned long long getCachedSize(){
-	size_t MAXLEN=1024;
-	FILE *fp;
-	char buf[MAXLEN];
-	fp = fopen("/proc/meminfo", "r");
-	while (fgets(buf, MAXLEN, fp)) {
-		char *p1 = strstr(buf, "Cached:");
-		if (p1 != NULL) {
-			int colon = ':';
-			char *p1 = strchr(buf, colon)+1;
-			//std::cout << p1 << endl;
-			unsigned long long t = strtoull(p1, NULL, 10);
-			//std::cout << t << endl;
-			return t;
-		}
-	}
-	return 0;
-}
-
 void Simulation::simulate() {
 	global_log->info() << "Started simulation" << endl;
 
@@ -1062,15 +1051,7 @@ void Simulation::simulate() {
 		unsigned particleNoTest;
 #endif
 #endif
-	{
-		struct sysinfo memInfo;
-		sysinfo(&memInfo);
-		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
-		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
-				- getCachedSize()) / 1024;
-		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
-				<< usedMem * 100. / totalMem << "%)" << endl;
-	}
+	_memoryProfiler->doOutput();
 
 	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
 		// Too many particle exchanges in the first 10 simulation steps.
@@ -1091,6 +1072,7 @@ void Simulation::simulate() {
 
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
+		global_simulation->incrementTimerTimestepCounter();
 
 		computationTimer->start();
 
@@ -1646,15 +1628,7 @@ void Simulation::simulate() {
 	ioTimer->stop();
 	global_simulation->printTimers();
 	global_simulation->resetTimers();
-	{
-		struct sysinfo memInfo;
-		sysinfo(&memInfo);
-		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
-		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
-				- getCachedSize()) / 1024;
-		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
-				<< usedMem * 100. / totalMem << "%)" << endl;
-	}
+	_memoryProfiler->doOutput();
 	global_log->info() << endl;
 
 #if WITH_PAPI
@@ -1767,6 +1741,10 @@ void Simulation::setDomainDecomposition(DomainDecompBase* domainDecomposition) {
 	_domainDecomposition = domainDecomposition;
 }
 
+unsigned long Simulation::getTotalNumberOfMolecules() const {
+	return _domain->N();
+}
+
 /* FIXME: we should provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
 	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical - _initSimulation);
@@ -1822,7 +1800,7 @@ void Simulation::initialize() {
 	_profileOutputTimesteps = 12500;
 	_profileOutputPrefix = "out";
 	_collectThermostatDirectedVelocity = 100;
-	_initCanonical = 5000;
+	_initCanonical = _initSimulation + 1;  // default: simulate canonical (with Tfactor == 1.) from begin on!
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;
 	h = 0.0;

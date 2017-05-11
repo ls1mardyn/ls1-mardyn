@@ -12,6 +12,7 @@
 #include <cmath>
 #include <string>
 #include <map>
+#include <cstdint>
 
 #include "molecules/MoleculeForwardDeclaration.h"
 class Domain;
@@ -77,6 +78,10 @@ private:
 	Domain* _domain;
 	DomainDecompBase* _domainDecomposition;
 	
+	// write control
+	uint64_t _nStartWritingProfiles;
+	uint64_t _nWriteFreqProfiles;
+	uint64_t _nStopWritingProfiles;
 };
 
 

@@ -10,7 +10,7 @@
 
 #include "utils/TestWithSimulationSetup.h"
 
-class CheckpointRestartTest:public utils::TestWithSimulationSetup {
+class CheckpointRestartTest : public utils::TestWithSimulationSetup {
 
 	// declare testsuite inputFileTest
 	TEST_SUITE(CheckpointRestartTest);
