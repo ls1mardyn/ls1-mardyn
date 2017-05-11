@@ -29,7 +29,6 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/adapter/VCP1CLJWR.h"
-#include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 #include "integrators/ExplicitEuler.h"
@@ -86,7 +85,6 @@ Simulation::Simulation()
 	_moleculeContainer(NULL),
 	_particlePairsHandler(NULL),
 	_cellProcessor(NULL),
-	_flopCounter(NULL),
 	_domainDecomposition(nullptr),
 	_integrator(NULL),
 	_domain(NULL),
@@ -115,7 +113,6 @@ Simulation::~Simulation() {
 	delete _moleculeContainer;
 	delete _integrator;
 	delete _inputReader;
-	delete _flopCounter;
 	delete _FMM;
 	delete _ensemble;
 	delete _longRangeCorrection;
@@ -447,11 +444,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if(pluginname == "DecompWriter") {
 			outputPlugin = new DecompWriter();
-		}
-		else if(pluginname == "FLOPCounter") {
-			/** @todo  Make the Flop counter a real output plugin */
-			_flopCounter = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
-			continue;
 		}
 		else if(pluginname == "MmspdWriter") {
 			outputPlugin = new MmspdWriter();
@@ -816,11 +808,6 @@ void Simulation::prepare_start() {
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
-	/* If enabled count FLOP rate of LS1. */
-	if( NULL != _flopCounter ) {
-		_moleculeContainer->traverseCells(*_flopCounter);
-	}
-
     // clear halo
     global_log->info() << "Clearing halos" << endl;
     _moleculeContainer->deleteOuterParticles();
@@ -1095,6 +1082,9 @@ void Simulation::simulate() {
 			_loopCompTimeSteps ++;
 		}
 		computationTimer->start();
+
+		measureFLOPRate(_moleculeContainer, _simstep);
+
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
@@ -1374,14 +1364,6 @@ void Simulation::simulate() {
 		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer->get_global_papi_counter(i) << endl;
 	}
 #endif /* WITH_PAPI */
-
-	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
-	double elapsed_time = loopTimer->get_etime();
-	if(NULL != _flopCounter) {
-		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
-		global_log->info() << "FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
-		global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
-	}
 }
 
 void Simulation::output(unsigned long simstep) {
@@ -1564,4 +1546,26 @@ void Simulation::initialize() {
 	_longRangeCorrection = NULL;
         
         this->_mcav = map<unsigned, CavityEnsemble>();
+}
+
+OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
+	OutputBase * ret = nullptr;
+	for(auto& it : _outputPlugins) {
+		if(name.compare(it->getPluginName()) == 0) {
+			ret = it;
+		}
+	}
+	return ret;
+}
+
+void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
+	OutputBase * flopRateBase = getOutputPlugin("FlopRateWriter");
+	if (flopRateBase == nullptr) {
+		return;
+	}
+
+	FlopRateWriter * flopRateWriter = dynamic_cast<FlopRateWriter * >(flopRateBase);
+	mardyn_assert(flopRateWriter != nullptr);
+
+	flopRateWriter->measureFLOPS(cont, simstep);
 }

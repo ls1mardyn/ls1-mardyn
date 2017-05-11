@@ -490,8 +490,6 @@ private:
 	/** New cellhandler, which will one day replace the particlePairsHandler here completely. */
 	CellProcessor* _cellProcessor;
 
-	FlopCounter* _flopCounter;
-
 	/** Type of the domain decomposition */
 	DomainDecompType _domainDecompositionType;
 	/** module which handles the domain decomposition */
@@ -581,6 +579,10 @@ public:
 	std::string getName() {
 		return _programName;
 	}
+
+	OutputBase* getOutputPlugin(const std::string& name);
+
+	void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
 
 private:
 

@@ -49,6 +49,9 @@
 
 #include "molecules/MoleculeForwardDeclaration.h"
 
+class CellDataSoA;
+class CellDataSoA_WR;
+
 /**
  * \brief
  * \author Johannes Heckl
@@ -112,7 +115,13 @@ public:
 	double getMyFlopCount() const {
 		return _myFlopCount;
 	}
+
 private:
+	template<class ForcePolicy, bool CalculateMacroscopic>
+	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
+	template<class ForcePolicy, bool CalculateMacroscopic>
+	void _calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2);
+
 	void handlePair(const Molecule& Mi, const Molecule& Mj,
 			bool addMacro = true);
 

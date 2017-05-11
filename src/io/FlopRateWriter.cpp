@@ -45,7 +45,7 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-void FlopRateWriter::initOutput(ParticleContainer* particleContainer,
+void FlopRateWriter::initOutput(ParticleContainer* /*particleContainer*/,
 		DomainDecompBase* domainDecomp, Domain* domain) {
 
 	if(_writeToFile != true)
@@ -71,12 +71,7 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 		return;
 	}
 
-	FlopCounter flopCounter(_cutoffRadius, _LJCutoffRadius);
-
-	particleContainer->traverseCells(flopCounter);
-
-
-	double flops = flopCounter.getTotalFlopCount();
+	double flops = _flopCounter.getTotalFlopCount();
 
 	unsigned long numElapsedIterations = global_simulation->getTimerTimestepCounter();
 	double force_calculation_time = global_simulation->getTime("SIMULATION_FORCE_CALCULATION") / numElapsedIterations;
@@ -125,4 +120,11 @@ void FlopRateWriter::finishOutput(ParticleContainer* particleContainer,
 	_fileStream << "# \n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: contact@ls1-mardyn.de\n# \n# Phone: +49 631 205 3227\n# University of Kaiserslautern\n# Computational Molecular Engineering\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n";
 
 	_fileStream.close();
+}
+
+void FlopRateWriter::measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep) {
+	if(simstep % _writeFrequency != 0) {
+		return;
+	}
+	particleContainer->traverseCells(_flopCounter);
 }
