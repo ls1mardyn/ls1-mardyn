@@ -19,8 +19,8 @@ using Log::global_log;
 Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation)
 {
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
-
-	cutoff=cutoffLJ; 
+	_nWriteFreqProfiles = 1;
+	cutoff = cutoffLJ;
 	_domain = domain;
 	_domainDecomposition = domainDecomposition;
 	_particleContainer = particleContainer;
@@ -147,7 +147,7 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 
 	// write control
 	_nStartWritingProfiles = 0;
-	_nWriteFreqProfiles = 0;
+	_nWriteFreqProfiles = 1;
 	_nStopWritingProfiles = 0;
 	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
 	bool bRet2 = xmlconfig.getNodeValue("writecontrol/frequency", _nWriteFreqProfiles);
