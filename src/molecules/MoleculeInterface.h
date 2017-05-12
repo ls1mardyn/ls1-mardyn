@@ -11,10 +11,19 @@
 #include "molecules/Component.h"
 #include "molecules/Quaternion.h"
 #include "particleContainer/adapter/CellDataSoABase.h"
+#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include <array>
 
 class MoleculeInterface {
 public:
+	static std::array<vcp_real_calc, 3> convert_double_to_vcp_real_calc(const std::array<double,3>& v) {
+		std::array<vcp_real_calc, 3> ret;
+		for (int d = 0; d < 3; ++d) {
+			ret[d] = static_cast<vcp_real_calc>(v[d]);
+		}
+		return ret;
+	}
+
 	virtual ~MoleculeInterface();
 	virtual unsigned long id() const = 0;
 	virtual void setid(unsigned long id) = 0;

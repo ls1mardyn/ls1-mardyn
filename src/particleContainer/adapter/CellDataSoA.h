@@ -113,7 +113,7 @@ public:
 	/**
 	 * \brief	Add a set of LJC-data at position index
 	 */
-	void pushBackLJC(const size_t index, std::array<double,3> moleculePos, std::array<double,3> centerPos, vcp_ljc_id_t lookUpIndex) {
+	void pushBackLJC(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_ljc_id_t lookUpIndex) {
 		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::LJC, index);
 		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::LJC, index);
 		_ljc_id[index] = lookUpIndex;
@@ -122,7 +122,7 @@ public:
 	/**
 	 * \brief	Add a set of charge-data at position index
 	 */
-	void pushBackCharge(const size_t index, std::array<double,3> moleculePos, std::array<double,3> centerPos, vcp_real_calc charge) {
+	void pushBackCharge(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_real_calc charge) {
 		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::CHARGE, index);
 		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::CHARGE, index);
 		_charges_q[index] = charge;
@@ -131,8 +131,8 @@ public:
 	/**
 	 * \brief	Add a set of dipole-data at position index
 	 */
-	void pushBackDipole(const size_t index, std::array<double,3> moleculePos, std::array<double,3> centerPos,
-			vcp_real_calc dipoleMoment, std::array<double,3> orientation) {
+	void pushBackDipole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
+			vcp_real_calc dipoleMoment, std::array<vcp_real_calc,3> orientation) {
 		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::DIPOLE, index);
 		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::DIPOLE, index);
 		_dipoles_p[index] = dipoleMoment;
@@ -144,8 +144,8 @@ public:
 	/**
 	 * \brief	Add a set of quadrupole-data at position index
 	 */
-	void pushBackQuadrupole(const size_t index, std::array<double,3> moleculePos, std::array<double,3> centerPos,
-			vcp_real_calc quadrupoleMoment, std::array<double,3> orientation) {
+	void pushBackQuadrupole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
+			vcp_real_calc quadrupoleMoment, std::array<vcp_real_calc,3> orientation) {
 		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, index);
 		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, index);
 		_quadrupoles_m[index] = quadrupoleMoment;
