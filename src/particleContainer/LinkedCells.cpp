@@ -403,40 +403,7 @@ void LinkedCells::traverseNonInnermostCellsC08(CellProcessor& cellProcessor) {
 						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
 						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
+						traverseCellC08(baseIndex, cellProcessor);
 					}
 				}
 			}
@@ -452,40 +419,7 @@ void LinkedCells::traverseNonInnermostCellsC08(CellProcessor& cellProcessor) {
 						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
 						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
+						traverseCellC08(baseIndex, cellProcessor);
 					}
 				}
 			}
@@ -502,38 +436,7 @@ void LinkedCells::traverseNonInnermostCellsC08(CellProcessor& cellProcessor) {
 						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
 						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for (int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if (cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if (cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							} else {
-								if (!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								} else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
+						traverseCellC08(baseIndex, cellProcessor);
 					}
 				}
 			}
@@ -622,40 +525,7 @@ void LinkedCells::traversePartialInnermostCellsC08(CellProcessor& cellProcessor,
 						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
 						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
+						traverseCellC08(baseIndex, cellProcessor);
 					}
 				}
 			}
@@ -663,7 +533,7 @@ void LinkedCells::traversePartialInnermostCellsC08(CellProcessor& cellProcessor,
 	} // end pragma omp parallel
 }
 
-void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProcessor) {
+void LinkedCells::traverseCell(long int cellIndex, CellProcessor& cellProcessor) {
 
 	ParticleCell& currentCell = _cells[cellIndex];
 	if (currentCell.isInnerCell()) {
@@ -708,6 +578,42 @@ void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProc
 			}
 		}
 	} // if ( isBoundaryCell() )
+}
+
+void LinkedCells::traverseCellC08(const long int baseIndex, CellProcessor& cellProcessor) {
+	const int num_pairs = _cellPairOffsets.size();
+	for(int j = 0; j < num_pairs; ++j) {
+		pair<long int, long int> current_pair = _cellPairOffsets[j];
+
+		long int offset1 = current_pair.first;
+		long int cellIndex1 = baseIndex + offset1;
+		if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
+			continue;
+
+		long int offset2 = current_pair.second;
+		long int cellIndex2 = baseIndex + offset2;
+		if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
+			continue;
+
+		ParticleCell& cell1 = _cells[cellIndex1];
+		ParticleCell& cell2 = _cells[cellIndex2];
+
+		if(cell1.isHaloCell() and cell2.isHaloCell()) {
+			continue;
+		}
+
+		if(cellIndex1 == cellIndex2) {
+			cellProcessor.processCell(cell1);
+		}
+		else {
+			if(!cell1.isHaloCell()) {
+				cellProcessor.processCellPair(cell1, cell2);
+			}
+			else {
+				cellProcessor.processCellPair(cell2, cell1);
+			}
+		}
+	}
 }
 
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
@@ -765,40 +671,7 @@ void LinkedCells::traverseCellsC08(CellProcessor& cellProcessor) {
 				for (int y = startIndices[1]; y < _cellsPerDimension[1]-1; y += strides[1]) {
 					for (int x = startIndices[0]; x < _cellsPerDimension[0]-1; x += strides[0]) {
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
+						traverseCellC08(baseIndex, cellProcessor);
 					}
 				}
 			}

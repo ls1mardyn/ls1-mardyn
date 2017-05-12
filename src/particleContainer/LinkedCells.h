@@ -308,6 +308,13 @@ private:
 	 * @return
 	 */
 	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
+	/**
+	 * traverses single cell for the c08 traversals
+	 * @param cellIndex
+	 * @param cellProcessor
+	 * @return
+	 */
+	void traverseCellC08(long int baseIndex, CellProcessor& cellProcessor);
 
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
 
