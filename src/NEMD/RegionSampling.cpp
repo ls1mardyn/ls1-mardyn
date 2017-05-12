@@ -11,6 +11,9 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/FileUtils.h"
+#include "utils/xmlfileUnits.h"
+#include "NEMD/DistControl.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -22,7 +25,7 @@ using namespace std;
 // init static ID --> instance counting
 unsigned short SampleRegion::_nStaticID = 0;
 
-SampleRegion::SampleRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] )
+SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], double dUpperCorner[3] )
 	: CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
 	_bDiscretisationDoneProfiles(false),
 	_SamplingEnabledProfiles(false),
@@ -66,7 +69,7 @@ void SampleRegion::PrepareSubdivisionProfiles()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dBinWidthProfilesInit nor _nNumBinsProfiles was set correctly! Programm exit..." << endl;
+		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dBinWidthProfilesInit nor _nNumBinsProfiles was set correctly! Program exit..." << endl;
 		exit(-1);
 	}
 }
@@ -90,7 +93,7 @@ void SampleRegion::PrepareSubdivisionVDF()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Neither _dBinWidthVDFInit nor _nNumBinsVDF was set correctly! Programm exit..." << endl;
+		global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Neither _dBinWidthVDFInit nor _nNumBinsVDF was set correctly! Program exit..." << endl;
 		exit(-1);
 	}
 }
@@ -1594,6 +1597,216 @@ RegionSampling::RegionSampling(Domain* domain, DomainDecompBase* domainDecomp)
 
 RegionSampling::~RegionSampling()
 {
+}
+
+void RegionSampling::readXML(XMLfileUnits& xmlconfig)
+{
+	// add regions
+	uint32_t nRegID = 0;
+	uint32_t numRegions = 0;
+	XMLfile::Query query = xmlconfig.query("region");
+	numRegions = query.card();
+	global_log->info() << "RegionSampling: Number of sampling regions: " << numRegions << endl;
+	if(numRegions < 1) {
+		global_log->warning() << "RegionSampling: No region parameters specified. Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputRegionIter;
+	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
+	{
+		xmlconfig.changecurrentnode( outputRegionIter );
+		double lc[3];
+		double uc[3];
+		std::string strVal[3];
+		std::string strControlType;
+
+		// coordinates
+		xmlconfig.getNodeValue("coords/lcx", lc[0]);
+		xmlconfig.getNodeValue("coords/lcy", lc[1]);
+		xmlconfig.getNodeValue("coords/lcz", lc[2]);
+		xmlconfig.getNodeValue("coords/ucx", strVal[0]);
+		xmlconfig.getNodeValue("coords/ucy", strVal[1]);
+		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
+		// read upper corner
+		for(uint8_t d=0; d<3; ++d)
+			uc[d] = (strVal[d] == "box") ? GetDomain()->getGlobalLength(d) : atof(strVal[d].c_str() );
+
+		global_log->info() << "RegionSampling->region["<<nRegID<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << endl;
+		global_log->info() << "RegionSampling->region["<<nRegID<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
+
+		// add regions
+		SampleRegion* region = new SampleRegion(this, lc, uc);
+		this->AddRegion(region);
+
+		// observer mechanism
+		uint32_t refCoordsID[6] = {0, 0, 0, 0, 0, 0};
+		xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID[0]);
+		xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID[1]);
+		xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID[2]);
+		xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID[3]);
+		xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID[4]);
+		xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID[5]);
+
+		bool bIsObserver = (refCoordsID[0]+refCoordsID[1]+refCoordsID[2]+refCoordsID[3]+refCoordsID[4]+refCoordsID[5]) > 0;
+
+		if(true == bIsObserver)
+		{
+			region->PrepareAsObserver(refCoordsID);
+
+			if(global_simulation->GetDistControl() != NULL)
+				global_simulation->GetDistControl()->registerObserver(region);
+			else
+			{
+				global_log->error() << "RegionSampling->region["<<nRegID<<"]: Initialization of feature DistControl is needed before! Program exit..." << endl;
+				exit(-1);
+			}
+		}
+
+		// sampling modules
+		uint32_t nSamplingModuleID = 0;
+		uint32_t numSamplingModules = 0;
+		XMLfile::Query query = xmlconfig.query("sampling");
+		numSamplingModules = query.card();
+		global_log->info() << "RegionSampling->region["<<nRegID<<"]: Number of sampling modules: " << numSamplingModules << endl;
+		if(numRegions < 1) {
+			global_log->error() << "RegionSampling->region["<<nRegID<<"]: No sampling module parameters specified. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+//		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator outputSamplingIter;
+		for( outputSamplingIter = query.begin(); outputSamplingIter; outputSamplingIter++ )
+		{
+			xmlconfig.changecurrentnode( outputSamplingIter );
+			std::string strSamplingModuleType = "unknown";
+			xmlconfig.getNodeValue("@type", strSamplingModuleType);
+
+			if("profiles" == strSamplingModuleType)
+			{
+				// control
+				unsigned long initSamplingProfiles;
+				unsigned long writeFrequencyProfiles;
+				unsigned long stopSamplingProfiles;
+				xmlconfig.getNodeValue("control/start", initSamplingProfiles);
+				xmlconfig.getNodeValue("control/frequency", writeFrequencyProfiles);
+				xmlconfig.getNodeValue("control/stop", stopSamplingProfiles);
+				region->SetParamProfiles(initSamplingProfiles, writeFrequencyProfiles, stopSamplingProfiles);
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << initSamplingProfiles << endl;
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << writeFrequencyProfiles << endl;
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << stopSamplingProfiles << endl;
+
+				// subdivision of region
+				std::string strSubdivisionType;
+				if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
+				{
+					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+				if("number" == strSubdivisionType)
+				{
+					unsigned int nNumSlabs = 0;
+					if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
+					{
+						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << endl;
+						Simulation::exit(-1);
+					}
+					else
+					{
+						region->SetSubdivisionProfiles(nNumSlabs);
+						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
+					}
+				}
+				else if("width" == strSubdivisionType)
+				{
+					double dSlabWidth = 0.;
+					if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
+					{
+						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << endl;
+						Simulation::exit(-1);
+					}
+					else
+					{
+						region->SetSubdivisionProfiles(dSlabWidth);
+						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
+					}
+				}
+				else
+				{
+					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+			}
+			else if("VDF" == strSamplingModuleType)
+			{
+				// control
+				unsigned long initSamplingVDF;
+				unsigned long writeFrequencyVDF;
+				unsigned long stopSamplingVDF;
+				unsigned int nNumDiscreteStepsVDF;
+				double dVeloMax;
+				xmlconfig.getNodeValue("control/start", initSamplingVDF);
+				xmlconfig.getNodeValue("control/frequency", writeFrequencyVDF);
+				xmlconfig.getNodeValue("control/stop", stopSamplingVDF);
+				xmlconfig.getNodeValue("discretization/numclasses", nNumDiscreteStepsVDF);
+				xmlconfig.getNodeValue("discretization/maxvalue", dVeloMax);
+				region->SetParamVDF(initSamplingVDF, writeFrequencyVDF, stopSamplingVDF, nNumDiscreteStepsVDF, dVeloMax);
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << initSamplingVDF << endl;
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << writeFrequencyVDF << endl;
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << stopSamplingVDF << endl;
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Number of velocity classes: " << nNumDiscreteStepsVDF << endl;
+				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Max. velocity value: " << dVeloMax << endl;
+
+				// subdivision of region
+				std::string strSubdivisionType;
+				if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
+				{
+					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+				if("number" == strSubdivisionType)
+				{
+					unsigned int nNumSlabs = 0;
+					if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
+					{
+						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << endl;
+						Simulation::exit(-1);
+					}
+					else
+					{
+						region->SetSubdivisionVDF(nNumSlabs);
+						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
+					}
+				}
+				else if("width" == strSubdivisionType)
+				{
+					double dSlabWidth = 0.;
+					if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
+					{
+						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << endl;
+						Simulation::exit(-1);
+					}
+					else
+					{
+						region->SetSubdivisionVDF(dSlabWidth);
+						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
+					}
+				}
+				else
+				{
+					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+			}
+			else
+			{
+				global_log->error() << "RegionSampling->region["<<nRegID<<"]: Wrong attribute 'sampling@type', expected type='profiles|VDF'! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+		}
+
+		nRegID++;
+
+	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 }
 
 void RegionSampling::AddRegion(SampleRegion* region)

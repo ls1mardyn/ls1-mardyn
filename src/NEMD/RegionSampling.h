@@ -27,22 +27,24 @@ class RegionSampling;
 class SampleRegion : public CuboidRegionObs
 {
 public:
-	SampleRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] );
+	SampleRegion(RegionSampling* parent, double dLowerCorner[3], double dUpperCorner[3] );
 	~SampleRegion();
 
 	// set parameters
-	void SetParamProfiles( unsigned long initSamplingProfiles, unsigned long writeFrequencyProfiles)
+	void SetParamProfiles( unsigned long initSamplingProfiles, unsigned long writeFrequencyProfiles, unsigned long stopSamplingProfiles)
 	{
 		_initSamplingProfiles   = initSamplingProfiles;
 		_writeFrequencyProfiles = writeFrequencyProfiles;
+		_stopSamplingProfiles   = stopSamplingProfiles;
 		_SamplingEnabledProfiles = true;
 		_dInvertNumSamplesProfiles = 1. / ( (double)(_writeFrequencyProfiles) );  // needed for e.g. density profiles
 	}
-	void SetParamVDF( unsigned long initSamplingVDF, unsigned long writeFrequencyVDF,
+	void SetParamVDF( unsigned long initSamplingVDF, unsigned long writeFrequencyVDF, unsigned long stopSamplingVDF,
 					  unsigned int nNumDiscreteStepsVDF, double dVeloMax)
 	{
 		_initSamplingVDF       = initSamplingVDF;
 		_writeFrequencyVDF     = writeFrequencyVDF;
+		_stopSamplingVDF       = stopSamplingVDF;
 		_nNumDiscreteStepsVDF  = nNumDiscreteStepsVDF;
 		 _dVeloMax             = dVeloMax;
 		_SamplingEnabledVDF = true;
@@ -102,6 +104,7 @@ private:
 	// parameters
 	unsigned long _initSamplingProfiles;
 	unsigned long _writeFrequencyProfiles;
+	unsigned long _stopSamplingProfiles;
 	unsigned int _nNumBinsProfiles;
 
 	double  _dBinWidthProfiles;
@@ -164,6 +167,7 @@ private:
 	// parameters
 	unsigned long _initSamplingVDF;
 	unsigned long _writeFrequencyVDF;
+	unsigned long _stopSamplingVDF;
 	unsigned int _nNumBinsVDF;
 	unsigned int _nNumDiscreteStepsVDF;
 	double _dVeloMax;
@@ -212,7 +216,7 @@ private:
 	unsigned long** _veloDistrMatrixGlobal_ny_nvz;
 };
 
-
+class XMLfileUnits;
 class RegionSampling : public ControlInstance
 {
 public:
@@ -220,6 +224,7 @@ public:
 	~RegionSampling();
 
 	std::string GetShortName() {return "ReS";}
+	void readXML(XMLfileUnits& xmlconfig);
 	void AddRegion(SampleRegion* region);
 	int GetNumRegions() {return _vecSampleRegions.size();}
 	SampleRegion* GetSampleRegion(unsigned short nRegionID) {return _vecSampleRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1

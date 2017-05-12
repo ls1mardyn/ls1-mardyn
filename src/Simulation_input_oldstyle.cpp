@@ -1367,7 +1367,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 							inputfilestream >> nID >> initSamplingProfiles >> writeFrequencyProfiles >> strSubdivisionKey >> strSubdivisionVal;
 
 							SampleRegion* region = _regionSampling->GetSampleRegion(nID);
-							region->SetParamProfiles( initSamplingProfiles, writeFrequencyProfiles);
+							region->SetParamProfiles( initSamplingProfiles, writeFrequencyProfiles, 1000000000);
 
 							// subdivision of region
 							if("num" == strSubdivisionKey)
@@ -1401,7 +1401,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 							inputfilestream >> strSubdivisionKey >> strSubdivisionVal >> nNumDiscreteStepsVDF >> dVeloMax;
 
 							SampleRegion* region = _regionSampling->GetSampleRegion(nID);
-							region->SetParamVDF( initSamplingVDF, writeFrequencyVDF, nNumDiscreteStepsVDF, dVeloMax);
+							region->SetParamVDF( initSamplingVDF, writeFrequencyVDF, 1000000000, nNumDiscreteStepsVDF, dVeloMax);
 
 							// subdivision of region
 							if("num" == strSubdivisionKey)

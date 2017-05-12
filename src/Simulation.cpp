@@ -232,6 +232,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_distControl->readXML(xmlconfig);
 				_distControl->Init(_moleculeContainer);
 			}
+			else if(featureName == "RegionSampling") {
+				_regionSampling = new RegionSampling(_domain, _domainDecomposition);
+				_regionSampling->readXML(xmlconfig);
+			}
 			else {
 				global_log->error() << "Unknown NEMD feature: " <<  featureName << "! Program exit..." << endl;
 				Simulation::exit(-1);
@@ -962,6 +966,7 @@ void Simulation::prepare_start() {
     // Init control instances (data structures)
     if(NULL != _regionSampling)
     {
+    	_regionSampling->SetDomainDecomposition(_domainDecomposition);
     	_regionSampling->PrepareRegionSubdivisions();
         _regionSampling->Init();
     }
