@@ -183,13 +183,19 @@ public:
 
 	std::array<double, 3> site_d(unsigned int i) const { return emptyArray3(); }
 
-	std::array<double, 3> ljcenter_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> ljcenter_d(unsigned int i) const {
+		mardyn_assert(i == 0);
+		return r_arr();
+	}
 	std::array<double, 3> charge_d(unsigned int i) const { return emptyArray3(); }
 	std::array<double, 3> dipole_d(unsigned int i) const { return emptyArray3(); }
 	std::array<double, 3> quadrupole_d(unsigned int i) const { return emptyArray3(); }
 
 	std::array<double, 3> site_d_abs(unsigned int i) const { return emptyArray3(); }
-	std::array<double, 3> ljcenter_d_abs(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
+		mardyn_assert(i == 0);
+		return r_arr();
+	}
 	std::array<double, 3> charge_d_abs(unsigned int i) const { return emptyArray3(); }
 	std::array<double, 3> dipole_d_abs(unsigned int i) const { return emptyArray3(); }
 	std::array<double, 3> quadrupole_d_abs(unsigned int i) const { return emptyArray3(); }
@@ -204,12 +210,12 @@ public:
 	std::array<double, 3> quadrupole_F(unsigned int i) const { return emptyArray3(); }
 
 	void normalizeQuaternion() {}
-	std::array<double, 3> computeLJcenter_d(unsigned int i, double result[3]) const { return emptyArray3(); }
-	std::array<double, 3> computeCharge_d(unsigned int i, double result[3]) const { return emptyArray3(); }
-	std::array<double, 3> computeDipole_d(unsigned int i, double result[3]) const { return emptyArray3(); }
-	std::array<double, 3> computeQuadrupole_d(unsigned int i, double result[3]) const { return emptyArray3(); }
-	std::array<double, 3> computeDipole_e(unsigned int i, double result[3]) const { return emptyArray3(); }
-	std::array<double, 3> computeQuadrupole_e(unsigned int i, double result[3]) const { return emptyArray3(); }
+	std::array<double, 3> computeLJcenter_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> computeCharge_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> computeDipole_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> computeQuadrupole_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> computeDipole_e(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> computeQuadrupole_e(unsigned int i) const { return emptyArray3(); }
 
 	unsigned long totalMemsize() const {
 		//todo: check
