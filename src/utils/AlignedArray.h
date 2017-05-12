@@ -40,21 +40,21 @@ public:
 	 * \brief Construct an empty array.
 	 */
 	AlignedArray() :
-			_vec(0), _vec_ptr(&_vec) {
+			_vec(0) {
 	}
 
 	/**
 	 * \brief Construct an array of n elements.
 	 */
 	AlignedArray(size_t n) :
-			_vec(n), _vec_ptr(&_vec) {
+			_vec(n) {
 	}
 
 	/**
 	 * \brief Construct a copy of another AlignedArray.
 	 */
 	AlignedArray(const AlignedArray & a) :
-			_vec(a._vec), _vec_ptr(&_vec) {
+			_vec(a._vec) {
 	}
 
 	/**
@@ -124,8 +124,12 @@ public:
 	/**
 	 * \brief Implicit conversion into pointer to T.
 	 */
-	operator T*() const {
-		return _vec_ptr->data();
+	operator T*() {
+		return _vec.data();
+	}
+
+	operator const T*() const {
+		return _vec.data();
 	}
 
 	/**
@@ -156,7 +160,6 @@ public:
 protected:
 
 	std::vector<T, AlignedAllocator<T, alignment>> _vec;
-	std::vector<T, AlignedAllocator<T, alignment>>* _vec_ptr;
 
 };
 

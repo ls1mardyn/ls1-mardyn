@@ -84,7 +84,12 @@ public:
 	 * \tparam	coord	Choose the coordinate of the site you want
 	 * \return	Pointer to the first element of the data you requested
 	 */
-	vcp_inline vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) const {
+	vcp_inline vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) {
+		ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
+		return thisQuantity->getBeginPointer(st, coord);
+	}
+
+	vcp_inline const vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) const {
 		const ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
 		return thisQuantity->getBeginPointer(st, coord);
 	}
@@ -92,8 +97,8 @@ public:
 	/**
 	 * \brief	Get a triplet of data from a ConcatenatedSites at specific index
 	 */
-	vcp_inline std::array<vcp_real_calc, 3> getTriplet(QuantityType qt, SiteType st, size_t index) {
-		ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
+	vcp_inline std::array<vcp_real_calc, 3> getTriplet(QuantityType qt, SiteType st, size_t index) const {
+		const ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
 		return thisQuantity->getTriplet(st, index);
 	}
 
@@ -104,9 +109,6 @@ public:
 		ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
 		thisQuantity->setTriplet(t, st, index);
 	}
-
-//NOTE: We either have to convert at some point the given double[3] to std::array<double, 3> or not use std::array at all
-//		Currently std::array is not used, because we get double[3] from FullMolecule.cpp
 
 	/**
 	 * \brief	Add a set of LJC-data at position index

@@ -742,7 +742,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 	const int tid = mardyn_get_thread_num();
 	VLJCPThreadData &my_threadData = *_threadData[tid];
 
@@ -2584,8 +2584,8 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	FullParticleCell & full_c1 = downcastReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastReferenceFull(c2);
 
-	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
-	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
+	CellDataSoA& soa1 = full_c1.getCellDataSoA();
+	CellDataSoA& soa2 = full_c2.getCellDataSoA();
 	const bool c1Halo = full_c1.isHaloCell();
 	const bool c2Halo = full_c2.isHaloCell();
 

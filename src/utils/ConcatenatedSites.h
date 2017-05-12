@@ -49,7 +49,7 @@ public:
 	 * \tparam coord	Indicates which of the 3 coordinates one needs. Has to be a value as specified in enum CoordinateType
 	 * \return	Pointer to the first value of the data, as indicated by the parameters
 	 */
-	T* getBeginPointer (SiteType st, CoordinateType coord) const {
+	T* getBeginPointer (SiteType st, CoordinateType coord) {
 		T* returnPointer = nullptr;
 
 		switch (coord) {
@@ -79,6 +79,41 @@ public:
 		case SiteType::LJC:
 			/* no break */ ; /* ; needed to compile here */
 		}
+
+		return returnPointer;
+	}
+
+	const T* getBeginPointer (SiteType st, CoordinateType coord) const {
+		const T* returnPointer = nullptr;
+		size_t offset = 0;
+
+		switch (st) {
+		case SiteType::QUADRUPOLE:
+			offset += AlignedArray<T>::_round_up(_dipoles_num);
+			/* no break */
+		case SiteType::DIPOLE:
+			offset += AlignedArray<T>::_round_up(_charges_num);
+			/* no break */
+		case SiteType::CHARGE:
+			offset += AlignedArray<T>::_round_up(_ljc_num);
+			/* no break */
+		case SiteType::LJC:
+			/* no break */ ; /* ; needed to compile here */
+		}
+
+		switch (coord) {
+		case CoordinateType::X:
+			returnPointer = _data.xBegin() + offset;
+			break;
+		case CoordinateType::Y:
+			returnPointer = _data.yBegin() + offset;
+			break;
+		case CoordinateType::Z:
+			returnPointer = _data.zBegin() + offset;
+			break;
+		}
+
+		mardyn_assert(returnPointer != nullptr);
 
 		return returnPointer;
 	}

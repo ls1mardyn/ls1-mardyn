@@ -33,12 +33,19 @@ public:
 	AlignedArrayTriplet<vcp_real_calc> _mol_v;
 	AlignedArray<uint64_t> _mol_uid;
 
-	vcp_inline vcp_real_calc* r_xBegin()   const { return _mol_r.xBegin();}
-	vcp_inline vcp_real_calc* r_yBegin()   const { return _mol_r.yBegin();}
-	vcp_inline vcp_real_calc* r_zBegin()   const { return _mol_r.zBegin();}
-	vcp_inline vcp_real_calc* v_xBegin()   const { return _mol_v.xBegin();}
-	vcp_inline vcp_real_calc* v_yBegin()   const { return _mol_v.yBegin();}
-	vcp_inline vcp_real_calc* v_zBegin()   const { return _mol_v.zBegin();}
+	vcp_inline vcp_real_calc* r_xBegin() { return _mol_r.xBegin();}
+	vcp_inline vcp_real_calc* r_yBegin() { return _mol_r.yBegin();}
+	vcp_inline vcp_real_calc* r_zBegin() { return _mol_r.zBegin();}
+	vcp_inline vcp_real_calc* v_xBegin() { return _mol_v.xBegin();}
+	vcp_inline vcp_real_calc* v_yBegin() { return _mol_v.yBegin();}
+	vcp_inline vcp_real_calc* v_zBegin() { return _mol_v.zBegin();}
+
+	const vcp_inline vcp_real_calc* r_xBegin()   const { return _mol_r.xBegin();}
+	const vcp_inline vcp_real_calc* r_yBegin()   const { return _mol_r.yBegin();}
+	const vcp_inline vcp_real_calc* r_zBegin()   const { return _mol_r.zBegin();}
+	const vcp_inline vcp_real_calc* v_xBegin()   const { return _mol_v.xBegin();}
+	const vcp_inline vcp_real_calc* v_yBegin()   const { return _mol_v.yBegin();}
+	const vcp_inline vcp_real_calc* v_zBegin()   const { return _mol_v.zBegin();}
 
 	void resize(size_t molecules_arg) {
 		const bool allow_shrink = false; // TODO shrink at some point in the future

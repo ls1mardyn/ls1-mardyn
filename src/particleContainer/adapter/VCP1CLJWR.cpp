@@ -97,8 +97,8 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	ParticleCell_WR & cellWR1 = downcastReferenceWR(cell1);
 	ParticleCell_WR & cellWR2 = downcastReferenceWR(cell2);
 
-	const CellDataSoA_WR& soa1 = cellWR1.getCellDataSoA();
-	const CellDataSoA_WR& soa2 = cellWR2.getCellDataSoA();
+	CellDataSoA_WR& soa1 = cellWR1.getCellDataSoA();
+	CellDataSoA_WR& soa2 = cellWR2.getCellDataSoA();
 	const bool c1Halo = cellWR1.isHaloCell();
 	const bool c2Halo = cellWR2.isHaloCell();
 
@@ -228,7 +228,7 @@ inline void VCP1CLJ_WR::_loopBodyLJ(
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDataSoA_WR& soa2) {
+inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR& soa2) {
 
 	const int tid = mardyn_get_thread_num();
 	VCP1CLJWRThreadData &my_threadData = *_threadData[tid];
