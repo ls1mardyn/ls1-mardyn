@@ -29,6 +29,13 @@ public:
 		return component()->getLookUpId();
 	}
 	virtual double r(unsigned short d) const = 0;
+	std::array<double, 3> r_arr() const {
+		std::array<double, 3> ret;
+		for(int d=0; d < 3; ++d) {
+			ret[d] = r(d);
+		}
+		return ret;
+	}
 	virtual double v(unsigned short d) const = 0;
 	virtual double mass() const {
 		return component()->m();
@@ -40,6 +47,13 @@ public:
 	virtual void setq(Quaternion q)= 0;
 
 	virtual double D(unsigned short d) const = 0;
+	std::array<double, 3> D_arr() const {
+		std::array<double, 3> ret;
+		for (int d = 0; d < 3; ++d) {
+			ret[d] = D(d);
+		}
+		return ret;
+	}
 	virtual double M(unsigned short d) const = 0;
 	virtual double Vi(unsigned short d) const = 0;
 
@@ -99,12 +113,12 @@ public:
 	virtual std::array<double, 3> quadrupole_F(unsigned int i) const = 0;
 
 	virtual void normalizeQuaternion() = 0;
-	virtual void computeLJcenter_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeCharge_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeDipole_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeQuadrupole_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeDipole_e(unsigned int i, double result[3]) const = 0;
-	virtual void computeQuadrupole_e(unsigned int i, double result[3]) const = 0;
+	virtual std::array<double, 3> computeLJcenter_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeCharge_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeDipole_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeQuadrupole_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeDipole_e(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeQuadrupole_e(unsigned int i) const = 0;
 
 
 	virtual unsigned long totalMemsize() const = 0;

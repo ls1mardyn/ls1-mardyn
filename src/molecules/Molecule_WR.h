@@ -181,119 +181,35 @@ public:
 		return 0;
 	}
 
-	std::array<double, 3> site_d(unsigned int i) const {
-		mardyn_assert(i == 0);
-		std::array<double, 3> ret;
-		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
-		return ret;
-	}
+	std::array<double, 3> site_d(unsigned int i) const { return emptyArray3(); }
 
-	std::array<double, 3> ljcenter_d(unsigned int i) const {
-		mardyn_assert(i == 0);
-		std::array<double, 3> ret;
-		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
-		return ret;
-	}
-	std::array<double, 3> charge_d(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> dipole_d(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> quadrupole_d(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
+	std::array<double, 3> ljcenter_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> charge_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> dipole_d(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> quadrupole_d(unsigned int i) const { return emptyArray3(); }
 
-	std::array<double, 3> site_d_abs(unsigned int i) const {
-		mardyn_assert(i == 0);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
-		mardyn_assert(i == 0);
-		std::array<double, 3> ret;
-		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
-		return ret;
-	}
-	std::array<double, 3> charge_d_abs(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> dipole_d_abs(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> quadrupole_d_abs(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
+	std::array<double, 3> site_d_abs(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> ljcenter_d_abs(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> charge_d_abs(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> dipole_d_abs(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> quadrupole_d_abs(unsigned int i) const { return emptyArray3(); }
 
-	std::array<double, 3> dipole_e(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> quadrupole_e(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
+	std::array<double, 3> dipole_e(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> quadrupole_e(unsigned int i) const { return emptyArray3(); }
 
-	std::array<double, 3> site_F(unsigned int i) const {
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> ljcenter_F(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> charge_F(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> dipole_F(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
-	std::array<double, 3> quadrupole_F(unsigned int i) const {
-		mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
-		return ret;
-	}
+	std::array<double, 3> site_F(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> ljcenter_F(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> charge_F(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> dipole_F(unsigned int i) const { return emptyArray3(); }
+	std::array<double, 3> quadrupole_F(unsigned int i) const { return emptyArray3(); }
 
 	void normalizeQuaternion() {}
-	void computeLJcenter_d(unsigned int i, double result[3]) const {}
-	void computeCharge_d(unsigned int i, double result[3]) const {}
-	void computeDipole_d(unsigned int i, double result[3]) const {}
-	void computeQuadrupole_d(unsigned int i, double result[3]) const {}
-	void computeDipole_e(unsigned int i, double result[3]) const {}
-	void computeQuadrupole_e(unsigned int i, double result[3]) const {}
+	std::array<double, 3> computeLJcenter_d(unsigned int i, double result[3]) const { return emptyArray3(); }
+	std::array<double, 3> computeCharge_d(unsigned int i, double result[3]) const { return emptyArray3(); }
+	std::array<double, 3> computeDipole_d(unsigned int i, double result[3]) const { return emptyArray3(); }
+	std::array<double, 3> computeQuadrupole_d(unsigned int i, double result[3]) const { return emptyArray3(); }
+	std::array<double, 3> computeDipole_e(unsigned int i, double result[3]) const { return emptyArray3(); }
+	std::array<double, 3> computeQuadrupole_e(unsigned int i, double result[3]) const { return emptyArray3(); }
 
 	unsigned long totalMemsize() const {
 		//todo: check
@@ -364,6 +280,13 @@ public:
 	}
 
 private:
+	static std::array<double, 3> emptyArray3() {
+		mardyn_assert(false);
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
+	}
+
 	static void initStaticVars();
 
     static Component *_component;  /**< IDentification number of its component type */

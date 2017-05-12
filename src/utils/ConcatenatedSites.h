@@ -104,16 +104,6 @@ public:
 	}
 
 	/**
-	 * \brief	Add the value triplet X,Y,Z of SiteType st at position index
-	 * \note	Only difference to setTriplet() is, that this one takes a C-style array
-	 */
-	void addTriplet(double values[3], SiteType st, size_t index) {
-		getBeginPointer(st, CoordinateType::X)[index] = values[0];
-		getBeginPointer(st, CoordinateType::Y)[index] = values[1];
-		getBeginPointer(st, CoordinateType::Z)[index] = values[2];
-	}
-
-	/**
 	 * \brief 	Resize the ConcatenatedSites to have enough space for the given number of elements
 	 * \tparam ljc_num
 	 * \tparam charges

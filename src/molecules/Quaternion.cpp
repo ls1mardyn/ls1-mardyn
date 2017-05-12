@@ -20,7 +20,8 @@ void Quaternion::multiply_left(const Quaternion& q) {
 	m_qw = qw;
 }
 
-void Quaternion::rotate(const double d[3], double drot[3]) const {
+std::array<double, 3> Quaternion::rotate(const std::array<double, 3>& d) const {
+	std::array<double, 3> drot;
 	double ww = m_qw*m_qw;
 	double xx = m_qx*m_qx;
 	double yy = m_qy*m_qy;
@@ -37,10 +38,11 @@ void Quaternion::rotate(const double d[3], double drot[3]) const {
 	drot[1] = 2.*(wz+xy)*d[0] + (ww-xx+yy-zz)*d[1] + 2.*(yz-wx)*d[2];
 	//                                              1-2*(xx+yy)
 	drot[2] = 2.*(xz-wy)*d[0] + 2.*(wx+yz)*d[1] + (ww-xx-yy+zz)*d[2];
+	return drot;
 }
 
-void Quaternion::rotateinv(const double d[3], double drot[3]) const {
-	//cout<<"quat after "<<m_qw<<" "<<m_qx<<" "<<m_qy<<" "<<m_qz<<endl;
+std::array<double, 3> Quaternion::rotateinv(const std::array<double, 3>& d) const {
+	std::array<double, 3> drot;
 	double ww = m_qw*m_qw;
 	double xx = m_qx*m_qx;
 	double yy = m_qy*m_qy;
@@ -57,6 +59,7 @@ void Quaternion::rotateinv(const double d[3], double drot[3]) const {
 	drot[1] = 2.*(xy-wz)*d[0] + (ww-xx+yy-zz)*d[1] + 2.*(yz+wx)*d[2];
 	//                                              1-2*(xx+yy)
 	drot[2] = 2.*(xz+wy)*d[0] + 2.*(yz-wx)*d[1] + (ww-xx-yy+zz)*d[2];
+	return drot;
 }
 
 /*
@@ -68,7 +71,7 @@ void Quaternion::rotateinv(const double d[3], double drot[3]) const {
  }
  */
 
-void Quaternion::differentiate(const double w[3], Quaternion& dqdt) const {
+void Quaternion::differentiate(const std::array<double, 3>& w, Quaternion& dqdt) const {
 	dqdt.m_qw = .5 * ( -m_qx*w[0] - m_qy*w[1] - m_qz*w[2] );
 	dqdt.m_qx = .5 * (  m_qw*w[0] - m_qz*w[1] + m_qy*w[2] );
 	dqdt.m_qy = .5 * (  m_qz*w[0] + m_qw*w[1] - m_qx*w[2] );

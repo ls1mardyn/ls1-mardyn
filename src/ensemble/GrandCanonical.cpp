@@ -412,12 +412,11 @@ Molecule ChemicalPotential::loadMolecule() {
 					qtr[2] * qtrnorm, qtr[3] * qtrnorm);
 			tmp.setq(tqtr);
 
-			double D[3];
+			std::array<double,3> D;
 			double Dnorm = 0.0;
 			for (int d = 0; d < 3; d++)
 				D[d] = -0.5 + this->rndmomenta.rnd();
-			double w[3];
-			tqtr.rotateinv(D, w);
+			std::array<double, 3> w = tqtr.rotateinv(D);
 			double Iw2 = w[0] * w[0] * tmp.component()->I11()
 					+ w[1] * w[1] * tmp.component()->I22()
 					+ w[2] * w[2] * tmp.component()->I33();
