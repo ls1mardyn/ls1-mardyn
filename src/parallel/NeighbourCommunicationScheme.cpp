@@ -96,7 +96,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		removeRecvDuplicates |= (domainDecomp->getRank() == _neighbours[0][i].getRank());
 	}
 
-	double waitCounter = 1.0;
+	double waitCounter = 5.0;
 	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	while (not allDone) {
@@ -128,7 +128,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
-			waitCounter += 1.0;
+			waitCounter += 5.0;
 			for (int i = 0; i < numNeighbours; ++i) {
 				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
 					_neighbours[0][i].deadlockDiagnosticSendRecv();
@@ -246,7 +246,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 	bool allDone = false;
 	double startTime = MPI_Wtime();
 
-	double waitCounter = 1.0;
+	double waitCounter = 5.0;
 	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	while (not allDone) {
@@ -275,7 +275,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 					<< "IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
-			waitCounter += 1.0;
+			waitCounter += 5.0;
 			for (int i = 0; i < numNeighbours; ++i) {
 				_neighbours[d][i].deadlockDiagnosticSendRecv();
 			}

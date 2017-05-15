@@ -196,8 +196,8 @@ protected:
 	//! datatype is stored in the member variable _valuesType;
 	void setMPIType() {
 		int numblocks = _values.size();
-		int blocklengths[numblocks];
-		MPI_Aint disps[numblocks];
+		std::vector<int> blocklengths(numblocks);
+		std::vector<MPI_Aint> disps(numblocks);
 		int disp = 0;
 		for (int i = 0; i < numblocks; i++) {
 			blocklengths[i] = 1;
@@ -207,10 +207,10 @@ protected:
 		MPI_Datatype * startOfTypes = &(_types[0]);
 #if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
 		MPI_CHECK(
-				MPI_Type_create_struct(numblocks, blocklengths, disps,
+				MPI_Type_create_struct(numblocks, blocklengths.data(), disps.data(),
 						startOfTypes, &_agglomeratedType));
 #else
-		MPI_CHECK( MPI_Type_struct(numblocks, blocklengths, disps, startOfTypes, &_agglomeratedType) );
+		MPI_CHECK( MPI_Type_struct(numblocks, blocklengths.data(), disps.data(), startOfTypes, &_agglomeratedType) );
 #endif
 		MPI_CHECK(MPI_Type_commit(&_agglomeratedType));
 	}
@@ -237,13 +237,13 @@ protected:
 				MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes,
 						&combiner));
 
-		int arrayInts[numints];
-		MPI_Aint arrayAddr[numaddr];
-		MPI_Datatype arrayTypes[numtypes];
+		std::vector<int> arrayInts(numints);
+		std::vector<MPI_Aint> arrayAddr(numaddr);
+		std::vector<MPI_Datatype> arrayTypes(numtypes);
 
 		MPI_CHECK(
 				MPI_Type_get_contents(*dtype, numints, numaddr, numtypes,
-						arrayInts, arrayAddr, arrayTypes));
+						arrayInts.data(), arrayAddr.data(), arrayTypes.data()));
 
 		for (int i = 0; i < numtypes; i++) {
 			if (arrayTypes[i] == MPI_INT) {
