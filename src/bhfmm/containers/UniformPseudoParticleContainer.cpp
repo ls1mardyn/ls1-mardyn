@@ -546,7 +546,7 @@ int UniformPseudoParticleContainer::optimizeAllReduce(/*ParticleContainer* ljCon
 				*(global_simulation->getDomain()));
 	double minTime = pow(2,100);
 	int bestStopLevel = 1;
-	double timeArray[_globalLevel];
+	std::vector<double> timeArray(_globalLevel);
 	for(int stopLevel = 1; stopLevel <= _globalLevel + 1; stopLevel++){ //iterate over possible stopping level
 		_stopLevel = stopLevel;
 		if(_globalLevel >= 1 and not(_globalLevel == 1 and _fuseGlobalCommunication)){

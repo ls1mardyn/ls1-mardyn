@@ -1271,7 +1271,7 @@ double Domain::getGamma(unsigned id){
 
 void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition){
 	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
-	double _localGamma[numComp];
+	std::vector<double> _localGamma(numComp);
 	for (unsigned i=0; i<numComp; i++){
 		_localGamma[i]=0;
 	}

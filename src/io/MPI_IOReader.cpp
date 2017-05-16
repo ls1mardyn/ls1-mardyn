@@ -408,7 +408,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 	}
 
 	//read the number of particles which each cell contains
-	int globalNumParticlesPerCell[numCellsAndMolecules[0]];
+	std::vector<int> globalNumParticlesPerCell (numCellsAndMolecules[0]);
 
 	ret = MPI_Type_size(MPI_DOUBLE, &size);
 	if (ret != MPI_SUCCESS) {
@@ -422,14 +422,14 @@ unsigned long MPI_IOReader::readPhaseSpace(
 			handle_error(ret);
 		}
 
-		ret = MPI_File_read(fh, globalNumParticlesPerCell,
+		ret = MPI_File_read(fh, globalNumParticlesPerCell.data(),
 				numCellsAndMolecules[0], MPI_INT, &status);
 		if (ret != MPI_SUCCESS) {
 			handle_error(ret);
 		}
 	}
 
-	ret = MPI_Bcast(globalNumParticlesPerCell, numCellsAndMolecules[0],
+	ret = MPI_Bcast(globalNumParticlesPerCell.data(), numCellsAndMolecules[0],
 			MPI_INT, 0, MPI_COMM_WORLD);
 	if (ret != MPI_SUCCESS) {
 		handle_error(ret);
@@ -523,9 +523,9 @@ unsigned long MPI_IOReader::readPhaseSpace(
 			handle_error(ret);
 		}
 
-		ParticleData data[globalNumParticlesPerCell[index]];
+		std::vector<ParticleData> data(globalNumParticlesPerCell[index]);
 
-		ret = MPI_File_read(fh, data, globalNumParticlesPerCell[index],
+		ret = MPI_File_read(fh, data.data(), globalNumParticlesPerCell[index],
 				mpiParticleData, &status);
 		if (ret != MPI_SUCCESS) {
 			handle_error(ret);
@@ -624,15 +624,15 @@ unsigned long MPI_IOReader::readPhaseSpace(
 	}
 	*/
 
-	long numComponentMoleculesLocal[numcomponents];
-	long numComponentMoleculesGlobal[numcomponents];
+	std::vector<long> numComponentMoleculesLocal(numcomponents);
+	std::vector<long> numComponentMoleculesGlobal(numcomponents);
 
 	for (unsigned int i = 0; i < numcomponents; i++) {
 		numComponentMoleculesLocal[i] = dcomponents[i].getNumMolecules();
 		numComponentMoleculesGlobal[i] = 0;
 	}
 
-	MPI_Allreduce(numComponentMoleculesLocal, numComponentMoleculesGlobal,
+	MPI_Allreduce(numComponentMoleculesLocal.data(), numComponentMoleculesGlobal.data(),
 			numcomponents, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 
 	for (unsigned int i = 0; i < numcomponents; i++) {

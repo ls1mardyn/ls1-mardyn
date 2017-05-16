@@ -59,14 +59,14 @@ void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 	filenamestream << ".mmspd";
 
-	char filename[filenamestream.str().size()+1];
-	strcpy(filename,filenamestream.str().c_str());
+	std::vector<char> filename (filenamestream.str().size()+1);
+	strcpy(filename.data(),filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
 #endif
-	ofstream mmspdfstream(filename, ios::binary|ios::out);
+	ofstream mmspdfstream(filename.data(), ios::binary|ios::out);
 
   // format marker
   mmspdfstream << "MMSPDb";
@@ -185,8 +185,8 @@ void MmspdBinWriter::doOutput( ParticleContainer* particleContainer,
 		}
 		filenamestream << ".mmspd";
 		
-		char filename[filenamestream.str().size()+1];
-		strcpy(filename,filenamestream.str().c_str());
+		std::vector<char> filename(filenamestream.str().size()+1);
+		strcpy(filename.data(),filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
 		int rank = domainDecomp->getRank();
@@ -207,7 +207,7 @@ void MmspdBinWriter::doOutput( ParticleContainer* particleContainer,
 		}
 
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
 
 		for (int dest = rank+1; dest < numprocs; ++dest){
 			int sendcount = 1;

@@ -70,8 +70,8 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 		}
 		filenamestream << ".vis";
 		
-		char filename[filenamestream.str().size()+1];
-		strcpy(filename,filenamestream.str().c_str());
+		std::vector<char> filename(filenamestream.str().size()+1);
+		strcpy(filename.data(),filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
 		int rank = domainDecomp->getRank();
@@ -109,11 +109,11 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 		}
 		long outputsize = outputstream.str().size();
 
-		char output[outputsize+1];
-		strcpy(output,outputstream.str().c_str());
+		std::vector<char> output(outputsize+1);
+		strcpy(output.data(),outputstream.str().c_str());
 #ifdef ENABLE_MPI
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY|MPI_MODE_APPEND, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY|MPI_MODE_APPEND, MPI_INFO_NULL, &fh);
 
 		for (int dest = rank+1; dest < numprocs; dest++){
 			int sendcount = 1;
@@ -133,7 +133,7 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
 		MPI_Barrier(MPI_COMM_WORLD);
-		MPI_File_write(fh, output, outputsize, MPI_CHAR, &status);
+		MPI_File_write(fh, output.data(), outputsize, MPI_CHAR, &status);
 		MPI_File_close(&fh);
 #else
 		ofstream fileout(filename, ios::out|ios::app);

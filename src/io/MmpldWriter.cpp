@@ -167,8 +167,8 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	*/
 	filenamestream << ".mmpld";
 
-	char filename[filenamestream.str().size()+1];
-	strcpy(filename,filenamestream.str().c_str());
+	std::vector<char> filename(filenamestream.str().size()+1);
+	strcpy(filename.data(),filenamestream.str().c_str());
 
 	int rank = domainDecomp->getRank();
 #ifndef NDEBUG
@@ -180,7 +180,7 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 //	int rank = domainDecomp->getRank();
 	if (rank == 0){
 #endif
-	ofstream mmpldfstream(filename, ios::binary|ios::out);
+	ofstream mmpldfstream(filename.data(), ios::binary|ios::out);
 
 	//format marker
 	uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00};
@@ -275,8 +275,8 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	*/
 	filenamestream << ".mmpld";
 
-	char filename[filenamestream.str().size()+1];
-	strcpy(filename,filenamestream.str().c_str());
+	std::vector<char> filename(filenamestream.str().size()+1);
+	strcpy(filename.data(),filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -284,7 +284,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	unsigned long numberParticles = particleContainer->getNumberOfParticles();
 	long outputsize = 0;
 
-	uint64_t numSpheresPerType[_numSphereTypes];
+	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
 	for (uint8_t ti = 0; ti < _numSphereTypes; ++ti){
 		numSpheresPerType[ti] = 0;
 	}
@@ -292,34 +292,34 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	//calculate number of spheres per component|siteType
 	uint32_t molcid = 0;
 	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
-		this->CalcNumSpheresPerType(numSpheresPerType, &(*mol));
+		this->CalcNumSpheresPerType(numSpheresPerType.data(), &(*mol));
 
 	//distribute global component particle count
-	uint64_t globalNumCompSpheres[_numSphereTypes];
+	std::vector<uint64_t> globalNumCompSpheres(_numSphereTypes);
 	if (rank == 0){
 		for (uint32_t i = 0; i < _numSphereTypes; ++i){
 			globalNumCompSpheres[i] = numSpheresPerType[i];
 		}
 		MPI_Status status;
-		uint64_t numSpheresPerTypeTmp[_numSphereTypes];
+		std::vector<uint64_t> numSpheresPerTypeTmp(_numSphereTypes);
 		for (int source = rank+1; source < numprocs; ++source){
-			int recvcount = sizeof(numSpheresPerTypeTmp);
+			int recvcount = _numSphereTypes * sizeof(uint64_t);
 			int recvtag = 1;
-			MPI_Recv(numSpheresPerTypeTmp, recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
+			MPI_Recv(numSpheresPerTypeTmp.data(), recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
 			for (uint8_t ti = 0; ti < _numSphereTypes; ++ti)
 				globalNumCompSpheres[ti] = globalNumCompSpheres[ti] + numSpheresPerTypeTmp[ti];
 		}
 	}else{
-			int dest = 0;
-			int sendcount = sizeof(numSpheresPerType);
-			int sendtag = 1;
-			MPI_Request request;
-			MPI_Isend(numSpheresPerType, sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
+		int dest = 0;
+		int sendcount = numSpheresPerType.size() * sizeof(uint64_t);
+		int sendtag = 1;
+		MPI_Request request;
+		MPI_Isend(numSpheresPerType.data(), sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	MPI_File fh;
-	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
 
 
 	//write particle list for each component|site (sphere type)
@@ -498,15 +498,15 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 	*/
 	filenamestream << ".mmpld";
 
-	char filename[filenamestream.str().size()+1];
-	strcpy(filename,filenamestream.str().c_str());
+	std::vector<char> filename(filenamestream.str().size()+1);
+	strcpy(filename.data(),filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
 		
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_Offset endPosition;
 		MPI_File_get_position(fh, &endPosition);
@@ -523,7 +523,7 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_File_close(&fh);
 	}else{
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 		MPI_File_close(&fh);
 	}
 		
