@@ -24,6 +24,12 @@ if [ ! -f libMardyn.so ]; then
    echo "libMardyn not found. Compile first."
    exit
 fi
+make -f Makefile.droplet clean -j2
+make -f Makefile.cubic clean -j2
+make -f Makefile.aqueous clean -j2
+make -f Makefile.crystal clean -j2
+make -f Makefile.ms2 clean -j2
+make -f Makefile.rayleigh clean -j2
 make -f Makefile.droplet -j2
 make -f Makefile.cubic -j2
 make -f Makefile.aqueous -j2

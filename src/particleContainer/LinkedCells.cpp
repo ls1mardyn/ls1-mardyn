@@ -358,7 +358,7 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
+		global_log->error() << "Cell structure in LinkedCells (traverseNonInnermostCells) invalid, call update first" << endl;
 		Simulation::exit(1);
 	}
 
@@ -448,7 +448,7 @@ void LinkedCells::traverseNonInnermostCellsC08(CellProcessor& cellProcessor) {
 
 void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
 	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
+		global_log->error() << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << endl;
 		Simulation::exit(1);
 	}
 
