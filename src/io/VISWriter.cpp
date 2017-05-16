@@ -136,8 +136,8 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 		MPI_File_write(fh, output.data(), outputsize, MPI_CHAR, &status);
 		MPI_File_close(&fh);
 #else
-		ofstream fileout(filename, ios::out|ios::app);
-		fileout << output;
+		ofstream fileout(filename.data(), ios::out|ios::app);
+		fileout << output.data();
 		fileout.close();
 #endif
 	}
