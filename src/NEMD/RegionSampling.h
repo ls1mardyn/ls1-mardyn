@@ -20,6 +20,7 @@ enum RegionSamplingDimensions
 #include "utils/Region.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 
+class XMLfileUnits;
 class Domain;
 class DomainDecompBase;
 class RegionSampling;
@@ -30,12 +31,19 @@ public:
 	SampleRegion(RegionSampling* parent, double dLowerCorner[3], double dUpperCorner[3] );
 	~SampleRegion();
 
+	void readXML(XMLfileUnits& xmlconfig);
+
 	// set parameters
 	void SetParamProfiles( unsigned long initSamplingProfiles, unsigned long writeFrequencyProfiles, unsigned long stopSamplingProfiles)
 	{
 		_initSamplingProfiles   = initSamplingProfiles;
 		_writeFrequencyProfiles = writeFrequencyProfiles;
 		_stopSamplingProfiles   = stopSamplingProfiles;
+		_SamplingEnabledProfiles = true;
+		_dInvertNumSamplesProfiles = 1. / ( (double)(_writeFrequencyProfiles) );  // needed for e.g. density profiles
+	}
+	void SetParamProfiles()
+	{
 		_SamplingEnabledProfiles = true;
 		_dInvertNumSamplesProfiles = 1. / ( (double)(_writeFrequencyProfiles) );  // needed for e.g. density profiles
 	}
@@ -49,6 +57,7 @@ public:
 		 _dVeloMax             = dVeloMax;
 		_SamplingEnabledVDF = true;
 	}
+	void SetParamVDF() {_SamplingEnabledVDF = true;}
 
 	// subdivision
 	void SetSubdivisionProfiles(const unsigned int& nNumSlabs) {_nNumBinsProfiles = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
@@ -57,26 +66,32 @@ public:
 	void SetSubdivisionVDF(const double& dSlabWidth) {_dBinWidthVDFInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
 	void PrepareSubdivisionProfiles();  // need to be called before data structure allocation
 	void PrepareSubdivisionVDF();  		// need to be called before data structure allocation
+	void PrepareSubdivisionFieldYR();  	// need to be called before data structure allocation
 
 
 	// init sampling
 	void InitSamplingProfiles(int nDimension);
 	void InitSamplingVDF(int nDimension);
+	void InitSamplingFieldYR(int nDimension);
 	void DoDiscretisationProfiles(int nDimension);
 	void DoDiscretisationVDF(int nDimension);
+	void DoDiscretisationFieldYR(int nDimension);
 
 	// molecule container loop methods
 	void SampleProfiles(Molecule* molecule, int nDimension);
 	void SampleVDF(Molecule* molecule, int nDimension);
+	void SampleFieldYR(Molecule* molecule);
 
 	// calc global values
 	void CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Domain* domain);
 	void CalcGlobalValuesVDF();
+	void CalcGlobalValuesFieldYR(DomainDecompBase* domainDecomp, Domain* domain);
 
 	// output
 	void WriteDataProfilesOld(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
 	void WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
 	void WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long simstep);
+	void WriteDataFieldYR(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
 
 	void UpdateSlabParameters();
 
@@ -85,6 +100,7 @@ private:
 	void ResetLocalValuesProfiles();
 	void ResetOutputDataProfiles();
 	void ResetLocalValuesVDF();
+	void ResetLocalValuesFieldYR();
 
 private:
 
@@ -214,6 +230,47 @@ private:
 	unsigned long** _veloDistrMatrixGlobal_ny_nvx;
 	unsigned long** _veloDistrMatrixGlobal_ny_nvy;
 	unsigned long** _veloDistrMatrixGlobal_ny_nvz;
+
+
+	// --- fieldYR ---
+
+	// control
+	bool _bDiscretisationDoneFieldYR;
+	bool _SamplingEnabledFieldYR;
+	int _nSubdivisionOptFieldYR_Y;
+	int _nSubdivisionOptFieldYR_R;
+
+	// parameters
+	uint64_t _initSamplingFieldYR;
+	uint64_t _writeFrequencyFieldYR;
+	uint64_t _stopSamplingFieldYR;
+	uint32_t _nNumBinsFieldYR;
+	uint32_t _nNumShellsFieldYR;
+	double  _dBinWidthInitFieldYR;
+	double  _dShellWidthInitFieldYR;
+
+	double  _dBinWidthFieldYR;
+	double  _dShellWidthFieldYR;
+	double  _dShellWidthSquaredFieldYR;
+	double* _dBinMidpointsFieldYR;
+	double* _dShellMidpointsFieldYR;
+	double* _dShellVolumesFieldYR;
+	double* _dInvShellVolumesFieldYR;
+	// equal shell volumes
+	double _dShellVolumeFieldYR;
+	double _dInvShellVolumeFieldYR;
+
+	// offsets
+	uint64_t**** _nOffsetFieldYR;  // [dimension x|y|z][component][section][positionR], dimension = 0 for scalar values, section: 0: all, 1: upper, 2: lower section
+	uint64_t _nNumValsFieldYR;
+
+	// Scalar quantities
+	// [component][section][positionR][positionY]
+	uint64_t* _nNumMoleculesFieldYRLocal;
+	uint64_t* _nNumMoleculesFieldYRGlobal;
+
+	// output profiles
+	double* _dDensityFieldYR;
 };
 
 class XMLfileUnits;

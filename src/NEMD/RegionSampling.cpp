@@ -17,8 +17,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <cmath>
 #include <limits>
+#include <cmath>
+#include <cstdint>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 using namespace std;
 
@@ -30,7 +35,11 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	_bDiscretisationDoneProfiles(false),
 	_SamplingEnabledProfiles(false),
 	_bDiscretisationDoneVDF(false),
-	_SamplingEnabledVDF(false)
+	_SamplingEnabledVDF(false),
+	_bDiscretisationDoneFieldYR(false),
+	_SamplingEnabledFieldYR(false),
+	_nSubdivisionOptFieldYR_Y(SDOPT_UNKNOWN),
+	_nSubdivisionOptFieldYR_R(SDOPT_UNKNOWN)
 {
 	_nID = ++_nStaticID;
 	_nSubdivisionOpt = SDOPT_UNKNOWN;
@@ -48,6 +57,228 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 
 SampleRegion::~SampleRegion()
 {
+}
+
+void SampleRegion::readXML(XMLfileUnits& xmlconfig)
+{
+	// sampling modules
+	uint32_t nSamplingModuleID = 0;
+	uint32_t numSamplingModules = 0;
+	XMLfile::Query query = xmlconfig.query("sampling");
+	numSamplingModules = query.card();
+	global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of sampling modules: " << numSamplingModules << endl;
+	if(numSamplingModules < 1) {
+		global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No sampling module parameters specified. Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+//		string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputSamplingIter;
+	for( outputSamplingIter = query.begin(); outputSamplingIter; outputSamplingIter++ )
+	{
+		xmlconfig.changecurrentnode( outputSamplingIter );
+		std::string strSamplingModuleType = "unknown";
+		xmlconfig.getNodeValue("@type", strSamplingModuleType);
+
+		if("profiles" == strSamplingModuleType)
+		{
+			// enable profile sampling
+			_SamplingEnabledProfiles = true;
+			// control
+			xmlconfig.getNodeValue("control/start", _initSamplingProfiles);
+			xmlconfig.getNodeValue("control/frequency", _writeFrequencyProfiles);
+			xmlconfig.getNodeValue("control/stop", _stopSamplingProfiles);
+			this->SetParamProfiles();
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << _initSamplingProfiles << endl;
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << _writeFrequencyProfiles << endl;
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << _stopSamplingProfiles << endl;
+
+			// subdivision of region
+			std::string strSubdivisionType;
+			if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
+			{
+				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+			if("number" == strSubdivisionType)
+			{
+				unsigned int nNumSlabs = 0;
+				if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
+				{
+					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+				else
+				{
+					this->SetSubdivisionProfiles(nNumSlabs);
+					global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
+				}
+			}
+			else if("width" == strSubdivisionType)
+			{
+				double dSlabWidth = 0.;
+				if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
+				{
+					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+				else
+				{
+					this->SetSubdivisionProfiles(dSlabWidth);
+					global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
+				}
+			}
+			else
+			{
+				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+		}
+		else if("VDF" == strSamplingModuleType)
+		{
+			// enable VDF sampling
+			_SamplingEnabledVDF = true;
+			// control
+			xmlconfig.getNodeValue("control/start", _initSamplingVDF);
+			xmlconfig.getNodeValue("control/frequency", _writeFrequencyVDF);
+			xmlconfig.getNodeValue("control/stop", _stopSamplingVDF);
+			xmlconfig.getNodeValue("discretization/numclasses", _nNumDiscreteStepsVDF);
+			xmlconfig.getNodeValue("discretization/maxvalue", _dVeloMax);
+			this->SetParamVDF();
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << _initSamplingVDF << endl;
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << _writeFrequencyVDF << endl;
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << _stopSamplingVDF << endl;
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Number of velocity classes: " << _nNumDiscreteStepsVDF << endl;
+			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Max. velocity value: " << _dVeloMax << endl;
+
+			// subdivision of region
+			std::string strSubdivisionType;
+			if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
+			{
+				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+			if("number" == strSubdivisionType)
+			{
+				unsigned int nNumSlabs = 0;
+				if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
+				{
+					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+				else
+				{
+					this->SetSubdivisionVDF(nNumSlabs);
+					global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
+				}
+			}
+			else if("width" == strSubdivisionType)
+			{
+				double dSlabWidth = 0.;
+				if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
+				{
+					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+				else
+				{
+					this->SetSubdivisionVDF(dSlabWidth);
+					global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
+				}
+			}
+			else
+			{
+				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+		}
+		else if("fieldYR" == strSamplingModuleType)
+		{
+			// enable fieldYR sampling
+			_SamplingEnabledFieldYR = true;
+			bool bInputIsValid = true;
+			// control
+			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/start", _initSamplingFieldYR);
+			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/frequency", _writeFrequencyFieldYR);
+			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/stop", _stopSamplingFieldYR);
+			if(true == bInputIsValid)
+			{
+				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << _initSamplingFieldYR << endl;
+				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << _writeFrequencyFieldYR << endl;
+				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << _stopSamplingFieldYR << endl;
+			}
+			else
+			{
+				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters of element: 'control' corrupted! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+
+			// subdivision of region
+			uint32_t numSubdivisions = 0;
+			XMLfile::Query query = xmlconfig.query("subdivision");
+			numSubdivisions = query.card();
+			if(numSubdivisions != 2) {
+				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Found " << numSubdivisions << " 'subdivision' elements, "
+						"expected: 2. Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			string oldpath = xmlconfig.getcurrentnodepath();
+			XMLfile::Query::const_iterator outputSubdivisionIter;
+			for( outputSubdivisionIter = query.begin(); outputSubdivisionIter; outputSubdivisionIter++ )
+			{
+				xmlconfig.changecurrentnode( outputSubdivisionIter );
+				bInputIsValid = true;
+				std::string strSubdivisionType;
+				std::string strSubdivisionDim;
+				bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("@dim", strSubdivisionDim);
+				if("y" == strSubdivisionDim)
+				{
+					bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("@type", strSubdivisionType);
+					if("number" == strSubdivisionType) {
+						_nSubdivisionOptFieldYR_Y = SDOPT_BY_NUM_SLABS;
+						bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("number", _nNumBinsFieldYR);
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision 'y' by '"<< strSubdivisionType << "': " << _nNumBinsFieldYR << endl;
+					}
+					else if("width" == strSubdivisionType) {
+						_nSubdivisionOptFieldYR_Y = SDOPT_BY_SLAB_WIDTH;
+						bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("width", _dBinWidthInitFieldYR);
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision 'y' by '"<< strSubdivisionType << "': " << _dBinWidthInitFieldYR << endl;
+					}
+					else
+						bInputIsValid = false;
+				}
+				else if("r" == strSubdivisionDim)
+				{
+					bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("@type", strSubdivisionType);
+					if("number" == strSubdivisionType) {
+						_nSubdivisionOptFieldYR_R = SDOPT_BY_NUM_SLABS;
+						bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("number", _nNumShellsFieldYR);
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision 'r' by '"<< strSubdivisionType << "': " << _nNumShellsFieldYR << endl;
+					}
+					else if("width" == strSubdivisionType) {
+						_nSubdivisionOptFieldYR_R = SDOPT_BY_SLAB_WIDTH;
+						bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("width", _dShellWidthInitFieldYR);
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision 'r' by '"<< strSubdivisionType << "': " << _dShellWidthInitFieldYR << endl;
+					}
+					else
+						bInputIsValid = false;
+				}
+				else
+					bInputIsValid = false;
+
+				if(false == bInputIsValid)
+				{
+					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters for elements: 'subdivision' corrupted! Program exit..." << endl;
+					Simulation::exit(-1);
+				}
+			}
+			xmlconfig.changecurrentnode(oldpath);
+		}
+		else
+		{
+			global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Wrong attribute 'sampling@type', expected type='profiles|VDF'! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
 }
 
 void SampleRegion::PrepareSubdivisionProfiles()
@@ -69,7 +300,7 @@ void SampleRegion::PrepareSubdivisionProfiles()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dBinWidthProfilesInit nor _nNumBinsProfiles was set correctly! Program exit..." << endl;
+		global_log->error() << "tec::ControlRegion::PrepareSubdivisionProfiles(): Unknown subdivision type! Program exit..." << endl;
 		exit(-1);
 	}
 }
@@ -93,8 +324,51 @@ void SampleRegion::PrepareSubdivisionVDF()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Neither _dBinWidthVDFInit nor _nNumBinsVDF was set correctly! Program exit..." << endl;
+		global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Unknown subdivision type! Program exit..." << endl;
 		exit(-1);
+	}
+}
+
+void SampleRegion::PrepareSubdivisionFieldYR()
+{
+	if(false == _SamplingEnabledFieldYR)
+		return;
+
+	double dWidth = this->GetWidth(1);
+
+	switch(_nSubdivisionOptFieldYR_Y)
+	{
+	case SDOPT_BY_NUM_SLABS:
+		_dBinWidthInitFieldYR = dWidth / ( (double)(_nNumBinsFieldYR) );
+		_dBinWidthFieldYR = _dBinWidthInitFieldYR;
+		break;
+	case SDOPT_BY_SLAB_WIDTH:
+		_nNumBinsFieldYR = round(dWidth / _dBinWidthInitFieldYR);
+		_dBinWidthFieldYR = dWidth / ( (double)(_nNumBinsFieldYR) );
+		break;
+	case SDOPT_UNKNOWN:
+	default:
+		global_log->error() << "SampleRegion::PrepareSubdivisionFieldYR(): Unknown subdivision type! Program exit..." << endl;
+		Simulation::exit(-1);
+	}
+
+	dWidth = (this->GetWidth(0) < this->GetWidth(2) ) ? this->GetWidth(0) : this->GetWidth(2);
+	dWidth *= 0.5;
+
+	switch(_nSubdivisionOptFieldYR_R)
+	{
+	case SDOPT_BY_NUM_SLABS:
+		_dShellWidthInitFieldYR = dWidth / ( (double)(_nNumShellsFieldYR) );
+		_dShellWidthFieldYR = _dShellWidthInitFieldYR;
+		break;
+	case SDOPT_BY_SLAB_WIDTH:
+		_nNumShellsFieldYR = round(dWidth / _dShellWidthInitFieldYR);
+		_dShellWidthFieldYR = dWidth / ( (double)(_nNumShellsFieldYR) );
+		break;
+	case SDOPT_UNKNOWN:
+	default:
+		global_log->error() << "SampleRegion::PrepareSubdivisionFieldYR(): Unknown subdivision type! Program exit..." << endl;
+		Simulation::exit(-1);
 	}
 }
 
@@ -375,6 +649,112 @@ void SampleRegion::InitSamplingVDF(int nDimension)
 }
 
 
+void SampleRegion::InitSamplingFieldYR(int nDimension)
+{
+	if(false == _SamplingEnabledFieldYR)
+		return;
+
+	// shell volumes
+	_dShellVolumesFieldYR = new double[_nNumShellsFieldYR];
+
+	// equidistant shells
+	for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
+	{
+		double ri = si * _dShellWidthFieldYR;
+		double ra = ri + _dShellWidthFieldYR;
+		double V = (ra*ra - ri*ri) * M_PI * _dBinWidthFieldYR;
+		_dShellVolumesFieldYR[si] = V;
+	}
+
+	// equal shell volumes
+	double ra = _dShellWidthInitFieldYR;
+	double V = (ra*ra) * M_PI * _dBinWidthFieldYR;
+	_dShellVolumeFieldYR = V;
+	_dInvShellVolumeFieldYR = 2. / V;  // 2 because of upper/lower section
+	double dWidth = (this->GetWidth(0) < this->GetWidth(2) ) ? this->GetWidth(0) : this->GetWidth(2);
+	dWidth *= 0.5;
+	_nNumShellsFieldYR = ceil( dWidth*dWidth/(ra*ra) );
+	_dShellWidthFieldYR = _dShellWidthInitFieldYR;
+	_dShellWidthSquaredFieldYR = _dShellWidthFieldYR*_dShellWidthFieldYR;
+
+	// discrete values: Bin midpoints, Shell midpoints
+	_dBinMidpointsFieldYR = new double[_nNumBinsFieldYR];
+	_dShellMidpointsFieldYR = new double[_nNumShellsFieldYR];
+
+	_nNumValsFieldYR = _nNumComponents * 3 * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
+
+#ifndef NDEBUG
+	cout << "_nNumComponents    = " << _nNumComponents    << endl;
+	cout << "_nNumShellsFieldYR = " << _nNumShellsFieldYR << endl;
+	cout << "_nNumBinsFieldYR   = " << _nNumBinsFieldYR   << endl;
+	cout << "_nNumValsFieldYR   = " << _nNumValsFieldYR   << endl;
+#endif
+
+	// Offsets
+	_nOffsetFieldYR = new uint64_t***[3];
+	for(uint8_t dim=0; dim<3; ++dim)
+	{
+		_nOffsetFieldYR[dim] = new uint64_t**[3];
+		for(uint8_t sec=0; sec<3; ++sec)
+		{
+			_nOffsetFieldYR[dim][sec] = new uint64_t*[_nNumComponents];
+			for(uint32_t cid = 0; cid<_nNumComponents; ++cid)
+				_nOffsetFieldYR[dim][sec][cid] = new uint64_t[_nNumShellsFieldYR];
+		}
+	}
+
+	// Init offsets
+	uint64_t nOffset = 0;
+	for(uint8_t dim = 0; dim<3; ++dim){
+		for(uint8_t sec = 0; sec<3; ++sec){
+			for(uint32_t cid = 0; cid<_nNumComponents; ++cid){
+				for(uint32_t si = 0; si<_nNumShellsFieldYR; ++si){
+					_nOffsetFieldYR[dim][sec][cid][si] = nOffset;
+					nOffset += _nNumBinsFieldYR;
+				}
+			}
+		}
+	}
+
+	// Scalar quantities
+	// [direction all|+|-][component][position]
+	_nNumMoleculesFieldYRLocal  = new unsigned long[_nNumValsFieldYR];
+	_nNumMoleculesFieldYRGlobal = new unsigned long[_nNumValsFieldYR];
+
+	// output profiles
+	_dDensityFieldYR = new double[_nNumValsFieldYR];
+	_dInvShellVolumesFieldYR = new double[_nNumValsFieldYR];
+
+	// section shell volume factor
+	 float faSecFac[3] = {1., 2., 2.};
+
+	for(uint32_t cid=0; cid<_nNumComponents; ++cid){
+		for(uint32_t si = 0; si<_nNumShellsFieldYR; ++si)
+		{
+			double dShellVolume = _dShellVolumesFieldYR[si];
+			double dInvShellVolume = 1. / dShellVolume;
+
+			for(uint8_t sec=0; sec<3; ++sec)
+			{
+				float fSecFac = faSecFac[sec];
+				uint64_t nOffset = _nOffsetFieldYR[0][sec][cid][si];
+				for(uint32_t bi = 0; bi<_nNumBinsFieldYR; ++bi)
+				{
+					mardyn_assert( (nOffset+bi) < _nNumValsFieldYR );
+					_dInvShellVolumesFieldYR[nOffset+bi] = dInvShellVolume * fSecFac;
+				}
+			}
+		}
+	}
+
+	// init sampling data structures
+	this->ResetLocalValuesFieldYR();
+
+	// discretisation
+	this->DoDiscretisationFieldYR(RS_DIMENSION_Y);
+}
+
+
 void SampleRegion::DoDiscretisationProfiles(int nDimension)
 {
 	if(false == _SamplingEnabledProfiles)
@@ -425,7 +805,29 @@ void SampleRegion::DoDiscretisationVDF(int nDimension)
 	_bDiscretisationDoneVDF = true;
 }
 
+void SampleRegion::DoDiscretisationFieldYR(int nDimension)
+{
+	if(false == _SamplingEnabledFieldYR)
+		return;
 
+	if(_bDiscretisationDoneFieldYR == true)  // if allready done -> return
+		return;
+
+	double* dLowerCorner = this->GetLowerCorner();
+
+	// calc Bin midpoints
+	for(unsigned int bi = 0; bi < _nNumBinsFieldYR; bi++)
+	{
+		_dBinMidpointsFieldYR[bi] = (bi + 0.5) * _dBinWidthFieldYR + dLowerCorner[nDimension];
+	}
+	// calc Shell midpoints
+	for(unsigned int si = 0; si < _nNumShellsFieldYR; si++)
+	{
+		_dShellMidpointsFieldYR[si] = (si + 0.5) * _dShellWidthFieldYR + dLowerCorner[nDimension];
+	}
+
+	_bDiscretisationDoneFieldYR = true;
+}
 
 void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 {
@@ -603,6 +1005,61 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 	}
 }
 
+void SampleRegion::SampleFieldYR(Molecule* molecule)
+{
+	if(false == _SamplingEnabledFieldYR)
+		return;
+
+	uint32_t nPosIndexY;
+	uint32_t nIndexMaxY = _nNumBinsFieldYR - 1;
+	uint32_t nPosIndexR;
+	uint32_t nIndexMaxR = _nNumShellsFieldYR - 1;
+
+	// do not reset profile matrices here!!!
+	// BUT: reset profile before calling this function!!!
+
+	// calc position index
+	double* dLowerCorner = this->GetLowerCorner();
+	double dPosRelativeX = molecule->r(0) - (dLowerCorner[0] + this->GetWidth(0)*0.5);
+	double dPosRelativeY = molecule->r(1) -  dLowerCorner[1];
+	double dPosRelativeZ = molecule->r(2) - (dLowerCorner[2] + this->GetWidth(2)*0.5);
+
+	nPosIndexY = (unsigned int) floor(dPosRelativeY / _dBinWidthFieldYR);
+	double dRadiusSquared = (dPosRelativeX*dPosRelativeX + dPosRelativeZ*dPosRelativeZ);
+//	double dRadius = sqrt(dPosRelativeX*dPosRelativeX + dPosRelativeZ*dPosRelativeZ);
+	nPosIndexR = (unsigned int) floor(dRadiusSquared / _dShellWidthSquaredFieldYR);
+
+	// ignore outer (halo) molecules
+	if(nPosIndexY > nIndexMaxY)  // negative values will be ignored too: cast to unsigned int --> high value
+		return;
+
+	// ignore outer (halo) molecules
+	if(nPosIndexR > nIndexMaxR)  // negative values will be ignored too: cast to unsigned int --> high value
+		return;
+
+	unsigned int cid = molecule->componentid() + 1;  // id starts internally with 0
+
+	for(uint8_t sec=0; sec<3; ++sec)
+	{
+		mardyn_assert(_nOffsetFieldYR[0][sec][0  ][nPosIndexR] + nPosIndexY < _nNumValsFieldYR);
+		mardyn_assert(_nOffsetFieldYR[0][sec][cid][nPosIndexR] + nPosIndexY < _nNumValsFieldYR);
+	}
+
+	// Scalar quantities
+	_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][0][0  ][nPosIndexR] + nPosIndexY ] ++;  // all components
+	_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][0][cid][nPosIndexR] + nPosIndexY ] ++;  // specific component
+
+	if(dPosRelativeX >= 0.)
+	{
+		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][1][0  ][nPosIndexR] + nPosIndexY ] ++;  // all components
+		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][1][cid][nPosIndexR] + nPosIndexY ] ++;  // specific component
+	}
+	else
+	{
+		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][2][0  ][nPosIndexR] + nPosIndexY ] ++;  // all components
+		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][2][cid][nPosIndexR] + nPosIndexY ] ++;  // specific component
+	}
+}
 
 void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Domain* domain)
 {
@@ -827,6 +1284,46 @@ void SampleRegion::CalcGlobalValuesVDF()
 
 }
 
+void SampleRegion::CalcGlobalValuesFieldYR(DomainDecompBase* domainDecomp, Domain* domain)
+{
+	if(false == _SamplingEnabledFieldYR)
+		return;
+
+	// perform reduce operation, process further calculations
+#ifdef ENABLE_MPI
+
+	// Scalar quantities
+	// [dimension x|y|z][component][positionR][positionY]
+	MPI_Reduce( _nNumMoleculesFieldYRLocal, _nNumMoleculesFieldYRGlobal, _nNumValsFieldYR, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+#else
+	// Scalar quantities
+	for(unsigned int i = 0; i < _nNumValsFieldYR; ++i)
+	{
+		_nNumMoleculesFieldYRGlobal[i] = _nNumMoleculesFieldYRLocal[i];
+	}
+#endif
+
+	int rank = domainDecomp->getRank();
+	//  int numprocs = domainDecomp->getNumProcs();
+
+	// only root process writes out data
+	if(rank != 0)
+		 return;
+
+	double dInvertNumSamples = (double) (_writeFrequencyFieldYR);  // TODO: perhabs in future different from writeFrequency
+	dInvertNumSamples = 1. / dInvertNumSamples;
+
+	// Scalar quantities
+	for(unsigned int i=0; i<_nNumValsFieldYR; ++i)
+	{
+		uint64_t nNumMolecules = _nNumMoleculesFieldYRGlobal[i];
+
+		// density profile
+//		_dDensityFieldYR[i] = nNumMolecules * _dInvShellVolumesFieldYR[i] * dInvertNumSamples;  // equidistant
+		_dDensityFieldYR[i] = nNumMolecules * _dInvShellVolumeFieldYR * dInvertNumSamples;
+	}
+}
 
 void SampleRegion::WriteDataProfilesOld(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
 {
@@ -1477,6 +1974,59 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 }
 
 
+void SampleRegion::WriteDataFieldYR(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
+{
+	if(false == _SamplingEnabledFieldYR)
+		return;
+
+	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
+	if( simstep <= _initSamplingFieldYR )
+		return;
+
+	if ( (simstep - _initSamplingFieldYR) % _writeFrequencyFieldYR != 0 )
+		return;
+
+	// calc global values
+	this->CalcGlobalValuesFieldYR(domainDecomp, domain);
+
+	// reset local values
+	this->ResetLocalValuesFieldYR();
+
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	for(uint8_t sec=0; sec<3; ++sec)
+	{
+		// writing .dat-files
+		std::stringstream filenamestream;
+		filenamestream << "fieldYR" << "_sec" << (uint32_t)sec << "_reg" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
+
+		std::stringstream outputstream;
+		uint64_t nOffset = 0;
+
+		for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
+		{
+			nOffset = _nOffsetFieldYR[0][sec][0][si];
+
+			for(uint32_t bi=0; bi<_nNumBinsFieldYR; ++bi)
+			{
+				mardyn_assert( (nOffset+bi) < _nNumValsFieldYR );
+				outputstream << FORMAT_SCI_MAX_DIGITS << _dDensityFieldYR[nOffset+bi];
+	//			outputstream << FORMAT_SCI_MAX_DIGITS << _nNumMoleculesFieldYRGlobal[nOffset+bi];
+			}
+			outputstream << endl;
+		}
+
+		ofstream fileout(filenamestream.str().c_str(), ios::out);
+		fileout << outputstream.str();
+		fileout.close();
+	}
+}
+
 
 // private methods
 
@@ -1553,6 +2103,18 @@ void SampleRegion::ResetOutputDataProfiles()
 	}
 }
 
+void SampleRegion::ResetLocalValuesFieldYR()
+{
+	if(false == _SamplingEnabledFieldYR)
+		return;
+
+	// Scalar quantities
+	for(unsigned int i = 0; i < _nNumValsFieldYR; ++i)
+	{
+		_nNumMoleculesFieldYRLocal[i] = 0;
+	}
+}
+
 void SampleRegion::UpdateSlabParameters()
 {
 	mardyn_assert(0 > 1);
@@ -1602,8 +2164,8 @@ RegionSampling::~RegionSampling()
 void RegionSampling::readXML(XMLfileUnits& xmlconfig)
 {
 	// add regions
-	uint32_t nRegID = 0;
 	uint32_t numRegions = 0;
+	uint32_t nRegID = 0;
 	XMLfile::Query query = xmlconfig.query("region");
 	numRegions = query.card();
 	global_log->info() << "RegionSampling: Number of sampling regions: " << numRegions << endl;
@@ -1658,152 +2220,12 @@ void RegionSampling::readXML(XMLfileUnits& xmlconfig)
 				global_simulation->GetDistControl()->registerObserver(region);
 			else
 			{
-				global_log->error() << "RegionSampling->region["<<nRegID<<"]: Initialization of feature DistControl is needed before! Program exit..." << endl;
+				global_log->error() << "RegionSampling->region["<<region->GetID()<<"]: Initialization of feature DistControl is needed before! Program exit..." << endl;
 				exit(-1);
 			}
 		}
 
-		// sampling modules
-		uint32_t nSamplingModuleID = 0;
-		uint32_t numSamplingModules = 0;
-		XMLfile::Query query = xmlconfig.query("sampling");
-		numSamplingModules = query.card();
-		global_log->info() << "RegionSampling->region["<<nRegID<<"]: Number of sampling modules: " << numSamplingModules << endl;
-		if(numRegions < 1) {
-			global_log->error() << "RegionSampling->region["<<nRegID<<"]: No sampling module parameters specified. Program exit ..." << endl;
-			Simulation::exit(-1);
-		}
-//		string oldpath = xmlconfig.getcurrentnodepath();
-		XMLfile::Query::const_iterator outputSamplingIter;
-		for( outputSamplingIter = query.begin(); outputSamplingIter; outputSamplingIter++ )
-		{
-			xmlconfig.changecurrentnode( outputSamplingIter );
-			std::string strSamplingModuleType = "unknown";
-			xmlconfig.getNodeValue("@type", strSamplingModuleType);
-
-			if("profiles" == strSamplingModuleType)
-			{
-				// control
-				unsigned long initSamplingProfiles;
-				unsigned long writeFrequencyProfiles;
-				unsigned long stopSamplingProfiles;
-				xmlconfig.getNodeValue("control/start", initSamplingProfiles);
-				xmlconfig.getNodeValue("control/frequency", writeFrequencyProfiles);
-				xmlconfig.getNodeValue("control/stop", stopSamplingProfiles);
-				region->SetParamProfiles(initSamplingProfiles, writeFrequencyProfiles, stopSamplingProfiles);
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << initSamplingProfiles << endl;
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << writeFrequencyProfiles << endl;
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << stopSamplingProfiles << endl;
-
-				// subdivision of region
-				std::string strSubdivisionType;
-				if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
-				{
-					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << endl;
-					Simulation::exit(-1);
-				}
-				if("number" == strSubdivisionType)
-				{
-					unsigned int nNumSlabs = 0;
-					if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
-					{
-						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << endl;
-						Simulation::exit(-1);
-					}
-					else
-					{
-						region->SetSubdivisionProfiles(nNumSlabs);
-						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
-					}
-				}
-				else if("width" == strSubdivisionType)
-				{
-					double dSlabWidth = 0.;
-					if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
-					{
-						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << endl;
-						Simulation::exit(-1);
-					}
-					else
-					{
-						region->SetSubdivisionProfiles(dSlabWidth);
-						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
-					}
-				}
-				else
-				{
-					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << endl;
-					Simulation::exit(-1);
-				}
-			}
-			else if("VDF" == strSamplingModuleType)
-			{
-				// control
-				unsigned long initSamplingVDF;
-				unsigned long writeFrequencyVDF;
-				unsigned long stopSamplingVDF;
-				unsigned int nNumDiscreteStepsVDF;
-				double dVeloMax;
-				xmlconfig.getNodeValue("control/start", initSamplingVDF);
-				xmlconfig.getNodeValue("control/frequency", writeFrequencyVDF);
-				xmlconfig.getNodeValue("control/stop", stopSamplingVDF);
-				xmlconfig.getNodeValue("discretization/numclasses", nNumDiscreteStepsVDF);
-				xmlconfig.getNodeValue("discretization/maxvalue", dVeloMax);
-				region->SetParamVDF(initSamplingVDF, writeFrequencyVDF, stopSamplingVDF, nNumDiscreteStepsVDF, dVeloMax);
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << initSamplingVDF << endl;
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << writeFrequencyVDF << endl;
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << stopSamplingVDF << endl;
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Number of velocity classes: " << nNumDiscreteStepsVDF << endl;
-				global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Max. velocity value: " << dVeloMax << endl;
-
-				// subdivision of region
-				std::string strSubdivisionType;
-				if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
-				{
-					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << endl;
-					Simulation::exit(-1);
-				}
-				if("number" == strSubdivisionType)
-				{
-					unsigned int nNumSlabs = 0;
-					if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
-					{
-						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << endl;
-						Simulation::exit(-1);
-					}
-					else
-					{
-						region->SetSubdivisionVDF(nNumSlabs);
-						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
-					}
-				}
-				else if("width" == strSubdivisionType)
-				{
-					double dSlabWidth = 0.;
-					if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
-					{
-						global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << endl;
-						Simulation::exit(-1);
-					}
-					else
-					{
-						region->SetSubdivisionVDF(dSlabWidth);
-						global_log->info() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
-					}
-				}
-				else
-				{
-					global_log->error() << "RegionSampling->region["<<nRegID<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << endl;
-					Simulation::exit(-1);
-				}
-			}
-			else
-			{
-				global_log->error() << "RegionSampling->region["<<nRegID<<"]: Wrong attribute 'sampling@type', expected type='profiles|VDF'! Program exit..." << endl;
-				Simulation::exit(-1);
-			}
-		}
-
+		region->readXML(xmlconfig);
 		nRegID++;
 
 	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
@@ -1823,6 +2245,7 @@ void RegionSampling::Init()
 	{
 		(*it)->InitSamplingProfiles(RS_DIMENSION_Y);
 		(*it)->InitSamplingVDF(RS_DIMENSION_Y);
+		(*it)->InitSamplingFieldYR(RS_DIMENSION_Y);
 	}
 }
 
@@ -1835,6 +2258,7 @@ void RegionSampling::DoSampling(Molecule* mol, DomainDecompBase* domainDecomp, u
 	{
 		(*it)->SampleProfiles(mol, RS_DIMENSION_Y);
 		(*it)->SampleVDF(mol, RS_DIMENSION_Y);
+		(*it)->SampleFieldYR(mol);
 	}
 }
 
@@ -1847,6 +2271,7 @@ void RegionSampling::WriteData(DomainDecompBase* domainDecomp, unsigned long sim
 	{
 		(*it)->WriteDataProfiles(domainDecomp, simstep, domain);
 		(*it)->WriteDataVDF(domainDecomp, simstep);
+		(*it)->WriteDataFieldYR(domainDecomp, simstep, domain);
 	}
 }
 
@@ -1858,6 +2283,7 @@ void RegionSampling::PrepareRegionSubdivisions()
 	{
 		(*it)->PrepareSubdivisionProfiles();
 		(*it)->PrepareSubdivisionVDF();
+		(*it)->PrepareSubdivisionFieldYR();
 	}
 }
 
