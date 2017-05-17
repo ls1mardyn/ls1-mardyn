@@ -1345,7 +1345,7 @@ void LinkedCells::updateMoleculeCaches() {
 }
 
 bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
-	const double epsi = 0.00000001; //TODO: ___Is epsilon small enough?
+	const double epsi = this->_cutoffRadius * 1e-3;	//1e-9; // TODO ___What epsilon to use? Or should this be dynamic?
 	auto index = getCellIndexOfPoint(pos);
 	auto& cell = getCell(index);
 

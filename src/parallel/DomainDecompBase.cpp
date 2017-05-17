@@ -65,6 +65,13 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 
 			for (auto i = begin; i != end; ++i) {
 				Molecule& molHalo = *i;
+
+				// Skip exchange for molecules where no forces were calculated on
+				// (double compare with equals as forces are reset to exactly zero each step)
+				if(molHalo.F(0) == 0 && molHalo.F(1) == 0 && molHalo.F(2) == 0){
+					continue;
+				}
+
 				// Add force of halo particle to original particle (or other duplicates)
 				// that have a distance of -'shiftMagnitude' in the current direction
 				shiftedPosition[0] = molHalo.r(0);
