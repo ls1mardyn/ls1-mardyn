@@ -29,6 +29,7 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
 
+	delete _neighbourCommunicationScheme;
 	MPI_Type_free(&_mpiParticleType);
 
 	// MPI_COMM_WORLD doesn't need to be freed, so

@@ -116,6 +116,7 @@ Simulation::~Simulation() {
 	delete _FMM;
 	delete _ensemble;
 	delete _longRangeCorrection;
+	delete _memoryProfiler;
 }
 
 void Simulation::exit(int exitcode) {
