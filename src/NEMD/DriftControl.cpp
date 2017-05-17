@@ -6,6 +6,7 @@
  */
 
 #include "NEMD/DriftControl.h"
+#include "NEMD/DistControl.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
@@ -15,6 +16,7 @@
 #include "Domain.h"
 //#include "NEMD/ParticleInsertion.h"
 //#include "utils/Random.h"
+#include "utils/xmlfileUnits.h"
 //
 #include <iostream>
 #include <fstream>
@@ -31,6 +33,13 @@ unsigned short drc::ControlRegion::_nStaticID = 0;
 
 // class ControlRegion
 
+drc::ControlRegion::ControlRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] )
+: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+{
+	// ID
+	_nID = ++_nStaticID;
+}
+
 drc::ControlRegion::ControlRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nTargetComponentID, const double dDirection[3], const double& dTargetVal)
 : CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
 {
@@ -44,6 +53,17 @@ drc::ControlRegion::ControlRegion( ControlInstance* parent, double dLowerCorner[
     _nTargetComponentID = nTargetComponentID;
 }
 
+void drc::ControlRegion::readXML(XMLfileUnits& xmlconfig)
+{
+	xmlconfig.getNodeValue("target/componentID", _nTargetComponentID);
+	xmlconfig.getNodeValue("target/direction/x", _dDriftDirection[0]);
+	xmlconfig.getNodeValue("target/direction/y", _dDriftDirection[1]);
+	xmlconfig.getNodeValue("target/direction/z", _dDriftDirection[2]);
+	xmlconfig.getNodeValue("target/value", _dDriftVelocityTargetVal);
+
+	// prepare drift vector
+	this->PrepareDriftVector();
+}
 
 drc::ControlRegion::~ControlRegion()
 {
@@ -226,6 +246,30 @@ void drc::ControlRegion::ResetLocalValues()
     _dScaleFactor = 1.;
 }
 
+void drc::ControlRegion::PrepareDriftVector()
+{
+	// normalize direction vector
+	double dLength = 0.;
+
+	for(unsigned short d=0; d<3; ++d)
+		dLength += _dDriftDirection[d] * _dDriftDirection[d];
+	dLength = sqrt(dLength);
+
+	// drift velocity target direction, target vector
+	for(unsigned short d=0; d<3; ++d)
+	{
+		_dDriftDirection[d] = _dDriftDirection[d] / dLength;
+		_dDriftVelocityTargetVector[d] = _dDriftDirection[d] * _dDriftVelocityTargetVal;
+	}
+
+	//    cout << "_dDriftDirection = " << _dDriftDirection[0] << ", " << _dDriftDirection[1] << ", " << _dDriftDirection[2] << endl;
+	//    cout << "_dDriftVelocityTargetVector = " << _dDriftVelocityTargetVector[0] << ", " << _dDriftVelocityTargetVector[1] << ", " << _dDriftVelocityTargetVector[2] << endl;
+
+	// vector to add to each molecule to obtain target drift velocity of system inside control region
+	for(unsigned short d=0; d<3; ++d)
+		_dAddVector[d] = 0.;
+}
+
 void drc::ControlRegion::PrepareDriftVector(const double dDirection[3], const double& dTargetVal)
 {
 	// normalize direction vector
@@ -260,6 +304,11 @@ void drc::ControlRegion::PrepareDriftVector(const double dDirection[3], const do
 
 // class DriftControl
 
+DriftControl::DriftControl( Domain* domain, DomainDecompBase* domainDecomp)
+		: ControlInstance(domain, domainDecomp)
+{
+}
+
 DriftControl::DriftControl( Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop)
                           : ControlInstance(domain, domainDecomp)
 {
@@ -274,6 +323,81 @@ DriftControl::DriftControl( Domain* domain, DomainDecompBase* domainDecomp, unsi
 DriftControl::~DriftControl()
 {
 
+}
+
+void DriftControl::readXML(XMLfileUnits& xmlconfig)
+{
+	// control
+	xmlconfig.getNodeValue("control/start", _nStart);
+	xmlconfig.getNodeValue("control/frequency", _nControlFreq);
+	xmlconfig.getNodeValue("control/stop", _nStop);
+
+	// add regions
+	uint32_t numRegions = 0;
+	uint32_t nRegID = 0;
+	XMLfile::Query query = xmlconfig.query("region");
+	numRegions = query.card();
+	global_log->info() << "DriftControl: Number of sampling regions: " << numRegions << endl;
+	if(numRegions < 1) {
+		global_log->warning() << "DriftControl: No region parameters specified. Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputRegionIter;
+	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
+	{
+		xmlconfig.changecurrentnode( outputRegionIter );
+		double lc[3];
+		double uc[3];
+		std::string strVal[3];
+		std::string strControlType;
+
+		// coordinates
+		xmlconfig.getNodeValue("coords/lcx", lc[0]);
+		xmlconfig.getNodeValue("coords/lcy", lc[1]);
+		xmlconfig.getNodeValue("coords/lcz", lc[2]);
+		xmlconfig.getNodeValue("coords/ucx", strVal[0]);
+		xmlconfig.getNodeValue("coords/ucy", strVal[1]);
+		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
+		// read upper corner
+		for(uint8_t d=0; d<3; ++d)
+			uc[d] = (strVal[d] == "box") ? GetDomain()->getGlobalLength(d) : atof(strVal[d].c_str() );
+
+		global_log->info() << "DriftControl->region["<<nRegID<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << endl;
+		global_log->info() << "DriftControl->region["<<nRegID<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
+
+		// add regions
+		drc::ControlRegion* region = new drc::ControlRegion(this, lc, uc);
+		this->AddRegion(region);
+
+		// observer mechanism
+		uint32_t refCoordsID[6] = {0, 0, 0, 0, 0, 0};
+		xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID[0]);
+		xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID[1]);
+		xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID[2]);
+		xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID[3]);
+		xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID[4]);
+		xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID[5]);
+
+		bool bIsObserver = (refCoordsID[0]+refCoordsID[1]+refCoordsID[2]+refCoordsID[3]+refCoordsID[4]+refCoordsID[5]) > 0;
+
+		if(true == bIsObserver)
+		{
+			region->PrepareAsObserver(refCoordsID);
+
+			if(global_simulation->GetDistControl() != NULL)
+				global_simulation->GetDistControl()->registerObserver(region);
+			else
+			{
+				global_log->error() << "DriftControl->region["<<region->GetID()<<"]: Initialization of feature DistControl is needed before! Program exit..." << endl;
+				exit(-1);
+			}
+		}
+
+		region->readXML(xmlconfig);
+		nRegID++;
+
+	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 }
 
 void DriftControl::AddRegion(drc::ControlRegion* region)

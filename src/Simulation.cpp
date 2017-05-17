@@ -236,6 +236,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_regionSampling = new RegionSampling(_domain, _domainDecomposition);
 				_regionSampling->readXML(xmlconfig);
 			}
+			else if(featureName == "DriftControl") {
+				_driftControl = new DriftControl(_domain, _domainDecomposition);
+				_driftControl->readXML(xmlconfig);
+			}
 			else {
 				global_log->error() << "Unknown NEMD feature: " <<  featureName << "! Program exit..." << endl;
 				Simulation::exit(-1);

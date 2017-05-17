@@ -21,9 +21,12 @@ namespace drc
 class ControlRegion : public CuboidRegionObs
 {
 public:
-    ControlRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nTargetComponentID, const double dDirection[3], const double& dTargetVal);
+	ControlRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] );
+	ControlRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3],
+			unsigned int nTargetComponentID, const double dDirection[3], const double& dTargetVal);
     ~ControlRegion();
 
+	void readXML(XMLfileUnits& xmlconfig);
     unsigned long GetDriftVelocityGlobal(unsigned short nDim) {return _dDriftVelocityGlobal[nDim];}
     void CalcGlobalValues();
     void MeasureDrift(Molecule* mol);
@@ -36,6 +39,7 @@ public:
     void ResetLocalValues();
 
 private:
+	void PrepareDriftVector();
     void PrepareDriftVector(const double dDirection[3], const double& dTargetVal);
 
 private:
@@ -60,12 +64,15 @@ private:
 
 }
 
+class XMLfileUnits;
 class DriftControl : public ControlInstance
 {
 public:
+	DriftControl(Domain* domain, DomainDecompBase* domainDecomp);
     DriftControl(Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
     ~DriftControl();
 
+	void readXML(XMLfileUnits& xmlconfig);
     std::string GetShortName() {return "DrC";}
     void AddRegion(drc::ControlRegion* region);
     int GetNumRegions() {return _vecControlRegions.size();}
@@ -82,9 +89,9 @@ public:
 
 private:
     std::vector<drc::ControlRegion*> _vecControlRegions;
-    unsigned long _nControlFreq;
-    unsigned long _nStart;
-    unsigned long _nStop;
+	unsigned long _nStart;
+	unsigned long _nControlFreq;
+	unsigned long _nStop;
 };
 
 
