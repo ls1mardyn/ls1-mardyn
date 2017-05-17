@@ -11,6 +11,9 @@
 
 #include "WrapOpenMP.h"
 
+template<class ParticleCellTemplate>
+class CellPairTraversals;
+
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -82,7 +85,7 @@ public:
 	);
 
 	//! Default constructor
-	LinkedCells(){}
+	LinkedCells() : ParticleContainer(), _traversal(nullptr) {}
 	//! Destructor
 	~LinkedCells();
 
@@ -136,17 +139,9 @@ public:
 
 	void traverseCells(CellProcessor& cellProcessor);
 
-	void traverseCellsOrig(CellProcessor& cellProcessor);
-
-	void traverseCellsC08(CellProcessor& cellProcessor);
-
 	void traverseNonInnermostCells(CellProcessor& cellProcessor);
-	void traverseNonInnermostCellsOrig(CellProcessor& cellProcessor);
-	void traverseNonInnermostCellsC08(CellProcessor& cellProcessor);
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
-	void traversePartialInnermostCellsOrig(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
-	void traversePartialInnermostCellsC08(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
@@ -257,6 +252,8 @@ private:
 	//! Assign each cell it's region (halo, boundary, inner).
 	void initializeCells();
 
+	void initializeTraversal();
+
 	//! @brief Calculate neighbour indices.
 	//!
 	//! This method is executed once for the molecule container and not for
@@ -301,21 +298,6 @@ private:
 	 */
 	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
-	/**
-	 * traverses single cell
-	 * @param cellIndex
-	 * @param cellProcessor
-	 * @return
-	 */
-	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
-	/**
-	 * traverses single cell for the c08 traversals
-	 * @param cellIndex
-	 * @param cellProcessor
-	 * @return
-	 */
-	void traverseCellC08(long int baseIndex, CellProcessor& cellProcessor);
-
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
 
 	RegionParticleIterator getRegionParticleIterator(
@@ -339,6 +321,8 @@ private:
 	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
+
+	CellPairTraversals<ParticleCell> * _traversal;
 
 	// addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
