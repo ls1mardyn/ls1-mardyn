@@ -23,13 +23,13 @@ PARTYPE ?= PAR
 # choose target
 # Show list of all available targets for the current config with cfg_help
 # Each config should at least provide the two targets RELEASE and DEBUG.
-TARGET ?= DEBUG
+TARGET ?= RELEASE
 
 # compile using depmode?
 DEPS ?= 0
 
 # build unit tests?
-UNIT_TESTS ?= 1
+UNIT_TESTS ?= 0
 
 # build with VTK support
 VTK ?= 0
@@ -37,7 +37,7 @@ VTK ?= 0
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
-VECTORIZE_CODE ?= AVX2
+VECTORIZE_CODE ?= SSE
 # AOS      - LegacyCellProcessor
 # SSE      - VectorizedCellProcessor with SSE intrinsics (default)
 # AVX      - VectorizedCellProcessor with AVX intrinsics
@@ -84,7 +84,7 @@ WORLD_RECORD ?= 0
 ENABLE_FMM_FFT ?= 0
 
 # allow acceleration of MPI communication through overlapping communication ?
-ENABLE_OVERLAPPING ?= 1
+ENABLE_OVERLAPPING ?= 0
 
 # allow OpenMP? Leave off for now, unless you are developing it.
 OPENMP ?= 0
