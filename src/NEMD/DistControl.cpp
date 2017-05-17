@@ -19,17 +19,23 @@
 #include <fstream>
 #include <sstream>
 #include <numeric>
-#include <cstdlib>
 #include <limits>
+#include <cstdlib>
+#include <cstdint>
+#include <cmath>
 
 using namespace std;
 
 
 DistControl::DistControl(DomainDecompBase* domainDecomp, Domain* domain)
-		: ControlInstance(domain, domainDecomp)
+		: ControlInstance(domain, domainDecomp),
+		  _nFlag(DCF_DEFAULT)
 {
 	// number of components
 	_nNumComponents = this->GetDomain()->getNumberOfComponents() + 1;  // +1: because 0 stands for sum of all components;
+
+	// init data structure pointers
+	this->InitDataStructurePointers();
 }
 
 DistControl::DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigned int nUpdateFreq, unsigned int nWriteFreqProfiles)
@@ -60,6 +66,14 @@ DistControl::~DistControl()
 
 void DistControl::readXML(XMLfileUnits& xmlconfig)
 {
+	// flag
+	std::string strFlag = "unknown";
+	xmlconfig.getNodeValue("@flag", strFlag);
+	if("DCF_ALIGN_COM_ONLY" == strFlag)
+		_nFlag = DCF_ALIGN_COM_ONLY;
+	else
+		_nFlag = DCF_DEFAULT;
+
 	// control
 	_nUpdateFreq = 5000;
 	_nWriteFreqProfiles = 50000;
@@ -224,6 +238,22 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 				"expected: type=\"density|denderiv\"! Programm exit..." << endl;
 		exit(-1);
 	}
+
+	// align COM
+	double dBoxWidth[3];
+	for(uint8_t d=0; d<3; ++d)
+		dBoxWidth[d] = this->GetDomain()->getGlobalLength(d);
+	std::string strRelation;
+	unsigned int nCompIDTargetCOM;
+	xmlconfig.getNodeValue("alignCOM/componentID", nCompIDTargetCOM);
+	_nCompIDTargetCOM = (uint8_t)(nCompIDTargetCOM);
+	xmlconfig.getNodeValue("alignCOM/coords@relation", strRelation);
+	xmlconfig.getNodeValue("alignCOM/coords/x", _dPosTargetCOM[0]);
+	xmlconfig.getNodeValue("alignCOM/coords/y", _dPosTargetCOM[1]);
+	xmlconfig.getNodeValue("alignCOM/coords/z", _dPosTargetCOM[2]);
+	if("box" == strRelation)
+		for(uint8_t d=0; d<3; ++d)
+			_dPosTargetCOM[d] *= dBoxWidth[d];
 }
 
 void DistControl::PrepareSubdivision()
@@ -271,6 +301,12 @@ void DistControl::InitDataStructurePointers()
 
 	// profile midpoint positions
 	_dMidpointPositions = NULL;
+
+	// align COM
+	_nNumMoleculesCOMLocal = NULL;
+	_nNumMoleculesCOMGlobal = NULL;
+	_dPosSumLocal = NULL;
+	_dPosSumGlobal = NULL;
 }
 
 void DistControl::AllocateDataStructures()
@@ -292,6 +328,12 @@ void DistControl::AllocateDataStructures()
 
 	// profile midpoint positions
 	AllocateDoubleArray(_dMidpointPositions, _nNumShells);
+
+	// align COM
+	AllocateUint64Array(_nNumMoleculesCOMLocal, _nNumComponents);
+	AllocateUint64Array(_nNumMoleculesCOMGlobal, _nNumComponents);
+	AllocateDoubleArray(_dPosSumLocal, _nNumComponents*3);
+	AllocateDoubleArray(_dPosSumGlobal, _nNumComponents*3);
 }
 
 void DistControl::InitDataStructures()
@@ -316,6 +358,18 @@ void DistControl::InitDataStructures()
 		_dForceSumGlobal[s] = 0.;
 		_dForceProfile[s] = 0.;
 		_dForceProfileSmoothed[s] = 0.;
+	}
+
+	// align COM
+	for(uint8_t c=0; c<_nNumComponents; ++c)
+	{
+		_nNumMoleculesCOMLocal[c] = 0;
+		_nNumMoleculesCOMGlobal[c] = 0;
+		for(uint8_t d=0; d<3; ++d)
+		{
+			_dPosSumLocal[c+d] = 0.;
+			_dPosSumGlobal[c+d] = 0.;
+		}
 	}
 }
 
@@ -813,6 +867,16 @@ void DistControl::ResetLocalValues()
 	}
 }
 
+void DistControl::ResetLocalValuesCOM()
+{
+	for(uint8_t c=0; c<_nNumComponents; ++c)
+	{
+		_nNumMoleculesCOMLocal[c] = 0;
+		for(uint8_t d=0; d<3; ++d)
+			_dPosSumLocal[c+d] = 0.;
+	}
+}
+
 void DistControl::WriteData(unsigned long simstep)
 {
 	// domain decomposition
@@ -1004,6 +1068,56 @@ void DistControl::AlignSystemCenterOfMass(Molecule* mol, unsigned long simstep)
     cout << "dDeltaRightY = " << dDeltaRightY << endl;
     cout << "dDeltaY = " << dDeltaY << endl;
 #endif
+}
+
+void DistControl::SampleCOM(Molecule* mol, unsigned long simstep)
+{
+	uint8_t cid = mol->componentid() + 1;  // cid == 0: all components
+
+	_nNumMoleculesCOMLocal[cid]++;
+	for(uint8_t d=0; d<3; ++d)
+		_dPosSumLocal[cid+d] += mol->r(d);
+}
+
+void DistControl::CalcGlobalValuesCOM(unsigned long simstep)
+{
+#ifdef ENABLE_MPI
+
+	MPI_Allreduce( _nNumMoleculesCOMLocal, _nNumMoleculesCOMGlobal, _nNumComponents, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce( _dPosSumLocal, _dPosSumGlobal, (_nNumComponents*3), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+#else
+	for(uint8_t c=0; c<_nNumComponents; ++c)
+	{
+		_nNumMoleculesCOMGlobal[c] = _nNumMoleculesCOMLocal[c];
+		for(uint8_t d=0; d<3; ++d)
+			_dPosSumGlobal[c+d] = _dPosSumLocal[c+d];
+	}
+#endif
+	double dCuttOffQuarter = global_simulation->getcutoffRadius() * 0.25;
+	double dInvNumMolecules = 1. / (double)(_nNumMoleculesCOMGlobal[_nTargetCompID]);
+	for(uint8_t d=0; d<3; ++d)
+	{
+		_dPosCOM[d] = _dPosSumGlobal[_nTargetCompID+d] * dInvNumMolecules;
+		double dDelta = _dPosTargetCOM[d] - _dPosCOM[d];
+		int nSign = (dDelta > 0.) ? 1 : -1;
+		dDelta = (abs(dDelta) < dCuttOffQuarter) ? dDelta : dCuttOffQuarter * nSign;
+		_dAddVec[d] = dDelta;
+	}
+
+#ifndef NDEBUG
+	cout << "DistControl::_dPosCOM = " << _dPosCOM[0] << ", " << _dPosCOM[1] << ", " << _dPosCOM[2] << endl;
+	cout << "DistControl::_dPosTargetCOM = " << _dPosTargetCOM[0] << ", " << _dPosTargetCOM[1] << ", " << _dPosTargetCOM[2] << endl;
+	cout << "DistControl::_dAddVec = " << _dAddVec[0] << ", " << _dAddVec[1] << ", " << _dAddVec[2] << endl;
+#endif
+
+	this->ResetLocalValuesCOM();
+}
+
+void DistControl::AlignCOM(Molecule* mol, unsigned long simstep)
+{
+	for(uint8_t d=0; d<3; ++d)
+		mol->setr(d, mol->r(d)+_dAddVec[d]);
 }
 
 void DistControl::registerObserver(ObserverBase* observer)

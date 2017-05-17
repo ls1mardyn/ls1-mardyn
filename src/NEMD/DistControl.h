@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cstdint>
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
 #include "molecules/MoleculeForwardDeclaration.h"
@@ -39,6 +40,12 @@ enum DistControlInitMethods
 	DCIM_START_CONFIGURATION = 1,
 	DCIM_MIDPOINT_VALUES = 2,
 	DCIM_READ_FROM_FILE = 3,
+};
+
+enum DistControlFlags : uint32_t
+{
+	DCF_DEFAULT = 0,
+	DCF_ALIGN_COM_ONLY = 1
 };
 
 class DistControl : public ControlInstance, public SubjectBase
@@ -83,11 +90,17 @@ public:
     void UpdatePositionsInit(ParticleContainer* particleContainer);  // call in Simulation::prepare_start()
     void UpdatePositions(unsigned long simstep);
     void AlignSystemCenterOfMass(Molecule* mol, unsigned long simstep);
+    void SampleCOM(Molecule* mol, unsigned long simstep);
+    void AlignCOM(Molecule* mol, unsigned long simstep);
+	void CalcGlobalValuesCOM(unsigned long simstep);
 
     // SubjectBase methods
 	virtual void registerObserver(ObserverBase* observer);
 	virtual void deregisterObserver(ObserverBase* observer);
 	virtual void informObserver();
+
+	// flag
+	uint32_t GetFlag(){return _nFlag;}
 
 private:
     // place methods after the loop
@@ -95,6 +108,7 @@ private:
     void EstimateInterfaceMidpoint();  // called by UpdatePositions
     void EstimateInterfaceMidpointsByForce();
     void ResetLocalValues();
+    void ResetLocalValuesCOM();
 
     // data structures
     void InitDataStructurePointers();
@@ -156,6 +170,17 @@ private:
 	std::vector<ObserverBase*> _observer;
 
 	int _nSubdivisionOpt;
+	uint32_t _nFlag;
+
+	// align COM
+	uint64_t* _nNumMoleculesCOMLocal;
+	uint64_t* _nNumMoleculesCOMGlobal;
+	double* _dPosSumLocal;
+	double* _dPosSumGlobal;
+	uint8_t _nCompIDTargetCOM;
+	double _dPosTargetCOM[3];
+	double _dPosCOM[3];
+	double _dAddVec[3];
 
 };  // class DistControl
 
