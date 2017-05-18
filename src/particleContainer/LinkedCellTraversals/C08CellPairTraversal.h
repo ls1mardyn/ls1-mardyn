@@ -175,12 +175,18 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 
 	// note parallel region is open outside
 
-	#if defined(_OPENMP)
-	#pragma omp for schedule(dynamic, 1) collapse(3) nowait
-	#endif
-	for (unsigned long z = start[2]; z < end[2]; z += stride[2]) {
-		for (unsigned long y = start[1]; y < end[1]; y += stride[1]) {
-			for (unsigned long x = start[0]; x < end[0]; x += stride[0]) {
+	// intel compiler demands following:
+    // note parallel region is open outside
+    const unsigned long start_x = start[0], start_y = start[1], start_z = start[2];
+    const unsigned long end_x = end[0], end_y = end[1], end_z = end[2];
+    const unsigned long stride_x = stride[0], stride_y = stride[1], stride_z = stride[2];
+
+    #if defined(_OPENMP)
+    #pragma omp for schedule(dynamic, 1) collapse(3) nowait
+    #endif
+    for (unsigned long z = start_z; z < end_z; z += stride_z) {
+        for (unsigned long y = start_y; y < end_y; y += stride_y) {
+            for (unsigned long x = start_x; x < end_x; x += stride_x) {
 				unsigned long baseIndex = threeDimensionalMapping::threeToOneD( x, y, z, this->_dims);
 				this->processBaseCell(cellProcessor, baseIndex);
 			}
