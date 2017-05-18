@@ -66,7 +66,19 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairs(
 template<class CellTemplate>
 void C08CellPairTraversal<CellTemplate>::traverseCellPairsOuter(
 		CellProcessor& cellProcessor) const {
+
 	using std::array;
+
+	{
+		unsigned long minsize = min(this->_dims[0], min(this->_dims[1], this->_dims[2]));
+
+		if (minsize <= 5) {
+			// iterating in the inner region didn't do anything. Iterate normally.
+			traverseCellPairs(cellProcessor);
+			return;
+		}
+	}
+
 	const array<unsigned long, 3> strides2 = { 2, 2, 2 };
 
 	#if defined(_OPENMP)
@@ -167,27 +179,25 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairsInner(
 
 
 template<class CellTemplate>
-void C08CellPairTraversal<CellTemplate>::traverseCellPairsBackend(
-		CellProcessor& cellProcessor,
-		const std::array<unsigned long, 3>& start,
-		const std::array<unsigned long, 3>& end,
+void C08CellPairTraversal<CellTemplate>::traverseCellPairsBackend(CellProcessor& cellProcessor,
+		const std::array<unsigned long, 3>& start, const std::array<unsigned long, 3>& end,
 		const std::array<unsigned long, 3>& stride) const {
 
 	// note parallel region is open outside
 
 	// intel compiler demands following:
-    // note parallel region is open outside
-    const unsigned long start_x = start[0], start_y = start[1], start_z = start[2];
-    const unsigned long end_x = end[0], end_y = end[1], end_z = end[2];
-    const unsigned long stride_x = stride[0], stride_y = stride[1], stride_z = stride[2];
+	// note parallel region is open outside
+	const unsigned long start_x = start[0], start_y = start[1], start_z = start[2];
+	const unsigned long end_x = end[0], end_y = end[1], end_z = end[2];
+	const unsigned long stride_x = stride[0], stride_y = stride[1], stride_z = stride[2];
 
-    #if defined(_OPENMP)
-    #pragma omp for schedule(dynamic, 1) collapse(3) nowait
-    #endif
-    for (unsigned long z = start_z; z < end_z; z += stride_z) {
-        for (unsigned long y = start_y; y < end_y; y += stride_y) {
-            for (unsigned long x = start_x; x < end_x; x += stride_x) {
-				unsigned long baseIndex = threeDimensionalMapping::threeToOneD( x, y, z, this->_dims);
+	#if defined(_OPENMP)
+	#pragma omp for schedule(dynamic, 1) collapse(3) nowait
+	#endif
+	for (unsigned long z = start_z; z < end_z; z += stride_z) {
+		for (unsigned long y = start_y; y < end_y; y += stride_y) {
+			for (unsigned long x = start_x; x < end_x; x += stride_x) {
+				unsigned long baseIndex = threeDimensionalMapping::threeToOneD(x, y, z, this->_dims);
 				this->processBaseCell(cellProcessor, baseIndex);
 			}
 		}

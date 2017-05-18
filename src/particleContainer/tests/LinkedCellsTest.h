@@ -22,9 +22,7 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
 	TEST_METHOD(testParticleIteratorBeginNextEndParticleIteratorSequential);
 //	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
-#ifndef _OPENMP
 	TEST_METHOD(testTraversalMethods);
-#endif
 	TEST_SUITE_END();
 
 public:
