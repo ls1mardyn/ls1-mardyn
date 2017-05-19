@@ -542,7 +542,7 @@ void Simulation::readConfigFile(string filename) {
 	}
 	else {
 		global_log->error() << "Unknown config file extension '" << extension << "'." << endl;
-		Simulation::exit(1);;
+		Simulation::exit(1);
 	}
 }
 
@@ -577,7 +577,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				return;
 			} else {
 				global_log->error() << "Unknown input file type: " << siminptype << endl;
-				Simulation::exit(1);;
+				Simulation::exit(1);
 			}
 		} else if (numsimpfiles > 1) {
 			global_log->error() << "Multiple input file sections are not supported." << endl;
