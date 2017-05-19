@@ -537,7 +537,7 @@ void Simulation::readConfigFile(string filename) {
 		initConfigXML(filename);
 	}
 	else if (extension == "cfg") {
-        global_log->warning() << "Old ASCII based input files are deprecated since 10.04.2017 and will be removed soon. Please convert your input to the xml format."
+        global_log->warning() << "Old ASCII based input files are deprecated since 10.04.2017 and will be removed soon. Please convert your input to the xml format.";
 		initConfigOldstyle(filename);
 	}
 	else {
