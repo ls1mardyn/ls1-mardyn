@@ -553,8 +553,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
 
 	if(inp.changecurrentnode("/mardyn") < 0) {
-		global_log->error() << "Cound not find root node /mardyn." << endl;
-		global_log->error() << "Not a valid MarDyn XML input file." << endl;
+		global_log->error() << "Cound not find root node /mardyn in XML input file." << endl;
+		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
 		Simulation::exit(1);
 	}
 
