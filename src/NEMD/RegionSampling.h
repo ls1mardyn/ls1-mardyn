@@ -8,6 +8,13 @@
 #ifndef REGIONSAMPLING_H_
 #define REGIONSAMPLING_H_
 
+#include "utils/ObserverBase.h"
+#include "utils/Region.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+
+#include <vector>
+#include <cstdint>
+
 enum RegionSamplingDimensions
 {
 	RS_DIMENSION_X = 0,
@@ -15,10 +22,11 @@ enum RegionSamplingDimensions
 	RS_DIMENSION_Z = 2,
 };
 
-#include <vector>
-#include "utils/ObserverBase.h"
-#include "utils/Region.h"
-#include "molecules/MoleculeForwardDeclaration.h"
+enum RegionSamplingFileTypes : uint8_t
+{
+	RSFT_ASCII = 1,
+	RSFT_BINARY = 2
+};
 
 class XMLfileUnits;
 class Domain;
@@ -271,6 +279,10 @@ private:
 
 	// output profiles
 	double* _dDensityFieldYR;
+
+	// output file
+	std::string _strFilePrefixFieldYR;
+	uint8_t _nFileTypeFieldYR;
 };
 
 class XMLfileUnits;

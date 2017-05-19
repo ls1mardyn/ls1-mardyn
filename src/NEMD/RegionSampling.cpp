@@ -196,7 +196,34 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			// enable fieldYR sampling
 			_SamplingEnabledFieldYR = true;
 			bool bInputIsValid = true;
+
+			// output file
+			bInputIsValid = true;
+			std::string strFileTypeFieldYR;
+			_nFileTypeFieldYR = RSFT_BINARY;
+			_strFilePrefixFieldYR = "fieldYR";
+			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("outputfile/@type", strFileTypeFieldYR);
+			if(true == bInputIsValid)
+			{
+				if("ASCII" == strFileTypeFieldYR)
+					_nFileTypeFieldYR = RSFT_ASCII;
+				else if("binary" == strFileTypeFieldYR)
+					_nFileTypeFieldYR = RSFT_BINARY;
+				else
+					bInputIsValid = false;
+			}
+			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("outputfile/prefix", _strFilePrefixFieldYR);
+			if(true == bInputIsValid)
+				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Writing y-r-field data to '" << strFileTypeFieldYR << "'-files "
+				"staring with prefix: " << _strFilePrefixFieldYR << endl;
+			else
+			{
+				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters of element: 'outputfile' corrupted! Program exit..." << endl;
+				Simulation::exit(-1);
+			}
+
 			// control
+			bInputIsValid = true;
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/start", _initSamplingFieldYR);
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/frequency", _writeFrequencyFieldYR);
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/stop", _stopSamplingFieldYR);
@@ -2003,27 +2030,43 @@ void SampleRegion::WriteDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 	{
 		// writing .dat-files
 		std::stringstream filenamestream;
-		filenamestream << "fieldYR" << "_sec" << (uint32_t)sec << "_reg" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
+		filenamestream << _strFilePrefixFieldYR << "_sec" << (uint32_t)sec << "_reg" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
 
 		std::stringstream outputstream;
 		uint64_t nOffset = 0;
 
-		for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
+		if(RSFT_ASCII == _nFileTypeFieldYR)
 		{
-			nOffset = _nOffsetFieldYR[0][sec][0][si];
-
-			for(uint32_t bi=0; bi<_nNumBinsFieldYR; ++bi)
+			for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
 			{
-				mardyn_assert( (nOffset+bi) < _nNumValsFieldYR );
-				outputstream << FORMAT_SCI_MAX_DIGITS << _dDensityFieldYR[nOffset+bi];
-	//			outputstream << FORMAT_SCI_MAX_DIGITS << _nNumMoleculesFieldYRGlobal[nOffset+bi];
+				nOffset = _nOffsetFieldYR[0][sec][0][si];
+				for(uint32_t bi=0; bi<_nNumBinsFieldYR; ++bi)
+				{
+					mardyn_assert( (nOffset+bi) < _nNumValsFieldYR );
+					outputstream << FORMAT_SCI_MAX_DIGITS << _dDensityFieldYR[nOffset+bi];
+				}
+				outputstream << endl;
 			}
-			outputstream << endl;
+			ofstream fileout(filenamestream.str().c_str(), std::ios::out);
+			fileout << outputstream.str();
+			fileout.close();
 		}
-
-		ofstream fileout(filenamestream.str().c_str(), ios::out);
-		fileout << outputstream.str();
-		fileout.close();
+		else
+		{
+			for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
+			{
+				nOffset = _nOffsetFieldYR[0][sec][0][si];
+				for(uint32_t bi=0; bi<_nNumBinsFieldYR; ++bi)
+				{
+					mardyn_assert( (nOffset+bi) < _nNumValsFieldYR );
+					double dVal = _dDensityFieldYR[nOffset+bi];
+					outputstream.write(reinterpret_cast<const char*>(&dVal), 8);
+				}
+			}
+			ofstream fileout(filenamestream.str().c_str(), std::ios::out | std::ios::binary);
+			fileout << outputstream.str();
+			fileout.close();
+		}
 	}
 }
 
