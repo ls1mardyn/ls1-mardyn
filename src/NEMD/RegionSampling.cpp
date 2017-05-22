@@ -2053,6 +2053,8 @@ void SampleRegion::WriteDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 		}
 		else
 		{
+			outputstream.write(reinterpret_cast<const char*>(&_nNumBinsFieldYR), 4);
+			outputstream.write(reinterpret_cast<const char*>(&_nNumShellsFieldYR), 4);
 			for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
 			{
 				nOffset = _nOffsetFieldYR[0][sec][0][si];
