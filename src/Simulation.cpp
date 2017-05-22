@@ -896,7 +896,7 @@ void Simulation::prepare_start() {
 	}
 
 	// initial number of timesteps
-	_initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+	_initSimulation = (unsigned long) round(this->_simulationTime / _integrator->getTimestepLength() );
 
 	// initialize output
 	std::list<OutputBase*>::iterator outputIter;
