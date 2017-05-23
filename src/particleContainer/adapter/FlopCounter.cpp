@@ -189,10 +189,10 @@ public:
 
 void FlopCounter::processCell(ParticleCell & c) {
 #ifndef MARDYN_WR
-	FullParticleCell & full_c = downcastReferenceFull(c);
+	FullParticleCell & full_c = downcastCellReferenceFull(c);
 	CellDataSoA& soa = full_c.getCellDataSoA();
 #else
-	ParticleCell_WR & wr_c = downcastReferenceWR(c);
+	ParticleCell_WR & wr_c = downcastCellReferenceWR(c);
 	CellDataSoA_WR& soa = wr_c.getCellDataSoA();
 #endif
 
@@ -206,13 +206,13 @@ void FlopCounter::processCell(ParticleCell & c) {
 void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
 #ifndef MARDYN_WR
-	FullParticleCell & full_c1 = downcastReferenceFull(c1);
-	FullParticleCell & full_c2 = downcastReferenceFull(c2);
+	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
 	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
 	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
 #else
-	ParticleCell_WR & wr_c1 = downcastReferenceWR(c1);
-	ParticleCell_WR & wr_c2 = downcastReferenceWR(c2);
+	ParticleCell_WR & wr_c1 = downcastCellReferenceWR(c1);
+	ParticleCell_WR & wr_c2 = downcastCellReferenceWR(c2);
 	const CellDataSoA_WR& soa1 = wr_c1.getCellDataSoA();
 	const CellDataSoA_WR& soa2 = wr_c2.getCellDataSoA();
 #endif

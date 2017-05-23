@@ -452,7 +452,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 }
 
 void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {
-	FullParticleCell & full_c = downcastReferenceFull(c);
+	FullParticleCell & full_c = downcastCellReferenceFull(c);
 	CellDataSoA& soa = full_c.getCellDataSoA();
 	if (full_c.isHaloCell() or soa._mol_num < 2) {
 		return;
@@ -464,8 +464,8 @@ void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {
 
 void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
-	FullParticleCell & full_c1 = downcastReferenceFull(c1);
-	FullParticleCell & full_c2 = downcastReferenceFull(c2);
+	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
 
 	CellDataSoA& soa1 = full_c1.getCellDataSoA();
 	CellDataSoA& soa2 = full_c2.getCellDataSoA();

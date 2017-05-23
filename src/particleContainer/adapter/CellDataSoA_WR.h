@@ -69,7 +69,7 @@ public:
 	}
 
 	void appendMolecule(MoleculeInterface& m) {
-		Molecule_WR& m_wr = downcastReferenceWR(m);
+		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
 
 		_mol_r.appendValueTriplet(m_wr.r(0), m_wr.r(1), m_wr.r(2), _mol_num);
 		_mol_v.appendValueTriplet(m_wr.v(0), m_wr.v(1), m_wr.v(2), _mol_num);
@@ -78,7 +78,7 @@ public:
 	}
 
 	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
-		Molecule_WR& m_wr = downcastReferenceWR(m);
+		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
 
 		// changes in AOS storage will not be saved
 		m_wr.setStorageState(Molecule_WR::STORAGE_AOS);
@@ -92,7 +92,7 @@ public:
 	}
 
 	void readMutableMolecule(size_t index, MoleculeInterface& m) {
-		Molecule_WR& m_wr = downcastReferenceWR(m);
+		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
 
 		// changes in SOA storage will be saved
 		m_wr.setStorageState(Molecule_WR::STORAGE_SOA);

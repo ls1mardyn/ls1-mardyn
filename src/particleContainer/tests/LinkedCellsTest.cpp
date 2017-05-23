@@ -252,13 +252,13 @@ public:
 	void checkOnlyInner(LinkedCells* container) {
 		for (int i = 0; i < _num_cells; i++) {
 			if (_cellProcessCount[i] != 0) {
-				ASSERT_TRUE(container->getCell(i).isInnerCell());
+				ASSERT_TRUE(container->getCellReference(i).isInnerCell());
 			}
 		}
 		for (int i = 0; i < _num_cells; i++) {
 			for (int j = 0; j < _num_cells; j++) {
 				if (_cellPairProcessCount[i * _num_cells + j] != 0) {
-					ASSERT_TRUE(container->getCell(i).isInnerCell() && container->getCell(j).isInnerCell());
+					ASSERT_TRUE(container->getCellReference(i).isInnerCell() && container->getCellReference(j).isInnerCell());
 				}
 			}
 		}

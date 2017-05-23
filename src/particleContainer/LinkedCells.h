@@ -212,7 +212,7 @@ public:
 	//! If the point is not inside the bounding box, an error is printed
 	unsigned long int getCellIndexOfPoint(const double point[3]) const;
 
-	ParticleCell& getCell(int idx){ return _cells[idx];}
+	ParticleCell& getCellReference(int idx){ return _cells[idx];}
 
 	// documentation in base class
 	virtual void updateInnerMoleculeCaches();
@@ -227,7 +227,7 @@ public:
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
-		return ParticleIterator(t, &_cells, offset, stride);
+		return ParticleIterator(t, this, offset, stride);
 	}
 	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 	
@@ -240,6 +240,17 @@ public:
 	virtual void printSubInfo(int offset) override;
 	virtual std::string getName() override;
 
+	size_t getNumCells() const {
+		return _cells.size();
+	}
+
+	ParticleCellBase * getCell(unsigned cellIndex) {
+		return &(_cells.at(cellIndex));
+	}
+
+	const ParticleCellBase * getCell(unsigned cellIndex) const {
+		return &(_cells.at(cellIndex));
+	}
 
 private:
 	//####################################

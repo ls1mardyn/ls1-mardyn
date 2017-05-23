@@ -210,6 +210,11 @@ public:
 	//! @brief Update the caches of the molecules.
 	virtual void updateMoleculeCaches() = 0;
 
+	virtual size_t getNumCells() const = 0;
+
+	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
+	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
+
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box
