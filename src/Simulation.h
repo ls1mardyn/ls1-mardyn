@@ -37,6 +37,12 @@ class SteereoSimSteering;
 class SteereoCouplingSim;
 #endif
 
+enum CheckFmaxOptions : uint32_t {
+	CFMAXOPT_NO_CHECK = 0,
+	CFMAXOPT_SHOW_ONLY = 1,
+	CFMAXOPT_CHECK_GREATER = 2
+};
+
 class Domain;
 class ParticleContainer;
 class ParticlePairsHandler;
@@ -628,6 +634,12 @@ private:
 	int _loopCompTimeSteps;
 
 	std::string _programName;
+
+	/** Check initial max. force (Fmax) after reading in start configuration or checkpoint after a restart. */
+	uint32_t _nFmaxOpt;
+	uint64_t _nFmaxID;
+	double _dFmaxInit;
+	double _dFmaxThreshold;
 };
 #endif /*SIMULATION_H_*/
 
