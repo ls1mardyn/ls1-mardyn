@@ -38,6 +38,12 @@ class SteereoSimSteering;
 class SteereoCouplingSim;
 #endif
 
+enum CheckFmaxOptions : uint32_t {
+	CFMAXOPT_NO_CHECK = 0,
+	CFMAXOPT_SHOW_ONLY = 1,
+	CFMAXOPT_CHECK_GREATER = 2
+};
+
 class Domain;
 class ParticleContainer;
 class ParticlePairsHandler;
@@ -503,8 +509,6 @@ private:
 	/** New cellhandler, which will one day replace the particlePairsHandler here completely. */
 	CellProcessor* _cellProcessor;
 
-	FlopCounter* _flopCounter;
-
 	/** Type of the domain decomposition */
 	DomainDecompType _domainDecompositionType;
 	/** module which handles the domain decomposition */
@@ -601,6 +605,10 @@ public:
 		return _programName;
 	}
 
+	OutputBase* getOutputPlugin(const std::string& name);
+
+	void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
+
 private:
 
 	/** Enable final checkpoint after simulation run. */
@@ -649,6 +657,12 @@ private:
 	ParticleTracker* _particleTracker;
 
 	uint32_t _flagsNEMD;
+
+	/** Check initial max. force (Fmax) after reading in start configuration or checkpoint after a restart. */
+	uint32_t _nFmaxOpt;
+	uint64_t _nFmaxID;
+	double _dFmaxInit;
+	double _dFmaxThreshold;
 };
 #endif /*SIMULATION_H_*/
 

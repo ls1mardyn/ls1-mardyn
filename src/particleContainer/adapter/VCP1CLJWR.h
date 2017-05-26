@@ -63,6 +63,10 @@ public:
 		_dtInvm = static_cast<vcp_real_calc>(dtInvm);
 	}
 
+	double getDtInvm() const {
+		return _dtInvm;
+	}
+
 private:
 	/**
 	 * \brief The Domain where macroscopic values will be stored.
@@ -148,7 +152,7 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	void _calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2);
+	void _calculatePairs(CellDataSoA_WR & soa1, CellDataSoA_WR & soa2);
 
 };
 

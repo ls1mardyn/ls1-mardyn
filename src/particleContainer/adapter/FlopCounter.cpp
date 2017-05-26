@@ -5,6 +5,7 @@
  */
 
 #include "FlopCounter.h"
+#include "WrapOpenMP.h"
 
 #include "particleContainer/ParticleCell.h"
 #include "molecules/Molecule.h"
@@ -114,14 +115,49 @@ double FlopCounter::_Counts::process() const {
 
 FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius),
 		_currentCounts(), _totalFlopCount(0.), _myFlopCount(0.), _synchronized(true){
+
+	const int numThreads = mardyn_get_max_threads();
+
+	global_log->info() << "FlopCounter: allocate data for " << numThreads << " threads." << std::endl;
+
+	_threadData.resize(numThreads);
+
+	#if defined (_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		_Counts * myown = new _Counts();
+		const int myid = mardyn_get_thread_num();
+		_threadData[myid] = myown;
+	}
 }
 
 void FlopCounter::initTraversal() {
-	_currentCounts.clear();
+	#if defined (_OPENMP)
+	#pragma omp master
+	#endif
+	{
+		_currentCounts.clear();
+	}
 }
 
-
 void FlopCounter::endTraversal() {
+	_Counts sum_omp_values;
+	sum_omp_values.clear();
+
+	#if defined (_OPENMP)
+	#pragma omp declare reduction(myadd : _Counts : omp_out.addCounts(omp_in))
+	#pragma omp parallel reduction(myadd : sum_omp_values)
+	#endif
+	{
+		const int myid = mardyn_get_thread_num();
+		_Counts & myown = *_threadData[myid];
+		sum_omp_values.addCounts(myown);
+		myown.clear();
+	}
+
+	_currentCounts = sum_omp_values;
+
 	_myFlopCount = _currentCounts.getTotalFlops();
 	if(_synchronized){
 		_currentCounts.allReduce();
@@ -136,99 +172,241 @@ void FlopCounter::endTraversal() {
 //	_totalFlopCount = _totalCounts.process();
 }
 
-void FlopCounter::preprocessCell(ParticleCell & /*c*/) {
-}
+class CellPairPolicy_ {
+public:
 
-void FlopCounter::postprocessCell(ParticleCell & /*c*/) {
-}
-
-void FlopCounter::handlePair(const Molecule& Mi, const Molecule& Mj, bool addMacro) {
-	// Have to compare the distance between 2 molecules.
-	_currentCounts._moleculeDistances += 1.;
-
-	double distSquared = 0.0;
-	for (int dim = 0; dim < 3; ++dim) {
-		const double dist = Mi.r(dim) - Mj.r(dim);
-		distSquared += dist * dist;
+	inline static size_t InitJ(const size_t /*i*/) {
+		return 0;
 	}
+};
+class SingleCellPolicy_ {
+public:
 
-	const size_t numLJcenters_i 	= Mi.numLJcenters();
-	const size_t numCharges_i 		= Mi.numCharges();
-	const size_t numDipoles_i 		= Mi.numDipoles();
-	const size_t numQuadrupoles_i 	= Mi.numQuadrupoles();
-
-	const size_t numLJcenters_j 	= Mj.numLJcenters();
-	const size_t numCharges_j 		= Mj.numCharges();
-	const size_t numDipoles_j 		= Mj.numDipoles();
-	const size_t numQuadrupoles_j 	= Mj.numQuadrupoles();
-
-
-	if (distSquared < _LJCutoffRadiusSquare) {
-		_currentCounts.addKernelAndMacro(I_LJ, numLJcenters_i * numLJcenters_j, addMacro);
+	inline static size_t InitJ(const size_t i) {
+		return i+1;
 	}
-
-	if (distSquared < _cutoffRadiusSquare) {
-		_currentCounts.addKernelAndMacro(I_CHARGE, numCharges_i * numCharges_j, addMacro);
-
-		_currentCounts.addKernelAndMacro(I_CHARGE_DIPOLE, numCharges_i * numDipoles_j + numDipoles_i * numCharges_j, addMacro);
-		_currentCounts.addKernelAndMacro(I_DIPOLE, numDipoles_i * numDipoles_j, addMacro);
-
-		_currentCounts.addKernelAndMacro(I_CHARGE_QUADRUPOLE, numCharges_i * numQuadrupoles_j + numQuadrupoles_i * numCharges_j, addMacro);
-		_currentCounts.addKernelAndMacro(I_DIPOLE_QUADRUPOLE, numDipoles_i * numQuadrupoles_j + numQuadrupoles_i * numDipoles_j, addMacro);
-		_currentCounts.addKernelAndMacro(I_QUADRUPOLE, numQuadrupoles_i * numQuadrupoles_j, addMacro);
-	}
-
-}
+};
 
 void FlopCounter::processCell(ParticleCell & c) {
-	using std::vector;
+#ifndef MARDYN_WR
+	FullParticleCell & full_c = downcastCellReferenceFull(c);
+	CellDataSoA& soa = full_c.getCellDataSoA();
+#else
+	ParticleCell_WR & wr_c = downcastCellReferenceWR(c);
+	CellDataSoA_WR& soa = wr_c.getCellDataSoA();
+#endif
 
-	// we don't execute any flops if cell is a halo cell
-	if (c.isHaloCell())
-		return;
-
-	const vector<Molecule *>::size_type numMolecules = c.getMoleculeCount();
-
-	if (numMolecules == 0) {
+	if (c.isHaloCell() or soa._mol_num < 2) {
 		return;
 	}
-
-	// Macroscopic values are always added for processCell
-	const bool addMacro = true;
-
-	for (vector<Molecule *>::size_type i = 0; i < numMolecules; ++i) {
-		const Molecule& Mi = c.moleculesAt(i);
-		for (vector<Molecule *>::size_type j = i + 1; j < numMolecules; ++j) {
-			const Molecule& Mj = c.moleculesAt(j);
-			handlePair(Mi, Mj, addMacro);
-		}
-	}
+	const bool CalculateMacroscopic = true;
+	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic>(soa, soa);
 }
 
 void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
-	using std::vector;
+	mardyn_assert(&c1 != &c2);
+#ifndef MARDYN_WR
+	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
+	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
+	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
+#else
+	ParticleCell_WR & wr_c1 = downcastCellReferenceWR(c1);
+	ParticleCell_WR & wr_c2 = downcastCellReferenceWR(c2);
+	const CellDataSoA_WR& soa1 = wr_c1.getCellDataSoA();
+	const CellDataSoA_WR& soa2 = wr_c2.getCellDataSoA();
+#endif
 
-	// we don't execute any flops if both cells are halo cells
-	if (c1.isHaloCell() and c2.isHaloCell())
-		return;
 
-	const vector<Molecule *>::size_type numMolecules1 = c1.getMoleculeCount();
-	const vector<Molecule *>::size_type numMolecules2 = c2.getMoleculeCount();
+	const bool c1Halo = c1.isHaloCell();
+	const bool c2Halo = c2.isHaloCell();
 
-	if ((numMolecules1 == 0) or (numMolecules2 == 0)) {
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty, or both cells are Halo, skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
 
-	// if both cells are non-halo cells, all macros are added,
-	// otherwise an "isLessThan" check is needed
-	const bool allMacro = (!c1.isHaloCell()) and (!c2.isHaloCell());
+	// Macroscopic conditions:
+	// if none of the cells is halo, then compute
+	// if one of them is halo:
+	// 		if full_c1-index < full_c2-index, then compute
+	// 		else, then don't compute
+	// This saves the Molecule::isLessThan checks
+	// and works similar to the "Half-Shell" scheme
 
-	for (vector<Molecule *>::size_type i = 0; i < numMolecules1; ++i) {
-		const Molecule & Mi = c1.moleculesAt(i);
-		for (vector<Molecule *>::size_type j = 0; j < numMolecules2; ++j) {
-			const Molecule & Mj = c2.moleculesAt(j);
-			const bool addMacro = allMacro or c1.getCellIndex() < c2.getCellIndex();
-			handlePair(Mi, Mj, addMacro);
+	const bool ApplyCutoff = true;
+
+	if ((not c1Halo and not c2Halo) or						// no cell is halo or
+			(c1.getCellIndex() < c2.getCellIndex())) 		// one of them is halo, but full_c1.index < full_c2.index
+	{
+		const bool CalculateMacroscopic = true;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa2, soa1);
+		}
+
+	} else {
+		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
+		mardyn_assert(not (c1.getCellIndex() < c2.getCellIndex()));// full_c1.index not < full_c2.index
+
+		const bool CalculateMacroscopic = false;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa2, soa1);
 		}
 	}
+}
+
+
+
+template<class ForcePolicy, bool CalculateMacroscopic>
+void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	const vcp_real_calc * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
+	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
+	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
+	const int * const soa1_mol_dipoles_num = soa1._mol_dipoles_num;
+	const int * const soa1_mol_quadrupoles_num = soa1._mol_quadrupoles_num;
+
+	const vcp_real_calc * const soa2_mol_pos_x = soa2._mol_pos.xBegin();
+	const vcp_real_calc * const soa2_mol_pos_y = soa2._mol_pos.yBegin();
+	const vcp_real_calc * const soa2_mol_pos_z = soa2._mol_pos.zBegin();
+	const int * const soa2_mol_ljc_num = soa2._mol_ljc_num;
+	const int * const soa2_mol_charges_num = soa2._mol_charges_num;
+	const int * const soa2_mol_dipoles_num = soa2._mol_dipoles_num;
+	const int * const soa2_mol_quadrupoles_num = soa2._mol_quadrupoles_num;
+
+	const size_t end_i = soa1._mol_num;
+	const size_t end_j = soa2._mol_num;
+
+	unsigned long int i_lj = 0, i_charge=0, i_charge_dipole=0, i_dipole=0, i_charge_quadrupole=0, i_dipole_quadrupole=0, i_quadrupole=0;
+	unsigned long int i_mm = 0;
+
+	for (size_t i = 0 ; i < end_i ; ++i) {
+		const double m1_x = soa1_mol_pos_x[i];
+		const double m1_y = soa1_mol_pos_y[i];
+		const double m1_z = soa1_mol_pos_z[i];
+
+		const int numLJcenters_i 	= soa1_mol_ljc_num[i];
+		const int numCharges_i 		= soa1_mol_charges_num[i];
+		const int numDipoles_i 		= soa1_mol_dipoles_num[i];
+		const int numQuadrupoles_i 	= soa1_mol_quadrupoles_num[i];
+
+		#if defined(_OPENMP)
+		#pragma omp simd reduction(+ : i_lj, i_charge, i_charge_dipole, i_dipole, i_charge_quadrupole, i_dipole_quadrupole, i_quadrupole, i_mm) \
+		aligned(soa1_mol_pos_x, soa1_mol_pos_y, soa1_mol_pos_z, soa1_mol_ljc_num, soa1_mol_charges_num, soa1_mol_dipoles_num, soa1_mol_quadrupoles_num, \
+				soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z, soa2_mol_ljc_num, soa2_mol_charges_num, soa2_mol_dipoles_num, soa2_mol_quadrupoles_num: 64)
+		#endif
+		for (size_t j = ForcePolicy::InitJ(i); j < end_j ; ++j) {
+			const double m2_x = soa2_mol_pos_x[j];
+			const double m2_y = soa2_mol_pos_y[j];
+			const double m2_z = soa2_mol_pos_z[j];
+
+			const int numLJcenters_j 	= soa2_mol_ljc_num[j];
+			const int numCharges_j 		= soa2_mol_charges_num[j];
+			const int numDipoles_j 		= soa2_mol_dipoles_num[j];
+			const int numQuadrupoles_j 	= soa2_mol_quadrupoles_num[j];
+
+			const double d_x = m1_x - m2_x;
+			const double d_y = m1_y - m2_y;
+			const double d_z = m1_z - m2_z;
+			const double dist2 = d_x * d_x + d_y * d_y + d_z * d_z;
+
+			++ i_mm;
+
+			if (dist2 < _LJCutoffRadiusSquare) {
+				i_lj += numLJcenters_i * numLJcenters_j;
+			}
+
+			if(dist2 < _cutoffRadiusSquare) {
+				i_charge += numCharges_i * numCharges_j;
+				i_charge_dipole += numCharges_i * numDipoles_j + numDipoles_i * numCharges_j;
+				i_dipole += numDipoles_i * numDipoles_j;
+				i_charge_quadrupole += numCharges_i * numQuadrupoles_j + numQuadrupoles_i * numCharges_j;
+				i_dipole_quadrupole += numDipoles_i * numQuadrupoles_j + numQuadrupoles_i * numDipoles_j;
+				i_quadrupole += numQuadrupoles_i * numQuadrupoles_j;
+
+			}
+		}
+	}
+
+	const int tid = mardyn_get_thread_num();
+	_Counts &my_threadData = *_threadData[tid];
+
+	my_threadData._moleculeDistances += i_mm;
+	my_threadData.addKernelAndMacro(I_LJ, i_lj, CalculateMacroscopic);
+
+	my_threadData.addKernelAndMacro(I_CHARGE, i_charge, CalculateMacroscopic);
+
+	my_threadData.addKernelAndMacro(I_CHARGE_DIPOLE, i_charge_dipole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_DIPOLE, i_dipole, CalculateMacroscopic);
+
+	my_threadData.addKernelAndMacro(I_CHARGE_QUADRUPOLE, i_charge_quadrupole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_DIPOLE_QUADRUPOLE, i_dipole_quadrupole, CalculateMacroscopic);
+	my_threadData.addKernelAndMacro(I_QUADRUPOLE, i_quadrupole, CalculateMacroscopic);
+}
+
+template<class ForcePolicy, bool CalculateMacroscopic>
+void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2) {
+	const vcp_real_calc * const soa1_mol_pos_x = soa1._mol_r.xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_r.yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_r.zBegin();
+
+	const vcp_real_calc * const soa2_mol_pos_x = soa2._mol_r.xBegin();
+	const vcp_real_calc * const soa2_mol_pos_y = soa2._mol_r.yBegin();
+	const vcp_real_calc * const soa2_mol_pos_z = soa2._mol_r.zBegin();
+
+	const size_t end_i = soa1._mol_num;
+	const size_t end_j = soa2._mol_num;
+
+	unsigned long int i_lj = 0;
+	unsigned long int i_mm = 0;
+
+	for (size_t i = 0 ; i < end_i ; ++i) {
+		const double m1_x = soa1_mol_pos_x[i];
+		const double m1_y = soa1_mol_pos_y[i];
+		const double m1_z = soa1_mol_pos_z[i];
+
+		const int numLJcenters_i 	= 1;
+
+		#if defined(_OPENMP)
+		#pragma omp simd reduction(+ : i_lj, i_mm) \
+		aligned(soa1_mol_pos_x, soa1_mol_pos_y, soa1_mol_pos_z, \
+				soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z: 64)
+		#endif
+		for (size_t j = ForcePolicy::InitJ(i); j < end_j ; ++j) {
+			const double m2_x = soa2_mol_pos_x[j];
+			const double m2_y = soa2_mol_pos_y[j];
+			const double m2_z = soa2_mol_pos_z[j];
+
+			const int numLJcenters_j 	= 1;
+
+			const double d_x = m1_x - m2_x;
+			const double d_y = m1_y - m2_y;
+			const double d_z = m1_z - m2_z;
+			const double dist2 = d_x * d_x + d_y * d_y + d_z * d_z;
+
+			++ i_mm;
+
+			if (dist2 < _LJCutoffRadiusSquare) {
+				i_lj += numLJcenters_i * numLJcenters_j;
+			}
+		}
+	}
+
+	const int tid = mardyn_get_thread_num();
+	_Counts &my_threadData = *_threadData[tid];
+
+	my_threadData._moleculeDistances += i_mm;
+	my_threadData.addKernelAndMacro(I_LJ, i_lj, CalculateMacroscopic);
 }

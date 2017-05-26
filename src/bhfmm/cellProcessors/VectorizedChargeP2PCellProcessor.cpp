@@ -298,7 +298,7 @@ inline void VectorizedChargeP2PCellProcessor :: _loopBodyCharge(
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 	const int tid = mardyn_get_thread_num();
 	VCP2PCPThreadData &my_threadData = *_threadData[tid];
 
@@ -523,8 +523,8 @@ void VectorizedChargeP2PCellProcessor::processCell(ParticleCellPointers & c) {
 
 void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCellPointers & c1, ParticleCellPointers & c2) {
 	mardyn_assert(&c1 != &c2);
-	const CellDataSoA& soa1 = c1.getCellDataSoA();
-	const CellDataSoA& soa2 = c2.getCellDataSoA();
+	CellDataSoA& soa1 = c1.getCellDataSoA();
+	CellDataSoA& soa2 = c2.getCellDataSoA();
 	const bool c1Halo = c1.isHaloCell();
 	const bool c2Halo = c2.isHaloCell();
 

@@ -569,6 +569,16 @@ void Domain::writeCheckpointHeader(string filename,
 void Domain::writeCheckpoint(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
 		bool binary) {
+
+#ifdef MARDYN_WR
+	global_log->warning() << "The checkpoints are not adapted for WR-mode. Velocity will be one half-timestep ahead!" << std::endl;
+	global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
+	//TODO: desired correctness (compatibility to normal mode) should be achievable by:
+	// 1. integrating positions by half a timestep forward (+ delta T / 2)
+	// 2. writing the checkpoint (with currentTime + delta T ? )
+	// 3. integrating positions by half a timestep backward (- delta T / 2)
+#endif
+
 	if (binary == true) {
 		this->writeCheckpointHeader((filename + ".header.xdr"), particleContainer, domainDecomp, currentTime);
 	} else {
@@ -1261,7 +1271,7 @@ double Domain::getGamma(unsigned id){
 
 void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition){
 	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
-	double _localGamma[numComp];
+	std::vector<double> _localGamma(numComp);
 	for (unsigned i=0; i<numComp; i++){
 		_localGamma[i]=0;
 	}

@@ -84,7 +84,12 @@ public:
 	 * \tparam	coord	Choose the coordinate of the site you want
 	 * \return	Pointer to the first element of the data you requested
 	 */
-	vcp_inline vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) const {
+	vcp_inline vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) {
+		ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
+		return thisQuantity->getBeginPointer(st, coord);
+	}
+
+	vcp_inline const vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) const {
 		const ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
 		return thisQuantity->getBeginPointer(st, coord);
 	}
@@ -92,8 +97,8 @@ public:
 	/**
 	 * \brief	Get a triplet of data from a ConcatenatedSites at specific index
 	 */
-	vcp_inline std::array<vcp_real_calc, 3> getTriplet(QuantityType qt, SiteType st, size_t index) {
-		ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
+	vcp_inline std::array<vcp_real_calc, 3> getTriplet(QuantityType qt, SiteType st, size_t index) const {
+		const ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
 		return thisQuantity->getTriplet(st, index);
 	}
 
@@ -105,43 +110,31 @@ public:
 		thisQuantity->setTriplet(t, st, index);
 	}
 
-//NOTE: We either have to convert at some point the given double[3] to std::array<double, 3> or not use std::array at all
-//		Currently std::array is not used, because we get double[3] from FullMolecule.cpp
-
-	/**
-	 * \brief	Add a triplet of data in a ConcatenatedSites to specified index
-	 * \note	Only difference to setTriplet() is, that this one takes a C-style array
-	 */
-	vcp_inline void addTriplet(double t[3], QuantityType qt, SiteType st, size_t index) {
-		ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
-		thisQuantity->addTriplet(t, st, index);
-	}
-
 	/**
 	 * \brief	Add a set of LJC-data at position index
 	 */
-	void pushBackLJC(const size_t index, double moleculePos[3], double centerPos[3], vcp_ljc_id_t lookUpIndex) {
-		addTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::LJC, index);
-		addTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::LJC, index);
+	void pushBackLJC(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_ljc_id_t lookUpIndex) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::LJC, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::LJC, index);
 		_ljc_id[index] = lookUpIndex;
 	}
 
 	/**
 	 * \brief	Add a set of charge-data at position index
 	 */
-	void pushBackCharge(const size_t index, double moleculePos[3], double centerPos[3],	vcp_real_calc charge) {
-		addTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::CHARGE, index);
-		addTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::CHARGE, index);
+	void pushBackCharge(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_real_calc charge) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::CHARGE, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::CHARGE, index);
 		_charges_q[index] = charge;
 	}
 
 	/**
 	 * \brief	Add a set of dipole-data at position index
 	 */
-	void pushBackDipole(const size_t index, double moleculePos[3], double centerPos[3],
-			vcp_real_calc dipoleMoment, double orientation[3]) {
-		addTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::DIPOLE, index);
-		addTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::DIPOLE, index);
+	void pushBackDipole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
+			vcp_real_calc dipoleMoment, std::array<vcp_real_calc,3> orientation) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::DIPOLE, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::DIPOLE, index);
 		_dipoles_p[index] = dipoleMoment;
 		_dipoles_e.x(index) = orientation[0];
 		_dipoles_e.y(index) = orientation[1];
@@ -151,10 +144,10 @@ public:
 	/**
 	 * \brief	Add a set of quadrupole-data at position index
 	 */
-	void pushBackQuadrupole(const size_t index, double moleculePos[3], double centerPos[3],
-			vcp_real_calc quadrupoleMoment, double orientation[3]) {
-		addTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, index);
-		addTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, index);
+	void pushBackQuadrupole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
+			vcp_real_calc quadrupoleMoment, std::array<vcp_real_calc,3> orientation) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, index);
 		_quadrupoles_m[index] = quadrupoleMoment;
 		_quadrupoles_e.x(index) = orientation[0];
 		_quadrupoles_e.y(index) = orientation[1];

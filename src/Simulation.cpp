@@ -29,10 +29,9 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/adapter/VCP1CLJWR.h"
-#include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
-#include "integrators/ExplicitEuler.h"
+#include "integrators/LeapfrogWR.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -93,7 +92,6 @@ Simulation::Simulation()
 	_moleculeContainer(NULL),
 	_particlePairsHandler(NULL),
 	_cellProcessor(NULL),
-	_flopCounter(NULL),
 	_domainDecomposition(nullptr),
 	_integrator(NULL),
 	_domain(NULL),
@@ -106,7 +104,11 @@ Simulation::Simulation()
 	_loopCompTime(0.),
 	_loopCompTimeSteps(0),
 	_programName(""),
-	_flagsNEMD(0)
+	_flagsNEMD(0),
+	_nFmaxOpt(CFMAXOPT_NO_CHECK),
+	_nFmaxID(0),
+	_dFmaxInit(0.),
+	_dFmaxThreshold(0.)
 {
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
@@ -131,10 +133,10 @@ Simulation::~Simulation() {
 	delete _moleculeContainer;
 	delete _integrator;
 	delete _inputReader;
-	delete _flopCounter;
 	delete _FMM;
 	delete _ensemble;
 	delete _longRangeCorrection;
+	delete _memoryProfiler;
 }
 
 void Simulation::exit(int exitcode) {
@@ -153,9 +155,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Integrator type: " << integratorType << endl;
 		if(integratorType == "Leapfrog") {
 			_integrator = new Leapfrog();
-		} else if (integratorType == "ExplicitEuler") {
-			global_log->info() << "Integrator type: Explicit Euler (WR mode only)" << endl;
-			_integrator = new ExplicitEuler();
+
+#ifdef MARDYN_WR
+			global_log->error() << "WR mode requires the Leapfrog_WR integrator" << endl;
+			Simulation::exit(-1);
+#endif
+
+		} else if (integratorType == "Leapfrog_WR") {
+			global_log->info() << "Integrator type: Leapfrog_WR (WR mode only)" << endl;
+			global_log->info() << "" << endl;
+			_integrator = new Leapfrog_WR();
 		} else {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
 			Simulation::exit(1);
@@ -203,6 +212,33 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
 		}
 		_domain->setGlobalTemperature(_ensemble->T());
+
+		/* check phasespacepoint */
+		bool bInputOk = true;
+		_nFmaxOpt = CFMAXOPT_NO_CHECK;
+		std::string strType = "unknown";
+		std::string strOption = "unknown";
+		_dFmaxInit = 0.;
+		_dFmaxThreshold = 0.;
+		bInputOk = bInputOk && xmlconfig.getNodeValue("phasespacepoint/check/@type", strType);
+		bInputOk = bInputOk && xmlconfig.getNodeValue("phasespacepoint/check/@option", strOption);
+		if(true == bInputOk)
+		{
+			if("show-only" == strOption)
+				_nFmaxOpt = CFMAXOPT_SHOW_ONLY;
+			else if("check-greater" == strOption)
+			{
+				_nFmaxOpt = CFMAXOPT_CHECK_GREATER;
+				bInputOk = bInputOk && xmlconfig.getNodeValue("phasespacepoint/check/Fmax", _dFmaxThreshold);
+				global_log->info() << "Checking if initial max. force (Fmax) is less than:"
+						" " << _dFmaxThreshold << endl;
+			}
+			else
+				global_log->error() << "XML-I/O: Wrong option in attribute: ensemble/phasespacepoint/check/@option" << endl;
+
+			if("Fmax" == strType && CFMAXOPT_NO_CHECK != _nFmaxOpt)
+				global_log->info() << "Checking max. initial force (Fmax)." << endl;
+		}
 		xmlconfig.changecurrentnode("..");
 	}
 	else {
@@ -502,11 +538,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "DecompWriter") {
 			outputPlugin = new DecompWriter();
 		}
-		else if(pluginname == "FLOPCounter") {
-			/** @todo  Make the Flop counter a real output plugin */
-			_flopCounter = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
-			continue;
-		}
 		else if(pluginname == "MmspdWriter") {
 			outputPlugin = new MmspdWriter();
 		}
@@ -591,11 +622,12 @@ void Simulation::readConfigFile(string filename) {
 		initConfigXML(filename);
 	}
 	else if (extension == "cfg") {
+        global_log->warning() << "Old ASCII based input files are deprecated since 10.04.2017 and will be removed soon. Please convert your input to the xml format." << endl;
 		initConfigOldstyle(filename);
 	}
 	else {
 		global_log->error() << "Unknown config file extension '" << extension << "'." << endl;
-		Simulation::exit(1);;
+		Simulation::exit(1);
 	}
 }
 
@@ -606,8 +638,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
 
 	if(inp.changecurrentnode("/mardyn") < 0) {
-		global_log->error() << "Cound not find root node /mardyn." << endl;
-		global_log->error() << "Not a valid MarDyn XML input file." << endl;
+		global_log->error() << "Cound not find root node /mardyn in XML input file." << endl;
+		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
 		Simulation::exit(1);
 	}
 
@@ -630,7 +662,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				return;
 			} else {
 				global_log->error() << "Unknown input file type: " << siminptype << endl;
-				Simulation::exit(1);;
+				Simulation::exit(1);
 			}
 		} else if (numsimpfiles > 1) {
 			global_log->error() << "Multiple input file sections are not supported." << endl;
@@ -852,27 +884,32 @@ void Simulation::prepare_start() {
 
 	_memoryProfiler->doOutput("with halo copies");
 
-#ifndef MARDYN_WR
+#ifdef MARDYN_WR
+	// the leapfrog integration requires that we move the velocities by one half-timestep
+	// so we halve vcp1clj_wr_cellProcessor::_dtInvm
+	VCP1CLJ_WR * vcp1clj_wr_cellProcessor = static_cast<VCP1CLJ_WR * >(_cellProcessor);
+	double dt_inv_m = vcp1clj_wr_cellProcessor->getDtInvm();
+	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m * 0.5);
+#endif /* MARDYN_WR */
+
 	global_log->info() << "Performing initial force calculation" << endl;
 	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
 
+#ifdef MARDYN_WR
+	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
+	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m);
+#endif /* MARDYN_WR */
+
 	_loopCompTime = global_simulation->getTime("SIMULATION_FORCE_CALCULATION");
 	global_simulation->resetTimer("SIMULATION_FORCE_CALCULATION");
 	++_loopCompTimeSteps;
-#else
-	global_log->info() << "No initial force calculation needed in WR mode" << endl;
-#endif /* MARDYN_WR */
+
 
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
-	}
-
-	/* If enabled count FLOP rate of LS1. */
-	if( NULL != _flopCounter ) {
-		_moleculeContainer->traverseCells(*_flopCounter);
 	}
 
     // clear halo
@@ -896,8 +933,46 @@ void Simulation::prepare_start() {
 		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
 		const ParticleIterator end = _moleculeContainer->iteratorEnd();
 
-		for (ParticleIterator i = begin; i != end; ++i){
-			i->calcFM();
+		if(CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt) {
+			uint64_t id;
+			uint32_t cid;
+			double r[3];
+			double F[3];
+			double Fabs=0.;
+			double FabsSquared=0.;
+			double FmaxInitSquared=_dFmaxInit*_dFmaxInit;
+			double FmaxThresholdSquared = _dFmaxThreshold*_dFmaxThreshold;
+
+			for (ParticleIterator i = begin; i != end; ++i){
+				i->calcFM();
+
+				id=i->id();
+				cid=i->componentid()+1;
+				for(uint8_t d=0; d<3; ++d)
+				{
+					r[d]=i->r(d);
+					F[d]=i->F(d);
+				}
+				FabsSquared=(F[0]*F[0]+F[1]*F[1]+F[2]*F[2]);
+				if(FabsSquared > FmaxInitSquared)
+				{
+					Fabs=sqrt(FabsSquared);
+					_dFmaxInit=Fabs;
+					FmaxInitSquared=_dFmaxInit*_dFmaxInit;
+					_nFmaxID=id;
+				}
+				if(CFMAXOPT_CHECK_GREATER == _nFmaxOpt && FabsSquared > FmaxThresholdSquared) {
+					Fabs=sqrt(FabsSquared);
+					global_log->warning()<<"Fabs="<<Fabs<<" > "<<_dFmaxThreshold<<" (threshold) for molecule: id="<<id<<", cid="<<cid<<", "
+						"x,y,z="<<r[0]<<", "<<r[1]<<", "<<r[2]<<endl;
+				}
+			}
+			global_log->info()<<"Max. initial force is found for molecule: id="<<_nFmaxID<<", Fmax="<<_dFmaxInit<<endl;
+		}
+		else {
+			for (ParticleIterator i = begin; i != end; ++i){
+				i->calcFM();
+			}
 		}
 	} // end pragma omp parallel
 
@@ -944,7 +1019,7 @@ void Simulation::prepare_start() {
 	}
 
 	// initial number of timesteps
-	_initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+	_initSimulation = (unsigned long) round(this->_simulationTime / _integrator->getTimestepLength() );
 
 	// initialize output
 	std::list<OutputBase*>::iterator outputIter;
@@ -1324,6 +1399,9 @@ void Simulation::simulate() {
 			_loopCompTimeSteps ++;
 		}
 		computationTimer->start();
+
+		measureFLOPRate(_moleculeContainer, _simstep);
+
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
@@ -1673,14 +1751,6 @@ void Simulation::simulate() {
 		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer->get_global_papi_counter(i) << endl;
 	}
 #endif /* WITH_PAPI */
-
-	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
-	double elapsed_time = loopTimer->get_etime();
-	if(NULL != _flopCounter) {
-		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
-		global_log->info() << "FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
-		global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
-	}
 }
 
 void Simulation::output(unsigned long simstep) {
@@ -1863,4 +1933,26 @@ void Simulation::initialize() {
 	_longRangeCorrection = NULL;
         
         this->_mcav = map<unsigned, CavityEnsemble>();
+}
+
+OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
+	OutputBase * ret = nullptr;
+	for(auto& it : _outputPlugins) {
+		if(name.compare(it->getPluginName()) == 0) {
+			ret = it;
+		}
+	}
+	return ret;
+}
+
+void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
+	OutputBase * flopRateBase = getOutputPlugin("FlopRateWriter");
+	if (flopRateBase == nullptr) {
+		return;
+	}
+
+	FlopRateWriter * flopRateWriter = dynamic_cast<FlopRateWriter * >(flopRateBase);
+	mardyn_assert(flopRateWriter != nullptr);
+
+	flopRateWriter->measureFLOPS(cont, simstep);
 }

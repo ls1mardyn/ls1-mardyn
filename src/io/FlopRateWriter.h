@@ -9,12 +9,12 @@
 #define SRC_IO_FLOPRATEWRITER_H_
 
 #include "OutputBase.h"
-class FlopCounter;
+#include "particleContainer/adapter/FlopCounter.h"
 
 class FlopRateWriter: public OutputBase {
 public:
 	FlopRateWriter(double cutoff, double LJcutoff) :
-			OutputBase(), _cutoffRadius(cutoff), _LJCutoffRadius(LJcutoff),
+			OutputBase(), _flopCounter(cutoff, LJcutoff),
 			_writeToStdout(false), _writeToFile(false) {
 	}
 	~FlopRateWriter() {}
@@ -51,12 +51,13 @@ public:
 			DomainDecompBase* domainDecomp, Domain* domain);
 
 	std::string getPluginName() {
-		return std::string("FlopRateOutputPlugin.");
+		return std::string("FlopRateWriter");
 	}
 
-private:
-	double _cutoffRadius, _LJCutoffRadius;
+	void measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep);
 
+private:
+	FlopCounter _flopCounter;
 	bool _writeToStdout, _writeToFile;
 	std::ofstream _fileStream;
 	unsigned long _writeFrequency;

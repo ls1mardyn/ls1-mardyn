@@ -150,24 +150,16 @@ public:
 		}
 	}
 	std::array<double, 3> ljcenter_d(unsigned int i) const {
-		std::array<double, 3> ret;
-		computeLJcenter_d(i,ret.data());
-		return ret;
+		return computeLJcenter_d(i);
 	}
 	std::array<double, 3> charge_d(unsigned int i) const {
-		std::array<double, 3> ret;
-		computeCharge_d(i,ret.data());
-		return ret;
+		return computeCharge_d(i);
 	}
 	std::array<double, 3> dipole_d(unsigned int i) const {
-		std::array<double, 3> ret;
-		computeDipole_d(i, ret.data());
-		return ret;
+		return computeDipole_d(i);
 	}
 	std::array<double, 3> quadrupole_d(unsigned int i) const {
-		std::array<double, 3> ret;
-		computeQuadrupole_d(i, ret.data());
-		return ret;
+		return computeQuadrupole_d(i);
 	}
 
 	std::array<double, 3> site_d_abs(unsigned int i) const {
@@ -216,29 +208,29 @@ public:
 	void normalizeQuaternion() {
 		_q.normalize();
 	}
-	void computeLJcenter_d(unsigned int i, double result[3]) const {
+	std::array<double, 3> computeLJcenter_d(unsigned int i) const {
 		mardyn_assert(_q.isNormalized());
-		_q.rotate(_component->ljcenter(i).r(), result);
+		return _q.rotate(_component->ljcenter(i).r());
 	}
-	void computeCharge_d(unsigned int i, double result[3]) const {
+	std::array<double, 3> computeCharge_d(unsigned int i) const {
 		mardyn_assert(_q.isNormalized());
-		_q.rotate(_component->charge(i).r(), result);
+		return _q.rotate(_component->charge(i).r());
 	}
-	void computeDipole_d(unsigned int i, double result[3]) const {
+	std::array<double, 3> computeDipole_d(unsigned int i) const {
 		mardyn_assert(_q.isNormalized());
-		_q.rotate(_component->dipole(i).r(), result);
+		return _q.rotate(_component->dipole(i).r());
 	}
-	void computeQuadrupole_d(unsigned int i, double result[3]) const {
+	std::array<double, 3> computeQuadrupole_d(unsigned int i) const {
 		mardyn_assert(_q.isNormalized());
-		_q.rotate(_component->quadrupole(i).r(), result);
+		return _q.rotate(_component->quadrupole(i).r());
 	}
-	void computeDipole_e(unsigned int i, double result[3]) const {
+	std::array<double, 3> computeDipole_e(unsigned int i) const {
 		mardyn_assert(_q.isNormalized());
-		_q.rotate(_component->dipole(i).e(), result);
+		return _q.rotate(_component->dipole(i).e());
 	}
-	void computeQuadrupole_e(unsigned int i, double result[3]) const {
+	std::array<double, 3> computeQuadrupole_e(unsigned int i) const {
 		mardyn_assert(_q.isNormalized());
-		_q.rotate(_component->quadrupole(i).e(), result);
+		return _q.rotate(_component->quadrupole(i).e());
 	}
 
 

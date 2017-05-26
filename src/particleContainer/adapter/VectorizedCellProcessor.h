@@ -315,7 +315,7 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
+	void _calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2);
 
 }; /* end of class VectorizedCellProcessor */
 

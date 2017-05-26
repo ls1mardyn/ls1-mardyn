@@ -227,7 +227,7 @@ void VCP1CLJWRTest::testProcessCell() {
 	// get an inner cell
 	double innerPoint[3] = {0.1, 0.1, 0.1};
 	unsigned long firstCellIndex = linkedCells->getCellIndexOfPoint(innerPoint);
-	ParticleCell_WR& cell_wr = linkedCells->getCell(firstCellIndex);
+	ParticleCell_WR& cell_wr = linkedCells->getCellReference(firstCellIndex);
 	CellDataSoA full_SoA(0,0,0,0,0);
 	VCP1CLJWRTest__initFullCellSoA(cell_wr, full_SoA);
 
@@ -297,8 +297,8 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	// get an inner cell
 	double innerPoint[3] = {0.1, 0.1, 0.1};
 	unsigned long firstCellIndex = linkedCells->getCellIndexOfPoint(innerPoint);
-	ParticleCell_WR& cell_wr1 = linkedCells->getCell(firstCellIndex);
-	ParticleCell_WR& cell_wr2 = linkedCells->getCell(firstCellIndex + 1);
+	ParticleCell_WR& cell_wr1 = linkedCells->getCellReference(firstCellIndex);
+	ParticleCell_WR& cell_wr2 = linkedCells->getCellReference(firstCellIndex + 1);
 
 
 	CellDataSoA full_SoA1(0,0,0,0,0);

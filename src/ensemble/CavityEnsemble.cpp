@@ -192,15 +192,15 @@ void CavityEnsemble::init(Component* component, unsigned Nx, unsigned Ny, unsign
             }
             double qtrnorm = sqrt(1.0 / qqtr);
 
-            double D[3];
+            std::array<double,3> D;
             double Dnorm = 0.0;
             if(rotdof > 0)
             {
                for(int d=0; d < 3; d++) D[d] = -0.5 + this->async.rnd();
 
-               double w[3];
+               std::array<double,3> w;
                Quaternion tqtr = Quaternion(qtr[0]*qtrnorm, qtr[1]*qtrnorm, qtr[2]*qtrnorm, qtr[3]*qtrnorm);
-               tqtr.rotate(D, w);
+               w = tqtr.rotate(D);
                double Iw2 = w[0]*w[0]*component->I11()
                           + w[1]*w[1]*component->I22()
                           + w[2]*w[2]*component->I33();

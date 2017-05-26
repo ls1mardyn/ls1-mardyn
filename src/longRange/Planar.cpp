@@ -31,8 +31,8 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 
 void Planar::init()
 {
-	_smooth=true; // Deactivate this for transient simulations!
-	//_smooth=false;  //true; <-- only applicable to static density profiles
+	//_smooth=true; // Deactivate this for transient simulations!
+	_smooth=false;  //true; <-- only applicable to static density profiles
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();

@@ -101,7 +101,7 @@ void FullParticleCell::preUpdateLeavingMolecules() {
 }
 
 void FullParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
-	FullParticleCell& oCell = downcastReferenceFull(otherCell);
+	FullParticleCell& oCell = downcastCellReferenceFull(otherCell);
 	updateLeavingMolecules(oCell);
 }
 

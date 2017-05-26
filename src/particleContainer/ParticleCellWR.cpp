@@ -69,7 +69,7 @@ int ParticleCell_WR::getMoleculeCount() const {
 }
 
 void ParticleCell_WR::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
-	ParticleCell_WR& oCell = downcastReferenceWR(otherCell);
+	ParticleCell_WR& oCell = downcastCellReferenceWR(otherCell);
 	const int oNumMols = oCell.getMoleculeCount();
 
 	// how many molecules travel from my cell to the other one

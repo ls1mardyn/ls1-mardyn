@@ -742,7 +742,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 	const int tid = mardyn_get_thread_num();
 	VLJCPThreadData &my_threadData = *_threadData[tid];
 
@@ -2568,7 +2568,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
 void VectorizedCellProcessor::processCell(ParticleCell & c) {
-	FullParticleCell & full_c = downcastReferenceFull(c);
+	FullParticleCell & full_c = downcastCellReferenceFull(c);
 
 	CellDataSoA& soa = full_c.getCellDataSoA();
 	if (c.isHaloCell() or soa._mol_num < 2) {
@@ -2581,11 +2581,11 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
-	FullParticleCell & full_c1 = downcastReferenceFull(c1);
-	FullParticleCell & full_c2 = downcastReferenceFull(c2);
+	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
 
-	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
-	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
+	CellDataSoA& soa1 = full_c1.getCellDataSoA();
+	CellDataSoA& soa2 = full_c2.getCellDataSoA();
 	const bool c1Halo = full_c1.isHaloCell();
 	const bool c2Halo = full_c2.isHaloCell();
 

@@ -11,6 +11,9 @@
 
 #include "WrapOpenMP.h"
 
+template<class ParticleCellTemplate>
+class CellPairTraversals;
+
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -82,7 +85,7 @@ public:
 	);
 
 	//! Default constructor
-	LinkedCells(){}
+	LinkedCells() : ParticleContainer(), _traversal(nullptr) {}
 	//! Destructor
 	~LinkedCells();
 
@@ -136,17 +139,9 @@ public:
 
 	void traverseCells(CellProcessor& cellProcessor);
 
-	void traverseCellsOrig(CellProcessor& cellProcessor);
-
-	void traverseCellsC08(CellProcessor& cellProcessor);
-
 	void traverseNonInnermostCells(CellProcessor& cellProcessor);
-	void traverseNonInnermostCellsOrig(CellProcessor& cellProcessor);
-	void traverseNonInnermostCellsC08(CellProcessor& cellProcessor);
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
-	void traversePartialInnermostCellsOrig(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
-	void traversePartialInnermostCellsC08(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
@@ -217,7 +212,7 @@ public:
 	//! If the point is not inside the bounding box, an error is printed
 	unsigned long int getCellIndexOfPoint(const double point[3]) const;
 
-	ParticleCell& getCell(int idx){ return _cells[idx];}
+	ParticleCell& getCellReference(int idx){ return _cells[idx];}
 
 	// documentation in base class
 	virtual void updateInnerMoleculeCaches();
@@ -232,7 +227,7 @@ public:
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
-		return ParticleIterator(t, &_cells, offset, stride);
+		return ParticleIterator(t, this, offset, stride);
 	}
 	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 	
@@ -245,6 +240,17 @@ public:
 	virtual void printSubInfo(int offset) override;
 	virtual std::string getName() override;
 
+	size_t getNumCells() const {
+		return _cells.size();
+	}
+
+	ParticleCellBase * getCell(unsigned cellIndex) {
+		return &(_cells.at(cellIndex));
+	}
+
+	const ParticleCellBase * getCell(unsigned cellIndex) const {
+		return &(_cells.at(cellIndex));
+	}
 
 private:
 	//####################################
@@ -256,6 +262,8 @@ private:
 	//! Fill the vector with the indices of the inner and boundary cells.
 	//! Assign each cell it's region (halo, boundary, inner).
 	void initializeCells();
+
+	void initializeTraversal();
 
 	//! @brief Calculate neighbour indices.
 	//!
@@ -301,14 +309,6 @@ private:
 	 */
 	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
-	/**
-	 * traverses single cell
-	 * @param cellIndex
-	 * @param cellProcessor
-	 * @return
-	 */
-	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
-
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
 
 	RegionParticleIterator getRegionParticleIterator(
@@ -332,6 +332,8 @@ private:
 	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
+
+	CellPairTraversals<ParticleCell> * _traversal;
 
 	// addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;

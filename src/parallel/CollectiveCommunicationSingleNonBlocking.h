@@ -141,7 +141,7 @@ private:
 				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, _agglomeratedTypeAddOperator, _communicator, _request));
 		_communicationInitiated = true;
 #else
-		for( int i = 0; i < _numValues; i++ ) {
+		for( unsigned int i = 0; i < _types.size(); i++ ) {
 			MPI_CHECK( MPI_Allreduce( MPI_IN_PLACE, &(_values[i]), 1, _types[i], MPI_SUM, _communicator ) );
 		}
 #endif

@@ -13,6 +13,10 @@
 #include "utils/Logger.h"
 #include "utils/mardyn_assert.h"
 #include <array>
+
+#include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
+#include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
+
 using namespace std;
 using Log::global_log;
 
@@ -22,7 +26,7 @@ using Log::global_log;
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius) :
-		ParticleContainer(bBoxMin, bBoxMax) {
+		ParticleContainer(bBoxMin, bBoxMax), _traversal(nullptr) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 
@@ -83,14 +87,33 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	calculateNeighbourIndices();
 	calculateCellPairOffsets();
 
+	initializeTraversal();
+
 	_cellsValid = false;
 }
 
 LinkedCells::~LinkedCells() {
+	delete _traversal;
+
 	std::vector<ParticleCell>::iterator it;
 	for (it = _cells.begin(); it != _cells.end(); ++it) {
 		it->deallocateAllParticles();
 	}
+}
+
+void LinkedCells::initializeTraversal() {
+	mardyn_assert(_traversal == nullptr);
+
+	std::array<long unsigned, 3> dims;
+	for (int d = 0; d < 3; ++d) {
+		dims[d] = _cellsPerDimension[d];
+	}
+
+#if defined(_OPENMP)
+	_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
+#else
+	_traversal = new OriginalCellPairTraversal<ParticleCell>(_cells, dims, _innerMostCellIndices);
+#endif
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
@@ -164,10 +187,17 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	// delete all Particles which are outside of the halo region
 	deleteParticlesOutsideBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
+	if (_traversal != nullptr) {
+		delete _traversal;
+		_traversal = nullptr;
+	}
+	initializeTraversal();
+
 	_cellsValid = false;
 }
 
 void LinkedCells::update() {
+	// TODO: replace via a cellProcessor and a traverseCells call ?
 #ifndef MARDYN_WR
 	update_via_copies();
 #else
@@ -358,356 +388,20 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
+		global_log->error() << "Cell structure in LinkedCells (traverseNonInnermostCells) invalid, call update first" << endl;
 		Simulation::exit(1);
 	}
 
-#if defined(_OPENMP)
-	traverseNonInnermostCellsC08(cellProcessor);
-#else
-	traverseNonInnermostCellsOrig(cellProcessor);
-#endif
-}
-
-void LinkedCells::traverseNonInnermostCellsOrig(CellProcessor& cellProcessor) {
-
-	// loop over all inner cells and calculate forces to forward neighbours
-
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
-		ParticleCell& currentCell = _cells[cellIndex];
-		if (!currentCell.isInnerMostCell()) {
-			traverseCell(cellIndex, cellProcessor);
-		}
-	} // loop over all cells
-}
-
-void LinkedCells::traverseNonInnermostCellsC08(CellProcessor& cellProcessor) {
-
-	#if defined(_OPENMP)
-		#pragma omp parallel
-	#endif
-	{
-		const int strides[3] = {2, 2, 2};
-		// loop over all colors
-		for (int col = 0; col < 8; ++col) {
-			int startIndices[3];
-			threeDIndexOfCellIndex(col, startIndices, strides);
-
-			// halo & boundaries in z direction
-			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3) nowait
-			#endif
-			for (int z = startIndices[2]; z < _cellsPerDimension[2] - 1; z += _cellsPerDimension[2] - 1 - strides[2]) {  // z is either lower or upper boundary
-				for (int y = startIndices[1]; y < _cellsPerDimension[1] - 1; y += strides[1]) {
-					for (int x = startIndices[0]; x < _cellsPerDimension[0] - 1; x += strides[0]) {
-						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
-						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
-						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			// halo & boundaries in y direction
-			// boundaries in z direction are excluded!
-			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3) nowait
-			#endif
-			for (int z = startIndices[2] + 2; z < _cellsPerDimension[2] - 3; z += strides[2]) {
-				for (int y = startIndices[1]; y < _cellsPerDimension[1] - 1; y += _cellsPerDimension[1] - 3) {  // y is either lower or upper boundary
-					for (int x = startIndices[0]; x < _cellsPerDimension[0] - 1; x += strides[0]) {
-						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
-						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
-						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			// halo & boundaries in x direction
-			// boundaries in z and y direction are excluded!
-			// no nowait, since we have to synchronize here!
-			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3)
-			#endif
-			for (int z = startIndices[2] + 2; z < _cellsPerDimension[2] - 3; z += strides[2]) {
-				for (int y = startIndices[1] + 2; y < _cellsPerDimension[1] - 3; y += strides[1]) {
-					for (int x = startIndices[0]; x < _cellsPerDimension[0] - 1; x += _cellsPerDimension[0] - 3) {  // x is either lower or upper boundary
-						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
-						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
-						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for (int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if (cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if (cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							} else {
-								if (!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								} else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
-					}
-				}
-			}
-
-
-		}
-	} // end pragma omp parallel
+	_traversal->traverseCellPairsOuter(cellProcessor);
 }
 
 void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
 	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
+		global_log->error() << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << endl;
 		Simulation::exit(1);
 	}
 
-#if defined(_OPENMP)
-	traversePartialInnermostCellsC08(cellProcessor, stage, stageCount);
-#else
-	traversePartialInnermostCellsOrig(cellProcessor, stage, stageCount);
-#endif
-}
-
-void LinkedCells::traversePartialInnermostCellsOrig(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
-
-
-	// loop over parts of innermost cells and calculate forces to forward neighbours
-	// _innerMostCellIndices
-	const long int lower =  _innerMostCellIndices.size() * stage / stageCount;
-	const long int upper =  _innerMostCellIndices.size() * (stage+1) / stageCount;
-
-#ifndef NDEBUG
-	global_log->debug() << "LinkedCells::traversePartialInnermostCells: Processing cells." << endl;
-	global_log->debug() << "lower=" << lower << "; upper="
-			<< upper << endl;
-#endif
-
-	for (long int cellIndex = lower; cellIndex < upper; cellIndex++) {
-		traverseCell(_innerMostCellIndices[cellIndex], cellProcessor);
-	} // loop over all cells
-}
-
-void LinkedCells::traversePartialInnermostCellsC08(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
-	int splitdim = 0;
-	int maxcellsize = _cellsPerDimension[0];
-	for (int i = 1; i < 3; i++){
-		if (_cellsPerDimension[i] > maxcellsize) {
-			splitdim = i;
-			maxcellsize = _cellsPerDimension[i];
-		}
-	}
-	int splitsize = maxcellsize - 5;
-	int minsize = min(_cellsPerDimension[0], min(_cellsPerDimension[1], _cellsPerDimension[2]));
-	assert(minsize>=4);  // there should be at least 4 cells in each dimension, otherwise we did something stupid!
-	if (minsize <= 5) {
-		return;  // we can not iterate over any inner cells, that do not depend on boundary or halo cells
-	}
-
-	int lower[3];
-	int upper[3];
-	for (int i = 0; i < 3; i++) {
-		lower[i] = 2;
-		upper[i] = _cellsPerDimension[i] - 3;
-	}
-	lower[splitdim] = 2 + splitsize * stage / stageCount;  // at least 2
-	upper[splitdim] = 2 + splitsize * (stage+1) / stageCount;  // at most _cellsPerDimension[i] - 3
-
-
-	#if defined(_OPENMP)
-		#pragma omp parallel
-	#endif
-	{
-		const int strides[3] = {2, 2, 2};
-		// loop over all colors
-		for (int col = 0; col < 8; ++col) {
-			int startIndices[3];
-			threeDIndexOfCellIndex(col, startIndices, strides);
-			for (int i = 0; i < 3; i++) {
-				startIndices[i] = startIndices[i] + lower[i];
-			}
-			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3)
-			#endif
-			for (int z = startIndices[2]; z < upper[2]; z += strides[2]) {
-				for (int y = startIndices[1]; y < upper[1]; y += strides[1]) {
-					for (int x = startIndices[0]; x < upper[0]; x += strides[0]) {
-						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
-						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
-						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	} // end pragma omp parallel
-}
-
-void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProcessor) {
-
-	ParticleCell& currentCell = _cells[cellIndex];
-	if (currentCell.isInnerCell()) {
-		cellProcessor.processCell(currentCell);
-		// loop over all forward neighbours
-		for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-			cellProcessor.processCellPair(currentCell, neighbourCell);
-		}
-	} /*else if (currentCell.isHaloCell()) {
-		cellProcessor.processCell(currentCell);
-		for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-			long int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
-			if ((neighbourCellIndex < 0) || (neighbourCellIndex >= (int) ((_cells.size()))))
-				continue;
-
-			ParticleCell& neighbourCell = _cells[neighbourCellIndex];
-			if (!neighbourCell.isHaloCell())
-				continue;
-
-			cellProcessor.processCellPair(currentCell, neighbourCell);
-		}
-	} */else
-	// loop over all boundary cells and calculate forces to forward and backward neighbours
-	if (currentCell.isBoundaryCell()) {
-		cellProcessor.processCell(currentCell);
-		// loop over all forward neighbours
-		for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-			cellProcessor.processCellPair(currentCell, neighbourCell);
-		}
-		// loop over all backward neighbours. calculate only forces
-		// to neighbour cells in the halo region, all others already have been calculated
-		for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
-				neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-			ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
-			if (neighbourCell.isHaloCell()) {
-				cellProcessor.processCellPair(currentCell, neighbourCell);
-			}
-		}
-	} // if ( isBoundaryCell() )
+	_traversal->traverseCellPairsInner(cellProcessor, stage, stageCount);
 }
 
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
@@ -718,93 +412,8 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		Simulation::exit(1);
 	}
 
-	#if defined(_OPENMP)
-		traverseCellsC08(cellProcessor);
-	#else
-		traverseCellsOrig(cellProcessor);
-	#endif
-}
-
-void LinkedCells::traverseCellsOrig(CellProcessor& cellProcessor) {
-	vector<long int>::iterator neighbourOffsetsIter;
-
-#ifndef NDEBUG
-	global_log->debug()
-			<< "LinkedCells::traverseCells: Processing pairs."
-			<< endl;
-	global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset
-			<< "; _maxNeighbourOffset=" << _maxNeighbourOffset << endl;
-#endif
-
 	cellProcessor.initTraversal();
-
-	// loop over all inner cells and calculate forces to forward neighbours
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
-		traverseCell(cellIndex, cellProcessor);
-	} // loop over all cells
-
-	cellProcessor.endTraversal();
-}
-
-void LinkedCells::traverseCellsC08(CellProcessor& cellProcessor) {
-	cellProcessor.initTraversal();
-
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-		const int strides[3] = {2, 2, 2};
-		for (int col = 0; col < 8; ++col) {
-			int startIndices[3];
-			threeDIndexOfCellIndex(col, startIndices, strides);
-
-			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3)
-			#endif
-			for (int z = startIndices[2]; z < _cellsPerDimension[2]-1 ; z+= strides[2]) {
-				for (int y = startIndices[1]; y < _cellsPerDimension[1]-1; y += strides[1]) {
-					for (int x = startIndices[0]; x < _cellsPerDimension[0]-1; x += strides[0]) {
-						long int baseIndex = cellIndexOf3DIndex(x, y, z);
-
-						const int num_pairs = _cellPairOffsets.size();
-						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-							long int offset1 = current_pair.first;
-							long int cellIndex1 = baseIndex + offset1;
-							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-								continue;
-
-							long int offset2 = current_pair.second;
-							long int cellIndex2 = baseIndex + offset2;
-							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-								continue;
-
-							ParticleCell& cell1 = _cells[cellIndex1];
-							ParticleCell& cell2 = _cells[cellIndex2];
-
-							if(cell1.isHaloCell() and cell2.isHaloCell()) {
-								continue;
-							}
-
-							if(cellIndex1 == cellIndex2) {
-								cellProcessor.processCell(cell1);
-							}
-							else {
-								if(!cell1.isHaloCell()) {
-									cellProcessor.processCellPair(cell1, cell2);
-								}
-								else {
-									cellProcessor.processCellPair(cell2, cell1);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	} // end pragma omp parallel
-
+	_traversal->traverseCellPairs(cellProcessor);
 	cellProcessor.endTraversal();
 }
 
@@ -1309,7 +918,7 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
 	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
 
-	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
+	return RegionParticleIterator(type, this, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {

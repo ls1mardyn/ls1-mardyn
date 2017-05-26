@@ -2,6 +2,7 @@
 #define QUATERNION_H_
 
 #include <cmath>
+#include <array>
 /**
  @author Martin Bernreuther
  */
@@ -54,32 +55,26 @@ public:
 	/**
 	 * apply the rotation represented by tis quaternion to d
 	 * @param d the vector to be rotated
-	 * @param result vector of the rotation
+	 * @return result vector of the rotation
 	 */
-	void rotate(const double d[3], double drot[3]) const;
+	std::array<double, 3> rotate(const std::array<double, 3>& d) const;
 
 	/**
 	 * apply the rotation represented by tis quaternion to d. The result vector
 	 * is stored to d.
 	 * @param d the vector to be rotated
 	 */
-	void rotate(double d[3]) const {
-		double drot[3];
-		rotate(d, drot);
-		d[0] = drot[0];
-		d[1] = drot[1];
-		d[2] = drot[2];
+	void rotateInPlace(std::array<double, 3>& d) const {
+		std::array<double, 3> dcopy = d;
+		d = rotate(dcopy);
 	}
-	void rotateinv(const double d[3], double drot[3]) const;
-	void rotateinv(double d[3]) const {
-		double drot[3];
-		rotateinv(d, drot);
-		d[0] = drot[0];
-		d[1] = drot[1];
-		d[2] = drot[2];
+	std::array<double, 3> rotateinv(const std::array<double, 3>& d) const;
+	void rotateinvInPlace(std::array<double, 3>& d) const {
+		std::array<double, 3> dcopy = d;
+		d = rotateinv(dcopy);
 	}
 	//void differentiate_dbl(const double w[3], Quaternion& dqdt) const;
-	void differentiate(const double w[3], Quaternion& dqdt) const;
+	void differentiate(const std::array<double, 3>& w, Quaternion& dqdt) const;
 	//  { differentiate_dbl(w,dqdt); dqdt.scale(.5); }
 	void getRotMatrix(double R[3][3]) const;
 	void getRotinvMatrix(double R[3][3]) const;

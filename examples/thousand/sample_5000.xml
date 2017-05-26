@@ -61,7 +61,6 @@
     </algorithm>
 
     <output>
-      <outputplugin name="LJFLOPCounter"></outputplugin>
       <outputplugin name="SysMonOutput">
         <expression>procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>

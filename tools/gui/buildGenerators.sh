@@ -1,5 +1,5 @@
 #! /bin/bash
-export VTKINCLUDEPATH=/usr/include/vtk-6.3
+#export VTKINCLUDEPATH=/usr/include/vtk-6.3
 #cd tools/gui
 
 tar xfz ScenarioGenerator.tar.gz
@@ -17,8 +17,8 @@ if [ -e libMardyn* ]; then
 rm -r libMardyn*
 fi
 
-wget www5.in.tum.de/mardyn/lastSuccessfulBuild/lib/libMardyn.so.1.0 .
-ln -s libMardyn.so.1.0 libMardyn.so
+#wget www5.in.tum.de/mardyn/lastSuccessfulBuild/lib/libMardyn.so.1.0 .
+#ln -s libMardyn.so.1.0 libMardyn.so
 
 make -f Makefile.droplet -j2
 make -f Makefile.cubic -j2

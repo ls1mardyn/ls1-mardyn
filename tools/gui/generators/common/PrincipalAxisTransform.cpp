@@ -125,7 +125,7 @@ static void sumProperties(const Site& site, double& totalMass, double centerOfMa
 }
 
 static void shiftCenterAndBuildMatrix(Site& s, const double centerOfMass[3], double A[3][3]) {
-	const double* r = s.r();
+	const std::array<double, 3> r = s.r();
 	for (int j = 0; j < 3; j++) {
 		s.setR(j, r[j] - centerOfMass[j]);
 	}

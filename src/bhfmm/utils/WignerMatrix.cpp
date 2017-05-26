@@ -35,7 +35,7 @@ void WignerMatrix::evaluate_0_Pip2(double theta)
 	 * @Remark: it is possible to just use one double for g_l0 instead of an array
 	 * for g_lm. In principle g_lm for m>0 could be temporarily stored in the matrix
 	 * itself. However, for now,  using an array is easier to read and implement. */
-	double g[ord+1]; // ord+1 to have enough space for the last iteration l==order
+	std::vector<double> g(ord+1); // ord+1 to have enough space for the last iteration l==order
 
 	const double sint = sin(theta);
 	const double cost = cos(theta);

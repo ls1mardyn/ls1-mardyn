@@ -42,7 +42,7 @@ void MemoryProfiler::doOutput(const std::string& string) {
 }
 
 unsigned long long MemoryProfiler::getCachedSize() {
-	size_t MAXLEN = 1024;
+	const size_t MAXLEN = 1024;
 	FILE *fp;
 	char buf[MAXLEN];
 	fp = fopen("/proc/meminfo", "r");

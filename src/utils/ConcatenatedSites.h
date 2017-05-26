@@ -49,7 +49,7 @@ public:
 	 * \tparam coord	Indicates which of the 3 coordinates one needs. Has to be a value as specified in enum CoordinateType
 	 * \return	Pointer to the first value of the data, as indicated by the parameters
 	 */
-	T* getBeginPointer (SiteType st, CoordinateType coord) const {
+	T* getBeginPointer (SiteType st, CoordinateType coord) {
 		T* returnPointer = nullptr;
 
 		switch (coord) {
@@ -83,6 +83,41 @@ public:
 		return returnPointer;
 	}
 
+	const T* getBeginPointer (SiteType st, CoordinateType coord) const {
+		const T* returnPointer = nullptr;
+		size_t offset = 0;
+
+		switch (st) {
+		case SiteType::QUADRUPOLE:
+			offset += AlignedArray<T>::_round_up(_dipoles_num);
+			/* no break */
+		case SiteType::DIPOLE:
+			offset += AlignedArray<T>::_round_up(_charges_num);
+			/* no break */
+		case SiteType::CHARGE:
+			offset += AlignedArray<T>::_round_up(_ljc_num);
+			/* no break */
+		case SiteType::LJC:
+			/* no break */ ; /* ; needed to compile here */
+		}
+
+		switch (coord) {
+		case CoordinateType::X:
+			returnPointer = _data.xBegin() + offset;
+			break;
+		case CoordinateType::Y:
+			returnPointer = _data.yBegin() + offset;
+			break;
+		case CoordinateType::Z:
+			returnPointer = _data.zBegin() + offset;
+			break;
+		}
+
+		mardyn_assert(returnPointer != nullptr);
+
+		return returnPointer;
+	}
+
 	/**
 	 * \brief	Get the value triplet X,Y,Z of SiteType st at position index
 	 */
@@ -98,16 +133,6 @@ public:
 	 * \brief	Set the value triplet X,Y,Z of SiteType st at position index to given values
 	 */
 	void setTriplet(std::array<T, 3> values, SiteType st, size_t index) {
-		getBeginPointer(st, CoordinateType::X)[index] = values[0];
-		getBeginPointer(st, CoordinateType::Y)[index] = values[1];
-		getBeginPointer(st, CoordinateType::Z)[index] = values[2];
-	}
-
-	/**
-	 * \brief	Add the value triplet X,Y,Z of SiteType st at position index
-	 * \note	Only difference to setTriplet() is, that this one takes a C-style array
-	 */
-	void addTriplet(double values[3], SiteType st, size_t index) {
 		getBeginPointer(st, CoordinateType::X)[index] = values[0];
 		getBeginPointer(st, CoordinateType::Y)[index] = values[1];
 		getBeginPointer(st, CoordinateType::Z)[index] = values[2];

@@ -21,16 +21,16 @@ public:
 	T* xBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; }
 	T* yBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (1 * _numEntriesPerArray) : nullptr; }
 	T* zBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (2 * _numEntriesPerArray) : nullptr; }
-	T* xBegin() const { return _numEntriesPerArray > 0 ? this->_vec_ptr->data() + (0 * _numEntriesPerArray) : nullptr; }
-	T* yBegin() const { return _numEntriesPerArray > 0 ? this->_vec_ptr->data() + (1 * _numEntriesPerArray) : nullptr; }
-	T* zBegin() const { return _numEntriesPerArray > 0 ? this->_vec_ptr->data() + (2 * _numEntriesPerArray) : nullptr; }
+	const T* xBegin() const { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; }
+	const T* yBegin() const { return _numEntriesPerArray > 0 ? this->_vec.data() + (1 * _numEntriesPerArray) : nullptr; }
+	const T* zBegin() const { return _numEntriesPerArray > 0 ? this->_vec.data() + (2 * _numEntriesPerArray) : nullptr; }
 
 	T& x(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 0 * _numEntriesPerArray]; }
 	T& y(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 1 * _numEntriesPerArray]; }
 	T& z(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 2 * _numEntriesPerArray]; }
-	T& x(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return (*this->_vec_ptr)[i + 0 * _numEntriesPerArray]; }
-	T& y(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return (*this->_vec_ptr)[i + 1 * _numEntriesPerArray]; }
-	T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return (*this->_vec_ptr)[i + 2 * _numEntriesPerArray]; }
+	const T& x(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 0 * _numEntriesPerArray]; }
+	const T& y(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 1 * _numEntriesPerArray]; }
+	const T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 2 * _numEntriesPerArray]; }
 
 	size_t dimensionToOffset(int i) const {
 		mardyn_assert(i >= 0 and i < 3);
