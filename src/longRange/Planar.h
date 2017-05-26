@@ -21,7 +21,7 @@ class ParticleContainer;
 class Planar:public LongRangeCorrection {
 public:
 	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation);
-	virtual ~Planar() {}
+	virtual ~Planar();
 
 	virtual void init();
 	virtual void readXML(XMLfileUnits& xmlconfig);

@@ -30,6 +30,28 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	frequency=10;
 }
 
+Planar::~Planar()
+{
+	free(numLJ);
+	free(numDipole);
+	free(numLJSum2);
+	free(numDipoleSum2);
+	free(muSquare);
+	free(uLJ);
+	free(vNLJ);
+	free(vTLJ);
+	free(fLJ);
+	free(rho_g);
+	free(rho_l);
+	free(fDipole);
+	free(uDipole);
+	free(vNDipole);
+	free(vTDipole);
+	free(rhoDipole);
+	free(rhoDipoleL);
+	free(eLong);
+}
+
 void Planar::init()
 {
 	//_smooth=true; // Deactivate this for transient simulations!

@@ -33,7 +33,7 @@ public:
 		_components = *components;
 	}
 
-	~CanonicalEnsemble() {
+	virtual ~CanonicalEnsemble() {
 	}
 
 	virtual void readXML(XMLfileUnits& xmlconfig) override;

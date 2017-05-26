@@ -8,7 +8,7 @@ class XMLfileUnits;
 class MixingRuleBase {
 public:
 	MixingRuleBase(){};
-	~MixingRuleBase(){};
+	virtual ~MixingRuleBase(){};
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
 private:

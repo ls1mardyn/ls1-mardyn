@@ -12,6 +12,13 @@
 using namespace std;
 using Log::global_log;
 
+Ensemble::~Ensemble()
+{
+	delete _domain;
+	for(auto& m : _mixingrules)
+		delete(m);
+}
+
 void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	long numComponents = 0;
 	XMLfile::Query query = xmlconfig.query("components/moleculetype");

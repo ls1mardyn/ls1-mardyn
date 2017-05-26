@@ -424,6 +424,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			if("planar" == type)
 			{
 				unsigned int nSlabs = 10;
+				if(NULL != _longRangeCorrection)
+					delete _longRangeCorrection;
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
