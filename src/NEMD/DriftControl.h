@@ -24,7 +24,7 @@ public:
 	ControlRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] );
 	ControlRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3],
 			unsigned int nTargetComponentID, const double dDirection[3], const double& dTargetVal);
-    ~ControlRegion();
+	virtual ~ControlRegion();
 
 	void readXML(XMLfileUnits& xmlconfig);
     unsigned long GetDriftVelocityGlobal(unsigned short nDim) {return _dDriftVelocityGlobal[nDim];}
@@ -70,7 +70,7 @@ class DriftControl : public ControlInstance
 public:
 	DriftControl(Domain* domain, DomainDecompBase* domainDecomp);
     DriftControl(Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
-    ~DriftControl();
+	virtual ~DriftControl();
 
 	void readXML(XMLfileUnits& xmlconfig);
     std::string GetShortName() {return "DrC";}

@@ -31,7 +31,7 @@ class ControlRegion : public CuboidRegionObs
 public:
 	ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3] );
 	ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nTargetComponentID, const double& dTargetDensity);
-	~ControlRegion();
+	virtual ~ControlRegion();
 
 	void readXML(XMLfileUnits& xmlconfig);
     void CheckBounds();
@@ -92,7 +92,7 @@ class DensityControl : public ControlInstance
 public:
 	DensityControl(DomainDecompBase* domainDecomp, Domain* domain);
     DensityControl(DomainDecompBase* domainDecomp, Domain* domain, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
-    ~DensityControl();
+	virtual ~DensityControl();
 
 	void readXML(XMLfileUnits& xmlconfig);
     std::string GetShortName() {return "DeC";}

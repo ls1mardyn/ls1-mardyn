@@ -37,7 +37,7 @@ class SampleRegion : public CuboidRegionObs
 {
 public:
 	SampleRegion(RegionSampling* parent, double dLowerCorner[3], double dUpperCorner[3] );
-	~SampleRegion();
+	virtual ~SampleRegion();
 
 	void readXML(XMLfileUnits& xmlconfig);
 
@@ -290,7 +290,7 @@ class RegionSampling : public ControlInstance
 {
 public:
 	RegionSampling(Domain* domain, DomainDecompBase* domainDecomp);
-	~RegionSampling();
+	virtual ~RegionSampling();
 
 	std::string GetShortName() {return "ReS";}
 	void readXML(XMLfileUnits& xmlconfig);

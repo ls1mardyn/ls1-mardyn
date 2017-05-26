@@ -11,12 +11,14 @@
 class ObserverBase
 {
 public:
+	virtual ~ObserverBase() {}
 	virtual void set(double dInterfaceMidLeft, double dInterfaceMidRight) = 0;
 };
 
 class SubjectBase
 {
 public:
+	virtual ~SubjectBase() {}
 	virtual void registerObserver(ObserverBase* observer) = 0;
 	virtual void deregisterObserver(ObserverBase* observer) = 0;
 	virtual void informObserver() = 0;

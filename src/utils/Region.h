@@ -27,7 +27,7 @@ class ControlInstance
 {
 public:
 	ControlInstance(Domain* domain, DomainDecompBase* domainDecomp) : _domain(domain), _domainDecomp(domainDecomp) {}
-	~ControlInstance() {}
+	virtual ~ControlInstance() {}
     virtual std::string GetShortName() = 0;
 
     Domain* GetDomain() {return _domain;}
@@ -43,7 +43,7 @@ class Region
 {
 protected:
     Region(ControlInstance* parent);
-    ~Region();
+	virtual ~Region();
 
 public:
     unsigned short GetID() {return _nID;}
@@ -67,7 +67,7 @@ class CuboidRegion : public Region
 public:
 	CuboidRegion(ControlInstance* parent);
 	CuboidRegion(ControlInstance* parent, double dLC[3], double dUC[3] );
-    ~CuboidRegion();
+	virtual ~CuboidRegion();
 
     double GetLowerCorner(unsigned short nDim) {return _dLowerCorner[nDim];}
     double GetUpperCorner(unsigned short nDim) {return _dUpperCorner[nDim];}
@@ -116,7 +116,7 @@ class CuboidRegionObs : public CuboidRegion, public ObserverBase
 public:
 	CuboidRegionObs(ControlInstance* parent);
 	CuboidRegionObs(ControlInstance* parent, double dLC[3], double dUC[3] );
-    virtual ~CuboidRegionObs();
+	virtual ~CuboidRegionObs();
 
     // ObserverBase methods
 	virtual void set(double dMidpointLeft, double dMidpointRight);

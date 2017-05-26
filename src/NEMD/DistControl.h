@@ -53,7 +53,7 @@ class DistControl : public ControlInstance, public SubjectBase
 public:
 	DistControl(DomainDecompBase* domainDecomp, Domain* domain);
     DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigned int nUpdateFreq, unsigned int nWriteFreqProfiles);
-    ~DistControl();
+	virtual ~DistControl();
 
     std::string GetShortName() {return "DiC";}
 	void readXML(XMLfileUnits& xmlconfig);

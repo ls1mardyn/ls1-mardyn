@@ -57,6 +57,153 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 
 SampleRegion::~SampleRegion()
 {
+	// profile sampling
+	if(true == _SamplingEnabledProfiles)
+	{
+		delete [] _dBinMidpointsProfiles;
+		// Offsets
+		for(uint8_t dir = 0; dir<3; ++dir)
+			delete [] _nOffsetScalar[dir];
+
+		for(uint8_t dim = 0; dim<3; ++dim)
+		{
+			for(uint8_t dir = 0; dir<3; ++dir)
+				delete [] _nOffsetVector[dim][dir];
+		}
+		// Scalar quantities
+		delete [] _nNumMoleculesLocal;
+		delete [] _nNumMoleculesGlobal;
+		delete [] _nRotDOFLocal;
+		delete [] _nRotDOFGlobal;
+		delete [] _d2EkinRotLocal;
+		delete [] _d2EkinRotGlobal;
+		// output profiles
+		delete [] _dDensity;
+		delete [] _d2EkinTotal;
+		delete [] _d2EkinTrans;
+		delete [] _d2EkinDrift;
+		delete [] _d2EkinRot;
+		delete [] _d2EkinT;
+		delete [] _dTemperature;
+		delete [] _dTemperatureTrans;
+		delete [] _dTemperatureRot;
+		// Vector quantities
+		delete [] _dVelocityLocal;
+		delete [] _dVelocityGlobal;
+		delete [] _dSquaredVelocityLocal;
+		delete [] _dSquaredVelocityGlobal;
+		delete [] _dForceLocal;
+		delete [] _dForceGlobal;
+		// output profiles
+		delete [] _dForce;
+		delete [] _dDriftVelocity;
+		delete [] _d2EkinTransComp;
+		delete [] _d2EkinDriftComp;
+		delete [] _dTemperatureComp;
+	}
+
+	// VDF sampling
+	if(true == _SamplingEnabledVDF)
+	{
+		delete [] _dBinMidpointsVDF;
+		delete [] _dDiscreteVelocityValues;
+
+		for(uint32_t s=0; s<_nNumBinsVDF; ++s) {
+			// local
+			delete [] _veloDistrMatrixLocal_py_abs[s];
+			delete [] _veloDistrMatrixLocal_py_pvx[s];
+			delete [] _veloDistrMatrixLocal_py_pvy[s];
+			delete [] _veloDistrMatrixLocal_py_pvz[s];
+			delete [] _veloDistrMatrixLocal_py_nvx[s];
+			delete [] _veloDistrMatrixLocal_py_nvy[s];
+			delete [] _veloDistrMatrixLocal_py_nvz[s];
+
+			delete [] _veloDistrMatrixLocal_ny_abs[s];
+			delete [] _veloDistrMatrixLocal_ny_pvx[s];
+			delete [] _veloDistrMatrixLocal_ny_pvy[s];
+			delete [] _veloDistrMatrixLocal_ny_pvz[s];
+			delete [] _veloDistrMatrixLocal_ny_nvx[s];
+			delete [] _veloDistrMatrixLocal_ny_nvy[s];
+			delete [] _veloDistrMatrixLocal_ny_nvz[s];
+
+			// global
+			delete [] _veloDistrMatrixGlobal_py_abs[s];
+			delete [] _veloDistrMatrixGlobal_py_pvx[s];
+			delete [] _veloDistrMatrixGlobal_py_pvy[s];
+			delete [] _veloDistrMatrixGlobal_py_pvz[s];
+			delete [] _veloDistrMatrixGlobal_py_nvx[s];
+			delete [] _veloDistrMatrixGlobal_py_nvy[s];
+			delete [] _veloDistrMatrixGlobal_py_nvz[s];
+
+			delete [] _veloDistrMatrixGlobal_ny_abs[s];
+			delete [] _veloDistrMatrixGlobal_ny_pvx[s];
+			delete [] _veloDistrMatrixGlobal_ny_pvy[s];
+			delete [] _veloDistrMatrixGlobal_ny_pvz[s];
+			delete [] _veloDistrMatrixGlobal_ny_nvx[s];
+			delete [] _veloDistrMatrixGlobal_ny_nvy[s];
+			delete [] _veloDistrMatrixGlobal_ny_nvz[s];
+		}
+		// local
+		delete [] _veloDistrMatrixLocal_py_abs;
+		delete [] _veloDistrMatrixLocal_py_pvx;
+		delete [] _veloDistrMatrixLocal_py_pvy;
+		delete [] _veloDistrMatrixLocal_py_pvz;
+		delete [] _veloDistrMatrixLocal_py_nvx;
+		delete [] _veloDistrMatrixLocal_py_nvy;
+		delete [] _veloDistrMatrixLocal_py_nvz;
+
+		delete [] _veloDistrMatrixLocal_ny_abs;
+		delete [] _veloDistrMatrixLocal_ny_pvx;
+		delete [] _veloDistrMatrixLocal_ny_pvy;
+		delete [] _veloDistrMatrixLocal_ny_pvz;
+		delete [] _veloDistrMatrixLocal_ny_nvx;
+		delete [] _veloDistrMatrixLocal_ny_nvy;
+		delete [] _veloDistrMatrixLocal_ny_nvz;
+
+		// global
+		delete [] _veloDistrMatrixGlobal_py_abs;
+		delete [] _veloDistrMatrixGlobal_py_pvx;
+		delete [] _veloDistrMatrixGlobal_py_pvy;
+		delete [] _veloDistrMatrixGlobal_py_pvz;
+		delete [] _veloDistrMatrixGlobal_py_nvx;
+		delete [] _veloDistrMatrixGlobal_py_nvy;
+		delete [] _veloDistrMatrixGlobal_py_nvz;
+
+		delete [] _veloDistrMatrixGlobal_ny_abs;
+		delete [] _veloDistrMatrixGlobal_ny_pvx;
+		delete [] _veloDistrMatrixGlobal_ny_pvy;
+		delete [] _veloDistrMatrixGlobal_ny_pvz;
+		delete [] _veloDistrMatrixGlobal_ny_nvx;
+		delete [] _veloDistrMatrixGlobal_ny_nvy;
+		delete [] _veloDistrMatrixGlobal_ny_nvz;
+	}
+
+	// fieldYR sampling
+	if(true == _SamplingEnabledFieldYR)
+	{
+		delete [] _dShellVolumesFieldYR;
+		delete [] _dBinMidpointsFieldYR;
+		delete [] _dShellMidpointsFieldYR;
+		// Offsets
+		for(uint8_t dim=0; dim<3; ++dim)
+		{
+			for(uint8_t sec=0; sec<3; ++sec)
+			{
+				for(uint32_t cid = 0; cid<_nNumComponents; ++cid)
+					delete [] _nOffsetFieldYR[dim][sec][cid];
+				delete [] _nOffsetFieldYR[dim][sec];
+			}
+			delete [] _nOffsetFieldYR[dim];
+		}
+		delete [] _nOffsetFieldYR;
+
+		// Scalar quantities
+		delete [] _nNumMoleculesFieldYRLocal;
+		delete [] _nNumMoleculesFieldYRGlobal;
+		// output profiles
+		delete [] _dDensityFieldYR;
+		delete [] _dInvShellVolumesFieldYR;
+	}
 }
 
 void SampleRegion::readXML(XMLfileUnits& xmlconfig)
@@ -2204,6 +2351,9 @@ RegionSampling::RegionSampling(Domain* domain, DomainDecompBase* domainDecomp)
 
 RegionSampling::~RegionSampling()
 {
+	// free memory
+	for(auto& r : _vecSampleRegions)
+		delete r;
 }
 
 void RegionSampling::readXML(XMLfileUnits& xmlconfig)

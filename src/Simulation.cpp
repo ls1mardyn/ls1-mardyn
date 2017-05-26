@@ -264,19 +264,27 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@name", featureName);
 			global_log->info() << "Enabling NEMD feature: " << featureName << endl;
 			if(featureName == "DistControl") {
+				if(NULL != _distControl)
+					delete _distControl;
 				_distControl = new DistControl(_domainDecomposition, _domain);
 				_distControl->readXML(xmlconfig);
 				_distControl->Init(_moleculeContainer);
 			}
 			else if(featureName == "RegionSampling") {
+				if(NULL != _regionSampling)
+					delete _regionSampling;
 				_regionSampling = new RegionSampling(_domain, _domainDecomposition);
 				_regionSampling->readXML(xmlconfig);
 			}
 			else if(featureName == "DriftControl") {
+				if(NULL != _driftControl)
+					delete _driftControl;
 				_driftControl = new DriftControl(_domain, _domainDecomposition);
 				_driftControl->readXML(xmlconfig);
 			}
 			else if(featureName == "DensityControl") {
+				if(NULL != _densityControl)
+					delete _densityControl;
 				_densityControl = new DensityControl(_domainDecomposition, _domain);
 				_densityControl->readXML(xmlconfig);
 			}

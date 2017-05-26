@@ -61,7 +61,23 @@ DistControl::DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigne
 
 DistControl::~DistControl()
 {
-
+	// free memory
+	delete [] _nOffsets;
+	delete [] _nNumMoleculesLocal;
+	delete [] _nNumMoleculesGlobal;
+	delete [] _dMidpointPositions;
+	delete [] _dForceSumLocal;
+	delete [] _dForceSumGlobal;
+	delete [] _dDensityProfile;
+	delete [] _dDensityProfileSmoothed;
+	delete [] _dDensityProfileSmoothedDerivation;
+	delete [] _dForceProfile;
+	delete [] _dForceProfileSmoothed;
+	// align COM
+	delete [] _nNumMoleculesCOMLocal;
+	delete [] _nNumMoleculesCOMGlobal;
+	delete [] _dPosSumLocal;
+	delete [] _dPosSumGlobal;
 }
 
 void DistControl::readXML(XMLfileUnits& xmlconfig)
