@@ -7,7 +7,7 @@ class XMLfileUnits;
 class DomainBase {
 public:
 	DomainBase(){};
-	~DomainBase(){};
+	virtual ~DomainBase(){};
 
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
