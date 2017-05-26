@@ -7,6 +7,7 @@
 
 #include "NEMD/NEMD.h"
 #include "NEMD/DensityControl.h"
+#include "NEMD/DistControl.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
@@ -18,6 +19,7 @@
 #include "Domain.h"
 //#include "NEMD/ParticleInsertion.h"
 //#include "utils/Random.h"
+#include "utils/xmlfileUnits.h"
 //
 #include <iostream>
 #include <fstream>
@@ -38,8 +40,34 @@ unsigned short dec::ControlRegion::_nStaticID = 0;
 
 // class dec::ControlRegion
 
-dec::ControlRegion::ControlRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nTargetComponentID, const double& dTargetDensity)
-: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3] )
+		: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+{
+	// ID
+	_nID = ++_nStaticID;
+
+	// init process relevance
+	_bProcessIsRelevant = true;
+
+	// init rank array
+	_ranks = NULL;
+
+	// reset local values
+	_nDeletedNumMoleculesLocal = 0;
+
+	for(unsigned int d=0; d<3; ++d)
+	{
+		_dDeletedVelocityLocal[d] = 0.;
+		_dDeletedVelocitySquaredLocal[d] = 0.;
+		_dDeletedEkinLocal[d] = 0.;
+	}
+
+	this->WriteHeaderDeletedMolecules();
+}
+
+dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3],
+		unsigned int nTargetComponentID, const double& dTargetDensity)
+		: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
 {
 	// ID
 	_nID = ++_nStaticID;
@@ -72,6 +100,12 @@ dec::ControlRegion::ControlRegion(ControlInstance* parent, double dLowerCorner[3
 
 dec::ControlRegion::~ControlRegion()
 {
+}
+
+void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
+{
+	xmlconfig.getNodeValue("target/componentID", _nTargetComponentID);
+	xmlconfig.getNodeValue("target/density", _dTargetDensity);
 }
 
 void dec::ControlRegion::CheckBounds()
@@ -261,11 +295,9 @@ void dec::ControlRegion::MeasureDensity(Molecule* mol)
 
 void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, bool& bDeleteMolecule)
 {
-    /*
-    // check component ID: if inert gas --> do nothing (return)
-    if(mol->componentid()+1 == 3)  // program intern component ID starts with 0
-        return;
-*/
+	// check componentID
+	if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
+		return;
 
 //    int nRank = domainDecomp->getRank();
 //    double dPosY = mol->r(1);
@@ -275,8 +307,8 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 		if( !(PositionIsInside(d, mol->r(d) ) ) ) return;
 
 	uint32_t flagsNEMD = dynamic_cast<DensityControl*>(this->GetParent() )->GetFlagsNEMD();
-	// change identity (component) of molecules Ac --> N2 (aceton to nitrogen) --> CHANGE_COMPONENT_AC_TO_N2
-	if(flagsNEMD & CHANGE_COMPONENT_AC_TO_N2)
+	// change identity (component) of molecules Ac --> N2 (aceton to nitrogen) --> NEMD_CHANGE_COMPONENT_AC_TO_N2
+	if(flagsNEMD & NEMD_CHANGE_COMPONENT_AC_TO_N2)
 	{
 		std::array<uint8_t, 3> arrChangComps;
 		arrChangComps = {2, 1, 2};
@@ -336,7 +368,7 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 	#endif
 		}
 	}
-	// <-- CHANGE_COMPONENT_AC_TO_N2
+	// <-- NEMD_CHANGE_COMPONENT_AC_TO_N2
 
     if( 0. == _dTargetDensity)
     {
@@ -488,6 +520,17 @@ void dec::ControlRegion::WriteDataDeletedMolecules(unsigned long simstep)
         
 // class DensityControl
 
+DensityControl::DensityControl(DomainDecompBase* domainDecomp, Domain* domain)
+	: ControlInstance(domain, domainDecomp),
+		_nStart(0),
+		_nControlFreq(1),
+		_nStop(1000000000),
+		_nWriteFreqDeleted(1000),
+		_bProcessIsRelevant(true),
+		_flagsNEMD(0)
+{
+}
+
 DensityControl::DensityControl(DomainDecompBase* domainDecomp, Domain* domain,
 		unsigned long nControlFreq, unsigned long nStart, unsigned long nStop)
 : ControlInstance(domain, domainDecomp), _flagsNEMD(0)
@@ -505,6 +548,96 @@ DensityControl::DensityControl(DomainDecompBase* domainDecomp, Domain* domain,
 
 DensityControl::~DensityControl()
 {
+}
+
+void DensityControl::readXML(XMLfileUnits& xmlconfig)
+{
+	// flags, TODO: implement mechanism to add multiple flags by logic | operation
+	std::string strFlags = "none";
+	xmlconfig.getNodeValue("@flags", strFlags);
+	if ("NEMD_CHANGE_COMPONENT_AC_TO_N2" == strFlags)
+	{
+		_flagsNEMD = (_flagsNEMD | NEMD_CHANGE_COMPONENT_AC_TO_N2);
+		std::string str = "false";
+		if(true == (_flagsNEMD & NEMD_CHANGE_COMPONENT_AC_TO_N2) )
+			str = "true";
+		global_log->info() << "DensityControl: Change component AC --> N2:"
+			" " << str << endl;
+	}
+
+	// control
+	xmlconfig.getNodeValue("control/start", _nStart);
+	xmlconfig.getNodeValue("control/controlfreq", _nControlFreq);
+	xmlconfig.getNodeValue("control/writefreq", _nWriteFreqDeleted);
+	xmlconfig.getNodeValue("control/stop", _nStop);
+
+	// add regions
+	uint32_t numRegions = 0;
+	uint32_t nRegID = 0;
+	XMLfile::Query query = xmlconfig.query("region");
+	numRegions = query.card();
+	global_log->info() << "DensityControl: Number of sampling regions: " << numRegions << endl;
+	if(numRegions < 1) {
+		global_log->warning() << "DensityControl: No region parameters specified. Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputRegionIter;
+	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
+	{
+		xmlconfig.changecurrentnode( outputRegionIter );
+		double lc[3];
+		double uc[3];
+		std::string strVal[3];
+		std::string strControlType;
+
+		// coordinates
+		xmlconfig.getNodeValue("coords/lcx", lc[0]);
+		xmlconfig.getNodeValue("coords/lcy", lc[1]);
+		xmlconfig.getNodeValue("coords/lcz", lc[2]);
+		xmlconfig.getNodeValue("coords/ucx", strVal[0]);
+		xmlconfig.getNodeValue("coords/ucy", strVal[1]);
+		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
+		// read upper corner
+		for(uint8_t d=0; d<3; ++d)
+			uc[d] = (strVal[d] == "box") ? GetDomain()->getGlobalLength(d) : atof(strVal[d].c_str() );
+
+		global_log->info() << "DensityControl->region["<<nRegID<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << endl;
+		global_log->info() << "DensityControl->region["<<nRegID<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
+
+		// add regions
+		dec::ControlRegion* region = new dec::ControlRegion(this, lc, uc);
+		this->AddRegion(region);
+
+		// observer mechanism
+		uint32_t refCoordsID[6] = {0, 0, 0, 0, 0, 0};
+		xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID[0]);
+		xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID[1]);
+		xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID[2]);
+		xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID[3]);
+		xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID[4]);
+		xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID[5]);
+
+		bool bIsObserver = (refCoordsID[0]+refCoordsID[1]+refCoordsID[2]+refCoordsID[3]+refCoordsID[4]+refCoordsID[5]) > 0;
+
+		if(true == bIsObserver)
+		{
+			region->PrepareAsObserver(refCoordsID);
+
+			if(global_simulation->GetDistControl() != NULL)
+				global_simulation->GetDistControl()->registerObserver(region);
+			else
+			{
+				global_log->error() << "DensityControl->region["<<region->GetID()<<"]: Initialization of feature DistControl is needed before! Program exit..." << endl;
+				exit(-1);
+			}
+		}
+
+		// read region parameters from XML file
+		region->readXML(xmlconfig);
+		nRegID++;
+
+	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 }
 
 void DensityControl::AddRegion(dec::ControlRegion* region)

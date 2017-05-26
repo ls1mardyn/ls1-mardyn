@@ -792,8 +792,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "flagsNEMD") {
 			std::string strFlag;
 			inputfilestream >> strFlag;
-			if (strFlag == "CHANGE_COMPONENT_AC_TO_N2")
-				_flagsNEMD = (_flagsNEMD | CHANGE_COMPONENT_AC_TO_N2);
+			if (strFlag == "NEMD_CHANGE_COMPONENT_AC_TO_N2")
+				_flagsNEMD = (_flagsNEMD | NEMD_CHANGE_COMPONENT_AC_TO_N2);
 		}
 
 		/** mheinen 2015-07-27 --> TEMPERATURE_CONTROL

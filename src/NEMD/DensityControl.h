@@ -8,14 +8,16 @@
 #ifndef DENSITYCONTROL_H_
 #define DENSITYCONTROL_H_
 
-#include <vector>
-#include <string>
-#include <cstdint>
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
 
+#include <vector>
+#include <string>
+#include <cstdint>
+
+class XMLfileUnits;
 class Simulation;
 class Domain;
 class DomainDecompBase;
@@ -27,9 +29,11 @@ namespace dec
 class ControlRegion : public CuboidRegionObs
 {
 public:
-    ControlRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nTargetComponentID, const double& dTargetDensity);
-    ~ControlRegion();
+	ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3] );
+	ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nTargetComponentID, const double& dTargetDensity);
+	~ControlRegion();
 
+	void readXML(XMLfileUnits& xmlconfig);
     void CheckBounds();
     void Init();
     void InitMPI();
@@ -50,14 +54,17 @@ public:
     void WriteDataDeletedMolecules(unsigned long simstep);
 
 private:
+	// parameter
+	unsigned int _nTargetComponentID;
+	double _dTargetDensity;
+
     double _dVolume;
     double _dInvertVolume;
     unsigned long _nNumMoleculesLocal;
     unsigned long _nNumMoleculesGlobal;
 
-    double _dTargetDensity;
     double _dDensityGlobal;
-    unsigned int _nTargetComponentID;  // inert gas
+
 
     int* _ranks;
     bool _bProcessIsRelevant;
@@ -83,9 +90,11 @@ private:
 class DensityControl : public ControlInstance
 {
 public:
+	DensityControl(DomainDecompBase* domainDecomp, Domain* domain);
     DensityControl(DomainDecompBase* domainDecomp, Domain* domain, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
     ~DensityControl();
 
+	void readXML(XMLfileUnits& xmlconfig);
     std::string GetShortName() {return "DeC";}
     void AddRegion(dec::ControlRegion* region);
     int GetNumRegions() {return _vecControlRegions.size();}
@@ -109,18 +118,18 @@ public:
     void WriteDataDeletedMolecules(unsigned long simstep);
 
 	// NEMD flags
-	void     SetFlagsNEMD(const uint32_t &flagsNEMD) {_flagsNEMD = flagsNEMD;}
+	void     SetFlagsNEMD(const uint32_t &flagsNEMD) {_flagsNEMD = _flagsNEMD | flagsNEMD;}
 	uint32_t GetFlagsNEMD() {return _flagsNEMD;}
+	bool CheckFlagNEMD(uint32_t nFlag) {return (_flagsNEMD & nFlag);}
 
 private:
     std::vector<dec::ControlRegion*> _vecControlRegions;
-    unsigned long _nControlFreq;
-    unsigned long _nStart;
-    unsigned long _nStop;
+	uint64_t _nStart;
+	uint64_t _nControlFreq;
+	uint64_t _nStop;
+	uint64_t _nWriteFreqDeleted;
 
     bool _bProcessIsRelevant;
-
-    unsigned int _nWriteFreqDeleted;
 
 	uint32_t _flagsNEMD;
 };

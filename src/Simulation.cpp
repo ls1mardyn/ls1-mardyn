@@ -276,6 +276,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_driftControl = new DriftControl(_domain, _domainDecomposition);
 				_driftControl->readXML(xmlconfig);
 			}
+			else if(featureName == "DensityControl") {
+				_densityControl = new DensityControl(_domainDecomposition, _domain);
+				_densityControl->readXML(xmlconfig);
+			}
 			else {
 				global_log->error() << "Unknown NEMD feature: " <<  featureName << "! Program exit..." << endl;
 				Simulation::exit(-1);
