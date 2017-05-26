@@ -27,6 +27,7 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	_domainDecomposition = domainDecomposition;
 	_particleContainer = particleContainer;
 	_slabs = slabs;
+	frequency=10;
 }
 
 void Planar::init()
@@ -129,7 +130,6 @@ void Planar::init()
 	boxlength[2]=_domain->getGlobalLength(2);
 	cutoff_slabs=cutoff*_slabs/ymax; // Number of slabs to cutoff
 	delta=ymax/_slabs;	
-	frequency=10;
 	V=ymax*_domain->getGlobalLength(0)*_domain->getGlobalLength(2); // Volume
 	
 	sint=_slabs;
