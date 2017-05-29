@@ -86,6 +86,8 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/)
 			dcomponents.push_back(component);
 		}
 		domain->setepsilonRF(1e+10);
+
+		global_simulation->getEnsemble()->setComponentLookUpIDs();
 }
 
 unsigned long DropletGenerator::readPhaseSpace(

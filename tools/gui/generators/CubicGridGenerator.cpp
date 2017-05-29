@@ -139,6 +139,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
     /* silence compiler warnings */
     (void) timestep;
+	global_simulation->getEnsemble()->setComponentLookUpIDs();
 }
 
 

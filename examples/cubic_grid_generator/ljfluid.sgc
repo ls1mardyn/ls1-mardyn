@@ -17,7 +17,7 @@ ConfigurationParameters {
 EqvGridParameters {
 	binaryMixture=false
 	molarDensity=8800
-	numMolecules=100000
+	numMolecules=10000
 	temperature=100
 	component1 {
 		component1.NumberOfLJCenters=1

@@ -79,6 +79,8 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double /*time
 		global_simulation->getEnsemble()->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
+
+	global_simulation->getEnsemble()->setComponentLookUpIDs();
 }
 
 unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particleContainer,
