@@ -1043,7 +1043,7 @@ void LinkedCells::updateMoleculeCaches() {
 
 size_t LinkedCells::getTotalSize() {
 	size_t totalSize = sizeof(LinkedCells);
-	for (auto cell : _cells) {
+	for (auto& cell : _cells) {
 		totalSize += sizeof(ParticleCell);
 		totalSize += cell.getCellDataSoA().getDynamicSize();
 		totalSize += cell.getMoleculeVectorDynamicSize();
@@ -1063,7 +1063,7 @@ size_t LinkedCells::getTotalSize() {
 }
 void LinkedCells::printSubInfo(int offset) {
 	size_t ownSize = sizeof(LinkedCells), cellTotal = 0, cellSoA = 0, cellMoleculeVectors = 0;
-	for (auto cell : _cells) {
+	for (auto& cell : _cells) {
 		cellTotal += sizeof(ParticleCell);
 		cellSoA += cell.getCellDataSoA().getDynamicSize();
 		cellMoleculeVectors += cell.getMoleculeVectorDynamicSize();

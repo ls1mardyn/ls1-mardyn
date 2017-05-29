@@ -3,8 +3,8 @@
 #cd tools/gui
 
 tar xfz ScenarioGenerator.tar.gz
-ExtraDefines="MARDYN_DPDP"
-#ExtraDefines='MARDYN_SPSP MARDYN_WR=1'
+#ExtraDefines="MARDYN_DPDP"
+ExtraDefines='MARDYN_SPSP MARDYN_WR=1'
 
 
 qmake DEFINES+="$ExtraDefines" DropletGenerator.pro -o Makefile.droplet
