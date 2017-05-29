@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 CrystalLatticeGenerator::CrystalLatticeGenerator() :
-	MDGenerator("CrystalLatticeGenerator"), _numMoleculesPerDim(4), _h(3.0), _charge(1.0) {
+	MDGenerator("CrystalLatticeGenerator"), _numMoleculesPerDim(4), _h(3.0), _charge(1.0), _components(*(global_simulation->getEnsemble()->getComponents())) {
 	_components.resize(2);
 	_components[0].addCharge(0, 0, 0, 1.0, _charge);
 	_components[1].addCharge(0, 0, 0, 1.0, - _charge);
@@ -98,9 +98,6 @@ void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 	domain->setGlobalLength(1, _simBoxLength);
 	domain->setGlobalLength(2, _simBoxLength);
 
-	for (unsigned int i = 0; i < _components.size(); i++) {
-		global_simulation->getEnsemble()->addComponent(_components[i]);
-	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
 

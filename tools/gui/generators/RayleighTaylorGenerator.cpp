@@ -35,7 +35,8 @@ void destruct_generator(Generator* generator) {
 }
 #endif
 
-RayleighTaylorGenerator::RayleighTaylorGenerator() : MDGenerator("RayleighTaylorGenerator") {
+RayleighTaylorGenerator::RayleighTaylorGenerator() :
+		MDGenerator("RayleighTaylorGenerator"), _components(*(global_simulation->getEnsemble()->getComponents())) {
 
 	_L1 		= 144.;// * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
 	_L2 		= 60.;//  * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
@@ -51,7 +52,7 @@ RayleighTaylorGenerator::RayleighTaylorGenerator() : MDGenerator("RayleighTaylor
 	_q_B 		= -0.5;// * MDGenerator::unitCharge_2_mardyn;
 	_m_A = _m_B = 23.;// * m_tilde * MDGenerator::unitMass_2_mardyn;
 	_T 			= 0.1;// * epsilon_tilde * MDGenerator::kelvin_2_mardyn / MDGenerator::boltzmann_constant_kB;
-
+	numSphereSizes = 1.;
 	_components.resize(2);
 	_components[0].addCharge(0.,0.,0.,0.,_q_A);
 	_components[1].addCharge(0.,0.,0.,0.,_q_B);
@@ -70,13 +71,10 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double /*time
 	domain->setGlobalLength(0, _L1);
 	domain->setGlobalLength(1, _L2);
 	domain->setGlobalLength(2, _L3);
-
-	for (unsigned int i = 0; i < _components.size(); i++) {
-		Component component = _components[i];
-		if (_configuration.performPrincipalAxisTransformation()) {
-			principalAxisTransform(component);
+	if (_configuration.performPrincipalAxisTransformation()) {
+		for (unsigned int i = 0; i < _components.size(); i++) {
+			principalAxisTransform(_components[i]);
 		}
-		global_simulation->getEnsemble()->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
 

@@ -33,7 +33,7 @@ extern "C" {
 MS2RSTGenerator::MS2RSTGenerator() :
 	MDGenerator("MS2RSTGenerator"), _molarDensity(0),
 	_temperature(0), _simBoxLength(0), _ms2_to_angstroem(0),
-	_filePath(""), _hasRotationalDOF(false), _numMolecules(0)
+	_filePath(""), _hasRotationalDOF(false), _numMolecules(0), _components(*(global_simulation->getEnsemble()->getComponents()))
 {
 	_components.resize(1);
 	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
@@ -126,11 +126,9 @@ void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 	for (unsigned int i = 0; i < _components.size(); i++) {
 		_components[i].updateMassInertia();
-		Component component = _components[i];
 		if (_configuration.performPrincipalAxisTransformation()) {
-			principalAxisTransform(component);
+			principalAxisTransform(_components[i]);
 		}
-		global_simulation->getEnsemble()->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from MS2RSTGenerator done." << endl;
