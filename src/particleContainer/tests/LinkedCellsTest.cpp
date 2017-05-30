@@ -210,9 +210,8 @@ void LinkedCellsTest::testGetHaloBoundaryParticlesDirection() {
 class CellProcessorStub: public CellProcessor {
 public:
 	CellProcessorStub(size_t num_cells) :
-			CellProcessor(0., 0.), _num_cells(num_cells) {
-		_cellProcessCount.assign(num_cells, 0);
-		_cellPairProcessCount.assign(num_cells * num_cells, 0);
+		CellProcessor(0., 0.), _cellProcessCount(num_cells, 0), _cellPairProcessCount(num_cells),
+		_num_cells(num_cells) {
 	}
 	virtual void initTraversal() {
 	}
@@ -221,8 +220,8 @@ public:
 	}
 
 	virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
-		_cellPairProcessCount[_num_cells * cell1.getCellIndex() + cell2.getCellIndex()] += sign;
-		_cellPairProcessCount[_num_cells * cell2.getCellIndex() + cell1.getCellIndex()] += sign;  // newton 3
+		_cellPairProcessCount[cell1.getCellIndex()][cell2.getCellIndex()] += sign;
+		_cellPairProcessCount[cell2.getCellIndex()][cell1.getCellIndex()] += sign;  // newton 3
 	}
 
 	virtual void processCell(ParticleCell& cell) {
@@ -241,27 +240,34 @@ public:
 	}
 
 	void checkZero() {
-		for (int i : _cellProcessCount) {
-			ASSERT_EQUAL(i, 0);
-		}
-		for (int i : _cellPairProcessCount) {
-			ASSERT_EQUAL(i, 0);
-		}
+		#if defined(_OPENMP)
+		#pragma omp parallel for
+		#endif
+		for (int i = 0; i < _num_cells; ++i) {
+			ASSERT_EQUAL(_cellProcessCount[i], 0);
+
+			std::map<unsigned long, int> & m = _cellPairProcessCount[i];
+			for (auto& j : m) {
+				ASSERT_EQUAL(j.second, 0);
+			}
+		} /* end of parallel region */
 	}
 
 	void checkOnlyInner(LinkedCells* container) {
+		#if defined(_OPENMP)
+		#pragma omp parallel for
+		#endif
 		for (int i = 0; i < _num_cells; i++) {
 			if (_cellProcessCount[i] != 0) {
 				ASSERT_TRUE(container->getCellReference(i).isInnerCell());
 			}
-		}
-		for (int i = 0; i < _num_cells; i++) {
-			for (int j = 0; j < _num_cells; j++) {
-				if (_cellPairProcessCount[i * _num_cells + j] != 0) {
-					ASSERT_TRUE(container->getCellReference(i).isInnerCell() && container->getCellReference(j).isInnerCell());
+
+			for (auto& pair : _cellPairProcessCount[i]) {
+				if (pair.second != 0) {
+					ASSERT_TRUE(container->getCellReference(i).isInnerCell() && container->getCellReference(pair.first).isInnerCell());
 				}
 			}
-		}
+		}/* end of parallel region */
 	}
 
 	void inverseSign() {
@@ -269,14 +275,14 @@ public:
 	}
 private:
 	std::vector<int> _cellProcessCount;
-	std::vector<int> _cellPairProcessCount;
+	std::vector<std::map<unsigned long, int>> _cellPairProcessCount;
 	int _num_cells;
 	int sign = 1;
 };
 
 void LinkedCellsTest::testTraversalMethods() {
 	const char* filename = "VectorizationMultiComponentMultiPotentials.inp";
-	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, 25.);
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, 5.);
 	int* boxWidthInNumCells = dynamic_cast<LinkedCells*>(container)->boxWidthInNumCells();
 	int haloWidthInNumCells = container->getHaloWidthNumCells();
 	size_t numCells = (boxWidthInNumCells[0] + 2 * haloWidthInNumCells)

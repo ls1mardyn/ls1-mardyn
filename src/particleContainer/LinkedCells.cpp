@@ -16,6 +16,7 @@
 
 #include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
+#include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
 
 using namespace std;
 using Log::global_log;
@@ -110,9 +111,16 @@ void LinkedCells::initializeTraversal() {
 	}
 
 #if defined(_OPENMP)
-	_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
+//	if (SlicedCellPairTraversal<ParticleCell>::isApplicable(dims)) {
+//		_traversal = new SlicedCellPairTraversal<ParticleCell>(_cells, dims);
+//		global_log->info() << "Using SlicedCellPairTraversal." << endl;
+//	} else {
+		_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
+		global_log->info() << "Using C08CellPairTraversal." << endl;
+//	}
 #else
 	_traversal = new OriginalCellPairTraversal<ParticleCell>(_cells, dims, _innerMostCellIndices);
+	global_log->info() << "Using OriginalCellPairTraversal." << endl;
 #endif
 }
 

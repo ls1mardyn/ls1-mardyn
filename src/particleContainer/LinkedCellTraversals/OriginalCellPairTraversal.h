@@ -30,9 +30,9 @@ public:
 
 	//TODO: handle rebuilds
 
-	void traverseCellPairs(CellProcessor& cellProcessor) const;
-	void traverseCellPairsOuter(CellProcessor& cellProcessor) const;
-	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) const;
+	void traverseCellPairs(CellProcessor& cellProcessor);
+	void traverseCellPairsOuter(CellProcessor& cellProcessor);
+	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
 	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
@@ -134,21 +134,21 @@ inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 }
 
 template<class CellTemplate>
-inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairs(CellProcessor& cellProcessor) const {
+inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairs(CellProcessor& cellProcessor) {
 	unsigned long start = 0ul;
 	unsigned long end = this->_cells->size();
 	traverseCellPairsBackend(cellProcessor, start, end, ALL_CELLS);
 }
 
 template<class CellTemplate>
-inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsOuter(CellProcessor& cellProcessor) const {
+inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsOuter(CellProcessor& cellProcessor) {
 	unsigned long start = 0ul;
 	unsigned long end = this->_cells->size();
 	traverseCellPairsBackend(cellProcessor, start, end, OUTER_CELLS);
 }
 
 template<class CellTemplate>
-inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) const {
+inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) {
 	unsigned long start =  _innerMostCellIndices->size() * stage / stageCount;
 	unsigned long end =  _innerMostCellIndices->size() * (stage+1) / stageCount;
 	traverseCellPairsBackend(cellProcessor, start, end, INNER_CELLS);
