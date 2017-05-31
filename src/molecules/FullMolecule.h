@@ -75,8 +75,10 @@ public:
 	double D(unsigned short d) const { return _L[d]; }
 	/** get coordinate of the current angular momentum  onto molecule */ 
 	double M(unsigned short d) const { return _M[d]; }
+	const double* M_vec() {return _M; }
 	/** get the virial **/
 	double Vi(unsigned short d) const { return _Vi[d];}
+	const double* Vi_vec() {return _Vi; }
 
 	void setD(unsigned short d, double D) { this->_L[d] = D; }
 
