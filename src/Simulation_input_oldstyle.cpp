@@ -733,34 +733,30 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			unsigned numComponents;
 			_applyWallFun_LJ_9_3 = true;
 			inputfilestream >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut;
-			double *xi_sf = new double[numComponents];
-			double *eta_sf = new double[numComponents];
+			std::vector<double> xi_sf(numComponents);
+			std::vector<double> eta_sf(numComponents);
 			for (unsigned nc = 0; nc < numComponents; nc++) {
-				inputfilestream >> xi_sf[nc] >> eta_sf[nc];
+				inputfilestream >> xi_sf.at(nc) >> eta_sf.at(nc);
 			}
 
 			std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 			_wall = new Wall();
 			_wall->initializeLJ93(components, rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut);
-			delete[] xi_sf;
-			delete[] eta_sf;
 
 		} else if (token == "WallFun_LJ_10_4") {
 			double rho_w, sig_w, eps_w, y_off, y_cut, Delta;
 			unsigned numComponents;
 			_applyWallFun_LJ_10_4 = true;
 			inputfilestream >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut >> Delta;
-			double *xi_sf = new double[numComponents];
-			double *eta_sf = new double[numComponents];
+			std::vector<double> xi_sf(numComponents);
+			std::vector<double> eta_sf(numComponents);
 			for (unsigned nc = 0; nc < numComponents; nc++) {
-				inputfilestream >> xi_sf[nc] >> eta_sf[nc];
+				inputfilestream >> xi_sf.at(nc) >> eta_sf.at(nc);
 			}
 
 			std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 			_wall = new Wall();
 			_wall->initializeLJ104(components, rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut, Delta);
-			delete[] xi_sf;
-			delete[] eta_sf;
 
 		}
 

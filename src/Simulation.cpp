@@ -446,6 +446,36 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		}
 
+		/* features */
+		if(xmlconfig.changecurrentnode("features")) {
+			int numFeatures = 0;
+			XMLfile::Query query = xmlconfig.query("feature");
+			numFeatures = query.card();
+			global_log->info() << "Number of features: " << numFeatures << endl;
+			if(numFeatures < 1) {
+				global_log->warning() << "No feature specified." << endl;
+			}
+			string oldpath = xmlconfig.getcurrentnodepath();
+			XMLfile::Query::const_iterator featureIter;
+			for( featureIter = query.begin(); featureIter; featureIter++ ) {
+				xmlconfig.changecurrentnode( featureIter );
+				string featureName;
+				xmlconfig.getNodeValue("@name", featureName);
+				if("Wallfun" == featureName) {
+					_wall = new Wall();
+					_wall->readXML(xmlconfig);
+					_applyWallFun_LJ_9_3 = true;
+				}
+				else
+				{
+					global_log->warning() << "Unknown feature " << featureName << endl;
+					continue;
+				}
+			}
+			xmlconfig.changecurrentnode(oldpath);
+			xmlconfig.changecurrentnode("..");
+		}
+
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
 	}
 	else {
