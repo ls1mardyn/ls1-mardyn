@@ -83,6 +83,10 @@ public:
 			ParticleContainer* particleContainer,
 			const DomainDecompBase* domainDecomp, double currentTime);
 
+	void writeCheckpointHeaderXML(std::string filename,
+			ParticleContainer* particleContainer,
+			const DomainDecompBase* domainDecomp, double currentTime);
+
 	//! @brief initialize far field correction parameters
 	//!
 	//! By limiting the calculation to pairs of particles which have

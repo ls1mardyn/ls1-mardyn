@@ -566,6 +566,31 @@ void Domain::writeCheckpointHeader(string filename,
 
 }
 
+void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* particleContainer,
+		const DomainDecompBase* domainDecomp, double currentTime)
+{
+	if(0 != domainDecomp->getRank() )
+		return;
+
+	ofstream ofs(filename.c_str() );
+
+	ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
+	ofs << "<mardyn version=\"20100525\" >" << endl;
+	ofs << "\t<headerinfo>" << endl;
+	ios::fmtflags f( ofs.flags() );
+	ofs << "\t\t<time>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << currentTime << "</time>" << endl;
+	ofs << "\t\t<length>" << endl;
+	ofs << "\t\t\t<x>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[0] << "</x> "
+				 "<y>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[1] << "</y> "
+				 "<z>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[2] << "</z>" << endl;
+	ofs << "\t\t</length>" << endl;
+	ofs.flags(f);  // restore default format flags
+	ofs << "\t\t<number>" << _globalNumMolecules << "</number>" << endl;
+	ofs << "\t\t<format type=\"ICRVQD\"/>" << endl;
+	ofs << "\t</headerinfo>" << endl;
+	ofs << "</mardyn>" << endl;
+}
+
 void Domain::writeCheckpoint(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
 		bool binary) {
@@ -580,7 +605,7 @@ void Domain::writeCheckpoint(string filename,
 #endif
 
 	if (binary == true) {
-		this->writeCheckpointHeader((filename + ".header.xdr"), particleContainer, domainDecomp, currentTime);
+		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
 	} else {
 		this->writeCheckpointHeader(filename, particleContainer, domainDecomp, currentTime);
 	}
