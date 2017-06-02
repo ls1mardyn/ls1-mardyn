@@ -10,7 +10,7 @@ lessThan(QT_MAJOR_VERSION, 5) {
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
 QMAKE_CXXFLAGS -= -O2
-#QMAKE_CXXFLAGS += -O3
+QMAKE_CXXFLAGS += -O3
 mardyn {
 DESTDIR=./staticlibs
 } else {
