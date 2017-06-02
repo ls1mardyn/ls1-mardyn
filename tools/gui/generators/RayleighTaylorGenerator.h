@@ -28,7 +28,7 @@ private:
 	int  _n_1, _n_2, _n_3;
 	double _L1, _L2, _L3, _epsilon_A, _epsilon_B, _sigma_A, _sigma_B,
 		_q_A, _q_B, _m_A, _m_B, _T;
-	std::vector<Component> _components;
+	std::vector<Component>& _components;
 
 	double numSphereSizes;
 

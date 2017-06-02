@@ -8,12 +8,12 @@
  * $HEADER
  */
 
-#include "Generator.h"
+#include "GeneratorExt.h"
 
 #include <cmath>
 
 
-void Generator::init(Lattice& lattice, Basis& basis, double origin[3]) {
+void GeneratorExt::init(Lattice& lattice, Basis& basis, double origin[3]) {
 	_lattice = lattice;
 	_basis = basis;
 	for(int d = 0; d < 3; d++) {
@@ -22,7 +22,7 @@ void Generator::init(Lattice& lattice, Basis& basis, double origin[3]) {
 	_baseCount = 0;
 }
 
-int Generator::getMolecule(molecule_t* molecule) {
+int GeneratorExt::getMolecule(molecule_t* molecule) {
 	if(_baseCount == 0) {
 		if(_lattice.getPoint(_lattice_point) == 0) {
 			return 0;

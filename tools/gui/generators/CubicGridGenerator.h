@@ -33,7 +33,7 @@ private:
 	// use unsigned long long for BG/P
 	unsigned long long int _numMolecules;
 	double _molarDensity;
-	std::vector<Component> _components;
+	std::vector<Component>& _components;
 	double _temperature;
 
 	double _simBoxLength; // length of the simulation box

@@ -16,6 +16,7 @@
 
 #include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
+#include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
 
 using namespace std;
 using Log::global_log;
@@ -110,9 +111,16 @@ void LinkedCells::initializeTraversal() {
 	}
 
 #if defined(_OPENMP)
-	_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
+//	if (SlicedCellPairTraversal<ParticleCell>::isApplicable(dims)) {
+//		_traversal = new SlicedCellPairTraversal<ParticleCell>(_cells, dims);
+//		global_log->info() << "Using SlicedCellPairTraversal." << endl;
+//	} else {
+		_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
+		global_log->info() << "Using C08CellPairTraversal." << endl;
+//	}
 #else
 	_traversal = new OriginalCellPairTraversal<ParticleCell>(_cells, dims, _innerMostCellIndices);
+	global_log->info() << "Using OriginalCellPairTraversal." << endl;
 #endif
 }
 
@@ -1043,7 +1051,7 @@ void LinkedCells::updateMoleculeCaches() {
 
 size_t LinkedCells::getTotalSize() {
 	size_t totalSize = sizeof(LinkedCells);
-	for (auto cell : _cells) {
+	for (auto& cell : _cells) {
 		totalSize += sizeof(ParticleCell);
 		totalSize += cell.getCellDataSoA().getDynamicSize();
 		totalSize += cell.getMoleculeVectorDynamicSize();
@@ -1063,7 +1071,7 @@ size_t LinkedCells::getTotalSize() {
 }
 void LinkedCells::printSubInfo(int offset) {
 	size_t ownSize = sizeof(LinkedCells), cellTotal = 0, cellSoA = 0, cellMoleculeVectors = 0;
-	for (auto cell : _cells) {
+	for (auto& cell : _cells) {
 		cellTotal += sizeof(ParticleCell);
 		cellSoA += cell.getCellDataSoA().getDynamicSize();
 		cellMoleculeVectors += cell.getMoleculeVectorDynamicSize();

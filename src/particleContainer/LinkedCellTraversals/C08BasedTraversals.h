@@ -11,6 +11,7 @@
 #include "particleContainer/LinkedCellTraversals/CellPairTraversals.h"
 #include "particleContainer/adapter/CellProcessor.h"
 #include "utils/threeDimensionalMapping.h"
+#include "WrapOpenMP.h"
 
 template <class CellTemplate>
 class C08BasedTraversals : public CellPairTraversals<CellTemplate> {

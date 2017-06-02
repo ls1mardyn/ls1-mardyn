@@ -24,9 +24,9 @@ public:
 	~C08CellPairTraversal() {
 	}
 
-	void traverseCellPairs(CellProcessor& cellProcessor) const;
-	void traverseCellPairsOuter(CellProcessor& cellProcessor) const;
-	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) const;
+	void traverseCellPairs(CellProcessor& cellProcessor);
+	void traverseCellPairsOuter(CellProcessor& cellProcessor);
+	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
 protected:
 	void traverseCellPairsBackend(CellProcessor& cellProcessor,
@@ -38,7 +38,7 @@ protected:
 
 template<class CellTemplate>
 void C08CellPairTraversal<CellTemplate>::traverseCellPairs(
-		CellProcessor& cellProcessor) const {
+		CellProcessor& cellProcessor) {
 
 	using std::array;
 	const array<unsigned long, 3> strides = { 2, 2, 2 };
@@ -65,7 +65,7 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairs(
 
 template<class CellTemplate>
 void C08CellPairTraversal<CellTemplate>::traverseCellPairsOuter(
-		CellProcessor& cellProcessor) const {
+		CellProcessor& cellProcessor) {
 
 	using std::array;
 
@@ -123,7 +123,7 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairsOuter(
 template<class CellTemplate>
 void C08CellPairTraversal<CellTemplate>::traverseCellPairsInner(
 		CellProcessor& cellProcessor, unsigned stage,
-		unsigned stageCount) const {
+		unsigned stageCount) {
 	using std::array;
 
 	unsigned long splitdim = 0;

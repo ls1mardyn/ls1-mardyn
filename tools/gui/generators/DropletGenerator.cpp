@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 DropletGenerator::DropletGenerator() :
-	MDGenerator("DropletGenerator") {
+	MDGenerator("DropletGenerator"), _components(*(global_simulation->getEnsemble()->getComponents())) {
 	numOfMolecules = 50;
 	_temperature = 300. / 315774.5;
 	setClusterParameters(0.05, 0.8, 15, 5, 4);
@@ -78,14 +78,14 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/)
 		_logger->debug() << "DropletGenerator: set global length=[" << simBoxLength[0]
 		    << "," << simBoxLength[1] << "," <<  simBoxLength[2] << "]" << endl;
 
-		for (unsigned int i = 0; i < _components.size(); i++) {
-			Component component = _components[i];
-			if (_configuration.performPrincipalAxisTransformation()) {
-				principalAxisTransform(component);
+		if (_configuration.performPrincipalAxisTransformation()) {
+			for (unsigned int i = 0; i < _components.size(); i++) {
+				principalAxisTransform(_components[i]);
 			}
-			dcomponents.push_back(component);
 		}
 		domain->setepsilonRF(1e+10);
+
+		global_simulation->getEnsemble()->setComponentLookUpIDs();
 }
 
 unsigned long DropletGenerator::readPhaseSpace(

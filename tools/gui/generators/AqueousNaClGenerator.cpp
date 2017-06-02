@@ -30,8 +30,8 @@ extern "C" {
 
 
 AqueousNaClGenerator::AqueousNaClGenerator() :
-	MDGenerator("AqueousNaClGenerator"), _numMolecules(4),_temperature(298. / 315774.5),
-	_molarDensity(57.556) {
+		MDGenerator("AqueousNaClGenerator"), _numMolecules(4), _temperature(298. / 315774.5), _molarDensity(57.556), _components(
+				*(global_simulation->getEnsemble()->getComponents())) {
 
 	_components.resize(3);
 	// set up water
@@ -111,15 +111,15 @@ void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep)
 	domain->setGlobalLength(2, _simBoxLength);
 
 	for (unsigned int i = 0; i < _components.size(); i++) {
-		Component component = _components[i];
-		principalAxisTransform(component);
-		global_simulation->getEnsemble()->addComponent(component);
+		principalAxisTransform(_components[i]);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator done." << endl;
 
     /* silence compiler warnings */
     (void) timestep;
+
+	global_simulation->getEnsemble()->setComponentLookUpIDs();
 }
 
 

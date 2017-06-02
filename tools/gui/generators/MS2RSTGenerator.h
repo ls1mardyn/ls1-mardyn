@@ -33,7 +33,7 @@ class MS2RSTGenerator: public MDGenerator {
 private:
 
 	double _molarDensity;
-	std::vector<Component> _components;
+	std::vector<Component>& _components;
 	double _temperature;
 
 	double _simBoxLength; // length of the simulation box

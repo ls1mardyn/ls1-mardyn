@@ -6,6 +6,8 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include <array>
+#include <cmath>
+#include <cstdint>
 
 using Log::global_log;
 
@@ -206,6 +208,16 @@ protected:
 	}
 
 	std::array<double, 3> _e;  /**< Normalized orientation vector */
+
+	void setOrientationVectorByPolarAngles(const double& theta_deg, const double& phi_deg)
+	{
+		const double fac = M_PI / 180.;  // translate: angle --> rad
+		double theta_rad = theta_deg * fac;
+		double phi_rad   = phi_deg   * fac;
+		_e[0] = sin(theta_rad) * cos(phi_rad);
+		_e[1] = sin(theta_rad) * sin(phi_rad);
+		_e[2] = cos(theta_rad);
+	}
 };
 
 
@@ -235,9 +247,18 @@ public:
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
 		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("dipolemoment/abs", _absMy);
-		xmlconfig.getNodeValueReduced("dipolemoment/x", _e[0]);
-		xmlconfig.getNodeValueReduced("dipolemoment/y", _e[1]);
-		xmlconfig.getNodeValueReduced("dipolemoment/z", _e[2]);
+		bool bAngleInput = true;
+		double theta, phi;
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("dipolemoment/theta", theta);
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("dipolemoment/phi",   phi);
+		if(true == bAngleInput)
+			this->setOrientationVectorByPolarAngles(theta, phi);
+		else
+		{
+			xmlconfig.getNodeValueReduced("dipolemoment/x", _e[0]);
+			xmlconfig.getNodeValueReduced("dipolemoment/y", _e[1]);
+			xmlconfig.getNodeValueReduced("dipolemoment/z", _e[2]);
+		}
 		/* TODO normalization check */
 	}
 
@@ -283,9 +304,18 @@ public:
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
 		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("quadrupolemoment/abs", _absQ);
-		xmlconfig.getNodeValueReduced("quadrupolemoment/x", _e[0]);
-		xmlconfig.getNodeValueReduced("quadrupolemoment/y", _e[1]);
-		xmlconfig.getNodeValueReduced("quadrupolemoment/z", _e[2]);
+		bool bAngleInput = true;
+		double theta, phi;
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("quadrupolemoment/theta", theta);
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("quadrupolemoment/phi",   phi);
+		if(true == bAngleInput)
+			this->setOrientationVectorByPolarAngles(theta, phi);
+		else
+		{
+			xmlconfig.getNodeValueReduced("quadrupolemoment/x", _e[0]);
+			xmlconfig.getNodeValueReduced("quadrupolemoment/y", _e[1]);
+			xmlconfig.getNodeValueReduced("quadrupolemoment/z", _e[2]);
+		}
 		/* TODO normalization check */
 	}
 	

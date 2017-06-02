@@ -41,7 +41,7 @@ private:
 
 	unsigned long long int _numMolecules;
 
-	std::vector<Component> _components;
+	std::vector<Component>& _components;
 	double _temperature;
 
 	double _simBoxLength; // length of the simulation box

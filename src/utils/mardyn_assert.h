@@ -15,13 +15,14 @@ inline void mardyn_exit(int code) {
 	// terminate all mpi processes and return exitcode
 	MPI_Abort(MPI_COMM_WORLD, code);
 #else
-	// call global exit
-	::exit(code);
+	// call global abort - this stops the debugger at the right spot.
+	Log::global_log->error_always_output() << "Exit code would have been " << code << std::endl;
+	::abort();
 #endif
 }
 
 inline void __mardyn_assert__(const char * expr, const char* file, int line) {
-	Log::global_log->error_always_output() << "Assertion \"" << expr << "\" failed in file " << file << " on line " << line << std::endl;
+	Log::global_log->error_always_output() << "Assertion \"" << expr << "\" failed at " << file << ":" << line << std::endl;
 	mardyn_exit(1);
 }
 

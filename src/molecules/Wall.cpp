@@ -1,14 +1,48 @@
 #include "Wall.h"
 
+#include <vector>
+#include <cmath>
+#include <cstdint>
+
 using namespace std;
 using Log::global_log;
 
-Wall::Wall() {}
+Wall::Wall()
+	: _dWidth(0)
+{
+}
 
 Wall::~Wall() {}
 
+void Wall::readXML(XMLfileUnits& xmlconfig)
+{
+	double density, sigma, epsilon, yoff, ycut;
+	xmlconfig.getNodeValue("density", density);
+	xmlconfig.getNodeValue("sigma", sigma);
+	xmlconfig.getNodeValue("epsilon", epsilon);
+	xmlconfig.getNodeValue("yoff", yoff);
+	xmlconfig.getNodeValue("ycut", ycut);
+	xmlconfig.getNodeValue("width", _dWidth);
+	_dWidthHalf = _dWidth * 0.5;
+	global_log->info() << "Using feature 'Wallfun' with parameters: density=" << density << ", "
+			"sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
+			"width=" << _dWidth << endl;
+	XMLfile::Query query = xmlconfig.query("component");
+	unsigned numComponents = query.card();
+	global_log->info() << "Wallfun: Setting parameters 'xi', 'eta' for " << numComponents << " components." << endl;
+	std::vector<double> xi_sf(numComponents);
+	std::vector<double> eta_sf(numComponents);
+	for (unsigned cid=0; cid<numComponents; cid++) {
+		xmlconfig.getNodeValue("component/xi",   xi_sf.at(cid) );
+		xmlconfig.getNodeValue("component/eta", eta_sf.at(cid) );
+	}
+	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	this->initializeLJ93(components, density, sigma, epsilon, xi_sf, eta_sf, yoff, ycut);
+	global_log->info() << "Wallfun initialized." << endl;
+}
+
 void Wall::initializeLJ93(const std::vector<Component>* components, 
-		 double in_rhoWall, double in_sigWall, double in_epsWall, double* in_xi, double* in_eta, 
+		 double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta,
 		 double in_yOffWall, double in_yWallCut) {
 	global_log->info() << "Initializing the wall function LJ-9-3.\n";
 	this->_rhoW = in_rhoWall;
@@ -23,7 +57,7 @@ void Wall::initializeLJ93(const std::vector<Component>* components,
 	_uPot_9_3 = new double[_nc];
 
 	for (unsigned i = 0; i < _nc; i++) {
-		_eps_wi[i] = in_xi[i] * sqrt(in_epsWall * (components->at(i)).ljcenter(0).eps());
+		_eps_wi[i] = in_xi.at(i) * sqrt(in_epsWall * (components->at(i)).ljcenter(0).eps());
 
 		double sig_wi = 0.5 * in_eta[i] * (in_sigWall + (components->at(i)).ljcenter(0).sigma());
 		_sig3_wi[i] = sig_wi * sig_wi * sig_wi;
@@ -39,7 +73,7 @@ void Wall::initializeLJ93(const std::vector<Component>* components,
 }
 
 void Wall::initializeLJ104(const std::vector<Component>* components, 
-		 double in_rhoWall, double in_sigWall, double in_epsWall, double* in_xi, double* in_eta, 
+		 double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta,
 		 double in_yOffWall, double in_yWallCut, double Delta) {
 	global_log->info() << "Initializing the wall function LJ-10-4.\n";
 	this->_rhoW = in_rhoWall;
@@ -56,7 +90,7 @@ void Wall::initializeLJ104(const std::vector<Component>* components,
 	_uPot_10_4 = new double[_nc];
 
 	for (unsigned i = 0; i < _nc; i++) {
-		_eps_wi[i] = in_xi[i] * sqrt(in_epsWall * (components->at(i)).ljcenter(0).eps());
+		_eps_wi[i] = in_xi.at(i) * sqrt(in_epsWall * (components->at(i)).ljcenter(0).eps());
 
 		double sig_wi = 0.5 * in_eta[i] * (in_sigWall + (components->at(i)).ljcenter(0).sigma());
 		_sig_wi[i] = sig_wi;
@@ -78,47 +112,54 @@ void Wall::initializeLJ104(const std::vector<Component>* components,
 	}
 }
 
-void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain) {
+void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
+{
 	double regionLowCorner[3], regionHighCorner[3];
-  
+
 	/*! LJ-9-3 potential applied in y-direction */
-	if(partContainer->getBoundingBoxMin(1) < _yc){ // if linked cell within the potential range (inside the potential's cutoff)
-		for(unsigned d = 0; d < 3; d++){
-			regionLowCorner[d] = partContainer->getBoundingBoxMin(d);
-			regionHighCorner[d] = partContainer->getBoundingBoxMax(d);
-		}
+	for(uint8_t d=0; d<3; ++d){
+		regionLowCorner[d]  = partContainer->getBoundingBoxMin(d);
+		regionHighCorner[d] = partContainer->getBoundingBoxMax(d);
+	}
+	double dWallRangeLeft  = _yOff-_dWidthHalf - _yc;
+	double dWallRangeRight = _yOff+_dWidthHalf + _yc;
+	regionLowCorner[1]  = (dWallRangeLeft  > regionLowCorner[1]  ) ? dWallRangeLeft  : regionLowCorner[1];
+	regionHighCorner[1] = (dWallRangeRight < regionHighCorner[1] ) ? dWallRangeRight : regionHighCorner[1];
 
-		//perform a check if the region is contained by the particleContainer???
-		if (partContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner)){
-			#if defined (_OPENMP)
-			#pragma omp parallel shared(regionLowCorner, regionHighCorner)
-			#endif
-			{
-				RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
-				RegionParticleIterator end = partContainer->iterateRegionEnd();
+	//perform a check if the region is contained by the particleContainer???
+	if ( false == partContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner) )
+		return;
 
-				for(RegionParticleIterator i = begin; i != end; ++i){
-					//! so far for 1CLJ only, several 1CLJ-components possible
-					double y, y3, y9;
-					unsigned cid = (*i).componentid();
-					y = (*i).r(1) - _yOff;
-					if(y < _yc){
-						y3 = y * y * y;
-						y9 = y3 * y3 * y3;
-						double f[3];
-						for(unsigned d = 0; d < 3; d++) {
-							f[d] = 0.0;
-						}
+	#if defined (_OPENMP)
+	#pragma omp parallel shared(regionLowCorner, regionHighCorner)
+	#endif
+	{
+		RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
+		RegionParticleIterator end = partContainer->iterateRegionEnd();
 
-						double sig9_wi;
-						sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
-						f[cid] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / y;
-						_uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
-						f[0] = 0;
-						f[2] = 0;
-						(*i).Fljcenteradd(0, f);
-					}
+		for(RegionParticleIterator i = begin; i != end; ++i){
+			//! so far for 1CLJ only, several 1CLJ-components possible
+			double y, y3, y9, ry, ryRel;
+			unsigned cid = (*i).componentid();
+			ry = (*i).r(1);
+			ryRel = (ry > _yOff) ? (ry - (_yOff+_dWidthHalf) ) : (ry - (_yOff-_dWidthHalf) );
+			y = abs(ryRel);
+			if(y < _yc){
+				y3 = y * y * y;
+				y9 = y3 * y3 * y3;
+				double f[3];
+				for(unsigned d = 0; d < 3; d++) {
+					f[d] = 0.0;
 				}
+
+				double sig9_wi;
+				sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
+				f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / ryRel;
+				_uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
+				f[0] = 0;
+				f[2] = 0;
+				(*i).Fljcenteradd(0, f);
+//				global_log->info() << "id=" << (*i).id() << ", ry=" << ry << ", ryRel=" << ryRel << ", f[1]=" << f[1] << endl;
 			}
 		}
 	}
@@ -177,11 +218,9 @@ void Wall::calcTSLJ_10_4( ParticleContainer* partContainer, Domain* domain) {
 						double term3 = sig4_wi / (3 * Delta * bracket3);
 						double preFactor = 2*M_PI*_eps_wi[cid]*_rhoW*sig2_wi*Delta;
 						_uPot_10_4[cid] += preFactor * (2 / 5 * term1 - term2 - term3) - _uShift_10_4[cid];
-						double force[3];
-						force[cid] = preFactor * (4 * sig10_wi / y11 - 4 * sig4_wi / y5 - term3 * 3 / bracket);
-						f[0] = 0;
-						f[1] = force[1];
-						f[2] = 0;
+						f[1] = preFactor * (4 * sig10_wi / y11 - 4 * sig4_wi / y5 - term3 * 3 / bracket);
+						f[0] = 0.;
+						f[2] = 0.;
 						(*i).Fljcenteradd(0, f);
 					}
 				}

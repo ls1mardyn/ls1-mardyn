@@ -1,10 +1,10 @@
 #ifndef GRIDGENERATOR_H_
 #define GRIDGENERATOR_H_
 
+#include "../utils/generator/GeneratorExt.h"
 #include "io/InputBase.h"
 #include "utils/generator/Basis.h"
 #include "utils/generator/Lattice.h"
-#include "utils/generator/Generator.h"
 
 
 class GridGenerator : public InputBase {
@@ -25,7 +25,7 @@ private:
 	Basis _basis;
 	Lattice _lattice;
 	double _origin[3];
-	Generator _generator;
+	GeneratorExt _generator;
 };
 
 #endif /* GRIDGENERATOR_H_ */

@@ -22,9 +22,9 @@ public:
 
 	virtual ~CellPairTraversals() {}
 
-	virtual void traverseCellPairs(CellProcessor& cellProcessor) const = 0;
-	virtual void traverseCellPairsOuter(CellProcessor& cellProcessor) const = 0;
-	virtual void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) const = 0;
+	virtual void traverseCellPairs(CellProcessor& cellProcessor) = 0;
+	virtual void traverseCellPairsOuter(CellProcessor& cellProcessor) = 0;
+	virtual void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) = 0;
 
 protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const = 0;
