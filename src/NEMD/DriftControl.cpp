@@ -74,7 +74,7 @@ drc::ControlRegion::~ControlRegion()
 void drc::ControlRegion::CalcGlobalValues()
 {
 	// domain decomposition
-	DomainDecompBase* domainDecomp = _parent->GetDomainDecomposition();
+	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
 
 #ifdef ENABLE_MPI
 
@@ -98,11 +98,11 @@ void drc::ControlRegion::CalcGlobalValues()
 //    cout << "_dDriftVelocityGlobal[2] = " << _dDriftVelocityGlobal[2] << endl;
 
     // collective Communication
-    domainDecomp->collCommInit(1);
-    domainDecomp->collCommAppendUnsLong(_nNumMoleculesLocal);
-    domainDecomp->collCommAllreduceSum();
-    _nNumMoleculesGlobal = domainDecomp->collCommGetUnsLong();
-    domainDecomp->collCommFinalize();
+    domainDecomp.collCommInit(1);
+    domainDecomp.collCommAppendUnsLong(_nNumMoleculesLocal);
+    domainDecomp.collCommAllreduceSum();
+    _nNumMoleculesGlobal = domainDecomp.collCommGetUnsLong();
+    domainDecomp.collCommFinalize();
 
 //    cout << "_nNumMoleculesLocal = " << _nNumMoleculesLocal << endl;
 //    cout << "_nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
