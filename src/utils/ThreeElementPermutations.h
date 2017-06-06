@@ -9,6 +9,7 @@
 #define SRC_UTILS_THREEELEMENTPERMUTATIONS_H_
 
 #include "mardyn_assert.h"
+#include <array>
 
 namespace Permute3Elements {
 
