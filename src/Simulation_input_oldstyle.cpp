@@ -22,10 +22,9 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
-#include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
-#include "integrators/ExplicitEuler.h"
+#include "integrators/LeapfrogWR.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -221,6 +220,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			if (token == "LinkedCells") {
 				int cellsInCutoffRadius;
 				inputfilestream >> cellsInCutoffRadius;
+//				cellsInCutoffRadius - Not used anymore. Read it for backwards compatibility with
+				// the to-be-removed .cfg files
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
@@ -229,8 +230,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				}
 				if (this->_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = this->_cutoffRadius;
-				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-						cellsInCutoffRadius);
+				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
 				global_log->error() << "AdaptiveSubCells no longer supported." << std::endl;
 				Simulation::exit(-1);
@@ -733,34 +733,30 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			unsigned numComponents;
 			_applyWallFun_LJ_9_3 = true;
 			inputfilestream >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut;
-			double *xi_sf = new double[numComponents];
-			double *eta_sf = new double[numComponents];
+			std::vector<double> xi_sf(numComponents);
+			std::vector<double> eta_sf(numComponents);
 			for (unsigned nc = 0; nc < numComponents; nc++) {
-				inputfilestream >> xi_sf[nc] >> eta_sf[nc];
+				inputfilestream >> xi_sf.at(nc) >> eta_sf.at(nc);
 			}
 
 			std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 			_wall = new Wall();
 			_wall->initializeLJ93(components, rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut);
-			delete[] xi_sf;
-			delete[] eta_sf;
 
 		} else if (token == "WallFun_LJ_10_4") {
 			double rho_w, sig_w, eps_w, y_off, y_cut, Delta;
 			unsigned numComponents;
 			_applyWallFun_LJ_10_4 = true;
 			inputfilestream >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut >> Delta;
-			double *xi_sf = new double[numComponents];
-			double *eta_sf = new double[numComponents];
+			std::vector<double> xi_sf(numComponents);
+			std::vector<double> eta_sf(numComponents);
 			for (unsigned nc = 0; nc < numComponents; nc++) {
-				inputfilestream >> xi_sf[nc] >> eta_sf[nc];
+				inputfilestream >> xi_sf.at(nc) >> eta_sf.at(nc);
 			}
 
 			std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 			_wall = new Wall();
 			_wall->initializeLJ104(components, rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut, Delta);
-			delete[] xi_sf;
-			delete[] eta_sf;
 
 		}
 
@@ -776,6 +772,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> slabs;
 			_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition,
 					_moleculeContainer, slabs, global_simulation);
+			_longRangeCorrection->init();
 		} else if (token == "NumberOfFluidComponents") {
 			double numFluidComp;
 			inputfilestream >> numFluidComp;
@@ -903,7 +900,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #ifndef MARDYN_WR
 	_integrator = new Leapfrog(timestepLength);
 #else
-	_integrator = new ExplicitEuler(timestepLength);
+	_integrator = new Leapfrog_WR(timestepLength);
 #endif
 
 	// test new Decomposition

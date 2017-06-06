@@ -32,6 +32,8 @@ public:
 
 	virtual bool isEmpty() const = 0;
 
+	bool isNotEmpty() const {return not isEmpty();}
+
 	bool deleteMoleculeByID(unsigned long molid);
 
 	virtual bool deleteMoleculeByIndex(size_t index) = 0;
@@ -50,14 +52,16 @@ public:
 
 	virtual void reserveMoleculeStorage(size_t numMols) = 0;
 
-	bool testPointInCell(const double point[3]) const {
+	virtual bool testPointInCell(const double point[3]) const {
 		return _boxMin[0] <= point[0] && _boxMin[1] <= point[1] && _boxMin[2] <= point[2] &&
 				point[0] < _boxMax[0] && point[1] < _boxMax[1] && point[2] < _boxMax[2];
 	}
 
-	bool testInBox(const Molecule& particle) const {
+	virtual bool testInBox(const Molecule& particle) const {
 		return particle.inBox(_boxMin, _boxMax);
 	}
+
+	virtual size_t getMoleculeVectorDynamicSize() const = 0;
 
 protected:
 	void findMoleculeByID(bool& wasFound, size_t& index, unsigned long molid) const;

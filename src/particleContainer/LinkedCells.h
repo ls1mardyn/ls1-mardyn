@@ -11,6 +11,9 @@
 
 #include "WrapOpenMP.h"
 
+template<class ParticleCellTemplate>
+class CellPairTraversals;
+
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -78,12 +81,11 @@ public:
 	//!        ==> cells have to be larger: cellsPerDimension = phasespacelength/celllength = 100/celllength = 66 cells \n
 	//!        ==> celllength = 100/66 = 1.5152
 	LinkedCells(
-		double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		double cellsInCutoffRadius
+		double bBoxMin[3], double bBoxMax[3], double cutoffRadius
 	);
 
 	//! Default constructor
-	LinkedCells(){}
+	LinkedCells() : ParticleContainer(), _traversal(nullptr) {}
 	//! Destructor
 	~LinkedCells();
 
@@ -137,10 +139,6 @@ public:
 
 	void traverseCells(CellProcessor& cellProcessor);
 
-	void traverseCellsOrig(CellProcessor& cellProcessor);
-
-	virtual void traverseCellsC08(CellProcessor& cellProcessor);
-
 	void traverseNonInnermostCells(CellProcessor& cellProcessor);
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
@@ -168,26 +166,10 @@ public:
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
 
-	int getCellsInCutoff() { return _cellsInCutoff; }
-	void setCellsInCutoff(int n) { _cellsInCutoff = n; }
-
-	//! @brief counts all particles inside the bounding box
-	unsigned countParticles(unsigned int cid);
-
-	/**
-	 * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
-	 */
-	//! @brief counts particles in the intersection of bounding box and control volume
-	unsigned countParticles(unsigned int cid, double* cbottom, double* ctop);
-
 	void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
-	int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
-	unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
-	void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
-	
 	double* boundingBoxMax() {
 		return _boundingBoxMax;
 	}
@@ -238,7 +220,7 @@ public:
 	//! If the point is not inside the bounding box, an error is printed
 	unsigned long int getCellIndexOfPoint(const double point[3]) const;
 
-	ParticleCell& getCell(int idx){ return _cells[idx];}
+	ParticleCell& getCellReference(int idx){ return _cells[idx];}
 
 	// documentation in base class
 	virtual void updateInnerMoleculeCaches();
@@ -249,21 +231,36 @@ public:
 	// documentation in base class
 	virtual void updateMoleculeCaches();
 
-	ParticleIterator iteratorBegin () {
+	ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) {
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
-		return ParticleIterator(&_cells, offset, stride);
+		return ParticleIterator(t, this, offset, stride);
 	}
-	RegionParticleIterator iterateRegionBegin (const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex, IterateType type = ALL);
-	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], IterateType type = ALL);
+	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 	
 	ParticleIterator iteratorEnd () {
 		return ParticleIterator :: invalid();
 	}
 	RegionParticleIterator iterateRegionEnd ();
 
-protected:
+	virtual size_t getTotalSize() override;
+	virtual void printSubInfo(int offset) override;
+	virtual std::string getName() override;
+
+	size_t getNumCells() const {
+		return _cells.size();
+	}
+
+	ParticleCellBase * getCell(unsigned cellIndex) {
+		return &(_cells.at(cellIndex));
+	}
+
+	const ParticleCellBase * getCell(unsigned cellIndex) const {
+		return &(_cells.at(cellIndex));
+	}
+
+private:
 	//####################################
 	//######### PRIVATE METHODS ##########
 	//####################################
@@ -273,6 +270,8 @@ protected:
 	//! Fill the vector with the indices of the inner and boundary cells.
 	//! Assign each cell it's region (halo, boundary, inner).
 	void initializeCells();
+
+	void initializeTraversal();
 
 	//! @brief Calculate neighbour indices.
 	//!
@@ -318,23 +317,12 @@ protected:
 	 */
 	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
-	/**
-	 * advance _cellIterator, until a non-empty cell is found,
-	 * set _particleIterator and return the corresponding Molecule* value
-	 */
-	MoleculeIterator nextNonEmptyCell();
-
-	/**
-	 * traverses single cell
-	 * @param cellIndex
-	 * @param cellProcessor
-	 * @return
-	 */
-	virtual void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
-
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
 
-	RegionParticleIterator getRegionParticleIterator(const double startRegion[3], const double endRegion[3], const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex);
+	RegionParticleIterator getRegionParticleIterator(
+			const double startRegion[3], const double endRegion[3],
+			const unsigned int startRegionCellIndex,
+			const unsigned int endRegionCellIndex, ParticleIterator::Type type);
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
@@ -353,20 +341,20 @@ protected:
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
 
+	CellPairTraversals<ParticleCell> * _traversal;
+
 	// addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
 
-	int _cellsInCutoff; //!< Minimal number of cells within the cutoff radius
 	int _cellsPerDimension[3]; //!< Number of Cells in each spatial dimension (including halo)
 	int _haloWidthInNumCells[3]; //!< Halo width (in cells) in each dimension
 	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
-	double _LJCutoffRadius;
 
 	//! @brief True if all Particles are in the right cell
 	//!

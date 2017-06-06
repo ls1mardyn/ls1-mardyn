@@ -11,6 +11,7 @@
 #include "generators/DropletGenerator.h"
 #endif
 #include "utils/Logger.h"
+#include "Simulation.h"
 
 
 
@@ -40,7 +41,8 @@ InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::strin
 	return generator;
 #else
 	global_log->error() << "Generators not supported! (Compile with -DSUPPORT_GENERATOR!)" << endl;
-	return NULL;
+	Simulation::exit(-1);
+	return nullptr;
 #endif
 }
 #pragma GCC diagnostic pop

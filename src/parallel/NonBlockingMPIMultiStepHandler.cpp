@@ -5,10 +5,10 @@
  *      Author: seckler
  */
 
+#include "Simulation.h"
 #include "NonBlockingMPIMultiStepHandler.h"
 #include <assert.h>
 #include "utils/Logger.h"
-#include "utils/Timer.h"
 #include "DomainDecompMPIBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/CellProcessor.h"
@@ -16,13 +16,9 @@
 using Log::global_log;
 using namespace std;
 
-NonBlockingMPIMultiStepHandler::NonBlockingMPIMultiStepHandler(Timer* decompositionTimer,
-		Timer* computationTimer, Timer* forceCalculationTimer,
-		DomainDecompMPIBase* domainDecomposition,
-		ParticleContainer* moleculeContainer, Domain* domain,
-		CellProcessor* cellProcessor) :
-				NonBlockingMPIHandlerBase(decompositionTimer, computationTimer, forceCalculationTimer,
-						domainDecomposition, moleculeContainer, domain, cellProcessor) {
+NonBlockingMPIMultiStepHandler::NonBlockingMPIMultiStepHandler(DomainDecompMPIBase* domainDecomposition,
+		ParticleContainer* moleculeContainer, Domain* domain, CellProcessor* cellProcessor) :
+				NonBlockingMPIHandlerBase(domainDecomposition, moleculeContainer, domain, cellProcessor) {
 	// just calling the constructor of the base class is enough
 }
 
@@ -34,57 +30,55 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	int stageCount = _domainDecomposition->getNonBlockingStageCount();
 
 	mardyn_assert(stageCount > 0);
-	_forceCalculationTimer->start();
-	_cellProcessor->initTraversal();
-	_forceCalculationTimer->stop();
-	for (unsigned int i = 0; i < static_cast<unsigned int>(stageCount); ++i) {
-		_decompositionTimer->start();
-		_domainDecomposition->prepareNonBlockingStage(false,
-				_moleculeContainer, _domain, i);
-		_decompositionTimer->stop();
 
-		_computationTimer->start();
+	global_simulation->startTimer("SIMULATION_COMPUTATION");
+	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
+	_cellProcessor->initTraversal();
+	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->stopTimer("SIMULATION_COMPUTATION");
+	for (unsigned int i = 0; i < static_cast<unsigned int>(stageCount); ++i) {
+		global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+		_domainDecomposition->prepareNonBlockingStage(false, _moleculeContainer, _domain, i);
+		global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
+
 		// Force calculation and other pair interaction related computations
 		global_log->debug() << "Traversing innermost cells" << std::endl;
-		_forceCalculationTimer->start();
-		_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i,
-				stageCount);
-		_forceCalculationTimer->stop();
-		_computationTimer->stop();
+		global_simulation->startTimer("SIMULATION_COMPUTATION");
+		global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
+		_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i, stageCount);
+		global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
+		global_simulation->stopTimer("SIMULATION_COMPUTATION");
 
-		_decompositionTimer->start();
-		_domainDecomposition->finishNonBlockingStage(false,
-				_moleculeContainer, _domain, i);
-		_decompositionTimer->stop();
+		global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+		_domainDecomposition->finishNonBlockingStage(false, _moleculeContainer, _domain, i);
+		global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
 	}
 
-	_decompositionTimer->start();
+	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
 	_moleculeContainer->updateBoundaryAndHaloMoleculeCaches();  // update the caches of the other molecules (non-inner cells)
-	_decompositionTimer->stop();
+	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
 
-	_computationTimer->start();
 	// remaining force calculation and other pair interaction related computations
 	global_log->debug() << "Traversing non-innermost cells" << std::endl;
-	_forceCalculationTimer->start();
+	global_simulation->startTimer("SIMULATION_COMPUTATION");
+	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
 	_cellProcessor->endTraversal();
-	_forceCalculationTimer->stop();
-	_computationTimer->stop();
+	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->stopTimer("SIMULATION_COMPUTATION");
 }
 
-void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(
-		bool forceRebalancing) {
+void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(bool forceRebalancing) {
 
 	mardyn_assert(!forceRebalancing);
 
-	_decompositionTimer->start();
-	_domainDecomposition->balanceAndExchangeInitNonBlocking(forceRebalancing,
-			_moleculeContainer, _domain);
+	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+	_domainDecomposition->balanceAndExchangeInitNonBlocking(forceRebalancing, _moleculeContainer, _domain);
 
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateInnerMoleculeCaches(); // only the caches of the innermost molecules have to be updated.
 
-	_decompositionTimer->stop();
+	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
 }
 

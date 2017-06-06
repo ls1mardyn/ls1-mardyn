@@ -23,22 +23,22 @@
 	typedef Molecule_WR Molecule;
 #endif
 
-inline FullMolecule* downcastPointerFull(MoleculeInterface* c) {
+inline FullMolecule* downcastMoleculePointerFull(MoleculeInterface* c) {
 	mardyn_assert(static_cast<FullMolecule*>(c) == dynamic_cast<FullMolecule*>(c));
 	return static_cast<FullMolecule*>(c);
 }
 
-inline FullMolecule& downcastReferenceFull(MoleculeInterface& c) {
+inline FullMolecule& downcastMoleculeReferenceFull(MoleculeInterface& c) {
 	mardyn_assert(&static_cast<FullMolecule&>(c) == &dynamic_cast<FullMolecule&>(c));
 	return static_cast<FullMolecule&>(c);
 }
 
-inline Molecule_WR* downcastPointerWR(MoleculeInterface* c) {
+inline Molecule_WR* downcastMoleculePointerWR(MoleculeInterface* c) {
 	mardyn_assert(static_cast<Molecule_WR*>(c) == dynamic_cast<Molecule_WR*>(c));
 	return static_cast<Molecule_WR*>(c);
 }
 
-inline Molecule_WR& downcastReferenceWR(MoleculeInterface& c) {
+inline Molecule_WR& downcastMoleculeReferenceWR(MoleculeInterface& c) {
 	mardyn_assert(&static_cast<Molecule_WR&>(c) == &dynamic_cast<Molecule_WR&>(c));
 	return static_cast<Molecule_WR&>(c);
 }

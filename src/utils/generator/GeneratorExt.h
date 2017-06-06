@@ -36,10 +36,10 @@ int generator_getMolecule(generator_t* generator, molecule_t *molecule);
 #ifdef __cplusplus
 
 /** Lattice generator */
-class Generator {
+class GeneratorExt {
 public:
-    Generator(){}
-    virtual ~Generator(){}
+    GeneratorExt(){}
+    virtual ~GeneratorExt(){}
 
 	/** Initialize the generator
 	 * @param[in]  lattice  The underlying point lattice to be used
@@ -65,7 +65,7 @@ private:
 	double _lattice_point[3];
 };
 
-struct generator_t : Generator {};
+struct generator_t : GeneratorExt {};
 
 #endif /* C++ interface */
 

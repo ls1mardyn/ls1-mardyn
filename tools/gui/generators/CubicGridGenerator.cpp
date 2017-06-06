@@ -13,7 +13,6 @@
 #include "common/PrincipalAxisTransform.h"
 #include "molecules/Molecule.h"
 #include "Tokenize.h"
-#include "utils/Timer.h"
 #include <cstring>
 
 #ifndef MARDYN
@@ -31,7 +30,7 @@ extern "C" {
 
 CubicGridGenerator::CubicGridGenerator() :
 	MDGenerator("CubicGridGenerator"), _numMolecules(4), _molarDensity(0.6),
-	_temperature(300. / 315774.5), _binaryMixture(false) {
+	_temperature(300. / 315774.5), _binaryMixture(false), _components(*(global_simulation->getEnsemble()->getComponents())) {
 
 	_components.resize(1);
 	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
@@ -127,14 +126,13 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	domain->setGlobalLength(1, _simBoxLength);
 	domain->setGlobalLength(2, _simBoxLength);
 
-	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
-	for (unsigned int i = 0; i < _components.size(); i++) {
-		Component component = _components[i];
-		if (_configuration.performPrincipalAxisTransformation()) {
-			principalAxisTransform(component);
+	if (_configuration.performPrincipalAxisTransformation()) {
+		for (unsigned int i = 0; i < _components.size(); i++) {
+			principalAxisTransform(_components[i]);
 		}
-		dcomponents.push_back(component);
 	}
+	global_simulation->getEnsemble()->setComponentLookUpIDs();
+
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
 
@@ -146,15 +144,13 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("CUBIC_GRID_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;
 
 // create a body centered cubic layout, by creating by placing the molecules on the
 // vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
 	int numMoleculesPerDimension = ceil(pow((double) _numMolecules / 2.0, 1./3.));
-	_components[0].updateMassInertia();
 	if (_binaryMixture) {
 		_components[1].updateMassInertia();
 	}
@@ -230,8 +226,9 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
-	inputTimer.stop();
-	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->stopTimer("CUBIC_GRID_GENERATOR_INPUT");
+	global_simulation->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << endl;
 
 
 	return id + idOffset;

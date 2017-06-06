@@ -20,6 +20,7 @@
 #include "utils/OptionParser.h"
 #include "utils/Testing.h"
 #include "utils/Timer.h"
+#include "utils/SigsegvHandler.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -117,6 +118,10 @@ int main(int argc, char** argv) {
 		global_log->info() << "Enabling verbose log output." << endl;
 		global_log->set_log_level(Log::All);
 	}
+	if (options.is_set_by_user("sigsegvhandler")) {
+		global_log->info() << "Enabling sigsegvhandler." << endl;
+		registerSigsegvHandler();  // from SigsegvHandler.h
+	}
 
 	program_build_info(global_log->info());
 	program_execution_info(argc, argv, global_log->info());
@@ -138,12 +143,7 @@ int main(int argc, char** argv) {
 	Simulation simulation;
 	simulation.setName(op.prog());
 
-	/** @todo remove unnamed options, present as --steps, --output-prefix below */
-	if (numargs > 1) {
-		unsigned long steps = 0;
-		istringstream(args[1]) >> steps;
-		simulation.setNumTimesteps(steps);
-	}
+	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
 	if( numargs > 2 ) {
 		simulation.setOutputPrefix(args[2]);
 	}
@@ -156,6 +156,14 @@ int main(int argc, char** argv) {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
 		Simulation::exit(-54);
 	}
+
+	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
+	if (numargs > 1) {
+		unsigned long steps = 0;
+		istringstream(args[1]) >> steps;
+		simulation.setNumTimesteps(steps);
+	}
+
 
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
@@ -195,6 +203,11 @@ int main(int argc, char** argv) {
 	double runtime = sim_timer.get_etime();
 	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
 
+	// print out total simulation speed
+	const unsigned long numForceCalculations = simulation.getNumTimesteps() + 1ul;
+	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
+	global_log->info() << "Simulation speed: " << scientific << speed << " Molecule-updates per second." << endl;
+
 	simulation.finalize();
 
 	delete global_log;
@@ -216,6 +229,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .type("string") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+	op.add_option("-S", "--sigsegvhandler") .action("store_true") .dest("sigsegvhandler") .metavar("S") .type("bool") .set_default(false) .help("sigsegvhandler: prints stacktrace on sigsegv(default: %default)");
 	op.add_option("--logfile").dest("logfile").type("string").set_default("MarDyn.log").metavar("STRING").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");

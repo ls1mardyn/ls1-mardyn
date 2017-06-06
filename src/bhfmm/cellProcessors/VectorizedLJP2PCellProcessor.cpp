@@ -97,7 +97,8 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	} // end pragma omp parallel
 
 #ifdef ENABLE_MPI
-	_timer.set_sync(false);
+	global_simulation->setOutputString("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", "FMM: Time spent in LJ P2P ");
+	//global_simulation->setSyncTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", false); //it is per default false
 #endif
 }
 
@@ -112,12 +113,12 @@ VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
 }
 
 void VectorizedLJP2PCellProcessor::printTimers() {
-	std::cout << "FMM: Time spent in LJ P2P " << _timer.get_etime() << std::endl;
+	std::cout << "FMM: Time spent in LJ P2P " << global_simulation->getTime("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P") << std::endl;
+	//global_simulation->printTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 
-
 void VectorizedLJP2PCellProcessor::initTraversal() {
-	_timer.start();
+	global_simulation->startTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 
 	#if defined(_OPENMP)
 	#pragma omp master
@@ -129,7 +130,6 @@ void VectorizedLJP2PCellProcessor::initTraversal() {
 
 	global_log->debug() << "VectorizedLJP2PCellProcessor::initTraversal()." << std::endl;
 }
-
 
 void VectorizedLJP2PCellProcessor::endTraversal() {
 	vcp_real_calc glob_upot6lj = 0.0;
@@ -156,81 +156,81 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 	_virial = glob_virial;
 	_domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/);
 	_domain.setLocalUpot(_upot6lj / 6.0 /*+ _upotXpoles + _myRF*/);
-	_timer.stop();
+	global_simulation->stopTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 
-	//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
-	const RealCalcVec zero = RealCalcVec::zero();
-	const RealCalcVec one = RealCalcVec::set1(1.0);
-	const RealCalcVec two = RealCalcVec::set1(2.0);
-	const RealCalcVec three = RealCalcVec::set1(3.0);
-	const RealCalcVec four = RealCalcVec::set1(4.0);
-	const RealCalcVec five = RealCalcVec::set1(5.0);
-	const RealCalcVec six = RealCalcVec::set1(6.0);
-	const RealCalcVec ten = RealCalcVec::set1(10.0);
-	const RealCalcVec _05 = RealCalcVec::set1(0.5);
-	const RealCalcVec _075 = RealCalcVec::set1(0.75);
-	const RealCalcVec _1pt5 = RealCalcVec::set1(1.5);
-	const RealCalcVec _15 = RealCalcVec::set1(15.0);
+//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
+const RealCalcVec zero = RealCalcVec::zero();
+const RealCalcVec one = RealCalcVec::set1(1.0);
+const RealCalcVec two = RealCalcVec::set1(2.0);
+const RealCalcVec three = RealCalcVec::set1(3.0);
+const RealCalcVec four = RealCalcVec::set1(4.0);
+const RealCalcVec five = RealCalcVec::set1(5.0);
+const RealCalcVec six = RealCalcVec::set1(6.0);
+const RealCalcVec ten = RealCalcVec::set1(10.0);
+const RealCalcVec _05 = RealCalcVec::set1(0.5);
+const RealCalcVec _075 = RealCalcVec::set1(0.75);
+const RealCalcVec _1pt5 = RealCalcVec::set1(1.5);
+const RealCalcVec _15 = RealCalcVec::set1(15.0);
 
-	template<bool calculateMacroscopic>
-	inline
-	void VectorizedLJP2PCellProcessor :: _loopBodyLJ(
-			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
-			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
-			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
-			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
-			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-			RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
-			const MaskVec& forceMask,
-			const RealCalcVec& eps_24, const RealCalcVec& sig2,
-			const RealCalcVec& shift6)
-	{
-		const RealCalcVec c_dx = r1_x - r2_x;
-		const RealCalcVec c_dy = r1_y - r2_y;
-		const RealCalcVec c_dz = r1_z - r2_z;
+template<bool calculateMacroscopic>
+inline
+void VectorizedLJP2PCellProcessor :: _loopBodyLJ(
+		const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
+		const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
+		const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
+		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
+		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
+		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
+		RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
+		const MaskVec& forceMask,
+		const RealCalcVec& eps_24, const RealCalcVec& sig2,
+		const RealCalcVec& shift6)
+{
+	const RealCalcVec c_dx = r1_x - r2_x;
+	const RealCalcVec c_dy = r1_y - r2_y;
+	const RealCalcVec c_dz = r1_z - r2_z;
 
-		const RealCalcVec c_r2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
-		const RealCalcVec r2_inv_unmasked = one / c_r2;
-		const RealCalcVec r2_inv = RealCalcVec::apply_mask(r2_inv_unmasked, forceMask);
+	const RealCalcVec c_r2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
+	const RealCalcVec r2_inv_unmasked = one / c_r2;
+	const RealCalcVec r2_inv = RealCalcVec::apply_mask(r2_inv_unmasked, forceMask);
 
 
-		const RealCalcVec lj2 = sig2 * r2_inv;//1FP (scale)
-		const RealCalcVec lj4 = lj2 * lj2;//1FP (scale)
-		const RealCalcVec lj6 = lj4 * lj2;//1FP (scale)
-		const RealCalcVec lj12 = lj6 * lj6;//1FP (scale)
-		const RealCalcVec lj12m6 = lj12 - lj6;//1FP (scale)
+	const RealCalcVec lj2 = sig2 * r2_inv;//1FP (scale)
+	const RealCalcVec lj4 = lj2 * lj2;//1FP (scale)
+	const RealCalcVec lj6 = lj4 * lj2;//1FP (scale)
+	const RealCalcVec lj12 = lj6 * lj6;//1FP (scale)
+	const RealCalcVec lj12m6 = lj12 - lj6;//1FP (scale)
 
-		const RealCalcVec eps24r2inv = eps_24 * r2_inv;//1FP (scale)
-		const RealCalcVec lj12lj12m6 = lj12 + lj12m6;//1FP (scale)
-		const RealCalcVec scale = eps24r2inv * lj12lj12m6;//1FP (scale)
+	const RealCalcVec eps24r2inv = eps_24 * r2_inv;//1FP (scale)
+	const RealCalcVec lj12lj12m6 = lj12 + lj12m6;//1FP (scale)
+	const RealCalcVec scale = eps24r2inv * lj12lj12m6;//1FP (scale)
 
-		f_x = c_dx * scale;//1FP (apply scale)
-		f_y = c_dy * scale;//1FP (apply scale)
-		f_z = c_dz * scale;//1FP (apply scale)
-		const RealCalcVec m_dx = m1_r_x - m2_r_x;//1FP (virial) (does not count)
-		const RealCalcVec m_dy = m1_r_y - m2_r_y;//1FP (virial) (does not count)
-		const RealCalcVec m_dz = m1_r_z - m2_r_z;//1FP (virial) (does not count)
+	f_x = c_dx * scale;//1FP (apply scale)
+	f_y = c_dy * scale;//1FP (apply scale)
+	f_z = c_dz * scale;//1FP (apply scale)
+	const RealCalcVec m_dx = m1_r_x - m2_r_x;//1FP (virial) (does not count)
+	const RealCalcVec m_dy = m1_r_y - m2_r_y;//1FP (virial) (does not count)
+	const RealCalcVec m_dz = m1_r_z - m2_r_z;//1FP (virial) (does not count)
 
-		V_x = m_dx * f_x;//1FP (virial)
-		V_y = m_dy * f_y;//1FP (virial)
-		V_z = m_dz * f_z;//1FP (virial)
+	V_x = m_dx * f_x;//1FP (virial)
+	V_y = m_dy * f_y;//1FP (virial)
+	V_z = m_dz * f_z;//1FP (virial)
 
-		// Check if we have to add the macroscopic values up
-		if (calculateMacroscopic) {
+	// Check if we have to add the macroscopic values up
+	if (calculateMacroscopic) {
 
-			const RealCalcVec upot_sh = RealCalcVec::fmadd(eps_24, lj12m6, shift6); //2 FP upot				//shift6 is not masked -> we have to mask upot_shifted
-			const RealCalcVec upot_masked = RealCalcVec::apply_mask(upot_sh, forceMask); //mask it
+		const RealCalcVec upot_sh = RealCalcVec::fmadd(eps_24, lj12m6, shift6); //2 FP upot	//shift6 is not masked -> we have to mask upot_shifted
+		const RealCalcVec upot_masked = RealCalcVec::apply_mask(upot_sh, forceMask); //mask it
 
-			sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
+		sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
 
-			sum_virial = sum_virial +  V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
-		}
+		sum_virial = sum_virial +  V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
 	}
+}
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 	const int tid = mardyn_get_thread_num();
 	VLJP2PCPThreadData &my_threadData = *_threadData[tid];
 
@@ -243,31 +243,36 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
 	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
+	//for better readability:
+	constexpr ConcatenatedSites<vcp_real_calc>::SiteType LJC = ConcatenatedSites<vcp_real_calc>::SiteType::LJC;
+	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
+	typedef CellDataSoA::QuantityType							QuantityType;
+
 	// Pointer for LJ centers
-	const vcp_real_calc * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
-	const vcp_real_calc * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
-	const vcp_real_calc * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
-	      vcp_real_calc * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
-	      vcp_real_calc * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
-	      vcp_real_calc * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
-	      vcp_real_calc * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
-	      vcp_real_calc * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
-	      vcp_real_calc * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
+	const vcp_real_calc * const soa1_ljc_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa1_ljc_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa1_ljc_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa1_ljc_f_x = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::X);
+	      vcp_real_calc * const soa1_ljc_f_y = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa1_ljc_f_z = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa1_ljc_V_x = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::X);
+	      vcp_real_calc * const soa1_ljc_V_y = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa1_ljc_V_z = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Z);
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
-	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
-	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
-	const vcp_real_calc * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
-	const vcp_real_calc * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
-	const vcp_real_calc * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
-	      vcp_real_calc * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
-	      vcp_real_calc * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
-	      vcp_real_calc * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
-	      vcp_real_calc * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
-	      vcp_real_calc * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
-	      vcp_real_calc * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
+	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z);
+	const vcp_real_calc * const soa2_ljc_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa2_ljc_f_x = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::X);
+	      vcp_real_calc * const soa2_ljc_f_y = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa2_ljc_f_z = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::Z);
+	      vcp_real_calc * const soa2_ljc_V_x = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::X);
+	      vcp_real_calc * const soa2_ljc_V_y = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Y);
+	      vcp_real_calc * const soa2_ljc_V_z = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Z);
 	const vcp_ljc_id_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
@@ -447,7 +452,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 }
 
 void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {
-	FullParticleCell & full_c = downcastReferenceFull(c);
+	FullParticleCell & full_c = downcastCellReferenceFull(c);
 	CellDataSoA& soa = full_c.getCellDataSoA();
 	if (full_c.isHaloCell() or soa._mol_num < 2) {
 		return;
@@ -459,11 +464,11 @@ void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {
 
 void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
-	FullParticleCell & full_c1 = downcastReferenceFull(c1);
-	FullParticleCell & full_c2 = downcastReferenceFull(c2);
+	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
 
-	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
-	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
+	CellDataSoA& soa1 = full_c1.getCellDataSoA();
+	CellDataSoA& soa2 = full_c2.getCellDataSoA();
 	const bool c1Halo = full_c1.isHaloCell();
 	const bool c2Halo = full_c2.isHaloCell();
 

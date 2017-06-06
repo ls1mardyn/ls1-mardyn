@@ -13,7 +13,6 @@
 #include "common/PrincipalAxisTransform.h"
 #include "molecules/Molecule.h"
 #include "Tokenize.h"
-#include "utils/Timer.h"
 #include <cstring>
 
 #ifndef MARDYN
@@ -30,7 +29,7 @@ extern "C" {
 #endif
 
 CrystalLatticeGenerator::CrystalLatticeGenerator() :
-	MDGenerator("CrystalLatticeGenerator"), _numMoleculesPerDim(4), _h(3.0), _charge(1.0) {
+	MDGenerator("CrystalLatticeGenerator"), _numMoleculesPerDim(4), _h(3.0), _charge(1.0), _components(*(global_simulation->getEnsemble()->getComponents())) {
 	_components.resize(2);
 	_components[0].addCharge(0, 0, 0, 1.0, _charge);
 	_components[1].addCharge(0, 0, 0, 1.0, - _charge);
@@ -99,22 +98,20 @@ void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 	domain->setGlobalLength(1, _simBoxLength);
 	domain->setGlobalLength(2, _simBoxLength);
 
-	for (unsigned int i = 0; i < _components.size(); i++) {
-		global_simulation->getEnsemble()->addComponent(_components[i]);
-	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
 
     /* silence compiler warnings */
     (void) timestep;
+
+	global_simulation->getEnsemble()->setComponentLookUpIDs();
 }
 
 
 unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("CRYSTAL_LATTICE_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;
 
 	unsigned long int id = 1;
@@ -169,8 +166,9 @@ unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particl
 
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
-	inputTimer.stop();
-	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->stopTimer("CRYSTAL_LATTICE_GENERATOR_INPUT");
+	global_simulation->setOutputString("CRYSTAL_LATTICE_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("CRYSTAL_LATTICE_GENERATOR_INPUT") << " sec" << endl;
 	return id;
 }
 

@@ -84,6 +84,7 @@ public:
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 private:
 
+	uint32_t _nMoleculeFormat;
 	std::string _moleculeFormat;
 	std::string  _phaseSpaceFile;
 	std::string  _phaseSpaceHeaderFile;

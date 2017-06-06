@@ -11,7 +11,6 @@
 #include "PseudoParticleContainer.h"
 #include "LeafNodesContainer.h"
 #include "parallel/DomainDecompBase.h"
-#include "utils/Timer.h"
 #include "bhfmm/utils/WignerMatrix.h"
 #include "bhfmm/utils/RotationParameter.h"
 
@@ -278,30 +277,6 @@ private:
 	int _backCommunicationGlobalProcessed;
 	int _backCommunicationGlobalStarted;
 
-	//different timers
-	Timer _timerProcessCells;
-	Timer _timerAllreduce;
-	Timer _timerGatherWellSepLoGlobal;
-	Timer _timerPropagateCellLoGlobal;
-	Timer _timerCombineMpCellGlobal;
-	Timer _timerCombineMpCellLokal;
-	Timer _timerGatherWellSepLoLokal;
-	Timer _timerPropagateCellLoLokal;
-	Timer _timerProcessFarField;
-	Timer _timerCommunicationHalos;
-	Timer _timerHaloGather;
-	Timer _timerBusyWaiting;
-	Timer _timerFMMcomplete;
-	Timer _timerGlobalM2MCalculation;
-	Timer _timerGlobalM2MInit;
-	Timer _timerGlobalM2MFinalize;
-	Timer _timerGlobalM2MTraversal;
-
-
-
-	Timer _timerGatherEvalM;
-	Timer _timerGatherEvalLM;
-	Timer _timerAllreduce_me;
 #ifdef ENABLE_MPI
 
 	MPI_Comm _comm; //MPI communicator from domain decomposition

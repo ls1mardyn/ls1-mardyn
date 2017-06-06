@@ -38,7 +38,7 @@ private:
 	// lattice spacing
 	double _h;
 	double _charge;
-	std::vector<Component> _components;
+	std::vector<Component>& _components;
 
 	double _simBoxLength; // length of the simulation box
 

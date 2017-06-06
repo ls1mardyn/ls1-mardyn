@@ -14,22 +14,22 @@
 	typedef ParticleCell_WR ParticleCell;
 #endif
 
-inline FullParticleCell* downcastPointerFull(ParticleCellBase* c) {
+inline FullParticleCell* downcastCellPointerFull(ParticleCellBase* c) {
 	mardyn_assert(static_cast<FullParticleCell*>(c) == dynamic_cast<FullParticleCell*>(c));
 	return static_cast<FullParticleCell*>(c);
 }
 
-inline FullParticleCell& downcastReferenceFull(ParticleCellBase& c) {
+inline FullParticleCell& downcastCellReferenceFull(ParticleCellBase& c) {
 	mardyn_assert(&static_cast<FullParticleCell&>(c) == &dynamic_cast<FullParticleCell&>(c));
 	return static_cast<FullParticleCell&>(c);
 }
 
-inline ParticleCell_WR* downcastPointerWR(ParticleCellBase* c) {
+inline ParticleCell_WR* downcastCellPointerWR(ParticleCellBase* c) {
 	mardyn_assert(static_cast<ParticleCell_WR*>(c) == dynamic_cast<ParticleCell_WR*>(c));
 	return static_cast<ParticleCell_WR*>(c);
 }
 
-inline ParticleCell_WR& downcastReferenceWR(ParticleCellBase& c) {
+inline ParticleCell_WR& downcastCellReferenceWR(ParticleCellBase& c) {
 	mardyn_assert(&static_cast<ParticleCell_WR&>(c) == &dynamic_cast<ParticleCell_WR&>(c));
 	return static_cast<ParticleCell_WR&>(c);
 }

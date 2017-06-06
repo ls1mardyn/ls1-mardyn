@@ -17,7 +17,6 @@
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "utils/Timer.h"
 
 #include <cmath>
 #include <climits>
@@ -36,7 +35,8 @@ void destruct_generator(Generator* generator) {
 }
 #endif
 
-RayleighTaylorGenerator::RayleighTaylorGenerator() : MDGenerator("RayleighTaylorGenerator") {
+RayleighTaylorGenerator::RayleighTaylorGenerator() :
+		MDGenerator("RayleighTaylorGenerator"), _components(*(global_simulation->getEnsemble()->getComponents())) {
 
 	_L1 		= 144.;// * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
 	_L2 		= 60.;//  * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
@@ -52,7 +52,7 @@ RayleighTaylorGenerator::RayleighTaylorGenerator() : MDGenerator("RayleighTaylor
 	_q_B 		= -0.5;// * MDGenerator::unitCharge_2_mardyn;
 	_m_A = _m_B = 23.;// * m_tilde * MDGenerator::unitMass_2_mardyn;
 	_T 			= 0.1;// * epsilon_tilde * MDGenerator::kelvin_2_mardyn / MDGenerator::boltzmann_constant_kB;
-
+	numSphereSizes = 1.;
 	_components.resize(2);
 	_components[0].addCharge(0.,0.,0.,0.,_q_A);
 	_components[1].addCharge(0.,0.,0.,0.,_q_B);
@@ -71,22 +71,20 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double /*time
 	domain->setGlobalLength(0, _L1);
 	domain->setGlobalLength(1, _L2);
 	domain->setGlobalLength(2, _L3);
-
-	for (unsigned int i = 0; i < _components.size(); i++) {
-		Component component = _components[i];
-		if (_configuration.performPrincipalAxisTransformation()) {
-			principalAxisTransform(component);
+	if (_configuration.performPrincipalAxisTransformation()) {
+		for (unsigned int i = 0; i < _components.size(); i++) {
+			principalAxisTransform(_components[i]);
 		}
-		global_simulation->getEnsemble()->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
+
+	global_simulation->getEnsemble()->setComponentLookUpIDs();
 }
 
 unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("REYLEIGH_TAYLOR_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (RayleighTaylorGenerator)." << endl;
 
 	_components[0].updateMassInertia();
@@ -142,8 +140,9 @@ unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particl
 	domainDecomp->collCommFinalize();
 
 	domain->setglobalNumMolecules(globalNumMolecules);
-	inputTimer.stop();
-	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->stopTimer("REYLEIGH_TAYLOR_GENERATOR_INPUT");
+	global_simulation->setOutputString("REYLEIGH_TAYLOR_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("REYLEIGH_TAYLOR_GENERATOR_INPUT") << " sec" << endl;
 	return id;
 }
 

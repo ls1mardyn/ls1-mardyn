@@ -10,6 +10,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
+#include "ParticleData.h"
 
 using Log::global_log;
 
@@ -23,11 +24,12 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &_numProcs));
 
-	ParticleData::setMPIType(_mpiParticleType);
+	ParticleData::getMPIType(_mpiParticleType);
 }
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
 
+	delete _neighbourCommunicationScheme;
 	MPI_Type_free(&_mpiParticleType);
 
 	// MPI_COMM_WORLD doesn't need to be freed, so

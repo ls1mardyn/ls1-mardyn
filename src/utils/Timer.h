@@ -1,6 +1,7 @@
 #ifndef TIMER_H_
 #define TIMER_H_
 
+#include <assert.h>
 #include <iostream>
 
 /* We use MPIs Wtime in parallel application, else clock */
@@ -52,14 +53,14 @@ typedef enum {
 	TIMER_RUNNING = 1
 } timer_state;
 
-//! @brief This class is used to messure times in sequential and parallel versions
+//! @brief This class is used to measure times in sequential and parallel versions
 //! @author Christoph Niethammer
 class Timer {
 	double _start;      // stop time
 	double _stop;       // start time
 	double _etime;      // elapsed time
 	timer_state _state; // timer state
-	bool _synced;       // timer should be synced at start and end accross processes/threads
+	bool _synced;       // timer should be synced at start and end across processes/threads
 
 #if WITH_PAPI
 	long long *_papi_start;
@@ -71,9 +72,12 @@ class Timer {
 	bool _collect_papi;
 #endif /* WITH_PAPI */
 
+private:
+	bool _active;		// timer can be active or not; if not active, then all function calls will have no effect on the timer
+
 public:
 	Timer() : 
-		_start(0), _stop(0), _etime(0), _state(TIMER_HALTED), _synced(false)
+		_start(0), _stop(0), _etime(0), _state(TIMER_HALTED), _synced(false), _active(true)
 #if WITH_PAPI
 		, _papi_start(0), _papi_stop(0), _papi_counter(0), _papi_num_counters(0), _papi_num_avail_counters(0), _papi_EventSet(0), _collect_papi(false)
 #endif /* WITH_PAPI */
@@ -97,6 +101,11 @@ public:
 	}
 
 	void start() {
+		if (!_active) {
+			assert(_state == TIMER_HALTED);
+			return;
+		}
+
 		_stop = 0.;
 		if (_state == TIMER_HALTED) {
 			_start = timer();
@@ -112,6 +121,11 @@ public:
 	}
 
 	void stop() {
+		if (!_active) {
+			assert(_state == TIMER_HALTED);
+			return;
+		}
+
 		if (_state == TIMER_RUNNING) {
 			_stop = timer();
 			_state = TIMER_HALTED;
@@ -130,6 +144,11 @@ public:
 	}
 
 	void reset() {
+		if (!_active) {
+			assert(_state == TIMER_HALTED);
+			return ;
+		}
+
 		_state = TIMER_HALTED;
 		_start = _stop = _etime = 0.;
 #if WITH_PAPI
@@ -155,7 +174,11 @@ public:
 		return _state;
 	}
 
-/** @brief Synchronize counter (accross MPI processes) */
+	void activateTimer(){ _active = true; }
+	void deactivateTimer(){ _active = false; }
+	bool isActive(){ return _active; }
+
+/** @brief Synchronize counter (across MPI processes) */
 	void set_sync(bool sync) {
 		_synced = sync;
 	}

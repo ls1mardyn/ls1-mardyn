@@ -35,7 +35,7 @@ public:
 	Ensemble() :
 			_domain(nullptr) {
 	}
-	virtual ~Ensemble() {}
+	virtual ~Ensemble();
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! @brief Returns the global number of Molecules of the ensemble.

@@ -180,22 +180,24 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 
 		mardyn_assert( M.numLJcenters() == 1);
 		const unsigned ind = i;
-		fullSoA.ljc_m_r_xBegin()[ind] = M.r(0);
-		fullSoA.ljc_m_r_yBegin()[ind] = M.r(1);
-		fullSoA.ljc_m_r_zBegin()[ind] = M.r(2);
-		fullSoA.ljc_r_xBegin()[ind] = M.r(0);
-		fullSoA.ljc_r_yBegin()[ind] = M.r(1);
-		fullSoA.ljc_r_zBegin()[ind] = M.r(2);
+
+		//for better readability:
+		constexpr ConcatenatedSites<vcp_real_calc>::SiteType LJC = ConcatenatedSites<vcp_real_calc>::SiteType::LJC;
+		typedef ConcatenatedSites<vcp_real_calc>::CoordinateType Coordinate;
+		typedef CellDataSoA::QuantityType QuantityType;
+
+		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X)[ind] = M.r(0);
+		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y)[ind] = M.r(1);
+		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z)[ind] = M.r(2);
+		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X)[ind] = M.r(0);
+		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y)[ind] = M.r(1);
+		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z)[ind] = M.r(2);
 		fullSoA._ljc_id[ind] = 0;
 
 		// clear FM
-		fullSoA.ljc_f_xBegin()[ind] = 0.0;
-		fullSoA.ljc_f_yBegin()[ind] = 0.0;
-		fullSoA.ljc_f_zBegin()[ind] = 0.0;
-		fullSoA.ljc_V_xBegin()[ind] = 0.0;
-		fullSoA.ljc_V_yBegin()[ind] = 0.0;
-		fullSoA.ljc_V_zBegin()[ind] = 0.0;
-	}
+		std::array<vcp_real_calc, 3> clearance = { 0., 0., 0. };
+		fullSoA.setTriplet(clearance, QuantityType::FORCE, LJC, ind);
+		fullSoA.setTriplet(clearance, QuantityType::VIRIAL, LJC, ind);	}
 #endif /* MARDYN_WR */
 }
 
@@ -225,7 +227,7 @@ void VCP1CLJWRTest::testProcessCell() {
 	// get an inner cell
 	double innerPoint[3] = {0.1, 0.1, 0.1};
 	unsigned long firstCellIndex = linkedCells->getCellIndexOfPoint(innerPoint);
-	ParticleCell_WR& cell_wr = linkedCells->getCell(firstCellIndex);
+	ParticleCell_WR& cell_wr = linkedCells->getCellReference(firstCellIndex);
 	CellDataSoA full_SoA(0,0,0,0,0);
 	VCP1CLJWRTest__initFullCellSoA(cell_wr, full_SoA);
 
@@ -254,9 +256,11 @@ void VCP1CLJWRTest::testProcessCell() {
 		double WR_f_x = cell_wr.moleculesAt(i).F(0);
 		double WR_f_y = cell_wr.moleculesAt(i).F(1);
 		double WR_f_z = cell_wr.moleculesAt(i).F(2);
-		double full_f_x = full_SoA._centers_f.x(i);
-		double full_f_y = full_SoA._centers_f.y(i);
-		double full_f_z = full_SoA._centers_f.z(i);
+
+		std::array<vcp_real_calc, 3> triple = full_SoA.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		double full_f_x = static_cast<double>(triple[0]);
+		double full_f_y = static_cast<double>(triple[1]);
+		double full_f_z = static_cast<double>(triple[2]);
 		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
@@ -293,8 +297,8 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	// get an inner cell
 	double innerPoint[3] = {0.1, 0.1, 0.1};
 	unsigned long firstCellIndex = linkedCells->getCellIndexOfPoint(innerPoint);
-	ParticleCell_WR& cell_wr1 = linkedCells->getCell(firstCellIndex);
-	ParticleCell_WR& cell_wr2 = linkedCells->getCell(firstCellIndex + 1);
+	ParticleCell_WR& cell_wr1 = linkedCells->getCellReference(firstCellIndex);
+	ParticleCell_WR& cell_wr2 = linkedCells->getCellReference(firstCellIndex + 1);
 
 
 	CellDataSoA full_SoA1(0,0,0,0,0);
@@ -327,9 +331,11 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		double WR_f_x = cell_wr1.moleculesAt(i).F(0);
 		double WR_f_y = cell_wr1.moleculesAt(i).F(1);
 		double WR_f_z = cell_wr1.moleculesAt(i).F(2);
-		double full_f_x = full_SoA1._centers_f.x(i);
-		double full_f_y = full_SoA1._centers_f.y(i);
-		double full_f_z = full_SoA1._centers_f.z(i);
+
+		std::array<vcp_real_calc, 3> triple = full_SoA1.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		double full_f_x = static_cast<double>(triple[0]);
+		double full_f_y = static_cast<double>(triple[1]);
+		double full_f_z = static_cast<double>(triple[2]);
 		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
@@ -340,9 +346,11 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		double WR_f_x = cell_wr2.moleculesAt(i).F(0);
 		double WR_f_y = cell_wr2.moleculesAt(i).F(1);
 		double WR_f_z = cell_wr2.moleculesAt(i).F(2);
-		double full_f_x = full_SoA2._centers_f.x(i);
-		double full_f_y = full_SoA2._centers_f.y(i);
-		double full_f_z = full_SoA2._centers_f.z(i);
+
+		std::array<vcp_real_calc, 3> triple = full_SoA2.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		double full_f_x = static_cast<double>(triple[0]);
+		double full_f_y = static_cast<double>(triple[1]);
+		double full_f_z = static_cast<double>(triple[2]);
 		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);

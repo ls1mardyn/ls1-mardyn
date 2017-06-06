@@ -143,9 +143,9 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		}
 
 		//compute localNumParticles, isCellOfProcess and localNumCells
-		int globalNumParticlesPerCell[globalNumCells];
-		int localNumParticlesPerCell[globalNumCells];
-		bool isCellOfProcess[globalNumCells]; //true if the cell is located in this process
+		std::vector<int> globalNumParticlesPerCell(globalNumCells);
+		std::vector<int> localNumParticlesPerCell(globalNumCells);
+		std::vector<bool> isCellOfProcess(globalNumCells); //true if the cell is located in this process
 
 		for (int i = 0; i < globalNumCells; i++) {
 			globalNumParticlesPerCell[i] = 0;
@@ -183,7 +183,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		*/
 		//every process has to know how many particles each cell in the linked cell has,
 		//as every process has to know the same header data
-		MPI_Allreduce(localNumParticlesPerCell, globalNumParticlesPerCell,
+		MPI_Allreduce(localNumParticlesPerCell.data(), globalNumParticlesPerCell.data(),
 				globalNumCells, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
 		for (int i = 0; i < globalNumCells; i++) {
@@ -271,7 +271,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			if (ret != MPI_SUCCESS) {
 				handle_error(ret);
 			}
-			ret = MPI_File_write(fh, globalNumParticlesPerCell, globalNumCells,
+			ret = MPI_File_write(fh, globalNumParticlesPerCell.data(), globalNumCells,
 					MPI_INT, &status);
 			if (ret != MPI_SUCCESS) {
 				handle_error(ret);
@@ -306,7 +306,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 		//Writing:
 		MPI_Datatype mpiParticleData;
-		ParticleData::setMPIType(mpiParticleData);
+		ParticleData::getMPIType(mpiParticleData);
 
 		//First dimension represents the cell
 		//Second dimension contains the molecules of this cell
@@ -317,7 +317,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		//to a local cell index(cell contained in the local process)
 		//
 		//entry of the array is -1 if the cell is not located at this process
-		int globalToLocalCell[globalNumCells];
+		std::vector<int> globalToLocalCell(globalNumCells);
 		int j = 0;
 		for (int i = 0; i < localNumCells; i++) {
 			while (isCellOfProcess[j] == false) {

@@ -23,9 +23,7 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testParticleIteratorBeginNextEndParticleIteratorSequential);
 	TEST_METHOD(testHalfShell);
 //	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
-#ifdef ENABLE_OVERLAPPING
 	TEST_METHOD(testTraversalMethods);
-#endif
 	TEST_SUITE_END();
 
 public:
@@ -37,21 +35,21 @@ public:
 	void testInsertion() {
 		double boundings_min[] = {0, 0, 0};
 		double boundings_max[] = {10.0, 10.0, 10.0 };
-		LinkedCells container(boundings_min, boundings_max, 2.5, 2.5, 1);
+		LinkedCells container(boundings_min, boundings_max, 2.5);
 		this->ParticleContainerTest::testInsertion(&container);
 	}
 
 	void testMoleculeIteration() {
 		double boundings_min[] = {0, 0, 0};
 		double boundings_max[] = {10.0, 10.0, 10.0 };
-		LinkedCells container(boundings_min, boundings_max, 2.5, 2.5, 1);
+		LinkedCells container(boundings_min, boundings_max, 2.5);
 		this->ParticleContainerTest::testMoleculeIteration(&container);
 	}
 
 	void testUpdateAndDeleteOuterParticles() {
 		double boundings_min[] = {0, 0, 0};
 		double boundings_max[] = {10.0, 10.0, 10.0 };
-		LinkedCells container(boundings_min, boundings_max, 2.5, 2.5, 1);
+		LinkedCells container(boundings_min, boundings_max, 2.5);
 		this->ParticleContainerTest::testUpdateAndDeleteOuterParticles(&container);
 	}
 

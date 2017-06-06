@@ -8,7 +8,6 @@
 #include "particleContainer/tests/ParticleContainerFactory.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/LinkedCellsHS.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
@@ -24,27 +23,13 @@
 
 using namespace Log;
 
-ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(type type) {
+ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type type) {
 	if (type == LinkedCell) {
 		double bBoxMin[] = {0.0, 0.0, 0.0, 0.0};
 		double bBoxMax[] = {2.0, 2.0, 2.0, 2.0};
 		double cutoffRadius = 1.0;
-		double LJCutoffRadius = 1.0;
-		double cellsInCutoffRadius = 1.0;
 
-		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoffRadius, LJCutoffRadius,
-		                                         cellsInCutoffRadius);
-		return container;
-
-	} else if (type == LinkedCellHS) {
-		double bBoxMin[] = {0.0, 0.0, 0.0, 0.0};
-		double bBoxMax[] = {2.0, 2.0, 2.0, 2.0};
-		double cutoffRadius = 1.0;
-		double LJCutoffRadius = 1.0;
-		double cellsInCutoffRadius = 1.0;
-
-		LinkedCellsHS* container = new LinkedCellsHS(bBoxMin, bBoxMax, cutoffRadius, LJCutoffRadius,
-		                                         cellsInCutoffRadius);
+		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoffRadius);
 		return container;
 
 	} else {
@@ -56,7 +41,7 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(type t
 
 
 ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
-		type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName) {
+		Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName) {
 
 	InputOldstyle inputReader;
 	inputReader.setPhaseSpaceHeaderFile(fileName.c_str());
@@ -70,17 +55,8 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 	}
 
 	ParticleContainer* moleculeContainer;
-	if (type == LinkedCell) {
-			moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
-			#if ENABLE_MPI
-			DomainDecomposition * temp = 0;
-			temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
-			if (temp != 0) {
-				temp->initCommunicationPartners(cutoff, domain);
-			}
-			#endif
-	} else if (type == LinkedCellHS) {
-		moleculeContainer = new LinkedCellsHS(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
+	if (type == Type::LinkedCell) {
+		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff);
 		#if ENABLE_MPI
 		DomainDecomposition * temp = 0;
 		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);

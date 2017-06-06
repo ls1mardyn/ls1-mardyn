@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include "bhfmm/containers/ParticleCellPointers.h"
 #include "utils/AlignedArray.h"
-#include "utils/Timer.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 #include "particleContainer/adapter/CellDataSoA.h"
@@ -71,8 +70,6 @@ public:
 
 private:
 	double _cutoffRadiusSquare;
-
-	Timer _timer;
 
 	/**
 	 * \brief a vector of Molecule pointers.
@@ -162,7 +159,7 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
+	void _calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2);
 
 }; /* end of class VectorizedChargeP2PCellProcessor */
 

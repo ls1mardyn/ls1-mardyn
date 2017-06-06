@@ -24,23 +24,11 @@
 #include <vector>
 #include "ParticleIterator.h"
 #include "RegionParticleIterator.h"
-
 #include "molecules/MoleculeForwardDeclaration.h"
-class CavityEnsemble;
+#include "io/MemoryProfiler.h"
 class CellProcessor;
-class ChemicalPotential;
-class Domain;
-class DomainDecompBase;
-class ParticleContainer;
 class ParticlePairsHandler;
 class XMLfileUnits;
-
-typedef Molecule* MoleculeIterator;
-
-enum IterateType {
-	ONLY_INNER_AND_BOUNDARY=0, /* iterates every cell except halo cells */
-	ALL=1 /* iterates every cell */
-};
 
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
@@ -75,7 +63,7 @@ enum IterateType {
 //! methods a class implementing this kind of datastructure has to provide to
 //! be used by the framework. Such a class should
 //! be implemented as a subclass of this class.
-class ParticleContainer {
+class ParticleContainer: public MemoryProfilable {
 private:
 	/* Copy operator private */
 	ParticleContainer& operator=(const ParticleContainer&);
@@ -151,8 +139,8 @@ public:
 
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
 
-	virtual ParticleIterator iteratorBegin () = 0;
-	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL) = 0;
+	virtual ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
+	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
 
 	virtual ParticleIterator iteratorEnd () = 0;
 	virtual RegionParticleIterator iterateRegionEnd () = 0;
@@ -203,24 +191,12 @@ public:
 
 	virtual double getCutoff() = 0;
 
-    /* TODO: This goes into the component class */
-	//! @brief counts all particles inside the bounding box
-	virtual unsigned countParticles(unsigned int cid) = 0;
-
-    /* TODO: This goes into the component class */
-	//! @brief counts particles in the intersection of bounding box and control volume
-	virtual unsigned countParticles(unsigned int cid, double* cbottom, double* ctop) = 0;
-
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) = 0;
 
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
 
-	virtual int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR) = 0;
-	virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;
-	virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
-	
 	//! @brief Update the caches of the molecules, that lie in inner cells.
 	//! The caches of boundary and halo cells is not updated.
 	//! This method is used for a multi-step scheme of overlapping mpi communication
@@ -234,8 +210,14 @@ public:
 	//! @brief Update the caches of the molecules.
 	virtual void updateMoleculeCaches() = 0;
 
+	virtual size_t getNumCells() const = 0;
+
+	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
+	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
+
 	//! @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	//  or does this particle container calculate all forces.
+	// TODO ____Move this to traversal method
 	virtual inline bool requiresForceExchange(){
 		return false;
 	}

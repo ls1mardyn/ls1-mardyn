@@ -14,7 +14,6 @@
 #include <cmath>
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
-#include "utils/Timer.h"
 #include "WrapOpenMP.h"
 
 #include "molecules/MoleculeForwardDeclaration.h"
@@ -57,9 +56,6 @@ public:
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
 		return 0.0;
 	}
-	int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) {
-		return 0;
-	}
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -77,8 +73,6 @@ public:
 	void printTimers();
 
 private:
-	Timer _timer;
-
 	/**
 	 * \brief a vector of Molecule pointers.
 	 */
@@ -206,7 +200,7 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
+	void _calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2);
 
 }; /* end of class VectorizedLJP2PCellProcessor */
 

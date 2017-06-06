@@ -19,7 +19,8 @@ P2MCellProcessor::P2MCellProcessor(
 		PseudoParticleContainer * pseudoParticleContainer) :
 		_pseudoParticleContainer(pseudoParticleContainer) {
 #ifdef ENABLE_MPI
-	_P2MTimer.set_sync(false);
+	global_simulation->setOutputString("P2M_CELL_PROCESSOR_P2M", "FMM: Time spent in P2M ");
+	//global_simulation->setSyncTimer("P2M_CELL_PROCESSOR_P2M", false); //it is per default false
 #endif
 }
 
@@ -28,9 +29,9 @@ P2MCellProcessor::~P2MCellProcessor() {
 
 void P2MCellProcessor::processCell(ParticleCellPointers& cell) {
 	if (!cell.isHaloCell()) {
-		_P2MTimer.start();
+		global_simulation->startTimer("P2M_CELL_PROCESSOR_P2M");
 		_pseudoParticleContainer->processMultipole(cell);
-		_P2MTimer.stop();
+		global_simulation->stopTimer("P2M_CELL_PROCESSOR_P2M");
 	}
 }
 
@@ -41,11 +42,11 @@ void P2MCellProcessor::printTimers() {
 	for (int i = 0; i < numprocs; i++) {
 		if (i == myrank) {
 			std::cout << "rank: " << myrank << std::endl;
-			std::cout << "\t\t" << _P2MTimer.get_etime() << "\t\t" << "s in P2M" << std::endl;
+			std::cout << "\t\t" << global_simulation->getTime("P2M_CELL_PROCESSOR_P2M") << "\t\t" << "s in P2M" << std::endl;
+			//global_simulation->printTimer("P2M_CELL_PROCESSOR_P2M");
 		}
 		domainDecomp.barrier();
 	}
-
 }
 
 } /* namespace bhfmm */

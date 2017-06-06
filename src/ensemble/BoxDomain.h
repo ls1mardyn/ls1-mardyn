@@ -8,7 +8,7 @@ class XMLfileUnits;
 class BoxDomain : public DomainBase {
 public:
 	BoxDomain();
-	~BoxDomain(){}
+	virtual ~BoxDomain(){}
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
 

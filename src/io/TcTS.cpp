@@ -66,8 +66,10 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 			+ (int)(100.0*box[1])
 	);
 
-	bool fill0[fl_units[0][0]][fl_units[1][0]][fl_units[2][0]][3];
-	bool fill1[fl_units[0][1]][fl_units[1][1]][fl_units[2][1]][3];
+	//bool fill0[fl_units[0][0]][fl_units[1][0]][fl_units[2][0]][3];
+	std::vector<bool> fill0(fl_units[0][0] * fl_units[1][0] * fl_units[2][0] * 3);
+	//bool fill1[fl_units[0][1]][fl_units[1][1]][fl_units[2][1]][3];
+	std::vector<bool> fill1(fl_units[0][1] * fl_units[1][1] * fl_units[2][1] * 3);
 	unsigned N[2];
 	unsigned slots[2];
 	for(unsigned l=0; l < 2; l++) {
@@ -75,8 +77,10 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 			for(unsigned j=0; j < fl_units[1][l]; j++) {
 				for(unsigned k=0; k < fl_units[2][l]; k++) {
 					for(unsigned d=0; d < 3; d++) {
-						if(l == 0) fill0[i][j][k][d] = true;
-						else fill1[i][j][k][d] = true;
+						if (l == 0)
+							fill0[((fl_units[1][0] * i + j) * fl_units[2][0] + k) * 3 + d] = true;
+						else
+							fill1[((fl_units[1][1] * i + j) * fl_units[2][1] + k) * 3 + d] = true;
 					}
 				}
 			}
@@ -96,10 +100,16 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 					for(unsigned k=0; k < fl_units[2][l]; k++) {
 						for(unsigned d=0; d < 3; d++) {
 							if(pswap >= rnd->rnd()) {
-								if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d])) N[l] --;
-								if(l == 0) fill0[i][j][k][d] = tswap;
-								else fill1[i][j][k][d] = tswap;
-								if(tswap) N[l] ++;
+								if (((l == 0)
+										&& fill0[((fl_units[1][0] * i + j) * fl_units[2][0] + k) * 3 + d])
+										|| ((l == 1) && fill1[((fl_units[1][1] * i + j) * fl_units[2][1] + k) * 3 + d]))
+									N[l]--;
+								if (l == 0)
+									fill0[((fl_units[1][0] * i + j) * fl_units[2][0] + k) * 3 + d] = tswap;
+								else
+									fill1[((fl_units[1][1] * i + j) * fl_units[2][1] + k) * 3 + d] = tswap;
+								if (tswap)
+									N[l]++;
 							}
 						}
 					}
@@ -129,7 +139,9 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 			for(unsigned j=0; j < fl_units[1][l]; j++) {
 				for(unsigned k=0; k < fl_units[2][l]; k++) {
 					for(unsigned d=0; d < 3; d++) {
-						if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d])) {
+						if (((l == 0) && fill0[((fl_units[1][0] * i + j) * fl_units[2][0] + k) * 3 + d])
+								|| ((l == 1)
+										&& fill1[((fl_units[1][1] * i + j) * fl_units[2][1] + k) * 3 + d])) {
 							double q[3];
 							q[0] = i * fl_unit[0][l];
 							q[1] = j * fl_unit[1][l];

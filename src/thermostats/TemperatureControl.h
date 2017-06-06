@@ -68,13 +68,16 @@ private:
 };
 
 
-
+class Domain;
+class XMLfileUnits;
 class TemperatureControl
 {
 public:
+	TemperatureControl(Domain* domain);
     TemperatureControl(unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
     ~TemperatureControl();
 
+	void readXML(XMLfileUnits& xmlconfig);
     void AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
     int GetNumRegions() {return _vecControlRegions.size();}
     ControlRegionT* GetControlRegion(unsigned short nRegionID) {return &(_vecControlRegions.at(nRegionID-1) ); }  // vector index starts with 0, region index with 1
@@ -91,6 +94,7 @@ public:
     void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
 
 private:
+	Domain* _domain;
     std::vector<ControlRegionT> _vecControlRegions;
     unsigned long _nControlFreq;
     unsigned long _nStart;

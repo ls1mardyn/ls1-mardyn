@@ -1,12 +1,13 @@
 #ifndef SITE_H_
 #define SITE_H_
 
-#include <iostream>
-#include <cmath>
 #include "utils/mardyn_assert.h"
 
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
+#include <array>
+#include <cmath>
+#include <cstdint>
 
 using Log::global_log;
 
@@ -22,7 +23,7 @@ public:
 	double rx() const { return _r[0]; }  /**< get x-coordinate of position vector */
 	double ry() const { return _r[1]; }  /**< get y-coordinate of position vector */
 	double rz() const { return _r[2]; }  /**< get z-coordinate of position vector */
-	const double* r() const { return _r; }  /**< get position vector */
+	std::array<double, 3> r() const { return _r; }  /**< get position vector */
 	double m() const { return _m; }         /**< get mass */
 
 	/**
@@ -48,7 +49,7 @@ protected:
             _r[2] = z;
         }
 
-	double _r[3]; /**< position coordinates */
+	std::array<double, 3> _r; /**< position coordinates */
 	double _m;    /**< mass */
 };
 
@@ -189,7 +190,7 @@ public:
 	double ex() const { return _e[0]; }
 	double ey() const { return _e[1]; }
 	double ez() const { return _e[2]; }
-	const double* e() const { return _e; }  /**< Get pointer to the normalized orientation vector. */
+	std::array<double, 3> e() const { return _e; }  /**< Get pointer to the normalized orientation vector. */
 
 	/** set the d-th component of the orientation vector */
 	void setE(int d, double e) {
@@ -206,7 +207,17 @@ protected:
 		_e[2] = ez;
 	}
 
-	double _e[3];  /**< Normalized orientation vector */
+	std::array<double, 3> _e;  /**< Normalized orientation vector */
+
+	void setOrientationVectorByPolarAngles(const double& theta_deg, const double& phi_deg)
+	{
+		const double fac = M_PI / 180.;  // translate: angle --> rad
+		double theta_rad = theta_deg * fac;
+		double phi_rad   = phi_deg   * fac;
+		_e[0] = sin(theta_rad) * cos(phi_rad);
+		_e[1] = sin(theta_rad) * sin(phi_rad);
+		_e[2] = cos(theta_rad);
+	}
 };
 
 
@@ -236,9 +247,18 @@ public:
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
 		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("dipolemoment/abs", _absMy);
-		xmlconfig.getNodeValueReduced("dipolemoment/x", _e[0]);
-		xmlconfig.getNodeValueReduced("dipolemoment/y", _e[1]);
-		xmlconfig.getNodeValueReduced("dipolemoment/z", _e[2]);
+		bool bAngleInput = true;
+		double theta, phi;
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("dipolemoment/theta", theta);
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("dipolemoment/phi",   phi);
+		if(true == bAngleInput)
+			this->setOrientationVectorByPolarAngles(theta, phi);
+		else
+		{
+			xmlconfig.getNodeValueReduced("dipolemoment/x", _e[0]);
+			xmlconfig.getNodeValueReduced("dipolemoment/y", _e[1]);
+			xmlconfig.getNodeValueReduced("dipolemoment/z", _e[2]);
+		}
 		/* TODO normalization check */
 	}
 
@@ -284,9 +304,18 @@ public:
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
 		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("quadrupolemoment/abs", _absQ);
-		xmlconfig.getNodeValueReduced("quadrupolemoment/x", _e[0]);
-		xmlconfig.getNodeValueReduced("quadrupolemoment/y", _e[1]);
-		xmlconfig.getNodeValueReduced("quadrupolemoment/z", _e[2]);
+		bool bAngleInput = true;
+		double theta, phi;
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("quadrupolemoment/theta", theta);
+		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("quadrupolemoment/phi",   phi);
+		if(true == bAngleInput)
+			this->setOrientationVectorByPolarAngles(theta, phi);
+		else
+		{
+			xmlconfig.getNodeValueReduced("quadrupolemoment/x", _e[0]);
+			xmlconfig.getNodeValueReduced("quadrupolemoment/y", _e[1]);
+			xmlconfig.getNodeValueReduced("quadrupolemoment/z", _e[2]);
+		}
 		/* TODO normalization check */
 	}
 	

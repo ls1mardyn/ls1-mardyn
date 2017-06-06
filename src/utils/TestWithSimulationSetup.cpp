@@ -59,7 +59,7 @@ void utils::TestWithSimulationSetup::tearDown() {
 
 
 ParticleContainer* utils::TestWithSimulationSetup::initializeFromFile(
-		ParticleContainerFactory::type type, const char* fileName, double cutoff) {
+		ParticleContainerFactory::Type type, const char* fileName, double cutoff) {
 
 	return ParticleContainerFactory::createInitializedParticleContainer(
 			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName));

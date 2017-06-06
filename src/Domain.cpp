@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <cstdint>
 
 #include "Domain.h"
 
@@ -63,12 +64,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_globalUSteps = 0;
 	this->_globalSigmaU = 0.0;
 	this->_globalSigmaUU = 0.0;
-#ifdef COMPLEX_POTENTIAL_SET
-	this->_universalConstantAccelerationTimesteps = 30;
-	if(!rank)
-		for(int d = 0; d < 3; d++)
-			this->_globalVelocitySum[d] = map<unsigned, long double>();
-#endif
 	this->_componentwiseThermostat = false;
 #ifdef COMPLEX_POTENTIAL_SET
 	this->_universalUndirectedThermostat = map<int, bool>();
@@ -109,12 +104,78 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode(originalpath);
 
 	/* temperature */
+	bool bInputOk = true;
 	double temperature = 0.;
-	xmlconfig.getNodeValueReduced("temperature", temperature);
-	setGlobalTemperature(temperature);
-	global_log->info() << "Temperature: " << temperature << endl;
-	xmlconfig.changecurrentnode(originalpath);
+	bInputOk = bInputOk && xmlconfig.getNodeValueReduced("temperature", temperature);
+	if(true == bInputOk) {
+		setGlobalTemperature(temperature);
+		global_log->info() << "Temperature: " << temperature << endl;
+		xmlconfig.changecurrentnode(originalpath);
+	}
 
+	/* profiles */
+	bInputOk = true;
+	uint32_t xun, yun, zun;
+	bInputOk = bInputOk && xmlconfig.getNodeValue("units/x", xun);
+	bInputOk = bInputOk && xmlconfig.getNodeValue("units/y", yun);
+	bInputOk = bInputOk && xmlconfig.getNodeValue("units/z", zun);
+	if(true == bInputOk)
+	{
+		this->setupProfile(xun, yun, zun);
+		global_log->info() << "Writing profiles with units: " << xun << ", " << yun << ", " << zun << endl;
+	}
+	else
+	{
+		global_log->error() << "Corrupted statements in path: output/outputplugin[@name='DomainProfiles']"
+				", program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+
+	bool doRecordProfile = true;
+	bool doRecordVirialProfile = false;
+	unsigned profileRecordingTimesteps = 1;
+	unsigned profileOutputTimesteps = 10000;
+	std::string profileOutputPrefix = "profile";
+	unsigned long initStatistics;
+	xmlconfig.getNodeValue("timesteps/init", initStatistics);
+	xmlconfig.getNodeValue("timesteps/recording", profileRecordingTimesteps);
+	xmlconfig.getNodeValue("timesteps/output", profileOutputTimesteps);
+	xmlconfig.getNodeValue("outputprefix", profileOutputPrefix);
+	bInputOk = true;
+	std::string strKeyword;
+	bInputOk = bInputOk && xmlconfig.getNodeValue("options/option@keyword", strKeyword);
+	if(true == bInputOk && "profileVirial" == strKeyword)
+		doRecordVirialProfile = true;
+
+	global_simulation->setProfileParameters( doRecordProfile,
+			doRecordVirialProfile,
+			profileRecordingTimesteps,
+			profileOutputTimesteps,
+			profileOutputPrefix,
+			initStatistics);
+
+	// recording components
+	{
+		int numComponents = 0;
+		XMLfile::Query query = xmlconfig.query("components/component");
+		numComponents = query.card();
+		global_log->info() << "Number of recorded components: " << numComponents << endl;
+		if(numComponents < 1) {
+			global_log->warning() << "No components specified for profile recording." << endl;
+		}
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator componentIter;
+		for( componentIter = query.begin(); componentIter; componentIter++ ) {
+			xmlconfig.changecurrentnode( componentIter );
+			int cid = 1;
+			bool bInputOk = xmlconfig.getNodeValue("@id", cid);
+			if(true == bInputOk) {
+				this->considerComponentInProfile(cid-1);
+				global_log->info() << "Considering component " << cid << " for profile recording." << endl;
+			}
+		}
+		this->considerComponentInProfile(0);
+	}
 }
 
 void Domain::setLocalUpot(double Upot) {_localUpot = Upot;}
@@ -572,11 +633,46 @@ void Domain::writeCheckpointHeader(string filename,
 
 }
 
+void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* particleContainer,
+		const DomainDecompBase* domainDecomp, double currentTime)
+{
+	if(0 != domainDecomp->getRank() )
+		return;
+
+	ofstream ofs(filename.c_str() );
+
+	ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
+	ofs << "<mardyn version=\"20100525\" >" << endl;
+	ofs << "\t<headerinfo>" << endl;
+	ios::fmtflags f( ofs.flags() );
+	ofs << "\t\t<time>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << currentTime << "</time>" << endl;
+	ofs << "\t\t<length>" << endl;
+	ofs << "\t\t\t<x>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[0] << "</x> "
+				 "<y>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[1] << "</y> "
+				 "<z>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[2] << "</z>" << endl;
+	ofs << "\t\t</length>" << endl;
+	ofs.flags(f);  // restore default format flags
+	ofs << "\t\t<number>" << _globalNumMolecules << "</number>" << endl;
+	ofs << "\t\t<format type=\"ICRVQD\"/>" << endl;
+	ofs << "\t</headerinfo>" << endl;
+	ofs << "</mardyn>" << endl;
+}
+
 void Domain::writeCheckpoint(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
 		bool binary) {
+
+#ifdef MARDYN_WR
+	global_log->warning() << "The checkpoints are not adapted for WR-mode. Velocity will be one half-timestep ahead!" << std::endl;
+	global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
+	//TODO: desired correctness (compatibility to normal mode) should be achievable by:
+	// 1. integrating positions by half a timestep forward (+ delta T / 2)
+	// 2. writing the checkpoint (with currentTime + delta T ? )
+	// 3. integrating positions by half a timestep backward (- delta T / 2)
+#endif
+
 	if (binary == true) {
-		this->writeCheckpointHeader((filename + ".header.xdr"), particleContainer, domainDecomp, currentTime);
+		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
 	} else {
 		this->writeCheckpointHeader(filename, particleContainer, domainDecomp, currentTime);
 	}
@@ -1082,8 +1178,6 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 	unsigned int rotationDegreesOfFreeedom = component->getRotationalDegreesOfFreedom();
 
 	this->_globalNumMolecules += N;
-	this->_localRotationalDOF[0] += localN * rotationDegreesOfFreeedom;
-	this->_universalRotationalDOF[0] += N * rotationDegreesOfFreeedom;
 	if( (this->_componentwiseThermostat)
 			&& (this->_componentToThermostatIdMap[cid] > 0) )
 	{
@@ -1269,7 +1363,7 @@ double Domain::getGamma(unsigned id){
 
 void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition){
 	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
-	double _localGamma[numComp];
+	std::vector<double> _localGamma(numComp);
 	for (unsigned i=0; i<numComp; i++){
 		_localGamma[i]=0;
 	}

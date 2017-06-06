@@ -4,7 +4,7 @@ mardyn trunk 20140131
  CT	2	1
  ThT 1	0.95
  ThT 2	0.95
-currentTime	0.0005
+currentTime	0.0004
  NumberOfComponents	2
 1	0	0	0	0
 0 0 0	1	1 1 2.5 0.0979013468

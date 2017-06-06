@@ -19,7 +19,9 @@
 #endif
 
 #include "RealCalcVec.h"
-#include "math.h"
+#include <cmath>
+#include "sys/types.h"
+
 
 using namespace vcp;
 

@@ -11,10 +11,19 @@
 #include "molecules/Component.h"
 #include "molecules/Quaternion.h"
 #include "particleContainer/adapter/CellDataSoABase.h"
+#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include <array>
 
 class MoleculeInterface {
 public:
+	static std::array<vcp_real_calc, 3> convert_double_to_vcp_real_calc(const std::array<double,3>& v) {
+		std::array<vcp_real_calc, 3> ret;
+		for (int d = 0; d < 3; ++d) {
+			ret[d] = static_cast<vcp_real_calc>(v[d]);
+		}
+		return ret;
+	}
+
 	virtual ~MoleculeInterface();
 	virtual unsigned long id() const = 0;
 	virtual void setid(unsigned long id) = 0;
@@ -29,6 +38,13 @@ public:
 		return component()->getLookUpId();
 	}
 	virtual double r(unsigned short d) const = 0;
+	std::array<double, 3> r_arr() const {
+		std::array<double, 3> ret;
+		for(int d=0; d < 3; ++d) {
+			ret[d] = r(d);
+		}
+		return ret;
+	}
 	virtual double v(unsigned short d) const = 0;
 	virtual double mass() const {
 		return component()->m();
@@ -40,6 +56,13 @@ public:
 	virtual void setq(Quaternion q)= 0;
 
 	virtual double D(unsigned short d) const = 0;
+	std::array<double, 3> D_arr() const {
+		std::array<double, 3> ret;
+		for (int d = 0; d < 3; ++d) {
+			ret[d] = D(d);
+		}
+		return ret;
+	}
 	virtual double M(unsigned short d) const = 0;
 	virtual double Vi(unsigned short d) const = 0;
 
@@ -99,12 +122,12 @@ public:
 	virtual std::array<double, 3> quadrupole_F(unsigned int i) const = 0;
 
 	virtual void normalizeQuaternion() = 0;
-	virtual void computeLJcenter_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeCharge_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeDipole_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeQuadrupole_d(unsigned int i, double result[3]) const = 0;
-	virtual void computeDipole_e(unsigned int i, double result[3]) const = 0;
-	virtual void computeQuadrupole_e(unsigned int i, double result[3]) const = 0;
+	virtual std::array<double, 3> computeLJcenter_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeCharge_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeDipole_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeQuadrupole_d(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeDipole_e(unsigned int i) const = 0;
+	virtual std::array<double, 3> computeQuadrupole_e(unsigned int i) const = 0;
 
 
 	virtual unsigned long totalMemsize() const = 0;
@@ -163,8 +186,10 @@ public:
 	virtual void upd_preF(double dt) = 0;
 	virtual void upd_postF(double dt_halve, double& summv2, double& sumIw2) = 0;
 
-	// Explicit Euler integration for single-centered molecules.
-	// Needed for WR mode. Placing it here, so that we can
+	// Integration for single-centered molecules in WR mode.
+	// Explicit Euler and LeapFrog without time-splitting for single-centered molecules are identical
+	// up to interpretation of whether the velocities are stored at (t) or at (t+dt/2)  (right?)
+	// Placing it here, so that we can
 	// verify the WR code against the non-WR code.
 	void ee_upd_preF(double dt) {
 		for (unsigned short d = 0; d < 3; ++d) {

@@ -27,10 +27,27 @@
 using Log::global_log;
 using namespace std;
 
+MmpldWriter::MmpldWriter()
+		:	_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
+		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(0),
+		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
+{
+	//	if (outputPrefix == "default") <-- what for??
+		if(false)
+			_appendTimestamp = true;
+		else
+			_appendTimestamp = false;
+
+		// ERROR
+		if (0 == _writeFrequency)
+			mardyn_exit(-1);
+}
+
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
 		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
-		 	_bWriteControlPrepared(false), _nFileIndex(0)
+		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep),
+		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
 //	if (outputPrefix == "default") <-- what for??
 	if(false)
@@ -47,12 +64,18 @@ MmpldWriter::~MmpldWriter()
 {
 }
 
-void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
-	_writeFrequency = 1;
-	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
+{
+	// write control
+	xmlconfig.getNodeValue("writecontrol/start", _startTimestep);
+	xmlconfig.getNodeValue("writecontrol/writefrequency", _writeFrequency);
+	xmlconfig.getNodeValue("writecontrol/stop", _stopTimestep);
+	xmlconfig.getNodeValue("writecontrol/framesperfile", _numFramesPerFile);
+	global_log->info() << "Start sampling from simstep: " << _startTimestep << endl;
+	global_log->info() << "Write with frequency: " << _writeFrequency << endl;
+	global_log->info() << "Stop sampling at simstep: " << _stopTimestep << endl;
+	global_log->info() << "Split files every " << _numFramesPerFile << "th frame."<< endl;
 
-	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
 	
@@ -62,16 +85,44 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 		_appendTimestamp = true;
 	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+
+	// sphere params: radius, colors
+	uint32_t numSites = 0;
+	XMLfile::Query query = xmlconfig.query("spheres/site");
+	numSites = query.card();
+	global_log->info() << "Number of sites: " << numSites << endl;
+	if(numSites < 1) {
+		global_log->warning() << "No site parameters specified." << endl;
+	}
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputSiteIter;
+	for( outputSiteIter = query.begin(); outputSiteIter; outputSiteIter++ )
+	{
+		xmlconfig.changecurrentnode( outputSiteIter );
+		float radius;
+		uint32_t r, g, b, alpha;
+		xmlconfig.getNodeValue("radius", radius);
+		xmlconfig.getNodeValue("color/r", r);
+		xmlconfig.getNodeValue("color/g", g);
+		xmlconfig.getNodeValue("color/b", b);
+		xmlconfig.getNodeValue("color/alpha", alpha);
+
+		_vfSphereRadius.push_back(radius);
+		std::array<uint32_t, 4> arrColors = {r, g, b, alpha};
+		_vaSphereColors.push_back(arrColors);
+	}
 }
 
 //Header Information
-void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
+void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
 	// only executed once
 	this->PrepareWriteControl();
 
 	_frameCount = 0;
+	_strOutputPrefixCurrent = _vecFilePrefixes.at(_nFileIndex);
+	_frameCountMax = _vecFramesPerFile.at(_nFileIndex);
 
 	// number of components / sites
 	_numComponents = (uint8_t)domain->getNumberOfComponents();
@@ -105,16 +156,19 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	this->SetNumSphereTypes();
 
 	stringstream filenamestream;
-	filenamestream << _vecFilePrefixes.at(_nFileIndex);
+	filenamestream << _strOutputPrefixCurrent;
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
-		_timestampString = gettimestring();
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
-	char filename[filenamestream.str().size()+1];
-	strcpy(filename,filenamestream.str().c_str());
+	std::vector<char> filename(filenamestream.str().size()+1);
+	strcpy(filename.data(),filenamestream.str().c_str());
 
 	int rank = domainDecomp->getRank();
 #ifndef NDEBUG
@@ -126,7 +180,7 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 //	int rank = domainDecomp->getRank();
 	if (rank == 0){
 #endif
-	ofstream mmpldfstream(filename, ios::binary|ios::out);
+	ofstream mmpldfstream(filename.data(), ios::binary|ios::out);
 
 	//format marker
 	uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00};
@@ -193,6 +247,10 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 #endif
 
+	// eventually write initial frame
+	if(false == _bInitFrameDone && (_startTimestep == _simulation.getNumInitTimesteps() ) )
+		this->doOutput(particleContainer, domainDecomp, domain, _nextRecSimstep, NULL, NULL);
+	_bInitFrameDone = true;
 }
 
 void MmpldWriter::doOutput( ParticleContainer* particleContainer,
@@ -200,19 +258,25 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
 		   map<unsigned, CavityEnsemble>* /*mcav*/)
 {
-	if( (*_frameListIterator) != simstep)
+	// control writing with desired write frequency
+	if( _nextRecSimstep != simstep)
 		return;
+	_nextRecSimstep += _writeFrequency;
 
 	stringstream filenamestream, outputstream;
-	filenamestream << _vecFilePrefixes.at(_nFileIndex);
+	filenamestream << _strOutputPrefixCurrent;
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
-	char filename[filenamestream.str().size()+1];
-	strcpy(filename,filenamestream.str().c_str());
+	std::vector<char> filename(filenamestream.str().size()+1);
+	strcpy(filename.data(),filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -220,7 +284,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	unsigned long numberParticles = particleContainer->getNumberOfParticles();
 	long outputsize = 0;
 
-	uint64_t numSpheresPerType[_numSphereTypes];
+	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
 	for (uint8_t ti = 0; ti < _numSphereTypes; ++ti){
 		numSpheresPerType[ti] = 0;
 	}
@@ -228,34 +292,34 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	//calculate number of spheres per component|siteType
 	uint32_t molcid = 0;
 	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
-		this->CalcNumSpheresPerType(numSpheresPerType, &(*mol));
+		this->CalcNumSpheresPerType(numSpheresPerType.data(), &(*mol));
 
 	//distribute global component particle count
-	uint64_t globalNumCompSpheres[_numSphereTypes];
+	std::vector<uint64_t> globalNumCompSpheres(_numSphereTypes);
 	if (rank == 0){
 		for (uint32_t i = 0; i < _numSphereTypes; ++i){
 			globalNumCompSpheres[i] = numSpheresPerType[i];
 		}
 		MPI_Status status;
-		uint64_t numSpheresPerTypeTmp[_numSphereTypes];
+		std::vector<uint64_t> numSpheresPerTypeTmp(_numSphereTypes);
 		for (int source = rank+1; source < numprocs; ++source){
-			int recvcount = sizeof(numSpheresPerTypeTmp);
+			int recvcount = _numSphereTypes * sizeof(uint64_t);
 			int recvtag = 1;
-			MPI_Recv(numSpheresPerTypeTmp, recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
+			MPI_Recv(numSpheresPerTypeTmp.data(), recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
 			for (uint8_t ti = 0; ti < _numSphereTypes; ++ti)
 				globalNumCompSpheres[ti] = globalNumCompSpheres[ti] + numSpheresPerTypeTmp[ti];
 		}
 	}else{
-			int dest = 0;
-			int sendcount = sizeof(numSpheresPerType);
-			int sendtag = 1;
-			MPI_Request request;
-			MPI_Isend(numSpheresPerType, sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
+		int dest = 0;
+		int sendcount = numSpheresPerType.size() * sizeof(uint64_t);
+		int sendtag = 1;
+		MPI_Request request;
+		MPI_Isend(numSpheresPerType.data(), sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	MPI_File fh;
-	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
 
 
 	//write particle list for each component|site (sphere type)
@@ -416,9 +480,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 #endif
 
 	// split data to multiple files
-	_frameListIterator++;
-//	if(_frameCount == _vecFramesPerFile.at(_nFileIndex) && (_nFileIndex+1) < _numFiles)
-	if(_frameListIterator == _vecFrameList.end() && (_nFileIndex+1) < _numFiles)
+	if(_frameCount == _frameCountMax && (_nFileIndex+1) < _numFiles)
 		this->MultiFileApproachReset(particleContainer, domainDecomp, domain);
 }
 
@@ -427,20 +489,24 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 	stringstream filenamestream;
 	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
-	char filename[filenamestream.str().size()+1];
-	strcpy(filename,filenamestream.str().c_str());
+	std::vector<char> filename(filenamestream.str().size()+1);
+	strcpy(filename.data(),filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
 		
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_Offset endPosition;
 		MPI_File_get_position(fh, &endPosition);
@@ -457,7 +523,7 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_File_close(&fh);
 	}else{
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 		MPI_File_close(&fh);
 	}
 		
@@ -466,23 +532,25 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 
 void MmpldWriter::InitSphereData()
 {
-	if(_bInitSphereData == ISD_USE_DEFAULT)
+	if(_bInitSphereData == ISD_READ_FROM_XML)
+		return;
+	else if(_bInitSphereData == ISD_USE_DEFAULT)
 	{
 		for(uint8_t i=0; i<6; i++)
 			_vfSphereRadius.push_back(0.5);
 
 		//                            R    G    B  alpha
-		std::array<uint8_t, 4> red = { 255, 0, 0, 255 };
+		std::array<uint32_t, 4> red = { 255, 0, 0, 255 };
 		_vaSphereColors.push_back(red);
-		std::array<uint8_t, 4> lightblue = { 0, 205, 255, 255 };
+		std::array<uint32_t, 4> lightblue = { 0, 205, 255, 255 };
 		_vaSphereColors.push_back(lightblue);
-		std::array<uint8_t, 4> blue = { 255, 0, 255, 255 };
+		std::array<uint32_t, 4> blue = { 255, 0, 255, 255 };
 		_vaSphereColors.push_back(blue);
-		std::array<uint8_t, 4> green = { 0, 155, 0, 255 };
+		std::array<uint32_t, 4> green = { 0, 155, 0, 255 };
 		_vaSphereColors.push_back(green);
-		std::array<uint8_t, 4> purple = { 105, 0, 205, 255 };
+		std::array<uint32_t, 4> purple = { 105, 0, 205, 255 };
 		_vaSphereColors.push_back(purple);
-		std::array<uint8_t, 4> orange = { 255, 125, 0, 255 };
+		std::array<uint32_t, 4> orange = { 255, 125, 0, 255 };
 		_vaSphereColors.push_back(orange);
 
 		return;
@@ -491,7 +559,7 @@ void MmpldWriter::InitSphereData()
 	std::ifstream filein(_strSphereDataFilename.c_str(), ios::in);
 	std::string strLine, strToken;
 	std::string strTokens[6];
-	std::array<uint8_t, 4> arrColors;
+	std::array<uint32_t, 4> arrColors;
 
 	while (getline (filein, strLine))
 	{
@@ -507,7 +575,7 @@ void MmpldWriter::InitSphereData()
 		{
 			_vfSphereRadius.push_back( (float)(atof( strTokens[1].c_str() ) ) );
 			for(uint8_t ci=0; ci<4; ci++)
-				arrColors[ci] = (uint8_t)(atoi(strTokens[ci+2].c_str() ) );
+				arrColors[ci] = (uint32_t)(atoi(strTokens[ci+2].c_str() ) );
 			_vaSphereColors.push_back(arrColors);
 		}
 	}
@@ -517,7 +585,7 @@ void MmpldWriter::InitSphereData()
 	for(it=_vfSphereRadius.begin(); it!=_vfSphereRadius.end(); ++it)
 		cout << i++ << ": " << (*it) << endl;
 
-	std::vector< std::array<uint8_t, 4> >::iterator cit; i=0; cout << "colors" << endl;
+	std::vector< std::array<uint32_t, 4> >::iterator cit; i=0; cout << "colors" << endl;
 	for(cit=_vaSphereColors.begin(); cit!=_vaSphereColors.end(); ++cit)
 	{
 		cout << i++ << ":";
@@ -534,11 +602,6 @@ void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 	this->finishOutput(particleContainer, domainDecomp, domain);
 	_nFileIndex++;
 	this->initOutput(particleContainer, domainDecomp, domain);
-
-	// update frame list iterators
-	_frameListsIterator = _vecFrameLists.begin() + _nFileIndex;
-	_vecFrameList = *_frameListsIterator;
-	_frameListIterator = _vecFrameList.begin();
 }
 
 void MmpldWriter::PrepareWriteControl()
@@ -548,15 +611,17 @@ void MmpldWriter::PrepareWriteControl()
 		return;
 	_bWriteControlPrepared = true;
 
-	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps()+1;
+	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps();
+	_nextRecSimstep = _startTimestep;
 	if( 0 == _stopTimestep )
 		_stopTimestep = _simulation.getNumTimesteps();
 	else
-		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() )     ? _stopTimestep  : _simulation.getNumTimesteps();
-	uint64_t numTimesteps = _stopTimestep - _startTimestep + 1;
-	uint64_t numFramesTotal = numTimesteps/_writeFrequency;  // +1: start configuration frame not included here!
+		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() ) ? _stopTimestep  : _simulation.getNumTimesteps();
+
+	uint64_t numTimesteps = _stopTimestep - _startTimestep;
+	uint64_t numFramesTotal = numTimesteps/_writeFrequency;
 	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
-		_numFramesPerFile = numFramesTotal + 1;  // +1: start configuration frame not included here!
+		_numFramesPerFile = numFramesTotal;
 
 #ifndef NDEBUG
 	cout << "_startTimestep    = " << _startTimestep << endl;
@@ -567,58 +632,28 @@ void MmpldWriter::PrepareWriteControl()
 	cout << "numFramesTotal    = " << numFramesTotal << endl;
 #endif
 
-	uint64_t ts = _startTimestep + _writeFrequency - 1;
-	uint64_t numFrames = 1;
-	std::vector<uint64_t> vecFrameList;
-	vecFrameList.push_back(_startTimestep);
-	while(ts <= _stopTimestep)
+	// init frames per file vector
+	_numFiles = numFramesTotal/_numFramesPerFile;
+	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
+	_vecFramesPerFile.at(0) += 1;  // +1 frame in first file: start configuration
+
+	// init file prefix vector
+	for(uint8_t fi=0; fi<_numFiles; ++fi)
 	{
-		if(numFrames == _numFramesPerFile + (_vecFrameLists.size() == 0) )  // + ... : first file +1 frame (start configuration)
-		{
-			numFrames = 0;
-			_vecFrameLists.push_back(vecFrameList);
-			vecFrameList.clear();
-		}
-
-		vecFrameList.push_back(ts);
-		numFrames++;
-		ts += _writeFrequency;
-	}
-	_vecFrameLists.push_back(vecFrameList);
-
-	// number of files that will be created
-	_numFiles = _vecFrameLists.size();
-#ifndef NDEBUG
-	cout << "_numFiles = " << (uint32_t)(_numFiles) << endl;
-#endif
-
-#ifndef NDEBUG
-	vector<vector<uint64_t> >::iterator fit;
-	vector<uint64_t>::iterator lit;
-	cout << "_vecFrameLists ..." << endl;
-	for(auto& fit : _vecFrameLists) {
-		for(auto& lit : fit)
-			cout << lit << ", ";
-		cout << endl;
-	}
-#endif
-
-	// frames per file, file prefix vector
-	uint32_t nFileNr = 1;
-
-	for(auto& fit : _vecFrameLists)
-	{
-		_vecFramesPerFile.push_back(fit.size() );
 		std::stringstream sstrPrefix;
-		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << nFileNr;
+		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(fi+1);
 		_vecFilePrefixes.push_back(sstrPrefix.str() );
-		nFileNr++;
 	}
 
-	// init frame list iterators
-	_frameListsIterator = _vecFrameLists.begin();
-	_vecFrameList = *_frameListsIterator;
-	_frameListIterator = _vecFrameList.begin();
+	// handle the case: numFramesTotal not a multiple of _numFramesPerFile
+	if(0 != numFramesTotal % _numFramesPerFile)
+	{
+		_numFiles++;
+		_vecFramesPerFile.push_back(numFramesTotal % _numFramesPerFile);
+		std::stringstream sstrPrefix;
+		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(_numFiles);
+		_vecFilePrefixes.push_back(sstrPrefix.str() );
+	}
 
 #ifndef NDEBUG
 	for(auto fit : _vecFilePrefixes)

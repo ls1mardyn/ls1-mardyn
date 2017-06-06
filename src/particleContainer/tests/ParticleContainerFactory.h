@@ -22,13 +22,13 @@ class ParticleContainerFactory {
 
 public:
 
-	enum type {LinkedCell, LinkedCellHS};
+	enum Type {LinkedCell};
 
 	/**
 	 * creates a small, empty particleContainer. For the moment, only LinkedCell is supported.
 	 * The caller is responsible for deleting the pointer!
 	 */
-	static ParticleContainer* createEmptyParticleContainer(type type);
+	static ParticleContainer* createEmptyParticleContainer(Type type);
 
 	/**
 	 * return a (more or less - rather less ;) initialized Particlecontainer. Actually, only the
@@ -39,7 +39,7 @@ public:
 	 * The caller is responsible for deleting the pointer!
 	 */
 	static ParticleContainer* createInitializedParticleContainer(
-			type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName);
+			Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName);
 
 };
 

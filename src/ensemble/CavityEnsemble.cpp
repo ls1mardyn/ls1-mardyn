@@ -5,6 +5,7 @@
 #include "utils/Logger.h"
 #include "molecules/Quaternion.h"
 #include "Simulation.h"
+#include "particleContainer/ParticleContainer.h"
 
 #define COMMUNICATION_THRESHOLD 3
 
@@ -191,15 +192,15 @@ void CavityEnsemble::init(Component* component, unsigned Nx, unsigned Ny, unsign
             }
             double qtrnorm = sqrt(1.0 / qqtr);
 
-            double D[3];
+            std::array<double,3> D;
             double Dnorm = 0.0;
             if(rotdof > 0)
             {
                for(int d=0; d < 3; d++) D[d] = -0.5 + this->async.rnd();
 
-               double w[3];
+               std::array<double,3> w;
                Quaternion tqtr = Quaternion(qtr[0]*qtrnorm, qtr[1]*qtrnorm, qtr[2]*qtrnorm, qtr[3]*qtrnorm);
-               tqtr.rotate(D, w);
+               w = tqtr.rotate(D);
                double Iw2 = w[0]*w[0]*component->I11()
                           + w[1]*w[1]*component->I22()
                           + w[2]*w[2]*component->I33();
@@ -287,4 +288,50 @@ map<unsigned long, Molecule*> CavityEnsemble::activeParticleContainer()
       retv[*resit] = this->reservoir[*resit];
    }
    return retv;
+}
+
+unsigned CavityEnsemble::countNeighbours(ParticleContainer * container, Molecule* m1) const {
+	unsigned m1neigh = 0;
+
+	double RR = getRR();
+	double R = std::sqrt(RR);
+
+	// the lower and higher corners of a box, centered at the molecule
+	// with side-length two times the search radius
+	double lo[3], hi[3];
+	for (int d = 0; d < 3; ++d) {
+		lo[d] = m1->r(d) - R;
+		hi[d] = m1->r(d) + R;
+	}
+
+	RegionParticleIterator begin = container->iterateRegionBegin(lo, hi, ParticleIterator::ALL_CELLS);
+	RegionParticleIterator end = container->iterateRegionEnd();
+
+	for (auto m2 = begin; m2 != end; ++m2) {
+		if (m2->id() == m1->id()) {
+			continue;
+		}
+        double distanceVectorDummy[3] = {0.0, 0.0, 0.0};
+		double dd = m2->dist2(*m1, distanceVectorDummy);
+		if (dd < RR) {
+			++m1neigh;
+		}
+	}
+
+	return m1neigh;
+}
+
+void CavityEnsemble::cavityStep(ParticleContainer * globalMoleculeContainer) {
+
+	// don't confuse with the other ParticleContainer, the base-class of LinkedCells!
+	map<unsigned long, Molecule*>* pc = this->particleContainer();
+
+	for (map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
+		mardyn_assert(pcit->second != NULL);
+		Molecule* m1 = pcit->second;
+		unsigned neigh = this->countNeighbours(globalMoleculeContainer, m1);
+		unsigned long m1id = pcit->first;
+		mardyn_assert(m1id == m1->id());
+		this->decideActivity(neigh, m1id);
+	}
 }

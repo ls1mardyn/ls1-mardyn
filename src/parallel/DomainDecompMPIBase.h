@@ -10,11 +10,11 @@
 
 #include "DomainDecompBase.h"
 #include "parallel/CollectiveCommunication.h"
-#include "parallel/ParticleData.h"
 #include "parallel/CommunicationPartner.h"
 
 #include <mpi.h>
 #include <vector>
+#include "ParticleDataForwardDeclaration.h"
 
 #define LOWER  0
 #define HIGHER 1
@@ -101,6 +101,10 @@ public:
 
 	void collCommAllreduceSum() {
 		_collCommunication.allreduceSum();
+	}
+
+	void collCommAllreduceSumAllowPrevious() {
+		_collCommunication.allreduceSumAllowPrevious();
 	}
 
 	void collCommScanSum() {

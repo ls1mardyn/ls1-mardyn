@@ -33,12 +33,19 @@ public:
 	AlignedArrayTriplet<vcp_real_calc> _mol_v;
 	AlignedArray<uint64_t> _mol_uid;
 
-	vcp_inline vcp_real_calc* r_xBegin()   const { return _mol_r.xBegin();}
-	vcp_inline vcp_real_calc* r_yBegin()   const { return _mol_r.yBegin();}
-	vcp_inline vcp_real_calc* r_zBegin()   const { return _mol_r.zBegin();}
-	vcp_inline vcp_real_calc* v_xBegin()   const { return _mol_v.xBegin();}
-	vcp_inline vcp_real_calc* v_yBegin()   const { return _mol_v.yBegin();}
-	vcp_inline vcp_real_calc* v_zBegin()   const { return _mol_v.zBegin();}
+	vcp_inline vcp_real_calc* r_xBegin() { return _mol_r.xBegin();}
+	vcp_inline vcp_real_calc* r_yBegin() { return _mol_r.yBegin();}
+	vcp_inline vcp_real_calc* r_zBegin() { return _mol_r.zBegin();}
+	vcp_inline vcp_real_calc* v_xBegin() { return _mol_v.xBegin();}
+	vcp_inline vcp_real_calc* v_yBegin() { return _mol_v.yBegin();}
+	vcp_inline vcp_real_calc* v_zBegin() { return _mol_v.zBegin();}
+
+	const vcp_inline vcp_real_calc* r_xBegin()   const { return _mol_r.xBegin();}
+	const vcp_inline vcp_real_calc* r_yBegin()   const { return _mol_r.yBegin();}
+	const vcp_inline vcp_real_calc* r_zBegin()   const { return _mol_r.zBegin();}
+	const vcp_inline vcp_real_calc* v_xBegin()   const { return _mol_v.xBegin();}
+	const vcp_inline vcp_real_calc* v_yBegin()   const { return _mol_v.yBegin();}
+	const vcp_inline vcp_real_calc* v_zBegin()   const { return _mol_v.zBegin();}
 
 	void resize(size_t molecules_arg) {
 		const bool allow_shrink = false; // TODO shrink at some point in the future
@@ -62,7 +69,7 @@ public:
 	}
 
 	void appendMolecule(MoleculeInterface& m) {
-		Molecule_WR& m_wr = downcastReferenceWR(m);
+		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
 
 		_mol_r.appendValueTriplet(m_wr.r(0), m_wr.r(1), m_wr.r(2), _mol_num);
 		_mol_v.appendValueTriplet(m_wr.v(0), m_wr.v(1), m_wr.v(2), _mol_num);
@@ -71,7 +78,7 @@ public:
 	}
 
 	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
-		Molecule_WR& m_wr = downcastReferenceWR(m);
+		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
 
 		// changes in AOS storage will not be saved
 		m_wr.setStorageState(Molecule_WR::STORAGE_AOS);
@@ -85,7 +92,7 @@ public:
 	}
 
 	void readMutableMolecule(size_t index, MoleculeInterface& m) {
-		Molecule_WR& m_wr = downcastReferenceWR(m);
+		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
 
 		// changes in SOA storage will be saved
 		m_wr.setStorageState(Molecule_WR::STORAGE_SOA);

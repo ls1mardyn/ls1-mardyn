@@ -4,6 +4,8 @@
 #include "utils/Logger.h"
 #include "CollectiveCommBase.h"
 #include <mpi.h>
+
+#include "CollectiveCommunicationInterface.h"
 #include "utils/mardyn_assert.h"
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
@@ -58,7 +60,7 @@
 //!   // finalize the communication (important for deleting memory)
 //!   collComm.finalize();
 //! @endcode
-class CollectiveCommunication: public CollectiveCommBase {
+class CollectiveCommunication: public CollectiveCommBase, public CollectiveCommunicationInterface {
 public:
 	CollectiveCommunication() {
 		_communicator = 0;
@@ -66,12 +68,12 @@ public:
 	}
 
 	virtual ~CollectiveCommunication() {
-		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		//mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
 	//! @brief allocate memory for the values to be sent, initialize counters
 	//! @param numValues number of values that shall be communicated
-	void init(MPI_Comm communicator, int numValues) {
+	virtual void init(MPI_Comm communicator, int numValues, int key = 0) override {
 		CollectiveCommBase::init(numValues);
 
 		_communicator = communicator;
@@ -79,7 +81,7 @@ public:
 	}
 
 	// documentation in base class
-	void finalize() {
+	virtual void finalize() override {
 		CollectiveCommBase::finalize();
 		_types.clear();
 
@@ -87,45 +89,45 @@ public:
 	}
 
 	// documentation in base class
-	void appendInt(int intValue) {
+	void appendInt(int intValue) override {
 		CollectiveCommBase::appendInt(intValue);
 		_types.push_back(MPI_INT);
 	}
 
 	// documentation in base class
-	void appendUnsLong(unsigned long unsLongValue) {
+	void appendUnsLong(unsigned long unsLongValue) override {
 		CollectiveCommBase::appendUnsLong(unsLongValue);
 		_types.push_back(MPI_UNSIGNED_LONG);
 	}
 
 	// documentation in base class
-	void appendFloat(float floatValue) {
+	void appendFloat(float floatValue) override {
 		CollectiveCommBase::appendFloat(floatValue);
 		_types.push_back(MPI_FLOAT);
 	}
 
 	// documentation in base class
-	void appendDouble(double doubleValue) {
+	void appendDouble(double doubleValue) override {
 		CollectiveCommBase::appendDouble(doubleValue);
 		_types.push_back(MPI_DOUBLE);
 	}
 
 	// documentation in base class
-	void appendLongDouble(long double longDoubleValue) {
+	void appendLongDouble(long double longDoubleValue) override {
 		CollectiveCommBase::appendLongDouble(longDoubleValue);
 		_types.push_back(MPI_LONG_DOUBLE);
 	}
 
 	//! Get the MPI communicator
 	//! @return MPI communicator
-	MPI_Comm getTopology() {
+	MPI_Comm getTopology() override {
 		return _communicator;
 	}
 
 	// Getters don't need to be overridden, see parent class
 
 	// documentation in base class
-	void broadcast(int root = 0) {
+	void broadcast(int root = 0) override {
 		setMPIType();
 		valType * startOfValues = _values.data();
 		MPI_CHECK(
@@ -135,7 +137,7 @@ public:
 	}
 
 	// documentation in base class
-	void allreduceSum() {
+	void allreduceSum() override {
 #if ENABLE_AGGLOMERATED_REDUCE
 		setMPIType();
 		MPI_Op agglomeratedTypeAddOperator;
@@ -156,8 +158,15 @@ public:
 #endif
 	}
 
+	//! Performs an all-reduce (sum), however values of previous iterations are permitted.
+	//! By allowing values from previous iterations, overlapping communication is possible.
+	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
+	virtual void allreduceSumAllowPrevious() override{
+		allreduceSum();
+	}
+
 	// documentation in base class
-	void scanSum() {
+	void scanSum() override {
 	#if ENABLE_AGGLOMERATED_REDUCE
 			setMPIType();
 			MPI_Op agglomeratedTypeAddOperator;
@@ -177,7 +186,8 @@ public:
 			}
 	#endif
 		}
-private:
+
+protected:
 	//! @brief defines a MPI datatype which can be used to transfer a CollectiveCommunication object
 	//!
 	//! before this method is called, init has to be called and all values to be
@@ -186,8 +196,8 @@ private:
 	//! datatype is stored in the member variable _valuesType;
 	void setMPIType() {
 		int numblocks = _values.size();
-		int blocklengths[numblocks];
-		MPI_Aint disps[numblocks];
+		std::vector<int> blocklengths(numblocks);
+		std::vector<MPI_Aint> disps(numblocks);
 		int disp = 0;
 		for (int i = 0; i < numblocks; i++) {
 			blocklengths[i] = 1;
@@ -197,10 +207,10 @@ private:
 		MPI_Datatype * startOfTypes = &(_types[0]);
 #if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
 		MPI_CHECK(
-				MPI_Type_create_struct(numblocks, blocklengths, disps,
+				MPI_Type_create_struct(numblocks, blocklengths.data(), disps.data(),
 						startOfTypes, &_agglomeratedType));
 #else
-		MPI_CHECK( MPI_Type_struct(numblocks, blocklengths, disps, startOfTypes, &_agglomeratedType) );
+		MPI_CHECK( MPI_Type_struct(numblocks, blocklengths.data(), disps.data(), startOfTypes, &_agglomeratedType) );
 #endif
 		MPI_CHECK(MPI_Type_commit(&_agglomeratedType));
 	}
@@ -227,13 +237,13 @@ private:
 				MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes,
 						&combiner));
 
-		int arrayInts[numints];
-		MPI_Aint arrayAddr[numaddr];
-		MPI_Datatype arrayTypes[numtypes];
+		std::vector<int> arrayInts(numints);
+		std::vector<MPI_Aint> arrayAddr(numaddr);
+		std::vector<MPI_Datatype> arrayTypes(numtypes);
 
 		MPI_CHECK(
 				MPI_Type_get_contents(*dtype, numints, numaddr, numtypes,
-						arrayInts, arrayAddr, arrayTypes));
+						arrayInts.data(), arrayAddr.data(), arrayTypes.data()));
 
 		for (int i = 0; i < numtypes; i++) {
 			if (arrayTypes[i] == MPI_INT) {

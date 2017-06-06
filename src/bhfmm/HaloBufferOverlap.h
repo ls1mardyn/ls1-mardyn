@@ -576,22 +576,22 @@ int HaloBufferOverlap<T>::testIfFinished(){
 	if(not(_doNT)){
 		if(!_isGlobal){
 
-			MPI_Status areaStatusArray[_areaBuffers.size()];
-			MPI_Testall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray);
+			std::vector<MPI_Status> areaStatusArray(_areaBuffers.size());
+			MPI_Testall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray.data());
 
-			MPI_Status edgeStatusArray[_edgeBuffers.size()];
-			MPI_Testall(_edgeBuffers.size(),_edgeRequests, &edgeFlag, edgeStatusArray);
+			std::vector<MPI_Status> edgeStatusArray(_edgeBuffers.size());
+			MPI_Testall(_edgeBuffers.size(),_edgeRequests, &edgeFlag, edgeStatusArray.data());
 
-			MPI_Status cornerStatusArray[_cornerBuffers.size()];
-			MPI_Testall(_cornerBuffers.size(),_cornerRequests, &cornerFlag, cornerStatusArray);
+			std::vector<MPI_Status> cornerStatusArray(_cornerBuffers.size());
+			MPI_Testall(_cornerBuffers.size(),_cornerRequests, &cornerFlag, cornerStatusArray.data());
 
 			return areaFlag * edgeFlag * cornerFlag;
 		}
 		else{
 //			std::cout << _areaBuffers.size() << "\n";
 			if(_areaBuffers.size() == 0) return true;
-			MPI_Status areaStatusArray[_areaBuffers.size()];
-			MPI_Testall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray);
+			std::vector<MPI_Status> areaStatusArray(_areaBuffers.size());
+			MPI_Testall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray.data());
 			return areaFlag;
 		}
 	}
@@ -614,8 +614,8 @@ int HaloBufferOverlap<T>::testIfFinished(){
 				numRequests = _globalLevelsInBuffer * _offsetFactor ;
 			}
 			if(numRequests == 0) return true;
-			MPI_Status areaStatusArray[numRequests];
-			MPI_Testall(numRequests,_areaRequests, &areaFlag, areaStatusArray);
+			std::vector<MPI_Status> areaStatusArray(numRequests);
+			MPI_Testall(numRequests,_areaRequests, &areaFlag, areaStatusArray.data());
 //			MPI_Status status;
 //
 //			for(int i= 0; i<numberOfSends; i++){

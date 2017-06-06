@@ -8,7 +8,6 @@
 #ifndef L2PCELLPROCESSOR_H_
 #define L2PCELLPROCESSOR_H_
 #include "bhfmm/cellProcessors/SimpleCellProcessor.h"
-#include "utils/Timer.h"
 #include <stdlib.h>
 
 namespace bhfmm {
@@ -28,7 +27,6 @@ public:
 
 private:
 	PseudoParticleContainer* const _pseudoParticleContainer;
-	Timer _L2PTimer;
 };
 
 } /* namespace bhfmm */

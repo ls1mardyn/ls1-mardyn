@@ -12,7 +12,6 @@
 
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
-#include "utils/Timer.h"
 #include "WrapOpenMP.h"
 
 #include "molecules/MoleculeForwardDeclaration.h"
@@ -46,10 +45,6 @@ public:
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
 		return 0.0;
 	}
-	int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) {
-		exit(0);
-		return 0;
-	}
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -66,6 +61,10 @@ public:
 
 	void setDtInvm(double dtInvm) {
 		_dtInvm = static_cast<vcp_real_calc>(dtInvm);
+	}
+
+	double getDtInvm() const {
+		return _dtInvm;
 	}
 
 private:
@@ -153,7 +152,7 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	void _calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2);
+	void _calculatePairs(CellDataSoA_WR & soa1, CellDataSoA_WR & soa2);
 
 };
 

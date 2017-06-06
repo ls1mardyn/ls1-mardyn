@@ -8,6 +8,7 @@ class XMLfileUnits;
 class LorentzBerthelotMixingRule : public MixingRuleBase {
 
 public:
+	virtual ~LorentzBerthelotMixingRule() {}
 	void readXML(XMLfileUnits& xmlconfig);
 
 private:

@@ -85,6 +85,11 @@ public:
 
 
 private:
+	//! @brief counts all particles inside the bounding box of this container
+	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid) const;
+	//! @brief counts particles in the intersection of bounding box and control volume
+	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid, double * cbottom, double * ctop) const;
+
 	bool moleculeStrictlyNotInBox(const Molecule& m, const double l[3], const double u[3]) const;
 
 	int ownrank;  // only for debugging purposes (indicate rank in console output)

@@ -5,24 +5,57 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
-#include "utils/Timer.h"
 
 #include <vector>
 #include <cmath>
 
 #include "utils/Logger.h"
+#include "utils/xmlfileUnits.h"
+#include "utils/FileUtils.h"
 
 using namespace std;
 using Log::global_log;
 
-Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation){
-	cutoff=cutoffLJ; 
+Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation)
+{
+	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
+	_nStartWritingProfiles = 1;
+	_nWriteFreqProfiles = 10;
+	_nStopWritingProfiles = 100;
+	cutoff = cutoffLJ;
 	_domain = domain;
 	_domainDecomposition = domainDecomposition;
 	_particleContainer = particleContainer;
 	_slabs = slabs;
-	
-	_smooth=true; // Deactivate this for transient simulations!
+	frequency=10;
+}
+
+Planar::~Planar()
+{
+	free(numLJ);
+	free(numDipole);
+	free(numLJSum2);
+	free(numDipoleSum2);
+	free(muSquare);
+	free(uLJ);
+	free(vNLJ);
+	free(vTLJ);
+	free(fLJ);
+	free(rho_g);
+	free(rho_l);
+	free(fDipole);
+	free(uDipole);
+	free(vNDipole);
+	free(vTDipole);
+	free(rhoDipole);
+	free(rhoDipoleL);
+	free(eLong);
+}
+
+void Planar::init()
+{
+	//_smooth=true; // Deactivate this for transient simulations!
+	_smooth=false;  //true; <-- only applicable to static density profiles
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
@@ -119,7 +152,6 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	boxlength[2]=_domain->getGlobalLength(2);
 	cutoff_slabs=cutoff*_slabs/ymax; // Number of slabs to cutoff
 	delta=ymax/_slabs;	
-	frequency=10;
 	V=ymax*_domain->getGlobalLength(0)*_domain->getGlobalLength(2); // Volume
 	
 	sint=_slabs;
@@ -128,6 +160,45 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	temp=_domain->getTargetTemperature(0);
 }
 
+void Planar::readXML(XMLfileUnits& xmlconfig)
+{
+	xmlconfig.getNodeValue("slabs", _slabs);
+	xmlconfig.getNodeValue("smooth", _smooth);
+	xmlconfig.getNodeValue("frequency", frequency);
+	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << endl;
+	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
+	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
+
+	// write control
+	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
+	bool bRet2 = xmlconfig.getNodeValue("writecontrol/frequency", _nWriteFreqProfiles);
+	bool bRet3 = xmlconfig.getNodeValue("writecontrol/stop", _nStopWritingProfiles);
+	if(_nWriteFreqProfiles < 1)
+	{
+		global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << endl;
+		Simulation::exit(-1);
+	}
+	if(_nStopWritingProfiles <= _nStartWritingProfiles)
+	{
+		global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << endl;
+		Simulation::exit(-1);
+	}
+	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
+	if(true == bInputIsValid)
+	{
+		global_log->error() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << endl;
+		global_log->error() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << endl;
+		global_log->error() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << endl;
+	}
+	else
+	{
+		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << endl;
+		Simulation::exit(-1);
+	}
+
+	// init
+	this->init();
+}
 
 void Planar::calculateLongRange(){
 	if (_smooth){
@@ -914,4 +985,49 @@ double Planar::lrcLJ(Molecule* mol){
 
 void Planar::directDensityProfile(){
 	_smooth = false;
+}
+
+void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep)
+{
+	if( 0 != simstep % _nWriteFreqProfiles || simstep < _nStartWritingProfiles || simstep > _nStopWritingProfiles)
+		return;
+
+	// writing .dat-files
+	std::stringstream filenamestream;
+	filenamestream << "LRC" << "_TS" << fill_width('0', 9) << simstep << ".dat";
+
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	std::stringstream outputstream;
+
+	// header
+//		outputstream << "                     pos";
+	for(uint32_t si=0; si<numLJSum; ++si)
+	{
+		outputstream << "            rho_l_LRC[" << si << "]";
+		outputstream << "                F_LRC[" << si << "]";
+	}
+	outputstream << endl;
+
+	// data
+	for(uint32_t pi=0; pi<_slabs; ++pi)
+	{
+		for(uint32_t si=0; si<numLJSum; ++si)
+		{
+			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
+			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+		}
+		outputstream << std::endl;
+	} // loop: pos
+
+	// open file for writing
+	// scalar
+	ofstream fileout(filenamestream.str().c_str(), ios::out);
+	fileout << outputstream.str();
+	fileout.close();
 }
