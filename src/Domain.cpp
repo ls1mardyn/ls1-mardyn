@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <cstdint>
 
 #include "Domain.h"
 
@@ -103,12 +104,78 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode(originalpath);
 
 	/* temperature */
+	bool bInputOk = true;
 	double temperature = 0.;
-	xmlconfig.getNodeValueReduced("temperature", temperature);
-	setGlobalTemperature(temperature);
-	global_log->info() << "Temperature: " << temperature << endl;
-	xmlconfig.changecurrentnode(originalpath);
+	bInputOk = bInputOk && xmlconfig.getNodeValueReduced("temperature", temperature);
+	if(true == bInputOk) {
+		setGlobalTemperature(temperature);
+		global_log->info() << "Temperature: " << temperature << endl;
+		xmlconfig.changecurrentnode(originalpath);
+	}
 
+	/* profiles */
+	bInputOk = true;
+	uint32_t xun, yun, zun;
+	bInputOk = bInputOk && xmlconfig.getNodeValue("units/x", xun);
+	bInputOk = bInputOk && xmlconfig.getNodeValue("units/y", yun);
+	bInputOk = bInputOk && xmlconfig.getNodeValue("units/z", zun);
+	if(true == bInputOk)
+	{
+		this->setupProfile(xun, yun, zun);
+		global_log->info() << "Writing profiles with units: " << xun << ", " << yun << ", " << zun << endl;
+	}
+	else
+	{
+		global_log->error() << "Corrupted statements in path: output/outputplugin[@name='DomainProfiles']"
+				", program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+
+	bool doRecordProfile = true;
+	bool doRecordVirialProfile = false;
+	unsigned profileRecordingTimesteps = 1;
+	unsigned profileOutputTimesteps = 10000;
+	std::string profileOutputPrefix = "profile";
+	unsigned long initStatistics;
+	xmlconfig.getNodeValue("timesteps/init", initStatistics);
+	xmlconfig.getNodeValue("timesteps/recording", profileRecordingTimesteps);
+	xmlconfig.getNodeValue("timesteps/output", profileOutputTimesteps);
+	xmlconfig.getNodeValue("outputprefix", profileOutputPrefix);
+	bInputOk = true;
+	std::string strKeyword;
+	bInputOk = bInputOk && xmlconfig.getNodeValue("options/option@keyword", strKeyword);
+	if(true == bInputOk && "profileVirial" == strKeyword)
+		doRecordVirialProfile = true;
+
+	global_simulation->setProfileParameters( doRecordProfile,
+			doRecordVirialProfile,
+			profileRecordingTimesteps,
+			profileOutputTimesteps,
+			profileOutputPrefix,
+			initStatistics);
+
+	// recording components
+	{
+		int numComponents = 0;
+		XMLfile::Query query = xmlconfig.query("components/component");
+		numComponents = query.card();
+		global_log->info() << "Number of recorded components: " << numComponents << endl;
+		if(numComponents < 1) {
+			global_log->warning() << "No components specified for profile recording." << endl;
+		}
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator componentIter;
+		for( componentIter = query.begin(); componentIter; componentIter++ ) {
+			xmlconfig.changecurrentnode( componentIter );
+			int cid = 1;
+			bool bInputOk = xmlconfig.getNodeValue("@id", cid);
+			if(true == bInputOk) {
+				this->considerComponentInProfile(cid-1);
+				global_log->info() << "Considering component " << cid << " for profile recording." << endl;
+			}
+		}
+		this->considerComponentInProfile(0);
+	}
 }
 
 void Domain::setLocalUpot(double Upot) {_localUpot = Upot;}
