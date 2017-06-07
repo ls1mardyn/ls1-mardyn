@@ -73,7 +73,7 @@
         <outputprefix>simple-lj</outputprefix>
         <accumulation_steps>10</accumulation_steps>
       </outputplugin>
-      <outputplugin name="CheckpointWriter">
+      <outputplugin name="CheckpointWriter" type="ASCII">
         <writefrequency>10</writefrequency>
         <outputprefix>simple-lj</outputprefix>
       </outputplugin>
