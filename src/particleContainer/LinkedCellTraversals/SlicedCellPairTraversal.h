@@ -9,6 +9,7 @@
 #define SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_SLICEDCELLPAIRTRAVERSAL_H_
 
 #include "particleContainer/LinkedCellTraversals/C08BasedTraversals.h"
+#include "utils/ThreeElementPermutations.h"
 #include "WrapOpenMP.h"
 
 template<class CellTemplate>
@@ -63,25 +64,6 @@ private:
 		MY_LOCK,
 		NEXT_LOCK
 	};
-
-	enum Permutation {
-		XYZ,
-		XZY,
-		YZX,
-		YXZ,
-		ZXY,
-		ZYX
-	};
-	static void arrangeDimensions(
-		unsigned long & outer_start, unsigned long & middle_start, unsigned long & inner_start,
-		unsigned long & outer_end, unsigned long & middle_end, unsigned long & inner_end,
-		Permutation & permutation,
-		const std::array<unsigned long, 3>& start,
-		const std::array<unsigned long, 3>& end);
-
-	unsigned long mapCellIndex(
-		unsigned long inner, unsigned long middle, unsigned long outer,
-		Permutation perm) const;
 
 	void releaseMyLock();
 	void acquireLock(LockType l);
@@ -197,64 +179,82 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 		const std::array<unsigned long, 3>& start,
 		const std::array<unsigned long, 3>& end
 		) {
+
+	using namespace Permute3Elements;
+	using std::array;
+
 	// Note: in the following we quasi-reimplement an OpenMP for-loop parallelisation with static scheduling
 	mardyn_assert(isApplicable(start, end));
 
-	size_t num_cells = 1;
+	array<unsigned long, 3> diff;
+
+	unsigned long num_cells = 1;
 	for(int d = 0; d < 3; ++d) {
-		num_cells *= end[d] - start[d];
+		mardyn_assert(end[d] >= start[d]);
+		unsigned long difference = end[d] - start[d];
+		num_cells *= difference;
+		diff[d] = difference;
 	}
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
-
-		unsigned long outer_start, middle_start, inner_start;
-		unsigned long outer_end, middle_end, inner_end;
-		Permutation permutation;
-
-		// order dimensions from longest to shortest:
-		arrangeDimensions(
-			outer_start, middle_start, inner_start,
-			outer_end, middle_end, inner_end,
-			permutation,
-			start, end);
+		Permutation perm = getPermutationForIncreasingSorting(diff);
+		array<unsigned long, 3> diff_permuted = permuteForward(perm, diff);
+		array<unsigned long, 3> start_permuted = permuteForward(perm, start);
 
 		initLocks();
 
 		int my_id = mardyn_get_thread_num();
 		int num_threads = mardyn_get_num_threads();
 
-		const size_t my_start = num_cells * my_id / num_threads;
-		const size_t my_end = num_cells * (my_id + 1) / num_threads;
-		const size_t my_num_cells = my_end - my_start; // a rough measure should be enough?
-		const size_t slice_size = (middle_end - middle_start) * (inner_end - inner_start);
-		size_t my_progress_counter = 0;
+		const unsigned long my_start = num_cells * my_id / num_threads;
+		const unsigned long my_end = num_cells * (my_id + 1) / num_threads;
+		const unsigned long my_num_cells = my_end - my_start; // a rough measure should be enough?
+		const unsigned long slice_size = diff_permuted[0] * diff_permuted[1];
+		unsigned long my_progress_counter = 0;
 
 		acquireLock(MY_LOCK);
 
 		#if defined(_OPENMP)
 		#pragma omp barrier
-		#pragma omp for schedule(static) collapse(3)
 		#endif
-		for (unsigned long outer = outer_start; outer < outer_end; ++outer) {
-			for (unsigned long middle = middle_start; middle < middle_end; ++middle) {
-				for (unsigned long inner = inner_start; inner < inner_end; ++inner) {
-					if (my_progress_counter == my_num_cells - slice_size) {
-						acquireLock(NEXT_LOCK);
-					}
-					unsigned long cellIndex = mapCellIndex(inner, middle, outer, permutation);
-					this->processBaseCell(cellProcessor, cellIndex);
 
-					++my_progress_counter;
+		// Note: manually implementing omp for schedule(static) collapse(3) unfortunately
+		// because I am relying on the execution order, i.e. thread 0 processes first chunk, thread 1 processes second chunk
+		// and so on, which I don't know whether is guaranteed by the OpenMP standard.
+		for (unsigned long i = my_start; i < my_end; ++i) {
+			if (my_progress_counter == my_num_cells - slice_size) {
+				acquireLock(NEXT_LOCK);
+			}
 
-					if (my_progress_counter == slice_size) {
-						releaseMyLock();
-					}
-				}
+			// unroll
+			array<unsigned long, 3> newInd_permuted = threeDimensionalMapping::oneToThreeD(i,diff_permuted);
+
+			// add inner-, middle- and outer-start
+			for(int d = 0; d < 3; ++d) {
+				newInd_permuted[d] += start_permuted[d];
+			}
+
+			// permute newInd backwards
+			array<unsigned long, 3> newInd = permuteBackward(perm, newInd_permuted);
+
+			// get actual index
+			unsigned long cellIndex = threeDimensionalMapping::threeToOneD(newInd, this->_dims);
+
+			this->processBaseCell(cellProcessor, cellIndex);
+
+			++my_progress_counter;
+
+			if (my_progress_counter == slice_size) {
+				releaseMyLock();
 			}
 		}
+
+		#if defined(_OPENMP)
+		#pragma omp barrier
+		#endif
 
 		destroyLocks();
 	} /* omp parallel */
@@ -267,8 +267,8 @@ inline void SlicedCellPairTraversal<CellTemplate>::releaseMyLock() {
 //	#endif
 	{
 		int myid = mardyn_get_thread_num();
-		if(myid != mardyn_get_num_threads()-1) {
-			mardyn_unset_lock(_locks[myid]);
+		if(myid != 0) {
+			mardyn_unset_lock(_locks[myid - 1]);
 		}
 	}
 }
@@ -325,16 +325,13 @@ template<class CellTemplate>
 inline bool SlicedCellPairTraversal<CellTemplate>::isApplicable(
 		const std::array<unsigned long, 3>& start,
 		const std::array<unsigned long, 3>& end) {
-	unsigned long outer_start, middle_start, inner_start;
-	unsigned long outer_end, middle_end, inner_end;
-	Permutation permutation;
 
-	// order dimensions from longest to shortest:
-	arrangeDimensions(
-		outer_start, middle_start, inner_start,
-		outer_end, middle_end, inner_end,
-		permutation,
-		start, end);
+	using namespace Permute3Elements;
+	using std::array;
+
+	array<unsigned long, 3> dims = {end[0] - start[0], end[1] - start[1], end[2] - start[2]};
+	Permutation permutation = getPermutationForIncreasingSorting(dims);
+	array<unsigned long, 3> dimsPermuted = permuteForward(permutation, dims);
 
 	int num_threads = mardyn_get_max_threads();
 
@@ -344,7 +341,7 @@ inline bool SlicedCellPairTraversal<CellTemplate>::isApplicable(
 	}
 
 	const size_t my_num_cells = num_cells / num_threads; // a rough measure should be enough? // lower bound ?
-	const size_t slice_size = (middle_end - middle_start) * (inner_end - inner_start);
+	const size_t slice_size = dimsPermuted[0] * dimsPermuted[1];
 
 	const bool ret = my_num_cells >= 2 * slice_size or num_threads == 1;
 
@@ -363,118 +360,5 @@ inline void SlicedCellPairTraversal<CellTemplate>::destroyLocks() {
 		}
 	}
 }
-
-template<class CellTemplate>
-void SlicedCellPairTraversal<CellTemplate>::arrangeDimensions(
-		unsigned long & outer_start, unsigned long & middle_start, unsigned long & inner_start,
-		unsigned long & outer_end, unsigned long & middle_end, unsigned long & inner_end,
-		Permutation & permutation,
-		const std::array<unsigned long, 3>& start,
-		const std::array<unsigned long, 3>& end) {
-
-	// shortcuts:
-	int z_dim = end[2] - start[2];
-	int y_dim = end[1] - start[1];
-	int x_dim = end[0] - start[0];
-	int z_start = start[2];
-	int y_start = start[1];
-	int x_start = start[0];
-
-	enum {
-		X = 0,
-		Y = 1,
-		Z = 2,
-		bad = 9999
-	} outer = bad, middle = bad, inner = bad;
-
-
-	if (y_dim < x_dim) {
-		if (z_dim < x_dim) {
-			if (z_dim < y_dim) {
-				permutation = ZYX;
-			} else {
-				permutation = YZX;
-			}
-		} else {
-			permutation = YXZ;
-		}
-	} else {
-		if (z_dim < y_dim) {
-			if (z_dim < x_dim) {
-				permutation = ZXY;
-			} else {
-				permutation = XZY;
-			}
-		} else {
-			permutation = XYZ;
-		}
-	}
-
-	switch(permutation) {
-	case XYZ:
-		inner = X; middle = Y; outer = Z;
-		break;
-	case XZY:
-		inner = X; middle = Z; outer = Y;
-		break;
-	case YXZ:
-		inner = Y; middle = X; outer = Z;
-		break;
-	case YZX:
-		inner = Y; middle = Z; outer = X;
-		break;
-	case ZXY:
-		inner = Z; middle = X; outer = Y;
-		break;
-	case ZYX:
-		inner = Z; middle = Y; outer = X;
-		break;
-	}
-
-	outer_end = end[outer];
-	middle_end = end[middle];
-	inner_end = end[inner];
-
-	outer_start = start[outer];
-	middle_start = start[middle];
-	inner_start = start[inner];
-
-
-	mardyn_assert(outer_end - outer_start >= middle_end - middle_start);
-	mardyn_assert(middle_end - middle_start >= inner_end - inner_start);
-}
-
-template<class CellTemplate>
-unsigned long SlicedCellPairTraversal<CellTemplate>::mapCellIndex(
-		unsigned long inner, unsigned long middle, unsigned long outer,
-		Permutation perm) const {
-	unsigned long X, Y, Z;
-
-	switch(perm) {
-	case XYZ:
-		X = inner; Y = middle; Z = outer;
-		break;
-	case XZY:
-		X = inner; Z = middle; Y = outer;
-		break;
-	case YXZ:
-		Y = inner; X = middle; Z = outer;
-		break;
-	case YZX:
-		Y = inner; Z = middle; X = outer;
-		break;
-	case ZXY:
-		Z = inner; X = middle; Y = outer;
-		break;
-	case ZYX:
-		Z = inner; Y = middle; X = outer;
-		break;
-	}
-
-	unsigned long ret = threeDimensionalMapping::threeToOneD(X, Y, Z, this->_dims);
-
-	return ret;
-}
-
 
 #endif /* SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_SLICEDCELLPAIRTRAVERSAL_H_ */

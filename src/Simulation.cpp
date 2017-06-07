@@ -645,6 +645,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "FlopRateWriter") {
 			outputPlugin = new FlopRateWriter(_cutoffRadius, _LJCutoffRadius);
 		}
+		else if(pluginname == "DomainProfiles")
+		{
+			_doRecordProfile = true;
+			outputPlugin = NULL;
+			_domain->readXML(xmlconfig);
+		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 			continue;

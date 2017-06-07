@@ -40,6 +40,14 @@ void C08BasedTraversals<CellTemplate>::processBaseCell(
 
 	using std::pair;
 
+#ifndef NDEBUG
+	// map to 3D index and check that we're not on the "right" boundary
+	std::array<unsigned long, 3> threeDIndex = threeDimensionalMapping::oneToThreeD(baseIndex, this->_dims);
+	for (int d = 0; d < 3; ++d) {
+		mardyn_assert(threeDIndex[d] != this->_dims[d]-1);
+	}
+#endif
+
 	const unsigned numCells = this->_cells->size();
 
 	const int num_pairs = _cellPairOffsets.size();
