@@ -12,10 +12,10 @@
 #include <vector>
 
 #include "ensemble/PressureGradient.h"
-#include "particleContainer/LinkedCellsHS.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
+#include "particleContainer/LinkedCellTraversals/HalfShellTraversal.h"
 
 TEST_SUITE_REGISTRATION(LinkedCellsTest);
 
@@ -342,9 +342,14 @@ void LinkedCellsTest::testHalfShell() {
 	auto domainDecomposition = new DomainDecompBase();
 	auto cutoff = 1;
 	auto filename = "LinkedCellsHS.inp";
-	LinkedCellsHS* containerHS = static_cast<LinkedCellsHS*>(initializeFromFile(ParticleContainerFactory::LinkedCellHS,
+
+	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
-	LinkedCells* container = static_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+	containerHS->_traversalSelected = LinkedCells::Traversal::HS;
+	containerHS->_traversal = nullptr;
+	containerHS->initializeTraversal();
+
+	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
 
 	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
@@ -404,17 +409,6 @@ void LinkedCellsTest::testHalfShell() {
 		for (auto i = begin; i != end; ++i, ++j) {
 
 			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
-
-			if (fabs(i->F(0) - j->F(0)) > 1e-4 || fabs(i->F(1) - j->F(1)) > 1e-4 || fabs(i->F(2) - j->F(2)) > 1e-4) {
-				std::cout << "particleid:" << i->id() << std::endl;
-				std::cout << i->F(0) << ", " << j->F(0) << "\n";
-				std::cout << i->F(1) << ", " << j->F(1) << "\n"; //TODO ___Remove
-				std::cout << i->F(2) << ", " << j->F(2) << "\n";
-				std::cout << i->r(0) << "\n";
-				std::cout << i->r(1) << "\n"; //TODO ___Remove
-				std::cout << i->r(2) << "\n";
-
-			}
 
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), 1e-4);
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), 1e-4);

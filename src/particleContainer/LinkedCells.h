@@ -8,12 +8,9 @@
 #include "particleContainer/ParticleIterator.h"
 #include "particleContainer/RegionParticleIterator.h"
 #include "particleContainer/ParticleCell.h"
+#include "particleContainer/LinkedCellTraversals/CellPairTraversals.h"
 
 #include "WrapOpenMP.h"
-
-template<class ParticleCellTemplate>
-class CellPairTraversals;
-
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -260,6 +257,8 @@ public:
 		return &(_cells.at(cellIndex));
 	}
 
+	bool requiresForceExchange() const {return _traversal->requiresForceExchange();}
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########
@@ -369,6 +368,9 @@ private:
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
 	bool _cellsValid;
+
+	enum Traversal{Original, HS}; //!< Traversal types
+	Traversal _traversalSelected = Original;  //!< Selected traversal type
 };
 
 #endif /* LINKEDCELLS_H_ */

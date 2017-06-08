@@ -215,13 +215,6 @@ public:
 	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
 	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
 
-	//! @brief Should the domain decomposition exchange calculated forces at the boundaries,
-	//  or does this particle container calculate all forces.
-	// TODO ____Move this to traversal method
-	virtual inline bool requiresForceExchange(){
-		return false;
-	}
-
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position
@@ -229,6 +222,10 @@ public:
 	 * @return Molecule was found?
 	 */
 	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0;
+
+	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
+	// or does this particle container calculate all forces.
+	virtual bool requiresForceExchange() const {return false;}
 
 protected:
 

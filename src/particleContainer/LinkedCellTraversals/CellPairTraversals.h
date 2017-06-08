@@ -26,6 +26,10 @@ public:
 	virtual void traverseCellPairsOuter(CellProcessor& cellProcessor) = 0;
 	virtual void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) = 0;
 
+	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
+	// or does this traversal calculate all forces.
+	virtual bool requiresForceExchange() const {return false;}
+
 protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const = 0;
 

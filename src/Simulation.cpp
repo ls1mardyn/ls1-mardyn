@@ -15,7 +15,6 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/LinkedCellsHS.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/NonBlockingMPIHandlerBase.h"
 #include "parallel/NonBlockingMPIMultiStepHandler.h"
@@ -333,14 +332,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 							global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
 							LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
 							lc->setCutoff(_cutoffRadius);
-			} else if(datastructuretype == "LinkedCellsHS") {
-				_moleculeContainer = new LinkedCellsHS();
-				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
-				global_log->info() << "Setting cell cutoff radius for linked cell hs datastructure to " << _cutoffRadius << endl;
-				LinkedCellsHS *lc = static_cast<LinkedCellsHS*>(_moleculeContainer);
-				lc->setCutoff(_cutoffRadius);
-			}
-			else if(datastructuretype == "AdaptiveSubCells") {
+			}else if(datastructuretype == "AdaptiveSubCells") {
 				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
 				Simulation::exit(-1);
 			}
@@ -1214,13 +1206,13 @@ void Simulation::simulate() {
 			forceCalculationTimer->stop();
 			computationTimer->stop();
 
-			decompositionTimer.start();
+			decompositionTimer->start();
 			// Update forces in molecules so they can be exchanged
 			calculateForces();
 
 			// Exchange forces if it's required by the cell container.
 			_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
-			decompositionTimer.stop();
+			decompositionTimer->stop();
 			_loopCompTime += computationTimer->get_etime() - startEtime;
 			_loopCompTimeSteps ++;
 		}

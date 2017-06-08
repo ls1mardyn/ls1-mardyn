@@ -16,6 +16,7 @@
 
 #include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
+#include "particleContainer/LinkedCellTraversals/HalfShellTraversal.h"
 #include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
 
 using namespace std;
@@ -110,21 +111,35 @@ void LinkedCells::initializeTraversal() {
 		dims[d] = _cellsPerDimension[d];
 	}
 
+	switch(_traversalSelected){
+	case Original:
 #if defined(_OPENMP)
-//	if (SlicedCellPairTraversal<ParticleCell>::isApplicable(dims)) {
-//		_traversal = new SlicedCellPairTraversal<ParticleCell>(_cells, dims);
-//		global_log->info() << "Using SlicedCellPairTraversal." << endl;
-//	} else {
-		_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
-		global_log->info() << "Using C08CellPairTraversal." << endl;
-//	}
+	//	if (SlicedCellPairTraversal<ParticleCell>::isApplicable(dims)) {
+	//		_traversal = new SlicedCellPairTraversal<ParticleCell>(_cells, dims);
+	//		global_log->info() << "Using SlicedCellPairTraversal." << endl;
+	//	} else {
+			_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
+			global_log->info() << "Using C08CellPairTraversal." << endl;
+	//	}
 #else
-	_traversal = new OriginalCellPairTraversal<ParticleCell>(_cells, dims, _innerMostCellIndices);
-	global_log->info() << "Using OriginalCellPairTraversal." << endl;
+		_traversal = new OriginalCellPairTraversal<ParticleCell>(_cells, dims, _innerMostCellIndices);
+		global_log->info() << "Using OriginalCellPairTraversal." << endl;
 #endif
+		break;
+
+	case HS:
+		_traversal = new HalfShellTraversal<ParticleCell>(_cells, dims, _innerMostCellIndices);
+		global_log->info() << "Using HalfShellTraversal." << endl;
+		break;
+
+	default:
+		global_log->info() << "Implementation missing for selected traversal!" << endl;
+		mardyn_exit(1);
+	}
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
+	//TODO _____ Read traversal type from xml input and set _traversalType;
 }
 
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
@@ -1107,7 +1122,7 @@ std::string LinkedCells::getName() {
 bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
 	const double epsi = this->_cutoffRadius * 1e-3;	//1e-9; // TODO ___What epsilon to use? Or should this be dynamic?
 	auto index = getCellIndexOfPoint(pos);
-	auto& cell = getCell(index);
+	auto& cell = *getCell(index);
 
 	// iterate through cell and compare position of molecules with given position
 	int numMolecules = cell.getMoleculeCount();
