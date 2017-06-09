@@ -133,13 +133,24 @@ void LinkedCells::initializeTraversal() {
 		break;
 
 	default:
-		global_log->info() << "Implementation missing for selected traversal!" << endl;
+		global_log->error() << "Implementation missing for selected traversal!" << endl;
 		mardyn_exit(1);
 	}
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-	//TODO _____ Read traversal type from xml input and set _traversalType;
+	// If traversal is specified (defaults to Original)
+	std::string traversal = "Original";
+	xmlconfig.getNodeValue("traversal", traversal);
+
+	if(traversal == "Original"){
+		_traversalSelected = Original;
+	} else if(traversal == "HS"){
+		_traversalSelected = HS;
+	}else{
+		global_log->error() << "Invalid traversal method: " << traversal << endl;
+		mardyn_exit(1);
+	}
 }
 
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {

@@ -41,7 +41,8 @@
 
     <algorithm>
       <parallelisation type="DomainDecomposition"></parallelisation>
-      <datastructure type="LinkedCellsHS">
+      <datastructure type="LinkedCells">
+          <traversal>HS</traversal>
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
@@ -73,7 +74,7 @@
         <outputprefix>simple-lj</outputprefix>
         <accumulation_steps>10</accumulation_steps>
       </outputplugin>
-      <outputplugin name="CheckpointWriter">
+      <outputplugin name="CheckpointWriter" type="ASCII">
         <writefrequency>10</writefrequency>
         <outputprefix>simple-lj</outputprefix>
       </outputplugin>
