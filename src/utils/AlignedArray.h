@@ -140,10 +140,13 @@ public:
 	}
 
 	static size_t _round_up(size_t n) {
-		size_t ret;
+		size_t ret = 0;
 		switch (sizeof(T)) {
 		case 1:
 			ret = (n + 63) & ~0x3F;
+			break;
+		case 2:
+			ret = (n + 31) & ~0x1F;
 			break;
 		case 4:
 			ret = (n + 15) & ~0x0F;

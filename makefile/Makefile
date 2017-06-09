@@ -65,16 +65,12 @@ ifeq ($(PRECISION), MIXED)
   $(error ERROR: MIXED precision not supported yet)
 endif
 
-not_supported_single_vectorizations := KNC_MASK KNC_G_S KNL_MASK KNL_G_S 
 ifeq ($(PRECISION), SINGLE)
   $(info # WARNING)
   $(info # WARNING)
   $(info # WARNING: you are selecting SINGLE precision instead of DOUBLE. Proceed at own risk! )
   $(info # WARNING)
   $(info # WARNING)
-  ifneq (, $(filter $(VECTORIZE_CODE), $(not_supported_single_vectorizations)))
-    $(error ERROR: SINGLE precision not yet extended to 512-bits)
-  endif
 endif
 
 # Set World Record?

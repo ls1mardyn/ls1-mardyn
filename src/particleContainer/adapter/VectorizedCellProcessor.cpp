@@ -189,9 +189,8 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dz = r1_z - r2_z;
 
 		const RealCalcVec c_r2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
-		const RealCalcVec r2_inv_unmasked = one / c_r2;
-		const RealCalcVec r2_inv = RealCalcVec::apply_mask(r2_inv_unmasked, forceMask);
 
+		const RealCalcVec r2_inv = RealCalcVec::fastReciprocal_mask(c_r2, forceMask);
 
 		const RealCalcVec lj2 = sig2 * r2_inv;//1FP (scale)
 		const RealCalcVec lj4 = lj2 * lj2;//1FP (scale)
@@ -246,9 +245,12 @@ void VectorizedCellProcessor::endTraversal() {
 
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
-		const RealCalcVec c_dr2_inv_unmasked = one / c_dr2;
-		const RealCalcVec c_dr2_inv = RealCalcVec::apply_mask(c_dr2_inv_unmasked, forceMask);//masked
+		const RealCalcVec c_dr2_inv = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);//masked
+#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	    const RealCalcVec c_dr_inv = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);//masked
+#else
 	    const RealCalcVec c_dr_inv = RealCalcVec::sqrt(c_dr2_inv);//masked
+#endif
 
 		const RealCalcVec q1q2per4pie0 = qii * qjj;
 		const RealCalcVec upot = q1q2per4pie0 * c_dr_inv;//masked
@@ -292,9 +294,12 @@ void VectorizedCellProcessor::endTraversal() {
 
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
-		const RealCalcVec dr2_inv_unmasked = one / dr2;
-		const RealCalcVec dr2_inv = RealCalcVec::apply_mask(dr2_inv_unmasked, forceMask);
-		const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
+		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
+#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
+#else
+	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
+#endif
 		const RealCalcVec dr3_inv = dr2_inv * dr_inv;
 
 		const RealCalcVec re = RealCalcVec::scal_prod(dx, dy, dz, e_x, e_y, e_z);
@@ -357,9 +362,12 @@ void VectorizedCellProcessor::endTraversal() {
 
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
-		const RealCalcVec dr2_inv_unmasked = one / dr2;
-		const RealCalcVec dr2_inv = RealCalcVec::apply_mask(dr2_inv_unmasked, forceMask);
-		const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
+		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
+#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
+#else
+	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
+#endif
 		const RealCalcVec dr2three_inv = three * dr2_inv;
 
 		const RealCalcVec p1p2 = RealCalcVec::apply_mask(pii * pjj, forceMask);
@@ -439,9 +447,12 @@ void VectorizedCellProcessor::endTraversal() {
 
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
-		const RealCalcVec invdr2_unmasked = one / c_dr2;
-		const RealCalcVec invdr2 = RealCalcVec::apply_mask(invdr2_unmasked, forceMask);
-		const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
+		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
+#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
+#else
+	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
+#endif
 
 		const RealCalcVec qQ05per4pie0 = _05 * q * m;
 
@@ -515,9 +526,12 @@ void VectorizedCellProcessor::endTraversal() {
 
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
-		const RealCalcVec invdr2_unmasked = one / c_dr2;
-		const RealCalcVec invdr2 = RealCalcVec::apply_mask(invdr2_unmasked, forceMask);
-		const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
+		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
+#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
+#else
+	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
+#endif
 
 		const RealCalcVec myqfac = _1pt5 * p * m * invdr2 * invdr2;
 
@@ -629,9 +643,12 @@ void VectorizedCellProcessor::endTraversal() {
 
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
-		const RealCalcVec invdr2_unmasked = one / c_dr2;
-		const RealCalcVec invdr2 = RealCalcVec::apply_mask(invdr2_unmasked, forceMask);
-		const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
+		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
+#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
+#else
+	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
+#endif
 
 		RealCalcVec qfac = _075 * invdr;
 		qfac = qfac * (mii * mjj);
@@ -1047,8 +1064,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_ljc);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_ljc);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_ljc_dist_lookup, j, remainderM);
 
 						const RealCalcVec c_r_x2 = MaskGatherChooser::load(soa2_ljc_r_x, j, lookupORforceMask);
@@ -1187,8 +1209,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
 
 						const RealCalcVec q2 = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
@@ -1323,8 +1350,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
 						const RealCalcVec q = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
 
@@ -1477,8 +1509,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
 						const RealCalcVec q = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
 
@@ -1656,8 +1693,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_dipoles_dist_lookup, j, remainderM);
 						const RealCalcVec p2 = MaskGatherChooser::load(soa2_dipoles_p, j, lookupORforceMask);
 						const RealCalcVec e2_x = MaskGatherChooser::load(soa2_dipoles_e_x, j, lookupORforceMask);
@@ -1816,8 +1858,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_dipoles_dist_lookup, j, remainderM);
 						const RealCalcVec p = MaskGatherChooser::load(soa2_dipoles_p, j, lookupORforceMask);
 
@@ -1976,8 +2023,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_dipoles_dist_lookup, j, remainderM);
 						const RealCalcVec p = MaskGatherChooser::load(soa2_dipoles_p, j, lookupORforceMask);
 						const RealCalcVec e2_x = MaskGatherChooser::load(soa2_dipoles_e_x, j, lookupORforceMask);
@@ -2159,8 +2211,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_quadrupoles_dist_lookup, j, remainderM);
 						const RealCalcVec mjj = MaskGatherChooser::load(soa2_quadrupoles_m, j, lookupORforceMask);
 						const RealCalcVec ejj_x = MaskGatherChooser::load(soa2_quadrupoles_e_x, j, lookupORforceMask);
@@ -2315,8 +2372,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_quadrupoles_dist_lookup, j, remainderM);
 						const RealCalcVec m = MaskGatherChooser::load(soa2_quadrupoles_m, j, lookupORforceMask);
 						const RealCalcVec e_x = MaskGatherChooser::load(soa2_quadrupoles_e_x, j, lookupORforceMask);
@@ -2476,8 +2538,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
+					if(remainderM != 0x0000){
+			#else /*VCP_DPDP */
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
+			#endif
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_quadrupoles_dist_lookup, j, remainderM);
 						const RealCalcVec m = MaskGatherChooser::load(soa2_quadrupoles_m, j, lookupORforceMask);
 						const RealCalcVec ejj_x = MaskGatherChooser::load(soa2_quadrupoles_e_x, j, lookupORforceMask);
