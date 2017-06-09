@@ -828,18 +828,6 @@ void SampleRegion::InitSamplingFieldYR(int nDimension)
 	if(false == _SamplingEnabledFieldYR)
 		return;
 
-	// shell volumes
-	_dShellVolumesFieldYR = new double[_nNumShellsFieldYR];
-
-	// equidistant shells
-	for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
-	{
-		double ri = si * _dShellWidthFieldYR;
-		double ra = ri + _dShellWidthFieldYR;
-		double V = (ra*ra - ri*ri) * M_PI * _dBinWidthFieldYR;
-		_dShellVolumesFieldYR[si] = V;
-	}
-
 	// equal shell volumes
 	double ra = _dShellWidthInitFieldYR;
 	double V = (ra*ra) * M_PI * _dBinWidthFieldYR;
@@ -850,6 +838,22 @@ void SampleRegion::InitSamplingFieldYR(int nDimension)
 	_nNumShellsFieldYR = ceil( dWidth*dWidth/(ra*ra) );
 	_dShellWidthFieldYR = _dShellWidthInitFieldYR;
 	_dShellWidthSquaredFieldYR = _dShellWidthFieldYR*_dShellWidthFieldYR;
+
+	// shell volumes
+	_dShellVolumesFieldYR = new double[_nNumShellsFieldYR];
+
+	/*
+	 * TODO: Implement both variants
+	 *
+	// equidistant shells
+	for(uint32_t si=0; si<_nNumShellsFieldYR; ++si)
+	{
+		double ri = si * _dShellWidthFieldYR;
+		double ra = ri + _dShellWidthFieldYR;
+		double V = (ra*ra - ri*ri) * M_PI * _dBinWidthFieldYR;
+		_dShellVolumesFieldYR[si] = V;
+	}
+	*/
 
 	// discrete values: Bin midpoints, Shell midpoints
 	_dBinMidpointsFieldYR = new double[_nNumBinsFieldYR];
