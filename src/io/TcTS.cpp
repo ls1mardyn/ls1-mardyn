@@ -19,7 +19,7 @@ using Log::global_log;
 #define VARFRACTION 0.125
 
 void MkTcTSGenerator::readXML(XMLfileUnits& xmlconfig) {
-// 	TODO: Add option to controll the layer thicknesses
+// 	TODO: Add option to control the layer thicknesses
 // 	xmlconfig.getNodeValue("layer1/heigth", heigth1);
 // 	global_log->info() << "Layer 1, heigth: " << heigth1 << endl;
 	xmlconfig.getNodeValue("layer1/density", rho1);
