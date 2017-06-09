@@ -2118,8 +2118,11 @@ RegionSampling::RegionSampling(Domain* domain, DomainDecompBase* domainDecomp)
 RegionSampling::~RegionSampling()
 {
 	// free memory
-	for(auto& r : _vecSampleRegions)
-		delete r;
+	for(auto&& rptr : _vecSampleRegions)
+	{
+		delete rptr;
+		rptr = nullptr;
+	}
 }
 
 void RegionSampling::readXML(XMLfileUnits& xmlconfig)

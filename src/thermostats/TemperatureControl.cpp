@@ -143,7 +143,30 @@ tec::ControlRegion::ControlRegion( TemperatureControl* const parent, double dLow
 
 tec::ControlRegion::~ControlRegion()
 {
+	delete[] _nNumMoleculesLocal;
+	delete[] _nNumMoleculesGlobal;
+	delete[] _nRotDOFLocal;
+	delete[] _nRotDOFGlobal;
 
+	delete[] _d2EkinTransLocal;
+	delete[] _d2EkinTransGlobal;
+	delete[] _d2EkinRotLocal;
+	delete[] _d2EkinRotGlobal;
+
+	delete[] _dBetaTransGlobal;
+	delete[] _dBetaRotGlobal;
+
+	delete[] _dTargetTemperatureVec;
+
+	delete[] _nNumMoleculesSumLocal;
+	delete[] _nNumMoleculesSumGlobal;
+
+	delete[] _dDelta2EkinTransSumLocal;
+	delete[] _dDelta2EkinTransSumGlobal;
+	delete[] _dDelta2EkinRotSumLocal;
+	delete[] _dDelta2EkinRotSumGlobal;
+
+	delete _accumulator;
 }
 
 void tec::ControlRegion::InitDataStructurePointers()
@@ -759,7 +782,11 @@ TemperatureControl::TemperatureControl(Domain* domain, DomainDecompBase* domainD
 
 TemperatureControl::~TemperatureControl()
 {
-
+	for(auto&& rptr : _vecControlRegions)
+	{
+		delete rptr;
+		rptr = nullptr;
+	}
 }
 
 void TemperatureControl::readXML(XMLfileUnits& xmlconfig)

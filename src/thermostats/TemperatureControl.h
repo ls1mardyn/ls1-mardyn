@@ -218,6 +218,7 @@ class AccumulatorBase
 {
 protected:
     AccumulatorBase() {}
+public:
     virtual ~AccumulatorBase() {}
 
 public:

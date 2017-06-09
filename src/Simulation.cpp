@@ -137,6 +137,12 @@ Simulation::~Simulation() {
 	delete _ensemble;
 	delete _longRangeCorrection;
 	delete _memoryProfiler;
+	// NEMD features
+	delete _temperatureControl;
+	delete _driftControl;
+	delete _distControl;
+	delete _regionSampling;
+	delete _densityControl;
 }
 
 void Simulation::exit(int exitcode) {
@@ -264,15 +270,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@name", featureName);
 			global_log->info() << "Enabling NEMD feature: " << featureName << endl;
 			if(featureName == "DistControl") {
-				if(NULL != _distControl)
-					delete _distControl;
+				delete _distControl;
 				_distControl = new DistControl(_domainDecomposition, _domain);
 				_distControl->readXML(xmlconfig);
 				_distControl->Init(_moleculeContainer);
 			}
 			else if(featureName == "RegionSampling") {
-				if(NULL != _regionSampling)
-					delete _regionSampling;
+				delete _regionSampling;
 				_regionSampling = new RegionSampling(_domain, _domainDecomposition);
 				_regionSampling->readXML(xmlconfig);
 			}
