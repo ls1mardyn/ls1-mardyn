@@ -40,6 +40,7 @@
 #include "io/RDF.h"
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
+#include "io/CubicGridGeneratorInternal.h"
 #include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
 
@@ -706,6 +707,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			}
 			else if(generatorName == "mkTcTS") {
 				_inputReader = new MkTcTSGenerator();
+			}
+			else if (generatorName == "CubicGridGenerator") {
+				_inputReader = new CubicGridGeneratorInternal();
 			}
 			else {
 				global_log->error() << "Unknown generator: " << generatorName << endl;

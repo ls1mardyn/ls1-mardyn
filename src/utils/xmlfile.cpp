@@ -753,6 +753,7 @@ template unsigned long XMLfile::Query::getNodeValue(int& value) const;
 template unsigned long XMLfile::Query::getNodeValue(long& value) const;
 template unsigned long XMLfile::Query::getNodeValue(unsigned int& value) const;
 template unsigned long XMLfile::Query::getNodeValue(unsigned long& value) const;
+template unsigned long XMLfile::Query::getNodeValue(unsigned long long& value) const;
 template unsigned long XMLfile::Query::getNodeValue(float& value) const;
 template unsigned long XMLfile::Query::getNodeValue(double& value) const;
 template unsigned long XMLfile::Query::getNodeValue(bool& value) const;
