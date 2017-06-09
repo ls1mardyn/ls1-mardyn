@@ -16,6 +16,9 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
 
 class XMLfileUnits;
 class Simulation;

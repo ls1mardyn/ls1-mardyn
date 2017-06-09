@@ -5,9 +5,9 @@
  *      Author: mheinen
  */
 
-#include "NEMD/NEMD.h"
 #include "NEMD/DensityControl.h"
 #include "NEMD/DistControl.h"
+#include "NEMD/NEMD.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
@@ -32,6 +32,9 @@
 #include <cstdlib>
 #include <cstdint>
 #include <limits>
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
 
 using namespace std;
 
