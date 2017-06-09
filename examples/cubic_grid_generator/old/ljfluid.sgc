@@ -1,0 +1,36 @@
+generator=CubicGridGenerator
+ConfigurationParameters {
+	ConfigurationParameters.hasResultWriter=false
+	ConfigurationParameters.hasStatisticsWriter=false
+	ConfigurationParameters.hasVTKMoleculeWriter=false
+	ConfigurationParameters.hasVTKGridWriter=false
+	ConfigurationParameters.ScenarioName=ljfluid_160k
+	ConfigurationParameters.fileformat=ls1-LEGACY
+	ConfigurationParameters.NVE=true
+	ConfigurationParameters.timesteplength=1
+	ConfigurationParameters.cutoffradius=0.529176999937
+	ConfigurationParameters.LJcutoffradius=0.529176999937
+	ConfigurationParameters.principalAxisTrafo=false
+	ConfigurationParameters.ParallelisationType=None
+	ConfigurationParameters.ContainerType=LinkedCells
+}
+EqvGridParameters {
+	binaryMixture=false
+	molarDensity=8800
+	numMolecules=10000
+	temperature=100
+	component1 {
+		component1.NumberOfLJCenters=1
+		component1.NumberOfCharges=0
+		component1.NumberOfDipoles=0
+		component1.NumberOfQuadrupoles=0
+		component1.LJCenter0 {
+			component1.LJCenter0.x=0
+			component1.LJCenter0.y=0
+			component1.LJCenter0.z=0
+			component1.LJCenter0.mass=1000
+			component1.LJCenter0.epsilon=315774.5
+			component1.LJCenter0.sigma=0.529176999937
+		}
+	}
+}
