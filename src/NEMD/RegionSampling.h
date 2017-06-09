@@ -96,7 +96,6 @@ public:
 	void CalcGlobalValuesFieldYR(DomainDecompBase* domainDecomp, Domain* domain);
 
 	// output
-	void WriteDataProfilesOld(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
 	void WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
 	void WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long simstep);
 	void WriteDataFieldYR(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
