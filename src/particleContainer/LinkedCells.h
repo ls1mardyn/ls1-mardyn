@@ -118,6 +118,7 @@ public:
 
 	void update_via_copies();
 	void update_via_coloring();
+	void update_via_traversal();
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 

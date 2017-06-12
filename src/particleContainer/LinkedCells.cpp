@@ -209,7 +209,8 @@ void LinkedCells::update() {
 #ifndef MARDYN_WR
 	update_via_copies();
 #else
-	update_via_coloring();
+//	update_via_coloring();
+	update_via_traversal();
 #endif
 
 	_cellsValid = true;
@@ -314,6 +315,24 @@ void LinkedCells::update_via_coloring() {
 			}
 		}
 	} // end pragma omp parallel
+}
+
+void LinkedCells::update_via_traversal() {
+	class ResortCellProcessor : public CellProcessor {
+	public:
+		ResortCellProcessor() : CellProcessor(0.0, 0.0) {}
+		void initTraversal() {}
+		void preprocessCell(ParticleCell& ) {}
+		void processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
+			cell1.updateLeavingMoleculesBase(cell2);
+		}
+		void processCell(ParticleCell& cell) {}
+		double processSingleMolecule(Molecule*, ParticleCell& ) { return 0.0;}
+		void postprocessCell(ParticleCell& ) {}
+		void endTraversal() {}
+
+	} resortCellProcessor;
+	_traversal->traverseCellPairs(resortCellProcessor);
 }
 
 bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
