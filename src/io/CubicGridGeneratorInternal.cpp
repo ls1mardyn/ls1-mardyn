@@ -52,7 +52,8 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 		Simulation::exit(1);
 	}
 	double spacing = simBoxLength / numMoleculesPerDimension;
-	double origin = spacing / 4.; // origin of the first DrawableMolecule
+	double origin1 = spacing / 4.; // origin of the first DrawableMolecule
+	double origin2 = spacing / 4. * 3.; // origin of the first DrawableMolecule
 
 	int start_i = floor((domainDecomp->getBoundingBoxMin(0, domain) / simBoxLength) * numMoleculesPerDimension) - 1;
 	int start_j = floor((domainDecomp->getBoundingBoxMin(1, domain) / simBoxLength) * numMoleculesPerDimension) - 1;
@@ -63,44 +64,32 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	int end_k = ceil((domainDecomp->getBoundingBoxMax(2, domain) / simBoxLength) * numMoleculesPerDimension) + 1;
 
 	// only for console output
-	double percentage = 1.0 / ((end_i - start_i) * 2.0) * 100.0;
 	int percentageRead = 0;
+	double percentage = 1.0 / (end_i - start_i) * 100.0;
 
 	for (int i = start_i; i < end_i; i++) {
 		for (int j = start_j; j < end_j; j++) {
 			for (int k = start_k; k < end_k; k++) {
 
-				double x = origin + i * spacing;
-				double y = origin + j * spacing;
-				double z = origin + k * spacing;
-				if (domainDecomp->procOwnsPos(x, y, z, domain)) {
-					addMolecule(x, y, z, id, particleContainer);
+				double x1 = origin1 + i * spacing;
+				double y1 = origin1 + j * spacing;
+				double z1 = origin1 + k * spacing;
+				if (domainDecomp->procOwnsPos(x1, y1, z1, domain)) {
+					addMolecule(x1, y1, z1, id, particleContainer);
+					id++;
+				}
+
+				double x2 = origin2 + i * spacing;
+				double y2 = origin2 + j * spacing;
+				double z2 = origin2 + k * spacing;
+				if (domainDecomp->procOwnsPos(x2, y2, z2, domain)) {
+					addMolecule(x2, y2, z2, id, particleContainer);
 					id++;
 				}
 			}
 		}
 		if ((int) (i * percentage) > percentageRead) {
 			percentageRead = i * percentage;
-			Log::global_log->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
-		}
-	}
-
-	origin = spacing / 4. * 3.; // origin of the first DrawableMolecule
-
-	for (int i = start_i; i < end_i; i++) {
-		for (int j = start_j; j < end_j; j++) {
-			for (int k = start_k; k < end_k; k++) {
-				double x = origin + i * spacing;
-				double y = origin + j * spacing;
-				double z = origin + k * spacing;
-				if (domainDecomp->procOwnsPos(x, y, z, domain)) {
-					addMolecule(x, y, z, id, particleContainer);
-					id++;
-				}
-			}
-		}
-		if ((int) (50 + i * percentage) > percentageRead) {
-			percentageRead = 50 + i * percentage;
 			Log::global_log->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
 		}
 	}

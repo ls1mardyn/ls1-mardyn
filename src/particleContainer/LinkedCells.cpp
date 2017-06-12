@@ -391,7 +391,7 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 		#endif
 
 		typedef vector<ParticleCell>::size_type cell_index_t;
-		const cell_index_t cells_start = (thread_id    ) * _cells.size() / num_threads;
+		const cell_index_t cells_start = (thread_id    ) * _cells.size() / num_threads; // TODO: does this scale?
 		const cell_index_t cells_end   = (thread_id + 1) * _cells.size() / num_threads;
 
 		for (index_t i = 0; i < particles.size(); i++) {
