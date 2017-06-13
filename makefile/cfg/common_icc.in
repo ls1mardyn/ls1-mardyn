@@ -44,3 +44,5 @@ endif
 
 particleContainer/adapter/VectorizedCellProcessor.o: particleContainer/adapter/VectorizedCellProcessor.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -ipo -inline-forceinline -c $< -o $@
+particleContainer/adapter/VCP1CLJWR.o: particleContainer/adapter/VCP1CLJWR.cpp
+	$(DEPCOMP) $(CXX) $(CXXFLAGS) -ipo -inline-forceinline -c $< -o $@
