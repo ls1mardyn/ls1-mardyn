@@ -24,7 +24,7 @@ public:
 	//! @brief copy data from object of class Molecule to object of class ParticleDataFull
 	static void MoleculeToParticleData(ParticleDataFull &particleStruct, Molecule &molecule);
 
-	//! @brief copy data from object of class class ParticleDataFull to object of class Molecule
+	//! @brief copy data from object of class ParticleDataFull to object of class Molecule
 	static void ParticleDataToMolecule(ParticleDataFull &particleStruct, Molecule &molecule);
 
 	unsigned long id; //! ID of the particle
