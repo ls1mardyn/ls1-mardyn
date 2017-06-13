@@ -41,7 +41,7 @@ MPI_CHECK( MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType)
 	MPI_CHECK( MPI_Type_commit(&sendPartType) );
 }
 
-void ParticleForceData::MoleculeToParticleForceData(ParticleForceData &particleStruct, Molecule &molecule) {
+void ParticleForceData::MoleculeToParticleData(ParticleForceData &particleStruct, Molecule &molecule) {
 	particleStruct.id = molecule.id();
 	particleStruct.cid = molecule.componentid();
 	particleStruct.r[0] = molecule.r(0);

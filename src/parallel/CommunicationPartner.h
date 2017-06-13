@@ -10,15 +10,19 @@
 
 #include "mpi.h"
 #include <vector>
+#include <type_traits>
 #include "ParticleDataForwardDeclaration.h"
+
 
 typedef enum {
 	LEAVING_AND_HALO_COPIES = 0, /** send process-leaving particles and halo-copies together in one message */
 	HALO_COPIES = 1, /** send halo-copies only */
-	LEAVING_ONLY = 2 /** send process-leaving particles only */
+	LEAVING_ONLY = 2, /** send process-leaving particles only */
+	FORCES = 3 //< send forces
 } MessageType;
 
 class ParticleContainer;
+class ParticleForceData;
 
 struct PositionInfo {
 	double _bothLow[3], _bothHigh[3];
@@ -109,7 +113,17 @@ public:
 	void add(CommunicationPartner partner);
 
 private:
-	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
+	template<typename T = ParticleData>
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3],
+			const bool removeFromContainer = false);
+
+	//! Helper function for collectMoleculesInRegion that does one assignment.
+	//! We have no static if therefore we use enable_if to differentiate the buffer types.
+	template<bool isForceData, typename T>
+	inline typename std::enable_if<isForceData, void>::type collectMoleculesInRegionHelper(int i, T t);
+
+	template<bool isForceData, typename T>
+	inline typename std::enable_if<!isForceData, void>::type collectMoleculesInRegionHelper(int i, T t);
 
 	int _rank;
         int _countTested;
@@ -119,6 +133,7 @@ private:
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
 	std::vector<ParticleData> _sendBuf, _recvBuf;
+	std::vector<ParticleForceData> _sendBufForces, _recvBufForces;
 	bool _msgSent, _countReceived, _msgReceived;
 
 };

@@ -13,6 +13,7 @@
 #include "WrapOpenMP.h"
 #include "Simulation.h"
 #include "ParticleData.h"
+#include "ParticleForceData.h"
 
 CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
 		const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
@@ -161,6 +162,13 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			break;
 		}
+		case FORCES: {
+			global_log->debug() << "sending forces" << std::endl;
+			for(unsigned int p = 0; p < numHaloInfo; p++){
+				collectMoleculesInRegion<ParticleForceData>(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
+			}
+			break;
+		}
 	}
 
 	#ifndef NDEBUG
@@ -300,8 +308,18 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 	_haloInfo.push_back(partner._haloInfo[0]);
 }
 
-void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer){
+template<typename T>
+void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3],
+		const double shift[3], const bool removeFromContainer){
 	using std::vector;
+
+	constexpr bool isFData = std::is_same<T,ParticleForceData>::value;
+	{
+		constexpr bool isPData = std::is_same<T,ParticleData>::value;
+		// Type must be one of both
+		static_assert(isPData || isFData, "Supported types are ParticleData or ParticleForceData");
+	}
+
 	global_simulation->startTimer("COMMUNICATION_PARTNER_INIT_SEND");
 	int prevNumMols = _sendBuf.size();
 	vector<vector<Molecule>> threadData;
@@ -357,7 +375,10 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			}
 
 			//resize the send buffer
-			_sendBuf.resize(prevNumMols + totalNumMols);
+			if(isFData)
+				_sendBufForces.resize(prevNumMols + totalNumMols);
+			else
+				_sendBuf.resize(prevNumMols + totalNumMols);
 		}
 
 		#if defined (_OPENMP)
@@ -367,13 +388,34 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		//reduce the molecules in the send buffer and also apply the shift
 		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
 		for(int i = 0; i < myThreadMolecules; i++){
-			ParticleData m;
-			ParticleData::MoleculeToParticleData(m, threadData[threadNum][i]);
+			T m;
+			T::MoleculeToParticleData(m, threadData[threadNum][i]);
 			m.r[0] += shift[0];
 			m.r[1] += shift[1];
 			m.r[2] += shift[2];
-			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
+
+			// Code would require static if (C++17)
+			/*
+			 * if constexpr(isFData)
+			 * 	  _sendBufForces[prevNumMols + prefixArray[threadNum] + i] = m;
+			 * else
+			 *    _sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
+			 */
+			// Use a helper function for the assignment instead
+			collectMoleculesInRegionHelper<isFData>(prevNumMols + prefixArray[threadNum] + i, m);
 		}
 	}
 	global_simulation->stopTimer("COMMUNICATION_PARTNER_INIT_SEND");
 }
+
+template<bool isForceData, typename T>
+inline typename std::enable_if<isForceData, void>::type CommunicationPartner::collectMoleculesInRegionHelper(int i, T t){
+	_sendBufForces[i] = t;
+}
+
+template<bool isForceData, typename T>
+inline typename std::enable_if<!isForceData, void>::type CommunicationPartner::collectMoleculesInRegionHelper(int i, T t){
+	_sendBuf[i] = t;
+}
+
+

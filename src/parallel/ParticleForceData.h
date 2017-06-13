@@ -12,7 +12,7 @@ public:
 	static void getMPIType(MPI_Datatype &sendPartType);
 
 	//! @brief copy data from object of class Molecule to object of class ParticleForceData
-	static void MoleculeToParticleForceData(ParticleForceData &particleStruct, Molecule &molecule);
+	static void MoleculeToParticleData(ParticleForceData &particleStruct, Molecule &molecule);
 
 	//! @brief add data from object of class ParticleForceData to object of class Molecule
 	static void AddParticleForceDataToMolecule(ParticleForceData &particleStruct, Molecule &molecule);
