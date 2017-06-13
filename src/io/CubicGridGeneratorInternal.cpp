@@ -67,32 +67,40 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	int percentageRead = 0;
 	double percentage = 1.0 / (end_i - start_i) * 100.0;
 
-	for (int i = start_i; i < end_i; i++) {
-		for (int j = start_j; j < end_j; j++) {
-			for (int k = start_k; k < end_k; k++) {
+    const int blocksize = 4;
 
-				double x1 = origin1 + i * spacing;
-				double y1 = origin1 + j * spacing;
-				double z1 = origin1 + k * spacing;
-				if (domainDecomp->procOwnsPos(x1, y1, z1, domain)) {
-					addMolecule(x1, y1, z1, id, particleContainer);
-					id++;
-				}
+	for (int i = start_i; i < end_i; i+=blocksize) {
+        for (int j = start_j; j < end_j; j+=blocksize) {
+            for (int k = start_k; k < end_k; k+=blocksize) {
+                for (int ii = i; ii < i+blocksize and ii < end_i; ii++) {
+                    for (int jj = j; jj < j+blocksize and jj < end_j; jj++) {
+                        for (int kk = k; kk < k+blocksize and kk < end_k; kk++) {
 
-				double x2 = origin2 + i * spacing;
-				double y2 = origin2 + j * spacing;
-				double z2 = origin2 + k * spacing;
-				if (domainDecomp->procOwnsPos(x2, y2, z2, domain)) {
-					addMolecule(x2, y2, z2, id, particleContainer);
-					id++;
-				}
-			}
-		}
-		if ((int) (i * percentage) > percentageRead) {
-			percentageRead = i * percentage;
-			Log::global_log->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
-		}
-	}
+                            double x1 = origin1 + ii * spacing;
+                            double y1 = origin1 + jj * spacing;
+                            double z1 = origin1 + kk * spacing;
+                            if (domainDecomp->procOwnsPos(x1, y1, z1, domain)) {
+                                addMolecule(x1, y1, z1, id, particleContainer);
+                                id++;
+                            }
+
+                            double x2 = origin2 + ii * spacing;
+                            double y2 = origin2 + jj * spacing;
+                            double z2 = origin2 + kk * spacing;
+                            if (domainDecomp->procOwnsPos(x2, y2, z2, domain)) {
+                                addMolecule(x2, y2, z2, id, particleContainer);
+                                id++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if ((int) (i * percentage) > percentageRead) {
+            percentageRead = i * percentage;
+            Log::global_log->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
+        }
+    }
 
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(id); //number of local molecules
