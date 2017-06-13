@@ -52,15 +52,20 @@ public:
 
 	~CommunicationPartner();
 
+	template<typename BufferType = ParticleData>
 	void initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
 			MessageType msgType, bool removeFromContainer = false);
 
+	template<typename BufferType = ParticleData>
 	bool testSend();
 
+	template<typename BufferType = ParticleData>
 	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
+	template<typename BufferType = ParticleData>
 	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
 
+	template<typename BufferType = ParticleData>
 	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
 
 	void deadlockDiagnosticSendRecv();
@@ -113,17 +118,21 @@ public:
 	void add(CommunicationPartner partner);
 
 private:
-	template<typename T = ParticleData>
+	template<typename BufferType = ParticleData>
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3],
 			const bool removeFromContainer = false);
 
-	//! Helper function for collectMoleculesInRegion that does one assignment.
-	//! We have no static if therefore we use enable_if to differentiate the buffer types.
-	template<bool isForceData, typename T>
-	inline typename std::enable_if<isForceData, void>::type collectMoleculesInRegionHelper(int i, T t);
+	//! Decide if T is ParticleForceData or ParticleData. Fail if T is something else.
+	template<typename T>
+	constexpr bool isForceData(){
+		const bool isFData = std::is_same<T,ParticleForceData>::value;
 
-	template<bool isForceData, typename T>
-	inline typename std::enable_if<!isForceData, void>::type collectMoleculesInRegionHelper(int i, T t);
+		const bool isPData = std::is_same<T,ParticleData>::value;
+		// Type must be one of both
+		static_assert(isPData || isFData, "Supported types are ParticleData or ParticleForceData");
+
+		return isFData;
+	}
 
 	int _rank;
         int _countTested;

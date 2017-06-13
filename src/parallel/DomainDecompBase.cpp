@@ -39,7 +39,6 @@ void DomainDecompBase::exchangeForces(ParticleContainer* moleculeContainer, Doma
 }
 
 void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const {
-	//TODO: ___Test me
 	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// direction +1 for dim 0, +2 for dim 1, +3 for dim 2
