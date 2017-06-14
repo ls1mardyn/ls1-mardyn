@@ -18,8 +18,20 @@
 #include "utils/Logger.h"
 
 MemoryProfiler::MemoryProfiler() :
-		_list() {
+		_list(), _hugePageSize(0) {
 
+	const size_t MAXLEN = 1024;
+	FILE *fp;
+	char buf[MAXLEN];
+	fp = fopen("/proc/meminfo", "r");
+	while (fgets(buf, MAXLEN, fp)) {
+		char *p1 = strstr(buf, "Hugepagesize:");
+		if (p1 != NULL) {
+			int colon = ':';
+			char *p1 = strchr(buf, colon) + 1;
+			_hugePageSize = atoi(p1);
+		}
+	}
 }
 
 void MemoryProfiler::registerObject(MemoryProfilable** object) {
@@ -36,7 +48,8 @@ void MemoryProfiler::doOutput(const std::string& string) {
 		if ((*item) == nullptr) {
 			continue;
 		}
-		Log::global_log->info() << "\t\t" << (*item)->getName() << ": " << (*item)->getTotalSize()/1.e6 << " MB" << std::endl;
+		Log::global_log->info() << "\t\t" << (*item)->getName() << ": " << (*item)->getTotalSize() / 1.e6 << " MB"
+				<< std::endl;
 		(*item)->printSubInfo(3);
 	}
 }
@@ -71,6 +84,31 @@ int parseLine(char* line) {
 	return i;
 }
 
+int countHugePages() {
+	FILE* file = fopen("/proc/self/numa_maps", "r");
+	if (!file) {
+		return 0;
+	}
+	int hugepagecount = 0;
+	char line[128];
+	while (fgets(line, 128, file) != NULL) {
+		//if (/huge.*dirty=(\d+)/) {
+		std::string linestring(line);
+		if (linestring.find("huge") != std::string::npos) {
+			auto pos = linestring.find("dirty");
+			if (pos != std::string::npos) {
+				linestring = linestring.substr(pos);
+				auto eqpos = linestring.find("=");
+				auto spacepos = linestring.find(" ");
+				linestring = linestring.substr(eqpos + 1, spacepos - eqpos - 1);
+				hugepagecount += std::stoi(linestring);
+			}
+		}
+	}
+	fclose(file);
+	return hugepagecount;
+}
+
 int getOwnMemory() { //Note: this value is in KB!
 	FILE* file = fopen("/proc/self/status", "r");
 	int result = -1;
@@ -100,7 +138,15 @@ void MemoryProfiler::printGeneralInfo(const std::string& string) {
 	Log::global_log->info() << "Memory consumption" << additionalinfo.str();
 	Log::global_log->info() << "\tMemory usage (System total):\t" << usedMem << " MB out of " << totalMem << " MB ("
 			<< usedMem * 100. / totalMem << "%)" << std::endl;
-	double ownMem = getOwnMemory() * 1.e-3;
-	Log::global_log->info() << "\tBy own process:\t\t\t" << ownMem << " MB (" << ownMem * 100. / totalMem
+	double ownMem = getOwnMemory() / 1024.;
+	double hugeMem = countHugePages() * _hugePageSize;
+	Log::global_log->info() << "\tBy own process:\t\t\t" << ownMem+hugeMem << " MB (" << (ownMem+hugeMem) * 100. / totalMem
 			<< "% of total memory)" << std::endl;
+	if (hugeMem != 0) {
+		Log::global_log->info() << "\t\t\tnormal:\t\t" << ownMem << " MB (" << (ownMem) * 100. / totalMem
+				<< "% of total memory)" << std::endl;
+
+		Log::global_log->info() << "\t\t\thugePages:\t" << hugeMem << " MB (" << (hugeMem) * 100. / totalMem
+				<< "% of total memory)" << std::endl;
+	}
 }
