@@ -25,6 +25,7 @@ public:
 	virtual ~C08BasedTraversals() {
 	}
 
+	using CellPairTraversals<CellTemplate>::rebuild;
 
 protected:
 	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
@@ -47,8 +48,6 @@ void C08BasedTraversals<CellTemplate>::processBaseCell(
 		mardyn_assert(threeDIndex[d] != this->_dims[d]-1);
 	}
 #endif
-
-	const unsigned numCells = this->_cells->size();
 
 	const int num_pairs = _cellPairOffsets.size();
 	for(int j = 0; j < num_pairs; ++j) {

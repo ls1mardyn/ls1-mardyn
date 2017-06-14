@@ -13,9 +13,11 @@
 #include "utils/Logger.h"
 #include "utils/mardyn_assert.h"
 #include <array>
+#include <algorithm>
 
 #include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
+#include "particleContainer/LinkedCellTraversals/QuickschedTraversal.h"
 #include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
 
 using namespace std;
@@ -27,7 +29,7 @@ using Log::global_log;
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius) :
-		ParticleContainer(bBoxMin, bBoxMax), _traversal(nullptr) {
+		ParticleContainer(bBoxMin, bBoxMax), _traversalTuner(new TraversalTuner()) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 
@@ -94,7 +96,8 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 }
 
 LinkedCells::~LinkedCells() {
-	delete _traversal;
+    if (_traversalTuner != nullptr)
+	    delete _traversalTuner;
 
 	std::vector<ParticleCell>::iterator it;
 	for (it = _cells.begin(); it != _cells.end(); ++it) {
@@ -103,28 +106,16 @@ LinkedCells::~LinkedCells() {
 }
 
 void LinkedCells::initializeTraversal() {
-	mardyn_assert(_traversal == nullptr);
-
 	std::array<long unsigned, 3> dims;
 	for (int d = 0; d < 3; ++d) {
 		dims[d] = _cellsPerDimension[d];
 	}
-
-#if defined(_OPENMP)
-//	if (SlicedCellPairTraversal<ParticleCell>::isApplicable(dims)) {
-//		_traversal = new SlicedCellPairTraversal<ParticleCell>(_cells, dims);
-//		global_log->info() << "Using SlicedCellPairTraversal." << endl;
-//	} else {
-		_traversal = new C08CellPairTraversal<ParticleCell>(_cells, dims);
-		global_log->info() << "Using C08CellPairTraversal." << endl;
-//	}
-#else
-	_traversal = new OriginalCellPairTraversal<ParticleCell>(_cells, dims, _innerMostCellIndices);
-	global_log->info() << "Using OriginalCellPairTraversal." << endl;
-#endif
+	_traversalTuner->rebuild(_cells, dims);
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
+    _traversalTuner = new TraversalTuner;
+	_traversalTuner->readXML(xmlconfig);
 }
 
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
@@ -195,11 +186,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	// delete all Particles which are outside of the halo region
 	deleteParticlesOutsideBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
-	if (_traversal != nullptr) {
-		delete _traversal;
-		_traversal = nullptr;
-	}
-	initializeTraversal();
+    initializeTraversal();
 
 	_cellsValid = false;
 }
@@ -332,7 +319,7 @@ void LinkedCells::update_via_traversal() {
 		void endTraversal() {}
 
 	} resortCellProcessor;
-	_traversal->traverseCellPairs(resortCellProcessor);
+	_traversalTuner->traverseCellPairs(resortCellProcessor);
 }
 
 bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
@@ -419,7 +406,7 @@ void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 		Simulation::exit(1);
 	}
 
-	_traversal->traverseCellPairsOuter(cellProcessor);
+	_traversalTuner->traverseCellPairsOuter(cellProcessor);
 }
 
 void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
@@ -428,7 +415,7 @@ void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, un
 		Simulation::exit(1);
 	}
 
-	_traversal->traverseCellPairsInner(cellProcessor, stage, stageCount);
+	_traversalTuner->traverseCellPairsInner(cellProcessor, stage, stageCount);
 }
 
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
@@ -440,7 +427,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	}
 
 	cellProcessor.initTraversal();
-	_traversal->traverseCellPairs(cellProcessor);
+	_traversalTuner->traverseCellPairs(cellProcessor);
 	cellProcessor.endTraversal();
 }
 

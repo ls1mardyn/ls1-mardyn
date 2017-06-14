@@ -10,9 +10,11 @@
 #include "particleContainer/ParticleCell.h"
 
 #include "WrapOpenMP.h"
+#include "TraversalTuner.h"
 
 template<class ParticleCellTemplate>
 class CellPairTraversals;
+class TraversalTuner;
 
 
 //! @brief Linked Cell Data Structure
@@ -85,7 +87,7 @@ public:
 	);
 
 	//! Default constructor
-	LinkedCells() : ParticleContainer(), _traversal(nullptr) {}
+	LinkedCells() : ParticleContainer(), _traversalTuner(nullptr) {}
 	//! Destructor
 	~LinkedCells();
 
@@ -184,9 +186,9 @@ public:
 	}
 
 	double* cellLength() {
-		return _cellLength; 
+		return _cellLength;
 	}
-	
+
 #ifdef VTK
 	friend class VTKGridWriter;
 #endif
@@ -231,7 +233,7 @@ public:
 		return ParticleIterator(t, this, offset, stride);
 	}
 	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
-	
+
 	ParticleIterator iteratorEnd () {
 		return ParticleIterator :: invalid();
 	}
@@ -334,7 +336,7 @@ private:
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
 
-	CellPairTraversals<ParticleCell> * _traversal;
+    TraversalTuner *_traversalTuner;
 
 	// addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;

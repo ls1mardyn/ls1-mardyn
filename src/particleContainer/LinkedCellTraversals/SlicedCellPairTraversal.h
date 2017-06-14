@@ -12,11 +12,14 @@
 #include "utils/ThreeElementPermutations.h"
 #include "WrapOpenMP.h"
 
+struct SlicedCellPairTraversalData : CellPairTraversalData {
+};
+
 template<class CellTemplate>
 class SlicedCellPairTraversal: public C08BasedTraversals<CellTemplate> {
 public:
 	SlicedCellPairTraversal(
-		std::vector<CellTemplate>& cells, std::array<unsigned long, 3>& dims) :
+		std::vector<CellTemplate> &cells, const std::array<unsigned long, 3> &dims) :
 		C08BasedTraversals<CellTemplate>(cells, dims)
 		, _locks(mardyn_get_max_threads() - 1, nullptr)
 	{
@@ -30,6 +33,8 @@ public:
 			}
 		}
 	}
+
+	using C08BasedTraversals<CellTemplate>::rebuild;
 
 	virtual ~SlicedCellPairTraversal() {
 		#if defined(_OPENMP)
@@ -92,7 +97,7 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsOuter(
 	using std::array;
 
 	{
-		unsigned long minsize = min(this->_dims[0], min(this->_dims[1], this->_dims[2]));
+		unsigned long minsize = std::min(this->_dims[0], std::min(this->_dims[1], this->_dims[2]));
 
 		if (minsize <= 5) {
 			// iterating in the inner region didn't do anything. Iterate normally.
@@ -153,7 +158,7 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsInner(
 		}
 	}
 	unsigned long splitsize = maxcellsize - 5;
-	unsigned long minsize = min(this->_dims[0], min(this->_dims[1], this->_dims[2]));
+	unsigned long minsize = std::min(this->_dims[0], std::min(this->_dims[1], this->_dims[2]));
 
 	mardyn_assert(minsize >= 4);  // there should be at least 4 cells in each dimension, otherwise we did something stupid!
 

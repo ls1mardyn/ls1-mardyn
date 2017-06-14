@@ -87,6 +87,8 @@ OPENMP ?= 0
 
 PAPI ?= 0
 
+ENABLE_QUICKSCHED ?= 0
+
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1
@@ -208,10 +210,19 @@ ifeq ($(USE_FFTW), 1)
   include $(FFTW_MAKEFILE)
 endif
 
+ifeq ($(ENABLE_QUICKSCHED), 1)
+  QUICKSCHED_MAKEFILE := $(realpath $(MAKEFILEDIR)/quicksched.mk )
+  include $(QUICKSCHED_MAKEFILE)
+endif
+
 $(BINARY): $(OBJECTS)
 	@echo "building $(BINARY)"
 	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
 	$(shell if [ ! -f $(BINARY_BASENAME) -o -L $(BINARY_BASENAME) ]; then ln -sf $(BINARY) $(BINARY_BASENAME); fi)
+
+# make sure C and C++ files are compiled with the same flags excluding -std
+%.o: %.c
+	$(DEPCOMP) $(CXX) -x c $(CFLAGS) $(filter-out -std=% -pedantic, $(CXXFLAGS)) -c $< -o $@
 
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@

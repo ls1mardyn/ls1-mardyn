@@ -11,6 +11,12 @@
 #include "Cell.h"
 #include "molecules/Molecule.h"
 
+#ifdef QUICKSCHED
+extern "C"{
+#include <quicksched.h>
+}
+#endif
+
 class ParticleCellBase: public Cell {
 public:
 	ParticleCellBase();
@@ -63,8 +69,31 @@ public:
 
 	virtual size_t getMoleculeVectorDynamicSize() const = 0;
 
+#ifdef QUICKSCHED
+	qsched_res_t getRescourceId() const {
+		return _resourceId;
+	}
+
+	void setResourceId(qsched_res_t resourceId){
+		_resourceId = resourceId;
+	}
+
+	qsched_task_t getTaskId() const {
+		return _taskId;
+	}
+
+	void setTaskId(qsched_task_t taskId){
+		_taskId = taskId;
+	}
+#endif // QUICKSCHED
+
 protected:
 	void findMoleculeByID(bool& wasFound, size_t& index, unsigned long molid) const;
+
+#ifdef QUICKSCHED
+	qsched_res_t  _resourceId;
+	qsched_task_t _taskId;
+#endif // QUICKSCHED
 };
 
 #endif /* SRC_PARTICLECONTAINER_PARTICLECELLBASE_H_ */
