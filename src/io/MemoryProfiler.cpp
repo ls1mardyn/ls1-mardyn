@@ -139,7 +139,7 @@ void MemoryProfiler::printGeneralInfo(const std::string& string) {
 	Log::global_log->info() << "\tMemory usage (System total):\t" << usedMem << " MB out of " << totalMem << " MB ("
 			<< usedMem * 100. / totalMem << "%)" << std::endl;
 	double ownMem = getOwnMemory() / 1024.;
-	double hugeMem = countHugePages() * _hugePageSize;
+	double hugeMem = countHugePages() * _hugePageSize / 1024;
 	Log::global_log->info() << "\tBy own process:\t\t\t" << ownMem+hugeMem << " MB (" << (ownMem+hugeMem) * 100. / totalMem
 			<< "% of total memory)" << std::endl;
 	if (hugeMem != 0) {
