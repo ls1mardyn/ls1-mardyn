@@ -238,7 +238,29 @@ public:
 	template<typename BufferType>
 	typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
 	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
-		//TODO ____ Implement
+		//TODO  ___ Test me
+
+		auto& recvBuf = getRecvBuf<BufferType>();
+
+		#if defined(_OPENMP)
+		#pragma omp for schedule(static)
+		#endif
+		for (int i = 0; i < numrecv; i++) {
+			BufferType& pData = recvBuf[i];
+
+			Molecule* original;
+
+			if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) {
+				// This should not happen
+				global_log->error()<< "Original molecule not found!" << std::endl;
+				mardyn_exit(1);
+			}
+
+			mardyn_assert(original->id() == pData.id);
+
+			BufferType::AddParticleForceDataToMolecule(pData, *original);
+		}
+
 	}
 
 	template<typename BufferType = ParticleData>
