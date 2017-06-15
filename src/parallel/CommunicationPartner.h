@@ -75,7 +75,7 @@ public:
 				mardyn_assert(!isForceData<BufferType>());
 				global_log->debug() << "sending halo and boundary particles together" << std::endl;
 				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, _haloInfo[p]._shift);
+					collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, _haloInfo[p]._shift);
 				}
 				break;
 			}
@@ -84,7 +84,7 @@ public:
 				mardyn_assert(!isForceData<BufferType>());
 				global_log->debug() << "sending leaving particles only" << std::endl;
 				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift, removeFromContainer);
+					collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift, removeFromContainer);
 				}
 				break;
 			}
@@ -93,7 +93,7 @@ public:
 				mardyn_assert(!isForceData<BufferType>());
 				global_log->debug() << "sending halo particles only" << std::endl;
 				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
+					collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
 				}
 				break;
 			}
@@ -162,7 +162,7 @@ public:
 		return _countReceived;
 	}
 
-	template<typename BufferType = ParticleData>
+	template<typename BufferType = ParticleData >
 	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
 		using Log::global_log;
 
@@ -199,7 +199,7 @@ public:
 	}
 
 	//! Handle receive for ParticleData
-	template<typename BufferType>
+	template<typename BufferType = ParticleData>
 	typename std::enable_if<std::is_same<BufferType, ParticleData>::value, void>::type
 	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
 
@@ -235,7 +235,7 @@ public:
 	}
 
 	//! Handle receive for ParticleForceData
-	template<typename BufferType>
+	template<typename BufferType = ParticleData>
 	typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
 	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
 		//TODO  ___ Test me
@@ -263,7 +263,7 @@ public:
 
 	}
 
-	template<typename BufferType = ParticleData>
+	template<typename BufferType = ParticleData >
 	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type){
 
 		auto& recvBuf = getRecvBuf<BufferType>();

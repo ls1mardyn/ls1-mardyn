@@ -65,6 +65,9 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 			case HALO_COPIES:
 				domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
 				break;
+			case FORCES:
+				domainDecomp->DomainDecompBase::handleForceExchange(d, moleculeContainer);
+				break;
 			}
 		}
 	}
@@ -74,8 +77,13 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	for (int i = 0; i < numNeighbours; ++i) {
 		if (_neighbours[0][i].getRank() != domainDecomp->getRank()) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
-			_neighbours[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
+			if(msgType == FORCES){
+				_neighbours[0][i].initSend<ParticleForceData>(moleculeContainer, domainDecomp->getCommunicator(),
+									domainDecomp->getMPIParticleForceType(), msgType);
+			}else{
+			_neighbours[0][i].initSend<ParticleData>(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
+			}
 		}
 
 	}
@@ -83,7 +91,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 }
 
 void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
-		Domain* /*domain*/, MessageType /*msgType*/, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
+		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
 
 	const int numNeighbours = _neighbours[0].size();
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
@@ -104,21 +112,40 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) {
-			if (domainDecomp->getRank() != _neighbours[0][i].getRank())
-				allDone &= _neighbours[0][i].testSend();
+			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
+				if(msgType == FORCES){
+					allDone &= _neighbours[0][i].testSend<ParticleForceData>();
+				}
+				else{
+					allDone &= _neighbours[0][i].testSend<ParticleData>();
+				}
+			}
 		}
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) {
-			if (domainDecomp->getRank() != _neighbours[0][i].getRank())
-				allDone &= _neighbours[0][i].iprobeCount(domainDecomp->getCommunicator(),
+			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
+				if(msgType == FORCES){
+					allDone &= _neighbours[0][i].iprobeCount<ParticleForceData>(domainDecomp->getCommunicator(),
+						domainDecomp->getMPIParticleForceType());
+				}
+				else{
+					allDone &= _neighbours[0][i].iprobeCount<ParticleData>(domainDecomp->getCommunicator(),
 						domainDecomp->getMPIParticleType());
+				}
+			}
+
 		}
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
-			if (domainDecomp->getRank() != _neighbours[0][i].getRank())
-				allDone &= _neighbours[0][i].testRecv(moleculeContainer, removeRecvDuplicates);
+			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
+				if(msgType == FORCES){
+					allDone &= _neighbours[0][i].testRecv<ParticleForceData>(moleculeContainer, removeRecvDuplicates);
+				}else{
+					allDone &= _neighbours[0][i].testRecv<ParticleData>(moleculeContainer, removeRecvDuplicates);
+				}
+			}
 		}
 
 		// catch deadlocks
@@ -218,6 +245,9 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		case HALO_COPIES:
 			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
 			break;
+		case FORCES:
+			domainDecomp->DomainDecompBase::handleForceExchange(d, moleculeContainer);
+			break;
 		}
 
 	} else {
@@ -226,15 +256,20 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 
 		for (int i = 0; i < numNeighbours; ++i) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
-			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType);
+			if(msgType == FORCES){
+				_neighbours[d][i].initSend<ParticleForceData>(moleculeContainer, domainDecomp->getCommunicator(),
+										domainDecomp->getMPIParticleForceType(), msgType);
+			}else{
+				_neighbours[d][i].initSend<ParticleData>(moleculeContainer, domainDecomp->getCommunicator(),
+						domainDecomp->getMPIParticleType(), msgType);
+			}
 		}
 
 	}
 }
 
 void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
-		Domain* /*domain*/, MessageType /*msgType*/, bool removeRecvDuplicates, unsigned short d,
+		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
 	if (_coversWholeDomain[d]) {
 		return;
@@ -254,18 +289,33 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) {
-			allDone &= _neighbours[d][i].testSend();
+			if(msgType == FORCES){
+				allDone &= _neighbours[d][i].testSend<ParticleForceData>();
+			}else{
+				allDone &= _neighbours[d][i].testSend<ParticleData>();
+			}
 		}
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) {
-			allDone &= _neighbours[d][i].iprobeCount(domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType());
+			if(msgType == FORCES){
+				allDone &= _neighbours[d][i].iprobeCount<ParticleForceData>(domainDecomp->getCommunicator(),
+					domainDecomp->getMPIParticleForceType());
+			}
+			else
+			{
+				allDone &= _neighbours[d][i].iprobeCount<ParticleData>(domainDecomp->getCommunicator(),
+									domainDecomp->getMPIParticleType());
+			}
 		}
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
-			allDone &= _neighbours[d][i].testRecv(moleculeContainer, removeRecvDuplicates);
+			if(msgType == FORCES){
+				allDone &= _neighbours[d][i].testRecv<ParticleForceData>(moleculeContainer, removeRecvDuplicates);
+			}else{
+				allDone &= _neighbours[d][i].testRecv<ParticleData>(moleculeContainer, removeRecvDuplicates);
+			}
 		}
 
 		// catch deadlocks
@@ -313,6 +363,7 @@ void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContaine
 	}
 
 }
+
 
 void IndirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,

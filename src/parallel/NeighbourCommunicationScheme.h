@@ -103,7 +103,7 @@ public:
 			DomainDecompMPIBase* domainDecomp);
 
 	virtual void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
-			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp);
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
 
 protected:
 	void finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* /*domain*/, MessageType /*msgType*/,
@@ -122,6 +122,7 @@ public:
 	}
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
+
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
 			override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {

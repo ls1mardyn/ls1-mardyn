@@ -74,7 +74,7 @@ public:
 	 * @param moleculeContainer The particle container
 	 * @param domain TODO ___Remove if never used
 	 */
-	void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain);
+	virtual void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain);
 
 	/**
 	 * Specifies the amount of non-blocking stages, when performing overlapping balanceAndExchange and computation.

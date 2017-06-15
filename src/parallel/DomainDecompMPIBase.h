@@ -163,6 +163,8 @@ public:
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates = false);
 
+	void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) override;
+
 	virtual std::vector<int> getNeighbourRanks() =0;
 	virtual std::vector<int> getNeighbourRanksFullShell() =0;
 
@@ -172,6 +174,9 @@ public:
 #if defined(ENABLE_MPI)
 	MPI_Datatype getMPIParticleType() {
 		return _mpiParticleType;
+	}
+	MPI_Datatype getMPIParticleForceType() {
+		return _mpiParticleForceType;
 	}
 	virtual MPI_Comm getCommunicator() {
 		return _comm;
@@ -211,6 +216,7 @@ protected:
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates = false);
 
 	MPI_Datatype _mpiParticleType;
+	MPI_Datatype _mpiParticleForceType;
 
 	MPI_Comm _comm;
 

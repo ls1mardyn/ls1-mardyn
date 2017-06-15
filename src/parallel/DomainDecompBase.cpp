@@ -30,9 +30,6 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 }
 
 void DomainDecompBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain){
-	// Skip force exchange if it's not required by the cell container.
-	if(!moleculeContainer->requiresForceExchange()) return;
-
 	for (unsigned d = 0; d < 3; ++d) {
 		handleForceExchange(d,moleculeContainer);
 	}

@@ -1211,7 +1211,9 @@ void Simulation::simulate() {
 			calculateForces();
 
 			// Exchange forces if it's required by the cell container.
-			_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+			if(_moleculeContainer->requiresForceExchange()){
+				_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+			}
 			decompositionTimer->stop();
 			_loopCompTime += computationTimer->get_etime() - startEtime;
 			_loopCompTimeSteps ++;
