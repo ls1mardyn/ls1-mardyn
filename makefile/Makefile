@@ -65,16 +65,12 @@ ifeq ($(PRECISION), MIXED)
   $(error ERROR: MIXED precision not supported yet)
 endif
 
-not_supported_single_vectorizations := KNC_MASK KNC_G_S KNL_MASK KNL_G_S 
 ifeq ($(PRECISION), SINGLE)
   $(info # WARNING)
   $(info # WARNING)
   $(info # WARNING: you are selecting SINGLE precision instead of DOUBLE. Proceed at own risk! )
   $(info # WARNING)
   $(info # WARNING)
-  ifneq (, $(filter $(VECTORIZE_CODE), $(not_supported_single_vectorizations)))
-    $(error ERROR: SINGLE precision not yet extended to 512-bits)
-  endif
 endif
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
@@ -87,6 +83,8 @@ ENABLE_OVERLAPPING ?= 0
 OPENMP ?= 0
 
 PAPI ?= 0
+
+ENABLE_QUICKSCHED ?= 0
 
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
@@ -209,10 +207,19 @@ ifeq ($(USE_FFTW), 1)
   include $(FFTW_MAKEFILE)
 endif
 
+ifeq ($(ENABLE_QUICKSCHED), 1)
+  QUICKSCHED_MAKEFILE := $(realpath $(MAKEFILEDIR)/quicksched.mk )
+  include $(QUICKSCHED_MAKEFILE)
+endif
+
 $(BINARY): $(OBJECTS)
 	@echo "building $(BINARY)"
 	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
 	$(shell if [ ! -f $(BINARY_BASENAME) -o -L $(BINARY_BASENAME) ]; then ln -sf $(BINARY) $(BINARY_BASENAME); fi)
+
+# make sure C and C++ files are compiled with the same flags excluding -std
+%.o: %.c
+	$(DEPCOMP) $(CXX) -x c $(CFLAGS) $(filter-out -std=% -pedantic, $(CXXFLAGS)) -c $< -o $@
 
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@

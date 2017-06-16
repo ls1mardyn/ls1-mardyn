@@ -13,6 +13,10 @@
 
 class CellProcessor;
 
+struct CellPairTraversalData {
+	virtual ~CellPairTraversalData() {}
+};
+
 template <class CellTemplate>
 class CellPairTraversals {
 public:
@@ -21,6 +25,16 @@ public:
 		const std::array<unsigned long, 3>& dims): _cells(&cells), _dims(dims) {}
 
 	virtual ~CellPairTraversals() {}
+
+	/**
+     * Reset all necessary data without reallocation.
+     */
+	virtual void rebuild(std::vector<CellTemplate> &cells,
+						 const std::array<unsigned long, 3> &dims,
+						 CellPairTraversalData *data) {
+		_cells = &cells;
+		_dims = dims;
+	};
 
 	virtual void traverseCellPairs(CellProcessor& cellProcessor) = 0;
 	virtual void traverseCellPairsOuter(CellProcessor& cellProcessor) = 0;

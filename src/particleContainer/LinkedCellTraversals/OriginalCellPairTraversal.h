@@ -8,38 +8,34 @@
 #ifndef SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_ORIGINALCELLPAIRTRAVERSAL_H_
 #define SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_ORIGINALCELLPAIRTRAVERSAL_H_
 
-#include "particleContainer/LinkedCellTraversals/CellPairTraversals.h"
+#include "CellPairTraversals.h"
 #include "utils/Logger.h"
 #include "utils/mardyn_assert.h"
 #include "utils/threeDimensionalMapping.h"
 #include "particleContainer/adapter/CellProcessor.h"
 
+struct OriginalCellPairTraversalData : CellPairTraversalData {
+};
+
 template <class CellTemplate>
 class OriginalCellPairTraversal: public CellPairTraversals<CellTemplate> {
 public:
-	OriginalCellPairTraversal(
-		std::vector<CellTemplate>& cells,
-		const std::array<unsigned long, 3>& dims,
-		std::vector<unsigned long>& innermostCellIndices) :
+	OriginalCellPairTraversal(std::vector<CellTemplate> &cells, const std::array<unsigned long, 3> &dims) :
 			CellPairTraversals<CellTemplate>(cells, dims) {
-		setInnerMostCellIndices(innermostCellIndices);
 		computeNeighbourOffsets();
 	}
 
 	~OriginalCellPairTraversal() {}
 
-	//TODO: handle rebuilds
+	virtual void rebuild(std::vector<CellTemplate>& cells,
+						 const std::array<unsigned long, 3>& dims,
+						 struct CellPairTraversalData *data);
 
 	void traverseCellPairs(CellProcessor& cellProcessor);
 	void traverseCellPairsOuter(CellProcessor& cellProcessor);
 	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
 	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
-
-	void setInnerMostCellIndices(
-			std::vector<unsigned long>& innerMostCellIndices) {
-		_innerMostCellIndices = &innerMostCellIndices;
-	}
 
 protected:
 	// couldn't get it to compile when the enum is part of the class, so making it global...
@@ -55,8 +51,31 @@ protected:
 
 	std::array<long, 13> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
 	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
-	std::vector<unsigned long>* _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
+	std::vector<unsigned long> _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 };
+
+template<class CellTemplate>
+void OriginalCellPairTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
+													  const std::array<unsigned long, 3> &dims,
+													  struct CellPairTraversalData *data) {
+	if (dynamic_cast<OriginalCellPairTraversalData *>(data)) {
+		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
+		computeNeighbourOffsets();
+
+		auto maxIndex = 1;
+		for (auto d : dims)
+			maxIndex *= d;
+
+		for (auto i = 0; i < maxIndex; ++i) {
+			if (this->_cells->at(i).isInnerMostCell()){
+				_innerMostCellIndices.push_back(i);
+			}
+		}
+	} else {
+		global_log->error() << "OriginalCellPairTraversalDat::rebuild was called with incompatible Traversal data!" << endl;
+		Simulation::exit(-1);
+	}
+}
 
 template<class CellTemplate>
 inline void OriginalCellPairTraversal<CellTemplate>::computeNeighbourOffsets() {
@@ -108,7 +127,7 @@ inline void OriginalCellPairTraversal<CellTemplate>::computeNeighbourOffsets() {
 }
 
 template<class CellTemplate>
-inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
+inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsBackend (
 		CellProcessor& cellProcessor, unsigned loIndex, unsigned hiIndex,
 		TraverseType type) const {
 	switch(type) {
@@ -119,7 +138,7 @@ inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 		break;
 	case INNER_CELLS:
 		for (unsigned i = loIndex; i < hiIndex; ++i) {
-			processBaseCell(cellProcessor, _innerMostCellIndices->at(i));
+			processBaseCell(cellProcessor, _innerMostCellIndices.at(i));
 		}
 		break;
 	case OUTER_CELLS:
@@ -148,15 +167,17 @@ inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsOuter(Cell
 }
 
 template<class CellTemplate>
-inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) {
-	unsigned long start =  _innerMostCellIndices->size() * stage / stageCount;
-	unsigned long end =  _innerMostCellIndices->size() * (stage+1) / stageCount;
+inline void OriginalCellPairTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cellProcessor,
+																			unsigned stage,
+																			unsigned stageCount) {
+	unsigned long start =  _innerMostCellIndices.size() * stage / stageCount;
+	unsigned long end =  _innerMostCellIndices.size() * (stage+1) / stageCount;
 	traverseCellPairsBackend(cellProcessor, start, end, INNER_CELLS);
 }
 
 template<class CellTemplate>
-inline void OriginalCellPairTraversal<CellTemplate>::processBaseCell(
-		CellProcessor& cellProcessor, unsigned long cellIndex) const {
+inline void OriginalCellPairTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor,
+																	 unsigned long cellIndex) const {
 
 	CellTemplate& currentCell = this->_cells->at(cellIndex);
 

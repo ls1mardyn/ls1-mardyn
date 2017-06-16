@@ -50,6 +50,8 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
+	}else{
+		_appendTimestamp = false;
 	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }

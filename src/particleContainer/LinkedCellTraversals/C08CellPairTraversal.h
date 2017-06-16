@@ -12,6 +12,8 @@
 #include "utils/threeDimensionalMapping.h"
 #include "utils/mardyn_assert.h"
 
+struct C08CellPairTraversalData : CellPairTraversalData {
+};
 
 template <class CellTemplate>
 class C08CellPairTraversal: public C08BasedTraversals<CellTemplate> {
@@ -23,6 +25,8 @@ public:
 	}
 	~C08CellPairTraversal() {
 	}
+
+	using C08BasedTraversals<CellTemplate>::rebuild;
 
 	void traverseCellPairs(CellProcessor& cellProcessor);
 	void traverseCellPairsOuter(CellProcessor& cellProcessor);

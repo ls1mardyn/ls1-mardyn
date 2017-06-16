@@ -512,7 +512,7 @@
 				<child plurality="multi" importance="optional">
 					<name>Result Writer</name>
 					<setting>
-						<defaultvalue>Resultwriter</defaultvalue>
+						<defaultvalue>ResultWriter</defaultvalue>
 						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
 					</setting>
 					<setting>
@@ -520,7 +520,7 @@
 						<defaultvalue>1000</defaultvalue>
 						<type>int</type>
 						<editor>lineedit</editor>
-						<description>Write out every X frames.</description>
+						<description>Write out every nth timestep.</description>
 						<filexmlpath>mardyn/simulation/output/outputplugin/writefrequency</filexmlpath>
 					</setting>
 					<setting>

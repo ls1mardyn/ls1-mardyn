@@ -35,7 +35,11 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_setzero_si256();
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
+	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
+		return 0x0000;
+	#else // VCP_PREC==VCP_DPDP
 		return 0x00;
+	#endif
 #endif
 	}
 
@@ -47,7 +51,11 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
+	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
+		return 0xFFFF;
+	#else // VCP_PREC==VCP_DPDP
 		return 0xFF;
+	#endif
 #endif
 	}
 
@@ -135,18 +143,17 @@ public:
 #endif
 	}
 
-#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
-	#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
-		static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
-			return _mm512_load_epi32(a);
-		}
+
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
+
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		return _mm512_load_epi32(a);
+	#else /* VCP_DPDP */
+		return _mm512_load_epi64(a);
 	#endif
-#else
-	#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
-		static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
-			return _mm512_load_epi64(a);
-		}
-	#endif
+
+	}
 #endif
 
 	void aligned_store(vcp_mask_single * location) const {

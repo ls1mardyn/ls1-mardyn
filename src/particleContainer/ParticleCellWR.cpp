@@ -126,8 +126,24 @@ void ParticleCell_WR::swapMolecules(int i, ParticleCell_WR& other, int j) {
 int ParticleCell_WR::countInRegion(double lowCorner[3], double highCorner[3]) const {
 	int ret = 0;
 	const int totalNumMols = getMoleculeCount();
+
+	const vcp_real_calc * const soa1_mol_pos_x = _cellDataSoA_WR._mol_r.xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = _cellDataSoA_WR._mol_r.yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = _cellDataSoA_WR._mol_r.zBegin();
+	vcp_real_calc low[3], high[3];
+	for(int d = 0; d < 3; ++d) {
+		low[d] = static_cast<vcp_real_calc>(lowCorner[d]);
+		high[d] = static_cast<vcp_real_calc>(highCorner[d]);
+	}
+
+	#if defined(_OPENMP)
+	#pragma omp simd reduction(+:ret) aligned(soa1_mol_pos_x, soa1_mol_pos_y, soa1_mol_pos_z: 64)
+	#endif
 	for (int i = 0; i < totalNumMols; ++i) {
-		ret += static_cast<int>(moleculesAtConst(i).inBox(lowCorner, highCorner));
+		bool isIn = soa1_mol_pos_x[i] >= low[0] and soa1_mol_pos_x[i] < high[0] and
+					soa1_mol_pos_y[i] >= low[1] and soa1_mol_pos_y[i] < high[1] and
+					soa1_mol_pos_z[i] >= low[2] and soa1_mol_pos_z[i] < high[2];
+		ret += static_cast<int>(isIn);
 	}
 
 	return ret;

@@ -300,7 +300,8 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 	_haloInfo.push_back(partner._haloInfo[0]);
 }
 
-void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer){
+void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
+		const double highCorner[3], const double shift[3], const bool removeFromContainer) {
 	using std::vector;
 	global_simulation->startTimer("COMMUNICATION_PARTNER_INIT_SEND");
 	int prevNumMols = _sendBuf.size();
