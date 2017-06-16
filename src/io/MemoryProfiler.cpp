@@ -32,8 +32,8 @@ MemoryProfiler::MemoryProfiler() :
 			_hugePageSize = atoi(p1);
 		}
 	}
-	std::string hugepsString = std::getenv("HUGETLB_DEFAULT_PAGE_SIZE");
-	if(!hugepsString.empty()){
+	if (std::getenv("HUGETLB_DEFAULT_PAGE_SIZE")!=NULL){
+		std::string hugepsString = std::getenv("HUGETLB_DEFAULT_PAGE_SIZE");
 		_hugePageSize = std::stoi(hugepsString);
 		if( hugepsString.find("G") != std::string::npos or hugepsString.find("g") != std::string::npos ){
 			_hugePageSize *= 1024 * 1024;
@@ -148,7 +148,7 @@ void MemoryProfiler::printGeneralInfo(const std::string& string) {
 	Log::global_log->info() << "\tMemory usage (System total):\t" << usedMem << " MB out of " << totalMem << " MB ("
 			<< usedMem * 100. / totalMem << "%)" << std::endl;
 	double ownMem = getOwnMemory() / 1024.;
-	double hugeMem = countHugePages() * _hugePageSize / 1024;
+	double hugeMem = countHugePages() * _hugePageSize / 1024.;
 	Log::global_log->info() << "\tBy own process:\t\t\t" << ownMem+hugeMem << " MB (" << (ownMem+hugeMem) * 100. / totalMem
 			<< "% of total memory)" << std::endl;
 	if (hugeMem != 0) {
