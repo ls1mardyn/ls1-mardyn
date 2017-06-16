@@ -15,6 +15,7 @@
 #include <array>
 #include <algorithm>
 
+#include "particleContainer/TraversalTuner.h"
 #include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/QuickschedTraversal.h"
@@ -26,6 +27,9 @@ using Log::global_log;
 //################################################
 //############ PUBLIC METHODS ####################
 //################################################
+
+LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner()) {
+}
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius) :
@@ -114,7 +118,7 @@ void LinkedCells::initializeTraversal() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-    _traversalTuner = new TraversalTuner;
+    _traversalTuner = new TraversalTuner();
 	_traversalTuner->readXML(xmlconfig);
 }
 

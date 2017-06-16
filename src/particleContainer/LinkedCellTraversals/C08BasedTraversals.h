@@ -25,7 +25,12 @@ public:
 	virtual ~C08BasedTraversals() {
 	}
 
-	using CellPairTraversals<CellTemplate>::rebuild;
+	virtual void rebuild(std::vector<CellTemplate> &cells,
+						 const std::array<unsigned long, 3> &dims,
+						 CellPairTraversalData *data) {
+		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
+		computeOffsets();
+	};
 
 protected:
 	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;

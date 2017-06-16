@@ -10,7 +10,6 @@
 #include "particleContainer/ParticleCell.h"
 
 #include "WrapOpenMP.h"
-#include "TraversalTuner.h"
 
 template<class ParticleCellTemplate>
 class CellPairTraversals;
@@ -87,7 +86,7 @@ public:
 	);
 
 	//! Default constructor
-	LinkedCells() : ParticleContainer(), _traversalTuner(nullptr) {}
+	LinkedCells();
 	//! Destructor
 	~LinkedCells();
 
