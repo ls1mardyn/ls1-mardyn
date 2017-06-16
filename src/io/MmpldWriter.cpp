@@ -480,8 +480,13 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 #endif
 
 	// split data to multiple files
-	if(_frameCount == _frameCountMax && (_nFileIndex+1) < _numFiles)
-		this->MultiFileApproachReset(particleContainer, domainDecomp, domain);
+	if(_frameCount == _frameCountMax)
+	{
+		if( (_nFileIndex+1) < _numFiles)
+			this->MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
+		else
+			_nextRecSimstep = 0;  // stop sampling
+	}
 }
 
 void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/) {
