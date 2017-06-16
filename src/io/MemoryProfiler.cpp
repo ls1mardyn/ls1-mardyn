@@ -32,6 +32,15 @@ MemoryProfiler::MemoryProfiler() :
 			_hugePageSize = atoi(p1);
 		}
 	}
+	std::string hugepsString = std::getenv("HUGETLB_DEFAULT_PAGE_SIZE");
+	if(!hugepsString.empty()){
+		_hugePageSize = std::stoi(hugepsString);
+		if( hugepsString.find("G") != std::string::npos or hugepsString.find("g") != std::string::npos ){
+			_hugePageSize *= 1024 * 1024;
+		} else if( hugepsString.find("M") != std::string::npos or hugepsString.find("m") != std::string::npos ){
+			_hugePageSize *= 1024;
+		}
+	}
 }
 
 void MemoryProfiler::registerObject(MemoryProfilable** object) {
@@ -90,8 +99,8 @@ int countHugePages() {
 		return 0;
 	}
 	int hugepagecount = 0;
-	char line[128];
-	while (fgets(line, 128, file) != NULL) {
+	char line[1024];
+	while (fgets(line, 1024, file) != NULL) {
 		//if (/huge.*dirty=(\d+)/) {
 		std::string linestring(line);
 		if (linestring.find("huge") != std::string::npos) {
@@ -112,7 +121,7 @@ int countHugePages() {
 int getOwnMemory() { //Note: this value is in KB!
 	FILE* file = fopen("/proc/self/status", "r");
 	int result = -1;
-	char line[128];
+	char line[1024];
 
 	while (fgets(line, 128, file) != NULL) {
 		if (strncmp(line, "VmRSS:", 6) == 0) {
@@ -147,6 +156,6 @@ void MemoryProfiler::printGeneralInfo(const std::string& string) {
 				<< "% of total memory)" << std::endl;
 
 		Log::global_log->info() << "\t\t\thugePages:\t" << hugeMem << " MB (" << (hugeMem) * 100. / totalMem
-				<< "% of total memory)" << std::endl;
+				<< "% of total memory)" << "\tHPS(kB):\t" << _hugePageSize << std::endl;
 	}
 }
