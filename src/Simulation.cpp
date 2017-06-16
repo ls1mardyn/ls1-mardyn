@@ -785,7 +785,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	}
 }
 
-void Simulation::calculateForces() {
+void Simulation::updateForces() {
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -794,6 +794,7 @@ void Simulation::calculateForces() {
 		const ParticleIterator end = _moleculeContainer->iteratorEnd();
 
 		if(CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt) {
+
 			uint64_t id;
 			uint32_t cid;
 			double r[3];
@@ -931,6 +932,13 @@ void Simulation::prepare_start() {
 	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
+	// Update forces in molecules so they can be exchanged
+	updateForces();
+
+	// Exchange forces if it's required by the cell container.
+	if(_moleculeContainer->requiresForceExchange()){
+		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+	}
 
 #ifdef MARDYN_WR
 	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
@@ -960,7 +968,7 @@ void Simulation::prepare_start() {
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
-	calculateForces();
+	//updateForces();
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
@@ -1208,7 +1216,7 @@ void Simulation::simulate() {
 
 			decompositionTimer->start();
 			// Update forces in molecules so they can be exchanged
-			calculateForces();
+			updateForces();
 
 			// Exchange forces if it's required by the cell container.
 			if(_moleculeContainer->requiresForceExchange()){
