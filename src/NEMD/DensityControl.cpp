@@ -424,10 +424,10 @@ void dec::ControlRegion::ResetLocalValues()
 void dec::ControlRegion::WriteHeaderDeletedMolecules()
 {
 	// domain decomposition
-	DomainDecompBase* domainDecomp = _parent->GetDomainDecomposition();
+	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
 
 #ifdef ENABLE_MPI
-int rank = domainDecomp->getRank();
+int rank = domainDecomp.getRank();
 // int numprocs = domainDecomp->getNumProcs();
 if (rank != 0)
     return;
@@ -459,7 +459,7 @@ if (rank != 0)
 void dec::ControlRegion::WriteDataDeletedMolecules(unsigned long simstep)
 {
 	// domain decomposition
-	DomainDecompBase* domainDecomp = _parent->GetDomainDecomposition();
+	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
 
     // calc global values 
 #ifdef ENABLE_MPI
@@ -492,7 +492,7 @@ void dec::ControlRegion::WriteDataDeletedMolecules(unsigned long simstep)
 
     // write out data
     #ifdef ENABLE_MPI
-    int rank = domainDecomp->getRank();
+    int rank = domainDecomp.getRank();
     // int numprocs = domainDecomp->getNumProcs();
     if (rank != 0)
         return;
