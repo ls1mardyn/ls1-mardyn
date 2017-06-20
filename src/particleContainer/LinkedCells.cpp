@@ -123,12 +123,18 @@ void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
+	global_log->info() << "REBUILD OF LinkedCells" << endl;
+
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
 		this->_boundingBoxMax[i] = bBoxMax[i];
 //		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff);
 		_haloWidthInNumCells[i] = 1;
 	}
+	global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
+			<< bBoxMin[1] << ", " << bBoxMax[1] << "]" << " x " << "[" << bBoxMin[2] << ", " << bBoxMax[2] << "]"
+			<< std::endl;
+
 	int numberOfCells = 1;
 
 	for (int dim = 0; dim < 3; dim++) {
@@ -159,6 +165,10 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 				+ _haloWidthInNumCells[dim] * _cellLength[dim];
 		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
 	}
+
+	global_log->info() << "Cells per dimension (incl. halo): " << _cellsPerDimension[0] << " x "
+			<< _cellsPerDimension[1] << " x " << _cellsPerDimension[2] << endl;
+
 
 	_cells.resize(numberOfCells);
 

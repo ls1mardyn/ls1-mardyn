@@ -21,20 +21,46 @@
 
 
 CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
-		_numMolecules(1000), _binaryMixture(false) {
+		_numMolecules(0), _binaryMixture(false) {
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
+	global_log->info() << "CubicGridGeneratorInternal: " << std::endl;
 	xmlconfig.getNodeValue("numMolecules", _numMolecules);
 	global_log->info() << "numMolecules: " << _numMolecules << std::endl;
+	double density = -1.;
+	xmlconfig.getNodeValue("density", density);
+	global_log->info() << "";
 	xmlconfig.getNodeValue("binaryMixture", _binaryMixture);
 	global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
+	// setting both or none is not allowed!
+	if((_numMolecules == 0 && density == -1.) || (_numMolecules != 0 && density != -1.) ){
+		global_log->error() << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
+		global_simulation->exit(2341);
+	}
+
+	if(density != -1.){
+		// density has been set
+		if(density <= 0){
+			global_log->error()
+					<< "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!"
+					<< std::endl;
+			global_simulation->exit(2342);
+		}
+		_numMolecules = density * global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(1) * global_simulation->getDomain()->getGlobalLength(2);
+	}
 }
 
 unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 	global_simulation->startTimer("CUBIC_GRID_GENERATOR_INPUT");
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
+
+	if(_numMolecules == 0){
+		global_log->error() << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
+				<< std::endl << "Please make sure to run readXML()!" << std::endl;
+		global_simulation->exit(2341);
+	}
 
 	// create a body centered cubic layout, by creating by placing the molecules on the
 	// vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
@@ -101,6 +127,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
             Log::global_log->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
         }
     }
+    Log::global_log->info() << std::endl;
 
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(id); //number of local molecules
