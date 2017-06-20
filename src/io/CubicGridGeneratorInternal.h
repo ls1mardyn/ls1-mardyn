@@ -65,6 +65,7 @@ private:
 	 */
 	std::vector<double> getRandomVelocity(double temperature) const;
 
-	static const int _MOLECULE_BUFFER_SIZE = 1000;
+	unsigned long _moleculeBufferSize;
 	std::vector<Molecule> _moleculeBuffer;
+	std::array<int, 3> _blockSizes;
 };

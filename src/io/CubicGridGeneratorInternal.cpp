@@ -21,8 +21,7 @@
 
 
 CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
-		_numMolecules(0), _binaryMixture(false) {
-	_moleculeBuffer.reserve(_MOLECULE_BUFFER_SIZE);
+		_numMolecules(0), _binaryMixture(false), _moleculeBufferSize(0), _moleculeBuffer(), _blockSizes() {
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
@@ -35,6 +34,17 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "";
 	xmlconfig.getNodeValue("binaryMixture", _binaryMixture);
 	global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
+
+	_moleculeBufferSize = 100;
+	_blockSizes[0] = 2;
+	_blockSizes[1] = 2;
+	_blockSizes[2] = 2;
+
+	xmlconfig.getNodeValue("moleculeBufferSize", _moleculeBufferSize);
+	xmlconfig.getNodeValue("blockSizesX", _blockSizes[0]);
+	xmlconfig.getNodeValue("blockSizesY", _blockSizes[1]);
+	xmlconfig.getNodeValue("blockSizesZ", _blockSizes[2]);
+
 	// setting both or none is not allowed!
 	if((_numMolecules == 0 && density == -1.) || (_numMolecules != 0 && density != -1.) ){
 		global_log->error() << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
@@ -56,6 +66,9 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 
 unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+
+	_moleculeBuffer.reserve(_moleculeBufferSize);
+
 	global_simulation->startTimer("CUBIC_GRID_GENERATOR_INPUT");
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 
@@ -96,14 +109,16 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	int percentageRead = 0;
 	double percentage = 1.0 / (end_i - start_i) * 100.0;
 
-    const int blocksize = 4;
+    const int blockSizesX = _blockSizes[0];
+    const int blockSizesY = _blockSizes[1];
+    const int blockSizesZ = _blockSizes[2];
 
-	for (int i = start_i; i < end_i; i+=blocksize) {
-        for (int j = start_j; j < end_j; j+=blocksize) {
-            for (int k = start_k; k < end_k; k+=blocksize) {
-                for (int ii = i; ii < i+blocksize and ii < end_i; ii++) {
-                    for (int jj = j; jj < j+blocksize and jj < end_j; jj++) {
-                        for (int kk = k; kk < k+blocksize and kk < end_k; kk++) {
+	for (int i = start_i; i < end_i; i+=blockSizesX) {
+        for (int j = start_j; j < end_j; j+=blockSizesY) {
+            for (int k = start_k; k < end_k; k+=blockSizesZ) {
+                for (int ii = i; ii < i+blockSizesX and ii < end_i; ii++) {
+                    for (int jj = j; jj < j+blockSizesY and jj < end_j; jj++) {
+                        for (int kk = k; kk < k+blockSizesZ and kk < end_k; kk++) {
 
                             double x1 = origin1 + ii * spacing;
                             double y1 = origin1 + jj * spacing;
@@ -204,9 +219,9 @@ void CubicGridGeneratorInternal::bufferMolecule(double x, double y, double z, un
 			orientation[0], orientation[1], orientation[2], orientation[3], w[0], w[1], w[2]);
 
 	_moleculeBuffer.push_back(m);
-	mardyn_assert(_moleculeBuffer.size () <= _MOLECULE_BUFFER_SIZE);
+	mardyn_assert(_moleculeBuffer.size () <= _moleculeBufferSize);
 
-	if(_moleculeBuffer.size () == _MOLECULE_BUFFER_SIZE) {
+	if(_moleculeBuffer.size () == _moleculeBufferSize) {
 		insertMoleculesInContainer(particleContainer);
 	}
 }
@@ -214,7 +229,7 @@ void CubicGridGeneratorInternal::bufferMolecule(double x, double y, double z, un
 void CubicGridGeneratorInternal::insertMoleculesInContainer(
 		ParticleContainer* particleContainer) {
 
-	mardyn_assert(_moleculeBuffer.size () <= _MOLECULE_BUFFER_SIZE);
+	mardyn_assert(_moleculeBuffer.size () <= _moleculeBufferSize);
 	particleContainer->addParticles(_moleculeBuffer);
 	_moleculeBuffer.clear();
 }
