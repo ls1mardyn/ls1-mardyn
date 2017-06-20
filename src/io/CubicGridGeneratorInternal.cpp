@@ -226,24 +226,36 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	double mass_sum = 0.;
 	double momentum_sum[3] = { 0., 0., 0. };
 
-	ParticleIterator molecule = particleContainer->iteratorBegin();
-	while (molecule != particleContainer->iteratorEnd()) {
-		mass = components[molecule->componentid()].m();
-		mass_sum = mass_sum + mass;
-		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
-		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
-		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		++molecule;
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator molecule = begin; molecule != end; ++molecule) {
+			mass = components[molecule->componentid()].m();
+			mass_sum = mass_sum + mass;
+			momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
+			momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
+			momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
+		}
 	}
 
 	double momentum_sub0 = momentum_sum[0] / mass_sum;
 	double momentum_sub1 = momentum_sum[1] / mass_sum;
 	double momentum_sub2 = momentum_sum[2] / mass_sum;
 
-	molecule = particleContainer->iteratorBegin();
-	while (molecule != particleContainer->iteratorEnd()) {
-		molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
-		++molecule;
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator molecule = begin; molecule != end; ++molecule) {
+			molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
+		}
 	}
 
 	//test
@@ -251,14 +263,20 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	momentum_sum[1] = 0.;
 	momentum_sum[2] = 0.;
 
-	molecule = particleContainer->iteratorBegin();
-	while (molecule != particleContainer->iteratorEnd()) {
-		mass = components[molecule->componentid()].m();
-		mass_sum = mass_sum + mass;
-		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
-		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
-		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		++molecule;
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator molecule = begin; molecule != end; ++molecule) {
+			mass = components[molecule->componentid()].m();
+			mass_sum = mass_sum + mass;
+			momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
+			momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
+			momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
+		}
 	}
 
 	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);
