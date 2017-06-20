@@ -209,7 +209,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
 		}
 	}
-
+	_logger->info() << std::endl;
 
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(id);//number of local molecules

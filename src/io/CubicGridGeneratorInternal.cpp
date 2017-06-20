@@ -27,9 +27,10 @@ CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "CubicGridGeneratorInternal: " << std::endl;
 	xmlconfig.getNodeValue("numMolecules", _numMolecules);
-	global_log->info() << "numMolecules: " << _numMolecules << std::endl;
+	if(_numMolecules)global_log->info() << "numMolecules: " << _numMolecules << std::endl;
 	double density = -1.;
 	xmlconfig.getNodeValue("density", density);
+	global_log->info() << "density: " << density << std::endl;
 	global_log->info() << "";
 	xmlconfig.getNodeValue("binaryMixture", _binaryMixture);
 	global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
@@ -48,6 +49,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 			global_simulation->exit(2342);
 		}
 		_numMolecules = density * global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(1) * global_simulation->getDomain()->getGlobalLength(2);
+		global_log->info() << "numMolecules: " << _numMolecules << std::endl;
 	}
 }
 
