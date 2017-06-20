@@ -22,6 +22,7 @@
 
 CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
 		_numMolecules(0), _binaryMixture(false) {
+	_moleculeBuffer.reserve(_MOLECULE_BUFFER_SIZE);
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
@@ -108,7 +109,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
                             double y1 = origin1 + jj * spacing;
                             double z1 = origin1 + kk * spacing;
                             if (domainDecomp->procOwnsPos(x1, y1, z1, domain)) {
-                                addMolecule(x1, y1, z1, id, particleContainer);
+                                bufferMolecule(x1, y1, z1, id, particleContainer);
                                 id++;
                             }
 
@@ -116,7 +117,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
                             double y2 = origin2 + jj * spacing;
                             double z2 = origin2 + kk * spacing;
                             if (domainDecomp->procOwnsPos(x2, y2, z2, domain)) {
-                                addMolecule(x2, y2, z2, id, particleContainer);
+                                bufferMolecule(x2, y2, z2, id, particleContainer);
                                 id++;
                             }
                         }
@@ -131,15 +132,27 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
     }
     Log::global_log->info() << std::endl;
 
+	insertMoleculesInContainer(particleContainer);
+
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(id); //number of local molecules
 	domainDecomp->collCommScanSum();
 	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
 	domainDecomp->collCommFinalize();
 	// fix ID's to be unique:
-	for (auto mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol) {
-		mol->setid(mol->id() + idOffset);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator mol = begin; mol != end; ++mol) {
+			mol->setid(mol->id() + idOffset);
+		}
 	}
+
 	//std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
 	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
 
@@ -151,10 +164,13 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	Log::global_log->info() << "Initial IO took:                 "
 			<< global_simulation->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
 
+	_moleculeBuffer.resize(0);
+	_moleculeBuffer.shrink_to_fit();
+
 	return id + idOffset;
 }
 
-void CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
+void CubicGridGeneratorInternal::bufferMolecule(double x, double y, double z, unsigned long id,
 		ParticleContainer* particleContainer) {
 	std::vector<double> velocity = getRandomVelocity(global_simulation->getEnsemble()->T());
 
@@ -186,8 +202,23 @@ void CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsig
 	Molecule m(id, &(global_simulation->getEnsemble()->getComponents()->at(componentType)), x, y, z, // position
 			velocity[0], -velocity[1], velocity[2], // velocity
 			orientation[0], orientation[1], orientation[2], orientation[3], w[0], w[1], w[2]);
-	particleContainer->addParticle(m);
+
+	_moleculeBuffer.push_back(m);
+	mardyn_assert(_moleculeBuffer.size () <= _MOLECULE_BUFFER_SIZE);
+
+	if(_moleculeBuffer.size () == _MOLECULE_BUFFER_SIZE) {
+		insertMoleculesInContainer(particleContainer);
+	}
 }
+
+void CubicGridGeneratorInternal::insertMoleculesInContainer(
+		ParticleContainer* particleContainer) {
+
+	mardyn_assert(_moleculeBuffer.size () <= _MOLECULE_BUFFER_SIZE);
+	particleContainer->addParticles(_moleculeBuffer);
+	_moleculeBuffer.clear();
+}
+
 
 void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleContainer,
 		const std::vector<Component>& components) {

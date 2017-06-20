@@ -206,6 +206,6 @@ void FullParticleCell::buildSoACaches() {
 	}
 }
 
-void FullParticleCell::reserveMoleculeStorage(size_t numMols) {
-	_molecules.reserve(numMols);
+void FullParticleCell::increaseMoleculeStorage(size_t numExtraMols) {
+	_molecules.reserve(_molecules.size() + numExtraMols);
 }

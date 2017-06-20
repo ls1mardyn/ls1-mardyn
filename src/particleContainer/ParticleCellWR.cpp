@@ -5,8 +5,8 @@
  *      Author: tchipevn
  */
 
-#include "ParticleCellWR.h"
-#include "ParticleCell.h"
+#include "particleContainer/ParticleCellWR.h"
+#include "particleContainer/ParticleCell.h"
 
 ParticleCell_WR::ParticleCell_WR() : _cellDataSoA_WR(0) {
 	// TODO Auto-generated constructor stub
@@ -153,6 +153,6 @@ void ParticleCell_WR::getRegion(double lowCorner[3], double highCorner[3],
 		std::vector<Molecule*>& particlePtrs, bool removeFromContainer) {
 }
 
-void ParticleCell_WR::reserveMoleculeStorage(size_t numMols) {
-	_cellDataSoA_WR.resize(numMols);
+void ParticleCell_WR::increaseMoleculeStorage(size_t numExtraMols) {
+	_cellDataSoA_WR.increaseStorage(numExtraMols);
 }

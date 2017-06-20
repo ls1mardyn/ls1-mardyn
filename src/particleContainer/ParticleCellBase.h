@@ -56,7 +56,7 @@ public:
 
 	virtual void buildSoACaches() = 0;
 
-	virtual void reserveMoleculeStorage(size_t numMols) = 0;
+	virtual void increaseMoleculeStorage(size_t numMols) = 0;
 
 	virtual bool testPointInCell(const double point[3]) const {
 		return _boxMin[0] <= point[0] && _boxMin[1] <= point[1] && _boxMin[2] <= point[2] &&

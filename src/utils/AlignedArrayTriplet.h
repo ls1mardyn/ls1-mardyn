@@ -89,25 +89,39 @@ public:
 		}
 	}
 
+	void increaseStorage(size_t oldNumElements, size_t additionalElements) {
+		mardyn_assert(oldNumElements <= _numEntriesPerArray);
+
+		size_t newNumElements = oldNumElements + additionalElements;
+
+		if (newNumElements <= _numEntriesPerArray) {
+			// no need to resize
+			return;
+		}
+
+		// do we need to keep contents?
+		if (oldNumElements > 0) {
+			// yes
+			AlignedArray<T> backupCopy(*this);
+
+			size_t oldNumEntriesPerArray = _numEntriesPerArray;
+			resize_zero_shrink(newNumElements);
+
+			std::memcpy(xBegin(), &(backupCopy[0*oldNumEntriesPerArray]), oldNumElements * sizeof(T));
+			std::memcpy(yBegin(), &(backupCopy[1*oldNumEntriesPerArray]), oldNumElements * sizeof(T));
+			std::memcpy(zBegin(), &(backupCopy[2*oldNumEntriesPerArray]), oldNumElements * sizeof(T));
+		} else {
+			// no
+			resize_zero_shrink(newNumElements);
+		}
+	}
+
 	void appendValueTriplet(T v0, T v1, T v2, size_t oldNumElements) {
 		mardyn_assert(oldNumElements <= _numEntriesPerArray);
 		if (oldNumElements < _numEntriesPerArray) {
 			// no need to resize, baby
 		} else {
-			// shit, we need to resize
-
-			// do we need to keep contents?
-			if(oldNumElements == 0) {
-				// No
-				resize_zero_shrink(oldNumElements + 1);
-			} else {
-				// Yes
-				AlignedArray<T> backupCopy(*this);
-				resize_zero_shrink(oldNumElements + 1);
-				std::memcpy(xBegin(), &(backupCopy[0*oldNumElements]), oldNumElements * sizeof(T));
-				std::memcpy(yBegin(), &(backupCopy[1*oldNumElements]), oldNumElements * sizeof(T));
-				std::memcpy(zBegin(), &(backupCopy[2*oldNumElements]), oldNumElements * sizeof(T));
-			}
+			increaseStorage(oldNumElements, 1);
 		}
 		x(oldNumElements) = v0;
 		y(oldNumElements) = v1;

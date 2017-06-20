@@ -353,28 +353,27 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 }
 
 int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
+	typedef vector<Molecule>::size_type mol_index_t;
+	typedef vector<ParticleCell>::size_type cell_index_t;
+
 	int oldNumberOfParticles = getNumberOfParticles();
 
-	typedef vector<Molecule>::size_type index_t;
-	static vector< vector<ParticleCell>::size_type > index_vector;
-	index_vector.resize(particles.size());
+	const mol_index_t N = particles.size();
+
+	map<cell_index_t, vector<mol_index_t>> newPartsPerCell;
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
-		const int thread_id = mardyn_get_thread_num();
-		const int num_threads = mardyn_get_num_threads();
+		map<cell_index_t, vector<mol_index_t>> local_newPartsPerCell;
 
-		const index_t start = (thread_id    ) * particles.size() / num_threads;
-		const index_t end   = (thread_id + 1) * particles.size() / num_threads;
-		for (index_t i = start; i < end; i++) {
-			Molecule particle = particles[i];
-			//there could be particles meant for another process that get here...
-			/*if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
-				index_vector[i] = -1; //this particle is not meant for this process...
-				continue;
-			}*/
+		#if defined(_OPENMP)
+		#pragma omp for schedule(static)
+		#endif
+		for (mol_index_t i = 0; i < N; ++i) {
+			Molecule & particle = particles[i];
+
 			#ifndef NDEBUG
 				if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
 					global_log->error()<<"At particle with ID "<<particle.id()<<" assertion failed..."<<endl;
@@ -384,27 +383,51 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 
 			const unsigned long cellIndex = getCellIndexOfMolecule(&particle);
 			mardyn_assert(cellIndex < _cells.size());
-			index_vector[i] = cellIndex;
+			local_newPartsPerCell[cellIndex].push_back(i);
+		}
+
+		#if defined(_OPENMP)
+		#pragma omp critical(add_particles_reduce_maps)
+		#endif
+		{
+			for (auto it = local_newPartsPerCell.begin(); it != local_newPartsPerCell.end(); ++it) {
+				cell_index_t cellIndex = it->first;
+				vector<mol_index_t> & global_vector = newPartsPerCell[cellIndex];
+				vector<mol_index_t> & local_vector = it->second;
+				global_vector.insert(global_vector.end(), local_vector.begin(), local_vector.end());
+			}
 		}
 
 		#if defined(_OPENMP)
 		#pragma omp barrier
 		#endif
 
-		typedef vector<ParticleCell>::size_type cell_index_t;
-		const cell_index_t cells_start = (thread_id    ) * _cells.size() / num_threads; // TODO: does this scale?
-		const cell_index_t cells_end   = (thread_id + 1) * _cells.size() / num_threads;
+		const cell_index_t numCells = newPartsPerCell.size();
+		const int thread_id = mardyn_get_thread_num();
+		const int num_threads = mardyn_get_num_threads();
+		const cell_index_t my_cells_start = (thread_id    ) * numCells / num_threads;
+		const cell_index_t my_cells_end   = (thread_id + 1) * numCells / num_threads;
 
-		for (index_t i = 0; i < particles.size(); i++) {
-			index_t index = index_vector[i];
-			if (cells_start <= index and index < cells_end) {
-				_cells[index].addParticle(particles[i], checkWhetherDuplicate);
-				//delete particles[i]; //replace at end with particles.clear()?
+		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_begin = newPartsPerCell.begin();
+		advance(thread_begin, my_cells_start);
+		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_end = newPartsPerCell.begin();
+		advance(thread_end, my_cells_end);
+
+		for(auto it = thread_begin; it != thread_end; ++it) {
+			cell_index_t cellIndex = it->first;
+			const vector<mol_index_t> & global_vector = it->second;
+
+			const size_t numMolsInCell = global_vector.size();
+			_cells[cellIndex].increaseMoleculeStorage(numMolsInCell);
+
+			for(size_t j = 0; j < numMolsInCell; ++j) {
+				const mol_index_t molIndex = global_vector[j];
+				Molecule & mol = particles[molIndex];
+				_cells[cellIndex].addParticle(mol);
 			}
 		}
-	} // end pragma omp parallel
 
-	index_vector.clear();
+	} // end pragma omp parallel
 
 	int numberOfAddedParticles = getNumberOfParticles() - oldNumberOfParticles;
 	global_log->debug()<<"In LinkedCells::addParticles :"<<endl;
