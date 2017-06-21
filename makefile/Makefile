@@ -119,8 +119,8 @@ OBJECTS = $(SOURCES:.cpp=.o)
 INCLUDES = -I$(SRCDIR) -isystem $(SRCDIR)/External
 
 BINARY_BASENAME = MarDyn
-ifneq ("$(wildcard $(SRCDIR)/.svn)","")
-  $(info Building from a svn version.)
+ifneq ("$(wildcard $(SRCDIR)/../.svn)","")
+  $(info Building from an svn version.)
   SVN_VERSION = $(shell svnversion | sed -e "s/:/-/")
   ifneq ($(SVN_VERSION),)
     BINARY = $(BINARY_BASENAME)_$(SVN_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
