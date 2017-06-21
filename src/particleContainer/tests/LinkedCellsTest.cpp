@@ -449,13 +449,6 @@ void LinkedCellsTest::testHalfShellMPI() {
 	//------------------------------------------------------------
 	// Setup
 	//------------------------------------------------------------
-	int ownrank = 0;
-#ifdef ENABLE_MPI
-	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-#endif
-
-	auto pressureGradient = new PressureGradient(ownrank);
-	auto domain = new Domain(ownrank, pressureGradient);
 
 	auto domainDecomposition = new DomainDecomposition();
 	auto filename = "simple-lj.inp";
@@ -470,9 +463,9 @@ void LinkedCellsTest::testHalfShellMPI() {
 	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
 
-	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+	auto cellProc = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
 
-	domainDecomposition->initCommunicationPartners(cutoff, domain);
+	domainDecomposition->initCommunicationPartners(cutoff, _domain);
 
 	//------------------------------------------------------------
 	// Prepare molecule containers
@@ -492,7 +485,7 @@ void LinkedCellsTest::testHalfShellMPI() {
 	// Do calculation with FS
 	//------------------------------------------------------------
 	{
-		container->traverseCells(*vectorizedCellProcessor);
+		container->traverseCells(*cellProc);
 
 		// calculate forces
 		const ParticleIterator begin = container->iteratorBegin();
@@ -506,7 +499,7 @@ void LinkedCellsTest::testHalfShellMPI() {
 	// Do calculation with HS
 	//------------------------------------------------------------
 	{
-		containerHS->traverseCells(*vectorizedCellProcessor);
+		containerHS->traverseCells(*cellProc);
 
 		// calculate forces
 		const ParticleIterator& begin = containerHS->iteratorBegin();
@@ -555,7 +548,5 @@ void LinkedCellsTest::testHalfShellMPI() {
 	//------------------------------------------------------------
 
 	delete domainDecomposition;
-	delete vectorizedCellProcessor;
-	delete domain;
-	delete pressureGradient;
+	delete cellProc;
 }

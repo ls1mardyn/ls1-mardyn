@@ -238,8 +238,6 @@ public:
 	template<typename BufferType = ParticleData>
 	typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
 	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
-		//TODO  ___ Test me
-
 		auto& recvBuf = getRecvBuf<BufferType>();
 
 		#if defined(_OPENMP)
