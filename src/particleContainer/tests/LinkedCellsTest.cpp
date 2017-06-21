@@ -8,6 +8,7 @@
 #include "LinkedCellsTest.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecomposition.h"
 #include "particleContainer/adapter/CellProcessor.h"
 #include <vector>
 
@@ -339,9 +340,16 @@ void LinkedCellsTest::testHalfShell() {
 	// Setup
 	//------------------------------------------------------------
 
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "LinkedCellsTest::testHalfShell()"
+				<< " not executed (rerun with only 1 Process!)" << std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
+
 	auto domainDecomposition = new DomainDecompBase();
-	auto cutoff = 1;
 	auto filename = "LinkedCellsHS.inp";
+	auto cutoff = 1;
 
 	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
@@ -408,6 +416,10 @@ void LinkedCellsTest::testHalfShell() {
 		auto j = beginHS;
 		for (auto i = begin; i != end; ++i, ++j) {
 
+			std::cout << i->F(0) << " --- " << j->F(0) << "\n";
+			std::cout << i->F(1) << " --- " << j->F(1) << "\n";
+			std::cout << i->F(2) << " --- " << j->F(2) << "\n";
+
 			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-7*i->F(0)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-7*i->F(1)));
@@ -429,4 +441,121 @@ void LinkedCellsTest::testHalfShell() {
 
 	delete domainDecomposition;
 	delete vectorizedCellProcessor;
+}
+
+
+void LinkedCellsTest::testHalfShellMPI() {
+	//TODO: ___Extract to separate test class
+	//------------------------------------------------------------
+	// Setup
+	//------------------------------------------------------------
+	int ownrank = 0;
+#ifdef ENABLE_MPI
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
+#endif
+
+	auto pressureGradient = new PressureGradient(ownrank);
+	auto domain = new Domain(ownrank, pressureGradient);
+
+	auto domainDecomposition = new DomainDecomposition();
+	auto filename = "simple-lj.inp";
+	auto cutoff = 1;
+
+	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+	containerHS->_traversalSelected = LinkedCells::Traversal::HS;
+	containerHS->_traversal = nullptr;
+	containerHS->initializeTraversal();
+
+	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+
+	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+
+	domainDecomposition->initCommunicationPartners(cutoff, domain);
+
+	//------------------------------------------------------------
+	// Prepare molecule containers
+	//------------------------------------------------------------
+
+	container->update();
+	containerHS->update();
+
+	bool forceRebalancing = false;
+	domainDecomposition->balanceAndExchange(forceRebalancing, container, _domain);
+	domainDecomposition->balanceAndExchange(forceRebalancing, containerHS, _domain);
+
+	container->updateMoleculeCaches();
+	containerHS->updateMoleculeCaches();
+
+	//------------------------------------------------------------
+	// Do calculation with FS
+	//------------------------------------------------------------
+	{
+		container->traverseCells(*vectorizedCellProcessor);
+
+		// calculate forces
+		const ParticleIterator begin = container->iteratorBegin();
+		const ParticleIterator end = container->iteratorEnd();
+		for (auto i = begin; i != end; ++i) {
+			i->calcFM();
+		}
+	}
+
+	//------------------------------------------------------------
+	// Do calculation with HS
+	//------------------------------------------------------------
+	{
+		containerHS->traverseCells(*vectorizedCellProcessor);
+
+		// calculate forces
+		const ParticleIterator& begin = containerHS->iteratorBegin();
+		const ParticleIterator& end = containerHS->iteratorEnd();
+		for (ParticleIterator i = begin; i != end; ++i) {
+			i->calcFM();
+		}
+
+		domainDecomposition->exchangeForces(containerHS, _domain);
+	}
+
+
+	//------------------------------------------------------------
+	container->deleteOuterParticles();
+	containerHS->deleteOuterParticles();
+	// Compare calculated forces
+	{
+		const ParticleIterator begin = container->iteratorBegin();
+		const ParticleIterator end = container->iteratorEnd();
+		const ParticleIterator beginHS = containerHS->iteratorBegin();
+		const ParticleIterator endHS = containerHS->iteratorEnd();
+		auto j = beginHS;
+		for (auto i = begin; i != end; ++i, ++j) {
+
+		//	std::cout << i->F(0) << " --- " << j->F(0) << "\n";
+		//	std::cout << i->F(1) << " --- " << j->F(1) << "\n";
+		//	std::cout << i->F(2) << " --- " << j->F(2) << "\n";
+
+			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-7*i->F(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-7*i->F(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), fabs(1e-7*i->F(2)));
+
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0), j->Vi(0), fabs(1e-7*j->Vi(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1), j->Vi(1), fabs(1e-7*j->Vi(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2), j->Vi(2), fabs(1e-7*j->Vi(2)));
+
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(0), j->M(0), fabs(1e-7*i->M(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(1), j->M(1), fabs(1e-7*i->M(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(2), j->M(2), fabs(1e-7*i->M(2)));
+		}
+	}
+
+	//------------------------------------------------------------
+	// Cleanup
+	//------------------------------------------------------------
+
+	delete domainDecomposition;
+	delete vectorizedCellProcessor;
+	delete domain;
+	delete pressureGradient;
 }

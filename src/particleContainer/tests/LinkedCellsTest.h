@@ -22,6 +22,7 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
 	TEST_METHOD(testParticleIteratorBeginNextEndParticleIteratorSequential);
 	TEST_METHOD(testHalfShell);
+	TEST_METHOD(testHalfShellMPI);
 //	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
 	TEST_METHOD(testTraversalMethods);
 	TEST_SUITE_END();
@@ -62,6 +63,7 @@ public:
 //	void testGetHaloBoundaryParticlesDirection();
 
 	void testHalfShell();
+	void testHalfShellMPI();
 };
 
 #endif /* LINKEDCELLSTEST_H_ */

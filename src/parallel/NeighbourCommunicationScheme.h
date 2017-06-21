@@ -27,7 +27,11 @@ public:
 	}
 	NeighbourCommunicationScheme() = delete;
 	NeighbourCommunicationScheme(unsigned int commDimms);
+
 	virtual ~NeighbourCommunicationScheme();
+
+	NeighbourCommunicationScheme(NeighbourCommunicationScheme const &) = delete;
+	void operator=(NeighbourCommunicationScheme const &other) = delete;
 
 	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
@@ -55,6 +59,7 @@ public:
 		}
 		return neighbourRanks;
 	}
+
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().

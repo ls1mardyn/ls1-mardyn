@@ -14,11 +14,9 @@
 #include "Domain.h"
 
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms) :
-		_commDimms(commDimms) {
+	_coversWholeDomain{false, false, false}, _commDimms(commDimms){
 	_neighbours.resize(this->getCommDims());
-	for (int d = 0; d < 3; ++d) {
-		_coversWholeDomain[d] = false;
-	}
+
 	_commScheme = new FullShell();
 }
 

@@ -22,6 +22,6 @@ public:
 	 * @param cutoffRadius
 	 * @return vector of regions
 	 */
-	std::vector<HaloRegion> getHaloRegions(HaloRegion initialRegion, double cutoffRadius, bool coversWholeDomain[3]);
+	std::vector<HaloRegion> getHaloRegions(HaloRegion initialRegion, double cutoffRadius, const bool coversWholeDomain[3]);
 };
 

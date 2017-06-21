@@ -14,7 +14,7 @@ FullShell::~FullShell() {
 }
 
 std::vector<HaloRegion> FullShell::getHaloRegions(HaloRegion initialRegion, double cutoffRadius,
-		bool coversWholeDomain[3]) {
+		const bool coversWholeDomain[3]) {
 	std::vector<HaloRegion> regions;
 	int d[3];
 	for (d[0] = -1; d[0] <= 1; d[0]++) {
