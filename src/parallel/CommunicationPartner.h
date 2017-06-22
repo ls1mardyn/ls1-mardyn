@@ -199,7 +199,7 @@ public:
 	}
 
 	//! Handle receive for ParticleData
-	template<typename BufferType = ParticleData>
+	template<typename BufferType>
 	typename std::enable_if<std::is_same<BufferType, ParticleData>::value, void>::type
 	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
 
@@ -235,7 +235,7 @@ public:
 	}
 
 	//! Handle receive for ParticleForceData
-	template<typename BufferType = ParticleData>
+	template<typename BufferType>
 	typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
 	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
 		auto& recvBuf = getRecvBuf<BufferType>();
@@ -256,7 +256,7 @@ public:
 
 			mardyn_assert(original->id() == pData.id);
 
-			BufferType::AddParticleForceDataToMolecule(pData, *original);
+			ParticleForceData::AddParticleForceDataToMolecule(pData, *original);
 		}
 
 	}

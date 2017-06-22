@@ -8,10 +8,10 @@
 
 
 void ParticleForceData::getMPIType(MPI_Datatype &sendPartType) {
-	int blocklengths[] = { 1, 1, 12 }; // 1 unsLong value (id), 1 int value (cid), 12 double values (3r, 3F, 3M, 3Vi)
-	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_INT, MPI_DOUBLE };
+	int blocklengths[] = { 1, 12 }; // 1 unsLong value (id), 12 double values (3r, 3F, 3M, 3Vi)
+	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
 
-	MPI_Aint displacements[3];
+	MPI_Aint displacements[2];
 	ParticleForceData pdata_dummy;
 
 	//if the following statements are not true, then the 12 double values do not follow one after the other!
@@ -19,31 +19,22 @@ void ParticleForceData::getMPIType(MPI_Datatype &sendPartType) {
 	mardyn_assert(&(pdata_dummy.r[0]) + 6 == &(pdata_dummy.M[0]));
 	mardyn_assert(&(pdata_dummy.r[0]) + 9 == &(pdata_dummy.Vi[0]));
 
-#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
 	MPI_CHECK( MPI_Get_address(&pdata_dummy.id, displacements) );
-	MPI_CHECK( MPI_Get_address(&pdata_dummy.cid, displacements + 1) );
-	MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements + 2) );
-#else
-	MPI_CHECK( MPI_Address(&pdata_dummy.id, displacements) );
-	MPI_CHECK( MPI_Address(&pdata_dummy.cid, displacements + 1) );
-	MPI_CHECK( MPI_Address(&pdata_dummy.r[0], displacements + 2) );
-#endif
+	MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements + 1) );
+
 	MPI_Aint base;
 	MPI_CHECK( MPI_Get_address(&pdata_dummy, &base) );
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 2; i++){
 		displacements[i] -= base;
+	}
 
-#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-	MPI_CHECK( MPI_Type_create_struct(3, blocklengths, displacements, types, &sendPartType) );
-#else
-MPI_CHECK( MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType) );
-#endif
+	MPI_CHECK( MPI_Type_create_struct(2, blocklengths, displacements, types, &sendPartType) );
+
 	MPI_CHECK( MPI_Type_commit(&sendPartType) );
 }
 
 void ParticleForceData::MoleculeToParticleData(ParticleForceData &particleStruct, Molecule &molecule) {
 	particleStruct.id = molecule.id();
-	particleStruct.cid = molecule.componentid();
 	particleStruct.r[0] = molecule.r(0);
 	particleStruct.r[1] = molecule.r(1);
 	particleStruct.r[2] = molecule.r(2);
