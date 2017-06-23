@@ -34,7 +34,7 @@ class ParticleForceData;
 
 struct PositionInfo {
 	double _bothLow[3], _bothHigh[3];
-	double _leavingLow[3], _leavingHigh[3];
+	double _leavingLow[3], _leavingHigh[3]; 
 	double _copiesLow[3], _copiesHigh[3];
 	double _shift[3]; //! for periodic boundaries
 	int _offset[3];
@@ -102,7 +102,7 @@ public:
 				mardyn_assert(isForceData<BufferType>());
 				global_log->debug() << "sending forces" << std::endl;
 				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion<ParticleForceData>(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
+					collectMoleculesInRegion<ParticleForceData>(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift);
 				}
 				break;
 			}
@@ -253,7 +253,6 @@ public:
 				global_log->error()<< "Original molecule not found!" << std::endl;
 				mardyn_exit(1);
 			}
-
 			mardyn_assert(original->id() == pData.id);
 
 			ParticleForceData::AddParticleForceDataToMolecule(pData, *original);

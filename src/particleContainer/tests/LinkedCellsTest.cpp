@@ -451,6 +451,7 @@ void LinkedCellsTest::testHalfShellMPI() {
 	//------------------------------------------------------------
 
 	auto domainDecomposition = new DomainDecomposition();
+        //domainDecomposition->setCommunicationScheme("direct");
 	auto filename = "simple-lj.inp";
 	auto cutoff = 1;
 
@@ -529,9 +530,11 @@ void LinkedCellsTest::testHalfShellMPI() {
 		//	std::cout << i->F(2) << " --- " << j->F(2) << "\n";
 
 			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
+                        
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-7*i->F(0)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-7*i->F(1)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), fabs(1e-7*i->F(2)));
+         
 
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0), j->Vi(0), fabs(1e-7*j->Vi(0)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1), j->Vi(1), fabs(1e-7*j->Vi(1)));
