@@ -79,12 +79,10 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 
 	_P2PProcessor = new VectorizedChargeP2PCellProcessor(
 			*(global_simulation->getDomain()));
-#if defined(ENABLE_MPI)
-	if (_adaptive){
-		global_log->error() << "not supported yet" << endl;
-		Simulation::exit(-1);
-	}
-#endif
+#ifdef QUICKSCHED
+    _scheduler = new struct qsched;
+    qsched_init(_scheduler, mardyn_get_max_threads(), qsched_flag_none);
+#endif // QUICKSCEHD
 	if (not _adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(
 				globalDomainLength, bBoxMin, bBoxMax, LJCellLength,
@@ -92,6 +90,10 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 
 	} else {
 		// TODO: Debugging in Progress!
+#if defined(ENABLE_MPI)
+		global_log->error() << "not supported yet" << endl;
+		Simulation::exit(-1);
+#endif
 		//int threshold = 100;
 		_pseudoParticleContainer = new AdaptivePseudoParticleContainer(
 				globalDomainLength, _order, LJCellLength,

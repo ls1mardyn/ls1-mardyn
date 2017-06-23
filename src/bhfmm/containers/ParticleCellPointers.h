@@ -15,6 +15,7 @@
 
 #include "molecules/MoleculeForwardDeclaration.h"
 
+#include "quicksched.h"
 /**
  * simpler copy of the class ParticleCellPointers.
  * Uses pointers, instead of references for main storage,
@@ -65,6 +66,24 @@ public:
 		return _cellDataSoA;
 	}
 
+#ifdef QUICKSCHED
+		qsched_res_t getRescourceId() const {
+			return _resourceId;
+		}
+
+		void setResourceId(qsched_res_t resourceId){
+			_resourceId = resourceId;
+		}
+
+		qsched_task_t getTaskId() const {
+			return _taskId;
+		}
+
+		void setTaskId(qsched_task_t taskId){
+			_taskId = taskId;
+		}
+#endif // QUICKSCHED
+
 private:
 	/**
 	 * \brief A vector of pointers to the Molecules in this cell.
@@ -76,6 +95,11 @@ private:
 	 * \author Johannes Heckl
 	 */
 	CellDataSoA _cellDataSoA;
+
+#ifdef QUICKSCHED
+		qsched_res_t  _resourceId;
+		qsched_task_t _taskId;
+#endif // QUICKSCHED
 };
 
 } /* namespace bhfmm */

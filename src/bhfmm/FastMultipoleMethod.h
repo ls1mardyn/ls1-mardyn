@@ -10,6 +10,7 @@
 
 #include "bhfmm/containers/PseudoParticleContainer.h"
 #include "particleContainer/ParticleContainer.h"
+#include "quicksched.h"
 
 namespace bhfmm {
 
@@ -53,6 +54,14 @@ private:
 	P2MCellProcessor *_P2MProcessor;
 	L2PCellProcessor *_L2PProcessor;
 
+	enum taskType {
+
+	};
+
+	static void runner(int type, void *data);
+#ifdef QUICKSCHED
+	struct qsched *_scheduler;
+#endif // QUICKSCEHD
 };
 
 } /* namespace bhfmm */

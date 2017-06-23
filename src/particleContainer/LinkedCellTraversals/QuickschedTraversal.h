@@ -13,11 +13,7 @@
 #include "Simulation.h"
 #include "particleContainer/LinkedCells.h"
 
-#ifdef QUICKSCHED
-
 #include "quicksched.h"
-
-#endif
 
 using Log::global_log;
 
