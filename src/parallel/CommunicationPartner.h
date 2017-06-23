@@ -199,64 +199,8 @@ public:
 	}
 
 	//! Handle receive for ParticleData
-	template<typename BufferType>
-	typename std::enable_if<std::is_same<BufferType, ParticleData>::value, void>::type
-	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
-
-		auto& recvBuf = getRecvBuf<BufferType>();
-
-		timer("COMMUNICATION_PARTNER_TEST_RECV", true);
-		static std::vector<Molecule> mols;
-		mols.resize(numrecv);
-		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
-		#endif
-		for (int i = 0; i < numrecv; i++) {
-			Molecule m;
-			BufferType::ParticleDataToMolecule(recvBuf[i], m);
-			mols[i] = m;
-		}
-		timer("COMMUNICATION_PARTNER_TEST_RECV", false);
-
-		#ifndef NDEBUG
-		std::ostringstream buf;
-			for (int i = 0; i < numrecv; i++) {
-				buf << mols[i].id() << " ";
-			}
-			global_log->debug() << buf.str() << std::endl;
-		#endif
-
-		timer("COMMUNICATION_PARTNER_TEST_RECV", true);
-		moleculeContainer->addParticles(mols, removeRecvDuplicates);
-		mols.clear();
-		recvBuf.clear();
-		timer("COMMUNICATION_PARTNER_TEST_RECV", false);
-
-	}
-
-	//! Handle receive for ParticleForceData
-	template<typename BufferType>
-	typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
-	testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
-		auto& recvBuf = getRecvBuf<BufferType>();
-
-		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
-		#endif
-		for (int i = 0; i < numrecv; i++) {
-			BufferType& pData = recvBuf[i];
-
-			Molecule* original;
-
-			if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) {
-				// This should not happen
-				global_log->error()<< "Original molecule not found!" << std::endl;
-				mardyn_exit(1);
-			}
-			mardyn_assert(original->id() == pData.id);
-
-			ParticleForceData::AddParticleForceDataToMolecule(pData, *original);
-		}
+	template <class BufferType>
+	void testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv){
 
 	}
 
@@ -454,5 +398,15 @@ private:
 	bool _msgSent, _countReceived, _msgReceived;
 
 };
+
+//typename std::enable_if<std::is_same<BufferType, ParticleData>::value, void>::type
+template <>
+void CommunicationPartner::testRecvHandle<ParticleData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) ;
+
+//! Handle receive for ParticleForceData
+
+//typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
+template<>
+void CommunicationPartner::testRecvHandle<ParticleForceData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) ;
 
 #endif /* COMMUNICATIONPARTNER_H_ */

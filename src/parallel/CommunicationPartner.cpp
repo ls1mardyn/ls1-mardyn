@@ -166,3 +166,65 @@ void CommunicationPartner::timer(const std::string name, const bool start){
 	else
 		global_simulation->stopTimer(name);
 }
+
+
+template <>
+void CommunicationPartner::testRecvHandle<ParticleData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
+
+	auto& recvBuf = getRecvBuf<ParticleData>();
+
+	timer("COMMUNICATION_PARTNER_TEST_RECV", true);
+	static std::vector<Molecule> mols;
+	mols.resize(numrecv);
+	#if defined(_OPENMP)
+	#pragma omp for schedule(static)
+	#endif
+	for (int i = 0; i < numrecv; i++) {
+		Molecule m;
+		ParticleData::ParticleDataToMolecule(recvBuf[i], m);
+		mols[i] = m;
+	}
+	timer("COMMUNICATION_PARTNER_TEST_RECV", false);
+
+	#ifndef NDEBUG
+	std::ostringstream buf;
+		for (int i = 0; i < numrecv; i++) {
+			buf << mols[i].id() << " ";
+		}
+		global_log->debug() << buf.str() << std::endl;
+	#endif
+
+	timer("COMMUNICATION_PARTNER_TEST_RECV", true);
+	moleculeContainer->addParticles(mols, removeRecvDuplicates);
+	mols.clear();
+	recvBuf.clear();
+	timer("COMMUNICATION_PARTNER_TEST_RECV", false);
+
+}
+
+//! Handle receive for ParticleForceData
+
+//typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
+template<>
+void CommunicationPartner::testRecvHandle<ParticleForceData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
+	auto& recvBuf = getRecvBuf<ParticleForceData>();
+
+	#if defined(_OPENMP)
+	#pragma omp for schedule(static)
+	#endif
+	for (int i = 0; i < numrecv; i++) {
+		ParticleForceData& pData = recvBuf[i];
+
+		Molecule* original;
+
+		if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) {
+			// This should not happen
+			global_log->error()<< "Original molecule not found!" << std::endl;
+			mardyn_exit(1);
+		}
+		mardyn_assert(original->id() == pData.id);
+
+		ParticleForceData::AddParticleForceDataToMolecule(pData, *original);
+	}
+
+}
