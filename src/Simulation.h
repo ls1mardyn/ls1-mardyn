@@ -606,6 +606,10 @@ public:
 
 	void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
 
+	/** Global energy log */
+	void initGlobalEnergyLog();
+	void writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure);
+
 private:
 
 	/** Enable final checkpoint after simulation run. */
@@ -656,6 +660,18 @@ private:
 	uint64_t _nFmaxID;
 	double _dFmaxInit;
 	double _dFmaxThreshold;
+
+	/** Global energy log */
+	unsigned long _nNumMolsGlobalEnergyLocal;
+	double _UkinLocal;
+	double _UkinTransLocal;
+	double _UkinRotLocal;
+	unsigned long _nNumMolsGlobalEnergyGlobal;
+	double _UkinGlobal;
+	double _UkinTransGlobal;
+	double _UkinRotGlobal;
+	unsigned long _nWriteFreqGlobalEnergy;
+	std::string _globalEnergyLogFilename;
 };
 #endif /*SIMULATION_H_*/
 
