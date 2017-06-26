@@ -62,157 +62,23 @@ public:
 
 	template<typename BufferType = ParticleData>
 	void initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
-			MessageType msgType, bool removeFromContainer = false) {
-
-		auto& sendBuf = getSendBuf<BufferType>();
-
-		global_log->debug() << _rank << std::endl;
-
-		const unsigned int numHaloInfo = _haloInfo.size();
-		switch (msgType){
-			case LEAVING_AND_HALO_COPIES: {
-				//"This message type requires a ParticleData buffer."
-				mardyn_assert(!isForceData<BufferType>());
-				global_log->debug() << "sending halo and boundary particles together" << std::endl;
-				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, _haloInfo[p]._shift);
-				}
-				break;
-			}
-			case LEAVING_ONLY: {
-				//"This message type requires a ParticleData buffer."
-				mardyn_assert(!isForceData<BufferType>());
-				global_log->debug() << "sending leaving particles only" << std::endl;
-				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift, removeFromContainer);
-				}
-				break;
-			}
-			case HALO_COPIES: {
-				//"This message type requires a ParticleData buffer."
-				mardyn_assert(!isForceData<BufferType>());
-				global_log->debug() << "sending halo particles only" << std::endl;
-				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
-				}
-				break;
-			}
-			case FORCES: {
-				// "A force message type requires a ParticleForceData buffer."
-				mardyn_assert(isForceData<BufferType>());
-				global_log->debug() << "sending forces" << std::endl;
-				for(unsigned int p = 0; p < numHaloInfo; p++){
-					collectMoleculesInRegion<ParticleForceData>(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift);
-				}
-				break;
-			}
-		}
-
-		#ifndef NDEBUG
-			const int n = sendBuf.size();
-			global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
-			std::ostringstream buf;
-			for (int i = 0; i < n; ++i) {
-				buf << sendBuf[i].id << " ";
-			}
-			global_log->debug() << buf.str() << std::endl;
-		#endif
-
-		MPI_CHECK(MPI_Isend(sendBuf.data(), (int ) sendBuf.size(), type, _rank, 99, comm, _sendRequest));
-		_msgSent = _countReceived = _msgReceived = false;
-	}
+				MessageType msgType, bool removeFromContainer = false);
 
 	template<typename BufferType = ParticleData>
-	bool testSend() {
-
-		auto& sendBuf = getSendBuf<BufferType>();
-
-		if (not _msgSent) {
-			int flag = 0;
-			MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus));
-			if (flag == 1) {
-				_msgSent = true;
-				sendBuf.clear();
-			}
-		}
-		return _msgSent;
-	}
+	bool testSend();
 
 	template<typename BufferType = ParticleData>
-	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type) {
+	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-		auto& recvBuf = getRecvBuf<BufferType>();
+	template<typename BufferType = ParticleData>
+	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
 
-		if (not _countReceived) {
-			int flag = 0;
-			MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
-			if (flag == true) {
-				_countReceived = true;
-				_countTested = 0;
-				int numrecv;
-				MPI_CHECK(MPI_Get_count(_recvStatus, type, &numrecv));
-	                        #ifndef NDEBUG
-	                                global_log->debug() << "Received particleCount from " << _rank << std::endl;
-	                                global_log->debug() << "Preparing to receive " << numrecv << " particles." << std::endl;
-	                        #endif
-				recvBuf.resize(numrecv);
-				MPI_CHECK(MPI_Irecv(recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
-			}
-		}
-		return _countReceived;
-	}
-
-	template<typename BufferType = ParticleData >
-	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
-		using Log::global_log;
-
-		auto& recvBuf = getRecvBuf<BufferType>();
-
-		if (_countReceived and not _msgReceived) {
-			int flag = 1;
-			if (_countTested > 10) {
-				// some MPI (Intel, IBM) implementations can produce deadlocks using MPI_Test without any MPI_Wait
-				// this fallback just ensures, that messages get received properly.
-				MPI_Wait(_recvRequest, _recvStatus);
-				_countTested = 0;
-				flag = 1;
-			} else {
-				MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
-			}
-			if (flag == true) {
-				_msgReceived = true;
-				int numrecv = recvBuf.size();
-
-				#ifndef NDEBUG
-					global_log->debug() << "Receiving particles from " << _rank << std::endl;
-					global_log->debug() << "Buffer contains " << numrecv << " particles with IDs " << std::endl;
-				#endif
-
-				//Code for different buffer types
-				testRecvHandle<BufferType>(moleculeContainer, removeRecvDuplicates, numrecv);
-
-			} else {
-				++_countTested;
-			}
-		}
-		return _msgReceived;
-	}
-
-	//! Handle receive for ParticleData
 	template <class BufferType>
-	void testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv){
+	void testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv);
 
-	}
+	template<typename BufferType = ParticleData>
+	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
 
-	template<typename BufferType = ParticleData >
-	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type){
-
-		auto& recvBuf = getRecvBuf<BufferType>();
-
-		_countReceived = true;
-		recvBuf.resize(numParticles);
-		MPI_CHECK(MPI_Irecv(recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
-	}
 
 	void deadlockDiagnosticSendRecv();
 	void deadlockDiagnosticSend();
@@ -265,88 +131,8 @@ public:
 
 private:
 	template<typename BufferType = ParticleData>
-	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3],
-			const bool removeFromContainer = false){
-		using std::vector;
-
-		auto& sendBuf = getSendBuf<BufferType>();
-
-		timer("COMMUNICATION_PARTNER_INIT_SEND", true);
-		int prevNumMols = sendBuf.size();
-		vector<vector<Molecule>> threadData;
-		vector<int> prefixArray;
-
-		#if defined (_OPENMP)
-		#pragma omp parallel shared(threadData)
-		#endif
-		{
-			const int numThreads = mardyn_get_num_threads();
-			const int threadNum = mardyn_get_thread_num();
-			RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(lowCorner, highCorner);
-			RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
-
-			#if defined (_OPENMP)
-			#pragma omp master
-			#endif
-			{
-				threadData.resize(numThreads);
-				prefixArray.resize(numThreads + 1);
-			}
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			for (RegionParticleIterator i = begin; i != end; ++i) {
-				//traverse and gather all molecules in the cells containing part of the box specified as parameter
-				//i is a pointer to a Molecule; (*i) is the Molecule
-				threadData[threadNum].push_back(*i);
-				if (removeFromContainer) {
-					i.deleteCurrentParticle();
-				}
-			}
-
-			prefixArray[threadNum + 1] = threadData[threadNum].size();
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			//build the prefix array and resize the send buffer
-			#if defined (_OPENMP)
-			#pragma omp master
-			#endif
-			{
-				int totalNumMols = 0;
-				//build the prefix array
-				prefixArray[0] = 0;
-				for(int i = 1; i <= numThreads; i++){
-					prefixArray[i] += prefixArray[i - 1];
-					totalNumMols += threadData[i - 1].size();
-				}
-
-				//resize the send buffer
-				sendBuf.resize(prevNumMols + totalNumMols);
-			}
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			//reduce the molecules in the send buffer and also apply the shift
-			int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
-			for(int i = 0; i < myThreadMolecules; i++){
-				BufferType m;
-				BufferType::MoleculeToParticleData(m, threadData[threadNum][i]);
-				m.r[0] += shift[0];
-				m.r[1] += shift[1];
-				m.r[2] += shift[2];
-
-				sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
-			}
-		}
-		timer("COMMUNICATION_PARTNER_INIT_SEND", false);
-	}
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
+			const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
 
 	//! Decide if T is ParticleForceData or ParticleData. Fail if T is something else.
 	template<typename BufferType>
@@ -381,11 +167,6 @@ private:
 		return _sendBuf;
 	}
 
-	//! As global_simulation is only available in the cpp file, start and stop timer there.
-	//! @param name Name of the timer
-	//! @param start Start (true) or stop (false) the timer
-	void timer(const std::string name, const bool start);
-
 	int _rank;
     int _countTested;
 	std::vector<PositionInfo> _haloInfo;
@@ -398,15 +179,4 @@ private:
 	bool _msgSent, _countReceived, _msgReceived;
 
 };
-
-//typename std::enable_if<std::is_same<BufferType, ParticleData>::value, void>::type
-template <>
-void CommunicationPartner::testRecvHandle<ParticleData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) ;
-
-//! Handle receive for ParticleForceData
-
-//typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
-template<>
-void CommunicationPartner::testRecvHandle<ParticleForceData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) ;
-
 #endif /* COMMUNICATIONPARTNER_H_ */
