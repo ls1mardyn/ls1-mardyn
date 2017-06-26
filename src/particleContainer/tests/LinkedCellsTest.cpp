@@ -416,10 +416,6 @@ void LinkedCellsTest::testHalfShell() {
 		auto j = beginHS;
 		for (auto i = begin; i != end; ++i, ++j) {
 
-			std::cout << i->F(0) << " --- " << j->F(0) << "\n";
-			std::cout << i->F(1) << " --- " << j->F(1) << "\n";
-			std::cout << i->F(2) << " --- " << j->F(2) << "\n";
-
 			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-7*i->F(0)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-7*i->F(1)));
@@ -452,7 +448,7 @@ void LinkedCellsTest::testHalfShellMPI() {
 
 	auto domainDecomposition = new DomainDecomposition();
         //domainDecomposition->setCommunicationScheme("direct");
-	auto filename = "simple-lj.inp";
+	auto filename = "LinkedCellsHS-MPI.inp";
 	auto cutoff = 1;
 
 	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
