@@ -34,6 +34,10 @@ UNIT_TESTS ?= 0
 # build with VTK support
 VTK ?= 0
 
+# bind to TBB proxy malloc
+TBB ?= 0
+
+# support generators in tools/gui - will be deprecated soon (as of June 2017)
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
@@ -65,16 +69,12 @@ ifeq ($(PRECISION), MIXED)
   $(error ERROR: MIXED precision not supported yet)
 endif
 
-not_supported_single_vectorizations := KNC_MASK KNC_G_S KNL_MASK KNL_G_S 
 ifeq ($(PRECISION), SINGLE)
   $(info # WARNING)
   $(info # WARNING)
   $(info # WARNING: you are selecting SINGLE precision instead of DOUBLE. Proceed at own risk! )
   $(info # WARNING)
   $(info # WARNING)
-  ifneq (, $(filter $(VECTORIZE_CODE), $(not_supported_single_vectorizations)))
-    $(error ERROR: SINGLE precision not yet extended to 512-bits)
-  endif
 endif
 
 # Set World Record?
@@ -90,6 +90,8 @@ ENABLE_OVERLAPPING ?= 0
 OPENMP ?= 0
 
 PAPI ?= 0
+
+ENABLE_QUICKSCHED ?= 0
 
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
@@ -121,8 +123,8 @@ OBJECTS = $(SOURCES:.cpp=.o)
 INCLUDES = -I$(SRCDIR) -isystem $(SRCDIR)/External
 
 BINARY_BASENAME = MarDyn
-ifneq ("$(wildcard $(SRCDIR)/.svn)","")
-  $(info Building from a svn version.)
+ifneq ("$(wildcard $(SRCDIR)/../.svn)","")
+  $(info Building from an svn version.)
   SVN_VERSION = $(shell svnversion | sed -e "s/:/-/")
   ifneq ($(SVN_VERSION),)
     BINARY = $(BINARY_BASENAME)_$(SVN_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
@@ -207,15 +209,29 @@ ifeq ($(VTK), 1)
   include $(VTK_MAKEFILE)
 endif
 
+ifeq ($(TBB), 1)
+  TBB_MAKEFILE := $(realpath $(MAKEFILEDIR)/tbbmalloc.mk ) 
+  include $(TBB_MAKEFILE)
+endif
+
 ifeq ($(USE_FFTW), 1)
   FFTW_MAKEFILE := $(realpath $(MAKEFILEDIR)/fft.mk ) 
   include $(FFTW_MAKEFILE)
+endif
+
+ifeq ($(ENABLE_QUICKSCHED), 1)
+  QUICKSCHED_MAKEFILE := $(realpath $(MAKEFILEDIR)/quicksched.mk )
+  include $(QUICKSCHED_MAKEFILE)
 endif
 
 $(BINARY): $(OBJECTS)
 	@echo "building $(BINARY)"
 	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
 	$(shell if [ ! -f $(BINARY_BASENAME) -o -L $(BINARY_BASENAME) ]; then ln -sf $(BINARY) $(BINARY_BASENAME); fi)
+
+# make sure C and C++ files are compiled with the same flags excluding -std
+%.o: %.c
+	$(DEPCOMP) $(CXX) -x c $(CFLAGS) $(filter-out -std=% -pedantic, $(CXXFLAGS)) -c $< -o $@
 
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@

@@ -40,6 +40,7 @@
 #include "io/RDF.h"
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
+#include "io/CubicGridGeneratorInternal.h"
 #include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
 
@@ -100,7 +101,17 @@ Simulation::Simulation()
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.),
-	_dFmaxThreshold(0.)
+	_dFmaxThreshold(0.),
+	_nNumMolsGlobalEnergyLocal(0),
+	_UkinLocal(0.),
+	_UkinTransLocal(0.),
+	_UkinRotLocal(0.),
+	_nNumMolsGlobalEnergyGlobal(0),
+	_UkinGlobal(0.),
+	_UkinTransGlobal(0.),
+	_UkinRotGlobal(0.),
+	_nWriteFreqGlobalEnergy(100),
+	_globalEnergyLogFilename("global_energy.log")
 {
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
@@ -706,6 +717,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			else if(generatorName == "mkTcTS") {
 				_inputReader = new MkTcTSGenerator();
 			}
+			else if (generatorName == "CubicGridGenerator") {
+				_inputReader = new CubicGridGeneratorInternal();
+			}
 			else {
 				global_log->error() << "Unknown generator: " << generatorName << endl;
 				Simulation::exit(1);
@@ -1023,10 +1037,12 @@ void Simulation::prepare_start() {
 				_domain);
 	}
 
+	/** global energy log */
+	this->initGlobalEnergyLog();
+
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
-
 }
 
 void Simulation::simulate() {
@@ -1552,6 +1568,8 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
+
+	this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
 }
 
 void Simulation::finalize() {
@@ -1713,4 +1731,81 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 	mardyn_assert(flopRateWriter != nullptr);
 
 	flopRateWriter->measureFLOPS(cont, simstep);
+}
+
+void Simulation::initGlobalEnergyLog()
+{
+	global_log->info() << "Init global energy log." << endl;
+
+#ifdef ENABLE_MPI
+	int rank = _domainDecomposition->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	std::stringstream outputstream;
+	outputstream.write(reinterpret_cast<const char*>(&_nWriteFreqGlobalEnergy), 8);
+
+	ofstream fileout(_globalEnergyLogFilename.c_str(), std::ios::out | std::ios::binary);
+	fileout << outputstream.str();
+	fileout.close();
+}
+
+void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
+{
+	const ParticleIterator begin = _moleculeContainer->iteratorBegin();
+	const ParticleIterator end = _moleculeContainer->iteratorEnd();
+
+	// sample energy
+	for (ParticleIterator mi = begin; mi != end; ++mi)
+	{
+		_nNumMolsGlobalEnergyLocal++;
+		_UkinLocal += mi->U_kin();
+		_UkinTransLocal += mi->U_trans();
+		_UkinRotLocal += mi->U_rot();
+	}
+
+	if(0 != _simstep % _nWriteFreqGlobalEnergy)
+		return;
+
+	// calculate global values
+	_domainDecomposition->collCommInit(4);
+	_domainDecomposition->collCommAppendUnsLong(_nNumMolsGlobalEnergyLocal);
+	_domainDecomposition->collCommAppendDouble(_UkinLocal);
+	_domainDecomposition->collCommAppendDouble(_UkinTransLocal);
+	_domainDecomposition->collCommAppendDouble(_UkinRotLocal);
+	_domainDecomposition->collCommAllreduceSum();
+	_nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
+	_UkinGlobal = _domainDecomposition->collCommGetDouble();
+	_UkinTransGlobal = _domainDecomposition->collCommGetDouble();
+	_UkinRotGlobal = _domainDecomposition->collCommGetDouble();
+	_domainDecomposition->collCommFinalize();
+
+	// reset local values
+	_nNumMolsGlobalEnergyLocal = 0;
+	_UkinLocal = 0.;
+	_UkinTransLocal = 0.;
+	_UkinRotLocal = 0.;
+
+#ifdef ENABLE_MPI
+	int rank = _domainDecomposition->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	std::stringstream outputstream;
+
+	outputstream.write(reinterpret_cast<const char*>(&_nNumMolsGlobalEnergyGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&globalUpot), 8);
+	outputstream.write(reinterpret_cast<const char*>(&_UkinGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&_UkinTransGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&_UkinRotGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&globalT), 8);
+	outputstream.write(reinterpret_cast<const char*>(&globalPressure), 8);
+
+	ofstream fileout(_globalEnergyLogFilename.c_str(), std::ios::app | std::ios::binary);
+	fileout << outputstream.str();
+	fileout.close();
 }

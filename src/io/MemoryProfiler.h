@@ -20,6 +20,9 @@ public:
 };
 
 class MemoryProfiler {
+private:
+	std::vector<MemoryProfilable **> _list;
+	int _hugePageSize; // in kB
 public:
 	MemoryProfiler();
 
@@ -28,8 +31,6 @@ public:
 	void doOutput(const std::string& stepInfo = std::string());
 
 private:
-	std::vector<MemoryProfilable **> _list;
-
 	//returns size of cached memory in kB (0 if error occurs)
 	unsigned long long getCachedSize();
 	void printGeneralInfo(const std::string& string);

@@ -120,6 +120,10 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	// only executed once
 	this->PrepareWriteControl();
 
+	// check if at least one file has to be created
+	if(_numFiles < 1)
+		return;
+
 	_frameCount = 0;
 	_strOutputPrefixCurrent = _vecFilePrefixes.at(_nFileIndex);
 	_frameCountMax = _vecFramesPerFile.at(_nFileIndex);
@@ -480,12 +484,21 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 #endif
 
 	// split data to multiple files
-	if(_frameCount == _frameCountMax && (_nFileIndex+1) < _numFiles)
-		this->MultiFileApproachReset(particleContainer, domainDecomp, domain);
+	if(_frameCount == _frameCountMax)
+	{
+		if( (_nFileIndex+1) < _numFiles)
+			this->MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
+		else
+			_nextRecSimstep = 0;  // stop sampling
+	}
 }
 
-void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/) {
-	//fill seektable
+void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/)
+{
+	// check if at least one file has to be created
+	if(_numFiles < 1)
+		return;
+
 	stringstream filenamestream;
 	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
@@ -618,6 +631,13 @@ void MmpldWriter::PrepareWriteControl()
 	else
 		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() ) ? _stopTimestep  : _simulation.getNumTimesteps();
 
+	if(_stopTimestep < _startTimestep)
+	{
+		_numFiles = 0;
+		global_log->warning() << "MmpldWriter: Recording time not within simulation time. No frames will be recorded!" << endl;
+		return;
+	}
+
 	uint64_t numTimesteps = _stopTimestep - _startTimestep;
 	uint64_t numFramesTotal = numTimesteps/_writeFrequency;
 	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
@@ -633,7 +653,10 @@ void MmpldWriter::PrepareWriteControl()
 #endif
 
 	// init frames per file vector
-	_numFiles = numFramesTotal/_numFramesPerFile;
+	if(_numFramesPerFile > 0)
+		_numFiles = numFramesTotal/_numFramesPerFile;
+	else
+		_numFiles = 1;
 	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
 	_vecFramesPerFile.at(0) += 1;  // +1 frame in first file: start configuration
 
@@ -646,7 +669,7 @@ void MmpldWriter::PrepareWriteControl()
 	}
 
 	// handle the case: numFramesTotal not a multiple of _numFramesPerFile
-	if(0 != numFramesTotal % _numFramesPerFile)
+	if(_numFramesPerFile > 0 && 0 != numFramesTotal % _numFramesPerFile)
 	{
 		_numFiles++;
 		_vecFramesPerFile.push_back(numFramesTotal % _numFramesPerFile);

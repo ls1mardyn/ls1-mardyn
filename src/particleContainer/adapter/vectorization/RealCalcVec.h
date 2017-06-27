@@ -10,7 +10,11 @@
 
 #include "SIMD_TYPES.h"
 #include "MaskVec.h"
+#include "utils/mardyn_assert.h"
+#include <fstream>
 #include <cmath>
+
+#include "utils/Logger.h"
 
 namespace vcp {
 
@@ -499,6 +503,258 @@ public:
 #endif
 	}
 
+	/**
+	 * \brief	Calculates 1/d and applies mask m on the result
+	 * \detail	This could also be done by directly using operator / and method apply_mask(..),
+	 * 			but this method is faster and more precise in some cases, because it calculates additional iterations of the Newton-Raphson method if beneficial.
+	 * 			Furthermore, in DEBUG-mode it does an additional check for NaNs before returning the result.
+	 */
+	// Newton-Raphson division:
+	// take the _mm*_rcp version with highest bit-precision
+	// and iterate until the number of bits is >53 (DPDP) or >22 (SPSP, SPDP)
+	//
+	// An iteration of Newton-Raphson looks like this:
+	// approximation * fnmadd(original_value, approximation, set1(2.0))
+	//
+	// AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
+	// AVX - slow-down: fma is not available; even more pressure on multiply-add imbalance? Leaving it out
+	// KNC - small speed-up, because _mm512_div actually already uses Newton-Raphson, but doesn't assume that conversions double -> float are safe?
+	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
+	static RealCalcVec fastReciprocal_mask(const RealCalcVec& d, const MaskVec& m) {
+
+		/* reciprocal */
+		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const vcp_real_calc_vec inv_unmasked = _mm256_rcp_ps(d); //12bit
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+					const RealCalcVec inv_prec = _mm512_mask_rcp23_ps(zero(), m, d); //23bit
+				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
+					const RealCalcVec inv_prec = _mm512_maskz_rcp28_ps(m, d); //28bit
+				#endif
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec inv_unmasked = set1(1.0) / d;
+			#endif
+		#else /* VCP_DPDP */
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const __m128 denom_ps = _mm256_cvtpd_ps(d);
+				const __m128 recip_ps = _mm_rcp_ps(denom_ps);
+
+				const vcp_real_calc_vec inv_unmasked = _mm256_cvtps_pd(recip_ps); //12bit
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+					// convert to single and truncate; no exceptions
+				    const __m512 denom_ps = _mm512_mask_cvt_roundpd_pslo(_mm512_setzero_ps(), m, d, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+				    const __m512 D_recip_ps = _mm512_mask_rcp23_ps(_mm512_setzero_ps(), static_cast<__mmask16>(m), denom_ps);
+
+				    const RealCalcVec inv = _mm512_mask_cvtpslo_pd(zero(), m, D_recip_ps); //23 bit
+				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
+					const RealCalcVec inv = _mm512_maskz_rcp28_pd(m, d); //28bit
+				#endif
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec inv_unmasked = set1(1.0) / d;
+			#endif
+		#endif
+
+		/* mask and/or N-R-iterations if necessary */
+		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const RealCalcVec inv = apply_mask(inv_unmasked, m); //12bit
+
+				const RealCalcVec inv_prec = inv * fnmadd(d, inv, set1(2.0)); //24bit, 1 N-R-Iteration
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				//do nothing
+				//no Newton-Raphson required in SP, as the rcp-intrinsic is already precise enough
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec inv_prec = apply_mask(inv_unmasked, m);
+			#endif
+		#else /* VCP_DPDP */
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const RealCalcVec inv = apply_mask(inv_unmasked, m); //12bit
+
+				const RealCalcVec inv_24bits = inv * fnmadd(d, inv, set1(2.0)); 				//24bit, 1. N-R-Iteration
+				const RealCalcVec inv_48bits = inv_24bits * fnmadd(d, inv_24bits, set1(2.0));	//48bit, 2. N-R-Iteration
+				const RealCalcVec inv_prec = inv_48bits * fnmadd(d, inv_48bits, set1(2.0)); 	//96bit, 3. N-R-Iteration
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+				    const RealCalcVec inv_46bits = inv * fnmadd(d, inv, set1(2.0));				//46bit, 1. N-R-Iteration
+				    const RealCalcVec inv_prec = inv_46bits * fnmadd(d, inv_46bits, set1(2.0)); //92bit, 2. N-R-Iteration
+				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
+				    const RealCalcVec inv_prec = inv * fnmadd(d, inv, set1(2.0)); //56bit, 1 N-R-Iteration
+				#endif
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec inv_prec = apply_mask(inv_unmasked, m);
+			#endif
+		#endif
+
+		/* check for NaNs */
+		#ifndef NDEBUG
+			//set nan_found to zero only if NO NaN is found
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+				#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+					int nan_found = std::isnan(inv_prec) ? 1 : 0;
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+					//movemask-intrinsic is used to get a comparable int value out of vcp_real_calc_vec
+					int nan_found = _mm_movemask_ps(_mm_cmpunord_ps(inv_prec, inv_prec));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+					__m128 low = _mm256_castps256_ps128(inv_prec);
+					__m128 high = _mm256_extractf128_ps(inv_prec, 1);
+					int nan_found = _mm_movemask_ps(_mm_cmpunord_ps(low, high));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+					//GCC doesnt know the convenient instruction, so the explicit comparison is used (at the moment)
+					//vcp_mask_vec nan_found = _mm512_cmpunord_ps_mask(inv_prec, inv_prec);
+					vcp_mask_vec nan_found = _mm512_cmp_ps_mask(inv_prec, inv_prec, _CMP_UNORD_Q);
+				#endif
+			#else /* VCP_DPDP */
+				#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+					int nan_found = std::isnan(inv_prec) ? 1 : 0;
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+					int nan_found = _mm_movemask_pd(_mm_cmpunord_pd(inv_prec, inv_prec));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+					__m128d low = _mm256_castpd256_pd128(inv_prec);
+					__m128d high = _mm256_extractf128_pd(inv_prec, 1);
+					int nan_found = _mm_movemask_pd(_mm_cmpunord_pd(low, high));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+					vcp_mask_vec nan_found = _mm512_cmp_pd_mask(inv_prec, inv_prec, _CMP_UNORD_Q);
+				#endif
+			#endif
+			if (nan_found) {
+				Log::global_log->error() << "NaN detected! Perhaps forceMask is wrong" << std::endl;
+				mardyn_assert(false);
+			}
+		#endif
+
+		return inv_prec;
+	} //fastReciprocal_mask(..)
+
+	/**
+	 * \brief	Calculates 1/sqrt(d) and applies mask m on the result
+	 * \detail	This could also be done by directly using operator / and methods apply_mask(..), sqrt()
+	 * 			but this method is faster because it makes use of special intrinsics.
+	 * 			Makes use of Newton-Raphson iterations if necessary to acquire the necessary precision
+	 * 			Furthermore, in DEBUG-mode it does an additional check for NaNs before returning the result.
+	 */
+	// Newton-Raphson division:
+	// take the _mm*_rsqrt version with highest bit-precision
+	// and iterate until the number of bits is >53 (DPDP) or >22 (SPSP, SPDP)
+	//
+	// An iteration of Newton-Raphson looks like this:
+	// y(n+1) = y(n) * (1.5 - (d / 2) * y(n)²)	or
+	// approximation * fnmadd(original_value * 0.5, approximation * approximation, set1(1.5))
+	//
+	// AVX2 - AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
+	// AVX - not supported
+	// KNC - small speed-up, because _mm512_div actually already uses Newton-Raphson, but doesn't assume that conversions double -> float are safe?
+	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
+	static RealCalcVec fastReciprocSqrt_mask(const RealCalcVec& d, const MaskVec& m) {
+
+		/* reciprocal sqrt */
+		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const vcp_real_calc_vec invSqrt_unmasked = _mm256_rsqrt_ps(d); //12bit
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+					const RealCalcVec invSqrt_prec = _mm512_mask_rsqrt23_ps(zero(), m, d); //23bit
+				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
+					const RealCalcVec invSqrt_prec = _mm512_maskz_rsqrt28_ps(m, d); //28bit
+				#endif
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec invSqrt_unmasked = set1(1.0) / sqrt(d);
+			#endif
+		#else /* VCP_DPDP */
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const __m128 denom_ps = _mm256_cvtpd_ps(d);
+				const __m128 recipSqrt_ps = _mm_rsqrt_ps(denom_ps);
+
+				const vcp_real_calc_vec invSqrt_unmasked = _mm256_cvtps_pd(recipSqrt_ps); //12bit
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+					// convert to single and truncate; no exceptions
+				    const __m512 denom_ps = _mm512_mask_cvt_roundpd_pslo(_mm512_setzero_ps(), m, d, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+				    const __m512 D_recip_ps = _mm512_mask_rsqrt23_ps(_mm512_setzero_ps(), static_cast<__mmask16>(m), denom_ps);
+
+				    const RealCalcVec invSqrt = _mm512_mask_cvtpslo_pd(zero(), m, D_recip_ps); //23 bit
+				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
+				    const RealCalcVec invSqrt = _mm512_maskz_rsqrt28_pd(m, d); //28bit
+				#endif
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec invSqrt_unmasked = set1(1.0) / sqrt(d);
+			#endif
+		#endif
+
+		/* mask and/or N-R-iterations if necessary */
+		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const RealCalcVec invSqrt = apply_mask(invSqrt_unmasked, m); //12bit
+
+				const RealCalcVec invSqrt_prec = invSqrt * fnmadd(d * set1(0.5), invSqrt * invSqrt, set1(1.5)); //24bit, 1 N-R-Iteration
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				//do nothing
+				//no Newton-Raphson required in SP, as the rsqrt-intrinsic is already precise enough
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec invSqrt_prec = apply_mask(invSqrt_unmasked, m);
+			#endif
+		#else /* VCP_DPDP */
+			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
+				const RealCalcVec invSqrt = apply_mask(invSqrt_unmasked, m); //12bit
+
+				const RealCalcVec d2 = d * set1(0.5);
+				const RealCalcVec invSqrt_24bits = invSqrt 		  * fnmadd(d2, invSqrt * invSqrt, set1(1.5)); 				//24bit, 1. N-R-Iteration
+				const RealCalcVec invSqrt_48bits = invSqrt_24bits * fnmadd(d2, invSqrt_24bits * invSqrt_24bits, set1(1.5));	//48bit, 2. N-R-Iteration
+				const RealCalcVec invSqrt_prec   = invSqrt_48bits * fnmadd(d2, invSqrt_48bits * invSqrt_48bits, set1(1.5)); //96bit, 3. N-R-Iteration
+			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+					const RealCalcVec d2 = d * set1(0.5);
+				    const RealCalcVec invSqrt_46bits = invSqrt * fnmadd(d2, invSqrt * invSqrt, set1(1.5));					  //46bit, 1. N-R-Iteration
+				    const RealCalcVec invSqrt_prec = invSqrt_46bits * fnmadd(d2, invSqrt_46bits * invSqrt_46bits, set1(1.5)); //92bit, 2. N-R-Iteration
+				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
+				    const RealCalcVec invSqrt_prec = invSqrt * fnmadd(d * set1(0.5), invSqrt * invSqrt, set1(1.5)); //56bit, 1 N-R-Iteration
+				#endif
+			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
+				const RealCalcVec invSqrt_prec = apply_mask(invSqrt_unmasked, m);
+			#endif
+		#endif
+
+		/* check for NaNs */
+		#ifndef NDEBUG
+			//set nan_found to zero only if NO NaN is found
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+				#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+					int nan_found = std::isnan(invSqrt_prec) ? 1 : 0;
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+					//movemask-intrinsic is used to get a comparable int value out of vcp_real_calc_vec
+					int nan_found = _mm_movemask_ps(_mm_cmpunord_ps(invSqrt_prec, invSqrt_prec));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+					__m128 low = _mm256_castps256_ps128(invSqrt_prec);
+					__m128 high = _mm256_extractf128_ps(invSqrt_prec, 1);
+					int nan_found = _mm_movemask_ps(_mm_cmpunord_ps(low, high));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+					//GCC doesnt know the convenient instruction, so the explicit comparison is used (at the moment)
+					//vcp_mask_vec nan_found = _mm512_cmpunord_ps_mask(invSqrt_prec, invSqrt_prec);
+					vcp_mask_vec nan_found = _mm512_cmp_ps_mask(invSqrt_prec, invSqrt_prec, _CMP_UNORD_Q);
+				#endif
+			#else /* VCP_DPDP */
+				#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+					int nan_found = std::isnan(invSqrt_prec) ? 1 : 0;
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+					int nan_found = _mm_movemask_pd(_mm_cmpunord_pd(invSqrt_prec, invSqrt_prec));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+					__m128d low = _mm256_castpd256_pd128(invSqrt_prec);
+					__m128d high = _mm256_extractf128_pd(invSqrt_prec, 1);
+					int nan_found = _mm_movemask_pd(_mm_cmpunord_pd(low, high));
+				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+					vcp_mask_vec nan_found = _mm512_cmp_pd_mask(invSqrt_prec, invSqrt_prec, _CMP_UNORD_Q);
+				#endif
+			#endif
+			if (nan_found) {
+				Log::global_log->error() << "NaN detected! Perhaps forceMask is wrong" << std::endl;
+				mardyn_assert(false);
+			}
+		#endif
+
+		return invSqrt_prec;
+	} //fastReciprocSqrt_mask(..)
+
 	static RealCalcVec apply_mask(const RealCalcVec& d, const MaskVec& m) {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if VCP_VEC_TYPE == VCP_NOVEC
@@ -601,7 +857,7 @@ public:
 	#endif
 #endif
 	}
-}; /* class DoubleVec */
+}; /* class RealCalcVec */
 
 } /* namespace vcp */
 

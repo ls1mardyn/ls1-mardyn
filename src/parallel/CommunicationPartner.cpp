@@ -6,9 +6,13 @@
  */
 
 #include "CommunicationPartner.h"
+#include "particleContainer/ParticleContainer.h"
+#include "molecules/Molecule.h"
 #include <cmath>
 #include <sstream>
+#include "WrapOpenMP.h"
 #include "Simulation.h"
+#include "ParticleData.h"
 
 CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
 		const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {

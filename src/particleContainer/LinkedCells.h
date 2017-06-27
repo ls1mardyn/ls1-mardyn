@@ -8,9 +8,13 @@
 #include "particleContainer/ParticleIterator.h"
 #include "particleContainer/RegionParticleIterator.h"
 #include "particleContainer/ParticleCell.h"
-#include "particleContainer/LinkedCellTraversals/CellPairTraversals.h"
 
 #include "WrapOpenMP.h"
+
+template<class ParticleCellTemplate>
+class CellPairTraversals;
+class TraversalTuner;
+
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -82,7 +86,7 @@ public:
 	);
 
 	//! Default constructor
-	LinkedCells() : ParticleContainer(), _traversal(nullptr) {}
+	LinkedCells();
 	//! Destructor
 	~LinkedCells();
 
@@ -115,6 +119,7 @@ public:
 
 	void update_via_copies();
 	void update_via_coloring();
+	void update_via_traversal();
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
@@ -180,7 +185,7 @@ public:
 	}
 
 	double* cellLength() {
-		return _cellLength; 
+		return _cellLength;
 	}
 	
 	/**
@@ -235,7 +240,7 @@ public:
 		return ParticleIterator(t, this, offset, stride);
 	}
 	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
-	
+
 	ParticleIterator iteratorEnd () {
 		return ParticleIterator :: invalid();
 	}
@@ -257,7 +262,7 @@ public:
 		return &(_cells.at(cellIndex));
 	}
 
-	bool requiresForceExchange() const {return _traversal->requiresForceExchange();}
+	bool requiresForceExchange() const;
 
 private:
 	//####################################
@@ -340,7 +345,7 @@ private:
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
 
-	CellPairTraversals<ParticleCell> * _traversal;
+    TraversalTuner *_traversalTuner;
 
 	// addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
@@ -368,9 +373,6 @@ private:
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
 	bool _cellsValid;
-
-	enum Traversal{Original, HS}; //!< Traversal types
-	Traversal _traversalSelected = Original;  //!< Selected traversal type
 };
 
 #endif /* LINKEDCELLS_H_ */

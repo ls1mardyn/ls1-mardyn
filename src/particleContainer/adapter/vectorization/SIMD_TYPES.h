@@ -51,7 +51,8 @@
 
 
 // The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
-#if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX) || defined(VCP_VEC_AVX2)
+#if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX) || defined(VCP_VEC_AVX2) || \
+	defined(VCP_VEC_KNL) || defined(VCP_VEC_KNL_GATHER) || defined(VCP_VEC_KNC) || defined(VCP_VEC_KNC_GATHER)
 	#error conflicting macro definitions
 #endif
 

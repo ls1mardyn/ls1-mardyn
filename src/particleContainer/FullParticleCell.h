@@ -105,7 +105,7 @@ public:
 
 	void buildSoACaches() override;
 
-	void reserveMoleculeStorage(size_t numMols) override;
+	void increaseMoleculeStorage(size_t numExtraMols) override;
 
 	virtual size_t getMoleculeVectorDynamicSize() const override {
 		return _molecules.size() * sizeof(Molecule) + _leavingMolecules.size() * sizeof(Molecule);

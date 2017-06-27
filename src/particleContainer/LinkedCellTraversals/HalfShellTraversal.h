@@ -10,6 +10,9 @@
 
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
 
+struct HalfShellTraversalData : OriginalCellPairTraversalData {
+};
+
 template <class CellTemplate>
 class HalfShellTraversal: public OriginalCellPairTraversal<CellTemplate> {
 	using OriginalCellPairTraversal<CellTemplate>::OriginalCellPairTraversal; // Inheriting constructors

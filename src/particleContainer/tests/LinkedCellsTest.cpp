@@ -17,6 +17,7 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/LinkedCellTraversals/HalfShellTraversal.h"
+#include "particleContainer/TraversalTuner.h"
 
 TEST_SUITE_REGISTRATION(LinkedCellsTest);
 
@@ -353,8 +354,8 @@ void LinkedCellsTest::testHalfShell() {
 
 	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
-	containerHS->_traversalSelected = LinkedCells::Traversal::HS;
-	containerHS->_traversal = nullptr;
+	containerHS->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::HS;
+	containerHS->_traversalTuner->findOptimalTraversal();
 	containerHS->initializeTraversal();
 
 	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
@@ -453,8 +454,8 @@ void LinkedCellsTest::testHalfShellMPI() {
 
 	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
-	containerHS->_traversalSelected = LinkedCells::Traversal::HS;
-	containerHS->_traversal = nullptr;
+	containerHS->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::HS;
+	containerHS->_traversalTuner->findOptimalTraversal();
 	containerHS->initializeTraversal();
 
 	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,

@@ -67,12 +67,21 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-8);
+			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+				ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-4);
+			#else /* VCP_DPDP */
+				ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-8);
+			#endif
 		}
 	}
 
-	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
-	ASSERT_DOUBLES_EQUAL(96, _domain->getLocalVirial(), 1e-8);
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-4);
+		ASSERT_DOUBLES_EQUAL(96, _domain->getLocalVirial(), 1e-4);
+	#else /* VCP_DPDP */
+		ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
+		ASSERT_DOUBLES_EQUAL(96, _domain->getLocalVirial(), 1e-8);
+	#endif
 
 	delete container;
 }

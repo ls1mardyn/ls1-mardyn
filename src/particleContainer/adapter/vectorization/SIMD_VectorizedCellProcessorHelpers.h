@@ -128,20 +128,25 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	#if VCP_PREC != VCP_DPDP
-			TODO: adapt for epi32
-	#endif
 
-	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-		__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
-	#else
-		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
-		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, id_j, 8);//gather id_j using the indices
-	#endif
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
+		indices = _mm512_add_epi32(indices, indices);//only every second...
+		eps_24 = _mm512_i32gather_ps(indices, eps_sigI, 4);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		sig2 = _mm512_i32gather_ps(indices, eps_sigI+1, 4);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+	#else /*VCP_DPDP*/
 
-	indices = _mm512_add_epi64(indices, indices);//only every second...
-	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
-	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, (const long long *) id_j, 8);//gather id_j using the indices
+		#else
+			__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
+			__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the indices
+		#endif
+
+		indices = _mm512_add_epi64(indices, indices);//only every second...
+		eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+	#endif /*VCP_PREC*/
 #endif
 }
 
@@ -233,36 +238,36 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
-	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
-	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
+
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		const __m512i indices = _mm512_load_epi32(id_j_shifted);
+		shift6 = _mm512_i32gather_ps(indices, shift6I, 4);
+
+	#else /* VCP_DPDP */
+		const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
+		shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
+	#endif
+
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	#if VCP_PREC != VCP_DPDP
-			TODO: adapt for epi32
+
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
+		shift6 = _mm512_i32gather_ps(indices, shift6I, 4);
+
+	#else /* VCP_DPDP */
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, (const long long *) id_j, 8);//gather id_j using the lookupindices
+		#else
+			__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
+			__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the lookupindices
+		#endif
+		shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 	#endif
 
-	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-		__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
-	#else
-		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
-		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, id_j, 8);//gather id_j using the lookupindices
-	#endif
-
-	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #endif
 }
 #pragma GCC diagnostic pop
-
-
-#if VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-static vcp_inline
-double horizontal_add_256 (__m256d a) {
-    __m256d t1 = _mm256_hadd_pd(a,a);
-    __m128d t2 = _mm256_extractf128_pd(t1,1);
-    __m128d t3 = _mm_add_sd(_mm256_castpd256_pd128(t1),t2);
-    return _mm_cvtsd_f64(t3);
-}
-#endif
 
 /**
  * sums up values in a and adds the result to *mem_addr
@@ -273,13 +278,48 @@ void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
 	RealCalcVec::horizontal_add_and_store(a, mem_addr);
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-	*mem_addr += _mm512_reduce_add_pd(a);
-
+	#if VCP_PREC == VCP_SPSP
+		*mem_addr += _mm512_reduce_add_ps(a);
+	#else /* VCP_DPDP or VCP_SPDP */
+		*mem_addr += _mm512_reduce_add_pd(a);
+	#endif
+	// NOTE: separate, because only the Intel compiler provides _mm512_reduce_add_pd/ps
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	// NOTE: separate, because only the Intel compiler provides _mm512_reduce_add_pd
-	__m256d low = _mm512_castpd512_pd256(a);
-	__m256d high = _mm512_extractf64x4_pd(a, 1);
-	*mem_addr += horizontal_add_256(low + high);
+	#if VCP_PREC == VCP_SPSP
+		//a		 = |  1 |  2 |  3 |  4 |  5 |....| 13 | 14 | 15 | 16 |
+		//low	 = |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |
+		//high	 = |  9 | 10 | 11 | 12 | 14 | 14 | 15 | 16 |
+		__m256 low = _mm512_castps512_ps256(a);
+
+		__m128 h1 = _mm512_extractf32x4_ps(a, 2);
+		__m128 h2 = _mm512_extractf32x4_ps(a, 3);
+		__m256 high = _mm256_castps128_ps256(h1);
+		high = _mm256_insertf128_ps(high, h2, 1);
+
+		//low+high 	= | 1+9 | 2+10 | 3+11 |...| 8+16 |
+		//			= |  1  |  2   |  3   |...|  8   |
+		//t1 = | 1+2 | 3+4 | 1+2 | 3+4 | 5+6 | 7+8 | 5+6 | 7+8 |
+		__m256 t1 = _mm256_hadd_ps(low + high, low + high);
+		//t1 = | 1234 | 1234 | 1234 | 1234 | 5678 | 5678 | 5678 | 5678 |
+		t1 = _mm256_hadd_ps(t1, t1);
+		//t2 = | 5678 | 5678 | 5678 | 5678 |
+		__m128 t2 = _mm256_extractf128_ps(t1,1);
+		//t3 = | 12345678 | 1234 | 1234 | 1234 |
+		__m128 t3 = _mm_add_ss(_mm256_castps256_ps128(t1), t2);
+
+		// only add first float value (12345678) of t3
+		*mem_addr += _mm_cvtss_f32(t3);
+
+	#else /* VCP_DPDP or VCP_SPDP */
+		__m256d low = _mm512_castpd512_pd256(a);
+		__m256d high = _mm512_extractf64x4_pd(a, 1);
+
+		__m256d t1 = _mm256_hadd_pd(low + high, low + high);
+		__m128d t2 = _mm256_extractf128_pd(t1,1);
+		__m128d t3 = _mm_add_sd(_mm256_castpd256_pd128(t1),t2);
+
+		*mem_addr += _mm_cvtsd_f64(t3);
+	#endif
 #endif
 }
 
