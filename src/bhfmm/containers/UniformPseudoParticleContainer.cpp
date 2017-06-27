@@ -29,16 +29,25 @@ namespace bhfmm {
 #define ToEven(x) ((x) & ~1)
 
 UniformPseudoParticleContainer::UniformPseudoParticleContainer(
-		double domainLength[3], double bBoxMin[3], double bBoxMax[3],
-		double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions,
-		ParticleContainer* ljContainer, bool periodic) :
-		PseudoParticleContainer(orderOfExpansions), _leafContainer(0), _wellSep(1)
-		 {
+		double domainLength[3],
+		double bBoxMin[3],
+		double bBoxMax[3],
+		double LJCellLength[3],
+		unsigned LJSubdivisionFactor,
+		int orderOfExpansions,
+		ParticleContainer *ljContainer, //TODO: is this used anywhere?
+		bool periodic
+#ifdef QUICKSCHED
+		, qsched *scheduler
+#endif
+		) : PseudoParticleContainer(orderOfExpansions),
+			_leafContainer(0),
+			_wellSep(1) {
 	_doNTLocal = true;
 	_doNTGlobal = true;
 	_periodicBC = periodic;
 	_fuseGlobalCommunication = false;
-	bool doDynamicAdjustment = true;
+	bool doDynamicAdjustment = true; //TODO: is this used anywhere?
 #ifdef ENABLE_MPI
 	int size;
 	MPI_Comm_size(MPI_COMM_WORLD,&size);
@@ -131,8 +140,15 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 
 #endif
-	_leafContainer = new LeafNodesContainer(bBoxMin, bBoxMax, LJCellLength,
-			LJSubdivisionFactor, periodic);
+	_leafContainer = new LeafNodesContainer(bBoxMin,
+											bBoxMax,
+											LJCellLength,
+											LJSubdivisionFactor,
+											periodic
+#ifdef QUICKSCHED
+											, scheduler
+#endif
+	);
 
 	double cellLength[3];
 
@@ -182,9 +198,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	else{
 		_importWholeGlobalRegion = false;
 	}
-
-
-	#else
+#else
 	_globalLevel = _maxLevel;
 #endif
 
@@ -370,7 +384,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	areaHaloSize[0] = xHaloSize;
 	areaHaloSize[1] = yHaloSizeOverlap;
 	areaHaloSize[2] = zHaloSizeOverlap;
- 	if(!_overlapComm){
+	if(!_overlapComm){
 		_multipoleBuffer = new HaloBufferNoOverlap<double>(xHaloSize * 2,yHaloSize * 2,zHaloSize * 2);
 		_multipoleRecBuffer = new HaloBufferNoOverlap<double>(xHaloSize * 2,yHaloSize * 2,zHaloSize * 2);
 	}
@@ -411,10 +425,10 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 			//get optimal stopping level for change from local allreduce to global allreduce
 			if(doDynamicAdjustment){
-			    _stopLevel = optimizeAllReduce(/*ljContainer*/);
+				_stopLevel = optimizeAllReduce(/*ljContainer*/);
 			}
 			else{
-			    _stopLevel = 1;
+				_stopLevel = 1;
 			}
 			int myRank;
 			MPI_Comm_rank(_comm,&myRank);
@@ -625,11 +639,11 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 		for(int i=0; i <3; i++)	cellWid[i] *=2;
 #if defined(ENABLE_MPI) && WIGNER==0
 		if(curLevel >= _globalLevel){ //local M2M
-		    Vector3<int> curCellsEdgeLocal;
-		    for(int j = 0; j < 3; j++){
-		    	curCellsEdgeLocal[j] = (int) (curCellsEdge/_numProcessorsPerDim[j])+4;
-		    }
-		    const Vector3<int> offset = (_globalLevel == curLevel)? _processorPositionGlobalLevel: Vector3<int>(2);
+			Vector3<int> curCellsEdgeLocal;
+			for(int j = 0; j < 3; j++){
+				curCellsEdgeLocal[j] = (int) (curCellsEdge/_numProcessorsPerDim[j])+4;
+			}
+			const Vector3<int> offset = (_globalLevel == curLevel)? _processorPositionGlobalLevel: Vector3<int>(2);
 			CombineMpCell_Local(cellWid, curCellsEdgeLocal , curLevel, offset);
 		}
 		else{ //global M2M
@@ -773,8 +787,10 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 void UniformPseudoParticleContainer::horizontalPass(
 		VectorizedChargeP2PCellProcessor* cp) {
 
+#ifndef QUICKSCHED
 	// P2P
 	_leafContainer->traverseCellPairs(*cp);
+#endif
 
 	// M2L
 	int curCellsEdge=1;
@@ -1021,7 +1037,7 @@ int UniformPseudoParticleContainer::busyWaiting(){
 		}
 	}
 	if(!_sendLocalProcessed){
-	    if(_multipoleBufferOverlap->testIfFinished()){
+		if(_multipoleBufferOverlap->testIfFinished()){
 			_sendLocalProcessed = 1;
 
 			return 3;

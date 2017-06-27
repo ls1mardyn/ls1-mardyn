@@ -35,8 +35,18 @@ namespace bhfmm {
 
 class UniformPseudoParticleContainer: public PseudoParticleContainer {
 public:
-	UniformPseudoParticleContainer(double domainLength[3], double bBoxMin[3], double bBoxMax[3],
-			double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions, ParticleContainer* ljContainer, bool periodic = true);
+	UniformPseudoParticleContainer(double domainLength[3],
+								   double bBoxMin[3],
+								   double bBoxMax[3],
+								   double LJCellLength[3],
+								   unsigned LJSubdivisionFactor,
+								   int orderOfExpansions,
+								   ParticleContainer* ljContainer,
+								   bool periodic = true
+#ifdef QUICKSCHED
+								   , qsched *scheduler = nullptr
+#endif
+	);
 	~UniformPseudoParticleContainer();
 
 	void clear();

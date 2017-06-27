@@ -5,6 +5,7 @@
  *      Author: tchipev
  */
 
+#include <utils/threeDimensionalMapping.h>
 #include "FastMultipoleMethod.h"
 #include "Simulation.h"
 #include "Domain.h"
@@ -26,6 +27,10 @@ FastMultipoleMethod::~FastMultipoleMethod() {
 	delete _P2PProcessor;
 	delete _P2MProcessor;
 	delete _L2PProcessor;
+#ifdef QUICKSCHED
+    qsched_free(_scheduler);
+    delete(_scheduler);
+#endif
 }
 
 void FastMultipoleMethod::readXML(XMLfileUnits& xmlconfig) {
@@ -84,14 +89,23 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
     qsched_init(_scheduler, mardyn_get_max_threads(), qsched_flag_none);
 #endif // QUICKSCEHD
 	if (not _adaptive) {
-		_pseudoParticleContainer = new UniformPseudoParticleContainer(
-				globalDomainLength, bBoxMin, bBoxMax, LJCellLength,
-				_LJCellSubdivisionFactor, _order, ljContainer, _periodic);
+		_pseudoParticleContainer = new UniformPseudoParticleContainer(globalDomainLength,
+                                                                      bBoxMin,
+                                                                      bBoxMax,
+                                                                      LJCellLength,
+                                                                      _LJCellSubdivisionFactor,
+                                                                      _order,
+                                                                      ljContainer,
+                                                                      _periodic
+#ifdef QUICKSCHED
+                                                                    , _scheduler
+#endif
+        );
 
 	} else {
 		// TODO: Debugging in Progress!
 #if defined(ENABLE_MPI)
-		global_log->error() << "not supported yet" << endl;
+		global_log->error() << "MPI in combination with adaptive is not supported yet" << endl;
 		Simulation::exit(-1);
 #endif
 		//int threshold = 100;
@@ -103,6 +117,7 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 	_P2MProcessor = new P2MCellProcessor(_pseudoParticleContainer);
 	_L2PProcessor = new L2PCellProcessor(_pseudoParticleContainer);
 
+    contextFMM = this;
 }
 
 void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) {
@@ -122,6 +137,9 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 	if (_adaptive) {
 		_P2PProcessor->initTraversal();
 	}
+#ifdef QUICKSCHED
+    qsched_run(_scheduler, mardyn_get_max_threads(), runner);
+#endif
 	_pseudoParticleContainer->horizontalPass(_P2PProcessor);
 
 	// L2L, L2P
@@ -140,5 +158,55 @@ void FastMultipoleMethod::printTimers() {
 	//global_simulation->printTimers("UNIFORM_PSEUDO_PARTICLE_CONTAINER");
 }
 
+#ifdef  QUICKSCHED
+void FastMultipoleMethod::runner(int type, void *data) {
+	switch (type) {
+		case PreprocessCell:{
+            ParticleCellPointers * cell = ((ParticleCellPointers **)data)[0];
+            contextFMM->_P2PProcessor->preprocessCell(*cell);
+			break;
+		} /* PreprocessCell */
+		case PostprocessCell:{
+            ParticleCellPointers * cell = ((ParticleCellPointers **)data)[0];
+            contextFMM->_P2PProcessor->postprocessCell(*cell);
+			break;
+		} /* PostprocessCell */
+		case P2P:{
+            // TODO optimize calculation order (1. corners 2. edges 3. rest) and gradually release resources
+            unsigned long x = ((unsigned long *) data)[0];
+            unsigned long y = ((unsigned long *) data)[1];
+            unsigned long z = ((unsigned long *) data)[2];
+            unsigned long blockX = ((unsigned long *) data)[3];
+            unsigned long blockY = ((unsigned long *) data)[4];
+            unsigned long blockZ = ((unsigned long *) data)[5];
+            LeafNodesContainer *contextContainer = ((LeafNodesContainer **) data)[6];
+
+            // traverse over block
+            for (unsigned long i = 0; i < blockX - 1
+                                      && i < contextContainer->getNumCellsPerDimension()[0] - 1; ++i) {
+                for (unsigned long j = 0; j < blockY - 1
+                                          && j < contextContainer->getNumCellsPerDimension()[1] - 1; ++j) {
+                    for (unsigned long k = 0; k < blockZ - 1
+                                              && k < contextContainer->getNumCellsPerDimension()[2] - 1; ++k) {
+
+                        //process cell
+                        long baseIndex = contextContainer->cellIndexOf3DIndex(x + i,
+                                                                     y + j,
+                                                                     z + k);
+                        contextFMM->_P2PProcessor->processCell(contextContainer->getCells()[baseIndex]);
+                    }
+                }
+            }
+			break;
+		} /* P2P */
+		case Dummy:{
+            // do nothing, only serves for synchronization
+			break;
+		} /* P2P */
+		default:
+			global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
+	}
+}
+#endif /* QUICKSCEHD */
 } /* namespace bhfmm */
 

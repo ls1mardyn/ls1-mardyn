@@ -30,6 +30,13 @@
 
 namespace bhfmm {
 
+struct taskData{
+	qsched_res_t  _resourceId;
+	qsched_task_t _preprocessId;
+	qsched_task_t _postprocessId;
+	qsched_task_t _P2PId;
+};
+
 class ParticleCellPointers: public Cell {
 public:
 	/**
@@ -67,21 +74,12 @@ public:
 	}
 
 #ifdef QUICKSCHED
-		qsched_res_t getRescourceId() const {
-			return _resourceId;
-		}
-
-		void setResourceId(qsched_res_t resourceId){
-			_resourceId = resourceId;
-		}
-
-		qsched_task_t getTaskId() const {
-			return _taskId;
-		}
-
-		void setTaskId(qsched_task_t taskId){
-			_taskId = taskId;
-		}
+	taskData& getTaskData(){
+		return _taskData;
+	}
+    void setResourceId(qsched_res_t id){
+        _taskData._resourceId = id;
+    }
 #endif // QUICKSCHED
 
 private:
@@ -97,8 +95,7 @@ private:
 	CellDataSoA _cellDataSoA;
 
 #ifdef QUICKSCHED
-		qsched_res_t  _resourceId;
-		qsched_task_t _taskId;
+	struct taskData _taskData;
 #endif // QUICKSCHED
 };
 

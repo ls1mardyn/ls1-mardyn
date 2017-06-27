@@ -13,10 +13,16 @@
 #include "quicksched.h"
 
 namespace bhfmm {
-
+class FastMultipoleMethod;
+// needed for static runner()
+static FastMultipoleMethod *contextFMM;
 class FastMultipoleMethod {
 public:
-	FastMultipoleMethod() : _order(-1), _LJCellSubdivisionFactor(0), _wellSeparated(0), _adaptive(false) {}
+	FastMultipoleMethod() : _order(-1),
+                            _LJCellSubdivisionFactor(0),
+                            _wellSeparated(0),
+                            _adaptive(false)
+    {}
 	~FastMultipoleMethod();
 
 	/** @brief Read in XML configuration for FastMultipoleMethod and all its included objects.
@@ -24,8 +30,8 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <electrostatic type="FastMultipoleMethod">
-	     <orderOfExpansions>UNSIGNED INTEGER</orderOfExpansions>
-	     <LJCellSubdivisionFactor>INTEGER</LJCellSubdivisionFactor>
+		 <orderOfExpansions>UNSIGNED INTEGER</orderOfExpansions>
+		 <LJCellSubdivisionFactor>INTEGER</LJCellSubdivisionFactor>
 	   </electrostatic>
 	   \endcode
 	 */
@@ -41,6 +47,9 @@ public:
 
 	void printTimers();
 
+	enum taskType {
+		PreprocessCell, PostprocessCell, P2P, Dummy
+	};
 private:
 	int _order;
 	unsigned _LJCellSubdivisionFactor;
@@ -54,12 +63,9 @@ private:
 	P2MCellProcessor *_P2MProcessor;
 	L2PCellProcessor *_L2PProcessor;
 
-	enum taskType {
 
-	};
-
-	static void runner(int type, void *data);
 #ifdef QUICKSCHED
+	static void runner(int type, void *data);
 	struct qsched *_scheduler;
 #endif // QUICKSCEHD
 };

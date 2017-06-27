@@ -13,6 +13,7 @@
 #include "WrapOpenMP.h"
 
 #include <cmath>
+#include <bhfmm/FastMultipoleMethod.h>
 
 using namespace std;
 using Log::global_log;
@@ -20,8 +21,15 @@ using Log::global_log;
 namespace bhfmm {
 
 LeafNodesContainer::LeafNodesContainer(double bBoxMin[3],
-		double bBoxMax[3], double LJCellLength[3], unsigned subdivisionFactor,
-		bool periodic) {
+									   double bBoxMax[3],
+									   double LJCellLength[3],
+									   unsigned subdivisionFactor,
+									   bool periodic
+#ifdef QUICKSCHED
+									   , qsched* scheduler ) : _scheduler(scheduler) {
+#else
+									   ) {
+#endif
 
 	_periodicBC = periodic; // a hack-in workaround to disable periodicity is
 	// simply to change the addParticle functionality to filter out by
@@ -132,6 +140,108 @@ void LeafNodesContainer::initializeCells() {
 			}
 		}
 	}
+#ifdef QUICKSCHED
+	qsched_res_t  resourceId;
+	qsched_task_t taskIdPre;
+	qsched_task_t taskIdPost;
+	qsched_task_t taskIdP2P;
+	//TODO: Make this dynamic / autotuning / xml
+	array<unsigned , 3> taskBlocksize = {2,2,2};
+
+	qsched_task_t sync_pre = qsched_addtask(_scheduler,
+											FastMultipoleMethod::Dummy,
+											qsched_flag_none,
+											nullptr,
+											0,
+											0);
+	qsched_task_t sync_post = qsched_addtask(_scheduler,
+											 FastMultipoleMethod::Dummy,
+											 qsched_flag_none,
+											 nullptr,
+											 0,
+											 0);
+
+	global_log->info() << "LeafNodesContainer: Generating resource and task ids" << std::endl;
+	for (auto z = 0; z < _numCellsPerDimension[2]; ++z) {
+		for (auto y = 0; y < _numCellsPerDimension[1]; ++y) {
+			for (auto x = 0; x < _numCellsPerDimension[0]; ++x) {
+				cellIndex  = cellIndexOf3DIndex(x,y,z);
+				resourceId = qsched_addres(_scheduler, qsched_owner_none, qsched_res_none);
+				_cells[cellIndex].setResourceId(resourceId);
+				// only create tasks with offset blocksize-1.
+				// -1 because they need to overlap
+				// skip tasks for rear halo layer as they would only contain halo cells
+				if ((z % (taskBlocksize[2] - 1) == 0
+					 && y % (taskBlocksize[1] - 1) == 0
+					 && x % (taskBlocksize[0] - 1) == 0)
+					&&
+					(x < _numCellsPerDimension[0] - 1
+					 && y < _numCellsPerDimension[1] - 1
+					 && z < _numCellsPerDimension[2] - 1)) {
+					// P2P TASK
+					// also save the pointers as long
+					unsigned long payload[]{x, y, z,
+											taskBlocksize[0],
+											taskBlocksize[1],
+											taskBlocksize[2],
+											(unsigned long) this};
+					taskIdP2P = qsched_addtask(_scheduler,
+											FastMultipoleMethod::P2P,
+											qsched_flag_none,
+											payload,
+											sizeof(payload),
+											1);
+					_cells[cellIndex].getTaskData()._P2PId = taskIdP2P;
+					// TODO remove barriers
+					qsched_addunlock(_scheduler, sync_pre, taskIdP2P);
+					qsched_addunlock(_scheduler, taskIdP2P, sync_post);
+
+					// PREPROCESS TASK
+					payload[0] = (unsigned long)&_cells[cellIndex];
+					taskIdPre  = qsched_addtask(_scheduler,
+												FastMultipoleMethod::PreprocessCell,
+												qsched_flag_none,
+												payload,
+												sizeof(payload),
+												1);
+					qsched_addunlock(_scheduler, taskIdPre, sync_pre);
+					// POSTPROCESS TASK
+					taskIdPost = qsched_addtask(_scheduler,
+												FastMultipoleMethod::PostprocessCell,
+												qsched_flag_none,
+												payload,
+												sizeof(payload),
+												1);
+					qsched_addunlock(_scheduler, sync_post, taskIdPost);
+				}
+			} /* end for-x */
+		} /* end for-y*/
+	} /* end for-z */
+
+	// set dependencies
+	global_log->info() << "LeafNodesContainer: Setting task dependencies" << std::endl;
+	for (auto z = 0; z < _numCellsPerDimension[2] - 1; z += taskBlocksize[2] - 1) {
+		for (auto y = 0; y < _numCellsPerDimension[1] - 1; y += taskBlocksize[1] - 1) {
+			for (auto x = 0; x < _numCellsPerDimension[0] - 1; x += taskBlocksize[0] - 1) {
+				cellIndex = cellIndexOf3DIndex(x, y, z);
+
+				// create locks for all 8 corners of the block
+				for (auto i = 0; i < taskBlocksize[0]
+										  && x + i < _numCellsPerDimension[0]; i += taskBlocksize[0] - 1) {
+					for (auto j = 0; j < taskBlocksize[1]
+											  && y + j < _numCellsPerDimension[1]; j += taskBlocksize[1] - 1) {
+						for (auto k = 0; k < taskBlocksize[2]
+												  && z + k < _numCellsPerDimension[2]; k += taskBlocksize[2] - 1) {
+							qsched_addlock(_scheduler,
+										   _cells[cellIndex].getTaskData()._P2PId,
+										   _cells[cellIndexOf3DIndex(x + i, y + j, z + k)].getTaskData()._resourceId);
+						}
+					}
+				}
+			} /* end for-x */
+		} /* end for-y*/
+	} /* end for-z */
+#endif /* QUICKSCHED */
 }
 
 void LeafNodesContainer::calculateNeighbourIndices() {
@@ -413,5 +523,13 @@ void LeafNodesContainer::threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) c
 	r[1] = (ind - r[2] * dim[0] * dim[1]) / dim[0];
 	r[0] = ind - dim[0] * (r[1] + dim[1] * r[2]);
 }
+
+	const int *LeafNodesContainer::getNumCellsPerDimension() const {
+		return _numCellsPerDimension;
+	}
+
+	vector<ParticleCellPointers> & LeafNodesContainer::getCells() {
+		return _cells;
+	}
 
 } /* namespace bhfmm */
