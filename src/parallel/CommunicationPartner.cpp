@@ -129,37 +129,6 @@ CommunicationPartner::~CommunicationPartner() {
 	delete _recvStatus;
 }
 
-
-void CommunicationPartner::deadlockDiagnosticSendRecv() {
-	using Log::global_log;
-
-	deadlockDiagnosticSend();
-
-	if (not _countReceived) {
-		global_log->warning() << "Probe request to " << _rank << " not yet completed" << std::endl;
-	}
-
-	deadlockDiagnosticRecv();
-}
-
-void CommunicationPartner::deadlockDiagnosticSend() {
-	// intentionally using std::cout instead of global_log, we want the messages from all processes
-	if (not _msgSent) {
-		Log::global_log->warning() << "Send request to " << _rank << " not yet completed" << std::endl;
-	}
-}
-
-void CommunicationPartner::deadlockDiagnosticRecv() {
-	if (not _msgReceived) {
-		Log::global_log->warning() << "Recv request to " << _rank << " not yet completed" << std::endl;
-	}
-}
-
-void CommunicationPartner::add(CommunicationPartner partner) {
-	mardyn_assert(partner._rank == _rank);
-	_haloInfo.push_back(partner._haloInfo[0]);
-}
-
 template<typename BufferType>
 void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
 		MessageType msgType, bool removeFromContainer) {
@@ -369,6 +338,37 @@ void CommunicationPartner::testRecvHandle<ParticleForceData>(ParticleContainer* 
 		ParticleForceData::AddParticleForceDataToMolecule(pData, *original);
 	}
 
+}
+
+
+void CommunicationPartner::deadlockDiagnosticSendRecv() {
+	using Log::global_log;
+
+	deadlockDiagnosticSend();
+
+	if (not _countReceived) {
+		global_log->warning() << "Probe request to " << _rank << " not yet completed" << std::endl;
+	}
+
+	deadlockDiagnosticRecv();
+}
+
+void CommunicationPartner::deadlockDiagnosticSend() {
+	// intentionally using std::cout instead of global_log, we want the messages from all processes
+	if (not _msgSent) {
+		Log::global_log->warning() << "Send request to " << _rank << " not yet completed" << std::endl;
+	}
+}
+
+void CommunicationPartner::deadlockDiagnosticRecv() {
+	if (not _msgReceived) {
+		Log::global_log->warning() << "Recv request to " << _rank << " not yet completed" << std::endl;
+	}
+}
+
+void CommunicationPartner::add(CommunicationPartner partner) {
+	mardyn_assert(partner._rank == _rank);
+	_haloInfo.push_back(partner._haloInfo[0]);
 }
 
 template<typename BufferType>
