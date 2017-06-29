@@ -19,9 +19,12 @@ class AccumulatorBase;
 class ControlRegionT
 {
 public:
-    ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
+    ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
+    		double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
+    		unsigned long nWriteFreqBeta, std::string strFilenamePrefix);
     ~ControlRegionT();
 
+    unsigned int GetID(){return _nID;}
     void Init();
 
     double* GetLowerCorner() {return _dLowerCorner;}
@@ -37,7 +40,16 @@ public:
 
     void ResetLocalValues();
 
+	// beta log file
+	void InitBetaLogfile();
+	void WriteBetaLogfile(unsigned long simstep);
+
 private:
+	unsigned short _nID;
+
+	// instances / ID
+	static unsigned short _nStaticID;
+
     double _dLowerCorner[3];
     double _dUpperCorner[3];
 
@@ -65,6 +77,12 @@ private:
     unsigned short _nRegionID;
 
     AccumulatorBase* _accumulator;
+
+	std::string _strFilenamePrefixBetaLog;
+	unsigned long _nWriteFreqBeta;
+	unsigned long _numSampledConfigs;
+	double _dBetaTransSumGlobal;
+	double _dBetaRotSumGlobal;
 };
 
 
@@ -78,7 +96,9 @@ public:
     ~TemperatureControl();
 
 	void readXML(XMLfileUnits& xmlconfig);
-    void AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
+    void AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
+    		double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
+    		unsigned long nWriteFreqBeta, std::string strFilenamePrefix);
     int GetNumRegions() {return _vecControlRegions.size();}
     ControlRegionT* GetControlRegion(unsigned short nRegionID) {return &(_vecControlRegions.at(nRegionID-1) ); }  // vector index starts with 0, region index with 1
 
@@ -89,6 +109,10 @@ public:
 
     unsigned long GetStart() {return _nStart;}
     unsigned long GetStop()  {return _nStop;}
+
+	// beta log file
+	void InitBetaLogfiles();
+	void WriteBetaLogfiles(unsigned long simstep);
 
     // loops over molecule container
     void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
