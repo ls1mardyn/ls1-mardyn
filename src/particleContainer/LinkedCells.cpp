@@ -423,7 +423,7 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 			for(size_t j = 0; j < numMolsInCell; ++j) {
 				const mol_index_t molIndex = global_vector[j];
 				Molecule & mol = particles[molIndex];
-				_cells[cellIndex].addParticle(mol);
+				_cells[cellIndex].addParticle(mol, checkWhetherDuplicate);
 			}
 		}
 
