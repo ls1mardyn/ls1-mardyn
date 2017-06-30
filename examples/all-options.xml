@@ -156,7 +156,7 @@
             - quicksched
             - sliced     (default for <2 threads)
             -->
-          <traversalSelector>c8</traversalSelector>
+          <traversalSelector>c08</traversalSelector>
           <!-- override default block size (2x2x2) for quicksched tasks -->
           <traversalData type="quicksched">
             <taskBlockSize>

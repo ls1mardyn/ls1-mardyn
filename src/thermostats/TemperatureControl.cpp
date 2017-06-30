@@ -102,6 +102,10 @@ ControlRegionT::ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], u
 
 	// beta log-file
 	_nWriteFreqBeta = nWriteFreqBeta;
+	if(_nWriteFreqBeta==0){
+		global_log->warning() << "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000." << std::endl;
+		_nWriteFreqBeta = 1000;
+	}
 	_strFilenamePrefixBetaLog = strFilenamePrefix;
 	this->InitBetaLogfile();
 }
