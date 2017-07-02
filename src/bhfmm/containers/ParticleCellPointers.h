@@ -80,6 +80,15 @@ public:
     void setResourceId(qsched_res_t id){
         _taskData._resourceId = id;
     }
+    void setP2PId(qsched_res_t id){
+        _taskData._P2PId = id;
+    }
+    void setPreprocessId(qsched_res_t id){
+        _taskData._preprocessId = id;
+    }
+    void setPostprocessId(qsched_res_t id){
+        _taskData._postprocessId = id;
+    }
 #endif // QUICKSCHED
 
 private:
