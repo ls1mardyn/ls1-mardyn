@@ -722,7 +722,6 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 
 	}
 #ifdef ENABLE_MPI
-
 	if(_avoidAllReduce and _fuseGlobalCommunication and _stopLevel <= _globalLevel){ //get remaining 7 cells at stop level
 		int mpCells = pow(2, _stopLevel);
 		int stride = pow(2,_globalLevel - _stopLevel);
@@ -776,7 +775,8 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	else{
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL");
 	}
-
+#else
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL");
 #endif
 //	//trigger communication by testing with MPI test
 //	initBusyWaiting();

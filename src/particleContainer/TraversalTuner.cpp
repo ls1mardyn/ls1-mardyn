@@ -10,7 +10,7 @@ TraversalTuner::TraversalTuner() : _optimalTravesal(nullptr) {
     struct OriginalCellPairTraversalData *origData   = new OriginalCellPairTraversalData;
     struct SlicedCellPairTraversalData   *slicedData = new SlicedCellPairTraversalData;
     struct QuickschedTraversalData       *quiData    = new QuickschedTraversalData;
-    quiData->taskBlockSize = {2, 2, 2};
+    quiData->taskBlockSize = {{2, 2, 2}};
 
     _traversals = {
             make_pair(nullptr, origData),

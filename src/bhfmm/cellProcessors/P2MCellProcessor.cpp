@@ -29,9 +29,7 @@ P2MCellProcessor::~P2MCellProcessor() {
 
 void P2MCellProcessor::processCell(ParticleCellPointers& cell) {
 	if (!cell.isHaloCell()) {
-		global_simulation->startTimer("P2M_CELL_PROCESSOR_P2M");
 		_pseudoParticleContainer->processMultipole(cell);
-		global_simulation->stopTimer("P2M_CELL_PROCESSOR_P2M");
 	}
 }
 
@@ -47,6 +45,14 @@ void P2MCellProcessor::printTimers() {
 		}
 		domainDecomp.barrier();
 	}
+}
+
+void P2MCellProcessor::initTraversal() {
+	global_simulation->startTimer("P2M_CELL_PROCESSOR_P2M");
+}
+
+void P2MCellProcessor::endTraversal() {
+	global_simulation->stopTimer("P2M_CELL_PROCESSOR_P2M");
 }
 
 } /* namespace bhfmm */

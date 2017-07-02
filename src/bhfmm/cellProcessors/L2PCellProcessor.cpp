@@ -35,13 +35,12 @@ void L2PCellProcessor::initTraversal() {
 //	cout << "L2P init: LocalP_xx     " << domain->getLocalP_xx() << endl;
 //	cout << "L2P init: LocalP_yy     " << domain->getLocalP_yy() << endl;
 //	cout << "L2P init: LocalP_zz     " << domain->getLocalP_zz() << endl;
+	global_simulation->startTimer("L2P_CELL_PROCESSOR_L2P");
 }
 
 void L2PCellProcessor::processCell(ParticleCellPointers& cell) {
 	if (!cell.isHaloCell()) {
-		global_simulation->startTimer("L2P_CELL_PROCESSOR_L2P");
 		_pseudoParticleContainer->processFarField(cell);
-		global_simulation->stopTimer("L2P_CELL_PROCESSOR_L2P");
 	}
 }
 
@@ -60,6 +59,7 @@ void L2PCellProcessor::printTimers() {
 }
 
 void L2PCellProcessor::endTraversal() {
+	global_simulation->stopTimer("L2P_CELL_PROCESSOR_L2P");
 }
 
 } /* namespace bhfmm */
