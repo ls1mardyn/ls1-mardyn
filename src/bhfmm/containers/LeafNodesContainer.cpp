@@ -145,21 +145,13 @@ void LeafNodesContainer::initializeCells() {
 	qsched_task_t taskIdPre;
 	qsched_task_t taskIdPost;
 	qsched_task_t taskIdP2P;
-	//TODO: Make this dynamic / autotuning / xml
-	array<unsigned , 3> taskBlocksize = {2,2,2};
+	//TODO: Make taskBlockSize dynamic / autotuning / xml
+	struct qsched_payload payload;
+    payload.taskBlockSize[0] = 2;
+	payload.taskBlockSize[1] = 2;
+	payload.taskBlockSize[2] = 2;
+    payload.contextContainer = this;
 
-	qsched_task_t sync_pre = qsched_addtask(_scheduler,
-											FastMultipoleMethod::Dummy,
-											qsched_flag_none,
-											nullptr,
-											0,
-											0);
-	qsched_task_t sync_post = qsched_addtask(_scheduler,
-											 FastMultipoleMethod::Dummy,
-											 qsched_flag_none,
-											 nullptr,
-											 0,
-											 0);
 
 	global_log->info() << "LeafNodesContainer: Generating resource and task ids" << std::endl;
 	for (auto z = 0; z < _numCellsPerDimension[2]; ++z) {
@@ -171,34 +163,31 @@ void LeafNodesContainer::initializeCells() {
 				// only create tasks with offset blocksize-1.
 				// -1 because they need to overlap
 				// skip tasks for rear halo layer as they would only contain halo cells
-				if ((z % (taskBlocksize[2] - 1) == 0
-					 && y % (taskBlocksize[1] - 1) == 0
-					 && x % (taskBlocksize[0] - 1) == 0)
+				if ((z % (payload.taskBlockSize[2] - 1) == 0
+					 && y % (payload.taskBlockSize[1] - 1) == 0
+					 && x % (payload.taskBlockSize[0] - 1) == 0)
 					&&
 					(x < _numCellsPerDimension[0] - 1
 					 && y < _numCellsPerDimension[1] - 1
 					 && z < _numCellsPerDimension[2] - 1)) {
 					// P2P TASK
 					// also save the pointers as long
-					// TODO make a struct for this mess
-					unsigned long payload[]{x, y, z,
-											taskBlocksize[0],
-											taskBlocksize[1],
-											taskBlocksize[2],
-											(unsigned long) this};
+                    payload.cell.coordinates[0] = x;
+                    payload.cell.coordinates[1] = y;
+                    payload.cell.coordinates[2] = z;
 					_cells[cellIndex].setP2PId(qsched_addtask(_scheduler,
 															  FastMultipoleMethod::P2P,
 															  qsched_flag_none,
-															  payload,
+															  &payload,
 															  sizeof(payload),
 															  1)
 					);
 					// PREPROCESS TASK
-					payload[0] = (unsigned long) &_cells[cellIndex];
+					payload.cell.pointer = &_cells[cellIndex];
 					_cells[cellIndex].setPreprocessId(qsched_addtask(_scheduler,
 																	 FastMultipoleMethod::PreprocessCell,
 																	 qsched_flag_none,
-																	 payload,
+																	 &payload,
 																	 sizeof(payload),
 																	 1)
 					);
@@ -206,7 +195,7 @@ void LeafNodesContainer::initializeCells() {
 					_cells[cellIndex].setPostprocessId(qsched_addtask(_scheduler,
 																	  FastMultipoleMethod::PostprocessCell,
 																	  qsched_flag_none,
-																	  payload,
+																	  &payload,
 																	  sizeof(payload),
 																	  1)
 					);
@@ -217,19 +206,19 @@ void LeafNodesContainer::initializeCells() {
 
 	// set dependencies
 	global_log->info() << "LeafNodesContainer: Setting task dependencies" << std::endl;
-	for (auto z = 0; z < _numCellsPerDimension[2] - 1; z += taskBlocksize[2] - 1) {
-		for (auto y = 0; y < _numCellsPerDimension[1] - 1; y += taskBlocksize[1] - 1) {
-			for (auto x = 0; x < _numCellsPerDimension[0] - 1; x += taskBlocksize[0] - 1) {
+	for (auto z = 0; z < _numCellsPerDimension[2] - 1; z += payload.taskBlockSize[2] - 1) {
+		for (auto y = 0; y < _numCellsPerDimension[1] - 1; y += payload.taskBlockSize[1] - 1) {
+			for (auto x = 0; x < _numCellsPerDimension[0] - 1; x += payload.taskBlockSize[0] - 1) {
 				cellIndex = cellIndexOf3DIndex(x, y, z);
 
-				for (auto i = 0; i < taskBlocksize[0]
+				for (auto i = 0; i < payload.taskBlockSize[0]
 										  && x + i < _numCellsPerDimension[0]; ++i) {
-					for (auto j = 0; j < taskBlocksize[1]
+					for (auto j = 0; j < payload.taskBlockSize[1]
 											  && y + j < _numCellsPerDimension[1]; ++j) {
-						for (auto k = 0; k < taskBlocksize[2]
+						for (auto k = 0; k < payload.taskBlockSize[2]
 												  && z + k < _numCellsPerDimension[2]; ++k) {
 							// create locks for only for resources at corners
-							if(i == taskBlocksize[0] - 1 || j == taskBlocksize[1] - 1 || k == taskBlocksize[2] - 1){
+							if(i == payload.taskBlockSize[0] - 1 || j == payload.taskBlockSize[1] - 1 || k == payload.taskBlockSize[2] - 1){
 								qsched_addlock(_scheduler,
 											   _cells[cellIndex].getTaskData()._P2PId,
 											   _cells[cellIndexOf3DIndex(x + i, y + j, z + k)].getTaskData()._resourceId);

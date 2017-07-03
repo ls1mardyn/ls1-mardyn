@@ -160,26 +160,25 @@ void FastMultipoleMethod::printTimers() {
 
 #ifdef  QUICKSCHED
 void FastMultipoleMethod::runner(int type, void *data) {
+	struct qsched_payload *payload = (qsched_payload *)data;
 	switch (type) {
 		case PreprocessCell:{
-            ParticleCellPointers * cell = ((ParticleCellPointers **)data)[0];
-            contextFMM->_P2PProcessor->preprocessCell(*cell);
+            contextFMM->_P2PProcessor->preprocessCell(*payload->cell.pointer);
 			break;
 		} /* PreprocessCell */
 		case PostprocessCell:{
-            ParticleCellPointers * cell = ((ParticleCellPointers **)data)[0];
-            contextFMM->_P2PProcessor->postprocessCell(*cell);
+            contextFMM->_P2PProcessor->postprocessCell(*payload->cell.pointer);
 			break;
 		} /* PostprocessCell */
 		case P2P:{
             // TODO optimize calculation order (1. corners 2. edges 3. rest) and gradually release resources
-            unsigned long x = ((unsigned long *) data)[0];
-            unsigned long y = ((unsigned long *) data)[1];
-            unsigned long z = ((unsigned long *) data)[2];
-            unsigned long blockX = ((unsigned long *) data)[3];
-            unsigned long blockY = ((unsigned long *) data)[4];
-            unsigned long blockZ = ((unsigned long *) data)[5];
-            LeafNodesContainer *contextContainer = ((LeafNodesContainer **) data)[6];
+			int                x                 = payload->cell.coordinates[0];
+			int                y                 = payload->cell.coordinates[1];
+			int                z                 = payload->cell.coordinates[2];
+			int                blockX            = payload->taskBlockSize[0];
+			int                blockY            = payload->taskBlockSize[1];
+			int                blockZ            = payload->taskBlockSize[2];
+			LeafNodesContainer *contextContainer = payload->contextContainer;
 
             // traverse over block
             for (unsigned long i = 0; i < blockX - 1
@@ -191,8 +190,8 @@ void FastMultipoleMethod::runner(int type, void *data) {
 
                         //process cell
                         long baseIndex = contextContainer->cellIndexOf3DIndex(x + i,
-                                                                     y + j,
-                                                                     z + k);
+																			  y + j,
+																			  z + k);
                         contextFMM->_P2PProcessor->processCell(contextContainer->getCells()[baseIndex]);
                     }
                 }

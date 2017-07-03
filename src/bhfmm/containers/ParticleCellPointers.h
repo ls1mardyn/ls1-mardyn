@@ -30,12 +30,14 @@
 
 namespace bhfmm {
 
+#ifdef QUICKSCHED
 struct taskData{
 	qsched_res_t  _resourceId;
 	qsched_task_t _preprocessId;
 	qsched_task_t _postprocessId;
 	qsched_task_t _P2PId;
 };
+#endif
 
 class ParticleCellPointers: public Cell {
 public:

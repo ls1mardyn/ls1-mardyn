@@ -8,6 +8,7 @@
 #ifndef FASTMULTIPOLEMETHOD_H_
 #define FASTMULTIPOLEMETHOD_H_
 
+#include <bhfmm/containers/LeafNodesContainer.h>
 #include "bhfmm/containers/PseudoParticleContainer.h"
 #include "particleContainer/ParticleContainer.h"
 #include "quicksched.h"
@@ -16,6 +17,17 @@ namespace bhfmm {
 class FastMultipoleMethod;
 // needed for static runner()
 static FastMultipoleMethod *contextFMM;
+
+#ifdef QUICKSCHED
+struct qsched_payload {
+    union {
+        ParticleCellPointers *pointer;
+	    int coordinates[3];
+    } cell;
+	int taskBlockSize[3];
+	LeafNodesContainer *contextContainer;
+};
+#endif
 class FastMultipoleMethod {
 public:
 	FastMultipoleMethod() : _order(-1),
