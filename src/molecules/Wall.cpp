@@ -1,6 +1,7 @@
 #include "Wall.h"
 
 #include <vector>
+#include <array>
 #include <cmath>
 #include <cstdint>
 
@@ -141,24 +142,29 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
 		for(unsigned d=0; d<3; d++)
 			f[d] = 0.;
 
-		for(RegionParticleIterator i = begin; i != end; ++i){
-			//! so far for 1CLJ only, several 1CLJ-components possible
-			double y, y3, y9, ry, ryRel;
-			unsigned cid = (*i).componentid();
-			ry = (*i).r(1);
-			ryRel = (ry > _yOff) ? (ry - (_yOff+_dWidthHalf) ) : (ry - (_yOff-_dWidthHalf) );
-			y = abs(ryRel);
-			if(y < _yc){
-				y3 = y * y * y;
-				y9 = y3 * y3 * y3;
+		for(RegionParticleIterator mi = begin; mi != end; ++mi)
+		{
+			for(unsigned int si=0; si<mi->numLJcenters(); ++si)
+			{
+				double y, y3, y9, ry, ryRel;
+				unsigned cid = (*mi).componentid();
+				const std::array<double,3> arrSite = mi->ljcenter_d_abs(si);
+				const double* posSite = arrSite.data();
+				ry = posSite[1];
+				ryRel = (ry > _yOff) ? (ry - (_yOff+_dWidthHalf) ) : (ry - (_yOff-_dWidthHalf) );
+				y = abs(ryRel);
+				if(y < _yc){
+					y3 = y * y * y;
+					y9 = y3 * y3 * y3;
 
-				double sig9_wi;
-				sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
-				f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / ryRel;
-				_uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
+					double sig9_wi;
+					sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
+					f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / ryRel;
+					_uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
 
-				(*i).Fljcenteradd(0, f);
-//				global_log->info() << "id=" << (*i).id() << ", ry=" << ry << ", ryRel=" << ryRel << ", f[1]=" << f[1] << endl;
+					mi->Fljcenteradd(si, f);
+	//				global_log->info() << "id=" << (*i).id() << ", ry=" << ry << ", ryRel=" << ryRel << ", f[1]=" << f[1] << endl;
+				}
 			}
 		}
 	}
