@@ -71,6 +71,7 @@
 #include "NEMD/RegionSampling.h"
 #include "NEMD/DensityControl.h"
 #include "NEMD/ParticleTracker.h"
+#include "NEMD/MettDeamon.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -106,6 +107,12 @@ Simulation::Simulation()
 	_loopCompTimeSteps(0),
 	_programName(""),
 	_flagsNEMD(0),
+	_driftControl(NULL),
+	_distControl(NULL),
+	_densityControl(NULL),
+	_regionSampling(NULL),
+	_particleTracker(NULL),
+	_mettDeamon(NULL),
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.),
@@ -114,13 +121,6 @@ Simulation::Simulation()
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
 	_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
-
-    // NEMD features
-    _driftControl = NULL;
-    _distControl = NULL;
-    _densityControl = NULL;
-    _regionSampling = NULL;
-    _particleTracker = NULL;
 
 	initialize();
 }
@@ -144,6 +144,7 @@ Simulation::~Simulation() {
 	delete _distControl;
 	delete _regionSampling;
 	delete _densityControl;
+	delete _mettDeamon;
 }
 
 void Simulation::exit(int exitcode) {
@@ -292,6 +293,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					delete _densityControl;
 				_densityControl = new DensityControl(_domainDecomposition, _domain);
 				_densityControl->readXML(xmlconfig);
+			}
+			else if(featureName == "MettDeamon") {
+				if(NULL == _mettDeamon)
+					_mettDeamon = new MettDeamon(_cutoffRadius);
+				_mettDeamon->readXML(xmlconfig);
 			}
 			else {
 				global_log->error() << "Unknown NEMD feature: " <<  featureName << "! Program exit..." << endl;
@@ -1126,6 +1132,9 @@ void Simulation::prepare_start() {
 	{
 		_particleTracker->Prepare();
 	}
+
+	if(NULL != _mettDeamon)
+		_mettDeamon->prepare_start(_domainDecomposition, _moleculeContainer, _cutoffRadius);
 }
 
 void Simulation::simulate() {
@@ -1238,7 +1247,13 @@ void Simulation::simulate() {
 		   }
 		}
 
+		if(NULL != _mettDeamon)
+			_mettDeamon->init_positionMap(_moleculeContainer);
+
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
+
+		if(NULL != _mettDeamon)
+			_mettDeamon->preForce_action(_moleculeContainer, _cutoffRadius);
 
 	    // mheinen 2015-05-29 --> DENSITY_CONTROL
 	    // should done after calling eventNewTimestep() / before force calculation, because force _F[] on molecule is deleted by method Molecule::setupCache()
@@ -1573,6 +1588,9 @@ void Simulation::simulate() {
 		// Inform the integrator about the calculated forces
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
+
+		if(NULL != _mettDeamon)
+			_mettDeamon->postForce_action(_moleculeContainer,_domainDecomposition);
 
 		// PARTICLE_TRACKER
 		if(_particleTracker != NULL)

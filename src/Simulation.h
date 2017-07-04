@@ -60,6 +60,7 @@ class Planar;
 class TemperatureControl;
 class ParticleTracker;
 class MemoryProfiler;
+class MettDeamon;
 
 // by Stefan Becker
 const int ANDERSEN_THERMOSTAT = 2;
@@ -407,7 +408,7 @@ public:
 		_timerProfiler.setOutputString(timerName, outputString);
 	}
 
-	// NEMD features
+	/** NEMD features */
 	DriftControl*   GetDriftControl()   {return _driftControl;}
 	DistControl*    GetDistControl()    {return _distControl;}
 	RegionSampling* GetRegionSampling() {return _regionSampling;}
@@ -580,12 +581,6 @@ private:
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
-    // NEMD features
-    DriftControl*   _driftControl;
-    DistControl*    _distControl;
-    RegionSampling* _regionSampling;
-    DensityControl* _densityControl;
-
 	/** manager for all timers in the project except the MarDyn main timer */
 	TimerProfiler _timerProfiler;
 
@@ -670,9 +665,15 @@ private:
 
 	std::string _programName;
 
-	ParticleTracker* _particleTracker;
-
+	/**  NEMD features */
 	uint32_t _flagsNEMD;
+	DriftControl*    _driftControl;
+	DistControl*     _distControl;
+	DensityControl*  _densityControl;
+	RegionSampling*  _regionSampling;
+	ParticleTracker* _particleTracker;
+	/** Algorithm to simulate stationary evaporation by backfilling liquid out of reservoir */
+	MettDeamon* _mettDeamon;
 
 	/** Check initial max. force (Fmax) after reading in start configuration or checkpoint after a restart. */
 	uint32_t _nFmaxOpt;
