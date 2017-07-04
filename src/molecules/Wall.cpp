@@ -53,16 +53,33 @@ void Wall::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "Using feature 'Wallfun' with parameters: density=" << density << ", "
 			"sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
 			"width=" << _dWidth << endl;
+
 	XMLfile::Query query = xmlconfig.query("component");
-	unsigned numComponents = query.card();
-	global_log->info() << "Wallfun: Setting parameters 'xi', 'eta' for " << numComponents << " components." << endl;
+	unsigned int numComponentsConsidered = query.card();
+	global_log->info() << "Wallfun: Setting parameters 'xi', 'eta' for " << numComponentsConsidered << " components." << endl;
+
+	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	unsigned int numComponents = components->size();
 	std::vector<double> xi_sf(numComponents);
 	std::vector<double> eta_sf(numComponents);
-	for (unsigned cid=0; cid<numComponents; cid++) {
-		xmlconfig.getNodeValue("component/xi",   xi_sf.at(cid) );
-		xmlconfig.getNodeValue("component/eta", eta_sf.at(cid) );
+
+	_bConsiderComponent.resize(numComponents);
+	for(auto&& bi : _bConsiderComponent)
+		bi = false;
+
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator componentIter;
+	for( componentIter = query.begin(); componentIter; componentIter++ )
+	{
+		xmlconfig.changecurrentnode( componentIter );
+		unsigned int cid;
+		xmlconfig.getNodeValue("@id", cid);
+		xmlconfig.getNodeValue("xi",   xi_sf.at(cid-1) );
+		xmlconfig.getNodeValue("eta", eta_sf.at(cid-1) );
+		_bConsiderComponent.at(cid-1) = true;
 	}
-	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	xmlconfig.changecurrentnode(oldpath);
+
 	this->initializeLJ93(components, density, sigma, epsilon, xi_sf, eta_sf, yoff, ycut);
 	global_log->info() << "Wallfun initialized." << endl;
 }
@@ -169,10 +186,13 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
 
 		for(RegionParticleIterator mi = begin; mi != end; ++mi)
 		{
+			unsigned int cid = mi->componentid();
+			if(false == _bConsiderComponent.at(cid) )
+				continue;  // only add Wall force to molecules of component that should be considered
+
 			for(unsigned int si=0; si<mi->numLJcenters(); ++si)
 			{
 				double y, y3, y9, ry, ryRel;
-				unsigned cid = (*mi).componentid();
 				const std::array<double,3> arrSite = mi->ljcenter_d_abs(si);
 				const double* posSite = arrSite.data();
 				ry = posSite[1];
