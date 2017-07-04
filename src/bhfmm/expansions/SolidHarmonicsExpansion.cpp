@@ -7,6 +7,7 @@
 
 #include "SolidHarmonicsExpansion.h"
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
 
