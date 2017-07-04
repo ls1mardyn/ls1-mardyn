@@ -77,6 +77,12 @@ public:
 		++_mol_num;
 	}
 
+	void increaseStorage(size_t additionalMolecules) {
+		_mol_r.increaseStorage(_mol_num, additionalMolecules);
+		_mol_v.increaseStorage(_mol_num, additionalMolecules);
+		_mol_uid.increaseStorage(_mol_num, additionalMolecules);
+	}
+
 	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
 		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
 

@@ -71,12 +71,24 @@ public:
 	virtual ~AlignedArray() {
 	}
 
-	void appendValue(T v, size_t oldNumElements) {
-		mardyn_assert(oldNumElements <= _vec.size());
-		if (oldNumElements >= _vec.size()) {
-			// shit, we need to resize, but also keep contents
-			_vec.resize(_round_up(oldNumElements + 1));
+	virtual void increaseStorage(size_t oldNumElements, size_t additionalElements) {
+		mardyn_assert(oldNumElements <= _vec.capacity());
+
+		size_t newNumElements = oldNumElements + additionalElements;
+
+		if (newNumElements <= _vec.capacity()) {
+			// no need to resize
+			return;
 		}
+
+		// we need to resize, but also keep contents
+		_vec.reserve(_round_up(newNumElements));
+		_vec.resize(_vec.capacity());
+	}
+
+	void appendValue(T v, size_t oldNumElements) {
+		increaseStorage(oldNumElements, 1);
+
 		_vec[oldNumElements] = v;
 	}
 
@@ -88,7 +100,8 @@ public:
 				or (allow_shrink and size_rounded_up < _vec.size());
 
 		if (need_resize) {
-			_vec.resize(size_rounded_up);
+			_vec.reserve(size_rounded_up);
+			_vec.resize(_vec.capacity());
 		}
 		// we might still need to zero the rest of the Cache Line
 		if (zero_rest_of_CL and size_rounded_up > 0) {
@@ -104,7 +117,8 @@ public:
 	 * \brief Reallocate the array. All content may be lost.
 	 */
 	virtual void resize(size_t n) {
-		_vec.resize(_round_up(n));
+		_vec.reserve(_round_up(n));
+		_vec.resize(_vec.capacity());
 	}
 
 	virtual void zero(size_t start_idx) {

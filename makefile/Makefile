@@ -34,6 +34,10 @@ UNIT_TESTS ?= 0
 # build with VTK support
 VTK ?= 0
 
+# bind to TBB proxy malloc
+TBB ?= 0
+
+# support generators in tools/gui - will be deprecated soon (as of June 2017)
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
@@ -116,8 +120,8 @@ OBJECTS = $(SOURCES:.cpp=.o)
 INCLUDES = -I$(SRCDIR) -isystem $(SRCDIR)/External
 
 BINARY_BASENAME = MarDyn
-ifneq ("$(wildcard $(SRCDIR)/.svn)","")
-  $(info Building from a svn version.)
+ifneq ("$(wildcard $(SRCDIR)/../.svn)","")
+  $(info Building from an svn version.)
   SVN_VERSION = $(shell svnversion | sed -e "s/:/-/")
   ifneq ($(SVN_VERSION),)
     BINARY = $(BINARY_BASENAME)_$(SVN_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
@@ -200,6 +204,11 @@ endif
 ifeq ($(VTK), 1)
   VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)/vtkwriter.mk ) 
   include $(VTK_MAKEFILE)
+endif
+
+ifeq ($(TBB), 1)
+  TBB_MAKEFILE := $(realpath $(MAKEFILEDIR)/tbbmalloc.mk ) 
+  include $(TBB_MAKEFILE)
 endif
 
 ifeq ($(USE_FFTW), 1)

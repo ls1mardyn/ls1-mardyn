@@ -22,6 +22,10 @@ void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		_boundingBoxMin[i] = bBoxMin[i];
 		_boundingBoxMax[i] = bBoxMax[i];
 	}
+	global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
+			<< bBoxMin[1] << ", " << bBoxMax[1] << "]" << " x " << "[" << bBoxMin[2] << ", " << bBoxMax[2] << "]"
+			<< std::endl;
+
 }
 
 double ParticleContainer::getBoundingBoxMin(int dimension) const {

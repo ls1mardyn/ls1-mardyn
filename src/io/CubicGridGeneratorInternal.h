@@ -9,6 +9,7 @@
 #include <vector>
 #include "InputBase.h"
 #include "molecules/Component.h"
+#include "molecules/Molecule.h"
 
 class ParticleContainer;
 class ChemicalPotential;
@@ -48,7 +49,8 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 private:
-	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
+	void bufferMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
+	void insertMoleculesInContainer(ParticleContainer* particleContainer);
 	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components);
 	/**
 	 * create a random number between a and b (inclusive)
@@ -63,4 +65,7 @@ private:
 	 */
 	std::vector<double> getRandomVelocity(double temperature) const;
 
+	unsigned long _moleculeBufferSize;
+	std::vector<Molecule> _moleculeBuffer;
+	std::array<int, 3> _blockSizes;
 };

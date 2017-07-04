@@ -21,20 +21,62 @@
 
 
 CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
-		_numMolecules(1000), _binaryMixture(false) {
+		_numMolecules(0), _binaryMixture(false), _moleculeBufferSize(0), _moleculeBuffer(), _blockSizes() {
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
+	global_log->info() << "CubicGridGeneratorInternal: " << std::endl;
 	xmlconfig.getNodeValue("numMolecules", _numMolecules);
-	global_log->info() << "numMolecules: " << _numMolecules << std::endl;
+	if(_numMolecules)global_log->info() << "numMolecules: " << _numMolecules << std::endl;
+	double density = -1.;
+	xmlconfig.getNodeValue("density", density);
+	global_log->info() << "density: " << density << std::endl;
+	global_log->info() << "";
 	xmlconfig.getNodeValue("binaryMixture", _binaryMixture);
 	global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
+
+	_moleculeBufferSize = 100;
+	_blockSizes[0] = 2;
+	_blockSizes[1] = 2;
+	_blockSizes[2] = 2;
+
+	xmlconfig.getNodeValue("moleculeBufferSize", _moleculeBufferSize);
+	xmlconfig.getNodeValue("blockSizesX", _blockSizes[0]);
+	xmlconfig.getNodeValue("blockSizesY", _blockSizes[1]);
+	xmlconfig.getNodeValue("blockSizesZ", _blockSizes[2]);
+
+	// setting both or none is not allowed!
+	if((_numMolecules == 0 && density == -1.) || (_numMolecules != 0 && density != -1.) ){
+		global_log->error() << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
+		global_simulation->exit(2341);
+	}
+
+	if(density != -1.){
+		// density has been set
+		if(density <= 0){
+			global_log->error()
+					<< "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!"
+					<< std::endl;
+			global_simulation->exit(2342);
+		}
+		_numMolecules = density * global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(1) * global_simulation->getDomain()->getGlobalLength(2);
+		global_log->info() << "numMolecules: " << _numMolecules << std::endl;
+	}
 }
 
 unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+
+	_moleculeBuffer.reserve(_moleculeBufferSize);
+
 	global_simulation->startTimer("CUBIC_GRID_GENERATOR_INPUT");
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
+
+	if(_numMolecules == 0){
+		global_log->error() << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
+				<< std::endl << "Please make sure to run readXML()!" << std::endl;
+		global_simulation->exit(2341);
+	}
 
 	// create a body centered cubic layout, by creating by placing the molecules on the
 	// vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
@@ -67,20 +109,22 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	int percentageRead = 0;
 	double percentage = 1.0 / (end_i - start_i) * 100.0;
 
-    const int blocksize = 4;
+    const int blockSizesX = _blockSizes[0];
+    const int blockSizesY = _blockSizes[1];
+    const int blockSizesZ = _blockSizes[2];
 
-	for (int i = start_i; i < end_i; i+=blocksize) {
-        for (int j = start_j; j < end_j; j+=blocksize) {
-            for (int k = start_k; k < end_k; k+=blocksize) {
-                for (int ii = i; ii < i+blocksize and ii < end_i; ii++) {
-                    for (int jj = j; jj < j+blocksize and jj < end_j; jj++) {
-                        for (int kk = k; kk < k+blocksize and kk < end_k; kk++) {
+	for (int i = start_i; i < end_i; i+=blockSizesX) {
+        for (int j = start_j; j < end_j; j+=blockSizesY) {
+            for (int k = start_k; k < end_k; k+=blockSizesZ) {
+                for (int ii = i; ii < i+blockSizesX and ii < end_i; ii++) {
+                    for (int jj = j; jj < j+blockSizesY and jj < end_j; jj++) {
+                        for (int kk = k; kk < k+blockSizesZ and kk < end_k; kk++) {
 
                             double x1 = origin1 + ii * spacing;
                             double y1 = origin1 + jj * spacing;
                             double z1 = origin1 + kk * spacing;
                             if (domainDecomp->procOwnsPos(x1, y1, z1, domain)) {
-                                addMolecule(x1, y1, z1, id, particleContainer);
+                                bufferMolecule(x1, y1, z1, id, particleContainer);
                                 id++;
                             }
 
@@ -88,7 +132,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
                             double y2 = origin2 + jj * spacing;
                             double z2 = origin2 + kk * spacing;
                             if (domainDecomp->procOwnsPos(x2, y2, z2, domain)) {
-                                addMolecule(x2, y2, z2, id, particleContainer);
+                                bufferMolecule(x2, y2, z2, id, particleContainer);
                                 id++;
                             }
                         }
@@ -101,6 +145,9 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
             Log::global_log->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
         }
     }
+    Log::global_log->info() << std::endl;
+
+	insertMoleculesInContainer(particleContainer);
 
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(id); //number of local molecules
@@ -108,9 +155,19 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
 	domainDecomp->collCommFinalize();
 	// fix ID's to be unique:
-	for (auto mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol) {
-		mol->setid(mol->id() + idOffset);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator mol = begin; mol != end; ++mol) {
+			mol->setid(mol->id() + idOffset);
+		}
 	}
+
 	//std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
 	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
 
@@ -122,10 +179,13 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	Log::global_log->info() << "Initial IO took:                 "
 			<< global_simulation->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
 
+	_moleculeBuffer.resize(0);
+	_moleculeBuffer.shrink_to_fit();
+
 	return id + idOffset;
 }
 
-void CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
+void CubicGridGeneratorInternal::bufferMolecule(double x, double y, double z, unsigned long id,
 		ParticleContainer* particleContainer) {
 	std::vector<double> velocity = getRandomVelocity(global_simulation->getEnsemble()->T());
 
@@ -157,8 +217,23 @@ void CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsig
 	Molecule m(id, &(global_simulation->getEnsemble()->getComponents()->at(componentType)), x, y, z, // position
 			velocity[0], -velocity[1], velocity[2], // velocity
 			orientation[0], orientation[1], orientation[2], orientation[3], w[0], w[1], w[2]);
-	particleContainer->addParticle(m);
+
+	_moleculeBuffer.push_back(m);
+	mardyn_assert(_moleculeBuffer.size () <= _moleculeBufferSize);
+
+	if(_moleculeBuffer.size () == _moleculeBufferSize) {
+		insertMoleculesInContainer(particleContainer);
+	}
 }
+
+void CubicGridGeneratorInternal::insertMoleculesInContainer(
+		ParticleContainer* particleContainer) {
+
+	mardyn_assert(_moleculeBuffer.size () <= _moleculeBufferSize);
+	particleContainer->addParticles(_moleculeBuffer);
+	_moleculeBuffer.clear();
+}
+
 
 void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleContainer,
 		const std::vector<Component>& components) {
@@ -166,24 +241,36 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	double mass_sum = 0.;
 	double momentum_sum[3] = { 0., 0., 0. };
 
-	ParticleIterator molecule = particleContainer->iteratorBegin();
-	while (molecule != particleContainer->iteratorEnd()) {
-		mass = components[molecule->componentid()].m();
-		mass_sum = mass_sum + mass;
-		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
-		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
-		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		++molecule;
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator molecule = begin; molecule != end; ++molecule) {
+			mass = components[molecule->componentid()].m();
+			mass_sum = mass_sum + mass;
+			momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
+			momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
+			momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
+		}
 	}
 
 	double momentum_sub0 = momentum_sum[0] / mass_sum;
 	double momentum_sub1 = momentum_sum[1] / mass_sum;
 	double momentum_sub2 = momentum_sum[2] / mass_sum;
 
-	molecule = particleContainer->iteratorBegin();
-	while (molecule != particleContainer->iteratorEnd()) {
-		molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
-		++molecule;
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator molecule = begin; molecule != end; ++molecule) {
+			molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
+		}
 	}
 
 	//test
@@ -191,14 +278,20 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	momentum_sum[1] = 0.;
 	momentum_sum[2] = 0.;
 
-	molecule = particleContainer->iteratorBegin();
-	while (molecule != particleContainer->iteratorEnd()) {
-		mass = components[molecule->componentid()].m();
-		mass_sum = mass_sum + mass;
-		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
-		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
-		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		++molecule;
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = particleContainer->iteratorBegin();
+		const ParticleIterator end = particleContainer->iteratorEnd();
+
+		for (ParticleIterator molecule = begin; molecule != end; ++molecule) {
+			mass = components[molecule->componentid()].m();
+			mass_sum = mass_sum + mass;
+			momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
+			momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
+			momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
+		}
 	}
 
 	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);

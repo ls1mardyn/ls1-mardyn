@@ -36,7 +36,13 @@
 
       <phasespacepoint>
         <generator name="CubicGridGenerator">
-		<numMolecules>10000</numMolecules>
+		<!--<numMolecules>10000</numMolecules>-->
+		<density>0.785302672</density>
+		<moleculeBufferSize> 1000 </moleculeBufferSize>
+		<blockSizesX> 3 </blockSizesX>
+		<blockSizesY> 3 </blockSizesY>
+		<blockSizesZ> 3 </blockSizesZ>
+		<!--8800*8.923894e-5-->
 		<binaryMixture>false</binaryMixture>
 	</generator>
       </phasespacepoint>

@@ -15,11 +15,10 @@
  */
 class AlignedArrayTest : public utils::Test {
 
-	// declare testsuite
 	TEST_SUITE(AlignedArrayTest);
-	// add methods which perform tests
 	TEST_METHOD(testAlignment);
-	// end suite declaration
+	TEST_METHOD(testAppending);
+	TEST_METHOD(testIncreasingStorage);
 	TEST_SUITE_END();
 
 public:
@@ -28,6 +27,10 @@ public:
 	virtual ~AlignedArrayTest();
 
 	void testAlignment();
+
+	void testAppending();
+
+	void testIncreasingStorage();
 };
 
 #endif /* COMMONTEST_H_ */
