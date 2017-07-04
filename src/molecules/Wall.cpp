@@ -9,11 +9,36 @@ using namespace std;
 using Log::global_log;
 
 Wall::Wall()
-	: _dWidth(0)
+	: _rhoW(0.),
+	_yc(0.),
+	_yOff(0.),
+	Delta(0.),
+	_eps_wi(NULL),
+	_sig3_wi(NULL),
+	_sig2_wi(NULL),
+	_sig_wi(NULL),
+	_uShift_9_3(NULL),
+	_uPot_9_3(NULL),
+	_uShift_10_4(NULL),
+	_uPot_10_4(NULL),
+	_nc(0),
+	_dWidth(0.),
+	_dWidthHalf(0.)
 {
 }
 
-Wall::~Wall() {}
+Wall::~Wall()
+{
+	// free memory
+	delete [] _eps_wi;
+	delete [] _sig3_wi;
+	delete [] _sig2_wi;
+	delete [] _sig_wi;
+	delete [] _uShift_9_3;
+	delete [] _uPot_9_3;
+	delete [] _uShift_10_4;
+	delete [] _uPot_10_4;
+}
 
 void Wall::readXML(XMLfileUnits& xmlconfig)
 {
