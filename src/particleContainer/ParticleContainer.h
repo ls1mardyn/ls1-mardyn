@@ -227,6 +227,8 @@ public:
 	// or does this particle container calculate all forces.
 	virtual bool requiresForceExchange() const {return false;}
 
+	virtual bool sendLeavingAndHaloTogether() {return true;}
+
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

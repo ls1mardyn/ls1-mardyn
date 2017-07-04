@@ -54,12 +54,23 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	if(moleculeContainer->sendLeavingAndHaloTogether()){
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	}
+	else {
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	}
 }
 
 void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	if(moleculeContainer->sendLeavingAndHaloTogether()){
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	}else{
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	}
 }
 
 bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/,
@@ -69,7 +80,12 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 
 void DomainDecomposition::balanceAndExchange(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
-	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+	if(moleculeContainer->sendLeavingAndHaloTogether()){
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+	}else{
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+	}
 }
 
 void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {

@@ -106,7 +106,7 @@ public:
 	}
 
 	// documentation see father class (ParticleContainer.h)
-	void rebuild(double bBoxMin[3], double bBoxMax[3]);
+	void rebuild(double bBoxMin[3], double bBoxMax[3]) override;
 
 	//! Pointers to the particles are put into cells depending on the spacial position
 	//! of the particles.
@@ -262,7 +262,11 @@ public:
 		return &(_cells.at(cellIndex));
 	}
 
-	bool requiresForceExchange() const;
+	bool requiresForceExchange() const override;
+
+	bool sendLeavingAndHaloTogether() override {
+		return numInnerCells>1;
+	}
 
 private:
 	//####################################
@@ -359,6 +363,7 @@ private:
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
+	int numInnerCells = 2;
 
 	//! @brief True if all Particles are in the right cell
 	//!

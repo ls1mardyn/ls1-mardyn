@@ -115,14 +115,24 @@ void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber) {
 	const bool removeRecvDuplicates = true;
-	DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	if(moleculeContainer->sendLeavingAndHaloTogether()){
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	} else {
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY, removeRecvDuplicates);
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES, removeRecvDuplicates);
+	}
 }
 
 void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber) {
 	const bool removeRecvDuplicates = true;
-	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	if(moleculeContainer->sendLeavingAndHaloTogether()){
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	} else {
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY, removeRecvDuplicates);
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES, removeRecvDuplicates);
+	}
 }
 
 //check whether or not to do rebalancing in the specified step
@@ -140,7 +150,12 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 	const bool removeRecvDuplicates = true;
 
 	if (rebalance == false) {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+		if(moleculeContainer->sendLeavingAndHaloTogether()){
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+		} else {
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 

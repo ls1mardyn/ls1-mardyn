@@ -139,31 +139,21 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	int numberOfCells = 1;
 
 	for (int dim = 0; dim < 3; dim++) {
-		_boxWidthInNumCells[dim] = floor(
-				(_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _cutoffRadius
-						* _haloWidthInNumCells[dim]);
-		// in each dimension at least one layer of (inner+boundary) cells is necessary
-		if (_boxWidthInNumCells[dim] == 0) {
-			_boxWidthInNumCells[dim] = 1;
-		}
+		_boxWidthInNumCells[dim] = floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _cutoffRadius * _haloWidthInNumCells[dim]);
 
-		_cellsPerDimension[dim] = (int) floor(
-				(_boundingBoxMax[dim] - _boundingBoxMin[dim])
-						/ (_cutoffRadius / _haloWidthInNumCells[dim]))
-				+ 2 * _haloWidthInNumCells[dim];
+		_cellsPerDimension[dim] = _boxWidthInNumCells[dim] + 2 * _haloWidthInNumCells[dim];
+
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			global_log->error_always_output() << "LinkedCells::rebuild: region to small"
-					<< endl;
+			global_log->error_always_output() << "LinkedCells::rebuild: region to small" << endl;
 			Simulation::exit(1);
 		}
+
 		numberOfCells *= _cellsPerDimension[dim];
-		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim])
-				/ (_cellsPerDimension[dim] - 2 * _haloWidthInNumCells[dim]);
-		_haloBoundingBoxMin[dim] = this->_boundingBoxMin[dim]
-				- _haloWidthInNumCells[dim] * _cellLength[dim];
-		_haloBoundingBoxMax[dim] = this->_boundingBoxMax[dim]
-				+ _haloWidthInNumCells[dim] * _cellLength[dim];
+
+		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _boxWidthInNumCells[dim];
+		_haloBoundingBoxMin[dim] = _boundingBoxMin[dim] - _haloWidthInNumCells[dim] * _cellLength[dim];
+		_haloBoundingBoxMax[dim] = _boundingBoxMax[dim] + _haloWidthInNumCells[dim] * _cellLength[dim];
 		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
 	}
 
@@ -174,24 +164,29 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	_cells.resize(numberOfCells);
 
 	// If the with of the inner region is less than the width of the halo region
-	// a parallelisation isn't possible (with the used algorithms).
-	// In this case, print an error message
-	// _cellsPerDimension is 2 times the halo width + the inner width
-	// so it has to be at least 3 times the halo width
-	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
-			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
-			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		global_log->error_always_output()
-				<< "LinkedCells (rebuild): bounding box too small for calculated cell Length"
-				<< endl;
-		global_log->error_always_output() << "cellsPerDimension " << _cellsPerDimension[0]
-				<< " / " << _cellsPerDimension[1] << " / "
-				<< _cellsPerDimension[2] << endl;
-		global_log->error_always_output() << "_haloWidthInNumCells" << _haloWidthInNumCells[0]
-				<< " / " << _haloWidthInNumCells[1] << " / "
-				<< _haloWidthInNumCells[2] << endl;
-		Simulation::exit(5);
+	// leaving particles and halo copy must be sent separately.
+	if (_boxWidthInNumCells[0] < numInnerCells * _haloWidthInNumCells[0]
+			|| _boxWidthInNumCells[1] < numInnerCells * _haloWidthInNumCells[1]
+			|| _boxWidthInNumCells[2] < numInnerCells * _haloWidthInNumCells[2]) {
+		if(numInnerCells<=1){
+			// TODO ____ Error will not be reached as "region to small" will fail first
+			global_log->error_always_output()
+					<< "LinkedCells (rebuild): bounding box too small for calculated cell Length"
+					<< endl;
+			global_log->error_always_output() << "cellsPerDimension " << _cellsPerDimension[0]
+					<< " / " << _cellsPerDimension[1] << " / "
+					<< _cellsPerDimension[2] << endl;
+			global_log->error_always_output() << "_haloWidthInNumCells" << _haloWidthInNumCells[0]
+					<< " / " << _haloWidthInNumCells[1] << " / "
+					<< _haloWidthInNumCells[2] << endl;
+			Simulation::exit(5);
+		}
+
+		// Try rebuild with fewer (minimal) inner cells
+		numInnerCells -= 1;
 	}
+
+	global_log->info() << "Using " << numInnerCells << " inner cell(s) as the minimum per dimension." << endl;
 
 	initializeCells();
 	calculateNeighbourIndices();
@@ -201,9 +196,10 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	// delete all Particles which are outside of the halo region
 	deleteParticlesOutsideBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
-    initializeTraversal();
+	initializeTraversal();
 
 	_cellsValid = false;
+
 }
 
 void LinkedCells::update() {
