@@ -137,6 +137,10 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
 		RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
 		RegionParticleIterator end = partContainer->iterateRegionEnd();
 
+		double f[3];
+		for(unsigned d=0; d<3; d++)
+			f[d] = 0.;
+
 		for(RegionParticleIterator i = begin; i != end; ++i){
 			//! so far for 1CLJ only, several 1CLJ-components possible
 			double y, y3, y9, ry, ryRel;
@@ -147,17 +151,12 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
 			if(y < _yc){
 				y3 = y * y * y;
 				y9 = y3 * y3 * y3;
-				double f[3];
-				for(unsigned d = 0; d < 3; d++) {
-					f[d] = 0.0;
-				}
 
 				double sig9_wi;
 				sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
 				f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / ryRel;
 				_uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
-				f[0] = 0;
-				f[2] = 0;
+
 				(*i).Fljcenteradd(0, f);
 //				global_log->info() << "id=" << (*i).id() << ", ry=" << ry << ", ryRel=" << ryRel << ", f[1]=" << f[1] << endl;
 			}
