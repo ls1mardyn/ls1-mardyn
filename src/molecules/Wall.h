@@ -40,6 +40,7 @@ class Wall{
 		unsigned _nc;
 		double _dWidth;
 		double _dWidthHalf;
+		std::vector<bool> _bConsiderComponent;
 };
 
 #endif /*WALL_H_*/
