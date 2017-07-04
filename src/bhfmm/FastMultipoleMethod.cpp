@@ -139,8 +139,9 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 	}
 #ifdef QUICKSCHED
     qsched_run(_scheduler, mardyn_get_max_threads(), runner);
-#endif
+#else
 	_pseudoParticleContainer->horizontalPass(_P2PProcessor);
+#endif
 
 	// L2L, L2P
 	_pseudoParticleContainer->downwardPass(_L2PProcessor);
@@ -178,7 +179,7 @@ void FastMultipoleMethod::runner(int type, void *data) {
 			int                blockX            = payload->taskBlockSize[0];
 			int                blockY            = payload->taskBlockSize[1];
 			int                blockZ            = payload->taskBlockSize[2];
-			LeafNodesContainer *contextContainer = payload->contextContainer;
+			LeafNodesContainer *contextContainer = payload->leafNodesContainer;
 
             // traverse over block
             for (unsigned long i = 0; i < blockX - 1
@@ -198,12 +199,53 @@ void FastMultipoleMethod::runner(int type, void *data) {
             }
 			break;
 		} /* P2P */
-		case Dummy:{
-            // do nothing, only serves for synchronization
+        case FFTInitialize: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            double radius = contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
+                    .local
+                    .getRadius();
+
+            FFTAccelerableExpansion &source = static_cast<bhfmm::SHMultipoleParticle &>(contextContainer
+                    ->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
+                    .multipole)
+                    .getExpansion();
+            FFTAccelerableExpansion &target = static_cast<bhfmm::SHLocalParticle &>(contextContainer
+                    ->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
+                    .local)
+                    .getExpansion();
+            contextContainer->getFFTAcceleration()->FFT_initialize_Source(source, radius);
+            contextContainer->getFFTAcceleration()->FFT_initialize_Target(target);
 			break;
-		} /* P2P */
-		default:
-			global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
+        } /* FFTInitialize */
+        case FFTFinalize: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            double radius = contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
+                    .local
+                    .getRadius();
+
+            FFTAccelerableExpansion &target = static_cast<bhfmm::SHLocalParticle &>(contextContainer
+                    ->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
+                    .local)
+                    .getExpansion();
+            contextContainer->getFFTAcceleration()->FFT_finalize_Target(target, radius);
+            break;
+        } /* FFTFinalize */
+        case M2LFourier: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            contextContainer->M2LStep<true, true, false, false>(payload->currentMultipole,
+																payload->currentEdgeLength,
+																payload->currentLevel);
+			break;
+        } /* M2LFourier */
+        case Dummy: {
+            // do nothing, only serves for synchronization
+            break;
+        } /* Dummy */
+        default:
+            global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
 	}
 }
 #endif /* QUICKSCEHD */

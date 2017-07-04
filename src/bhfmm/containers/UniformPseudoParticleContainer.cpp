@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <array>
 #include <omp.h>
+#include <bhfmm/FastMultipoleMethod.h>
 
 namespace bhfmm {
 
@@ -41,7 +42,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		, qsched *scheduler
 #endif
 		) : PseudoParticleContainer(orderOfExpansions),
-			_leafContainer(0),
+			_leafContainer(nullptr),
 			_wellSep(1) {
 	_doNTLocal = true;
 	_doNTGlobal = true;
@@ -488,6 +489,10 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	Log::global_log->info() << "UniformPseudoParticleContainer: globalLevel = "
 				<< _globalLevel << " maxLevel= " <<_maxLevel << std::endl;
 
+#ifdef QUICKSCHED
+	// Quicksched Task generation
+	generateM2LTasks(scheduler);
+#endif
 //reset timers
 #ifdef ENABLE_MPI
 	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROCESS_CELLS");
@@ -540,6 +545,50 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 #endif  /* FMM_FFT */
 }
 
+void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
+	int currentCellsEdge = 1;
+	double cellWid[]{_domain->getGlobalLength(0),
+					 _domain->getGlobalLength(1),
+					 _domain->getGlobalLength(2)};
+	struct qsched_payload payload;
+	payload.uniformPseudoParticleContainer = this;
+
+	for (int currentLevel = 1; currentLevel <= _maxLevel; ++currentLevel) { //global M2M
+
+		currentCellsEdge *= 2;
+		for (int i = 0; i < 3; ++i) {
+			cellWid[i] /= 2;
+		}
+
+		payload.currentLevel = currentLevel;
+		payload.currentEdgeLength = currentCellsEdge;
+
+		int maxId = currentCellsEdge * currentCellsEdge * currentCellsEdge;
+
+		for (int multipoleId = 0; multipoleId < maxId; ++multipoleId){
+			payload.currentMultipole = multipoleId;
+			qsched_addtask(scheduler,
+						   FastMultipoleMethod::FFTInitialize,
+						   qsched_flag_none,
+						   &payload,
+						   sizeof(payload),
+						   1);
+			qsched_addtask(scheduler,
+						   FastMultipoleMethod::M2LFourier,
+						   qsched_flag_none,
+						   &payload,
+						   sizeof(payload),
+						   1);
+			qsched_addtask(scheduler,
+						   FastMultipoleMethod::FFTFinalize,
+						   qsched_flag_none,
+						   &payload,
+						   sizeof(payload),
+						   1);
+		}
+
+	}
+}
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
 	_leafContainer->clearParticles();
@@ -787,10 +836,8 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 void UniformPseudoParticleContainer::horizontalPass(
 		VectorizedChargeP2PCellProcessor* cp) {
 
-#ifndef QUICKSCHED
 	// P2P
 	_leafContainer->traverseCellPairs(*cp);
-#endif
 
 	// M2L
 	int curCellsEdge=1;
@@ -799,7 +846,6 @@ void UniformPseudoParticleContainer::horizontalPass(
 	for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
 
 #if defined(ENABLE_MPI)
-
 	//iterate through local areas of local tree without halos
 	for(int curLevel= 1; curLevel<=_maxLevel; curLevel++){
 
@@ -821,7 +867,6 @@ void UniformPseudoParticleContainer::horizontalPass(
 	}
 #endif
 
-
 	int finishedFlag = 0;
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 	//initialize busy waiting variables
@@ -830,7 +875,6 @@ void UniformPseudoParticleContainer::horizontalPass(
 	while(finishedFlag != -1){
 		finishedFlag = busyWaiting(); //returns -1 if finished
 #if defined(ENABLE_MPI)
-
 		if(finishedFlag == 1){ //communication of local tree halos finished
 			global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 			communicateHalosOverlapSetHalos();
@@ -862,7 +906,6 @@ void UniformPseudoParticleContainer::horizontalPass(
 			}
 			global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 		}
-
 #endif
 
 		if(finishedFlag == 2){ //communication of global tree finished
@@ -880,10 +923,9 @@ void UniformPseudoParticleContainer::horizontalPass(
 			if(_doNTGlobal and _avoidAllReduce and not (_globalLevel == 1 and _fuseGlobalCommunication)){
 				_multipoleRecBufferOverlapGlobal->communicateGlobalLevels(_globalLevel,_stopLevel,true);
 			}
-#endif
 			curCellsEdge=1;
 			for(int i=0; i < 3; i++) cellWid[i] = _domain->getGlobalLength(i);
-
+#endif
 			for(int curLevel=1; curLevel<=_maxLevel; curLevel++){ //global M2M
 
 				curCellsEdge *=2;
@@ -999,8 +1041,6 @@ void UniformPseudoParticleContainer::horizontalPass(
 	}
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 	//in case of neutral territory version exchange halo values
-
-
 }
 
 int UniformPseudoParticleContainer::busyWaiting(){
@@ -1127,9 +1167,6 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
 }
 
-
-
-
 void UniformPseudoParticleContainer::CombineMpCell_Global(double */*cellWid*/, int mpCells, int curLevel){
 #ifdef ENABLE_OPENMP
 #pragma omp parallel firstprivate(curLevel, mpCells)
@@ -1169,8 +1206,6 @@ void UniformPseudoParticleContainer::CombineMpCell_Global(double */*cellWid*/, i
 		} // mloop closed
 	}
 }
-
-
 
 void UniformPseudoParticleContainer::CombineMpCell_Local(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
 #ifdef ENABLE_OPENMP
@@ -1418,8 +1453,6 @@ bool UniformPseudoParticleContainer::filterM2Local(bool doHalos, int m1, int m1x
 	return false;
 }
 
-
-
 void UniformPseudoParticleContainer::GatherWellSepLo_Local(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, int doHalos){
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
 	if(doHalos){
@@ -1522,7 +1555,6 @@ void UniformPseudoParticleContainer::GatherWellSepLo_Local(double* /*cellWid*/, 
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER");
 	}
 } // GatherWellSepLo closed
-
 
 #ifdef FMM_FFT
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global(double *cellWid, int mpCells, int curLevel) {
@@ -1693,10 +1725,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 #pragma omp parallel firstprivate(curLevel, mpCells, cellWid)
 #endif
 	{
-		int m1v[3]; //cell1 coordinates
-		int m2v[3]; //cell2 coordinates
-		int m1, m2, m2x, m2y, m2z; //cell coordinates
-		int m22x, m22y, m22z; // for periodic image
+		int m1; //cell coordinates
 		int loop_min, loop_max;
 		int row_length; //number of cells per row
 		row_length = mpCells * mpCells * mpCells;
@@ -1704,13 +1733,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		loop_max = row_length;
 		//FFT param
 		double radius;
-		double base_unit = 2.0 / sqrt(3);
-		int M2L_order;
-		FFTDataContainer* tf;
 		//Initialize FFT
 #ifndef ENABLE_OPENMP
 		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
 #endif
+        // FFT Initialize
 #ifdef ENABLE_OPENMP
 #pragma omp for schedule(dynamic,1)
 #endif
@@ -1718,8 +1745,8 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 #ifdef ENABLE_MPI
 			if(curLevel > 2 or (_doNTGlobal and curLevel > 1)){ //for low levels it is better to initialize all cells directly to avoid double initialization
 #endif
-				if (_mpCellGlobalTop[curLevel][m1].occ == 0)
-					continue;
+			if (_mpCellGlobalTop[curLevel][m1].occ == 0)
+				continue;
 #ifdef ENABLE_MPI
 			}
 #endif
@@ -1730,7 +1757,6 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 					static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
 			_FFTAcceleration->FFT_initialize_Source(source, radius);
 			_FFTAcceleration->FFT_initialize_Target(target);
-
 #ifdef ENABLE_MPI
 			if(curLevel > 2 or (_doNTGlobal and curLevel > 1)){ //initialize only cells that are accessed later during M2M calculation -> same traversal scheme
 				//iterate over all accessible cells m2 (they are always occ=0 -> extra treatment)
@@ -1781,10 +1807,8 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 				}
 			}
 #endif
-
 		}
 #ifndef ENABLE_OPENMP
-
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
 		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 #endif
@@ -1793,171 +1817,16 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 #pragma omp for schedule(dynamic,1)
 #endif
 		for (int m1Loop = loop_min; m1Loop < loop_max; m1Loop++) {
-
-			m1v[0] = m1Loop % mpCells;
-			m1v[1] = (m1Loop / mpCells) % mpCells;
-			m1v[2] = (m1Loop / (mpCells * mpCells)) % mpCells;
-			if (_mpCellGlobalTop[curLevel][m1Loop].occ == 0)
-				continue;
-			int offsetEnd, offsetStart;
-			if(!_doNTGlobal or curLevel < _stopLevel){
-				offsetEnd = 0;
-				offsetStart = 0;
-			}
-			else{ //iterate over tower
-				offsetStart = -2;
-				offsetEnd = 3;
-			}
-			int m1v1_local = m1v[1];
-			for(int yOffset = offsetStart ; yOffset <=offsetEnd; yOffset++){ //iterate over tower
-
-				if(offsetEnd != 0 or offsetStart != 0){
-					m1v[1] = (m1v1_local & ~1) + yOffset;
-					int m11y = ((m1v1_local & ~1) + yOffset + mpCells) % mpCells;
-					m1 = (m1v[2] * mpCells + m11y) * mpCells + m1v[0];
-				}
-				else{
-					m1 = (m1v[2] * mpCells + m1v[1]) * mpCells + m1v[0];
-
-				}
-				for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
-					// to get periodic image
-					m22z = (mpCells + m2z) % mpCells;
-
-					m2v[2] = m2z;
-					int m2yStart, m2yEnd;
-					if(_doNTGlobal && curLevel >= _stopLevel){ //guarantees that m2y stays in y interval of plate
-						m2yStart = m2yEnd = m1v1_local;
-					}
-					else{
-						m2yStart = LoLim(1);
-						m2yEnd = HiLim(1);
-					}
-					for (m2y = m2yStart; m2y <= m2yEnd; m2y++) {
-						// to get periodic image
-						m22y = (mpCells + m2y) % mpCells;
-
-						m2v[1] = m2y;
-						for (m2x = LoLim(0); m2x <= HiLim(0); m2x++) {
-							// to get periodic image
-							m22x = (mpCells + m2x) % mpCells;
-							m2v[0] = m2x;
-							m2 = (m22z * mpCells + m22y) * mpCells + m22x;
-							if(filterM2Global(curLevel, m2v, m1v, m2x, m2y, m2z, m2,yOffset)){
-								continue;
-							}
-	#ifndef ENABLE_MPI
-
-							if (UseM2L_2way) {
-								if (m1 > m2)
-									continue;
-							}
-	#endif
-							int doBothDirections = (_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way)? 1 : 0;
-							for(int i = 0; i <= doBothDirections; i++){
-								tf = _FFT_TM->getTransferFunction(m2v[0] - m1v[0],
-										m2v[1] - m1v[1], m2v[2] - m1v[2], base_unit, base_unit,
-										base_unit);
+            M2LStep<UseVectorization, UseTFMemoization, UseM2L_2way, UseOrderReduction>(m1Loop, mpCells, curLevel);
+        } //m1 closed
 #ifndef ENABLE_OPENMP
-
-								global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
-								global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
-#endif
-								if (UseM2L_2way) {
-									FFTAccelerableExpansion& source2 =
-											static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
-									FFTAccelerableExpansion& target2 =
-											static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m2].local).getExpansion();
-									FFTAccelerableExpansion& source1 =
-											static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m1].multipole).getExpansion();
-									FFTAccelerableExpansion& target1 =
-											static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
-
-									if (UseOrderReduction) {
-										M2L_order = FFTOrderReduction::getM2LOrder(
-												m2v[0] - m1v[0], m2v[1] - m1v[1],
-												m2v[2] - m1v[2], _maxOrd);
-										if (UseVectorization) {
-											static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed_vec(
-													source2, source1, target2, target1, tf,
-													M2L_order);
-										} else {
-											static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed(
-													source2, source1, target2, target1, tf,
-													M2L_order);
-										}
-									} else {
-										if (UseVectorization) {
-											static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way_vec(
-													source2, source1, target2, target1, tf);
-										} else {
-											static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way(
-													source2, source1, target2, target1, tf);
-										}
-									}
-								} else {
-									FFTAccelerableExpansion& source =
-											static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
-									FFTAccelerableExpansion& target =
-											static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
-
-									if (UseOrderReduction) {
-										M2L_order = FFTOrderReduction::getM2LOrder(
-												m2v[0] - m1v[0], m2v[1] - m1v[1],
-												m2v[2] - m1v[2], _maxOrd);
-										if (UseVectorization) {
-											static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction_vec(
-													source, target, tf, M2L_order);
-										} else {
-											static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction(
-													source, target, tf, M2L_order);
-										}
-									} else {
-										if (UseVectorization) {
-											_FFTAcceleration->FFT_M2L_vec(source, target,
-													tf);
-										} else {
-											_FFTAcceleration->FFT_M2L(source, target, tf);
-										}
-									}
-								}
-#ifndef ENABLE_OPENMP
-								global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
-								global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
-#endif
-								if (!UseTFMemoization) {
-									delete tf; //free useless memory
-								}
-								if(_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way){
-									//exchange m1 and m2 for second direction
-									int temp = m1;
-									m1 = m2;
-									m2 = temp;
-									int tempAr[3];
-									tempAr[0] = m1v[0];
-									tempAr[1] = m1v[1];
-									tempAr[2] = m1v[2];
-									m1v[0] = m2v[0];
-									m1v[1] = m2v[1];
-									m1v[2] = m2v[2];
-									m2v[0] = tempAr[0];
-									m2v[1] = tempAr[1];
-									m2v[2] = tempAr[2];
-								}
-							}
-						} // m2x closed
-					} // m2y closed
-				} // m2z closed
-			}
-		} //m1 closed
-#ifndef ENABLE_OPENMP
-
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 
 		//Finalize FFT
 
 		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE");
 #endif
+        // FFT Finalize
 #ifdef ENABLE_OPENMP
 #pragma omp for schedule(dynamic,1)
 #endif
@@ -2016,10 +1885,8 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 				}
 			}
 #endif
-
 		}
 #ifndef ENABLE_OPENMP
-
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE");
 #endif
 //		std::cout << "global " <<n <<" all " << m <<" \n";
@@ -2027,6 +1894,176 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
 
 } // GatherWellSepLo_FFT_template closed
+
+// TODO: Inline hack
+template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
+void UniformPseudoParticleContainer::M2LStep(int m1Loop, int mpCells, int curLevel) {
+
+    int m1v[3]; //cell1 coordinates
+    int m2v[3]; //cell2 coordinates
+    int m1, m2, m2x, m2y, m2z; //cell coordinates
+    int m22x, m22y, m22z; // for periodic image
+    //FFT param
+    double radius;
+    double base_unit = 2.0 / sqrt(3);
+    int M2L_order;
+    FFTDataContainer* tf;
+
+    m1v[0] = m1Loop % mpCells;
+    m1v[1] = (m1Loop / mpCells) % mpCells;
+    m1v[2] = (m1Loop / (mpCells * mpCells)) % mpCells;
+    if (_mpCellGlobalTop[curLevel][m1Loop].occ == 0)
+        return;
+    int offsetEnd, offsetStart;
+    if(!_doNTGlobal or curLevel < _stopLevel){
+        offsetEnd = 0;
+        offsetStart = 0;
+    }
+    else{ //iterate over tower
+        offsetStart = -2;
+        offsetEnd = 3;
+    }
+    int m1v1_local = m1v[1];
+    for(int yOffset = offsetStart ; yOffset <=offsetEnd; yOffset++){ //iterate over tower
+
+        if(offsetEnd != 0 or offsetStart != 0){
+            m1v[1] = (m1v1_local & ~1) + yOffset;
+            int m11y = ((m1v1_local & ~1) + yOffset + mpCells) % mpCells;
+            m1 = (m1v[2] * mpCells + m11y) * mpCells + m1v[0];
+        }
+        else{
+            m1 = (m1v[2] * mpCells + m1v[1]) * mpCells + m1v[0];
+
+        }
+        for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
+            // to get periodic image
+            m22z = (mpCells + m2z) % mpCells;
+
+            m2v[2] = m2z;
+            int m2yStart, m2yEnd;
+            if(_doNTGlobal && curLevel >= _stopLevel){ //guarantees that m2y stays in y interval of plate
+                m2yStart = m2yEnd = m1v1_local;
+            }
+            else{
+                m2yStart = LoLim(1);
+                m2yEnd = HiLim(1);
+            }
+            for (m2y = m2yStart; m2y <= m2yEnd; m2y++) {
+                // to get periodic image
+                m22y = (mpCells + m2y) % mpCells;
+
+                m2v[1] = m2y;
+                for (m2x = LoLim(0); m2x <= HiLim(0); m2x++) {
+                    // to get periodic image
+                    m22x = (mpCells + m2x) % mpCells;
+                    m2v[0] = m2x;
+                    m2 = (m22z * mpCells + m22y) * mpCells + m22x;
+                    if(filterM2Global(curLevel, m2v, m1v, m2x, m2y, m2z, m2,yOffset)){
+                        continue;
+                    }
+#ifndef ENABLE_MPI
+                    if (UseM2L_2way) {
+                        if (m1 > m2)
+                            continue;
+                    }
+#endif
+                    int doBothDirections = (_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way)? 1 : 0;
+                    for(int i = 0; i <= doBothDirections; i++){
+                        tf = _FFT_TM->getTransferFunction(m2v[0] - m1v[0],
+                                                          m2v[1] - m1v[1], m2v[2] - m1v[2], base_unit, base_unit,
+                                                          base_unit);
+#ifndef ENABLE_OPENMP
+                        global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
+                            global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
+#endif
+                        if (UseM2L_2way) {
+                            FFTAccelerableExpansion& source2 =
+                                                           static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
+                            FFTAccelerableExpansion& target2 =
+                                                           static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m2].local).getExpansion();
+                            FFTAccelerableExpansion& source1 =
+                                                           static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m1].multipole).getExpansion();
+                            FFTAccelerableExpansion& target1 =
+                                                           static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
+
+                            if (UseOrderReduction) {
+                                M2L_order = FFTOrderReduction::getM2LOrder(
+                                        m2v[0] - m1v[0], m2v[1] - m1v[1],
+                                        m2v[2] - m1v[2], _maxOrd);
+                                if (UseVectorization) {
+                                    static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed_vec(
+                                            source2, source1, target2, target1, tf,
+                                            M2L_order);
+                                } else {
+                                    static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed(
+                                            source2, source1, target2, target1, tf,
+                                            M2L_order);
+                                }
+                            } else {
+                                if (UseVectorization) {
+                                    static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way_vec(
+                                            source2, source1, target2, target1, tf);
+                                } else {
+                                    static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way(
+                                            source2, source1, target2, target1, tf);
+                                }
+                            }
+                        } else {
+                            FFTAccelerableExpansion& source =
+                                                           static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
+                            FFTAccelerableExpansion& target =
+                                                           static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
+
+                            if (UseOrderReduction) {
+                                M2L_order = FFTOrderReduction::getM2LOrder(
+                                        m2v[0] - m1v[0], m2v[1] - m1v[1],
+                                        m2v[2] - m1v[2], _maxOrd);
+                                if (UseVectorization) {
+                                    static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction_vec(
+                                            source, target, tf, M2L_order);
+                                } else {
+                                    static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction(
+                                            source, target, tf, M2L_order);
+                                }
+                            } else {
+                                if (UseVectorization) {
+                                    _FFTAcceleration->FFT_M2L_vec(source, target,
+                                                                  tf);
+                                } else {
+                                    _FFTAcceleration->FFT_M2L(source, target, tf);
+                                }
+                            }
+                        }
+#ifndef ENABLE_OPENMP
+                        global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
+                            global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
+#endif
+                        if (!UseTFMemoization) {
+                            delete tf; //free useless memory
+                        }
+                        if(_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way){
+                            //exchange m1 and m2 for second direction
+                            int temp = m1;
+                            m1 = m2;
+                            m2 = temp;
+                            int tempAr[3];
+                            tempAr[0] = m1v[0];
+                            tempAr[1] = m1v[1];
+                            tempAr[2] = m1v[2];
+                            m1v[0] = m2v[0];
+                            m1v[1] = m2v[1];
+                            m1v[2] = m2v[2];
+                            m2v[0] = tempAr[0];
+                            m2v[1] = tempAr[1];
+                            m2v[2] = tempAr[2];
+                        }
+                    }
+                } // m2x closed
+            } // m2y closed
+        } // m2z closed
+    }
+
+}
 
 template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
@@ -2302,7 +2339,6 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 } // GatherWellSepLo_FFT_MPI_template closed
 #endif /* FMM_FFT */
 
-
 void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/, int mpCells, int curLevel){
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL");
 #ifdef ENABLE_OPENMP
@@ -2349,7 +2385,6 @@ void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/,
 	}
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL");
 } // PropogateCellLo
-
 
 void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL");
@@ -2420,8 +2455,6 @@ void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, 
 	}
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL");
 } // PropogateCellLo_MPI
-
-
 
 void UniformPseudoParticleContainer::processMultipole(ParticleCellPointers& cell){
 //#ifdef ENABLE_OPENMP currently broken
@@ -2765,7 +2798,6 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 #endif
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME");
 }
-
 
 void UniformPseudoParticleContainer::getHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, double *buffer,
 		int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion){
@@ -3244,8 +3276,6 @@ void UniformPseudoParticleContainer::communicateHalosNoOverlap(){ //Outdated!!!
 #endif
 }
 
-
-
 void UniformPseudoParticleContainer::communicateHalosOverlapStart(){
 
 #if defined(ENABLE_MPI)
@@ -3338,8 +3368,6 @@ void UniformPseudoParticleContainer::communicateHalosOverlapStart(){
 
 #endif
 }
-
-
 
 void UniformPseudoParticleContainer::communicateHalosOverlapSetHalos(){
 
@@ -3520,8 +3548,6 @@ void UniformPseudoParticleContainer::communicateHalosOverlapPostProcessingSetHal
 #endif
 }
 
-
-
 void UniformPseudoParticleContainer::communicateHalosOverlapPostProcessingStart(){
 
 #if defined(ENABLE_MPI)
@@ -3635,7 +3661,6 @@ void UniformPseudoParticleContainer::communicateHalosAlongAxis(double * lowerNei
 #endif
 }
 
-
 void UniformPseudoParticleContainer::processTree() {
 
 	int curCellsEdge=1;
@@ -3701,6 +3726,13 @@ void UniformPseudoParticleContainer::printTimers() {
 #endif
 }
 
+    vector<vector<MpCell>> &UniformPseudoParticleContainer::getMpCellGlobalTop() {
+        return _mpCellGlobalTop;
+    }
+
+    FFTAccelerationAPI *UniformPseudoParticleContainer::getFFTAcceleration() {
+        return _FFTAcceleration;
+    }
 
 } /* namespace bhfmm */
 

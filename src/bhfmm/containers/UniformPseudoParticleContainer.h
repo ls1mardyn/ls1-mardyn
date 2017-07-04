@@ -67,7 +67,12 @@ public:
 	//prints timer values to the standard output
 	void printTimers();
 
+    vector<vector<MpCell>> &getMpCellGlobalTop() ;
 
+    FFTAccelerationAPI *getFFTAcceleration() ;
+
+    template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
+    void M2LStep(int m1Loop, int mpCells, int curLevel);
 
 private:
 	LeafNodesContainer* _leafContainer;
@@ -294,6 +299,10 @@ private:
 	MPI_Comm * _allReduceComms; //MPI communicator that stores all MPI rank that need to communicate in global reduce for each possible stoplevel
 #endif
 	int _overlapComm; //indicates if overlap of communication is desired; Must be true currently!
+
+#ifdef QUICKSCHED
+    void generateM2LTasks(qsched *scheduler);
+#endif
 
 };
 

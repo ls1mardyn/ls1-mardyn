@@ -142,15 +142,12 @@ void LeafNodesContainer::initializeCells() {
 	}
 #ifdef QUICKSCHED
 	qsched_res_t  resourceId;
-	qsched_task_t taskIdPre;
-	qsched_task_t taskIdPost;
-	qsched_task_t taskIdP2P;
 	//TODO: Make taskBlockSize dynamic / autotuning / xml
 	struct qsched_payload payload;
     payload.taskBlockSize[0] = 2;
 	payload.taskBlockSize[1] = 2;
 	payload.taskBlockSize[2] = 2;
-    payload.contextContainer = this;
+    payload.leafNodesContainer = this;
 
 
 	global_log->info() << "LeafNodesContainer: Generating resource and task ids" << std::endl;
