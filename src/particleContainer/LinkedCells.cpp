@@ -165,10 +165,10 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 	// If the with of the inner region is less than the width of the halo region
 	// leaving particles and halo copy must be sent separately.
-	if (_boxWidthInNumCells[0] < numInnerCells * _haloWidthInNumCells[0]
-			|| _boxWidthInNumCells[1] < numInnerCells * _haloWidthInNumCells[1]
-			|| _boxWidthInNumCells[2] < numInnerCells * _haloWidthInNumCells[2]) {
-		if(numInnerCells<=1){
+	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
+			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
+			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
+		/*
 			// TODO ____ Error will not be reached as "region to small" will fail first
 			global_log->error_always_output()
 					<< "LinkedCells (rebuild): bounding box too small for calculated cell Length"
@@ -180,13 +180,13 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 					<< " / " << _haloWidthInNumCells[1] << " / "
 					<< _haloWidthInNumCells[2] << endl;
 			Simulation::exit(5);
-		}
+		*/
 
-		// Try rebuild with fewer (minimal) inner cells
-		numInnerCells -= 1;
+		_sendParticlesTogether = false;
 	}
 
-	global_log->info() << "Using " << numInnerCells << " inner cell(s) as the minimum per dimension." << endl;
+	global_log->info() << "Sending leaving particles and halo copies "
+			<< (_sendParticlesTogether ? "together" : "separately") << std::endl;
 
 	initializeCells();
 	calculateNeighbourIndices();

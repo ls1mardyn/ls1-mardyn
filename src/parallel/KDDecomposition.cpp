@@ -153,8 +153,8 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 		if(moleculeContainer->sendLeavingAndHaloTogether()){
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 		} else {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
 		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;

@@ -265,7 +265,7 @@ public:
 	bool requiresForceExchange() const override;
 
 	bool sendLeavingAndHaloTogether() override {
-		return numInnerCells>1;
+		return _sendParticlesTogether;
 	}
 
 private:
@@ -363,7 +363,7 @@ private:
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
-	int numInnerCells = 2;
+	bool _sendParticlesTogether = true; //!< Should leaving particles and halo copies be sent together or separately?
 
 	//! @brief True if all Particles are in the right cell
 	//!
