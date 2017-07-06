@@ -530,3 +530,48 @@ void LinkedCellsTest::doHSTest(DomainDecompBase* domainDecomposition,
 	}
 }
 
+void LinkedCellsTest::testMidpoint() {
+	return; //TODO: ____ Remove when midpoint is implemented
+
+	//TODO: ___Extract to separate test class
+	//------------------------------------------------------------
+	// Setup
+	//------------------------------------------------------------
+
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "LinkedCellsTest::testMidpoint()"
+				<< " not executed (rerun with only 1 Process!)" << std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
+
+	auto domainDecomposition = new DomainDecompBase();
+	auto filename = "LinkedCellsHS.inp";
+	auto cutoff = 1;
+
+	LinkedCells* containerMP = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+	containerMP->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::MP;
+	containerMP->_traversalTuner->findOptimalTraversal();
+	containerMP->initializeTraversal();
+
+	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+
+	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+
+
+	//------------------------------------------------------------
+	//  Calculate forces for FS and MP and compare
+	//------------------------------------------------------------
+
+	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerMP);
+
+	//------------------------------------------------------------
+	// Cleanup
+	//------------------------------------------------------------
+
+	delete domainDecomposition;
+	delete vectorizedCellProcessor;
+}
+

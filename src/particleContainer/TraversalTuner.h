@@ -12,6 +12,7 @@
 #include "LinkedCellTraversals/C08CellPairTraversal.h"
 #include "LinkedCellTraversals/OriginalCellPairTraversal.h"
 #include "LinkedCellTraversals/HalfShellTraversal.h"
+#include "LinkedCellTraversals/MidpointTraversal.h"
 
 using Log::global_log;
 
@@ -49,7 +50,8 @@ private:
         C08      = 1,
         SLICED   = 2,
         QSCHED   = 3,
-		HS		 = 4
+		HS		 = 4,
+		MP		 = 5
     };
 
     traversalNames selectedTraversal;

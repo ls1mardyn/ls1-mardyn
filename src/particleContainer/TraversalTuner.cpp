@@ -10,6 +10,7 @@ TraversalTuner::TraversalTuner() : _optimalTravesal(nullptr) {
     struct OriginalCellPairTraversalData *origData   = new OriginalCellPairTraversalData;
     struct SlicedCellPairTraversalData   *slicedData = new SlicedCellPairTraversalData;
     struct HalfShellTraversalData    	 *hsData   	 = new HalfShellTraversalData;
+    struct MidpointTraversalData    	 *mpData   	 = new MidpointTraversalData;
     struct QuickschedTraversalData       *quiData    = new QuickschedTraversalData;
     quiData->taskBlockSize = {2, 2, 2};
 
@@ -18,7 +19,8 @@ TraversalTuner::TraversalTuner() : _optimalTravesal(nullptr) {
             make_pair(nullptr, c08Data),
             make_pair(nullptr, slicedData),
             make_pair(nullptr, quiData),
-            make_pair(nullptr, hsData)
+            make_pair(nullptr, hsData),
+            make_pair(nullptr, mpData)
     };
 }
 
@@ -43,6 +45,8 @@ void TraversalTuner::findOptimalTraversal() {
         global_log->info() << "Using OriginalCellPairTraversal." << endl;
     else if (dynamic_cast<C08CellPairTraversal<ParticleCell> *>(_optimalTravesal))
         global_log->info() << "Using C08CellPairTraversal." << endl;
+    else if (dynamic_cast<MidpointTraversal<ParticleCell> *>(_optimalTravesal))
+        global_log->info() << "Using MidpointTraversal." << endl;
 
     else if (dynamic_cast<QuickschedTraversal<ParticleCell> *>(_optimalTravesal)){
         global_log->info() << "Using QuickschedTraversal." << endl;
@@ -79,6 +83,8 @@ void TraversalTuner::readXML(XMLfileUnits &xmlconfig) {
         selectedTraversal = ORIGINAL;
     else if (traversalType.find("hs") != string::npos)
         selectedTraversal = HS;
+    else if (traversalType.find("mp") != string::npos)
+        selectedTraversal = MP;
     else {
         // selector already set in constructor, just print a warning here
         if (mardyn_get_max_threads() > 1) {
@@ -162,6 +168,8 @@ void TraversalTuner::rebuild(std::vector<ParticleCell> &cells,
                                                                     quiData->taskBlockSize);
             } else if (dynamic_cast<HalfShellTraversalData *>(tPair.second)) {
                 tPair.first = new HalfShellTraversal<ParticleCell>(cells, dims);
+            } else if (dynamic_cast<MidpointTraversalData *>(tPair.second)) {
+                tPair.first = new MidpointTraversal<ParticleCell>(cells, dims);
             } else if (dynamic_cast<OriginalCellPairTraversalData *>(tPair.second)) {
                 tPair.first = new OriginalCellPairTraversal<ParticleCell>(cells,
                                                                           dims);
