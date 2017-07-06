@@ -546,7 +546,10 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 }
 
 void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
-	int currentCellsEdge = 1;
+	int currentCellsEdge = 1,
+        idInit,
+        idFinalize,
+        idM2L;
 	double cellWid[]{_domain->getGlobalLength(0),
 					 _domain->getGlobalLength(1),
 					 _domain->getGlobalLength(2)};
@@ -567,24 +570,26 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 
 		for (int multipoleId = 0; multipoleId < maxId; ++multipoleId){
 			payload.currentMultipole = multipoleId;
-			qsched_addtask(scheduler,
-						   FastMultipoleMethod::FFTInitialize,
-						   qsched_flag_none,
-						   &payload,
-						   sizeof(payload),
+			idInit = qsched_addtask(scheduler,
+                                    FastMultipoleMethod::FFTInitialize,
+                                    qsched_flag_none,
+                                    &payload,
+                                    sizeof(payload),
+                                    1);
+            idM2L  = qsched_addtask(scheduler,
+                                    FastMultipoleMethod::M2LFourier,
+                                    qsched_flag_none,
+                                    &payload,
+                                    sizeof(payload),
+                                    1);
+            idFinalize = qsched_addtask(scheduler,
+                                        FastMultipoleMethod::FFTFinalize,
+                                        qsched_flag_none,
+                                        &payload,
+                                        sizeof(payload),
 						   1);
-			qsched_addtask(scheduler,
-						   FastMultipoleMethod::M2LFourier,
-						   qsched_flag_none,
-						   &payload,
-						   sizeof(payload),
-						   1);
-			qsched_addtask(scheduler,
-						   FastMultipoleMethod::FFTFinalize,
-						   qsched_flag_none,
-						   &payload,
-						   sizeof(payload),
-						   1);
+            qsched_addunlock(scheduler, idInit, idM2L);
+            qsched_addunlock(scheduler, idM2L, idFinalize);
 		}
 
 	}
