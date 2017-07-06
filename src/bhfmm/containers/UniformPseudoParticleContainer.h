@@ -138,7 +138,7 @@ private:
 
 	// M2L
 	void GatherWellSepLo_Local(double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos);
-  
+
 
 #ifdef FMM_FFT
 	// M2L

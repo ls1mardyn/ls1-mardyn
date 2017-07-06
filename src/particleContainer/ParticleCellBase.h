@@ -11,7 +11,9 @@
 #include "Cell.h"
 #include "molecules/Molecule.h"
 
+#ifdef QUICKSCHED
 #include <quicksched.h>
+#endif
 
 class ParticleCellBase: public Cell {
 public:

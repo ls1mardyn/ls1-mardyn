@@ -15,7 +15,9 @@
 
 #include "molecules/MoleculeForwardDeclaration.h"
 
+#ifdef QUICKSCHED
 #include "quicksched.h"
+#endif
 /**
  * simpler copy of the class ParticleCellPointers.
  * Uses pointers, instead of references for main storage,

@@ -536,7 +536,6 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	}
 #endif
 
-	
 #ifdef FMM_FFT
 	if (FFTSettings::issetFFTAcceleration()) {
 		delete _FFT_TM;
@@ -545,6 +544,7 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 #endif  /* FMM_FFT */
 }
 
+#ifdef QUICKSCHED
 void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 	int currentCellsEdge = 1,
         idInit,
@@ -591,9 +591,9 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
             qsched_addunlock(scheduler, idInit, idM2L);
             qsched_addunlock(scheduler, idM2L, idFinalize);
 		}
-
 	}
 }
+#endif
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
 	_leafContainer->clearParticles();
@@ -1641,7 +1641,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global(double *cellWid,
 		}
 	}
 }
-  
+
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local(double *cellWid, Vector3<int> mpCells, int curLevel, int doHalos) {
 	if (FFTSettings::USE_VECTORIZATION) {
 		if (FFTSettings::USE_TFMANAGER_UNIFORMGRID) {
@@ -1726,7 +1726,7 @@ template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool Us
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		double *cellWid, int mpCells, int curLevel) {
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp parallel firstprivate(curLevel, mpCells, cellWid)
 #endif
 	{
@@ -1739,11 +1739,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		//FFT param
 		double radius;
 		//Initialize FFT
-#ifndef ENABLE_OPENMP
+#ifndef _OPENMP
 		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
 #endif
         // FFT Initialize
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp for schedule(dynamic,1)
 #endif
 		for (m1 = loop_min; m1 < loop_max; m1++) {
@@ -1813,18 +1813,18 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 			}
 #endif
 		}
-#ifndef ENABLE_OPENMP
+#ifndef _OPENMP
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
 		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 #endif
 		//M2L in Fourier space
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp for schedule(dynamic,1)
 #endif
 		for (int m1Loop = loop_min; m1Loop < loop_max; m1Loop++) {
             M2LStep<UseVectorization, UseTFMemoization, UseM2L_2way, UseOrderReduction>(m1Loop, mpCells, curLevel);
         } //m1 closed
-#ifndef ENABLE_OPENMP
+#ifndef _OPENMP
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 
 		//Finalize FFT
@@ -1832,7 +1832,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE");
 #endif
         // FFT Finalize
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp for schedule(dynamic,1)
 #endif
 		for (m1 = loop_min; m1 < loop_max; m1++) {
@@ -1891,7 +1891,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 			}
 #endif
 		}
-#ifndef ENABLE_OPENMP
+#ifndef _OPENMP
 		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE");
 #endif
 //		std::cout << "global " <<n <<" all " << m <<" \n";
@@ -1977,7 +1977,7 @@ void UniformPseudoParticleContainer::M2LStep(int m1Loop, int mpCells, int curLev
                         tf = _FFT_TM->getTransferFunction(m2v[0] - m1v[0],
                                                           m2v[1] - m1v[1], m2v[2] - m1v[2], base_unit, base_unit,
                                                           base_unit);
-#ifndef ENABLE_OPENMP
+#ifndef _OPENMP
                         global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
                             global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
 #endif
@@ -2039,7 +2039,7 @@ void UniformPseudoParticleContainer::M2LStep(int m1Loop, int mpCells, int curLev
                                 }
                             }
                         }
-#ifndef ENABLE_OPENMP
+#ifndef _OPENMP
                         global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
                             global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 #endif
@@ -2074,7 +2074,7 @@ template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool Us
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 		double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos) {
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
 #endif
 	{
@@ -2106,7 +2106,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 			zEnd = localMpCells[2];
 		}
 		//Initialize FFT
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp for schedule(dynamic,1)
 #endif
 		for (int mloop = 0 ; mloop < xEnd * yEnd * zEnd; mloop++){
@@ -2143,7 +2143,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 			}
 		}
 		//M2L in Fourier space
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 		#pragma omp for schedule(dynamic,1)
 #endif
 		for (int mloop = 0 ; mloop < numCellsToIterate[0] * numCellsToIterate[1] * numCellsToIterate[2]; mloop++){
@@ -2309,7 +2309,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 
 		//Finalize FFT
 		if(doHalos){
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp for schedule(dynamic,1)
 #endif
 			for (int mloop = 0 ; mloop < numCellsToIterate[0] * numCellsToIterate[1] * numCellsToIterate[2]; mloop++){
@@ -2346,7 +2346,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 
 void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/, int mpCells, int curLevel){
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL");
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp parallel firstprivate(curLevel, mpCells)
 #endif
 	{
@@ -2356,7 +2356,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/,
 		int mpCellsN = 2*mpCells;
 		int loop_min = 0;
 		int loop_max = mpCells * mpCells * mpCells;
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 	#pragma omp for schedule(dynamic,1)
 #endif
 		for (m1 = loop_min; m1 < loop_max; m1++) { //iterate over all global cells
@@ -2393,7 +2393,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/,
 
 void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL");
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 #pragma omp parallel firstprivate(curLevel, localMpCells, offset)
 #endif
 	{
@@ -2428,7 +2428,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, 
 		for(int d = 0; d < 3; d++){
 			numInnerCells[d] = localMpCells[d] - 4;
 		}
-#ifdef ENABLE_OPENMP
+#ifdef _OPENMP
 	#pragma omp for schedule(dynamic,1)
 #endif
 		for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
@@ -2462,7 +2462,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, 
 } // PropogateCellLo_MPI
 
 void UniformPseudoParticleContainer::processMultipole(ParticleCellPointers& cell){
-//#ifdef ENABLE_OPENMP currently broken
+//#ifdef _OPENMP currently broken
 //#pragma omp parallel firstprivate(cell)
 //#endif
 	{
@@ -2522,7 +2522,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCellPointers& cell
 		int Occupied = 0;
 
 		// loop over all particles in the cell
-//	#ifdef ENABLE_OPENMP
+//	#ifdef _OPENMP
 //			#pragma omp for schedule(dynamic,1)
 //	#endif
 		for (int i = 0; i < currentParticleCount; i++) {
@@ -2550,7 +2550,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCellPointers& cell
 }
 
 void UniformPseudoParticleContainer::processFarField(ParticleCellPointers& cell) {
-//#ifdef ENABLE_OPENMP currently broken
+//#ifdef _OPENMP currently broken
 //#pragma omp parallel firstprivate(cell)
 //#endif
 	{
@@ -2608,7 +2608,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCellPointers& cell)
 		double P_zzSum=0.0;
 
 		// loop over all particles in the cell
-//#ifdef ENABLE_OPENMP
+//#ifdef _OPENMP
 //		#pragma omp for schedule(dynamic,1)
 //#endif
 		for (int i = 0; i < currentParticleCount; i++) {

@@ -12,7 +12,9 @@
 #include <bhfmm/containers/UniformPseudoParticleContainer.h>
 #include "bhfmm/containers/PseudoParticleContainer.h"
 #include "particleContainer/ParticleContainer.h"
+#ifdef QUICKSCHED
 #include "quicksched.h"
+#endif
 
 namespace bhfmm {
 class FastMultipoleMethod;
