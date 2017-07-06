@@ -363,74 +363,12 @@ void LinkedCellsTest::testHalfShell() {
 
 	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
 
-	//------------------------------------------------------------
-	// Prepare molecule containers
-	//------------------------------------------------------------
-
-	container->update();
-	containerHS->update();
-
-	bool forceRebalancing = false;
-	domainDecomposition->balanceAndExchange(forceRebalancing, container, _domain);
-	domainDecomposition->balanceAndExchange(forceRebalancing, containerHS, _domain);
-
-	container->updateMoleculeCaches();
-	containerHS->updateMoleculeCaches();
 
 	//------------------------------------------------------------
-	// Do calculation with HS
+	//  Calculate forces for FS and HS and compare
 	//------------------------------------------------------------
-	{
-		containerHS->traverseCells(*vectorizedCellProcessor);
 
-		// calculate forces
-		const ParticleIterator& begin = containerHS->iteratorBegin();
-		const ParticleIterator& end = containerHS->iteratorEnd();
-		for (ParticleIterator i = begin; i != end; ++i) {
-			i->calcFM();
-		}
-
-		domainDecomposition->exchangeForces(containerHS, _domain);
-	}
-	//------------------------------------------------------------
-	// Do calculation with FS
-	//------------------------------------------------------------
-	{
-		container->traverseCells(*vectorizedCellProcessor);
-
-		// calculate forces
-		const ParticleIterator begin = container->iteratorBegin();
-		const ParticleIterator end = container->iteratorEnd();
-		for (auto i = begin; i != end; ++i) {
-			i->calcFM();
-		}
-	}
-	//------------------------------------------------------------
-	container->deleteOuterParticles();
-	containerHS->deleteOuterParticles();
-	// Compare calculated forces
-	{
-		const ParticleIterator begin = container->iteratorBegin();
-		const ParticleIterator end = container->iteratorEnd();
-		const ParticleIterator beginHS = containerHS->iteratorBegin();
-		const ParticleIterator endHS = containerHS->iteratorEnd();
-		auto j = beginHS;
-		for (auto i = begin; i != end; ++i, ++j) {
-
-			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-7*i->F(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-7*i->F(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), fabs(1e-7*i->F(2)));
-
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0), j->Vi(0), fabs(1e-7*j->Vi(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1), j->Vi(1), fabs(1e-7*j->Vi(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2), j->Vi(2), fabs(1e-7*j->Vi(2)));
-
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(0), j->M(0), fabs(1e-7*i->M(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(1), j->M(1), fabs(1e-7*i->M(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(2), j->M(2), fabs(1e-7*i->M(2)));
-		}
-	}
+	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerHS);
 
 	//------------------------------------------------------------
 	// Cleanup
@@ -441,14 +379,14 @@ void LinkedCellsTest::testHalfShell() {
 }
 
 
-void LinkedCellsTest::testHalfShellMPI() {
+void LinkedCellsTest::testHalfShellMPIIndirect() {
 	//TODO: ___Extract to separate test class
 	//------------------------------------------------------------
 	// Setup
 	//------------------------------------------------------------
 
 	auto domainDecomposition = new DomainDecomposition();
-        //domainDecomposition->setCommunicationScheme("direct");
+        domainDecomposition->setCommunicationScheme("indirect");
 	auto filename = "LinkedCellsHS-MPI.inp";
 	auto cutoff = 1;
 
@@ -466,25 +404,75 @@ void LinkedCellsTest::testHalfShellMPI() {
 	domainDecomposition->initCommunicationPartners(cutoff, _domain);
 
 	//------------------------------------------------------------
-	// Prepare molecule containers
+	//  Calculate forces for FS and HS and compare
 	//------------------------------------------------------------
 
+	doHSTest(domainDecomposition, cellProc, container, containerHS);
+
+	//------------------------------------------------------------
+	// Cleanup
+	//------------------------------------------------------------
+
+	delete domainDecomposition;
+	delete cellProc;
+}
+
+void LinkedCellsTest::testHalfShellMPIDirect() {
+	//TODO: ___Extract to separate test class
+	//------------------------------------------------------------
+	// Setup
+	//------------------------------------------------------------
+
+	auto domainDecomposition = new DomainDecomposition();
+        domainDecomposition->setCommunicationScheme("direct");
+	auto filename = "LinkedCellsHS-MPI.inp";
+	auto cutoff = 1;
+
+	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+	containerHS->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::HS;
+	containerHS->_traversalTuner->findOptimalTraversal();
+	containerHS->initializeTraversal();
+
+	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+
+	auto cellProc = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+
+	domainDecomposition->initCommunicationPartners(cutoff, _domain);
+
+	//------------------------------------------------------------
+	//  Calculate forces for FS and HS and compare
+	//------------------------------------------------------------
+
+	doHSTest(domainDecomposition, cellProc, container, containerHS);
+	//------------------------------------------------------------
+	// Cleanup
+	//------------------------------------------------------------
+
+	delete domainDecomposition;
+	delete cellProc;
+}
+void LinkedCellsTest::doHSTest(DomainDecompBase* domainDecomposition,
+		CellProcessor* cellProc, LinkedCells* container,
+		LinkedCells* containerHS) {
+	//------------------------------------------------------------
+	// Prepare molecule containers
+	//------------------------------------------------------------
 	container->update();
 	containerHS->update();
-
 	bool forceRebalancing = false;
-	domainDecomposition->balanceAndExchange(forceRebalancing, container, _domain);
-	domainDecomposition->balanceAndExchange(forceRebalancing, containerHS, _domain);
-
+	domainDecomposition->balanceAndExchange(forceRebalancing, container,
+			_domain);
+	domainDecomposition->balanceAndExchange(forceRebalancing, containerHS,
+			_domain);
 	container->updateMoleculeCaches();
 	containerHS->updateMoleculeCaches();
-
 	//------------------------------------------------------------
 	// Do calculation with FS
 	//------------------------------------------------------------
 	{
 		container->traverseCells(*cellProc);
-
 		// calculate forces
 		const ParticleIterator begin = container->iteratorBegin();
 		const ParticleIterator end = container->iteratorEnd();
@@ -492,24 +480,19 @@ void LinkedCellsTest::testHalfShellMPI() {
 			i->calcFM();
 		}
 	}
-
 	//------------------------------------------------------------
 	// Do calculation with HS
 	//------------------------------------------------------------
 	{
 		containerHS->traverseCells(*cellProc);
-
 		// calculate forces
 		const ParticleIterator& begin = containerHS->iteratorBegin();
 		const ParticleIterator& end = containerHS->iteratorEnd();
 		for (ParticleIterator i = begin; i != end; ++i) {
 			i->calcFM();
 		}
-
 		domainDecomposition->exchangeForces(containerHS, _domain);
 	}
-
-
 	//------------------------------------------------------------
 	container->deleteOuterParticles();
 	containerHS->deleteOuterParticles();
@@ -521,32 +504,29 @@ void LinkedCellsTest::testHalfShellMPI() {
 		const ParticleIterator endHS = containerHS->iteratorEnd();
 		auto j = beginHS;
 		for (auto i = begin; i != end; ++i, ++j) {
-
-		//	std::cout << i->F(0) << " --- " << j->F(0) << "\n";
-		//	std::cout << i->F(1) << " --- " << j->F(1) << "\n";
-		//	std::cout << i->F(2) << " --- " << j->F(2) << "\n";
-
+			//	std::cout << i->F(0) << " --- " << j->F(0) << "\n";
+			//	std::cout << i->F(1) << " --- " << j->F(1) << "\n";
+			//	std::cout << i->F(2) << " --- " << j->F(2) << "\n";
 			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
-                        
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-7*i->F(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-7*i->F(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), fabs(1e-7*i->F(2)));
-         
-
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0), j->Vi(0), fabs(1e-7*j->Vi(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1), j->Vi(1), fabs(1e-7*j->Vi(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2), j->Vi(2), fabs(1e-7*j->Vi(2)));
-
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(0), j->M(0), fabs(1e-7*i->M(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(1), j->M(1), fabs(1e-7*i->M(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(2), j->M(2), fabs(1e-7*i->M(2)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0),
+					j->F(0), fabs(1e-7 * i->F(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1),
+					j->F(1), fabs(1e-7 * i->F(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2),
+					j->F(2), fabs(1e-7 * i->F(2)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0),
+					j->Vi(0), fabs(1e-7 * j->Vi(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1),
+					j->Vi(1), fabs(1e-7 * j->Vi(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2),
+					j->Vi(2), fabs(1e-7 * j->Vi(2)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
+					i->M(0), j->M(0), fabs(1e-7 * i->M(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
+					i->M(1), j->M(1), fabs(1e-7 * i->M(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
+					i->M(2), j->M(2), fabs(1e-7 * i->M(2)));
 		}
 	}
-
-	//------------------------------------------------------------
-	// Cleanup
-	//------------------------------------------------------------
-
-	delete domainDecomposition;
-	delete cellProc;
 }
+
