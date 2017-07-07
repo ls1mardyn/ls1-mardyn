@@ -422,7 +422,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			for (int j = 0; j < particle_buff_pos; j++) {
 				Molecule m;
 				ParticleData::ParticleDataToMolecule(particle_buff[j], m);
-				particleContainer->addParticle(m);
+				particleContainer->addParticle(m, false, true);
 				componentid=m.componentid();
 				
 				// TODO: The following should be done by the addPartice method.
@@ -442,7 +442,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			particle_buff_pos = 0;
 		}
 #else
-		particleContainer->addParticle(m1);
+		particleContainer->addParticle(m1, false, true);
 		
 		componentid=m1.componentid();
 		// TODO: The following should be done by the addPartice method.

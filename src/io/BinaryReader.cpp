@@ -236,7 +236,7 @@ unsigned long BinaryReader::readPhaseSpace(
 			for (int j = 0; j < particle_buff_pos; j++) {
 				Molecule m;
 				ParticleData::ParticleDataToMolecule(particle_buff[j], m);
-				particleContainer->addParticle(m);
+				particleContainer->addParticle(m, false, true);
 
 				// TODO: The following should be done by the addPartice method.
 				dcomponents[m.componentid()].incNumMolecules();
@@ -258,7 +258,7 @@ unsigned long BinaryReader::readPhaseSpace(
 			particle_buff_pos = 0;
 		}
 #else
-		particleContainer->addParticle(m1);
+		particleContainer->addParticle(m1, false, true);
 
 		// TODO: The following should be done by the addPartice method.
 		dcomponents[componentid].incNumMolecules();
