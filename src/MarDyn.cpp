@@ -23,15 +23,34 @@
 #include "utils/SigsegvHandler.h"
 
 using Log::global_log;
-using optparse::OptionParser;
-using optparse::OptionGroup;
-using optparse::Values;
-using namespace std;
+using std::endl;
 
+/**
+ * @brief Initialize command line options.
+ */
+void initOptions(optparse::OptionParser *op) {
+	op = new optparse::OptionParser();
+	op->usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
+		  "      %prog --tests --test-dir <test input data directory> [<name of testcase>]\n\n"
+				"Use option --help to display all available options.");
+	op->version("%prog 1.1");
+	op->description("ls1 mardyn (M-olecul-AR DYN-amics)");
 
-optparse::Values& initOptions(int argc, const char* const argv[], optparse::OptionParser& op);
+	op->add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
+	op->add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .type("string") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
+	op->add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+	op->add_option("-S", "--sigsegvhandler") .action("store_true") .dest("sigsegvhandler") .metavar("S") .type("bool") .set_default(false) .help("sigsegvhandler: prints stacktrace on sigsegv(default: %default)");
+	op->add_option("--logfile").dest("logfile").type("string").set_default("MarDyn.log").metavar("STRING").help("enable/disable final checkopint (default: %default)");
+	op->add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
+	op->add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
 
-/** Helper function outputting program build information to given logger */
+	op->add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
+	op->add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
+}
+
+/**
+ * @brief Helper function outputting program build information to given logger
+ */
 void program_build_info(Log::Logger &log) {
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
@@ -44,7 +63,9 @@ void program_build_info(Log::Logger &log) {
 #endif
 }
 
-/** Helper function outputting program invocation information to given logger */
+/**
+ * @brief Helper function outputting program invocation information to given logger
+ */
 void program_execution_info(int argc, char **argv, Log::Logger &log) {
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_timestamp(info_str);
@@ -68,7 +89,7 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
 }
 
 /** Run the internal unit tests */
-int run_unit_tests(Values &options, vector<string> &args) {
+int run_unit_tests(const Values &options, const vector<string> &args) {
 	string testcases("");
 	if(args.size() == 1) {
 		testcases = args[0];
@@ -104,8 +125,9 @@ int main(int argc, char** argv) {
 	//global_log->set_mpi_output_all();
 #endif
 
-	OptionParser op;
-	Values options = initOptions(argc, argv, op);
+	optparse::OptionParser op;
+	initOptions(&op);
+	optparse::Values options = op.parse_args(argc, argv);
 	vector<string> args = op.args();
 
 	if( options.is_set_by_user("logfile") ) {
@@ -215,33 +237,4 @@ int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Finalize();
 #endif
-}
-
-
-Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
-	op = OptionParser()
-		.usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
-		  "      %prog --tests --test-dir <test input data directory> [<name of testcase>]\n\n"
-				"Use option --help to display all available options.")
-		.version("%prog 1.1")
-		.description("ls1 mardyn (M-olecul-AR DYN-amics)");
-
-	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
-	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .type("string") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
-	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-	op.add_option("-S", "--sigsegvhandler") .action("store_true") .dest("sigsegvhandler") .metavar("S") .type("bool") .set_default(false) .help("sigsegvhandler: prints stacktrace on sigsegv(default: %default)");
-	op.add_option("--logfile").dest("logfile").type("string").set_default("MarDyn.log").metavar("STRING").help("enable/disable final checkopint (default: %default)");
-	op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
-	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
-
-    op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
-    op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
-
-	//OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
-	//dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
-	//char const* const pc_choices[] = { "LinkedCells" };
-	//dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[1]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
-	//op.add_option_group(dgroup);
-
-	return op.parse_args(argc, argv);
 }
