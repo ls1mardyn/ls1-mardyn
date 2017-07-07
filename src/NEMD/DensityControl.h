@@ -20,6 +20,7 @@
 #include <mpi.h>
 #endif
 
+class MettDeamon;
 class XMLfileUnits;
 class Simulation;
 class Domain;
@@ -56,6 +57,10 @@ public:
     void WriteHeaderDeletedMolecules();
     void WriteDataDeletedMolecules(unsigned long simstep);
 
+	// Connection to MettDeamon
+	void ConnectMettDeamon(MettDeamon* mettDeamon) {_mettDeamon = mettDeamon;}
+	bool MettDeamonConnected() {return _bMettDeamonConnected;}
+
 private:
 	// parameter
 	unsigned int _nTargetComponentID;
@@ -85,10 +90,13 @@ private:
 
     // instances / ID
     static unsigned short _nStaticID;
+
+	// Connection to MettDeamon
+	MettDeamon* _mettDeamon;
+	bool _bMettDeamonConnected;
 };
 
 }
-
 
 class DensityControl : public ControlInstance
 {
@@ -124,6 +132,9 @@ public:
 	void     SetFlagsNEMD(const uint32_t &flagsNEMD) {_flagsNEMD = _flagsNEMD | flagsNEMD;}
 	uint32_t GetFlagsNEMD() {return _flagsNEMD;}
 	bool CheckFlagNEMD(uint32_t nFlag) {return (_flagsNEMD & nFlag);}
+
+	// Connection to MettDeamon
+	void ConnectMettDeamon(MettDeamon* mettDeamon);
 
 private:
     std::vector<dec::ControlRegion*> _vecControlRegions;

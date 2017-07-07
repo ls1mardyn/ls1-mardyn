@@ -7,6 +7,7 @@
 
 #include "NEMD/DensityControl.h"
 #include "NEMD/DistControl.h"
+#include "NEMD/MettDeamon.h"
 #include "NEMD/NEMD.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
@@ -66,6 +67,10 @@ dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3]
 	}
 
 	this->WriteHeaderDeletedMolecules();
+
+	// Connection to MettDeamon
+	_mettDeamon = NULL;
+	_bMettDeamonConnected = false;
 }
 
 dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3],
@@ -98,6 +103,10 @@ dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3]
     }
 
     this->WriteHeaderDeletedMolecules();
+
+	// Connection to MettDeamon
+	_mettDeamon = NULL;
+	_bMettDeamonConnected = false;
 }
 
 
@@ -107,6 +116,16 @@ dec::ControlRegion::~ControlRegion()
 
 void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 {
+	bool bRet = true;
+	bool bVal = false;
+	std::string strName;
+	std::string oldpath = xmlconfig.getcurrentnodepath();
+	bRet = bRet && xmlconfig.changecurrentnode("option/[@name='connect-mettdeamon']");
+	if(true == bRet)
+		bRet = bRet && xmlconfig.getNodeValue(".", bVal);
+	if(true == bRet && true == bVal)
+		_bMettDeamonConnected = true;
+
 	xmlconfig.getNodeValue("target/componentID", _nTargetComponentID);
 	xmlconfig.getNodeValue("target/density", _dTargetDensity);
 }
@@ -416,6 +435,10 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 			_dDeletedVelocityLocal[d] += v;
 			_dDeletedVelocitySquaredLocal[d] += v*v;
 		}
+
+		//connection to MettDeamon
+		if(true == _bMettDeamonConnected)
+			_mettDeamon->IncrementDeletedMoleculesLocal();
 	}
 }
 
@@ -773,3 +796,12 @@ void DensityControl::WriteDataDeletedMolecules(unsigned long simstep)
     }
 }
 
+// Connection to MettDeamon
+void DensityControl::ConnectMettDeamon(MettDeamon* mettDeamon)
+{
+	for(auto&& ri : _vecControlRegions)
+	{
+		if(true == ri->MettDeamonConnected() )
+			ri->ConnectMettDeamon(mettDeamon);
+	}
+}

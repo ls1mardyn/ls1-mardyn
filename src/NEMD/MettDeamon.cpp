@@ -273,7 +273,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 //			cout << "cid(new) = " << tM->componentid() << endl;
 		}
 		// vapor phase
-		else if(dPosY < (dLeftMirror+0.5) || dPosY > (dBoxY-2.* cutoffRadius) )
+		else if(dPosY < (dLeftMirror+0.5) )  // || dPosY > (dBoxY-2.* cutoffRadius) ) <-- vacuum established by feature: DensityControl
 		{
 			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), false);
 //			cout << "delete: dY = " << dPosY << endl;
@@ -354,6 +354,9 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			tM->setv(2,it->second.at(5) );
 		}
 
+		/** Vacuum will be established by DensityControl
+		 *
+		 *
 		// delete molecules of component 1 (cid == 1), close to bounding box on the right side
 		if(cid == 1)
 		{
@@ -363,6 +366,8 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 				_nNumMoleculesDeletedLocal++;
 			}
 		}
+		*/
+
 	}  // loop over molecules
 	_dYsum += this->getDeltaY();
 

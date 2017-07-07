@@ -48,6 +48,9 @@ public:
 	void preForce_action(ParticleContainer* particleContainer, double cutoffRadius);
 	void postForce_action(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition);
 
+	// connection to DensityControl
+	void IncrementDeletedMoleculesLocal() {_nNumMoleculesDeletedLocal++;}
+
 private:
 	void ReadReservoir(DomainDecompBase* domainDecomp);
 	void writeRestartfile();

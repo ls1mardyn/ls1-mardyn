@@ -1146,7 +1146,19 @@ void Simulation::prepare_start() {
 	}
 
 	if(NULL != _mettDeamon)
+	{
 		_mettDeamon->prepare_start(_domainDecomposition, _moleculeContainer, _cutoffRadius);
+		if(NULL == _densityControl)
+		{
+			global_log->error() << "MettDeamon needs to be connected to feature 'DensityControl', which was not initialized."
+					"Program exit ... " << endl;
+			Simulation::exit(-1);
+		}
+		else
+		{
+			_densityControl->ConnectMettDeamon(_mettDeamon);
+		}
+	}
 }
 
 void Simulation::simulate() {
