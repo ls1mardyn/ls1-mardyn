@@ -376,19 +376,6 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
     if( 0. == _dTargetDensity)
     {
         bDeleteMolecule = true;
-
-        // sample deleted molecules data
-        _nDeletedNumMoleculesLocal++;
-        _dDeletedEkinLocal[0] += mol->U_kin();
-        _dDeletedEkinLocal[1] += mol->U_trans();
-        _dDeletedEkinLocal[2] += mol->U_rot();
-
-        for(unsigned short d = 0; d<3; ++d)
-        {
-        	double v = mol->v(d);
-            _dDeletedVelocityLocal[d] += v;
-            _dDeletedVelocitySquaredLocal[d] += v*v;
-        }
     }
     else
     {
@@ -414,6 +401,22 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
         else
             bDeleteMolecule = false;
     }
+
+	// sample deleted molecules data
+	if(true == bDeleteMolecule)
+	{
+		_nDeletedNumMoleculesLocal++;
+		_dDeletedEkinLocal[0] += mol->U_kin();
+		_dDeletedEkinLocal[1] += mol->U_trans();
+		_dDeletedEkinLocal[2] += mol->U_rot();
+
+		for(unsigned short d = 0; d<3; ++d)
+		{
+			double v = mol->v(d);
+			_dDeletedVelocityLocal[d] += v;
+			_dDeletedVelocitySquaredLocal[d] += v*v;
+		}
+	}
 }
 
 void dec::ControlRegion::ResetLocalValues()
