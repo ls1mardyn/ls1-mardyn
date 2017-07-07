@@ -32,7 +32,7 @@ public:
 	~MettDeamon();
 
 	void readXML(XMLfileUnits& xmlconfig);
-	double getAreaY(){return _areaY;}
+	double getAreaY(){return _dAreaXZ;}
 	double getDeltaY() {return _dY;}
 	int getnSlabindex() {return _nSlabindex;}
 	double getdYsum() {return _dYsum;}
@@ -51,18 +51,19 @@ public:
 private:
 	void ReadReservoir(DomainDecompBase* domainDecomp);
 	void writeRestartfile();
-	void calcDeltaY() { _dY = _nNumMoleculesDeletedGlobal/(_areaY*_rho_l); }
+	void calcDeltaY() { _dY = _dDeletedMolsPerTimestep * _dInvDensityArea; }
 
 private:
 	double _rho_l;
-	double _areaY;
+	double _dAreaXZ;
+	double _dInvDensityArea;
 	double _dY;
 	double _dYsum;
 	double _velocityBarrier;
 	double _dSlabWidthInit;
 	double _dSlabWidth;
 	double _cutoffRadius;
-	uint64_t _nControlFreq;
+	uint64_t _nUpdateFreq;
 	uint64_t _nWriteFreqRestart;
 	uint64_t _maxId;
 	uint64_t _nNumMoleculesDeletedLocal;
@@ -76,9 +77,12 @@ private:
 	std::string _reservoirFilename;
 	std::map<uint64_t, std::array<double, 6> > _storePosition;  //Map for frozen particle position storage <"id, position">
 	std::vector< std::vector<Molecule> >_reservoir;
-	std::vector<Molecule>::iterator _reservoirIter;
-	std::vector<Molecule> _currentReservoirSlab;
 	bool _bIsRestart;  // simulation is a restart?
+	std::list<uint64_t> _listDeletedMolecules;
+	uint32_t _nNumValsSummation;
+	uint64_t _numDeletedMolsSum;
+	double _dDeletedMolsPerTimestep;
+	double _dInvNumTimestepsSummation;
 };
 
 #endif /* METTDEAMON_H_ */

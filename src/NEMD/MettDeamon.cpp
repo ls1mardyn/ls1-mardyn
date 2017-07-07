@@ -23,14 +23,15 @@ using namespace std;
 
 MettDeamon::MettDeamon(double cutoffRadius)
 	: 	_rho_l(0.),
-		_areaY(0.),
+		_dAreaXZ(0.),
+		_dInvDensityArea(0.),
 		_dY(0.),
 		_dYsum(0.),
 		_velocityBarrier(0.),
 		_dSlabWidthInit(0),
 		_dSlabWidth(0),
 		_cutoffRadius(cutoffRadius),
-		_nControlFreq(0),
+		_nUpdateFreq(0),
 		_nWriteFreqRestart(0),
 		_maxId(0),
 		_nNumMoleculesDeletedLocal(0),
@@ -42,9 +43,13 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_reservoirSlabs(0),
 		_nSlabindex(0),
 		_reservoirFilename("unknown"),
-		_bIsRestart(false)
+		_bIsRestart(false),
+		_nNumValsSummation(0),
+		_numDeletedMolsSum(0),
+		_dDeletedMolsPerTimestep(0.),
+		_dInvNumTimestepsSummation(0.)
 {
-	_areaY = global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(2);
+	_dAreaXZ = global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(2);
 
 	// init restart file
 	std::ofstream ofs("MettDeamonRestart.dat", std::ios::out);
@@ -52,6 +57,10 @@ MettDeamon::MettDeamon(double cutoffRadius)
 	outputstream << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
 	ofs << outputstream.str();
 	ofs.close();
+
+	// summation of deleted molecules
+	_listDeletedMolecules.clear();
+	_listDeletedMolecules.push_back(0);
 }
 
 MettDeamon::~MettDeamon()
@@ -61,9 +70,11 @@ MettDeamon::~MettDeamon()
 void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 {
 	// control
-	xmlconfig.getNodeValue("control/controlfreq", _nControlFreq);
+	xmlconfig.getNodeValue("control/updatefreq", _nUpdateFreq);
 	xmlconfig.getNodeValue("control/writefreq", _nWriteFreqRestart);
 	xmlconfig.getNodeValue("control/vmax", _velocityBarrier);
+	xmlconfig.getNodeValue("control/numvals", _nNumValsSummation);
+	_dInvNumTimestepsSummation = 1. / (double)(_nNumValsSummation*_nUpdateFreq);
 
 	// reservoir
 	xmlconfig.getNodeValue("reservoir/file", _reservoirFilename);
@@ -118,6 +129,7 @@ void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 	ifs >> _reservoirNumMolecules;
 	global_log->info() << " number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
 	_rho_l = _reservoirNumMolecules / V;
+	_dInvDensityArea = 1. / (_dAreaXZ * _rho_l);
 	global_log->info() << "Density of Mettdeamon Reservoir: " << _rho_l << endl;
 
 	streampos spos = ifs.tellg();
@@ -185,7 +197,7 @@ void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 //				long temp= m1.r(1)/_cutoffRadius;
 //				_reservoirIter = _reservoir.begin();
 		uint32_t nSlabindex = floor(y / _dSlabWidth);
-		m1.setr(1, y - nSlabindex*_dSlabWidth);
+		m1.setr(1, y - nSlabindex*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
 
 		double bbMin[3];
 		double bbMax[3];
@@ -244,6 +256,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 //	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
 	double dLeftMirror = 2*_dSlabWidth;
+	cout << "dLeftMirror = " << dLeftMirror << endl;
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd();
@@ -304,7 +317,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	unsigned int cid;
 	std::map<unsigned long, std::array<double, 6> >::iterator it;
 
-	//Simon
 	Component* comp1=global_simulation->getEnsemble()->getComponent(0);
 	Component* comp2=global_simulation->getEnsemble()->getComponent(1);
 	Component* comp3=global_simulation->getEnsemble()->getComponent(2);
@@ -320,8 +332,11 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 //		else if(dY > (dMirrorPosLeft + 2.5) )
 //			tM->setComponent(comp1);
 
-		if(dY > dMirrorPosLeft)
+		if( (cid == 2) && (dY > dMirrorPosLeft) )
+		{
 			tM->setComponent(comp1);
+			tM->setv(1, abs(tM->v(1) ) );
+		}
 
 		// reset position of molecules of component 2 (cid == 2 --> fixed molecules)
 		if(cid == 2)
@@ -330,7 +345,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			if(it != _storePosition.end() )
 			{
 				tM->setr(0, it->second.at(0) );
-				tM->setr(1, it->second.at(1) + getDeltaY() );  // <--- _mettDeamon->getDeltaY()
+				tM->setr(1, it->second.at(1) + this->getDeltaY() );
 				tM->setr(2, it->second.at(2) );
 			}
 			// restore velocity
@@ -349,52 +364,25 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			}
 		}
 	}  // loop over molecules
-	_dYsum=_dYsum + this->getDeltaY();
+	_dYsum += this->getDeltaY();
 
 	if (_dYsum >= _dSlabWidth)
 	{
-		_currentReservoirSlab = _reservoir.at(_nSlabindex);
+		global_log->info() << "_dSlabWidth = " << _dSlabWidth << endl;
+		global_log->info() << "_dYsum = " << _dYsum << endl;
+		global_log->info() << "_nSlabindex = " << _nSlabindex << endl;
+		std::vector<Molecule> currentReservoirSlab = _reservoir.at(_nSlabindex);
 
-		for (_reservoirIter = _currentReservoirSlab.begin(); _reservoirIter != _currentReservoirSlab.end(); _reservoirIter++)
+		for(auto mi : currentReservoirSlab)
 		{
-			//_maxId++;
-
-			unsigned long tempId = _reservoirIter->id();
-			_reservoirIter->setid(_maxId + tempId);
-			_reservoirIter->setComponent(comp2);
-
-			_reservoirIter->setr(1, _reservoirIter->r(1) + _dYsum - _dSlabWidth);
-
-			particleContainer->addParticle(*_reservoirIter);
-
-			_reservoirIter->setid(_maxId - tempId);
-			_reservoirIter->setr(1, _reservoirIter->r(1)-_dYsum - _dSlabWidth);
+			unsigned long tempId = mi.id();
+			mi.setid(_maxId + tempId);
+			mi.setComponent(comp2);
+			mi.setr(1, mi.r(1) + _dYsum - _dSlabWidth);
+			particleContainer->addParticle(mi);
 		}
 
-
-//		global_log->info() << endl;
-//		global_log->info() << "ReservoirSize is: " << _reservoir.size();
-//		global_log->info() << endl;
-//
-//		_currentReservoirSlab = _reservoir.at(0);
-//
-//		global_log->info() << endl;
-//		global_log->info() << "Size is: " << _currentReservoirSlab.size();
-//		global_log->info() << endl;
-//
-//		_currentReservoirSlab = _reservoir.at(1);
-//
-//		global_log->info() << endl;
-//		global_log->info() << "Size is: " << _currentReservoirSlab.size();
-//		global_log->info() << endl;
-//
-//		_currentReservoirSlab = _reservoir.at(2);
-//
-//		global_log->info() << endl;
-//		global_log->info() << "Size is: " << _currentReservoirSlab.size();
-//		global_log->info() << endl;
-
-		_dYsum = _dYsum - _dSlabWidth;
+		_dYsum -= _dSlabWidth;
 		_nSlabindex--;
 		if(_nSlabindex == -1)
 		{
@@ -402,7 +390,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			_maxId = _maxId + _reservoirNumMolecules;
 		}
 	}
-
 	particleContainer->update();
 }
 void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition)
@@ -417,10 +404,11 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		double v2 = tM->v2();
 		if(cid != 2 && v2 > _velocityBarrier*_velocityBarrier) // v2_limit
 		{
-			int cid = tM->componentid()+1;
+			unsigned long id = tM->id();
 			double dY = tM->r(1);
 
 			cout << "cid = " << cid << endl;
+			cout << "id = " << id << endl;
 			cout << "dY = " << dY << endl;
 			cout << "v2 = " << v2 << endl;
 
@@ -439,7 +427,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
 
 	// delta y berechnen: alle x Zeitschritte
-	if(global_simulation->getSimulationStep() % _nControlFreq)
+	if(global_simulation->getSimulationStep() % _nUpdateFreq == 0)
 	{
 		// update global number of particles / calc global number of deleted particles
 		domainDecomposition->collCommInit(2);
@@ -449,9 +437,27 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		nNumMoleculesGlobal = domainDecomposition->collCommGetUnsLong();
 		_nNumMoleculesDeletedGlobal = domainDecomposition->collCommGetUnsLong();
 		domainDecomposition->collCommFinalize();
-		_nNumMoleculesDeletedGlobalAlltime = _nNumMoleculesDeletedGlobalAlltime + _nNumMoleculesDeletedGlobal;
-		this->calcDeltaY();
+		_nNumMoleculesDeletedGlobalAlltime += _nNumMoleculesDeletedGlobal;
 		_nNumMoleculesDeletedLocal = 0;
+
+		// update sum and summation list
+		_numDeletedMolsSum += _nNumMoleculesDeletedGlobal;
+		_numDeletedMolsSum -= _listDeletedMolecules.front();
+		_listDeletedMolecules.push_back(_nNumMoleculesDeletedGlobal);
+		if(_listDeletedMolecules.size() > _nNumValsSummation)
+			_listDeletedMolecules.pop_front();
+		else
+		{
+			_numDeletedMolsSum = 0;
+			for(auto&& vi : _listDeletedMolecules)
+				_numDeletedMolsSum += vi;
+		}
+		_dDeletedMolsPerTimestep = _numDeletedMolsSum * _dInvNumTimestepsSummation;
+		this->calcDeltaY();
+		global_log->info() << "_nNumMoleculesDeletedGlobal = " << _nNumMoleculesDeletedGlobal << endl;
+		global_log->info() << "_numDeletedMolsSum = " << _numDeletedMolsSum << endl;
+		global_log->info() << "_dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
+		global_log->info() << "_dY = " << _dY << endl;
 	}
 	else
 	{
