@@ -15,8 +15,7 @@ using namespace std;
 TEST_SUITE_REGISTRATION(MarDynInitOptionsTest);
 
 // declaration of the function to be tested in Mardyn.cpp
-optparse::Values& initOptions(int argc, const char* const argv[],
-    optparse::OptionParser& op);
+optparse::Values& initOptions(optparse::OptionParser *op);
 
 
 MarDynInitOptionsTest::MarDynInitOptionsTest() {
@@ -34,7 +33,8 @@ void MarDynInitOptionsTest::testAllOptions() {
 
 	int argc = sizeof(argv) / sizeof(char*);
 	optparse::OptionParser op;
-	optparse::Values options = initOptions(argc, argv, op);
+	initOptions(&op);
+	optparse::Values options = op.parse_args(argc, argv);
 
 	int n = options.get("timesteps");
 	ASSERT_TRUE_MSG("timesteps isSetByUser must be true!", options.is_set_by_user("timesteps"));
