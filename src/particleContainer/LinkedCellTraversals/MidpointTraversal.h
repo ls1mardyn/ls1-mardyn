@@ -29,7 +29,10 @@ public:
      * Reset all necessary data without reallocation.
      */
 	virtual void rebuild(std::vector<CellTemplate> &cells,
-		const std::array<unsigned long, 3> &dims, CellPairTraversalData *data) override;
+		const std::array<unsigned long, 3> &dims, CellPairTraversalData *data) override{
+		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
+		computeOffsets();
+	}
 
 	virtual void traverseCellPairs(CellProcessor& cellProcessor);
 	virtual void traverseCellPairsOuter(CellProcessor& cellProcessor);
@@ -41,9 +44,9 @@ public:
 protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
-	// All pairs that have to be processed when calculating the forces
-	std::array<std::pair<unsigned long, unsigned long>, 62> _cellPairOffsets;
-	std::array<std::pair<std::tuple<long, long, long>, std::tuple<long, long, long>>, 62> _offsets3D;
+	// All pairs that have to be processed when calculating the forces (including self)
+	std::array<std::pair<unsigned long, unsigned long>, 63> _cellPairOffsets;
+	std::array<std::pair<std::tuple<long, long, long>, std::tuple<long, long, long>>, 63> _offsets3D;
 
 
 private:
@@ -133,11 +136,15 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 		_offsets3D[index++] = make_pair(_corners[i], _corners[j]);
 	}
 
+	mardyn_assert(index == 13);
+
 	// ----------------------------------------------------
 	// Forward neighbors of origin (similar to half shell)
 	// ----------------------------------------------------
 
 	pairOriginWithForewardNeighbors(index);
+
+	mardyn_assert(index == 13+13);
 
 
 	// ----------------------------------------------------
@@ -152,6 +159,8 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 		pairCellsWithPlane(cc, oc, index);
 	}
 
+	mardyn_assert(index == 13+13+24);
+
 	// ----------------------------------------------------
 	// 'Cone' for half the edges
 	// ----------------------------------------------------
@@ -164,8 +173,14 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 
 	}
 
-	// We need exactly 62 cell offset pairs
-	mardyn_assert(index == 62);
+	mardyn_assert(index == 13+13+24+12);
+
+	// Cell with it self
+	auto origin = make_tuple(0l, 0l, 0l);
+	_offsets3D[index++] = make_pair(origin, origin);
+
+	// We need exactly 62+1 cell offset pairs
+	mardyn_assert(index == 63);
 }
 
 template<class CellTemplate>
@@ -278,30 +293,55 @@ void MidpointTraversal<CellTemplate>::pairCellsWithAdjacentCorners(std::tuple<lo
 }
 
 template<class CellTemplate>
-void MidpointTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
-		const std::array<unsigned long, 3> &dims, CellPairTraversalData *data){
-	//TODO ____ Implement
-}
-
-template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::traverseCellPairs(CellProcessor& cellProcessor){
-	//TODO ____ Implement
+	unsigned long start = 0ul;
+	unsigned long end = this->_cells->size();
+	for(auto i = start; i<end; ++i){
+		processBaseCell(cellProcessor, i);
+	}
 }
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::traverseCellPairsOuter(CellProcessor& cellProcessor){
-	//TODO ____ Implement
+	//TODO ____ Implement for overlapping
 }
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount){
-	//TODO ____ Implement
+	//TODO ____ Implement for overlapping
 }
 
 
 template<class CellTemplate>
-void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const{
-	//TODO ____ Implement
+void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long baseIndex) const{
+	for(auto current_pair : _cellPairOffsets){
+
+		unsigned offset1 = current_pair.first;
+		unsigned cellIndex1 = baseIndex + offset1;
+
+		unsigned offset2 = current_pair.second;
+		unsigned cellIndex2 = baseIndex + offset2;
+
+		CellTemplate& cell1 = this->_cells->at(cellIndex1);
+		CellTemplate& cell2 = this->_cells->at(cellIndex2);
+
+
+		if(cell1.isHaloCell() and cell2.isHaloCell()) {
+			continue;
+		}
+
+		if(cellIndex1 == cellIndex2) {
+			cellProcessor.processCell(cell1);
+		}
+		else {
+			if(!cell1.isHaloCell()) {
+				cellProcessor.processCellPair(cell1, cell2);
+			}
+			else {
+				cellProcessor.processCellPair(cell2, cell1);
+			}
+		}
+	}
 }
 
 #endif /* SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_MIDPOINTTRAVERSAL_H_ */
