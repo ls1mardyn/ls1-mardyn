@@ -120,17 +120,17 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 	// process only half of the centers to get no pair twice
 	for(int i=0; i<3; ++i){ // centers
 		int j = (i+3)%6;
-		_offsets3D[index] = make_pair(_centers[i], _centers[j]);
+		_offsets3D[index++] = make_pair(_centers[i], _centers[j]);
 	}
 	// process only half of the edges to get no pair twice
 	for(int i=0; i<6; ++i){ // edges
 		int j = (i+6)%12;
-		_offsets3D[index] = make_pair(_edges[i], _edges[j]);
+		_offsets3D[index++] = make_pair(_edges[i], _edges[j]);
 	}
 	// process only half of the corners to get no pair twice
 	for(int i=0; i<4; ++i){ // corners
 		int j = (i+4)%8;
-		_offsets3D[index] = make_pair(_corners[i], _corners[j]);
+		_offsets3D[index++] = make_pair(_corners[i], _corners[j]);
 	}
 
 	// ----------------------------------------------------
@@ -206,6 +206,21 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::pairOriginWithForewardNeighbors(int& index){
+	using std::make_pair;
+	using std::make_tuple;
+
+	auto origin = make_tuple(0l, 0l, 0l);
+
+	for(long y=-1; y<=1; ++y){ // 3 * 4
+		for(long x=-1; x<=1; ++x){ // 3
+			_offsets3D[index++] = make_pair(origin, make_tuple(x, y, 1l));
+		}
+		// 1
+		_offsets3D[index++] = make_pair(origin, make_tuple(1l, y, 0l));
+	}
+
+	// 13.
+	_offsets3D[index++] = make_pair(origin, make_tuple(0l, 1l, 0l));
 
 }
 
@@ -234,7 +249,7 @@ void MidpointTraversal<CellTemplate>::pairCellsWithPlane(std::tuple<long, long, 
 				cell = std::make_tuple(std::get<0>(oc), i, j);
 			}
 
-			_offsets3D[index] = std::make_pair(cc, cell);
+			_offsets3D[index++] = std::make_pair(cc, cell);
 		}
 	}
 }
@@ -258,7 +273,7 @@ void MidpointTraversal<CellTemplate>::pairCellsWithAdjacentCorners(std::tuple<lo
 				cell = std::make_tuple(std::get<0>(oe), std::get<1>(oe), i);
 			}
 
-			_offsets3D[index] = std::make_pair(ce, cell);
+			_offsets3D[index++] = std::make_pair(ce, cell);
 	}
 }
 
