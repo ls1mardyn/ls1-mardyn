@@ -20,6 +20,7 @@ class MidpointTraversal : public CellPairTraversals<CellTemplate>{
 public:
 	MidpointTraversal(std::vector<CellTemplate>& cells,	const std::array<unsigned long, 3>& dims):
 	CellPairTraversals<CellTemplate>(cells, dims) {
+		fillArrays();
 		computeOffsets();
 	}
 	virtual ~MidpointTraversal() {}
@@ -41,10 +42,11 @@ protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
 	// All pairs that have to be processed when calculating the forces
-	std::array<std::pair<unsigned long, unsigned long>, 98> _cellPairOffsets;
+	std::array<std::pair<unsigned long, unsigned long>, 62> _cellPairOffsets;
 
 private:
 	void computeOffsets();
+	void fillArrays();
 
 	void pairCells(std::tuple<long, long, long>& a,
 			std::tuple<long, long, long>& b, int& index, std::array<long, 3>& dims);
@@ -55,46 +57,52 @@ private:
 			std::tuple<long, long, long>& oe, int& index, std::array<long, 3>& dims);
 
 	// Offsets of all centers of the surrounding cube. Opposite sides are (i+3)%6
-	std::array<std::tuple<long, long, long>, 6> _centers = {
-			std::make_tuple( 1, 0, 0),
-			std::make_tuple( 0, 1, 0),
-			std::make_tuple( 0, 0, 1),
-			// Mirrored at origin
-			std::make_tuple(-1, 0, 0),
-			std::make_tuple( 0,-1, 0),
-			std::make_tuple( 0, 0,-1),
-	};
+	std::array<std::tuple<long, long, long>, 6> _centers;
 
 	// Offsets of all edges of the surrounding cube. Opposite sides are (i+6)%12
-	std::array<std::tuple<long, long, long>, 12> _edges = {
-			std::make_tuple( 1, 1, 0),
-			std::make_tuple( 1, 0, 1),
-			std::make_tuple( 0, 1, 1),
-			std::make_tuple(-1, 1, 0),
-			std::make_tuple(-1, 0, 1),
-			std::make_tuple( 0,-1, 1),
-			// Mirrored at origin
-			std::make_tuple(-1,-1, 0),
-			std::make_tuple(-1, 0,-1),
-			std::make_tuple( 0,-1,-1),
-			std::make_tuple( 1,-1, 0),
-			std::make_tuple( 1, 0,-1),
-			std::make_tuple( 0, 1,-1),
-	};
+	std::array<std::tuple<long, long, long>, 12> _edges;
 
 	// Offsets of all corners of the surrounding cube. Opposite sides are (i+4)%8
-	std::array<std::tuple<long, long, long>, 8> _corners = {
-			std::make_tuple( 1, 1, 1),
-			std::make_tuple( 1, 1,-1),
-			std::make_tuple( 1,-1, 1),
-			std::make_tuple( 1,-1,-1),
-			// Mirrored at origin
-			std::make_tuple(-1,-1,-1),
-			std::make_tuple(-1,-1, 1),
-			std::make_tuple(-1, 1,-1),
-			std::make_tuple(-1, 1, 1),
-	};
+	std::array<std::tuple<long, long, long>, 8> _corners;
 };
+
+template<class CellTemplate>
+void MidpointTraversal<CellTemplate>::fillArrays() {
+	// Centers
+	_centers[0] = std::make_tuple( 1, 0, 0);
+	_centers[1] = std::make_tuple( 0, 1, 0);
+	_centers[2] = std::make_tuple( 0, 0, 1);
+	// Mirrored at origin
+	_centers[3] = std::make_tuple(-1, 0, 0);
+	_centers[4] = std::make_tuple( 0,-1, 0);
+	_centers[5] = std::make_tuple( 0, 0,-1);
+
+	// Edges
+	_edges[0] = std::make_tuple( 1, 1, 0);
+	_edges[1] = std::make_tuple( 1, 0, 1);
+	_edges[2] = std::make_tuple( 0, 1, 1);
+	_edges[3] = std::make_tuple(-1, 1, 0);
+	_edges[4] = std::make_tuple(-1, 0, 1);
+	_edges[5] = std::make_tuple( 0,-1, 1);
+	// Mirrored at origin
+	_edges[6] = std::make_tuple(-1,-1, 0);
+	_edges[7] = std::make_tuple(-1, 0,-1);
+	_edges[8] = std::make_tuple( 0,-1,-1);
+	_edges[9] = std::make_tuple( 1,-1, 0);
+	_edges[10] = std::make_tuple( 1, 0,-1);
+	_edges[11] = std::make_tuple( 0, 1,-1);
+
+	// Corners
+	_corners[0] = std::make_tuple( 1, 1, 1);
+	_corners[1] = std::make_tuple( 1, 1,-1);
+	_corners[2] = std::make_tuple( 1,-1, 1);
+	_corners[3] = std::make_tuple( 1,-1,-1);
+	// Mirrored at origin
+	_corners[4] = std::make_tuple(-1,-1,-1);
+	_corners[5] = std::make_tuple(-1,-1, 1);
+	_corners[6] = std::make_tuple(-1, 1,-1);
+	_corners[7] = std::make_tuple(-1, 1, 1);
+}
 
 
 template<class CellTemplate>
@@ -144,9 +152,9 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 
 
 	// ----------------------------------------------------
-	// 'Cone' for all centers
+	// 'Cone' for half the centers
 	// ----------------------------------------------------
-	for(int i=0; i<6; ++i){
+	for(int i=0; i<3; ++i){
 		auto oc = _centers[(i+3)%6]; // opposite center
 		auto cc = _centers[i]; // current center
 
@@ -156,9 +164,9 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 	}
 
 	// ----------------------------------------------------
-	// 'Cone' for all edges
+	// 'Cone' for half the edges
 	// ----------------------------------------------------
-	for(int i=0; i<12; ++i){
+	for(int i=0; i<6; ++i){
 		auto oe = _edges[(i+6)%12]; // opposite edge
 		auto ce = _edges[i]; // current edge
 
@@ -166,6 +174,9 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 		pairCellsWithAdjacentCorners(ce, oe, index, dims);
 
 	}
+
+	// We need exactly 62 cell offset pairs
+	mardyn_assert(index == 62);
 
 }
 
@@ -199,19 +210,60 @@ void MidpointTraversal<CellTemplate>::pairCells(std::tuple<long, long, long>& a,
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::pairOriginWithForewardNeighbors(int& index, std::array<long, 3>& dims){
-	//TODO ____ Implement
+	// TODO: ____Implement
 }
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::pairCellsWithPlane(std::tuple<long, long, long>& cc,
 		std::tuple<long, long, long>& oc, int& index, std::array<long, 3>& dims){
-	//TODO ____ Implement
+	// Pairs the current cell (cc) with every cell next to oc except the origin.
+	for(int i=-1; i<=1; ++i){
+		for(int j=-1; j<=1; ++j){
+
+			// Skip pair cc <--> oc
+			if(i==0 && j==0) continue;
+
+			std::tuple<long,long,long> cell;
+
+			if(std::get<0>(oc) == 0){
+				if(std::get<1>(oc) == 0){ // x and y are 0
+					// Center in +-z direction -> ring around oc in xy plane
+					cell = std::make_tuple(i, j, std::get<2>(oc));
+				} else { // x and z are 0
+					// Center in +-y direction -> ring around oc in xz plane
+					cell = std::make_tuple(i, std::get<1>(oc), j);
+				}
+			} else { // y and z are 0
+				// Center in +-x direction -> ring around oc in yz plane
+				cell = std::make_tuple(std::get<0>(oc), i, j);
+			}
+
+			pairCells(cc, cell, index, dims);
+		}
+	}
 }
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::pairCellsWithAdjacentCorners(std::tuple<long, long, long>& ce,
 		std::tuple<long, long, long>& oe, int& index, std::array<long, 3>& dims){
-	//TODO ____ Implement
+	// Pairs the current edge cell (ce) with both adjacent corners to oe
+	for(int i=-1; i<=1; i+=2){ // i=-1 and i=1
+
+			std::tuple<long,long,long> cell;
+
+			if(std::get<0>(oe) == 0) { // x = 0
+				// Corners are oe with x=+-1
+				cell = std::make_tuple(i, std::get<1>(oe), std::get<2>(oe));
+			} else if(std::get<1>(oe) == 0) { // y = 0
+				// Corners are oe with y=+-1
+				cell = std::make_tuple(std::get<0>(oe), i, std::get<2>(oe));
+			} else { // z = 0
+				// Corners are oe with z=+-1
+				cell = std::make_tuple(std::get<0>(oe), std::get<1>(oe), i);
+			}
+
+			pairCells(ce, cell, index, dims);
+	}
 }
 
 template<class CellTemplate>
