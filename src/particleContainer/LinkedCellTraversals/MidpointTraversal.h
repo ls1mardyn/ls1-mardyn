@@ -14,13 +14,13 @@
 struct MidpointTraversalData : CellPairTraversalData {
 };
 
-
 template <class CellTemplate>
 class MidpointTraversal : public CellPairTraversals<CellTemplate>{
 public:
 	MidpointTraversal(std::vector<CellTemplate>& cells,	const std::array<unsigned long, 3>& dims):
 	CellPairTraversals<CellTemplate>(cells, dims) {
-		fillArrays();
+		fillArrays(); // Array initialization could be done directly but GCC 4.9 doesn't like it
+		computeOffsets3D(); // >= C++14 this could be constexpr
 		computeOffsets();
 	}
 	virtual ~MidpointTraversal() {}
@@ -43,18 +43,20 @@ protected:
 
 	// All pairs that have to be processed when calculating the forces
 	std::array<std::pair<unsigned long, unsigned long>, 62> _cellPairOffsets;
+	std::array<std::pair<std::tuple<long, long, long>, std::tuple<long, long, long>>, 62> _offsets3D;
+
 
 private:
+
 	void computeOffsets();
+	void computeOffsets3D(); // This could be changed to constexpr in C++14
 	void fillArrays();
 
-	void pairCells(std::tuple<long, long, long>& a,
-			std::tuple<long, long, long>& b, int& index, std::array<long, 3>& dims);
-	void pairOriginWithForewardNeighbors(int& index, std::array<long, 3>& dims);
+	void pairOriginWithForewardNeighbors(int& index);
 	void pairCellsWithPlane(std::tuple<long, long, long>& cc,
-			std::tuple<long, long, long>& oc, int& index, std::array<long, 3>& dims);
+			std::tuple<long, long, long>& oc, int& index);
 	void pairCellsWithAdjacentCorners(std::tuple<long, long, long>& ce,
-			std::tuple<long, long, long>& oe, int& index, std::array<long, 3>& dims);
+			std::tuple<long, long, long>& oe, int& index);
 
 	// Offsets of all centers of the surrounding cube. Opposite sides are (i+3)%6
 	std::array<std::tuple<long, long, long>, 6> _centers;
@@ -104,23 +106,10 @@ void MidpointTraversal<CellTemplate>::fillArrays() {
 	_corners[7] = std::make_tuple(-1, 1, 1);
 }
 
-
 template<class CellTemplate>
-void MidpointTraversal<CellTemplate>::computeOffsets() {
+void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 
-	using threeDimensionalMapping::threeToOneD;
-	using std::make_pair;
-
-	// Dim array is int but we need it as long for some reason (copied from C08BasedTraversal)
-	std::array<long, 3> dims;
-	for (int d = 0; d < 3; ++d) {
-		dims[d] = static_cast<long>(this->_dims[d]);
-	}
-
-	// Cell index of origin
-	long int o = threeToOneD(0l, 0l, 0l, dims);
-
-	// Next free index of the cellPairOffsets array
+	// Next free index of the offsets array
 	int index = 0;
 
 	// ----------------------------------------------------
@@ -131,24 +120,24 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 	// process only half of the centers to get no pair twice
 	for(int i=0; i<3; ++i){ // centers
 		int j = (i+3)%6;
-		pairCells(_centers[i], _centers[j], index, dims);
+		_offsets3D[index] = make_pair(_centers[i], _centers[j]);
 	}
 	// process only half of the edges to get no pair twice
 	for(int i=0; i<6; ++i){ // edges
 		int j = (i+6)%12;
-		pairCells(_edges[i], _edges[j], index, dims);
+		_offsets3D[index] = make_pair(_edges[i], _edges[j]);
 	}
 	// process only half of the corners to get no pair twice
 	for(int i=0; i<4; ++i){ // corners
 		int j = (i+4)%8;
-		pairCells(_corners[i], _corners[j], index, dims);
+		_offsets3D[index] = make_pair(_corners[i], _corners[j]);
 	}
 
 	// ----------------------------------------------------
 	// Forward neighbors of origin (similar to half shell)
 	// ----------------------------------------------------
 
-	pairOriginWithForewardNeighbors(index, dims);
+	pairOriginWithForewardNeighbors(index);
 
 
 	// ----------------------------------------------------
@@ -160,7 +149,7 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 
 		// Create pairs for each pair cc <--> oc + offset where offset is not in the direction of [CC Origin OC]
 		// Therefore with every cell (except OC) in the plane with normal vector [CC Origin OC] that contains OC.
-		pairCellsWithPlane(cc, oc, index, dims);
+		pairCellsWithPlane(cc, oc, index);
 	}
 
 	// ----------------------------------------------------
@@ -171,51 +160,58 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 		auto ce = _edges[i]; // current edge
 
 		// Create pairs for each pair ce <--> (corners adjacent to oe)
-		pairCellsWithAdjacentCorners(ce, oe, index, dims);
+		pairCellsWithAdjacentCorners(ce, oe, index);
 
 	}
 
 	// We need exactly 62 cell offset pairs
 	mardyn_assert(index == 62);
-
 }
 
-
 template<class CellTemplate>
-void MidpointTraversal<CellTemplate>::pairCells(std::tuple<long, long, long>& a,
-		std::tuple<long, long, long>& b, int& index, std::array<long, 3>& dims){
-
+void MidpointTraversal<CellTemplate>::computeOffsets() {
 	using threeDimensionalMapping::threeToOneD;
 
-	auto ax = std::get<0>(a);
-	auto ay = std::get<1>(a);
-	auto az = std::get<2>(a);
+	// Dim array is int but we need it as long for some reason (copied from C08BasedTraversal)
+	std::array<long, 3> dims;
+	for (int d = 0; d < 3; ++d) {
+		dims[d] = static_cast<long>(this->_dims[d]);
+	}
 
-	auto bx = std::get<0>(b);
-	auto by = std::get<1>(b);
-	auto bz = std::get<2>(b);
+	for(unsigned int i=0; i<_offsets3D.size(); ++i){
 
-	mardyn_assert((abs(ax) <= 1) && (abs(ay) <= 1) && (abs(az) <= 1));
-	mardyn_assert((abs(bx) <= 1) && (abs(by) <= 1) && (abs(bz) <= 1));
+		auto a = _offsets3D[i].first;
+		auto b = _offsets3D[i].second;
 
-	// convert 3d index to 1d
-	auto aIndex = threeToOneD(ax, ay, az, dims);
-	auto bIndex = threeToOneD(bx, by, bz, dims);
+		auto ax = std::get<0>(a);
+		auto ay = std::get<1>(a);
+		auto az = std::get<2>(a);
 
-	// store offset pair
-	_cellPairOffsets[index] = std::make_pair(aIndex, bIndex);
-	// increment index for the next pair
-	++index;
+		auto bx = std::get<0>(b);
+		auto by = std::get<1>(b);
+		auto bz = std::get<2>(b);
+
+		mardyn_assert((abs(ax) <= 1) && (abs(ay) <= 1) && (abs(az) <= 1));
+		mardyn_assert((abs(bx) <= 1) && (abs(by) <= 1) && (abs(bz) <= 1));
+
+		// convert 3d index to 1d
+		auto aIndex = threeToOneD(ax, ay, az, dims);
+		auto bIndex = threeToOneD(bx, by, bz, dims);
+
+		// store offset pair
+		_cellPairOffsets[i] = std::make_pair(aIndex, bIndex);
+	}
+
 }
 
 template<class CellTemplate>
-void MidpointTraversal<CellTemplate>::pairOriginWithForewardNeighbors(int& index, std::array<long, 3>& dims){
-	// TODO: ____Implement
+void MidpointTraversal<CellTemplate>::pairOriginWithForewardNeighbors(int& index){
+
 }
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::pairCellsWithPlane(std::tuple<long, long, long>& cc,
-		std::tuple<long, long, long>& oc, int& index, std::array<long, 3>& dims){
+		std::tuple<long, long, long>& oc, int& index){
 	// Pairs the current cell (cc) with every cell next to oc except the origin.
 	for(int i=-1; i<=1; ++i){
 		for(int j=-1; j<=1; ++j){
@@ -238,14 +234,14 @@ void MidpointTraversal<CellTemplate>::pairCellsWithPlane(std::tuple<long, long, 
 				cell = std::make_tuple(std::get<0>(oc), i, j);
 			}
 
-			pairCells(cc, cell, index, dims);
+			_offsets3D[index] = std::make_pair(cc, cell);
 		}
 	}
 }
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::pairCellsWithAdjacentCorners(std::tuple<long, long, long>& ce,
-		std::tuple<long, long, long>& oe, int& index, std::array<long, 3>& dims){
+		std::tuple<long, long, long>& oe, int& index){
 	// Pairs the current edge cell (ce) with both adjacent corners to oe
 	for(int i=-1; i<=1; i+=2){ // i=-1 and i=1
 
@@ -262,7 +258,7 @@ void MidpointTraversal<CellTemplate>::pairCellsWithAdjacentCorners(std::tuple<lo
 				cell = std::make_tuple(std::get<0>(oe), std::get<1>(oe), i);
 			}
 
-			pairCells(ce, cell, index, dims);
+			_offsets3D[index] = std::make_pair(ce, cell);
 	}
 }
 
