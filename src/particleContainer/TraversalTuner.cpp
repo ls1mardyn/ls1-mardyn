@@ -186,3 +186,4 @@ void TraversalTuner::traverseCellPairsInner(CellProcessor &cellProcessor, unsign
         findOptimalTraversal();
     _optimalTravesal->traverseCellPairsInner(cellProcessor, stage, stageCount);
 }
+
