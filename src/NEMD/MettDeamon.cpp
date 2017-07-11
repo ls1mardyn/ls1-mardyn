@@ -259,10 +259,12 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 
 	Molecule* tM;
 	double dPosY;
-//	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
 	double dLeftMirror = 2*_dSlabWidth;
 	cout << "dLeftMirror = " << dLeftMirror << endl;
+
+	if(true == _bIsRestart)
+		return;
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd();
