@@ -86,6 +86,8 @@ private:
 	uint64_t _numDeletedMolsSum;
 	double _dDeletedMolsPerTimestep;
 	double _dInvNumTimestepsSummation;
+	bool _bMirrorActivated;
+	double _dMirrorPosY;
 };
 
 #endif /* METTDEAMON_H_ */

@@ -47,7 +47,9 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_nNumValsSummation(0),
 		_numDeletedMolsSum(0),
 		_dDeletedMolsPerTimestep(0.),
-		_dInvNumTimestepsSummation(0.)
+		_dInvNumTimestepsSummation(0.),
+		_bMirrorActivated(false),
+		_dMirrorPosY(0.)
 {
 	_dAreaXZ = global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(2);
 
@@ -84,6 +86,10 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	_bIsRestart = true;
 	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/slabindex", _nSlabindex);
 	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/deltaY", _dYsum);
+
+	// mirror
+	bool bRet = xmlconfig.getNodeValue("mirror/position", _dMirrorPosY);
+	_bMirrorActivated = bRet;
 }
 
 void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
@@ -426,6 +432,13 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			tM->setv(0, 0.);
 			tM->setv(1, 0.);
 			tM->setv(2, 0.);
+		}
+
+		// mirror, to simulate VLE
+		if(true == _bMirrorActivated)
+		{
+			if(tM->r(1) >= _dMirrorPosY)
+				tM->setv(1, -1.*tM->v(1) );
 		}
 	}
 	particleContainer->update();
