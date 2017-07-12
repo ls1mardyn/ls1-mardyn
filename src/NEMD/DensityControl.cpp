@@ -437,7 +437,7 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 		}
 
 		//connection to MettDeamon
-		if(true == _bMettDeamonConnected)
+		if(NULL != _mettDeamon)
 			_mettDeamon->IncrementDeletedMoleculesLocal();
 	}
 }

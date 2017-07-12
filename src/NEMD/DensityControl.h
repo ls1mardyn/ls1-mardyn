@@ -58,7 +58,7 @@ public:
     void WriteDataDeletedMolecules(unsigned long simstep);
 
 	// Connection to MettDeamon
-	void ConnectMettDeamon(MettDeamon* mettDeamon) {_mettDeamon = mettDeamon;}
+	void ConnectMettDeamon(MettDeamon* mettDeamon) {_mettDeamon = _bMettDeamonConnected ? mettDeamon : NULL;}
 	bool MettDeamonConnected() {return _bMettDeamonConnected;}
 
 private:

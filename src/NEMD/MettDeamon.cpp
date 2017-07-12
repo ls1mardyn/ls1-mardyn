@@ -261,7 +261,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	double dPosY;
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
 	double dLeftMirror = 2*_dSlabWidth;
-	cout << "dLeftMirror = " << dLeftMirror << endl;
+	global_log->info() << "Position of MettDeamons insertion area: " << dLeftMirror << endl;
 
 	if(true == _bIsRestart)
 		return;

@@ -1157,6 +1157,7 @@ void Simulation::prepare_start() {
 		else
 		{
 			_densityControl->ConnectMettDeamon(_mettDeamon);
+			global_log->info() << "Connected features: MettDeamon + DensityControl." << endl;
 		}
 	}
 }
