@@ -29,7 +29,6 @@ using std::endl;
  * @brief Initialize command line options.
  */
 void initOptions(optparse::OptionParser *op) {
-	op = new optparse::OptionParser();
 	op->usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
 		  "      %prog --tests --test-dir <test input data directory> [<name of testcase>]\n\n"
 				"Use option --help to display all available options.");
