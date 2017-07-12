@@ -63,13 +63,12 @@ int get_mpi_info(char *info_str) {
 	/* Intel MPI */
 	/* FIXME */
 
-	/* MVAPICH2 */
 #if defined(MVAPICH2)
 	sprintf(info_str, "MVAPICH2");
-
-	/* Open MPI */
 #elif defined(OPEN_MPI)
 	sprintf(info_str, "Open MPI");
+#elif defined(CRAY_MPICH_VERSION)
+    sprintf(info_str, "Cray MPI");
 
 	/* unknown */
 #else
