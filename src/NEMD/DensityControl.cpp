@@ -125,9 +125,11 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 		bRet = bRet && xmlconfig.getNodeValue(".", bVal);
 	if(true == bRet && true == bVal)
 		_bMettDeamonConnected = true;
+	xmlconfig.changecurrentnode(oldpath);
 
 	xmlconfig.getNodeValue("target/componentID", _nTargetComponentID);
 	xmlconfig.getNodeValue("target/density", _dTargetDensity);
+	global_log->info()<< "DensityControl: target componentID = " << _nTargetComponentID << ", target density = " << _dTargetDensity << endl;
 }
 
 void dec::ControlRegion::CheckBounds()
@@ -392,7 +394,7 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 	}
 	// <-- NEMD_CHANGE_COMPONENT_AC_TO_N2
 
-    if( 0. == _dTargetDensity)
+    if( 0.0000001 > _dTargetDensity)
     {
         bDeleteMolecule = true;
     }
