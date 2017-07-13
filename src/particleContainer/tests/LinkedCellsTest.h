@@ -27,6 +27,7 @@ class LinkedCellsTest: public ParticleContainerTest {
 //	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
 	TEST_METHOD(testTraversalMethods);
 	TEST_METHOD(testMidpoint);
+	TEST_METHOD(testMidpointMPI);
 	TEST_SUITE_END();
 
 public:
@@ -69,6 +70,7 @@ public:
 	void testHalfShellMPIIndirect();
 
 	void testMidpoint();
+	void testMidpointMPI();
 
 private:
 

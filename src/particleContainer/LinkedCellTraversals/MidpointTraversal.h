@@ -45,7 +45,7 @@ protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
 	// All pairs that have to be processed when calculating the forces (including self)
-	std::array<std::pair<unsigned long, unsigned long>, 63> _cellPairOffsets;
+	std::array<std::pair<long, long>, 63> _cellPairOffsets;
 	std::array<std::pair<std::tuple<long, long, long>, std::tuple<long, long, long>>, 63> _offsets3D;
 
 
@@ -314,17 +314,24 @@ void MidpointTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cell
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long baseIndex) const{
-	for(auto current_pair : _cellPairOffsets){
 
-		unsigned offset1 = current_pair.first;
-		unsigned cellIndex1 = baseIndex + offset1;
+	// Skip halo cells
+	CellTemplate& baseCell = this->_cells->at(baseIndex);
+	if(baseCell.isHaloCell()){
+		return;
+	}
 
-		unsigned offset2 = current_pair.second;
-		unsigned cellIndex2 = baseIndex + offset2;
+	// Process all cell pairs for this cell
+	for(auto& current_pair : _cellPairOffsets){
+
+		long offset1 = current_pair.first;
+		long cellIndex1 = baseIndex + offset1;
+
+		long offset2 = current_pair.second;
+		long cellIndex2 = baseIndex + offset2;
 
 		CellTemplate& cell1 = this->_cells->at(cellIndex1);
 		CellTemplate& cell2 = this->_cells->at(cellIndex2);
-
 
 		if(cell1.isHaloCell() and cell2.isHaloCell()) {
 			continue;

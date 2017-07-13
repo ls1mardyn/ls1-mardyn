@@ -531,7 +531,6 @@ void LinkedCellsTest::doHSTest(DomainDecompBase* domainDecomposition,
 }
 
 void LinkedCellsTest::testMidpoint() {
-	return; //TODO: ____ Remove when midpoint is implemented
 
 	//TODO: ___Extract to separate test class
 	//------------------------------------------------------------
@@ -575,3 +574,40 @@ void LinkedCellsTest::testMidpoint() {
 	delete vectorizedCellProcessor;
 }
 
+void LinkedCellsTest::testMidpointMPI() {
+	//TODO: ___Extract to separate test class
+	//------------------------------------------------------------
+	// Setup
+	//------------------------------------------------------------
+
+	auto domainDecomposition = new DomainDecomposition();
+        domainDecomposition->setCommunicationScheme("indirect");
+	auto filename = "LinkedCellsHS-MPI.inp";
+	auto cutoff = 1;
+
+	LinkedCells* containerMP = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+	containerMP->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::MP;
+	containerMP->_traversalTuner->findOptimalTraversal();
+	containerMP->initializeTraversal();
+
+	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+			filename, cutoff));
+
+	auto cellProc = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+
+	domainDecomposition->initCommunicationPartners(cutoff, _domain);
+
+	//------------------------------------------------------------
+	//  Calculate forces for FS and MP and compare
+	//------------------------------------------------------------
+
+	doHSTest(domainDecomposition, cellProc, container, containerMP);
+
+	//------------------------------------------------------------
+	// Cleanup
+	//------------------------------------------------------------
+
+	delete domainDecomposition;
+	delete cellProc;
+}
