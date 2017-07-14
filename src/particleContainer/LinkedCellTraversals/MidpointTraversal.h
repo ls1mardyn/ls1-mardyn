@@ -32,6 +32,16 @@ public:
 		const std::array<unsigned long, 3> &dims, CellPairTraversalData *data) override{
 		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
 		computeOffsets();
+
+		auto maxIndex = 1;
+		for (auto d : dims)
+			maxIndex *= d;
+
+		for (auto i = 0; i < maxIndex; ++i) {
+			if (this->_cells->at(i).isInnerMostCell()){
+				_innerMostCellIndices.push_back(i);
+			}
+		}
 	}
 
 	virtual void traverseCellPairs(CellProcessor& cellProcessor);
@@ -69,6 +79,8 @@ private:
 
 	// Offsets of all corners of the surrounding cube. Opposite sides are (i+4)%8
 	std::array<std::tuple<long, long, long>, 8> _corners;
+
+	std::vector<unsigned long> _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 };
 
 template<class CellTemplate>
@@ -303,12 +315,25 @@ void MidpointTraversal<CellTemplate>::traverseCellPairs(CellProcessor& cellProce
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::traverseCellPairsOuter(CellProcessor& cellProcessor){
-	//TODO ____ Implement for overlapping
+	//TODO ____ Test
+	unsigned long start = 0ul;
+	unsigned long end = this->_cells->size();
+	for(auto i = start; i<end; ++i){
+		CellTemplate& baseCell = this->_cells->at(i);
+		if (!baseCell.isInnerMostCell()) {
+			processBaseCell(cellProcessor, i);
+		}
+	}
 }
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount){
-	//TODO ____ Implement for overlapping
+	//TODO ____ Test
+	unsigned long start =  _innerMostCellIndices.size() * stage / stageCount;
+	unsigned long end =  _innerMostCellIndices.size() * (stage+1) / stageCount;
+	for (unsigned i = start; i < end; ++i) {
+		processBaseCell(cellProcessor, _innerMostCellIndices.at(i));
+	}
 }
 
 
