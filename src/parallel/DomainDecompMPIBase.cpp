@@ -11,14 +11,17 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
+#include "parallel/FullShell.h"
+#include "parallel/HalfShell.h"
+#include "parallel/Midpoint.h"
 
 using Log::global_log;
 
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
 
-	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme();
-	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme();
+	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(new FullShell());
+	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell());
 
 	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &_rank));
 
@@ -39,27 +42,47 @@ DomainDecompMPIBase::~DomainDecompMPIBase() {
 }
 
 void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
-	std::string communicationScheme = "indirect";
-	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
-	setCommunicationScheme(communicationScheme);
+	std::string neighbourCommunicationScheme = "indirect";
+	xmlconfig.getNodeValue("CommunicationScheme", neighbourCommunicationScheme);
+
+	std::string communicationScheme = "fs";
+	xmlconfig.getNodeValue("HaloScheme", communicationScheme);
+
+	setCommunicationScheme(neighbourCommunicationScheme, communicationScheme);
 }
 
 int DomainDecompMPIBase::getNonBlockingStageCount(){
 	return _neighbourCommunicationScheme->getCommDims();
 }
 
-void DomainDecompMPIBase::setCommunicationScheme(std::string scheme){
+void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string commScheme){
 	if(_neighbourCommunicationScheme!=nullptr){
 		delete _neighbourCommunicationScheme;
 	}
+
+	CommunicationScheme* commSchemeP;
+
+	// CommunicationScheme will delete the pointer
+	if(commScheme=="fs"){
+		commSchemeP = new FullShell();
+	}else if(commScheme=="hs"){
+		commSchemeP = new HalfShell();
+	}else if(commScheme=="mp"){
+		commSchemeP = new Midpoint();
+	}else{
+		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'fs', 'hs' and 'mp'"
+				<< std::endl;
+		Simulation::exit(1);
+	}
+
 	if (scheme=="direct"){
 		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme();
+		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(commSchemeP);
 	} else if(scheme=="indirect"){
 		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme();
+		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(commSchemeP);
 	} else{
-		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
+		global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
 		Simulation::exit(1);
 	}

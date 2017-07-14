@@ -1,14 +1,16 @@
 /*
- * FullShell.cpp
+ * CommunicationScheme.h
  *
- *  Created on: Oct 10, 2016
- *      Author: seckler
+ *  Created on: 14.07.2017
+ *      Author: sauermann
  */
 
-#include "FullShell.h"
+#include "HalfShell.h"
 
-std::vector<HaloRegion> FullShell::getHaloRegions(HaloRegion& initialRegion, double cutoffRadius,
+std::vector<HaloRegion> HalfShell::getHaloRegions(HaloRegion& initialRegion, double cutoffRadius,
 		const bool coversWholeDomain[3]) {
+
+	//TODO ____ Change to HS
 	std::vector<HaloRegion> regions;
 	int d[3];
 	for (d[0] = -1; d[0] <= 1; d[0]++) {

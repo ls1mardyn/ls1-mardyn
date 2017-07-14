@@ -188,7 +188,7 @@ public:
 	//! Sets the communicationScheme.
 	//! If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
 	//! @param scheme
-	virtual void setCommunicationScheme(std::string scheme);
+	virtual void setCommunicationScheme(std::string scheme,std::string comScheme);
 
 	// documentation in base class
 	virtual int getNonBlockingStageCount() override;

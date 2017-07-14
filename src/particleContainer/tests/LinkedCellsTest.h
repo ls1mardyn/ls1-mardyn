@@ -10,6 +10,7 @@
 
 #include "particleContainer/tests/ParticleContainerTest.h"
 #include "particleContainer/LinkedCells.h"
+#include "particleContainer/TraversalTuner.h"
 
 class LinkedCellsTest: public ParticleContainerTest {
 
@@ -21,12 +22,12 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testUpdateAndDeleteOuterParticles8Particles);
 	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
 	TEST_METHOD(testParticleIteratorBeginNextEndParticleIteratorSequential);
-	TEST_METHOD(testHalfShell);
+	//TEST_METHOD(testHalfShell);
 	TEST_METHOD(testHalfShellMPIDirect);
 	TEST_METHOD(testHalfShellMPIIndirect);
 //	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
 	TEST_METHOD(testTraversalMethods);
-	TEST_METHOD(testMidpoint);
+	//TEST_METHOD(testMidpoint);
 	TEST_METHOD(testMidpointMPI);
 	TEST_SUITE_END();
 
@@ -65,18 +66,16 @@ public:
 	void testTraversalMethods();
 //	void testGetHaloBoundaryParticlesDirection();
 
-	void testHalfShell();
+	//void testHalfShell();
 	void testHalfShellMPIDirect();
 	void testHalfShellMPIIndirect();
 
-	void testMidpoint();
+	//void testMidpoint();
 	void testMidpointMPI();
 
 private:
 
-	void doHSTest(DomainDecompBase* domainDecomposition,
-			CellProcessor* cellProc, LinkedCells* container,
-			LinkedCells* containerHS);
+	void doForceComparisonTest(std::string inputFile, TraversalTuner::traversalNames traversal, std::string neighbourCommScheme, std::string commScheme);
 };
 
 #endif /* LINKEDCELLSTEST_H_ */

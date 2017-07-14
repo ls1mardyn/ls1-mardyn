@@ -176,7 +176,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				// default DomainDecomposition is already set in initialize();
 				//_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 				if (line.find("direct") != string::npos) {
-					dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition)->setCommunicationScheme("direct");
+					dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition)->setCommunicationScheme("direct", "fs");
 				}
 			} else if (token == "KDDecomposition") {
 				delete _domainDecomposition;
@@ -203,7 +203,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				}
 
 				if (line.find("direct") != string::npos) {
-					dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition)->setCommunicationScheme("direct"); // never do a search for the best Partitioning, always force the ratio (should be similar to fullSeachThreshold=0)
+					dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition)->setCommunicationScheme("direct", "fs"); // never do a search for the best Partitioning, always force the ratio (should be similar to fullSeachThreshold=0)
 				}
 			}
 #endif

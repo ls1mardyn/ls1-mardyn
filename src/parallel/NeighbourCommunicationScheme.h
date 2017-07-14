@@ -13,7 +13,7 @@
 
 class DomainDecompMPIBase;
 class Domain;
-class FullShell;
+class CommunicationScheme;
 class HaloRegion;
 class NeighbourCommunicationScheme {
 public:
@@ -26,7 +26,7 @@ public:
 		return _commDimms;
 	}
 	NeighbourCommunicationScheme() = delete;
-	NeighbourCommunicationScheme(unsigned int commDimms);
+	NeighbourCommunicationScheme(unsigned int commDimms, CommunicationScheme* commScheme);
 
 	virtual ~NeighbourCommunicationScheme();
 
@@ -73,7 +73,7 @@ protected:
 	unsigned int _commDimms;
 
 	//! communication scheme (FullShell, EightShell, ...)
-	FullShell* _commScheme;
+	CommunicationScheme* _commScheme;
 
 	//! list of all neighbours (non-squeezed)
 	std::vector<CommunicationPartner> _fullShellNeighbours;
@@ -82,8 +82,8 @@ protected:
 
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
-	DirectNeighbourCommunicationScheme() :
-			NeighbourCommunicationScheme(1) {
+	DirectNeighbourCommunicationScheme(CommunicationScheme* commScheme) :
+			NeighbourCommunicationScheme(1, commScheme) {
 	}
 	virtual ~DirectNeighbourCommunicationScheme() {
 	}
@@ -120,8 +120,8 @@ protected:
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
 
-	IndirectNeighbourCommunicationScheme() :
-			NeighbourCommunicationScheme(3) {
+	IndirectNeighbourCommunicationScheme(CommunicationScheme* commScheme) :
+			NeighbourCommunicationScheme(3, commScheme) {
 	}
 	virtual ~IndirectNeighbourCommunicationScheme() {
 	}

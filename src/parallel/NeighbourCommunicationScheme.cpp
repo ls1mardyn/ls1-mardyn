@@ -10,14 +10,12 @@
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
-#include "FullShell.h"
 #include "Domain.h"
+#include "CommunicationScheme.h"
 
-NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms) :
-	_coversWholeDomain{false, false, false}, _commDimms(commDimms){
+NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, CommunicationScheme* commScheme) :
+	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _commScheme(commScheme){
 	_neighbours.resize(this->getCommDims());
-
-	_commScheme = new FullShell();
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {

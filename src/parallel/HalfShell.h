@@ -1,8 +1,8 @@
 /*
- * FullShell.h
+ * CommunicationScheme.h
  *
- *  Created on: Oct 10, 2016
- *      Author: seckler
+ *  Created on: 14.07.2017
+ *      Author: sauermann
  */
 
 #pragma once
@@ -10,13 +10,13 @@
 #include "CommunicationScheme.h"
 
 
-class FullShell: public CommunicationScheme {
+class HalfShell: public CommunicationScheme {
 public:
-	FullShell(){}
-	virtual ~FullShell(){}
+	HalfShell(){}
+	virtual ~HalfShell(){}
 
 	/**
-	 * Returns up to 26 halo Regions of the process. If a process is spanning a whole dimension, then fewer regions can be returned.
+	 * Returns up to 13 halo Regions of the process. If a process is spanning a whole dimension, then fewer regions can be returned.
 	 * @param initialRegion boundary of the current process
 	 * @param cutoffRadius
 	 * @return vector of regions
