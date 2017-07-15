@@ -2,6 +2,14 @@
 
 # check if patch is already applied
 VERSION=$(sed --quiet --expression 's/#define * VERSION //gp' config.h)
+if [[ -z ${VERSION} ]]; then
+    VERSION=$(sed --quiet --expression 's/#define *QSCHED_VERSION //gp' config.h)
+
+    if [[ -z ${VERSION} ]]; then
+        echo "Version could not be determined, aborting!"
+        exit 1
+    fi
+fi
 
 if [[ ${VERSION} =~ .*MARDYN ]]; then
     echo "Quicksched is already patched!"
