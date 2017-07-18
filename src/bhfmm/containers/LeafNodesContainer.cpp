@@ -174,7 +174,7 @@ void LeafNodesContainer::initializeCells() {
                     payload.cell.coordinates[2] = z;
 					_cells[cellIndex].setP2PId(qsched_addtask(_scheduler,
 															  FastMultipoleMethod::P2P,
-															  qsched_flag_none,
+															  task_flag_none,
 															  &payload,
 															  sizeof(payload),
 															  1)
@@ -183,7 +183,7 @@ void LeafNodesContainer::initializeCells() {
 					payload.cell.pointer = &_cells[cellIndex];
 					_cells[cellIndex].setPreprocessId(qsched_addtask(_scheduler,
 																	 FastMultipoleMethod::PreprocessCell,
-																	 qsched_flag_none,
+																	 task_flag_none,
 																	 &payload,
 																	 sizeof(payload),
 																	 1)
@@ -191,7 +191,7 @@ void LeafNodesContainer::initializeCells() {
 					// POSTPROCESS TASK
 					_cells[cellIndex].setPostprocessId(qsched_addtask(_scheduler,
 																	  FastMultipoleMethod::PostprocessCell,
-																	  qsched_flag_none,
+																	  task_flag_none,
 																	  &payload,
 																	  sizeof(payload),
 																	  1)

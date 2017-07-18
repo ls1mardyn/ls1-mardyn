@@ -39,7 +39,8 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		ParticleContainer *ljContainer, //TODO: is this used anywhere?
 		bool periodic
 #ifdef QUICKSCHED
-		, qsched *scheduler
+		, qsched *scheduler_p2p
+		, qsched *scheduler_m2l
 #endif
 		) : PseudoParticleContainer(orderOfExpansions),
 			_leafContainer(nullptr),
@@ -147,7 +148,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 											LJSubdivisionFactor,
 											periodic
 #ifdef QUICKSCHED
-											, scheduler
+											, scheduler_p2p
 #endif
 	);
 
@@ -490,7 +491,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 #ifdef QUICKSCHED
 	// Quicksched Task generation
-	generateM2LTasks(scheduler);
+	generateM2LTasks(scheduler_m2l);
 #endif
 //reset timers
 #ifdef ENABLE_MPI
@@ -545,16 +546,19 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 
 #ifdef QUICKSCHED
 void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
-	int currentCellsEdge = 1,
-		idInit,
-		idFinalize,
-		idM2L;
-	double cellWid[]{_domain->getGlobalLength(0),
-					 _domain->getGlobalLength(1),
-					 _domain->getGlobalLength(2)};
+	int           currentCellsEdge = 1;
+	qsched_task_t idInit,
+				  idFinalize,
+				  idM2L,
+                  iniBarrier, finBarrier;
+	double        cellWid[]{_domain->getGlobalLength(0),
+							_domain->getGlobalLength(1),
+							_domain->getGlobalLength(2)};
 	struct qsched_payload payload;
 	payload.uniformPseudoParticleContainer = this;
 
+    iniBarrier = qsched_addtask(scheduler, FastMultipoleMethod::Dummy, task_flag_none, nullptr, 0, 0);
+    finBarrier = qsched_addtask(scheduler, FastMultipoleMethod::Dummy, task_flag_none, nullptr, 0, 0);
 	for (int currentLevel = 1; currentLevel <= _maxLevel; ++currentLevel) { //global M2M
 		currentCellsEdge *= 2;
 		for (int i = 0; i < 3; ++i) {
@@ -570,28 +574,33 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 			payload.currentMultipole = multipoleId;
 			idInit = qsched_addtask(scheduler,
 									FastMultipoleMethod::FFTInitialize,
-									qsched_flag_none,
+									task_flag_none,
 									&payload,
 									sizeof(payload),
 									1);
 			idM2L  = qsched_addtask(scheduler,
 									FastMultipoleMethod::M2LFourier,
-									qsched_flag_none,
+									task_flag_none,
 									&payload,
 									sizeof(payload),
 									1);
 			idFinalize = qsched_addtask(scheduler,
 										FastMultipoleMethod::FFTFinalize,
-										qsched_flag_none,
+										task_flag_none,
 										&payload,
 										sizeof(payload),
-						   1);
+										1);
 			qsched_addunlock(scheduler, idInit, idM2L);
 			qsched_addunlock(scheduler, idM2L, idFinalize);
+
+            qsched_addunlock(scheduler, idInit, iniBarrier);
+            qsched_addunlock(scheduler, idM2L, finBarrier);
+            qsched_addunlock(scheduler, finBarrier, idFinalize);
 		}
 	}
 }
 #endif
+
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
 	_leafContainer->clearParticles();
@@ -926,9 +935,10 @@ void UniformPseudoParticleContainer::horizontalPass(
 			if(_doNTGlobal and _avoidAllReduce and not (_globalLevel == 1 and _fuseGlobalCommunication)){
 				_multipoleRecBufferOverlapGlobal->communicateGlobalLevels(_globalLevel,_stopLevel,true);
 			}
+#endif
 			curCellsEdge=1;
 			for(int i=0; i < 3; i++) cellWid[i] = _domain->getGlobalLength(i);
-#endif
+
 			for(int curLevel=1; curLevel<=_maxLevel; curLevel++){ //global M2M
 
 				curCellsEdge *=2;
@@ -1244,6 +1254,7 @@ void UniformPseudoParticleContainer::CombineMpCell_Local(double* /*cellWid*/, Ve
 	for(int d = 0; d < 3; ++d){
 		numInnerCells[d] = localMpCells[d] - 4;
 	}
+
 	for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
 		m1x = mloop % numInnerCells[0];
 		m1y = (mloop / numInnerCells[0]) % numInnerCells[1];

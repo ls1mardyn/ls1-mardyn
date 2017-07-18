@@ -28,8 +28,8 @@ FastMultipoleMethod::~FastMultipoleMethod() {
 	delete _P2MProcessor;
 	delete _L2PProcessor;
 #ifdef QUICKSCHED
-    qsched_free(_scheduler);
-    delete(_scheduler);
+    qsched_free(_scheduler_p2p);
+    delete(_scheduler_p2p);
 #endif
 }
 
@@ -85,8 +85,10 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 	_P2PProcessor = new VectorizedChargeP2PCellProcessor(
 			*(global_simulation->getDomain()));
 #ifdef QUICKSCHED
-    _scheduler = new struct qsched;
-    qsched_init(_scheduler, mardyn_get_max_threads(), qsched_flag_none);
+    _scheduler_p2p = new struct qsched;
+    _scheduler_m2l = new struct qsched;
+    qsched_init(_scheduler_p2p, mardyn_get_max_threads(), qsched_flag_none);
+    qsched_init(_scheduler_m2l, mardyn_get_max_threads(), qsched_flag_none);
 #endif // QUICKSCEHD
 	if (not _adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(globalDomainLength,
@@ -98,7 +100,8 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
                                                                       ljContainer,
                                                                       _periodic
 #ifdef QUICKSCHED
-                                                                    , _scheduler
+                                                                    , _scheduler_p2p
+                                                                    , _scheduler_m2l
 #endif
         );
 
@@ -138,7 +141,8 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 		_P2PProcessor->initTraversal();
 	}
 #ifdef QUICKSCHED
-    qsched_run(_scheduler, mardyn_get_max_threads(), runner);
+    qsched_run(_scheduler_p2p, mardyn_get_max_threads(), runner);
+    qsched_run(_scheduler_m2l, mardyn_get_max_threads(), runner);
 #else
 	_pseudoParticleContainer->horizontalPass(_P2PProcessor);
 #endif
@@ -202,6 +206,9 @@ void FastMultipoleMethod::runner(int type, void *data) {
         case FFTInitialize: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
+            if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
+                return;
+
             double radius = contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
                     .local
                     .getRadius();
@@ -220,6 +227,9 @@ void FastMultipoleMethod::runner(int type, void *data) {
         } /* FFTInitialize */
         case FFTFinalize: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
+                return;
 
             double radius = contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
                     .local

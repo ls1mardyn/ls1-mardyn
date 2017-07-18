@@ -90,7 +90,8 @@ private:
 
 #ifdef QUICKSCHED
 	static void runner(int type, void *data);
-	struct qsched *_scheduler;
+	struct qsched *_scheduler_p2p;
+	struct qsched *_scheduler_m2l;
 #endif // QUICKSCEHD
 };
 

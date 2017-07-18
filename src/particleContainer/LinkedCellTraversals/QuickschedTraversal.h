@@ -137,7 +137,7 @@ void QuickschedTraversal<CellTemplate>::init() {
                             unsigned long payload[]{x, y, z, (unsigned long) this};
                             taskId = qsched_addtask(_scheduler,
                                                     PackedAdjustable,
-                                                    qsched_flag_none,
+                                                    task_flag_none,
                                                     payload,
                                                     sizeof(payload),
                                                     1);

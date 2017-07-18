@@ -44,7 +44,8 @@ public:
 								   ParticleContainer* ljContainer,
 								   bool periodic = true
 #ifdef QUICKSCHED
-								   , qsched *scheduler = nullptr
+								   , qsched *scheduler_p2p = nullptr
+								   , qsched *scheduler_m2l = nullptr
 #endif
 	);
 	~UniformPseudoParticleContainer();
