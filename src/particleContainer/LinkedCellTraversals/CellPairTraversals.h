@@ -41,11 +41,8 @@ public:
 	virtual void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) = 0;
 
 protected:
-	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const = 0;
-
 	//TODO:
-	void traverseCellPairsNoDep(CellProcessor& cellProcessor);
-
+	//void traverseCellPairsNoDep(CellProcessor& cellProcessor);
 	std::vector<CellTemplate> * _cells;
 	std::array<unsigned long, 3> _dims;
 };
