@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/Logger.h"
 class Component;
 class Domain;
 class ParticleContainer;
@@ -182,6 +183,7 @@ public:
 
 
 	void updateSendLeavingWithCopies(bool sendTogether){
+		using Log::global_log;
 		// Count all processes that need to send separately
 		collCommInit(1);
 		collCommAppendInt(!sendTogether);
@@ -191,7 +193,7 @@ public:
 
 
 		global_log->info() << "Sending leaving particles and halo copies "
-				<< (sendLeavingWithCopies ? "together" : "separately") << std::endl;
+				<< (sendLeavingWithCopies() ? "together" : "separately") << std::endl;
 	}
 
 	bool sendLeavingWithCopies() const{
