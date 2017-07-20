@@ -356,7 +356,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			double bBoxMin[3];
 			double bBoxMax[3];
 			_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
-			_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+			bool sendTogether = _moleculeContainer->rebuild(bBoxMin, bBoxMax);
+			_domainDecomposition->updateSendLeavingWithCopies(sendTogether);
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Datastructure section missing" << endl;

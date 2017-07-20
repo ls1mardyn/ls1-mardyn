@@ -88,7 +88,7 @@ public:
 	//! This method basically does what the constructor does as well, with the difference,
 	//! that there are already particles stored, and particles which don't belong to the
 	//! new region have to be deleted after rebuild
-	virtual void rebuild(double bBoxMin[3], double bBoxMax[3]);
+	virtual bool rebuild(double bBoxMin[3], double bBoxMax[3]);
 
 	//! @brief do necessary updates resulting from changed particle positions
 	//!
@@ -226,8 +226,6 @@ public:
 	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	// or does this particle container calculate all forces.
 	virtual bool requiresForceExchange() const {return false;}
-
-	virtual bool sendLeavingAndHaloTogether() {return true;}
 
 protected:
 

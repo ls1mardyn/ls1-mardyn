@@ -115,7 +115,7 @@ void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber) {
 	const bool removeRecvDuplicates = true;
-	if(moleculeContainer->sendLeavingAndHaloTogether()){
+	if(sendLeavingWithCopies()){
 		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 	} else {
 		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY, removeRecvDuplicates);
@@ -127,7 +127,7 @@ void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber) {
 	const bool removeRecvDuplicates = true;
-	if(moleculeContainer->sendLeavingAndHaloTogether()){
+	if(sendLeavingWithCopies()){
 		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 	} else {
 		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY, removeRecvDuplicates);
@@ -150,7 +150,7 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 	const bool removeRecvDuplicates = true;
 
 	if (rebalance == false) {
-		if(moleculeContainer->sendLeavingAndHaloTogether()){
+		if(sendLeavingWithCopies()){
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 		} else {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
@@ -203,7 +203,7 @@ void KDDecomposition::getCellIntCoordsFromRegionPeriodic(int* lo, int* hi, const
 	}
 }
 
-bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const {
+bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) {
 	// 1. compute which processes we will receive from
 	// 2. issue Irecv calls
 	// 3. compute which processes we will send to
@@ -306,7 +306,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		newBoxMin[dim] = (newOwnLeaf._lowCorner[dim]) * _cellSize[dim];
 		newBoxMax[dim] = (newOwnLeaf._highCorner[dim] + 1) * _cellSize[dim];
 	}
-	moleculeContainer->rebuild(newBoxMin, newBoxMax);
+	bool sendTogether = moleculeContainer->rebuild(newBoxMin, newBoxMax);
+	updateSendLeavingWithCopies(sendTogether);
 
 	global_log->set_mpi_output_all();
 	double waitCounter = 1.0;

@@ -106,7 +106,7 @@ public:
 	}
 
 	// documentation see father class (ParticleContainer.h)
-	void rebuild(double bBoxMin[3], double bBoxMax[3]) override;
+	bool rebuild(double bBoxMin[3], double bBoxMax[3]) override;
 
 	//! Pointers to the particles are put into cells depending on the spacial position
 	//! of the particles.
@@ -264,9 +264,6 @@ public:
 
 	bool requiresForceExchange() const override;
 
-	bool sendLeavingAndHaloTogether() override {
-		return _sendParticlesTogether;
-	}
 
 private:
 	//####################################
@@ -363,7 +360,6 @@ private:
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
-	bool _sendParticlesTogether = true; //!< Should leaving particles and halo copies be sent together or separately?
 
 	//! @brief True if all Particles are in the right cell
 	//!

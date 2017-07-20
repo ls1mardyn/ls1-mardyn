@@ -54,7 +54,7 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	if(moleculeContainer->sendLeavingAndHaloTogether()){
+	if(sendLeavingWithCopies()){
 		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
 	}
 	else {
@@ -65,7 +65,7 @@ void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, Par
 
 void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	if(moleculeContainer->sendLeavingAndHaloTogether()){
+	if(sendLeavingWithCopies()){
 		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
 	}else{
 		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
@@ -80,7 +80,7 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 
 void DomainDecomposition::balanceAndExchange(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
-	if(moleculeContainer->sendLeavingAndHaloTogether()){
+	if(sendLeavingWithCopies()){
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 	}else{
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);

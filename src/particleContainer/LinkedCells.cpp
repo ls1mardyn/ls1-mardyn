@@ -123,7 +123,7 @@ void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
 	_traversalTuner->readXML(xmlconfig);
 }
 
-void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
+bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	global_log->info() << "REBUILD OF LinkedCells" << endl;
 
 	for (int i = 0; i < 3; i++) {
@@ -163,30 +163,14 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 	_cells.resize(numberOfCells);
 
+	bool sendParticlesTogether = true;
 	// If the with of the inner region is less than the width of the halo region
 	// leaving particles and halo copy must be sent separately.
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
 			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		/*
-			// TODO ____ Error will not be reached as "region to small" will fail first
-			global_log->error_always_output()
-					<< "LinkedCells (rebuild): bounding box too small for calculated cell Length"
-					<< endl;
-			global_log->error_always_output() << "cellsPerDimension " << _cellsPerDimension[0]
-					<< " / " << _cellsPerDimension[1] << " / "
-					<< _cellsPerDimension[2] << endl;
-			global_log->error_always_output() << "_haloWidthInNumCells" << _haloWidthInNumCells[0]
-					<< " / " << _haloWidthInNumCells[1] << " / "
-					<< _haloWidthInNumCells[2] << endl;
-			Simulation::exit(5);
-		*/
-
-		_sendParticlesTogether = false;
+		sendParticlesTogether = false;
 	}
-
-	global_log->info() << "Sending leaving particles and halo copies "
-			<< (_sendParticlesTogether ? "together" : "separately") << std::endl;
 
 	initializeCells();
 	calculateNeighbourIndices();
@@ -199,6 +183,8 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	initializeTraversal();
 
 	_cellsValid = false;
+
+	return sendParticlesTogether;
 
 }
 

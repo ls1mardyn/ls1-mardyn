@@ -181,6 +181,25 @@ public:
 	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary = false) const;
 
 
+	void updateSendLeavingWithCopies(bool sendTogether){
+		// Count all processes that need to send separately
+		collCommInit(1);
+		collCommAppendInt(!sendTogether);
+		collCommAllreduceSum();
+		_sendLeavingAndCopiesSeparately = collCommGetInt();
+		collCommFinalize();
+
+
+		global_log->info() << "Sending leaving particles and halo copies "
+				<< (sendLeavingWithCopies ? "together" : "separately") << std::endl;
+	}
+
+	bool sendLeavingWithCopies() const{
+		// No process needs to send separately => send together
+		return _sendLeavingAndCopiesSeparately == 0;
+	}
+
+
 	//##################################################################
 	// The following methods with prefix "collComm" are all used
 	// in the context of collective communication. Each of the methods
@@ -261,6 +280,7 @@ protected:
 
 private:
 	CollectiveCommBase _collCommBase;
+	int _sendLeavingAndCopiesSeparately = 0;
 };
 
 #endif /* DOMAINDECOMPBASE_H_ */

@@ -199,7 +199,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				double bBoxMax[3];
 				_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
 				if (_moleculeContainer != NULL) {
-					_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+					bool sendTogether = _moleculeContainer->rebuild(bBoxMin, bBoxMax);
+					_domainDecomposition->updateSendLeavingWithCopies(sendTogether);
 				}
 
 				if (line.find("direct") != string::npos) {
