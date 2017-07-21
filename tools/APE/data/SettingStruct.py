@@ -348,20 +348,16 @@ class ChildData(object):
 		self.settings.append(settingObject)
 		
 	# only return settings whose dependencies are met
-	def getDependSettings(self):
+	def getDependSettings(self, withSpare=False):
 		dSettings = []
 		
 		# go through every setting entry and check its dependencies
 		for sEntry in self.settings:
-			depOk = True
-			for dependEntry in sEntry.dependList:
-				if not dependEntry.dependOk(self.settings):
-					depOk = False
-					break
-			
-			# copy over positive tested entries
-			if depOk:
+			if sEntry.settingDependOk(self.settings):
+				# copy over positive tested entries
 				dSettings.append(sEntry)
+			elif withSpare:
+				dSettings.append(None)
 				
 		return dSettings
 	
@@ -385,6 +381,12 @@ class SettingData(object):
 		else:
 			self.dependList = []
 		
+	def settingDependOk(self, settings):
+		for dependEntry in self.dependList:
+			if not dependEntry.dependOk(settings):
+				return False
+		return True
+		
 	def __str__(self):
 		return self.name
 		
@@ -401,9 +403,10 @@ class SettingElementDependEntry(object):
 	def dependOk(self, settings):
 		for sEntry in settings:
 			if sEntry.name == self.dependSettingName:
-				for value in self.dependSettingValues:
-					if sEntry.value == value:
-						return True
+				if sEntry.settingDependOk(settings):
+					for value in self.dependSettingValues:
+						if sEntry.value == value:
+							return True
 		return False
 		
 	def isValid(self):

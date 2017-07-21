@@ -40,7 +40,7 @@ class GeneralEdit(object):
 		if self.parent != None:
 			self.parent.notifyChange(editor)
 	
-	def setValueToSettingData(self):
+	def setValueToSettingData(self, resetIfWrong=True):
 		return None
 		
 '''
@@ -72,9 +72,10 @@ class LineEdit(GeneralEdit):
 	
 	def setFocus(self, reason):
 		self.valueWidget.setFocus(reason)
-		self.valueWidget.selectAll()
+		if reason == Qt.PopupFocusReason:
+			self.valueWidget.selectAll()
 	
-	def setValueToSettingData(self):
+	def setValueToSettingData(self, resetIfWrong=True):
 		returnMessage = None
 		value = self.valueWidget.text()
 		varType = self.settingData.varType
@@ -84,14 +85,16 @@ class LineEdit(GeneralEdit):
 				self.settingData.value = value
 			except ValueError:
 				returnMessage = ['The value at "'+self.settingData.name+'" must be an integer.', self]
-				self.valueWidget.setText(self.settingData.value)
+				if resetIfWrong:
+					self.valueWidget.setText(self.settingData.value)
 		elif varType == "float":
 			try:
 				float(value)
 				self.settingData.value = value
 			except ValueError:
 				returnMessage = ['The value at "'+self.settingData.name+'" must be a floating point number.', self]
-				self.valueWidget.setText(self.settingData.value)
+				if resetIfWrong:
+					self.valueWidget.setText(self.settingData.value)
 		else:
 			self.settingData.value = value
 		return returnMessage
@@ -126,7 +129,7 @@ class SelectEdit(GeneralEdit):
 	def setFocus(self, reason):
 		self.valueWidget.setFocus(reason)
 	
-	def setValueToSettingData(self):
+	def setValueToSettingData(self, resetIfWrong=True):
 		possibleOptions = self.settingData.editorOptions.split(",")
 		selectedText = self.valueWidget.currentText()
 		found = False
@@ -260,12 +263,18 @@ class SettingEditorContainer(object):
 
 	def notifyChange(self, editor):
 		if self.parent != None:
-			self.parent.editorToSettingData(editor)
+			# self.parent.editorToSettingData(editor)
+			editor.setValueToSettingData(False)
+			esData = editor.settingData
 			settings = self.checkEditorsChanged()
 			if settings != None:
 				self.parent.cleanEditorWidgets(False)
 				self.pupulateEditorList(settings)
 				self.parent.viewContainerEditors()
+				for nEditor in self.editorList:
+					if nEditor.settingData is esData:
+						nEditor.setFocus(Qt.OtherFocusReason)
+						break
 			self.parent.setUnsavedContent(True)
 
 '''

@@ -463,8 +463,17 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 		if self.fileHandler != None:
 			filename = QFileDialog.getSaveFileName(self, 'Save configuration file to', self.FilePath(self.lastFile), self.fileHandler.fileExtension)
 			if filename[0] != "":
-				retVal = self.saveFile(False, filename[0])
-				self.fileHandler.fileName = filename[0]
+				fileN = filename[0]
+				if filename[0].find(".") == -1:
+					fileFilter = self.fileHandler.fileExtension
+					istart = fileFilter.find("(") + 1
+					istop = fileFilter.find(")", istart)
+					fileFilter = fileFilter[istart:istop]
+					fileExtensions = fileFilter.split(" ")
+					fileN = filename[0] + fileExtensions[0][fileExtensions[0].find("."):]
+				
+				retVal = self.saveFile(False, fileN)
+				self.fileHandler.fileName = fileN
 				self.lastFile = self.fileHandler.fileName
 				self.unsavedContent = True
 				self.setUnsavedContent(False)

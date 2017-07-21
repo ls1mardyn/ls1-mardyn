@@ -271,15 +271,45 @@ class FileHandlerXML(object):
 			if error:
 				break
 		
+		# check if all settings were written to the active tree and no setting is missing
 		targetModelSearch = SettingStruct.DeepSearchSettingTree(targetModel)
 		for targetModelItem in targetModelSearch.getElementGenerator():
 			childData = targetModelItem[1].data(1)
+			
 			if childData.settingMarks != None:
+				# distribute value data to all unwritten setting entries with the same xmlpath
 				for idx, mark in enumerate(childData.settingMarks):
 					if not mark:
-						settingItem = childData.settings[idx]
-						errorMessageLog.append(self.generateErrorMessage(None, None, None, childData, 'The element at '+settingItem.fileInformation.__str__()+'Default value: "'+settingItem.defaultvalue+'" does not exist in the XML-File. Default value will be used.'))
-				childData.settingMarks = None
+						if childData.settings[idx].fileInformation.isValid():
+							xmlpath = childData.settings[idx].fileInformation.xmlpath
+							for mIdx, mSetting in enumerate(childData.settings):
+								if childData.settingMarks[mIdx]:
+									if self.isPathSimilar(xmlpath, mSetting.fileInformation.xmlpath):
+										childData.settings[idx].value = mSetting.value
+										childData.settingMarks[idx] = True
+				
+				# get settings whose dependencies are met
+				try:
+					sparedDependSettings = childData.getDependSettings(True)
+					
+					for idx, mark in enumerate(childData.settingMarks):
+						
+						# reset values of settings whose dependencies are not met
+						if sparedDependSettings[idx] == None:
+							childData.settings[idx].value = childData.settings[idx].defaultvalue
+						
+						# thow error message if important setting is missing
+						if not mark:
+							settingItem = sparedDependSettings[idx]
+							if settingItem != None:
+								errorMessageLog.append(self.generateErrorMessage(None, None, None, childData, 'The element at '+settingItem.fileInformation.__str__()+'Default value: "'+settingItem.defaultvalue+'" does not exist in the XML-File. Default value will be used.'))
+					childData.settingMarks = None
+					
+				except RecursionError:
+					errorMessageLog.append(self.generateErrorMessage(None, None, None, childData, "This SettingTreeElement has settings which depend on each other in a loop. This is not possible. Please edit "+plugin[1].absoluteFilePath("content.xml"), True))
+					error = True
+					break
+
 		
 		return errorMessageLog, error
 	
