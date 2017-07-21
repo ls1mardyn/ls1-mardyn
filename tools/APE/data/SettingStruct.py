@@ -346,12 +346,32 @@ class ChildData(object):
 		
 	def addSetting(self, settingObject):
 		self.settings.append(settingObject)
+		
+	# only return settings whose dependencies are met
+	def getDependSettings(self):
+		dSettings = []
+		
+		# go through every setting entry and check its dependencies
+		for sEntry in self.settings:
+			depOk = True
+			for dependEntry in sEntry.dependList:
+				if not dependEntry.dependOk(self.settings):
+					depOk = False
+					break
+			
+			# copy over positive tested entries
+			if depOk:
+				dSettings.append(sEntry)
+				
+		return dSettings
+	
+	dependSettings = property(getDependSettings)
 	
 	def __str__(self):
 		return self.name
 
 class SettingData(object):
-	def __init__(self, name, defaultvalue, varType, editor, editorOptions, description, fileInformation=None, parent=None):
+	def __init__(self, name, defaultvalue, varType, editor, editorOptions, description, dependList=None, fileInformation=None, parent=None):
 		self.name = name
 		self.defaultvalue = defaultvalue
 		self.value = defaultvalue
@@ -360,6 +380,10 @@ class SettingData(object):
 		self.editorOptions = editorOptions
 		self.description = description
 		self.fileInformation = fileInformation
+		if dependList != None:
+			self.dependList = dependList
+		else:
+			self.dependList = []
 		
 	def __str__(self):
 		return self.name
@@ -368,6 +392,25 @@ class HeaderData(object):
 	def __init__(self, isDictionary = False, pluginname = ""):
 		self.isDictionary = isDictionary
 		self.pluginname = pluginname
+		
+class SettingElementDependEntry(object):
+	def __init__(self):
+		self.dependSettingName = ""
+		self.dependSettingValues = []
+		
+	def dependOk(self, settings):
+		for sEntry in settings:
+			if sEntry.name == self.dependSettingName:
+				for value in self.dependSettingValues:
+					if sEntry.value == value:
+						return True
+		return False
+		
+	def isValid(self):
+		return self.dependSettingName != "" and len(self.dependSettingValues) > 0
+	
+	def __str__(self):
+		return self.dependSettingName + "\n" + str(self.dependSettingValues) + "\n"
 '''
 The XMLSettingElementHelper class reads setting elements of the plugin content xml file.
 '''
@@ -384,8 +427,9 @@ class XMLSettingElementHelper(object):
 		self.description = ""
 		self.fileHandler = fileHandler
 		self.fileInformation = fileHandler.newFileInformationObject()
+		self.dependList = []
 		
-			
+		
 		for child in self.element.childNodes:
 			if child.nodeType == child.ELEMENT_NODE:
 				if child.nodeName == "name" and self.name == "" and child.hasChildNodes():
@@ -400,6 +444,16 @@ class XMLSettingElementHelper(object):
 					self.editoroptions = child.childNodes[0].data
 				elif child.nodeName == "description" and self.description == "" and child.hasChildNodes():
 					self.description = child.childNodes[0].data
+				elif child.nodeName == "depends" and child.hasChildNodes():
+					dependEntry = SettingElementDependEntry()
+					for dependChild in child.childNodes:
+						if dependChild.nodeType == dependChild.ELEMENT_NODE:
+							if dependEntry.dependSettingName == "" and dependChild.nodeName == "settingname" and dependChild.hasChildNodes():
+								dependEntry.dependSettingName = dependChild.childNodes[0].data
+							elif dependChild.nodeName == "value" and dependChild.hasChildNodes():
+								dependEntry.dependSettingValues.append(dependChild.childNodes[0].data)
+					if dependEntry.isValid():
+						self.dependList.append(dependEntry)
 				else:
 					fitting, message = self.fileInformation.parseSettingElement(child)
 					self.isError = message != None
@@ -415,7 +469,7 @@ class XMLSettingElementHelper(object):
 			self.name = self.parent.settingNameGenerator()
 			
 	def makeSettingData(self):
-		return SettingData(self.name, self.defaultvalue, self.type, self.editor, self.editoroptions, self.description, self.fileInformation)
+		return SettingData(self.name, self.defaultvalue, self.type, self.editor, self.editoroptions, self.description, self.dependList, self.fileInformation)
 
 '''
 The XMLSettingElementHelper class reads child elements of the plugin content xml file.
@@ -487,7 +541,7 @@ class XMLChildElementHelper(object):
 	def makeChildData(self):
 		childData = ChildData(self.name, self.plurality, self.importance, self.visibility)
 		if self.description != "":
-			childData.addSetting(SettingData("", "", "", "textshow", "", self.description, None))
+			childData.addSetting(SettingData("", "", "", "textshow", "", self.description, None, None))
 		if self.hasSettings():
 			for settingXML in self.settings:
 				setting = XMLSettingElementHelper(settingXML, self.fileHandler, self.parent)

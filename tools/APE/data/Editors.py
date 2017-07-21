@@ -36,9 +36,9 @@ class GeneralEdit(object):
 	def setFocus(self):
 		pass
 	
-	def notifyChange(self):
+	def notifyChange(self, editor):
 		if self.parent != None:
-			self.parent.notifyChange()
+			self.parent.notifyChange(editor)
 	
 	def setValueToSettingData(self):
 		return None
@@ -68,7 +68,7 @@ class LineEdit(GeneralEdit):
 	def checkChanged(self):
 		if self.valueWidget != None:
 			if self.valueWidget.text() != self.settingData.value:
-				self.notifyChange()
+				self.notifyChange(self)
 	
 	def setFocus(self, reason):
 		self.valueWidget.setFocus(reason)
@@ -121,7 +121,7 @@ class SelectEdit(GeneralEdit):
 	def checkChanged(self):
 		if self.valueWidget != None:
 			if self.valueWidget.currentText() != self.settingData.value:
-				self.notifyChange()
+				self.notifyChange(self)
 		
 	def setFocus(self, reason):
 		self.valueWidget.setFocus(reason)
@@ -191,29 +191,57 @@ The SettingEditorContainer class is used to insance needed editors and hold link
 '''
 class SettingEditorContainer(object):
 	def __init__(self, child, parentWidget, parent=None):
-		settings = child.settings
+		self.child = child
 		self.editorList = []
-		realSettings = False
 		self.parent = parent
+		self.parentWidget = parentWidget
+		self.settings = []
 		
-		self.editorList.append(Headline(child.name, parentWidget, self))
-		self.editorList.append(HorizontalLine(None, parentWidget, self))
-		if len(settings) != 0:
-			for item in settings:
+		self.pupulateEditorList()
+	
+	#return new setting list, if list has changed
+	def checkEditorsChanged(self):
+		if not isinstance(self.child, EditorProbe):
+			dSettings = self.child.dependSettings
+			if len(dSettings) != len(self.settings):
+				return dSettings
+			for sIndex, sEntry in enumerate(self.settings):
+				if not sEntry is dSettings[sIndex]:
+					return dSettings
+			return None
+		else:
+			return None
+	
+	def pupulateEditorList(self, settings=None):
+		if settings == None:
+			if not isinstance(self.child, EditorProbe):
+				self.settings = self.child.dependSettings
+			else:
+				self.settings = self.child.settings
+		else:
+			self.settings = settings
+		
+		realSettings = False
+		self.editorList = []
+		
+		self.editorList.append(Headline(self.child.name, self.parentWidget, self))
+		self.editorList.append(HorizontalLine(None, self.parentWidget, self))
+		if len(self.settings) != 0:
+			for item in self.settings:
 				
 				#item.editor is the value at <editor> of a setting element in the plugin content xml file
 				
 				if item.editor == "lineedit":
-					self.editorList.append(LineEdit(item, parentWidget, True, self))
+					self.editorList.append(LineEdit(item, self.parentWidget, True, self))
 					
 				elif item.editor == "lineedit-readonly":
-					self.editorList.append(LineEdit(item, parentWidget, False, self))
+					self.editorList.append(LineEdit(item, self.parentWidget, False, self))
 				
 				elif item.editor == "select":
-					self.editorList.append(SelectEdit(item, parentWidget, self))
+					self.editorList.append(SelectEdit(item, self.parentWidget, self))
 					
 				elif item.editor == "textshow":
-					self.editorList.append(TextShow(item, parentWidget, self))
+					self.editorList.append(TextShow(item, self.parentWidget, self))
 				
 				else:
 					item.editor = "invisible"
@@ -222,15 +250,22 @@ class SettingEditorContainer(object):
 					realSettings = True
 				
 				if item.editor != "invisible":
-					self.editorList.append(HorizontalLine(item, parentWidget, self))
+					self.editorList.append(HorizontalLine(item, self.parentWidget, self))
 			
 			if not realSettings:
-				self.editorList.append(NoSettingsText(None, parentWidget, self))
+				self.editorList.append(NoSettingsText(None, self.parentWidget, self))
 		else:
-			self.editorList.append(NoSettingsText(None, parentWidget, self))
+			self.editorList.append(NoSettingsText(None, self.parentWidget, self))
+		
 
-	def notifyChange(self):
+	def notifyChange(self, editor):
 		if self.parent != None:
+			self.parent.editorToSettingData(editor)
+			settings = self.checkEditorsChanged()
+			if settings != None:
+				self.parent.cleanEditorWidgets(False)
+				self.pupulateEditorList(settings)
+				self.parent.viewContainerEditors()
 			self.parent.setUnsavedContent(True)
 
 '''

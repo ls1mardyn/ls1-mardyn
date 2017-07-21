@@ -47,13 +47,21 @@ class FileHandler(object):
 	
 	def newFileInformationObject(self):
 		return self.specificHandler.newFileInformationObject()
+	
+	def getFileExtension(self):
+		if self.specificHandler != None:
+			return self.specificHandler.fileExtension + ";;All files (*.*)"
+		else:
+			return "All files (*.*)"
+	
+	fileExtension = property(getFileExtension)
 
 '''
 The FileHandlerXML class reads and stores config file in the xml format
 '''
 class FileHandlerXML(object):
 	def __init__(self, parent=None):
-		pass
+		self.fileExtension = "XML (*.xml)"
 	
 	def isValid(self):
 		return True
@@ -66,7 +74,7 @@ class FileHandlerXML(object):
 		search = SettingStruct.DeepSearchSettingTree(sourceModel)
 		doc = Document()
 		for childTreeEntryTupel in search.getElementGenerator():
-			settings = childTreeEntryTupel[1].data(1).settings
+			settings = childTreeEntryTupel[1].data(1).dependSettings
 			for setting in settings:
 				fileInfo = setting.fileInformation
 				element = doc

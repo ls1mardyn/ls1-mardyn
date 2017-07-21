@@ -343,34 +343,50 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 					self.activeModel.endResetModel()
 					self.button_add.setEnabled(True)
 					self.label.setText("Select a setting to edit it.")
+					self.actionSave_Configuration.setEnabled(True)
+					self.actionSave_Configuration_File_As.setEnabled(True)
 					self.windowIndicator()
 					
 					
 		
 	def widgetToSettingData(self):
-		retVal = True
 		if self.editorContainer != None:
-			for item in self.editorContainer.editorList:
-				returnMessage = item.setValueToSettingData()
-				if returnMessage != None:
-					if type(returnMessage[0]) is str:
-						QMessageBox.critical(self, "Error", returnMessage[0], QMessageBox.Ok, QMessageBox.NoButton)
-						returnMessage[1].setFocus(Qt.PopupFocusReason)
-						retVal = False
-		return retVal
+			for editor in self.editorContainer.editorList:
+				if not self.editorToSettingData(editor):
+					return False
+		return True
+	
+	def editorToSettingData(self, editor):
+		returnMessage = editor.setValueToSettingData()
+		if returnMessage != None:
+			if type(returnMessage[0]) is str:
+				QMessageBox.critical(self, "Error", returnMessage[0], QMessageBox.Ok, QMessageBox.NoButton)
+				returnMessage[1].setFocus(Qt.PopupFocusReason)
+				return False
+		return True
+	
 		
-	def cleanEditorWidgets(self):
+	def cleanEditorWidgets(self, containerPurge=True):
 		for i in range(self.formLayout_2.count()):
 			lItem = self.formLayout_2.takeAt(0)
 			lItem.widget().setVisible(False)
 			self.formLayout_2.removeItem(lItem)
-		self.editorContainer = None
+		if containerPurge:
+			self.editorContainer = None
 		
 	def showEditorLabel(self):
 		if self.formLayout_2.count() != 0:
 			self.cleanEditorWidgets()
 		self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.label)
 		self.label.setVisible(True)
+		
+	def viewContainerEditors(self):
+		for editor in self.editorContainer.editorList:
+			for item in editor.widgetList:
+				if item.label == None:
+					self.formLayout_2.addRow(item.widget)
+				else:
+					self.formLayout_2.addRow(item.label, item.widget)
 		
 	def setSelectedElement(self, itemTo):
 		indexList = itemTo.indexes()
@@ -394,12 +410,7 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 					self.button_del.setEnabled(True)
 					self.cleanEditorWidgets()
 					self.editorContainer = SettingEditorContainer(self.activeModel.childData(self.selectedElement), self.scrollAreaWidgetContents_4, self)
-					for editor in self.editorContainer.editorList:
-						for item in editor.widgetList:
-							if item.label == None:
-								self.formLayout_2.addRow(item.widget)
-							else:
-								self.formLayout_2.addRow(item.label, item.widget)
+					self.viewContainerEditors()
 				else:
 					self.selectedElement = None
 					self.button_del.setEnabled(False)
@@ -449,14 +460,15 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 	
 	def saveFileAs(self):
 		retVal = False
-		filename = QFileDialog.getSaveFileName(self, 'Save configuration file to', self.FilePath(self.lastFile))
-		if filename[0] != "":
-			retVal = self.saveFile(False, filename[0])
-			self.fileHandler.fileName = filename[0]
-			self.lastFile = self.fileHandler.fileName
-			self.unsavedContent = True
-			self.setUnsavedContent(False)
-			self.windowIndicator()
+		if self.fileHandler != None:
+			filename = QFileDialog.getSaveFileName(self, 'Save configuration file to', self.FilePath(self.lastFile), self.fileHandler.fileExtension)
+			if filename[0] != "":
+				retVal = self.saveFile(False, filename[0])
+				self.fileHandler.fileName = filename[0]
+				self.lastFile = self.fileHandler.fileName
+				self.unsavedContent = True
+				self.setUnsavedContent(False)
+				self.windowIndicator()
 		return retVal
 	
 	def saveFile(self, checked=False, fileName=""):
@@ -497,6 +509,8 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 		self.fileHandler = None
 		self.setWindowTitle("APE")
 		self.statusBar.setText("No configuration file loaded.")
+		self.actionSave_Configuration.setEnabled(False)
+		self.actionSave_Configuration_File_As.setEnabled(False)
 	
 	def setUnsavedContent(self, status):
 		self.unsavedContent = status
@@ -591,6 +605,8 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 						if importanceError or importError:
 							self.closeConfiguration()
 						else:
+							self.actionSave_Configuration.setEnabled(True)
+							self.actionSave_Configuration_File_As.setEnabled(True)
 							self.button_add.setEnabled(True)
 							self.label.setText("Select a setting to edit it.")
 							self.windowIndicator()
