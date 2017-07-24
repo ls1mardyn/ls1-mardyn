@@ -52,6 +52,9 @@ public:
     std::vector<ParticleCellPointers> & getCells();
 
 	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
+
+	void c08Step(long int baseIndex, VectorizedChargeP2PCellProcessor &cellProcessor);
+
 private:
 	void initializeCells();
 	void calculateNeighbourIndices();

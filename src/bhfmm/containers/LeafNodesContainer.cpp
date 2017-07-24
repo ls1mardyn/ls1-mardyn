@@ -214,21 +214,35 @@ void LeafNodesContainer::initializeCells() {
 											  && y + j < _numCellsPerDimension[1]; ++j) {
 						for (auto k = 0; k < payload.taskBlockSize[2]
 												  && z + k < _numCellsPerDimension[2]; ++k) {
-							// create locks for only for resources at corners
-							if(i == payload.taskBlockSize[0] - 1 || j == payload.taskBlockSize[1] - 1 || k == payload.taskBlockSize[2] - 1){
+							// create locks for only for resources at edges
+                            // TODO: only do this for corners
+							if(i == payload.taskBlockSize[0] - 1
+							   || j == payload.taskBlockSize[1] - 1
+							   || k == payload.taskBlockSize[2] - 1){
 								qsched_addlock(_scheduler,
-											   _cells[cellIndex].getTaskData()._P2PId,
-											   _cells[cellIndexOf3DIndex(x + i, y + j, z + k)].getTaskData()._resourceId);
+											   _cells[cellIndex]
+													   .getTaskData()
+													   ._P2PId,
+											   _cells[cellIndexOf3DIndex(x + i, y + j, z + k)]
+													   .getTaskData()
+													   ._resourceId);
 							}
 							// one preprocess (partly) unlocks 8 P2P
 							qsched_addunlock(_scheduler,
-											 _cells[cellIndex].getTaskData()._preprocessId,
-											 _cells[cellIndexOf3DIndex(x + i, y + j, z + k)].getTaskData()._P2PId);
+											 _cells[cellIndex]
+													 .getTaskData()
+													 ._preprocessId,
+											 _cells[cellIndexOf3DIndex(x + i, y + j, z + k)]
+													 .getTaskData()
+													 ._P2PId);
 							// every P2P (partly) unlocks one postprocess
 							qsched_addunlock(_scheduler,
-											 _cells[cellIndexOf3DIndex(x + i, y + j, z + k)].getTaskData()._P2PId,
-											 _cells[cellIndex].getTaskData()._postprocessId);
-
+											 _cells[cellIndexOf3DIndex(x + i, y + j, z + k)]
+													 .getTaskData()
+													 ._P2PId,
+											 _cells[cellIndex]
+													 .getTaskData()
+													 ._postprocessId);
 						}
 					}
 				}
@@ -404,7 +418,7 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 
 		// preprocess all cells
 		#pragma omp parallel for schedule(static)
-		for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
+		for (unsigned int cellIndex = 0; cellIndex < _cells.size(); ++cellIndex) {
 			cellProcessor.preprocessCell(_cells[cellIndex]);
 		}
 
@@ -418,39 +432,8 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 				for(int i = 0; i < numIndicesOfThisColour; ++i) {
 					long int baseIndex = _cellIndicesPerColour[col][i];
 
-					const int num_pairs = _cellPairOffsets.size();
-					for(int j = 0; j < num_pairs; ++j) {
-						pair<long int, long int> current_pair = _cellPairOffsets[j];
+					c08Step(baseIndex, cellProcessor);
 
-						long int offset1 = current_pair.first;
-						long int cellIndex1 = baseIndex + offset1;
-						if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-							continue;
-
-						long int offset2 = current_pair.second;
-						long int cellIndex2 = baseIndex + offset2;
-						if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-							continue;
-
-						ParticleCellPointers& cell1 = _cells[cellIndex1];
-						ParticleCellPointers& cell2 = _cells[cellIndex2];
-
-						if(cell1.isHaloCell() and cell2.isHaloCell()) {
-							continue;
-						}
-
-						if(cellIndex1 == cellIndex2) {
-							cellProcessor.processCell(cell1);
-						}
-						else {
-							if(!cell1.isHaloCell()) {
-								cellProcessor.processCellPair(cell1, cell2);
-							}
-							else {
-								cellProcessor.processCellPair(cell2, cell1);
-							}
-						}
-					}
 				} // for-loop over indices of this colour
 			} // for-loop over colours
 		} // end pragma omp parallel
@@ -462,7 +445,43 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 		}
 
 		cellProcessor.endTraversal();
-	#endif
+    #endif
+}
+
+void LeafNodesContainer::c08Step(long int baseIndex, VectorizedChargeP2PCellProcessor &cellProcessor) {
+	const int num_pairs = _cellPairOffsets.size();
+	for(int j = 0; j < num_pairs; ++j) {
+		pair<long int, long int> current_pair = _cellPairOffsets[j];
+
+		long int offset1 = current_pair.first;
+		long int cellIndex1 = baseIndex + offset1;
+		if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
+			continue;
+
+		long int offset2 = current_pair.second;
+		long int cellIndex2 = baseIndex + offset2;
+		if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
+			continue;
+
+		ParticleCellPointers& cell1 = _cells[cellIndex1];
+		ParticleCellPointers& cell2 = _cells[cellIndex2];
+
+		if(cell1.isHaloCell() and cell2.isHaloCell()) {
+			continue;
+		}
+
+		if(cellIndex1 == cellIndex2) {
+			cellProcessor.processCell(cell1);
+		}
+		else {
+			if(!cell1.isHaloCell()) {
+				cellProcessor.processCellPair(cell1, cell2);
+			}
+			else {
+				cellProcessor.processCellPair(cell2, cell1);
+			}
+		}
+	}
 }
 
 LeafNodesContainer::~LeafNodesContainer() {

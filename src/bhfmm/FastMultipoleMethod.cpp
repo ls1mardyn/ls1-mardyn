@@ -180,27 +180,11 @@ void FastMultipoleMethod::runner(int type, void *data) {
 			int                x                 = payload->cell.coordinates[0];
 			int                y                 = payload->cell.coordinates[1];
 			int                z                 = payload->cell.coordinates[2];
-			int                blockX            = payload->taskBlockSize[0];
-			int                blockY            = payload->taskBlockSize[1];
-			int                blockZ            = payload->taskBlockSize[2];
 			LeafNodesContainer *contextContainer = payload->leafNodesContainer;
 
-            // traverse over block
-            for (unsigned long i = 0; i < blockX - 1
-                                      && i < contextContainer->getNumCellsPerDimension()[0] - 1; ++i) {
-                for (unsigned long j = 0; j < blockY - 1
-                                          && j < contextContainer->getNumCellsPerDimension()[1] - 1; ++j) {
-                    for (unsigned long k = 0; k < blockZ - 1
-                                              && k < contextContainer->getNumCellsPerDimension()[2] - 1; ++k) {
+			long baseIndex = contextContainer->cellIndexOf3DIndex(x, y, z);
+			contextContainer->c08Step(baseIndex, *contextFMM->_P2PProcessor);
 
-                        //process cell
-                        long baseIndex = contextContainer->cellIndexOf3DIndex(x + i,
-																			  y + j,
-																			  z + k);
-                        contextFMM->_P2PProcessor->processCell(contextContainer->getCells()[baseIndex]);
-                    }
-                }
-            }
 			break;
 		} /* P2P */
         case FFTInitialize: {
