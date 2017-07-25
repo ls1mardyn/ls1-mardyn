@@ -116,7 +116,10 @@ class SelectEdit(GeneralEdit):
 		element.label = QtWidgets.QLabel(self.settingData.name, parentWidget)
 		element.widget = QtWidgets.QComboBox(parentWidget)
 		element.widget.currentIndexChanged.connect(self.checkChanged)
-		element.widget.addItems(self.settingData.editorOptions.split(","))
+		if self.settingData.editorOptions.count(";") > 0:
+			element.widget.addItems(self.settingData.editorOptions.split(";"))
+		else:
+			element.widget.addItems(self.settingData.editorOptions.split(","))
 		element.widget.setCurrentIndex(element.widget.findData(self.settingData.value, Qt.DisplayRole))
 		self.valueWidget = element.widget
 		self.widgetList.append(element)
@@ -130,7 +133,11 @@ class SelectEdit(GeneralEdit):
 		self.valueWidget.setFocus(reason)
 	
 	def setValueToSettingData(self, resetIfWrong=True):
-		possibleOptions = self.settingData.editorOptions.split(",")
+		if self.settingData.editorOptions.count(";") > 0:
+			possibleOptions = self.settingData.editorOptions.split(";")
+		else:
+			possibleOptions = self.settingData.editorOptions.split(",")
+		
 		selectedText = self.valueWidget.currentText()
 		found = False
 		for options in possibleOptions:

@@ -332,8 +332,10 @@ class FileHandlerXML(object):
 		if value != None:
 			if value != '':
 				message += 'Value: "' + value + '" '
-		if settingTreeItem != None:
+		if isinstance(settingTreeItem, SettingStruct.SettingData):
 			message += 'SettingTreeElement: "' + settingTreeItem.name + '" '
+		elif isinstance(settingTreeItem, SettingStruct.SettingEntry):
+			message += 'SettingTreeElement: "' + settingTreeItem.__str__() + '" '
 		message += errorString
 		return message
 	
