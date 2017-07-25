@@ -52,7 +52,7 @@ void L2PCellProcessor::printTimers() {
 		if (i == myrank) {
 			std::cout << "rank: " << myrank << std::endl;
 			std::cout << "\t\t" << global_simulation->getTime("L2P_CELL_PROCESSOR_L2P") << "\t\t" << "s in L2P" << std::endl;
-			//global_simulation->printTimer("L2P_CELL_PROCESSOR_L2P");
+			global_simulation->printTimer("L2P_CELL_PROCESSOR_L2P");
 		}
 		domainDecomp.barrier();
 	}

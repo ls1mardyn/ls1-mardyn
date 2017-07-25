@@ -159,8 +159,8 @@ void FastMultipoleMethod::printTimers() {
 	_P2MProcessor->printTimers();
 	_L2PProcessor->printTimers();
 	_pseudoParticleContainer->printTimers();
-	//global_simulation->printTimers("CELL_PROCESSORS");
-	//global_simulation->printTimers("UNIFORM_PSEUDO_PARTICLE_CONTAINER");
+	global_simulation->printTimers("CELL_PROCESSORS");
+	global_simulation->printTimers("UNIFORM_PSEUDO_PARTICLE_CONTAINER");
 }
 
 #ifdef  QUICKSCHED

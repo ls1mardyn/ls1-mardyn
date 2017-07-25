@@ -41,7 +41,7 @@ void P2MCellProcessor::printTimers() {
 		if (i == myrank) {
 			std::cout << "rank: " << myrank << std::endl;
 			std::cout << "\t\t" << global_simulation->getTime("P2M_CELL_PROCESSOR_P2M") << "\t\t" << "s in P2M" << std::endl;
-			//global_simulation->printTimer("P2M_CELL_PROCESSOR_P2M");
+			global_simulation->printTimer("P2M_CELL_PROCESSOR_P2M");
 		}
 		domainDecomp.barrier();
 	}

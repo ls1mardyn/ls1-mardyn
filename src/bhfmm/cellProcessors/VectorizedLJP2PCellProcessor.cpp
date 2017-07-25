@@ -114,7 +114,7 @@ VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
 
 void VectorizedLJP2PCellProcessor::printTimers() {
 	std::cout << "FMM: Time spent in LJ P2P " << global_simulation->getTime("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P") << std::endl;
-	//global_simulation->printTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
+	global_simulation->printTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 
 void VectorizedLJP2PCellProcessor::initTraversal() {

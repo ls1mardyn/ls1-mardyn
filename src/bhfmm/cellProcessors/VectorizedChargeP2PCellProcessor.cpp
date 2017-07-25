@@ -68,7 +68,7 @@ VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
 
 void VectorizedChargeP2PCellProcessor::printTimers() {
 	std::cout << "FMM: Time spent in Charge P2P " << global_simulation->getTime("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P") << std::endl;
-	//global_simulation->printTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
+	global_simulation->printTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
 
 void VectorizedChargeP2PCellProcessor::initTraversal() {
