@@ -29,12 +29,12 @@ using Log::global_log;
 //############ PUBLIC METHODS ####################
 //################################################
 
-LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner()) {
+LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner<ParticleCell>()) {
 }
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius) :
-		ParticleContainer(bBoxMin, bBoxMax), _traversalTuner(new TraversalTuner()) {
+		ParticleContainer(bBoxMin, bBoxMax), _traversalTuner(new TraversalTuner<ParticleCell>()) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 
@@ -119,7 +119,7 @@ void LinkedCells::initializeTraversal() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-    _traversalTuner = new TraversalTuner();
+    _traversalTuner = new TraversalTuner<ParticleCell>();
 	_traversalTuner->readXML(xmlconfig);
 }
 
@@ -406,7 +406,7 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 			for(size_t j = 0; j < numMolsInCell; ++j) {
 				const mol_index_t molIndex = global_vector[j];
 				Molecule & mol = particles[molIndex];
-				_cells[cellIndex].addParticle(mol);
+				_cells[cellIndex].addParticle(mol, checkWhetherDuplicate);
 			}
 		}
 
@@ -602,20 +602,40 @@ void LinkedCells::initializeCells() {
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		cellBoxMin[2] = iz * _cellLength[2] + _haloBoundingBoxMin[2];
 		cellBoxMax[2] = (iz + 1) * _cellLength[2] + _haloBoundingBoxMin[2];
-		if(iz==_cellsPerDimension[2]-1){//make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMax[2]=_haloBoundingBoxMax[2];
+		if (iz == 0) {  // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMax[2] = _boundingBoxMin[2];
+		} else if (iz == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMin[2] = _boundingBoxMin[2];
+		} else if (iz == _cellsPerDimension[2] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMax[2] = _boundingBoxMax[2];
+		} else if (iz == _cellsPerDimension[2] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMin[2] = _boundingBoxMax[2];
+			cellBoxMax[2] = _haloBoundingBoxMax[2];
 		}
-
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
 			cellBoxMin[1] = iy * _cellLength[1] + _haloBoundingBoxMin[1];
 			cellBoxMax[1] = (iy + 1) * _cellLength[1] + _haloBoundingBoxMin[1];
-			if (iy == _cellsPerDimension[1] - 1) { //make sure, that the cells span the whole domain... for iy=0 this is already implicitly done
+			if (iy == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMax[1] = _boundingBoxMin[1];
+			} else if (iy == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMin[1] = _boundingBoxMin[1];
+			} else if (iy == _cellsPerDimension[1] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMax[1] = _boundingBoxMax[1];
+			} else if (iy == _cellsPerDimension[1] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMin[1] = _boundingBoxMax[1];
 				cellBoxMax[1] = _haloBoundingBoxMax[1];
 			}
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
 				cellBoxMin[0] = ix * _cellLength[0] + _haloBoundingBoxMin[0];
 				cellBoxMax[0] = (ix + 1) * _cellLength[0] + _haloBoundingBoxMin[0];
-				if (ix == _cellsPerDimension[0] - 1) { //make sure, that the cells span the whole domain... for ix=0 this is already implicitly done
+				if (ix == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMax[0] = _boundingBoxMin[0];
+				} else if (ix == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMin[0] = _boundingBoxMin[0];
+				} else if (ix == _cellsPerDimension[0] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMax[0] = _boundingBoxMax[0];
+				} else if (ix == _cellsPerDimension[0] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMin[0] = _boundingBoxMax[0];
 					cellBoxMax[0] = _haloBoundingBoxMax[0];
 				}
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);

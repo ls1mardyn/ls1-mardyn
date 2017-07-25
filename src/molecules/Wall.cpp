@@ -1,6 +1,7 @@
 #include "Wall.h"
 
 #include <vector>
+#include <array>
 #include <cmath>
 #include <cstdint>
 
@@ -8,11 +9,36 @@ using namespace std;
 using Log::global_log;
 
 Wall::Wall()
-	: _dWidth(0)
+	: _rhoW(0.),
+	_yc(0.),
+	_yOff(0.),
+	Delta(0.),
+	_eps_wi(NULL),
+	_sig3_wi(NULL),
+	_sig2_wi(NULL),
+	_sig_wi(NULL),
+	_uShift_9_3(NULL),
+	_uPot_9_3(NULL),
+	_uShift_10_4(NULL),
+	_uPot_10_4(NULL),
+	_nc(0),
+	_dWidth(0.),
+	_dWidthHalf(0.)
 {
 }
 
-Wall::~Wall() {}
+Wall::~Wall()
+{
+	// free memory
+	delete [] _eps_wi;
+	delete [] _sig3_wi;
+	delete [] _sig2_wi;
+	delete [] _sig_wi;
+	delete [] _uShift_9_3;
+	delete [] _uPot_9_3;
+	delete [] _uShift_10_4;
+	delete [] _uPot_10_4;
+}
 
 void Wall::readXML(XMLfileUnits& xmlconfig)
 {
@@ -27,16 +53,33 @@ void Wall::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "Using feature 'Wallfun' with parameters: density=" << density << ", "
 			"sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
 			"width=" << _dWidth << endl;
+
 	XMLfile::Query query = xmlconfig.query("component");
-	unsigned numComponents = query.card();
-	global_log->info() << "Wallfun: Setting parameters 'xi', 'eta' for " << numComponents << " components." << endl;
+	unsigned int numComponentsConsidered = query.card();
+	global_log->info() << "Wallfun: Setting parameters 'xi', 'eta' for " << numComponentsConsidered << " components." << endl;
+
+	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	unsigned int numComponents = components->size();
 	std::vector<double> xi_sf(numComponents);
 	std::vector<double> eta_sf(numComponents);
-	for (unsigned cid=0; cid<numComponents; cid++) {
-		xmlconfig.getNodeValue("component/xi",   xi_sf.at(cid) );
-		xmlconfig.getNodeValue("component/eta", eta_sf.at(cid) );
+
+	_bConsiderComponent.resize(numComponents);
+	for(auto&& bi : _bConsiderComponent)
+		bi = false;
+
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator componentIter;
+	for( componentIter = query.begin(); componentIter; componentIter++ )
+	{
+		xmlconfig.changecurrentnode( componentIter );
+		unsigned int cid;
+		xmlconfig.getNodeValue("@id", cid);
+		xmlconfig.getNodeValue("xi",   xi_sf.at(cid-1) );
+		xmlconfig.getNodeValue("eta", eta_sf.at(cid-1) );
+		_bConsiderComponent.at(cid-1) = true;
 	}
-	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	xmlconfig.changecurrentnode(oldpath);
+
 	this->initializeLJ93(components, density, sigma, epsilon, xi_sf, eta_sf, yoff, ycut);
 	global_log->info() << "Wallfun initialized." << endl;
 }
@@ -137,29 +180,36 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
 		RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
 		RegionParticleIterator end = partContainer->iterateRegionEnd();
 
-		for(RegionParticleIterator i = begin; i != end; ++i){
-			//! so far for 1CLJ only, several 1CLJ-components possible
-			double y, y3, y9, ry, ryRel;
-			unsigned cid = (*i).componentid();
-			ry = (*i).r(1);
-			ryRel = (ry > _yOff) ? (ry - (_yOff+_dWidthHalf) ) : (ry - (_yOff-_dWidthHalf) );
-			y = abs(ryRel);
-			if(y < _yc){
-				y3 = y * y * y;
-				y9 = y3 * y3 * y3;
-				double f[3];
-				for(unsigned d = 0; d < 3; d++) {
-					f[d] = 0.0;
-				}
+		double f[3];
+		for(unsigned d=0; d<3; d++)
+			f[d] = 0.;
 
-				double sig9_wi;
-				sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
-				f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / ryRel;
-				_uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
-				f[0] = 0;
-				f[2] = 0;
-				(*i).Fljcenteradd(0, f);
-//				global_log->info() << "id=" << (*i).id() << ", ry=" << ry << ", ryRel=" << ryRel << ", f[1]=" << f[1] << endl;
+		for(RegionParticleIterator mi = begin; mi != end; ++mi)
+		{
+			unsigned int cid = mi->componentid();
+			if(false == _bConsiderComponent.at(cid) )
+				continue;  // only add Wall force to molecules of component that should be considered
+
+			for(unsigned int si=0; si<mi->numLJcenters(); ++si)
+			{
+				double y, y3, y9, ry, ryRel;
+				const std::array<double,3> arrSite = mi->ljcenter_d_abs(si);
+				const double* posSite = arrSite.data();
+				ry = posSite[1];
+				ryRel = (ry > _yOff) ? (ry - (_yOff+_dWidthHalf) ) : (ry - (_yOff-_dWidthHalf) );
+				y = abs(ryRel);
+				if(y < _yc){
+					y3 = y * y * y;
+					y9 = y3 * y3 * y3;
+
+					double sig9_wi;
+					sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
+					f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / ryRel;
+					_uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
+
+					mi->Fljcenteradd(si, f);
+	//				global_log->info() << "id=" << (*i).id() << ", ry=" << ry << ", ryRel=" << ryRel << ", f[1]=" << f[1] << endl;
+				}
 			}
 		}
 	}

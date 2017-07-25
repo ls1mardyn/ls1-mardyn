@@ -1044,6 +1044,10 @@ void Simulation::prepare_start() {
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
+
+	/** Init TemperatureControl beta_trans, beta_rot log-files*/
+	if(NULL != _temperatureControl)
+		_temperatureControl->InitBetaLogfiles();
 }
 
 void Simulation::simulate() {

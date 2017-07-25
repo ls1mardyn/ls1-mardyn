@@ -56,26 +56,22 @@ int get_compiler_info(char *info_str) {
 
 	return 0;
 }
-
-#if defined(MPI_VERSION)
+#if defined(MPI_VERSION) and defined(MPI_SUBVERSION)
 
 int get_mpi_info(char *info_str) {
-	/* Intel MPI */
-	/* FIXME */
 
-	/* MVAPICH2 */
 #if defined(MVAPICH2)
-	sprintf(info_str, "MVAPICH2");
-
-	/* Open MPI */
+	sprintf(info_str, "MVAPICH2 (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
 #elif defined(OPEN_MPI)
-	sprintf(info_str, "Open MPI");
-
-	/* unknown */
+	sprintf(info_str, "Open MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+#elif defined(CRAY_MPICH_VERSION)
+	sprintf(info_str, "Cray MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+#elif defined(I_MPI_VERSION)
+	sprintf(info_str, "Intel MPI %s (MPI %d.%d)", I_MPI_VERSION, MPI_VERSION, MPI_SUBVERSION);
 #else
-	sprintf(info_str, "unknown");
+	// unknown
+	sprintf(info_str, "unknown (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
 #endif
-
 	return 0;
 }
 

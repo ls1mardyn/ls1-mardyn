@@ -22,11 +22,24 @@
 
 using namespace std;
 
+// init static ID --> instance counting
+unsigned short ControlRegionT::_nStaticID = 0;
 
 // class ControlRegionT
 
-ControlRegionT::ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections)
+ControlRegionT::ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
+		double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
+		unsigned long nWriteFreqBeta, std::string strFilenamePrefix)
+	:
+		_strFilenamePrefixBetaLog("beta_log"),
+		_nWriteFreqBeta(1000),
+		_numSampledConfigs(0),
+		_dBetaTransSumGlobal(0.),
+		_dBetaRotSumGlobal(0.)
 {
+	// ID
+	_nID = ++_nStaticID;
+
     // region span
     for(unsigned short d=0; d<3; ++d)
     {
@@ -84,9 +97,17 @@ ControlRegionT::ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], u
         _accumulator = new AccumulatorXYZ();
         _nNumThermostatedTransDirections = 3;
     }
-    else
-        _accumulator = NULL;
+	else
+		_accumulator = NULL;
 
+	// beta log-file
+	_nWriteFreqBeta = nWriteFreqBeta;
+	if(_nWriteFreqBeta==0){
+		global_log->warning() << "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000." << std::endl;
+		_nWriteFreqBeta = 1000;
+	}
+	_strFilenamePrefixBetaLog = strFilenamePrefix;
+	this->InitBetaLogfile();
 }
 
 
@@ -148,7 +169,10 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* /*domainDecomp*/)
     }
 #endif
 
-    // calc betaTrans, betaRot
+    // calc betaTrans, betaRot, and their sum
+	double dBetaTransSumSlabs = 0.;
+	double dBetaRotSumSlabs = 0.;
+
     for(unsigned int s = 0; s<_nNumSlabs; ++s)
     {
         if( _nNumMoleculesGlobal[s] < 1 )
@@ -160,7 +184,15 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* /*domainDecomp*/)
             _dBetaRotGlobal[s] = 1.;
         else
             _dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperature / _d2EkinRotGlobal[s], _dTemperatureExponent);
+
+		// calc sums over all slabs
+		dBetaTransSumSlabs += _dBetaTransGlobal[s];
+		dBetaRotSumSlabs   += _dBetaRotGlobal[s];
     }
+	// calc ensemble average of beta_trans, beta_rot
+	_dBetaTransSumGlobal += dBetaTransSumSlabs;
+	_dBetaRotSumGlobal   += dBetaRotSumSlabs;
+	_numSampledConfigs++;
 
 //    cout << "_nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
 //    cout << "_dBetaTransGlobal = " << _dBetaTransGlobal << endl;
@@ -290,7 +322,59 @@ void ControlRegionT::ResetLocalValues()
     }
 }
 
+void ControlRegionT::InitBetaLogfile()
+{
+	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition() );
 
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	std::stringstream filenamestream;
+	filenamestream << _strFilenamePrefixBetaLog << "_reg" << this->GetID() << ".dat";
+	std::stringstream outputstream;
+	outputstream.write(reinterpret_cast<const char*>(&_nWriteFreqBeta), 8);
+
+	ofstream fileout(filenamestream.str().c_str(), std::ios::out | std::ios::binary);
+	fileout << outputstream.str();
+	fileout.close();
+}
+
+void ControlRegionT::WriteBetaLogfile(unsigned long simstep)
+{
+	if(0 != (simstep % _nWriteFreqBeta) )
+		return;
+
+	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition() );
+
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	std::stringstream filenamestream;
+	filenamestream << _strFilenamePrefixBetaLog << "_reg" << this->GetID() << ".dat";
+	std::stringstream outputstream;
+	double dInvNumConfigs = 1. / (double)(_numSampledConfigs);
+	double dBetaTrans = _dBetaTransSumGlobal * dInvNumConfigs;
+	double dBetaRot   = _dBetaRotSumGlobal   * dInvNumConfigs;
+	outputstream.write(reinterpret_cast<const char*>(&dBetaTrans), 8);
+	outputstream.write(reinterpret_cast<const char*>(&dBetaRot),   8);
+
+	ofstream fileout(filenamestream.str().c_str(), std::ios::app | std::ios::binary);
+	fileout << outputstream.str();
+	fileout.close();
+
+	// reset averaged values
+	_numSampledConfigs = 0;
+	_dBetaTransSumGlobal = 0.;
+	_dBetaRotSumGlobal = 0.;
+}
 
 // class TemperatureControl
 TemperatureControl::TemperatureControl(Domain* domain)
@@ -369,14 +453,22 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("settings/exponent", dExponent);
 		xmlconfig.getNodeValue("settings/directions", strDirections);
 
+		// write control for beta_trans and beta_rot log file
+		unsigned long nWriteFreqBeta;
+		std::string strFilenamePrefix;
+		xmlconfig.getNodeValue("writefreq", nWriteFreqBeta);
+		xmlconfig.getNodeValue("fileprefix", strFilenamePrefix);
+
 		this->AddRegion(lc, uc, nNumSlabs, nCompID, dTemperature,
-				dExponent, strDirections);
+				dExponent, strDirections, nWriteFreqBeta, strFilenamePrefix);
     }
 }
 
-void TemperatureControl::AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections)
+void TemperatureControl::AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
+		double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
+		unsigned long nWriteFreqBeta, std::string strFilenamePrefix)
 {
-    _vecControlRegions.push_back(ControlRegionT(dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature, dTemperatureExponent, strTransDirections) );
+    _vecControlRegions.push_back(ControlRegionT(dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature, dTemperatureExponent, strTransDirections, nWriteFreqBeta, strFilenamePrefix) );
 }
 
 void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -436,12 +528,24 @@ void TemperatureControl::Init(unsigned long simstep)
     }
 }
 
+void TemperatureControl::InitBetaLogfiles()
+{
+	for(auto&& reg : _vecControlRegions)
+		reg.InitBetaLogfile();
+}
+
+void TemperatureControl::WriteBetaLogfiles(unsigned long simstep)
+{
+	for(auto&& reg : _vecControlRegions)
+		reg.WriteBetaLogfile(simstep);
+}
+
 void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned long simstep)
 {
     // respect start/stop
     if(this->GetStart() <= simstep && this->GetStop() > simstep)
     {
-//        cout << "Thermostat ON!" << endl;
+//		global_log->info() << "Thermostat ON!" << endl;
 
     	ParticleIterator tM;
 
@@ -461,6 +565,8 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
         // calc global values
         this->CalcGlobalValues(domainDecomposition, simstep);
 
+		// write beta_trans, beta_rot log-files
+		this->WriteBetaLogfiles(simstep);
 
         for( tM  = particleContainer->iteratorBegin();
              tM != particleContainer->iteratorEnd();

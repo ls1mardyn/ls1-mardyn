@@ -51,6 +51,8 @@ public:
 
 	void deleteCurrentParticle();
 
+	CellIndex_T getCellIndex(){return _cell_index;}
+
 protected:
 	Type _type;
 	CellContainer_T_ptr _cells;

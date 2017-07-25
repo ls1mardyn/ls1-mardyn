@@ -824,7 +824,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				unsigned int nComp;
 				double dTargetTemperature;
 				double dTemperatureExponent;
-				string strTransDirections;
+				std::string strTransDirections;
+				unsigned long nWriteFreqBeta;
+				std::string strFilenamePrefix;
 
 				// read lower corner
 				for (unsigned short d = 0; d < 3; d++) {
@@ -842,6 +844,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> dTargetTemperature;
 				inputfilestream >> dTemperatureExponent;
 				inputfilestream >> strTransDirections;
+				inputfilestream >> nWriteFreqBeta;
+				inputfilestream >> strFilenamePrefix;
 
 				if (strTransDirections != "x" && strTransDirections != "y" && strTransDirections != "z"
 						&& strTransDirections != "xy" && strTransDirections != "xz" && strTransDirections != "yz"
@@ -857,7 +861,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				} else {
 					// add regions
 					_temperatureControl->AddRegion(dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature,
-							dTemperatureExponent, strTransDirections);
+							dTemperatureExponent, strTransDirections, nWriteFreqBeta, strFilenamePrefix);
 				}
 			} else {
 				global_log->error() << "TemperatureControl: Wrong statement in cfg, programm exit..." << endl;

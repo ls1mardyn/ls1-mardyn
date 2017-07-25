@@ -16,6 +16,7 @@
 
 #include <limits>
 #include <stdlib.h>
+//#include <malloc.h>
 
 #define CACHE_LINE_SIZE 64
 
@@ -68,10 +69,14 @@ struct AlignedAllocator {
 	 */
 	T* allocate(std::size_t n) {
 		if (n <= max_size()) {
-#if defined(__SSE3__) && !defined(__PGI)
+#if defined(_SX)
+			T* ptr = static_cast<T*>(malloc(sizeof(T) * n));
+#elif defined(__SSE3__) && !defined(__PGI)
 			T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * n, Alignment));
 #else
 			T* ptr = static_cast<T*>(memalign(Alignment, sizeof(T) * n));
+			//T* ptr = static_cast<T*>(aligned_alloc(Alignment, sizeof(T) * n));
+			//T* ptr; posix_memalign(&ptr,Alignment, sizeof(T) * n);
 #endif
 			if (ptr == nullptr) {
 				throw std::bad_alloc();

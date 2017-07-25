@@ -45,11 +45,8 @@ public:
 	virtual bool requiresForceExchange() const {return false;}
 
 protected:
-	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const = 0;
-
 	//TODO:
-	void traverseCellPairsNoDep(CellProcessor& cellProcessor);
-
+	//void traverseCellPairsNoDep(CellProcessor& cellProcessor);
 	std::vector<CellTemplate> * _cells;
 	std::array<unsigned long, 3> _dims;
 };

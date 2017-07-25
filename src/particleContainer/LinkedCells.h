@@ -13,6 +13,7 @@
 
 template<class ParticleCellTemplate>
 class CellPairTraversals;
+template<class CellTemplate>
 class TraversalTuner;
 
 
@@ -346,7 +347,7 @@ private:
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
 
-    TraversalTuner *_traversalTuner;
+    TraversalTuner<ParticleCell> *_traversalTuner;
 
 	// addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;

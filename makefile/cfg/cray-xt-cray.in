@@ -35,3 +35,14 @@ CXXFLAGS_PAR_RELEASE  = -O2 -DNDEBUG -DENABLE_MPI -hgnu
 LINKFLAGS_PAR_RELEASE =
 
 CXXFLAGS += -hstd=c++11
+
+ifeq ($(OPENMP),1)
+FLAGS_OPENMP += -openmp
+else
+  ifeq ($(OPENMP_SIMD),1)
+  FLAGS_OPENMP += -fopenmp-simd
+  else
+  CXXFLAGS += -h noomp
+  endif
+endif
+
