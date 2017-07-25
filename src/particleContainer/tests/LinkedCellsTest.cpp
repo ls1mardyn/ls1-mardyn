@@ -423,15 +423,19 @@ void LinkedCellsTest::testMidpoint() {
 }*/
 
 void LinkedCellsTest::testHalfShellMPIIndirect() {
-	doForceComparisonTest("LinkedCellsHS-MPI.inp", TraversalTuner::traversalNames::HS, "indirect", "hs");
+	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::HS, "indirect", "fs" /* TODO: "hs" */);
 }
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
-	doForceComparisonTest("LinkedCellsHS-MPI.inp", TraversalTuner::traversalNames::HS, "direct", "hs");
+	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::HS, "direct", "fs"  /* TODO: "hs" */);
 }
 
-void LinkedCellsTest::testMidpointMPI() {
-	doForceComparisonTest("LinkedCellsHS-MPI.inp", TraversalTuner::traversalNames::MP, "indirect", "mp");
+void LinkedCellsTest::testMidpointMPIIndirect() {
+	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::MP, "indirect", "fs"  /* TODO: "mp" */);
+}
+
+void LinkedCellsTest::testMidpointMPIDirect() {
+	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::MP, "direct", "fs"  /* TODO: "mp" */);
 }
 
 void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTuner::traversalNames traversal, std::string neighbourCommScheme, std::string commScheme){

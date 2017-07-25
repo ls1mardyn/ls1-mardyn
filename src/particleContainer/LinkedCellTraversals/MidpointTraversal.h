@@ -340,11 +340,7 @@ void MidpointTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cell
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long baseIndex) const{
 
-	// Skip halo cells
-	CellTemplate& baseCell = this->_cells->at(baseIndex);
-	if(baseCell.isHaloCell()){
-		return;
-	}
+	long maxIndex = this->_cells->size() - 1;
 
 	// Process all cell pairs for this cell
 	for(auto& current_pair : _cellPairOffsets){
@@ -354,6 +350,9 @@ void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcess
 
 		long offset2 = current_pair.second;
 		long cellIndex2 = baseIndex + offset2;
+
+		if(cellIndex1 < 0 || cellIndex2 < 0 || cellIndex1 > maxIndex || cellIndex2 > maxIndex)
+			continue;
 
 		CellTemplate& cell1 = this->_cells->at(cellIndex1);
 		CellTemplate& cell2 = this->_cells->at(cellIndex2);
