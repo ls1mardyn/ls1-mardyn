@@ -29,7 +29,7 @@ public:
      * Reset all necessary data without reallocation.
      */
 	virtual void rebuild(std::vector<CellTemplate> &cells,
-		const std::array<unsigned long, 3> &dims, CellPairTraversalData *data) override{
+		const std::array<unsigned long, 3> &dims, CellPairTraversalData *data) override {
 		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
 		computeOffsets();
 
@@ -49,7 +49,7 @@ public:
 	virtual void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
 	// Midpoint traversal requires force exchange
-	virtual bool requiresForceExchange() const {return true;}
+	virtual bool requiresForceExchange() const override {return true;}
 
 protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
@@ -340,37 +340,45 @@ void MidpointTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cell
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long baseIndex) const{
 
-	long maxIndex = this->_cells->size() - 1;
+	unsigned long maxIndex = this->_cells->size() - 1;
+
+	CellTemplate& baseCell = this->_cells->at(baseIndex);
 
 	// Process all cell pairs for this cell
 	for(auto& current_pair : _cellPairOffsets){
 
-		long offset1 = current_pair.first;
-		long cellIndex1 = baseIndex + offset1;
+		unsigned long offset1 = current_pair.first;
+		unsigned long cellIndex1 = baseIndex + offset1;
 
-		long offset2 = current_pair.second;
-		long cellIndex2 = baseIndex + offset2;
+		unsigned long offset2 = current_pair.second;
+		unsigned long cellIndex2 = baseIndex + offset2;
 
-		if(cellIndex1 < 0 || cellIndex2 < 0 || cellIndex1 > maxIndex || cellIndex2 > maxIndex)
-			continue;
-
-		CellTemplate& cell1 = this->_cells->at(cellIndex1);
-		CellTemplate& cell2 = this->_cells->at(cellIndex2);
-
-		if(cell1.isHaloCell() and cell2.isHaloCell()) {
+		if(cellIndex1 < 0 || cellIndex2 < 0 || cellIndex1 > maxIndex || cellIndex2 > maxIndex) {
 			continue;
 		}
+
+		// Prevent calculating the same pairs twice for opposite halo cells
+		// We have to iterate the offset pairs for base cells that are halo cells as the "cone through the center" pairs
+		// may contain halo <--> boundary pairs
+		if(baseCell.isHaloCell() && offset1 < baseIndex){
+			continue;
+		}
+
+		CellTemplate& cell1 = this->_cells->at(cellIndex1);
 
 		if(cellIndex1 == cellIndex2) {
 			cellProcessor.processCell(cell1);
-		}
-		else {
+		}else {
+			CellTemplate& cell2 = this->_cells->at(cellIndex2);
+
 			if(!cell1.isHaloCell()) {
 				cellProcessor.processCellPair(cell1, cell2);
 			}
-			else {
+			else if(!cell2.isHaloCell()){
 				cellProcessor.processCellPair(cell2, cell1);
-			}
+			}/* else { // cell1 and cell2 are halo
+				continue;
+			}*/
 		}
 	}
 }

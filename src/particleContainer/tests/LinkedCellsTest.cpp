@@ -458,7 +458,17 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTune
 
 	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
 
+	// Legacy Processor for debugging
+	/*
+	auto pphandler = new ParticlePairs2PotForceAdapter(*_domain);
+	auto pphandler2 = new ParticlePairs2PotForceAdapter(*_domain);
+	auto cellProc = new LegacyCellProcessor(cutoff, cutoff, pphandler);
+	auto cellProc2 = new LegacyCellProcessor(cutoff, cutoff, pphandler2);
+	*/
+
 	auto cellProc = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+	auto cellProc2 = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+
 
 	domainDecompositionFS->initCommunicationPartners(cutoff, _domain);
 	domainDecompositionTest->initCommunicationPartners(cutoff, _domain);
@@ -494,7 +504,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTune
 		// Do calculation with TestTraversal
 		//------------------------------------------------------------
 		{
-			containerTest->traverseCells(*cellProc);
+			containerTest->traverseCells(*cellProc2);
 			// calculate forces
 			const ParticleIterator& begin = containerTest->iteratorBegin();
 			const ParticleIterator& end = containerTest->iteratorEnd();
