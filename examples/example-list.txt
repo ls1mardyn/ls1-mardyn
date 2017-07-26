@@ -7,7 +7,6 @@
 ./mkesfera/mkesfera.xml
 ./mkTcTS/mkTcTS.xml
 ./EOX_600K_15mol_l/EOX_600K_15mol_l.xml
-./xml_test/components.xml
 ./xml_test/simulation.xml
 ./EOX_liq_305K/EOX_305K_19.44.xml
 ./surface-tension_LRC/CO2_Merker_220/config.xml
