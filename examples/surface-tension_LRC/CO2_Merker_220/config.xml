@@ -53,6 +53,11 @@
         <slabs>500</slabs>
         <smooth>0</smooth>
         <frequency>10</frequency>
+        <writecontrol>
+          <start>10000</start>
+          <frequency>100</frequency>
+          <stop>11000</stop>
+        </writecontrol>
       </longrange>
       
       <thermostats>
