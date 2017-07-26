@@ -32,7 +32,8 @@ public:
 	     <type>ASCII|binary</type>
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
-	     <accumulation_steps>INTEGER</accumulation_steps>
+	     <incremental>INTEGER</incremental>
+	     <appendTimestamp>INTEGER</appendTimestamp>
 	   </outputplugin>
 	   \endcode
 	 */
