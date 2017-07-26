@@ -19,9 +19,23 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-	CheckpointWriter(unsigned long writeFrequency, std::string outputPrefix, bool incremental);
+	//! @param useBinaryFormat  Use binary format to write checkpoint files
+	CheckpointWriter(unsigned long writeFrequency, std::string outputPrefix, bool incremental, bool useBinaryFormat);
 	~CheckpointWriter();
 	
+
+	/** @brief Read in XML configuration for CheckpointWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="CheckpointWriter">
+	     <type>ASCII|binary</type>
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	     <accumulation_steps>INTEGER</accumulation_steps>
+	   </outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	
 	void initOutput(ParticleContainer* particleContainer,
@@ -41,6 +55,7 @@ public:
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
+    bool    _useBinaryFormat;
 	bool	_incremental;
 	bool	_appendTimestamp;
 };

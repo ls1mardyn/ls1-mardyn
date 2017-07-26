@@ -90,6 +90,7 @@
         <outputprefix>default</outputprefix>
       </outputplugin>
       <outputplugin name="CheckpointWriter">
+        <type>binary</type>
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>

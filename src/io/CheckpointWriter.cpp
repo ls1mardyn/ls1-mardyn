@@ -11,10 +11,11 @@
 using Log::global_log;
 using namespace std;
 
-CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
+CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string outputPrefix, bool incremental, bool useBinaryFormat) {
 	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
 	_incremental = incremental;
+    _useBinaryFormat = useBinaryFormat;
 
 	if (outputPrefix == "default") {
 		_appendTimestamp = true;
@@ -34,6 +35,19 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	if(_writeFrequency == 0 ){
 		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
+		Simulation::exit(-1);
+	}
+	
+	std::string checkpointType = "unknown";
+	xmlconfig.getNodeValue("type", checkpointType);
+	if("ASCII" == checkpointType) {
+		_useBinaryFormat = false;
+	}
+	else if("binary" == checkpointType) {
+		_useBinaryFormat = true;
+	}
+	else {
+		global_log->error() << "Unknown CheckpointWriter type '" << checkpointType << "', expected: ASCII|binary." << endl;
 		Simulation::exit(-1);
 	}
 
@@ -74,10 +88,16 @@ void CheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDeco
 		if(_appendTimestamp) {
 			filenamestream << "-" << gettimestring();
 		}
-		filenamestream << ".restart.dat";
+
+		if(_useBinaryFormat) {
+            filenamestream << ".restart";
+        }
+        else { /* ASCII mode */
+            filenamestream << ".restart.dat";
+        }
 
 		string filename = filenamestream.str();
-		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime());
+		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime(), _useBinaryFormat);
 	}
 }
 
