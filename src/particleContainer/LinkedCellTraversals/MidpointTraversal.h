@@ -55,8 +55,9 @@ protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
 	// All pairs that have to be processed when calculating the forces (including self)
-	std::array<std::pair<long, long>, 63> _cellPairOffsets;
-	std::array<std::pair<std::tuple<long, long, long>, std::tuple<long, long, long>>, 63> _offsets3D;
+	std::array<std::pair<long, long>, 62> _cellPairOffsets;
+	std::array<std::pair<long, long>, 24> _haloCellPairOffsets;
+	std::array<std::pair<std::tuple<long, long, long>, std::tuple<long, long, long>>, 62> _offsets3D;
 
 
 private:
@@ -185,14 +186,8 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 
 	}
 
+	// We need exactly 62 cell offset pairs
 	mardyn_assert(index == 13+13+24+12);
-
-	// Cell with it self
-	auto origin = make_tuple(0l, 0l, 0l);
-	_offsets3D[index++] = make_pair(origin, origin);
-
-	// We need exactly 62+1 cell offset pairs
-	mardyn_assert(index == 63);
 }
 
 template<class CellTemplate>
@@ -225,8 +220,16 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 		auto aIndex = threeToOneD(ax, ay, az, dims);
 		auto bIndex = threeToOneD(bx, by, bz, dims);
 
+		auto offsetPair = std::make_pair(aIndex, bIndex);
+
 		// store offset pair
-		_cellPairOffsets[i] = std::make_pair(aIndex, bIndex);
+		_cellPairOffsets[i] = offsetPair;
+
+		if(26 <= i && i < 26 + 24){
+			// This is a pair from the "cone through the centers"
+			// These are the only pairs that have to be iterated for halo cells
+			_haloCellPairOffsets[i-26] = offsetPair;
+		}
 	}
 
 }
@@ -344,31 +347,29 @@ void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcess
 
 	CellTemplate& baseCell = this->_cells->at(baseIndex);
 
-	// Process all cell pairs for this cell
-	for(auto& current_pair : _cellPairOffsets){
+	if(baseCell.isHaloCell()) {
+		for(auto& current_pair : _haloCellPairOffsets){
+			unsigned long offset1 = current_pair.first;
 
-		unsigned long offset1 = current_pair.first;
-		unsigned long cellIndex1 = baseIndex + offset1;
+			// Prevent calculating the same pairs twice for opposite halo cells
+			// We have to iterate the offset pairs for base cells that are halo cells as the "cone through the center" pairs
+			// may contain halo <--> boundary pairs
+			if(offset1 < baseIndex){
+				continue;
+			}
 
-		unsigned long offset2 = current_pair.second;
-		unsigned long cellIndex2 = baseIndex + offset2;
+			unsigned long cellIndex1 = baseIndex + offset1;
 
-		if(cellIndex1 < 0 || cellIndex2 < 0 || cellIndex1 > maxIndex || cellIndex2 > maxIndex) {
-			continue;
-		}
+			unsigned long offset2 = current_pair.second;
+			unsigned long cellIndex2 = baseIndex + offset2;
 
-		// Prevent calculating the same pairs twice for opposite halo cells
-		// We have to iterate the offset pairs for base cells that are halo cells as the "cone through the center" pairs
-		// may contain halo <--> boundary pairs
-		if(baseCell.isHaloCell() && offset1 < baseIndex){
-			continue;
-		}
+			// If one index would be out of bounds, ignore the pair
+			if(cellIndex1 < 0 || cellIndex2 < 0 || cellIndex1 > maxIndex || cellIndex2 > maxIndex) {
+				continue;
+			}
 
-		CellTemplate& cell1 = this->_cells->at(cellIndex1);
+			CellTemplate& cell1 = this->_cells->at(cellIndex1);
 
-		if(cellIndex1 == cellIndex2) {
-			cellProcessor.processCell(cell1);
-		}else {
 			CellTemplate& cell2 = this->_cells->at(cellIndex2);
 
 			if(!cell1.isHaloCell()) {
@@ -380,6 +381,34 @@ void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcess
 				continue;
 			}*/
 		}
+	} else { // Non halo base cell
+
+		// Process all cell pairs for this cell
+		for(auto& current_pair : _cellPairOffsets){
+
+			unsigned long offset1 = current_pair.first;
+			unsigned long cellIndex1 = baseIndex + offset1;
+
+			unsigned long offset2 = current_pair.second;
+			unsigned long cellIndex2 = baseIndex + offset2;
+
+			CellTemplate& cell1 = this->_cells->at(cellIndex1);
+			CellTemplate& cell2 = this->_cells->at(cellIndex2);
+
+			if(!cell1.isHaloCell()) {
+				cellProcessor.processCellPair(cell1, cell2);
+			}
+			else if(!cell2.isHaloCell()){
+				cellProcessor.processCellPair(cell2, cell1);
+			}/* else { // cell1 and cell2 are halo
+				continue;
+			}*/
+
+		}
+
+		// Process base cell itself
+		cellProcessor.processCell(baseCell);
+
 	}
 }
 
