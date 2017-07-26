@@ -185,46 +185,49 @@
 				</child>
 				<child plurality="single" importance="optional">
 					<name>Phasespace</name>
-					<child plurality="alone">
-						<name>ASCII</name>
-						<setting>
-							<name>Filetype</name>
-							<defaultvalue>ASCII</defaultvalue>
-							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file@type</filexmlpath>
-						</setting>
-						<setting>
-							<name>Filename</name>
-							<defaultvalue>../n2_N1000_T433-15K_p4MPa.xdr</defaultvalue>
-							<type>string</type>
-							<editor>lineedit</editor>
-							<description>Define the phasespace file.</description>
-							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file</filexmlpath>
-						</setting>
-					</child>
-					<child plurality="alone">
-						<name>Binary</name>
-						<setting>
-							<name>Filetype</name>
-							<defaultvalue>binary</defaultvalue>
-							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file@type</filexmlpath>
-						</setting>
-						<setting>
-							<name>Filename header</name>
-							<defaultvalue>../run02/cp_binary-1.restart.header.xml</defaultvalue>
-							<type>string</type>
-							<editor>lineedit</editor>
-							<description>Define the phasespace header file.</description>
-							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/header</filexmlpath>
-						</setting>
-						<setting>
-							<name>Filename data</name>
-							<defaultvalue>../run02/cp_binary-1.restart.xdr</defaultvalue>
-							<type>string</type>
-							<editor>lineedit</editor>
-							<description>Define the phasespace data file.</description>
-							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/data</filexmlpath>
-						</setting>
-					</child>
+          <setting>
+            <name>Filetype</name>
+            <defaultvalue>ASCII</defaultvalue>
+            <editor>select</editor>
+            <editor-options>ASCII,binary</editor-options>
+            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file@type</filexmlpath>
+          </setting>
+          <setting>
+            <name>Filename</name>
+            <defaultvalue>../n2_N1000_T433-15K_p4MPa.xdr</defaultvalue>
+            <type>string</type>
+            <editor>lineedit</editor>
+            <description>Define the phasespace file.</description>
+            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file</filexmlpath>
+            <depends>
+              <settingname>Filetype</settingname>
+              <value>ASCII</value>
+            </depends>
+          </setting>
+          <setting>
+            <name>Filename header</name>
+            <defaultvalue>../run02/cp_binary-1.restart.header.xml</defaultvalue>
+            <type>string</type>
+            <editor>lineedit</editor>
+            <description>Define the phasespace header file.</description>
+            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/header</filexmlpath>
+            <depends>
+              <settingname>Filetype</settingname>
+              <value>binary</value>
+            </depends>
+          </setting>
+          <setting>
+            <name>Filename data</name>
+            <defaultvalue>../run02/cp_binary-1.restart.xdr</defaultvalue>
+            <type>string</type>
+            <editor>lineedit</editor>
+            <description>Define the phasespace data file.</description>
+            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/data</filexmlpath>
+            <depends>
+              <settingname>Filetype</settingname>
+              <value>binary</value>
+            </depends>
+          </setting>
 				</child>
 			</child>
 			<child plurality="single" importance="optional">
