@@ -29,7 +29,7 @@
       </domain>
 	  
       <components>
-          <moleculetype id="1" >
+          <moleculetype id="1" name="EOX">
             <site type="LJ126" id="1" >
               <coords> <x>0.0</x> <y>1.46711523</y> <z>0.0</z> </coords>
               <mass>0.016</mass>
@@ -51,7 +51,7 @@
               <epsilon>0.000268352891</epsilon>
               <shifted>0</shifted>
             </site>
-            <site type="Dipol" id="4" >
+            <site type="Dipole" id="4" >
               <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <dipolemoment>
                 <orientation> <x>0.0</x> <y>1.0</y> <z>0.0</z> </orientation>
