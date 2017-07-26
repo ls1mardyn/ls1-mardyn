@@ -549,16 +549,13 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 	int           currentCellsEdge = 1;
 	qsched_task_t idInit,
 				  idFinalize,
-				  idM2L,
-                  iniBarrier, finBarrier;
+				  idM2L;
 	double        cellWid[]{_domain->getGlobalLength(0),
 							_domain->getGlobalLength(1),
 							_domain->getGlobalLength(2)};
 	struct qsched_payload payload;
 	payload.uniformPseudoParticleContainer = this;
 
-    iniBarrier = qsched_addtask(scheduler, FastMultipoleMethod::Dummy, task_flag_none, nullptr, 0, 0);
-    finBarrier = qsched_addtask(scheduler, FastMultipoleMethod::Dummy, task_flag_none, nullptr, 0, 0);
 	for (int currentLevel = 1; currentLevel <= _maxLevel; ++currentLevel) { //global M2M
 		currentCellsEdge *= 2;
 		for (int i = 0; i < 3; ++i) {
@@ -592,10 +589,6 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 										1);
 			qsched_addunlock(scheduler, idInit, idM2L);
 			qsched_addunlock(scheduler, idM2L, idFinalize);
-
-            qsched_addunlock(scheduler, idInit, iniBarrier);
-            qsched_addunlock(scheduler, idM2L, finBarrier);
-            qsched_addunlock(scheduler, finBarrier, idFinalize);
 		}
 	}
 }

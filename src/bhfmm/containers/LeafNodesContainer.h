@@ -57,6 +57,7 @@ public:
 
 private:
 	void initializeCells();
+	void generateP2PTasks();
 	void calculateNeighbourIndices();
 	void calculateCellPairOffsets();
 	unsigned long int getCellIndexOfMolecule(Molecule* molecule) const;
@@ -85,7 +86,7 @@ private:
 	std::vector<std::vector<long int> > _cellIndicesPerColour;
 
 #ifdef QUICKSCHED
-	struct qsched                    *_scheduler;
+	struct qsched *_scheduler;
 #endif
 };
 

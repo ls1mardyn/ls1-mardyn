@@ -140,14 +140,19 @@ void LeafNodesContainer::initializeCells() {
 			}
 		}
 	}
+	generateP2PTasks();
+}
+
+void LeafNodesContainer::generateP2PTasks() {
 #ifdef QUICKSCHED
+	unsigned long cellIndex;
 	qsched_res_t  resourceId;
 	//TODO: Make taskBlockSize dynamic / autotuning / xml
 	struct qsched_payload payload;
-    payload.taskBlockSize[0] = 2;
+	payload.taskBlockSize[0] = 2;
 	payload.taskBlockSize[1] = 2;
 	payload.taskBlockSize[2] = 2;
-    payload.leafNodesContainer = this;
+	payload.leafNodesContainer = this;
 
 
 	global_log->info() << "LeafNodesContainer: Generating resource and task ids" << std::endl;
@@ -169,9 +174,9 @@ void LeafNodesContainer::initializeCells() {
 					 && z < _numCellsPerDimension[2] - 1)) {
 					// P2P TASK
 					// also save the pointers as long
-                    payload.cell.coordinates[0] = x;
-                    payload.cell.coordinates[1] = y;
-                    payload.cell.coordinates[2] = z;
+					payload.cell.coordinates[0] = x;
+					payload.cell.coordinates[1] = y;
+					payload.cell.coordinates[2] = z;
 					_cells[cellIndex].setP2PId(qsched_addtask(_scheduler,
 															  FastMultipoleMethod::P2P,
 															  task_flag_none,
@@ -209,13 +214,13 @@ void LeafNodesContainer::initializeCells() {
 				cellIndex = cellIndexOf3DIndex(x, y, z);
 
 				for (auto i = 0; i < payload.taskBlockSize[0]
-										  && x + i < _numCellsPerDimension[0]; ++i) {
+								 && x + i < _numCellsPerDimension[0]; ++i) {
 					for (auto j = 0; j < payload.taskBlockSize[1]
-											  && y + j < _numCellsPerDimension[1]; ++j) {
+									 && y + j < _numCellsPerDimension[1]; ++j) {
 						for (auto k = 0; k < payload.taskBlockSize[2]
-												  && z + k < _numCellsPerDimension[2]; ++k) {
+										 && z + k < _numCellsPerDimension[2]; ++k) {
 							// create locks for only for resources at edges
-                            // TODO: only do this for corners
+							// TODO: only do this for corners
 							if(i == payload.taskBlockSize[0] - 1
 							   || j == payload.taskBlockSize[1] - 1
 							   || k == payload.taskBlockSize[2] - 1){
