@@ -45,7 +45,8 @@
       </electrostatic>
     </algorithm>
     <output>
-      <outputplugin name="CheckpointWriter" type="binary">
+      <outputplugin name="CheckpointWriter">
+        <type>binary</type>
         <writefrequency>50000</writefrequency>
         <outputprefix>cp_binary</outputprefix>
       </outputplugin>

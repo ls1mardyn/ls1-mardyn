@@ -462,7 +462,7 @@
 						<editor>select</editor>
 						<editor-options>ASCII,binary</editor-options>
 						<description>Format of data represented in checkpoint file.</description>
-						<filexmlpath>mardyn/simulation/output/outputplugin@type</filexmlpath>
+						<filexmlpath>mardyn/simulation/output/outputplugin/type</filexmlpath>
 					</setting>
 					<setting>
 						<name>Write frequency</name>
