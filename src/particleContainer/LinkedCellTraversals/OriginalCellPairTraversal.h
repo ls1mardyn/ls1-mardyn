@@ -35,7 +35,7 @@ public:
 	void traverseCellPairsOuter(CellProcessor& cellProcessor);
 	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
-	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
+	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
 protected:
 	// couldn't get it to compile when the enum is part of the class, so making it global...

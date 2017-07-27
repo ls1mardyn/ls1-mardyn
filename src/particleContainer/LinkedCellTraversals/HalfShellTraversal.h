@@ -17,9 +17,10 @@ template <class CellTemplate>
 class HalfShellTraversal: public OriginalCellPairTraversal<CellTemplate> {
 	using OriginalCellPairTraversal<CellTemplate>::OriginalCellPairTraversal; // Inheriting constructors
 
-	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const override;
-
 	bool requiresForceExchange() const override {return true;}
+public:
+
+	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const override;
 };
 
 template<class CellTemplate>

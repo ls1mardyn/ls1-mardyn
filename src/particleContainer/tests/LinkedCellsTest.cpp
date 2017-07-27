@@ -423,22 +423,22 @@ void LinkedCellsTest::testMidpoint() {
 }*/
 
 void LinkedCellsTest::testHalfShellMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::HS, "indirect", "fs" /* TODO: "hs" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, "indirect", "fs" /* TODO: "hs" */);
 }
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::HS, "direct", "fs"  /* TODO: "hs" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, "direct", "fs"  /* TODO: "hs" */);
 }
 
 void LinkedCellsTest::testMidpointMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::MP, "indirect", "fs"  /* TODO: "mp" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, "indirect", "fs"  /* TODO: "mp" */);
 }
 
 void LinkedCellsTest::testMidpointMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner::traversalNames::MP, "direct", "fs"  /* TODO: "mp" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, "direct", "fs"  /* TODO: "mp" */);
 }
 
-void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTuner::traversalNames traversal, std::string neighbourCommScheme, std::string commScheme){
+void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTuner<ParticleCell>::traversalNames traversal, std::string neighbourCommScheme, std::string commScheme){
 
 	//------------------------------------------------------------
 	// Setup
@@ -453,12 +453,13 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTune
 
 	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
 	containerTest->_traversalTuner->selectedTraversal = traversal;
-	containerTest->_traversalTuner->findOptimalTraversal();
 	containerTest->initializeTraversal();
 
 	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
 
 	// Legacy Processor for debugging
+	// assert in potforce.h l. 483 has to be disabled
+
 	/*
 	auto pphandler = new ParticlePairs2PotForceAdapter(*_domain);
 	auto pphandler2 = new ParticlePairs2PotForceAdapter(*_domain);
@@ -468,7 +469,6 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTune
 
 	auto cellProc = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
 	auto cellProc2 = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
-
 
 	domainDecompositionFS->initCommunicationPartners(cutoff, _domain);
 	domainDecompositionTest->initCommunicationPartners(cutoff, _domain);

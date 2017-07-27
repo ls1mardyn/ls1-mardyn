@@ -77,7 +77,7 @@ public:
 
 private:
 
-	void doForceComparisonTest(std::string inputFile, TraversalTuner::traversalNames traversal, std::string neighbourCommScheme, std::string commScheme);
+	void doForceComparisonTest(std::string inputFile, TraversalTuner<ParticleCell>::traversalNames traversal, std::string neighbourCommScheme, std::string commScheme);
 };
 
 #endif /* LINKEDCELLSTEST_H_ */

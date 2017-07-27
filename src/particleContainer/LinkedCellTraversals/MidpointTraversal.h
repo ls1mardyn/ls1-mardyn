@@ -357,6 +357,7 @@ void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcess
 			if(offset1 < baseIndex){
 				continue;
 			}
+			continue;
 
 			unsigned long cellIndex1 = baseIndex + offset1;
 

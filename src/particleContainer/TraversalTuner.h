@@ -51,9 +51,9 @@ private:
         ORIGINAL = 0,
         C08      = 1,
         SLICED   = 2,
-        QSCHED   = 3,
-	HS	 = 4,
-	MP	 = 5
+		HS	 	 = 3,
+		MP	 	 = 4,
+        QSCHED   = 5
     };
 
 	traversalNames selectedTraversal;
@@ -109,13 +109,13 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	_optimalTravesal = _traversals[selectedTraversal].first;
 
 	// log traversal
-    if (dynamic_cast<HalfShellTraversal<ParticleCell> *>(_optimalTravesal))
+    if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTravesal))
            global_log->info() << "Using HalfShellTraversal." << endl;
-    else if (dynamic_cast<OriginalCellPairTraversal<ParticleCell> *>(_optimalTravesal))
+    else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTravesal))
         global_log->info() << "Using OriginalCellPairTraversal." << endl;
-    else if (dynamic_cast<C08CellPairTraversal<ParticleCell> *>(_optimalTravesal))
+    else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTravesal))
         global_log->info() << "Using C08CellPairTraversal." << endl;
-    else if (dynamic_cast<MidpointTraversal<ParticleCell> *>(_optimalTravesal))
+    else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTravesal))
         global_log->info() << "Using MidpointTraversal." << endl;
 
 	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTravesal)) {
@@ -230,7 +230,6 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 										   const std::array<unsigned long, 3> &dims) {
-
 	for (auto &tPair : _traversals) {
 		// decide whether to initialize or rebuild
 		if (tPair.first == nullptr) {
@@ -243,9 +242,9 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 																	dims,
 																	quiData->taskBlockSize);
 			} else if (dynamic_cast<HalfShellTraversalData *>(tPair.second)) {
-			    tPair.first = new HalfShellTraversal<ParticleCell>(cells, dims);
+			    tPair.first = new HalfShellTraversal<CellTemplate>(cells, dims);
 		    } else if (dynamic_cast<MidpointTraversalData *>(tPair.second)) {
-			    tPair.first = new MidpointTraversal<ParticleCell>(cells, dims);
+			    tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
 			} else if (dynamic_cast<OriginalCellPairTraversalData *>(tPair.second)) {
 				tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells,
 																		  dims);
