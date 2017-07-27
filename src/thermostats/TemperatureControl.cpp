@@ -454,8 +454,8 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("settings/directions", strDirections);
 
 		// write control for beta_trans and beta_rot log file
-		unsigned long nWriteFreqBeta;
-		std::string strFilenamePrefix;
+		unsigned long nWriteFreqBeta = 1000;
+		std::string strFilenamePrefix = "beta_log";
 		xmlconfig.getNodeValue("writefreq", nWriteFreqBeta);
 		xmlconfig.getNodeValue("fileprefix", strFilenamePrefix);
 
