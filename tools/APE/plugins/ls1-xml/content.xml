@@ -16,43 +16,59 @@
 		<child plurality="single" importance="mandatory">
 			<name>Reference Units</name>
 			<setting>
+				<name>Unit system</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>SI</editor-options>
 				<defaultvalue>SI</defaultvalue>
 				<filexmlpath>mardyn/refunits@type</filexmlpath>
 			</setting>
 			<setting>
-				<defaultvalue>nm</defaultvalue>
+				<name>Length unit</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>nm,A°</editor-options>
+				<defaultvalue>A°</defaultvalue>
 				<filexmlpath>mardyn/refunits/length@unit</filexmlpath>
-			</setting>
-			<setting>
-				<defaultvalue>u</defaultvalue>
-				<filexmlpath>mardyn/refunits/mass@unit</filexmlpath>
-			</setting>
-			<setting>
-				<defaultvalue>K</defaultvalue>
-				<filexmlpath>mardyn/refunits/energy@unit</filexmlpath>
 			</setting>
 			<setting>
 				<name>Length</name>
 				<defaultvalue>0.1</defaultvalue>
 				<type>float</type>
 				<editor>lineedit</editor>
-				<description>Reference length in nm.</description>
+				<description>Reference length</description>
 				<filexmlpath>mardyn/refunits/length</filexmlpath>
+			</setting>
+			<setting>
+				<name>Mass unit</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>u</editor-options>
+				<defaultvalue>u</defaultvalue>
+				<filexmlpath>mardyn/refunits/mass@unit</filexmlpath>
 			</setting>
 			<setting>
 				<name>Mass</name>
 				<defaultvalue>1</defaultvalue>
 				<type>float</type>
 				<editor>lineedit</editor>
-				<description>Reference mass in u.</description>
+				<description>Reference mass</description>
 				<filexmlpath>mardyn/refunits/mass</filexmlpath>
+			</setting>
+			<setting>
+				<name>Energy unit</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>K,eV</editor-options>
+				<defaultvalue>K</defaultvalue>
+				<filexmlpath>mardyn/refunits/energy@unit</filexmlpath>
 			</setting>
 			<setting>
 				<name>Energy</name>
 				<defaultvalue>1</defaultvalue>
 				<type>float</type>
 				<editor>lineedit</editor>
-				<description>Reference energy in K.</description>
+				<description>Reference energy</description>
 				<filexmlpath>mardyn/refunits/energy</filexmlpath>
 			</setting>
 		</child>
