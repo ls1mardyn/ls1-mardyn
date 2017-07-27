@@ -660,7 +660,7 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 
 void Domain::writeCheckpoint(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
-		bool binary) {
+		bool useBinaryFormat) {
 
 #ifdef MARDYN_WR
 	global_log->warning() << "The checkpoints are not adapted for WR-mode. Velocity will be one half-timestep ahead!" << std::endl;
@@ -671,17 +671,12 @@ void Domain::writeCheckpoint(string filename,
 	// 3. integrating positions by half a timestep backward (- delta T / 2)
 #endif
 
-	if (binary == true) {
+	if (useBinaryFormat == true) {
 		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
 	} else {
 		this->writeCheckpointHeader(filename, particleContainer, domainDecomp, currentTime);
 	}
-
-	if (binary == true) {
-		domainDecomp->writeMoleculesToFile(filename, particleContainer, true);
-	} else {
-		domainDecomp->writeMoleculesToFile(filename, particleContainer, false);
-	}
+	domainDecomp->writeMoleculesToFile(filename, particleContainer, useBinaryFormat);
 }
 
 
