@@ -588,6 +588,29 @@
 					</setting>
 				</child>
 				<child plurality="multi" importance="optional">
+					<name>Gamma Writer</name>
+					<setting>
+						<defaultvalue>GammaWriter</defaultvalue>
+						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
+					</setting>
+					<setting>
+						<name>Writefrequency</name>
+						<defaultvalue>1000</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Write out every nth timestep.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/writefrequency</filexmlpath>
+					</setting>
+					<setting>
+						<name>Output Prefix</name>
+						<defaultvalue>megamol</defaultvalue>
+						<type>string</type>
+						<editor>lineedit</editor>
+						<description>Defines a filename prefix for the output file.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/outputprefix</filexmlpath>
+					</setting>
+				</child>
+				<child plurality="multi" importance="optional">
 					<name>System Monitor Output</name>
 					<setting>
 						<defaultvalue>SysMonOutput</defaultvalue>
