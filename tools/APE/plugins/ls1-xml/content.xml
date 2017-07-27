@@ -450,14 +450,66 @@
 			<child plurality="single" importance="optional">
 				<name>Output</name>
 				<child plurality="multi" importance="optional">
+					<name>Checkpoint Writer</name>
+					<setting>
+						<defaultvalue>CheckpointWriter</defaultvalue>
+						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
+					</setting>
+					<setting>
+						<name>Fileformat</name>
+						<defaultvalue>binary</defaultvalue>
+						<type>string</type>
+						<editor>select</editor>
+						<editor-options>ASCII,binary</editor-options>
+						<description>Format of data represented in checkpoint file.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin@type</filexmlpath>
+					</setting>
+					<setting>
+						<name>Write frequency</name>
+						<defaultvalue>100000</defaultvalue>
+						<type>integer</type>
+						<editor>lineedit</editor>
+						<description>Frequency of writing checkpoints (every nth timestep).</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/writefrequency</filexmlpath>
+					</setting>
+					<setting>
+						<name>File prefix</name>
+						<defaultvalue>cp_ascii</defaultvalue>
+						<type>string</type>
+						<editor>lineedit</editor>
+						<description>Prefix of checkpoint file name.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/outputprefix</filexmlpath>
+						<depends>
+							<settingname>Fileformat</settingname>
+							<value>ASCII</value>
+						</depends>
+					</setting>
+					<setting>
+						<name>File prefix</name>
+						<defaultvalue>cp_binary</defaultvalue>
+						<type>string</type>
+						<editor>lineedit</editor>
+						<description>Prefix of checkpoint file name.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/outputprefix</filexmlpath>
+						<depends>
+							<settingname>Fileformat</settingname>
+							<value>binary</value>
+						</depends>
+					</setting>
+				</child>
+				<child plurality="multi" importance="optional">
 					<name>MMPLD Writer Multi</name>
 					<setting>
 						<defaultvalue>MmpldWriter</defaultvalue>
 						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
 					</setting>
 					<setting>
+						<name>Molecule representation</name>
 						<defaultvalue>multi</defaultvalue>
 						<filexmlpath>mardyn/simulation/output/outputplugin@type</filexmlpath>
+						<editor>select</editor>
+						<editor-options>simple,multi</editor-options>
+						<description>Choose if molecules are represented by simple sphere or multi-spheres (all LJ-Sites).</description>
 					</setting>
 					<setting>
 						<defaultvalue>/spheres</defaultvalue>
