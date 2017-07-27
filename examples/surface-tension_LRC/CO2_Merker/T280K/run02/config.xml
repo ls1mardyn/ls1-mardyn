@@ -100,7 +100,7 @@
 				<outputprefix>cp_binary</outputprefix>
 			</outputplugin>
 			
-			<outputplugin name="Resultwriter">
+			<outputplugin name="ResultWriter">
 				<writefrequency>1000</writefrequency>
 				<outputprefix>result</outputprefix>
 			</outputplugin>

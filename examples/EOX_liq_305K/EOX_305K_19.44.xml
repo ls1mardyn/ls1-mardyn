@@ -85,7 +85,7 @@
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
         <writefrequency>1000</writefrequency>
       </outputplugin>
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>

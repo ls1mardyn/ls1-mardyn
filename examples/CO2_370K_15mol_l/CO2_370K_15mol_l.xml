@@ -94,7 +94,7 @@
     </algorithm>
 
     <output>
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>5</writefrequency>
         <outputprefix>CO2</outputprefix>
       </outputplugin>

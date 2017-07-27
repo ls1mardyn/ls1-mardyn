@@ -82,7 +82,7 @@
         <writefrequency>10</writefrequency>
       </outputplugin>
       -->
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>1</writefrequency>
         <outputprefix>mkTcTS</outputprefix>
       </outputplugin>

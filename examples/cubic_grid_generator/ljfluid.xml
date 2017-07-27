@@ -77,7 +77,7 @@
         <expression>procselfstatm:size 1048576. /</expression>
         <writefrequency>10</writefrequency>
       </outputplugin>
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>simple-lj</outputprefix>
         <accumulation_steps>10</accumulation_steps>
