@@ -543,7 +543,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_rdf = new RDF();
 			outputPlugin = _rdf;
 		}
-		else if(pluginname == "ResultWriter") {
+		else if(pluginname == "Resultwriter" or pluginname == "ResultWriter") {
 			outputPlugin = new ResultWriter();
 		}
 		else if(pluginname == "SysMonOutput") {
