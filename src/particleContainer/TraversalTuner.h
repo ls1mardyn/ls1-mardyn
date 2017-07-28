@@ -61,6 +61,8 @@ private:
 	std::vector<std::pair<CellPairTraversals<CellTemplate> *, CellPairTraversalData *> > _traversals;
 
 	CellPairTraversals<CellTemplate> *_optimalTravesal;
+
+	unsigned _cellsInCutoff = 1;
 };
 
 template<class CellTemplate>
@@ -129,6 +131,9 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	else
 		global_log->warning() << "Using unknown traversal." << endl;
 
+
+	mardyn_assert(_optimalTravesal->maxCellsInCutoff() >= _cellsInCutoff);
+
 }
 
 template<class CellTemplate>
@@ -163,6 +168,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 			global_log->warning() << "No traversal type selected. Defaulting to sliced traversal." << endl;
 		}
 	}
+
+	_cellsInCutoff = xmlconfig.getNodeValue_int("cellsInCutoffRadius", 1); // This is currently only used for an assert
 
 	// workaround for stupid iterator:
 	// since

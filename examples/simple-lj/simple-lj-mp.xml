@@ -46,7 +46,7 @@
       </parallelisation>
       <datastructure type="LinkedCells">
           <traversalSelector>mp</traversalSelector>
-          <cellsInCutoffRadius>1</cellsInCutoffRadius>
+          <cellsInCutoffRadius>2</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
         <radiusLJ unit="reduced" >5.0</radiusLJ>

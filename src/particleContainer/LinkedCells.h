@@ -361,6 +361,7 @@ private:
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
+	unsigned _cellsInCutoff = 1; //!< Cells in cutoff radius -> cells with size cutoff / cellsInCutoff
 
 	//! @brief True if all Particles are in the right cell
 	//!

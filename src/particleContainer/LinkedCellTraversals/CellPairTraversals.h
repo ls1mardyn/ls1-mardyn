@@ -44,6 +44,9 @@ public:
 	// or does this traversal calculate all forces.
 	virtual bool requiresForceExchange() const {return false;}
 
+	// @brief Returns the maximum number of cells per cutoff this traversal supports.
+	virtual unsigned maxCellsInCutoff() const { return 1; }
+
 protected:
 	//TODO:
 	//void traverseCellPairsNoDep(CellProcessor& cellProcessor);

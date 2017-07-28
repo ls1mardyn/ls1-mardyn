@@ -50,6 +50,8 @@ public:
 
 	// Midpoint traversal requires force exchange
 	virtual bool requiresForceExchange() const override {return true;}
+	// Midpoint supports cell sizes down to cutoff/2
+	virtual unsigned maxCellsInCutoff() const override {return 2;}
 
 protected:
 	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;

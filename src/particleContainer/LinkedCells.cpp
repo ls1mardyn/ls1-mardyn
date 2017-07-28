@@ -119,6 +119,9 @@ void LinkedCells::initializeTraversal() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
+	_cellsInCutoff = xmlconfig.getNodeValue_int("cellsInCutoffRadius", 1);
+	mardyn_assert(_cellsInCutoff>=1);
+
     _traversalTuner = new TraversalTuner<ParticleCell>();
 	_traversalTuner->readXML(xmlconfig);
 }
@@ -138,8 +141,11 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 	int numberOfCells = 1;
 
+	global_log->info() << "Using " << _cellsInCutoff << " cells in cutoff." << endl;
+	float rc = (_cutoffRadius / _cellsInCutoff);
+
 	for (int dim = 0; dim < 3; dim++) {
-		_boxWidthInNumCells[dim] = floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _cutoffRadius * _haloWidthInNumCells[dim]);
+		_boxWidthInNumCells[dim] = floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / rc * _haloWidthInNumCells[dim]);
 
 		_cellsPerDimension[dim] = _boxWidthInNumCells[dim] + 2 * _haloWidthInNumCells[dim];
 

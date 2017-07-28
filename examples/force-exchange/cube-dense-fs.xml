@@ -18,9 +18,9 @@
       <!-- Nparticles determined by the input file -->
       <temperature unit="reduced" >0.95</temperature>
       <domain type="box">
-          <lx>40.0</lx>
-          <ly>40.0</ly>
-          <lz>40.0</lz>
+          <lx>80.0</lx>
+          <ly>80.0</ly>
+          <lz>80.0</lz>
       </domain>
 
       <components>
@@ -37,10 +37,10 @@
       <phasespacepoint>
         <generator name="mkTcTS">
           <layer1>
-            <density>0.5</density>
+            <density>0.8</density>
           </layer1>
           <layer2>
-            <density>0.5</density>
+            <density>0.8</density>
           </layer2>
         </generator>
       </phasespacepoint>
@@ -61,7 +61,7 @@
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
-        <radiusLJ unit="reduced" >5.0</radiusLJ>
+        <radiusLJ unit="reduced" >10.0</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField" >
         <epsilon>1.0e+10</epsilon>

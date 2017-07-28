@@ -427,22 +427,22 @@ void LinkedCellsTest::testMidpoint() {
 }*/
 
 void LinkedCellsTest::testHalfShellMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, "indirect", "fs" /* TODO: "hs" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, 1, "indirect", "fs" /* TODO: "hs" */);
 }
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, "direct", "fs"  /* TODO: "hs" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, 1, "direct", "fs"  /* TODO: "hs" */);
 }
 
 void LinkedCellsTest::testMidpointMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, "indirect", "fs"  /* TODO: "mp" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, 2, "indirect", "fs"  /* TODO: "mp" */);
 }
 
 void LinkedCellsTest::testMidpointMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, "direct", "fs"  /* TODO: "mp" */);
+	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, 2, "direct", "fs"  /* TODO: "mp" */);
 }
 
-void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTuner<ParticleCell>::traversalNames traversal, std::string neighbourCommScheme, std::string commScheme){
+void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTuner<ParticleCell>::traversalNames traversal, unsigned cellsInCutoff, std::string neighbourCommScheme, std::string commScheme){
 
 	//------------------------------------------------------------
 	// Setup
@@ -458,6 +458,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTune
 	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
 	containerTest->_traversalTuner->selectedTraversal = traversal;
 	containerTest->initializeTraversal();
+	containerTest->_cellsInCutoff = cellsInCutoff;
 
 	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
 
