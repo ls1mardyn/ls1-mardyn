@@ -258,14 +258,14 @@
 							<setting>
 								<name>Density</name>
 								<defaultvalue>0.7</defaultvalue>
-								<type>string</type>
+								<type>float</type>
 								<editor>lineedit</editor>
 								<description>Specify desired density</description>
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/density</filexmlpath>
 							</setting>
 							<setting>
 								<name>Buffersize</name>
-								<defaultvalue>0.7</defaultvalue>
+								<defaultvalue>1000</defaultvalue>
 								<type>int</type>
 								<editor>lineedit</editor>
 								<description>Specify size of molecule buffer</description>
@@ -303,6 +303,61 @@
 								<editor-options>true,false</editor-options>
 								<description>Set binary mixture?</description>
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/binaryMixture</filexmlpath>
+							</setting>
+						</child>
+						<child plurality="alone" importance="optional">
+							<name>Mkesfera Generator</name>
+							<setting>
+								<defaultvalue>mkesfera</defaultvalue>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator@name</filexmlpath>
+							</setting>
+							<setting>
+								<name>Radius</name>
+								<defaultvalue>20.0</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Specify radius of the droplet</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/droplet/radius</filexmlpath>
+							</setting>
+							<setting>
+								<name>Droplet density</name>
+								<defaultvalue>0.7</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Specify density of the droplet</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/droplet/density</filexmlpath>
+							</setting>
+							<setting>
+								<name>X</name>
+								<defaultvalue>40.0</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate of droplet center X</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/droplet/center/x</filexmlpath>
+							</setting>
+							<setting>
+								<name>Y</name>
+								<defaultvalue>40.0</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate of droplet center Y</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/droplet/center/y</filexmlpath>
+							</setting>
+							<setting>
+								<name>Z</name>
+								<defaultvalue>40.0</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate of droplet center Z</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/droplet/center/z</filexmlpath>
+							</setting>
+							<setting>
+								<name>Outer density</name>
+								<defaultvalue>0.07</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Specify outer density</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/outer-density</filexmlpath>
 							</setting>
 						</child>
 					</child>
