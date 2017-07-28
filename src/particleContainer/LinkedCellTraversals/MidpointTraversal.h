@@ -354,14 +354,8 @@ void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcess
 			CellTemplate& cell1 = this->_cells->at(cellIndex1);
 			CellTemplate& cell2 = this->_cells->at(cellIndex2);
 
-			if(!cell1.isHaloCell()) {
-				cellProcessor.processCellPair(cell1, cell2);
-			}
-			else if(!cell2.isHaloCell()){
-				cellProcessor.processCellPair(cell2, cell1);
-			}/* else { // cell1 and cell2 are halo
-				continue;
-			}*/
+			const bool sumAllMacroscopic = true;
+			cellProcessor.processCellPair<sumAllMacroscopic>(cell1, cell2);
 
 		}
 

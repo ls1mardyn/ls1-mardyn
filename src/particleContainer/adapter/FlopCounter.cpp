@@ -203,7 +203,7 @@ void FlopCounter::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic>(soa, soa);
 }
 
-void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
+void FlopCounter::processCellPairSumHalf(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
 #ifndef MARDYN_WR
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
@@ -266,6 +266,46 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	}
 }
 
+void FlopCounter::processCellPairSumAll(ParticleCell & c1, ParticleCell & c2) {
+	mardyn_assert(&c1 != &c2);
+#ifndef MARDYN_WR
+	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
+	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
+	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
+#else
+	ParticleCell_WR & wr_c1 = downcastCellReferenceWR(c1);
+	ParticleCell_WR & wr_c2 = downcastCellReferenceWR(c2);
+	const CellDataSoA_WR& soa1 = wr_c1.getCellDataSoA();
+	const CellDataSoA_WR& soa2 = wr_c2.getCellDataSoA();
+#endif
+
+
+	const bool c1Halo = c1.isHaloCell();
+	const bool c2Halo = c2.isHaloCell();
+
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0) {
+		return;
+	}
+
+	// Macroscopic conditions: Sum all
+
+	const bool ApplyCutoff = true;
+
+	const bool CalculateMacroscopic = true;
+
+	if (calc_soa1_soa2) {
+		_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa1, soa2);
+	} else {
+		_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa2, soa1);
+	}
+}
 
 
 template<class ForcePolicy, bool CalculateMacroscopic>

@@ -307,8 +307,11 @@ void LinkedCells::update_via_traversal() {
 		ResortCellProcessor() : CellProcessor(0.0, 0.0) {}
 		void initTraversal() {}
 		void preprocessCell(ParticleCell& ) {}
-		void processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
-			cell1.updateLeavingMoleculesBase(cell2);
+		void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) override {
+				cell1.updateLeavingMoleculesBase(cell2);
+		}
+		void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) override {
+				processCellPairSumHalf(cell1, cell2);
 		}
 		void processCell(ParticleCell& cell) {}
 		double processSingleMolecule(Molecule*, ParticleCell& ) { return 0.0;}

@@ -79,11 +79,6 @@ public:
 	 */
 	void preprocessCell(ParticleCell& cell) {}
 
-	/**
-	 * \brief Count flops for this pair.
-	 */
-	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
-
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }  // why 0.0 flops???
 
 	/**
@@ -115,6 +110,22 @@ public:
 	double getMyFlopCount() const {
 		return _myFlopCount;
 	}
+
+protected:
+	/**
+	 * Counts flops for this pair
+	 *
+	 * Implementation of processCellPair that only sums the macroscopic values of Molecule-Molecule pairs,
+	 * not of Molecule-Halo pairs and does not calculate Halo-Halo pairs.
+	 */
+	virtual void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) override;
+
+	/**
+	 * Counts flops for this pair
+	 *
+	 * Implementation of processCellPair that sums all macroscopic values and calculates Halo-Halo pairs.
+	 */
+	virtual void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) override;
 
 private:
 	template<class ForcePolicy, bool CalculateMacroscopic>

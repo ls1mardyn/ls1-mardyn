@@ -27,24 +27,16 @@ template<class CellTemplate>
 inline void HalfShellTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const{
 
 	CellTemplate& currentCell = this->_cells->at(cellIndex);
-	if (currentCell.isInnerCell()) {
+	if (!currentCell.isHaloCell()) {
 		cellProcessor.processCell(currentCell);
 		// loop over all forward neighbours
 		for (auto& neighbourOffset : this->_forwardNeighbourOffsets) {
 			CellTemplate& neighbourCell = this->_cells->at(cellIndex + neighbourOffset);
-			cellProcessor.processCellPair(currentCell, neighbourCell);
+
+			const bool sumAllMacroscopic = true;
+			cellProcessor.processCellPair<sumAllMacroscopic>(currentCell, neighbourCell);
 		}
 	}
-	else
-	// loop over all boundary cells and calculate forces to forward neighbours
-	if (currentCell.isBoundaryCell()) {
-		cellProcessor.processCell(currentCell);
-		// loop over all forward neighbours
-		for (auto& neighbourOffset : this->_forwardNeighbourOffsets) {
-			CellTemplate& neighbourCell = this->_cells->at(cellIndex + neighbourOffset);
-			cellProcessor.processCellPair(currentCell, neighbourCell);
-		}
-	} // if ( isBoundaryCell() )
 
 }
 

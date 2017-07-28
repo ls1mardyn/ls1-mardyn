@@ -2646,7 +2646,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
-void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
+void VectorizedCellProcessor::processCellPairSumHalf(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
@@ -2698,5 +2698,38 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 		} else {
 			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
+	}
+}
+
+void VectorizedCellProcessor::processCellPairSumAll(ParticleCell & c1, ParticleCell & c2) {
+	mardyn_assert(&c1 != &c2);
+	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
+
+	CellDataSoA& soa1 = full_c1.getCellDataSoA();
+	CellDataSoA& soa2 = full_c2.getCellDataSoA();
+	const bool c1Halo = full_c1.isHaloCell();
+	const bool c2Halo = full_c2.isHaloCell();
+
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty, skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0) {
+		return;
+	}
+
+	// Macroscopic conditions: Compute always
+
+	const bool ApplyCutoff = true;
+
+	const bool CalculateMacroscopic = true;
+
+	if (calc_soa1_soa2) {
+		_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+	} else {
+		_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 	}
 }

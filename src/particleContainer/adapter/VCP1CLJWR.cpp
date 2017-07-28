@@ -92,7 +92,7 @@ void VCP1CLJ_WR::initTraversal() {
 	global_log->debug() << "VCP1CLJ_WR::initTraversal()." << std::endl;
 }
 
-void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
+void VCP1CLJ_WR::processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) {
 	mardyn_assert(&cell1 != &cell2);
 	ParticleCell_WR & cellWR1 = downcastCellReferenceWR(cell1);
 	ParticleCell_WR & cellWR2 = downcastCellReferenceWR(cell2);
@@ -144,6 +144,39 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 		} else {
 			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
+	}
+}
+
+void VCP1CLJ_WR::processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) {
+	mardyn_assert(&cell1 != &cell2);
+	ParticleCell_WR & cellWR1 = downcastCellReferenceWR(cell1);
+	ParticleCell_WR & cellWR2 = downcastCellReferenceWR(cell2);
+
+	CellDataSoA_WR& soa1 = cellWR1.getCellDataSoA();
+	CellDataSoA_WR& soa2 = cellWR2.getCellDataSoA();
+	const bool c1Halo = cellWR1.isHaloCell();
+	const bool c2Halo = cellWR2.isHaloCell();
+
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty, skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+		return;
+	}
+
+	// Macroscopic conditions: Sum all
+
+	const bool ApplyCutoff = true;
+
+	const bool CalculateMacroscopic = true;
+
+	if (calc_soa1_soa2) {
+		_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+	} else {
+		_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 	}
 }
 

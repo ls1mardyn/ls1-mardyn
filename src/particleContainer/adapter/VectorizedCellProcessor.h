@@ -49,10 +49,6 @@ public:
 	 * \brief Load the CellDataSoA for cell.
 	 */
 	void preprocessCell(ParticleCell& /*cell*/) {}
-	/**
-	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
-	 */
-	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
 		return 0.0;
@@ -70,6 +66,18 @@ public:
 	 * \brief Store macroscopic values in the Domain.
 	 */
 	void endTraversal();
+
+protected:
+	/**
+	 * Implementation of processCellPair that only sums the macroscopic values of Molecule-Molecule pairs,
+	 * not of Molecule-Halo pairs and does not calculate Halo-Halo pairs.
+	 */
+	virtual void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) override;
+	/**
+	 * Implementation of processCellPair that sums all macroscopic values and calculates Halo-Halo pairs.
+	 */
+	virtual void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) override;
+
 private:
 	/**
 	 * \brief a vector of Molecule pointers.
