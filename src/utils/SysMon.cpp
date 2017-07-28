@@ -6,7 +6,7 @@
 #define SYSMON_CPP
 
 #include "SysMon.h"
-//#include "Logger.h"
+#include "Logger.h"
 
 #include <stack>
 
