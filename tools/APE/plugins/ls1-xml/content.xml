@@ -201,49 +201,111 @@
 				</child>
 				<child plurality="single" importance="optional">
 					<name>Phasespace</name>
-          <setting>
-            <name>Filetype</name>
-            <defaultvalue>ASCII</defaultvalue>
-            <editor>select</editor>
-            <editor-options>ASCII,binary</editor-options>
-            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file@type</filexmlpath>
-          </setting>
-          <setting>
-            <name>Filename</name>
-            <defaultvalue>../n2_N1000_T433-15K_p4MPa.xdr</defaultvalue>
-            <type>string</type>
-            <editor>lineedit</editor>
-            <description>Define the phasespace file.</description>
-            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file</filexmlpath>
-            <depends>
-              <settingname>Filetype</settingname>
-              <value>ASCII</value>
-            </depends>
-          </setting>
-          <setting>
-            <name>Filename header</name>
-            <defaultvalue>../run02/cp_binary-1.restart.header.xml</defaultvalue>
-            <type>string</type>
-            <editor>lineedit</editor>
-            <description>Define the phasespace header file.</description>
-            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/header</filexmlpath>
-            <depends>
-              <settingname>Filetype</settingname>
-              <value>binary</value>
-            </depends>
-          </setting>
-          <setting>
-            <name>Filename data</name>
-            <defaultvalue>../run02/cp_binary-1.restart.xdr</defaultvalue>
-            <type>string</type>
-            <editor>lineedit</editor>
-            <description>Define the phasespace data file.</description>
-            <filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/data</filexmlpath>
-            <depends>
-              <settingname>Filetype</settingname>
-              <value>binary</value>
-            </depends>
-          </setting>
+					<child plurality="alone" importance="optional">
+						<name>File</name>
+						<setting>
+							<name>Filetype</name>
+							<defaultvalue>ASCII</defaultvalue>
+							<editor>select</editor>
+							<editor-options>ASCII,binary</editor-options>
+							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file@type</filexmlpath>
+						</setting>
+						<setting>
+							<name>Filename</name>
+							<defaultvalue>../n2_N1000_T433-15K_p4MPa.xdr</defaultvalue>
+							<type>string</type>
+							<editor>lineedit</editor>
+							<description>Define the phasespace file.</description>
+							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file</filexmlpath>
+							<depends>
+								<settingname>Filetype</settingname>
+								<value>ASCII</value>
+							</depends>
+						</setting>
+						<setting>
+							<name>Filename header</name>
+							<defaultvalue>../run02/cp_binary-1.restart.header.xml</defaultvalue>
+							<type>string</type>
+							<editor>lineedit</editor>
+							<description>Define the phasespace header file.</description>
+							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/header</filexmlpath>
+							<depends>
+								<settingname>Filetype</settingname>
+								<value>binary</value>
+							</depends>
+						</setting>
+						<setting>
+							<name>Filename data</name>
+							<defaultvalue>../run02/cp_binary-1.restart.xdr</defaultvalue>
+							<type>string</type>
+							<editor>lineedit</editor>
+							<description>Define the phasespace data file.</description>
+							<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/file/data</filexmlpath>
+							<depends>
+								<settingname>Filetype</settingname>
+								<value>binary</value>
+							</depends>
+						</setting>
+					</child>
+					<child plurality="alone" importance="optional">
+						<name>Generator</name>
+						<child plurality="alone" importance="optional">
+							<name>Cubic Grid Generator</name>
+							<setting>
+								<defaultvalue>CubicGridGenerator</defaultvalue>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator@name</filexmlpath>
+							</setting>
+							<setting>
+								<name>Density</name>
+								<defaultvalue>0.7</defaultvalue>
+								<type>string</type>
+								<editor>lineedit</editor>
+								<description>Specify desired density</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/density</filexmlpath>
+							</setting>
+							<setting>
+								<name>Buffersize</name>
+								<defaultvalue>0.7</defaultvalue>
+								<type>int</type>
+								<editor>lineedit</editor>
+								<description>Specify size of molecule buffer</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/moleculeBufferSize</filexmlpath>
+							</setting>
+							<setting>
+								<name>Blocksize X</name>
+								<defaultvalue>3</defaultvalue>
+								<type>int</type>
+								<editor>lineedit</editor>
+								<description>Specify blocksize X</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/blockSizesX</filexmlpath>
+							</setting>
+							<setting>
+								<name>Blocksize Y</name>
+								<defaultvalue>3</defaultvalue>
+								<type>int</type>
+								<editor>lineedit</editor>
+								<description>Specify blocksize Y</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/blockSizesY</filexmlpath>
+							</setting>
+							<setting>
+								<name>Blocksize Z</name>
+								<defaultvalue>3</defaultvalue>
+								<type>int</type>
+								<editor>lineedit</editor>
+								<description>Specify blocksize Z</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/blockSizesZ</filexmlpath>
+							</setting>
+							<setting>
+								<name>Binary mixture</name>
+								<defaultvalue>false</defaultvalue>
+								<type>string</type>
+								<editor>select</editor>
+								<editor-options>true,false</editor-options>
+								<description>Set binary mixture?</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/binaryMixture</filexmlpath>
+							</setting>
+						</child>
+					</child>
 				</child>
 			</child>
 			<child plurality="single" importance="optional">
