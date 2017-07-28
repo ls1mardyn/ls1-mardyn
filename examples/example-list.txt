@@ -1,12 +1,12 @@
 ./EOX/305K_liq/config.xml
 ./EOX/600K_15mol_l/config.xml
-./mkTcTS/mkTcTS.xml
+./Generators/mkTcTS/config.xml
+./Generators/mkesfera/config.xml
+./Generators/cubic_grid_generator/config.xml
 ./CO2/370K_15mol_l/config.xml
-./mkesfera/mkesfera.xml
 ./Argon/200K_18mol_l/config.xml
-./FMM/mkesfera.xml
+./FMM/config.xml
 ./surface-tension_LRC/CO2_Merker/220K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/280K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/250K/run01/config.xml
-./cubic_grid_generator/config.xml
 
