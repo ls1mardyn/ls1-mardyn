@@ -74,7 +74,7 @@ class FileHandlerXML(object):
 		search = SettingStruct.DeepSearchSettingTree(sourceModel)
 		doc = Document()
 		for childTreeEntryTupel in search.getElementGenerator():
-			settings = childTreeEntryTupel[1].data(1).dependSettings
+			settings = childTreeEntryTupel[1].data(1).getDependSettings()
 			for setting in settings:
 				fileInfo = setting.fileInformation
 				element = doc
@@ -200,6 +200,8 @@ class FileHandlerXML(object):
 													#this setting already has been read
 													errorMessageLog.append(self.generateErrorMessage(XMLLeafCheckListEntry[0], XMLLeafCheckListEntry[1], XMLLeafCheckListEntry[2], targetModelLeafData, "child setting not complete and double read of setting, other values will be reset to default."))
 													targetModelLeafData.settingMarks = None	
+													found = True
+													break
 												else:
 													#this setting has not been read
 													targetModelLeafData.settingMarks[settingItemIndex] = True
@@ -213,10 +215,11 @@ class FileHandlerXML(object):
 														settingItem.value = defaultvalue
 													
 													#mark this child as complete if complete
+													found = True
 													if self.allSettingsRead(targetModelLeafData):
 														targetModelLeafData.settingMarks = None
-													found = True
-													break
+														break
+													
 						if found:
 							break
 				
@@ -288,27 +291,30 @@ class FileHandlerXML(object):
 										childData.settings[idx].value = mSetting.value
 										childData.settingMarks[idx] = True
 				
-				# get settings whose dependencies are met
-				try:
-					sparedDependSettings = childData.getDependSettings(True)
+			# get settings whose dependencies are met
+			try:
+				sparedDependSettings = childData.getDependSettings(True)
+				
+				if childData.settingMarks == None:
+					childData.settingMarks = [True] * len(childData.settings)
+				
+				for idx, mark in enumerate(childData.settingMarks):
 					
-					for idx, mark in enumerate(childData.settingMarks):
-						
-						# reset values of settings whose dependencies are not met
-						if sparedDependSettings[idx] == None:
-							childData.settings[idx].value = childData.settings[idx].defaultvalue
-						
-						# thow error message if important setting is missing
-						if not mark:
-							settingItem = sparedDependSettings[idx]
-							if settingItem != None:
-								errorMessageLog.append(self.generateErrorMessage(None, None, None, childData, 'The element at '+settingItem.fileInformation.__str__()+'Default value: "'+settingItem.defaultvalue+'" does not exist in the XML-File. Default value will be used.'))
-					childData.settingMarks = None
+					# reset values of settings whose dependencies are not met
+					if sparedDependSettings[idx] == None:
+						childData.settings[idx].value = childData.settings[idx].defaultvalue
 					
-				except RecursionError:
-					errorMessageLog.append(self.generateErrorMessage(None, None, None, childData, "This SettingTreeElement has settings which depend on each other in a loop. This is not possible. Please edit "+plugin[1].absoluteFilePath("content.xml"), True))
-					error = True
-					break
+					# thow error message if important setting is missing
+					if not mark:
+						settingItem = sparedDependSettings[idx]
+						if settingItem != None:
+							errorMessageLog.append(self.generateErrorMessage(None, None, None, childData, 'The element at '+settingItem.fileInformation.__str__()+'Default value: "'+settingItem.defaultvalue+'" does not exist in the XML-File. Default value will be used.'))
+				childData.settingMarks = None
+				
+			except RecursionError:
+				errorMessageLog.append(self.generateErrorMessage(None, None, None, childData, "This SettingTreeElement has settings which depend on each other in a loop. This is not possible. Please edit "+plugin[1].absoluteFilePath("content.xml"), True))
+				error = True
+				break
 
 		
 		return errorMessageLog, error
