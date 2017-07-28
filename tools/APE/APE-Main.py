@@ -619,6 +619,7 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 							self.button_add.setEnabled(True)
 							self.label.setText("Select a setting to edit it.")
 							self.windowIndicator()
+							self.expandTree()
 							
 						if len(importLog) != 0:
 							importLogWindow = ImportLog(importLog, importError, filename[0], self)
