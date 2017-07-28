@@ -520,6 +520,7 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 		self.statusBar.setText("No configuration file loaded.")
 		self.actionSave_Configuration.setEnabled(False)
 		self.actionSave_Configuration_File_As.setEnabled(False)
+		self.selectedElement = None
 	
 	def setUnsavedContent(self, status):
 		self.unsavedContent = status
