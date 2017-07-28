@@ -34,13 +34,14 @@ newMarDyn = ''
 oldMarDyn = '-1'
 xmlFilename = ''
 inpFilename = ''
+additionalFilenames = []
 comparePlugins = ['ResultWriter', 'GammaWriter', 'RDF']
 numIterations = '25'
 baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 # shortopts: if they have an argument, then add : after shortcut
-options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:',
+options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:',
                             ['mpicmd=',
                              'mpi=',
                              'newMarDyn=',
@@ -54,7 +55,8 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:',
                              'remote=',
                              'remoteprefix=',
                              'baseIsLocal',
-                             'baseRemote='
+                             'baseRemote=',
+                             'additionalFile='
                              ])
 nonDefaultPlugins = False
 baseIsLocal = False
@@ -101,6 +103,8 @@ for opt, arg in options:
         baseIsLocal = True
     elif opt in ('-B', '--baseRemote'):
         baseRemote = arg
+    elif opt in ('-a', '--additionalFile'):
+        additionalFilenames.append(arg)
     else:
         print "unknown option: " + opt
         exit(1)
@@ -157,7 +161,7 @@ p = Popen(cleanUpCommand,stdout=PIPE, stderr=PIPE)
 p.communicate()  # suppresses possible errors if nothing there yet, as we don't want them for rm
 
 # copy all there
-call(['cp', newMarDyn, xmlFilename, inpFilename, pathToValidationRuns])
+call(['cp', newMarDyn, xmlFilename, inpFilename] + additionalFilenames + [pathToValidationRuns])
 if doReferenceRun:
     call(['cp', oldMarDyn, pathToValidationRuns])
 
@@ -167,6 +171,8 @@ os.chdir(pathToValidationRuns)
 # get the basenames
 xmlBase = ntpath.basename(xmlFilename)
 inpBase = ntpath.basename(inpFilename)
+additionalFileBases=[]
+additionalFileBases[:] = [ntpath.basename(fn) for fn in additionalFilenames]
 oldMarDynBase = ntpath.basename(oldMarDyn)
 newMarDynBase = ntpath.basename(newMarDyn)
 
@@ -215,9 +221,11 @@ for comparePostfix in comparePostfixes:
 if doReferenceRun:
     call(['cp', xmlBase, 'reference/'])
     call(['cp', inpBase, 'reference/'])
+    call(['cp'] + additionalFileBases + ['reference/'])
     call(['cp', oldMarDynBase, 'reference/'])
 call(['cp', xmlBase, 'new/'])
 call(['cp', inpBase, 'new/'])
+call(['cp'] + additionalFileBases + ['new/'])
 call(['cp', newMarDynBase, 'new/'])
 
 def doRun(directory, MardynExe):
