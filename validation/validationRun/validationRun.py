@@ -178,7 +178,8 @@ newMarDynBase = ntpath.basename(newMarDyn)
 
 # print "append ComparisonWriter here"
 # print "append ComparisonWriter here"
-with open(xmlBase, "r") as prev_file, open("tmp.xml", "w") as new_file:
+with open(xmlBase, "r") as prev_file:
+  with open("tmp.xml", "w") as new_file:
     contents = prev_file.readlines()
     #Now contents is a list of strings and you may add the new line to this list at any position
     #contents.insert(4, "\n This is a new line \n ")
