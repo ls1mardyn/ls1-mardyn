@@ -360,6 +360,29 @@
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/outer-density</filexmlpath>
 							</setting>
 						</child>
+						<child plurality="alone" importance="optional">
+							<name>MkTcTS Generator</name>
+							<setting>
+								<defaultvalue>mkTcTS</defaultvalue>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator@name</filexmlpath>
+							</setting>
+							<setting>
+								<name>rho1</name>
+								<defaultvalue>0.07</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Density of layer 1</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/layer1/density</filexmlpath>
+							</setting>
+							<setting>
+								<name>rho2</name>
+								<defaultvalue>0.7</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Density of layer 2</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/layer2/density</filexmlpath>
+							</setting>
+						</child>
 					</child>
 				</child>
 			</child>
@@ -912,6 +935,29 @@
 					<setting>
 						<name>Output Prefix</name>
 						<defaultvalue>megamol</defaultvalue>
+						<type>string</type>
+						<editor>lineedit</editor>
+						<description>Defines a filename prefix for the output file.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/outputprefix</filexmlpath>
+					</setting>
+				</child>
+				<child plurality="multi" importance="optional">
+					<name>Pov Writer</name>
+					<setting>
+						<defaultvalue>PovWriter</defaultvalue>
+						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
+					</setting>
+					<setting>
+						<name>Writefrequency</name>
+						<defaultvalue>1000</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Write out every nth timestep.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/writefrequency</filexmlpath>
+					</setting>
+					<setting>
+						<name>Output Prefix</name>
+						<defaultvalue>pov</defaultvalue>
 						<type>string</type>
 						<editor>lineedit</editor>
 						<description>Defines a filename prefix for the output file.</description>
