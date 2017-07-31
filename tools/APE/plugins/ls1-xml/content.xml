@@ -829,7 +829,7 @@
 					</setting>
 				</child>
 				<child plurality="multi" importance="optional">
-					<name>MMPLD Writer Multi</name>
+					<name>MMPLD Writer</name>
 					<setting>
 						<defaultvalue>MmpldWriter</defaultvalue>
 						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
@@ -848,7 +848,7 @@
 					</setting>
 					<setting>
 						<name>Spheres XML Include</name>
-						<defaultvalue>sphereparams_n2.xml</defaultvalue>
+						<defaultvalue>sphereparams.xml</defaultvalue>
 						<type>string</type>
 						<editor>lineedit</editor>
 						<description>Define the xml file that contains the spheres definitions.</description>
