@@ -896,6 +896,88 @@
 					</setting>
 				</child>
 				<child plurality="multi" importance="optional">
+					<name>Domain Profiles</name>
+					<setting>
+						<defaultvalue>DomainProfiles</defaultvalue>
+						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
+					</setting>
+					<setting>
+						<name>numBins X</name>
+						<defaultvalue>1</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Number of sampling bins in X-direction</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/units/x</filexmlpath>
+					</setting>
+					<setting>
+						<name>numBins Y</name>
+						<defaultvalue>100</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Number of sampling bins in Y-direction</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/units/y</filexmlpath>
+					</setting>
+					<setting>
+						<name>numBins Z</name>
+						<defaultvalue>100</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Number of sampling bins in Z-direction</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/units/z</filexmlpath>
+					</setting>
+					<setting>
+						<name>Init timestep</name>
+						<defaultvalue>0</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Timestep with which sampling should start</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/timesteps/init</filexmlpath>
+					</setting>
+					<setting>
+						<name>Recording frequency</name>
+						<defaultvalue>1</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Recording every nth timestep</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/timesteps/recording</filexmlpath>
+					</setting>
+					<setting>
+						<name>Output frequency</name>
+						<defaultvalue>10000</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Write profiles every nth timestep</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/timesteps/output</filexmlpath>
+					</setting>
+					<setting>
+						<name>Output prefix</name>
+						<defaultvalue>megamol</defaultvalue>
+						<type>string</type>
+						<editor>lineedit</editor>
+						<description>Defines a filename prefix for the output files.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/outputprefix</filexmlpath>
+					</setting>
+					<child plurality="multi" importance="optional">
+						<name>Component</name>
+						<setting>
+							<name>Component ID</name>
+							<defaultvalue>1</defaultvalue>
+							<type>int</type>
+							<editor>lineedit</editor>
+							<description>Component that should be considered by sampling</description>
+							<filexmlpath>mardyn/simulation/output/outputplugin/components/component@id</filexmlpath>
+					</setting>
+					</child>
+					<setting>
+						<name>Option</name>
+						<defaultvalue>profileVirial</defaultvalue>
+						<type>string</type>
+						<editor>lineedit</editor>
+						<description>Specify if virial profiles should be sampled</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/options/option@keyword</filexmlpath>
+					</setting>
+				</child>
+				<child plurality="multi" importance="optional">
 					<name>Result Writer</name>
 					<setting>
 						<defaultvalue>ResultWriter</defaultvalue>

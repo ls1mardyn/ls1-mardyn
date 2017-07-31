@@ -50,6 +50,23 @@
         <writefrequency>50000</writefrequency>
         <outputprefix>cp_binary</outputprefix>
       </outputplugin>
+      
+      <outputplugin name="DomainProfiles">
+        <units> <x>1</x> <y>240</y> <z>1</z> </units>
+        <timesteps>
+          <init>0</init>
+          <recording>1</recording>
+          <output>1000</output>
+        </timesteps>
+        <outputprefix>profile</outputprefix>
+        <components>
+          <component id="1"></component>
+        </components>
+        <options>
+          <option keyword="profileVirial"/>
+        </options>
+      </outputplugin>
+      
       <outputplugin name="MmpldWriter" type="multi">
         <include query="/spheres">sphereparams_n2.xml</include>
         <writecontrol>
@@ -60,6 +77,7 @@
         </writecontrol>
         <outputprefix>megamol</outputprefix>
       </outputplugin>
+      
       <outputplugin name="SysMonOutput">
         <writefrequency>50</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
