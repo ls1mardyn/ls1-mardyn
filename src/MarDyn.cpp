@@ -10,9 +10,6 @@
 
 #include "WrapOpenMP.h"
 
-#if ENABLE_MPI
-#include "parallel/KDDecomposition.h"
-#endif
 #include "Simulation.h"
 #include "utils/compile_info.h"
 #include "utils/FileUtils.h"

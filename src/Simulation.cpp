@@ -10,8 +10,6 @@
 #include <sstream>
 #include <string>
 
-#include "WrapOpenMP.h"
-
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
