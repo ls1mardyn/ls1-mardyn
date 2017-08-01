@@ -12,6 +12,8 @@ public:
 	InputOldstyle();
 	~InputOldstyle();
 
+	void readXML(XMLfileUnits& xmlconfig);
+
 	//! @brief gets a filename and opens an ifstream associated with the given file
 	//!
 	//! As the reading of the phasespace file is separated into two parts,

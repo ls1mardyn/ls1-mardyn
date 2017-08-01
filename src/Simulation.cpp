@@ -650,20 +650,20 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 		readXML(inp);
 
-		string pspfile;
-		string pspfileheader;
-		string pspfiletype("ASCII");
-		if (inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype) ){
+		string oldpath = inp.getcurrentnodepath();
+		if(inp.changecurrentnode("ensemble/phasespacepoint/file")) {
+			global_log->info() << "Reading phase space from file." << endl;
+			string pspfiletype;
+			inp.getNodeValue("@type", pspfiletype);
+			global_log->info() << "Face space file type: " << pspfiletype << endl;
+
 			if (pspfiletype == "ASCII") {
-				if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
-					pspfile.insert(0, inp.getDir());
-					global_log->info() << "phasespacepoint description file:\t"
-							<< pspfile << endl;
-				}
 				_inputReader = (InputBase*) new InputOldstyle();
-				_inputReader->setPhaseSpaceFile(pspfile);
+				_inputReader->readXML(inp);
 			}
 			else if (pspfiletype == "binary") {
+				string pspfile;
+				string pspfileheader;
 				if (inp.getNodeValue("ensemble/phasespacepoint/file/header", pspfileheader)) {
 					pspfileheader.insert(0, inp.getDir());
 					global_log->info() << "phasespacepoint description file:\t"
@@ -681,14 +681,13 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			}
 			else {
-				global_log->error() << "Unknown type in node: ensemble/phasespacepoint/file, "
-						"expected: ASCII|binary. Programm exit ..." << endl;
+				global_log->error() << "Unknown phase space file type" << endl;
 				Simulation::exit(-1);
 			}
-			global_log->info() << "       phasespacepoint file type:\t"
-					<< pspfiletype << endl;
 		}
-		string oldpath = inp.getcurrentnodepath();
+		inp.changecurrentnode(oldpath);
+
+		oldpath = inp.getcurrentnodepath();
 		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
 			string generatorName;
 			inp.getNodeValue("@name", generatorName);
