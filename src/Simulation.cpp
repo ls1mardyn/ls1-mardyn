@@ -592,6 +592,57 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
+
+	oldpath = xmlconfig.getcurrentnodepath();
+	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
+		global_log->info() << "Reading phase space from file." << endl;
+		string pspfiletype;
+		xmlconfig.getNodeValue("@type", pspfiletype);
+		global_log->info() << "Face space file type: " << pspfiletype << endl;
+
+		if (pspfiletype == "ASCII") {
+			_inputReader = (InputBase*) new InputOldstyle();
+			_inputReader->readXML(xmlconfig);
+		}
+		else if (pspfiletype == "binary") {
+			_inputReader = (InputBase*) new BinaryReader();
+			_inputReader->readXML(xmlconfig);
+
+			//@todo read header should be either part of readPhaseSpace or readXML.
+			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
+			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+		}
+		else {
+			global_log->error() << "Unknown phase space file type" << endl;
+			Simulation::exit(-1);
+		}
+	}
+	xmlconfig.changecurrentnode(oldpath);
+
+	oldpath = xmlconfig.getcurrentnodepath();
+	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/generator")) {
+		string generatorName;
+		xmlconfig.getNodeValue("@name", generatorName);
+		global_log->info() << "Generator: " << generatorName << endl;
+		if(generatorName == "GridGenerator") {
+			_inputReader = new GridGenerator();
+		}
+		else if(generatorName == "mkesfera") {
+			_inputReader = new MkesferaGenerator();
+		}
+		else if(generatorName == "mkTcTS") {
+			_inputReader = new MkTcTSGenerator();
+		}
+		else if (generatorName == "CubicGridGenerator") {
+			_inputReader = new CubicGridGeneratorInternal();
+		}
+		else {
+			global_log->error() << "Unknown generator: " << generatorName << endl;
+			Simulation::exit(1);
+		}
+		_inputReader->readXML(xmlconfig);
+	}
+	xmlconfig.changecurrentnode(oldpath);
 }
 
 void Simulation::readConfigFile(string filename) {
@@ -649,58 +700,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		}
 
 		readXML(inp);
-
-		string oldpath = inp.getcurrentnodepath();
-		if(inp.changecurrentnode("ensemble/phasespacepoint/file")) {
-			global_log->info() << "Reading phase space from file." << endl;
-			string pspfiletype;
-			inp.getNodeValue("@type", pspfiletype);
-			global_log->info() << "Face space file type: " << pspfiletype << endl;
-
-			if (pspfiletype == "ASCII") {
-				_inputReader = (InputBase*) new InputOldstyle();
-				_inputReader->readXML(inp);
-			}
-			else if (pspfiletype == "binary") {
-				_inputReader = (InputBase*) new BinaryReader();
-				_inputReader->readXML(inp);
-
-				//@todo read header should be either part of readPhaseSpace or readXML.
-				double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
-				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-			}
-			else {
-				global_log->error() << "Unknown phase space file type" << endl;
-				Simulation::exit(-1);
-			}
-		}
-		inp.changecurrentnode(oldpath);
-
-		oldpath = inp.getcurrentnodepath();
-		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
-			string generatorName;
-			inp.getNodeValue("@name", generatorName);
-			global_log->info() << "Generator: " << generatorName << endl;
-			if(generatorName == "GridGenerator") {
-				_inputReader = new GridGenerator();
-			}
-			else if(generatorName == "mkesfera") {
-				_inputReader = new MkesferaGenerator();
-			}
-			else if(generatorName == "mkTcTS") {
-				_inputReader = new MkTcTSGenerator();
-			}
-			else if (generatorName == "CubicGridGenerator") {
-				_inputReader = new CubicGridGeneratorInternal();
-			}
-			else {
-				global_log->error() << "Unknown generator: " << generatorName << endl;
-				Simulation::exit(1);
-			}
-			_inputReader->readXML(inp);
-		}
-		inp.changecurrentnode(oldpath);
-
 
 		inp.changecurrentnode("..");
 	} // simulation-section
