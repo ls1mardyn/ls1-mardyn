@@ -4,13 +4,14 @@
  *  Created on: Apr 11, 2014
  *      Author: andal
  */
-
 #ifndef BINARYREADER_H_
 #define BINARYREADER_H_
 
-#include "io/InputBase.h"
 #include <string>
 #include <fstream>
+
+#include "utils/xmlfile.h"
+#include "io/InputBase.h"
 
 class BinaryReader  : public InputBase {
 
@@ -18,6 +19,9 @@ public:
 
 	BinaryReader();
 	~BinaryReader();
+
+	void readXML(XMLfileUnits& xmlconfig);
+
 	//! @brief gets a filename and opens an ifstream associated with the given file
 	//!
 	//! As the reading of the phasespace file is separated into two parts,

@@ -662,21 +662,10 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				_inputReader->readXML(inp);
 			}
 			else if (pspfiletype == "binary") {
-				string pspfile;
-				string pspfileheader;
-				if (inp.getNodeValue("ensemble/phasespacepoint/file/header", pspfileheader)) {
-					pspfileheader.insert(0, inp.getDir());
-					global_log->info() << "phasespacepoint description file:\t"
-							<< pspfileheader << endl;
-				}
-				if (inp.getNodeValue("ensemble/phasespacepoint/file/data", pspfile)) {
-					pspfile.insert(0, inp.getDir());
-				}
 				_inputReader = (InputBase*) new BinaryReader();
-				_inputReader->setPhaseSpaceHeaderFile(pspfileheader);
-				_inputReader->setPhaseSpaceFile(pspfile);
+				_inputReader->readXML(inp);
 
-				// read header
+				//@todo read header should be either part of readPhaseSpace or readXML.
 				double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			}
