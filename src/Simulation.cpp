@@ -138,9 +138,6 @@ void Simulation::exit(int exitcode) {
 }
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
-#ifdef USE_VT
-	VT_traceoff();
-#endif
 	/* integrator */
 	if(xmlconfig.changecurrentnode("integrator")) {
 		string integratorType;
