@@ -7,8 +7,10 @@
 #include <cstdint>
 
 #include "Domain.h"
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecompBase.h"
 #include "parallel/DomainDecomposition.h"
+#endif
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
