@@ -16,6 +16,7 @@ using namespace std;
  *
  * Description
  */
+class DomainDecompBase;
 class MoleculeDataReader;
 class ReplicaGeneratorVLE : public InputBase
 {

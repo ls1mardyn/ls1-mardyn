@@ -7,8 +7,9 @@
 #include <cstdint>
 
 #include "Domain.h"
-#ifdef ENABLE_MPI
+
 #include "parallel/DomainDecompBase.h"
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
 #include "ensemble/EnsembleBase.h"
