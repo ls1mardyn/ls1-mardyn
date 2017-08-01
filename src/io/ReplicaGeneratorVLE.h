@@ -47,13 +47,14 @@ private:
 private:
 	std::vector<Molecule> _vecParticlesLiq;
 	std::vector<Molecule> _vecParticlesVap;
-	std::vector<bool> _vecIsLiq;
 	uint64_t _numParticlesLiq;
 	uint64_t _numParticlesVap;
 	uint64_t _numParticlesTotal;
 	uint32_t _numBlocksXZ;
 	uint32_t _numBlocksLiqY;
 	uint32_t _numBlocksVapY;
+	uint32_t _nIndexLiqBeginY;
+	uint32_t _nIndexLiqEndY;
 	std::string _strFilePathHeaderLiq;
 	std::string _strFilePathDataLiq;
 	std::string _strFilePathHeaderVap;
@@ -63,7 +64,6 @@ private:
 	double _dBoxLengthXYZ;
 	uint32_t _nMoleculeFormat;
 	MoleculeDataReader* _moleculeDataReader;
-	uint64_t _nSubdomainIndex[3];
 	uint64_t _nMaxID;
 	double _dMoleculeDiameter;
 	double _fspY[6];  // free space positions

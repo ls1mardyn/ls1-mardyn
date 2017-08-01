@@ -31,6 +31,8 @@ ReplicaGeneratorVLE::ReplicaGeneratorVLE()
 	_numBlocksXZ(0),
 	_numBlocksLiqY(0),
 	_numBlocksVapY(0),
+	_nIndexLiqBeginY(0),
+	_nIndexLiqEndY(0),
 	_strFilePathHeaderLiq("unknown"),
 	_strFilePathDataLiq("unknown"),
 	_strFilePathHeaderVap("unknown"),
@@ -158,6 +160,10 @@ void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("numblocks/liquid", _numBlocksLiqY);
 	xmlconfig.getNodeValue("numblocks/vapor",  _numBlocksVapY);
 
+	// liquid blocks begin/end index
+	_nIndexLiqBeginY = _numBlocksVapY;
+	_nIndexLiqEndY = _numBlocksVapY + _numBlocksLiqY - 1;
+
 	xmlconfig.getNodeValue("diameter",  _dMoleculeDiameter);
 
 	//init
@@ -185,14 +191,6 @@ void ReplicaGeneratorVLE::init(XMLfileUnits& xmlconfig)
 	}
 	_dBoxLengthXYZ = _dBoxLengthLiqXYZ;
 
-	// liq/vap distribution
-	for(uint8_t bi=0; bi<_numBlocksVapY; ++bi)
-		_vecIsLiq.push_back(false);
-	for(uint8_t bi=0; bi<_numBlocksLiqY; ++bi)
-		_vecIsLiq.push_back(true);
-	for(uint8_t bi=0; bi<_numBlocksVapY; ++bi)
-		_vecIsLiq.push_back(false);
-
 	// total num particles, maxID
 	_numParticlesTotal = (2*_numBlocksVapY*_numParticlesVap + _numBlocksLiqY*_numParticlesLiq) * _numBlocksXZ * _numBlocksXZ;
 	global_simulation->getDomain()->setglobalNumMolecules(_numParticlesTotal);
@@ -207,7 +205,7 @@ void ReplicaGeneratorVLE::init(XMLfileUnits& xmlconfig)
 		global_simulation->getDomain()->setGlobalLength(di, dLength[di]);
 	global_log->info() << "Domain box length = " << dLength[0] << ", " << dLength[1] << ", " << dLength[2] << endl;
 
-	/*
+/*
 	// Reset domain decomposition
 	if (domainDecomp != nullptr) {
 		delete domainDecomp;
@@ -242,26 +240,19 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 
 	global_log->info() << domainDecomp->getRank() << ": Constructing Replica VLE ..." << endl;
 
-	particleContainer->update();
-
-//	double dDomainLength[3];
 	double bbMin[3];
 	double bbMax[3];
-	double bbMid[3];
 	double bbLength[3];
 	uint64_t numBlocks[3];
 	uint64_t startIndex[3];
 
 	for(uint8_t di=0; di<3; ++di)
 	{
-//		dDomainLength[di] = domain->getGlobalLength(di);
 		bbMin[di] = domainDecomp->getBoundingBoxMin(di, domain);
 		bbMax[di] = domainDecomp->getBoundingBoxMax(di, domain);
-		bbMid[di] = (bbMin[di] + bbMax[di]) * 0.5;
 		bbLength[di] = bbMax[di] - bbMin[di];
-		numBlocks[di] = ceil(bbLength[di] / _dBoxLengthXYZ);
-		_nSubdomainIndex[di] = floor(bbMid[di] / bbLength[di]);  // TODO: need this??
-		startIndex[di] = floor(bbMin[di] / _dBoxLengthXYZ);
+		numBlocks[di]  =  ceil(bbLength[di] / _dBoxLengthXYZ);
+		startIndex[di] = floor(bbMin[di]    / _dBoxLengthXYZ);
 	}
 
 	// Init maxID
@@ -275,10 +266,11 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 	cout << domainDecomp->getRank() << ": _nMaxID (init) = " << _nMaxID << endl;
 	cout << domainDecomp->getRank() << ": bbMin = " << bbMin[0] << ", " << bbMin[1] << ", " << bbMin[2] << endl;
 	cout << domainDecomp->getRank() << ": bbMax = " << bbMax[0] << ", " << bbMax[1] << ", " << bbMax[2] << endl;
-	cout << domainDecomp->getRank() << ": bbMid = " << bbMid[0] << ", " << bbMid[1] << ", " << bbMid[2] << endl;
 	cout << domainDecomp->getRank() << ": bbLength = " << bbLength[0] << ", " << bbLength[1] << ", " << bbLength[2] << endl;
 	cout << domainDecomp->getRank() << ": numBlocks = " << numBlocks[0] << ", " << numBlocks[1] << ", " << numBlocks[2] << endl;
 	cout << domainDecomp->getRank() << ": startIndex = " << startIndex[0] << ", " << startIndex[1] << ", " << startIndex[2] << endl;
+	cout << domainDecomp->getRank() << ": _dBoxLengthXYZ = " << _dBoxLengthXYZ << endl;
+	cout << domainDecomp->getRank() << ": bbLength/_dBoxLengthXYZ = " << bbLength[0]/_dBoxLengthXYZ << ", " << bbLength[1]/_dBoxLengthXYZ << ", " << bbLength[2]/_dBoxLengthXYZ << endl;
 #endif
 
 	uint64_t bi[3];  // block index
@@ -297,16 +289,8 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 				for(uint8_t di=0; di<3; ++di)
 					dShift[di] = bi[di] * _dBoxLengthXYZ;
 
-				if(_vecIsLiq.size() <= bi[1] )
-				{
-					cout << domainDecomp->getRank() << ": bi[1] = " << bi[1] << " >= _vecIsLiq.size() = " << _vecIsLiq.size() << endl;
-					cout << domainDecomp->getRank() << ": startIndex[1] = " << startIndex[1] << endl;
-					cout << domainDecomp->getRank() << ": numBlocks[1] = " << numBlocks[1] << endl;
-					Simulation::exit(-1);
-				}
-
 				std::vector<Molecule>* ptrVec;
-				if(true == _vecIsLiq.at(bi[1]) )
+				if(bi[1] >= _nIndexLiqBeginY && bi[1] <= _nIndexLiqEndY)
 					ptrVec = &_vecParticlesLiq;
 				else
 					ptrVec = &_vecParticlesVap;
