@@ -2588,8 +2588,8 @@ void UniformPseudoParticleContainer::processFarField(ParticleCellPointers& cell)
 			}// for j closed
 		} // current particle closed
 
-	//	_domain->addLocalUpot(uSum);
-	//	_domain->addLocalVirial(virialSum);
+		_domain->setLocalUpot(uSum + _domain->getLocalUpot());
+		_domain->setLocalVirial(virialSum + _domain->getLocalVirial());
 	//	_domain->addLocalP_xx(P_xxSum);
 	//	_domain->addLocalP_yy(P_yySum);
 	//	_domain->addLocalP_zz(P_zzSum);
