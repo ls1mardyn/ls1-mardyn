@@ -103,7 +103,7 @@ NumberOfComponents      1
   in the header. For each component there is a line with 5 integer values denoting
   the number of centers for
   \verbatim
-  #lennard-jones   #charge   #dipole   #quadrupole   #tersoff
+  #lennard-jones   #charge   #dipole   #quadrupole   
   \endverbatim
 
   for each of the centers there has to be a line of integers describing the center
