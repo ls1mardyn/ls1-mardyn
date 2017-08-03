@@ -142,20 +142,21 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
         }
         if ((int) (i * percentage) > percentageRead) {
             percentageRead = i * percentage;
-            Log::global_log->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
+            Log::global_log->info() << "Finished generating molecules: " << (percentageRead) << "%\r" << std::flush;
         }
     }
-    Log::global_log->info() << std::endl;
+	Log::global_log->info() << "Finished generating molecules: " << 100 << "%" << std::endl;
 
 	insertMoleculesInContainer(particleContainer);
-
+	Log::global_log->info() << "CCG: Synchronizing" << std::endl;
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(id); //number of local molecules
 	domainDecomp->collCommScanSum();
 	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
 	domainDecomp->collCommFinalize();
 	// fix ID's to be unique:
-
+	Log::global_log->info() << "CCG: Synchronizing done" << std::endl;
+	Log::global_log->info() << "CCG: correcting ids" << std::endl;
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -167,7 +168,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 			mol->setid(mol->id() + idOffset);
 		}
 	}
-
+	Log::global_log->info() << "CCG: correcting ids done" << std::endl;
 	//std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
 	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
 
@@ -181,7 +182,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 
 	_moleculeBuffer.resize(0);
 	_moleculeBuffer.shrink_to_fit();
-
+	Log::global_log->info() << "CCG: completed input" << std::endl;
 	return id + idOffset;
 }
 
