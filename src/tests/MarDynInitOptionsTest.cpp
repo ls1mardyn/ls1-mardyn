@@ -15,7 +15,7 @@ using namespace std;
 TEST_SUITE_REGISTRATION(MarDynInitOptionsTest);
 
 // declaration of the function to be tested in Mardyn.cpp
-optparse::Values& initOptions(optparse::OptionParser *op);
+void initOptions(optparse::OptionParser *op);
 
 
 MarDynInitOptionsTest::MarDynInitOptionsTest() {
