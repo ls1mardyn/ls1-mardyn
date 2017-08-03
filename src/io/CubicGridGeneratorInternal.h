@@ -49,7 +49,7 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 private:
-	void bufferMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
+	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
 	void insertMoleculesInContainer(ParticleContainer* particleContainer, const unsigned int thread);
 	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components);
 	/**
