@@ -622,7 +622,7 @@ public:
 	
 	/// \brief std::string cast operator
 	/// XMLfile will cast to a string with XML content
-	operator const std::string() const;
+	operator std::string() const;
 	
 	/// \brief number of registered queries
 	/// return the number of active queries

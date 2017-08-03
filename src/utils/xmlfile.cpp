@@ -157,7 +157,7 @@ XMLfile::Query XMLfile::query(const char* querystr) const
 }
 
 
-XMLfile::operator const string() const
+XMLfile::operator string() const
 {
 	stringstream ss;
 	ss << m_xmldoc;
