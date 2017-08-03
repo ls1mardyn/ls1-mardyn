@@ -11,9 +11,10 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
-#include "parallel/FullShell.h"
-#include "parallel/HalfShell.h"
-#include "parallel/Midpoint.h"
+#include "parallel/ZonalMethods/FullShell.h"
+#include "parallel/ZonalMethods/HalfShell.h"
+#include "parallel/ZonalMethods/Midpoint.h"
+#include "parallel/ZonalMethods/NeutralTerritory.h"
 
 using Log::global_log;
 
@@ -42,45 +43,59 @@ DomainDecompMPIBase::~DomainDecompMPIBase() {
 }
 
 void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
+	// store current path
+	string oldPath(xmlconfig.getcurrentnodepath());
+
 	std::string neighbourCommunicationScheme = "indirect";
 	xmlconfig.getNodeValue("CommunicationScheme", neighbourCommunicationScheme);
 
-	std::string communicationScheme = "fs";
-	xmlconfig.getNodeValue("HaloScheme", communicationScheme);
+	std::string zonalMethod = "fs";
+	xmlconfig.changecurrentnode("../datastructure");
+	xmlconfig.getNodeValue("traversalSelector", zonalMethod);
+	if(zonalMethod != "fs" && zonalMethod != "hs" && zonalMethod != "mp" && zonalMethod != "nt"){
+		global_log->info() << "No zonal method for " << zonalMethod << " traversal exists. Using full shell." << std::endl;
+		zonalMethod = "fs";
+	}
 
-	setCommunicationScheme(neighbourCommunicationScheme, communicationScheme);
+	setCommunicationScheme(neighbourCommunicationScheme, zonalMethod);
+
+	// reset path
+	xmlconfig.changecurrentnode(oldPath);
 }
 
 int DomainDecompMPIBase::getNonBlockingStageCount(){
 	return _neighbourCommunicationScheme->getCommDims();
 }
 
-void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string commScheme){
+void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string zonalMethod){
 	if(_neighbourCommunicationScheme!=nullptr){
 		delete _neighbourCommunicationScheme;
 	}
 
-	CommunicationScheme* commSchemeP;
+	ZonalMethod* zonalMethodP;
 
 	// CommunicationScheme will delete the pointer
-	if(commScheme=="fs"){
-		commSchemeP = new FullShell();
-	}else if(commScheme=="hs"){
-		commSchemeP = new HalfShell();
-	}else if(commScheme=="mp"){
-		commSchemeP = new Midpoint();
-	}else{
-		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'fs', 'hs' and 'mp'"
+	if(zonalMethod=="fs"){
+		zonalMethodP = new FullShell();
+	}else if(zonalMethod=="hs"){
+		zonalMethodP = new HalfShell();
+	}else if(zonalMethod=="mp"){
+		zonalMethodP = new Midpoint();
+	}else if(zonalMethod=="nt"){
+		zonalMethodP = new NeutralTerritory();
+	}else {
+		global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'hs', 'mp' and 'nt'"
 				<< std::endl;
 		Simulation::exit(1);
 	}
+	global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
 	if (scheme=="direct"){
 		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(commSchemeP);
+		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP);
 	} else if(scheme=="indirect"){
 		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(commSchemeP);
+		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(zonalMethodP);
 	} else{
 		global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;

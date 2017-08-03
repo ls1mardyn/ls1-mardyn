@@ -11,15 +11,15 @@
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
 #include "Domain.h"
-#include "CommunicationScheme.h"
+#include "parallel/ZonalMethods/ZonalMethod.h"
 
-NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, CommunicationScheme* commScheme) :
-	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _commScheme(commScheme){
+NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
+	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
 	_neighbours.resize(this->getCommDims());
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
-	delete _commScheme;
+	delete _zonalMethod;
 }
 
 void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
@@ -75,9 +75,9 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
 			if(msgType == FORCES){
 				_neighbours[0][i].initSend<ParticleForceData>(moleculeContainer, domainDecomp->getCommunicator(),
-									domainDecomp->getMPIParticleForceType(), msgType);
-			}else{
-			_neighbours[0][i].initSend<ParticleData>(moleculeContainer, domainDecomp->getCommunicator(),
+					domainDecomp->getMPIParticleForceType(), msgType);
+			} else {
+				_neighbours[0][i].initSend<ParticleData>(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 			}
 		}
@@ -211,8 +211,8 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	for (unsigned int d = 0; d < _commDimms; d++) {
 		_neighbours[d].clear();
 	}
-	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 };
-	std::vector<HaloRegion> haloRegions = _commScheme->getHaloRegions(ownRegion, cutoffRadius, _coversWholeDomain);
+	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , cutoffRadius};
+	std::vector<HaloRegion> haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
 		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
@@ -409,8 +409,8 @@ void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cuto
 	for (unsigned int d = 0; d < _commDimms; d++) {
 		_neighbours[d].clear();
 	}
-	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 };
-	std::vector<HaloRegion> haloRegions = _commScheme->getHaloRegions(ownRegion, cutoffRadius, _coversWholeDomain);
+	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, cutoffRadius};
+	std::vector<HaloRegion> haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
 		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);

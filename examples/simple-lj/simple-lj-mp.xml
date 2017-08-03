@@ -42,7 +42,6 @@
     <algorithm>
       <parallelisation type="DomainDecomposition">
       	<CommunicationScheme>indirect</CommunicationScheme>
-      	<HaloScheme>mp</HaloScheme>
       </parallelisation>
       <datastructure type="LinkedCells">
           <traversalSelector>mp</traversalSelector>

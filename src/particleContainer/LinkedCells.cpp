@@ -1160,7 +1160,7 @@ std::string LinkedCells::getName() {
 }
 
 bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
-	const double epsi = this->_cutoffRadius * 1e-3;	//1e-9; // TODO ___What epsilon to use? Or should this be dynamic?
+	const double epsi = this->_cutoffRadius * 1e-6;
 	auto index = getCellIndexOfPoint(pos);
 	auto& cell = *getCell(index);
 

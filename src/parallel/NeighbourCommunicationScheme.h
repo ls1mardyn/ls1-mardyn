@@ -13,7 +13,7 @@
 
 class DomainDecompMPIBase;
 class Domain;
-class CommunicationScheme;
+class ZonalMethod;
 class HaloRegion;
 class NeighbourCommunicationScheme {
 public:
@@ -26,7 +26,7 @@ public:
 		return _commDimms;
 	}
 	NeighbourCommunicationScheme() = delete;
-	NeighbourCommunicationScheme(unsigned int commDimms, CommunicationScheme* commScheme);
+	NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod);
 
 	virtual ~NeighbourCommunicationScheme();
 
@@ -72,8 +72,8 @@ protected:
 
 	unsigned int _commDimms;
 
-	//! communication scheme (FullShell, EightShell, ...)
-	CommunicationScheme* _commScheme;
+	//! zonal method (FullShell, HalfShell, ...)
+	ZonalMethod* _zonalMethod;
 
 	//! list of all neighbours (non-squeezed)
 	std::vector<CommunicationPartner> _fullShellNeighbours;
@@ -82,8 +82,8 @@ protected:
 
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
-	DirectNeighbourCommunicationScheme(CommunicationScheme* commScheme) :
-			NeighbourCommunicationScheme(1, commScheme) {
+	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
+			NeighbourCommunicationScheme(1, zonalMethod) {
 	}
 	virtual ~DirectNeighbourCommunicationScheme() {
 	}
@@ -120,8 +120,8 @@ protected:
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
 
-	IndirectNeighbourCommunicationScheme(CommunicationScheme* commScheme) :
-			NeighbourCommunicationScheme(3, commScheme) {
+	IndirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
+			NeighbourCommunicationScheme(3, zonalMethod) {
 	}
 	virtual ~IndirectNeighbourCommunicationScheme() {
 	}

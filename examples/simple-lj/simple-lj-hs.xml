@@ -42,7 +42,6 @@
     <algorithm>
       <parallelisation type="DomainDecomposition">
       	<CommunicationScheme>indirect</CommunicationScheme>
-      	<HaloScheme>hs</HaloScheme>
       </parallelisation>
       <datastructure type="LinkedCells">
           <traversalSelector>hs</traversalSelector>

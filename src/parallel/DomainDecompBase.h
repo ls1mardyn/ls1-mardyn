@@ -73,7 +73,7 @@ public:
 	/**
 	 * @brief Exchanges forces at the domain boundaries if it's required by the cell container.
 	 * @param moleculeContainer The particle container
-	 * @param domain TODO ___Remove if never used
+	 * @param domain
 	 */
 	virtual void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain);
 

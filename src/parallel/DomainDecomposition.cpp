@@ -320,8 +320,8 @@ std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegi
 		haloLow[d] = haloRegion.rmin[d];
 		haloHigh[d] = haloRegion.rmax[d];
 		//TODO: ONLY FULL SHELL!!!
-		boundaryLow[d] = haloRegion.rmin[d] - haloRegion.offset[d] * cutoff; //rmin[d] if offset[d]==0
-		boundaryHigh[d] = haloRegion.rmax[d] - haloRegion.offset[d] * cutoff; //if offset[d]!=0 : shift by cutoff in negative offset direction
+		boundaryLow[d] = haloRegion.rmin[d] - haloRegion.offset[d] * haloRegion.width; //rmin[d] if offset[d]==0
+		boundaryHigh[d] = haloRegion.rmax[d] - haloRegion.offset[d] * haloRegion.width; //if offset[d]!=0 : shift by cutoff in negative offset direction
 		if (_coords[d] == 0 and haloRegion.offset[d] == -1) {
 			shift[d] = domain->getGlobalLength(d);
 		} else if (_coords[d] == _gridSize[d] - 1 and haloRegion.offset[d] == 1) {
