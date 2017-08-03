@@ -292,7 +292,8 @@ private:
 	std::string _group_description;
 };
 
-struct Callback {
+class Callback {
+public:
 	virtual void operator() (const Option& option, const std::string& opt, const std::string& val, const OptionParser& parser) = 0;
 	virtual ~Callback() {}
 };
