@@ -16,6 +16,9 @@ enum InitSphereData : uint8_t
 };
 
 class Simulation;
+
+/** @brief Output plugin to generate a MegaMol™ Particle List Data file (*.mmpld).
+ */
 class MmpldWriter : public OutputBase
 {
 protected:
