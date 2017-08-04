@@ -4,6 +4,8 @@
 #include <mpi.h>
 #endif
 
+#include <endian.h>
+
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -18,7 +20,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
-#include "/usr/include/endian.h"
 #include "utils/FileUtils.h"
 
 
