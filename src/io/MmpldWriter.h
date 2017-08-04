@@ -72,8 +72,11 @@ protected:
 	void PrepareWriteControl();
 
 protected:
+	/** First time step to be recorded */
 	uint64_t _startTimestep;
+	/** time steps between two records*/
 	uint64_t _writeFrequency;
+	/** Max time step up to which shall be recorded */
 	uint64_t _stopTimestep;
 	uint64_t _numFramesPerFile;
 	std::string _outputPrefix;
@@ -91,14 +94,12 @@ protected:
 	std::string _strSphereDataFilename;
 	uint8_t _bInitSphereData;
 	bool _bWriteControlPrepared;
-	bool _bInitFrameDone;
 
 	// split files
 	uint8_t _nFileIndex;
 	uint8_t _numFiles;
 	std::vector<string> _vecFilePrefixes;
 	std::vector<uint64_t> _vecFramesPerFile;
-	uint64_t _nextRecSimstep;
 	std::string _strOutputPrefixCurrent;
 	uint32_t _frameCountMax;
 	int _mmpldversion;

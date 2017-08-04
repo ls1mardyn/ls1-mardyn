@@ -30,7 +30,7 @@ using namespace std;
 
 MmpldWriter::MmpldWriter() :
 		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
-		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(0),
+		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _nFileIndex(0), _numFiles(1),
 		_strOutputPrefixCurrent("unknown"), _frameCountMax(1), _mmpldversion(MMPLD_DEFAULT_VERSION)
 {
 	if (0 == _writeFrequency) {
@@ -41,8 +41,8 @@ MmpldWriter::MmpldWriter() :
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
 		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
-		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep),
-		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
+			_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _nFileIndex(0), _numFiles(1),
+			_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
 	if (0 == _writeFrequency) {
 		mardyn_exit(-1);
@@ -212,11 +212,6 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 #ifdef ENABLE_MPI
 	}
 #endif
-
-	// eventually write initial frame
-	if(false == _bInitFrameDone && (_startTimestep == _simulation.getNumInitTimesteps() ) )
-		this->doOutput(particleContainer, domainDecomp, domain, _nextRecSimstep, NULL, NULL);
-	_bInitFrameDone = true;
 }
 
 void MmpldWriter::doOutput( ParticleContainer* particleContainer,
@@ -224,10 +219,9 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
 		   map<unsigned, CavityEnsemble>* /*mcav*/)
 {
-	// control writing with desired write frequency
-	if( _nextRecSimstep != simstep)
+	if((simstep < _startTimestep) || (simstep > _stopTimestep) || (0 != ((simstep - _startTimestep) % _writeFrequency)) ) {
 		return;
-	_nextRecSimstep += _writeFrequency;
+	}
 
 	stringstream filenamestream, outputstream;
 	filenamestream << _strOutputPrefixCurrent;
@@ -429,15 +423,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	MPI_File_close(&fh);
 #endif
-
-	// split data to multiple files
-	if(_frameCount == _frameCountMax)
-	{
-		if( (_nFileIndex+1) < _numFiles)
-			this->MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
-		else
-			_nextRecSimstep = 0;  // stop sampling
-	}
 }
 
 void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/)
@@ -563,7 +548,6 @@ void MmpldWriter::PrepareWriteControl()
 	_bWriteControlPrepared = true;
 
 	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps();
-	_nextRecSimstep = _startTimestep;
 	if( 0 == _stopTimestep )
 		_stopTimestep = _simulation.getNumTimesteps();
 	else
