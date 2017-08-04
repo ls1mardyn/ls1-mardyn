@@ -97,16 +97,18 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	double percentage = 1.0 / (end_i - start_i) * 100.0;
 
     const int blocksize = 4;
-
+#if defined(_OPENMP)
 #pragma omp parallel reduction(max:id)
+#endif
     {
 
     	std::vector<Molecule> threadPrivateBuffer;
     	int myID = mardyn_get_thread_num();
     	int numThreads = mardyn_get_num_threads();
     	long unsigned int threadPrivateId = myID;
-
+#if defined(_OPENMP)
 #pragma omp for collapse(3)
+#endif
 		for (int i = start_i; i < end_i; i += blocksize) {
 			for (int j = start_j; j < end_j; j += blocksize) {
 				for (int k = start_k; k < end_k; k += blocksize) {
