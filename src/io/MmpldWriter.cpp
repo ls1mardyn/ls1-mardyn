@@ -48,10 +48,6 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 	}
 }
 
-MmpldWriter::~MmpldWriter()
-{
-}
-
 void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 {
 	// write control

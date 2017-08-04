@@ -36,7 +36,8 @@ protected:
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 	MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 			std::string outputPrefix);
-	virtual ~MmpldWriter();
+	virtual ~MmpldWriter() {}
+
 	virtual void SetNumSphereTypes() = 0;
 	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol) = 0;
 	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) = 0;
