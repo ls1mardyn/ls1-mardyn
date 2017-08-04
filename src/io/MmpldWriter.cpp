@@ -21,16 +21,17 @@
 #include "/usr/include/endian.h"
 #include "utils/FileUtils.h"
 
-// set mmpld file version. possible values: 100 or 102
-#define MMPLD_FILE_VERSION 100
+
+// default version to use for mmpld format writing. possible values: 100 or 102
+#define MMPLD_DEFAULT_VERSION 100
 
 using Log::global_log;
 using namespace std;
 
-MmpldWriter::MmpldWriter()
-		:	_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
-		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(0),
-		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
+MmpldWriter::MmpldWriter() :
+		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
+		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(0),
+		_strOutputPrefixCurrent("unknown"), _frameCountMax(1), _mmpldversion(MMPLD_DEFAULT_VERSION)
 {
 	if (0 == _writeFrequency) {
 		mardyn_exit(-1);
@@ -60,6 +61,16 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "Stop sampling at simstep: " << _stopTimestep << endl;
 	global_log->info() << "Split files every " << _numFramesPerFile << "th frame."<< endl;
 
+	xmlconfig.getNodeValue("mmpldversion", _mmpldversion);
+	switch(_mmpldversion) {
+		case 100:
+		case 102:
+			break;
+		default:
+			global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << endl;
+			global_simulation->exit(1);
+			break;
+	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
 
@@ -159,25 +170,9 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00};
 	mmpldfstream.write((char*)magicIdentifier, sizeof(magicIdentifier));
 
-	//version number
-	uint16_t versionNumber;
-	switch (MMPLD_FILE_VERSION)
-	{
-	case 100:
-		versionNumber = htole16(100);
-		break;
 
-	case 102:
-		versionNumber = htole16(102);
-		break;
-
-	default:
-		cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-		return;
-		break;
-	}
-
-	mmpldfstream.write((char*)&versionNumber, sizeof(versionNumber));
+	uint16_t mmpldversion_little_endian = htole16(_mmpldversion);
+	mmpldfstream.write((char*)&mmpldversion_little_endian, sizeof(mmpldversion_little_endian));
 
 	//calculate the number of frames
 	uint32_t numframes;
@@ -297,21 +292,18 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 			//add particle list header
 			outputsize += 18;
 			if (nSphereTypeIndex == 0){
-
-				switch (MMPLD_FILE_VERSION){
+				switch (_mmpldversion){
 					case 100:
 						//add space for number of particle lists
 						outputsize += 4;
 						break;
-
 					case 102:
 						//add space for timestamp and number of particle lists
 						outputsize += 8;
 						break;
-
 					default:
-						cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-						return;
+						global_log->error() << "Unsupported mmpld version: " << _mmpldversion << endl;
+						global_simulation->exit(1);
 						break;
 				}
 			}
@@ -356,19 +348,17 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				
 				float frameHeader_timestamp = simstep;
 				
-				switch (MMPLD_FILE_VERSION){
+				switch (_mmpldversion){
 					case 100:
 						//do not write timestamp to frame header
 						break;
-
 					case 102:
 						//write timestamp to frame header
 						MPI_File_write(fh, &frameHeader_timestamp, 1, MPI_FLOAT, &status);
 						break;
-
 					default:
-						cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-						return;
+						global_log->error() << "Unsupported mmpld version: " << _mmpldversion << endl;
+						global_simulation->exit(1);
 						break;
 				}
 				

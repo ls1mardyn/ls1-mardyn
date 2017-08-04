@@ -101,6 +101,7 @@ protected:
 	uint64_t _nextRecSimstep;
 	std::string _strOutputPrefixCurrent;
 	uint32_t _frameCountMax;
+	int _mmpldversion;
 };
 
 class MmpldWriterSimpleSphere : public MmpldWriter
