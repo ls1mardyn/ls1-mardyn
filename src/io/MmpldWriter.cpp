@@ -228,6 +228,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	filenamestream << _strOutputPrefixCurrent;
 	filenamestream << ".mmpld";
 	string filename = filenamestream.str();
+	global_log->info() << "Writing MMPLD frame for simstep " << simstep << " to file " << filename << endl;
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -403,9 +404,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	// data of frame is written
 	_frameCount++;
-#ifndef NDEBUG
-	cout << "rank[" << rank << "]: _frameCount = " << _frameCount << endl;
-#endif
 
 	// write seek table entry
 	if (rank == 0)
@@ -566,15 +564,6 @@ void MmpldWriter::PrepareWriteControl()
 	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
 		_numFramesPerFile = numFramesTotal;
 
-#ifndef NDEBUG
-	cout << "_startTimestep    = " << _startTimestep << endl;
-	cout << "_writeFrequency   = " << _writeFrequency << endl;
-	cout << "_stopTimestep     = " << _stopTimestep << endl;
-	cout << "_numFramesPerFile = " << _numFramesPerFile << endl;
-	cout << "numTimesteps      = " << numTimesteps << endl;
-	cout << "numFramesTotal    = " << numFramesTotal << endl;
-#endif
-
 	// init frames per file vector
 	if(_numFramesPerFile > 0)
 		_numFiles = numFramesTotal/_numFramesPerFile;
@@ -600,13 +589,6 @@ void MmpldWriter::PrepareWriteControl()
 		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(_numFiles);
 		_vecFilePrefixes.push_back(sstrPrefix.str() );
 	}
-
-#ifndef NDEBUG
-	for(auto fit : _vecFilePrefixes)
-		cout << fit << endl;
-	for(auto fit : _vecFramesPerFile)
-		cout << fit << endl;
-#endif
 }
 
 // derived classes
@@ -650,22 +632,3 @@ bool MmpldWriterMultiSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, 
 	}
 	return ret;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
