@@ -32,15 +32,9 @@ MmpldWriter::MmpldWriter()
 		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(0),
 		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
-	//	if (outputPrefix == "default") <-- what for??
-		if(false)
-			_appendTimestamp = true;
-		else
-			_appendTimestamp = false;
-
-		// ERROR
-		if (0 == _writeFrequency)
-			mardyn_exit(-1);
+	if (0 == _writeFrequency) {
+		mardyn_exit(-1);
+	}
 }
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
@@ -49,15 +43,9 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep),
 		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
-//	if (outputPrefix == "default") <-- what for??
-	if(false)
-		_appendTimestamp = true;
-	else
-		_appendTimestamp = false;
-
-	// ERROR
-	if (0 == _writeFrequency)
+	if (0 == _writeFrequency) {
 		mardyn_exit(-1);
+	}
 }
 
 MmpldWriter::~MmpldWriter()
@@ -78,13 +66,6 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
-	
-	int appendTimestamp = 0;
-	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
-	if(appendTimestamp > 0) {
-		_appendTimestamp = true;
-	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 
 	// sphere params: radius, colors
 	uint32_t numSites = 0;
@@ -161,14 +142,6 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 
 	stringstream filenamestream;
 	filenamestream << _strOutputPrefixCurrent;
-
-	/*
-	 * not in use actually
-	 *
-	if(_appendTimestamp) {
-		filenamestream << "-" << _timestampString;
-	}
-	*/
 	filenamestream << ".mmpld";
 
 	std::vector<char> filename(filenamestream.str().size()+1);
@@ -269,14 +242,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	stringstream filenamestream, outputstream;
 	filenamestream << _strOutputPrefixCurrent;
-
-	/*
-	 * not in use actually
-	 *
-	if(_appendTimestamp) {
-		filenamestream << "-" << _timestampString;
-	}
-	*/
 	filenamestream << ".mmpld";
 
 	std::vector<char> filename(filenamestream.str().size()+1);
@@ -502,13 +467,6 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 	stringstream filenamestream;
 	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
-	/*
-	 * not in use actually
-	 *
-	if(_appendTimestamp) {
-		filenamestream << "-" << _timestampString;
-	}
-	*/
 	filenamestream << ".mmpld";
 
 	std::vector<char> filename(filenamestream.str().size()+1);

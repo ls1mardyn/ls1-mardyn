@@ -73,7 +73,6 @@ protected:
 	uint64_t _stopTimestep;
 	uint64_t _numFramesPerFile;
 	std::string _outputPrefix;
-	bool _appendTimestamp;
 	std::string _timestampString;
 	uint32_t _numSeekEntries;
 	uint32_t _frameCount;
