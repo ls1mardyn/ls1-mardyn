@@ -33,11 +33,7 @@ MmpldWriter::MmpldWriter() :
 		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
 		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _nFileIndex(0), _numFiles(1),
 		_strOutputPrefixCurrent("unknown"), _frameCountMax(1), _mmpldversion(MMPLD_DEFAULT_VERSION)
-{
-	if (0 == _writeFrequency) {
-		mardyn_exit(-1);
-	}
-}
+{}
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
