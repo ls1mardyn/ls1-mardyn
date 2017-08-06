@@ -83,7 +83,7 @@ class FileHandlerXML(object):
 					for node in reversed(element.childNodes):
 						if node.nodeType == node.ELEMENT_NODE:
 							if node.tagName == path:
-								if path != fileInfo.xmlpath[-1]:	
+								if not path is fileInfo.xmlpath[-1]:
 									found = True
 									element = node
 								else:
