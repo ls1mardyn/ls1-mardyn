@@ -114,31 +114,22 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	_frameCountMax = _vecFramesPerFile.at(_nFileIndex);
 
 	// number of components / sites
-	_numComponents = (uint8_t)domain->getNumberOfComponents();
+	vector<Component> *components = global_simulation->getEnsemble()->getComponents();
+	_numComponents = components->size();
 	_numSitesPerComp.resize(_numComponents);
 	_nCompSitesOffset.resize(_numComponents);
 	_numSitesTotal = 0;
 
-	vector<Component>& vComponents = *(_simulation.getEnsemble()->getComponents() );
-	vector<Component>::iterator cit;
-	cit=vComponents.begin();
-
-	_nCompSitesOffset.at(0) = 0;
-	for(uint8_t cid=0; cid<_numComponents; cid++)
-	{
-		uint8_t numSites = (*cit).numLJcenters();
+	for(int cid = 0; cid < _numComponents; ++cid) {
+		Component &component = components->at(cid);
+		/** @todo MMPLD writer takes into account only LJ sites at the moment, here */
+		int numSites = component.numLJcenters();
 		_numSitesPerComp.at(cid) = numSites;
-		if(cid>0)
-			_nCompSitesOffset.at(cid) = _nCompSitesOffset.at(cid-1) + _numSitesPerComp.at(cid-1);
-		// total number of sites (all components)
+		_nCompSitesOffset.at(cid) = _numSitesTotal; /* offset is total number of sites so far */
+		global_log->debug() << "MMPLD Writer: Component[" << cid << "] numSites=" << numSites << " offset=" << _nCompSitesOffset.at(cid) << endl;
 		_numSitesTotal += numSites;
-		cit++;
 	}
-
-#ifndef NDEBUG
-	for(uint8_t cid=0; cid<_numComponents; cid++)
-		cout << "_nCompSitesOffset[" << (uint32_t)cid << "] = " << (uint32_t)_nCompSitesOffset.at(cid) << endl;
-#endif
+	global_log->debug() << "MMPLD writer: Total number of sites taken into account: " << _numSitesTotal << endl;
 
 	// init radius and color of spheres
 	this->InitSphereData();
