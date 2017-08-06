@@ -554,7 +554,7 @@ void MmpldWriter::PrepareWriteControl()
 	}
 
 	uint64_t numTimesteps = _stopTimestep - _startTimestep;
-	uint64_t numFramesTotal = numTimesteps/_writeFrequency;
+	uint64_t numFramesTotal = numTimesteps/_writeFrequency + 1;
 	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
 		_numFramesPerFile = numFramesTotal;
 
@@ -564,7 +564,6 @@ void MmpldWriter::PrepareWriteControl()
 	else
 		_numFiles = 1;
 	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
-	_vecFramesPerFile.at(0) += 1;  // +1 frame in first file: start configuration
 
 	// init file prefix vector
 	for(uint8_t fi=0; fi<_numFiles; ++fi)
