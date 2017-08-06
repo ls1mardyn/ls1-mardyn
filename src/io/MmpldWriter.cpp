@@ -555,14 +555,13 @@ void MmpldWriter::PrepareWriteControl()
 
 	uint64_t numTimesteps = _stopTimestep - _startTimestep;
 	uint64_t numFramesTotal = numTimesteps/_writeFrequency + 1;
-	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
+	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0) {
 		_numFramesPerFile = numFramesTotal;
+	}
+
+	_numFiles = (numFramesTotal + _numFramesPerFile - 1) / _numFramesPerFile;
 
 	// init frames per file vector
-	if(_numFramesPerFile > 0)
-		_numFiles = numFramesTotal/_numFramesPerFile;
-	else
-		_numFiles = 1;
 	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
 
 	// init file prefix vector
@@ -570,16 +569,6 @@ void MmpldWriter::PrepareWriteControl()
 	{
 		std::stringstream sstrPrefix;
 		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(fi+1);
-		_vecFilePrefixes.push_back(sstrPrefix.str() );
-	}
-
-	// handle the case: numFramesTotal not a multiple of _numFramesPerFile
-	if(_numFramesPerFile > 0 && 0 != numFramesTotal % _numFramesPerFile)
-	{
-		_numFiles++;
-		_vecFramesPerFile.push_back(numFramesTotal % _numFramesPerFile);
-		std::stringstream sstrPrefix;
-		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(_numFiles);
 		_vecFilePrefixes.push_back(sstrPrefix.str() );
 	}
 }
