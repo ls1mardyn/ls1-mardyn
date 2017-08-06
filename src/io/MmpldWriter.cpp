@@ -545,8 +545,6 @@ void MmpldWriter::PrepareWriteControl()
 	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps();
 	if( 0 == _stopTimestep )
 		_stopTimestep = _simulation.getNumTimesteps();
-	else
-		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() ) ? _stopTimestep  : _simulation.getNumTimesteps();
 
 	if(_stopTimestep < _startTimestep)
 	{
