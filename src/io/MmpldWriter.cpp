@@ -210,12 +210,15 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	if((simstep < _startTimestep) || (simstep > _stopTimestep) || (0 != ((simstep - _startTimestep) % _writeFrequency)) ) {
 		return;
 	}
+	if(_frameCount == _frameCountMax) {
+		MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
+	}
 
 	stringstream filenamestream, outputstream;
 	filenamestream << _strOutputPrefixCurrent;
 	filenamestream << ".mmpld";
 	string filename = filenamestream.str();
-	global_log->info() << "Writing MMPLD frame for simstep " << simstep << " to file " << filename << endl;
+	global_log->info() << "Writing MMPLD frame " << _frameCount << " for simstep " << simstep << " to file " << filename << endl;
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
