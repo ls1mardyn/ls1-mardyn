@@ -26,13 +26,13 @@ CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "CubicGridGeneratorInternal: " << std::endl;
+	global_log->info() << "------------------------------------------------------------------------" << std::endl;
+	global_log->info() << "CubicGridGeneratorInternal (CGG)" << std::endl;
 	xmlconfig.getNodeValue("numMolecules", _numMolecules);
 	if(_numMolecules)global_log->info() << "numMolecules: " << _numMolecules << std::endl;
 	double density = -1.;
 	xmlconfig.getNodeValue("density", density);
 	global_log->info() << "density: " << density << std::endl;
-	global_log->info() << "";
 	xmlconfig.getNodeValue("binaryMixture", _binaryMixture);
 	global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
 	// setting both or none is not allowed!
@@ -176,7 +176,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	global_simulation->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
 	Log::global_log->info() << "Initial IO took:                 "
 			<< global_simulation->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
-
+	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	return id + idOffset;
 }
 
