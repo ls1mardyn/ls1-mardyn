@@ -35,13 +35,8 @@
 
 			<phasespacepoint>
 				<generator name="CubicGridGenerator">
-					<!--<numMolecules>10000</numMolecules>-->
+					<specification>density</specification>
 					<density>0.785302672</density>
-					<moleculeBufferSize> 1000 </moleculeBufferSize>
-					<blockSizesX> 3 </blockSizesX>
-					<blockSizesY> 3 </blockSizesY>
-					<blockSizesZ> 3 </blockSizesZ>
-					<!--8800*8.923894e-5-->
 					<binaryMixture>false</binaryMixture>
 				</generator>
 			</phasespacepoint>
@@ -82,9 +77,9 @@
 				<outputprefix>simple-lj</outputprefix>
 			</outputplugin>
 			<outputplugin name="CheckpointWriter">
-				<type>ASCII</type>
-				<writefrequency>10</writefrequency>
-				<outputprefix>simple-lj</outputprefix>
+				<type>binary</type>
+				<writefrequency>500</writefrequency>
+				<outputprefix>cp_binary</outputprefix>
 			</outputplugin>
 			<outputplugin name="MmpldWriter" type="simple">
 				<include query="/spheres">./sphereparams_1clj.xml</include>

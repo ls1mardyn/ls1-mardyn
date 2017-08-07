@@ -256,44 +256,37 @@
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator@name</filexmlpath>
 							</setting>
 							<setting>
+								<name>Specification</name>
+								<defaultvalue>density</defaultvalue>
+								<type>string</type>
+								<editor>select</editor>
+								<editor-options>density,numMolecules</editor-options>
+								<description>Choose specification</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/specification</filexmlpath>
+							</setting>
+							<setting>
 								<name>Density</name>
 								<defaultvalue>0.7</defaultvalue>
 								<type>float</type>
 								<editor>lineedit</editor>
 								<description>Specify desired density</description>
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/density</filexmlpath>
+								<depends>
+									<settingname>Specification</settingname>
+									<value>density</value>
+								</depends>
 							</setting>
 							<setting>
-								<name>Buffersize</name>
+								<name>numMolecules</name>
 								<defaultvalue>1000</defaultvalue>
 								<type>int</type>
 								<editor>lineedit</editor>
-								<description>Specify size of molecule buffer</description>
-								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/moleculeBufferSize</filexmlpath>
-							</setting>
-							<setting>
-								<name>Blocksize X</name>
-								<defaultvalue>3</defaultvalue>
-								<type>int</type>
-								<editor>lineedit</editor>
-								<description>Specify blocksize X</description>
-								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/blockSizesX</filexmlpath>
-							</setting>
-							<setting>
-								<name>Blocksize Y</name>
-								<defaultvalue>3</defaultvalue>
-								<type>int</type>
-								<editor>lineedit</editor>
-								<description>Specify blocksize Y</description>
-								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/blockSizesY</filexmlpath>
-							</setting>
-							<setting>
-								<name>Blocksize Z</name>
-								<defaultvalue>3</defaultvalue>
-								<type>int</type>
-								<editor>lineedit</editor>
-								<description>Specify blocksize Z</description>
-								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/blockSizesZ</filexmlpath>
+								<description>Specify desired number of molecules</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/numMolecules</filexmlpath>
+								<depends>
+									<settingname>Specification</settingname>
+									<value>numMolecules</value>
+								</depends>
 							</setting>
 							<setting>
 								<name>Binary mixture</name>
