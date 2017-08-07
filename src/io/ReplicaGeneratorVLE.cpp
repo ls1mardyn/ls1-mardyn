@@ -152,20 +152,32 @@ void ReplicaGeneratorVLE::readReplicaPhaseSpaceData(const std::string& strFilePa
 
 void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
 {
+	global_log->info() << "------------------------------------------------------------------------" << std::endl;
+	global_log->info() << "ReplicaGeneratorVLE" << std::endl;
+
 	xmlconfig.getNodeValue("files/liquid/header", _strFilePathHeaderLiq);
 	xmlconfig.getNodeValue("files/liquid/data", _strFilePathDataLiq);
 	xmlconfig.getNodeValue("files/vapor/header", _strFilePathHeaderVap);
 	xmlconfig.getNodeValue("files/vapor/data", _strFilePathDataVap);
 
+	global_log->info() << "Importing data for liquid box from file: " << _strFilePathDataLiq << std::endl;
+	global_log->info() << "Importing data for vapour box from file: " << _strFilePathDataVap << std::endl;
+
 	xmlconfig.getNodeValue("numblocks/xz",     _numBlocksXZ);
 	xmlconfig.getNodeValue("numblocks/liquid", _numBlocksLiqY);
 	xmlconfig.getNodeValue("numblocks/vapor",  _numBlocksVapY);
+
+	global_log->info() << "Replicating " << _numBlocksXZ << " x " << _numBlocksXZ << " boxes in XZ layers." << std::endl;
+	global_log->info() << "Replicating " << _numBlocksLiqY << " (liquid) + " << _numBlocksVapY << " (vapour) + " << _numBlocksLiqY << " (liquid) boxes"
+			" = " << 2*_numBlocksVapY + _numBlocksLiqY << " (total) in a row of Y direction." << std::endl;
 
 	// liquid blocks begin/end index
 	_nIndexLiqBeginY = _numBlocksVapY;
 	_nIndexLiqEndY = _numBlocksVapY + _numBlocksLiqY - 1;
 
 	xmlconfig.getNodeValue("diameter",  _dMoleculeDiameter);
+
+	global_log->info() << "Using molecule diameter: " << _dMoleculeDiameter << " for spacing between liquid and vapour phase. " << std::endl;
 
 	//init
 	this->init(xmlconfig);
@@ -238,8 +250,8 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 {
 //	if(3 != domainDecomp->getRank() )
 //		return 0;
-
-	global_log->info() << domainDecomp->getRank() << ": Constructing Replica VLE ..." << endl;
+	global_simulation->startTimer("REPLICA_GENERATOR_VLE_INPUT");
+	Log::global_log->info() << "Constructing Replica VLE" << std::endl;
 
 	double bbMin[3];
 	double bbMax[3];
@@ -331,6 +343,11 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 	domainDecomp->collCommFinalize();
 	domain->setglobalNumMolecules(numParticlesGlobal);
 
+	global_simulation->stopTimer("REPLICA_GENERATOR_VLE_INPUT");
+	global_simulation->setOutputString("REPLICA_GENERATOR_VLE_INPUT", "Initial IO took:                 ");
+	Log::global_log->info() << "Initial IO took:                 "
+			<< global_simulation->getTime("REPLICA_GENERATOR_VLE_INPUT") << " sec" << std::endl;
+	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	return 0;
 }
 
