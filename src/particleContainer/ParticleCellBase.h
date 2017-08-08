@@ -12,9 +12,7 @@
 #include "molecules/Molecule.h"
 
 #ifdef QUICKSCHED
-extern "C"{
 #include <quicksched.h>
-}
 #endif
 
 class ParticleCellBase: public Cell {

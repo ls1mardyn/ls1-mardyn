@@ -20,9 +20,9 @@ public:
 	P2MCellProcessor(PseudoParticleContainer * pseudoParticleContainer);
 	~P2MCellProcessor();
 
-	void initTraversal() {}
+	void initTraversal();
 	void processCell(ParticleCellPointers& cell);
-	void endTraversal() {}
+	void endTraversal();
 
 	void printTimers();
 
