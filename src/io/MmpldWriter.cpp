@@ -25,6 +25,7 @@
 
 // default version to use for mmpld format writing. possible values: 100 or 102
 #define MMPLD_DEFAULT_VERSION 100
+#define MMPLD_HEADER_DATA_SIZE 60
 
 using Log::global_log;
 using namespace std;
@@ -393,7 +394,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	if (rank == 0)
 	{
 		MPI_Status status;
-		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_frameCount-1));
+		uint64_t seektablePos =  MMPLD_HEADER_DATA_SIZE + (sizeof(uint64_t)*(_frameCount-1));
 		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition;
 		seekPosition = htole64(_seekTable.at(_frameCount-1) );
@@ -429,16 +430,15 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_Offset endPosition;
 		MPI_File_get_position(fh, &endPosition);
-		_seekTable.at(_numSeekEntries-1) = (uint64_t)endPosition;
-		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_numSeekEntries-1));
+
+		uint64_t seektablePos = MMPLD_HEADER_DATA_SIZE + (_frameCount * sizeof(uint64_t));
 		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
-		uint64_t seekPosition;
+		uint64_t seekPosition = htole64(endPosition); /** @todo end of frame offset may not be identical to file end! */
 		MPI_Status status;
-		seekPosition = htole64(_seekTable.at(_numSeekEntries-1) );
-		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
+		MPI_File_write(fh, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
 		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
-		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
-		MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
+		MPI_File_seek(fh, 8, MPI_SEEK_SET);  // 8: frame count position in file header
+		MPI_File_write(fh, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
 		MPI_File_close(&fh);
 	}else{
 		MPI_File fh;
