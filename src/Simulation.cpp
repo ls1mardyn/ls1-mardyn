@@ -1080,6 +1080,7 @@ void Simulation::simulate() {
 #endif
 #endif
 	_memoryProfiler->doOutput();
+	output(_initSimulation);
 
 	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
 		// Too many particle exchanges in the first 10 simulation steps.
