@@ -42,6 +42,7 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"></parallelisation>
       <datastructure type="LinkedCells">
+          <traversalSelector>c08</traversalSelector>
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >

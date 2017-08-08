@@ -167,15 +167,15 @@ void FastMultipoleMethod::printTimers() {
 void FastMultipoleMethod::runner(int type, void *data) {
 	struct qsched_payload *payload = (qsched_payload *)data;
 	switch (type) {
-		case PreprocessCell:{
+		case P2PPreprocessSingleCell:{
             contextFMM->_P2PProcessor->preprocessCell(*payload->cell.pointer);
 			break;
 		} /* PreprocessCell */
-		case PostprocessCell:{
+		case P2PPostprocessSingleCell:{
             contextFMM->_P2PProcessor->postprocessCell(*payload->cell.pointer);
 			break;
 		} /* PostprocessCell */
-		case P2P:{
+		case P2Pc08StepBlock:{
             // TODO optimize calculation order (1. corners 2. edges 3. rest) and gradually release resources
 			int                x                 = payload->cell.coordinates[0];
 			int                y                 = payload->cell.coordinates[1];
@@ -187,7 +187,7 @@ void FastMultipoleMethod::runner(int type, void *data) {
 
 			break;
 		} /* P2P */
-        case FFTInitialize: {
+        case M2LInitializePair: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
             if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
@@ -208,8 +208,8 @@ void FastMultipoleMethod::runner(int type, void *data) {
             contextContainer->getFFTAcceleration()->FFT_initialize_Source(source, radius);
             contextContainer->getFFTAcceleration()->FFT_initialize_Target(target);
 			break;
-        } /* FFTInitialize */
-        case FFTFinalize: {
+        } /* M2LInitialize */
+        case M2LFinalizePair: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
             if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
@@ -225,15 +225,16 @@ void FastMultipoleMethod::runner(int type, void *data) {
                     .getExpansion();
             contextContainer->getFFTAcceleration()->FFT_finalize_Target(target, radius);
             break;
-        } /* FFTFinalize */
-        case M2LFourier: {
+        } /* M2LFinalize */
+        case M2LTranslation: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
-            contextContainer->M2LStep<true, true, false, false>(payload->currentMultipole,
-																payload->currentEdgeLength,
-																payload->currentLevel);
+			// TODO bad idea to make this a task
+			contextContainer->M2LTowerPlateStep<true, true, false, false>(payload->currentMultipole,
+																		  payload->currentEdgeLength,
+																		  payload->currentLevel);
 			break;
-        } /* M2LFourier */
+        } /* M2LTranslation */
         case Dummy: {
             // do nothing, only serves for synchronization
             break;

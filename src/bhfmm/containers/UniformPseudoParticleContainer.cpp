@@ -569,20 +569,21 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 
 		for (int multipoleId = 0; multipoleId < maxId; ++multipoleId){
 			payload.currentMultipole = multipoleId;
+			// TODO: This is bull...
 			idInit = qsched_addtask(scheduler,
-									FastMultipoleMethod::FFTInitialize,
+									FastMultipoleMethod::M2LInitializePair,
 									task_flag_none,
 									&payload,
 									sizeof(payload),
 									1);
 			idM2L  = qsched_addtask(scheduler,
-									FastMultipoleMethod::M2LFourier,
+									FastMultipoleMethod::M2LTranslation,
 									task_flag_none,
 									&payload,
 									sizeof(payload),
 									1);
 			idFinalize = qsched_addtask(scheduler,
-										FastMultipoleMethod::FFTFinalize,
+										FastMultipoleMethod::M2LFinalizePair,
 										task_flag_none,
 										&payload,
 										sizeof(payload),
@@ -1789,7 +1790,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 	//M2L in Fourier space
 	for (int m1Loop = loop_min; m1Loop < loop_max; m1Loop++) {
-		M2LStep<UseVectorization, UseTFMemoization, UseM2L_2way, UseOrderReduction>(m1Loop, mpCells, curLevel);
+		M2LTowerPlateStep<UseVectorization, UseTFMemoization, UseM2L_2way, UseOrderReduction>(m1Loop, mpCells, curLevel);
 	} //m1 closed
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 
@@ -1860,7 +1861,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 
 // TODO: Inline hack
 template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
-void UniformPseudoParticleContainer::M2LStep(int m1Loop, int mpCells, int curLevel) {
+void UniformPseudoParticleContainer::M2LTowerPlateStep(int m1Loop, int mpCells, int curLevel) {
 
 	int m1v[3]; //cell1 coordinates
 	int m2v[3]; //cell2 coordinates

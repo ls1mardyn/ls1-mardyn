@@ -73,7 +73,7 @@ public:
     FFTAccelerationAPI *getFFTAcceleration() ;
 
     template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
-    void M2LStep(int m1Loop, int mpCells, int curLevel);
+    void M2LTowerPlateStep(int m1Loop, int mpCells, int curLevel);
 
 private:
 	LeafNodesContainer* _leafContainer;

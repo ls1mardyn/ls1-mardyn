@@ -72,7 +72,7 @@ public:
 	void printTimers();
 
 	enum taskType {
-		Dummy, PreprocessCell, PostprocessCell, P2P, FFTInitialize, FFTFinalize, M2LFourier
+		Dummy, P2PPreprocessSingleCell, P2PPostprocessSingleCell, P2Pc08StepBlock, M2LInitializePair, M2LFinalizePair, M2LTranslation
 	};
 private:
 	int _order;

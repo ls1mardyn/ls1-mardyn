@@ -178,7 +178,7 @@ void LeafNodesContainer::generateP2PTasks() {
 					payload.cell.coordinates[1] = y;
 					payload.cell.coordinates[2] = z;
 					_cells[cellIndex].setP2PId(qsched_addtask(_scheduler,
-															  FastMultipoleMethod::P2P,
+															  FastMultipoleMethod::P2Pc08StepBlock,
 															  task_flag_none,
 															  &payload,
 															  sizeof(payload),
@@ -189,7 +189,7 @@ void LeafNodesContainer::generateP2PTasks() {
 				// PREPROCESS TASK
 				payload.cell.pointer = &_cells[cellIndex];
 				_cells[cellIndex].setPreprocessId(qsched_addtask(_scheduler,
-																 FastMultipoleMethod::PreprocessCell,
+																 FastMultipoleMethod::P2PPreprocessSingleCell,
 																 task_flag_none,
 																 &payload,
 																 sizeof(payload),
@@ -197,7 +197,7 @@ void LeafNodesContainer::generateP2PTasks() {
 				);
 				// POSTPROCESS TASK
 				_cells[cellIndex].setPostprocessId(qsched_addtask(_scheduler,
-																  FastMultipoleMethod::PostprocessCell,
+																  FastMultipoleMethod::P2PPostprocessSingleCell,
 																  task_flag_none,
 																  &payload,
 																  sizeof(payload),
