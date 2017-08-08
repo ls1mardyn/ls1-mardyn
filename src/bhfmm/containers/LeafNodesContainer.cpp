@@ -113,15 +113,15 @@ void LeafNodesContainer::initializeCells() {
 				_cells[cellIndex].skipCellFromInnerRegion();
 
 				if (ix == 0 || iy == 0 || iz == 0 ||
-				    ix == _numCellsPerDimension[0]-1 ||
-				    iy == _numCellsPerDimension[1]-1 ||
-				    iz == _numCellsPerDimension[2]-1) {
+					ix == _numCellsPerDimension[0]-1 ||
+					iy == _numCellsPerDimension[1]-1 ||
+					iz == _numCellsPerDimension[2]-1) {
 					_cells[cellIndex].assignCellToHaloRegion();
 				}
 				else if (ix == 1 || iy == 1 || iz == 1 ||
-				         ix == _numCellsPerDimension[0]-2 ||
-				         iy == _numCellsPerDimension[1]-2 ||
-				         iz == _numCellsPerDimension[2]-2) {
+						 ix == _numCellsPerDimension[0]-2 ||
+						 iy == _numCellsPerDimension[1]-2 ||
+						 iz == _numCellsPerDimension[2]-2) {
 					_cells[cellIndex].assignCellToBoundaryRegion();
 				}
 				else {
@@ -184,24 +184,25 @@ void LeafNodesContainer::generateP2PTasks() {
 															  sizeof(payload),
 															  1)
 					);
-					// PREPROCESS TASK
-					payload.cell.pointer = &_cells[cellIndex];
-					_cells[cellIndex].setPreprocessId(qsched_addtask(_scheduler,
-																	 FastMultipoleMethod::PreprocessCell,
-																	 task_flag_none,
-																	 &payload,
-																	 sizeof(payload),
-																	 1)
-					);
-					// POSTPROCESS TASK
-					_cells[cellIndex].setPostprocessId(qsched_addtask(_scheduler,
-																	  FastMultipoleMethod::PostprocessCell,
-																	  task_flag_none,
-																	  &payload,
-																	  sizeof(payload),
-																	  1)
-					);
 				}
+				// Pre and post tasks for every cell
+				// PREPROCESS TASK
+				payload.cell.pointer = &_cells[cellIndex];
+				_cells[cellIndex].setPreprocessId(qsched_addtask(_scheduler,
+																 FastMultipoleMethod::PreprocessCell,
+																 task_flag_none,
+																 &payload,
+																 sizeof(payload),
+																 1)
+				);
+				// POSTPROCESS TASK
+				_cells[cellIndex].setPostprocessId(qsched_addtask(_scheduler,
+																  FastMultipoleMethod::PostprocessCell,
+																  task_flag_none,
+																  &payload,
+																  sizeof(payload),
+																  1)
+				);
 			} /* end for-x */
 		} /* end for-y*/
 	} /* end for-z */
@@ -220,7 +221,6 @@ void LeafNodesContainer::generateP2PTasks() {
 						for (auto k = 0; k < payload.taskBlockSize[2]
 										 && z + k < _numCellsPerDimension[2]; ++k) {
 							// create locks for only for resources at edges
-							// TODO: only do this for corners
 							if(i == payload.taskBlockSize[0] - 1
 							   || j == payload.taskBlockSize[1] - 1
 							   || k == payload.taskBlockSize[2] - 1){
@@ -234,18 +234,18 @@ void LeafNodesContainer::generateP2PTasks() {
 							}
 							// one preprocess (partly) unlocks 8 P2P
 							qsched_addunlock(_scheduler,
-											 _cells[cellIndex]
+											 _cells[cellIndexOf3DIndex(x + i, y + j, z + k)]
 													 .getTaskData()
 													 ._preprocessId,
-											 _cells[cellIndexOf3DIndex(x + i, y + j, z + k)]
+											 _cells[cellIndex]
 													 .getTaskData()
 													 ._P2PId);
 							// every P2P (partly) unlocks one postprocess
 							qsched_addunlock(_scheduler,
-											 _cells[cellIndexOf3DIndex(x + i, y + j, z + k)]
+											 _cells[cellIndex]
 													 .getTaskData()
 													 ._P2PId,
-											 _cells[cellIndex]
+											_cells[cellIndexOf3DIndex(x + i, y + j, z + k)]
 													 .getTaskData()
 													 ._postprocessId);
 						}
@@ -450,7 +450,7 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 		}
 
 		cellProcessor.endTraversal();
-    #endif
+	#endif
 }
 
 void LeafNodesContainer::c08Step(long int baseIndex, VectorizedChargeP2PCellProcessor &cellProcessor) {
