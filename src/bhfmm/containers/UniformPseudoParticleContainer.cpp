@@ -571,7 +571,7 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 			payload.currentMultipole = multipoleId;
 			// TODO: This is bull...
 			idInit = qsched_addtask(scheduler,
-									FastMultipoleMethod::M2LInitializePair,
+									FastMultipoleMethod::M2LInitializeCell,
 									task_flag_none,
 									&payload,
 									sizeof(payload),
@@ -583,7 +583,7 @@ void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
 									sizeof(payload),
 									1);
 			idFinalize = qsched_addtask(scheduler,
-										FastMultipoleMethod::M2LFinalizePair,
+										FastMultipoleMethod::M2LFinalizeCell,
 										task_flag_none,
 										&payload,
 										sizeof(payload),

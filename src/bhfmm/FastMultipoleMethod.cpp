@@ -186,8 +186,8 @@ void FastMultipoleMethod::runner(int type, void *data) {
 			contextContainer->c08Step(baseIndex, *contextFMM->_P2PProcessor);
 
 			break;
-		} /* P2P */
-        case M2LInitializePair: {
+		} /* P2Pc08StepBlock */
+        case M2LInitializeCell: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
             if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
@@ -208,8 +208,8 @@ void FastMultipoleMethod::runner(int type, void *data) {
             contextContainer->getFFTAcceleration()->FFT_initialize_Source(source, radius);
             contextContainer->getFFTAcceleration()->FFT_initialize_Target(target);
 			break;
-        } /* M2LInitialize */
-        case M2LFinalizePair: {
+        } /* M2LInitializeCell */
+        case M2LFinalizeCell: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
             if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
@@ -225,7 +225,7 @@ void FastMultipoleMethod::runner(int type, void *data) {
                     .getExpansion();
             contextContainer->getFFTAcceleration()->FFT_finalize_Target(target, radius);
             break;
-        } /* M2LFinalize */
+        } /* M2LFinalizeCell */
         case M2LTranslation: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
