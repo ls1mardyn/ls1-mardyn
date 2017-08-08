@@ -26,6 +26,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <utility>
 #include <string>
 #include <cmath>
 //#include <iterator>  // std::advance
@@ -130,6 +131,13 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("target/componentID", _nTargetComponentID);
 	xmlconfig.getNodeValue("target/density", _dTargetDensity);
 	global_log->info()<< "DensityControl: target componentID = " << _nTargetComponentID << ", target density = " << _dTargetDensity << endl;
+
+	// change identity
+	uint32_t nFrom, nTo;
+	nFrom = nTo = 0;
+	xmlconfig.getNodeValue("change/from", nFrom);
+	xmlconfig.getNodeValue("change/to", nTo);
+	_nCompIDsChangePair = std::make_pair(nFrom, nTo);
 }
 
 void dec::ControlRegion::CheckBounds()
@@ -320,7 +328,8 @@ void dec::ControlRegion::MeasureDensity(Molecule* mol)
 void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, bool& bDeleteMolecule)
 {
 	// check componentID
-	if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
+	uint32_t cid = mol->componentid();
+	if(cid+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
 		return;
 
 //    int nRank = domainDecomp->getRank();
@@ -330,69 +339,58 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 	for(uint8_t d=0; d<3; ++d)
 		if( !(PositionIsInside(d, mol->r(d) ) ) ) return;
 
-	uint32_t flagsNEMD = dynamic_cast<DensityControl*>(this->GetParent() )->GetFlagsNEMD();
-	// change identity (component) of molecules Ac --> N2 (aceton to nitrogen) --> NEMD_CHANGE_COMPONENT_AC_TO_N2
-	if(flagsNEMD & NEMD_CHANGE_COMPONENT_AC_TO_N2)
+	// --> CHANGE_IDENTITY
+	if(cid+1 == _nCompIDsChangePair.first)
 	{
-		std::array<uint8_t, 3> arrChangComps;
-		arrChangComps = {2, 1, 2};
-
-		uint8_t cid = (uint8_t)mol->componentid();
-
 		std::vector<Component>* ptrComps = simulation->getEnsemble()->getComponents();
-		if(arrChangComps.at(cid) != cid)
+		Component* compOld = mol->component();
+		Component* compNew = &(ptrComps->at(_nCompIDsChangePair.second-1) );
+
+		uint8_t numRotDOF_old = compOld->getRotationalDegreesOfFreedom();
+		uint8_t numRotDOF_new = compNew->getRotationalDegreesOfFreedom();
+		double dUkinOld = mol->U_kin();
+		double dUkinPerDOF = dUkinOld / (3 + numRotDOF_old);
+
+		// rotation
+		double U_rot = mol->U_rot();
+		global_log->info() << "U_rot_old = " << U_rot << endl;
+
+		double L[3];
+		double Ipa[3];
+
+		Ipa[0] = compNew->I11();
+		Ipa[1] = compNew->I22();
+		Ipa[2] = compNew->I33();
+
+		for(uint8_t dim=0; dim<3; ++dim)
 		{
-			Component* compOld = mol->component();
-			Component* compNew = &(ptrComps->at(arrChangComps.at(cid) ) );
-
-			// rotation
-			double U_rot = mol->U_rot();
-	#ifndef NDEBUG
-			cout << "U_rot = " << U_rot << endl;
-	#endif
-			double L[3];
-			double Ipa[3];
-			double U_rot_FG[3];
-
-			Ipa[0] = compNew->I11();
-			Ipa[1] = compNew->I22();
-			Ipa[2] = compNew->I33();
-
-			U_rot_FG[0] = U_rot * 1./3.;  // 0.5 * 2./3.
-			U_rot_FG[1] = U_rot * 1./3.;  // 0.5 * 2./3.
-			U_rot_FG[2] = U_rot * 0.0;
-
-			L[0] = sqrt(U_rot_FG[0] * 2. * Ipa[0] );
-			L[1] = sqrt(U_rot_FG[1] * 2. * Ipa[1] );
-			L[2] = sqrt(U_rot_FG[2] * 2. * Ipa[2] );
-	#ifndef NDEBUG
-			cout << "L[0] = " << L[0] << endl;
-			cout << "L[1] = " << L[1] << endl;
-			cout << "L[2] = " << L[2] << endl;
-	#endif
-			mol->setD(0, L[0] );
-			mol->setD(1, L[1] );
-			mol->setD(2, L[2] );
-
-			Quaternion q(1., 0., 0., 0.);
-			mol->setq(q);
-
-			mol->setComponent(compNew);
-	//		mol->clearFM();  // <-- necessary?
-	#ifndef NDEBUG
-			cout << "Changed cid of molecule " << mol->id() << " from: " << (int32_t)cid << " to: " << mol->componentid() << endl;
-	#endif
-			double mr = compOld->m()/compNew->m();
-			double mrf = sqrt(mr);
-			mol->scale_v(mrf);
-
-			U_rot = mol->U_rot();
-	#ifndef NDEBUG
-			cout << "U_rot = " << U_rot << endl;
-	#endif
+			L[dim] = sqrt(dUkinPerDOF * 2. * Ipa[dim] );
+			mol->setD(dim, L[dim] );
 		}
+
+#ifndef NDEBUG
+		cout << "L[0] = " << L[0] << endl;
+		cout << "L[1] = " << L[1] << endl;
+		cout << "L[2] = " << L[2] << endl;
+#endif
+		Quaternion q(1., 0., 0., 0.);
+		mol->setq(q);
+
+		mol->setComponent(compNew);
+//		mol->clearFM();  // <-- necessary?
+#ifndef NDEBUG
+		cout << "Changed cid of molecule " << mol->id() << " from: " << (int32_t)cid << " to: " << mol->componentid() << endl;
+#endif
+
+		// update transl. kin. energy
+		double dScaleFactorTrans = sqrt(6*dUkinPerDOF/compNew->m()/mol->v2() );
+		mol->scale_v(dScaleFactorTrans);
+
+		U_rot = mol->U_rot();
+		global_log->info() << "U_rot_new = " << U_rot << endl;
 	}
-	// <-- NEMD_CHANGE_COMPONENT_AC_TO_N2
+	// <-- CHANGE_IDENTITY
+
 
     if( 0.0000001 > _dTargetDensity)
     {
