@@ -32,7 +32,7 @@ class Domain;
 class DomainDecompBase;
 
 namespace bhfmm {
-
+class FFTAccelerationAPI;
 class UniformPseudoParticleContainer: public PseudoParticleContainer {
 public:
 	UniformPseudoParticleContainer(double domainLength[3],
@@ -68,7 +68,7 @@ public:
 	//prints timer values to the standard output
 	void printTimers();
 
-    vector<vector<MpCell>> &getMpCellGlobalTop() ;
+    std::vector<std::vector<MpCell>> &getMpCellGlobalTop() ;
 
     FFTAccelerationAPI *getFFTAcceleration() ;
 
@@ -76,8 +76,8 @@ public:
     void M2LTowerPlateStep(int m1Loop, int mpCells, int curLevel);
 
 private:
+	FFTAccelerationAPI* _FFTAcceleration;
 	LeafNodesContainer* _leafContainer;
-
 	int _wellSep;
 	int _maxLevel;	//number of tree levels
 	int _globalLevel;	//number of levels in global tree
