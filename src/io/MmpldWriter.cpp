@@ -228,9 +228,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	//calculate number of spheres per component|siteType
 	uint32_t molcid = 0;
-	/*
-	 * should use this version in future
-	 */
 	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
 		this->CalcNumSpheresPerType(numSpheresPerType.data(), &(*mol));
 
@@ -382,16 +379,9 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		}  // if (rank == 0){
 
 		float spherePos[3];
-		/*
-		 * should use this version in future
-		 */
 		for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
 		{
 			if(true == GetSpherePos(spherePos, &(*mol), nSphereTypeIndex) )
-		/*
-		for (Molecule* mol = particleContainer->begin(); mol != particleContainer->end(); mol = particleContainer->next())
-		{
-			if(true == GetSpherePos(spherePos, mol, nSphereTypeIndex) )*/
 				MPI_File_write(fh, spherePos, 3, MPI_FLOAT, &status);
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
