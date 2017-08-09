@@ -64,7 +64,7 @@ public:
         std::copy(_data, _data + _size, sorted_data);
         std::sort(sorted_data, sorted_data + _size);
         T retValue = sorted_data[static_cast<size_t>(_size * p) - 1];
-        delete sorted_data;
+        delete[] sorted_data;
         return retValue;
     }
 
@@ -80,7 +80,7 @@ public:
         T qmin = sorted_data[static_cast<size_t>(_size * pmin) - 1];
         T qmax = sorted_data[static_cast<size_t>(_size * pmax) - 1];
         T retValue = qmax - qmin;
-        delete sorted_data;
+        delete[] sorted_data;
         return retValue;
     }
 

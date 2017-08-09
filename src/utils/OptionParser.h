@@ -278,7 +278,7 @@ private:
 class OptionGroup : public OptionParser {
 public:
 	OptionGroup(const OptionParser& p, const std::string& t, const std::string& d = "") :
-		_parser(p), _title(t), _group_description(d) {}
+		_title(t), _group_description(d) {}
 	virtual ~OptionGroup() {}
 
 	OptionGroup& title(const std::string& t) { _title = t; return *this; }
@@ -287,12 +287,12 @@ public:
 	const std::string& group_description() const { return _group_description; }
 
 private:
-	const OptionParser& _parser;
 	std::string _title;
 	std::string _group_description;
 };
 
-struct Callback {
+class Callback {
+public:
 	virtual void operator() (const Option& option, const std::string& opt, const std::string& val, const OptionParser& parser) = 0;
 	virtual ~Callback() {}
 };

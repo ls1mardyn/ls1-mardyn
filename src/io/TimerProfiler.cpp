@@ -153,6 +153,7 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 		make_tuple("DROPLET_GENERATOR_INPUT", vector<string>{"GENERATORS"}, true),
 		make_tuple("MS2RST_GENERATOR_INPUT", vector<string>{"GENERATORS"}, true),
 		make_tuple("REYLEIGH_TAYLOR_GENERATOR_INPUT", vector<string>{"GENERATORS"}, true),
+		make_tuple("REPLICA_GENERATOR_VLE_INPUT", vector<string>{"GENERATORS"}, true),
 		make_tuple("L2P_CELL_PROCESSOR_L2P", vector<string>{"CELL_PROCESSORS"}, true),
 		make_tuple("P2M_CELL_PROCESSOR_P2M", vector<string>{"CELL_PROCESSORS"}, true),
 		make_tuple("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", vector<string>{"CELL_PROCESSORS"}, true),

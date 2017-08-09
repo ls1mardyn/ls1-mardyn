@@ -136,7 +136,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	unsigned profileRecordingTimesteps = 1;
 	unsigned profileOutputTimesteps = 10000;
 	std::string profileOutputPrefix = "profile";
-	unsigned long initStatistics;
+	unsigned long initStatistics = 0;
 	xmlconfig.getNodeValue("timesteps/init", initStatistics);
 	xmlconfig.getNodeValue("timesteps/recording", profileRecordingTimesteps);
 	xmlconfig.getNodeValue("timesteps/output", profileOutputTimesteps);

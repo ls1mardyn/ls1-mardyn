@@ -4,6 +4,8 @@
 #include <mpi.h>
 #endif
 
+#include <endian.h>
+
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -18,50 +20,31 @@
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
-#include "/usr/include/endian.h"
 #include "utils/FileUtils.h"
 
-// set mmpld file version. possible values: 100 or 102
-#define MMPLD_FILE_VERSION 100
+
+// default version to use for mmpld format writing. possible values: 100 or 102
+#define MMPLD_DEFAULT_VERSION 100
+#define MMPLD_HEADER_DATA_SIZE 60
 
 using Log::global_log;
 using namespace std;
 
-MmpldWriter::MmpldWriter()
-		:	_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
-		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(0),
-		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
-{
-	//	if (outputPrefix == "default") <-- what for??
-		if(false)
-			_appendTimestamp = true;
-		else
-			_appendTimestamp = false;
-
-		// ERROR
-		if (0 == _writeFrequency)
-			mardyn_exit(-1);
-}
+MmpldWriter::MmpldWriter() :
+		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
+		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _nFileIndex(0), _numFiles(1),
+		_strOutputPrefixCurrent("unknown"), _frameCountMax(1), _mmpldversion(MMPLD_DEFAULT_VERSION)
+{}
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
 		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
-		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep),
-		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
+			_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _nFileIndex(0), _numFiles(1),
+			_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
-//	if (outputPrefix == "default") <-- what for??
-	if(false)
-		_appendTimestamp = true;
-	else
-		_appendTimestamp = false;
-
-	// ERROR
-	if (0 == _writeFrequency)
+	if (0 == _writeFrequency) {
 		mardyn_exit(-1);
-}
-
-MmpldWriter::~MmpldWriter()
-{
+	}
 }
 
 void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
@@ -71,28 +54,31 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("writecontrol/writefrequency", _writeFrequency);
 	xmlconfig.getNodeValue("writecontrol/stop", _stopTimestep);
 	xmlconfig.getNodeValue("writecontrol/framesperfile", _numFramesPerFile);
-	global_log->info() << "Start sampling from simstep: " << _startTimestep << endl;
-	global_log->info() << "Write with frequency: " << _writeFrequency << endl;
-	global_log->info() << "Stop sampling at simstep: " << _stopTimestep << endl;
-	global_log->info() << "Split files every " << _numFramesPerFile << "th frame."<< endl;
+	global_log->info() << "[MMPLD Writer] Start sampling from simstep: " << _startTimestep << endl;
+	global_log->info() << "[MMPLD Writer] Write with frequency: " << _writeFrequency << endl;
+	global_log->info() << "[MMPLD Writer] Stop sampling at simstep: " << _stopTimestep << endl;
+	global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< endl;
 
-	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
-	
-	int appendTimestamp = 0;
-	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
-	if(appendTimestamp > 0) {
-		_appendTimestamp = true;
+	xmlconfig.getNodeValue("mmpldversion", _mmpldversion);
+	switch(_mmpldversion) {
+		case 100:
+		case 102:
+			break;
+		default:
+			global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << endl;
+			global_simulation->exit(1);
+			break;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "[MMPLD Writer] Output prefix: " << _outputPrefix << endl;
 
 	// sphere params: radius, colors
 	uint32_t numSites = 0;
 	XMLfile::Query query = xmlconfig.query("spheres/site");
 	numSites = query.card();
-	global_log->info() << "Number of sites: " << numSites << endl;
+	global_log->info() << "[MMPLD Writer] Number of sites: " << numSites << endl;
 	if(numSites < 1) {
-		global_log->warning() << "No site parameters specified." << endl;
+		global_log->warning() << "[MMPLD Writer] No site parameters specified." << endl;
 	}
 	string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputSiteIter;
@@ -129,31 +115,22 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	_frameCountMax = _vecFramesPerFile.at(_nFileIndex);
 
 	// number of components / sites
-	_numComponents = (uint8_t)domain->getNumberOfComponents();
+	vector<Component> *components = global_simulation->getEnsemble()->getComponents();
+	_numComponents = components->size();
 	_numSitesPerComp.resize(_numComponents);
 	_nCompSitesOffset.resize(_numComponents);
 	_numSitesTotal = 0;
 
-	vector<Component>& vComponents = *(_simulation.getEnsemble()->getComponents() );
-	vector<Component>::iterator cit;
-	cit=vComponents.begin();
-
-	_nCompSitesOffset.at(0) = 0;
-	for(uint8_t cid=0; cid<_numComponents; cid++)
-	{
-		uint8_t numSites = (*cit).numLJcenters();
+	for(int cid = 0; cid < _numComponents; ++cid) {
+		Component &component = components->at(cid);
+		/** @todo MMPLD writer takes into account only LJ sites at the moment, here */
+		int numSites = component.numLJcenters();
 		_numSitesPerComp.at(cid) = numSites;
-		if(cid>0)
-			_nCompSitesOffset.at(cid) = _nCompSitesOffset.at(cid-1) + _numSitesPerComp.at(cid-1);
-		// total number of sites (all components)
+		_nCompSitesOffset.at(cid) = _numSitesTotal; /* offset is total number of sites so far */
+		global_log->debug() << "[MMPLD Writer] Component[" << cid << "] numSites=" << numSites << " offset=" << _nCompSitesOffset.at(cid) << endl;
 		_numSitesTotal += numSites;
-		cit++;
 	}
-
-#ifndef NDEBUG
-	for(uint8_t cid=0; cid<_numComponents; cid++)
-		cout << "_nCompSitesOffset[" << (uint32_t)cid << "] = " << (uint32_t)_nCompSitesOffset.at(cid) << endl;
-#endif
+	global_log->debug() << "[MMPLD Writer] Total number of sites taken into account: " << _numSitesTotal << endl;
 
 	// init radius and color of spheres
 	this->InitSphereData();
@@ -161,74 +138,42 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 
 	stringstream filenamestream;
 	filenamestream << _strOutputPrefixCurrent;
-
-	/*
-	 * not in use actually
-	 *
-	if(_appendTimestamp) {
-		filenamestream << "-" << _timestampString;
-	}
-	*/
 	filenamestream << ".mmpld";
+	string filename = filenamestream.str();
 
-	std::vector<char> filename(filenamestream.str().size()+1);
-	strcpy(filename.data(),filenamestream.str().c_str());
-
-	int rank = domainDecomp->getRank();
-#ifndef NDEBUG
-	cout << "rank[" << rank << "]: _nFileIndex = " << (uint32_t)_nFileIndex
-			<< ", filename = " << filenamestream.str() << endl;
-#endif
 
 #ifdef ENABLE_MPI
-//	int rank = domainDecomp->getRank();
+	int rank = domainDecomp->getRank();
 	if (rank == 0){
 #endif
-	ofstream mmpldfstream(filename.data(), ios::binary|ios::out);
+	ofstream mmpldfstream(filename.c_str(), ios::binary|ios::out);
 
 	//format marker
 	uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00};
 	mmpldfstream.write((char*)magicIdentifier, sizeof(magicIdentifier));
 
-	//version number
-	uint16_t versionNumber;
-	switch (MMPLD_FILE_VERSION)
-	{
-	case 100:
-		versionNumber = htole16(100);
-		break;
-
-	case 102:
-		versionNumber = htole16(102);
-		break;
-
-	default:
-		cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-		return;
-		break;
-	}
-
-	mmpldfstream.write((char*)&versionNumber, sizeof(versionNumber));
+	uint16_t mmpldversion_little_endian = htole16(_mmpldversion);
+	mmpldfstream.write((char*)&mmpldversion_little_endian, sizeof(mmpldversion_little_endian));
 
 	//calculate the number of frames
 	uint32_t numframes;
 	uint32_t numframes_le;
 	numframes = _vecFramesPerFile.at(_nFileIndex);
-
-	_numSeekEntries = numframes+1;
 	numframes_le = htole32(numframes);
+	global_log->debug() << "[MMPLD Writer] Writing number of frames: " << numframes << endl;
 	mmpldfstream.write((char*)&numframes_le,sizeof(numframes_le));
 
+	_numSeekEntries = numframes+1;
 	_seekTable.resize(_numSeekEntries);
 
-	//boundary box
+	global_log->debug() << "[MMPLD Writer] Writing bounding box data." << endl;
 	float minbox[3] = {0, 0, 0};
 	float maxbox[3];
 	for (unsigned short d = 0; d < 3; ++d) maxbox[d] = domain->getGlobalLength(d);
 	mmpldfstream.write((char*)&minbox,sizeof(minbox));
 	mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
 
-	//clipping box
+	global_log->debug() << "[MMPLD Writer] Writing clipping box data." << endl;
 	float inflateRadius = *(_vfSphereRadius.begin() );
 	std::vector<float>::iterator it;
 	for(it=_vfSphereRadius.begin(); it!=_vfSphereRadius.end(); ++it)
@@ -241,7 +186,7 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	mmpldfstream.write((char*)&minbox,sizeof(minbox));
 	mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
 
-	//preallocate seektable
+	global_log->debug() << "[MMPLD Writer] Preallocating " << _numSeekEntries << " seek table entries for frames" << endl;
 	uint64_t seekNum = 0;
 	for (uint32_t i = 0; i <= numframes; ++i)
 		mmpldfstream.write((char*)&seekNum,sizeof(seekNum));
@@ -250,11 +195,6 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 #ifdef ENABLE_MPI
 	}
 #endif
-
-	// eventually write initial frame
-	if(false == _bInitFrameDone && (_startTimestep == _simulation.getNumInitTimesteps() ) )
-		this->doOutput(particleContainer, domainDecomp, domain, _nextRecSimstep, NULL, NULL);
-	_bInitFrameDone = true;
 }
 
 void MmpldWriter::doOutput( ParticleContainer* particleContainer,
@@ -262,25 +202,18 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
 		   map<unsigned, CavityEnsemble>* /*mcav*/)
 {
-	// control writing with desired write frequency
-	if( _nextRecSimstep != simstep)
+	if((simstep < _startTimestep) || (simstep > _stopTimestep) || (0 != ((simstep - _startTimestep) % _writeFrequency)) ) {
 		return;
-	_nextRecSimstep += _writeFrequency;
+	}
+	if(_frameCount == _frameCountMax) {
+		MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
+	}
 
 	stringstream filenamestream, outputstream;
 	filenamestream << _strOutputPrefixCurrent;
-
-	/*
-	 * not in use actually
-	 *
-	if(_appendTimestamp) {
-		filenamestream << "-" << _timestampString;
-	}
-	*/
 	filenamestream << ".mmpld";
-
-	std::vector<char> filename(filenamestream.str().size()+1);
-	strcpy(filename.data(),filenamestream.str().c_str());
+	string filename = filenamestream.str();
+	global_log->info() << "[MMPLD Writer] Writing MMPLD frame " << _frameCount << " for simstep " << simstep << " to file " << filename << endl;
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -326,7 +259,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	MPI_File fh;
-	MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
 
 
 	//write particle list for each component|site (sphere type)
@@ -339,21 +272,18 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 			//add particle list header
 			outputsize += 18;
 			if (nSphereTypeIndex == 0){
-
-				switch (MMPLD_FILE_VERSION){
+				switch (_mmpldversion){
 					case 100:
 						//add space for number of particle lists
 						outputsize += 4;
 						break;
-
 					case 102:
 						//add space for timestamp and number of particle lists
 						outputsize += 8;
 						break;
-
 					default:
-						cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-						return;
+						global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << endl;
+						global_simulation->exit(1);
 						break;
 				}
 			}
@@ -377,7 +307,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 			offset += outputsize_get;
 		}
 
-		global_log->debug() << "MmpldWriter rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
+		global_log->debug() << "[MMPLD Writer] rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
 
@@ -398,19 +328,17 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				
 				float frameHeader_timestamp = simstep;
 				
-				switch (MMPLD_FILE_VERSION){
+				switch (_mmpldversion){
 					case 100:
 						//do not write timestamp to frame header
 						break;
-
 					case 102:
 						//write timestamp to frame header
 						MPI_File_write(fh, &frameHeader_timestamp, 1, MPI_FLOAT, &status);
 						break;
-
 					default:
-						cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-						return;
+						global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << endl;
+						global_simulation->exit(1);
 						break;
 				}
 				
@@ -471,15 +399,12 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	// data of frame is written
 	_frameCount++;
-#ifndef NDEBUG
-	cout << "rank[" << rank << "]: _frameCount = " << _frameCount << endl;
-#endif
 
 	// write seek table entry
 	if (rank == 0)
 	{
 		MPI_Status status;
-		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_frameCount-1));
+		uint64_t seektablePos =  MMPLD_HEADER_DATA_SIZE + (sizeof(uint64_t)*(_frameCount-1));
 		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition;
 		seekPosition = htole64(_seekTable.at(_frameCount-1) );
@@ -492,15 +417,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	MPI_File_close(&fh);
 #endif
-
-	// split data to multiple files
-	if(_frameCount == _frameCountMax)
-	{
-		if( (_nFileIndex+1) < _numFiles)
-			this->MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
-		else
-			_nextRecSimstep = 0;  // stop sampling
-	}
 }
 
 void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/)
@@ -512,41 +428,31 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 	stringstream filenamestream;
 	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
-	/*
-	 * not in use actually
-	 *
-	if(_appendTimestamp) {
-		filenamestream << "-" << _timestampString;
-	}
-	*/
 	filenamestream << ".mmpld";
-
-	std::vector<char> filename(filenamestream.str().size()+1);
-	strcpy(filename.data(),filenamestream.str().c_str());
+	string filename = filenamestream.str();
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
 		
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_Offset endPosition;
 		MPI_File_get_position(fh, &endPosition);
-		_seekTable.at(_numSeekEntries-1) = (uint64_t)endPosition;
-		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_numSeekEntries-1));
+
+		uint64_t seektablePos = MMPLD_HEADER_DATA_SIZE + (_frameCount * sizeof(uint64_t));
 		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
-		uint64_t seekPosition;
+		uint64_t seekPosition = htole64(endPosition); /** @todo end of frame offset may not be identical to file end! */
 		MPI_Status status;
-		seekPosition = htole64(_seekTable.at(_numSeekEntries-1) );
-		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
+		MPI_File_write(fh, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
 		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
-		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
-		MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
+		MPI_File_seek(fh, 8, MPI_SEEK_SET);  // 8: frame count position in file header
+		MPI_File_write(fh, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
 		MPI_File_close(&fh);
 	}else{
 		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename.data(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+		MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 		MPI_File_close(&fh);
 	}
 
@@ -588,7 +494,6 @@ void MmpldWriter::InitSphereData()
 	{
 		stringstream sstr;
 		sstr << strLine;
-//		cout << sstr.str() << endl;
 
 		uint8_t ti=0;
 		while (sstr >> strToken)
@@ -635,40 +540,26 @@ void MmpldWriter::PrepareWriteControl()
 	_bWriteControlPrepared = true;
 
 	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps();
-	_nextRecSimstep = _startTimestep;
 	if( 0 == _stopTimestep )
 		_stopTimestep = _simulation.getNumTimesteps();
-	else
-		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() ) ? _stopTimestep  : _simulation.getNumTimesteps();
 
 	if(_stopTimestep < _startTimestep)
 	{
 		_numFiles = 0;
-		global_log->warning() << "MmpldWriter: Recording time not within simulation time. No frames will be recorded!" << endl;
+		global_log->warning() << "[MMPLD Writer] Invalid time interval. No frames will be recorded!" << endl;
 		return;
 	}
 
 	uint64_t numTimesteps = _stopTimestep - _startTimestep;
-	uint64_t numFramesTotal = numTimesteps/_writeFrequency;
-	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
+	uint64_t numFramesTotal = numTimesteps/_writeFrequency + 1;
+	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0) {
 		_numFramesPerFile = numFramesTotal;
+	}
 
-#ifndef NDEBUG
-	cout << "_startTimestep    = " << _startTimestep << endl;
-	cout << "_writeFrequency   = " << _writeFrequency << endl;
-	cout << "_stopTimestep     = " << _stopTimestep << endl;
-	cout << "_numFramesPerFile = " << _numFramesPerFile << endl;
-	cout << "numTimesteps      = " << numTimesteps << endl;
-	cout << "numFramesTotal    = " << numFramesTotal << endl;
-#endif
+	_numFiles = (numFramesTotal + _numFramesPerFile - 1) / _numFramesPerFile;
 
 	// init frames per file vector
-	if(_numFramesPerFile > 0)
-		_numFiles = numFramesTotal/_numFramesPerFile;
-	else
-		_numFiles = 1;
 	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
-	_vecFramesPerFile.at(0) += 1;  // +1 frame in first file: start configuration
 
 	// init file prefix vector
 	for(uint8_t fi=0; fi<_numFiles; ++fi)
@@ -677,23 +568,6 @@ void MmpldWriter::PrepareWriteControl()
 		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(fi+1);
 		_vecFilePrefixes.push_back(sstrPrefix.str() );
 	}
-
-	// handle the case: numFramesTotal not a multiple of _numFramesPerFile
-	if(_numFramesPerFile > 0 && 0 != numFramesTotal % _numFramesPerFile)
-	{
-		_numFiles++;
-		_vecFramesPerFile.push_back(numFramesTotal % _numFramesPerFile);
-		std::stringstream sstrPrefix;
-		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(_numFiles);
-		_vecFilePrefixes.push_back(sstrPrefix.str() );
-	}
-
-#ifndef NDEBUG
-	for(auto fit : _vecFilePrefixes)
-		cout << fit << endl;
-	for(auto fit : _vecFramesPerFile)
-		cout << fit << endl;
-#endif
 }
 
 // derived classes
@@ -737,22 +611,3 @@ bool MmpldWriterMultiSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, 
 	}
 	return ret;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

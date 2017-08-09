@@ -5,6 +5,7 @@
 #endif
 
 #include <climits>
+#include <string>
 
 #include "Domain.h"
 #include "ensemble/BoxDomain.h"
@@ -34,6 +35,15 @@ void InputOldstyle::setPhaseSpaceFile(string filename) {
 
 void InputOldstyle::setPhaseSpaceHeaderFile(string filename) {
 	_phaseSpaceHeaderFile = filename;
+}
+
+void InputOldstyle::readXML(XMLfileUnits& xmlconfig) {
+	string pspfile;
+	if (xmlconfig.getNodeValue(".", pspfile)) {
+		pspfile.insert(0, xmlconfig.getDir());
+		global_log->info() << "phasespacepoint description file:\t" << pspfile << endl;
+	}
+	setPhaseSpaceFile(pspfile);
 }
 
 void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)

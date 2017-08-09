@@ -41,7 +41,6 @@ class MmspdWriter : public OutputBase{
 	  std::string _filename;
       unsigned long _writeFrequency;
       bool _appendTimestamp;
-      bool _incremental;
 };
 
 #endif /* MMSPDWRITER_H_ */

@@ -90,10 +90,10 @@ private:
 	}
 
 	//const accesssor
-	inline const double acc_c_C(unsigned l, unsigned m) const {
+	inline double acc_c_C(unsigned l, unsigned m) const {
 		return C.access_const(l, m);
 	}
-	inline const double acc_c_S(unsigned l, unsigned m) const {
+	inline double acc_c_S(unsigned l, unsigned m) const {
 		return S.access_const(l, m);
 	}
 

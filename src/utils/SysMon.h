@@ -8,8 +8,10 @@
 
 /*#define ENABLE_MPI*/
 
-#if !defined(_SX)
+#ifdef _POSIX_VERSION
 #define SYSMON_ENABLE_SYSCONF
+#endif
+#ifdef __linux__
 #define SYSMON_ENABLE_SYSINFO
 #endif
 #define SYSMON_ENABLE_MALLINFO
@@ -19,6 +21,7 @@
 #define SYSMON_ENABLE_PROCSELFSTATM
 #define SYSMON_ENABLE_PROCSELFSCHED
 //#define SYSMON_ENABLE_PROCSELFSCHEDSTAT
+#define SYSMON_ENABLE_PROCSELFSTATUS
 
 #include <string>
 #include <vector>
@@ -36,7 +39,7 @@
 #endif
 
 #ifdef SYSMON_ENABLE_SYSCONF
-#include <unistd.h>	// sysconf, sync
+#include <unistd.h>	// sysconf, sync; see http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/unistd.h.html
 #endif
 
 #ifdef SYSMON_ENABLE_SYSINFO
@@ -132,6 +135,7 @@ private:
 	unsigned int updateVariables_procselfstatm();
 	unsigned int updateVariables_procselfschedstat();
 	unsigned int updateVariables_procselfsched();
+	unsigned int updateVariables_procselfstatus();
 };
 // ------------------------------------------------------------------------------------------ SysMon
 

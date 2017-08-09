@@ -65,19 +65,6 @@
                 <x>1.0</x> <y>0.0</y> <z>0.0</z>
               </quadrupolemoment>
             </site>
-            <site type="Tersoff" id="5" >
-              <coords> <x>0.0</x> <y>0.0</y> <z>-1.212237</z> </coords>
-              <A></A>
-              <B></B>
-              <lambda></lambda>
-              <mu></mu>
-              <R></R>
-              <S></S>
-              <c></c>
-              <d></d>
-              <h></h>
-              <beta></beta>
-            </site>
             <momentsofinertia>
               <Ixx>47.02459341</Ixx>
               <Iyy>47.02459341</Iyy>

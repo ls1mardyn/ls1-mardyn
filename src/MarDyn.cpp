@@ -10,9 +10,6 @@
 
 #include "WrapOpenMP.h"
 
-#if ENABLE_MPI
-#include "parallel/KDDecomposition.h"
-#endif
 #include "Simulation.h"
 #include "utils/compile_info.h"
 #include "utils/FileUtils.h"
@@ -59,6 +56,9 @@ void program_build_info(Log::Logger &log) {
 #ifdef ENABLE_MPI
 	get_mpi_info(info_str);
 	log << "MPI library: " << info_str << endl;
+#endif
+#if defined(_OPENMP)
+	log << "Compiled with OpenMP support" << endl;
 #endif
 }
 

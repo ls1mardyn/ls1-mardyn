@@ -171,8 +171,7 @@ void VectorizedCellProcessor::endTraversal() {
 	const RealCalcVec _15 = RealCalcVec::set1(15.0);
 
 	template<bool calculateMacroscopic>
-	inline
-	void VectorizedCellProcessor :: _loopBodyLJ(
+	vcp_inline void VectorizedCellProcessor :: _loopBodyLJ(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
@@ -227,7 +226,7 @@ void VectorizedCellProcessor::endTraversal() {
 
 
 	template<bool calculateMacroscopic>
-	inline void VectorizedCellProcessor :: _loopBodyCharge(
+	vcp_inline void VectorizedCellProcessor :: _loopBodyCharge(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& qii,
@@ -274,7 +273,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	inline void VectorizedCellProcessor :: _loopBodyChargeDipole(
+	vcp_inline void VectorizedCellProcessor :: _loopBodyChargeDipole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& q,
@@ -339,7 +338,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	inline void VectorizedCellProcessor :: _loopBodyDipole(
+	vcp_inline void VectorizedCellProcessor :: _loopBodyDipole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& eii_x, const RealCalcVec& eii_y, const RealCalcVec& eii_z,
@@ -427,7 +426,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	inline void VectorizedCellProcessor :: _loopBodyChargeQuadrupole(
+	vcp_inline void VectorizedCellProcessor :: _loopBodyChargeQuadrupole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& q,
@@ -503,7 +502,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	inline void VectorizedCellProcessor :: _loopBodyDipoleQuadrupole(
+	vcp_inline void VectorizedCellProcessor :: _loopBodyDipoleQuadrupole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& eii_x, const RealCalcVec& eii_y, const RealCalcVec& eii_z,
@@ -621,7 +620,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	inline void VectorizedCellProcessor :: _loopBodyQuadrupole(
+	vcp_inline void VectorizedCellProcessor :: _loopBodyQuadrupole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& eii_x, const RealCalcVec& eii_y, const RealCalcVec& eii_z,

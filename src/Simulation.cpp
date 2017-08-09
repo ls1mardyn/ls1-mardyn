@@ -10,8 +10,6 @@
 #include <sstream>
 #include <string>
 
-#include "WrapOpenMP.h"
-
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
@@ -41,6 +39,7 @@
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
+#include "io/ReplicaGeneratorVLE.h"
 #include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
 
@@ -163,9 +162,6 @@ void Simulation::exit(int exitcode) {
 }
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
-#ifdef USE_VT
-	VT_traceoff();
-#endif
 	/* integrator */
 	if(xmlconfig.changecurrentnode("integrator")) {
 		string integratorType;
@@ -673,6 +669,60 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
+
+	oldpath = xmlconfig.getcurrentnodepath();
+	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
+		global_log->info() << "Reading phase space from file." << endl;
+		string pspfiletype;
+		xmlconfig.getNodeValue("@type", pspfiletype);
+		global_log->info() << "Face space file type: " << pspfiletype << endl;
+
+		if (pspfiletype == "ASCII") {
+			_inputReader = (InputBase*) new InputOldstyle();
+			_inputReader->readXML(xmlconfig);
+		}
+		else if (pspfiletype == "binary") {
+			_inputReader = (InputBase*) new BinaryReader();
+			_inputReader->readXML(xmlconfig);
+
+			//@todo read header should be either part of readPhaseSpace or readXML.
+			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
+			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+		}
+		else {
+			global_log->error() << "Unknown phase space file type" << endl;
+			Simulation::exit(-1);
+		}
+	}
+	xmlconfig.changecurrentnode(oldpath);
+
+	oldpath = xmlconfig.getcurrentnodepath();
+	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/generator")) {
+		string generatorName;
+		xmlconfig.getNodeValue("@name", generatorName);
+		global_log->info() << "Generator: " << generatorName << endl;
+		if(generatorName == "GridGenerator") {
+			_inputReader = new GridGenerator();
+		}
+		else if(generatorName == "mkesfera") {
+			_inputReader = new MkesferaGenerator();
+		}
+		else if(generatorName == "mkTcTS") {
+			_inputReader = new MkTcTSGenerator();
+		}
+		else if (generatorName == "CubicGridGenerator") {
+			_inputReader = new CubicGridGeneratorInternal();
+		}
+		else if (generatorName == "ReplicaGeneratorVLE") {
+			_inputReader = new ReplicaGeneratorVLE();
+		}
+		else {
+			global_log->error() << "Unknown generator: " << generatorName << endl;
+			Simulation::exit(1);
+		}
+		_inputReader->readXML(xmlconfig);
+	}
+	xmlconfig.changecurrentnode(oldpath);
 }
 
 void Simulation::readConfigFile(string filename) {
@@ -730,70 +780,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		}
 
 		readXML(inp);
-
-		string pspfile;
-		string pspfileheader;
-		string pspfiletype("ASCII");
-		if (inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype) ){
-			if (pspfiletype == "ASCII") {
-				if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
-					pspfile.insert(0, inp.getDir());
-					global_log->info() << "phasespacepoint description file:\t"
-							<< pspfile << endl;
-				}
-				_inputReader = (InputBase*) new InputOldstyle();
-				_inputReader->setPhaseSpaceFile(pspfile);
-			}
-			else if (pspfiletype == "binary") {
-				if (inp.getNodeValue("ensemble/phasespacepoint/file/header", pspfileheader)) {
-					pspfileheader.insert(0, inp.getDir());
-					global_log->info() << "phasespacepoint description file:\t"
-							<< pspfileheader << endl;
-				}
-				if (inp.getNodeValue("ensemble/phasespacepoint/file/data", pspfile)) {
-					pspfile.insert(0, inp.getDir());
-				}
-				_inputReader = (InputBase*) new BinaryReader();
-				_inputReader->setPhaseSpaceHeaderFile(pspfileheader);
-				_inputReader->setPhaseSpaceFile(pspfile);
-
-				// read header
-				double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
-				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-			}
-			else {
-				global_log->error() << "Unknown type in node: ensemble/phasespacepoint/file, "
-						"expected: ASCII|binary. Programm exit ..." << endl;
-				Simulation::exit(-1);
-			}
-			global_log->info() << "       phasespacepoint file type:\t"
-					<< pspfiletype << endl;
-		}
-		string oldpath = inp.getcurrentnodepath();
-		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
-			string generatorName;
-			inp.getNodeValue("@name", generatorName);
-			global_log->info() << "Generator: " << generatorName << endl;
-			if(generatorName == "GridGenerator") {
-				_inputReader = new GridGenerator();
-			}
-			else if(generatorName == "mkesfera") {
-				_inputReader = new MkesferaGenerator();
-			}
-			else if(generatorName == "mkTcTS") {
-				_inputReader = new MkTcTSGenerator();
-			}
-			else if (generatorName == "CubicGridGenerator") {
-				_inputReader = new CubicGridGeneratorInternal();
-			}
-			else {
-				global_log->error() << "Unknown generator: " << generatorName << endl;
-				Simulation::exit(1);
-			}
-			_inputReader->readXML(inp);
-		}
-		inp.changecurrentnode(oldpath);
-
 
 		inp.changecurrentnode("..");
 	} // simulation-section
@@ -1093,7 +1079,7 @@ void Simulation::prepare_start() {
 	}
 
 	/** global energy log */
-	this->initGlobalEnergyLog();
+	//this->initGlobalEnergyLog();
 
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
@@ -1217,6 +1203,7 @@ void Simulation::simulate() {
 #endif
 #endif
 	_memoryProfiler->doOutput();
+	output(_initSimulation);
 
 	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
 		// Too many particle exchanges in the first 10 simulation steps.
@@ -1885,7 +1872,7 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
 
-	this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
+	//this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
 }
 
 void Simulation::finalize() {
@@ -2070,16 +2057,20 @@ void Simulation::initGlobalEnergyLog()
 
 void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
 {
-	const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-	const ParticleIterator end = _moleculeContainer->iteratorEnd();
-
-	// sample energy
-	for (ParticleIterator mi = begin; mi != end; ++mi)
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:_nNumMolsGlobalEnergyLocal,_UkinLocal,_UkinTransLocal,_UkinRotLocal)
+	#endif
 	{
-		_nNumMolsGlobalEnergyLocal++;
-		_UkinLocal += mi->U_kin();
-		_UkinTransLocal += mi->U_trans();
-		_UkinRotLocal += mi->U_rot();
+		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
+		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+
+		// sample energy
+		for (ParticleIterator mi = begin; mi != end; ++mi) {
+			_nNumMolsGlobalEnergyLocal++;
+			_UkinLocal += mi->U_kin();
+			_UkinTransLocal += mi->U_trans();
+			_UkinRotLocal += mi->U_rot();
+		}
 	}
 
 	if(0 != _simstep % _nWriteFreqGlobalEnergy)

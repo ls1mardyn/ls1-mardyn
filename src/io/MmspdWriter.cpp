@@ -158,7 +158,7 @@ void MmspdWriter::doOutput( ParticleContainer* particleContainer,
 			char *recvbuff = new char[numchars];
 			MPI_Recv(recvbuff, numchars, MPI_CHAR, fromrank, tag, MPI_COMM_WORLD, &status_recv);
 			mmspdfstream << string(recvbuff);
-			delete recvbuff;
+			delete[] recvbuff;
 		}
 #endif
 		mmspdfstream.close();

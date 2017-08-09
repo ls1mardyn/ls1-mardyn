@@ -16,6 +16,9 @@ enum InitSphereData : uint8_t
 };
 
 class Simulation;
+
+/** @brief Output plugin to generate a MegaMol™ Particle List Data file (*.mmpld).
+ */
 class MmpldWriter : public OutputBase
 {
 protected:
@@ -33,7 +36,8 @@ protected:
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 	MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 			std::string outputPrefix);
-	virtual ~MmpldWriter();
+	virtual ~MmpldWriter() {}
+
 	virtual void SetNumSphereTypes() = 0;
 	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol) = 0;
 	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) = 0;
@@ -68,12 +72,14 @@ protected:
 	void PrepareWriteControl();
 
 protected:
+	/** First time step to be recorded */
 	uint64_t _startTimestep;
+	/** time steps between two records*/
 	uint64_t _writeFrequency;
+	/** Max time step up to which shall be recorded */
 	uint64_t _stopTimestep;
 	uint64_t _numFramesPerFile;
 	std::string _outputPrefix;
-	bool _appendTimestamp;
 	std::string _timestampString;
 	uint32_t _numSeekEntries;
 	uint32_t _frameCount;
@@ -88,16 +94,15 @@ protected:
 	std::string _strSphereDataFilename;
 	uint8_t _bInitSphereData;
 	bool _bWriteControlPrepared;
-	bool _bInitFrameDone;
 
 	// split files
 	uint8_t _nFileIndex;
 	uint8_t _numFiles;
 	std::vector<string> _vecFilePrefixes;
 	std::vector<uint64_t> _vecFramesPerFile;
-	uint64_t _nextRecSimstep;
 	std::string _strOutputPrefixCurrent;
 	uint32_t _frameCountMax;
+	int _mmpldversion;
 };
 
 class MmpldWriterSimpleSphere : public MmpldWriter
