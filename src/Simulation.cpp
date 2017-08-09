@@ -1003,7 +1003,7 @@ void Simulation::prepare_start() {
 	}
 
 	/** global energy log */
-	this->initGlobalEnergyLog();
+	//this->initGlobalEnergyLog();
 
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
@@ -1530,7 +1530,7 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
 
-	this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
+	//this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
 }
 
 void Simulation::finalize() {
