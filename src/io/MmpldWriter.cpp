@@ -265,25 +265,13 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				}
 			}
 		}
-		
-		//send outputsize of current rank to next rank
-		for (int dest = rank+1; dest < numprocs; ++dest){
-			int sendcount = 1;
-			int sendtag = 0;
-			MPI_Request request;
-			MPI_Isend(&outputsize, sendcount, MPI_LONG, dest, sendtag, MPI_COMM_WORLD, &request);
-		}
-		//accumulate outputsizes of previous ranks and use it as offset for output file
-		MPI_Status status;
-		long offset = 0;
-		long outputsize_get;
-		for (int source = 0; source < rank; ++source){
-			int recvcount = 1;
-			int recvtag = 0;
-			MPI_Recv(&outputsize_get, recvcount, MPI_LONG, source, recvtag, MPI_COMM_WORLD, &status);
-			offset += outputsize_get;
-		}
 
+		MPI_Status status;
+
+		//accumulate outputsizes of previous ranks and use it as offset for output file
+		long offset = 0;
+		MPI_Scan(&outputsize, &offset, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		offset -= outputsize; /* scan is inclusive own value */
 		global_log->debug() << "[MMPLD Writer] rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
