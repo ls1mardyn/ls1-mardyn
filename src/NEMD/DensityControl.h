@@ -14,7 +14,6 @@
 #include "utils/Region.h"
 
 #include <vector>
-#include <utility>
 #include <string>
 #include <cstdint>
 #ifdef ENABLE_MPI
@@ -97,7 +96,7 @@ private:
 	bool _bMettDeamonConnected;
 
 	// identity change (by component ID)
-	std::pair <uint32_t,uint32_t> _nCompIDsChangePair;
+	std::vector<uint32_t> _vecChangeCompIDs;
 };
 
 }

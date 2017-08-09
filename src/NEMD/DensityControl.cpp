@@ -26,9 +26,9 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <utility>
 #include <string>
 #include <cmath>
+#include <numeric>
 //#include <iterator>  // std::advance
 
 #include <cstdlib>
@@ -72,6 +72,11 @@ dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3]
 	// Connection to MettDeamon
 	_mettDeamon = NULL;
 	_bMettDeamonConnected = false;
+
+	// init identity change vector
+	uint8_t nNumComponents = global_simulation->getEnsemble()->getComponents()->size();
+	_vecChangeCompIDs.resize(nNumComponents);
+	std::iota (std::begin(_vecChangeCompIDs), std::end(_vecChangeCompIDs), 0);
 }
 
 dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3],
@@ -134,10 +139,10 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 
 	// change identity
 	uint32_t nFrom, nTo;
-	nFrom = nTo = 0;
+	nFrom = nTo = 1;
 	xmlconfig.getNodeValue("change/from", nFrom);
 	xmlconfig.getNodeValue("change/to", nTo);
-	_nCompIDsChangePair = std::make_pair(nFrom, nTo);
+	_vecChangeCompIDs.at(nFrom-1) = nTo-1;
 }
 
 void dec::ControlRegion::CheckBounds()
@@ -340,11 +345,11 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 		if( !(PositionIsInside(d, mol->r(d) ) ) ) return;
 
 	// --> CHANGE_IDENTITY
-	if(cid+1 == _nCompIDsChangePair.first)
+	if(cid != _vecChangeCompIDs.at(cid))
 	{
 		std::vector<Component>* ptrComps = simulation->getEnsemble()->getComponents();
 		Component* compOld = mol->component();
-		Component* compNew = &(ptrComps->at(_nCompIDsChangePair.second-1) );
+		Component* compNew = &(ptrComps->at(_vecChangeCompIDs.at(cid) ) );
 
 		uint8_t numRotDOF_old = compOld->getRotationalDegreesOfFreedom();
 		uint8_t numRotDOF_new = compNew->getRotationalDegreesOfFreedom();
