@@ -16,10 +16,6 @@
 #include <algorithm>
 
 #include "particleContainer/TraversalTuner.h"
-#include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
-#include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
-#include "particleContainer/LinkedCellTraversals/QuickschedTraversal.h"
-#include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
 
 using namespace std;
 using Log::global_log;
@@ -28,12 +24,12 @@ using Log::global_log;
 //############ PUBLIC METHODS ####################
 //################################################
 
-LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner()) {
+LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner<ParticleCell>()) {
 }
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius) :
-		ParticleContainer(bBoxMin, bBoxMax), _traversalTuner(new TraversalTuner()) {
+		ParticleContainer(bBoxMin, bBoxMax), _traversalTuner(new TraversalTuner<ParticleCell>()) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 
@@ -118,7 +114,7 @@ void LinkedCells::initializeTraversal() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-    _traversalTuner = new TraversalTuner();
+    _traversalTuner = new TraversalTuner<ParticleCell>();
 	_traversalTuner->readXML(xmlconfig);
 }
 

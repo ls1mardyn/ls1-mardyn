@@ -25,7 +25,6 @@
 #include "io/CavityWriter.h"
 
 #include "io/BinaryReader.h"
-#include "io/BinaryCheckpointWriter.h"
 
 #include "io/MPI_IOReader.h"
 #include "io/MPI_IOCheckpointWriter.h"

@@ -104,35 +104,23 @@ void C08BasedTraversals<CellTemplate>::computeOffsets() {
 	long int xz  = threeToOneD(1l, 0l, 1l, dims);
 	long int xyz = threeToOneD(1l, 1l, 1l, dims);
 
-	// minimize number of cells simultaneously in memory:
+	int i = 0;
+	// if incrementing along X, the following order will be more cache-efficient:
+	_cellPairOffsets[i++] = make_pair(o, o  );
+	_cellPairOffsets[i++] = make_pair(o, y  );
+	_cellPairOffsets[i++] = make_pair(o, z  );
+	_cellPairOffsets[i++] = make_pair(y, z  );
+	_cellPairOffsets[i++] = make_pair(o, yz );
 
-	_cellPairOffsets[ 0] = make_pair(o, xyz);
-	// evict xyz
-
-	_cellPairOffsets[ 1] = make_pair(o, yz );
-	_cellPairOffsets[ 2] = make_pair(x, yz );
-	// evict yz
-
-	_cellPairOffsets[ 3] = make_pair(o, x  );
-
-	_cellPairOffsets[ 4] = make_pair(o, xy );
-	_cellPairOffsets[ 5] = make_pair(xy, z );
-	// evict xy
-
-	_cellPairOffsets[ 6] = make_pair(o, z  );
-	_cellPairOffsets[ 7] = make_pair(x, z  );
-	_cellPairOffsets[ 8] = make_pair(y, z  );
-	// evict z
-
-	_cellPairOffsets[ 9] = make_pair(o, y  );
-	_cellPairOffsets[10] = make_pair(x, y  );
-	// evict x
-
-	_cellPairOffsets[11] = make_pair(o, xz );
-	_cellPairOffsets[12] = make_pair(y, xz );
-	// evict xz
-
-	_cellPairOffsets[13] = make_pair(o, o  );
+	_cellPairOffsets[i++] = make_pair(x, yz );
+	_cellPairOffsets[i++] = make_pair(x, y  );
+	_cellPairOffsets[i++] = make_pair(x, z  );
+	_cellPairOffsets[i++] = make_pair(o, x  );
+	_cellPairOffsets[i++] = make_pair(o, xy );
+	_cellPairOffsets[i++] = make_pair(xy, z );
+	_cellPairOffsets[i++] = make_pair(o, xz );
+	_cellPairOffsets[i++] = make_pair(y, xz );
+	_cellPairOffsets[i++] = make_pair(o, xyz);
 
 }
 

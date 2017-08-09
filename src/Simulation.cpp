@@ -587,18 +587,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@name", pluginname);
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 		if(pluginname == "CheckpointWriter") {
-			std::string strType = "unknown";
-			xmlconfig.getNodeValue("@type", strType);
-
-			if("ASCII" == strType)
-				outputPlugin = new CheckpointWriter();
-			else if("binary" == strType)
-				outputPlugin = new BinaryCheckpointWriter();
-			else
-			{
-				global_log->error() << "Unknown CheckpointWriter type, expected: ASCII|binary. Program exit... " << endl;
-				Simulation::exit(-1);
-			}
+            outputPlugin = new CheckpointWriter();
 		}
 		else if(pluginname == "DecompWriter") {
 			outputPlugin = new DecompWriter();

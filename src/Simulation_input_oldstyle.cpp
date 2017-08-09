@@ -271,7 +271,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new CheckpointWriter(writeFrequency, outputPathAndPrefix, true));
+				_outputPlugins.push_back(new CheckpointWriter(writeFrequency, outputPathAndPrefix, true, false));
 				if (writeFrequency == 0) {
 					global_log->error() << "Write frequency must be a positive nonzero integer, but is "
 							<< writeFrequency << endl;
@@ -282,7 +282,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new BinaryCheckpointWriter(writeFrequency, outputPathAndPrefix, true));
+				_outputPlugins.push_back(new CheckpointWriter(writeFrequency, outputPathAndPrefix, true, true));
 				global_log->debug() << "BinaryCheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 #ifdef ENABLE_MPI
 			} else if (token == "MPI-IOCheckpointWriter") {

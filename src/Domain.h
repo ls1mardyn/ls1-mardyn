@@ -65,9 +65,9 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
-	//! @param binary indicates wheter binary I/O is used or not
+	//! @param useBinaryFormat indicates wheter binary I/O is used or not
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime, bool binary = false);
+			const DomainDecompBase* domainDecomp, double currentTime, bool useBinaryFormat = false);
 
 	//! @brief writes a checkpoint file that can be used to continue the simulation
 	//!

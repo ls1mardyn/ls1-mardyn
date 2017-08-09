@@ -14,8 +14,14 @@
 #include <string>
 
 #include "utils/mardyn_assert.h"
-#include "utils/Logger.h"
+//#include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
+
+//#include <cstdio>	// fseek(),fread(); should be included after mpi.h
+//#ifdef __linux__
+//#include <sys/stat.h>   // stat() 
+//#endif
+
 
 using namespace std;
 using namespace rapidxml;
@@ -130,6 +136,7 @@ XMLfile::Query XMLfile::query(const char* querystr) const
 	query(nodes,querystr);
 
 	XMLfile::Query queryresult(this);
+	//copy nodes (std::list<Node>) to queryresult.m_nodes (std::vector<Node>)
 	queryresult.m_nodes.resize(nodes.size());
 /*
 	std::vector<Node>::iterator nodespos2=queryresult.m_nodes.begin();
@@ -140,7 +147,12 @@ XMLfile::Query XMLfile::query(const char* querystr) const
 	}
 */
 	copy(nodes.begin(), nodes.end(), queryresult.m_nodes.begin());
-
+/*
+	////queryresult.m_nodes.clear();
+	//queryresult.m_nodes.assign(nodes.begin(), nodes.end());
+	queryresult.m_nodes.reserve(nodes.size());
+	copy(nodes.begin(), nodes.end(), back_inserter(queryresult.m_nodes));
+*/	
 	return queryresult;
 }
 
@@ -189,9 +201,11 @@ bool XMLfile::initfile_local(const string& filepath)
 		m_filedir=string();
 		m_filename=string(filepath);
 	}
-
+	
+	// read filepath file content -> xmlstr
+	// determination of the file size, reading a file to memory (string),... should probably better be outsourced to extra utility functions
+/*version using cstdio
 	FILE *fp;
-	size_t len;
 	fp=fopen(filepath.c_str(),"rb");
 	if(!fp)
 	{
@@ -199,16 +213,43 @@ bool XMLfile::initfile_local(const string& filepath)
 		clear();
 		return false;
 	}
+	// determine file size
+#ifdef __linux__
+	struct stat st;
+	stat(filepath.c_str(), &st);
+	off_t filesize = st.st_size;
+#else
+	// Warning: SEEK_END and SEEK_SET will also be defined in the now obsolete C++ binding of MPI 2!
+	// -> compilation with -D MPICH_IGNORE_CXX_SEEK 
 	fseek(fp,0,SEEK_END);
-	len=ftell(fp);
+	size_t filesize=ftell(fp);
 	fseek(fp,0,SEEK_SET);
-
-	char* xmlstr = m_xmldoc.allocate_string(NULL,len+1);
-	xmlstr[len]=0;
-	len -= fread(xmlstr,sizeof(char),len,fp);
+#endif
+	char* xmlstr = m_xmldoc.allocate_string(NULL,filesize+1);
+	xmlstr[filesize]=0;
+	filesize -= fread(xmlstr,sizeof(char),filesize,fp);
 	fclose(fp);
-	mardyn_assert(len == 0);
-
+*/
+//version using ifstream
+	ifstream fstrm(filepath.c_str(),ifstream::binary|ifstream::ate);
+	if(!fstrm) {
+		cerr << "ERROR opening " << filepath << endl;
+		clear();
+		return false;
+	}
+	ifstream::pos_type filesize=fstrm.tellg();
+	fstrm.close(); fstrm.clear();
+	char* xmlstr = m_xmldoc.allocate_string(NULL,static_cast<size_t>(filesize)+1);
+	xmlstr[filesize]=0;
+	//                          ios::binary
+	fstrm.open(filepath.c_str(),ifstream::binary);
+	//checking if(!fstrm) again should not be necessary 
+	fstrm.read(xmlstr,filesize);
+	filesize-=fstrm.gcount();
+	fstrm.close();
+//	
+	mardyn_assert(filesize == 0);
+	
 	m_xmldoc.parse<0>(xmlstr);
 	expandincludes();
 	m_currentnode=Node(&m_xmldoc,"/");

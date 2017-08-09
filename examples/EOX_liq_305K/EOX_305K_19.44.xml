@@ -29,7 +29,7 @@
       </domain>
 
       <components>
-          <moleculetype id="1" >
+          <moleculetype id="1" name="EOX">
             <site type="LJ126" id="1" >
               <coords> <x>0.0</x> <y>0.0</y> <z>1.4681756272422370</z> </coords>
               <mass>1.59989999999999993E-002</mass>
@@ -51,7 +51,7 @@
               <epsilon>2.68352891066251406E-004</epsilon>
               <shifted>0</shifted>
             </site>
-            <site type="Dipol" id="4" >
+            <site type="Dipole" id="4" >
               <coords> <x>0.0</x> <y>0.0</y> <z>7.79229859719781925E-002</z> </coords>
               <dipolemoment>
                 <orientation> <x>0.0</x> <y>0.0</y> <z>-1.0</z> </orientation>
@@ -90,6 +90,7 @@
         <outputprefix>default</outputprefix>
       </outputplugin>
       <outputplugin name="CheckpointWriter">
+        <type>binary</type>
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>

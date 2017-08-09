@@ -3671,7 +3671,6 @@ void UniformPseudoParticleContainer::printTimers() {
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL"), "GatherWellSepLoGlobal", _comm);
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL"), "PropagateCellLoGlobal", _comm);
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_LOKAL"), "CombineMpCellLokal", _comm);
-	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GARHTER_WELL_SEP_LO_LOKAL"), "GatherWellSepLoLokal", _comm);
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL"), "PropagateCellLoLokal", _comm);
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMMUNICATION_HALOS"), "Halo communication", _comm);
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER"), "GatherWellSepLoHalos", _comm);
