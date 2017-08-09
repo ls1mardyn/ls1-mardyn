@@ -88,6 +88,8 @@ private:
 	double _dInvNumTimestepsSummation;
 	bool _bMirrorActivated;
 	double _dMirrorPosY;
+	// identity change (by component ID)
+	std::vector<uint32_t> _vecChangeCompIDs;
 };
 
 #endif /* METTDEAMON_H_ */

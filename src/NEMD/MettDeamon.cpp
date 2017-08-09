@@ -18,6 +18,7 @@
 #include <vector>
 #include <cmath>
 #include <iomanip>
+#include <numeric>
 
 using namespace std;
 
@@ -63,6 +64,11 @@ MettDeamon::MettDeamon(double cutoffRadius)
 	// summation of deleted molecules
 	_listDeletedMolecules.clear();
 	_listDeletedMolecules.push_back(0);
+
+	// init identity change vector
+	uint8_t nNumComponents = global_simulation->getEnsemble()->getComponents()->size();
+	_vecChangeCompIDs.resize(nNumComponents);
+	std::iota (std::begin(_vecChangeCompIDs), std::end(_vecChangeCompIDs), 0);
 }
 
 MettDeamon::~MettDeamon()
@@ -90,6 +96,34 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	// mirror
 	bool bRet = xmlconfig.getNodeValue("mirror/position", _dMirrorPosY);
 	_bMirrorActivated = bRet;
+
+	// change identity of fixed (frozen) molecules by component ID
+	if(xmlconfig.changecurrentnode("changes")) {
+		uint8_t numChanges = 0;
+		XMLfile::Query query = xmlconfig.query("change");
+		numChanges = query.card();
+		global_log->info() << "Number of fixed molecules components: " << (uint32_t)numChanges << endl;
+		if(numChanges < 1) {
+			global_log->error() << "No component change defined in XML-config file. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator changeIter;
+		for( changeIter = query.begin(); changeIter; changeIter++ ) {
+			xmlconfig.changecurrentnode(changeIter);
+			uint32_t nFrom, nTo;
+			nFrom = nTo = 1;
+			xmlconfig.getNodeValue("change/from", nFrom);
+			xmlconfig.getNodeValue("change/to", nTo);
+			_vecChangeCompIDs.at(nFrom-1) = nTo-1;
+		}
+		xmlconfig.changecurrentnode(oldpath);
+		xmlconfig.changecurrentnode("..");
+	}
+	else {
+		global_log->error() << "No component changes defined in XML-config file. Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
 }
 
 void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
@@ -254,9 +288,6 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	particleContainer->deleteOuterParticles();
 	// fixed components
 
-	Component* comp2;
-	comp2 = global_simulation->getEnsemble()->getComponent(1);
-
 	Molecule* tM;
 	double dPosY;
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
@@ -266,18 +297,17 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	if(true == _bIsRestart)
 		return;
 
+	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
+
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd();
-			++tM)
+	tM != particleContainer->iteratorEnd(); ++tM)
 	{
 		dPosY = tM->r(1);
-
-//		if(dPosY < 2.*_cutoffRadius)
 		if(dPosY < (dLeftMirror-0.5) )
 		{
-//			cout << "cid(old) = " << tM->componentid() << endl;
-			//tM->setXYZ();
-			tM->setComponent(comp2);
+			uint32_t cid = tM->componentid();
+			Component* compNew = &(ptrComps->at(_vecChangeCompIDs.at(cid) ) );
+			tM->setComponent(compNew);
 //			cout << "cid(new) = " << tM->componentid() << endl;
 		}
 		// vapor phase
@@ -325,9 +355,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	unsigned int cid;
 	std::map<unsigned long, std::array<double, 6> >::iterator it;
 
-	Component* comp1=global_simulation->getEnsemble()->getComponent(0);
-	Component* comp2=global_simulation->getEnsemble()->getComponent(1);
-	Component* comp3=global_simulation->getEnsemble()->getComponent(2);
+	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM) {
@@ -340,14 +368,16 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 //		else if(dY > (dMirrorPosLeft + 2.5) )
 //			tM->setComponent(comp1);
 
-		if( (cid == 2) && (dY > dMirrorPosLeft) )
+		if(dY > dMirrorPosLeft)
 		{
-			tM->setComponent(comp1);
+			uint32_t cid = tM->componentid();
+			Component* compNew = &(ptrComps->at(_vecChangeCompIDs.at(cid) ) );
+			tM->setComponent(compNew);
 			tM->setv(1, abs(tM->v(1) ) );
 		}
 
-		// reset position of molecules of component 2 (cid == 2 --> fixed molecules)
-		if(cid == 2)
+		// reset position of fixed molecules
+		if(cid != _vecChangeCompIDs.at(cid))
 		{
 			it = _storePosition.find(tM->id() );
 			if(it != _storePosition.end() )
@@ -389,8 +419,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		for(auto mi : currentReservoirSlab)
 		{
 			unsigned long tempId = mi.id();
+			uint32_t cid = mi.componentid();
+			Component* compNew = &(ptrComps->at(_vecChangeCompIDs.at(cid) ) );
 			mi.setid(_maxId + tempId);
-			mi.setComponent(comp2);
+			mi.setComponent(compNew);
 			mi.setr(1, mi.r(1) + _dYsum - _dSlabWidth);
 			particleContainer->addParticle(mi);
 		}
@@ -413,14 +445,14 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM) {
 
-		unsigned int cid = tM->componentid()+1;
+		uint32_t cid = tM->componentid();
 		double v2 = tM->v2();
-		if(cid != 2 && v2 > _velocityBarrier*_velocityBarrier) // v2_limit
+		if(cid == _vecChangeCompIDs.at(cid)&& v2 > _velocityBarrier*_velocityBarrier) // v2_limit
 		{
-			unsigned long id = tM->id();
+			uint64_t id = tM->id();
 			double dY = tM->r(1);
 
-			cout << "cid = " << cid << endl;
+			cout << "cid = " << cid+1 << endl;
 			cout << "id = " << id << endl;
 			cout << "dY = " << dY << endl;
 			cout << "v2 = " << v2 << endl;
@@ -429,7 +461,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			_nNumMoleculesDeletedLocal++;
 			_nNumMoleculesTooFast++;
 		}
-		if(cid == 2)
+		if(cid != _vecChangeCompIDs.at(cid) )
 		{
 			tM->setv(0, 0.);
 			tM->setv(1, 0.);
