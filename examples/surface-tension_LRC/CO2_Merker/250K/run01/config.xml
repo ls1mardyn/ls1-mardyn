@@ -21,11 +21,11 @@
 
 		<ensemble type="NVT">
 			<!-- Nparticles determined by the input file -->
-			<temperature unit="reduced" >0.00088671</temperature>
+			<temperature unit="reduced" >0.000791705</temperature>
 			<domain type="box">
-				<lx>199.587</lx>
+				<lx>191.331</lx>
 				<ly>394.819</ly>
-				<lz>199.587</lz>
+				<lz>191.331</lz>
 			</domain>
 
 			<components>
@@ -33,7 +33,7 @@
 			</components>
 
 			<phasespacepoint>
-				<file type="ASCII">../CO2_Merker_T280K.xdr</file>
+				<file type="ASCII">../CO2_Merker_250K.xdr</file>
 			</phasespacepoint>
 		</ensemble>
 
@@ -71,10 +71,10 @@
 						<region>
 							<coords>
 								<lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
-								<ucx>199.587</ucx> <ucy>394.819</ucy> <ucz>199.587</ucz>
+								<ucx>191.331</ucx> <ucy>394.819</ucy> <ucz>191.331</ucz>
 							</coords>
 							<target>
-								<temperature>0.00088671</temperature>
+								<temperature>0.000791705</temperature>
 								<component>0</component>
 							</target>
 							<settings>
