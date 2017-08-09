@@ -1715,16 +1715,20 @@ void Simulation::initGlobalEnergyLog()
 
 void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
 {
-	const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-	const ParticleIterator end = _moleculeContainer->iteratorEnd();
-
-	// sample energy
-	for (ParticleIterator mi = begin; mi != end; ++mi)
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:_nNumMolsGlobalEnergyLocal,_UkinLocal,_UkinTransLocal,_UkinRotLocal)
+	#endif
 	{
-		_nNumMolsGlobalEnergyLocal++;
-		_UkinLocal += mi->U_kin();
-		_UkinTransLocal += mi->U_trans();
-		_UkinRotLocal += mi->U_rot();
+		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
+		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+
+		// sample energy
+		for (ParticleIterator mi = begin; mi != end; ++mi) {
+			_nNumMolsGlobalEnergyLocal++;
+			_UkinLocal += mi->U_kin();
+			_UkinTransLocal += mi->U_trans();
+			_UkinRotLocal += mi->U_rot();
+		}
 	}
 
 	if(0 != _simstep % _nWriteFreqGlobalEnergy)
