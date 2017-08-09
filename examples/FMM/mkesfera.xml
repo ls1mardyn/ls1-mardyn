@@ -102,7 +102,7 @@
         <writefrequency>10</writefrequency>
       </outputplugin>
 
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>mkesfera</outputprefix>
       </outputplugin>

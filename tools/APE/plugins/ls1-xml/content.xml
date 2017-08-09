@@ -16,43 +16,59 @@
 		<child plurality="single" importance="mandatory">
 			<name>Reference Units</name>
 			<setting>
+				<name>Unit system</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>SI</editor-options>
 				<defaultvalue>SI</defaultvalue>
 				<filexmlpath>mardyn/refunits@type</filexmlpath>
 			</setting>
 			<setting>
-				<defaultvalue>nm</defaultvalue>
+				<name>Length unit</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>nm,A°</editor-options>
+				<defaultvalue>A°</defaultvalue>
 				<filexmlpath>mardyn/refunits/length@unit</filexmlpath>
-			</setting>
-			<setting>
-				<defaultvalue>u</defaultvalue>
-				<filexmlpath>mardyn/refunits/mass@unit</filexmlpath>
-			</setting>
-			<setting>
-				<defaultvalue>K</defaultvalue>
-				<filexmlpath>mardyn/refunits/energy@unit</filexmlpath>
 			</setting>
 			<setting>
 				<name>Length</name>
 				<defaultvalue>0.1</defaultvalue>
 				<type>float</type>
 				<editor>lineedit</editor>
-				<description>Reference length in nm.</description>
+				<description>Reference length</description>
 				<filexmlpath>mardyn/refunits/length</filexmlpath>
+			</setting>
+			<setting>
+				<name>Mass unit</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>u</editor-options>
+				<defaultvalue>u</defaultvalue>
+				<filexmlpath>mardyn/refunits/mass@unit</filexmlpath>
 			</setting>
 			<setting>
 				<name>Mass</name>
 				<defaultvalue>1</defaultvalue>
 				<type>float</type>
 				<editor>lineedit</editor>
-				<description>Reference mass in u.</description>
+				<description>Reference mass</description>
 				<filexmlpath>mardyn/refunits/mass</filexmlpath>
+			</setting>
+			<setting>
+				<name>Energy unit</name>
+				<type>string</type>
+				<editor>select</editor>
+				<editor-options>K,eV</editor-options>
+				<defaultvalue>K</defaultvalue>
+				<filexmlpath>mardyn/refunits/energy@unit</filexmlpath>
 			</setting>
 			<setting>
 				<name>Energy</name>
 				<defaultvalue>1</defaultvalue>
 				<type>float</type>
 				<editor>lineedit</editor>
-				<description>Reference energy in K.</description>
+				<description>Reference energy</description>
 				<filexmlpath>mardyn/refunits/energy</filexmlpath>
 			</setting>
 		</child>
@@ -308,55 +324,230 @@
 					</child>
 				</child>
 				<child plurality="single" importance="optional">
-					<name>LongRangeCorrection(LRC)</name>
+					<name>LongRangeCorrection (LRC)</name>
+					<setting>
+						<name>LRC type</name>
+						<type>string</type>
+						<editor>select</editor>
+						<editor-options>planar,homogeneous</editor-options>
+						<defaultvalue>planar</defaultvalue>
+						<description>Choose type of LRC</description>
+						<filexmlpath>mardyn/simulation/algorithm/longrange@type</filexmlpath>
+					</setting>
+					<setting>
+						<name>numSlabs</name>
+						<defaultvalue>1000</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Define how many slabs are used for sampling.</description>
+						<filexmlpath>mardyn/simulation/algorithm/longrange/slabs</filexmlpath>
+						<depends>
+							<settingname>LRC type</settingname>
+							<value>planar</value>
+						</depends>
+					</setting>
+					<setting>
+						<name>Smooth 0 | 1</name>
+						<defaultvalue>0</defaultvalue>
+						<type>bool</type>
+						<editor>lineedit</editor>
+						<description>Define if density profile should be averaged over whole simulation time.</description>
+						<filexmlpath>mardyn/simulation/algorithm/longrange/smooth</filexmlpath>
+						<depends>
+							<settingname>LRC type</settingname>
+							<value>planar</value>
+						</depends>
+					</setting>
+					<setting>
+						<name>Frequency</name>
+						<defaultvalue>10</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Set frequency of reseting profiles for LRC calculation.</description>
+						<filexmlpath>mardyn/simulation/algorithm/longrange/frequency</filexmlpath>
+						<depends>
+							<settingname>LRC type</settingname>
+							<value>planar</value>
+						</depends>
+					</setting>
+					<setting>
+						<name>StartTimestep</name>
+						<defaultvalue>10000</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Set Start timestep for wirting out LRC profiles.</description>
+						<filexmlpath>mardyn/simulation/algorithm/longrange/writecontrol/start</filexmlpath>
+						<depends>
+							<settingname>LRC type</settingname>
+							<value>planar</value>
+						</depends>
+					</setting>
+					<setting>
+						<name>WriteFrequency</name>
+						<defaultvalue>100</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Set Frequency for wirting out LRC profiles.</description>
+						<filexmlpath>mardyn/simulation/algorithm/longrange/writecontrol/frequency</filexmlpath>
+						<depends>
+							<settingname>LRC type</settingname>
+							<value>planar</value>
+						</depends>
+					</setting>
+					<setting>
+						<name>StopTimestep</name>
+						<defaultvalue>11000</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Set Stop timestep for wirting out LRC profiles.</description>
+						<filexmlpath>mardyn/simulation/algorithm/longrange/writecontrol/stop</filexmlpath>
+						<depends>
+							<settingname>LRC type</settingname>
+							<value>planar</value>
+						</depends>
+					</setting>
+				</child>
+				<child plurality="single" importance="optional">
+					<name>Thermostats</name>
+					<child plurality="single" importance="optional">
+						<name>Temperature Control</name>
 						<setting>
-							<name>numSlabs</name>
-							<defaultvalue>1000</defaultvalue>
-							<type>int</type>
-							<editor>lineedit</editor>
-							<description>Define how many slabs are used for sampling.</description>
-							<filexmlpath>mardyn/simulation/algorithm/longrange/slabs</filexmlpath>
-						</setting>
-						<setting>
-							<name>Smooth 0 | 1</name>
-							<defaultvalue>0</defaultvalue>
-							<type>bool</type>
-							<editor>lineedit</editor>
-							<description>Define if density profile should be averaged over whole simulation time.</description>
-							<filexmlpath>mardyn/simulation/algorithm/longrange/smooth</filexmlpath>
-						</setting>
-						<setting>
-							<name>Frequency</name>
-							<defaultvalue>10</defaultvalue>
-							<type>int</type>
-							<editor>lineedit</editor>
-							<description>Set frequency of reseting profiles for LRC calculation.</description>
-							<filexmlpath>mardyn/simulation/algorithm/longrange/frequency</filexmlpath>
+							<defaultvalue>TemperatureControl</defaultvalue>
+							<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat@type</filexmlpath>
 						</setting>
 						<setting>
 							<name>StartTimestep</name>
-							<defaultvalue>10000</defaultvalue>
+							<defaultvalue>0</defaultvalue>
 							<type>int</type>
 							<editor>lineedit</editor>
-							<description>Set Start timestep for wirting out LRC profiles.</description>
-							<filexmlpath>mardyn/simulation/algorithm/longrange/writecontrol/start</filexmlpath>
+							<description>Set Start timestep of thermostating.</description>
+							<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/control/start</filexmlpath>
 						</setting>
 						<setting>
 							<name>WriteFrequency</name>
-							<defaultvalue>100</defaultvalue>
+							<defaultvalue>1</defaultvalue>
 							<type>int</type>
 							<editor>lineedit</editor>
-							<description>Set Frequency for wirting out LRC profiles.</description>
-							<filexmlpath>mardyn/simulation/algorithm/longrange/writecontrol/frequency</filexmlpath>
+							<description>Set Frequency of thermostating.</description>
+							<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/control/frequency</filexmlpath>
 						</setting>
 						<setting>
 							<name>StopTimestep</name>
-							<defaultvalue>11000</defaultvalue>
+							<defaultvalue>1000000000</defaultvalue>
 							<type>int</type>
 							<editor>lineedit</editor>
-							<description>Set Stop timestep for wirting out LRC profiles.</description>
-							<filexmlpath>mardyn/simulation/algorithm/longrange/writecontrol/stop</filexmlpath>
+							<description>Set Stop timestep of thermostating.</description>
+							<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/control/stop</filexmlpath>
 						</setting>
+						<child plurality="multi" importance="optional">
+							<name>Region</name>
+							<setting>
+								<name>Lower corner X</name>
+								<defaultvalue>0</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate X of lower corner</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/coords/lcx</filexmlpath>
+							</setting>
+							<setting>
+								<name>Lower corner Y</name>
+								<defaultvalue>0</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate Y of lower corner</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/coords/lcy</filexmlpath>
+							</setting>
+							<setting>
+								<name>Lower corner Z</name>
+								<defaultvalue>0</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate Z of lower corner</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/coords/lcz</filexmlpath>
+							</setting>
+							<setting>
+								<name>Upper corner X</name>
+								<defaultvalue>100</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate X of upper corner</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/coords/ucx</filexmlpath>
+							</setting>
+							<setting>
+								<name>Upper corner Y</name>
+								<defaultvalue>100</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate Y of upper corner</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/coords/ucy</filexmlpath>
+							</setting>
+							<setting>
+								<name>Upper corner Z</name>
+								<defaultvalue>100</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Coordinate Z of upper corner</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/coords/ucz</filexmlpath>
+							</setting>
+							<setting>
+								<name>Target temperature</name>
+								<defaultvalue>273.15</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Temperature that the thermostat maintains.</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/target/temperature</filexmlpath>
+							</setting>
+							<setting>
+								<name>Target component</name>
+								<defaultvalue>1</defaultvalue>
+								<type>int</type>
+								<editor>lineedit</editor>
+								<description>Component that should be controlled by thermostat (0: all).</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/target/component</filexmlpath>
+							</setting>
+							<setting>
+								<name>Number of slabs</name>
+								<defaultvalue>10</defaultvalue>
+								<type>int</type>
+								<editor>lineedit</editor>
+								<description>Number of slabs the control region is divided into.</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/settings/numslabs</filexmlpath>
+							</setting>
+							<setting>
+								<name>Damping exponent</name>
+								<defaultvalue>0.4</defaultvalue>
+								<type>float</type>
+								<editor>lineedit</editor>
+								<description>Damping exponent of temperature controlling.</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/settings/exponent</filexmlpath>
+							</setting>
+							<setting>
+								<name>Directions</name>
+								<defaultvalue>xyz</defaultvalue>
+								<type>string</type>
+								<editor>select</editor>
+								<editor-options>xyz,xy,xz,yz,x,y,z</editor-options>
+								<description>Specify which directions should be recognized for thermostating.</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/settings/directions</filexmlpath>
+							</setting>
+							<setting>
+								<name>Beta-Log write frequency</name>
+								<defaultvalue>1000</defaultvalue>
+								<type>int</type>
+								<editor>lineedit</editor>
+								<description>Frequency of writing beta_trans and beta_rot to log-file.</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/writefreq</filexmlpath>
+							</setting>
+							<setting>
+								<name>Beta-Log file prefix</name>
+								<defaultvalue>beta_log</defaultvalue>
+								<type>string</type>
+								<editor>lineedit</editor>
+								<description>Filename prefix of beta_trans and beta_rot log-file.</description>
+								<filexmlpath>mardyn/simulation/algorithm/thermostats/thermostat/regions/region/fileprefix</filexmlpath>
+							</setting>
+						</child>
+					</child>
 				</child>
 				<child plurality="single" importance="optional">
 					<name>Features</name>
@@ -568,6 +759,29 @@
 					<name>Result Writer</name>
 					<setting>
 						<defaultvalue>ResultWriter</defaultvalue>
+						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
+					</setting>
+					<setting>
+						<name>Writefrequency</name>
+						<defaultvalue>1000</defaultvalue>
+						<type>int</type>
+						<editor>lineedit</editor>
+						<description>Write out every nth timestep.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/writefrequency</filexmlpath>
+					</setting>
+					<setting>
+						<name>Output Prefix</name>
+						<defaultvalue>megamol</defaultvalue>
+						<type>string</type>
+						<editor>lineedit</editor>
+						<description>Defines a filename prefix for the output file.</description>
+						<filexmlpath>mardyn/simulation/output/outputplugin/outputprefix</filexmlpath>
+					</setting>
+				</child>
+				<child plurality="multi" importance="optional">
+					<name>Gamma Writer</name>
+					<setting>
+						<defaultvalue>GammaWriter</defaultvalue>
 						<filexmlpath>mardyn/simulation/output/outputplugin@name</filexmlpath>
 					</setting>
 					<setting>

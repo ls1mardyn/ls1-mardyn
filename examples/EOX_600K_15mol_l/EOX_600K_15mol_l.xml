@@ -85,7 +85,7 @@
     </algorithm>
 
     <output>
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>5</writefrequency>
         <outputprefix>EOX</outputprefix>
       </outputplugin>

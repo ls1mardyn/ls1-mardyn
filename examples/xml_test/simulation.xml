@@ -128,7 +128,7 @@
       </thermostats>
     </algorithm>
     <output>
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>

@@ -240,7 +240,7 @@
         - BetaTrans
         - BetaRot
         - Specific heat capacity (constant volume) -->
-      <outputplugin name="Resultwriter">
+      <outputplugin name="ResultWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
         <accumulation_steps>1000</accumulation_steps>
