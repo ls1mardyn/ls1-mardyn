@@ -233,27 +233,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	//distribute global component particle count
 	std::vector<uint64_t> globalNumCompSpheres(_numSphereTypes);
-	if (rank == 0){
-		for (uint32_t i = 0; i < _numSphereTypes; ++i){
-			globalNumCompSpheres[i] = numSpheresPerType[i];
-		}
-		MPI_Status status;
-		std::vector<uint64_t> numSpheresPerTypeTmp(_numSphereTypes);
-		for (int source = rank+1; source < numprocs; ++source){
-			int recvcount = _numSphereTypes * sizeof(uint64_t);
-			int recvtag = 1;
-			MPI_Recv(numSpheresPerTypeTmp.data(), recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
-			for (uint8_t ti = 0; ti < _numSphereTypes; ++ti)
-				globalNumCompSpheres[ti] = globalNumCompSpheres[ti] + numSpheresPerTypeTmp[ti];
-		}
-	}else{
-		int dest = 0;
-		int sendcount = numSpheresPerType.size() * sizeof(uint64_t);
-		int sendtag = 1;
-		MPI_Request request;
-		MPI_Isend(numSpheresPerType.data(), sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Reduce(numSpheresPerType.data(), globalNumCompSpheres.data(), _numSphereTypes, MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	MPI_File fh;
 	MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
