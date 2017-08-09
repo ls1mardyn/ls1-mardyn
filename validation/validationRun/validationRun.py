@@ -26,12 +26,13 @@ from shlex import split
 import compareHelpers
 from datetime import date
 import time
+import fileinput
 # from twisted.internet.defer import returnValue
 
 mpi = '-1'
 newMarDyn = ''
 oldMarDyn = '-1'
-cfgFilename = ''
+xmlFilename = ''
 inpFilename = ''
 comparePlugins = ['ResultWriter', 'GammaWriter', 'RDF']
 numIterations = '25'
@@ -44,7 +45,7 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:',
                              'mpi=',
                              'newMarDyn=',
                              'oldMarDyn=',
-                             'cfgFilename=',
+                             'xmlFilename=',
                              'inpFilename=',
                              'plugin=',
                              'numIterations=',
@@ -66,8 +67,8 @@ for opt, arg in options:
         newMarDyn = arg
     elif opt in ('-o', '--oldMarDyn'):
         oldMarDyn = arg
-    elif opt in ('-c', '--cfgFilename'):
-        cfgFilename = arg
+    elif opt in ('-c', '--xmlFilename'):
+        xmlFilename = arg
     elif opt in ('-i', '--inpFilename'):
         inpFilename = arg
     elif opt in ('-m', '--mpi'):
@@ -83,7 +84,7 @@ for opt, arg in options:
         numIterations = arg
     elif opt in ('-h', '--help'):
         print "Make sure two versions of mardyn produce identical simulation results. Sample usage:"
-        print """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.cfg -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """
+        print """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.xml -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """
         print " multiple -p are possible. Currently ResultWriter, GammaWriter and RDF are supported."
         print " -b specifies, that the base (old file) is assumed to be sequential"
         print " -r specifies the remote host "
@@ -119,8 +120,10 @@ doReferenceRun = not noReferenceRun
 
 
 comparePostfixes = []
-for comparePlugin in comparePlugins:
-    if comparePlugin == 'ResultWriter':
+for i in range(len(comparePlugins)):
+    comparePlugin = comparePlugins[i]
+    if comparePlugin == 'Resultwriter' or comparePlugin == 'ResultWriter':
+        comparePlugins[i] = comparePlugin = 'Resultwriter'
         comparePostfixes.append('.res')
     elif comparePlugin == 'GammaWriter':
         comparePostfixes.append('.gamma')
@@ -143,16 +146,18 @@ print pathToValidationRuns
 
 # first clean all the folders
 cleanUpCommand = ['rm']
-cleanUpCommand.extend(glob(pathToValidationRuns + '/*.cfg'))
+cleanUpCommand.extend(glob(pathToValidationRuns + '/*.xml'))
+cleanUpCommand.extend(glob(pathToValidationRuns + '/*.cfg')) # remains for cleanup
 cleanUpCommand.extend(glob(pathToValidationRuns + '/*.inp'))
 cleanUpCommand.extend(glob(pathToValidationRuns + '/new/*'))
 if doReferenceRun:
     cleanUpCommand.extend(glob(pathToValidationRuns + '/reference/*'))
 cleanUpCommand.extend(glob(pathToValidationRuns + '/MarDyn*'))
-call(cleanUpCommand)
+p = Popen(cleanUpCommand,stdout=PIPE, stderr=PIPE)
+p.communicate()  # suppresses possible errors if nothing there yet, as we don't want them for rm
 
 # copy all there
-call(['cp', newMarDyn, cfgFilename, inpFilename, pathToValidationRuns])
+call(['cp', newMarDyn, xmlFilename, inpFilename, pathToValidationRuns])
 if doReferenceRun:
     call(['cp', oldMarDyn, pathToValidationRuns])
 
@@ -160,28 +165,58 @@ if doReferenceRun:
 os.chdir(pathToValidationRuns)
 
 # get the basenames
-cfgBase = ntpath.basename(cfgFilename)
+xmlBase = ntpath.basename(xmlFilename)
 inpBase = ntpath.basename(inpFilename)
 oldMarDynBase = ntpath.basename(oldMarDyn)
 newMarDynBase = ntpath.basename(newMarDyn)
 
 # print "append ComparisonWriter here"
-with open(cfgBase, "a") as myfile:
-    for comparePlugin in comparePlugins:
-        if comparePlugin == 'RDF':  # configuring RDF within the cfg is different...
-            myfile.write("initStatistics 0\nRDF 0.003 1000\nRDFOutputTimesteps 10\nRDFOutputPrefix val.comparison\n")
-        else:
-            myfile.write("output " + comparePlugin + " 1 val.comparison\n")
+# print "append ComparisonWriter here"
+with open(xmlBase, "r") as prev_file, open("tmp.xml", "w") as new_file:
+    contents = prev_file.readlines()
+    #Now contents is a list of strings and you may add the new line to this list at any position
+    #contents.insert(4, "\n This is a new line \n ")
+
+
+    for i in range(len(contents)):
+        line=contents[i]
+        if 'RDF' in comparePlugins and line.find("<run>") != -1:
+            contents.insert(i+1,"""<equilibration><steps>0</steps></equilibration>\n""")
+            i+=1
+            continue
+        
+        if line.find("<output>") != -1:
+            for comparePlugin in comparePlugins:
+                if comparePlugin == 'RDF':  # configuring RDF within the xml is different...
+                    contents.insert(i+1, """
+        <outputplugin name="RDF">
+            <writefrequency>10</writefrequency>
+            <outputprefix>val.comparison</outputprefix>
+            <intervallength>0.003</intervallength>
+            <bins>1000</bins>
+        </outputplugin>\n""")
+                    i+=1
+                    #myfile.write("initStatistics 0\nRDF 0.003 1000\nRDFOutputTimesteps 10\nRDFOutputPrefix val.comparison\n")
+                else:
+                    contents.insert(i+1, """
+        <outputplugin name=\""""+ comparePlugin+ """\">
+            <writefrequency>1</writefrequency>
+            <outputprefix>val.comparison</outputprefix>
+        </outputplugin>""")
+                    i+=1
+                  #myfile.write("output " + comparePlugin + " 1 val.comparison\n")  
+    new_file.write("".join(contents))
+call(['mv','tmp.xml',xmlBase])
 
 comparisonFilenames = []
 for comparePostfix in comparePostfixes:
     comparisonFilenames.append('val.comparison' + comparePostfix)
 
 if doReferenceRun:
-    call(['cp', cfgBase, 'reference/'])
+    call(['cp', xmlBase, 'reference/'])
     call(['cp', inpBase, 'reference/'])
     call(['cp', oldMarDynBase, 'reference/'])
-call(['cp', cfgBase, 'new/'])
+call(['cp', xmlBase, 'new/'])
 call(['cp', inpBase, 'new/'])
 call(['cp', newMarDynBase, 'new/'])
 
@@ -209,8 +244,7 @@ def doRun(directory, MardynExe):
         if p.returncode:
             print "error on mkdir -p:"
             print out, err
-            exit(1)        
-        
+            exit(1)
         remotedirectory = remoteprefix + "/" + directory
         command = "rsync --delete-before -r ../" + directory + " " + rsyncremote + ":" + remoteprefix
         print command
@@ -225,8 +259,8 @@ def doRun(directory, MardynExe):
     if PAR and (directory == 'new' or not baseisnormal):
         cmd.extend(split(MPI_START))
         cmd.extend(['-n', str(mpi)])
-    cmd.extend(['./' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
-    #cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
+    cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]); 
+    #cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]); 
     print cmd
     print "================"
     t = time.time()
@@ -238,7 +272,7 @@ def doRun(directory, MardynExe):
         print "error while executing program:"
         print out, err
         exit(1)
-    
+    print out, err
     if doRemote:  # sync back
         command = "rsync " + rsyncremote + ":" + remotedirectory + "/* ./"
         print command
