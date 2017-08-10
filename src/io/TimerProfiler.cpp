@@ -18,9 +18,8 @@ using Log::global_log;
 
 const string TimerProfiler::_baseTimerName = "_baseTimer";
 
-TimerProfiler::TimerProfiler(): _timerCount(0), _numElapsedIterations(0) {
-	_timers[_baseTimerName] = _Timer(_timerCount, _baseTimerName);
-	_timerCount++;
+TimerProfiler::TimerProfiler(): _numElapsedIterations(0) {
+	_timers[_baseTimerName] = _Timer(_baseTimerName);
 	readInitialTimersFromFile("");
 }
 
@@ -39,15 +38,13 @@ void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNa
 	if (!activate && timer){
 		timer->deactivateTimer();
 	}
-	_timers[timerName] = _Timer(_timerCount, timerName, timer);
+	_timers[timerName] = _Timer(timerName, timer);
 
 	if (!parentTimerNames.size()) parentTimerNames.push_back(_baseTimerName);
 	for (size_t i=0; i<parentTimerNames.size(); i++) {
 		_timers[parentTimerNames[i]]._childTimerNames.push_back(timerName);
 		_timers[timerName]._parentTimerNames.push_back(parentTimerNames[i]);
 	}
-
-	_timerCount++;
 }
 
 void TimerProfiler::activateTimer(string timerName){

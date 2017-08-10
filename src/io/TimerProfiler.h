@@ -39,7 +39,6 @@ public:
 	Deallocates all instantiated timers and clears the content of the timer container.
 	*/
 	virtual ~TimerProfiler();
-
 	/**
 	@fn void registerTimer(std::string timerName, std::vector<std::string> parentTimerNames, Timer *timer=nullptr, bool activate=true)
 	@brief Adds a timer in the container.
@@ -207,12 +206,6 @@ private:
 	void _clearTimers(std::string startingTimerName=_baseTimerName);
 
 	/**
-	@var int _timerCount = 0
-	@brief Variable to count how many timers are registered in the timerProfiler
-	*/
-	int _timerCount = 0;
-
-	/**
 	@class _Timer
 	@brief Private helper class containing a timer and its hierarchical information
 	*/
@@ -223,17 +216,11 @@ private:
 
 			A default constructor is necessary because the container creates for every new key an object initialised with the default constructor.
 			*/
-			_Timer(int id=0, std::string timerName="", Timer* timer=nullptr,
+			_Timer(std::string timerName="", Timer* timer=nullptr,
 					std::vector<std::string>childTimerNames={}, std::vector<std::string>parentTimerNames={},
 					std::string outputString=""):
-				_id(id), _timer(timer), _childTimerNames(childTimerNames), _parentTimerNames(parentTimerNames),
+				_timer(timer), _childTimerNames(childTimerNames), _parentTimerNames(parentTimerNames),
 				_outputString(outputString), _timerName(timerName) {}
-
-			/**
-			@var int _id
-			@brief ID of the timer in timerProfiler
-			*/
-			int _id;
 
 			/**
 			@var Timer* _timer
