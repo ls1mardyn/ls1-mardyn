@@ -842,7 +842,7 @@ void Simulation::prepare_start() {
 	_memoryProfiler->doOutput("without halo copies");
 
 	// temporary addition until MPI communication is parallelized with OpenMP
-	//we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
+	// we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
 	global_simulation->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 	updateParticleContainerAndDecomposition();
 	global_simulation->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
@@ -1707,12 +1707,12 @@ void Simulation::initGlobalEnergyLog()
 
 void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
 {
-	unsigned long _nNumMolsGlobalEnergyLocal = 0ul;
-	double _UkinLocal = 0.;
-	double _UkinTransLocal = 0.;
-	double _UkinRotLocal = 0.;
+	unsigned long nNumMolsGlobalEnergyLocal = 0ul;
+	double UkinLocal = 0.;
+	double UkinTransLocal = 0.;
+	double UkinRotLocal = 0.;
 	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:_nNumMolsGlobalEnergyLocal,_UkinLocal,_UkinTransLocal,_UkinRotLocal)
+	#pragma omp parallel reduction(+:nNumMolsGlobalEnergyLocal,UkinLocal,UkinTransLocal,UkinRotLocal)
 	#endif
 	{
 		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
@@ -1720,10 +1720,10 @@ void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& gl
 
 		// sample energy
 		for (ParticleIterator mi = begin; mi != end; ++mi) {
-			_nNumMolsGlobalEnergyLocal++;
-			_UkinLocal += mi->U_kin();
-			_UkinTransLocal += mi->U_trans();
-			_UkinRotLocal += mi->U_rot();
+			nNumMolsGlobalEnergyLocal++;
+			UkinLocal += mi->U_kin();
+			UkinTransLocal += mi->U_trans();
+			UkinRotLocal += mi->U_rot();
 		}
 	}
 
@@ -1732,22 +1732,22 @@ void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& gl
 
 	// calculate global values
 	_domainDecomposition->collCommInit(4);
-	_domainDecomposition->collCommAppendUnsLong(_nNumMolsGlobalEnergyLocal);
-	_domainDecomposition->collCommAppendDouble(_UkinLocal);
-	_domainDecomposition->collCommAppendDouble(_UkinTransLocal);
-	_domainDecomposition->collCommAppendDouble(_UkinRotLocal);
+	_domainDecomposition->collCommAppendUnsLong(nNumMolsGlobalEnergyLocal);
+	_domainDecomposition->collCommAppendDouble(UkinLocal);
+	_domainDecomposition->collCommAppendDouble(UkinTransLocal);
+	_domainDecomposition->collCommAppendDouble(UkinRotLocal);
 	_domainDecomposition->collCommAllreduceSum();
-	unsigned long _nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
-	double _UkinGlobal = _domainDecomposition->collCommGetDouble();
-	double _UkinTransGlobal = _domainDecomposition->collCommGetDouble();
-	double _UkinRotGlobal = _domainDecomposition->collCommGetDouble();
+	unsigned long nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
+	double UkinGlobal = _domainDecomposition->collCommGetDouble();
+	double UkinTransGlobal = _domainDecomposition->collCommGetDouble();
+	double UkinRotGlobal = _domainDecomposition->collCommGetDouble();
 	_domainDecomposition->collCommFinalize();
 
 	// reset local values
-	_nNumMolsGlobalEnergyLocal = 0;
-	_UkinLocal = 0.;
-	_UkinTransLocal = 0.;
-	_UkinRotLocal = 0.;
+	nNumMolsGlobalEnergyLocal = 0;
+	UkinLocal = 0.;
+	UkinTransLocal = 0.;
+	UkinRotLocal = 0.;
 
 #ifdef ENABLE_MPI
 	int rank = _domainDecomposition->getRank();
@@ -1758,11 +1758,11 @@ void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& gl
 
 	std::stringstream outputstream;
 
-	outputstream.write(reinterpret_cast<const char*>(&_nNumMolsGlobalEnergyGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&nNumMolsGlobalEnergyGlobal), 8);
 	outputstream.write(reinterpret_cast<const char*>(&globalUpot), 8);
-	outputstream.write(reinterpret_cast<const char*>(&_UkinGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&_UkinTransGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&_UkinRotGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&UkinGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&UkinTransGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&UkinRotGlobal), 8);
 	outputstream.write(reinterpret_cast<const char*>(&globalT), 8);
 	outputstream.write(reinterpret_cast<const char*>(&globalPressure), 8);
 
