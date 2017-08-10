@@ -659,16 +659,8 @@ private:
 	double _dFmaxThreshold;
 
 	/** Global energy log */
-	unsigned long _nNumMolsGlobalEnergyLocal;
-	double _UkinLocal;
-	double _UkinTransLocal;
-	double _UkinRotLocal;
-	unsigned long _nNumMolsGlobalEnergyGlobal;
-	double _UkinGlobal;
-	double _UkinTransGlobal;
-	double _UkinRotGlobal;
-	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
+	unsigned long _nWriteFreqGlobalEnergy;
 };
 #endif /*SIMULATION_H_*/
 

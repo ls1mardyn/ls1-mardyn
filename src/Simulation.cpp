@@ -101,14 +101,6 @@ Simulation::Simulation()
 	_nFmaxID(0),
 	_dFmaxInit(0.),
 	_dFmaxThreshold(0.),
-	_nNumMolsGlobalEnergyLocal(0),
-	_UkinLocal(0.),
-	_UkinTransLocal(0.),
-	_UkinRotLocal(0.),
-	_nNumMolsGlobalEnergyGlobal(0),
-	_UkinGlobal(0.),
-	_UkinTransGlobal(0.),
-	_UkinRotGlobal(0.),
 	_nWriteFreqGlobalEnergy(100),
 	_globalEnergyLogFilename("global_energy.log")
 {
@@ -1431,7 +1423,7 @@ void Simulation::simulate() {
 
 		output(_simstep);
 		
-		
+		//! TODO: this should be moved! it is definitely not I/O
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
 		  * realignment tools borrowed from Martin Horsch
 		  * For the actual shift the halo MUST NOT be present!
@@ -1715,6 +1707,10 @@ void Simulation::initGlobalEnergyLog()
 
 void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
 {
+	unsigned long _nNumMolsGlobalEnergyLocal = 0ul;
+	double _UkinLocal = 0.;
+	double _UkinTransLocal = 0.;
+	double _UkinRotLocal = 0.;
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:_nNumMolsGlobalEnergyLocal,_UkinLocal,_UkinTransLocal,_UkinRotLocal)
 	#endif
@@ -1741,10 +1737,10 @@ void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& gl
 	_domainDecomposition->collCommAppendDouble(_UkinTransLocal);
 	_domainDecomposition->collCommAppendDouble(_UkinRotLocal);
 	_domainDecomposition->collCommAllreduceSum();
-	_nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
-	_UkinGlobal = _domainDecomposition->collCommGetDouble();
-	_UkinTransGlobal = _domainDecomposition->collCommGetDouble();
-	_UkinRotGlobal = _domainDecomposition->collCommGetDouble();
+	unsigned long _nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
+	double _UkinGlobal = _domainDecomposition->collCommGetDouble();
+	double _UkinTransGlobal = _domainDecomposition->collCommGetDouble();
+	double _UkinRotGlobal = _domainDecomposition->collCommGetDouble();
 	_domainDecomposition->collCommFinalize();
 
 	// reset local values
