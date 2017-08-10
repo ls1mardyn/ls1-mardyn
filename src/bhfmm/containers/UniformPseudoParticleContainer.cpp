@@ -2283,6 +2283,10 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 	}
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
 } // GatherWellSepLo_FFT_MPI_template closed
+
+FFTAccelerationAPI *UniformPseudoParticleContainer::getFFTAcceleration() {
+	return _FFTAcceleration;
+}
 #endif /* FMM_FFT */
 
 void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/, int mpCells, int curLevel){
@@ -3627,10 +3631,6 @@ void UniformPseudoParticleContainer::printTimers() {
 
 vector<vector<MpCell>> &UniformPseudoParticleContainer::getMpCellGlobalTop() {
 	return _mpCellGlobalTop;
-}
-
-FFTAccelerationAPI *UniformPseudoParticleContainer::getFFTAcceleration() {
-	return _FFTAcceleration;
 }
 
 } /* namespace bhfmm */

@@ -154,8 +154,9 @@ void FastMultipoleMethod::printTimers() {
 	global_simulation->printTimers("UNIFORM_PSEUDO_PARTICLE_CONTAINER");
 }
 
-#ifdef  QUICKSCHED
+#ifdef QUICKSCHED
 void FastMultipoleMethod::runner(int type, void *data) {
+#ifdef FMM_FFT
 	struct qsched_payload *payload = (qsched_payload *)data;
 	switch (type) {
 		case P2PPreprocessSingleCell:{
@@ -233,6 +234,13 @@ void FastMultipoleMethod::runner(int type, void *data) {
         default:
             global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
 	}
+#else
+#pragma omp critical
+	{
+	global_log->error() << "Quicksched runner without FMM_FFT not implemented!" << std::endl;
+	Simulation::exit(1);
+	}
+#endif /* FMM_FFT */
 }
 #endif /* QUICKSCEHD */
 } /* namespace bhfmm */
