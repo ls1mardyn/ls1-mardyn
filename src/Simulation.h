@@ -659,8 +659,8 @@ private:
 	double _dFmaxThreshold;
 
 	/** Global energy log */
-	std::string _globalEnergyLogFilename;
 	unsigned long _nWriteFreqGlobalEnergy;
+	std::string _globalEnergyLogFilename;
 };
 #endif /*SIMULATION_H_*/
 
