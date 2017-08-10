@@ -62,6 +62,8 @@ void OriginalCellPairTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> 
 		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
 		computeNeighbourOffsets();
 
+		_innerMostCellIndices.clear();
+
 		auto maxIndex = 1;
 		for (auto d : dims)
 			maxIndex *= d;

@@ -37,10 +37,10 @@
       <phasespacepoint>
         <generator name="mkTcTS">
           <layer1>
-            <density>0.8</density>
+            <density>1</density>
           </layer1>
           <layer2>
-            <density>0.8</density>
+            <density>1</density>
           </layer2>
         </generator>
       </phasespacepoint>
@@ -61,7 +61,7 @@
           <cellsInCutoffRadius>2</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
-        <radiusLJ unit="reduced" >10.0</radiusLJ>
+        <radiusLJ unit="reduced" >5.0</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField" >
         <epsilon>1.0e+10</epsilon>

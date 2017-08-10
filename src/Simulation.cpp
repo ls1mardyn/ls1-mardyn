@@ -1232,13 +1232,13 @@ void Simulation::simulate() {
 			computationTimer->start();
 			forceCalculationTimer->start();
 			_moleculeContainer->traverseCells(*_cellProcessor);
+
+			// Update forces in molecules so they can be exchanged
+			updateForces();
 			forceCalculationTimer->stop();
 			computationTimer->stop();
 
 			decompositionTimer->start();
-			// Update forces in molecules so they can be exchanged
-			updateForces();
-
 			// Exchange forces if it's required by the cell container.
 			if(_moleculeContainer->requiresForceExchange()){
 				_domainDecomposition->exchangeForces(_moleculeContainer, _domain);

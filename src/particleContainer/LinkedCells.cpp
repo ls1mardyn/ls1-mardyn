@@ -158,9 +158,10 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		numberOfCells *= _cellsPerDimension[dim];
 
 		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _boxWidthInNumCells[dim];
-		_haloBoundingBoxMin[dim] = _boundingBoxMin[dim] - _haloWidthInNumCells[dim] * _cellLength[dim];
-		_haloBoundingBoxMax[dim] = _boundingBoxMax[dim] + _haloWidthInNumCells[dim] * _cellLength[dim];
-		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
+		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim] * _cellsInCutoff; //TODO Halo blocks have always the size of one cutoff
+
+		_haloBoundingBoxMin[dim] = _boundingBoxMin[dim] - _haloLength[dim];
+		_haloBoundingBoxMax[dim] = _boundingBoxMax[dim] + _haloLength[dim];
 	}
 
 	global_log->info() << "Cells per dimension (incl. halo): " << _cellsPerDimension[0] << " x "

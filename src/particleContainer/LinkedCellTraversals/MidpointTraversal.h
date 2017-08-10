@@ -33,6 +33,9 @@ public:
 		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
 		computeOffsets();
 
+		_innerMostCellIndices.clear();
+		_notInnerMostCellIndices.clear();
+
 		auto maxIndex = 1;
 		for (auto d : dims)
 			maxIndex *= d;
@@ -40,6 +43,8 @@ public:
 		for (auto i = 0; i < maxIndex; ++i) {
 			if (this->_cells->at(i).isInnerMostCell()){
 				_innerMostCellIndices.push_back(i);
+			} else {
+				_notInnerMostCellIndices.push_back(i);
 			}
 		}
 	}
@@ -83,6 +88,7 @@ private:
 	std::array<std::tuple<long, long, long>, 8> _corners;
 
 	std::vector<unsigned long> _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
+	std::vector<unsigned long> _notInnerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all outer cells
 };
 
 template<class CellTemplate>
@@ -240,11 +246,11 @@ void MidpointTraversal<CellTemplate>::pairOriginWithForewardNeighbors(int& index
 		for(long x=-1; x<=1; ++x){ // 3
 			_offsets3D[index++] = make_pair(origin, make_tuple(x, y, 1l));
 		}
-		// 1
+		// 1st
 		_offsets3D[index++] = make_pair(origin, make_tuple(1l, y, 0l));
 	}
 
-	// 13.
+	// 13th
 	_offsets3D[index++] = make_pair(origin, make_tuple(0l, 1l, 0l));
 
 }
@@ -314,13 +320,8 @@ void MidpointTraversal<CellTemplate>::traverseCellPairs(CellProcessor& cellProce
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::traverseCellPairsOuter(CellProcessor& cellProcessor){
 	//TODO ____ Test
-	unsigned long start = 0ul;
-	unsigned long end = this->_cells->size();
-	for(auto i = start; i<end; ++i){
-		CellTemplate& baseCell = this->_cells->at(i);
-		if (!baseCell.isInnerMostCell()) {
-			processBaseCell(cellProcessor, i);
-		}
+	for(unsigned long outerCellIndex : _notInnerMostCellIndices){
+		processBaseCell(cellProcessor, outerCellIndex);
 	}
 }
 
@@ -329,7 +330,7 @@ void MidpointTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cell
 	//TODO ____ Test
 	unsigned long start =  _innerMostCellIndices.size() * stage / stageCount;
 	unsigned long end =  _innerMostCellIndices.size() * (stage+1) / stageCount;
-	for (unsigned i = start; i < end; ++i) {
+	for (unsigned long i = start; i < end; ++i) {
 		processBaseCell(cellProcessor, _innerMostCellIndices.at(i));
 	}
 }
