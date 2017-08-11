@@ -279,7 +279,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	global_simulation->startTimer("INPUT_OLDSTYLE_INPUT");
+	global_simulation->timers()->start("INPUT_OLDSTYLE_INPUT");
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
@@ -493,9 +493,9 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	} // Rank 0 only
 #endif
 
-	global_simulation->stopTimer("INPUT_OLDSTYLE_INPUT");
-	global_simulation->setOutputString("INPUT_OLDSTYLE_INPUT", "Initial IO took:                 ");
-	global_simulation->printTimer("INPUT_OLDSTYLE_INPUT");
+	global_simulation->timers()->stop("INPUT_OLDSTYLE_INPUT");
+	global_simulation->timers()->setOutputString("INPUT_OLDSTYLE_INPUT", "Initial IO took:                 ");
+	global_simulation->timers()->print("INPUT_OLDSTYLE_INPUT");
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
 #endif

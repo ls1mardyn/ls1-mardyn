@@ -24,13 +24,13 @@ NonBlockingMPIHandlerBase::~NonBlockingMPIHandlerBase() {
 }
 
 void NonBlockingMPIHandlerBase::performOverlappingTasks(bool forceRebalancing) {
-	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 	// ensure that all Particles are in the right cells and exchange Particles
 	global_log->debug() << "Updating container and decomposition" << std::endl;
 	// The particles have moved, so the neighbourhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();
-	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 
 	// check if domain decomposition allows for non-blocking balance and exchange step. if it does, perform a non-blocking step
 	if (_domainDecomposition->queryBalanceAndExchangeNonBlocking(
@@ -52,15 +52,15 @@ void NonBlockingMPIHandlerBase::performComputation() {
 	// Force calculation and other pair interaction related computations
 	global_log->debug() << "Traversing pairs" << std::endl;
 
-	global_simulation->startTimer("SIMULATION_COMPUTATION");
-	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->start("SIMULATION_COMPUTATION");
+	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
-	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
-	global_simulation->stopTimer("SIMULATION_COMPUTATION");
+	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 }
 
 void NonBlockingMPIHandlerBase::initBalanceAndExchange(bool forceRebalancing) {
-	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 
 	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
 
@@ -68,5 +68,5 @@ void NonBlockingMPIHandlerBase::initBalanceAndExchange(bool forceRebalancing) {
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
 
-	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 }

@@ -51,7 +51,7 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	} // end pragma omp parallel
 
 #ifdef ENABLE_MPI
-	global_simulation->setOutputString("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", "FMM: Time spent in Charge P2P ");
+	global_simulation->timers()->setOutputString("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", "FMM: Time spent in Charge P2P ");
 	//global_simulation->setSyncTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", false); //it is per default false
 #endif
 }
@@ -67,12 +67,12 @@ VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
 }
 
 void VectorizedChargeP2PCellProcessor::printTimers() {
-	std::cout << "FMM: Time spent in Charge P2P " << global_simulation->getTime("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P") << std::endl;
-	global_simulation->printTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
+	std::cout << "FMM: Time spent in Charge P2P " << global_simulation->timers()->getTime("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P") << std::endl;
+	global_simulation->timers()->print("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
 
 void VectorizedChargeP2PCellProcessor::initTraversal() {
-	global_simulation->startTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
+	global_simulation->timers()->start("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 
 	#if defined(_OPENMP)
 	#pragma omp master
@@ -111,7 +111,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 	_virial = glob_virial;
 	_domain.setLocalVirial(currentVirial + _virial);
 	_domain.setLocalUpot(currentUpot + _upotXpoles);
-	global_simulation->stopTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
+	global_simulation->timers()->stop("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
 
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) {

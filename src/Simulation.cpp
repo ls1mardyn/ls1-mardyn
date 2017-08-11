@@ -116,14 +116,6 @@ Simulation::Simulation()
 	_nFmaxID(0),
 	_dFmaxInit(0.),
 	_dFmaxThreshold(0.),
-	_nNumMolsGlobalEnergyLocal(0),
-	_UkinLocal(0.),
-	_UkinTransLocal(0.),
-	_UkinRotLocal(0.),
-	_nNumMolsGlobalEnergyGlobal(0),
-	_UkinGlobal(0.),
-	_UkinTransGlobal(0.),
-	_UkinRotGlobal(0.),
 	_nWriteFreqGlobalEnergy(100),
 	_globalEnergyLogFilename("global_energy.log")
 {
@@ -926,10 +918,10 @@ void Simulation::prepare_start() {
 	_memoryProfiler->doOutput("without halo copies");
 
 	// temporary addition until MPI communication is parallelized with OpenMP
-	//we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
-	global_simulation->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+	// we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
+	global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 	updateParticleContainerAndDecomposition();
-	global_simulation->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+	global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 
 	_memoryProfiler->doOutput("with halo copies");
 
@@ -942,17 +934,17 @@ void Simulation::prepare_start() {
 #endif /* MARDYN_WR */
 
 	global_log->info() << "Performing initial force calculation" << endl;
-	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
-	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 
 #ifdef MARDYN_WR
 	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
 	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m);
 #endif /* MARDYN_WR */
 
-	_loopCompTime = global_simulation->getTime("SIMULATION_FORCE_CALCULATION");
-	global_simulation->resetTimer("SIMULATION_FORCE_CALCULATION");
+	_loopCompTime = global_simulation->timers()->getTime("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->reset("SIMULATION_FORCE_CALCULATION");
 	++_loopCompTimeSteps;
 
 
@@ -1070,12 +1062,16 @@ void Simulation::prepare_start() {
 	// initial number of timesteps
 	_initSimulation = (unsigned long) round(this->_simulationTime / _integrator->getTimestepLength() );
 
-	// initialize output
+	// initialize output and output timers
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter
 			!= _outputPlugins.end(); outputIter++) {
-		(*outputIter)->initOutput(_moleculeContainer, _domainDecomposition,
-				_domain);
+		OutputBase* output_plugin = (*outputIter);
+		string timer_name = output_plugin->getPluginName();
+		global_simulation->timers()->registerTimer(timer_name,  vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
+		string timer_output_string = string("Output Plugin ") + timer_name + string(" took:");
+		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
+		output_plugin->initOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
 
 	/** global energy log */
@@ -1162,26 +1158,27 @@ void Simulation::simulate() {
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 
+	global_simulation->timers()->setOutputString("SIMULATION_LOOP", "Computation in main loop took:");
+	global_simulation->timers()->setOutputString("SIMULATION_DECOMPOSITION", "Decomposition took:");
+	global_simulation->timers()->setOutputString("SIMULATION_COMPUTATION", "Computation took:");
+	global_simulation->timers()->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
+	global_simulation->timers()->setOutputString("SIMULATION_IO", "Final IO took:");
+	global_simulation->timers()->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
+	global_simulation->timers()->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
+	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
+	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
+
 	// all timers except the ioTimer measure inside the main loop
-	Timer* loopTimer = global_simulation->getTimer("SIMULATION_LOOP"); // timer for the entire simulation loop (synced)
-	global_simulation->setOutputString("SIMULATION_LOOP", "Computation in main loop took:");
-	Timer* decompositionTimer = global_simulation->getTimer("SIMULATION_DECOMPOSITION"); // timer for decomposition: sub-timer of loopTimer
-	global_simulation->setOutputString("SIMULATION_DECOMPOSITION", "Decomposition took:");
-	Timer* computationTimer = global_simulation->getTimer("SIMULATION_COMPUTATION"); // timer for computation: sub-timer of loopTimer
-	global_simulation->setOutputString("SIMULATION_COMPUTATION", "Computation took:");
-	Timer* perStepIoTimer = global_simulation->getTimer("SIMULATION_PER_STEP_IO"); // timer for io in simulation loop: sub-timer of loopTimer
-	global_simulation->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
-	Timer* ioTimer = global_simulation->getTimer("SIMULATION_IO"); // timer for final io
-	global_simulation->setOutputString("SIMULATION_IO", "Final IO took:");
-	Timer* forceCalculationTimer = global_simulation->getTimer("SIMULATION_FORCE_CALCULATION"); // timer for force calculation: sub-timer of computationTimer
-	global_simulation->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
-	Timer* mpiOMPCommunicationTimer = global_simulation->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); // timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
-	global_simulation->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
-	global_simulation->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
-	global_simulation->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
+	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); // timer for the entire simulation loop (synced)
+	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); // timer for decomposition: sub-timer of loopTimer
+	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); // timer for computation: sub-timer of loopTimer
+	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); // timer for io in simulation loop: sub-timer of loopTimer
+	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); // timer for final io
+	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); // timer for force calculation: sub-timer of computationTimer
+	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); // timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
 	//loopTimer->set_sync(true);
-	global_simulation->setSyncTimer("SIMULATION_LOOP", true);
+	global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
 #if WITH_PAPI
 	const char *papi_event_list[] = {
 		"PAPI_TOT_CYC",
@@ -1206,25 +1203,9 @@ void Simulation::simulate() {
 	output(_initSimulation);
 
 	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
-		// Too many particle exchanges in the first 10 simulation steps.
-		// Reset the timers after 10 simulation steps and restart the timers
-		// 		for more accurate measurements for benchmarking.
-		if (_simstep == 10) {
-			loopTimer->stop();
-
-			global_log->info() << "Simstep 10:" << endl;
-			global_simulation->printTimers();
-			global_log->info() << endl;
-			global_log->info() << "RESETTING TIMERS" << endl;
-			global_simulation->resetTimers();
-			global_log->info() << endl;
-
-			loopTimer->start();
-		}
-
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
-		global_simulation->incrementTimerTimestepCounter();
+		global_simulation->timers()->incrementTimerTimestepCounter();
 
 		computationTimer->start();
 
@@ -1773,7 +1754,7 @@ void Simulation::simulate() {
 
 		output(_simstep);
 		
-		
+		//! TODO: this should be moved! it is definitely not I/O
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
 		  * realignment tools borrowed from Martin Horsch
 		  * For the actual shift the halo MUST NOT be present!
@@ -1817,8 +1798,8 @@ void Simulation::simulate() {
 		delete (*outputIter);
 	}
 	ioTimer->stop();
-	global_simulation->printTimers();
-	global_simulation->resetTimers();
+	global_simulation->timers()->printTimers();
+	global_simulation->timers()->resetTimers();
 	_memoryProfiler->doOutput();
 	global_log->info() << endl;
 
@@ -1838,7 +1819,9 @@ void Simulation::output(unsigned long simstep) {
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		OutputBase* output = (*outputIter);
 		global_log->debug() << "Output from " << output->getPluginName() << endl;
+		global_simulation->timers()->start(output->getPluginName());
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
+		global_simulation->timers()->stop(output->getPluginName());
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
@@ -1895,9 +1878,9 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	_moleculeContainer->update();
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
 	bool forceRebalancing = false;
-	global_simulation->startTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
 	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
-	global_simulation->stopTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
@@ -2057,8 +2040,12 @@ void Simulation::initGlobalEnergyLog()
 
 void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
 {
+	unsigned long nNumMolsGlobalEnergyLocal = 0ul;
+	double UkinLocal = 0.;
+	double UkinTransLocal = 0.;
+	double UkinRotLocal = 0.;
 	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:_nNumMolsGlobalEnergyLocal,_UkinLocal,_UkinTransLocal,_UkinRotLocal)
+	#pragma omp parallel reduction(+:nNumMolsGlobalEnergyLocal,UkinLocal,UkinTransLocal,UkinRotLocal)
 	#endif
 	{
 		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
@@ -2066,10 +2053,10 @@ void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& gl
 
 		// sample energy
 		for (ParticleIterator mi = begin; mi != end; ++mi) {
-			_nNumMolsGlobalEnergyLocal++;
-			_UkinLocal += mi->U_kin();
-			_UkinTransLocal += mi->U_trans();
-			_UkinRotLocal += mi->U_rot();
+			nNumMolsGlobalEnergyLocal++;
+			UkinLocal += mi->U_kin();
+			UkinTransLocal += mi->U_trans();
+			UkinRotLocal += mi->U_rot();
 		}
 	}
 
@@ -2078,22 +2065,22 @@ void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& gl
 
 	// calculate global values
 	_domainDecomposition->collCommInit(4);
-	_domainDecomposition->collCommAppendUnsLong(_nNumMolsGlobalEnergyLocal);
-	_domainDecomposition->collCommAppendDouble(_UkinLocal);
-	_domainDecomposition->collCommAppendDouble(_UkinTransLocal);
-	_domainDecomposition->collCommAppendDouble(_UkinRotLocal);
+	_domainDecomposition->collCommAppendUnsLong(nNumMolsGlobalEnergyLocal);
+	_domainDecomposition->collCommAppendDouble(UkinLocal);
+	_domainDecomposition->collCommAppendDouble(UkinTransLocal);
+	_domainDecomposition->collCommAppendDouble(UkinRotLocal);
 	_domainDecomposition->collCommAllreduceSum();
-	_nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
-	_UkinGlobal = _domainDecomposition->collCommGetDouble();
-	_UkinTransGlobal = _domainDecomposition->collCommGetDouble();
-	_UkinRotGlobal = _domainDecomposition->collCommGetDouble();
+	unsigned long nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
+	double UkinGlobal = _domainDecomposition->collCommGetDouble();
+	double UkinTransGlobal = _domainDecomposition->collCommGetDouble();
+	double UkinRotGlobal = _domainDecomposition->collCommGetDouble();
 	_domainDecomposition->collCommFinalize();
 
 	// reset local values
-	_nNumMolsGlobalEnergyLocal = 0;
-	_UkinLocal = 0.;
-	_UkinTransLocal = 0.;
-	_UkinRotLocal = 0.;
+	nNumMolsGlobalEnergyLocal = 0;
+	UkinLocal = 0.;
+	UkinTransLocal = 0.;
+	UkinRotLocal = 0.;
 
 #ifdef ENABLE_MPI
 	int rank = _domainDecomposition->getRank();
@@ -2104,11 +2091,11 @@ void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& gl
 
 	std::stringstream outputstream;
 
-	outputstream.write(reinterpret_cast<const char*>(&_nNumMolsGlobalEnergyGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&nNumMolsGlobalEnergyGlobal), 8);
 	outputstream.write(reinterpret_cast<const char*>(&globalUpot), 8);
-	outputstream.write(reinterpret_cast<const char*>(&_UkinGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&_UkinTransGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&_UkinRotGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&UkinGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&UkinTransGlobal), 8);
+	outputstream.write(reinterpret_cast<const char*>(&UkinRotGlobal), 8);
 	outputstream.write(reinterpret_cast<const char*>(&globalT), 8);
 	outputstream.write(reinterpret_cast<const char*>(&globalPressure), 8);
 

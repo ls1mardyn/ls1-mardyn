@@ -231,7 +231,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				std::ostringstream buf;
 			#endif
 
-			global_simulation->startTimer("COMMUNICATION_PARTNER_TEST_RECV");
+			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 			static std::vector<Molecule> mols;
 			mols.resize(numrecv);
 			#if defined(_OPENMP)
@@ -242,7 +242,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
 				mols[i] = m;
 			}
-			global_simulation->stopTimer("COMMUNICATION_PARTNER_TEST_RECV");
+			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 
 			#ifndef NDEBUG
 				for (int i = 0; i < numrecv; i++) {
@@ -251,11 +251,11 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				global_log->debug() << buf.str() << std::endl;
 			#endif
 
-			global_simulation->startTimer("COMMUNICATION_PARTNER_TEST_RECV");
+			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 			moleculeContainer->addParticles(mols, removeRecvDuplicates);
 			mols.clear();
 			_recvBuf.clear();
-			global_simulation->stopTimer("COMMUNICATION_PARTNER_TEST_RECV");
+			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 
 		} else {
 			++_countTested;
@@ -303,7 +303,7 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
 		const double highCorner[3], const double shift[3], const bool removeFromContainer) {
 	using std::vector;
-	global_simulation->startTimer("COMMUNICATION_PARTNER_INIT_SEND");
+	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
 	int prevNumMols = _sendBuf.size();
 	vector<vector<Molecule>> threadData;
 	vector<int> prefixArray;
@@ -376,5 +376,5 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
 		}
 	}
-	global_simulation->stopTimer("COMMUNICATION_PARTNER_INIT_SEND");
+	global_simulation->timers()->stop("COMMUNICATION_PARTNER_INIT_SEND");
 }

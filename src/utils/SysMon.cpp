@@ -6,7 +6,7 @@
 #define SYSMON_CPP
 
 #include "SysMon.h"
-#include "Logger.h"
+#include "Logger.h"	// MPI_CHECK, Log::global_log
 
 #include <stack>
 
@@ -14,6 +14,7 @@
 #include <sstream>
 
 using namespace std;
+using Log::global_log;
 
 SysMon* SysMon::s_sysmoninstance=NULL;
 
@@ -328,7 +329,8 @@ unsigned int SysMon::updateVariables_procmeminfo()
 			if(valunit=="kB")
 				val*=1024;
 			else
-				cerr << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+				//cerr << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+				global_log->warning() << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
 		}
 		_variableset->setVariable("procmeminfo",label,val);
 		++numvalues;
@@ -497,7 +499,8 @@ unsigned int SysMon::updateVariables_procselfstatus()
 				if(valunit=="kB")
 					val*=1024;
 				else
-					cerr << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+					//cerr << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+					global_log->warning() << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
 			}
 			_variableset->setVariable("procselfstatus",label,val);
 		}

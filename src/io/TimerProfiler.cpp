@@ -12,15 +12,15 @@
 
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
+#include "utils/String_utils.h"
 
 using namespace std;
 using Log::global_log;
 
 const string TimerProfiler::_baseTimerName = "_baseTimer";
 
-TimerProfiler::TimerProfiler(): _timerCount(0), _numElapsedIterations(0) {
-	_timers[_baseTimerName] = _Timer(_timerCount, _baseTimerName);
-	_timerCount++;
+TimerProfiler::TimerProfiler(): _numElapsedIterations(0) {
+	_timers[_baseTimerName] = _Timer(_baseTimerName);
 	readInitialTimersFromFile("");
 }
 
@@ -36,18 +36,18 @@ Timer* TimerProfiler::getTimer(string timerName){
 }
 
 void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNames, Timer *timer, bool activate){
+	global_log->debug() << "Registering timer: " << timerName << "  [parents: " << string_utils::join(parentTimerNames, string(", ")) << "]" << endl;
+
 	if (!activate && timer){
 		timer->deactivateTimer();
 	}
-	_timers[timerName] = _Timer(_timerCount, timerName, timer);
+	_timers[timerName] = _Timer(timerName, timer);
 
 	if (!parentTimerNames.size()) parentTimerNames.push_back(_baseTimerName);
 	for (size_t i=0; i<parentTimerNames.size(); i++) {
 		_timers[parentTimerNames[i]]._childTimerNames.push_back(timerName);
 		_timers[timerName]._parentTimerNames.push_back(parentTimerNames[i]);
 	}
-
-	_timerCount++;
 }
 
 void TimerProfiler::activateTimer(string timerName){
@@ -194,12 +194,11 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 		make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL", vector<string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true)
 	};
 
-	int classesTimers = timerClasses.size();
-	int actualTimers = timerAttrs.size();
-	int numberOfTimers = classesTimers + actualTimers;
-	for (int i=0; i < numberOfTimers; i++){
-		if (i < classesTimers) this->registerTimer(timerClasses[i], vector<string>());
-		else registerTimer(get<0>(timerAttrs[i - classesTimers]), get<1>(timerAttrs[i - classesTimers]), new Timer(), get<2>(timerAttrs[i - classesTimers]));
+	for (auto timerClass : timerClasses){
+		registerTimer(timerClass, vector<string>());
+	}
+	for (auto timerAttr : timerAttrs){
+		registerTimer(get<0>(timerAttr), get<1>(timerAttr), new Timer(), get<2>(timerAttr));
 	}
 }
 

@@ -127,10 +127,10 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 		int numSites = component.numLJcenters();
 		_numSitesPerComp.at(cid) = numSites;
 		_nCompSitesOffset.at(cid) = _numSitesTotal; /* offset is total number of sites so far */
-		global_log->debug() << "[MMPLD Writer] Component[" << cid << "] numSites=" << numSites << " offset=" << _nCompSitesOffset.at(cid) << endl;
+		global_log->debug() << "[MMPLD Writer] Component[" << cid << "] numSites=" << numSites << " offset=" << unsigned(_nCompSitesOffset.at(cid)) << endl;
 		_numSitesTotal += numSites;
 	}
-	global_log->debug() << "[MMPLD Writer] Total number of sites taken into account: " << _numSitesTotal << endl;
+	global_log->debug() << "[MMPLD Writer] Total number of sites taken into account: " << unsigned(_numSitesTotal) << endl;
 
 	// init radius and color of spheres
 	this->InitSphereData();
@@ -233,27 +233,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	//distribute global component particle count
 	std::vector<uint64_t> globalNumCompSpheres(_numSphereTypes);
-	if (rank == 0){
-		for (uint32_t i = 0; i < _numSphereTypes; ++i){
-			globalNumCompSpheres[i] = numSpheresPerType[i];
-		}
-		MPI_Status status;
-		std::vector<uint64_t> numSpheresPerTypeTmp(_numSphereTypes);
-		for (int source = rank+1; source < numprocs; ++source){
-			int recvcount = _numSphereTypes * sizeof(uint64_t);
-			int recvtag = 1;
-			MPI_Recv(numSpheresPerTypeTmp.data(), recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
-			for (uint8_t ti = 0; ti < _numSphereTypes; ++ti)
-				globalNumCompSpheres[ti] = globalNumCompSpheres[ti] + numSpheresPerTypeTmp[ti];
-		}
-	}else{
-		int dest = 0;
-		int sendcount = numSpheresPerType.size() * sizeof(uint64_t);
-		int sendtag = 1;
-		MPI_Request request;
-		MPI_Isend(numSpheresPerType.data(), sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Reduce(numSpheresPerType.data(), globalNumCompSpheres.data(), _numSphereTypes, MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	MPI_File fh;
 	MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
@@ -285,26 +265,14 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				}
 			}
 		}
-		
-		//send outputsize of current rank to next rank
-		for (int dest = rank+1; dest < numprocs; ++dest){
-			int sendcount = 1;
-			int sendtag = 0;
-			MPI_Request request;
-			MPI_Isend(&outputsize, sendcount, MPI_LONG, dest, sendtag, MPI_COMM_WORLD, &request);
-		}
-		//accumulate outputsizes of previous ranks and use it as offset for output file
-		MPI_Status status;
-		long offset = 0;
-		long outputsize_get;
-		for (int source = 0; source < rank; ++source){
-			int recvcount = 1;
-			int recvtag = 0;
-			MPI_Recv(&outputsize_get, recvcount, MPI_LONG, source, recvtag, MPI_COMM_WORLD, &status);
-			offset += outputsize_get;
-		}
 
-		global_log->debug() << "[MMPLD Writer] rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
+		MPI_Status status;
+
+		//accumulate outputsizes of previous ranks and use it as offset for output file
+		long offset = 0;
+		MPI_Scan(&outputsize, &offset, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		offset -= outputsize; /* scan is inclusive own value */
+		global_log->debug() << "[MMPLD Writer] rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << unsigned(nSphereTypeIndex) << "; offset: " << offset << endl;
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
 
@@ -395,13 +363,12 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	{
 		MPI_Status status;
 		uint64_t seektablePos =  MMPLD_HEADER_DATA_SIZE + (sizeof(uint64_t)*(_frameCount-1));
-		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition;
 		seekPosition = htole64(_seekTable.at(_frameCount-1) );
-		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
+		MPI_File_write_at(fh, seektablePos, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
 		uint32_t frameCount = htole32(_frameCount-1);  // last frame will be ignored when simulation is aborted
-		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
-		MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
+		// 8: frame count position in file header
+		MPI_File_write_at(fh, 8, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -432,13 +399,12 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_File_get_position(fh, &endPosition);
 
 		uint64_t seektablePos = MMPLD_HEADER_DATA_SIZE + (_frameCount * sizeof(uint64_t));
-		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition = htole64(endPosition); /** @todo end of frame offset may not be identical to file end! */
 		MPI_Status status;
-		MPI_File_write(fh, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
+		MPI_File_write_at(fh, seektablePos, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
 		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
-		MPI_File_seek(fh, 8, MPI_SEEK_SET);  // 8: frame count position in file header
-		MPI_File_write(fh, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
+		// 8: frame count position in file header
+		MPI_File_write_at(fh, 8, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
 		MPI_File_close(&fh);
 	}else{
 		MPI_File fh;

@@ -56,7 +56,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 
 unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
-	global_simulation->startTimer("CUBIC_GRID_GENERATOR_INPUT");
+	global_simulation->timers()->start("CUBIC_GRID_GENERATOR_INPUT");
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 
 	if(_numMolecules == 0){
@@ -172,10 +172,10 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	Log::global_log->info() << "CGG: momentum done" << std::endl;
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	Log::global_log->info() << "Calculated Rho=" << domain->getglobalRho() << std::endl;
-	global_simulation->stopTimer("CUBIC_GRID_GENERATOR_INPUT");
-	global_simulation->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
+	global_simulation->timers()->stop("CUBIC_GRID_GENERATOR_INPUT");
+	global_simulation->timers()->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
 	Log::global_log->info() << "Initial IO took:                 "
-			<< global_simulation->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
+			<< global_simulation->timers()->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	return id + idOffset;
 }
