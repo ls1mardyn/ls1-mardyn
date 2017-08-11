@@ -191,12 +191,11 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 		make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL", vector<string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true)
 	};
 
-	int classesTimers = timerClasses.size();
-	int actualTimers = timerAttrs.size();
-	int numberOfTimers = classesTimers + actualTimers;
-	for (int i=0; i < numberOfTimers; i++){
-		if (i < classesTimers) this->registerTimer(timerClasses[i], vector<string>());
-		else registerTimer(get<0>(timerAttrs[i - classesTimers]), get<1>(timerAttrs[i - classesTimers]), new Timer(), get<2>(timerAttrs[i - classesTimers]));
+	for (auto timerClass : timerClasses){
+		registerTimer(timerClass, vector<string>());
+	}
+	for (auto timerAttr : timerAttrs){
+		registerTimer(get<0>(timerAttr), get<1>(timerAttr), new Timer(), get<2>(timerAttr));
 	}
 }
 
