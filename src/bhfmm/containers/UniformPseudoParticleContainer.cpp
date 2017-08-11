@@ -723,7 +723,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 					MPI_Allreduce(MPI_IN_PLACE,buffer,2 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[curLevel]);
 					index = 0;
 					currentCell.multipole.readValuesFromMPIBuffer(buffer,index);
-					delete buffer;
+					delete[] buffer;
 				}
 				else{ //get values of 8 values from previous level that contributed to the parent level in addition to parent value (9 values each 2 expansions)
 					int coordsFlooredPreviousLevel[3];
