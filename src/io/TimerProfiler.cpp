@@ -12,6 +12,7 @@
 
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
+#include "utils/String_utils.h"
 
 using namespace std;
 using Log::global_log;
@@ -35,6 +36,8 @@ Timer* TimerProfiler::getTimer(string timerName){
 }
 
 void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNames, Timer *timer, bool activate){
+	global_log->debug() << "Registering timer: " << timerName << "  [parents: " << string_utils::join(parentTimerNames, string(", ")) << "]" << endl;
+
 	if (!activate && timer){
 		timer->deactivateTimer();
 	}
