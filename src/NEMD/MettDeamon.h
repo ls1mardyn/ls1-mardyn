@@ -89,7 +89,8 @@ private:
 	bool _bMirrorActivated;
 	double _dMirrorPosY;
 	// identity change (by component ID)
-	std::vector<uint32_t> _vecChangeCompIDs;
+	std::vector<uint32_t> _vecChangeCompIDsFreeze;
+	std::vector<uint32_t> _vecChangeCompIDsUnfreeze;
 };
 
 #endif /* METTDEAMON_H_ */
