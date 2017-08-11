@@ -349,60 +349,8 @@ public:
 		return _memoryProfiler;
 	}
 
-	Timer* getTimer(std::string timerName){
-		return _timerProfiler.getTimer(timerName);
-	}
-
-	void activateTimer(std::string timerName){
-		_timerProfiler.activateTimer(timerName);
-	}
-
-	void deactivateTimer(std::string timerName){
-		_timerProfiler.deactivateTimer(timerName);
-	}
-
-	void setSyncTimer(std::string timerName, bool sync){
-		_timerProfiler.setSyncTimer(timerName, sync);
-	}
-
-	void printTimer(std::string timerName){
-		_timerProfiler.print(timerName);
-	}
-
-	void printTimers(std::string startingTimerName="SIMULATION"){
-		_timerProfiler.printTimers(startingTimerName);
-	}
-
-	void resetTimers(std::string startingTimerName="SIMULATION"){
-		_timerProfiler.resetTimers(startingTimerName);
-	}
-
-	void startTimer(std::string timerName){
-		_timerProfiler.start(timerName);
-	}
-
-	void stopTimer(std::string timerName){
-		_timerProfiler.stop(timerName);
-	}
-
-	void resetTimer(std::string timerName){
-		_timerProfiler.reset(timerName);
-	}
-
-	double getTime(std::string timerName){
-		return _timerProfiler.getTime(timerName);
-	}
-
-	void setOutputString(std::string timerName, std::string outputString){
-		_timerProfiler.setOutputString(timerName, outputString);
-	}
-
-	void incrementTimerTimestepCounter() {
-		_timerProfiler.incrementTimerTimestepCounter();
-	}
-
-	unsigned long getTimerTimestepCounter() const {
-		return _timerProfiler.getNumElapsedIterations();
+	TimerProfiler* timers() {
+		return &_timerProfiler;
 	}
 
 	void setProfileParameters(

@@ -97,7 +97,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	} // end pragma omp parallel
 
 #ifdef ENABLE_MPI
-	global_simulation->setOutputString("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", "FMM: Time spent in LJ P2P ");
+	global_simulation->timers()->setOutputString("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", "FMM: Time spent in LJ P2P ");
 	//global_simulation->setSyncTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", false); //it is per default false
 #endif
 }
@@ -113,12 +113,12 @@ VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
 }
 
 void VectorizedLJP2PCellProcessor::printTimers() {
-	std::cout << "FMM: Time spent in LJ P2P " << global_simulation->getTime("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P") << std::endl;
-	global_simulation->printTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
+	std::cout << "FMM: Time spent in LJ P2P " << global_simulation->timers()->getTime("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P") << std::endl;
+	global_simulation->timers()->print("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 
 void VectorizedLJP2PCellProcessor::initTraversal() {
-	global_simulation->startTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
+	global_simulation->timers()->start("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 
 	#if defined(_OPENMP)
 	#pragma omp master
@@ -156,7 +156,7 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 	_virial = glob_virial;
 	_domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/);
 	_domain.setLocalUpot(_upot6lj / 6.0 /*+ _upotXpoles + _myRF*/);
-	global_simulation->stopTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
+	global_simulation->timers()->stop("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 
 //const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning

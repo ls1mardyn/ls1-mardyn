@@ -73,11 +73,11 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 
 	double flops = _flopCounter.getTotalFlopCount();
 
-	unsigned long numElapsedIterations = global_simulation->getTimerTimestepCounter();
-	double force_calculation_time = global_simulation->getTime("SIMULATION_FORCE_CALCULATION") / numElapsedIterations;
-	global_simulation->stopTimer("SIMULATION_LOOP");
-	double loop_time = global_simulation->getTime("SIMULATION_LOOP") / numElapsedIterations ;
-	global_simulation->startTimer("SIMULATION_LOOP");
+	unsigned long numElapsedIterations = global_simulation->timers()->getNumElapsedIterations();
+	double force_calculation_time = global_simulation->timers()->getTime("SIMULATION_FORCE_CALCULATION") / numElapsedIterations;
+	global_simulation->timers()->stop("SIMULATION_LOOP");
+	double loop_time = global_simulation->timers()->getTime("SIMULATION_LOOP") / numElapsedIterations ;
+	global_simulation->timers()->start("SIMULATION_LOOP");
 
 	double flop_rate_force = flops * _writeFrequency / force_calculation_time / (1024*1024);
 	double flop_rate_loop = flops * _writeFrequency / loop_time / (1024*1024);

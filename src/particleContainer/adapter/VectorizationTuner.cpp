@@ -147,11 +147,11 @@ void VectorizationTuner::iterateOwn(long long int numRepetitions,
 		ParticleCell& cell, double& gflopsPair, FlopCounter& flopCounter) {
 	runOwn(flopCounter, cell, 1);
 	// run simulation for a pair of cells
-	global_simulation->startTimer("VECTORIZATION_TUNER_TUNER");
+	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
 	runOwn(**_cellProcessor, cell, numRepetitions);
-	global_simulation->stopTimer("VECTORIZATION_TUNER_TUNER");
+	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
-	double tuningTime = global_simulation->getTime("VECTORIZATION_TUNER_TUNER");
+	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
 	gflopsPair = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024 * 1024 * 1024);
 	global_log->info() << "FLOP-Count per Iteration: " << flopCounter.getTotalFlopCount() << " FLOPs" << endl;
 	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl;
@@ -159,7 +159,7 @@ void VectorizationTuner::iterateOwn(long long int numRepetitions,
 	global_log->info() << "total time: " << tuningTime << "s" << endl;
 	global_log->info() << "time per iteration: " << tuningTime / numRepetitions << "s " << endl << endl;
 	flopCounter.resetCounters();
-	global_simulation->resetTimer("VECTORIZATION_TUNER_TUNER");
+	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
 
 void VectorizationTuner::iteratePair(long long int numRepetitions, ParticleCell& firstCell,
@@ -167,11 +167,11 @@ void VectorizationTuner::iteratePair(long long int numRepetitions, ParticleCell&
 	//count/calculate the needed flops
 	runPair(flopCounter, firstCell, secondCell, 1);
 	// run simulation for a pair of cells
-	global_simulation->startTimer("VECTORIZATION_TUNER_TUNER");
+	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
 	runPair(**_cellProcessor, firstCell, secondCell, numRepetitions);
-	global_simulation->stopTimer("VECTORIZATION_TUNER_TUNER");
+	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
-	double tuningTime = global_simulation->getTime("VECTORIZATION_TUNER_TUNER");
+	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
 	gflopsPair = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024 * 1024 * 1024);
 	global_log->info() << "FLOP-Count per Iteration: " << flopCounter.getTotalFlopCount() << " FLOPs" << endl;
 	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl;
@@ -179,7 +179,7 @@ void VectorizationTuner::iteratePair(long long int numRepetitions, ParticleCell&
 	global_log->info() << "total time: " << tuningTime << "s" << endl;
 	global_log->info() << "time per iteration: " << tuningTime / numRepetitions << "s " << endl << endl;
 	flopCounter.resetCounters();
-	global_simulation->resetTimer("VECTORIZATION_TUNER_TUNER");
+	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
 
 void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig,

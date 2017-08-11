@@ -250,7 +250,7 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 {
 //	if(3 != domainDecomp->getRank() )
 //		return 0;
-	global_simulation->startTimer("REPLICA_GENERATOR_VLE_INPUT");
+	global_simulation->timers()->start("REPLICA_GENERATOR_VLE_INPUT");
 	Log::global_log->info() << "Constructing Replica VLE" << std::endl;
 
 	double bbMin[3];
@@ -343,10 +343,10 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 	domainDecomp->collCommFinalize();
 	domain->setglobalNumMolecules(numParticlesGlobal);
 
-	global_simulation->stopTimer("REPLICA_GENERATOR_VLE_INPUT");
-	global_simulation->setOutputString("REPLICA_GENERATOR_VLE_INPUT", "Initial IO took:                 ");
+	global_simulation->timers()->stop("REPLICA_GENERATOR_VLE_INPUT");
+	global_simulation->timers()->setOutputString("REPLICA_GENERATOR_VLE_INPUT", "Initial IO took:                 ");
 	Log::global_log->info() << "Initial IO took:                 "
-			<< global_simulation->getTime("REPLICA_GENERATOR_VLE_INPUT") << " sec" << std::endl;
+			<< global_simulation->timers()->getTime("REPLICA_GENERATOR_VLE_INPUT") << " sec" << std::endl;
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	return 0;
 }

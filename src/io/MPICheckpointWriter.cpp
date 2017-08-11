@@ -172,7 +172,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		{	// should use Timer instead
 			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 			mpistarttime=MPI_Wtime();
-			// global_simulation->startTimer("MPI_CHECKPOINT_WRITER_INPUT");
+			// global_simulation->timers()->start("MPI_CHECKPOINT_WRITER_INPUT");
 		}
 		MPI_File mpifh;
 		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const char* now)
@@ -272,8 +272,8 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		{
 			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 			double mpimeasuredtime=MPI_Wtime()-mpistarttime;
-			// global_simulation->stopTimer("MPI_CHECKPOINT_WRITER_INPUT");
-			// double mpimeasuredtime=global_simulation->getTime("MPI_CHECKPOINT_WRITER_INPUT");
+			// global_simulation->timers()->stop("MPI_CHECKPOINT_WRITER_INPUT");
+			// double mpimeasuredtime=global_simulation->timers()->getTime("MPI_CHECKPOINT_WRITER_INPUT");
 			if(ownrank==0) global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << mpimeasuredtime << " sec (par.; " << num_procs << " proc.)" << endl;
 		}
 #else
@@ -285,7 +285,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		struct timeval tod_start;
 		if(_measureTime) {
 			gettimeofday( &tod_start, NULL );
-			// global_simulation->startTimer("MPI_CHECKPOINT_WRITER_INPUT");
+			// global_simulation->timers()->start("MPI_CHECKPOINT_WRITER_INPUT");
 		}
 		//
 		ofstream ostrm(filename.c_str(),ios::out|ios::binary);
@@ -341,8 +341,8 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 			struct timeval tod_end;
 			gettimeofday( &tod_end, NULL );
 			double measuredtime=(double)(tod_end.tv_sec-tod_start.tv_sec)+(double)(tod_end.tv_usec-tod_start.tv_usec)/1.E6;
-			// global_simulation->stopTimer("MPI_CHECKPOINT_WRITER_INPUT");
-			// double measuredtime=global_simulation->getTime("MPI_CHECKPOINT_WRITER_INPUT");
+			// global_simulation->timers()->stop("MPI_CHECKPOINT_WRITER_INPUT");
+			// double measuredtime=global_simulation->timers()->getTime("MPI_CHECKPOINT_WRITER_INPUT");
 			global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << measuredtime << " sec (seq.)" << endl;
 		}
 #endif
