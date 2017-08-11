@@ -11,7 +11,6 @@
 #include <vector>
 #include <array>
 #include <iostream>
-#include <iomanip>
 
 #include "Common.h"
 #include "Domain.h"
@@ -30,17 +29,23 @@
 using Log::global_log;
 using namespace std;
 
+
+std::string MmpldWriter::getOutputFilename() {
+	std::stringstream filenamestream;
+	filenamestream << _outputPrefix << "_" << fill_width('0', 4) << _fileCount << ".mmpld";
+	return filenamestream.str();
+}
+
 MmpldWriter::MmpldWriter() :
 		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
-		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _nFileIndex(0), _numFiles(1),
-		_strOutputPrefixCurrent("unknown"), _frameCountMax(1), _mmpldversion(MMPLD_DEFAULT_VERSION)
+		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
+		_fileCount(1), _mmpldversion(MMPLD_DEFAULT_VERSION)
 {}
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
 		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
-			_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _nFileIndex(0), _numFiles(1),
-			_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
+			_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _fileCount(1)
 {
 	if (0 == _writeFrequency) {
 		mardyn_exit(-1);
@@ -106,13 +111,7 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	// only executed once
 	this->PrepareWriteControl();
 
-	// check if at least one file has to be created
-	if(_numFiles < 1)
-		return;
-
 	_frameCount = 0;
-	_strOutputPrefixCurrent = _vecFilePrefixes.at(_nFileIndex);
-	_frameCountMax = _vecFramesPerFile.at(_nFileIndex);
 
 	// number of components / sites
 	vector<Component> *components = global_simulation->getEnsemble()->getComponents();
@@ -136,10 +135,7 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	this->InitSphereData();
 	this->SetNumSphereTypes();
 
-	stringstream filenamestream;
-	filenamestream << _strOutputPrefixCurrent;
-	filenamestream << ".mmpld";
-	string filename = filenamestream.str();
+	string filename = getOutputFilename();
 
 
 #ifdef ENABLE_MPI
@@ -156,14 +152,11 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	mmpldfstream.write((char*)&mmpldversion_little_endian, sizeof(mmpldversion_little_endian));
 
 	//calculate the number of frames
-	uint32_t numframes;
-	uint32_t numframes_le;
-	numframes = _vecFramesPerFile.at(_nFileIndex);
-	numframes_le = htole32(numframes);
-	global_log->debug() << "[MMPLD Writer] Writing number of frames: " << numframes << endl;
+	uint32_t numframes = _numFramesPerFile;
+	uint32_t numframes_le = htole32(numframes);
 	mmpldfstream.write((char*)&numframes_le,sizeof(numframes_le));
 
-	_numSeekEntries = numframes+1;
+	_numSeekEntries = numframes + 1; /* need additional seek entry for end of file offset marker */
 	_seekTable.resize(_numSeekEntries);
 
 	global_log->debug() << "[MMPLD Writer] Writing bounding box data." << endl;
@@ -205,14 +198,11 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	if((simstep < _startTimestep) || (simstep > _stopTimestep) || (0 != ((simstep - _startTimestep) % _writeFrequency)) ) {
 		return;
 	}
-	if(_frameCount == _frameCountMax) {
+	if(_frameCount == _numFramesPerFile) {
 		MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
 	}
 
-	stringstream filenamestream, outputstream;
-	filenamestream << _strOutputPrefixCurrent;
-	filenamestream << ".mmpld";
-	string filename = filenamestream.str();
+	string filename = getOutputFilename();
 	global_log->info() << "[MMPLD Writer] Writing MMPLD frame " << _frameCount << " for simstep " << simstep << " to file " << filename << endl;
 
 #ifdef ENABLE_MPI
@@ -378,15 +368,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/)
 {
-	// check if at least one file has to be created
-	if(_numFiles < 1)
-		return;
-
-	stringstream filenamestream;
-	filenamestream << _vecFilePrefixes.at(_nFileIndex);
-
-	filenamestream << ".mmpld";
-	string filename = filenamestream.str();
+	string filename = getOutputFilename();
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -484,7 +466,7 @@ void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
 	this->finishOutput(particleContainer, domainDecomp, domain);
-	_nFileIndex++;
+	_fileCount++;
 	this->initOutput(particleContainer, domainDecomp, domain);
 }
 
@@ -499,9 +481,7 @@ void MmpldWriter::PrepareWriteControl()
 	if( 0 == _stopTimestep )
 		_stopTimestep = _simulation.getNumTimesteps();
 
-	if(_stopTimestep < _startTimestep)
-	{
-		_numFiles = 0;
+	if(_stopTimestep < _startTimestep) {
 		global_log->warning() << "[MMPLD Writer] Invalid time interval. No frames will be recorded!" << endl;
 		return;
 	}
@@ -510,19 +490,6 @@ void MmpldWriter::PrepareWriteControl()
 	uint64_t numFramesTotal = numTimesteps/_writeFrequency + 1;
 	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0) {
 		_numFramesPerFile = numFramesTotal;
-	}
-
-	_numFiles = (numFramesTotal + _numFramesPerFile - 1) / _numFramesPerFile;
-
-	// init frames per file vector
-	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
-
-	// init file prefix vector
-	for(uint8_t fi=0; fi<_numFiles; ++fi)
-	{
-		std::stringstream sstrPrefix;
-		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(fi+1);
-		_vecFilePrefixes.push_back(sstrPrefix.str() );
 	}
 }
 

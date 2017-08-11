@@ -95,14 +95,10 @@ protected:
 	uint8_t _bInitSphereData;
 	bool _bWriteControlPrepared;
 
-	// split files
-	uint8_t _nFileIndex;
-	uint8_t _numFiles;
-	std::vector<string> _vecFilePrefixes;
-	std::vector<uint64_t> _vecFramesPerFile;
-	std::string _strOutputPrefixCurrent;
-	uint32_t _frameCountMax;
+	long _fileCount;
 	int _mmpldversion;
+
+	std::string getOutputFilename();
 };
 
 class MmpldWriterSimpleSphere : public MmpldWriter
