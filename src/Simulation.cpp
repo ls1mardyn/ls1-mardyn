@@ -986,12 +986,16 @@ void Simulation::prepare_start() {
 	// initial number of timesteps
 	_initSimulation = (unsigned long) round(this->_simulationTime / _integrator->getTimestepLength() );
 
-	// initialize output
+	// initialize output and output timers
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter
 			!= _outputPlugins.end(); outputIter++) {
-		(*outputIter)->initOutput(_moleculeContainer, _domainDecomposition,
-				_domain);
+		OutputBase* output_plugin = (*outputIter);
+		string timer_name = output_plugin->getPluginName();
+		global_simulation->timers()->registerTimer(timer_name,  vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
+		string timer_output_string = string("Output Plugin ") + timer_name + string(" took:");
+		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
+		output_plugin->initOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
 
 	/** global energy log */
@@ -1473,7 +1477,9 @@ void Simulation::output(unsigned long simstep) {
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		OutputBase* output = (*outputIter);
 		global_log->debug() << "Output from " << output->getPluginName() << endl;
+		global_simulation->timers()->start(output->getPluginName());
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
+		global_simulation->timers()->stop(output->getPluginName());
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
