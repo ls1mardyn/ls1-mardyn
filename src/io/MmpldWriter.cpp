@@ -127,10 +127,10 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 		int numSites = component.numLJcenters();
 		_numSitesPerComp.at(cid) = numSites;
 		_nCompSitesOffset.at(cid) = _numSitesTotal; /* offset is total number of sites so far */
-		global_log->debug() << "[MMPLD Writer] Component[" << cid << "] numSites=" << numSites << " offset=" << _nCompSitesOffset.at(cid) << endl;
+		global_log->debug() << "[MMPLD Writer] Component[" << cid << "] numSites=" << numSites << " offset=" << unsigned(_nCompSitesOffset.at(cid)) << endl;
 		_numSitesTotal += numSites;
 	}
-	global_log->debug() << "[MMPLD Writer] Total number of sites taken into account: " << _numSitesTotal << endl;
+	global_log->debug() << "[MMPLD Writer] Total number of sites taken into account: " << unsigned(_numSitesTotal) << endl;
 
 	// init radius and color of spheres
 	this->InitSphereData();
@@ -272,7 +272,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		long offset = 0;
 		MPI_Scan(&outputsize, &offset, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 		offset -= outputsize; /* scan is inclusive own value */
-		global_log->debug() << "[MMPLD Writer] rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
+		global_log->debug() << "[MMPLD Writer] rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << unsigned(nSphereTypeIndex) << "; offset: " << offset << endl;
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
 
