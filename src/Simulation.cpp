@@ -1075,22 +1075,6 @@ void Simulation::simulate() {
 	output(_initSimulation);
 
 	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
-		// Too many particle exchanges in the first 10 simulation steps.
-		// Reset the timers after 10 simulation steps and restart the timers
-		// 		for more accurate measurements for benchmarking.
-		if (_simstep == 10) {
-			loopTimer->stop();
-
-			global_log->info() << "Simstep 10:" << endl;
-			global_simulation->timers()->printTimers();
-			global_log->info() << endl;
-			global_log->info() << "RESETTING TIMERS" << endl;
-			global_simulation->timers()->resetTimers();
-			global_log->info() << endl;
-
-			loopTimer->start();
-		}
-
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 		global_simulation->timers()->incrementTimerTimestepCounter();
