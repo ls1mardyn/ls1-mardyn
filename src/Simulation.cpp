@@ -1031,23 +1031,24 @@ void Simulation::simulate() {
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 
-	// all timers except the ioTimer measure inside the main loop
-	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); // timer for the entire simulation loop (synced)
 	global_simulation->timers()->setOutputString("SIMULATION_LOOP", "Computation in main loop took:");
-	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); // timer for decomposition: sub-timer of loopTimer
 	global_simulation->timers()->setOutputString("SIMULATION_DECOMPOSITION", "Decomposition took:");
-	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); // timer for computation: sub-timer of loopTimer
 	global_simulation->timers()->setOutputString("SIMULATION_COMPUTATION", "Computation took:");
-	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); // timer for io in simulation loop: sub-timer of loopTimer
 	global_simulation->timers()->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
-	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); // timer for final io
 	global_simulation->timers()->setOutputString("SIMULATION_IO", "Final IO took:");
-	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); // timer for force calculation: sub-timer of computationTimer
 	global_simulation->timers()->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
-	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); // timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 	global_simulation->timers()->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
+
+	// all timers except the ioTimer measure inside the main loop
+	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); // timer for the entire simulation loop (synced)
+	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); // timer for decomposition: sub-timer of loopTimer
+	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); // timer for computation: sub-timer of loopTimer
+	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); // timer for io in simulation loop: sub-timer of loopTimer
+	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); // timer for final io
+	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); // timer for force calculation: sub-timer of computationTimer
+	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); // timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
 	//loopTimer->set_sync(true);
 	global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
