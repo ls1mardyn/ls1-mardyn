@@ -111,7 +111,7 @@ void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	global_simulation->startTimer("CRYSTAL_LATTICE_GENERATOR_INPUT");
+	global_simulation->timers()->start("CRYSTAL_LATTICE_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;
 
 	unsigned long int id = 1;
@@ -166,9 +166,9 @@ unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particl
 
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
-	global_simulation->stopTimer("CRYSTAL_LATTICE_GENERATOR_INPUT");
-	global_simulation->setOutputString("CRYSTAL_LATTICE_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("CRYSTAL_LATTICE_GENERATOR_INPUT") << " sec" << endl;
+	global_simulation->timers()->stop("CRYSTAL_LATTICE_GENERATOR_INPUT");
+	global_simulation->timers()->setOutputString("CRYSTAL_LATTICE_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("CRYSTAL_LATTICE_GENERATOR_INPUT") << " sec" << endl;
 	return id;
 }
 

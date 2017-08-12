@@ -144,7 +144,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	global_simulation->startTimer("CUBIC_GRID_GENERATOR_INPUT");
+	global_simulation->timers()->start("CUBIC_GRID_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;
 
 // create a body centered cubic layout, by creating by placing the molecules on the
@@ -226,9 +226,9 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
-	global_simulation->stopTimer("CUBIC_GRID_GENERATOR_INPUT");
-	global_simulation->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << endl;
+	global_simulation->timers()->stop("CUBIC_GRID_GENERATOR_INPUT");
+	global_simulation->timers()->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << endl;
 
 
 	return id + idOffset;
