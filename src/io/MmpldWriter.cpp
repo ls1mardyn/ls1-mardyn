@@ -207,8 +207,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
-	int numprocs = domainDecomp->getNumProcs();
-	unsigned long numberParticles = particleContainer->getNumberOfParticles();
 	long outputsize = 0;
 
 	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
@@ -217,7 +215,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	}
 
 	//calculate number of spheres per component|siteType
-	uint32_t molcid = 0;
 	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
 		this->CalcNumSpheresPerType(numSpheresPerType.data(), &(*mol));
 
