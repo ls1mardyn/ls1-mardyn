@@ -103,23 +103,19 @@
 				<outputprefix>megamol</outputprefix>
 			</outputplugin>
 			
-<!-- XML does not allow nested comments; moving elements into an otherwise unused element is equivalent to commenting out -->
-<C>
 			<outputplugin name="MPICheckpointWriter">
 				<writefrequency>10</writefrequency>
 				<outputprefix>mkesfera</outputprefix>
 				<appendTimestamp>1</appendTimestamp>
 				<datarep>native</datarep>
 				<measureTime>1</measureTime>
-				<!--
-				<MPIioInfo key="striping_factor">4</MPIioInfo>
-				<MPIioInfo key="striping_unit">65536</MPIioInfo>
-				<MPIioInfo key="cb_buffer_size">16777216</MPIioInfo>
-				-->
+				<mpi_info>
+					<pair> <key>striping_factor</key> <value>4</value> </pair>
+					<pair> <key>striping_unit</key> <value>65536</value> </pair>
+					<pair> <key>cb_buffer_size</key> <value>16777216</value> </pair>
+				</mpi_info>
 				<ParticlesBufferSizeMPI>0</ParticlesBufferSizeMPI>	<!-- only for testing - deprecated -->
 			</outputplugin>
-</C>
-<!-- ==================================================================================================================== -->
 			
 		</output>
 		

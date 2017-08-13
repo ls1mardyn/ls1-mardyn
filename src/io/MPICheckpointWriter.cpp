@@ -20,6 +20,7 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
+#include "utils/MPI_Info_object.h"
 
 #include "parallel/ParticleData.h"
 #endif
@@ -108,31 +109,14 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 		global_log->info() << "MPICheckpointWriter\texecution wall time will be measured" << endl;
 	}
 	
-	XMLfile::Query q=xmlconfig.query("MPIioInfo");
-	if(q.card()>0)
-	{
-#ifdef ENABLE_MPI
-		MPI_CHECK( MPI_Info_create(&_mpiioinfo) );
-		XMLfile::Query::const_iterator it;
-		for(it=q.begin();it;++it)
-                {
-			const XMLfile::Node& n=*it;
-			std::string key,val(n.value_string());
-			xmlconfig.getNodeValue(n.nodepath()+"@key",key);
-			global_log->info() << "MPICheckpointWriter\tsetting MPIioInfo\t" << key << " = " << val << endl;
-			MPI_CHECK( MPI_Info_set(_mpiioinfo,key.c_str(),val.c_str()) );
-		}
-#else
-		global_log->info() << "MPICheckpointWriter\tMPIioInfo only processed for MPI version (" << q.card() << " entries found)" << endl;
-#endif
+	if(xmlconfig.changecurrentnode("mpi_info")) {
+		global_log->info() << "[MPICheckpointWriter] Setting MPI info object for IO." << endl;
+		MPI_Info_object mpi_info_obj;
+		mpi_info_obj.readXML(xmlconfig);
+		mpi_info_obj.get_MPI_Info(&_mpiioinfo);
+		xmlconfig.changecurrentnode("..");
 	}
-	else
-	{
-#ifdef ENABLE_MPI
-		global_log->info() << "MPICheckpointWriter\tno MPIioInfo" << endl;
-#endif
-	}
-	
+
 	_particlesbuffersize = 0;
 	xmlconfig.getNodeValue("ParticlesBufferSizeMPI", _particlesbuffersize);
 	if(_particlesbuffersize)
