@@ -26,6 +26,12 @@ bool fileExists(const char* fileName);
  */
 std::string getFileExtension(const char* fileName);
 
+/** @brief check, if a filepath is an absolute path
+ *
+ * @return bool    is absolute path
+ */
+bool isAbsolutePath(const std::string& path);
+
 /**
  * Delete a file from the system.
  */

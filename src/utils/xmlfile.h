@@ -459,10 +459,6 @@ public:
 	/// if instantiated with a XML-file, return the filename (without directory part of path)
 	/// \return std::string	filename
 	const std::string getFilename() const { return m_filename; }
-	/// \brief check, if XML-filepath is an absolute path
-	/// if instantiated with a XML-file, return if path is absolute
-	/// \return bool	is absolute path?
-	bool isabsolutePath() const { return m_filedir.find_first_of("/~")==0; }
 	
 	/// \brief set current node
 	/// set a node, relative queries start with
