@@ -435,10 +435,6 @@ public:
 	
 	/// \brief initialize with XML-string
 	/// instantiating with XML-string
-	/// \param std::string	XML-string
-	void initstring(const std::string xmlstring) { initstring(xmlstring.c_str()); }
-	/// \brief initialize with XML-string
-	/// instantiating with XML-string
 	/// \param const char*	XML-string
 	void initstring(const char* xmlstring);
 	
@@ -458,12 +454,6 @@ public:
 	long changecurrentnode(const std::string& nodepath=std::string("/"));
 	/// \brief set current node
 	/// set a node, relative queries start with
-	/// \param const char*	node path (default: "/")
-	/// \return long	cardinality of the resulting query set; <=0 => no action
-	long changecurrentnode(const char* nodepath)
-		{ return changecurrentnode(std::string(nodepath)); }
-	/// \brief set current node
-	/// set a node, relative queries start with
 	/// \param Query::const_iterator&	query iterator pointing to a node
 	/// \return bool	done?
 	bool changecurrentnode(const Query::const_iterator& pos);
@@ -479,7 +469,7 @@ public:
 	/// \return unsigned long	number of nodes matching the nodepath
 	template<typename T> unsigned long getNodeValue(const std::string& nodepath, T& value) const
 		//{ Query q=query(nodepath.c_str()); if(!q.empty()) q.front().getValue(value); return q.card(); }
-		{ return query(nodepath.c_str()).getNodeValue(value); }
+		{ return query(nodepath).getNodeValue(value); }
 	/// \brief get node value
 	/// get the node content and convert it to a given type
 	/// \param const char*	nodepath
@@ -494,7 +484,7 @@ public:
 	/// \return std::string	node value
 	std::string getNodeValue_string(const std::string& nodepath, const std::string defaultvalue=std::string()) const
 		//{ std::string value(defaultvalue); getNodeValue(nodepath,value); return value; }
-		{ return query(nodepath.c_str()).getNodeValue_string(defaultvalue); }
+		{ return query(nodepath).getNodeValue_string(defaultvalue); }
 	/// \brief get node value as string
 	/// get the node content
 	/// \param const char*	nodepath
@@ -509,7 +499,7 @@ public:
 	/// \return int	node value
 	int getNodeValue_int(const std::string& nodepath, int defaultvalue=0) const
 		//{ int value=defaultvalue; getNodeValue(nodepath,value); return value; }
-		{ return query(nodepath.c_str()).getNodeValue_int(defaultvalue); }
+		{ return query(nodepath).getNodeValue_int(defaultvalue); }
 	/// \brief get node value as int
 	/// get the node content and convert it to an integer
 	/// \param const char*	nodepath
@@ -539,7 +529,7 @@ public:
 	/// \return float	node value
 	float getNodeValue_float(const std::string& nodepath, float defaultvalue=0.) const
 		//{ float value=defaultvalue; getNodeValue(nodepath,value); return value; }
-		{ return query(nodepath.c_str()).getNodeValue_float(defaultvalue); }
+		{ return query(nodepath).getNodeValue_float(defaultvalue); }
 	/// \brief get node value as float
 	/// get the node content and convert it to a float
 	/// \param const char*	nodepath
@@ -554,7 +544,7 @@ public:
 	/// \return double	node value
 	double getNodeValue_double(const std::string& nodepath, double defaultvalue=0.) const
 		//{ double value=defaultvalue; getNodeValue(nodepath,value); return value; }
-		{ return query(nodepath.c_str()).getNodeValue_double(defaultvalue); }
+		{ return query(nodepath).getNodeValue_double(defaultvalue); }
 	/// \brief get node value as double
 	/// get the node content and convert it to a double
 	/// \param const char*	nodepath
@@ -570,7 +560,7 @@ public:
 	/// \return bool	node value
 	bool getNodeValue_bool(const std::string& nodepath, bool defaultvalue=false) const
 		//{ bool value=defaultvalue; getNodeValue(nodepath,value); return value; }
-		{ return query(nodepath.c_str()).getNodeValue_bool(defaultvalue); }
+		{ return query(nodepath).getNodeValue_bool(defaultvalue); }
 	/// \brief get node value as bool
 	/// get the node content and convert it to a bool
 	/// \param const char*	nodepath
@@ -596,12 +586,7 @@ public:
 	/// return a query to a given query expression
 	/// \param std::string&	query string
 	/// \return XMLfile::Query	query
-	Query query(const std::string& querystr) const { return query(querystr.c_str()); }
-	/// \brief perform a query
-	/// return a query to a given query expression
-	/// \param const char*	query string
-	/// \return XMLfile::Query	query
-	Query query(const char* querystr) const;
+	Query query(const std::string& querystr) const;
 	
 	/// \brief std::string cast operator
 	/// XMLfile will cast to a string with XML content
@@ -630,7 +615,7 @@ private:
 	bool initfile_local(const std::string& filepath);
 	void initstring_local(const char* xmlstring);
 	void expandincludes();
-	unsigned long query(std::list<Node>& nodeselection, const char* querystr, Node startnode=Node()) const;
+	unsigned long query(std::list<Node>& nodeselection, const std::string& querystring, Node startnode=Node()) const;
 	void insertcloneelement(const t_XMLelement* src, t_XMLelement* dest_after);
 	
 	void registerQuery(Query* q) const
