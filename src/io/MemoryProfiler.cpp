@@ -41,6 +41,7 @@ MemoryProfiler::MemoryProfiler() :
 			_hugePageSize *= 1024;
 		}
 	}
+	fclose(fp);
 }
 
 void MemoryProfiler::registerObject(MemoryProfilable** object) {
@@ -64,6 +65,7 @@ void MemoryProfiler::doOutput(const std::string& string) {
 }
 
 unsigned long long MemoryProfiler::getCachedSize() {
+	unsigned long long cached_size = 0;
 	const size_t MAXLEN = 1024;
 	FILE *fp;
 	char buf[MAXLEN];
@@ -73,13 +75,12 @@ unsigned long long MemoryProfiler::getCachedSize() {
 		if (p1 != NULL) {
 			int colon = ':';
 			char *p1 = strchr(buf, colon) + 1;
-			//std::cout << p1 << endl;
-			unsigned long long t = strtoull(p1, NULL, 10);
-			//std::cout << t << endl;
-			return t;
+			cached_size = strtoull(p1, NULL, 10);
+			break;
 		}
 	}
-	return 0;
+	fclose(fp);
+	return cached_size;
 }
 
 int parseLine(char* line) {
