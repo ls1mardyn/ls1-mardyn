@@ -479,7 +479,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 			double ainit[3];
 			for (unsigned d = 0; d < 3; d++)
-				inputfilestream >> ainit[3];
+				inputfilestream >> ainit[d];
 			if (timestepLength == 0.0) {
 				global_log->error() << "timestep missing." << endl;
 				Simulation::exit(1);
