@@ -50,15 +50,6 @@ XMLfile::XMLfile(const string& filepath)
 	initfile(filepath);
 }
 
-XMLfile::XMLfile(const char* filepath)
-{
-	clear();
-#ifdef ENABLE_MPI
-	setMPIdefaults();
-#endif
-	initfile(filepath);
-}
-
 bool XMLfile::initfile(const string& filepath)
 {
 	clear();

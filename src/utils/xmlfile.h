@@ -427,20 +427,11 @@ public:
 	/// constructor calls initfile
 	/// \param std::string&	XML-file
 	XMLfile(const std::string& filepath);
-	/// \brief constructor for XML-file
-	/// constructor calls initfile
-	/// \param const char*	file XML-file
-	XMLfile(const char* filepath);
 	
 	/// \brief initialize with XML-file
 	/// instantiating with XML file
 	/// \param std::string&	XML-file
 	bool initfile(const std::string& filepath);
-	/// \brief initialize with XML-file
-	/// instantiating with XML file
-	/// \param const char*	XML-file
-	bool initfile(const char* filepath)
-		{ return initfile(std::string(filepath)); }
 	
 	/// \brief initialize with XML-string
 	/// instantiating with XML-string
@@ -600,10 +591,6 @@ public:
 	/// save node content as XML-file
 	/// \param std::string&	output file
 	void save(std::string filepath=std::string());
-	/// \brief save
-	/// save node content as XML-file
-	/// \param const char*	output file
-	void save(const char* filepath) { save(std::string(filepath)); }
 	
 	/// \brief perform a query
 	/// return a query to a given query expression
