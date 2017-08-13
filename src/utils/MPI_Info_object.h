@@ -1,13 +1,13 @@
 #ifndef MPI_INFO_OBJECT_H
 #define MPI_INFO_OBJECT_H
 
+#if ENABLE_MPI
+
 #include <string>
 
 #include <mpi.h>
 
 #include "utils/xmlfile.h"
-
-#if ENABLE_MPI
 
 /** @brief MPI Info object implements functionalities to handle MPI Info objects, e.g. initialize from a XML file.
  */
