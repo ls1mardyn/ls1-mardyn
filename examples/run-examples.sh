@@ -5,7 +5,7 @@
 #
 
 MARDYN_EXE="mpirun -np 1 $PWD/../src/MarDyn"
-MARDYN_OPTIONS="--steps 10"
+MARDYN_OPTIONS="--steps 10 -v"
 EXAMPLE_LIST_FILE=${EXAMPLE_LIST_FILE:=example-list.txt}
 LOGFILE=${LOGFILE:=$PWD/run-examples.log}
 
