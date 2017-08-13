@@ -64,7 +64,7 @@ private:
 	std::string	_datarep;
 	bool	_measureTime;
 #ifdef ENABLE_MPI
-	int	_mpiioinfo = MPI_INFO_NULL;
+	MPI_Info	_mpiioinfo = MPI_INFO_NULL;
 #endif
 	unsigned long	_particlesbuffersize = 0;
 };
