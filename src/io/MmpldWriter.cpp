@@ -210,9 +210,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	long outputsize = 0;
 
 	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
-	for (uint8_t ti = 0; ti < _numSphereTypes; ++ti){
-		numSpheresPerType[ti] = 0;
-	}
 
 	//calculate number of spheres per component|siteType
 	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
