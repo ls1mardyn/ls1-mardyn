@@ -28,7 +28,9 @@ public:
 	 */
 	void readXML(XMLfile& xmlconfig);
 
-	/** @brief Add a key value pair */
+	/** @brief reset MPI info object */
+	void reset();
+	/** @brief Add a hint key value pair */
 	void add_hint(std::string& key, std::string& value);
 	/** @brief Obtains the MPI info object as a duplicate of the internal one. */
 	void get_dup_MPI_Info(MPI_Info* mpi_info);
