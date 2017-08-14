@@ -211,9 +211,8 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
 
-	//calculate number of spheres per component|siteType
-	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
-		this->CalcNumSpheresPerType(numSpheresPerType.data(), &(*mol));
+	//calculate local number of spheres per component|siteType
+	this->CalcNumSpheresPerType(particleContainer, numSpheresPerType.data());
 
 	//distribute global component particle count
 	std::vector<uint64_t> globalNumCompSpheres(_numSphereTypes);
@@ -488,10 +487,12 @@ void MmpldWriter::PrepareWriteControl()
 }
 
 // derived classes
-void MmpldWriterSimpleSphere::CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol)
+void MmpldWriterSimpleSphere::CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType)
 {
-	uint8_t cid = mol->componentid();
-	numSpheresPerType[cid]++;
+	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol) {
+		uint8_t cid = mol->componentid();
+		numSpheresPerType[cid]++;
+	}
 }
 
 bool MmpldWriterSimpleSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex)
@@ -502,12 +503,14 @@ bool MmpldWriterSimpleSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol,
 }
 
 
-void MmpldWriterMultiSphere::CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol)
+void MmpldWriterMultiSphere::CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType)
 {
-	uint8_t cid = mol->componentid();
-	uint8_t offset = _nCompSitesOffset.at(cid);
-	for (uint8_t si = 0; si < _numSitesPerComp.at(cid); ++si)
-		numSpheresPerType[offset+si]++;
+	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol) {
+		uint8_t cid = mol->componentid();
+		uint8_t offset = _nCompSitesOffset.at(cid);
+		for (uint8_t si = 0; si < _numSitesPerComp.at(cid); ++si)
+			numSpheresPerType[offset+si]++;
+	}
 }
 
 bool MmpldWriterMultiSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex)

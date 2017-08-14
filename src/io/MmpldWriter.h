@@ -39,7 +39,7 @@ protected:
 	virtual ~MmpldWriter() {}
 
 	virtual void SetNumSphereTypes() = 0;
-	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol) = 0;
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) = 0;
 	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) = 0;
 
 	void InitSphereData();
@@ -114,7 +114,7 @@ public:
 	virtual ~MmpldWriterSimpleSphere() {}
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numComponents;}
-	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol);
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
 	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex);
 };
 
@@ -131,7 +131,7 @@ public:
 	virtual ~MmpldWriterMultiSphere() {}
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numSitesTotal;}
-	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol);
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
 	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex);
 };
 
