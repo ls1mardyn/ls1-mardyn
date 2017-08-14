@@ -99,6 +99,10 @@ protected:
 	int _mmpldversion;
 
 	std::string getOutputFilename();
+
+#if ENABLE_MPI
+	MPI_Info _mpiioinfo = MPI_INFO_NULL;
+#endif
 };
 
 class MmpldWriterSimpleSphere : public MmpldWriter
