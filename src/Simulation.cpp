@@ -511,16 +511,15 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			outputPlugin = new MmspdBinWriter();
 		}
 		else if(pluginname == "MmpldWriter") {
-			std::string strType = "unknown";
-			xmlconfig.getNodeValue("@type", strType);
-
-			if("simple" == strType)
+			/** @todo this should be handled in the MMPLD Writer readXML() */
+			std::string sphere_representation = "simple";
+			xmlconfig.getNodeValue("@type", sphere_representation);
+			if("simple" == sphere_representation) {
 				outputPlugin = new MmpldWriterSimpleSphere();
-			else if("multi" == strType)
+			} else if("multi" == sphere_representation) {
 				outputPlugin = new MmpldWriterMultiSphere ();
-			else
-			{
-				global_log->error() << "MmpldWriter: wrong attribute, expected type=simple|multi. Program exit... " << endl;
+			} else {
+				global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << endl;
 				Simulation::exit(-1);
 			}
 		}
