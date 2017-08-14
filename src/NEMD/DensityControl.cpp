@@ -137,12 +137,29 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("target/density", _dTargetDensity);
 	global_log->info()<< "DensityControl: target componentID = " << _nTargetComponentID << ", target density = " << _dTargetDensity << endl;
 
-	// change identity
-	uint32_t nFrom, nTo;
-	nFrom = nTo = 1;
-	xmlconfig.getNodeValue("change/from", nFrom);
-	xmlconfig.getNodeValue("change/to", nTo);
-	_vecChangeCompIDs.at(nFrom-1) = nTo-1;
+	// change identity of molecules by component ID
+	if(xmlconfig.changecurrentnode("changes")) {
+		uint8_t numChanges = 0;
+		XMLfile::Query query = xmlconfig.query("change");
+		numChanges = query.card();
+		global_log->info() << "Number of components to change: " << (uint32_t)numChanges << endl;
+		if(numChanges < 1) {
+			global_log->error() << "No component change defined in XML-config file. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator changeIter;
+		for( changeIter = query.begin(); changeIter; changeIter++ ) {
+			xmlconfig.changecurrentnode(changeIter);
+			uint32_t nFrom, nTo;
+			nFrom = nTo = 1;
+			xmlconfig.getNodeValue("from", nFrom);
+			xmlconfig.getNodeValue("to", nTo);
+			_vecChangeCompIDs.at(nFrom-1) = nTo-1;
+		}
+		xmlconfig.changecurrentnode(oldpath);
+		xmlconfig.changecurrentnode("..");
+	}
 }
 
 void dec::ControlRegion::CheckBounds()
