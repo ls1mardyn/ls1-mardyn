@@ -20,7 +20,6 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 #include "utils/FileUtils.h"
-#include "utils/MPI_Info_object.h"
 
 
 // default version to use for mmpld format writing. possible values: 100 or 102
@@ -107,9 +106,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	if(xmlconfig.changecurrentnode("mpi_info")) {
 #ifdef ENABLE_MPI
 		global_log->info() << "[MMPLD Writer] Setting MPI info object for IO" << endl;
-		MPI_Info_object mpi_info_obj;	// MPI_Info_object just for temporary use
-		mpi_info_obj.readXML(xmlconfig);
-		mpi_info_obj.get_MPI_Info(&_mpiioinfo);	// _mpiioinfo is all what is used
+		_mpiinfo.readXML(xmlconfig);
 #else
 		global_log->info() << "[MMPLD Writer] mpi_info only used in parallel/MPI version" << endl;
 #endif
@@ -232,7 +229,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	MPI_Reduce(numSpheresPerType.data(), globalNumCompSpheres.data(), _numSphereTypes, MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	MPI_File fh;
-	MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, _mpiioinfo, &fh);
+	MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, _mpiinfo, &fh);
 
 
 	//write particle list for each component|site (sphere type)

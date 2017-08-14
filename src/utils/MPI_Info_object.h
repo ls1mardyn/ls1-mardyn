@@ -13,7 +13,9 @@
  */
 class MPI_Info_object{
 public:
-	MPI_Info_object();
+	MPI_Info_object()
+		: _mpi_info(MPI_INFO_NULL)
+		{}
 	~MPI_Info_object();
 
 	/** @brief read key value pairs to be set in the MPI info object
@@ -27,9 +29,10 @@ public:
 	void readXML(XMLfile& xmlconfig);
 
 	/** @brief Add a key value pair */
-	void add_pair(std::string& key, std::string& value);
+	void add_hint(std::string& key, std::string& value);
 	/** @brief Obtains the MPI info object as a duplicate of the internal one. */
-	void get_MPI_Info(MPI_Info* mpi_info);
+	void get_dup_MPI_Info(MPI_Info* mpi_info);
+	operator MPI_Info() const { return _mpi_info; }
 
 private:
 	MPI_Info _mpi_info;

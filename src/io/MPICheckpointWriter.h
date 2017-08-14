@@ -9,6 +9,9 @@
 #include <string>
 
 #include "io/OutputBase.h"
+#ifdef ENABLE_MPI
+#include "utils/MPI_Info_object.h"
+#endif
 
 class MPICheckpointWriter : public OutputBase {
 public:
@@ -35,7 +38,7 @@ public:
 	MPICheckpointWriter(unsigned long writeFrequency
 	                   , std::string outputPrefix, bool incremental=true
 	                   , std::string datarep=std::string(""));
-	~MPICheckpointWriter();
+	//~MPICheckpointWriter() {};
 	
 	void readXML(XMLfileUnits& xmlconfig);
 	
@@ -64,7 +67,7 @@ private:
 	std::string	_datarep;
 	bool	_measureTime;
 #ifdef ENABLE_MPI
-	MPI_Info	_mpiioinfo = MPI_INFO_NULL;
+	MPI_Info_object	_mpiinfo;
 #endif
 	unsigned long	_particlesbuffersize = 0;
 };

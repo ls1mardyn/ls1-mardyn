@@ -8,6 +8,10 @@
 #include "ensemble/GrandCanonical.h"
 #include "io/OutputBase.h"
 
+#ifdef ENABLE_MPI
+#include "utils/MPI_Info_object.h"
+#endif
+
 enum InitSphereData : uint8_t
 {
 	ISD_USE_DEFAULT = 1,
@@ -101,7 +105,7 @@ protected:
 	std::string getOutputFilename();
 
 #if ENABLE_MPI
-	MPI_Info _mpiioinfo = MPI_INFO_NULL;
+	MPI_Info_object _mpiinfo;
 #endif
 };
 
