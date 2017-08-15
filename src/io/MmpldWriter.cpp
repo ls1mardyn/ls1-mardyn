@@ -38,13 +38,13 @@ std::string MmpldWriter::getOutputFilename() {
 MmpldWriter::MmpldWriter() :
 		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
 		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
-		_fileCount(1), _mmpldversion(MMPLD_DEFAULT_VERSION)
+		_fileCount(1), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_NONE)
 {}
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
 		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
-			_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _fileCount(1)
+			_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _fileCount(1), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_NONE)
 {
 	if (0 == _writeFrequency) {
 		mardyn_exit(-1);
