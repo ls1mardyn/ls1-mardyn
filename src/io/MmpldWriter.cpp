@@ -29,7 +29,6 @@
 using Log::global_log;
 using namespace std;
 
-
 std::string MmpldWriter::getOutputFilename() {
 	std::stringstream filenamestream;
 	filenamestream << _outputPrefix << "_" << fill_width('0', 4) << _fileCount << ".mmpld";
@@ -217,11 +216,9 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
-	long outputsize = 0;
-
-	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
 
 	//calculate local number of spheres per component|siteType
+	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
 	this->CalcNumSpheresPerType(particleContainer, numSpheresPerType.data());
 
 	//distribute global component particle count
@@ -231,40 +228,26 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	MPI_File fh;
 	MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, _mpiinfo, &fh);
 
-
 	//write particle list for each component|site (sphere type)
-	for (uint8_t nSphereTypeIndex=0; nSphereTypeIndex<_numSphereTypes; ++nSphereTypeIndex){
-		//add space for particle data
-		outputsize = (long)numSpheresPerType[nSphereTypeIndex]*12;
-		
-		//add space for particle list header
+	for (uint8_t nSphereTypeIndex = 0; nSphereTypeIndex < _numSphereTypes; ++nSphereTypeIndex){
+		long outputsize = 0;
 		if (rank == 0){
-			//add particle list header
-			outputsize += 18;
+			// add space for initial data frame  header
 			if (nSphereTypeIndex == 0){
-				switch (_mmpldversion){
-					case 100:
-						//add space for number of particle lists
-						outputsize += 4;
-						break;
-					case 102:
-						//add space for timestamp and number of particle lists
-						outputsize += 8;
-						break;
-					default:
-						global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << endl;
-						global_simulation->exit(1);
-						break;
-				}
+				outputsize += get_data_frame_header_size();
 			}
+			// add space for particle list header
+			outputsize += get_data_list_header_size();
 		}
+		//add space for particle data
+		outputsize += get_data_list_size(numSpheresPerType[nSphereTypeIndex]); /* add space for local size */
 
 		MPI_Status status;
 
 		//accumulate outputsizes of previous ranks and use it as offset for output file
 		long offset = 0;
-		MPI_Scan(&outputsize, &offset, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
-		offset -= outputsize; /* scan is inclusive own value */
+		MPI_Exscan(&outputsize, &offset, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		if(rank == 0) {offset = 0;} /* state of offset undefined */
 		global_log->debug() << "[MMPLD Writer] rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << unsigned(nSphereTypeIndex) << "; offset: " << offset << endl;
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
@@ -494,6 +477,59 @@ void MmpldWriter::PrepareWriteControl()
 	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0) {
 		_numFramesPerFile = numFramesTotal;
 	}
+}
+
+long MmpldWriter::get_data_frame_header_size() {
+	long data_frame_header_size = 0;
+	switch (_mmpldversion){
+		case 100: /* number of particle lists (uint32_t) */
+			data_frame_header_size = sizeof(float);
+			break;
+		case 102: /* time stamp (float) | number of particle lists (uint32_t) */
+			data_frame_header_size = sizeof(float) + sizeof(uint32_t);
+			break;
+		default:
+			global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << endl;
+			global_simulation->exit(1);
+			break;
+	}
+	return data_frame_header_size;
+}
+
+long MmpldWriter::get_data_list_header_size() {
+	long data_list_header_size = 0;
+	data_list_header_size += sizeof(uint8_t); /* vertex type */
+	data_list_header_size += sizeof(uint8_t); /* color type */
+	if(_vertex_type == MMPLD_VERTEX_FLOAT_XYZ || _vertex_type == MMPLD_VERTEX_SHORT_XYZ) {
+		data_list_header_size += sizeof(float); /* global radius */
+	}
+	if(_color_type == MMPLD_COLOR_NONE) {
+		data_list_header_size += 4 * sizeof(uint8_t); /* global color as UINT8_RGBA */
+	} else if(_color_type == MMPLD_COLOR_FLOAT_I) {
+		data_list_header_size += 2 * sizeof(float); /* intensityrange min and max */
+	}
+	data_list_header_size += sizeof(uint64_t); /* particle count */
+	return data_list_header_size;
+}
+
+long MmpldWriter::get_data_list_size(uint64_t particle_count) {
+	long data_list_size = 0;
+	long elemsize = 0;
+	switch(_vertex_type) {
+		case MMPLD_VERTEX_NONE:
+			elemsize = 0;
+			break;
+		case MMPLD_VERTEX_FLOAT_XYZ:
+			elemsize = sizeof(float);
+			break;
+		case MMPLD_VERTEX_FLOAT_XYZR:
+			elemsize = 4 * sizeof(float);
+			break;
+		case MMPLD_VERTEX_SHORT_XYZ:
+			elemsize = 3 * sizeof(uint16_t);
+	}
+	data_list_size = elemsize * particle_count;
+	return data_list_size;
 }
 
 // derived classes

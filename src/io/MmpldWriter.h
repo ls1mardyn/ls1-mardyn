@@ -19,6 +19,22 @@ enum InitSphereData : uint8_t
 	ISD_READ_FROM_XML = 3,
 };
 
+enum MMPLD_Vertex_type : uint8_t {
+	MMPLD_VERTEX_NONE       = 0,
+	MMPLD_VERTEX_FLOAT_XYZ  = 1,
+	MMPLD_VERTEX_FLOAT_XYZR = 2,
+	MMPLD_VERTEX_SHORT_XYZ  = 3,
+};
+
+enum MMPLD_Color_type : uint8_t {
+	MMPLD_COLOR_NONE       = 0,
+	MMPLD_COLOR_UINT8_RGB  = 1,
+	MMPLD_COLOR_UINT8_RGBA = 2,
+	MMPLD_COLOR_FLOAT_I    = 3,
+	MMPLD_COLOR_FLOAT_RGB  = 4,
+	MMPLD_COLOR_FLOAT_RGBA = 5,
+};
+
 class Simulation;
 
 /** @brief Output plugin to generate a MegaMol™ Particle List Data file (*.mmpld).
@@ -74,6 +90,9 @@ protected:
 	void MultiFileApproachReset(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	void PrepareWriteControl();
+	long get_data_frame_header_size();
+	long get_data_list_header_size();
+	long get_data_list_size(uint64_t particle_count);
 
 protected:
 	/** First time step to be recorded */
@@ -101,6 +120,8 @@ protected:
 
 	long _fileCount;
 	int _mmpldversion;
+	MMPLD_Vertex_type _vertex_type;
+	MMPLD_Color_type _color_type;
 
 	std::string getOutputFilename();
 
