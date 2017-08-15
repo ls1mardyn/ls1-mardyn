@@ -60,7 +60,7 @@ protected:
 
 	virtual void SetNumSphereTypes() {};
 	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {};
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) {};
+	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) { return false; };
 
 	void InitSphereData();
 
