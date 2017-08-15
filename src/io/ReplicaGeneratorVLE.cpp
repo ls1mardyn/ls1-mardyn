@@ -45,7 +45,8 @@ ReplicaGeneratorVLE::ReplicaGeneratorVLE()
 	_moleculeDataReader(nullptr),
 	_nMaxID(0),
 	_dDensityLiq(0.0),
-	_dBoxVolumeLiq(0.0)
+	_dBoxVolumeLiq(0.0),
+	_bCreateHomogenous(false)
 {
 }
 
@@ -155,29 +156,49 @@ void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	global_log->info() << "ReplicaGeneratorVLE" << std::endl;
 
-	xmlconfig.getNodeValue("files/liquid/header", _strFilePathHeaderLiq);
-	xmlconfig.getNodeValue("files/liquid/data", _strFilePathDataLiq);
+	_bCreateHomogenous = false;
+	std::string strType = "unknown";
+	xmlconfig.getNodeValue("type", strType);
+	if("homogeneous" == strType)
+		_bCreateHomogenous = true;
+	else if ("heterogeneous" == strType)
+		_bCreateHomogenous = false;
+	else
+	{
+		global_log->error() << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << std::endl;
+		Simulation::exit(-1);
+	}
+
+	if(false == _bCreateHomogenous)
+	{
+		xmlconfig.getNodeValue("files/liquid/header", _strFilePathHeaderLiq);
+		xmlconfig.getNodeValue("files/liquid/data", _strFilePathDataLiq);
+	}
 	xmlconfig.getNodeValue("files/vapor/header", _strFilePathHeaderVap);
 	xmlconfig.getNodeValue("files/vapor/data", _strFilePathDataVap);
 
-	global_log->info() << "Importing data for liquid box from file: " << _strFilePathDataLiq << std::endl;
+	if(false == _bCreateHomogenous)
+		global_log->info() << "Importing data for liquid box from file: " << _strFilePathDataLiq << std::endl;
 	global_log->info() << "Importing data for vapour box from file: " << _strFilePathDataVap << std::endl;
 
 	xmlconfig.getNodeValue("numblocks/xz",     _numBlocksXZ);
-	xmlconfig.getNodeValue("numblocks/liquid", _numBlocksLiqY);
+	if(false == _bCreateHomogenous)
+		xmlconfig.getNodeValue("numblocks/liquid", _numBlocksLiqY);
 	xmlconfig.getNodeValue("numblocks/vapor",  _numBlocksVapY);
 
 	global_log->info() << "Replicating " << _numBlocksXZ << " x " << _numBlocksXZ << " boxes in XZ layers." << std::endl;
 	global_log->info() << "Replicating " << _numBlocksLiqY << " (liquid) + " << _numBlocksVapY << " (vapour) + " << _numBlocksLiqY << " (liquid) boxes"
 			" = " << 2*_numBlocksVapY + _numBlocksLiqY << " (total) in a row of Y direction." << std::endl;
 
+	if(false == _bCreateHomogenous)
+	{
 	// liquid blocks begin/end index
-	_nIndexLiqBeginY = _numBlocksVapY;
-	_nIndexLiqEndY = _numBlocksVapY + _numBlocksLiqY - 1;
+		_nIndexLiqBeginY = _numBlocksVapY;
+		_nIndexLiqEndY = _numBlocksVapY + _numBlocksLiqY - 1;
 
-	xmlconfig.getNodeValue("diameter",  _dMoleculeDiameter);
-
-	global_log->info() << "Using molecule diameter: " << _dMoleculeDiameter << " for spacing between liquid and vapour phase. " << std::endl;
+		xmlconfig.getNodeValue("diameter",  _dMoleculeDiameter);
+		global_log->info() << "Using molecule diameter: " << _dMoleculeDiameter << " for spacing between liquid and vapour phase. " << std::endl;
+	}
 
 	//init
 	this->init(xmlconfig);
@@ -188,31 +209,53 @@ void ReplicaGeneratorVLE::init(XMLfileUnits& xmlconfig)
 	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
 	global_log->info() << domainDecomp->getRank() << ": Init Replica VLE ..." << endl;
 
-	// Read liquid system
-	this->readReplicaPhaseSpaceHeader(_strFilePathHeaderLiq, _numParticlesLiq, _dBoxLengthLiqXYZ);
-	this->readReplicaPhaseSpaceData(_strFilePathDataLiq, _numParticlesLiq, _vecParticlesLiq);
-
+	if(false == _bCreateHomogenous)
+	{
+		// Read liquid system
+		this->readReplicaPhaseSpaceHeader(_strFilePathHeaderLiq, _numParticlesLiq, _dBoxLengthLiqXYZ);
+		this->readReplicaPhaseSpaceData(_strFilePathDataLiq, _numParticlesLiq, _vecParticlesLiq);
+	}
 	// Read vapor system
 	this->readReplicaPhaseSpaceHeader(_strFilePathHeaderVap, _numParticlesVap, _dBoxLengthVapXYZ);
 	this->readReplicaPhaseSpaceData(_strFilePathDataVap, _numParticlesVap, _vecParticlesVap);
 
-	// Box length
-	if(_dBoxLengthLiqXYZ != _dBoxLengthVapXYZ)
+	if(false == _bCreateHomogenous)
 	{
-		global_log->error() << "Box length of liquid and vapor system differ! Program exit ..." << endl;
-		Simulation::exit(1);
+		// Box length
+		if(_dBoxLengthLiqXYZ != _dBoxLengthVapXYZ)
+		{
+			global_log->error() << "Box length of liquid and vapor system differ! Program exit ..." << endl;
+			Simulation::exit(1);
+		}
+		_dBoxLengthXYZ = _dBoxLengthLiqXYZ;
 	}
-	_dBoxLengthXYZ = _dBoxLengthLiqXYZ;
+	else
+		_dBoxLengthXYZ = _dBoxLengthVapXYZ;
 
 	// total num particles, maxID
-	_numParticlesTotal = (2*_numBlocksVapY*_numParticlesVap + _numBlocksLiqY*_numParticlesLiq) * _numBlocksXZ * _numBlocksXZ;
+	if(true == _bCreateHomogenous)
+		_numParticlesTotal = _numBlocksVapY*_numParticlesVap * _numBlocksXZ * _numBlocksXZ;
+	else
+		_numParticlesTotal = (2*_numBlocksVapY*_numParticlesVap + _numBlocksLiqY*_numParticlesLiq) * _numBlocksXZ * _numBlocksXZ;
 	global_simulation->getDomain()->setglobalNumMolecules(_numParticlesTotal);
-	_dBoxVolumeLiq = _dBoxLengthLiqXYZ*_dBoxLengthLiqXYZ*_dBoxLengthLiqXYZ;
-	_dDensityLiq = _numParticlesLiq / _dBoxVolumeLiq;
+
+	if(false == _bCreateHomogenous)
+	{
+		_dBoxVolumeLiq = _dBoxLengthLiqXYZ*_dBoxLengthLiqXYZ*_dBoxLengthLiqXYZ;
+		_dDensityLiq = _numParticlesLiq / _dBoxVolumeLiq;
+	}
+	else
+	{
+		_dBoxVolumeLiq = _dBoxLengthVapXYZ*_dBoxLengthVapXYZ*_dBoxLengthVapXYZ;
+		_dDensityLiq = _numParticlesVap / _dBoxVolumeLiq;
+	}
 
 	// update global length of domain
 	double dLength[3];
-	dLength[1] = (2*_numBlocksVapY + _numBlocksLiqY) * _dBoxLengthXYZ;
+	if(true == _bCreateHomogenous)
+		dLength[1] = _numBlocksVapY * _dBoxLengthXYZ;
+	else
+		dLength[1] = (2*_numBlocksVapY + _numBlocksLiqY) * _dBoxLengthXYZ;
 	dLength[0] = dLength[2] = _numBlocksXZ * _dBoxLengthXYZ;
 	for(uint8_t di=0; di<3; ++di)
 		global_simulation->getDomain()->setGlobalLength(di, dLength[di]);
@@ -234,15 +277,18 @@ void ReplicaGeneratorVLE::init(XMLfileUnits& xmlconfig)
 	domainDecomp->readXML(xmlconfig);
 */
 
-	// calc free space positions
-	double dPhaseLengthVapY = _numBlocksVapY * _dBoxLengthXYZ;
-	double dPhaseLengthLiqY = _numBlocksLiqY * _dBoxLengthXYZ;
-	_fspY[0] = dPhaseLengthVapY - _dMoleculeDiameter;
-	_fspY[1] = dPhaseLengthVapY;
-	_fspY[2] = dPhaseLengthVapY + dPhaseLengthLiqY;
-	_fspY[3] = dPhaseLengthVapY + dPhaseLengthLiqY + _dMoleculeDiameter;
-	_fspY[4] = dPhaseLengthVapY + dPhaseLengthLiqY + dPhaseLengthVapY - _dMoleculeDiameter;
-	_fspY[5] = dPhaseLengthVapY + dPhaseLengthLiqY + dPhaseLengthVapY;
+	if(false == _bCreateHomogenous)
+	{
+		// calc free space positions
+		double dPhaseLengthVapY = _numBlocksVapY * _dBoxLengthXYZ;
+		double dPhaseLengthLiqY = _numBlocksLiqY * _dBoxLengthXYZ;
+		_fspY[0] = dPhaseLengthVapY - _dMoleculeDiameter;
+		_fspY[1] = dPhaseLengthVapY;
+		_fspY[2] = dPhaseLengthVapY + dPhaseLengthLiqY;
+		_fspY[3] = dPhaseLengthVapY + dPhaseLengthLiqY + _dMoleculeDiameter;
+		_fspY[4] = dPhaseLengthVapY + dPhaseLengthLiqY + dPhaseLengthVapY - _dMoleculeDiameter;
+		_fspY[5] = dPhaseLengthVapY + dPhaseLengthLiqY + dPhaseLengthVapY;
+	}
 }
 
 long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particleContainer,
@@ -303,7 +349,7 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 					dShift[di] = bi[di] * _dBoxLengthXYZ;
 
 				std::vector<Molecule>* ptrVec;
-				if(bi[1] >= _nIndexLiqBeginY && bi[1] <= _nIndexLiqEndY)
+				if(false == _bCreateHomogenous && bi[1] >= _nIndexLiqBeginY && bi[1] <= _nIndexLiqEndY)
 					ptrVec = &_vecParticlesLiq;
 				else
 					ptrVec = &_vecParticlesVap;
@@ -321,7 +367,9 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 
 					// Add particle to container
 					double ry = r[1];
-					bool bIsInsideFreespace = (ry > _fspY[0] && ry < _fspY[1]) || (ry > _fspY[2] && ry < _fspY[3]) || (ry > _fspY[4] && ry < _fspY[5]);
+					bool bIsInsideFreespace = false;
+					if(false == _bCreateHomogenous)
+						bIsInsideFreespace = (ry > _fspY[0] && ry < _fspY[1]) || (ry > _fspY[2] && ry < _fspY[3]) || (ry > _fspY[4] && ry < _fspY[5]);
 
 					if(true == particleContainer->isInBoundingBox(r) && false == bIsInsideFreespace)
 					{

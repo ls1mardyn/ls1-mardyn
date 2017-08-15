@@ -383,12 +383,25 @@
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator@name</filexmlpath>
 							</setting>
 							<setting>
+								<name>System type</name>
+								<defaultvalue>heterogeneous</defaultvalue>
+								<type>string</type>
+								<editor>select</editor>
+								<editor-options>homogeneous,heterogeneous</editor-options>
+								<description>Specify desired system type</description>
+								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/type</filexmlpath>
+							</setting>
+							<setting>
 								<name>Header file liquid</name>
 								<defaultvalue>unknown</defaultvalue>
 								<type>string</type>
 								<editor>lineedit</editor>
 								<description>Filepath of header file of liquid system</description>
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/files/liquid/header</filexmlpath>
+								<depends>
+									<settingname>System type</settingname>
+									<value>heterogeneous</value>
+								</depends>
 							</setting>
 							<setting>
 								<name>Data file liquid</name>
@@ -397,6 +410,10 @@
 								<editor>lineedit</editor>
 								<description>Filepath of data file of liquid system</description>
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/files/liquid/data</filexmlpath>
+								<depends>
+									<settingname>System type</settingname>
+									<value>heterogeneous</value>
+								</depends>
 							</setting>
 							<setting>
 								<name>Header file vapor</name>
@@ -429,6 +446,10 @@
 								<editor>lineedit</editor>
 								<description>Number of blocks liquid system is replicated in Y direction</description>
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator/numblocks/liquid</filexmlpath>
+								<depends>
+									<settingname>System type</settingname>
+									<value>heterogeneous</value>
+								</depends>
 							</setting>
 							<setting>
 								<name>numBlocks vapor</name>
