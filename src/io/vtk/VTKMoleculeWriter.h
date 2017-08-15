@@ -51,6 +51,11 @@ public:
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 
+	static std::string getPluginName() {
+		return std::string("VTKMoleculeWriter");
+	}
+	static OutputBase* createInstance() { return new VTKMoleculeWriter(); }
+
 	void readXML(XMLfileUnits& xmlconfig);
 
 private:
