@@ -53,9 +53,10 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("ResultWriter");
 	}
+	static OutputBase* createInstance() { return new ResultWriter(); }
 
 private:
 	std::ofstream _resultStream;

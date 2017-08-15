@@ -42,9 +42,10 @@ public:
 
 	void handle_error(int i);
 
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("MPI_IOCheckpointWriter");
 	}
+	static OutputBase* createInstance() { return new MPI_IOCheckpointWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

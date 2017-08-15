@@ -53,9 +53,10 @@ public:
 
 	void finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("RDF");
 	}
+	static OutputBase* createInstance() { return new RDF(); }
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.

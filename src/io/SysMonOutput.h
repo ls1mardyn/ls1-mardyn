@@ -20,9 +20,10 @@ public:
 	//! @todo comment
 	void finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("SysMonOutput");
 	}
+	static OutputBase* createInstance() { return new SysMonOutput(); }
 
 private:
 	//! prefix for the names of all output files

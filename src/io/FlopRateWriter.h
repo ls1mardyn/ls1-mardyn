@@ -50,9 +50,10 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("FlopRateWriter");
 	}
+// 	static OutputBase* createInstance() { return new FlopRateWriter(); }
 
 	void measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep);
 

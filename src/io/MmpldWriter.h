@@ -58,9 +58,9 @@ protected:
 			std::string outputPrefix);
 	virtual ~MmpldWriter() {}
 
-	virtual void SetNumSphereTypes() = 0;
-	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) = 0;
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) = 0;
+	virtual void SetNumSphereTypes() {};
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {};
+	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) {};
 
 	void InitSphereData();
 
@@ -78,9 +78,10 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("MmpldWriter");
 	}
+	static OutputBase* createInstance() { return new MmpldWriter(); }
 
 	void SetInitSphereDataParameters(const uint8_t &bInitSphereData, const std::string &strSphereDataFilename) {
 		_bInitSphereData = bInitSphereData; _strSphereDataFilename = strSphereDataFilename;

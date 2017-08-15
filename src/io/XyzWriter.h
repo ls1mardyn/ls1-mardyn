@@ -39,9 +39,10 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("XyzWriter");
 	}
+	static OutputBase* createInstance() { return new XyzWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

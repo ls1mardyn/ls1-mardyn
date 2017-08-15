@@ -50,9 +50,10 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("CheckpointWriter");
 	}
+	static OutputBase* createInstance() { return new CheckpointWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

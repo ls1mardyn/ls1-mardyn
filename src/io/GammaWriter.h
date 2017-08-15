@@ -34,9 +34,10 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("GammaWriter");
 	}
+	static OutputBase* createInstance() { return new GammaWriter(); }
 
 private:
 	//! prefix for the names of all output files

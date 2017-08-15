@@ -48,9 +48,10 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	
-	std::string getPluginName() {
+	static std::string getPluginName() {
 		return std::string("PovWriter");
 	}
+	static OutputBase* createInstance() { return new PovWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
