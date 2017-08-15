@@ -282,12 +282,11 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 						global_simulation->exit(1);
 						break;
 				}
-				
 				uint32_t frameHeader_numPLists = htole32(_numSphereTypes);
 				MPI_File_write(fh, &frameHeader_numPLists, 1, MPI_UNSIGNED, &status);
-				
 			}
-			uint8_t pListHeader_vortexType;
+
+			uint8_t pListHeader_vertexType;
 			uint8_t pListHeader_colorType;
 			float pListHeader_globalRadius;
 			uint8_t pListHeader_red;
@@ -295,12 +294,9 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 			uint8_t pListHeader_blue;
 			uint8_t pListHeader_alpha;
 			uint64_t pListHeader_particleCount;
-
-			//set vortex data type to FLOAT_XYZ
-			pListHeader_vortexType = 1;
 			
-			//set color data type to NONE (only global color used)
-			pListHeader_colorType = 0;
+			pListHeader_vertexType = _vertex_type; // initialized to FLOAT_XYZ in constructor
+			pListHeader_colorType = _color_type; // initialized to NONE in constructor
 
 			//select different colors depending on component|site id
 			pListHeader_globalRadius = _vfSphereRadius[nSphereTypeIndex];
@@ -312,7 +308,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 			//store componentParticleCount
 			pListHeader_particleCount = htole64(globalNumCompSpheres[nSphereTypeIndex]);
 
-			MPI_File_write(fh, &pListHeader_vortexType, 1, MPI_BYTE, &status);
+			MPI_File_write(fh, &pListHeader_vertexType, 1, MPI_BYTE, &status);
 			MPI_File_write(fh, &pListHeader_colorType, 1, MPI_BYTE, &status);
 			MPI_File_write(fh, &pListHeader_globalRadius, 1, MPI_FLOAT, &status);
 			MPI_File_write(fh, &pListHeader_red, 1, MPI_BYTE, &status);
