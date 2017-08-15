@@ -256,7 +256,6 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 		//write particle list header
 		if (rank == 0){
-			
 			//write frame header if we are before the first particle list
 			if (nSphereTypeIndex == 0){
 				//store file position for seek table
@@ -265,10 +264,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 					MPI_File_get_position(fh, &entry);
 					_seekTable.at(_frameCount) = (uint64_t)entry;
 				}
-//					_frameCount = _frameCount + 1;
-				
-				float frameHeader_timestamp = simstep;
-				
+				float frameHeader_timestamp = _simulation.getSimulationTime();
 				switch (_mmpldversion){
 					case 100:
 						//do not write timestamp to frame header
