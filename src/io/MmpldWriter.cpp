@@ -520,7 +520,7 @@ long MmpldWriter::get_data_list_size(uint64_t particle_count) {
 			elemsize = 0;
 			break;
 		case MMPLD_VERTEX_FLOAT_XYZ:
-			elemsize = sizeof(float);
+			elemsize = 3 * sizeof(float);
 			break;
 		case MMPLD_VERTEX_FLOAT_XYZR:
 			elemsize = 4 * sizeof(float);
