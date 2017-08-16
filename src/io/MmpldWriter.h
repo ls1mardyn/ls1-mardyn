@@ -92,6 +92,7 @@ protected:
 			DomainDecompBase* domainDecomp, Domain* domain);
 	void PrepareWriteControl();
 	long get_data_frame_header_size();
+	long get_seekTable_size();
 	long get_data_list_header_size();
 	long get_data_list_size(uint64_t particle_count);
 

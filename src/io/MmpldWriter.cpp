@@ -191,9 +191,11 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
 
 	global_log->debug() << "[MMPLD Writer] Preallocating " << _numSeekEntries << " seek table entries for frames" << endl;
-	uint64_t seekNum = 0;
-	for (uint32_t i = 0; i <= numframes; ++i)
-		mmpldfstream.write((char*)&seekNum,sizeof(seekNum));
+	_seekTable.at(0) = MMPLD_HEADER_DATA_SIZE + get_seekTable_size();
+	for (uint32_t i = 0; i < _numSeekEntries; ++i) {
+		uint64_t offset_le = htole64(_seekTable.at(i));
+		mmpldfstream.write((char*) &offset_le, sizeof(offset_le));
+	}
 
 	mmpldfstream.close();
 #ifdef ENABLE_MPI
@@ -524,6 +526,10 @@ long MmpldWriter::get_data_list_size(uint64_t particle_count) {
 	}
 	data_list_size = elemsize * particle_count;
 	return data_list_size;
+}
+
+long MmpldWriter::get_seekTable_size(){
+	return _numSeekEntries * sizeof(uint64_t);
 }
 
 // derived classes
