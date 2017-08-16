@@ -63,7 +63,9 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "[MMPLD Writer] Stop sampling at simstep: " << _stopTimestep << endl;
 	global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< endl;
 
-	xmlconfig.getNodeValue("mmpldversion", _mmpldversion);
+	int mmpldversion = 100;
+	xmlconfig.getNodeValue("mmpldversion", mmpldversion);
+	_mmpldversion = mmpldversion;
 	switch(_mmpldversion) {
 		case 100:
 		case 102:
@@ -157,8 +159,8 @@ void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 	uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00};
 	mmpldfstream.write((char*)magicIdentifier, sizeof(magicIdentifier));
 
-	uint16_t mmpldversion_little_endian = htole16(_mmpldversion);
-	mmpldfstream.write((char*)&mmpldversion_little_endian, sizeof(mmpldversion_little_endian));
+	uint16_t mmpldversion_le = htole16(_mmpldversion);
+	mmpldfstream.write((char*)&mmpldversion_le, sizeof(mmpldversion_le));
 
 	//calculate the number of frames
 	uint32_t numframes = _numFramesPerFile;

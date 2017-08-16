@@ -120,7 +120,7 @@ protected:
 	bool _bWriteControlPrepared;
 
 	long _fileCount;
-	int _mmpldversion;
+	uint16_t _mmpldversion;
 	MMPLD_Vertex_type _vertex_type;
 	MMPLD_Color_type _color_type;
 
