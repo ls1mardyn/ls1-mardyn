@@ -93,8 +93,12 @@ protected:
 	void PrepareWriteControl();
 	long get_data_frame_header_size();
 	long get_seekTable_size();
+	void writeSeekTableEntry(int id, uint64_t offset);
 	long get_data_list_header_size();
 	long get_data_list_size(uint64_t particle_count);
+	void write_frame_header(uint32_t num_data_lists);
+	void write_particle_list_header(uint64_t particle_count, int sphereId);
+	void write_frame(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 protected:
 	/** First time step to be recorded */
@@ -103,10 +107,8 @@ protected:
 	uint64_t _writeFrequency;
 	/** Max time step up to which shall be recorded */
 	uint64_t _stopTimestep;
-	uint64_t _numFramesPerFile;
 	std::string _outputPrefix;
 	std::string _timestampString;
-	uint32_t _numSeekEntries;
 	uint32_t _frameCount;
 	uint8_t  _numComponents;
 	uint8_t  _numSitesTotal;
@@ -114,20 +116,25 @@ protected:
 	std::vector<uint64_t> _seekTable;
 	std::vector<uint8_t> _numSitesPerComp;
 	std::vector<uint8_t> _nCompSitesOffset;
-	std::vector<float> _vfSphereRadius;
-	std::vector< std::array<uint32_t, 4> > _vaSphereColors;
 	std::string _strSphereDataFilename;
 	uint8_t _bInitSphereData;
 	bool _bWriteControlPrepared;
 
 	long _fileCount;
+	uint32_t _numFramesPerFile;
+
 	uint16_t _mmpldversion;
+	uint32_t _numSeekEntries;
 	MMPLD_Vertex_type _vertex_type;
 	MMPLD_Color_type _color_type;
+	std::vector<float> _global_radius;
+	std::vector< std::array<uint8_t, 4> > _global_rgba;
+	std::vector< std::array<float, 2> > _global_intensity_range;
 
 	std::string getOutputFilename();
 
 #if ENABLE_MPI
+	MPI_File _mpifh;
 	MPI_Info_object _mpiinfo;
 #endif
 };
