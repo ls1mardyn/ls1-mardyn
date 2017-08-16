@@ -508,7 +508,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 		outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
-			global_log->error() << "Could not create output plugin: " << pluginname << endl;
+			global_log->error() << "Could not create output plugin using factory: " << pluginname << endl;
 		}
 
 		if(pluginname == "RDF") {
@@ -541,14 +541,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			outputPlugin = NULL;
 			_domain->readXML(xmlconfig);
 		}
-		else {
-			global_log->warning() << "Unknown plugin " << pluginname << endl;
-			continue;
-		}
 
 		if(NULL != outputPlugin) {
 			outputPlugin->readXML(xmlconfig);
 			_outputPlugins.push_back(outputPlugin);
+		} else {
+			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
