@@ -83,7 +83,7 @@ public:
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
 			
-	static std::string getPluginName() {
+	virtual std::string getPluginName() {
 		return std::string("Unknown output plugin name.");
 	}
 };

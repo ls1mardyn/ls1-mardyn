@@ -28,7 +28,7 @@ public:
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	
-	static std::string getPluginName() {
+	std::string getPluginName() {
 		return std::string("CavityWriter");
 	}
 	static OutputBase* createInstance() { return new CavityWriter(); }

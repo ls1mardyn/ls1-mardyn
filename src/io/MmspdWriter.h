@@ -36,7 +36,7 @@ class MmspdWriter : public OutputBase{
 	//! @todo comment
     void finishOutput( ParticleContainer* particleContainer,
 		       DomainDecompBase* domainDecomp, Domain* domain);
-	static std::string getPluginName() {
+	std::string getPluginName() {
 		return std::string("MmspdWriter");
 	}
 	static OutputBase* createInstance() { return new MmspdWriter(); }

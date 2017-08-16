@@ -13,10 +13,9 @@ typedef OutputBase* createInstanceFunc();
 /** @brief Output Plugin Factory
  *
  * Provide a comman interface to register output plugins based on the OutputBase interface.
- * Therefore each plugin has to implement the two static methods:
+ * Therefore each plugin has to implement the following static method:
  * \code{.cpp}
  *   static OutputBase* createInstance(); // returning an instance object
- *   static std::string getPluginName();  // returning the name of the plugin as used in the XML file
  * \endcode
  * Plugins are registered in the OutputPluginFactory constructor using the REGISTER_PLUGIN(NAME) macro.
  */
@@ -27,10 +26,9 @@ public:
 
 	/** @brief Register an output plugin
 	 *
-	 * @par pluginname      name of the plugin
 	 * @par createInstance  pointer to a function returning an instance of the plugin object.
 	 */
-	void registerPlugin(std::string pluginname, createInstanceFunc* createInstance);
+	void registerPlugin(createInstanceFunc* createInstance);
 
 	/** @brief Get all names of registered plugins */
 	std::vector<string> getPluginNames();
