@@ -37,14 +37,14 @@ std::string MmpldWriter::getOutputFilename() {
 }
 
 MmpldWriter::MmpldWriter() :
-		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _outputPrefix("unknown"),
+		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _writeBufferSize(32768), _outputPrefix("unknown"),
 		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
 		_fileCount(1), _numFramesPerFile(0), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_NONE)
 {}
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
-		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep),
+		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _writeBufferSize(32768),
 		_outputPrefix(outputPrefix), _bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
 		_fileCount(1),_numFramesPerFile(numFramesPerFile),  _vertex_type(MMPLD_VERTEX_FLOAT_XYZ),
 		_color_type(MMPLD_COLOR_NONE)
@@ -61,10 +61,12 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("writecontrol/writefrequency", _writeFrequency);
 	xmlconfig.getNodeValue("writecontrol/stop", _stopTimestep);
 	xmlconfig.getNodeValue("writecontrol/framesperfile", _numFramesPerFile);
+	xmlconfig.getNodeValue("writecontrol/writeBufferSize", _writeBufferSize);
 	global_log->info() << "[MMPLD Writer] Start sampling from simstep: " << _startTimestep << endl;
 	global_log->info() << "[MMPLD Writer] Write with frequency: " << _writeFrequency << endl;
 	global_log->info() << "[MMPLD Writer] Stop sampling at simstep: " << _stopTimestep << endl;
 	global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< endl;
+	global_log->info() << "[MMPLD Writer] Write buffer size: " << _writeBufferSize << " Byte" << endl;
 
 	int mmpldversion = 100;
 	xmlconfig.getNodeValue("mmpldversion", mmpldversion);
@@ -243,6 +245,8 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 		dataListWriteOffsets[i] = get_data_list_header_size() + get_data_list_size(exscanNumCompSpheres[i]);
 	}
 
+	char* writeBuffer = new char[_writeBufferSize];
+	long buffer_pos = 0;
 	/* write particle list for each component|site (sphere type)`*/
 	for (uint8_t sphereTypeId = 0; sphereTypeId < _numSphereTypes; ++sphereTypeId){
 		//write particle list header
@@ -253,14 +257,21 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 		}
 		long offset = _seekTable.at(_frameCount) + dataListBeginOffsets[sphereTypeId] + dataListWriteOffsets[sphereTypeId];
 		MPI_File_seek(_mpifh, offset, MPI_SEEK_SET);
+		buffer_pos = 0;
 		for (auto moleculeIter = particleContainer->iteratorBegin(); moleculeIter != particleContainer->iteratorEnd(); ++moleculeIter) {
-			float spherePos[3];
-			if(true == GetSpherePos(spherePos, &(*moleculeIter), sphereTypeId) ) {
-				MPI_Status status;
-				MPI_File_write(_mpifh, spherePos, 3, MPI_FLOAT, &status);
+			if(true == GetSpherePos(reinterpret_cast<float*>(&writeBuffer[buffer_pos]), &(*moleculeIter), sphereTypeId)) {
+				buffer_pos += get_particle_data_size();
+				if(buffer_pos > _writeBufferSize - get_particle_data_size()) {
+					MPI_Status status;
+					MPI_File_write(_mpifh, writeBuffer, buffer_pos, MPI_BYTE, &status);
+					buffer_pos = 0;
+				}
 			}
 		}
+		MPI_Status status;
+		MPI_File_write(_mpifh, writeBuffer, buffer_pos, MPI_BYTE, &status);
 	}
+	delete[] writeBuffer;
 	// data of frame is written
 	_frameCount++;
 	u_int64_t frame_offset = dataListBeginOffsets.back() + get_data_list_header_size() + get_data_list_size(globalNumCompSpheres.back());
@@ -412,8 +423,7 @@ long MmpldWriter::get_data_list_header_size() {
 	return data_list_header_size;
 }
 
-long MmpldWriter::get_data_list_size(uint64_t particle_count) {
-	long data_list_size = 0;
+long MmpldWriter::get_particle_data_size(){
 	long elemsize = 0;
 	switch(_vertex_type) {
 		case MMPLD_VERTEX_NONE:
@@ -428,8 +438,12 @@ long MmpldWriter::get_data_list_size(uint64_t particle_count) {
 		case MMPLD_VERTEX_SHORT_XYZ:
 			elemsize = 3 * sizeof(uint16_t);
 	}
-	data_list_size = elemsize * particle_count;
-	return data_list_size;
+	return elemsize;
+}
+
+
+long MmpldWriter::get_data_list_size(uint64_t particle_count) {
+	return particle_count * get_particle_data_size();
 }
 
 
@@ -490,7 +504,7 @@ void MmpldWriterSimpleSphere::CalcNumSpheresPerType(ParticleContainer* particleC
 	}
 }
 
-bool MmpldWriterSimpleSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex)
+bool MmpldWriterSimpleSphere::GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex)
 {
 	uint8_t cid = mol->componentid();
 	for (unsigned short d = 0; d < 3; ++d) spherePos[d] = (float)mol->r(d);
@@ -508,7 +522,7 @@ void MmpldWriterMultiSphere::CalcNumSpheresPerType(ParticleContainer* particleCo
 	}
 }
 
-bool MmpldWriterMultiSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex)
+bool MmpldWriterMultiSphere::GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex)
 {
 	bool ret = false;
 	uint8_t cid = mol->componentid();

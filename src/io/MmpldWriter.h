@@ -60,7 +60,7 @@ protected:
 
 	virtual void SetNumSphereTypes() {};
 	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {};
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) { return false; };
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex) { return false; };
 
 	void InitSphereData();
 
@@ -88,6 +88,7 @@ public:
 	}
 
 protected:
+	std::string getOutputFilename();
 	void MultiFileApproachReset(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	void PrepareWriteControl();
@@ -95,6 +96,7 @@ protected:
 	long get_seekTable_size();
 	void writeSeekTableEntry(int id, uint64_t offset);
 	long get_data_list_header_size();
+	long get_particle_data_size();
 	long get_data_list_size(uint64_t particle_count);
 	void write_frame_header(uint32_t num_data_lists);
 	void write_particle_list_header(uint64_t particle_count, int sphereId);
@@ -107,6 +109,7 @@ protected:
 	uint64_t _writeFrequency;
 	/** Max time step up to which shall be recorded */
 	uint64_t _stopTimestep;
+	long _writeBufferSize;
 	std::string _outputPrefix;
 	std::string _timestampString;
 	uint32_t _frameCount;
@@ -131,7 +134,6 @@ protected:
 	std::vector< std::array<uint8_t, 4> > _global_rgba;
 	std::vector< std::array<float, 2> > _global_intensity_range;
 
-	std::string getOutputFilename();
 
 #if ENABLE_MPI
 	MPI_File _mpifh;
@@ -153,7 +155,7 @@ public:
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numComponents;}
 	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex);
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex);
 };
 
 class MmpldWriterMultiSphere : public MmpldWriter
@@ -170,7 +172,7 @@ public:
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numSitesTotal;}
 	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex);
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex);
 };
 
 #endif /* MMPLDWRITER_H_ */
