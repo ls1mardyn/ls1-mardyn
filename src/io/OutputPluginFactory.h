@@ -26,7 +26,7 @@ public:
 
 	/** @brief Register an output plugin
 	 *
-	 * @par createInstance  pointer to a function returning an instance of the plugin object.
+	 * @param createInstance  pointer to a function returning an instance of the plugin object.
 	 */
 	void registerPlugin(createInstanceFunc* createInstance);
 
