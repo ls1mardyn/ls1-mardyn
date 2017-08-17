@@ -147,7 +147,7 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	}
 }
 
-vcp_inline void VCP1CLJ_WR::processCell(ParticleCell& cell) {
+void VCP1CLJ_WR::processCell(ParticleCell& cell) {
 	ParticleCell_WR & cellWR = downcastCellReferenceWR(cell);
 
 	CellDataSoA_WR& soa = cellWR.getCellDataSoA();
