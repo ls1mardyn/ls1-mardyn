@@ -11,7 +11,7 @@
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
-class XMLfile;
+class XMLfileUnits;
 
 
 /** @todo Mark all parameters as const: output plugins should not modify the state of the simulation. */
@@ -84,7 +84,7 @@ public:
 	 *
 	 * @param xmlconfig  section of the xml file
 	 */
-	virtual void readXML(XMLfile& xmlconfig) {}
+	virtual void readXML(XMLfileUnits& xmlconfig) {}
 
 	/** @brief Method doOutput will be called at the end of each time step.
 	 *
