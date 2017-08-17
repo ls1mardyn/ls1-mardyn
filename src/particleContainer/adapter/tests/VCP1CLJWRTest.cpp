@@ -248,8 +248,8 @@ void VCP1CLJWRTest::testProcessCell() {
 	double full_Upot = _domain->getLocalUpot();
 	double full_Virial = _domain->getLocalVirial();
 
-	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, 1.0e-17);
-	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, 1.0e-17);
+	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, fabs(1.0e-5*full_Upot));
+	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, fabs(1.0e-5*full_Virial));
 
 	size_t numMolecules = cell_wr.getMoleculeCount();
 	for (size_t i = 0; i < numMolecules; ++i) {
@@ -261,9 +261,9 @@ void VCP1CLJWRTest::testProcessCell() {
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
-		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
-		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
-		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, fabs(1.0e-5*WR_f_x));
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, fabs(1.0e-5*WR_f_y));
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, fabs(1.0e-5*WR_f_z));
 	}
 
 	delete container;
@@ -323,8 +323,8 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	double full_Upot = _domain->getLocalUpot();
 	double full_Virial = _domain->getLocalVirial();
 
-	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, 1.0e-17);
-	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, 1.0e-17);
+	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, fabs(1.0e-7*full_Upot));
+	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, fabs(1.0e-7*full_Virial));
 
 	size_t numMolecules1 = cell_wr1.getMoleculeCount();
 	for (size_t i = 0; i < numMolecules1; ++i) {
@@ -336,9 +336,9 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
-		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
-		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
-		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, fabs(full_f_x*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, fabs(full_f_y*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, fabs(full_f_z*1.0e-5));
 	}
 
 	size_t numMolecules2 = cell_wr2.getMoleculeCount();
@@ -351,9 +351,9 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
-		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
-		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
-		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, fabs(full_f_x*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, fabs(full_f_y*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, fabs(full_f_z*1.0e-5));
 	}
 
 	delete container;
