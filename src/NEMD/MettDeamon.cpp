@@ -11,6 +11,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/Random.h"
 
 #include <map>
 #include <array>
@@ -27,6 +28,7 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_dAreaXZ(0.),
 		_dInvDensityArea(0.),
 		_dY(0.),
+		_dYInit(0.),
 		_dYsum(0.),
 		_velocityBarrier(0.),
 		_dSlabWidthInit(0),
@@ -50,7 +52,10 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_dDeletedMolsPerTimestep(0.),
 		_dInvNumTimestepsSummation(0.),
 		_bMirrorActivated(false),
-		_dMirrorPosY(0.)
+		_dMirrorPosY(0.),
+		_nDeleteNonVolatile(0),
+		_dMoleculeDiameter(1.0),
+		_dTransitionPlanePosY(0.0)
 {
 	_dAreaXZ = global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(2);
 
@@ -71,6 +76,17 @@ MettDeamon::MettDeamon(double cutoffRadius)
 	_vecChangeCompIDsUnfreeze.resize(nNumComponents);
 	std::iota (std::begin(_vecChangeCompIDsFreeze), std::end(_vecChangeCompIDsFreeze), 0);
 	std::iota (std::begin(_vecChangeCompIDsUnfreeze), std::end(_vecChangeCompIDsUnfreeze), 0);
+
+	// throttle parameters
+	_vecThrottleFromPosY.resize(nNumComponents);
+	_vecThrottleToPosY.resize(nNumComponents);
+	_vecThrottleForceY.resize(nNumComponents);
+	for(uint8_t cid=0; cid<nNumComponents; ++cid)
+	{
+		_vecThrottleFromPosY.at(cid) = 0.;
+		_vecThrottleToPosY.at(cid) = 0.;
+		_vecThrottleForceY.at(cid) = 0.;
+	}
 }
 
 MettDeamon::~MettDeamon()
@@ -137,6 +153,42 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	for(uint32_t i=0; i<_vecChangeCompIDsUnfreeze.size(); ++i)
 	{
 		std::cout << i << ": " << _vecChangeCompIDsUnfreeze.at(i) << std::endl;
+	}
+
+	// molecule diameter
+	xmlconfig.getNodeValue("diameter", _dMoleculeDiameter);
+
+	// init _dY
+	xmlconfig.getNodeValue("dyinit", _dYInit);
+
+	// throttles
+	// change identity of fixed (frozen) molecules by component ID
+	if(xmlconfig.changecurrentnode("throttles")) {
+		uint8_t numThrottles = 0;
+		XMLfile::Query query = xmlconfig.query("throttle");
+		numThrottles = query.card();
+		global_log->info() << "Number of throttles: " << (uint32_t)numThrottles << endl;
+		if(numThrottles < 1) {
+			global_log->error() << "No throttles defined in XML-config file. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator throttleIter;
+		for( throttleIter = query.begin(); throttleIter; throttleIter++ ) {
+			xmlconfig.changecurrentnode(throttleIter);
+			uint32_t cid;
+			xmlconfig.getNodeValue("componentID", cid); cid--;
+			xmlconfig.getNodeValue("pos/from", _vecThrottleFromPosY.at(cid));
+			xmlconfig.getNodeValue("pos/to",   _vecThrottleToPosY.at(cid));
+			xmlconfig.getNodeValue("force",    _vecThrottleForceY.at(cid));
+			_vecThrottleForceY.at(cid) = abs(_vecThrottleForceY.at(cid)* -1.);
+		}
+		xmlconfig.changecurrentnode(oldpath);
+		xmlconfig.changecurrentnode("..");
+	}
+	else {
+		global_log->error() << "No throttles defined in XML-config file. Program exit ..." << endl;
+		Simulation::exit(-1);
 	}
 }
 
@@ -296,8 +348,9 @@ uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposi
 }
 void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer, double cutoffRadius)
 {
-	double sigma = 3.0;
 	this->ReadReservoir(domainDecomp);
+	double dMoleculeRadius = _dMoleculeDiameter*0.5;
+	_dTransitionPlanePosY = 2*_dSlabWidth;
 
 	//ParticleContainer* _moleculeContainer;
 	particleContainer->deleteOuterParticles();
@@ -306,8 +359,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	Molecule* tM;
 	double dPosY;
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
-	double dLeftMirror = 2*_dSlabWidth;
-	global_log->info() << "Position of MettDeamons insertion area: " << dLeftMirror << endl;
+	global_log->info() << "Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
 
 	if(true == _bIsRestart)
 		return;
@@ -318,7 +370,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	tM != particleContainer->iteratorEnd(); ++tM)
 	{
 		dPosY = tM->r(1);
-		if(dPosY < (dLeftMirror-0.5*sigma) )
+		if(dPosY < (_dTransitionPlanePosY) )  // -dMoleculeRadius) )
 		{
 			uint32_t cid = tM->componentid();
 			if(cid != _vecChangeCompIDsFreeze.at(cid))
@@ -328,18 +380,20 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 //				cout << "cid(new) = " << tM->componentid() << endl;
 			}
 		}
-		/*
-		// vapor phase
-		else if(dPosY < (dLeftMirror+0.5*sigma) )  // || dPosY > (dBoxY-2.* cutoffRadius) ) <-- vacuum established by feature: DensityControl
+/*
+		else
+//		else if(dPosY < (_dTransitionPlanePosY+dMoleculeRadius) )
 		{
 			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), false);
 //			cout << "delete: dY = " << dPosY << endl;
 			particleContainer->update();
 			tM  = particleContainer->iteratorBegin();
+			this->IncrementDeletedMoleculesLocal();
 		}
-		else if(dPosY < (dLeftMirror+1.0*sigma) )
+
+		else if(dPosY < (_dTransitionPlanePosY+_dMoleculeDiameter) )
 		{
-			tM->setv(1, 0.);
+			tM->setv(1, tM->r(1)-1.);
 		}
 		*/
 	}
@@ -372,30 +426,67 @@ void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cutoffRadius)
 {
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
-	double dMirrorPosLeft = 2*_dSlabWidth;
+	double dMoleculeRadius = 0.5;
 	uint32_t cid;
 	std::map<unsigned long, std::array<double, 6> >::iterator it;
 
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
+
+	Random rnd;
+	double T = 0.88;
+	double v[3];
+	double v2 = 0.;
+//	_dY = _dYInit;
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM)
 	{
 		cid = tM->componentid();
 		double dY = tM->r(1);
+		bool bIsFrozenMolecule = cid != _vecChangeCompIDsUnfreeze.at(cid);
 
-		if(dY > dMirrorPosLeft && cid != _vecChangeCompIDsUnfreeze.at(cid) )
+		v2 = 0.;
+		v[0] = rnd.gaussDeviate(T);
+		v[1] = rnd.gaussDeviate(T);
+		v[2] = rnd.gaussDeviate(T);
+		for(uint8_t dim=0; dim<3; ++dim)
+			v2 += v[dim]*v[dim];
+//		global_log->info() << "vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
+
+		if(dY > (_dTransitionPlanePosY-dMoleculeRadius) && true == bIsFrozenMolecule)
 		{
 			Component* compNew = &(ptrComps->at(_vecChangeCompIDsUnfreeze.at(cid) ) );
 			tM->setComponent(compNew);
 //			tM->setv(1, abs(tM->v(1) ) );
-			tM->setv(0, 0.0);
-			tM->setv(1, 1.0);
-			tM->setv(2, 0.0);
+			tM->setv(0, v[0]);
+			tM->setv(1, v[1]);
+			tM->setv(2, v[2]);
+			// delete fraction of non-volatile component
+			/*
+			if(tM->id()+1 == 1 && _nDeleteNonVolatile%10 != 0)
+			{
+				particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), false);
+	//			cout << "delete: dY = " << dPosY << endl;
+				particleContainer->update();
+				tM  = particleContainer->iteratorBegin();
+				this->IncrementDeletedMoleculesLocal();
+				_nDeleteNonVolatile++;
+			}
+			*/
 		}
+		/*
+		else if(dY < (_dTransitionPlanePosY+dMoleculeRadius) && dY > _dTransitionPlanePosY && tM->v(1) < 0.0 && false == bIsFrozenMolecule)
+		{
+			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), false);
+//			cout << "delete: dY = " << dPosY << endl;
+			particleContainer->update();
+			tM  = particleContainer->iteratorBegin();
+			this->IncrementDeletedMoleculesLocal();
+		}
+		*/
 
 		// reset position of fixed molecules
-		if(cid != _vecChangeCompIDsUnfreeze.at(cid))
+		if(true == bIsFrozenMolecule)
 		{
 			it = _storePosition.find(tM->id() );
 			if(it != _storePosition.end() )
@@ -447,6 +538,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 {
 	unsigned long nNumMoleculesLocal = 0;
 	unsigned long nNumMoleculesGlobal = 0;
+	double T = 80;
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM) {
@@ -454,6 +546,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		uint32_t cid = tM->componentid();
 		bool bIsFrozenMolecule = cid != _vecChangeCompIDsUnfreeze.at(cid);
 		double v2 = tM->v2();
+		double dY = tM->r(1);
 
 		if(true == bIsFrozenMolecule)
 		{
@@ -476,6 +569,41 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			_nNumMoleculesTooFast++;
 //			particleContainer->update();
 			continue;
+			this->IncrementDeletedMoleculesLocal();
+		}
+
+		if(false == bIsFrozenMolecule &&
+				dY > (_dTransitionPlanePosY + _vecThrottleFromPosY.at(cid) ) &&
+				dY < (_dTransitionPlanePosY +   _vecThrottleToPosY.at(cid) ) )
+		{
+			double m = tM->mass();
+//			global_log->info() << "m=" << m << endl;
+			double vm = sqrt(T/m);
+//			global_log->info() << "vym" << vym << endl;
+			double v[3];
+			for(uint8_t dim=0; dim<3; ++dim)
+			{
+				v[dim] = tM->v(dim);
+
+				if(abs(v[dim]) > vm)
+				{
+					if(v[dim]>0.)
+						v[dim] += abs(v[dim])/_vecThrottleForceY.at(cid)*(-1.);
+					else
+						v[dim] += abs(v[dim])/_vecThrottleForceY.at(cid);
+
+					if(abs(v[dim]) > 5*vm)
+					{
+						if(v[dim]>0.)
+							v[dim] = vm;
+						else
+							v[dim] = vm*-1;
+					}
+					tM->setv(dim,v[dim]);
+				}
+			}
+//			global_log->info() << "_dTransitionPlanePosY=" << _dTransitionPlanePosY << endl;
+//			global_log->info() << "dY=" << dY << endl;
 		}
 
 		// mirror, to simulate VLE

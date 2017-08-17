@@ -61,6 +61,7 @@ private:
 	double _dAreaXZ;
 	double _dInvDensityArea;
 	double _dY;
+	double _dYInit;
 	double _dYsum;
 	double _velocityBarrier;
 	double _dSlabWidthInit;
@@ -91,6 +92,13 @@ private:
 	// identity change (by component ID)
 	std::vector<uint32_t> _vecChangeCompIDsFreeze;
 	std::vector<uint32_t> _vecChangeCompIDsUnfreeze;
+	uint64_t _nDeleteNonVolatile;
+	double _dMoleculeDiameter;
+	double _dTransitionPlanePosY;
+	// throttle parameters for each component
+	std::vector<double> _vecThrottleFromPosY;
+	std::vector<double> _vecThrottleToPosY;
+	std::vector<double> _vecThrottleForceY;
 };
 
 #endif /* METTDEAMON_H_ */
