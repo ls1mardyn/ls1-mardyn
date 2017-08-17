@@ -1596,13 +1596,12 @@ void Simulation::initialize() {
 }
 
 OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
-	OutputBase * ret = nullptr;
-	for(auto& it : _outputPlugins) {
-		if(name.compare(it->getPluginName()) == 0) {
-			ret = it;
+	for(auto& outputPlugin : _outputPlugins) {
+		if(name.compare(outputPlugin->getPluginName()) == 0) {
+			return outputPlugin;
 		}
 	}
-	return ret;
+	return nullptr;
 }
 
 void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
