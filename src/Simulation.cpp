@@ -112,9 +112,7 @@ Simulation::Simulation()
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.),
-	_dFmaxThreshold(0.),
-	_nWriteFreqGlobalEnergy(100),
-	_globalEnergyLogFilename("global_energy.log")
+	_dFmaxThreshold(0.)
 {
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
@@ -960,9 +958,6 @@ void Simulation::prepare_start() {
 		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
 	}
 
-	/** global energy log */
-	//this->initGlobalEnergyLog();
-
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
@@ -1459,8 +1454,6 @@ void Simulation::output(unsigned long simstep) {
 		global_log->error() << "NaN detected, exiting." << std::endl;
 		global_simulation->exit(1);
 	}
-
-	//this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
 }
 
 void Simulation::finalize() {
@@ -1624,87 +1617,3 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 	flopRateWriter->measureFLOPS(cont, simstep);
 }
 
-void Simulation::initGlobalEnergyLog()
-{
-	global_log->info() << "Init global energy log." << endl;
-
-#ifdef ENABLE_MPI
-	int rank = _domainDecomposition->getRank();
-	// int numprocs = domainDecomp->getNumProcs();
-	if (rank!= 0)
-		return;
-#endif
-
-	std::stringstream outputstream;
-	outputstream.write(reinterpret_cast<const char*>(&_nWriteFreqGlobalEnergy), 8);
-
-	ofstream fileout(_globalEnergyLogFilename.c_str(), std::ios::out | std::ios::binary);
-	fileout << outputstream.str();
-	fileout.close();
-}
-
-void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
-{
-	unsigned long nNumMolsGlobalEnergyLocal = 0ul;
-	double UkinLocal = 0.;
-	double UkinTransLocal = 0.;
-	double UkinRotLocal = 0.;
-	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:nNumMolsGlobalEnergyLocal,UkinLocal,UkinTransLocal,UkinRotLocal)
-	#endif
-	{
-		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-		const ParticleIterator end = _moleculeContainer->iteratorEnd();
-
-		// sample energy
-		for (ParticleIterator mi = begin; mi != end; ++mi) {
-			nNumMolsGlobalEnergyLocal++;
-			UkinLocal += mi->U_kin();
-			UkinTransLocal += mi->U_trans();
-			UkinRotLocal += mi->U_rot();
-		}
-	}
-
-	if(0 != _simstep % _nWriteFreqGlobalEnergy)
-		return;
-
-	// calculate global values
-	_domainDecomposition->collCommInit(4);
-	_domainDecomposition->collCommAppendUnsLong(nNumMolsGlobalEnergyLocal);
-	_domainDecomposition->collCommAppendDouble(UkinLocal);
-	_domainDecomposition->collCommAppendDouble(UkinTransLocal);
-	_domainDecomposition->collCommAppendDouble(UkinRotLocal);
-	_domainDecomposition->collCommAllreduceSum();
-	unsigned long nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
-	double UkinGlobal = _domainDecomposition->collCommGetDouble();
-	double UkinTransGlobal = _domainDecomposition->collCommGetDouble();
-	double UkinRotGlobal = _domainDecomposition->collCommGetDouble();
-	_domainDecomposition->collCommFinalize();
-
-	// reset local values
-	nNumMolsGlobalEnergyLocal = 0;
-	UkinLocal = 0.;
-	UkinTransLocal = 0.;
-	UkinRotLocal = 0.;
-
-#ifdef ENABLE_MPI
-	int rank = _domainDecomposition->getRank();
-	// int numprocs = domainDecomp->getNumProcs();
-	if (rank!= 0)
-		return;
-#endif
-
-	std::stringstream outputstream;
-
-	outputstream.write(reinterpret_cast<const char*>(&nNumMolsGlobalEnergyGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&globalUpot), 8);
-	outputstream.write(reinterpret_cast<const char*>(&UkinGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&UkinTransGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&UkinRotGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&globalT), 8);
-	outputstream.write(reinterpret_cast<const char*>(&globalPressure), 8);
-
-	ofstream fileout(_globalEnergyLogFilename.c_str(), std::ios::app | std::ios::binary);
-	fileout << outputstream.str();
-	fileout.close();
-}
