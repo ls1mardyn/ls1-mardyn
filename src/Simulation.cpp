@@ -506,11 +506,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	OutputPluginFactory outputPluginFactory;
 	for( auto outputPluginIter = query.begin(); outputPluginIter; ++outputPluginIter ) {
 		xmlconfig.changecurrentnode( outputPluginIter );
-		OutputBase *outputPlugin = NULL;
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
-		outputPlugin = outputPluginFactory.create(pluginname);
+		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
 		} else if (pluginname == "RDF") {  // we need RDF both as an outputplugin and _rdf
@@ -547,7 +546,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(nullptr != outputPlugin) {
 			outputPlugin->readXML(xmlconfig);
 			_outputPlugins.push_back(outputPlugin);
-		} else if (pluginname != "DomainProfiles"){  // remove this line once DomainProfiles is a proper OutputPlugin
+		} else if (pluginname != "DomainProfiles"){  //!@todo remove this line once DomainProfiles is a proper OutputPlugin
 		// } else {  // and add this line
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
@@ -569,7 +568,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_inputReader = (InputBase*) new BinaryReader();
 			_inputReader->readXML(xmlconfig);
 
-			//@todo read header should be either part of readPhaseSpace or readXML.
+			//!@todo read header should be either part of readPhaseSpace or readXML.
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 		}
@@ -674,12 +673,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 #ifdef ENABLE_MPI
 	// if we are using the DomainDecomposition, please complete its initialization:
-	{
-		DomainDecomposition * temp = nullptr;
-		temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
-		if (temp != nullptr) {
-			temp->initCommunicationPartners(_cutoffRadius, _domain);
-		}
+	DomainDecomposition *temp = dynamic_cast<DomainDecomposition*>(_domainDecomposition);
+	if (temp != nullptr) {
+		temp->initCommunicationPartners(_cutoffRadius, _domain);
 	}
 #endif
 
@@ -1016,23 +1012,14 @@ void Simulation::simulate() {
 	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); ///< timer for decomposition: sub-timer of loopTimer
 	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); ///< timer for computation: sub-timer of loopTimer
 	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); ///< timer for io in simulation loop: sub-timer of loopTimer
-	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); ///< timer for final io
+	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); ///< timer for final IO
 	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); ///< timer for force calculation: sub-timer of computationTimer
 	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
 	//loopTimer->set_sync(true);
 	global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
 #if WITH_PAPI
-	const char *papi_event_list[] = {
-		"PAPI_TOT_CYC",
-		"PAPI_TOT_INS"
-	//	"PAPI_VEC_DP"
-	// 	"PAPI_L2_DCM"
-	// 	"PAPI_L2_ICM"
-	// 	"PAPI_L1_ICM"
-	//	"PAPI_DP_OPS"
-	// 	"PAPI_VEC_INS"
-	};
+	const char *papi_event_list[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" /*, "PAPI_VEC_DP", "PAPI_L2_DCM", "PAPI_L2_ICM", "PAPI_L1_ICM", "PAPI_DP_OPS", "PAPI_VEC_INS" }; */
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
 	loopTimer->add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
@@ -1229,8 +1216,7 @@ void Simulation::simulate() {
 				}
 			}
 		}
-		
-		// clear halo
+
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
@@ -1255,17 +1241,14 @@ void Simulation::simulate() {
 		_longRangeCorrection->calculateLongRange();
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 		
-		/*
-		 * radial distribution function
-		 */
+		/* radial distribution function */
 		if (_simstep >= _initStatistics) {
 			if (this->_lmu.size() == 0) {
 				this->_domain->record_cv();
 			}
 		}
 
-		// Inform the integrator about the calculated forces
-		global_log->debug() << "Inform the integrator" << endl;
+		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
 		// calculate the global macroscopic values from the local values
@@ -1342,14 +1325,8 @@ void Simulation::simulate() {
 				}
 				//global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
 			}
-
-			/*
-			if(_mirror && _applyMirror){
-				_mirror->VelocityChange(_moleculeContainer, _domain);
-			}
-			*/
-
 		}
+
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
         else if ( _temperatureControl != NULL) {
             _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
