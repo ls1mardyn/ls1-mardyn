@@ -147,7 +147,7 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	}
 }
 
-void VCP1CLJ_WR::processCell(ParticleCell& cell) {
+vcp_inline void VCP1CLJ_WR::processCell(ParticleCell& cell) {
 	ParticleCell_WR & cellWR = downcastCellReferenceWR(cell);
 
 	CellDataSoA_WR& soa = cellWR.getCellDataSoA();
@@ -189,7 +189,7 @@ void VCP1CLJ_WR::endTraversal() {
 const RealCalcVec one = RealCalcVec::set1(1.0);
 
 template<bool calculateMacroscopic>
-inline void VCP1CLJ_WR::_loopBodyLJ(
+vcp_inline void VCP1CLJ_WR::_loopBodyLJ(
 	const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 	RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 	RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
@@ -228,7 +228,7 @@ inline void VCP1CLJ_WR::_loopBodyLJ(
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR& soa2) {
+vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR& soa2) {
 
 	const int tid = mardyn_get_thread_num();
 	VCP1CLJWRThreadData &my_threadData = *_threadData[tid];

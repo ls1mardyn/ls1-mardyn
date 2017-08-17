@@ -36,24 +36,24 @@ public:
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
-	void preprocessCell(ParticleCell& /*cell*/) {}
+	vcp_inline void preprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */
-	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
+	vcp_inline void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
+	vcp_inline double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
 		return 0.0;
 	}
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */
-	void processCell(ParticleCell& cell);
+	vcp_inline void processCell(ParticleCell& cell);
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
-	void postprocessCell(ParticleCell& /*cell*/) {}
+	vcp_inline void postprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Store macroscopic values in the Domain.
 	 */
@@ -120,7 +120,7 @@ private:
 	size_t _numThreads;
 
 	template<bool calculateMacroscopic>
-	inline
+	vcp_inline
 	void _loopBodyLJ(
 		const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
@@ -152,7 +152,7 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	void _calculatePairs(CellDataSoA_WR & soa1, CellDataSoA_WR & soa2);
+	vcp_inline void _calculatePairs(CellDataSoA_WR & soa1, CellDataSoA_WR & soa2);
 
 };
 
