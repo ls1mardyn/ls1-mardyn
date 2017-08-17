@@ -508,7 +508,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 		outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
-			global_log->error() << "Could not create output plugin using factory: " << pluginname << endl;
+			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
 		} else if (pluginname == "RDF") {  // we need RDF both as an outputplugin and _rdf
 			_rdf = static_cast<RDF*>(outputPlugin);
 		}
@@ -536,14 +536,15 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "DomainProfiles")
 		{
 			_doRecordProfile = true;
-			outputPlugin = NULL;
+			outputPlugin = nullptr;
 			_domain->readXML(xmlconfig);
 		}
 
-		if(NULL != outputPlugin) {
+		if(nullptr != outputPlugin) {
 			outputPlugin->readXML(xmlconfig);
 			_outputPlugins.push_back(outputPlugin);
-		} else {
+		} else if (pluginname != "DomainProfiles"){  // remove this line once DomainProfiles is a proper OutputPlugin
+		// } else {  // and add this line
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
 	}
