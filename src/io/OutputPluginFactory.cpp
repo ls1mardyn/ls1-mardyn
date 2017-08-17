@@ -13,6 +13,7 @@
 #include "io/MmspdBinWriter.h"
 #include "io/MmspdWriter.h"
 #include "io/PovWriter.h"
+#include "io/RDF.h"
 #include "io/ResultWriter.h"
 #include "io/SysMonOutput.h"
 #include "io/VISWriter.h"
@@ -37,6 +38,7 @@ OutputPluginFactory::OutputPluginFactory() {
 	REGISTER_PLUGIN(MmspdBinWriter);
 	REGISTER_PLUGIN(MmspdWriter);
 	REGISTER_PLUGIN(PovWriter);
+	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(ResultWriter);
 	REGISTER_PLUGIN(SysMonOutput);
 	REGISTER_PLUGIN(VISWriter);

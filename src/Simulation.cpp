@@ -509,10 +509,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->error() << "Could not create output plugin using factory: " << pluginname << endl;
-		}
-
-		if(pluginname == "RDF") {
-			_rdf = static_cast<RDF*>(outputPlugin) ;
+		} else if (pluginname == "RDF") {  // we need RDF both as an outputplugin and _rdf
+			_rdf = static_cast<RDF*>(outputPlugin);
 		}
 		if(pluginname == "MmpldWriter") {
 			/** @todo this should be handled in the MMPLD Writer readXML() */
