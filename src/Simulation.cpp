@@ -1477,6 +1477,11 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
 
+	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
+		global_log->error() << "NaN detected, exiting." << std::endl;
+		global_simulation->exit(1);
+	}
+
 	//this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
 }
 
