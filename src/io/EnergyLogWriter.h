@@ -28,7 +28,7 @@ public:
 	 * \code{.xml}
 	   <outputplugin name="EnergyLogWriter">
 	     <writefrequency>INTEGER</writefrequency>
-	     <outputprefix>STRING</outputprefix>
+	     <outputfilename>STRING</outputfilename>
 	   </outputplugin>
 	   \endcode
 	 */
