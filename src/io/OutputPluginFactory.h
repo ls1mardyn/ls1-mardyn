@@ -31,7 +31,7 @@ public:
 	void registerPlugin(createInstanceFunc* createInstance);
 
 	/** @brief Get all names of registered plugins */
-	std::vector<string> getPluginNames();
+	std::vector<std::string> getPluginNames();
 
 	/** @brief Create a new instance of plugin */
 	OutputBase* create(std::string pluginname);
