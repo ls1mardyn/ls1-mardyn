@@ -2,6 +2,7 @@
 #define OUTPUTBASE_H_
 
 #include <list>
+#include <map>
 #include <string>
 
 #include "ensemble/GrandCanonical.h"
