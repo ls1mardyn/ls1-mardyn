@@ -1371,8 +1371,7 @@ void Simulation::simulate() {
 #endif
 		}
 		
-		if(_forced_checkpoint_time >= 0 && (decompositionTimer->get_etime() + computationTimer->get_etime()
-				+ ioTimer->get_etime() + perStepIoTimer->get_etime()) >= _forced_checkpoint_time) {
+		if( (_forced_checkpoint_time > 0) && (loopTimer->get_etime() >= _forced_checkpoint_time) ) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
