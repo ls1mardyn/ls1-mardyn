@@ -226,6 +226,9 @@ private:
 	unsigned int _writeFrequency;
 
 	std::string _outputPrefix;
+
+	bool _initialized;
+	bool _readConfig;
 };
 
 #endif /* RDF_H */

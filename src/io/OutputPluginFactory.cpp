@@ -26,7 +26,8 @@
 
 #define REGISTER_PLUGIN(NAME) registerPlugin(&(NAME::createInstance));
 
-OutputPluginFactory::OutputPluginFactory() {
+OutputPluginFactory::OutputPluginFactory():
+_outputPluginFactoryMap(){
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(DecompWriter);
