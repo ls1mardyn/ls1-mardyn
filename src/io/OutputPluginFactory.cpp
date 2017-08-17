@@ -1,5 +1,6 @@
 #include "io/OutputPluginFactory.h"
 
+#include "io/OutputBase.h"
 #include "utils/Logger.h"
 
 #include "io/CavityWriter.h"

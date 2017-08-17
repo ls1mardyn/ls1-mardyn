@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "io/OutputBase.h"
+class OutputBase;
 
 
 typedef OutputBase* createInstanceFunc();
