@@ -8,8 +8,6 @@
 #include "io/OutputBase.h"
 #include "molecules/Molecule.h"
 
-class Domain;
-class DomainDecompBase;
 class Component;
 
 /**
