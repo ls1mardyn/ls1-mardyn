@@ -27,7 +27,7 @@ class XMLfileUnits;
  * the outputBase class provides a common interface. The interface provides access to
  * the most important data: the particle container and the domain decomposition.
  *
- * Of course, several OutputPlugins will be needed in some cases. So the idea is, that
+ * Of course, several output plugins will be needed in some cases. So the idea is, that
  * all available output plugins are registered in the OutputPluginFactory and initialized
  * in the Simulation at runtime as requested by the input file. The plugin will then be
  * called at the respective points in the simulation automatically.
@@ -58,9 +58,9 @@ public:
 	 * This method will be called once at the begin of the simulation just
 	 * right before the main time step loop.
 	 * It can be used e.g. to open output files or initialize statistics.
-	 * @par particleContainer  particle container storing the (local) molecules
-	 * @par domainDecomp       domain decomposition in use
-	 * @par domain
+	 * @param particleContainer  particle container storing the (local) molecules
+	 * @param domainDecomp       domain decomposition in use
+	 * @param domain
 	 */
 	virtual void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
@@ -81,7 +81,7 @@ public:
 	   </outputplugin>
 	   \endcode
 	 *
-	 * @par xmlconfig  section of the xml file
+	 * @param xmlconfig  section of the xml file
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig) {}
 
@@ -89,9 +89,9 @@ public:
 	 *
 	 * This method will be called every time step passing the simstep as an additional parameter.
 	 * It can be used e.g. to write per time step data to a file or perform additional computations.
-	 * @par particleContainer  particle container storing the (local) molecules
-	 * @par domainDecomp       domain decomposition in use
-	 * @par domain
+	 * @param particleContainer  particle container storing the (local) molecules
+	 * @param domainDecomp       domain decomposition in use
+	 * @param domain
 	 */
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
@@ -104,9 +104,9 @@ public:
 	 *
 	 * This method will be called once at the end of the simulation.
 	 * It can be used e.g. to closing output files or writing final statistics.
-	 * @par particleContainer  particle container storing the (local) molecules
-	 * @par domainDecomp       domain decomposition in use
-	 * @par domain
+	 * @param particleContainer  particle container storing the (local) molecules
+	 * @param domainDecomp       domain decomposition in use
+	 * @param domain
 	 */
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
