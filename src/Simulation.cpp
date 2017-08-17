@@ -2,13 +2,17 @@
 #define SIMULATION_SRC
 #include "Simulation.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <list>
+#include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "Common.h"
 #include "Domain.h"
@@ -947,19 +951,17 @@ void Simulation::prepare_start() {
 		}
 	}
 
-	// initial number of timesteps
-	_initSimulation = (unsigned long) round(this->_simulationTime / _integrator->getTimestepLength() );
+	_initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
+	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 
-	// initialize output and output timers
-	std::list<OutputBase*>::iterator outputIter;
-	for (outputIter = _outputPlugins.begin(); outputIter
-			!= _outputPlugins.end(); outputIter++) {
-		OutputBase* output_plugin = (*outputIter);
-		string timer_name = output_plugin->getPluginName();
+	global_log->info() << "Initializing output plugins and corresponding output timers" << endl;
+	for (auto& outputPlugin : _outputPlugins) {
+		global_log->info() << "Initializing output plugin " << outputPlugin->getPluginName() << endl;
+		outputPlugin->initOutput(_moleculeContainer, _domainDecomposition, _domain);
+		string timer_name = outputPlugin->getPluginName();
 		global_simulation->timers()->registerTimer(timer_name,  vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
 		string timer_output_string = string("Output Plugin ") + timer_name + string(" took:");
 		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
-		output_plugin->initOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
 
 	/** global energy log */
@@ -1010,13 +1012,13 @@ void Simulation::simulate() {
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
 
 	// all timers except the ioTimer measure inside the main loop
-	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); // timer for the entire simulation loop (synced)
-	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); // timer for decomposition: sub-timer of loopTimer
-	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); // timer for computation: sub-timer of loopTimer
-	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); // timer for io in simulation loop: sub-timer of loopTimer
-	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); // timer for final io
-	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); // timer for force calculation: sub-timer of computationTimer
-	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); // timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
+	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); ///< timer for the entire simulation loop (synced)
+	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); ///< timer for decomposition: sub-timer of loopTimer
+	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); ///< timer for computation: sub-timer of loopTimer
+	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); ///< timer for io in simulation loop: sub-timer of loopTimer
+	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); ///< timer for final io
+	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); ///< timer for force calculation: sub-timer of computationTimer
+	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
 	//loopTimer->set_sync(true);
 	global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
@@ -1405,7 +1407,7 @@ void Simulation::simulate() {
 	loopTimer->stop();
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
-	/*****************************//**********************************************/
+	/***************************************************************************/
     ioTimer->start();
     if( _finalCheckpoint ) {
         /* write final checkpoint */
