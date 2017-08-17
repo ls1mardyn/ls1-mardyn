@@ -93,7 +93,7 @@ unsigned long DropletGenerator::readPhaseSpace(
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain,
 		DomainDecompBase* domainDecomp) {
 
-	global_simulation->startTimer("DROPLET_GENERATOR_INPUT");
+	global_simulation->timers()->start("DROPLET_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (DropletGenerator)." << endl;
 
 	srand(1);
@@ -133,9 +133,9 @@ unsigned long DropletGenerator::readPhaseSpace(
 
 	removeMomentum(particleContainer, _components);
 
-	global_simulation->stopTimer("DROPLET_GENERATOR_INPUT");
-	global_simulation->setOutputString("DROPLET_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("DROPLET_GENERATOR_INPUT") << " sec" << endl;
+	global_simulation->timers()->stop("DROPLET_GENERATOR_INPUT");
+	global_simulation->timers()->setOutputString("DROPLET_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("DROPLET_GENERATOR_INPUT") << " sec" << endl;
 	return maxID;
 }
 

@@ -56,6 +56,7 @@ public:
 	std::string getPluginName() {
 		return std::string("ResultWriter");
 	}
+	static OutputBase* createInstance() { return new ResultWriter(); }
 
 private:
 	std::ofstream _resultStream;

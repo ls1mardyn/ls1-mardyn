@@ -33,9 +33,17 @@
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
-#include "io/io.h"
-#include "io/GeneratorFactory.h"
+#include "io/OutputBase.h"
+#include "io/OutputPluginFactory.h"
+
+#include "io/MmpldWriter.h"
 #include "io/RDF.h"
+#include "io/FlopRateWriter.h"
+
+#include "io/GeneratorFactory.h"
+#include "io/BinaryReader.h"
+#include "io/GridGenerator.h"
+#include "io/InputOldstyle.h"
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
@@ -567,76 +575,34 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	string oldpath = xmlconfig.getcurrentnodepath();
-	XMLfile::Query::const_iterator outputPluginIter;
-	for( outputPluginIter = query.begin(); outputPluginIter; outputPluginIter++ ) {
+	OutputPluginFactory outputPluginFactory;
+	for( auto outputPluginIter = query.begin(); outputPluginIter; ++outputPluginIter ) {
 		xmlconfig.changecurrentnode( outputPluginIter );
 		OutputBase *outputPlugin = NULL;
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
-		if(pluginname == "CheckpointWriter") {
-            outputPlugin = new CheckpointWriter();
+		outputPlugin = outputPluginFactory.create(pluginname);
+		if(outputPlugin == nullptr) {
+			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
+		} else if (pluginname == "RDF") {  // we need RDF both as an outputplugin and _rdf
+			_rdf = static_cast<RDF*>(outputPlugin);
 		}
-		else if(pluginname == "DecompWriter") {
-			outputPlugin = new DecompWriter();
-		}
-		else if(pluginname == "MmspdWriter") {
-			outputPlugin = new MmspdWriter();
-		}
-		else if(pluginname == "MmspdBinWriter") {
-			outputPlugin = new MmspdBinWriter();
-		}
-		else if(pluginname == "MmpldWriter") {
-			std::string strType = "unknown";
-			xmlconfig.getNodeValue("@type", strType);
-
-			if("simple" == strType)
+		if(pluginname == "MmpldWriter") {
+			/** @todo this should be handled in the MMPLD Writer readXML() */
+			std::string sphere_representation = "simple";
+			xmlconfig.getNodeValue("@type", sphere_representation);
+			delete outputPlugin;
+			if("simple" == sphere_representation) {
 				outputPlugin = new MmpldWriterSimpleSphere();
-			else if("multi" == strType)
+			} else if("multi" == sphere_representation) {
 				outputPlugin = new MmpldWriterMultiSphere ();
-			else
-			{
-				global_log->error() << "MmpldWriter: wrong attribute, expected type=simple|multi. Program exit... " << endl;
+			} else {
+				global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << endl;
 				Simulation::exit(-1);
 			}
 		}
-		else if(pluginname == "PovWriter") {
-			outputPlugin = new PovWriter();
-		}
-		else if(pluginname == "RDF") {
-			_rdf = new RDF();
-			outputPlugin = _rdf;
-		}
-		else if(pluginname == "Resultwriter" or pluginname == "ResultWriter") {
-			outputPlugin = new ResultWriter();
-		}
-		else if(pluginname == "SysMonOutput") {
-			outputPlugin = new SysMonOutput();
-		}
-		else if(pluginname == "VISWriter") {
-			outputPlugin = new VISWriter();
-		}
-#ifdef VTK
-		else if(pluginname == "VTKMoleculeWriter") {
-			outputPlugin = new VTKMoleculeWriter();
-		}
-		else if(pluginname == "VTKGridWriter") {
-			outputPlugin = new VTKGridWriter();
-		}
-#endif /* VTK */
-		else if(pluginname == "XyzWriter") {
-			outputPlugin = new XyzWriter();
-		}
-		else if(pluginname == "CavityWriter") {
-			outputPlugin = new CavityWriter();
-		}
-        else if(pluginname == "GammaWriter") {
-            outputPlugin = new GammaWriter();
-        }
 		/* temporary */
-		else if(pluginname == "MPICheckpointWriter") {
-			outputPlugin = new MPICheckpointWriter();
-		}
 		else if(pluginname == "VectorizationTuner") {
 			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
 		}
@@ -646,18 +612,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "DomainProfiles")
 		{
 			_doRecordProfile = true;
-			outputPlugin = NULL;
+			outputPlugin = nullptr;
 			_domain->readXML(xmlconfig);
 		}
-		else {
-			global_log->warning() << "Unknown plugin " << pluginname << endl;
-			continue;
-		}
 
-		if(NULL != outputPlugin)
-		{
+		if(nullptr != outputPlugin) {
 			outputPlugin->readXML(xmlconfig);
 			_outputPlugins.push_back(outputPlugin);
+		} else if (pluginname != "DomainProfiles"){  // remove this line once DomainProfiles is a proper OutputPlugin
+		// } else {  // and add this line
+			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
@@ -1854,6 +1818,11 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
+
+	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
+		global_log->error() << "NaN detected, exiting." << std::endl;
+		global_simulation->exit(1);
+	}
 
 	//this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
 }

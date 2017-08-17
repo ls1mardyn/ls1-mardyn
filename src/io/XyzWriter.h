@@ -42,6 +42,7 @@ public:
 	std::string getPluginName() {
 		return std::string("XyzWriter");
 	}
+	static OutputBase* createInstance() { return new XyzWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

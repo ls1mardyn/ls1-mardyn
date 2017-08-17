@@ -56,6 +56,7 @@ public:
 	std::string getPluginName() {
 		return std::string("RDF");
 	}
+	static OutputBase* createInstance() { return new RDF(); }
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
@@ -225,6 +226,9 @@ private:
 	unsigned int _writeFrequency;
 
 	std::string _outputPrefix;
+
+	bool _initialized;
+	bool _readConfig;
 };
 
 #endif /* RDF_H */

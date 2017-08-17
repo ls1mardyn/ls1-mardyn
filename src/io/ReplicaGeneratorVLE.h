@@ -70,6 +70,7 @@ private:
 	double _fspY[6];  // free space positions
 	double _dDensityLiq;
 	double _dBoxVolumeLiq;
+	bool _bCreateHomogenous;
 };
 
 class MoleculeDataReader

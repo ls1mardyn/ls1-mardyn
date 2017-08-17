@@ -50,15 +50,6 @@ XMLfile::XMLfile(const string& filepath)
 	initfile(filepath);
 }
 
-XMLfile::XMLfile(const char* filepath)
-{
-	clear();
-#ifdef ENABLE_MPI
-	setMPIdefaults();
-#endif
-	initfile(filepath);
-}
-
 bool XMLfile::initfile(const string& filepath)
 {
 	clear();
@@ -129,7 +120,7 @@ void XMLfile::save(string filepath)
 	printXML(of);
 }
 
-XMLfile::Query XMLfile::query(const char* querystr) const
+XMLfile::Query XMLfile::query(const string& querystr) const
 {
 	list<Node> nodes;
 	//nodes.clear();
@@ -308,9 +299,8 @@ void XMLfile::expandincludes()
 	}
 }
 
-unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, Node startnode) const
+unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystring, Node startnode) const
 {
-	string querystring(querystr);
 	if (querystring.empty())
 		// nothing selected
 		return 0;
@@ -380,7 +370,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, No
 				condition=nodequery.substr(tokenpos,tokenpos2-tokenpos);
 				tokenpos=tokenpos2+1;
 			} else {
-				cerr << "ERROR: missing ] after " << elename << " within query string " << querystr << endl;
+				cerr << "ERROR: missing ] after " << elename << " within query string " << querystring << endl;
 			}
 			if(!condition.empty())
 			{ // parse condition

@@ -34,6 +34,10 @@ std::string getFileExtension(const char* fileName) {
 	return extension;
 }
 
+bool isAbsolutePath(const std::string& path) {
+	return path.find_first_of("/~")==0;
+}
+
 void removeFile(const char* fileName) {
 	int retVal = remove(fileName);
 	if (retVal != 0) {

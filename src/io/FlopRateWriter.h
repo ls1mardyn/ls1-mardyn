@@ -53,6 +53,7 @@ public:
 	std::string getPluginName() {
 		return std::string("FlopRateWriter");
 	}
+// 	static OutputBase* createInstance() { return new FlopRateWriter(); }
 
 	void measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep);
 

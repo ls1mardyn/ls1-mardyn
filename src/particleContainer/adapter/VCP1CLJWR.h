@@ -120,7 +120,7 @@ private:
 	size_t _numThreads;
 
 	template<bool calculateMacroscopic>
-	inline
+	vcp_inline
 	void _loopBodyLJ(
 		const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
@@ -152,7 +152,7 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	void _calculatePairs(CellDataSoA_WR & soa1, CellDataSoA_WR & soa2);
+	vcp_inline void _calculatePairs(CellDataSoA_WR & soa1, CellDataSoA_WR & soa2);
 
 };
 

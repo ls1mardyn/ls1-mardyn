@@ -14,7 +14,9 @@ using namespace std;
 using namespace Log;
 
 RDF::RDF() :
-	_components(_simulation.getEnsemble()->getComponents())
+	_components(_simulation.getEnsemble()->getComponents()),
+	_initialized(false),
+	_readConfig(false)
 {
 }
 
@@ -25,10 +27,15 @@ RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>* compo
 	_writeFrequency(25000),
 	_outputPrefix("out")
 {
+	_readConfig=true;
 	init();
 }
 
 void RDF::init() {
+	if(!_readConfig){
+		global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
+		global_simulation->exit(25);
+	}
 	_numberOfComponents = _components->size();
 	_doCollectSiteRDF = false;
 	_numberOfRDFTimesteps = 0;
@@ -95,6 +102,7 @@ void RDF::init() {
 			}
 		}
 	}
+	_initialized=true;
 }
 
 
@@ -114,6 +122,7 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_intervalLength = 1;
 	xmlconfig.getNodeValueReduced("intervallength", _intervalLength);
 	global_log->info() << "Interval length: " << _intervalLength << endl;
+	_readConfig = true;
 }
 
 void RDF::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
@@ -126,22 +135,24 @@ void RDF::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBas
 
 
 RDF::~RDF() {
-	for(unsigned i = 0; i < _numberOfComponents; i++) {
-		for(unsigned k=0; i+k < _numberOfComponents; k++) {
-			delete[] _localDistribution[i][k];
-			delete[] _globalDistribution[i][k];
-			delete[] _globalAccumulatedDistribution[i][k];
+	if (_initialized) {
+		for (unsigned i = 0; i < _numberOfComponents; i++) {
+			for (unsigned k = 0; i + k < _numberOfComponents; k++) {
+				delete[] _localDistribution[i][k];
+				delete[] _globalDistribution[i][k];
+				delete[] _globalAccumulatedDistribution[i][k];
+			}
+			delete[] _localDistribution[i];
+			delete[] _globalDistribution[i];
+			delete[] _globalAccumulatedDistribution[i];
 		}
-		delete[] _localDistribution[i];
-		delete[] _globalDistribution[i];
-		delete[] _globalAccumulatedDistribution[i];
-	}
 
-	delete[] _globalCtr;
-	delete[] _globalAccumulatedCtr;
-	delete[] _localDistribution;
-	delete[] _globalDistribution;
-	delete[] _globalAccumulatedDistribution;
+		delete[] _globalCtr;
+		delete[] _globalAccumulatedCtr;
+		delete[] _localDistribution;
+		delete[] _globalDistribution;
+		delete[] _globalAccumulatedDistribution;
+	}
 }
 
 void RDF::accumulateNumberOfMolecules(vector<Component>& components) const {

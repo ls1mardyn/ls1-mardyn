@@ -20,7 +20,6 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
-
 #include "parallel/ParticleData.h"
 #endif
 
@@ -56,18 +55,15 @@ MPICheckpointWriter::MPICheckpointWriter(unsigned long writeFrequency, string ou
 	}
 }
 
-MPICheckpointWriter::~MPICheckpointWriter(){}
-
-
 void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "MPICheckpointWriter\twrite frequency: " << _writeFrequency << endl;
+	global_log->info() << "[MPICheckpointWriter]\twrite frequency: " << _writeFrequency << endl;
 	
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "MPICheckpointWriter\toutput prefix: " << _outputPrefix << endl;
+	global_log->info() << "[MPICheckpointWriter]\toutput prefix: " << _outputPrefix << endl;
 	
 	_incremental = false;
 	int incremental = 1;
@@ -75,8 +71,8 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	//_incremental = (incremental != 0);
 	if(incremental > 0) {
 		_incremental = true;
+		global_log->info() << "[MPICheckpointWriter]\tusing incremental numbers in file names" << endl;
 	}
-	global_log->info() << "MPICheckpointWriter\tincremental numbers: " << _incremental << endl;
 	
 	_appendTimestamp = false;
 	int appendTimestamp = 0;
@@ -84,13 +80,14 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	//_appendTimestamp = (appendTimestamp != 0);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
+		global_log->info() << "[MPICheckpointWriter]\tappend timestamp to file names" << endl;
 	}
-	global_log->info() << "MPICheckpointWriter\tappend timestamp: " << _appendTimestamp << endl;
 	
 	_datarep = "";	// -> NULL
 	//_datarep = "external32";	// "native", "internal", "external32"
 	xmlconfig.getNodeValue("datarep", _datarep);
-	if(!_datarep.empty()) global_log->info() << "MPICheckpointWriter\tdata represenatation: " << _datarep << endl;
+	if(!_datarep.empty())
+		global_log->info() << "[MPICheckpointWriter]\tdata representation: " << _datarep << endl;
 	
 	_measureTime = false;
 	int measureTime = 0;
@@ -98,8 +95,29 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	//_measureTime = (measureTime != 0);
 	if(measureTime > 0) {
 		_measureTime = true;
+		global_log->info() << "[MPICheckpointWriter]\texecution wall time will be measured" << endl;
 	}
-	global_log->info() << "MPICheckpointWriter\tmeasure time: " << _measureTime << endl;
+	
+	if(xmlconfig.changecurrentnode("mpi_info")) {
+#ifdef ENABLE_MPI
+		global_log->info() << "[MPICheckpointWriter] Setting MPI info object for IO" << endl;
+		_mpiinfo.readXML(xmlconfig);
+#else
+		global_log->info() << "[MPICheckpointWriter] mpi_info only used in parallel/MPI version" << endl;
+#endif
+		xmlconfig.changecurrentnode("..");
+	}
+
+	_particlesbuffersize = 0;
+	xmlconfig.getNodeValue("ParticlesBufferSizeMPI", _particlesbuffersize);
+	if(_particlesbuffersize)
+	{
+#ifdef ENABLE_MPI
+		global_log->info() << "[MPICheckpointWriter]\tparticles buffer size: " << _particlesbuffersize << endl;
+#else
+		global_log->info() << "[MPICheckpointWriter]\tparticles buffer size (" << _particlesbuffersize << ") only used in parallel/MPI version" << endl;
+#endif
+	}
 }
 
 void MPICheckpointWriter::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/)
@@ -156,11 +174,15 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		filenamestream << ".MPIrestart.dat";
 
 		string filename = filenamestream.str();
-		global_log->debug() << "MPICheckpointWriter filename:" << filename << endl;
+		global_log->info() << "[MPICheckpointWriter]\tfilename: " << filename << endl;
 		
-		unsigned long numParticles=particleContainer->getNumberOfParticles();
+		unsigned long numParticles_global=domain->getglobalNumMolecules();
+		unsigned long numParticles=particleContainer->getNumberOfParticles();	// local
 		unsigned long numbb=1;
 #ifdef ENABLE_MPI
+		global_log->info() << "[MPICheckpointWriter]\tnumber of particles: " << numParticles_global
+		                   << "\t(*" << sizeof(ParticleData) << "=" << numParticles_global*sizeof(ParticleData) << " Bytes in memory)"
+				   << endl;
 		//global_log->set_mpi_output_all()
 		int num_procs;
 		MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &num_procs) );
@@ -169,16 +191,18 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 		double mpistarttime=0;	// =0 to prevent Jenkins/gcc complaining about uninitialized mpistarttime [-Werror=uninitialized]
 		if(_measureTime)
-		{	// should use Timer instead
+		{
+			//if(ownrank==0) global_log->debug() << "MPICheckpointWriter (" << filename << ")\tstart measuring time" << endl;
 			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 			mpistarttime=MPI_Wtime();
-			// global_simulation->timers()->start("MPI_CHECKPOINT_WRITER_INPUT");
+			// global_simulation->timers()->start("MPI_CHECKPOINT_WRITER_INPUT");	// should use Timer instead
 		}
 		MPI_File mpifh;
-		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const char* now)
+		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, _mpiinfo, &mpifh) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		//                    Why does an explicit C cast  (char*)  not work?  -> should be interpreted like a const_cast in the first place (see e.g. http://en.cppreference.com/w/cpp/language/explicit_cast)
 		//MPI_CHECK( MPI_File_preallocate( mpifh, mpifilesize); )	// might ensure that data can be written, but might be slow
-		MPI_CHECK( MPI_File_set_view(mpifh, 0, MPI_BYTE, MPI_BYTE, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
+		//MPI_Aint mpidtParticleDte; MPI_CHECK( MPI_File_get_type_extent(mpifh,mpidtParticleD,&mpidtParticleDte) );
+		MPI_CHECK( MPI_File_set_view(mpifh, 0, MPI_BYTE, MPI_BYTE, const_cast<char*>(mpidatarep), _mpiinfo) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		MPI_Offset mpioffset=0;
 		MPI_Status mpistat;
 		unsigned long startidx;
@@ -239,7 +263,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		mpioffset+=sizeof(unsigned long);
 		MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&numParticles,1,MPI_UNSIGNED_LONG,&mpistat) );
 		mpioffset+=sizeof(unsigned long);
-		global_log->debug() << "MPICheckpointWriter(" << ownrank << ")\tBB " << ":\t"
+		global_log->debug() << "[MPICheckpointWriter](" << ownrank << ")\tBB " << ":\t"
 		                    << bbmin[0] << ", " << bbmin[1] << ", " << bbmin[2] << " - "
 		                    << bbmax[0] << ", " << bbmax[1] << ", " << bbmax[2]
 		                    << "\tstarting index=" << startidx << " numParticles=" << numParticles << endl;
@@ -248,6 +272,8 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		ParticleData::getMPIType(mpidtParticleM);
 		mpidtParticleD=mpidtParticleM;
 		MPI_Aint mpidtParticleMsize=sizeof(ParticleData);	// !=MPI_Type_size
+		int mpidtParticleDts;
+		MPI_CHECK( MPI_Type_size(mpidtParticleM,&mpidtParticleDts) );
 		// MPI_Type_get_extent
 		/*
 		ParticleData pd[2];
@@ -257,16 +283,47 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		mpidtParticleMsize=addr1-addr0;
 		*/
 		mpioffset=64+gap+startidx*mpidtParticleMsize;
-		MPI_CHECK( MPI_File_set_view(mpifh, mpioffset, mpidtParticleM, mpidtParticleM, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
-		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
-		ParticleData particleStruct;
-		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
-			//global_log->debug() << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
-			ParticleData::MoleculeToParticleData(particleStruct, *pos);
-			MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
-			// saving a struct directly will also save padding zeros... 
-			//mpioffset+=mpidtParticleMsize;
+		MPI_CHECK( MPI_File_set_view(mpifh, mpioffset, mpidtParticleM, mpidtParticleM, const_cast<char*>(mpidatarep), _mpiinfo) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
+		global_log->debug() << "[MPICheckpointWriter](" << ownrank << ")\twriting molecule data for " << numParticles << " particles of size " << mpidtParticleDts << endl;
+		//unsigned long writecounter=0;
+		if(_particlesbuffersize>0)
+		{
+			ParticleData* particleStructBuffer=new ParticleData[_particlesbuffersize];
+			unsigned long bufidx=0;
+			for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
+				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
+				ParticleData::MoleculeToParticleData(particleStructBuffer[bufidx], *pos);
+				++bufidx;
+				if(bufidx==_particlesbuffersize)
+				{
+					//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting" << _particlesbuffersize << " particles" << endl
+					MPI_CHECK( MPI_File_write(mpifh, particleStructBuffer, _particlesbuffersize, mpidtParticleD, &mpistat) );
+					//++writecounter;
+					bufidx=0;
+				}
+			}
+			if(bufidx>0)
+			{
+				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting" << bufidx << " particles" << endl
+				MPI_CHECK( MPI_File_write(mpifh, particleStructBuffer, bufidx, mpidtParticleD, &mpistat) );
+				//++writecounter;
+			}
+			delete[] particleStructBuffer;
 		}
+		else
+		{
+			ParticleData particleStruct;
+			for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
+				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
+				ParticleData::MoleculeToParticleData(particleStruct, *pos);
+				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting particle" << endl
+				MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
+				//++writecounter;
+				// saving a struct directly will also save padding zeros... 
+				//mpioffset+=mpidtParticleMsize;
+			}
+		}
+		
 		MPI_CHECK( MPI_File_close(&mpifh) );
 		if(_measureTime)
 		{
@@ -274,16 +331,23 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 			double mpimeasuredtime=MPI_Wtime()-mpistarttime;
 			// global_simulation->timers()->stop("MPI_CHECKPOINT_WRITER_INPUT");
 			// double mpimeasuredtime=global_simulation->timers()->getTime("MPI_CHECKPOINT_WRITER_INPUT");
-			if(ownrank==0) global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << mpimeasuredtime << " sec (par.; " << num_procs << " proc.)" << endl;
+			if(ownrank==0)
+				global_log->info() << "[MPICheckpointWriter]\tmeasured time: " << mpimeasuredtime << " sec (par., " << num_procs << " proc.; "
+						   << numParticles_global << "*" << mpidtParticleDts << "=" << numParticles_global*mpidtParticleDts << " Bytes)"
+						   << endl;
 		}
 #else
+		global_log->info() << "[MPICheckpointWriter]\tnumber of particles: " << numParticles_global
+		                   << "\t(*" << 2*sizeof(unsigned long)+13*sizeof(double) << "=" << numParticles_global*(2*sizeof(unsigned long)+13*sizeof(double)) << " Bytes in memory)"
+				   << endl;
 		unsigned long gap=7+3+sizeof(unsigned long)+(6*sizeof(double)+2*sizeof(unsigned long));
 		unsigned int i;
 		unsigned int offset=0;
-		if (!_datarep.empty())  global_log->info() << "MPICheckpointWriter\tsetting data represenatation (" << _datarep << ") is not supported (yet) in sequential version" << endl;
+		if (!_datarep.empty())  global_log->warning() << "[MPICheckpointWriter]\tsetting data representation (" << _datarep << ") is not supported (yet) in sequential version" << endl;
 		// should use Timer instead
 		struct timeval tod_start;
 		if(_measureTime) {
+			//global_log->debug() << "MPICheckpointWriter (" << filename << ")\tstart measuring time" << endl;
 			gettimeofday( &tod_start, NULL );
 			// global_simulation->timers()->start("MPI_CHECKPOINT_WRITER_INPUT");
 		}
@@ -343,7 +407,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 			double measuredtime=(double)(tod_end.tv_sec-tod_start.tv_sec)+(double)(tod_end.tv_usec-tod_start.tv_usec)/1.E6;
 			// global_simulation->timers()->stop("MPI_CHECKPOINT_WRITER_INPUT");
 			// double measuredtime=global_simulation->timers()->getTime("MPI_CHECKPOINT_WRITER_INPUT");
-			global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << measuredtime << " sec (seq.)" << endl;
+			global_log->info() << "[MPICheckpointWriter]\tmeasured time: " << measuredtime << " sec (seq.)" << endl;
 		}
 #endif
 	}

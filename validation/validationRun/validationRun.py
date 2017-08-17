@@ -127,7 +127,7 @@ comparePostfixes = []
 for i in range(len(comparePlugins)):
     comparePlugin = comparePlugins[i]
     if comparePlugin == 'Resultwriter' or comparePlugin == 'ResultWriter':
-        comparePlugins[i] = comparePlugin = 'Resultwriter'
+        comparePlugins[i] = comparePlugin = 'ResultWriter'
         comparePostfixes.append('.res')
     elif comparePlugin == 'GammaWriter':
         comparePostfixes.append('.gamma')

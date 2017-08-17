@@ -39,6 +39,7 @@ class MmspdBinWriter : public OutputBase{
 	std::string getPluginName() {
 		return std::string("MmspdBinWriter");
 	}
+	static OutputBase* createInstance() { return new MmspdBinWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

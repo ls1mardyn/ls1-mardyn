@@ -12,39 +12,40 @@ class DomainDecompBase;
 class Domain;
 class XMLfileUnits;
 
-/**
- * TODO: cleanup all classes implementing this interface
- *       make this an abstract class which deals with all things which are
- *       common to all OutputComponents like writeFrequncy, baseFilename, and so on...
- */
 
-//! @brief interface for any kind of output class
-//! @author Martin Bernreuther, Martin Buchholz, et al. (2009)
-//!
-//! There are lots of different things that possibly might want
-//! to be written out, e.g. thermodynimic values, graphical information, 
-//! time measurements, ... \n
-//! In many cases, the output happens regularly every time step. To keep
-//! the other classes as clear as possible, the output routines (especially
-//! extensive routines writing special graphics formats for visualization)
-//! shouldn't be placed there. That's why this interface was introduced.
-//! For a given output task, this interface has to be implemented. This
-//! implementation will be called OutputPlugin in the follwing. 
-//! 
-//! There are three main methodes
-//! - initOutput: will be called once in the beginning
-//! - doOutput: will be called each time step
-//! - finishOutput: will be called at the end
-//! To each of this methods, a pointer to the particle Container, to the domain 
-//! decomposition and to the domain will be passed. This should cover most of
-//! the data that might be necessary for the output.
-//! 
-//! Of course, several OutputPlugins will be needed in some cases. So the
-//! idea is, that the class which controls the simulation (see Simulation.h)
-//! has a list of OutputPlugins. At the beginning of the simulation, 
-//! for each element in that list the method initOutput is called. 
-//! The same will happen in each time step with the method doOutput and at 
-//! the end of the simulation with the method finishOutput.
+/** @todo Mark all parameters as const: output plugins should not modify the state of the simulation. */
+/** @todo get rid of the domain parameter */
+/** @todo get rid of lmu and mcav as well, if possible. */
+/** @todo clean up all classes implementing this interface */
+
+
+/** @brief The outputBase class provides the interface for any kind of output classes - called "output plugins".
+ *
+ * There are a lot of different things that one might want to write out during a simulation,
+ * e.g. thermodynimic values, graphical information, time measurements, ...
+ * For all cases in which this output happens regularly at the end of each time step
+ * the outputBase class provides a common interface. The interface provides access to
+ * the most important data: the particle container and the domain decomposition.
+ *
+ * Of course, several output plugins will be needed in some cases. So the idea is, that
+ * all available output plugins are registered in the OutputPluginFactory and initialized
+ * in the Simulation at runtime as requested by the input file. The plugin will then be
+ * called at the respective points in the simulation automatically.
+ *
+ * Therefore, each output plugin has to implement at least the following five methods:
+ * - initOutput: will be called once in the beginning
+ * - doOutput: will be called each time step
+ * - finishOutput: will be called at the end
+ * - getPluginName: returning the output pulugin name
+ * - createInstance: returning an instance object as follows
+ * \code{.cpp}
+ *   static OutputBase* createInstance() { return new MyPlugin(); }   // class name is MyPlugin
+ * \endcode
+ *
+ * Optionally each plugin can provide its own implemenation of the following method to
+ * read in a corresoonding section from the xml config file:
+ * - readXML: read in xml section from config file
+ */
 class OutputBase {
 public:
 	//! @brief Subclasses should use their constructur to pass parameters (e.g. filenames)
@@ -52,22 +53,46 @@ public:
 
 	virtual ~OutputBase(){}
 
-	//! @brief will be called at the beginning of the simulation
-	//!
-	//! Some OutputPlugins will need some initial things to be done before
-	//! the output can start, e.g. opening some files. This method will
-	//! be called once at the beginning of the simulation (see Simulation.cpp)
+	/** @brief Method initOutput will be called at the begin of the simulation.
+	 *
+	 * This method will be called once at the begin of the simulation just
+	 * right before the main time step loop.
+	 * It can be used e.g. to open output files or initialize statistics.
+	 * @param particleContainer  particle container storing the (local) molecules
+	 * @param domainDecomp       domain decomposition in use
+	 * @param domain
+	 */
 	virtual void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
 
-	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
+	/** @brief Method readXML will be called once for each output plugin section in the input file.
+	 *
+	 * This method can be used to read in parameters from the corresponding output plugin section in
+	 * the xml config file. The method will be called once after an instance of the output plugin
+	 * is created.
+	 *
+	 * @note The same output plugins may be specified multiple times in the xml config file.
+	 *       It is the responsibili of the output plugin to handle this case in a propper way.
+	 *
+	 * The following xml object structure will be provided to the output plugin:
+	 * \code{.xml}
+	   <outputplugin name="plugin name">
+	     <!-- options for the specific plugin -->
+	   </outputplugin>
+	   \endcode
+	 *
+	 * @param xmlconfig  section of the xml file
+	 */
+	virtual void readXML(XMLfileUnits& xmlconfig) {}
 
-	//! @brief will be called in each time step
-	//!
-	//! Most of the times, the output should either be done every time step or at least
-	//! every n-th time step. Therefore, this method has an additional parameter simstep,
-	//! allowing to do a output depending on the current simulation time step. This method
-	//! will be called once every time step during the simulation (see Simulation.cpp)
+	/** @brief Method doOutput will be called at the end of each time step.
+	 *
+	 * This method will be called every time step passing the simstep as an additional parameter.
+	 * It can be used e.g. to write per time step data to a file or perform additional computations.
+	 * @param particleContainer  particle container storing the (local) molecules
+	 * @param domainDecomp       domain decomposition in use
+	 * @param domain
+	 */
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
@@ -75,17 +100,19 @@ public:
 			std::map<unsigned, CavityEnsemble>* mcav
 	) = 0;
 
-	//! @brief will be called at the end of the simulation
-	//!
-	//! Some OutputPlugins will need to do some things at the end of the simulation,
-	//! e.g. closing some files. This method will
-	//! be called once at the end of the simulation (see Simulation.cpp)
+	/** @brief Method finalOutput will be called at the end of the simulation
+	 *
+	 * This method will be called once at the end of the simulation.
+	 * It can be used e.g. to closing output files or writing final statistics.
+	 * @param particleContainer  particle container storing the (local) molecules
+	 * @param domainDecomp       domain decomposition in use
+	 * @param domain
+	 */
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
-			
-	virtual std::string getPluginName() {
-		return std::string("Unknown output plugin name.");
-	}
+
+	/** @brief return the name of the plugin */
+	virtual std::string getPluginName()  = 0;
 };
 
 #endif /* OUTPUTBASE_H_ */

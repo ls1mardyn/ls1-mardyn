@@ -23,6 +23,7 @@ public:
 	std::string getPluginName() {
 		return std::string("SysMonOutput");
 	}
+	static OutputBase* createInstance() { return new SysMonOutput(); }
 
 private:
 	//! prefix for the names of all output files

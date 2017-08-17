@@ -38,6 +38,7 @@ public:
 	std::string getPluginName() {
 		return std::string("DecompWriter");
 	}
+	static OutputBase* createInstance() { return new DecompWriter(); }
 private:
 	unsigned long _writeFrequency;
 	std::string _mode;

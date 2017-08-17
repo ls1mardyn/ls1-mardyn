@@ -334,8 +334,6 @@ public:
 	 */
 	double Tfactor(unsigned long simstep);
 
-	void mkTcTS(Values &options);
-
 	void initCanonical(unsigned long t) { this->_initCanonical = t; }
 	void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }

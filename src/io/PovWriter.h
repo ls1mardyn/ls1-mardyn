@@ -51,6 +51,7 @@ public:
 	std::string getPluginName() {
 		return std::string("PovWriter");
 	}
+	static OutputBase* createInstance() { return new PovWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
