@@ -15,7 +15,7 @@ typedef OutputBase* createInstanceFunc();
  * Provide a comman interface to register output plugins based on the OutputBase interface.
  * Therefore each plugin has to implement the following static method:
  * \code{.cpp}
- *   static OutputBase* createInstance(); // returning an instance object
+ *   static OutputBase* createInstance() { return new MyPlugin(); }  // returning an instance object
  * \endcode
  * Plugins are registered in the OutputPluginFactory constructor using the REGISTER_PLUGIN(NAME) macro.
  */
