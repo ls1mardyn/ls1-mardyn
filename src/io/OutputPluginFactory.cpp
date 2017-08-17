@@ -18,6 +18,7 @@
 #include "io/SysMonOutput.h"
 #include "io/VISWriter.h"
 #include "io/XyzWriter.h"
+#include "io/MaxWriter.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -39,11 +40,12 @@ _outputPluginFactoryMap(){
 	REGISTER_PLUGIN(MmspdBinWriter);
 	REGISTER_PLUGIN(MmspdWriter);
 	REGISTER_PLUGIN(PovWriter);
-	REGISTER_PLUGIN(RDF);
+//	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(ResultWriter);
 	REGISTER_PLUGIN(SysMonOutput);
 	REGISTER_PLUGIN(VISWriter);
 	REGISTER_PLUGIN(XyzWriter);
+	REGISTER_PLUGIN(MaxWriter);
 #ifdef VTK
 	REGISTER_PLUGIN(VTKMoleculeWriter);
 	REGISTER_PLUGIN(VTKGridWriter);
