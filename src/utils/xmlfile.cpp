@@ -553,7 +553,7 @@ bool XMLfile::distributeXMLstring()
 bool XMLfile::Node::isLeafNode() const
 {
 	if(!m_xmlnode) return false;
-	if(type()!=ELEMENT_Node) return true;
+	if(type()!=ELEMENT_Node) return false;
 	if(static_cast<const rapidxml::xml_node<>*>(m_xmlnode)->first_node()) return false;
 	return true;
 }
