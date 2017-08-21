@@ -326,8 +326,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 		node=&m_xmldoc;
 		nodepath=querystring[pos];
 		++pos;
-		if(pos>=querystring.size())
-		{ // querystr="/": path points to rootnode
+		if(querystring == "/") {
 			nodeselection.push_back(Node(node,nodepath));
 			return 1;
 		}
