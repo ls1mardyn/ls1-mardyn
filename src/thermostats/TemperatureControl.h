@@ -92,7 +92,6 @@ class TemperatureControl
 {
 public:
 	TemperatureControl();
-	TemperatureControl(unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
 	~TemperatureControl();
 
 	void readXML(XMLfileUnits& xmlconfig);

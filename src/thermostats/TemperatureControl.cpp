@@ -381,16 +381,6 @@ TemperatureControl::TemperatureControl()
 {
 }
 
-TemperatureControl::TemperatureControl(unsigned long nControlFreq, unsigned long nStart, unsigned long nStop)
-{
-	// control frequency
-	_nControlFreq = nControlFreq;
-
-	// start/stop timestep
-	_nStart = nStart;
-	_nStop  = nStop;
-}
-
 TemperatureControl::~TemperatureControl()
 {
 
@@ -477,13 +467,8 @@ void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* d
 	if(simstep % _nControlFreq != 0)
 		return;
 
-	// measure drift in each control region
-	std::vector<ControlRegionT>::iterator it;
-
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-	{
-		(*it).MeasureKineticEnergy(mol, domainDecomp);
-	}
+	for(auto&& reg : _vecControlRegions)
+		reg.MeasureKineticEnergy(mol, domainDecomp);
 }
 
 void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -491,13 +476,8 @@ void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsign
 	if(simstep % _nControlFreq != 0)
 		return;
 
-	// calc global values for control region
-	std::vector<ControlRegionT>::iterator it;
-
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-	{
-		(*it).CalcGlobalValues(domainDecomp);
-	}
+	for(auto&& reg : _vecControlRegions)
+		reg.CalcGlobalValues(domainDecomp);
 }
 
 
@@ -506,13 +486,8 @@ void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep
 	if(simstep % _nControlFreq != 0)
 		return;
 
-	// control drift of all regions
-	std::vector<ControlRegionT>::iterator it;
-
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-	{
-		(*it).ControlTemperature(mol);
-	}
+	for(auto&& reg : _vecControlRegions)
+		reg.ControlTemperature(mol);
 }
 
 void TemperatureControl::Init(unsigned long simstep)
@@ -520,13 +495,8 @@ void TemperatureControl::Init(unsigned long simstep)
 	if(simstep % _nControlFreq != 0)
 		return;
 
-	// reset local values
-	std::vector<ControlRegionT>::iterator it;
-
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-	{
-		(*it).ResetLocalValues();
-	}
+	for(auto&& reg : _vecControlRegions)
+		reg.ResetLocalValues();
 }
 
 void TemperatureControl::InitBetaLogfiles()
