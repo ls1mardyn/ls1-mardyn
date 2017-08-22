@@ -767,7 +767,7 @@ namespace rapidxml
 
         //! Sets value of node to a zero-terminated string.
         //! See also \ref ownership_of_strings and xml_node::value(const Ch *, std::size_t).
-        //! \param value Vame of node to set. Must be zero terminated.
+        //! \param value value of node to set. Must be zero terminated.
         void value(const Ch *value)
         {
             this->value(value, internal::measure(value));
