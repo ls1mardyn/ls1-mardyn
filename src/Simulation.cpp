@@ -612,10 +612,6 @@ void Simulation::readConfigFile(string filename) {
 	if (extension == "xml") {
 		initConfigXML(filename);
 	}
-	else if (extension == "cfg") {
-        global_log->warning() << "Old ASCII based input files are deprecated since 10.04.2017 and will be removed soon. Please convert your input to the xml format." << endl;
-		initConfigOldstyle(filename);
-	}
 	else {
 		global_log->error() << "Unknown config file extension '" << extension << "'." << endl;
 		Simulation::exit(1);
@@ -638,30 +634,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	inp.getNodeValue("@version", version);
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
 
-	if (inp.changecurrentnode("simulation")) {
-		/** @todo this is all for old input files. Remove! */
-		string siminpfile;
-		int numsimpfiles = inp.getNodeValue("input", siminpfile);
-		if (numsimpfiles == 1) {
-			string siminptype;
-			global_log->info() << "Reading input file: " << siminpfile << endl;
-			inp.getNodeValue("input@type", siminptype);
-			global_log->info() << "Input file type: " << siminptype << endl;
-			if (siminptype == "oldstyle") {
-				initConfigOldstyle(siminpfile);
-				/* Skip the rest of the xml config for old cfg files. */
-				return;
-			} else {
-				global_log->error() << "Unknown input file type: " << siminptype << endl;
-				Simulation::exit(1);
-			}
-		} else if (numsimpfiles > 1) {
-			global_log->error() << "Multiple input file sections are not supported." << endl;
-			Simulation::exit(1);
-		}
-
+	if (inp.changecurrentnode("simulation"))
+	{
 		readXML(inp);
-
 		inp.changecurrentnode("..");
 	} // simulation-section
 	else {
