@@ -920,7 +920,7 @@ void Simulation::prepare_start() {
 		}
 	}
 
-	_initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
+	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 
 	global_log->info() << "Initializing output plugins and corresponding output timers" << endl;
