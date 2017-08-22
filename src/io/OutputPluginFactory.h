@@ -1,9 +1,6 @@
 #ifndef OUTPUT_PLUGIN_FACTORY
 #define OUTPUT_PLUGIN_FACTORY
 
-#include <map>
-#include <string>
-#include <vector>
 #include "utils/PluginFactory.h"
 
 class OutputBase;
