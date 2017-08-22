@@ -287,8 +287,8 @@ public:
 		
 		/// \brief XMLfile::Query constructor
 		/// sets up an invalid query
-		Query() : m_xmlfile(NULL)
-			{ m_nodes.clear(); }
+		Query() : m_xmlfile(NULL), m_nodes()
+			{}
 		/// \brief copy constructor
 		/// duplicate a given query and register the new created one at the XMLfile
 		/// \param const Query&	query
