@@ -27,93 +27,144 @@ unsigned short ControlRegionT::_nStaticID = 0;
 
 // class ControlRegionT
 
-ControlRegionT::ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
-		double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
-		unsigned long nWriteFreqBeta, std::string strFilenamePrefix)
+ControlRegionT::ControlRegionT()
 	:
-		_strFilenamePrefixBetaLog("beta_log"),
-		_nWriteFreqBeta(1000),
-		_numSampledConfigs(0),
-		_dBetaTransSumGlobal(0.),
-		_dBetaRotSumGlobal(0.)
+	_nID(0),
+	_dLowerCorner{0.,0.,0.},
+	_dUpperCorner{0.,0.,0.},
+	_nNumSlabs(0),
+	_dSlabWidth(0.0),
+	_nNumMoleculesLocal(nullptr),
+	_nNumMoleculesGlobal(nullptr),
+	_nRotDOFLocal(nullptr),
+	_nRotDOFGlobal(nullptr),
+	_d2EkinTransLocal(nullptr),
+	_d2EkinTransGlobal(nullptr),
+	_d2EkinRotLocal(nullptr),
+	_d2EkinRotGlobal(nullptr),
+	_dBetaTransGlobal(nullptr),
+	_dBetaRotGlobal(nullptr),
+	_dTargetTemperature(0.0),
+	_dTemperatureExponent(0.0),
+	_nTargetComponentID(0),
+	_nNumThermostatedTransDirections(0),
+	_nRegionID(0),
+	_accumulator(nullptr),
+	_strFilenamePrefixBetaLog("beta_log"),
+	_nWriteFreqBeta(1000),
+	_numSampledConfigs(0),
+	_dBetaTransSumGlobal(0.0),
+	_dBetaRotSumGlobal(0.0)
 {
 	// ID
 	_nID = ++_nStaticID;
-
-	// region span
-	for(unsigned short d=0; d<3; ++d)
-	{
-		_dLowerCorner[d] = dLowerCorner[d];
-		_dUpperCorner[d] = dUpperCorner[d];
-	}
-
-	_nTargetComponentID = nComp;
-	_dTargetTemperature = dTargetTemperature;
-
-	_dTemperatureExponent = dTemperatureExponent;
-
-	// number of slabs
-	_nNumSlabs = nNumSlabs;
-
-	// calc slab width
-	_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
-
-	// init data structures
-	this->Init();
-
-	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
-	if(strTransDirections == "x")
-	{
-		_accumulator = new AccumulatorX();
-		_nNumThermostatedTransDirections = 1;
-	}
-	else if(strTransDirections == "y")
-	{
-		_accumulator = new AccumulatorY();
-		_nNumThermostatedTransDirections = 1;
-	}
-	else if(strTransDirections == "z")
-	{
-		_accumulator = new AccumulatorZ();
-		_nNumThermostatedTransDirections = 1;
-	}
-	else if(strTransDirections == "xy")
-	{
-		_accumulator = new AccumulatorXY();
-		_nNumThermostatedTransDirections = 2;
-	}
-	else if(strTransDirections == "xz")
-	{
-		_accumulator = new AccumulatorXZ();
-		_nNumThermostatedTransDirections = 2;
-	}
-	else if(strTransDirections == "yz")
-	{
-		_accumulator = new AccumulatorYZ();
-		_nNumThermostatedTransDirections = 2;
-	}
-	else if(strTransDirections == "xyz")
-	{
-		_accumulator = new AccumulatorXYZ();
-		_nNumThermostatedTransDirections = 3;
-	}
-	else
-		_accumulator = NULL;
-
-	// beta log-file
-	_nWriteFreqBeta = nWriteFreqBeta;
-	if(_nWriteFreqBeta==0){
-		global_log->warning() << "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000." << std::endl;
-		_nWriteFreqBeta = 1000;
-	}
-	_strFilenamePrefixBetaLog = strFilenamePrefix;
-	this->InitBetaLogfile();
 }
 
 
 ControlRegionT::~ControlRegionT()
 {
+}
 
+AccumulatorBase* ControlRegionT::CreateAccumulatorInstance(std::string strTransDirections)
+{
+	AccumulatorBase* accumulator;
+
+	if(strTransDirections == "x")
+	{
+		accumulator = new AccumulatorX();
+		_nNumThermostatedTransDirections = 1;
+	}
+	else if(strTransDirections == "y")
+	{
+		accumulator = new AccumulatorY();
+		_nNumThermostatedTransDirections = 1;
+	}
+	else if(strTransDirections == "z")
+	{
+		accumulator = new AccumulatorZ();
+		_nNumThermostatedTransDirections = 1;
+	}
+	else if(strTransDirections == "xy")
+	{
+		accumulator = new AccumulatorXY();
+		_nNumThermostatedTransDirections = 2;
+	}
+	else if(strTransDirections == "xz")
+	{
+		accumulator = new AccumulatorXZ();
+		_nNumThermostatedTransDirections = 2;
+	}
+	else if(strTransDirections == "yz")
+	{
+		accumulator = new AccumulatorYZ();
+		_nNumThermostatedTransDirections = 2;
+	}
+	else if(strTransDirections == "xyz")
+	{
+		accumulator = new AccumulatorXYZ();
+		_nNumThermostatedTransDirections = 3;
+	}
+	else
+		accumulator = NULL;
+
+	return accumulator;
+}
+
+void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
+{
+	Domain* domain = global_simulation->getDomain();
+	double lc[3];
+	double uc[3];
+	std::string strVal[3];
+	std::string strDirections;
+
+	// coordinates
+	xmlconfig.getNodeValue("coords/lcx", lc[0]);
+	xmlconfig.getNodeValue("coords/lcy", lc[1]);
+	xmlconfig.getNodeValue("coords/lcz", lc[2]);
+	xmlconfig.getNodeValue("coords/ucx", strVal[0]);
+	xmlconfig.getNodeValue("coords/ucy", strVal[1]);
+	xmlconfig.getNodeValue("coords/ucz", strVal[2]);
+	// read upper corner
+	for(uint8_t d=0; d<3; ++d)
+		uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str() );
+
+#ifndef NDEBUG
+	global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
+#endif
+
+	for(uint8_t d=0; d<3; ++d)
+	{
+		_dLowerCorner[d] = lc[d];
+		_dUpperCorner[d] = uc[d];
+	}
+
+	// target values
+	xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
+	xmlconfig.getNodeValue("target/component", _nTargetComponentID);
+
+	// settings
+	xmlconfig.getNodeValue("settings/numslabs", _nNumSlabs);
+	xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
+	xmlconfig.getNodeValue("settings/directions", strDirections);
+	// calc slab width
+	_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
+	// create accumulator instance
+	_accumulator = this->CreateAccumulatorInstance(strDirections);
+
+	// write control for beta_trans and beta_rot log file
+	_nWriteFreqBeta = 1000;
+	_strFilenamePrefixBetaLog = "beta_log";
+	xmlconfig.getNodeValue("writefreq",  _nWriteFreqBeta);
+	xmlconfig.getNodeValue("fileprefix", _strFilenamePrefixBetaLog);
+	if(_nWriteFreqBeta==0) {
+		global_log->warning() << "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000." << std::endl;
+		_nWriteFreqBeta = 1000;
+	}
+	this->InitBetaLogfile();
+
+	// init data structures
+	this->Init();
 }
 
 void ControlRegionT::Init()
@@ -388,8 +439,6 @@ TemperatureControl::~TemperatureControl()
 
 void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 {
-	Domain* domain = global_simulation->getDomain();
-
 	// control
 	xmlconfig.getNodeValue("control/start", _nStart);
 	xmlconfig.getNodeValue("control/frequency", _nControlFreq);
@@ -413,53 +462,16 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 	XMLfile::Query::const_iterator outputRegionIter;
 	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 	{
-		xmlconfig.changecurrentnode( outputRegionIter );
-		double lc[3];
-		double uc[3];
-		std::string strVal[3];
-		double dTemperature;
-		double dExponent;
-		std::string strDirections;
-		uint32_t nNumSlabs;
-		uint32_t nCompID;
-
-		// coordinates
-		xmlconfig.getNodeValue("coords/lcx", lc[0]);
-		xmlconfig.getNodeValue("coords/lcy", lc[1]);
-		xmlconfig.getNodeValue("coords/lcz", lc[2]);
-		xmlconfig.getNodeValue("coords/ucx", strVal[0]);
-		xmlconfig.getNodeValue("coords/ucy", strVal[1]);
-		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
-		// read upper corner
-		for(uint8_t d=0; d<3; ++d)
-			uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str() );
-
-#ifndef NDEBUG
-		global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
-#endif
-
-		xmlconfig.getNodeValue("target/temperature", dTemperature);
-		xmlconfig.getNodeValue("target/component", nCompID);
-		xmlconfig.getNodeValue("settings/numslabs", nNumSlabs);
-		xmlconfig.getNodeValue("settings/exponent", dExponent);
-		xmlconfig.getNodeValue("settings/directions", strDirections);
-
-		// write control for beta_trans and beta_rot log file
-		unsigned long nWriteFreqBeta = 1000;
-		std::string strFilenamePrefix = "beta_log";
-		xmlconfig.getNodeValue("writefreq", nWriteFreqBeta);
-		xmlconfig.getNodeValue("fileprefix", strFilenamePrefix);
-
-		this->AddRegion(lc, uc, nNumSlabs, nCompID, dTemperature,
-				dExponent, strDirections, nWriteFreqBeta, strFilenamePrefix);
+		xmlconfig.changecurrentnode(outputRegionIter);
+		ControlRegionT* region = new ControlRegionT();
+		region->readXML(xmlconfig);
+		this->AddRegion(region);
 	}
 }
 
-void TemperatureControl::AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
-		double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
-		unsigned long nWriteFreqBeta, std::string strFilenamePrefix)
+void TemperatureControl::AddRegion(ControlRegionT* region)
 {
-	_vecControlRegions.push_back(ControlRegionT(dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature, dTemperatureExponent, strTransDirections, nWriteFreqBeta, strFilenamePrefix) );
+	_vecControlRegions.push_back(region);
 }
 
 void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -468,7 +480,7 @@ void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* d
 		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg.MeasureKineticEnergy(mol, domainDecomp);
+		reg->MeasureKineticEnergy(mol, domainDecomp);
 }
 
 void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -477,7 +489,7 @@ void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsign
 		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg.CalcGlobalValues(domainDecomp);
+		reg->CalcGlobalValues(domainDecomp);
 }
 
 
@@ -487,7 +499,7 @@ void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep
 		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg.ControlTemperature(mol);
+		reg->ControlTemperature(mol);
 }
 
 void TemperatureControl::Init(unsigned long simstep)
@@ -496,19 +508,19 @@ void TemperatureControl::Init(unsigned long simstep)
 		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg.ResetLocalValues();
+		reg->ResetLocalValues();
 }
 
 void TemperatureControl::InitBetaLogfiles()
 {
 	for(auto&& reg : _vecControlRegions)
-		reg.InitBetaLogfile();
+		reg->InitBetaLogfile();
 }
 
 void TemperatureControl::WriteBetaLogfiles(unsigned long simstep)
 {
 	for(auto&& reg : _vecControlRegions)
-		reg.WriteBetaLogfile(simstep);
+		reg->WriteBetaLogfile(simstep);
 }
 
 void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned long simstep)

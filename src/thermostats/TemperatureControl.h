@@ -13,16 +13,17 @@
 
 #include "molecules/Molecule.h"
 
+class XMLfileUnits;
 class DomainDecompBase;
 class ParticleContainer;
 class AccumulatorBase;
 class ControlRegionT
 {
 public:
-	ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
-			double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
-			unsigned long nWriteFreqBeta, std::string strFilenamePrefix);
+	ControlRegionT();
 	~ControlRegionT();
+
+	void readXML(XMLfileUnits& xmlconfig);
 
 	unsigned int GetID(){return _nID;}
 	void Init();
@@ -45,10 +46,13 @@ public:
 	void WriteBetaLogfile(unsigned long simstep);
 
 private:
-	unsigned short _nID;
+	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
+	AccumulatorBase* CreateAccumulatorInstance(std::string strTransDirections);
 
+private:
 	// instances / ID
 	static unsigned short _nStaticID;
+	unsigned short _nID;
 
 	double _dLowerCorner[3];
 	double _dUpperCorner[3];
@@ -87,7 +91,6 @@ private:
 
 
 class Domain;
-class XMLfileUnits;
 class TemperatureControl
 {
 public:
@@ -95,11 +98,9 @@ public:
 	~TemperatureControl();
 
 	void readXML(XMLfileUnits& xmlconfig);
-	void AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
-			double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
-			unsigned long nWriteFreqBeta, std::string strFilenamePrefix);
+	void AddRegion(ControlRegionT* region);
 	int GetNumRegions() {return _vecControlRegions.size();}
-	ControlRegionT* GetControlRegion(unsigned short nRegionID) {return &(_vecControlRegions.at(nRegionID-1) ); }  // vector index starts with 0, region index with 1
+	ControlRegionT* GetControlRegion(unsigned short nRegionID) {return _vecControlRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
 
 	void Init(unsigned long simstep);
 	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep);
@@ -117,7 +118,7 @@ public:
 	void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
 
 private:
-	std::vector<ControlRegionT> _vecControlRegions;
+	std::vector<ControlRegionT*> _vecControlRegions;
 	unsigned long _nControlFreq;
 	unsigned long _nStart;
 	unsigned long _nStop;
