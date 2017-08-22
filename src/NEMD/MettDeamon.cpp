@@ -87,6 +87,9 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_vecThrottleToPosY.at(cid) = 0.;
 		_vecThrottleForceY.at(cid) = 0.;
 	}
+
+	// velocity barriers
+	_vecVeloctiyBarriers.resize(nNumComponents);
 }
 
 MettDeamon::~MettDeamon()
@@ -98,9 +101,32 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	// control
 	xmlconfig.getNodeValue("control/updatefreq", _nUpdateFreq);
 	xmlconfig.getNodeValue("control/writefreq", _nWriteFreqRestart);
-	xmlconfig.getNodeValue("control/vmax", _velocityBarrier);
 	xmlconfig.getNodeValue("control/numvals", _nNumValsSummation);
 	_dInvNumTimestepsSummation = 1. / (double)(_nNumValsSummation*_nUpdateFreq);
+
+	// vmax
+//	xmlconfig.getNodeValue("control/vmax", _velocityBarrier);
+	{
+		uint8_t numNodes = 0;
+		XMLfile::Query query = xmlconfig.query("control/vmax");
+		numNodes = query.card();
+		global_log->info() << "Number of vmax values: " << (uint32_t)numNodes << endl;
+		if(numNodes < 1) {
+			global_log->error() << "No vmax values defined in XML-config file. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator nodeIter;
+		for( nodeIter = query.begin(); nodeIter; nodeIter++ ) {
+			xmlconfig.changecurrentnode(nodeIter);
+			uint32_t cid;
+			double vmax;
+			xmlconfig.getNodeValue("@cid", cid);
+			xmlconfig.getNodeValue(".", vmax);
+			_vecVeloctiyBarriers.at(cid) = vmax;
+		}
+		xmlconfig.changecurrentnode(oldpath);
+	}
 
 	// reservoir
 	xmlconfig.getNodeValue("reservoir/file", _reservoirFilename);
@@ -433,10 +459,12 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 
 	Random rnd;
-	double T = 0.88;
+	double T = 80;
 	double v[3];
 	double v2 = 0.;
 //	_dY = _dYInit;
+
+	particleContainer->updateMoleculeCaches();
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM)
@@ -444,23 +472,33 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		cid = tM->componentid();
 		double dY = tM->r(1);
 		bool bIsFrozenMolecule = cid != _vecChangeCompIDsUnfreeze.at(cid);
+/*
+		double m = tM->mass();
+		double vym = sqrt(T/m);
+*/
+		double m = tM->mass();
+		double vm2 = 3*T/m;
 
-		v2 = 0.;
-		v[0] = rnd.gaussDeviate(T);
-		v[1] = rnd.gaussDeviate(T);
-		v[2] = rnd.gaussDeviate(T);
+		v[0] = rnd.rnd();
+		v[1] = rnd.rnd();
+		v[2] = rnd.rnd();
+		v2 = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+//		global_log->info() << "rnd: vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
+		double f = sqrt(vm2/v2);
+
 		for(uint8_t dim=0; dim<3; ++dim)
-			v2 += v[dim]*v[dim];
-//		global_log->info() << "vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
+			v[dim] *= f;
+		v2 = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+//		global_log->info() << "scaled: vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
 
 		if(dY > (_dTransitionPlanePosY-dMoleculeRadius) && true == bIsFrozenMolecule)
 		{
 			Component* compNew = &(ptrComps->at(_vecChangeCompIDsUnfreeze.at(cid) ) );
 			tM->setComponent(compNew);
 //			tM->setv(1, abs(tM->v(1) ) );
-			tM->setv(0, v[0]);
-			tM->setv(1, v[1]);
-			tM->setv(2, v[2]);
+			tM->setv(0, 0.0);
+			tM->setv(1, 3*_dY);
+			tM->setv(2, 0.0);
 			// delete fraction of non-volatile component
 			/*
 			if(tM->id()+1 == 1 && _nDeleteNonVolatile%10 != 0)
@@ -499,6 +537,27 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			tM->setv(0,it->second.at(3) );
 			tM->setv(1,it->second.at(4) );
 			tM->setv(2,it->second.at(5) );
+		}
+		else
+		{
+			double v2 = tM->v2();
+			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
+
+			if(v2 > v2max)
+			{
+				uint64_t id = tM->id();
+				double dY = tM->r(1);
+
+				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
+				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
+
+	//			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), true);
+	//			_nNumMoleculesDeletedLocal++;
+	//			_nNumMoleculesTooFast++;
+
+				double f = sqrt(v2max/v2);
+				tM->scale_v(f);
+			}
 		}
 
 	}  // loop over molecules
@@ -554,6 +613,24 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			tM->setv(1, 0.);
 			tM->setv(2, 0.);
 		}
+		else
+		{
+			double v2 = tM->v2();
+			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
+
+			if(v2 > v2max)
+			{
+				uint64_t id = tM->id();
+				double dY = tM->r(1);
+
+//				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
+//				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
+
+				double f = sqrt(v2max/v2);
+				tM->scale_v(f);
+			}
+		}
+		/*
 		else if(v2 > _velocityBarrier*_velocityBarrier) // v2_limit)
 		{
 			uint64_t id = tM->id();
@@ -567,11 +644,13 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), true);
 			_nNumMoleculesDeletedLocal++;
 			_nNumMoleculesTooFast++;
-//			particleContainer->update();
 			continue;
 			this->IncrementDeletedMoleculesLocal();
 		}
-
+		*/
+/*
+ * limit force, velocities => repair dynamic
+ *
 		if(false == bIsFrozenMolecule &&
 				dY > (_dTransitionPlanePosY + _vecThrottleFromPosY.at(cid) ) &&
 				dY < (_dTransitionPlanePosY +   _vecThrottleToPosY.at(cid) ) )
@@ -605,7 +684,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 //			global_log->info() << "_dTransitionPlanePosY=" << _dTransitionPlanePosY << endl;
 //			global_log->info() << "dY=" << dY << endl;
 		}
-
+*/
 		// mirror, to simulate VLE
 		if(true == _bMirrorActivated)
 		{
@@ -613,8 +692,8 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 				tM->setv(1, -1.*tM->v(1) );
 		}
 	}
-	particleContainer->update();
-	particleContainer->updateMoleculeCaches();
+//	particleContainer->update();
+//	particleContainer->updateMoleculeCaches();
 	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
 
 	// delta y berechnen: alle x Zeitschritte

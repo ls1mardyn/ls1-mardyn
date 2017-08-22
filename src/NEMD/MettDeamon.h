@@ -99,6 +99,7 @@ private:
 	std::vector<double> _vecThrottleFromPosY;
 	std::vector<double> _vecThrottleToPosY;
 	std::vector<double> _vecThrottleForceY;
+	std::vector<double> _vecVeloctiyBarriers;
 };
 
 #endif /* METTDEAMON_H_ */
