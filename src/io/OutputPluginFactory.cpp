@@ -27,10 +27,8 @@
 #include "io/vtk/VTKGridWriter.h"
 #endif
 
-#define REGISTER_PLUGIN(NAME) registerPlugin(&(NAME::createInstance));
 
-OutputPluginFactory::OutputPluginFactory():
-_outputPluginFactoryMap(){
+OutputPluginFactory::OutputPluginFactory() {
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(DecompWriter);
@@ -53,36 +51,4 @@ _outputPluginFactoryMap(){
 	REGISTER_PLUGIN(VTKMoleculeWriter);
 	REGISTER_PLUGIN(VTKGridWriter);
 #endif /* VTK */
-}
-
-#include "utils/String_utils.h"
-
-void OutputPluginFactory::registerPlugin(createInstanceFunc* createInstance) {
-	OutputBase *pluginInstance = createInstance();
-	std::string pluginname = pluginInstance->getPluginName();
-	Log::global_log->info() << "Registering plugin with name " << pluginname << std::endl;
-	delete pluginInstance;
-	if( _outputPluginFactoryMap.count(pluginname) > 0 ) {
-		Log::global_log->warning() << "Skipping already registered plugin with name " << pluginname << std::endl;
-		Log::global_log->debug() << "Registered plugins: " << string_utils::join(getPluginNames(),", ") << std::endl;
-		return;
-	}
-	_outputPluginFactoryMap[pluginname] = createInstance;
-}
-
-std::vector<string> OutputPluginFactory::getPluginNames() {
-	std::vector<string> pluginNames;
-	for(auto pluginIter : _outputPluginFactoryMap) {
-		pluginNames.push_back(pluginIter.first);
-	}
-	return pluginNames;
-}
-
-OutputBase * OutputPluginFactory::create(std::string pluginname) {
-	auto existing = _outputPluginFactoryMap.find(pluginname);
-	if( existing != _outputPluginFactoryMap.end() ) {
-		return existing->second(); /* call createInstance for plugin */
-	}
-	Log::global_log->warning() << "Plugin not found: " << pluginname << std::endl;
-	return nullptr;
 }
