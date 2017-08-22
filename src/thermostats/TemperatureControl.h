@@ -91,7 +91,7 @@ class XMLfileUnits;
 class TemperatureControl
 {
 public:
-	TemperatureControl(Domain* domain);
+	TemperatureControl();
 	TemperatureControl(unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
 	~TemperatureControl();
 
@@ -118,7 +118,6 @@ public:
 	void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
 
 private:
-	Domain* _domain;
 	std::vector<ControlRegionT> _vecControlRegions;
 	unsigned long _nControlFreq;
 	unsigned long _nStart;

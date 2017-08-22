@@ -377,8 +377,7 @@ void ControlRegionT::WriteBetaLogfile(unsigned long simstep)
 }
 
 // class TemperatureControl
-TemperatureControl::TemperatureControl(Domain* domain)
-	: _domain(domain)
+TemperatureControl::TemperatureControl()
 {
 }
 
@@ -399,6 +398,8 @@ TemperatureControl::~TemperatureControl()
 
 void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 {
+	Domain* domain = global_simulation->getDomain();
+
 	// control
 	xmlconfig.getNodeValue("control/start", _nStart);
 	xmlconfig.getNodeValue("control/frequency", _nControlFreq);
@@ -408,7 +409,7 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "Stop control at simstep: " << _nStop << endl;
 
 	// turn on/off explosion heuristics
-	//_domain->SetExplosionHeuristics(bUseExplosionHeuristics);
+	// domain->SetExplosionHeuristics(bUseExplosionHeuristics);
 
 	// add regions
 	uint32_t numRegions = 0;
@@ -441,7 +442,7 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
 		// read upper corner
 		for(uint8_t d=0; d<3; ++d)
-			uc[d] = (strVal[d] == "box") ? _domain->getGlobalLength(d) : atof(strVal[d].c_str() );
+			uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str() );
 
 #ifndef NDEBUG
 		global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
