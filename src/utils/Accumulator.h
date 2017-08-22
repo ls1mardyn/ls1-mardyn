@@ -19,7 +19,7 @@ template <typename T>
 class Accumulator {
 public:
     /** Constructor creating new Accumlator
-     * @param[in]  _windowLength  Number of elements in the sliding window.
+     * @param[in]  windowLength  Number of elements in the sliding window.
      */
     Accumulator(size_t windowLength = 100) : _windowLength(windowLength), _insertPosition(0), _size(0) {
         _data = new T[windowLength];

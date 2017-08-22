@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "io/OutputBase.h"
+class OutputBase;
 
 
 typedef OutputBase* createInstanceFunc();
@@ -26,12 +26,12 @@ public:
 
 	/** @brief Register an output plugin
 	 *
-	 * @par createInstance  pointer to a function returning an instance of the plugin object.
+	 * @param createInstance  pointer to a function returning an instance of the plugin object.
 	 */
 	void registerPlugin(createInstanceFunc* createInstance);
 
 	/** @brief Get all names of registered plugins */
-	std::vector<string> getPluginNames();
+	std::vector<std::string> getPluginNames();
 
 	/** @brief Create a new instance of plugin */
 	OutputBase* create(std::string pluginname);

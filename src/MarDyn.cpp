@@ -222,9 +222,11 @@ int main(int argc, char** argv) {
 	simulation.simulate();
 	sim_timer.stop();
 	double runtime = sim_timer.get_etime();
+	//!@todo time only for simulation.simulate not "main"!
 	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
 
 	// print out total simulation speed
+	//!@todo this is incorrect if currenttime is > 0 in the configuration!
 	const unsigned long numForceCalculations = simulation.getNumTimesteps() + 1ul;
 	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
 	global_log->info() << "Simulation speed: " << scientific << speed << " Molecule-updates per second." << endl;

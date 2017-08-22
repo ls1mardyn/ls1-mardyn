@@ -1,4 +1,3 @@
-
 #include "io/ResultWriter.h"
 
 #include "Domain.h"
@@ -47,6 +46,7 @@ void ResultWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	if(domainDecomp->getRank()==0){
 		_resultStream.open(resultfile.c_str());
 		_resultStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
+		_resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< endl;
 		_resultStream << "#step\tt\t\tU_pot\tU_pot_avg\t\tp\tp_avg\t\tbeta_trans\tbeta_rot\t\tc_v\t\tN\t(N_cav*)\n";
 	}
 }
@@ -77,7 +77,5 @@ void ResultWriter::finishOutput(ParticleContainer* /*particleContainer*/,
 	time_t now;
 	time(&now);
 	_resultStream << "# ls1 mardyn simulation finished at " << ctime(&now) << endl;
-        _resultStream << "# \n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: contact@ls1-mardyn.de\n# \n# Phone: +49 631 205 3227\n# University of Kaiserslautern\n# Computational Molecular Engineering\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n";
-
 	_resultStream.close();
 }

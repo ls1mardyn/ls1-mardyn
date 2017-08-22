@@ -326,8 +326,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 		node=&m_xmldoc;
 		nodepath=querystring[pos];
 		++pos;
-		if(pos>=querystring.size())
-		{ // querystr="/": path points to rootnode
+		if(querystring == "/") {
 			nodeselection.push_back(Node(node,nodepath));
 			return 1;
 		}
@@ -554,7 +553,7 @@ bool XMLfile::distributeXMLstring()
 bool XMLfile::Node::isLeafNode() const
 {
 	if(!m_xmlnode) return false;
-	if(type()!=ELEMENT_Node) return true;
+	if(type()!=ELEMENT_Node) return false;
 	if(static_cast<const rapidxml::xml_node<>*>(m_xmlnode)->first_node()) return false;
 	return true;
 }

@@ -2,13 +2,17 @@
 #define SIMULATION_SRC
 #include "Simulation.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <list>
+#include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "Common.h"
 #include "Domain.h"
@@ -123,9 +127,7 @@ Simulation::Simulation()
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.),
-	_dFmaxThreshold(0.),
-	_nWriteFreqGlobalEnergy(100),
-	_globalEnergyLogFilename("global_energy.log")
+	_dFmaxThreshold(0.)
 {
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
@@ -578,11 +580,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	OutputPluginFactory outputPluginFactory;
 	for( auto outputPluginIter = query.begin(); outputPluginIter; ++outputPluginIter ) {
 		xmlconfig.changecurrentnode( outputPluginIter );
-		OutputBase *outputPlugin = NULL;
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
-		outputPlugin = outputPluginFactory.create(pluginname);
+		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
 		} else if (pluginname == "RDF") {  // we need RDF both as an outputplugin and _rdf
@@ -619,7 +620,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(nullptr != outputPlugin) {
 			outputPlugin->readXML(xmlconfig);
 			_outputPlugins.push_back(outputPlugin);
-		} else if (pluginname != "DomainProfiles"){  // remove this line once DomainProfiles is a proper OutputPlugin
+		} else if (pluginname != "DomainProfiles"){  //!@todo remove this line once DomainProfiles is a proper OutputPlugin
 		// } else {  // and add this line
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
@@ -641,7 +642,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_inputReader = (InputBase*) new BinaryReader();
 			_inputReader->readXML(xmlconfig);
 
-			//@todo read header should be either part of readPhaseSpace or readXML.
+			//!@todo read header should be either part of readPhaseSpace or readXML.
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 		}
@@ -746,12 +747,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 #ifdef ENABLE_MPI
 	// if we are using the DomainDecomposition, please complete its initialization:
-	{
-		DomainDecomposition * temp = nullptr;
-		temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
-		if (temp != nullptr) {
-			temp->initCommunicationPartners(_cutoffRadius, _domain);
-		}
+	DomainDecomposition *temp = dynamic_cast<DomainDecomposition*>(_domainDecomposition);
+	if (temp != nullptr) {
+		temp->initCommunicationPartners(_cutoffRadius, _domain);
 	}
 #endif
 
@@ -1023,23 +1021,18 @@ void Simulation::prepare_start() {
 		}
 	}
 
-	// initial number of timesteps
-	_initSimulation = (unsigned long) round(this->_simulationTime / _integrator->getTimestepLength() );
+	_initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
+	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 
-	// initialize output and output timers
-	std::list<OutputBase*>::iterator outputIter;
-	for (outputIter = _outputPlugins.begin(); outputIter
-			!= _outputPlugins.end(); outputIter++) {
-		OutputBase* output_plugin = (*outputIter);
-		string timer_name = output_plugin->getPluginName();
+	global_log->info() << "Initializing output plugins and corresponding output timers" << endl;
+	for (auto& outputPlugin : _outputPlugins) {
+		global_log->info() << "Initializing output plugin " << outputPlugin->getPluginName() << endl;
+		outputPlugin->initOutput(_moleculeContainer, _domainDecomposition, _domain);
+		string timer_name = outputPlugin->getPluginName();
 		global_simulation->timers()->registerTimer(timer_name,  vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
 		string timer_output_string = string("Output Plugin ") + timer_name + string(" took:");
 		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
-		output_plugin->initOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
-
-	/** global energy log */
-	//this->initGlobalEnergyLog();
 
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
@@ -1133,27 +1126,18 @@ void Simulation::simulate() {
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
 
 	// all timers except the ioTimer measure inside the main loop
-	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); // timer for the entire simulation loop (synced)
-	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); // timer for decomposition: sub-timer of loopTimer
-	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); // timer for computation: sub-timer of loopTimer
-	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); // timer for io in simulation loop: sub-timer of loopTimer
-	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); // timer for final io
-	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); // timer for force calculation: sub-timer of computationTimer
-	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); // timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
+	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); ///< timer for the entire simulation loop (synced)
+	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); ///< timer for decomposition: sub-timer of loopTimer
+	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); ///< timer for computation: sub-timer of loopTimer
+	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); ///< timer for io in simulation loop: sub-timer of loopTimer
+	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); ///< timer for final IO
+	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); ///< timer for force calculation: sub-timer of computationTimer
+	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
 	//loopTimer->set_sync(true);
 	global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
 #if WITH_PAPI
-	const char *papi_event_list[] = {
-		"PAPI_TOT_CYC",
-		"PAPI_TOT_INS"
-	//	"PAPI_VEC_DP"
-	// 	"PAPI_L2_DCM"
-	// 	"PAPI_L2_ICM"
-	// 	"PAPI_L1_ICM"
-	//	"PAPI_DP_OPS"
-	// 	"PAPI_VEC_INS"
-	};
+	const char *papi_event_list[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" /*, "PAPI_VEC_DP", "PAPI_L2_DCM", "PAPI_L2_ICM", "PAPI_L1_ICM", "PAPI_DP_OPS", "PAPI_VEC_INS" }; */
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
 	loopTimer->add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
@@ -1496,8 +1480,7 @@ void Simulation::simulate() {
 				}
 			}
 		}
-		
-		// clear halo
+
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
@@ -1522,17 +1505,14 @@ void Simulation::simulate() {
 		_longRangeCorrection->calculateLongRange();
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 		
-		/*
-		 * radial distribution function
-		 */
+		/* radial distribution function */
 		if (_simstep >= _initStatistics) {
 			if (this->_lmu.size() == 0) {
 				this->_domain->record_cv();
 			}
 		}
 
-		// Inform the integrator about the calculated forces
-		global_log->debug() << "Inform the integrator" << endl;
+		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
 		if(NULL != _mettDeamon)
@@ -1682,14 +1662,8 @@ void Simulation::simulate() {
 				}
 				//global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
 			}
-
-			/*
-			if(_mirror && _applyMirror){
-				_mirror->VelocityChange(_moleculeContainer, _domain);
-			}
-			*/
-
 		}
+
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
         else if ( _temperatureControl != NULL) {
             _temperatureControl->DoLoopsOverMolecules(_moleculeContainer, _simstep);
@@ -1734,8 +1708,7 @@ void Simulation::simulate() {
 #endif
 		}
 		
-		if(_forced_checkpoint_time >= 0 && (decompositionTimer->get_etime() + computationTimer->get_etime()
-				+ ioTimer->get_etime() + perStepIoTimer->get_etime()) >= _forced_checkpoint_time) {
+		if( (_forced_checkpoint_time > 0) && (loopTimer->get_etime() >= _forced_checkpoint_time) ) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
@@ -1747,7 +1720,7 @@ void Simulation::simulate() {
 	loopTimer->stop();
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
-	/*****************************//**********************************************/
+	/***************************************************************************/
     ioTimer->start();
     if( _finalCheckpoint ) {
         /* write final checkpoint */
@@ -1818,13 +1791,11 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
-
+	using std::isnan;
 	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
 		global_log->error() << "NaN detected, exiting." << std::endl;
 		global_simulation->exit(1);
 	}
-
-	//this->writeGlobalEnergyLog(_domain->getGlobalUpot(), _domain->getGlobalCurrentTemperature(), _domain->getGlobalPressure() );
 }
 
 void Simulation::finalize() {
@@ -1967,13 +1938,12 @@ void Simulation::initialize() {
 }
 
 OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
-	OutputBase * ret = nullptr;
-	for(auto& it : _outputPlugins) {
-		if(name.compare(it->getPluginName()) == 0) {
-			ret = it;
+	for(auto& outputPlugin : _outputPlugins) {
+		if(name.compare(outputPlugin->getPluginName()) == 0) {
+			return outputPlugin;
 		}
 	}
-	return ret;
+	return nullptr;
 }
 
 void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
@@ -1988,87 +1958,3 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 	flopRateWriter->measureFLOPS(cont, simstep);
 }
 
-void Simulation::initGlobalEnergyLog()
-{
-	global_log->info() << "Init global energy log." << endl;
-
-#ifdef ENABLE_MPI
-	int rank = _domainDecomposition->getRank();
-	// int numprocs = domainDecomp->getNumProcs();
-	if (rank!= 0)
-		return;
-#endif
-
-	std::stringstream outputstream;
-	outputstream.write(reinterpret_cast<const char*>(&_nWriteFreqGlobalEnergy), 8);
-
-	ofstream fileout(_globalEnergyLogFilename.c_str(), std::ios::out | std::ios::binary);
-	fileout << outputstream.str();
-	fileout.close();
-}
-
-void Simulation::writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure)
-{
-	unsigned long nNumMolsGlobalEnergyLocal = 0ul;
-	double UkinLocal = 0.;
-	double UkinTransLocal = 0.;
-	double UkinRotLocal = 0.;
-	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:nNumMolsGlobalEnergyLocal,UkinLocal,UkinTransLocal,UkinRotLocal)
-	#endif
-	{
-		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-		const ParticleIterator end = _moleculeContainer->iteratorEnd();
-
-		// sample energy
-		for (ParticleIterator mi = begin; mi != end; ++mi) {
-			nNumMolsGlobalEnergyLocal++;
-			UkinLocal += mi->U_kin();
-			UkinTransLocal += mi->U_trans();
-			UkinRotLocal += mi->U_rot();
-		}
-	}
-
-	if(0 != _simstep % _nWriteFreqGlobalEnergy)
-		return;
-
-	// calculate global values
-	_domainDecomposition->collCommInit(4);
-	_domainDecomposition->collCommAppendUnsLong(nNumMolsGlobalEnergyLocal);
-	_domainDecomposition->collCommAppendDouble(UkinLocal);
-	_domainDecomposition->collCommAppendDouble(UkinTransLocal);
-	_domainDecomposition->collCommAppendDouble(UkinRotLocal);
-	_domainDecomposition->collCommAllreduceSum();
-	unsigned long nNumMolsGlobalEnergyGlobal = _domainDecomposition->collCommGetUnsLong();
-	double UkinGlobal = _domainDecomposition->collCommGetDouble();
-	double UkinTransGlobal = _domainDecomposition->collCommGetDouble();
-	double UkinRotGlobal = _domainDecomposition->collCommGetDouble();
-	_domainDecomposition->collCommFinalize();
-
-	// reset local values
-	nNumMolsGlobalEnergyLocal = 0;
-	UkinLocal = 0.;
-	UkinTransLocal = 0.;
-	UkinRotLocal = 0.;
-
-#ifdef ENABLE_MPI
-	int rank = _domainDecomposition->getRank();
-	// int numprocs = domainDecomp->getNumProcs();
-	if (rank!= 0)
-		return;
-#endif
-
-	std::stringstream outputstream;
-
-	outputstream.write(reinterpret_cast<const char*>(&nNumMolsGlobalEnergyGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&globalUpot), 8);
-	outputstream.write(reinterpret_cast<const char*>(&UkinGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&UkinTransGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&UkinRotGlobal), 8);
-	outputstream.write(reinterpret_cast<const char*>(&globalT), 8);
-	outputstream.write(reinterpret_cast<const char*>(&globalPressure), 8);
-
-	ofstream fileout(_globalEnergyLogFilename.c_str(), std::ios::app | std::ios::binary);
-	fileout << outputstream.str();
-	fileout.close();
-}
