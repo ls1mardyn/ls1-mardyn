@@ -10,13 +10,6 @@
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
 
-enum QuantityOffsets
-{
-	QO_VELOCITY_OFFSET = 0,
-	QO_ANGULAR_MOMENTUM_OFFSET = 7,
-	QO_FORCE_OFFSET = 14,
-};
-
 /** @brief Writes max values of velocity angular momentum and force to a file.
  *
  */

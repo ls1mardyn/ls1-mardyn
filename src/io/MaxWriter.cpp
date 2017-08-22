@@ -7,6 +7,8 @@
 #include "utils/Logger.h"
 
 #include <iomanip>
+#include <vector>
+#include <array>
 
 using Log::global_log;
 using namespace std;
@@ -138,52 +140,40 @@ void MaxWriter::doSampling(ParticleContainer* particleContainer)
 	{
 		uint32_t cid = pit->componentid()+1;  // 0: all components
 		uint32_t nOffsetComponent = cid*_numValsPerComponent;
-		double v2 = pit->v2();
-		double L2 = pit->L2();
-		double F2 = pit->F2();
+		std::array<double,3> arrQuantities;
+		arrQuantities[0] = pit->v2();
+		arrQuantities[1] = pit->L2();
+		arrQuantities[2] = pit->F2();
+		std::vector<std::array<double,3> > vecQuantitiesXYZ;
 
-		for(uint32_t cid=0; cid<_numComponents; ++cid)
+		std::array<double,3> arr;
+		for(uint8_t dim=0; dim<3; ++dim)
+			arr[dim] = pit->v(dim);
+		vecQuantitiesXYZ.push_back(arr);
+		for(uint8_t dim=0; dim<3; ++dim)
+			arr[dim] = pit->D(dim);
+		vecQuantitiesXYZ.push_back(arr);
+		for(uint8_t dim=0; dim<3; ++dim)
+			arr[dim] = pit->F(dim);
+		vecQuantitiesXYZ.push_back(arr);
+
+		for(uint32_t qi=0; qi<_numQuantities; ++qi)
 		{
-			// velocity
-			if(v2 > _dMaxValuesLocal[QO_VELOCITY_OFFSET])
-			{
-				_dMaxValuesLocal[QO_VELOCITY_OFFSET] = v2;
-				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[QO_VELOCITY_OFFSET+1+dim] = pit->v(dim);
-			}
-			if(v2 > _dMaxValuesLocal[QO_VELOCITY_OFFSET+nOffsetComponent])
-			{
-				_dMaxValuesLocal[QO_VELOCITY_OFFSET+nOffsetComponent] = v2;
-				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[QO_VELOCITY_OFFSET+1+dim+nOffsetComponent] = pit->v(dim);
-			}
+			uint32_t nOffsetQuantity = _numValsPerQuantity*qi;
 
-			// angular momentum
-			if(L2 > _dMaxValuesLocal[QO_ANGULAR_MOMENTUM_OFFSET])
+			// all components
+			if(arrQuantities[qi] > _dMaxValuesLocal[nOffsetQuantity])
 			{
-				_dMaxValuesLocal[QO_ANGULAR_MOMENTUM_OFFSET] = L2;
+				_dMaxValuesLocal[nOffsetQuantity] = arrQuantities[qi];
 				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[QO_ANGULAR_MOMENTUM_OFFSET+1+dim] = pit->v(dim);
+					_dMaxValuesLocal[nOffsetQuantity+1+dim] = vecQuantitiesXYZ.at(qi)[dim];
 			}
-			if(L2 > _dMaxValuesLocal[QO_ANGULAR_MOMENTUM_OFFSET+nOffsetComponent])
+			// specific component
+			if(arrQuantities[qi] > _dMaxValuesLocal[nOffsetQuantity+nOffsetComponent])
 			{
-				_dMaxValuesLocal[QO_ANGULAR_MOMENTUM_OFFSET+nOffsetComponent] = L2;
+				_dMaxValuesLocal[nOffsetQuantity+nOffsetComponent] = arrQuantities[qi];
 				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[QO_ANGULAR_MOMENTUM_OFFSET+1+dim+nOffsetComponent] = pit->v(dim);
-			}
-
-			// force
-			if(F2 > _dMaxValuesLocal[QO_FORCE_OFFSET])
-			{
-				_dMaxValuesLocal[QO_FORCE_OFFSET] = F2;
-				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[QO_FORCE_OFFSET+1+dim] = pit->v(dim);
-			}
-			if(F2 > _dMaxValuesLocal[QO_FORCE_OFFSET+nOffsetComponent])
-			{
-				_dMaxValuesLocal[QO_FORCE_OFFSET+nOffsetComponent] = F2;
-				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[QO_FORCE_OFFSET+1+dim+nOffsetComponent] = pit->v(dim);
+					_dMaxValuesLocal[nOffsetQuantity+1+dim+nOffsetComponent] = vecQuantitiesXYZ.at(qi)[dim];
 			}
 		}
 	}
@@ -210,53 +200,35 @@ void MaxWriter::resetLocalValues()
 
 void MaxWriter::writeData(DomainDecompBase* domainDecomp)
 {
-	// write data
+	// only root process writes data to files
+	if( 0 != domainDecomp->getRank() )
+		return;
+
 	std::stringstream sstrFilename[3];
 	sstrFilename[0] << _outputPrefix << "_max_veloc.dat";
 	sstrFilename[1] << _outputPrefix << "_max_angmo.dat";
 	sstrFilename[2] << _outputPrefix << "_max_force.dat";
 
-	if( 0 != domainDecomp->getRank() )
-		return;
-
 	std::stringstream sstrOutput[3];
 
-	// velocity
-	sstrOutput[0] << std::setw(24) << global_simulation->getSimulationStep();
-	for(uint32_t cid=0; cid<_numComponents; ++cid)
+	// write data to streams
+	for(uint32_t qi=0; qi<_numQuantities; ++qi)
 	{
-		uint32_t nOffsetComponent = cid*_numValsPerComponent;
-		double vmax = sqrt(_dMaxValuesGlobal[QO_VELOCITY_OFFSET+nOffsetComponent]);
-		sstrOutput[0] << FORMAT_SCI_MAX_DIGITS << vmax;
-		for(uint8_t vi=1; vi<_numValsPerQuantity; ++vi)
-			sstrOutput[0] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[QO_VELOCITY_OFFSET+nOffsetComponent+vi];
-	}
-	sstrOutput[0] << endl;
+		uint32_t nOffsetQuantity = _numValsPerQuantity*qi;
 
-	// angular momentum
-	sstrOutput[1] << std::setw(24) << global_simulation->getSimulationStep();
-	for(uint32_t cid=0; cid<_numComponents; ++cid)
-	{
-		uint32_t nOffsetComponent = cid*_numValsPerComponent;
-		double Lmax = sqrt(_dMaxValuesGlobal[QO_ANGULAR_MOMENTUM_OFFSET+nOffsetComponent]);
-		sstrOutput[1] << FORMAT_SCI_MAX_DIGITS << Lmax;
-		for(uint8_t vi=1; vi<_numValsPerQuantity; ++vi)
-			sstrOutput[1] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[QO_ANGULAR_MOMENTUM_OFFSET+nOffsetComponent+vi];
+		sstrOutput[qi] << std::setw(24) << global_simulation->getSimulationStep();
+		for(uint32_t cid=0; cid<_numComponents; ++cid)
+		{
+			uint32_t nOffsetComponent = cid*_numValsPerComponent;
+			double vmax = sqrt(_dMaxValuesGlobal[nOffsetQuantity+nOffsetComponent]);
+			sstrOutput[0] << FORMAT_SCI_MAX_DIGITS << vmax;
+			for(uint8_t vi=1; vi<_numValsPerQuantity; ++vi)
+				sstrOutput[qi] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[nOffsetQuantity+nOffsetComponent+vi];
+		}
+		sstrOutput[qi] << endl;
 	}
-	sstrOutput[1] << endl;
 
-	// force
-	sstrOutput[2] << std::setw(24) << global_simulation->getSimulationStep();
-	for(uint32_t cid=0; cid<_numComponents; ++cid)
-	{
-		uint32_t nOffsetComponent = cid*_numValsPerComponent;
-		double Fmax = sqrt(_dMaxValuesGlobal[QO_FORCE_OFFSET+nOffsetComponent]);
-		sstrOutput[2] << FORMAT_SCI_MAX_DIGITS << Fmax;
-		for(uint8_t vi=1; vi<_numValsPerQuantity; ++vi)
-			sstrOutput[2] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[QO_FORCE_OFFSET+nOffsetComponent+vi];
-	}
-	sstrOutput[2] << endl;
-
+	// write streams to files
 	for(uint8_t fi=0; fi<3; ++fi)
 	{
 		ofstream ofs(sstrFilename[fi].str().c_str(), ios::app);
