@@ -18,9 +18,9 @@
 /** @brief Plugin Factory
  *
  * Provides a common interface to register plugins based on the template given as parameter.
- * The interface must include include the the following method:
+ * The interface must include the following method:
  * \code{.cpp}
- *   virtual std::string getPluginName()  = 0; // return the name of the plugin
+ *   virtual std::string getPluginName() = 0; // return the name of the plugin
  * \endcode
  * Also each plugin has to implement the following static method:
  * \code{.cpp}
