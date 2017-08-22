@@ -51,11 +51,11 @@ public:
 			Log::global_log->debug() << "Registered plugins: " << string_utils::join(getPluginNames(), ", ") << std::endl;
 			return;
 		}
-			_pluginFactoryMap[pluginname] = createInstance;
+		_pluginFactoryMap[pluginname] = createInstance;
 	}
 
 	/** @brief Get all names of registered plugins */
-		std::vector<std::string> getPluginNames() {
+	std::vector<std::string> getPluginNames() {
 		std::vector<std::string> pluginNames;
 		for(auto pluginIter : _pluginFactoryMap) {
 			pluginNames.push_back(pluginIter.first);
@@ -64,7 +64,7 @@ public:
 	}
 
 	/** @brief Create a new instance of plugin */
-		T* create(std::string pluginname) {
+	T* create(std::string pluginname) {
 		auto existing = _pluginFactoryMap.find(pluginname);
 		if( existing != _pluginFactoryMap.end() ) {
 			return existing->second(); /* call createInstance for plugin */
