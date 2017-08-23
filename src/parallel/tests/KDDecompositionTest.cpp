@@ -191,7 +191,7 @@ void KDDecompositionTest::testbalanceAndExchange() {
 		//cout << "running " << numReps << " repetitions" << std::endl;
 	}
 	for (int i = 0; i < numReps; ++i) {
-		kdd->balanceAndExchange(true, moleculeContainer, _domain);
+		kdd->balanceAndExchange(1.0, true, moleculeContainer, _domain);
 		moleculeContainer->updateMoleculeCaches();
 	}
 

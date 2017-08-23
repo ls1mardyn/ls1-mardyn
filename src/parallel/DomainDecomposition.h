@@ -46,7 +46,7 @@ public:
 	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
+	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
 	//! @brief writes information about the current decomposition into the given file
 	//!

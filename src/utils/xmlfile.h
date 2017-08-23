@@ -116,7 +116,7 @@ public:
 		/// \brief get node name
 		/// returns the name of the node, if node is valid - otherwise an empty string
 		std::string name() const
-			{ if(m_xmlnode) return m_xmlnode->name(); else return std::string(); }
+			{ return (m_xmlnode) ? std::string(m_xmlnode->name()) : std::string(); }
 		
 		/// \brief invalidate the node
 		/// set the internal state to invalid
@@ -287,8 +287,8 @@ public:
 		
 		/// \brief XMLfile::Query constructor
 		/// sets up an invalid query
-		Query() : m_xmlfile(NULL)
-			{ m_nodes.clear(); }
+		Query() : m_xmlfile(NULL), m_nodes()
+			{}
 		/// \brief copy constructor
 		/// duplicate a given query and register the new created one at the XMLfile
 		/// \param const Query&	query

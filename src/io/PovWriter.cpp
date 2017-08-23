@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include "Common.h"
 #include "Domain.h"
@@ -15,22 +16,6 @@ using Log::global_log;
 using namespace std;
 
 
-PovWriter::PovWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
-	_outputPrefix = outputPrefix;
-	_writeFrequency = writeFrequency;
-	_incremental = incremental;
-
-	if (outputPrefix == "default") {
-		_appendTimestamp = true;
-	}
-	else {
-		_appendTimestamp = false;
-	}
-}
-
-PovWriter::~PovWriter() {}
-
-
 void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
@@ -39,18 +24,17 @@ void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
-	
+
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
 	global_log->info() << "Incremental numbers: " << _incremental << endl;
-	
+
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
-	}
-	else{
+	} else{
 		_appendTimestamp = false;
 	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
@@ -125,7 +109,6 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		double mrot[3][3];
 		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
 			(pos->q()).getRotMatrix(mrot);
-			//cout << "object { T0 rotate <0,0,0> translate <0,0,0>}" << endl;
 			ostrm << "object { T" << pos->componentid();
 			ostrm << " matrix <"
 			      << mrot[0][0] << "," << mrot[0][1] << "," << mrot[0][2] << ","
