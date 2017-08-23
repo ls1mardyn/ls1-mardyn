@@ -134,12 +134,12 @@ void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
 }
 
 //check whether or not to do rebalancing in the specified step
-bool doRebalancing(bool forceRebalancing, size_t steps, int frequency){
-	return forceRebalancing or steps % frequency == 0 or steps <= 1;
+bool doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int frequency){
+	return forceRebalancing or ((steps % frequency == 0 or steps <= 1) and needsRebalance);
 }
 
-bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
-	return not doRebalancing(forceRebalancing, _steps, _frequency);
+bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, bool needsRebalance, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+	return not doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 }
 
 void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
@@ -161,7 +161,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		needsRebalance = true;
 	}
 
-	const bool rebalance = doRebalancing(forceRebalancing, _steps, _frequency);
+	const bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;
 

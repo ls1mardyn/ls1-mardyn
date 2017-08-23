@@ -85,7 +85,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 			unsigned int stageNumber) override;
 
 	// documentation in base class
-	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, bool needsRebalance, ParticleContainer* moleculeContainer, Domain* domain);
 
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
