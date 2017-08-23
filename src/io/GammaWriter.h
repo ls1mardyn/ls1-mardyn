@@ -20,6 +20,16 @@ public:
 	GammaWriter() {}
 	~GammaWriter() {}
 
+	/** @brief Read in XML configuration for GammaWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="RDF">
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	   </outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	//! @todo comment
 	void initOutput(ParticleContainer* particleContainer,
