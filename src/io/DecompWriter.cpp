@@ -35,9 +35,6 @@ void DecompWriter::readXML(XMLfileUnits& xmlconfig) {
 		_appendTimestamp = true;
 	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
-
-	xmlconfig.getNodeValue("mode", _mode);
-	global_log->info() << "Mode: " << _mode << endl;
 }
 
 
@@ -60,29 +57,6 @@ void DecompWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBa
 		filenamestream << ".decomp";
 
 		domainDecomp->printDecomp(filenamestream.str(), domain);
-		
-		if(_mode=="withParticles"){
-			int ownRank = domainDecomp->getRank();
-			for(int process = 0; process < domainDecomp->getNumProcs(); process++){
-				if(ownRank==process){
-					ofstream decompstrm(filenamestream.str().c_str(), ios::app);
-					if(ownRank==0) {
-						decompstrm << "particleData xyz" << endl;
-					}
-					ParticleIterator moleculePtr;
-					for(moleculePtr = particleContainer->iteratorBegin(); moleculePtr != particleContainer->iteratorEnd(); ++moleculePtr) {
-						decompstrm << moleculePtr->r(0) << "\t" << moleculePtr->r(1) << "\t" << moleculePtr->r(2) << endl;
-					}
-					decompstrm.close();
-				}
-				domainDecomp->barrier();
-			}
-		}
-		else if(domainDecomp->getRank()==0){
-			ofstream decompstrm(filenamestream.str().c_str(), ios::app);
-			decompstrm << "particleData none" << endl;
-			decompstrm.close();
-		}
 	}  
 }
 

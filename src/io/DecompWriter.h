@@ -40,7 +40,6 @@ public:
 	static OutputBase* createInstance() { return new DecompWriter(); }
 private:
 	unsigned long _writeFrequency;
-	std::string _mode;
 	bool _appendTimestamp;
 	bool _incremental;
 	std::string _outputPrefix;
