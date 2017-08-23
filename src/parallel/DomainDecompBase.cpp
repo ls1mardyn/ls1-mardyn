@@ -101,7 +101,7 @@ bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancin
 	return false;
 }
 
-void DomainDecompBase::balanceAndExchange(bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
 	exchangeMolecules(moleculeContainer, domain);
 }
 

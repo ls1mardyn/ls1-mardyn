@@ -98,7 +98,7 @@ public:
 	//! 					otherwise automatic balancing of Decomposition is applied
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	virtual void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief find out whether the given position belongs to the domain of this process
 	//!

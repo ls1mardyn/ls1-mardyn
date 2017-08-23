@@ -241,7 +241,7 @@ public:
 	 * - update the caches of the molecules
 	 * - update the ParticleContainer
 	 */
-	void updateParticleContainerAndDecomposition();
+	void updateParticleContainerAndDecomposition(double lastTraversalTime);
 
 	/**
 	 * Performs both the decomposition and the cell traversal in an overlapping way.

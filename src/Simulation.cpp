@@ -781,7 +781,7 @@ void Simulation::prepare_start() {
 	// temporary addition until MPI communication is parallelized with OpenMP
 	// we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
 	global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
-	updateParticleContainerAndDecomposition();
+	updateParticleContainerAndDecomposition(1.0);
 	global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 
 	_memoryProfiler->doOutput("with halo copies");
@@ -1002,13 +1002,15 @@ void Simulation::simulate() {
 	_memoryProfiler->doOutput();
 	output(_initSimulation);
 
+	Timer perStepTimer;
+	perStepTimer.reset();
 	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 		global_simulation->timers()->incrementTimerTimestepCounter();
 
 		computationTimer->start();
-
+		perStepTimer.start();
 		/** @todo What is this good for? Where come the numbers from? Needs documentation */
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -1075,6 +1077,7 @@ void Simulation::simulate() {
 #endif
 #endif
 		}
+		perStepTimer.stop();
 		computationTimer->stop();
 
 
@@ -1092,22 +1095,25 @@ void Simulation::simulate() {
 			decompositionTimer->start();
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition" << endl;
-			updateParticleContainerAndDecomposition();
+			updateParticleContainerAndDecomposition(perStepTimer.get_etime());
 			decompositionTimer->stop();
-
+			perStepTimer.reset();
 			double startEtime = computationTimer->get_etime();
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer->start();
+			perStepTimer.start();
 			forceCalculationTimer->start();
 			_moleculeContainer->traverseCells(*_cellProcessor);
 			forceCalculationTimer->stop();
+			perStepTimer.stop();
 			computationTimer->stop();
 
 			_loopCompTime += computationTimer->get_etime() - startEtime;
 			_loopCompTimeSteps ++;
 		}
 		computationTimer->start();
+		perStepTimer.start();
 
 		measureFLOPRate(_moleculeContainer, _simstep);
 
@@ -1320,6 +1326,8 @@ void Simulation::simulate() {
 		*/
 		/* END PHYSICAL SECTION */
 
+		
+		perStepTimer.stop();
 		computationTimer->stop();
 		perStepIoTimer->start();
 
@@ -1445,14 +1453,14 @@ void Simulation::finalize() {
 	global_simulation = NULL;
 }
 
-void Simulation::updateParticleContainerAndDecomposition() {
+void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime) {
 	// The particles have moved, so the neighborhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred

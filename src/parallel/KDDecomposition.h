@@ -87,7 +87,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
+	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain) override;
@@ -278,6 +278,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	bool _heterogeneousSystems;
 	bool _splitBiggest;  // indicates, whether a subdomain is to be split along its biggest size
 	bool _forceRatio;  // if you want to enable forcing the above ratio, enable this.
+	double _rebalanceLimit; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
 };
 
 

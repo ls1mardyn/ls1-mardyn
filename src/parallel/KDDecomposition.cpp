@@ -28,7 +28,7 @@ using Log::global_log;
 KDDecomposition::KDDecomposition() :
 		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.), _cutoffRadius(
 				1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.), _processorSpeedUpdateCount(0),
-				_heterogeneousSystems(false), _splitBiggest(true), _forceRatio(false){
+				_heterogeneousSystems(false), _splitBiggest(true), _forceRatio(false), _rebalanceLimit(0) {
 	bool before = global_log->get_do_output();
 	global_log->set_mpi_output_all();
 	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
@@ -108,6 +108,14 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition splits along biggest domain?: " << (_splitBiggest?"yes":"no") << endl;
 	xmlconfig.getNodeValue("forceRatio", _forceRatio);
 	global_log->info() << "KDDecomposition forces load/performance ratio?: " << (_forceRatio?"yes":"no") << endl;
+	xmlconfig.getNodeValue("rebalanceLimit", _rebalanceLimit);
+	if(_rebalanceLimit > 0) {
+		global_log->info() << "KDDecomposition automatic rebalancing: enabled" << endl;
+		global_log->info() << "KDDecomposition rebalance limit: " << _rebalanceLimit << endl;
+	}
+	else {
+		global_log->info() << "KDDecomposition automatic rebalancing: disabled" << endl;
+	}
 	DomainDecompMPIBase::readXML(xmlconfig);
 }
 
@@ -134,7 +142,25 @@ bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, 
 	return not doRebalancing(forceRebalancing, _steps, _frequency);
 }
 
-void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+	bool needsRebalance = false;
+	if(_rebalanceLimit > 0) { /* automatic rebalancing */
+		double localTraversalTimes[2];
+		localTraversalTimes[0] = -lastTraversalTime;
+		localTraversalTimes[1] =  lastTraversalTime;
+		double globalTraversalTimes[2];
+		MPI_CHECK(MPI_Allreduce(localTraversalTimes, globalTraversalTimes, 2, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD));
+		globalTraversalTimes[0] *= -1.0;
+		double timerCoeff = globalTraversalTimes[1]/globalTraversalTimes[0];
+		global_log->info() << "KDDecomposition timerCoeff: " << timerCoeff << endl;
+		if(timerCoeff > _rebalanceLimit) {
+			needsRebalance = true;
+		}
+	}
+	else {
+		needsRebalance = true;
+	}
+
 	const bool rebalance = doRebalancing(forceRebalancing, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;
