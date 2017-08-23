@@ -9,6 +9,7 @@
 #define RDFTEST_H_
 
 #include "utils/TestWithSimulationSetup.h"
+#include "io/RDF.h"
 
 
 class RDFTest : public utils::TestWithSimulationSetup {
@@ -80,6 +81,8 @@ public:
 	 * run in parallel.
 	 */
 	void testSiteSiteRDF(ParticleContainer* moleculeContainer);
+
+	void initRDF(RDF &rdf, double intervalLength, unsigned int bins, std::vector<Component>* components);
 };
 
 #endif /* RDFTEST_H_ */

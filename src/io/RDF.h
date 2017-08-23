@@ -28,7 +28,6 @@ class Component;
  * - for each bin: calculate the number density (i.e. number of particles per volume)
  *   of the corresponding shell
  * - divide the number density by the number density of the system.
- *
  */
 class RDF : public OutputBase {
 
@@ -37,12 +36,6 @@ class RDF : public OutputBase {
 public:
 
 	RDF();
-	/**
-	 * @todo Wouldn't make sense to calculate the parameter intervalLength?
-	 *       intervalLength = cutoffRadius / bins
-	 */
-	RDF(double intervalLength, unsigned int bins, std::vector<Component>* components);
-
 	virtual ~RDF();
 
 	void readXML(XMLfileUnits& xmlconfig);
@@ -58,11 +51,11 @@ public:
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
-	void setOutputTimestep(unsigned int timestep);
+	void setOutputTimestep(unsigned int timestep) { _writeFrequency = timestep; }
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
-	void setOutputPrefix(std::string prefix);
+	void setOutputPrefix(std::string prefix) { _outputPrefix = prefix; }
 
 	//! plot all the statistics calculated to one or several files
 	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav);
