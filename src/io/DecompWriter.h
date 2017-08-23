@@ -1,5 +1,5 @@
-#ifndef DECOMPWRITER_H_
-#define DECOMPWRITER_H_
+#ifndef SRC_IO_DECOMPWRITER_H_
+#define SRC_IO_DECOMPWRITER_H_
 
 #include <string>
 
@@ -15,9 +15,8 @@
 //! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 class DecompWriter : public OutputBase {
 public:
-    DecompWriter(){}
-	DecompWriter(unsigned long writeFrequency, std::string mode, std::string outputPrefix, bool incremental);
-	~DecompWriter();
+	DecompWriter() {}
+	~DecompWriter() {}
 
 	void readXML(XMLfileUnits& xmlconfig);
 
@@ -47,4 +46,4 @@ private:
 	std::string _outputPrefix;
 };
 
-#endif /*DECOMPWRITER_H_*/
+#endif  // SRC_IO_DECOMPWRITER_H_

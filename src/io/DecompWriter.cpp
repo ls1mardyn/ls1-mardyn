@@ -14,21 +14,6 @@
 using Log::global_log;
 using namespace std;
 
-DecompWriter::DecompWriter(unsigned long writeFrequency, string mode, string outputPrefix, bool incremental) {
-	_outputPrefix = outputPrefix;
-	_mode = mode;
-	_writeFrequency = writeFrequency;
-	_incremental = incremental;
-
-	if (outputPrefix== "default") {
-		_appendTimestamp = true;
-	}
-	else {
-		_appendTimestamp = false;
-	}
-}
-
-DecompWriter::~DecompWriter(){}
 
 void DecompWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
