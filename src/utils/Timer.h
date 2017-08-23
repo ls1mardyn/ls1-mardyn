@@ -101,7 +101,7 @@ public:
 	}
 
 	void start() {
-		if (!_active) {
+		if (!isActive()) {
 			assert(_state == TIMER_HALTED);
 			return;
 		}
@@ -121,7 +121,7 @@ public:
 	}
 
 	void stop() {
-		if (!_active) {
+		if (!isActive()) {
 			assert(_state == TIMER_HALTED);
 			return;
 		}
@@ -144,7 +144,7 @@ public:
 	}
 
 	void reset() {
-		if (!_active) {
+		if (!isActive()) {
 			assert(_state == TIMER_HALTED);
 			return ;
 		}
