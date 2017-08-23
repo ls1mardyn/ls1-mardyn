@@ -21,7 +21,7 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <outputplugin name="RDF">
+	   <outputplugin name="XyzWriter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
