@@ -6,18 +6,29 @@
 #include "io/OutputBase.h"
 
 
-//! @brief writes out information about decomposition of the simulation domain.
-//!
-//! @param filename Name of the written file (including path)
-//! @param particleContainer The molecules that are contained in the simulation domain
-//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
-//!                     Methods to achieve this are available in domainDecomp
-//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
+/** @brief writes out information about decomposition of the simulation domain.
+ *
+ * Writes out decomposition information. The data written to the file depend
+ * on the used domain decomposition.
+ */
 class DecompWriter : public OutputBase {
 public:
 	DecompWriter() {}
 	~DecompWriter() {}
 
+
+	/** @brief Read in XML configuration for DecompWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="RDF">
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	     <incremental>INTEGER</incremental>
+	     <appendTimestamp>INTEGER</appendTimestamp>
+	   </outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	//! @todo comment
