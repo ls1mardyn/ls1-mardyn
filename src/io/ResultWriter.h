@@ -1,5 +1,5 @@
-#ifndef RESULTWRITER_H_
-#define RESULTWRITER_H_
+#ifndef SRC_IO_RESULTWRITER_H_
+#define SRC_IO_RESULTWRITER_H_
 
 #include <fstream>
 #include <string>
@@ -23,9 +23,8 @@
  */
 class ResultWriter : public OutputBase {
 public:
-	ResultWriter(){}
-	ResultWriter(unsigned long writeFrequency, std::string outputPrefix);
-	~ResultWriter();
+	ResultWriter() {}
+	~ResultWriter() {}
 
 	/** @brief Read in XML configuration for ResultWriter and all its included objects.
 	 *
@@ -66,4 +65,4 @@ private:
 	Accumulator<double> *_p_acc;
 };
 
-#endif /*RESULTWRITER_H_*/
+#endif  // SRC_IO_RESULTWRITER_H_
