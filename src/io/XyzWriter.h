@@ -16,6 +16,19 @@ class XyzWriter : public OutputBase {
 public:
 	XyzWriter() {}
 	~XyzWriter() {}
+
+	/** @brief Read in XML configuration for DecompWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="RDF">
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	     <incremental>INTEGER</incremental>
+	     <appendTimestamp>INTEGER</appendTimestamp>
+	   </outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	void initOutput(ParticleContainer* particleContainer,
