@@ -172,7 +172,7 @@ public:
 
 	/** @brief process configuration file
 	 *
-	 * calls initConfigXML or initConfigOldStyle
+	 * calls initConfigXML
 	 * @param[in]  filename filename of the input file
 	 */
 	void readConfigFile(std::string filename);
@@ -193,21 +193,6 @@ public:
 	void initConfigXML(const std::string& inputfilename);
 	void initConfigXML(const char* inputfilename) {
 		initConfigXML(std::string(inputfilename));
-	}
-
-	/** @brief process oldstyle configuration file (*.cfg)
-	 *
-	 * Opens the file with the given filename and reads in all parameters
-	 * for the simulaion and initializes the following member variables:
-	 * - timestepLength:
-	 * - cutoffRadius
-	 * - phaseSpace
-	 * - moleculeContainer
-	 * @param[in]  inputfilename filename of the XML input file
-	 */
-	void initConfigOldstyle(const std::string& inputfilename);
-	void initConfigOldstyle(const char* inputfilename) {
-		initConfigOldstyle(std::string(inputfilename));
 	}
 
 	/** @brief calculate all values for the starting timepoint
