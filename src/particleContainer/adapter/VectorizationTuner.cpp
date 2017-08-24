@@ -29,13 +29,6 @@
 //preprocessing macros
 //#define MASKING
 
-VectorizationTuner::VectorizationTuner(std::string outputPrefix, unsigned int minMoleculeCnt, unsigned int maxMoleculeCnt,
-		MoleculeCntIncreaseTypeEnum moleculeCntIncreaseType, double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
-	_outputPrefix(outputPrefix), _minMoleculeCnt(minMoleculeCnt), _maxMoleculeCnt(maxMoleculeCnt), _moleculeCntIncreaseType(moleculeCntIncreaseType),
-	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL){
-
-}
-
 VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
 	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
 	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL){
