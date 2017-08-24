@@ -62,6 +62,10 @@ public:
 
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
+
+	/** get coordinate of current angular momentum onto molecule */
+	double L(unsigned short d) const {return _L[d]; }
+
 	/** get molecule's orientation */
 	const Quaternion& q() const { return _q; }
 
