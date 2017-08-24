@@ -47,7 +47,18 @@ public:
 	void initOutput(ParticleContainer* particleContainer,
 				DomainDecompBase* domainDecomp, Domain* domain);
 
-	//documentation in OutputBase, used to get parameters from xml files.
+	/** @brief Read in XML configuration for the VectorizationTuner.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <parallelisation type="KDDecomposition">
+	     <outputfilename>STRING</outputfilename>
+	     <minmoleculecnt>INTEGER</minmoleculecnt>
+	     <maxmoleculecnt>INTEGER</maxmoleculecnt>
+	     <moleculecntincreasetype>INTEGER</moleculecntincreasetype>
+	   </parallelisation>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	//documentation in OutputBase, does nothing.
