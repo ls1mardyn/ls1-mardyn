@@ -98,8 +98,13 @@ void LoadbalanceWriter::recordTimes(unsigned long simstep) {
 }
 
 void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
+#if ENABLE_MPI
 	//! @todo If this shall become a general LB monitor/manager a MPI_Allreduce will be needed here
-	MPI_CHECK(MPI_Reduce( _times.data(), _global_times.data(), _times.size(), MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD));
+	MPI_CHECK(MPI_Reduce( _times.data(), _global_times.data(), _times.size(), MPI_DOUBLE, MPI_MAX, 0, domainDecomp->getCommunicator()));
+#else
+	//! @todo in case we do not reuse _times later on, we may use here  _global_times = std::move(_times);
+	_global_times = _times;
+#endif
 	if(0 == domainDecomp->getRank()) {
 		std::ofstream outputfile(_outputFilename,  std::ofstream::app);
 		for(size_t i = 0; i < _simsteps.size(); ++i) {
