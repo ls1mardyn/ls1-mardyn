@@ -21,7 +21,7 @@ class KDNode;
  * search of the best subdivision.
  *
  * The function to minimize is the load imbalance:
- * sum over all children i: \sum (load_i - _optimalLoad)^2
+ * \f[\sum_{i \in \text{children}} (\text{load}_i - \text{optimalLoad})^2\f]
  *
  * During the downward pass an estimate is the expected load imbalance, which is
  * averaged over all children, in the upward pass, the exact imbalance is calculated.
@@ -53,7 +53,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	KDDecomposition();
 
-	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
 
 
@@ -68,11 +67,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 	   \endcode
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig) override;
-
-	//###############################################
-	//### The following methods are those of the  ###
-	//### base class which have to be implemented ###
-	//###############################################
 
 	// documentation in base class
 	virtual void prepareNonBlockingStage(bool forceRebalancing,
