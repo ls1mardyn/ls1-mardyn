@@ -13,6 +13,7 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 
 #include <vector>
+#include <array>
 #include <cstdint>
 
 enum RegionSamplingDimensions
@@ -27,6 +28,27 @@ enum RegionSamplingFileTypes : uint8_t
 	RSFT_ASCII = 1,
 	RSFT_BINARY = 2
 };
+
+struct ComponentSpecificParamsVDF
+{
+	bool bSamplingEnabled;
+	double dVeloMax;
+	double dVelocityClassWidth;
+	double dInvVelocityClassWidth;
+	uint32_t numVelocityClasses;
+	uint32_t numVals;
+	uint32_t nOffsetDataStructure;
+	std::vector<double> dDiscreteVelocityValues;
+};
+//#define USE_TEST_INPUT
+#ifdef USE_TEST_INPUT
+struct TestInputType
+{
+	uint32_t cid;
+	uint32_t binIndex;
+	uint32_t classIndex;
+};
+#endif
 
 class XMLfileUnits;
 class Domain;
@@ -55,22 +77,11 @@ public:
 		_SamplingEnabledProfiles = true;
 		_dInvertNumSamplesProfiles = 1. / ( (double)(_writeFrequencyProfiles) );  // needed for e.g. density profiles
 	}
-	void SetParamVDF( unsigned long initSamplingVDF, unsigned long writeFrequencyVDF, unsigned long stopSamplingVDF,
-					  unsigned int nNumDiscreteStepsVDF, double dVeloMax)
-	{
-		_initSamplingVDF       = initSamplingVDF;
-		_writeFrequencyVDF     = writeFrequencyVDF;
-		_stopSamplingVDF       = stopSamplingVDF;
-		_nNumDiscreteStepsVDF  = nNumDiscreteStepsVDF;
-		 _dVeloMax             = dVeloMax;
-		_SamplingEnabledVDF = true;
-	}
-	void SetParamVDF() {_SamplingEnabledVDF = true;}
 
 	// subdivision
 	void SetSubdivisionProfiles(const unsigned int& nNumSlabs) {_nNumBinsProfiles = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
 	void SetSubdivisionProfiles(const double& dSlabWidth) {_dBinWidthProfilesInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
-	void SetSubdivisionVDF(const unsigned int& nNumSlabs) {_nNumBinsVDF = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
+	void SetSubdivisionVDF(const unsigned int& nNumSlabs) {_numBinsVDF = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
 	void SetSubdivisionVDF(const double& dSlabWidth) {_dBinWidthVDFInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
 	void PrepareSubdivisionProfiles();  // need to be called before data structure allocation
 	void PrepareSubdivisionVDF();  		// need to be called before data structure allocation
@@ -109,10 +120,20 @@ private:
 	void ResetLocalValuesVDF();
 	void ResetLocalValuesFieldYR();
 
+	void InitComponentSpecificParamsVDF();
+	void ShowComponentSpecificParamsVDF();
+#ifdef USE_TEST_INPUT
+	void InitTestInput();
+#endif
 private:
-
+#ifdef USE_TEST_INPUT
+	std::vector<TestInputType> _vecTestInput;
+	static uint32_t _nTestInputIndex;
+#endif
 	// instances / ID
 	static unsigned short _nStaticID;
+
+	uint32_t _numComponents;
 
 	// ******************
 	// sampling variables
@@ -143,7 +164,6 @@ private:
 	unsigned long _nNumValsScalar;
 	unsigned long _nNumValsVector;
 
-	unsigned int _nNumComponents;
 	std::vector<double> _vecMass;
 	double _dInvertNumSamplesProfiles;
 	double _dInvertBinVolumeProfiles;
@@ -191,53 +211,54 @@ private:
 	unsigned long _initSamplingVDF;
 	unsigned long _writeFrequencyVDF;
 	unsigned long _stopSamplingVDF;
-	unsigned int _nNumBinsVDF;
-	unsigned int _nNumDiscreteStepsVDF;
-	double _dVeloMax;
 
 	// control
 	bool _bDiscretisationDoneVDF;
 	bool _SamplingEnabledVDF;
 
-	double  _dBinWidthVDF;
-	double  _dBinWidthVDFInit;
-	double* _dBinMidpointsVDF;
-	double* _dDiscreteVelocityValues;
+	double _dBinWidthVDF;
+	double _dInvBinWidthVDF;
+	double _dBinWidthVDFInit;
+	std::vector<double> _dBinMidpointsVDF;
+
+	// component specific parameters
+	std::vector<ComponentSpecificParamsVDF> _vecComponentSpecificParamsVDF;
+
+	// data structures
+	uint32_t _numBinsVDF;
+	uint32_t _numValsVDF;
 
 	// local
-	unsigned long** _veloDistrMatrixLocal_py_abs;
-	unsigned long** _veloDistrMatrixLocal_py_pvx;
-	unsigned long** _veloDistrMatrixLocal_py_pvy;
-	unsigned long** _veloDistrMatrixLocal_py_pvz;
-	unsigned long** _veloDistrMatrixLocal_py_nvx;
-	unsigned long** _veloDistrMatrixLocal_py_nvy;
-	unsigned long** _veloDistrMatrixLocal_py_nvz;
+	uint64_t* _VDF_pjy_abs_local;
+	uint64_t* _VDF_pjy_pvx_local;
+	uint64_t* _VDF_pjy_pvy_local;
+	uint64_t* _VDF_pjy_pvz_local;
+	uint64_t* _VDF_pjy_nvx_local;
+	uint64_t* _VDF_pjy_nvz_local;
 
-	unsigned long** _veloDistrMatrixLocal_ny_abs;
-	unsigned long** _veloDistrMatrixLocal_ny_pvx;
-	unsigned long** _veloDistrMatrixLocal_ny_pvy;
-	unsigned long** _veloDistrMatrixLocal_ny_pvz;
-	unsigned long** _veloDistrMatrixLocal_ny_nvx;
-	unsigned long** _veloDistrMatrixLocal_ny_nvy;
-	unsigned long** _veloDistrMatrixLocal_ny_nvz;
+	uint64_t* _VDF_njy_abs_local;
+	uint64_t* _VDF_njy_pvx_local;
+	uint64_t* _VDF_njy_pvz_local;
+	uint64_t* _VDF_njy_nvx_local;
+	uint64_t* _VDF_njy_nvy_local;
+	uint64_t* _VDF_njy_nvz_local;
 
 	// global
-	unsigned long** _veloDistrMatrixGlobal_py_abs;
-	unsigned long** _veloDistrMatrixGlobal_py_pvx;
-	unsigned long** _veloDistrMatrixGlobal_py_pvy;
-	unsigned long** _veloDistrMatrixGlobal_py_pvz;
-	unsigned long** _veloDistrMatrixGlobal_py_nvx;
-	unsigned long** _veloDistrMatrixGlobal_py_nvy;
-	unsigned long** _veloDistrMatrixGlobal_py_nvz;
+	uint64_t* _VDF_pjy_abs_global;
+	uint64_t* _VDF_pjy_pvx_global;
+	uint64_t* _VDF_pjy_pvy_global;
+	uint64_t* _VDF_pjy_pvz_global;
+	uint64_t* _VDF_pjy_nvx_global;
+	uint64_t* _VDF_pjy_nvz_global;
 
-	unsigned long** _veloDistrMatrixGlobal_ny_abs;
-	unsigned long** _veloDistrMatrixGlobal_ny_pvx;
-	unsigned long** _veloDistrMatrixGlobal_ny_pvy;
-	unsigned long** _veloDistrMatrixGlobal_ny_pvz;
-	unsigned long** _veloDistrMatrixGlobal_ny_nvx;
-	unsigned long** _veloDistrMatrixGlobal_ny_nvy;
-	unsigned long** _veloDistrMatrixGlobal_ny_nvz;
+	uint64_t* _VDF_njy_abs_global;
+	uint64_t* _VDF_njy_pvx_global;
+	uint64_t* _VDF_njy_pvz_global;
+	uint64_t* _VDF_njy_nvx_global;
+	uint64_t* _VDF_njy_nvy_global;
+	uint64_t* _VDF_njy_nvz_global;
 
+	std::array<std::array<uint64_t*,4>,3> _dataPtrs;
 
 	// --- fieldYR ---
 
@@ -303,8 +324,6 @@ public:
 
 	void WriteData(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
 
-	unsigned short GetNumComponents() {return _nNumComponents;}
-
 private:
 	std::vector<SampleRegion*> _vecSampleRegions;
 
@@ -312,8 +331,6 @@ private:
 	unsigned long _writeFrequencyProfiles;
 	unsigned long _initSamplingVDF;
 	unsigned long _writeFrequencyVDF;
-
-	unsigned short _nNumComponents;
 };
 
 #endif /* REGIONSAMPLING_H_ */

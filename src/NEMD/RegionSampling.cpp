@@ -20,12 +20,18 @@
 #include <limits>
 #include <cmath>
 #include <cstdint>
+#include <algorithm>  // std::fill
+#include <array>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
 using namespace std;
+
+#ifdef USE_TEST_INPUT
+uint32_t SampleRegion::_nTestInputIndex = 0;
+#endif
 
 // init static ID --> instance counting
 unsigned short SampleRegion::_nStaticID = 0;
@@ -44,16 +50,22 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	_nID = ++_nStaticID;
 	_nSubdivisionOpt = SDOPT_UNKNOWN;
 
-	_nNumComponents = this->GetParent()->GetDomain()->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
-	_vecMass.resize(_nNumComponents);
+	_numComponents = global_simulation->getEnsemble()->getComponents()->size()+1;  // cid == 0: all components
+	_vecMass.resize(_numComponents);
 	_vecMass.at(0) = 0.;
-	for(uint8_t cid=1; cid<_nNumComponents; ++cid)
+	for(uint8_t cid=1; cid<_numComponents; ++cid)
 	{
 		_vecMass.at(cid) = global_simulation->getEnsemble()->getComponent(cid-1)->m();
 //		cout << "cid = " << cid << ": mass = " << _vecMass.at(cid) << endl;
 	}
-}
 
+	// Init component specific parameters for VDF sampling
+	this->InitComponentSpecificParamsVDF();
+
+#ifdef USE_TEST_INPUT
+	this->InitTestInput();
+#endif
+}
 
 SampleRegion::~SampleRegion()
 {
@@ -105,77 +117,35 @@ SampleRegion::~SampleRegion()
 	// VDF sampling
 	if(true == _SamplingEnabledVDF)
 	{
-		delete [] _dBinMidpointsVDF;
-		delete [] _dDiscreteVelocityValues;
-
-		for(uint32_t s=0; s<_nNumBinsVDF; ++s) {
-			// local
-			delete [] _veloDistrMatrixLocal_py_abs[s];
-			delete [] _veloDistrMatrixLocal_py_pvx[s];
-			delete [] _veloDistrMatrixLocal_py_pvy[s];
-			delete [] _veloDistrMatrixLocal_py_pvz[s];
-			delete [] _veloDistrMatrixLocal_py_nvx[s];
-			delete [] _veloDistrMatrixLocal_py_nvy[s];
-			delete [] _veloDistrMatrixLocal_py_nvz[s];
-
-			delete [] _veloDistrMatrixLocal_ny_abs[s];
-			delete [] _veloDistrMatrixLocal_ny_pvx[s];
-			delete [] _veloDistrMatrixLocal_ny_pvy[s];
-			delete [] _veloDistrMatrixLocal_ny_pvz[s];
-			delete [] _veloDistrMatrixLocal_ny_nvx[s];
-			delete [] _veloDistrMatrixLocal_ny_nvy[s];
-			delete [] _veloDistrMatrixLocal_ny_nvz[s];
-
-			// global
-			delete [] _veloDistrMatrixGlobal_py_abs[s];
-			delete [] _veloDistrMatrixGlobal_py_pvx[s];
-			delete [] _veloDistrMatrixGlobal_py_pvy[s];
-			delete [] _veloDistrMatrixGlobal_py_pvz[s];
-			delete [] _veloDistrMatrixGlobal_py_nvx[s];
-			delete [] _veloDistrMatrixGlobal_py_nvy[s];
-			delete [] _veloDistrMatrixGlobal_py_nvz[s];
-
-			delete [] _veloDistrMatrixGlobal_ny_abs[s];
-			delete [] _veloDistrMatrixGlobal_ny_pvx[s];
-			delete [] _veloDistrMatrixGlobal_ny_pvy[s];
-			delete [] _veloDistrMatrixGlobal_ny_pvz[s];
-			delete [] _veloDistrMatrixGlobal_ny_nvx[s];
-			delete [] _veloDistrMatrixGlobal_ny_nvy[s];
-			delete [] _veloDistrMatrixGlobal_ny_nvz[s];
-		}
 		// local
-		delete [] _veloDistrMatrixLocal_py_abs;
-		delete [] _veloDistrMatrixLocal_py_pvx;
-		delete [] _veloDistrMatrixLocal_py_pvy;
-		delete [] _veloDistrMatrixLocal_py_pvz;
-		delete [] _veloDistrMatrixLocal_py_nvx;
-		delete [] _veloDistrMatrixLocal_py_nvy;
-		delete [] _veloDistrMatrixLocal_py_nvz;
+		delete [] _VDF_pjy_abs_local;
+		delete [] _VDF_pjy_pvx_local;
+		delete [] _VDF_pjy_pvy_local;
+		delete [] _VDF_pjy_pvz_local;
+		delete [] _VDF_pjy_nvx_local;
+		delete [] _VDF_pjy_nvz_local;
 
-		delete [] _veloDistrMatrixLocal_ny_abs;
-		delete [] _veloDistrMatrixLocal_ny_pvx;
-		delete [] _veloDistrMatrixLocal_ny_pvy;
-		delete [] _veloDistrMatrixLocal_ny_pvz;
-		delete [] _veloDistrMatrixLocal_ny_nvx;
-		delete [] _veloDistrMatrixLocal_ny_nvy;
-		delete [] _veloDistrMatrixLocal_ny_nvz;
+		delete [] _VDF_njy_abs_local;
+		delete [] _VDF_njy_pvx_local;
+		delete [] _VDF_njy_pvz_local;
+		delete [] _VDF_njy_nvx_local;
+		delete [] _VDF_njy_nvy_local;
+		delete [] _VDF_njy_nvz_local;
 
 		// global
-		delete [] _veloDistrMatrixGlobal_py_abs;
-		delete [] _veloDistrMatrixGlobal_py_pvx;
-		delete [] _veloDistrMatrixGlobal_py_pvy;
-		delete [] _veloDistrMatrixGlobal_py_pvz;
-		delete [] _veloDistrMatrixGlobal_py_nvx;
-		delete [] _veloDistrMatrixGlobal_py_nvy;
-		delete [] _veloDistrMatrixGlobal_py_nvz;
+		delete [] _VDF_pjy_abs_global;
+		delete [] _VDF_pjy_pvx_global;
+		delete [] _VDF_pjy_pvy_global;
+		delete [] _VDF_pjy_pvz_global;
+		delete [] _VDF_pjy_nvx_global;
+		delete [] _VDF_pjy_nvz_global;
 
-		delete [] _veloDistrMatrixGlobal_ny_abs;
-		delete [] _veloDistrMatrixGlobal_ny_pvx;
-		delete [] _veloDistrMatrixGlobal_ny_pvy;
-		delete [] _veloDistrMatrixGlobal_ny_pvz;
-		delete [] _veloDistrMatrixGlobal_ny_nvx;
-		delete [] _veloDistrMatrixGlobal_ny_nvy;
-		delete [] _veloDistrMatrixGlobal_ny_nvz;
+		delete [] _VDF_njy_abs_global;
+		delete [] _VDF_njy_pvx_global;
+		delete [] _VDF_njy_pvz_global;
+		delete [] _VDF_njy_nvx_global;
+		delete [] _VDF_njy_nvy_global;
+		delete [] _VDF_njy_nvz_global;
 	}
 
 	// fieldYR sampling
@@ -189,7 +159,7 @@ SampleRegion::~SampleRegion()
 		{
 			for(uint8_t sec=0; sec<3; ++sec)
 			{
-				for(uint32_t cid = 0; cid<_nNumComponents; ++cid)
+				for(uint32_t cid = 0; cid<_numComponents; ++cid)
 					delete [] _nOffsetFieldYR[dim][sec][cid];
 				delete [] _nOffsetFieldYR[dim][sec];
 			}
@@ -204,6 +174,41 @@ SampleRegion::~SampleRegion()
 		delete [] _dDensityFieldYR;
 		delete [] _dInvShellVolumesFieldYR;
 	}
+}
+
+void SampleRegion::InitComponentSpecificParamsVDF()
+{
+	_vecComponentSpecificParamsVDF.resize(_numComponents);
+	for(auto&& csp : _vecComponentSpecificParamsVDF)
+	{
+		csp.bSamplingEnabled = false;
+		csp.dVeloMax = 0.0;
+		csp.dVelocityClassWidth = 0.0;
+		csp.dInvVelocityClassWidth = 0.0;
+		csp.numVelocityClasses = 0;
+		csp.numVals = 0;
+		csp.nOffsetDataStructure = 0;
+		csp.dDiscreteVelocityValues.clear();
+	}
+}
+
+void SampleRegion::ShowComponentSpecificParamsVDF()
+{
+	global_log->info() << ">>>> ComponentSpecificParamsVDF" << endl;
+	global_log->info() << "-----------------------------------------------------" << endl;
+	uint32_t cid = 0;
+	for(auto&& csp : _vecComponentSpecificParamsVDF)
+	{
+		global_log->info() << "bSamplingEnabled = "       << csp.bSamplingEnabled << endl;
+		global_log->info() << "dVeloMax = "               << csp.dVeloMax << endl;
+		global_log->info() << "dVelocityClassWidth = "    << csp.dVelocityClassWidth << endl;
+		global_log->info() << "dInvVelocityClassWidth = " << csp.dInvVelocityClassWidth << endl;
+		global_log->info() << "numVelocityClasses = "     << csp.numVelocityClasses << endl;
+		global_log->info() << "numVals = "                << csp.numVals << endl;
+		global_log->info() << "nOffsetDataStructure = "   << csp.nOffsetDataStructure << endl;
+		global_log->info() << "-----------------------------------------------------" << endl;
+	}
+	global_log->info() << "<<<< ComponentSpecificParamsVDF" << endl;
 }
 
 void SampleRegion::readXML(XMLfileUnits& xmlconfig)
@@ -288,14 +293,38 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			xmlconfig.getNodeValue("control/start", _initSamplingVDF);
 			xmlconfig.getNodeValue("control/frequency", _writeFrequencyVDF);
 			xmlconfig.getNodeValue("control/stop", _stopSamplingVDF);
-			xmlconfig.getNodeValue("discretization/numclasses", _nNumDiscreteStepsVDF);
-			xmlconfig.getNodeValue("discretization/maxvalue", _dVeloMax);
-			this->SetParamVDF();
+
+			// velocity dicretization
+			{
+				string oldpath = xmlconfig.getcurrentnodepath();
+				xmlconfig.changecurrentnode("discretizations");
+				uint32_t numDiscretizations = 0;
+				XMLfile::Query query = xmlconfig.query("discretization");
+				numDiscretizations = query.card();
+				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations (components for that VDF should be sampled): " << numDiscretizations << endl;
+				if(numDiscretizations < 1) {
+					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No velocity discretizations specified for VDF sampling. Program exit ..." << endl;
+					Simulation::exit(-1);
+				}
+				XMLfile::Query::const_iterator nodeIter;
+				for( nodeIter = query.begin(); nodeIter; nodeIter++ )
+				{
+					xmlconfig.changecurrentnode(nodeIter);
+					uint32_t cid = 0;
+					if(false == (xmlconfig.getNodeValue("@cid", cid) && cid < _numComponents) )
+						global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << endl;
+
+					ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
+					csp.bSamplingEnabled = true;
+					xmlconfig.getNodeValue("numclasses", csp.numVelocityClasses);
+					xmlconfig.getNodeValue("maxvalue", csp.dVeloMax);
+				}
+				xmlconfig.changecurrentnode(oldpath);
+			}
+
 			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << _initSamplingVDF << endl;
 			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << _writeFrequencyVDF << endl;
 			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Stop sampling at simstep: " << _stopSamplingVDF << endl;
-			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Number of velocity classes: " << _nNumDiscreteStepsVDF << endl;
-			global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Max. velocity value: " << _dVeloMax << endl;
 
 			// subdivision of region
 			std::string strSubdivisionType;
@@ -489,12 +518,12 @@ void SampleRegion::PrepareSubdivisionVDF()
 	switch(_nSubdivisionOpt)
 	{
 	case SDOPT_BY_NUM_SLABS:
-		_dBinWidthVDFInit = this->GetWidth(1) / ( (double)(_nNumBinsVDF) );
+		_dBinWidthVDFInit = this->GetWidth(1) / ( (double)(_numBinsVDF) );
 		_dBinWidthVDF = _dBinWidthVDFInit;
 		break;
 	case SDOPT_BY_SLAB_WIDTH:
-		_nNumBinsVDF = round(dWidth / _dBinWidthVDFInit);
-		_dBinWidthVDF = dWidth / ( (double)(_nNumBinsVDF) );
+		_numBinsVDF = round(dWidth / _dBinWidthVDFInit);
+		_dBinWidthVDF = dWidth / ( (double)(_numBinsVDF) );
 		break;
 	case SDOPT_UNKNOWN:
 	default:
@@ -584,12 +613,12 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	// discrete values: Bin midpoints, velocity values
 	_dBinMidpointsProfiles = new double[_nNumBinsProfiles];
 
-	_nNumValsScalar = _nNumBinsProfiles * _nNumComponents * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
+	_nNumValsScalar = _nNumBinsProfiles * _numComponents * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
 	_nNumValsVector = _nNumValsScalar * 3;                        // * 3: x, y, z-component
 
 #ifndef NDEBUG
 	cout << "_nNumBinsProfiles = " << _nNumBinsProfiles << endl;
-	cout << "_nNumComponents   = " << _nNumComponents   << endl;
+	cout << "_numComponents    = " << _numComponents   << endl;
 	cout << "_nNumValsScalar   = " << _nNumValsScalar   << endl;
 	cout << "_nNumValsVector   = " << _nNumValsVector   << endl;
 #endif
@@ -597,14 +626,14 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	// Offsets
 	_nOffsetScalar = new unsigned long*[3];
 	for(unsigned int dir = 0; dir<3; ++dir)
-		_nOffsetScalar[dir] = new unsigned long[_nNumComponents];
+		_nOffsetScalar[dir] = new unsigned long[_numComponents];
 
 	_nOffsetVector = new unsigned long**[3];
 	for(unsigned int dim = 0; dim<3; ++dim)
 	{
 		_nOffsetVector[dim] = new unsigned long*[3];
 		for(unsigned int dir = 0; dir<3; ++dir)
-			_nOffsetVector[dim][dir] = new unsigned long[_nNumComponents];
+			_nOffsetVector[dim][dir] = new unsigned long[_numComponents];
 	}
 
 	unsigned long nOffset;
@@ -612,7 +641,7 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	// Scalar quantities
 	nOffset = 0;
 	for(unsigned int dir = 0; dir<3; ++dir){
-		for(unsigned int cid = 0; cid<_nNumComponents; ++cid){
+		for(unsigned int cid = 0; cid<_numComponents; ++cid){
 			_nOffsetScalar[dir][cid] = nOffset;
 			nOffset += _nNumBinsProfiles;
 		}
@@ -621,7 +650,7 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	nOffset = 0;
 	for(unsigned int dim = 0; dim<3; ++dim){
 		for(unsigned int dir = 0; dir<3; ++dir){
-			for(unsigned int cid = 0; cid<_nNumComponents; ++cid){
+			for(unsigned int cid = 0; cid<_numComponents; ++cid){
 				_nOffsetVector[dim][dir][cid] = nOffset;
 				nOffset += _nNumBinsProfiles;
 			}
@@ -667,8 +696,8 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	// init sampling data structures
 	this->ResetLocalValuesProfiles();
 
-    // discretisation
-    this->DoDiscretisationProfiles(RS_DIMENSION_Y);
+	// discretisation
+	this->DoDiscretisationProfiles(RS_DIMENSION_Y);
 }
 
 
@@ -677,149 +706,88 @@ void SampleRegion::InitSamplingVDF(int nDimension)
 	if(false == _SamplingEnabledVDF)
 		return;
 
-	// Bin width
-	double dNumBinsVDF = (double) _nNumBinsVDF;
-	_dBinWidthVDFInit = this->GetWidth(nDimension) / dNumBinsVDF;
-	_dBinWidthVDF = _dBinWidthVDFInit;
+	// Init component specific parameters
+	uint32_t nOffsetDataStructure = 0;
+	for(auto&& csp : _vecComponentSpecificParamsVDF)
+	{
+		if(false == csp.bSamplingEnabled)
+			continue;
+		csp.nOffsetDataStructure = nOffsetDataStructure;
+		csp.dVelocityClassWidth = csp.dVeloMax / ((double)(csp.numVelocityClasses));
+		csp.dInvVelocityClassWidth = 1./csp.dVelocityClassWidth;
+		csp.numVals = _numBinsVDF * csp.numVelocityClasses;
+		nOffsetDataStructure += csp.numVals;
+		csp.dDiscreteVelocityValues.resize(csp.numVelocityClasses);
+		std::fill (csp.dDiscreteVelocityValues.begin(),csp.dDiscreteVelocityValues.end(),0);
+	}
+	_numValsVDF = nOffsetDataStructure;
 
 	// discrete values: Bin midpoints, velocity values
-	_dBinMidpointsVDF = new double[_nNumBinsVDF];
-
-	for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
-	{
-		_dBinMidpointsVDF[s] = 0.;
-	}
-
-	_dDiscreteVelocityValues = new double[_nNumDiscreteStepsVDF];
-
-	for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
-	{
-		_dDiscreteVelocityValues[v] = 0.;
-	}
+	_dInvBinWidthVDF = 1./_dBinWidthVDF;
+	_dBinMidpointsVDF.resize(_numBinsVDF);
+	std::fill (_dBinMidpointsVDF.begin(),_dBinMidpointsVDF.end(),0);
 
 	// local
-	_veloDistrMatrixLocal_py_abs = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_py_pvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_py_pvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_py_pvz = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_py_nvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_py_nvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_py_nvz = new unsigned long*[_nNumBinsVDF];
+	_VDF_pjy_abs_local = new uint64_t[_numValsVDF];
+	_VDF_pjy_pvx_local = new uint64_t[_numValsVDF];
+	_VDF_pjy_pvy_local = new uint64_t[_numValsVDF];
+	_VDF_pjy_pvz_local = new uint64_t[_numValsVDF];
+	_VDF_pjy_nvx_local = new uint64_t[_numValsVDF];
+	_VDF_pjy_nvz_local = new uint64_t[_numValsVDF];
 
-	_veloDistrMatrixLocal_ny_abs = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_ny_pvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_ny_pvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_ny_pvz = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_ny_nvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_ny_nvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixLocal_ny_nvz = new unsigned long*[_nNumBinsVDF];
+	_VDF_njy_abs_local = new uint64_t[_numValsVDF];
+	_VDF_njy_pvx_local = new uint64_t[_numValsVDF];
+	_VDF_njy_pvz_local = new uint64_t[_numValsVDF];
+	_VDF_njy_nvx_local = new uint64_t[_numValsVDF];
+	_VDF_njy_nvy_local = new uint64_t[_numValsVDF];
+	_VDF_njy_nvz_local = new uint64_t[_numValsVDF];
 
 	// global
-	_veloDistrMatrixGlobal_py_abs = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_py_pvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_py_pvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_py_pvz = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_py_nvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_py_nvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_py_nvz = new unsigned long*[_nNumBinsVDF];
+	_VDF_pjy_abs_global = new uint64_t[_numValsVDF];
+	_VDF_pjy_pvx_global = new uint64_t[_numValsVDF];
+	_VDF_pjy_pvy_global = new uint64_t[_numValsVDF];
+	_VDF_pjy_pvz_global = new uint64_t[_numValsVDF];
+	_VDF_pjy_nvx_global = new uint64_t[_numValsVDF];
+	_VDF_pjy_nvz_global = new uint64_t[_numValsVDF];
 
-	_veloDistrMatrixGlobal_ny_abs = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_ny_pvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_ny_pvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_ny_pvz = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_ny_nvx = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_ny_nvy = new unsigned long*[_nNumBinsVDF];
-	_veloDistrMatrixGlobal_ny_nvz = new unsigned long*[_nNumBinsVDF];
+	_VDF_njy_abs_global = new uint64_t[_numValsVDF];
+	_VDF_njy_pvx_global = new uint64_t[_numValsVDF];
+	_VDF_njy_pvz_global = new uint64_t[_numValsVDF];
+	_VDF_njy_nvx_global = new uint64_t[_numValsVDF];
+	_VDF_njy_nvy_global = new uint64_t[_numValsVDF];
+	_VDF_njy_nvz_global = new uint64_t[_numValsVDF];
+
+	// store pointers of local data structures (velocity component only) in 2D array
+	_dataPtrs.at(0).at(0) = _VDF_njy_nvx_local;
+	_dataPtrs.at(0).at(1) = _VDF_njy_pvx_local;
+	_dataPtrs.at(0).at(2) = _VDF_pjy_nvx_local;
+	_dataPtrs.at(0).at(3) = _VDF_pjy_pvx_local;
+	_dataPtrs.at(1).at(0) = _VDF_njy_nvy_local;
+	_dataPtrs.at(1).at(1) = NULL;
+	_dataPtrs.at(1).at(2) = NULL;
+	_dataPtrs.at(1).at(3) = _VDF_pjy_pvy_local;
+	_dataPtrs.at(2).at(0) = _VDF_njy_nvz_local;
+	_dataPtrs.at(2).at(1) = _VDF_njy_pvz_local;
+	_dataPtrs.at(2).at(2) = _VDF_pjy_nvz_local;
+	_dataPtrs.at(2).at(3) = _VDF_pjy_pvz_local;
 
 
-	for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
-	{
-		// local
-		_veloDistrMatrixLocal_py_abs[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_py_pvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_py_pvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_py_pvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_py_nvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_py_nvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_py_nvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-
-		_veloDistrMatrixLocal_ny_abs[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_ny_pvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_ny_pvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_ny_pvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_ny_nvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_ny_nvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixLocal_ny_nvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-
-		// global
-		_veloDistrMatrixGlobal_py_abs[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_py_pvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_py_pvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_py_pvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_py_nvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_py_nvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_py_nvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-
-		_veloDistrMatrixGlobal_ny_abs[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_ny_pvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_ny_pvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_ny_pvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_ny_nvx[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_ny_nvy[s] = new unsigned long[_nNumDiscreteStepsVDF];
-		_veloDistrMatrixGlobal_ny_nvz[s] = new unsigned long[_nNumDiscreteStepsVDF];
-
-	}
-
-	// init values
-	for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
-	{
-		for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
-		{
-			// local
-			_veloDistrMatrixLocal_py_abs[s][v] = 0;
-			_veloDistrMatrixLocal_py_pvx[s][v] = 0;
-			_veloDistrMatrixLocal_py_pvy[s][v] = 0;
-			_veloDistrMatrixLocal_py_pvz[s][v] = 0;
-			_veloDistrMatrixLocal_py_nvx[s][v] = 0;
-			_veloDistrMatrixLocal_py_nvy[s][v] = 0;
-			_veloDistrMatrixLocal_py_nvz[s][v] = 0;
-
-			_veloDistrMatrixLocal_ny_abs[s][v] = 0;
-			_veloDistrMatrixLocal_ny_pvx[s][v] = 0;
-			_veloDistrMatrixLocal_ny_pvy[s][v] = 0;
-			_veloDistrMatrixLocal_ny_pvz[s][v] = 0;
-			_veloDistrMatrixLocal_ny_nvx[s][v] = 0;
-			_veloDistrMatrixLocal_ny_nvy[s][v] = 0;
-			_veloDistrMatrixLocal_ny_nvz[s][v] = 0;
-
-			// global
-			_veloDistrMatrixGlobal_py_abs[s][v] = 0;
-			_veloDistrMatrixGlobal_py_pvx[s][v] = 0;
-			_veloDistrMatrixGlobal_py_pvy[s][v] = 0;
-			_veloDistrMatrixGlobal_py_pvz[s][v] = 0;
-			_veloDistrMatrixGlobal_py_nvx[s][v] = 0;
-			_veloDistrMatrixGlobal_py_nvy[s][v] = 0;
-			_veloDistrMatrixGlobal_py_nvz[s][v] = 0;
-
-			_veloDistrMatrixGlobal_ny_abs[s][v] = 0;
-			_veloDistrMatrixGlobal_ny_pvx[s][v] = 0;
-			_veloDistrMatrixGlobal_ny_pvy[s][v] = 0;
-			_veloDistrMatrixGlobal_ny_pvz[s][v] = 0;
-			_veloDistrMatrixGlobal_ny_nvx[s][v] = 0;
-			_veloDistrMatrixGlobal_ny_nvy[s][v] = 0;
-			_veloDistrMatrixGlobal_ny_nvz[s][v] = 0;
-
-		}
-	}
+	// init local values
+	this->ResetLocalValuesVDF();
 /*
 	cout << "_initSamplingVDF = " << _initSamplingVDF << endl;
 	cout << "_writeFrequencyVDF = " << _writeFrequencyVDF << endl;
-	cout << "_nNumBinsVDF = " << _nNumBinsVDF << endl;
-	cout << "_nNumDiscreteStepsVDF = " << _nNumDiscreteStepsVDF << endl;
+	cout << "_numBinsVDF = " << _numBinsVDF << endl;
+	cout << "_numVelocityClassesVDF = " << _numVelocityClassesVDF << endl;
 */
 
 	// discrete velocity values
 	this->DoDiscretisationVDF(RS_DIMENSION_Y);
+
+#ifndef NDEBUG
+	// show component specific parameters
+	this->ShowComponentSpecificParamsVDF();
+#endif
 }
 
 
@@ -859,10 +827,10 @@ void SampleRegion::InitSamplingFieldYR(int nDimension)
 	_dBinMidpointsFieldYR = new double[_nNumBinsFieldYR];
 	_dShellMidpointsFieldYR = new double[_nNumShellsFieldYR];
 
-	_nNumValsFieldYR = _nNumComponents * 3 * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
+	_nNumValsFieldYR = _numComponents * 3 * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
 
 #ifndef NDEBUG
-	cout << "_nNumComponents    = " << _nNumComponents    << endl;
+	cout << "_numComponents    = " << _numComponents    << endl;
 	cout << "_nNumShellsFieldYR = " << _nNumShellsFieldYR << endl;
 	cout << "_nNumBinsFieldYR   = " << _nNumBinsFieldYR   << endl;
 	cout << "_nNumValsFieldYR   = " << _nNumValsFieldYR   << endl;
@@ -875,8 +843,8 @@ void SampleRegion::InitSamplingFieldYR(int nDimension)
 		_nOffsetFieldYR[dim] = new uint64_t**[3];
 		for(uint8_t sec=0; sec<3; ++sec)
 		{
-			_nOffsetFieldYR[dim][sec] = new uint64_t*[_nNumComponents];
-			for(uint32_t cid = 0; cid<_nNumComponents; ++cid)
+			_nOffsetFieldYR[dim][sec] = new uint64_t*[_numComponents];
+			for(uint32_t cid = 0; cid<_numComponents; ++cid)
 				_nOffsetFieldYR[dim][sec][cid] = new uint64_t[_nNumShellsFieldYR];
 		}
 	}
@@ -885,7 +853,7 @@ void SampleRegion::InitSamplingFieldYR(int nDimension)
 	uint64_t nOffset = 0;
 	for(uint8_t dim = 0; dim<3; ++dim){
 		for(uint8_t sec = 0; sec<3; ++sec){
-			for(uint32_t cid = 0; cid<_nNumComponents; ++cid){
+			for(uint32_t cid = 0; cid<_numComponents; ++cid){
 				for(uint32_t si = 0; si<_nNumShellsFieldYR; ++si){
 					_nOffsetFieldYR[dim][sec][cid][si] = nOffset;
 					nOffset += _nNumBinsFieldYR;
@@ -906,7 +874,7 @@ void SampleRegion::InitSamplingFieldYR(int nDimension)
 	// section shell volume factor
 	 float faSecFac[3] = {1., 2., 2.};
 
-	for(uint32_t cid=0; cid<_nNumComponents; ++cid){
+	for(uint32_t cid=0; cid<_numComponents; ++cid){
 		for(uint32_t si = 0; si<_nNumShellsFieldYR; ++si)
 		{
 			double dShellVolume = _dShellVolumesFieldYR[si];
@@ -961,24 +929,17 @@ void SampleRegion::DoDiscretisationVDF(int nDimension)
 	if(_bDiscretisationDoneVDF == true)  // if allready done -> return
 		return;
 
-//    double dVeloMax = _dVeloMax * 1.1;  // velocity discretisation, highest value with safety factor
-	double dNumDiscreteStepsVDF = (double) _nNumDiscreteStepsVDF;
-	double dDeltaVelo = _dVeloMax / dNumDiscreteStepsVDF;
-
-	double* dLowerCorner = this->GetLowerCorner();
+	// calc discrete velocity values
+	for(auto&& csp : _vecComponentSpecificParamsVDF)
+	{
+		for(unsigned int vi=0; vi< csp.numVelocityClasses; ++vi)
+			csp.dDiscreteVelocityValues.at(vi) = csp.dVelocityClassWidth * (vi + 0.5);
+	}
 
 	// calc Bin midpoints
-	for(unsigned int s = 0; s < _nNumBinsVDF; s++)
-	{
-		_dBinMidpointsVDF[s] = (s + 0.5) * _dBinWidthVDF + dLowerCorner[nDimension];
-	}
-
-
-	// calc discrete velocity values
-	for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
-	{
-		_dDiscreteVelocityValues[v] = dDeltaVelo * (v + 0.5);
-	}
+	double* dLowerCorner = this->GetLowerCorner();
+	for(uint32_t bi=0; bi<_numBinsVDF; ++bi)
+		_dBinMidpointsVDF.at(bi) = (bi + 0.5) * _dBinWidthVDF + dLowerCorner[nDimension];
 
 	_bDiscretisationDoneVDF = true;
 }
@@ -1087,6 +1048,13 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 
 void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 {
+#ifdef USE_TEST_INPUT
+	if(_nTestInputIndex >= _vecTestInput.size() )
+		return;
+	int rank = global_simulation->domainDecomposition().getRank();
+	cout << "rank=" << rank << ", begin: _nTestInputIndex=" << _nTestInputIndex << endl;
+#endif
+
 	if(false == _SamplingEnabledVDF)
 		return;
 
@@ -1095,92 +1063,98 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 	if(false == _bDiscretisationDoneVDF)
 		return;
 
-	unsigned int nPosIndex;
-	unsigned int nVelocityIndex;
-	unsigned int nIndexMax     = _nNumBinsVDF - 1;
-	unsigned int nIndexMaxVelo = _nNumDiscreteStepsVDF - 1;
+	uint32_t cid = molecule->componentid()+1;  // 0: all components
+#ifdef USE_TEST_INPUT
+	cid = _vecTestInput.at(_nTestInputIndex).cid;
+#endif
+	const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
+	if(false == csp.bSamplingEnabled)
+		return;
+	uint32_t nComponentOffset = csp.nOffsetDataStructure;
 
-	double dVelocity;
-//    double dMaxVelo = _dVeloMax * 1.1;  // velocity discretisation, highest value with safety factor
-
-	// do not reset profile matrices here!!
-
-	// calc position index
+	// calc bin index / offset
 	double* dLowerCorner = this->GetLowerCorner();
 	double dPosRelative = molecule->r(nDimension) - dLowerCorner[nDimension];
-
-	nPosIndex = (unsigned int) floor(dPosRelative / _dBinWidthVDF);
+	uint32_t nBinIndex = (uint32_t) floor(dPosRelative * _dInvBinWidthVDF);
+#ifdef USE_TEST_INPUT
+	nBinIndex = _vecTestInput.at(_nTestInputIndex).binIndex;
+#endif
+	uint32_t numVelocityClasses   = csp.numVelocityClasses;
+	uint32_t nBinOffset = nBinIndex * numVelocityClasses;
+	uint32_t nOffset = nComponentOffset + nBinOffset;
 
 	// ignore outer (halo) molecules
-	if(nPosIndex > nIndexMax)
+	uint32_t nIndexMax = _numBinsVDF - 1;
+	if(nBinIndex > nIndexMax)
 		return;
 
-	dVelocity = sqrt( molecule->v2() );
-	nVelocityIndex = (unsigned int) floor(dVelocity / _dVeloMax * _nNumDiscreteStepsVDF);
+	double dVelocity = sqrt( molecule->v2() );
+	double dInvVelocityClassWidth = csp.dInvVelocityClassWidth;
+	uint32_t nVelocityClassIndex = (uint32_t)(floor(dVelocity * dInvVelocityClassWidth) );
+#ifdef USE_TEST_INPUT
+	nVelocityClassIndex = _vecTestInput.at(_nTestInputIndex).classIndex;
+#endif
 
+	// calculate velocity vector indices for velocity components
+	double v[3];
+	uint32_t naVelocityClassIndex[3];
+
+	for(unsigned int d=0; d<3; ++d) {
+		v[d] = molecule->v(d);
+		naVelocityClassIndex[d] = (uint32_t)(floor( fabs( v[d] ) * dInvVelocityClassWidth) );
+#ifdef USE_TEST_INPUT
+		naVelocityClassIndex[d] = _vecTestInput.at(_nTestInputIndex).classIndex;
+#endif
+	}
 
 	// respect finite resolution of velocity
-	if(nVelocityIndex > nIndexMaxVelo)
+	uint32_t nIndexMaxVelo = numVelocityClasses - 1;
+	if(nVelocityClassIndex > nIndexMaxVelo)
 	{
 //        global_log->info() << "Molecule with: v > v_max detected: v = " << dVelocity << ", v_max = " << dMaxVelo << endl;
 		return;
 	}
+	for(unsigned int d=0; d<3; ++d) {
+		if(naVelocityClassIndex[d] > nIndexMaxVelo)
+			return;
+	}
 
-	// calculate velocity vector indices for velocity components
-	double v_dim[3];
-	unsigned int naVelocityIndex[3];
+#ifdef USE_TEST_INPUT
+	for(unsigned int d=0; d<3; ++d)
+		v[d] = -1.0;
+#endif
 
+	// sampling
+	bool bSampleComponentSum = _vecComponentSpecificParamsVDF.at(0).bSamplingEnabled;
+	// velocity components
 	for(unsigned int d=0; d<3; ++d)
 	{
-		v_dim[d] = molecule->v(d);
-		naVelocityIndex[d] = (unsigned int) floor( fabs( v_dim[d] ) / _dVeloMax * _nNumDiscreteStepsVDF);
+		uint8_t ptrIndex = 2*(v[1]>0.)+(v[d]>0.);
+#ifdef USE_TEST_INPUT
+		cout << "rank=" << rank << ", v=" << v[0] << ", " << v[1] << ", " << v[2] << "=> ptrIndex["<<d<<"]=" << (uint32_t)ptrIndex << endl;
+#endif
+		_dataPtrs.at(d).at(ptrIndex)[ nOffset + naVelocityClassIndex[d] ]++;
+		if(true == bSampleComponentSum)
+			_dataPtrs.at(d).at(ptrIndex)[ nBinOffset + naVelocityClassIndex[d] ]++;
 	}
-
-	int pv[3];
-	int nv[3];
-
-	for(unsigned int d=0; d<3; ++d)
+	// absolute velocity
+	if(v[1] > 0.)  // particle flux in positive y-direction
 	{
-		if(v_dim[d] > 0.)
-		{
-			pv[d] = 1;
-			nv[d] = 0;
-		}
-		else
-		{
-			pv[d] = 0;
-			nv[d] = 1;
-		}
+		if(true == bSampleComponentSum)
+			_VDF_pjy_abs_local[nBinOffset + nVelocityClassIndex]++;
+		_VDF_pjy_abs_local[nOffset + nVelocityClassIndex]++;
 	}
-
-	// positive y-direction
-	if(v_dim[1] > 0.)
+	else  // particle flux in negative y-direction
 	{
-		// absolute
-		_veloDistrMatrixLocal_py_abs[nPosIndex][nVelocityIndex]++;
-
-		_veloDistrMatrixLocal_py_pvx[nPosIndex][naVelocityIndex[0] ] += pv[0];
-		_veloDistrMatrixLocal_py_pvy[nPosIndex][naVelocityIndex[1] ] += pv[1];
-		_veloDistrMatrixLocal_py_pvz[nPosIndex][naVelocityIndex[2] ] += pv[2];
-
-		_veloDistrMatrixLocal_py_nvx[nPosIndex][naVelocityIndex[0] ] += nv[0];
-		_veloDistrMatrixLocal_py_nvy[nPosIndex][naVelocityIndex[1] ] += nv[1];
-		_veloDistrMatrixLocal_py_nvz[nPosIndex][naVelocityIndex[2] ] += nv[2];
+		if(true == bSampleComponentSum)
+			_VDF_njy_abs_local[nBinOffset + nVelocityClassIndex]++;
+		_VDF_njy_abs_local[nOffset + nVelocityClassIndex]++;
 	}
-	// negative y-direction
-	else
-	{
-		// absolute
-		_veloDistrMatrixLocal_ny_abs[nPosIndex][nVelocityIndex]++;
 
-		_veloDistrMatrixLocal_ny_pvx[nPosIndex][naVelocityIndex[0] ] += pv[0];
-		_veloDistrMatrixLocal_ny_pvy[nPosIndex][naVelocityIndex[1] ] += pv[1];
-		_veloDistrMatrixLocal_ny_pvz[nPosIndex][naVelocityIndex[2] ] += pv[2];
-
-		_veloDistrMatrixLocal_ny_nvx[nPosIndex][naVelocityIndex[0] ] += nv[0];
-		_veloDistrMatrixLocal_ny_nvy[nPosIndex][naVelocityIndex[1] ] += nv[1];
-		_veloDistrMatrixLocal_ny_nvz[nPosIndex][naVelocityIndex[2] ] += nv[2];
-	}
+#ifdef USE_TEST_INPUT
+	_nTestInputIndex++;
+	cout << "rank=" << rank << ", _nTestInputIndex=" << _nTestInputIndex << endl;
+#endif
 }
 
 void SampleRegion::SampleFieldYR(Molecule* molecule)
@@ -1297,7 +1271,7 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	{
 		for(uint8_t dim=0; dim<3; ++dim)
 		{
-			for(uint8_t cid=1; cid<_nNumComponents; ++cid)
+			for(uint8_t cid=1; cid<_numComponents; ++cid)
 			{
 				unsigned long offsetN    =      _nOffsetScalar[dir][cid];
 				unsigned long offsetComp = _nOffsetVector[dim][dir][cid];
@@ -1330,7 +1304,7 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	{
 		for(uint8_t dim=0; dim<3; ++dim)
 		{
-			for(uint8_t cid=0; cid<_nNumComponents; ++cid)
+			for(uint8_t cid=0; cid<_numComponents; ++cid)
 			{
 				unsigned long offsetDim = _nOffsetVector[dim][dir][cid];
 				unsigned long offsetSum = _nOffsetVector[  0][dir][cid];  // sum x, y, z --> scalar
@@ -1404,62 +1378,45 @@ void SampleRegion::CalcGlobalValuesVDF()
 
 	#ifdef ENABLE_MPI
 
-		for(unsigned int s = 0; s < _nNumBinsVDF; s++)
-		{
-			// positive y-direction
+		// positive y-direction
+		MPI_Reduce( _VDF_pjy_abs_local, _VDF_pjy_abs_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-			// absolute
-			MPI_Reduce( _veloDistrMatrixLocal_py_abs[s], _veloDistrMatrixGlobal_py_abs[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_pvx_local, _VDF_pjy_pvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_pvy_local, _VDF_pjy_pvy_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_pvz_local, _VDF_pjy_pvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-			MPI_Reduce( _veloDistrMatrixLocal_py_pvx[s], _veloDistrMatrixGlobal_py_pvx[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_py_pvy[s], _veloDistrMatrixGlobal_py_pvy[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_py_pvz[s], _veloDistrMatrixGlobal_py_pvz[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
-			MPI_Reduce( _veloDistrMatrixLocal_py_nvx[s], _veloDistrMatrixGlobal_py_nvx[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_py_nvy[s], _veloDistrMatrixGlobal_py_nvy[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_py_nvz[s], _veloDistrMatrixGlobal_py_nvz[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_nvx_local, _VDF_pjy_nvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_nvz_local, _VDF_pjy_nvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
 
-			// negative y-direction
+		// negative y-direction
+		MPI_Reduce( _VDF_njy_abs_local, _VDF_njy_abs_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-			// absolute
-			MPI_Reduce( _veloDistrMatrixLocal_ny_abs[s], _veloDistrMatrixGlobal_ny_abs[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_pvx_local, _VDF_njy_pvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_pvz_local, _VDF_njy_pvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-			MPI_Reduce( _veloDistrMatrixLocal_ny_pvx[s], _veloDistrMatrixGlobal_ny_pvx[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_ny_pvy[s], _veloDistrMatrixGlobal_ny_pvy[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_ny_pvz[s], _veloDistrMatrixGlobal_ny_pvz[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_nvx_local, _VDF_njy_nvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_nvy_local, _VDF_njy_nvy_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_nvz_local, _VDF_njy_nvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-			MPI_Reduce( _veloDistrMatrixLocal_ny_nvx[s], _veloDistrMatrixGlobal_ny_nvx[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_ny_nvy[s], _veloDistrMatrixGlobal_ny_nvy[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-			MPI_Reduce( _veloDistrMatrixLocal_ny_nvz[s], _veloDistrMatrixGlobal_ny_nvz[s], _nNumDiscreteStepsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
-		}
 	#else
-		for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
+		for(uint32_t vi=0; vi<_numValsVDF; ++vi)
 		{
-			for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
-			{
-				// positive y-direction
-				_veloDistrMatrixGlobal_py_abs[s][v] = _veloDistrMatrixLocal_py_abs[s][v];
-				_veloDistrMatrixGlobal_py_pvx[s][v] = _veloDistrMatrixLocal_py_pvx[s][v];
-				_veloDistrMatrixGlobal_py_pvy[s][v] = _veloDistrMatrixLocal_py_pvy[s][v];
-				_veloDistrMatrixGlobal_py_pvz[s][v] = _veloDistrMatrixLocal_py_pvz[s][v];
-				_veloDistrMatrixGlobal_py_nvx[s][v] = _veloDistrMatrixLocal_py_nvx[s][v];
-				_veloDistrMatrixGlobal_py_nvy[s][v] = _veloDistrMatrixLocal_py_nvy[s][v];
-				_veloDistrMatrixGlobal_py_nvz[s][v] = _veloDistrMatrixLocal_py_nvz[s][v];
+			_VDF_pjy_abs_global[vi] = _VDF_pjy_abs_local[vi];
+			_VDF_pjy_pvx_global[vi] = _VDF_pjy_pvx_local[vi];
+			_VDF_pjy_pvy_global[vi] = _VDF_pjy_pvy_local[vi];
+			_VDF_pjy_pvz_global[vi] = _VDF_pjy_pvz_local[vi];
+			_VDF_pjy_nvx_global[vi] = _VDF_pjy_nvx_local[vi];
+			_VDF_pjy_nvz_global[vi] = _VDF_pjy_nvz_local[vi];
 
-				// negative y-direction
-				_veloDistrMatrixGlobal_ny_abs[s][v] = _veloDistrMatrixLocal_ny_abs[s][v];
-				_veloDistrMatrixGlobal_ny_pvx[s][v] = _veloDistrMatrixLocal_ny_pvx[s][v];
-				_veloDistrMatrixGlobal_ny_pvy[s][v] = _veloDistrMatrixLocal_ny_pvy[s][v];
-				_veloDistrMatrixGlobal_ny_pvz[s][v] = _veloDistrMatrixLocal_ny_pvz[s][v];
-				_veloDistrMatrixGlobal_ny_nvx[s][v] = _veloDistrMatrixLocal_ny_nvx[s][v];
-				_veloDistrMatrixGlobal_ny_nvy[s][v] = _veloDistrMatrixLocal_ny_nvy[s][v];
-				_veloDistrMatrixGlobal_ny_nvz[s][v] = _veloDistrMatrixLocal_ny_nvz[s][v];
-			}
+			_VDF_njy_abs_global[vi] = _VDF_njy_abs_local[vi];
+			_VDF_njy_pvx_global[vi] = _VDF_njy_pvx_local[vi];
+			_VDF_njy_pvz_global[vi] = _VDF_njy_pvz_local[vi];
+			_VDF_njy_nvx_global[vi] = _VDF_njy_nvx_local[vi];
+			_VDF_njy_nvy_global[vi] = _VDF_njy_nvy_local[vi];
+			_VDF_njy_nvz_global[vi] = _VDF_njy_nvz_local[vi];
 		}
 	#endif
-
 }
 
 void SampleRegion::CalcGlobalValuesFieldYR(DomainDecompBase* domainDecomp, Domain* domain)
@@ -1546,7 +1503,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 		// header
 		outputstream_scal << "                     pos";
 		outputstream_vect << "                     pos";
-		for(uint32_t cid = 0; cid < _nNumComponents; ++cid)
+		for(uint32_t cid = 0; cid < _numComponents; ++cid)
 		{
 			// scalar
 			outputstream_scal << "            DOF_total[" << cid << "]";
@@ -1589,7 +1546,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 			outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 			outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 
-			for(uint8_t cid=0; cid<_nNumComponents; ++cid)
+			for(uint8_t cid=0; cid<_numComponents; ++cid)
 			{
 				// scalar
 				mardyn_assert( _nOffsetScalar[dir][cid]+s < _nNumValsScalar );
@@ -1680,237 +1637,109 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 	this->CalcGlobalValuesVDF();  // calculate global velocity distribution sums
 
 	// reset local values
-	this->ResetLocalValuesVDF();
+//	this->ResetLocalValuesVDF();
 
-	// writing .rpf-files
-	std::stringstream outputstreamVelo_py_abs;
-	std::stringstream outputstreamVelo_py_pvx;
-	std::stringstream outputstreamVelo_py_pvy;
-	std::stringstream outputstreamVelo_py_pvz;
-	std::stringstream outputstreamVelo_py_nvx;
-	std::stringstream outputstreamVelo_py_nvy;
-	std::stringstream outputstreamVelo_py_nvz;
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank != 0)
+		return;
+#endif
 
-	std::stringstream outputstreamVelo_ny_abs;
-	std::stringstream outputstreamVelo_ny_pvx;
-	std::stringstream outputstreamVelo_ny_pvy;
-	std::stringstream outputstreamVelo_ny_pvz;
-	std::stringstream outputstreamVelo_ny_nvx;
-	std::stringstream outputstreamVelo_ny_nvy;
-	std::stringstream outputstreamVelo_ny_nvz;
+	const uint8_t numDataStructuresVDF = 12;
+	const uint8_t numFiles = numDataStructuresVDF+1;
+	const std::array<std::string,numFiles> strSubPrefixes = {
+			"_pjy_abs",
+			"_pjy_pvx",
+			"_pjy_pvy",
+			"_pjy_pvz",
+			"_pjy_nvx",
+			"_pjy_nvz",
+			"_njy_abs",
+			"_njy_pvx",
+			"_njy_pvz",
+			"_njy_nvx",
+			"_njy_nvy",
+			"_njy_nvz",
+			"_classes"};
 
-	std::stringstream filenamestreamVelo_py_abs;
-	std::stringstream filenamestreamVelo_py_pvx;
-	std::stringstream filenamestreamVelo_py_pvy;
-	std::stringstream filenamestreamVelo_py_pvz;
-	std::stringstream filenamestreamVelo_py_nvx;
-	std::stringstream filenamestreamVelo_py_nvy;
-	std::stringstream filenamestreamVelo_py_nvz;
+	std::array<uint64_t*,12> dataPtrs;
+	dataPtrs.at(0)  = _VDF_pjy_abs_global;
+	dataPtrs.at(1)  = _VDF_pjy_pvx_global;
+	dataPtrs.at(2)  = _VDF_pjy_pvy_global;
+	dataPtrs.at(3)  = _VDF_pjy_pvz_global;
+	dataPtrs.at(4)  = _VDF_pjy_nvx_global;
+	dataPtrs.at(5)  = _VDF_pjy_nvz_global;
+	dataPtrs.at(6)  = _VDF_njy_abs_global;
+	dataPtrs.at(7)  = _VDF_njy_pvx_global;
+	dataPtrs.at(8)  = _VDF_njy_pvz_global;
+	dataPtrs.at(9)  = _VDF_njy_nvx_global;
+	dataPtrs.at(10) = _VDF_njy_nvy_global;
+	dataPtrs.at(11) = _VDF_njy_nvz_global;
 
-	std::stringstream filenamestreamVelo_ny_abs;
-	std::stringstream filenamestreamVelo_ny_pvx;
-	std::stringstream filenamestreamVelo_ny_pvy;
-	std::stringstream filenamestreamVelo_ny_pvz;
-	std::stringstream filenamestreamVelo_ny_nvx;
-	std::stringstream filenamestreamVelo_ny_nvy;
-	std::stringstream filenamestreamVelo_ny_nvz;
+	for(uint64_t cid=0; cid<_numComponents; ++cid)
+	{
+		const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
+		if(false == csp.bSamplingEnabled)
+			continue;
 
-	filenamestreamVelo_py_abs << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfabs";
-	filenamestreamVelo_py_pvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfpvx";
-	filenamestreamVelo_py_pvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfpvy";
-	filenamestreamVelo_py_pvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfpvz";
-	filenamestreamVelo_py_nvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfnvx";
-	filenamestreamVelo_py_nvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfnvy";
-	filenamestreamVelo_py_nvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfnvz";
+		std::stringstream sstrOutput[numFiles];
+		std::stringstream sstrFilename[numFiles];
 
-	filenamestreamVelo_ny_abs << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfabs";
-	filenamestreamVelo_ny_pvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfpvx";
-	filenamestreamVelo_ny_pvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfpvy";
-	filenamestreamVelo_ny_pvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfpvz";
-	filenamestreamVelo_ny_nvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfnvx";
-	filenamestreamVelo_ny_nvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfnvy";
-	filenamestreamVelo_ny_nvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfnvz";
+		// concat filename string
+		for(uint32_t fi=0; fi<numFiles; ++fi)
+			sstrFilename[fi] << "VDF_reg" << this->GetID() << "_cid" << cid << strSubPrefixes.at(fi) << "_TS" << fill_width('0', 9) << simstep << ".dat";
 
-
-	#ifdef ENABLE_MPI
-		int rank = domainDecomp->getRank();
-		// int numprocs = domainDecomp->getNumProcs();
-		if (rank== 0)
+		// write to string streams
+		sstrOutput[numFiles-1] << "            classes_cid" << cid << endl;
+		for(auto&& dvv : csp.dDiscreteVelocityValues)
 		{
-	#endif
-
-			// header
-			outputstreamVelo_py_abs << "v/y                     ";
-			outputstreamVelo_py_pvx << "v/y                     ";
-			outputstreamVelo_py_pvy << "v/y                     ";
-			outputstreamVelo_py_pvz << "v/y                     ";
-			outputstreamVelo_py_nvx << "v/y                     ";
-			outputstreamVelo_py_nvy << "v/y                     ";
-			outputstreamVelo_py_nvz << "v/y                     ";
-
-			outputstreamVelo_ny_abs << "v/y                     ";
-			outputstreamVelo_ny_pvx << "v/y                     ";
-			outputstreamVelo_ny_pvy << "v/y                     ";
-			outputstreamVelo_ny_pvz << "v/y                     ";
-			outputstreamVelo_ny_nvx << "v/y                     ";
-			outputstreamVelo_ny_nvy << "v/y                     ";
-			outputstreamVelo_ny_nvz << "v/y                     ";
-
-			// first line - discrete radius values
-			for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
-			{
-				outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-
-				outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-				outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
-			}
-			outputstreamVelo_py_abs << endl;
-			outputstreamVelo_py_pvx << endl;
-			outputstreamVelo_py_pvy << endl;
-			outputstreamVelo_py_pvz << endl;
-			outputstreamVelo_py_nvx << endl;
-			outputstreamVelo_py_nvy << endl;
-			outputstreamVelo_py_nvz << endl;
-
-			outputstreamVelo_ny_abs << endl;
-			outputstreamVelo_ny_pvx << endl;
-			outputstreamVelo_ny_pvy << endl;
-			outputstreamVelo_ny_pvz << endl;
-			outputstreamVelo_ny_nvx << endl;
-			outputstreamVelo_ny_nvy << endl;
-			outputstreamVelo_ny_nvz << endl;
-
-			// global_log->info() << "header done." << endl;
-
-			// velocity distribution matrix
-			for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
-			{
-				outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-
-				outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-				outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-
-				for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
-				{
-					outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_abs[s][v];
-					outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_pvx[s][v];
-					outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_pvy[s][v];
-					outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_pvz[s][v];
-					outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_nvx[s][v];
-					outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_nvy[s][v];
-					outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_nvz[s][v];
-
-					outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_abs[s][v];
-					outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_pvx[s][v];
-					outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_pvy[s][v];
-					outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_pvz[s][v];
-					outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_nvx[s][v];
-					outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_nvy[s][v];
-					outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_nvz[s][v];
-				}
-
-				outputstreamVelo_py_abs << endl;
-				outputstreamVelo_py_pvx << endl;
-				outputstreamVelo_py_pvy << endl;
-				outputstreamVelo_py_pvz << endl;
-				outputstreamVelo_py_nvx << endl;
-				outputstreamVelo_py_nvy << endl;
-				outputstreamVelo_py_nvz << endl;
-
-				outputstreamVelo_ny_abs << endl;
-				outputstreamVelo_ny_pvx << endl;
-				outputstreamVelo_ny_pvy << endl;
-				outputstreamVelo_ny_pvz << endl;
-				outputstreamVelo_ny_nvx << endl;
-				outputstreamVelo_ny_nvy << endl;
-				outputstreamVelo_ny_nvz << endl;
-			}
-
-			// Datei zum schreiben öffnen, daten schreiben
-			ofstream fileoutVelo_py_abs(filenamestreamVelo_py_abs.str().c_str(), ios::out);
-			fileoutVelo_py_abs << outputstreamVelo_py_abs.str();
-			fileoutVelo_py_abs.close();
-
-			ofstream fileoutVelo_py_pvx(filenamestreamVelo_py_pvx.str().c_str(), ios::out);
-			fileoutVelo_py_pvx << outputstreamVelo_py_pvx.str();
-			fileoutVelo_py_pvx.close();
-
-			ofstream fileoutVelo_py_pvy(filenamestreamVelo_py_pvy.str().c_str(), ios::out);
-			fileoutVelo_py_pvy << outputstreamVelo_py_pvy.str();
-			fileoutVelo_py_pvy.close();
-
-			ofstream fileoutVelo_py_pvz(filenamestreamVelo_py_pvz.str().c_str(), ios::out);
-			fileoutVelo_py_pvz << outputstreamVelo_py_pvz.str();
-			fileoutVelo_py_pvz.close();
-
-			ofstream fileoutVelo_py_nvx(filenamestreamVelo_py_nvx.str().c_str(), ios::out);
-			fileoutVelo_py_nvx << outputstreamVelo_py_nvx.str();
-			fileoutVelo_py_nvx.close();
-
-			ofstream fileoutVelo_py_nvy(filenamestreamVelo_py_nvy.str().c_str(), ios::out);
-			fileoutVelo_py_nvy << outputstreamVelo_py_nvy.str();
-			fileoutVelo_py_nvy.close();
-
-			ofstream fileoutVelo_py_nvz(filenamestreamVelo_py_nvz.str().c_str(), ios::out);
-			fileoutVelo_py_nvz << outputstreamVelo_py_nvz.str();
-			fileoutVelo_py_nvz.close();
-
-
-			ofstream fileoutVelo_ny_abs(filenamestreamVelo_ny_abs.str().c_str(), ios::out);
-			fileoutVelo_ny_abs << outputstreamVelo_ny_abs.str();
-			fileoutVelo_ny_abs.close();
-
-			ofstream fileoutVelo_ny_pvx(filenamestreamVelo_ny_pvx.str().c_str(), ios::out);
-			fileoutVelo_ny_pvx << outputstreamVelo_ny_pvx.str();
-			fileoutVelo_ny_pvx.close();
-
-			ofstream fileoutVelo_ny_pvy(filenamestreamVelo_ny_pvy.str().c_str(), ios::out);
-			fileoutVelo_ny_pvy << outputstreamVelo_ny_pvy.str();
-			fileoutVelo_ny_pvy.close();
-
-			ofstream fileoutVelo_ny_pvz(filenamestreamVelo_ny_pvz.str().c_str(), ios::out);
-			fileoutVelo_ny_pvz << outputstreamVelo_ny_pvz.str();
-			fileoutVelo_ny_pvz.close();
-
-			ofstream fileoutVelo_ny_nvx(filenamestreamVelo_ny_nvx.str().c_str(), ios::out);
-			fileoutVelo_ny_nvx << outputstreamVelo_ny_nvx.str();
-			fileoutVelo_ny_nvx.close();
-
-			ofstream fileoutVelo_ny_nvy(filenamestreamVelo_ny_nvy.str().c_str(), ios::out);
-			fileoutVelo_ny_nvy << outputstreamVelo_ny_nvy.str();
-			fileoutVelo_ny_nvy.close();
-
-			ofstream fileoutVelo_ny_nvz(filenamestreamVelo_ny_nvz.str().c_str(), ios::out);
-			fileoutVelo_ny_nvz << outputstreamVelo_ny_nvz.str();
-			fileoutVelo_ny_nvz.close();
-
-			// global_log->info() << "files closed." << endl;
-
-	#ifdef ENABLE_MPI
+			sstrOutput[numFiles-1] << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << dvv;
+			sstrOutput[numFiles-1] << endl;
 		}
-	#endif
+
+		// loop over vdf data structures
+		for(uint8_t di=0; di<numDataStructuresVDF; ++di)
+		{
+			// meta data
+			sstrOutput[di].write(reinterpret_cast<const char*>(&csp.numVelocityClasses), 4);
+			sstrOutput[di].write(reinterpret_cast<const char*>(&_numBinsVDF), 4);
+
+			// vdf data
+			uint64_t* data = dataPtrs.at(di);
+			for(uint64_t vi=csp.nOffsetDataStructure; vi<csp.nOffsetDataStructure+csp.numVals; ++vi)
+			{
+				mardyn_assert(vi < _numValsVDF);
+				sstrOutput[di].write(reinterpret_cast<const char*>(&data[vi]), 8);
+//				sstrOutput[di].write(reinterpret_cast<const char*>(&vi), 8);
+			}
+		}
+
+		// write to file streams
+		for(uint8_t fi=0; fi<numFiles; ++fi)
+		{
+			ofstream ofs(sstrFilename[fi].str().c_str(), ios::out);
+			ofs << sstrOutput[fi].str();
+			ofs.close();
+		}
+	}
+
+	// bin midpoint positions
+	std::stringstream sstrOutput;
+	std::stringstream sstrFilename;
+	sstrFilename << "VDF_reg" << this->GetID() << "_bin_coords" << "_TS" << fill_width('0', 9) << simstep << ".dat";
+
+	// write to string stream
+	sstrOutput << "                  coords" << endl;
+	for(auto&& bmp : _dBinMidpointsVDF)
+	{
+		sstrOutput << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << bmp;
+		sstrOutput << endl;
+	}
+	// write to file stream
+	ofstream ofs(sstrFilename.str().c_str(), ios::out);
+	ofs << sstrOutput.str();
+	ofs.close();
 }
 
 
@@ -1993,28 +1822,21 @@ void SampleRegion::ResetLocalValuesVDF()
 	if(false == _SamplingEnabledVDF)
 		return;
 
-	// reset values
-	for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
+	for(uint32_t vi=0; vi<_numValsVDF; ++vi)
 	{
-		// reset local velocity profile arrays
-		for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
-		{
-			_veloDistrMatrixLocal_py_abs[s][v] = 0;
-			_veloDistrMatrixLocal_py_pvx[s][v] = 0;
-			_veloDistrMatrixLocal_py_pvy[s][v] = 0;
-			_veloDistrMatrixLocal_py_pvz[s][v] = 0;
-			_veloDistrMatrixLocal_py_nvx[s][v] = 0;
-			_veloDistrMatrixLocal_py_nvy[s][v] = 0;
-			_veloDistrMatrixLocal_py_nvz[s][v] = 0;
+		_VDF_pjy_abs_local[vi] = 0;
+		_VDF_pjy_pvx_local[vi] = 0;
+		_VDF_pjy_pvy_local[vi] = 0;
+		_VDF_pjy_pvz_local[vi] = 0;
+		_VDF_pjy_nvx_local[vi] = 0;
+		_VDF_pjy_nvz_local[vi] = 0;
 
-			_veloDistrMatrixLocal_ny_abs[s][v] = 0;
-			_veloDistrMatrixLocal_ny_pvx[s][v] = 0;
-			_veloDistrMatrixLocal_ny_pvy[s][v] = 0;
-			_veloDistrMatrixLocal_ny_pvz[s][v] = 0;
-			_veloDistrMatrixLocal_ny_nvx[s][v] = 0;
-			_veloDistrMatrixLocal_ny_nvy[s][v] = 0;
-			_veloDistrMatrixLocal_ny_nvz[s][v] = 0;
-		}
+		_VDF_njy_abs_local[vi] = 0;
+		_VDF_njy_pvx_local[vi] = 0;
+		_VDF_njy_pvz_local[vi] = 0;
+		_VDF_njy_nvx_local[vi] = 0;
+		_VDF_njy_nvy_local[vi] = 0;
+		_VDF_njy_nvz_local[vi] = 0;
 	}
 }
 
@@ -2095,23 +1917,58 @@ void SampleRegion::UpdateSlabParameters()
 	// VDF
 	if(true == _SamplingEnabledVDF)
 	{
-		_nNumBinsVDF = round(dWidth / _dBinWidthVDFInit);
-		_dBinWidthVDF = dWidth / ( (double)(_nNumBinsVDF) );
+		_numBinsVDF = round(dWidth / _dBinWidthVDFInit);
+		_dBinWidthVDF = dWidth / ( (double)(_numBinsVDF) );
 
 		// recalculate Bin midpoint positions
-		for(unsigned int s = 0; s < _nNumBinsVDF; s++)
+		for(unsigned int s = 0; s < _numBinsVDF; s++)
 			_dBinMidpointsVDF[s] = (s + 0.5) * _dBinWidthVDF + dLowerCorner[1];
 	}
 }
+#ifdef USE_TEST_INPUT
+void SampleRegion::InitTestInput()
+{
+	global_log->info() << ">>>> USE_TEST_INPUT" << endl;
+	global_log->info() << "-----------------------------------------------" << endl;
+	uint32_t numBins = 3;
+	uint32_t numClasses1 = 4;
+	uint32_t numClasses2 = 8;
+	_vecTestInput.resize(numBins*(numClasses1 + numClasses2) );
 
+	for(uint32_t ci=0; ci<numClasses1; ci++)
+	{
+		for(uint32_t bi=0; bi<numBins; ++bi)
+		{
+			global_log->info() << "(ci*numBins+bi) = " << (ci*numBins+bi) << endl;
+			_vecTestInput.at(ci*numBins+bi).cid = 1;
+			_vecTestInput.at(ci*numBins+bi).binIndex = bi;
+			_vecTestInput.at(ci*numBins+bi).classIndex = ci;
+		}
+	}
+	for(uint32_t ci=0; ci<numClasses2; ++ci)
+	{
+		for(uint32_t bi=0; bi<numBins; ++bi)
+		{
+			_vecTestInput.at(numBins*numClasses1 + ci*numBins+bi).cid = 2;
+			_vecTestInput.at(numBins*numClasses1 + ci*numBins+bi).binIndex = bi;
+			_vecTestInput.at(numBins*numClasses1 + ci*numBins+bi).classIndex = ci;
+		}
+	}
+
+	global_log->info() << "         cid    binIndex  classIndex" << endl;
+	for(auto&& ti : _vecTestInput)
+		global_log->info() << setw(12) << ti.cid << setw(12) << ti.binIndex << setw(12) << ti.classIndex << endl;
+
+	global_log->info() << "-----------------------------------------------" << endl;
+	global_log->info() << "<<<< USE_TEST_INPUT" << endl;
+}
+#endif
 
 // class RegionSampling
 
 RegionSampling::RegionSampling(Domain* domain, DomainDecompBase* domainDecomp)
 : ControlInstance(domain, domainDecomp)
 {
-	// number of components
-	_nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
 }
 
 
