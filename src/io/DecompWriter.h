@@ -1,24 +1,34 @@
-#ifndef DECOMPWRITER_H_
-#define DECOMPWRITER_H_
+#ifndef SRC_IO_DECOMPWRITER_H_
+#define SRC_IO_DECOMPWRITER_H_
 
 #include <string>
 
 #include "io/OutputBase.h"
 
 
-//! @brief writes out information about decomposition of the simulation domain.
-//!
-//! @param filename Name of the written file (including path)
-//! @param particleContainer The molecules that are contained in the simulation domain
-//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
-//!                     Methods to achieve this are available in domainDecomp
-//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
+/** @brief writes out information about decomposition of the simulation domain.
+ *
+ * Writes out decomposition information. The data written to the file depend
+ * on the used domain decomposition.
+ */
 class DecompWriter : public OutputBase {
 public:
-    DecompWriter(){}
-	DecompWriter(unsigned long writeFrequency, std::string mode, std::string outputPrefix, bool incremental);
-	~DecompWriter();
+	DecompWriter() {}
+	~DecompWriter() {}
 
+
+	/** @brief Read in XML configuration for DecompWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="DecompWriter">
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	     <incremental>INTEGER</incremental>
+	     <appendTimestamp>INTEGER</appendTimestamp>
+	   </outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	//! @todo comment
@@ -41,10 +51,9 @@ public:
 	static OutputBase* createInstance() { return new DecompWriter(); }
 private:
 	unsigned long _writeFrequency;
-	std::string _mode;
 	bool _appendTimestamp;
 	bool _incremental;
 	std::string _outputPrefix;
 };
 
-#endif /*DECOMPWRITER_H_*/
+#endif  // SRC_IO_DECOMPWRITER_H_

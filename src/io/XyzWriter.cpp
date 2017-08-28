@@ -11,23 +11,9 @@
 #include "utils/Logger.h"
 #include "Simulation.h"
 
+
 using Log::global_log;
 using namespace std;
-
-XyzWriter::XyzWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
-	_outputPrefix= outputPrefix;
-	_writeFrequency = writeFrequency;
-	_incremental = incremental;
-
-	if (outputPrefix == "default") {
-		_appendTimestamp = true;
-	}
-	else {
-		_appendTimestamp = false;
-	}
-}
-
-XyzWriter::~XyzWriter(){}
 
 void XyzWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;

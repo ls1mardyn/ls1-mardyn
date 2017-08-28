@@ -20,17 +20,6 @@ RDF::RDF() :
 {
 }
 
-RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>* components) :
-	_intervalLength(intervalLength),
-	_bins(bins),
-	_components(components),
-	_writeFrequency(25000),
-	_outputPrefix("out")
-{
-	_readConfig=true;
-	init();
-}
-
 void RDF::init() {
 	if(!_readConfig){
 		global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
@@ -264,14 +253,6 @@ void RDF::reset() {
 	}
 }
 
-
-void RDF::setOutputTimestep(unsigned int timestep) {
-	_writeFrequency = timestep;
-}
-
-void RDF::setOutputPrefix(string prefix) {
-	_outputPrefix = prefix;
-}
 
 void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomposition, Domain* domain,
 		unsigned long simStep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {

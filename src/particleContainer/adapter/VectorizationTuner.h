@@ -1,12 +1,5 @@
-/*
- * VectorizationTuner.h
- *
- *  Created on: Jun 12, 2015
- *      Author: tchipevn
- */
-
-#ifndef VECTORIZATIONTUNER_H_
-#define VECTORIZATIONTUNER_H_
+#ifndef SRC_IO_VECTORIZATIONTUNER_H_
+#define SRC_IO_VECTORIZATIONTUNER_H_
 
 /// An enum, that describes, whether the molecule count should be increased exponentially or linearly.
 enum MoleculeCntIncreaseTypeEnum{
@@ -24,38 +17,21 @@ enum MoleculeCntIncreaseTypeEnum{
 
 class Component;
 #include "particleContainer/ParticleCellForwardDeclaration.h"
-//class VectorizedCellProcessor;
-//class FlopCounter;
 
 
 
-
-/**
- * @brief VectorizationTuner class.
+/** @brief VectorizationTuner class.
+ *
  * This class is used to get detailed information about the performance of the VectorizedCellProcessor.
  * For different scenarios, the performance is evaluated and output.
  * Later this could be used to actually use this class as a tuner, i.e. to use the best possible vectorization method for the actual computation.
- *
  */
 class VectorizationTuner : public OutputBase{
 
 public:
-	/**
-	* @brief Constructor of VectorizationTuner for the old input mode.
-	* Here the parameter (outputPrefix) has to be passed explicitly.
-	*
-	* @param outputPrefix
-	* @param cutoffRadius
-	* @param LJCutoffRadius
-	* @param cellProcessor pointer to the pointer of the cellProcessor. This is needed, since the cell processor is not yet set, when this function is called.
-	*/
-	VectorizationTuner(std::string outputPrefix, unsigned int minMoleculeCnt, unsigned int maxMoleculeCnt, MoleculeCntIncreaseTypeEnum _moleculeCntIncreaseType,
-			double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor);
-
-	/**
-	 * @brief Constructor of VectorizationTuner for the xml input mode.
+	/** @brief Constructor of VectorizationTuner for the xml input mode.
+	 *
 	 * Here the parameter (outputPrefix) does not have to be passed, it is written from the xml file instead.
-
 	 * @param cutoffRadius
 	 * @param LJCutoffRadius
 	 * @param cellProcessor pointer to the pointer of the cellProcessor. This is needed, since the cell processor is not yet set, when this function is called.
@@ -71,7 +47,18 @@ public:
 	void initOutput(ParticleContainer* particleContainer,
 				DomainDecompBase* domainDecomp, Domain* domain);
 
-	//documentation in OutputBase, used to get parameters from xml files.
+	/** @brief Read in XML configuration for the VectorizationTuner.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <parallelisation type="KDDecomposition">
+	     <outputfilename>STRING</outputfilename>
+	     <minmoleculecnt>INTEGER</minmoleculecnt>
+	     <maxmoleculecnt>INTEGER</maxmoleculecnt>
+	     <moleculecntincreasetype>INTEGER</moleculecntincreasetype>
+	   </parallelisation>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	//documentation in OutputBase, does nothing.
@@ -223,4 +210,4 @@ private:
 			double& gflopsPair, FlopCounter& flopCounter);
 };
 
-#endif /* VECTORIZATIONTUNER_H_ */
+#endif  // SRC_IO_VECTORIZATIONTUNER_H_

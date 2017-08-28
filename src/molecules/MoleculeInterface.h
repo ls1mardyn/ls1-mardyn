@@ -78,6 +78,8 @@ public:
 
 
 	double v2() const {return v(0)*v(0)+v(1)*v(1)+v(2)*v(2); }
+	double F2() const {return F(0)*F(0)+F(1)*F(1)+F(2)*F(2); }
+	double L2() const {return D(0)*D(0)+D(1)*D(1)+D(2)*D(2); }
 
 	double U_trans() const { return 0.5 * mass() * v2(); }
 	virtual double U_rot() = 0;

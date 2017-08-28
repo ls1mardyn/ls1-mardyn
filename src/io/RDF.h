@@ -10,8 +10,7 @@
 
 class Component;
 
-/**
- * This class calculates the Radial Distribution Function (RDF).
+/** @brief This class calculates the Radial Distribution Function (RDF).
  *
  * The RDF "describes how the atomic density varies as a function of the distance
  * from one particular atom." (see http://en.wikipedia.org/wiki/Radial_distribution_function ).
@@ -28,7 +27,6 @@ class Component;
  * - for each bin: calculate the number density (i.e. number of particles per volume)
  *   of the corresponding shell
  * - divide the number density by the number density of the system.
- *
  */
 class RDF : public OutputBase {
 
@@ -37,14 +35,20 @@ class RDF : public OutputBase {
 public:
 
 	RDF();
-	/**
-	 * @todo Wouldn't make sense to calculate the parameter intervalLength?
-	 *       intervalLength = cutoffRadius / bins
-	 */
-	RDF(double intervalLength, unsigned int bins, std::vector<Component>* components);
-
 	virtual ~RDF();
 
+	/** @brief Read in XML configuration for RDFWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="RDF">
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	     <bins>INTEGER</bins>
+	     <intervallength>DOUBLE</intervallength>
+	   </outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	void initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
@@ -58,11 +62,11 @@ public:
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
-	void setOutputTimestep(unsigned int timestep);
+	void setOutputTimestep(unsigned int timestep) { _writeFrequency = timestep; }
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
-	void setOutputPrefix(std::string prefix);
+	void setOutputPrefix(std::string prefix) { _outputPrefix = prefix; }
 
 	//! plot all the statistics calculated to one or several files
 	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav);

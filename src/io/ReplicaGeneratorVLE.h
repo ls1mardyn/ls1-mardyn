@@ -12,6 +12,25 @@
 
 using namespace std;
 
+enum SystemTypes : uint8_t
+{
+	ST_UNKNOWN = 0,
+	ST_HOMOGENEOUS = 1,
+	ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR = 2,
+	ST_HETEROGENEOUS_LIQUID_VAPOR = 3,
+};
+
+struct SubDomain
+{
+	std::string strFilePathHeader;
+	std::string strFilePathData;
+	std::vector<Molecule> vecParticles;
+	uint64_t numParticles;
+	std::array<double,3> arrBoxLength;
+	double dVolume;
+	double dDensity;
+};
+
 /** @brief Generator of VLE scenario by replicating equilibrated liquid and vapor system.
  *
  * Description
@@ -41,36 +60,24 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 private:
-	void init(XMLfileUnits& xmlconfig);
-	void readReplicaPhaseSpaceHeader(const std::string& strFilePathHeader, uint64_t& numParticles, double& dBoxLengthXYZ);
-	void readReplicaPhaseSpaceData(const std::string& strFilePathData, const uint64_t& numParticles, std::vector<Molecule>& vecParticles);
+	void init();
+	void readReplicaPhaseSpaceHeader(SubDomain& subDomain);
+	void readReplicaPhaseSpaceData(SubDomain& subDomain);
 
 private:
-	std::vector<Molecule> _vecParticlesLiq;
-	std::vector<Molecule> _vecParticlesVap;
-	uint64_t _numParticlesLiq;
-	uint64_t _numParticlesVap;
+	std::vector<SubDomain> _vecSubDomains;
 	uint64_t _numParticlesTotal;
 	uint32_t _numBlocksXZ;
 	uint32_t _numBlocksLiqY;
 	uint32_t _numBlocksVapY;
 	uint32_t _nIndexLiqBeginY;
 	uint32_t _nIndexLiqEndY;
-	std::string _strFilePathHeaderLiq;
-	std::string _strFilePathDataLiq;
-	std::string _strFilePathHeaderVap;
-	std::string _strFilePathDataVap;
-	double _dBoxLengthLiqXYZ;
-	double _dBoxLengthVapXYZ;
-	double _dBoxLengthXYZ;
 	uint32_t _nMoleculeFormat;
 	MoleculeDataReader* _moleculeDataReader;
 	uint64_t _nMaxID;
 	double _dMoleculeDiameter;
 	double _fspY[6];  // free space positions
-	double _dDensityLiq;
-	double _dBoxVolumeLiq;
-	bool _bCreateHomogenous;
+	uint8_t _nSystemType;
 };
 
 class MoleculeDataReader

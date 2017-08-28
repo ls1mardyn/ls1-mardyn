@@ -26,27 +26,18 @@ enum MoleculeFormat : uint32_t {
 
 ReplicaGeneratorVLE::ReplicaGeneratorVLE()
 	:
-	_numParticlesLiq(0),
-	_numParticlesVap(0),
 	_numParticlesTotal(0),
 	_numBlocksXZ(0),
 	_numBlocksLiqY(0),
 	_numBlocksVapY(0),
 	_nIndexLiqBeginY(0),
 	_nIndexLiqEndY(0),
-	_strFilePathHeaderLiq("unknown"),
-	_strFilePathDataLiq("unknown"),
-	_strFilePathHeaderVap("unknown"),
-	_strFilePathDataVap("unknown"),
-	_dBoxLengthLiqXYZ(0.0),
-	_dBoxLengthVapXYZ(0.0),
-	_dBoxLengthXYZ(0.0),
 	_nMoleculeFormat(ICRVQD),
 	_moleculeDataReader(nullptr),
 	_nMaxID(0),
-	_dDensityLiq(0.0),
-	_dBoxVolumeLiq(0.0),
-	_bCreateHomogenous(false)
+	_dMoleculeDiameter(0.),
+	_fspY{0., 0., 0., 0., 0., 0.},
+	_nSystemType(ST_UNKNOWN)
 {
 }
 
@@ -54,9 +45,9 @@ ReplicaGeneratorVLE::~ReplicaGeneratorVLE()
 {
 }
 
-void ReplicaGeneratorVLE::readReplicaPhaseSpaceHeader(const std::string& strFilePathHeader, uint64_t& numParticles, double& dBoxLengthXYZ)
+void ReplicaGeneratorVLE::readReplicaPhaseSpaceHeader(SubDomain& subDomain)
 {
-	XMLfileUnits inp(strFilePathHeader);
+	XMLfileUnits inp(subDomain.strFilePathHeader);
 
 	if(false == inp.changecurrentnode("/mardyn")) {
 		global_log->error() << "Could not find root node /mardyn in XML input file." << endl;
@@ -66,30 +57,28 @@ void ReplicaGeneratorVLE::readReplicaPhaseSpaceHeader(const std::string& strFile
 
 	bool bInputOk = true;
 	double dCurrentTime = 0.;
-	double dBoxLength[3] = {0., 0., 0.};
-	uint64_t numMolecules = 0;
+	double dBL[3];
 	std::string strMoleculeFormat;
 	bInputOk = bInputOk && inp.changecurrentnode("headerinfo");
 	bInputOk = bInputOk && inp.getNodeValue("time", dCurrentTime);
-	bInputOk = bInputOk && inp.getNodeValue("length/x", dBoxLength[0] );
-	bInputOk = bInputOk && inp.getNodeValue("length/y", dBoxLength[1] );
-	bInputOk = bInputOk && inp.getNodeValue("length/z", dBoxLength[2] );
-	bInputOk = bInputOk && inp.getNodeValue("number", numParticles);
+	bInputOk = bInputOk && inp.getNodeValue("length/x", dBL[0] );
+	bInputOk = bInputOk && inp.getNodeValue("length/y", dBL[1] );
+	bInputOk = bInputOk && inp.getNodeValue("length/z", dBL[2] );
+	bInputOk = bInputOk && inp.getNodeValue("number", subDomain.numParticles);
 	bInputOk = bInputOk && inp.getNodeValue("format@type", strMoleculeFormat);
+	subDomain.dVolume = 1;
+	for(uint8_t di=0; di<3; ++di)
+	{
+		subDomain.arrBoxLength.at(di) = dBL[di];
+		subDomain.dVolume *= dBL[di];
+	}
+	subDomain.dDensity = subDomain.numParticles / subDomain.dVolume;
 
 	if(false == bInputOk)
 	{
-		global_log->error() << "Content of file: '" << strFilePathHeader << "' corrupted! Program exit ..." << endl;
+		global_log->error() << "Content of file: '" << subDomain.strFilePathHeader << "' corrupted! Program exit ..." << endl;
 		Simulation::exit(1);
 	}
-
-	// Box length
-	if(dBoxLength[0] != dBoxLength[1] || dBoxLength[0] != dBoxLength[2] || dBoxLength[1] != dBoxLength[2])
-	{
-		global_log->error() << "System is not a cube! Program exit ..." << endl;
-		Simulation::exit(1);
-	}
-	dBoxLengthXYZ = dBoxLength[0];
 
 	if("ICRVQD" == strMoleculeFormat)
 		_nMoleculeFormat = ICRVQD;
@@ -104,18 +93,18 @@ void ReplicaGeneratorVLE::readReplicaPhaseSpaceHeader(const std::string& strFile
 	}
 }
 
-void ReplicaGeneratorVLE::readReplicaPhaseSpaceData(const std::string& strFilePathData, const uint64_t& numParticles, std::vector<Molecule>& vecParticles)
+void ReplicaGeneratorVLE::readReplicaPhaseSpaceData(SubDomain& subDomain)
 {
 	// Open file
 	std::ifstream ifs;
-	global_log->info() << "Opening phase space file " << strFilePathData << endl;
-	ifs.open(strFilePathData.c_str(),
+	global_log->info() << "Opening phase space file " << subDomain.strFilePathData << endl;
+	ifs.open(subDomain.strFilePathData.c_str(),
 			ios::binary | ios::in);
 	if (!ifs.is_open()) {
-		global_log->error() << "Could not open phaseSpaceFile " << strFilePathData << endl;
+		global_log->error() << "Could not open phaseSpaceFile " << subDomain.strFilePathData << endl;
 		Simulation::exit(1);
 	}
-	global_log->info() << "Reading phase space file " << strFilePathData << endl;
+	global_log->info() << "Reading phase space file " << subDomain.strFilePathData << endl;
 
 	vector<Component>& components = *(_simulation.getEnsemble()->getComponents());
 	unsigned int numComponents = components.size();
@@ -134,14 +123,14 @@ void ReplicaGeneratorVLE::readReplicaPhaseSpaceData(const std::string& strFilePa
 		break;
 	}
 
-	for (uint64_t pi=0; pi<numParticles; pi++)
+	for (uint64_t pi=0; pi<subDomain.numParticles; pi++)
 	{
 		Molecule mol;
 		_moleculeDataReader->read(ifs, mol, components);
-		vecParticles.push_back(mol);
+		subDomain.vecParticles.push_back(mol);
 
 		// Print status message
-		unsigned long iph = numParticles / 100;
+		unsigned long iph = subDomain.numParticles / 100;
 		if (iph != 0 && (pi % iph) == 0)
 			global_log->info() << "Finished reading molecules: " << pi / iph
 					<< "%\r" << std::flush;
@@ -156,41 +145,47 @@ void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	global_log->info() << "ReplicaGeneratorVLE" << std::endl;
 
-	_bCreateHomogenous = false;
+	_nSystemType = ST_UNKNOWN;
 	std::string strType = "unknown";
 	xmlconfig.getNodeValue("type", strType);
 	if("homogeneous" == strType)
-		_bCreateHomogenous = true;
-	else if ("heterogeneous" == strType)
-		_bCreateHomogenous = false;
+		_nSystemType = ST_HOMOGENEOUS;
+	else if ("heterogeneous_VLV" == strType)
+		_nSystemType = ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR;
+	else if ("heterogeneous_LV" == strType)
+		_nSystemType = ST_HETEROGENEOUS_LIQUID_VAPOR;
 	else
 	{
 		global_log->error() << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << std::endl;
 		Simulation::exit(-1);
 	}
 
-	if(false == _bCreateHomogenous)
+	SubDomain sd;
+	xmlconfig.getNodeValue("files/vapor/header", sd.strFilePathHeader);
+	xmlconfig.getNodeValue("files/vapor/data", sd.strFilePathData);
+	_vecSubDomains.push_back(sd);
+	if(_nSystemType == ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR || _nSystemType == ST_HETEROGENEOUS_LIQUID_VAPOR)
 	{
-		xmlconfig.getNodeValue("files/liquid/header", _strFilePathHeaderLiq);
-		xmlconfig.getNodeValue("files/liquid/data", _strFilePathDataLiq);
+		SubDomain sd;
+		xmlconfig.getNodeValue("files/liquid/header", sd.strFilePathHeader);
+		xmlconfig.getNodeValue("files/liquid/data", sd.strFilePathData);
+		_vecSubDomains.push_back(sd);
 	}
-	xmlconfig.getNodeValue("files/vapor/header", _strFilePathHeaderVap);
-	xmlconfig.getNodeValue("files/vapor/data", _strFilePathDataVap);
 
-	if(false == _bCreateHomogenous)
-		global_log->info() << "Importing data for liquid box from file: " << _strFilePathDataLiq << std::endl;
-	global_log->info() << "Importing data for vapour box from file: " << _strFilePathDataVap << std::endl;
+//	if(false == _bCreateHomogenous)
+//		global_log->info() << "Importing data for liquid box from file: " << _strFilePathDataLiq << std::endl;
+//	global_log->info() << "Importing data for vapour box from file: " << _strFilePathDataVap << std::endl;
 
 	xmlconfig.getNodeValue("numblocks/xz",     _numBlocksXZ);
-	if(false == _bCreateHomogenous)
-		xmlconfig.getNodeValue("numblocks/liquid", _numBlocksLiqY);
 	xmlconfig.getNodeValue("numblocks/vapor",  _numBlocksVapY);
+	if(_nSystemType == ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR || _nSystemType == ST_HETEROGENEOUS_LIQUID_VAPOR)
+		xmlconfig.getNodeValue("numblocks/liquid", _numBlocksLiqY);
 
 	global_log->info() << "Replicating " << _numBlocksXZ << " x " << _numBlocksXZ << " boxes in XZ layers." << std::endl;
-	global_log->info() << "Replicating " << _numBlocksLiqY << " (liquid) + " << _numBlocksVapY << " (vapour) + " << _numBlocksLiqY << " (liquid) boxes"
-			" = " << 2*_numBlocksVapY + _numBlocksLiqY << " (total) in a row of Y direction." << std::endl;
+//	global_log->info() << "Replicating " << _numBlocksLiqY << " (liquid) + " << _numBlocksVapY << " (vapour) + " << _numBlocksLiqY << " (liquid) boxes"
+//			" = " << 2*_numBlocksVapY + _numBlocksLiqY << " (total) in a row of Y direction." << std::endl;
 
-	if(false == _bCreateHomogenous)
+	if(_nSystemType == ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR)
 	{
 	// liquid blocks begin/end index
 		_nIndexLiqBeginY = _numBlocksVapY;
@@ -199,64 +194,78 @@ void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("diameter",  _dMoleculeDiameter);
 		global_log->info() << "Using molecule diameter: " << _dMoleculeDiameter << " for spacing between liquid and vapour phase. " << std::endl;
 	}
+	else if(_nSystemType == ST_HETEROGENEOUS_LIQUID_VAPOR)
+	{
+	// liquid blocks begin/end index
+		_nIndexLiqBeginY = 0;
+		_nIndexLiqEndY = _numBlocksLiqY - 1;
+
+		xmlconfig.getNodeValue("diameter",  _dMoleculeDiameter);
+		global_log->info() << "Using molecule diameter: " << _dMoleculeDiameter << " for spacing between liquid and vapour phase. " << std::endl;
+	}
 
 	//init
-	this->init(xmlconfig);
+	this->init();
 }
 
-void ReplicaGeneratorVLE::init(XMLfileUnits& xmlconfig)
+void ReplicaGeneratorVLE::init()
 {
 	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
 	global_log->info() << domainDecomp->getRank() << ": Init Replica VLE ..." << endl;
 
-	if(false == _bCreateHomogenous)
+	for(auto&& sd : _vecSubDomains)
 	{
-		// Read liquid system
-		this->readReplicaPhaseSpaceHeader(_strFilePathHeaderLiq, _numParticlesLiq, _dBoxLengthLiqXYZ);
-		this->readReplicaPhaseSpaceData(_strFilePathDataLiq, _numParticlesLiq, _vecParticlesLiq);
+		this->readReplicaPhaseSpaceHeader(sd);
+		this->readReplicaPhaseSpaceData(sd);
 	}
-	// Read vapor system
-	this->readReplicaPhaseSpaceHeader(_strFilePathHeaderVap, _numParticlesVap, _dBoxLengthVapXYZ);
-	this->readReplicaPhaseSpaceData(_strFilePathDataVap, _numParticlesVap, _vecParticlesVap);
-
-	if(false == _bCreateHomogenous)
+	/*
+	// Check box length vap/liq
+	for(uint8_t dim=0; dim<3; ++dim)
 	{
-		// Box length
-		if(_dBoxLengthLiqXYZ != _dBoxLengthVapXYZ)
+		if(dBoxLength[0] != dBoxLength[1] || dBoxLength[0] != dBoxLength[2] || dBoxLength[1] != dBoxLength[2])
 		{
-			global_log->error() << "Box length of liquid and vapor system differ! Program exit ..." << endl;
+			global_log->error() << "System is not a cube! Program exit ..." << endl;
 			Simulation::exit(1);
 		}
-		_dBoxLengthXYZ = _dBoxLengthLiqXYZ;
 	}
-	else
-		_dBoxLengthXYZ = _dBoxLengthVapXYZ;
+	*/
 
 	// total num particles, maxID
-	if(true == _bCreateHomogenous)
-		_numParticlesTotal = _numBlocksVapY*_numParticlesVap * _numBlocksXZ * _numBlocksXZ;
-	else
-		_numParticlesTotal = (2*_numBlocksVapY*_numParticlesVap + _numBlocksLiqY*_numParticlesLiq) * _numBlocksXZ * _numBlocksXZ;
+	switch(_nSystemType)
+	{
+	case ST_HOMOGENEOUS:
+		_numParticlesTotal = _numBlocksVapY*_vecSubDomains.at(0).numParticles * _numBlocksXZ * _numBlocksXZ;
+		break;
+	case ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR:
+		_numParticlesTotal = (2*_numBlocksVapY*_vecSubDomains.at(0).numParticles + _numBlocksLiqY*_vecSubDomains.at(1).numParticles) * _numBlocksXZ * _numBlocksXZ;
+		break;
+	case ST_HETEROGENEOUS_LIQUID_VAPOR:
+		_numParticlesTotal = (_numBlocksVapY*_vecSubDomains.at(0).numParticles + _numBlocksLiqY*_vecSubDomains.at(1).numParticles) * _numBlocksXZ * _numBlocksXZ;
+		break;
+	default:
+		_numParticlesTotal = 0;
+	}
 	global_simulation->getDomain()->setglobalNumMolecules(_numParticlesTotal);
-
-	if(false == _bCreateHomogenous)
-	{
-		_dBoxVolumeLiq = _dBoxLengthLiqXYZ*_dBoxLengthLiqXYZ*_dBoxLengthLiqXYZ;
-		_dDensityLiq = _numParticlesLiq / _dBoxVolumeLiq;
-	}
-	else
-	{
-		_dBoxVolumeLiq = _dBoxLengthVapXYZ*_dBoxLengthVapXYZ*_dBoxLengthVapXYZ;
-		_dDensityLiq = _numParticlesVap / _dBoxVolumeLiq;
-	}
 
 	// update global length of domain
 	double dLength[3];
-	if(true == _bCreateHomogenous)
-		dLength[1] = _numBlocksVapY * _dBoxLengthXYZ;
-	else
-		dLength[1] = (2*_numBlocksVapY + _numBlocksLiqY) * _dBoxLengthXYZ;
-	dLength[0] = dLength[2] = _numBlocksXZ * _dBoxLengthXYZ;
+	switch(_nSystemType)
+	{
+	case ST_HOMOGENEOUS:
+		dLength[1] = _numBlocksVapY * _vecSubDomains.at(0).arrBoxLength.at(1);
+		break;
+	case ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR:
+		dLength[1] = 2*_numBlocksVapY*_vecSubDomains.at(0).arrBoxLength.at(1) + _numBlocksLiqY * _vecSubDomains.at(1).arrBoxLength.at(1);
+		break;
+	case ST_HETEROGENEOUS_LIQUID_VAPOR:
+		dLength[1] = _numBlocksVapY*_vecSubDomains.at(0).arrBoxLength.at(1) + _numBlocksLiqY * _vecSubDomains.at(1).arrBoxLength.at(1);
+		break;
+	default:
+		dLength[1] = 0;
+		break;
+	}
+	dLength[0] = _numBlocksXZ * _vecSubDomains.at(0).arrBoxLength.at(0);
+	dLength[2] = _numBlocksXZ * _vecSubDomains.at(0).arrBoxLength.at(2);
 	for(uint8_t di=0; di<3; ++di)
 		global_simulation->getDomain()->setGlobalLength(di, dLength[di]);
 	global_log->info() << "Domain box length = " << dLength[0] << ", " << dLength[1] << ", " << dLength[2] << endl;
@@ -277,17 +286,32 @@ void ReplicaGeneratorVLE::init(XMLfileUnits& xmlconfig)
 	domainDecomp->readXML(xmlconfig);
 */
 
-	if(false == _bCreateHomogenous)
+	double dPhaseLengthVapY = 0.;
+	double dPhaseLengthLiqY = 0.;
+	switch(_nSystemType)
 	{
+	case ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR:
 		// calc free space positions
-		double dPhaseLengthVapY = _numBlocksVapY * _dBoxLengthXYZ;
-		double dPhaseLengthLiqY = _numBlocksLiqY * _dBoxLengthXYZ;
+		dPhaseLengthVapY = _numBlocksVapY * _vecSubDomains.at(0).arrBoxLength.at(1);
+		dPhaseLengthLiqY = _numBlocksLiqY * _vecSubDomains.at(1).arrBoxLength.at(1);
 		_fspY[0] = dPhaseLengthVapY - _dMoleculeDiameter;
 		_fspY[1] = dPhaseLengthVapY;
 		_fspY[2] = dPhaseLengthVapY + dPhaseLengthLiqY;
 		_fspY[3] = dPhaseLengthVapY + dPhaseLengthLiqY + _dMoleculeDiameter;
 		_fspY[4] = dPhaseLengthVapY + dPhaseLengthLiqY + dPhaseLengthVapY - _dMoleculeDiameter;
 		_fspY[5] = dPhaseLengthVapY + dPhaseLengthLiqY + dPhaseLengthVapY;
+		break;
+	case ST_HETEROGENEOUS_LIQUID_VAPOR:
+		// calc free space positions
+		dPhaseLengthVapY = _numBlocksVapY * _vecSubDomains.at(0).arrBoxLength.at(1);
+		dPhaseLengthLiqY = _numBlocksLiqY * _vecSubDomains.at(1).arrBoxLength.at(1);
+		_fspY[0] = 1.;
+		_fspY[1] = 0.;
+		_fspY[2] = dPhaseLengthLiqY;
+		_fspY[3] = dPhaseLengthLiqY + _dMoleculeDiameter;
+		_fspY[4] = dPhaseLengthLiqY + dPhaseLengthVapY - _dMoleculeDiameter;
+		_fspY[5] = dPhaseLengthLiqY + dPhaseLengthVapY;
+		break;
 	}
 }
 
@@ -310,14 +334,19 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 		bbMin[di] = domainDecomp->getBoundingBoxMin(di, domain);
 		bbMax[di] = domainDecomp->getBoundingBoxMax(di, domain);
 		bbLength[di] = bbMax[di] - bbMin[di];
-		numBlocks[di]  =  ceil(bbLength[di] / _dBoxLengthXYZ);
-		startIndex[di] = floor(bbMin[di]    / _dBoxLengthXYZ);
+		numBlocks[di]  =  ceil(bbLength[di] / _vecSubDomains.at(0).arrBoxLength.at(di) );
+		startIndex[di] = floor(bbMin[di]    / _vecSubDomains.at(0).arrBoxLength.at(di) );
 	}
 
 	// Init maxID
 	int nRank = domainDecomp->getRank();
 	double dVolumeSubdomain = bbLength[0] * bbLength[1] * bbLength[2];
-	uint64_t numParticlesPerSubdomainMax = (uint64_t) ceil(_dDensityLiq * dVolumeSubdomain);
+	double dDensityMax = 0;
+	for(auto sd : _vecSubDomains) {
+		if(sd.dDensity > dDensityMax)
+			dDensityMax = sd.dDensity;
+	}
+	uint64_t numParticlesPerSubdomainMax = (uint64_t) ceil(dDensityMax * dVolumeSubdomain);
 	_nMaxID = 1 + numParticlesPerSubdomainMax * nRank;
 
 #ifndef NDEBUG
@@ -328,9 +357,19 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 	cout << domainDecomp->getRank() << ": bbLength = " << bbLength[0] << ", " << bbLength[1] << ", " << bbLength[2] << endl;
 	cout << domainDecomp->getRank() << ": numBlocks = " << numBlocks[0] << ", " << numBlocks[1] << ", " << numBlocks[2] << endl;
 	cout << domainDecomp->getRank() << ": startIndex = " << startIndex[0] << ", " << startIndex[1] << ", " << startIndex[2] << endl;
-	cout << domainDecomp->getRank() << ": _dBoxLengthXYZ = " << _dBoxLengthXYZ << endl;
-	cout << domainDecomp->getRank() << ": bbLength/_dBoxLengthXYZ = " << bbLength[0]/_dBoxLengthXYZ << ", " << bbLength[1]/_dBoxLengthXYZ << ", " << bbLength[2]/_dBoxLengthXYZ << endl;
+	cout << domainDecomp->getRank() << ": BoxLength = " << _vecSubDomains.at(0).arrBoxLength.at(0) << ","
+																  " " << _vecSubDomains.at(0).arrBoxLength.at(1) << ","
+																  " " << _vecSubDomains.at(0).arrBoxLength.at(2) << endl;
+	cout << domainDecomp->getRank() << ": bbLength/BoxLength = " << bbLength[0]/_vecSubDomains.at(0).arrBoxLength.at(0) << ","
+																  " " << bbLength[1]/_vecSubDomains.at(0).arrBoxLength.at(1) << ","
+																  " " << bbLength[2]/_vecSubDomains.at(0).arrBoxLength.at(2) << endl;
 #endif
+
+	std::array<double,3> bl = _vecSubDomains.at(0).arrBoxLength;
+	std::vector<Molecule>* vecParticlesVap = &_vecSubDomains.at(0).vecParticles;
+	std::vector<Molecule>* vecParticlesLiq = nullptr;
+	if(_nSystemType != ST_HOMOGENEOUS)
+		vecParticlesLiq = &_vecSubDomains.at(1).vecParticles;
 
 	uint64_t bi[3];  // block index
 	for(bi[0]=startIndex[0]; bi[0]<startIndex[0]+numBlocks[0]; ++bi[0])
@@ -346,13 +385,13 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 				// shift particle position
 				double dShift[3];
 				for(uint8_t di=0; di<3; ++di)
-					dShift[di] = bi[di] * _dBoxLengthXYZ;
+					dShift[di] = bi[di] * bl.at(di);
 
 				std::vector<Molecule>* ptrVec;
-				if(false == _bCreateHomogenous && bi[1] >= _nIndexLiqBeginY && bi[1] <= _nIndexLiqEndY)
-					ptrVec = &_vecParticlesLiq;
+				if(_nSystemType != ST_HOMOGENEOUS && bi[1] >= _nIndexLiqBeginY && bi[1] <= _nIndexLiqEndY)
+					ptrVec = vecParticlesLiq;
 				else
-					ptrVec = &_vecParticlesVap;
+					ptrVec = vecParticlesVap;
 
 				for(auto&& mi : *ptrVec)
 				{
@@ -368,7 +407,7 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 					// Add particle to container
 					double ry = r[1];
 					bool bIsInsideFreespace = false;
-					if(false == _bCreateHomogenous)
+					if(_nSystemType != ST_HOMOGENEOUS)
 						bIsInsideFreespace = (ry > _fspY[0] && ry < _fspY[1]) || (ry > _fspY[2] && ry < _fspY[3]) || (ry > _fspY[4] && ry < _fspY[5]);
 
 					if(true == particleContainer->isInBoundingBox(r) && false == bIsInsideFreespace)

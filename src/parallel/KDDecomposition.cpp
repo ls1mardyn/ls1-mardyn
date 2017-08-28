@@ -5,6 +5,10 @@
 #include <fstream>
 #include <climits>
 
+#if ENABLE_MPI
+#include "mpi.h"
+#endif
+
 #include "Domain.h"
 #include "KDNode.h"
 #include "molecules/Molecule.h"
@@ -37,7 +41,7 @@ KDDecomposition::KDDecomposition() :
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold, bool hetero, bool cutsmaller, bool forceRatio) :
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
-		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio) {
+		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio), _rebalanceLimit(0) {
 	bool before = global_log->get_do_output();
 	global_log->set_mpi_output_all();
 	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
@@ -528,16 +532,30 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 		povcfgstrm.close();
 	}
 
-	for (int process = 0; process < _numProcs; process++) {
-		if (_rank == process) {
-			ofstream povcfgstrm(filename.c_str(), ios::app);
-			povcfgstrm << getBoundingBoxMin(0,domain) << " " << getBoundingBoxMin(1,domain) << " "
-			           << getBoundingBoxMin(2,domain) << " " << getBoundingBoxMax(0,domain) << " "
-			           << getBoundingBoxMax(1,domain) << " " << getBoundingBoxMax(2,domain) << endl;
-			povcfgstrm.close();
-		}
-		barrier();
+	stringstream output;
+	output  << getBoundingBoxMin(0,domain) << " " << getBoundingBoxMin(1,domain) << " "
+			<< getBoundingBoxMin(2,domain) << " " << getBoundingBoxMax(0,domain) << " "
+			<< getBoundingBoxMax(1,domain) << " " << getBoundingBoxMax(2,domain) << "\n";
+	string output_str = output.str();
+#if ENABLE_MPI
+	MPI_File fh;
+	MPI_File_open(_comm, filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	uint64_t write_size = output_str.size();
+	uint64_t offset = 0;
+	if(_rank == 0) {
+		MPI_Offset file_end_pos;
+		MPI_File_seek(fh, 0, MPI_SEEK_END);
+		MPI_File_get_position(fh, &file_end_pos);
+		offset += file_end_pos;
 	}
+	MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
+	MPI_File_write_at(fh, offset, output_str.c_str(), output_str.size(), MPI_CHAR, MPI_STATUS_IGNORE);
+	MPI_File_close(&fh);
+#else
+	ofstream povcfgstrm(filename.c_str(), ios::app);
+	povcfgstrm << output_str;
+	povcfgstrm.close();
+#endif
 }
 
 

@@ -7,16 +7,9 @@
 #include "utils/xmlfileUnits.h"
 
 #include <ctime>
-using std::ios_base;
+
 
 using namespace std;
-
-GammaWriter::GammaWriter(unsigned long writeFrequency, string outputPrefix)
-: _writeFrequency(writeFrequency),
-	_outputPrefix(outputPrefix)
-{ }
-
-GammaWriter::~GammaWriter(){}
 
 void GammaWriter::readXML(XMLfileUnits& xmlconfig)
 {

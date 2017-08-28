@@ -10,6 +10,7 @@
 /** @todo fix Interface missmatch */
 // #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
+#include "io/LoadBalanceWriter.h"
 #include "io/MPICheckpointWriter.h"
 #include "io/MmpldWriter.h"
 #include "io/MmspdBinWriter.h"
@@ -36,6 +37,7 @@ OutputPluginFactory::OutputPluginFactory() {
 /** @todo fix Interface missmatch */
 // 	REGISTER_PLUGIN(FlopRateWriter);
 	REGISTER_PLUGIN(GammaWriter);
+	REGISTER_PLUGIN(LoadbalanceWriter);
 	REGISTER_PLUGIN(MPICheckpointWriter);
 	REGISTER_PLUGIN(MmpldWriter);
 	REGISTER_PLUGIN(MmspdBinWriter);

@@ -1,5 +1,5 @@
-#ifndef GAMMAWRITER_H_
-#define GAMMAWRITER_H_
+#ifndef SRC_IO_GAMMAWRITER_H_
+#define SRC_IO_GAMMAWRITER_H_
 
 #include "io/OutputBase.h"
 #include "ensemble/GrandCanonical.h"
@@ -10,16 +10,27 @@ class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
 
-//! @brief writes Surface tension to a file
-
+/** @brief The GammaWriter plugin writes the surface tension to a file.
+ *
+ * @todo What is the actual surface? Implementation is in the Domain.
+ */
 class XMLfileUnits;
 class GammaWriter : public OutputBase {
 public:
 	GammaWriter() {}
-	GammaWriter(unsigned long writeFrequency, std::string outputPrefix);
-	~GammaWriter();
+	~GammaWriter() {}
 
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	/** @brief Read in XML configuration for GammaWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="GammaWriter">
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	   </outputplugin>
+	   \endcode
+	 */
+	void readXML(XMLfileUnits& xmlconfig);
 	//! @todo comment
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
@@ -46,4 +57,4 @@ private:
 	std::string _outputPrefix;
 };
 
-#endif /*GAMMAWRITER_H_*/
+#endif  // SRC_IO_GAMMAWRITER_H_
