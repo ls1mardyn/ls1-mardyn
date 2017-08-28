@@ -41,7 +41,7 @@ KDDecomposition::KDDecomposition() :
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold, bool hetero, bool cutsmaller, bool forceRatio) :
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
-		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio) {
+		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio), _rebalanceLimit(0) {
 	bool before = global_log->get_do_output();
 	global_log->set_mpi_output_all();
 	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
