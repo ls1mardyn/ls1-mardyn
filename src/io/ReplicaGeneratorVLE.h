@@ -41,7 +41,7 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 private:
-	void init(XMLfileUnits& xmlconfig);
+	void init();
 	void readReplicaPhaseSpaceHeader(const std::string& strFilePathHeader, uint64_t& numParticles, double& dBoxLengthXYZ);
 	void readReplicaPhaseSpaceData(const std::string& strFilePathData, const uint64_t& numParticles, std::vector<Molecule>& vecParticles);
 

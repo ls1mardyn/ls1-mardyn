@@ -201,10 +201,10 @@ void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
 	}
 
 	//init
-	this->init(xmlconfig);
+	this->init();
 }
 
-void ReplicaGeneratorVLE::init(XMLfileUnits& xmlconfig)
+void ReplicaGeneratorVLE::init()
 {
 	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
 	global_log->info() << domainDecomp->getRank() << ": Init Replica VLE ..." << endl;
