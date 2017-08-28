@@ -19,6 +19,14 @@
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
 
+enum ReadReservoirMethods : uint8_t
+{
+	RRM_UNKNOWN = 0,
+	RRM_READ_FROM_FILE = 1,
+	RRM_READ_FROM_MEMORY = 2,
+	RRM_AMBIGUOUS = 3,
+};
+
 class Domain;
 class Ensemble;
 class DomainDecompBase;
@@ -53,6 +61,9 @@ public:
 
 private:
 	void ReadReservoir(DomainDecompBase* domainDecomp);
+	void ReadReservoirFromFile(DomainDecompBase* domainDecomp);
+	void ReadReservoirFromMemory(DomainDecompBase* domainDecomp);
+	void DetermineMaxMoleculeIDs(DomainDecompBase* domainDecomp);
 	void writeRestartfile();
 	void calcDeltaY() { _dY = _dDeletedMolsPerTimestep * _dInvDensityArea; }
 
@@ -66,10 +77,12 @@ private:
 	double _velocityBarrier;
 	double _dSlabWidthInit;
 	double _dSlabWidth;
+	double _dReservoirWidthY;
 	double _cutoffRadius;
 	uint64_t _nUpdateFreq;
 	uint64_t _nWriteFreqRestart;
-	uint64_t _maxId;
+	uint64_t _nMaxMoleculeID;
+	uint64_t _nMaxReservoirMoleculeID;
 	uint64_t _nNumMoleculesDeletedLocal;
 	uint64_t _nNumMoleculesDeletedGlobal;
 	uint64_t _nNumMoleculesDeletedGlobalAlltime;
@@ -78,6 +91,7 @@ private:
 	uint64_t _reservoirNumMolecules;
 	uint64_t _reservoirSlabs;
 	int32_t _nSlabindex;
+	uint8_t _nReadReservoirMethod;
 	std::string _reservoirFilename;
 	std::map<uint64_t, std::array<double, 6> > _storePosition;  //Map for frozen particle position storage <"id, position">
 	std::vector< std::vector<Molecule> >_reservoir;

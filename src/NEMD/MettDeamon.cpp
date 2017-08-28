@@ -33,10 +33,12 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_velocityBarrier(0.),
 		_dSlabWidthInit(0),
 		_dSlabWidth(0),
+		_dReservoirWidthY(0),
 		_cutoffRadius(cutoffRadius),
 		_nUpdateFreq(0),
 		_nWriteFreqRestart(0),
-		_maxId(0),
+		_nMaxMoleculeID(0),
+		_nMaxReservoirMoleculeID(0),
 		_nNumMoleculesDeletedLocal(0),
 		_nNumMoleculesDeletedGlobal(0),
 		_nNumMoleculesDeletedGlobalAlltime(0),
@@ -45,6 +47,7 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_reservoirNumMolecules(0),
 		_reservoirSlabs(0),
 		_nSlabindex(0),
+		_nReadReservoirMethod(RRM_UNKNOWN),
 		_reservoirFilename("unknown"),
 		_bIsRestart(false),
 		_nNumValsSummation(0),
@@ -89,7 +92,7 @@ MettDeamon::MettDeamon(double cutoffRadius)
 	}
 
 	// velocity barriers
-	_vecVeloctiyBarriers.resize(nNumComponents);
+	_vecVeloctiyBarriers.resize(nNumComponents+1);
 }
 
 MettDeamon::~MettDeamon()
@@ -129,8 +132,15 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	}
 
 	// reservoir
-	xmlconfig.getNodeValue("reservoir/file", _reservoirFilename);
+	bool bRet1 = xmlconfig.getNodeValue("reservoir/file", _reservoirFilename);
+	bool bRet2 = xmlconfig.getNodeValue("reservoir/width", _dReservoirWidthY);
 	xmlconfig.getNodeValue("reservoir/slabwidth", _dSlabWidthInit);
+	if(true == bRet1 && false == bRet2)
+		_nReadReservoirMethod = RRM_READ_FROM_FILE;
+	else if(false == bRet1 && true == bRet2)
+		_nReadReservoirMethod = RRM_READ_FROM_MEMORY;
+	else
+		_nReadReservoirMethod = RRM_AMBIGUOUS;
 
 	// restart
 	_bIsRestart = true;
@@ -220,6 +230,80 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 
 void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 {
+	switch(_nReadReservoirMethod)
+	{
+	case RRM_READ_FROM_MEMORY:
+		this->ReadReservoirFromMemory(domainDecomp);
+		break;
+	case RRM_READ_FROM_FILE:
+		this->ReadReservoirFromFile(domainDecomp);
+		break;
+	case RRM_UNKNOWN:
+	case RRM_AMBIGUOUS:
+	default:
+		global_log->error() << "Unknown (or ambiguous) method to read reservoir for feature MettDeamon. Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+
+	// Init reservoir slab index, unless restarting from checkpoint
+	if(false == _bIsRestart)
+		_nSlabindex = _reservoirSlabs-1;
+
+	// Determine max molecule id in reservoir
+	this->DetermineMaxMoleculeIDs(domainDecomp);
+}
+
+void MettDeamon::ReadReservoirFromMemory(DomainDecompBase* domainDecomp)
+{
+	ParticleContainer* particleContainer = global_simulation->getMolecules();
+	Domain* domain = global_simulation->getDomain();
+
+	_reservoirSlabs = _dReservoirWidthY/_dSlabWidthInit;
+	global_log->info() << "Mettdeamon: _reservoirSlabs=" << _reservoirSlabs << endl;
+	_dSlabWidth = _dReservoirWidthY / (double)(_reservoirSlabs);
+	_reservoir.resize(_reservoirSlabs);
+	double Volume = _dReservoirWidthY * domain->getGlobalLength(0) * domain->getGlobalLength(2);
+
+	for (ParticleIterator tM = particleContainer->iteratorBegin();
+	tM != particleContainer->iteratorEnd(); ++tM)
+	{
+		double y = tM->r(1);
+		if(y > _dReservoirWidthY)
+			continue;
+
+		Molecule mol(*tM);
+		uint32_t nSlabindex = floor(y / _dSlabWidth);
+		mol.setr(1, y - nSlabindex*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+		_reservoir.at(nSlabindex).push_back(mol);
+
+		uint32_t cid = tM->componentid();
+		// TODO: The following should be done by the addPartice method.
+		std::vector<Component>* dcomponents = global_simulation->getEnsemble()->getComponents();
+		dcomponents->at(cid).incNumMolecules();
+	}
+
+	// calc global number of particles in reservoir
+	uint64_t numMoleculesLocal = 0;
+	// max molecule id in reservoir (local)
+	for(auto si : _reservoir)
+	{
+		for(auto mi : si)
+			numMoleculesLocal++;
+	}
+	domainDecomp->collCommInit(1);
+	domainDecomp->collCommAppendUnsLong(numMoleculesLocal);
+	domainDecomp->collCommAllreduceSum();
+	_reservoirNumMolecules = domainDecomp->collCommGetUnsLong();
+	domainDecomp->collCommFinalize();
+
+	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
+	_rho_l = _reservoirNumMolecules / Volume;
+	_dInvDensityArea = 1. / (_dAreaXZ * _rho_l);
+	global_log->info() << "Density of Mettdeamon Reservoir: " << _rho_l << endl;
+}
+
+void MettDeamon::ReadReservoirFromFile(DomainDecompBase* domainDecomp)
+{
 	std::ifstream ifs;
 	global_log->info() << "Opening Mettdeamon Reservoirfile " << _reservoirFilename << endl;
 	ifs.open( _reservoirFilename.c_str() );
@@ -232,7 +316,6 @@ void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 	string token;
 	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	unsigned int numcomponents = dcomponents.size();
-	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 	string ntypestring("ICRVQD");
 	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
 
@@ -259,7 +342,7 @@ void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 		Simulation::exit(1);
 	}
 	ifs >> _reservoirNumMolecules;
-	global_log->info() << " number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
+	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
 	_rho_l = _reservoirNumMolecules / V;
 	_dInvDensityArea = 1. / (_dAreaXZ * _rho_l);
 	global_log->info() << "Density of Mettdeamon Reservoir: " << _rho_l << endl;
@@ -340,12 +423,9 @@ void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 		if(true == bIsInsideSubdomain)
 			_reservoir.at(nSlabindex).push_back(m1);
 
-		componentid=m1.componentid();
+		componentid = m1.componentid();
 		// TODO: The following should be done by the addPartice method.
-		dcomponents[componentid].incNumMolecules();
-
-		if(id > maxid) maxid = id;
-		_maxId = maxid;
+		dcomponents.at(componentid).incNumMolecules();
 
 		// Print status message
 		unsigned long iph = _reservoirNumMolecules / 100;
@@ -356,8 +436,44 @@ void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 	global_log->info() << "Finished reading Mettdeamon Rerservoirmolecules: 100%" << endl;
 
 	ifs.close();
-	if(false == _bIsRestart)
-		_nSlabindex = _reservoirSlabs-1;
+}
+
+void MettDeamon::DetermineMaxMoleculeIDs(DomainDecompBase* domainDecomp)
+{
+	ParticleContainer* particleContainer = global_simulation->getMolecules();
+	uint64_t nMaxMoleculeID_local = 0;
+	uint64_t nMaxReservoirMoleculeID_local = 0;
+
+	// max molecule id in particle container (local)
+	for (ParticleIterator tM = particleContainer->iteratorBegin();
+	tM != particleContainer->iteratorEnd(); ++tM)
+	{
+		uint64_t id = tM->id();
+		if(id > nMaxMoleculeID_local)
+			nMaxMoleculeID_local = id;
+	}
+
+	// max molecule id in reservoir (local)
+	for(auto si : _reservoir)
+	{
+		for(auto mi : si)
+		{
+			uint64_t id = mi.id();
+			if(id > nMaxReservoirMoleculeID_local)
+				nMaxReservoirMoleculeID_local = id;
+		}
+	}
+
+	// global max IDs
+#ifdef ENABLE_MPI
+
+	MPI_Allreduce( &nMaxMoleculeID_local,          &_nMaxMoleculeID,          1, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
+	MPI_Allreduce( &nMaxReservoirMoleculeID_local, &_nMaxReservoirMoleculeID, 1, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
+
+#else
+	_nMaxMoleculeID = nMaxMoleculeID_local;
+	_nMaxReservoirMoleculeID = nMaxReservoirMoleculeID_local;
+#endif
 }
 
 uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposition)
@@ -529,16 +645,19 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			it = _storePosition.find(tM->id() );
 			if(it != _storePosition.end() )
 			{
-				tM->setr(0, it->second.at(0) );
 				tM->setr(1, it->second.at(1) + this->getDeltaY() );
-				tM->setr(2, it->second.at(2) );
+				if(dY < _dSlabWidth)
+				{
+					tM->setr(0, it->second.at(0) );
+					tM->setr(2, it->second.at(2) );
+				}
 			}
 			// restore velocity
-			tM->setv(0,it->second.at(3) );
-			tM->setv(1,it->second.at(4) );
-			tM->setv(2,it->second.at(5) );
+//			tM->setv(0,it->second.at(3) );
+//			tM->setv(1,it->second.at(4) );
+//			tM->setv(2,it->second.at(5) );
 		}
-		else
+//		else   <-- also limit velocity of fixed molecules???
 		{
 			double v2 = tM->v2();
 			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
@@ -548,8 +667,8 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 				uint64_t id = tM->id();
 				double dY = tM->r(1);
 
-				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
-				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
+//				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
+//				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
 
 	//			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), true);
 	//			_nNumMoleculesDeletedLocal++;
@@ -559,6 +678,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 				tM->scale_v(f);
 			}
 		}
+
+		// mirror molecules back that are on the way to pass fixed molecule region
+		if(dY <= _dSlabWidth)
+			tM->setv(1, abs(tM->v(1) ) );
 
 	}  // loop over molecules
 
@@ -573,10 +696,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 		for(auto mi : currentReservoirSlab)
 		{
-			unsigned long tempId = mi.id();
+			uint64_t id = mi.id();
 			uint32_t cid = mi.componentid();
 			Component* compNew = &(ptrComps->at(_vecChangeCompIDsFreeze.at(cid) ) );
-			mi.setid(_maxId + tempId);
+			mi.setid(_nMaxMoleculeID + id);
 			mi.setComponent(compNew);
 			mi.setr(1, mi.r(1) + _dYsum - _dSlabWidth);
 			particleContainer->addParticle(mi);
@@ -587,7 +710,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		if(_nSlabindex == -1)
 		{
 			_nSlabindex = _reservoirSlabs-1;
-			_maxId = _maxId + _reservoirNumMolecules;
+			_nMaxMoleculeID += _nMaxReservoirMoleculeID;
 		}
 	}
 	particleContainer->update();
@@ -609,11 +732,11 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 		if(true == bIsFrozenMolecule)
 		{
-			tM->setv(0, 0.);
+//			tM->setv(0, 0.);
 			tM->setv(1, 0.);
-			tM->setv(2, 0.);
+//			tM->setv(2, 0.);
 		}
-		else
+//		else  <-- also limit velocity of frozen molecules?
 		{
 			double v2 = tM->v2();
 			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
@@ -689,7 +812,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		if(true == _bMirrorActivated)
 		{
 			if(tM->r(1) >= _dMirrorPosY)
-				tM->setv(1, -1.*tM->v(1) );
+				tM->setv(1, -1.*abs(tM->v(1) ) );
 		}
 	}
 //	particleContainer->update();
