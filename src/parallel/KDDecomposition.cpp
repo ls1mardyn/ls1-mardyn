@@ -30,22 +30,15 @@ using Log::global_log;
 //#define DEBUG_DECOMP
 
 KDDecomposition::KDDecomposition() :
-		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.), _cutoffRadius(
-				1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.), _processorSpeedUpdateCount(0),
-				_heterogeneousSystems(false), _splitBiggest(true), _forceRatio(false), _rebalanceLimit(0) {
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
-}
+	_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.),
+	_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
+	_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _splitBiggest(true), _forceRatio(false), _rebalanceLimit(0)
+{}
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold, bool hetero, bool cutsmaller, bool forceRatio) :
-		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
-		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio), _rebalanceLimit(0) {
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
+	_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
+	_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio), _rebalanceLimit(0)
+{
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
@@ -71,7 +64,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int update
 	if (!_decompTree->isResolvable()) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
-		barrier(); // the messages above are only promoted to std::out if we have the barrier somehow...
 		Simulation::exit(-1);
 	}
 	_decompTree->buildKDTree();
