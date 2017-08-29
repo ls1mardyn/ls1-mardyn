@@ -19,11 +19,28 @@ DomainDecompBaseTest::DomainDecompBaseTest() {
 DomainDecompBaseTest::~DomainDecompBaseTest() {
 }
 
+void DomainDecompBaseTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
+	// original pointer will be deleted by tearDown()
+	_domainDecomposition = new DomainDecompBase();
+
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
+	int numMols = container->getNumberOfParticles();
+
+	_domainDecomposition->exchangeMolecules(container, _domain);
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+//	_domain->writeCheckpoint("dump.txt", container, _domainDecomposition);
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	delete _domainDecomposition;
+}
+
+void DomainDecompBaseTest::testNoDuplicatedParticles() {
+	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15.inp", 27.0);
+}
+
 void DomainDecompBaseTest::testExchangeMoleculesSimple() {
-	std::vector<Component> components;
-	Component dummyComponent(0);
-	dummyComponent.addLJcenter(0,0,0,1,1,1,0,false);
-	components.push_back(dummyComponent);
 
 	// make sure we have a DomainDecompBase
 	_domainDecomposition = new DomainDecompBase();
@@ -62,10 +79,6 @@ void DomainDecompBaseTest::testExchangeMoleculesSimple() {
 }
 
 void DomainDecompBaseTest::testExchangeMolecules() {
-	std::vector<Component> components;
-	Component dummyComponent(0);
-	dummyComponent.addLJcenter(0,0,0,1,1,1,0,false);
-	components.push_back(dummyComponent);
 
 	// make sure we have a DomainDecompBase
 	_domainDecomposition = new DomainDecompBase();
