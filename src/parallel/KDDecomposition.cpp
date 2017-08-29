@@ -1211,34 +1211,24 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 	for (int i = 0; i < _globalNumCells; i++)
 		_numParticlesPerCell[i] = 0;
 
-	int count = 0;
 	double bBMin[3]; // haloBoundingBoxMin
-    /* TODO: We do not use values form bBMax anywhere ... */
-	//double bBMax[3]; // haloBoundingBoxMax
 	for (int dim = 0; dim < 3; dim++) {
-		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
-		//bBMax[dim] = moleculeContainer->getBoundingBoxMax(dim);// + moleculeContainer->get_halo_L(dim);
+		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);
 	}
-	ParticleIterator molPtr = moleculeContainer->iteratorBegin();
-	while (molPtr != moleculeContainer->iteratorEnd()) {
-		int cellIndex[3]; // 3D Cell index (local)
+	for(ParticleIterator molPtr = moleculeContainer->iteratorBegin(); molPtr != moleculeContainer->iteratorEnd(); ++molPtr) {
+		int localCellIndex[3]; // 3D Cell index (local)
 		int globalCellIdx[3]; // 3D Cell index (global)
-
 		for (int dim = 0; dim < 3; dim++) {
-			cellIndex[dim] = (int) floor((molPtr->r(dim) - bBMin[dim]) / _cellSize[dim]);
-			globalCellIdx[dim] = _ownArea->_lowCorner[dim] + cellIndex[dim];
+			localCellIndex[dim] = (int) floor((molPtr->r(dim) - bBMin[dim]) / _cellSize[dim]);
+			globalCellIdx[dim] = _ownArea->_lowCorner[dim] + localCellIndex[dim];
 			if (globalCellIdx[dim] < 0)
 				globalCellIdx[dim] += _globalCellsPerDim[dim];
 			if (globalCellIdx[dim] >= _globalCellsPerDim[dim])
 				globalCellIdx[dim] -= _globalCellsPerDim[dim];
 		}
-
 		_numParticlesPerCell[_globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
-		++molPtr;
-		count++;
 	}
 	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
-
 }
 
 std::vector<int> KDDecomposition::getNeighbourRanks() {
