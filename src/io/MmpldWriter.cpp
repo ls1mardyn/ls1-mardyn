@@ -4,7 +4,14 @@
 #include <mpi.h>
 #endif
 
+#if _SX
+#define htole16(X) bswap2((X))
+#define htole32(X) bswap4((X))
+#define htole64(X) bswap8((X))
+#else
 #include <endian.h>
+#endif
+
 
 #include <fstream>
 #include <sstream>
