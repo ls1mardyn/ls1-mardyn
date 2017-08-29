@@ -182,7 +182,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		KDNode * newDecompRoot = NULL;
 		KDNode * newOwnLeaf = NULL;
 
-		getNumParticles(moleculeContainer);
+		calcNumParticlesPerCell(moleculeContainer);
 		constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
 		bool migrationSuccessful = migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
 		if (not migrationSuccessful) {
@@ -1207,7 +1207,7 @@ void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* de
 	}
 }
 
-void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
+void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContainer) {
 	for (int i = 0; i < _globalNumCells; i++)
 		_numParticlesPerCell[i] = 0;
 
