@@ -109,7 +109,14 @@ public:
 	void add(CommunicationPartner partner);
 
 private:
-	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
+	enum HaloOrLeavingCorrection{
+		HALO,
+		LEAVING,
+		NONE
+	};
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
+			const double highCorner[3], const double shift[3], const bool removeFromContainer,
+			HaloOrLeavingCorrection haloLeaveCorr = HaloOrLeavingCorrection::NONE);
 
 	int _rank;
         int _countTested;
