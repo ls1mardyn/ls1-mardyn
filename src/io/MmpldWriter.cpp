@@ -5,6 +5,7 @@
 #endif
 
 #if _SX
+#include <byteswap.h>
 #define htole16(X) bswap2((X))
 #define htole32(X) bswap4((X))
 #define htole64(X) bswap8((X))
@@ -281,7 +282,7 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 	delete[] writeBuffer;
 	// data of frame is written
 	_frameCount++;
-	u_int64_t frame_offset = dataListBeginOffsets.back() + get_data_list_header_size() + get_data_list_size(globalNumCompSpheres.back());
+	uint64_t frame_offset = dataListBeginOffsets.back() + get_data_list_header_size() + get_data_list_size(globalNumCompSpheres.back());
 	_seekTable.at(_frameCount) = _seekTable.at(_frameCount - 1) + frame_offset;
 	// write seek table entry and update frame count
 	if (rank == 0) {
