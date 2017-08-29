@@ -57,7 +57,6 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(const char * filenam
 	newNumMols = kdd->collCommGetInt();
 	kdd->collCommFinalize();
 
-	std::cout << "old: " << numMols << " molecules; "<< " new: " << newNumMols << " molecules "<< std::endl;
 	ASSERT_EQUAL(numMols, newNumMols);
 
 	delete _domainDecomposition;
