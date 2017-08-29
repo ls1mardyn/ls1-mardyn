@@ -22,7 +22,7 @@ DEPMODE = none
 CXXFLAGS_SEQ_DEBUG  = -g
 LINKFLAGS_SEQ_DEBUG =
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = -size_t64 -Kstd=c++11 -Kexceptions -Krtti -Kusing_std -Kcpp11 -DNDEBUG
+CXXFLAGS_SEQ_RELEASE  = -size_t64 -Kexceptions -Krtti -DNDEBUG
 LINKFLAGS_SEQ_RELEASE =
 
 # PAR
