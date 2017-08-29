@@ -19,10 +19,10 @@ DEPMODE = none
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = -g
+CXXFLAGS_SEQ_DEBUG  = -size_t64 -Kexceptions -Krtti -D _MPIPP_INCLUDE=1
 LINKFLAGS_SEQ_DEBUG =
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = -size_t64 -Kexceptions -Krtti -DNDEBUG
+CXXFLAGS_SEQ_RELEASE  = -size_t64 -Kexceptions -Krtti -D _MPIPP_INCLUDE=1 -DNDEBUG
 LINKFLAGS_SEQ_RELEASE =
 
 # PAR
