@@ -1,4 +1,4 @@
-#include "ReplicaGeneratorVLE.h"
+#include "ReplicaGenerator.h"
 
 /* the following macro has to be defined to use math constants in cmath */
 #define _USE_MATH_DEFINES  1
@@ -24,7 +24,7 @@ enum MoleculeFormat : uint32_t {
 	ICRVQD, IRV, ICRV
 };
 
-ReplicaGeneratorVLE::ReplicaGeneratorVLE()
+ReplicaGenerator::ReplicaGenerator()
 	:
 	_numParticlesTotal(0),
 	_numBlocksXZ(0),
@@ -41,11 +41,11 @@ ReplicaGeneratorVLE::ReplicaGeneratorVLE()
 {
 }
 
-ReplicaGeneratorVLE::~ReplicaGeneratorVLE()
+ReplicaGenerator::~ReplicaGenerator()
 {
 }
 
-void ReplicaGeneratorVLE::readReplicaPhaseSpaceHeader(SubDomain& subDomain)
+void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain)
 {
 	XMLfileUnits inp(subDomain.strFilePathHeader);
 
@@ -93,7 +93,7 @@ void ReplicaGeneratorVLE::readReplicaPhaseSpaceHeader(SubDomain& subDomain)
 	}
 }
 
-void ReplicaGeneratorVLE::readReplicaPhaseSpaceData(SubDomain& subDomain)
+void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain)
 {
 	// Open file
 	std::ifstream ifs;
@@ -140,10 +140,10 @@ void ReplicaGeneratorVLE::readReplicaPhaseSpaceData(SubDomain& subDomain)
 	global_log->info() << "Reading Molecules done" << endl;
 }
 
-void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
+void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig)
 {
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
-	global_log->info() << "ReplicaGeneratorVLE" << std::endl;
+	global_log->info() << "ReplicaGenerator" << std::endl;
 
 	_nSystemType = ST_UNKNOWN;
 	std::string strType = "unknown";
@@ -208,7 +208,7 @@ void ReplicaGeneratorVLE::readXML(XMLfileUnits& xmlconfig)
 	this->init();
 }
 
-void ReplicaGeneratorVLE::init()
+void ReplicaGenerator::init()
 {
 	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
 	global_log->info() << domainDecomp->getRank() << ": Init Replica VLE ..." << endl;
@@ -314,7 +314,7 @@ void ReplicaGeneratorVLE::init()
 	}
 }
 
-long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particleContainer,
+long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp)
 {
 //	if(3 != domainDecomp->getRank() )
