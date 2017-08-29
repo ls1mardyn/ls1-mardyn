@@ -230,7 +230,7 @@ void ReplicaGeneratorVLE::init()
 	}
 	*/
 
-	// total num particles, maxID
+	// total number of particles
 	switch(_nSystemType)
 	{
 	case ST_HOMOGENEOUS:
@@ -245,7 +245,6 @@ void ReplicaGeneratorVLE::init()
 	default:
 		_numParticlesTotal = 0;
 	}
-	global_simulation->getDomain()->setglobalNumMolecules(_numParticlesTotal);
 
 	// update global length of domain
 	double dLength[3];
@@ -334,7 +333,7 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 		bbMin[di] = domainDecomp->getBoundingBoxMin(di, domain);
 		bbMax[di] = domainDecomp->getBoundingBoxMax(di, domain);
 		bbLength[di] = bbMax[di] - bbMin[di];
-		numBlocks[di]  =  ceil(bbLength[di] / _vecSubDomains.at(0).arrBoxLength.at(di) );
+		numBlocks[di]  =  ceil(bbLength[di] / _vecSubDomains.at(0).arrBoxLength.at(di) +1 );  // +1: Particles were missing in some processes without +1 (rounding error??)
 		startIndex[di] = floor(bbMin[di]    / _vecSubDomains.at(0).arrBoxLength.at(di) );
 	}
 
@@ -371,6 +370,10 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 	if(_nSystemType != ST_HOMOGENEOUS)
 		vecParticlesLiq = &_vecSubDomains.at(1).vecParticles;
 
+	// Count added particles
+	uint64_t numAddedParticlesLocal = 0;
+	uint64_t numAddedParticlesFreespaceLocal = 0;
+
 	uint64_t bi[3];  // block index
 	for(bi[0]=startIndex[0]; bi[0]<startIndex[0]+numBlocks[0]; ++bi[0])
 	{
@@ -378,10 +381,6 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 		{
 			for(bi[1]=startIndex[1]; bi[1]<startIndex[1]+numBlocks[1]; ++bi[1])
 			{
-			#ifndef NDEBUG
-				cout << domainDecomp->getRank() << ": " << bi[0] << ", " << bi[1] << ", " << bi[2] << endl;
-			#endif
-
 				// shift particle position
 				double dShift[3];
 				for(uint8_t di=0; di<3; ++di)
@@ -410,25 +409,47 @@ long unsigned int ReplicaGeneratorVLE::readPhaseSpace(ParticleContainer* particl
 					if(_nSystemType != ST_HOMOGENEOUS)
 						bIsInsideFreespace = (ry > _fspY[0] && ry < _fspY[1]) || (ry > _fspY[2] && ry < _fspY[3]) || (ry > _fspY[4] && ry < _fspY[5]);
 
-					if(true == particleContainer->isInBoundingBox(r) && false == bIsInsideFreespace)
+					if(true == particleContainer->isInBoundingBox(r) )
 					{
-						particleContainer->addParticle(mol);
-						_nMaxID++;
+						if(false == bIsInsideFreespace)
+						{
+							particleContainer->addParticle(mol);
+							_nMaxID++;
+							numAddedParticlesLocal++;
+						}
+						else
+							numAddedParticlesFreespaceLocal++;
 					}
 				}
 			}
 		}
 	}
 
-	// update global number of particles
+	// update global number of particles, perform number checks
 	uint64_t numParticlesLocal = particleContainer->getNumberOfParticles();
 	uint64_t numParticlesGlobal = 0;
-	domainDecomp->collCommInit(1);
+	uint64_t numAddedParticlesFreespaceGlobal = 0;
+	mardyn_assert(numParticlesLocal == numAddedParticlesLocal);
+	domainDecomp->collCommInit(2);
 	domainDecomp->collCommAppendUnsLong(numParticlesLocal);
+	domainDecomp->collCommAppendUnsLong(numAddedParticlesFreespaceLocal);
 	domainDecomp->collCommAllreduceSum();
 	numParticlesGlobal = domainDecomp->collCommGetUnsLong();
+	numAddedParticlesFreespaceGlobal = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 	domain->setglobalNumMolecules(numParticlesGlobal);
+	mardyn_assert(numParticlesGlobal == _numParticlesTotal - numAddedParticlesFreespaceGlobal);
+
+	global_log->info() << "Number of particles calculated by number of blocks  : " << setw(24) << _numParticlesTotal << endl;
+	global_log->info() << "Number of particles located in freespace (not added): " << setw(24) << numAddedParticlesFreespaceGlobal << endl;
+	global_log->info() << "Number of particles added to particle container     : " << setw(24) << numParticlesGlobal << endl;
+
+	if(domainDecomp->getRank() == 0 && numParticlesGlobal != _numParticlesTotal - numAddedParticlesFreespaceGlobal)
+	{
+		global_log->info() << "Number of particles: " << numParticlesGlobal << " (added)"
+				" != " << (_numParticlesTotal - numAddedParticlesFreespaceGlobal) << " (expected). Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
 
 	global_simulation->timers()->stop("REPLICA_GENERATOR_VLE_INPUT");
 	global_simulation->timers()->setOutputString("REPLICA_GENERATOR_VLE_INPUT", "Initial IO took:                 ");
