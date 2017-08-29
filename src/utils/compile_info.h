@@ -41,6 +41,9 @@ int get_compiler_info(char *info_str) {
 	int patch = (__SUNPRO_C >> 0 ) & 0xf;
 	sprintf(info_str, "Sun %d.%d%d.%d", version, revision_digit1, revision_digit2, patch);
 
+#elif defined(_SX)
+	sprintf(info_str, "NEC SX, rev. %d", __SXCXX_REVISION);
+
 	/* GNU compiler */
 #elif defined(__GNUC__)
 # if defined(__GNUC_PATCHLEVEL__)
@@ -95,8 +98,12 @@ int get_timestamp(char *info_str) {
 
 int get_host(char *info_str) {
 	char hostname[1024];
+#if _SX
+	strcpy(hostname, "unknown");
+#else
 	hostname[1023] = '\0';
 	gethostname(hostname, 1023);
+#endif
 	sprintf(info_str, "%s", hostname);
 	return 0;
 }
