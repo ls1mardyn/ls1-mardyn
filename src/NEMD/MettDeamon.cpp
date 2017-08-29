@@ -180,6 +180,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		Simulation::exit(-1);
 	}
 
+#ifndef NDEBUG
 	cout << "_vecChangeCompIDsFreeze:" << endl;
 	for(uint32_t i=0; i<_vecChangeCompIDsFreeze.size(); ++i)
 	{
@@ -190,6 +191,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	{
 		std::cout << i << ": " << _vecChangeCompIDsUnfreeze.at(i) << std::endl;
 	}
+#endif
 
 	// molecule diameter
 	xmlconfig.getNodeValue("diameter", _dMoleculeDiameter);
