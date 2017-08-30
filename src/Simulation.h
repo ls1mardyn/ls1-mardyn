@@ -4,7 +4,6 @@
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "io/TimerProfiler.h"
-#include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
@@ -440,8 +439,6 @@ private:
 	/** New cellhandler, which will one day replace the particlePairsHandler here completely. */
 	CellProcessor* _cellProcessor;
 
-	/** Type of the domain decomposition */
-	DomainDecompType _domainDecompositionType;
 	/** module which handles the domain decomposition */
 	DomainDecompBase* _domainDecomposition;
 
