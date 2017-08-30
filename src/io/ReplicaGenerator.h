@@ -78,6 +78,8 @@ private:
 	double _dMoleculeDiameter;
 	double _fspY[6];  // free space positions
 	uint8_t _nSystemType;
+	std::vector<uint32_t> _vecChangeCompIDsVap;
+	std::vector<uint32_t> _vecChangeCompIDsLiq;
 };
 
 class MoleculeDataReader

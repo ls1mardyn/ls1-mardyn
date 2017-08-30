@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <cstdint>
+#include <numeric>
 
 #include "Domain.h"
 
@@ -39,6 +40,12 @@ ReplicaGenerator::ReplicaGenerator()
 	_fspY{0., 0., 0., 0., 0., 0.},
 	_nSystemType(ST_UNKNOWN)
 {
+	// init component ID change data structures
+	uint32_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
+	_vecChangeCompIDsVap.resize(numComponents);
+	_vecChangeCompIDsLiq.resize(numComponents);
+	std::iota (std::begin(_vecChangeCompIDsVap), std::end(_vecChangeCompIDsVap), 0);
+	std::iota (std::begin(_vecChangeCompIDsLiq), std::end(_vecChangeCompIDsLiq), 0);
 }
 
 ReplicaGenerator::~ReplicaGenerator()
@@ -202,6 +209,55 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig)
 
 		xmlconfig.getNodeValue("diameter",  _dMoleculeDiameter);
 		global_log->info() << "Using molecule diameter: " << _dMoleculeDiameter << " for spacing between liquid and vapour phase. " << std::endl;
+	}
+
+	// change identity of molecules by component ID (zero based))
+	{
+		// vapor system
+		string oldpath = xmlconfig.getcurrentnodepath();
+		if(xmlconfig.changecurrentnode("componentIDs/vapor")) {
+			uint8_t numChanges = 0;
+			XMLfile::Query query = xmlconfig.query("change");
+			numChanges = query.card();
+			global_log->info() << "Number of components to change: " << (uint32_t)numChanges << endl;
+			if(numChanges < 1) {
+				global_log->error() << "No component change defined in XML-config file. Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			XMLfile::Query::const_iterator changeIter;
+			for( changeIter = query.begin(); changeIter; changeIter++ ) {
+				xmlconfig.changecurrentnode(changeIter);
+				uint32_t nFrom, nTo;
+				nFrom = nTo = 1;
+				xmlconfig.getNodeValue("from", nFrom);
+				xmlconfig.getNodeValue("to", nTo);
+				_vecChangeCompIDsVap.at(nFrom-1) = nTo-1;
+			}
+		}
+		xmlconfig.changecurrentnode(oldpath);
+
+		// liquid system
+		oldpath = xmlconfig.getcurrentnodepath();
+		if(xmlconfig.changecurrentnode("componentIDs/liquid")) {
+			uint8_t numChanges = 0;
+			XMLfile::Query query = xmlconfig.query("change");
+			numChanges = query.card();
+			global_log->info() << "Number of components to change: " << (uint32_t)numChanges << endl;
+			if(numChanges < 1) {
+				global_log->error() << "No component change defined in XML-config file. Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			XMLfile::Query::const_iterator changeIter;
+			for( changeIter = query.begin(); changeIter; changeIter++ ) {
+				xmlconfig.changecurrentnode(changeIter);
+				uint32_t nFrom, nTo;
+				nFrom = nTo = 1;
+				xmlconfig.getNodeValue("from", nFrom);
+				xmlconfig.getNodeValue("to", nTo);
+				_vecChangeCompIDsLiq.at(nFrom-1) = nTo-1;
+			}
+		}
+		xmlconfig.changecurrentnode(oldpath);
 	}
 
 	//init
@@ -374,6 +430,9 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 	uint64_t numAddedParticlesLocal = 0;
 	uint64_t numAddedParticlesFreespaceLocal = 0;
 
+	// set componnet
+	std::vector<Component>* ptrComponents = global_simulation->getEnsemble()->getComponents();
+
 	uint64_t bi[3];  // block index
 	for(bi[0]=startIndex[0]; bi[0]<startIndex[0]+numBlocks[0]; ++bi[0])
 	{
@@ -387,10 +446,17 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 					dShift[di] = bi[di] * bl.at(di);
 
 				std::vector<Molecule>* ptrVec;
+				std::vector<uint32_t>* ptrChangeVec;
 				if(_nSystemType != ST_HOMOGENEOUS && bi[1] >= _nIndexLiqBeginY && bi[1] <= _nIndexLiqEndY)
+				{
 					ptrVec = vecParticlesLiq;
+					ptrChangeVec = &_vecChangeCompIDsLiq;
+				}
 				else
+				{
 					ptrVec = vecParticlesVap;
+					ptrChangeVec = &_vecChangeCompIDsVap;
+				}
 
 				for(auto&& mi : *ptrVec)
 				{
@@ -413,6 +479,11 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 					{
 						if(false == bIsInsideFreespace)
 						{
+							// set component
+							uint32_t cid = mol.componentid();
+							Component* comp = &ptrComponents->at(ptrChangeVec->at(cid) );
+							mol.setComponent(comp);
+
 							particleContainer->addParticle(mol);
 							_nMaxID++;
 							numAddedParticlesLocal++;
