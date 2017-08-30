@@ -293,15 +293,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				//_domainDecomposition = new DomainDecompDummy();
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
-				if (_domainDecomposition != nullptr) {
-					delete _domainDecomposition;
-				}
+				delete _domainDecomposition;
 				_domainDecomposition = new DomainDecomposition();
 			}
 			else if(parallelisationtype == "KDDecomposition") {
-				if (_domainDecomposition != nullptr) {
-					delete _domainDecomposition;
-				}
+				delete _domainDecomposition;
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
 			}
 			else {
@@ -1484,9 +1480,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep() {
 }
 
 void Simulation::setDomainDecomposition(DomainDecompBase* domainDecomposition) {
-	if (_domainDecomposition != nullptr) {
-		delete _domainDecomposition;
-	}
+	delete _domainDecomposition;
 	_domainDecomposition = domainDecomposition;
 }
 
@@ -1526,9 +1520,7 @@ void Simulation::initialize() {
 	_domainDecomposition = new DomainDecompBase();
 #else
 	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
-	if (_domainDecomposition != nullptr) {
-		delete _domainDecomposition;
-	}
+	delete _domainDecomposition;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
 	global_log->info() << "Initialization done" << endl;
