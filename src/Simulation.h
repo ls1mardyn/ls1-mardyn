@@ -475,8 +475,6 @@ private:
 	Wall* _wall;
 	Mirror* _mirror;
 
-	//! flags to control the cancel of the momentum 
-	bool _doCancelMomentum;
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;
 	
