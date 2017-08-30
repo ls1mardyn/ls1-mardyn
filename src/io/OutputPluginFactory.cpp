@@ -43,7 +43,7 @@ OutputPluginFactory::OutputPluginFactory() {
 	REGISTER_PLUGIN(MmspdBinWriter);
 	REGISTER_PLUGIN(MmspdWriter);
 	REGISTER_PLUGIN(PovWriter);
-//	REGISTER_PLUGIN(RDF);
+	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(ResultWriter);
 	REGISTER_PLUGIN(SysMonOutput);
 	REGISTER_PLUGIN(VISWriter);
