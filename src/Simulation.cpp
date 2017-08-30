@@ -630,8 +630,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	inp.getNodeValue("@version", version);
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
 
-	if (inp.changecurrentnode("simulation"))
-	{
+	if(inp.changecurrentnode("simulation")) {
 		readXML(inp);
 		inp.changecurrentnode("..");
 	} // simulation-section
@@ -685,17 +684,12 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		/* TODO: thermostat */
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double
-				Ttar =
-						_domain->severalThermostats() ? _domain->getTargetTemperature(
-								1)
-								: _domain->getTargetTemperature(0);
+		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 		cpit->submitTemperature(Tcur);
 		if (h != 0.0)
 			cpit->setPlanckConstant(h);
-
 		j++;
 	}
 }
