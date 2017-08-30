@@ -206,6 +206,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		_domain->setGlobalTemperature(_ensemble->T());
 
+		/// @todo Move the phasespace check into an output plugin executed once at the start!
 		/* check phasespacepoint */
 		bool bInputOk = true;
 		_nFmaxOpt = CFMAXOPT_NO_CHECK;
@@ -288,9 +289,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@type", parallelisationtype);
 			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
 		#ifdef ENABLE_MPI
+			/// @todo Dummy Decomposition now included in DecompBase - still keep this name?
 			if(parallelisationtype == "DummyDecomposition") {
 				global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
-				//_domainDecomposition = new DomainDecompDummy();
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
 				delete _domainDecomposition;
@@ -576,7 +577,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/generator")) {
 		string generatorName;
 		xmlconfig.getNodeValue("@name", generatorName);
-		global_log->info() << "Generator: " << generatorName << endl;
+		global_log->info() << "Initializing phase space using generator: " << generatorName << endl;
 		if(generatorName == "GridGenerator") {
 			_inputReader = new GridGenerator();
 		}
@@ -650,11 +651,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
 			&_lmu, _domain, _domainDecomposition);
 
-
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
-	// test new Decomposition
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
@@ -1507,7 +1506,6 @@ void Simulation::initialize() {
 	_finalCheckpoint = true;
 	_finalCheckpointBinary = false;
 
-        // TODO:
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
 	_domainDecomposition = new DomainDecompBase();
