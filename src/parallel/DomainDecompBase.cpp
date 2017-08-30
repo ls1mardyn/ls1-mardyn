@@ -54,6 +54,18 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 			for(RegionParticleIterator i = begin; i != end; ++i){
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
+				// some additional shifting to ensure that rounding errors do not hinder the correct placement
+				if (shift < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
+					if (m.r(dim) <= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
+						m.setr(dim, moleculeContainer->getBoundingBoxMin(dim));  // ensures that r is at least the boundingboxmin
+					}
+				} else {  // shift > 0
+					if (m.r(dim) >= moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
+						// std::nexttoward: returns the next bigger value of _boundingBoxMax
+						vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
+						m.setr(dim, std::nexttoward(r, r - 1.f));  // ensures that r is smaller than the boundingboxmax
+					}
+				}
 				moleculeContainer->addParticle(m);
 				i.deleteCurrentParticle(); //removeFromContainer = true;
 			}
