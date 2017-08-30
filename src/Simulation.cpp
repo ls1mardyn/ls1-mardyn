@@ -1,4 +1,3 @@
-
 #define SIMULATION_SRC
 #include "Simulation.h"
 
@@ -87,32 +86,66 @@ Simulation* global_simulation;
 
 Simulation::Simulation()
 	:
-	_simulationTime(0),
+	_simulationTime(0.0),
+	_maxMoleculeId(0),
+	_cutoffRadius(0.0),
+	_LJCutoffRadius(0.0),
+	_doRecordProfile(false),
+	_doRecordVirialProfile(false),
+	_profileRecordingTimesteps(7),
+	_profileOutputTimesteps(12500),
+	_profileOutputPrefix("out"),
+	_collectThermostatDirectedVelocity(100),
+	_thermostatType(VELSCALE_THERMOSTAT),
+	_nuAndersen(0.0),
+	_numberOfTimesteps(1),
+	_simstep(0),
 	_initSimulation(0),
-	_initCanonical(0),
-	_initGrandCanonical(0),
-	_initStatistics(0),
-	_ensemble(NULL),
-	_rdf(NULL),
-	_moleculeContainer(NULL),
-	_particlePairsHandler(NULL),
-	_cellProcessor(NULL),
+	_initCanonical(_initSimulation + 1),  // simulate canonical (with Tfactor == 1.) from begin on!
+	_initGrandCanonical(10000000),
+	_initStatistics(20000),
+	_ensemble(nullptr),
+	_pressureGradient(nullptr),
+	_rdf(nullptr),
+	_moleculeContainer(nullptr),
+	_particlePairsHandler(nullptr),
+	_cellProcessor(nullptr),
 	_domainDecomposition(nullptr),
-	_integrator(NULL),
-	_domain(NULL),
-	_inputReader(NULL),
-	_longRangeCorrection(NULL),
-	_temperatureControl(NULL),
-	_FMM(NULL),
+	_integrator(nullptr),
+	_domain(nullptr),
+	_inputReader(nullptr),
+	_outputPrefix("mardyn"),
+	_doAlignCentre(false),
+	_componentSpecificAlignment(false),
+	_alignmentInterval(25),
+	_alignmentCorrection(0.0),
+	_applyWallFun_LJ_9_3(false),
+	_applyWallFun_LJ_10_4(false),
+	_applyMirror(false),
+	_wall(nullptr),
+	_mirror(nullptr),
+	_momentumInterval(1000),
+	_rand(8624),
+	_longRangeCorrection(nullptr),
+	_temperatureControl(nullptr),
+	_FMM(nullptr),
 	_timerProfiler(),
+	_memoryProfiler(nullptr),
+	_finalCheckpoint(true),
+	_finalCheckpointBinary(false),
+	_outputPlugins(),
+	_velocityScalingThermostat(),
+	_lmu(),
+	_mcav(),
+	h(0.0),
 	_forced_checkpoint_time(0),
-	_loopCompTime(0.),
-	_loopCompTimeSteps(0),
-	_programName(""),
+	_loopCompTime(0.0),
+	_loopCompTimeSteps(0.0),
+	_programName("ls1-MarDyn"),
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
-	_dFmaxInit(0.),
-	_dFmaxThreshold(0.)
+	_dFmaxInit(0.0),
+	_dFmaxThreshold(0.0)
 {
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
@@ -1503,9 +1536,6 @@ void Simulation::initialize() {
 
 	global_simulation = this;
 
-	_finalCheckpoint = true;
-	_finalCheckpointBinary = false;
-
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
 	_domainDecomposition = new DomainDecompBase();
@@ -1515,49 +1545,16 @@ void Simulation::initialize() {
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
 
-	/*
-	 * default parameters
-	 */
-	_cutoffRadius = 0.0;
-	_LJCutoffRadius = 0.0;
-	_numberOfTimesteps = 1;
-	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
-
-	/** @todo the following features should be documented */
-	_doRecordProfile = false;
-	_doRecordVirialProfile = false;
-	_profileRecordingTimesteps = 7;
-	_profileOutputTimesteps = 12500;
-	_profileOutputPrefix = "out";
-	_collectThermostatDirectedVelocity = 100;
-	_initCanonical = _initSimulation + 1;  // default: simulate canonical (with Tfactor == 1.) from begin on!
-	_initGrandCanonical = 10000000;
-	_initStatistics = 20000;
-	h = 0.0;
-
-	_thermostatType = VELSCALE_THERMOSTAT;
-	_nuAndersen = 0.0;
-	_rand.init(8624);
-
-	_doAlignCentre = false;
-	_componentSpecificAlignment = false;
-	_alignmentInterval = 25;
-	_momentumInterval = 1000;
-	_wall = NULL;
-	_applyWallFun_LJ_9_3 = false;
-	_applyWallFun_LJ_10_4 = false;
-	_mirror = NULL;
-	_applyMirror = false;
 
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
-	_longRangeCorrection = NULL;
-        
-        this->_mcav = map<unsigned, CavityEnsemble>();
+
+	this->_mcav = map<unsigned, CavityEnsemble>();
+
 	global_log->info() << "Initialization done" << endl;
 }
 
