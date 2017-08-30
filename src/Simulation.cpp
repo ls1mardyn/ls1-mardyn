@@ -555,13 +555,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Face space file type: " << pspfiletype << endl;
 
 		if (pspfiletype == "ASCII") {
-			_inputReader = (InputBase*) new InputOldstyle();
+			_inputReader = new InputOldstyle();
 			_inputReader->readXML(xmlconfig);
 		}
 		else if (pspfiletype == "binary") {
-			_inputReader = (InputBase*) new BinaryReader();
+			_inputReader = new BinaryReader();
 			_inputReader->readXML(xmlconfig);
-
 			//!@todo read header should be either part of readPhaseSpace or readXML.
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
