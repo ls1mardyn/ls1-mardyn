@@ -555,13 +555,18 @@ void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 		if(cid != _vecChangeCompIDsUnfreeze.at(cid))
 		{
 			//savevelo
-			std::array<double, 6> pos;
+			std::array<double,10> pos;
 			pos.at(0) = tM->r(0);
 			pos.at(1) = tM->r(1);
 			pos.at(2) = tM->r(2);
 			pos.at(3) = tM->v(0);
 			pos.at(4) = tM->v(1);
 			pos.at(5) = tM->v(2);
+			Quaternion q = tM->q();
+			pos.at(6) = q.qw();
+			pos.at(7) = q.qx();
+			pos.at(8) = q.qy();
+			pos.at(9) = q.qz();
 //			_storePosition.insert ( std::pair<unsigned long, std::array<double, 3> >(mid, pos) );
 			_storePosition[tM->id()] = pos;
 		}
@@ -572,7 +577,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
 	double dMoleculeRadius = 0.5;
 	uint32_t cid;
-	std::map<unsigned long, std::array<double, 6> >::iterator it;
 
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 
@@ -642,6 +646,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		*/
 
 		// reset position of fixed molecules
+		std::map<unsigned long, std::array<double,10> >::iterator it;
 		if(true == bIsFrozenMolecule)
 		{
 			it = _storePosition.find(tM->id() );
@@ -652,6 +657,13 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 				{
 					tM->setr(0, it->second.at(0) );
 					tM->setr(2, it->second.at(2) );
+
+					// reset quaternion (orientation)
+					Quaternion q(it->second.at(6),
+							it->second.at(7),
+							it->second.at(8),
+							it->second.at(9) );
+					tM->setq(q);
 				}
 			}
 			// restore velocity

@@ -93,7 +93,7 @@ private:
 	int32_t _nSlabindex;
 	uint8_t _nReadReservoirMethod;
 	std::string _reservoirFilename;
-	std::map<uint64_t, std::array<double, 6> > _storePosition;  //Map for frozen particle position storage <"id, position">
+	std::map<uint64_t, std::array<double,10> > _storePosition;  //Map for frozen particle position storage <"id, position">
 	std::vector< std::vector<Molecule> >_reservoir;
 	bool _bIsRestart;  // simulation is a restart?
 	std::list<uint64_t> _listDeletedMolecules;
