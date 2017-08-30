@@ -154,17 +154,21 @@ Simulation::Simulation()
 }
 
 Simulation::~Simulation() {
-	delete _domainDecomposition;
+	delete _ensemble;
 	delete _pressureGradient;
-	delete _domain;
+	delete _rdf;
+	delete _moleculeContainer;
 	delete _particlePairsHandler;
 	delete _cellProcessor;
-	delete _moleculeContainer;
+	delete _domainDecomposition;
 	delete _integrator;
+	delete _domain;
 	delete _inputReader;
-	delete _FMM;
-	delete _ensemble;
+	delete _wall;
+	delete _mirror;
 	delete _longRangeCorrection;
+	delete _temperatureControl;
+	delete _FMM;
 	delete _memoryProfiler;
 }
 
