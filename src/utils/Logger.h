@@ -68,8 +68,8 @@ typedef enum {
 	All
 } logLevel;
 
-/**
- * Logging class
+/** @brief The Logger class provides a simple interface to handle log messages.
+ *
  * Provides easy interface to handle log messages. Initialize either with
  * output level and stream or output level and filename or use default constructor
  * values (Error, &(std::cout)). With a given file basename and MPI Support each rank will
