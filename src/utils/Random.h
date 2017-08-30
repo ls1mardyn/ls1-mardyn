@@ -12,7 +12,7 @@
 class Random
 {
  public:
-   Random();
+   Random(int seed = 8624);
    void init(int seed);
 
    float rnd();
