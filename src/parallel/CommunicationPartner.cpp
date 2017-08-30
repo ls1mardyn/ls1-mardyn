@@ -394,14 +394,14 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 					// checks if the molecule has been shifted to inside the domain due to rounding errors.
 					if (shift[dim] < 0.) { // if the shift was negative, it is now in the lower part of the domain -> min
 						if (m.r[dim] >= 0.) { // in the lower part it was wrongly shifted
-							std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
+							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 							vcp_real_calc r = 0;
 							m.r[dim] = std::nexttoward(r, r - 1.f); // ensures that r is smaller than the boundingboxmin
 						}
 					} else if (shift[dim] > 0.) {  // shift > 0
 						if (m.r[dim] < domain->getGlobalLength(dim)) { // in the higher part it was wrongly shifted
-						// std::nextafter: returns the next bigger value of _boundingBoxMax
-							std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
+							// std::nextafter: returns the next bigger value of _boundingBoxMax
+							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 							vcp_real_calc r = domain->getGlobalLength(dim);
 							m.r[dim] = std::nexttoward(r, r + 1.f);  // ensures that r is bigger than the boundingboxmax
 						}
