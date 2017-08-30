@@ -1523,7 +1523,6 @@ void Simulation::initialize() {
 	delete _domainDecomposition;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
-	global_log->info() << "Initialization done" << endl;
 
 	/*
 	 * default parameters
@@ -1568,6 +1567,7 @@ void Simulation::initialize() {
 	_longRangeCorrection = NULL;
         
         this->_mcav = map<unsigned, CavityEnsemble>();
+	global_log->info() << "Initialization done" << endl;
 }
 
 OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
