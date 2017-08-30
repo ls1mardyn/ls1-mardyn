@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#if ENABLE_SIGHANDLER
+
 #include <stdio.h>
 #include <execinfo.h>
 #include <signal.h>
@@ -31,4 +33,6 @@ void handler(int sig) {
 void registerSigsegvHandler() {
   signal(SIGSEGV, handler);   // install our handler
 }
+
+#endif
 

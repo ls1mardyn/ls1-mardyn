@@ -16,6 +16,7 @@
 class KDDecompositionTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(KDDecompositionTest);
+	TEST_METHOD(testNoDuplicatedParticles);
 	TEST_METHOD(testCompleteTreeInfo);
 	TEST_METHOD(testRebalancingDeadlocks);
 	TEST_METHOD(testbalanceAndExchange);
@@ -26,6 +27,8 @@ public:
 	KDDecompositionTest();
 
 	virtual ~KDDecompositionTest();
+
+	void testNoDuplicatedParticles();
 
 	void testCompleteTreeInfo();
 
@@ -40,6 +43,8 @@ public:
 	void testbalanceAndExchange();
 
 private:
+
+	void testNoDuplicatedParticlesFilename(const char * filename, double cutoff);
 
 	/**
 	 * init some random distribution

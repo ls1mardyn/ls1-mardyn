@@ -23,6 +23,50 @@ KDDecompositionTest::KDDecompositionTest():_rank(0) {
 KDDecompositionTest::~KDDecompositionTest() {
 }
 
+
+void KDDecompositionTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
+	KDDecomposition * kdd;
+	// original pointer will be deleted by tearDown()
+	_domain->setGlobalLength(0, 58.5389);
+	_domain->setGlobalLength(1, 58.5389);
+	_domain->setGlobalLength(2, 58.5389);
+	kdd = new KDDecomposition(cutoff, _domain, 1, 4);
+	_domainDecomposition = kdd;
+	//global_simulation->setDomainDecomposition(kdd);
+	_rank = kdd->_rank;
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
+
+	kdd->initCommunicationPartners(cutoff, _domain);
+
+	int numMols = container->getNumberOfParticles();
+	kdd->collCommInit(1);
+	kdd->collCommAppendInt(numMols);
+	kdd->collCommAllreduceSum();
+	numMols = kdd->collCommGetInt();
+	kdd->collCommFinalize();
+
+	_domainDecomposition->balanceAndExchange(0.,true, container, _domain);
+	// will rebalance, we thus need a reduce
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+
+	kdd->collCommInit(1);
+	kdd->collCommAppendInt(newNumMols);
+	kdd->collCommAllreduceSum();
+	newNumMols = kdd->collCommGetInt();
+	kdd->collCommFinalize();
+
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	delete _domainDecomposition;
+}
+
+void KDDecompositionTest::testNoDuplicatedParticles() {
+	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15_DD.inp", 5.0);
+}
+
+
 void KDDecompositionTest::testCompleteTreeInfo() {
 
 	if (_domainDecomposition->getNumProcs() < 9) {

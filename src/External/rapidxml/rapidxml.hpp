@@ -669,7 +669,7 @@ namespace rapidxml
         //! \return Pointer to document that contains this attribute, or 0 if there is no parent document.
         xml_document<Ch> *document() const
         {
-            xml_base<Ch> *node = const_cast<xml_base<Ch> *>(this);
+            xml_node<Ch> *node = const_cast<xml_node<Ch> *>(this);
             while (node->parent())
                 node = node->parent();
             return node->type() == node_document ? static_cast<xml_document<Ch> *>(node) : 0;

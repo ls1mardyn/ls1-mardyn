@@ -30,22 +30,15 @@ using Log::global_log;
 //#define DEBUG_DECOMP
 
 KDDecomposition::KDDecomposition() :
-		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.), _cutoffRadius(
-				1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.), _processorSpeedUpdateCount(0),
-				_heterogeneousSystems(false), _splitBiggest(true), _forceRatio(false), _rebalanceLimit(0) {
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
-}
+	_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.),
+	_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
+	_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _splitBiggest(true), _forceRatio(false), _rebalanceLimit(0)
+{}
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold, bool hetero, bool cutsmaller, bool forceRatio) :
-		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
-		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio), _rebalanceLimit(0) {
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
+	_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
+	_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _splitBiggest(!cutsmaller), _forceRatio(forceRatio), _rebalanceLimit(0)
+{
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
@@ -71,7 +64,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int update
 	if (!_decompTree->isResolvable()) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
-		barrier(); // the messages above are only promoted to std::out if we have the barrier somehow...
 		Simulation::exit(-1);
 	}
 	_decompTree->buildKDTree();
@@ -182,7 +174,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		KDNode * newDecompRoot = NULL;
 		KDNode * newOwnLeaf = NULL;
 
-		getNumParticles(moleculeContainer);
+		calcNumParticlesPerCell(moleculeContainer);
 		constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
 		bool migrationSuccessful = migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
 		if (not migrationSuccessful) {
@@ -1207,38 +1199,28 @@ void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* de
 	}
 }
 
-void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
+void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContainer) {
 	for (int i = 0; i < _globalNumCells; i++)
 		_numParticlesPerCell[i] = 0;
 
-	int count = 0;
 	double bBMin[3]; // haloBoundingBoxMin
-    /* TODO: We do not use values form bBMax anywhere ... */
-	//double bBMax[3]; // haloBoundingBoxMax
 	for (int dim = 0; dim < 3; dim++) {
-		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
-		//bBMax[dim] = moleculeContainer->getBoundingBoxMax(dim);// + moleculeContainer->get_halo_L(dim);
+		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);
 	}
-	ParticleIterator molPtr = moleculeContainer->iteratorBegin();
-	while (molPtr != moleculeContainer->iteratorEnd()) {
-		int cellIndex[3]; // 3D Cell index (local)
+	for(ParticleIterator molPtr = moleculeContainer->iteratorBegin(); molPtr != moleculeContainer->iteratorEnd(); ++molPtr) {
+		int localCellIndex[3]; // 3D Cell index (local)
 		int globalCellIdx[3]; // 3D Cell index (global)
-
 		for (int dim = 0; dim < 3; dim++) {
-			cellIndex[dim] = (int) floor((molPtr->r(dim) - bBMin[dim]) / _cellSize[dim]);
-			globalCellIdx[dim] = _ownArea->_lowCorner[dim] + cellIndex[dim];
+			localCellIndex[dim] = (int) floor((molPtr->r(dim) - bBMin[dim]) / _cellSize[dim]);
+			globalCellIdx[dim] = _ownArea->_lowCorner[dim] + localCellIndex[dim];
 			if (globalCellIdx[dim] < 0)
 				globalCellIdx[dim] += _globalCellsPerDim[dim];
 			if (globalCellIdx[dim] >= _globalCellsPerDim[dim])
 				globalCellIdx[dim] -= _globalCellsPerDim[dim];
 		}
-
 		_numParticlesPerCell[_globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
-		++molPtr;
-		count++;
 	}
 	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
-
 }
 
 std::vector<int> KDDecomposition::getNeighbourRanks() {

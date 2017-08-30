@@ -348,6 +348,22 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 	return wasInserted;
 }
 
+bool LinkedCells::addHaloParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
+	const bool inBox = inBoxCheckedAlready or particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
+	assert(not particle.inBox(_boundingBoxMin,_boundingBoxMax));
+	bool wasInserted = false;
+
+	if (inBox) {
+		int cellIndex = getCellIndexOfMolecule(&particle);
+		wasInserted = _cells[cellIndex].addParticle(particle, checkWhetherDuplicate);
+		if (rebuildCaches) {
+			_cells[cellIndex].buildSoACaches();
+		}
+	}
+
+	return wasInserted;
+}
+
 int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
 	typedef vector<Molecule>::size_type mol_index_t;
 	typedef vector<ParticleCell>::size_type cell_index_t;

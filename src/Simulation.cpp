@@ -51,7 +51,7 @@
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
-#include "io/ReplicaGeneratorVLE.h"
+#include "io/ReplicaGenerator.h"
 #include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
 
@@ -670,8 +670,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if (generatorName == "CubicGridGenerator") {
 			_inputReader = new CubicGridGeneratorInternal();
 		}
-		else if (generatorName == "ReplicaGeneratorVLE") {
-			_inputReader = new ReplicaGeneratorVLE();
+		else if (generatorName == "ReplicaGenerator") {
+			_inputReader = new ReplicaGenerator();
 		}
 		else {
 			global_log->error() << "Unknown generator: " << generatorName << endl;

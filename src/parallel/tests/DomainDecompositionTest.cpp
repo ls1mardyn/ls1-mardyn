@@ -7,9 +7,11 @@
 
 #include "DomainDecompositionTest.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecomposition.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Component.h"
 #include "molecules/Molecule.h"
+#include "Domain.h"
 
 TEST_SUITE_REGISTRATION(DomainDecompositionTest);
 
@@ -17,6 +19,39 @@ DomainDecompositionTest::DomainDecompositionTest() {
 }
 
 DomainDecompositionTest::~DomainDecompositionTest() {
+}
+
+void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
+	// original pointer will be deleted by tearDown()
+	_domainDecomposition = new DomainDecomposition();
+
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
+	int numMols = container->getNumberOfParticles();
+
+	_domainDecomposition->collCommInit(1);
+	_domainDecomposition->collCommAppendInt(numMols);
+	_domainDecomposition->collCommAllreduceSum();
+	numMols = _domainDecomposition->collCommGetInt();
+	_domainDecomposition->collCommFinalize();
+
+	_domainDecomposition->balanceAndExchange(0.,true, container, _domain);
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+
+	_domainDecomposition->collCommInit(1);
+	_domainDecomposition->collCommAppendInt(newNumMols);
+	_domainDecomposition->collCommAllreduceSum();
+	newNumMols = _domainDecomposition->collCommGetInt();
+	_domainDecomposition->collCommFinalize();
+
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	delete _domainDecomposition;
+}
+
+void DomainDecompositionTest::testNoDuplicatedParticles() {
+	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15_DD.inp", 5.0);
 }
 
 
@@ -27,11 +62,6 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
 	}
-
-	std::vector<Component> components;
-	Component dummyComponent(0);
-	dummyComponent.addLJcenter(0,0,0,1,1,1,0,false);
-	components.push_back(dummyComponent);
 
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", 17.0);
 

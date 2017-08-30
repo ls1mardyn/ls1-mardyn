@@ -194,9 +194,9 @@ class KDDecomposition: public DomainDecompMPIBase {
 	void getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, std::vector<int>* procIDs, std::vector<int>* neighbHaloAreas) const;
 
 
-	//! @brief
+	/** @brief calculates the number of particles in each of the underlying basic cells */
 	//! @todo _numParticles should perhaps not be a member variable (think about that)
-	void getNumParticles(ParticleContainer* moleculeContainer);
+	void calcNumParticlesPerCell(ParticleContainer* moleculeContainer);
 
 	bool decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
 

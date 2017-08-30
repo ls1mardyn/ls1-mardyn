@@ -83,6 +83,9 @@ ENABLE_FMM_FFT ?= 0
 # allow acceleration of MPI communication through overlapping communication ?
 ENABLE_OVERLAPPING ?= 0
 
+# enable internal backtracing for SIGSEGV
+SIGHANDLER ?= 0
+
 # allow OpenMP? Leave off for now, unless you are developing it.
 OPENMP ?= 0
 
@@ -179,6 +182,10 @@ ifeq ($(ENABLE_FMM_FFT),1)
 CXXFLAGS += -D FMM_FFT
 endif
 
+ifeq ($(SIGHANDLER),1)
+CXXFLAGS += -D ENABLE_SIGHANDLER=1
+endif
+
 ifeq ($(ENABLE_OVERLAPPING),1)
 CXXFLAGS += -D ENABLE_OVERLAPPING
 endif
@@ -252,6 +259,7 @@ help:
 	@echo "make VECTORIZE_CODE=AOS | $(call underline,SSE) | AVX | ...		compile with vectorization support (see help_vect)"
 	@echo "make PAPI=$(call underline,0) | 1			                   	compile with PAPI counter support"
 	@echo "make ENABLE_FMM_FFT=$(call underline,0) | 1				compile using an FFT accelerated FMM method"
+	@echo "make SIGHANDLER=$(call underline,0) | 1                                  compile with or without backtrace capability in case of SIGSEGV"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"

@@ -13,7 +13,7 @@
  */
 class DecompWriter : public OutputBase {
 public:
-	DecompWriter() {}
+	DecompWriter();
 	~DecompWriter() {}
 
 

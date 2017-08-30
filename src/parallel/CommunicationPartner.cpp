@@ -13,6 +13,8 @@
 #include "WrapOpenMP.h"
 #include "Simulation.h"
 #include "ParticleData.h"
+#include "parallel/DomainDecompBase.h"
+#include "Domain.h"
 
 CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
 		const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
@@ -142,22 +144,32 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 	switch (msgType){
 		case LEAVING_AND_HALO_COPIES: {
 			global_log->debug() << "sending halo and boundary particles together" << std::endl;
-			for(unsigned int p = 0; p < numHaloInfo; p++){
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, _haloInfo[p]._shift);
+			// first leaving particles:
+			for (unsigned int p = 0; p < numHaloInfo; p++) {
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
+						_haloInfo[p]._shift, removeFromContainer, LEAVING);
+			}
+
+			// then halo particles/copies:
+			for (unsigned int p = 0; p < numHaloInfo; p++) {
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh,
+						_haloInfo[p]._shift, false, HALO);
 			}
 			break;
 		}
 		case LEAVING_ONLY: {
 			global_log->debug() << "sending leaving particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift, removeFromContainer);
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
+						_haloInfo[p]._shift, removeFromContainer, LEAVING);
 			}
 			break;
 		}
 		case HALO_COPIES: {
 			global_log->debug() << "sending halo particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh,
+						_haloInfo[p]._shift, false, HALO);
 			}
 			break;
 		}
@@ -223,6 +235,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag == true) {
 			_msgReceived = true;
+
 			int numrecv = _recvBuf.size();
 
 			#ifndef NDEBUG
@@ -301,7 +314,7 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 }
 
 void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
-		const double highCorner[3], const double shift[3], const bool removeFromContainer) {
+		const double highCorner[3], const double shift[3], const bool removeFromContainer, HaloOrLeavingCorrection haloLeaveCorr) {
 	using std::vector;
 	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
 	int prevNumMols = _sendBuf.size();
@@ -365,6 +378,9 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
+
+		Domain* domain = global_simulation->getDomain();
+
 		//reduce the molecules in the send buffer and also apply the shift
 		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
 		for(int i = 0; i < myThreadMolecules; i++){
@@ -373,6 +389,25 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			m.r[0] += shift[0];
 			m.r[1] += shift[1];
 			m.r[2] += shift[2];
+			for (int dim = 0; dim < 2; dim++) {
+				if (haloLeaveCorr == HALO) {
+					// checks if the molecule has been shifted to inside the domain due to rounding errors.
+					if (shift[dim] < 0.) { // if the shift was negative, it is now in the lower part of the domain -> min
+						if (m.r[dim] >= 0.) { // in the lower part it was wrongly shifted
+							std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
+							vcp_real_calc r = 0;
+							m.r[dim] = std::nexttoward(r, r - 1.f); // ensures that r is smaller than the boundingboxmin
+						}
+					} else if (shift[dim] > 0.) {  // shift > 0
+						if (m.r[dim] < domain->getGlobalLength(dim)) { // in the higher part it was wrongly shifted
+						// std::nextafter: returns the next bigger value of _boundingBoxMax
+							std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
+							vcp_real_calc r = domain->getGlobalLength(dim);
+							m.r[dim] = std::nexttoward(r, r + 1.f);  // ensures that r is bigger than the boundingboxmax
+						}
+					}
+				}
+			}
 			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
 		}
 	}

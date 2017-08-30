@@ -594,8 +594,8 @@ public:
 	
 	/// \brief number of registered queries
 	/// return the number of active queries
-	/// \param unsigned int	number of queries
-	unsigned int numqueries() const
+	/// \return number of active queries
+	size_t numqueries() const
 		{ return m_queries.size(); }
 
 #ifdef ENABLE_MPI

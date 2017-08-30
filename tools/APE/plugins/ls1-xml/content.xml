@@ -377,9 +377,9 @@
 							</setting>
 						</child>
 						<child plurality="alone" importance="optional">
-							<name>Replica Generator VLE</name>
+							<name>Replica Generator</name>
 							<setting>
-								<defaultvalue>ReplicaGeneratorVLE</defaultvalue>
+								<defaultvalue>ReplicaGenerator</defaultvalue>
 								<filexmlpath>mardyn/simulation/ensemble/phasespacepoint/generator@name</filexmlpath>
 							</setting>
 							<setting>

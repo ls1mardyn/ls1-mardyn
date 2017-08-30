@@ -1,5 +1,5 @@
-#ifndef REPLICAGENERATORVLE_H
-#define REPLICAGENERATORVLE_H
+#ifndef REPLICA_GENERATOR_H
+#define REPLICA_GENERATOR_H
 
 #include "io/InputBase.h"
 #include "molecules/Molecule.h"
@@ -37,11 +37,11 @@ struct SubDomain
  */
 class DomainDecompBase;
 class MoleculeDataReader;
-class ReplicaGeneratorVLE : public InputBase
+class ReplicaGenerator : public InputBase
 {
 public:
-	ReplicaGeneratorVLE();
-	~ReplicaGeneratorVLE();
+	ReplicaGenerator();
+	~ReplicaGenerator();
 
 	void setPhaseSpaceFile(std::string /*filename*/){}
 	void setPhaseSpaceHeaderFile(std::string /*filename*/){}
@@ -53,7 +53,7 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <generator name="ReplicaGeneratorVLE">
+	   <generator name="ReplicaGenerator">
 	   </generator>
 	   \endcode
 	 */
@@ -191,5 +191,5 @@ public:
 	}
 };
 
-#endif /* REPLICAGENERATORVLE_H */
+#endif /* REPLICA_GENERATOR_H */
 
