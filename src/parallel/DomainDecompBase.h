@@ -64,8 +64,6 @@ public:
 	//! molecules for the halo-region are transferred.
 	//! This implementation is the one used in sequential mode.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param components when creating a new Molecule-object (from the received data),
-	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
