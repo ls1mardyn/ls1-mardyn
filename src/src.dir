@@ -18,9 +18,10 @@ to access particles and pairs of particles.
 You shouldn't add any files directly in the root directory as long as it isn't absolutely
 necessary
 On the root level, there are already the following files:
-- MDProject.cpp: main method
+- MarDyn.cpp: main method
 - Simulation.h/Simulation.cpp: controls the whole simulation process
 - Domain.h/Domain.cpp
+- Common.h/Common.cpp
 
 The reasen why those files are there is mainly that they are core elements of the program
 and there is no plan to replace them by different implementations.
