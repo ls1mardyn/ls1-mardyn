@@ -40,13 +40,6 @@ public:
 	~MettDeamon();
 
 	void readXML(XMLfileUnits& xmlconfig);
-	double getAreaY(){return _dAreaXZ;}
-	double getDeltaY() {return _dY;}
-	int getnSlabindex() {return _nSlabindex;}
-	double getdYsum() {return _dYsum;}
-
-	void setnSlabindex(int slabindex) {_nSlabindex = slabindex;}
-	void setdYsum(double dY) {_dYsum = dY;}
 
 	uint64_t getnNumMoleculesDeleted( DomainDecompBase* domainDecomposition){return _nNumMoleculesDeletedGlobalAlltime;}
 	uint64_t getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposition);

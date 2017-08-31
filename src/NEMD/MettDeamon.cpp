@@ -652,7 +652,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			it = _storePosition.find(tM->id() );
 			if(it != _storePosition.end() )
 			{
-				tM->setr(1, it->second.at(1) + this->getDeltaY() );
+				tM->setr(1, it->second.at(1) + _dY);
 				if(dY < _dSlabWidth)
 				{
 					tM->setr(0, it->second.at(0) );
@@ -666,12 +666,23 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 					tM->setq(q);
 				}
 			}
-			// restore velocity
-//			tM->setv(0,it->second.at(3) );
-//			tM->setv(1,it->second.at(4) );
-//			tM->setv(2,it->second.at(5) );
+			// limit velocity of trapped molecules
+//			tM->setv(0, 0.);
+			tM->setv(1, 0.);
+//			tM->setv(2, 0.);
+
+			double T = 80.;
+			double m = tM->mass();
+			double vm2 = T/m*4/9.;
+			double v2 = tM->v2();
+
+			if(v2 > vm2)
+			{
+				double f = sqrt(vm2/v2);
+				tM->scale_v(f);
+			}
 		}
-//		else   <-- also limit velocity of fixed molecules???
+		else
 		{
 			double v2 = tM->v2();
 			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
@@ -699,7 +710,8 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 	}  // loop over molecules
 
-	_dYsum += this->getDeltaY();
+	_dYsum += _dY;
+//	global_log->info() << "_dYsum=" << _dYsum << endl;
 
 	if (_dYsum >= _dSlabWidth)
 	{
@@ -746,11 +758,23 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 		if(true == bIsFrozenMolecule)
 		{
+			// limit velocity of trapped molecules
 //			tM->setv(0, 0.);
 			tM->setv(1, 0.);
 //			tM->setv(2, 0.);
+
+			double T = 80.;
+			double m = tM->mass();
+			double vm2 = T/m*4/9.;
+			double v2 = tM->v2();
+
+			if(v2 > vm2)
+			{
+				double f = sqrt(vm2/v2);
+				tM->scale_v(f);
+			}
 		}
-//		else  <-- also limit velocity of frozen molecules?
+		else
 		{
 			double v2 = tM->v2();
 			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
