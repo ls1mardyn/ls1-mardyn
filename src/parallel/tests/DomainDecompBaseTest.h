@@ -23,12 +23,16 @@ public:
 	DomainDecompBaseTest();
 
 	virtual ~DomainDecompBaseTest();
-	void testNoDuplicatedParticlesFilename(const char * filename, double cutoff);
+
 	void testNoDuplicatedParticles();
-	void testNoLostParticlesFilename(const char * filename, double cutoff);
+
 	void testNoLostParticles();
 	void testExchangeMoleculesSimple();
 	void testExchangeMolecules();
+
+private:
+	void testNoDuplicatedParticlesFilename(const char * filename, double cutoff);
+	void testNoLostParticlesFilename(const char * filename, double cutoff);
 };
 
 #endif /* DOMAINDECOMPBASETEST_H_ */

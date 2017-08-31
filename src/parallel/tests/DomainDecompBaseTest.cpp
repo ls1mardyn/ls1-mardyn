@@ -93,10 +93,10 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 		for (int dim = 0; dim < 3; dim++) {
 			if (lower[dim].count(m->id())) {
 				// We make sure, that these particles are now at the top part of the domain.
-				mardyn_assert(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
+				ASSERT_TRUE(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
 			} else if (upper[dim].count(m->id())) {
 				// We make sure, that these particles are now at the lower part of the domain.
-				mardyn_assert(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
+				ASSERT_TRUE(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
 			}
 		}
 	}

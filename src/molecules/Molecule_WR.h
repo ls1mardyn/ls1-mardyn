@@ -287,7 +287,7 @@ public:
 
 private:
 	static std::array<double, 3> emptyArray3() {
-		mardyn_assert(false);
+		//mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
