@@ -124,9 +124,6 @@ public:
 		_uLJshift6 = uLJshift6;
 	}
 
-    /* TODO: The following method is never used */
-	bool TRUNCATED_SHIFTED() { return (_uLJshift6 != 0.0); } /**< get truncation option */
-
 	double shift6() const { return _uLJshift6; }             /**< get energy shift of interaction potential */
 
 private:
