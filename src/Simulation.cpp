@@ -106,7 +106,6 @@ Simulation::Simulation()
 	_initStatistics(20000),
 	_ensemble(nullptr),
 	_pressureGradient(nullptr),
-	_rdf(nullptr),
 	_moleculeContainer(nullptr),
 	_particlePairsHandler(nullptr),
 	_cellProcessor(nullptr),
@@ -158,8 +157,6 @@ Simulation::~Simulation() {
 	_ensemble = nullptr;
 	delete _pressureGradient;
 	_pressureGradient = nullptr;
-	//delete _rdf; // rdf is a pointer to an outputplugin and thus already deleted!
-	//_rdf = nullptr;
 	delete _moleculeContainer;
 	_moleculeContainer = nullptr;
 	delete _particlePairsHandler;
@@ -562,8 +559,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
-		} else if (pluginname == "RDF") {  // we need RDF both as an outputplugin and _rdf
-			_rdf = static_cast<RDF*>(outputPlugin);
 		}
 		if(pluginname == "MmpldWriter") {
 			/** @todo this should be handled in the MMPLD Writer readXML() */
@@ -779,7 +774,7 @@ void Simulation::prepare_start() {
 	if(this->_doRecordVirialProfile) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	} else if (_rdf != NULL) {
+	} else if (nullptr != getOutputPlugin("RDF")) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)"
 				<< endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
@@ -1077,11 +1072,12 @@ void Simulation::simulate() {
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
 		// activate RDF sampling
-		if ((_simstep >= _initStatistics) && _rdf != NULL) {
+		RDF* rdf;
+		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
 			global_log->info() << "Activating the RDF sampling" << endl;
-			this->_rdf->tickRDF();
-			this->_particlePairsHandler->setRDF(_rdf);
-			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
+			rdf->tickRDF();
+			_particlePairsHandler->setRDF(rdf);
+			rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
 		}
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 

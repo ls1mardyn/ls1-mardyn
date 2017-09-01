@@ -427,9 +427,6 @@ private:
 	/** Flow regulation */
 	PressureGradient* _pressureGradient;
 
-	/** Component to calculate the radial distribution function */
-	RDF* _rdf;
-
 	/** Datastructure for finding neighbours efficiently */
 	ParticleContainer* _moleculeContainer;
 
@@ -525,6 +522,9 @@ public:
 		return _programName;
 	}
 
+	/** @brief get output plugin
+	 * @return pointer to the output plugin if it is active, otherwise nullptr
+	 */
 	OutputBase* getOutputPlugin(const std::string& name);
 
 	void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
