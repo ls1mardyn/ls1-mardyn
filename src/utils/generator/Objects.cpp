@@ -1,6 +1,7 @@
 #include "utils/generator/Objects.h"
 #include "utils/generator/ObjectFactory.h"
 
+#include "utils/Coordinate3D.h"
 #include "utils/Logger.h"
 
 using namespace std;
@@ -16,13 +17,11 @@ Cuboid::Cuboid(double lower[3], double upper[3]) {
 }
 
 void Cuboid::readXML(XMLfileUnits& xmlconfig) {
-	xmlconfig.getNodeValueReduced("lower/x", _lowerCorner[0]);
-	xmlconfig.getNodeValueReduced("lower/y", _lowerCorner[1]);
-	xmlconfig.getNodeValueReduced("lower/z", _lowerCorner[2]);
+	Coordinate3D lowerCorner(xmlconfig, "lower");
+	Coordinate3D upperCorner(xmlconfig, "upper");
+	lowerCorner.get(_lowerCorner);
+	upperCorner.get(_upperCorner);
 	global_log->info() << "lower corner: " << _lowerCorner[0] << ", " << _lowerCorner[1] << ", " << _lowerCorner[2] << endl;
-	xmlconfig.getNodeValueReduced("upper]/x", _upperCorner[0]);
-	xmlconfig.getNodeValueReduced("upper]/y", _upperCorner[1]);
-	xmlconfig.getNodeValueReduced("upper]/z", _upperCorner[2]);
 	global_log->info() << "upper corner: " << _upperCorner[0] << ", " << _upperCorner[1] << ", " << _upperCorner[2] << endl;
 }
 
@@ -59,9 +58,8 @@ Sphere::Sphere(double center[3], double r) : _radius(r), _radiusSquare(r*r) {
 }
 
 void Sphere::readXML(XMLfileUnits& xmlconfig) {
-	xmlconfig.getNodeValueReduced("center/x", _center[0]);
-	xmlconfig.getNodeValueReduced("center/y", _center[1]);
-	xmlconfig.getNodeValueReduced("center/z", _center[2]);
+	Coordinate3D center(xmlconfig, "center");
+	center.get(_center);
 	global_log->info() << "center coordinate: "<< _center[0] << ", " << _center[1] << ", " << _center[2] << endl;
 	xmlconfig.getNodeValueReduced("radius", _radius);
 	_radiusSquare = _radius*_radius;
@@ -108,9 +106,8 @@ Cylinder::Cylinder(double centerBase[3], double radius, double height) : _radius
 }
 
 void Cylinder::readXML(XMLfileUnits& xmlconfig) {
-	xmlconfig.getNodeValueReduced("centerBase/x", _centerBase[0]);
-	xmlconfig.getNodeValueReduced("centerBase/y", _centerBase[1]);
-	xmlconfig.getNodeValueReduced("centerBase/z", _centerBase[2]);
+	Coordinate3D centerBase(xmlconfig, "centerBase");
+	centerBase.get(_centerBase);
 	global_log->info() << "center base coordinate: "<< _centerBase[0] << ", " << _centerBase[1] << ", " << _centerBase[2] << endl;
 	xmlconfig.getNodeValueReduced("radius", _radius);
 	_radiusSquare = _radius*_radius;

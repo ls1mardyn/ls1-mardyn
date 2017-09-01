@@ -13,6 +13,7 @@
 #include "LA.h"
 #include "LesSolver.h"
 #include "utils/generator/Objects.h"
+#include "utils/Coordinate3D.h"
 #include "molecules/Molecule.h"
 
 #include <iostream>
@@ -92,13 +93,10 @@ void Generator::readXML(XMLfileUnits& xmlconfig) {
 		_basis.readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
-	if(xmlconfig.changecurrentnode("latticeOrigin")) {
-		xmlconfig.getNodeValueReduced("x", _origin[0]);
-		xmlconfig.getNodeValueReduced("y", _origin[1]);
-		xmlconfig.getNodeValueReduced("z", _origin[2]);
-		global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << endl;
-		xmlconfig.changecurrentnode("..");
-	}
+	Coordinate3D origin(xmlconfig, "latticeOrigin");
+	origin.get(_origin);
+	global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << endl;
+
 	if(xmlconfig.changecurrentnode("object")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);

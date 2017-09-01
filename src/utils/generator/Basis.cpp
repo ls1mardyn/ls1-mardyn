@@ -12,6 +12,7 @@
 #include "utils/Logger.h"
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
+#include "utils/Coordinate3D.h"
 
 using namespace std;
 using Log::global_log;
@@ -28,9 +29,8 @@ void Basis::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("componentid", componentid);
 		molecule.setComponent(ensemble->getComponent(componentid));
 		double r[3];
-		xmlconfig.getNodeValueReduced("coordinate/x", r[0]);
-		xmlconfig.getNodeValueReduced("coordinate/y", r[1]);
-		xmlconfig.getNodeValueReduced("coordinate/z", r[2]);
+		Coordinate3D sitePosition(xmlconfig, "coordinate");
+		sitePosition.get(r);
 		molecule.setr(0, r[0]);
 		molecule.setr(1, r[1]);
 		molecule.setr(2, r[2]);
