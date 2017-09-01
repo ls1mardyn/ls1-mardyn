@@ -66,7 +66,7 @@ int get_mpi_info(char *info_str) {
 #if defined(MVAPICH2)
 	sprintf(info_str, "MVAPICH2 (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
 #elif defined(OPEN_MPI)
-	sprintf(info_str, "Open MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+	sprintf(info_str, "Open MPI %d.%d.%d (MPI %d.%d)", OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION, MPI_VERSION, MPI_SUBVERSION);
 #elif defined(CRAY_MPICH_VERSION)
 	sprintf(info_str, "Cray MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
 #elif defined(I_MPI_VERSION)
