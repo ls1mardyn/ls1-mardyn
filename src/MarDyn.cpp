@@ -125,6 +125,9 @@ int main(int argc, char** argv) {
 	global_log->set_mpi_output_root(0);
 	//global_log->set_mpi_output_all();
 #endif
+#ifndef NDEBUG
+	global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << endl;
+#endif
 
 	optparse::OptionParser op;
 	initOptions(&op);
@@ -147,7 +150,6 @@ int main(int argc, char** argv) {
 		registerSigsegvHandler();  // from SigsegvHandler.h
 	}
 #endif
-
 	program_build_info(global_log->info());
 	program_execution_info(argc, argv, global_log->info());
 
