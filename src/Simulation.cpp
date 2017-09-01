@@ -186,6 +186,8 @@ Simulation::~Simulation() {
 	_FMM = nullptr;
 	delete _memoryProfiler;
 	_memoryProfiler = nullptr;
+	/* destruct output plugins and remove them from the output plugin list */
+	_outputPlugins.remove_if([](OutputBase *pluginPtr) {delete pluginPtr; return true;} );
 }
 
 void Simulation::exit(int exitcode) {
@@ -1411,11 +1413,8 @@ void Simulation::simulate() {
         _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, _finalCheckpointBinary);
     }
 	// finish output
-	std::list<OutputBase*>::iterator outputIter;
-	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
-		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
-		delete (*outputIter);
-		*outputIter = nullptr;
+	for (auto outputPlugin : _outputPlugins) {
+		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
 	ioTimer->stop();
 	global_simulation->timers()->printTimers();
