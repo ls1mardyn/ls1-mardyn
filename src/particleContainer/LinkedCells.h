@@ -196,9 +196,6 @@ public:
 #endif
 
 
-	friend class StatisticsWriter;
-
-
 	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!
 	//! each spatial position within the bounding box of the linked cells
