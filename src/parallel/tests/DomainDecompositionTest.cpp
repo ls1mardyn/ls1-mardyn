@@ -22,7 +22,7 @@ DomainDecompositionTest::~DomainDecompositionTest() {
 }
 
 void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
-	// original pointer will be deleted by tearDown()
+	// original pointer will be deleted by tearDown() (delete global_simulation)
 	_domainDecomposition = new DomainDecomposition();
 
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
@@ -55,7 +55,7 @@ void DomainDecompositionTest::testNoDuplicatedParticles() {
 }
 
 void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename, double cutoff) {
-	// original pointer will be deleted by tearDown()
+	// original pointer will be deleted by tearDown() (delete global_simulation)
 	_domainDecomposition = new DomainDecomposition();
 
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);

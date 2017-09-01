@@ -33,7 +33,8 @@ utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
 void utils::TestWithSimulationSetup::setUp() {
 	_rank = 0;
 	Simulation* sim = new Simulation();
-	sim->initialize(); // this assigns global_simulation.
+	//deleted the next line, as it is already done in the constructor.
+	//sim->initialize(); // this assigns global_simulation.
 	#ifdef ENABLE_MPI
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_rank) );
 	#endif

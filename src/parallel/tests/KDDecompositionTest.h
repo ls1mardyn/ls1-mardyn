@@ -17,7 +17,9 @@ class KDDecompositionTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(KDDecompositionTest);
 	TEST_METHOD(testNoDuplicatedParticles);
+	TEST_METHOD(testNoDuplicatedParticles2);
 	TEST_METHOD(testNoLostParticles);
+	TEST_METHOD(testNoLostParticles2);
 	TEST_METHOD(testCompleteTreeInfo);
 	TEST_METHOD(testRebalancingDeadlocks);
 	TEST_METHOD(testbalanceAndExchange);
@@ -30,8 +32,10 @@ public:
 	virtual ~KDDecompositionTest();
 
 	void testNoDuplicatedParticles();
+	void testNoDuplicatedParticles2();
 
 	void testNoLostParticles();
+	void testNoLostParticles2();
 
 	void testCompleteTreeInfo();
 

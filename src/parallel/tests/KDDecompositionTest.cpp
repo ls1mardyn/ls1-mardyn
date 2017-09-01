@@ -59,10 +59,13 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(const char * filenam
 	ASSERT_EQUAL(numMols, newNumMols);
 
 	delete _domainDecomposition;
+	delete container;
 }
 
 void KDDecompositionTest::testNoDuplicatedParticles() {
 	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15_DD.inp", 5.0, 58.5389);
+}
+void KDDecompositionTest::testNoDuplicatedParticles2() {
 	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15_DD_2.inp", 5.0, 58.5);
 }
 
@@ -150,12 +153,16 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename, dou
 	}
 
 	delete _domainDecomposition;
+	delete container;
 }
 
 void KDDecompositionTest::testNoLostParticles() {
 	testNoLostParticlesFilename("H20_NaBr_0.01_T_293.15_DD.inp", 3.0, 58.5389);
+}
+void KDDecompositionTest::testNoLostParticles2() {
 	testNoLostParticlesFilename("H20_NaBr_0.01_T_293.15_DD_2.inp", 3.0,  58.5);
 }
+
 
 void KDDecompositionTest::testCompleteTreeInfo() {
 
@@ -180,8 +187,11 @@ void KDDecompositionTest::testCompleteTreeInfo() {
 		result.buildKDTree();
 
 		KDDecomposition decomposition(1.0, _domain, 1.0, 10);
+		KDNode * toCleanUp = root;
 		decomposition.completeTreeInfo(root, ownArea);
+		delete toCleanUp;
 		ASSERT_TRUE(result.equals(*root));
+		delete root;
 
 	} else {
 		Log::global_log->warning() << "KDDecompositionTest::testCompleteTreeInfo():"
@@ -307,7 +317,7 @@ void KDDecompositionTest::testbalanceAndExchange() {
 
 	kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
 	_domainDecomposition = kdd;
-	global_simulation->setDomainDecomposition(kdd);
+
 	_rank = kdd->_rank;
 
 
@@ -328,7 +338,8 @@ void KDDecompositionTest::testbalanceAndExchange() {
 		kdd->balanceAndExchange(1.0, true, moleculeContainer, _domain);
 		moleculeContainer->updateMoleculeCaches();
 	}
-
+	delete moleculeContainer;
+	delete kdd;
 
 	// SHUTDOWN
 
