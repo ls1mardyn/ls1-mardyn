@@ -9,9 +9,11 @@
 #define VTKMOLECULEWRITERTEST_H_
 
 #include "utils/Testing.h"
+#include "utils/TestWithSimulationSetup.h"
 #include "io/vtk/VTKMoleculeWriter.h"
 
-class VTKMoleculeWriterTest : public utils::Test {
+//we need global_simulation for WR mode LinkedCells constructor, as ParticleCell instantiates a Molecule...
+class VTKMoleculeWriterTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(VTKMoleculeWriterTest);
 	TEST_METHOD(testDoOutput);
