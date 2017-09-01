@@ -10,6 +10,7 @@
 #include "utils/Random.h"
 #include "utils/xmlfileUnits.h"
 
+#include <climits>
 #include <cmath>
 #include <string>
 #include <map>
@@ -38,6 +39,8 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	double bBoxMin[3];
 	double bBoxMax[3];
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
+	//! @todo find a better way to get distinct molecule IDs per process and ensure also no double insertions at one place
+	uint64_t IDoffset = (uint64_t) UINT_MAX * (uint64_t) domainDecomp->getRank();
 	
 	for(auto generator : _generators) {
 		Molecule molecule;
@@ -57,7 +60,7 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 			}
 			Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
 			molecule.setq(q);
-			molecule.setid(numMolecules);
+			molecule.setid(IDoffset + numMolecules);
 			bool inserted = particleContainer->addParticle(molecule);
 			if(inserted){
 				numMolecules++;
