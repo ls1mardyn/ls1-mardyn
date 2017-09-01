@@ -30,6 +30,12 @@ void Generator::init(Lattice& lattice, Basis& basis, double origin[3], Object *o
     init();
 }
 
+void Generator::setBoudingBox(double bBoxMin[3], double bBoxMax[3]) {
+	Object *bBox = new Cuboid(bBoxMin, bBoxMax);
+	Object *boundedObject = new ObjectIntersection(bBox, _object);
+	_object =  boundedObject;
+}
+
 void Generator::init() {
     _object->getBboxMin(_bBoxMin);
     _object->getBboxMax(_bBoxMax);
@@ -110,7 +116,6 @@ void Generator::readXML(XMLfileUnits& xmlconfig) {
 		_object->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
-	init(_lattice, _basis, _origin, _object);
 }
 
 

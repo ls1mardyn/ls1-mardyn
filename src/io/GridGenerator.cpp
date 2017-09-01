@@ -5,6 +5,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
+#include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
 #include "utils/Random.h"
 #include "utils/xmlfileUnits.h"
@@ -34,9 +35,14 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 
 	Ensemble* ensemble = _simulation.getEnsemble();
 	Random rng;
+	double bBoxMin[3];
+	double bBoxMax[3];
+	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
 	
 	for(auto generator : _generators) {
 		Molecule molecule;
+		generator->setBoudingBox(bBoxMin, bBoxMax);
+		generator->init();
 		while(generator->getMolecule(&molecule) > 0) {
 			double v_abs = sqrt(/*kB=1*/ ensemble->T() / molecule.component()->m());
 			double phi, theta;
