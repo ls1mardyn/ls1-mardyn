@@ -72,7 +72,7 @@ doxygen Doxyfile
 ```
 It includes information about the following topics
 * \ref ls1MarDynInputFiles Mardyn Input Files
-* \ref unitTests Unit tests:
+* \ref unitTests Unit tests
 * \ref visualisationMegaMol Visualisation with MegaMol
 * \ref visualisationParaview Visualisation with Paraview
 as well as the documentation of the source code.
