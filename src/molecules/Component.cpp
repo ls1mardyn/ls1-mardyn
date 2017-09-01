@@ -94,7 +94,7 @@ void Component::addLJcenter(double x, double y, double z,
 		shift6 = 24.0 * eps * (sigperrc6 - sigperrc6 * sigperrc6);
 	}
 
-	LJcenter ljsite(x, y, z, m, eps, sigma, rc, shift6);
+	LJcenter ljsite(x, y, z, m, eps, sigma, shift6);
 	_ljcenters.push_back(ljsite);
 	updateMassInertia(ljsite);
 }
