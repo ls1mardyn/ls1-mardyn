@@ -17,8 +17,8 @@
 
 /** Enum with the 7 Bravais lattice types. */
 enum LatticeSystem {
-    unknownSystem = 0,
-    triclinic,
+    unknownSystem = -1,
+    triclinic = 0,
     monoclinic,
     orthorombic,
     tetragonal,
@@ -30,8 +30,8 @@ typedef enum LatticeSystem LatticeSystem;
 
 /** Enum with the four lattice centering types. */
 enum LatticeCentering {
-    unknownCentering = 0,
-    primitive,
+    unknownCentering = -1,
+    primitive = 0,
     body,
     face,
     base_A,
