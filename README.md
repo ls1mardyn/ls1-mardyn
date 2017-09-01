@@ -64,6 +64,19 @@ cd examples/EOX/305K_liq
 mpirun -np 2 ../../../src/MarDyn config.xml  --steps 10
 ```
 
+Additional resources
+====================
+ls1-MarDyn is documented using doxygen. To build the documentation run
+```sh
+doxygen Doxyfile
+```
+It includes information about the following topics
+* \ref ls1MarDynInputFiles Mardyn Input Files
+* \ref unitTests Unit tests:
+* \ref visualisationMegaMol Visualisation with MegaMol
+* \ref visualisationParaview Visualisation with Paraview
+as well as the documentation of the source code.
+
 Contact
 =======
 

@@ -1,0 +1,5 @@
+/** \page visualisationMegaMol Visualisation with MegaMol
+
+ls1-MarDyn provides the MmpldWriter which can write out .mmpld files used by MegaMol.
+
+*/

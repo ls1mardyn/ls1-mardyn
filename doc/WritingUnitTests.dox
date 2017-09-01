@@ -1,34 +1,34 @@
+/** \page unitTests Unit Tests
 
-/** \page "Writing Unit Tests"
-
-!!! Organisation of the tests
+Organisation of Unit Tests
+==========================
 
 All tests are organized in directories called \b tests. A test-directory contains
 the tests for the code contained in its parent directory. It should be possible
 to derive the name of the source file under test from the classname of the testcase.
 
-!!! Writing unit tests
+Writing unit tests
+==================
 
-Here I explain the testcase tests/CommonTest as a simple example, to demonstrate
-how to write testcases within Mardyn.
+In the following the creation of Unit Tests in ls1-MarDyn shall be demonstrated with
+the testcase tests/CommonTest as a simple example.
 
-<b>Note: Although cppunit is the testing framework used at the moment, DO NOT USE
-ANY CPPUNIT-FUNCTIONALITY DIRECTLY!!!
+\note Although cppunit is the testing framework used at the moment, DO NOT USE
+ANY CPPUNIT-FUNCTIONALITY DIRECTLY. Therefore and in order to keep the underlying
+testing framework exchangable, all framework-dependend things should be encapsulated.
 
-In order to keep the underlying testing framework exchangable, all framework-dependend
-things should be encapsulated.</b>
-
-!! Writing the header
+Writing the test header
+-----------------------
 
 To create a new testcase, apply the following steps to your new header file:
 - Create a new testclass, which inherits from utils::Test
-- Include the header \"utils/Testing.h\"
+- Include the header utils/Testing.h
 - Write the declarations of the test methods. It is recommended that you create
   one test method for each method which you are going to test. The name
   of test methods should start with \"test"\. Thus, you end up with the following
   code:
 
-  \code
+  \code{.cpp}
 #include "utils/Testing.h"
 
 class CommonTest : public utils::Test {
@@ -71,7 +71,6 @@ class CommonTest : public utils::Test {
 	// end suite declaration
 	TEST_SUITE_END();
 
-
 public:
 	CommonTest();
 
@@ -83,7 +82,8 @@ public:
 };
 \endcode
 
-!! Writing the implementation file
+Writing the Unit Test Implementation
+------------------------------------
 
 - Next implement the .cpp-file. Include the header of the test class as well as
   the header of the class being tested.
@@ -91,7 +91,7 @@ public:
 - <b>Directly below the includes, call the macro \"TEST_SUITE_REGISTRATION(test name)\",
 with the name of the test class as argument! </b>
 
-\code
+\code{.cpp}
 #include "CommonTest.h"
 #include "Common.h"
 
@@ -111,7 +111,7 @@ are
 @see utils/Testing.h
 
 The implementation of a test method may look like
-\code
+\code{.cpp}
 void CommonTest::testGetTimeString() {
 	std::string time = gettimestring();
 	ASSERT_EQUAL((size_t)13, time.size());
@@ -119,7 +119,8 @@ void CommonTest::testGetTimeString() {
 }
 \endcode
 
-!!! A few general thoughts about tests
+General Thoughts about Tests
+----------------------------
 
 - Think about testability, when you write code.
   Try to keep your methods small and simple. If your method is just too long or
