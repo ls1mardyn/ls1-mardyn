@@ -158,8 +158,8 @@ Simulation::~Simulation() {
 	_ensemble = nullptr;
 	delete _pressureGradient;
 	_pressureGradient = nullptr;
-	delete _rdf;
-	_rdf = nullptr;
+	//delete _rdf; // rdf is a pointer to an outputplugin and thus already deleted!
+	//_rdf = nullptr;
 	delete _moleculeContainer;
 	_moleculeContainer = nullptr;
 	delete _particlePairsHandler;
@@ -1415,6 +1415,7 @@ void Simulation::simulate() {
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 		delete (*outputIter);
+		*outputIter = nullptr;
 	}
 	ioTimer->stop();
 	global_simulation->timers()->printTimers();
