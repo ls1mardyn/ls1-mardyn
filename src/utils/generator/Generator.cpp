@@ -22,13 +22,16 @@
 void Generator::init(Lattice& lattice, Basis& basis, double origin[3], Object *object) {
     _lattice = lattice;
     _basis = basis;
-    _object = object;
-
-    object->getBboxMin(_bBoxMin);
-    object->getBboxMax(_bBoxMax);
     for(int d = 0; d < 3; d++) {
         _origin[d] = origin[d];
     }
+    _object = object;
+    init();
+}
+
+void Generator::init() {
+    _object->getBboxMin(_bBoxMin);
+    _object->getBboxMax(_bBoxMax);
     _baseCount = 0;
 
     /* transpose (a,b,c) */

@@ -33,6 +33,9 @@ public:
 		*/
 	void init(Lattice& lattice, Basis& basis, double origin[3], Object *object);
 
+	/** Initialize the generator with current internal state */
+	void init();
+
 	/** Get a single molecule
 	 * By subsequent calls all molecules will be returned, one by one.
 	 * @param[out] molecule  Pointer to molecule data structure where to store the molecule data (coordinate and component id)
