@@ -155,21 +155,37 @@ Simulation::Simulation()
 
 Simulation::~Simulation() {
 	delete _ensemble;
+	_ensemble = nullptr;
 	delete _pressureGradient;
+	_pressureGradient = nullptr;
 	delete _rdf;
+	_rdf = nullptr;
 	delete _moleculeContainer;
+	_moleculeContainer = nullptr;
 	delete _particlePairsHandler;
+	_particlePairsHandler = nullptr;
 	delete _cellProcessor;
+	_cellProcessor = nullptr;
 	delete _domainDecomposition;
+	_domainDecomposition = nullptr;
 	delete _integrator;
+	_integrator = nullptr;
 	delete _domain;
+	_domain = nullptr;
 	delete _inputReader;
+	_inputReader = nullptr;
 	delete _wall;
+	_wall = nullptr;
 	delete _mirror;
+	_mirror = nullptr;
 	delete _longRangeCorrection;
+	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
+	_temperatureControl = nullptr;
 	delete _FMM;
+	_FMM = nullptr;
 	delete _memoryProfiler;
+	_memoryProfiler = nullptr;
 }
 
 void Simulation::exit(int exitcode) {

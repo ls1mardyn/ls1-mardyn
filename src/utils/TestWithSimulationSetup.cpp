@@ -27,17 +27,6 @@ utils::TestWithSimulationSetup::TestWithSimulationSetup()
 
 
 utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
-	if (_domain != nullptr) {
-		test_log->warning() << "TestCase did not free its resources!" << std::endl;
-		delete _domain;
-		_domain = nullptr;
-	}
-
-	if (_domainDecomposition != nullptr) {
-		test_log->warning() << "TestCase did not free its resources!" << std::endl;
-		delete _domainDecomposition;
-		_domainDecomposition = nullptr;
-	}
 }
 
 
@@ -56,17 +45,8 @@ void utils::TestWithSimulationSetup::setUp() {
 void utils::TestWithSimulationSetup::tearDown() {
 	delete global_simulation;
 	global_simulation = nullptr;
-	if (_domain != nullptr) {
-		test_log->warning() << "TestCase did not free its resources!" << std::endl;
-		delete _domain;
-		_domain = nullptr;
-	}
-
-	if (_domainDecomposition != nullptr) {
-		test_log->warning() << "TestCase did not free its resources!" << std::endl;
-		delete _domainDecomposition;
-		_domainDecomposition = nullptr;
-	}
+	_domain = nullptr;
+	_domainDecomposition = nullptr;
 }
 
 
