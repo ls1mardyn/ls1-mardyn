@@ -1,11 +1,10 @@
 #ifndef SRC_IO_GRIDGENERATOR_H_
 #define SRC_IO_GRIDGENERATOR_H_
 
+#include <list>
+
 #include "io/InputBase.h"
 #include "utils/generator/Generator.h"
-#include "utils/generator/Basis.h"
-#include "utils/generator/Lattice.h"
-#include "utils/generator/Objects.h"
 
 
 class GridGenerator : public InputBase {
@@ -23,11 +22,8 @@ public:
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
 private:
-	Basis _basis;
-	Lattice _lattice;
-	double _origin[3];
-	Generator _generator;
-	Object *_object;
+
+	std::list<Generator*> _generators;
 };
 
 #endif  // SRC_IO_GRIDGENERATOR_H_

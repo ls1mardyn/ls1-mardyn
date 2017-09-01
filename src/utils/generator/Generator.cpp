@@ -82,6 +82,40 @@ void Generator::init() {
     _lattice.setDimsMax(enddims);
 }
 
+void Generator::readXML(XMLfileUnits& xmlconfig) {
+	using std::endl;
+	if(xmlconfig.changecurrentnode("lattice")) {
+		_lattice.readXML(xmlconfig);
+		xmlconfig.changecurrentnode("..");
+	}
+	if(xmlconfig.changecurrentnode("basis")) {
+		_basis.readXML(xmlconfig);
+		xmlconfig.changecurrentnode("..");
+	}
+	if(xmlconfig.changecurrentnode("latticeOrigin")) {
+		xmlconfig.getNodeValueReduced("x", _origin[0]);
+		xmlconfig.getNodeValueReduced("y", _origin[1]);
+		xmlconfig.getNodeValueReduced("z", _origin[2]);
+		global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << endl;
+		xmlconfig.changecurrentnode("..");
+	}
+	if(xmlconfig.changecurrentnode("object")) {
+		std::string object_type;
+		xmlconfig.getNodeValue("@type", object_type);
+		ObjectFactory object_factory;
+		global_log->debug() << "Obj name: " << object_type << endl;
+		_object = object_factory.create(object_type);
+		if(_object == nullptr) {
+			global_log->debug() << "Unknown object type: " << object_type << endl;
+		}
+		global_log->error() << "Created object of type: " << _object->getName() << endl;
+		_object->readXML(xmlconfig);
+		xmlconfig.changecurrentnode("..");
+	}
+	init(_lattice, _basis, _origin, _object);
+}
+
+
 int Generator::getMolecule(Molecule* molecule) {
 	for(;;) {
 		if(_baseCount == 0) {

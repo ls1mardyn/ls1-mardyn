@@ -13,6 +13,8 @@
 
 #include "Basis.h"
 #include "Lattice.h"
+#include "Objects.h"
+#include "ObjectFactory.h"
 #include "molecules/Molecule.h"
 
 class Object;
@@ -23,7 +25,7 @@ public:
 	Generator(){}
 	~Generator(){}
 
-	void readXML(XMLfileUnits& xmlconfig){}
+	void readXML(XMLfileUnits& xmlconfig);
 
 	/** Initialize the generator
 		* @param[in]  lattice  The underlying point lattice to be used
