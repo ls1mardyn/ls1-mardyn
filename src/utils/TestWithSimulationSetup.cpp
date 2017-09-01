@@ -53,8 +53,9 @@ void utils::TestWithSimulationSetup::setUp() {
 
 void utils::TestWithSimulationSetup::tearDown() {
 	delete global_simulation;
-	_domainDecomposition = NULL;
-	_domain = NULL;
+	global_simulation = nullptr;
+	_domainDecomposition = nullptr;
+	_domain = nullptr;
 }
 
 
