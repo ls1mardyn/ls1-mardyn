@@ -111,6 +111,9 @@ public:
 	/** calculate and return the square force */
 	double F2() const {return _F[0]*_F[0]+_F[1]*_F[1]+_F[2]*_F[2]; }
 
+	/** calculate and return the square torque */
+	double M2() const {return _M[0]*_M[0]+_M[1]*_M[1]+_M[2]*_M[2]; }
+
 	/** return the translational energy of the molecule */
 	double U_trans() const { return 0.5 * _m * v2(); }
 	/** return the rotational energy of the molecule */
