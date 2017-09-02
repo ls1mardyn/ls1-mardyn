@@ -70,9 +70,6 @@ public:
 
 	inline virtual void move(int d, double dr) = 0;
 
-	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
-	// method returns the total mass of a particle
-	virtual double gMass()= 0;
 	//by Stefan Becker
 	virtual double getI(unsigned short d) const = 0;
 

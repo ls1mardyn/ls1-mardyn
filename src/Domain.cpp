@@ -1488,7 +1488,7 @@ void Domain::determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
       {
-	double tmass = tm->gMass();
+	double tmass = tm->mass();
 	localMass += tmass;
 	for(unsigned d = 0; d < 3; d=d+2){ // counting d=d+2 causes the value d==1 (i.e. y-direction) to be skipped, this is performed by the method determineYShift()
 	  localBalance[d] += tm->r(d) * tmass;
@@ -1526,7 +1526,7 @@ void Domain::determineYShift( DomainDecompBase* domainDecomp, ParticleContainer*
      cid = tm->componentid();
      if(_componentForYShift[cid])
      {
-	double tmass = tm->gMass();
+	double tmass = tm->mass();
 
 	localMass += tmass;
 	localBalance += (tm->r(1) - _globalLength[1]*floor(2.0* tm->r(1)/ _globalLength[1]))*tmass; // PBC
@@ -1572,7 +1572,7 @@ void Domain::noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCon
    for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
 
-	double tmass = tm->gMass();
+	double tmass = tm->mass();
 
 	localMass += tmass;
 	localBalance += (tm->r(1) - _globalLength[1]*floor(2.0* tm->r(1)/ _globalLength[1]))*tmass; // PBC
@@ -1627,7 +1627,7 @@ void Domain::determineShift( DomainDecompBase* domainDecomp, ParticleContainer* 
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
       {
-        double tmass = tm->gMass();
+        double tmass = tm->mass();
         localMass += tmass;
         for(unsigned d = 0; d < 3; d++){
           localBalance[d] += tm->r(d) * tmass;

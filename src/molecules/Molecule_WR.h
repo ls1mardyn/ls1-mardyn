@@ -124,9 +124,6 @@ public:
 		setr(d, r(d) + dr);
 	}
 
-	double gMass() {
-		return mass();
-	}
 	double getI(unsigned short d) const {
 		mardyn_assert(false);
 		// TODO: check values for single-centered molecules

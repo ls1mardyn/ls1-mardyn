@@ -1314,7 +1314,7 @@ void Simulation::simulate() {
 							numPartThermo++;
 							int thermostat = _domain->getThermostat(tM->componentid());
 							tTarget = _domain->getTargetTemperature(thermostat);
-							stdDevTrans = sqrt(tTarget/tM->gMass());
+							stdDevTrans = sqrt(tTarget/tM->mass());
 							for(unsigned short d = 0; d < 3; d++) {
 								stdDevRot = sqrt(tTarget*tM->getI(d));
 								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
@@ -1329,7 +1329,7 @@ void Simulation::simulate() {
 						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
-							stdDevTrans = sqrt(tTarget/tM->gMass());
+							stdDevTrans = sqrt(tTarget/tM->mass());
 							for(unsigned short d = 0; d < 3; d++) {
 								stdDevRot = sqrt(tTarget*tM->getI(d));
 								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
