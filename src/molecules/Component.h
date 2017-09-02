@@ -102,7 +102,7 @@ public:
 	double E() const { return _E_trans + _E_rot; }
 	double T() const { return _T; }
 	void setName(std::string name) { _name = name; }
-	std::string& getName() { return _name; }
+	std::string getName() const { return _name; }
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	//! needed by the MegaMol output format
