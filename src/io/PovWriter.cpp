@@ -16,6 +16,23 @@ using Log::global_log;
 using namespace std;
 
 
+
+static void writePOVobjs(Component const &component, std::ostream& ostrm, string para) {
+	if (component.numLJcenters() <= 0) return;
+	if (component.numLJcenters() == 1) {
+		LJcenter LJsite = component.ljcenter(0);
+		ostrm << "sphere {<" << LJsite.rx() << "," << LJsite.ry() << "," << LJsite.rz() << ">," << .5 * LJsite.sigma() << " " << para << "}";
+	}
+	else {
+		ostrm << "blob { threshold 0.01 ";
+		for (auto LJsite : component.ljcenters()) {
+			ostrm << "sphere {<" << LJsite.rx() << "," << LJsite.ry() << "," << LJsite.rz() << ">," << .5 * LJsite.sigma() << ", strength 1 } ";
+		}
+		ostrm << para << "}";
+	}
+}
+
+
 void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
@@ -83,7 +100,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 			osstrm << " pigment {color rgb <" << (i + 1) % 2 << "," << (i + 1) / 2 % 2 << "," << (i + 1) / 4 % 2 << ">}";
 			osstrm << " finish{ambient 0.5 diffuse 0.4 phong 0.3 phong_size 3}";
 			ostrm << "#declare T" << i << " = ";
-			dcomponents->at(i).writePOVobjs(ostrm, osstrm.str());
+			writePOVobjs(dcomponents->at(i), ostrm, osstrm.str());
 			ostrm << endl;
 		}
 		ostrm << endl;

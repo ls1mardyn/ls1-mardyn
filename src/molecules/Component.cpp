@@ -204,20 +204,6 @@ void Component::write(std::ostream& ostrm) const {
 	ostrm << _Ipa[0] << " " << _Ipa[1] << " " << _Ipa[2] << endl;
 }
 
-void Component::writePOVobjs(std::ostream& ostrm, string para) const {
-	if (numLJcenters() <= 0) return;
-	if (numLJcenters() == 1) {
-		ostrm << "sphere {<" << _ljcenters.front().rx() << "," << _ljcenters.front().ry() << "," << _ljcenters.front().rz() << ">," << .5 * _ljcenters.front().sigma() << " " << para << "}";
-	}
-	else {
-		ostrm << "blob { threshold 0.01 ";
-		for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos)
-			ostrm << "sphere {<" << pos->rx() << "," << pos->ry() << "," << pos->rz() << ">," << .5 * pos->sigma() << ", strength 1 } ";
-		ostrm << para << "}";
-	}
-	ostrm << flush;
-}
-
 void Component::writeVIM(std::ostream& ostrm) {
 	for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos) {
 		ostrm << "~ " << this->_id + 1 << " LJ " << setw(7) << pos->rx() << ' '

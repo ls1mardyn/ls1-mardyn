@@ -89,9 +89,6 @@ public:
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
 
-	/** write POVray object definition to stream */
-	void writePOVobjs(std::ostream& ostrm, std::string para = std::string("pigment {color rgb<1,0,0>}")) const;
-
 	void writeVIM(std::ostream& ostrm);
 
 	void setE_trans(double E) { _E_trans = E; }
