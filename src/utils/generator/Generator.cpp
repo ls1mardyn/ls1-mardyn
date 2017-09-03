@@ -37,8 +37,10 @@ void Generator::setBoudingBox(double bBoxMin[3], double bBoxMax[3]) {
 }
 
 void Generator::init() {
-    _object->getBboxMin(_bBoxMin);
-    _object->getBboxMax(_bBoxMax);
+	double bBoxMin[3];
+	double bBoxMax[3];
+    _object->getBboxMin(bBoxMin);
+    _object->getBboxMax(bBoxMax);
     _baseCount = 0;
 
     /* transpose (a,b,c) */
@@ -48,14 +50,12 @@ void Generator::init() {
         A[i][0] = _lattice.a()[i];
         A[i][1] = _lattice.b()[i];
         A[i][2] = _lattice.c()[i];
-    }
-
-    /* As we use grid coordinates the origin has to be subtracted.
+    }    /* As we use grid coordinates the origin has to be subtracted.
      * This displacement will be added later on again in getMolecule. */
     double boxMin[3], boxMax[3];
     for(int d = 0; d < 3; d++) {
-        boxMin[d] = _bBoxMin[d] - _origin[d];
-        boxMax[d] = _bBoxMax[d] - _origin[d];
+        boxMin[d] = bBoxMin[d] - _origin[d];
+        boxMax[d] = bBoxMax[d] - _origin[d];
     }
     double x0[3];
     double x1[3];
@@ -136,7 +136,6 @@ int Generator::getMolecule(Molecule* molecule) {
 
 		_baseCount = (_baseCount + 1) % _basis.numMolecules();
 
-		/* _bBoxMin[0] != _bBoxMax[0] means "no bounding box mode */
 		if(_object->isInside(r)) {
 			for(int d = 0; d < 3; d++) {
 				molecule->setr(d, r[d]);

@@ -72,8 +72,6 @@ private:
 	Basis _basis;
 	double _origin[3];
 	Object *_object;
-	double _bBoxMin[3];
-	double _bBoxMax[3];
 
 	/* Internal values/counters used during the creation by getMolecule */
 	long _baseCount;
