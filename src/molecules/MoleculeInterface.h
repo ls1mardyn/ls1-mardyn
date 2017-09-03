@@ -8,11 +8,12 @@
 #ifndef SRC_MOLECULES_MOLECULEINTERFACE_H_
 #define SRC_MOLECULES_MOLECULEINTERFACE_H_
 
+#include <array>
+
 #include "molecules/Component.h"
 #include "molecules/Quaternion.h"
 #include "particleContainer/adapter/CellDataSoABase.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
-#include <array>
 
 class MoleculeInterface {
 public:
@@ -24,7 +25,7 @@ public:
 		return ret;
 	}
 
-	virtual ~MoleculeInterface();
+	virtual ~MoleculeInterface() {}
 	virtual unsigned long id() const = 0;
 	virtual void setid(unsigned long id) = 0;
 	virtual void setComponent(Component *component) = 0;
