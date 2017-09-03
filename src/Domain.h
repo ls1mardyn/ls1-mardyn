@@ -416,12 +416,6 @@ public:
 	
 	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
-	//! reset the surface tension
-	void resetGamma();
-
-	double getGamma(unsigned id);
-	//! Calcute the surface tension from the virial tensor
-	void calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition);
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
@@ -604,9 +598,6 @@ private:
 	//! modified Lorentz-Berthelot mixing rule parameters
 	//! @todo more explanation
 	std::vector<double> _mixcoeff;
-	
-	//! Surface tension component wise
-	std::map<unsigned,double> _Gamma;
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     bool _bDoExplosionHeuristics;

@@ -40,18 +40,56 @@ void GammaWriter::initOutput(ParticleContainer* /*particleContainer*/,
 void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 			     unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/ )
 {
-	domain->calculateGamma(particleContainer,domainDecomp);
+	calculateGamma(particleContainer,domainDecomp);
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
+		double globalLength[3];
+		for(int d = 0; d < 3; ++d) {
+			globalLength[d] = domain->getGlobalLength(d);
+		}
 		_gammaStream << simstep << "\t"; 
 		for (unsigned i=0; i<domain->getNumberOfComponents(); i++){
-			_gammaStream << domain->getGamma(i)/_writeFrequency << "\t";
+			_gammaStream << getGamma(i, globalLength)/_writeFrequency << "\t";
 		}
 		_gammaStream << endl;
-		domain->resetGamma();
+		resetGamma();
 	}
 }
 
 void GammaWriter::finishOutput(ParticleContainer* /*particleContainer*/,
 				DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
 	_gammaStream.close();
+}
+
+void GammaWriter::resetGamma(){
+	for (unsigned i=0; i<_simulation.getEnsemble()->getComponents()->size(); i++){
+		_Gamma[i]=0;
+	}
+}
+
+double GammaWriter::getGamma(unsigned id, double globalLength[3]){
+	return (_Gamma[id]/(2*globalLength[0]*globalLength[2]));
+}
+
+void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom){
+	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
+	std::vector<double> _localGamma(numComp);
+	for (unsigned i=0; i<numComp; i++){
+		_localGamma[i]=0;
+	}
+	for(ParticleIterator tempMol = particleContainer->iteratorBegin(); tempMol != particleContainer->iteratorEnd(); ++tempMol){
+		unsigned cid=tempMol->componentid();
+		_localGamma[cid]+=tempMol->Vi(1)-0.5*(tempMol->Vi(0)+tempMol->Vi(2));
+	}
+	domainDecom->collCommInit(numComp);
+	for (unsigned i=0; i<numComp; i++){
+		domainDecom->collCommAppendDouble(_localGamma[i]);
+	}
+	domainDecom->collCommAllreduceSum();
+	for (unsigned i=0; i<numComp; i++){
+		_localGamma[i] = domainDecom->collCommGetDouble();
+	}
+	domainDecom->collCommFinalize();
+	for (unsigned i=0; i<numComp; i++){
+		_Gamma[i]+=_localGamma[i];
+	}
 }

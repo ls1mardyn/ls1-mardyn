@@ -51,10 +51,15 @@ public:
 	static OutputBase* createInstance() { return new GammaWriter(); }
 
 private:
+	void calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom);
+	double getGamma(unsigned id, double globalLength[3]);
+	void resetGamma();
+
 	//! prefix for the names of all output files
 	std::ofstream _gammaStream;
 	unsigned long _writeFrequency;
 	std::string _outputPrefix;
+	std::map<unsigned,double> _Gamma; //!< Surface tension component wise
 };
 
 #endif  // SRC_IO_GAMMAWRITER_H_
