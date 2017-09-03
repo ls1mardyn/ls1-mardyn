@@ -158,8 +158,8 @@ public:
 
 	//! @brief return the length of the domain
 	//!
-	//! @param index dimension for which the length should be returned
-	double getGlobalLength(int index) const;
+	//! @param d  dimension for which the length should be returned
+	double getGlobalLength(int d) const { return _globalLength[d]; }
 
 	//! @brief set the length of the domain
 	//!
@@ -386,7 +386,6 @@ public:
 
 	void Nadd(unsigned cid, int N, int localN);
 
-	double getGlobalLength(int d) { return _globalLength[d]; }
 	double getGlobalVolume() const { return (_globalLength[0] *  _globalLength[1] *  _globalLength[2]); }
 
 	void thermostatOff() { this->_universalNVE = true; }
