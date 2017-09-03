@@ -9,14 +9,16 @@
 #include "utils/Logger.h"
 #include "utils/Random.h"
 #include "utils/xmlfileUnits.h"
+#include "molecules/MoleculeIdPool.h"
 
-#include <climits>
 #include <cmath>
-#include <string>
+#include <limits>
 #include <map>
+#include <string>
 
 using Log::global_log;
 using namespace std;
+
 
 void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query("subgenerator");
@@ -39,9 +41,8 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	double bBoxMin[3];
 	double bBoxMax[3];
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
-	//! @todo find a better way to get distinct molecule IDs per process and ensure also no double insertions at one place
-	uint64_t IDoffset = (uint64_t) UINT_MAX * (uint64_t) domainDecomp->getRank();
-	
+	MoleculeIdPool moleculeIdPool(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());
+
 	for(auto generator : _generators) {
 		Molecule molecule;
 		generator->setBoudingBox(bBoxMin, bBoxMax);
@@ -60,7 +61,7 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 			}
 			Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
 			molecule.setq(q);
-			molecule.setid(IDoffset + numMolecules);
+			molecule.setid(moleculeIdPool.getNewMoleculeId());
 			bool inserted = particleContainer->addParticle(molecule);
 			if(inserted){
 				numMolecules++;
