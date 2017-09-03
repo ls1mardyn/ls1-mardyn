@@ -164,7 +164,7 @@ public:
 	//! @brief set the length of the domain
 	//!
 	//! @param index dimension for which the length should be set
-	//! @param index value which should be set
+	//! @param length value which should be set
 	void setGlobalLength(int index, double length);
 
 	//! @brief get the global temperature for the whole system (i.e. thermostat ID 0)
