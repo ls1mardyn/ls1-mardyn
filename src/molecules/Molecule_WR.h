@@ -40,6 +40,7 @@ public:
 		_v[2] = vz;
 		_id = id;
 		_soa = nullptr;
+		_soa_index = static_cast<size_t>(-1);
 
 		if(component != nullptr) {
 			_component = component;
