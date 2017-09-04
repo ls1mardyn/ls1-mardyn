@@ -311,12 +311,6 @@ public:
 	void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }
 
-	void profileSettings(unsigned long profileRecordingTimesteps, unsigned long profileOutputTimesteps, std::string profileOutputPrefix) {
-	   this->_doRecordProfile = true;
-	   this->_profileRecordingTimesteps = profileRecordingTimesteps;
-	   this->_profileOutputTimesteps = profileOutputTimesteps;
-	   this->_profileOutputPrefix = profileOutputPrefix;
-	}
 	void setSimulationTime(double curtime) { _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }
 	double getSimulationTime() { return _simulationTime; }
