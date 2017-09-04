@@ -18,16 +18,13 @@ void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
     global_log->info() << "GammaWriter: Output prefix: " << _outputPrefix << endl;
 }
 
-void GammaWriter::initOutput(ParticleContainer* /*particleContainer*/,
-			      DomainDecompBase* domainDecomp, Domain* /*domain*/){
-	 
-	// initialize result file
-	string resultfile(_outputPrefix+".gamma");
-	_gammaStream.precision(6);
-	time_t now;
-	time(&now);
-	if(domainDecomp->getRank()==0){
-		_gammaStream.open(resultfile.c_str());
+void GammaWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+	if(domainDecomp->getRank() == 0){
+		string resultfilename(_outputPrefix + ".gamma");
+		_gammaStream.open(resultfilename);
+		_gammaStream.precision(6);
+		time_t now;
+		time(&now);
 		_gammaStream << "# mardyn MD simulation starting at " << ctime(&now) << endl;
 		_gammaStream << "#\tgamma" << endl;
 	}
