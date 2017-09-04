@@ -17,7 +17,7 @@ class Domain;
 class XMLfileUnits;
 class GammaWriter : public OutputBase {
 public:
-	GammaWriter() {}
+	GammaWriter() : _gammaStream(), _writeFrequency(1), _outputPrefix("mardyn"), _Gamma() {}
 	~GammaWriter() {}
 
 	/** @brief Read in XML configuration for GammaWriter.

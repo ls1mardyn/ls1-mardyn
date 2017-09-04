@@ -11,13 +11,9 @@
 
 using namespace std;
 
-void GammaWriter::readXML(XMLfileUnits& xmlconfig)
-{
-    _writeFrequency = 1;
+void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
     global_log->info() << "GammaWriter: Write frequency: " << _writeFrequency << endl;
-
-    _outputPrefix = "gamma";
     xmlconfig.getNodeValue("outputprefix", _outputPrefix);
     global_log->info() << "GammaWriter: Output prefix: " << _outputPrefix << endl;
 }
