@@ -296,7 +296,7 @@ def doRun(directory, MardynExe):
         p.wait()
     for comparisonFilename in  comparisonFilenames:
         # possible switch/if statements if other comparison plugins require different output.
-        p = Popen(split("sed -i.bak /^#/d " + comparisonFilename))  # deletes lines starting with #. 
+        p = Popen(split("sed -i.bak '/^#/d; s/[[:blank:]]*$//; /^$/d' " + comparisonFilename))  # deletes lines starting with #. 
         # These are the lines containing timestamps, and have to be removed for proper comparison.
         p.wait()
     os.chdir('..')
