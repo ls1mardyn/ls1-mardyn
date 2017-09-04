@@ -90,11 +90,6 @@ Simulation::Simulation()
 	_maxMoleculeId(0),
 	_cutoffRadius(0.0),
 	_LJCutoffRadius(0.0),
-	_doRecordProfile(false),
-	_doRecordVirialProfile(false),
-	_profileRecordingTimesteps(7),
-	_profileOutputTimesteps(12500),
-	_profileOutputPrefix("out"),
 	_collectThermostatDirectedVelocity(100),
 	_thermostatType(VELSCALE_THERMOSTAT),
 	_nuAndersen(0.0),
@@ -144,7 +139,8 @@ Simulation::Simulation()
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.0),
-	_dFmaxThreshold(0.0)
+	_dFmaxThreshold(0.0),
+	_virialRequired(false)
 {
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
@@ -581,18 +577,19 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "FlopRateWriter") {
 			outputPlugin = new FlopRateWriter(_cutoffRadius, _LJCutoffRadius);
 		}
-		else if(pluginname == "DomainProfiles")
-		{
-			_doRecordProfile = true;
-			outputPlugin = nullptr;
+		else if(pluginname == "DomainProfiles") {
+			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
+			/** @todo This is ugly. Needed as the vectorized code does not support the virial ...*/
+			if(xmlconfig.getNodeValue_int("/mardyn/simulation/output/outputplugin[@name='DomainProfiles']/options/option[@keyword='profileVirial']", 0) > 0) {
+				_virialRequired = true;
+			}
 			_domain->readXML(xmlconfig);
 		}
 
 		if(nullptr != outputPlugin) {
 			outputPlugin->readXML(xmlconfig);
 			_outputPlugins.push_back(outputPlugin);
-		} else if (pluginname != "DomainProfiles"){  //!@todo remove this line once DomainProfiles is a proper OutputPlugin
-		// } else {  // and add this line
+		} else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
 	}
@@ -774,12 +771,11 @@ void Simulation::prepare_start() {
 	}
 	else*/
 #ifndef MARDYN_WR
-	if(this->_doRecordVirialProfile) {
+	if(_virialRequired) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	} else if (nullptr != getOutputPlugin("RDF")) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)"
-				<< endl;
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	} else {
 		global_log->info() << "Using vectorized cell processor." << endl;
@@ -1440,28 +1436,6 @@ void Simulation::output(unsigned long simstep) {
 		global_simulation->timers()->start(output->getPluginName());
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
 		global_simulation->timers()->stop(output->getPluginName());
-	}
-
-	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
-		_domain->recordProfile(_moleculeContainer, _doRecordVirialProfile);
-	}
-	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileOutputTimesteps)) {
-		_domain->collectProfile(_domainDecomposition, _doRecordVirialProfile);
-		if (mpi_rank == 0) {
-			ostringstream osstrm;
-			osstrm << _profileOutputPrefix << "." << fill_width('0', 9) << simstep;
-			//edited by Michaela Heier 
-			if(this->_domain->isCylindrical()){
-				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
-				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
-			}
-			else{
-			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
-			}
-			osstrm.str("");
-			osstrm.clear();
-		}
-		_domain->resetProfile(_doRecordVirialProfile);
 	}
 
 	

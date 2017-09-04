@@ -6,6 +6,7 @@
 #include "io/CavityWriter.h"
 #include "io/CheckpointWriter.h"
 #include "io/DecompWriter.h"
+#include "io/DensityProfileWriter.h"
 #include "io/EnergyLogWriter.h"
 /** @todo fix Interface missmatch */
 // #include "io/FlopRateWriter.h"
@@ -33,6 +34,7 @@ OutputPluginFactory::OutputPluginFactory() {
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(DecompWriter);
+	REGISTER_PLUGIN(DensityProfileWriter);
 	REGISTER_PLUGIN(EnergyLogWriter);
 /** @todo fix Interface missmatch */
 // 	REGISTER_PLUGIN(FlopRateWriter);

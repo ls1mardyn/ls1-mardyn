@@ -124,29 +124,6 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 		Simulation::exit(-1);
 	}
 
-	bool doRecordProfile = true;
-	bool doRecordVirialProfile = false;
-	unsigned profileRecordingTimesteps = 1;
-	unsigned profileOutputTimesteps = 10000;
-	std::string profileOutputPrefix = "profile";
-	unsigned long initStatistics = 0;
-	xmlconfig.getNodeValue("timesteps/init", initStatistics);
-	xmlconfig.getNodeValue("timesteps/recording", profileRecordingTimesteps);
-	xmlconfig.getNodeValue("timesteps/output", profileOutputTimesteps);
-	xmlconfig.getNodeValue("outputprefix", profileOutputPrefix);
-	bInputOk = true;
-	std::string strKeyword;
-	bInputOk = bInputOk && xmlconfig.getNodeValue("options/option@keyword", strKeyword);
-	if(true == bInputOk && "profileVirial" == strKeyword)
-		doRecordVirialProfile = true;
-
-	global_simulation->setProfileParameters( doRecordProfile,
-			doRecordVirialProfile,
-			profileRecordingTimesteps,
-			profileOutputTimesteps,
-			profileOutputPrefix,
-			initStatistics);
-
 	// recording components
 	{
 		int numComponents = 0;

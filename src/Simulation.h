@@ -326,22 +326,6 @@ public:
 		return &_timerProfiler;
 	}
 
-	void setProfileParameters(
-		bool doRecordProfile,
-		bool doRecordVirialProfile,
-		unsigned profileRecordingTimesteps,
-		unsigned profileOutputTimesteps,
-		std::string profileOutputPrefix,
-		unsigned long initStatistics)
-	{
-		_doRecordProfile = doRecordProfile;
-		_doRecordVirialProfile = doRecordVirialProfile;
-		_profileRecordingTimesteps = profileRecordingTimesteps;
-		_profileOutputTimesteps = profileOutputTimesteps;
-		_profileOutputPrefix = profileOutputPrefix;
-		_initStatistics = initStatistics;
-	}
-
 private:
 
 
@@ -357,28 +341,6 @@ private:
 
 	/** LJ cutoff (may be smaller than the RDF/electrostatics cutoff) */
 	double _LJCutoffRadius;
-
-	/** flag specifying whether planar interface profiles are recorded */
-	bool _doRecordProfile;
-	/** Interval between two evaluations of the profile.
-	 * This means that only 1 / _profileRecordingTimesteps of the
-	 * internally available data are actually used, so if precision is
-	 * a concern, set the value to 1. On the other hand, the program
-	 * may be accelerated somewhat by increasing the interval.
-	 */
-	bool _doRecordVirialProfile;
-	unsigned _profileRecordingTimesteps;
-	/** Aggregation interval for the profile data, i.e. if _profileRecordingTimesteps
-	 * is 100 and _profileOutputTimesteps is 20 000, this means that
-	 * the profiles found in the output are averages over 200 configurations.
-	 */
-	unsigned _profileOutputTimesteps;
-	/** Although the meaning of this should be obvious, it may be noted
-	 * that the time step and "rhpry" (density), "vzpry" (z-velocity),
-	 * and Tpry (kinetic energy) will be attached to the prefix for
-	 * the different profiles.
-     */
-	std::string _profileOutputPrefix;
 
 	/** A thermostat can be specified to account for the directed
 	 * motion, which means that only the undirected kinetic energy is
@@ -578,6 +540,8 @@ private:
 	/** Global energy log */
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
+
+	bool _virialRequired;
 };
 #endif /*SIMULATION_H_*/
 

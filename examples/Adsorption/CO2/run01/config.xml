@@ -88,6 +88,7 @@
       </features>
     </algorithm>
     <output>
+<!--
       <outputplugin name="CheckpointWriter">
         <type>binary</type>
         <writefrequency>100000</writefrequency>
@@ -103,26 +104,21 @@
         </writecontrol>
         <outputprefix>megamol</outputprefix>
       </outputplugin>
+-->
       <outputplugin name="DomainProfiles">
+        <outputprefix>profile</outputprefix>
+        <writefrequency>10</writefrequency>
+        <timesteps>
+          <init>0</init>
+          <recording>1</recording>
+        </timesteps>
         <units>
           <x>1</x>
           <y>200</y>
           <z>1</z>
         </units>
-        <timesteps>
-          <init>0</init>
-          <recording>1</recording>
-        </timesteps>
-      </outputplugin>
-    </output>
-    <output>
-      <outputplugin>
-        <timesteps>
-          <output>50000</output>
-        </timesteps>
-        <outputprefix>profile</outputprefix>
         <options>
-          <option keyword="profileVirial"/>
+          <option keyword="profileVirial">1</option>
         </options>
         <components>
           <component id="1"/>
