@@ -246,8 +246,17 @@ public:
 	 * @param u upper right back corner of cube (equality not allowed)
 	 * @return true if molecule is contained in the box, false otherwise
 	 */
-	bool inBox(const double l[3], const double u[3]) const
-	{bool in = true; for(int d=0; d < 3; ++d) {in &= (r(d) >= l[d] and r(d) < u[d]);} return in;}
+	bool inBox(const double l[3], const double u[3]) const {
+		bool in = true;
+		for (int d = 0; d < 3; ++d) {
+#ifdef __INTEL_COMPILER
+			#pragma float_control(precise, on)
+			#pragma fenv_access(on)
+#endif
+			in &= (r(d) >= l[d] and r(d) < u[d]);
+		}
+		return in;
+	}
 };
 
 /** @brief Calculate the distance between two sites of two molecules.
