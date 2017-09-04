@@ -698,8 +698,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 #endif
 
 	// read particle data (or generate particles, if a generator is chosen)
-	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
-			&_lmu, _domain, _domainDecomposition);
+	std::string phaseSpaceCreationTimerName("SIMULATION_IO_PHASESPACE_CREATION");
+	timers()->registerTimer(phaseSpaceCreationTimerName,  vector<string>{"SIMULATION_IO"}, new Timer());
+	timers()->getTimer(phaseSpaceCreationTimerName)->start();
+	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
+	timers()->getTimer(phaseSpaceCreationTimerName)->stop();
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
