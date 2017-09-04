@@ -18,12 +18,12 @@ ifeq ($(VECTORIZE_CODE),AVX2)
 CXXFLAGS_VECTORIZE = -march=core-avx2 -fma # march=... should enable -fma automatically, but we will ensure it.
 endif
 ifeq ($(VECTORIZE_CODE),KNC_MASK)
-CXXFLAGS_VECTORIZE = -mmic
-LDFLAGS_VECTORIZE = -mmic
+CXXFLAGS_VECTORIZE = -mmic -fp-model precise
+LDFLAGS_VECTORIZE = -mmic -fp-model precise
 endif
 ifeq ($(VECTORIZE_CODE),KNC_G_S)
-CXXFLAGS_VECTORIZE = -mmic -D__VCP_GATHER__
-LDFLAGS_VECTORIZE = -mmic
+CXXFLAGS_VECTORIZE = -mmic -D__VCP_GATHER__ -fp-model precise
+LDFLAGS_VECTORIZE = -mmic -fp-model precise
 endif
 ifeq ($(VECTORIZE_CODE),KNL_MASK)
 CXXFLAGS_VECTORIZE = -xMIC-AVX512
