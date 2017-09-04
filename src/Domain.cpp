@@ -81,8 +81,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 }
 
 void Domain::readXML(XMLfileUnits& xmlconfig) {
-	string originalpath = xmlconfig.getcurrentnodepath();
-
 	/* volume */
 	if ( xmlconfig.changecurrentnode( "volume" )) {
 		std::string type;
@@ -99,8 +97,8 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 		else {
 			global_log->error() << "Unsupported volume type " << type << endl;
 		}
+		xmlconfig.changecurrentnode("..");
 	}
-	xmlconfig.changecurrentnode(originalpath);
 
 	/* temperature */
 	bool bInputOk = true;
@@ -109,7 +107,6 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	if(true == bInputOk) {
 		setGlobalTemperature(temperature);
 		global_log->info() << "Temperature: " << temperature << endl;
-		xmlconfig.changecurrentnode(originalpath);
 	}
 
 	/* profiles */
@@ -118,15 +115,12 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/x", xun);
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/y", yun);
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/z", zun);
-	if(true == bInputOk)
-	{
+	if(true == bInputOk) {
 		this->setupProfile(xun, yun, zun);
 		global_log->info() << "Writing profiles with units: " << xun << ", " << yun << ", " << zun << endl;
 	}
-	else
-	{
-		global_log->error() << "Corrupted statements in path: output/outputplugin[@name='DomainProfiles']"
-				", program exit ..." << endl;
+	else {
+		global_log->error() << "Corrupted statements in path: output/outputplugin[@name='DomainProfiles'], program exit ..." << endl;
 		Simulation::exit(-1);
 	}
 
@@ -173,6 +167,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 				global_log->info() << "Considering component " << cid << " for profile recording." << endl;
 			}
 		}
+		xmlconfig.changecurrentnode(oldpath);
 		this->considerComponentInProfile(0);
 	}
 }
