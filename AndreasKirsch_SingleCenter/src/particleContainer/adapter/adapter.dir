@@ -1,9 +1,0 @@
-/**
-\dir
-@author Martin Buchholz
-
-Implementations of handler interfaces for datastructures should be placed here.
-Only the classes placed here should know something about the "outside world"
-(e.g. what methods are to be called to calculate forces between molecules)
-
-*/

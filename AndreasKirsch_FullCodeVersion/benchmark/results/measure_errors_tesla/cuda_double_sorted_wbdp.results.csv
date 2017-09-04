@@ -1,4 +1,0 @@
-timeSteps,moleculeCount,cutOffRadius,totalTime,numWarps,maxRegisterCount,warpBlockCellProcessor,sortCellsByComponent,hwCacheOnly,doubleMode,unpackedStorage,maxNumComponents,maxNumLJCenters,maxNumCharges,maxNumDipoles,CUDA_totalTime,CUDA_preTime,CUDA_postTime,CUDA_singleTime,CUDA_pairTime,CUDA_processingTime,name
-40,87808,1.000000e+01,1.849962e+02,16,63,1,1,1,1,0,2,3,0,1,6.874809e+02,2.630559e+01,5.844721e+01,3.754185e+01,5.651014e+02,6.027148e+02,cuda_double_sorted_wbdp_lj_80000_10
-40,50000,1.000000e+01,2.052206e+02,16,63,1,1,1,1,0,2,3,0,1,8.086419e+02,1.519391e+01,3.584650e+01,5.559267e+01,7.019254e+02,7.575881e+02,cuda_double_sorted_wbdp_lj3d1_50000_10
-40,50000,1.000000e+01,1.739828e+02,16,63,1,1,1,1,0,2,3,0,1,7.363996e+02,1.707072e+01,3.693887e+01,4.606390e+01,6.362427e+02,6.823767e+02,cuda_double_sorted_wbdp_lj3d1_lj2d1_50000_10
