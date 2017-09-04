@@ -167,9 +167,6 @@ public:
 	 * @param[in]  filename filename of the input file
 	 */
 	void readConfigFile(std::string filename);
-	void readConfigFile(const char* filename) {
-		readConfigFile(std::string(filename));
-	}
 
 	/** @brief process XML configuration file (*.xml)
 	 *
