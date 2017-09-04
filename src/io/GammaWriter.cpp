@@ -53,9 +53,9 @@ void GammaWriter::finishOutput(ParticleContainer* /*particleContainer*/,
 	_gammaStream.close();
 }
 
-void GammaWriter::resetGamma(){
-	for (unsigned i=0; i<_simulation.getEnsemble()->getComponents()->size(); i++){
-		_Gamma[i]=0;
+void GammaWriter::resetGamma() {
+	for(unsigned componentId = 0; componentId < _simulation.getEnsemble()->getComponents()->size(); ++componentId) {
+		_Gamma[componentId] = 0;
 	}
 }
 
