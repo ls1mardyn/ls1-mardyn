@@ -31,17 +31,17 @@ void GammaWriter::initOutput(ParticleContainer* particleContainer, DomainDecompB
 }
 
 void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-			     unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/ )
+	unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/ )
 {
-	calculateGamma(particleContainer,domainDecomp);
+	calculateGamma(particleContainer, domainDecomp);
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
 		double globalLength[3];
 		for(int d = 0; d < 3; ++d) {
 			globalLength[d] = domain->getGlobalLength(d);
 		}
-		_gammaStream << simstep << "\t"; 
-		for (unsigned i=0; i<domain->getNumberOfComponents(); i++){
-			_gammaStream << getGamma(i, globalLength)/_writeFrequency << "\t";
+		_gammaStream << simstep;
+		for(unsigned int componentId = 0; componentId < domain->getNumberOfComponents(); ++componentId){
+			_gammaStream << "\t" << getGamma(componentId, globalLength)/_writeFrequency;
 		}
 		_gammaStream << endl;
 		resetGamma();
