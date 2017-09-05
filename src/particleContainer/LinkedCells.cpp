@@ -145,7 +145,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	float rc = (_cutoffRadius / _cellsInCutoff);
 
 	for (int dim = 0; dim < 3; dim++) {
-		_boxWidthInNumCells[dim] = floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / rc * _haloWidthInNumCells[dim]);
+		_boxWidthInNumCells[dim] = floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / rc);
 
 		_cellsPerDimension[dim] = _boxWidthInNumCells[dim] + 2 * _haloWidthInNumCells[dim];
 
@@ -156,9 +156,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		}
 
 		numberOfCells *= _cellsPerDimension[dim];
-
-		//_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _boxWidthInNumCells[dim];
-		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / (_boxWidthInNumCells[dim]/_cellsInCutoff);
+		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _boxWidthInNumCells[dim];
 		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
 
 		_haloBoundingBoxMin[dim] = _boundingBoxMin[dim] - _haloLength[dim];
