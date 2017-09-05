@@ -17,6 +17,10 @@ Component::Component(unsigned int id) {
 	_rot_dof = 0;
 	_Ipa[0] = _Ipa[1] = _Ipa[2] = 0.;
 	_numMolecules = 0;
+	_T = 1.;
+	_E_trans=0.;
+	_lookUpID = 0;
+	_E_rot=0.;
 
 	_ljcenters = vector<LJcenter> ();
 	_charges = vector<Charge> ();
