@@ -133,7 +133,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
 		this->_boundingBoxMax[i] = bBoxMax[i];
 //		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff);
-		_haloWidthInNumCells[i] = 1;
+		_haloWidthInNumCells[i] = _cellsInCutoff;
 	}
 	global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
 			<< bBoxMin[1] << ", " << bBoxMax[1] << "]" << " x " << "[" << bBoxMin[2] << ", " << bBoxMax[2] << "]"
@@ -158,7 +158,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		numberOfCells *= _cellsPerDimension[dim];
 
 		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _boxWidthInNumCells[dim];
-		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim] * _cellsInCutoff; //TODO Halo blocks have always the size of one cutoff
+		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
 
 		_haloBoundingBoxMin[dim] = _boundingBoxMin[dim] - _haloLength[dim];
 		_haloBoundingBoxMax[dim] = _boundingBoxMax[dim] + _haloLength[dim];
@@ -753,8 +753,13 @@ void LinkedCells::initializeCells() {
 
 void LinkedCells::calculateNeighbourIndices() {
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
-	std::fill(_forwardNeighbourOffsets.begin(), _forwardNeighbourOffsets.end(), 0);
-	std::fill(_backwardNeighbourOffsets.begin(), _backwardNeighbourOffsets.end(), 0);
+
+	// 13 neighbors for _haloWidthInNumCells = 1 or 64 for =2
+	int nNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
+
+	// Resize offset vector to number of neighbors and fill with 0
+	_forwardNeighbourOffsets.resize(nNeighbours, 0);
+	_backwardNeighbourOffsets.resize(nNeighbours, 0);
 	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
 
 	_maxNeighbourOffset = 0;
@@ -766,7 +771,7 @@ void LinkedCells::calculateNeighbourIndices() {
 	for (int zIndex = -_haloWidthInNumCells[2];
 			zIndex <= _haloWidthInNumCells[2]; zIndex++) {
 		// The distance in one dimension is the width of a cell multiplied with the number
-		// of cells between the two cells (this is received by substracting one of the
+		// of cells between the two cells (this is received by subtracting one of the
 		// absolute difference of the cells, if this difference is not zero)
 		if (zIndex != 0) {
 			zDistanceSquare = pow((abs(zIndex) - 1) * _cellLength[2], 2);
@@ -783,8 +788,7 @@ void LinkedCells::calculateNeighbourIndices() {
 			for (int xIndex = -_haloWidthInNumCells[0];
 					xIndex <= _haloWidthInNumCells[0]; xIndex++) {
 				if (xIndex != 0) {
-					xDistanceSquare = pow((abs(xIndex) - 1) * _cellLength[0],
-							2);
+					xDistanceSquare = pow((abs(xIndex) - 1) * _cellLength[0], 2);
 				} else {
 					xDistanceSquare = 0;
 				}
@@ -793,14 +797,14 @@ void LinkedCells::calculateNeighbourIndices() {
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex,
 							zIndex);
 					if (offset > 0) {
-						_forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
+						_forwardNeighbourOffsets.at(forwardNeighbourIndex) = offset;
 						++forwardNeighbourIndex;
 						if (offset > _maxNeighbourOffset) {
 							_maxNeighbourOffset = offset;
 						}
 					}
 					if (offset < 0) {
-						_backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
+						_backwardNeighbourOffsets.at(backwardNeighbourIndex) = abs(offset);
 						++backwardNeighbourIndex;
 						if (abs(offset) > _minNeighbourOffset) {
 							_minNeighbourOffset = abs(offset);
@@ -811,8 +815,8 @@ void LinkedCells::calculateNeighbourIndices() {
 		}
 	}
 
-	mardyn_assert(forwardNeighbourIndex == 13);
-	mardyn_assert(backwardNeighbourIndex == 13);
+	mardyn_assert(forwardNeighbourIndex == nNeighbours);
+	mardyn_assert(backwardNeighbourIndex == nNeighbours);
 
 	global_log->info() << "Neighbour offsets are bounded by "
 			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
