@@ -30,7 +30,7 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(const char * filenam
 	_domain->setGlobalLength(0, domainLength);
 	_domain->setGlobalLength(1, domainLength);
 	_domain->setGlobalLength(2, domainLength);
-	kdd = new KDDecomposition(cutoff, _domain, 1, 4);
+	kdd = new KDDecomposition(cutoff, _domain, 3, 1, 4);
 	_domainDecomposition = kdd;
 	_rank = kdd->_rank;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
@@ -76,7 +76,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename, dou
 	_domain->setGlobalLength(0, domainLength);
 	_domain->setGlobalLength(1, domainLength);
 	_domain->setGlobalLength(2, domainLength);
-	kdd = new KDDecomposition(cutoff, _domain, 1, 4);
+	kdd = new KDDecomposition(cutoff, _domain, 3, 1, 4);
 	_domainDecomposition = kdd;
 	_rank = kdd->_rank;
 
@@ -186,7 +186,7 @@ void KDDecompositionTest::testCompleteTreeInfo() {
 		KDNode result(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll, 0);
 		result.buildKDTree();
 
-		KDDecomposition decomposition(1.0, _domain, 1.0, 10);
+		KDDecomposition decomposition(1.0, _domain, 1, 1.0, 10);
 		KDNode * toCleanUp = root;
 		decomposition.completeTreeInfo(root, ownArea);
 		delete toCleanUp;
@@ -212,7 +212,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		_domain->setGlobalLength(0, boxL);
 		_domain->setGlobalLength(1, boxL);
 		_domain->setGlobalLength(2, boxL);
-		kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
+		kdd = new KDDecomposition(cutOff, _domain, 1, 1, fullSearchThreshold);
 
 		double bBoxMin[3];
 		double bBoxMax[3];
@@ -315,7 +315,7 @@ void KDDecompositionTest::testbalanceAndExchange() {
 	inputReader.setPhaseSpaceFile(fileName2.c_str());
 	inputReader.readPhaseSpaceHeader(_domain, 1.0);
 
-	kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
+	kdd = new KDDecomposition(cutOff, _domain, 1, 1, fullSearchThreshold);
 	_domainDecomposition = kdd;
 
 	_rank = kdd->_rank;

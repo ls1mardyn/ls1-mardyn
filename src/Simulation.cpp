@@ -12,6 +12,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <thread>
+#include <chrono>
 
 #include "Common.h"
 #include "Domain.h"
@@ -288,6 +290,21 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		Simulation::exit(1);
 	}
 
+	//The mixing coefficents have to be read in the ensemble part
+	//if this didn't happen fill the mixing coeffs with default values
+	auto& dmixcoeff = _domain->getmixcoeff();
+	const std::size_t compNum = _ensemble->getComponents()->size();
+	//1 Comps: 0 coeffs; 2 Comps: 2 coeffs; 3 Comps: 6 coeffs; 4 Comps 12 coeffs
+	const std::size_t neededCoeffs = compNum*(compNum-1);
+	if(dmixcoeff.size() < neededCoeffs){
+		global_log->warning() << "Not enough mixing coefficients were given! (Filling the missing ones with 1)" << '\n';
+		global_log->warning() << "This can happen because the xml-input doesn't support these yet!" << endl;
+		unsigned int numcomponents = _simulation.getEnsemble()->getComponents()->size();
+		for (unsigned int i = dmixcoeff.size(); i < neededCoeffs; i++) {
+			dmixcoeff.push_back(1);
+		}
+	}
+
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
 		/* cutoffs */
@@ -347,7 +364,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
-				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
+				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
 			}
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
@@ -808,6 +825,12 @@ void Simulation::prepare_start() {
 		delete _cellProcessor;
 		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
 	}
+
+#ifdef ENABLE_MPI
+	if(dynamic_cast<KDDecomposition*>(_domainDecomposition) != nullptr){
+		static_cast<KDDecomposition*>(_domainDecomposition)->fillTimeVecs(&_cellProcessor);
+	}
+#endif
 
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
