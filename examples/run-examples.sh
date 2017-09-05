@@ -9,7 +9,10 @@ MARDYN_OPTIONS="--steps 10 -v"
 EXAMPLE_LIST_FILE=${EXAMPLE_LIST_FILE:=example-list.txt}
 LOGFILE=${LOGFILE:=$PWD/run-examples.log}
 
-mapfile -t all_examples < $EXAMPLE_LIST_FILE
+#mapfile -t all_examples < $EXAMPLE_LIST_FILE # requires bash4 ...
+declare -a all_examples
+while IFS= read -r; do all_examples+=("$REPLY"); done < $EXAMPLE_LIST_FILE
+
 failed_examples=()
 
 # definitions for esear color output to display
