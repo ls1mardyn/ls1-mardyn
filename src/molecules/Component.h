@@ -75,6 +75,13 @@ public:
 	void addQuadrupole(double x, double y, double z,
 	                   double eQx, double eQy, double eQz, double eQabs);
 
+	/** delete the last site stored in the vector -- these are used by the external generators*/
+	void deleteLJCenter() { _ljcenters.pop_back() ;}
+	void deleteCharge() { _charges.pop_back() ;}
+	void deleteDipole() { _dipoles.pop_back() ;}
+	void deleteQuadrupole() { _quadrupoles.pop_back() ;}
+
+
 	/**
 	 * To be called after sites have been deleted or the properties of sites have been changed.
 	 */
