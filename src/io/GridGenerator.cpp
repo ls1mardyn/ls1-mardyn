@@ -16,6 +16,8 @@
 #include <map>
 #include <string>
 
+#include <mpi.h>
+
 using Log::global_log;
 using namespace std;
 
@@ -68,11 +70,14 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 			}
 		}
 	}
-	global_log->info() << "Number of inserted molecules: " << numMolecules << endl;
+	global_log->debug() << "Number of locally inserted molecules: " << numMolecules << endl;
 	particleContainer->updateMoleculeCaches();
+	unsigned long globalNumMolecules = 0;
+	MPI_Allreduce(&numMolecules, &globalNumMolecules, 1, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
+	global_log->info() << "Number of inserted molecules: " << numMolecules << endl;
 	//! @todo Get rid of the domain class calls at this place here...
 	domain->setGlobalTemperature(ensemble->T());
-	domain->setglobalNumMolecules(numMolecules);
+	domain->setglobalNumMolecules(globalNumMolecules);
 	domain->setglobalRho(numMolecules / ensemble->V() );
 	//! @todo reduce numMolecules?!
 	return numMolecules;
