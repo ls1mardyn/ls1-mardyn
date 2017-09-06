@@ -110,9 +110,9 @@ void Generator::readXML(XMLfileUnits& xmlconfig) {
 		global_log->debug() << "Obj name: " << object_type << endl;
 		_object = object_factory.create(object_type);
 		if(_object == nullptr) {
-			global_log->debug() << "Unknown object type: " << object_type << endl;
+			global_log->error() << "Unknown object type: " << object_type << endl;
 		}
-		global_log->error() << "Created object of type: " << _object->getName() << endl;
+		global_log->debug() << "Created object of type: " << _object->getName() << endl;
 		_object->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
