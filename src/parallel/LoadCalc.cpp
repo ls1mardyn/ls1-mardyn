@@ -114,8 +114,8 @@ TunerLoad::TunerLoad(int count1, int count2,
 		_count1 { count1 }, _count2 { count2 },
 		_ownTime { std::move(ownTime) }, _faceTime {std::move(faceTime) },
 		_edgeTime { std::move(edgeTime) }, _cornerTime { std::move(cornerTime) },
-		_ownConst { calcConsts(_ownTime, true) }, _faceConst { calcConsts(_faceTime, false) },
-		_edgeConst { calcConsts(_edgeTime, false) }, _cornerConst { calcConsts(_cornerTime, false) } {
+		_ownConst ( calcConsts(_ownTime, true) ), _faceConst ( calcConsts(_faceTime, false) ),
+		_edgeConst ( calcConsts(_edgeTime, false) ), _cornerConst ( calcConsts(_cornerTime, false) ) {
 
 	if (_ownTime.size() != size_t(_count1 * _count2)) {
 		global_log->error_always_output()
