@@ -4,7 +4,6 @@
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "io/TimerProfiler.h"
-#include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
@@ -176,9 +175,6 @@ public:
 	 * @param[in]  filename filename of the input file
 	 */
 	void readConfigFile(std::string filename);
-	void readConfigFile(const char* filename) {
-		readConfigFile(std::string(filename));
-	}
 
 	/** @brief process XML configuration file (*.xml)
 	 *
@@ -323,12 +319,6 @@ public:
 	void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }
 
-	void profileSettings(unsigned long profileRecordingTimesteps, unsigned long profileOutputTimesteps, std::string profileOutputPrefix) {
-	   this->_doRecordProfile = true;
-	   this->_profileRecordingTimesteps = profileRecordingTimesteps;
-	   this->_profileOutputTimesteps = profileOutputTimesteps;
-	   this->_profileOutputPrefix = profileOutputPrefix;
-	}
 	void setSimulationTime(double curtime) { _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }
 	double getSimulationTime() { return _simulationTime; }
@@ -350,22 +340,6 @@ public:
 	RegionSampling* GetRegionSampling() {return _regionSampling;}
 	DensityControl* GetDensityControl() {return _densityControl;}
 
-	void setProfileParameters(
-		bool doRecordProfile,
-		bool doRecordVirialProfile,
-		unsigned profileRecordingTimesteps,
-		unsigned profileOutputTimesteps,
-		std::string profileOutputPrefix,
-		unsigned long initStatistics)
-	{
-		_doRecordProfile = doRecordProfile;
-		_doRecordVirialProfile = doRecordVirialProfile;
-		_profileRecordingTimesteps = profileRecordingTimesteps;
-		_profileOutputTimesteps = profileOutputTimesteps;
-		_profileOutputPrefix = profileOutputPrefix;
-		_initStatistics = initStatistics;
-	}
-
 private:
 
 
@@ -381,28 +355,6 @@ private:
 
 	/** LJ cutoff (may be smaller than the RDF/electrostatics cutoff) */
 	double _LJCutoffRadius;
-
-	/** flag specifying whether planar interface profiles are recorded */
-	bool _doRecordProfile;
-	/** Interval between two evaluations of the profile.
-	 * This means that only 1 / _profileRecordingTimesteps of the
-	 * internally available data are actually used, so if precision is
-	 * a concern, set the value to 1. On the other hand, the program
-	 * may be accelerated somewhat by increasing the interval.
-	 */
-	bool _doRecordVirialProfile;
-	unsigned _profileRecordingTimesteps;
-	/** Aggregation interval for the profile data, i.e. if _profileRecordingTimesteps
-	 * is 100 and _profileOutputTimesteps is 20 000, this means that
-	 * the profiles found in the output are averages over 200 configurations.
-	 */
-	unsigned _profileOutputTimesteps;
-	/** Although the meaning of this should be obvious, it may be noted
-	 * that the time step and "rhpry" (density), "vzpry" (z-velocity),
-	 * and Tpry (kinetic energy) will be attached to the prefix for
-	 * the different profiles.
-     */
-	std::string _profileOutputPrefix;
 
 	/** A thermostat can be specified to account for the directed
 	 * motion, which means that only the undirected kinetic energy is
@@ -442,9 +394,6 @@ private:
 	/** Flow regulation */
 	PressureGradient* _pressureGradient;
 
-	/** Component to calculate the radial distribution function */
-	RDF* _rdf;
-
 	/** Datastructure for finding neighbours efficiently */
 	ParticleContainer* _moleculeContainer;
 
@@ -454,8 +403,6 @@ private:
 	/** New cellhandler, which will one day replace the particlePairsHandler here completely. */
 	CellProcessor* _cellProcessor;
 
-	/** Type of the domain decomposition */
-	DomainDecompType _domainDecompositionType;
 	/** module which handles the domain decomposition */
 	DomainDecompBase* _domainDecomposition;
 
@@ -492,8 +439,6 @@ private:
 	Wall* _wall;
 	Mirror* _mirror;
 
-	//! flags to control the cancel of the momentum 
-	bool _doCancelMomentum;
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;
 	
@@ -544,6 +489,9 @@ public:
 		return _programName;
 	}
 
+	/** @brief get output plugin
+	 * @return pointer to the output plugin if it is active, otherwise nullptr
+	 */
 	OutputBase* getOutputPlugin(const std::string& name);
 
 	void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
@@ -616,6 +564,8 @@ private:
 	/** Global energy log */
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
+
+	bool _virialRequired;
 };
 #endif /*SIMULATION_H_*/
 

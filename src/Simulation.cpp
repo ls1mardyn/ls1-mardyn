@@ -1,4 +1,3 @@
-
 #define SIMULATION_SRC
 #include "Simulation.h"
 
@@ -13,6 +12,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <thread>
+#include <chrono>
 
 #include "Common.h"
 #include "Domain.h"
@@ -95,28 +96,56 @@ Simulation* global_simulation;
 
 Simulation::Simulation()
 	:
-	_simulationTime(0),
+	_simulationTime(0.0),
+	_maxMoleculeId(0),
+	_cutoffRadius(0.0),
+	_LJCutoffRadius(0.0),
+	_collectThermostatDirectedVelocity(100),
+	_thermostatType(VELSCALE_THERMOSTAT),
+	_nuAndersen(0.0),
+	_numberOfTimesteps(1),
+	_simstep(0),
 	_initSimulation(0),
-	_initCanonical(0),
-	_initGrandCanonical(0),
-	_initStatistics(0),
-	_ensemble(NULL),
-	_rdf(NULL),
-	_moleculeContainer(NULL),
-	_particlePairsHandler(NULL),
-	_cellProcessor(NULL),
+	_initCanonical(_initSimulation + 1),  // simulate canonical (with Tfactor == 1.) from begin on!
+	_initGrandCanonical(10000000),
+	_initStatistics(20000),
+	_ensemble(nullptr),
+	_pressureGradient(nullptr),
+	_moleculeContainer(nullptr),
+	_particlePairsHandler(nullptr),
+	_cellProcessor(nullptr),
 	_domainDecomposition(nullptr),
-	_integrator(NULL),
-	_domain(NULL),
-	_inputReader(NULL),
-	_longRangeCorrection(NULL),
-	_temperatureControl(NULL),
-	_FMM(NULL),
+	_integrator(nullptr),
+	_domain(nullptr),
+	_inputReader(nullptr),
+	_outputPrefix("mardyn"),
+	_doAlignCentre(false),
+	_componentSpecificAlignment(false),
+	_alignmentInterval(25),
+	_alignmentCorrection(0.0),
+	_applyWallFun_LJ_9_3(false),
+	_applyWallFun_LJ_10_4(false),
+	_applyMirror(false),
+	_wall(nullptr),
+	_mirror(nullptr),
+	_momentumInterval(1000),
+	_rand(8624),
+	_longRangeCorrection(nullptr),
+	_temperatureControl(nullptr),
+	_FMM(nullptr),
 	_timerProfiler(),
+	_memoryProfiler(nullptr),
+	_finalCheckpoint(true),
+	_finalCheckpointBinary(false),
+	_outputPlugins(),
+	_velocityScalingThermostat(),
+	_lmu(),
+	_mcav(),
+	h(0.0),
 	_forced_checkpoint_time(0),
-	_loopCompTime(0.),
-	_loopCompTimeSteps(0),
-	_programName(""),
+	_loopCompTime(0.0),
+	_loopCompTimeSteps(0.0),
+	_programName("ls1-MarDyn"),
 	_flagsNEMD(0),
 	_driftControl(NULL),
 	_distControl(NULL),
@@ -126,8 +155,9 @@ Simulation::Simulation()
 	_mettDeamon(NULL),
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
-	_dFmaxInit(0.),
-	_dFmaxThreshold(0.)
+	_dFmaxInit(0.0),
+	_dFmaxThreshold(0.0),
+	_virialRequired(false)
 {
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
@@ -137,18 +167,39 @@ Simulation::Simulation()
 }
 
 Simulation::~Simulation() {
-	delete _domainDecomposition;
-	delete _pressureGradient;
-	delete _domain;
-	delete _particlePairsHandler;
-	delete _cellProcessor;
-	delete _moleculeContainer;
-	delete _integrator;
-	delete _inputReader;
-	delete _FMM;
 	delete _ensemble;
+	_ensemble = nullptr;
+	delete _pressureGradient;
+	_pressureGradient = nullptr;
+	delete _moleculeContainer;
+	_moleculeContainer = nullptr;
+	delete _particlePairsHandler;
+	_particlePairsHandler = nullptr;
+	delete _cellProcessor;
+	_cellProcessor = nullptr;
+	delete _domainDecomposition;
+	_domainDecomposition = nullptr;
+	delete _integrator;
+	_integrator = nullptr;
+	delete _domain;
+	_domain = nullptr;
+	delete _inputReader;
+	_inputReader = nullptr;
+	delete _wall;
+	_wall = nullptr;
+	delete _mirror;
+	_mirror = nullptr;
 	delete _longRangeCorrection;
+	_longRangeCorrection = nullptr;
+	delete _temperatureControl;
+	_temperatureControl = nullptr;
+	delete _FMM;
+	_FMM = nullptr;
 	delete _memoryProfiler;
+	_memoryProfiler = nullptr;
+	/* destruct output plugins and remove them from the output plugin list */
+	_outputPlugins.remove_if([](OutputBase *pluginPtr) {delete pluginPtr; return true;} );
+
 	// NEMD features
 	delete _temperatureControl;
 	delete _driftControl;
@@ -229,6 +280,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		_domain->setGlobalTemperature(_ensemble->T());
 
+		/// @todo Move the phasespace check into an output plugin executed once at the start!
 		/* check phasespacepoint */
 		bool bInputOk = true;
 		_nFmaxOpt = CFMAXOPT_NO_CHECK;
@@ -315,6 +367,21 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode(oldpath);
 	}
 
+	//The mixing coefficents have to be read in the ensemble part
+	//if this didn't happen fill the mixing coeffs with default values
+	auto& dmixcoeff = _domain->getmixcoeff();
+	const std::size_t compNum = _ensemble->getComponents()->size();
+	//1 Comps: 0 coeffs; 2 Comps: 2 coeffs; 3 Comps: 6 coeffs; 4 Comps 12 coeffs
+	const std::size_t neededCoeffs = compNum*(compNum-1);
+	if(dmixcoeff.size() < neededCoeffs){
+		global_log->warning() << "Not enough mixing coefficients were given! (Filling the missing ones with 1)" << '\n';
+		global_log->warning() << "This can happen because the xml-input doesn't support these yet!" << endl;
+		unsigned int numcomponents = _simulation.getEnsemble()->getComponents()->size();
+		for (unsigned int i = dmixcoeff.size(); i < neededCoeffs; i++) {
+			dmixcoeff.push_back(1);
+		}
+	}
+
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
 		/* cutoffs */
@@ -364,21 +431,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@type", parallelisationtype);
 			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
 		#ifdef ENABLE_MPI
+			/// @todo Dummy Decomposition now included in DecompBase - still keep this name?
 			if(parallelisationtype == "DummyDecomposition") {
 				global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
-				//_domainDecomposition = new DomainDecompDummy();
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
-				if (_domainDecomposition != nullptr) {
-					delete _domainDecomposition;
-				}
+				delete _domainDecomposition;
 				_domainDecomposition = new DomainDecomposition();
 			}
 			else if(parallelisationtype == "KDDecomposition") {
-				if (_domainDecomposition != nullptr) {
-					delete _domainDecomposition;
-				}
-				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
+				delete _domainDecomposition;
+				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
 			}
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
@@ -586,8 +649,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
-		} else if (pluginname == "RDF") {  // we need RDF both as an outputplugin and _rdf
-			_rdf = static_cast<RDF*>(outputPlugin);
 		}
 		if(pluginname == "MmpldWriter") {
 			/** @todo this should be handled in the MMPLD Writer readXML() */
@@ -610,18 +671,19 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "FlopRateWriter") {
 			outputPlugin = new FlopRateWriter(_cutoffRadius, _LJCutoffRadius);
 		}
-		else if(pluginname == "DomainProfiles")
-		{
-			_doRecordProfile = true;
-			outputPlugin = nullptr;
+		else if(pluginname == "DomainProfiles") {
+			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
+			/** @todo This is ugly. Needed as the vectorized code does not support the virial ...*/
+			if(xmlconfig.getNodeValue_int("/mardyn/simulation/output/outputplugin[@name='DomainProfiles']/options/option[@keyword='profileVirial']", 0) > 0) {
+				_virialRequired = true;
+			}
 			_domain->readXML(xmlconfig);
 		}
 
 		if(nullptr != outputPlugin) {
 			outputPlugin->readXML(xmlconfig);
 			_outputPlugins.push_back(outputPlugin);
-		} else if (pluginname != "DomainProfiles"){  //!@todo remove this line once DomainProfiles is a proper OutputPlugin
-		// } else {  // and add this line
+		} else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
 	}
@@ -635,13 +697,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Face space file type: " << pspfiletype << endl;
 
 		if (pspfiletype == "ASCII") {
-			_inputReader = (InputBase*) new InputOldstyle();
+			_inputReader = new InputOldstyle();
 			_inputReader->readXML(xmlconfig);
 		}
 		else if (pspfiletype == "binary") {
-			_inputReader = (InputBase*) new BinaryReader();
+			_inputReader = new BinaryReader();
 			_inputReader->readXML(xmlconfig);
-
 			//!@todo read header should be either part of readPhaseSpace or readXML.
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
@@ -657,7 +718,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/generator")) {
 		string generatorName;
 		xmlconfig.getNodeValue("@name", generatorName);
-		global_log->info() << "Generator: " << generatorName << endl;
+		global_log->info() << "Initializing phase space using generator: " << generatorName << endl;
 		if(generatorName == "GridGenerator") {
 			_inputReader = new GridGenerator();
 		}
@@ -710,8 +771,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	inp.getNodeValue("@version", version);
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
 
-	if (inp.changecurrentnode("simulation"))
-	{
+	if(inp.changecurrentnode("simulation")) {
 		readXML(inp);
 		inp.changecurrentnode("..");
 	} // simulation-section
@@ -729,14 +789,15 @@ void Simulation::initConfigXML(const string& inputfilename) {
 #endif
 
 	// read particle data (or generate particles, if a generator is chosen)
-	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
-			&_lmu, _domain, _domainDecomposition);
-
+	std::string phaseSpaceCreationTimerName("SIMULATION_IO_PHASESPACE_CREATION");
+	timers()->registerTimer(phaseSpaceCreationTimerName,  vector<string>{"SIMULATION_IO"}, new Timer());
+	timers()->getTimer(phaseSpaceCreationTimerName)->start();
+	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
+	timers()->getTimer(phaseSpaceCreationTimerName)->stop();
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
-	// test new Decomposition
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
@@ -765,17 +826,12 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		/* TODO: thermostat */
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double
-				Ttar =
-						_domain->severalThermostats() ? _domain->getTargetTemperature(
-								1)
-								: _domain->getTargetTemperature(0);
+		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 		cpit->submitTemperature(Tcur);
 		if (h != 0.0)
 			cpit->setPlanckConstant(h);
-
 		j++;
 	}
 }
@@ -809,12 +865,11 @@ void Simulation::prepare_start() {
 	}
 	else*/
 #ifndef MARDYN_WR
-	if(this->_doRecordVirialProfile) {
+	if(_virialRequired) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	} else if (_rdf != NULL) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)"
-				<< endl;
+	} else if (nullptr != getOutputPlugin("RDF")) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	} else {
 		global_log->info() << "Using vectorized cell processor." << endl;
@@ -847,6 +902,12 @@ void Simulation::prepare_start() {
 		delete _cellProcessor;
 		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
 	}
+
+#ifdef ENABLE_MPI
+	if(dynamic_cast<KDDecomposition*>(_domainDecomposition) != nullptr){
+		static_cast<KDDecomposition*>(_domainDecomposition)->fillTimeVecs(&_cellProcessor);
+	}
+#endif
 
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
@@ -1303,11 +1364,12 @@ void Simulation::simulate() {
 
 
 		// activate RDF sampling
-		if ((_simstep >= _initStatistics) && _rdf != NULL) {
+		RDF* rdf;
+		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
 			global_log->info() << "Activating the RDF sampling" << endl;
-			this->_rdf->tickRDF();
-			this->_particlePairsHandler->setRDF(_rdf);
-			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
+			rdf->tickRDF();
+			_particlePairsHandler->setRDF(rdf);
+			rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
 		}
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
@@ -1617,7 +1679,7 @@ void Simulation::simulate() {
 							numPartThermo++;
 							int thermostat = _domain->getThermostat(tM->componentid());
 							tTarget = _domain->getTargetTemperature(thermostat);
-							stdDevTrans = sqrt(tTarget/tM->gMass());
+							stdDevTrans = sqrt(tTarget/tM->mass());
 							for(unsigned short d = 0; d < 3; d++) {
 								stdDevRot = sqrt(tTarget*tM->getI(d));
 								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
@@ -1632,7 +1694,7 @@ void Simulation::simulate() {
 						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
-							stdDevTrans = sqrt(tTarget/tM->gMass());
+							stdDevTrans = sqrt(tTarget/tM->mass());
 							for(unsigned short d = 0; d < 3; d++) {
 								stdDevRot = sqrt(tTarget*tM->getI(d));
 								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
@@ -1712,10 +1774,8 @@ void Simulation::simulate() {
         _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, _finalCheckpointBinary);
     }
 	// finish output
-	std::list<OutputBase*>::iterator outputIter;
-	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
-		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
-		delete (*outputIter);
+	for (auto outputPlugin : _outputPlugins) {
+		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
 	ioTimer->stop();
 	global_simulation->timers()->printTimers();
@@ -1742,28 +1802,6 @@ void Simulation::output(unsigned long simstep) {
 		global_simulation->timers()->start(output->getPluginName());
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
 		global_simulation->timers()->stop(output->getPluginName());
-	}
-
-	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
-		_domain->recordProfile(_moleculeContainer, _doRecordVirialProfile);
-	}
-	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileOutputTimesteps)) {
-		_domain->collectProfile(_domainDecomposition, _doRecordVirialProfile);
-		if (mpi_rank == 0) {
-			ostringstream osstrm;
-			osstrm << _profileOutputPrefix << "." << fill_width('0', 9) << simstep;
-			//edited by Michaela Heier 
-			if(this->_domain->isCylindrical()){
-				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
-				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
-			}
-			else{
-			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
-			}
-			osstrm.str("");
-			osstrm.clear();
-		}
-		_domain->resetProfile(_doRecordVirialProfile);
 	}
 
 	
@@ -1826,9 +1864,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep() {
 }
 
 void Simulation::setDomainDecomposition(DomainDecompBase* domainDecomposition) {
-	if (_domainDecomposition != nullptr) {
-		delete _domainDecomposition;
-	}
+	delete _domainDecomposition;
 	_domainDecomposition = domainDecomposition;
 }
 
@@ -1859,65 +1895,26 @@ void Simulation::initialize() {
 
 	global_simulation = this;
 
-	_finalCheckpoint = true;
-	_finalCheckpointBinary = false;
-
-        // TODO:
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
 	_domainDecomposition = new DomainDecompBase();
 #else
 	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
-	if (_domainDecomposition != nullptr) {
-		delete _domainDecomposition;
-	}
+	delete _domainDecomposition;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
-	global_log->info() << "Initialization done" << endl;
 
-	/*
-	 * default parameters
-	 */
-	_cutoffRadius = 0.0;
-	_LJCutoffRadius = 0.0;
-	_numberOfTimesteps = 1;
-	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
-
-	/** @todo the following features should be documented */
-	_doRecordProfile = false;
-	_doRecordVirialProfile = false;
-	_profileRecordingTimesteps = 7;
-	_profileOutputTimesteps = 12500;
-	_profileOutputPrefix = "out";
-	_collectThermostatDirectedVelocity = 100;
-	_initCanonical = _initSimulation + 1;  // default: simulate canonical (with Tfactor == 1.) from begin on!
-	_initGrandCanonical = 10000000;
-	_initStatistics = 20000;
-	h = 0.0;
-
-	_thermostatType = VELSCALE_THERMOSTAT;
-	_nuAndersen = 0.0;
-	_rand.init(8624);
-
-	_doAlignCentre = false;
-	_componentSpecificAlignment = false;
-	_alignmentInterval = 25;
-	_momentumInterval = 1000;
-	_wall = NULL;
-	_applyWallFun_LJ_9_3 = false;
-	_applyWallFun_LJ_10_4 = false;
-	_mirror = NULL;
-	_applyMirror = false;
 
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
-	_longRangeCorrection = NULL;
-        
-        this->_mcav = map<unsigned, CavityEnsemble>();
+
+	this->_mcav = map<unsigned, CavityEnsemble>();
+
+	global_log->info() << "Initialization done" << endl;
 }
 
 OutputBase* Simulation::getOutputPlugin(const std::string& name)  {

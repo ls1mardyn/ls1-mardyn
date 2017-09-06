@@ -17,6 +17,10 @@ Component::Component(unsigned int id) {
 	_rot_dof = 0;
 	_Ipa[0] = _Ipa[1] = _Ipa[2] = 0.;
 	_numMolecules = 0;
+	_T = 1.;
+	_E_trans=0.;
+	_lookUpID = 0;
+	_E_rot=0.;
 
 	_ljcenters = vector<LJcenter> ();
 	_charges = vector<Charge> ();
@@ -94,7 +98,7 @@ void Component::addLJcenter(double x, double y, double z,
 		shift6 = 24.0 * eps * (sigperrc6 - sigperrc6 * sigperrc6);
 	}
 
-	LJcenter ljsite(x, y, z, m, eps, sigma, rc, shift6);
+	LJcenter ljsite(x, y, z, m, eps, sigma, shift6);
 	_ljcenters.push_back(ljsite);
 	updateMassInertia(ljsite);
 }
@@ -202,20 +206,6 @@ void Component::write(std::ostream& ostrm) const {
 		ostrm << endl;
 	}
 	ostrm << _Ipa[0] << " " << _Ipa[1] << " " << _Ipa[2] << endl;
-}
-
-void Component::writePOVobjs(std::ostream& ostrm, string para) const {
-	if (numLJcenters() <= 0) return;
-	if (numLJcenters() == 1) {
-		ostrm << "sphere {<" << _ljcenters.front().rx() << "," << _ljcenters.front().ry() << "," << _ljcenters.front().rz() << ">," << .5 * _ljcenters.front().sigma() << " " << para << "}";
-	}
-	else {
-		ostrm << "blob { threshold 0.01 ";
-		for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos)
-			ostrm << "sphere {<" << pos->rx() << "," << pos->ry() << "," << pos->rz() << ">," << .5 * pos->sigma() << ", strength 1 } ";
-		ostrm << para << "}";
-	}
-	ostrm << flush;
 }
 
 void Component::writeVIM(std::ostream& ostrm) {

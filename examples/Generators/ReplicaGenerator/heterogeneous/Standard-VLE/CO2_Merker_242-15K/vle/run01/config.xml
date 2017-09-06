@@ -98,7 +98,7 @@
         </timesteps>
         <outputprefix>profile</outputprefix>
         <options>
-          <option keyword="profileVirial"/>
+          <option keyword="profileVirial">1</option>
         </options>
         <components>
           <component id="1"/>

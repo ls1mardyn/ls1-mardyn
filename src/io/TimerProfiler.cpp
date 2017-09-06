@@ -9,6 +9,9 @@
 #include <stdexcept>
 #include <tuple>
 #include <utility>
+#include <thread>
+#include <chrono>
+#include <cmath>
 
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
@@ -67,7 +70,7 @@ void TimerProfiler::setSyncTimer(string timerName, bool sync){
 
 void TimerProfiler::print(string timerName, string outputPrefix){
 	if (_checkTimer(timerName)) {
-		global_log->info()<<outputPrefix<<getOutputString(timerName)<<_timers[timerName]._timer->get_etime()<<" sec\n";
+			global_log->info()<<outputPrefix<<getOutputString(timerName)<<_timers[timerName]._timer->get_etime()<<" sec\n";
 	}
 	else {
 		_debugMessage(timerName);

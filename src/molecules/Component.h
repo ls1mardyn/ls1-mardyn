@@ -75,11 +75,12 @@ public:
 	void addQuadrupole(double x, double y, double z,
 	                   double eQx, double eQy, double eQz, double eQabs);
 
-	/** delete the last site stored in the vector */
+	/** delete the last site stored in the vector -- these are used by the external generators*/
 	void deleteLJCenter() { _ljcenters.pop_back() ;}
 	void deleteCharge() { _charges.pop_back() ;}
 	void deleteDipole() { _dipoles.pop_back() ;}
 	void deleteQuadrupole() { _quadrupoles.pop_back() ;}
+
 
 	/**
 	 * To be called after sites have been deleted or the properties of sites have been changed.
@@ -88,9 +89,6 @@ public:
 
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
-
-	/** write POVray object definition to stream */
-	void writePOVobjs(std::ostream& ostrm, std::string para = std::string("pigment {color rgb<1,0,0>}")) const;
 
 	void writeVIM(std::ostream& ostrm);
 
@@ -102,7 +100,7 @@ public:
 	double E() const { return _E_trans + _E_rot; }
 	double T() const { return _T; }
 	void setName(std::string name) { _name = name; }
-	std::string& getName() { return _name; }
+	std::string getName() const { return _name; }
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	//! needed by the MegaMol output format

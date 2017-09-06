@@ -12,6 +12,12 @@ public:
 
 	/** @brief Read in XML configuration for PovWriter and all its included objects.
 	 *
+	 * The povray output plugin writes povray input files. It is intended for smaller
+	 * (serial) runs. For visualisation of larger systems please use the MmpldWriter.
+	 *
+	 * @note The PovWriter works only in serial execution, it is not parallel!
+	 * @todo Implement parallel output
+	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <outputplugin name="PovWriter">

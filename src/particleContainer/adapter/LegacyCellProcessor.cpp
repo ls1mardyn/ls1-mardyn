@@ -76,19 +76,18 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 
 	if (cell1.isBoundaryCell()) {//first cell is boundary
 		// loop over all particles in the cell
+		PairType pairType = MOLECULE_MOLECULE;
+		//if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//boundary <-> halo: using macroscopic boundary condition
+		if (cell2.isHaloCell() && ! (cell1.getCellIndex()<cell2.getCellIndex())) {//boundary <-> halo: not using macroscopic boundary condition, instead cell indices are compared.
+			/* Do not sum up values twice. */
+			pairType = MOLECULE_HALOMOLECULE;
+		}
 		for (int i = 0; i < currentParticleCount; i++) {
 			Molecule& molecule1 = cell1.moleculesAt(i);
 			for (int j = 0; j < neighbourParticleCount; j++) {
 				Molecule& molecule2 = cell2.moleculesAt(j);
-
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
-					PairType pairType = MOLECULE_MOLECULE;
-					//if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//boundary <-> halo: using macroscopic boundary condition
-					if (cell2.isHaloCell() && ! (cell1.getCellIndex()<cell2.getCellIndex())) {//boundary <-> halo: not using macroscopic boundary condition, instead cell indices are compared.
-						/* Do not sum up values twice. */
-						pairType = MOLECULE_HALOMOLECULE;
-					}
 					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare));
 				}
 			}

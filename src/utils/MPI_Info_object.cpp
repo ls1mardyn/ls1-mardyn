@@ -43,7 +43,7 @@ void MPI_Info_object::add_hint(std::string& key, std::string& value) {
 		return;
 	}
 	global_log->info() << "[MPI_Info_object]\tsetting MPI Info hint " << key << "=" << value << std::endl;
-	MPI_CHECK( MPI_Info_set(_mpi_info, key.c_str(), value.c_str()) );
+	MPI_CHECK( MPI_Info_set(_mpi_info, const_cast<char*>(key.c_str()), const_cast<char*>(value.c_str())) );
 }
 
 void MPI_Info_object::get_dup_MPI_Info(MPI_Info* mpi_info) {

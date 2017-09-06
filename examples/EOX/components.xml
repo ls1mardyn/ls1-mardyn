@@ -26,7 +26,7 @@
 		<site type="Dipole" id="4" >
 			<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
 			<dipolemoment>
-				<orientation> <x>0.0</x> <y>1.0</y> <z>0.0</z> </orientation>
+				<x>0.0</x> <y>1.0</y> <z>0.0</z>
 				<abs>0.967443691</abs>
 			</dipolemoment>
 		</site>

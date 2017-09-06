@@ -12,12 +12,12 @@ class Domain;
 
 /** @brief The GammaWriter plugin writes the surface tension to a file.
  *
- * @todo What is the actual surface? Implementation is in the Domain.
+ * @todo What is the actual surface? y-plane?
  */
 class XMLfileUnits;
 class GammaWriter : public OutputBase {
 public:
-	GammaWriter() {}
+	GammaWriter() : _gammaStream(), _writeFrequency(1), _outputPrefix("mardyn"), _Gamma() {}
 	~GammaWriter() {}
 
 	/** @brief Read in XML configuration for GammaWriter.
@@ -51,10 +51,14 @@ public:
 	static OutputBase* createInstance() { return new GammaWriter(); }
 
 private:
-	//! prefix for the names of all output files
+	void calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom);
+	double getGamma(unsigned id, double globalLength[3]);
+	void resetGamma();
+
 	std::ofstream _gammaStream;
 	unsigned long _writeFrequency;
-	std::string _outputPrefix;
+	std::string _outputPrefix;  //!< prefix the output file
+	std::map<unsigned,double> _Gamma;  //!< Surface tension component wise
 };
 
 #endif  // SRC_IO_GAMMAWRITER_H_

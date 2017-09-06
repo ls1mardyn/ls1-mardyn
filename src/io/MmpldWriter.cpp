@@ -224,7 +224,7 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 #if ENABLE_MPI
 	int rank = domainDecomp->getRank();
 
-	MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_CREATE, _mpiinfo, &_mpifh);
+	MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, _mpiinfo, &_mpifh);
 
 	//distribute global component particle count and offset counts for distrubted write
 	std::vector<uint64_t> globalNumCompSpheres(_numSphereTypes);
@@ -320,7 +320,7 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
-		MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
+		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
 		MPI_File_seek(_mpifh, 0, MPI_SEEK_END);
 		MPI_Offset endPosition;
 		MPI_File_get_position(_mpifh, &endPosition);
@@ -334,7 +334,7 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_File_write_at(_mpifh, 8, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
 		MPI_File_close(&_mpifh);
 	}else{
-		MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
+		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
 		MPI_File_close(&_mpifh);
 	}
 	_seekTable.clear();

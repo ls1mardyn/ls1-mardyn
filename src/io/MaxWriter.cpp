@@ -19,11 +19,11 @@ MaxWriter::MaxWriter()
 	_outputPrefix("maxvals"),
 	_dMaxValuesLocal(nullptr),
 	_dMaxValuesGlobal(nullptr),
-	_numQuantities(3),
+	_numQuantities(7),
 	_numValsPerQuantity(4),
-	_numValsPerComponent(3*4),
+	_numValsPerComponent(7*4),
 	_numComponents(2),
-	_numVals(3*4*2)
+	_numVals(7*4*2)
 {
 	_numComponents = global_simulation->getEnsemble()->getComponents()->size()+1;  // 0: all components
 }
@@ -60,43 +60,60 @@ void MaxWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	if( 0 != domainDecomp->getRank() )
 		return;
 
-	std::stringstream sstrFilename[3];
+	std::stringstream sstrFilename[4];
 	sstrFilename[0] << _outputPrefix << "_max_veloc.dat";
 	sstrFilename[1] << _outputPrefix << "_max_angmo.dat";
 	sstrFilename[2] << _outputPrefix << "_max_force.dat";
+	sstrFilename[3] << _outputPrefix << "_max_torqe.dat";
 
-	std::stringstream sstrOutput[3];
-	for(uint8_t fi=0; fi<3; ++fi)
-		sstrOutput[fi] << "                 simstep";
+	std::stringstream sstrOutput[4];
+	for(uint8_t qi=0; qi<_numQuantities; ++qi)
+		sstrOutput[qi] << "                 simstep";
 
 	for(uint32_t cid=0; cid<_numComponents; ++cid)
 	{
 		// velocity
 		sstrOutput[0] << "                 vabs_c" << cid;
-		sstrOutput[0] << "                   vx_c" << cid;
-		sstrOutput[0] << "                   vy_c" << cid;
-		sstrOutput[0] << "                   vz_c" << cid;
+		sstrOutput[0] << "                  v+x_c" << cid;
+		sstrOutput[0] << "                  v+y_c" << cid;
+		sstrOutput[0] << "                  v+z_c" << cid;
+		sstrOutput[0] << "                  v-x_c" << cid;
+		sstrOutput[0] << "                  v-y_c" << cid;
+		sstrOutput[0] << "                  v-z_c" << cid;
 
 		// angular momentum
 		sstrOutput[1] << "                 Labs_c" << cid;
-		sstrOutput[1] << "                   Lx_c" << cid;
-		sstrOutput[1] << "                   Ly_c" << cid;
-		sstrOutput[1] << "                   Lz_c" << cid;
+		sstrOutput[1] << "                  L+x_c" << cid;
+		sstrOutput[1] << "                  L+y_c" << cid;
+		sstrOutput[1] << "                  L+z_c" << cid;
+		sstrOutput[1] << "                  L-x_c" << cid;
+		sstrOutput[1] << "                  L-y_c" << cid;
+		sstrOutput[1] << "                  L-z_c" << cid;
 
 		// force
 		sstrOutput[2] << "                 Fabs_c" << cid;
-		sstrOutput[2] << "                   Fx_c" << cid;
-		sstrOutput[2] << "                   Fy_c" << cid;
-		sstrOutput[2] << "                   Fz_c" << cid;
+		sstrOutput[2] << "                  F+x_c" << cid;
+		sstrOutput[2] << "                  F+y_c" << cid;
+		sstrOutput[2] << "                  F+z_c" << cid;
+		sstrOutput[2] << "                  F-x_c" << cid;
+		sstrOutput[2] << "                  F-y_c" << cid;
+		sstrOutput[2] << "                  F-z_c" << cid;
+
+		// torque
+		sstrOutput[3] << "                 Mabs_c" << cid;
+		sstrOutput[3] << "                  M+x_c" << cid;
+		sstrOutput[3] << "                  M+y_c" << cid;
+		sstrOutput[3] << "                  M+z_c" << cid;
+		sstrOutput[3] << "                  M-x_c" << cid;
+		sstrOutput[3] << "                  M-y_c" << cid;
+		sstrOutput[3] << "                  M-z_c" << cid;
 	}
 
-	for(uint8_t fi=0; fi<3; ++fi)
-		sstrOutput[fi] << endl;
-
-	for(uint8_t fi=0; fi<3; ++fi)
+	for(uint8_t qi=0; qi<_numQuantities; ++qi)
 	{
-		ofstream ofs(sstrFilename[fi].str().c_str(), ios::out);
-		ofs << sstrOutput[fi].str();
+		ofstream ofs(sstrFilename[qi].str().c_str(), ios::out);
+		sstrOutput[qi] << endl;
+		ofs << sstrOutput[qi].str();
 		ofs.close();
 	}
 }
@@ -122,8 +139,8 @@ void MaxWriter::finishOutput(ParticleContainer* /*particleContainer*/,
 
 void MaxWriter::initDataStructures()
 {
-	_numQuantities = 3;  // velocity, angular momentum, force
-	_numValsPerQuantity = 4;  // Quantity (Q): Qabs, Qx, Qy, Qz
+	_numQuantities = 4;  // velocity, angular momentum, force, torque
+	_numValsPerQuantity = 7;  // Quantity (Q): Qabs, Qx_max, Qy_max, Qz_max, Qx_min, Qy_min, Qz_min
 	_numValsPerComponent = _numQuantities * _numValsPerQuantity;
 	_numVals = _numValsPerComponent * _numComponents;
 
@@ -140,40 +157,67 @@ void MaxWriter::doSampling(ParticleContainer* particleContainer)
 	{
 		uint32_t cid = pit->componentid()+1;  // 0: all components
 		uint32_t nOffsetComponent = cid*_numValsPerComponent;
-		std::array<double,3> arrQuantities;
-		arrQuantities[0] = pit->v2();
-		arrQuantities[1] = pit->L2();
-		arrQuantities[2] = pit->F2();
-		std::vector<std::array<double,3> > vecQuantitiesXYZ;
-
-		std::array<double,3> arr;
-		for(uint8_t dim=0; dim<3; ++dim)
-			arr[dim] = pit->v(dim);
-		vecQuantitiesXYZ.push_back(arr);
-		for(uint8_t dim=0; dim<3; ++dim)
-			arr[dim] = pit->D(dim);
-		vecQuantitiesXYZ.push_back(arr);
-		for(uint8_t dim=0; dim<3; ++dim)
-			arr[dim] = pit->F(dim);
-		vecQuantitiesXYZ.push_back(arr);
+		std::array<std::array<double,7>,4> arrQuantities;
+		// squared absolute values
+		arrQuantities.at(0).at(0) = pit->v2();
+		arrQuantities.at(1).at(0) = pit->L2();
+		arrQuantities.at(2).at(0) = pit->F2();
+		arrQuantities.at(3).at(0) = pit->M2();
+		// x-component
+		arrQuantities.at(0).at(1) = pit->v(0);
+		arrQuantities.at(1).at(1) = pit->D(0);
+		arrQuantities.at(2).at(1) = pit->F(0);
+		arrQuantities.at(3).at(1) = pit->M(0);
+		// y-component
+		arrQuantities.at(0).at(2) = pit->v(1);
+		arrQuantities.at(1).at(2) = pit->D(1);
+		arrQuantities.at(2).at(2) = pit->F(1);
+		arrQuantities.at(3).at(2) = pit->M(1);
+		// z-component
+		arrQuantities.at(0).at(3) = pit->v(2);
+		arrQuantities.at(1).at(3) = pit->D(2);
+		arrQuantities.at(2).at(3) = pit->F(2);
+		arrQuantities.at(3).at(3) = pit->M(2);
 
 		for(uint32_t qi=0; qi<_numQuantities; ++qi)
 		{
 			uint32_t nOffsetQuantity = _numValsPerQuantity*qi;
 
 			// all components
-			if(arrQuantities[qi] > _dMaxValuesLocal[nOffsetQuantity])
+			double* ptrValueActual = &arrQuantities.at(qi).at(0);
+			double* ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity];
+			if(*ptrValueActual > *ptrValueStored)
+				*ptrValueStored = *ptrValueActual;
+			for(uint32_t dim=1; dim<4; ++dim)
 			{
-				_dMaxValuesLocal[nOffsetQuantity] = arrQuantities[qi];
-				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[nOffsetQuantity+1+dim] = vecQuantitiesXYZ.at(qi)[dim];
+				// positive direction (+)
+				ptrValueActual = &arrQuantities.at(qi).at(dim);
+				ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity+dim];
+				if(*ptrValueActual > *ptrValueStored)
+					*ptrValueStored = *ptrValueActual;
+				// negative direction (-)
+				ptrValueActual = &arrQuantities.at(qi).at(dim);
+				ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity+dim+3];
+				if(*ptrValueActual < *ptrValueStored)
+					*ptrValueStored = *ptrValueActual;
 			}
 			// specific component
-			if(arrQuantities[qi] > _dMaxValuesLocal[nOffsetQuantity+nOffsetComponent])
+			ptrValueActual = &arrQuantities.at(qi).at(0);
+			ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity];
+			if(*ptrValueActual > *ptrValueStored)
+				*ptrValueStored = *ptrValueActual;
+			for(uint32_t dim=1; dim<4; ++dim)
 			{
-				_dMaxValuesLocal[nOffsetQuantity+nOffsetComponent] = arrQuantities[qi];
-				for(uint8_t dim=0; dim<3; ++dim)
-					_dMaxValuesLocal[nOffsetQuantity+1+dim+nOffsetComponent] = vecQuantitiesXYZ.at(qi)[dim];
+				// positive direction (+)
+				ptrValueActual = &arrQuantities.at(qi).at(dim);
+				ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim];
+				if(*ptrValueActual > *ptrValueStored)
+					*ptrValueStored = *ptrValueActual;
+				// negative direction (-)
+				ptrValueActual = &arrQuantities.at(qi).at(dim);
+				ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim+3];
+				if(*ptrValueActual < *ptrValueStored)
+					*ptrValueStored = *ptrValueActual;
 			}
 		}
 	}
@@ -204,12 +248,13 @@ void MaxWriter::writeData(DomainDecompBase* domainDecomp)
 	if( 0 != domainDecomp->getRank() )
 		return;
 
-	std::stringstream sstrFilename[3];
+	std::stringstream sstrFilename[4];
 	sstrFilename[0] << _outputPrefix << "_max_veloc.dat";
 	sstrFilename[1] << _outputPrefix << "_max_angmo.dat";
 	sstrFilename[2] << _outputPrefix << "_max_force.dat";
+	sstrFilename[3] << _outputPrefix << "_max_torqe.dat";
 
-	std::stringstream sstrOutput[3];
+	std::stringstream sstrOutput[4];
 
 	// write data to streams
 	for(uint32_t qi=0; qi<_numQuantities; ++qi)
@@ -220,19 +265,19 @@ void MaxWriter::writeData(DomainDecompBase* domainDecomp)
 		for(uint32_t cid=0; cid<_numComponents; ++cid)
 		{
 			uint32_t nOffsetComponent = cid*_numValsPerComponent;
-			double vmax = sqrt(_dMaxValuesGlobal[nOffsetQuantity+nOffsetComponent]);
-			sstrOutput[0] << FORMAT_SCI_MAX_DIGITS << vmax;
+			double vmax = sqrt(_dMaxValuesGlobal[nOffsetComponent+nOffsetQuantity]);
+			sstrOutput[qi] << FORMAT_SCI_MAX_DIGITS << vmax;
 			for(uint8_t vi=1; vi<_numValsPerQuantity; ++vi)
-				sstrOutput[qi] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[nOffsetQuantity+nOffsetComponent+vi];
+				sstrOutput[qi] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[nOffsetComponent+nOffsetQuantity+vi];
 		}
 		sstrOutput[qi] << endl;
 	}
 
 	// write streams to files
-	for(uint8_t fi=0; fi<3; ++fi)
+	for(uint8_t qi=0; qi<_numQuantities; ++qi)
 	{
-		ofstream ofs(sstrFilename[fi].str().c_str(), ios::app);
-		ofs << sstrOutput[fi].str();
+		ofstream ofs(sstrFilename[qi].str().c_str(), ios::app);
+		ofs << sstrOutput[qi].str();
 		ofs.close();
 	}
 }

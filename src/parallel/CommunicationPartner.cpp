@@ -406,6 +406,21 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							m.r[dim] = std::nexttoward(r, r + 1.f);  // ensures that r is bigger than the boundingboxmax
 						}
 					}
+				} else if (haloLeaveCorr == LEAVING) {
+					// some additional shifting to ensure that rounding errors do not hinder the correct placement
+					if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
+						if (m.r[dim] < 0.) { // in the lower part it was wrongly shifted if
+							m.r[dim] = 0.; // ensures that r is at least the boundingboxmin
+							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
+						}
+					} else  if (shift[dim] > 0.) {  // shift > 0
+						if (m.r[dim] >= domain->getGlobalLength(dim)) { // in the lower part it was wrongly shifted if
+						// std::nexttoward: returns the next bigger value of _boundingBoxMax
+							vcp_real_calc r = domain->getGlobalLength(dim);
+							m.r[dim] = std::nexttoward(r, r - 1.f); // ensures that r is smaller than the boundingboxmax
+							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
+						}
+					}
 				}
 			}
 			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;

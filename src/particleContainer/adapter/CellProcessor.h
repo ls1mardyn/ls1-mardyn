@@ -45,6 +45,13 @@ public:
 	void setCutoffRadius(const double c) {_cutoffRadiusSquare = c * c;}
 	void setLJCutoffRadius(const double ljc) {_LJCutoffRadiusSquare = ljc * ljc;}
 
+
+	double getCutoffRadiusSquare() const {return _cutoffRadiusSquare;}
+	double getLJCutoffRadiusSquare() const {return _LJCutoffRadiusSquare;}
+	void setCutoffRadiusSquare(const double c) {_cutoffRadiusSquare = c;}
+	void setLJCutoffRadiusSquare(const double ljc) {_LJCutoffRadiusSquare = ljc;}
+
+
 	/**
 	 * called before the traversal starts.
 	 *

@@ -5,12 +5,15 @@
 #include <algorithm>
 #include <list>
 #include <vector>
+#include <limits>
 
 #define KDDIM 3
 
 #include "DomainDecompMPIBase.h"
 #include "parallel/CollectiveCommunication.h"
 #include "ParticleDataForwardDeclaration.h"
+#include "particleContainer/adapter/CellProcessor.h"
+#include "parallel/LoadCalc.h"
 
 class KDNode;
 
@@ -48,8 +51,12 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 *                            all possible decompositions will be investigated, so it
 	 *                            influences the quality of the load balancing. I recommend to
 	 *                            set it to 2 - 4.
+	 * @param splitThresh If the Decomposition is allowed to cut every dimension (not only the biggest one)
+	 * 	                  then it tests cuts in all Dimensions (not only the biggest) if a KDNode has less processors,
+	 * 	                  than the threshold
 	 */
-	KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency = 100, int fullSearchThreshold = 2, bool hetero=false, bool cutsmaller=false, bool forceRatio=false);
+	KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency = 100,  int fullSearchThreshold = 2, bool hetero=false,
+			bool cutsmaller=false, bool forceRatio=false, int splitThresh = std::numeric_limits<int>::max());
 
 	KDDecomposition();
 
@@ -63,6 +70,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	   <parallelisation type="KDDecomposition">
 	     <updateFrequency>INTEGER</updateFrequency>
 	     <fullSearchThreshold>INTEGER</fullSearchThreshold>
+	     <splitThreshold>INTEGER</splitThreshold>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -115,6 +123,12 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
+	/*
+	 * Create a TunerTimes object with measured values from the tuner
+	 *
+	 * Has to be an extra function since the CellProcessor is only created after the KDDecomposition was already constructed
+	 */
+	void fillTimeVecs(CellProcessor **cellProc);
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
 	/**
@@ -203,6 +217,17 @@ class KDDecomposition: public DomainDecompMPIBase {
 	bool decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup, const double globalMinimalDeviation);
 
 	/**
+	 * Does the "cluster" heterogeneous decomposition
+	 *
+	 * Right now only supports two clusters, where one cluster is made up of all processors from mpi rank 0 to a certain value k, while the second is made
+	 * up of all processors with a rank k+1 or higher.
+	 *
+	 * It should be ensured that the performance difference between the clusters isn't to big, because otherwise the decomposition might
+	 * degrade to a point where there will be errors in the program execution
+	 */
+	bool heteroDecompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
+
+	/**
 	 * Get the load for the area represented by this node.
 	 *
 	 * @note: if this implementation is too slow for large domains, we could change
@@ -210,7 +235,14 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 */
 	bool calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup);
 	
-	
+	/**
+	 * Calculates the splitting plane for the "cluster" heterogeneous decomposition
+	 *
+	 * Each cluster calculates the loads from one side of each plane with tuner values from its processors.
+	 * Then the plane is chosen, where the left-righ-load-ratio is roughly equal the ratio of the number of processors in the clusters
+	 */
+	bool calculateHeteroSubdivision(KDNode* node, KDNode*& subdivededNode, MPI_Comm commGroup);
+
 	void updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
 			std::vector<double>& accumulatedProcessorSpeeds, ParticleContainer* moleculeContainer);
 
@@ -221,11 +253,14 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//! @param mols vector to put the particles in
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double startRegion[3], const double endRegion[3], std::vector<Molecule*>& mols) const;
 
+	/*
+	 * Determines the partition rank that is needed for the "cluster" heterogeneous decomposition
+	 */
+	int calculatePartitionRank();
+
 	//######################################
 	//###    private member variables    ###
 	//######################################
-
-
 	//! Length of one cell. The length of the cells is the cutoff-radius, or a
 	//! little bit larger as there has to be a natural number of cells.
 	double _cellSize[KDDIM];
@@ -270,8 +305,50 @@ class KDDecomposition: public DomainDecompMPIBase {
 	double _totalProcessorSpeed;
 	int _processorSpeedUpdateCount;
 	bool _heterogeneousSystems;
+	bool _clusteredHeterogeneouseSystems;
 	bool _splitBiggest;  // indicates, whether a subdomain is to be split along its biggest size
 	bool _forceRatio;  // if you want to enable forcing the above ratio, enable this.
+
+	//The decomp. only searches in all direction, if _splitBiggest is false and the number of processors in a node is less then the _splitThreshold
+	int _splitThreshold;
+	int _numParticleTypes;
+
+	/*
+	 * Stores the maximum number of particles encountered in a cell by the processor (per particle type).
+	 * This information is max-reduced in the destructor to print the overall maximum number of particles (per type).
+	 *
+	 * This is can be useful for the vectorization tuner to know how many values should be measured
+	 * and comes at the cost of only one additional conditional move per cell per load balancing.
+	 */
+	int _maxPars;
+	int _maxPars2;
+
+	/*
+	 * The partition rank that is used in the "clustered" heterogeneous decomposition to determine
+	 * the mpi ranks associated with each cluster.
+	 *
+	 * Cluster 1: (0; partitionRank(
+	 * Cluster 2: (partitionRank; maxRank)
+	 */
+	const int _partitionRank;
+	LoadCalc* _loadCalc; // stores the measured times (and constants) of measured by the vectorization tuner
+
+	/*
+	 * The following Variables are only used for as parameters for the Vectorization tuner constructor.
+	 * They are stored here since the tuner is still partly a optional OutputPlugin which doesn't
+	 * really fit to its use now as essential part of the load balancing of the k-d-tree.
+	 *
+	 * For documentation see public tune function of the vectorization tuner
+	 *
+	 * TODO These should probably be transferred into the tuner at some point,
+	 * when a decision is made whether the tuner should still be a Outputplugin or simply be a part of the
+	 * KDDecomposition (or both)
+	 */
+	std::vector<int> _vecTunParticleNums;
+	bool _generateNewFiles;
+	bool _useExistingFiles;
+
+
 	double _rebalanceLimit; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
 };
 

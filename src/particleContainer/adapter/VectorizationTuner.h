@@ -14,6 +14,7 @@ enum MoleculeCntIncreaseTypeEnum{
 #include <vector>
 #include "io/OutputBase.h"
 #include "ensemble/EnsembleBase.h"
+#include "parallel/LoadCalc.h"
 
 class Component;
 #include "particleContainer/ParticleCellForwardDeclaration.h"
@@ -76,6 +77,18 @@ public:
 		return std::string("VectorizationTuner");
 	}
 
+	/*
+	 * used in the KDDecomposition to fill the TunerTimes object
+	 *
+	 * particleNums stores the number of particles until which the tuner should measure the values
+	 *
+	 * useExistingFiles denotes whether the tuner is allowed to read the tuner values from existing tuner files (if they exist, otherwise they are still calculated)
+	 *
+	 * generateNewFiles denotes whether the tuner should write his measured values to files, which also overwrites old files.
+	 * If both are true and tuner files are available then the values that were read are written again,
+	 */
+	void tune(const std::vector<Component> ComponentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles);
+
 private:
 	/// The output prefix, that should be prefixed before the output files.
 	std::string _outputPrefix;
@@ -113,6 +126,17 @@ private:
 	/// FlopCounter for zero cutoff radius
 	FlopCounter* _flopCounterZeroRc;
 
+	/*
+	 * Writes the given TunerTimes to a file
+	 */
+	void writeFile(const TunerLoad& vecs);
+
+	/*
+	 * Fills the TunerTimes object with values read from a file
+	 *
+	 * returns true on success
+	 */
+	bool readFile(TunerLoad& times);
 
 	/**
 	 * This function is the main routine of this plugin. Multiple simulations are started from here.
@@ -133,6 +157,13 @@ private:
 	 */
 	void iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
 			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero);
+
+	void iteratePair (long long int numRepetitions,
+			ParticleCell& firstCell, ParticleCell& secondCell, double& gflops, double& flopCount, double& time, FlopCounter& flopCounter);
+
+	void iterateOwn (long long int numRepetitions,
+			ParticleCell& cell, double& gflops, double& flopCount, double& time, FlopCounter& flopCounter);
+
 
 	/**
 	 * @brief Calculation of the molecule interactions within a single cell.
@@ -171,7 +202,9 @@ private:
 	 * @param cell
 	 * @param numMols
 	 */
-	void initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell, unsigned int numMols);
+	void initUniformRandomMolecules(Component& comp, ParticleCell& cell, unsigned int numMols);
+
+	void initUniformRandomMolecules(Component& comp1, Component& comp2, ParticleCell& cell, unsigned int numMolsFirst, unsigned int numMolsSecond);
 
 
 	/**
@@ -201,6 +234,8 @@ private:
 	 * @param cell
 	 */
 	void clearMolecules(ParticleCell& cell);
+
+	void initCells(ParticleCell& main, ParticleCell& face, ParticleCell& edge, ParticleCell& corner);
 
 	void iterateOwn(long long int numRepetitions,
 			ParticleCell& cell,

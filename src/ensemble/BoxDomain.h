@@ -10,6 +10,18 @@ public:
 	BoxDomain();
 	virtual ~BoxDomain(){}
 
+
+	/** @brief Read in XML configuration for BoxDomain and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <domain type="box">
+	     <lx>DOUBLE</lx>
+	     <ly>DOUBLE</ly>
+	     <lz>DOUBLE</lz>
+	   </domain>
+	   \endcode
+	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	/** Return volume of the domain */

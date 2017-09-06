@@ -1,6 +1,15 @@
-/*! \page "Mardyn Input Files"
+/*! \page ls1MarDynInputFiles Mardyn Input Files
+
+ls1-MarDyn input files use a xml syntax.
+
+Documentation about the xml structure for the various components can be found in the documentation of their readXML methods.
 
 @TODO write or complete the page...
+
+
+
+Old Config file format (deprecated and removed with the next release)
+---------------------------------------------------------------------
 
 Basically, there seem to be 2 kinds of input files:
 - a configuration file which contains determines technical stuff like io,
@@ -8,11 +17,6 @@ Basically, there seem to be 2 kinds of input files:
 - a phase space specification file, which contains application specific thing
   like the specification of the molecule types being simulated and the positions
   of the indivudual molecules.
-
-
-!!! Config file
-
-@TODO Sketch general.
 
 MDProjectConfig
 

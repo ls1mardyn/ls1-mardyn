@@ -23,7 +23,14 @@ void Molecule_WR::initStaticVars() {
 			return;
 		if (global_simulation->getEnsemble() == nullptr)
 			return;
+		if (global_simulation->getEnsemble()->getComponents() == nullptr){
+			return;
+		}
+		if (global_simulation->getEnsemble()->getComponents()->size() == 0) {
+			return;
+		}
 		_component = global_simulation->getEnsemble()->getComponent(0);
+
 		if (_component == nullptr) {
 			// we are in some constructor and are not ready to initialise yet
 			return;

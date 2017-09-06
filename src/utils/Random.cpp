@@ -1,6 +1,8 @@
 #include "Random.h"
 
-Random::Random() { this->init(8624); }
+Random::Random(int seed) {
+	init(seed);
+}
 
 void Random::init(int seed)
 {

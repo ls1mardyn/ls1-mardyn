@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Christoph Niethammer <christoph.niethammer@gmail.com>
+ * Copyright (c) 2012-2014 Christoph Niethammer <christoph.niethammer@gmail.com>
  *
  * $COPYRIGHT$
  *
@@ -10,8 +10,17 @@
 
 #include "Lattice.h"
 
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
+#include <map>
+#include <string>
+
+#include "utils/Logger.h"
+
 using namespace std;
+using Log::global_log;
 
 /** List of the names of the 7 Bravais lattices */
 static const char* LatticeSystemNames[] = {
@@ -29,69 +38,102 @@ static int LatticeCenteringNums[6] = { 1, 2, 4, 2, 2, 2 };
 
 /** List of the names of the centerings */
 static const char* LatticeCenteringNames[] = {
-    "primitive",
-    "body",
-    "face",
-    "base A",
-    "base B",
-    "base C"
+	"primitive",
+	"body",
+	"face",
+	"base A",
+	"base B",
+	"base C"
 };
 
 /** Array holding the relative coordinates of the lattice centers in the a,b,c system */
 static const double LatticeCenteringCoords[6][4][3] = {
-    { /* primitive */
-        {0.0, 0.0, 0.0}
-    },
-    { /* body */
-        {0.0, 0.0, 0.0},
-        {0.5, 0.5, 0.5}
-    },
-    { /* face */
-        {0.0, 0.0, 0.0},
-        {0.5, 0.5, 0.0},
-        {0.5, 0.0, 0.5},
-        {0.0, 0.5, 0.5}
-    },
-    { /* base A */
-        {0.0, 0.0, 0.0},
-        {0.0, 0.5, 0.5}
-    },
-    { /* base B */
-        {0.0, 0.0, 0.0},
-        {0.5, 0.0, 0.5}
-    },
-    { /* base C */
-        {0.0, 0.0, 0.0},
-        {0.5, 0.5, 0.0}
-    }
+	{ /* primitive */
+		{0.0, 0.0, 0.0}
+	},
+	{ /* body */
+		{0.0, 0.0, 0.0},
+		{0.5, 0.5, 0.5}
+	},
+	{ /* face */
+		{0.0, 0.0, 0.0},
+		{0.5, 0.5, 0.0},
+		{0.5, 0.0, 0.5},
+		{0.0, 0.5, 0.5}
+	},
+	{ /* base A */
+		{0.0, 0.0, 0.0},
+		{0.0, 0.5, 0.5}
+	},
+	{ /* base B */
+		{0.0, 0.0, 0.0},
+		{0.5, 0.0, 0.5}
+	},
+	{ /* base C */
+		{0.0, 0.0, 0.0},
+		{0.5, 0.5, 0.0}
+	}
 };
 
+void Lattice::readXML(XMLfileUnits& xmlconfig) {
+	string latticeSystem;
+	xmlconfig.getNodeValue("@system", latticeSystem);
+	global_log->info() << "Lattice system type: " << latticeSystem << endl;
+	
+	string latticeCentering;
+	xmlconfig.getNodeValue("@centering", latticeCentering);
+	global_log->info() << "Lattice centering: " << latticeCentering << endl;
 
-void Lattice::init(LatticeSystem system, LatticeCentering centering, double a[3], double b[3], double c[3], long int dims[3]) {
+	double a[3];
+	double b[3];
+	double c[3];
+	xmlconfig.getNodeValueReduced("vec[@id='a']/x", a[0]);
+	xmlconfig.getNodeValueReduced("vec[@id='a']/y", a[1]);
+	xmlconfig.getNodeValueReduced("vec[@id='a']/z", a[2]);
+	global_log->info() << "Vec a: " << a[0] << ", " << a[1] << ", " << a[2] << endl;
+	xmlconfig.getNodeValueReduced("vec[@id='b']/x", b[0]);
+	xmlconfig.getNodeValueReduced("vec[@id='b']/y", b[1]);
+	xmlconfig.getNodeValueReduced("vec[@id='b']/z", b[2]);
+	global_log->info() << "Vec b: " << b[0] << ", " << b[1] << ", " << b[2] << endl;
+	xmlconfig.getNodeValueReduced("vec[@id='c']/x", c[0]);
+	xmlconfig.getNodeValueReduced("vec[@id='c']/y", c[1]);
+	xmlconfig.getNodeValueReduced("vec[@id='c']/z", c[2]);
+	global_log->info() << "Vec c: " << c[0] << ", " << c[1] << ", " << c[2] << endl;
+
+	init( Lattice::system(latticeSystem), Lattice::centering(latticeCentering), a, b, c);
+}
+
+void Lattice::init(LatticeSystem system, LatticeCentering centering, double a[3], double b[3], double c[3]) {
 	_system    = system;
 	_centering = centering;
 	for(int d = 0; d < 3; d++) {
 		_a[d] = a[d];
 		_b[d] = b[d];
 		_c[d] = c[d];
-		_dims[d] = dims[d];
-		_pos[d] = 0;
 	}
 	_centeringCounter = 0;
 }
 
 int Lattice::getPoint(double* r) {
-
+    /* after iterating over all centering positions for current cell, move to next cell */
 	if(_centeringCounter >= LatticeCenteringNums[_centering]) {
 		_centeringCounter = 0;
 		_pos[0]++;
-		if(_pos[0] >= _dims[0]) {
-			_pos[0] = 0;
+		/* for hexagonal lattic we have to skip mid points of hexagons */
+		if( (_system == hexagonal) && ( (_pos[0] - _pos[1] + 2) % 3 == 0) ) {
+			_pos[0]++;
+		}
+		if(_pos[0] >= _dimsMax[0]) {
+			_pos[0] = _dimsMin[0];
 			_pos[1]++;
-			if(_pos[1] >= _dims[1]) {
-				_pos[1] = 0;
+			/* for hexagonal lattic we have to skip mid points of hexagons */
+			if( (_system == hexagonal) && ( (_pos[0] - _pos[1] + 2) % 3 == 0) ) {
+				_pos[0]++;
+			}
+			if(_pos[1] >= _dimsMax[1]) {
+				_pos[1] = _dimsMin[1];
 				_pos[2]++;
-				if(_pos[2] >= _dims[2]) {
+				if(_pos[2] >= _dimsMax[2]) {
 					return 0;
 				}
 			}
@@ -108,7 +150,7 @@ int Lattice::getPoint(double* r) {
 	return 1;
 }
 
-int Lattice::checkValidity(){
+bool Lattice::checkValidity(){
 	/* Checks for validity of system centering combination */
 	switch(_system) {
 		case triclinic:
@@ -116,7 +158,7 @@ int Lattice::checkValidity(){
 				case primitive:
 					break;
 				default:
-					return 0;
+					return false;
 			}
 			break;
 		case monoclinic:
@@ -124,7 +166,7 @@ int Lattice::checkValidity(){
 				case primitive:	case base_A: case base_B: case base_C:
 					break;
 				default:
-					return 0;
+					return false;
 			}
 			break;
 		case orthorombic:
@@ -132,7 +174,7 @@ int Lattice::checkValidity(){
 				case primitive: case base_A: case base_B: case base_C: case body: case face:
 					break;
 				default:
-					return 0;
+					return false;
 			}
 			break;
 		case tetragonal:
@@ -140,7 +182,7 @@ int Lattice::checkValidity(){
 				case primitive: case body:
 					break;
 				default:
-					return 0;
+					return false;
 			}
 			break;
 		case rhomboedral:
@@ -148,7 +190,7 @@ int Lattice::checkValidity(){
 				case primitive:
 					break;
 				default:
-					return 0;
+					return false;
 			}
 			break;
 		case hexagonal:
@@ -156,7 +198,7 @@ int Lattice::checkValidity(){
 				case primitive:
 					break;
 				default:
-					return 0;
+					return false;
 			}
 			break;
 		case cubic:
@@ -164,47 +206,59 @@ int Lattice::checkValidity(){
 				case primitive: case body: case face:
 					break;
 				default:
-					return 0;
+					return false;
 			}
 			break;
 		default:
 			return 0;
 	}
-	/* TODO: Check validity of lattice vectors for the given system. */
-	return 1;
+	/** @todo have to implement checking of lattice vectors, as well. */
+	return true;
+}
+
+void Lattice::setDimsMin(long dimsMin[3]) {
+	for(int d = 0; d < 3; d++) {
+		_dimsMin[d] = dimsMin[d];
+		_pos[d] = dimsMin[d];
+	}
+}
+
+void Lattice::setDimsMax(long dimsMax[3]) {
+	for(int d = 0; d < 3; d++) {
+		_dimsMax[d] = dimsMax[d];
+	}
 }
 
 const char* Lattice::systemName() {
-    return LatticeSystemNames[_system];
+	return LatticeSystemNames[_system];
 }
 const char* Lattice::centeringName() {
-    return LatticeCenteringNames[_centering];
+	return LatticeCenteringNames[_centering];
 }
 
-lattice_t* lattice_create() {
-    return new lattice_t();
+int Lattice::numCenters(LatticeCentering centering) {
+	return LatticeCenteringNums[centering];
 }
 
-void lattice_destroy(lattice_t* lattice) {
-    delete lattice;
+LatticeSystem Lattice::system(std::string name) {
+	const char* str = name.c_str();
+	if( strcmp( LatticeSystemNames[triclinic], str ) == 0 ) { return triclinic; }
+	else if( strcmp( LatticeSystemNames[monoclinic], str ) == 0 ) { return monoclinic; }
+	else if( strcmp( LatticeSystemNames[orthorombic], str ) == 0 ) { return orthorombic; }
+	else if( strcmp( LatticeSystemNames[tetragonal], str ) == 0 ) { return tetragonal; }
+	else if( strcmp( LatticeSystemNames[rhomboedral], str ) == 0 ) { return rhomboedral; }
+	else if( strcmp( LatticeSystemNames[hexagonal], str ) == 0 ) { return hexagonal; }
+	else if( strcmp( LatticeSystemNames[cubic], str ) == 0 ) { return cubic; }
+	else { return unknownSystem; }
 }
 
-void lattice_init(lattice_t* lattice, LatticeSystem system, LatticeCentering centering, double a[3], double b[3], double c[3], long dims[3]) {
-    lattice->init(system, centering, a, b, c, dims);
-}
-
-int lattice_getPoint(lattice_t* lattice, double r[3]) {
-    return lattice->getPoint(r);
-}
-
-int lattice_checkValidits(lattice_t *lattice) {
-    return lattice->checkValidity();
-}
-
-const char* lattice_systemName(lattice_t* lattice) {
-    return lattice->systemName();
-}
-
-const char* lattice_centeringName(lattice_t* lattice) {
-    return lattice->centeringName();
+LatticeCentering Lattice::centering(std::string name) {
+	const char* str = name.c_str();
+	if( strcmp( LatticeCenteringNames[primitive], str ) == 0 ) { return primitive; }
+	else if( strcmp( LatticeCenteringNames[body], str ) == 0 ) { return body; }
+	else if( strcmp( LatticeCenteringNames[face], str ) == 0 ) { return face; }
+	else if( strcmp( LatticeCenteringNames[base_A], str ) == 0 ) { return base_A; }
+	else if( strcmp( LatticeCenteringNames[base_B], str ) == 0 ) { return base_B; }
+	else if( strcmp( LatticeCenteringNames[base_C], str ) == 0 ) { return base_C; }
+	else { return unknownCentering; }
 }

@@ -40,6 +40,7 @@ public:
 		_v[2] = vz;
 		_id = id;
 		_soa = nullptr;
+		_soa_index = static_cast<size_t>(-1);
 
 		if(component != nullptr) {
 			_component = component;
@@ -124,9 +125,6 @@ public:
 		setr(d, r(d) + dr);
 	}
 
-	double gMass() {
-		return mass();
-	}
 	double getI(unsigned short d) const {
 		mardyn_assert(false);
 		// TODO: check values for single-centered molecules
@@ -287,7 +285,7 @@ public:
 
 private:
 	static std::array<double, 3> emptyArray3() {
-		mardyn_assert(false);
+		//mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;

@@ -29,7 +29,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 	_globalUpot = 0;
 	_globalVirial = 0;
 	_globalRho = 0;
-	this->_Gamma = map<unsigned, double>();
 
 	this->_universalPG = pg;
 
@@ -82,8 +81,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 }
 
 void Domain::readXML(XMLfileUnits& xmlconfig) {
-	string originalpath = xmlconfig.getcurrentnodepath();
-
 	/* volume */
 	if ( xmlconfig.changecurrentnode( "volume" )) {
 		std::string type;
@@ -100,8 +97,8 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 		else {
 			global_log->error() << "Unsupported volume type " << type << endl;
 		}
+		xmlconfig.changecurrentnode("..");
 	}
-	xmlconfig.changecurrentnode(originalpath);
 
 	/* temperature */
 	bool bInputOk = true;
@@ -110,7 +107,6 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	if(true == bInputOk) {
 		setGlobalTemperature(temperature);
 		global_log->info() << "Temperature: " << temperature << endl;
-		xmlconfig.changecurrentnode(originalpath);
 	}
 
 	/* profiles */
@@ -119,40 +115,14 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/x", xun);
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/y", yun);
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/z", zun);
-	if(true == bInputOk)
-	{
+	if(true == bInputOk) {
 		this->setupProfile(xun, yun, zun);
 		global_log->info() << "Writing profiles with units: " << xun << ", " << yun << ", " << zun << endl;
 	}
-	else
-	{
-		global_log->error() << "Corrupted statements in path: output/outputplugin[@name='DomainProfiles']"
-				", program exit ..." << endl;
+	else {
+		global_log->error() << "Corrupted statements in path: output/outputplugin[@name='DomainProfiles'], program exit ..." << endl;
 		Simulation::exit(-1);
 	}
-
-	bool doRecordProfile = true;
-	bool doRecordVirialProfile = false;
-	unsigned profileRecordingTimesteps = 1;
-	unsigned profileOutputTimesteps = 10000;
-	std::string profileOutputPrefix = "profile";
-	unsigned long initStatistics = 0;
-	xmlconfig.getNodeValue("timesteps/init", initStatistics);
-	xmlconfig.getNodeValue("timesteps/recording", profileRecordingTimesteps);
-	xmlconfig.getNodeValue("timesteps/output", profileOutputTimesteps);
-	xmlconfig.getNodeValue("outputprefix", profileOutputPrefix);
-	bInputOk = true;
-	std::string strKeyword;
-	bInputOk = bInputOk && xmlconfig.getNodeValue("options/option@keyword", strKeyword);
-	if(true == bInputOk && "profileVirial" == strKeyword)
-		doRecordVirialProfile = true;
-
-	global_simulation->setProfileParameters( doRecordProfile,
-			doRecordVirialProfile,
-			profileRecordingTimesteps,
-			profileOutputTimesteps,
-			profileOutputPrefix,
-			initStatistics);
 
 	// recording components
 	{
@@ -174,6 +144,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 				global_log->info() << "Considering component " << cid << " for profile recording." << endl;
 			}
 		}
+		xmlconfig.changecurrentnode(oldpath);
 		this->considerComponentInProfile(0);
 	}
 }
@@ -684,105 +655,7 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ);
 }
 
-/*void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
-	double UpotCorrLJ=0.;
-	double VirialCorrLJ=0.;
-	double MySelbstTerm=0.;
-	vector<Component>* components = _simulation.getEnsemble()->getComponents();
-	unsigned int numcomp=components->size();
-	for(unsigned int i=0;i<numcomp;++i) {
-		Component& ci=(*components)[i];
-		unsigned int numljcentersi=ci.numLJcenters();
-		unsigned int numchargesi = ci.numCharges();
-		unsigned int numdipolesi=ci.numDipoles();
 
-		// effective dipoles computed from point charge distributions
-		double chargeBalance[3];
-		for(unsigned d = 0; d < 3; d++) chargeBalance[d] = 0;
-		for(unsigned int si = 0; si < numchargesi; si++)
-		{
-			double tq = ci.charge(si).q();
-			for(unsigned d = 0; d < 3; d++) chargeBalance[d] += tq * ci.charge(si).r()[d];
-		}
-		// point dipoles
-		for(unsigned int si=0;si<numdipolesi;++si)
-		{
-			double tmy = ci.dipole(si).absMy();
-			double evect = 0;
-			for(unsigned d = 0; d < 3; d++) evect += ci.dipole(si).e()[d] * ci.dipole(si).e()[d];
-			double norm = 1.0 / sqrt(evect);
-			for(unsigned d = 0; d < 3; d++) chargeBalance[d] += tmy * ci.dipole(si).e()[d] * norm;
-		}
-		double my2 = 0.0;
-		for(unsigned d = 0; d < 3; d++) my2 += chargeBalance[d] * chargeBalance[d];
-		MySelbstTerm += my2 * ci.getNumMolecules();
-
-		for(unsigned int j=0;j<numcomp;++j) {
-			Component& cj=(*components)[j];
-			unsigned int numljcentersj=cj.numLJcenters();
-			ParaStrm& params=_comp2params(i,j);
-			params.reset_read();
-			// LJ centers
-			for(unsigned int si=0;si<numljcentersi;++si) {
-				double xi=ci.ljcenter(si).rx();
-				double yi=ci.ljcenter(si).ry();
-				double zi=ci.ljcenter(si).rz();
-				double tau1=sqrt(xi*xi+yi*yi+zi*zi);
-				for(unsigned int sj=0;sj<numljcentersj;++sj) {
-					double xj=cj.ljcenter(sj).rx();
-					double yj=cj.ljcenter(sj).ry();
-					double zj=cj.ljcenter(sj).rz();
-					double tau2=sqrt(xj*xj+yj*yj+zj*zj);
-					if(tau1+tau2>=cutoffRadiusLJ){
-						global_log->error() << "Error calculating cutoff corrections, rc too small" << endl;
-						Simulation::exit(1);
-					}
-					double eps24;
-					params >> eps24;
-					double sig2;
-					params >> sig2;
-					double uLJshift6;
-					params >> uLJshift6;  // 0 unless TRUNCATED_SHIFTED
-
-					if(uLJshift6 == 0.0)
-					{
-						double fac=double(ci.getNumMolecules())*double(cj.getNumMolecules())*eps24;
-						if(tau1==0. && tau2==0.)
-						{
-							UpotCorrLJ+=fac*(TICCu(-6,cutoffRadiusLJ,sig2)-TICCu(-3,cutoffRadiusLJ,sig2));
-							VirialCorrLJ+=fac*(TICCv(-6,cutoffRadiusLJ,sig2)-TICCv(-3,cutoffRadiusLJ,sig2));
-						}
-						else if(tau1!=0. && tau2!=0.)
-						{
-							UpotCorrLJ += fac*( TISSu(-6,cutoffRadiusLJ,sig2,tau1,tau2)
-									- TISSu(-3,cutoffRadiusLJ,sig2,tau1,tau2) );
-							VirialCorrLJ += fac*( TISSv(-6,cutoffRadiusLJ,sig2,tau1,tau2)
-									- TISSv(-3,cutoffRadiusLJ,sig2,tau1,tau2) );
-						}
-						else {
-							if(tau2==0.)
-								tau2=tau1;
-							UpotCorrLJ+=fac*(TICSu(-6,cutoffRadiusLJ,sig2,tau2)-TICSu(-3,cutoffRadiusLJ,sig2,tau2));
-							VirialCorrLJ+=fac*(TICSv(-6,cutoffRadiusLJ,sig2,tau2)-TICSv(-3,cutoffRadiusLJ,sig2,tau2));
-						}
-					}
-				}
-			}
-		}
-	}
-
-	double fac=M_PI*_globalRho/(3.*_globalNumMolecules);
-	UpotCorrLJ*=fac;
-	VirialCorrLJ*=-fac;
-
-	double epsRFInvrc3=2.*(_epsilonRF-1.)/((cutoffRadius*cutoffRadius*cutoffRadius)*(2.*_epsilonRF+1.));
-	MySelbstTerm*=-0.5*epsRFInvrc3;
-
-	_UpotCorr=UpotCorrLJ+MySelbstTerm;
-	_VirialCorr=VirialCorrLJ+3.*MySelbstTerm;
-
-	global_log->info() << "Far field terms: U_pot_correction  = " << _UpotCorr << " virial_correction = " << _VirialCorr << endl;
-}*/
 
 void Domain::setupProfile(unsigned xun, unsigned yun, unsigned zun)
 {
@@ -1346,40 +1219,7 @@ void Domain::submitDU(unsigned /*cid*/, double DU, double* r)
    }
 }
 
-void Domain::resetGamma(){
-	for (unsigned i=0; i<_simulation.getEnsemble()->getComponents()->size(); i++){
-		_Gamma[i]=0;
-	}
-}
 
-double Domain::getGamma(unsigned id){
-	return (_Gamma[id]/(2*_globalLength[0]*_globalLength[2]));
-}
-
-void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition){
-	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
-	std::vector<double> _localGamma(numComp);
-	for (unsigned i=0; i<numComp; i++){
-		_localGamma[i]=0;
-	}
-	for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
-		unsigned cid=tempMol->componentid();
-		_localGamma[cid]+=tempMol->Vi(1)-0.5*(tempMol->Vi(0)+tempMol->Vi(2));
-	//	cout << _localGamma[cid] << "\t" << cid << endl;
-	}
-	_domainDecomposition->collCommInit(numComp);
-	for (unsigned i=0; i<numComp; i++){
-		_domainDecomposition->collCommAppendDouble(_localGamma[i]);
-	}
-	_domainDecomposition->collCommAllreduceSum();
-	for (unsigned i=0; i<numComp; i++){
-		_localGamma[i] = _domainDecomposition->collCommGetDouble();
-	}
-	_domainDecomposition->collCommFinalize();
-	for (unsigned i=0; i<numComp; i++){
-		_Gamma[i]+=_localGamma[i];
-	}
-}
 void Domain::considerComponentForYShift(unsigned cidMin, unsigned cidMax){
     for (unsigned i = 0; i <= cidMax; i++) _componentForYShift[i] = false;
     for (unsigned i = 0; i <= cidMax-cidMin; i++) _componentForYShift[cidMin+i] = true;
@@ -1488,7 +1328,7 @@ void Domain::determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
       {
-	double tmass = tm->gMass();
+	double tmass = tm->mass();
 	localMass += tmass;
 	for(unsigned d = 0; d < 3; d=d+2){ // counting d=d+2 causes the value d==1 (i.e. y-direction) to be skipped, this is performed by the method determineYShift()
 	  localBalance[d] += tm->r(d) * tmass;
@@ -1526,7 +1366,7 @@ void Domain::determineYShift( DomainDecompBase* domainDecomp, ParticleContainer*
      cid = tm->componentid();
      if(_componentForYShift[cid])
      {
-	double tmass = tm->gMass();
+	double tmass = tm->mass();
 
 	localMass += tmass;
 	localBalance += (tm->r(1) - _globalLength[1]*floor(2.0* tm->r(1)/ _globalLength[1]))*tmass; // PBC
@@ -1572,7 +1412,7 @@ void Domain::noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCon
    for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
 
-	double tmass = tm->gMass();
+	double tmass = tm->mass();
 
 	localMass += tmass;
 	localBalance += (tm->r(1) - _globalLength[1]*floor(2.0* tm->r(1)/ _globalLength[1]))*tmass; // PBC
@@ -1627,7 +1467,7 @@ void Domain::determineShift( DomainDecompBase* domainDecomp, ParticleContainer* 
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
       {
-        double tmass = tm->gMass();
+        double tmass = tm->mass();
         localMass += tmass;
         for(unsigned d = 0; d < 3; d++){
           localBalance[d] += tm->r(d) * tmass;
