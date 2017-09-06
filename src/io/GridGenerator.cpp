@@ -21,6 +21,35 @@
 using Log::global_log;
 using namespace std;
 
+/** The VelocityAssigner can be used to assign normally distributed velocity vectors with absolute value mathching to a given temperature.
+ */
+class VelocityAssigner {
+public:
+	VelocityAssigner() : _T(0), _rng() {}
+	~VelocityAssigner(){}
+
+	void setTemperature(double T) { _T = T; }
+	double T() { return _T; }
+
+	void assignVelocity(Molecule *molecule) {
+		double v_abs = sqrt(/*kB=1*/ T() / molecule->component()->m());
+		/* pick angels for uniform distributino on S^2. */
+		double phi, theta;
+		phi   = 2*M_PI * _rng.rnd();
+		theta = acos(2 * _rng.rnd() - 1);
+
+		double v[3];
+		v[0] = v_abs * sin(phi);
+		v[1] = v_abs * cos(phi) * sin(theta);
+		v[2] = v_abs * cos(phi) * cos(theta);
+		for(int d = 0; d < 3; d++) {
+			molecule->setv(d, v[d]);
+		}
+	}
+private:
+	double _T;
+	Random _rng;
+};
 
 void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query("subgenerator");
@@ -39,31 +68,22 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	unsigned long numMolecules = 0;
 
 	Ensemble* ensemble = _simulation.getEnsemble();
-	Random rng;
 	double bBoxMin[3];
 	double bBoxMax[3];
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
 	MoleculeIdPool moleculeIdPool(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());
 
+	VelocityAssigner velocityAssigner;
+	velocityAssigner.setTemperature(ensemble->T());
 	for(auto generator : _generators) {
 		Molecule molecule;
 		generator->setBoudingBox(bBoxMin, bBoxMax);
 		generator->init();
 		while(generator->getMolecule(&molecule) > 0) {
-			double v_abs = sqrt(/*kB=1*/ ensemble->T() / molecule.component()->m());
-			double phi, theta;
-			phi = rng.rnd();
-			theta = rng.rnd();
-			double v[3];
-			v[0] = v_abs * sin(phi);
-			v[1] = v_abs * cos(phi) * sin(theta);
-			v[2] = v_abs * cos(phi) * cos(theta);
-			for(int d = 0; d < 3; d++) {
-				molecule.setv(d, v[d]);
-			}
+			molecule.setid(moleculeIdPool.getNewMoleculeId());
+			velocityAssigner.assignVelocity(&molecule);
 			Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
 			molecule.setq(q);
-			molecule.setid(moleculeIdPool.getNewMoleculeId());
 			bool inserted = particleContainer->addParticle(molecule);
 			if(inserted){
 				numMolecules++;
