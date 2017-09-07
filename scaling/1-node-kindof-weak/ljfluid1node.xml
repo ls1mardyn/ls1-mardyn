@@ -66,10 +66,9 @@
     </algorithm>
 
     <output>
-      <outputplugin name="LJFLOPCounter"></outputplugin>
       <outputplugin name="FlopRateWriter">
 		<mode>stdout</mode>
-        <writefrequency>5</writefrequency>
+        <writefrequency>10</writefrequency>
       </outputplugin>
 <!--      <outputplugin name="SysMonOutput">
         <expression>procloadavg:loadavg1</expression>
