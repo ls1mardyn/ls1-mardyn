@@ -292,10 +292,13 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 	unsigned long int i_lj = 0, i_charge=0, i_charge_dipole=0, i_dipole=0, i_charge_quadrupole=0, i_dipole_quadrupole=0, i_quadrupole=0;
 	unsigned long int i_mm = 0;
 
+	const vcp_real_calc _ljCutSq_rc = static_cast<vcp_real_calc>(_LJCutoffRadiusSquare);
+	const vcp_real_calc _cutSq_rc = static_cast<vcp_real_calc>(_cutoffRadiusSquare);
+
 	for (size_t i = 0 ; i < end_i ; ++i) {
-		const double m1_x = soa1_mol_pos_x[i];
-		const double m1_y = soa1_mol_pos_y[i];
-		const double m1_z = soa1_mol_pos_z[i];
+		const vcp_real_calc m1_x = soa1_mol_pos_x[i];
+		const vcp_real_calc m1_y = soa1_mol_pos_y[i];
+		const vcp_real_calc m1_z = soa1_mol_pos_z[i];
 
 		const int numLJcenters_i 	= soa1_mol_ljc_num[i];
 		const int numCharges_i 		= soa1_mol_charges_num[i];
@@ -308,27 +311,27 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 				soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z, soa2_mol_ljc_num, soa2_mol_charges_num, soa2_mol_dipoles_num, soa2_mol_quadrupoles_num: 64)
 		#endif
 		for (size_t j = ForcePolicy::InitJ(i); j < end_j ; ++j) {
-			const double m2_x = soa2_mol_pos_x[j];
-			const double m2_y = soa2_mol_pos_y[j];
-			const double m2_z = soa2_mol_pos_z[j];
+			const vcp_real_calc m2_x = soa2_mol_pos_x[j];
+			const vcp_real_calc m2_y = soa2_mol_pos_y[j];
+			const vcp_real_calc m2_z = soa2_mol_pos_z[j];
 
 			const int numLJcenters_j 	= soa2_mol_ljc_num[j];
 			const int numCharges_j 		= soa2_mol_charges_num[j];
 			const int numDipoles_j 		= soa2_mol_dipoles_num[j];
 			const int numQuadrupoles_j 	= soa2_mol_quadrupoles_num[j];
 
-			const double d_x = m1_x - m2_x;
-			const double d_y = m1_y - m2_y;
-			const double d_z = m1_z - m2_z;
-			const double dist2 = d_x * d_x + d_y * d_y + d_z * d_z;
+			const vcp_real_calc d_x = m1_x - m2_x;
+			const vcp_real_calc d_y = m1_y - m2_y;
+			const vcp_real_calc d_z = m1_z - m2_z;
+			const vcp_real_calc dist2 = d_x * d_x + d_y * d_y + d_z * d_z;
 
 			++ i_mm;
 
-			if (dist2 < _LJCutoffRadiusSquare) {
+			if (dist2 < _ljCutSq_rc) {
 				i_lj += numLJcenters_i * numLJcenters_j;
 			}
 
-			if(dist2 < _cutoffRadiusSquare) {
+			if(dist2 < _cutSq_rc) {
 				i_charge += numCharges_i * numCharges_j;
 				i_charge_dipole += numCharges_i * numDipoles_j + numDipoles_i * numCharges_j;
 				i_dipole += numDipoles_i * numDipoles_j;
@@ -372,10 +375,12 @@ void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA
 	unsigned long int i_lj = 0;
 	unsigned long int i_mm = 0;
 
+	const vcp_real_calc _ljCutSq_rc = static_cast<vcp_real_calc>(_LJCutoffRadiusSquare);
+
 	for (size_t i = 0 ; i < end_i ; ++i) {
-		const double m1_x = soa1_mol_pos_x[i];
-		const double m1_y = soa1_mol_pos_y[i];
-		const double m1_z = soa1_mol_pos_z[i];
+		const vcp_real_calc m1_x = soa1_mol_pos_x[i];
+		const vcp_real_calc m1_y = soa1_mol_pos_y[i];
+		const vcp_real_calc m1_z = soa1_mol_pos_z[i];
 
 		const int numLJcenters_i 	= 1;
 
@@ -385,20 +390,20 @@ void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA
 				soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z: 64)
 		#endif
 		for (size_t j = ForcePolicy::InitJ(i); j < end_j ; ++j) {
-			const double m2_x = soa2_mol_pos_x[j];
-			const double m2_y = soa2_mol_pos_y[j];
-			const double m2_z = soa2_mol_pos_z[j];
+			const vcp_real_calc m2_x = soa2_mol_pos_x[j];
+			const vcp_real_calc m2_y = soa2_mol_pos_y[j];
+			const vcp_real_calc m2_z = soa2_mol_pos_z[j];
 
 			const int numLJcenters_j 	= 1;
 
-			const double d_x = m1_x - m2_x;
-			const double d_y = m1_y - m2_y;
-			const double d_z = m1_z - m2_z;
-			const double dist2 = d_x * d_x + d_y * d_y + d_z * d_z;
+			const vcp_real_calc d_x = m1_x - m2_x;
+			const vcp_real_calc d_y = m1_y - m2_y;
+			const vcp_real_calc d_z = m1_z - m2_z;
+			const vcp_real_calc dist2 = d_x * d_x + d_y * d_y + d_z * d_z;
 
 			++ i_mm;
 
-			if (dist2 < _LJCutoffRadiusSquare) {
+			if (dist2 < _ljCutSq_rc) {
 				i_lj += numLJcenters_i * numLJcenters_j;
 			}
 		}
