@@ -173,7 +173,7 @@ public:
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m != MaskVec::zero();
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-			return _mm_movemask_epi8(_m);
+			return _mm_movemask_ps(_mm_castsi128_ps(_m));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 			return _mm256_movemask_ps(_mm256_castsi256_ps(_m));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
@@ -183,7 +183,7 @@ public:
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m != MaskVec::zero();
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-			return _mm_movemask_epi8(_m);
+			return _mm_movemask_pd(_mm_castsi128_pd(_m));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 			return _mm256_movemask_pd(_mm256_castsi256_pd(_m));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
