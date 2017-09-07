@@ -858,6 +858,9 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
+	measureFLOPRate(_moleculeContainer, 0);
+
 
 #ifdef MARDYN_WR
 	// now set vcp1clj_wr_cellProcessor::_dtInvm back.

@@ -67,7 +67,7 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/,
 		std::map<unsigned, CavityEnsemble>* /*mcav*/) {
 
-	if(simstep % _writeFrequency != 0) {
+	if (not ((_writeFrequency == 1 and simstep > 0) or simstep % _writeFrequency == 1)) {
 		return;
 	}
 
