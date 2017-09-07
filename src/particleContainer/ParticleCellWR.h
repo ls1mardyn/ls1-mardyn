@@ -15,7 +15,7 @@ class ParticleCell_WR: public ParticleCellBase {
 public:
 	ParticleCell_WR();
 
-	ParticleCell_WR(const ParticleCell_WR& other):_cellDataSoA_WR(0){
+	ParticleCell_WR(const ParticleCell_WR& /*other*/):_cellDataSoA_WR(0){
 		_dummy = Molecule();
 	}
 

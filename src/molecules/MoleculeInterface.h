@@ -197,7 +197,11 @@ public:
 			setr(d,r(d) + dt * v(d));
 		}
 	}
-	void ee_upd_postF(double dt, double& summv2) {
+	void ee_upd_postF(double
+#ifndef MARDYN_WR
+		dt
+#endif
+		, double& summv2) {
 
 		calcFM();
 

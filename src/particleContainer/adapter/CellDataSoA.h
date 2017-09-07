@@ -186,7 +186,7 @@ public:
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
-		const bool allow_shrink = false; // TODO shrink at some point in the future
+//		const bool allow_shrink = false; // TODO shrink at some point in the future
 
 		_mol_num = molecules_arg;
 		_ljc_num = ljcenters_arg;
