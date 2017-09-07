@@ -168,7 +168,7 @@ public:
 #endif
 	}
 
-	bool movemask() const {
+	int movemask() const {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m != MaskVec::zero();
@@ -189,6 +189,16 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 			return _m != MaskVec::zero();
 	#endif
+#endif
+	}
+
+	int countUnmasked() const {
+#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+		return _m;
+#elif VCP_VEC_WIDTH == VCP_VEC_W_128 or VCP_VEC_WIDTH == VCP_VEC_W_256
+		return __builtin_popcount(movemask());
+#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		return __builtin_popcount(_m);
 #endif
 	}
 };

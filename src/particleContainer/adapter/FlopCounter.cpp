@@ -13,6 +13,9 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
+#include "vectorization/SIMD_VectorizedCellProcessorHelpers.h"
+#include "vectorization/MaskGatherChooser.h"
+
 FlopCounter::_Counts::_Counts():
 	_moleculeDistances(0.), _distanceMultiplier(8){
 	// 3 sub + 3 square + 2 add
@@ -172,16 +175,14 @@ void FlopCounter::endTraversal() {
 //	_totalFlopCount = _totalCounts.process();
 }
 
-class CellPairPolicy_ {
+class CellPairPolicy_FlopCounter_ {
 public:
-
 	inline static size_t InitJ(const size_t /*i*/) {
 		return 0;
 	}
 };
-class SingleCellPolicy_ {
+class SingleCellPolicy_FlopCounter_ {
 public:
-
 	inline static size_t InitJ(const size_t i) {
 		return i+1;
 	}
@@ -200,7 +201,11 @@ void FlopCounter::processCell(ParticleCell & c) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
-	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic>(soa, soa);
+#ifndef MARDYN_WR
+	_calculatePairs<SingleCellPolicy_FlopCounter_, CalculateMacroscopic>(soa, soa);
+#else
+	_calculatePairs<SingleCellPolicy_<true>, CalculateMacroscopic>(soa, soa);
+#endif
 }
 
 void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
@@ -246,11 +251,19 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	{
 		const bool CalculateMacroscopic = true;
 
+#ifndef MARDYN_WR
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa1, soa2);
+			_calculatePairs<CellPairPolicy_FlopCounter_, CalculateMacroscopic>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa2, soa1);
+			_calculatePairs<CellPairPolicy_FlopCounter_, CalculateMacroscopic>(soa2, soa1);
 		}
+#else
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_<true>, CalculateMacroscopic>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_<true>, CalculateMacroscopic>(soa2, soa1);
+		}
+#endif
 
 	} else {
 		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
@@ -258,11 +271,19 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 
 		const bool CalculateMacroscopic = false;
 
+#ifndef MARDYN_WR
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa1, soa2);
+			_calculatePairs<CellPairPolicy_FlopCounter_, CalculateMacroscopic>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa2, soa1);
+			_calculatePairs<CellPairPolicy_FlopCounter_, CalculateMacroscopic>(soa2, soa1);
 		}
+#else
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_<true>, CalculateMacroscopic>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_<true>, CalculateMacroscopic>(soa2, soa1);
+		}
+#endif
 	}
 }
 
@@ -374,40 +395,18 @@ void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA
 
 	unsigned long int i_lj = 0;
 	unsigned long int i_mm = 0;
-
+	
 	const vcp_real_calc _ljCutSq_rc = static_cast<vcp_real_calc>(_LJCutoffRadiusSquare);
 
-	for (size_t i = 0 ; i < end_i ; ++i) {
-		const vcp_real_calc m1_x = soa1_mol_pos_x[i];
-		const vcp_real_calc m1_y = soa1_mol_pos_y[i];
-		const vcp_real_calc m1_z = soa1_mol_pos_z[i];
+	RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(_ljCutSq_rc);
 
-		const int numLJcenters_i 	= 1;
-
-		#if defined(_OPENMP)
-		#pragma omp simd reduction(+ : i_lj, i_mm) \
-		aligned(soa1_mol_pos_x, soa1_mol_pos_y, soa1_mol_pos_z, \
-				soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z: 64)
-		#endif
-		for (size_t j = ForcePolicy::InitJ(i); j < end_j ; ++j) {
-			const vcp_real_calc m2_x = soa2_mol_pos_x[j];
-			const vcp_real_calc m2_y = soa2_mol_pos_y[j];
-			const vcp_real_calc m2_z = soa2_mol_pos_z[j];
-
-			const int numLJcenters_j 	= 1;
-
-			const vcp_real_calc d_x = m1_x - m2_x;
-			const vcp_real_calc d_y = m1_y - m2_y;
-			const vcp_real_calc d_z = m1_z - m2_z;
-			const vcp_real_calc dist2 = d_x * d_x + d_y * d_y + d_z * d_z;
-
-			++ i_mm;
-
-			if (dist2 < _ljCutSq_rc) {
-				i_lj += numLJcenters_i * numLJcenters_j;
-			}
-		}
+	for (size_t i = 0; i < end_i; ++i) {
+		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
+		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
+		const RealCalcVec m1_r_z = RealCalcVec::broadcast(soa1_mol_pos_z + i);
+		i_lj += calcDistLookup<ForcePolicy, CountUnmasked_MGC>(i, end_j, nullptr, soa2_mol_pos_x, soa2_mol_pos_y, soa2_mol_pos_z, cutoffRadiusSquare,end_j, m1_r_x, m1_r_y, m1_r_z);
 	}
+	i_mm = static_cast<unsigned long>(ForcePolicy::NumDistanceCalculations(end_i, end_j));
 
 	const int tid = mardyn_get_thread_num();
 	_Counts &my_threadData = *_threadData[tid];

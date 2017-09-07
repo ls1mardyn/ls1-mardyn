@@ -215,3 +215,19 @@ public:
 #else
 	typedef GatherChooser MaskGatherC;
 #endif
+
+class CountUnmasked_MGC {
+private:
+	countertype32 _numUnmasked;
+public:
+	vcp_inline CountUnmasked_MGC(vcp_mask_single* const /*soa2_center_dist_lookup*/, size_t /*j*/)
+	: _numUnmasked(0) {}
+
+	vcp_inline int getCount() {
+		return _numUnmasked;
+	}
+
+	vcp_inline void storeCalcDistLookup(size_t j, MaskVec forceMask) {
+		_numUnmasked += forceMask.countUnmasked();
+	}
+};
