@@ -60,7 +60,7 @@ public:
 	}
 
 	MaskVec operator and (const MaskVec& rhs) const {
-#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m & rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -84,7 +84,7 @@ public:
 	}
 
 	MaskVec operator or (const MaskVec& rhs) const {
-#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m | rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -108,7 +108,7 @@ public:
 	}
 
 	MaskVec operator xor (const MaskVec & rhs) const {
-#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m ^ rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -169,7 +169,7 @@ public:
 	}
 
 	bool movemask() const {
-#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m != MaskVec::zero();
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
