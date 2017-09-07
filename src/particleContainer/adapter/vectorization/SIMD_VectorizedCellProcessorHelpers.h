@@ -472,7 +472,7 @@ public:
  */
 template<class ForcePolicy, class MaskGatherChooser>
 countertype32
-static inline calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const vcp_real_calc & cutoffRadiusSquare,
+static inline calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers,
 		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const vcp_real_calc* const soa2_m_r_x, const vcp_real_calc* const soa2_m_r_y, const vcp_real_calc* const soa2_m_r_z,
 		const RealCalcVec & cutoffRadiusSquareD, size_t end_j, const RealCalcVec m1_r_x, const RealCalcVec m1_r_y, const RealCalcVec m1_r_z) {
 
