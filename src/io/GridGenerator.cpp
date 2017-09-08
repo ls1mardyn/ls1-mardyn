@@ -7,13 +7,13 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
-#include "utils/Random.h"
 #include "utils/xmlfileUnits.h"
 #include "molecules/MoleculeIdPool.h"
 
 #include <cmath>
 #include <limits>
 #include <map>
+#include <random>
 #include <string>
 
 #if ENABLE_MPI
@@ -27,7 +27,7 @@ using namespace std;
  */
 class VelocityAssigner {
 public:
-	VelocityAssigner() : _T(0), _rng() {}
+	VelocityAssigner() : _T(0), _mt(), _uniformDistrubtion(0, 1) {}
 	~VelocityAssigner(){}
 
 	void setTemperature(double T) { _T = T; }
@@ -37,9 +37,8 @@ public:
 		double v_abs = sqrt(/*kB=1*/ T() / molecule->component()->m());
 		/* pick angels for uniform distributino on S^2. */
 		double phi, theta;
-		phi   = 2*M_PI * _rng.rnd();
-		theta = acos(2 * _rng.rnd() - 1);
-
+		phi   = 2*M_PI * _uniformDistrubtion(_mt);
+		theta = acos(2 * _uniformDistrubtion(_mt) - 1);
 		double v[3];
 		v[0] = v_abs * sin(phi);
 		v[1] = v_abs * cos(phi) * sin(theta);
@@ -50,7 +49,8 @@ public:
 	}
 private:
 	double _T;
-	Random _rng;
+	std::mt19937 _mt; //!< Mersenne twister used as input for the uniform distribution
+	std::uniform_real_distribution<double> _uniformDistrubtion;
 };
 
 void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
