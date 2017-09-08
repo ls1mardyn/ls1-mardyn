@@ -6,6 +6,7 @@
 #include "io/InputBase.h"
 #include "utils/generator/Generator.h"
 
+class VelocityAssignerBase;
 
 class GridGenerator : public InputBase {
 public:
@@ -24,6 +25,7 @@ public:
 private:
 
 	std::list<Generator*> _generators;
+	VelocityAssignerBase *_velocityAssigner;
 };
 
 #endif  // SRC_IO_GRIDGENERATOR_H_
