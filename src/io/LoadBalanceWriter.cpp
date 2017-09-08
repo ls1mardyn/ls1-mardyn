@@ -82,8 +82,9 @@ void LoadbalanceWriter::writeOutputFileHeader() {
 	}
 	outputfile << "\n\t";
 	for(auto timername : _timerNames) {
-		outputfile << "\tmin\tmax\tf_LB" << std::endl;
+		outputfile << "\tmin\tmax\tf_LB";
 	}
+	outputfile << std::endl;
 	outputfile.close();
 }
 
