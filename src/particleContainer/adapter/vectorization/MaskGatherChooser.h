@@ -220,7 +220,7 @@ class CountUnmasked_MGC {
 private:
 	countertype32 _numUnmasked;
 public:
-	vcp_inline CountUnmasked_MGC(vcp_mask_single* const /*soa2_center_dist_lookup*/, size_t /*j*/)
+	vcp_inline CountUnmasked_MGC(vcp_lookupOrMask_single* const /*soa2_center_dist_lookup*/, size_t /*j*/)
 	: _numUnmasked(0) {}
 
 	vcp_inline int getCount() {
