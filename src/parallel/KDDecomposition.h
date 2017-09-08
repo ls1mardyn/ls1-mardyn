@@ -70,6 +70,11 @@ class KDDecomposition: public DomainDecompMPIBase {
 	   <parallelisation type="KDDecomposition">
 	     <updateFrequency>INTEGER</updateFrequency>
 	     <fullSearchThreshold>INTEGER</fullSearchThreshold>
+	     <heterogeneousSystems>BOOL</heterogeneousSystems>
+	     <clusterHetSys>BOOL</clusterHetSys>
+	     <splitBiggestDimension>BBOL</splitBiggestDimension>
+	     <forceRatio>BOOL</forceRatio>
+	     <rebalanceLimit>DOUBLE</rebalanceLimit>
 	     <splitThreshold>INTEGER</splitThreshold>
 	   </parallelisation>
 	   \endcode
