@@ -99,6 +99,21 @@ void Generator::readXML(XMLfileUnits& xmlconfig) {
 		_basis.readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
+	double rho = 0.0;
+	if(xmlconfig.getNodeValueReduced("density", rho)) {
+		global_log->info() << "Initializing cubic lattice with density: " << rho << endl;
+		global_log->warning() << "Initializing cubic lattice with density overwrites previously set lattice system and vectors." << endl;
+		long num_molecules_per_crystal_cell = _basis.numMolecules() * _lattice.numCenters();
+		global_log->debug() << "Number of molecules per crystall cell: " << num_molecules_per_crystal_cell << endl;
+		double crystal_cell_volume = num_molecules_per_crystal_cell / rho;
+		double l = pow(crystal_cell_volume, 1./3.);
+		double a[3], b[3], c[3];
+		a[0] = l; a[1] = 0; a[2] = 0;
+		b[0] = 0; b[1] = l; b[2] = 0;
+		c[0] = 0; c[1] = 0; c[2] = l;
+		_lattice.init(cubic, _lattice.centering(), a, b, c);
+	}
+
 	Coordinate3D origin(xmlconfig, "latticeOrigin");
 	origin.get(_origin);
 	global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << endl;

@@ -81,6 +81,12 @@ public:
 		*/
 	bool checkValidity();
 
+	void setSystem(LatticeSystem system) { _system = system; }
+	LatticeSystem system() { return _system; }
+
+	void setCentering(LatticeCentering centering) { _centering = centering; }
+	LatticeCentering centering() { return _centering; }
+	int numCenters() { return numCenters(centering()); }
 
 	/** Get the name of the lattice system. */
 	const char* systemName();

@@ -38,6 +38,7 @@ public:
 	         <y>DOUBLE</y>
 	         <z>DOUBLE</z>
 	     </latticeOrigin>
+	     <densit>DOUBLE</density>
 	     <object type=""><!-- ... --></object>
 	   </generator>
 	   \endcode
