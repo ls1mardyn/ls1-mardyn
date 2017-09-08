@@ -99,9 +99,13 @@ void Generator::readXML(XMLfileUnits& xmlconfig) {
 		_basis.readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
+	xmlconfig.getNodeValue("latticeOccupancy", _latticeOccupancy);
+	global_log->info() << "Lattice occupancy: " << _latticeOccupancy << endl;
 	double rho = 0.0;
 	if(xmlconfig.getNodeValueReduced("density", rho)) {
-		global_log->info() << "Initializing cubic lattice with density: " << rho << endl;
+		global_log->info() << "Density: " << rho << endl;
+		rho /= _latticeOccupancy;
+		global_log->info() << "Initializing cubic lattice with density (fully occupied): " << rho << endl;
 		global_log->warning() << "Initializing cubic lattice with density overwrites previously set lattice system and vectors." << endl;
 		long num_molecules_per_crystal_cell = _basis.numMolecules() * _lattice.numCenters();
 		global_log->debug() << "Number of molecules per crystall cell: " << num_molecules_per_crystal_cell << endl;
@@ -115,7 +119,7 @@ void Generator::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	Coordinate3D origin(xmlconfig, "latticeOrigin");
-	origin.get(_origin);
+	origin.get(_origin.data());
 	global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << endl;
 
 	if(xmlconfig.changecurrentnode("object")) {
@@ -150,6 +154,10 @@ int Generator::getMolecule(Molecule* molecule) {
 		}
 
 		_baseCount = (_baseCount + 1) % _basis.numMolecules();
+
+		if(_dis(_gen) > _latticeOccupancy) {
+			continue;
+		}
 
 		if(_object->isInside(r)) {
 			for(int d = 0; d < 3; d++) {
