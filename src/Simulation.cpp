@@ -1096,7 +1096,10 @@ void Simulation::simulate() {
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
-		// activate RDF sampling
+		/** @todo FIXME: here two things are done:
+		 * 1. the actual kernel to collect rdf data in the handler is activated which would have to be done only once.
+		 * 2. the number of sampling steps is incremented, which has to be done each time step.
+		 */
 		RDF* rdf;
 		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
 			global_log->info() << "Activating the RDF sampling" << endl;
@@ -1433,7 +1436,7 @@ void Simulation::simulate() {
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
         _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, _finalCheckpointBinary);
     }
-	// finish output
+	global_log->info() << "Finish output from output plugins" << endl;
 	for (auto outputPlugin : _outputPlugins) {
 		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
