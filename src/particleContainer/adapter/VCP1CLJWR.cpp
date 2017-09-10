@@ -197,8 +197,12 @@ vcp_inline void VCP1CLJ_WR::_loopBodyLJ(
 	const RealCalcVec& eps_24, const RealCalcVec& sig2,
 	const RealCalcVec& shift6)
 {
+#if 0
 	const RealCalcVec r2_inv_unmasked = one / c_r2;
 	const RealCalcVec r2_inv = RealCalcVec::apply_mask(r2_inv_unmasked, forceMask);
+#else
+	const RealCalcVec r2_inv = RealCalcVec::fastReciprocal_mask(c_r2, forceMask);
+#endif
 
 
 	const RealCalcVec lj2 = sig2 * r2_inv;//1FP (scale)
