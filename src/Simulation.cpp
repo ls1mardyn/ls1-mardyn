@@ -1010,17 +1010,13 @@ void Simulation::simulate() {
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
-	/* demonstration for the usage of the new ensemble class */
-	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
-	ensemble.updateGlobalVariable(NUM_PARTICLES);
-	global_log->debug() << "Number of particles in the Ensemble: "
-			<< ensemble.N() << endl;
-	ensemble.updateGlobalVariable(ENERGY);
-	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E()
-		<< endl;
-	ensemble.updateGlobalVariable(TEMPERATURE);
-	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-		<< endl;*/
+
+	_ensemble->updateGlobalVariable(_moleculeContainer, NUM_PARTICLES);
+	global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << endl;
+// 	ensemble.updateGlobalVariable(ENERGY);
+// 	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
+// 	ensemble.updateGlobalVariable(TEMPERATURE);
+// 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;*/
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
@@ -1379,9 +1375,11 @@ void Simulation::simulate() {
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
+		//! @todo the number of particles per component stored in components has to be
+		//!       updated here in case we insert/remove particles
+		// _ensemble->updateGlobalVariable(NUM_PARTICLES);
+		// global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << endl;
 		/*
-		ensemble.updateGlobalVariable(NUM_PARTICLES);
-		global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
 		ensemble.updateGlobalVariable(ENERGY);
 		global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
