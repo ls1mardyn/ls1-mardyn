@@ -100,7 +100,7 @@ int run_unit_tests(const Values &options, const vector<string> &args) {
 	}
 	std::string testDataDirectory(options.get("testDataDirectory"));
 	global_log->info() << "Test data directory: " << testDataDirectory << endl;
-	Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
+	Log::logLevel testLogLevel = (options.is_set("verbose") && options.get("verbose")) ? Log::All : Log::Info;
 	int testresult = runTests(testLogLevel, testDataDirectory, testcases);
 	return testresult;
 }
