@@ -1010,10 +1010,6 @@ void Simulation::simulate() {
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
-// 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
-// 			/ _integrator->getTimestepLength());
-//    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
-	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
 	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
