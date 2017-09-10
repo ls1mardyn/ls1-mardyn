@@ -81,7 +81,7 @@ public:
 	//! @todo: remove it and replace it by component.getNumMolecules()
 	void accumulateNumberOfMolecules(std::vector<Component>& components) const;
 
-	void observeRDF(Molecule& mi, Molecule& mj, double dd, double /*distanceVector*/ [3]) const {
+	void observeRDF(Molecule const& mi, Molecule const& mj, double dd) const {
 		observeRDF(dd, mi.componentid(), mj.componentid());
 
 		if(_doCollectSiteRDF) {
