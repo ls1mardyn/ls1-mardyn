@@ -150,9 +150,9 @@ public:
 	void reset();  //!< reset all values to 0, except the accumulated ones.
 
 private:
-
 	void init();
-
+	unsigned int numBins() const { return _bins; }
+	double binwidth() const { return _intervalLength; }
 	void collectRDF(DomainDecompBase* domainDecomp);  //!< update global values from local once
 
 	//! Update the "accumulatedXXX"-fields from the "global"-variables.

@@ -338,10 +338,10 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 
 	double N_pair_int = 0.0;
 	double N_Apair_int = 0.0;
-	for(unsigned l=0; l < this->_bins; l++) {
-		double rmin = l * _intervalLength;
-		double rmid = (l+0.5) * _intervalLength;
-		double rmax = (l+1.0) * _intervalLength;
+	for(unsigned int l = 0; l < numBins(); ++l) {
+		double rmin = l * binwidth();
+		double rmid = (l+0.5) * binwidth();
+		double rmax = (l+1.0) * binwidth();
 		double r3min = rmin*rmin*rmin;
 		double r3max = rmax*rmax*rmax;
 		double dV = (4.0 / 3.0) * M_PI * (r3max - r3min);
