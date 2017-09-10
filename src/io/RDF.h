@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "io/OutputBase.h"
@@ -106,17 +107,13 @@ public:
 	 * This method "really" counts the number of molecule pairs within a certain distance.
 	 */
 	void observeRDF(double dd, unsigned i, unsigned j) const {
-		if(dd > _maxDistanceSquare) return;
-		if(i > j) {
-			this->observeRDF(dd, j, i);
-			return;
-		}
-
-		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
+		if(dd > _maxDistanceSquare) { return; }
+		if(i > j) { std::swap(j, i); }
+		size_t binId = floor( sqrt(dd) / binwidth() );
 		#if defined _OPENMP
 		#pragma omp atomic
 		#endif
-		this->_localDistribution[i][j-i][l] ++;
+		_localDistribution[i][j-i][binId]++;
 	}
 
 	/**
@@ -124,22 +121,19 @@ public:
 	 * m_i, n_j at distance dd.
 	 */
 	inline void observeRDF(double dd, unsigned i, unsigned j, unsigned m, unsigned n) const {
-		if(dd > _maxDistanceSquare) return;
-		if(i > j) {
-			this->observeRDF(dd, j, i, n, m);
-			return;
-		}
+		if(dd > _maxDistanceSquare) { return; }
+		if(i > j) { std::swap(j, i); }
 
-		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
+		unsigned int binId = floor( sqrt(dd) / binwidth() );
 		#if defined _OPENMP
 		#pragma omp atomic
 		#endif
-		this->_localSiteDistribution[i][j-i][m][n][l] ++;
+		_localSiteDistribution[i][j-i][m][n][binId] ++;
 		if((i == j) && (m != n)){
 			#if defined _OPENMP
 			#pragma omp atomic
 			#endif
-			this->_localSiteDistribution[i][j-i][n][m][l] ++;
+			_localSiteDistribution[i][j-i][n][m][binId] ++;
 		}
 	}
 
