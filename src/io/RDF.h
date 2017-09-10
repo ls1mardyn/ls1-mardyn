@@ -84,7 +84,7 @@ public:
 	void observeRDF(Molecule const& mi, Molecule const& mj, double dd) const {
 		observeRDF(dd, mi.componentid(), mj.componentid());
 
-		if(_doCollectSiteRDF) {
+		if(isEnabledSiteRDF()) {
 			double drs[3];
 			double dr2;
 			unsigned si = mi.numSites();
@@ -145,9 +145,7 @@ public:
 		}
 	}
 
-	bool siteRDF() {
-		return this->_doCollectSiteRDF;
-	}
+	bool isEnabledSiteRDF() const { return _doCollectSiteRDF; }
 
 	void reset();  //!< reset all values to 0, except the accumulated ones.
 
