@@ -33,7 +33,9 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-12x12x12.inp", 1.0);
 	CanonicalEnsemble ensemble;
 
+	ensemble.addComponent((*(global_simulation->getEnsemble()->getComponents()))[0]);
 	Component* component = ensemble.getComponent(0);
+
 
 	ensemble.updateGlobalVariable(container, NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?
