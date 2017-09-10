@@ -1094,7 +1094,7 @@ void Simulation::simulate() {
 		 */
 		RDF* rdf;
 		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
-			global_log->info() << "Activating the RDF sampling" << endl;
+			global_log->debug() << "Activating the RDF sampling" << endl;
 			rdf->tickRDF();
 			_particlePairsHandler->setRDF(rdf);
 			rdf->accumulateNumberOfMolecules(*(getEnsemble()->getComponents()));
@@ -1106,7 +1106,7 @@ void Simulation::simulate() {
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
 		particleNoTest = _moleculeContainer->getNumberOfParticles();
-		global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
+		global_log->debug()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
         if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
