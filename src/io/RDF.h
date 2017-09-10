@@ -161,7 +161,7 @@ private:
 	//! @note consequently, collectRDF should be called just before.
 	void accumulateRDF();
 
-	void writeToFile(const Domain* domain, const char* filename, unsigned int i, unsigned int j) const;
+	void writeToFile(const Domain* domain, std::string filename, unsigned int i, unsigned int j) const;
 
 	//! The length of an interval
 	//! Only used for the output to scale the "radius"-axis.

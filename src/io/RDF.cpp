@@ -270,7 +270,7 @@ void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* d
 					osstrm.fill('0');
 					osstrm.width(9);
 					osstrm << std::right << simStep << ".rdf";
-					writeToFile(domain, osstrm.str().c_str(), i, j);
+					writeToFile(domain, osstrm.str(), i, j);
 				}
 			}
 		}
@@ -279,8 +279,7 @@ void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* d
 }
 
 
-void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, unsigned j) const {
-
+void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, unsigned j) const {
 	ofstream rdfout(filename);
 	if( rdfout.fail() ) {
 		global_log->error() << "[RDF] Failed opening output file '" << filename << "'" << endl;
