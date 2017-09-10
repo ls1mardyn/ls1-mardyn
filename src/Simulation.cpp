@@ -1101,7 +1101,7 @@ void Simulation::simulate() {
 			global_log->info() << "Activating the RDF sampling" << endl;
 			rdf->tickRDF();
 			_particlePairsHandler->setRDF(rdf);
-			rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
+			rdf->accumulateNumberOfMolecules(*(getEnsemble()->getComponents()));
 		}
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
