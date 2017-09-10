@@ -103,7 +103,7 @@ public:
 	}
 
 	/**
-	 * This method "really" counts the number of pairs within a certain distance.
+	 * This method "really" counts the number of molecule pairs within a certain distance.
 	 */
 	void observeRDF(double dd, unsigned i, unsigned j) const {
 		if(_numberOfRDFTimesteps <= 0) return;
@@ -143,23 +143,19 @@ public:
 			#endif
 			this->_localSiteDistribution[i][j-i][n][m][l] ++;
 		}
-		//std::cout << "Observed RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
 	}
 
 	bool siteRDF() {
 		return this->_doCollectSiteRDF;
 	}
 
-	//! set all values counted to 0, except the accumulated ones.
-	void reset();
+	void reset();  //!< reset all values to 0, except the accumulated ones.
 
 private:
 
 	void init();
 
-	//! Performs a reduction of the local rdf data of all nodes
-	//! to update the "global" fields
-	void collectRDF(DomainDecompBase* domainDecomp);
+	void collectRDF(DomainDecompBase* domainDecomp);  //!< update global values from local once
 
 	//! Update the "accumulatedXXX"-fields from the "global"-variables.
 	//! @note consequently, collectRDF should be called just before.
@@ -194,8 +190,7 @@ private:
 
 	/**
 	 * holds the numberOfMolecules of component i at _globalCtr[i], globally.
-	 *
-	 * @todo remove it, as it can be retrieved via Component::getNumMolecules()
+	 * accumulates over time steps as the number of molecules may change
 	 */
 	unsigned long* _globalCtr;
 
@@ -222,12 +217,8 @@ private:
 
 	unsigned long *****_globalAccumulatedSiteDistribution;
 
-	/**
-	 * aggregation interval for the RDF data
-	 */
-	unsigned int _writeFrequency;
-
-	std::string _outputPrefix;
+	unsigned int _writeFrequency;  //!< aggregation and output writing interval for the RDF data
+	std::string _outputPrefix;  //!< output prefix for rdf files
 
 	bool _initialized;
 	bool _readConfig;
