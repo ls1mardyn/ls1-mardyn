@@ -14,11 +14,19 @@ using namespace std;
 using namespace Log;
 
 RDF::RDF() :
+	_intervalLength(0),
+	_bins(0),
+	_numberOfComponents(0),
 	_components(_simulation.getEnsemble()->getComponents()),
+	_numberOfRDFTimesteps(0),
+	_accumulatedNumberOfRDFTimesteps(0),
+	_maxDistanceSquare(0.0),
+	_doCollectSiteRDF(false),
+	_writeFrequency(1),
+	_outputPrefix("ls1-mardyn"),
 	_initialized(false),
 	_readConfig(false)
-{
-}
+{}
 
 void RDF::init() {
 	if(!_readConfig){
