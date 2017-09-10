@@ -106,7 +106,6 @@ public:
 	 * This method "really" counts the number of molecule pairs within a certain distance.
 	 */
 	void observeRDF(double dd, unsigned i, unsigned j) const {
-		if(_numberOfRDFTimesteps <= 0) return;
 		if(dd > _maxDistanceSquare) return;
 		if(i > j) {
 			this->observeRDF(dd, j, i);
@@ -125,7 +124,6 @@ public:
 	 * m_i, n_j at distance dd.
 	 */
 	inline void observeRDF(double dd, unsigned i, unsigned j, unsigned m, unsigned n) const {
-		if(_numberOfRDFTimesteps <= 0) return;
 		if(dd > _maxDistanceSquare) return;
 		if(i > j) {
 			this->observeRDF(dd, j, i, n, m);
