@@ -680,27 +680,34 @@ void Simulation::readConfigFile(string filename) {
 
 void Simulation::initConfigXML(const string& inputfilename) {
 	global_log->info() << "Initializing XML config file: " << inputfilename << endl;
-	XMLfileUnits inp(inputfilename);
 
-	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
+	try{
+		XMLfileUnits inp(inputfilename);
 
-	if(inp.changecurrentnode("/mardyn") < 0) {
-		global_log->error() << "Cound not find root node /mardyn in XML input file." << endl;
-		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
-		Simulation::exit(1);
-	}
+		global_log->debug() << "Input XML:" << endl << string(inp) << endl;
 
-	string version("unknown");
-	inp.getNodeValue("@version", version);
-	global_log->info() << "MarDyn XML config file version: " << version << endl;
+		if(inp.changecurrentnode("/mardyn") < 0) {
+			global_log->error() << "Cound not find root node /mardyn in XML input file." << endl;
+			global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
+			Simulation::exit(1);
+		}
 
-	if(inp.changecurrentnode("simulation")) {
-		readXML(inp);
-		inp.changecurrentnode("..");
-	} // simulation-section
-	else {
-		global_log->error() << "Simulation section missing" << endl;
-		Simulation::exit(1);
+		string version("unknown");
+		inp.getNodeValue("@version", version);
+		global_log->info() << "MarDyn XML config file version: " << version << endl;
+
+		if(inp.changecurrentnode("simulation")) {
+			readXML(inp);
+			inp.changecurrentnode("..");
+		} // simulation-section
+		else {
+			global_log->error() << "Simulation section missing" << endl;
+			Simulation::exit(1);
+		}
+	} catch (const std::exception& e) {
+		global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
+		global_log->error() << "Exception: " << e.what() << std::endl;
+		mardyn_exit(7);
 	}
 
 #ifdef ENABLE_MPI
