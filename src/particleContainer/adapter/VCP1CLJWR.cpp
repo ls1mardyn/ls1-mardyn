@@ -227,7 +227,7 @@ vcp_inline void VCP1CLJ_WR::_loopBodyLJ(
 
 		sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
 
-		sum_virial = sum_virial + c_dx * f_x + c_dy * f_y + c_dz * f_z;//1 FP (sum macro) + 2 FP (virial)
+		sum_virial = sum_virial + c_dx * f_x + c_dy * f_y + c_dz * f_z;//1 FP (sum macro) + 5 FP (virial)
 	}
 }
 

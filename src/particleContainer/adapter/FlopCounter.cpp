@@ -23,11 +23,20 @@ FlopCounter::_Counts::_Counts():
 
 //inverse R squared is one, because only 1/(R^2) has to be calculated, while R^2 already is calculated.
 
+#ifndef MARDYN_WR
 	// Kernel: 15 = 1 (inverse R squared) + 8 (compute scale) + 3 (apply scale) + 3 (virial tensor)
 	// Macro: 4 = 2 (upot) + 2 (virial)
 	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 0 (torques)
 	// sum Macro: 2 (upot + virial) + 0 (RF)
 	initPotCounter(I_LJ, "Lennard-Jones", 15, 4, 12, 2);
+#else
+	// in WR mode, we don't sum up the virials:
+	// Kernel: 12 = 1 (inverse R squared) + 8 (compute scale) + 3 (apply scale) + 0 (virial tensor)
+	// Macro: 4 = 2 (upot) + 5 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 0 (virials) + 0 (torques)
+	// sum Macro: 2 (upot + virial) + 0 (RF)
+	initPotCounter(I_LJ, "Lennard-Jones", 12, 7, 6, 2);
+#endif
 
 	// Kernel: 10 = 1 (inverse R squared) + 1 (square root) + 2 (compute scale) + 3 (apply scale) + 3 (virial tensor)
 	// Macro: 2 = 0 (upot) + 2 (virial)
