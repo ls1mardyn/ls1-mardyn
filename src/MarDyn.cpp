@@ -59,6 +59,11 @@ void program_build_info(Log::Logger &log) {
 	get_mpi_info(info_str);
 	log << "MPI library: " << info_str << endl;
 #endif
+#if defined(MARDYN_SPSP)
+	log << "Precision: Single" << endl;
+#else
+	log << "Precision: Double" << endl;
+#endif
 #if defined(_OPENMP)
 	log << "Compiled with OpenMP support" << endl;
 #endif
