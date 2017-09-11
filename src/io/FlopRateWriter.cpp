@@ -86,7 +86,7 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 		global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << endl
 			<< "\tFLOP-Count per Iteration: " << flops << " FLOPs" << endl
 			<< "\tFLOP-rate in force calculation: " << flop_rate_force << " MFLOPS" << endl
-			<< "\tFLOP-rate for main loop       : " << flop_rate_loop << " MFLOPS (" << flop_rate_loop / flop_rate_force << " %)" << endl;
+			<< "\tFLOP-rate for main loop       : " << flop_rate_loop << " MFLOPS (" << flop_rate_loop / flop_rate_force * 100. << " %)" << endl;
 	}
 
 
