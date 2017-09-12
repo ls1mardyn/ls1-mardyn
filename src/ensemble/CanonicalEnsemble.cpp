@@ -19,7 +19,7 @@
 using namespace std;
 using Log::global_log;
 
-void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
+void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable ) {
 
 	const int numComponents = this->numComponents();
 
@@ -30,12 +30,11 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		global_log->debug() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
 		unsigned long *numMolecules = new unsigned long[numComponents];
-		for( int cid = 0; cid < numComponents; cid++) 
+		for( int cid = 0; cid < numComponents; cid++) {
 			numMolecules[cid] = 0;
-		for(ParticleIterator tM = _particles->iteratorBegin(); tM != _particles->iteratorEnd(); ++tM) {
-			Molecule& molecule = *tM;
-			const int cid = molecule.componentid();
-			numMolecules[cid]++;
+		}
+		for(auto molecule = particleContainer->iteratorBegin(); molecule != particleContainer->iteratorEnd(); ++molecule) {
+			numMolecules[molecule->componentid()]++;
 		}
 #ifdef ENABLE_MPI
 		_simulation.domainDecomposition().collCommInit(numComponents);
@@ -75,19 +74,19 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 
 	if ( (variable & ENERGY) | (variable & TEMPERATURE) ) {
 		global_log->debug() << "Updating energy" << endl;
-	  double *E_trans = new double [numComponents];
-	  double *E_rot = new double[numComponents];
-	  for( int cid = 0; cid < numComponents; cid++)
-		  E_trans[cid] = E_rot[cid] = 0.0;
-	  for(ParticleIterator tM = _particles->iteratorBegin(); tM != _particles->iteratorEnd(); ++tM) {
-		  Molecule& molecule = *tM;
-		  const int cid = molecule.componentid();
-		  double E_trans_loc = 0.0;
-		  double E_rot_loc = 0.0;
-		  molecule.calculate_mv2_Iw2( E_trans_loc, E_rot_loc );
-		  E_trans[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
-		  E_rot[cid]   += E_rot_loc;  // 2*k_{B} * E_{rot}
-	  }
+	double *E_trans = new double [numComponents];
+	double *E_rot = new double[numComponents];
+	for( int cid = 0; cid < numComponents; cid++) {
+		E_trans[cid] = E_rot[cid] = 0.0;
+	}
+	for(auto molecule = particleContainer->iteratorBegin(); molecule != particleContainer->iteratorEnd(); ++molecule) {
+		const int cid = molecule->componentid();
+		double E_trans_loc = 0.0;
+		double E_rot_loc = 0.0;
+		molecule->calculate_mv2_Iw2( E_trans_loc, E_rot_loc );
+		E_trans[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
+		E_rot[cid]   += E_rot_loc;  // 2*k_{B} * E_{rot}
+	}
 #ifdef ENABLE_MPI
 	  _simulation.domainDecomposition().collCommInit(2*numComponents);
 	  for( int cid = 0; cid < numComponents; cid++ ) {

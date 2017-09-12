@@ -11,6 +11,9 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
+#include <array>
+#include <random>
+
 #include "Basis.h"
 #include "Lattice.h"
 #include "Objects.h"
@@ -22,7 +25,7 @@ class Object;
 /** Lattice generator */
 class Generator {
 public:
-	Generator(){}
+	Generator() : _lattice(), _basis(), _origin{{0.0, 0.0, 0.0}}, _object(nullptr), _latticeOccupancy(1.0), _dis(0.0, 1.0), _gen(0) {}
 	~Generator(){}
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
@@ -38,6 +41,8 @@ public:
 	         <y>DOUBLE</y>
 	         <z>DOUBLE</z>
 	     </latticeOrigin>
+	     <densit>DOUBLE</density>
+	     <latticeOccupancy>DOUBLE</latticeOccupancy>
 	     <object type=""><!-- ... --></object>
 	   </generator>
 	   \endcode
@@ -70,8 +75,12 @@ private:
 
 	Lattice _lattice;
 	Basis _basis;
-	double _origin[3];
+	std::array<double, 3> _origin;
 	Object *_object;
+	double _latticeOccupancy;
+
+	std::uniform_real_distribution<> _dis;
+	std::mt19937 _gen;
 
 	/* Internal values/counters used during the creation by getMolecule */
 	long _baseCount;

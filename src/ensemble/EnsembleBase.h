@@ -9,6 +9,7 @@
 
 #include "DomainBase.h"
 
+class ParticleContainer;
 class MixingRuleBase;
 
 
@@ -53,7 +54,7 @@ public:
 
 	//! @brief Calculate global variables
 	//! @param variable Variable to be updated.
-	virtual void updateGlobalVariable(GlobalVariable variable) = 0;
+	virtual void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) = 0;
 
 	DomainBase* &domain() { return _domain; }
 	Component* getComponent(int cid) { return &_components[cid]; }

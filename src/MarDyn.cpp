@@ -59,6 +59,11 @@ void program_build_info(Log::Logger &log) {
 	get_mpi_info(info_str);
 	log << "MPI library: " << info_str << endl;
 #endif
+#if defined(MARDYN_SPSP)
+	log << "Precision: Single" << endl;
+#else
+	log << "Precision: Double" << endl;
+#endif
 #if defined(_OPENMP)
 	log << "Compiled with OpenMP support" << endl;
 #endif
@@ -100,7 +105,7 @@ int run_unit_tests(const Values &options, const vector<string> &args) {
 	}
 	std::string testDataDirectory(options.get("testDataDirectory"));
 	global_log->info() << "Test data directory: " << testDataDirectory << endl;
-	Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
+	Log::logLevel testLogLevel = (options.is_set("verbose") && options.get("verbose")) ? Log::All : Log::Info;
 	int testresult = runTests(testLogLevel, testDataDirectory, testcases);
 	return testresult;
 }

@@ -428,6 +428,10 @@ public:
 
 		return result;
 	}
+
+	inline static size_t NumDistanceCalculations(const size_t numSoA1, const size_t /*numSoA2*/) {
+		return numSoA1 * (numSoA1 - 1) / 2;
+	}
 }; /* end of class SingleCellPolicy_ */
 
 /**
@@ -465,6 +469,10 @@ public:
 	{
 		return MaskVec::ones();//totally unimportant, since not used...
 	}
+
+	inline static size_t NumDistanceCalculations(const size_t numSoA1, const size_t numSoA2) {
+		return numSoA1 * numSoA2;
+	}
 }; /* end of class CellPairPolicy_ */
 
 /**
@@ -472,7 +480,7 @@ public:
  */
 template<class ForcePolicy, class MaskGatherChooser>
 countertype32
-static inline calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const vcp_real_calc & cutoffRadiusSquare,
+static vcp_inline calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers,
 		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const vcp_real_calc* const soa2_m_r_x, const vcp_real_calc* const soa2_m_r_y, const vcp_real_calc* const soa2_m_r_z,
 		const RealCalcVec & cutoffRadiusSquareD, size_t end_j, const RealCalcVec m1_r_x, const RealCalcVec m1_r_y, const RealCalcVec m1_r_z) {
 

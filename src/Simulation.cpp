@@ -757,27 +757,34 @@ void Simulation::readConfigFile(string filename) {
 
 void Simulation::initConfigXML(const string& inputfilename) {
 	global_log->info() << "Initializing XML config file: " << inputfilename << endl;
-	XMLfileUnits inp(inputfilename);
 
-	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
+	try{
+		XMLfileUnits inp(inputfilename);
 
-	if(inp.changecurrentnode("/mardyn") < 0) {
-		global_log->error() << "Cound not find root node /mardyn in XML input file." << endl;
-		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
-		Simulation::exit(1);
-	}
+		global_log->debug() << "Input XML:" << endl << string(inp) << endl;
 
-	string version("unknown");
-	inp.getNodeValue("@version", version);
-	global_log->info() << "MarDyn XML config file version: " << version << endl;
+		if(inp.changecurrentnode("/mardyn") < 0) {
+			global_log->error() << "Cound not find root node /mardyn in XML input file." << endl;
+			global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
+			Simulation::exit(1);
+		}
 
-	if(inp.changecurrentnode("simulation")) {
-		readXML(inp);
-		inp.changecurrentnode("..");
-	} // simulation-section
-	else {
-		global_log->error() << "Simulation section missing" << endl;
-		Simulation::exit(1);
+		string version("unknown");
+		inp.getNodeValue("@version", version);
+		global_log->info() << "MarDyn XML config file version: " << version << endl;
+
+		if(inp.changecurrentnode("simulation")) {
+			readXML(inp);
+			inp.changecurrentnode("..");
+		} // simulation-section
+		else {
+			global_log->error() << "Simulation section missing" << endl;
+			Simulation::exit(1);
+		}
+	} catch (const std::exception& e) {
+		global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
+		global_log->error() << "Exception: " << e.what() << std::endl;
+		mardyn_exit(7);
 	}
 
 #ifdef ENABLE_MPI
@@ -935,6 +942,9 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
+	measureFLOPRate(_moleculeContainer, 0);
+
 
 #ifdef MARDYN_WR
 	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
@@ -1131,21 +1141,13 @@ void Simulation::simulate() {
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
-// 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
-// 			/ _integrator->getTimestepLength());
-//    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
-	// _initSimulation = 1;
-	/* demonstration for the usage of the new ensemble class */
-	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
-	ensemble.updateGlobalVariable(NUM_PARTICLES);
-	global_log->debug() << "Number of particles in the Ensemble: "
-			<< ensemble.N() << endl;
-	ensemble.updateGlobalVariable(ENERGY);
-	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E()
-		<< endl;
-	ensemble.updateGlobalVariable(TEMPERATURE);
-	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-		<< endl;*/
+
+	_ensemble->updateGlobalVariable(_moleculeContainer, NUM_PARTICLES);
+	global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << endl;
+// 	ensemble.updateGlobalVariable(ENERGY);
+// 	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
+// 	ensemble.updateGlobalVariable(TEMPERATURE);
+// 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;*/
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
@@ -1364,12 +1366,16 @@ void Simulation::simulate() {
 
 
 		// activate RDF sampling
+		/** @todo FIXME: here two things are done:
+		 * 1. the actual kernel to collect rdf data in the handler is activated which would have to be done only once.
+		 * 2. the number of sampling steps is incremented, which has to be done each time step.
+		 */
 		RDF* rdf;
 		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
-			global_log->info() << "Activating the RDF sampling" << endl;
+			global_log->debug() << "Activating the RDF sampling" << endl;
 			rdf->tickRDF();
 			_particlePairsHandler->setRDF(rdf);
-			rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
+			rdf->accumulateNumberOfMolecules(*(getEnsemble()->getComponents()));
 		}
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
@@ -1378,7 +1384,7 @@ void Simulation::simulate() {
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
 		particleNoTest = _moleculeContainer->getNumberOfParticles();
-		global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
+		global_log->debug()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
         if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
@@ -1720,9 +1726,11 @@ void Simulation::simulate() {
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
+		//! @todo the number of particles per component stored in components has to be
+		//!       updated here in case we insert/remove particles
+		// _ensemble->updateGlobalVariable(NUM_PARTICLES);
+		// global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << endl;
 		/*
-		ensemble.updateGlobalVariable(NUM_PARTICLES);
-		global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
 		ensemble.updateGlobalVariable(ENERGY);
 		global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
@@ -1773,7 +1781,7 @@ void Simulation::simulate() {
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
         _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, _finalCheckpointBinary);
     }
-	// finish output
+	global_log->info() << "Finish output from output plugins" << endl;
 	for (auto outputPlugin : _outputPlugins) {
 		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}

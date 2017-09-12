@@ -14,11 +14,19 @@ using namespace std;
 using namespace Log;
 
 RDF::RDF() :
+	_intervalLength(0),
+	_bins(0),
+	_numberOfComponents(0),
 	_components(_simulation.getEnsemble()->getComponents()),
+	_numberOfRDFTimesteps(0),
+	_accumulatedNumberOfRDFTimesteps(0),
+	_maxDistanceSquare(0.0),
+	_doCollectSiteRDF(false),
+	_writeFrequency(1),
+	_outputPrefix("ls1-mardyn"),
 	_initialized(false),
 	_readConfig(false)
-{
-}
+{}
 
 void RDF::init() {
 	if(!_readConfig){
@@ -145,8 +153,7 @@ RDF::~RDF() {
 }
 
 void RDF::accumulateNumberOfMolecules(vector<Component>& components) const {
-	const int num_components = components.size();
-	for (int i = 0; i < num_components; i++) {
+	for (size_t i = 0; i < components.size(); i++) {
 		_globalCtr[i] += components[i].getNumMolecules();
 	}
 }
@@ -258,7 +265,7 @@ void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* d
 		unsigned long simStep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
 	if(_numberOfRDFTimesteps <= 0) return;
 
-	if (simStep > 0 && simStep % _writeFrequency == 0) {
+	if((simStep > 0) && (simStep % _writeFrequency == 0)) {
 		collectRDF(domainDecomposition);
 		
 		if( domainDecomposition->getRank() == 0 ) {
@@ -270,9 +277,7 @@ void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* d
 					osstrm.fill('0');
 					osstrm.width(9);
 					osstrm << std::right << simStep << ".rdf";
-					writeToFile(domain, osstrm.str().c_str(), i, j);
-					osstrm.str("");
-					osstrm.clear();
+					writeToFile(domain, osstrm.str(), i, j);
 				}
 			}
 		}
@@ -281,14 +286,14 @@ void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* d
 }
 
 
-void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, unsigned j) const {
-
+void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, unsigned j) const {
 	ofstream rdfout(filename);
 	if( rdfout.fail() ) {
-		global_log->error() << "Failed opening output file '" << filename << "'" << endl;
+		global_log->error() << "[RDF] Failed opening output file '" << filename << "'" << endl;
 		return;
 	}
 
+	global_log->debug() << "[RDF] Writing output" << endl;
 	unsigned ni = (*_components)[i].numSites();
 	unsigned nj = (*_components)[j].numSites();
 
@@ -309,8 +314,8 @@ void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, un
 		for(unsigned m=0; m < ni; m++) {
 			rdfout << "\t";
 			for(unsigned n=0; n < nj; n++) {
-                                Nsite_pair_int[m][n] = 0.0;
-                                Nsite_Apair_int[m][n] = 0.0;
+				Nsite_pair_int[m][n] = 0.0;
+				Nsite_Apair_int[m][n] = 0.0;
 				rdfout << "\t(" << m << ", " << n << ")_curr{loc, int}   (" << m << ", " << n << ")_accu{loc, int}";
 			}
 		}
@@ -329,8 +334,8 @@ void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, un
 		for(unsigned m=0; m < ni; m++) {
 			rdfout << "\t";
 			for(unsigned n=0; n < nj; n++) {
-                                Nsite_pair_int[m][n] = 0.0;
-                                Nsite_Apair_int[m][n] = 0.0;
+				Nsite_pair_int[m][n] = 0.0;
+				Nsite_Apair_int[m][n] = 0.0;
 				rdfout << "\t(" << m << "," << n << ")_curr{rdf, rdf_integral}   (" << m << "," << n << ")_accu{rdf, rdf_integral}";
 			}
 		}
@@ -340,10 +345,10 @@ void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, un
 
 	double N_pair_int = 0.0;
 	double N_Apair_int = 0.0;
-	for(unsigned l=0; l < this->_bins; l++) {
-		double rmin = l * _intervalLength;
-		double rmid = (l+0.5) * _intervalLength;
-		double rmax = (l+1.0) * _intervalLength;
+	for(unsigned int l = 0; l < numBins(); ++l) {
+		double rmin = l * binwidth();
+		double rmid = (l+0.5) * binwidth();
+		double rmax = (l+1.0) * binwidth();
 		double r3min = rmin*rmin*rmin;
 		double r3max = rmax*rmax*rmax;
 		double dV = (4.0 / 3.0) * M_PI * (r3max - r3min);
@@ -357,15 +362,13 @@ void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, un
 		double N_pair_int_norm = 0.0;
 		double N_Apair_int_norm = 0.0;
 
-		if(i == j)
-		{
+		if(i == j) {
 			N_pair_norm = 0.5*N_i*(N_i-1.0) * dV/V;
 			N_Apair_norm = 0.5*N_Ai*(N_Ai-1.0) * dV/V;
 			N_pair_int_norm = 0.5*N_i*(N_i-1.0) * 4.1887902*r3max/V;
 			N_Apair_int_norm = 0.5*N_Ai*(N_Ai-1.0) * 4.1887902*r3max/V;
 		}
-		else
-		{
+		else {
 			N_pair_norm = N_i*N_j * dV/V;
 			N_Apair_norm = N_Ai*N_Aj * dV/V;
 			N_pair_int_norm = N_i*N_j * 4.1887902*r3max/V;
@@ -377,13 +380,10 @@ void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, un
 				<< "\t\t" << dV << "\t" << N_pair << "\t" << N_Apair
 				<< "\t\t" << N_pair_norm << "\t" << N_Apair_norm;
 
-		if(ni+nj > 2)
-		{
-			for(unsigned m=0; m < ni; m++)
-			{
+		if(ni+nj > 2) {
+			for(unsigned m=0; m < ni; m++) {
 				rdfout << "\t";
-				for(unsigned n=0; n < nj; n++)
-				{
+				for(unsigned n=0; n < nj; n++) {
 					double p = _globalSiteDistribution[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
 					Nsite_pair_int[m][n] += p;
 					double ap = _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;

@@ -29,7 +29,7 @@
 #include <set>
 #include <stack>
 
-#define RAPIDXML_NO_EXCEPTIONS
+//#define RAPIDXML_NO_EXCEPTIONS
 #include "rapidxml/rapidxml.hpp"
 
 #ifdef ENABLE_MPI

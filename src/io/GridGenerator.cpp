@@ -7,13 +7,13 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
-#include "utils/Random.h"
 #include "utils/xmlfileUnits.h"
 #include "molecules/MoleculeIdPool.h"
 
 #include <cmath>
 #include <limits>
 #include <map>
+#include <random>
 #include <string>
 
 #if ENABLE_MPI
@@ -23,23 +23,33 @@
 using Log::global_log;
 using namespace std;
 
-/** The VelocityAssigner can be used to assign normally distributed velocity vectors with absolute value mathching to a given temperature.
+/** The VelocityAssignerBase implements the gernal functionality and interface to assign velocity vectors mathing to a given temperature.
  */
-class VelocityAssigner {
+class VelocityAssignerBase {
 public:
-	VelocityAssigner() : _T(0), _rng() {}
-	~VelocityAssigner(){}
-
+	VelocityAssignerBase(double T = 0) : _T(T) {}
+	~VelocityAssignerBase(){}
 	void setTemperature(double T) { _T = T; }
 	double T() { return _T; }
+	virtual void assignVelocity(Molecule *molecule) = 0;
+private:
+	double _T;  //!< coressponding target temperature
+};
+
+
+/** The VelocityAssigner can be used to assign normally distributed velocity vectors with absolute value mathching to a given temperature.
+ */
+class EqualVelocityAssigner : public VelocityAssignerBase {
+public:
+	EqualVelocityAssigner(double T = 0, int seed = 0) : VelocityAssignerBase(T), _mt(seed), _uniformDistrubtion(0, 1) {}
+	~EqualVelocityAssigner(){}
 
 	void assignVelocity(Molecule *molecule) {
 		double v_abs = sqrt(/*kB=1*/ T() / molecule->component()->m());
 		/* pick angels for uniform distributino on S^2. */
 		double phi, theta;
-		phi   = 2*M_PI * _rng.rnd();
-		theta = acos(2 * _rng.rnd() - 1);
-
+		phi   = 2*M_PI * _uniformDistrubtion(_mt);
+		theta = acos(2 * _uniformDistrubtion(_mt) - 1);
 		double v[3];
 		v[0] = v_abs * sin(phi);
 		v[1] = v_abs * cos(phi) * sin(theta);
@@ -49,9 +59,33 @@ public:
 		}
 	}
 private:
-	double _T;
-	Random _rng;
+	std::mt19937 _mt; //!< Mersenne twister used as input for the uniform distribution
+	std::uniform_real_distribution<double> _uniformDistrubtion;
 };
+
+
+/** The MaxwellVelocityAssigner can be used to assign maxwell boltzmann distributed velocity vectors mathching to a given temperature.
+ */
+class MaxwellVelocityAssigner : public VelocityAssignerBase {
+public:
+	MaxwellVelocityAssigner(double T = 0, int seed = 0) : VelocityAssignerBase(T), _mt(seed), _normalDistrubtion(0.0, 1.0) {}
+	~MaxwellVelocityAssigner() {}
+
+	void assignVelocity(Molecule *molecule) {
+		double v_abs = sqrt(/*kB=1*/ T() / molecule->component()->m());
+		double v[3];
+		v[0] = v_abs * _normalDistrubtion(_mt);
+		v[1] = v_abs * _normalDistrubtion(_mt);
+		v[2] = v_abs * _normalDistrubtion(_mt);
+		for(int d = 0; d < 3; d++) {
+			molecule->setv(d, v[d]);
+		}
+	}
+private:
+	std::mt19937 _mt; //!< Mersenne twister used as input for the normal distribution
+	std::normal_distribution<double> _normalDistrubtion;
+};
+
 
 void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query("subgenerator");
@@ -63,7 +97,15 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 		_generators.back()->readXML(xmlconfig);
 	}
 	xmlconfig.changecurrentnode(oldpath);
+	std::string velocityAssignerName;
+	xmlconfig.getNodeValue("velocityAssigner", velocityAssignerName);
+	if(velocityAssignerName == "EqualVelocityDistribution") {
+		_velocityAssigner = new EqualVelocityAssigner();
+	} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
+		_velocityAssigner = new MaxwellVelocityAssigner();
+	}
 }
+
 
 long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
 		Domain* domain, DomainDecompBase* domainDecomp) {
@@ -75,15 +117,14 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
 	MoleculeIdPool moleculeIdPool(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());
 
-	VelocityAssigner velocityAssigner;
-	velocityAssigner.setTemperature(ensemble->T());
+	_velocityAssigner->setTemperature(ensemble->T());
 	for(auto generator : _generators) {
 		Molecule molecule;
 		generator->setBoudingBox(bBoxMin, bBoxMax);
 		generator->init();
 		while(generator->getMolecule(&molecule) > 0) {
 			molecule.setid(moleculeIdPool.getNewMoleculeId());
-			velocityAssigner.assignVelocity(&molecule);
+			_velocityAssigner->assignVelocity(&molecule);
 			Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
 			molecule.setq(q);
 			bool inserted = particleContainer->addParticle(molecule);
@@ -103,6 +144,5 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	domain->setGlobalTemperature(ensemble->T());
 	domain->setglobalNumMolecules(globalNumMolecules);
 	domain->setglobalRho(numMolecules / ensemble->V() );
-	//! @todo reduce numMolecules?!
 	return numMolecules;
 }
