@@ -36,7 +36,7 @@ class XMLfileUnits;
 class MettDeamon
 {
 public:
-	MettDeamon(double cutoffRadius);
+	MettDeamon();
 	~MettDeamon();
 
 	void readXML(XMLfileUnits& xmlconfig);
@@ -71,7 +71,6 @@ private:
 	double _dSlabWidthInit;
 	double _dSlabWidth;
 	double _dReservoirWidthY;
-	double _cutoffRadius;
 	uint64_t _nUpdateFreq;
 	uint64_t _nWriteFreqRestart;
 	uint64_t _nMaxMoleculeID;

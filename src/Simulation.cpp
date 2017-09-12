@@ -356,7 +356,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(featureName == "MettDeamon") {
 				if(NULL == _mettDeamon)
-					_mettDeamon = new MettDeamon(_cutoffRadius);
+					_mettDeamon = new MettDeamon();
 				_mettDeamon->readXML(xmlconfig);
 			}
 			else {

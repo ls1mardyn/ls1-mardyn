@@ -23,7 +23,7 @@
 
 using namespace std;
 
-MettDeamon::MettDeamon(double cutoffRadius)
+MettDeamon::MettDeamon()
 	: 	_rho_l(0.),
 		_dAreaXZ(0.),
 		_dInvDensityArea(0.),
@@ -34,7 +34,6 @@ MettDeamon::MettDeamon(double cutoffRadius)
 		_dSlabWidthInit(0),
 		_dSlabWidth(0),
 		_dReservoirWidthY(0),
-		_cutoffRadius(cutoffRadius),
 		_nUpdateFreq(0),
 		_nWriteFreqRestart(0),
 		_nMaxMoleculeID(0),
@@ -333,7 +332,6 @@ void MettDeamon::ReadReservoirFromFile(DomainDecompBase* domainDecomp)
 			_reservoirSlabs = Ylength/_dSlabWidthInit;  // parameter sliceWidth
 			global_log->info() << "Mettdeamon: _reservoirSlabs=" << _reservoirSlabs << endl;
 			_dSlabWidth = Ylength / (double)(_reservoirSlabs);
-//				_reservoirLastSlice = Ylength-((_reservoirSlices-1)*_cutoffRadius);
 			_reservoir.resize(_reservoirSlabs);
 			V = Xlength * Ylength * Zlength;
 		}
@@ -411,8 +409,6 @@ void MettDeamon::ReadReservoirFromFile(DomainDecompBase* domainDecomp)
 		//Simon changed id to i+1
 		Molecule m1 = Molecule(i+1,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
 
-//				long temp= m1.r(1)/_cutoffRadius;
-//				_reservoirIter = _reservoir.begin();
 		uint32_t nSlabindex = floor(y / _dSlabWidth);
 		m1.setr(1, y - nSlabindex*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
 
