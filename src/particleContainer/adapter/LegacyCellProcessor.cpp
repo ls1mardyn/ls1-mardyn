@@ -95,6 +95,11 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 	} // isBoundaryCell
 }
 
+
+#if defined(MARDYN_WR) && ENABLE_VECTORIZED_CODE==0
+#error MARDYN_WR does not work using the LegacyCellProcessor! please use vectorization (see make help_vect)
+#endif
+//TODO: fix LegacyCellProcessor for WR mode - especially the calls to moleculesAt(i) using the _dummy are dangerous!
 void LegacyCellProcessor::processCell(ParticleCell& cell) {
 	double distanceVector[3];
 	int currentParticleCount = cell.getMoleculeCount();
@@ -105,6 +110,7 @@ void LegacyCellProcessor::processCell(ParticleCell& cell) {
 
 			for (int j = i+1; j < currentParticleCount; j++) {
 				Molecule& molecule2 = cell.moleculesAt(j);
+
 				mardyn_assert(&molecule1 != &molecule2);
 				double dd = molecule2.dist2(molecule1, distanceVector);
 
