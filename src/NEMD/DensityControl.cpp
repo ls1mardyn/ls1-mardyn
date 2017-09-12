@@ -418,8 +418,11 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
     {
         bDeleteMolecule = true;
     }
-    else
+    else if(_dDensityGlobal > _dTargetDensity)
     {
+//		global_log->info() << "_dDensityGlobal = " << _dDensityGlobal << endl;
+//		global_log->info() << "_dTargetDensity = " << _dTargetDensity << endl;
+
         /* initialize random seed: */
         srand (time(NULL) + mol->id() );
 
@@ -429,10 +432,6 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
         double dRand = (double) (nRand / 100000.);
 
     //    cout << "dRand = " << dRand << endl;
-    //
-    //    cout << "_dDensityGlobal = " << _dDensityGlobal << endl;
-    //    cout << "_dTargetDensity = " << _dTargetDensity << endl;
-
         double dPercentToTakeOut = (_dDensityGlobal - _dTargetDensity) / _dDensityGlobal;
 
     //    cout << "dPercentToTakeOut = " << dPercentToTakeOut << endl;
