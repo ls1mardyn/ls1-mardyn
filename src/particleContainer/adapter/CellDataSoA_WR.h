@@ -131,6 +131,11 @@ public:
 		}
 		--_mol_num;
 	}
+
+	void prefetch() const {
+		_mol_r.prefetch();
+		_mol_v.prefetch();
+	}
 };
 
 #endif /* CELLDATASOA_WR_H_ */

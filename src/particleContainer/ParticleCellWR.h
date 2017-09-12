@@ -57,6 +57,8 @@ public:
 
 	virtual size_t getMoleculeVectorDynamicSize() const override {return 0;}
 
+	void prefetch() const;
+
 private:
 	/**
 	 * \brief object used for the moleculesAt() interface

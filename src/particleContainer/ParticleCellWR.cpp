@@ -156,3 +156,7 @@ void ParticleCell_WR::getRegion(double lowCorner[3], double highCorner[3],
 void ParticleCell_WR::increaseMoleculeStorage(size_t numExtraMols) {
 	_cellDataSoA_WR.increaseStorage(numExtraMols);
 }
+
+void ParticleCell_WR::prefetch() const {
+	_cellDataSoA_WR.prefetch();
+}

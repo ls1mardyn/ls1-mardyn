@@ -18,7 +18,37 @@ public:
 		AlignedArrayTriplet<T>::resize(initialSize);
 	}
 
-	T* xBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; }
+	void prefetch(int hint = 1, int n = -1) const {
+		mardyn_assert(n >= -2);
+
+		int endPrefetch;
+		const int stride = this->_round_up(1);
+
+		switch(n) {
+		case -1:
+			// prefetch all up to capacity()
+			AlignedArray<T>::prefetch(hint, n);
+			return;
+			break;
+		case -2:
+			// prefetch all up to size()
+			endPrefetch = _numEntriesPerArray;
+			break;
+		default:
+			// prefetch only first n elements
+			endPrefetch = n;
+		}
+
+		for (int i = 0; i < endPrefetch; i+= stride) {
+#if defined(__SSE3__) or defined(__MIC__)
+			_mm_prefetch((const char*)&(x(i)), _MM_HINT_T1);
+			_mm_prefetch((const char*)&(y(i)), _MM_HINT_T1);
+			_mm_prefetch((const char*)&(z(i)), _MM_HINT_T1);
+#endif
+		}
+	}
+
+	T* xBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; } // TODO: remove ternary operator?
 	T* yBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (1 * _numEntriesPerArray) : nullptr; }
 	T* zBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (2 * _numEntriesPerArray) : nullptr; }
 	const T* xBegin() const { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; }
