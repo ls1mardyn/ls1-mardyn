@@ -211,6 +211,19 @@ void LinkedCells::update() {
 #endif
 
 	_cellsValid = true;
+
+
+
+#ifndef NDEBUG
+	for (ParticleIterator tM = iteratorBegin(); tM != iteratorEnd(); ++tM) {
+		if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
+			global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
+					<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
+					<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
+		}
+		assert(_cells[tM.getCellIndex()].testInBox(*tM));
+	}
+#endif
 }
 
 void LinkedCells::update_via_copies() {
