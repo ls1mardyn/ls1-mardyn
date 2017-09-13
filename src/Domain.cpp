@@ -305,38 +305,38 @@ void Domain::calculateGlobalValues(
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
 				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << endl;
 			int rot_dof;
-			double Utrans, Urot;
-			double limit_energy =  KINLIMIT_PER_T * Ti;
-			double limit_rot_energy;
-			double vcorr, Dcorr;
-			ParticleIterator tM;
-			for( tM = particleContainer->iteratorBegin();
-					tM != particleContainer->iteratorEnd();
-					++tM)
-			{
-				Utrans = tM->U_trans();
-				if(Utrans > limit_energy)
-				{
-					vcorr = sqrt(limit_energy / Utrans);
-					global_log->debug() << ": v(m" << tM->id() << ") *= " << vcorr << endl;
-					tM->scale_v(vcorr);
-					tM->scale_F(vcorr);
-				}
+			const double limit_energy =  KINLIMIT_PER_T * Ti;
 
-				rot_dof = tM->component()->getRotationalDegreesOfFreedom();
-				if(rot_dof > 0)
-				{
-					limit_rot_energy = 3.0*rot_dof * Ti;
-					Urot = tM->U_rot();
-					if(Urot > limit_rot_energy)
-					{
-						Dcorr = sqrt(limit_rot_energy / Urot);
-						global_log->debug() << "D(m" << tM->id() << ") *= " << Dcorr << endl;
-						tM->scale_D(Dcorr);
-						tM->scale_M(Dcorr);
+			#if defined(_OPENMP)
+			#pragma omp parallel
+			#endif
+			{
+				const ParticleIterator begin = particleContainer->iteratorBegin();
+				const ParticleIterator end = particleContainer->iteratorEnd();
+
+				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
+				for (ParticleIterator tM = begin; tM != end; ++tM) {
+					Utrans = tM->U_trans();
+					if (Utrans > limit_energy) {
+						vcorr = sqrt(limit_energy / Utrans);
+						global_log->debug() << ": v(m" << tM->id() << ") *= " << vcorr << endl;
+						tM->scale_v(vcorr);
+						tM->scale_F(vcorr);
+					}
+
+					rot_dof = tM->component()->getRotationalDegreesOfFreedom();
+					if (rot_dof > 0) {
+						limit_rot_energy = 3.0 * rot_dof * Ti;
+						Urot = tM->U_rot();
+						if (Urot > limit_rot_energy) {
+							Dcorr = sqrt(limit_rot_energy / Urot);
+							global_log->debug() << "D(m" << tM->id() << ") *= " << Dcorr << endl;
+							tM->scale_D(Dcorr);
+							tM->scale_M(Dcorr);
+						}
 					}
 				}
-			}
+			} /*_OPENMP*/
 
 			/* FIXME: Unnamed constant 3960... */
 			if(3960 >= _universalSelectiveThermostatCounter)
