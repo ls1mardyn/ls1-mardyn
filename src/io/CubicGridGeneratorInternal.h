@@ -48,7 +48,7 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 private:
-	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
+	bool addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
 	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components);
 	/**
 	 * create a random number between a and b (inclusive)

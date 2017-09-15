@@ -116,19 +116,19 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 						for (int jj = j; jj < j + blocksize and jj < end_j; jj++) {
 							for (int kk = k; kk < k + blocksize and kk < end_k; kk++) {
 
-								double x1 = origin1 + ii * spacing;
-								double y1 = origin1 + jj * spacing;
-								double z1 = origin1 + kk * spacing;
+								vcp_real_calc x1 = origin1 + ii * spacing;
+								vcp_real_calc y1 = origin1 + jj * spacing;
+								vcp_real_calc z1 = origin1 + kk * spacing;
 								if (domainDecomp->procOwnsPos(x1, y1, z1, domain)) {
-									addMolecule(x1, y1, z1, threadPrivateId, particleContainer);
+									assert(addMolecule(x1, y1, z1, threadPrivateId, particleContainer));
 									threadPrivateId += numThreads;
 								}
 
-								double x2 = origin2 + ii * spacing;
-								double y2 = origin2 + jj * spacing;
-								double z2 = origin2 + kk * spacing;
+								vcp_real_calc x2 = origin2 + ii * spacing;
+								vcp_real_calc y2 = origin2 + jj * spacing;
+								vcp_real_calc z2 = origin2 + kk * spacing;
 								if (domainDecomp->procOwnsPos(x2, y2, z2, domain)) {
-									addMolecule(x2, y2, z2, threadPrivateId, particleContainer);
+									assert(addMolecule(x2, y2, z2, threadPrivateId, particleContainer));
 									threadPrivateId += numThreads;
 								}
 							}
@@ -180,7 +180,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	return id + idOffset;
 }
 
-void CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
+bool CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
 		ParticleContainer* particleContainer) {
 	std::vector<double> velocity = getRandomVelocity(global_simulation->getEnsemble()->T());
 
@@ -212,7 +212,7 @@ void CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsig
 	Molecule m(id, &(global_simulation->getEnsemble()->getComponents()->at(componentType)), x, y, z, // position
 			velocity[0], -velocity[1], velocity[2], // velocity
 			orientation[0], orientation[1], orientation[2], orientation[3], w[0], w[1], w[2]);
-	particleContainer->addParticle(m);
+	return particleContainer->addParticle(m);
 }
 
 void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleContainer,
