@@ -220,6 +220,13 @@ void LinkedCells::update() {
 			global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
 					<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
 					<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
+			global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2)
+					<< std::endl << "cell: [" << _cells[tM.getCellIndex()].getBoxMin(0) << ", "
+					<< _cells[tM.getCellIndex()].getBoxMax(0) << "] x [" << _cells[tM.getCellIndex()].getBoxMin(1)
+					<< ", " << _cells[tM.getCellIndex()].getBoxMax(1) << "] x ["
+					<< _cells[tM.getCellIndex()].getBoxMin(2) << ", " << _cells[tM.getCellIndex()].getBoxMax(2) << "]"
+					<< std::endl;
+
 		}
 		assert(_cells[tM.getCellIndex()].testInBox(*tM));
 	}
