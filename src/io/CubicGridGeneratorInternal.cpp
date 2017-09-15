@@ -120,7 +120,11 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 								vcp_real_calc y1 = origin1 + jj * spacing;
 								vcp_real_calc z1 = origin1 + kk * spacing;
 								if (domainDecomp->procOwnsPos(x1, y1, z1, domain)) {
+#ifndef NDEBUG
 									assert(addMolecule(x1, y1, z1, threadPrivateId, particleContainer));
+#else
+									addMolecule(x1, y1, z1, threadPrivateId, particleContainer);
+#endif
 									threadPrivateId += numThreads;
 								}
 
@@ -128,7 +132,11 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 								vcp_real_calc y2 = origin2 + jj * spacing;
 								vcp_real_calc z2 = origin2 + kk * spacing;
 								if (domainDecomp->procOwnsPos(x2, y2, z2, domain)) {
+#ifndef NDEBUG
 									assert(addMolecule(x2, y2, z2, threadPrivateId, particleContainer));
+#else
+									addMolecule(x2, y2, z2, threadPrivateId, particleContainer);
+#endif
 									threadPrivateId += numThreads;
 								}
 							}
