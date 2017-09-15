@@ -281,7 +281,7 @@ double DomainDecompBase::getIOCutoffRadius(int dim, Domain* domain,
 
 	double length = domain->getGlobalLength(dim);
 	double cutoff = moleculeContainer->getCutoff();
-	assert( ((int) length / cutoff ) == length / cutoff );
+	mardyn_assert( ((int) length / cutoff ) == length / cutoff );
 	return cutoff;
 }
 

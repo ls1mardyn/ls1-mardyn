@@ -102,7 +102,7 @@ public:
 
 	void start() {
 		if (!isActive()) {
-			assert(_state == TIMER_HALTED);
+			mardyn_assert(_state == TIMER_HALTED);
 			return;
 		}
 
@@ -122,7 +122,7 @@ public:
 
 	void stop() {
 		if (!isActive()) {
-			assert(_state == TIMER_HALTED);
+			mardyn_assert(_state == TIMER_HALTED);
 			return;
 		}
 
@@ -145,7 +145,7 @@ public:
 
 	void reset() {
 		if (!isActive()) {
-			assert(_state == TIMER_HALTED);
+			mardyn_assert(_state == TIMER_HALTED);
 			return ;
 		}
 

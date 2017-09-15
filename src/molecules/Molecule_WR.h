@@ -235,12 +235,12 @@ public:
 	void Fljcentersub(unsigned int /*i*/, double /*a*/[]) {}
 #else
 	void Fljcenteradd(unsigned int i, double a[]) {
-		assert(i == 0);
+		mardyn_assert(i == 0);
 		for(int d = 0; d < 3; ++d)
 			setv(d, v(d) + a[d]);
 	}
 	void Fljcentersub(unsigned int i, double a[]) {
-		assert(i == 0);
+		mardyn_assert(i == 0);
 		for(int d = 0; d < 3; ++d)
 			setv(d, v(d) - a[d]);
 	}

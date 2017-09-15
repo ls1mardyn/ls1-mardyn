@@ -16,6 +16,7 @@
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
+#include "mardyn_assert.h"
 
 using namespace std;
 using Log::global_log;
@@ -29,7 +30,7 @@ TimerProfiler::TimerProfiler(): _numElapsedIterations(0) {
 
 TimerProfiler::~TimerProfiler() {
 	_clearTimers();
-	assert(_timers.size() == 0);
+	mardyn_assert(_timers.size() == 0);
 }
 
 Timer* TimerProfiler::getTimer(string timerName){

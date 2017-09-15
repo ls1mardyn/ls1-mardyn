@@ -460,7 +460,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 		lengthInCells[i] = floor(
 				domain->getGlobalLength(i) / oldCellLength[i]);
 
-		assert(lengthInCells[i] >= 0);
+		mardyn_assert(lengthInCells[i] >= 0);
 	}
 
 	//compute bounding boxes in cells. The cellsize is determinded through the old
@@ -477,9 +477,9 @@ unsigned long MPI_IOReader::readPhaseSpace(
 				domainDecomp->getBoundingBoxMax(i, domain) / oldCellLength[i]
 						- 1);
 
-		assert(boundingBoxMinInCells[i] >= 0);
-		assert(boundingBoxMaxInCells[i] >= 0);
-		assert(boundingBoxMinInCells[i] <= boundingBoxMaxInCells[i]);
+		mardyn_assert(boundingBoxMinInCells[i] >= 0);
+		mardyn_assert(boundingBoxMaxInCells[i] >= 0);
+		mardyn_assert(boundingBoxMinInCells[i] <= boundingBoxMaxInCells[i]);
 	}
 
 	int maxNumCellsLocal = (boundingBoxMaxInCells[2] - boundingBoxMinInCells[2]
@@ -539,7 +539,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 				ParticleData::ParticleDataToMolecule(data[l], m);
 
 				particleContainer->addParticle(m);
-				assert(m.mass() != 0);
+				mardyn_assert(m.mass() != 0);
 
 				// TODO: The following should be done by the addPartice method.
 				if (m.r(0) >= domainDecomp->getBoundingBoxMin(0, domain)
