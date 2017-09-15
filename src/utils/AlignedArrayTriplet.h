@@ -40,10 +40,15 @@ public:
 		}
 
 		for (int i = 0; i < endPrefetch; i+= stride) {
-#if defined(__SSE3__) or defined(__MIC__)
+#if defined(__SSE3__)
 			_mm_prefetch((const char*)&(x(i)), _MM_HINT_T1);
 			_mm_prefetch((const char*)&(y(i)), _MM_HINT_T1);
 			_mm_prefetch((const char*)&(z(i)), _MM_HINT_T1);
+#elif defined(__MIC__)
+			_mm_prefetch((const char*)&(x(i)), 2);
+			_mm_prefetch((const char*)&(y(i)), 2);
+			_mm_prefetch((const char*)&(z(i)), 2);
+#else
 #endif
 		}
 	}

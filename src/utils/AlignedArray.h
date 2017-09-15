@@ -133,7 +133,11 @@ public:
 		for (int i = 0; i < endPrefetch; i+= stride) {
 			const T & val = _vec[i];
 			const T * valP = &val;
+#if defined(__MIC__)
+			_mm_prefetch((const char*)valP, 2);
+#else
 			_mm_prefetch((const char*)valP, _MM_HINT_T1);
+#endif
 		}
 	}
 #else
