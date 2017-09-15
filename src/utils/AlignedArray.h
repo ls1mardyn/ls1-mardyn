@@ -109,6 +109,7 @@ public:
 	virtual ~AlignedArray() {
 	}
 
+#if defined(__SSE3__) or defined(__MIC__)
 	virtual void prefetch(int hint = 1, int n = -1) const {
 		mardyn_assert(n >= -2);
 
@@ -132,11 +133,12 @@ public:
 		for (int i = 0; i < endPrefetch; i+= stride) {
 			const T & val = _vec[i];
 			const T * valP = &val;
-#if defined(__SSE3__) or defined(__MIC__)
 			_mm_prefetch((const char*)valP, _MM_HINT_T1);
-#endif
 		}
 	}
+#else
+	virtual void prefetch(int /*hint = 1*/, int /*n = -1*/) const {}
+#endif
 
 	virtual void increaseStorage(size_t oldNumElements, size_t additionalElements) {
 		mardyn_assert(oldNumElements <= _vec.capacity());
