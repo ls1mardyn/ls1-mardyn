@@ -228,7 +228,7 @@ void LinkedCells::update() {
 					<< std::endl;
 
 		}
-		assert(_cells[tM.getCellIndex()].testInBox(*tM));
+		mardyn_assert(_cells[tM.getCellIndex()].testInBox(*tM));
 	}
 #endif
 }
@@ -370,7 +370,7 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 
 bool LinkedCells::addHaloParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
 	const bool inBox = inBoxCheckedAlready or particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
-	assert(not particle.inBox(_boundingBoxMin,_boundingBoxMax));
+	mardyn_assert(not particle.inBox(_boundingBoxMin,_boundingBoxMax));
 	bool wasInserted = false;
 
 	if (inBox) {
