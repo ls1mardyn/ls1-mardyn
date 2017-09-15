@@ -16,7 +16,7 @@
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
-#include "mardyn_assert.h"
+#include "utils/mardyn_assert.h"
 
 using namespace std;
 using Log::global_log;
