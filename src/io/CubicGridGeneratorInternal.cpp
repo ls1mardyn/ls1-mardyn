@@ -267,7 +267,7 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	}
 	Log::global_log->info() << "m1 v: " << particleContainer->iteratorBegin()->v(0) << " " << particleContainer->iteratorBegin()->v(1)<< " " << particleContainer->iteratorBegin()->v(2) <<std::setprecision(5)<< std::endl;
 
-#ifdef NDEBUG
+#ifndef NDEBUG
 	//test
 	momentum_sum0 = 0.;
 	momentum_sum1 = 0.;
@@ -288,9 +288,9 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 		}
 	}
 	Log::global_log->info() << "momentumsum: " << momentum_sum0 << " " << momentum_sum1<< " " << momentum_sum2 << std::endl;
-	assert(fabs(momentum_sum[0])<1e-7);
-	assert(fabs(momentum_sum[0])<1e-7);
-	assert(fabs(momentum_sum[0])<1e-7);
+	mardyn_assert(fabs(momentum_sum0)<1e-7);
+	mardyn_assert(fabs(momentum_sum0)<1e-7);
+	mardyn_assert(fabs(momentum_sum0)<1e-7);
 #endif
 	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);
 	//printf("momentum_sum[1] from removeMomentum is %lf\n", momentum_sum[1]);
