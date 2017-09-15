@@ -74,7 +74,7 @@ int ParticleCell_WR::getMoleculeCount() const {
 
 void ParticleCell_WR::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 	ParticleCell_WR& oCell = downcastCellReferenceWR(otherCell);
-	const int oNumMols = oCell.getMoleculeCount();
+	//const int oNumMols = oCell.getMoleculeCount();
 
 	// how many molecules travel from my cell to the other one
 	const int numMolsMeToOther = countInRegion(oCell._boxMin, oCell._boxMax);
@@ -102,8 +102,8 @@ void ParticleCell_WR::swapAndAppendToCell(ParticleCell_WR& other) {
 
 		// find next swap/insertion position
 		for (;j <other.getMoleculeCount(); ++j) {
-			if (not other.moleculesAt(j).inBox(_boxMin,_boxMax))
-				continue;
+			if (other.moleculesAt(j).inBox(_boxMin,_boxMax))
+				break;
 		}
 
 		if (j < other.getMoleculeCount()) {
