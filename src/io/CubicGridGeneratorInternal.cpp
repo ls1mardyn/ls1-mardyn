@@ -22,7 +22,7 @@
 #include <algorithm>
 
 CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
-		_numMolecules(0), _binaryMixture(false) {
+		_numMolecules(0), _binaryMixture(false), _RNG(0) {
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
@@ -80,6 +80,8 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 		Log::global_log->error() << "varying simBoxLength not yet supported for CubicGridGenerator" << std::endl;
 		Simulation::exit(1);
 	}
+
+#if 1
 	double spacing = simBoxLength / numMoleculesPerDimension;
 	double origin1 = spacing / 4.; // origin of the first DrawableMolecule
 	double origin2 = spacing / 4. * 3.; // origin of the first DrawableMolecule
@@ -151,6 +153,10 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 		}
 		id = max(id, threadPrivateId);
     }
+#else
+    id = particleContainer->initCubicGrid(numMoleculesPerDimension, simBoxLength);
+#endif /* if 0 */
+
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 
 	domainDecomp->collCommInit(1);
@@ -313,7 +319,7 @@ void CubicGridGeneratorInternal::getOrientation(int base, int delta, double orie
 	orientation[3] = 0;
 }
 
-std::vector<double> CubicGridGeneratorInternal::getRandomVelocity(double temperature) const {
+std::vector<double> CubicGridGeneratorInternal::getRandomVelocity(double temperature) {
 	std::vector<double> v_;
 	v_.resize(3);
 

@@ -12,6 +12,7 @@
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 #include "utils/mardyn_assert.h"
+#include "utils/Random.h"
 #include <array>
 #include <algorithm>
 
@@ -1005,6 +1006,70 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	//find the cellIndices of the cells which contain the start and end corners of the region
 	startIndex = getCellIndexOfPoint(startRegion);
 	endIndex = getCellIndexOfPoint(endRegion);
+}
+
+unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double simBoxLength) {
+	const unsigned long numCells = _cells.size();
+
+	std::vector<unsigned long> numMoleculesPerThread;
+	const int numThreads = mardyn_get_max_threads();
+	numMoleculesPerThread.resize(numThreads);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		unsigned long numMoleculesByThisThread = 0;
+		const int myID = mardyn_get_thread_num();
+
+		const int seed = myID;
+		Random threadPrivateRNG = Random(seed);
+
+		// manual "static" scheduling important, because later this thread needs to traverse the same cells
+		for (unsigned long cellIndex = myID; cellIndex < numCells; cellIndex += numThreads) {
+			ParticleCell & cell = _cells[cellIndex];
+			if(not cell.isHaloCell()) {
+				numMoleculesByThisThread += cell.initCubicGrid(numMoleculesPerDimension, simBoxLength, threadPrivateRNG);
+			}
+		}
+
+		// prefix sum of numMoleculesByThisThread
+
+
+		#if defined(_OPENMP)
+		#pragma omp critical(prefixInitCubicGridLC)
+		#endif
+		for (int i = myID; i < numThreads; ++i) {
+			numMoleculesPerThread[i] += numMoleculesByThisThread;
+		}
+
+		/* wait for all threads to accumulate */
+		#if defined(_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		// assign local IDs
+
+		unsigned long threadIDsAssignedByThisThread = 0;
+		if(myID > 0) {
+			threadIDsAssignedByThisThread = numMoleculesPerThread[myID-1];
+		}
+
+		// manual "static" scheduling important, because all threads need to traverse the same cells
+		for (unsigned long cellIndex = myID; cellIndex < numCells; cellIndex += numThreads) {
+			ParticleCell & cell = _cells[cellIndex];
+			if(not cell.isHaloCell()) {
+				const int numMolecules = cell.getMoleculeCount();
+				for (int i = 0; i < numMolecules; ++i) {
+					cell.moleculesAt(i).setid(threadIDsAssignedByThisThread);
+					++threadIDsAssignedByThisThread;
+				}
+			}
+		}
+	} /* end of parallel */
+
+	unsigned long totalNumberOfMolecules = numMoleculesPerThread.back();
+	return totalNumberOfMolecules;
 }
 
 RegionParticleIterator LinkedCells::getRegionParticleIterator(

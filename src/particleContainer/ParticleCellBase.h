@@ -15,6 +15,8 @@
 #include <quicksched.h>
 #endif
 
+class Random;
+
 class ParticleCellBase: public Cell {
 public:
 	ParticleCellBase();
@@ -68,6 +70,8 @@ public:
 	virtual size_t getMoleculeVectorDynamicSize() const = 0;
 
 	virtual void prefetch() const {/*TODO*/}
+
+	unsigned long initCubicGrid(int numMoleculesPerDimension, double spacing, Random & RNG);
 
 #ifdef QUICKSCHED
 	qsched_res_t getRescourceId() const {

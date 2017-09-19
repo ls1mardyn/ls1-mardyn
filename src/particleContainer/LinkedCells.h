@@ -254,6 +254,8 @@ public:
 		return &(_cells.at(cellIndex));
 	}
 
+	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength);
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########

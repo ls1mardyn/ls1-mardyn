@@ -9,6 +9,7 @@
 #include <vector>
 #include "InputBase.h"
 #include "molecules/Component.h"
+#include "utils/Random.h"
 
 class ParticleContainer;
 class ChemicalPotential;
@@ -53,14 +54,19 @@ private:
 	/**
 	 * create a random number between a and b (inclusive)
 	 */
-	double randdouble(double a, double b) const {
+	double randdouble(double a, double b) {
+#if 1
 		return a + rand() * (b - a) / (RAND_MAX);
+#else
+		return _RNG.uniformRandInRange(a, b);
+#endif
 	}
 	void getOrientation(int base, int delta, double orientation[4]);
 
 	/**
 	 * determine the velocity according to the temperature.
 	 */
-	std::vector<double> getRandomVelocity(double temperature) const;
+	std::vector<double> getRandomVelocity(double temperature);
 
+	Random _RNG;
 };
