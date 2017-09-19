@@ -227,8 +227,12 @@ public:
 	void Fadd(const double /*a*/[]) {}
 	void Madd(const double /*a*/[]) {}
 	void Viadd(const double /*a*/[]) {}
-	void vadd(const double /*ax*/, const double /*ay*/, const double /*az*/) {}
-	void vsub(const double /*ax*/, const double /*ay*/, const double /*az*/) {}
+	void vadd(const double ax, const double ay, const double az) {
+		setv(0, v(0) + ax); setv(1, v(1) + ay); setv(2, v(2) + az);
+	}
+	void vsub(const double ax, const double ay, const double az) {
+		setv(0, v(0) - ax); setv(1, v(1) - ay); setv(2, v(2) - az);
+	}
 
 #ifndef DEBUG_FUNCTIONALITY_HACKS
 	void Fljcenteradd(unsigned int /*i*/, double /*a*/[]) {}
