@@ -221,9 +221,15 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 		}
 	}
 	Log::global_log->info() << "momentumsum: " << momentum_sum0 << " " << momentum_sum1<< " " << momentum_sum2 << std::endl;
-	mardyn_assert(fabs(momentum_sum0)<1e-7);
-	mardyn_assert(fabs(momentum_sum1)<1e-7);
-	mardyn_assert(fabs(momentum_sum2)<1e-7);
+	// Leave commented out - as there are many molecules, mass_sum is large, leading to small corrections to  the molecule velocities
+	// and since molecule velocities are stored in only single precision, this is likely not
+	// going to be easy to fix, across all ranges of magnitudes, which can appear here (1 to 10^9 molecules per process? to 10^13 molecules for total simulation?).
+
+	// should we try to MPI-this? range will be even laaarger.
+
+//	mardyn_assert(fabs(momentum_sum0)<1e-7);
+//	mardyn_assert(fabs(momentum_sum1)<1e-7);
+//	mardyn_assert(fabs(momentum_sum2)<1e-7);
 #endif
 	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);
 	//printf("momentum_sum[1] from removeMomentum is %lf\n", momentum_sum[1]);
