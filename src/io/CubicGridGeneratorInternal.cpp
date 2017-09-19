@@ -22,7 +22,8 @@
 #include <algorithm>
 
 CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
-		_numMolecules(0), _binaryMixture(false), _RNG(0) {
+		_numMolecules(0), _binaryMixture(false)//, _RNG(0)
+{
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
@@ -120,40 +121,40 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	return id + idOffset;
 }
 
-bool CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
-		ParticleContainer* particleContainer) {
-	std::vector<double> velocity = getRandomVelocity(global_simulation->getEnsemble()->T());
-
-	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
-	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
-	// o = cos 30° + (1 1 0) * sin 15°
-	double orientation[4];
-	getOrientation(15, 10, orientation);
-
-	int componentType = 0;
-	if (_binaryMixture) {
-		componentType = randdouble(0, 1.999999);
-	}
-
-	double I[3] = { 0., 0., 0. };
-	I[0] = global_simulation->getEnsemble()->getComponents()->at(0).I11();
-	I[1] = global_simulation->getEnsemble()->getComponents()->at(0).I22();
-	I[2] = global_simulation->getEnsemble()->getComponents()->at(0).I33();
-	/*****  Copied from animake - initialize anular velocity *****/
-	double w[3];
-	for (int d = 0; d < 3; d++) {
-		w[d] = (I[d] == 0) ?
-				0.0 : ((randdouble(0, 1) > 0.5) ? 1 : -1) * sqrt(2.0 * randdouble(0, 1) * global_simulation->getEnsemble()->T() / I[d]);
-		double fs_2_mardyn = 0.030619994;
-		w[d] = w[d] * fs_2_mardyn;
-	}
-	/************************** End Copy **************************/
-
-	Molecule m(id, &(global_simulation->getEnsemble()->getComponents()->at(componentType)), x, y, z, // position
-			velocity[0], -velocity[1], velocity[2], // velocity
-			orientation[0], orientation[1], orientation[2], orientation[3], w[0], w[1], w[2]);
-	return particleContainer->addParticle(m);
-}
+//bool CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
+//		ParticleContainer* particleContainer) {
+//	std::vector<double> velocity = getRandomVelocity(global_simulation->getEnsemble()->T());
+//
+//	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
+//	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
+//	// o = cos 30° + (1 1 0) * sin 15°
+//	double orientation[4];
+//	getOrientation(15, 10, orientation);
+//
+//	int componentType = 0;
+//	if (_binaryMixture) {
+//		componentType = randdouble(0, 1.999999);
+//	}
+//
+//	double I[3] = { 0., 0., 0. };
+//	I[0] = global_simulation->getEnsemble()->getComponents()->at(0).I11();
+//	I[1] = global_simulation->getEnsemble()->getComponents()->at(0).I22();
+//	I[2] = global_simulation->getEnsemble()->getComponents()->at(0).I33();
+//	/*****  Copied from animake - initialize anular velocity *****/
+//	double w[3];
+//	for (int d = 0; d < 3; d++) {
+//		w[d] = (I[d] == 0) ?
+//				0.0 : ((randdouble(0, 1) > 0.5) ? 1 : -1) * sqrt(2.0 * randdouble(0, 1) * global_simulation->getEnsemble()->T() / I[d]);
+//		double fs_2_mardyn = 0.030619994;
+//		w[d] = w[d] * fs_2_mardyn;
+//	}
+//	/************************** End Copy **************************/
+//
+//	Molecule m(id, &(global_simulation->getEnsemble()->getComponents()->at(componentType)), x, y, z, // position
+//			velocity[0], -velocity[1], velocity[2], // velocity
+//			orientation[0], orientation[1], orientation[2], orientation[3], w[0], w[1], w[2]);
+//	return particleContainer->addParticle(m);
+//}
 
 void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleContainer,
 		const std::vector<Component>& components) {
@@ -230,38 +231,38 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 }
 
 
-void CubicGridGeneratorInternal::getOrientation(int base, int delta, double orientation[4]) {
-	double offset = randdouble(-delta / 2., delta / 2.) / 180. * M_PI;
-	double rad = base / 180. * M_PI;
-	double angle = rad + offset;
-
-	double cosinePart = cos(angle);
-	double sinePart = sin(angle);
-
-	double length = sqrt(cosinePart * cosinePart + 2 * (sinePart * sinePart));
-	orientation[0] = cosinePart / length;
-	orientation[1] = sinePart / length;
-	orientation[2] = sinePart / length;
-	orientation[3] = 0;
-}
-
-std::vector<double> CubicGridGeneratorInternal::getRandomVelocity(double temperature) {
-	std::vector<double> v_;
-	v_.resize(3);
-
-	// Velocity
-	for (int dim = 0; dim < 3; dim++) {
-		v_[dim] = randdouble(-0.5, 0.5);
-	}
-	double dotprod_v = 0;
-	for (unsigned int i = 0; i < v_.size(); i++) {
-		dotprod_v += v_[i] * v_[i];
-	}
-	// Velocity Correction
-	double vCorr = sqrt(3.0 * temperature / dotprod_v);
-	for (unsigned int i = 0; i < v_.size(); i++) {
-		v_[i] *= vCorr;
-	}
-
-	return v_;
-}
+//void CubicGridGeneratorInternal::getOrientation(int base, int delta, double orientation[4]) {
+//	double offset = randdouble(-delta / 2., delta / 2.) / 180. * M_PI;
+//	double rad = base / 180. * M_PI;
+//	double angle = rad + offset;
+//
+//	double cosinePart = cos(angle);
+//	double sinePart = sin(angle);
+//
+//	double length = sqrt(cosinePart * cosinePart + 2 * (sinePart * sinePart));
+//	orientation[0] = cosinePart / length;
+//	orientation[1] = sinePart / length;
+//	orientation[2] = sinePart / length;
+//	orientation[3] = 0;
+//}
+//
+//std::vector<double> CubicGridGeneratorInternal::getRandomVelocity(double temperature) {
+//	std::vector<double> v_;
+//	v_.resize(3);
+//
+//	// Velocity
+//	for (int dim = 0; dim < 3; dim++) {
+//		v_[dim] = randdouble(-0.5, 0.5);
+//	}
+//	double dotprod_v = 0;
+//	for (unsigned int i = 0; i < v_.size(); i++) {
+//		dotprod_v += v_[i] * v_[i];
+//	}
+//	// Velocity Correction
+//	double vCorr = sqrt(3.0 * temperature / dotprod_v);
+//	for (unsigned int i = 0; i < v_.size(); i++) {
+//		v_[i] *= vCorr;
+//	}
+//
+//	return v_;
+//}
