@@ -102,13 +102,14 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 	int end_j = ceil((getBoxMax(1) / simBoxLength) * numMoleculesPerDimension) + 1;
 	int end_k = ceil((getBoxMax(2) / simBoxLength) * numMoleculesPerDimension) + 1;
 
-	int numMolsUpperBound = (end_k - start_k) * (end_j - start_j) * (end_i - start_i) * 2;
 	std::vector<Molecule> buffer;
+	int numMolsUpperBound = (end_k - start_k) * (end_j - start_j) * (end_i - start_i) * 2;
 	buffer.reserve(numMolsUpperBound);
-	int buffercount = 0;
 
 	// step 1: count!
 	unsigned long numInserted = 0;
+
+	const bool notHalo = not isHaloCell();
 
 	for (int i = start_i; i < end_i; ++i) {
 
@@ -144,22 +145,23 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 				bool z2In = PositionIsInBox1D(_boxMin[2], _boxMax[2], static_cast<double>(z2));
 
 				if (x1In and y1In and z1In) {
-
-					std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
-					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-						x1, y1, z1, v[0], -v[1], v[2]);
 					++numInserted;
-					buffer.push_back(dummy);
-					buffercount++;
+					if (notHalo) {
+						std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
+						Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
+							x1, y1, z1, v[0], -v[1], v[2]);
+						buffer.push_back(dummy);
+					}
 				}
 
 				if (x2In and y2In and z2In) {
-					std::array<vcp_real_calc,3> v2 = getRandomVelocity<vcp_real_calc>(T, RNG);
-					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-						x2, y2, z2, v2[0], -v2[1], v2[2]);
 					++numInserted;
-					buffer.push_back(dummy);
-					buffercount++;
+					if (notHalo) {
+						std::array<vcp_real_calc,3> v2 = getRandomVelocity<vcp_real_calc>(T, RNG);
+						Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
+							x2, y2, z2, v2[0], -v2[1], v2[2]);
+						buffer.push_back(dummy);
+					}
 				}
 			}
 		}
@@ -169,8 +171,10 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 	increaseMoleculeStorage(numInserted);
 
 	// step 3: add
-	for (unsigned long i = 0; i < numInserted; ++i) {
-		addParticle(buffer[i]);
+	if (notHalo) {
+		for (unsigned long i = 0; i < numInserted; ++i) {
+			addParticle(buffer[i]);
+		}
 	}
 
 	return numInserted;

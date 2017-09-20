@@ -1019,18 +1019,18 @@ unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double si
 	#pragma omp parallel
 	#endif
 	{
-		unsigned long numMoleculesByThisThread = 0;
 		const int myID = mardyn_get_thread_num();
-
+		const unsigned long myStart = numCells * myID / numThreads;
+		const unsigned long myEnd = numCells * (myID + 1) / numThreads;
 		const int seed = myID;
+
+		unsigned long numMoleculesByThisThread = 0;
 		Random threadPrivateRNG = Random(seed);
 
 		// manual "static" scheduling important, because later this thread needs to traverse the same cells
-		for (unsigned long cellIndex = myID; cellIndex < numCells; cellIndex += numThreads) {
+		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {
 			ParticleCell & cell = _cells[cellIndex];
-			if(not cell.isHaloCell()) {
-				numMoleculesByThisThread += cell.initCubicGrid(numMoleculesPerDimension, simBoxLength, threadPrivateRNG);
-			}
+			numMoleculesByThisThread += cell.initCubicGrid(numMoleculesPerDimension, simBoxLength, threadPrivateRNG);
 		}
 
 		// prefix sum of numMoleculesByThisThread
@@ -1055,15 +1055,13 @@ unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double si
 			threadIDsAssignedByThisThread = numMoleculesPerThread[myID-1];
 		}
 
-		// manual "static" scheduling important, because all threads need to traverse the same cells
-		for (unsigned long cellIndex = myID; cellIndex < numCells; cellIndex += numThreads) {
+		// manual "static" scheduling important, because later this thread needs to traverse the same cells
+		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {
 			ParticleCell & cell = _cells[cellIndex];
-			if(not cell.isHaloCell()) {
-				const int numMolecules = cell.getMoleculeCount();
-				for (int i = 0; i < numMolecules; ++i) {
-					cell.moleculesAt(i).setid(threadIDsAssignedByThisThread);
-					++threadIDsAssignedByThisThread;
-				}
+			const int numMolecules = cell.getMoleculeCount();
+			for (int i = 0; i < numMolecules; ++i) {
+				cell.moleculesAt(i).setid(threadIDsAssignedByThisThread);
+				++threadIDsAssignedByThisThread;
 			}
 		}
 	} /* end of parallel */
