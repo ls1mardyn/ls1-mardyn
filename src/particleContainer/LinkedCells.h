@@ -229,7 +229,7 @@ public:
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
-		return ParticleIterator(t, this, offset, stride);
+		return ParticleIterator(t, &_cells, offset, stride);
 	}
 	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 

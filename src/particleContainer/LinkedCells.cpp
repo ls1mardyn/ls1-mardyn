@@ -1084,7 +1084,7 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
 	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
 
-	return RegionParticleIterator(type, this, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
+	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {
