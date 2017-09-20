@@ -445,10 +445,9 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 
 void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
-	ParticleIterator tM;
 	if(this->_componentwiseThermostat)
 	{
-		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
+		for(ParticleIterator tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -470,23 +469,35 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 	}
 	else
 	{
-		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
+		unsigned long N = 0, rotationalDOF = 0;
+		double local2KETrans = 0.0, local2KERot = 0.0;
+		#if defined(_OPENMP)
+		#pragma omp parallel reduction(+:N, rotationalDOF, local2KETrans, local2KERot)
+		#endif
 		{
-			this->_localThermostatN[0]++;
-			this->_localRotationalDOF[0] += tM->component()->getRotationalDegreesOfFreedom();
-			if(this->_universalUndirectedThermostat[0])
-			{
-				tM->calculate_mv2_Iw2( this->_local2KETrans[0],
-						this->_local2KERot[0],
-						this->_universalThermostatDirectedVelocity[0][0],
-						this->_universalThermostatDirectedVelocity[1][0],
-						this->_universalThermostatDirectedVelocity[2][0]  );
+			const ParticleIterator begin = partCont->iteratorBegin();
+			const ParticleIterator end = partCont->iteratorEnd();
+
+			for(ParticleIterator tM = begin; tM != end; ++tM) {
+				++N;
+				rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
+				if(this->_universalUndirectedThermostat[0]) {
+					tM->calculate_mv2_Iw2( local2KETrans,
+							local2KERot,
+							this->_universalThermostatDirectedVelocity[0][0],
+							this->_universalThermostatDirectedVelocity[1][0],
+							this->_universalThermostatDirectedVelocity[2][0]  );
+				} else {
+					tM->calculate_mv2_Iw2(local2KETrans, local2KERot);
+				}
 			}
-			else
-			{
-				tM->calculate_mv2_Iw2(_local2KETrans[0], _local2KERot[0]);
-			}
-		}
+		} /* _OPENMP */
+
+		this->_localThermostatN[0] = N;
+		this->_localRotationalDOF[0] = rotationalDOF;
+		this->_local2KETrans[0] = local2KETrans;
+		this->_local2KERot[0] = local2KERot;
+
 		global_log->debug() << "      * N = " << this->_localThermostatN[0]
 			<< "rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
 			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
