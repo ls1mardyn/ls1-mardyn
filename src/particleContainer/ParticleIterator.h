@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include "utils/mardyn_assert.h"
 #include "ParticleCell.h"
+#include "WrapOpenMP.h"
 
 class ParticleIterator {
 public:
@@ -77,6 +78,11 @@ inline ParticleIterator :: ParticleIterator (Type t_arg, CellContainer_T_ptr cel
 		return;
 	}
 
+#ifdef MARDYN_WR
+	const unsigned long my_start = _cells->size() * mardyn_get_thread_num() / mardyn_get_num_threads();
+	_cell_index = static_cast<CellIndex_T>(my_start);
+#endif
+
 	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
@@ -116,7 +122,12 @@ inline void ParticleIterator :: next_non_empty_cell() {
 	// find the next non-empty cell
 	bool validCellFound = false;
 
+#ifndef MARDYN_WR
 	for (_cell_index += _stride; _cell_index < numCells; _cell_index += _stride) {
+#else
+	const unsigned long my_end = _cells->size() * (mardyn_get_thread_num() + 1) / mardyn_get_num_threads();
+	for (_cell_index++; _cell_index < my_end; ++_cell_index) {
+#endif
 
 		const ParticleCellBase & c = cells.at(_cell_index);
 
