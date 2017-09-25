@@ -591,9 +591,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "VectorizationTuner") {
 			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
 		}
-		else if(pluginname == "FlopRateWriter") {
-			outputPlugin = new FlopRateWriter(_cutoffRadius, _LJCutoffRadius);
-		}
 		else if(pluginname == "DomainProfiles") {
 			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
 			/** @todo This is ugly. Needed as the vectorized code does not support the virial ...*/

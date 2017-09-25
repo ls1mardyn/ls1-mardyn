@@ -71,7 +71,7 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 		return;
 	}
 
-	double flops = _flopCounter.getTotalFlopCount();
+	double flops = _flopCounter->getTotalFlopCount();
 
 	unsigned long numElapsedIterations = global_simulation->timers()->getNumElapsedIterations();
 	double force_calculation_time = global_simulation->timers()->getTime("SIMULATION_FORCE_CALCULATION") / numElapsedIterations;
@@ -126,5 +126,8 @@ void FlopRateWriter::measureFLOPS(ParticleContainer* particleContainer, unsigned
 	if(simstep % _writeFrequency != 0) {
 		return;
 	}
-	particleContainer->traverseCells(_flopCounter);
+	if(_flopCounter == nullptr) {
+		_flopCounter = new FlopCounter(global_simulation->getcutoffRadius(), global_simulation->getLJCutoff());
+	}
+	particleContainer->traverseCells(*_flopCounter);
 }
