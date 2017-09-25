@@ -111,6 +111,8 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 void FlopRateWriter::finishOutput(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {
 
+	delete _flopCounter;
+
 	if(_writeToFile != true)
 		return;
 
