@@ -109,7 +109,9 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 	// step 1: count!
 	unsigned long numInserted = 0;
 
-	const bool notHalo = not isHaloCell();
+	const bool isHalo = isHaloCell();
+	const bool notHalo = not isHalo;
+
 
 	for (int i = start_i; i < end_i; ++i) {
 
@@ -146,22 +148,18 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 
 				if (x1In and y1In and z1In) {
 					++numInserted;
-					if (notHalo) {
-						std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
-						Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-							x1, y1, z1, v[0], -v[1], v[2]);
-						buffer.push_back(dummy);
-					}
+					std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
+					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
+						x1, y1, z1, v[0], -v[1], v[2]);
+					buffer.push_back(dummy);
 				}
 
 				if (x2In and y2In and z2In) {
 					++numInserted;
-					if (notHalo) {
-						std::array<vcp_real_calc,3> v2 = getRandomVelocity<vcp_real_calc>(T, RNG);
-						Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-							x2, y2, z2, v2[0], -v2[1], v2[2]);
-						buffer.push_back(dummy);
-					}
+					std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
+					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
+						x2, y2, z2, v[0], -v[1], v[2]);
+					buffer.push_back(dummy);
 				}
 			}
 		}
@@ -170,11 +168,17 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 	// step 2: preallocate!
 	increaseMoleculeStorage(numInserted);
 
-	// step 3: add
-	if (notHalo) {
-		for (unsigned long i = 0; i < numInserted; ++i) {
-			addParticle(buffer[i]);
-		}
+	// step 3: add. Also for Halo-cells, we want the current thread to also "touch" the memory, not just allocate it.
+	// lookup OpenMP "first touch" policy
+	for (unsigned long i = 0; i < numInserted; ++i) {
+		addParticle(buffer[i]);
+	}
+
+	if (isHalo) {
+		deallocateAllParticles();
+
+		// and return 0, instead of a number.
+		numInserted = 0;
 	}
 
 	return numInserted;
