@@ -774,7 +774,7 @@ void Simulation::prepare_start() {
 	bool dipole_present = false;
 	bool quadrupole_present = false;
 
-	const vector<Component> components = *(global_simulation->getEnsemble()->getComponents());
+	const vector<Component> components = *(getEnsemble()->getComponents());
 	for (size_t i = 0; i < components.size(); i++) {
 		lj_present |= (components[i].numLJcenters() != 0);
 		charge_present |= (components[i].numCharges() != 0);
@@ -886,7 +886,7 @@ void Simulation::prepare_start() {
     _moleculeContainer->deleteOuterParticles();
 
     if (_longRangeCorrection == NULL){
-        _longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
+        _longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
     }
 
 
