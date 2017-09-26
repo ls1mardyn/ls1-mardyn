@@ -72,6 +72,7 @@ void Leapfrog_WR::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 				rotDOFgt_l += i->component()->getRotationalDegreesOfFreedom();
 			}
 
+			// TODO: urgently fix critical section! see Domain.cpp 474-494
 			#if defined(_OPENMP)
 			#pragma omp critical (thermostat)
 			#endif
