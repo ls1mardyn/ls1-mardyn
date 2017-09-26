@@ -12,6 +12,7 @@
 
 #include "Simulation.h"
 #include "utils/compile_info.h"
+#include "utils/PrintThreadPinningToCPU.h"
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
 #include "utils/OptionParser.h"
@@ -91,6 +92,11 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
 #if defined(_OPENMP)
 	int num_threads = mardyn_get_max_threads();
 	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
+
+	#if defined(MARDYN_WR)
+		// print thread pinning info
+		PrintThreadPinningToCPU();
+	#endif
 #endif
 }
 
