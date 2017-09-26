@@ -21,7 +21,15 @@ void PrintThreadPinningToCPU() {
 	#pragma omp parallel
 	#endif
 	{
-		const int cpu = sched_getcpu();
+		int cpu;
+
+		// protect the call to sched_getcpu, just in case. It is "MT-Safe" but let's be super safe.
+		#if defined(_OPENMP)
+		#pragma omp critical (sched_getcpu)
+		#endif
+		cpu = sched_getcpu();
+
+
 		const int myID = mardyn_get_thread_num();
 		const int numThreads = mardyn_get_num_threads();
 
