@@ -46,43 +46,35 @@ void Leapfrog_WR::computePositions(ParticleContainer* molCont, Domain* dom) {
 }
 
 void Leapfrog_WR::computeVelocities(ParticleContainer* molCont, Domain* dom) {
-	// TODO: I hate this piece of code. It will be rewritten from within the Leapfrog integrator ASAP.
+	// TODO: Thermostat functionality is duplicated X times and needs to be rewritten!
 	map<int, unsigned long> N;
 	map<int, unsigned long> rotDOF;
 	map<int, double> summv2;
 	map<int, double> sumIw2;
 	{
+		unsigned long red_N = 0;
+		unsigned long red_rotDOF = 0;
+		double red_summv2 = 0.0;
+		double red_sumIw2 = 0.0;
 		#if defined(_OPENMP)
-		#pragma omp parallel
+		#pragma omp parallel reduction(+: red_N, red_rotDOF, red_summv2, red_sumIw2)
 		#endif
 		{
-			unsigned long Ngt_l = 0;
-			unsigned long rotDOFgt_l = 0;
-			double summv2gt_l = 0.0;
-			double sumIw2gt_l = 0.0;
-
 			const ParticleIterator begin = molCont->iteratorBegin();
 			const ParticleIterator end = molCont->iteratorEnd();
 
 			for (ParticleIterator i = begin; i != end; ++i) {
 				double dummy = 0.0;
-				i->ee_upd_postF(_timestepLength, summv2gt_l);
-				mardyn_assert(summv2gt_l >= 0.0);
-				Ngt_l++;
-				rotDOFgt_l += i->component()->getRotationalDegreesOfFreedom();
-			}
-
-			// TODO: urgently fix critical section! see Domain.cpp 474-494
-			#if defined(_OPENMP)
-			#pragma omp critical (thermostat)
-			#endif
-			{
-				N[0] += Ngt_l;
-				rotDOF[0] += rotDOFgt_l;
-				summv2[0] += summv2gt_l;
-				sumIw2[0] += sumIw2gt_l;
+				i->ee_upd_postF(_timestepLength, red_summv2);
+				mardyn_assert(red_summv2 >= 0.0);
+				red_N++;
+				red_rotDOF += i->component()->getRotationalDegreesOfFreedom();
 			}
 		} // end pragma omp parallel
+		N[0] += red_N;
+		rotDOF[0] += red_rotDOF;
+		summv2[0] += red_summv2;
+		sumIw2[0] += red_sumIw2;
 	}
 	for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
 		dom->setLocalSummv2(thermit->second, thermit->first);
