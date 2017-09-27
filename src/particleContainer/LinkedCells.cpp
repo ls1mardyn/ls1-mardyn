@@ -1059,8 +1059,12 @@ unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double si
 		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {
 			ParticleCell & cell = _cells[cellIndex];
 			const int numMolecules = cell.getMoleculeCount();
-			for (int i = 0; i < numMolecules; ++i) {
-				cell.moleculesAt(i).setid(threadIDsAssignedByThisThread);
+
+			SingleCellIterator begin = cell.iteratorBegin();
+			SingleCellIterator end = cell.iteratorEnd();
+
+			for (SingleCellIterator it = begin; it != end; ++it) {
+				it->setid(threadIDsAssignedByThisThread);
 				++threadIDsAssignedByThisThread;
 			}
 		}
@@ -1144,7 +1148,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	cellProcessor->initTraversal();
 
-	Molecule * molWithSoA = &(dummyCell.moleculesAt(0));
+	Molecule * molWithSoA = &(*dummyCell.iteratorBegin());
 
 	u += cellProcessor->processSingleMolecule(molWithSoA, currentCell);
 

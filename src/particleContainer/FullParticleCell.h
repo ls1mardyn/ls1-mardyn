@@ -66,14 +66,6 @@ public:
 	//! insert a single molecule into this cell
 	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) override;
 
-	Molecule& moleculesAt(size_t i) override{
-		return _molecules.at(i);
-	}
-
-	const Molecule& moleculesAtConst(size_t i) const override{
-		return _molecules.at(i);
-	}
-
 	bool isEmpty() const override;
 
 	bool deleteMoleculeByIndex(size_t index) override;
@@ -109,6 +101,15 @@ public:
 
 	virtual size_t getMoleculeVectorDynamicSize() const override {
 		return _molecules.size() * sizeof(Molecule) + _leavingMolecules.size() * sizeof(Molecule);
+	}
+
+//protected: do not use!
+	void moleculesAtNew(size_t i, Molecule *& multipurposePointer) override {
+		multipurposePointer = & _molecules.at(i);
+	}
+
+	void moleculesAtConstNew(size_t i, Molecule *& multipurposePointer) const override {
+		multipurposePointer = const_cast<Molecule*>(& _molecules.at(i));
 	}
 
 private:

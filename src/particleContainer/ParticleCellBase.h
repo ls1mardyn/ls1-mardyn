@@ -9,6 +9,7 @@
 #define SRC_PARTICLECONTAINER_PARTICLECELLBASE_H_
 
 #include "Cell.h"
+#include "SingleCellIterator.h"
 #include "molecules/Molecule.h"
 
 #ifdef QUICKSCHED
@@ -32,9 +33,8 @@ public:
 	 */
 	virtual bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) = 0;
 
-	virtual Molecule& moleculesAt(size_t i) = 0;
-
-	virtual const Molecule& moleculesAtConst(size_t i) const = 0;
+	SingleCellIterator iteratorBegin();
+	SingleCellIterator iteratorEnd();
 
 	virtual bool isEmpty() const = 0;
 
@@ -72,6 +72,14 @@ public:
 	virtual void prefetch() const {/*TODO*/}
 
 	unsigned long initCubicGrid(int numMoleculesPerDimension, double spacing, Random & RNG);
+
+//protected: Do not use! use SingleCellIterator instead!
+	// multipurpose:
+	// in FullParticleCell, this is set to point to one of the molecules in _molecules
+	// in ParticleCell_WR, this points to an existing molecule, into which the correct data is written.
+	virtual void moleculesAtNew(size_t i, Molecule *& multipurposePointer) = 0;
+	virtual void moleculesAtConstNew(size_t i, Molecule *& multipurposePointer) const = 0;
+
 
 #ifdef QUICKSCHED
 	qsched_res_t getRescourceId() const {

@@ -142,13 +142,17 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 	size_t nDipoles = 0;
 	size_t nQuadrupoles = 0;
 
-	for (size_t m = 0;  m < numMolecules; ++m) {
-		const Molecule_WR& Mol = cell_wr.moleculesAtConst(m);
-		nLJCenters += Mol.numLJcenters();
-		nCharges += Mol.numCharges();
-		nDipoles += Mol.numDipoles();
-		nQuadrupoles += Mol.numQuadrupoles();
+	ParticleCell_WR & nonconst_cell_wr = const_cast<ParticleCell_WR&>(cell_wr);
+	SingleCellIterator begin = nonconst_cell_wr.iteratorBegin();
+	SingleCellIterator end = nonconst_cell_wr.iteratorEnd();
+
+	for(SingleCellIterator it = begin; it != end; ++it) {
+		nLJCenters += it->numLJcenters();
+		nCharges += it->numCharges();
+		nDipoles += it->numDipoles();
+		nQuadrupoles += it->numQuadrupoles();
 	}
+
 	mardyn_assert(nCharges == 0);
 	mardyn_assert(nDipoles == 0);
 	mardyn_assert(nQuadrupoles == 0);
@@ -161,24 +165,24 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 	size_t iDipoles = 0;
 	size_t iQuadrupoles = 0;
 
+	SingleCellIterator it = begin;
 	// For each molecule iterate over all its centers.
 	for (size_t i = 0; i < numMolecules; ++i) {
-		const Molecule & M = cell_wr.moleculesAtConst(i);
-		const size_t mol_ljc_num = M.numLJcenters();
-		const size_t mol_charges_num = M.numCharges();
-		const size_t mol_dipoles_num = M.numDipoles();
-		const size_t mol_quadrupoles_num = M.numQuadrupoles();
+		const size_t mol_ljc_num = it->numLJcenters();
+		const size_t mol_charges_num = it->numCharges();
+		const size_t mol_dipoles_num = it->numDipoles();
+		const size_t mol_quadrupoles_num = it->numQuadrupoles();
 
 		fullSoA._mol_ljc_num[i] = mol_ljc_num;
 		fullSoA._mol_charges_num[i] = mol_charges_num;
 		fullSoA._mol_dipoles_num[i] = mol_dipoles_num;
 		fullSoA._mol_quadrupoles_num[i] = mol_quadrupoles_num;
 
-		fullSoA._mol_pos.x(i) = M.r(0);
-		fullSoA._mol_pos.y(i) = M.r(1);
-		fullSoA._mol_pos.z(i) = M.r(2);
+		fullSoA._mol_pos.x(i) = it->r(0);
+		fullSoA._mol_pos.y(i) = it->r(1);
+		fullSoA._mol_pos.z(i) = it->r(2);
 
-		mardyn_assert( M.numLJcenters() == 1);
+		mardyn_assert( it->numLJcenters() == 1);
 		const unsigned ind = i;
 
 		//for better readability:
@@ -186,18 +190,21 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 		typedef ConcatenatedSites<vcp_real_calc>::CoordinateType Coordinate;
 		typedef CellDataSoA::QuantityType QuantityType;
 
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X)[ind] = M.r(0);
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y)[ind] = M.r(1);
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z)[ind] = M.r(2);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X)[ind] = M.r(0);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y)[ind] = M.r(1);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z)[ind] = M.r(2);
+		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
+		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
+		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
+		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
+		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
+		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
 		fullSoA._ljc_id[ind] = 0;
 
 		// clear FM
 		std::array<vcp_real_calc, 3> clearance = { 0., 0., 0. };
 		fullSoA.setTriplet(clearance, QuantityType::FORCE, LJC, ind);
-		fullSoA.setTriplet(clearance, QuantityType::VIRIAL, LJC, ind);	}
+		fullSoA.setTriplet(clearance, QuantityType::VIRIAL, LJC, ind);
+
+		++it;
+	}
 #endif /* MARDYN_WR */
 }
 
@@ -251,11 +258,15 @@ void VCP1CLJWRTest::testProcessCell() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, fabs(1.0e-5*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, fabs(1.0e-5*full_Virial));
 
-	size_t numMolecules = cell_wr.getMoleculeCount();
-	for (size_t i = 0; i < numMolecules; ++i) {
-		double WR_f_x = cell_wr.moleculesAt(i).F(0);
-		double WR_f_y = cell_wr.moleculesAt(i).F(1);
-		double WR_f_z = cell_wr.moleculesAt(i).F(2);
+	SingleCellIterator begin = cell_wr.iteratorBegin();
+	SingleCellIterator end = cell_wr.iteratorEnd();
+
+	for (SingleCellIterator it = begin; it != end; ++it) {
+		double WR_f_x = it->F(0);
+		double WR_f_y = it->F(1);
+		double WR_f_z = it->F(2);
+
+		size_t i = it.getIndex();
 
 		std::array<vcp_real_calc, 3> triple = full_SoA.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
@@ -326,11 +337,14 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, fabs(1.0e-7*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, fabs(1.0e-7*full_Virial));
 
-	size_t numMolecules1 = cell_wr1.getMoleculeCount();
-	for (size_t i = 0; i < numMolecules1; ++i) {
-		double WR_f_x = cell_wr1.moleculesAt(i).F(0);
-		double WR_f_y = cell_wr1.moleculesAt(i).F(1);
-		double WR_f_z = cell_wr1.moleculesAt(i).F(2);
+	SingleCellIterator begin1 = cell_wr1.iteratorBegin();
+	SingleCellIterator end1 = cell_wr1.iteratorEnd();
+	for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+		double WR_f_x = it1->F(0);
+		double WR_f_y = it1->F(1);
+		double WR_f_z = it1->F(2);
+
+		size_t i = it1.getIndex();
 
 		std::array<vcp_real_calc, 3> triple = full_SoA1.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
@@ -341,11 +355,14 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, fabs(full_f_z*1.0e-5));
 	}
 
-	size_t numMolecules2 = cell_wr2.getMoleculeCount();
-	for (size_t i = 0; i < numMolecules2; ++i) {
-		double WR_f_x = cell_wr2.moleculesAt(i).F(0);
-		double WR_f_y = cell_wr2.moleculesAt(i).F(1);
-		double WR_f_z = cell_wr2.moleculesAt(i).F(2);
+	SingleCellIterator begin2 = cell_wr2.iteratorBegin();
+	SingleCellIterator end2 = cell_wr2.iteratorEnd();
+	for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+		double WR_f_x = it2->F(0);
+		double WR_f_y = it2->F(1);
+		double WR_f_z = it2->F(2);
+
+		size_t i = it2.getIndex();
 
 		std::array<vcp_real_calc, 3> triple = full_SoA2.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);

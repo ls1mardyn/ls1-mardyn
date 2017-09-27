@@ -45,17 +45,16 @@ bool ParticleCell_WR::addParticle(Molecule& particle, bool checkWhetherDuplicate
 	return wasInserted;
 }
 
-Molecule& ParticleCell_WR::moleculesAt(size_t i) {
+void ParticleCell_WR::moleculesAtNew(size_t i, Molecule*& multipurposePointer) {
 	mardyn_assert((int)i < getMoleculeCount());
-	_cellDataSoA_WR.readMutableMolecule(i, _dummy);
-	return _dummy;
+	_cellDataSoA_WR.readMutableMolecule(i, *multipurposePointer);
 }
 
-const Molecule& ParticleCell_WR::moleculesAtConst(size_t i) const {
+void ParticleCell_WR::moleculesAtConstNew(size_t i, Molecule*& multipurposePointer) const {
 	mardyn_assert((int)i < getMoleculeCount());
-	_cellDataSoA_WR.readImmutableMolecule(i, const_cast<Molecule &>(_dummy));
-	return _dummy;
+	_cellDataSoA_WR.readImmutableMolecule(i, *multipurposePointer);
 }
+
 
 bool ParticleCell_WR::isEmpty() const {
 	return getMoleculeCount() == 0;
@@ -76,6 +75,8 @@ void ParticleCell_WR::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 	ParticleCell_WR& oCell = downcastCellReferenceWR(otherCell);
 	//const int oNumMols = oCell.getMoleculeCount();
 
+	// TODO: use getRegion and put in a vector? will reduce number of calls to inBox by factor 2?
+
 	// how many molecules travel from my cell to the other one
 	const int numMolsMeToOther = countInRegion(oCell._boxMin, oCell._boxMax);
 
@@ -94,22 +95,26 @@ void ParticleCell_WR::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 
 void ParticleCell_WR::swapAndAppendToCell(ParticleCell_WR& other) {
 	// holds: the number of molecules that move from "this" to "other" is >= 0
+	Molecule dummy, otherDummy;
+	Molecule *dummy_p = &dummy, *otherDummy_p = &otherDummy;
 	int j = 0;
 	for (int i = 0; i < getMoleculeCount(); ++i) {
 		// find next molecule to move from this to other
-		if (not moleculesAt(i).inBox(other._boxMin, other._boxMax))
+		moleculesAtNew(i, dummy_p);
+		if (not dummy.inBox(other._boxMin, other._boxMax))
 			continue;
 
 		// find next swap/insertion position
 		for (;j <other.getMoleculeCount(); ++j) {
-			if (other.moleculesAt(j).inBox(_boxMin,_boxMax))
+			other.moleculesAtNew(j, otherDummy_p);
+			if (otherDummy.inBox(_boxMin,_boxMax))
 				break;
 		}
 
 		if (j < other.getMoleculeCount()) {
 			swapMolecules(i, other, j);
 		} else {
-			other.addParticle(moleculesAt(i));
+			other.addParticle(dummy);
 			deleteMoleculeByIndex(i);
 			--i;
 		}

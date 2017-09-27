@@ -68,6 +68,7 @@ inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T
 	_baseX = (startCellIndex_arg % (_globalDimensions[0] * _globalDimensions[1])) % _globalDimensions[0];
 
 	_cell_index = getGlobalCellIndex();
+	updateCellIteratorCell();
 
 	mardyn_assert(_cells != nullptr);
 
@@ -84,8 +85,14 @@ inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T
 			next_non_empty_cell();
 		}
 		*/
-		_currentParticleDeleted = true;
-		this->operator++();
+//		_currentParticleDeleted = true;
+
+		if (cells[_cell_index].isNotEmpty() and (this->operator*()).inBox(_startRegion, _endRegion)) {
+			// if the particle is good, leave it
+		} else {
+			// else, find a particle in the box
+			this->operator++();
+		}
 	}
 }
 
@@ -93,8 +100,7 @@ inline RegionParticleIterator& RegionParticleIterator::operator=(const RegionPar
 	mardyn_assert(_stride == other._stride);
 	_cells = other._cells;
 	_cell_index = other._cell_index;
-	_mol_index = other._mol_index;
-	_currentParticleDeleted = other._currentParticleDeleted;
+	_cell_iterator = other._cell_iterator;
 	_baseX = other._baseX;
 	_baseY = other._baseY;
 	_baseZ = other._baseZ;
@@ -131,7 +137,7 @@ inline void RegionParticleIterator :: next_non_empty_cell() {
 		if (c.isNotEmpty() and (_type == ALL_CELLS or not c.isHaloCell())) {
 			validCellFound = true;
 			_cell_index = getGlobalCellIndex();
-			_mol_index = 0;
+			updateCellIteratorCell();
 			break;
 		}
 	}

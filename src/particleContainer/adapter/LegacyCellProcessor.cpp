@@ -38,8 +38,11 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 	int neighbourParticleCount = cell2.getMoleculeCount();
 	double u = 0.0;
 
-	for (int j = 0; j < neighbourParticleCount; j++) {
-		Molecule& molecule2 = cell2.moleculesAt(j);
+	SingleCellIterator begin2 = cell2.iteratorBegin();
+	SingleCellIterator end2 = cell2.iteratorEnd();
+
+	for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+		Molecule& molecule2 = *it2;
 		if(m1->id() == molecule2.id()) continue;
 		double dd = molecule2.dist2(*m1, distanceVector);
 		if (dd < _cutoffRadiusSquare)
@@ -54,16 +57,21 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	double distanceVector[3];
 
-	int currentParticleCount = cell1.getMoleculeCount();
-	int neighbourParticleCount = cell2.getMoleculeCount();
+	SingleCellIterator begin1 = cell1.iteratorBegin();
+	SingleCellIterator end1 = cell1.iteratorEnd();
+	SingleCellIterator begin2 = cell2.iteratorBegin();
+	SingleCellIterator end2 = cell2.iteratorEnd();
 
 	if (cell1.isInnerCell()) {//no cell is halo
 		// loop over all particles in the cell
-		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = cell1.moleculesAt(i);
 
-			for (int j = 0; j < neighbourParticleCount; j++) {
-				Molecule& molecule2 = cell2.moleculesAt(j);
+
+		for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+			Molecule& molecule1 = *it1;
+
+			for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+				Molecule& molecule2 = *it2;
+
 				if(molecule1.id() == molecule2.id()) continue;  // for grand canonical ensemble and traversal of pseudocells
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
@@ -82,10 +90,11 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 			/* Do not sum up values twice. */
 			pairType = MOLECULE_HALOMOLECULE;
 		}
-		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = cell1.moleculesAt(i);
-			for (int j = 0; j < neighbourParticleCount; j++) {
-				Molecule& molecule2 = cell2.moleculesAt(j);
+
+		for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+			Molecule& molecule1 = *it1;
+			for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+				Molecule& molecule2 = *it2;
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
 					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare));
@@ -97,19 +106,24 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 
 
 #if defined(MARDYN_WR) && ENABLE_VECTORIZED_CODE==0
-#error MARDYN_WR does not work using the LegacyCellProcessor! please use vectorization (see make help_vect)
+#warning MARDYN_WR should now work using LegacyCellProcessor with the introduction of SingleCellIterator-s. Please double check at first usage!
 #endif
-//TODO: fix LegacyCellProcessor for WR mode - especially the calls to moleculesAt(i) using the _dummy are dangerous!
+////TODO: fix LegacyCellProcessor for WR mode - especially the calls to moleculesAt(i) using the _dummy are dangerous!
+// should work now, with SingleCellIterator
 void LegacyCellProcessor::processCell(ParticleCell& cell) {
 	double distanceVector[3];
-	int currentParticleCount = cell.getMoleculeCount();
 
 	if (cell.isInnerCell() || cell.isBoundaryCell()) {
-		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = cell.moleculesAt(i);
+		SingleCellIterator begin = cell.iteratorBegin();
+		SingleCellIterator end = cell.iteratorEnd();
 
-			for (int j = i+1; j < currentParticleCount; j++) {
-				Molecule& molecule2 = cell.moleculesAt(j);
+		for (SingleCellIterator it1 = begin; it1 != end; ++it1) {
+			Molecule& molecule1 = *it1;
+
+			SingleCellIterator it2 = it1;
+			++it2;
+			for (; it2 != end; ++it2) {
+				Molecule& molecule2 = *it2;
 
 				mardyn_assert(&molecule1 != &molecule2);
 				double dd = molecule2.dist2(molecule1, distanceVector);

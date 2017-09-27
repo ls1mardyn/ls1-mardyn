@@ -15,19 +15,13 @@ class ParticleCell_WR: public ParticleCellBase {
 public:
 	ParticleCell_WR();
 
-	ParticleCell_WR(const ParticleCell_WR& /*other*/):_cellDataSoA_WR(0){
-		_dummy = Molecule();
-	}
+	ParticleCell_WR(const ParticleCell_WR& /*other*/):_cellDataSoA_WR(0){}
 
 	~ParticleCell_WR();
 
 	void deallocateAllParticles() override;
 
 	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) override;
-
-	Molecule& moleculesAt(size_t i) override;
-
-	const Molecule& moleculesAtConst(size_t i) const override;
 
 	bool isEmpty() const override;
 
@@ -59,12 +53,11 @@ public:
 
 	void prefetch() const;
 
-private:
-	/**
-	 * \brief object used for the moleculesAt() interface
-	 */
-	Molecule _dummy;
+//protected: do not use!
+	void moleculesAtNew(size_t i, Molecule *& multipurposePointer) override;
+	void moleculesAtConstNew(size_t i, Molecule *& multipurposePointer) const override;
 
+private:
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
