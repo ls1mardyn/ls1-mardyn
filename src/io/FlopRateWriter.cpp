@@ -79,14 +79,28 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 	double loop_time = global_simulation->timers()->getTime("SIMULATION_LOOP") / numElapsedIterations ;
 	global_simulation->timers()->start("SIMULATION_LOOP");
 
-	double flop_rate_force = flops / force_calculation_time / (1024*1024);
-	double flop_rate_loop = flops / loop_time / (1024*1024);
+	double flop_rate_force = flops / force_calculation_time;
+	double flop_rate_loop = flops / loop_time;
+	double percentage = flop_rate_loop / flop_rate_force * 100. ;
+
+	// compute convenient pefixes, i.e. kilo, mega, giga, tera, peta, exa
+	char prefix_flops ;
+	double flops_normalized;
+	setPrefix(flops, flops_normalized, prefix_flops);
+
+	char prefix_flop_rate_force;
+	double flop_rate_force_normalized;
+	setPrefix(flop_rate_force, flop_rate_force_normalized, prefix_flop_rate_force);
+
+	char prefix_flop_rate_loop;
+	double flop_rate_loop_normalized;
+	setPrefix(flop_rate_loop, flop_rate_loop_normalized, prefix_flop_rate_loop);
 
 	if(_writeToStdout) {
 		global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << endl
-			<< "\tFLOP-Count per Iteration: " << flops << " FLOPs" << endl
-			<< "\tFLOP-rate in force calculation: " << flop_rate_force << " MFLOPS" << endl
-			<< "\tFLOP-rate for main loop       : " << flop_rate_loop << " MFLOPS (" << flop_rate_loop / flop_rate_force * 100. << " %)" << endl;
+			<< "\tFLOP-Count per Iteration: " << flops_normalized << " " << prefix_flops << "FLOPs" << endl
+			<< "\tFLOP-rate in force calculation: " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << endl
+			<< "\tFLOP-rate for main loop       : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << endl;
 	}
 
 
@@ -132,4 +146,42 @@ void FlopRateWriter::measureFLOPS(ParticleContainer* particleContainer, unsigned
 		_flopCounter = new FlopCounter(global_simulation->getcutoffRadius(), global_simulation->getLJCutoff());
 	}
 	particleContainer->traverseCells(*_flopCounter);
+}
+
+void FlopRateWriter::setPrefix(double f_in, double& f_out, char& prefix) const {
+	// powers of two or powers of ten?
+//	double kilo = 1024.0;
+//	double mega = 1024.0 * 1024.0;
+//	double giga = 1024.0 * 1024.0 * 1024.0;
+//	double tera = 1024.0 * 1024.0 * 1024.0 * 1024.0;
+//	double peta = 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0;
+//	double exa  = 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0;
+
+	// use powers of ten for correct comparison to TrillionAtoms run. (10-12% difference at tera-peta scale)
+	double kilo = 1e+3;
+	double mega = 1e+6;
+	double giga = 1e+9;
+	double tera = 1e+12;
+	double peta = 1e+15;
+	double exa  = 1e+18;
+
+	if (f_in >= exa) {
+		f_out = f_in / exa;
+		prefix = 'E';
+	} else if (f_in >= peta) {
+		f_out = f_in / peta;
+		prefix = 'P';
+	} else if (f_in >= tera) {
+		f_out = f_in / tera;
+		prefix = 'T';
+	} else if (f_in >= giga) {
+		f_out = f_in / giga;
+		prefix = 'G';
+	} else if (f_in >= mega) {
+		f_out = f_in / mega;
+		prefix = 'M';
+	} else if (f_in >= kilo) {
+		f_out = f_in / kilo;
+		prefix = 'K';
+	}
 }

@@ -56,6 +56,8 @@ public:
 	void measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep);
 
 private:
+	void setPrefix(double f_in, double& f_out, char& prefix) const;
+
 	FlopCounter * _flopCounter;
 	bool _writeToStdout, _writeToFile;
 	std::ofstream _fileStream;
