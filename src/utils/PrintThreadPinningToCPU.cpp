@@ -7,15 +7,17 @@
 
 #include "PrintThreadPinningToCPU.h"
 #include "../WrapOpenMP.h"
+#include "utils/Logger.h"
 
 #include <sched.h> /* int sched_getcpu(void); */
-#include <iostream> /* intentionally writing to cout and not to global_log */
+
+using Log::global_log;
 
 void PrintThreadPinningToCPU() {
 	int mastercpu = sched_getcpu();
 
-	std::cout << "Thread pinning:" << std::endl;
-	std::cout << "Master thread running on " << mastercpu << std::endl;
+	global_log->info() << "Thread pinning:" << std::endl;
+	global_log->info() << "Master thread running on " << mastercpu << std::endl;
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -35,7 +37,7 @@ void PrintThreadPinningToCPU() {
 
 		for (int i = 0; i < numThreads; ++i) {
 			if (i == myID) {
-				std::cout << "	Thread with id " << myID << " is running on " << cpu << "." << std::endl;
+				global_log->info() << "	Thread with id " << myID << " is running on " << cpu << "." << std::endl;
 			}
 
 			#if defined(_OPENMP)
