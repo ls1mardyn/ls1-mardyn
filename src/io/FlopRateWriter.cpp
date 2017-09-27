@@ -84,15 +84,15 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 	double percentage = flop_rate_loop / flop_rate_force * 100. ;
 
 	// compute convenient pefixes, i.e. kilo, mega, giga, tera, peta, exa
-	char prefix_flops ;
+	char prefix_flops = '0';
 	double flops_normalized;
 	setPrefix(flops, flops_normalized, prefix_flops);
 
-	char prefix_flop_rate_force;
+	char prefix_flop_rate_force = '0';
 	double flop_rate_force_normalized;
 	setPrefix(flop_rate_force, flop_rate_force_normalized, prefix_flop_rate_force);
 
-	char prefix_flop_rate_loop;
+	char prefix_flop_rate_loop = '0';
 	double flop_rate_loop_normalized;
 	setPrefix(flop_rate_loop, flop_rate_loop_normalized, prefix_flop_rate_loop);
 
