@@ -42,8 +42,6 @@ VTK ?= 0
 # 0: disbaled, 1: enabled
 TBB ?= 0
 
-# support generators in tools/gui - will be deprecated soon (as of June 2017)
-SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
 VECTORIZE_CODE ?= SSE
@@ -146,12 +144,6 @@ endif
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -D MPICH_IGNORE_CXX_SEEK
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
-
-ifeq ($(SUPPORT_GENERATOR), 1)
-LDFLAGS += -L../tools/gui/staticlibs -lCubicGridGenerator -lDropletGenerator
-CXXFLAGS += -D SUPPORT_GENERATOR
-INCLUDES += -I../tools/gui/ -I../tools/gui/src/
-endif
 
 # additional setup for unit tests
 ifneq ($(UNIT_TESTS),0)
@@ -263,7 +255,6 @@ help:
 	@echo "make DEPS=$(call underline,0) | 1                   			compile using dependancy tracking"
 	@echo "make UNIT_TESTS=$(call underline,0) | 1             			compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=$(call underline,0) | 1                    	 		compile with or without the vtk output plugin" 
-	@echo "make SUPPORT_GENERATOR=$(call underline,0) | 1   	     		   	compile with support for input generators as dynamic libraries"
 	@echo "make VECTORIZE_CODE=AOS | $(call underline,SSE) | AVX | ...		compile with vectorization support (see help_vect)"
 	@echo "make PAPI=$(call underline,0) | 1			                   	compile with PAPI counter support"
 	@echo "make ENABLE_FMM_FFT=$(call underline,0) | 1				compile using an FFT accelerated FMM method"

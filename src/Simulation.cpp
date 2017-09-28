@@ -45,7 +45,6 @@
 #include "io/RDF.h"
 #include "io/FlopRateWriter.h"
 
-#include "io/GeneratorFactory.h"
 #include "io/BinaryReader.h"
 #include "io/GridGenerator.h"
 #include "io/InputOldstyle.h"
