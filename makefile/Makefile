@@ -1,14 +1,14 @@
 # Find out the base directory
 MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all default help clean cleanall test
+.PHONY: all clean clean_deps cleanall default help test
 default: all
 
 # Check current directory
 CURDIR ?= $(realpath $(PWD) )
 SRCDIR := $(CURDIR)
 ifeq ($(findstring src,$(SRCDIR)),)
-  $(error ERROR: current directory $(SRCDIR) seems not to be a source directory)
+  $(error ERROR: make has to be called from the ls1-MarDyn source directory, current directory is $(CURDIR))
 endif
 
 # compiler configuration
@@ -25,16 +25,21 @@ PARTYPE ?= PAR
 # Each config should at least provide the two targets RELEASE and DEBUG.
 TARGET ?= RELEASE
 
-# compile using depmode?
+# compile using depmode
+# create dependency information for faster recompilation in case of source file changes
+# 0: disbaled, 1: enabled
 DEPS ?= 0
 
-# build unit tests?
+# build unit tests
+# 0: disbaled, 1: enabled
 UNIT_TESTS ?= 0
 
 # build with VTK support
+# 0: disbaled, 1: enabled
 VTK ?= 0
 
 # bind to TBB proxy malloc
+# 0: disbaled, 1: enabled
 TBB ?= 0
 
 # support generators in tools/gui - will be deprecated soon (as of June 2017)
@@ -348,8 +353,6 @@ clean_deps:
 	find -path '*/.deps/*' -type f -delete
 	find -type d -name .deps -delete
 
-clear: cleanall
-
 cleanall: clean clean_deps
 	$(RM) $(BINARY)
 	find -type f -name '*~' -delete
@@ -363,19 +366,18 @@ lcov_clean:
 	lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
 
 
-test:
-	@test -L $(BINARY_BASENAME) || { echo "\n----no executable found. Compile the program first.---\n"; exit 1; }
+test: $(BINARY_BASENAME)
 	@$(eval FILENAME := $(shell ls -l $(BINARY_BASENAME) | tr -s ' ' | cut -d ' ' -f 11))
-	@echo testing with executable: $(FILENAME)
+	$(info Running tests for executable: $(FILENAME))
 	@if test $(findstring PAR, $(FILENAME)); then \
 		echo parallel execution ; \
-    	mpirun -n 2 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
-    	mpirun -n 1 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
-    else \
-    	echo Serial execution ; \
-    	$(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
-    fi
-#	$(MPICMD) $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/
+		mpirun -n 2 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+		mpirun -n 1 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+	else \
+		echo Serial execution ; \
+		$(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+	fi
+
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)
