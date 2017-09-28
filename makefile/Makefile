@@ -349,6 +349,8 @@ cleanall: clean clean_deps
 	find -type f -name '*~' -delete
 	if [ -L $(BINARY_BASENAME) ]; then $(RM) $(BINARY_BASENAME); fi
 
+clear: cleanall
+
 lcov:
 	lcov --directory $(SRCDIR) -b $(SRCDIR) --capture --output-file Mardyn.info
 	genhtml --output-director $(SRCDIR)/../lcov/ Mardyn.info
