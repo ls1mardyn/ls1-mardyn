@@ -11,7 +11,11 @@
 #include "molecules/Molecule.h"
 #include "bhfmm/containers/ParticleCellPointers.h"
 
+#ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(DttNodeTest);
+#else
+#pragma message "Compilation info: DttNodeTest disabled in MARDYN_WR mode"
+#endif
 
 DttNodeTest::DttNodeTest() {
 	// TODO Auto-generated constructor stub
