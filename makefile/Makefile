@@ -80,8 +80,12 @@ ifeq ($(PRECISION), SINGLE)
   $(info # WARNING)
 endif
 
-# Set World Record?
-WORLD_RECORD ?= 0
+# build ls1-MarDyn for the reduced memory mode
+# If enabled the reduced memory mode reduces the ammount of memory required by
+# ls1-MarDyn for very large simulations.
+# However, not all features will work in this mode.
+# 0: disbaled, 1: enabled
+REDUCED_MEMORY_MODE ?= 0
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
 ENABLE_FMM_FFT ?= 0
@@ -195,7 +199,7 @@ CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
 endif
 
-ifeq ($(WORLD_RECORD), 1)
+ifeq ($(REDUCED_MEMORY_MODE), 1)
 CXXFLAGS += -D MARDYN_WR=1
 endif
 

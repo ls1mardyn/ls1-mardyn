@@ -78,7 +78,7 @@ inline ParticleIterator :: ParticleIterator (Type t_arg, CellContainer_T_ptr cel
 		return;
 	}
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	const unsigned long my_start = _cells->size() * mardyn_get_thread_num() / mardyn_get_num_threads();
 	_cell_index = static_cast<CellIndex_T>(my_start);
 #endif
@@ -122,7 +122,7 @@ inline void ParticleIterator :: next_non_empty_cell() {
 	// find the next non-empty cell
 	bool validCellFound = false;
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	for (_cell_index += _stride; _cell_index < numCells; _cell_index += _stride) {
 #else
 	const unsigned long my_end = _cells->size() * (mardyn_get_thread_num() + 1) / mardyn_get_num_threads();

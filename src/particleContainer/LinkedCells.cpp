@@ -204,7 +204,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 void LinkedCells::update() {
 	// TODO: replace via a cellProcessor and a traverseCells call ?
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	update_via_copies();
 #else
 //	update_via_coloring();

@@ -17,7 +17,7 @@
 #include "FullMolecule.h"
 #include "Molecule_WR.h"
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	typedef FullMolecule Molecule;
 #else
 	typedef Molecule_WR Molecule;

@@ -52,7 +52,7 @@ inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(),
 inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]) :
 		ParticleIterator(t, cells_arg, offset_arg, stride_arg, false), _localCellIndex (offset_arg) {
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	_cell_index = offset_arg;
 #endif
 

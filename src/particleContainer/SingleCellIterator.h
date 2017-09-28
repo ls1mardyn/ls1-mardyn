@@ -47,7 +47,7 @@ private:
 
 	// note: possible to add offset for a threaded entry within cells
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	Molecule _AoSMoleculeReservoir;
 #endif
 

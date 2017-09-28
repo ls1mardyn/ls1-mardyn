@@ -11,10 +11,10 @@
 #include "molecules/Molecule.h"
 #include "bhfmm/containers/ParticleCellPointers.h"
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 TEST_SUITE_REGISTRATION(DttNodeTest);
 #else
-#pragma message "Compilation info: DttNodeTest disabled in MARDYN_WR mode"
+#pragma message "Compilation info: DttNodeTest disabled in reduced memory mode"
 #endif
 
 DttNodeTest::DttNodeTest() {

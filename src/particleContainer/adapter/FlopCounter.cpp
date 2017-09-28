@@ -23,7 +23,7 @@ FlopCounter::_Counts::_Counts():
 
 //inverse R squared is one, because only 1/(R^2) has to be calculated, while R^2 already is calculated.
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	// Kernel: 15 = 1 (inverse R squared) + 8 (compute scale) + 3 (apply scale) + 3 (virial tensor)
 	// Macro: 4 = 2 (upot) + 2 (virial)
 	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 0 (torques)
@@ -198,7 +198,7 @@ public:
 };
 
 void FlopCounter::processCell(ParticleCell & c) {
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	FullParticleCell & full_c = downcastCellReferenceFull(c);
 	CellDataSoA& soa = full_c.getCellDataSoA();
 #else
@@ -210,7 +210,7 @@ void FlopCounter::processCell(ParticleCell & c) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	_calculatePairs<SingleCellPolicy_FlopCounter_, CalculateMacroscopic>(soa, soa);
 #else
 	_calculatePairs<SingleCellPolicy_<true>, CalculateMacroscopic>(soa, soa);
@@ -219,7 +219,7 @@ void FlopCounter::processCell(ParticleCell & c) {
 
 void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
 	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
@@ -260,7 +260,7 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	{
 		const bool CalculateMacroscopic = true;
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 		if (calc_soa1_soa2) {
 			_calculatePairs<CellPairPolicy_FlopCounter_, CalculateMacroscopic>(soa1, soa2);
 		} else {
@@ -280,7 +280,7 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 
 		const bool CalculateMacroscopic = false;
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 		if (calc_soa1_soa2) {
 			_calculatePairs<CellPairPolicy_FlopCounter_, CalculateMacroscopic>(soa1, soa2);
 		} else {

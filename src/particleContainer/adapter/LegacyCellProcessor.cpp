@@ -105,8 +105,8 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 }
 
 
-#if defined(MARDYN_WR) && ENABLE_VECTORIZED_CODE==0
-#warning MARDYN_WR should now work using LegacyCellProcessor with the introduction of SingleCellIterator-s. Please double check at first usage!
+#if defined(ENABLE_REDUCED_MEMORY_MODE) && ENABLE_VECTORIZED_CODE==0
+#warning Recuced memory mode should now work using LegacyCellProcessor with the introduction of SingleCellIterator-s. Please double check at first usage!
 #endif
 ////TODO: fix LegacyCellProcessor for WR mode - especially the calls to moleculesAt(i) using the _dummy are dangerous!
 // should work now, with SingleCellIterator

@@ -20,10 +20,10 @@ using namespace std;
 
 class MDGenerator;
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 TEST_SUITE_REGISTRATION(CheckpointRestartTest);
 #else
-#pragma message "Compilation Info: CheckpointRestartTest disabled in MARDYN_WR mode."
+#pragma message "Compilation Info: CheckpointRestartTest disabled in reduced memory mode."
 #endif
 
 

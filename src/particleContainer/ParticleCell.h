@@ -8,7 +8,7 @@
 #include "FullParticleCell.h"
 #include "ParticleCellWR.h"
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	typedef FullParticleCell ParticleCell;
 #else
 	typedef ParticleCell_WR ParticleCell;

@@ -13,7 +13,7 @@
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 TEST_SUITE_REGISTRATION(VCP1CLJWRTest);
 #else
 #pragma message "Compilation info: The unit test for the WR force calculation is not executed in non-WR mode."
@@ -21,7 +21,7 @@ TEST_SUITE_REGISTRATION(VCP1CLJWRTest);
 
 
 VCP1CLJWRTest::VCP1CLJWRTest() {
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	test_log->info() << "Testing VCP1CLJWR cell processor against: "
 #if VCP_VEC_TYPE==VCP_NOVEC
 	<< "VectorizedCellProcessor with no intrinsics." << std::endl;
@@ -33,14 +33,14 @@ VCP1CLJWRTest::VCP1CLJWRTest() {
 	<< "VectorizedCellProcessor with AVX2 intrinsics." << std::endl;
 #endif
 	;
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
 VCP1CLJWRTest::~VCP1CLJWRTest() {
 }
 
 void VCP1CLJWRTest::testForcePotentialCalculationU0() {
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "VCP1CLJWRTest::testForcePotentialCalculationU0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -81,11 +81,11 @@ void VCP1CLJWRTest::testForcePotentialCalculationU0() {
 	ASSERT_DOUBLES_EQUAL(96, _domain->getLocalVirial(), 1e-4);
 
 	delete container;
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
 void VCP1CLJWRTest::testForcePotentialCalculationF0() {
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "VCP1CLJWRTest::testForcePotentialCalculationF0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -122,12 +122,12 @@ void VCP1CLJWRTest::testForcePotentialCalculationF0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-6);
 
 	delete container;
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
 // free function
 void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA& fullSoA) {
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 
 //	for (int i = 0; i < numMols; ++i) {
 ////		FullMolecule m = FullMolecule(cell_wr.moleculesAtConst(i));
@@ -205,11 +205,11 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 
 		++it;
 	}
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
 void VCP1CLJWRTest::testProcessCell() {
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "VCP1CLJWRTest::testProcessCell()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -278,11 +278,11 @@ void VCP1CLJWRTest::testProcessCell() {
 	}
 
 	delete container;
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
 void VCP1CLJWRTest::testProcessCellPair() {
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "VCP1CLJWRTest::testProcessCellPair()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -374,5 +374,5 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	}
 
 	delete container;
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 }

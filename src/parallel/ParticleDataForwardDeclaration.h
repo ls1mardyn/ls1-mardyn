@@ -7,7 +7,7 @@
 
 #pragma once
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	class ParticleDataFull;
 	typedef ParticleDataFull ParticleData;
 #else

@@ -198,19 +198,19 @@ public:
 		}
 	}
 	void ee_upd_postF(double
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 		dt
 #endif
 		, double& summv2) {
 
 		calcFM();
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 		double dtInvM = dt / component()->m();
 		for (unsigned short d = 0; d < 3; ++d) {
 			setv(d, v(d) + dtInvM * F(d));
 		}
-#endif /*MARDYN_WR */
+#endif /*ENABLE_REDUCED_MEMORY_MODE */
 
 		summv2 += component()->m() * v2();
 	}

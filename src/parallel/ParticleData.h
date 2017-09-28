@@ -6,7 +6,7 @@
 #include "ParticleDataFull.h"
 #include "ParticleDataWR.h"
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	typedef ParticleDataFull ParticleData;
 #else
 	typedef ParticleDataWR ParticleData;

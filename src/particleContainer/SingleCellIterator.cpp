@@ -19,7 +19,7 @@ Molecule& SingleCellIterator:: operator * () const {
 	// .at method performs automatically an out-of-bounds check
 	Molecule * multipurposePointer = nullptr;
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	multipurposePointer = const_cast<Molecule *>(& _AoSMoleculeReservoir);
 #endif
 

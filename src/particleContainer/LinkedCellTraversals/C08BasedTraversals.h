@@ -45,11 +45,11 @@ template<class CellTemplate>
 void C08BasedTraversals<CellTemplate>::processBaseCell(
 		CellProcessor& cellProcessor, unsigned long baseIndex) const {
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	for (int i = 0; i < 8; ++i) {
 		this->_cells->at(baseIndex + _cellOffsets[i]).prefetch();
 	}
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 
 	using std::pair;
 

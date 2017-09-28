@@ -93,7 +93,8 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
 	int num_threads = mardyn_get_max_threads();
 	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
 
-	#if defined(MARDYN_WR)
+	#if defined(ENABLE_REDUCED_MEMORY_MODE)
+	global->warning() << "Running in reduced memory mode. Not all features work in this mode." << endl;
 		// print thread pinning info
 		PrintThreadPinningToCPU();
 	#endif
