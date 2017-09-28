@@ -37,4 +37,4 @@ LINKFLAGS_PAR_RELEASE =
 
 # Further settings, common to all configurations, which use the Intel compiler
 #########################################
-include $(realpath $(MAKEFILEDIR)/cfg/common_icc.in)
+include $(realpath $(MAKEFILEDIR)/cfg/common_icc.mk)

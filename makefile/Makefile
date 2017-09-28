@@ -323,7 +323,7 @@ all: $(BINARY)
 
 #list available configurations
 cfg_list:
-	@ls -1 ../makefile/cfg | sed -e 's/\.in$$//'
+	@ls -1 ../makefile/cfg | sed -e '/\.mk$$/d' -e 's/\.in$$//'
 #print info about the selected configuration
 cfg_help:
 	@echo "Current configuration: $(CFG_INFO)"
