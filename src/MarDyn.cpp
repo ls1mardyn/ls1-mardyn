@@ -188,12 +188,13 @@ int main(int argc, char** argv) {
 	}
 
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
-	if( fileExists(args[0].c_str()) ) {
-		global_log->info() << "Config file: " << args[0] << endl;
-		simulation.readConfigFile(args[0]);
+	std::string configfilename(args[0]);
+	if( fileExists(configfilename.c_str()) ) {
+		global_log->info() << "Config file: " << configfilename << endl;
+		simulation.readConfigFile(configfilename);
 	} else {
-		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
-		Simulation::exit(-54);
+		global_log->error() << "Cannot open config file '" << configfilename << "'" << endl;
+		Simulation::exit(-2);
 	}
 
 	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
@@ -223,13 +224,12 @@ int main(int argc, char** argv) {
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
-	string outprefix(args[numargs-1]);
-	size_t foundstr = outprefix.rfind(".");
-	if (foundstr!=string::npos && foundstr==outprefix.size()-4) outprefix.erase(foundstr);	// remove .??? suffix
-	simulation.setOutputPrefix(outprefix.c_str());
+	size_t lastindex = configfilename.rfind(".");
+	std::string outprefix = configfilename.substr(0, lastindex);
 	if( options.is_set_by_user("outputprefix") ) {
-		simulation.setOutputPrefix( options["outputprefix"] );
+		outprefix = options["outputprefix"];
 	}
+	simulation.setOutputPrefix(outprefix.c_str());
 	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << endl;
 
 
