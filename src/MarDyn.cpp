@@ -27,23 +27,24 @@ using std::endl;
  * @brief Initialize command line options.
  */
 void initOptions(optparse::OptionParser *op) {
-	op->usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
-		  "      %prog --tests --test-dir <test input data directory> [<name of testcase>]\n\n"
-				"Use option --help to display all available options.");
+	op->usage("%prog [OPTIONS] <configfilename> <number of timesteps> <outputprefix>\n\n"
+		"Use option --help to display all available options.\n\n"
+		"To execute the built in unit tests run with\n"
+		"%prog --tests --test-dir <test input data directory> [<name of testcase>]");
 	op->version("%prog 1.1");
-	op->description("ls1 mardyn (M-olecul-AR DYN-amics)");
+	op->description("ls1-MarDyn (Large SimulatIon MoleculAR DYNamics)");
 
 	op->add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op->add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .type("string") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
 	op->add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-#if ENABLE_SIGHANDLER
-	op->add_option("-S", "--sigsegvhandler") .action("store_true") .dest("sigsegvhandler") .metavar("S") .type("bool") .set_default(false) .help("sigsegvhandler: prints stacktrace on sigsegv(default: %default)");
-#endif
 	op->add_option("--logfile").dest("logfile").type("string").set_default("MarDyn.log").metavar("STRING").help("enable/disable final checkopint (default: %default)");
 	op->add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
 	op->add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
+#if ENABLE_SIGHANDLER
+	op->add_option("-S", "--sigsegvhandler") .action("store_true") .dest("sigsegvhandler") .metavar("S") .type("bool") .set_default(false) .help("sigsegvhandler: prints stacktrace on sigsegv(default: %default)");
+#endif
 
-	op->add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
+	op->add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests instead of regular simulation");
 	op->add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
 }
 
@@ -165,6 +166,8 @@ int main(int argc, char** argv) {
 	program_build_info(global_log->info());
 	program_execution_info(argc, argv, global_log->info());
 
+
+	/* Run built in tests and exit */
 	if (options.is_set_by_user("tests")) {
 		int testresult = run_unit_tests(options, args);
 		#ifdef ENABLE_MPI
@@ -173,20 +176,17 @@ int main(int argc, char** argv) {
 		exit(testresult); // using exit here should be OK
 	}
 
-	unsigned int numargs = args.size();
-	if (numargs < 1) {
-		op.print_usage();
-		Simulation::exit(-13);
-	}
 
+	/* Set up and run regular Simulation */
 	Simulation simulation;
 	simulation.setName(op.prog());
 
-	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
-	if( numargs > 2 ) {
-		simulation.setOutputPrefix(args[2]);
+	unsigned int numargs = args.size();
+	if(numargs != 1) {
+		global_log->error() << "Incorrect number of arguments provided." << std::endl;
+		op.print_usage();
+		Simulation::exit(-1);
 	}
-
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	std::string configfilename(args[0]);
 	if( fileExists(configfilename.c_str()) ) {
@@ -197,14 +197,7 @@ int main(int argc, char** argv) {
 		Simulation::exit(-2);
 	}
 
-	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
-	if (numargs > 1) {
-		unsigned long steps = 0;
-		istringstream(args[1]) >> steps;
-		simulation.setNumTimesteps(steps);
-	}
-
-
+	/* processing command line arguments */
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
 		global_log->info() << "Final checkpoint enabled" << endl;
@@ -213,10 +206,10 @@ int main(int argc, char** argv) {
 		global_log->info() << "Final checkpoint disabled." << endl;
 	}
 
-	double time = options.get("timed-checkpoint");
-	simulation.setForcedCheckpointTime(time);
 	if( options.is_set_by_user("timed-checkpoint") ) {
-		global_log->info() << "Enabling checkpoint after execution time: " << time << " sec" << endl;
+		double checkpointtime = options.get("timed-checkpoint");
+		simulation.setForcedCheckpointTime(checkpointtime);
+		global_log->info() << "Enabling checkpoint after execution time: " << checkpointtime << " sec" << endl;
 	}
 
 	if (options.is_set_by_user("timesteps")) {
