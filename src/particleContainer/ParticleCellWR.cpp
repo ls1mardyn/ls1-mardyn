@@ -136,9 +136,9 @@ int ParticleCell_WR::countInRegion(double lowCorner[3], double highCorner[3]) co
 	int ret = 0;
 	const int totalNumMols = getMoleculeCount();
 
-	const vcp_real_calc * const soa1_mol_pos_x = _cellDataSoA_WR._mol_r.xBegin();
-	const vcp_real_calc * const soa1_mol_pos_y = _cellDataSoA_WR._mol_r.yBegin();
-	const vcp_real_calc * const soa1_mol_pos_z = _cellDataSoA_WR._mol_r.zBegin();
+	const vcp_real_calc * const soa1_mol_pos_x = _cellDataSoA_WR.r_xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = _cellDataSoA_WR.r_yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = _cellDataSoA_WR.r_zBegin();
 
 
 	#if defined(_OPENMP)

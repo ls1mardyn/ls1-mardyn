@@ -241,21 +241,21 @@ vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR
 	my_threadData._centers_dist_lookup.resize_zero_shrink(soa2._mol_num, true, false);
 
 	// Pointer for molecules
-	const vcp_real_calc * const soa1_mol_pos_x = soa1._mol_r.xBegin();
-	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_r.yBegin();
-	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_r.zBegin();
+	const vcp_real_calc * const soa1_mol_pos_x = soa1.r_xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = soa1.r_yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = soa1.r_zBegin();
 
-	      vcp_real_calc * const soa1_mol_vel_x = soa1._mol_v.xBegin();
-	      vcp_real_calc * const soa1_mol_vel_y = soa1._mol_v.yBegin();
-	      vcp_real_calc * const soa1_mol_vel_z = soa1._mol_v.zBegin();
+	      vcp_real_calc * const soa1_mol_vel_x = soa1.v_xBegin();
+	      vcp_real_calc * const soa1_mol_vel_y = soa1.v_yBegin();
+	      vcp_real_calc * const soa1_mol_vel_z = soa1.v_zBegin();
 
-	const vcp_real_calc * const soa2_mol_pos_x = soa2._mol_r.xBegin();
-	const vcp_real_calc * const soa2_mol_pos_y = soa2._mol_r.yBegin();
-	const vcp_real_calc * const soa2_mol_pos_z = soa2._mol_r.zBegin();
+	const vcp_real_calc * const soa2_mol_pos_x = soa2.r_xBegin();
+	const vcp_real_calc * const soa2_mol_pos_y = soa2.r_yBegin();
+	const vcp_real_calc * const soa2_mol_pos_z = soa2.r_zBegin();
 
-	      vcp_real_calc * const soa2_mol_vel_x = soa2._mol_v.xBegin();
-	      vcp_real_calc * const soa2_mol_vel_y = soa2._mol_v.yBegin();
-	      vcp_real_calc * const soa2_mol_vel_z = soa2._mol_v.zBegin();
+	      vcp_real_calc * const soa2_mol_vel_x = soa2.v_xBegin();
+	      vcp_real_calc * const soa2_mol_vel_y = soa2.v_yBegin();
+	      vcp_real_calc * const soa2_mol_vel_z = soa2.v_zBegin();
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
