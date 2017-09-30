@@ -190,7 +190,11 @@ inline void ParticleIterator :: deleteCurrentParticle () {
 }
 
 inline void ParticleIterator :: updateCellIteratorCell() {
-	_cell_iterator = SingleCellIterator(&_cells->at(_cell_index));
+	if(_cell_index < _cells->size()) {
+		_cell_iterator = SingleCellIterator(&_cells->at(_cell_index));
+	} else {
+		_cell_iterator.make_invalid();
+	}
 }
 
 
