@@ -227,23 +227,8 @@ public:
 	}
 
 	static size_t _round_up(size_t n) {
-		size_t ret = 0;
-		switch (sizeof(T)) {
-		case 1:
-			ret = (n + 63) & ~0x3F;
-			break;
-		case 2:
-			ret = (n + 31) & ~0x1F;
-			break;
-		case 4:
-			ret = (n + 15) & ~0x0F;
-			break;
-		case 8:
-			ret = (n + 7) & ~0x07;
-			break;
-		default:
-			mardyn_assert(false);
-		}
+		unsigned long j = alignment / sizeof(T) - 1;
+		unsigned long ret = (n + j) & ~j;
 		return ret;
 	}
 
