@@ -206,7 +206,7 @@ void FlopCounter::processCell(ParticleCell & c) {
 	CellDataSoA_WR& soa = wr_c.getCellDataSoA();
 #endif
 
-	if (c.isHaloCell() or soa._mol_num < 2) {
+	if (c.isHaloCell() or soa.getMolNum() < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
@@ -238,10 +238,10 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty, or both cells are Halo, skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
 
@@ -316,8 +316,8 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 	const int * const soa2_mol_dipoles_num = soa2._mol_dipoles_num;
 	const int * const soa2_mol_quadrupoles_num = soa2._mol_quadrupoles_num;
 
-	const size_t end_i = soa1._mol_num;
-	const size_t end_j = soa2._mol_num;
+	const size_t end_i = soa1.getMolNum();
+	const size_t end_j = soa2.getMolNum();
 
 	unsigned long int i_lj = 0, i_charge=0, i_charge_dipole=0, i_dipole=0, i_charge_quadrupole=0, i_dipole_quadrupole=0, i_quadrupole=0;
 	unsigned long int i_mm = 0;

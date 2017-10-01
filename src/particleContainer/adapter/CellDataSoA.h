@@ -38,6 +38,7 @@ public:
 		MOL_POSITION, CENTER_POSITION, FORCE, VIRIAL
 	};
 
+	size_t getMolNum() const { return _mol_num; }
 
 	size_t _mol_num;
 	size_t _ljc_num;

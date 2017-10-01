@@ -95,7 +95,7 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
 	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
 
 	#if defined(ENABLE_REDUCED_MEMORY_MODE)
-	global->warning() << "Running in reduced memory mode. Not all features work in this mode." << endl;
+	global_log->warning() << "Running in reduced memory mode. Not all features work in this mode." << endl;
 		// print thread pinning info
 		PrintThreadPinningToCPU();
 	#endif
