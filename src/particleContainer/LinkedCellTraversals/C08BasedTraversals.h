@@ -47,7 +47,7 @@ void C08BasedTraversals<CellTemplate>::processBaseCell(
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	for (int i = 0; i < 8; ++i) {
-		this->_cells->at(baseIndex + _cellOffsets[i]).prefetch();
+		this->_cells->at(baseIndex + _cellOffsets[i]).prefetchForForce();
 	}
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 

@@ -51,7 +51,7 @@ public:
 
 	virtual size_t getMoleculeVectorDynamicSize() const override {return 0;}
 
-	void prefetch() const;
+	void prefetchForForce() const;
 
 //protected: do not use!
 	void moleculesAtNew(size_t i, Molecule *& multipurposePointer) override;

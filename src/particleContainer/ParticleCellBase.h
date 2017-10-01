@@ -69,7 +69,7 @@ public:
 
 	virtual size_t getMoleculeVectorDynamicSize() const = 0;
 
-	virtual void prefetch() const {/*TODO*/}
+	virtual void prefetchForForce() const {/*TODO*/}
 
 	unsigned long initCubicGrid(int numMoleculesPerDimension, double spacing, Random & RNG);
 

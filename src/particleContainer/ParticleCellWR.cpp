@@ -162,6 +162,6 @@ void ParticleCell_WR::increaseMoleculeStorage(size_t numExtraMols) {
 	_cellDataSoA_WR.increaseStorage(numExtraMols);
 }
 
-void ParticleCell_WR::prefetch() const {
-	_cellDataSoA_WR.prefetch();
+void ParticleCell_WR::prefetchForForce() const {
+	_cellDataSoA_WR.prefetchForForce();
 }
