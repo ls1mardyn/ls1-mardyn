@@ -391,16 +391,16 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 
 template<class ForcePolicy, bool CalculateMacroscopic>
 void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2) {
-	const vcp_real_calc * const soa1_mol_pos_x = soa1._mol_r.xBegin();
-	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_r.yBegin();
-	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_r.zBegin();
+	const vcp_real_calc * const soa1_mol_pos_x = soa1.r_xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = soa1.r_yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = soa1.r_zBegin();
 
-	const vcp_real_calc * const soa2_mol_pos_x = soa2._mol_r.xBegin();
-	const vcp_real_calc * const soa2_mol_pos_y = soa2._mol_r.yBegin();
-	const vcp_real_calc * const soa2_mol_pos_z = soa2._mol_r.zBegin();
+	const vcp_real_calc * const soa2_mol_pos_x = soa2.r_xBegin();
+	const vcp_real_calc * const soa2_mol_pos_y = soa2.r_yBegin();
+	const vcp_real_calc * const soa2_mol_pos_z = soa2.r_zBegin();
 
-	const size_t end_i = soa1._mol_num;
-	const size_t end_j = soa2._mol_num;
+	const size_t end_i = soa1.getMolNum();
+	const size_t end_j = soa2.getMolNum();
 
 	unsigned long int i_lj = 0;
 	unsigned long int i_mm = 0;
