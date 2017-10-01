@@ -198,7 +198,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(integratorType == "Leapfrog") {
 			_integrator = new Leapfrog();
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 			global_log->error() << "WR mode requires the Leapfrog_WR integrator" << endl;
 			Simulation::exit(-1);
 #endif
@@ -790,7 +790,7 @@ void Simulation::prepare_start() {
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 	else*/
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	if(_virialRequired) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
@@ -804,7 +804,7 @@ void Simulation::prepare_start() {
 #else
 	global_log->info() << "Using WR cell processor." << endl;
 	_cellProcessor = new VCP1CLJ_WR( *_domain, _cutoffRadius, _LJCutoffRadius);
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
@@ -849,13 +849,13 @@ void Simulation::prepare_start() {
 
 	_memoryProfiler->doOutput("with halo copies");
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	// the leapfrog integration requires that we move the velocities by one half-timestep
 	// so we halve vcp1clj_wr_cellProcessor::_dtInvm
 	VCP1CLJ_WR * vcp1clj_wr_cellProcessor = static_cast<VCP1CLJ_WR * >(_cellProcessor);
 	double dt_inv_m = vcp1clj_wr_cellProcessor->getDtInvm();
 	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m * 0.5);
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 
 	global_log->info() << "Performing initial force calculation" << endl;
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
@@ -865,10 +865,10 @@ void Simulation::prepare_start() {
 	measureFLOPRate(_moleculeContainer, 0);
 
 
-#ifdef MARDYN_WR
+#ifdef ENABLE_REDUCED_MEMORY_MODE
 	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
 	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m);
-#endif /* MARDYN_WR */
+#endif /* ENABLE_REDUCED_MEMORY_MODE */
 
 	_loopCompTime = global_simulation->timers()->getTime("SIMULATION_FORCE_CALCULATION");
 	global_simulation->timers()->reset("SIMULATION_FORCE_CALCULATION");

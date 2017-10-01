@@ -200,7 +200,7 @@ LDFLAGS += -lpapi
 endif
 
 ifeq ($(REDUCED_MEMORY_MODE), 1)
-CXXFLAGS += -D MARDYN_WR=1
+CXXFLAGS += -D ENABLE_REDUCED_MEMORY_MODE=1
 endif
 
 ifeq ($(DEPS),1)
