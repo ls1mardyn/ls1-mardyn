@@ -61,8 +61,7 @@ double Molecule_WR::r(unsigned short d) const {
 	if (_state == STORAGE_AOS) {
 		return _r[d];
 	} else {
-		size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
-		return _soa->_mol_r.linearCrossAccess(linOffset + _soa_index);
+		return _soa->getMolR(d, _soa_index);
 	}
 }
 
@@ -72,8 +71,7 @@ double Molecule_WR::v(unsigned short d) const {
 	if (_state == STORAGE_AOS) {
 		return _v[d];
 	} else {
-		size_t linOffset = _soa->_mol_v.dimensionToOffset(d);
-		return _soa->_mol_v.linearCrossAccess(linOffset + _soa_index);
+		return _soa->getMolV(d, _soa_index);
 	}
 }
 
@@ -83,7 +81,7 @@ unsigned long Molecule_WR::id() const {
 	if (_state == STORAGE_AOS) {
 		return _id;
 	} else {
-		return _soa->_mol_uid[_soa_index];
+		return _soa->getMolUid(_soa_index);
 	}
 }
 
@@ -93,8 +91,7 @@ void Molecule_WR::setr(unsigned short d, double r) {
 	if (_state == STORAGE_AOS) {
 		_r[d] = r;
 	} else {
-		size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
-		_soa->_mol_r.linearCrossAccess(linOffset + _soa_index) = r;
+		_soa->setMolR(d, _soa_index, r);
 	}
 }
 
@@ -104,8 +101,7 @@ void Molecule_WR::setv(unsigned short d, double v) {
 	if (_state == STORAGE_AOS) {
 		_v[d] = v;
 	} else {
-		size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
-		_soa->_mol_v.linearCrossAccess(linOffset + _soa_index) = v;
+		_soa->setMolV(d, _soa_index, v);
 	}
 }
 
@@ -115,7 +111,7 @@ void Molecule_WR::setid(unsigned long id) {
 	if (_state == STORAGE_AOS) {
 		_id = id;
 	} else {
-		_soa->_mol_uid[_soa_index] = id;
+		_soa->setMolUid(_soa_index, id);
 	}
 }
 

@@ -105,10 +105,10 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty, or both cells are Halo, skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
 
@@ -151,7 +151,7 @@ void VCP1CLJ_WR::processCell(ParticleCell& cell) {
 	ParticleCell_WR & cellWR = downcastCellReferenceWR(cell);
 
 	CellDataSoA_WR& soa = cellWR.getCellDataSoA();
-	if (cellWR.isHaloCell() or soa._mol_num < 2) {
+	if (cellWR.isHaloCell() or soa.getMolNum() < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
@@ -238,7 +238,7 @@ vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR
 	VCP1CLJWRThreadData &my_threadData = *_threadData[tid];
 
 	// initialize dist lookups
-	my_threadData._centers_dist_lookup.resize_zero_shrink(soa2._mol_num, true, false);
+	my_threadData._centers_dist_lookup.resize_zero_shrink(soa2.getMolNum(), true, false);
 
 	// Pointer for molecules
 	const vcp_real_calc * const soa1_mol_pos_x = soa1.r_xBegin();
@@ -268,12 +268,13 @@ vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR
 	const RealCalcVec shift6 = RealCalcVec::set1(_shift6);
 	const RealCalcVec dtInv2m = RealCalcVec::set1(_dtInvm);
 
-	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2._mol_num);
-	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2._mol_num);//this is ceil _ljc_num, VCP_VEC_SIZE
+	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2.getMolNum());
+	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2.getMolNum());//this is ceil _ljc_num, VCP_VEC_SIZE
 
 #if not (VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER)
 
-	for (size_t i = 0; i < soa1._mol_num; ++i) {
+	const size_t soa1_mol_num = soa1.getMolNum();
+	for (size_t i = 0; i < soa1_mol_num; ++i) {
 		size_t j = ForcePolicy :: InitJ(i);
 		MaskVec initJ_mask = ForcePolicy :: InitJ_Mask(i);
 
@@ -311,7 +312,7 @@ vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR
 				sum_fz1 = sum_fz1 + fz;
 			}
 		}
-		const MaskVec remainderMask = vcp_simd_getRemainderMask(soa2._mol_num);
+		const MaskVec remainderMask = vcp_simd_getRemainderMask(soa2.getMolNum());
 		if (remainderMask.movemask())
 		{
 			const RealCalcVec m2_r_x = RealCalcVec::aligned_load_mask(soa2_mol_pos_x + j, remainderMask);

@@ -26,13 +26,6 @@ public:
 		resize(mol_arg);
 	}
 
-	size_t _mol_num;
-
-	// entries per molecule
-	AlignedArrayTriplet<vcp_real_calc> _mol_r;
-	AlignedArrayTriplet<vcp_real_calc> _mol_v;
-	AlignedArray<uint64_t> _mol_uid;
-
 	vcp_inline vcp_real_calc* r_xBegin() { return _mol_r.xBegin();}
 	vcp_inline vcp_real_calc* r_yBegin() { return _mol_r.yBegin();}
 	vcp_inline vcp_real_calc* r_zBegin() { return _mol_r.zBegin();}
@@ -136,6 +129,94 @@ public:
 		_mol_r.prefetch();
 		_mol_v.prefetch();
 	}
+
+	size_t getMolNum() const {
+		return _mol_num;
+	}
+
+	void setMolNum(size_t molNum) {
+		_mol_num = molNum;
+	}
+
+	vcp_real_calc getMolR(unsigned short d, size_t index) const {
+		mardyn_assert(d < 3);
+		switch(d) {
+		case 0:
+			return _mol_r.x(index);
+		case 1:
+			return _mol_r.y(index);
+		case 2:
+			return _mol_r.z(index);
+		default:
+			mardyn_assert(false);
+			return static_cast<vcp_real_calc>(0.0);
+		}
+	}
+
+	void setMolR(unsigned short d, size_t index, vcp_real_calc molR) {
+		mardyn_assert(d < 3);
+		switch(d) {
+		case 0:
+			_mol_r.x(index) = molR;
+			break;
+		case 1:
+			_mol_r.y(index) = molR;
+			break;
+		case 2:
+			_mol_r.z(index) = molR;
+			break;
+		default:
+			mardyn_assert(false);
+		}
+	}
+
+	vcp_real_calc getMolV(unsigned short d, size_t index) const {
+		mardyn_assert(d < 3);
+		switch(d) {
+		case 0:
+			return _mol_v.x(index);
+		case 1:
+			return _mol_v.y(index);
+		case 2:
+			return _mol_v.z(index);
+		default:
+			mardyn_assert(false);
+			return static_cast<vcp_real_calc>(0.0);
+		}
+	}
+
+	void setMolV(unsigned short d, size_t index, vcp_real_calc molV) {
+		mardyn_assert(d < 3);
+		switch(d) {
+		case 0:
+			_mol_v.x(index) = molV;
+			break;
+		case 1:
+			_mol_v.y(index) = molV;
+			break;
+		case 2:
+			_mol_v.z(index) = molV;
+			break;
+		default:
+			mardyn_assert(false);
+		}
+	}
+
+	uint64_t getMolUid(size_t index) const {
+		return _mol_uid[index];
+	}
+
+	void setMolUid(size_t index, unsigned long molUid) {
+		_mol_uid[index] = molUid;
+	}
+
+private:
+	size_t _mol_num;
+
+	// entries per molecule
+	AlignedArrayTriplet<vcp_real_calc> _mol_r;
+	AlignedArrayTriplet<vcp_real_calc> _mol_v;
+	AlignedArray<uint64_t> _mol_uid;
 };
 
 #endif /* CELLDATASOA_WR_H_ */

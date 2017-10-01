@@ -68,7 +68,7 @@ bool ParticleCell_WR::deleteMoleculeByIndex(size_t index) {
 }
 
 int ParticleCell_WR::getMoleculeCount() const {
-	return _cellDataSoA_WR._mol_num;
+	return _cellDataSoA_WR.getMolNum();
 }
 
 void ParticleCell_WR::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
