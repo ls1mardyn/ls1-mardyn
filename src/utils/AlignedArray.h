@@ -194,10 +194,10 @@ public:
 		_vec.resize(_vec.capacity());
 	}
 
-	virtual void zero(size_t start_idx) {
+	virtual void zero(size_t start_idx = 0) {
 		if (_vec.size() > 0) {
-			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
-			std::memset(_vec.data(), 0, num_to_zero * sizeof(T));
+			size_t num_to_zero = _vec.capacity() - start_idx;
+			std::memset(_vec.data() + start_idx, 0, num_to_zero * sizeof(T));
 		}
 	}
 
