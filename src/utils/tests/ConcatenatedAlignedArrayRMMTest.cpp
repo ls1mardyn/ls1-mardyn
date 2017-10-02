@@ -78,7 +78,7 @@ void ConcatenatedAlignedArrayRMMTest::testGetters() {
 }
 
 void ConcatenatedAlignedArrayRMMTest::testZero() {
-	ConcatenatedAlignedArrayRMM<float, uint64_t> a(1);
+	ConcatenatedAlignedArrayRMM<float, uint64_t> a(8);
 	const int qbegin = static_cast<int>(Quantity_t::RX);
 	const int qend = static_cast<int>(Quantity_t::UID);
 	for (int q = qbegin; q < qend; ++q) {
