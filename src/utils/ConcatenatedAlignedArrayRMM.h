@@ -166,7 +166,7 @@ inline void ConcatenatedAlignedArrayRMM<TypeReal, TypeUID>::zero(size_t start_id
 		_byteBuffer.zero(start_idx);
 		return;
 	}
-	size_t num_to_zero = AlignedArray<TypeReal, VCP_ALIGNMENT>::_round_up(start_idx) - start_idx;
+	size_t num_to_zero = _numEntriesPerRealArray - start_idx;
 	if (_numEntriesPerRealArray > 0 and num_to_zero > 0) {
 		const int qbegin = static_cast<int>(Quantity_t::RX);
 		const int qend = static_cast<int>(Quantity_t::UID);
