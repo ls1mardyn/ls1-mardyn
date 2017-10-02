@@ -858,6 +858,12 @@ public:
 	#endif
 #endif
 	}
+
+	void aligned_load_add_store(vcp_real_calc * location) const {
+		RealCalcVec dest = aligned_load(location);
+		dest = dest + *this;
+		dest.aligned_store(location);
+	}
 }; /* class RealCalcVec */
 
 } /* namespace vcp */

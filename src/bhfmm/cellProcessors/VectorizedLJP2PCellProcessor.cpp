@@ -452,8 +452,8 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 		}
 	}
 
-	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
-	hSum_Add_Store(my_threadData._virialV, sum_virial);
+	sum_upot6lj.aligned_load_add_store(&my_threadData._upot6ljV[0]);
+	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 }
 
 void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {

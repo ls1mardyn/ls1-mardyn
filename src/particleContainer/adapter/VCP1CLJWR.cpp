@@ -346,9 +346,8 @@ vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR
 		hSum_Add_Store(soa1_mol_vel_z + i, sum_fz1 * dtInv2m);
 	}
 
-	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
-	hSum_Add_Store(my_threadData._virialV, sum_virial);
-
+	sum_upot6lj.aligned_load_add_store(&my_threadData._upot6ljV[0]);
+	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 
 #else
 #pragma message "TODO: WR Mode is not implemented yet for KNC/KNL."

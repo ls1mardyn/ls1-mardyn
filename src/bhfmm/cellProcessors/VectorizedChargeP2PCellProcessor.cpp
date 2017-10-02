@@ -512,8 +512,8 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 		}
 	}
 
-	hSum_Add_Store(my_threadData._upotXpolesV, sum_upotXpoles);
-	hSum_Add_Store(my_threadData._virialV, sum_virial);
+	sum_upotXpoles.aligned_load_add_store(&my_threadData._upotXpolesV[0]);
+	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 } // void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2)
 
 void VectorizedChargeP2PCellProcessor::processCell(ParticleCellPointers & c) {

@@ -2626,10 +2626,11 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 		}
 	}
 
-	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
-	hSum_Add_Store(my_threadData._upotXpolesV, sum_upotXpoles);
-	hSum_Add_Store(my_threadData._virialV, sum_virial);
-	hSum_Add_Store(my_threadData._myRFV, zero - sum_myRF);
+	sum_upot6lj.aligned_load_add_store(&my_threadData._upot6ljV[0]);
+	sum_upotXpoles.aligned_load_add_store(&my_threadData._upotXpolesV[0]);
+	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
+	const RealCalcVec negative_sum_myRF = zero - sum_myRF;
+	negative_sum_myRF.aligned_load_add_store(&my_threadData._myRFV[0]);
 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
