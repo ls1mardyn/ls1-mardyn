@@ -9,6 +9,7 @@
 #include "../WrapOpenMP.h"
 #include "utils/Logger.h"
 
+#ifndef __INTEL_COMPILER
 #include <sched.h> /* int sched_getcpu(void); */
 
 using Log::global_log;
@@ -46,3 +47,11 @@ void PrintThreadPinningToCPU() {
 		}
 	}
 }
+#else
+using Log::global_log;
+
+void PrintThreadPinningToCPU() {
+	global_log->warning() << "Use KMP_AFFINITY=verbose with the Intel Compiler instead of this function call." << std::endl;
+}
+
+#endif
