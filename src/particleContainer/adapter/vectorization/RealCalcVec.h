@@ -799,6 +799,7 @@ public:
 #endif
 	}
 
+	vcp_inline
 	static void horizontal_add_and_store(const RealCalcVec& a, vcp_real_calc * const mem_addr) {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64

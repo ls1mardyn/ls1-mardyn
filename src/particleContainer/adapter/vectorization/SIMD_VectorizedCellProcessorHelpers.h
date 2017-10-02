@@ -399,13 +399,13 @@ template<bool ApplyCutoff>
 class SingleCellPolicy_ {
 public:
 
-	inline static size_t InitJ (const size_t i)  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+	vcp_inline static size_t InitJ (const size_t i)  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 	{  // i: only calculate j>=i
 		// however we do a floor for alignment purposes. ->  we have to mark some of the indices to not be computed (this is handled using the InitJ_Mask)
 		return vcp_floor_to_vec_size(i);  // this is i if i is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 	}
 
-	inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+	vcp_inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 	{
 #if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER and VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER
 		return InitJ(i);
@@ -414,11 +414,11 @@ public:
 #endif
 	}
 
-	inline static MaskVec InitJ_Mask(const size_t i) {  // calculations only for i onwards.
+	vcp_inline static MaskVec InitJ_Mask(const size_t i) {  // calculations only for i onwards.
 		return vcp_simd_getInitMask(i);
 	}
 
-	inline static MaskVec GetForceMask(const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskVec& j_mask) {
+	vcp_inline static MaskVec GetForceMask(const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskVec& j_mask) {
 		MaskVec result = (m_r2 != RealCalcVec::zero()) and j_mask;
 		j_mask = MaskVec::ones();
 
@@ -429,7 +429,7 @@ public:
 		return result;
 	}
 
-	inline static size_t NumDistanceCalculations(const size_t numSoA1, const size_t /*numSoA2*/) {
+	vcp_inline static size_t NumDistanceCalculations(const size_t numSoA1, const size_t /*numSoA2*/) {
 		return numSoA1 * (numSoA1 - 1) / 2;
 	}
 }; /* end of class SingleCellPolicy_ */
@@ -441,16 +441,16 @@ template<bool ApplyCutoff>
 class CellPairPolicy_ {
 public:
 
-	inline static size_t InitJ (const size_t /*i*/)
+	vcp_inline static size_t InitJ (const size_t /*i*/)
 	{
 		return 0;
 	}
-	inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+	vcp_inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 	{
 		return InitJ(i);
 	}
 
-	inline static MaskVec GetForceMask (const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskVec& /*j_mask*/)
+	vcp_inline static MaskVec GetForceMask (const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskVec& /*j_mask*/)
 	{
 		// Provide a mask with the same logic as used in
 		MaskVec result;
@@ -465,12 +465,12 @@ public:
 		return result;
 	}
 
-	inline static MaskVec InitJ_Mask (const size_t /*i*/)
+	vcp_inline static MaskVec InitJ_Mask (const size_t /*i*/)
 	{
 		return MaskVec::ones();//totally unimportant, since not used...
 	}
 
-	inline static size_t NumDistanceCalculations(const size_t numSoA1, const size_t numSoA2) {
+	vcp_inline static size_t NumDistanceCalculations(const size_t numSoA1, const size_t numSoA2) {
 		return numSoA1 * numSoA2;
 	}
 }; /* end of class CellPairPolicy_ */
