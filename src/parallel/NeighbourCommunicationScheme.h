@@ -55,6 +55,23 @@ public:
 		}
 		return neighbourRanks;
 	}
+
+	virtual size_t getDynamicSize() {
+		size_t totSize = 0;
+		// _fullShellNeighbours
+		totSize += _fullShellNeighbours.size();
+		for (CommunicationPartner& neigh : _fullShellNeighbours) {
+			totSize += neigh.getDynamicSize();
+		}
+		for (auto& neighList : _neighbours) {
+			for (auto& neigh : neighList) {
+				totSize += neigh.getDynamicSize();
+			}
+			totSize += sizeof(neighList);
+		}
+
+		return totSize;
+	}
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().

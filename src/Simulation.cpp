@@ -146,6 +146,7 @@ Simulation::Simulation()
 	_ensemble = new CanonicalEnsemble();
 	_memoryProfiler = new MemoryProfiler();
 	_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
+	_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_domainDecomposition));
 	initialize();
 }
 

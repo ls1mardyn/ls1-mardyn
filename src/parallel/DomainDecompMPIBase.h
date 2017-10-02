@@ -187,6 +187,15 @@ public:
 
 	// documentation in base class
 	virtual int getNonBlockingStageCount() override;
+
+	virtual size_t getTotalSize() override;
+
+	virtual void printSubInfo(int offset) override {
+		return;
+	}
+	virtual std::string getName() override {
+		return "DomainDecompMPIBase";
+	}
 protected:
 
 	/**

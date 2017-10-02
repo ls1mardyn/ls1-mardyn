@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <stddef.h>
 #include "CollectiveCommBaseInterface.h"
 //! @brief This class is a dummy class which ensures that the collective communication
 //!        commands also work if the program is executed sequentially without MPI.
@@ -153,6 +154,10 @@ public:
 	//! @return the value
 	virtual void finalize() override {
 		_values.clear();
+	}
+
+	virtual size_t getDynamicSize() {
+		return _values.size() * sizeof(valType);
 	}
 
 protected:

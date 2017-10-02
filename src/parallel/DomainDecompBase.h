@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "io/MemoryProfiler.h"
 class Component;
 class Domain;
 class ParticleContainer;
@@ -44,7 +45,7 @@ typedef ParticleContainer TMoleculeContainer;
 //! no need for message passing between processes). So the main program (or in this
 //! case the class Simulation) can decide which implementation to use. When MPI is
 //! available, the parallel version is used, otherwise the sequential version
-class DomainDecompBase {
+class DomainDecompBase: public MemoryProfilable {
 	friend class NeighbourCommunicationScheme;
 	friend class IndirectNeighbourCommunicationScheme;
 	friend class DirectNeighbourCommunicationScheme;
@@ -230,6 +231,16 @@ public:
 	    return MPI_COMM_WORLD;
 	}
 #endif
+
+	virtual size_t getTotalSize() override {
+		return _collCommBase.getDynamicSize();
+	}
+	virtual void printSubInfo(int offset) override {
+		return;
+	}
+	virtual std::string getName() override {
+		return "DomainDecompBase";
+	}
 
 protected:
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;

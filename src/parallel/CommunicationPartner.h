@@ -108,6 +108,8 @@ public:
 	//! @param partner which to add to the current CommunicationPartner
 	void add(CommunicationPartner partner);
 
+	size_t getDynamicSize();
+
 private:
 	enum HaloOrLeavingCorrection{
 		HALO,

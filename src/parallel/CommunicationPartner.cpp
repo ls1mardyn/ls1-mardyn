@@ -428,3 +428,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	}
 	global_simulation->timers()->stop("COMMUNICATION_PARTNER_INIT_SEND");
 }
+
+size_t CommunicationPartner::getDynamicSize() {
+	return (_sendBuf.size() + _recvBuf.size()) * sizeof(ParticleData) + _haloInfo.size() * sizeof(PositionInfo);
+}

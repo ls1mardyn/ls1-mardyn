@@ -187,6 +187,11 @@ public:
 	#endif
 		}
 
+	virtual size_t getDynamicSize() override{
+		return CollectiveCommBase::getDynamicSize() + _types.size() * sizeof(MPI_Datatype);
+	}
+
+
 protected:
 	//! @brief defines a MPI datatype which can be used to transfer a CollectiveCommunication object
 	//!
