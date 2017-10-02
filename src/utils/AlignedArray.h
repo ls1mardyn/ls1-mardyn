@@ -195,7 +195,7 @@ public:
 	}
 
 	virtual void zero(size_t start_idx = 0) {
-		if (_vec.size() > 0) {
+		if (_vec.size() > 0 and start_idx < _vec.capacity()) {
 			size_t num_to_zero = _vec.capacity() - start_idx;
 			std::memset(_vec.data() + start_idx, 0, num_to_zero * sizeof(T));
 		}

@@ -252,13 +252,12 @@ public:
 
 private:
 
-	template <typename T>
-	vcp_inline void setPaddingToZero(AlignedArray<T>& t) const {
-		size_t ljc_size = t._round_up(_ljc_num);
-		size_t charges_size = t._round_up(_charges_num);
-		size_t dipoles_size = t._round_up(_dipoles_num);
+	vcp_inline void setPaddingToZero(AlignedArray<vcp_lookupOrMask_single>& t) const {
+		size_t ljc_size 	= AlignedArray<vcp_real_calc>::_round_up(_ljc_num);
+		size_t charges_size = AlignedArray<vcp_real_calc>::_round_up(_charges_num);
+		size_t dipoles_size = AlignedArray<vcp_real_calc>::_round_up(_dipoles_num);
 
-		t.zero(_ljc_num);
+		t.zero(_ljc_num); // TODO: this call actually sets all after _ljc_num to zero. The subsequent calls are not necessary..?
 		t.zero(ljc_size + _charges_num);
 		t.zero(ljc_size + charges_size + _dipoles_num);
 		t.zero(ljc_size + charges_size + dipoles_size + _quadrupoles_num);
