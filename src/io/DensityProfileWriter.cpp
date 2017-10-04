@@ -37,13 +37,11 @@ void DensityProfileWriter::doOutput(ParticleContainer* particleContainer, Domain
 	if ((simstep >= _initStatistics) && (simstep % _writeFrequency == 0)) {
 		domain->collectProfile(domainDecomp, _doRecordVirialProfile);
 		if (mpi_rank == 0) {
-			global_log->info() << "[DensityProfileWriter] WRITING WRITING WRITING" << endl;
 			ostringstream osstrm;
 			osstrm << _outputPrefix << "." << fill_width('0', 9) << simstep;
 			//edited by Michaela Heier
 			if(domain->isCylindrical()){
 				domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
-				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
 			}
 			else{
 				domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
