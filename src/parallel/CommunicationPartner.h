@@ -10,6 +10,7 @@
 
 #include "mpi.h"
 #include <vector>
+#include <stddef.h>
 #include "ParticleDataForwardDeclaration.h"
 
 typedef enum {
