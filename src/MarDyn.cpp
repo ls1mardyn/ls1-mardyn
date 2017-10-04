@@ -1,3 +1,5 @@
+#include "MarDyn_version.h"
+
 #if ENABLE_MPI
 #include <mpi.h>
 #endif
@@ -138,14 +140,16 @@ int main(int argc, char** argv) {
 	global_log->set_mpi_output_root(0);
 	//global_log->set_mpi_output_all();
 #endif
-#ifndef NDEBUG
-	global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << endl;
-#endif
 
 	optparse::OptionParser op;
 	initOptions(&op);
 	optparse::Values options = op.parse_args(argc, argv);
 	vector<string> args = op.args();
+
+	global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << endl;
+#ifndef NDEBUG
+	global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << endl;
+#endif
 
 	if( options.is_set_by_user("logfile") ) {
 		string logfileName(options.get("logfile"));
