@@ -645,7 +645,7 @@ void Domain::writeCheckpoint(string filename,
 		bool useBinaryFormat) {
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	global_log->warning() << "The checkpoints are not adapted for WR-mode. Velocity will be one half-timestep ahead!" << std::endl;
+	global_log->warning() << "The checkpoints are not adapted for RMM-mode. Velocity will be one half-timestep ahead!" << std::endl;
 	global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
 	//TODO: desired correctness (compatibility to normal mode) should be achievable by:
 	// 1. integrating positions by half a timestep forward (+ delta T / 2)

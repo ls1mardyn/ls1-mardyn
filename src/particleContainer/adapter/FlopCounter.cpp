@@ -30,7 +30,7 @@ FlopCounter::_Counts::_Counts():
 	// sum Macro: 2 (upot + virial) + 0 (RF)
 	initPotCounter(I_LJ, "Lennard-Jones", 15, 4, 12, 2);
 #else
-	// in WR mode, we don't sum up the virials:
+	// in RMM mode, we don't sum up the virials:
 	// Kernel: 12 = 1 (inverse R squared) + 8 (compute scale) + 3 (apply scale) + 0 (virial tensor)
 	// Macro: 4 = 2 (upot) + 5 (virial)
 	// sum Forces, Virials and Torques: 6 (forces) + 0 (virials) + 0 (torques)
@@ -202,8 +202,8 @@ void FlopCounter::processCell(ParticleCell & c) {
 	FullParticleCell & full_c = downcastCellReferenceFull(c);
 	CellDataSoA& soa = full_c.getCellDataSoA();
 #else
-	ParticleCell_WR & wr_c = downcastCellReferenceWR(c);
-	CellDataSoA_WR& soa = wr_c.getCellDataSoA();
+	ParticleCellRMM & wr_c = downcastCellReferenceRMM(c);
+	CellDataSoARMM& soa = wr_c.getCellDataSoA();
 #endif
 
 	if (c.isHaloCell() or soa.getMolNum() < 2) {
@@ -225,10 +225,10 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
 	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
 #else
-	ParticleCell_WR & wr_c1 = downcastCellReferenceWR(c1);
-	ParticleCell_WR & wr_c2 = downcastCellReferenceWR(c2);
-	const CellDataSoA_WR& soa1 = wr_c1.getCellDataSoA();
-	const CellDataSoA_WR& soa2 = wr_c2.getCellDataSoA();
+	ParticleCellRMM & wr_c1 = downcastCellReferenceRMM(c1);
+	ParticleCellRMM & wr_c2 = downcastCellReferenceRMM(c2);
+	const CellDataSoARMM& soa1 = wr_c1.getCellDataSoA();
+	const CellDataSoARMM& soa2 = wr_c2.getCellDataSoA();
 #endif
 
 
@@ -390,7 +390,7 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic>
-void FlopCounter::_calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2) {
+void FlopCounter::_calculatePairs(const CellDataSoARMM & soa1, const CellDataSoARMM & soa2) {
 	const vcp_real_calc * const soa1_mol_pos_x = soa1.r_xBegin();
 	const vcp_real_calc * const soa1_mol_pos_y = soa1.r_yBegin();
 	const vcp_real_calc * const soa1_mol_pos_z = soa1.r_zBegin();

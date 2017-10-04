@@ -1,28 +1,28 @@
 /*
- * VCP1CLJWRTest.cpp
+ * VCP1CLJRMMTest.cpp
  *
  *  Created on: 13 Apr 2017
  *      Author: tchipevn
  */
 
-#include "VCP1CLJWRTest.h"
+#include "VCP1CLJRMMTest.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/adapter/VCP1CLJWR.h"
+#include "particleContainer/adapter/VCP1CLJRMM.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-TEST_SUITE_REGISTRATION(VCP1CLJWRTest);
+TEST_SUITE_REGISTRATION(VCP1CLJRMMTest);
 #else
-#pragma message "Compilation info: The unit test for the WR force calculation is not executed in non-WR mode."
+#pragma message "Compilation info: The unit test for the RMM force calculation is not executed in non-RMM mode."
 #endif
 
 
-VCP1CLJWRTest::VCP1CLJWRTest() {
+VCP1CLJRMMTest::VCP1CLJRMMTest() {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	test_log->info() << "Testing VCP1CLJWR cell processor against: "
+	test_log->info() << "Testing VCP1CLJRMM cell processor against: "
 #if VCP_VEC_TYPE==VCP_NOVEC
 	<< "VectorizedCellProcessor with no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
@@ -36,13 +36,13 @@ VCP1CLJWRTest::VCP1CLJWRTest() {
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
-VCP1CLJWRTest::~VCP1CLJWRTest() {
+VCP1CLJRMMTest::~VCP1CLJRMMTest() {
 }
 
-void VCP1CLJWRTest::testForcePotentialCalculationU0() {
+void VCP1CLJRMMTest::testForcePotentialCalculationU0() {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "VCP1CLJWRTest::testForcePotentialCalculationU0()"
+		test_log->info() << "VCP1CLJRMMTest::testForcePotentialCalculationU0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -61,7 +61,7 @@ void VCP1CLJWRTest::testForcePotentialCalculationU0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
-	VCP1CLJ_WR cellProcessor( *_domain, 1.1, 1.1);
+	VCP1CLJRMM cellProcessor( *_domain, 1.1, 1.1);
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
@@ -84,10 +84,10 @@ void VCP1CLJWRTest::testForcePotentialCalculationU0() {
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
-void VCP1CLJWRTest::testForcePotentialCalculationF0() {
+void VCP1CLJRMMTest::testForcePotentialCalculationF0() {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "VCP1CLJWRTest::testForcePotentialCalculationF0()"
+		test_log->info() << "VCP1CLJRMMTest::testForcePotentialCalculationF0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -102,7 +102,7 @@ void VCP1CLJWRTest::testForcePotentialCalculationF0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
-	VCP1CLJ_WR cellProcessor( *_domain,  1.3, 1.3);
+	VCP1CLJRMM cellProcessor( *_domain,  1.3, 1.3);
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
@@ -126,25 +126,25 @@ void VCP1CLJWRTest::testForcePotentialCalculationF0() {
 }
 
 // free function
-void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA& fullSoA) {
+void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataSoA& fullSoA) {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 
 //	for (int i = 0; i < numMols; ++i) {
-////		FullMolecule m = FullMolecule(cell_wr.moleculesAtConst(i));
+////		FullMolecule m = FullMolecule(cell_RMM.moleculesAtConst(i));
 //		TODO: create an std vector of FullMolecules and SoA for two cells
 //		TODO: compute forces via _calculatePairs
 //	}
 
 	// Determine the total number of centers.
-	size_t numMolecules = cell_wr.getMoleculeCount();
+	size_t numMolecules = cell_RMM.getMoleculeCount();
 	size_t nLJCenters = 0;
 	size_t nCharges = 0;
 	size_t nDipoles = 0;
 	size_t nQuadrupoles = 0;
 
-	ParticleCell_WR & nonconst_cell_wr = const_cast<ParticleCell_WR&>(cell_wr);
-	SingleCellIterator begin = nonconst_cell_wr.iteratorBegin();
-	SingleCellIterator end = nonconst_cell_wr.iteratorEnd();
+	ParticleCellRMM & nonconst_cell_RMM = const_cast<ParticleCellRMM&>(cell_RMM);
+	SingleCellIterator begin = nonconst_cell_RMM.iteratorBegin();
+	SingleCellIterator end = nonconst_cell_RMM.iteratorEnd();
 
 	for(SingleCellIterator it = begin; it != end; ++it) {
 		nLJCenters += it->numLJcenters();
@@ -208,10 +208,10 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
-void VCP1CLJWRTest::testProcessCell() {
+void VCP1CLJRMMTest::testProcessCell() {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "VCP1CLJWRTest::testProcessCell()"
+		test_log->info() << "VCP1CLJRMMTest::testProcessCell()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -227,24 +227,24 @@ void VCP1CLJWRTest::testProcessCell() {
 
 	LinkedCells * linkedCells = dynamic_cast<LinkedCells*>(container);
 
-	VCP1CLJ_WR vcp_WR( *_domain,  ScenarioCutoff, ScenarioCutoff);
-	vcp_WR.setDtInvm(1.0);
+	VCP1CLJRMM vcp_RMM( *_domain,  ScenarioCutoff, ScenarioCutoff);
+	vcp_RMM.setDtInvm(1.0);
 	VectorizedCellProcessor vcp_full(*_domain,  ScenarioCutoff, ScenarioCutoff);
 
 	// get an inner cell
 	double innerPoint[3] = {0.1, 0.1, 0.1};
 	unsigned long firstCellIndex = linkedCells->getCellIndexOfPoint(innerPoint);
-	ParticleCell_WR& cell_wr = linkedCells->getCellReference(firstCellIndex);
+	ParticleCellRMM& cell_RMM = linkedCells->getCellReference(firstCellIndex);
 	CellDataSoA full_SoA(0,0,0,0,0);
-	VCP1CLJWRTest__initFullCellSoA(cell_wr, full_SoA);
+	VCP1CLJRMMTest__initFullCellSoA(cell_RMM, full_SoA);
 
-	vcp_WR.initTraversal();
-	vcp_WR.processCell(cell_wr);
-	vcp_WR.endTraversal();
+	vcp_RMM.initTraversal();
+	vcp_RMM.processCell(cell_RMM);
+	vcp_RMM.endTraversal();
 
 
-	double WR_Upot = _domain->getLocalUpot();
-	double WR_Virial = _domain->getLocalVirial();
+	double RMM_Upot = _domain->getLocalUpot();
+	double RMM_Virial = _domain->getLocalVirial();
 
 	vcp_full.initTraversal();
 	const bool CalculateMacroscopic = true;
@@ -255,16 +255,16 @@ void VCP1CLJWRTest::testProcessCell() {
 	double full_Upot = _domain->getLocalUpot();
 	double full_Virial = _domain->getLocalVirial();
 
-	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, fabs(1.0e-5*full_Upot));
-	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, fabs(1.0e-5*full_Virial));
+	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-5*full_Upot));
+	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-5*full_Virial));
 
-	SingleCellIterator begin = cell_wr.iteratorBegin();
-	SingleCellIterator end = cell_wr.iteratorEnd();
+	SingleCellIterator begin = cell_RMM.iteratorBegin();
+	SingleCellIterator end = cell_RMM.iteratorEnd();
 
 	for (SingleCellIterator it = begin; it != end; ++it) {
-		double WR_f_x = it->F(0);
-		double WR_f_y = it->F(1);
-		double WR_f_z = it->F(2);
+		double RMM_f_x = it->F(0);
+		double RMM_f_y = it->F(1);
+		double RMM_f_z = it->F(2);
 
 		size_t i = it.getIndex();
 
@@ -272,19 +272,19 @@ void VCP1CLJWRTest::testProcessCell() {
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
-		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, fabs(1.0e-5*WR_f_x));
-		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, fabs(1.0e-5*WR_f_y));
-		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, fabs(1.0e-5*WR_f_z));
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, RMM_f_x, fabs(1.0e-5*RMM_f_x));
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, RMM_f_y, fabs(1.0e-5*RMM_f_y));
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, RMM_f_z, fabs(1.0e-5*RMM_f_z));
 	}
 
 	delete container;
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
 
-void VCP1CLJWRTest::testProcessCellPair() {
+void VCP1CLJRMMTest::testProcessCellPair() {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "VCP1CLJWRTest::testProcessCellPair()"
+		test_log->info() << "VCP1CLJRMMTest::testProcessCellPair()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -301,29 +301,29 @@ void VCP1CLJWRTest::testProcessCellPair() {
 
 	LinkedCells * linkedCells = dynamic_cast<LinkedCells*>(container);
 
-	VCP1CLJ_WR vcp_WR( *_domain,  ScenarioCutoff, ScenarioCutoff);
-	vcp_WR.setDtInvm(1.0);
+	VCP1CLJRMM vcp_RMM( *_domain,  ScenarioCutoff, ScenarioCutoff);
+	vcp_RMM.setDtInvm(1.0);
 	VectorizedCellProcessor vcp_full(*_domain,  ScenarioCutoff, ScenarioCutoff);
 
 	// get an inner cell
 	double innerPoint[3] = {0.1, 0.1, 0.1};
 	unsigned long firstCellIndex = linkedCells->getCellIndexOfPoint(innerPoint);
-	ParticleCell_WR& cell_wr1 = linkedCells->getCellReference(firstCellIndex);
-	ParticleCell_WR& cell_wr2 = linkedCells->getCellReference(firstCellIndex + 1);
+	ParticleCellRMM& cell_RMM1 = linkedCells->getCellReference(firstCellIndex);
+	ParticleCellRMM& cell_RMM2 = linkedCells->getCellReference(firstCellIndex + 1);
 
 
 	CellDataSoA full_SoA1(0,0,0,0,0);
 	CellDataSoA full_SoA2(0,0,0,0,0);
-	VCP1CLJWRTest__initFullCellSoA(cell_wr1, full_SoA1);
-	VCP1CLJWRTest__initFullCellSoA(cell_wr2, full_SoA2);
+	VCP1CLJRMMTest__initFullCellSoA(cell_RMM1, full_SoA1);
+	VCP1CLJRMMTest__initFullCellSoA(cell_RMM2, full_SoA2);
 
-	vcp_WR.initTraversal();
-	vcp_WR.processCellPair(cell_wr1, cell_wr2);
-	vcp_WR.endTraversal();
+	vcp_RMM.initTraversal();
+	vcp_RMM.processCellPair(cell_RMM1, cell_RMM2);
+	vcp_RMM.endTraversal();
 
 
-	double WR_Upot = _domain->getLocalUpot();
-	double WR_Virial = _domain->getLocalVirial();
+	double RMM_Upot = _domain->getLocalUpot();
+	double RMM_Virial = _domain->getLocalVirial();
 
 	vcp_full.initTraversal();
 	const bool CalculateMacroscopic = true;
@@ -334,15 +334,15 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	double full_Upot = _domain->getLocalUpot();
 	double full_Virial = _domain->getLocalVirial();
 
-	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, fabs(1.0e-7*full_Upot));
-	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, fabs(1.0e-7*full_Virial));
+	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-7*full_Upot));
+	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-7*full_Virial));
 
-	SingleCellIterator begin1 = cell_wr1.iteratorBegin();
-	SingleCellIterator end1 = cell_wr1.iteratorEnd();
+	SingleCellIterator begin1 = cell_RMM1.iteratorBegin();
+	SingleCellIterator end1 = cell_RMM1.iteratorEnd();
 	for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
-		double WR_f_x = it1->F(0);
-		double WR_f_y = it1->F(1);
-		double WR_f_z = it1->F(2);
+		double RMM_f_x = it1->F(0);
+		double RMM_f_y = it1->F(1);
+		double RMM_f_z = it1->F(2);
 
 		size_t i = it1.getIndex();
 
@@ -350,17 +350,17 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
-		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, fabs(full_f_x*1.0e-5));
-		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, fabs(full_f_y*1.0e-5));
-		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, fabs(full_f_z*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, RMM_f_x, fabs(full_f_x*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, RMM_f_y, fabs(full_f_y*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, RMM_f_z, fabs(full_f_z*1.0e-5));
 	}
 
-	SingleCellIterator begin2 = cell_wr2.iteratorBegin();
-	SingleCellIterator end2 = cell_wr2.iteratorEnd();
+	SingleCellIterator begin2 = cell_RMM2.iteratorBegin();
+	SingleCellIterator end2 = cell_RMM2.iteratorEnd();
 	for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
-		double WR_f_x = it2->F(0);
-		double WR_f_y = it2->F(1);
-		double WR_f_z = it2->F(2);
+		double RMM_f_x = it2->F(0);
+		double RMM_f_y = it2->F(1);
+		double RMM_f_z = it2->F(2);
 
 		size_t i = it2.getIndex();
 
@@ -368,9 +368,9 @@ void VCP1CLJWRTest::testProcessCellPair() {
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
-		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, fabs(full_f_x*1.0e-5));
-		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, fabs(full_f_y*1.0e-5));
-		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, fabs(full_f_z*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, RMM_f_x, fabs(full_f_x*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, RMM_f_y, fabs(full_f_y*1.0e-5));
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, RMM_f_z, fabs(full_f_z*1.0e-5));
 	}
 
 	delete container;

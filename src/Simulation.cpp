@@ -31,10 +31,10 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
-#include "particleContainer/adapter/VCP1CLJWR.h"
+#include "particleContainer/adapter/VCP1CLJRMM.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
-#include "integrators/LeapfrogWR.h"
+#include "integrators/LeapfrogRMM.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -197,17 +197,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@type", integratorType);
 		global_log->info() << "Integrator type: " << integratorType << endl;
 		if(integratorType == "Leapfrog") {
-			_integrator = new Leapfrog();
-
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-			global_log->error() << "WR mode requires the Leapfrog_WR integrator" << endl;
+			global_log->error() << "The reduced memory mode (RMM) requires the LeapfrogRMM integrator." << endl;
 			Simulation::exit(-1);
 #endif
-
-		} else if (integratorType == "Leapfrog_WR") {
-			global_log->info() << "Integrator type: Leapfrog_WR (WR mode only)" << endl;
-			global_log->info() << "" << endl;
-			_integrator = new Leapfrog_WR();
+			_integrator = new Leapfrog();
+		} else if (integratorType == "LeapfrogRMM") {
+			_integrator = new LeapfrogRMM();
 		} else {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
 			Simulation::exit(1);
@@ -803,8 +799,8 @@ void Simulation::prepare_start() {
 		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}
 #else
-	global_log->info() << "Using WR cell processor." << endl;
-	_cellProcessor = new VCP1CLJ_WR( *_domain, _cutoffRadius, _LJCutoffRadius);
+	global_log->info() << "Using reduced memory mode (RMM) cell processor." << endl;
+	_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
@@ -853,7 +849,7 @@ void Simulation::prepare_start() {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	// the leapfrog integration requires that we move the velocities by one half-timestep
 	// so we halve vcp1clj_wr_cellProcessor::_dtInvm
-	VCP1CLJ_WR * vcp1clj_wr_cellProcessor = static_cast<VCP1CLJ_WR * >(_cellProcessor);
+	VCP1CLJRMM * vcp1clj_wr_cellProcessor = static_cast<VCP1CLJRMM * >(_cellProcessor);
 	double dt_inv_m = vcp1clj_wr_cellProcessor->getDtInvm();
 	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m * 0.5);
 #endif /* ENABLE_REDUCED_MEMORY_MODE */

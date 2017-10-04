@@ -1,18 +1,11 @@
-/*
- * VCP1CLJWRTest.h
- *
- *  Created on: 13 Apr 2017
- *      Author: tchipevn
- */
-
-#ifndef SRC_PARTICLECONTAINER_ADAPTER_TESTS_VCP1CLJWRTEST_H_
-#define SRC_PARTICLECONTAINER_ADAPTER_TESTS_VCP1CLJWRTEST_H_
+#ifndef SRC_PARTICLECONTAINER_ADAPTER_TESTS_VCP1CLJRMMTEST_H_
+#define SRC_PARTICLECONTAINER_ADAPTER_TESTS_VCP1CLJRMMTEST_H_
 
 #include "utils/TestWithSimulationSetup.h"
 
-class VCP1CLJWRTest : public utils::TestWithSimulationSetup {
+class VCP1CLJRMMTest : public utils::TestWithSimulationSetup {
 
-	TEST_SUITE(VCP1CLJWRTest);
+	TEST_SUITE(VCP1CLJRMMTest);
 
 	TEST_METHOD(testForcePotentialCalculationU0);
 	TEST_METHOD(testForcePotentialCalculationF0);
@@ -23,8 +16,8 @@ class VCP1CLJWRTest : public utils::TestWithSimulationSetup {
 
 
 public:
-	VCP1CLJWRTest();
-	virtual ~VCP1CLJWRTest();
+	VCP1CLJRMMTest();
+	virtual ~VCP1CLJRMMTest();
 
 	/**
 	 * p3 --- p4
@@ -64,4 +57,4 @@ public:
 
 };
 
-#endif /* SRC_PARTICLECONTAINER_ADAPTER_TESTS_VCP1CLJWRTEST_H_ */
+#endif /* SRC_PARTICLECONTAINER_ADAPTER_TESTS_VCP1CLJRMMTEST_H_ */

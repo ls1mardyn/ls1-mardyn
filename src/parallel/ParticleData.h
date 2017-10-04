@@ -4,10 +4,10 @@
  */
 
 #include "ParticleDataFull.h"
-#include "ParticleDataWR.h"
+#include "ParticleDataRMM.h"
 
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 	typedef ParticleDataFull ParticleData;
 #else
-	typedef ParticleDataWR ParticleData;
+	typedef ParticleDataRMM ParticleData;
 #endif

@@ -1,13 +1,6 @@
-/*
- * VCP1CLJWR.cpp
- *
- *  Created on: 30 Jan 2017
- *      Author: tchipevn
- */
+#include "VCP1CLJRMM.h"
 
-#include "VCP1CLJWR.h"
-
-#include "particleContainer/adapter/CellDataSoA_WR.h"
+#include "particleContainer/adapter/CellDataSoARMM.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleCell.h"
 #include "Domain.h"
@@ -19,20 +12,20 @@
 
 #include <algorithm>
 
-VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadius) :
+VCP1CLJRMM::VCP1CLJRMM(Domain& domain, double cutoffRadius, double LJcutoffRadius) :
 	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInvm(0.0), _upot6lj(0.0), _virial(0.0) {
 #if VCP_VEC_TYPE==VCP_NOVEC
-	global_log->info() << "VCP1CLJ_WR: using no intrinsics." << std::endl;
+	global_log->info() << "VCP1CLJRMM: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	global_log->info() << "VCP1CLJ_WR: using SSE3 intrinsics." << std::endl;
+	global_log->info() << "VCP1CLJRMM: using SSE3 intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	global_log->info() << "VCP1CLJ_WR: using AVX intrinsics." << std::endl;
+	global_log->info() << "VCP1CLJRMM: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
-	global_log->info() << "VCP1CLJ_WR: using AVX2 intrinsics." << std::endl;
+	global_log->info() << "VCP1CLJRMM: using AVX2 intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNC) || (VCP_VEC_TYPE==VCP_VEC_KNC_GATHER)
-	global_log->info() << "VCP1CLJ_WR: using KNC intrinsics." << std::endl;
+	global_log->info() << "VCP1CLJRMM: using KNC intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
-	global_log->info() << "VCP1CLJ_WR: using KNL intrinsics." << std::endl;
+	global_log->info() << "VCP1CLJRMM: using KNL intrinsics." << std::endl;
 #endif
 
 	const Component& componentZero = _simulation.getEnsemble()->getComponents()->front();
@@ -49,12 +42,12 @@ VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 		double dt = global_simulation->getIntegrator()->getTimestepLength();
 		_dtInvm = dt / componentZero.m();
 	} else {
-		global_log->info() << "VCP1CLJWR: initialize dtInv2m via setter method necessary." << endl;
+		global_log->info() << "VCP1CLJRMM: initialize dtInv2m via setter method necessary." << endl;
 	}
 
 	// initialize thread data
 	_numThreads = mardyn_get_max_threads();
-	global_log->info() << "VCP1CLJ_WR: allocate data for "
+	global_log->info() << "VCP1CLJRMM: allocate data for "
 			<< _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
@@ -62,13 +55,13 @@ VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 	#pragma omp parallel
 	#endif
 	{
-		VCP1CLJWRThreadData * myown = new VCP1CLJWRThreadData();
+		VCP1CLJRMMThreadData * myown = new VCP1CLJRMMThreadData();
 		const int myid = mardyn_get_thread_num();
 		_threadData[myid] = myown;
 	} // end pragma omp parallel
 }
 
-VCP1CLJ_WR::~VCP1CLJ_WR() {
+VCP1CLJRMM::~VCP1CLJRMM() {
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -78,7 +71,7 @@ VCP1CLJ_WR::~VCP1CLJ_WR() {
 	}
 }
 
-void VCP1CLJ_WR::initTraversal() {
+void VCP1CLJRMM::initTraversal() {
 	mardyn_assert(_dtInvm != static_cast<vcp_real_calc>(0.0));
 
 	#if defined(_OPENMP)
@@ -89,18 +82,18 @@ void VCP1CLJ_WR::initTraversal() {
 		_virial = 0.0;
 	} // end pragma omp master
 
-	global_log->debug() << "VCP1CLJ_WR::initTraversal()." << std::endl;
+	global_log->debug() << "VCP1CLJRMM::initTraversal()." << std::endl;
 }
 
-void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
+void VCP1CLJRMM::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	mardyn_assert(&cell1 != &cell2);
-	ParticleCell_WR & cellWR1 = downcastCellReferenceWR(cell1);
-	ParticleCell_WR & cellWR2 = downcastCellReferenceWR(cell2);
+	ParticleCellRMM & cellRMM1 = downcastCellReferenceRMM(cell1);
+	ParticleCellRMM & cellRMM2 = downcastCellReferenceRMM(cell2);
 
-	CellDataSoA_WR& soa1 = cellWR1.getCellDataSoA();
-	CellDataSoA_WR& soa2 = cellWR2.getCellDataSoA();
-	const bool c1Halo = cellWR1.isHaloCell();
-	const bool c2Halo = cellWR2.isHaloCell();
+	CellDataSoARMM& soa1 = cellRMM1.getCellDataSoA();
+	CellDataSoARMM& soa2 = cellRMM2.getCellDataSoA();
+	const bool c1Halo = cellRMM1.isHaloCell();
+	const bool c2Halo = cellRMM2.isHaloCell();
 
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
@@ -123,7 +116,7 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	const bool ApplyCutoff = true;
 
 	if ((not c1Halo and not c2Halo) or						// no cell is halo or
-			(cellWR1.getCellIndex() < cellWR2.getCellIndex())) 		// one of them is halo, but cellWR1.index < cellWR2.index
+			(cellRMM1.getCellIndex() < cellRMM2.getCellIndex())) 		// one of them is halo, but cellRMM1.index < cellRMM2.index
 	{
 		const bool CalculateMacroscopic = true;
 
@@ -135,7 +128,7 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 
 	} else {
 		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
-		mardyn_assert(not (cellWR1.getCellIndex() < cellWR2.getCellIndex()));// cellWR1.index not < cellWR2.index
+		mardyn_assert(not (cellRMM1.getCellIndex() < cellRMM2.getCellIndex()));
 
 		const bool CalculateMacroscopic = false;
 
@@ -147,11 +140,11 @@ void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	}
 }
 
-void VCP1CLJ_WR::processCell(ParticleCell& cell) {
-	ParticleCell_WR & cellWR = downcastCellReferenceWR(cell);
+void VCP1CLJRMM::processCell(ParticleCell& cell) {
+	ParticleCellRMM & cellRMM = downcastCellReferenceRMM(cell);
 
-	CellDataSoA_WR& soa = cellWR.getCellDataSoA();
-	if (cellWR.isHaloCell() or soa.getMolNum() < 2) {
+	CellDataSoARMM& soa = cellRMM.getCellDataSoA();
+	if (cellRMM.isHaloCell() or soa.getMolNum() < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
@@ -159,7 +152,7 @@ void VCP1CLJ_WR::processCell(ParticleCell& cell) {
 	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
-void VCP1CLJ_WR::endTraversal() {
+void VCP1CLJRMM::endTraversal() {
 	vcp_real_calc glob_upot6lj = 0.0;
 	vcp_real_calc glob_virial = 0.0;
 
@@ -189,7 +182,7 @@ void VCP1CLJ_WR::endTraversal() {
 const RealCalcVec one = RealCalcVec::set1(1.0);
 
 template<bool calculateMacroscopic>
-vcp_inline void VCP1CLJ_WR::_loopBodyLJ(
+vcp_inline void VCP1CLJRMM::_loopBodyLJ(
 	const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 	RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 	RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
@@ -232,10 +225,10 @@ vcp_inline void VCP1CLJ_WR::_loopBodyLJ(
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR& soa2) {
+vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM& soa2) {
 
 	const int tid = mardyn_get_thread_num();
-	VCP1CLJWRThreadData &my_threadData = *_threadData[tid];
+	VCP1CLJRMMThreadData &my_threadData = *_threadData[tid];
 
 	// initialize dist lookups
 	my_threadData._centers_dist_lookup.resize_zero_shrink(soa2.getMolNum(), true, false);
@@ -350,6 +343,6 @@ vcp_inline void VCP1CLJ_WR::_calculatePairs(CellDataSoA_WR& soa1, CellDataSoA_WR
 	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 
 #else
-#pragma message "TODO: WR Mode is not implemented yet for KNC/KNL."
+#pragma message "TODO: RMM Mode is not implemented yet for KNC/KNL."
 #endif
 }

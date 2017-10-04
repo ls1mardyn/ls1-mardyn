@@ -1,29 +1,22 @@
-/*
- * CellDataSoAWR.h
- *
- * @Date: 11.01.2017
- * @Author: tchipevn
- */
-
-#ifndef CELLDATASOA_WR_H_
-#define CELLDATASOA_WR_H_
+#ifndef CELLDATASOARMM_H_
+#define CELLDATASOARMM_H_
 
 #include "utils/ConcatenatedAlignedArrayRMM.h"
 #include "vectorization/SIMD_TYPES.h"
 #include "molecules/Molecule.h"
-#include "molecules/Molecule_WR.h"
+#include "molecules/MoleculeRMM.h"
 #include "CellDataSoABase.h"
 #include <cstdint>
 
 /**
  * \brief Structure of Arrays for single-center lennard-Jones molecules for
- * the WR run.
+ * the RMM run.
  * \author Nikola Tchipev
  */
-class CellDataSoA_WR : public CellDataSoABase {
+class CellDataSoARMM : public CellDataSoABase {
 	typedef ConcatenatedAlignedArrayRMM<vcp_real_calc, uint64_t>::Quantity_t Quantity_t;
 public:
-	CellDataSoA_WR(size_t mol_arg) {
+	CellDataSoARMM(size_t mol_arg) {
 		resize(mol_arg);
 	}
 
@@ -55,17 +48,17 @@ public:
 	}
 
 	void appendMolecule(MoleculeInterface& m) {
-		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
+		MoleculeRMM& m_RMM = downcastMoleculeReferenceRMM(m);
 		std::array<vcp_real_calc,6> vals = {
-			static_cast<vcp_real_calc>(m_wr.r(0)),
-			static_cast<vcp_real_calc>(m_wr.r(1)),
-			static_cast<vcp_real_calc>(m_wr.r(2)),
-			static_cast<vcp_real_calc>(m_wr.v(0)),
-			static_cast<vcp_real_calc>(m_wr.v(1)),
-			static_cast<vcp_real_calc>(m_wr.v(2))
+			static_cast<vcp_real_calc>(m_RMM.r(0)),
+			static_cast<vcp_real_calc>(m_RMM.r(1)),
+			static_cast<vcp_real_calc>(m_RMM.r(2)),
+			static_cast<vcp_real_calc>(m_RMM.v(0)),
+			static_cast<vcp_real_calc>(m_RMM.v(1)),
+			static_cast<vcp_real_calc>(m_RMM.v(2))
 		};
 
-		_data.appendValues(vals, m_wr.id(), _mol_num);
+		_data.appendValues(vals, m_RMM.id(), _mol_num);
 		++_mol_num;
 	}
 
@@ -74,26 +67,26 @@ public:
 	}
 
 	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
-		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
+		MoleculeRMM& m_RMM = downcastMoleculeReferenceRMM(m);
 
 		// changes in AOS storage will not be saved
-		m_wr.setStorageState(Molecule_WR::STORAGE_AOS);
-		m_wr.setr(0, getMolR(0,index));
-		m_wr.setr(1, getMolR(1,index));
-		m_wr.setr(2, getMolR(2,index));
-		m_wr.setv(0, getMolV(0,index));
-		m_wr.setv(1, getMolV(1,index));
-		m_wr.setv(2, getMolV(2,index));
-		m_wr.setid(getMolUid(index));
+		m_RMM.setStorageState(MoleculeRMM::STORAGE_AOS);
+		m_RMM.setr(0, getMolR(0,index));
+		m_RMM.setr(1, getMolR(1,index));
+		m_RMM.setr(2, getMolR(2,index));
+		m_RMM.setv(0, getMolV(0,index));
+		m_RMM.setv(1, getMolV(1,index));
+		m_RMM.setv(2, getMolV(2,index));
+		m_RMM.setid(getMolUid(index));
 	}
 
 	void readMutableMolecule(size_t index, MoleculeInterface& m) {
-		Molecule_WR& m_wr = downcastMoleculeReferenceWR(m);
+		MoleculeRMM& m_RMM = downcastMoleculeReferenceRMM(m);
 
 		// changes in SOA storage will be saved
-		m_wr.setStorageState(Molecule_WR::STORAGE_SOA);
-		m_wr.setSoA(this);
-		m_wr.setStartIndexSoA_LJ(index);
+		m_RMM.setStorageState(MoleculeRMM::STORAGE_SOA);
+		m_RMM.setSoA(this);
+		m_RMM.setStartIndexSoA_LJ(index);
 	}
 
 	void writeMolecule(size_t i, const MoleculeInterface& m) {
@@ -173,4 +166,5 @@ private:
 	ConcatenatedAlignedArrayRMM<vcp_real_calc, uint64_t> _data;
 };
 
-#endif /* CELLDATASOA_WR_H_ */
+#endif /* CELLDATASOARMM_H_ */
+

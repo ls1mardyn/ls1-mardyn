@@ -1,20 +1,13 @@
-/*
- * LeapfrogWR.h
- *
- *  Created on: Apr 16, 2017
- *      Author: tchipevn
- */
-
-#ifndef SRC_INTEGRATORS_LEAPFROGWR_H_
-#define SRC_INTEGRATORS_LEAPFROGWR_H_
+#ifndef SRC_INTEGRATORS_LEAPFROGRMM_H_
+#define SRC_INTEGRATORS_LEAPFROGRMM_H_
 
 #include "Integrator.h"
 
-class Leapfrog_WR : public Integrator {
+class LeapfrogRMM : public Integrator {
 public:
-	Leapfrog_WR() {}
-	Leapfrog_WR(double timestepLength);
-	~Leapfrog_WR() {}
+	LeapfrogRMM() {}
+	LeapfrogRMM (double timestepLength);
+	~LeapfrogRMM() {}
 
 	void readXML(XMLfileUnits& xmlconfig);
 
@@ -44,4 +37,5 @@ private:
 
 };
 
-#endif /* SRC_INTEGRATORS_LEAPFROGWR_H_ */
+#endif /* SRC_INTEGRATORS_LEAPFROGRMM_H_ */
+

@@ -1,12 +1,5 @@
-/*
- * Molecule_WR.h
- *
- *  Created on: 21 Jan 2017
- *      Author: tchipevn
- */
-
-#ifndef SRC_MOLECULES_MOLECULE_WR_H_
-#define SRC_MOLECULES_MOLECULE_WR_H_
+#ifndef SRC_MOLECULES_MOLECULERMM_H_
+#define SRC_MOLECULES_MOLECULERMM_H_
 
 #include "MoleculeInterface.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
@@ -15,9 +8,9 @@
 #define DEBUG_FUNCTIONALITY_HACKS
 #endif
 
-class CellDataSoA_WR;
+class CellDataSoARMM;
 
-class Molecule_WR : public MoleculeInterface {
+class MoleculeRMM : public MoleculeInterface {
 public:
 	enum StorageState {
 		STORAGE_SOA = 0,
@@ -25,7 +18,7 @@ public:
 	};
 
 public:
-	Molecule_WR(unsigned long id = 0, Component *component = nullptr,
+	MoleculeRMM(unsigned long id = 0, Component *component = nullptr,
         double rx = 0., double ry = 0., double rz = 0.,
         double vx = 0., double vy = 0., double vz = 0.,
         double = 0., double = 0., double = 0., double = 0., /*q0, q1, q2, q3*/
@@ -52,7 +45,7 @@ public:
 	}
 
 	// copy constructor should always create an AOS molecule?
-	Molecule_WR(const Molecule_WR& other) {
+	MoleculeRMM(const MoleculeRMM& other) {
 		_state = STORAGE_AOS;
 		for (int d = 0; d < 3; ++d) {
 			setr(d, other.r(d));
@@ -63,7 +56,7 @@ public:
 		_soa_index = static_cast<size_t>(-1);
 	}
 
-	Molecule_WR(CellDataSoA_WR * soa, size_t index) {
+	MoleculeRMM(CellDataSoARMM * soa, size_t index) {
 		_state = STORAGE_SOA;
 		_soa = soa;
 		_soa_index = index;
@@ -73,7 +66,7 @@ public:
 		}
 	}
 
-	~Molecule_WR() {}
+	~MoleculeRMM() {}
 
 	unsigned long id() const;
 	void setid(unsigned long id);
@@ -278,7 +271,7 @@ public:
 	void calcFM() {}
 	void check(unsigned long /*id*/) {}
 
-	static Component * getStaticWRComponent() {
+	static Component * getStaticRMMComponent() {
 		return _component;
 	}
 
@@ -312,10 +305,10 @@ private:
 	unsigned long _id;
 
 	// if the state is SOA, the values are read from the SoA:
-	CellDataSoA_WR * _soa;
+	CellDataSoARMM * _soa;
 	size_t _soa_index;
 };
 
-std::ostream& operator<<( std::ostream& os, const Molecule_WR& m );
+std::ostream& operator<<( std::ostream& os, const MoleculeRMM& m );
 
-#endif /* SRC_MOLECULES_MOLECULE_WR_H_ */
+#endif /* SRC_MOLECULES_MOLECULERMM_H_ */

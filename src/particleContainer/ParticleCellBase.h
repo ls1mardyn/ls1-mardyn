@@ -76,7 +76,7 @@ public:
 //protected: Do not use! use SingleCellIterator instead!
 	// multipurpose:
 	// in FullParticleCell, this is set to point to one of the molecules in _molecules
-	// in ParticleCell_WR, this points to an existing molecule, into which the correct data is written.
+	// in ParticleCellRMM, this points to an existing molecule, into which the correct data is written.
 	virtual void moleculesAtNew(size_t i, Molecule *& multipurposePointer) = 0;
 	virtual void moleculesAtConstNew(size_t i, Molecule *& multipurposePointer) const = 0;
 

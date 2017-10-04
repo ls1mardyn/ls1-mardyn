@@ -1,5 +1,5 @@
-#ifndef ParticleDataWR_H_
-#define ParticleDataWR_H_
+#ifndef ParticleDataRMM_H_
+#define ParticleDataRMM_H_
 
 #include <mpi.h>
 
@@ -17,20 +17,20 @@
 //! This class achieves both. It is a class without constructor and destructor and only static
 //! methods, which means that only the member variables use memory, so it can be used like a
 //! C stuct. The static method setMPIType sets the given type to represent all the member variables.
-class ParticleDataWR {
+class ParticleDataRMM {
 public:
 	//! @brief defines a MPI datatype which can be used to transfer a MacroscopicData object
 	static void getMPIType(MPI_Datatype &sendPartType);
 
-	//! @brief copy data from object of class Molecule to object of class ParticleDataWR
-	static void MoleculeToParticleData(ParticleDataWR &particleStruct, Molecule &molecule);
+	//! @brief copy data from object of class Molecule to object of class ParticleDataRMM
+	static void MoleculeToParticleData(ParticleDataRMM &particleStruct, Molecule &molecule);
 
-	//! @brief copy data from object of class class ParticleDataWR to object of class Molecule
-	static void ParticleDataToMolecule(ParticleDataWR &particleStruct, Molecule &molecule);
+	//! @brief copy data from object of class class ParticleDataRMM to object of class Molecule
+	static void ParticleDataToMolecule(ParticleDataRMM &particleStruct, Molecule &molecule);
 
 	unsigned long id;
 	vcp_real_calc r[3];
 	vcp_real_calc v[3];
 };
 
-#endif /* ParticleDataWR_H_ */
+#endif /* ParticleDataRMM_H_ */

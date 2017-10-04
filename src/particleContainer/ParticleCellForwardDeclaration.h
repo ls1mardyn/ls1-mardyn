@@ -12,8 +12,8 @@
 	class FullParticleCell;
 	typedef FullParticleCell ParticleCell;
 #else
-	class ParticleCell_WR;
-	typedef ParticleCell_WR ParticleCell;
+	class ParticleCellRMM;
+	typedef ParticleCellRMM ParticleCell;
 #endif
 
 #endif /* SRC_PARTICLECONTAINER_PARTICLECELLFORWARDDECLARATION_H_ */

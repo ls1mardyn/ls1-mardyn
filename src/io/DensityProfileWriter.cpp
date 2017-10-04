@@ -9,7 +9,6 @@
 #include "utils/FileUtils.h"
 
 void DensityProfileWriter::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "[DensityProfileWriter] PATH: " << xmlconfig.getcurrentnodepath() << endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "[DensityProfileWriter] Write frequency: " << _writeFrequency << endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);

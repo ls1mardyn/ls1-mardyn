@@ -1,4 +1,4 @@
-#include "ParticleDataWR.h"
+#include "ParticleDataRMM.h"
 
 #include <mpi.h>
 #include <typeinfo>
@@ -9,7 +9,7 @@
 #include "utils/Logger.h"
 
 
-void ParticleDataWR::getMPIType(MPI_Datatype &sendPartType) {
+void ParticleDataRMM::getMPIType(MPI_Datatype &sendPartType) {
 	int blocklengths[] = { 1, 6 }; // 1 unsLong value (id), 6 double values (3r, 3v)
 
 
@@ -17,7 +17,7 @@ void ParticleDataWR::getMPIType(MPI_Datatype &sendPartType) {
 	types[0] = MPI_UNSIGNED_LONG;
 
 
-	ParticleDataWR pdata_dummy;
+	ParticleDataRMM pdata_dummy;
 
 	// ensure, that the types of v[0] and r[0] match!:
 	mardyn_assert(typeid(pdata_dummy.v[0])==typeid(pdata_dummy.r[0]));
@@ -56,7 +56,7 @@ void ParticleDataWR::getMPIType(MPI_Datatype &sendPartType) {
 	MPI_CHECK( MPI_Type_commit(&sendPartType) );
 }
 
-void ParticleDataWR::MoleculeToParticleData(ParticleDataWR &particleStruct, Molecule &molecule) {
+void ParticleDataRMM::MoleculeToParticleData(ParticleDataRMM &particleStruct, Molecule &molecule) {
 	particleStruct.id = molecule.id();
 	particleStruct.r[0] = molecule.r(0);
 	particleStruct.r[1] = molecule.r(1);
@@ -66,7 +66,7 @@ void ParticleDataWR::MoleculeToParticleData(ParticleDataWR &particleStruct, Mole
 	particleStruct.v[2] = molecule.v(2);
 }
 
-void ParticleDataWR::ParticleDataToMolecule(ParticleDataWR &particleStruct, Molecule &molecule) {
+void ParticleDataRMM::ParticleDataToMolecule(ParticleDataRMM &particleStruct, Molecule &molecule) {
 	Component* component = _simulation.getEnsemble()->getComponent(0);
 	molecule = Molecule(particleStruct.id, component,
 						particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],

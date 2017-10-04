@@ -1,23 +1,16 @@
-/*
- * ParticleCellWR.h
- *
- *  Created on: 20 Jan 2017
- *      Author: tchipevn
- */
-
-#ifndef SRC_PARTICLECONTAINER_PARTICLECELLWR_H_
-#define SRC_PARTICLECONTAINER_PARTICLECELLWR_H_
+#ifndef SRC_PARTICLECONTAINER_PARTICLECELLRMM_H_
+#define SRC_PARTICLECONTAINER_PARTICLECELLRMM_H_
 
 #include "ParticleCellBase.h"
-#include "particleContainer/adapter/CellDataSoA_WR.h"
+#include "particleContainer/adapter/CellDataSoARMM.h"
 
-class ParticleCell_WR: public ParticleCellBase {
+class ParticleCellRMM: public ParticleCellBase {
 public:
-	ParticleCell_WR();
+	ParticleCellRMM();
 
-	ParticleCell_WR(const ParticleCell_WR& /*other*/):_cellDataSoA_WR(0){}
+	ParticleCellRMM(const ParticleCellRMM& /*other*/):_cellDataSoARMM(0){}
 
-	~ParticleCell_WR();
+	~ParticleCellRMM();
 
 	void deallocateAllParticles() override;
 
@@ -43,11 +36,11 @@ public:
 
 	int countInRegion(double lowCorner[3], double highCorner[3]) const;
 
-	void swapAndAppendToCell(ParticleCell_WR& other);
+	void swapAndAppendToCell(ParticleCellRMM& other);
 
-	void swapMolecules(int i, ParticleCell_WR& other, int j);
+	void swapMolecules(int i, ParticleCellRMM& other, int j);
 
-	CellDataSoA_WR & getCellDataSoA() {return _cellDataSoA_WR;}
+	CellDataSoARMM & getCellDataSoA() {return _cellDataSoARMM;}
 
 	virtual size_t getMoleculeVectorDynamicSize() const override {return 0;}
 
@@ -62,7 +55,7 @@ private:
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	CellDataSoA_WR _cellDataSoA_WR;
+	CellDataSoARMM _cellDataSoARMM;
 };
 
-#endif /* SRC_PARTICLECONTAINER_PARTICLECELLWR_H_ */
+#endif /* SRC_PARTICLECONTAINER_PARTICLECELLRMM_H_ */

@@ -11,8 +11,8 @@
 	class ParticleDataFull;
 	typedef ParticleDataFull ParticleData;
 #else
-	class ParticleDataWR;
-	typedef ParticleDataWR ParticleData;
+	class ParticleDataRMM;
+	typedef ParticleDataRMM ParticleData;
 #endif
 
 

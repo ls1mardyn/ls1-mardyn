@@ -18,7 +18,7 @@ namespace bhfmm {
 
 ParticleCellPointers::ParticleCellPointers() :
 		_molecules(), _cellDataSoA(0, 0, 0, 0, 0) {
-	// TODO: disable when in Molecule_WR mode. It's only 1CLJ anyway.
+	// TODO: disable when in MoleculeRMM mode. It's only 1CLJ anyway.
 }
 
 ParticleCellPointers::~ParticleCellPointers() {

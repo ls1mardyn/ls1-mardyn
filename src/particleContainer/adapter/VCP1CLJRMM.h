@@ -1,12 +1,12 @@
 /*
- * VCP1CLJWR.h
+ * VCP1CLJRMM.h
  *
  *  Created on: 30 Jan 2017
  *      Author: tchipevn
  */
 
-#ifndef SRC_PARTICLECONTAINER_ADAPTER_VCP1CLJWR_H_
-#define SRC_PARTICLECONTAINER_ADAPTER_VCP1CLJWR_H_
+#ifndef SRC_PARTICLECONTAINER_ADAPTER_VCP1CLJRMM_H_
+#define SRC_PARTICLECONTAINER_ADAPTER_VCP1CLJRMM_H_
 
 #include "CellProcessor.h"
 
@@ -21,12 +21,12 @@
 class Component;
 class Domain;
 class Comp2Param;
-class CellDataSoA_WR;
+class CellDataSoARMM;
 
-class VCP1CLJ_WR: public CellProcessor {
+class VCP1CLJRMM: public CellProcessor {
 public:
-	VCP1CLJ_WR(Domain & domain, double cutoffRadius, double LJcutoffRadius);
-	~VCP1CLJ_WR();
+	VCP1CLJRMM(Domain & domain, double cutoffRadius, double LJcutoffRadius);
+	~VCP1CLJRMM();
 
 
 	/**
@@ -87,9 +87,9 @@ private:
 	 */
 	double _virial;
 
-	struct VCP1CLJWRThreadData {
+	struct VCP1CLJRMMThreadData {
 	public:
-		VCP1CLJWRThreadData(): _ljc_dist_lookup(nullptr){
+		VCP1CLJRMMThreadData(): _ljc_dist_lookup(nullptr){
 			_upot6ljV.resize(_numVectorElements);
 			_virialV.resize(_numVectorElements);
 
@@ -114,7 +114,7 @@ private:
 		AlignedArray<vcp_real_calc> _upot6ljV, _virialV;
 	};
 
-	std::vector<VCP1CLJWRThreadData *> _threadData;
+	std::vector<VCP1CLJRMMThreadData *> _threadData;
 
 	static const size_t _numVectorElements = VCP_VEC_SIZE;
 	size_t _numThreads;
@@ -152,8 +152,8 @@ private:
 	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-	vcp_inline void _calculatePairs(CellDataSoA_WR & soa1, CellDataSoA_WR & soa2);
+	vcp_inline void _calculatePairs(CellDataSoARMM & soa1, CellDataSoARMM & soa2);
 
 };
 
-#endif /* SRC_PARTICLECONTAINER_ADAPTER_VCP1CLJWR_H_ */
+#endif /* SRC_PARTICLECONTAINER_ADAPTER_VCP1CLJRMM_H_ */

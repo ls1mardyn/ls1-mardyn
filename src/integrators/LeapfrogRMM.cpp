@@ -1,11 +1,4 @@
-/*
- * LeapFrogWR.cpp
- *
- *  Created on: Apr 16, 2017
- *      Author: tchipevn
- */
-
-#include "LeapfrogWR.h"
+#include "LeapfrogRMM.h"
 
 #include "Simulation.h"
 #include "utils/Logger.h"
@@ -21,18 +14,18 @@
 using namespace std;
 using Log::global_log;
 
-Leapfrog_WR::Leapfrog_WR(double timestepLength) :
+LeapfrogRMM::LeapfrogRMM(double timestepLength) :
 		Integrator(timestepLength) {
 }
 
-void Leapfrog_WR::readXML(XMLfileUnits & xmlconfig) {
+void LeapfrogRMM::readXML(XMLfileUnits & xmlconfig) {
 	_timestepLength = 0;
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
 	global_log->info() << "Timestep: " << _timestepLength << endl;
 	mardyn_assert(_timestepLength > 0);
 }
 
-void Leapfrog_WR::computePositions(ParticleContainer* molCont, Domain* dom) {
+void LeapfrogRMM::computePositions(ParticleContainer* molCont, Domain* dom) {
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -45,7 +38,7 @@ void Leapfrog_WR::computePositions(ParticleContainer* molCont, Domain* dom) {
 	}
 }
 
-void Leapfrog_WR::computeVelocities(ParticleContainer* molCont, Domain* dom) {
+void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 	// TODO: Thermostat functionality is duplicated X times and needs to be rewritten!
 	map<int, unsigned long> N;
 	map<int, unsigned long> rotDOF;

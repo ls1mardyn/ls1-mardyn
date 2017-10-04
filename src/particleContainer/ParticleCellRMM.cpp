@@ -1,27 +1,20 @@
-/*
- * ParticleCellWR.cpp
- *
- *  Created on: 20 Jan 2017
- *      Author: tchipevn
- */
-
-#include "particleContainer/ParticleCellWR.h"
+#include "particleContainer/ParticleCellRMM.h"
 #include "particleContainer/ParticleCell.h"
 
-ParticleCell_WR::ParticleCell_WR() : _cellDataSoA_WR(0) {
+ParticleCellRMM::ParticleCellRMM() : _cellDataSoARMM(0) {
 	// TODO Auto-generated constructor stub
 
 }
 
-ParticleCell_WR::~ParticleCell_WR() {
+ParticleCellRMM::~ParticleCellRMM() {
 	// TODO Auto-generated destructor stub
 }
 
-void ParticleCell_WR::deallocateAllParticles() {
-	_cellDataSoA_WR.resize(0);
+void ParticleCellRMM::deallocateAllParticles() {
+	_cellDataSoARMM.resize(0);
 }
 
-bool ParticleCell_WR::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
+bool ParticleCellRMM::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 
 #ifndef NDEBUG
 	mardyn_assert(particle.inBox(_boxMin,_boxMax ));
@@ -36,7 +29,7 @@ bool ParticleCell_WR::addParticle(Molecule& particle, bool checkWhetherDuplicate
 	}
 
 	if (not found) {
-		_cellDataSoA_WR.appendMolecule(particle);
+		_cellDataSoARMM.appendMolecule(particle);
 		wasInserted = true;
 	} else {
 		wasInserted = false;
@@ -45,34 +38,34 @@ bool ParticleCell_WR::addParticle(Molecule& particle, bool checkWhetherDuplicate
 	return wasInserted;
 }
 
-void ParticleCell_WR::moleculesAtNew(size_t i, Molecule*& multipurposePointer) {
+void ParticleCellRMM::moleculesAtNew(size_t i, Molecule*& multipurposePointer) {
 	mardyn_assert((int)i < getMoleculeCount());
-	_cellDataSoA_WR.readMutableMolecule(i, *multipurposePointer);
+	_cellDataSoARMM.readMutableMolecule(i, *multipurposePointer);
 }
 
-void ParticleCell_WR::moleculesAtConstNew(size_t i, Molecule*& multipurposePointer) const {
+void ParticleCellRMM::moleculesAtConstNew(size_t i, Molecule*& multipurposePointer) const {
 	mardyn_assert((int)i < getMoleculeCount());
-	_cellDataSoA_WR.readImmutableMolecule(i, *multipurposePointer);
+	_cellDataSoARMM.readImmutableMolecule(i, *multipurposePointer);
 }
 
 
-bool ParticleCell_WR::isEmpty() const {
+bool ParticleCellRMM::isEmpty() const {
 	return getMoleculeCount() == 0;
 }
 
-bool ParticleCell_WR::deleteMoleculeByIndex(size_t index) {
+bool ParticleCellRMM::deleteMoleculeByIndex(size_t index) {
 	bool found = true;
 	mardyn_assert(index < static_cast<size_t>(getMoleculeCount()));
-	_cellDataSoA_WR.deleteMolecule(index);
+	_cellDataSoARMM.deleteMolecule(index);
 	return found;
 }
 
-int ParticleCell_WR::getMoleculeCount() const {
-	return _cellDataSoA_WR.getMolNum();
+int ParticleCellRMM::getMoleculeCount() const {
+	return _cellDataSoARMM.getMolNum();
 }
 
-void ParticleCell_WR::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
-	ParticleCell_WR& oCell = downcastCellReferenceWR(otherCell);
+void ParticleCellRMM::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
+	ParticleCellRMM& oCell = downcastCellReferenceRMM(otherCell);
 	//const int oNumMols = oCell.getMoleculeCount();
 
 	// TODO: use getRegion and put in a vector? will reduce number of calls to inBox by factor 2?
@@ -93,7 +86,7 @@ void ParticleCell_WR::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 	}
 }
 
-void ParticleCell_WR::swapAndAppendToCell(ParticleCell_WR& other) {
+void ParticleCellRMM::swapAndAppendToCell(ParticleCellRMM& other) {
 	// holds: the number of molecules that move from "this" to "other" is >= 0
 	Molecule dummy, otherDummy;
 	Molecule *dummy_p = &dummy, *otherDummy_p = &otherDummy;
@@ -121,24 +114,24 @@ void ParticleCell_WR::swapAndAppendToCell(ParticleCell_WR& other) {
 	}
 }
 
-void ParticleCell_WR::swapMolecules(int i, ParticleCell_WR& other, int j) {
+void ParticleCellRMM::swapMolecules(int i, ParticleCellRMM& other, int j) {
 	Molecule read_i, read_j;
-	      _cellDataSoA_WR.readImmutableMolecule(i, read_i);
-	other._cellDataSoA_WR.readImmutableMolecule(j, read_j);
+	      _cellDataSoARMM.readImmutableMolecule(i, read_i);
+	other._cellDataSoARMM.readImmutableMolecule(j, read_j);
 
-	      _cellDataSoA_WR.writeMolecule(i, read_j);
-	other._cellDataSoA_WR.writeMolecule(j, read_i);
+	      _cellDataSoARMM.writeMolecule(i, read_j);
+	other._cellDataSoARMM.writeMolecule(j, read_i);
 
 
 }
 
-int ParticleCell_WR::countInRegion(double lowCorner[3], double highCorner[3]) const {
+int ParticleCellRMM::countInRegion(double lowCorner[3], double highCorner[3]) const {
 	int ret = 0;
 	const int totalNumMols = getMoleculeCount();
 
-	const vcp_real_calc * const soa1_mol_pos_x = _cellDataSoA_WR.r_xBegin();
-	const vcp_real_calc * const soa1_mol_pos_y = _cellDataSoA_WR.r_yBegin();
-	const vcp_real_calc * const soa1_mol_pos_z = _cellDataSoA_WR.r_zBegin();
+	const vcp_real_calc * const soa1_mol_pos_x = _cellDataSoARMM.r_xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = _cellDataSoARMM.r_yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = _cellDataSoARMM.r_zBegin();
 
 
 	#if defined(_OPENMP)
@@ -154,14 +147,14 @@ int ParticleCell_WR::countInRegion(double lowCorner[3], double highCorner[3]) co
 	return ret;
 }
 
-void ParticleCell_WR::getRegion(double lowCorner[3], double highCorner[3],
+void ParticleCellRMM::getRegion(double lowCorner[3], double highCorner[3],
 		std::vector<Molecule*>& particlePtrs, bool removeFromContainer) {
 }
 
-void ParticleCell_WR::increaseMoleculeStorage(size_t numExtraMols) {
-	_cellDataSoA_WR.increaseStorage(numExtraMols);
+void ParticleCellRMM::increaseMoleculeStorage(size_t numExtraMols) {
+	_cellDataSoARMM.increaseStorage(numExtraMols);
 }
 
-void ParticleCell_WR::prefetchForForce() const {
-	_cellDataSoA_WR.prefetchForForce();
+void ParticleCellRMM::prefetchForForce() const {
+	_cellDataSoARMM.prefetchForForce();
 }

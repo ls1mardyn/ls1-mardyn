@@ -187,11 +187,11 @@ public:
 	virtual void upd_preF(double dt) = 0;
 	virtual void upd_postF(double dt_halve, double& summv2, double& sumIw2) = 0;
 
-	// Integration for single-centered molecules in WR mode.
+	// Integration for single-centered molecules in RMM mode.
 	// Explicit Euler and LeapFrog without time-splitting for single-centered molecules are identical
 	// up to interpretation of whether the velocities are stored at (t) or at (t+dt/2)  (right?)
 	// Placing it here, so that we can
-	// verify the WR code against the non-WR code.
+	// verify the RMM code against the non-RMM code.
 	void ee_upd_preF(double dt) {
 		for (unsigned short d = 0; d < 3; ++d) {
 			setr(d,r(d) + dt * v(d));
