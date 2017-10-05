@@ -17,7 +17,7 @@
 #include <random>
 #include <string>
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -137,7 +137,7 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	global_log->debug() << "Number of locally inserted molecules: " << numMolecules << endl;
 	particleContainer->updateMoleculeCaches();
 	unsigned long globalNumMolecules = numMolecules;
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	MPI_Allreduce(MPI_IN_PLACE, &globalNumMolecules, 1, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
 #endif
 	global_log->info() << "Number of inserted molecules: " << numMolecules << endl;

@@ -99,7 +99,7 @@ void LoadbalanceWriter::recordTimes(unsigned long simstep) {
 }
 
 void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	//! @todo If this shall become a general LB monitor/manager a MPI_Allreduce will be needed here
 	MPI_CHECK(MPI_Reduce( _times.data(), _global_times.data(), _times.size(), MPI_DOUBLE, MPI_MAX, 0, domainDecomp->getCommunicator()));
 #else
