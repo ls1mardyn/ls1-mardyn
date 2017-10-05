@@ -135,7 +135,7 @@ protected:
 	std::vector< std::array<float, 2> > _global_intensity_range;
 
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	MPI_File _mpifh;
 	MPI_Info_object _mpiinfo;
 #endif
