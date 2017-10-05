@@ -18,6 +18,8 @@ CXX_SEQ = scorep g++
 CXX_PAR = scorep mpicxx
 DEPMODE = gcc3
 
+CXXFLAGS += $(CXXFLAGS_WARNINGS)
+
 # SEQ
 #########################################
 # DEBUG
