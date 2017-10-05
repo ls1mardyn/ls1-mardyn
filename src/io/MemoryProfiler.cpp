@@ -46,7 +46,7 @@ MemoryProfiler::MemoryProfiler() :
 
 void MemoryProfiler::registerObject(MemoryProfilable** object) {
 	_list.push_back(object);
-	Log::global_log->info() << "MemoryProfiler: added object" << std::endl;
+	Log::global_log->debug() << "MemoryProfiler: added object" << std::endl;
 }
 
 void MemoryProfiler::doOutput(const std::string& string) {
