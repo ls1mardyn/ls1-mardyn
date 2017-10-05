@@ -3,11 +3,13 @@
 
 #include "Integrator.h"
 
+class VelocityCellProcessorRMM;
+
 class LeapfrogRMM : public Integrator {
 public:
-	LeapfrogRMM() {}
+	LeapfrogRMM();
 	LeapfrogRMM (double timestepLength);
-	~LeapfrogRMM() {}
+	~LeapfrogRMM();
 
 	void readXML(XMLfileUnits& xmlconfig);
 
@@ -34,6 +36,9 @@ private:
 	
 	void computePositions(ParticleContainer* molCont, Domain* dom);
 	void computeVelocities(ParticleContainer* molCont, Domain* dom);
+
+	// unlike the PositionCellProcessor, the VelocityCellProcessor has dynamic data, so keep it.
+	VelocityCellProcessorRMM * _velocityCellProcessor;
 
 };
 

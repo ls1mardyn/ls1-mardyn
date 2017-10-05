@@ -11,11 +11,25 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleIterator.h"
 
+#include "PositionCellProcessorRMM.h"
+#include "VelocityCellProcessorRMM.h"
+
 using namespace std;
 using Log::global_log;
 
+LeapfrogRMM::LeapfrogRMM() {
+	_velocityCellProcessor = nullptr;
+}
+
+LeapfrogRMM::~LeapfrogRMM() {
+	if (_velocityCellProcessor != nullptr) {
+		delete _velocityCellProcessor;
+	}
+}
+
 LeapfrogRMM::LeapfrogRMM(double timestepLength) :
 		Integrator(timestepLength) {
+	_velocityCellProcessor = nullptr;
 }
 
 void LeapfrogRMM::readXML(XMLfileUnits & xmlconfig) {
@@ -23,9 +37,14 @@ void LeapfrogRMM::readXML(XMLfileUnits & xmlconfig) {
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
 	global_log->info() << "Timestep: " << _timestepLength << endl;
 	mardyn_assert(_timestepLength > 0);
+
+	mardyn_assert(_velocityCellProcessor == nullptr);
+	_velocityCellProcessor = new VelocityCellProcessorRMM();
 }
 
 void LeapfrogRMM::computePositions(ParticleContainer* molCont, Domain* dom) {
+#ifndef ENABLE_REDUCED_MEMORY_MODE
+	// leaving old functionality for debugging purposes
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -36,9 +55,17 @@ void LeapfrogRMM::computePositions(ParticleContainer* molCont, Domain* dom) {
 			i->ee_upd_preF(_timestepLength);
 		}
 	}
+#else
+	// this is actually called in RMM
+	PositionCellProcessorRMM cellProc(_timestepLength);
+	molCont->traverseCells(cellProc);
+#endif
 }
 
 void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
+#ifndef ENABLE_REDUCED_MEMORY_MODE
+	// leaving old functionality for debugging purposes
+
 	// TODO: Thermostat functionality is duplicated X times and needs to be rewritten!
 	map<int, unsigned long> N;
 	map<int, unsigned long> rotDOF;
@@ -74,4 +101,13 @@ void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 		dom->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
 		dom->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
 	}
+#else
+	molCont->traverseCells(*_velocityCellProcessor);
+	unsigned long N = _velocityCellProcessor->getN();
+	double summv2 = _velocityCellProcessor->getSummv2();
+
+	dom->setLocalSummv2(summv2, 0);
+	dom->setLocalSumIw2(0.0, 0);
+	dom->setLocalNrotDOF(0, N, 0);
+#endif
 }
