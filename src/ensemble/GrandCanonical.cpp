@@ -234,8 +234,6 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 		++m;
 		j++;
 		if (m == moleculeContainer->iteratorEnd()) {
-			if (j == 0)
-				return false; // DELETION_FALSE // this will never be executed?
 			m = moleculeContainer->iteratorBegin();
 			j = 0;
 		}
