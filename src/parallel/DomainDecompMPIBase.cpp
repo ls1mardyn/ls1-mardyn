@@ -103,9 +103,8 @@ void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) const {
 	using std::endl;
 
 	if (_rank) {
-		int num_molecules = mm->getNumberOfParticles();
-		unsigned long *tids;
-		tids = new unsigned long[num_molecules];
+		unsigned long num_molecules = mm->getNumberOfParticles();
+		unsigned long *tids = new unsigned long[num_molecules];
 
 		int i = 0;
 		for (ParticleIterator m = mm->iteratorBegin(); m != mm->iteratorEnd(); ++m) {
