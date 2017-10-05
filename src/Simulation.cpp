@@ -1402,7 +1402,7 @@ void Simulation::simulate() {
 			_domain->realign(_moleculeContainer);
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
-			unsigned particleNoTest = 0;
+			particleNoTest = 0;
 			particleNoTest = _moleculeContainer->getNumberOfParticles();
 			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
 #endif
