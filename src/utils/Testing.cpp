@@ -43,11 +43,11 @@ int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const s
 	int testresult;
 
 #ifndef UNIT_TESTS
-	test_log->error() << std::endl << "Running unit tests demanded, but program compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
+	test_log->error() << "Running unit tests demanded, but program was build without unit test support!" << std::endl;
 	testresult = true;
 
 #else /* UNIT_TESTS */
-	test_log->info() << "Running unit tests!" << std::endl;
+	test_log->info() << "Running unit tests" << std::endl;
 #ifdef USE_CPPUNIT
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 	CppUnit::TextUi::TestRunner runner;
