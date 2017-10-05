@@ -70,6 +70,11 @@ public:
 	FlopCounter(double cutoffRadius, double LJcutoffRadius);
 
 	/**
+	 * free threadData
+	 */
+	~FlopCounter();
+
+	/**
 	 * \brief Initializes the internal counters.
 	 */
 	void initTraversal();

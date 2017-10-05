@@ -144,6 +144,17 @@ FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProce
 	}
 }
 
+FlopCounter::~FlopCounter() {
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int myid = mardyn_get_thread_num();
+		delete _threadData[myid];
+	}
+}
+
+
 void FlopCounter::initTraversal() {
 	#if defined (_OPENMP)
 	#pragma omp master
