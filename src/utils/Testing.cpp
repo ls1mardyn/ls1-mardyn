@@ -31,6 +31,7 @@ int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const s
 	Log::logLevel globalLogLevel = Log::global_log->get_log_level();
 
 	test_log = new Log::Logger(testLogLevel);
+	test_log->set_do_output(Log::global_log->get_do_output());
 	if (testLogLevel > Log::Info) {
 		Log::global_log->set_log_level(Log::Debug);
 	} else {
