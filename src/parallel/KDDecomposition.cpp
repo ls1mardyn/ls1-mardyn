@@ -9,7 +9,7 @@
 #include <chrono>
 
 #if ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include "Domain.h"
