@@ -1,6 +1,6 @@
 #include "MarDyn_version.h"
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 

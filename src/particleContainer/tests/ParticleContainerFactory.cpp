@@ -57,7 +57,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 	ParticleContainer* moleculeContainer;
 	if (type == Type::LinkedCell) {
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff);
-		#if ENABLE_MPI
+		#ifdef ENABLE_MPI
 		DomainDecomposition * temp = 0;
 		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
 		if (temp != 0) {
