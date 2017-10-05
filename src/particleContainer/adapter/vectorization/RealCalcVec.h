@@ -360,7 +360,7 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_broadcast_ss(a);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		#if VCP_VECTYPE==VCP_VEC_KNC or VCP_VECTYPE==VCP_VEC_KNC_GATHER
+		#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			return _mm512_extload_ps(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X16, _MM_HINT_NONE);
 		#else
 			return _mm512_set1_ps(*a);
@@ -374,7 +374,7 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_broadcast_sd(a);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		#if VCP_VECTYPE==VCP_VEC_KNC or VCP_VECTYPE==VCP_VEC_KNC_GATHER
+		#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);
 		#else
 			return _mm512_set1_pd(*a);
