@@ -1,14 +1,20 @@
 /** \page unitTests Unit Tests
 
-ls1-MarDyn comes with a rich set of Unit Tests to check the functionality of its components.
+ls1-MarDyn comes with a rich set of unit tests to check the functionality of its components.
 The underlying unit test framework used by ls1-MarDyn is CppUnit.
 
 Building and running Unit Tests
 ===============================
 
+To build the internal unit tests at least CppUnit 1.12.1 is required. The
 Unit Tests in ls1-MarDyn are enabled when build with the UNIT_TEST=1 option:
 \code{.sh}
-make UNIT_TESTS=1
+make UNIT_TESTS=1 ...
+\endcode
+
+If cppunit is installed at a non-standard location, its path can be specified with
+\code{.sh}
+make UNIT_TESTS=1 CPPUNIT_DIR=<PATH> ...
 \endcode
 
 To run all unit tests run ls1-MarDyn with
