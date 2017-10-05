@@ -31,6 +31,15 @@ public:
 			_threadData[myid] = myown;
 		} // end pragma omp parallel
 	}
+	~VelocityCellProcessorRMM() {
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			const int myid = mardyn_get_thread_num();
+			delete _threadData[myid];
+		}
+	}
 
 	void preprocessCell(ParticleCell& cell) {}
 
