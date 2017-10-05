@@ -53,40 +53,40 @@ void initOptions(optparse::OptionParser *op) {
 /**
  * @brief Helper function outputting program build information to given logger
  */
-void program_build_info(Log::Logger &log) {
+void program_build_info(Log::Logger *log) {
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
-	log << "Compiler: " << info_str << endl;
+	log->info() << "Compiler: " << info_str << endl;
 	get_compile_time(info_str);
-	log << "Compiled: " << info_str << endl;
+	log->info() << "Compiled: " << info_str << endl;
 #ifdef ENABLE_MPI
 	get_mpi_info(info_str);
-	log << "MPI library: " << info_str << endl;
+	log->info() << "MPI library: " << info_str << endl;
 #endif
 #if defined(MARDYN_SPSP)
-	log << "Precision: Single" << endl;
+	log->info() << "Precision: Single" << endl;
 #else
-	log << "Precision: Double" << endl;
+	log->info() << "Precision: Double" << endl;
 #endif
 #if defined(_OPENMP)
-	log << "Compiled with OpenMP support" << endl;
+	log->info() << "Compiled with OpenMP support" << endl;
 #endif
 }
 
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
-void program_execution_info(int argc, char **argv, Log::Logger &log) {
+void program_execution_info(int argc, char **argv, Log::Logger *log) {
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_timestamp(info_str);
-	log << "Started: " << info_str << endl;
+	log->info() << "Started: " << info_str << endl;
 	get_host(info_str);
-	log << "Execution host: " << info_str << endl;
+	log->info() << "Execution host: " << info_str << endl;
 	std::stringstream arguments;
 	for (int i = 0; i < argc; i++) {
 		arguments << " " << argv[i];
 	}
-	log << "Started with arguments: " << arguments.str() << endl;
+	log->info() << "Started with arguments: " << arguments.str() << endl;
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
@@ -167,8 +167,8 @@ int main(int argc, char** argv) {
 		registerSigsegvHandler();  // from SigsegvHandler.h
 	}
 #endif
-	program_build_info(global_log->info());
-	program_execution_info(argc, argv, global_log->info());
+	program_build_info(global_log);
+	program_execution_info(argc, argv, global_log);
 
 
 	/* Run built in tests and exit */
