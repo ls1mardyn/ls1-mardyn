@@ -60,7 +60,7 @@ public:
 	   </parallelisation>
 	   \endcode
 	 */
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 
 	//documentation in OutputBase, does nothing.
 	void doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/,

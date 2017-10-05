@@ -590,8 +590,6 @@ private:
 	//! Global virial correction for the error made by the cutoff
 	double _VirialCorr;
 
-	//! Contains the time t in reduced units
-	double currentTime;  //edited by Michaela Heier
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;

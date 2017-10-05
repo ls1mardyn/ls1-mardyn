@@ -4,8 +4,8 @@
 #include <list>
 
 #include "io/InputBase.h"
-#include "utils/generator/Generator.h"
 
+class Generator;
 class VelocityAssignerBase;
 
 class GridGenerator : public InputBase {

@@ -63,7 +63,7 @@ void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, Part
 }
 
 bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/,
-		ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/) {
+		ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/, double /*etime*/) {
 	return true;
 }
 

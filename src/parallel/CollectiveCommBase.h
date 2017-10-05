@@ -40,7 +40,7 @@ public:
 
 	//! @brief allocate memory for the values to be stored, initialize getter-iterator
 	//! @param numValues number of values that shall be stored
-	virtual void init(int numValues) {
+	void init(int numValues) {
 		_values.reserve(numValues);
 		_getter = _values.begin();
 	}

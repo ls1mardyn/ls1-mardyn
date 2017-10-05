@@ -331,7 +331,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 				<< endl;
 	}
 
-	char * fileName = (char*) _phaseSpaceFile.c_str();
+	const char * fileName = _phaseSpaceFile.c_str();
 	int ret, size;
 	MPI_Status status;
 	MPI_Offset header_offset = 0;

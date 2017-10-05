@@ -98,7 +98,7 @@ int get_timestamp(char *info_str) {
 
 int get_host(char *info_str) {
 	char hostname[1024];
-#if _SX
+#ifdef _SX
 	strcpy(hostname, "unknown");
 #else
 	hostname[1023] = '\0';

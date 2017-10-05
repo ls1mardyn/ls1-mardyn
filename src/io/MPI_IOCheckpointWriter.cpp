@@ -210,7 +210,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		MPI_Offset offset = 0;
 		MPI_Status status;
 
-		char* fileName = (char*) filename.c_str();
+		const char* fileName = filename.c_str();
 
 		MPI_File fh;
 		MPI_Info info;

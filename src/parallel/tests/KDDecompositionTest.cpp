@@ -44,7 +44,7 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(const char * filenam
 	numMols = kdd->collCommGetInt();
 	kdd->collCommFinalize();
 
-	_domainDecomposition->balanceAndExchange(0.,true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
 	// will rebalance, we thus need a reduce
 	container->deleteOuterParticles();
 

@@ -184,7 +184,7 @@ void MmspdWriter::doOutput( ParticleContainer* particleContainer,
 		
 		string sendbuff;
 		sendbuff = mmspdfstream.str();
-		MPI_Send((char*)sendbuff.c_str(), sendbuff.length() + 1, MPI_CHAR, 0, tag, MPI_COMM_WORLD);
+		MPI_Send(sendbuff.c_str(), sendbuff.length() + 1, MPI_CHAR, 0, tag, MPI_COMM_WORLD);
 	}
 #endif
   }

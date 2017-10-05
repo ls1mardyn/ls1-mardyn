@@ -29,7 +29,7 @@ public:
 protected:
 
 	// documentation in base class
-	virtual void initBalanceAndExchange(bool forceRebalancing);
+	virtual void initBalanceAndExchange(bool forceRebalancing, double etime);
 
 	// documentation in base class
 	virtual void performComputation();

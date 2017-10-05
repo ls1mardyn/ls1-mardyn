@@ -84,7 +84,7 @@ public:
 	//! 					otherwise automatic balancing of Decomposition is applied
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain, double etime);
 
 	//! @brief balance the load (and optimize communication) and exchange boundary particles
 	//!

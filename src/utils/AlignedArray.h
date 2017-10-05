@@ -113,7 +113,7 @@ public:
 	virtual void prefetch(int hint = 1, int n = -1) const {
 		mardyn_assert(n >= -2);
 
-		int endPrefetch;
+		size_t endPrefetch;
 		const int stride = _round_up(1);
 
 		switch(n) {
@@ -130,7 +130,7 @@ public:
 			endPrefetch = n;
 		}
 
-		for (int i = 0; i < endPrefetch; i+= stride) {
+		for (size_t i = 0; i < endPrefetch; i+= stride) {
 			const T & val = _vec[i];
 			const T * valP = &val;
 #if defined(__MIC__)

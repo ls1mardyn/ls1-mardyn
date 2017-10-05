@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#if ENABLE_SIGHANDLER
+#ifdef ENABLE_SIGHANDLER
 
 #include <stdio.h>
 #include <execinfo.h>

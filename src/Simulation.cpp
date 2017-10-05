@@ -1042,7 +1042,7 @@ void Simulation::simulate() {
 
 	//loopTimer->set_sync(true);
 	global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
-#if WITH_PAPI
+#ifdef WITH_PAPI
 	const char *papi_event_list[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" /*, "PAPI_VEC_DP", "PAPI_L2_DCM", "PAPI_L2_ICM", "PAPI_L1_ICM", "PAPI_DP_OPS", "PAPI_VEC_INS" }; */
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
 	loopTimer->add_papi_counters(num_papi_events, (char**) papi_event_list);
@@ -1147,7 +1147,7 @@ void Simulation::simulate() {
 #endif
 
 		if (overlapCommComp) {
-			performOverlappingDecompositionAndCellTraversalStep();
+			performOverlappingDecompositionAndCellTraversalStep(perStepTimer.get_etime());
 		}
 		else {
 			decompositionTimer->start();
@@ -1439,7 +1439,7 @@ void Simulation::simulate() {
 	_memoryProfiler->doOutput();
 	global_log->info() << endl;
 
-#if WITH_PAPI
+#ifdef WITH_PAPI
 	global_log->info() << "PAPI counter values for loop timer:"  << endl;
 	for(int i = 0; i < loopTimer->get_papi_num_counters(); i++) {
 		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer->get_global_papi_counter(i) << endl;
@@ -1503,7 +1503,7 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	_moleculeContainer->updateMoleculeCaches();
 }
 
-void Simulation::performOverlappingDecompositionAndCellTraversalStep() {
+void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etime) {
 	bool forceRebalancing = false;
 
 	#ifdef ENABLE_MPI
@@ -1515,7 +1515,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep() {
 					new NonBlockingMPIHandlerBase(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
 		#endif
 
-		nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
+		nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing, etime);
 	#endif
 }
 

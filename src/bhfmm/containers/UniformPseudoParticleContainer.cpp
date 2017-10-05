@@ -51,25 +51,25 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_fuseGlobalCommunication = false;
 	bool doDynamicAdjustment = true; //TODO: is this used anywhere?
 #ifdef ENABLE_MPI
-	int size;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	//set avoidAllReduce depending on number of MPI ranks
-	if(size >= 512){
-		_avoidAllReduce = true;
-	}
-	else{
-		if(_doNTGlobal and size >= 64){
+	{
+		int size;
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		//set avoidAllReduce depending on number of MPI ranks
+		if (size >= 512) {
 			_avoidAllReduce = true;
-		}
-		else{
-			_avoidAllReduce = false;
-			if(size == 1){
+		} else {
+			if (_doNTGlobal and size >= 64) {
+				_avoidAllReduce = true;
+			} else {
 				_avoidAllReduce = false;
+				if (size == 1) {
+					_avoidAllReduce = false;
+				}
 			}
 		}
-	}
-	if(size <= 64){ // in this case there might be doubling effects if not switched off (+y and -y neighbor the same -> twice added the same value in tower backcommunication for 1st local level)
-		_doNTLocal = false;
+		if (size <= 64) { // in this case there might be doubling effects if not switched off (+y and -y neighbor the same -> twice added the same value in tower backcommunication for 1st local level)
+			_doNTLocal = false;
+		}
 	}
 #else
 	_avoidAllReduce = false;
@@ -431,8 +431,6 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 			else{
 				_stopLevel = 1;
 			}
-			int myRank;
-			MPI_Comm_rank(_comm,&myRank);
 			if(myRank == 0){
 				std::cout << "optimal stop level = " << _stopLevel << "\n";
 			}

@@ -1,5 +1,5 @@
 # std=c++11
-CXXFLAGS += -std=c++11 -pedantic
+CXXFLAGS += -std=c++11 -pedantic -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow=5 -Wundef -Werror -Wno-unused # -Wsign-conversion -Wswitch-default -Wold-style-cast -Wsign-promo -Wmissing-declarations 
 
 # Vectorization settings:
 #########################################

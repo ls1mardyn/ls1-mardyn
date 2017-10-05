@@ -10,7 +10,7 @@
 		if (_state == TIMER_HALTED) {
 			_start = timer();
 			_state = TIMER_RUNNING;
-#if WITH_PAPI
+#ifdef WITH_PAPI
 			if(_collect_papi) {
 				PAPI_CHECK( (PAPI_read( _papi_EventSet, _papi_start)), "Failed reading counters.");
 			}
@@ -30,7 +30,7 @@
 			_stop = timer();
 			_state = TIMER_HALTED;
 			_etime += _stop - _start;
-#if WITH_PAPI
+#ifdef WITH_PAPI
 			if(_collect_papi) {
 				PAPI_CHECK((PAPI_read( _papi_EventSet, _papi_stop)), "Failed reading counters.");
 				for (int i = 0; i < _papi_num_counters; i++) {
@@ -51,7 +51,7 @@
 
 		_state = TIMER_HALTED;
 		_start = _stop = _etime = 0.;
-#if WITH_PAPI
+#ifdef WITH_PAPI
 		if (_collect_papi) {
 			PAPI_reset(_papi_EventSet);
             for (int i = 0; i < _papi_num_counters; i++) {

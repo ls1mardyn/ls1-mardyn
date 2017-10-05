@@ -122,7 +122,7 @@ int DomainDecompBase::getNonBlockingStageCount(){
 	return -1;
 }
 
-bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/, double etime){
 	return false;
 }
 

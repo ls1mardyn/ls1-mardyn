@@ -173,10 +173,10 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig)
 	_vecSubDomains.push_back(sd);
 	if(_nSystemType == ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR || _nSystemType == ST_HETEROGENEOUS_LIQUID_VAPOR)
 	{
-		SubDomain sd;
-		xmlconfig.getNodeValue("files/liquid/header", sd.strFilePathHeader);
-		xmlconfig.getNodeValue("files/liquid/data", sd.strFilePathData);
-		_vecSubDomains.push_back(sd);
+		SubDomain sd2;
+		xmlconfig.getNodeValue("files/liquid/header", sd2.strFilePathHeader);
+		xmlconfig.getNodeValue("files/liquid/data", sd2.strFilePathData);
+		_vecSubDomains.push_back(sd2);
 	}
 
 //	if(false == _bCreateHomogenous)

@@ -265,7 +265,7 @@ void VectorizationTuner::tune(std::vector<Component> componentList, TunerLoad& t
 		bool allowMpi = false;
 
 		if(useExistingFiles && readFile(times)){
-			global_log->info() << "Read tuner values from file" << endl;	
+			global_log->info() << "Read tuner values from file" << endl;
 			return;
 		} else if(useExistingFiles) {
 			global_log->info() << "Couldn't read tuner values from file" << endl;

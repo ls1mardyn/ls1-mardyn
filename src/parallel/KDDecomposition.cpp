@@ -175,29 +175,34 @@ bool doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int
 	return forceRebalancing or ((steps % frequency == 0 or steps <= 1) and needsRebalance);
 }
 
-bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, bool needsRebalance, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/, double etime){
+	bool needsRebalance = checkNeedRebalance(etime);
 	return not doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 }
 
-void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+bool KDDecomposition::checkNeedRebalance(double lastTraversalTime) {
 	bool needsRebalance = false;
-	if(_rebalanceLimit > 0) { /* automatic rebalancing */
+	if (_rebalanceLimit > 0) {
+		/* automatic rebalancing */
 		double localTraversalTimes[2];
 		localTraversalTimes[0] = -lastTraversalTime;
-		localTraversalTimes[1] =  lastTraversalTime;
+		localTraversalTimes[1] = lastTraversalTime;
 		double globalTraversalTimes[2];
 		MPI_CHECK(MPI_Allreduce(localTraversalTimes, globalTraversalTimes, 2, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD));
 		globalTraversalTimes[0] *= -1.0;
-		double timerCoeff = globalTraversalTimes[1]/globalTraversalTimes[0];
+		double timerCoeff = globalTraversalTimes[1] / globalTraversalTimes[0];
 		global_log->info() << "KDDecomposition timerCoeff: " << timerCoeff << endl;
-		if(timerCoeff > _rebalanceLimit) {
+		if (timerCoeff > _rebalanceLimit) {
 			needsRebalance = true;
 		}
-	}
-	else {
+	} else {
 		needsRebalance = true;
 	}
+	return needsRebalance;
+}
 
+void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+	bool needsRebalance = checkNeedRebalance(lastTraversalTime);
 	const bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;
@@ -850,6 +855,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 	double optimalSpeed = (_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs]
 			- _accumulatedProcessorSpeeds[node->_owningProc]) * leftRightLoadRatio / (1. + leftRightLoadRatio);
 	double searchSpeed = optimalSpeed + _accumulatedProcessorSpeeds[node->_owningProc];
+	{
 	std::vector<double>::iterator iter = std::lower_bound(_accumulatedProcessorSpeeds.begin() + node->_owningProc,
 			_accumulatedProcessorSpeeds.begin() + node->_owningProc + node->_numProcs + 1, searchSpeed); // +1 since _accumulatedProcessorSpeeds are shifted and of size (numprocs+1)
 	// returns iterator to first instance of array, that is >= optimalSpeed = totalspeed * rho / (1+rho)
@@ -867,7 +873,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 	leftRightLoadRatio = (_accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex] - _accumulatedProcessorSpeeds[node->_owningProc]) /
 			(_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex]);
 
-
+	}
 
 	bool splitLoad = true;  // indicates, whether to split the domain according to the load
 							// or whether the domain should simply be split in half and the number of processes should be distributed accordingly.

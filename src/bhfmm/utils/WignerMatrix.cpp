@@ -189,11 +189,12 @@ void WignerMatrix::scale() {
 		for (unsigned l = 0; l <= order; ++l) {
 			for (unsigned m = 0; m <= l; ++m) {
 
-				unsigned k = 0; {
+				unsigned k = 0;
+				{
 					const double factor = lookUpFactor(l, m, k);
 					acc(l, m, k) *= factor;
 				}
-				for (unsigned k = 1; k<=l; ++k) {
+				for (k = 1; k<=l; ++k) {
 					const double factor = lookUpFactor(l, m, k);
 					acc(l,m,-k) *= factor;
 					acc(l,m,k) *= factor;
@@ -209,7 +210,7 @@ void WignerMatrix::scale() {
 					const double factor = lookUpFactor(l, k, m);
 					acc(l,m,k) *= factor;
 				}
-				for (unsigned k = 1; k<=l; ++k) {
+				for (k = 1; k<=l; ++k) {
 					const double factor = lookUpFactor(l, k, m);
 					acc(l,m,-k) *= factor;
 					acc(l,m,k) *= factor;

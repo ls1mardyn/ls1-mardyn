@@ -24,7 +24,7 @@ class Wall{
 		void readXML(XMLfileUnits& xmlconfig);
 		void initializeLJ93(const std::vector<Component>* components, double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta, double in_yOffWall, double in_yWallCut);
 		void calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain );
-		void initializeLJ104(const std::vector<Component>* components, double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta, double in_yOffWall, double y_cut,  double Delta);
+		void initializeLJ104(const std::vector<Component>* components, double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta, double in_yOffWall, double y_cut);
 		void calcTSLJ_10_4( ParticleContainer* partContainer, Domain* domain );
 
 	private:

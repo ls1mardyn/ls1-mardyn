@@ -24,11 +24,12 @@ MemoryProfiler::MemoryProfiler() :
 	FILE *fp;
 	char buf[MAXLEN];
 	fp = fopen("/proc/meminfo", "r");
+	char *p1;
 	while (fgets(buf, MAXLEN, fp)) {
-		char *p1 = strstr(buf, "Hugepagesize:");
+		p1 = strstr(buf, "Hugepagesize:");
 		if (p1 != NULL) {
 			int colon = ':';
-			char *p1 = strchr(buf, colon) + 1;
+			p1 = strchr(buf, colon) + 1;
 			_hugePageSize = atoi(p1);
 		}
 	}
@@ -74,7 +75,7 @@ unsigned long long MemoryProfiler::getCachedSize() {
 		char *p1 = strstr(buf, "Cached:");
 		if (p1 != NULL) {
 			int colon = ':';
-			char *p1 = strchr(buf, colon) + 1;
+			p1 = strchr(buf, colon) + 1;
 			cached_size = strtoull(p1, NULL, 10);
 			break;
 		}

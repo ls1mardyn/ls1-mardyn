@@ -215,7 +215,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 
 		const size_t mol_charges_num = m.numCharges();
 
-		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
+		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges) {
 			// Store the resulting force in the molecule.
 			double f[3];
 			f[0] = static_cast<double>(soa_charges_f_x[iCharges]);
@@ -224,7 +224,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			mardyn_assert(!isnan(f[0]));
 			mardyn_assert(!isnan(f[1]));
 			mardyn_assert(!isnan(f[2]));
-			m.Fchargeadd(i, f);
+			m.Fchargeadd(j, f);
 
 			// Store the resulting virial in the molecule.
 			double V[3];

@@ -92,7 +92,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 			unsigned int stageNumber) override;
 
 	// documentation in base class
-	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, bool needsRebalance, ParticleContainer* moleculeContainer, Domain* domain);
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain, double etime) override;
 
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
@@ -262,6 +262,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Determines the partition rank that is needed for the "cluster" heterogeneous decomposition
 	 */
 	int calculatePartitionRank();
+	bool checkNeedRebalance(double lastTraversalTime);
 
 	//######################################
 	//###    private member variables    ###

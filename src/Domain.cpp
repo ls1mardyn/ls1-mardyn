@@ -138,8 +138,8 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 		for( componentIter = query.begin(); componentIter; componentIter++ ) {
 			xmlconfig.changecurrentnode( componentIter );
 			int cid = 1;
-			bool bInputOk = xmlconfig.getNodeValue("@id", cid);
-			if(true == bInputOk) {
+			bInputOk = xmlconfig.getNodeValue("@id", cid);
+			if(bInputOk) {
 				this->considerComponentInProfile(cid-1);
 				global_log->info() << "Considering component " << cid << " for profile recording." << endl;
 			}

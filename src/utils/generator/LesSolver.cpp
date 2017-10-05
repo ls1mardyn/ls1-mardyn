@@ -9,7 +9,7 @@ void LesSolve(double **A, double *a, int n, double *x) {
     double **R;
     L = new double*[n];
     R = new double*[n];
-    for(int i = 0; i < n; i++) {
+    for(i = 0; i < n; i++) {
         L[i] = new double[n];
         R[i] = new double[n];
     }
@@ -40,7 +40,7 @@ void LesSolve(double **A, double *a, int n, double *x) {
         }
         x[i] /= R[i][i];
     }
-    for(int i = 0; i < n; i++) {
+    for(i = 0; i < n; i++) {
 		delete[] L[i];
 		delete[] R[i];
 	}

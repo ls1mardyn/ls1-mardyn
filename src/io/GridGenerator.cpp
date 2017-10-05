@@ -9,6 +9,7 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include "molecules/MoleculeIdPool.h"
+#include "utils/generator/Generator.h"
 
 #include <cmath>
 #include <limits>

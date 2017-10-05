@@ -16,7 +16,7 @@
  * Take care when using multiple timers because calls to the constructor 
  * reset the hw counters to zero! 
  */
-#if WITH_PAPI
+#ifdef WITH_PAPI
 #include <papi.h>
 
 #ifndef NDEBUG
@@ -63,7 +63,7 @@ class Timer {
 	timer_state _state; // timer state
 	bool _synced;       // timer should be synced at start and end across processes/threads
 
-#if WITH_PAPI
+#ifdef WITH_PAPI
 	long long *_papi_start;
 	long long *_papi_stop;
 	long long *_papi_counter;
@@ -79,7 +79,7 @@ private:
 public:
 	Timer() : 
 		_start(0), _stop(0), _etime(0), _state(TIMER_HALTED), _synced(false), _active(true)
-#if WITH_PAPI
+#ifdef WITH_PAPI
 		, _papi_start(0), _papi_stop(0), _papi_counter(0), _papi_num_counters(0), _papi_num_avail_counters(0), _papi_EventSet(0), _collect_papi(false)
 #endif /* WITH_PAPI */
 	{
@@ -94,7 +94,7 @@ public:
 	}
 
 	~Timer() {
-#if WITH_PAPI
+#ifdef WITH_PAPI
 		delete[] _papi_start;
 		delete[] _papi_stop;
 		delete[] _papi_counter;
@@ -126,7 +126,7 @@ public:
 		_synced = sync;
 	}
 
-#if WITH_PAPI
+#ifdef WITH_PAPI
 	int add_papi_counters(int n, char *papi_event_list[]) {
 		if(_collect_papi) {
 			std::cerr << "PAPI ERROR: PAPI counters already started." << std::endl;

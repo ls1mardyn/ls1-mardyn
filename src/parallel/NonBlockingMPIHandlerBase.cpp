@@ -23,7 +23,7 @@ NonBlockingMPIHandlerBase::NonBlockingMPIHandlerBase(DomainDecompMPIBase* domain
 NonBlockingMPIHandlerBase::~NonBlockingMPIHandlerBase() {
 }
 
-void NonBlockingMPIHandlerBase::performOverlappingTasks(bool forceRebalancing) {
+void NonBlockingMPIHandlerBase::performOverlappingTasks(bool forceRebalancing, double etime) {
 	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 	// ensure that all Particles are in the right cells and exchange Particles
 	global_log->debug() << "Updating container and decomposition" << std::endl;
@@ -34,16 +34,16 @@ void NonBlockingMPIHandlerBase::performOverlappingTasks(bool forceRebalancing) {
 
 	// check if domain decomposition allows for non-blocking balance and exchange step. if it does, perform a non-blocking step
 	if (_domainDecomposition->queryBalanceAndExchangeNonBlocking(
-			forceRebalancing, _moleculeContainer, _domain)) {
+			forceRebalancing, _moleculeContainer, _domain, etime)) {
 		// calls to derived class (if it exists, otherwise calls sequential version)
-		initBalanceAndExchange(forceRebalancing);
+		initBalanceAndExchange(forceRebalancing, etime);
 		performComputation();
 
 	} else {
 		global_log->debug()
 				<< "falling back to sequential version, since domainDecomposition is blocking in this time step."
 				<< std::endl;
-		NonBlockingMPIHandlerBase::initBalanceAndExchange(forceRebalancing);
+		NonBlockingMPIHandlerBase::initBalanceAndExchange(forceRebalancing, etime);
 		NonBlockingMPIHandlerBase::performComputation();
 	}
 }
@@ -59,10 +59,10 @@ void NonBlockingMPIHandlerBase::performComputation() {
 	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 }
 
-void NonBlockingMPIHandlerBase::initBalanceAndExchange(bool forceRebalancing) {
+void NonBlockingMPIHandlerBase::initBalanceAndExchange(bool forceRebalancing, double etime) {
 	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 
-	_domainDecomposition->balanceAndExchange(1.0, forceRebalancing, _moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(etime, forceRebalancing, _moleculeContainer, _domain);
 
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred

@@ -4,7 +4,7 @@
 #include <mpi.h>
 #endif
 
-#if _SX
+#ifdef _SX
 #include <byteswap.h>
 #define htole16(X) bswap2((X))
 #define htole32(X) bswap4((X))

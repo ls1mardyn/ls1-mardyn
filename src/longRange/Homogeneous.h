@@ -14,7 +14,7 @@ class Homogeneous: public LongRangeCorrection{
 
 public:
 //	Homogeneous();
-	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation _simulation);
+	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation* simulation);
 	virtual ~Homogeneous() {}
 
 	virtual void init() {}
@@ -35,7 +35,7 @@ private:
 	double _TISSv(int n,double rc,double sigma2,double tau1,double tau2);
 	
 	//! Components resp. molecule types
-	std::vector<Component> _components;
+	std::vector<Component>* _components;
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
 	

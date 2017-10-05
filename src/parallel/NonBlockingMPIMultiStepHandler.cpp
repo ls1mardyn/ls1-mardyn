@@ -68,7 +68,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 }
 
-void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(bool forceRebalancing) {
+void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(bool forceRebalancing, double etime) {
 
 	mardyn_assert(!forceRebalancing);
 

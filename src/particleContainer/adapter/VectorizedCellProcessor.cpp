@@ -245,7 +245,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec c_dr2_inv = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);//masked
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec c_dr_inv = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);//masked
 #else
 	    const RealCalcVec c_dr_inv = RealCalcVec::sqrt(c_dr2_inv);//masked
@@ -294,7 +294,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
 		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
 #else
 	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
@@ -362,7 +362,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
 		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
 #else
 	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
@@ -447,7 +447,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -526,7 +526,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -643,7 +643,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);

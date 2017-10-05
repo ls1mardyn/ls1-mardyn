@@ -244,7 +244,7 @@ public:
 	 * The overlapping is needed to speed up the overall computation. The order of cells
 	 * traversed will be different, than for the non-overlapping case, slightly different results are possible.
 	 */
-	void performOverlappingDecompositionAndCellTraversalStep();
+	void performOverlappingDecompositionAndCellTraversalStep(double etime);
 
 	/**
 	 * Set the private _domainDecomposition variable to a new pointer.

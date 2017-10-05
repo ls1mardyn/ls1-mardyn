@@ -21,10 +21,10 @@ DEPMODE = gcc3
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -g -rdynamic -ggdb -Wno-unused-parameter #-Weffc++ 
+CXXFLAGS_SEQ_DEBUG  = -g -rdynamic -ggdb 
 LINKFLAGS_SEQ_DEBUG = -export-dynamic
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = -O3 -Wall -Werror -DNDEBUG -flto
+CXXFLAGS_SEQ_RELEASE  = -O3 -DNDEBUG -flto
 LINKFLAGS_SEQ_RELEASE = -fwhole-program -flto
 # COVERAGE
 CXXFLAGS_SEQ_COVERAGE  = $(CXXFLAGS_SEQ_RELEASE) --coverage
