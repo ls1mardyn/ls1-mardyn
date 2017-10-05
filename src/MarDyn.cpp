@@ -39,7 +39,7 @@ void initOptions(optparse::OptionParser *op) {
 	op->add_option("-n", "--steps").dest("timesteps").type("int") .metavar("NUM") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op->add_option("-p", "--outprefix").dest("outputprefix").type("string") .metavar("STR") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
 	op->add_option("-v", "--verbose").dest("verbose").type("bool") .action("store_true") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-	op->add_option("--logfile").dest("logfile").type("string").metavar("FILENAME").set_default("MarDyn.log").help("name of logfile (default: %default)");
+	op->add_option("--logfile").dest("logfile").type("string").metavar("PREFIX").set_default("MarDyn").help("enable output to logfile using given prefix for the filename (default: %default)");
 	op->add_option("--final-checkpoint").dest("final-checkpoint").type("int").metavar("(1|0)").set_default(1).help("enable/disable final checkopint (default: %default)");
 	op->add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").metavar("TIME").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced, disable: -1. (default: %default)");
 #if ENABLE_SIGHANDLER
@@ -152,10 +152,10 @@ int main(int argc, char** argv) {
 #endif
 
 	if( options.is_set_by_user("logfile") ) {
-		string logfileName(options.get("logfile"));
-		global_log->info() << "Using logfile " << logfileName << endl;
+		string logfileNamePrefix(options.get("logfile"));
+		global_log->info() << "Using logfile with prefix " << logfileNamePrefix << endl;
 		delete global_log;
-		global_log = new Log::Logger(Log::Info, logfileName);
+		global_log = new Log::Logger(Log::Info, logfileNamePrefix);
 	}
 	if( options.is_set_by_user("verbose") ) {
 		global_log->info() << "Enabling verbose log output." << endl;
