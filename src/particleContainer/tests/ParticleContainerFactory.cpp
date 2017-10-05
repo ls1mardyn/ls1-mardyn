@@ -11,7 +11,7 @@
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
 #include "Domain.h"
