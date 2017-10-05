@@ -468,12 +468,6 @@ public:
 
 	/** initialize all member variables with a suitable value */
 	void initialize();
-	void setName(std::string name) {
-		_programName = name;
-	}
-	std::string getName() {
-		return _programName;
-	}
 
 	/** @brief get output plugin
 	 * @return pointer to the output plugin if it is active, otherwise nullptr
@@ -528,8 +522,6 @@ private:
 	double _loopCompTime;
 
 	int _loopCompTimeSteps;
-
-	std::string _programName;
 
 	/** Check initial max. force (Fmax) after reading in start configuration or checkpoint after a restart. */
 	uint32_t _nFmaxOpt;

@@ -183,7 +183,6 @@ int main(int argc, char** argv) {
 
 	/* Set up and run regular Simulation */
 	Simulation simulation;
-	simulation.setName(op.prog());
 
 	unsigned int numargs = args.size();
 	if(numargs != 1) {

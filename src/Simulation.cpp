@@ -136,7 +136,6 @@ Simulation::Simulation()
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.0),
 	_loopCompTimeSteps(0.0),
-	_programName("ls1-MarDyn"),
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.0),

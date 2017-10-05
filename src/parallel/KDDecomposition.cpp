@@ -42,10 +42,6 @@ KDDecomposition::KDDecomposition() :
 		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
 		_useExistingFiles {}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
 }
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
@@ -58,11 +54,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
 		_useExistingFiles {true}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
-
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
