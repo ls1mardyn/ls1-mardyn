@@ -18,7 +18,7 @@ void print_matrix(double **A, int n);
  * @param[in]  n  length of array
  * @return  absolute avlue
  */
-double vec_abs(double v, int n);
+double vec_abs(double v[3], int n);
 
 /** Calculate scalar product of two vectors
  * @param[in]  v  pointer to array
