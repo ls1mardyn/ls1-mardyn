@@ -3,7 +3,7 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 
 MPI_Info_object::~MPI_Info_object() {
 	reset();	// will also free _mpi_info object if necessary
