@@ -8,10 +8,10 @@
 class GridFiller;
 class VelocityAssignerBase;
 
-class ObjectGenerator : public InputBase {
+class MultiObjectGenerator : public InputBase {
 public:
-    ObjectGenerator() {};
-    virtual ~ObjectGenerator() {}
+    MultiObjectGenerator() {};
+    virtual ~MultiObjectGenerator() {}
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {}

@@ -1,4 +1,4 @@
-#include "io/ObjectGenerator.h"
+#include "io/MultiObjectGenerator.h"
 
 #include "Domain.h"
 #include "Simulation.h"
@@ -28,9 +28,9 @@ using Log::global_log;
 using namespace std;
 
 
-void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
-	XMLfile::Query query = xmlconfig.query("subgenerator");
-	global_log->info() << "Number of sub-generators: " << query.card() << endl;
+void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
+	XMLfile::Query query = xmlconfig.query("objectgenerator");
+	global_log->info() << "Number of sub-objectgenerators: " << query.card() << endl;
 	string oldpath = xmlconfig.getcurrentnodepath();
 	for( auto generatorIter = query.begin(); generatorIter; ++generatorIter ) {
 		xmlconfig.changecurrentnode(generatorIter);
@@ -48,7 +48,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 }
 
 
-long unsigned int ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
+long unsigned int MultiObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
 		Domain* domain, DomainDecompBase* domainDecomp) {
 	unsigned long numMolecules = 0;
 

@@ -47,7 +47,7 @@
 
 #include "io/ASCIIReader.h"
 #include "io/BinaryReader.h"
-#include "io/ObjectGenerator.h"
+#include "io/MultiObjectGenerator.h"
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
@@ -634,8 +634,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		string generatorName;
 		xmlconfig.getNodeValue("@name", generatorName);
 		global_log->info() << "Initializing phase space using generator: " << generatorName << endl;
-		if(generatorName == "ObjectGenerator") {
-			_inputReader = new ObjectGenerator();
+		if(generatorName == "MultiObjectGenerator") {
+			_inputReader = new MultiObjectGenerator();
 		}
 		else if(generatorName == "mkesfera") {
 			_inputReader = new MkesferaGenerator();
