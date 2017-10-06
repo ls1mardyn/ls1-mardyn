@@ -46,7 +46,7 @@
 #include "io/FlopRateWriter.h"
 
 #include "io/BinaryReader.h"
-#include "io/GridGenerator.h"
+#include "io/ObjectGenerator.h"
 #include "io/InputOldstyle.h"
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
@@ -634,8 +634,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		string generatorName;
 		xmlconfig.getNodeValue("@name", generatorName);
 		global_log->info() << "Initializing phase space using generator: " << generatorName << endl;
-		if(generatorName == "GridGenerator") {
-			_inputReader = new GridGenerator();
+		if(generatorName == "ObjectGenerator") {
+			_inputReader = new ObjectGenerator();
 		}
 		else if(generatorName == "mkesfera") {
 			_inputReader = new MkesferaGenerator();

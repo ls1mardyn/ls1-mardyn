@@ -1,4 +1,4 @@
-#include "io/GridGenerator.h"
+#include "io/ObjectGenerator.h"
 
 #include "Domain.h"
 #include "Simulation.h"
@@ -88,7 +88,7 @@ private:
 };
 
 
-void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
+void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query("subgenerator");
 	global_log->info() << "Number of sub-generators: " << query.card() << endl;
 	string oldpath = xmlconfig.getcurrentnodepath();
@@ -108,7 +108,7 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 }
 
 
-long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
+long unsigned int ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
 		Domain* domain, DomainDecompBase* domainDecomp) {
 	unsigned long numMolecules = 0;
 

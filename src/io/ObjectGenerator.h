@@ -1,5 +1,5 @@
-#ifndef SRC_IO_GRIDGENERATOR_H_
-#define SRC_IO_GRIDGENERATOR_H_
+#ifndef SRC_IO_OBJECTGENERATOR_H_
+#define SRC_IO_OBJECTGENERATOR_H_
 
 #include <list>
 
@@ -8,10 +8,10 @@
 class GridFiller;
 class VelocityAssignerBase;
 
-class GridGenerator : public InputBase {
+class ObjectGenerator : public InputBase {
 public:
-    GridGenerator() {};
-    virtual ~GridGenerator() {}
+    ObjectGenerator() {};
+    virtual ~ObjectGenerator() {}
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	void setPhaseSpaceFile(std::string /*filename*/) {}
@@ -28,4 +28,4 @@ private:
 	VelocityAssignerBase *_velocityAssigner;
 };
 
-#endif  // SRC_IO_GRIDGENERATOR_H_
+#endif  // SRC_IO_OBJECTGENERATOR_H_
