@@ -14,10 +14,6 @@ public:
     virtual ~ObjectGenerator() {}
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	void setPhaseSpaceFile(std::string /*filename*/) {}
-
-	void setPhaseSpaceHeaderFile(std::string /*filename*/) {}
-
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {}
 
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);

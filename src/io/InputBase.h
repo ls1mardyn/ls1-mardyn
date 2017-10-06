@@ -19,13 +19,6 @@ public:
 
 	virtual ~InputBase(){}
 
-	//! @brief set the phase space file name
-	virtual void setPhaseSpaceFile(std::string filename) = 0;
-
-	//! @brief set the phase space header file name (can be identical to the
-	//         phase space file
-	virtual void setPhaseSpaceHeaderFile(std::string filename) = 0;
-
 	//! @brief read the phase space components and header information
 	//! @param timestep timestep length
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep) = 0;
