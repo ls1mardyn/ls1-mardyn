@@ -45,11 +45,12 @@ template<class CellTemplate>
 void C08BasedTraversals<CellTemplate>::processBaseCell(
 		CellProcessor& cellProcessor, unsigned long baseIndex) const {
 
-#ifdef ENABLE_REDUCED_MEMORY_MODE
-	for (int i = 0; i < 8; ++i) {
-		this->_cells->at(baseIndex + _cellOffsets[i]).prefetchForForce();
-	}
-#endif /* ENABLE_REDUCED_MEMORY_MODE */
+// leads to performance degradation!
+//#ifdef ENABLE_REDUCED_MEMORY_MODE
+//	for (int i = 0; i < 8; ++i) {
+//		this->_cells->at(baseIndex + _cellOffsets[i]).prefetchForForce();
+//	}
+//#endif /* ENABLE_REDUCED_MEMORY_MODE */
 
 	using std::pair;
 
