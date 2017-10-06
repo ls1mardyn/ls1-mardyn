@@ -10,6 +10,9 @@
 #include "utils/xmlfileUnits.h"
 #include "molecules/MoleculeIdPool.h"
 #include "utils/generator/GridFiller.h"
+#include "utils/generator/VelocityAssignerBase.h"
+#include "utils/generator/EqualVelocityAssigner.h"
+#include "utils/generator/MaxwellVelocityAssigner.h"
 
 #include <cmath>
 #include <limits>
@@ -23,69 +26,6 @@
 
 using Log::global_log;
 using namespace std;
-
-/** The VelocityAssignerBase implements the gernal functionality and interface to assign velocity vectors mathing to a given temperature.
- */
-class VelocityAssignerBase {
-public:
-	VelocityAssignerBase(double T = 0) : _T(T) {}
-	~VelocityAssignerBase(){}
-	void setTemperature(double T) { _T = T; }
-	double T() { return _T; }
-	virtual void assignVelocity(Molecule *molecule) = 0;
-private:
-	double _T;  //!< coressponding target temperature
-};
-
-
-/** The VelocityAssigner can be used to assign normally distributed velocity vectors with absolute value mathching to a given temperature.
- */
-class EqualVelocityAssigner : public VelocityAssignerBase {
-public:
-	EqualVelocityAssigner(double T = 0, int seed = 0) : VelocityAssignerBase(T), _mt(seed), _uniformDistrubtion(0, 1) {}
-	~EqualVelocityAssigner(){}
-
-	void assignVelocity(Molecule *molecule) {
-		double v_abs = sqrt(/*kB=1*/ T() / molecule->component()->m());
-		/* pick angels for uniform distributino on S^2. */
-		double phi, theta;
-		phi   = 2*M_PI * _uniformDistrubtion(_mt);
-		theta = acos(2 * _uniformDistrubtion(_mt) - 1);
-		double v[3];
-		v[0] = v_abs * sin(phi);
-		v[1] = v_abs * cos(phi) * sin(theta);
-		v[2] = v_abs * cos(phi) * cos(theta);
-		for(int d = 0; d < 3; d++) {
-			molecule->setv(d, v[d]);
-		}
-	}
-private:
-	std::mt19937 _mt; //!< Mersenne twister used as input for the uniform distribution
-	std::uniform_real_distribution<double> _uniformDistrubtion;
-};
-
-
-/** The MaxwellVelocityAssigner can be used to assign maxwell boltzmann distributed velocity vectors mathching to a given temperature.
- */
-class MaxwellVelocityAssigner : public VelocityAssignerBase {
-public:
-	MaxwellVelocityAssigner(double T = 0, int seed = 0) : VelocityAssignerBase(T), _mt(seed), _normalDistrubtion(0.0, 1.0) {}
-	~MaxwellVelocityAssigner() {}
-
-	void assignVelocity(Molecule *molecule) {
-		double v_abs = sqrt(/*kB=1*/ T() / molecule->component()->m());
-		double v[3];
-		v[0] = v_abs * _normalDistrubtion(_mt);
-		v[1] = v_abs * _normalDistrubtion(_mt);
-		v[2] = v_abs * _normalDistrubtion(_mt);
-		for(int d = 0; d < 3; d++) {
-			molecule->setv(d, v[d]);
-		}
-	}
-private:
-	std::mt19937 _mt; //!< Mersenne twister used as input for the normal distribution
-	std::normal_distribution<double> _normalDistrubtion;
-};
 
 
 void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
