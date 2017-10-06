@@ -42,6 +42,8 @@ VTK ?= 0
 # 0: disbaled, 1: enabled
 TBB ?= 0
 
+# clang's address sanitizer 
+ADDRESS_SANITIZER ?= 0
 
 # select vectorization mode:
 VECTORIZE_CODE ?= SSE
@@ -147,7 +149,7 @@ endif
 
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -D MPICH_IGNORE_CXX_SEEK
-LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
+LDFLAGS += $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 # additional setup for unit tests
 ifneq ($(UNIT_TESTS),0)

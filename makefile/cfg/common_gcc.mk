@@ -1,4 +1,12 @@
-CXXFLAGS_WARNINGS = -std=c++11 -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wno-pointer-arith -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow -Wundef -Wno-unused # -Wsign-conversion -Wswitch-default -Wold-style-cast -Wsign-promo -Wmissing-declarations 
+CXXFLAGS += -std=c++11
+CXXFLAGS_WARNINGS =  -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wno-pointer-arith -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow -Wundef -Wno-unused # -Wsign-conversion -Wswitch-default -Wold-style-cast -Wsign-promo -Wmissing-declarations 
+
+
+# address sanitizer:
+ifeq ($(ADDRESS_SANITIZER),1)
+CXXFLAGS += -fsanitize=address
+LDFLAGS += -fsanitize=address
+endif
 
 # Vectorization settings:
 #########################################
