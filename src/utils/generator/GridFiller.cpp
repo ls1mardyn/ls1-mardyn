@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Christoph Niethammer <christoph.niethammer@gmail.com>
+ * Copyright (c) 2013-2017 Christoph Niethammer <christoph.niethammer@gmail.com>
  *
  * $COPYRIGHT$
  *
@@ -8,7 +8,7 @@
  * $HEADER
  */
 
-#include "Generator.h"
+#include "GridFiller.h"
 
 #include "LA.h"
 #include "LesSolver.h"
@@ -20,7 +20,7 @@
 #include <cmath>
 
 
-void Generator::init(Lattice& lattice, Basis& basis, double origin[3], Object *object) {
+void GridFiller::init(Lattice& lattice, Basis& basis, double origin[3], Object *object) {
     _lattice = lattice;
     _basis = basis;
     for(int d = 0; d < 3; d++) {
@@ -30,13 +30,13 @@ void Generator::init(Lattice& lattice, Basis& basis, double origin[3], Object *o
     init();
 }
 
-void Generator::setBoudingBox(double bBoxMin[3], double bBoxMax[3]) {
+void GridFiller::setBoudingBox(double bBoxMin[3], double bBoxMax[3]) {
 	Object *bBox = new Cuboid(bBoxMin, bBoxMax);
 	Object *boundedObject = new ObjectIntersection(bBox, _object);
 	_object =  boundedObject;
 }
 
-void Generator::init() {
+void GridFiller::init() {
 	double bBoxMin[3];
 	double bBoxMax[3];
     _object->getBboxMin(bBoxMin);
@@ -89,7 +89,7 @@ void Generator::init() {
     _lattice.setDimsMax(enddims);
 }
 
-void Generator::readXML(XMLfileUnits& xmlconfig) {
+void GridFiller::readXML(XMLfileUnits& xmlconfig) {
 	using std::endl;
 	if(xmlconfig.changecurrentnode("lattice")) {
 		_lattice.readXML(xmlconfig);
@@ -138,7 +138,7 @@ void Generator::readXML(XMLfileUnits& xmlconfig) {
 }
 
 
-int Generator::getMolecule(Molecule* molecule) {
+int GridFiller::getMolecule(Molecule* molecule) {
 	for(;;) {
 		if(_baseCount == 0) {
 			if(_lattice.getPoint(_lattice_point) == 0) {

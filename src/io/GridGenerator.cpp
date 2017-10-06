@@ -9,7 +9,7 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include "molecules/MoleculeIdPool.h"
-#include "utils/generator/Generator.h"
+#include "utils/generator/GridFiller.h"
 
 #include <cmath>
 #include <limits>
@@ -94,7 +94,7 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	string oldpath = xmlconfig.getcurrentnodepath();
 	for( auto generatorIter = query.begin(); generatorIter; ++generatorIter ) {
 		xmlconfig.changecurrentnode(generatorIter);
-		_generators.push_back(new Generator);
+		_generators.push_back(new GridFiller);
 		_generators.back()->readXML(xmlconfig);
 	}
 	xmlconfig.changecurrentnode(oldpath);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Christoph Niethammer <christoph.niethammer@gmail.com>
+ * Copyright (c) 2013-2017 Christoph Niethammer <christoph.niethammer@gmail.com>
  *
  * $COPYRIGHT$
  *
@@ -8,8 +8,8 @@
  * $HEADER
  */
 
-#ifndef GENERATOR_H
-#define GENERATOR_H
+#ifndef GRIDFILLER_H_
+#define GRIDFILLER_H_
 
 #include <array>
 #include <random>
@@ -23,10 +23,10 @@
 class Object;
 
 /** Lattice generator */
-class Generator {
+class GridFiller {
 public:
-	Generator() : _lattice(), _basis(), _origin{{0.0, 0.0, 0.0}}, _object(nullptr), _latticeOccupancy(1.0), _dis(0.0, 1.0), _gen(0) {}
-	~Generator(){}
+	   GridFiller() : _lattice(), _basis(), _origin{{0.0, 0.0, 0.0}}, _object(nullptr), _latticeOccupancy(1.0), _dis(0.0, 1.0), _gen(0) {}
+	   ~GridFiller(){}
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
 	 *
@@ -71,8 +71,6 @@ public:
 	int getMolecule(Molecule *molecule);
 
 private:
-	bool isInsideBox(double r[3]);
-
 	Lattice _lattice;
 	Basis _basis;
 	std::array<double, 3> _origin;
@@ -87,4 +85,4 @@ private:
 	double _lattice_point[3];
 };
 
-#endif /* GENERATOR_H */
+#endif  // GRIDFILLER_H_
