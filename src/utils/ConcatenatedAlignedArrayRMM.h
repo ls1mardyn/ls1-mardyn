@@ -150,7 +150,7 @@ inline void ConcatenatedAlignedArrayRMM<TypeReal, TypeUID>::resize(size_t nEntri
 
 	_numEntriesPerRealArray = AlignedArray<TypeReal, VCP_ALIGNMENT>::_round_up(nEntriesPerArray);
 	size_t numBytesForReals = 6 * _numEntriesPerRealArray * sizeof(TypeReal);
-	size_t numBytesForUID = AlignedArray<TypeUID, VCP_ALIGNMENT>::_round_up(nEntriesPerArray) * sizeof(TypeUID); //TODO: VCP_ALIGNMENT should not be needed here
+	size_t numBytesForUID = _numEntriesPerRealArray * sizeof(TypeUID);
 	size_t totalNumBytes = numBytesForReals + numBytesForUID;
 
 	_byteBuffer.resize(totalNumBytes);
