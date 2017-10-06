@@ -33,7 +33,7 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * @note This structure is not fixed yet and may see changes
 	 * \code{.xml}
-	   <generator>
+	   <objectgenerator>
 	     <lattice><!-- ... --></lattice>
 	     <basis><!-- ... --></basis>
 	     <latticeOrigin>
@@ -44,7 +44,7 @@ public:
 	     <densit>DOUBLE</density>
 	     <latticeOccupancy>DOUBLE</latticeOccupancy>
 	     <object type=""><!-- ... --></object>
-	   </generator>
+	   </objectgenerator>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
