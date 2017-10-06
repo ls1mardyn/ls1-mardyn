@@ -45,9 +45,9 @@
 #include "io/RDF.h"
 #include "io/FlopRateWriter.h"
 
+#include "io/ASCIIReader.h"
 #include "io/BinaryReader.h"
 #include "io/ObjectGenerator.h"
-#include "io/InputOldstyle.h"
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
@@ -612,7 +612,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Face space file type: " << pspfiletype << endl;
 
 		if (pspfiletype == "ASCII") {
-			_inputReader = new InputOldstyle();
+			_inputReader = new ASCIIReader();
 			_inputReader->readXML(xmlconfig);
 		}
 		else if (pspfiletype == "binary") {

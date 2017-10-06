@@ -1,4 +1,4 @@
-#include "io/InputOldstyle.h"
+#include "io/ASCIIReader.h"
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
@@ -25,19 +25,19 @@ using Log::global_log;
 using namespace std;
 
 
-InputOldstyle::InputOldstyle() {}
+ASCIIReader::ASCIIReader() {}
 
-InputOldstyle::~InputOldstyle(){}
+ASCIIReader::~ASCIIReader(){}
 
-void InputOldstyle::setPhaseSpaceFile(string filename) {
+void ASCIIReader::setPhaseSpaceFile(string filename) {
 	_phaseSpaceFile = filename;
 }
 
-void InputOldstyle::setPhaseSpaceHeaderFile(string filename) {
+void ASCIIReader::setPhaseSpaceHeaderFile(string filename) {
 	_phaseSpaceHeaderFile = filename;
 }
 
-void InputOldstyle::readXML(XMLfileUnits& xmlconfig) {
+void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 	string pspfile;
 	if (xmlconfig.getNodeValue(".", pspfile)) {
 		pspfile.insert(0, xmlconfig.getDir());
@@ -46,7 +46,7 @@ void InputOldstyle::readXML(XMLfileUnits& xmlconfig) {
 	setPhaseSpaceFile(pspfile);
 }
 
-void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
+void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 {
 	string token, token2;
 
@@ -277,7 +277,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	_phaseSpaceHeaderFileStream.close();
 }
 
-unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("INPUT_OLDSTYLE_INPUT");
 

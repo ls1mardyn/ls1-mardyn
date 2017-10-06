@@ -16,7 +16,7 @@
 #endif
 #include "Domain.h"
 
-#include "io/InputOldstyle.h"
+#include "io/ASCIIReader.h"
 #include "utils/Logger.h"
 
 #include <list>
@@ -43,7 +43,7 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type t
 ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName) {
 
-	InputOldstyle inputReader;
+	   ASCIIReader inputReader;
 	inputReader.setPhaseSpaceHeaderFile(fileName.c_str());
 	inputReader.setPhaseSpaceFile(fileName.c_str());
 	inputReader.readPhaseSpaceHeader(domain, 1.0);

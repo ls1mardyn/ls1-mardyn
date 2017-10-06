@@ -5,12 +5,12 @@
 #include <string>
 #include <fstream>
 
-//! @brief This class is used to read in the phasespace using the "old" input file syntax
+//! @brief This class is used to read in the phasespace using the "old" ASCII input file syntax
 //! @author Martin Bernreuther, Martin Buchholz
-class InputOldstyle : public InputBase {
+class ASCIIReader : public InputBase {
 public:
-	InputOldstyle();
-	~InputOldstyle();
+	ASCIIReader();
+	~ASCIIReader();
 
 	void readXML(XMLfileUnits& xmlconfig);
 

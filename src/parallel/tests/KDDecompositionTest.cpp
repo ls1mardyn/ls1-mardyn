@@ -8,7 +8,7 @@
 #include "KDDecompositionTest.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "io/InputOldstyle.h"
+#include "io/ASCIIReader.h"
 
 #include <sstream>
 #include <cmath>
@@ -309,7 +309,7 @@ void KDDecompositionTest::testbalanceAndExchange() {
 	const double cutOff = 3.5;
 	int fullSearchThreshold = 2;
 
-	InputOldstyle inputReader;
+	   ASCIIReader inputReader;
 	std::string fileName2=getTestDataFilename("DomainDecompBase.inp");
 	inputReader.setPhaseSpaceHeaderFile(fileName2.c_str());
 	inputReader.setPhaseSpaceFile(fileName2.c_str());
