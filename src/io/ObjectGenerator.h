@@ -13,7 +13,6 @@ class MoleculeIdPool;
 class ObjectGenerator : public InputBase {
 public:
 	ObjectGenerator() : _filler(nullptr), _object(nullptr), _velocityAssigner(nullptr), _moleculeIdPool(nullptr) {};
-	~ObjectGenerator() {}
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
 	 *
