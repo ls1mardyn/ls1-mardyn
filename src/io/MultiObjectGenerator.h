@@ -1,5 +1,5 @@
-#ifndef SRC_IO_OBJECTGENERATOR_H_
-#define SRC_IO_OBJECTGENERATOR_H_
+#ifndef SRC_IO_MULTIOBJECTGENERATOR_H_
+#define SRC_IO_MULTIOBJECTGENERATOR_H_
 
 #include <list>
 
@@ -42,4 +42,4 @@ private:
 	VelocityAssignerBase *_defaultVelocityAssigner;
 };
 
-#endif  // SRC_IO_OBJECTGENERATOR_H_
+#endif  // SRC_IO_MULTIOBJECTGENERATOR_H_
