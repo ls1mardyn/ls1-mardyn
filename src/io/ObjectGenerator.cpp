@@ -1,7 +1,7 @@
 #include "io/ObjectGenerator.h"
 
+#include <limits>
 
-#include "Domain.h"
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
