@@ -49,6 +49,8 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		} else if(defaultVelocityAssignerName == "MaxwellVelocityDistribution") {
 			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
 		}
+		Ensemble* ensemble = _simulation.getEnsemble();
+		_velocityAssigner->setTemperature(ensemble->T());
 		xmlconfig.changecurrentnode("..");
 	}
 }
