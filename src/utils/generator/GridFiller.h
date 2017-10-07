@@ -27,22 +27,18 @@ public:
 	   GridFiller() : _lattice(), _basis(), _origin{{0.0, 0.0, 0.0}}, _object(nullptr), _latticeOccupancy(1.0), _dis(0.0, 1.0), _gen(0) {}
 	   ~GridFiller(){}
 
-	/** @brief Read in XML configuration for Generator and all its included objects.
+	/** @brief Read in XML configuration for GridFiller and all its included objects.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * @note This structure is not fixed yet and may see changes
 	 * \code{.xml}
-	   <objectgenerator>
+	   <filler type="GridFiller">
 	     <lattice><!-- ... --></lattice>
 	     <basis><!-- ... --></basis>
-	     <latticeOrigin>
-	         <x>DOUBLE</x>
-	         <y>DOUBLE</y>
-	         <z>DOUBLE</z>
-	     </latticeOrigin>
+	     <latticeOrigin> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </latticeOrigin>
 	     <densit>DOUBLE</density>
 	     <latticeOccupancy>DOUBLE</latticeOccupancy>
-	   </objectgenerator>
+	   </filler>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig);

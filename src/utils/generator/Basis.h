@@ -22,6 +22,19 @@ public:
 	Basis(){}
 	~Basis(){}
 
+	/** @brief Read in XML configuration for Basis and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <basis>
+	     <site>
+	       <componentid>INT</componentid>
+	       <coordinate> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </coordinate>
+	     </site>
+	     ...
+	   </basis>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	/** Add molecule to basis

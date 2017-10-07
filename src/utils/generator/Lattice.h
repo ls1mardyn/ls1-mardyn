@@ -48,6 +48,17 @@ public:
 	/** Lattice destructor */
 	~Lattice(){}
 
+	/** @brief Read in XML configuration for Lattice and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <lattice system="..." centering="...">
+	     <vec id='a'> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </vec>
+	     <vec id='b'> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </vec>
+	     <vec id='c'> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </vec>
+	   </lattice>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	/** Initialize lattice
