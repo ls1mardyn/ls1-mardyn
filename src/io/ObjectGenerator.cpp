@@ -32,7 +32,6 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		ObjectFactory object_factory;
 		global_log->debug() << "Obj name: " << object_type << endl;
 		_object = std::shared_ptr<Object>(object_factory.create(object_type));
-		global_log->info() << "COUNT : " << _object.use_count() << endl;
 		if(_object == nullptr) {
 			global_log->error() << "Unknown object type: " << object_type << endl;
 		}
