@@ -121,20 +121,6 @@ void GridFiller::readXML(XMLfileUnits& xmlconfig) {
 	Coordinate3D origin(xmlconfig, "latticeOrigin");
 	origin.get(_origin.data());
 	global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << endl;
-
-	if(xmlconfig.changecurrentnode("object")) {
-		std::string object_type;
-		xmlconfig.getNodeValue("@type", object_type);
-		ObjectFactory object_factory;
-		global_log->debug() << "Obj name: " << object_type << endl;
-		_object = object_factory.create(object_type);
-		if(_object == nullptr) {
-			global_log->error() << "Unknown object type: " << object_type << endl;
-		}
-		global_log->debug() << "Created object of type: " << _object->getName() << endl;
-		_object->readXML(xmlconfig);
-		xmlconfig.changecurrentnode("..");
-	}
 }
 
 

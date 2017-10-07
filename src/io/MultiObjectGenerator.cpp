@@ -13,6 +13,7 @@
 #include "utils/generator/VelocityAssignerBase.h"
 #include "utils/generator/EqualVelocityAssigner.h"
 #include "utils/generator/MaxwellVelocityAssigner.h"
+#include "utils/generator/ObjectFactory.h"
 
 #include <cmath>
 #include <limits>
@@ -47,6 +48,21 @@ void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode(generatorIter);
 		_generators.push_back(new GridFiller);
 		_generators.back()->readXML(xmlconfig);
+
+		if(xmlconfig.changecurrentnode("object")) {
+			std::string object_type;
+			xmlconfig.getNodeValue("@type", object_type);
+			ObjectFactory object_factory;
+			global_log->debug() << "Obj name: " << object_type << endl;
+			Object *object = object_factory.create(object_type);
+			if(object == nullptr) {
+				global_log->error() << "Unknown object type: " << object_type << endl;
+			}
+			global_log->debug() << "Created object of type: " << object->getName() << endl;
+			object->readXML(xmlconfig);
+			_generators.back()->setObject(object);
+			xmlconfig.changecurrentnode("..");
+		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
 }

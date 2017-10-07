@@ -17,7 +17,6 @@
 #include "Basis.h"
 #include "Lattice.h"
 #include "Objects.h"
-#include "ObjectFactory.h"
 #include "molecules/Molecule.h"
 
 class Object;
@@ -43,7 +42,6 @@ public:
 	     </latticeOrigin>
 	     <densit>DOUBLE</density>
 	     <latticeOccupancy>DOUBLE</latticeOccupancy>
-	     <object type=""><!-- ... --></object>
 	   </objectgenerator>
 	   \endcode
 	 */
@@ -59,6 +57,9 @@ public:
 
 	/** Initialize the generator with current internal state */
 	void init();
+
+	/* Set object to fill */
+	void setObject(Object *object) { _object = object; }
 
 	/* Set outer bounding box for the generator */
 	void setBoudingBox(double bBoxMin[3], double bBoxMax[3]);

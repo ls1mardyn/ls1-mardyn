@@ -21,7 +21,12 @@ public:
 	 * @note This structure is not fixed yet and may see changes
 	 * \code{.xml}
 	   <generator name="MultiObjectGenerator">
-	     <objectgenerator><!-- ... --></objectgenerator>
+	     <objectgenerator>
+	       <filler type=""><!-- ... --></filler>
+	       <object type=""><!-- ... --></object>
+	       <velocityAssigner type=""><!-- ... --></velocityAssigner>
+	     </objectgenerator>
+	     <velocityAssigner><!-- ... --></velocityAssigner>
 	   </generator >
 	   \endcode
 	 */
