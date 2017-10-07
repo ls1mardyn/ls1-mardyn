@@ -2,18 +2,17 @@
 #define SRC_IO_MULTIOBJECTGENERATOR_H_
 
 #include <list>
+#include <memory>
 
 #include "io/InputBase.h"
 
-class GridFiller;
+class ObjectGenerator;
 class VelocityAssignerBase;
 
 class MultiObjectGenerator : public InputBase {
 public:
 	MultiObjectGenerator() : _defaultVelocityAssigner(nullptr) {};
-	virtual ~MultiObjectGenerator() {
-		delete _defaultVelocityAssigner;
-	}
+	~MultiObjectGenerator();
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
 	 *
@@ -21,12 +20,9 @@ public:
 	 * @note This structure is not fixed yet and may see changes
 	 * \code{.xml}
 	   <generator name="MultiObjectGenerator">
-	     <objectgenerator>
-	       <filler type=""><!-- ... --></filler>
-	       <object type=""><!-- ... --></object>
-	       <velocityAssigner type=""><!-- ... --></velocityAssigner>
-	     </objectgenerator>
-	     <velocityAssigner><!-- ... --></velocityAssigner>
+	     <objectgenerator> <!-- ... --> </objectgenerator>
+	     ...
+	     <velocityAssigner> <!-- ... --> </velocityAssigner>
 	   </generator >
 	   \endcode
 	 */
@@ -38,8 +34,8 @@ public:
 
 private:
 
-	std::list<GridFiller*> _generators;
-	VelocityAssignerBase *_defaultVelocityAssigner;
+	std::list<ObjectGenerator*> _generators;
+	std::shared_ptr<VelocityAssignerBase> _defaultVelocityAssigner;
 };
 
 #endif  // SRC_IO_MULTIOBJECTGENERATOR_H_
