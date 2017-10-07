@@ -8,7 +8,7 @@
 class VelocityAssignerBase {
 public:
 	VelocityAssignerBase(double T = 0) : _T(T) {}
-	~VelocityAssignerBase(){}
+	virtual ~VelocityAssignerBase(){}
 	void setTemperature(double T) { _T = T; }
 	double T() { return _T; }
 	virtual void assignVelocity(Molecule *molecule) = 0;
