@@ -149,14 +149,14 @@ void ObjectUnification::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("object1")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob1 = object_factory.create(object_type);
+		_ob1 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob1->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
 	if(xmlconfig.changecurrentnode("object2")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob2 = object_factory.create(object_type);
+		_ob2 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob2->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
@@ -170,14 +170,14 @@ void ObjectSubtractor::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("object1")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob1 = object_factory.create(object_type);
+		_ob1 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob1->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
 	if(xmlconfig.changecurrentnode("object2")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob2 = object_factory.create(object_type);
+		_ob2 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob2->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
@@ -191,14 +191,14 @@ void ObjectIntersection::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("object1")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob1 = object_factory.create(object_type);
+		_ob1 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob1->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
 	if(xmlconfig.changecurrentnode("object2")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob2 = object_factory.create(object_type);
+		_ob2 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob2->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}

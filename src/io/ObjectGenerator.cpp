@@ -62,11 +62,9 @@ unsigned long ObjectGenerator::readPhaseSpace(ParticleContainer* particleContain
 	double bBoxMin[3];
 	double bBoxMax[3];
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
-	Object *bBox = new Cuboid(bBoxMin, bBoxMax);
-	/** @todo the following line introduces a memory leak, as we cannot delete the object in the current
-	 * design due to the recursive destructor calls that will break the shared _object state. */
-	Object *boundedObject = new ObjectIntersection(bBox, _object.get());
-	_filler->setObject(boundedObject);
+	std::shared_ptr<Object> bBox = std::make_shared<Cuboid>(bBoxMin, bBoxMax);
+	std::shared_ptr<Object> boundedObject = std::make_shared<ObjectIntersection>(bBox, _object);
+	_filler->setObject(boundedObject.get());
 	_filler->init();
 
 	Molecule molecule;

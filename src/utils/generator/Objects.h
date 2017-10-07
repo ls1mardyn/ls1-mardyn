@@ -11,6 +11,8 @@
 #ifndef OBJECTS_H
 #define OBJECTS_H
 
+#include <memory>
+
 #include "utils/xmlfileUnits.h"
 
 class Object {
@@ -113,11 +115,7 @@ public:
 	 * @param[in]  obj1  First object.
 	 * @param[in]  obj2  Second object.
 	 */
-	ObjectUnification(Object *obj1, Object *obj2) : _ob1(obj1), _ob2(obj2) {}
-	~ObjectUnification(){
-		delete _ob1;
-		delete _ob2;
-	}
+	ObjectUnification(std::shared_ptr<Object> obj1, std::shared_ptr<Object> obj2) : _ob1(obj1), _ob2(obj2) {}
 
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("ObjectUnification"); }
@@ -150,8 +148,8 @@ public:
 	}
 
 private:
-	Object* _ob1;
-	Object* _ob2;
+	std::shared_ptr<Object> _ob1;
+	std::shared_ptr<Object> _ob2;
 };
 
 /** Abstract class to subtract one object from another */
@@ -162,11 +160,7 @@ public:
 	 * @param[in]  original_ob  The original object.
 	 * @param[in]  subtract_ob  The object which shall be subtract from the original object.
 	 */
-	ObjectSubtractor(Object *original_ob, Object *subtract_ob) : _ob1(original_ob), _ob2(subtract_ob) {}
-	~ObjectSubtractor(){
-		delete _ob1;
-		delete _ob2;
-	}
+	ObjectSubtractor(std::shared_ptr<Object> original_ob, std::shared_ptr<Object> subtract_ob) : _ob1(original_ob), _ob2(subtract_ob) {}
 
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("ObjectSubtractor"); }
@@ -188,8 +182,8 @@ public:
 	}
 
 private:
-	Object* _ob1;
-	Object* _ob2;
+	std::shared_ptr<Object> _ob1;
+	std::shared_ptr<Object> _ob2;
 };
 
 /** Abstract class for the intersection of two objects */
@@ -200,11 +194,7 @@ public:
 	 * @param[in]  obj1  First object.
 	 * @param[in]  obj2  Second object.
 	 */
-	ObjectIntersection(Object *obj1, Object *obj2) : _ob1(obj1), _ob2(obj2) {}
-	~ObjectIntersection(){
-		delete _ob1;
-		delete _ob2;
-	}
+	ObjectIntersection(std::shared_ptr<Object> obj1, std::shared_ptr<Object> obj2) : _ob1(obj1), _ob2(obj2) {}
 
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("ObjectIntersection"); }
@@ -236,8 +226,8 @@ public:
 	}
 
 private:
-	Object* _ob1;
-	Object* _ob2;
+	std::shared_ptr<Object> _ob1;
+	std::shared_ptr<Object> _ob2;
 };
 
 #endif /* OBJECTS_H */
