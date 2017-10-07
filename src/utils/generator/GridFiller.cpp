@@ -30,12 +30,6 @@ void GridFiller::init(Lattice& lattice, Basis& basis, double origin[3], Object *
     init();
 }
 
-void GridFiller::setBoudingBox(double bBoxMin[3], double bBoxMax[3]) {
-	Object *bBox = new Cuboid(bBoxMin, bBoxMax);
-	Object *boundedObject = new ObjectIntersection(bBox, _object);
-	_object =  boundedObject;
-}
-
 void GridFiller::init() {
 	double bBoxMin[3];
 	double bBoxMax[3];

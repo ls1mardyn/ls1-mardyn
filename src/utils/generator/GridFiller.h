@@ -61,9 +61,6 @@ public:
 	/* Set object to fill */
 	void setObject(Object *object) { _object = object; }
 
-	/* Set outer bounding box for the generator */
-	void setBoudingBox(double bBoxMin[3], double bBoxMax[3]);
-
 	/** Get a single molecule
 	 * By subsequent calls all molecules will be returned, one by one.
 	 * @param[out] molecule  Pointer to molecule data structure where to store the molecule data (coordinate and component id)
