@@ -10,8 +10,10 @@ class VelocityAssignerBase;
 
 class MultiObjectGenerator : public InputBase {
 public:
-    MultiObjectGenerator() {};
-    virtual ~MultiObjectGenerator() {}
+	MultiObjectGenerator() : _defaultVelocityAssigner(nullptr) {};
+	virtual ~MultiObjectGenerator() {
+		delete _defaultVelocityAssigner;
+	}
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
 	 *
@@ -32,7 +34,7 @@ public:
 private:
 
 	std::list<GridFiller*> _generators;
-	VelocityAssignerBase *_velocityAssigner;
+	VelocityAssignerBase *_defaultVelocityAssigner;
 };
 
 #endif  // SRC_IO_OBJECTGENERATOR_H_

@@ -29,6 +29,17 @@ using namespace std;
 
 
 void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
+	if(xmlconfig.changecurrentnode("velocityAssigner")) {
+		std::string defaultVelocityAssignerName;
+		xmlconfig.getNodeValue("@type", defaultVelocityAssignerName);
+		if(defaultVelocityAssignerName == "EqualVelocityDistribution") {
+			_defaultVelocityAssigner = new EqualVelocityAssigner();
+		} else if(defaultVelocityAssignerName == "MaxwellVelocityDistribution") {
+			_defaultVelocityAssigner = new MaxwellVelocityAssigner();
+		}
+		xmlconfig.changecurrentnode("..");
+	}
+
 	XMLfile::Query query = xmlconfig.query("objectgenerator");
 	global_log->info() << "Number of sub-objectgenerators: " << query.card() << endl;
 	string oldpath = xmlconfig.getcurrentnodepath();
@@ -38,13 +49,6 @@ void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		_generators.back()->readXML(xmlconfig);
 	}
 	xmlconfig.changecurrentnode(oldpath);
-	std::string velocityAssignerName;
-	xmlconfig.getNodeValue("velocityAssigner", velocityAssignerName);
-	if(velocityAssignerName == "EqualVelocityDistribution") {
-		_velocityAssigner = new EqualVelocityAssigner();
-	} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
-		_velocityAssigner = new MaxwellVelocityAssigner();
-	}
 }
 
 
@@ -58,14 +62,14 @@ long unsigned int MultiObjectGenerator::readPhaseSpace(ParticleContainer* partic
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
 	MoleculeIdPool moleculeIdPool(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());
 
-	_velocityAssigner->setTemperature(ensemble->T());
+	_defaultVelocityAssigner->setTemperature(ensemble->T());
 	for(auto generator : _generators) {
 		Molecule molecule;
 		generator->setBoudingBox(bBoxMin, bBoxMax);
 		generator->init();
 		while(generator->getMolecule(&molecule) > 0) {
 			molecule.setid(moleculeIdPool.getNewMoleculeId());
-			_velocityAssigner->assignVelocity(&molecule);
+			_defaultVelocityAssigner->assignVelocity(&molecule);
 			Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
 			molecule.setq(q);
 			bool inserted = particleContainer->addParticle(molecule);
