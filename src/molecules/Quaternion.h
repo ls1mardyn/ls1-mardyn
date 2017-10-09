@@ -3,12 +3,13 @@
 
 #include <cmath>
 #include <array>
+#include "utils/mardyn_assert.h"
 /**
  @author Martin Bernreuther
  */
 class Quaternion {
 public:
-	Quaternion(double qw = 0., double qx = 0., double qy = 0., double qz = 0.)
+	Quaternion(double qw = 1., double qx = 1., double qy = 0., double qz = 0.)
 			: m_qw(qw), m_qx(qx), m_qy(qy), m_qz(qz) {
 	}
 
@@ -81,6 +82,13 @@ public:
 
 	bool isNormalized() const {
 		return fabs(magnitude2() - 1.0) <= 1e-15;
+	}
+	void check() const{
+		using std::isnormal;
+		mardyn_assert(std::isnormal(m_qw));
+		mardyn_assert(std::isnormal(m_qx));
+		mardyn_assert(std::isnormal(m_qy));
+		mardyn_assert(std::isnormal(m_qz));
 	}
 
 private:
