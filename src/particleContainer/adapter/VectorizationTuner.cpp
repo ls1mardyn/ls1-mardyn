@@ -501,8 +501,12 @@ void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numR
 
 	cp.preprocessCell(cell1);
 
-	for (int i = 0; i < numRepetitions; ++i) {
-		cp.processCell(cell1);
+	#pragma omp parallel
+	{
+		ParticleCell myowncopy(cell1);
+		for (int i = 0; i < numRepetitions; ++i) {
+			cp.processCell(myowncopy);
+		}
 	}
 
 	cp.postprocessCell(cell1);
@@ -517,8 +521,12 @@ void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, Particl
 	cp.preprocessCell(cell1);
 	cp.preprocessCell(cell2);
 
-	for (int i = 0; i < numRepetitions; ++i) {
-        cp.processCellPair(cell1, cell2);
+	#pragma omp parallel
+	{
+		ParticleCell myown1(cell1), myown2(cell2);
+		for (int i = 0; i < numRepetitions; ++i) {
+			cp.processCellPair(myown1, myown2);
+		}
 	}
 
 	cp.postprocessCell(cell1);

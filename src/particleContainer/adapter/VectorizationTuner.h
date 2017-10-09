@@ -27,7 +27,7 @@ class Component;
  * For different scenarios, the performance is evaluated and output.
  * Later this could be used to actually use this class as a tuner, i.e. to use the best possible vectorization method for the actual computation.
  */
-class VectorizationTuner : public OutputBase{
+class VectorizationTuner: public OutputBase {
 
 public:
 	/** @brief Constructor of VectorizationTuner for the xml input mode.
@@ -66,14 +66,14 @@ public:
 	void doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/,
 			Domain* /*domain*/, unsigned long /*simstep*/,
 			std::list<ChemicalPotential>* /*lmu*/,
-			std::map<unsigned, CavityEnsemble>* /*mcav*/){}
+			std::map<unsigned, CavityEnsemble>* /*mcav*/) override {}
 
 	//documentation in OutputBase, does nothing.
 	void finishOutput(ParticleContainer* /*particleContainer*/,
-			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){}
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) override {}
 
 	//documentation in OutputBase.
-	std::string getPluginName() {
+	std::string getPluginName() override {
 		return std::string("VectorizationTuner");
 	}
 
