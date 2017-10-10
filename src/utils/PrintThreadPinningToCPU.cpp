@@ -9,10 +9,10 @@
 #include "../WrapOpenMP.h"
 #include "utils/Logger.h"
 
-#ifndef __INTEL_COMPILER
-#include <sched.h> /* int sched_getcpu(void); */
-
 using Log::global_log;
+
+#if !defined(__INTEL_COMPILER) and !defined(_SX)
+#include <sched.h> /* int sched_getcpu(void); */
 
 void PrintThreadPinningToCPU() {
 	int mastercpu = sched_getcpu();
@@ -38,7 +38,7 @@ void PrintThreadPinningToCPU() {
 
 		for (int i = 0; i < numThreads; ++i) {
 			if (i == myID) {
-				global_log->info() << "	Thread with id " << myID << " is running on " << cpu << "." << std::endl;
+				global_log->info() << "	Thread with id " << myID << " is running on " << cpu << "." << endl;
 			}
 
 			#if defined(_OPENMP)
@@ -51,7 +51,7 @@ void PrintThreadPinningToCPU() {
 using Log::global_log;
 
 void PrintThreadPinningToCPU() {
-	global_log->warning() << "Use KMP_AFFINITY=verbose with the Intel Compiler instead of this function call." << std::endl;
+	global_log->warning() << "Thread pinning information cannot be obtained for this system by ls1. Please use OpenMP runtime system capabilities, e.g. KMP_AFFINITY=verbose with the Intel Compiler." << endl;
 }
 
 #endif
