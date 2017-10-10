@@ -75,14 +75,14 @@ void TimerProfiler::print(string timerName, string outputPrefix){
 	}
 }
 
-void TimerProfiler::printTimers(string startingTimerName, string outputPrefix){
-	if (!_timers.count(startingTimerName)) return ;
-	if (_checkTimer(startingTimerName)){
-		print(startingTimerName, outputPrefix);
+void TimerProfiler::printTimers(string timerName, string outputPrefix){
+	if (!_timers.count(timerName)) return ;
+	if (_checkTimer(timerName)){
+		print(timerName, outputPrefix);
 		outputPrefix += "\t";
 	}
-	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
-		printTimers(_timers[startingTimerName]._childTimerNames[i], outputPrefix);
+	for(size_t i=0; i<_timers[timerName]._childTimerNames.size(); i++){
+		printTimers(_timers[timerName]._childTimerNames[i], outputPrefix);
 	}
 }
 
@@ -242,18 +242,18 @@ void TimerProfiler::_debugMessage(string timerName){
 	}
 }
 
-void TimerProfiler::_clearTimers(string startingTimerName){
+void TimerProfiler::_clearTimers(string timerName){
 	//if the timer is not in the container it must have already been deleted -> return
-	if (!_timers.count(startingTimerName)){
+	if (!_timers.count(timerName)){
 		return;
 	}
-	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
-		_clearTimers(_timers[startingTimerName]._childTimerNames[i]);
+	for(size_t i=0; i<_timers[timerName]._childTimerNames.size(); i++){
+		_clearTimers(_timers[timerName]._childTimerNames[i]);
 	}
-	if (_checkTimer(startingTimerName, false)) {
-		delete _timers[startingTimerName]._timer;
+	if (_checkTimer(timerName, false)) {
+		delete _timers[timerName]._timer;
 	}
-	_timers[startingTimerName]._childTimerNames.clear();
-	_timers[startingTimerName]._parentTimerNames.clear();
-	_timers.erase(startingTimerName);
+	_timers[timerName]._childTimerNames.clear();
+	_timers[timerName]._parentTimerNames.clear();
+	_timers.erase(timerName);
 }
