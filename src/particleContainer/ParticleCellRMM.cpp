@@ -38,6 +38,10 @@ bool ParticleCellRMM::addParticle(Molecule& particle, bool checkWhetherDuplicate
 	return wasInserted;
 }
 
+Molecule ParticleCellRMM::buildAoSMolecule(size_t i) const {
+	return _cellDataSoARMM.buildAoSMolecule(i);
+}
+
 void ParticleCellRMM::moleculesAtNew(size_t i, Molecule*& multipurposePointer) {
 	mardyn_assert((int)i < getMoleculeCount());
 	_cellDataSoARMM.readMutableMolecule(i, *multipurposePointer);
@@ -157,4 +161,30 @@ void ParticleCellRMM::increaseMoleculeStorage(size_t numExtraMols) {
 
 void ParticleCellRMM::prefetchForForce() const {
 	_cellDataSoARMM.prefetchForForce();
+}
+
+void ParticleCellRMM::getLeavingMolecules(std::vector<Molecule>& appendBuffer) {
+	const vcp_real_calc * const soa1_mol_pos_x = _cellDataSoARMM.r_xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = _cellDataSoARMM.r_yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = _cellDataSoARMM.r_zBegin();
+
+	for (int i = 0; i < getMoleculeCount(); ) {
+
+		double x = static_cast<double>(soa1_mol_pos_x[i]);
+		double y = static_cast<double>(soa1_mol_pos_y[i]);
+		double z = static_cast<double>(soa1_mol_pos_z[i]);
+		bool xOut = x < _boxMin[0] or x >= _boxMax[0];
+		bool yOut = y < _boxMin[1] or y >= _boxMax[1];
+		bool zOut = z < _boxMin[2] or z >= _boxMax[2];
+		bool satisfy = xOut or yOut or zOut;
+
+		if (not satisfy) {
+			// do nothing, advance i
+			++i;
+		} else {
+			appendBuffer.push_back(buildAoSMolecule(i));
+			deleteMoleculeByIndex(i);
+			// don't advance i
+		}
+	}
 }

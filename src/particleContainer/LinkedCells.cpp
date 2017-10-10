@@ -17,6 +17,7 @@
 #include <algorithm>
 
 #include "particleContainer/TraversalTuner.h"
+#include "ResortCellProcessorSliced.h"
 
 using namespace std;
 using Log::global_log;
@@ -25,7 +26,7 @@ using Log::global_log;
 //############ PUBLIC METHODS ####################
 //################################################
 
-LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner<ParticleCell>()) {
+LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner<ParticleCell>()), _resortCellProcessorSliced(nullptr) {
 }
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
@@ -94,11 +95,16 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	initializeTraversal();
 
 	_cellsValid = false;
+	_resortCellProcessorSliced = nullptr;
 }
 
 LinkedCells::~LinkedCells() {
     if (_traversalTuner != nullptr)
 	    delete _traversalTuner;
+
+    if (_resortCellProcessorSliced != nullptr) {
+    	delete _resortCellProcessorSliced;
+    }
 
 	std::vector<ParticleCell>::iterator it;
 	for (it = _cells.begin(); it != _cells.end(); ++it) {
@@ -208,7 +214,11 @@ void LinkedCells::update() {
 	update_via_copies();
 #else
 //	update_via_coloring();
-	update_via_traversal();
+	if (_traversalTuner->getSelectedTraversal() == TraversalTuner<ParticleCell>::traversalNames::SLICED) {
+		update_via_sliced_traversal();
+	} else {
+		update_via_traversal();
+	}
 #endif
 
 	_cellsValid = true;
@@ -221,7 +231,7 @@ void LinkedCells::update() {
 			global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
 					<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
 					<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
-			global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2)
+			global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
 					<< std::endl << "cell: [" << _cells[tM.getCellIndex()].getBoxMin(0) << ", "
 					<< _cells[tM.getCellIndex()].getBoxMax(0) << "] x [" << _cells[tM.getCellIndex()].getBoxMin(1)
 					<< ", " << _cells[tM.getCellIndex()].getBoxMax(1) << "] x ["
@@ -333,6 +343,13 @@ void LinkedCells::update_via_coloring() {
 			}
 		}
 	} // end pragma omp parallel
+}
+
+void LinkedCells::update_via_sliced_traversal() {
+	if (_resortCellProcessorSliced == nullptr) {
+		_resortCellProcessorSliced = new ResortCellProcessorSliced(this);
+	}
+	_traversalTuner->traverseCellPairs(*_resortCellProcessorSliced);
 }
 
 void LinkedCells::update_via_traversal() {

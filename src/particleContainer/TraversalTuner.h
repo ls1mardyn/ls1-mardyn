@@ -19,6 +19,14 @@ template<class CellTemplate>
 class TraversalTuner {
 
 public:
+	// Probably remove this once autotuning is implemented
+	enum traversalNames {
+		ORIGINAL = 0,
+		C08      = 1,
+		SLICED   = 2,
+		QSCHED   = 3
+	};
+
 	TraversalTuner();
 
 	~TraversalTuner();
@@ -36,17 +44,11 @@ public:
 
 	void traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage, unsigned stageCount);
 
+	traversalNames getSelectedTraversal() const {
+		return selectedTraversal;
+	}
 
 private:
-
-	// Probably remove this once autotuning is implemented
-	enum traversalNames {
-		ORIGINAL = 0,
-		C08      = 1,
-		SLICED   = 2,
-		QSCHED   = 3
-	};
-
 	traversalNames selectedTraversal;
 
 	std::vector<std::pair<CellPairTraversals<CellTemplate> *, CellPairTraversalData *> > _traversals;

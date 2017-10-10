@@ -80,6 +80,10 @@ public:
 	virtual void moleculesAtNew(size_t i, Molecule *& multipurposePointer) = 0;
 	virtual void moleculesAtConstNew(size_t i, Molecule *& multipurposePointer) const = 0;
 
+	virtual void getLeavingMolecules(std::vector<Molecule> & appendBuffer) {
+		// TODO: implement for FullParticleCell
+	}
+
 
 #ifdef QUICKSCHED
 	qsched_res_t getRescourceId() const {

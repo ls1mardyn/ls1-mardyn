@@ -16,6 +16,7 @@ class CellPairTraversals;
 template<class CellTemplate>
 class TraversalTuner;
 
+class ResortCellProcessorSliced;
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -121,6 +122,7 @@ public:
 	void update_via_copies();
 	void update_via_coloring();
 	void update_via_traversal();
+	void update_via_sliced_traversal();
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
@@ -365,6 +367,8 @@ private:
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
 	bool _cellsValid;
+
+	ResortCellProcessorSliced * _resortCellProcessorSliced;
 };
 
 #endif /* LINKEDCELLS_H_ */

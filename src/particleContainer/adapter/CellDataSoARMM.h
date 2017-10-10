@@ -66,6 +66,13 @@ public:
 		_data.increaseStorage(_mol_num, additionalMolecules);
 	}
 
+	Molecule buildAoSMolecule(size_t index) const {
+		return Molecule (
+			getMolUid(index), nullptr,
+			getMolR(0,index), getMolR(1,index), getMolR(2,index),
+			getMolV(0,index), getMolV(1,index), getMolV(2,index));
+	}
+
 	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
 		MoleculeRMM& m_RMM = downcastMoleculeReferenceRMM(m);
 

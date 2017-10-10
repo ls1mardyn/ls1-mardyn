@@ -46,11 +46,15 @@ public:
 
 	void prefetchForForce() const;
 
+	void getLeavingMolecules(std::vector<Molecule> & appendBuffer);
+
 //protected: do not use!
 	void moleculesAtNew(size_t i, Molecule *& multipurposePointer) override;
 	void moleculesAtConstNew(size_t i, Molecule *& multipurposePointer) const override;
 
 private:
+	Molecule buildAoSMolecule(size_t i) const;
+
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
