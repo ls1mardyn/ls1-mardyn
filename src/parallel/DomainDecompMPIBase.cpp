@@ -177,3 +177,14 @@ size_t DomainDecompMPIBase::getTotalSize() {
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
 			+ _collCommunication.getDynamicSize();
 }
+
+void DomainDecompMPIBase::printSubInfo(int offset){
+	std::stringstream offsetstream;
+	for (int i = 0; i < offset; i++) {
+		offsetstream << "\t";
+	}
+	global_log->info() << offsetstream.str() << "own datastructures:\t" << sizeof(DomainDecompMPIBase) / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "neighbourCommunicationScheme:\t\t" << _neighbourCommunicationScheme->getDynamicSize() / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication.getDynamicSize() / 1.e6 << " MB" << std::endl;
+
+}

@@ -1236,14 +1236,14 @@ size_t LinkedCells::getTotalSize() {
 		totalSize += cell.getCellDataSoA().getDynamicSize();
 		totalSize += cell.getMoleculeVectorDynamicSize();
 	}
-	totalSize += _innerMostCellIndices.size() * sizeof(unsigned long);
-	totalSize += _innerCellIndices.size() * sizeof(unsigned long);
-	totalSize += _boundaryCellIndices.size() * sizeof(unsigned long);
-	totalSize += _haloCellIndices.size() * sizeof(unsigned long);
+	totalSize += _innerMostCellIndices.capacity() * sizeof(unsigned long);
+	totalSize += _innerCellIndices.capacity() * sizeof(unsigned long);
+	totalSize += _boundaryCellIndices.capacity() * sizeof(unsigned long);
+	totalSize += _haloCellIndices.capacity() * sizeof(unsigned long);
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 2; j++) {
 			for (int k = 0; k < 2; k++) {
-				totalSize += _borderCellIndices[i][j][k].size() * sizeof(unsigned long);
+				totalSize += _borderCellIndices[i][j][k].capacity() * sizeof(unsigned long);
 			}
 		}
 	}
@@ -1258,14 +1258,14 @@ void LinkedCells::printSubInfo(int offset) {
 	}
 	cellTotal += cellSoA + cellMoleculeVectors;
 	size_t indexVectors = 0;
-	indexVectors += _innerMostCellIndices.size() * sizeof(unsigned long);
-	indexVectors += _innerCellIndices.size() * sizeof(unsigned long);
-	indexVectors += _boundaryCellIndices.size() * sizeof(unsigned long);
-	indexVectors += _haloCellIndices.size() * sizeof(unsigned long);
+	indexVectors += _innerMostCellIndices.capacity() * sizeof(unsigned long);
+	indexVectors += _innerCellIndices.capacity() * sizeof(unsigned long);
+	indexVectors += _boundaryCellIndices.capacity() * sizeof(unsigned long);
+	indexVectors += _haloCellIndices.capacity() * sizeof(unsigned long);
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 2; j++) {
 			for (int k = 0; k < 2; k++) {
-				indexVectors += _borderCellIndices[i][j][k].size() * sizeof(unsigned long);
+				indexVectors += _borderCellIndices[i][j][k].capacity() * sizeof(unsigned long);
 			}
 		}
 	}

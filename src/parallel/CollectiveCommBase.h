@@ -157,7 +157,7 @@ public:
 	}
 
 	virtual size_t getDynamicSize() {
-		return _values.size() * sizeof(valType);
+		return _values.capacity() * sizeof(valType);
 	}
 
 protected:

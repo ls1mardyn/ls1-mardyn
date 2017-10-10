@@ -100,7 +100,7 @@ public:
 	void increaseMoleculeStorage(size_t numExtraMols) override;
 
 	virtual size_t getMoleculeVectorDynamicSize() const override {
-		return _molecules.size() * sizeof(Molecule) + _leavingMolecules.size() * sizeof(Molecule);
+		return _molecules.capacity() * sizeof(Molecule) + _leavingMolecules.capacity() * sizeof(Molecule);
 	}
 
 //protected: do not use!

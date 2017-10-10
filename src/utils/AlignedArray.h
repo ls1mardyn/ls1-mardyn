@@ -223,7 +223,7 @@ public:
 	 * \brief Return amount of allocated storage + .
 	 */
 	size_t get_dynamic_memory() const {
-		return _vec.size() * sizeof(T);
+		return _vec.capacity() * sizeof(T);
 	}
 
 	static size_t _round_up(size_t n) {

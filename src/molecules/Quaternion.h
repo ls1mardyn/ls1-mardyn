@@ -28,6 +28,7 @@ public:
 
 	}
 	void scaleinv(double s) {
+		mardyn_assert(s != 0.);
 		scale( 1./ s);
 	}
 	void normalize() {

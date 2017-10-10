@@ -59,17 +59,22 @@ public:
 	virtual size_t getDynamicSize() {
 		size_t totSize = 0;
 		// _fullShellNeighbours
-		totSize += _fullShellNeighbours.size();
+		totSize += sizeof(*this);
+		//std::cout << "pre FSN:" << totSize;
+		totSize += _fullShellNeighbours.capacity() * sizeof(CommunicationPartner);
 		for (CommunicationPartner& neigh : _fullShellNeighbours) {
 			totSize += neigh.getDynamicSize();
+			//std::cout << "FSN:" << neigh.getDynamicSize();
 		}
+		//std::cout << "post FSN/pre neigh:" << totSize;
+		totSize += _neighbours.capacity() * sizeof(CommunicationPartner);
 		for (auto& neighList : _neighbours) {
 			for (auto& neigh : neighList) {
 				totSize += neigh.getDynamicSize();
+				//std::cout << "Neigh:" << neigh.getDynamicSize();
 			}
-			totSize += sizeof(neighList);
 		}
-
+		//std::cout << "post Neigh:" << totSize;
 		return totSize;
 	}
 protected:

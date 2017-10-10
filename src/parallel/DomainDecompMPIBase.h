@@ -190,9 +190,8 @@ public:
 
 	virtual size_t getTotalSize() override;
 
-	virtual void printSubInfo(int offset) override {
-		return;
-	}
+	virtual void printSubInfo(int offset) override;
+
 	virtual std::string getName() override {
 		return "DomainDecompMPIBase";
 	}
