@@ -5,12 +5,7 @@
  *      Author: Andrei Costinescu
  */
 
-#include <assert.h>
-#include <stdexcept>
 #include <tuple>
-#include <utility>
-#include <thread>
-#include <chrono>
 #include <cmath>
 
 #include "TimerProfiler.h"
