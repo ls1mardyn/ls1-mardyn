@@ -585,22 +585,22 @@ void FullMolecule::calcFM() {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void FullMolecule::check(unsigned long id) {
 #ifndef NDEBUG
-	using std::isnormal; // C++11 needed
+	using std::isfinite; // C++11 needed
 
 	mardyn_assert(_id == id);
 	mardyn_assert(_m > 0.0);
 	for (int d = 0; d < 3; d++) {
-		mardyn_assert(isnormal(_r[d]));
-		mardyn_assert(isnormal(_v[d]));
-		mardyn_assert(isnormal(_L[d]));
-		mardyn_assert(isnormal(_F[d]));
-		mardyn_assert(isnormal(_M[d]));
-		mardyn_assert(isnormal(_I[d]));
+		mardyn_assert(isfinite(_r[d]));
+		mardyn_assert(isfinite(_v[d]));
+		mardyn_assert(isfinite(_L[d]));
+		mardyn_assert(isfinite(_F[d]));
+		mardyn_assert(isfinite(_M[d]));
+		mardyn_assert(isfinite(_I[d]));
 		// mardyn_assert(!isnan(_Vi[d]));
-		mardyn_assert(isnormal(_invI[d]));
+		mardyn_assert(isfinite(_invI[d]));
 	}
 	_q.check();
-	if(!isnormal(_Vi[0]) || !isnormal(_Vi[1]) || !isnormal(_Vi[2]))
+	if(!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2]))
 	{
 	   cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")"<<endl;
 	   _Vi[0] = 0.0;

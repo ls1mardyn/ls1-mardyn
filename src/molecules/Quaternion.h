@@ -84,11 +84,11 @@ public:
 		return fabs(magnitude2() - 1.0) <= 1e-15;
 	}
 	void check() const{
-		using std::isnormal;
-		mardyn_assert(std::isnormal(m_qw));
-		mardyn_assert(std::isnormal(m_qx));
-		mardyn_assert(std::isnormal(m_qy));
-		mardyn_assert(std::isnormal(m_qz));
+		using std::isfinite;
+		mardyn_assert(std::isfinite(m_qw));
+		mardyn_assert(std::isfinite(m_qx));
+		mardyn_assert(std::isfinite(m_qy));
+		mardyn_assert(std::isfinite(m_qz));
 	}
 
 private:
