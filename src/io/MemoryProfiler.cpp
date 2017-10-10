@@ -136,6 +136,7 @@ int getOwnMemory() { //Note: this value is in KB!
 }
 
 void MemoryProfiler::printGeneralInfo(const std::string& string) {
+#ifndef _SX
 	struct sysinfo memInfo;
 	sysinfo(&memInfo);
 	long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
@@ -160,4 +161,7 @@ void MemoryProfiler::printGeneralInfo(const std::string& string) {
 		Log::global_log->info() << "\t\t\thugePages:\t" << hugeMem << " MB (" << (hugeMem) * 100. / totalMem
 				<< "% of total memory)" << "\tHPS(kB):\t" << _hugePageSize << std::endl;
 	}
+#else
+    Log::global_log->warning() << "MemoryProfiler of ls1 is not available for this platform." << std::endl;
+#endif
 }
