@@ -5,8 +5,8 @@
  *      Author: Andrei Costinescu
  */
 
-#include <tuple>
 #include <cmath>
+#include <tuple>
 
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
@@ -29,9 +29,11 @@ TimerProfiler::~TimerProfiler() {
 }
 
 Timer* TimerProfiler::getTimer(string timerName){
-	if (!_timers.count(timerName)) throw invalid_argument("No timer with name "+timerName+".");
-	if (!_checkTimer(timerName, false)) throw invalid_argument("Timer "+timerName+" is not a timer");
-	return _timers[timerName]._timer;
+	auto timerProfiler = _timers.find(timerName);
+	if(timerProfiler != _timers.end()) {
+		return (timerProfiler->second)._timer;
+	}
+	return nullptr;
 }
 
 void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNames, Timer *timer, bool activate){
