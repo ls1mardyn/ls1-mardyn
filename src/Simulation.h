@@ -119,7 +119,7 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <simulation>
-	     <integrator type=STRING><!-- see Integrator class documentation --></integrator>
+	     <integrator type="STRING"><!-- processed by corresponding Integrator::readXML() --></integrator>
 	     <run>
 	       <production>
 	         <steps>INTEGER</steps>

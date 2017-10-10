@@ -1,10 +1,18 @@
 /*! \page ls1MarDynInputFiles Mardyn Input Files
 
-ls1-MarDyn input files use a xml syntax.
+ls1-MarDyn input files use a xml syntax. Documentation about the xml structure for the various components can be found in the documentation of their readXML methods.
 
-Documentation about the xml structure for the various components can be found in the documentation of their readXML methods.
+The structure of the XML configfile is
+\code{.xml}
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="STRING">
+  <simulation> <!-- processed by Simulation::readXML() --> </simulation>
+</mardyn>
+\endcode
+Related readXML() methods:
+- simulation:  Simulation::readXML() documentation,
 
-@TODO write or complete the page...
+
 
 
 
@@ -137,6 +145,5 @@ x-   y-   z-coordinates   mass   epsilon   sigma   cutoff   doshift
 
 !! Body
 
-!!! XML File Format
 
 */
