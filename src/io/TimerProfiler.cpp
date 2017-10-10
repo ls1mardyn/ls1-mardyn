@@ -212,7 +212,6 @@ void TimerProfiler::setOutputString(string timerName, string outputString){
 }
 
 string TimerProfiler::getOutputString(string timerName){
-	if (!_timers.count(timerName)) throw invalid_argument("No timer with name "+timerName+".");
 	string output = _timers[timerName]._outputString;
 	if (output.compare("") == 0){
 		output = "Timer "+timerName+" took: ";
@@ -221,10 +220,11 @@ string TimerProfiler::getOutputString(string timerName){
 }
 
 double TimerProfiler::getTime(string timerName){
-	if (!_timers.count(timerName)) throw invalid_argument("No timer with name "+timerName+".");
-	if (!_checkTimer(timerName, false)) throw invalid_argument("Timer "+timerName+" is not a timer");
-	if (!_checkTimer(timerName)) throw invalid_argument("Timer "+timerName+" is not active");
-	return _timers[timerName]._timer->get_etime();
+	auto timer = getTimer(timerName);
+	if(timer != nullptr) {
+		return timer->get_etime();
+	}
+	return 0.0;
 }
 
 /* private Methods */
