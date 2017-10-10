@@ -10,6 +10,7 @@
 #include "utils/Logger.h"
 
 using Log::global_log;
+using std::endl;
 
 #if !defined(__INTEL_COMPILER) and !defined(_SX)
 #include <sched.h> /* int sched_getcpu(void); */
