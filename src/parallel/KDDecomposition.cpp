@@ -5,8 +5,6 @@
 #include <fstream>
 #include <climits>
 #include <cmath>
-#include <thread>
-#include <chrono>
 
 #if ENABLE_MPI
 #include <mpi.h>
