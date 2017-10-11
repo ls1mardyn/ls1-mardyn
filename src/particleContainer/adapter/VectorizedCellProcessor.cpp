@@ -963,12 +963,13 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	size_t i_quadrupole_dipole_idx = 0;
 	size_t i_quadrupole_idx = 0;
 
-	//if(soa1._mol_num < 8){
+	//if(soa1.getMolNum() < 8){
 	//	printf("less than 8\n");
 	//}
 
 	// Iterate over each center in the first cell.
-	for (size_t i = 0; i < soa1._mol_num; ++i) {//over the molecules
+	const size_t soa1_mol_num = soa1.getMolNum();
+	for (size_t i = 0; i < soa1_mol_num; ++i) {//over the molecules
 		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
 		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
 		const RealCalcVec m1_r_z = RealCalcVec::broadcast(soa1_mol_pos_z + i);
@@ -2638,7 +2639,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	FullParticleCell & full_c = downcastCellReferenceFull(c);
 
 	CellDataSoA& soa = full_c.getCellDataSoA();
-	if (c.isHaloCell() or soa._mol_num < 2) {
+	if (c.isHaloCell() or soa.getMolNum() < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
@@ -2659,10 +2660,10 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty, or both cells are Halo, skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
 

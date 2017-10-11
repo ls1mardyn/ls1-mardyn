@@ -12,8 +12,15 @@
 
 class CellDataSoABase {
 public:
-	virtual ~CellDataSoABase() {}
-	virtual size_t getMolNum() const = 0;
+	// no virtual destructor - objects are never deleted through a pointer to base
+	// they only exist as references FullParticleCell and ParticleCellRMM.
+	void setMolNum(size_t molNum) {_molNum = molNum;}
+	size_t getMolNum() const {return _molNum;}
+	void incrementMolNum() {++_molNum;}
+	void decrementMolNum() {--_molNum;}
+
+private:
+	size_t _molNum;
 };
 
 #endif /* SRC_PARTICLECONTAINER_ADAPTER_CELLDATASOABASE_H_ */

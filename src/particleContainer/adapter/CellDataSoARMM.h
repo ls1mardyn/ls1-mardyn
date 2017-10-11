@@ -37,10 +37,10 @@ public:
 	void resize(size_t molecules_arg) {
 		const bool allow_shrink = false; // TODO shrink at some point in the future
 
-		_mol_num = molecules_arg;
+		setMolNum(molecules_arg);
 
 		// entries per molecule
-		_data.resize(_mol_num);
+		_data.resize(getMolNum());
 	}
 
 	size_t getDynamicSize() const {
@@ -58,12 +58,12 @@ public:
 			static_cast<vcp_real_calc>(m_RMM.v(2))
 		};
 
-		_data.appendValues(vals, m_RMM.id(), _mol_num);
-		++_mol_num;
+		_data.appendValues(vals, m_RMM.id(), getMolNum());
+		incrementMolNum();
 	}
 
 	void increaseStorage(size_t additionalMolecules) {
-		_data.increaseStorage(_mol_num, additionalMolecules);
+		_data.increaseStorage(getMolNum(), additionalMolecules);
 	}
 
 	Molecule buildAoSMolecule(size_t index) const {
@@ -107,29 +107,21 @@ public:
 	}
 
 	void deleteMolecule(size_t index) {
-		mardyn_assert(index < _mol_num);
-		if(_mol_num > 1 and index < _mol_num - 1) {
-			setMolR(0, index, getMolR(0,_mol_num-1));
-			setMolR(1, index, getMolR(1,_mol_num-1));
-			setMolR(2, index, getMolR(2,_mol_num-1));
-			setMolV(0, index, getMolV(0,_mol_num-1));
-			setMolV(1, index, getMolV(1,_mol_num-1));
-			setMolV(2, index, getMolV(2,_mol_num-1));
-			setMolUid(index, getMolUid(_mol_num-1));
+		mardyn_assert(index < getMolNum());
+		if(getMolNum() > 1 and index < getMolNum() - 1) {
+			setMolR(0, index, getMolR(0,getMolNum()-1));
+			setMolR(1, index, getMolR(1,getMolNum()-1));
+			setMolR(2, index, getMolR(2,getMolNum()-1));
+			setMolV(0, index, getMolV(0,getMolNum()-1));
+			setMolV(1, index, getMolV(1,getMolNum()-1));
+			setMolV(2, index, getMolV(2,getMolNum()-1));
+			setMolUid(index, getMolUid(getMolNum()-1));
 		}
-		--_mol_num;
+		decrementMolNum();
 	}
 
 	void prefetchForForce() const {
 		_data.prefetchForForce();
-	}
-
-	size_t getMolNum() const {
-		return _mol_num;
-	}
-
-	void setMolNum(size_t molNum) {
-		_mol_num = molNum;
 	}
 
 	vcp_real_calc getMolR(unsigned short d, size_t index) const {
@@ -167,8 +159,6 @@ public:
 	}
 
 private:
-	size_t _mol_num;
-
 	// entries per molecule
 	ConcatenatedAlignedArrayRMM<vcp_real_calc, uint64_t> _data;
 };

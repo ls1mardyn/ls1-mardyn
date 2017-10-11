@@ -42,16 +42,7 @@ void MoleculeRMM::initStaticVars() {
 
 void MoleculeRMM::setSoA(CellDataSoABase * const s) {
 	CellDataSoARMM * derived;
-#ifndef NDEBUG
-	derived = nullptr;
-	derived = dynamic_cast<CellDataSoARMM *>(s);
-	if(derived == nullptr and s != nullptr) {
-		global_log->error() << "expected CellDataSoARMM pointer for m" << _id << std::endl;
-		mardyn_assert(false);
-	}
-#else
 	derived = static_cast<CellDataSoARMM *>(s);
-#endif
 	_soa = derived;
 }
 

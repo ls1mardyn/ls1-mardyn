@@ -633,16 +633,7 @@ unsigned long FullMolecule::totalMemsize() const {
 
 void FullMolecule::setSoA(CellDataSoABase * const s) {
 	CellDataSoA * derived;
-#ifndef NDEBUG
-	derived = nullptr;
-	derived = dynamic_cast<CellDataSoA *>(s);
-	if(derived == nullptr and s != nullptr) {
-		global_log->error() << "expected CellDataSoA pointer for m" << _id << endl;
-		mardyn_assert(false);
-	}
-#else
 	derived = static_cast<CellDataSoA *>(s);
-#endif
 	_soa = derived;
 }
 
