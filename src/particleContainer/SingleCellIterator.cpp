@@ -17,15 +17,15 @@ SingleCellIterator::SingleCellIterator(ParticleCellBase * cell_arg,
 
 Molecule& SingleCellIterator:: operator * () const {
 	// .at method performs automatically an out-of-bounds check
-	Molecule * multipurposePointer = nullptr;
+	Molecule *moleculePtr = nullptr;
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	multipurposePointer = const_cast<Molecule *>(& _AoSMoleculeReservoir);
+	moleculePtr = const_cast<Molecule *>(& _AoSMoleculeReservoir);
 #endif
 
-	_cell->moleculesAtNew(_mol_index, multipurposePointer);
+	_cell->moleculesAtNew(_mol_index, moleculePtr);
 
-	return *multipurposePointer;
+	return *moleculePtr;
 }
 
 void SingleCellIterator :: operator ++ () {
