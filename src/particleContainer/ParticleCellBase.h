@@ -18,6 +18,8 @@
 
 class Random;
 
+/** @brief ParticleCellBase defines the interface for cells used by the LinkedCells data structure to store molecule data.
+ */
 class ParticleCellBase: public Cell {
 public:
 	ParticleCellBase();
@@ -25,10 +27,9 @@ public:
 
 	virtual void deallocateAllParticles() = 0;
 
-	/**
+	/** @brief Add a particle to the cell.
 	 * \param particle the particle to be added
-	 * \param checkWhetherDuplicate if true, perform a check by molecule IDs,
-	 * whether a particle with the same ID already exists
+	 * \param checkWhetherDuplicate if true, check if a molecule with the same molecule IDs already exists in the cell
 	 * \return true, if inserted
 	 */
 	virtual bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) = 0;
@@ -36,10 +37,19 @@ public:
 	SingleCellIterator iteratorBegin();
 	SingleCellIterator iteratorEnd();
 
+	/** @brief Check if current cell contains no molecules
+	 * @return true if no molecules are in the cell, false otherwise
+	 */
 	virtual bool isEmpty() const = 0;
-
+	/** @brief Check if current cell contains molecules
+	 * @return true if molecules are in the cell, false otherwise
+	 */
 	bool isNotEmpty() const {return not isEmpty();}
 
+	/** @brief Remove moleulce from the cell based on molecule ID
+	 * @param molid molecule ID of the molecule to be deleted
+	 * @return true if molecules was deleted
+	 */
 	bool deleteMoleculeByID(unsigned long molid);
 
 	virtual bool deleteMoleculeByIndex(size_t index) = 0;
@@ -107,6 +117,11 @@ public:
 #endif // QUICKSCHED
 
 protected:
+	/** @brief Find the index of a molecule in a cell based on its molecule ID.
+	 * @param index index of the molecule in the cell data structure
+	 * @param molid molecule ID of the molecule to be searched in the cell
+	 * @return true if molecule was found
+	 */
 	bool findMoleculeByID(size_t& index, unsigned long molid) const;
 
 #ifdef QUICKSCHED
