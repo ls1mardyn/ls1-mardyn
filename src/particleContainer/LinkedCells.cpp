@@ -666,6 +666,14 @@ void LinkedCells::initializeCells() {
 	long int cellIndex;
 	double cellBoxMin[3], cellBoxMax[3];
 
+#ifdef ENABLE_REDUCED_MEMORY_MODE
+	ParticleCell::_cellBorderAndFlagManager.init(_cellsPerDimension,
+			_haloBoundingBoxMin, _haloBoundingBoxMax,
+			_boundingBoxMin, _boundingBoxMax,
+			_cellLength);
+	// this code would have been much simpler if we could use CellBorderAndFlagManager in non-RMM mode...
+#endif
+
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		cellBoxMin[2] = iz * _cellLength[2] + _haloBoundingBoxMin[2];
 		cellBoxMax[2] = (iz + 1) * _cellLength[2] + _haloBoundingBoxMin[2];
@@ -707,15 +715,17 @@ void LinkedCells::initializeCells() {
 				}
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
+				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
 
-				cell.skipCellFromHaloRegion();
-				cell.skipCellFromBoundaryRegion();
-				cell.skipCellFromInnerRegion();
-				cell.skipCellFromInnerMostRegion();
+				#ifndef ENABLE_REDUCED_MEMORY_MODE
+					cell.skipCellFromHaloRegion();
+					cell.skipCellFromBoundaryRegion();
+					cell.skipCellFromInnerRegion();
+					cell.skipCellFromInnerMostRegion();
+				#endif
 
 				cell.setBoxMin(cellBoxMin);
 				cell.setBoxMax(cellBoxMax);
-				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
 				if (ix < _haloWidthInNumCells[0] ||
 					iy < _haloWidthInNumCells[1] ||
 					iz < _haloWidthInNumCells[2] ||
@@ -724,6 +734,10 @@ void LinkedCells::initializeCells() {
 					iz >= _cellsPerDimension[2] - _haloWidthInNumCells[2]) {
 
 					cell.assignCellToHaloRegion();
+					#ifdef ENABLE_REDUCED_MEMORY_MODE
+						cell.skipCellFromInnerRegion();
+						cell.skipCellFromInnerMostRegion();
+					#endif
 					_haloCellIndices.push_back(cellIndex);
 				}
 				else{
@@ -735,6 +749,11 @@ void LinkedCells::initializeCells() {
 						iz >= _cellsPerDimension[2] - 2 * _haloWidthInNumCells[2]) {
 
 						cell.assignCellToBoundaryRegion();
+						#ifdef ENABLE_REDUCED_MEMORY_MODE
+							cell.skipCellFromHaloRegion();
+							cell.skipCellFromInnerRegion();
+							cell.skipCellFromInnerMostRegion();
+						#endif
 						_boundaryCellIndices.push_back(cellIndex);
 					}
 					else{
@@ -746,10 +765,18 @@ void LinkedCells::initializeCells() {
 							iz >= _cellsPerDimension[2] - 3 * _haloWidthInNumCells[2]) {
 
 							cell.assignCellToInnerRegion();
+							#ifdef ENABLE_REDUCED_MEMORY_MODE
+								cell.skipCellFromHaloRegion();
+								cell.skipCellFromBoundaryRegion();
+							#endif
 							_innerCellIndices.push_back(cellIndex);
 						}
 						else {
 							cell.assignCellToInnerMostAndInnerRegion();
+							#ifdef ENABLE_REDUCED_MEMORY_MODE
+								cell.skipCellFromHaloRegion();
+								cell.skipCellFromBoundaryRegion();
+							#endif
 							_innerMostCellIndices.push_back(cellIndex);
 							_innerCellIndices.push_back(cellIndex);
 						}

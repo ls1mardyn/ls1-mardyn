@@ -61,6 +61,9 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 
 void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
 			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
+	// make a backup copy of CellBorderAndFlagManager
+	CellBorderAndFlagManager backup = ParticleCellRMM::_cellBorderAndFlagManager;
+
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
 	_flopCounterZeroRc = new FlopCounter( 0., 0.);
@@ -70,6 +73,9 @@ void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
 	std::vector<std::vector<double>> edgeValues {};
 	std::vector<std::vector<double>> cornerValues {};
 	//tune(*(_simulation.getEnsemble()->getComponents()), ownValues, faceValues, edgeValues, cornerValues);
+
+	// restore CellBorderAndFlagManager to its values
+	ParticleCellRMM::_cellBorderAndFlagManager = backup;
 }
 
 void VectorizationTuner::writeFile(const TunerLoad& vecs){
@@ -219,10 +225,15 @@ void VectorizationTuner::iteratePair (long long int numRepetitions,
 }
 
 void VectorizationTuner::initCells(ParticleCell& main, ParticleCell& face, ParticleCell& edge, ParticleCell& corner){
-		main.assignCellToInnerRegion();
-		face.assignCellToInnerRegion();
-		edge.assignCellToInnerRegion();
-		corner.assignCellToInnerRegion();
+		main.setCellIndex(21);
+		face.setCellIndex(22);
+		edge.setCellIndex(26);
+		corner.setCellIndex(42);
+
+		main.assignCellToBoundaryRegion();
+		face.assignCellToBoundaryRegion();
+		edge.assignCellToBoundaryRegion();
+		corner.assignCellToBoundaryRegion();
 
 	    #ifdef MASKING
 	    srand(time(NULL));
@@ -274,6 +285,13 @@ void VectorizationTuner::tune(std::vector<Component> componentList, TunerLoad& t
 		global_log->info() << "starting tuning..." << endl;
 
 		//init the cells
+		int cellsPerDim[3] = { 4, 4, 4 };
+		double haloBoxMin[3] = {-1., -1., -1.};
+		double haloBoxMax[3] = {3., 3., 3.};
+		double boxMin[3] = {0., 0., 0.};
+		double boxMax[3] = {2., 2., 2.};
+		double cellLength[3] = {1., 1., 1.};
+		ParticleCellRMM::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
 		ParticleCell mainCell;
 		ParticleCell faceCell;
 		ParticleCell edgeCell;
@@ -405,8 +423,17 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	Component comp = ComponentList[0];
 
 	// construct two cells
+	int cellsPerDim[3] = { 4, 4, 4 };
+	double haloBoxMin[3] = {-1., -1., -1.};
+	double haloBoxMax[3] = {3., 3., 3.};
+	double boxMin[3] = {0., 0., 0.};
+	double boxMax[3] = {2., 2., 2.};
+	double cellLength[3] = {1., 1., 1.};
+	ParticleCellRMM::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
 	ParticleCell firstCell;
 	ParticleCell secondCell;
+	firstCell.setCellIndex(21);
+	secondCell.setCellIndex(22);
 	firstCell.assignCellToInnerRegion();
 	secondCell.assignCellToInnerRegion();
 

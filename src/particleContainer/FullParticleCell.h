@@ -112,10 +112,42 @@ public:
 		multipurposePointer = const_cast<Molecule*>(& _molecules.at(i));
 	}
 
+	void assignCellToHaloRegion() { haloCell = true; }
+	void assignCellToBoundaryRegion() { boundaryCell = true; }
+	void assignCellToInnerRegion() { innerCell = true; }
+	void assignCellToInnerMostAndInnerRegion() { innerCell = true; innerMostCell = true; }
+
+	void skipCellFromHaloRegion() { haloCell = false; }
+	void skipCellFromBoundaryRegion() { boundaryCell = false; }
+	void skipCellFromInnerRegion() { innerCell = false; }
+	void skipCellFromInnerMostRegion() { innerMostCell = false; }
+
+	bool isHaloCell() const { return haloCell; }
+	bool isBoundaryCell() const { return boundaryCell; }
+	bool isInnerCell() const { return innerCell; }
+	bool isInnerMostCell() const { return innerMostCell; }
+
+	double getBoxMin(int d) const { return _boxMin[d]; }
+	double getBoxMax(int d) const { return _boxMax[d]; }
+	void setBoxMin(const double b[3]) { for (int d = 0; d < 3; ++d) { _boxMin[d] = b[d]; } }
+	void setBoxMax(const double b[3]) { for (int d = 0; d < 3; ++d) { _boxMax[d] = b[d]; } }
+
 private:
 
 	void updateLeavingMolecules(FullParticleCell& otherCell);
 
+	//! true when the cell is in the halo region
+	bool haloCell;
+	//! true when the cell is in the boundary region
+	bool boundaryCell;
+	//! true when the cell is in the inner region. Innermost cells are always also innerCells.
+	bool innerCell;
+	//! true when the cell is in the innermost region (does not have neighbors, that are boundary cells)
+	bool innerMostCell;
+	//! lower left front corner
+	double _boxMin[3];
+	//! upper right back corner
+	double _boxMax[3];
 
 	/**
 	 * \brief A vector of pointers to the Molecules in this cell.

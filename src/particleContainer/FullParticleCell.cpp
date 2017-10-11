@@ -17,7 +17,12 @@
 using namespace std;
 
 FullParticleCell::FullParticleCell() :
-		_molecules(), _cellDataSoA(0, 0, 0, 0, 0) { }
+		haloCell(false), boundaryCell(false), innerCell(false), innerMostCell(false), _molecules(), _cellDataSoA(0, 0, 0, 0, 0) {
+	for (int d = 0; d < 3; ++d) {
+		_boxMin[d] = 0.0;
+		_boxMax[d] = 0.0;
+	}
+}
 
 FullParticleCell::~FullParticleCell() {
 //	if(!isEmpty()) {

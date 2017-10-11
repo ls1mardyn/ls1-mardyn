@@ -59,12 +59,16 @@ public:
 	virtual void increaseMoleculeStorage(size_t numMols) = 0;
 
 	virtual bool testPointInCell(const double point[3]) const {
-		return _boxMin[0] <= point[0] && _boxMin[1] <= point[1] && _boxMin[2] <= point[2] &&
-				point[0] < _boxMax[0] && point[1] < _boxMax[1] && point[2] < _boxMax[2];
+		double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
+		double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
+		return boxMin[0] <= point[0] && boxMin[1] <= point[1] && boxMin[2] <= point[2] &&
+				point[0] < boxMax[0] && point[1] < boxMax[1] && point[2] < boxMax[2];
 	}
 
 	virtual bool testInBox(const Molecule& particle) const {
-		return particle.inBox(_boxMin, _boxMax);
+		double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
+		double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
+		return particle.inBox(boxMin, boxMax);
 	}
 
 	virtual size_t getMoleculeVectorDynamicSize() const = 0;
@@ -83,7 +87,6 @@ public:
 	virtual void getLeavingMolecules(std::vector<Molecule> & appendBuffer) {
 		// TODO: implement for FullParticleCell
 	}
-
 
 #ifdef QUICKSCHED
 	qsched_res_t getRescourceId() const {

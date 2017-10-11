@@ -100,13 +100,16 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 
 	vcp_real_calc T = global_simulation->getEnsemble()->T();
 
-	int start_i = floor((getBoxMin(0) / simBoxLength) * numMoleculesPerDimension) - 1;
-	int start_j = floor((getBoxMin(1) / simBoxLength) * numMoleculesPerDimension) - 1;
-	int start_k = floor((getBoxMin(2) / simBoxLength) * numMoleculesPerDimension) - 1;
+	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
+	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
 
-	int end_i = ceil((getBoxMax(0) / simBoxLength) * numMoleculesPerDimension) + 1;
-	int end_j = ceil((getBoxMax(1) / simBoxLength) * numMoleculesPerDimension) + 1;
-	int end_k = ceil((getBoxMax(2) / simBoxLength) * numMoleculesPerDimension) + 1;
+	int start_i = floor((boxMin[0] / simBoxLength) * numMoleculesPerDimension) - 1;
+	int start_j = floor((boxMin[1] / simBoxLength) * numMoleculesPerDimension) - 1;
+	int start_k = floor((boxMin[2] / simBoxLength) * numMoleculesPerDimension) - 1;
+
+	int end_i = ceil((boxMax[0] / simBoxLength) * numMoleculesPerDimension) + 1;
+	int end_j = ceil((boxMax[1] / simBoxLength) * numMoleculesPerDimension) + 1;
+	int end_k = ceil((boxMax[2] / simBoxLength) * numMoleculesPerDimension) + 1;
 
 	std::vector<Molecule> buffer;
 	int numMolsUpperBound = (end_k - start_k) * (end_j - start_j) * (end_i - start_i) * 2;
@@ -126,8 +129,8 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 		double i_rc = static_cast<double>(i);
 		vcp_real_calc x1 = origin1 + i_rc * spacing;
 		vcp_real_calc x2 = origin2 + i_rc * spacing;
-		bool x1In = PositionIsInBox1D(_boxMin[0], _boxMax[0], static_cast<double>(x1));
-		bool x2In = PositionIsInBox1D(_boxMin[0], _boxMax[0], static_cast<double>(x2));
+		bool x1In = PositionIsInBox1D(boxMin[0], boxMax[0], static_cast<double>(x1));
+		bool x2In = PositionIsInBox1D(boxMin[0], boxMax[0], static_cast<double>(x2));
 
 		if(not (x1In or x2In)) {
 			continue;
@@ -137,8 +140,8 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 			double j_rc = static_cast<double>(j);
 			vcp_real_calc y1 = origin1 + j_rc * spacing;
 			vcp_real_calc y2 = origin2 + j_rc * spacing;
-			bool y1In = PositionIsInBox1D(_boxMin[1], _boxMax[1], static_cast<double>(y1));
-			bool y2In = PositionIsInBox1D(_boxMin[1], _boxMax[1], static_cast<double>(y2));
+			bool y1In = PositionIsInBox1D(boxMin[1], boxMax[1], static_cast<double>(y1));
+			bool y2In = PositionIsInBox1D(boxMin[1], boxMax[1], static_cast<double>(y2));
 
 			if(not (y1In or y2In)) {
 				continue;
@@ -149,8 +152,8 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 				double k_rc = static_cast<double>(k);
 				vcp_real_calc z1 = origin1 + k_rc * spacing;
 				vcp_real_calc z2 = origin2 + k_rc * spacing;
-				bool z1In = PositionIsInBox1D(_boxMin[2], _boxMax[2], static_cast<double>(z1));
-				bool z2In = PositionIsInBox1D(_boxMin[2], _boxMax[2], static_cast<double>(z2));
+				bool z1In = PositionIsInBox1D(boxMin[2], boxMax[2], static_cast<double>(z1));
+				bool z2In = PositionIsInBox1D(boxMin[2], boxMax[2], static_cast<double>(z2));
 
 				if (x1In and y1In and z1In) {
 					++numInserted;

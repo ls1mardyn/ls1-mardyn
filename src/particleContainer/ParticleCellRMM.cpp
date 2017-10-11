@@ -1,6 +1,8 @@
 #include "particleContainer/ParticleCellRMM.h"
 #include "particleContainer/ParticleCell.h"
 
+CellBorderAndFlagManager ParticleCellRMM::_cellBorderAndFlagManager;
+
 ParticleCellRMM::ParticleCellRMM() : _cellDataSoARMM(0) {
 	// TODO Auto-generated constructor stub
 
@@ -17,7 +19,9 @@ void ParticleCellRMM::deallocateAllParticles() {
 bool ParticleCellRMM::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 
 #ifndef NDEBUG
-	mardyn_assert(particle.inBox(_boxMin,_boxMax ));
+	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
+	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
+	mardyn_assert(particle.inBox(boxMin, boxMax));
 #endif
 
 	bool wasInserted;
@@ -73,12 +77,16 @@ void ParticleCellRMM::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 	//const int oNumMols = oCell.getMoleculeCount();
 
 	// TODO: use getRegion and put in a vector? will reduce number of calls to inBox by factor 2?
+	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
+	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
+	double otherCellBoxMin[3] = {otherCell.getBoxMin(0), otherCell.getBoxMin(1), otherCell.getBoxMin(2)};
+	double otherCellBoxMax[3] = {otherCell.getBoxMax(0), otherCell.getBoxMax(1), otherCell.getBoxMax(2)};
 
 	// how many molecules travel from my cell to the other one
-	const int numMolsMeToOther = countInRegion(oCell._boxMin, oCell._boxMax);
+	const int numMolsMeToOther = countInRegion(otherCellBoxMin, otherCellBoxMax);
 
 	// how many molecules travel from the other cell to me
-	int numMolsOtherToMe = oCell.countInRegion(_boxMin, _boxMax);
+	int numMolsOtherToMe = oCell.countInRegion(boxMin, boxMax);
 
 	if (numMolsMeToOther == 0 and numMolsOtherToMe == 0)
 		return;
@@ -91,6 +99,11 @@ void ParticleCellRMM::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 }
 
 void ParticleCellRMM::swapAndAppendToCell(ParticleCellRMM& other) {
+	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
+	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
+	double otherCellBoxMin[3] = {other.getBoxMin(0), other.getBoxMin(1), other.getBoxMin(2)};
+	double otherCellBoxMax[3] = {other.getBoxMax(0), other.getBoxMax(1), other.getBoxMax(2)};
+
 	// holds: the number of molecules that move from "this" to "other" is >= 0
 	Molecule dummy, otherDummy;
 	Molecule *dummy_p = &dummy, *otherDummy_p = &otherDummy;
@@ -98,13 +111,13 @@ void ParticleCellRMM::swapAndAppendToCell(ParticleCellRMM& other) {
 	for (int i = 0; i < getMoleculeCount(); ++i) {
 		// find next molecule to move from this to other
 		moleculesAtNew(i, dummy_p);
-		if (not dummy.inBox(other._boxMin, other._boxMax))
+		if (not dummy.inBox(otherCellBoxMin, otherCellBoxMax))
 			continue;
 
 		// find next swap/insertion position
 		for (;j <other.getMoleculeCount(); ++j) {
 			other.moleculesAtNew(j, otherDummy_p);
-			if (otherDummy.inBox(_boxMin,_boxMax))
+			if (otherDummy.inBox(boxMin, boxMax))
 				break;
 		}
 
@@ -167,15 +180,17 @@ void ParticleCellRMM::getLeavingMolecules(std::vector<Molecule>& appendBuffer) {
 	const vcp_real_calc * const soa1_mol_pos_x = _cellDataSoARMM.r_xBegin();
 	const vcp_real_calc * const soa1_mol_pos_y = _cellDataSoARMM.r_yBegin();
 	const vcp_real_calc * const soa1_mol_pos_z = _cellDataSoARMM.r_zBegin();
+	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
+	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
 
 	for (int i = 0; i < getMoleculeCount(); ) {
 
 		double x = static_cast<double>(soa1_mol_pos_x[i]);
 		double y = static_cast<double>(soa1_mol_pos_y[i]);
 		double z = static_cast<double>(soa1_mol_pos_z[i]);
-		bool xOut = x < _boxMin[0] or x >= _boxMax[0];
-		bool yOut = y < _boxMin[1] or y >= _boxMax[1];
-		bool zOut = z < _boxMin[2] or z >= _boxMax[2];
+		bool xOut = x < boxMin[0] or x >= boxMax[0];
+		bool yOut = y < boxMin[1] or y >= boxMax[1];
+		bool zOut = z < boxMin[2] or z >= boxMax[2];
 		bool satisfy = xOut or yOut or zOut;
 
 		if (not satisfy) {
