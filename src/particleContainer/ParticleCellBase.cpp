@@ -12,7 +12,6 @@
 
 ParticleCellBase::ParticleCellBase() {
 	// TODO Auto-generated constructor stub
-
 }
 
 ParticleCellBase::~ParticleCellBase() {
@@ -20,19 +19,15 @@ ParticleCellBase::~ParticleCellBase() {
 }
 
 bool ParticleCellBase::deleteMoleculeByID(unsigned long molid) {
-	bool found = false;
-
 	size_t index;
-	findMoleculeByID(found, index, molid);
+	bool found = findMoleculeByID(index, molid);
 	if (found) {
 		deleteMoleculeByIndex(index);
 	}
-
 	return found;
 }
 
-void ParticleCellBase::findMoleculeByID(bool& wasFound, size_t& index, unsigned long molid) const {
-	wasFound = false;
+bool ParticleCellBase::findMoleculeByID(size_t& index, unsigned long molid) const {
 	int numMolecules = getMoleculeCount();
 
 	// TODO: we'd need separate classes for const and non-const iterators...
@@ -44,10 +39,10 @@ void ParticleCellBase::findMoleculeByID(bool& wasFound, size_t& index, unsigned 
 	for(SingleCellIterator it = begin; it != end; ++it) {
 		if (it->id() == molid) {
 			index = it.getIndex();
-			wasFound = true;
-			break;
+			return true;
 		}
 	}
+	return false;
 }
 
 template <typename T>

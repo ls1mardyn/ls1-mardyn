@@ -107,7 +107,7 @@ public:
 #endif // QUICKSCHED
 
 protected:
-	void findMoleculeByID(bool& wasFound, size_t& index, unsigned long molid) const;
+	bool findMoleculeByID(size_t& index, unsigned long molid) const;
 
 #ifdef QUICKSCHED
 	qsched_res_t  _resourceId;

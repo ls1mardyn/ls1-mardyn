@@ -46,13 +46,9 @@ bool FullParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicat
 		_molecules.push_back(particle);
 		wasInserted = true;
 	} else {
-
 		// perform a check whether this molecule exists (has been received) already
-
-		bool found;
 		size_t index;
-		findMoleculeByID(found, index, particle.id());
-
+		bool found = findMoleculeByID(index, particle.id());
 		if (not found) {
 			_molecules.push_back(particle);
 			wasInserted = true;

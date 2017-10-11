@@ -24,12 +24,12 @@ bool ParticleCellRMM::addParticle(Molecule& particle, bool checkWhetherDuplicate
 	mardyn_assert(particle.inBox(boxMin, boxMax));
 #endif
 
-	bool wasInserted;
+	bool wasInserted = false;
 	bool found = false;
 
 	if (checkWhetherDuplicate) {
 		size_t index;
-		findMoleculeByID(found, index, particle.id());
+		found = findMoleculeByID(index, particle.id());
 	}
 
 	if (not found) {
@@ -38,7 +38,6 @@ bool ParticleCellRMM::addParticle(Molecule& particle, bool checkWhetherDuplicate
 	} else {
 		wasInserted = false;
 	}
-
 	return wasInserted;
 }
 
