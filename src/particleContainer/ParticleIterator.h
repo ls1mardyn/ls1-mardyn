@@ -157,7 +157,7 @@ inline void ParticleIterator :: operator ++ () {
 }
 
 inline bool ParticleIterator :: operator == (const ParticleIterator& other) const {
-	return (_cell_index == other._cell_index) and (_cell_iterator == other._cell_iterator);
+	return (_cell_index == other._cell_index) and (_cell_iterator == other._cell_iterator) and (_cells == other._cells);
 }
 
 inline bool ParticleIterator :: operator != (const ParticleIterator& other) const {
