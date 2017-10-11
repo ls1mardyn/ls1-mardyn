@@ -1432,6 +1432,7 @@ void Simulation::simulate() {
 		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
 	ioTimer->stop();
+	global_log->info() << "Timing information:" << endl;
 	global_simulation->timers()->printTimers();
 	global_simulation->timers()->resetTimers();
 	_memoryProfiler->doOutput();

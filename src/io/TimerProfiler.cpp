@@ -46,11 +46,10 @@ void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNa
 
 	if (parentTimerNames.size() == 0) {
 		parentTimerNames.push_back(_baseTimerName);
-	} else {
-		for (auto parentTimerName : parentTimerNames) {
-			_timers[timerName]._parentTimerNames.push_back(parentTimerName);
-			_timers[parentTimerName]._childTimerNames.push_back(timerName);
-		}
+	}
+	for (auto parentTimerName : parentTimerNames) {
+		_timers[timerName]._parentTimerNames.push_back(parentTimerName);
+		_timers[parentTimerName]._childTimerNames.push_back(timerName);
 	}
 }
 
