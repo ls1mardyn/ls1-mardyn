@@ -180,8 +180,8 @@ inline ParticleIterator ParticleIterator :: invalid () {
 }
 
 inline void ParticleIterator :: make_invalid () {
-	_cell_index = CellIndex_T(-1);
 	_cells = nullptr;
+	_cell_index = 0;
 	_cell_iterator.make_invalid();
 }
 

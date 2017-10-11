@@ -33,7 +33,7 @@ public:
 		_v[2] = vz;
 		_id = id;
 		_soa = nullptr;
-		_soa_index = static_cast<size_t>(-1);
+		_soa_index = 0;
 
 		if(component != nullptr) {
 			_component = component;
@@ -53,7 +53,7 @@ public:
 		}
 		_id = other.id();
 		_soa = nullptr;
-		_soa_index = static_cast<size_t>(-1);
+		_soa_index = 0;
 	}
 
 	MoleculeRMM(CellDataSoARMM * soa, size_t index) {

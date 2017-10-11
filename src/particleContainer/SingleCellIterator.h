@@ -85,7 +85,7 @@ inline SingleCellIterator SingleCellIterator :: invalid () {
 
 inline void SingleCellIterator :: make_invalid () {
 	_cell = nullptr;
-	_mol_index = size_t(-1);
+	_mol_index = 0;
 	_currentParticleDeleted = false;
 }
 

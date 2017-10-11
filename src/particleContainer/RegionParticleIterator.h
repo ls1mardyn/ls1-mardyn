@@ -45,7 +45,7 @@ class RegionParticleIterator : public ParticleIterator {
 		double _endRegion[3];
 };
 
-inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(), _localCellIndex(-1){
+inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(), _localCellIndex(0){
 	make_invalid();
 }
 
@@ -149,7 +149,7 @@ inline void RegionParticleIterator :: next_non_empty_cell() {
 
 inline void RegionParticleIterator :: make_invalid() {
 	ParticleIterator::make_invalid();
-	_localCellIndex = CellIndex_T(-1);
+	_localCellIndex = 0;
 }
 
 inline RegionParticleIterator RegionParticleIterator :: invalid () {
