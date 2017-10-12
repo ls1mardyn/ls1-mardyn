@@ -61,28 +61,16 @@ private:
 	bool isCell(IsCell_t type, GlobalLinearizedIndex_t cellIndex) const {
 		bool ret;
 		Global3DIndex_t r = rIndex(cellIndex);
-
-		enum {HALOORBOUNDARY = 0, INNERORINNERMOST=1} t;
 		if (type == IsCell_t::HALO or type == IsCell_t::BOUNDARY) {
-			t = HALOORBOUNDARY;
-		} else {
-			t = INNERORINNERMOST;
-		}
-		switch(t) {
-		case HALOORBOUNDARY:
-			// if halo or boundary in any dimension, then true
 			ret = false;
-			for (int d = 0; d < 3; ++d){
+			for (int d = 0; d < 3; ++d) {
 				ret = ret or isCell1D(type, r[d], d);
 			}
-			break;
-		case INNERORINNERMOST:
-			// if inner or innermost in all dimensions, then true
+		} else {
 			ret = true;
-			for (int d = 0; d < 3; ++d){
+			for (int d = 0; d < 3; ++d) {
 				ret = ret and isCell1D(type, r[d], d);
 			}
-			break;
 		}
 		return ret;
 	}
