@@ -293,7 +293,7 @@ private:
 	void calculateNeighbourIndices();
 
 	//! @brief addition for compact SimpleMD-style traversal
-	void calculateCellPairOffsets();
+	std::array<std::pair<unsigned long, unsigned long>, 14> calculateCellPairOffsets() const;
 
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
@@ -336,9 +336,6 @@ private:
 	long _minNeighbourOffset;
 
     TraversalTuner<ParticleCell> *_traversalTuner;
-
-	// addition for compact SimpleMD-style traversal
-	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)

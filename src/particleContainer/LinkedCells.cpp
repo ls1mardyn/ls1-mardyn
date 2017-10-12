@@ -90,8 +90,6 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 
 	initializeCells();
 	calculateNeighbourIndices();
-	calculateCellPairOffsets();
-
 	initializeTraversal();
 
 	_cellsValid = false;
@@ -197,7 +195,6 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 	initializeCells();
 	calculateNeighbourIndices();
-	calculateCellPairOffsets();
 
 	// TODO: We loose particles here as they are not communicated to the new owner
 	// delete all Particles which are outside of the halo region
@@ -293,6 +290,8 @@ void LinkedCells::update_via_copies() {
 	} // end pragma omp parallel
 }
 void LinkedCells::update_via_coloring() {
+	std::array<std::pair<unsigned long, unsigned long>, 14> cellPairOffsets = calculateCellPairOffsets();
+
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -310,9 +309,9 @@ void LinkedCells::update_via_coloring() {
 					for (int x = startIndices[0]; x < _cellsPerDimension[0]-1; x += strides[0]) {
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
 
-						const int num_pairs = _cellPairOffsets.size();
+						const int num_pairs = cellPairOffsets.size();
 						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
+							pair<long int, long int> current_pair = cellPairOffsets[j];
 
 							long int offset1 = current_pair.first;
 							long int cellIndex1 = baseIndex + offset1;
@@ -847,8 +846,7 @@ void LinkedCells::calculateNeighbourIndices() {
 	global_log->info() << "Neighbour offsets are bounded by "
 			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
 }
-
-void LinkedCells::calculateCellPairOffsets() {
+std::array<std::pair<unsigned long, unsigned long>, 14> LinkedCells::calculateCellPairOffsets() const {
 	long int o   = cellIndexOf3DIndex(0,0,0); // origin
 	long int x   = cellIndexOf3DIndex(1,0,0); // displacement to the right
 	long int y   = cellIndexOf3DIndex(0,1,0); // displacement ...
@@ -859,34 +857,37 @@ void LinkedCells::calculateCellPairOffsets() {
 	long int xyz = cellIndexOf3DIndex(1,1,1);
 
 	// minimize number of cells simultaneously in memory:
+	std::array<std::pair<unsigned long, unsigned long>, 14> cellPairOffsets;
 
-	_cellPairOffsets[ 0] = make_pair(o, xyz);
+	cellPairOffsets[ 0] = make_pair(o, xyz);
 	// evict xyz
 
-	_cellPairOffsets[ 1] = make_pair(o, yz );
-	_cellPairOffsets[ 2] = make_pair(x, yz );
+	cellPairOffsets[ 1] = make_pair(o, yz );
+	cellPairOffsets[ 2] = make_pair(x, yz );
 	// evict yz
 
-	_cellPairOffsets[ 3] = make_pair(o, x  );
+	cellPairOffsets[ 3] = make_pair(o, x  );
 
-	_cellPairOffsets[ 4] = make_pair(o, xy );
-	_cellPairOffsets[ 5] = make_pair(xy, z );
+	cellPairOffsets[ 4] = make_pair(o, xy );
+	cellPairOffsets[ 5] = make_pair(xy, z );
 	// evict xy
 
-	_cellPairOffsets[ 6] = make_pair(o, z  );
-	_cellPairOffsets[ 7] = make_pair(x, z  );
-	_cellPairOffsets[ 8] = make_pair(y, z  );
+	cellPairOffsets[ 6] = make_pair(o, z  );
+	cellPairOffsets[ 7] = make_pair(x, z  );
+	cellPairOffsets[ 8] = make_pair(y, z  );
 	// evict z
 
-	_cellPairOffsets[ 9] = make_pair(o, y  );
-	_cellPairOffsets[10] = make_pair(x, y  );
+	cellPairOffsets[ 9] = make_pair(o, y  );
+	cellPairOffsets[10] = make_pair(x, y  );
 	// evict x
 
-	_cellPairOffsets[11] = make_pair(o, xz );
-	_cellPairOffsets[12] = make_pair(y, xz );
+	cellPairOffsets[11] = make_pair(o, xz );
+	cellPairOffsets[12] = make_pair(y, xz );
 	// evict xz
 
-	_cellPairOffsets[13] = make_pair(o, o  );
+	cellPairOffsets[13] = make_pair(o, o  );
+
+	return cellPairOffsets;
 }
 
 unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
