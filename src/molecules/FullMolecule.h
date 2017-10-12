@@ -41,8 +41,6 @@ public:
 	unsigned long id() const { return _id; }
 	/** set molecule ID */
 	void setid(unsigned long id) { _id = id; }
-	/** get the molecule's component ID */
-	unsigned int componentid() const { return _component->ID(); }
 	/** set the molecule's component */
 	void setComponent(Component *component) { _component = component; this->updateMassInertia();}
 	/** return pointer to component to which the molecule belongs */
