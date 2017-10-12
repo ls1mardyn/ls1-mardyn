@@ -658,9 +658,7 @@ RegionParticleIterator LinkedCells::iterateRegionEnd() {
 //################################################
 
 void LinkedCells::initializeCells() {
-	_innerMostCellIndices.clear();
-	_innerCellIndices.clear();
-	_boundaryCellIndices.clear();
+	//TODO: resize _haloCellIndices
 	_haloCellIndices.clear();
 
 	long int cellIndex;
@@ -754,7 +752,6 @@ void LinkedCells::initializeCells() {
 							cell.skipCellFromInnerRegion();
 							cell.skipCellFromInnerMostRegion();
 						#endif
-						_boundaryCellIndices.push_back(cellIndex);
 					}
 					else{
 						if (ix < 3 * _haloWidthInNumCells[0] ||
@@ -769,7 +766,6 @@ void LinkedCells::initializeCells() {
 								cell.skipCellFromHaloRegion();
 								cell.skipCellFromBoundaryRegion();
 							#endif
-							_innerCellIndices.push_back(cellIndex);
 						}
 						else {
 							cell.assignCellToInnerMostAndInnerRegion();
@@ -777,56 +773,6 @@ void LinkedCells::initializeCells() {
 								cell.skipCellFromHaloRegion();
 								cell.skipCellFromBoundaryRegion();
 							#endif
-							_innerMostCellIndices.push_back(cellIndex);
-							_innerCellIndices.push_back(cellIndex);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/*********************  Compute Border indices *********************/
-	for (int dim = 0; dim < 3; ++dim) {
-		for (int dir = 0; dir < 2; ++dir) {
-			for (int typ = 0; typ < 2; ++typ) {
-				_borderCellIndices[dim][dir][typ].clear();
-				int low[3] = { 0, 0, 0 };
-				int high[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
-
-				if (typ == 1) {
-					if (dir == 0){
-						low[dim]++;
-					}
-					else {
-						high[dim]--;
-					}
-				}
-
-				if (dir == 0){
-					high[dim] = low[dim];
-				}
-				else {
-					low[dim] = high[dim];
-				}
-
-				for (int iz = low[2]; iz <= high[2]; ++iz) {
-					for (int iy = low[1]; iy <= high[1]; ++iy) {
-						for (int ix = low[0]; ix <= high[0]; ++ix) {
-							cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-#ifndef NDEBUG
-							ParticleCell & cell = _cells[cellIndex];
-
-							mardyn_assert(not cell.isInnerCell());
-
-							if (typ == 0){
-								mardyn_assert(cell.isHaloCell());
-							} else {
-								 /* mardyn_assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
-							}
-#endif
-
-							_borderCellIndices[dim][dir][typ].push_back(cellIndex);
 						}
 					}
 				}
@@ -1263,17 +1209,7 @@ size_t LinkedCells::getTotalSize() {
 		totalSize += cell.getCellDataSoA().getDynamicSize();
 		totalSize += cell.getMoleculeVectorDynamicSize();
 	}
-	totalSize += _innerMostCellIndices.capacity() * sizeof(unsigned long);
-	totalSize += _innerCellIndices.capacity() * sizeof(unsigned long);
-	totalSize += _boundaryCellIndices.capacity() * sizeof(unsigned long);
 	totalSize += _haloCellIndices.capacity() * sizeof(unsigned long);
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 2; j++) {
-			for (int k = 0; k < 2; k++) {
-				totalSize += _borderCellIndices[i][j][k].capacity() * sizeof(unsigned long);
-			}
-		}
-	}
 	return totalSize;
 }
 void LinkedCells::printSubInfo(int offset) {
@@ -1285,17 +1221,7 @@ void LinkedCells::printSubInfo(int offset) {
 	}
 	cellTotal += cellSoA + cellMoleculeVectors;
 	size_t indexVectors = 0;
-	indexVectors += _innerMostCellIndices.capacity() * sizeof(unsigned long);
-	indexVectors += _innerCellIndices.capacity() * sizeof(unsigned long);
-	indexVectors += _boundaryCellIndices.capacity() * sizeof(unsigned long);
 	indexVectors += _haloCellIndices.capacity() * sizeof(unsigned long);
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 2; j++) {
-			for (int k = 0; k < 2; k++) {
-				indexVectors += _borderCellIndices[i][j][k].capacity() * sizeof(unsigned long);
-			}
-		}
-	}
 	std::stringstream offsetstream;
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";
