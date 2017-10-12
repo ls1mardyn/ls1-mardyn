@@ -87,7 +87,7 @@ public:
 	 * generateNewFiles denotes whether the tuner should write his measured values to files, which also overwrites old files.
 	 * If both are true and tuner files are available then the values that were read are written again,
 	 */
-	void tune(const std::vector<Component> ComponentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles);
+	void tune(std::vector<Component>& ComponentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles);
 
 private:
 	/// The output prefix, that should be prefixed before the output files.
@@ -144,7 +144,7 @@ private:
 	 * @param vcp
 	 * @param fc
 	 */
-	void tune(std::vector<Component> ComponentList);
+	void tune(std::vector<Component>& ComponentList);
 
 	/**
 	 * Performs multiple iterations of the selected simulation, that is also set up here.
@@ -155,7 +155,7 @@ private:
 	 * @param gflopsOwn
 	 * @param gflopsPair
 	 */
-	void iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
+	void iterate(std::vector<Component>& ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
 			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero);
 
 	void iteratePair (long long int numRepetitions,

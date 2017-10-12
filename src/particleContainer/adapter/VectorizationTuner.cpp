@@ -63,7 +63,6 @@ void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
 			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 	// make a backup copy of CellBorderAndFlagManager
 	CellBorderAndFlagManager backup = ParticleCellRMM::_cellBorderAndFlagManager;
-
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
 	_flopCounterZeroRc = new FlopCounter( 0., 0.);
@@ -102,7 +101,7 @@ bool VectorizationTuner::readFile(TunerLoad& times) {
 
 using namespace std;
 
-void VectorizationTuner::tune(std::vector<Component> ComponentList) {
+void VectorizationTuner::tune(std::vector<Component>& ComponentList) {
 
 	global_log->info() << "VT: begin VECTORIZATION TUNING "<< endl;
 
@@ -127,7 +126,7 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
 			myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
 					<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
     	}
-		for(unsigned int i = _minMoleculeCnt; i <= std::min(32u, _maxMoleculeCnt); i++){
+		for (unsigned int i = _minMoleculeCnt; i <= (_moleculeCntIncreaseType == linear ? _maxMoleculeCnt : std::min(32u, _maxMoleculeCnt)); i++) {
 			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
 			if (rank==0) {
 				myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
@@ -264,7 +263,7 @@ void VectorizationTuner::initCells(ParticleCell& main, ParticleCell& face, Parti
 		corner.setBoxMax(BoxMaxCorner);
 }
 
-void VectorizationTuner::tune(std::vector<Component> componentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles){
+void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles){
 
 		/*
 		 * MPI parallelization strategy:
@@ -309,8 +308,8 @@ void VectorizationTuner::tune(std::vector<Component> componentList, TunerLoad& t
 		int maxMols2 = particleNums.size() < 2 ? 0 : particleNums.at(1);
 		int numProcs = allowMpi ? global_simulation->domainDecomposition().getNumProcs() : 1;
 
-		Component c1 = componentList[0];
-		Component c2 = componentList.size() >= 2 ? componentList[1] : c1;
+		Component& c1 = componentList[0];
+		Component& c2 = componentList.size() >= 2 ? componentList[1] : c1;
 
 		FlopCounter counter = FlopCounter {1, 1};
 
@@ -414,13 +413,13 @@ void VectorizationTuner::iteratePair(long long int numRepetitions, ParticleCell&
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
 
-void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig,
+void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned int numMols, double& gflopsOwnBig,
 		double& gflopsPairBig, double& /*gflopsOwnNormal*/, double& /*gflopsPairNormalFace*/, double& /*gflopsPairNormalEdge*/,
 		double& /*gflopsPairNormalCorner*/, double& gflopsOwnZero, double& gflopsPairZero) {
 
 
 	// get (first) component
-	Component comp = ComponentList[0];
+	Component& comp = ComponentList[0];
 
 	// construct two cells
 	int cellsPerDim[3] = { 4, 4, 4 };
@@ -432,10 +431,12 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	ParticleCellRMM::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
 	ParticleCell firstCell;
 	ParticleCell secondCell;
+
 	firstCell.setCellIndex(21);
 	secondCell.setCellIndex(22);
-	firstCell.assignCellToInnerRegion();
-	secondCell.assignCellToInnerRegion();
+
+	firstCell.assignCellToBoundaryRegion();
+	secondCell.assignCellToBoundaryRegion();
 
     #ifdef MASKING
     srand(time(NULL));
