@@ -290,7 +290,7 @@ private:
 	//! is larger than the cutoff radius, the cell can be neglected.
 	//! The distance in one dimension is the width of a cell multiplied with the number
 	//! of cells between the two cells (this is received by subtracting one of the difference).
-	void calculateNeighbourIndices();
+	void calculateNeighbourIndices(std::array<long, 13>& forward, std::array<long, 13>& backward) const;
 
 	//! @brief addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> calculateCellPairOffsets() const;
@@ -329,11 +329,6 @@ private:
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
-
-	std::array<long, 13> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
-	long _maxNeighbourOffset;
-	long _minNeighbourOffset;
 
     TraversalTuner<ParticleCell> *_traversalTuner;
 

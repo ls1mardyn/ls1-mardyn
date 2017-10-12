@@ -89,7 +89,6 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	}
 
 	initializeCells();
-	calculateNeighbourIndices();
 	initializeTraversal();
 
 	_cellsValid = false;
@@ -194,7 +193,6 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	}
 
 	initializeCells();
-	calculateNeighbourIndices();
 
 	// TODO: We loose particles here as they are not communicated to the new owner
 	// delete all Particles which are outside of the halo region
@@ -243,6 +241,9 @@ void LinkedCells::update() {
 
 void LinkedCells::update_via_copies() {
 	const vector<ParticleCell>::size_type numCells = _cells.size();
+	array<long,13> forwardNeighbourOffsets;
+	array<long,13> backwardNeighbourOffsets;
+	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -261,8 +262,8 @@ void LinkedCells::update_via_copies() {
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			ParticleCell& cell = _cells[cellIndex];
 
-			for (unsigned long j = 0; j < _backwardNeighbourOffsets.size(); j++) {
-				const unsigned long neighbourIndex = cellIndex - _backwardNeighbourOffsets[j];
+			for (unsigned long j = 0; j < backwardNeighbourOffsets.size(); j++) {
+				const unsigned long neighbourIndex = cellIndex - backwardNeighbourOffsets[j];
 				if (neighbourIndex >= _cells.size()) {
 					// handles cell_index < 0 (indices are unsigned!)
 					mardyn_assert(cell.isHaloCell());
@@ -271,8 +272,8 @@ void LinkedCells::update_via_copies() {
 				cell.updateLeavingMoleculesBase(_cells[neighbourIndex]);
 			}
 
-			for (unsigned long j = 0; j < _forwardNeighbourOffsets.size(); j++) {
-				const unsigned long neighbourIndex = cellIndex + _forwardNeighbourOffsets[j];
+			for (unsigned long j = 0; j < forwardNeighbourOffsets.size(); j++) {
+				const unsigned long neighbourIndex = cellIndex + forwardNeighbourOffsets[j];
 				if (neighbourIndex >= numCells) {
 					mardyn_assert(cell.isHaloCell());
 					continue;
@@ -780,14 +781,12 @@ void LinkedCells::initializeCells() {
 	}
 }
 
-void LinkedCells::calculateNeighbourIndices() {
+void LinkedCells::calculateNeighbourIndices(std::array<long, 13>& forwardNeighbourOffsets, std::array<long, 13>& backwardNeighbourOffsets) const {
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
-	std::fill(_forwardNeighbourOffsets.begin(), _forwardNeighbourOffsets.end(), 0);
-	std::fill(_backwardNeighbourOffsets.begin(), _backwardNeighbourOffsets.end(), 0);
+	std::fill(forwardNeighbourOffsets.begin(), forwardNeighbourOffsets.end(), 0);
+	std::fill(backwardNeighbourOffsets.begin(), backwardNeighbourOffsets.end(), 0);
 	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
 
-	_maxNeighbourOffset = 0;
-	_minNeighbourOffset = 0;
 	double xDistanceSquare;
 	double yDistanceSquare;
 	double zDistanceSquare;
@@ -822,18 +821,12 @@ void LinkedCells::calculateNeighbourIndices() {
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex,
 							zIndex);
 					if (offset > 0) {
-						_forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
+						forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
 						++forwardNeighbourIndex;
-						if (offset > _maxNeighbourOffset) {
-							_maxNeighbourOffset = offset;
-						}
 					}
 					if (offset < 0) {
-						_backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
+						backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
 						++backwardNeighbourIndex;
-						if (abs(offset) > _minNeighbourOffset) {
-							_minNeighbourOffset = abs(offset);
-						}
 					}
 				}
 			}
@@ -842,9 +835,6 @@ void LinkedCells::calculateNeighbourIndices() {
 
 	mardyn_assert(forwardNeighbourIndex == 13);
 	mardyn_assert(backwardNeighbourIndex == 13);
-
-	global_log->info() << "Neighbour offsets are bounded by "
-			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
 }
 std::array<std::pair<unsigned long, unsigned long>, 14> LinkedCells::calculateCellPairOffsets() const {
 	long int o   = cellIndexOf3DIndex(0,0,0); // origin
@@ -1144,16 +1134,20 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	u += cellProcessor->processSingleMolecule(molWithSoA, currentCell);
 
+	array<long,13> forwardNeighbourOffsets;
+	array<long,13> backwardNeighbourOffsets;
+	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
+
 	// forward neighbours
-	for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
+	for (auto neighbourOffsetsIter = forwardNeighbourOffsets.begin();
+			neighbourOffsetsIter != forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
 	}
 	// backward neighbours
-	for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
-			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
+	for (auto neighbourOffsetsIter = backwardNeighbourOffsets.begin();
+			neighbourOffsetsIter != backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
 		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
