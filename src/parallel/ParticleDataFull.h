@@ -27,12 +27,12 @@ public:
 	//! @brief copy data from object of class class ParticleDataFull to object of class Molecule
 	static void ParticleDataToMolecule(ParticleDataFull &particleStruct, Molecule &molecule);
 
-	unsigned long id; //! ID of the particle
-	int cid;  //! ID of the component of the particle
 	double r[3];  //! position
 	double v[3];  //! velocity
 	double q[4];  //! rotational quaternion
 	double D[3];  //! rotational velocity (angular momentum, L)
+	unsigned long id; //! ID of the particle
+	int cid;  //! ID of the component of the particle
 };
 
 #endif /* ParticleDataFull_H_ */
