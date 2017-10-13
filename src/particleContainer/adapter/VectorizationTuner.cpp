@@ -32,7 +32,7 @@
 VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
 	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
 	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL) {
-	vtWriter = std::unique_ptr<VTWriterI>(new VTWriterStatistics());
+	vtWriter = std::unique_ptr<VTWriterI>(new VTWriter());
 }
 
 VectorizationTuner::~VectorizationTuner() {
@@ -40,8 +40,18 @@ VectorizationTuner::~VectorizationTuner() {
 }
 
 void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
-	_outputPrefix = "mardyn";
+	std::string mode = "file";
+	xmlconfig.getNodeValue("mode", mode);
+	if (mode.compare("statistics") == 0) {
+		vtWriter = std::unique_ptr<VTWriterI>(new VTWriterStatistics());
+	} else if (mode.compare("file") == 0) {
+		vtWriter = std::unique_ptr<VTWriterI>(new VTWriter());
+	} else {
+		global_log->error() << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << endl;
+		Simulation::exit(1);
+	}
 
+	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
@@ -442,7 +452,7 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	firstCell.buildSoACaches();
 	secondCell.buildSoACaches();
 
-	long long int numRepetitions = std::max(800000000u / (numMols*numMols), 50u);
+	long long int numRepetitions = std::max(400000000u / (numMols*numMols), 50u);
 
 
 	//0a,0b: 0RC
