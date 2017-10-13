@@ -529,11 +529,22 @@ void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numR
 
 	cp.preprocessCell(cell1);
 
+	if (dynamic_cast<FlopCounter*>(&cp) == nullptr) {
+		global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
+	}
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
 		ParticleCell myowncopy(cell1);
+		#if defined(_OPENMP)
+		// wait for all threads to copy data - we don't want this to affect our flop rate...
+		#pragma omp barrier
+		#pragma omp single
+		#endif
+		if (dynamic_cast<FlopCounter*>(&cp) == nullptr) {
+			global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
+		}
 		for (int i = 0; i < numRepetitions; ++i) {
 			cp.processCell(myowncopy);
 		}
@@ -550,12 +561,22 @@ void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, Particl
 
 	cp.preprocessCell(cell1);
 	cp.preprocessCell(cell2);
-
+	if (dynamic_cast<FlopCounter*>(&cp) == nullptr) {
+		global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
+	}
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
 		ParticleCell myown1(cell1), myown2(cell2);
+		#if defined(_OPENMP)
+		// wait for all threads to copy data - we don't want this to affect our flop rate...
+		#pragma omp barrier
+		#pragma omp single
+		#endif
+		if (dynamic_cast<FlopCounter*>(&cp) == nullptr) {
+			global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
+		}
 		for (int i = 0; i < numRepetitions; ++i) {
 			cp.processCellPair(myown1, myown2);
 		}
