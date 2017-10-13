@@ -70,6 +70,15 @@
 		<mode>stdout</mode>
         <writefrequency>5</writefrequency>
       </outputplugin>
+	  <!--
+	  <outputplugin name="VectorizationTuner">
+	  		<mode>statistics</mode>
+	  		<minmoleculecnt>32</minmoleculecnt>
+	  		<maxmoleculecnt>32</maxmoleculecnt>
+	  		<moleculecntincreasetype>0</moleculecntincreasetype>
+	  </outputplugin>
+	  -->
+
 <!--      <outputplugin name="SysMonOutput">
         <expression>procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>

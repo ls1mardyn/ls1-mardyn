@@ -66,4 +66,4 @@ env >> $envfilename
 
 ./../testhp.sh > $testhpfilename &
 
-mpiexec -n $NumProcs ./$executableName $inputFileName --steps 11 --final-checkpoint=0
+mpiexec -n $NumProcs ../$executableName $inputFileName --steps 11 --final-checkpoint=0

@@ -1,7 +1,7 @@
 #!/bin/bash
 #bash script for strong scaling scenario
 #submitcommand="llsubmit"
-executable="MarDyn_5598.PAR_RELEASE_AVX"
+executable="MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge"
 working_directory="."
 time_limit=800      #in seconds
 #should be changed:
