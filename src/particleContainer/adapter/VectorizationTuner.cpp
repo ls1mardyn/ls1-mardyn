@@ -654,7 +654,7 @@ void VectorizationTuner::initUniformRandomMolecules(Component& comp, ParticleCel
 				orientation[0], orientation[1], orientation[2], orientation[3],
 				angularVelocity[0], angularVelocity[1], angularVelocity[2]
 				);
-		cell.addParticle(m);
+		mardyn_assert(cell.addParticle(m));
 		id++; // id's need to be distinct
 		//global_log->info() << pos[0] << " " << pos[1] << " " << pos[2] << endl;
 	}

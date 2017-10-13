@@ -9,7 +9,9 @@ class ParticleCellRMM: public ParticleCellBase {
 public:
 	ParticleCellRMM();
 
-	ParticleCellRMM(const ParticleCellRMM& /*other*/):_cellDataSoARMM(0){}
+	ParticleCellRMM(const ParticleCellRMM& other) :
+			ParticleCellBase(other), _cellDataSoARMM(other._cellDataSoARMM) {
+	}
 
 	~ParticleCellRMM();
 
