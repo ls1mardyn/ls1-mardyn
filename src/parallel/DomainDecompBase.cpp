@@ -268,6 +268,10 @@ void DomainDecompBase::collCommAllreduceSum() {
 	_collCommBase.allreduceSum();
 }
 
+void DomainDecompBase::collCommAllreduceCustom(ReduceType type) {
+	_collCommBase.allreduceCustom(type);
+}
+
 void DomainDecompBase::collCommScanSum() {
 	_collCommBase.scanSum();
 }

@@ -32,7 +32,7 @@
 VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
 	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
 	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL) {
-
+	vtWriter = std::unique_ptr<VTWriterI>(new VTWriterStatistics());
 }
 
 VectorizationTuner::~VectorizationTuner() {
@@ -81,7 +81,7 @@ void VectorizationTuner::writeFile(const TunerLoad& vecs){
 		int rank = global_simulation->domainDecomposition().getRank();
 		ofstream myfile;
 		string resultfile(_outputPrefix + '.' + std::to_string(rank) + ".VT.data");
-		global_log->info() << "VT: Writing to file " << resultfile << endl;
+		global_log->info() << "VT: Writing to file " << resultfile << std::endl;
 		myfile.open(resultfile.c_str(), ofstream::out | ofstream::trunc);
 		TunerLoad::write(myfile, vecs);
 }
@@ -90,7 +90,7 @@ bool VectorizationTuner::readFile(TunerLoad& times) {
 		ifstream myfile;
 		int rank = global_simulation->domainDecomposition().getRank();
 		string resultfile(_outputPrefix + '.' + std::to_string(rank) + ".VT.data");
-		global_log->info() << "VT: Reading from file " << resultfile << endl;
+		global_log->info() << "VT: Reading from file " << resultfile << std::endl;
 		myfile.open(resultfile.c_str(), ifstream::in);
 		if(!myfile.good()){
 			return false;
@@ -99,72 +99,45 @@ bool VectorizationTuner::readFile(TunerLoad& times) {
 		return true;
 }
 
-using namespace std;
-
 void VectorizationTuner::tune(std::vector<Component>& ComponentList) {
 
-	global_log->info() << "VT: begin VECTORIZATION TUNING "<< endl;
+	global_log->info() << "VT: begin VECTORIZATION TUNING "<< std::endl;
 
     double gflopsOwnBig=0., gflopsPairBig=0., gflopsOwnNormal=0., gflopsPairNormalFace=0., gflopsPairNormalEdge=0., gflopsPairNormalCorner=0.,gflopsOwnZero=0., gflopsPairZero=0.;
 
-    string resultfile(_outputPrefix+".VT.csv");
-    global_log->info() << "VT: Writing to file " << resultfile << endl;
-    int rank = global_simulation->domainDecomposition().getRank();
 
-    ofstream myfile;
-    if (rank == 0) {
-    	myfile.open(resultfile.c_str(), ofstream::out | ofstream::trunc);
-    	myfile << "Vectorization Tuner File" << endl
-			<< "The Cutoff Radii were: " << endl
-			<< "NormalRc=" << _cutoffRadius << " , LJCutoffRadiusNormal=" << _LJCutoffRadius << endl
-			<< "BigRC=" << _cutoffRadiusBig << " , BigLJCR=" << _LJCutoffRadiusBig << endl;
-    }
+    vtWriter->initWrite(_outputPrefix, _cutoffRadius, _LJCutoffRadius, _cutoffRadiusBig, _LJCutoffRadiusBig);
 
     if(_moleculeCntIncreaseType==linear or _moleculeCntIncreaseType==both){
-    	if (rank==0) {
-			myfile << "Linearly distributed molecule counts" << endl;
-			myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-					<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
-    	}
-		for (unsigned int i = _minMoleculeCnt; i <= (_moleculeCntIncreaseType == linear ? _maxMoleculeCnt : std::min(32u, _maxMoleculeCnt)); i++) {
-			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
-			if (rank==0) {
-				myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
-						<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
-						<< gflopsOwnZero << ", " << gflopsPairZero << endl;
-			}
-		}
-		if (rank == 0) {
-			myfile << endl;
+    	vtWriter->writeHeader("Linearly");
+
+		for (unsigned int i = _minMoleculeCnt;
+				i <= (_moleculeCntIncreaseType == linear ? _maxMoleculeCnt : std::min(32u, _maxMoleculeCnt)); i++) {
+			iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace,
+					gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
+
+			vtWriter->write(i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge,
+					gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
+
 		}
     }
     if(_moleculeCntIncreaseType==exponential or _moleculeCntIncreaseType==both){
-    	if (rank == 0) {
-			myfile << "Exponentially distributed molecule counts" << endl;
-			myfile << "Num. of Molecules," << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-					<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
-    	// logarithmically scaled axis -> exponentially increasing counts
-    	}
+    	vtWriter->writeHeader("Exponentially");
 
     	for(unsigned int i = _minMoleculeCnt; i <= _maxMoleculeCnt; i*=2){
     		iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
-    		if (rank == 0) {
-				myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
-									<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
-									<< gflopsOwnZero << ", " << gflopsPairZero << endl;
-    		}
+    		vtWriter->write(i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge,
+    							gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
     	}
     }
 
-    if (rank == 0) {
-    	myfile.close();
-    }
+    vtWriter->close();
 
     _flopCounterZeroRc->resetCounters();
     _flopCounterBigRc->resetCounters();
     _flopCounterNormalRc->resetCounters();
 
-	global_log->info() << "VECTORIZATION TUNING completed "<< endl;
+	global_log->info() << "VECTORIZATION TUNING completed "<< std::endl;
 
 }
 
@@ -178,11 +151,11 @@ void VectorizationTuner::iterateOwn(long long int numRepetitions,
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
 	gflopsPair = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024*1024*1024);
-	global_log->info() << "FLOP-Count per Iteration: " << flopCounter.getTotalFlopCount() << " FLOPs" << endl;
-	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl;
-	global_log->info() << "number of iterations: " << numRepetitions << endl;
-	global_log->info() << "total time: " << tuningTime << "s" << endl;
-	global_log->info() << "time per iteration: " << tuningTime / numRepetitions << "s " << endl << endl;
+	global_log->info() << "single rank: FLOP-Count per Iteration: " << flopCounter.getTotalFlopCount() << " FLOPs" << std::endl;
+	global_log->info() << "single rank: FLOP-rate: " << gflopsPair << " GFLOPS" << std::endl;
+	global_log->info() << "single rank: number of iterations: " << numRepetitions << std::endl;
+	global_log->info() << "single rank: total time: " << tuningTime << "s" << std::endl;
+	global_log->info() << "single rank: time per iteration: " << tuningTime / numRepetitions << "s " << std::endl << std::endl;
 	flopCounter.resetCounters();
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
@@ -199,8 +172,8 @@ void VectorizationTuner::iterateOwn (long long int numRepetitions,
 	gflops = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024 * 1024 * 1024);
 	flopCount = flopCounter.getTotalFlopCount();
 	time = tuningTime / numRepetitions;
-	//global_log->info() << "flop count per iterations: " << flopCount << endl;
-	//global_log->info() << "time per iteration: " << time << "s " << endl;
+	//global_log->info() << "flop count per iterations: " << flopCount << std::endl;
+	//global_log->info() << "time per iteration: " << time << "s " << std::endl;
 	flopCounter.resetCounters();
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
@@ -217,8 +190,8 @@ void VectorizationTuner::iteratePair (long long int numRepetitions,
 	gflops = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024 * 1024 * 1024);
 	flopCount = flopCounter.getTotalFlopCount();
 	time = tuningTime / numRepetitions;
-	//global_log->info() << "flop count per iterations: " << flopCount << endl;
-	//global_log->info() << "time per iteration: " << time << "s " << endl;
+	//global_log->info() << "flop count per iterations: " << flopCount << std::endl;
+	//global_log->info() << "time per iteration: " << time << "s " << std::endl;
 	flopCounter.resetCounters();
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
@@ -275,13 +248,13 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		bool allowMpi = false;
 
 		if(useExistingFiles && readFile(times)){
-			global_log->info() << "Read tuner values from file" << endl;
+			global_log->info() << "Read tuner values from file" << std::endl;
 			return;
 		} else if(useExistingFiles) {
-			global_log->info() << "Couldn't read tuner values from file" << endl;
+			global_log->info() << "Couldn't read tuner values from file" << std::endl;
 		}
 
-		global_log->info() << "starting tuning..." << endl;
+		global_log->info() << "starting tuning..." << std::endl;
 
 		//init the cells
 		int cellsPerDim[3] = { 4, 4, 4 };
@@ -300,7 +273,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		mardyn_assert(componentList.size() == particleNums.size());
 
 		if(componentList.size() > 2){
-			global_log->error_always_output() << "The tuner currently supports only two different particle types!" << endl;
+			global_log->error_always_output() << "The tuner currently supports only two different particle types!" << std::endl;
 			Simulation::exit(1);
 		}
 
@@ -328,7 +301,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		cornerValues.reserve((maxMols+1)*(maxMols2+1));
 
 		for(int numMols1 = 0; numMols1 <= maxMols; numMols1++){
-			global_log->info() << numMols1 << " Molecule(s)" << endl;
+			global_log->info() << numMols1 << " Molecule(s)" << std::endl;
 			for(int numMols2 = 0; numMols2 <= maxMols2; ++numMols2){
 
 				initUniformRandomMolecules(c1, c2, mainCell, numMols1, numMols2);
@@ -389,7 +362,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 
 		(**_cellProcessor).setCutoffRadiusSquare(restoreCutoff);
 		(**_cellProcessor).setLJCutoffRadiusSquare(restoreLJCutoff);
-		global_log->info() << "finished tuning" << endl;
+		global_log->info() << "finished tuning" << std::endl;
 }
 
 
@@ -404,11 +377,11 @@ void VectorizationTuner::iteratePair(long long int numRepetitions, ParticleCell&
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
 	gflopsPair = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024 * 1024 * 1024);
-	global_log->info() << "FLOP-Count per Iteration: " << flopCounter.getTotalFlopCount() << " FLOPs" << endl;
-	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl;
-	global_log->info() << "number of iterations: " << numRepetitions << endl;
-	global_log->info() << "total time: " << tuningTime << "s" << endl;
-	global_log->info() << "time per iteration: " << tuningTime / numRepetitions << "s " << endl << endl;
+	global_log->info() << "FLOP-Count per Iteration: " << flopCounter.getTotalFlopCount() << " FLOPs" << std::endl;
+	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << std::endl;
+	global_log->info() << "number of iterations: " << numRepetitions << std::endl;
+	global_log->info() << "total time: " << tuningTime << "s" << std::endl;
+	global_log->info() << "time per iteration: " << tuningTime / numRepetitions << "s " << std::endl << std::endl;
 	flopCounter.resetCounters();
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
@@ -459,7 +432,7 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	//double diryplus[3] = {0., 1., 0.};
 	//double dirzplus[3] = {0., 0., 1.};
 
-	global_log->info() << "--------------------------Molecule count: " << numMols << "--------------------------" << endl;
+	global_log->info() << "--------------------------Molecule count: " << numMols << "--------------------------" << std::endl;
 
 	//initialize both cells with molecules between 0,0,0 and 1,1,1
     initUniformRandomMolecules(comp, firstCell, numMols);
@@ -469,7 +442,7 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	firstCell.buildSoACaches();
 	secondCell.buildSoACaches();
 
-	long long int numRepetitions = std::max(20000000u / (numMols*numMols), 10u);
+	long long int numRepetitions = std::max(800000000u / (numMols*numMols), 50u);
 
 
 	//0a,0b: 0RC
@@ -681,7 +654,7 @@ void VectorizationTuner::initUniformRandomMolecules(Component& comp, ParticleCel
 		cell.addParticle(m);
 #endif
 		id++; // id's need to be distinct
-		//global_log->info() << pos[0] << " " << pos[1] << " " << pos[2] << endl;
+		//global_log->info() << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
 	}
 }
 
@@ -710,7 +683,7 @@ void VectorizationTuner::initUniformRandomMolecules(Component& comp1, Component&
 			);
 			cell.addParticle(m);
 			id++; // id's need to be distinct
-			//global_log->info() << pos[0] << " " << pos[1] << " " << pos[2] << endl;
+			//global_log->info() << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
 		}
 	}
 }
@@ -761,6 +734,123 @@ void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
 		mol.move(0, direction[0]);
 		mol.move(1, direction[1]);
 		mol.move(2, direction[2]);
-		//global_log->info() << mol->r(0) << " " << mol->r(1) << " " << mol->r(2) << endl;
+		//global_log->info() << mol->r(0) << " " << mol->r(1) << " " << mol->r(2) << std::endl;
 	}
 }
+
+void VectorizationTuner::VTWriter::initWrite(const std::string& outputPrefix, double cutoffRadius,
+		double LJCutoffRadius, double cutoffRadiusBig, double LJCutoffRadiusBig) {
+	string resultfile(outputPrefix + ".VT.csv");
+	global_log->info() << "VT: Writing to file " << resultfile << std::endl;
+	_rank = global_simulation->domainDecomposition().getRank();
+	if (_rank == 0) {
+		_myfile.open(resultfile.c_str(), ofstream::out | ofstream::trunc);
+		_myfile << "Vectorization Tuner File" << std::endl << "The Cutoff Radii were: " << std::endl << "NormalRc="
+				<< cutoffRadius << " , LJCutoffRadiusNormal=" << LJCutoffRadius << std::endl << "BigRC="
+				<< cutoffRadiusBig << " , BigLJCR=" << LJCutoffRadiusBig << std::endl;
+	}
+}
+
+void VectorizationTuner::VTWriter::close() {
+	if (_rank == 0) {
+		_myfile.close();
+	}
+}
+
+void VectorizationTuner::VTWriter::writeHeader(const std::string& distributionTypeString) {
+	if (_rank == 0) {
+		_myfile << distributionTypeString << " distributed molecule counts" << std::endl;
+		_myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, "
+				<< "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, " << "Gflops for Pair NormalRc Edge, "
+				<< "Gflops for Pair NormalRc Corner, " << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)"
+				<< std::endl;
+	}
+}
+
+void VectorizationTuner::VTWriter::write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig,
+		double gflopsOwnNormal, double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+		double gflopsOwnZero, double gflopsPairZero) {
+	if (_rank == 0) {
+		_myfile << numMols << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
+				<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
+				<< gflopsOwnZero << ", " << gflopsPairZero << std::endl;
+	}
+}
+
+void VectorizationTuner::VTWriterStatistics::initWrite(const std::string& /*outputPrefix*/, double cutoffRadius,
+		double LJCutoffRadius, double cutoffRadiusBig, double LJCutoffRadiusBig) {
+	global_log->info() << "VT: Writing to global_log " << std::endl;
+	_rank = global_simulation->domainDecomposition().getRank();
+
+	if (_rank == 0) {
+		global_log->info() << "Vectorization Tuner File" << std::endl << "The Cutoff Radii were: " << std::endl
+				<< "NormalRc=" << cutoffRadius << " , LJCutoffRadiusNormal=" << LJCutoffRadius << std::endl << "BigRC="
+				<< cutoffRadiusBig << " , BigLJCR=" << LJCutoffRadiusBig << std::endl;
+	}
+}
+
+void VectorizationTuner::VTWriterStatistics::close() {
+	// we don't want to do anything here
+}
+
+void VectorizationTuner::VTWriterStatistics::writeHeader(const std::string& distributionTypeString) {
+	// we don't want to do anything here
+}
+
+
+void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const std::string& name){
+	DomainDecompBase& dd = global_simulation->domainDecomposition();
+
+	int numRanks = global_simulation->domainDecomposition().getNumProcs();
+
+	double square = input * input;
+	dd.collCommInit(2);
+	dd.collCommAppendDouble(input);
+	dd.collCommAppendDouble(square);
+	dd.collCommAllreduceSum();
+	double average = dd.collCommGetDouble() / numRanks;
+	double average2 = dd.collCommGetDouble() / numRanks;
+	dd.collCommFinalize();
+
+	dd.collCommInit(1);
+	dd.collCommAppendDouble(input);
+	dd.collCommAllreduceCustom(ReduceType::MIN);
+	double min = dd.collCommGetDouble();
+	dd.collCommFinalize();
+
+	dd.collCommInit(1);
+	dd.collCommAppendDouble(input);
+	dd.collCommAllreduceCustom(ReduceType::MAX);
+	double max = dd.collCommGetDouble();
+	dd.collCommFinalize();
+
+	double stddev = std::sqrt(average2  - average * average);
+
+	if (not std::isfinite(stddev)) stddev = 0.;
+
+	if (average > 0.) {
+		global_log->info() << name << ":\tAverage: " << average << "\tstd.deviation(abs): " << stddev << "\tMin: "
+				<< min << "\tMax: " << max << std::endl;
+	}
+}
+
+void VectorizationTuner::VTWriterStatistics::write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig,
+		double gflopsOwnNormal, double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+		double gflopsOwnZero, double gflopsPairZero) {
+
+
+	global_log->info() << "Vectorization Tuner Statistics:" << std::endl;
+	global_log->info() << "Number of molecules per cell: " << numMols << std::endl;
+
+	global_log->info() << "values in GFlop/s" << std::endl;
+	writeStatistics(gflopsOwnBig, "gflopsOwnBig");
+	writeStatistics(gflopsPairBig, "gflopsPairBig");
+	writeStatistics(gflopsOwnNormal, "gflopsOwnNormal");
+	writeStatistics(gflopsPairNormalFace, "gflopsPairNormalFace");
+	writeStatistics(gflopsPairNormalEdge, "gflopsPairNormalEdge");
+	writeStatistics(gflopsPairNormalCorner, "gflopsPairNormalCorner");
+	writeStatistics(gflopsOwnZero, "gflopsOwnZero");
+	writeStatistics(gflopsPairZero, "gflopsPairZero");
+
+}
+

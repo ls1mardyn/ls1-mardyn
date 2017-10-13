@@ -2,6 +2,11 @@
 
 #include <vector>
 
+//! Reduce Types of the allreduceCustom operation
+enum ReduceType {
+	SUM, MIN, MAX
+};
+
 //! @brief This class is provides an interface for the base class of the collective communication.
 //! @details Refactored to increase code-reuse
 //! @author Steffen Seckler
@@ -54,6 +59,10 @@ public:
 	//! By allowing values from previous iterations, overlapping communication is possible.
 	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
 	virtual void allreduceSumAllowPrevious() = 0;
+
+	//! Performs an allreduce operation with a custom reduce type.
+	//! @param type the type of the operation
+	virtual void allreduceCustom(ReduceType type) = 0;
 
 	//! Performs a scan (sum)
 	virtual void scanSum() = 0;

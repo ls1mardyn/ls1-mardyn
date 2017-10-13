@@ -1,12 +1,13 @@
 #ifndef COLLECTIVECOMMUNICATION_H_
 #define COLLECTIVECOMMUNICATION_H_
 
-#include "utils/Logger.h"
-#include "CollectiveCommBase.h"
 #include <mpi.h>
 
+#include "utils/Logger.h"
+#include "CollectiveCommBase.h"
 #include "CollectiveCommunicationInterface.h"
 #include "utils/mardyn_assert.h"
+
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
  * user defined reduce operation so that the MPI reduce operation is only called once. */
@@ -156,6 +157,28 @@ public:
 			MPI_CHECK( MPI_Allreduce( MPI_IN_PLACE, _values.data(), 1, _types[i], MPI_SUM, _communicator ) );
 		}
 #endif
+	}
+
+	void allreduceCustom(ReduceType type) override{
+		// TODO: add agglomerated reduce!
+		for (unsigned int i = 0; i < _types.size(); i++) {
+			MPI_Op op;
+			switch(type){
+			case ReduceType::SUM:
+				op = MPI_SUM;
+				break;
+			case ReduceType::MIN:
+				op = MPI_MIN;
+				break;
+			case ReduceType::MAX:
+				op = MPI_MAX;
+				break;
+			default:
+				Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
+				mardyn_exit(1);
+			}
+			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, _values.data(), 1, _types[i], op, _communicator ));
+		}
 	}
 
 	//! Performs an all-reduce (sum), however values of previous iterations are permitted.

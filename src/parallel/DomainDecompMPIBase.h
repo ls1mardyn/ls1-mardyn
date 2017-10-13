@@ -107,6 +107,10 @@ public:
 		_collCommunication.allreduceSumAllowPrevious();
 	}
 
+	void collCommAllreduceCustom(ReduceType type) {
+		_collCommunication.allreduceCustom(type);
+	}
+
 	void collCommScanSum() {
 		_collCommunication.scanSum();
 	}

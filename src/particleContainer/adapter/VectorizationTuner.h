@@ -9,16 +9,17 @@ enum MoleculeCntIncreaseTypeEnum{
 };
 
 
+#include <vector>
+#include <string>
+
 #include "CellProcessor.h"
 #include "FlopCounter.h"
-#include <vector>
 #include "io/OutputBase.h"
 #include "ensemble/EnsembleBase.h"
 #include "parallel/LoadCalc.h"
 
 class Component;
 #include "particleContainer/ParticleCellForwardDeclaration.h"
-
 
 
 /** @brief VectorizationTuner class.
@@ -243,6 +244,47 @@ private:
 	void iteratePair(long long int numRepetitions,
 			ParticleCell& firstCell, ParticleCell& secondCell,
 			double& gflopsPair, FlopCounter& flopCounter);
+
+	class VTWriterI {
+	public:
+		virtual void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
+				double cutoffRadiusBig, double LJCutoffRadiusBig)=0;
+		virtual void writeHeader(const std::string& distributionTypeString)=0;
+		virtual void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
+				double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+				double gflopsOwnZero, double gflopsPairZero)=0;
+		virtual void close()=0;
+	protected:
+		int _rank;
+	};
+
+	class VTWriter: public VTWriterI {
+	public:
+		virtual void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
+				double cutoffRadiusBig, double LJCutoffRadiusBig) override;
+		virtual void writeHeader(const std::string& distributionTypeString) override;
+		virtual void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
+				double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+				double gflopsOwnZero, double gflopsPairZero) override;
+		virtual void close() override;
+	private:
+		ofstream _myfile;
+	};
+
+	class VTWriterStatistics: public VTWriterI {
+	public:
+		void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
+				double cutoffRadiusBig, double LJCutoffRadiusBig) override;
+		void writeHeader(const std::string& distributionTypeString) override;
+		void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
+				double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+				double gflopsOwnZero, double gflopsPairZero) override;
+		void close() override;
+	private:
+		void writeStatistics(double input, const std::string& name);
+	};
+
+	std::unique_ptr<VTWriterI> vtWriter;
 };
 
 #endif  // SRC_IO_VECTORIZATIONTUNER_H_

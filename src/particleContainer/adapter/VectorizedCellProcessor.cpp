@@ -928,7 +928,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	RealCalcVec sum_virial = RealCalcVec::zero();
 	RealCalcVec sum_myRF = RealCalcVec::zero();
 
-	const RealCalcVec rc2 = RealCalcVec::set1(static_cast<vcp_real_calc>(_LJCutoffRadiusSquare));
+	const RealCalcVec ljrc2 = RealCalcVec::set1(static_cast<vcp_real_calc>(_LJCutoffRadiusSquare));
 	const RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(static_cast<vcp_real_calc>(_cutoffRadiusSquare));
 	const RealCalcVec epsRFInvrc3 = RealCalcVec::set1(static_cast<vcp_real_calc>(_epsRFInvrc3));
 
@@ -976,7 +976,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 		// Iterate over centers of second cell
 		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_ljc_idx, soa2._ljc_num,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
-				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
+				ljrc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
 		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_charge_idx, soa2._charges_num,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
 				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);

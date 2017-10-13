@@ -172,6 +172,10 @@ public:
 		_comms.at(_currentKey).allreduceSumAllowPrevious();
 	}
 
+	void allreduceCustom(ReduceType type) override{
+		_comms.at(_currentKey).allreduceCustom(type);
+	}
+
 	void scanSum() override {
 		_comms.at(_currentKey).scanSum();
 	}
