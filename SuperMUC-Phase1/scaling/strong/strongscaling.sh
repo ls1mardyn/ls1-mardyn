@@ -20,7 +20,7 @@ ARG_TIME=$time_limit
 for (( i=8; i<=4096;i=i*2 ))
 do
 
-	ARG_NAME="mardyn-weak-$i"
+	ARG_NAME="mardyn-strong-$i"
 	if (("$i" <= 32))
 	then
 		ARG_CLASS="test"
