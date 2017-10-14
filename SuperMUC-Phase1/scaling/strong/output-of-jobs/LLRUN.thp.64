@@ -1,0 +1,493 @@
+di56giq5  4787  2.5  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11332  1488 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4952  0.0  0.0  10820  1052 ?        R    19:38   0:00 ps axwu
+di56giq5  4953  0.0  0.0   4280   580 ?        S    19:38   0:00 grep di56giq5
+
+AnonHugePages:   1521664 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.9  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954 20.1  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 1335  2.8 2839684 940800 ?      Dl   19:38   0:31 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5146  0.0  0.0  10820  1052 ?        R    19:38   0:00 ps axwu
+di56giq5  5147  0.0  0.0   4280   580 ?        S    19:38   0:00 grep di56giq5
+
+AnonHugePages:   1708032 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.6  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954 10.0  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 1860  7.3 4547896 2406720 ?     Dl   19:38   1:39 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5151  0.0  0.0  10820  1056 ?        R    19:38   0:00 ps axwu
+di56giq5  5152  0.0  0.0   4280   580 ?        S    19:38   0:00 grep di56giq5
+
+AnonHugePages:   1708032 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.4  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  6.7  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.1  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 1945  9.8 4940032 3230820 ?     Rl   19:38   2:43 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5155  0.0  0.0  10820  1052 ?        R    19:38   0:00 ps axwu
+di56giq5  5156  0.0  0.0   4280   580 ?        S    19:38   0:00 grep di56giq5
+
+AnonHugePages:   1822720 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.3  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  5.0  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2077 10.1 5101292 3324952 ?     Rl   19:38   3:57 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5160  200  0.0  10820  1052 ?        R    19:38   0:00 ps axwu
+di56giq5  5161  0.0  0.0   4280   580 ?        S    19:38   0:00 grep di56giq5
+
+AnonHugePages:   1941504 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.2  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  4.0  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.1  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2288 10.1 5101292 3325216 ?     Rl   19:38   5:32 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5164  0.0  0.0  10820  1048 ?        R    19:38   0:00 ps axwu
+di56giq5  5165  0.0  0.0   4280   580 ?        S    19:38   0:00 grep di56giq5
+
+AnonHugePages:   1941504 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.2  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  3.3  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.1  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2064 10.1 5101292 3325820 ?     Rl   19:38   6:04 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5168 50.0  0.0  10820  1052 ?        R    19:38   0:00 ps axwu
+di56giq5  5169  0.0  0.0   4280   580 ?        S    19:38   0:00 grep di56giq5
+
+AnonHugePages:   1941504 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.2  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  2.8  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2026 10.2 5234412 3358224 ?     Rl   19:38   7:00 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5172  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5173  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1941504 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  2.4  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2159 10.2 5234412 3358224 ?     Rl   19:38   8:35 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5176 50.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5177  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1941504 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  2.2  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2149 10.2 5240196 3363020 ?     Rl   19:38   9:39 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5180 50.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5181  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1951744 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.9  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2235 10.2 5240196 3363020 ?     Rl   19:38  11:12 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5184  200  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5185  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1951744 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.8  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2228 10.2 5239936 3361944 ?     Rl   19:38  12:19 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5188  200  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5189  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1943552 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.6  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2288 10.2 5239936 3361944 ?     Rl   19:38  13:49 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5192  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5193  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1943552 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.5  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2295 10.3 5271760 3386360 ?     Rl   19:38  15:02 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5196 50.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5197  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1943552 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.4  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2331 10.3 5271760 3386360 ?     Rl   19:38  16:29 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5200  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5201  0.0  0.0   4280   576 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1943552 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.1  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.3  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2298 10.4 5373508 3439348 ?     Rl   19:38  17:24 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5204  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5205  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1992704 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.2  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2351 10.4 5373508 3439348 ?     Sl   19:38  19:02 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5208  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5209  0.0  0.0   4280   576 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1992704 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.1  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2360 10.2 5456028 3383140 ?     Rl   19:38  20:17 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5212  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5213  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1996800 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.1  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2371 10.2 5456032 3382780 ?     Rl   19:38  21:35 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5216  100  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5217  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1951744 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.0  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2383 10.3 5276408 3400116 ?     Sl   19:38  22:56 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5220  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5221  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1951744 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  1.0  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2402 10.4 5276412 3418436 ?     Rl   19:38  24:20 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5224 33.3  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5225  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1964032 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.9  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2398 10.2 5257032 3368596 ?     Rl   19:38  25:32 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5228  100  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5229  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1964032 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.9  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2409 10.3 5326664 3390940 ?     Rl   19:38  26:52 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5232  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5233  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1947648 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.8  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2415 10.3 5326664 3395196 ?     Rl   19:38  28:12 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5236  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5237  0.0  0.0   4280   576 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1955840 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.8  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2411 10.3 5392204 3415844 ?     Rl   19:38  29:22 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5240  100  0.0  10820  1048 ?        R    19:39   0:00 ps axwu
+di56giq5  5241  0.0  0.0   4280   580 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1972224 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.8  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2427 10.4 5457740 3448092 ?     Rl   19:38  30:49 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5244  0.0  0.0  10820  1052 ?        R    19:39   0:00 ps axwu
+di56giq5  5245  0.0  0.0   4280   584 ?        S    19:39   0:00 grep di56giq5
+
+AnonHugePages:   1972224 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.7  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2415 10.3 5426452 3415320 ?     Rl   19:38  31:54 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5248  100  0.0  10820  1052 ?        R    19:40   0:00 ps axwu
+di56giq5  5249  0.0  0.0   4280   580 ?        S    19:40   0:00 grep di56giq5
+
+AnonHugePages:   1961984 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.7  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2440 10.3 5426452 3415320 ?     Rl   19:38  33:29 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5252  0.0  0.0  10820  1052 ?        R    19:40   0:00 ps axwu
+di56giq5  5253  0.0  0.0   4280   580 ?        S    19:40   0:00 grep di56giq5
+
+AnonHugePages:   1961984 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.7  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2427 10.5 5439352 3451452 ?     Rl   19:38  34:34 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5256  100  0.0  10820  1052 ?        R    19:40   0:00 ps axwu
+di56giq5  5257  0.0  0.0   4280   580 ?        S    19:40   0:00 grep di56giq5
+
+AnonHugePages:   1984512 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.6  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2453 10.5 5439352 3451452 ?     Rl   19:38  36:13 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5264 50.0  0.0  10820  1052 ?        R    19:40   0:00 ps axwu
+di56giq5  5265  0.0  0.0   4344   580 ?        S    19:40   0:00 grep di56giq5
+
+AnonHugePages:   1984512 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
+di56giq5  4787  0.0  0.0  11532  1668 ?        S    19:38   0:00 /bin/bash /var/loadl/execute/srv04-ib.1955110.0/job-64.sh
+di56giq5  4950  0.0  0.0  11396  1520 ?        S    19:38   0:00 /bin/bash ./../testhp.sh
+di56giq5  4951  0.0  0.0  21276  1744 ?        S    19:38   0:00 /bin/ksh /lrz/sys/parallel/mpi.ibm/pecurrent/gnu/bin/mpiexec -n 64 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  4954  0.6  0.1 437432 32988 ?        Sl   19:38   0:00 poe ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0 -procs 64
+di56giq5  4960  0.0  0.0 104312  3032 ?        Sl   19:38   0:00 /etc/pmdv14
+di56giq5  5102 2414  0.8 3227456 283348 ?      Sl   19:38  36:53 ../MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge ljfluid8node.xml --steps 11 --final-checkpoint=0
+di56giq5  5270  0.0  0.0  10820  1056 ?        R    19:40   0:00 ps axwu
+di56giq5  5271  0.0  0.0   4280   580 ?        R    19:40   0:00 grep di56giq5
+
+AnonHugePages:   1751040 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+
