@@ -179,9 +179,6 @@ public:
 	 * @param[in]  inputfilename filename of the XML input file
 	 */
 	void initConfigXML(const std::string& inputfilename);
-	void initConfigXML(const char* inputfilename) {
-		initConfigXML(std::string(inputfilename));
-	}
 
 	/** @brief calculate all values for the starting timepoint
 	 *
