@@ -119,7 +119,7 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <simulation>
-	     <integrator type="STRING"><!-- processed by corresponding Integrator::readXML() --></integrator>
+	     <integrator type="STRING"><!-- see Integrator class documentation --></integrator>
 	     <run>
 	       <production>
 	         <steps>INTEGER</steps>
@@ -168,14 +168,7 @@ public:
 	 */
 	void readConfigFile(std::string filename);
 
-	/** @brief process XML configuration file (*.xml)
-	 *
-	 * Opens the XML file with the given filename and reads in all parameters
-	 * for the simulaion and initializes the following member variables:
-	 * - timestepLength:
-	 * - cutoffRadius
-	 * - phaseSpace
-	 * - moleculeContainer
+	/** @brief Opens given XML file and reads in parameters for the simulaion.
 	 * @param[in]  inputfilename filename of the XML input file
 	 */
 	void initConfigXML(const std::string& inputfilename);

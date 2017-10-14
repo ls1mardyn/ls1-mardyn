@@ -10,19 +10,25 @@ class Object;
 class VelocityAssignerBase;
 class MoleculeIdPool;
 
+/** @brief The ObjectGenerator sets up a phase space by filling volumetric objects.
+ *
+ * The idea of the ObjectGenerator is to create a composite 3D volumetric Object and fill this with molecules.
+ * The molecule placement into the object is performed by a Filler. The assignment of molecule velocities is
+ * performed by a velocityAssigner.
+ */
 class ObjectGenerator : public InputBase {
 public:
 	ObjectGenerator() : _filler(nullptr), _object(nullptr), _velocityAssigner(nullptr), _moleculeIdPool(nullptr) {};
 
-	/** @brief Read in XML configuration for Generator and all its included objects.
+	/** @brief Read in XML configuration for ObjectGenerator and all its included objects.
 	 *
-	 * The following xml object structure is handled by this method:
+	 * The following XML object structure is handled by this method:
 	 * @note This structure is not fixed yet and may see changes
 	 * \code{.xml}
 	   <objectgenerator>
-	     <filler type=""><!-- ... --></filler>
-	     <object type=""><!-- ... --></object>
-	     <velocityAssigner type=""><!-- ... --></velocityAssigner>
+	     <filler type="STRING"> <!-- see Filler documentation --> </filler>
+	     <object type="STRING"> <!-- see Object documentation --> </object>
+	     <velocityAssigner type="STRING"> <!-- see VelocityAssignerBase doucmentation --> </velocityAssigner>
 	   </objectgenerator>
 	   \endcode
 	 */
