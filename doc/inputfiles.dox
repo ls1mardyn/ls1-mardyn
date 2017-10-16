@@ -16,14 +16,12 @@ Related readXML() methods:
 
 
 
-Old Config file format (deprecated and removed with the next release)
----------------------------------------------------------------------
+Old Config file format (used up to ls1-MarDyn 1.1)
+--------------------------------------------------
 
-Basically, there seem to be 2 kinds of input files:
-- a configuration file which contains determines technical stuff like io,
-  things related to parallelization and so on
-- a phase space specification file, which contains application specific thing
-  like the specification of the molecule types being simulated and the positions
+Old ls1-Mardyn versions prior to version 1.2 used input consisting out of two input files:
+- a configuration file, which contained simulation related stuff like io, algorithm and output plugin selection
+- a phase space specification file, which contained the specification of the used molecule types and the positions
   of the indivudual molecules.
 
 MDProjectConfig
