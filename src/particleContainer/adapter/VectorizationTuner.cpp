@@ -77,12 +77,14 @@ void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
 	_flopCounterZeroRc = new FlopCounter( 0., 0.);
 	tune(*(_simulation.getEnsemble()->getComponents()));
+
+	/*
 	std::vector<std::vector<double>> ownValues {};
 	std::vector<std::vector<double>> faceValues {};
 	std::vector<std::vector<double>> edgeValues {};
 	std::vector<std::vector<double>> cornerValues {};
-	//tune(*(_simulation.getEnsemble()->getComponents()), ownValues, faceValues, edgeValues, cornerValues);
-
+	tune(*(_simulation.getEnsemble()->getComponents()), ownValues, faceValues, edgeValues, cornerValues);
+	 */
 	// restore CellBorderAndFlagManager to its values
 	ParticleCellRMM::_cellBorderAndFlagManager = backup;
 }
@@ -400,6 +402,8 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 		double& gflopsPairBig, double& /*gflopsOwnNormal*/, double& /*gflopsPairNormalFace*/, double& /*gflopsPairNormalEdge*/,
 		double& /*gflopsPairNormalCorner*/, double& gflopsOwnZero, double& gflopsPairZero) {
 
+	const double restoreCutoff = (**_cellProcessor).getCutoffRadiusSquare();
+	const double restoreLJCutoff = (**_cellProcessor).getLJCutoffRadiusSquare();
 
 	// get (first) component
 	Component& comp = ComponentList[0];
@@ -487,6 +491,9 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	// clear cells
 	clearMolecules(firstCell);
 	clearMolecules(secondCell);
+
+	(**_cellProcessor).setCutoffRadiusSquare(restoreCutoff);
+	(**_cellProcessor).setLJCutoffRadiusSquare(restoreLJCutoff);
 
 }
 
