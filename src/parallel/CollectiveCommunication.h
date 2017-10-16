@@ -162,7 +162,7 @@ public:
 	void allreduceCustom(ReduceType type) override{
 		// TODO: add agglomerated reduce!
 		for (unsigned int i = 0; i < _types.size(); i++) {
-			MPI_Op op;
+			MPI_Op op = MPI_NO_OP;
 			switch(type){
 			case ReduceType::SUM:
 				op = MPI_SUM;
