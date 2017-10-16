@@ -60,7 +60,7 @@ void ParticleDataFull::MoleculeToParticleData(ParticleDataFull &particleStruct, 
 	particleStruct.D[2] = molecule.D(2);
 }
 
-void ParticleDataFull::ParticleDataToMolecule(ParticleDataFull &particleStruct, Molecule &molecule) {
+void ParticleDataFull::ParticleDataToMolecule(const ParticleDataFull &particleStruct, Molecule &molecule) {
 	Component* component = _simulation.getEnsemble()->getComponent(particleStruct.cid);
 	molecule = Molecule(particleStruct.id, component,
 						particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],

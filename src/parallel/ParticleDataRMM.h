@@ -26,7 +26,7 @@ public:
 	static void MoleculeToParticleData(ParticleDataRMM &particleStruct, Molecule &molecule);
 
 	//! @brief copy data from object of class class ParticleDataRMM to object of class Molecule
-	static void ParticleDataToMolecule(ParticleDataRMM &particleStruct, Molecule &molecule);
+	static void ParticleDataToMolecule(const ParticleDataRMM &particleStruct, Molecule &molecule);
 
 	unsigned long id;
 	vcp_real_calc r[3];
