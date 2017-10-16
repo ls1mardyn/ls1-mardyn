@@ -11,7 +11,7 @@
 #include <mpi.h>
 #include <vector>
 #include <stddef.h>
-#include "ParticleDataForwardDeclaration.h"
+#include "CommunicationBuffer.h"
 
 typedef enum {
 	LEAVING_AND_HALO_COPIES = 0, /** send process-leaving particles and halo-copies together in one message */
@@ -128,7 +128,7 @@ private:
 	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
-	std::vector<ParticleData> _sendBuf, _recvBuf;
+	CommunicationBuffer _sendBuf, _recvBuf;
 	bool _msgSent, _countReceived, _msgReceived;
 
 };

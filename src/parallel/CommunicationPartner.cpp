@@ -176,16 +176,16 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 	}
 
 	#ifndef NDEBUG
-		const int n = _sendBuf.size();
+		const int n = _sendBuf.getNumElements();
 		global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
 		std::ostringstream buf;
 		for (int i = 0; i < n; ++i) {
-			buf << _sendBuf[i].id << " ";
+			buf << _sendBuf.at(i).id << " ";
 		}
 		global_log->debug() << buf.str() << std::endl;
 	#endif
 
-	MPI_CHECK(MPI_Isend(_sendBuf.data(), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest));
+	MPI_CHECK(MPI_Isend(_sendBuf.getData(), (int ) _sendBuf.getNumElements(), type, _rank, 99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
@@ -215,7 +215,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
                                 global_log->debug() << "Preparing to receive " << numrecv << " particles." << std::endl;
                         #endif
 			_recvBuf.resize(numrecv);
-			MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
+			MPI_CHECK(MPI_Irecv(_recvBuf.getData(), numrecv, type, _rank, 99, comm, _recvRequest));
 		}
 	}
 	return _countReceived;
@@ -236,7 +236,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		if (flag == true) {
 			_msgReceived = true;
 
-			int numrecv = _recvBuf.size();
+			int numrecv = _recvBuf.getNumElements();
 
 			#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
@@ -252,7 +252,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			#endif
 			for (int i = 0; i < numrecv; i++) {
 				Molecule m;
-				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
+				ParticleData::ParticleDataToMolecule(_recvBuf.at(i), m);
 				mols[i] = m;
 			}
 			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
@@ -280,7 +280,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	_countReceived = true;
 	_recvBuf.resize(numParticles);
-	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
+	MPI_CHECK(MPI_Irecv(_recvBuf.getData(), numParticles, type, _rank, 99, comm, _recvRequest));
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
@@ -317,7 +317,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		const double highCorner[3], const double shift[3], const bool removeFromContainer, HaloOrLeavingCorrection haloLeaveCorr) {
 	using std::vector;
 	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
-	int prevNumMols = _sendBuf.size();
+	int prevNumMols = _sendBuf.getNumElements();
 	vector<vector<Molecule>> threadData;
 	vector<int> prefixArray;
 
@@ -423,12 +423,12 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 					}
 				}
 			}
-			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
+			_sendBuf.at(prevNumMols + prefixArray[threadNum] + i) = m;
 		}
 	}
 	global_simulation->timers()->stop("COMMUNICATION_PARTNER_INIT_SEND");
 }
 
 size_t CommunicationPartner::getDynamicSize() {
-	return (_sendBuf.capacity() + _recvBuf.capacity()) * sizeof(ParticleData) + _haloInfo.capacity() * sizeof(PositionInfo);
+	return _sendBuf.getDynamicSize() + _recvBuf.getDynamicSize() + _haloInfo.capacity() * sizeof(PositionInfo);
 }
