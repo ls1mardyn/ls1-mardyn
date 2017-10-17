@@ -207,6 +207,8 @@ public:
 	virtual long double collCommGetLongDouble();
 	//! has to call allreduceSum method of a CollComm class (none in sequential version)
 	virtual void collCommAllreduceSum();
+	//! has to call allreduceSum method of a CollComm class (none in sequential version), allows for values of previous iteration.
+	virtual void collCommAllreduceSumAllowPrevious();
 	//! has to call allreduceCustom method of a CollComm class (none in sequential version)
 	virtual void collCommAllreduceCustom(ReduceType type);
 	//! has to call scanSum method of a CollComm class (none in sequential version)
@@ -235,7 +237,7 @@ public:
 #endif
 
 	virtual size_t getTotalSize() override {
-		return _collCommBase.getDynamicSize();
+		return _collCommBase.getTotalSize();
 	}
 	virtual void printSubInfo(int offset) override {
 		return;

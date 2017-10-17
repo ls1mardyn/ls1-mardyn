@@ -189,6 +189,13 @@ public:
 	 _comms[key].waitAndUpdateData();
 	 }*/
 
+	size_t getTotalSize() override {
+		size_t tmp = 0;
+		for (auto& comm : _comms){
+			tmp += comm.second.getTotalSize();
+		}
+		return tmp;
+	}
 private:
 	int _currentKey;
 	std::map<int, CollectiveCommunicationSingleNonBlocking> _comms;

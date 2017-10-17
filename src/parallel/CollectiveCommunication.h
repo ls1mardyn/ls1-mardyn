@@ -210,8 +210,8 @@ public:
 	#endif
 		}
 
-	virtual size_t getDynamicSize() override{
-		return CollectiveCommBase::getDynamicSize() + _types.capacity() * sizeof(MPI_Datatype);
+	virtual size_t getTotalSize() override{
+		return CollectiveCommBase::getTotalSize() + _types.capacity() * sizeof(MPI_Datatype);
 	}
 
 

@@ -106,5 +106,8 @@ public:
 	//! @return the value
 	virtual void finalize() = 0;
 
+	//! get the size of the entire object allocated memory
+	//! @return size of the dynamically allocated memory in bytes
+	virtual size_t getTotalSize() = 0;
 };
 

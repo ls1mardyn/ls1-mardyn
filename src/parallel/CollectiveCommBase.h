@@ -159,7 +159,7 @@ public:
 		_values.clear();
 	}
 
-	virtual size_t getDynamicSize() {
+	virtual size_t getTotalSize() override {
 		return _values.capacity() * sizeof(valType);
 	}
 
