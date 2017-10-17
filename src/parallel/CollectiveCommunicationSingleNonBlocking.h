@@ -39,6 +39,7 @@ public:
 				MPI_Wait(_request, MPI_STATUS_IGNORE);
 			}
 			delete _request;
+			_request = nullptr;
 		}
 		if (_agglomeratedTypeAddOperator != MPI_OP_NULL) {
 			MPI_CHECK(MPI_Op_free(&_agglomeratedTypeAddOperator));

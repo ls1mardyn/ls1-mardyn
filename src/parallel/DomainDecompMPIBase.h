@@ -8,12 +8,14 @@
 #ifndef DOMAINDECOMPMPIBASE_H_
 #define DOMAINDECOMPMPIBASE_H_
 
-#include "DomainDecompBase.h"
-#include "parallel/CollectiveCommunication.h"
-#include "parallel/CommunicationPartner.h"
-
 #include <mpi.h>
 #include <vector>
+#include <memory>
+
+#include "utils/Logger.h"
+#include "DomainDecompBase.h"
+#include "CollectiveCommunicationInterface.h"
+#include "CommunicationPartner.h"
 #include "ParticleDataForwardDeclaration.h"
 
 #define LOWER  0
@@ -51,72 +53,72 @@ public:
 	// the documentation of the class CollectiveCommunication and of the
 	// father class of this class (DomainDecompBase.h)
 	//##################################################################
-	void collCommInit(int numValues) {
-		_collCommunication.init(_comm, numValues);
+	void collCommInit(int numValues, int key=0) override {
+		_collCommunication->init(_comm, numValues, key);
 	}
 
-	void collCommFinalize() {
-		_collCommunication.finalize();
+	void collCommFinalize() override {
+		_collCommunication->finalize();
 	}
 
-	void collCommAppendInt(int intValue) {
-		_collCommunication.appendInt(intValue);
+	void collCommAppendInt(int intValue) override {
+		_collCommunication->appendInt(intValue);
 	}
 
-	void collCommAppendUnsLong(unsigned long unsLongValue) {
-		_collCommunication.appendUnsLong(unsLongValue);
+	void collCommAppendUnsLong(unsigned long unsLongValue) override {
+		_collCommunication->appendUnsLong(unsLongValue);
 	}
 
-	void collCommAppendFloat(float floatValue) {
-		_collCommunication.appendFloat(floatValue);
+	void collCommAppendFloat(float floatValue) override {
+		_collCommunication->appendFloat(floatValue);
 	}
 
-	void collCommAppendDouble(double doubleValue) {
-		_collCommunication.appendDouble(doubleValue);
+	void collCommAppendDouble(double doubleValue) override {
+		_collCommunication->appendDouble(doubleValue);
 	}
 
-	void collCommAppendLongDouble(long double longDoubleValue) {
-		_collCommunication.appendLongDouble(longDoubleValue);
+	void collCommAppendLongDouble(long double longDoubleValue) override {
+		_collCommunication->appendLongDouble(longDoubleValue);
 	}
 
-	int collCommGetInt() {
-		return _collCommunication.getInt();
+	int collCommGetInt() override {
+		return _collCommunication->getInt();
 	}
 
-	unsigned long collCommGetUnsLong() {
-		return _collCommunication.getUnsLong();
+	unsigned long collCommGetUnsLong() override {
+		return _collCommunication->getUnsLong();
 	}
 
-	float collCommGetFloat() {
-		return _collCommunication.getFloat();
+	float collCommGetFloat() override {
+		return _collCommunication->getFloat();
 	}
 
-	double collCommGetDouble() {
-		return _collCommunication.getDouble();
+	double collCommGetDouble() override {
+		return _collCommunication->getDouble();
 	}
 
-	long double collCommGetLongDouble() {
-		return _collCommunication.getLongDouble();
+	long double collCommGetLongDouble() override {
+		return _collCommunication->getLongDouble();
 	}
 
-	void collCommAllreduceSum() {
-		_collCommunication.allreduceSum();
+	void collCommAllreduceSum() override {
+		_collCommunication->allreduceSum();
 	}
 
-	void collCommAllreduceSumAllowPrevious() {
-		_collCommunication.allreduceSumAllowPrevious();
+	void collCommAllreduceSumAllowPrevious() override {
+		_collCommunication->allreduceSumAllowPrevious();
 	}
 
-	void collCommAllreduceCustom(ReduceType type) {
-		_collCommunication.allreduceCustom(type);
+	void collCommAllreduceCustom(ReduceType type) override {
+		_collCommunication->allreduceCustom(type);
 	}
 
-	void collCommScanSum() {
-		_collCommunication.scanSum();
+	void collCommScanSum() override {
+		_collCommunication->scanSum();
 	}
 
-	void collCommBroadcast(int root = 0) {
-		_collCommunication.broadcast(root);
+	void collCommBroadcast(int root = 0) override {
+		_collCommunication->broadcast(root);
 	}
 
 	/**
@@ -228,7 +230,7 @@ protected:
 
 	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
 private:
-	CollectiveCommunication _collCommunication;
+	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
 };
 
 #endif /* DOMAINDECOMPMPIBASE_H_ */

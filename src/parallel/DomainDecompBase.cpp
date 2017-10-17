@@ -216,7 +216,7 @@ void DomainDecompBase::getBoundingBoxMinMax(Domain *domain, double *min, double 
 	}
 }
 
-void DomainDecompBase::collCommInit(int numValues) {
+void DomainDecompBase::collCommInit(int numValues, int /*key*/) {
 	_collCommBase.init(numValues);
 }
 
@@ -265,6 +265,10 @@ long double DomainDecompBase::collCommGetLongDouble() {
 }
 
 void DomainDecompBase::collCommAllreduceSum() {
+	_collCommBase.allreduceSum();
+}
+
+void DomainDecompBase::collCommAllreduceSumAllowPrevious() {
 	_collCommBase.allreduceSum();
 }
 

@@ -4,6 +4,7 @@
  *  Created on: Nov 15, 2015
  *      Author: tchipevn
  */
+#include <memory>
 
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
@@ -11,6 +12,8 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
+#include "parallel/CollectiveCommunication.h"
+#include "parallel/CollectiveCommunicationNonBlocking.h"
 
 using Log::global_log;
 
@@ -25,11 +28,17 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &_numProcs));
 
 	ParticleData::getMPIType(_mpiParticleType);
+
+
+	_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunication());
+	//_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
 }
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
 
 	delete _neighbourCommunicationScheme;
+	_neighbourCommunicationScheme = nullptr;
+
 	MPI_Type_free(&_mpiParticleType);
 
 	// MPI_COMM_WORLD doesn't need to be freed, so
@@ -41,6 +50,16 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	std::string communicationScheme = "indirect";
 	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
 	setCommunicationScheme(communicationScheme);
+
+	std::string overlappingCollectives = "no";
+	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);
+
+	if (overlappingCollectives!="no"){
+		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << std::endl;
+		_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
+	}else{
+		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << std::endl;
+	}
 }
 
 int DomainDecompMPIBase::getNonBlockingStageCount(){
@@ -175,7 +194,7 @@ void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContai
 
 size_t DomainDecompMPIBase::getTotalSize() {
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
-			+ _collCommunication.getDynamicSize();
+			+ _collCommunication->getTotalSize();
 }
 
 void DomainDecompMPIBase::printSubInfo(int offset){
@@ -185,6 +204,6 @@ void DomainDecompMPIBase::printSubInfo(int offset){
 	}
 	global_log->info() << offsetstream.str() << "own datastructures:\t" << sizeof(DomainDecompMPIBase) / 1.e6 << " MB" << std::endl;
 	global_log->info() << offsetstream.str() << "neighbourCommunicationScheme:\t\t" << _neighbourCommunicationScheme->getDynamicSize() / 1.e6 << " MB" << std::endl;
-	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication.getDynamicSize() / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication->getTotalSize() / 1.e6 << " MB" << std::endl;
 
 }
