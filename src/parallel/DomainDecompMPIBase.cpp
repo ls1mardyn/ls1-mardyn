@@ -56,7 +56,7 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 
 	if (overlappingCollectives!="no"){
 		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << std::endl;
-#if MPI_VERSION = 3
+#if MPI_VERSION >= 3
 		_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
 #else
 		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << std::endl;
