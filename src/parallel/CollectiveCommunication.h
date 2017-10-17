@@ -139,7 +139,7 @@ public:
 
 	// documentation in base class
 	void allreduceSum() override {
-		Log::global_log->info() << "CollectiveCommunication: normal Allreduce" << std::endl;
+		Log::global_log->debug() << "CollectiveCommunication: normal Allreduce" << std::endl;
 #if ENABLE_AGGLOMERATED_REDUCE
 		setMPIType();
 		MPI_Op agglomeratedTypeAddOperator;
@@ -161,7 +161,7 @@ public:
 	}
 
 	void allreduceCustom(ReduceType type) override{
-		Log::global_log->info() << "CollectiveCommunication: custom Allreduce" << std::endl;
+		Log::global_log->debug() << "CollectiveCommunication: custom Allreduce" << std::endl;
 		// TODO: add agglomerated reduce!
 		for (unsigned int i = 0; i < _types.size(); i++) {
 			MPI_Op op = MPI_NO_OP;
