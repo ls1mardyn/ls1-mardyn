@@ -101,6 +101,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	/* temperature */
+	/** @todo reading temperature is performed in the Ensemble, so check and remove */
 	bool bInputOk = true;
 	double temperature = 0.;
 	bInputOk = bInputOk && xmlconfig.getNodeValueReduced("temperature", temperature);
@@ -110,6 +111,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	/* profiles */
+	/** @todo this should go into the DensityProfileWriter, so check and remove */
 	bInputOk = true;
 	uint32_t xun, yun, zun;
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/x", xun);
