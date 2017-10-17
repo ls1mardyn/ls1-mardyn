@@ -12,33 +12,21 @@
 using Log::global_log;
 using namespace std;
 
-DomainDecomposition::DomainDecomposition() :
-		DomainDecompMPIBase() {
-	int period[DIMgeom]; // 1(true) when using periodic boundary conditions in the corresponding dimension
-	int reorder; // 1(true) if the ranking may be reordered by MPI_Cart_create
+DomainDecomposition::DomainDecomposition() : DomainDecompMPIBase(), _gridSize{0}, _coords{0} {
+	initMPIGridDims();
+}
 
-	// We create a torus topology, so all boundary conditions are periodic
-	for (int d = 0; d < DIMgeom; d++)
-		period[d] = 1;
+void DomainDecomposition::initMPIGridDims() {
+	mardyn_assert(DIMgeom == 3);
+	int period[DIMgeom] = {1, 1, 1}; // 1(true) when using periodic boundary conditions in the corresponding dimension
+	int reorder = 1; // 1(true) if the ranking may be reordered by MPI_Cart_create
 
-	// Allow reordering of process ranks
-	reorder = 1;
-
-	for (int i = 0; i < DIMgeom; i++) {
-		_gridSize[i] = 0;
-	}
 	MPI_CHECK(MPI_Dims_create( _numProcs, DIMgeom, (int *) &_gridSize ));
-
-	// Create the communicator
 	MPI_CHECK(MPI_Cart_create(MPI_COMM_WORLD, DIMgeom, _gridSize, period, reorder, &_comm));
-	global_log->info() << "MPI grid dimensions: " << _gridSize[0] << ", " << _gridSize[1] << ", " << _gridSize[2]
-			<< endl;
-
-	// introduce coordinates
+	global_log->info() << "MPI grid dimensions: " << _gridSize[0] << ", " << _gridSize[1] << ", " << _gridSize[2] << endl;
 	MPI_CHECK(MPI_Comm_rank(_comm, &_rank));
 	MPI_CHECK(MPI_Cart_coords(_comm, _rank, DIMgeom, _coords));
-	global_log->info() << "MPI coordinate of current process: " << _coords[0] << ", " << _coords[1] << ", "
-			<< _coords[2] << endl;
+	global_log->info() << "MPI coordinate of current process: " << _coords[0] << ", " << _coords[1] << ", " << _coords[2] << endl;
 }
 
 DomainDecomposition::~DomainDecomposition() {
@@ -73,8 +61,15 @@ void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool 
 }
 
 void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
-	/* TODO: Maybe add decomposition dimensions, default auto. */
 	DomainDecompMPIBase::readXML(xmlconfig);
+
+	if(xmlconfig.changecurrentnode("MPIGridDims")) {
+		_gridSize[0] = xmlconfig.getNodeValue_int("x", 0);
+		_gridSize[1] = xmlconfig.getNodeValue_int("y", 0);
+		_gridSize[2] = xmlconfig.getNodeValue_int("z", 0);
+		xmlconfig.changecurrentnode("..");
+		initMPIGridDims();
+	}
 }
 
 bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {
