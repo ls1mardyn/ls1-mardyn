@@ -184,6 +184,17 @@ public:
 	}
 #endif
 
+	/** @brief Read in XML configuration for DomainDecompMPIBase.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
+	   	 <CommunicationScheme>indirect OR direct</CommunicationScheme>
+	   	 <overlappingCollectives>yes OR no</overlappingCollectives>
+	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
+	   </parallelisation>
+	   \endcode
+	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! Sets the communicationScheme.
