@@ -96,8 +96,6 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 }
 
 LinkedCells::~LinkedCells() {
-    if (_traversalTuner != nullptr)
-	    delete _traversalTuner;
 
     if (_resortCellProcessorSliced != nullptr) {
     	delete _resortCellProcessorSliced;
@@ -118,7 +116,7 @@ void LinkedCells::initializeTraversal() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-    _traversalTuner = new TraversalTuner<ParticleCell>();
+    _traversalTuner = std::unique_ptr<TraversalTuner<ParticleCell>>(new TraversalTuner<ParticleCell>());
 	_traversalTuner->readXML(xmlconfig);
 }
 
