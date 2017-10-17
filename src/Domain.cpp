@@ -210,10 +210,10 @@ void Domain::calculateGlobalValues(
 	// to this point           
 
 	/* FIXME stuff for the ensemble class */
-	domainDecomp->collCommInit(2);
+	domainDecomp->collCommInit(2, 654);
 	domainDecomp->collCommAppendDouble(Upot);
 	domainDecomp->collCommAppendDouble(Virial);
-	domainDecomp->collCommAllreduceSum();
+	domainDecomp->collCommAllreduceSumAllowPrevious();
 	Upot = domainDecomp->collCommGetDouble();
 	Virial = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
@@ -246,8 +246,8 @@ void Domain::calculateGlobalValues(
 			this->_local2KERot[0] += this->_local2KERot[thermit->first];
 		}
 	}
-
-	for(thermit = _universalThermostatN.begin(); thermit != _universalThermostatN.end(); thermit++)
+	int thermid = 0;
+	for (thermit = _universalThermostatN.begin(); thermit != _universalThermostatN.end(); thermit++, thermid++)
 	{
 		// number of molecules on the local process. After the reduce operation
 		// num_molecules will contain the global number of molecules
@@ -256,12 +256,12 @@ void Domain::calculateGlobalValues(
 		unsigned long rotDOF = _localRotationalDOF[thermit->first];
 		double sumIw2 = (rotDOF > 0)? _local2KERot[thermit->first]: 0.0;
 
-		domainDecomp->collCommInit(4);
+		domainDecomp->collCommInit(4, 12+thermid);
 		domainDecomp->collCommAppendDouble(summv2);
 		domainDecomp->collCommAppendDouble(sumIw2);
 		domainDecomp->collCommAppendUnsLong(numMolecules);
 		domainDecomp->collCommAppendUnsLong(rotDOF);
-		domainDecomp->collCommAllreduceSum();
+		domainDecomp->collCommAllreduceSumAllowPrevious();
 		summv2 = domainDecomp->collCommGetDouble();
 		sumIw2 = domainDecomp->collCommGetDouble();
 		numMolecules = domainDecomp->collCommGetUnsLong();

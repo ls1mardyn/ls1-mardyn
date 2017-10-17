@@ -53,8 +53,8 @@ public:
 	// the documentation of the class CollectiveCommunication and of the
 	// father class of this class (DomainDecompBase.h)
 	//##################################################################
-	void collCommInit(int numValues) override {
-		_collCommunication->init(_comm, numValues);
+	void collCommInit(int numValues, int key=0) override {
+		_collCommunication->init(_comm, numValues, key);
 	}
 
 	void collCommFinalize() override {

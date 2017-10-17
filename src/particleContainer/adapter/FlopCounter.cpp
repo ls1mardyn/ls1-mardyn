@@ -89,7 +89,7 @@ void FlopCounter::_PotentialCounts::collCommGet() {
 
 void FlopCounter::_Counts::allReduce() {
 	DomainDecompBase& domainDecomp =  global_simulation->domainDecomposition();
-	domainDecomp.collCommInit(15);
+	domainDecomp.collCommInit(15, 734);
 
 	domainDecomp.collCommAppendDouble(_moleculeDistances);
 
@@ -97,7 +97,7 @@ void FlopCounter::_Counts::allReduce() {
 		_potCounts[i].collCommAppend();//adds 2 values each
 	}
 
-	domainDecomp.collCommAllreduceSum();
+	domainDecomp.collCommAllreduceSumAllowPrevious();
 	_moleculeDistances = domainDecomp.collCommGetDouble();
 
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {

@@ -182,7 +182,7 @@ public:
 	// the documentation of the class CollectiveCommunication.
 	//##################################################################
 	//! has to call init method of a CollComm class
-	virtual void collCommInit(int numValues);
+	virtual void collCommInit(int numValues, int key=0);
 	//! has to call finalize method of a CollComm class
 	virtual void collCommFinalize();
 	//! has to call appendInt method of a CollComm class
