@@ -67,6 +67,7 @@ public:
 		if (_currentKey == 0) {
 			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key " << _currentKey
 					<< ", thus the entry is removed." << std::endl;
+			_comms.at(_currentKey).destroy();
 			_comms.erase(_currentKey);
 		}
 		_currentKey = -1;

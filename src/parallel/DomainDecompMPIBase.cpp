@@ -30,8 +30,8 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 	ParticleData::getMPIType(_mpiParticleType);
 
 
-	//_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunication());
-	_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
+	_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunication());
+	//_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
 }
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
@@ -50,6 +50,16 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	std::string communicationScheme = "indirect";
 	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
 	setCommunicationScheme(communicationScheme);
+
+	std::string overlappingCollectives = "no";
+	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);
+
+	if (overlappingCollectives!="no"){
+		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << std::endl;
+		_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
+	}else{
+		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << std::endl;
+	}
 }
 
 int DomainDecompMPIBase::getNonBlockingStageCount(){
