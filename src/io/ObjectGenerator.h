@@ -14,7 +14,7 @@ class MoleculeIdPool;
  *
  * The idea of the ObjectGenerator is to create a composite 3D volumetric Object and fill this with molecules.
  * The molecule placement into the object is performed by a Filler. The assignment of molecule velocities is
- * performed by a velocityAssigner.
+ * performed by a VelocityAssigner. The molecule IDs are provided by a MoleculeIdPool.
  */
 class ObjectGenerator : public InputBase {
 public:
@@ -28,7 +28,7 @@ public:
 	   <objectgenerator>
 	     <filler type="STRING"> <!-- see Filler documentation --> </filler>
 	     <object type="STRING"> <!-- see Object documentation --> </object>
-	     <velocityAssigner type="STRING"> <!-- see VelocityAssignerBase doucmentation --> </velocityAssigner>
+	     <velocityAssigner type="STRING"> <!-- see VelocityAssignerBase documentation --> </velocityAssigner>
 	   </objectgenerator>
 	   \endcode
 	 */
