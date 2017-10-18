@@ -505,6 +505,10 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 	Log::global_log->info() << "Initial IO took:                 "
 			<< global_simulation->timers()->getTime("REPLICA_GENERATOR_VLE_INPUT") << " sec" << std::endl;
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
+
+	Ensemble* ensemble = _simulation.getEnsemble();
+	domain->setGlobalTemperature(ensemble->T());
+	domain->setglobalRho(numParticlesGlobal / ensemble->V() );
 	return 0;
 }
 
