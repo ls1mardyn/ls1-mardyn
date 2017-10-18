@@ -147,10 +147,8 @@ void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain)
 	global_log->info() << "Reading Molecules done" << endl;
 }
 
-void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig)
-{
-	global_log->info() << "------------------------------------------------------------------------" << std::endl;
-	global_log->info() << "ReplicaGenerator" << std::endl;
+void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
+	global_log->debug() << "Reading config for ReplicaGenerator" << std::endl;
 
 	_nSystemType = ST_UNKNOWN;
 	std::string strType = "unknown";
@@ -179,18 +177,12 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig)
 		_vecSubDomains.push_back(sd2);
 	}
 
-//	if(false == _bCreateHomogenous)
-//		global_log->info() << "Importing data for liquid box from file: " << _strFilePathDataLiq << std::endl;
-//	global_log->info() << "Importing data for vapour box from file: " << _strFilePathDataVap << std::endl;
-
 	xmlconfig.getNodeValue("numblocks/xz",     _numBlocksXZ);
 	xmlconfig.getNodeValue("numblocks/vapor",  _numBlocksVapY);
 	if(_nSystemType == ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR || _nSystemType == ST_HETEROGENEOUS_LIQUID_VAPOR)
 		xmlconfig.getNodeValue("numblocks/liquid", _numBlocksLiqY);
 
 	global_log->info() << "Replicating " << _numBlocksXZ << " x " << _numBlocksXZ << " boxes in XZ layers." << std::endl;
-//	global_log->info() << "Replicating " << _numBlocksLiqY << " (liquid) + " << _numBlocksVapY << " (vapour) + " << _numBlocksLiqY << " (liquid) boxes"
-//			" = " << 2*_numBlocksVapY + _numBlocksLiqY << " (total) in a row of Y direction." << std::endl;
 
 	if(_nSystemType == ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR)
 	{
@@ -260,7 +252,6 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.changecurrentnode(oldpath);
 	}
 
-	//init
 	this->init();
 }
 
@@ -274,17 +265,6 @@ void ReplicaGenerator::init()
 		this->readReplicaPhaseSpaceHeader(sd);
 		this->readReplicaPhaseSpaceData(sd);
 	}
-	/*
-	// Check box length vap/liq
-	for(uint8_t dim=0; dim<3; ++dim)
-	{
-		if(dBoxLength[0] != dBoxLength[1] || dBoxLength[0] != dBoxLength[2] || dBoxLength[1] != dBoxLength[2])
-		{
-			global_log->error() << "System is not a cube! Program exit ..." << endl;
-			Simulation::exit(1);
-		}
-	}
-	*/
 
 	// total number of particles
 	switch(_nSystemType)
@@ -384,13 +364,11 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 	uint64_t numBlocks[3];
 	uint64_t startIndex[3];
 
-	for(uint8_t di=0; di<3; ++di)
-	{
-		bbMin[di] = domainDecomp->getBoundingBoxMin(di, domain);
-		bbMax[di] = domainDecomp->getBoundingBoxMax(di, domain);
-		bbLength[di] = bbMax[di] - bbMin[di];
-		numBlocks[di]  =  ceil(bbLength[di] / _vecSubDomains.at(0).arrBoxLength.at(di) +1 );  // +1: Particles were missing in some processes without +1 (rounding error??)
-		startIndex[di] = floor(bbMin[di]    / _vecSubDomains.at(0).arrBoxLength.at(di) );
+	domainDecomp->getBoundingBoxMinMax(domain, bbMin, bbMax);
+	for(int d=0; d < 3; ++d) {
+		bbLength[d] = bbMax[d] - bbMin[d];
+		numBlocks[d]  =  ceil(bbLength[d] / _vecSubDomains.at(0).arrBoxLength.at(d) +1 );  // +1: Particles were missing in some processes without +1 (rounding error??)
+		startIndex[d] = floor(bbMin[d]    / _vecSubDomains.at(0).arrBoxLength.at(d) );
 	}
 
 	// Init maxID
