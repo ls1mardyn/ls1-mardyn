@@ -8,9 +8,10 @@
 #ifndef SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 #define SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 
+#include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/mardyn_assert.h"
 #include <vector>
 #include <stddef.h>
-#include "ParticleDataForwardDeclaration.h"
 
 
 /**
@@ -23,29 +24,96 @@
  *
  * TODO: test how this will work when going to Big Endian/Little Endian architectures,
  * due to CHAR conversion.
+ *
+ * Stores two unsigned long integers, then leaving molecules, then halo molecules.
  */
 class CommunicationBuffer {
+
+	friend class CommunicationBufferTest;
+
 public:
-	CommunicationBuffer();
-	~CommunicationBuffer();
-
-	// At the moment, just wrap old functionality.
+	CommunicationBuffer() {
+		clear();
+	}
 	size_t getDynamicSize();
-
-	unsigned long getNumElements();
-
-	const ParticleData& at(size_t i) const;
-
-	ParticleData& at(size_t i);
-
-	ParticleData * getData();
-
-	void resize(unsigned long numElements);
 
 	void clear();
 
+	void resizeForAppendingLeavingMolecules(unsigned long numMols);
+	void resizeForAppendingHaloMolecules(unsigned long numMols);
+
+	unsigned char * getDataForSending();
+	size_t getNumElementsForSending();
+	void resizeForRawBytes(unsigned long numBytes);
+
+	// write
+	void addLeavingMolecule(size_t indexOfMolecule, const Molecule& m);
+	void addHaloMolecule(size_t indexOfMolecule, const Molecule& m);
+
+	// read
+	void readLeavingMolecule(size_t indexOfMolecule, Molecule& m) const;
+	void readHaloMolecule(size_t indexOfMolecule, Molecule& m) const;
+
+	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo);
+
+	size_t getNumHalo() const {
+		return _numHalo;
+	}
+
+	size_t getNumLeaving() const {
+		return _numLeaving;
+	}
+
 private:
-	std::vector<ParticleData> _buffer;
+	static size_t _numBytesHalo;
+	static size_t _numBytesLeaving;
+
+	enum class ParticleType_t {HALO=0, LEAVING=1};
+	size_t getStartPosition(ParticleType_t type, size_t indexOfMolecule) const;
+
+	/**
+	 * @return the next index for writing
+	 */
+	template<typename T>
+	size_t emplaceValue(size_t indexInBytes, T passByValue);
+
+	template<typename T>
+	size_t readValue(size_t indexInBytes, T& passByReference) const;
+
+	typedef unsigned char byte_t;
+	std::vector<byte_t> _buffer;
+	size_t _numLeaving, _numHalo;
 };
+
+template<typename T>
+inline size_t CommunicationBuffer::emplaceValue(size_t indexInBytes, T passByValue) {
+	const size_t numBytesOfT = sizeof(T);
+	size_t ret = indexInBytes + numBytesOfT;
+
+	mardyn_assert(_buffer.size() >= ret);
+
+	const byte_t * pointer = reinterpret_cast<byte_t *> (&passByValue);
+	for (size_t i = 0; i < numBytesOfT; ++i) {
+		_buffer[indexInBytes + i] = pointer[i];
+	}
+
+	return ret;
+}
+
+template<typename T>
+inline size_t CommunicationBuffer::readValue(size_t indexInBytes, T& passByReference) const {
+	const size_t numBytesOfT = sizeof(T);
+	size_t ret = indexInBytes + numBytesOfT;
+
+	mardyn_assert(_buffer.size() >= ret);
+
+	byte_t * pointer = reinterpret_cast<byte_t *> (&passByReference);
+	for (size_t i = 0; i < numBytesOfT; ++i) {
+		pointer[i] = _buffer[indexInBytes + i];
+	}
+
+	return ret;
+}
+
 
 #endif /* SRC_PARALLEL_COMMUNICATIONBUFFER_H_ */
