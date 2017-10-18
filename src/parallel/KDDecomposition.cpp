@@ -29,10 +29,8 @@
 using namespace std;
 using Log::global_log;
 
-//#define DEBUG_DECOMP
 
 KDDecomposition::KDDecomposition() :
-
 		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.),
 		_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
 		_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _clusteredHeterogeneouseSystems {false}, _splitBiggest(true), _forceRatio(false),
@@ -44,7 +42,6 @@ KDDecomposition::KDDecomposition() :
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
 		bool cutsmaller, bool forceRatio, int splitThresh) :
-
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
 		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _clusteredHeterogeneouseSystems {false}, _splitBiggest(!cutsmaller),
 		_forceRatio(forceRatio), _splitThreshold{splitThresh},
@@ -135,8 +132,8 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 	xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 	if(!_splitBiggest){
-		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
 		xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
+		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
 	}
 
 	/*
@@ -146,10 +143,10 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("particleCount" + std::to_string(i+1), _vecTunParticleNums.at(i));
 		global_log->info() << "Maximum particle count in the vectorization tuner of type " << i+1 << ": " << _vecTunParticleNums.at(i) << endl;
 	}
-	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
 	xmlconfig.getNodeValue("generateNewFiles", _generateNewFiles);
-	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
+	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
+	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
 
 	DomainDecompMPIBase::readXML(xmlconfig);
 }
