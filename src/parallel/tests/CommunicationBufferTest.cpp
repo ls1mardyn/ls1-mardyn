@@ -219,20 +219,20 @@ void CommunicationBufferTest::testPackSendRecvUnpack() {
 		buf.addHaloMolecule(2, m[4]);
 
 		// send of course
-		MPI_Send(buf.getDataForSending(), buf.getNumElementsForSending(), MPI_CHAR, 1, Tag, MPI_COMM_WORLD);
+		MPI_Send(buf.getDataForSending(), buf.getNumElementsForSending(), buf.getMPIDataType(), 1, Tag, MPI_COMM_WORLD);
 	} else if (rank == 1) {
 		// probe
 		MPI_Status stat;
 		MPI_Probe(0, Tag, MPI_COMM_WORLD, &stat);
 
 		// get the message length
+		CommunicationBuffer buf;
 		int messageLengthInBytes;
-		MPI_Get_count(&stat, MPI_CHAR, &messageLengthInBytes);
+		MPI_Get_count(&stat, buf.getMPIDataType(), &messageLengthInBytes);
 
 		// recv
-		CommunicationBuffer buf;
 		buf.resizeForRawBytes(messageLengthInBytes);
-		MPI_Recv(buf.getDataForSending(), messageLengthInBytes, MPI_CHAR, 0, Tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(buf.getDataForSending(), messageLengthInBytes, buf.getMPIDataType(), 0, Tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		// start reading
 		unsigned long numLeaving, numHalo;

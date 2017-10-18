@@ -200,7 +200,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 
 	#endif
 
-	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), MPI_CHAR, _rank, 99, comm, _sendRequest));
+	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
@@ -224,13 +224,13 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 			_countReceived = true;
 			_countTested = 0;
 			int numrecv;
-			MPI_CHECK(MPI_Get_count(_recvStatus, MPI_CHAR, &numrecv));
+			MPI_CHECK(MPI_Get_count(_recvStatus, _sendBuf.getMPIDataType(), &numrecv));
                         #ifndef NDEBUG
                                 global_log->debug() << "Received byteCount from " << _rank << std::endl;
                                 global_log->debug() << "Preparing to receive " << numrecv << " bytes." << std::endl;
                         #endif
 			_recvBuf.resizeForRawBytes(numrecv);
-			MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), numrecv, MPI_CHAR, _rank, 99, comm, _recvRequest));
+			MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), numrecv, _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest));
 		}
 	}
 	return _countReceived;
@@ -317,7 +317,7 @@ void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, cons
 	// hackaround - resizeForAppendingLeavingMolecules is intended for the send-buffer, not the recv one.
 	_recvBuf.resizeForAppendingLeavingMolecules(numParticles);
 
-	MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), _recvBuf.getNumElementsForSending(), MPI_CHAR, _rank, 99, comm, _recvRequest));
+	MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), _recvBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest));
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {

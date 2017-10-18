@@ -10,9 +10,10 @@
 
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/mardyn_assert.h"
+
 #include <vector>
 #include <stddef.h>
-
+#include <mpi.h>
 
 /**
  * This class enables to send only position-data when sending HALO molecules
@@ -62,6 +63,10 @@ public:
 
 	size_t getNumLeaving() const {
 		return _numLeaving;
+	}
+
+	static MPI_Datatype getMPIDataType() {
+		return MPI_CHAR;
 	}
 
 private:
