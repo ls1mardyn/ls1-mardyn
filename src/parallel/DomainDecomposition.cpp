@@ -215,28 +215,10 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 			neighbours[i] = rank;
 		}
 	}
-	/*for(int i=0; i< 26;i++)
-		std::cout << neighbours[i];*/
-	std::cout << "\n";
 	return neighbours;
 #else
 	return std::vector<int>(0);
 #endif
-	/* new version that does not work so far
-#if defined(ENABLE_MPI)
-
-	std::vector<int> neighbours(26, -1);
-	if (_numProcs == 1) {
-		for (int i = 0; i < 26; i++)
-			neighbours[i] = _rank;
-	} else {
-		neighbours = _neighbourCommunicationScheme->getFullShellNeighbourRanks();
-	}
-	return neighbours;
-#else
-	return std::vector<int>(0);
-#endif
-*/
 }
 
 
@@ -259,17 +241,7 @@ std::vector<std::vector<std::vector<int>>> DomainDecomposition::getAllRanks(){
 	for(int i = 0; i < numProcessors; i++){
 		MPI_Cart_coords(_comm, i, 3, coords);
 		ranks[coords[0]][coords[1]][coords[2]] = i;
-//		if(myRank == 0)
-//		std:: cout << i << coords[0] << coords[1] << coords[2] << "\n";
 	}
-//	if(myRank == 0){
-//		int previous, next;
-//		MPI_CHECK( MPI_Cart_shift(_comm, 0, 1, &previous, &next ) );
-//		if(next != ranks[1][0][0]){
-//			std::cout << "Error!!!!!!! \n\n\n\n\n\n";
-//		}
-//	}
-
 	return ranks;
 #else
 	return std::vector<std::vector<std::vector<int>>>(0);
