@@ -110,6 +110,10 @@ public:
 	//! @param domain might be needed to get the bounding box
 	virtual bool procOwnsPos(double x, double y, double z, Domain* domain);
 
+	//! @brief get the minimum and maximum coordinate of the bounding box of this process' domain
+	//! @param domain
+	//! @param min lower coordinate of the bounding box
+	//! @param max upper coordinate of the bounding box
 	void getBoundingBoxMinMax(Domain* domain, double* min, double* max);
 
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
