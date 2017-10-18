@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <array>
+#include <memory>
 
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleIterator.h"
