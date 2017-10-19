@@ -58,7 +58,7 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 		_color_type(MMPLD_COLOR_NONE)
 {
 	if (0 == _writeFrequency) {
-		mardyn_exit(-1);
+		Simulation::exit(-1);
 	}
 }
 

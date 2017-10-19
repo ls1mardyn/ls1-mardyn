@@ -29,7 +29,7 @@ void ParticleDataRMM::getMPIType(MPI_Datatype &sendPartType) {
 		types[1] = MPI_REAL;
 	} else {
 		global_log->error() << "invalid size of vcp_real_calc";
-		mardyn_exit(4852);
+		Simulation::exit(4852);
 	}
 
 	//if the following statement is not true, then the 6 double values do not follow one after the other.

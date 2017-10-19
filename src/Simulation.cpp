@@ -697,7 +697,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	} catch (const std::exception& e) {
 		global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
 		global_log->error() << "Exception: " << e.what() << std::endl;
-		mardyn_exit(7);
+		Simulation::exit(7);
 	}
 
 #ifdef ENABLE_MPI
