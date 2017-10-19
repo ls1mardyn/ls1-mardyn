@@ -518,9 +518,13 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 
 unsigned long LinkedCells::getNumberOfParticles() {
 	unsigned long N = 0;
-	std::vector<ParticleCell>::iterator it;
-	for (it = _cells.begin(); it != _cells.end(); ++it) {
-		N += it->getMoleculeCount();
+	unsigned long numCells = _cells.size();
+
+	#if defined(_OPENMP)
+	#pragma omp parallel for reduction(+:N)
+	#endif
+	for (unsigned long i = 0; i < numCells; ++i) {
+		N += _cells.at(i).getMoleculeCount();
 	}
 	return N;
 }
