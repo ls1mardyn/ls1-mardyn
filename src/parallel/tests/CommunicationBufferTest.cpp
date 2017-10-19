@@ -193,6 +193,10 @@ void CommunicationBufferTest::testPackSendRecvUnpack() {
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
 	}
+	Component dummyComponent(0);
+	dummyComponent.addLJcenter(0, 0, 0, 1, 1, 1, 0, false);
+	global_simulation->getEnsemble()->addComponent(dummyComponent);
+
 
 	Molecule m[5];
 	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1., 2., 3., -1., -2., -3.);

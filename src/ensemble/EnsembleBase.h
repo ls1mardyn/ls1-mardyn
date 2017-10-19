@@ -57,7 +57,10 @@ public:
 	virtual void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) = 0;
 
 	DomainBase* &domain() { return _domain; }
-	Component* getComponent(int cid) { return &_components.at(cid); }
+	Component* getComponent(int cid) {
+		mardyn_assert(cid < static_cast<int>(_components.size()));
+		return &_components.at(cid);
+	}
 	Component* getComponent(std::string name) { return getComponent(_componentnamesToIds[name]); }
 	std::vector<Component>* getComponents() { return &_components; }
 	void addComponent(Component& component) { _components.push_back(component); }
