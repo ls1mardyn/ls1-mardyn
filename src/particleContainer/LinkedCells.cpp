@@ -400,11 +400,13 @@ bool LinkedCells::addHaloParticle(Molecule& particle, bool inBoxCheckedAlready, 
 	return wasInserted;
 }
 
-int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
+void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
 	typedef vector<Molecule>::size_type mol_index_t;
 	typedef vector<ParticleCell>::size_type cell_index_t;
 
+#ifndef NDEBUG
 	int oldNumberOfParticles = getNumberOfParticles();
+#endif
 
 	const mol_index_t N = particles.size();
 
@@ -477,12 +479,14 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 
 	} // end pragma omp parallel
 
+#ifndef NDEBUG
 	int numberOfAddedParticles = getNumberOfParticles() - oldNumberOfParticles;
 	global_log->debug()<<"In LinkedCells::addParticles :"<<endl;
 	global_log->debug()<<"\t#Particles to be added = "<<particles.size()<<endl;
 	global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<endl;
+#endif
 
-	return numberOfAddedParticles;
+	return;
 }
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {

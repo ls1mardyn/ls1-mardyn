@@ -129,7 +129,7 @@ public:
 
 	bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
-	int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
+	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
 
 	//! @brief calculate the forces between the molecules.
 	//!

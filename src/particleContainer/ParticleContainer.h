@@ -126,7 +126,7 @@ public:
 
 	//! @brief adds a whole vector of particles
 	//! @param particles reference to a vector of pointers to particles
-	virtual int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
+	virtual void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
