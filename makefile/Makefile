@@ -95,6 +95,9 @@ ENABLE_FMM_FFT ?= 0
 # allow acceleration of MPI communication through overlapping communication ?
 ENABLE_OVERLAPPING ?= 0
 
+# allow acceleration of MPI communication through overlapping communication - experimental
+ENABLE_ADVANCED_OVERLAPPING ?= 0
+
 # enable internal backtracing for SIGSEGV
 SIGHANDLER ?= 0
 
@@ -194,6 +197,10 @@ endif
 
 ifeq ($(ENABLE_OVERLAPPING),1)
 CXXFLAGS += -D ENABLE_OVERLAPPING
+endif
+
+ifeq ($(ENABLE_ADVANCEd_OVERLAPPING),1)
+CXXFLAGS += -D ADVANCED_OVERLAPPING
 endif
 
 ifeq ($(PAPI),1)
