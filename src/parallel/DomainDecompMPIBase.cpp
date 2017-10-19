@@ -16,6 +16,7 @@
 #include "parallel/CollectiveCommunicationNonBlocking.h"
 
 using Log::global_log;
+using std::endl;
 
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
@@ -51,19 +52,17 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
 	setCommunicationScheme(communicationScheme);
 
-	std::string overlappingCollectives = "no";
+	bool overlappingCollectives = false;
 	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);
-
-	if (overlappingCollectives!="no"){
-		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << std::endl;
+	if(overlappingCollectives) {
+		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << endl;
 #if MPI_VERSION >= 3
 		_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
 #else
-		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << std::endl;
+		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << endl;
 #endif
-
-	}else{
-		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << std::endl;
+	} else {
+		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << endl;
 	}
 }
 
