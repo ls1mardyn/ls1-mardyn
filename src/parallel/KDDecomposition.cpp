@@ -31,7 +31,7 @@ using Log::global_log;
 
 
 KDDecomposition::KDDecomposition() :
-		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.),
+		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(), _steps(0), _frequency(1.),
 		_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
 		_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _clusteredHeterogeneouseSystems {false}, _splitBiggest(true), _forceRatio(false),
 		_splitThreshold(std::numeric_limits<int>::max()), _numParticleTypes {}, _maxPars{std::numeric_limits<int>::min()},
@@ -64,9 +64,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		coversWholeDomain[dim] = true;
 	}
 	
-	_numParticlesPerCell = new unsigned int[_numParticleTypes * _globalNumCells];
-	for (int i = 0; i < _numParticleTypes * _globalNumCells; i++)
-		_numParticlesPerCell[i] = 0;
+	_numParticlesPerCell.resize(_numParticleTypes * _globalNumCells);
 
 	// create initial decomposition
 	// ensure that enough cells for the number of procs are available
@@ -93,7 +91,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 }
 
 KDDecomposition::~KDDecomposition() {
-	delete[] _numParticlesPerCell;
 //	_decompTree->serialize(string("kddecomp.dat"));
 	if (_rank == 0) {
 		_decompTree->plotNode("kddecomp.vtu", &_processorSpeeds);
@@ -1327,7 +1324,7 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 			_numParticlesPerCell[_globalNumCells + _globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
 		}
 	}
-	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells * _numParticleTypes, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
+	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell.data(), _globalNumCells * _numParticleTypes, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
 }
 
 std::vector<int> KDDecomposition::getNeighbourRanks() {

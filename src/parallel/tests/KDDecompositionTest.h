@@ -60,14 +60,14 @@ private:
 	 * @param v the _numParticlesPerCell entry of the KDD
 	 * @param len the dimensions of the _numParticlesPerCell array of the KDD
 	 */
-	void setNumParticlesPerCell(unsigned int * v, int len[3]) const;
+	void setNumParticlesPerCell(std::vector<unsigned int> &v, int len[3]) const;
 
 	/**
 	 * set the entries to zero
 	 * @param v the _numParticlesPerCell entry of the KDD
 	 * @param total_len the total length of the _numParticlesPerCell array of the KDD
 	 */
-	void clearNumParticlesPerCell(unsigned int *v, int totalLen) const;
+	void clearNumParticlesPerCell(std::vector<unsigned int> &v, int totalLen) const;
 
 	unsigned f(double x, double y, double z, int N[3], const std::vector<double>& c) const;
 

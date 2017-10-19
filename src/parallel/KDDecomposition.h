@@ -285,7 +285,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	KDNode* _ownArea;
 
 	//! Number of particles for each cell (including halo?)
-	unsigned int* _numParticlesPerCell;
+	std::vector<unsigned int> _numParticlesPerCell;
 
 	/* TODO: This may not be equal to the number simulation steps if balanceAndExchange
 	 * is not called exactly once in every simulation step! */
