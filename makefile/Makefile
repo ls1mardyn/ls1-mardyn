@@ -262,6 +262,7 @@ help:
 	@echo "make UNIT_TESTS=$(call underline,0) | 1             			compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=$(call underline,0) | 1                    	 		compile with or without the vtk output plugin" 
 	@echo "make VECTORIZE_CODE=AOS | $(call underline,SSE) | AVX | ...		compile with vectorization support (see help_vect)"
+	@echo "make OPENMP=$(call underline,0) | 1                   			build with OpenMP support"
 	@echo "make PAPI=$(call underline,0) | 1			                   	compile with PAPI counter support"
 	@echo "make ENABLE_FMM_FFT=$(call underline,0) | 1				compile using an FFT accelerated FMM method"
 	@echo "make SIGHANDLER=$(call underline,0) | 1                                  compile with or without backtrace capability in case of SIGSEGV"
