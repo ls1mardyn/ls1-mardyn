@@ -44,7 +44,9 @@
     </ensemble>
 
     <algorithm>
-      <parallelisation type="DomainDecomposition"></parallelisation>
+      <parallelisation type="DomainDecomposition">
+	  	<overlappingCollectives>yes</overlappingCollectives> 
+	  </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
 	  <traversalSelector>slice</traversalSelector>
@@ -70,14 +72,12 @@
 		<mode>stdout</mode>
         <writefrequency>5</writefrequency>
       </outputplugin>
-	  <!--
 	  <outputplugin name="VectorizationTuner">
 	  		<mode>statistics</mode>
 	  		<minmoleculecnt>32</minmoleculecnt>
 	  		<maxmoleculecnt>32</maxmoleculecnt>
 	  		<moleculecntincreasetype>0</moleculecntincreasetype>
 	  </outputplugin>
-	  -->
 
 <!--      <outputplugin name="SysMonOutput">
         <expression>procloadavg:loadavg1</expression>

@@ -1,9 +1,9 @@
 #!/bin/bash
 #bash script for strong scaling scenario
 #submitcommand="llsubmit"
-executable="MarDyn_5612.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge"
+executable="MarDyn_5651.PAR_RELEASE_AVX-gcc-7-ibm-mpi-noflto-march-sandybridge"
 working_directory="."
-time_limit=800      #in seconds
+time_limit=1000      #in seconds
 #should be changed:
 #GENERIC_ARG_NAME
 #GENERIC_ARG_CLASS
