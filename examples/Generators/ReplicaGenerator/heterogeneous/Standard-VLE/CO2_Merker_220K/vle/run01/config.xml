@@ -119,10 +119,10 @@
           <y>2400</y>
           <z>1</z>
         </units>
+        <writefrequency>50000</writefrequency>
         <timesteps>
           <init>0</init>
           <recording>1</recording>
-          <output>50000</output>
         </timesteps>
         <outputprefix>profile</outputprefix>
         <options>
