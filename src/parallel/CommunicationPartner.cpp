@@ -358,7 +358,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	vector<int> prefixArray;
 
 	// compute how many molecules are already in of this type:
-	unsigned long numMolsAlreadyIn;
+	unsigned long numMolsAlreadyIn = 0;
 	if (haloLeaveCorr == LEAVING) {
 		numMolsAlreadyIn = _sendBuf.getNumLeaving();
 	} else if (haloLeaveCorr == HALO) {
@@ -366,7 +366,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	}
 
 	#if defined (_OPENMP)
-	#pragma omp parallel shared(threadData)
+	#pragma omp parallel shared(threadData, numMolsAlreadyIn)
 	#endif
 	{
 		const int numThreads = mardyn_get_num_threads();
