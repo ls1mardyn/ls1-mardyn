@@ -280,9 +280,9 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			static std::vector<Molecule> mols;
 			mols.resize(totalNumMols);
 
-			#if defined(_OPENMP)
-			#pragma omp for schedule(static)
-			#endif
+			/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
+			#pragma omp parallel for schedule(static)
+			#endif*/
 			for (unsigned long i = 0; i < totalNumMols; i++) {
 				Molecule m;
 				if (i < numLeaving) {
