@@ -1039,7 +1039,7 @@ void Simulation::simulate() {
 	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
 	//loopTimer->set_sync(true);
-	global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
+	//global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
 #ifdef WITH_PAPI
 	const char *papi_event_list[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" /*, "PAPI_VEC_DP", "PAPI_L2_DCM", "PAPI_L2_ICM", "PAPI_L1_ICM", "PAPI_DP_OPS", "PAPI_VEC_INS" }; */
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
