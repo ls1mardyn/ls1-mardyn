@@ -18,9 +18,9 @@
     <ensemble type="NVT">
       <temperature unit="reduced">280</temperature>
       <domain type="box">
-        <lx>263.155095</lx>
-        <ly>263.155095</ly>
-        <lz>263.155095</lz>
+        <lx>526.310190</lx>
+        <ly>526.310190</ly>
+        <lz>526.310190</lz>
       </domain>
       <components>
         <include query="/components/moleculetype">../../components_benzene.xml</include>
@@ -35,8 +35,8 @@
             </vapor>
           </files>
           <numblocks>
-            <xz>5</xz>
-            <vapor>5</vapor>
+            <xz>10</xz>
+            <vapor>10</vapor>
           </numblocks>
           <diameter>5.0</diameter>
         </generator>
@@ -46,6 +46,7 @@
       <parallelisation type="DomainDecomposition"/>
       <datastructure type="LinkedCells">
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
+		<traversalSelector>sliced</traversalSelector>
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">20.139112002</radiusLJ>
