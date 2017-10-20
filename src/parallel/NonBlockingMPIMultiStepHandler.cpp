@@ -58,19 +58,22 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 		int max_threads = omp_get_max_threads();
 		#pragma omp parallel num_threads(2)
 		{
-#pragma omp master
+			#pragma omp master
 			{
-				std::cout << "thread " << omp_get_thread_num() << " doing communication" << std::endl;
 				omp_set_num_threads(1);
+				global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 				_domainDecomposition->prepareNonBlockingStage(false, _moleculeContainer, _domain, i);
 				_domainDecomposition->finishNonBlockingStage(false, _moleculeContainer, _domain, i);
+				global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 			}
-#pragma omp single
+			#pragma omp single
 			{
-				std::cout << "thread " << omp_get_thread_num() << " doing calculation" << std::endl;
-				omp_set_num_threads(max_threads);
+				omp_set_num_threads(max_threads - 1);
+				global_simulation->timers()->start("SIMULATION_COMPUTATION");
+				global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 				_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i, stageCount);
-				std::cout << "calculation done" << std::endl;
+				global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+				global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 			}
 		}
 #endif
