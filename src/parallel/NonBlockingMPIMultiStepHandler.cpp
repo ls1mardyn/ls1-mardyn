@@ -37,12 +37,10 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 	for (unsigned int i = 0; i < static_cast<unsigned int>(stageCount); ++i) {
+#ifndef ADVANCED_OVERLAPPING
 		global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 		_domainDecomposition->prepareNonBlockingStage(false, _moleculeContainer, _domain, i);
 		global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
-
-
-#ifndef ADVANCED_OVERLAPPING
 		// Force calculation and other pair interaction related computations
 		global_log->debug() << "Traversing innermost cells" << std::endl;
 		global_simulation->timers()->start("SIMULATION_COMPUTATION");
@@ -64,6 +62,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 			{
 				std::cout << "thread " << omp_get_thread_num() << " doing communication" << std::endl;
 				omp_set_num_threads(1);
+				_domainDecomposition->prepareNonBlockingStage(false, _moleculeContainer, _domain, i);
 				_domainDecomposition->finishNonBlockingStage(false, _moleculeContainer, _domain, i);
 			}
 #pragma omp single
