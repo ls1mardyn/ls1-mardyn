@@ -45,6 +45,9 @@ TBB ?= 0
 # clang's address sanitizer 
 ADDRESS_SANITIZER ?= 0
 
+# clang's thread sanitizer 
+THREAD_SANITIZER ?= 0
+
 # select vectorization mode:
 VECTORIZE_CODE ?= SSE
 # AOS      - LegacyCellProcessor
@@ -199,7 +202,7 @@ ifeq ($(ENABLE_OVERLAPPING),1)
 CXXFLAGS += -D ENABLE_OVERLAPPING
 endif
 
-ifeq ($(ENABLE_ADVANCEd_OVERLAPPING),1)
+ifeq ($(ENABLE_ADVANCED_OVERLAPPING),1)
 CXXFLAGS += -D ADVANCED_OVERLAPPING
 endif
 
