@@ -72,7 +72,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 
 }
 
-void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
+void VectorizationTuner::finishOutput(ParticleContainer* /*particleContainer*/,
 			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 	// make a backup copy of CellBorderAndFlagManager
 	CellBorderAndFlagManager backup = ParticleCellRMM::_cellBorderAndFlagManager;
