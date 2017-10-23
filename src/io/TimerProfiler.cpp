@@ -88,20 +88,28 @@ void TimerProfiler::printTimers(string timerName, string outputPrefix){
 }
 
 void TimerProfiler::start(string timerName){
-	if (_checkTimer(timerName)){
-		getTimer(timerName)->start();
-	}
-	else{
-		_debugMessage(timerName);
+	#ifdef _OPENMP
+	#pragma omp critical
+	#endif
+	{
+		if (_checkTimer(timerName)) {
+			getTimer(timerName)->start();
+		} else {
+			_debugMessage(timerName);
+		}
 	}
 }
 
 void TimerProfiler::stop(string timerName){
-	if (_checkTimer(timerName)){
-		getTimer(timerName)->stop();
-	}
-	else{
-		_debugMessage(timerName);
+	#ifdef _OPENMP
+	#pragma omp critical
+	#endif
+	{
+		if (_checkTimer(timerName)) {
+			getTimer(timerName)->stop();
+		} else {
+			_debugMessage(timerName);
+		}
 	}
 }
 
