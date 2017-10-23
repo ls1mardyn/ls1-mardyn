@@ -66,6 +66,6 @@ echo " " >>$envfilename
 env >> $envfilename
 
 
-./../testhp.sh > $testhpfilename &
+../../testhp.sh > $testhpfilename &
 
 mpiexec -n $NumProcs ../../$executableName $inputFileName --steps 11 --final-checkpoint=0
