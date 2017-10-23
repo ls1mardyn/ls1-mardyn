@@ -3,8 +3,7 @@
 #submitcommand="llsubmit"
 executable="MarDyn_5683.PAR_RELEASE_AVX-gcc-7-ibmmpi-RMM-SINGLE"
 working_directory="."
-processes_per_node=1
-time_limit=00:30:00
+time_limit=1000      #in seconds
 #should be changed:
 #GENERIC_ARG_NAME
 #GENERIC_ARG_CLASS
@@ -14,17 +13,15 @@ time_limit=00:30:00
 #GENERIC_ARG_ISLAND_COUNT
 #GENERIC_ARG_EXECUTABLE
 
-input_file_name1node="ljfluid1node.xml"
-onenodesize=`cat $input_file_name1node | grep "<lx>" | sed "s/>/</g" | cut -d '<' -f 3`
 
-ARG_TIME=$time_limit
 ARG_EXECUTABLE=$executable
+ARG_TIME=$time_limit
 
-number_of_nodes="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 9216"
+number_of_nodes="8 16 32 64 128 256 512 1024 2048 4096 8192 9216"
 for i in $number_of_nodes
 do
 
-	ARG_NAME="mar-weak-$i-sp-50"
+	ARG_NAME="mar-strong-$i-sp-50"
 	if (("$i" <= 32))
 	then
 		ARG_CLASS="test"
@@ -50,12 +47,7 @@ do
 	ARG_NODES=$i
 	ARG_TOTAL_TASKS=$i
 	number_of_nodes=$i
-	size=`echo "" | awk "END {print $onenodesize * $i ^ (1/3) }"`
 
-	#change size of new input:
-	configname="$i-nodes.xml"
-	sed -e "s/$onenodesize/$size/g" $input_file_name1node > $configname
-	
 	#sed everything
 	#s/GENERIC_ARG_NAME/$ARG_NAME/g;
 	#s/GENERIC_ARG_NAME/$ARG_NAME/g; 
