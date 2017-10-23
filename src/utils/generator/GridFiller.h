@@ -21,7 +21,7 @@
 
 class Object;
 
-/** Lattice generator */
+/** The GridFiller returns molecules within an object placed on a lattice using a specified lattice basis. */
 class GridFiller {
 public:
 	   GridFiller() : _lattice(), _basis(), _origin{{0.0, 0.0, 0.0}}, _object(nullptr), _latticeOccupancy(1.0), _dis(0.0, 1.0), _gen(0) {}
@@ -29,8 +29,11 @@ public:
 
 	/** @brief Read in XML configuration for GridFiller and all its included objects.
 	 *
+	 * If a density is provided a cubic lattice will be used. If in this case also a lattice occupancy factor (0-1] is provided,
+	 * a finer grid will be used and only the specified fraction of points will be used. The lattice vectors will be scaled to
+	 * achieve the desired density taking the occupancy factor into account. By default the occupancy factor is 1 (use all lattice points).
+	 *
 	 * The following xml object structure is handled by this method:
-	 * @note This structure is not fixed yet and may see changes
 	 * \code{.xml}
 	   <filler type="GridFiller">
 	     <lattice><!-- ... --></lattice>
