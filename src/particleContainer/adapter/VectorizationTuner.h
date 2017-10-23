@@ -53,10 +53,11 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <parallelisation type="KDDecomposition">
+	   <parallelisation type="VectorizationTuner">
 	     <outputfilename>STRING</outputfilename>
 	     <minmoleculecnt>INTEGER</minmoleculecnt>
 	     <maxmoleculecnt>INTEGER</maxmoleculecnt>
+	     <numRepetitionsMax>INTEGER</numRepetitionsMax>
 	     <moleculecntincreasetype>INTEGER</moleculecntincreasetype>
 	   </parallelisation>
 	   \endcode
@@ -111,6 +112,8 @@ private:
 
 	/// The cutoff Radius for the LJ potential
 	double _LJCutoffRadius;
+
+	unsigned long _numRepetitionsMax;
 
 	/// The cutoff radius
 	static constexpr double _cutoffRadiusBig=5.;

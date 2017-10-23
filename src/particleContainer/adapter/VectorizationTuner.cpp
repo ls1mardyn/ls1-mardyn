@@ -31,7 +31,7 @@
 
 VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
 	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
-	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL) {
+	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _numRepetitionsMax(4000000) , _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL) {
 	vtWriter = std::unique_ptr<VTWriterI>(new VTWriter());
 }
 
@@ -60,6 +60,9 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 
 	xmlconfig.getNodeValue("maxmoleculecnt", _maxMoleculeCnt);
 	global_log->info() << "Maximal molecule count: " << _maxMoleculeCnt << std::endl;
+
+	xmlconfig.getNodeValue("numRepetitionsMax", _numRepetitionsMax);
+	global_log->info() << "Maximal number of repetitions: " << _numRepetitionsMax << std::endl;
 
 	//! @todo This is a very improper way to do this - user does not know what the int values stand for
 	int type=2;
@@ -456,7 +459,7 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	firstCell.buildSoACaches();
 	secondCell.buildSoACaches();
 
-	long long int numRepetitions = std::max(400000000u / (numMols*numMols), 50u);
+	long long int numRepetitions = std::max(_numRepetitionsMax / (numMols*numMols), 50ul);
 
 
 	//0a,0b: 0RC
