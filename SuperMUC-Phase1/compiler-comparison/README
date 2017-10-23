@@ -1,0 +1,46 @@
+todo - running on SuperMUC Phase 1, also SandyBridge
+
+
+////The following binaries should be built in this folder.
+////
+////Note: 
+////* icc-17 and icc-18 needed module load gcc/7.2.0
+////* icc-16            needed module load gcc/6.3.0
+////* icc-15            needed module load gcc/4.9.3
+////* gcc was done with        module load gcc/7.2.0
+////
+////All intel versions are compiled with -O3 -fp-model source -xCORE-AVX2.
+////
+////Testing on: Intel(R) Xeon(R) CPU E5-2680 v3 @ 2.50GHz on Hazel Hen.
+
+
+
+
+/////total 20M
+/////2.5M -rwxr-xr-x 1 upbtchip thet1286 2.4M Oct 11 18:34 mar-gcc-default-no-flto
+/////1.4M -rwxr-xr-x 1 upbtchip thet1286 1.4M Oct 11 18:34 mar-gcc-default-wi-flto
+/////2.5M -rwxr-xr-x 1 upbtchip thet1286 2.4M Oct 11 18:34 mar-gcc-marchhaswell-no-flto
+/////1.4M -rwxr-xr-x 1 upbtchip thet1286 1.4M Oct 11 18:34 mar-gcc-marchhaswell-wi-flto
+/////3.2M -rwxr-xr-x 1 upbtchip thet1286 3.2M Oct 11 18:34 mar-icc-15-0-4
+/////3.1M -rwxr-xr-x 1 upbtchip thet1286 3.1M Oct 11 18:34 mar-icc-16-0-3
+/////3.2M -rwxr-xr-x 1 upbtchip thet1286 3.2M Oct 11 18:34 mar-icc-17-0-2
+/////3.0M -rwxr-xr-x 1 upbtchip thet1286 3.0M Oct 11 18:34 mar-icc-18-0-0
+/////
+/////Currently Loaded Modulefiles:
+/////1) modules/3.2.10.6                                                         16) cray-libsci/17.09.1
+/////2) nodestat/2.2-1.0502.60539.1.31.ari                                       17) pmi/5.0.12
+/////3) sdb/1.1-1.0502.63652.4.25.ari                                            18) rca/1.0.0-2.0502.60530.1.62.ari
+/////4) alps/5.2.4-2.0502.9822.32.1.ari                                          19) atp/2.1.1
+/////5) lustre-cray_ari_s/2.5_3.0.101_0.46.1_1.0502.8871.20.1-1.0502.21481.23.2  20) PrgEnv-cray/5.2.82
+/////6) udreg/2.3.2-1.0502.10518.2.17.ari                                        21) craype-haswell
+/////7) ugni/6.0-1.0502.10863.8.29.ari                                           22) craype-hugepages16M
+/////8) gni-headers/4.0-1.0502.10859.7.8.ari                                     23) cray-mpich/7.6.3
+/////9) dmapp/7.0.1-1.0502.11080.8.76.ari                                        24) torque/4.2.10.h1
+/////10) xpmem/0.1-2.0502.64982.5.3.ari                                           25) moab/7.2.9-2014091214-96b8ec34-b9-SUSE11
+/////11) hss-llm/7.2.0                                                            26) system/ws_tools
+/////12) Base-opts/1.0.2-1.0502.60680.2.4.ari                                     27) system/hlrs-defaults
+/////13) cce/8.6.3                                                                28) gcc/7.2.0
+/////14) craype-network-aries                                                     29) intel/18.0.0.128
+/////15) craype/2.5.13
+/////
+/////
