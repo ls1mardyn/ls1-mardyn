@@ -24,7 +24,7 @@ number_of_nodes="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 9216"
 for i in $number_of_nodes
 do
 
-	ARG_NAME="mar-weak-$i-sp-35"
+	ARG_NAME="mar-weak-$i-dp-35"
 	if (("$i" <= 32))
 	then
 		ARG_CLASS="test"
