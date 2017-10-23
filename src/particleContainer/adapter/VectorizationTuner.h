@@ -47,7 +47,7 @@ public:
 
 	//documentation in OutputBase
 	void initOutput(ParticleContainer* particleContainer,
-				DomainDecompBase* domainDecomp, Domain* domain);
+				DomainDecompBase* domainDecomp, Domain* domain) override {}
 
 	/** @brief Read in XML configuration for the VectorizationTuner.
 	 *
@@ -72,7 +72,7 @@ public:
 
 	//documentation in OutputBase, does nothing.
 	void finishOutput(ParticleContainer* /*particleContainer*/,
-			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) override {}
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) override;
 
 	//documentation in OutputBase.
 	std::string getPluginName() override {
