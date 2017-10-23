@@ -41,7 +41,10 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 			for (auto molecule = begin; molecule != end; ++molecule) {
 				numMolecules_private[molecule->componentid()]++;
 			}
+
+			#if defined(_OPENMP)
 			#pragma omp critical
+			#endif
 			{
 				for (unsigned int i = 0; i < numMolecules.size(); i++) {
 					numMolecules[i] += numMolecules_private[i];
