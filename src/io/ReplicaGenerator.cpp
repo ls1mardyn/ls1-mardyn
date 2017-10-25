@@ -100,50 +100,32 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain)
 	}
 }
 
-void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain)
-{
-	// Open file
-	std::ifstream ifs;
+void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain) {
 	global_log->info() << "Opening phase space file " << subDomain.strFilePathData << endl;
-	ifs.open(subDomain.strFilePathData.c_str(),
-			ios::binary | ios::in);
+	std::ifstream ifs;
+	ifs.open(subDomain.strFilePathData.c_str(), ios::binary | ios::in);
 	if (!ifs.is_open()) {
 		global_log->error() << "Could not open phaseSpaceFile " << subDomain.strFilePathData << endl;
 		Simulation::exit(1);
 	}
+
 	global_log->info() << "Reading phase space file " << subDomain.strFilePathData << endl;
 
 	vector<Component>& components = *(_simulation.getEnsemble()->getComponents());
-	unsigned int numComponents = components.size();
-	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 
 	// Select appropriate reader
 	switch (_nMoleculeFormat) {
-	case ICRVQD:
-		_moleculeDataReader = new MoleculeDataReaderICRVQD();
-		break;
-	case ICRV:
-		_moleculeDataReader = new MoleculeDataReaderICRV();
-		break;
-	case IRV:
-		_moleculeDataReader = new MoleculeDataReaderIRV();
-		break;
+		case ICRVQD: _moleculeDataReader = new MoleculeDataReaderICRVQD(); break;
+		case ICRV: _moleculeDataReader = new MoleculeDataReaderICRV(); break;
+		case IRV: _moleculeDataReader = new MoleculeDataReaderIRV(); break;
 	}
 
-	for (uint64_t pi=0; pi<subDomain.numParticles; pi++)
-	{
+	for (uint64_t pi=0; pi<subDomain.numParticles; pi++) {
 		Molecule mol;
 		_moleculeDataReader->read(ifs, mol, components);
 		subDomain.vecParticles.push_back(mol);
-
-		// Print status message
-		unsigned long iph = subDomain.numParticles / 100;
-		if (iph != 0 && (pi % iph) == 0)
-			global_log->info() << "Finished reading molecules: " << pi / iph
-					<< "%\r" << std::flush;
 	}
 
-	global_log->info() << "Finished reading molecules: 100%" << endl;
 	global_log->info() << "Reading Molecules done" << endl;
 }
 
@@ -153,14 +135,13 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 	_nSystemType = ST_UNKNOWN;
 	std::string strType = "unknown";
 	xmlconfig.getNodeValue("type", strType);
-	if("homogeneous" == strType)
+	if("homogeneous" == strType) {
 		_nSystemType = ST_HOMOGENEOUS;
-	else if ("heterogeneous_VLV" == strType)
+	} else if ("heterogeneous_VLV" == strType) {
 		_nSystemType = ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR;
-	else if ("heterogeneous_LV" == strType)
+	} else if ("heterogeneous_LV" == strType) {
 		_nSystemType = ST_HETEROGENEOUS_LIQUID_VAPOR;
-	else
-	{
+	} else {
 		global_log->error() << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << std::endl;
 		Simulation::exit(-1);
 	}
