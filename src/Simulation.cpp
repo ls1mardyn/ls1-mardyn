@@ -761,29 +761,6 @@ void Simulation::prepare_start() {
 
 	global_log->info() << "Initialising cell processor" << endl;
 #if ENABLE_VECTORIZED_CODE
-	global_log->debug() << "Checking if vectorized cell processor can be used" << endl;
-	bool lj_present = false;
-	bool charge_present = false;
-	bool dipole_present = false;
-	bool quadrupole_present = false;
-
-	const vector<Component> components = *(getEnsemble()->getComponents());
-	for (size_t i = 0; i < components.size(); i++) {
-		lj_present |= (components[i].numLJcenters() != 0);
-		charge_present |= (components[i].numCharges() != 0);
-		dipole_present |= (components[i].numDipoles() != 0);
-		quadrupole_present |= (components[i].numQuadrupoles() != 0);
-	}
-	global_log->debug() << "xx lj present: " << lj_present << endl;
-	global_log->debug() << "xx charge present: " << charge_present << endl;
-	global_log->debug() << "xx dipole present: " << dipole_present << endl;
-	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
-
-	/*if(this->_lmu.size() > 0) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	}
-	else*/
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 	if(_virialRequired) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
@@ -798,11 +775,11 @@ void Simulation::prepare_start() {
 #else
 	global_log->info() << "Using reduced memory mode (RMM) cell processor." << endl;
 	_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
-#endif /* ENABLE_REDUCED_MEMORY_MODE */
+#endif // ENABLE_REDUCED_MEMORY_MODE
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-#endif
+#endif // ENABLE_VECTORIZED_CODE
 
 	if (_FMM != NULL) {
 
