@@ -302,7 +302,7 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	unsigned long nummolecules;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 	string ntypestring("ICRVQD");
-	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
+	enum class Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = Ndatatype::ICRVQD;
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
@@ -337,10 +337,10 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
 		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
 
-		if (ntypestring == "ICRVQDV") ntype = ICRVQDV;
-		else if (ntypestring == "ICRVQD") ntype = ICRVQD;
-		else if (ntypestring == "ICRV") ntype = ICRV;
-		else if (ntypestring == "IRV")  ntype = IRV;
+		if (ntypestring == "ICRVQDV") ntype = Ndatatype::ICRVQDV;
+		else if (ntypestring == "ICRVQD") ntype = Ndatatype::ICRVQD;
+		else if (ntypestring == "ICRV") ntype = Ndatatype::ICRV;
+		else if (ntypestring == "IRV")  ntype = Ndatatype::IRV;
 		else {
 			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
 			Simulation::exit(1);
@@ -349,7 +349,6 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 		_phaseSpaceFileStream.seekg(spos);
 	}
 	global_log->info() << " molecule format: " << ntypestring << endl;
-	
 	if( numcomponents < 1 ) {
 		global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
 		numcomponents = 1;
@@ -377,7 +376,7 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
 	unsigned long id;
-	unsigned int componentid;
+	unsigned int componentid = std::numeric_limits<unsigned int>::max();
 
 	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
 	q0=1.;
@@ -388,18 +387,18 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif	
 			switch ( ntype ) {
-				case ICRVQDV:
+				case Ndatatype::ICRVQDV:
 					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
 						>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Vix >> Viy >> Viz;
 					break;
-				case ICRVQD:
+				case Ndatatype::ICRVQD:
 					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
 						>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
 					break;
-				case ICRV :
+				case Ndatatype::ICRV :
 					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
 					break;
-				case IRV :
+				case Ndatatype::IRV :
 					_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
 					break;
 			}
