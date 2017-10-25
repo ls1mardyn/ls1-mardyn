@@ -5,7 +5,7 @@
 
 #include "io/InputBase.h"
 
-class GridFiller;
+class ObjectFillerBase;
 class Object;
 class VelocityAssignerBase;
 class MoleculeIdPool;
@@ -34,7 +34,7 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	void setFiller(std::shared_ptr<GridFiller> filler) { _filler = filler; }
+	void setFiller(std::shared_ptr<ObjectFillerBase> filler) { _filler = filler; }
 	void setObject(std::shared_ptr<Object> object) { _object = object; }
 	void setVelocityAssigner(std::shared_ptr<VelocityAssignerBase> vAssigner) { _velocityAssigner = vAssigner; }
 	void setMoleculeIDPool(std::shared_ptr<MoleculeIdPool> moleculeIdPool) { _moleculeIdPool = moleculeIdPool; }
@@ -44,7 +44,7 @@ public:
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
 private:
-	std::shared_ptr<GridFiller> _filler;
+	std::shared_ptr<ObjectFillerBase> _filler;
 	std::shared_ptr<Object> _object;
 	std::shared_ptr<VelocityAssignerBase> _velocityAssigner;
 	std::shared_ptr<MoleculeIdPool> _moleculeIdPool;

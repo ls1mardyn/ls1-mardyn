@@ -7,7 +7,8 @@
 #include "molecules/Molecule.h"
 #include "molecules/MoleculeIdPool.h"
 #include "parallel/DomainDecompBase.h"
-#include "utils/generator/GridFiller.h"
+#include "utils/generator/ObjectFillerBase.h"
+#include "utils/generator/ObjectFillerFactory.h"
 #include "utils/generator/ObjectFactory.h"
 #include "utils/generator/EqualVelocityAssigner.h"
 #include "utils/generator/MaxwellVelocityAssigner.h"
@@ -21,21 +22,27 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		std::string fillerType;
 		xmlconfig.getNodeValue("@type", fillerType);
 		global_log->debug() << "Filler type: " << fillerType << endl;
-		_filler = std::make_shared<GridFiller>();
+		ObjectFillerFactory objectFillerFactory;
+		_filler = std::shared_ptr<ObjectFillerBase>(objectFillerFactory.create(fillerType));
+		if(_filler == nullptr) {
+			global_log->error() << "Object Filler could not be created" << endl;
+			Simulation::exit(1);
+		}
+		global_log->debug() << "Using object filler of type: " << _filler->getPluginName() << endl;
 		_filler->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
 
 	if(xmlconfig.changecurrentnode("object")) {
-		std::string object_type;
-		xmlconfig.getNodeValue("@type", object_type);
-		ObjectFactory object_factory;
-		global_log->debug() << "Obj name: " << object_type << endl;
-		_object = std::shared_ptr<Object>(object_factory.create(object_type));
+		std::string objectType;
+		xmlconfig.getNodeValue("@type", objectType);
+		global_log->debug() << "Obj name: " << objectType << endl;
+		ObjectFactory objectFactory;
+		_object = std::shared_ptr<Object>(objectFactory.create(objectType));
 		if(_object == nullptr) {
-			global_log->error() << "Unknown object type: " << object_type << endl;
+			global_log->error() << "Unknown object type: " << objectType << endl;
 		}
-		global_log->debug() << "Created object of type: " << _object->getName() << endl;
+		global_log->debug() << "Created object of type: " << _object->getPluginName() << endl;
 		_object->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}

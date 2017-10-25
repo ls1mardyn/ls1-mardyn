@@ -16,13 +16,11 @@
 
 #include "Basis.h"
 #include "Lattice.h"
-#include "Objects.h"
-#include "molecules/Molecule.h"
+#include "utils/generator/ObjectFillerBase.h"
 
-class Object;
 
 /** The GridFiller returns molecules within an object placed on a lattice using a specified lattice basis. */
-class GridFiller {
+class GridFiller : public ObjectFillerBase {
 public:
 	   GridFiller() : _lattice(), _basis(), _origin{{0.0, 0.0, 0.0}}, _object(nullptr), _latticeOccupancy(1.0), _dis(0.0, 1.0), _gen(0) {}
 	   ~GridFiller(){}
@@ -66,6 +64,9 @@ public:
 	 * @return     0 if no more molecules can be returned
 	 */
 	int getMolecule(Molecule *molecule);
+
+	std::string getPluginName() { return std::string("GridFiller"); }
+	static ObjectFillerBase* createInstance() { return new GridFiller(); }
 
 private:
 	Lattice _lattice;
