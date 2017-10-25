@@ -11,6 +11,7 @@
 
 #include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
+#include "parallel/ParticleData.h"
 #include "parallel/DomainDecomposition.h"
 #endif
 #include "ensemble/EnsembleBase.h"
@@ -100,7 +101,10 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain)
 	}
 }
 
-void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain) {
+void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDecompBase* domainDecomp) {
+#ifdef ENABLE_MPI
+	if(domainDecomp->getRank() == 0) {
+#endif
 	global_log->info() << "Opening phase space file " << subDomain.strFilePathData << endl;
 	std::ifstream ifs;
 	ifs.open(subDomain.strFilePathData.c_str(), ios::binary | ios::in);
@@ -125,12 +129,51 @@ void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain) {
 		_moleculeDataReader->read(ifs, mol, components);
 		subDomain.vecParticles.push_back(mol);
 	}
+#ifdef ENABLE_MPI
+	}
+#endif
 
+	/* distribute molecules to other MPI processes */
+#ifdef ENABLE_MPI
+	unsigned long num_particles = subDomain.vecParticles.size();
+	MPI_CHECK( MPI_Bcast(&num_particles, 1, MPI_UNSIGNED_LONG, 0, domainDecomp->getCommunicator()) );
+
+#define PARTICLE_BUFFER_SIZE  (16*1024)
+	ParticleData particle_buff[PARTICLE_BUFFER_SIZE];
+	int particle_buff_pos = 0;
+	MPI_Datatype mpi_Particle;
+	ParticleData::getMPIType(mpi_Particle);
+
+	if(domainDecomp->getRank() == 0) {
+		for(unsigned long i = 0; i < num_particles; ++i) {
+			ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], subDomain.vecParticles[i]);
+			particle_buff_pos++;
+			if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == num_particles - 1)) {
+				global_log->debug() << "broadcasting(sending) particles" << endl;
+				MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, domainDecomp->getCommunicator());
+				particle_buff_pos = 0;
+			}
+		}
+	} else {
+		for(unsigned long i = 0; i < num_particles; ++i) {
+			if(i % PARTICLE_BUFFER_SIZE == 0) {
+				global_log->debug() << "broadcasting(receiving) particles" << endl;
+				MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, domainDecomp->getCommunicator());
+				particle_buff_pos = 0;
+			}
+			Molecule m;
+			ParticleData::ParticleDataToMolecule(particle_buff[particle_buff_pos], m);
+			particle_buff_pos++;
+			subDomain.vecParticles.push_back(m);
+		}
+	}
+	global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
+#endif
 	global_log->info() << "Reading Molecules done" << endl;
 }
 
 void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
-	global_log->debug() << "Reading config for ReplicaGenerator" << std::endl;
+	global_log->debug() << "Reading config for ReplicaGenerator" << endl;
 
 	_nSystemType = ST_UNKNOWN;
 	std::string strType = "unknown";
@@ -142,7 +185,7 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 	} else if ("heterogeneous_LV" == strType) {
 		_nSystemType = ST_HETEROGENEOUS_LIQUID_VAPOR;
 	} else {
-		global_log->error() << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << std::endl;
+		global_log->error() << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << endl;
 		Simulation::exit(-1);
 	}
 
@@ -244,7 +287,7 @@ void ReplicaGenerator::init()
 	for(auto&& sd : _vecSubDomains)
 	{
 		this->readReplicaPhaseSpaceHeader(sd);
-		this->readReplicaPhaseSpaceData(sd);
+		this->readReplicaPhaseSpaceData(sd, domainDecomp);
 	}
 
 	// total number of particles

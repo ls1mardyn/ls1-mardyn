@@ -59,7 +59,7 @@ public:
 private:
 	void init();
 	void readReplicaPhaseSpaceHeader(SubDomain& subDomain);
-	void readReplicaPhaseSpaceData(SubDomain& subDomain);
+	void readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDecompBase* domainDecomp);
 
 private:
 	std::vector<SubDomain> _vecSubDomains;
