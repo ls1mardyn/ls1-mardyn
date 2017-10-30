@@ -55,7 +55,7 @@ do
 	do
 		echo "scheme: $iScheme"
 		inputFileName=GENERIC_ARG_NODES-nodes-$iSize-$iScheme.xml
-		outputFileName="output-of-jobs-GENERIC_ARG_NODES-nodes/out-$iSize-$iScheme.txt"
+		outputFileName="output-of-jobs-GENERIC_ARG_NODES-nodes/out-$NumProcs-$iSize-$iScheme.txt"
 		mpiexec -n $NumProcs ../../$executableName $inputFileName --steps 11 --final-checkpoint=0 >$outputFileName
 	done
 done

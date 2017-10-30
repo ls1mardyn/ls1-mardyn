@@ -3,7 +3,7 @@ numNodes=$1
 # Step 3: generate jobscripts hybrid MPI x OpenMP variation of number of MPI ranks
 echo "script $0 generating input file for $1 nodes."
 
-time_limit=00:30:00
+time_limit=00:59:00
 ARG_TIME=$time_limit
 numNodes=$1
 ARG_NODES=$numNodes
@@ -33,11 +33,10 @@ fi
 
 for ((iMPI=1; iMPI <= 32; iMPI *= 2)) ; 
 do
-	if (("$iMPI" < 32))
-	then
-		ARG_EXECUTABLE="MarDyn_5683.PAR_RELEASE_AVX-gcc-7-ibmmpi-RMM-SINGLE"
-	else
+	if (("$iMPI" == 32)); then
 		ARG_EXECUTABLE="MarDyn_5683.PAR_RELEASE_AVX-gcc-7-ibmmpi-RMM-SINGLE-no-openmp"
+	else
+		ARG_EXECUTABLE="MarDyn_5683.PAR_RELEASE_AVX-gcc-7-ibmmpi-RMM-SINGLE"
 	fi
 	ARG_TOTAL_TASKS=$((numNodes * iMPI))
 	ARG_NAME="mar-h-$numNodes-$iMPI-sp-35"
