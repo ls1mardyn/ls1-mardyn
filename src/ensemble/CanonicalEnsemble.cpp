@@ -109,7 +109,9 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 				E_trans_priv[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
 				E_rot_priv[cid] += E_rot_loc;  // 2*k_{B} * E_{rot}
 			}
+			#if defined(_OPENMP)
 			#pragma omp critical
+			#endif
 			{
 				for (unsigned int i = 0; i < E_trans_priv.size(); i++) {
 					E_trans[i] += E_trans_priv[i];
