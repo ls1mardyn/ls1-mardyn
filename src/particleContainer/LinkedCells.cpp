@@ -207,8 +207,16 @@ void LinkedCells::update() {
 	update_via_copies();
 #else
 //	update_via_coloring();
-	if (_traversalTuner->getSelectedTraversal() == TraversalTuner<ParticleCell>::traversalNames::SLICED) {
-		update_via_sliced_traversal();
+	std::array<long unsigned, 3> dims = {
+		static_cast<long unsigned>(_cellsPerDimension[0]),
+		static_cast<long unsigned>(_cellsPerDimension[1]),
+		static_cast<long unsigned>(_cellsPerDimension[2])
+	};
+	if (_traversalTuner->isTraversalApplicable(TraversalTuner<ParticleCell>::traversalNames::SLICED, dims)) {
+		if (_resortCellProcessorSliced == nullptr) {
+			_resortCellProcessorSliced = new ResortCellProcessorSliced(this);
+		}
+		_traversalTuner->traverseCellPairs(TraversalTuner<ParticleCell>::traversalNames::SLICED, *_resortCellProcessorSliced);
 	} else {
 		update_via_traversal();
 	}

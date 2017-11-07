@@ -40,15 +40,22 @@ public:
 
 	void traverseCellPairs(CellProcessor &cellProcessor);
 
+	void traverseCellPairs(traversalNames name, CellProcessor &cellProcessor);
+
 	void traverseCellPairsOuter(CellProcessor &cellProcessor);
 
 	void traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage, unsigned stageCount);
+
+	bool isTraversalApplicable(traversalNames name, const std::array<unsigned long, 3> &dims) const;
 
 	traversalNames getSelectedTraversal() const {
 		return selectedTraversal;
 	}
 
 private:
+	std::vector<CellTemplate>* _cells;
+	std::array<unsigned long, 3> _dims;
+
 	traversalNames selectedTraversal;
 
 	std::vector<std::pair<CellPairTraversals<CellTemplate> *, CellPairTraversalData *> > _traversals;
@@ -57,7 +64,7 @@ private:
 };
 
 template<class CellTemplate>
-TraversalTuner<CellTemplate>::TraversalTuner() : _optimalTravesal(nullptr) {
+TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _optimalTravesal(nullptr) {
 	// defaults:
 	selectedTraversal = {
 			mardyn_get_max_threads() > 1 ? C08 : SLICED
@@ -210,6 +217,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 										   const std::array<unsigned long, 3> &dims) {
+	_cells = &cells;
+	_dims = dims;
 
 	for (auto &tPair : _traversals) {
 		// decide whether to initialize or rebuild
@@ -246,6 +255,25 @@ void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcesso
 }
 
 template<class CellTemplate>
+inline void TraversalTuner<CellTemplate>::traverseCellPairs(traversalNames name,
+		CellProcessor& cellProcessor) {
+	if (name == getSelectedTraversal()) {
+		traverseCellPairs(cellProcessor);
+	} else {
+		SlicedCellPairTraversal<CellTemplate> slicedTraversal(*_cells, _dims);
+		switch(name) {
+		case SLICED:
+			slicedTraversal.traverseCellPairs(cellProcessor);
+			break;
+		default:
+			Log::global_log->error()<< "Calling traverseCellPairs(traversalName, CellProcessor&) for something else than the Sliced Traversal is disabled for now. Aborting." << std::endl;
+			mardyn_exit(1);
+			break;
+		}
+	}
+}
+
+template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairsOuter(CellProcessor &cellProcessor) {
 	if (_optimalTravesal == nullptr)
 		findOptimalTraversal();
@@ -260,5 +288,29 @@ void TraversalTuner<CellTemplate>::traverseCellPairsInner(CellProcessor &cellPro
 	_optimalTravesal->traverseCellPairsInner(cellProcessor, stage, stageCount);
 }
 
+template<class CellTemplate>
+inline bool TraversalTuner<CellTemplate>::isTraversalApplicable(
+		traversalNames name, const std::array<unsigned long, 3> &dims) const {
+	bool ret = true;
+	switch(name) {
+	case SLICED:
+		ret = SlicedCellPairTraversal<CellTemplate>::isApplicable(dims);
+		break;
+	case QSCHED:
+#ifdef QUICKSCHED
+		ret = true;
+#else
+		ret = false;
+#endif
+		break;
+	case C08:
+		ret = true;
+		break;
+	case ORIGINAL:
+		ret = true;
+		break;
+	}
+	return ret;
+}
 
 #endif //TRAVERSALTUNER_H_
