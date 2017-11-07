@@ -189,7 +189,10 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 	using std::array;
 
 	// Note: in the following we quasi-reimplement an OpenMP for-loop parallelisation with static scheduling
-	mardyn_assert(isApplicable(start, end));
+	if (not isApplicable(start, end) ) {
+		Log::global_log->error() << "The SlicedCellPairTraversal is not applicable. Aborting." << std::endl;
+		mardyn_exit(1);
+	}
 
 	array<unsigned long, 3> diff;
 
