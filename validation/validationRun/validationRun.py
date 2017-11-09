@@ -41,7 +41,7 @@ baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 # shortopts: if they have an argument, then add : after shortcut
-options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:',
+options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:A',
                             ['mpicmd=',
                              'mpi=',
                              'newMarDyn=',
@@ -56,11 +56,13 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:',
                              'remoteprefix=',
                              'baseIsLocal',
                              'baseRemote=',
-                             'additionalFile='
+                             'additionalFile=',
+                             'allMPI'
                              ])
 nonDefaultPlugins = False
 baseIsLocal = False
 
+allMPI = False
 MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
 print options
 baseRemote=""
@@ -105,6 +107,8 @@ for opt, arg in options:
         baseRemote = arg
     elif opt in ('-a', '--additionalFile'):
         additionalFilenames.append(arg)
+    elif opt in ('-A', '--allMPI'):
+        allMPI = True
     else:
         print "unknown option: " + opt
         exit(1)
@@ -264,10 +268,19 @@ def doRun(directory, MardynExe):
             exit(1)
         command = "cd " + remotedirectory + " && pwd && "
         cmd.extend(['ssh', localRemote, command])
-        
-    if PAR and (directory == 'new' or not baseisnormal):
+    
+    if allMPI:
         cmd.extend(split(MPI_START))
-        cmd.extend(['-n', str(mpi)])
+        if directory == 'new' or not baseisnormal:
+            cmd.extend(['-n', str(mpi)])
+        else:
+            cmd.extend(['-n', 1])
+    else:    
+        if PAR and (directory == 'new' or not baseisnormal):
+            cmd.extend(split(MPI_START))
+            cmd.extend(['-n', str(mpi)])
+        
+        
     cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations]); 
     #cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]); 
     print cmd
