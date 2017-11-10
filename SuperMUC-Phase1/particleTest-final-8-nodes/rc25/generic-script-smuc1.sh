@@ -2,7 +2,7 @@
 #@ job_type = parallel
 #@ energy_policy_tag = tchipev00
 #@ minimize_time_to_solution = yes
-#@ initialdir=/home/hpc/pr48te/di56giq5/svn/WR_2017/SuperMUC-Phase1/particleTest-final-8-nodes
+#@ initialdir=/home/hpc/pr48te/di56giq5/svn/WR_2017/SuperMUC-Phase1/particleTest-final-8-nodes/rc25
 #@ job_name = GENERIC_ARG_NAME
 #@ class = GENERIC_ARG_CLASS
 #@ node_usage = not_shared
