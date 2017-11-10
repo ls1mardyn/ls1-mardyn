@@ -46,16 +46,20 @@ export MP_SINGLE_THREAD=no
 export MP_USE_BULK_XFER=no
 
 # for loop over system sizes
-for ((iSize=1; iSize <= 4096; iSize *= 2)) ; 
+for ((iRepe=0; iRepe <= 4; iRepe +=1)) ; 
 do
-	echo "system size: $iSize"
-	#for loop over schemes
-	schemes="slice c08"
-	for iScheme in $schemes ;
+	echo "repetition $iRepe"
+	for ((iSize=4096; iSize >= 1; iSize /= 2)) ;
 	do
-		echo "scheme: $iScheme"
-		inputFileName=GENERIC_ARG_NODES-nodes-$iSize-$iScheme.xml
-		outputFileName="output-of-jobs-GENERIC_ARG_NODES-nodes/out-$NumProcs-$iSize-$iScheme.txt"
-		mpiexec -n $NumProcs ../../$executableName $inputFileName --steps 11 --final-checkpoint=0 >$outputFileName
+		echo "system size: $iSize"
+		#for loop over schemes
+		schemes="slice c08"
+		for iScheme in $schemes ;
+		do
+			echo "scheme: $iScheme"
+			inputFileName=GENERIC_ARG_NODES-nodes-$iSize-$iScheme.xml
+			outputFileName="output-of-jobs-GENERIC_ARG_NODES-nodes/out-$NumProcs-$iSize-$iScheme-$iRepe.txt"
+			mpiexec -n $NumProcs ../../$executableName $inputFileName --steps 11 --final-checkpoint=0 >$outputFileName
+		done
 	done
 done
