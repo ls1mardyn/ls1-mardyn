@@ -41,7 +41,7 @@ baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 # shortopts: if they have an argument, then add : after shortcut
-options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:AS',
+options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:LB:a:AS',
                             ['mpicmd=',
                              'mpi=',
                              'newMarDyn=',
