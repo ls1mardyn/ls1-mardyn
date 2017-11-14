@@ -41,7 +41,7 @@ baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 # shortopts: if they have an argument, then add : after shortcut
-options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:A',
+options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:AS',
                             ['mpicmd=',
                              'mpi=',
                              'newMarDyn=',
@@ -57,7 +57,8 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:B:a:A',
                              'baseIsLocal',
                              'baseRemote=',
                              'additionalFile=',
-                             'allMPI'
+                             'allMPI',
+                             'srunFix'
                              ])
 nonDefaultPlugins = False
 baseIsLocal = False
@@ -109,6 +110,8 @@ for opt, arg in options:
         additionalFilenames.append(arg)
     elif opt in ('-A', '--allMPI'):
         allMPI = True
+    elif opt in ('-S', '--srunFix'):
+        os.environ["I_MPI_PMI_LIBRARY"] = "/usr/lib64/libpmi.so"
     else:
         print "unknown option: " + opt
         exit(1)
