@@ -274,7 +274,7 @@ def doRun(directory, MardynExe):
         if directory == 'new' or not baseisnormal:
             cmd.extend(['-n', str(mpi)])
         else:
-            cmd.extend(['-n', 1])
+            cmd.extend(['-n', '1'])
     else:    
         if PAR and (directory == 'new' or not baseisnormal):
             cmd.extend(split(MPI_START))
