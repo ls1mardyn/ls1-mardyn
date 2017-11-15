@@ -1087,25 +1087,25 @@ void Domain::evaluateRho(
 		(this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]);
 }
 
-void Domain::setTargetTemperature(int thermostat, double targetT)
+void Domain::setTargetTemperature(int thermostatID, double targetT)
 {
-	if(thermostat < 0)
+	if(thermostatID < 0)
 	{
-		global_log->warning() << "Warning: thermostat \'" << thermostat << "\' (T = "
+		global_log->warning() << "Warning: thermostat \'" << thermostatID << "\' (T = "
 			<< targetT << ") will be ignored." << endl;
 		return;
 	}
 
-	this->_universalTargetTemperature[thermostat] = targetT;
-	if(!(this->_universalUndirectedThermostat[thermostat] == true))
-		this->_universalUndirectedThermostat[thermostat] = false;
+	this->_universalTargetTemperature[thermostatID] = targetT;
+	if(!(this->_universalUndirectedThermostat[thermostatID] == true))
+		this->_universalUndirectedThermostat[thermostatID] = false;
 
 	/* FIXME: Substantial change in program behavior! */
-	if(thermostat == 0) {
+	if(thermostatID == 0) {
 		global_log->warning() << "Disabling the component wise thermostat!" << endl;
 		disableComponentwiseThermostat();
 	}
-	if(thermostat >= 1) {
+	if(thermostatID >= 1) {
 		if( ! _componentwiseThermostat ) {
 			/* FIXME: Substantial change in program behavior! */
 			global_log->warning() << "Enabling the component wise thermostat!" << endl;
@@ -1145,12 +1145,6 @@ void Domain::enableUndirectedThermostat(int tst)
 		this->_universalThermostatDirectedVelocity[d][tst] = 0.0;
 		this->_localThermostatDirectedVelocity[d][tst] = 0.0;
 	}
-}
-
-void Domain::setGlobalTemperature(double temp)
-{
-	this->disableComponentwiseThermostat();
-	this->_universalTargetTemperature[0] = temp;
 }
 
 vector<double> & Domain::getmixcoeff() { return _mixcoeff; }

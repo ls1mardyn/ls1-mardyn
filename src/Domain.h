@@ -168,13 +168,13 @@ public:
 	void setGlobalLength(int index, double length);
 
 	//! @brief get the global temperature for the whole system (i.e. thermostat ID 0)
-	double getGlobalCurrentTemperature() { return this->getCurrentTemperature(0); }
-	double getCurrentTemperature(int thermostat) { return this->_globalTemperatureMap[thermostat]; }
-	double getTargetTemperature(int thermostat) { return this->_universalTargetTemperature[thermostat]; }
+	double getGlobalCurrentTemperature() { return getCurrentTemperature(0); }
+	double getCurrentTemperature(int thermostatID) { return _globalTemperatureMap[thermostatID]; }
+	double getTargetTemperature(int thermostatID) { return _universalTargetTemperature[thermostatID]; }
 
 	//! @brief set the global temperature
-	void setGlobalTemperature(double T);
-	void setTargetTemperature(int thermostat, double T);
+	void setGlobalTemperature(double T) { setTargetTemperature(0, T); }
+	void setTargetTemperature(int thermostatID, double T);
 
 	//! @brief get the mixcoeff
 	std::vector<double> & getmixcoeff();
