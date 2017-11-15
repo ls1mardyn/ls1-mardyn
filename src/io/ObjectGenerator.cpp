@@ -48,12 +48,16 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	if(xmlconfig.changecurrentnode("velocityAssigner")) {
-		std::string defaultVelocityAssignerName;
-		xmlconfig.getNodeValue("@type", defaultVelocityAssignerName);
-		if(defaultVelocityAssignerName == "EqualVelocityDistribution") {
+		std::string velocityAssignerName;
+		xmlconfig.getNodeValue("@type", velocityAssignerName);
+		global_log->info() << "Velocity assigner: " << velocityAssignerName << endl;
+		if(velocityAssignerName == "EqualVelocityDistribution") {
 			_velocityAssigner = std::make_shared<EqualVelocityAssigner>();
-		} else if(defaultVelocityAssignerName == "MaxwellVelocityDistribution") {
+		} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
 			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
+		} else {
+			global_log->error() << "Unknown velocity assigner specified." << endl;
+			Simulation::exit(1);
 		}
 		Ensemble* ensemble = _simulation.getEnsemble();
 		_velocityAssigner->setTemperature(ensemble->T());
