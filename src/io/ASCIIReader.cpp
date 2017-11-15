@@ -67,13 +67,12 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 		Simulation::exit(1);
 	}
 
-	if( strtoul(inputversion.c_str(), NULL, 0) < 20080701 ) {
+	if( std::stoi(inputversion) < 20080701 ) {
 		global_log->error() << "Input version tool old (" << inputversion << ")" << endl;
 		Simulation::exit(1);
 	}
 
 	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << endl;
-
 
 	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	bool header = true; // When the last header element is reached, "header" is set to false
