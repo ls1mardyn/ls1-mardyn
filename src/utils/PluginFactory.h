@@ -44,7 +44,7 @@ public:
 	void registerPlugin(createInstanceFunc* createInstance) {
 		T *pluginInstance = createInstance();
 		std::string pluginname = pluginInstance->getPluginName();
-		Log::global_log->info() << "Registering plugin with name " << pluginname << std::endl;
+		Log::global_log->debug() << "Registering plugin with name " << pluginname << std::endl;
 		delete pluginInstance;
 		if( _pluginFactoryMap.count(pluginname) > 0 ) {
 			Log::global_log->warning() << "Skipping already registered plugin with name " << pluginname << std::endl;
