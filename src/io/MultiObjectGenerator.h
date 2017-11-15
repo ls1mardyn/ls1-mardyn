@@ -11,7 +11,7 @@ class VelocityAssignerBase;
 
 class MultiObjectGenerator : public InputBase {
 public:
-	MultiObjectGenerator() : _defaultVelocityAssigner(nullptr) {};
+	MultiObjectGenerator() : _globalNumMolecules(0) {}
 	~MultiObjectGenerator();
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
@@ -35,7 +35,7 @@ public:
 private:
 
 	std::list<ObjectGenerator*> _generators;
-	std::shared_ptr<VelocityAssignerBase> _defaultVelocityAssigner;
+	unsigned long _globalNumMolecules;
 };
 
 #endif  // SRC_IO_MULTIOBJECTGENERATOR_H_

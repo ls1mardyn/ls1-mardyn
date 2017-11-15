@@ -37,20 +37,6 @@ void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	for( auto generatorIter = query.begin(); generatorIter; ++generatorIter ) {
 		xmlconfig.changecurrentnode(generatorIter);
 		ObjectGenerator *generator = new ObjectGenerator();
-		if(xmlconfig.changecurrentnode("velocityAssigner")) {
-			std::string defaultVelocityAssignerName;
-			xmlconfig.getNodeValue("@type", defaultVelocityAssignerName);
-			std::shared_ptr<VelocityAssignerBase> velocityAssigner;
-			if(defaultVelocityAssignerName == "EqualVelocityDistribution") {
-				velocityAssigner = std::make_shared<EqualVelocityAssigner>();
-			} else if(defaultVelocityAssignerName == "MaxwellVelocityDistribution") {
-				velocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
-			}
-			Ensemble* ensemble = _simulation.getEnsemble();
-			velocityAssigner->setTemperature(ensemble->T());
-			generator->setVelocityAssigner(velocityAssigner);
-			xmlconfig.changecurrentnode("..");
-		}
 		generator->readXML(xmlconfig);
 		_generators.push_back(generator);
 	}
@@ -63,19 +49,17 @@ long unsigned int MultiObjectGenerator::readPhaseSpace(ParticleContainer* partic
 	unsigned long numMolecules = 0;
 	std::shared_ptr<MoleculeIdPool> moleculeIdPool = std::make_shared<MoleculeIdPool>(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());
 
-	Ensemble* ensemble = _simulation.getEnsemble();
-	_defaultVelocityAssigner->setTemperature(ensemble->T());
 	for(auto generator : _generators) {
 		generator->setMoleculeIDPool(moleculeIdPool);
 		numMolecules += generator->readPhaseSpace(particleContainer, lmu, domain, domainDecomp);
 	}
 	particleContainer->updateMoleculeCaches();
-	unsigned long globalNumMolecules = numMolecules;
+	global_log->info() << "Number of locally inserted molecules: " << numMolecules << endl;
+	_globalNumMolecules = numMolecules;
 #ifdef ENABLE_MPI
-	MPI_Allreduce(MPI_IN_PLACE, &globalNumMolecules, 1, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
+	MPI_Allreduce(MPI_IN_PLACE, &_globalNumMolecules, 1, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
 #endif
-	global_log->debug() << "Number of locally inserted molecules: " << numMolecules << endl;
-	global_log->info() << "Number of inserted molecules: " << globalNumMolecules<< endl;
+	global_log->info() << "Number of globally inserted molecules: " << _globalNumMolecules<< endl;
 	//! @todo Get rid of the domain class calls at this place here...
-	return numMolecules;
+	return _globalNumMolecules;
 }
