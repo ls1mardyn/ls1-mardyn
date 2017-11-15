@@ -30,16 +30,6 @@ MultiObjectGenerator::MultiObjectGenerator::~MultiObjectGenerator() {}
 
 
 void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
-	if(xmlconfig.changecurrentnode("velocityAssigner")) {
-		std::string defaultVelocityAssignerName;
-		xmlconfig.getNodeValue("@type", defaultVelocityAssignerName);
-		if(defaultVelocityAssignerName == "EqualVelocityDistribution") {
-			_defaultVelocityAssigner = std::make_shared<EqualVelocityAssigner>();
-		} else if(defaultVelocityAssignerName == "MaxwellVelocityDistribution") {
-			_defaultVelocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
-		}
-		xmlconfig.changecurrentnode("..");
-	}
 
 	XMLfile::Query query = xmlconfig.query("objectgenerator");
 	global_log->info() << "Number of sub-objectgenerators: " << query.card() << endl;
@@ -47,7 +37,20 @@ void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	for( auto generatorIter = query.begin(); generatorIter; ++generatorIter ) {
 		xmlconfig.changecurrentnode(generatorIter);
 		ObjectGenerator *generator = new ObjectGenerator();
-		generator->setVelocityAssigner(_defaultVelocityAssigner);
+		if(xmlconfig.changecurrentnode("velocityAssigner")) {
+			std::string defaultVelocityAssignerName;
+			xmlconfig.getNodeValue("@type", defaultVelocityAssignerName);
+			std::shared_ptr<VelocityAssignerBase> velocityAssigner;
+			if(defaultVelocityAssignerName == "EqualVelocityDistribution") {
+				velocityAssigner = std::make_shared<EqualVelocityAssigner>();
+			} else if(defaultVelocityAssignerName == "MaxwellVelocityDistribution") {
+				velocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
+			}
+			Ensemble* ensemble = _simulation.getEnsemble();
+			velocityAssigner->setTemperature(ensemble->T());
+			generator->setVelocityAssigner(velocityAssigner);
+			xmlconfig.changecurrentnode("..");
+		}
 		generator->readXML(xmlconfig);
 		_generators.push_back(generator);
 	}
