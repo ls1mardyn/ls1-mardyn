@@ -141,8 +141,11 @@ int GridFiller::getMolecule(Molecule* molecule) {
 		if(_object->isInside(r)) {
 			for(int d = 0; d < 3; d++) {
 				molecule->setr(d, r[d]);
+				molecule->setv(d, molecule_base.v(d));
+				molecule->setD(d, molecule_base.D(d));
 				molecule->setComponent(molecule_base.component());
 			}
+			molecule->setq(molecule_base.q());
 			break;
 		}
 	}
