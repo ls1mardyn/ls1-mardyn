@@ -1535,12 +1535,12 @@ void Simulation::initialize() {
 
 	global_simulation = this;
 
+	delete _domainDecomposition;
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
 	_domainDecomposition = new DomainDecompBase();
 #else
 	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
-	delete _domainDecomposition;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
 
