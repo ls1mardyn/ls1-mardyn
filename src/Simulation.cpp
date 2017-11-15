@@ -704,11 +704,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 #endif
 
 	// read particle data (or generate particles, if a generator is chosen)
-	std::string phaseSpaceCreationTimerName("SIMULATION_IO_PHASESPACE_CREATION");
-	timers()->registerTimer(phaseSpaceCreationTimerName,  vector<string>{"SIMULATION_IO"}, new Timer());
-	timers()->getTimer(phaseSpaceCreationTimerName)->start();
-	timers()->getTimer(phaseSpaceCreationTimerName)->stop();
+	timers()->registerTimer("PHASESPACE_CREATION",  vector<string>{"SIMULATION_IO"}, new Timer());
+	timers()->getTimer("PHASESPACE_CREATION")->start();
 	unsigned long globalNumMolecules = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
+	timers()->getTimer("PHASESPACE_CREATION")->stop();
+
 	double rho_global = globalNumMolecules/ _ensemble->V();
 	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << endl;
 	_domain->setglobalNumMolecules(globalNumMolecules);
