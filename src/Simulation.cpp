@@ -470,7 +470,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else {
 			global_log->warning() << "Thermostats section missing." << endl;
 		}
-		
+
 		/* long range correction */
 		if(xmlconfig.changecurrentnode("longrange") )
 		{
@@ -974,9 +974,7 @@ void Simulation::prepare_start() {
 		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
 	}
 
-	global_log->info() << "System initialised\n" << endl;
-	global_log->info() << "System contains "
-			<< _domain->getglobalNumMolecules() << " molecules." << endl;
+	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
 
 	/** Init TemperatureControl beta_trans, beta_rot log-files*/
 	if(NULL != _temperatureControl)
@@ -1170,7 +1168,7 @@ void Simulation::simulate() {
 		if(_wall && _applyWallFun_LJ_10_4){
 		  _wall->calcTSLJ_10_4(_moleculeContainer, _domain);
 		}
-		
+
 		if(_mirror && _applyMirror){
 		  _mirror->VelocityChange(_moleculeContainer, _domain);
 		}
@@ -1208,7 +1206,7 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
-		
+
 		if(_simstep >= _initStatistics) {
 			map<unsigned, CavityEnsemble>::iterator ceit;
 			for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
@@ -1255,7 +1253,7 @@ void Simulation::simulate() {
 		}
 		_longRangeCorrection->calculateLongRange();
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
-		
+
 		/* radial distribution function */
 		if (_simstep >= _initStatistics) {
 			if (this->_lmu.size() == 0) {
@@ -1270,7 +1268,7 @@ void Simulation::simulate() {
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, 
 				(!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
-		
+
 		// scale velocity and angular momentum
 		if ( !_domain->NVE() && _temperatureControl == NULL) {
 			if (_thermostatType ==VELSCALE_THERMOSTAT) {
@@ -1347,8 +1345,8 @@ void Simulation::simulate() {
             _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
-		
-		
+
+
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 
@@ -1367,13 +1365,13 @@ void Simulation::simulate() {
 		*/
 		/* END PHYSICAL SECTION */
 
-		
+
 		perStepTimer.stop();
 		computationTimer->stop();
 		perStepIoTimer->start();
 
 		output(_simstep);
-		
+
 		//! TODO: this should be moved! it is definitely not I/O
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
 		  * realignment tools borrowed from Martin Horsch
@@ -1389,7 +1387,7 @@ void Simulation::simulate() {
 #endif
 #endif
 		}
-		
+
 		if( (_forced_checkpoint_time > 0) && (loopTimer->get_etime() >= _forced_checkpoint_time) ) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
@@ -1444,7 +1442,7 @@ void Simulation::output(unsigned long simstep) {
 		global_simulation->timers()->stop(output->getPluginName());
 	}
 
-	
+
 	if (_domain->thermostatWarning())
 		global_log->warning() << "Thermostat!" << endl;
 	/* TODO: thermostat */
@@ -1537,19 +1535,21 @@ void Simulation::initialize() {
 
 	delete _domainDecomposition;
 #ifndef ENABLE_MPI
-	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
+	global_log->info() << "Creating alibi domain decomposition ... " << endl;
 	_domainDecomposition = new DomainDecompBase();
 #else
-	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
+	global_log->info() << "Creating standard domain decomposition ... " << endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
 
 	_outputPrefix.append(gettimestring());
 
+	global_log->info() << "Creating PressureGradient ... " << endl;
 	_pressureGradient = new PressureGradient(ownrank);
-	global_log->info() << "Constructing domain ..." << endl;
+
+	global_log->info() << "Creating domain ..." << endl;
 	_domain = new Domain(ownrank, this->_pressureGradient);
-	global_log->info() << "Domain construction done." << endl;
+	global_log->info() << "Creating ParticlePairs2PotForceAdapter ..." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 
 	this->_mcav = map<unsigned, CavityEnsemble>();
