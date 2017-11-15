@@ -1,6 +1,8 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include <memory>
+
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "io/TimerProfiler.h"
@@ -308,7 +310,7 @@ public:
 	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
 
-	MemoryProfiler* getMemoryProfiler() {
+	std::shared_ptr<MemoryProfiler> getMemoryProfiler() {
 		return _memoryProfiler;
 	}
 
@@ -434,7 +436,7 @@ private:
 	TimerProfiler _timerProfiler;
 
 	//! used to get information about the memory consumed by the process and the overall system.
-	MemoryProfiler* _memoryProfiler;
+	std::shared_ptr<MemoryProfiler> _memoryProfiler;
 
 public:
 	//! computational time for one execution of traverseCell
@@ -453,6 +455,12 @@ public:
 
 	void enableFinalCheckpoint() { _finalCheckpoint = true; }
 	void disableFinalCheckpoint() { _finalCheckpoint = false; }
+
+	void enableMemoryProfiler() {
+		_memoryProfiler = std::make_shared<MemoryProfiler>();
+		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
+		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_domainDecomposition));
+	}
 
 	void setForcedCheckpointTime(double time) { _forced_checkpoint_time = time; }
 

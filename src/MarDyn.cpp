@@ -39,6 +39,7 @@ void initOptions(optparse::OptionParser *op) {
 	op->add_option("-n", "--steps").dest("timesteps").type("int") .metavar("NUM") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op->add_option("-p", "--outprefix").dest("outputprefix").type("string") .metavar("STR") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
 	op->add_option("-v", "--verbose").dest("verbose").type("bool") .action("store_true") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+	op->add_option("--print-meminfo").dest("print-meminfo").type("bool").action("store_true").set_default(false).help("Print memory consumtion info (default: %default)");
 	op->add_option("--logfile").dest("logfile").type("string").metavar("PREFIX").set_default("MarDyn").help("enable output to logfile using given prefix for the filename (default: %default)");
 	op->add_option("--final-checkpoint").dest("final-checkpoint").type("int").metavar("(1|0)").set_default(1).help("enable/disable final checkopint (default: %default)");
 	op->add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").metavar("TIME").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced, disable: -1. (default: %default)");
@@ -220,6 +221,10 @@ int main(int argc, char** argv) {
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
+	if(options.is_set_by_user("print-meminfo")) {
+		global_log->info() << "Enabling memory info output" << endl;
+		simulation.enableMemoryProfiler();
+	}
 	size_t lastindex = configfilename.rfind(".");
 	std::string outprefix = configfilename.substr(0, lastindex);
 	if( options.is_set_by_user("outputprefix") ) {

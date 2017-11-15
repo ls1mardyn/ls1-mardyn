@@ -141,9 +141,6 @@ Simulation::Simulation()
 	_virialRequired(false)
 {
 	_ensemble = new CanonicalEnsemble();
-	_memoryProfiler = new MemoryProfiler();
-	_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
-	_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_domainDecomposition));
 	initialize();
 }
 
@@ -176,8 +173,6 @@ Simulation::~Simulation() {
 	_temperatureControl = nullptr;
 	delete _FMM;
 	_FMM = nullptr;
-	delete _memoryProfiler;
-	_memoryProfiler = nullptr;
 	/* destruct output plugins and remove them from the output plugin list */
 	_outputPlugins.remove_if([](OutputBase *pluginPtr) {delete pluginPtr; return true;} );
 }
@@ -810,7 +805,9 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
 
-	_memoryProfiler->doOutput("without halo copies");
+	if(getMemoryProfiler()) {
+		getMemoryProfiler()->doOutput("without halo copies");
+	}
 
 	// temporary addition until MPI communication is parallelized with OpenMP
 	// we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
@@ -818,7 +815,9 @@ void Simulation::prepare_start() {
 	updateParticleContainerAndDecomposition(1.0);
 	global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 
-	_memoryProfiler->doOutput("with halo copies");
+	if(getMemoryProfiler()) {
+		getMemoryProfiler()->doOutput("with halo copies");
+	}
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	// the leapfrog integration requires that we move the velocities by one half-timestep
@@ -1028,7 +1027,9 @@ void Simulation::simulate() {
 		unsigned particleNoTest;
 #endif
 #endif
-	_memoryProfiler->doOutput();
+	if(getMemoryProfiler()) {
+		getMemoryProfiler()->doOutput();
+	}
 	output(_initSimulation);
 
 	Timer perStepTimer;
@@ -1412,7 +1413,9 @@ void Simulation::simulate() {
 	global_log->info() << "Timing information:" << endl;
 	global_simulation->timers()->printTimers();
 	global_simulation->timers()->resetTimers();
-	_memoryProfiler->doOutput();
+	if(getMemoryProfiler()) {
+		getMemoryProfiler()->doOutput();
+	}
 	global_log->info() << endl;
 
 #ifdef WITH_PAPI
