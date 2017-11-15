@@ -707,8 +707,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	std::string phaseSpaceCreationTimerName("SIMULATION_IO_PHASESPACE_CREATION");
 	timers()->registerTimer(phaseSpaceCreationTimerName,  vector<string>{"SIMULATION_IO"}, new Timer());
 	timers()->getTimer(phaseSpaceCreationTimerName)->start();
-	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
 	timers()->getTimer(phaseSpaceCreationTimerName)->stop();
+	unsigned long globalNumMolecules = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
@@ -730,7 +730,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
 				tmp_molecularMass);
 		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
-		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
+		cpit->setNextID(j + (int) (1.001 * (256 + globalNumMolecules)));
 
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
 				_moleculeContainer->getBoundingBoxMax(0),
