@@ -533,6 +533,6 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 	Ensemble* ensemble = _simulation.getEnsemble();
 	domain->setGlobalTemperature(ensemble->T());
 	domain->setglobalRho(numParticlesGlobal / ensemble->V() );
-	return 0;
+	return numParticlesGlobal;
 }
 
