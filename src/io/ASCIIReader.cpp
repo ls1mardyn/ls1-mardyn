@@ -46,15 +46,13 @@ void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 	setPhaseSpaceFile(pspfile);
 }
 
-void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep)
-{
-	string token, token2;
+void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
+	string token;
 
 	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << endl;
 	_phaseSpaceHeaderFileStream.open( _phaseSpaceHeaderFile.c_str() );
 	_phaseSpaceHeaderFileStream >> token;
-	if( token != "mardyn")
-	{
+	if( token != "mardyn") {
 		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;
 		Simulation::exit(1);
 	}
