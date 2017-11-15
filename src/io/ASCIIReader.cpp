@@ -296,7 +296,7 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	string token;
 	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	unsigned int numcomponents = dcomponents.size();
-	unsigned long nummolecules;
+	unsigned long nummolecules = 0;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 	string ntypestring("ICRVQD");
 	enum class Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = Ndatatype::ICRVQD;
@@ -318,7 +318,6 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	// TODO: Better do the following in setGlobalNumMolecules?!
 	MPI_Bcast(&nummolecules, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 #endif
-	domain->setglobalNumMolecules( nummolecules );
 	global_log->info() << " number of molecules: " << nummolecules << endl;
 
 	
@@ -329,11 +328,9 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	streampos spos = _phaseSpaceFileStream.tellg();
 	_phaseSpaceFileStream >> token;
 	if((token=="MoleculeFormat") || (token == "M")) {
-
         _phaseSpaceFileStream >> ntypestring;
 		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
 		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
-
 		if (ntypestring == "ICRVQDV") ntype = Ndatatype::ICRVQDV;
 		else if (ntypestring == "ICRVQD") ntype = Ndatatype::ICRVQD;
 		else if (ntypestring == "ICRV") ntype = Ndatatype::ICRV;
@@ -378,7 +375,7 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
 	q0=1.;
 
-	for( unsigned long i = 0; i < domain->getglobalNumMolecules(); i++ ) {
+	for( unsigned long i = 0; i < nummolecules; i++ ) {
 
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
@@ -421,7 +418,7 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 		} // Rank 0 only
 		
 		particle_buff_pos++;
-		if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == domain->getglobalNumMolecules() - 1)) {
+		if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == nummolecules - 1)) {
 			//MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
 			global_log->debug() << "broadcasting(sending/receiving) particles with buffer_position " << particle_buff_pos << std::endl;
 			MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD 
@@ -464,21 +461,9 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 			}
 		}
 #endif
-
-		// Print status message
-		unsigned long iph = domain->getglobalNumMolecules() / 100;
-		if( iph != 0 && (i % iph) == 0 )
-			global_log->info() << "Finished reading molecules: " << i/iph << "%\r" << flush;
 	}
-
-	global_log->info() << "Finished reading molecules: 100%" << endl;
 	global_log->info() << "Reading Molecules done" << endl;
 
-	// TODO: Shouldn't we always calculate this?
-	if( !domain->getglobalRho() ){
-		domain->setglobalRho( domain->getglobalNumMolecules() / domain->getGlobalVolume() );
-		global_log->info() << "Calculated Rho_global = " << domain->getglobalRho() << endl;
-	}
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
@@ -495,5 +480,7 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
 #endif
+	domain->setglobalNumMolecules( nummolecules );
+	domain->setglobalRho( domain->getglobalNumMolecules() / domain->getGlobalVolume() );
 	return maxid;
 }
