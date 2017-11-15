@@ -91,8 +91,6 @@ unsigned long ObjectGenerator::readPhaseSpace(ParticleContainer* particleContain
 	Molecule molecule;
 	while(_filler->getMolecule(&molecule) > 0) {
 		molecule.setid(_moleculeIdPool->getNewMoleculeId());
-		Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
-		molecule.setq(q);
 		if(_velocityAssigner) {
 			_velocityAssigner->assignVelocity(&molecule);
 		}
