@@ -42,7 +42,6 @@ BinaryReader::BinaryReader()
 	: _nMoleculeFormat(ICRVQD)
 {
 	// TODO Auto-generated constructor stub
-
 }
 
 BinaryReader::~BinaryReader() {}
@@ -111,9 +110,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 	// Set parameters of Domain and Simulation class
 	_simulation.setSimulationTime(dCurrentTime);
-	for( uint8_t d=0; d<3; ++d)
-	{
-		static_cast<BoxDomain*>(_simulation.getEnsemble()->domain())->setLength(d, dBoxLength[d]);
+	for( uint8_t d=0; d<3; ++d) {
 		domain->setGlobalLength(d, dBoxLength[d]);
 	}
 	domain->setglobalNumMolecules(numMolecules);
