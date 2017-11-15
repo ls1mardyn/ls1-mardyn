@@ -510,7 +510,6 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 	numParticlesGlobal = domainDecomp->collCommGetUnsLong();
 	numAddedParticlesFreespaceGlobal = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
-	domain->setglobalNumMolecules(numParticlesGlobal);
 	mardyn_assert(numParticlesGlobal == _numParticlesTotal - numAddedParticlesFreespaceGlobal);
 
 	global_log->info() << "Number of particles calculated by number of blocks  : " << setw(24) << _numParticlesTotal << endl;
@@ -530,9 +529,6 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 			<< global_simulation->timers()->getTime("REPLICA_GENERATOR_VLE_INPUT") << " sec" << std::endl;
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 
-	Ensemble* ensemble = _simulation.getEnsemble();
-	domain->setGlobalTemperature(ensemble->T());
-	domain->setglobalRho(numParticlesGlobal / ensemble->V() );
 	return numParticlesGlobal;
 }
 

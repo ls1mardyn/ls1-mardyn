@@ -74,8 +74,5 @@ long unsigned int MultiObjectGenerator::readPhaseSpace(ParticleContainer* partic
 	global_log->debug() << "Number of locally inserted molecules: " << numMolecules << endl;
 	global_log->info() << "Number of inserted molecules: " << globalNumMolecules<< endl;
 	//! @todo Get rid of the domain class calls at this place here...
-	domain->setGlobalTemperature(ensemble->T());
-	domain->setglobalNumMolecules(globalNumMolecules);
-	domain->setglobalRho(numMolecules / ensemble->V() );
 	return numMolecules;
 }
