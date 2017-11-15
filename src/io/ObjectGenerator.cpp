@@ -89,14 +89,16 @@ unsigned long ObjectGenerator::readPhaseSpace(ParticleContainer* particleContain
 	_filler->init();
 
 	Molecule molecule;
+	unsigned long moleculeID = _moleculeIdPool->getNewMoleculeId();
 	while(_filler->getMolecule(&molecule) > 0) {
-		molecule.setid(_moleculeIdPool->getNewMoleculeId());
+		molecule.setid(moleculeID);
 		if(_velocityAssigner) {
 			_velocityAssigner->assignVelocity(&molecule);
 		}
 		bool inserted = particleContainer->addParticle(molecule);
 		if(inserted){
 			numMolecules++;
+			moleculeID = _moleculeIdPool->getNewMoleculeId();
 		}
 	}
 	return numMolecules;
