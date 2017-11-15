@@ -20,13 +20,12 @@
 #include <cmath>
 
 
-void GridFiller::init(Lattice& lattice, Basis& basis, double origin[3], Object *object) {
+void GridFiller::init(Lattice& lattice, Basis& basis, double origin[3]) {
     _lattice = lattice;
     _basis = basis;
     for(int d = 0; d < 3; d++) {
         _origin[d] = origin[d];
     }
-    _object = object;
     init();
 }
 

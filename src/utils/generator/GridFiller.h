@@ -50,7 +50,7 @@ public:
 		* @param[in]  origin   The origin for the lattice
 		* @param[in]  object   Volume object to be filled
 		*/
-	void init(Lattice& lattice, Basis& basis, double origin[3], Object *object);
+	void init(Lattice& lattice, Basis& basis, double origin[3]);
 
 	/** Initialize the generator with current internal state */
 	void init();
