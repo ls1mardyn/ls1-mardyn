@@ -9,7 +9,11 @@
 #include "utils/Logger.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
+#else
+#include "parallel/DomainDecompBase.h"
+#endif
 
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
@@ -119,7 +123,11 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 void ReplicaFiller::init() {
 	ParticleContainerToBasisWrapper basisContainer;
 	std::list<ChemicalPotential> lmu;
+#ifdef ENABLE_MPI
 	DomainDecomposition domainDecomp;
+#else
+	DomainDecompBase domainDecomp;
+#endif
 	Domain domain(0, nullptr);
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
 	_inputReader->readPhaseSpace(&basisContainer, &lmu, &domain, &domainDecomp);
