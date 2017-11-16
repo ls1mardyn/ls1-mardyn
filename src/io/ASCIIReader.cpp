@@ -482,5 +482,5 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 #endif
 	domain->setglobalNumMolecules( nummolecules );
 	domain->setglobalRho( domain->getglobalNumMolecules() / domain->getGlobalVolume() );
-	return maxid;
+	return maxid+1;
 }
