@@ -27,8 +27,6 @@ using namespace std;
 
 ASCIIReader::ASCIIReader() {}
 
-ASCIIReader::~ASCIIReader(){}
-
 void ASCIIReader::setPhaseSpaceFile(string filename) {
 	_phaseSpaceFile = filename;
 }

@@ -10,7 +10,7 @@
 class ASCIIReader : public InputBase {
 public:
 	ASCIIReader();
-	~ASCIIReader();
+	~ASCIIReader() {}
 
 	void readXML(XMLfileUnits& xmlconfig);
 
