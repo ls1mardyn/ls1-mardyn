@@ -5,8 +5,8 @@
 #include <string>
 #include <fstream>
 
-//! @brief This class is used to read in the phasespace using the "old" ASCII input file syntax
-//! @author Martin Bernreuther, Martin Buchholz
+/** @brief The ASCIIReader reads in phasespace information using ls1-MarDyn's (old) ASCII input file format.
+ */
 class ASCIIReader : public InputBase {
 public:
 	ASCIIReader();
@@ -14,13 +14,10 @@ public:
 
 	void readXML(XMLfileUnits& xmlconfig);
 
-	//! @brief gets a filename and opens an ifstream associated with the given file
-	//!
-	//! As the reading of the phasespace file is separated into two parts,
-	//! but each line of the file should only be parsed once, not the filename
-	//! itself is stored, but a stream (_phaseSpaceFileStream) which is associated with
-	//! the file
-	//! @param filename full path to the input file
+	/** @brief Set the phase space file to be read.
+	 *
+	 * @param filename full path to the phase space file
+	 */
 	void setPhaseSpaceFile(std::string filename);
 
 	//! @brief For this class, header and data are in the same file, so there is no separate header file
@@ -58,8 +55,6 @@ public:
 	//!     - For each pair of different components: xi, eta (both double)
 	//!     - epsilonRF (double)
 	//! \li NumberOfMolecules: One token follows with the number of molecules
-	//!
-	//! An example can be seen in the documentation of this class
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
 
 	//! @brief reads in the data of all molecules
@@ -74,9 +69,8 @@ public:
 	//! \li Orientation (quaternion): q0, q1, q2, q3 (all double)
 	//! \li Angular Momentum: Dx, Dy, Dz (all double)
 	//!
-	//! An example can be seen in the documentation of this class
 	//! @param particleContainer Here the Molecules from the input file are stored
-	//! @return Highest molecule ID found in the input phase space file.
+	//! @return Number of molecules read in from the input phase space file
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 private:
 
