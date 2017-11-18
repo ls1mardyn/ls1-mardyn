@@ -1,5 +1,5 @@
-#ifndef INPUTOLDSTYLE_H_
-#define INPUTOLDSTYLE_H_
+#ifndef ASCIIREADER_H_
+#define ASCIIREADER_H_
 
 #include "io/InputBase.h"
 #include <string>
@@ -87,4 +87,4 @@ private:
 
 };
 
-#endif /*INPUTOLDSTYLE_H_*/
+#endif  // ASCIIREADER_H_
