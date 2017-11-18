@@ -64,7 +64,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	}
 
 	if( std::stoi(inputversion) < 20080701 ) {
-		global_log->error() << "Input version tool old (" << inputversion << ")" << endl;
+		global_log->error() << "Input version too old (" << inputversion << ")" << endl;
 		Simulation::exit(1);
 	}
 
