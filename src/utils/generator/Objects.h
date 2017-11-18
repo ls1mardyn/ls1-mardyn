@@ -205,8 +205,8 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <object>
-	     <object1 type="..."> <!-- ... --> </object1>
-	     <object2 type="..."> <!-- ... --> </object2>
+	     <object1 type="..."> <!-- (minuend) ... --> </object1>
+	     <object2 type="..."> <!-- (subtrahend) ... --> </object2>
 	   </object>
 	   \endcode
 	 */
@@ -250,8 +250,8 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <object>
-	     <object1 type="..."> <!-- ... --> </object1>
-	     <object2 type="..."> <!-- ... --> </object2>
+	     <object1 type="..."> <!-- (summand) ... --> </object1>
+	     <object2 type="..."> <!-- (summand) ... --> </object2>
 	   </object>
 	   \endcode
 	 */
