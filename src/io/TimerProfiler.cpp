@@ -175,6 +175,9 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 		make_tuple("SIMULATION_LOOP", vector<string>{"SIMULATION"}, true),
 		make_tuple("SIMULATION_DECOMPOSITION", vector<string>{"SIMULATION_LOOP"}, true),
 		make_tuple("SIMULATION_COMPUTATION", vector<string>{"SIMULATION_LOOP"}, true),
+#ifdef QUICKSCHED
+		make_tuple("QUICKSCHED", vector<string>{"SIMULATION_LOOP"}, true),
+#endif
 		make_tuple("SIMULATION_PER_STEP_IO", vector<string>{"SIMULATION_LOOP"}, true),
 		make_tuple("SIMULATION_IO", vector<string>{"SIMULATION"}, true),
 		make_tuple("SIMULATION_MPI_OMP_COMMUNICATION", vector<string>{"SIMULATION_DECOMPOSITION"}, true),

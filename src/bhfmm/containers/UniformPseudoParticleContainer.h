@@ -21,6 +21,7 @@
 #include "bhfmm/fft/FFTFactory.h"
 #include "bhfmm/fft/FFTOrderReduction.h"
 #include "bhfmm/fft/TransferFunctionManagerAPI.h"
+#include <bhfmm/FastMultipoleMethod.h>
 #endif /* FMM_FFT */
 
 #include <vector>
@@ -43,8 +44,7 @@ public:
 								   ParticleContainer* ljContainer,
 								   bool periodic = true
 #ifdef QUICKSCHED
-								   , qsched *scheduler_p2p = nullptr
-								   , qsched *scheduler_m2l = nullptr
+								   , qsched *scheduler = nullptr
 #endif
 	);
 	~UniformPseudoParticleContainer();
@@ -75,6 +75,18 @@ public:
 
     template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
     void M2LTowerPlateStep(int m1Loop, int mpCells, int curLevel);
+
+// stuff used by Quicksched
+    void M2MCompleteCell(int targetId, int level, int cellsPerDim);
+    void P2MCompleteCell(int sourceId);
+    void M2LCompleteCell(int targetId, int level, int cellsPerDimension);
+    void M2LPair2Way(int cellA, int cellB, int level, int cellsPerDimension);
+	void L2LCompleteCell(int sourceId, int level, int cellsPerDimension);
+	void L2PCompleteCell(int targetId);
+    enum taskModelTypesM2L {
+        CompleteTarget,
+        Pair2Way
+    };
 
 private:
 	LeafNodesContainer* _leafContainer;
@@ -302,7 +314,31 @@ private:
 	int _overlapComm; //indicates if overlap of communication is desired; Must be true currently!
 
 #ifdef QUICKSCHED
-    void generateM2LTasks(qsched *scheduler);
+    void generateResources(qsched *scheduler);
+    /**
+     * Needs M2L tasks
+     */
+    void generateP2MTasks(qsched* scheduler);
+    /**
+     * Needs M2L and P2M tasks
+     */
+    void generateM2MTasks(qsched* scheduler);
+    /**
+     * Needs L2P tasks
+     */
+    void generateP2PTasks(qsched *scheduler);
+	/**
+	 * Needs L2L tasks to be already created
+	 */
+    void generateM2LTasks(qsched *scheduler, taskModelTypesM2L taskModelM2L);
+	/**
+	 * Needs generateResources to be run first and L2P tasks created
+	 */
+    void generateL2LTasks(qsched *scheduler);
+    /**
+     * Need generateResources to be run first
+     */
+    void generateL2PTasks(qsched *scheduler);
 #endif
 
 };

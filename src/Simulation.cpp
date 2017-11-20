@@ -123,14 +123,9 @@ Simulation::Simulation()
 	_temperatureControl(nullptr),
 	_FMM(nullptr),
 	_timerProfiler(),
-	_memoryProfiler(nullptr),
-	_finalCheckpoint(true),
-	_finalCheckpointBinary(false),
-	_outputPlugins(),
-	_velocityScalingThermostat(),
-	_lmu(),
-	_mcav(),
-	h(0.0),
+#ifdef TASKTIMINGPROFILE
+	_taskTimingProfiler(new TaskTimingProfiler),
+#endif /* TASKTIMINGPROFILE */
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.0),
 	_loopCompTimeSteps(0.0),
@@ -1464,6 +1459,13 @@ void Simulation::finalize() {
 		temp->printTimers();
 	}
 
+#ifdef TASKTIMINGPROFILE
+	std::string outputFileName = "taskTimings_"
+								 + std::to_string(std::time(nullptr))
+								 + ".csv";
+	_taskTimingProfiler->dump(outputFileName);
+#endif /* TASKTIMINGPROFILE */
+
 	if (_domainDecomposition != NULL) {
 		delete _domainDecomposition;
 		_domainDecomposition = NULL;
@@ -1578,3 +1580,6 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 	flopRateWriter->measureFLOPS(cont, simstep);
 }
 
+unsigned long Simulation::getNumberOfTimesteps() const {
+	return _numberOfTimesteps;
+}

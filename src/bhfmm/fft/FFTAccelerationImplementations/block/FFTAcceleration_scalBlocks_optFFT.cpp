@@ -21,8 +21,12 @@ FFTAcceleration_scalBlocks_optFFT::FFTAcceleration_scalBlocks_optFFT(
 	_fft_nx = 2 * _nbLinePerBlock; // litterature uses 2*_nbLinePerBlock (no -1)
 	_fft_ny = _p;
 
-	_Re_tmp = alloc_matrix(_fft_nx, _fft_ny);
-	_Im_tmp = alloc_matrix(_fft_nx, _fft_ny);
+	_Re_tmp = new FFT_precision**[mardyn_get_max_threads()];
+	_Im_tmp = new FFT_precision**[mardyn_get_max_threads()];
+	for (int i = 0; i < mardyn_get_max_threads(); ++i) {
+		_Re_tmp[i] = alloc_matrix(_fft_nx, _fft_ny);
+		_Im_tmp[i] = alloc_matrix(_fft_nx, _fft_ny);
+	}
 
 	_optFFT_API = optFFT_API_Factory::getOptFFT_API(order, false);
 	_blockSize = new int[_nbBlocks];
@@ -85,6 +89,7 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_initialize_Source(
 	FFTDataContainer_scalBlocks* FFTData = getFFTData(Expansion);
 	FFT_precision** & Re_arr = FFTData->Re;
 	FFT_precision** & Im_arr = FFTData->Im;
+	const int threadNum = mardyn_get_thread_num();
 
 	int b, i, j, trueI;
 	FFT_precision scaling = 1.0 / (FFT_precision) radius; //include radius scaling and -1^i
@@ -93,30 +98,30 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_initialize_Source(
 		for (i = 0; i < _nbLinePerBlock; i++) {
 			trueI = i + _nbLinePerBlock * b;
 			for (j = 0; j <= trueI; j++) {
-				_Re_tmp[i][j] = (FFT_precision) Expansion.get_C(trueI, j)
-						* scaling;
-				_Im_tmp[i][j] = -(FFT_precision) Expansion.get_S(trueI, j)
-						* scaling; //we want to use use conj(Source)
+				_Re_tmp[threadNum][i][j] = (FFT_precision) Expansion.get_C(trueI, j)
+														 * scaling;
+				_Im_tmp[threadNum][i][j] = -(FFT_precision) Expansion.get_S(trueI, j)
+														 * scaling; //we want to use use conj(Source)
 			}
 			for (; j < _fft_ny; j++) {
-				_Re_tmp[i][j] = 0.0;
-				_Im_tmp[i][j] = 0.0;
+				_Re_tmp[threadNum][i][j] = 0.0;
+				_Im_tmp[threadNum][i][j] = 0.0;
 			}
 			scaling /= -(FFT_precision) radius;
 		}
 
 		for (; i < _fft_nx; i++)
 			for (j = 0; j < _fft_ny; j++) {
-				_Re_tmp[i][j] = 0.0;
-				_Im_tmp[i][j] = 0.0;
+				_Re_tmp[threadNum][i][j] = 0.0;
+				_Im_tmp[threadNum][i][j] = 0.0;
 			}
 
-		_optFFT_API->optimizedFFT(_Re_tmp, _Im_tmp, _fft_nx, _fft_ny);
+		_optFFT_API->optimizedFFT(_Re_tmp[threadNum], _Im_tmp[threadNum], _fft_nx, _fft_ny);
 
 		for (i = 0; i < _fft_nx; i++)
 			for (j = 0; j < _fft_ny; j++) {
-				Re_arr[b][j * _fft_nx + i] = _Re_tmp[i][j];
-				Im_arr[b][j * _fft_nx + i] = _Im_tmp[i][j];
+				Re_arr[b][j * _fft_nx + i] = _Re_tmp[threadNum][i][j];
+				Im_arr[b][j * _fft_nx + i] = _Im_tmp[threadNum][i][j];
 			}
 	}
 }
@@ -126,6 +131,7 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_finalize_Target(
 	FFTDataContainer_scalBlocks* FFTData = getFFTData(Expansion);
 	FFT_precision** & Re_arr = FFTData->Re;
 	FFT_precision** & Im_arr = FFTData->Im;
+	const int threadNum = mardyn_get_thread_num();
 
 	int b, i, j, trueI;
 	double scaling = 1.0; // / (FFT_precision)(_fft_nx * _fft_ny);
@@ -136,21 +142,21 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_finalize_Target(
 
 		for (i = 0; i < _fft_nx; i++)
 			for (j = 0; j < _fft_ny; j++) {
-				_Re_tmp[i][j] = Re_arr[b][j * _fft_nx + i];
-				_Im_tmp[i][j] = Im_arr[b][j * _fft_nx + i];
+				_Re_tmp[threadNum][i][j] = Re_arr[b][j * _fft_nx + i];
+				_Im_tmp[threadNum][i][j] = Im_arr[b][j * _fft_nx + i];
 			}
 
-		_optFFT_API->optimizedIFFT(_Re_tmp, _Im_tmp, _fft_nx, _fft_ny);
+		_optFFT_API->optimizedIFFT(_Re_tmp[threadNum], _Im_tmp[threadNum], _fft_nx, _fft_ny);
 
 		for (i = 0; i < _nbLinePerBlock; i++) {
 			trueI = i + _nbLinePerBlock * b;
 			minus_one_power_j = 1.0;
 			for (j = 0; j <= trueI; j++) {
 				Expansion.get_C(trueI, j) += minus_one_power_j
-						* (double) (_Re_tmp[_nbLinePerBlock - i - 1][j])
+						* (double) (_Re_tmp[threadNum][_nbLinePerBlock - i - 1][j])
 						* scaling;
 				Expansion.get_S(trueI, j) += -minus_one_power_j
-						* (double) (_Im_tmp[_nbLinePerBlock - i - 1][j])
+						* (double) (_Im_tmp[threadNum][_nbLinePerBlock - i - 1][j])
 						* scaling;
 				minus_one_power_j *= -1.0;
 			}
@@ -163,10 +169,10 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_finalize_Target(
 				minus_one_power_j = 1.0;
 				for (j = 0; j <= trueI; j++) {
 					Expansion.get_C(trueI, j) += minus_one_power_j
-							* (double) (_Re_tmp[_nbLinePerBlock * 2 - i - 1][j])
+							* (double) (_Re_tmp[threadNum][_nbLinePerBlock * 2 - i - 1][j])
 							* scaling2;
 					Expansion.get_S(trueI, j) += -minus_one_power_j
-							* (double) (_Im_tmp[_nbLinePerBlock * 2 - i - 1][j])
+							* (double) (_Im_tmp[threadNum][_nbLinePerBlock * 2 - i - 1][j])
 							* scaling2;
 					minus_one_power_j *= -1.0;
 				}
@@ -260,7 +266,7 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_M2L_template(
 			} else { //same size block, default scheme
 				if (Vect) {
 #pragma omp simd aligned (t_re, t_im, s_re, s_im, \
-		                            tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
+									tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
 					for (i = 0; i < end_i; ++i) {
 						t_re[i] += s_re[i] * tf_re[i] - s_im[i] * tf_im[i];
 						t_im[i] += s_re[i] * tf_im[i] + s_im[i] * tf_re[i];
@@ -384,8 +390,8 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_M2L_2way_template(
 					j_rep = repetition * j_dec;
 					if (Vect) {
 #pragma omp simd aligned (t1_re, t1_im, s1_re, s1_im, \
-                                      t2_re, t2_im, s2_re, s2_im, \
-                                      tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
+									  t2_re, t2_im, s2_re, s2_im, \
+									  tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
 						for (i = 0; i < shift_2way; i++) {
 							t2_re[i + j_rep] += s1_re[i + j_rep]
 									* tf_re[i + j_dec]
@@ -403,8 +409,8 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_M2L_2way_template(
 											* tf_im[i + j_dec];
 						}
 #pragma omp simd aligned (t1_re, t1_im, s1_re, s1_im, \
-                                      t2_re, t2_im, s2_re, s2_im, \
-                                      tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
+									  t2_re, t2_im, s2_re, s2_im, \
+									  tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
 						for (i = shift_2way; i < end_shift_2way; i++) {
 							t2_re[i + j_rep] += s1_re[i + j_rep]
 									* tf_re[i + j_dec]
@@ -462,8 +468,8 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_M2L_2way_template(
 					for (int j = 0; j < _fft_ny; j++) {
 						i = j * _fft_nx;
 #pragma omp simd aligned (t1_re, t1_im, s1_re, s1_im, \
-                                      t2_re, t2_im, s2_re, s2_im, \
-                                      tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
+									  t2_re, t2_im, s2_re, s2_im, \
+									  tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
 						for (n = 0; n < shift_2way; n++) {
 							t2_re[i] += s1_re[i] * tf_re[i]
 									- s1_im[i] * tf_im[i];
@@ -478,8 +484,8 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_M2L_2way_template(
 							++i;
 						}
 #pragma omp simd aligned (t1_re, t1_im, s1_re, s1_im, \
-                                      t2_re, t2_im, s2_re, s2_im, \
-                                      tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
+									  t2_re, t2_im, s2_re, s2_im, \
+									  tf_re, tf_im: __FFT_MATRIX_ALIGNMENT__)
 						for (n = shift_2way; n < end_shift_2way; n++) {
 							t2_re[i] += s1_re[i] * tf_re[i]
 									- s1_im[i] * tf_im[i];
@@ -761,6 +767,7 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_initialize_TransferFunction(
 	FFTDataContainer_scalBlocks* FFTData = getFFTData_scal(Expansion);
 	FFT_precision** & Re_arr = FFTData->Re;
 	FFT_precision** & Im_arr = FFTData->Im;
+	const int threadNum = mardyn_get_thread_num();
 
 	int b, i, j, trueI;
 	FFT_precision minus_one_power_j = 1.0;
@@ -771,42 +778,42 @@ void FFTAcceleration_scalBlocks_optFFT::FFT_initialize_TransferFunction(
 			trueI = i + _nbLinePerBlock * b;
 			minus_one_power_j = 1.0;
 			for (j = 0; j <= trueI; j++) {
-				_Re_tmp[_nbLinePerBlock - i - 1][j] =
+				_Re_tmp[threadNum][_nbLinePerBlock - i - 1][j] =
 						(FFT_precision) Expansion.get_C(trueI, j)
 								* minus_one_power_j;
-				_Im_tmp[_nbLinePerBlock - i - 1][j] =
+				_Im_tmp[threadNum][_nbLinePerBlock - i - 1][j] =
 						(FFT_precision) Expansion.get_S(trueI, j)
 								* -minus_one_power_j;
 				minus_one_power_j *= -1.0;
 			}
 
 			for (; j < _blockSize[b]; j++) {
-				_Re_tmp[_nbLinePerBlock - i - 1][j] = 0.0;
-				_Im_tmp[_nbLinePerBlock - i - 1][j] = 0.0;
+				_Re_tmp[threadNum][_nbLinePerBlock - i - 1][j] = 0.0;
+				_Im_tmp[threadNum][_nbLinePerBlock - i - 1][j] = 0.0;
 			}
 		}
 
 		for (; i < _fft_nx; i++)
 			for (j = 0; j < _blockSize[b]; j++) {
-				_Re_tmp[i][j] = 0.0;
-				_Im_tmp[i][j] = 0.0;
+				_Re_tmp[threadNum][i][j] = 0.0;
+				_Im_tmp[threadNum][i][j] = 0.0;
 			}
 
-		_optFFT_API->optimizedFFT(_Re_tmp, _Im_tmp, _fft_nx, _blockSize[b]);
+		_optFFT_API->optimizedFFT(_Re_tmp[threadNum], _Im_tmp[threadNum], _fft_nx, _blockSize[b]);
 
 		if (b < _nbBlocks / 2) {
 			repetition = (FFT_precision) (_fft_ny / _blockSize[b]);
 			for (i = 0; i < _fft_nx; i++)
 				for (j = 0; j < _blockSize[b]; j++) {
-					_Re_tmp[i][j] *= repetition;
-					_Im_tmp[i][j] *= repetition;
+					_Re_tmp[threadNum][i][j] *= repetition;
+					_Im_tmp[threadNum][i][j] *= repetition;
 				}
 		}
 
 		for (i = 0; i < _fft_nx; i++)
 			for (j = 0; j < _blockSize[b]; j++) {
-				Re_arr[b][j * _fft_nx + i] = _Re_tmp[i][j];
-				Im_arr[b][j * _fft_nx + i] = _Im_tmp[i][j];
+				Re_arr[b][j * _fft_nx + i] = _Re_tmp[threadNum][i][j];
+				Im_arr[b][j * _fft_nx + i] = _Im_tmp[threadNum][i][j];
 			}
 
 	}

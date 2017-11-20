@@ -29,6 +29,7 @@ class Ensemble;
 #include <list>
 #include <vector>
 #include <string>
+#include <io/TaskTimingProfiler.h>
 
 #ifdef STEEREO
 class SteereoSimSteering;
@@ -321,7 +322,12 @@ private:
 	int _thermostatType;
 	double _nuAndersen;
 
-	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps to be performed in the simulation */
+	unsigned long _numberOfTimesteps;
+public:
+    unsigned long getNumberOfTimesteps() const;
+
+private:
+    /**< Number of discrete time steps to be performed in the simulation */
 
 	unsigned long _simstep;             /**< Actual time step in the simulation. */
 
@@ -405,7 +411,16 @@ private:
 	//! used to get information about the memory consumed by the process and the overall system.
 	std::shared_ptr<MemoryProfiler> _memoryProfiler;
 
+#ifdef TASKTIMINGPROFILE
+	/** Used to track what thread worked on which task for how long and plot it **/
+	TaskTimingProfiler* _taskTimingProfiler;
+#endif
 public:
+#ifdef TASKTIMINGPROFILE
+    TaskTimingProfiler* getTaskTimingProfiler(){
+        return _taskTimingProfiler;
+    }
+#endif
 	//! computational time for one execution of traverseCell
 	double getAndResetOneLoopCompTime() {
 		if(_loopCompTimeSteps==0){

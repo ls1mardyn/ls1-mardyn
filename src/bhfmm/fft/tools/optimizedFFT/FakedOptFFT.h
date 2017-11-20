@@ -8,6 +8,8 @@
 #ifndef FAKEOPTFFT_H_
 #define FAKEOPTFFT_H_
 
+#include "WrapOpenMP.h"
+
 #include "bhfmm/fft/tools/optimizedFFT/optFFT_API.h"
 #include "bhfmm/fft/tools/FFTW_API.h"
 #include "bhfmm/fft/tools/fft_utils.h"
@@ -41,8 +43,11 @@ public:
 	FakedOptFFT() {
 	} //cout << "Using faked opt FFT (see bhfmm/fft/tools/optimizedFFT)" <<  endl;}
 	~FakedOptFFT() { //free all entry of the map and the map
-		map<pos, FFTW_API*, pos_comp>::iterator itr = _fftw_api_map.begin();
+		auto itr = _fftw_api_map.begin();
 		while (itr != _fftw_api_map.end()) {
+			for (int i = 0; i < mardyn_get_max_threads(); ++i) {
+				delete ((*itr).second[i]);
+			}
 			delete ((*itr).second);
 			_fftw_api_map.erase(itr++);
 		}
@@ -55,7 +60,7 @@ public:
 			const int size_x, const int size_y);
 
 private:
-	map<pos, FFTW_API*, pos_comp> _fftw_api_map; //storage of the various FFTW_API required
+	map<pos, FFTW_API**, pos_comp> _fftw_api_map; //storage of the various FFTW_API required
 
 	FFTW_API* getFFTW_API(const int size_x, const int size_y); //memoized function using the map
 };

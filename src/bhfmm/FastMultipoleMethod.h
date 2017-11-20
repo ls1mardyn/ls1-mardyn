@@ -18,6 +18,7 @@
 
 namespace bhfmm {
 class FastMultipoleMethod;
+class UniformPseudoParticleContainer;
 // needed for static runner()
 static FastMultipoleMethod *contextFMM;
 
@@ -35,7 +36,8 @@ struct qsched_payload {
 	// Stuff for M2L and init/finalize FFT
 
 	int currentLevel,
-		currentMultipole,
+		currentMultipole, // or target
+		sourceMultipole,
         currentEdgeLength;
 	UniformPseudoParticleContainer *uniformPseudoParticleContainer;
 };
@@ -72,8 +74,21 @@ public:
 	void printTimers();
 
 	enum taskType {
-		Dummy, P2PPreprocessSingleCell, P2PPostprocessSingleCell, P2Pc08StepBlock, M2LInitializeCell, M2LFinalizeCell, M2LTranslation
+		P2PPreprocessSingleCell,
+		P2PPostprocessSingleCell,
+		P2Pc08StepBlock,
+		P2MCompleteCell,
+		M2MCompleteCell,
+		M2LInitializeCell,
+		M2LInitializeSource,
+		M2LFinalizeCell,
+		M2LTranslation,
+		M2LPair2Way,
+		L2LCompleteCell,
+		L2PCompleteCell,
+		Dummy
 	};
+
 private:
 	int _order;
 	unsigned _LJCellSubdivisionFactor;
@@ -90,8 +105,7 @@ private:
 
 #ifdef QUICKSCHED
 	static void runner(int type, void *data);
-	struct qsched *_scheduler_p2p;
-	struct qsched *_scheduler_m2l;
+	struct qsched *_scheduler;
 #endif // QUICKSCEHD
 };
 

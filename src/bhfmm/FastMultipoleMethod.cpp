@@ -25,8 +25,8 @@ FastMultipoleMethod::~FastMultipoleMethod() {
 	delete _P2MProcessor;
 	delete _L2PProcessor;
 #ifdef QUICKSCHED
-    qsched_free(_scheduler_p2p);
-    delete(_scheduler_p2p);
+    qsched_free(_scheduler);
+    delete(_scheduler);
 #endif
 }
 
@@ -82,10 +82,8 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 	_P2PProcessor = new VectorizedChargeP2PCellProcessor(
 			*(global_simulation->getDomain()));
 #ifdef QUICKSCHED
-    _scheduler_p2p = new struct qsched;
-    _scheduler_m2l = new struct qsched;
-    qsched_init(_scheduler_p2p, mardyn_get_max_threads(), qsched_flag_none);
-    qsched_init(_scheduler_m2l, mardyn_get_max_threads(), qsched_flag_none);
+    _scheduler = new struct qsched;
+    qsched_init(_scheduler, mardyn_get_max_threads(), qsched_flag_none);
 #endif // QUICKSCEHD
 	if (not _adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(globalDomainLength,
@@ -97,10 +95,16 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
                                                                       ljContainer,
                                                                       _periodic
 #ifdef QUICKSCHED
-                                                                    , _scheduler_p2p
-                                                                    , _scheduler_m2l
+                                                                      , _scheduler
 #endif
-        );
+                                                                     );
+#ifdef TASKTIMINGPROFILE
+#ifdef QUICKSCHED
+        global_simulation->getTaskTimingProfiler()->init(_scheduler->count);
+#else
+        global_log->warning() << "Profiling tasks without Quicksched not implemented!" << endl;
+#endif
+#endif
 
 	} else {
 		// TODO: Debugging in Progress!
@@ -127,22 +131,32 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 	// clear expansions
 	_pseudoParticleContainer->clear();
 
-	// P2M, M2P
-	_pseudoParticleContainer->upwardPass(_P2MProcessor);
+#ifdef QUICKSCHED
+	_P2MProcessor->initTraversal();
+	_P2PProcessor->initTraversal();
+	_L2PProcessor->initTraversal();
 
-	// M2L, P2P
+	global_simulation->timers()->start(("QUICKSCHED"));
+	qsched_run(_scheduler, mardyn_get_max_threads(), runner);
+	global_simulation->timers()->stop(("QUICKSCHED"));
+
+	_L2PProcessor->endTraversal();
+	_P2PProcessor->endTraversal();
+	_P2MProcessor->endTraversal();
+
+	global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
+#else
+    // P2M, M2P
+	_pseudoParticleContainer->upwardPass(_P2MProcessor);
 	if (_adaptive) {
 		_P2PProcessor->initTraversal();
 	}
-#ifdef QUICKSCHED
-    qsched_run(_scheduler_p2p, mardyn_get_max_threads(), runner);
-    qsched_run(_scheduler_m2l, mardyn_get_max_threads(), runner);
-#else
+	// M2L, P2P
 	_pseudoParticleContainer->horizontalPass(_P2PProcessor);
-#endif
-
 	// L2L, L2P
 	_pseudoParticleContainer->downwardPass(_L2PProcessor);
+#endif
+
 }
 
 void FastMultipoleMethod::printTimers() {
@@ -158,6 +172,9 @@ void FastMultipoleMethod::printTimers() {
 void FastMultipoleMethod::runner(int type, void *data) {
 #ifdef FMM_FFT
 	struct qsched_payload *payload = (qsched_payload *)data;
+#ifdef TASKTIMINGPROFILE
+    auto startTime = global_simulation->getTaskTimingProfiler()->start();
+#endif /* TASKTIMINGPROFILE */
 	switch (type) {
 		case P2PPreprocessSingleCell:{
             contextFMM->_P2PProcessor->preprocessCell(*payload->cell.pointer);
@@ -179,11 +196,12 @@ void FastMultipoleMethod::runner(int type, void *data) {
 
 			break;
 		} /* P2Pc08StepBlock */
+		// used for scheme Pair2Way
         case M2LInitializeCell: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
             if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
-                return;
+                break;
 
             double radius = contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
                     .local
@@ -201,11 +219,30 @@ void FastMultipoleMethod::runner(int type, void *data) {
             contextContainer->getFFTAcceleration()->FFT_initialize_Target(target);
 			break;
         } /* M2LInitializeCell */
+		// used for scheme CompleteTarget
+        case M2LInitializeSource: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
+                break;
+
+            double radius = contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
+                    .local
+                    .getRadius();
+
+            FFTAccelerableExpansion &source = static_cast<bhfmm::SHMultipoleParticle &>(contextContainer
+                    ->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
+                    .multipole)
+                    .getExpansion();
+            contextContainer->getFFTAcceleration()->FFT_initialize_Source(source, radius);
+            break;
+        } /* M2LInitializeSource */
+		// used for scheme Pair2Way
         case M2LFinalizeCell: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
             if (contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole].occ == 0)
-                return;
+                break;
 
             double radius = contextContainer->getMpCellGlobalTop()[payload->currentLevel][payload->currentMultipole]
                     .local
@@ -218,22 +255,63 @@ void FastMultipoleMethod::runner(int type, void *data) {
             contextContainer->getFFTAcceleration()->FFT_finalize_Target(target, radius);
             break;
         } /* M2LFinalizeCell */
+		// used for scheme CompleteTarget
         case M2LTranslation: {
             UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
 
-			// TODO bad idea to make this a task
-			contextContainer->M2LTowerPlateStep<true, true, false, false>(payload->currentMultipole,
-																		  payload->currentEdgeLength,
-																		  payload->currentLevel);
+            contextContainer->M2LCompleteCell(payload->currentMultipole,
+                                              payload->currentLevel,
+                                              payload->currentEdgeLength);
 			break;
-        } /* M2LTranslation */
-        case Dummy: {
-            // do nothing, only serves for synchronization
+		} /* M2LTranslation */
+		// used for scheme Pair2Way
+		case M2LPair2Way: {
+			UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+			contextContainer->M2LPair2Way(payload->sourceMultipole,
+										  payload->currentMultipole,
+										  payload->currentLevel,
+										  payload->currentEdgeLength);
+			break;
+		}
+        case L2LCompleteCell: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            contextContainer->L2LCompleteCell(payload->sourceMultipole,
+											  payload->currentLevel,
+											  payload->currentEdgeLength);
+			break;
+        }
+		case L2PCompleteCell: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            contextContainer->L2PCompleteCell(payload->currentMultipole);
             break;
-        } /* Dummy */
-        default:
-            global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
-	}
+		}
+        case M2MCompleteCell: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            contextContainer->M2MCompleteCell(payload->currentMultipole,
+                                              payload->currentLevel,
+                                              payload->currentEdgeLength);
+            break;
+        }
+        case P2MCompleteCell: {
+            UniformPseudoParticleContainer *contextContainer = payload->uniformPseudoParticleContainer;
+
+            contextContainer->P2MCompleteCell(payload->currentMultipole);
+            break;
+        }
+		case Dummy: {
+			// do nothing, only serves for synchronization
+			break;
+		} /* Dummy */
+		default:
+			global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
+    }
+#ifdef TASKTIMINGPROFILE
+    global_simulation->getTaskTimingProfiler()->stop(startTime, type);
+#endif /* TASKTIMINGPROFILE */
 #else
 #pragma omp critical
 	{

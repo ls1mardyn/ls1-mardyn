@@ -39,8 +39,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		ParticleContainer *ljContainer, //TODO: is this used anywhere?
 		bool periodic
 #ifdef QUICKSCHED
-		, qsched *scheduler_p2p
-		, qsched *scheduler_m2l
+		, qsched *scheduler
 #endif
 		) : PseudoParticleContainer(orderOfExpansions),
 			_leafContainer(nullptr),
@@ -51,25 +50,25 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_fuseGlobalCommunication = false;
 	bool doDynamicAdjustment = true; //TODO: is this used anywhere?
 #ifdef ENABLE_MPI
-	{
-		int size;
-		MPI_Comm_size(MPI_COMM_WORLD, &size);
-		//set avoidAllReduce depending on number of MPI ranks
-		if (size >= 512) {
+	int size;
+	MPI_Comm_size(MPI_COMM_WORLD,&size);
+	//set avoidAllReduce depending on number of MPI ranks
+	if(size >= 512){
+		_avoidAllReduce = true;
+	}
+	else{
+		if(_doNTGlobal and size >= 64){
 			_avoidAllReduce = true;
-		} else {
-			if (_doNTGlobal and size >= 64) {
-				_avoidAllReduce = true;
-			} else {
+		}
+		else{
+			_avoidAllReduce = false;
+			if(size == 1){
 				_avoidAllReduce = false;
-				if (size == 1) {
-					_avoidAllReduce = false;
-				}
 			}
 		}
-		if (size <= 64) { // in this case there might be doubling effects if not switched off (+y and -y neighbor the same -> twice added the same value in tower backcommunication for 1st local level)
-			_doNTLocal = false;
-		}
+	}
+	if(size <= 64){ // in this case there might be doubling effects if not switched off (+y and -y neighbor the same -> twice added the same value in tower backcommunication for 1st local level)
+		_doNTLocal = false;
 	}
 #else
 	_avoidAllReduce = false;
@@ -148,7 +147,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 											LJSubdivisionFactor,
 											periodic
 #ifdef QUICKSCHED
-											, scheduler_p2p
+											, scheduler
 #endif
 	);
 
@@ -331,6 +330,15 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	//FFT objects initialization
 	FFTSettings::autoSetting(_maxOrd); //auto set FFT acceleration's settings to optimal values
 	//FFTSettings::TFMANAGER_VERBOSE = false;
+
+	// TODO: move this some place sensible (Env var?, config?)
+	taskModelTypesM2L taskModelM2L = CompleteTarget;
+//    taskModelTypesM2L taskModelM2L = Pair2Way;
+	if(taskModelM2L == Pair2Way)
+		FFTSettings::USE_2WAY_M2L = true;
+	else
+		FFTSettings::USE_2WAY_M2L = false;
+
 	FFTSettings::printCurrentOptions();
 	if (FFTSettings::issetFFTAcceleration()) {
 		_FFTAcceleration = FFTFactory::getFFTAccelerationAPI(_maxOrd);
@@ -488,8 +496,14 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 							<< _globalLevel << " maxLevel= " <<_maxLevel << std::endl;
 
 #ifdef QUICKSCHED
-	// Quicksched Task generation
-	generateM2LTasks(scheduler_m2l);
+	// Quicksched Task and resource generation generation
+	generateResources(scheduler);
+	generateL2PTasks(scheduler);
+	generateP2PTasks(scheduler);
+	generateL2LTasks(scheduler);
+	generateM2LTasks(scheduler, taskModelM2L);
+	generateP2MTasks(scheduler);
+	generateM2MTasks(scheduler);
 #endif
 //reset timers
 #ifdef ENABLE_MPI
@@ -543,53 +557,576 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 }
 
 #ifdef QUICKSCHED
-void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler) {
-	int           currentCellsEdge = 1;
-	qsched_task_t idInit,
-				  idFinalize,
-				  idM2L;
-	double        cellWid[]{_domain->getGlobalLength(0),
-							_domain->getGlobalLength(1),
-							_domain->getGlobalLength(2)};
+void UniformPseudoParticleContainer::generateResources(qsched *scheduler) {
+
+	// resources for multipoles
+	for (int level = 0; level <= _maxLevel; ++level) {
+		for (unsigned int multipoleId = 0; multipoleId < _mpCellGlobalTop[level].size(); ++multipoleId) {
+			_mpCellGlobalTop[level][multipoleId]._resIdLocal     = qsched_addres(scheduler,
+																				 qsched_owner_none,
+																				 qsched_res_none);
+			_mpCellGlobalTop[level][multipoleId]._resIdMultipole = qsched_addres(scheduler,
+																				 qsched_owner_none,
+																				 qsched_res_none);
+		}
+	}
+	// resources for lj cells
+	for (unsigned int i = 0; i < _leafContainer->getCells().size(); ++i) {
+		_leafContainer->getCells()[i].setResourceId(
+				qsched_addres(scheduler, qsched_owner_none, qsched_res_none)
+		);
+	}
+}
+
+void UniformPseudoParticleContainer::generateP2MTasks(qsched *scheduler) {
 	struct qsched_payload payload;
 	payload.uniformPseudoParticleContainer = this;
 
-	for (int currentLevel = 1; currentLevel <= _maxLevel; ++currentLevel) { //global M2M
-		currentCellsEdge *= 2;
-		for (int i = 0; i < 3; ++i) {
-			cellWid[i] /= 2;
-		}
+	long sourceId,
+		 targetId;
+	int  idP2M,
+		 targetCoords[3],
+		 cellsPerDim = 1 << _maxLevel;     // in cells
 
-		payload.currentLevel = currentLevel;
-		payload.currentEdgeLength = currentCellsEdge;
+	for (targetCoords[0] = 0; targetCoords[0] < cellsPerDim; ++targetCoords[0]) {
+		for (targetCoords[1] = 0; targetCoords[1] < cellsPerDim; ++targetCoords[1]) {
+			for (targetCoords[2] = 0; targetCoords[2] < cellsPerDim; ++targetCoords[2]) {
+				sourceId = _leafContainer->cellIndexOf3DIndex(targetCoords[0]+1,
+															  targetCoords[1]+1,
+															  targetCoords[2]+1);
+				payload.currentMultipole = sourceId;
+				idP2M = qsched_addtask(scheduler,
+									   FastMultipoleMethod::P2MCompleteCell,
+									   qsched_flag_none,
+									   &payload,
+									   sizeof(payload),
+									   1);
 
-		int maxId = currentCellsEdge * currentCellsEdge * currentCellsEdge;
-
-		for (int multipoleId = 0; multipoleId < maxId; ++multipoleId){
-			payload.currentMultipole = multipoleId;
-			// TODO: This is bull...
-			idInit = qsched_addtask(scheduler,
-									FastMultipoleMethod::M2LInitializeCell,
-									task_flag_none,
-									&payload,
-									sizeof(payload),
-									1);
-			idM2L  = qsched_addtask(scheduler,
-									FastMultipoleMethod::M2LTranslation,
-									task_flag_none,
-									&payload,
-									sizeof(payload),
-									1);
-			idFinalize = qsched_addtask(scheduler,
-										FastMultipoleMethod::M2LFinalizeCell,
-										task_flag_none,
-										&payload,
-										sizeof(payload),
-										1);
-			qsched_addunlock(scheduler, idInit, idM2L);
-			qsched_addunlock(scheduler, idM2L, idFinalize);
+				targetId = (targetCoords[2] * cellsPerDim + targetCoords[1])
+						   * cellsPerDim
+						   + targetCoords[0];
+				_mpCellGlobalTop[_maxLevel][targetId]._taskIdP2M = idP2M;
+				qsched_addunlock(scheduler,
+								 idP2M,
+								 _mpCellGlobalTop[_maxLevel][targetId]._taskIdM2LInit
+				);
+			}
 		}
 	}
+}
+
+void UniformPseudoParticleContainer::generateM2MTasks(qsched *scheduler) {
+	struct qsched_payload payload;
+	payload.uniformPseudoParticleContainer = this;
+
+	int idM2M,
+		sourceId,
+		cellsPerDim  = 1 << (_maxLevel - 1),       // in cells
+		cellsInLevel = 1 << (3 * (_maxLevel - 1)), // == cellsPerDim^3
+		sourceCoords[3],
+		targetCoords[3];
+
+	for (int level = _maxLevel - 1; level > 0; --level) {
+		payload.currentLevel = level;
+		payload.currentEdgeLength = cellsPerDim;
+		for (int targetId = 0; targetId < cellsInLevel; ++targetId) {
+			payload.currentMultipole = targetId;
+
+			idM2M = qsched_addtask(scheduler,
+								   FastMultipoleMethod::M2MCompleteCell,
+								   task_flag_none,
+								   &payload,
+								   sizeof(payload),
+								   1);
+
+			_mpCellGlobalTop[level][targetId]._taskIdM2M = idM2M;
+
+			qsched_addunlock(scheduler,
+							 idM2M,
+							 _mpCellGlobalTop[level][targetId]._taskIdM2LInit);
+
+			int cellsPerDim2 = cellsPerDim * cellsPerDim;
+			targetCoords[2] = targetId / cellsPerDim2;
+			targetCoords[1] = (targetId - (targetCoords[2] * cellsPerDim2)) / cellsPerDim;
+			targetCoords[0] = targetId - (targetCoords[2] * cellsPerDim2) - (targetCoords[1] * cellsPerDim);
+
+			for (int i = 0; i < 8; ++i) {
+				sourceCoords[0] = targetCoords[0] * 2;
+				sourceCoords[1] = targetCoords[1] * 2;
+				sourceCoords[2] = targetCoords[2] * 2;
+
+				if (IsOdd(i    )) ++sourceCoords[0];
+				if (IsOdd(i / 2)) ++sourceCoords[1];
+				if (IsOdd(i / 4)) ++sourceCoords[2];
+
+				sourceId = (sourceCoords[2] * cellsPerDim * 2 + sourceCoords[1]) * cellsPerDim * 2
+						   + sourceCoords[0];
+
+				if (level != _maxLevel - 1) {
+					qsched_addunlock(scheduler,
+									 _mpCellGlobalTop[level + 1][sourceId]._taskIdM2M,
+									 _mpCellGlobalTop[level][targetId]._taskIdM2M);
+				} else { // level == _maxLevel - 1
+					qsched_addunlock(scheduler,
+									 _mpCellGlobalTop[level + 1][sourceId]._taskIdP2M,
+									 _mpCellGlobalTop[level][targetId]._taskIdM2M);
+				}
+			}
+		}
+		cellsPerDim >>= 1;
+		cellsInLevel >>= 3;
+	}
+}
+
+void UniformPseudoParticleContainer::generateM2LTasks(qsched *scheduler, taskModelTypesM2L taskModelM2L) {
+
+	qsched_task_t         idInit,
+						  idFin,
+						  idM2L;
+	struct qsched_payload payload;
+	payload.uniformPseudoParticleContainer = this;
+
+	switch (taskModelM2L) {
+		case CompleteTarget: {
+			int currentEdgeLength = 2,
+				cellsInLevel      = 8;
+			for (int currentLevel = 1; currentLevel <= _maxLevel; ++currentLevel) {
+
+				payload.currentLevel      = currentLevel;
+				payload.currentEdgeLength = currentEdgeLength;
+
+				// generate tasks
+				for (int multipoleId = 0; multipoleId < cellsInLevel; ++multipoleId) {
+					payload.currentMultipole = multipoleId;
+					idInit = qsched_addtask(scheduler,
+											FastMultipoleMethod::M2LInitializeSource,
+											task_flag_none,
+											&payload,
+											sizeof(payload),
+											1);
+					_mpCellGlobalTop[currentLevel][multipoleId]._taskIdM2LInit = idInit;
+					idM2L = qsched_addtask(scheduler,
+										   FastMultipoleMethod::M2LTranslation,
+										   task_flag_none,
+										   &payload,
+										   sizeof(payload),
+										   1);
+					_mpCellGlobalTop[currentLevel][multipoleId]._taskIdM2LCalc = idM2L;
+					// Translation tasks includes finalize
+					_mpCellGlobalTop[currentLevel][multipoleId]._taskIdM2LFin  = idM2L;
+				}
+
+				// generate dependencies
+				// TODO: think of smarter iteration scheme to merge this and task loop
+				for (int targetId = 0; targetId < cellsInLevel; ++targetId) {
+					int sourceCoords[3],
+						targetCoords[3];
+					int currentEdgeLength2 = currentEdgeLength * currentEdgeLength;
+					targetCoords[2] = targetId / currentEdgeLength2;
+					targetCoords[1] = (targetId - (targetCoords[2] * currentEdgeLength2)) / currentEdgeLength;
+					targetCoords[0] = targetId - (targetCoords[2] * currentEdgeLength2) - (targetCoords[1] * currentEdgeLength);
+
+					// cell from where sources will be calculated
+					int      sourceRootCoords[3];
+					// find start corner for stencil
+					for (int i = 0; i < 3; ++i) {
+						if (IsOdd(targetCoords[i]))
+							sourceRootCoords[i] = targetCoords[i] - 3;
+						else
+							sourceRootCoords[i] = targetCoords[i] - 2;
+					}
+
+					// finalizing (here done in Calc) unlocks L2L. No L2Ls on maxLevel.
+					if(currentLevel < _maxLevel){
+						qsched_addunlock(scheduler,
+										 _mpCellGlobalTop[currentLevel][targetId]._taskIdM2LFin,
+										 _mpCellGlobalTop[currentLevel][targetId]._taskIdL2L);
+					} else { // currentLevel == _maxLevel
+						qsched_addunlock(scheduler,
+										 _mpCellGlobalTop[currentLevel][targetId]._taskIdM2LFin,
+										 _mpCellGlobalTop[currentLevel][targetId]._taskIdL2P);
+					}
+					qsched_addlock(scheduler,
+								   _mpCellGlobalTop[currentLevel][targetId]._taskIdM2LCalc,
+								   _mpCellGlobalTop[currentLevel][targetId]._resIdLocal);
+
+					// iterate through 6x6x6 grid around target cell with periodic boundaries
+					for (int x = 0; x < 6; ++x) {
+						sourceCoords[0] = sourceRootCoords[0] + x;
+						if (sourceCoords[0] < 0)
+							sourceCoords[0] += currentEdgeLength;
+						else if (sourceCoords[0] >= currentEdgeLength)
+							sourceCoords[0] -= currentEdgeLength;
+						for (int y = 0; y < 6; ++y) {
+							sourceCoords[1] = sourceRootCoords[1] + y;
+							if (sourceCoords[1] < 0)
+								sourceCoords[1] += currentEdgeLength;
+							else if (sourceCoords[1] >= currentEdgeLength)
+								sourceCoords[1] -= currentEdgeLength;
+							for (int z = 0; z < 6; ++z) {
+								sourceCoords[2] = sourceRootCoords[2] + z;
+								if (sourceCoords[2] < 0)
+									sourceCoords[2] += currentEdgeLength;
+								else if (sourceCoords[2] >= currentEdgeLength)
+									sourceCoords[2] -= currentEdgeLength;
+								// skip cells that are too near
+								if (std::abs(sourceRootCoords[0] + x - targetCoords[0]) < 2
+									&& std::abs(sourceRootCoords[1] + y - targetCoords[1]) < 2
+									&& std::abs(sourceRootCoords[2] + z - targetCoords[2]) < 2)
+									continue;
+
+								int sourceId = (sourceCoords[2] * currentEdgeLength + sourceCoords[1])
+											   * currentEdgeLength
+											   + sourceCoords[0];
+
+								qsched_addunlock(scheduler,
+												 _mpCellGlobalTop[currentLevel][sourceId]._taskIdM2LInit,
+												 _mpCellGlobalTop[currentLevel][targetId]._taskIdM2LCalc);
+							}
+						}
+					}
+				}
+
+				currentEdgeLength <<= 1;
+				// cellsInLevel = currentEdgeLength * currentEdgeLength * currentEdgeLength
+				cellsInLevel <<= 3;
+
+			}
+			break;
+		} /* CompleteTarget */
+		case Pair2Way : {
+			// TODO: might be broken since downward pass was added
+			int currentEdgeLength = 2,
+				cellsInLevel      = 8;
+			for (int currentLevel = 1; currentLevel <= _maxLevel; ++currentLevel) {
+
+				payload.currentLevel      = currentLevel;
+				payload.currentEdgeLength = currentEdgeLength;
+
+				// generate resource ids, init and finalize tasks
+				for (int multipoleId = 0; multipoleId < cellsInLevel; ++multipoleId) {
+					payload.currentMultipole = multipoleId;
+					idInit = qsched_addtask(scheduler,
+											FastMultipoleMethod::M2LInitializeCell,
+											task_flag_none,
+											&payload,
+											sizeof(payload),
+											1);
+					_mpCellGlobalTop[currentLevel][multipoleId]._taskIdM2LInit = idInit;
+					idFin = qsched_addtask(scheduler,
+										   FastMultipoleMethod::M2LFinalizeCell,
+										   task_flag_none,
+										   &payload,
+										   sizeof(payload),
+										   1);
+					_mpCellGlobalTop[currentLevel][multipoleId]._taskIdM2LFin = idFin;
+					// finalizing unlocks L2L
+					qsched_addunlock(scheduler,
+									 _mpCellGlobalTop[currentLevel][multipoleId]._taskIdM2LFin,
+									 _mpCellGlobalTop[currentLevel][multipoleId]._taskIdL2L);
+				}
+				// generate m2l tasks and dependencies
+				for (int targetId = 0; targetId < cellsInLevel; ++targetId) {
+					payload.currentMultipole = targetId;
+					int sourceCoords[3],
+						targetCoords[3];
+					int currentEdgeLength2 = currentEdgeLength * currentEdgeLength;
+					targetCoords[0] = targetId / currentEdgeLength2;
+					targetCoords[1] = (targetId - (targetCoords[0] * currentEdgeLength2)) / currentEdgeLength;
+					targetCoords[2] = targetId - (targetCoords[0] * currentEdgeLength2) - (targetCoords[1] * currentEdgeLength);
+					// cell from where sources will be calculated
+					int sourceRootCoords[3];
+
+					// find start corner for stencil
+					for (int i = 0; i < 3; ++i) {
+						if (IsOdd(targetCoords[i]))
+							sourceRootCoords[i] = targetCoords[i] - 3;
+						else
+							sourceRootCoords[i] = targetCoords[i] - 2;
+					}
+
+					// iterate through 6x6x6 grid around target cell with periodic boundaries
+					for (int x = 0; x < 6; ++x) {
+						sourceCoords[0] = sourceRootCoords[0] + x;
+						if (sourceCoords[0] < 0)
+							sourceCoords[0] += currentEdgeLength;
+						else if (sourceCoords[0] >= currentEdgeLength)
+							sourceCoords[0] -= currentEdgeLength;
+						for (int y = 0; y < 6; ++y) {
+							sourceCoords[1] = sourceRootCoords[1] + y;
+							if (sourceCoords[1] < 0)
+								sourceCoords[1] += currentEdgeLength;
+							else if (sourceCoords[1] >= currentEdgeLength)
+								sourceCoords[1] -= currentEdgeLength;
+							for (int z = 0; z < 6; ++z) {
+								sourceCoords[2] = sourceRootCoords[2] + z;
+								if (sourceCoords[2] < 0)
+									sourceCoords[2] += currentEdgeLength;
+								else if (sourceCoords[2] >= currentEdgeLength)
+									sourceCoords[2] -= currentEdgeLength;
+								// skip cells that are too near
+								if (std::abs(sourceRootCoords[0] + x- targetCoords[0]) < 2
+									&& std::abs(sourceRootCoords[1] + y - targetCoords[1]) < 2
+									&& std::abs(sourceRootCoords[2] + z - targetCoords[2]) < 2)
+									continue;
+
+								int sourceId = (sourceCoords[2] * currentEdgeLength + sourceCoords[1])
+											   * currentEdgeLength
+											   + sourceCoords[0];
+								// FIXME: this prevents double calculation but should be replaced by smarter domain iteration
+								if (sourceId > targetId)
+									continue;
+								payload.sourceMultipole = sourceId;
+
+								idM2L = qsched_addtask(scheduler,
+													   FastMultipoleMethod::M2LPair2Way,
+													   task_flag_none,
+													   &payload,
+													   sizeof(payload),
+													   1);
+
+								// every calculation task depends on source and target initialization
+								qsched_addunlock(scheduler,
+												 _mpCellGlobalTop[currentLevel][targetId]._taskIdM2LInit,
+												 idM2L);
+								qsched_addunlock(scheduler,
+												 _mpCellGlobalTop[currentLevel][sourceId]._taskIdM2LInit,
+												 idM2L);
+								// every calculation tasks brings one one step closer to finalizing target and source
+								qsched_addunlock(scheduler,
+												 idM2L,
+												 _mpCellGlobalTop[currentLevel][targetId]._taskIdM2LFin);
+								qsched_addunlock(scheduler,
+												 idM2L,
+												 _mpCellGlobalTop[currentLevel][sourceId]._taskIdM2LFin);
+								// every calculation needs to lock source and target
+								qsched_addlock(scheduler,
+											   idM2L,
+											   _mpCellGlobalTop[currentLevel][targetId]._resIdLocal);
+								qsched_addlock(scheduler,
+											   idM2L,
+											   _mpCellGlobalTop[currentLevel][sourceId]._resIdLocal);
+							}
+						}
+					}
+				}
+
+				currentEdgeLength <<= 1;
+				// cellsInLevel = currentEdgeLength * currentEdgeLength * currentEdgeLength
+				cellsInLevel <<= 3;
+			}
+			break;
+		} /* Pair2Way */
+	}
+}
+
+void UniformPseudoParticleContainer::generateL2LTasks(qsched *scheduler) {
+	struct qsched_payload payload;
+	payload.uniformPseudoParticleContainer = this;
+
+	int idL2L,
+		targetId,
+		cellsPerDim  = 1 << (_maxLevel - 1),
+		cellsInLevel = 1 << (3 * (_maxLevel - 1)), // == cellsPerDim^3
+		sourceCoords[3],
+		targetCoords[3];
+
+	for (int level = _maxLevel-1; level > 0; --level) {
+
+		payload.currentLevel = level;
+		payload.currentEdgeLength = cellsPerDim;
+
+		for (int sourceId = 0; sourceId < cellsInLevel; ++sourceId) {
+
+			payload.sourceMultipole = sourceId;
+
+			idL2L = qsched_addtask(scheduler,
+								   FastMultipoleMethod::L2LCompleteCell,
+								   task_flag_none,
+								   &payload,
+								   sizeof(payload),
+								   1);
+
+			_mpCellGlobalTop[level][sourceId]._taskIdL2L = idL2L;
+
+			int cellsPerDim2 = cellsPerDim * cellsPerDim;
+			sourceCoords[2] = sourceId / cellsPerDim2;
+			sourceCoords[1] = (sourceId - (sourceCoords[2] * cellsPerDim2)) / cellsPerDim;
+			sourceCoords[0] = sourceId - (sourceCoords[2] * cellsPerDim2) - (sourceCoords[1] * cellsPerDim);
+
+
+			for (int i = 0; i < 8; ++i) {
+				targetCoords[2] = 2 * sourceCoords[2];
+				targetCoords[1] = 2 * sourceCoords[1];
+				targetCoords[0] = 2 * sourceCoords[0];
+
+				if (IsOdd(i    )) targetCoords[0] = targetCoords[0] + 1;
+				if (IsOdd(i / 2)) targetCoords[1] = targetCoords[1] + 1;
+				if (IsOdd(i / 4)) targetCoords[2] = targetCoords[2] + 1;
+
+				targetId = (targetCoords[2] * cellsPerDim * 2 + targetCoords[1]) * cellsPerDim * 2
+						   + targetCoords[0];
+
+				// prevent concurrent M2L to this target
+				qsched_addlock(scheduler,
+							   _mpCellGlobalTop[level][sourceId]._taskIdL2L,
+							   _mpCellGlobalTop[level + 1][targetId]._resIdLocal);
+				if ((level + 1) != _maxLevel) {
+					qsched_addunlock(scheduler,
+									 _mpCellGlobalTop[level][sourceId]._taskIdL2L,
+									 _mpCellGlobalTop[level + 1][targetId]._taskIdL2L);
+				} else {
+					qsched_addunlock(scheduler,
+									 _mpCellGlobalTop[level][sourceId]._taskIdL2L,
+									 _mpCellGlobalTop[level + 1][targetId]._taskIdL2P);
+				}
+			}
+		}
+
+		// cellsPerDim / 2;
+		cellsPerDim >>= 1;
+		// cellsInLevel / 8;
+		cellsInLevel >>= 3;
+	}
+}
+
+void UniformPseudoParticleContainer::generateL2PTasks(qsched *scheduler) {
+	long sourceId,
+		 targetId;
+	int  idL2P,
+		 sourceCoords[3],
+		 cellsPerDim = 1 << _maxLevel;     // in cells
+
+	struct qsched_payload payload;
+
+	payload.uniformPseudoParticleContainer = this;
+
+	for (sourceCoords[0] = 0; sourceCoords[0] < cellsPerDim; ++sourceCoords[0]) {
+		for (sourceCoords[1] = 0; sourceCoords[1] < cellsPerDim; ++sourceCoords[1]) {
+			for (sourceCoords[2] = 0; sourceCoords[2] < cellsPerDim; ++sourceCoords[2]) {
+				targetId = _leafContainer->cellIndexOf3DIndex(sourceCoords[0]+1,
+															  sourceCoords[1]+1,
+															  sourceCoords[2]+1);
+				payload.currentMultipole = targetId;
+				idL2P = qsched_addtask(scheduler,
+									   FastMultipoleMethod::L2PCompleteCell,
+									   qsched_flag_none,
+									   &payload,
+									   sizeof(payload),
+									   1);
+				qsched_addlock(scheduler,
+							   idL2P,
+							   _leafContainer->getCells()[targetId].getTaskData()._resourceId);
+				sourceId = (sourceCoords[2] * cellsPerDim + sourceCoords[1])
+						   * cellsPerDim
+						   + sourceCoords[0];
+				_mpCellGlobalTop[_maxLevel][sourceId]._taskIdL2P = idL2P;
+			}
+		}
+	}
+}
+
+void UniformPseudoParticleContainer::generateP2PTasks(qsched *scheduler) {
+	long cellIndex;
+	int  multipolesPerDim = 1 << _maxLevel,
+		 cellsPerDim      = multipolesPerDim + 2;
+	//TODO: Make taskBlockSize dynamic / autotuning / xml
+	struct qsched_payload payload;
+	payload.taskBlockSize[0] = 2;
+	payload.taskBlockSize[1] = 2;
+	payload.taskBlockSize[2] = 2;
+	payload.leafNodesContainer = _leafContainer;
+
+
+	global_log->info() << "Generating P2P task ids" << std::endl;
+	for (auto z = 0; z < cellsPerDim; ++z) {
+		for (auto y = 0; y < cellsPerDim; ++y) {
+			for (auto x = 0; x < cellsPerDim; ++x) {
+				cellIndex = _leafContainer->cellIndexOf3DIndex(x, y, z);
+				auto *cell = &_leafContainer->getCells()[cellIndex];
+				// only create tasks with offset blocksize-1.
+				// -1 because they need to overlap
+				// skip tasks for rear halo layer as they would only contain halo cells
+				if ((z % (payload.taskBlockSize[2] - 1) == 0
+					 && y % (payload.taskBlockSize[1] - 1) == 0
+					 && x % (payload.taskBlockSize[0] - 1) == 0)
+					&&
+					(x < cellsPerDim - 1
+					 && y < cellsPerDim - 1
+					 && z < cellsPerDim - 1)) {
+					// P2P TASK
+					// also save the pointers as long
+					payload.cell.coordinates[0] = x;
+					payload.cell.coordinates[1] = y;
+					payload.cell.coordinates[2] = z;
+					cell->setP2PId(qsched_addtask(scheduler,
+												 FastMultipoleMethod::P2Pc08StepBlock,
+												 task_flag_none,
+												 &payload,
+												 sizeof(payload),
+												 1)
+					);
+				}
+				// Pre and post tasks for every cell
+				// PREPROCESS TASK
+				payload.cell.pointer = cell;
+				cell->setPreprocessId(qsched_addtask(scheduler,
+													FastMultipoleMethod::P2PPreprocessSingleCell,
+													task_flag_none,
+													&payload,
+													sizeof(payload),
+													1)
+				);
+				// POSTPROCESS TASK
+				cell->setPostprocessId(qsched_addtask(scheduler,
+													 FastMultipoleMethod::P2PPostprocessSingleCell,
+													 task_flag_none,
+													 &payload,
+													 sizeof(payload),
+													 1)
+				);
+			} /* end for-x */
+		} /* end for-y*/
+	} /* end for-z */
+
+	// set dependencies
+	global_log->info() << "Setting P2P task dependencies" << std::endl;
+	for (auto z = 0; z < cellsPerDim - 1; z += payload.taskBlockSize[2] - 1) {
+		for (auto y = 0; y < cellsPerDim - 1; y += payload.taskBlockSize[1] - 1) {
+			for (auto x = 0; x < cellsPerDim - 1; x += payload.taskBlockSize[0] - 1) {
+				cellIndex = _leafContainer->cellIndexOf3DIndex(x, y, z);
+				auto *baseCell = &_leafContainer->getCells()[cellIndex];
+
+				for (auto k = 0; k < payload.taskBlockSize[2]
+								 && z + k < cellsPerDim; ++k) {
+					for (auto j = 0; j < payload.taskBlockSize[1]
+									 && y + j < cellsPerDim; ++j) {
+						for (auto i = 0; i < payload.taskBlockSize[0]
+										 && x + i < cellsPerDim; ++i) {
+							cellIndex = _leafContainer->cellIndexOf3DIndex(x + k, y + j, z + i);
+							auto *targetCell = &_leafContainer->getCells()[cellIndex];
+							// create locks for only for resources at edges
+							if(i == payload.taskBlockSize[0] - 1
+							   || j == payload.taskBlockSize[1] - 1
+							   || k == payload.taskBlockSize[2] - 1){
+								qsched_addlock(scheduler,
+											   baseCell->getTaskData()._P2PId,
+											   targetCell->getTaskData()._resourceId);
+							}
+							// 8 preprocess (partly) unlock one P2P
+							qsched_addunlock(scheduler,
+											 targetCell->getTaskData()._preprocessId,
+											 baseCell->getTaskData()._P2PId);
+							// every P2P (partly) unlocks 8 postprocess
+							qsched_addunlock(scheduler,
+											 baseCell->getTaskData()._P2PId,
+											 targetCell->getTaskData()._postprocessId);
+						}
+					}
+				}
+			} /* end for-x */
+		} /* end for-y*/
+	} /* end for-z */
 }
 #endif
 
@@ -1706,10 +2243,10 @@ template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool Us
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		double *cellWid, int mpCells, int curLevel) {
 	global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
-    int m1v[3]; //cell1 coordinates
-    int m2v[3]; //cell2 coordinates
-    int m1, m2, m2x, m2y, m2z; //cell coordinates
-    int m22x, m22y, m22z; // for periodic image
+	int m1v[3]; //cell1 coordinates
+	int m2v[3]; //cell2 coordinates
+	int m1, m2, m2x, m2y, m2z; //cell coordinates
+	int m22x, m22y, m22z; // for periodic image
 	int loop_min, loop_max;
 	int row_length; //number of cells per row
 	row_length = mpCells * mpCells * mpCells;
@@ -1717,9 +2254,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 	loop_max   = row_length;
 	//FFT param
 	double radius;
-    double base_unit = 2.0 / sqrt(3);
-    int M2L_order;
-    FFTDataContainer* tf;
+	double base_unit = 2.0 / sqrt(3);
+	int M2L_order;
+	FFTDataContainer* tf;
 	//Initialize FFT
 	global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
 	// FFT Initialize
@@ -1794,7 +2331,161 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 	global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 	//M2L in Fourier space
 	for (int m1Loop = loop_min; m1Loop < loop_max; m1Loop++) {
-		M2LTowerPlateStep<UseVectorization, UseTFMemoization, UseM2L_2way, UseOrderReduction>(m1Loop, mpCells, curLevel);
+		m1v[0] = m1Loop % mpCells;
+		m1v[1] = (m1Loop / mpCells) % mpCells;
+		m1v[2] = (m1Loop / (mpCells * mpCells)) % mpCells;
+		if (_mpCellGlobalTop[curLevel][m1Loop].occ == 0)
+			return;
+		int offsetEnd, offsetStart;
+		if(!_doNTGlobal or curLevel < _stopLevel){
+			offsetEnd = 0;
+			offsetStart = 0;
+		}
+		else{ //iterate over tower
+			offsetStart = -2;
+			offsetEnd = 3;
+		}
+		int m1v1_local = m1v[1];
+		for(int yOffset = offsetStart ; yOffset <=offsetEnd; yOffset++){ //iterate over tower
+
+			if(offsetEnd != 0 or offsetStart != 0){
+				m1v[1] = (m1v1_local & ~1) + yOffset;
+				int m11y = ((m1v1_local & ~1) + yOffset + mpCells) % mpCells;
+				m1 = (m1v[2] * mpCells + m11y) * mpCells + m1v[0];
+			}
+			else{
+				m1 = (m1v[2] * mpCells + m1v[1]) * mpCells + m1v[0];
+
+			}
+			for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
+				// to get periodic image
+				m22z = (mpCells + m2z) % mpCells;
+
+				m2v[2] = m2z;
+				int m2yStart, m2yEnd;
+				if(_doNTGlobal && curLevel >= _stopLevel){ //guarantees that m2y stays in y interval of plate
+					m2yStart = m2yEnd = m1v1_local;
+				}
+				else{
+					m2yStart = LoLim(1);
+					m2yEnd = HiLim(1);
+				}
+				for (m2y = m2yStart; m2y <= m2yEnd; m2y++) {
+					// to get periodic image
+					m22y = (mpCells + m2y) % mpCells;
+
+					m2v[1] = m2y;
+					for (m2x = LoLim(0); m2x <= HiLim(0); m2x++) {
+						// to get periodic image
+						m22x = (mpCells + m2x) % mpCells;
+						m2v[0] = m2x;
+						m2 = (m22z * mpCells + m22y) * mpCells + m22x;
+						if(filterM2Global(curLevel, m2v, m1v, m2x, m2y, m2z, m2,yOffset)){
+							continue;
+						}
+#ifndef ENABLE_MPI
+						if (UseM2L_2way) {
+							if (m1 > m2)
+								continue;
+						}
+#endif
+						int doBothDirections = (_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way)? 1 : 0;
+						for(int i = 0; i <= doBothDirections; i++){
+							tf = _FFT_TM->getTransferFunction(m2v[0] - m1v[0],
+															  m2v[1] - m1v[1], m2v[2] - m1v[2], base_unit, base_unit,
+															  base_unit);
+#ifndef _OPENMP
+						// Can only be used in sequential mode because race conditions
+						global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
+						global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
+#endif
+							if (UseM2L_2way) {
+								FFTAccelerableExpansion& source2 =
+															   static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
+								FFTAccelerableExpansion& target2 =
+															   static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m2].local).getExpansion();
+								FFTAccelerableExpansion& source1 =
+															   static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m1].multipole).getExpansion();
+								FFTAccelerableExpansion& target1 =
+															   static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
+
+								if (UseOrderReduction) {
+									M2L_order = FFTOrderReduction::getM2LOrder(
+											m2v[0] - m1v[0], m2v[1] - m1v[1],
+											m2v[2] - m1v[2], _maxOrd);
+									if (UseVectorization) {
+										static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed_vec(
+												source2, source1, target2, target1, tf,
+												M2L_order);
+									} else {
+										static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed(
+												source2, source1, target2, target1, tf,
+												M2L_order);
+									}
+								} else {
+									if (UseVectorization) {
+										static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way_vec(
+												source2, source1, target2, target1, tf);
+									} else {
+										static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way(
+												source2, source1, target2, target1, tf);
+									}
+								}
+							} else {
+								FFTAccelerableExpansion& source =
+															   static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
+								FFTAccelerableExpansion& target =
+															   static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
+
+								if (UseOrderReduction) {
+									M2L_order = FFTOrderReduction::getM2LOrder(
+											m2v[0] - m1v[0], m2v[1] - m1v[1],
+											m2v[2] - m1v[2], _maxOrd);
+									if (UseVectorization) {
+										static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction_vec(
+												source, target, tf, M2L_order);
+									} else {
+										static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction(
+												source, target, tf, M2L_order);
+									}
+								} else {
+									if (UseVectorization) {
+										_FFTAcceleration->FFT_M2L_vec(source, target,
+																	  tf);
+									} else {
+										_FFTAcceleration->FFT_M2L(source, target, tf);
+									}
+								}
+							}
+#ifndef _OPENMP
+						// Can only be used in sequential mode because race conditions
+						global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
+						global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
+#endif
+							if (!UseTFMemoization) {
+								delete tf; //free useless memory
+							}
+							if(_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way){
+								//exchange m1 and m2 for second direction
+								int temp = m1;
+								m1 = m2;
+								m2 = temp;
+								int tempAr[3];
+								tempAr[0] = m1v[0];
+								tempAr[1] = m1v[1];
+								tempAr[2] = m1v[2];
+								m1v[0] = m2v[0];
+								m1v[1] = m2v[1];
+								m1v[2] = m2v[2];
+								m2v[0] = tempAr[0];
+								m2v[1] = tempAr[1];
+								m2v[2] = tempAr[2];
+							}
+						}
+					} // m2x closed
+				} // m2y closed
+			} // m2z closed
+		}
 	} //m1 closed
 	global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 
@@ -1863,177 +2554,184 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 	global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
 } // GatherWellSepLo_FFT_template closed
 
-// TODO: Inline hack
-template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
-void UniformPseudoParticleContainer::M2LTowerPlateStep(int m1Loop, int mpCells, int curLevel) {
+void UniformPseudoParticleContainer::M2LCompleteCell(int targetId, int level, int cellsPerDimension) {
 
-	int m1v[3]; //cell1 coordinates
-	int m2v[3]; //cell2 coordinates
-	int m1, m2, m2x, m2y, m2z; //cell coordinates
-	int m22x, m22y, m22z; // for periodic image
-	//FFT param
-	double radius;
-	double base_unit = 2.0 / sqrt(3);
-	int M2L_order;
-	FFTDataContainer* tf;
+	// corresponds to base_unit from UniformPseudoParticleContainer::M2LTowerPlateStep
+	const double cellSize = 2.0 / sqrt(3);
 
-	m1v[0] = m1Loop % mpCells;
-	m1v[1] = (m1Loop / mpCells) % mpCells;
-	m1v[2] = (m1Loop / (mpCells * mpCells)) % mpCells;
-	if (_mpCellGlobalTop[curLevel][m1Loop].occ == 0)
+	// get and initialize target
+	int targetCoords[3];
+	int cellsPerDimension2 = cellsPerDimension * cellsPerDimension;
+	targetCoords[2] = targetId / cellsPerDimension2;
+	targetCoords[1] = (targetId - (targetCoords[2] * cellsPerDimension2)) / cellsPerDimension;
+	targetCoords[0] = targetId - (targetCoords[2] * cellsPerDimension2) - (targetCoords[1] * cellsPerDimension);
+
+	FFTAccelerableExpansion& target = static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[level][targetId]
+			.local)
+			.getExpansion();
+
+	_FFTAcceleration->FFT_initialize_Target(target);
+
+	// abort if cell target is empty
+	if (_mpCellGlobalTop[level][targetId].occ == 0) {
+		// Finalize
+		double targetRadius = _mpCellGlobalTop[level][targetId].local.getRadius();
+		_FFTAcceleration->FFT_finalize_Target(target, targetRadius);
 		return;
-	int offsetEnd, offsetStart;
-	if(!_doNTGlobal or curLevel < _stopLevel){
-		offsetEnd = 0;
-		offsetStart = 0;
 	}
-	else{ //iterate over tower
-		offsetStart = -2;
-		offsetEnd = 3;
+
+	int sourceCoords[3];
+	// cell from where sources will be calculated
+	int sourceRootCoords[3];
+	// find start corner for stencil
+	for (int i = 0; i < 3; ++i) {
+		if (IsOdd(targetCoords[i]))
+			sourceRootCoords[i] = targetCoords[i] - 3;
+		else
+			sourceRootCoords[i] = targetCoords[i] - 2;
 	}
-	int m1v1_local = m1v[1];
-	for(int yOffset = offsetStart ; yOffset <=offsetEnd; yOffset++){ //iterate over tower
 
-		if(offsetEnd != 0 or offsetStart != 0){
-			m1v[1] = (m1v1_local & ~1) + yOffset;
-			int m11y = ((m1v1_local & ~1) + yOffset + mpCells) % mpCells;
-			m1 = (m1v[2] * mpCells + m11y) * mpCells + m1v[0];
-		}
-		else{
-			m1 = (m1v[2] * mpCells + m1v[1]) * mpCells + m1v[0];
+	// iterate through 6x6x6 grid around target cell with periodic boundaries
+	for (int x = 0; x < 6; ++x) {
+		sourceCoords[0] = sourceRootCoords[0] + x;
+		if (sourceCoords[0] < 0)
+			sourceCoords[0] += cellsPerDimension;
+		else if (sourceCoords[0] >= cellsPerDimension)
+			sourceCoords[0] -= cellsPerDimension;
+		for (int y = 0; y < 6; ++y) {
+			sourceCoords[1] = sourceRootCoords[1] + y;
+			if (sourceCoords[1] < 0)
+				sourceCoords[1] += cellsPerDimension;
+			else if (sourceCoords[1] >= cellsPerDimension)
+				sourceCoords[1] -= cellsPerDimension;
+			for (int z = 0; z < 6; ++z) {
+				sourceCoords[2] = sourceRootCoords[2] + z;
+				if (sourceCoords[2] < 0)
+					sourceCoords[2] += cellsPerDimension;
+				else if (sourceCoords[2] >= cellsPerDimension)
+					sourceCoords[2] -= cellsPerDimension;
+				// skip cells that are too near
+				if (std::abs(sourceRootCoords[0] + x - targetCoords[0]) < 2
+					&& std::abs(sourceRootCoords[1] + y - targetCoords[1]) < 2
+					&& std::abs(sourceRootCoords[2] + z - targetCoords[2]) < 2)
+					continue;
 
-		}
-		for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
-			// to get periodic image
-			m22z = (mpCells + m2z) % mpCells;
+				int sourceId = (sourceCoords[2] * cellsPerDimension + sourceCoords[1]) * cellsPerDimension
+							   + sourceCoords[0];
 
-			m2v[2] = m2z;
-			int m2yStart, m2yEnd;
-			if(_doNTGlobal && curLevel >= _stopLevel){ //guarantees that m2y stays in y interval of plate
-				m2yStart = m2yEnd = m1v1_local;
+				if(_mpCellGlobalTop[level][sourceId].occ == 0)
+					continue;
+
+				FFTAccelerableExpansion &source = static_cast<bhfmm::SHMultipoleParticle &>(_mpCellGlobalTop[level][sourceId]
+						.multipole)
+						.getExpansion();
+
+				auto transferFunction = _FFT_TM->getTransferFunction(sourceRootCoords[0] + x - targetCoords[0],
+																	 sourceRootCoords[1] + y - targetCoords[1],
+																	 sourceRootCoords[2] + z - targetCoords[2],
+																	 cellSize,
+																	 cellSize,
+																	 cellSize);
+
+//                cout << "Level: " << level
+//                     << " | Target: " << setw(5) << targetId
+//                     << " (" << setw(2) << targetCoords[0]
+//                     << ", " << setw(2) << targetCoords[1]
+//                     << ", " << setw(2) << targetCoords[2]
+//                     << ") | Source: " << setw(5) << sourceId
+//                     << " (" << setw(2) << sourceCoords[0]
+//                     << ", " << setw(2) << sourceCoords[1]
+//                     << ", " << setw(2) << sourceCoords[2]
+//                     << ") | tf: "
+//                     << "(" << setw(2) << sourceRootCoords[0] + x - targetCoords[0]
+//                     << ", " << setw(2) << sourceRootCoords[1] + y - targetCoords[1]
+//                     << ", " << setw(2) << sourceRootCoords[2] + z - targetCoords[2]
+//                     << ")" << endl;
+
+				// calculate single M2L
+				if(FFTSettings::USE_ORDER_REDUCTION){
+					auto m2l_order = FFTOrderReduction::getM2LOrder(
+							sourceRootCoords[2] + z - targetCoords[2],
+							sourceRootCoords[1] + y - targetCoords[1],
+							sourceRootCoords[0] + x - targetCoords[0],
+							_maxOrd);
+					static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction_vec(
+							source, target, transferFunction, m2l_order);
+
+				} else
+					_FFTAcceleration->FFT_M2L_vec(source, target, transferFunction);
 			}
-			else{
-				m2yStart = LoLim(1);
-				m2yEnd = HiLim(1);
-			}
-			for (m2y = m2yStart; m2y <= m2yEnd; m2y++) {
-				// to get periodic image
-				m22y = (mpCells + m2y) % mpCells;
-
-				m2v[1] = m2y;
-				for (m2x = LoLim(0); m2x <= HiLim(0); m2x++) {
-					// to get periodic image
-					m22x = (mpCells + m2x) % mpCells;
-					m2v[0] = m2x;
-					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
-					if(filterM2Global(curLevel, m2v, m1v, m2x, m2y, m2z, m2,yOffset)){
-						continue;
-					}
-#ifndef ENABLE_MPI
-					if (UseM2L_2way) {
-						if (m1 > m2)
-							continue;
-					}
-#endif
-					int doBothDirections = (_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way)? 1 : 0;
-					for(int i = 0; i <= doBothDirections; i++){
-						tf = _FFT_TM->getTransferFunction(m2v[0] - m1v[0],
-														  m2v[1] - m1v[1], m2v[2] - m1v[2], base_unit, base_unit,
-														  base_unit);
-#ifndef _OPENMP
-						// Can only be used in sequential mode because race conditions
-						global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
-						global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
-#endif
-						if (UseM2L_2way) {
-							FFTAccelerableExpansion& source2 =
-														   static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
-							FFTAccelerableExpansion& target2 =
-														   static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m2].local).getExpansion();
-							FFTAccelerableExpansion& source1 =
-														   static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m1].multipole).getExpansion();
-							FFTAccelerableExpansion& target1 =
-														   static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
-
-							if (UseOrderReduction) {
-								M2L_order = FFTOrderReduction::getM2LOrder(
-										m2v[0] - m1v[0], m2v[1] - m1v[1],
-										m2v[2] - m1v[2], _maxOrd);
-								if (UseVectorization) {
-									static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed_vec(
-											source2, source1, target2, target1, tf,
-											M2L_order);
-								} else {
-									static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed(
-											source2, source1, target2, target1, tf,
-											M2L_order);
-								}
-							} else {
-								if (UseVectorization) {
-									static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way_vec(
-											source2, source1, target2, target1, tf);
-								} else {
-									static_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way(
-											source2, source1, target2, target1, tf);
-								}
-							}
-						} else {
-							FFTAccelerableExpansion& source =
-														   static_cast<bhfmm::SHMultipoleParticle&>(_mpCellGlobalTop[curLevel][m2].multipole).getExpansion();
-							FFTAccelerableExpansion& target =
-														   static_cast<bhfmm::SHLocalParticle&>(_mpCellGlobalTop[curLevel][m1].local).getExpansion();
-
-							if (UseOrderReduction) {
-								M2L_order = FFTOrderReduction::getM2LOrder(
-										m2v[0] - m1v[0], m2v[1] - m1v[1],
-										m2v[2] - m1v[2], _maxOrd);
-								if (UseVectorization) {
-									static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction_vec(
-											source, target, tf, M2L_order);
-								} else {
-									static_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction(
-											source, target, tf, M2L_order);
-								}
-							} else {
-								if (UseVectorization) {
-									_FFTAcceleration->FFT_M2L_vec(source, target,
-																  tf);
-								} else {
-									_FFTAcceleration->FFT_M2L(source, target, tf);
-								}
-							}
-						}
-#ifndef _OPENMP
-						// Can only be used in sequential mode because race conditions
-						global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
-						global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
-#endif
-						if (!UseTFMemoization) {
-							delete tf; //free useless memory
-						}
-						if(_doNTGlobal && curLevel >= _stopLevel and not UseM2L_2way){
-							//exchange m1 and m2 for second direction
-							int temp = m1;
-							m1 = m2;
-							m2 = temp;
-							int tempAr[3];
-							tempAr[0] = m1v[0];
-							tempAr[1] = m1v[1];
-							tempAr[2] = m1v[2];
-							m1v[0] = m2v[0];
-							m1v[1] = m2v[1];
-							m1v[2] = m2v[2];
-							m2v[0] = tempAr[0];
-							m2v[1] = tempAr[1];
-							m2v[2] = tempAr[2];
-						}
-					}
-				} // m2x closed
-			} // m2y closed
-		} // m2z closed
+		}
 	}
+
+	// Finalize
+	double targetRadius = _mpCellGlobalTop[level][targetId].local.getRadius();
+	_FFTAcceleration->FFT_finalize_Target(target, targetRadius);
 }
 
+void UniformPseudoParticleContainer::M2LPair2Way(int cellA, int cellB, int level, int cellsPerDimension) {
+	const double cellSize = 2.0 / sqrt(3);
+
+	int  coordsA[3],
+		 coordsB[3];
+	int cellsPerDimension2 = cellsPerDimension * cellsPerDimension;
+
+	coordsA[0] = cellA / cellsPerDimension2;
+	coordsA[1] = (cellA - (coordsA[0] * cellsPerDimension2)) / cellsPerDimension;
+	coordsA[2] = cellA - (coordsA[0] * cellsPerDimension2) - coordsA[1] * cellsPerDimension;
+
+	coordsB[0] = cellB / cellsPerDimension2;
+	coordsB[1] = (cellB - (coordsB[0] * cellsPerDimension2)) / cellsPerDimension;
+	coordsB[2] = cellB - (coordsB[0] * cellsPerDimension2) - coordsB[1] * cellsPerDimension;
+
+	FFTAccelerableExpansion &targetA = static_cast<bhfmm::SHLocalParticle &>(_mpCellGlobalTop[level][cellA]
+			.local)
+			.getExpansion();
+	FFTAccelerableExpansion &sourceA = static_cast<bhfmm::SHMultipoleParticle &>(_mpCellGlobalTop[level][cellA]
+			.multipole)
+			.getExpansion();
+	FFTAccelerableExpansion &targetB = static_cast<bhfmm::SHLocalParticle &>(_mpCellGlobalTop[level][cellB]
+			.local)
+			.getExpansion();
+	FFTAccelerableExpansion &sourceB = static_cast<bhfmm::SHMultipoleParticle &>(_mpCellGlobalTop[level][cellB]
+			.multipole)
+			.getExpansion();
+
+	auto transferFunction1 = _FFT_TM->getTransferFunction(coordsB[0] - coordsA[0],
+														 coordsB[1] - coordsA[1],
+														 coordsB[2] - coordsA[2],
+														 cellSize,
+														 cellSize,
+														 cellSize);
+	auto transferFunction2 = _FFT_TM->getTransferFunction(coordsA[0] - coordsB[0],
+														 coordsA[1] - coordsB[1],
+														 coordsA[2] - coordsB[2],
+														 cellSize,
+														 cellSize,
+														 cellSize);
+
+	// calculate single M2L
+	if(FFTSettings::USE_ORDER_REDUCTION){
+		auto m2l_order = FFTOrderReduction::getM2LOrder(
+				coordsA[0] - coordsB[0],
+				coordsA[1] - coordsB[1],
+				coordsA[2] - coordsB[2],
+				_maxOrd);
+		// FIXME: two FFT_M2Ls are faster than one 2way
+//		dynamic_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_2way_ORed_vec(
+//				sourceA, sourceB, targetA, targetB, transferFunction1, m2l_order);
+		dynamic_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction_vec(
+				sourceA, targetB, transferFunction1, m2l_order);
+		dynamic_cast<FFTAccelerationAPI_full*>(_FFTAcceleration)->FFT_M2L_OrderReduction_vec(
+				sourceB, targetA, transferFunction2, m2l_order);
+
+	} else {
+//		dynamic_cast<FFTAccelerationAPI_2Way*>(_FFTAcceleration)->FFT_M2L_2way_vec(
+//				sourceA, sourceB, targetA, targetB, transferFunction1);
+		_FFTAcceleration->FFT_M2L_vec(sourceA, targetB, transferFunction1);
+		_FFTAcceleration->FFT_M2L_vec(sourceB, targetA, transferFunction2);
+	}
+}
 template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 		double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos) {
@@ -2334,6 +3032,80 @@ void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/,
 	}
 	global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL");
 } // PropogateCellLo
+
+void UniformPseudoParticleContainer::M2MCompleteCell(int targetId, int level, int cellsPerDim) {
+	int sourceId,
+		sourceCoords[3],
+		targetCoords[3],
+		cellsPerDim2 = cellsPerDim * cellsPerDim;
+	targetCoords[2] = targetId / cellsPerDim2;
+	targetCoords[1] = (targetId - (targetCoords[2] * cellsPerDim2)) / cellsPerDim;
+	targetCoords[0] = targetId - (targetCoords[2] * cellsPerDim2) - (targetCoords[1] * cellsPerDim);
+
+	auto *target = &_mpCellGlobalTop[level][targetId];
+	for (int i = 0; i < 8; ++i) {
+		sourceCoords[0] = targetCoords[0] * 2;
+		sourceCoords[1] = targetCoords[1] * 2;
+		sourceCoords[2] = targetCoords[2] * 2;
+
+		if (IsOdd(i    )) ++sourceCoords[0];
+		if (IsOdd(i / 2)) ++sourceCoords[1];
+		if (IsOdd(i / 4)) ++sourceCoords[2];
+
+		sourceId = (sourceCoords[2] * cellsPerDim * 2 + sourceCoords[1]) * cellsPerDim * 2
+				   + sourceCoords[0];
+
+		auto *source = &_mpCellGlobalTop[level + 1][sourceId];
+
+		if(source->occ == 0)
+			continue;
+
+		//M2M operation
+		target->occ += source->occ;
+		target->multipole.addMultipoleParticle(source->multipole);
+	}
+}
+
+void UniformPseudoParticleContainer::L2LCompleteCell(int sourceId, int level, int cellsPerDimension) {
+
+	if (_mpCellGlobalTop[level][sourceId].occ == 0){
+		return;
+	}
+
+	int targetId,
+		sourceCoords[3],
+		targetCoords[3],
+		currentEdgeLength2 = cellsPerDimension * cellsPerDimension;
+	sourceCoords[2] = sourceId / currentEdgeLength2;
+	sourceCoords[1] = (sourceId - (sourceCoords[2] * currentEdgeLength2)) / cellsPerDimension;
+	sourceCoords[0] = sourceId - (sourceCoords[2] * currentEdgeLength2) - (sourceCoords[1] * cellsPerDimension);
+
+
+	for (int i = 0; i < 8; ++i) {
+		targetCoords[0] = 2 * sourceCoords[0];
+		targetCoords[1] = 2 * sourceCoords[1];
+		targetCoords[2] = 2 * sourceCoords[2];
+
+		if (IsOdd(i    )) targetCoords[0] = targetCoords[0] + 1;
+		if (IsOdd(i / 2)) targetCoords[1] = targetCoords[1] + 1;
+		if (IsOdd(i / 4)) targetCoords[2] = targetCoords[2] + 1;
+
+		targetId = (targetCoords[2] * cellsPerDimension * 2 + targetCoords[1]) * cellsPerDimension * 2
+				   + targetCoords[0];
+
+		// L2L operation
+		_mpCellGlobalTop[level][sourceId].local.actOnLocalParticle(
+				_mpCellGlobalTop[level + 1][targetId].local);
+	}
+}
+
+void UniformPseudoParticleContainer::L2PCompleteCell(int targetId) {
+	processFarField(_leafContainer->getCells()[targetId]);
+}
+
+void UniformPseudoParticleContainer::P2MCompleteCell(int sourceId) {
+	processMultipole(_leafContainer->getCells()[sourceId]);
+}
 
 void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
 	global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL");
