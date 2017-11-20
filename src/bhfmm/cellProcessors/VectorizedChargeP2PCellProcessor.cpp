@@ -120,6 +120,8 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 
 	// Determine the total number of centers.
 	size_t numMolecules = c.getMoleculeCount();
+	if(numMolecules == 0)
+		return;
 	size_t nLJCenters = 0;
 	size_t nCharges = 0;
 	size_t nDipoles = 0;
@@ -193,6 +195,11 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 	// as pre new integration of Caches in SoAs, 
 	// this function work as before, as it builds secondary SoAs
 	using std::isnan; // C++11 required
+
+	size_t numMolecules = c.getMoleculeCount();
+	if(numMolecules == 0)
+		return;
+
 	CellDataSoA& soa = c.getCellDataSoA();
 
 	//for better readability:
@@ -209,7 +216,6 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
-	size_t numMolecules = c.getMoleculeCount();
 	for (size_t i = 0; i < numMolecules; ++i) {
 		Molecule& m = c.moleculesAt(i);
 
