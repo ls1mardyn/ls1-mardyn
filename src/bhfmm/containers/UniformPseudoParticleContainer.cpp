@@ -1706,7 +1706,10 @@ template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool Us
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		double *cellWid, int mpCells, int curLevel) {
 	global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
-	int m1; //cell coordinates
+    int m1v[3]; //cell1 coordinates
+    int m2v[3]; //cell2 coordinates
+    int m1, m2, m2x, m2y, m2z; //cell coordinates
+    int m22x, m22y, m22z; // for periodic image
 	int loop_min, loop_max;
 	int row_length; //number of cells per row
 	row_length = mpCells * mpCells * mpCells;
@@ -1714,6 +1717,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 	loop_max   = row_length;
 	//FFT param
 	double radius;
+    double base_unit = 2.0 / sqrt(3);
+    int M2L_order;
+    FFTDataContainer* tf;
 	//Initialize FFT
 	global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
 	// FFT Initialize
