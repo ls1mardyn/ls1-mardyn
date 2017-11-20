@@ -69,40 +69,7 @@ class FastMultipoleMethod;
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *
- * Some of the simulation parameters are provided in a config file.
- * The order of the parameters in the config file is important.
- * Thats's because e.g. the datastructure can only be built after the
- * phasespace has been read.
- *
- * The config file usually has the file ending ".cfg" and
- * starts with a line containing the token "mardynconfig"
- * followed by the following parameters, among others
- * (possibly mixed with comment lines starting with "#"):
- * - timestepLength: Uses by the Iterator to calculate new velocities and positions
- * - cutoffRadius: Determines the maximum distance for which the force between two
- *                   molecules still has to be calculated
- * - phaseSpaceFile: Full path to the XDR file containing the phase space
- * - parallelization: Parallelisation scheme to be used
- *                    - DomainDecomposition: standard spacial domain decomposition into
- *                                           cuboid regions of equal size
- * - datastructure: Datastructure to be used (e.g. Linked Cells) followed by
- *                    the parameters for the datastructures
- *                  The datastructure LinkedCells needs one additional parameter,
- *                  which is the number of cells in the cutoff radius (equals to the
- *                  cutoff radius divided by the cell length).
- *
- * Example for a config file:
- *
- * \code{.txt}
- *  mardynconfig
- *  timestepLength 0.00005
- *  cutoffRadius 3.0
- *  phaseSpaceFile OldStype phasespace.xdr
- *  # datastructure followed by the parameters for the datastructure
- *  # for LinkedCells, the cellsInCutoffRadius has to be provided
- *  datastructure LinkedCells 1
- *  parallelization DomainDecomposition
- * \endcode
+ * Simulation parameters are provided via a xml config file or can be set directly via the corresponding methods.
  */
 class Simulation {
 private:

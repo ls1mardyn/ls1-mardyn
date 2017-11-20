@@ -186,8 +186,8 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream;
 			if(binary == true){
-//				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
-				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::app);
+//				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::app);
 			}
 			else {
 				checkpointfilestream.open(filename.c_str(), std::ios::app);
