@@ -376,7 +376,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		MPI_Comm_size(_neighbourhoodComms[i], &size);
 		if(size > 8){ //neighbourhood comms need to have size 8
 			std::cout << "Error wrong communicator \n";
-			exit(1);
+			Simulation::exit(1);
 		}
 	}
 #endif

@@ -119,7 +119,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 					|| ntypestring == "IRV")) {
 				global_log->error() << "Unknown molecule format: '"
 						<< ntypestring << "'" << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			_moleculeFormat = ntypestring;
 			global_log->info() << " molecule format: " << ntypestring << endl;
@@ -695,6 +695,6 @@ void MPI_IOReader::handle_error(int i) {
 
 	global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	exit(1);
+	Simulation::exit(1);
 #endif
 }

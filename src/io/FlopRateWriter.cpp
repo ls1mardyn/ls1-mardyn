@@ -35,7 +35,7 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 	// TODO:
 	if(_writeToFile) {
 		global_log->error() << "TODO: file output not yet supported." << endl;
-		global_simulation->exit(1);
+		Simulation::exit(1);
 	}
 
 	if(_writeToFile) {

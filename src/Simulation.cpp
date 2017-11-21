@@ -1448,7 +1448,7 @@ void Simulation::output(unsigned long simstep) {
 	using std::isnan;
 	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
 		global_log->error() << "NaN detected, exiting." << std::endl;
-		global_simulation->exit(1);
+		Simulation::exit(1);
 	}
 }
 

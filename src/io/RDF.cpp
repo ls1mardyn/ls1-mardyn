@@ -31,7 +31,7 @@ RDF::RDF() :
 void RDF::init() {
 	if(!_readConfig){
 		global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
-		global_simulation->exit(25);
+		Simulation::exit(25);
 	}
 	_numberOfComponents = _components->size();
 	_doCollectSiteRDF = false;

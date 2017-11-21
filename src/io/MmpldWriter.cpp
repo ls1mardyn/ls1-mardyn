@@ -85,7 +85,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 			break;
 		default:
 			global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << endl;
-			global_simulation->exit(1);
+			Simulation::exit(1);
 			break;
 	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -409,7 +409,7 @@ long MmpldWriter::get_data_frame_header_size() {
 			break;
 		default:
 			global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << endl;
-			global_simulation->exit(1);
+			Simulation::exit(1);
 			break;
 	}
 	return data_frame_header_size;

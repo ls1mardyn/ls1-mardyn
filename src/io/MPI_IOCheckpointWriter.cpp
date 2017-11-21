@@ -443,6 +443,6 @@ void MPI_IOCheckpointWriter::handle_error(int i) {
 
 	global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	exit(1);
+	Simulation::exit(1);
 #endif
 }

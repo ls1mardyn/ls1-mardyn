@@ -133,7 +133,7 @@ unsigned long BinaryReader::readPhaseSpace(
 		if (!_phaseSpaceFileStream.is_open()) {
 			global_log->error() << "Could not open phaseSpaceFile "
 					<< _phaseSpaceFile << endl;
-			exit(1);
+			Simulation::exit(1);
 		}
 		global_log->info() << "Reading phase space file " << _phaseSpaceFile
 				<< endl;
@@ -221,7 +221,7 @@ unsigned long BinaryReader::readPhaseSpace(
 				global_log->error() << "Molecule id " << id
 						<< " has wrong componentid: " << componentid << ">"
 						<< numcomponents << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			componentid--; // TODO: Component IDs start with 0 in the program.
 
