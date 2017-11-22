@@ -10,13 +10,15 @@ MPI_Info_object::~MPI_Info_object() {
 }
 
 void MPI_Info_object::reset() {
-	if(_mpi_info!=MPI_INFO_NULL) MPI_CHECK( MPI_Info_free(&_mpi_info) );
-	_mpi_info=MPI_INFO_NULL;
+	if(_mpi_info != MPI_INFO_NULL) {
+		MPI_CHECK( MPI_Info_free(&_mpi_info) );
+	}
 }
 
 void MPI_Info_object::readXML(XMLfile& xmlconfig) {
-	if(_mpi_info==MPI_INFO_NULL)
+	if(_mpi_info == MPI_INFO_NULL) {
 		MPI_CHECK( MPI_Info_create(&_mpi_info) );
+	}
 	
 	XMLfile::Query query = xmlconfig.query("hint");
 	global_log->debug() << "[MPI_Info_object]\tNumber of hint key value pairs: " << query.card() << endl;
