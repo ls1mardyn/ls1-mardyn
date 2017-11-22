@@ -41,7 +41,7 @@ do
 	fi
 	ARG_TOTAL_TASKS=$((numNodes * iMPI))
 	ARG_NAME="mar-h-$numNodes-$iMPI-sp-35"
-	ARG_NUMOMP=$((32 / iMPI))
+	ARG_NUMOMP=$((48 / iMPI))
 
 	#sed everything
 	#s/GENERIC_ARG_NAME/$ARG_NAME/g; 
