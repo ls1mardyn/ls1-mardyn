@@ -1,4 +1,5 @@
 #!/bin/bash
+#PBS -W group_list=uhs44130
 #PBS -N GENERIC_ARG_NAME
 #PBS -l nodes=GENERIC_ARG_NODES:ppn=GENERIC_ARG_PPNODE
 #PBS -l walltime=GENERIC_ARG_TIME
@@ -28,7 +29,7 @@ executable="GENERIC_ARG_EXECUTABLE"
 for ((iRepe=0; iRepe <= 4; iRepe +=1)) ; 
 do
 	echo "repetition $iRepe"
-	for ((iSize=4096; iSize >= 1; iSize /= 2)) ;
+	for ((iSize=32768; iSize >= 1; iSize /= 2)) ;
 	do
 		echo "system size: $iSize"
 		#for loop over schemes

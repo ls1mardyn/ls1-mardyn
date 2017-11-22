@@ -7,7 +7,7 @@ input_file_base="$numNodes-nodes.xml"
 echo "using $input_file_base as base"
 
 # generate up to 4096 times smaller files
-for ((iSize=1; iSize <= 4096; iSize *= 2)) ; 
+for ((iSize=1; iSize <= 32768; iSize *= 2)) ; 
 do
 	onenodesize=`cat $input_file_base | grep "<lx>" | sed "s/>/</g" | cut -d '<' -f 3`
 	size=`echo "" | awk "END {print $onenodesize / ($iSize ^ (1/3)) }"`
