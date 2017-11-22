@@ -3,7 +3,7 @@ numNodes=$1
 # Step 3: generate jobscripts hybrid MPI x OpenMP variation of number of MPI ranks
 echo "script $0 generating input file for $1 nodes."
 
-time_limit=06:00:00
+time_limit=12:00:00
 ARG_TIME=$time_limit
 numNodes=$1
 ARG_NODES=$numNodes

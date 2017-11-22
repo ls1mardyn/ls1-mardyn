@@ -1,10 +1,12 @@
 #!/bin/bash
 #PBS -W group_list=uhs44130
 #PBS -N GENERIC_ARG_NAME
+#PBS -m abe
+#PBS -M tchipev@in.tum.de
 #PBS -l nodes=GENERIC_ARG_NODES:ppn=GENERIC_ARG_PPNODE
 #PBS -l walltime=GENERIC_ARG_TIME
-#PBS -o output-of-jobs-GENERIC_ARG_NODES-nodes/PBS.out.GENERIC_ARG_TOTAL_TASKS.$(PBS_JOBID)
-#PBS -e output-of-jobs-GENERIC_ARG_NODES-nodes/PBS.err.GENERIC_ARG_TOTAL_TASKS.$(PBS_JOBID)
+#PBS -o output-of-jobs-GENERIC_ARG_NODES-nodes/
+#PBS -e output-of-jobs-GENERIC_ARG_NODES-nodes/
 
 # Change to the directory that the job was submitted from
 cd $PBS_O_WORKDIR
@@ -19,6 +21,8 @@ echo ""
 echo "running with $ppn processes per node ($omps omp threads per process) on $nodes nodes."
 echo ""
 export OMP_NUM_THREADS=$omps
+
+NumProcs=$npes
 
 module list
 #aprun -n $npes -N $ppn -d $OMP_NUM_THREADS -cc depth a.out
@@ -39,7 +43,7 @@ do
 			echo "scheme: $iScheme"
 			inputFileName=GENERIC_ARG_NODES-nodes-$iSize-$iScheme.xml
 			outputFileName="output-of-jobs-GENERIC_ARG_NODES-nodes/out-$NumProcs-$iSize-$iScheme-$iRepe.txt"
-			aprun -n $npes -N $ppn -d $OMP_NUM_THREADS -cc depth -j 2 ../$executable $inputFileName 11 --final-checkpoint=0 > $outputFileName
+			aprun -n $npes -N $ppn -d $OMP_NUM_THREADS -cc depth -j 2 ../$executable $inputFileName --steps 11 --final-checkpoint=0 > $outputFileName
 		done
 	done
 done
