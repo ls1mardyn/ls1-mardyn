@@ -113,8 +113,8 @@ public:
 	 * \code{.xml}
 	   <object>
 	     <centerBase> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </centerBase>
-	     <radius>DOUBLE</radius>
-	     <height>DOUBLE</height>
+	     <radius>DOUBLE</radius> <!-- x-y plane -->
+	     <height>DOUBLE</height> <!-- z-direction -->
 	   </object>
 	   \endcode
 	 */
@@ -190,7 +190,10 @@ private:
 	std::shared_ptr<Object> _ob2;
 };
 
-/** Abstract class to subtract one object from another */
+/** Abstract class to subtract one object from another
+ *
+ * @note Boundaries of the subtrahend object lying within the minuend object are included in the resulting object.
+ */
 class ObjectSubtractor : public Object {
 public:
 	ObjectSubtractor();
