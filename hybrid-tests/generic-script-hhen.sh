@@ -43,7 +43,7 @@ do
 			echo "scheme: $iScheme"
 			inputFileName=GENERIC_ARG_NODES-nodes-$iSize-$iScheme.xml
 			outputFileName="output-of-jobs-GENERIC_ARG_NODES-nodes/out-$NumProcs-$iSize-$iScheme-$iRepe.txt"
-			aprun -n $npes -N $ppn -d $OMP_NUM_THREADS -cc depth -j 2 ../$executable $inputFileName --steps 11 --final-checkpoint=0 > $outputFileName
+			aprun -n $npes -N $ppn -d $OMP_NUM_THREADS -cc cpu -j 2 ../$executable $inputFileName --steps 11 --final-checkpoint=0 > $outputFileName
 		done
 	done
 done
