@@ -42,7 +42,7 @@ public:
 
 	//! @brief checks identity of random number generators
 	void assertIntIdentity(int IX);
-	void assertDisjunctivity(TMoleculeContainer* mm) const override;
+	void assertDisjunctivity(ParticleContainer* moleculeContainer) const override;
 
 	//##################################################################
 	// The following methods with prefix "collComm" are all used

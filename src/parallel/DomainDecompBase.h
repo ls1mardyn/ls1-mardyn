@@ -16,8 +16,6 @@ class Domain;
 class ParticleContainer;
 class XMLfileUnits;
 
-typedef ParticleContainer TMoleculeContainer;
-
 //! @brief handle boundary region and multiple processes
 //! @author Martin Buchholz, Nikola Tchipev
 //!
@@ -152,7 +150,7 @@ public:
 
 	//! @brief checks identity of random number generators
 	virtual void assertIntIdentity(int IX);
-	virtual void assertDisjunctivity(TMoleculeContainer* mm) const;
+	virtual void assertDisjunctivity(ParticleContainer* moleculeContainer) const;
 
 	//! @brief returns an cutoff radius for a dimension for a global linked cells datastructure
 	//!

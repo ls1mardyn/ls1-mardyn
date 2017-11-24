@@ -13,8 +13,6 @@ class CellProcessor;
 class Domain;
 class ParticleIterator;
 
-typedef ParticleContainer TMoleculeContainer;
-
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 class ChemicalPotential {
 public:
@@ -30,10 +28,10 @@ public:
 	void setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1);
 	void setIncrement(unsigned idi) { _id_increment = idi; }
 
-	void prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm);  // C must not contain the halo!
+	void prepareTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* comm);  // C must not contain the halo!
 
 	// false if no deletion remains for this subdomain
-	bool getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret);
+	bool getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret);
 	unsigned long getInsertion(double* ins);  // 0 if no insertion remains for this subdomain
 	bool decideDeletion(double deltaUTilde);
 	bool decideInsertion(double deltaUTilde);
@@ -79,16 +77,16 @@ public:
 		return _localInsertionsMinusDeletions;
 	}
 	/* Moved from LinkedCells! */
-	void grandcanonicalStep(TMoleculeContainer * moleculeContainer, double T, Domain* domain, CellProcessor* cellProcessor);
+	void grandcanonicalStep(ParticleContainer * moleculeContainer, double T, Domain* domain, CellProcessor* cellProcessor);
 	/* Moved from LinkedCells! */
 	int grandcanonicalBalance(DomainDecompBase* comm);
 
 
 private:
 	//! @brief counts all particles inside the bounding box of this container
-	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid) const;
+	unsigned countParticles(ParticleContainer * moleculeContainer, unsigned int cid) const;
 	//! @brief counts particles in the intersection of bounding box and control volume
-	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid, double * cbottom, double * ctop) const;
+	unsigned countParticles(ParticleContainer * moleculeContainer, unsigned int cid, double * cbottom, double * ctop) const;
 
 	bool moleculeStrictlyNotInBox(const Molecule& m, const double l[3], const double u[3]) const;
 

@@ -163,7 +163,7 @@ unsigned DomainDecompBase::Ndistribution(unsigned localN, float* minrnd, float* 
 void DomainDecompBase::assertIntIdentity(int /* IX */) {
 }
 
-void DomainDecompBase::assertDisjunctivity(TMoleculeContainer* /* mm */) const {
+void DomainDecompBase::assertDisjunctivity(ParticleContainer* /* moleculeContainer */) const {
 }
 
 void DomainDecompBase::printDecomp(std::string /* filename */, Domain* /* domain */) {
