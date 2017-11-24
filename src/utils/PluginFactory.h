@@ -57,8 +57,8 @@ public:
 	/** @brief Get all names of registered plugins */
 	std::vector<std::string> getPluginNames() {
 		std::vector<std::string> pluginNames;
-		for(auto pluginIter : _pluginFactoryMap) {
-			pluginNames.push_back(pluginIter.first);
+		for(auto const &plugin : _pluginFactoryMap) {
+			pluginNames.push_back(plugin.first);
 		}
 		return pluginNames;
 	}
