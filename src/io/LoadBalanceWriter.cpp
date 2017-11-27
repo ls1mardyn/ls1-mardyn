@@ -18,8 +18,8 @@ LoadbalanceWriter::LoadbalanceWriter::LoadbalanceWriter() :
 void LoadbalanceWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
-	xmlconfig.getNodeValue("outputprefix", _outputFilename);
-	global_log->info() << "Output prefix: " << _outputFilename << endl;
+	xmlconfig.getNodeValue("outputfilename", _outputFilename);
+	global_log->info() << "Output filename: " << _outputFilename << endl;
 
 	XMLfile::Query query = xmlconfig.query("timers/timer");
 	std::string oldpath = xmlconfig.getcurrentnodepath();

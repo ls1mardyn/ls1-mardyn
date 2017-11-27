@@ -36,7 +36,7 @@ public:
 	 * \code{.xml}
 	   <outputplugin name="LoadbalanceWriter">
 	     <writefrequency>INTEGER</writefrequency>
-	     <outputprefix>STRING</outputprefix>
+	     <outputfilename>STRING</outputfilename>
 	     <timers> <!-- additional timers -->
 	        <timer> <name>LoadbalanceWriter_default</name> <warninglevel>DOUBLE</warninglevel> </timer>
 	        <timer> <name>STRING</name> <warninglevel>DOUBLE</warninglevel> </timer>
