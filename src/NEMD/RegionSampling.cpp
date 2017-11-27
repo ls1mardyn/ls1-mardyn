@@ -29,9 +29,6 @@
 
 using namespace std;
 
-#ifdef USE_TEST_INPUT
-uint32_t SampleRegion::_nTestInputIndex = 0;
-#endif
 
 // init static ID --> instance counting
 unsigned short SampleRegion::_nStaticID = 0;
@@ -62,9 +59,6 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	// Init component specific parameters for VDF sampling
 	this->InitComponentSpecificParamsVDF();
 
-#ifdef USE_TEST_INPUT
-	this->InitTestInput();
-#endif
 }
 
 SampleRegion::~SampleRegion()
@@ -1048,12 +1042,6 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 
 void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 {
-#ifdef USE_TEST_INPUT
-	if(_nTestInputIndex >= _vecTestInput.size() )
-		return;
-	int rank = global_simulation->domainDecomposition().getRank();
-	cout << "rank=" << rank << ", begin: _nTestInputIndex=" << _nTestInputIndex << endl;
-#endif
 
 	if(false == _SamplingEnabledVDF)
 		return;
@@ -1064,9 +1052,6 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 		return;
 
 	uint32_t cid = molecule->componentid()+1;  // 0: all components
-#ifdef USE_TEST_INPUT
-	cid = _vecTestInput.at(_nTestInputIndex).cid;
-#endif
 	const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
 	if(false == csp.bSamplingEnabled)
 		return;
@@ -1076,9 +1061,6 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 	double* dLowerCorner = this->GetLowerCorner();
 	double dPosRelative = molecule->r(nDimension) - dLowerCorner[nDimension];
 	uint32_t nBinIndex = (uint32_t) floor(dPosRelative * _dInvBinWidthVDF);
-#ifdef USE_TEST_INPUT
-	nBinIndex = _vecTestInput.at(_nTestInputIndex).binIndex;
-#endif
 	uint32_t numVelocityClasses   = csp.numVelocityClasses;
 	uint32_t nBinOffset = nBinIndex * numVelocityClasses;
 	uint32_t nOffset = nComponentOffset + nBinOffset;
@@ -1091,9 +1073,6 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 	double dVelocity = sqrt( molecule->v2() );
 	double dInvVelocityClassWidth = csp.dInvVelocityClassWidth;
 	uint32_t nVelocityClassIndex = (uint32_t)(floor(dVelocity * dInvVelocityClassWidth) );
-#ifdef USE_TEST_INPUT
-	nVelocityClassIndex = _vecTestInput.at(_nTestInputIndex).classIndex;
-#endif
 
 	// calculate velocity vector indices for velocity components
 	double v[3];
@@ -1102,9 +1081,6 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 	for(unsigned int d=0; d<3; ++d) {
 		v[d] = molecule->v(d);
 		naVelocityClassIndex[d] = (uint32_t)(floor( fabs( v[d] ) * dInvVelocityClassWidth) );
-#ifdef USE_TEST_INPUT
-		naVelocityClassIndex[d] = _vecTestInput.at(_nTestInputIndex).classIndex;
-#endif
 	}
 
 	// respect finite resolution of velocity
@@ -1119,20 +1095,12 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 			return;
 	}
 
-#ifdef USE_TEST_INPUT
-	for(unsigned int d=0; d<3; ++d)
-		v[d] = -1.0;
-#endif
-
 	// sampling
 	bool bSampleComponentSum = _vecComponentSpecificParamsVDF.at(0).bSamplingEnabled;
 	// velocity components
 	for(unsigned int d=0; d<3; ++d)
 	{
 		uint8_t ptrIndex = 2*(v[1]>0.)+(v[d]>0.);
-#ifdef USE_TEST_INPUT
-		cout << "rank=" << rank << ", v=" << v[0] << ", " << v[1] << ", " << v[2] << "=> ptrIndex["<<d<<"]=" << (uint32_t)ptrIndex << endl;
-#endif
 		_dataPtrs.at(d).at(ptrIndex)[ nOffset + naVelocityClassIndex[d] ]++;
 		if(true == bSampleComponentSum)
 			_dataPtrs.at(d).at(ptrIndex)[ nBinOffset + naVelocityClassIndex[d] ]++;
@@ -1150,11 +1118,6 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 			_VDF_njy_abs_local[nBinOffset + nVelocityClassIndex]++;
 		_VDF_njy_abs_local[nOffset + nVelocityClassIndex]++;
 	}
-
-#ifdef USE_TEST_INPUT
-	_nTestInputIndex++;
-	cout << "rank=" << rank << ", _nTestInputIndex=" << _nTestInputIndex << endl;
-#endif
 }
 
 void SampleRegion::SampleFieldYR(Molecule* molecule)
@@ -1925,44 +1888,6 @@ void SampleRegion::UpdateSlabParameters()
 			_dBinMidpointsVDF[s] = (s + 0.5) * _dBinWidthVDF + dLowerCorner[1];
 	}
 }
-#ifdef USE_TEST_INPUT
-void SampleRegion::InitTestInput()
-{
-	global_log->info() << ">>>> USE_TEST_INPUT" << endl;
-	global_log->info() << "-----------------------------------------------" << endl;
-	uint32_t numBins = 3;
-	uint32_t numClasses1 = 4;
-	uint32_t numClasses2 = 8;
-	_vecTestInput.resize(numBins*(numClasses1 + numClasses2) );
-
-	for(uint32_t ci=0; ci<numClasses1; ci++)
-	{
-		for(uint32_t bi=0; bi<numBins; ++bi)
-		{
-			global_log->info() << "(ci*numBins+bi) = " << (ci*numBins+bi) << endl;
-			_vecTestInput.at(ci*numBins+bi).cid = 1;
-			_vecTestInput.at(ci*numBins+bi).binIndex = bi;
-			_vecTestInput.at(ci*numBins+bi).classIndex = ci;
-		}
-	}
-	for(uint32_t ci=0; ci<numClasses2; ++ci)
-	{
-		for(uint32_t bi=0; bi<numBins; ++bi)
-		{
-			_vecTestInput.at(numBins*numClasses1 + ci*numBins+bi).cid = 2;
-			_vecTestInput.at(numBins*numClasses1 + ci*numBins+bi).binIndex = bi;
-			_vecTestInput.at(numBins*numClasses1 + ci*numBins+bi).classIndex = ci;
-		}
-	}
-
-	global_log->info() << "         cid    binIndex  classIndex" << endl;
-	for(auto&& ti : _vecTestInput)
-		global_log->info() << setw(12) << ti.cid << setw(12) << ti.binIndex << setw(12) << ti.classIndex << endl;
-
-	global_log->info() << "-----------------------------------------------" << endl;
-	global_log->info() << "<<<< USE_TEST_INPUT" << endl;
-}
-#endif
 
 // class RegionSampling
 

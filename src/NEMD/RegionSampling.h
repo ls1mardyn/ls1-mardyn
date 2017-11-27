@@ -40,15 +40,6 @@ struct ComponentSpecificParamsVDF
 	uint32_t nOffsetDataStructure;
 	std::vector<double> dDiscreteVelocityValues;
 };
-//#define USE_TEST_INPUT
-#ifdef USE_TEST_INPUT
-struct TestInputType
-{
-	uint32_t cid;
-	uint32_t binIndex;
-	uint32_t classIndex;
-};
-#endif
 
 class XMLfileUnits;
 class Domain;
@@ -122,14 +113,7 @@ private:
 
 	void InitComponentSpecificParamsVDF();
 	void ShowComponentSpecificParamsVDF();
-#ifdef USE_TEST_INPUT
-	void InitTestInput();
-#endif
 private:
-#ifdef USE_TEST_INPUT
-	std::vector<TestInputType> _vecTestInput;
-	static uint32_t _nTestInputIndex;
-#endif
 	// instances / ID
 	static unsigned short _nStaticID;
 
