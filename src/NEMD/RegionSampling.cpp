@@ -1085,11 +1085,6 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 
 	// respect finite resolution of velocity
 	uint32_t nIndexMaxVelo = numVelocityClasses - 1;
-	if(nVelocityClassIndex > nIndexMaxVelo)
-	{
-//        global_log->info() << "Molecule with: v > v_max detected: v = " << dVelocity << ", v_max = " << dMaxVelo << endl;
-		return;
-	}
 	for(unsigned int d=0; d<3; ++d) {
 		if(naVelocityClassIndex[d] > nIndexMaxVelo)
 			return;
@@ -1105,7 +1100,11 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 		if(true == bSampleComponentSum)
 			_dataPtrs.at(d).at(ptrIndex)[ nBinOffset + naVelocityClassIndex[d] ]++;
 	}
+
 	// absolute velocity
+	if(nVelocityClassIndex > nIndexMaxVelo)  // v_abs > v_max? (respect finite resolution of velocity)
+		return;
+
 	if(v[1] > 0.)  // particle flux in positive y-direction
 	{
 		if(true == bSampleComponentSum)
