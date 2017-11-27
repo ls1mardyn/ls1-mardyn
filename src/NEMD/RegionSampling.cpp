@@ -1599,7 +1599,7 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 	this->CalcGlobalValuesVDF();  // calculate global velocity distribution sums
 
 	// reset local values
-//	this->ResetLocalValuesVDF();
+	this->ResetLocalValuesVDF();
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
