@@ -1,0 +1,9 @@
+#!/bin/bash
+fname=$1
+# check if the file is OK
+if ! check-OK $fname ; then
+	echo "- MFLOP/sec"
+	exit 1
+fi
+FLOPsecWithUnits=`cat $fname | grep "FLOP/sec" | tail -n 2 | head -n 1 | cut -d ":" -f 2`
+echo $FLOPsecWithUnits

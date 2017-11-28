@@ -1,0 +1,15 @@
+#!/bin/bash
+# The purpose of this script is to check if the simulation has completed successfully.
+# Criterion: "main: used " is present.
+fname=$1
+mainUsedPresent=`cat $fname  | grep "main: used "`
+# if "main: used " is present, return 0
+# otherwise, return 1
+if [[ -z ${mainUsedPresent} ]]; then
+	>&2 echo "Error: File $fname not OK. See check-OK script."
+	RC=1
+else
+	#echo "File $fname OK."
+	RC=0
+fi
+(exit $RC)

@@ -1,0 +1,13 @@
+#!/bin/bash
+fname=$1
+# check if the file is OK
+if ! check-OK $fname ; then
+	echo "-"
+	exit 1
+fi
+# in all these, cut by a tab first, because cutting only by white-space is errorprone due to time-stamp having different number of digits
+timeSec=`cat $fname | grep "Computation in main loop took" | cut -d $'\t' -f 3 | cut -d " " -f 6`
+mols=`cat $fname | grep "System contains" | cut -d $'\t' -f 3 | cut -d ' ' -f 3`
+its=`cat $fname  | grep "Simulating " | cut -d $'\t' -f 3  | cut -d ' ' -f 2`
+MUPS=`echo "scale=2 ; $mols * $its / $timeSec" | bc`
+echo $MUPS
