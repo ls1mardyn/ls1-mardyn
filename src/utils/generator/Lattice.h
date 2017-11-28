@@ -58,6 +58,9 @@ public:
 	     <vec id='c'> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </vec>
 	   </lattice>
 	   \endcode
+	 * where system can be one of the values "triclinic", "monoclinic", "orthorombic", "tetragonal",
+	 * "rhomboedral", and "hexagonal", "cubic" and centering can be one of the values "primitive",
+	 * "body", "face", "base A", "base B", and "base C".
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
