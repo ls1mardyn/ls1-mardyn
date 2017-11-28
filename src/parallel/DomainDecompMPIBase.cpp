@@ -138,6 +138,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 		delete[] tids;
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	} else {
+		/** @todo FIXME: This implementation does not scale. */
 		map<unsigned long, int> check;
 
 		for (ParticleIterator m = moleculeContainer->iteratorBegin(); m != moleculeContainer->iteratorEnd(); ++m)
