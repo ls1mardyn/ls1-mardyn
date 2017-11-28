@@ -58,9 +58,9 @@ protected:
 			std::string outputPrefix);
 	virtual ~MmpldWriter() {}
 
-	virtual void SetNumSphereTypes() {};
-	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {};
-	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex) { return false; };
+	virtual void SetNumSphereTypes() {}
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {}
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex) { return false; }
 
 	void InitSphereData();
 
