@@ -71,7 +71,6 @@ private:
 	uint32_t _nIndexLiqEndY;
 	uint32_t _nMoleculeFormat;
 	MoleculeDataReader* _moleculeDataReader;
-	uint64_t _nMaxID;
 	double _dMoleculeDiameter;
 	double _fspY[6];  // free space positions
 	uint8_t _nSystemType;

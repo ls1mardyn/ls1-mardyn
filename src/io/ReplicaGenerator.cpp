@@ -36,7 +36,6 @@ ReplicaGenerator::ReplicaGenerator()
 	_nIndexLiqEndY(0),
 	_nMoleculeFormat(ICRVQD),
 	_moleculeDataReader(nullptr),
-	_nMaxID(0),
 	_dMoleculeDiameter(0.),
 	_fspY{0., 0., 0., 0., 0., 0.},
 	_nSystemType(ST_UNKNOWN)
@@ -403,12 +402,13 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 		if(sd.dDensity > dDensityMax)
 			dDensityMax = sd.dDensity;
 	}
-	uint64_t numParticlesPerSubdomainMax = (uint64_t) ceil(dDensityMax * dVolumeSubdomain);
-	_nMaxID = 1 + numParticlesPerSubdomainMax * nRank;
+	uint64_t numParticlesPerSubdomainMax = (uint64_t) ceil(dDensityMax * 1.1 * dVolumeSubdomain);  //  safety factor 1.1 allows 10% higher density in sliced compared to whole subdomain
+	uint64_t nActID = numParticlesPerSubdomainMax *  nRank;
+	uint64_t nMaxID = numParticlesPerSubdomainMax * (nRank + 1);
 
 #ifndef NDEBUG
 	cout << domainDecomp->getRank() << ": numParticlesPerSubdomainMax = " << numParticlesPerSubdomainMax << endl;
-	cout << domainDecomp->getRank() << ": _nMaxID (init) = " << _nMaxID << endl;
+	cout << domainDecomp->getRank() << ": nActID (init) = " << nActID << endl;
 	cout << domainDecomp->getRank() << ": bbMin = " << bbMin[0] << ", " << bbMin[1] << ", " << bbMin[2] << endl;
 	cout << domainDecomp->getRank() << ": bbMax = " << bbMax[0] << ", " << bbMax[1] << ", " << bbMax[2] << endl;
 	cout << domainDecomp->getRank() << ": bbLength = " << bbLength[0] << ", " << bbLength[1] << ", " << bbLength[2] << endl;
@@ -469,7 +469,6 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 						r[di] = mol.r(di) + dShift[di];
 						mol.setr(di, r[di]);
 					}
-					mol.setid(_nMaxID);
 
 					// Add particle to container
 					double ry = r[1];
@@ -485,9 +484,8 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 							uint32_t cid = mol.componentid();
 							Component* comp = &ptrComponents->at(ptrChangeVec->at(cid) );
 							mol.setComponent(comp);
-
+							mol.setid(++nActID);
 							particleContainer->addParticle(mol);
-							_nMaxID++;
 							numAddedParticlesLocal++;
 						}
 						else
@@ -499,6 +497,7 @@ long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleCo
 	}
 
 	// update global number of particles, perform number checks
+	mardyn_assert(nActID <= nMaxID);
 	uint64_t numParticlesLocal = particleContainer->getNumberOfParticles();
 	uint64_t numParticlesGlobal = 0;
 	uint64_t numAddedParticlesFreespaceGlobal = 0;
