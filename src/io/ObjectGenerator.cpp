@@ -74,6 +74,23 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
+
+/** Class implementing a cuboidal bounding box.
+ *
+ * Implements a cuboid with open upper end, i.e. the upper border is excluded
+ * from the volume in contrast to the normal cuboid, where it is included.
+ */
+class BoundingBox : public Cuboid {
+public:
+	BoundingBox(double bBoxMin[3], double bBoxMax[3]) : Cuboid(bBoxMin, bBoxMax) {}
+	bool isInside(double r[3]) {
+		return (lowerCorner(0) <= r[0] && r[0] < upperCorner(0))
+			&& (lowerCorner(1) <= r[1] && r[1] < upperCorner(1))
+			&& (lowerCorner(2) <= r[2] && r[2] < upperCorner(2));
+	}
+	std::string getName() { return std::string("BoundingBox"); };
+};
+
 unsigned long ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 	unsigned long numMolecules = 0;
 	if(_moleculeIdPool == nullptr) {
@@ -83,7 +100,7 @@ unsigned long ObjectGenerator::readPhaseSpace(ParticleContainer* particleContain
 	double bBoxMin[3];
 	double bBoxMax[3];
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
-	std::shared_ptr<Object> bBox = std::make_shared<Cuboid>(bBoxMin, bBoxMax);
+	std::shared_ptr<Object> bBox = std::make_shared<BoundingBox>(bBoxMin, bBoxMax);
 	std::shared_ptr<Object> boundedObject = std::make_shared<ObjectIntersection>(bBox, _object);
 	_filler->setObject(boundedObject.get());
 	_filler->init();

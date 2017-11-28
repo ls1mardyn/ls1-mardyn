@@ -26,15 +26,15 @@ void Cuboid::readXML(XMLfileUnits& xmlconfig) {
 }
 
 bool Cuboid::isInside(double r[3]) {
-	return (_lowerCorner[0] <= r[0] && r[0] <= _upperCorner[0])
-		&& (_lowerCorner[1] <= r[1] && r[1] <= _upperCorner[1])
-		&& (_lowerCorner[2] <= r[2] && r[2] <= _upperCorner[2]);
+	return (lowerCorner(0) <= r[0] && r[0] <= upperCorner(0))
+		&& (lowerCorner(1) <= r[1] && r[1] <= upperCorner(1))
+		&& (lowerCorner(2) <= r[2] && r[2] <= upperCorner(2));
 }
 
 bool Cuboid::isInsideNoBorder(double r[3]) {
-	return (_lowerCorner[0] < r[0] && r[0] < _upperCorner[0])
-		&& (_lowerCorner[1] < r[1] && r[1] < _upperCorner[1])
-		&& (_lowerCorner[2] < r[2] && r[2] < _upperCorner[2]);
+	return (lowerCorner(0) < r[0] && r[0] < upperCorner(0))
+		&& (lowerCorner(1) < r[1] && r[1] < upperCorner(1))
+		&& (lowerCorner(2) < r[2] && r[2] < upperCorner(2));
 }
 
 void Cuboid::getBboxMin(double rmin[3]) {

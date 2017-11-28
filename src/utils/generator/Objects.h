@@ -60,6 +60,9 @@ public:
 	void getBboxMin(double rmin[3]);
 	void getBboxMax(double rmax[3]);
 
+	double upperCorner(int d) { return _upperCorner[d]; }
+	double lowerCorner(int d) { return _lowerCorner[d]; }
+
 private:
 	double _lowerCorner[3];
 	double _upperCorner[3];
