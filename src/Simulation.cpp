@@ -552,12 +552,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
 		bool enabled = true;
-		std::string strEnabled = "N/A";
-		xmlconfig.getNodeValue("@enabled", strEnabled);
-		if("N/A" != strEnabled) {
-			global_log->debug() << "output plugin: " << pluginname << ", strEnabled = " << strEnabled << endl;
-			xmlconfig.getNodeValue("@enabled", enabled);
-		}
+		xmlconfig.getNodeValue("@enabled", enabled);
 		if(not enabled) {
 			global_log->debug() << "Skipping disabled output plugin: " << pluginname << endl;
 			continue;
