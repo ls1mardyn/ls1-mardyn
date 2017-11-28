@@ -508,7 +508,6 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 
 void Domain::writeCheckpointHeader(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime) {
-		domainDecomp->assertDisjunctivity(particleContainer);
 		/* Rank 0 writes file header */
 		if(0 == this->_localRank) {
 			ofstream checkpointfilestream(filename.c_str());
@@ -645,7 +644,7 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 void Domain::writeCheckpoint(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
 		bool useBinaryFormat) {
-
+	domainDecomp->assertDisjunctivity(particleContainer);
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	global_log->warning() << "The checkpoints are not adapted for RMM-mode. Velocity will be one half-timestep ahead!" << std::endl;
 	global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
