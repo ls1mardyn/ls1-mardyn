@@ -706,6 +706,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 	// read particle data (or generate particles, if a generator is chosen)
 	timers()->registerTimer("PHASESPACE_CREATION",  vector<string>{"SIMULATION_IO"}, new Timer());
+	timers()->setOutputString("PHASESPACE_CREATION", "Phasespace creation took:");
 	timers()->getTimer("PHASESPACE_CREATION")->start();
 	unsigned long globalNumMolecules = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
 	timers()->getTimer("PHASESPACE_CREATION")->stop();
@@ -1003,7 +1004,6 @@ void Simulation::simulate() {
 	global_simulation->timers()->setOutputString("SIMULATION_DECOMPOSITION", "Decomposition took:");
 	global_simulation->timers()->setOutputString("SIMULATION_COMPUTATION", "Computation took:");
 	global_simulation->timers()->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
-	global_simulation->timers()->setOutputString("SIMULATION_IO", "Final IO took:");
 	global_simulation->timers()->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
 	global_simulation->timers()->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
@@ -1014,7 +1014,6 @@ void Simulation::simulate() {
 	Timer* decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); ///< timer for decomposition: sub-timer of loopTimer
 	Timer* computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); ///< timer for computation: sub-timer of loopTimer
 	Timer* perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); ///< timer for io in simulation loop: sub-timer of loopTimer
-	Timer* ioTimer = global_simulation->timers()->getTimer("SIMULATION_IO"); ///< timer for final IO
 	Timer* forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); ///< timer for force calculation: sub-timer of computationTimer
 	Timer* mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
@@ -1402,7 +1401,11 @@ void Simulation::simulate() {
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/***************************************************************************/
-    ioTimer->start();
+
+
+	global_simulation->timers()->registerTimer("SIMULATION_FINAL_IO", vector<string>{"SIMULATION_IO"}, new Timer());
+	global_simulation->timers()->setOutputString("SIMULATION_FINAL_IO", "Final IO took:");
+	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->start();
     if( _finalCheckpoint ) {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.dat");
@@ -1413,7 +1416,8 @@ void Simulation::simulate() {
 	for (auto outputPlugin : _outputPlugins) {
 		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
-	ioTimer->stop();
+	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
+
 	global_log->info() << "Timing information:" << endl;
 	global_simulation->timers()->printTimers();
 	global_simulation->timers()->resetTimers();
