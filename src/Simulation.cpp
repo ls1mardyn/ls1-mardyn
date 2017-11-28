@@ -551,6 +551,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode( outputPluginIter );
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
+		bool enabled = true;
+		xmlconfig.getNodeValue("@enabled", enabled);
+		if(not enabled) {
+			global_log->debug() << "Skipping disabled output plugin: " << pluginname << endl;
+			continue;
+		}
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {

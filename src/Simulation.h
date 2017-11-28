@@ -116,7 +116,7 @@ public:
 	       </thermostats>
 	     </algorithm>
 	     <output>
-	       <outputplugin><!-- see OutputBase class and specific plugin documentation --></outputplugin>
+	       <outputplugin name=STRING enabled="yes|no"><!-- see OutputBase class and specific plugin documentation --></outputplugin>
 	     </output>
 	   </simulation>
 	   \endcode
