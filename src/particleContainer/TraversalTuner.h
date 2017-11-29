@@ -159,10 +159,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 	string basePath(xmlconfig.getcurrentnodepath());
 
 	int i = 1;
-
-	for (XMLfile::Query::const_iterator traversalIterator = xmlconfig.query("traversalData").begin();
-		 traversalIterator;
-		 ++traversalIterator) {
+	XMLfile::Query qry = xmlconfig.query("traversalData");
+	for (XMLfile::Query::const_iterator traversalIterator = qry.begin(); traversalIterator; ++traversalIterator) {
 		string path(basePath + "/traversalData[" + to_string(i) + "]");
 		xmlconfig.changecurrentnode(path);
 
