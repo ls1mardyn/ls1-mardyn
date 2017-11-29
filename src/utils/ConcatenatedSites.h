@@ -69,10 +69,10 @@ public:
 
 		switch (st) {
 		case SiteType::QUADRUPOLE:
-			returnPointer += AlignedArray<T>::_round_up(_dipoles_num);
+			returnPointer += AlignedArray<T>::_round_up(_dipoles_num); // fallthrough
 			/* no break */
 		case SiteType::DIPOLE:
-			returnPointer += AlignedArray<T>::_round_up(_charges_num);
+			returnPointer += AlignedArray<T>::_round_up(_charges_num); // fallthrough
 			/* no break */
 		case SiteType::CHARGE:
 			returnPointer += AlignedArray<T>::_round_up(_ljc_num);
@@ -90,10 +90,10 @@ public:
 
 		switch (st) {
 		case SiteType::QUADRUPOLE:
-			offset += AlignedArray<T>::_round_up(_dipoles_num);
+			offset += AlignedArray<T>::_round_up(_dipoles_num); // fallthrough
 			/* no break */
 		case SiteType::DIPOLE:
-			offset += AlignedArray<T>::_round_up(_charges_num);
+			offset += AlignedArray<T>::_round_up(_charges_num); // fallthrough
 			/* no break */
 		case SiteType::CHARGE:
 			offset += AlignedArray<T>::_round_up(_ljc_num);
