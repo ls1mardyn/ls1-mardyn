@@ -4,6 +4,7 @@
 // Copyright (C) 2006, 2009 Marcin Kalicinski
 // Version 1.13
 // Revision $DateTime: 2009/05/13 01:46:17 $
+// CHANGES: 29.11.2017 bugfix by Richard Walsh <rwalsh@cray.com>, see line 573
 //! \file rapidxml.hpp This file contains rapidxml parser and DOM implementation
 
 // If standard library is disabled, user must provide implementations of required functions and typedefs
@@ -568,7 +569,8 @@ namespace rapidxml
         {
             m_begin = m_static_memory;
             m_ptr = align(m_begin);
-            m_end = m_static_memory + sizeof(m_static_memory);
+	    //                                                correction, bugfix from Richard Walsh <rwalsh@cray.com>, see Email 29.11.2017
+            m_end = m_static_memory + sizeof(m_static_memory) - 1;
         }
         
         char *align(char *ptr)
