@@ -264,6 +264,9 @@ private:
 	//######### PRIVATE METHODS ##########
 	//####################################
 
+	//!	@brief Performs a sanity check to ensure that particles are within the bounding box (including the halo)
+	void check_molecules_in_box();
+
 	//! @brief Initialize index vectors and cells.
 	//!
 	//! Fill the vector with the indices of the inner and boundary cells.

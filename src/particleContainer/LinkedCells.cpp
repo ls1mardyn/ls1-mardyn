@@ -201,7 +201,30 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	_cellsValid = false;
 }
 
+void LinkedCells::check_molecules_in_box(){
+	{
+		const ParticleIterator begin = this->iteratorBegin();
+		const ParticleIterator end = this->iteratorEnd();
+
+		for (ParticleIterator tM = begin; tM != end; ++tM) {
+			if (not tM->inBox(_boundingBoxMin,_boundingBoxMax)){
+				global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
+						<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
+				global_log->error() << "The bounding box is: [" << _boundingBoxMin[0] << ", " << _boundingBoxMax[0]
+						<< ") x [" << _boundingBoxMin[1] << ", " << _boundingBoxMax[1] << ") x [" << _boundingBoxMin[2]
+						<< ", " << _boundingBoxMax[2] << ")" << std::endl;
+				global_log->error() << "Particle will be lost. Aboarting simulation." << std::endl;
+				Simulation::exit(311);
+			}
+		}
+	}
+}
+
 void LinkedCells::update() {
+#ifndef NDEBUG
+	check_molecules_in_box();
+#endif
+
 	// TODO: replace via a cellProcessor and a traverseCells call ?
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 	update_via_copies();
