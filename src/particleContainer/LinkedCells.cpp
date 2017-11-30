@@ -207,12 +207,12 @@ void LinkedCells::check_molecules_in_box(){
 		const ParticleIterator end = this->iteratorEnd();
 
 		for (ParticleIterator tM = begin; tM != end; ++tM) {
-			if (not tM->inBox(_boundingBoxMin,_boundingBoxMax)){
+			if (not tM->inBox(_haloBoundingBoxMin,_haloBoundingBoxMax)){
 				global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
 						<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
-				global_log->error() << "The bounding box is: [" << _boundingBoxMin[0] << ", " << _boundingBoxMax[0]
-						<< ") x [" << _boundingBoxMin[1] << ", " << _boundingBoxMax[1] << ") x [" << _boundingBoxMin[2]
-						<< ", " << _boundingBoxMax[2] << ")" << std::endl;
+				global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
+						<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
+						<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
 				global_log->error() << "Particle will be lost. Aboarting simulation." << std::endl;
 				Simulation::exit(311);
 			}
