@@ -176,7 +176,3 @@ public:
 };
 
 #endif /* MMPLDWRITER_H_ */
-
-
-
-
