@@ -26,7 +26,7 @@ public:
 	FullMolecule(unsigned long id = 0, Component *component = nullptr,
 	         double rx = 0., double ry = 0., double rz = 0.,
 	         double vx = 0., double vy = 0., double vz = 0.,
-	         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
+	         double q0 = 1., double q1 = 1., double q2 = 0., double q3 = 0.,
 	         double Dx = 0., double Dy = 0., double Dz = 0.
 	);
 	FullMolecule(const FullMolecule& m);
@@ -42,8 +42,6 @@ public:
 	unsigned long id() const { return _id; }
 	/** set molecule ID */
 	void setid(unsigned long id) { _id = id; }
-	/** get the molecule's component ID */
-	unsigned int componentid() const { return _component->ID(); }
 	/** set the molecule's component */
 	void setComponent(Component *component) { _component = component; this->updateMassInertia();}
 	/** return pointer to component to which the molecule belongs */

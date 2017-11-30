@@ -12,7 +12,7 @@
 /** @brief The LoadbalanceWriter writes out information about the programs load balance.
  *
  * The LoadbalanceWriter writes out load balance information for MPI processes based on
- * timers. The 'default' timer used meassures the time between invocations of this plugin.
+ * timers. The 'default' timer used measures the time between invocations of this plugin.
  * Additional timers used in the program and registered in the Simulation can be added
  * to compute the load balance of specific code parts.
  *
@@ -37,7 +37,7 @@ public:
 	   <outputplugin name="LoadbalanceWriter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputfilename>STRING</outputfilename>
-	     <timers> <!-- additinoal timers -->
+	     <timers> <!-- additional timers -->
 	        <timer> <name>LoadbalanceWriter_default</name> <warninglevel>DOUBLE</warninglevel> </timer>
 	        <timer> <name>STRING</name> <warninglevel>DOUBLE</warninglevel> </timer>
 	        <!-- ... -->

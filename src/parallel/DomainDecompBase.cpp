@@ -122,7 +122,7 @@ int DomainDecompBase::getNonBlockingStageCount(){
 	return -1;
 }
 
-bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/, double etime){
 	return false;
 }
 
@@ -163,7 +163,7 @@ unsigned DomainDecompBase::Ndistribution(unsigned localN, float* minrnd, float* 
 void DomainDecompBase::assertIntIdentity(int /* IX */) {
 }
 
-void DomainDecompBase::assertDisjunctivity(TMoleculeContainer* /* mm */) const {
+void DomainDecompBase::assertDisjunctivity(ParticleContainer* /* moleculeContainer */) const {
 }
 
 void DomainDecompBase::printDecomp(std::string /* filename */, Domain* /* domain */) {
@@ -186,8 +186,8 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream;
 			if(binary == true){
-//				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
-				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::app);
+//				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::app);
 			}
 			else {
 				checkpointfilestream.open(filename.c_str(), std::ios::app);
@@ -216,7 +216,7 @@ void DomainDecompBase::getBoundingBoxMinMax(Domain *domain, double *min, double 
 	}
 }
 
-void DomainDecompBase::collCommInit(int numValues) {
+void DomainDecompBase::collCommInit(int numValues, int /*key*/) {
 	_collCommBase.init(numValues);
 }
 
@@ -268,6 +268,14 @@ void DomainDecompBase::collCommAllreduceSum() {
 	_collCommBase.allreduceSum();
 }
 
+void DomainDecompBase::collCommAllreduceSumAllowPrevious() {
+	_collCommBase.allreduceSum();
+}
+
+void DomainDecompBase::collCommAllreduceCustom(ReduceType type) {
+	_collCommBase.allreduceCustom(type);
+}
+
 void DomainDecompBase::collCommScanSum() {
 	_collCommBase.scanSum();
 }
@@ -281,7 +289,7 @@ double DomainDecompBase::getIOCutoffRadius(int dim, Domain* domain,
 
 	double length = domain->getGlobalLength(dim);
 	double cutoff = moleculeContainer->getCutoff();
-	assert( ((int) length / cutoff ) == length / cutoff );
+	mardyn_assert( ((int) length / cutoff ) == length / cutoff );
 	return cutoff;
 }
 

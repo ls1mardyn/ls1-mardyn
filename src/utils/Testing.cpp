@@ -31,6 +31,7 @@ int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const s
 	Log::logLevel globalLogLevel = Log::global_log->get_log_level();
 
 	test_log = new Log::Logger(testLogLevel);
+	test_log->set_do_output(Log::global_log->get_do_output());
 	if (testLogLevel > Log::Info) {
 		Log::global_log->set_log_level(Log::Debug);
 	} else {
@@ -42,11 +43,11 @@ int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const s
 	int testresult;
 
 #ifndef UNIT_TESTS
-	test_log->error() << std::endl << "Running unit tests demanded, but program compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
+	test_log->error() << "Running unit tests demanded, but program was build without unit test support!" << std::endl;
 	testresult = true;
 
 #else /* UNIT_TESTS */
-	test_log->info() << "Running unit tests!" << std::endl;
+	test_log->info() << "Running unit tests" << std::endl;
 #ifdef USE_CPPUNIT
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 	CppUnit::TextUi::TestRunner runner;

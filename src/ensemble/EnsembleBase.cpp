@@ -51,7 +51,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 
 	for( mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++ ) {
 		xmlconfig.changecurrentnode( mixingruletIter );
-		MixingRuleBase *mixingrule;
+		MixingRuleBase *mixingrule = nullptr;
 		string mixingruletype;
 
 		xmlconfig.getNodeValue("@type", mixingruletype);

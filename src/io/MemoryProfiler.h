@@ -34,5 +34,6 @@ private:
 	//returns size of cached memory in kB (0 if error occurs)
 	unsigned long long getCachedSize();
 	void printGeneralInfo(const std::string& string);
+	int parseLine(char* line);
 };
 

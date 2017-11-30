@@ -606,26 +606,28 @@ void FullMolecule::calcFM() {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void FullMolecule::check(unsigned long id) {
 #ifndef NDEBUG
-	using std::isnan; // C++11 needed
+	using std::isfinite; // C++11 needed
 
 	mardyn_assert(_id == id);
 	mardyn_assert(_m > 0.0);
 	for (int d = 0; d < 3; d++) {
-		mardyn_assert(!isnan(_r[d]));
-		mardyn_assert(!isnan(_v[d]));
-		mardyn_assert(!isnan(_L[d]));
-		mardyn_assert(!isnan(_F[d]));
-		mardyn_assert(!isnan(_M[d]));
-		mardyn_assert(!isnan(_I[d]));
+		mardyn_assert(isfinite(_r[d]));
+		mardyn_assert(isfinite(_v[d]));
+		mardyn_assert(isfinite(_L[d]));
+		mardyn_assert(isfinite(_F[d]));
+		mardyn_assert(isfinite(_M[d]));
+		mardyn_assert(isfinite(_I[d]));
 		// mardyn_assert(!isnan(_Vi[d]));
-		mardyn_assert(!isnan(_invI[d]));
+		mardyn_assert(isfinite(_invI[d]));
 	}
-	if(isnan(_Vi[0]) || isnan(_Vi[1]) || isnan(_Vi[2]))
+	_q.check();
+	if(!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2]))
 	{
 	   cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")"<<endl;
 	   _Vi[0] = 0.0;
 	   _Vi[1] = 0.0;
 	   _Vi[2] = 0.0;
+	   mardyn_assert(false);
 	}
 #endif
 }
@@ -652,16 +654,7 @@ unsigned long FullMolecule::totalMemsize() const {
 
 void FullMolecule::setSoA(CellDataSoABase * const s) {
 	CellDataSoA * derived;
-#ifndef NDEBUG
-	derived = nullptr;
-	derived = dynamic_cast<CellDataSoA *>(s);
-	if(derived == nullptr and s != nullptr) {
-		global_log->error() << "expected CellDataSoA pointer for m" << _id << endl;
-		mardyn_assert(false);
-	}
-#else
 	derived = static_cast<CellDataSoA *>(s);
-#endif
 	_soa = derived;
 }
 

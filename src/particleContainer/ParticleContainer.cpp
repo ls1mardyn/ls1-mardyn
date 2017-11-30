@@ -13,9 +13,6 @@ ParticleContainer::ParticleContainer(double bBoxMin[3], double bBoxMax[3]) {
 	}
 }
 
-ParticleContainer::~ParticleContainer() {
-}
-
 void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	global_log->info() << "REBUILD OF PARTICLE CONTAINER" << endl;
 	for (int i = 0; i < 3; i++) {
@@ -47,4 +44,9 @@ bool ParticleContainer::isInBoundingBox(double r[3]) const {
 
 int ParticleContainer::getHaloWidthNumCells() {
 	return 0;
+}
+
+bool ParticleContainer::addHaloParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
+	mardyn_assert(not particle.inBox(_boundingBoxMin,_boundingBoxMax));
+	return addParticle(particle, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
 }

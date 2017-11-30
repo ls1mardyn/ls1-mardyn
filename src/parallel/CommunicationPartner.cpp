@@ -139,6 +139,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		const MPI_Datatype& type, MessageType msgType, bool removeFromContainer) {
 
 	global_log->debug() << _rank << std::endl;
+	_sendBuf.clear();
 
 	const unsigned int numHaloInfo = _haloInfo.size();
 	switch (msgType){
@@ -176,16 +177,30 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 	}
 
 	#ifndef NDEBUG
-		const int n = _sendBuf.size();
-		global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
-		std::ostringstream buf;
-		for (int i = 0; i < n; ++i) {
-			buf << _sendBuf[i].id << " ";
+		const int numLeaving = _sendBuf.getNumLeaving();
+		const int numHalo = _sendBuf.getNumHalo();
+		global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
+		std::ostringstream buf1;
+		for (int i = 0; i < numLeaving; ++i) {
+			Molecule m;
+			_sendBuf.readLeavingMolecule(i, m);
+			buf1 << m.id() << " ";
 		}
-		global_log->debug() << buf.str() << std::endl;
+		global_log->debug() << buf1.str() << std::endl;
+
+		global_log->debug() << "and " << numHalo << " halo particles with IDs " << std::endl;
+		std::ostringstream buf2;
+		for (int i = 0; i < numHalo; ++i) {
+			Molecule m;
+			_sendBuf.readHaloMolecule(i, m);
+			buf2 << m.id() << " ";
+		}
+		global_log->debug() << buf2.str() << std::endl;
+
+
 	#endif
 
-	MPI_CHECK(MPI_Isend(_sendBuf.data(), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest));
+	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
@@ -201,7 +216,7 @@ bool CommunicationPartner::testSend() {
 	return _msgSent;
 }
 
-bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type) {
+bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& /*type*/) {
 	if (not _countReceived) {
 		int flag = 0;
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
@@ -209,13 +224,13 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 			_countReceived = true;
 			_countTested = 0;
 			int numrecv;
-			MPI_CHECK(MPI_Get_count(_recvStatus, type, &numrecv));
+			MPI_CHECK(MPI_Get_count(_recvStatus, _sendBuf.getMPIDataType(), &numrecv));
                         #ifndef NDEBUG
-                                global_log->debug() << "Received particleCount from " << _rank << std::endl;
-                                global_log->debug() << "Preparing to receive " << numrecv << " particles." << std::endl;
+                                global_log->debug() << "Received byteCount from " << _rank << std::endl;
+                                global_log->debug() << "Preparing to receive " << numrecv << " bytes." << std::endl;
                         #endif
-			_recvBuf.resize(numrecv);
-			MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
+			_recvBuf.resizeForRawBytes(numrecv);
+			MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), numrecv, _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest));
 		}
 	}
 	return _countReceived;
@@ -236,33 +251,50 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		if (flag == true) {
 			_msgReceived = true;
 
-			int numrecv = _recvBuf.size();
+			unsigned long numHalo, numLeaving;
+			_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo);
 
 			#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
-				global_log->debug() << "Buffer contains " << numrecv << " particles with IDs " << std::endl;
-				std::ostringstream buf;
+				global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
+				std::ostringstream buf1;
+				for (unsigned long i = 0; i < numLeaving; ++i) {
+					Molecule m;
+					_recvBuf.readLeavingMolecule(i, m);
+					buf1 << m.id() << " ";
+				}
+				global_log->debug() << buf1.str() << std::endl;
+
+				global_log->debug() << "and " << numHalo << " halo particles with IDs " << std::endl;
+				std::ostringstream buf2;
+				for (unsigned long i = 0; i < numHalo; ++i) {
+					Molecule m;
+					_recvBuf.readHaloMolecule(i, m);
+					buf2 << m.id() << " ";
+				}
+				global_log->debug() << buf2.str() << std::endl;
 			#endif
 
 			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
+			unsigned long totalNumMols = numLeaving + numHalo;
 			static std::vector<Molecule> mols;
-			mols.resize(numrecv);
-			#if defined(_OPENMP)
-			#pragma omp for schedule(static)
-			#endif
-			for (int i = 0; i < numrecv; i++) {
+			mols.resize(totalNumMols);
+
+			/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
+			#pragma omp parallel for schedule(static)
+			#endif*/
+			for (unsigned long i = 0; i < totalNumMols; i++) {
 				Molecule m;
-				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
+				if (i < numLeaving) {
+					// leaving
+					_recvBuf.readLeavingMolecule(i, m);
+				} else {
+					// halo
+					_recvBuf.readHaloMolecule(i - numLeaving, m);
+				}
 				mols[i] = m;
 			}
 			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
-
-			#ifndef NDEBUG
-				for (int i = 0; i < numrecv; i++) {
-					buf << mols[i].id() << " ";
-				}
-				global_log->debug() << buf.str() << std::endl;
-			#endif
 
 			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 			moleculeContainer->addParticles(mols, removeRecvDuplicates);
@@ -278,9 +310,14 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 }
 
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
+	// one single call from KDDecomposition::migrate particles.
+	// So all molecules, which arrive area leaving molecules.
 	_countReceived = true;
-	_recvBuf.resize(numParticles);
-	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
+
+	// hackaround - resizeForAppendingLeavingMolecules is intended for the send-buffer, not the recv one.
+	_recvBuf.resizeForAppendingLeavingMolecules(numParticles);
+
+	MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), _recvBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest));
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
@@ -317,12 +354,19 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		const double highCorner[3], const double shift[3], const bool removeFromContainer, HaloOrLeavingCorrection haloLeaveCorr) {
 	using std::vector;
 	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
-	int prevNumMols = _sendBuf.size();
 	vector<vector<Molecule>> threadData;
 	vector<int> prefixArray;
 
+	// compute how many molecules are already in of this type:
+	unsigned long numMolsAlreadyIn = 0;
+	if (haloLeaveCorr == LEAVING) {
+		numMolsAlreadyIn = _sendBuf.getNumLeaving();
+	} else if (haloLeaveCorr == HALO) {
+		numMolsAlreadyIn = _sendBuf.getNumHalo();
+	}
+
 	#if defined (_OPENMP)
-	#pragma omp parallel shared(threadData)
+	#pragma omp parallel shared(threadData, numMolsAlreadyIn)
 	#endif
 	{
 		const int numThreads = mardyn_get_num_threads();
@@ -362,16 +406,20 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp master
 		#endif
 		{
-			int totalNumMols = 0;
+			int totalNumMolsAppended = 0;
 			//build the prefix array
 			prefixArray[0] = 0;
 			for(int i = 1; i <= numThreads; i++){
 				prefixArray[i] += prefixArray[i - 1];
-				totalNumMols += threadData[i - 1].size();
+				totalNumMolsAppended += threadData[i - 1].size();
 			}
 
 			//resize the send buffer
-			_sendBuf.resize(prevNumMols + totalNumMols);
+			if (haloLeaveCorr == LEAVING) {
+				_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
+			} else if (haloLeaveCorr == HALO) {
+				_sendBuf.resizeForAppendingHaloMolecules(totalNumMolsAppended);
+			}
 		}
 
 		#if defined (_OPENMP)
@@ -384,47 +432,54 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		//reduce the molecules in the send buffer and also apply the shift
 		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
 		for(int i = 0; i < myThreadMolecules; i++){
-			ParticleData m;
-			ParticleData::MoleculeToParticleData(m, threadData[threadNum][i]);
-			m.r[0] += shift[0];
-			m.r[1] += shift[1];
-			m.r[2] += shift[2];
+			Molecule mCopy = threadData[threadNum][i];
+			mCopy.move(0, shift[0]);
+			mCopy.move(1, shift[1]);
+			mCopy.move(2, shift[2]);
 			for (int dim = 0; dim < 3; dim++) {
 				if (haloLeaveCorr == HALO) {
 					// checks if the molecule has been shifted to inside the domain due to rounding errors.
 					if (shift[dim] < 0.) { // if the shift was negative, it is now in the lower part of the domain -> min
-						if (m.r[dim] >= 0.) {  // in the lower part it was wrongly shifted
+						if (mCopy.r(dim) >= 0.) {  // in the lower part it was wrongly shifted
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 							vcp_real_calc r = 0;
-							m.r[dim] = std::nexttoward(r, r - 1.f); // ensures that r is smaller than the boundingboxmin
+							mCopy.setr(dim, std::nexttoward(r, r - 1.f)); // ensures that r is smaller than the boundingboxmin
 						}
 					} else if (shift[dim] > 0.) {  // shift > 0
-						if (m.r[dim] < domain->getGlobalLength(dim)) { // in the higher part it was wrongly shifted
+						if (mCopy.r(dim) < domain->getGlobalLength(dim)) { // in the higher part it was wrongly shifted
 							// std::nextafter: returns the next bigger value of _boundingBoxMax
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 							vcp_real_calc r = domain->getGlobalLength(dim);
-							m.r[dim] = std::nexttoward(r, r + 1.f);  // ensures that r is bigger than the boundingboxmax
+							mCopy.setr(dim, std::nexttoward(r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
 						}
 					}
 				} else if (haloLeaveCorr == LEAVING) {
 					// some additional shifting to ensure that rounding errors do not hinder the correct placement
 					if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
-						if (m.r[dim] < 0.) { // in the lower part it was wrongly shifted if
-							m.r[dim] = 0.; // ensures that r is at least the boundingboxmin
+						if (mCopy.r(dim) < 0.) { // in the lower part it was wrongly shifted if
+							mCopy.setr(dim, 0.); // ensures that r is at least the boundingboxmin
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 						}
 					} else  if (shift[dim] > 0.) {  // shift > 0
-						if (m.r[dim] >= domain->getGlobalLength(dim)) { // in the lower part it was wrongly shifted if
+						if (mCopy.r(dim) >= domain->getGlobalLength(dim)) { // in the lower part it was wrongly shifted if
 						// std::nexttoward: returns the next bigger value of _boundingBoxMax
 							vcp_real_calc r = domain->getGlobalLength(dim);
-							m.r[dim] = std::nexttoward(r, r - 1.f); // ensures that r is smaller than the boundingboxmax
+							mCopy.setr(dim, std::nexttoward(r, r - 1.f)); // ensures that r is smaller than the boundingboxmax
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 						}
 					}
-				}
+				} /* if-else HALO-LEAVING */
+			} /* for-loop dim */
+			if (haloLeaveCorr == LEAVING) {
+				_sendBuf.addLeavingMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
+			} else if (haloLeaveCorr == HALO) {
+				_sendBuf.addHaloMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			}
-			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
 		}
 	}
 	global_simulation->timers()->stop("COMMUNICATION_PARTNER_INIT_SEND");
+}
+
+size_t CommunicationPartner::getDynamicSize() {
+	return _sendBuf.getDynamicSize() + _recvBuf.getDynamicSize() + _haloInfo.capacity() * sizeof(PositionInfo);
 }

@@ -4,7 +4,7 @@
 #include <mpi.h>
 #endif
 
-#if _SX
+#ifdef _SX
 #include <byteswap.h>
 #define htole16(X) bswap2((X))
 #define htole32(X) bswap4((X))
@@ -58,7 +58,7 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 		_color_type(MMPLD_COLOR_NONE)
 {
 	if (0 == _writeFrequency) {
-		mardyn_exit(-1);
+		Simulation::exit(-1);
 	}
 }
 
@@ -85,7 +85,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 			break;
 		default:
 			global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << endl;
-			global_simulation->exit(1);
+			Simulation::exit(1);
 			break;
 	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -221,7 +221,7 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
 	this->CalcNumSpheresPerType(particleContainer, numSpheresPerType.data());
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 
 	MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, _mpiinfo, &_mpifh);
@@ -409,7 +409,7 @@ long MmpldWriter::get_data_frame_header_size() {
 			break;
 		default:
 			global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << endl;
-			global_simulation->exit(1);
+			Simulation::exit(1);
 			break;
 	}
 	return data_frame_header_size;
@@ -456,7 +456,7 @@ long MmpldWriter::get_data_list_size(uint64_t particle_count) {
 
 
 void MmpldWriter::write_frame_header(uint32_t num_data_lists) {
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	MPI_Status status;
 	if (_mmpldversion == 102){
 		float frameHeader_timestamp = _simulation.getSimulationTime();
@@ -474,7 +474,7 @@ long MmpldWriter::get_seekTable_size(){
 }
 
 void MmpldWriter::writeSeekTableEntry(int id, uint64_t offset) {
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	MPI_Offset seekpos = MMPLD_SEEK_TABLE_OFFSET + id*sizeof(uint64_t);
 	uint64_t offset_le = htole64(offset);
 	MPI_Status status;
@@ -483,7 +483,7 @@ void MmpldWriter::writeSeekTableEntry(int id, uint64_t offset) {
 }
 
 void MmpldWriter::write_particle_list_header(uint64_t particle_count, int sphereId) {
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	MPI_Status status;
 	MPI_File_write(_mpifh, &_vertex_type,  1, MPI_BYTE, &status);
 	MPI_File_write(_mpifh, &_color_type,   1, MPI_BYTE, &status);

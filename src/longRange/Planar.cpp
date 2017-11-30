@@ -16,7 +16,8 @@
 using namespace std;
 using Log::global_log;
 
-Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation)
+Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition,
+		ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation)
 {
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	_nStartWritingProfiles = 1;
@@ -28,6 +29,9 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	_particleContainer = particleContainer;
 	_slabs = slabs;
 	frequency=10;
+	vNDipole=nullptr;
+	numLJSum2=nullptr;
+	numComp=0;
 }
 
 Planar::~Planar()
@@ -987,14 +991,14 @@ void Planar::directDensityProfile(){
 	_smooth = false;
 }
 
-void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep)
+void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstepI)
 {
-	if( 0 != simstep % _nWriteFreqProfiles || simstep < _nStartWritingProfiles || simstep > _nStopWritingProfiles)
+	if( 0 != simstepI % _nWriteFreqProfiles || simstepI < _nStartWritingProfiles || simstepI > _nStopWritingProfiles)
 		return;
 
 	// writing .dat-files
 	std::stringstream filenamestream;
-	filenamestream << "LRC" << "_TS" << fill_width('0', 9) << simstep << ".dat";
+	filenamestream << "LRC" << "_TS" << fill_width('0', 9) << simstepI << ".dat";
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();

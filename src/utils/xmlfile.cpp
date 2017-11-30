@@ -617,7 +617,6 @@ template<> bool XMLfile::Node::getValue<double>(double& value) const
 
 template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 {
-	value = false;
 	string v;
 	bool found=getValue(v);
 	if(found)

@@ -1,11 +1,7 @@
-/*
- * ParticleContainerTest.cpp
- *
- * @Date: 03.05.2011
- * @Author: eckhardw
- */
-
 #include "ParticleContainerTest.h"
+
+#include <set>
+
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 
@@ -34,44 +30,24 @@ void ParticleContainerTest::testInsertion(ParticleContainer* container) {
 	setupMolecules(container);
 	ASSERT_EQUAL(4ul, container->getNumberOfParticles());
 	Molecule dummyMolecule5(0, &_components[0], 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	container->addParticle(dummyMolecule5);
+	ASSERT_EQUAL(true, container->addParticle(dummyMolecule5));
 	Molecule dummyMolecule6(0, &_components[0], 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	container->addParticle(dummyMolecule6);
+	ASSERT_EQUAL(true, container->addParticle(dummyMolecule6));
 	ASSERT_EQUAL(6ul, container->getNumberOfParticles());
 }
 
 
 void ParticleContainerTest::testMoleculeIteration(ParticleContainer* container) {
 	setupMolecules(container);
-	ParticleIterator molecule = container->iteratorBegin();
-	int moleculeCount = 0;
-	while (molecule != container->iteratorEnd()) {
-		++molecule;
+	unsigned long moleculeCount = 0;
+	std::set<unsigned long> ids;
+	for(auto moleculeIter = container->iteratorBegin(); moleculeIter != container->iteratorEnd(); ++moleculeIter) {
+		test_log->debug() << "Visited Molecule with id " << moleculeIter->id() << std::endl;
+		ids.insert(moleculeIter->id());
 		moleculeCount++;
 	}
-	ASSERT_EQUAL(4, moleculeCount);
-	ASSERT_EQUAL(4ul, container->getNumberOfParticles());
-
-	Molecule dummyMolecule5(5, &_components[0], 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	container->addParticle(dummyMolecule5);
-	Molecule dummyMolecule6(6, &_components[0], 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
-	container->addParticle(dummyMolecule6);
-
-	moleculeCount = 0;
-	bool ids[] = {false, false, false, false, false, false};
-
-	molecule = container->iteratorBegin();
-	while (molecule != container->iteratorEnd()) {
-		ids[molecule->id() - 1] = true;
-		test_log->debug() << "Visited Molecule with id " << molecule->id() << std::endl;
-		++molecule;
-		moleculeCount++;
-	}
-	ASSERT_EQUAL(6, moleculeCount);
-	ASSERT_EQUAL(6ul, container->getNumberOfParticles());
-	for (int i = 0; i < 6; i++) {
-		ASSERT_TRUE(ids[i]);
-	}
+	ASSERT_EQUAL(container->getNumberOfParticles(), moleculeCount); // check if iterator catches all molecules
+	ASSERT_EQUAL(moleculeCount, ids.size()); // check for duplicate molecules
 }
 
 

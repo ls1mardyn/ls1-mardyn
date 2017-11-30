@@ -9,8 +9,8 @@
 
 
 void ParticleDataFull::getMPIType(MPI_Datatype &sendPartType) {
-	int blocklengths[] = { 1, 1, 13 }; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
-	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_INT, MPI_DOUBLE };
+	int blocklengths[] = { 13, 1, 1 }; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
+	MPI_Datatype types[] = { MPI_DOUBLE, MPI_UNSIGNED_LONG, MPI_INT };
 
 	MPI_Aint displacements[3];
 	ParticleDataFull pdata_dummy;
@@ -21,13 +21,13 @@ void ParticleDataFull::getMPIType(MPI_Datatype &sendPartType) {
 	mardyn_assert(&(pdata_dummy.r[0]) + 10 == &(pdata_dummy.D[0]));
 
 #if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-	MPI_CHECK( MPI_Get_address(&pdata_dummy.id, displacements) );
-	MPI_CHECK( MPI_Get_address(&pdata_dummy.cid, displacements + 1) );
-	MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements + 2) );
+	MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements) );
+	MPI_CHECK( MPI_Get_address(&pdata_dummy.id, displacements + 1) );
+	MPI_CHECK( MPI_Get_address(&pdata_dummy.cid, displacements + 2) );
 #else
-	MPI_CHECK( MPI_Address(&pdata_dummy.id, displacements) );
-	MPI_CHECK( MPI_Address(&pdata_dummy.cid, displacements + 1) );
-	MPI_CHECK( MPI_Address(&pdata_dummy.r[0], displacements + 2) );
+	MPI_CHECK( MPI_Address(&pdata_dummy.r[0], displacements) );
+	MPI_CHECK( MPI_Address(&pdata_dummy.id, displacements + 1) );
+	MPI_CHECK( MPI_Address(&pdata_dummy.cid, displacements + 2) );
 #endif
 	MPI_Aint base;
 	MPI_CHECK( MPI_Get_address(&pdata_dummy, &base) );
@@ -60,7 +60,7 @@ void ParticleDataFull::MoleculeToParticleData(ParticleDataFull &particleStruct, 
 	particleStruct.D[2] = molecule.D(2);
 }
 
-void ParticleDataFull::ParticleDataToMolecule(ParticleDataFull &particleStruct, Molecule &molecule) {
+void ParticleDataFull::ParticleDataToMolecule(const ParticleDataFull &particleStruct, Molecule &molecule) {
 	Component* component = _simulation.getEnsemble()->getComponent(particleStruct.cid);
 	molecule = Molecule(particleStruct.id, component,
 						particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],

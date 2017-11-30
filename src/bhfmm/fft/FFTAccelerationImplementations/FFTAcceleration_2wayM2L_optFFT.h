@@ -25,8 +25,10 @@ public:
 
 	FFTAcceleration_2wayM2L_optFFT(int order);
 	~FFTAcceleration_2wayM2L_optFFT() {
-		delete_matrix(Re);
-		delete_matrix(Im);
+		for (int i = 0; i < mardyn_get_max_threads(); ++i) {
+			delete_matrix(Re[i]);
+			delete_matrix(Im[i]);
+		}
 	}
 
 	void FFT_initialize_Source(FFTAccelerableExpansion & Expansion,
@@ -38,8 +40,8 @@ public:
 
 protected:
 	//Matrices used as tmp data storage to perform optFFT (works only on matrices)
-	FFT_precision** Re;
-	FFT_precision** Im;
+	FFT_precision*** Re;
+	FFT_precision*** Im;
 	optFFT_API* _optFFT_API;
 
 	//convert matrix for the optFFT_API to array for the FFTData

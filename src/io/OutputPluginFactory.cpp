@@ -8,8 +8,7 @@
 #include "io/DecompWriter.h"
 #include "io/DensityProfileWriter.h"
 #include "io/EnergyLogWriter.h"
-/** @todo fix Interface missmatch */
-// #include "io/FlopRateWriter.h"
+#include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
 #include "io/LoadBalanceWriter.h"
 #include "io/MPICheckpointWriter.h"
@@ -36,8 +35,7 @@ OutputPluginFactory::OutputPluginFactory() {
 	REGISTER_PLUGIN(DecompWriter);
 	REGISTER_PLUGIN(DensityProfileWriter);
 	REGISTER_PLUGIN(EnergyLogWriter);
-/** @todo fix Interface missmatch */
-// 	REGISTER_PLUGIN(FlopRateWriter);
+ 	REGISTER_PLUGIN(FlopRateWriter);
 	REGISTER_PLUGIN(GammaWriter);
 	REGISTER_PLUGIN(LoadbalanceWriter);
 	REGISTER_PLUGIN(MPICheckpointWriter);

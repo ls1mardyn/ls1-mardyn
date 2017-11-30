@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <array>
+#include <memory>
 
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleIterator.h"
@@ -16,6 +17,7 @@ class CellPairTraversals;
 template<class CellTemplate>
 class TraversalTuner;
 
+class ResortCellProcessorSliced;
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -121,12 +123,11 @@ public:
 	void update_via_copies();
 	void update_via_coloring();
 	void update_via_traversal();
+	void update_via_sliced_traversal();
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
-	bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
-
-	int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
+	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -229,7 +230,7 @@ public:
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
-		return ParticleIterator(t, this, offset, stride);
+		return ParticleIterator(t, &_cells, offset, stride);
 	}
 	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 
@@ -254,10 +255,15 @@ public:
 		return &(_cells.at(cellIndex));
 	}
 
+	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength);
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########
 	//####################################
+
+	//!	@brief Performs a sanity check to ensure that particles are within the bounding box (including the halo)
+	void check_molecules_in_box();
 
 	//! @brief Initialize index vectors and cells.
 	//!
@@ -286,10 +292,10 @@ private:
 	//! is larger than the cutoff radius, the cell can be neglected.
 	//! The distance in one dimension is the width of a cell multiplied with the number
 	//! of cells between the two cells (this is received by subtracting one of the difference).
-	void calculateNeighbourIndices();
+	void calculateNeighbourIndices(std::array<long, 13>& forward, std::array<long, 13>& backward) const;
 
 	//! @brief addition for compact SimpleMD-style traversal
-	void calculateCellPairOffsets();
+	std::array<std::pair<unsigned long, unsigned long>, 14> calculateCellPairOffsets() const;
 
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
@@ -324,21 +330,9 @@ private:
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
-	std::vector<unsigned long> _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
-	std::vector<unsigned long> _innerCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
-	std::vector<unsigned long> _boundaryCellIndices; //!< Vector containing the indices (for the cells vector) of all boundary cells
-	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
-	std::vector<unsigned long> _borderCellIndices[3][2][2];
+	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices of all halo cells in the _cells vector
 
-	std::array<long, 13> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
-	long _maxNeighbourOffset;
-	long _minNeighbourOffset;
-
-    TraversalTuner<ParticleCell> *_traversalTuner;
-
-	// addition for compact SimpleMD-style traversal
-	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
+    std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
@@ -358,11 +352,13 @@ private:
 	//! e.g. after the integrator has changed the positions of particles.
 	//! If this happens, no method must be able to access the particles via
 	//! the cells. Therefore, whenever a piece of code causes the cells to
-	//! become possibly invalid, _cellsValid has to been set to false. Methods
+	//! become possibly invalid, _cellsValid has to be set to false. Methods
 	//! accessing cells have to check whether _cellsValid is true (and e.g.
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
 	bool _cellsValid;
+
+	ResortCellProcessorSliced * _resortCellProcessorSliced;
 };
 
 #endif /* LINKEDCELLS_H_ */

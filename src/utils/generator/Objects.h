@@ -11,6 +11,8 @@
 #ifndef OBJECTS_H
 #define OBJECTS_H
 
+#include <memory>
+
 #include "utils/xmlfileUnits.h"
 
 class Object {
@@ -38,18 +40,29 @@ class Cuboid : public Object {
 public:
 	Cuboid();
 	Cuboid(double lower[3], double upper[3]);
+
+	/** @brief Read in XML configuration for Cuboid and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <object>
+	     <lower> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </lower>
+	     <upper> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </upper>
+	   </object>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("Cuboid"); }
 	static Object* createInstance() { return new Cuboid(); }
 
-	/** Determines if the given point is inside the object */
 	bool isInside(double r[3]);
-	/** Determines if the given point is inside the object excluding it's border  */
 	bool isInsideNoBorder(double r[3]);
-	/** Get lower corner of a bounding box around the object */
 	void getBboxMin(double rmin[3]);
-	/** Get upper corner of a bounding box around the object */
 	void getBboxMax(double rmax[3]);
+
+	double upperCorner(int d) { return _upperCorner[d]; }
+	double lowerCorner(int d) { return _lowerCorner[d]; }
+
 private:
 	double _lowerCorner[3];
 	double _upperCorner[3];
@@ -60,14 +73,23 @@ class Sphere : public Object {
 public:
 	Sphere();
 	Sphere(double center[3], double r);
+
+	/** @brief Read in XML configuration for Sphere and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <object>
+	     <center> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </center>
+	     <radius>DOUBLE</radius>
+	   </object>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("Sphere"); }
 	static Object* createInstance() { return new Sphere(); }
 
 	bool isInside(double r[3]);
-
 	bool isInsideNoBorder(double r[3]);
-
 	void getBboxMin(double rmin[3]);
 	void getBboxMax(double rmax[3]);
 
@@ -87,14 +109,24 @@ public:
 	 * @param[in]  height       Height of the cylinder (z-axis)
 	 */
 	Cylinder(double centerBase[3], double radius, double height);
+
+	/** @brief Read in XML configuration for Cylinder and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <object>
+	     <centerBase> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </centerBase>
+	     <radius>DOUBLE</radius> <!-- x-y plane -->
+	     <height>DOUBLE</height> <!-- z-direction -->
+	   </object>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("Cylinder"); }
 	static Object* createInstance() { return new Cylinder(); }
 
 	bool isInside(double r[3]);
-
 	bool isInsideNoBorder(double r[3]);
-
 	void getBboxMin(double rmin[3]);
 	void getBboxMax(double rmax[3]);
 
@@ -113,12 +145,18 @@ public:
 	 * @param[in]  obj1  First object.
 	 * @param[in]  obj2  Second object.
 	 */
-	ObjectUnification(Object *obj1, Object *obj2) : _ob1(obj1), _ob2(obj2) {}
-	~ObjectUnification(){
-		delete _ob1;
-		delete _ob2;
-	}
+	ObjectUnification(std::shared_ptr<Object> obj1, std::shared_ptr<Object> obj2) : _ob1(obj1), _ob2(obj2) {}
 
+	/** @brief Read in XML configuration for ObjectUnification and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <object>
+	     <object1 type="..."> <!-- ... --> </object1>
+	     <object2 type="..."> <!-- ... --> </object2>
+	   </object>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("ObjectUnification"); }
 	static Object* createInstance() { return new ObjectUnification(); }
@@ -140,6 +178,7 @@ public:
 			rmin[d] = (rmin1[d] < rmin2[d]) ? rmin1[d] : rmin2[d] ;
 		}
 	}
+
 	void getBboxMax(double rmax[3]) {
 		double rmax1[3], rmax2[3];
 		_ob1->getBboxMax(rmax1);
@@ -150,11 +189,14 @@ public:
 	}
 
 private:
-	Object* _ob1;
-	Object* _ob2;
+	std::shared_ptr<Object> _ob1;
+	std::shared_ptr<Object> _ob2;
 };
 
-/** Abstract class to subtract one object from another */
+/** Abstract class to subtract one object from another
+ *
+ * @note Boundaries of the subtrahend object lying within the minuend object are included in the resulting object.
+ */
 class ObjectSubtractor : public Object {
 public:
 	ObjectSubtractor();
@@ -162,12 +204,18 @@ public:
 	 * @param[in]  original_ob  The original object.
 	 * @param[in]  subtract_ob  The object which shall be subtract from the original object.
 	 */
-	ObjectSubtractor(Object *original_ob, Object *subtract_ob) : _ob1(original_ob), _ob2(subtract_ob) {}
-	~ObjectSubtractor(){
-		delete _ob1;
-		delete _ob2;
-	}
+	ObjectSubtractor(std::shared_ptr<Object> original_ob, std::shared_ptr<Object> subtract_ob) : _ob1(original_ob), _ob2(subtract_ob) {}
 
+	/** @brief Read in XML configuration for ObjectSubtractor and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <object>
+	     <object1 type="..."> <!-- (minuend) ... --> </object1>
+	     <object2 type="..."> <!-- (subtrahend) ... --> </object2>
+	   </object>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("ObjectSubtractor"); }
 	static Object* createInstance() { return new ObjectSubtractor(); }
@@ -183,13 +231,14 @@ public:
 	void getBboxMin(double rmin[3]) {
 		_ob1->getBboxMin(rmin);
 	}
+
 	void getBboxMax(double rmax[3]) {
 		_ob1->getBboxMax(rmax);
 	}
 
 private:
-	Object* _ob1;
-	Object* _ob2;
+	std::shared_ptr<Object> _ob1;
+	std::shared_ptr<Object> _ob2;
 };
 
 /** Abstract class for the intersection of two objects */
@@ -200,12 +249,18 @@ public:
 	 * @param[in]  obj1  First object.
 	 * @param[in]  obj2  Second object.
 	 */
-	ObjectIntersection(Object *obj1, Object *obj2) : _ob1(obj1), _ob2(obj2) {}
-	~ObjectIntersection(){
-		delete _ob1;
-		delete _ob2;
-	}
+	ObjectIntersection(std::shared_ptr<Object> obj1, std::shared_ptr<Object> obj2) : _ob1(obj1), _ob2(obj2) {}
 
+	/** @brief Read in XML configuration for ObjectIntersection and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <object>
+	     <object1 type="..."> <!-- (summand) ... --> </object1>
+	     <object2 type="..."> <!-- (summand) ... --> </object2>
+	   </object>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	std::string getName() { return std::string("ObjectIntersection"); }
 	static Object* createInstance() { return new ObjectIntersection(); }
@@ -226,6 +281,7 @@ public:
 			rmin[d] = (rmin1[d] < rmin2[d]) ? rmin2[d] : rmin1[d] ;
 		}
 	}
+
 	void getBboxMax(double rmax[3]) {
 		double rmax1[3], rmax2[3];
 		_ob1->getBboxMax(rmax1);
@@ -236,8 +292,8 @@ public:
 	}
 
 private:
-	Object* _ob1;
-	Object* _ob2;
+	std::shared_ptr<Object> _ob1;
+	std::shared_ptr<Object> _ob2;
 };
 
 #endif /* OBJECTS_H */

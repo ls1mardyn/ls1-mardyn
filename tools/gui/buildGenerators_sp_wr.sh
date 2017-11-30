@@ -4,7 +4,7 @@
 
 tar xfz ScenarioGenerator.tar.gz
 #ExtraDefines="MARDYN_DPDP"
-ExtraDefines='MARDYN_SPSP MARDYN_WR=1'
+ExtraDefines='MARDYN_SPSP ENABLE_REDUCED_MEMORY_MODE=1'
 
 
 qmake DEFINES+="$ExtraDefines" DropletGenerator.pro -o Makefile.droplet

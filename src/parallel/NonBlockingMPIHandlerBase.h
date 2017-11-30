@@ -42,7 +42,7 @@ public:
 	 *
 	 * @param forceRebalancing Defines, whether a rebalancing should be forced.
 	 */
-	virtual void performOverlappingTasks(bool forceRebalancing) final;
+	virtual void performOverlappingTasks(bool forceRebalancing, double etime) final;
 
 protected:
 
@@ -53,7 +53,7 @@ protected:
 	 *
 	 * @param forceRebalancing Defines, whether a rebalancing should be forced.
 	 */
-	virtual void initBalanceAndExchange(bool forceRebalancing);
+	virtual void initBalanceAndExchange(bool forceRebalancing, double etime);
 
 	/**
 	 * Performs the cell traversal.

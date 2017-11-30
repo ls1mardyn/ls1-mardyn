@@ -26,15 +26,15 @@ void Cuboid::readXML(XMLfileUnits& xmlconfig) {
 }
 
 bool Cuboid::isInside(double r[3]) {
-	return (_lowerCorner[0] <= r[0] && r[0] <= _upperCorner[0])
-		&& (_lowerCorner[1] <= r[1] && r[1] <= _upperCorner[1])
-		&& (_lowerCorner[2] <= r[2] && r[2] <= _upperCorner[2]);
+	return (lowerCorner(0) <= r[0] && r[0] <= upperCorner(0))
+		&& (lowerCorner(1) <= r[1] && r[1] <= upperCorner(1))
+		&& (lowerCorner(2) <= r[2] && r[2] <= upperCorner(2));
 }
 
 bool Cuboid::isInsideNoBorder(double r[3]) {
-	return (_lowerCorner[0] < r[0] && r[0] < _upperCorner[0])
-		&& (_lowerCorner[1] < r[1] && r[1] < _upperCorner[1])
-		&& (_lowerCorner[2] < r[2] && r[2] < _upperCorner[2]);
+	return (lowerCorner(0) < r[0] && r[0] < upperCorner(0))
+		&& (lowerCorner(1) < r[1] && r[1] < upperCorner(1))
+		&& (lowerCorner(2) < r[2] && r[2] < upperCorner(2));
 }
 
 void Cuboid::getBboxMin(double rmin[3]) {
@@ -149,14 +149,14 @@ void ObjectUnification::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("object1")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob1 = object_factory.create(object_type);
+		_ob1 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob1->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
 	if(xmlconfig.changecurrentnode("object2")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob2 = object_factory.create(object_type);
+		_ob2 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob2->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
@@ -170,14 +170,14 @@ void ObjectSubtractor::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("object1")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob1 = object_factory.create(object_type);
+		_ob1 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob1->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
 	if(xmlconfig.changecurrentnode("object2")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob2 = object_factory.create(object_type);
+		_ob2 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob2->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
@@ -191,14 +191,14 @@ void ObjectIntersection::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("object1")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob1 = object_factory.create(object_type);
+		_ob1 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob1->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
 	if(xmlconfig.changecurrentnode("object2")) {
 		std::string object_type;
 		xmlconfig.getNodeValue("@type", object_type);
-		_ob2 = object_factory.create(object_type);
+		_ob2 = std::shared_ptr<Object>(object_factory.create(object_type));
 		_ob2->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}

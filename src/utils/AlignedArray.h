@@ -25,6 +25,44 @@
 //
 // Switch to std::vector with a custom allocator
 // so that it is at least clear what happens when.
+//
+// Regarding prefetching on Xeon Phi, consider the following text, coming from here:
+// https://tianyuliukingcrimson.wordpress.com/2015/07/01/prefetch-on-intel-mic-coprocessor-and-xeon-cpu/
+	//Prefetch instruction
+	//
+	//Let’s take a look at two orthogonal concepts first:
+	//
+	//    non-temporal hint (NTA) — informs that data will be used only once in the future and causes them to be evicted from the cache after the first use (most recently used data to be evicted).
+	//    exclusive hint (E) — renders the cache line on the current core in the “exclusive” state, where the cache lines on other cores are invalidated.
+	//
+	//The combination of temporality, exclusiveness, and locality (L1 or L2) together yields 8 types of instructions supported by the present-day Knights Corner MIC. They specify how the data are expected to be uniquely handled in the cache, enumerated below.
+	//instruction 	hint 	purpose
+	//vprefetchnta 	_MM_HINT_NTA 	loads data to L1 and L2 cache, marks it as NTA
+	//vprefetch0 	_MM_HINT_T0 	loads data to L1 and L2 cache
+	//vprefetch1 	_MM_HINT_T1 	loads data to L2 cache only
+	//vprefetch2 	_MM_HINT_T2 	loads data to L2 cache only, marks it as NTA This mnemonic is counter-intuitive as there is not NTA in it
+	//vprefetchenta 	_MM_HINT_ENTA 	exclusive version of vprefetchnta
+	//vprefetche0 	_MM_HINT_ET0 	exclusive version of vprefetch0
+	//vprefetche1 	_MM_HINT_ET1 	exclusive version of vprefetch1
+	//vprefetche2 	_MM_HINT_ET2 	exclusive version of vprefetch2
+	//
+	//Note L2 cache of the MIC is inclusive in the sense that it has a copy of all the data in L1.
+	//
+	//There are two ways of implementing prefetch in C — intrinsic and assembly.
+	//
+	//// method 1: intrinsic
+	//_mm_prefetch((const char*)addr, hint);
+	//
+	//// method 2: assembly
+	//asm volatile ("prefetch_inst [%0]"::"m"(addr));
+	//
+	//Here addr is the address of the byte starting from which to prefetch, prefetch_inst is the prefetch instructions listed above, and hint is the parameter for the compiler intrinsic. We would like to emphasize again that _MM_HINT_T2 and _MM_HINT_ET2 are counter-intuitive. In fact they are misnomers as both are non-temporary. They should have been named as _MM_HINT_NTA2 and _MM_HINT_ENTA2 by Intel.
+
+// Prefetching on Xeons features much fewer hints, apparently! (same link):
+	//prefetchnta 	_MM_HINT_NTA 	loads data to L2 and L3 cache, marks as NTA
+	//prefetcht0 	_MM_HINT_T0 	loads data to L2 and L3 cache
+	//prefetcht1 	_MM_HINT_T1 	equivalent to prefetch0
+	//prefetcht2 	_MM_HINT_T2 	equivalent to prefetch0
 
 /**
  * \brief An aligned array.
@@ -70,6 +108,41 @@ public:
 	 */
 	virtual ~AlignedArray() {
 	}
+
+#if defined(__SSE3__) or defined(__MIC__)
+	virtual void prefetch(int hint = 1, int n = -1) const {
+		mardyn_assert(n >= -2);
+
+		size_t endPrefetch;
+		const int stride = _round_up(1);
+
+		switch(n) {
+		case -1:
+			// prefetch all up to capacity()
+			endPrefetch = _vec.capacity();
+			break;
+		case -2:
+			// prefetch all up to size()
+			endPrefetch = _vec.size();
+			break;
+		default:
+			// prefetch only first n elements
+			endPrefetch = n;
+		}
+
+		for (size_t i = 0; i < endPrefetch; i+= stride) {
+			const T & val = _vec[i];
+			const T * valP = &val;
+#if defined(__MIC__)
+			_mm_prefetch((const char*)valP, 2);
+#else
+			_mm_prefetch((const char*)valP, _MM_HINT_T1);
+#endif
+		}
+	}
+#else
+	virtual void prefetch(int /*hint = 1*/, int /*n = -1*/) const {}
+#endif
 
 	virtual void increaseStorage(size_t oldNumElements, size_t additionalElements) {
 		mardyn_assert(oldNumElements <= _vec.capacity());
@@ -121,10 +194,10 @@ public:
 		_vec.resize(_vec.capacity());
 	}
 
-	virtual void zero(size_t start_idx) {
-		if (_vec.size() > 0) {
-			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
-			std::memset(_vec.data(), 0, num_to_zero * sizeof(T));
+	virtual void zero(size_t start_idx = 0) {
+		if (_vec.size() > 0 and start_idx < _vec.capacity()) {
+			size_t num_to_zero = _vec.capacity() - start_idx;
+			std::memset(_vec.data() + start_idx, 0, num_to_zero * sizeof(T));
 		}
 	}
 
@@ -150,27 +223,12 @@ public:
 	 * \brief Return amount of allocated storage + .
 	 */
 	size_t get_dynamic_memory() const {
-		return _vec.size() * sizeof(T);
+		return _vec.capacity() * sizeof(T);
 	}
 
 	static size_t _round_up(size_t n) {
-		size_t ret = 0;
-		switch (sizeof(T)) {
-		case 1:
-			ret = (n + 63) & ~0x3F;
-			break;
-		case 2:
-			ret = (n + 31) & ~0x1F;
-			break;
-		case 4:
-			ret = (n + 15) & ~0x0F;
-			break;
-		case 8:
-			ret = (n + 7) & ~0x07;
-			break;
-		default:
-			mardyn_assert(false);
-		}
+		unsigned long j = alignment / sizeof(T) - 1;
+		unsigned long ret = (n + j) & ~j;
 		return ret;
 	}
 

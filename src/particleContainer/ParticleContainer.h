@@ -75,9 +75,9 @@ public:
 	ParticleContainer(double bBoxMin[3], double bBoxMax[3]);
 
 	//! @brief Default constructor
-	ParticleContainer(){}
+	ParticleContainer() {}
 	//! @brief The destructor
-	virtual ~ParticleContainer();
+	virtual ~ParticleContainer() {}
 
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
@@ -122,11 +122,11 @@ public:
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
 	virtual bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-			const bool& rebuildCaches = false) = 0;
+			const bool& rebuildCaches = false);
 
 	//! @brief adds a whole vector of particles
 	//! @param particles reference to a vector of pointers to particles
-	virtual int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
+	virtual void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -227,6 +227,8 @@ public:
 
 	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
 	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
+
+	virtual unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength) = 0;
 
 protected:
 

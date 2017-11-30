@@ -245,7 +245,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec c_dr2_inv = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);//masked
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec c_dr_inv = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);//masked
 #else
 	    const RealCalcVec c_dr_inv = RealCalcVec::sqrt(c_dr2_inv);//masked
@@ -294,7 +294,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
 		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
 #else
 	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
@@ -362,7 +362,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
 		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
 #else
 	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
@@ -447,7 +447,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -526,7 +526,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -643,7 +643,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -928,7 +928,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	RealCalcVec sum_virial = RealCalcVec::zero();
 	RealCalcVec sum_myRF = RealCalcVec::zero();
 
-	const RealCalcVec rc2 = RealCalcVec::set1(static_cast<vcp_real_calc>(_LJCutoffRadiusSquare));
+	const RealCalcVec ljrc2 = RealCalcVec::set1(static_cast<vcp_real_calc>(_LJCutoffRadiusSquare));
 	const RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(static_cast<vcp_real_calc>(_cutoffRadiusSquare));
 	const RealCalcVec epsRFInvrc3 = RealCalcVec::set1(static_cast<vcp_real_calc>(_epsRFInvrc3));
 
@@ -963,19 +963,20 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	size_t i_quadrupole_dipole_idx = 0;
 	size_t i_quadrupole_idx = 0;
 
-	//if(soa1._mol_num < 8){
+	//if(soa1.getMolNum() < 8){
 	//	printf("less than 8\n");
 	//}
 
 	// Iterate over each center in the first cell.
-	for (size_t i = 0; i < soa1._mol_num; ++i) {//over the molecules
+	const size_t soa1_mol_num = soa1.getMolNum();
+	for (size_t i = 0; i < soa1_mol_num; ++i) {//over the molecules
 		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
 		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
 		const RealCalcVec m1_r_z = RealCalcVec::broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
 		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_ljc_idx, soa2._ljc_num,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
-				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
+				ljrc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
 		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_charge_idx, soa2._charges_num,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
 				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);
@@ -2626,10 +2627,11 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 		}
 	}
 
-	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
-	hSum_Add_Store(my_threadData._upotXpolesV, sum_upotXpoles);
-	hSum_Add_Store(my_threadData._virialV, sum_virial);
-	hSum_Add_Store(my_threadData._myRFV, zero - sum_myRF);
+	sum_upot6lj.aligned_load_add_store(&my_threadData._upot6ljV[0]);
+	sum_upotXpoles.aligned_load_add_store(&my_threadData._upotXpolesV[0]);
+	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
+	const RealCalcVec negative_sum_myRF = zero - sum_myRF;
+	negative_sum_myRF.aligned_load_add_store(&my_threadData._myRFV[0]);
 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
@@ -2637,7 +2639,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	FullParticleCell & full_c = downcastCellReferenceFull(c);
 
 	CellDataSoA& soa = full_c.getCellDataSoA();
-	if (c.isHaloCell() or soa._mol_num < 2) {
+	if (c.isHaloCell() or soa.getMolNum() < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
@@ -2658,10 +2660,10 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty, or both cells are Halo, skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
 

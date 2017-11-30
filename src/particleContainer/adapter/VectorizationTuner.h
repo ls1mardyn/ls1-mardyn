@@ -9,9 +9,11 @@ enum MoleculeCntIncreaseTypeEnum{
 };
 
 
+#include <vector>
+#include <string>
+
 #include "CellProcessor.h"
 #include "FlopCounter.h"
-#include <vector>
 #include "io/OutputBase.h"
 #include "ensemble/EnsembleBase.h"
 #include "parallel/LoadCalc.h"
@@ -20,14 +22,13 @@ class Component;
 #include "particleContainer/ParticleCellForwardDeclaration.h"
 
 
-
 /** @brief VectorizationTuner class.
  *
  * This class is used to get detailed information about the performance of the VectorizedCellProcessor.
  * For different scenarios, the performance is evaluated and output.
  * Later this could be used to actually use this class as a tuner, i.e. to use the best possible vectorization method for the actual computation.
  */
-class VectorizationTuner : public OutputBase{
+class VectorizationTuner: public OutputBase {
 
 public:
 	/** @brief Constructor of VectorizationTuner for the xml input mode.
@@ -46,34 +47,35 @@ public:
 
 	//documentation in OutputBase
 	void initOutput(ParticleContainer* particleContainer,
-				DomainDecompBase* domainDecomp, Domain* domain);
+				DomainDecompBase* domainDecomp, Domain* domain) override {}
 
 	/** @brief Read in XML configuration for the VectorizationTuner.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <parallelisation type="KDDecomposition">
+	   <parallelisation type="VectorizationTuner">
 	     <outputfilename>STRING</outputfilename>
 	     <minmoleculecnt>INTEGER</minmoleculecnt>
 	     <maxmoleculecnt>INTEGER</maxmoleculecnt>
+	     <numRepetitionsMax>INTEGER</numRepetitionsMax>
 	     <moleculecntincreasetype>INTEGER</moleculecntincreasetype>
 	   </parallelisation>
 	   \endcode
 	 */
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 
 	//documentation in OutputBase, does nothing.
 	void doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/,
 			Domain* /*domain*/, unsigned long /*simstep*/,
 			std::list<ChemicalPotential>* /*lmu*/,
-			std::map<unsigned, CavityEnsemble>* /*mcav*/){}
+			std::map<unsigned, CavityEnsemble>* /*mcav*/) override {}
 
 	//documentation in OutputBase, does nothing.
 	void finishOutput(ParticleContainer* /*particleContainer*/,
-			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){}
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) override;
 
 	//documentation in OutputBase.
-	std::string getPluginName() {
+	std::string getPluginName() override {
 		return std::string("VectorizationTuner");
 	}
 
@@ -87,7 +89,7 @@ public:
 	 * generateNewFiles denotes whether the tuner should write his measured values to files, which also overwrites old files.
 	 * If both are true and tuner files are available then the values that were read are written again,
 	 */
-	void tune(const std::vector<Component> ComponentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles);
+	void tune(std::vector<Component>& ComponentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles);
 
 private:
 	/// The output prefix, that should be prefixed before the output files.
@@ -110,6 +112,8 @@ private:
 
 	/// The cutoff Radius for the LJ potential
 	double _LJCutoffRadius;
+
+	unsigned long _numRepetitionsMax;
 
 	/// The cutoff radius
 	static constexpr double _cutoffRadiusBig=5.;
@@ -144,7 +148,7 @@ private:
 	 * @param vcp
 	 * @param fc
 	 */
-	void tune(std::vector<Component> ComponentList);
+	void tune(std::vector<Component>& ComponentList);
 
 	/**
 	 * Performs multiple iterations of the selected simulation, that is also set up here.
@@ -155,7 +159,7 @@ private:
 	 * @param gflopsOwn
 	 * @param gflopsPair
 	 */
-	void iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
+	void iterate(std::vector<Component>& ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
 			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero);
 
 	void iteratePair (long long int numRepetitions,
@@ -243,6 +247,47 @@ private:
 	void iteratePair(long long int numRepetitions,
 			ParticleCell& firstCell, ParticleCell& secondCell,
 			double& gflopsPair, FlopCounter& flopCounter);
+
+	class VTWriterI {
+	public:
+		virtual void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
+				double cutoffRadiusBig, double LJCutoffRadiusBig)=0;
+		virtual void writeHeader(const std::string& distributionTypeString)=0;
+		virtual void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
+				double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+				double gflopsOwnZero, double gflopsPairZero)=0;
+		virtual void close()=0;
+	protected:
+		int _rank;
+	};
+
+	class VTWriter: public VTWriterI {
+	public:
+		virtual void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
+				double cutoffRadiusBig, double LJCutoffRadiusBig) override;
+		virtual void writeHeader(const std::string& distributionTypeString) override;
+		virtual void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
+				double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+				double gflopsOwnZero, double gflopsPairZero) override;
+		virtual void close() override;
+	private:
+		ofstream _myfile;
+	};
+
+	class VTWriterStatistics: public VTWriterI {
+	public:
+		void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
+				double cutoffRadiusBig, double LJCutoffRadiusBig) override;
+		void writeHeader(const std::string& distributionTypeString) override;
+		void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
+				double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
+				double gflopsOwnZero, double gflopsPairZero) override;
+		void close() override;
+	private:
+		void writeStatistics(double input, const std::string& name);
+	};
+
+	std::unique_ptr<VTWriterI> vtWriter;
 };
 
 #endif  // SRC_IO_VECTORIZATIONTUNER_H_

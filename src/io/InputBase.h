@@ -19,24 +19,16 @@ public:
 
 	virtual ~InputBase(){}
 
-	//! @brief set the phase space file name
-	virtual void setPhaseSpaceFile(std::string filename) = 0;
-
-	//! @brief set the phase space header file name (can be identical to the
-	//         phase space file
-	virtual void setPhaseSpaceHeaderFile(std::string filename) = 0;
-
-	//! @brief read the phase space components and header information
-	//! @param timestep timestep length
+	/** @brief read the phase space components and header information
+	 * @param domain  pointer to domain object
+	 * @param timestep timestep length
+	 */
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep) = 0;
 
 	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
 
-	/**
-	 *  @brief read the actual phase space information
-	 *  Returns "the highest molecule ID found in the phase space file";
-	 *  // todo why? should it be some kind of upper bound for the number of molecules???
-	 *  // WE: good question. For the scenario generator however, useful for the visualization...
+	/** @brief read the actual phase space information
+	 * @return number of read in molecules added to the particle containers of all processes
 	 */
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
 

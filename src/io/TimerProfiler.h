@@ -93,7 +93,7 @@ public:
 	@param timerName The name of the timer from where to start the print; defaults to the base timer
 	@param outputPrefix String prefix for the hierarchical print
 	*/
-	void printTimers(std::string startingTimerName=_baseTimerName, std::string outputPrefix="");
+	void printTimers(std::string timerName=_baseTimerName, std::string outputPrefix="");
 
 	/**
 	@fn void start(std::string timerName)
@@ -121,7 +121,7 @@ public:
 	@brief Resets the timer "timerName" and all of its descendants.
 	@param timerName The name of the timer to be deactivated; defaults to the base timer
 	*/
-	void resetTimers(std::string startingTimerName=_baseTimerName);
+	void resetTimers(std::string timerName=_baseTimerName);
 
 	/**
 	@fn void readInitialTimersFromFile(std::string fileName)

@@ -1,5 +1,6 @@
 #include "KDNode.h"
 
+#include <algorithm>
 #include <bitset>
 
 #ifdef VTK
@@ -64,35 +65,23 @@ bool KDNode::equals(KDNode& other) {
 
 
 void KDNode::buildKDTree() {
-
 	if (_numProcs == 1) {
 		return;
 	}
 
-	int cellsPerDim[KDDIM];
+	// split in the dimension with the most cells
+	std::vector<int> cellsPerDim(KDDIM);
 	for (int dim = 0; dim < KDDIM; dim++) {
 		cellsPerDim[dim] = _highCorner[dim] - _lowCorner[dim] + 1;
 	}
-	int divDir = 0;
-
-	// split in the dimension with the most cells
-	int maxCells = cellsPerDim[0];
-	if (cellsPerDim[1] > maxCells) {
-		divDir = 1;
-		maxCells = cellsPerDim[1];
-	}
-	if (cellsPerDim[2] > maxCells) {
-		divDir = 2;
-		maxCells = cellsPerDim[2];
-	}
-
+	auto max_element_ptr = std::max_element(cellsPerDim.begin(), cellsPerDim.end());
+	int divDir = max_element_ptr - cellsPerDim.begin();
 	int divIndex = (_highCorner[divDir] + _lowCorner[divDir]) / 2;
 	split(divDir, divIndex, _numProcs / 2);
 
 	if (_child1->_numProcs > 1) {
 		_child1->buildKDTree();
 	}
-
 	if (_child2->_numProcs > 1) {
 		_child2->buildKDTree();
 	}

@@ -101,6 +101,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	/* temperature */
+	/** @todo reading temperature is performed in the Ensemble, so check and remove */
 	bool bInputOk = true;
 	double temperature = 0.;
 	bInputOk = bInputOk && xmlconfig.getNodeValueReduced("temperature", temperature);
@@ -110,6 +111,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	/* profiles */
+	/** @todo this should go into the DensityProfileWriter, so check and remove */
 	bInputOk = true;
 	uint32_t xun, yun, zun;
 	bInputOk = bInputOk && xmlconfig.getNodeValue("units/x", xun);
@@ -138,8 +140,8 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 		for( componentIter = query.begin(); componentIter; componentIter++ ) {
 			xmlconfig.changecurrentnode( componentIter );
 			int cid = 1;
-			bool bInputOk = xmlconfig.getNodeValue("@id", cid);
-			if(true == bInputOk) {
+			bInputOk = xmlconfig.getNodeValue("@id", cid);
+			if(bInputOk) {
 				this->considerComponentInProfile(cid-1);
 				global_log->info() << "Considering component " << cid << " for profile recording." << endl;
 			}
@@ -210,10 +212,10 @@ void Domain::calculateGlobalValues(
 	// to this point           
 
 	/* FIXME stuff for the ensemble class */
-	domainDecomp->collCommInit(2);
+	domainDecomp->collCommInit(2, 654);
 	domainDecomp->collCommAppendDouble(Upot);
 	domainDecomp->collCommAppendDouble(Virial);
-	domainDecomp->collCommAllreduceSum();
+	domainDecomp->collCommAllreduceSumAllowPrevious();
 	Upot = domainDecomp->collCommGetDouble();
 	Virial = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
@@ -246,8 +248,8 @@ void Domain::calculateGlobalValues(
 			this->_local2KERot[0] += this->_local2KERot[thermit->first];
 		}
 	}
-
-	for(thermit = _universalThermostatN.begin(); thermit != _universalThermostatN.end(); thermit++)
+	int thermid = 0;
+	for (thermit = _universalThermostatN.begin(); thermit != _universalThermostatN.end(); thermit++, thermid++)
 	{
 		// number of molecules on the local process. After the reduce operation
 		// num_molecules will contain the global number of molecules
@@ -256,12 +258,12 @@ void Domain::calculateGlobalValues(
 		unsigned long rotDOF = _localRotationalDOF[thermit->first];
 		double sumIw2 = (rotDOF > 0)? _local2KERot[thermit->first]: 0.0;
 
-		domainDecomp->collCommInit(4);
+		domainDecomp->collCommInit(4, 12+thermid);
 		domainDecomp->collCommAppendDouble(summv2);
 		domainDecomp->collCommAppendDouble(sumIw2);
 		domainDecomp->collCommAppendUnsLong(numMolecules);
 		domainDecomp->collCommAppendUnsLong(rotDOF);
-		domainDecomp->collCommAllreduceSum();
+		domainDecomp->collCommAllreduceSumAllowPrevious();
 		summv2 = domainDecomp->collCommGetDouble();
 		sumIw2 = domainDecomp->collCommGetDouble();
 		numMolecules = domainDecomp->collCommGetUnsLong();
@@ -305,38 +307,38 @@ void Domain::calculateGlobalValues(
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
 				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << endl;
 			int rot_dof;
-			double Utrans, Urot;
-			double limit_energy =  KINLIMIT_PER_T * Ti;
-			double limit_rot_energy;
-			double vcorr, Dcorr;
-			ParticleIterator tM;
-			for( tM = particleContainer->iteratorBegin();
-					tM != particleContainer->iteratorEnd();
-					++tM)
-			{
-				Utrans = tM->U_trans();
-				if(Utrans > limit_energy)
-				{
-					vcorr = sqrt(limit_energy / Utrans);
-					global_log->debug() << ": v(m" << tM->id() << ") *= " << vcorr << endl;
-					tM->scale_v(vcorr);
-					tM->scale_F(vcorr);
-				}
+			const double limit_energy =  KINLIMIT_PER_T * Ti;
 
-				rot_dof = tM->component()->getRotationalDegreesOfFreedom();
-				if(rot_dof > 0)
-				{
-					limit_rot_energy = 3.0*rot_dof * Ti;
-					Urot = tM->U_rot();
-					if(Urot > limit_rot_energy)
-					{
-						Dcorr = sqrt(limit_rot_energy / Urot);
-						global_log->debug() << "D(m" << tM->id() << ") *= " << Dcorr << endl;
-						tM->scale_D(Dcorr);
-						tM->scale_M(Dcorr);
+			#if defined(_OPENMP)
+			#pragma omp parallel
+			#endif
+			{
+				const ParticleIterator begin = particleContainer->iteratorBegin();
+				const ParticleIterator end = particleContainer->iteratorEnd();
+
+				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
+				for (ParticleIterator tM = begin; tM != end; ++tM) {
+					Utrans = tM->U_trans();
+					if (Utrans > limit_energy) {
+						vcorr = sqrt(limit_energy / Utrans);
+						global_log->debug() << ": v(m" << tM->id() << ") *= " << vcorr << endl;
+						tM->scale_v(vcorr);
+						tM->scale_F(vcorr);
+					}
+
+					rot_dof = tM->component()->getRotationalDegreesOfFreedom();
+					if (rot_dof > 0) {
+						limit_rot_energy = 3.0 * rot_dof * Ti;
+						Urot = tM->U_rot();
+						if (Urot > limit_rot_energy) {
+							Dcorr = sqrt(limit_rot_energy / Urot);
+							global_log->debug() << "D(m" << tM->id() << ") *= " << Dcorr << endl;
+							tM->scale_D(Dcorr);
+							tM->scale_M(Dcorr);
+						}
 					}
 				}
-			}
+			} /*_OPENMP*/
 
 			/* FIXME: Unnamed constant 3960... */
 			if(3960 >= _universalSelectiveThermostatCounter)
@@ -445,10 +447,9 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 
 void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
-	ParticleIterator tM;
 	if(this->_componentwiseThermostat)
 	{
-		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
+		for(ParticleIterator tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -470,23 +471,35 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 	}
 	else
 	{
-		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
+		unsigned long N = 0, rotationalDOF = 0;
+		double local2KETrans = 0.0, local2KERot = 0.0;
+		#if defined(_OPENMP)
+		#pragma omp parallel reduction(+:N, rotationalDOF, local2KETrans, local2KERot)
+		#endif
 		{
-			this->_localThermostatN[0]++;
-			this->_localRotationalDOF[0] += tM->component()->getRotationalDegreesOfFreedom();
-			if(this->_universalUndirectedThermostat[0])
-			{
-				tM->calculate_mv2_Iw2( this->_local2KETrans[0],
-						this->_local2KERot[0],
-						this->_universalThermostatDirectedVelocity[0][0],
-						this->_universalThermostatDirectedVelocity[1][0],
-						this->_universalThermostatDirectedVelocity[2][0]  );
+			const ParticleIterator begin = partCont->iteratorBegin();
+			const ParticleIterator end = partCont->iteratorEnd();
+
+			for(ParticleIterator tM = begin; tM != end; ++tM) {
+				++N;
+				rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
+				if(this->_universalUndirectedThermostat[0]) {
+					tM->calculate_mv2_Iw2( local2KETrans,
+							local2KERot,
+							this->_universalThermostatDirectedVelocity[0][0],
+							this->_universalThermostatDirectedVelocity[1][0],
+							this->_universalThermostatDirectedVelocity[2][0]  );
+				} else {
+					tM->calculate_mv2_Iw2(local2KETrans, local2KERot);
+				}
 			}
-			else
-			{
-				tM->calculate_mv2_Iw2(_local2KETrans[0], _local2KERot[0]);
-			}
-		}
+		} /* _OPENMP */
+
+		this->_localThermostatN[0] = N;
+		this->_localRotationalDOF[0] = rotationalDOF;
+		this->_local2KETrans[0] = local2KETrans;
+		this->_local2KERot[0] = local2KERot;
+
 		global_log->debug() << "      * N = " << this->_localThermostatN[0]
 			<< "rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
 			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
@@ -495,7 +508,6 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 
 void Domain::writeCheckpointHeader(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime) {
-		domainDecomp->assertDisjunctivity(particleContainer);
 		/* Rank 0 writes file header */
 		if(0 == this->_localRank) {
 			ofstream checkpointfilestream(filename.c_str());
@@ -632,9 +644,9 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 void Domain::writeCheckpoint(string filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
 		bool useBinaryFormat) {
-
-#ifdef MARDYN_WR
-	global_log->warning() << "The checkpoints are not adapted for WR-mode. Velocity will be one half-timestep ahead!" << std::endl;
+	domainDecomp->assertDisjunctivity(particleContainer);
+#ifdef ENABLE_REDUCED_MEMORY_MODE
+	global_log->warning() << "The checkpoints are not adapted for RMM-mode. Velocity will be one half-timestep ahead!" << std::endl;
 	global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
 	//TODO: desired correctness (compatibility to normal mode) should be achievable by:
 	// 1. integrating positions by half a timestep forward (+ delta T / 2)
@@ -1074,25 +1086,25 @@ void Domain::evaluateRho(
 		(this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]);
 }
 
-void Domain::setTargetTemperature(int thermostat, double targetT)
+void Domain::setTargetTemperature(int thermostatID, double targetT)
 {
-	if(thermostat < 0)
+	if(thermostatID < 0)
 	{
-		global_log->warning() << "Warning: thermostat \'" << thermostat << "\' (T = "
+		global_log->warning() << "Warning: thermostat \'" << thermostatID << "\' (T = "
 			<< targetT << ") will be ignored." << endl;
 		return;
 	}
 
-	this->_universalTargetTemperature[thermostat] = targetT;
-	if(!(this->_universalUndirectedThermostat[thermostat] == true))
-		this->_universalUndirectedThermostat[thermostat] = false;
+	this->_universalTargetTemperature[thermostatID] = targetT;
+	if(!(this->_universalUndirectedThermostat[thermostatID] == true))
+		this->_universalUndirectedThermostat[thermostatID] = false;
 
 	/* FIXME: Substantial change in program behavior! */
-	if(thermostat == 0) {
+	if(thermostatID == 0) {
 		global_log->warning() << "Disabling the component wise thermostat!" << endl;
 		disableComponentwiseThermostat();
 	}
-	if(thermostat >= 1) {
+	if(thermostatID >= 1) {
 		if( ! _componentwiseThermostat ) {
 			/* FIXME: Substantial change in program behavior! */
 			global_log->warning() << "Enabling the component wise thermostat!" << endl;
@@ -1132,12 +1144,6 @@ void Domain::enableUndirectedThermostat(int tst)
 		this->_universalThermostatDirectedVelocity[d][tst] = 0.0;
 		this->_localThermostatDirectedVelocity[d][tst] = 0.0;
 	}
-}
-
-void Domain::setGlobalTemperature(double temp)
-{
-	this->disableComponentwiseThermostat();
-	this->_universalTargetTemperature[0] = temp;
 }
 
 vector<double> & Domain::getmixcoeff() { return _mixcoeff; }

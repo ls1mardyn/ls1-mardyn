@@ -5,11 +5,9 @@
 #include <fstream>
 #include <climits>
 #include <cmath>
-#include <thread>
-#include <chrono>
 
 #if ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include "Domain.h"
@@ -31,26 +29,19 @@
 using namespace std;
 using Log::global_log;
 
-//#define DEBUG_DECOMP
 
 KDDecomposition::KDDecomposition() :
-
-		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.),
+		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(), _steps(0), _frequency(1.),
 		_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
 		_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _clusteredHeterogeneouseSystems {false}, _splitBiggest(true), _forceRatio(false),
 		_splitThreshold(std::numeric_limits<int>::max()), _numParticleTypes {}, _maxPars{std::numeric_limits<int>::min()},
 		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
 		_useExistingFiles {}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
 }
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
 		bool cutsmaller, bool forceRatio, int splitThresh) :
-
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
 		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _clusteredHeterogeneouseSystems {false}, _splitBiggest(!cutsmaller),
 		_forceRatio(forceRatio), _splitThreshold{splitThresh},
@@ -58,11 +49,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
 		_useExistingFiles {true}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
-	bool before = global_log->get_do_output();
-	global_log->set_mpi_output_all();
-	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_do_output(before);
-
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
@@ -78,9 +64,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		coversWholeDomain[dim] = true;
 	}
 	
-	_numParticlesPerCell = new unsigned int[_numParticleTypes * _globalNumCells];
-	for (int i = 0; i < _numParticleTypes * _globalNumCells; i++)
-		_numParticlesPerCell[i] = 0;
+	_numParticlesPerCell.resize(_numParticleTypes * _globalNumCells);
 
 	// create initial decomposition
 	// ensure that enough cells for the number of procs are available
@@ -107,7 +91,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 }
 
 KDDecomposition::~KDDecomposition() {
-	delete[] _numParticlesPerCell;
 //	_decompTree->serialize(string("kddecomp.dat"));
 	if (_rank == 0) {
 		_decompTree->plotNode("kddecomp.vtu", &_processorSpeeds);
@@ -146,8 +129,8 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 	xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 	if(!_splitBiggest){
-		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
 		xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
+		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
 	}
 
 	/*
@@ -157,10 +140,10 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("particleCount" + std::to_string(i+1), _vecTunParticleNums.at(i));
 		global_log->info() << "Maximum particle count in the vectorization tuner of type " << i+1 << ": " << _vecTunParticleNums.at(i) << endl;
 	}
-	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
 	xmlconfig.getNodeValue("generateNewFiles", _generateNewFiles);
-	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
+	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
+	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
 
 	DomainDecompMPIBase::readXML(xmlconfig);
 }
@@ -184,29 +167,34 @@ bool doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int
 	return forceRebalancing or ((steps % frequency == 0 or steps <= 1) and needsRebalance);
 }
 
-bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, bool needsRebalance, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/, double etime){
+	bool needsRebalance = checkNeedRebalance(etime);
 	return not doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 }
 
-void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+bool KDDecomposition::checkNeedRebalance(double lastTraversalTime) {
 	bool needsRebalance = false;
-	if(_rebalanceLimit > 0) { /* automatic rebalancing */
+	if (_rebalanceLimit > 0) {
+		/* automatic rebalancing */
 		double localTraversalTimes[2];
 		localTraversalTimes[0] = -lastTraversalTime;
-		localTraversalTimes[1] =  lastTraversalTime;
+		localTraversalTimes[1] = lastTraversalTime;
 		double globalTraversalTimes[2];
 		MPI_CHECK(MPI_Allreduce(localTraversalTimes, globalTraversalTimes, 2, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD));
 		globalTraversalTimes[0] *= -1.0;
-		double timerCoeff = globalTraversalTimes[1]/globalTraversalTimes[0];
+		double timerCoeff = globalTraversalTimes[1] / globalTraversalTimes[0];
 		global_log->info() << "KDDecomposition timerCoeff: " << timerCoeff << endl;
-		if(timerCoeff > _rebalanceLimit) {
+		if (timerCoeff > _rebalanceLimit) {
 			needsRebalance = true;
 		}
-	}
-	else {
+	} else {
 		needsRebalance = true;
 	}
+	return needsRebalance;
+}
 
+void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+	bool needsRebalance = checkNeedRebalance(lastTraversalTime);
 	const bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;
@@ -859,6 +847,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 	double optimalSpeed = (_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs]
 			- _accumulatedProcessorSpeeds[node->_owningProc]) * leftRightLoadRatio / (1. + leftRightLoadRatio);
 	double searchSpeed = optimalSpeed + _accumulatedProcessorSpeeds[node->_owningProc];
+	{
 	std::vector<double>::iterator iter = std::lower_bound(_accumulatedProcessorSpeeds.begin() + node->_owningProc,
 			_accumulatedProcessorSpeeds.begin() + node->_owningProc + node->_numProcs + 1, searchSpeed); // +1 since _accumulatedProcessorSpeeds are shifted and of size (numprocs+1)
 	// returns iterator to first instance of array, that is >= optimalSpeed = totalspeed * rho / (1+rho)
@@ -876,7 +865,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 	leftRightLoadRatio = (_accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex] - _accumulatedProcessorSpeeds[node->_owningProc]) /
 			(_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex]);
 
-
+	}
 
 	bool splitLoad = true;  // indicates, whether to split the domain according to the load
 							// or whether the domain should simply be split in half and the number of processes should be distributed accordingly.
@@ -1335,7 +1324,7 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 			_numParticlesPerCell[_globalNumCells + _globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
 		}
 	}
-	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells * _numParticleTypes, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
+	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell.data(), _globalNumCells * _numParticleTypes, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
 }
 
 std::vector<int> KDDecomposition::getNeighbourRanks() {

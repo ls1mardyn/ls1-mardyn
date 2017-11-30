@@ -17,3 +17,8 @@ ifneq ($(TBB_LIBDIR),)
 else
   $(warning WARNING: TBB_LIBDIR not set)
 endif
+
+ifeq ($(CFG), cray-xt-gnu)
+  LDFLAGS += -dynamic
+  $(warning Using -dynamic for linking to tbbmallocproxy with cray-xt-gnu on Hazel Hen.)
+endif

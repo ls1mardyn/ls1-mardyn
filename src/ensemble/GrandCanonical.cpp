@@ -89,7 +89,7 @@ void ChemicalPotential::setSystem(double x, double y, double z, double m)
 // note that *C must not contain the halo
 // but when the decisions are evaluated, the halo must be taken into account!
 //
-void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
+void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
 		DomainDecompBase* comm)
 {
 	_remainingDeletions.clear();
@@ -109,10 +109,10 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 	else if ((_minredco[0] < 0.0) || (_minredco[1] < 0.0) || (_minredco[2] < 0.0)
 			|| (_maxredco[0] > 1.0) || (_maxredco[1] > 1.0)
 			|| (_maxredco[2] > 1.0))
-		localN = this->countParticles(cell, _componentid, _control_bottom,
+		localN = this->countParticles(moleculeContainer, _componentid, _control_bottom,
 				_control_top);
 	else
-		localN = this->countParticles(cell, _componentid);
+		localN = this->countParticles(moleculeContainer, _componentid);
 	float minrnd = 0.0;
 	float maxrnd = 1.0;
 	_globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
@@ -171,7 +171,7 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 			//      << nextid << " (" << tc[0] << "/" << tc[1]
 			//      << "/" << tc[2] << ").\n";  // \\ //
 #endif
-			if (cell->isInBoundingBox(tc)) { // necessary because of rounding errors
+			if (moleculeContainer->isInBoundingBox(tc)) { // necessary because of rounding errors
 				for (int d = 0; d < 3; d++) {
 					_remainingInsertions[d].push_back(tc[d]);
 				}
@@ -193,7 +193,7 @@ bool ChemicalPotential::moleculeStrictlyNotInBox(const Molecule& m,
 	return out;
 }
 
-bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret)
+bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret)
 {
 	if (_remainingDeletions.empty())
 		return false; // DELETION_FALSE (always occurring for Widom)
@@ -234,8 +234,6 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 		++m;
 		j++;
 		if (m == moleculeContainer->iteratorEnd()) {
-			if (j == 0)
-				return false; // DELETION_FALSE // this will never be executed?
 			m = moleculeContainer->iteratorBegin();
 			j = 0;
 		}
@@ -449,7 +447,7 @@ int ChemicalPotential::grandcanonicalBalance(DomainDecompBase* comm) {
 }
 
 void ChemicalPotential::grandcanonicalStep(
-		TMoleculeContainer* moleculeContainer, double T, Domain* domain,
+		ParticleContainer* moleculeContainer, double T, Domain* domain,
 		CellProcessor* cellProcessor)
 {
 	bool accept = true;
@@ -603,7 +601,7 @@ void ChemicalPotential::grandcanonicalStep(
 }
 
 unsigned ChemicalPotential::countParticles(
-		TMoleculeContainer* moleculeContainer, unsigned int cid) const
+		ParticleContainer* moleculeContainer, unsigned int cid) const
 {
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles are NOT counted
@@ -622,7 +620,7 @@ unsigned ChemicalPotential::countParticles(
 }
 
 unsigned ChemicalPotential::countParticles(
-		TMoleculeContainer* moleculeContainer, unsigned int cid,
+		ParticleContainer* moleculeContainer, unsigned int cid,
 		double* cbottom, double* ctop) const
 {
 	// ParticleContainer::countParticles functionality moved here as it was:

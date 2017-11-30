@@ -58,9 +58,9 @@ protected:
 			std::string outputPrefix);
 	virtual ~MmpldWriter() {}
 
-	virtual void SetNumSphereTypes() {};
-	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {};
-	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex) { return false; };
+	virtual void SetNumSphereTypes() {}
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {}
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex) { return false; }
 
 	void InitSphereData();
 
@@ -135,7 +135,7 @@ protected:
 	std::vector< std::array<float, 2> > _global_intensity_range;
 
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	MPI_File _mpifh;
 	MPI_Info_object _mpiinfo;
 #endif
@@ -176,7 +176,3 @@ public:
 };
 
 #endif /* MMPLDWRITER_H_ */
-
-
-
-

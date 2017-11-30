@@ -50,7 +50,7 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 
 class CellDataSoA;
-class CellDataSoA_WR;
+class CellDataSoARMM;
 
 /**
  * \brief
@@ -68,6 +68,11 @@ public:
 	 * \param LJcutoffRadius Must be the same as the LJ cutoff radius for the CellProcessor.
 	 */
 	FlopCounter(double cutoffRadius, double LJcutoffRadius);
+
+	/**
+	 * free threadData
+	 */
+	~FlopCounter();
 
 	/**
 	 * \brief Initializes the internal counters.
@@ -120,7 +125,7 @@ private:
 	template<class ForcePolicy, bool CalculateMacroscopic>
 	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
 	template<class ForcePolicy, bool CalculateMacroscopic>
-	void _calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2);
+	void _calculatePairs(const CellDataSoARMM & soa1, const CellDataSoARMM & soa2);
 
 	void handlePair(const Molecule& Mi, const Molecule& Mj,
 			bool addMacro = true);

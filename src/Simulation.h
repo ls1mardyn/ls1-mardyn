@@ -1,6 +1,8 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include <memory>
+
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "io/TimerProfiler.h"
@@ -28,6 +30,7 @@ class Ensemble;
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <io/TaskTimingProfiler.h>
 
 #ifdef STEEREO
 class SteereoSimSteering;
@@ -75,40 +78,7 @@ class DensityControl;
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *
- * Some of the simulation parameters are provided in a config file.
- * The order of the parameters in the config file is important.
- * Thats's because e.g. the datastructure can only be built after the
- * phasespace has been read.
- *
- * The config file usually has the file ending ".cfg" and
- * starts with a line containing the token "mardynconfig"
- * followed by the following parameters, among others
- * (possibly mixed with comment lines starting with "#"):
- * - timestepLength: Uses by the Iterator to calculate new velocities and positions
- * - cutoffRadius: Determines the maximum distance for which the force between two
- *                   molecules still has to be calculated
- * - phaseSpaceFile: Full path to the XDR file containing the phase space
- * - parallelization: Parallelisation scheme to be used
- *                    - DomainDecomposition: standard spacial domain decomposition into
- *                                           cuboid regions of equal size
- * - datastructure: Datastructure to be used (e.g. Linked Cells) followed by
- *                    the parameters for the datastructures
- *                  The datastructure LinkedCells needs one additional parameter,
- *                  which is the number of cells in the cutoff radius (equals to the
- *                  cutoff radius divided by the cell length).
- *
- * Example for a config file:
- *
- * \code{.txt}
- *  mardynconfig
- *  timestepLength 0.00005
- *  cutoffRadius 3.0
- *  phaseSpaceFile OldStype phasespace.xdr
- *  # datastructure followed by the parameters for the datastructure
- *  # for LinkedCells, the cellsInCutoffRadius has to be provided
- *  datastructure LinkedCells 1
- *  parallelization DomainDecomposition
- * \endcode
+ * Simulation parameters are provided via a xml config file or can be set directly via the corresponding methods.
  */
 class Simulation {
 private:
@@ -127,7 +97,7 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <simulation>
-	     <integrator type=STRING><!-- see Integrator class documentation --></integrator>
+	     <integrator type="STRING"><!-- see Integrator class documentation --></integrator>
 	     <run>
 	       <production>
 	         <steps>INTEGER</steps>
@@ -154,7 +124,7 @@ public:
 	       </thermostats>
 	     </algorithm>
 	     <output>
-	       <outputplugin><!-- see OutputBase class and specific plugin documentation --></outputplugin>
+	       <outputplugin name=STRING enabled="yes|no"><!-- see OutputBase class and specific plugin documentation --></outputplugin>
 	     </output>
 	   </simulation>
 	   \endcode
@@ -176,20 +146,10 @@ public:
 	 */
 	void readConfigFile(std::string filename);
 
-	/** @brief process XML configuration file (*.xml)
-	 *
-	 * Opens the XML file with the given filename and reads in all parameters
-	 * for the simulaion and initializes the following member variables:
-	 * - timestepLength:
-	 * - cutoffRadius
-	 * - phaseSpace
-	 * - moleculeContainer
+	/** @brief Opens given XML file and reads in parameters for the simulaion.
 	 * @param[in]  inputfilename filename of the XML input file
 	 */
 	void initConfigXML(const std::string& inputfilename);
-	void initConfigXML(const char* inputfilename) {
-		initConfigXML(std::string(inputfilename));
-	}
 
 	/** @brief calculate all values for the starting timepoint
 	 *
@@ -252,7 +212,7 @@ public:
 	 * The overlapping is needed to speed up the overall computation. The order of cells
 	 * traversed will be different, than for the non-overlapping case, slightly different results are possible.
 	 */
-	void performOverlappingDecompositionAndCellTraversalStep();
+	void performOverlappingDecompositionAndCellTraversalStep(double etime);
 
 	/**
 	 * Set the private _domainDecomposition variable to a new pointer.
@@ -326,7 +286,7 @@ public:
 	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
 
-	MemoryProfiler* getMemoryProfiler() {
+	std::shared_ptr<MemoryProfiler> getMemoryProfiler() {
 		return _memoryProfiler;
 	}
 
@@ -376,7 +336,12 @@ private:
 	int _thermostatType;
 	double _nuAndersen;
 
-	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps to be performed in the simulation */
+	unsigned long _numberOfTimesteps;
+public:
+    unsigned long getNumberOfTimesteps() const;
+
+private:
+    /**< Number of discrete time steps to be performed in the simulation */
 
 	unsigned long _simstep;             /**< Actual time step in the simulation. */
 
@@ -458,9 +423,18 @@ private:
 	TimerProfiler _timerProfiler;
 
 	//! used to get information about the memory consumed by the process and the overall system.
-	MemoryProfiler* _memoryProfiler;
+	std::shared_ptr<MemoryProfiler> _memoryProfiler;
 
+#ifdef TASKTIMINGPROFILE
+	/** Used to track what thread worked on which task for how long and plot it **/
+	TaskTimingProfiler* _taskTimingProfiler;
+#endif
 public:
+#ifdef TASKTIMINGPROFILE
+    TaskTimingProfiler* getTaskTimingProfiler(){
+        return _taskTimingProfiler;
+    }
+#endif
 	//! computational time for one execution of traverseCell
 	double getAndResetOneLoopCompTime() {
 		if(_loopCompTimeSteps==0){
@@ -478,16 +452,16 @@ public:
 	void enableFinalCheckpoint() { _finalCheckpoint = true; }
 	void disableFinalCheckpoint() { _finalCheckpoint = false; }
 
+	void enableMemoryProfiler() {
+		_memoryProfiler = std::make_shared<MemoryProfiler>();
+		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
+		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_domainDecomposition));
+	}
+
 	void setForcedCheckpointTime(double time) { _forced_checkpoint_time = time; }
 
 	/** initialize all member variables with a suitable value */
 	void initialize();
-	void setName(std::string name) {
-		_programName = name;
-	}
-	std::string getName() {
-		return _programName;
-	}
 
 	/** @brief get output plugin
 	 * @return pointer to the output plugin if it is active, otherwise nullptr
@@ -542,8 +516,6 @@ private:
 	double _loopCompTime;
 
 	int _loopCompTimeSteps;
-
-	std::string _programName;
 
 	/**  NEMD features */
 	uint32_t _flagsNEMD;

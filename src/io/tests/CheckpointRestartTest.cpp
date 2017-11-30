@@ -20,10 +20,10 @@ using namespace std;
 
 class MDGenerator;
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 TEST_SUITE_REGISTRATION(CheckpointRestartTest);
 #else
-#pragma message "Compilation Info: CheckpointRestartTest disabled in MARDYN_WR mode."
+#pragma message "Compilation Info: CheckpointRestartTest disabled in reduced memory mode."
 #endif
 
 
@@ -40,12 +40,12 @@ void CheckpointRestartTest::testCheckpointRestart() {
 	ParticleContainer* particleContainer
 		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", 1.5);
 
-	_domain->writeCheckpoint(getTestDataFilename("restart.test.xdr", false), particleContainer, _domainDecomposition, 0.);
+	_domain->writeCheckpoint(getTestDataFilename("restart.test.dat", false), particleContainer, _domainDecomposition, 0.);
 
 	delete particleContainer;
 
 	ParticleContainer* particleContainer2
-			= initializeFromFile(ParticleContainerFactory::LinkedCell, "restart.test.xdr", 1.5);
+			= initializeFromFile(ParticleContainerFactory::LinkedCell, "restart.test.dat", 1.5);
 
 	delete particleContainer2;
 }

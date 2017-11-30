@@ -119,7 +119,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 					|| ntypestring == "IRV")) {
 				global_log->error() << "Unknown molecule format: '"
 						<< ntypestring << "'" << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			_moleculeFormat = ntypestring;
 			global_log->info() << " molecule format: " << ntypestring << endl;
@@ -331,7 +331,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 				<< endl;
 	}
 
-	char * fileName = (char*) _phaseSpaceFile.c_str();
+	const char * fileName = _phaseSpaceFile.c_str();
 	int ret, size;
 	MPI_Status status;
 	MPI_Offset header_offset = 0;
@@ -460,7 +460,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 		lengthInCells[i] = floor(
 				domain->getGlobalLength(i) / oldCellLength[i]);
 
-		assert(lengthInCells[i] >= 0);
+		mardyn_assert(lengthInCells[i] >= 0);
 	}
 
 	//compute bounding boxes in cells. The cellsize is determinded through the old
@@ -477,9 +477,9 @@ unsigned long MPI_IOReader::readPhaseSpace(
 				domainDecomp->getBoundingBoxMax(i, domain) / oldCellLength[i]
 						- 1);
 
-		assert(boundingBoxMinInCells[i] >= 0);
-		assert(boundingBoxMaxInCells[i] >= 0);
-		assert(boundingBoxMinInCells[i] <= boundingBoxMaxInCells[i]);
+		mardyn_assert(boundingBoxMinInCells[i] >= 0);
+		mardyn_assert(boundingBoxMaxInCells[i] >= 0);
+		mardyn_assert(boundingBoxMinInCells[i] <= boundingBoxMaxInCells[i]);
 	}
 
 	int maxNumCellsLocal = (boundingBoxMaxInCells[2] - boundingBoxMinInCells[2]
@@ -539,7 +539,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 				ParticleData::ParticleDataToMolecule(data[l], m);
 
 				particleContainer->addParticle(m);
-				assert(m.mass() != 0);
+				mardyn_assert(m.mass() != 0);
 
 				// TODO: The following should be done by the addPartice method.
 				if (m.r(0) >= domainDecomp->getBoundingBoxMin(0, domain)
@@ -695,6 +695,6 @@ void MPI_IOReader::handle_error(int i) {
 
 	global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	exit(1);
+	Simulation::exit(1);
 #endif
 }

@@ -24,8 +24,10 @@ public:
 	~FFTAcceleration_scalBlocks_optFFT() {
 		delete _optFFT_API;
 		delete[] _blockSize;
-		delete_matrix(_Re_tmp);
-		delete_matrix(_Im_tmp);
+        for (int i = 0; i < mardyn_get_max_threads(); ++i) {
+            delete_matrix(_Re_tmp[i]);
+            delete_matrix(_Im_tmp[i]);
+        }
 	}
 
 	void FFT_initialize_Target(FFTAccelerableExpansion & Expansion);
@@ -83,8 +85,9 @@ protected:
 	int _nbBlocks;
 	int _nbLinePerBlock; //number of usefull line per block
 	int* _blockSize;     //fft_ny size of each block
-	FFT_precision** _Re_tmp; //tmp matrices for FFT
-	FFT_precision** _Im_tmp;
+    //tmp matrices for FFT for each thread
+	FFT_precision*** _Re_tmp;
+	FFT_precision*** _Im_tmp;
 
 	template<bool Vect, bool OrderRed>
 	void FFT_M2L_template(FFTAccelerableExpansion & Source,

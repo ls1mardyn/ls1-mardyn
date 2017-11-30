@@ -14,23 +14,67 @@
 template <class T>
 class AlignedArrayTriplet : public AlignedArray<T> {
 public:
+	enum class Coordinate { X = 0, Y = 1, Z = 2 };
+
 	AlignedArrayTriplet(size_t initialSize = 0) : AlignedArray<T>(0), _numEntriesPerArray(0) {
 		AlignedArrayTriplet<T>::resize(initialSize);
 	}
 
-	T* xBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; }
-	T* yBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (1 * _numEntriesPerArray) : nullptr; }
-	T* zBegin() { return _numEntriesPerArray > 0 ? this->_vec.data() + (2 * _numEntriesPerArray) : nullptr; }
-	const T* xBegin() const { return _numEntriesPerArray > 0 ? this->_vec.data() + (0 * _numEntriesPerArray) : nullptr; }
-	const T* yBegin() const { return _numEntriesPerArray > 0 ? this->_vec.data() + (1 * _numEntriesPerArray) : nullptr; }
-	const T* zBegin() const { return _numEntriesPerArray > 0 ? this->_vec.data() + (2 * _numEntriesPerArray) : nullptr; }
+	void prefetch(int hint = 1, int n = -1) const {
+		mardyn_assert(n >= -2);
 
-	T& x(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 0 * _numEntriesPerArray]; }
-	T& y(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 1 * _numEntriesPerArray]; }
-	T& z(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 2 * _numEntriesPerArray]; }
-	const T& x(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 0 * _numEntriesPerArray]; }
-	const T& y(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 1 * _numEntriesPerArray]; }
-	const T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + 2 * _numEntriesPerArray]; }
+		int endPrefetch;
+		const int stride = this->_round_up(1);
+
+		switch(n) {
+		case -1:
+			// prefetch all up to capacity()
+			AlignedArray<T>::prefetch(hint, n);
+			return;
+			break;
+		case -2:
+			// prefetch all up to size()
+			endPrefetch = _numEntriesPerArray;
+			break;
+		default:
+			// prefetch only first n elements
+			endPrefetch = n;
+		}
+
+		for (int i = 0; i < endPrefetch; i+= stride) {
+#if defined(__SSE3__)
+			_mm_prefetch((const char*)&(x(i)), _MM_HINT_T1);
+			_mm_prefetch((const char*)&(y(i)), _MM_HINT_T1);
+			_mm_prefetch((const char*)&(z(i)), _MM_HINT_T1);
+#elif defined(__MIC__)
+			_mm_prefetch((const char*)&(x(i)), 2);
+			_mm_prefetch((const char*)&(y(i)), 2);
+			_mm_prefetch((const char*)&(z(i)), 2);
+#else
+#endif
+		}
+	}
+
+	// TODO: remove ternary operator?
+	T* begin(Coordinate coord) {return _numEntriesPerArray > 0 ? this->_vec.data() + (size_t(coord) * _numEntriesPerArray) : nullptr;}
+	T* xBegin() { return begin(Coordinate::X); }
+	T* yBegin() { return begin(Coordinate::Y); }
+	T* zBegin() { return begin(Coordinate::Z); }
+
+	const T* begin(Coordinate coord) const {return _numEntriesPerArray > 0 ? this->_vec.data() + (size_t(coord) * _numEntriesPerArray) : nullptr;}
+	const T* xBegin() const { return begin(Coordinate::X); }
+	const T* yBegin() const { return begin(Coordinate::Y); }
+	const T* zBegin() const { return begin(Coordinate::Z); }
+
+	T& get(Coordinate coord, size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + size_t(coord) * _numEntriesPerArray]; }
+	T& x(size_t i) { return get(Coordinate::X, i); }
+	T& y(size_t i) { return get(Coordinate::Y, i); }
+	T& z(size_t i) { return get(Coordinate::Z, i); }
+
+	const T& get(Coordinate coord, size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_vec[i + size_t(coord) * _numEntriesPerArray]; }
+	const T& x(size_t i) const { return get(Coordinate::X, i); }
+	const T& y(size_t i) const { return get(Coordinate::Y, i); }
+	const T& z(size_t i) const { return get(Coordinate::Z, i); }
 
 	size_t dimensionToOffset(int i) const {
 		mardyn_assert(i >= 0 and i < 3);

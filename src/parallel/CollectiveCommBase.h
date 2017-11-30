@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <stddef.h>
 #include "CollectiveCommBaseInterface.h"
 //! @brief This class is a dummy class which ensures that the collective communication
 //!        commands also work if the program is executed sequentially without MPI.
@@ -39,7 +40,7 @@ public:
 
 	//! @brief allocate memory for the values to be stored, initialize getter-iterator
 	//! @param numValues number of values that shall be stored
-	virtual void init(int numValues) {
+	void init(int numValues) {
 		_values.reserve(numValues);
 		_getter = _values.begin();
 	}
@@ -93,11 +94,14 @@ public:
 	virtual void allreduceSum() override {
 	}
 
-
 	//! Performs an all-reduce (sum), however values of previous iterations are permitted.
 	//! By allowing values from previous iterations, overlapping communication is possible.
 	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
 	virtual void allreduceSumAllowPrevious() override {
+	}
+
+	// doku in base class
+	virtual void allreduceCustom(ReduceType type) override{
 	}
 
 	//! Performs a scan (sum)
@@ -153,6 +157,10 @@ public:
 	//! @return the value
 	virtual void finalize() override {
 		_values.clear();
+	}
+
+	virtual size_t getTotalSize() override {
+		return _values.capacity() * sizeof(valType);
 	}
 
 protected:

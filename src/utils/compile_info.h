@@ -44,6 +44,13 @@ int get_compiler_info(char *info_str) {
 #elif defined(_SX)
 	sprintf(info_str, "NEC SX, rev. %d", __SXCXX_REVISION);
 
+	/* Clang compiler */
+#elif defined(__clang__)
+	int version = __clang_major__;
+	int revision = __clang_minor__;
+	int patch = __clang_patchlevel__;
+	sprintf(info_str, "Clang %d.%d.%d", version, revision, patch);
+
 	/* GNU compiler */
 #elif defined(__GNUC__)
 # if defined(__GNUC_PATCHLEVEL__)
@@ -98,7 +105,7 @@ int get_timestamp(char *info_str) {
 
 int get_host(char *info_str) {
 	char hostname[1024];
-#if _SX
+#ifdef _SX
 	strcpy(hostname, "unknown");
 #else
 	hostname[1023] = '\0';

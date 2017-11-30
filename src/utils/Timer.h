@@ -16,7 +16,7 @@
  * Take care when using multiple timers because calls to the constructor 
  * reset the hw counters to zero! 
  */
-#if WITH_PAPI
+#ifdef WITH_PAPI
 #include <papi.h>
 
 #ifndef NDEBUG
@@ -28,6 +28,7 @@
 #else /* NDEBUG */
 #define PAPI_CHECK(BOOL,MSG) (BOOL);
 #endif /* NDEBUG */
+
 
 class PAPI_Initializer{
 public:
@@ -62,7 +63,7 @@ class Timer {
 	timer_state _state; // timer state
 	bool _synced;       // timer should be synced at start and end across processes/threads
 
-#if WITH_PAPI
+#ifdef WITH_PAPI
 	long long *_papi_start;
 	long long *_papi_stop;
 	long long *_papi_counter;
@@ -78,7 +79,7 @@ private:
 public:
 	Timer() : 
 		_start(0), _stop(0), _etime(0), _state(TIMER_HALTED), _synced(false), _active(true)
-#if WITH_PAPI
+#ifdef WITH_PAPI
 		, _papi_start(0), _papi_stop(0), _papi_counter(0), _papi_num_counters(0), _papi_num_avail_counters(0), _papi_EventSet(0), _collect_papi(false)
 #endif /* WITH_PAPI */
 	{
@@ -93,74 +94,16 @@ public:
 	}
 
 	~Timer() {
-#if WITH_PAPI
+#ifdef WITH_PAPI
 		delete[] _papi_start;
 		delete[] _papi_stop;
 		delete[] _papi_counter;
 #endif /* WITH_PAPI */
 	}
-
-	void start() {
-		if (!isActive()) {
-			assert(_state == TIMER_HALTED);
-			return;
-		}
-
-		_stop = 0.;
-		if (_state == TIMER_HALTED) {
-			_start = timer();
-			_state = TIMER_RUNNING;
-#if WITH_PAPI
-			if(_collect_papi) {
-				PAPI_CHECK( (PAPI_read( _papi_EventSet, _papi_start)), "Failed reading counters.");
-			}
-#endif /* WITH_PAPI */
-		}
-		else
-			std::cerr << "WARNING: Timer already running" << std::endl;
-	}
-
-	void stop() {
-		if (!isActive()) {
-			assert(_state == TIMER_HALTED);
-			return;
-		}
-
-		if (_state == TIMER_RUNNING) {
-			_stop = timer();
-			_state = TIMER_HALTED;
-			_etime += _stop - _start;
-#if WITH_PAPI
-			if(_collect_papi) {
-				PAPI_CHECK((PAPI_read( _papi_EventSet, _papi_stop)), "Failed reading counters.");
-				for (int i = 0; i < _papi_num_counters; i++) {
-					_papi_counter[i] += _papi_stop[i] - _papi_start[i];
-				}
-			}
-#endif /* WITH_PAPI */
-		}
-		else
-			std::cerr << "WARNING: Timer not running" << std::endl;
-	}
-
-	void reset() {
-		if (!isActive()) {
-			assert(_state == TIMER_HALTED);
-			return ;
-		}
-
-		_state = TIMER_HALTED;
-		_start = _stop = _etime = 0.;
-#if WITH_PAPI
-		if (_collect_papi) {
-			PAPI_reset(_papi_EventSet);
-            for (int i = 0; i < _papi_num_counters; i++) {
-				_papi_counter[i] = 0;
-			}
-		}
-#endif /* WITH_PAPI */
-	}
-
+	void start();
+	void stop();
+	void reset();
+	
 	double get_start() {
 		return _start;
 	}
@@ -183,7 +126,7 @@ public:
 		_synced = sync;
 	}
 
-#if WITH_PAPI
+#ifdef WITH_PAPI
 	int add_papi_counters(int n, char *papi_event_list[]) {
 		if(_collect_papi) {
 			std::cerr << "PAPI ERROR: PAPI counters already started." << std::endl;

@@ -8,7 +8,7 @@
 #include "KDDecompositionTest.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "io/InputOldstyle.h"
+#include "io/ASCIIReader.h"
 
 #include <sstream>
 #include <cmath>
@@ -44,7 +44,7 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(const char * filenam
 	numMols = kdd->collCommGetInt();
 	kdd->collCommFinalize();
 
-	_domainDecomposition->balanceAndExchange(0.,true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
 	// will rebalance, we thus need a reduce
 	container->deleteOuterParticles();
 
@@ -309,7 +309,7 @@ void KDDecompositionTest::testbalanceAndExchange() {
 	const double cutOff = 3.5;
 	int fullSearchThreshold = 2;
 
-	InputOldstyle inputReader;
+	   ASCIIReader inputReader;
 	std::string fileName2=getTestDataFilename("DomainDecompBase.inp");
 	inputReader.setPhaseSpaceHeaderFile(fileName2.c_str());
 	inputReader.setPhaseSpaceFile(fileName2.c_str());
@@ -361,7 +361,7 @@ double KDDecompositionTest::myRand(double min, double max) const {
 	return ret;
 }
 
-void KDDecompositionTest::setNumParticlesPerCell(unsigned int * v, int len[3]) const {
+void KDDecompositionTest::setNumParticlesPerCell(std::vector<unsigned int> &v, int len[3]) const {
 
 	for (int z = 0; z < len[2]; ++z) {
 		for (int y = 0; y < len[1]; ++y) {
@@ -403,7 +403,7 @@ unsigned KDDecompositionTest::f(double x, double y, double z, int N[3], const st
 	return ret;
 }
 
-void KDDecompositionTest::clearNumParticlesPerCell(unsigned int * v, int totalLen) const {
+void KDDecompositionTest::clearNumParticlesPerCell(std::vector<unsigned int> &v, int totalLen) const {
 	for (int i = 0; i < totalLen; ++i)
 		v[i] = 0;
 }

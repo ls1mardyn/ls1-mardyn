@@ -24,10 +24,10 @@
 
 using namespace std;
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 TEST_SUITE_REGISTRATION(RDFTest);
 #else
-#pragma message "Compilation info: RDFTest disabled in MARDYN_WR mode"
+#pragma message "Compilation info: RDFTest disabled in reduced memory mode"
 #endif
 
 

@@ -11,12 +11,12 @@
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
 #include "Domain.h"
 
-#include "io/InputOldstyle.h"
+#include "io/ASCIIReader.h"
 #include "utils/Logger.h"
 
 #include <list>
@@ -43,7 +43,7 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type t
 ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName) {
 
-	InputOldstyle inputReader;
+	   ASCIIReader inputReader;
 	inputReader.setPhaseSpaceHeaderFile(fileName.c_str());
 	inputReader.setPhaseSpaceFile(fileName.c_str());
 	inputReader.readPhaseSpaceHeader(domain, 1.0);
@@ -57,7 +57,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 	ParticleContainer* moleculeContainer;
 	if (type == Type::LinkedCell) {
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff);
-		#if ENABLE_MPI
+		#ifdef ENABLE_MPI
 		DomainDecomposition * temp = 0;
 		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
 		if (temp != 0) {

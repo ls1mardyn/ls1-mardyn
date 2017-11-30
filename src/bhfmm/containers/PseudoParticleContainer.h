@@ -29,6 +29,18 @@ public:
 	int occ;
 	bhfmm::SHMultipoleParticle multipole;
 	bhfmm::SHLocalParticle local;
+
+#ifdef QUICKSCHED
+	qsched_task_t _taskIdP2M,
+				  _taskIdM2M,
+				  _taskIdM2LInit,
+				  _taskIdM2LCalc,
+				  _taskIdM2LFin,
+				  _taskIdL2L,
+				  _taskIdL2P;
+	qsched_res_t  _resIdLocal,
+				  _resIdMultipole;
+#endif // QUICKSCHED
 };
 
 class PseudoParticleContainer {

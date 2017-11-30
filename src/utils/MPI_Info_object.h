@@ -1,7 +1,7 @@
 #ifndef MPI_INFO_OBJECT_H
 #define MPI_INFO_OBJECT_H
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 
 #include <string>
 

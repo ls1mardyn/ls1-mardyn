@@ -43,9 +43,6 @@ public:
 	ReplicaGenerator();
 	~ReplicaGenerator();
 
-	void setPhaseSpaceFile(std::string /*filename*/){}
-	void setPhaseSpaceHeaderFile(std::string /*filename*/){}
-
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/){}
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
@@ -62,7 +59,7 @@ public:
 private:
 	void init();
 	void readReplicaPhaseSpaceHeader(SubDomain& subDomain);
-	void readReplicaPhaseSpaceData(SubDomain& subDomain);
+	void readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDecompBase* domainDecomp);
 
 private:
 	std::vector<SubDomain> _vecSubDomains;
@@ -74,7 +71,6 @@ private:
 	uint32_t _nIndexLiqEndY;
 	uint32_t _nMoleculeFormat;
 	MoleculeDataReader* _moleculeDataReader;
-	uint64_t _nMaxID;
 	double _dMoleculeDiameter;
 	double _fspY[6];  // free space positions
 	uint8_t _nSystemType;

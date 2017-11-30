@@ -27,6 +27,7 @@ public:
 	//! Get the MPI communicator
 	//! @return MPI communicator
 	virtual MPI_Comm getTopology() = 0;
+
 };
 
 

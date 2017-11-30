@@ -57,7 +57,6 @@ public:
 
 private:
 	void initializeCells();
-	void generateP2PTasks();
 	void calculateNeighbourIndices();
 	void calculateCellPairOffsets();
 	unsigned long int getCellIndexOfMolecule(Molecule* molecule) const;

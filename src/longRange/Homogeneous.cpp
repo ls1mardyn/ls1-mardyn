@@ -15,9 +15,9 @@ using namespace std;
 //  
 //};
 
-Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, Simulation _simulation) {
+Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, Simulation* simulation) {
 	_domain = domain;
-	_components = *_simulation.getEnsemble()->getComponents();
+	_components = simulation->getEnsemble()->getComponents();
 	_comp2params = _domain->getComp2Params();
 	global_log->info() << "Long range correction for homogeneous systems is used " << endl;
 	double UpotCorrLJ=0.;
@@ -26,10 +26,10 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 	double _globalRho = domain->getglobalRho();
 	double _globalNumMolecules = domain->getglobalNumMolecules();
 	double _epsilonRF = _domain->getepsilonRF();
-	unsigned int numcomp=_components.size();
+	unsigned int numcomp=_components->size();
 	unsigned long nummolecules=0;
 	for(unsigned int i=0;i<numcomp;++i) {
-		Component& ci=_components[i];
+		Component& ci=(*_components)[i];
 		nummolecules+=ci.getNumMolecules();
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
@@ -57,7 +57,7 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 		MySelbstTerm += my2 * ci.getNumMolecules();
 
 		for(unsigned int j=0;j<numcomp;++j) {
-			Component& cj=_components[j];
+			Component& cj=(*_components)[j];
 			unsigned int numljcentersj=cj.numLJcenters();
 			ParaStrm& params=_comp2params(i,j);
 			params.reset_read();

@@ -10,12 +10,11 @@
 #include <iostream>
 
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "io/MemoryProfiler.h"
 class Component;
 class Domain;
 class ParticleContainer;
 class XMLfileUnits;
-
-typedef ParticleContainer TMoleculeContainer;
 
 //! @brief handle boundary region and multiple processes
 //! @author Martin Buchholz, Nikola Tchipev
@@ -44,7 +43,7 @@ typedef ParticleContainer TMoleculeContainer;
 //! no need for message passing between processes). So the main program (or in this
 //! case the class Simulation) can decide which implementation to use. When MPI is
 //! available, the parallel version is used, otherwise the sequential version
-class DomainDecompBase {
+class DomainDecompBase: public MemoryProfilable {
 	friend class NeighbourCommunicationScheme;
 	friend class IndirectNeighbourCommunicationScheme;
 	friend class DirectNeighbourCommunicationScheme;
@@ -83,7 +82,7 @@ public:
 	//! 					otherwise automatic balancing of Decomposition is applied
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain, double etime);
 
 	//! @brief balance the load (and optimize communication) and exchange boundary particles
 	//!
@@ -109,6 +108,10 @@ public:
 	//! @param domain might be needed to get the bounding box
 	virtual bool procOwnsPos(double x, double y, double z, Domain* domain);
 
+	//! @brief get the minimum and maximum coordinate of the bounding box of this process' domain
+	//! @param domain
+	//! @param min lower coordinate of the bounding box
+	//! @param max upper coordinate of the bounding box
 	void getBoundingBoxMinMax(Domain* domain, double* min, double* max);
 
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
@@ -147,7 +150,7 @@ public:
 
 	//! @brief checks identity of random number generators
 	virtual void assertIntIdentity(int IX);
-	virtual void assertDisjunctivity(TMoleculeContainer* mm) const;
+	virtual void assertDisjunctivity(ParticleContainer* moleculeContainer) const;
 
 	//! @brief returns an cutoff radius for a dimension for a global linked cells datastructure
 	//!
@@ -181,7 +184,7 @@ public:
 	// the documentation of the class CollectiveCommunication.
 	//##################################################################
 	//! has to call init method of a CollComm class
-	virtual void collCommInit(int numValues);
+	virtual void collCommInit(int numValues, int key=0);
 	//! has to call finalize method of a CollComm class
 	virtual void collCommFinalize();
 	//! has to call appendInt method of a CollComm class
@@ -206,6 +209,10 @@ public:
 	virtual long double collCommGetLongDouble();
 	//! has to call allreduceSum method of a CollComm class (none in sequential version)
 	virtual void collCommAllreduceSum();
+	//! has to call allreduceSum method of a CollComm class (none in sequential version), allows for values of previous iteration.
+	virtual void collCommAllreduceSumAllowPrevious();
+	//! has to call allreduceCustom method of a CollComm class (none in sequential version)
+	virtual void collCommAllreduceCustom(ReduceType type);
 	//! has to call scanSum method of a CollComm class (none in sequential version)
 	virtual void collCommScanSum();
 	//! has to call broadcast method of a CollComm class (none in sequential version)
@@ -230,6 +237,16 @@ public:
 	    return MPI_COMM_WORLD;
 	}
 #endif
+
+	virtual size_t getTotalSize() override {
+		return _collCommBase.getTotalSize();
+	}
+	virtual void printSubInfo(int offset) override {
+		return;
+	}
+	virtual std::string getName() override {
+		return "DomainDecompBase";
+	}
 
 protected:
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;

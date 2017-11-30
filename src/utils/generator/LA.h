@@ -16,9 +16,9 @@ void print_matrix(double **A, int n);
 /** Calculate absolute value of vector
  * @param[in]  v  pointer to array
  * @param[in]  n  length of array
- * @return  absolute avlue
+ * @return  absolute value
  */
-double vec_abs(double v, int n);
+double vec_abs(double v[3], int n);
 
 /** Calculate scalar product of two vectors
  * @param[in]  v  pointer to array

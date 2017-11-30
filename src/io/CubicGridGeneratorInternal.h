@@ -9,6 +9,7 @@
 #include <vector>
 #include "InputBase.h"
 #include "molecules/Component.h"
+#include "utils/Random.h"
 
 class ParticleContainer;
 class ChemicalPotential;
@@ -27,11 +28,6 @@ public:
 	virtual ~CubicGridGeneratorInternal() {
 	}
 
-	void setPhaseSpaceFile(std::string /*filename*/) {
-	}
-	void setPhaseSpaceHeaderFile(std::string /*filename*/) {
-	}
-
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {
 	}
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu,
@@ -48,19 +44,20 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 private:
-	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
+//	bool addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
 	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components);
 	/**
 	 * create a random number between a and b (inclusive)
 	 */
-	double randdouble(double a, double b) const {
-		return a + rand() * (b - a) / (RAND_MAX);
-	}
-	void getOrientation(int base, int delta, double orientation[4]);
+//	double randdouble(double a, double b) {
+//		return _RNG.uniformRandInRange(a, b);
+//	}
+//	void getOrientation(int base, int delta, double orientation[4]);
 
 	/**
 	 * determine the velocity according to the temperature.
 	 */
-	std::vector<double> getRandomVelocity(double temperature) const;
+//	std::vector<double> getRandomVelocity(double temperature);
 
+//	Random _RNG;
 };

@@ -67,6 +67,7 @@ public:
 		if (_currentKey == 0) {
 			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key " << _currentKey
 					<< ", thus the entry is removed." << std::endl;
+			_comms.at(_currentKey).destroy();
 			_comms.erase(_currentKey);
 		}
 		_currentKey = -1;
@@ -161,6 +162,7 @@ public:
 
 	//! Do Allreduce off all values with reduce operation add
 	void allreduceSum() override {
+		Log::global_log->debug() << "CollectiveCommunicationNonBlocking: normal Allreduce" << std::endl;
 		_comms.at(_currentKey).allreduceSum();
 	}
 
@@ -168,8 +170,13 @@ public:
 	//! By allowing values from previous iterations, overlapping communication is possible.
 	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
 	virtual void allreduceSumAllowPrevious() override {
+		Log::global_log->debug() << "CollectiveCommunicationNonBlocking: nonblocking Allreduce with id "<< _currentKey << std::endl;
 		mardyn_assert(_currentKey > 0); // _currentKey has to be positive non-zero and should be unique for allreduceSumAllowPrevious
 		_comms.at(_currentKey).allreduceSumAllowPrevious();
+	}
+
+	void allreduceCustom(ReduceType type) override{
+		_comms.at(_currentKey).allreduceCustom(type);
 	}
 
 	void scanSum() override {
@@ -185,6 +192,13 @@ public:
 	 _comms[key].waitAndUpdateData();
 	 }*/
 
+	size_t getTotalSize() override {
+		size_t tmp = 0;
+		for (auto& comm : _comms){
+			tmp += comm.second.getTotalSize();
+		}
+		return tmp;
+	}
 private:
 	int _currentKey;
 	std::map<int, CollectiveCommunicationSingleNonBlocking> _comms;

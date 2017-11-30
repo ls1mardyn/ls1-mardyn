@@ -356,7 +356,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		ostrm << _magicVersion;
 		offset+=strlen(_magicVersion);
 		for(i=0;i<64-offset-sizeof(unsigned long)-sizeof(int);++i) ostrm << '\0';
-		ostrm.write((char*)&_endiannesstest,sizeof(int));
+		ostrm.write((const char*)&_endiannesstest,sizeof(int));
 		ostrm.write((char*)&gap,sizeof(unsigned long));
 		//offset=64
 		//ostrm.seekp(offset);

@@ -24,11 +24,12 @@ MemoryProfiler::MemoryProfiler() :
 	FILE *fp;
 	char buf[MAXLEN];
 	fp = fopen("/proc/meminfo", "r");
+	char *p1;
 	while (fgets(buf, MAXLEN, fp)) {
-		char *p1 = strstr(buf, "Hugepagesize:");
+		p1 = strstr(buf, "Hugepagesize:");
 		if (p1 != NULL) {
 			int colon = ':';
-			char *p1 = strchr(buf, colon) + 1;
+			p1 = strchr(buf, colon) + 1;
 			_hugePageSize = atoi(p1);
 		}
 	}
@@ -46,7 +47,7 @@ MemoryProfiler::MemoryProfiler() :
 
 void MemoryProfiler::registerObject(MemoryProfilable** object) {
 	_list.push_back(object);
-	Log::global_log->info() << "MemoryProfiler: added object" << std::endl;
+	Log::global_log->debug() << "MemoryProfiler: added object" << std::endl;
 }
 
 void MemoryProfiler::doOutput(const std::string& string) {
@@ -74,7 +75,7 @@ unsigned long long MemoryProfiler::getCachedSize() {
 		char *p1 = strstr(buf, "Cached:");
 		if (p1 != NULL) {
 			int colon = ':';
-			char *p1 = strchr(buf, colon) + 1;
+			p1 = strchr(buf, colon) + 1;
 			cached_size = strtoull(p1, NULL, 10);
 			break;
 		}
@@ -135,6 +136,7 @@ int getOwnMemory() { //Note: this value is in KB!
 }
 
 void MemoryProfiler::printGeneralInfo(const std::string& string) {
+#ifndef _SX
 	struct sysinfo memInfo;
 	sysinfo(&memInfo);
 	long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
@@ -159,4 +161,7 @@ void MemoryProfiler::printGeneralInfo(const std::string& string) {
 		Log::global_log->info() << "\t\t\thugePages:\t" << hugeMem << " MB (" << (hugeMem) * 100. / totalMem
 				<< "% of total memory)" << "\tHPS(kB):\t" << _hugePageSize << std::endl;
 	}
+#else
+    Log::global_log->warning() << "MemoryProfiler of ls1 is not available for this platform." << std::endl;
+#endif
 }

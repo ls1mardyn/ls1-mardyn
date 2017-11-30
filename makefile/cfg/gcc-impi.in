@@ -18,6 +18,8 @@ CXX_SEQ = g++
 CXX_PAR = mpiicpc
 DEPMODE = gcc3
 
+CXXFLAGS += $(CXXFLAGS_WARNINGS)
+
 # SEQ
 #########################################
 # DEBUG
@@ -50,4 +52,4 @@ LINKFLAGS_PAR_PROFILE = $(LINKFLAGS_PAR_RELEASE) -pg
 
 # Further settings, common to all configurations, which use gcc
 #########################################
-include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.in)
+include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.mk)

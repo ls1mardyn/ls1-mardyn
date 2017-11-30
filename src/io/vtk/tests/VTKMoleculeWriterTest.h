@@ -12,7 +12,7 @@
 #include "utils/TestWithSimulationSetup.h"
 #include "io/vtk/VTKMoleculeWriter.h"
 
-//we need global_simulation for WR mode LinkedCells constructor, as ParticleCell instantiates a Molecule...
+//we need global_simulation for RMM mode LinkedCells constructor, as ParticleCell instantiates a Molecule...
 class VTKMoleculeWriterTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(VTKMoleculeWriterTest);

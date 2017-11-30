@@ -4,6 +4,7 @@
  *  Created on: Nov 15, 2015
  *      Author: tchipevn
  */
+#include <memory>
 
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
@@ -11,8 +12,11 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
+#include "parallel/CollectiveCommunication.h"
+#include "parallel/CollectiveCommunicationNonBlocking.h"
 
 using Log::global_log;
+using std::endl;
 
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
@@ -25,11 +29,17 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &_numProcs));
 
 	ParticleData::getMPIType(_mpiParticleType);
+
+
+	_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunication());
+	//_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
 }
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
 
 	delete _neighbourCommunicationScheme;
+	_neighbourCommunicationScheme = nullptr;
+
 	MPI_Type_free(&_mpiParticleType);
 
 	// MPI_COMM_WORLD doesn't need to be freed, so
@@ -41,6 +51,19 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	std::string communicationScheme = "indirect";
 	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
 	setCommunicationScheme(communicationScheme);
+
+	bool overlappingCollectives = false;
+	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);
+	if(overlappingCollectives) {
+		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << endl;
+#if MPI_VERSION >= 3
+		_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
+#else
+		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << endl;
+#endif
+	} else {
+		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << endl;
+	}
 }
 
 int DomainDecompMPIBase::getNonBlockingStageCount(){
@@ -98,17 +121,16 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 	}
 }
 
-void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) const {
+void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContainer) const {
 	using std::map;
 	using std::endl;
 
 	if (_rank) {
-		int num_molecules = mm->getNumberOfParticles();
-		unsigned long *tids;
-		tids = new unsigned long[num_molecules];
+		unsigned long num_molecules = moleculeContainer->getNumberOfParticles();
+		unsigned long *tids = new unsigned long[num_molecules];
 
 		int i = 0;
-		for (ParticleIterator m = mm->iteratorBegin(); m != mm->iteratorEnd(); ++m) {
+		for (ParticleIterator m = moleculeContainer->iteratorBegin(); m != moleculeContainer->iteratorEnd(); ++m) {
 			tids[i] = m->id();
 			i++;
 		}
@@ -116,9 +138,10 @@ void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) const {
 		delete[] tids;
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	} else {
+		/** @todo FIXME: This implementation does not scale. */
 		map<unsigned long, int> check;
 
-		for (ParticleIterator m = mm->iteratorBegin(); m != mm->iteratorEnd(); ++m)
+		for (ParticleIterator m = moleculeContainer->iteratorBegin(); m != moleculeContainer->iteratorEnd(); ++m)
 			check[m->id()] = 0;
 
 		MPI_Status status;
@@ -174,3 +197,18 @@ void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContai
 	global_log->set_mpi_output_root(0);
 }
 
+size_t DomainDecompMPIBase::getTotalSize() {
+	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
+			+ _collCommunication->getTotalSize();
+}
+
+void DomainDecompMPIBase::printSubInfo(int offset){
+	std::stringstream offsetstream;
+	for (int i = 0; i < offset; i++) {
+		offsetstream << "\t";
+	}
+	global_log->info() << offsetstream.str() << "own datastructures:\t" << sizeof(DomainDecompMPIBase) / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "neighbourCommunicationScheme:\t\t" << _neighbourCommunicationScheme->getDynamicSize() / 1.e6 << " MB" << std::endl;
+	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication->getTotalSize() / 1.e6 << " MB" << std::endl;
+
+}

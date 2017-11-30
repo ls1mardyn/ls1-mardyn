@@ -29,12 +29,28 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 	if ( (variable & NUM_PARTICLES) | (variable & TEMPERATURE) ) {
 		global_log->debug() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
-		unsigned long *numMolecules = new unsigned long[numComponents];
-		for( int cid = 0; cid < numComponents; cid++) {
-			numMolecules[cid] = 0;
-		}
-		for(auto molecule = particleContainer->iteratorBegin(); molecule != particleContainer->iteratorEnd(); ++molecule) {
-			numMolecules[molecule->componentid()]++;
+		std::vector<unsigned long> numMolecules(numComponents, 0ul);
+
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			std::vector<unsigned long> numMolecules_private(numComponents, 0ul);
+			const ParticleIterator begin = particleContainer->iteratorBegin();
+			const ParticleIterator end = particleContainer->iteratorEnd();
+			for (auto molecule = begin; molecule != end; ++molecule) {
+				numMolecules_private[molecule->componentid()]++;
+			}
+
+			#if defined(_OPENMP)
+			#pragma omp critical
+			#endif
+			{
+				for (unsigned int i = 0; i < numMolecules.size(); i++) {
+					numMolecules[i] += numMolecules_private[i];
+				}
+
+			}
 		}
 #ifdef ENABLE_MPI
 		_simulation.domainDecomposition().collCommInit(numComponents);
@@ -54,7 +70,6 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 #ifdef ENABLE_MPI
 		_simulation.domainDecomposition().collCommFinalize();
 #endif
-		delete [] numMolecules;
 	}
 
 	if ( variable & VOLUME ) {
@@ -74,19 +89,37 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 
 	if ( (variable & ENERGY) | (variable & TEMPERATURE) ) {
 		global_log->debug() << "Updating energy" << endl;
-	double *E_trans = new double [numComponents];
-	double *E_rot = new double[numComponents];
-	for( int cid = 0; cid < numComponents; cid++) {
-		E_trans[cid] = E_rot[cid] = 0.0;
-	}
-	for(auto molecule = particleContainer->iteratorBegin(); molecule != particleContainer->iteratorEnd(); ++molecule) {
-		const int cid = molecule->componentid();
-		double E_trans_loc = 0.0;
-		double E_rot_loc = 0.0;
-		molecule->calculate_mv2_Iw2( E_trans_loc, E_rot_loc );
-		E_trans[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
-		E_rot[cid]   += E_rot_loc;  // 2*k_{B} * E_{rot}
-	}
+		std::vector<double> E_trans(numComponents, 0.);
+		std::vector<double> E_rot(numComponents, 0.);
+
+
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			std::vector<unsigned long> E_trans_priv(numComponents, 0.);
+			std::vector<unsigned long> E_rot_priv(numComponents, 0.);
+			const ParticleIterator begin = particleContainer->iteratorBegin();
+			const ParticleIterator end = particleContainer->iteratorEnd();
+			for (auto molecule = begin; molecule != end; ++molecule) {
+				const int cid = molecule->componentid();
+				double E_trans_loc = 0.0;
+				double E_rot_loc = 0.0;
+				molecule->calculate_mv2_Iw2(E_trans_loc, E_rot_loc);
+				E_trans_priv[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
+				E_rot_priv[cid] += E_rot_loc;  // 2*k_{B} * E_{rot}
+			}
+			#if defined(_OPENMP)
+			#pragma omp critical
+			#endif
+			{
+				for (unsigned int i = 0; i < E_trans_priv.size(); i++) {
+					E_trans[i] += E_trans_priv[i];
+					E_rot[i] += E_rot[i];
+				}
+			}
+		}
+
 #ifdef ENABLE_MPI
 	  _simulation.domainDecomposition().collCommInit(2*numComponents);
 	  for( int cid = 0; cid < numComponents; cid++ ) {
@@ -115,8 +148,6 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 	  global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans 
 		  << ", 2*E_rot = " << _E_rot << endl;
 	  _E = _E_trans + _E_rot;
-		delete [] E_trans;
-		delete [] E_rot; 
 	}
 
 	if ( variable & TEMPERATURE ) {

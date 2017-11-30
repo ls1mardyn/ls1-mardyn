@@ -117,7 +117,7 @@ void Wall::initializeLJ93(const std::vector<Component>* components,
 
 void Wall::initializeLJ104(const std::vector<Component>* components, 
 		 double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta,
-		 double in_yOffWall, double in_yWallCut, double Delta) {
+		 double in_yOffWall, double in_yWallCut) {
 	global_log->info() << "Initializing the wall function LJ-10-4.\n";
 	this->_rhoW = in_rhoWall;
 	this->_yc = in_yWallCut;
