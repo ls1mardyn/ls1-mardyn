@@ -100,6 +100,13 @@ public:
 		os << "upperCorner: " << uc[0] << " " << uc[1] << " " << uc[2] << std::endl;
 		os << "----------------------------------------------------------------" << std::endl;
 	}
+	double GetVolume()
+	{
+		double dVolume = 1.;
+		for(uint8_t dim=0; dim<3; ++dim)
+			dVolume *= this->GetWidth(dim);
+		return dVolume;
+	}
 
 protected:
     double _dLowerCorner[3];
