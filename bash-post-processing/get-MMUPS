@@ -9,5 +9,6 @@ fi
 timeSec=`cat $fname | grep "Computation in main loop took" | cut -d $'\t' -f 3 | cut -d " " -f 6`
 mols=`cat $fname | grep "System contains" | cut -d $'\t' -f 3 | cut -d ' ' -f 3`
 its=`cat $fname  | grep "Simulating " | cut -d $'\t' -f 3  | cut -d ' ' -f 2`
-MUPS=`echo "scale=2 ; $mols * $its / $timeSec" | bc`
-echo $MUPS
+# million molecule updates per second
+MMUPS=`echo "scale=2 ; $mols * $its / $timeSec / 10^6" | bc`
+echo $MMUPS

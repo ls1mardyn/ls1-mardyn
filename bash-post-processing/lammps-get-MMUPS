@@ -1,0 +1,15 @@
+#!/bin/bash
+fname=$1
+# check if the file is OK
+if ! lammps-check-OK $fname ; then
+	echo "-"
+	exit 1
+fi
+# in all these, cut by a tab first, because cutting only by white-space is errorprone due to time-stamp having different number of digits
+relevantline=`cat $fname | grep "Loop time of " | tail -n 1`
+timeSec=`echo $relevantline | cut -d " " -f 4`
+its=`echo $relevantline | cut -d " " -f 9`
+mols=`echo $relevantline | cut -d " " -f 12`
+# million molecule updates per second
+MMUPS=`echo "scale=2 ; $mols * $its / $timeSec /10.0^6" | bc`
+echo $MMUPS

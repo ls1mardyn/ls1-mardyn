@@ -1,0 +1,15 @@
+#!/bin/bash
+# The purpose of this script is to check if the simulation has completed successfully.
+# Criterion: "main: used " is present.
+fname=$1
+totalWallTimePresent=`cat $fname  | grep "Total wall time:"`
+# if "Total wall time:" is present, return 0
+# otherwise, return 1
+if [[ -z ${totalWallTimePresent} ]]; then
+	>&2 echo "Error: File $fname not OK. See check-OK script."
+	RC=1
+else
+	#echo "File $fname OK."
+	RC=0
+fi
+(exit $RC)
