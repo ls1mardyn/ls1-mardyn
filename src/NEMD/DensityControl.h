@@ -58,8 +58,7 @@ public:
     void WriteDataDeletedMolecules(unsigned long simstep);
 
 	// Connection to MettDeamon
-	void ConnectMettDeamon(MettDeamon* mettDeamon) {_mettDeamon = _bMettDeamonConnected ? mettDeamon : NULL;}
-	bool MettDeamonConnected() {return _bMettDeamonConnected;}
+	void ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamon) {_mettDeamon = _bMettDeamonConnected ? mettDeamon.at(_nMettDeamonInstanceIndex) : NULL;}
 
 private:
 	// parameter
@@ -94,6 +93,7 @@ private:
 	// Connection to MettDeamon
 	MettDeamon* _mettDeamon;
 	bool _bMettDeamonConnected;
+	uint8_t _nMettDeamonInstanceIndex;
 
 	// identity change (by component ID)
 	std::vector<uint32_t> _vecChangeCompIDs;
@@ -137,7 +137,7 @@ public:
 	bool CheckFlagNEMD(uint32_t nFlag) {return (_flagsNEMD & nFlag);}
 
 	// Connection to MettDeamon
-	void ConnectMettDeamon(MettDeamon* mettDeamon);
+	void ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamon);
 
 private:
     std::vector<dec::ControlRegion*> _vecControlRegions;

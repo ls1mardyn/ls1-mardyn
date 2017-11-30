@@ -24,7 +24,7 @@
 using namespace std;
 
 MettDeamon::MettDeamon()
-	: 	_rho_l(0.),
+	: 	_dDensityReservoir(0.),
 		_dAreaXZ(0.),
 		_dInvDensityArea(0.),
 		_dY(0.),
@@ -41,12 +41,16 @@ MettDeamon::MettDeamon()
 		_nNumMoleculesDeletedLocal(0),
 		_nNumMoleculesDeletedGlobal(0),
 		_nNumMoleculesDeletedGlobalAlltime(0),
+		_nNumMoleculesChangedLocal(0),
+		_nNumMoleculesChangedGlobal(0),
 		_nNumMoleculesTooFast(0),
 		_nNumMoleculesTooFastGlobal(0),
 		_reservoirNumMolecules(0),
 		_reservoirSlabs(0),
 		_nSlabindex(0),
 		_nReadReservoirMethod(RRM_UNKNOWN),
+		_nMovingDirection(MD_UNKNOWN),
+		_nFeedRateMethod(FRM_UNKNOWN),
 		_reservoirFilename("unknown"),
 		_bIsRestart(false),
 		_nNumValsSummation(0),
@@ -57,7 +61,9 @@ MettDeamon::MettDeamon()
 		_dMirrorPosY(0.),
 		_nDeleteNonVolatile(0),
 		_dMoleculeDiameter(1.0),
-		_dTransitionPlanePosY(0.0)
+		_dTransitionPlanePosY(0.0),
+		_dDensityTarget(0.0),
+		_dVolumeCV(0.0)
 {
 	_dAreaXZ = global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(2);
 
@@ -92,6 +98,9 @@ MettDeamon::MettDeamon()
 
 	// velocity barriers
 	_vecVeloctiyBarriers.resize(nNumComponents+1);
+
+	// density values
+	_vecDensityValues.clear();
 }
 
 MettDeamon::~MettDeamon()
@@ -128,6 +137,28 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			_vecVeloctiyBarriers.at(cid) = vmax;
 		}
 		xmlconfig.changecurrentnode(oldpath);
+	}
+	// Feed from left/right
+	{
+		_nMovingDirection = MD_UNKNOWN;
+		int nVal = 0;
+		xmlconfig.getNodeValue("control/direction", nVal);
+		if(1 == nVal)
+			_nMovingDirection = MD_LEFT_TO_RIGHT;
+		else if(2 == nVal)
+			_nMovingDirection = MD_RIGHT_TO_LEFT;
+	}
+	// Feed rate method
+	{
+		_nFeedRateMethod = FRM_UNKNOWN;
+		int nVal = 0;
+		xmlconfig.getNodeValue("control/frmethod", nVal);
+		if(1 == nVal)
+			_nFeedRateMethod = FRM_DELETED_MOLECULES;
+		else if(2 == nVal)
+			_nFeedRateMethod = FRM_CHANGED_MOLECULES;
+		else if(3 == nVal)
+			_nFeedRateMethod = FRM_DENSITY;
 	}
 
 	// reservoir
@@ -248,7 +279,7 @@ void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
 
 	// Init reservoir slab index, unless restarting from checkpoint
 	if(false == _bIsRestart)
-		_nSlabindex = _reservoirSlabs-1;
+		this->InitSlabIndex();
 
 	// Determine max molecule id in reservoir
 	this->DetermineMaxMoleculeIDs(domainDecomp);
@@ -260,29 +291,69 @@ void MettDeamon::ReadReservoirFromMemory(DomainDecompBase* domainDecomp)
 	Domain* domain = global_simulation->getDomain();
 
 	_reservoirSlabs = _dReservoirWidthY/_dSlabWidthInit;
-	global_log->info() << "Mettdeamon: _reservoirSlabs=" << _reservoirSlabs << endl;
+	global_log->info() << "Mettdeamon-" << (uint32_t)_nMovingDirection << ": _reservoirSlabs=" << _reservoirSlabs << endl;
 	_dSlabWidth = _dReservoirWidthY / (double)(_reservoirSlabs);
 	_reservoir.resize(_reservoirSlabs);
 	double Volume = _dReservoirWidthY * domain->getGlobalLength(0) * domain->getGlobalLength(2);
+	this->InitTransitionPlane(global_simulation->getDomain() );
+	global_log->info() << "Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM)
 	{
 		double y = tM->r(1);
-		if(y > _dReservoirWidthY)
-			continue;
+//		if(true == this->IsBehindTransitionPlane(y) )
+//			continue;
 
 		Molecule mol(*tM);
-		uint32_t nSlabindex = floor(y / _dSlabWidth);
-		mol.setr(1, y - nSlabindex*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
-		_reservoir.at(nSlabindex).push_back(mol);
+		uint32_t nSlabindex;
+		switch(_nMovingDirection)
+		{
+		case MD_LEFT_TO_RIGHT:
+			if(y > _dReservoirWidthY)
+				continue;
+			nSlabindex = floor(y / _dSlabWidth);
+			mol.setr(1, y - nSlabindex*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+			mardyn_assert(nSlabindex < _reservoir.size() );
+#ifndef NDEBUG
+			cout << "y=" << y << ", mol.r(1)=" << mol.r(1) << ", >>>nSlabindex="<< nSlabindex << endl;
+#endif
+			_reservoir.at(nSlabindex).push_back(mol);
+			break;
+		case MD_RIGHT_TO_LEFT:
+			if(y < (domain->getGlobalLength(1) - _dReservoirWidthY) )
+				continue;
+			double relPosY = y - (domain->getGlobalLength(1) - _dReservoirWidthY);
+			nSlabindex = floor( relPosY / _dSlabWidth);
+			cout << "y=" << y << ", relPosY=" << relPosY << ", mol.r(1)=" << mol.r(1) << ", >>>nSlabindex="<< nSlabindex << endl;
+			mol.setr(1, y + (_reservoirSlabs-nSlabindex-1)*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+#ifndef NDEBUG
+			if(nSlabindex >= _reservoir.size() )
+			{
+				cout << "nSlabindex=" << nSlabindex << endl;
+				cout << "y=" << y << endl;
+				cout << "_reservoir.size()=" << _reservoir.size() << endl;
+				cout << "_dTransitionPlanePosY=" << _dTransitionPlanePosY << endl;
+			}
+#endif
+			mardyn_assert(nSlabindex < _reservoir.size() );
+			_reservoir.at(nSlabindex).push_back(mol);
+			break;
+		}
 
 		uint32_t cid = tM->componentid();
 		// TODO: The following should be done by the addPartice method.
 		std::vector<Component>* dcomponents = global_simulation->getEnsemble()->getComponents();
+		mardyn_assert(cid < dcomponents->size() );
 		dcomponents->at(cid).incNumMolecules();
 	}
-
+	std::vector<Molecule> currentReservoirSlab;
+	// DEBUG
+	for(uint32_t s=0; s<_reservoirSlabs; s++) {
+		currentReservoirSlab = _reservoir.at(s);
+		cout << "Rank["<<domainDecomp->getRank()<<"], Slab["<<s<<"]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
+	}
+	// DEBUG
 	// calc global number of particles in reservoir
 	uint64_t numMoleculesLocal = 0;
 	// max molecule id in reservoir (local)
@@ -298,9 +369,9 @@ void MettDeamon::ReadReservoirFromMemory(DomainDecompBase* domainDecomp)
 	domainDecomp->collCommFinalize();
 
 	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
-	_rho_l = _reservoirNumMolecules / Volume;
-	_dInvDensityArea = 1. / (_dAreaXZ * _rho_l);
-	global_log->info() << "Density of Mettdeamon Reservoir: " << _rho_l << endl;
+	_dDensityReservoir = _reservoirNumMolecules / Volume;
+	_dInvDensityArea = 1. / (_dAreaXZ * _dDensityReservoir);
+	global_log->info() << "Density of Mettdeamon Reservoir: " << _dDensityReservoir << endl;
 }
 
 void MettDeamon::ReadReservoirFromFile(DomainDecompBase* domainDecomp)
@@ -336,6 +407,8 @@ void MettDeamon::ReadReservoirFromFile(DomainDecompBase* domainDecomp)
 			V = Xlength * Ylength * Zlength;
 		}
 	}
+	this->InitTransitionPlane(global_simulation->getDomain() );
+	global_log->info() << "Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
 
 	if((token != "NumberOfMolecules") && (token != "N")) {
 		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
@@ -343,9 +416,9 @@ void MettDeamon::ReadReservoirFromFile(DomainDecompBase* domainDecomp)
 	}
 	ifs >> _reservoirNumMolecules;
 	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
-	_rho_l = _reservoirNumMolecules / V;
-	_dInvDensityArea = 1. / (_dAreaXZ * _rho_l);
-	global_log->info() << "Density of Mettdeamon Reservoir: " << _rho_l << endl;
+	_dDensityReservoir = _reservoirNumMolecules / V;
+	_dInvDensityArea = 1. / (_dAreaXZ * _dDensityReservoir);
+	global_log->info() << "Density of Mettdeamon Reservoir: " << _dDensityReservoir << endl;
 
 	streampos spos = ifs.tellg();
 	ifs >> token;
@@ -490,16 +563,10 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 {
 	this->ReadReservoir(domainDecomp);
 	double dMoleculeRadius = _dMoleculeDiameter*0.5;
-	_dTransitionPlanePosY = 2*_dSlabWidth;
 
 	//ParticleContainer* _moleculeContainer;
 	particleContainer->deleteOuterParticles();
 	// fixed components
-
-	Molecule* tM;
-	double dPosY;
-	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
-	global_log->info() << "Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
 
 	if(true == _bIsRestart)
 		return;
@@ -509,8 +576,9 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM)
 	{
-		dPosY = tM->r(1);
-		if(dPosY < (_dTransitionPlanePosY) )  // -dMoleculeRadius) )
+		double dPosY = tM->r(1);
+		bool IsBehindTransitionPlane = this->IsBehindTransitionPlane(dPosY);
+		if(false == IsBehindTransitionPlane)
 		{
 			uint32_t cid = tM->componentid();
 			if(cid != _vecChangeCompIDsFreeze.at(cid))
@@ -572,7 +640,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 {
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
 	double dMoleculeRadius = 0.5;
-	uint32_t cid;
 
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 
@@ -587,9 +654,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM)
 	{
-		cid = tM->componentid();
+		uint8_t cid = tM->componentid();
 		double dY = tM->r(1);
-		bool bIsFrozenMolecule = cid != _vecChangeCompIDsUnfreeze.at(cid);
+		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
+		bool IsBehindTransitionPlane = this->IsBehindTransitionPlane(dY);
 /*
 		double m = tM->mass();
 		double vym = sqrt(T/m);
@@ -609,7 +677,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		v2 = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 //		global_log->info() << "scaled: vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
 
-		if(dY > (_dTransitionPlanePosY-dMoleculeRadius) && true == bIsFrozenMolecule)
+		if(true == bIsTrappedMolecule && true == IsBehindTransitionPlane)
 		{
 			Component* compNew = &(ptrComps->at(_vecChangeCompIDsUnfreeze.at(cid) ) );
 			tM->setComponent(compNew);
@@ -643,12 +711,16 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 		// reset position of fixed molecules
 		std::map<unsigned long, std::array<double,10> >::iterator it;
-		if(true == bIsFrozenMolecule)
+		if(true == bIsTrappedMolecule)
 		{
 			it = _storePosition.find(tM->id() );
 			if(it != _storePosition.end() )
 			{
-				tM->setr(1, it->second.at(1) + _dY);
+				if(MD_LEFT_TO_RIGHT == _nMovingDirection)
+					tM->setr(1, it->second.at(1) + _dY);
+				else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
+					tM->setr(1, it->second.at(1) - _dY);
+
 				if(dY < _dSlabWidth)
 				{
 					tM->setr(0, it->second.at(0) );
@@ -706,34 +778,20 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 	}  // loop over molecules
 
+	// DEBUG
+//	_dY = 0.01;
+	// DEBUG
 	_dYsum += _dY;
-//	global_log->info() << "_dYsum=" << _dYsum << endl;
 
 	if (_dYsum >= _dSlabWidth)
 	{
-		global_log->info() << "_dSlabWidth = " << _dSlabWidth << endl;
-		global_log->info() << "_dYsum = " << _dYsum << endl;
-		global_log->info() << "_nSlabindex = " << _nSlabindex << endl;
-		std::vector<Molecule> currentReservoirSlab = _reservoir.at(_nSlabindex);
+		global_log->info() << "Mett-" << (uint32_t)_nMovingDirection << ": _dYsum=" << _dYsum << ", _dSlabWidth=" << _dSlabWidth << endl;
+		global_log->info() << "_dSlabWidth=" << _dSlabWidth << endl;
+		global_log->info() << "_dYsum=" << _dYsum << endl;
+		global_log->info() << "_nSlabindex=" << _nSlabindex << endl;
 
-		for(auto mi : currentReservoirSlab)
-		{
-			uint64_t id = mi.id();
-			uint32_t cid = mi.componentid();
-			Component* compNew = &(ptrComps->at(_vecChangeCompIDsFreeze.at(cid) ) );
-			mi.setid(_nMaxMoleculeID + id);
-			mi.setComponent(compNew);
-			mi.setr(1, mi.r(1) + _dYsum - _dSlabWidth);
-			particleContainer->addParticle(mi);
-		}
-
-		_dYsum -= _dSlabWidth;
-		_nSlabindex--;
-		if(_nSlabindex == -1)
-		{
-			_nSlabindex = _reservoirSlabs-1;
-			_nMaxMoleculeID += _nMaxReservoirMoleculeID;
-		}
+		// insert actual reservoir slab / activate next reservoir slab
+		this->InsertReservoirSlab(particleContainer);
 	}
 	particleContainer->update();
 	particleContainer->updateMoleculeCaches();
@@ -747,12 +805,12 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM) {
 
-		uint32_t cid = tM->componentid();
-		bool bIsFrozenMolecule = cid != _vecChangeCompIDsUnfreeze.at(cid);
+		uint8_t cid = tM->componentid();
+		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
 		double v2 = tM->v2();
 		double dY = tM->r(1);
 
-		if(true == bIsFrozenMolecule)
+		if(true == bIsTrappedMolecule)
 		{
 			// limit velocity of trapped molecules
 //			tM->setv(0, 0.);
@@ -857,20 +915,28 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	if(global_simulation->getSimulationStep() % _nUpdateFreq == 0)
 	{
 		// update global number of particles / calc global number of deleted particles
-		domainDecomposition->collCommInit(2);
+		domainDecomposition->collCommInit(3);
 		domainDecomposition->collCommAppendUnsLong(nNumMoleculesLocal);
 		domainDecomposition->collCommAppendUnsLong(_nNumMoleculesDeletedLocal);
+		domainDecomposition->collCommAppendUnsLong(_nNumMoleculesChangedLocal);
 		domainDecomposition->collCommAllreduceSum();
 		nNumMoleculesGlobal = domainDecomposition->collCommGetUnsLong();
 		_nNumMoleculesDeletedGlobal = domainDecomposition->collCommGetUnsLong();
+		_nNumMoleculesChangedGlobal = domainDecomposition->collCommGetUnsLong();
 		domainDecomposition->collCommFinalize();
 		_nNumMoleculesDeletedGlobalAlltime += _nNumMoleculesDeletedGlobal;
 		_nNumMoleculesDeletedLocal = 0;
+		_nNumMoleculesChangedLocal = 0;
 
 		// update sum and summation list
-		_numDeletedMolsSum += _nNumMoleculesDeletedGlobal;
+		uint64_t numMolsDeletedOrChanged;
+		if(FRM_DELETED_MOLECULES == _nFeedRateMethod)
+			numMolsDeletedOrChanged = _nNumMoleculesDeletedGlobal;
+		else if(FRM_CHANGED_MOLECULES == _nFeedRateMethod)
+			numMolsDeletedOrChanged = _nNumMoleculesChangedGlobal;
+		_numDeletedMolsSum += numMolsDeletedOrChanged;
 		_numDeletedMolsSum -= _listDeletedMolecules.front();
-		_listDeletedMolecules.push_back(_nNumMoleculesDeletedGlobal);
+		_listDeletedMolecules.push_back(numMolsDeletedOrChanged);
 		if(_listDeletedMolecules.size() > _nNumValsSummation)
 			_listDeletedMolecules.pop_front();
 		else
@@ -880,8 +946,12 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 				_numDeletedMolsSum += vi;
 		}
 		_dDeletedMolsPerTimestep = _numDeletedMolsSum * _dInvNumTimestepsSummation;
-		this->calcDeltaY();
+		if(FRM_DELETED_MOLECULES == _nFeedRateMethod || FRM_CHANGED_MOLECULES == _nFeedRateMethod)
+			this->calcDeltaY();
+		else if(FRM_DENSITY == _nFeedRateMethod)
+			this->calcDeltaYbyDensity();
 		global_log->info() << "_nNumMoleculesDeletedGlobal = " << _nNumMoleculesDeletedGlobal << endl;
+		global_log->info() << "_nNumMoleculesChangedGlobal = " << _nNumMoleculesChangedGlobal << endl;
 		global_log->info() << "_numDeletedMolsSum = " << _numDeletedMolsSum << endl;
 		global_log->info() << "_dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
 		global_log->info() << "_dY = " << _dY << endl;
@@ -919,6 +989,74 @@ void MettDeamon::writeRestartfile()
 
 	ofs << outputstream.str();
 	ofs.close();
+}
+
+void MettDeamon::NextReservoirSlab()
+{
+	switch(_nMovingDirection)
+	{
+	case MD_LEFT_TO_RIGHT:
+		_nSlabindex--;
+		if(_nSlabindex == -1)
+		{
+			_nSlabindex = _reservoirSlabs-1;
+			_nMaxMoleculeID += _nMaxReservoirMoleculeID;
+		}
+		break;
+	case MD_RIGHT_TO_LEFT:
+		_nSlabindex++;
+		if( (uint32_t)(_nSlabindex) == _reservoirSlabs)
+		{
+			_nSlabindex = 0;
+			_nMaxMoleculeID += _nMaxReservoirMoleculeID;
+		}
+		break;
+	}
+}
+
+void MettDeamon::calcDeltaYbyDensity()
+{
+	double dDensityMean = 0.;
+	uint32_t numVals = 0;
+	for(auto&& dVal : _vecDensityValues)
+	{
+		dDensityMean += dVal;
+		numVals++;
+	}
+	double dInvNumVals = 1./((double)(numVals));
+	dDensityMean *= dInvNumVals;
+	double dDensityDelta = _dDensityTarget - dDensityMean;
+	if(dDensityDelta <= 0.)
+		_dY = 0.;
+	else
+		_dY = dDensityDelta/_dDensityReservoir*dInvNumVals*_dVolumeCV/_dAreaXZ;
+}
+
+void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
+{
+	cout << "INSERT: Mett-" << (uint32_t)_nMovingDirection << endl;
+	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
+	std::vector<Molecule> currentReservoirSlab = _reservoir.at(_nSlabindex);
+	global_log->info() << "currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
+
+	for(auto mi : currentReservoirSlab)
+	{
+		uint64_t id = mi.id();
+		uint32_t cid = mi.componentid();
+		Component* compNew;
+		if(_nMovingDirection==1)
+			compNew = &(ptrComps->at(_vecChangeCompIDsFreeze.at(cid) ) );
+		else
+			compNew = &(ptrComps->at(3));
+
+		mi.setid(_nMaxMoleculeID + id);
+		mi.setComponent(compNew);
+		mi.setr(1, mi.r(1) + _dYsum - _dSlabWidth);
+		cout << "INSERT POS: " << mi.r(1) << ", cid=" << _vecChangeCompIDsFreeze.at(cid) << endl;
+		particleContainer->addParticle(mi);
+	}
+	_dYsum -= _dSlabWidth;  // reset feed sum
+	this->NextReservoirSlab();
 }
 
 

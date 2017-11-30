@@ -123,14 +123,17 @@ dec::ControlRegion::~ControlRegion()
 void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 {
 	bool bRet = true;
-	bool bVal = false;
+	int nVal = 0;
 	std::string strName;
 	std::string oldpath = xmlconfig.getcurrentnodepath();
-	bRet = bRet && xmlconfig.changecurrentnode("option/[@name='connect-mettdeamon']");
+	bRet = bRet && xmlconfig.changecurrentnode("connect/[@name='MettDeamon']");
 	if(true == bRet)
-		bRet = bRet && xmlconfig.getNodeValue(".", bVal);
-	if(true == bRet && true == bVal)
+		bRet = bRet && xmlconfig.getNodeValue(".", nVal);
+	if(true == bRet && nVal > 0)
+	{
 		_bMettDeamonConnected = true;
+		_nMettDeamonInstanceIndex = (uint8_t)(nVal-1);
+	}
 	xmlconfig.changecurrentnode(oldpath);
 
 	xmlconfig.getNodeValue("target/componentID", _nTargetComponentID);
@@ -298,6 +301,11 @@ void dec::ControlRegion::CalcGlobalValues()
     _dDensityGlobal = _nNumMoleculesLocal * _dInvertVolume;
 #endif
 
+	if(true == _bMettDeamonConnected)
+	{
+		_mettDeamon->StoreDensity(_dDensityGlobal);
+		_mettDeamon->StoreValuesCV(_dTargetDensity, this->GetVolume() );  // TODO: move this, so its called only once
+	}
 }
 
 void dec::ControlRegion::UpdateGlobalDensity(bool bDeleteMolecule)
@@ -410,6 +418,10 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 
 		U_rot = mol->U_rot();
 		global_log->info() << "U_rot_new = " << U_rot << endl;
+
+		//connection to MettDeamon
+		if(NULL != _mettDeamon)
+			_mettDeamon->IncrementChangedMoleculesLocal();
 	}
 	// <-- CHANGE_IDENTITY
 
@@ -818,11 +830,8 @@ void DensityControl::WriteDataDeletedMolecules(unsigned long simstep)
 }
 
 // Connection to MettDeamon
-void DensityControl::ConnectMettDeamon(MettDeamon* mettDeamon)
+void DensityControl::ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamon)
 {
 	for(auto&& ri : _vecControlRegions)
-	{
-		if(true == ri->MettDeamonConnected() )
-			ri->ConnectMettDeamon(mettDeamon);
-	}
+		ri->ConnectMettDeamon(mettDeamon);
 }

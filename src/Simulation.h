@@ -553,7 +553,7 @@ private:
 	RegionSampling*  _regionSampling;
 	ParticleTracker* _particleTracker;
 	/** Algorithm to simulate stationary evaporation by backfilling liquid out of reservoir */
-	MettDeamon* _mettDeamon;
+	std::vector<MettDeamon*> _mettDeamon;
 
 	/** Check initial max. force (Fmax) after reading in start configuration or checkpoint after a restart. */
 	uint32_t _nFmaxOpt;
