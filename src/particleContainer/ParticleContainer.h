@@ -75,9 +75,9 @@ public:
 	ParticleContainer(double bBoxMin[3], double bBoxMax[3]);
 
 	//! @brief Default constructor
-	ParticleContainer(){}
+	ParticleContainer() {}
 	//! @brief The destructor
-	virtual ~ParticleContainer();
+	virtual ~ParticleContainer() {}
 
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
