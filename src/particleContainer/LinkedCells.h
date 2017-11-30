@@ -332,7 +332,7 @@ private:
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
-	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
+	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices of all halo cells in the _cells vector
 
     std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner;
 
@@ -354,7 +354,7 @@ private:
 	//! e.g. after the integrator has changed the positions of particles.
 	//! If this happens, no method must be able to access the particles via
 	//! the cells. Therefore, whenever a piece of code causes the cells to
-	//! become possibly invalid, _cellsValid has to been set to false. Methods
+	//! become possibly invalid, _cellsValid has to be set to false. Methods
 	//! accessing cells have to check whether _cellsValid is true (and e.g.
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
