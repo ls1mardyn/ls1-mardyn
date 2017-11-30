@@ -49,7 +49,6 @@ public:
 	bool isInBoundingBox(double r[3]) const;
 
 	void update() {}
-	bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false) { return false; }
 	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) {}
 
 	void traverseCells(CellProcessor& cellProcessor) {}

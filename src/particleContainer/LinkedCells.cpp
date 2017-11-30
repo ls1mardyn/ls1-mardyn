@@ -409,11 +409,6 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 	return wasInserted;
 }
 
-bool LinkedCells::addHaloParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
-	mardyn_assert(not particle.inBox(_boundingBoxMin,_boundingBoxMax));
-	return addParticle(particle, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
-}
-
 void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
 	typedef vector<Molecule>::size_type mol_index_t;
 	typedef vector<ParticleCell>::size_type cell_index_t;

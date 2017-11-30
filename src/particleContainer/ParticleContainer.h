@@ -122,7 +122,7 @@ public:
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
 	virtual bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-			const bool& rebuildCaches = false) = 0;
+			const bool& rebuildCaches = false);
 
 	//! @brief adds a whole vector of particles
 	//! @param particles reference to a vector of pointers to particles
