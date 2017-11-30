@@ -110,6 +110,9 @@ public:
 		}
 
 		void initComp2Param(Comp2Param& c2p) {
+			if (_comp2Param != 0) {
+				delete _comp2Param;
+			}
 			_comp2Param = new Comp2Param(c2p);
 		}
 
