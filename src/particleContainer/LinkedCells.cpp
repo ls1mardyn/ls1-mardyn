@@ -96,10 +96,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 }
 
 LinkedCells::~LinkedCells() {
-
-    if (_resortCellProcessorSliced != nullptr) {
-    	delete _resortCellProcessorSliced;
-    }
+	delete _resortCellProcessorSliced;
 
 	std::vector<ParticleCell>::iterator it;
 	for (it = _cells.begin(); it != _cells.end(); ++it) {
