@@ -1087,28 +1087,25 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
-void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {
-	int ix = (int) floor( (x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
-	int iy = (int) floor( (y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
-	int iz = (int) floor( (z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
+void LinkedCells::deleteMolecule(Molecule &molecule, const bool& rebuildCaches) {
+	auto cellid = getCellIndexOfMolecule(&molecule);
 
-	unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
-	if (hash >= _cells.size()) {
+	if (cellid >= _cells.size()) {
 		global_log->error_always_output()
 				<< "coordinates for atom deletion lie outside bounding box."
 				<< endl;
 		Simulation::exit(1);
 	}
 
-	bool found = this->_cells[hash].deleteMoleculeByID(molid);
+	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.id());
 
 	if (!found) {
-		global_log->error_always_output() << "could not delete molecule " << molid << "."
+		global_log->error_always_output() << "could not delete molecule " << molecule.id() << "."
 				<< endl;
 		Simulation::exit(1);
 	}
 	else if (rebuildCaches) {
-		_cells[hash].buildSoACaches();
+		_cells[cellid].buildSoACaches();
 	}
 }
 

@@ -172,7 +172,7 @@ public:
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
 
-	void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) override;
+	void deleteMolecule(Molecule &molecule, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
