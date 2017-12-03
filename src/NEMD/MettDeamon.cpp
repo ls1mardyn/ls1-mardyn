@@ -9,9 +9,14 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
+#ifdef ENABLE_MPI
+#include "parallel/ParticleData.h"
+#include "parallel/DomainDecomposition.h"
+#endif
 #include "particleContainer/ParticleContainer.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Random.h"
+#include "io/ReplicaGenerator.h"  // class MoleculeDataReader
 
 #include <map>
 #include <array>
@@ -24,16 +29,12 @@
 using namespace std;
 
 MettDeamon::MettDeamon()
-	: 	_dDensityReservoir(0.),
-		_dAreaXZ(0.),
+	: 	_dAreaXZ(0.),
 		_dInvDensityArea(0.),
 		_dY(0.),
 		_dYInit(0.),
 		_dYsum(0.),
 		_velocityBarrier(0.),
-		_dSlabWidthInit(0),
-		_dSlabWidth(0),
-		_dReservoirWidthY(0),
 		_nUpdateFreq(0),
 		_nWriteFreqRestart(0),
 		_nMaxMoleculeID(0),
@@ -45,13 +46,8 @@ MettDeamon::MettDeamon()
 		_nNumMoleculesChangedGlobal(0),
 		_nNumMoleculesTooFast(0),
 		_nNumMoleculesTooFastGlobal(0),
-		_reservoirNumMolecules(0),
-		_reservoirSlabs(0),
-		_nSlabindex(0),
-		_nReadReservoirMethod(RRM_UNKNOWN),
 		_nMovingDirection(MD_UNKNOWN),
 		_nFeedRateMethod(FRM_UNKNOWN),
-		_reservoirFilename("unknown"),
 		_bIsRestart(false),
 		_nNumValsSummation(0),
 		_numDeletedMolsSum(0),
@@ -63,7 +59,8 @@ MettDeamon::MettDeamon()
 		_dMoleculeDiameter(1.0),
 		_dTransitionPlanePosY(0.0),
 		_dDensityTarget(0.0),
-		_dVolumeCV(0.0)
+		_dVolumeCV(0.0),
+		_reservoir(nullptr)
 {
 	_dAreaXZ = global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(2);
 
@@ -101,6 +98,9 @@ MettDeamon::MettDeamon()
 
 	// density values
 	_vecDensityValues.clear();
+
+	// particle reservoir
+	_reservoir = new Reservoir(this);
 }
 
 MettDeamon::~MettDeamon()
@@ -162,20 +162,19 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	}
 
 	// reservoir
-	bool bRet1 = xmlconfig.getNodeValue("reservoir/file", _reservoirFilename);
-	bool bRet2 = xmlconfig.getNodeValue("reservoir/width", _dReservoirWidthY);
-	xmlconfig.getNodeValue("reservoir/slabwidth", _dSlabWidthInit);
-	if(true == bRet1 && false == bRet2)
-		_nReadReservoirMethod = RRM_READ_FROM_FILE;
-	else if(false == bRet1 && true == bRet2)
-		_nReadReservoirMethod = RRM_READ_FROM_MEMORY;
-	else
-		_nReadReservoirMethod = RRM_AMBIGUOUS;
+	{
+		string oldpath = xmlconfig.getcurrentnodepath();
+		xmlconfig.changecurrentnode("reservoir");
+		_reservoir->readXML(xmlconfig);
+		xmlconfig.changecurrentnode(oldpath);
+	}
 
 	// restart
+	int32_t nBinIndex;
 	_bIsRestart = true;
-	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/slabindex", _nSlabindex);
+	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/slabindex", nBinIndex);
 	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/deltaY", _dYsum);
+	_reservoir->setBinIndex(nBinIndex);
 
 	// mirror
 	bool bRet = xmlconfig.getNodeValue("mirror/position", _dMirrorPosY);
@@ -260,260 +259,10 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	}
 }
 
-void MettDeamon::ReadReservoir(DomainDecompBase* domainDecomp)
-{
-	switch(_nReadReservoirMethod)
-	{
-	case RRM_READ_FROM_MEMORY:
-		this->ReadReservoirFromMemory(domainDecomp);
-		break;
-	case RRM_READ_FROM_FILE:
-		this->ReadReservoirFromFile(domainDecomp);
-		break;
-	case RRM_UNKNOWN:
-	case RRM_AMBIGUOUS:
-	default:
-		global_log->error() << "Unknown (or ambiguous) method to read reservoir for feature MettDeamon. Program exit ..." << endl;
-		Simulation::exit(-1);
-	}
-
-	// Init reservoir slab index, unless restarting from checkpoint
-	if(false == _bIsRestart)
-		this->InitSlabIndex();
-
-	// Determine max molecule id in reservoir
-	this->DetermineMaxMoleculeIDs(domainDecomp);
-}
-
-void MettDeamon::ReadReservoirFromMemory(DomainDecompBase* domainDecomp)
-{
-	ParticleContainer* particleContainer = global_simulation->getMolecules();
-	Domain* domain = global_simulation->getDomain();
-
-	_reservoirSlabs = _dReservoirWidthY/_dSlabWidthInit;
-	global_log->info() << "Mettdeamon-" << (uint32_t)_nMovingDirection << ": _reservoirSlabs=" << _reservoirSlabs << endl;
-	_dSlabWidth = _dReservoirWidthY / (double)(_reservoirSlabs);
-	_reservoir.resize(_reservoirSlabs);
-	double Volume = _dReservoirWidthY * domain->getGlobalLength(0) * domain->getGlobalLength(2);
-	this->InitTransitionPlane(global_simulation->getDomain() );
-	global_log->info() << "Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
-
-	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd(); ++tM)
-	{
-		double y = tM->r(1);
-//		if(true == this->IsBehindTransitionPlane(y) )
-//			continue;
-
-		Molecule mol(*tM);
-		uint32_t nSlabindex;
-		switch(_nMovingDirection)
-		{
-		case MD_LEFT_TO_RIGHT:
-			if(y > _dReservoirWidthY)
-				continue;
-			nSlabindex = floor(y / _dSlabWidth);
-			mol.setr(1, y - nSlabindex*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
-			mardyn_assert(nSlabindex < _reservoir.size() );
-#ifndef NDEBUG
-			cout << "y=" << y << ", mol.r(1)=" << mol.r(1) << ", >>>nSlabindex="<< nSlabindex << endl;
-#endif
-			_reservoir.at(nSlabindex).push_back(mol);
-			break;
-		case MD_RIGHT_TO_LEFT:
-			if(y < (domain->getGlobalLength(1) - _dReservoirWidthY) )
-				continue;
-			double relPosY = y - (domain->getGlobalLength(1) - _dReservoirWidthY);
-			nSlabindex = floor( relPosY / _dSlabWidth);
-			cout << "y=" << y << ", relPosY=" << relPosY << ", mol.r(1)=" << mol.r(1) << ", >>>nSlabindex="<< nSlabindex << endl;
-			mol.setr(1, y + (_reservoirSlabs-nSlabindex-1)*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
-#ifndef NDEBUG
-			if(nSlabindex >= _reservoir.size() )
-			{
-				cout << "nSlabindex=" << nSlabindex << endl;
-				cout << "y=" << y << endl;
-				cout << "_reservoir.size()=" << _reservoir.size() << endl;
-				cout << "_dTransitionPlanePosY=" << _dTransitionPlanePosY << endl;
-			}
-#endif
-			mardyn_assert(nSlabindex < _reservoir.size() );
-			_reservoir.at(nSlabindex).push_back(mol);
-			break;
-		}
-
-		uint32_t cid = tM->componentid();
-		// TODO: The following should be done by the addPartice method.
-		std::vector<Component>* dcomponents = global_simulation->getEnsemble()->getComponents();
-		mardyn_assert(cid < dcomponents->size() );
-		dcomponents->at(cid).incNumMolecules();
-	}
-	std::vector<Molecule> currentReservoirSlab;
-	// DEBUG
-	for(uint32_t s=0; s<_reservoirSlabs; s++) {
-		currentReservoirSlab = _reservoir.at(s);
-		cout << "Rank["<<domainDecomp->getRank()<<"], Slab["<<s<<"]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
-	}
-	// DEBUG
-	// calc global number of particles in reservoir
-	uint64_t numMoleculesLocal = 0;
-	// max molecule id in reservoir (local)
-	for(auto si : _reservoir)
-	{
-		for(auto mi : si)
-			numMoleculesLocal++;
-	}
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMoleculesLocal);
-	domainDecomp->collCommAllreduceSum();
-	_reservoirNumMolecules = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-
-	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
-	_dDensityReservoir = _reservoirNumMolecules / Volume;
-	_dInvDensityArea = 1. / (_dAreaXZ * _dDensityReservoir);
-	global_log->info() << "Density of Mettdeamon Reservoir: " << _dDensityReservoir << endl;
-}
-
-void MettDeamon::ReadReservoirFromFile(DomainDecompBase* domainDecomp)
-{
-	std::ifstream ifs;
-	global_log->info() << "Opening Mettdeamon Reservoirfile " << _reservoirFilename << endl;
-	ifs.open( _reservoirFilename.c_str() );
-	if (!ifs.is_open()) {
-		global_log->error() << "Could not open Mettdeamon Reservoirfile " << _reservoirFilename << endl;
-		Simulation::exit(1);
-	}
-	global_log->info() << "Reading Mettdeamon Reservoirfile " << _reservoirFilename << endl;
-
-	string token;
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
-	unsigned int numcomponents = dcomponents.size();
-	string ntypestring("ICRVQD");
-	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
-
-	double Xlength, Ylength, Zlength, V;
-	Xlength = Ylength = Zlength = V = 1.0;
-	while(ifs && (token != "NumberOfMolecules") && (token != "N"))
-	{
-		ifs >> token;
-
-		if(token=="Length" || token=="L")
-		{
-			ifs >> Xlength >> Ylength >> Zlength;
-			_reservoirSlabs = Ylength/_dSlabWidthInit;  // parameter sliceWidth
-			global_log->info() << "Mettdeamon: _reservoirSlabs=" << _reservoirSlabs << endl;
-			_dSlabWidth = Ylength / (double)(_reservoirSlabs);
-			_reservoir.resize(_reservoirSlabs);
-			V = Xlength * Ylength * Zlength;
-		}
-	}
-	this->InitTransitionPlane(global_simulation->getDomain() );
-	global_log->info() << "Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
-
-	if((token != "NumberOfMolecules") && (token != "N")) {
-		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
-		Simulation::exit(1);
-	}
-	ifs >> _reservoirNumMolecules;
-	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _reservoirNumMolecules << endl;
-	_dDensityReservoir = _reservoirNumMolecules / V;
-	_dInvDensityArea = 1. / (_dAreaXZ * _dDensityReservoir);
-	global_log->info() << "Density of Mettdeamon Reservoir: " << _dDensityReservoir << endl;
-
-	streampos spos = ifs.tellg();
-	ifs >> token;
-	if((token=="MoleculeFormat") || (token == "M"))
-	{
-		ifs >> ntypestring;
-		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
-		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
-
-		if (ntypestring == "ICRVQDV") ntype = ICRVQDV;
-		else if (ntypestring == "ICRVQD") ntype = ICRVQD;
-		else if (ntypestring == "ICRV") ntype = ICRV;
-		else if (ntypestring == "IRV")  ntype = IRV;
-		else {
-			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
-			Simulation::exit(1);
-		}
-	} else {
-		ifs.seekg(spos);
-	}
-	global_log->info() << " molecule format: " << ntypestring << endl;
-
-	if( numcomponents < 1 ) {
-		global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
-		numcomponents = 1;
-		dcomponents.resize( numcomponents );
-		dcomponents[0].setID(0);
-		dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
-	}
-	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
-	unsigned long id;
-	unsigned int componentid;
-
-	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
-	q0=1.;
-
-	for( unsigned long i = 0; i < _reservoirNumMolecules; i++ )
-	{
-		switch ( ntype ) {
-			case ICRVQDV:
-				ifs >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
-					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Vix >> Viy >> Viz;
-				break;
-			case ICRVQD:
-				ifs >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
-					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
-				break;
-			case ICRV :
-				ifs >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
-				break;
-			case IRV :
-				ifs >> id >> x >> y >> z >> vx >> vy >> vz;
-				break;
-		}
-
-		if( componentid > numcomponents ) {
-			global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
-			Simulation::exit(1);
-		}
-		componentid --; // TODO: Component IDs start with 0 in the program.
-		//Simon changed id to i+1
-		Molecule m1 = Molecule(i+1,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
-
-		uint32_t nSlabindex = floor(y / _dSlabWidth);
-		m1.setr(1, y - nSlabindex*_dSlabWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
-
-		double bbMin[3];
-		double bbMax[3];
-		bool bIsInsideSubdomain = false;
-		domainDecomp->getBoundingBoxMinMax(global_simulation->getDomain(), bbMin, bbMax);
-		bIsInsideSubdomain = x > bbMin[0] && x < bbMax[0] && y > bbMin[1] && y < bbMax[1] && z > bbMin[2] && z < bbMax[2];
-
-		if(true == bIsInsideSubdomain)
-			_reservoir.at(nSlabindex).push_back(m1);
-
-		componentid = m1.componentid();
-		// TODO: The following should be done by the addPartice method.
-		dcomponents.at(componentid).incNumMolecules();
-
-		// Print status message
-		unsigned long iph = _reservoirNumMolecules / 100;
-		if( iph != 0 && (i % iph) == 0 )
-			global_log->info() << "Finished reading molecules: " << i/iph << "%\r" << flush;
-	}
-
-	global_log->info() << "Finished reading Mettdeamon Rerservoirmolecules: 100%" << endl;
-
-	ifs.close();
-}
-
-void MettDeamon::DetermineMaxMoleculeIDs(DomainDecompBase* domainDecomp)
+void MettDeamon::findMaxMoleculeID(DomainDecompBase* domainDecomp)
 {
 	ParticleContainer* particleContainer = global_simulation->getMolecules();
 	uint64_t nMaxMoleculeID_local = 0;
-	uint64_t nMaxReservoirMoleculeID_local = 0;
 
 	// max molecule id in particle container (local)
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
@@ -524,26 +273,13 @@ void MettDeamon::DetermineMaxMoleculeIDs(DomainDecompBase* domainDecomp)
 			nMaxMoleculeID_local = id;
 	}
 
-	// max molecule id in reservoir (local)
-	for(auto si : _reservoir)
-	{
-		for(auto mi : si)
-		{
-			uint64_t id = mi.id();
-			if(id > nMaxReservoirMoleculeID_local)
-				nMaxReservoirMoleculeID_local = id;
-		}
-	}
-
 	// global max IDs
 #ifdef ENABLE_MPI
 
-	MPI_Allreduce( &nMaxMoleculeID_local,          &_nMaxMoleculeID,          1, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
-	MPI_Allreduce( &nMaxReservoirMoleculeID_local, &_nMaxReservoirMoleculeID, 1, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
+	MPI_Allreduce( &nMaxMoleculeID_local, &_nMaxMoleculeID, 1, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
 
 #else
 	_nMaxMoleculeID = nMaxMoleculeID_local;
-	_nMaxReservoirMoleculeID = nMaxReservoirMoleculeID_local;
 #endif
 }
 
@@ -561,7 +297,18 @@ uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposi
 }
 void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer, double cutoffRadius)
 {
-	this->ReadReservoir(domainDecomp);
+	_reservoir->readParticleData(domainDecomp);
+	_dInvDensityArea = 1. / (_dAreaXZ * _reservoir->getDensity() );
+	// Init reservoir slab index, unless restarting from checkpoint
+	if(false == _bIsRestart)
+		_reservoir->initBinIndex(_nMovingDirection);
+
+	this->InitTransitionPlane(global_simulation->getDomain() );
+	cout << domainDecomp->getRank() << ": Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
+
+	// find max molecule ID in particle container
+	this->findMaxMoleculeID(domainDecomp);
+
 	double dMoleculeRadius = _dMoleculeDiameter*0.5;
 
 	//ParticleContainer* _moleculeContainer;
@@ -721,7 +468,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 				else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
 					tM->setr(1, it->second.at(1) - _dY);
 
-				if(dY < _dSlabWidth)
+				if(dY < _reservoir->getBinWidth() )
 				{
 					tM->setr(0, it->second.at(0) );
 					tM->setr(2, it->second.at(2) );
@@ -758,7 +505,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			if(v2 > v2max)
 			{
 				uint64_t id = tM->id();
-				double dY = tM->r(1);
 
 //				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
 //				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
@@ -773,22 +519,22 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		}
 
 		// mirror molecules back that are on the way to pass fixed molecule region
-		if(dY <= _dSlabWidth)
+		if(dY <= _reservoir->getBinWidth() )
 			tM->setv(1, abs(tM->v(1) ) );
 
 	}  // loop over molecules
 
 	// DEBUG
-//	_dY = 0.01;
+	_dY = 0.005;
 	// DEBUG
 	_dYsum += _dY;
 
-	if (_dYsum >= _dSlabWidth)
+	if (_dYsum >= _reservoir->getBinWidth())
 	{
-		global_log->info() << "Mett-" << (uint32_t)_nMovingDirection << ": _dYsum=" << _dYsum << ", _dSlabWidth=" << _dSlabWidth << endl;
-		global_log->info() << "_dSlabWidth=" << _dSlabWidth << endl;
+		global_log->info() << "Mett-" << (uint32_t)_nMovingDirection << ": _dYsum=" << _dYsum << ", _dSlabWidth=" << _reservoir->getBinWidth() << endl;
+		global_log->info() << "_dSlabWidth=" << _reservoir->getBinWidth() << endl;
 		global_log->info() << "_dYsum=" << _dYsum << endl;
-		global_log->info() << "_nSlabindex=" << _nSlabindex << endl;
+		global_log->info() << "_reservoir->getBinIndex()=" << _reservoir->getBinIndex() << endl;
 
 		// insert actual reservoir slab / activate next reservoir slab
 		this->InsertReservoirSlab(particleContainer);
@@ -808,7 +554,6 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		uint8_t cid = tM->componentid();
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
 		double v2 = tM->v2();
-		double dY = tM->r(1);
 
 		if(true == bIsTrappedMolecule)
 		{
@@ -984,34 +729,11 @@ void MettDeamon::writeRestartfile()
 	std::ofstream ofs("MettDeamonRestart.dat", std::ios::app);
 	std::stringstream outputstream;
 
-	outputstream << setw(12) << global_simulation->getSimulationStep() << setw(12) << _nSlabindex;
+	outputstream << setw(12) << global_simulation->getSimulationStep() << setw(12) << _reservoir->getBinIndex();
 	outputstream << FORMAT_SCI_MAX_DIGITS << _dYsum << std::endl;
 
 	ofs << outputstream.str();
 	ofs.close();
-}
-
-void MettDeamon::NextReservoirSlab()
-{
-	switch(_nMovingDirection)
-	{
-	case MD_LEFT_TO_RIGHT:
-		_nSlabindex--;
-		if(_nSlabindex == -1)
-		{
-			_nSlabindex = _reservoirSlabs-1;
-			_nMaxMoleculeID += _nMaxReservoirMoleculeID;
-		}
-		break;
-	case MD_RIGHT_TO_LEFT:
-		_nSlabindex++;
-		if( (uint32_t)(_nSlabindex) == _reservoirSlabs)
-		{
-			_nSlabindex = 0;
-			_nMaxMoleculeID += _nMaxReservoirMoleculeID;
-		}
-		break;
-	}
 }
 
 void MettDeamon::calcDeltaYbyDensity()
@@ -1029,14 +751,23 @@ void MettDeamon::calcDeltaYbyDensity()
 	if(dDensityDelta <= 0.)
 		_dY = 0.;
 	else
-		_dY = dDensityDelta/_dDensityReservoir*dInvNumVals*_dVolumeCV/_dAreaXZ;
+		_dY = dDensityDelta/_reservoir->getDensity()*dInvNumVals*_dVolumeCV/_dAreaXZ;
+}
+
+void MettDeamon::InitTransitionPlane(Domain* domain)
+{
+	double dBoxY = domain->getGlobalLength(1);
+	if(MD_LEFT_TO_RIGHT == _nMovingDirection)
+		_dTransitionPlanePosY = 2*_reservoir->getBinWidth();
+	else
+		_dTransitionPlanePosY = dBoxY - 2*_reservoir->getBinWidth();
 }
 
 void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 {
 	cout << "INSERT: Mett-" << (uint32_t)_nMovingDirection << endl;
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
-	std::vector<Molecule> currentReservoirSlab = _reservoir.at(_nSlabindex);
+	std::vector<Molecule> currentReservoirSlab = _reservoir->getBinMoleculeVectorActual();
 	global_log->info() << "currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
 
 	for(auto mi : currentReservoirSlab)
@@ -1051,12 +782,476 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 
 		mi.setid(_nMaxMoleculeID + id);
 		mi.setComponent(compNew);
-		mi.setr(1, mi.r(1) + _dYsum - _dSlabWidth);
+		mi.setr(1, mi.r(1) + _dYsum - _reservoir->getBinWidth() );
 		cout << "INSERT POS: " << mi.r(1) << ", cid=" << _vecChangeCompIDsFreeze.at(cid) << endl;
 		particleContainer->addParticle(mi);
 	}
-	_dYsum -= _dSlabWidth;  // reset feed sum
-	this->NextReservoirSlab();
+	_dYsum -= _reservoir->getBinWidth();  // reset feed sum
+	_reservoir->nextBin(_nMovingDirection, _nMaxMoleculeID);
 }
 
 
+// class Reservoir
+Reservoir::Reservoir(MettDeamon* parent)
+	: 	_parent(parent),
+		_numMoleculesLocal(0),
+		_numMoleculesGlobal(0),
+		_numBins(0)
+{
+}
+
+void Reservoir::readXML(XMLfileUnits& xmlconfig)
+{
+	std::string strType = "unknown";
+	bool bRet1 = xmlconfig.getNodeValue("file@type", strType);
+	bool bRet2 = xmlconfig.getNodeValue("width", _dReadWidthY);
+	xmlconfig.getNodeValue("binwidth", _dBinWidthInit);
+	_nReadMethod = RRM_UNKNOWN;
+	if(true == bRet1 && false == bRet2)
+	{
+		if("ASCII" == strType) {
+			_nReadMethod = RRM_READ_FROM_FILE;
+			xmlconfig.getNodeValue("file", _strFilename);
+		}
+		else if("binary" == strType) {
+			_nReadMethod = RRM_READ_FROM_FILE_BINARY;
+			xmlconfig.getNodeValue("file/header", _strFilenameHeader);
+			xmlconfig.getNodeValue("file/data", _strFilename);
+		}
+		else {
+			global_log->error() << "Wrong file type='" << strType << "' specified. Programm exit ..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+	else if(false == bRet1 && true == bRet2)
+		_nReadMethod = RRM_READ_FROM_MEMORY;
+	else
+		_nReadMethod = RRM_AMBIGUOUS;
+}
+
+void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
+{
+	cout << "Reservoir::readParticleData(...)" << endl;
+	switch(_nReadMethod)
+	{
+	case RRM_READ_FROM_MEMORY:
+		this->readFromMemory(domainDecomp);
+		break;
+	case RRM_READ_FROM_FILE:
+		this->readFromFile(domainDecomp);
+		break;
+	case RRM_READ_FROM_FILE_BINARY:
+		this->readFromFileBinary(domainDecomp);
+		break;
+	case RRM_UNKNOWN:
+	case RRM_AMBIGUOUS:
+	default:
+		global_log->error() << "Unknown (or ambiguous) method to read reservoir for feature MettDeamon. Program exit ..." << endl;
+		Simulation::exit(-1);
+	}
+
+	// sort particles into bins
+	this->sortParticlesToBins();
+
+	// volume, density
+	this->calcNumMoleculesGlobal(domainDecomp);
+//	mardyn_assert( (_numMoleculesGlobal == _numMoleculesRead) || (RRM_READ_FROM_MEMORY == _nReadMethod) );
+	_dVolume = 1.; for(uint8_t dim=0; dim<3; dim++) _dVolume *= _arrBoxLength[dim];
+	_dDensity = _numMoleculesGlobal / _dVolume;
+	cout << "Density of Mettdeamon Reservoir: " << _dDensity << endl;
+}
+
+void Reservoir::sortParticlesToBins()
+{
+	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
+	cout << domainDecomp->getRank() << ": Reservoir::sortParticlesToBins(...)" << endl;
+	_numBins = _arrBoxLength[1] / _dBinWidthInit;
+	_dBinWidth = _arrBoxLength.at(1) / (double)(_numBins);
+	cout << domainDecomp->getRank() << ": _dBinWidthInit="<<_dBinWidthInit<<endl;
+	cout << domainDecomp->getRank() << ": _numBins="<<_numBins<<endl;
+	_binVector.resize(_numBins);
+	Domain* domain = global_simulation->getDomain();
+	uint32_t nBinIndex;
+	for(auto&& mol:_particleVector)
+	{
+		double y = mol.r(1);
+		nBinIndex = floor(y / _dBinWidth);
+		cout << domainDecomp->getRank() << ": y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<_binVector.size()<<endl;
+		mardyn_assert(nBinIndex < _binVector.size() );
+		mol.setr(1, y - nBinIndex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+		switch(_parent->getMovingDirection() )
+		{
+		case MD_LEFT_TO_RIGHT:
+			mol.setr(1, y - nBinIndex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+			break;
+		case MD_RIGHT_TO_LEFT:
+			mol.setr(1, y - nBinIndex*_dBinWidth + (domain->getGlobalLength(1) - _dBinWidth) );  // positions in slabs related to origin (x,y,z) == (0,0,0)
+			break;
+		}
+		_binVector.at(nBinIndex).push_back(mol);
+	}
+}
+
+void Reservoir::readFromMemory(DomainDecompBase* domainDecomp)
+{
+	ParticleContainer* particleContainer = global_simulation->getMolecules();
+	Domain* domain = global_simulation->getDomain();
+
+	_arrBoxLength.at(0) = domain->getGlobalLength(0);
+	_arrBoxLength.at(1) = _dReadWidthY;
+	_arrBoxLength.at(2) = domain->getGlobalLength(2);
+
+	for (ParticleIterator tM = particleContainer->iteratorBegin();
+	tM != particleContainer->iteratorEnd(); ++tM)
+	{
+//		if(true == this->IsBehindTransitionPlane(y) )
+//			continue;
+
+		Molecule mol(*tM);
+		double y = mol.r(1);
+
+		switch(_parent->getMovingDirection() )
+		{
+		case MD_LEFT_TO_RIGHT:
+			if(y > _dReadWidthY) continue;
+			break;
+		case MD_RIGHT_TO_LEFT:
+			if(y < (domain->getGlobalLength(1) - _dReadWidthY) ) continue;
+			double relPosY = y - (domain->getGlobalLength(1) - _dReadWidthY);
+			mol.setr(1, relPosY);  // move to origin x,y,z = 0,0,0
+			break;
+		}
+		_particleVector.push_back(mol);
+	}
+}
+
+void Reservoir::readFromFile(DomainDecompBase* domainDecomp)
+{
+	Domain* domain = global_simulation->getDomain();
+	std::ifstream ifs;
+	global_log->info() << "Opening Mettdeamon Reservoirfile " << _strFilename << endl;
+	ifs.open( _strFilename.c_str() );
+	if (!ifs.is_open()) {
+		global_log->error() << "Could not open Mettdeamon Reservoirfile " << _strFilename << endl;
+		Simulation::exit(1);
+	}
+	global_log->info() << "Reading Mettdeamon Reservoirfile " << _strFilename << endl;
+
+	string token;
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
+	unsigned int numcomponents = dcomponents.size();
+	string ntypestring("ICRVQD");
+	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
+
+	double Xlength, Ylength, Zlength;
+	while(ifs && (token != "NumberOfMolecules") && (token != "N"))
+	{
+		ifs >> token;
+
+		if(token=="Length" || token=="L")
+		{
+			ifs >> Xlength >> Ylength >> Zlength;
+			_arrBoxLength.at(0) = domain->getGlobalLength(0);
+			_arrBoxLength.at(1) = Ylength;
+			_arrBoxLength.at(2) = domain->getGlobalLength(2);
+		}
+	}
+
+	if((token != "NumberOfMolecules") && (token != "N")) {
+		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
+		Simulation::exit(1);
+	}
+	ifs >> _numMoleculesRead;
+
+	streampos spos = ifs.tellg();
+	ifs >> token;
+	if((token=="MoleculeFormat") || (token == "M"))
+	{
+		ifs >> ntypestring;
+		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
+		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
+
+		if (ntypestring == "ICRVQDV") ntype = ICRVQDV;
+		else if (ntypestring == "ICRVQD") ntype = ICRVQD;
+		else if (ntypestring == "ICRV") ntype = ICRV;
+		else if (ntypestring == "IRV")  ntype = IRV;
+		else {
+			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
+			Simulation::exit(1);
+		}
+	} else {
+		ifs.seekg(spos);
+	}
+	global_log->info() << " molecule format: " << ntypestring << endl;
+
+	if( numcomponents < 1 ) {
+		global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
+		numcomponents = 1;
+		dcomponents.resize( numcomponents );
+		dcomponents[0].setID(0);
+		dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
+	}
+	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
+	unsigned long id;
+	unsigned int componentid;
+
+	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
+	q0=1.;
+
+	for( unsigned long i=0; i<_numMoleculesRead; i++ )
+	{
+		switch ( ntype ) {
+			case ICRVQDV:
+				ifs >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
+					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Vix >> Viy >> Viz;
+				break;
+			case ICRVQD:
+				ifs >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
+					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
+				break;
+			case ICRV :
+				ifs >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
+				break;
+			case IRV :
+				ifs >> id >> x >> y >> z >> vx >> vy >> vz;
+				break;
+		}
+
+		if( componentid > numcomponents ) {
+			global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
+			Simulation::exit(1);
+		}
+		componentid --; // TODO: Component IDs start with 0 in the program.
+		Molecule mol = Molecule(i+1,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
+/*
+		uint32_t nSlabindex = floor(y / _dBinWidth);
+		m1.setr(1, y - nSlabindex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+
+		double bbMin[3];
+		double bbMax[3];
+		bool bIsInsideSubdomain = false;
+		domainDecomp->getBoundingBoxMinMax(global_simulation->getDomain(), bbMin, bbMax);
+		bIsInsideSubdomain = x > bbMin[0] && x < bbMax[0] && y > bbMin[1] && y < bbMax[1] && z > bbMin[2] && z < bbMax[2];
+
+		if(true == bIsInsideSubdomain)
+			_binVector.at(nSlabindex).push_back(m1);
+
+		componentid = m1.componentid();
+		// TODO: The following should be done by the addPartice method.
+		dcomponents.at(componentid).incNumMolecules();
+*/
+		_particleVector.push_back(mol);
+
+		// Print status message
+		unsigned long iph = _numMoleculesRead / 100;
+		if( iph != 0 && (i % iph) == 0 )
+			global_log->info() << "Finished reading molecules: " << i/iph << "%\r" << flush;
+	}
+
+	cout << domainDecomp->getRank() << ": Finished reading Mettdeamon Rerservoirmolecules: 100%" << endl;
+
+	ifs.close();
+}
+
+void Reservoir::readFromFileBinaryHeader()
+{
+	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
+	cout << domainDecomp->getRank() << ": Reservoir::readFromFileBinaryHeader(...)" << endl;
+	XMLfileUnits inp(_strFilenameHeader);
+
+	if(false == inp.changecurrentnode("/mardyn")) {
+		global_log->error() << "Could not find root node /mardyn in XML input file." << endl;
+		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
+		Simulation::exit(1);
+	}
+
+	bool bInputOk = true;
+	double dCurrentTime = 0.;
+	double dBL[3];
+	uint64_t nNumMols;
+	std::string strMoleculeFormat;
+	bInputOk = bInputOk && inp.changecurrentnode("headerinfo");
+	bInputOk = bInputOk && inp.getNodeValue("time", dCurrentTime);
+	bInputOk = bInputOk && inp.getNodeValue("length/x", dBL[0] );
+	bInputOk = bInputOk && inp.getNodeValue("length/y", dBL[1] );
+	bInputOk = bInputOk && inp.getNodeValue("length/z", dBL[2] );
+	bInputOk = bInputOk && inp.getNodeValue("number", nNumMols);
+	bInputOk = bInputOk && inp.getNodeValue("format@type", strMoleculeFormat);
+	double dVolume = 1;
+	for(uint8_t di=0; di<3; ++di)
+	{
+		this->setBoxLength(di, dBL[di] );
+		dVolume *= dBL[di];
+	}
+	_numMoleculesRead = nNumMols;
+	this->setVolume(dVolume);
+	this->setDensity(nNumMols / dVolume);
+
+	if(false == bInputOk)
+	{
+		global_log->error() << "Content of file: '" << _strFilenameHeader << "' corrupted! Program exit ..." << endl;
+		Simulation::exit(1);
+	}
+
+	if("ICRVQD" == strMoleculeFormat)
+		_nMoleculeFormat = ICRVQD;
+	else if("IRV" == strMoleculeFormat)
+		_nMoleculeFormat = IRV;
+	else if("ICRV" == strMoleculeFormat)
+		_nMoleculeFormat = ICRV;
+	else
+	{
+		global_log->error() << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << endl;
+		Simulation::exit(1);
+	}
+}
+
+void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp)
+{
+	global_log->info() << "Reservoir::readFromFileBinary(...)" << endl;
+	// read header
+	this->readFromFileBinaryHeader();
+
+#ifdef ENABLE_MPI
+	if(domainDecomp->getRank() == 0) {
+#endif
+	global_log->info() << "Opening phase space file " << _strFilename << endl;
+	std::ifstream ifs;
+	ifs.open(_strFilename.c_str(), ios::binary | ios::in);
+	if (!ifs.is_open()) {
+		global_log->error() << "Could not open phaseSpaceFile " << _strFilename << endl;
+		Simulation::exit(1);
+	}
+
+	global_log->info() << "Reading phase space file " << _strFilename << endl;
+
+	vector<Component>& components = *(_simulation.getEnsemble()->getComponents());
+
+	// Select appropriate reader
+	switch (_nMoleculeFormat) {
+		case ICRVQD: _moleculeDataReader = new MoleculeDataReaderICRVQD(); break;
+		case ICRV: _moleculeDataReader = new MoleculeDataReaderICRV(); break;
+		case IRV: _moleculeDataReader = new MoleculeDataReaderIRV(); break;
+	}
+
+	for (uint64_t pi=0; pi<_numMoleculesRead; pi++) {
+		Molecule mol;
+		_moleculeDataReader->read(ifs, mol, components);
+		_particleVector.push_back(mol);
+	}
+#ifdef ENABLE_MPI
+	}
+#endif
+
+	/* distribute molecules to other MPI processes */
+#ifdef ENABLE_MPI
+	unsigned long num_particles = _particleVector.size();
+	MPI_CHECK( MPI_Bcast(&num_particles, 1, MPI_UNSIGNED_LONG, 0, domainDecomp->getCommunicator()) );
+
+#define PARTICLE_BUFFER_SIZE  (16*1024)
+	ParticleData particle_buff[PARTICLE_BUFFER_SIZE];
+	int particle_buff_pos = 0;
+	MPI_Datatype mpi_Particle;
+	ParticleData::getMPIType(mpi_Particle);
+
+	if(domainDecomp->getRank() == 0) {
+		for(unsigned long i = 0; i < num_particles; ++i) {
+			ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], _particleVector[i]);
+			particle_buff_pos++;
+			if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == num_particles - 1)) {
+				global_log->debug() << "broadcasting(sending) particles" << endl;
+				MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, domainDecomp->getCommunicator());
+				particle_buff_pos = 0;
+			}
+		}
+	} else {
+		for(unsigned long i = 0; i < num_particles; ++i) {
+			if(i % PARTICLE_BUFFER_SIZE == 0) {
+				global_log->debug() << "broadcasting(receiving) particles" << endl;
+				MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, domainDecomp->getCommunicator());
+				particle_buff_pos = 0;
+			}
+			Molecule mol;
+			ParticleData::ParticleDataToMolecule(particle_buff[particle_buff_pos], mol);
+			particle_buff_pos++;
+			_particleVector.push_back(mol);
+		}
+	}
+	global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
+#endif
+	cout << domainDecomp->getRank() << ": Reading Molecules done" << endl;
+}
+
+void Reservoir::initBinIndex(uint8_t nMovingDirection)
+{
+	switch(nMovingDirection) {
+	case MD_LEFT_TO_RIGHT:
+		_nBinIndex = _numBins-1; break;
+	case MD_RIGHT_TO_LEFT:
+		_nBinIndex = 0; break;
+	}
+}
+
+void Reservoir::nextBin(uint8_t nMovingDirection, uint64_t& nMaxID)
+{
+	switch(nMovingDirection)
+	{
+	case MD_LEFT_TO_RIGHT:
+		_nBinIndex--;
+		if(_nBinIndex == -1)
+		{
+			_nBinIndex = _numBins-1;
+			nMaxID += _numMoleculesGlobal;
+		}
+		break;
+	case MD_RIGHT_TO_LEFT:
+		_nBinIndex++;
+		if( (uint32_t)(_nBinIndex) == _numBins)
+		{
+			_nBinIndex = 0;
+			nMaxID += _numMoleculesGlobal;
+		}
+		break;
+	}
+}
+
+uint64_t Reservoir::findMaxMoleculeID()
+{
+	uint64_t nMaxMoleculeID_local = 0;
+	for(auto si : _binVector)
+	{
+		for(auto mi : si)
+		{
+			uint64_t id = mi.id();
+			if(id > nMaxMoleculeID_local)
+				_nMaxMoleculeID = id;
+		}
+	}
+	return _nMaxMoleculeID;
+}
+
+uint64_t Reservoir::calcNumMoleculesLocal()
+{
+	_numMoleculesLocal = 0;
+	for(auto si : _binVector)
+		_numMoleculesLocal += si.size();
+	return _numMoleculesLocal;
+}
+
+uint64_t Reservoir::calcNumMoleculesGlobal(DomainDecompBase* domainDecomp)
+{
+	uint64_t numMoleculesLocal = 0;
+	for(auto si : _binVector)
+	{
+		for(auto mi : si)
+			numMoleculesLocal++;
+	}
+	domainDecomp->collCommInit(1);
+	domainDecomp->collCommAppendUnsLong(numMoleculesLocal);
+	domainDecomp->collCommAllreduceSum();
+	_numMoleculesGlobal = domainDecomp->collCommGetUnsLong();
+	domainDecomp->collCommFinalize();
+
+	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _numMoleculesGlobal << endl;
+	return _numMoleculesGlobal;
+}
