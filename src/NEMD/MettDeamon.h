@@ -17,6 +17,7 @@
 #include <vector>
 #include <cstdint>
 #include <limits>
+#include <algorithm>
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
 
@@ -41,11 +42,18 @@ enum FeedRateMethod : uint8_t
 	FRM_UNKNOWN = 0,
 	FRM_DELETED_MOLECULES = 1,
 	FRM_CHANGED_MOLECULES = 2,
-	FRM_DENSITY = 3
+	FRM_DENSITY = 3,
+	FRM_CONSTANT = 4
 };
 
 enum MoleculeFormat : uint32_t {
 	ICRVQD, IRV, ICRV
+};
+
+struct RestartInfoType
+{
+	uint32_t nBindindex;
+	double dYsum;
 };
 
 class Domain;
@@ -94,6 +102,7 @@ private:
 
 	void InitTransitionPlane(Domain* domain);
 	void InsertReservoirSlab(ParticleContainer* particleContainer);
+	void initRestart();
 
 private:
 	double _dAreaXZ;
@@ -140,8 +149,11 @@ private:
 	double _dDensityTarget;
 	double _dVolumeCV;
 	Reservoir* _reservoir;
+	RestartInfoType _restartInfo;
+	double _dFeedRate;
 };
 
+class BinQueue;
 class MoleculeDataReader;
 class Reservoir
 {
@@ -162,11 +174,8 @@ private:
 
 public:
 	// Getters, Setters
-	uint64_t getNumMoleculesLocal() {return _numMoleculesLocal;}
 	uint64_t getNumMoleculesGlobal() {return _numMoleculesGlobal;}
 //	void setNumMolecules(uint64_t nVal) {_numMolecules = nVal;}
-	uint64_t getNumBins() {return _numBins;}
-	void setNumBins(uint32_t nVal) {_numBins = nVal; _binVector.resize(nVal);}
 	std::string getFilename() {return _strFilename;}
 	std::string getFilenameHeader() {return _strFilenameHeader;}
 //	void setNumMolecules(uint64_t nVal) {_numMolecules = nVal;}
@@ -176,31 +185,27 @@ public:
 	void setBoxLength(uint32_t nDim, double dVal) {_arrBoxLength.at(nDim)=dVal;}
 	double getVolume() {return _dVolume;}
 	void setVolume(double dVal) {_dVolume = dVal;}
-	std::vector<Molecule>& getBinMoleculeVector(uint32_t nBinIndex) {return _binVector.at(nBinIndex);}
-	std::vector<Molecule>& getBinMoleculeVectorActual() {return _binVector.at(_nBinIndex);}
-	int32_t getBinIndex() {return _nBinIndex;}
-	void setBinIndex(int32_t nVal) {_nBinIndex = nVal;}
 	double getBinWidth() {return _dBinWidth;}
 
-	// more methods
-	void initBinIndex(uint8_t nMovingDirection);
-	void nextBin(uint8_t nMovingDirection, uint64_t& nMaxID);
-	uint64_t findMaxMoleculeID();
+	// queue methods
+	uint32_t getActualBinIndex();
+	uint64_t getNumMoleculesLocal();
+	uint32_t getNumBins();
+	std::vector<Molecule>& getParticlesActualBin();
+	void nextBin(uint64_t& nMaxID);
+	uint64_t getMaxMoleculeID();
+	bool activateBin(uint32_t nBinIndex);
 
 private:
-	uint64_t calcNumMoleculesLocal();
 	uint64_t calcNumMoleculesGlobal(DomainDecompBase* domainDecomp);
 
 private:
 	MettDeamon* _parent;
 	uint64_t _numMoleculesRead;
-	uint64_t _numMoleculesLocal;
 	uint64_t _numMoleculesGlobal;
-	uint64_t _numBins;
 	uint64_t _nMaxMoleculeID;
 	uint32_t _nMoleculeFormat;
 	uint8_t _nReadMethod;
-	int32_t _nBinIndex;
 	double _dReadWidthY;
 	double _dBinWidthInit;
 	double _dBinWidth;
@@ -211,7 +216,167 @@ private:
 	MoleculeDataReader* _moleculeDataReader;
 	std::array<double,3> _arrBoxLength;
 	std::vector<Molecule> _particleVector;
-	std::vector< std::vector<Molecule> > _binVector;
+	BinQueue* _binQueue;
+};
+
+
+
+class BinQueue
+{
+	class Bin
+	{
+	friend class BinQueue;
+	public:
+		Bin(std::vector<Molecule> vec, uint32_t nIndex) : _next(nullptr), _nIndex(nIndex)
+		{
+			for(auto p:vec)
+				_particles.push_back(p);
+		}
+		uint32_t _nIndex;
+		Bin* _next;
+		std::vector<Molecule> _particles;
+	};
+private:
+	Bin *_first, *_last, *_actual;
+	uint32_t _numBins;
+	uint32_t _nRoundCount;
+	uint64_t _numParticles;
+	uint64_t _maxID;
+
+
+public:
+	BinQueue() :
+		_first(nullptr),
+		_last(nullptr),
+		_actual(nullptr),
+		_numBins(0),
+		_nRoundCount(0),
+		_numParticles(0),
+		_maxID(0)
+	{
+	}
+
+	BinQueue(std::vector<Molecule> vec) :
+		_first(nullptr),
+		_last(nullptr),
+		_actual(nullptr),
+		_numBins(0),
+		_nRoundCount(0),
+		_numParticles(0),
+		_maxID(0)
+	{
+		enque(vec);
+	}
+
+	~BinQueue() {
+		_last->_next = nullptr;
+		while (!isEmpty())
+			deque();
+	}
+
+	bool isEmpty() {
+		return _first == nullptr;
+	}
+
+	void enque(std::vector<Molecule> vec)
+	{
+		Bin* ptr = new Bin(vec, _numBins);
+		if (isEmpty()) {
+			_last = ptr;
+			_first = ptr;
+		} else {
+			_last->_next = ptr;
+			_last = ptr;
+		}
+		_numBins++;
+		_numParticles += vec.size();
+		// update max particle ID
+		std::vector<Molecule>::iterator it = max_element(vec.begin(), vec.end(), molecule_id_compare);
+		_maxID = ( (*it).id()>_maxID ? (*it).id() : _maxID);
+		cout << "_maxID=" << _maxID << endl;
+	}
+
+	void deque()
+	{
+		if (!isEmpty()) {
+			Bin* ptr = _first;
+			_numParticles -= ptr->_particles.size();
+			_first = _first->_next;
+			delete ptr;
+			_numBins--;
+		}
+		// update max particle ID
+		this->determineMaxID();
+	}
+
+	std::vector<Molecule>& head() {
+		return _first->_particles;
+	}
+
+	std::vector<Molecule>& getParticlesActualBin() {
+		return _actual->_particles;
+	}
+
+	void showActualBin() {
+		for(auto& p:_actual->_particles)
+			std::cout << p << ", ";
+		std::cout << endl;
+	}
+
+	void connectTailToHead()
+	{
+		_last->_next=_first;
+		_actual = _first;
+	}
+
+	void next()
+	{
+		_actual = _actual->_next;
+		if(_actual == _first)
+			_nRoundCount++;
+	}
+
+	bool activateBin(uint32_t nBinIndex)
+	{
+		Bin* ptr = _first;
+		while(ptr != nullptr)
+		{
+			cout << "ptr->_nIndex="<<ptr->_nIndex<<", nBinIndex="<<nBinIndex<<endl;
+			if(ptr->_nIndex == nBinIndex)
+				return true;
+			ptr = ptr->_next;
+			if(ptr == _first)
+				break;
+		}
+		return false;
+	}
+
+	uint32_t getActualBinIndex() {return _actual->_nIndex;}
+	uint32_t getNumBins() {return _numBins;}
+	uint32_t getRoundCount() {return _nRoundCount;}
+	uint64_t getNumParticles() {return _numParticles;}
+	uint64_t getMaxID() {return _maxID;}
+
+private:
+	static bool molecule_id_compare(Molecule a, Molecule b)
+	{
+		return (a.id() < b.id());
+	}
+	void determineMaxID()
+	{
+		_maxID = 0;
+		Bin* ptr = _first;
+		while(ptr != nullptr)
+		{
+			std::vector<Molecule> vec = ptr->_particles;
+			std::vector<Molecule>::iterator it = max_element(vec.begin(), vec.end(), molecule_id_compare);
+			_maxID = ( (*it).id()>_maxID ? (*it).id() : _maxID);
+			ptr = ptr->_next;
+			if(ptr == _first)
+				break;
+		}
+	}
 };
 
 #endif /* METTDEAMON_H_ */
+
