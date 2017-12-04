@@ -6,14 +6,14 @@ while (( "$#" )); do
 	case "$1" in
 		-h | --help)
 			#echo "usage: $0 --summaryName=<txt> --getFunction=<txt> -- file1 file2 ... fileN"
-			echo "usage: -- file1 file2 ... fileN"
+			echo "usage: $0 --getFunction=<txt> -- file1 file2 ... fileN"
 			# no shifting needed here, we're done.
 			exit 0
 			;;
-#		-F | --getFunction)
-#			getFunction="$2" # You may want to check validity of $2
-#			shift 2
-#			;;
+		-F | --getFunction)
+			getFunction="$2" # You may want to check validity of $2
+			shift 2
+			;;
 #		-S | --summary)
 #			summaryName="$2"   # You may want to check validity of $2
 #			shift 2
@@ -38,7 +38,7 @@ done
 maximalValue=0.0
 for file in $fnames ; 
 do
-	res=`get-MMUPS $file`
+	res=`$getFunction $file`
 	if [[ $res != "-" ]]; then
 		isGreater=`echo $res'>'$maximalValue | bc -l`
 		((isGreater)) && maximalValue=$res
