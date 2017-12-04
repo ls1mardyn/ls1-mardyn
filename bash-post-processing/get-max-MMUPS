@@ -1,0 +1,49 @@
+#!/bin/bash
+#!/bin/sh
+
+i=0
+while (( "$#" )); do
+	case "$1" in
+		-h | --help)
+			#echo "usage: $0 --summaryName=<txt> --getFunction=<txt> -- file1 file2 ... fileN"
+			echo "usage: -- file1 file2 ... fileN"
+			# no shifting needed here, we're done.
+			exit 0
+			;;
+#		-F | --getFunction)
+#			getFunction="$2" # You may want to check validity of $2
+#			shift 2
+#			;;
+#		-S | --summary)
+#			summaryName="$2"   # You may want to check validity of $2
+#			shift 2
+#			;;
+		--) # End of all options
+			shift
+			#break
+			;;
+		-*)
+			echo "Error: Unknown option: $1" >&2
+			exit 1
+			;;
+		*)  # No more options
+			fnames="$fnames $1"
+			shift
+			;;
+	esac
+done
+#echo "summaryname: $summaryName getFunction: $getFunction "
+#echo "filenames: $fnames"
+
+maximalValue=0.0
+for file in $fnames ; 
+do
+	res=`get-MMUPS $file`
+	if [[ $res != "-" ]]; then
+		isGreater=`echo $res'>'$maximalValue | bc -l`
+		((isGreater)) && maximalValue=$res
+	fi
+done
+echo $maximalValue
+#results
+
