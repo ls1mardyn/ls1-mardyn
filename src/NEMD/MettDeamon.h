@@ -112,12 +112,23 @@ private:
 	void initRestart();
 
 private:
+	Reservoir* _reservoir;
+	bool _bIsRestart;  // simulation is a restart?
+	bool _bMirrorActivated;
 	double _dAreaXZ;
 	double _dInvDensityArea;
 	double _dY;
 	double _dYInit;
 	double _dYsum;
 	double _velocityBarrier;
+	double _dDeletedMolsPerTimestep;
+	double _dInvNumTimestepsSummation;
+	double _dMirrorPosY;
+	double _dMoleculeDiameter;
+	double _dTransitionPlanePosY;
+	double _dDensityTarget;
+	double _dVolumeCV;
+	double _dFeedRate;
 	uint64_t _nUpdateFreq;
 	uint64_t _nWriteFreqRestart;
 	uint64_t _nMaxMoleculeID;
@@ -132,33 +143,22 @@ private:
 	uint8_t _nMovingDirection;
 	uint8_t _nFeedRateMethod;
 	uint8_t _nZone2Method;
-	std::map<uint64_t, std::array<double,10> > _storePosition;  //Map for frozen particle position storage <"id, position">
-	bool _bIsRestart;  // simulation is a restart?
-	std::list<uint64_t> _listDeletedMolecules;
 	uint32_t _nNumValsSummation;
 	uint64_t _numDeletedMolsSum;
-	double _dDeletedMolsPerTimestep;
-	double _dInvNumTimestepsSummation;
-	bool _bMirrorActivated;
-	double _dMirrorPosY;
+	uint64_t _nDeleteNonVolatile;
+	std::map<uint64_t, std::array<double,10> > _storePosition;  //Map for frozen particle position storage <"id, position">
+	std::list<uint64_t> _listDeletedMolecules;
 	// identity change (by component ID)
 	std::vector<uint32_t> _vecChangeCompIDsFreeze;
 	std::vector<uint32_t> _vecChangeCompIDsUnfreeze;
-	uint64_t _nDeleteNonVolatile;
-	double _dMoleculeDiameter;
-	double _dTransitionPlanePosY;
+	// keep gas phase density
+	std::vector<double> _vecDensityValues;
 	// throttle parameters for each component
 	std::vector<double> _vecThrottleFromPosY;
 	std::vector<double> _vecThrottleToPosY;
 	std::vector<double> _vecThrottleForceY;
 	std::vector<double> _vecVeloctiyBarriers;
-	// keep gas phase density
-	std::vector<double> _vecDensityValues;
-	double _dDensityTarget;
-	double _dVolumeCV;
-	Reservoir* _reservoir;
 	RestartInfoType _restartInfo;
-	double _dFeedRate;
 };
 
 class BinQueue;
@@ -210,6 +210,8 @@ private:
 
 private:
 	MettDeamon* _parent;
+	MoleculeDataReader* _moleculeDataReader;
+	BinQueue* _binQueue;
 	uint64_t _numMoleculesRead;
 	uint64_t _numMoleculesGlobal;
 	uint64_t _nMaxMoleculeID;
@@ -222,10 +224,8 @@ private:
 	double _dVolume;
 	std::string _strFilename;
 	std::string _strFilenameHeader;
-	MoleculeDataReader* _moleculeDataReader;
 	std::array<double,3> _arrBoxLength;
 	std::vector<Molecule> _particleVector;
-	BinQueue* _binQueue;
 	std::vector<uint32_t> _vecChangeCompIDs;
 };
 
@@ -242,8 +242,8 @@ class BinQueue
 			for(auto p:vec)
 				_particles.push_back(p);
 		}
-		uint32_t _nIndex;
 		Bin* _next;
+		uint32_t _nIndex;
 		std::vector<Molecule> _particles;
 	};
 private:

@@ -28,13 +28,24 @@
 
 using namespace std;
 
-MettDeamon::MettDeamon()
-	: 	_dAreaXZ(0.),
+MettDeamon::MettDeamon() :
+		_reservoir(nullptr),
+		_bIsRestart(false),
+		_bMirrorActivated(false),
+		_dAreaXZ(0.),
 		_dInvDensityArea(0.),
 		_dY(0.),
 		_dYInit(0.),
 		_dYsum(0.),
 		_velocityBarrier(0.),
+		_dDeletedMolsPerTimestep(0.),
+		_dInvNumTimestepsSummation(0.),
+		_dMirrorPosY(0.),
+		_dMoleculeDiameter(1.0),
+		_dTransitionPlanePosY(0.0),
+		_dDensityTarget(0.0),
+		_dVolumeCV(0.0),
+		_dFeedRate(0.0),
 		_nUpdateFreq(0),
 		_nWriteFreqRestart(0),
 		_nMaxMoleculeID(0),
@@ -49,20 +60,9 @@ MettDeamon::MettDeamon()
 		_nMovingDirection(MD_UNKNOWN),
 		_nFeedRateMethod(FRM_UNKNOWN),
 		_nZone2Method(Z2M_UNKNOWN),
-		_bIsRestart(false),
 		_nNumValsSummation(0),
 		_numDeletedMolsSum(0),
-		_dDeletedMolsPerTimestep(0.),
-		_dInvNumTimestepsSummation(0.),
-		_bMirrorActivated(false),
-		_dMirrorPosY(0.),
-		_nDeleteNonVolatile(0),
-		_dMoleculeDiameter(1.0),
-		_dTransitionPlanePosY(0.0),
-		_dDensityTarget(0.0),
-		_dVolumeCV(0.0),
-		_reservoir(nullptr),
-		_dFeedRate(0.0)
+		_nDeleteNonVolatile(0)
 {
 	_dAreaXZ = global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(2);
 
@@ -846,6 +846,8 @@ void MettDeamon::initRestart()
 // class Reservoir
 Reservoir::Reservoir(MettDeamon* parent) :
 	_parent(parent),
+	_moleculeDataReader(nullptr),
+	_binQueue(nullptr),
 	_numMoleculesRead(0),
 	_numMoleculesGlobal(0),
 	_nMaxMoleculeID(0),
@@ -857,9 +859,7 @@ Reservoir::Reservoir(MettDeamon* parent) :
 	_dDensity(0.0),
 	_dVolume(0.0),
 	_strFilename("unknown"),
-	_strFilenameHeader("unknown"),
-	_moleculeDataReader(nullptr),
-	_binQueue(nullptr)
+	_strFilenameHeader("unknown")
 {
 	// allocate BinQueue
 	_binQueue = new BinQueue();
