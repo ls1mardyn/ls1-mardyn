@@ -189,7 +189,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 
 	// restart
 	_bIsRestart = true;
-	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/slabindex", _restartInfo.nBindindex);
+	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/binindex", _restartInfo.nBindindex);
 	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/deltaY", _restartInfo.dYsum);
 
 	// mirror
