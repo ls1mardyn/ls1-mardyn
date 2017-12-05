@@ -435,7 +435,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			tM->setComponent(compNew);
 //			tM->setv(1, abs(tM->v(1) ) );
 			tM->setv(0, 0.0);
-			tM->setv(1, 3*_dY);
+			if(MD_LEFT_TO_RIGHT == _nMovingDirection)
+				tM->setv(1, 3*_dY);
+			else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
+				tM->setv(1, -3*_dY);
 			tM->setv(2, 0.0);
 			// delete fraction of non-volatile component
 			/*
@@ -469,21 +472,40 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			if(it != _storePosition.end() )
 			{
 				if(MD_LEFT_TO_RIGHT == _nMovingDirection)
-					tM->setr(1, it->second.at(1) + _dY);
-				else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
-					tM->setr(1, it->second.at(1) - _dY);
-
-				if(dY < _reservoir->getBinWidth() )
 				{
-					tM->setr(0, it->second.at(0) );
-					tM->setr(2, it->second.at(2) );
+					// reset y-position
+					tM->setr(1, it->second.at(1) + _dY);
+					// reset x,z-position
+					if(dY < _reservoir->getBinWidth() )
+					{
+						tM->setr(0, it->second.at(0) );
+						tM->setr(2, it->second.at(2) );
 
-					// reset quaternion (orientation)
-					Quaternion q(it->second.at(6),
-							it->second.at(7),
-							it->second.at(8),
-							it->second.at(9) );
-					tM->setq(q);
+						// reset quaternion (orientation)
+						Quaternion q(it->second.at(6),
+								it->second.at(7),
+								it->second.at(8),
+								it->second.at(9) );
+						tM->setq(q);
+					}
+				}
+				else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
+				{
+					// reset y-position
+					tM->setr(1, it->second.at(1) - _dY);
+					// reset x,z-position
+					if(dY > (dBoxY - _reservoir->getBinWidth() ) )
+					{
+						tM->setr(0, it->second.at(0) );
+						tM->setr(2, it->second.at(2) );
+
+						// reset quaternion (orientation)
+						Quaternion q(it->second.at(6),
+								it->second.at(7),
+								it->second.at(8),
+								it->second.at(9) );
+						tM->setq(q);
+					}
 				}
 			}
 			// limit velocity of trapped molecules
