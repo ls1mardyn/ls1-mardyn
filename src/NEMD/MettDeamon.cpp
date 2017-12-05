@@ -992,17 +992,18 @@ void Reservoir::sortParticlesToBins()
 	switch(_parent->getMovingDirection() )
 	{
 		case MD_LEFT_TO_RIGHT:
-			for(auto bin:binVector)
-			{
-				cout << domainDecomp->getRank() << ": bin.size()=" << bin.size() << endl;
-				_binQueue->enque(bin);
-			}
-			break;
-		case MD_RIGHT_TO_LEFT:
 			for (auto bit = binVector.rbegin(); bit != binVector.rend(); ++bit)
 			{
 				cout << domainDecomp->getRank() << ": (*bit).size()=" << (*bit).size() << endl;
 				_binQueue->enque(*bit);
+			}
+			break;
+
+		case MD_RIGHT_TO_LEFT:
+			for(auto bin:binVector)
+			{
+				cout << domainDecomp->getRank() << ": bin.size()=" << bin.size() << endl;
+				_binQueue->enque(bin);
 			}
 			break;
 	}
