@@ -46,6 +46,13 @@ enum FeedRateMethod : uint8_t
 	FRM_CONSTANT = 4
 };
 
+enum Zone2Method : uint8_t
+{
+	Z2M_UNKNOWN = 0,
+	Z2M_RESET_ALL = 1,
+	Z2M_RESET_YPOS_ONLY = 2,
+};
+
 enum MoleculeFormat : uint32_t {
 	ICRVQD, IRV, ICRV
 };
@@ -124,6 +131,7 @@ private:
 	uint64_t _nNumMoleculesTooFastGlobal;
 	uint8_t _nMovingDirection;
 	uint8_t _nFeedRateMethod;
+	uint8_t _nZone2Method;
 	std::map<uint64_t, std::array<double,10> > _storePosition;  //Map for frozen particle position storage <"id, position">
 	bool _bIsRestart;  // simulation is a restart?
 	std::list<uint64_t> _listDeletedMolecules;

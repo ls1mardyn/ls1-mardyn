@@ -48,6 +48,7 @@ MettDeamon::MettDeamon()
 		_nNumMoleculesTooFastGlobal(0),
 		_nMovingDirection(MD_UNKNOWN),
 		_nFeedRateMethod(FRM_UNKNOWN),
+		_nZone2Method(Z2M_UNKNOWN),
 		_bIsRestart(false),
 		_nNumValsSummation(0),
 		_numDeletedMolsSum(0),
@@ -165,6 +166,17 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			_nFeedRateMethod = FRM_CONSTANT;
 			xmlconfig.getNodeValue("control/feedrate", _dFeedRate);
 		}
+	}
+
+	// Zone2 method
+	{
+		_nZone2Method = FRM_UNKNOWN;
+		int nVal = 0;
+		xmlconfig.getNodeValue("control/z2method", nVal);
+		if(1 == nVal)
+			_nZone2Method = Z2M_RESET_ALL;
+		else if(2 == nVal)
+			_nZone2Method = Z2M_RESET_YPOS_ONLY;
 	}
 
 	// reservoir
@@ -476,7 +488,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 					// reset y-position
 					tM->setr(1, it->second.at(1) + _dY);
 					// reset x,z-position
-					if(dY < _reservoir->getBinWidth() )
+					if(dY < _reservoir->getBinWidth() || Z2M_RESET_ALL == _nZone2Method)
 					{
 						tM->setr(0, it->second.at(0) );
 						tM->setr(2, it->second.at(2) );
@@ -494,7 +506,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 					// reset y-position
 					tM->setr(1, it->second.at(1) - _dY);
 					// reset x,z-position
-					if(dY > (dBoxY - _reservoir->getBinWidth() ) )
+					if(dY > (dBoxY - _reservoir->getBinWidth() ) || Z2M_RESET_ALL == _nZone2Method)
 					{
 						tM->setr(0, it->second.at(0) );
 						tM->setr(2, it->second.at(2) );
@@ -960,7 +972,7 @@ void Reservoir::sortParticlesToBins()
 		this->changeComponentID(mol, mol.componentid() );
 		double y = mol.r(1);
 		nBinIndex = floor(y / _dBinWidth);
-		cout << domainDecomp->getRank() << ": y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
+//		cout << domainDecomp->getRank() << ": y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
 		mardyn_assert(nBinIndex < binVector.size() );
 		mol.setr(1, y - nBinIndex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
 		switch(_parent->getMovingDirection() )
