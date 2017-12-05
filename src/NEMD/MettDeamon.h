@@ -198,6 +198,7 @@ public:
 
 private:
 	uint64_t calcNumMoleculesGlobal(DomainDecompBase* domainDecomp);
+	void changeComponentID(Molecule& mol, const uint32_t& cid);
 
 private:
 	MettDeamon* _parent;
@@ -217,6 +218,7 @@ private:
 	std::array<double,3> _arrBoxLength;
 	std::vector<Molecule> _particleVector;
 	BinQueue* _binQueue;
+	std::vector<uint32_t> _vecChangeCompIDs;
 };
 
 

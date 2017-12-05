@@ -829,6 +829,11 @@ Reservoir::Reservoir(MettDeamon* parent) :
 {
 	// allocate BinQueue
 	_binQueue = new BinQueue();
+
+	// init identity change vector
+	uint8_t nNumComponents = global_simulation->getEnsemble()->getComponents()->size();
+	_vecChangeCompIDs.resize(nNumComponents);
+	std::iota (std::begin(_vecChangeCompIDs), std::end(_vecChangeCompIDs), 0);
 }
 
 void Reservoir::readXML(XMLfileUnits& xmlconfig)
@@ -858,6 +863,29 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 		_nReadMethod = RRM_READ_FROM_MEMORY;
 	else
 		_nReadMethod = RRM_AMBIGUOUS;
+
+	// Possibly change component IDs
+	if(xmlconfig.changecurrentnode("changes")) {
+		uint8_t numChanges = 0;
+		XMLfile::Query query = xmlconfig.query("change");
+		numChanges = query.card();
+		if(numChanges < 1) {
+			global_log->error() << "No component change defined in XML-config file. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+		string oldpath = xmlconfig.getcurrentnodepath();
+		XMLfile::Query::const_iterator changeIter;
+		for( changeIter = query.begin(); changeIter; changeIter++ ) {
+			xmlconfig.changecurrentnode(changeIter);
+			uint32_t nFrom, nTo;
+			nFrom = nTo = 1;
+			xmlconfig.getNodeValue("from", nFrom);
+			xmlconfig.getNodeValue("to", nTo);
+			_vecChangeCompIDs.at(nFrom-1) = nTo-1;
+		}
+		xmlconfig.changecurrentnode(oldpath);
+		xmlconfig.changecurrentnode("..");
+	}
 }
 
 void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
@@ -906,6 +934,8 @@ void Reservoir::sortParticlesToBins()
 	uint32_t nBinIndex;
 	for(auto&& mol:_particleVector)
 	{
+		// possibly change component IDs
+		this->changeComponentID(mol, mol.componentid() );
 		double y = mol.r(1);
 		nBinIndex = floor(y / _dBinWidth);
 		cout << domainDecomp->getRank() << ": y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
@@ -1246,6 +1276,13 @@ uint64_t Reservoir::calcNumMoleculesGlobal(DomainDecompBase* domainDecomp)
 
 	global_log->info() << "Number of Mettdeamon Reservoirmolecules: " << _numMoleculesGlobal << endl;
 	return _numMoleculesGlobal;
+}
+
+void Reservoir::changeComponentID(Molecule& mol, const uint32_t& cid)
+{
+	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
+	Component* compNew = &(ptrComps->at(_vecChangeCompIDs.at(cid) ) );
+	mol.setComponent(compNew);
 }
 
 // queue methods
