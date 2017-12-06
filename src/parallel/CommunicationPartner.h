@@ -8,10 +8,17 @@
 #ifndef COMMUNICATIONPARTNER_H_
 #define COMMUNICATIONPARTNER_H_
 
-#include "mpi.h"
+#include <mpi.h>
 #include <vector>
+<<<<<<< .working
 #include <type_traits>
 #include "ParticleDataForwardDeclaration.h"
+||||||| .merge-left.r4919
+#include "ParticleDataForwardDeclaration.h"
+=======
+#include <stddef.h>
+#include "CommunicationBuffer.h"
+>>>>>>> .merge-right.r5797
 #include "utils/Logger.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
@@ -129,10 +136,25 @@ public:
 	//! @param partner which to add to the current CommunicationPartner
 	void add(CommunicationPartner partner);
 
+	size_t getDynamicSize();
+
 private:
-	template<typename BufferType = ParticleData>
+<<<<<<< .working
+	template<typename BufferType = ParticleData> // default BufferType - so you don't have to type it all the time?
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
 			const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
+||||||| .merge-left.r4919 // before local and trunk changes?
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
+=======
+	enum HaloOrLeavingCorrection{
+		HALO,
+		LEAVING,
+		NONE
+	};
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
+			const double highCorner[3], const double shift[3], const bool removeFromContainer, // removeFromContainer default value?
+			HaloOrLeavingCorrection haloLeaveCorr = HaloOrLeavingCorrection::NONE); // Additional parameter HaloOrLeavingCorrection?
+>>>>>>> .merge-right.r5797
 
 	//! Decide if T is ParticleForceData or ParticleData. Fail if T is something else.
 	template<typename BufferType>
@@ -168,13 +190,13 @@ private:
 	}
 
 	int _rank;
-    int _countTested;
+        int _countTested;
 	std::vector<PositionInfo> _haloInfo;
 
 	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
-	std::vector<ParticleData> _sendBuf, _recvBuf;
+	CommunicationBuffer _sendBuf, _recvBuf;
 	std::vector<ParticleForceData> _sendBufForces, _recvBufForces;
 	bool _msgSent, _countReceived, _msgReceived;
 
