@@ -135,11 +135,8 @@ CommunicationPartner::~CommunicationPartner() {
 	delete _recvStatus;
 }
 
-template<typename BufferType>
-void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
-		MessageType msgType, bool removeFromContainer) {
-
-	auto& sendBuf = getSendBuf<BufferType>();
+void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm,
+		const MPI_Datatype& type, MessageType msgType, bool removeFromContainer) {
 
 	global_log->debug() << _rank << std::endl;
 	_sendBuf.clear();
@@ -147,21 +144,11 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 	const unsigned int numHaloInfo = _haloInfo.size();
 	switch (msgType){
 		case LEAVING_AND_HALO_COPIES: {
-			//"This message type requires a ParticleData buffer."
-			mardyn_assert(!isForceData<BufferType>());
 			global_log->debug() << "sending halo and boundary particles together" << std::endl;
-<<<<<<< .working
-			for(unsigned int p = 0; p < numHaloInfo; p++){ // -
-				collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, _haloInfo[p]._shift); // -
-||||||| .merge-left.r4919
-			for(unsigned int p = 0; p < numHaloInfo; p++){ // -
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, _haloInfo[p]._shift); // -
-=======
 			// first leaving particles:
-			for (unsigned int p = 0; p < numHaloInfo; p++) { // +
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, // +
-						_haloInfo[p]._shift, removeFromContainer, LEAVING); // +
->>>>>>> .merge-right.r5797
+			for (unsigned int p = 0; p < numHaloInfo; p++) {
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
+						_haloInfo[p]._shift, removeFromContainer, LEAVING);
 			}
 
 			// then halo particles/copies:
@@ -172,71 +159,32 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			break;
 		}
 		case LEAVING_ONLY: {
-			//"This message type requires a ParticleData buffer."
-			mardyn_assert(!isForceData<BufferType>());
 			global_log->debug() << "sending leaving particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
-<<<<<<< .working
-				collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift, removeFromContainer); // -
-||||||| .merge-left.r4919
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift, removeFromContainer); // -
-=======
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, // +
-						_haloInfo[p]._shift, removeFromContainer, LEAVING); // +
->>>>>>> .merge-right.r5797
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
+						_haloInfo[p]._shift, removeFromContainer, LEAVING);
 			}
 			break;
 		}
 		case HALO_COPIES: {
-			//"This message type requires a ParticleData buffer."
-			mardyn_assert(!isForceData<BufferType>());
 			global_log->debug() << "sending halo particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
-<<<<<<< .working
-				collectMoleculesInRegion<BufferType>(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift); // -
-||||||| .merge-left.r4919
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift); // -
-=======
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, // +
-						_haloInfo[p]._shift, false, HALO); // +
->>>>>>> .merge-right.r5797
-			}
-			break;
-		}
-		case FORCES: {
-			// "A force message type requires a ParticleForceData buffer."
-			mardyn_assert(isForceData<BufferType>());
-			global_log->debug() << "sending forces" << std::endl;
-			for(unsigned int p = 0; p < numHaloInfo; p++){
-				collectMoleculesInRegion<ParticleForceData>(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift);
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh,
+						_haloInfo[p]._shift, false, HALO);
 			}
 			break;
 		}
 	}
 
 	#ifndef NDEBUG
-<<<<<<< .working
-		const int n = sendBuf.size();
-		global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
-		std::ostringstream buf;
-		for (int i = 0; i < n; ++i) {
-			buf << sendBuf[i].id << " "; // How do we know, that his is not a CommunicationBuffer?
-||||||| .merge-left.r4919
-		const int n = _sendBuf.size();
-		global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
-		std::ostringstream buf;
-		for (int i = 0; i < n; ++i) {
-			buf << _sendBuf[i].id << " ";
-=======
-		const int numLeaving = _sendBuf.getNumLeaving(); // new
-		const int numHalo = _sendBuf.getNumHalo(); // new
-		global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl; // same
-		std::ostringstream buf1; // buf now buf1
+		const int numLeaving = _sendBuf.getNumLeaving();
+		const int numHalo = _sendBuf.getNumHalo();
+		global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
+		std::ostringstream buf1;
 		for (int i = 0; i < numLeaving; ++i) {
 			Molecule m;
-			_sendBuf.readLeavingMolecule(i, m); // writes into m
-			buf1 << m.id() << " "; // why is this a molecule?
->>>>>>> .merge-right.r5797
+			_sendBuf.readLeavingMolecule(i, m);
+			buf1 << m.id() << " ";
 		}
 		global_log->debug() << buf1.str() << std::endl;
 
@@ -252,43 +200,23 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 
 	#endif
 
-<<<<<<< .working
-	MPI_CHECK(MPI_Isend(sendBuf.data(), (int ) sendBuf.size(), type, _rank, 99, comm, _sendRequest)); // -
-||||||| .merge-left.r4919
-	MPI_CHECK(MPI_Isend(_sendBuf.data(), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest)); // -
-=======
-	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _sendRequest)); // CommunicationBuffer changed
->>>>>>> .merge-right.r5797
+	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
-template<typename BufferType>
 bool CommunicationPartner::testSend() {
-
-	auto& sendBuf = getSendBuf<BufferType>();
-
 	if (not _msgSent) {
 		int flag = 0;
 		MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus));
 		if (flag == 1) {
 			_msgSent = true;
-			sendBuf.clear();
+			_sendBuf.clear();
 		}
 	}
 	return _msgSent;
 }
 
-<<<<<<< .working
-template<typename BufferType>
-bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type) {
-||||||| .merge-left.r4919
-bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type) {
-=======
 bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& /*type*/) {
->>>>>>> .merge-right.r5797
-
-	auto& recvBuf = getRecvBuf<BufferType>();
-
 	if (not _countReceived) {
 		int flag = 0;
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
@@ -301,27 +229,14 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
                                 global_log->debug() << "Received byteCount from " << _rank << std::endl;
                                 global_log->debug() << "Preparing to receive " << numrecv << " bytes." << std::endl;
                         #endif
-<<<<<<< .working
-			recvBuf.resize(numrecv); // -
-			MPI_CHECK(MPI_Irecv(recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest)); // -
-||||||| .merge-left.r4919
-			_recvBuf.resize(numrecv); // -
-			MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest)); // -
-=======
-			_recvBuf.resizeForRawBytes(numrecv); // +
-			MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), numrecv, _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest)); // +
->>>>>>> .merge-right.r5797
+			_recvBuf.resizeForRawBytes(numrecv);
+			MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), numrecv, _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest));
 		}
 	}
 	return _countReceived;
 }
-
-template<typename BufferType>
 bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
 	using Log::global_log;
-
-	auto& recvBuf = getRecvBuf<BufferType>(); // is this necessary?
-
 	if (_countReceived and not _msgReceived) {
 		int flag = 1;
 		if (_countTested > 10) {
@@ -335,25 +250,12 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag == true) {
 			_msgReceived = true;
-<<<<<<< .working
-			int numrecv = recvBuf.size(); // again the buffer thing
-||||||| .merge-left.r4919
-			int numrecv = _recvBuf.size(); // prob. should use this.
-=======
->>>>>>> .merge-right.r5797
 
 			unsigned long numHalo, numLeaving;
 			_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo);
 
 			#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
-<<<<<<< .working
-				global_log->debug() << "Buffer contains " << numrecv << " particles with IDs " << std::endl; // -
-||||||| .merge-left.r4919
-				global_log->debug() << "Buffer contains " << numrecv << " particles with IDs " << std::endl; // -
-				std::ostringstream buf; // -
-=======
-				// the new stuff
 				global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
 				std::ostringstream buf1;
 				for (unsigned long i = 0; i < numLeaving; ++i) {
@@ -371,26 +273,8 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					buf2 << m.id() << " ";
 				}
 				global_log->debug() << buf2.str() << std::endl;
->>>>>>> .merge-right.r5797
 			#endif
 
-<<<<<<< .working
-			//Code for different buffer types
-			testRecvHandle<BufferType>(moleculeContainer, removeRecvDuplicates, numrecv); // don't know
-||||||| .merge-left.r4919
-			global_simulation->startTimer("COMMUNICATION_PARTNER_TEST_RECV");
-			static std::vector<Molecule> mols;
-			mols.resize(numrecv);
-			#if defined(_OPENMP)
-			#pragma omp for schedule(static)
-			#endif
-			for (int i = 0; i < numrecv; i++) {
-				Molecule m;
-				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
-				mols[i] = m;
-			}
-			global_simulation->stopTimer("COMMUNICATION_PARTNER_TEST_RECV");
-=======
 			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 			unsigned long totalNumMols = numLeaving + numHalo;
 			static std::vector<Molecule> mols;
@@ -411,31 +295,13 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				mols[i] = m;
 			}
 			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
->>>>>>> .merge-right.r5797
 
-<<<<<<< .working
-||||||| .merge-left.r4919
-			#ifndef NDEBUG
-				for (int i = 0; i < numrecv; i++) {
-					buf << mols[i].id() << " ";
-				}
-				global_log->debug() << buf.str() << std::endl;
-			#endif
-
-			global_simulation->startTimer("COMMUNICATION_PARTNER_TEST_RECV");
-			moleculeContainer->addParticles(mols, removeRecvDuplicates);
-			mols.clear();
-			_recvBuf.clear();
-			global_simulation->stopTimer("COMMUNICATION_PARTNER_TEST_RECV");
-
-======= // why did the sauermann branch delete this? 
 			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 			moleculeContainer->addParticles(mols, removeRecvDuplicates);
 			mols.clear();
 			_recvBuf.clear();
 			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 
->>>>>>> .merge-right.r5797
 		} else {
 			++_countTested;
 		}
@@ -443,92 +309,16 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 	return _msgReceived;
 }
 
-
-template<typename BufferType>
-void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type){
-
-	auto& recvBuf = getRecvBuf<BufferType>();
-
+void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	// one single call from KDDecomposition::migrate particles.
 	// So all molecules, which arrive area leaving molecules.
 	_countReceived = true;
-<<<<<<< .working
-	recvBuf.resize(numParticles); // -
-	MPI_CHECK(MPI_Irecv(recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest)); // -
-||||||| .merge-left.r4919
-	_recvBuf.resize(numParticles); // -
-	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest)); // -
-=======
 
 	// hackaround - resizeForAppendingLeavingMolecules is intended for the send-buffer, not the recv one.
-	_recvBuf.resizeForAppendingLeavingMolecules(numParticles); // +
+	_recvBuf.resizeForAppendingLeavingMolecules(numParticles);
 
-	MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), _recvBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest)); // +
->>>>>>> .merge-right.r5797
+	MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), _recvBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest));
 }
-
-
-template <>
-void CommunicationPartner::testRecvHandle<ParticleData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
-
-	auto& recvBuf = getRecvBuf<ParticleData>();
-
-	global_simulation->startTimer("COMMUNICATION_PARTNER_TEST_RECV");
-	static std::vector<Molecule> mols;
-	mols.resize(numrecv);
-	#if defined(_OPENMP)
-	#pragma omp for schedule(static)
-	#endif
-	for (int i = 0; i < numrecv; i++) {
-		Molecule m;
-		ParticleData::ParticleDataToMolecule(recvBuf[i], m);
-		mols[i] = m;
-	}
-	global_simulation->stopTimer("COMMUNICATION_PARTNER_TEST_RECV");
-
-	#ifndef NDEBUG
-	std::ostringstream buf;
-		for (int i = 0; i < numrecv; i++) {
-			buf << mols[i].id() << " ";
-		}
-		global_log->debug() << buf.str() << std::endl;
-	#endif
-
-	global_simulation->startTimer("COMMUNICATION_PARTNER_TEST_RECV");
-	moleculeContainer->addParticles(mols, removeRecvDuplicates);
-	mols.clear();
-	recvBuf.clear();
-	global_simulation->stopTimer("COMMUNICATION_PARTNER_TEST_RECV");
-
-}
-
-//! Handle receive for ParticleForceData
-
-//typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, void>::type
-template<>
-void CommunicationPartner::testRecvHandle<ParticleForceData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) {
-	auto& recvBuf = getRecvBuf<ParticleForceData>();
-
-	#if defined(_OPENMP)
-	#pragma omp for schedule(static)
-	#endif
-	for (int i = 0; i < numrecv; i++) {
-		ParticleForceData& pData = recvBuf[i];
-
-		Molecule* original;
-
-		if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) {
-			// This should not happen
-			global_log->error()<< "Original molecule not found!" << std::endl;
-			mardyn_exit(1);
-		}
-		mardyn_assert(original->id() == pData.id);
-
-		ParticleForceData::AddParticleForceDataToMolecule(pData, *original);
-	}
-
-}
-
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
 	using Log::global_log;
@@ -560,36 +350,10 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 	_haloInfo.push_back(partner._haloInfo[0]);
 }
 
-
-/* -------------------------------------------------------------------------- */
-/* - COLLECT MOLECULES IN REGION -------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-<<<<<<< .working
-template<typename BufferType> // -
-void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], // -
-		const bool removeFromContainer){ // -
-||||||| .merge-left.r4919 
-void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], // -
-		const double highCorner[3], const double shift[3], const bool removeFromContainer) { // -
-=======
-// new declaration - use this
-void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], // +
-		const double highCorner[3], const double shift[3], const bool removeFromContainer, HaloOrLeavingCorrection haloLeaveCorr) { // +
->>>>>>> .merge-right.r5797
+void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
+		const double highCorner[3], const double shift[3], const bool removeFromContainer, HaloOrLeavingCorrection haloLeaveCorr) {
 	using std::vector;
-<<<<<<< .working
-
-	auto& sendBuf = getSendBuf<BufferType>(); // WHAT DOES THIS DO?
-
-	global_simulation->startTimer("COMMUNICATION_PARTNER_INIT_SEND");
-	int prevNumMols = sendBuf.size(); // WHY IS THIS GONE? - New methods in CommunicationBuffer
-||||||| .merge-left.r4919
-	global_simulation->startTimer("COMMUNICATION_PARTNER_INIT_SEND");
-	int prevNumMols = _sendBuf.size();
-=======
-	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND"); // new timer start function
->>>>>>> .merge-right.r5797
+	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
 	vector<vector<Molecule>> threadData;
 	vector<int> prefixArray;
 
@@ -651,19 +415,11 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			}
 
 			//resize the send buffer
-<<<<<<< .working
-			sendBuf.resize(prevNumMols + totalNumMols); // -
-||||||| .merge-left.r4919
-			_sendBuf.resize(prevNumMols + totalNumMols); // -
-=======
-
-			// New parameter is used - new methods in CommunicationBuffer - resize does not exist anymore
-			if (haloLeaveCorr == LEAVING) { // +
-				_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended); // +
-			} else if (haloLeaveCorr == HALO) { // +
-				_sendBuf.resizeForAppendingHaloMolecules(totalNumMolsAppended); // +
+			if (haloLeaveCorr == LEAVING) {
+				_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
+			} else if (haloLeaveCorr == HALO) {
+				_sendBuf.resizeForAppendingHaloMolecules(totalNumMolsAppended);
 			}
->>>>>>> .merge-right.r5797
 		}
 
 		#if defined (_OPENMP)
@@ -676,23 +432,6 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		//reduce the molecules in the send buffer and also apply the shift
 		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
 		for(int i = 0; i < myThreadMolecules; i++){
-<<<<<<< .working
-			BufferType m; // -
-			BufferType::MoleculeToParticleData(m, threadData[threadNum][i]); // -
-			m.r[0] += shift[0]; // -
-			m.r[1] += shift[1]; // -
-			m.r[2] += shift[2]; // -
-
-			sendBuf[prevNumMols + prefixArray[threadNum] + i] = m; // -
-||||||| .merge-left.r4919
-			ParticleData m; // -
-			ParticleData::MoleculeToParticleData(m, threadData[threadNum][i]); // -
-			m.r[0] += shift[0]; // -
-			m.r[1] += shift[1]; // -
-			m.r[2] += shift[2]; // -
-			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m; // -
-=======
-			// accept this block
 			Molecule mCopy = threadData[threadNum][i];
 			mCopy.move(0, shift[0]);
 			mCopy.move(1, shift[1]);
@@ -736,70 +475,11 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			} else if (haloLeaveCorr == HALO) {
 				_sendBuf.addHaloMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			}
->>>>>>> .merge-right.r5797
 		}
 	}
 	global_simulation->timers()->stop("COMMUNICATION_PARTNER_INIT_SEND");
 }
-<<<<<<< .working
-
-//--------------------------------------------------------------------------------------------
-//------------------------Explicit template instantiations below------------------------------
-//--------------------------------------------------------------------------------------------
-
-// what are these for?
-
-template
-void CommunicationPartner::initSend<ParticleData>(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
-		MessageType msgType, bool removeFromContainer);
-
-template
-void CommunicationPartner::initSend<ParticleForceData>(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
-		MessageType msgType, bool removeFromContainer);
-
-template
-bool CommunicationPartner::testSend<ParticleData>();
-
-template
-bool CommunicationPartner::testSend<ParticleForceData>();
-
-template
-bool CommunicationPartner::iprobeCount<ParticleData>(const MPI_Comm& comm, const MPI_Datatype& type);
-
-template
-bool CommunicationPartner::iprobeCount<ParticleForceData>(const MPI_Comm& comm, const MPI_Datatype& type);
-
-template
-bool CommunicationPartner::testRecv<ParticleData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
-
-template
-bool CommunicationPartner::testRecv<ParticleForceData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
-
-template
-void CommunicationPartner::initRecv<ParticleData>(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
-
-template
-void CommunicationPartner::initRecv<ParticleForceData>(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
-
-//! Handle receive for ParticleData
-template
-void CommunicationPartner::testRecvHandle<ParticleData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) ;
-
-//! Handle receive for ParticleForceData
-template
-void CommunicationPartner::testRecvHandle<ParticleForceData>(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv) ;
-
-template
-void CommunicationPartner::collectMoleculesInRegion<ParticleData>(ParticleContainer* moleculeContainer, const double lowCorner[3],
-		const double highCorner[3], const double shift[3], const bool removeFromContainer);
-
-template
-void CommunicationPartner::collectMoleculesInRegion<ParticleForceData>(ParticleContainer* moleculeContainer, const double lowCorner[3],
-		const double highCorner[3], const double shift[3], const bool removeFromContainer);
-||||||| .merge-left.r4919
-=======
 
 size_t CommunicationPartner::getDynamicSize() {
 	return _sendBuf.getDynamicSize() + _recvBuf.getDynamicSize() + _haloInfo.capacity() * sizeof(PositionInfo);
 }
->>>>>>> .merge-right.r5797

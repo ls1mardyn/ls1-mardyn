@@ -73,13 +73,9 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	for (int i = 0; i < numNeighbours; ++i) {
 		if (_neighbours[0][i].getRank() != domainDecomp->getRank()) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
-			if(msgType == FORCES){
-				_neighbours[0][i].initSend<ParticleForceData>(moleculeContainer, domainDecomp->getCommunicator(),
+			_neighbours[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleForceType(), msgType);
-			} else {
-				_neighbours[0][i].initSend<ParticleData>(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType);
-			}
+
 		}
 
 	}
@@ -109,26 +105,15 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) {
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-				if(msgType == FORCES){
-					allDone &= _neighbours[0][i].testSend<ParticleForceData>();
-				}
-				else{
-					allDone &= _neighbours[0][i].testSend<ParticleData>();
-				}
+				allDone &= _neighbours[0][i].testSend();
 			}
 		}
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) {
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-				if(msgType == FORCES){
-					allDone &= _neighbours[0][i].iprobeCount<ParticleForceData>(domainDecomp->getCommunicator(),
-						domainDecomp->getMPIParticleForceType());
-				}
-				else{
-					allDone &= _neighbours[0][i].iprobeCount<ParticleData>(domainDecomp->getCommunicator(),
-						domainDecomp->getMPIParticleType());
-				}
+				allDone &= _neighbours[0][i].iprobeCount(domainDecomp->getCommunicator(),
+					domainDecomp->getMPIParticleForceType());
 			}
 
 		}
@@ -136,11 +121,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-				if(msgType == FORCES){
-					allDone &= _neighbours[0][i].testRecv<ParticleForceData>(moleculeContainer, removeRecvDuplicates);
-				}else{
-					allDone &= _neighbours[0][i].testRecv<ParticleData>(moleculeContainer, removeRecvDuplicates);
-				}
+					allDone &= _neighbours[0][i].testRecv(moleculeContainer, removeRecvDuplicates);
 			}
 		}
 
@@ -252,13 +233,8 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 
 		for (int i = 0; i < numNeighbours; ++i) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
-			if(msgType == FORCES){
-				_neighbours[d][i].initSend<ParticleForceData>(moleculeContainer, domainDecomp->getCommunicator(),
-										domainDecomp->getMPIParticleForceType(), msgType);
-			}else{
-				_neighbours[d][i].initSend<ParticleData>(moleculeContainer, domainDecomp->getCommunicator(),
-						domainDecomp->getMPIParticleType(), msgType);
-			}
+			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
+					domainDecomp->getMPIParticleForceType(), msgType);
 		}
 
 	}
@@ -285,33 +261,18 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) {
-			if(msgType == FORCES){
-				allDone &= _neighbours[d][i].testSend<ParticleForceData>();
-			}else{
-				allDone &= _neighbours[d][i].testSend<ParticleData>();
-			}
+			allDone &= _neighbours[d][i].testSend();
 		}
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) {
-			if(msgType == FORCES){
-				allDone &= _neighbours[d][i].iprobeCount<ParticleForceData>(domainDecomp->getCommunicator(),
+			allDone &= _neighbours[d][i].iprobeCount(domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleForceType());
-			}
-			else
-			{
-				allDone &= _neighbours[d][i].iprobeCount<ParticleData>(domainDecomp->getCommunicator(),
-									domainDecomp->getMPIParticleType());
-			}
 		}
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
-			if(msgType == FORCES){
-				allDone &= _neighbours[d][i].testRecv<ParticleForceData>(moleculeContainer, removeRecvDuplicates);
-			}else{
-				allDone &= _neighbours[d][i].testRecv<ParticleData>(moleculeContainer, removeRecvDuplicates);
-			}
+			allDone &= _neighbours[d][i].testRecv(moleculeContainer, removeRecvDuplicates);
 		}
 
 		// catch deadlocks

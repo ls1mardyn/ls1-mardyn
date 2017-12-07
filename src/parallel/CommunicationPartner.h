@@ -10,38 +10,21 @@
 
 #include <mpi.h>
 #include <vector>
-<<<<<<< .working
-#include <type_traits>
-#include "ParticleDataForwardDeclaration.h"
-||||||| .merge-left.r4919
-#include "ParticleDataForwardDeclaration.h"
-=======
 #include <stddef.h>
 #include "CommunicationBuffer.h"
->>>>>>> .merge-right.r5797
-#include "utils/Logger.h"
-#include "molecules/Molecule.h"
-#include "particleContainer/ParticleContainer.h"
-#include "ParticleData.h"
-#include "ParticleForceData.h"
-#include "WrapOpenMP.h"
-#include <string>
-
-using Log::global_log;
 
 typedef enum {
 	LEAVING_AND_HALO_COPIES = 0, /** send process-leaving particles and halo-copies together in one message */
 	HALO_COPIES = 1, /** send halo-copies only */
 	LEAVING_ONLY = 2, /** send process-leaving particles only */
-	FORCES = 3 //< send forces
+	FORCES = 3
 } MessageType;
 
 class ParticleContainer;
-class ParticleForceData;
 
 struct PositionInfo {
 	double _bothLow[3], _bothHigh[3];
-	double _leavingLow[3], _leavingHigh[3]; 
+	double _leavingLow[3], _leavingHigh[3];
 	double _copiesLow[3], _copiesHigh[3];
 	double _shift[3]; //! for periodic boundaries
 	int _offset[3];
@@ -67,25 +50,16 @@ public:
 
 	~CommunicationPartner();
 
-	template<typename BufferType = ParticleData>
 	void initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
-				MessageType msgType, bool removeFromContainer = false);
+			MessageType msgType, bool removeFromContainer = false);
 
-	template<typename BufferType = ParticleData>
 	bool testSend();
 
-	template<typename BufferType = ParticleData>
 	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-	template<typename BufferType = ParticleData>
 	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
 
-	template <class BufferType>
-	void testRecvHandle(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, int numrecv);
-
-	template<typename BufferType = ParticleData>
 	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
-
 
 	void deadlockDiagnosticSendRecv();
 	void deadlockDiagnosticSend();
@@ -139,55 +113,14 @@ public:
 	size_t getDynamicSize();
 
 private:
-<<<<<<< .working
-	template<typename BufferType = ParticleData> // default BufferType - so you don't have to type it all the time?
-	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
-			const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
-||||||| .merge-left.r4919 // before local and trunk changes?
-	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
-=======
 	enum HaloOrLeavingCorrection{
 		HALO,
 		LEAVING,
 		NONE
 	};
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
-			const double highCorner[3], const double shift[3], const bool removeFromContainer, // removeFromContainer default value?
-			HaloOrLeavingCorrection haloLeaveCorr = HaloOrLeavingCorrection::NONE); // Additional parameter HaloOrLeavingCorrection?
->>>>>>> .merge-right.r5797
-
-	//! Decide if T is ParticleForceData or ParticleData. Fail if T is something else.
-	template<typename BufferType>
-	static constexpr inline typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, bool>::type isForceData(){
-		return true;
-	}
-
-	template<typename BufferType>
-	static constexpr inline typename std::enable_if<std::is_same<BufferType, ParticleData>::value, bool>::type isForceData() {
-		return false;
-	}
-
-	//! Returns the receive buffer for a specific buffer type
-	template<typename BufferType>
-	inline typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, std::vector<BufferType>&>::type getRecvBuf(){
-		return _recvBufForces;
-	}
-
-	template<typename BufferType>
-	inline typename std::enable_if<std::is_same<BufferType, ParticleData>::value, std::vector<BufferType>&>::type getRecvBuf(){
-		return _recvBuf;
-	}
-
-	//! Returns the send buffer for a specific buffer type
-	template<typename BufferType>
-	inline typename std::enable_if<std::is_same<BufferType, ParticleForceData>::value, std::vector<BufferType>&>::type  getSendBuf(){
-		return _sendBufForces;
-	}
-
-	template<typename BufferType>
-	inline typename std::enable_if<std::is_same<BufferType, ParticleData>::value, std::vector<BufferType>&>::type  getSendBuf(){
-		return _sendBuf;
-	}
+			const double highCorner[3], const double shift[3], const bool removeFromContainer,
+			HaloOrLeavingCorrection haloLeaveCorr = HaloOrLeavingCorrection::NONE);
 
 	int _rank;
         int _countTested;
@@ -197,8 +130,8 @@ private:
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
 	CommunicationBuffer _sendBuf, _recvBuf;
-	std::vector<ParticleForceData> _sendBufForces, _recvBufForces;
 	bool _msgSent, _countReceived, _msgReceived;
 
 };
+
 #endif /* COMMUNICATIONPARTNER_H_ */

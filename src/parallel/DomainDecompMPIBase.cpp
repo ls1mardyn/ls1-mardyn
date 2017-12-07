@@ -12,16 +12,13 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
-<<<<<<< .working
+
 #include "parallel/ZonalMethods/FullShell.h"
 #include "parallel/ZonalMethods/HalfShell.h"
 #include "parallel/ZonalMethods/Midpoint.h"
 #include "parallel/ZonalMethods/NeutralTerritory.h"
-||||||| .merge-left.r4919
-=======
 #include "parallel/CollectiveCommunication.h" // probably new stuff - add
 #include "parallel/CollectiveCommunicationNonBlocking.h" // probably new stuff - add
->>>>>>> .merge-right.r5797
 
 using Log::global_log;
 using std::endl;
@@ -36,16 +33,9 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &_numProcs));
 
-	ParticleData::getMPIType(_mpiParticleType);
-<<<<<<< .working // changes to constructor
-	ParticleForceData::getMPIType(_mpiParticleForceType);
-||||||| .merge-left.r4919
-=======
-
 
 	_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunication());
 	//_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
->>>>>>> .merge-right.r5797
 }
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
@@ -244,7 +234,7 @@ void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContai
 	global_log->set_mpi_output_root(0);
 }
 
-<<<<<<< .working
+
 
 void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) { // this is new, how was this previously done?
 	global_log->set_mpi_output_all();
@@ -255,8 +245,6 @@ void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, D
 	global_log->set_mpi_output_root(0);
 }
 
-||||||| .merge-left.r4919
-=======
 size_t DomainDecompMPIBase::getTotalSize() { // another new method
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
 			+ _collCommunication->getTotalSize();
