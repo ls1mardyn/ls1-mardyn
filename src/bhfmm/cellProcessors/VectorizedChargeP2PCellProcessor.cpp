@@ -51,7 +51,7 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	} // end pragma omp parallel
 
 #ifdef ENABLE_MPI
-	global_simulation->setOutputString("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", "FMM: Time spent in Charge P2P ");
+	global_simulation->timers()->setOutputString("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", "FMM: Time spent in Charge P2P ");
 	//global_simulation->setSyncTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", false); //it is per default false
 #endif
 }
@@ -67,12 +67,12 @@ VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
 }
 
 void VectorizedChargeP2PCellProcessor::printTimers() {
-	std::cout << "FMM: Time spent in Charge P2P " << global_simulation->getTime("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P") << std::endl;
-	//global_simulation->printTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
+	std::cout << "FMM: Time spent in Charge P2P " << global_simulation->timers()->getTime("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P") << std::endl;
+	global_simulation->timers()->print("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
 
 void VectorizedChargeP2PCellProcessor::initTraversal() {
-	global_simulation->startTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
+	global_simulation->timers()->start("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 
 	#if defined(_OPENMP)
 	#pragma omp master
@@ -111,7 +111,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 	_virial = glob_virial;
 	_domain.setLocalVirial(currentVirial + _virial);
 	_domain.setLocalUpot(currentUpot + _upotXpoles);
-	global_simulation->stopTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
+	global_simulation->timers()->stop("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
 
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) {
@@ -120,6 +120,8 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 
 	// Determine the total number of centers.
 	size_t numMolecules = c.getMoleculeCount();
+	if(numMolecules == 0)
+		return;
 	size_t nLJCenters = 0;
 	size_t nCharges = 0;
 	size_t nDipoles = 0;
@@ -193,6 +195,11 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 	// as pre new integration of Caches in SoAs, 
 	// this function work as before, as it builds secondary SoAs
 	using std::isnan; // C++11 required
+
+	size_t numMolecules = c.getMoleculeCount();
+	if(numMolecules == 0)
+		return;
+
 	CellDataSoA& soa = c.getCellDataSoA();
 
 	//for better readability:
@@ -209,13 +216,12 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
-	size_t numMolecules = c.getMoleculeCount();
 	for (size_t i = 0; i < numMolecules; ++i) {
 		Molecule& m = c.moleculesAt(i);
 
 		const size_t mol_charges_num = m.numCharges();
 
-		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
+		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges) {
 			// Store the resulting force in the molecule.
 			double f[3];
 			f[0] = static_cast<double>(soa_charges_f_x[iCharges]);
@@ -224,7 +230,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			mardyn_assert(!isnan(f[0]));
 			mardyn_assert(!isnan(f[1]));
 			mardyn_assert(!isnan(f[2]));
-			m.Fchargeadd(i, f);
+			m.Fchargeadd(j, f);
 
 			// Store the resulting virial in the molecule.
 			double V[3];
@@ -364,12 +370,13 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 	size_t i_charge_idx = 0;
 
 	// Iterate over each center in the first cell.
-	for (size_t i = 0; i < soa1._mol_num; ++i) {//over the molecules
+	const size_t soa1_mol_num = soa1.getMolNum();
+	for (size_t i = 0; i < soa1_mol_num; ++i) {//over the molecules
 		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
 		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
 		const RealCalcVec m1_r_z = RealCalcVec::broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
-		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
+		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_charge_idx, soa2._charges_num,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
 				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);
 
@@ -512,13 +519,13 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 		}
 	}
 
-	hSum_Add_Store(my_threadData._upotXpolesV, sum_upotXpoles);
-	hSum_Add_Store(my_threadData._virialV, sum_virial);
+	sum_upotXpoles.aligned_load_add_store(&my_threadData._upotXpolesV[0]);
+	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 } // void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2)
 
 void VectorizedChargeP2PCellProcessor::processCell(ParticleCellPointers & c) {
 	CellDataSoA& soa = c.getCellDataSoA();
-	if (c.isHaloCell() or soa._mol_num < 2) {
+	if (c.isHaloCell() or soa.getMolNum() < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
@@ -536,10 +543,10 @@ void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCellPointers & c1
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty, or both cells are Halo, skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
 

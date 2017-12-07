@@ -97,7 +97,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	} // end pragma omp parallel
 
 #ifdef ENABLE_MPI
-	global_simulation->setOutputString("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", "FMM: Time spent in LJ P2P ");
+	global_simulation->timers()->setOutputString("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", "FMM: Time spent in LJ P2P ");
 	//global_simulation->setSyncTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", false); //it is per default false
 #endif
 }
@@ -113,12 +113,12 @@ VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
 }
 
 void VectorizedLJP2PCellProcessor::printTimers() {
-	std::cout << "FMM: Time spent in LJ P2P " << global_simulation->getTime("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P") << std::endl;
-	//global_simulation->printTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
+	std::cout << "FMM: Time spent in LJ P2P " << global_simulation->timers()->getTime("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P") << std::endl;
+	global_simulation->timers()->print("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 
 void VectorizedLJP2PCellProcessor::initTraversal() {
-	global_simulation->startTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
+	global_simulation->timers()->start("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 
 	#if defined(_OPENMP)
 	#pragma omp master
@@ -156,7 +156,7 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 	_virial = glob_virial;
 	_domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/);
 	_domain.setLocalUpot(_upot6lj / 6.0 /*+ _upotXpoles + _myRF*/);
-	global_simulation->stopTimer("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
+	global_simulation->timers()->stop("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 
 //const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
@@ -294,17 +294,18 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2._ljc_num);//this is ceil _ljc_num, VCP_VEC_SIZE
 	size_t i_ljc_idx = 0;
 
-	//if(soa1._mol_num < 8){
+	//if(soa1.getMolNum() < 8){
 	//	printf("less than 8\n");
 	//}
 
 	// Iterate over each center in the first cell.
-	for (size_t i = 0; i < soa1._mol_num; ++i) {//over the molecules
+	const size_t soa1_mol_num = soa1.getMolNum();
+	for (size_t i = 0; i < soa1_mol_num; ++i) {//over the molecules
 		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
 		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
 		const RealCalcVec m1_r_z = RealCalcVec::broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
-		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
+		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_ljc_idx, soa2._ljc_num,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
 				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
 
@@ -452,14 +453,14 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 		}
 	}
 
-	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
-	hSum_Add_Store(my_threadData._virialV, sum_virial);
+	sum_upot6lj.aligned_load_add_store(&my_threadData._upot6ljV[0]);
+	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 }
 
 void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {
 	FullParticleCell & full_c = downcastCellReferenceFull(c);
 	CellDataSoA& soa = full_c.getCellDataSoA();
-	if (full_c.isHaloCell() or soa._mol_num < 2) {
+	if (full_c.isHaloCell() or soa.getMolNum() < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
@@ -480,10 +481,10 @@ void VectorizedLJP2PCellProcessor::processCellPairSumHalf(ParticleCell & c1, Par
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty, or both cells are Halo, skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
 

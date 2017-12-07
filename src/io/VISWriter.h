@@ -47,6 +47,7 @@ public:
 	std::string getPluginName() {
 		return std::string("VISWriter");
 	}
+	static OutputBase* createInstance() { return new VISWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

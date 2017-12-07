@@ -21,6 +21,7 @@
 #include "bhfmm/fft/FFTFactory.h"
 #include "bhfmm/fft/FFTOrderReduction.h"
 #include "bhfmm/fft/TransferFunctionManagerAPI.h"
+#include <bhfmm/FastMultipoleMethod.h>
 #endif /* FMM_FFT */
 
 #include <vector>
@@ -32,11 +33,20 @@ class Domain;
 class DomainDecompBase;
 
 namespace bhfmm {
-
 class UniformPseudoParticleContainer: public PseudoParticleContainer {
 public:
-	UniformPseudoParticleContainer(double domainLength[3], double bBoxMin[3], double bBoxMax[3],
-			double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions, ParticleContainer* ljContainer, bool periodic = true);
+	UniformPseudoParticleContainer(double domainLength[3],
+								   double bBoxMin[3],
+								   double bBoxMax[3],
+								   double LJCellLength[3],
+								   unsigned LJSubdivisionFactor,
+								   int orderOfExpansions,
+								   ParticleContainer* ljContainer,
+								   bool periodic = true
+#ifdef QUICKSCHED
+								   , qsched *scheduler = nullptr
+#endif
+	);
 	~UniformPseudoParticleContainer();
 
 	void clear();
@@ -57,11 +67,29 @@ public:
 	//prints timer values to the standard output
 	void printTimers();
 
+    std::vector<std::vector<MpCell>> &getMpCellGlobalTop() ;
 
+#ifdef FMM_FFT
+    FFTAccelerationAPI *getFFTAcceleration() ;
+#endif
+
+    template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
+    void M2LTowerPlateStep(int m1Loop, int mpCells, int curLevel);
+
+// stuff used by Quicksched
+    void M2MCompleteCell(int targetId, int level, int cellsPerDim);
+    void P2MCompleteCell(int sourceId);
+    void M2LCompleteCell(int targetId, int level, int cellsPerDimension);
+    void M2LPair2Way(int cellA, int cellB, int level, int cellsPerDimension);
+	void L2LCompleteCell(int sourceId, int level, int cellsPerDimension);
+	void L2PCompleteCell(int targetId);
+    enum taskModelTypesM2L {
+        CompleteTarget,
+        Pair2Way
+    };
 
 private:
 	LeafNodesContainer* _leafContainer;
-
 	int _wellSep;
 	int _maxLevel;	//number of tree levels
 	int _globalLevel;	//number of levels in global tree
@@ -123,7 +151,7 @@ private:
 
 	// M2L
 	void GatherWellSepLo_Local(double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos);
-  
+
 
 #ifdef FMM_FFT
 	// M2L
@@ -284,6 +312,34 @@ private:
 	MPI_Comm * _allReduceComms; //MPI communicator that stores all MPI rank that need to communicate in global reduce for each possible stoplevel
 #endif
 	int _overlapComm; //indicates if overlap of communication is desired; Must be true currently!
+
+#ifdef QUICKSCHED
+    void generateResources(qsched *scheduler);
+    /**
+     * Needs M2L tasks
+     */
+    void generateP2MTasks(qsched* scheduler);
+    /**
+     * Needs M2L and P2M tasks
+     */
+    void generateM2MTasks(qsched* scheduler);
+    /**
+     * Needs L2P tasks
+     */
+    void generateP2PTasks(qsched *scheduler);
+	/**
+	 * Needs L2L tasks to be already created
+	 */
+    void generateM2LTasks(qsched *scheduler, taskModelTypesM2L taskModelM2L);
+	/**
+	 * Needs generateResources to be run first and L2P tasks created
+	 */
+    void generateL2LTasks(qsched *scheduler);
+    /**
+     * Need generateResources to be run first
+     */
+    void generateL2PTasks(qsched *scheduler);
+#endif
 
 };
 

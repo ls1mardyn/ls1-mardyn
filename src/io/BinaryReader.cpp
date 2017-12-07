@@ -42,11 +42,21 @@ BinaryReader::BinaryReader()
 	: _nMoleculeFormat(ICRVQD)
 {
 	// TODO Auto-generated constructor stub
-
 }
 
-BinaryReader::~BinaryReader() {
-	// TODO Auto-generated destructor stub
+BinaryReader::~BinaryReader() {}
+
+void BinaryReader::readXML(XMLfileUnits& xmlconfig) {
+	string pspfile;
+	string pspheaderfile;
+	xmlconfig.getNodeValue("header", pspheaderfile);
+	pspheaderfile.insert(0, xmlconfig.getDir());
+	global_log->info() << "phase space header file: " << pspheaderfile << endl;
+	xmlconfig.getNodeValue("data", pspfile);
+	pspfile.insert(0, xmlconfig.getDir());
+	global_log->info() << "phase space header file: " << pspfile << endl;
+	setPhaseSpaceHeaderFile(pspheaderfile);
+	setPhaseSpaceFile(pspfile);
 }
 
 void BinaryReader::setPhaseSpaceFile(string filename) {
@@ -100,9 +110,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 	// Set parameters of Domain and Simulation class
 	_simulation.setSimulationTime(dCurrentTime);
-	for( uint8_t d=0; d<3; ++d)
-	{
-		static_cast<BoxDomain*>(_simulation.getEnsemble()->domain())->setLength(d, dBoxLength[d]);
+	for( uint8_t d=0; d<3; ++d) {
 		domain->setGlobalLength(d, dBoxLength[d]);
 	}
 	domain->setglobalNumMolecules(numMolecules);
@@ -125,7 +133,7 @@ unsigned long BinaryReader::readPhaseSpace(
 		if (!_phaseSpaceFileStream.is_open()) {
 			global_log->error() << "Could not open phaseSpaceFile "
 					<< _phaseSpaceFile << endl;
-			exit(1);
+			Simulation::exit(1);
 		}
 		global_log->info() << "Reading phase space file " << _phaseSpaceFile
 				<< endl;
@@ -213,7 +221,7 @@ unsigned long BinaryReader::readPhaseSpace(
 				global_log->error() << "Molecule id " << id
 						<< " has wrong componentid: " << componentid << ">"
 						<< numcomponents << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			componentid--; // TODO: Component IDs start with 0 in the program.
 

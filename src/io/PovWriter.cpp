@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include "Common.h"
 #include "Domain.h"
@@ -15,20 +16,21 @@ using Log::global_log;
 using namespace std;
 
 
-PovWriter::PovWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
-	_outputPrefix = outputPrefix;
-	_writeFrequency = writeFrequency;
-	_incremental = incremental;
 
-	if (outputPrefix == "default") {
-		_appendTimestamp = true;
+static void writePOVobjs(Component const &component, std::ostream& ostrm, string para) {
+	if (component.numLJcenters() <= 0) return;
+	if (component.numLJcenters() == 1) {
+		LJcenter LJsite = component.ljcenter(0);
+		ostrm << "sphere {<" << LJsite.rx() << "," << LJsite.ry() << "," << LJsite.rz() << ">," << .5 * LJsite.sigma() << " " << para << "}";
 	}
 	else {
-		_appendTimestamp = false;
+		ostrm << "blob { threshold 0.01 ";
+		for (auto LJsite : component.ljcenters()) {
+			ostrm << "sphere {<" << LJsite.rx() << "," << LJsite.ry() << "," << LJsite.rz() << ">," << .5 * LJsite.sigma() << ", strength 1 } ";
+		}
+		ostrm << para << "}";
 	}
 }
-
-PovWriter::~PovWriter() {}
 
 
 void PovWriter::readXML(XMLfileUnits& xmlconfig) {
@@ -39,18 +41,17 @@ void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
-	
+
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
 	global_log->info() << "Incremental numbers: " << _incremental << endl;
-	
+
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
-	}
-	else{
+	} else{
 		_appendTimestamp = false;
 	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
@@ -99,7 +100,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 			osstrm << " pigment {color rgb <" << (i + 1) % 2 << "," << (i + 1) / 2 % 2 << "," << (i + 1) / 4 % 2 << ">}";
 			osstrm << " finish{ambient 0.5 diffuse 0.4 phong 0.3 phong_size 3}";
 			ostrm << "#declare T" << i << " = ";
-			dcomponents->at(i).writePOVobjs(ostrm, osstrm.str());
+			writePOVobjs(dcomponents->at(i), ostrm, osstrm.str());
 			ostrm << endl;
 		}
 		ostrm << endl;
@@ -125,7 +126,6 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		double mrot[3][3];
 		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
 			(pos->q()).getRotMatrix(mrot);
-			//cout << "object { T0 rotate <0,0,0> translate <0,0,0>}" << endl;
 			ostrm << "object { T" << pos->componentid();
 			ostrm << " matrix <"
 			      << mrot[0][0] << "," << mrot[0][1] << "," << mrot[0][2] << ","

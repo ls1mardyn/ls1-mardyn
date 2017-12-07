@@ -7,6 +7,8 @@
 #ifndef FFTACC_H_
 #define FFTACC_H_
 
+#include <stdexcept>
+
 #include "bhfmm/fft/FFTDataContainer.h"
 #include "bhfmm/fft/FFTAccelerableExpansion.h"
 

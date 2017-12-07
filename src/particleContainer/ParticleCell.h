@@ -6,12 +6,12 @@
  */
 
 #include "FullParticleCell.h"
-#include "ParticleCellWR.h"
+#include "ParticleCellRMM.h"
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	typedef FullParticleCell ParticleCell;
 #else
-	typedef ParticleCell_WR ParticleCell;
+	typedef ParticleCellRMM ParticleCell;
 #endif
 
 inline FullParticleCell* downcastCellPointerFull(ParticleCellBase* c) {
@@ -24,14 +24,14 @@ inline FullParticleCell& downcastCellReferenceFull(ParticleCellBase& c) {
 	return static_cast<FullParticleCell&>(c);
 }
 
-inline ParticleCell_WR* downcastCellPointerWR(ParticleCellBase* c) {
-	mardyn_assert(static_cast<ParticleCell_WR*>(c) == dynamic_cast<ParticleCell_WR*>(c));
-	return static_cast<ParticleCell_WR*>(c);
+inline ParticleCellRMM* downcastCellPointerRMM(ParticleCellBase* c) {
+	mardyn_assert(static_cast<ParticleCellRMM*>(c) == dynamic_cast<ParticleCellRMM*>(c));
+	return static_cast<ParticleCellRMM*>(c);
 }
 
-inline ParticleCell_WR& downcastCellReferenceWR(ParticleCellBase& c) {
-	mardyn_assert(&static_cast<ParticleCell_WR&>(c) == &dynamic_cast<ParticleCell_WR&>(c));
-	return static_cast<ParticleCell_WR&>(c);
+inline ParticleCellRMM& downcastCellReferenceRMM(ParticleCellBase& c) {
+	mardyn_assert(&static_cast<ParticleCellRMM&>(c) == &dynamic_cast<ParticleCellRMM&>(c));
+	return static_cast<ParticleCellRMM&>(c);
 }
 
 #endif /* PARTICLE_CELL_H_ */

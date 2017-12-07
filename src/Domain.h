@@ -65,9 +65,9 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
-	//! @param binary indicates wheter binary I/O is used or not
+	//! @param useBinaryFormat indicates wheter binary I/O is used or not
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime, bool binary = false);
+			const DomainDecompBase* domainDecomp, double currentTime, bool useBinaryFormat = false);
 
 	//! @brief writes a checkpoint file that can be used to continue the simulation
 	//!
@@ -158,23 +158,23 @@ public:
 
 	//! @brief return the length of the domain
 	//!
-	//! @param index dimension for which the length should be returned
-	double getGlobalLength(int index) const;
+	//! @param d  dimension for which the length should be returned
+	double getGlobalLength(int d) const { return _globalLength[d]; }
 
 	//! @brief set the length of the domain
 	//!
 	//! @param index dimension for which the length should be set
-	//! @param index value which should be set
+	//! @param length value which should be set
 	void setGlobalLength(int index, double length);
 
 	//! @brief get the global temperature for the whole system (i.e. thermostat ID 0)
-	double getGlobalCurrentTemperature() { return this->getCurrentTemperature(0); }
-	double getCurrentTemperature(int thermostat) { return this->_globalTemperatureMap[thermostat]; }
-	double getTargetTemperature(int thermostat) { return this->_universalTargetTemperature[thermostat]; }
+	double getGlobalCurrentTemperature() { return getCurrentTemperature(0); }
+	double getCurrentTemperature(int thermostatID) { return _globalTemperatureMap[thermostatID]; }
+	double getTargetTemperature(int thermostatID) { return _universalTargetTemperature[thermostatID]; }
 
 	//! @brief set the global temperature
-	void setGlobalTemperature(double T);
-	void setTargetTemperature(int thermostat, double T);
+	void setGlobalTemperature(double T) { setTargetTemperature(0, T); }
+	void setTargetTemperature(int thermostatID, double T);
 
 	//! @brief get the mixcoeff
 	std::vector<double> & getmixcoeff();
@@ -386,7 +386,6 @@ public:
 
 	void Nadd(unsigned cid, int N, int localN);
 
-	double getGlobalLength(int d) { return _globalLength[d]; }
 	double getGlobalVolume() const { return (_globalLength[0] *  _globalLength[1] *  _globalLength[2]); }
 
 	void thermostatOff() { this->_universalNVE = true; }
@@ -417,12 +416,6 @@ public:
 	
 	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
-	//! reset the surface tension
-	void resetGamma();
-
-	double getGamma(unsigned id);
-	//! Calcute the surface tension from the virial tensor
-	void calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition);
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
@@ -597,17 +590,12 @@ private:
 	//! Global virial correction for the error made by the cutoff
 	double _VirialCorr;
 
-	//! Contains the time t in reduced units
-	double currentTime;  //edited by Michaela Heier
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
 	//! modified Lorentz-Berthelot mixing rule parameters
 	//! @todo more explanation
 	std::vector<double> _mixcoeff;
-	
-	//! Surface tension component wise
-	std::map<unsigned,double> _Gamma;
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     bool _bDoExplosionHeuristics;

@@ -89,7 +89,7 @@ struct AlignedAllocator {
 	/**
 	 * \brief Deallocate memory pointed to by ptr
 	 */
-	void deallocate(T* ptr, std::size_t n) {
+	void deallocate(T* ptr, std::size_t /*n*/) {
 #if defined(__SSE3__) && !defined(__PGI)
 		_mm_free(ptr);
 #else

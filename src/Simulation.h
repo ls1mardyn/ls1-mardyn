@@ -1,16 +1,14 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include <memory>
+
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "io/TimerProfiler.h"
-#include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
-#ifdef USE_VT
-#include "VT.h"
-#endif
 class Wall;
 class Mirror;
 using optparse::Values;
@@ -31,6 +29,7 @@ class Ensemble;
 #include <list>
 #include <vector>
 #include <string>
+#include <io/TaskTimingProfiler.h>
 
 #ifdef STEEREO
 class SteereoSimSteering;
@@ -71,40 +70,7 @@ class FastMultipoleMethod;
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *
- * Some of the simulation parameters are provided in a config file.
- * The order of the parameters in the config file is important.
- * Thats's because e.g. the datastructure can only be built after the
- * phasespace has been read.
- *
- * The config file usually has the file ending ".cfg" and
- * starts with a line containing the token "mardynconfig"
- * followed by the following parameters, among others
- * (possibly mixed with comment lines starting with "#"):
- * - timestepLength: Uses by the Iterator to calculate new velocities and positions
- * - cutoffRadius: Determines the maximum distance for which the force between two
- *                   molecules still has to be calculated
- * - phaseSpaceFile: Full path to the XDR file containing the phase space
- * - parallelization: Parallelisation scheme to be used
- *                    - DomainDecomposition: standard spacial domain decomposition into
- *                                           cuboid regions of equal size
- * - datastructure: Datastructure to be used (e.g. Linked Cells) followed by
- *                    the parameters for the datastructures
- *                  The datastructure LinkedCells needs one additional parameter,
- *                  which is the number of cells in the cutoff radius (equals to the
- *                  cutoff radius divided by the cell length).
- *
- * Example for a config file:
- *
- * \code{.txt}
- *  mardynconfig
- *  timestepLength 0.00005
- *  cutoffRadius 3.0
- *  phaseSpaceFile OldStype phasespace.xdr
- *  # datastructure followed by the parameters for the datastructure
- *  # for LinkedCells, the cellsInCutoffRadius has to be provided
- *  datastructure LinkedCells 1
- *  parallelization DomainDecomposition
- * \endcode
+ * Simulation parameters are provided via a xml config file or can be set directly via the corresponding methods.
  */
 class Simulation {
 private:
@@ -124,7 +90,7 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <simulation>
-	     <integrator type=STRING><!-- see Integrator class documentation --></integrator>
+	     <integrator type="STRING"><!-- see Integrator class documentation --></integrator>
 	     <run>
 	       <production>
 	         <steps>INTEGER</steps>
@@ -151,7 +117,7 @@ public:
 	       </thermostats>
 	     </algorithm>
 	     <output>
-	       <outputplugin><!-- see OutputBase class and specific plugin documentation --></outputplugin>
+	       <outputplugin name=STRING enabled="yes|no"><!-- see OutputBase class and specific plugin documentation --></outputplugin>
 	     </output>
 	   </simulation>
 	   \endcode
@@ -168,43 +134,15 @@ public:
 
 	/** @brief process configuration file
 	 *
-	 * calls initConfigXML or initConfigOldStyle
+	 * calls initConfigXML
 	 * @param[in]  filename filename of the input file
 	 */
 	void readConfigFile(std::string filename);
-	void readConfigFile(const char* filename) {
-		readConfigFile(std::string(filename));
-	}
 
-	/** @brief process XML configuration file (*.xml)
-	 *
-	 * Opens the XML file with the given filename and reads in all parameters
-	 * for the simulaion and initializes the following member variables:
-	 * - timestepLength:
-	 * - cutoffRadius
-	 * - phaseSpace
-	 * - moleculeContainer
+	/** @brief Opens given XML file and reads in parameters for the simulaion.
 	 * @param[in]  inputfilename filename of the XML input file
 	 */
 	void initConfigXML(const std::string& inputfilename);
-	void initConfigXML(const char* inputfilename) {
-		initConfigXML(std::string(inputfilename));
-	}
-
-	/** @brief process oldstyle configuration file (*.cfg)
-	 *
-	 * Opens the file with the given filename and reads in all parameters
-	 * for the simulaion and initializes the following member variables:
-	 * - timestepLength:
-	 * - cutoffRadius
-	 * - phaseSpace
-	 * - moleculeContainer
-	 * @param[in]  inputfilename filename of the XML input file
-	 */
-	void initConfigOldstyle(const std::string& inputfilename);
-	void initConfigOldstyle(const char* inputfilename) {
-		initConfigOldstyle(std::string(inputfilename));
-	}
 
 	/** @brief calculate all values for the starting timepoint
 	 *
@@ -260,14 +198,14 @@ public:
 	 * - update the caches of the molecules
 	 * - update the ParticleContainer
 	 */
-	void updateParticleContainerAndDecomposition();
+	void updateParticleContainerAndDecomposition(double lastTraversalTime);
 
 	/**
 	 * Performs both the decomposition and the cell traversal in an overlapping way.
 	 * The overlapping is needed to speed up the overall computation. The order of cells
 	 * traversed will be different, than for the non-overlapping case, slightly different results are possible.
 	 */
-	void performOverlappingDecompositionAndCellTraversalStep();
+	void performOverlappingDecompositionAndCellTraversalStep(double etime);
 
 	/**
 	 * Set the private _domainDecomposition variable to a new pointer.
@@ -330,18 +268,10 @@ public:
 	 */
 	double Tfactor(unsigned long simstep);
 
-	void mkTcTS(Values &options);
-
 	void initCanonical(unsigned long t) { this->_initCanonical = t; }
 	void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }
 
-	void profileSettings(unsigned long profileRecordingTimesteps, unsigned long profileOutputTimesteps, std::string profileOutputPrefix) {
-	   this->_doRecordProfile = true;
-	   this->_profileRecordingTimesteps = profileRecordingTimesteps;
-	   this->_profileOutputTimesteps = profileOutputTimesteps;
-	   this->_profileOutputPrefix = profileOutputPrefix;
-	}
 	void setSimulationTime(double curtime) { _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }
 	double getSimulationTime() { return _simulationTime; }
@@ -349,80 +279,12 @@ public:
 	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
 
-	MemoryProfiler* getMemoryProfiler() {
+	std::shared_ptr<MemoryProfiler> getMemoryProfiler() {
 		return _memoryProfiler;
 	}
 
-	Timer* getTimer(std::string timerName){
-		return _timerProfiler.getTimer(timerName);
-	}
-
-	void activateTimer(std::string timerName){
-		_timerProfiler.activateTimer(timerName);
-	}
-
-	void deactivateTimer(std::string timerName){
-		_timerProfiler.deactivateTimer(timerName);
-	}
-
-	void setSyncTimer(std::string timerName, bool sync){
-		_timerProfiler.setSyncTimer(timerName, sync);
-	}
-
-	void printTimer(std::string timerName){
-		_timerProfiler.print(timerName);
-	}
-
-	void printTimers(std::string startingTimerName="SIMULATION"){
-		_timerProfiler.printTimers(startingTimerName);
-	}
-
-	void resetTimers(std::string startingTimerName="SIMULATION"){
-		_timerProfiler.resetTimers(startingTimerName);
-	}
-
-	void startTimer(std::string timerName){
-		_timerProfiler.start(timerName);
-	}
-
-	void stopTimer(std::string timerName){
-		_timerProfiler.stop(timerName);
-	}
-
-	void resetTimer(std::string timerName){
-		_timerProfiler.reset(timerName);
-	}
-
-	double getTime(std::string timerName){
-		return _timerProfiler.getTime(timerName);
-	}
-
-	void setOutputString(std::string timerName, std::string outputString){
-		_timerProfiler.setOutputString(timerName, outputString);
-	}
-
-	void incrementTimerTimestepCounter() {
-		_timerProfiler.incrementTimerTimestepCounter();
-	}
-
-	unsigned long getTimerTimestepCounter() const {
-		return _timerProfiler.getNumElapsedIterations();
-	}
-
-	void setProfileParameters(
-		bool doRecordProfile,
-		bool doRecordVirialProfile,
-		unsigned profileRecordingTimesteps,
-		unsigned profileOutputTimesteps,
-		std::string profileOutputPrefix,
-		unsigned long initStatistics)
-	{
-		_doRecordProfile = doRecordProfile;
-		_doRecordVirialProfile = doRecordVirialProfile;
-		_profileRecordingTimesteps = profileRecordingTimesteps;
-		_profileOutputTimesteps = profileOutputTimesteps;
-		_profileOutputPrefix = profileOutputPrefix;
-		_initStatistics = initStatistics;
+	TimerProfiler* timers() {
+		return &_timerProfiler;
 	}
 
 private:
@@ -440,28 +302,6 @@ private:
 
 	/** LJ cutoff (may be smaller than the RDF/electrostatics cutoff) */
 	double _LJCutoffRadius;
-
-	/** flag specifying whether planar interface profiles are recorded */
-	bool _doRecordProfile;
-	/** Interval between two evaluations of the profile.
-	 * This means that only 1 / _profileRecordingTimesteps of the
-	 * internally available data are actually used, so if precision is
-	 * a concern, set the value to 1. On the other hand, the program
-	 * may be accelerated somewhat by increasing the interval.
-	 */
-	bool _doRecordVirialProfile;
-	unsigned _profileRecordingTimesteps;
-	/** Aggregation interval for the profile data, i.e. if _profileRecordingTimesteps
-	 * is 100 and _profileOutputTimesteps is 20 000, this means that
-	 * the profiles found in the output are averages over 200 configurations.
-	 */
-	unsigned _profileOutputTimesteps;
-	/** Although the meaning of this should be obvious, it may be noted
-	 * that the time step and "rhpry" (density), "vzpry" (z-velocity),
-	 * and Tpry (kinetic energy) will be attached to the prefix for
-	 * the different profiles.
-     */
-	std::string _profileOutputPrefix;
 
 	/** A thermostat can be specified to account for the directed
 	 * motion, which means that only the undirected kinetic energy is
@@ -483,7 +323,12 @@ private:
 	int _thermostatType;
 	double _nuAndersen;
 
-	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps to be performed in the simulation */
+	unsigned long _numberOfTimesteps;
+public:
+    unsigned long getNumberOfTimesteps() const;
+
+private:
+    /**< Number of discrete time steps to be performed in the simulation */
 
 	unsigned long _simstep;             /**< Actual time step in the simulation. */
 
@@ -501,9 +346,6 @@ private:
 	/** Flow regulation */
 	PressureGradient* _pressureGradient;
 
-	/** Component to calculate the radial distribution function */
-	RDF* _rdf;
-
 	/** Datastructure for finding neighbours efficiently */
 	ParticleContainer* _moleculeContainer;
 
@@ -513,8 +355,6 @@ private:
 	/** New cellhandler, which will one day replace the particlePairsHandler here completely. */
 	CellProcessor* _cellProcessor;
 
-	/** Type of the domain decomposition */
-	DomainDecompType _domainDecompositionType;
 	/** module which handles the domain decomposition */
 	DomainDecompBase* _domainDecomposition;
 
@@ -551,8 +391,6 @@ private:
 	Wall* _wall;
 	Mirror* _mirror;
 
-	//! flags to control the cancel of the momentum 
-	bool _doCancelMomentum;
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;
 	
@@ -572,9 +410,18 @@ private:
 	TimerProfiler _timerProfiler;
 
 	//! used to get information about the memory consumed by the process and the overall system.
-	MemoryProfiler* _memoryProfiler;
+	std::shared_ptr<MemoryProfiler> _memoryProfiler;
 
+#ifdef TASKTIMINGPROFILE
+	/** Used to track what thread worked on which task for how long and plot it **/
+	TaskTimingProfiler* _taskTimingProfiler;
+#endif
 public:
+#ifdef TASKTIMINGPROFILE
+    TaskTimingProfiler* getTaskTimingProfiler(){
+        return _taskTimingProfiler;
+    }
+#endif
 	//! computational time for one execution of traverseCell
 	double getAndResetOneLoopCompTime() {
 		if(_loopCompTimeSteps==0){
@@ -592,17 +439,20 @@ public:
 	void enableFinalCheckpoint() { _finalCheckpoint = true; }
 	void disableFinalCheckpoint() { _finalCheckpoint = false; }
 
+	void enableMemoryProfiler() {
+		_memoryProfiler = std::make_shared<MemoryProfiler>();
+		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
+		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_domainDecomposition));
+	}
+
 	void setForcedCheckpointTime(double time) { _forced_checkpoint_time = time; }
 
 	/** initialize all member variables with a suitable value */
 	void initialize();
-	void setName(std::string name) {
-		_programName = name;
-	}
-	std::string getName() {
-		return _programName;
-	}
 
+	/** @brief get output plugin
+	 * @return pointer to the output plugin if it is active, otherwise nullptr
+	 */
 	OutputBase* getOutputPlugin(const std::string& name);
 
 	void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
@@ -654,8 +504,6 @@ private:
 
 	int _loopCompTimeSteps;
 
-	std::string _programName;
-
 	/** Check initial max. force (Fmax) after reading in start configuration or checkpoint after a restart. */
 	uint32_t _nFmaxOpt;
 	uint64_t _nFmaxID;
@@ -663,16 +511,10 @@ private:
 	double _dFmaxThreshold;
 
 	/** Global energy log */
-	unsigned long _nNumMolsGlobalEnergyLocal;
-	double _UkinLocal;
-	double _UkinTransLocal;
-	double _UkinRotLocal;
-	unsigned long _nNumMolsGlobalEnergyGlobal;
-	double _UkinGlobal;
-	double _UkinTransGlobal;
-	double _UkinRotGlobal;
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
+
+	bool _virialRequired;
 };
 #endif /*SIMULATION_H_*/
 

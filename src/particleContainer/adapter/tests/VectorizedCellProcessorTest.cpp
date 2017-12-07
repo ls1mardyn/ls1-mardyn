@@ -13,10 +13,10 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 TEST_SUITE_REGISTRATION(VectorizedCellProcessorTest);
 #else
-#pragma message "Compilation info: VectorizedCellProcessorTest disabled in MARDYN_WR mode"
+#pragma message "Compilation info: VectorizedCellProcessorTest disabled in reduced memory mode"
 #endif
 
 VectorizedCellProcessorTest::VectorizedCellProcessorTest() {

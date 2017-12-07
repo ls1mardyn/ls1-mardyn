@@ -141,7 +141,7 @@ void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 unsigned long MS2RSTGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	global_simulation->startTimer("MS2RST_GENERATOR_INPUT");
+	global_simulation->timers()->start("MS2RST_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (MS2RSTGenerator)." << endl;
 
 	std::vector<bool> rotationDOF(1);
@@ -171,9 +171,9 @@ unsigned long MS2RSTGenerator::readPhaseSpace(ParticleContainer* particleContain
 
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
-	global_simulation->startTimer("MS2RST_GENERATOR_INPUT");
-	global_simulation->setOutputString("MS2RST_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("MS2RST_GENERATOR_INPUT") << " sec" << endl;
+	global_simulation->timers()->start("MS2RST_GENERATOR_INPUT");
+	global_simulation->timers()->setOutputString("MS2RST_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("MS2RST_GENERATOR_INPUT") << " sec" << endl;
 	return _numMolecules;
 }
 

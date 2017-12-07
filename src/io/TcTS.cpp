@@ -19,9 +19,15 @@ using Log::global_log;
 #define VARFRACTION 0.125
 
 void MkTcTSGenerator::readXML(XMLfileUnits& xmlconfig) {
-// 	TODO: Add option to control the layer thicknesses
-// 	xmlconfig.getNodeValue("layer1/heigth", heigth1);
-// 	global_log->info() << "Layer 1, heigth: " << heigth1 << endl;
+	//this is the ratio of the length of the domain box that layer1 encompasses (has to be between 0 and 1)
+	l1_ratio = 0.5;
+	//this is the offset of the beginning of layer 1 from the box_boundaries given in realtive values to the box_length
+	//if l1_offset is 0.5 layer1 begins in the middle of the box
+	//has to be between 0 and 1
+	l1_offset = 0.3;
+	xmlconfig.getNodeValue("layer1/l1_ratio", l1_ratio);
+	global_log->info() << "Layer 1, ratio: " << l1_ratio << endl;
+	xmlconfig.getNodeValue("layer1/l1_offset", l1_offset);
 	xmlconfig.getNodeValue("layer1/density", rho1);
 	global_log->info() << "Layer 1, density: " << rho1 << endl;
 	rho2 = rho1;
@@ -29,8 +35,24 @@ void MkTcTSGenerator::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Layer 2, density: " << rho2 << endl;
 }
 
+void MkTcTSGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/){
+}
+
 long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* /*lmu*/,
 		Domain* domain, DomainDecompBase* /*domainDecomp*/) {
+	// Mixing coefficients
+	vector<double>& dmixcoeff = domain->getmixcoeff();
+	dmixcoeff.clear();
+
+	unsigned int numcomponents = _simulation.getEnsemble()->getComponents()->size();
+	for (unsigned int i = 1; i < numcomponents; i++) {
+		for (unsigned int j = i + 1; j <= numcomponents; j++) {
+			double xi = 1., eta = 1.;
+
+			dmixcoeff.push_back(xi);
+			dmixcoeff.push_back(eta);
+		}
+	}
 
 	double T = _simulation.getEnsemble()->T();
 	double box[3];
@@ -42,11 +64,12 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 	double fl_unit[3][2];
 	double N_id[2];
 	for(int i=0; i < 2; i++) {
-		N_id[i] = box[0]*(0.5*box[1])*box[2] * ((i == 0)? rho1: rho2);
+		double curr_ratio = (i==0) ? l1_ratio : (1 - l1_ratio);
+		N_id[i] = box[0]*(curr_ratio*box[1])*box[2] * ((i == 0)? rho1: rho2);
 		double N_boxes = N_id[i] / 3.0; /* 3 molecules per box */
 		fl_units[1][i] = (unsigned int) round(
 							pow(
-								(N_boxes * (0.5*box[1]) * (0.5*box[1]))
+								(N_boxes * (curr_ratio*box[1]) * (curr_ratio*box[1]))
 										/ (box[0] * box[2]), 1.0/3.0
 							)
 						);
@@ -55,7 +78,7 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 		fl_units[0][i] = (unsigned int) round(sqrt(box[0] * bxbz_id / box[2]));
 		if(fl_units[0][i] == 0) fl_units[0][i] = 1;
 		fl_units[2][i] = (unsigned int) ceil(bxbz_id / fl_units[0][i]);
-		for(int d=0; d < 3; d++) fl_unit[d][i] = ((d == 1)? 0.5: 1.0) * box[d] / (double)fl_units[d][i];
+		for(int d=0; d < 3; d++) fl_unit[d][i] = ((d == 1)? curr_ratio: 1.0) * box[d] / (double)fl_units[d][i];
 		global_log->debug() << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << endl;
 	}
 
@@ -122,8 +145,12 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 	}
 
 	double loffset[3][2];
-	loffset[0][0] = 0.1; loffset[1][0] = 0.3; loffset[2][0] = 0.1;
-	loffset[0][1] = 0.1; loffset[1][1] = 0.8; loffset[2][1] = 0.1;
+	loffset[0][0] = 0.1; loffset[1][0] = l1_offset; loffset[2][0] = 0.1;
+	double l2_offset = l1_offset + l1_ratio;
+	if(l1_offset > 1){
+		--l1_offset;
+	}
+	loffset[0][1] = 0.1; loffset[1][1] = l2_offset; loffset[2][1] = 0.1;
 	double goffset[3][3] = {
 		{0.0, 0.5, 0.5},
 		{0.5, 0.0, 0.5},
@@ -132,9 +159,16 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 
 	double v_avg = sqrt(3.0 * T);
 
-	Component* component = _simulation.getEnsemble()->getComponent(0);
+	std::vector<Component> *components = _simulation.getEnsemble()->getComponents();
+	if(components->size() > 2){
+		global_log->warning() << "MkTcTs only supports 2 components but " << components->size() << "where given!";
+	}
+	Component *component1 = &(*components)[0];
+	Component *component2 = components->size() >= 2 ? &(*components)[1] : &(*components)[0];
+	//Component* currComponent = _simulation.getEnsemble()->getComponent(0);
 	unsigned ID = 1;
 	for(unsigned l=0; l < 2; l++) {
+		Component *currComponent = l == 0 ? component1 : component2;
 		for(unsigned i=0; i < fl_units[0][l]; i++) {
 			for(unsigned j=0; j < fl_units[1][l]; j++) {
 				for(unsigned k=0; k < fl_units[2][l]; k++) {
@@ -158,7 +192,7 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 							v[0] = v_avg*cos(phi)*cos(omega);
 							v[1] = v_avg*cos(phi)*sin(omega);
 							v[2] = v_avg*sin(phi);
-							Molecule molecule(ID, component, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
+							Molecule molecule(ID, currComponent, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
 							particleContainer->addParticle(molecule);
 							ID++;
 						}

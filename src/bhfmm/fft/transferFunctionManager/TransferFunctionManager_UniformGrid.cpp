@@ -72,7 +72,10 @@ void TransferFunctionManager_UniformGrid::buildTransferFunction() {
 FFTDataContainer* TransferFunctionManager_UniformGrid::getTransferFunction(
 		int x, int y, int z, double cell_size_x, double cell_size_y,
 		double cell_size_z) {
-	_asked++;
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
+	++_asked;
 	return _storage[x + 3][y + 3][z + 3];
 }
 

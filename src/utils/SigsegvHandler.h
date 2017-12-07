@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#ifdef ENABLE_SIGHANDLER
+
 #include <stdio.h>
 #include <execinfo.h>
 #include <signal.h>
@@ -13,6 +15,7 @@
 #include <unistd.h>
 
 #include "mardyn_assert.h"
+#include "Simulation.h"
 
 
 void handler(int sig) {
@@ -25,10 +28,12 @@ void handler(int sig) {
   // print out all the frames to stderr
   fprintf(stderr, "Error: signal %d:\n", sig);
   backtrace_symbols_fd(array, size, STDERR_FILENO);
-  mardyn_exit(1);
+  Simulation::exit(1);
 }
 
 void registerSigsegvHandler() {
   signal(SIGSEGV, handler);   // install our handler
 }
+
+#endif
 

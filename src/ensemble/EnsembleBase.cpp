@@ -40,13 +40,18 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	/* mixing rules */
 	query = xmlconfig.query("components/mixing/rule");
 	XMLfile::Query::const_iterator mixingruletIter;
-	long numMixingrules = 0;
+	uint32_t numMixingrules = 0;
 	numMixingrules = query.card();
+	global_log->info() << "Found " << numMixingrules << " mixing rules." << endl;
 	_mixingrules.resize(numMixingrules);
+
+	// data structure for mixing coefficients of domain class (still in use!!!)
+	std::vector<double>& dmixcoeff = global_simulation->getDomain()->getmixcoeff();
+	dmixcoeff.clear();
 
 	for( mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++ ) {
 		xmlconfig.changecurrentnode( mixingruletIter );
-		MixingRuleBase *mixingrule;
+		MixingRuleBase *mixingrule = nullptr;
 		string mixingruletype;
 
 		xmlconfig.getNodeValue("@type", mixingruletype);
@@ -70,20 +75,13 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		 * in the way it is done above?
 		 *
 		 */
-		std::vector<double>& dmixcoeff = global_simulation->getDomain()->getmixcoeff();
-		dmixcoeff.clear();
-		for( unsigned int i = 1; i < numComponents; i++ ) {
-			for( unsigned int j = i + 1; j <= numComponents; j++ ) {
-				double xi, eta;
-				xmlconfig.getNodeValue("xi", xi);
-				xmlconfig.getNodeValue("eta", eta);
-				dmixcoeff.push_back( xi );
-				dmixcoeff.push_back( eta );
-			}
-		}
+		double xi, eta;
+		xmlconfig.getNodeValue("xi", xi);
+		xmlconfig.getNodeValue("eta", eta);
+		dmixcoeff.push_back( xi );
+		dmixcoeff.push_back( eta );
 	}
 	xmlconfig.changecurrentnode(oldpath);
-
 	setComponentLookUpIDs();
 }
 

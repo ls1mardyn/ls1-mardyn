@@ -36,12 +36,15 @@ class MmspdWriter : public OutputBase{
 	//! @todo comment
     void finishOutput( ParticleContainer* particleContainer,
 		       DomainDecompBase* domainDecomp, Domain* domain);
+	std::string getPluginName() {
+		return std::string("MmspdWriter");
+	}
+	static OutputBase* createInstance() { return new MmspdWriter(); }
   private:
       std::string _outputPrefix;
 	  std::string _filename;
       unsigned long _writeFrequency;
       bool _appendTimestamp;
-      bool _incremental;
 };
 
 #endif /* MMSPDWRITER_H_ */

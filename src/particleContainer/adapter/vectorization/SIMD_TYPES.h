@@ -146,6 +146,8 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
+	#define VCP_ALIGNMENT 8
+
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 
 	#if VCP_PREC==VCP_SPSP
@@ -177,6 +179,8 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
+	#define VCP_ALIGNMENT 16
+
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
 	#if VCP_PREC==VCP_SPSP
 		typedef __m256 vcp_real_calc_vec;
@@ -206,6 +210,8 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
+
+	#define VCP_ALIGNMENT 32
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or \
 	  VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
@@ -251,6 +257,8 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 		typedef __m512i vcp_lookupOrMask_vec;
 		typedef countertype32 vcp_lookupOrMask_single;
 	#endif
+
+	#define VCP_ALIGNMENT 64
 
 #endif
 

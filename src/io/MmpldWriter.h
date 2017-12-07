@@ -8,6 +8,10 @@
 #include "ensemble/GrandCanonical.h"
 #include "io/OutputBase.h"
 
+#ifdef ENABLE_MPI
+#include "utils/MPI_Info_object.h"
+#endif
+
 enum InitSphereData : uint8_t
 {
 	ISD_USE_DEFAULT = 1,
@@ -15,7 +19,26 @@ enum InitSphereData : uint8_t
 	ISD_READ_FROM_XML = 3,
 };
 
+enum MMPLD_Vertex_type : uint8_t {
+	MMPLD_VERTEX_NONE       = 0,
+	MMPLD_VERTEX_FLOAT_XYZ  = 1,
+	MMPLD_VERTEX_FLOAT_XYZR = 2,
+	MMPLD_VERTEX_SHORT_XYZ  = 3,
+};
+
+enum MMPLD_Color_type : uint8_t {
+	MMPLD_COLOR_NONE       = 0,
+	MMPLD_COLOR_UINT8_RGB  = 1,
+	MMPLD_COLOR_UINT8_RGBA = 2,
+	MMPLD_COLOR_FLOAT_I    = 3,
+	MMPLD_COLOR_FLOAT_RGB  = 4,
+	MMPLD_COLOR_FLOAT_RGBA = 5,
+};
+
 class Simulation;
+
+/** @brief Output plugin to generate a MegaMol™ Particle List Data file (*.mmpld).
+ */
 class MmpldWriter : public OutputBase
 {
 protected:
@@ -33,10 +56,11 @@ protected:
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 	MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 			std::string outputPrefix);
-	virtual ~MmpldWriter();
-	virtual void SetNumSphereTypes() = 0;
-	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol) = 0;
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex) = 0;
+	virtual ~MmpldWriter() {}
+
+	virtual void SetNumSphereTypes() {}
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {}
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex) { return false; }
 
 	void InitSphereData();
 
@@ -57,25 +81,37 @@ public:
 	std::string getPluginName() {
 		return std::string("MmpldWriter");
 	}
+	static OutputBase* createInstance() { return new MmpldWriter(); }
 
 	void SetInitSphereDataParameters(const uint8_t &bInitSphereData, const std::string &strSphereDataFilename) {
 		_bInitSphereData = bInitSphereData; _strSphereDataFilename = strSphereDataFilename;
 	}
 
 protected:
+	std::string getOutputFilename();
 	void MultiFileApproachReset(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	void PrepareWriteControl();
+	long get_data_frame_header_size();
+	long get_seekTable_size();
+	void writeSeekTableEntry(int id, uint64_t offset);
+	long get_data_list_header_size();
+	long get_particle_data_size();
+	long get_data_list_size(uint64_t particle_count);
+	void write_frame_header(uint32_t num_data_lists);
+	void write_particle_list_header(uint64_t particle_count, int sphereId);
+	void write_frame(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 protected:
+	/** First time step to be recorded */
 	uint64_t _startTimestep;
+	/** time steps between two records*/
 	uint64_t _writeFrequency;
+	/** Max time step up to which shall be recorded */
 	uint64_t _stopTimestep;
-	uint64_t _numFramesPerFile;
+	long _writeBufferSize;
 	std::string _outputPrefix;
-	bool _appendTimestamp;
 	std::string _timestampString;
-	uint32_t _numSeekEntries;
 	uint32_t _frameCount;
 	uint8_t  _numComponents;
 	uint8_t  _numSitesTotal;
@@ -83,21 +119,26 @@ protected:
 	std::vector<uint64_t> _seekTable;
 	std::vector<uint8_t> _numSitesPerComp;
 	std::vector<uint8_t> _nCompSitesOffset;
-	std::vector<float> _vfSphereRadius;
-	std::vector< std::array<uint32_t, 4> > _vaSphereColors;
 	std::string _strSphereDataFilename;
 	uint8_t _bInitSphereData;
 	bool _bWriteControlPrepared;
-	bool _bInitFrameDone;
 
-	// split files
-	uint8_t _nFileIndex;
-	uint8_t _numFiles;
-	std::vector<string> _vecFilePrefixes;
-	std::vector<uint64_t> _vecFramesPerFile;
-	uint64_t _nextRecSimstep;
-	std::string _strOutputPrefixCurrent;
-	uint32_t _frameCountMax;
+	long _fileCount;
+	uint32_t _numFramesPerFile;
+
+	uint16_t _mmpldversion;
+	uint32_t _numSeekEntries;
+	MMPLD_Vertex_type _vertex_type;
+	MMPLD_Color_type _color_type;
+	std::vector<float> _global_radius;
+	std::vector< std::array<uint8_t, 4> > _global_rgba;
+	std::vector< std::array<float, 2> > _global_intensity_range;
+
+
+#ifdef ENABLE_MPI
+	MPI_File _mpifh;
+	MPI_Info_object _mpiinfo;
+#endif
 };
 
 class MmpldWriterSimpleSphere : public MmpldWriter
@@ -113,8 +154,8 @@ public:
 	virtual ~MmpldWriterSimpleSphere() {}
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numComponents;}
-	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol);
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex);
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex);
 };
 
 class MmpldWriterMultiSphere : public MmpldWriter
@@ -130,8 +171,8 @@ public:
 	virtual ~MmpldWriterMultiSphere() {}
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numSitesTotal;}
-	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol);
-	virtual bool GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex);
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex);
 };
 
 #endif /* MMPLDWRITER_H_ */

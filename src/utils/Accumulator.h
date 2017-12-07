@@ -19,7 +19,7 @@ template <typename T>
 class Accumulator {
 public:
     /** Constructor creating new Accumlator
-     * @param[in]  _windowLength  Number of elements in the sliding window.
+     * @param[in]  windowLength  Number of elements in the sliding window.
      */
     Accumulator(size_t windowLength = 100) : _windowLength(windowLength), _insertPosition(0), _size(0) {
         _data = new T[windowLength];
@@ -64,7 +64,7 @@ public:
         std::copy(_data, _data + _size, sorted_data);
         std::sort(sorted_data, sorted_data + _size);
         T retValue = sorted_data[static_cast<size_t>(_size * p) - 1];
-        delete sorted_data;
+        delete[] sorted_data;
         return retValue;
     }
 
@@ -80,7 +80,7 @@ public:
         T qmin = sorted_data[static_cast<size_t>(_size * pmin) - 1];
         T qmax = sorted_data[static_cast<size_t>(_size * pmax) - 1];
         T retValue = qmax - qmin;
-        delete sorted_data;
+        delete[] sorted_data;
         return retValue;
     }
 

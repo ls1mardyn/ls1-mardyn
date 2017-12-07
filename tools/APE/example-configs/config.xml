@@ -45,18 +45,41 @@
       </electrostatic>
     </algorithm>
     <output>
+      <outputplugin name="CheckpointWriter">
+        <type>binary</type>
+        <writefrequency>50000</writefrequency>
+        <outputprefix>cp_binary</outputprefix>
+      </outputplugin>
+      
+      <outputplugin name="DomainProfiles">
+        <units> <x>1</x> <y>240</y> <z>1</z> </units>
+        <timesteps>
+          <init>0</init>
+          <recording>1</recording>
+          <output>1000</output>
+        </timesteps>
+        <outputprefix>profile</outputprefix>
+        <components>
+          <component id="1"></component>
+        </components>
+        <options>
+          <option keyword="profileVirial"/>
+        </options>
+      </outputplugin>
+      
       <outputplugin name="MmpldWriter" type="multi">
         <include query="/spheres">sphereparams_n2.xml</include>
         <writecontrol>
           <start>1000</start>
-          <writefrequency>500</writefrequency>
+          <writefrequency>50</writefrequency>
           <stop>0</stop>
           <framesperfile>0</framesperfile>
         </writecontrol>
         <outputprefix>megamol</outputprefix>
       </outputplugin>
+      
       <outputplugin name="SysMonOutput">
-        <writefrequency>1234234523</writefrequency>
+        <writefrequency>50</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
       </outputplugin>

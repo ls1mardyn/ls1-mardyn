@@ -1,4 +1,6 @@
-#if ENABLE_MPI
+#include "MarDyn_version.h"
+
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -10,11 +12,9 @@
 
 #include "WrapOpenMP.h"
 
-#if ENABLE_MPI
-#include "parallel/KDDecomposition.h"
-#endif
 #include "Simulation.h"
 #include "utils/compile_info.h"
+#include "utils/PrintThreadPinningToCPU.h"
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
 #include "utils/OptionParser.h"
@@ -29,53 +29,65 @@ using std::endl;
  * @brief Initialize command line options.
  */
 void initOptions(optparse::OptionParser *op) {
-	op->usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
-		  "      %prog --tests --test-dir <test input data directory> [<name of testcase>]\n\n"
-				"Use option --help to display all available options.");
-	op->version("%prog 1.1");
-	op->description("ls1 mardyn (M-olecul-AR DYN-amics)");
+	op->usage("%prog [OPTIONS] <configfilename>\n\n"
+		"Use option --help to display all available options.\n\n"
+		"To execute the built in unit tests run with\n"
+		"%prog --tests --test-dir <test input data directory> [<name of testcase>]");
+	op->version("%prog " + MARDYN_VERSION);
+	op->description("ls1-MarDyn (Large Scale SImulation MoleculAR DYNamics)");
 
-	op->add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
-	op->add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .type("string") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
-	op->add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-	op->add_option("-S", "--sigsegvhandler") .action("store_true") .dest("sigsegvhandler") .metavar("S") .type("bool") .set_default(false) .help("sigsegvhandler: prints stacktrace on sigsegv(default: %default)");
-	op->add_option("--logfile").dest("logfile").type("string").set_default("MarDyn.log").metavar("STRING").help("enable/disable final checkopint (default: %default)");
-	op->add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
-	op->add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
+	op->add_option("-n", "--steps").dest("timesteps").type("int") .metavar("NUM") .set_default(1) .help("number of timesteps to simulate (default: %default)");
+	op->add_option("-p", "--outprefix").dest("outputprefix").type("string") .metavar("STR") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
+	op->add_option("-v", "--verbose").dest("verbose").type("bool") .action("store_true") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+	op->add_option("--print-meminfo").dest("print-meminfo").type("bool").action("store_true").set_default(false).help("Print memory consumtion info (default: %default)");
+	op->add_option("--logfile").dest("logfile").type("string").metavar("PREFIX").set_default("MarDyn").help("enable output to logfile using given prefix for the filename (default: %default)");
+	op->add_option("--final-checkpoint").dest("final-checkpoint").type("int").metavar("(1|0)").set_default(1).help("enable/disable final checkopint (default: %default)");
+	op->add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").metavar("TIME").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced, disable: -1. (default: %default)");
+#ifdef ENABLE_SIGHANDLER
+	op->add_option("-S", "--sigsegvhandler").dest("sigsegvhandler").type("bool") .action("store_true") .set_default(false) .help("sigsegvhandler: prints stacktrace on sigsegv (default: %default)");
+#endif
 
-	op->add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
-	op->add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
+	op->add_option("-t", "--tests").action("store_true").dest("tests").type("bool").set_default(false).help("unit tests: run built-in unit tests instead of regular simulation");
+	op->add_option("-d", "--test-dir").dest("testDataDirectory").type("string").metavar("STR").set_default("").help("unit tests: specify the directory where the in input data required by the tests resides");
 }
 
 /**
  * @brief Helper function outputting program build information to given logger
  */
-void program_build_info(Log::Logger &log) {
+void program_build_info(Log::Logger *log) {
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
-	log << "Compiler: " << info_str << endl;
+	log->info() << "Compiler: " << info_str << endl;
 	get_compile_time(info_str);
-	log << "Compiled: " << info_str << endl;
+	log->info() << "Compiled: " << info_str << endl;
 #ifdef ENABLE_MPI
 	get_mpi_info(info_str);
-	log << "MPI library: " << info_str << endl;
+	log->info() << "MPI library: " << info_str << endl;
+#endif
+#if defined(MARDYN_SPSP)
+	log->info() << "Precision: Single" << endl;
+#else
+	log->info() << "Precision: Double" << endl;
+#endif
+#if defined(_OPENMP)
+	log->info() << "Compiled with OpenMP support" << endl;
 #endif
 }
 
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
-void program_execution_info(int argc, char **argv, Log::Logger &log) {
+void program_execution_info(int argc, char **argv, Log::Logger *log) {
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_timestamp(info_str);
-	log << "Started: " << info_str << endl;
+	log->info() << "Started: " << info_str << endl;
 	get_host(info_str);
-	log << "Execution host: " << info_str << endl;
+	log->info() << "Execution host: " << info_str << endl;
 	std::stringstream arguments;
 	for (int i = 0; i < argc; i++) {
 		arguments << " " << argv[i];
 	}
-	log << "Started with arguments: " << arguments.str() << endl;
+	log->info() << "Started with arguments: " << arguments.str() << endl;
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
@@ -84,6 +96,12 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
 #if defined(_OPENMP)
 	int num_threads = mardyn_get_max_threads();
 	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
+
+	#if defined(ENABLE_REDUCED_MEMORY_MODE)
+	global_log->warning() << "Running in reduced memory mode. Not all features work in this mode." << endl;
+		// print thread pinning info
+		PrintThreadPinningToCPU();
+	#endif
 #endif
 }
 
@@ -98,7 +116,7 @@ int run_unit_tests(const Values &options, const vector<string> &args) {
 	}
 	std::string testDataDirectory(options.get("testDataDirectory"));
 	global_log->info() << "Test data directory: " << testDataDirectory << endl;
-	Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
+	Log::logLevel testLogLevel = (options.is_set("verbose") && options.get("verbose")) ? Log::All : Log::Info;
 	int testresult = runTests(testLogLevel, testDataDirectory, testcases);
 	return testresult;
 }
@@ -129,24 +147,32 @@ int main(int argc, char** argv) {
 	optparse::Values options = op.parse_args(argc, argv);
 	vector<string> args = op.args();
 
+	global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << endl;
+#ifndef NDEBUG
+	global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << endl;
+#endif
+
 	if( options.is_set_by_user("logfile") ) {
-		string logfileName(options.get("logfile"));
-		global_log->info() << "Using logfile " << logfileName << endl;
+		string logfileNamePrefix(options.get("logfile"));
+		global_log->info() << "Using logfile with prefix " << logfileNamePrefix << endl;
 		delete global_log;
-		global_log = new Log::Logger(Log::Info, logfileName);
+		global_log = new Log::Logger(Log::Info, logfileNamePrefix);
 	}
 	if( options.is_set_by_user("verbose") ) {
 		global_log->info() << "Enabling verbose log output." << endl;
 		global_log->set_log_level(Log::All);
 	}
+#ifdef ENABLE_SIGHANDLER
 	if (options.is_set_by_user("sigsegvhandler")) {
 		global_log->info() << "Enabling sigsegvhandler." << endl;
 		registerSigsegvHandler();  // from SigsegvHandler.h
 	}
+#endif
+	program_build_info(global_log);
+	program_execution_info(argc, argv, global_log);
 
-	program_build_info(global_log->info());
-	program_execution_info(argc, argv, global_log->info());
 
+	/* Run built in tests and exit */
 	if (options.is_set_by_user("tests")) {
 		int testresult = run_unit_tests(options, args);
 		#ifdef ENABLE_MPI
@@ -155,37 +181,27 @@ int main(int argc, char** argv) {
 		exit(testresult); // using exit here should be OK
 	}
 
-	unsigned int numargs = args.size();
-	if (numargs < 1) {
-		op.print_usage();
-		Simulation::exit(-13);
-	}
 
+	/* Set up and run regular Simulation */
 	Simulation simulation;
-	simulation.setName(op.prog());
 
-	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
-	if( numargs > 2 ) {
-		simulation.setOutputPrefix(args[2]);
+	unsigned int numargs = args.size();
+	if(numargs != 1) {
+		global_log->error() << "Incorrect number of arguments provided." << std::endl;
+		op.print_usage();
+		Simulation::exit(-1);
 	}
-
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
-	if( fileExists(args[0].c_str()) ) {
-		global_log->info() << "Config file: " << args[0] << endl;
-		simulation.readConfigFile(args[0]);
+	std::string configfilename(args[0]);
+	if( fileExists(configfilename.c_str()) ) {
+		global_log->info() << "Config file: " << configfilename << endl;
+		simulation.readConfigFile(configfilename);
 	} else {
-		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
-		Simulation::exit(-54);
+		global_log->error() << "Cannot open config file '" << configfilename << "'" << endl;
+		Simulation::exit(-2);
 	}
 
-	/** @todo remove unnamed options, present as --steps, --output-prefix below **/
-	if (numargs > 1) {
-		unsigned long steps = 0;
-		istringstream(args[1]) >> steps;
-		simulation.setNumTimesteps(steps);
-	}
-
-
+	/* processing command line arguments */
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
 		global_log->info() << "Final checkpoint enabled" << endl;
@@ -194,10 +210,10 @@ int main(int argc, char** argv) {
 		global_log->info() << "Final checkpoint disabled." << endl;
 	}
 
-	double time = options.get("timed-checkpoint");
-	simulation.setForcedCheckpointTime(time);
 	if( options.is_set_by_user("timed-checkpoint") ) {
-		global_log->info() << "Enabling checkpoint after execution time: " << time << " sec" << endl;
+		double checkpointtime = options.get("timed-checkpoint");
+		simulation.setForcedCheckpointTime(checkpointtime);
+		global_log->info() << "Enabling checkpoint after execution time: " << checkpointtime << " sec" << endl;
 	}
 
 	if (options.is_set_by_user("timesteps")) {
@@ -205,13 +221,16 @@ int main(int argc, char** argv) {
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
-	string outprefix(args[numargs-1]);
-	size_t foundstr = outprefix.rfind(".");
-	if (foundstr!=string::npos && foundstr==outprefix.size()-4) outprefix.erase(foundstr);	// remove .??? suffix
-	simulation.setOutputPrefix(outprefix.c_str());
-	if( options.is_set_by_user("outputprefix") ) {
-		simulation.setOutputPrefix( options["outputprefix"] );
+	if(options.is_set_by_user("print-meminfo")) {
+		global_log->info() << "Enabling memory info output" << endl;
+		simulation.enableMemoryProfiler();
 	}
+	size_t lastindex = configfilename.rfind(".");
+	std::string outprefix = configfilename.substr(0, lastindex);
+	if( options.is_set_by_user("outputprefix") ) {
+		outprefix = options["outputprefix"];
+	}
+	simulation.setOutputPrefix(outprefix.c_str());
 	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << endl;
 
 
@@ -222,9 +241,11 @@ int main(int argc, char** argv) {
 	simulation.simulate();
 	sim_timer.stop();
 	double runtime = sim_timer.get_etime();
+	//!@todo time only for simulation.simulate not "main"!
 	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
 
 	// print out total simulation speed
+	//!@todo this is incorrect if currenttime is > 0 in the configuration!
 	const unsigned long numForceCalculations = simulation.getNumTimesteps() + 1ul;
 	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
 	global_log->info() << "Simulation speed: " << scientific << speed << " Molecule-updates per second." << endl;

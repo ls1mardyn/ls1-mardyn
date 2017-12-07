@@ -1,14 +1,14 @@
 # Find out the base directory
 MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all default help clean cleanall test
+.PHONY: all clean clean_deps cleanall default help test
 default: all
 
 # Check current directory
 CURDIR ?= $(realpath $(PWD) )
 SRCDIR := $(CURDIR)
 ifeq ($(findstring src,$(SRCDIR)),)
-  $(error ERROR: current directory $(SRCDIR) seems not to be a source directory)
+  $(error ERROR: make has to be called from the ls1-MarDyn source directory, current directory is $(CURDIR))
 endif
 
 # compiler configuration
@@ -25,20 +25,28 @@ PARTYPE ?= PAR
 # Each config should at least provide the two targets RELEASE and DEBUG.
 TARGET ?= RELEASE
 
-# compile using depmode?
+# compile using depmode
+# create dependency information for faster recompilation in case of source file changes
+# 0: disbaled, 1: enabled
 DEPS ?= 0
 
-# build unit tests?
+# build unit tests
+# 0: disbaled, 1: enabled
 UNIT_TESTS ?= 0
 
 # build with VTK support
+# 0: disbaled, 1: enabled
 VTK ?= 0
 
 # bind to TBB proxy malloc
+# 0: disbaled, 1: enabled
 TBB ?= 0
 
-# support generators in tools/gui - will be deprecated soon (as of June 2017)
-SUPPORT_GENERATOR ?= 0
+# clang's address sanitizer 
+ADDRESS_SANITIZER ?= 0
+
+# clang's thread sanitizer 
+THREAD_SANITIZER ?= 0
 
 # select vectorization mode:
 VECTORIZE_CODE ?= SSE
@@ -77,14 +85,24 @@ ifeq ($(PRECISION), SINGLE)
   $(info # WARNING)
 endif
 
-# Set World Record?
-WORLD_RECORD ?= 0
+# build ls1-MarDyn for the reduced memory mode
+# If enabled the reduced memory mode reduces the ammount of memory required by
+# ls1-MarDyn for very large simulations.
+# However, not all features will work in this mode.
+# 0: disbaled, 1: enabled
+REDUCED_MEMORY_MODE ?= 0
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
 ENABLE_FMM_FFT ?= 0
 
 # allow acceleration of MPI communication through overlapping communication ?
 ENABLE_OVERLAPPING ?= 0
+
+# allow acceleration of MPI communication through overlapping communication - experimental
+ENABLE_ADVANCED_OVERLAPPING ?= 0
+
+# enable internal backtracing for SIGSEGV
+SIGHANDLER ?= 0
 
 # allow OpenMP? Leave off for now, unless you are developing it.
 OPENMP ?= 0
@@ -114,7 +132,7 @@ endif
 
 SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -E -v "(/tests/|/vtk/)")
-SOURCES_SEQ += $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase" | grep -E -v "/tests/")
+SOURCES_SEQ += $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase\|LoadCalc" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/)")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE)) 
 
@@ -137,13 +155,7 @@ endif
 
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -D MPICH_IGNORE_CXX_SEEK
-LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
-
-ifeq ($(SUPPORT_GENERATOR), 1)
-LDFLAGS += -L../tools/gui/staticlibs -lCubicGridGenerator -lDropletGenerator
-CXXFLAGS += -D SUPPORT_GENERATOR
-INCLUDES += -I../tools/gui/ -I../tools/gui/src/
-endif
+LDFLAGS += $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 # additional setup for unit tests
 ifneq ($(UNIT_TESTS),0)
@@ -182,8 +194,16 @@ ifeq ($(ENABLE_FMM_FFT),1)
 CXXFLAGS += -D FMM_FFT
 endif
 
+ifeq ($(SIGHANDLER),1)
+CXXFLAGS += -D ENABLE_SIGHANDLER=1
+endif
+
 ifeq ($(ENABLE_OVERLAPPING),1)
 CXXFLAGS += -D ENABLE_OVERLAPPING
+endif
+
+ifeq ($(ENABLE_ADVANCED_OVERLAPPING),1)
+CXXFLAGS += -D ADVANCED_OVERLAPPING
 endif
 
 ifeq ($(PAPI),1)
@@ -191,8 +211,8 @@ CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
 endif
 
-ifeq ($(WORLD_RECORD), 1)
-CXXFLAGS += -D MARDYN_WR=1
+ifeq ($(REDUCED_MEMORY_MODE), 1)
+CXXFLAGS += -D ENABLE_REDUCED_MEMORY_MODE=1
 endif
 
 ifeq ($(DEPS),1)
@@ -224,6 +244,10 @@ ifeq ($(ENABLE_QUICKSCHED), 1)
   include $(QUICKSCHED_MAKEFILE)
 endif
 
+ifeq ($(ENABLE_TASK_TIMING_PROFILER), 1)
+  CXXFLAGS += -DTASKTIMINGPROFILE
+endif
+
 $(BINARY): $(OBJECTS)
 	@echo "building $(BINARY)"
 	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
@@ -251,10 +275,11 @@ help:
 	@echo "make DEPS=$(call underline,0) | 1                   			compile using dependancy tracking"
 	@echo "make UNIT_TESTS=$(call underline,0) | 1             			compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=$(call underline,0) | 1                    	 		compile with or without the vtk output plugin" 
-	@echo "make SUPPORT_GENERATOR=$(call underline,0) | 1   	     		   	compile with support for input generators as dynamic libraries"
 	@echo "make VECTORIZE_CODE=AOS | $(call underline,SSE) | AVX | ...		compile with vectorization support (see help_vect)"
+	@echo "make OPENMP=$(call underline,0) | 1                   			build with OpenMP support"
 	@echo "make PAPI=$(call underline,0) | 1			                   	compile with PAPI counter support"
 	@echo "make ENABLE_FMM_FFT=$(call underline,0) | 1				compile using an FFT accelerated FMM method"
+	@echo "make SIGHANDLER=$(call underline,0) | 1                                  compile with or without backtrace capability in case of SIGSEGV"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
@@ -262,6 +287,7 @@ help:
 	@echo "make cfg_help    show help for the selected configuration"
 	@echo "make clean       delete object files"
 	@echo "make clean_deps  delete files generated by the depcomp command"
+	@echo "make clean_ext   delete object files of external dependencies"
 	@echo "make cleanall    delete object files and executable"
 	@echo "make depend      generate makefile dependency list"
 	@echo "make lcov        create code coverage information"
@@ -319,7 +345,7 @@ all: $(BINARY)
 
 #list available configurations
 cfg_list:
-	@ls -1 ../makefile/cfg | sed -e 's/\.in$$//'
+	@ls -1 ../makefile/cfg | sed -e '/\.mk$$/d' -e 's/\.in$$//'
 #print info about the selected configuration
 cfg_help:
 	@echo "Current configuration: $(CFG_INFO)"
@@ -340,12 +366,15 @@ clean_deps:
 	find -path '*/.deps/*' -type f -delete
 	find -type d -name .deps -delete
 
-clear: cleanall
+clean_ext:
+	find ../dependencies-external/* -type f -name '*.o' -delete
 
-cleanall: clean clean_deps
+cleanall: clean clean_deps clean_ext
 	$(RM) $(BINARY)
 	find -type f -name '*~' -delete
 	if [ -L $(BINARY_BASENAME) ]; then $(RM) $(BINARY_BASENAME); fi
+
+clear: cleanall
 
 lcov:
 	lcov --directory $(SRCDIR) -b $(SRCDIR) --capture --output-file Mardyn.info
@@ -355,19 +384,18 @@ lcov_clean:
 	lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
 
 
-test:
-	@test -L $(BINARY_BASENAME) || { echo "\n----no executable found. Compile the program first.---\n"; exit 1; }
+test: $(BINARY_BASENAME)
 	@$(eval FILENAME := $(shell ls -l $(BINARY_BASENAME) | tr -s ' ' | cut -d ' ' -f 11))
-	@echo testing with executable: $(FILENAME)
+	$(info Running tests for executable: $(FILENAME))
 	@if test $(findstring PAR, $(FILENAME)); then \
 		echo parallel execution ; \
-    	mpirun -n 2 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
-    	mpirun -n 1 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
-    else \
-    	echo Serial execution ; \
-    	$(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
-    fi
-#	$(MPICMD) $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/
+		mpirun -n 2 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+		mpirun -n 1 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+	else \
+		echo Serial execution ; \
+		$(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+	fi
+
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)

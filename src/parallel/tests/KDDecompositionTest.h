@@ -16,6 +16,10 @@
 class KDDecompositionTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(KDDecompositionTest);
+	TEST_METHOD(testNoDuplicatedParticles);
+	TEST_METHOD(testNoDuplicatedParticles2);
+	TEST_METHOD(testNoLostParticles);
+	TEST_METHOD(testNoLostParticles2);
 	TEST_METHOD(testCompleteTreeInfo);
 	TEST_METHOD(testRebalancingDeadlocks);
 	TEST_METHOD(testbalanceAndExchange);
@@ -26,6 +30,12 @@ public:
 	KDDecompositionTest();
 
 	virtual ~KDDecompositionTest();
+
+	void testNoDuplicatedParticles();
+	void testNoDuplicatedParticles2();
+
+	void testNoLostParticles();
+	void testNoLostParticles2();
 
 	void testCompleteTreeInfo();
 
@@ -41,19 +51,23 @@ public:
 
 private:
 
+	void testNoDuplicatedParticlesFilename(const char * filename, double cutoff, double domainLength);
+
+	void testNoLostParticlesFilename(const char * filename, double cutoff, double domainLength);
+
 	/**
 	 * init some random distribution
 	 * @param v the _numParticlesPerCell entry of the KDD
 	 * @param len the dimensions of the _numParticlesPerCell array of the KDD
 	 */
-	void setNumParticlesPerCell(unsigned int * v, int len[3]) const;
+	void setNumParticlesPerCell(std::vector<unsigned int> &v, int len[3]) const;
 
 	/**
 	 * set the entries to zero
 	 * @param v the _numParticlesPerCell entry of the KDD
 	 * @param total_len the total length of the _numParticlesPerCell array of the KDD
 	 */
-	void clearNumParticlesPerCell(unsigned int *v, int totalLen) const;
+	void clearNumParticlesPerCell(std::vector<unsigned int> &v, int totalLen) const;
 
 	unsigned f(double x, double y, double z, int N[3], const std::vector<double>& c) const;
 

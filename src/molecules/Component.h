@@ -14,9 +14,22 @@
 class Component {
 public:
 	Component(unsigned int id = 0);
+
+	/** @brief Read in XML configuration for a component and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <component id=INT name="STRING">
+	     <site type="LJ126|Charge|Dipole|Quadrupole"> <!-- see Site class documentation --> </site>
+	     <momentsofinertia> <Ixx>DOUBLE</Ixx> <Iyy>DOUBLE</Iyy> <Izz>DOUBLE</Izz> </momentsofinertia>
+	   </component>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
-	
+
+	/** set the component id */
 	void setID(unsigned int id) { _id = id; }
+	/** get component id */
 	unsigned int ID() const { return _id; }
 
 	/** get number of interaction sites */
@@ -27,12 +40,17 @@ public:
 	}
 	/** get number of oriented interaction sites (dipoles and quadrupoles) */
 	unsigned int numOrientedSites() const { return numDipoles() + numQuadrupoles(); }
+	/** get number of Lennard Jones interaction sites */
 	unsigned int numLJcenters() const { return _ljcenters.size(); }
+	/** get number of charge interaction sites */
 	unsigned int numCharges() const { return _charges.size(); }
+	/** get number of dipole interaction sites */
 	unsigned int numDipoles() const { return _dipoles.size(); }
+	/** get number of quadrupole interaction sites */
 	unsigned int numQuadrupoles() const { return _quadrupoles.size(); }
 
-	double m() const { return _m; } /**< get mass of the molecule */
+	/** get mass of the molecule */
+	double m() const { return _m; }
 	double I11() const { return _Ipa[0]; }
 	double I22() const { return _Ipa[1]; }
 	double I33() const { return _Ipa[2]; }
@@ -75,11 +93,12 @@ public:
 	void addQuadrupole(double x, double y, double z,
 	                   double eQx, double eQy, double eQz, double eQabs);
 
-	/** delete the last site stored in the vector */
+	/** delete the last site stored in the vector -- these are used by the external generators*/
 	void deleteLJCenter() { _ljcenters.pop_back() ;}
 	void deleteCharge() { _charges.pop_back() ;}
 	void deleteDipole() { _dipoles.pop_back() ;}
 	void deleteQuadrupole() { _quadrupoles.pop_back() ;}
+
 
 	/**
 	 * To be called after sites have been deleted or the properties of sites have been changed.
@@ -88,9 +107,6 @@ public:
 
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
-
-	/** write POVray object definition to stream */
-	void writePOVobjs(std::ostream& ostrm, std::string para = std::string("pigment {color rgb<1,0,0>}")) const;
 
 	void writeVIM(std::ostream& ostrm);
 
@@ -102,7 +118,7 @@ public:
 	double E() const { return _E_trans + _E_rot; }
 	double T() const { return _T; }
 	void setName(std::string name) { _name = name; }
-	std::string& getName() { return _name; }
+	std::string getName() const { return _name; }
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	//! needed by the MegaMol output format
@@ -144,14 +160,13 @@ private:
 	double _E_rot; // rotational energy
 	double _T; // temperature
 
-	std::string _name;
+	std::string _name; /**< name of the component/molecule type */
 
 	/**
 	 * for use by the Vectorization:
 	 * a look-up table is set up there,
 	 * which needs to know about the sites of all present components
 	 *
-	 * 
 	 * \brief One LJ center enumeration start index for each component.
 	 * \details All the LJ centers of all components are enumerated.<br>
 	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>

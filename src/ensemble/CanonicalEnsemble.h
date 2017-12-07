@@ -25,12 +25,7 @@ private:
 public:
 
 	CanonicalEnsemble() :
-			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0), _particles(nullptr) {
-	}
-
-	CanonicalEnsemble(ParticleContainer *particles, std::vector<Component> *components) :
-			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0), _particles(particles) {
-		_components = *components;
+			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
 	}
 
 	virtual ~CanonicalEnsemble() {
@@ -58,7 +53,7 @@ public:
 		return _E;
 	}
 
-	void updateGlobalVariable( GlobalVariable variable ) override;
+	void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override;
 
 
 
@@ -80,7 +75,6 @@ private:
 	double _E_trans;
 	double _E_rot;
 
-	ParticleContainer *_particles;
 	// TODO: As the canonical ensemble fixes the temperature here should be the right place for the thermostats
 	//std::map<int, VelocityScalingThermostat> _thermostats;
 	//std::map<int, int> _componentToThermostatMap;

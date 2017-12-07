@@ -9,14 +9,12 @@
 #define SRC_IO_FLOPRATEWRITER_H_
 
 #include "OutputBase.h"
-#include "particleContainer/adapter/FlopCounter.h"
+
+class FlopCounter;
 
 class FlopRateWriter: public OutputBase {
 public:
-	FlopRateWriter(double cutoff, double LJcutoff) :
-			OutputBase(), _flopCounter(cutoff, LJcutoff),
-			_writeToStdout(false), _writeToFile(false) {
-	}
+	FlopRateWriter() : OutputBase(), _flopCounter(nullptr) {}
 	~FlopRateWriter() {}
 
 	//! @brief will be called at the beginning of the simulation
@@ -53,11 +51,14 @@ public:
 	std::string getPluginName() {
 		return std::string("FlopRateWriter");
 	}
+ 	static OutputBase* createInstance() { return new FlopRateWriter(); }
 
 	void measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep);
 
 private:
-	FlopCounter _flopCounter;
+	void setPrefix(double f_in, double& f_out, char& prefix) const;
+
+	FlopCounter * _flopCounter;
 	bool _writeToStdout, _writeToFile;
 	std::ofstream _fileStream;
 	unsigned long _writeFrequency;

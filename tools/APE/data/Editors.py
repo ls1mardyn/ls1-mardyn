@@ -212,7 +212,7 @@ class SettingEditorContainer(object):
 	#return new setting list, if list has changed
 	def checkEditorsChanged(self):
 		if not isinstance(self.child, EditorProbe):
-			dSettings = self.child.dependSettings
+			dSettings = self.child.getDependSettings()
 			if len(dSettings) != len(self.settings):
 				return dSettings
 			for sIndex, sEntry in enumerate(self.settings):
@@ -225,7 +225,7 @@ class SettingEditorContainer(object):
 	def pupulateEditorList(self, settings=None):
 		if settings == None:
 			if not isinstance(self.child, EditorProbe):
-				self.settings = self.child.dependSettings
+				self.settings = self.child.getDependSettings()
 			else:
 				self.settings = self.child.settings
 		else:

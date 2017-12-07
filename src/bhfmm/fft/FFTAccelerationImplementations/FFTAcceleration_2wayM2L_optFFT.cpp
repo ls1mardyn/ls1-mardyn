@@ -17,8 +17,12 @@ FFTAcceleration_2wayM2L_optFFT::FFTAcceleration_2wayM2L_optFFT(int order) {
 	_nbZeroes = nb_zeroes_2wayFFT(_fft_nx, _fft_ny);
 	_totalSize = _fft_nx * _fft_ny + 2 * _nbZeroes;
 
-	Re = alloc_matrix(_fft_nx, _fft_ny);
-	Im = alloc_matrix(_fft_nx, _fft_ny);
+	Re = new FFT_precision**[mardyn_get_max_threads()];
+	Im = new FFT_precision**[mardyn_get_max_threads()];
+	for (int i = 0; i < mardyn_get_max_threads(); ++i) {
+		Re[i] = alloc_matrix(_fft_nx, _fft_ny);
+		Im[i] = alloc_matrix(_fft_nx, _fft_ny);
+	}
 }
 
 void FFTAcceleration_2wayM2L_optFFT::FFT_initialize_Source(
@@ -26,6 +30,7 @@ void FFTAcceleration_2wayM2L_optFFT::FFT_initialize_Source(
 	FFTDataContainer_arrays* FFTData = getFFTData(Expansion);
 	FFT_precision* & Re_a = FFTData->Re;
 	FFT_precision* & Im_a = FFTData->Im;
+	const int threadNum = mardyn_get_thread_num();
 
 	int n, m;
 	FFT_precision minus_one_power_n = 1.0;
@@ -33,14 +38,14 @@ void FFTAcceleration_2wayM2L_optFFT::FFT_initialize_Source(
 
 	for (n = 0; n < _p; n++) {
 		for (m = 0; m <= n; m++) {
-			Re[n][m] = minus_one_power_n * (FFT_precision) Expansion.get_C(n, m)
+			Re[threadNum][n][m] = minus_one_power_n * (FFT_precision) Expansion.get_C(n, m)
 					/ r;
-			Im[n][m] = -minus_one_power_n
+			Im[threadNum][n][m] = -minus_one_power_n
 					* (FFT_precision) Expansion.get_S(n, m) / r; //we want to use use conj(Source)
 		}
 		for (; m < _fft_ny; m++) {
-			Re[n][m] = 0.0;
-			Im[n][m] = 0.0;
+			Re[threadNum][n][m] = 0.0;
+			Im[threadNum][n][m] = 0.0;
 		}
 		minus_one_power_n *= -1.0;
 		r *= (FFT_precision) radius;
@@ -48,14 +53,14 @@ void FFTAcceleration_2wayM2L_optFFT::FFT_initialize_Source(
 
 	for (; n < _fft_nx; n++)
 		for (m = 0; m < _fft_ny; m++) {
-			Re[n][m] = 0.0;
-			Im[n][m] = 0.0;
+			Re[threadNum][n][m] = 0.0;
+			Im[threadNum][n][m] = 0.0;
 		}
 
-	_optFFT_API->optimizedFFT(Re, Im, _fft_nx, _fft_ny);
+	_optFFT_API->optimizedFFT(Re[threadNum], Im[threadNum], _fft_nx, _fft_ny);
 
-	matrix2array(Re, Re_a);
-	matrix2array(Im, Im_a);
+	matrix2array(Re[threadNum], Re_a);
+	matrix2array(Im[threadNum], Im_a);
 }
 
 void FFTAcceleration_2wayM2L_optFFT::FFT_initialize_TransferFunction(
@@ -65,33 +70,34 @@ void FFTAcceleration_2wayM2L_optFFT::FFT_initialize_TransferFunction(
 	FFT_precision* & Im_a = FFTData->Im;
 	int n, m;
 	FFT_precision minus_one_power_m = 1.0;
+	const int threadNum = mardyn_get_thread_num();
 
 	for (n = 0; n < _p; n++) {
 		minus_one_power_m = 1.0;
 		for (m = 0; m <= n; m++) {
 			//SH_Expansion.signed_acc_const_CS(n,-m,Re[_p-n-1][m],Im[_p-n-1][m]); //flipmatrix included
-			Re[_p - n - 1][m] = (FFT_precision) Expansion.get_C(n, m)
+			Re[threadNum][_p - n - 1][m] = (FFT_precision) Expansion.get_C(n, m)
 					* minus_one_power_m;
-			Im[_p - n - 1][m] = (FFT_precision) Expansion.get_S(n, m)
+			Im[threadNum][_p - n - 1][m] = (FFT_precision) Expansion.get_S(n, m)
 					* -minus_one_power_m;
 			minus_one_power_m *= -1.0;
 		}
 		for (; m < _fft_ny; m++) {
-			Re[_p - n - 1][m] = 0;
-			Im[_p - n - 1][m] = 0;
+			Re[threadNum][_p - n - 1][m] = 0;
+			Im[threadNum][_p - n - 1][m] = 0;
 		}
 	}
 
 	for (; n < _fft_nx; n++)
 		for (m = 0; m < _fft_ny; m++) {
-			Re[n][m] = 0;
-			Im[n][m] = 0;
+			Re[threadNum][n][m] = 0;
+			Im[threadNum][n][m] = 0;
 		}
 
-	_optFFT_API->optimizedFFT(Re, Im, _fft_nx, _fft_ny);
+	_optFFT_API->optimizedFFT(Re[threadNum], Im[threadNum], _fft_nx, _fft_ny);
 
-	matrix2array(Re, Re_a);
-	matrix2array(Im, Im_a);
+	matrix2array(Re[threadNum], Re_a);
+	matrix2array(Im[threadNum], Im_a);
 }
 
 void FFTAcceleration_2wayM2L_optFFT::FFT_finalize_Target(
@@ -100,20 +106,21 @@ void FFTAcceleration_2wayM2L_optFFT::FFT_finalize_Target(
 	FFT_precision* & Re_a = FFTData->Re;
 	FFT_precision* & Im_a = FFTData->Im;
 	int n, m;
+	const int threadNum = mardyn_get_thread_num();
 
-	array2matrix(Re_a, Re);
-	array2matrix(Im_a, Im);
+	array2matrix(Re_a, Re[threadNum]);
+	array2matrix(Im_a, Im[threadNum]);
 
-	_optFFT_API->optimizedIFFT(Re, Im, _fft_nx, _fft_ny);
+	_optFFT_API->optimizedIFFT(Re[threadNum], Im[threadNum], _fft_nx, _fft_ny);
 
 	FFT_precision scaling = 1.0;
 	double minus_1_power_m;
 	for (n = 0; n < _p; n++) {
 		minus_1_power_m = 1.0;
 		for (m = 0; m <= n; m++) {
-			Expansion.get_C(n, m) += (double) (Re[(_p - n - 1)][m] * scaling)
+			Expansion.get_C(n, m) += (double) (Re[threadNum][(_p - n - 1)][m] * scaling)
 					* minus_1_power_m;
-			Expansion.get_S(n, m) += (double) (Im[(_p - n - 1)][m] * scaling)
+			Expansion.get_S(n, m) += (double) (Im[threadNum][(_p - n - 1)][m] * scaling)
 					* -minus_1_power_m;
 			minus_1_power_m *= -1.0;
 		}

@@ -13,6 +13,7 @@
 #include "WrapOpenMP.h"
 
 #include <cmath>
+#include <bhfmm/FastMultipoleMethod.h>
 
 using namespace std;
 using Log::global_log;
@@ -20,8 +21,15 @@ using Log::global_log;
 namespace bhfmm {
 
 LeafNodesContainer::LeafNodesContainer(double bBoxMin[3],
-		double bBoxMax[3], double LJCellLength[3], unsigned subdivisionFactor,
-		bool periodic) {
+									   double bBoxMax[3],
+									   double LJCellLength[3],
+									   unsigned subdivisionFactor,
+									   bool periodic
+#ifdef QUICKSCHED
+									   , qsched* scheduler ) : _scheduler(scheduler) {
+#else
+									   ) {
+#endif
 
 	_periodicBC = periodic; // a hack-in workaround to disable periodicity is
 	// simply to change the addParticle functionality to filter out by
@@ -105,15 +113,15 @@ void LeafNodesContainer::initializeCells() {
 				_cells[cellIndex].skipCellFromInnerRegion();
 
 				if (ix == 0 || iy == 0 || iz == 0 ||
-				    ix == _numCellsPerDimension[0]-1 ||
-				    iy == _numCellsPerDimension[1]-1 ||
-				    iz == _numCellsPerDimension[2]-1) {
+					ix == _numCellsPerDimension[0]-1 ||
+					iy == _numCellsPerDimension[1]-1 ||
+					iz == _numCellsPerDimension[2]-1) {
 					_cells[cellIndex].assignCellToHaloRegion();
 				}
 				else if (ix == 1 || iy == 1 || iz == 1 ||
-				         ix == _numCellsPerDimension[0]-2 ||
-				         iy == _numCellsPerDimension[1]-2 ||
-				         iz == _numCellsPerDimension[2]-2) {
+						 ix == _numCellsPerDimension[0]-2 ||
+						 iy == _numCellsPerDimension[1]-2 ||
+						 iz == _numCellsPerDimension[2]-2) {
 					_cells[cellIndex].assignCellToBoundaryRegion();
 				}
 				else {
@@ -300,7 +308,7 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 
 		// preprocess all cells
 		#pragma omp parallel for schedule(static)
-		for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
+		for (unsigned int cellIndex = 0; cellIndex < _cells.size(); ++cellIndex) {
 			cellProcessor.preprocessCell(_cells[cellIndex]);
 		}
 
@@ -314,39 +322,8 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 				for(int i = 0; i < numIndicesOfThisColour; ++i) {
 					long int baseIndex = _cellIndicesPerColour[col][i];
 
-					const int num_pairs = _cellPairOffsets.size();
-					for(int j = 0; j < num_pairs; ++j) {
-						pair<long int, long int> current_pair = _cellPairOffsets[j];
+					c08Step(baseIndex, cellProcessor);
 
-						long int offset1 = current_pair.first;
-						long int cellIndex1 = baseIndex + offset1;
-						if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-							continue;
-
-						long int offset2 = current_pair.second;
-						long int cellIndex2 = baseIndex + offset2;
-						if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-							continue;
-
-						ParticleCellPointers& cell1 = _cells[cellIndex1];
-						ParticleCellPointers& cell2 = _cells[cellIndex2];
-
-						if(cell1.isHaloCell() and cell2.isHaloCell()) {
-							continue;
-						}
-
-						if(cellIndex1 == cellIndex2) {
-							cellProcessor.processCell(cell1);
-						}
-						else {
-							if(!cell1.isHaloCell()) {
-								cellProcessor.processCellPair(cell1, cell2);
-							}
-							else {
-								cellProcessor.processCellPair(cell2, cell1);
-							}
-						}
-					}
 				} // for-loop over indices of this colour
 			} // for-loop over colours
 		} // end pragma omp parallel
@@ -359,6 +336,42 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 
 		cellProcessor.endTraversal();
 	#endif
+}
+
+void LeafNodesContainer::c08Step(long int baseIndex, VectorizedChargeP2PCellProcessor &cellProcessor) {
+	const int num_pairs = _cellPairOffsets.size();
+	for(int j = 0; j < num_pairs; ++j) {
+		pair<long int, long int> current_pair = _cellPairOffsets[j];
+
+		long int offset1 = current_pair.first;
+		long int cellIndex1 = baseIndex + offset1;
+		if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
+			continue;
+
+		long int offset2 = current_pair.second;
+		long int cellIndex2 = baseIndex + offset2;
+		if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
+			continue;
+
+		ParticleCellPointers& cell1 = _cells[cellIndex1];
+		ParticleCellPointers& cell2 = _cells[cellIndex2];
+
+		if(cell1.isHaloCell() and cell2.isHaloCell()) {
+			continue;
+		}
+
+		if(cellIndex1 == cellIndex2) {
+			cellProcessor.processCell(cell1);
+		}
+		else {
+			if(!cell1.isHaloCell()) {
+				cellProcessor.processCellPair(cell1, cell2);
+			}
+			else {
+				cellProcessor.processCellPair(cell2, cell1);
+			}
+		}
+	}
 }
 
 LeafNodesContainer::~LeafNodesContainer() {
@@ -413,5 +426,13 @@ void LeafNodesContainer::threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) c
 	r[1] = (ind - r[2] * dim[0] * dim[1]) / dim[0];
 	r[0] = ind - dim[0] * (r[1] + dim[1] * r[2]);
 }
+
+	const int *LeafNodesContainer::getNumCellsPerDimension() const {
+		return _numCellsPerDimension;
+	}
+
+	vector<ParticleCellPointers> & LeafNodesContainer::getCells() {
+		return _cells;
+	}
 
 } /* namespace bhfmm */

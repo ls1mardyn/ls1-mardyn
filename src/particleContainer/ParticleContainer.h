@@ -99,7 +99,7 @@ public:
 	//! invalid. This method restores a valid representation.
 	virtual void update() = 0;
 
-	//! @brief add a single Molecules to the ParticleContainer.
+	//! @brief add a single Molecule to the ParticleContainer.
 	//!
 	//! Note: a copy of the particle is pushed. Destroying the argument is
 	//! responsibility of the programmer.
@@ -111,9 +111,22 @@ public:
 	//! @return true if successful, false if particle outside domain
 	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
 
+	//! @brief add a single Molecule to the ParticleContainer, ensures that it is added in the halo.
+	//!
+	//! Note: a copy of the particle is pushed. Destroying the argument is
+	//! responsibility of the programmer.
+	//!
+	//! @param particle reference to the particle which has to be added
+	//! @param inBoxCheckedAlready - if true, spare check whether molecule is in bounding box
+	//! @param checkWhetherDuplicate - if true, check whether molecule already exists and don't insert it.
+	//! @param rebuildCaches specifies, whether the caches should be rebuild
+	//! @return true if successful, false if particle outside domain
+	virtual bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+			const bool& rebuildCaches = false) = 0;
+
 	//! @brief adds a whole vector of particles
 	//! @param particles reference to a vector of pointers to particles
-	virtual int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
+	virtual void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -215,6 +228,7 @@ public:
 	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
 	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
 
+<<<<<<< .working
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position
@@ -227,6 +241,11 @@ public:
 	// or does this particle container calculate all forces.
 	virtual bool requiresForceExchange() const {return false;}
 
+||||||| .merge-left.r4919
+=======
+	virtual unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength) = 0;
+
+>>>>>>> .merge-right.r5797
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

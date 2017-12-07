@@ -1,56 +1,171 @@
+/** \page unitTests Unit Tests
 
-/** \page "Unit Tests"
+ls1-MarDyn comes with a rich set of unit tests to check the functionality of its components.
+The underlying unit test framework used by ls1-MarDyn is CppUnit.
 
-Currently, the project ls1/Mardyn uses the testing framework CppUnit for writing unit tests.
-Following you find a short description on building Mardyn with CppUnit and executing the tests.
+Building and running Unit Tests
+===============================
 
-For information on how to write unit tests within Mardyn see "Writing Unit Tests".
+To build the internal unit tests at least CppUnit 1.12.1 is required. The
+Unit Tests in ls1-MarDyn are enabled when build with the UNIT_TEST=1 option:
+\code{.sh}
+make UNIT_TESTS=1 ...
+\endcode
 
-!!! Quick Instructions
+If cppunit is installed at a non-standard location, its path can be specified with
+\code{.sh}
+make UNIT_TESTS=1 CPPUNIT_DIR=<PATH> ...
+\endcode
 
-The simplest way to build Mardyn/ls1 with Unit Tests, is to use the makefile and the
-cppunit-version contained in the subversion repository.
+To run all unit tests run ls1-MarDyn with
+\code{.sh}
+mpirun -np 2 MarDyn -t -d ../test_input/
+\endcode
 
-Change to the directory "src/" and type
+Organisation of Unit Tests
+==========================
 
-\verbatim
-make -f ../makefile/Makefile TARGET=DEBUG PARTYPE=SEQ UNIT_TESTS=1
-\endverbatim
+All tests are organized in directories called \b tests. A test-directory contains
+the tests for the code contained in its parent directory. It should be possible
+to derive the name of the source file under test from the classname of the testcase.
 
-Execute the tests with
-\verbatim
-./MarDyn -t -d ../test_input/
-\endverbatim
+Writing unit tests
+==================
 
+In the following the creation of Unit Tests in ls1-MarDyn shall be demonstrated with
+the testcase tests/CommonTest as a simple example.
 
-!!! Building Mardyn with Unit Tests
+\note Although cppunit is the testing framework used at the moment, DO NOT USE
+ANY CPPUNIT-FUNCTIONALITY DIRECTLY. Therefore and in order to keep the underlying
+testing framework exchangable, all framework-dependend things should be encapsulated.
 
-To build Mardyn with unit tests generally, the following conditions have to be met:
-- the macro UNIT_TESTS has to be defined when compiling Mardyn
-- the CppUnit header-files have to be in the include path
-- you have to link against the CppUnit-Library or the compiled source code
+Writing the test header
+-----------------------
 
-If building without CppUnit, all source code in the  *\\test-directories cannot be
-compiled and linked, so it has to be excluded from the build.
+To create a new testcase, apply the following steps to your new header file:
+- Create a new testclass, which inherits from utils::Test
+- Include the header utils/Testing.h
+- Write the declarations of the test methods. It is recommended that you create
+  one test method for each method which you are going to test. The name
+  of test methods should start with \"test"\. Thus, you end up with the following
+  code:
 
-!! Using the CppUnit-Source from the Mardyn-repository
+  \code{.cpp}
+#include "utils/Testing.h"
 
-The simplest way is to use the makefile distributed, with the option TESTS=1. Then
-the CppUnit source code which comes with the svn version is compiled and linked. Also all
-tests will be compiled and linked.
+class CommonTest : public utils::Test {
 
-!! Using a CppUnit Library
+public:
+	CommonTest();
 
-If there is already a cppUnit library installed on your system, it might be convenient
-to use that one. Configure your build-system so that the conditions listed above
-are met, or replace the file makefile/cppunit.mk.
+	virtual ~CommonTest();
 
-!!! Running the unit tests
+	void testGetTimeString();
 
-After building Mardyn with unit tests, call Mardyn with the commandline arguments
- "-t" or "--tests". The tests will then be executed.
+	void testAlignedNumber();
+};
+\endcode
 
-\note In cases you use the cppunit source code from the Mardyn repository, also
-the tests which test cppUnit itself will be executed.
+- Next declare the test suite, which will contain the single test methods. A good
+  place is just at then beginning of the class. A test suite is declared with
+  the macros TEST_SUITE(test_suite_name) and TEST_SUITE_END().
+  Declare the unit tests in between those two macros with the macro
+  TEST_METHOD(testGetTimeString).
+
+  \note The argument of TEST_METHOD must match the name of a test function
+        you declared in the last step!
+  \note Each of the macros has to be terminated by a semicolon!
+
+  The result is the final header:
+
+\code
+#include <utils/Testing.h>
+
+class CommonTest : public utils::Test {
+
+	// declare testsuite commonTest
+	TEST_SUITE(CommonTest);
+
+	// add two methods which perform tests
+	TEST_METHOD(testGetTimeString);
+	TEST_METHOD(testAlignedNumber);
+
+	// end suite declaration
+	TEST_SUITE_END();
+
+public:
+	CommonTest();
+
+	virtual ~CommonTest();
+
+	void testGetTimeString();
+
+	void testAlignedNumber();
+};
+\endcode
+
+Writing the Unit Test Implementation
+------------------------------------
+
+- Next implement the .cpp-file. Include the header of the test class as well as
+  the header of the class being tested.
+
+- <b>Directly below the includes, call the macro \"TEST_SUITE_REGISTRATION(test name)\",
+with the name of the test class as argument! </b>
+
+\code{.cpp}
+#include "CommonTest.h"
+#include "Common.h"
+
+TEST_SUITE_REGISTRATION(CommonTest);
+\endcode
+
+- Then implement the test functions. Use assertions to check results. Assertions
+are
+	- ASSERT_TRUE
+	- ASSERT_TRUE_MSG
+	- ASSERT_FAIL
+	- ASSERT_EQUAL
+	- ASSERT_EQUAL_MSG
+	- ASSERT_DOUBLES_EQUAL
+	- ASSERT_DOUBLES_EQUAL_MSG
+
+@see utils/Testing.h
+
+The implementation of a test method may look like
+\code{.cpp}
+void CommonTest::testGetTimeString() {
+	std::string time = gettimestring();
+	ASSERT_EQUAL((size_t)13, time.size());
+	ASSERT_EQUAL(time[6], 'T');
+}
+\endcode
+
+General Thoughts about Tests
+----------------------------
+
+- Think about testability, when you write code.
+  Try to keep your methods small and simple. If your method is just too long or
+  contains complex control flows, then your tests might get very complex as well.
+  Thus, try to design your code for testability.
+
+- You might also try to test invalid input to your methods. E.g. if you specify
+  that your method accepts only positive integer input values, try also negative
+  ones and check if your code deals with that case the right way.
+
+- Of course tests will never cover 100 % of your code, and there will be bugs
+  despite. For each bug you fixed, add a test. This will make sure that the bug
+  will never again be introduced (e.g. by a developer who is not familiar with
+  that part of the code).
+
+- Don't overdo tests - create a few tests per public method. Add only more tests,
+  if certain parts of your code are likely to contain several bugs, or if code
+  is rather complex.
+
+For more detailed information on testing see
+- the "CppUnit Cookbook" (<b>Although you must not use anything cppunit-related directly!</b>
+- JUnit - Pragmatic Programmer: Although written for JUnit, the general concept of tests is
+  explained very well
+- XUnit Test Patterns
 
 */

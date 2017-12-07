@@ -12,15 +12,21 @@
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 #include "utils/mardyn_assert.h"
+#include "utils/Random.h"
 #include <array>
 #include <algorithm>
 
 #include "particleContainer/TraversalTuner.h"
+<<<<<<< .working
 #include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/HalfShellTraversal.h"
 #include "particleContainer/LinkedCellTraversals/QuickschedTraversal.h"
 #include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
+||||||| .merge-left.r4919
+=======
+#include "ResortCellProcessorSliced.h"
+>>>>>>> .merge-right.r5797
 
 using namespace std;
 using Log::global_log;
@@ -29,7 +35,7 @@ using Log::global_log;
 //############ PUBLIC METHODS ####################
 //################################################
 
-LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner<ParticleCell>()) {
+LinkedCells::LinkedCells() : ParticleContainer(), _traversalTuner(new TraversalTuner<ParticleCell>()), _resortCellProcessorSliced(nullptr) {
 }
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
@@ -92,17 +98,17 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	}
 
 	initializeCells();
-	calculateNeighbourIndices();
-	calculateCellPairOffsets();
-
 	initializeTraversal();
 
 	_cellsValid = false;
+	_resortCellProcessorSliced = nullptr;
 }
 
 LinkedCells::~LinkedCells() {
-    if (_traversalTuner != nullptr)
-	    delete _traversalTuner;
+
+    if (_resortCellProcessorSliced != nullptr) {
+    	delete _resortCellProcessorSliced;
+    }
 
 	std::vector<ParticleCell>::iterator it;
 	for (it = _cells.begin(); it != _cells.end(); ++it) {
@@ -119,10 +125,16 @@ void LinkedCells::initializeTraversal() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
+<<<<<<< .working
 	_cellsInCutoff = xmlconfig.getNodeValue_int("cellsInCutoffRadius", 1);
 	mardyn_assert(_cellsInCutoff>=1);
 
     _traversalTuner = new TraversalTuner<ParticleCell>();
+||||||| .merge-left.r4919
+    _traversalTuner = new TraversalTuner<ParticleCell>();
+=======
+    _traversalTuner = std::unique_ptr<TraversalTuner<ParticleCell>>(new TraversalTuner<ParticleCell>());
+>>>>>>> .merge-right.r5797
 	_traversalTuner->readXML(xmlconfig);
 }
 
@@ -179,8 +191,6 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	}
 
 	initializeCells();
-	calculateNeighbourIndices();
-	calculateCellPairOffsets();
 
 	// TODO: We loose particles here as they are not communicated to the new owner
 	// delete all Particles which are outside of the halo region
@@ -194,20 +204,78 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 }
 
+void LinkedCells::check_molecules_in_box(){
+	{
+		const ParticleIterator begin = this->iteratorBegin();
+		const ParticleIterator end = this->iteratorEnd();
+
+		for (ParticleIterator tM = begin; tM != end; ++tM) {
+			if (not tM->inBox(_boundingBoxMin,_boundingBoxMax)){
+				global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
+						<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
+				global_log->error() << "The bounding box is: [" << _boundingBoxMin[0] << ", " << _boundingBoxMax[0]
+						<< ") x [" << _boundingBoxMin[1] << ", " << _boundingBoxMax[1] << ") x [" << _boundingBoxMin[2]
+						<< ", " << _boundingBoxMax[2] << ")" << std::endl;
+				global_log->error() << "Particle will be lost. Aboarting simulation." << std::endl;
+				Simulation::exit(311);
+			}
+		}
+	}
+}
+
 void LinkedCells::update() {
+#ifndef NDEBUG
+	check_molecules_in_box();
+#endif
+
 	// TODO: replace via a cellProcessor and a traverseCells call ?
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	update_via_copies();
 #else
 //	update_via_coloring();
-	update_via_traversal();
+	std::array<long unsigned, 3> dims = {
+		static_cast<long unsigned>(_cellsPerDimension[0]),
+		static_cast<long unsigned>(_cellsPerDimension[1]),
+		static_cast<long unsigned>(_cellsPerDimension[2])
+	};
+	if (_traversalTuner->isTraversalApplicable(TraversalTuner<ParticleCell>::traversalNames::SLICED, dims)) {
+		if (_resortCellProcessorSliced == nullptr) {
+			_resortCellProcessorSliced = new ResortCellProcessorSliced(this);
+		}
+		_traversalTuner->traverseCellPairs(TraversalTuner<ParticleCell>::traversalNames::SLICED, *_resortCellProcessorSliced);
+	} else {
+		update_via_traversal();
+	}
 #endif
 
 	_cellsValid = true;
+
+
+
+#ifndef NDEBUG
+	for (ParticleIterator tM = iteratorBegin(); tM != iteratorEnd(); ++tM) {
+		if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
+			global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
+					<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
+					<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
+			global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
+					<< std::endl << "cell: [" << _cells[tM.getCellIndex()].getBoxMin(0) << ", "
+					<< _cells[tM.getCellIndex()].getBoxMax(0) << "] x [" << _cells[tM.getCellIndex()].getBoxMin(1)
+					<< ", " << _cells[tM.getCellIndex()].getBoxMax(1) << "] x ["
+					<< _cells[tM.getCellIndex()].getBoxMin(2) << ", " << _cells[tM.getCellIndex()].getBoxMax(2) << "]"
+					<< std::endl;
+
+		}
+		mardyn_assert(_cells[tM.getCellIndex()].testInBox(*tM));
+	}
+#endif
 }
 
 void LinkedCells::update_via_copies() {
 	const vector<ParticleCell>::size_type numCells = _cells.size();
+	array<long,13> forwardNeighbourOffsets;
+	array<long,13> backwardNeighbourOffsets;
+	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -226,8 +294,8 @@ void LinkedCells::update_via_copies() {
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			ParticleCell& cell = _cells[cellIndex];
 
-			for (unsigned long j = 0; j < _backwardNeighbourOffsets.size(); j++) {
-				const unsigned long neighbourIndex = cellIndex - _backwardNeighbourOffsets[j];
+			for (unsigned long j = 0; j < backwardNeighbourOffsets.size(); j++) {
+				const unsigned long neighbourIndex = cellIndex - backwardNeighbourOffsets[j];
 				if (neighbourIndex >= _cells.size()) {
 					// handles cell_index < 0 (indices are unsigned!)
 					mardyn_assert(cell.isHaloCell());
@@ -236,8 +304,8 @@ void LinkedCells::update_via_copies() {
 				cell.updateLeavingMoleculesBase(_cells[neighbourIndex]);
 			}
 
-			for (unsigned long j = 0; j < _forwardNeighbourOffsets.size(); j++) {
-				const unsigned long neighbourIndex = cellIndex + _forwardNeighbourOffsets[j];
+			for (unsigned long j = 0; j < forwardNeighbourOffsets.size(); j++) {
+				const unsigned long neighbourIndex = cellIndex + forwardNeighbourOffsets[j];
 				if (neighbourIndex >= numCells) {
 					mardyn_assert(cell.isHaloCell());
 					continue;
@@ -255,6 +323,8 @@ void LinkedCells::update_via_copies() {
 	} // end pragma omp parallel
 }
 void LinkedCells::update_via_coloring() {
+	std::array<std::pair<unsigned long, unsigned long>, 14> cellPairOffsets = calculateCellPairOffsets();
+
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -272,9 +342,9 @@ void LinkedCells::update_via_coloring() {
 					for (int x = startIndices[0]; x < _cellsPerDimension[0]-1; x += strides[0]) {
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
 
-						const int num_pairs = _cellPairOffsets.size();
+						const int num_pairs = cellPairOffsets.size();
 						for(int j = 0; j < num_pairs; ++j) {
-							pair<long int, long int> current_pair = _cellPairOffsets[j];
+							pair<long int, long int> current_pair = cellPairOffsets[j];
 
 							long int offset1 = current_pair.first;
 							long int cellIndex1 = baseIndex + offset1;
@@ -305,6 +375,13 @@ void LinkedCells::update_via_coloring() {
 			}
 		}
 	} // end pragma omp parallel
+}
+
+void LinkedCells::update_via_sliced_traversal() {
+	if (_resortCellProcessorSliced == nullptr) {
+		_resortCellProcessorSliced = new ResortCellProcessorSliced(this);
+	}
+	_traversalTuner->traverseCellPairs(*_resortCellProcessorSliced);
 }
 
 void LinkedCells::update_via_traversal() {
@@ -344,11 +421,29 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 	return wasInserted;
 }
 
-int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
+bool LinkedCells::addHaloParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
+	const bool inBox = inBoxCheckedAlready or particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
+	mardyn_assert(not particle.inBox(_boundingBoxMin,_boundingBoxMax));
+	bool wasInserted = false;
+
+	if (inBox) {
+		int cellIndex = getCellIndexOfMolecule(&particle);
+		wasInserted = _cells[cellIndex].addParticle(particle, checkWhetherDuplicate);
+		if (rebuildCaches) {
+			_cells[cellIndex].buildSoACaches();
+		}
+	}
+
+	return wasInserted;
+}
+
+void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
 	typedef vector<Molecule>::size_type mol_index_t;
 	typedef vector<ParticleCell>::size_type cell_index_t;
 
+#ifndef NDEBUG
 	int oldNumberOfParticles = getNumberOfParticles();
+#endif
 
 	const mol_index_t N = particles.size();
 
@@ -421,12 +516,14 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 
 	} // end pragma omp parallel
 
+#ifndef NDEBUG
 	int numberOfAddedParticles = getNumberOfParticles() - oldNumberOfParticles;
 	global_log->debug()<<"In LinkedCells::addParticles :"<<endl;
 	global_log->debug()<<"\t#Particles to be added = "<<particles.size()<<endl;
 	global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<endl;
+#endif
 
-	return numberOfAddedParticles;
+	return;
 }
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
@@ -462,9 +559,13 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 
 unsigned long LinkedCells::getNumberOfParticles() {
 	unsigned long N = 0;
-	std::vector<ParticleCell>::iterator it;
-	for (it = _cells.begin(); it != _cells.end(); ++it) {
-		N += it->getMoleculeCount();
+	unsigned long numCells = _cells.size();
+
+	#if defined(_OPENMP)
+	#pragma omp parallel for reduction(+:N)
+	#endif
+	for (unsigned long i = 0; i < numCells; ++i) {
+		N += _cells.at(i).getMoleculeCount();
 	}
 	return N;
 }
@@ -600,13 +701,19 @@ RegionParticleIterator LinkedCells::iterateRegionEnd() {
 //################################################
 
 void LinkedCells::initializeCells() {
-	_innerMostCellIndices.clear();
-	_innerCellIndices.clear();
-	_boundaryCellIndices.clear();
+	//TODO: resize _haloCellIndices
 	_haloCellIndices.clear();
 
 	long int cellIndex;
 	double cellBoxMin[3], cellBoxMax[3];
+
+#ifdef ENABLE_REDUCED_MEMORY_MODE
+	ParticleCell::_cellBorderAndFlagManager.init(_cellsPerDimension,
+			_haloBoundingBoxMin, _haloBoundingBoxMax,
+			_boundingBoxMin, _boundingBoxMax,
+			_cellLength);
+	// this code would have been much simpler if we could use CellBorderAndFlagManager in non-RMM mode...
+#endif
 
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		cellBoxMin[2] = iz * _cellLength[2] + _haloBoundingBoxMin[2];
@@ -649,15 +756,17 @@ void LinkedCells::initializeCells() {
 				}
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
+				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
 
-				cell.skipCellFromHaloRegion();
-				cell.skipCellFromBoundaryRegion();
-				cell.skipCellFromInnerRegion();
-				cell.skipCellFromInnerMostRegion();
+				#ifndef ENABLE_REDUCED_MEMORY_MODE
+					cell.skipCellFromHaloRegion();
+					cell.skipCellFromBoundaryRegion();
+					cell.skipCellFromInnerRegion();
+					cell.skipCellFromInnerMostRegion();
+				#endif
 
 				cell.setBoxMin(cellBoxMin);
 				cell.setBoxMax(cellBoxMax);
-				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
 				if (ix < _haloWidthInNumCells[0] ||
 					iy < _haloWidthInNumCells[1] ||
 					iz < _haloWidthInNumCells[2] ||
@@ -666,6 +775,10 @@ void LinkedCells::initializeCells() {
 					iz >= _cellsPerDimension[2] - _haloWidthInNumCells[2]) {
 
 					cell.assignCellToHaloRegion();
+					#ifdef ENABLE_REDUCED_MEMORY_MODE
+						cell.skipCellFromInnerRegion();
+						cell.skipCellFromInnerMostRegion();
+					#endif
 					_haloCellIndices.push_back(cellIndex);
 				}
 				else{
@@ -677,7 +790,11 @@ void LinkedCells::initializeCells() {
 						iz >= _cellsPerDimension[2] - 2 * _haloWidthInNumCells[2]) {
 
 						cell.assignCellToBoundaryRegion();
-						_boundaryCellIndices.push_back(cellIndex);
+						#ifdef ENABLE_REDUCED_MEMORY_MODE
+							cell.skipCellFromHaloRegion();
+							cell.skipCellFromInnerRegion();
+							cell.skipCellFromInnerMostRegion();
+						#endif
 					}
 					else{
 						if (ix < 3 * _haloWidthInNumCells[0] ||
@@ -688,60 +805,17 @@ void LinkedCells::initializeCells() {
 							iz >= _cellsPerDimension[2] - 3 * _haloWidthInNumCells[2]) {
 
 							cell.assignCellToInnerRegion();
-							_innerCellIndices.push_back(cellIndex);
+							#ifdef ENABLE_REDUCED_MEMORY_MODE
+								cell.skipCellFromHaloRegion();
+								cell.skipCellFromBoundaryRegion();
+							#endif
 						}
 						else {
 							cell.assignCellToInnerMostAndInnerRegion();
-							_innerMostCellIndices.push_back(cellIndex);
-							_innerCellIndices.push_back(cellIndex);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/*********************  Compute Border indices *********************/
-	for (int dim = 0; dim < 3; ++dim) {
-		for (int dir = 0; dir < 2; ++dir) {
-			for (int typ = 0; typ < 2; ++typ) {
-				_borderCellIndices[dim][dir][typ].clear();
-				int low[3] = { 0, 0, 0 };
-				int high[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
-
-				if (typ == 1) {
-					if (dir == 0){
-						low[dim]++;
-					}
-					else {
-						high[dim]--;
-					}
-				}
-
-				if (dir == 0){
-					high[dim] = low[dim];
-				}
-				else {
-					low[dim] = high[dim];
-				}
-
-				for (int iz = low[2]; iz <= high[2]; ++iz) {
-					for (int iy = low[1]; iy <= high[1]; ++iy) {
-						for (int ix = low[0]; ix <= high[0]; ++ix) {
-							cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-#ifndef NDEBUG
-							ParticleCell & cell = _cells[cellIndex];
-
-							mardyn_assert(not cell.isInnerCell());
-
-							if (typ == 0){
-								mardyn_assert(cell.isHaloCell());
-							} else {
-								 /* mardyn_assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
-							}
-#endif
-
-							_borderCellIndices[dim][dir][typ].push_back(cellIndex);
+							#ifdef ENABLE_REDUCED_MEMORY_MODE
+								cell.skipCellFromHaloRegion();
+								cell.skipCellFromBoundaryRegion();
+							#endif
 						}
 					}
 				}
@@ -750,8 +824,9 @@ void LinkedCells::initializeCells() {
 	}
 }
 
-void LinkedCells::calculateNeighbourIndices() {
+void LinkedCells::calculateNeighbourIndices(std::array<long, 13>& forwardNeighbourOffsets, std::array<long, 13>& backwardNeighbourOffsets) const {
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
+<<<<<<< .working
 
 	// 13 neighbors for _haloWidthInNumCells = 1 or 64 for =2
 	int nNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
@@ -759,10 +834,15 @@ void LinkedCells::calculateNeighbourIndices() {
 	// Resize offset vector to number of neighbors and fill with 0
 	_forwardNeighbourOffsets.resize(nNeighbours, 0);
 	_backwardNeighbourOffsets.resize(nNeighbours, 0);
+||||||| .merge-left.r4919
+	std::fill(_forwardNeighbourOffsets.begin(), _forwardNeighbourOffsets.end(), 0);
+	std::fill(_backwardNeighbourOffsets.begin(), _backwardNeighbourOffsets.end(), 0);
+=======
+	std::fill(forwardNeighbourOffsets.begin(), forwardNeighbourOffsets.end(), 0);
+	std::fill(backwardNeighbourOffsets.begin(), backwardNeighbourOffsets.end(), 0);
+>>>>>>> .merge-right.r5797
 	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
 
-	_maxNeighbourOffset = 0;
-	_minNeighbourOffset = 0;
 	double xDistanceSquare;
 	double yDistanceSquare;
 	double zDistanceSquare;
@@ -796,18 +876,24 @@ void LinkedCells::calculateNeighbourIndices() {
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex,
 							zIndex);
 					if (offset > 0) {
+<<<<<<< .working
 						_forwardNeighbourOffsets.at(forwardNeighbourIndex) = offset;
+||||||| .merge-left.r4919
+						_forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
+=======
+						forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
+>>>>>>> .merge-right.r5797
 						++forwardNeighbourIndex;
-						if (offset > _maxNeighbourOffset) {
-							_maxNeighbourOffset = offset;
-						}
 					}
 					if (offset < 0) {
+<<<<<<< .working
 						_backwardNeighbourOffsets.at(backwardNeighbourIndex) = abs(offset);
+||||||| .merge-left.r4919
+						_backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
+=======
+						backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
+>>>>>>> .merge-right.r5797
 						++backwardNeighbourIndex;
-						if (abs(offset) > _minNeighbourOffset) {
-							_minNeighbourOffset = abs(offset);
-						}
 					}
 				}
 			}
@@ -816,12 +902,8 @@ void LinkedCells::calculateNeighbourIndices() {
 
 	mardyn_assert(forwardNeighbourIndex == nNeighbours);
 	mardyn_assert(backwardNeighbourIndex == nNeighbours);
-
-	global_log->info() << "Neighbour offsets are bounded by "
-			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
 }
-
-void LinkedCells::calculateCellPairOffsets() {
+std::array<std::pair<unsigned long, unsigned long>, 14> LinkedCells::calculateCellPairOffsets() const {
 	long int o   = cellIndexOf3DIndex(0,0,0); // origin
 	long int x   = cellIndexOf3DIndex(1,0,0); // displacement to the right
 	long int y   = cellIndexOf3DIndex(0,1,0); // displacement ...
@@ -832,34 +914,37 @@ void LinkedCells::calculateCellPairOffsets() {
 	long int xyz = cellIndexOf3DIndex(1,1,1);
 
 	// minimize number of cells simultaneously in memory:
+	std::array<std::pair<unsigned long, unsigned long>, 14> cellPairOffsets;
 
-	_cellPairOffsets[ 0] = make_pair(o, xyz);
+	cellPairOffsets[ 0] = make_pair(o, xyz);
 	// evict xyz
 
-	_cellPairOffsets[ 1] = make_pair(o, yz );
-	_cellPairOffsets[ 2] = make_pair(x, yz );
+	cellPairOffsets[ 1] = make_pair(o, yz );
+	cellPairOffsets[ 2] = make_pair(x, yz );
 	// evict yz
 
-	_cellPairOffsets[ 3] = make_pair(o, x  );
+	cellPairOffsets[ 3] = make_pair(o, x  );
 
-	_cellPairOffsets[ 4] = make_pair(o, xy );
-	_cellPairOffsets[ 5] = make_pair(xy, z );
+	cellPairOffsets[ 4] = make_pair(o, xy );
+	cellPairOffsets[ 5] = make_pair(xy, z );
 	// evict xy
 
-	_cellPairOffsets[ 6] = make_pair(o, z  );
-	_cellPairOffsets[ 7] = make_pair(x, z  );
-	_cellPairOffsets[ 8] = make_pair(y, z  );
+	cellPairOffsets[ 6] = make_pair(o, z  );
+	cellPairOffsets[ 7] = make_pair(x, z  );
+	cellPairOffsets[ 8] = make_pair(y, z  );
 	// evict z
 
-	_cellPairOffsets[ 9] = make_pair(o, y  );
-	_cellPairOffsets[10] = make_pair(x, y  );
+	cellPairOffsets[ 9] = make_pair(o, y  );
+	cellPairOffsets[10] = make_pair(x, y  );
 	// evict x
 
-	_cellPairOffsets[11] = make_pair(o, xz );
-	_cellPairOffsets[12] = make_pair(y, xz );
+	cellPairOffsets[11] = make_pair(o, xz );
+	cellPairOffsets[12] = make_pair(y, xz );
 	// evict xz
 
-	_cellPairOffsets[13] = make_pair(o, o  );
+	cellPairOffsets[13] = make_pair(o, o  );
+
+	return cellPairOffsets;
 }
 
 unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
@@ -971,6 +1056,72 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	endIndex = getCellIndexOfPoint(endRegion);
 }
 
+unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double simBoxLength) {
+	const unsigned long numCells = _cells.size();
+
+	std::vector<unsigned long> numMoleculesPerThread;
+	const int numThreads = mardyn_get_max_threads();
+	numMoleculesPerThread.resize(numThreads);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int myID = mardyn_get_thread_num();
+		const unsigned long myStart = numCells * myID / numThreads;
+		const unsigned long myEnd = numCells * (myID + 1) / numThreads;
+		const int seed = myID;
+
+		unsigned long numMoleculesByThisThread = 0;
+		Random threadPrivateRNG = Random(seed);
+
+		// manual "static" scheduling important, because later this thread needs to traverse the same cells
+		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {
+			ParticleCell & cell = _cells[cellIndex];
+			numMoleculesByThisThread += cell.initCubicGrid(numMoleculesPerDimension, simBoxLength, threadPrivateRNG);
+		}
+
+		// prefix sum of numMoleculesByThisThread
+
+
+		#if defined(_OPENMP)
+		#pragma omp critical(prefixInitCubicGridLC)
+		#endif
+		for (int i = myID; i < numThreads; ++i) {
+			numMoleculesPerThread[i] += numMoleculesByThisThread;
+		}
+
+		/* wait for all threads to accumulate */
+		#if defined(_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		// assign local IDs
+
+		unsigned long threadIDsAssignedByThisThread = 0;
+		if(myID > 0) {
+			threadIDsAssignedByThisThread = numMoleculesPerThread[myID-1];
+		}
+
+		// manual "static" scheduling important, because later this thread needs to traverse the same cells
+		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {
+			ParticleCell & cell = _cells[cellIndex];
+			const int numMolecules = cell.getMoleculeCount();
+
+			SingleCellIterator begin = cell.iteratorBegin();
+			SingleCellIterator end = cell.iteratorEnd();
+
+			for (SingleCellIterator it = begin; it != end; ++it) {
+				it->setid(threadIDsAssignedByThisThread);
+				++threadIDsAssignedByThisThread;
+			}
+		}
+	} /* end of parallel */
+
+	unsigned long totalNumberOfMolecules = numMoleculesPerThread.back();
+	return totalNumberOfMolecules;
+}
+
 RegionParticleIterator LinkedCells::getRegionParticleIterator(
 		const double startRegion[3], const double endRegion[3],
 		const unsigned int startRegionCellIndex,
@@ -985,7 +1136,7 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
 	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
 
-	return RegionParticleIterator(type, this, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
+	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {
@@ -1028,9 +1179,10 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 	{
 		// (potentially re-) initialize dummyCell
 		dummyCell.assignCellToInnerRegion();
-		double l[3] = {m1->r(0)-10., m1->r(1)-10., m1->r(2)-10.}, u[3] = {m1->r(0)+10., m1->r(1)+10., m1->r(2)+10.};
-		dummyCell.setBoxMin(l);
-		dummyCell.setBoxMax(u);
+		double low[3] = {m1->r(0)-10., m1->r(1)-10., m1->r(2)-10.};
+		double up[3] = {m1->r(0)+10., m1->r(1)+10., m1->r(2)+10.};
+		dummyCell.setBoxMin(low);
+		dummyCell.setBoxMax(up);
 		dummyCell.addParticle(*m1);
 
 		dummyCell.buildSoACaches();
@@ -1045,20 +1197,24 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	cellProcessor->initTraversal();
 
-	Molecule * molWithSoA = &(dummyCell.moleculesAt(0));
+	Molecule * molWithSoA = &(*dummyCell.iteratorBegin());
 
 	u += cellProcessor->processSingleMolecule(molWithSoA, currentCell);
 
+	array<long,13> forwardNeighbourOffsets;
+	array<long,13> backwardNeighbourOffsets;
+	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
+
 	// forward neighbours
-	for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
+	for (auto neighbourOffsetsIter = forwardNeighbourOffsets.begin();
+			neighbourOffsetsIter != forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
 	}
 	// backward neighbours
-	for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
-			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
+	for (auto neighbourOffsetsIter = backwardNeighbourOffsets.begin();
+			neighbourOffsetsIter != backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
 		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
@@ -1115,17 +1271,7 @@ size_t LinkedCells::getTotalSize() {
 		totalSize += cell.getCellDataSoA().getDynamicSize();
 		totalSize += cell.getMoleculeVectorDynamicSize();
 	}
-	totalSize += _innerMostCellIndices.size() * sizeof(unsigned long);
-	totalSize += _innerCellIndices.size() * sizeof(unsigned long);
-	totalSize += _boundaryCellIndices.size() * sizeof(unsigned long);
-	totalSize += _haloCellIndices.size() * sizeof(unsigned long);
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 2; j++) {
-			for (int k = 0; k < 2; k++) {
-				totalSize += _borderCellIndices[i][j][k].size() * sizeof(unsigned long);
-			}
-		}
-	}
+	totalSize += _haloCellIndices.capacity() * sizeof(unsigned long);
 	return totalSize;
 }
 void LinkedCells::printSubInfo(int offset) {
@@ -1137,17 +1283,7 @@ void LinkedCells::printSubInfo(int offset) {
 	}
 	cellTotal += cellSoA + cellMoleculeVectors;
 	size_t indexVectors = 0;
-	indexVectors += _innerMostCellIndices.size() * sizeof(unsigned long);
-	indexVectors += _innerCellIndices.size() * sizeof(unsigned long);
-	indexVectors += _boundaryCellIndices.size() * sizeof(unsigned long);
-	indexVectors += _haloCellIndices.size() * sizeof(unsigned long);
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 2; j++) {
-			for (int k = 0; k < 2; k++) {
-				indexVectors += _borderCellIndices[i][j][k].size() * sizeof(unsigned long);
-			}
-		}
-	}
+	indexVectors += _haloCellIndices.capacity() * sizeof(unsigned long);
 	std::stringstream offsetstream;
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";

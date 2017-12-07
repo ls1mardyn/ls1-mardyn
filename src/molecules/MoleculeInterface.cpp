@@ -18,10 +18,6 @@ using namespace std;
 using Log::global_log;
 
 
-MoleculeInterface::~MoleculeInterface() {
-	// TODO Auto-generated destructor stub
-}
-
 bool MoleculeInterface::isLessThan(const MoleculeInterface& m2) const {
 	if (r(2) < m2.r(2))
 		return true;

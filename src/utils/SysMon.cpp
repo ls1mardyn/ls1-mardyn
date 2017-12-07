@@ -6,7 +6,7 @@
 #define SYSMON_CPP
 
 #include "SysMon.h"
-#include "Logger.h"
+#include "Logger.h"	// MPI_CHECK, Log::global_log
 
 #include <stack>
 
@@ -14,6 +14,7 @@
 #include <sstream>
 
 using namespace std;
+using Log::global_log;
 
 SysMon* SysMon::s_sysmoninstance=NULL;
 
@@ -73,6 +74,7 @@ void SysMon::updateExpressionValues(bool resetMinMax)
 	if(_variableset->existVariableGroup("procselfstatm")) updateVariables_procselfstatm();
 	if(_variableset->existVariableGroup("procselfschedstat")) updateVariables_procselfschedstat();
 	if(_variableset->existVariableGroup("procselfsched")) updateVariables_procselfsched();
+	if(_variableset->existVariableGroup("procselfstatus")) updateVariables_procselfstatus();
 	
 	size_t i=0;
 	for(std::list<Expression>::const_iterator exprit=_expressions.begin();exprit!=_expressions.end();++exprit)
@@ -177,18 +179,21 @@ void SysMon::writeExpressionValues(ostream& ostrm, string header, string linepre
 #endif
 }
 
+
 unsigned int SysMon::updateVariables_sysconf()
 {
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_SYSCONF
 	long val=0;
 	
+#ifdef __linux__
 	val=sysconf(_SC_PHYS_PAGES);
 	_variableset->setVariable("sysconf:PHYS_PAGES",val);
 	++numvalues;
 	val=sysconf(_SC_AVPHYS_PAGES);
 	_variableset->setVariable("sysconf:AVPHYS_PAGES",val);
 	++numvalues;
+#endif
 	val=sysconf(_SC_PAGESIZE);
 	_variableset->setVariable("sysconf:PAGESIZE",val);
 	++numvalues;
@@ -303,19 +308,29 @@ unsigned int SysMon::updateVariables_procmeminfo()
 	ifstream ifstrm("/proc/meminfo");
 	if(!ifstrm) return 0;
 	long val=0;
-	string line,label;
+	string line,label,valunit;
 	unsigned int linenr=0;
 	while (getline(ifstrm, line))
-	{
+	{	// process line
 		++linenr;
 		istringstream iss(line);
 		if (!(iss >> label >> val)) { break; }
-		//iss.str(string());
 		size_t i=label.find_first_of(" :");
 		while(i!=string::npos)
 		{
 			label.erase(i,1);
 			i=label.find_first_of(" :");
+		}
+		valunit=string();	//=""
+		if(!iss.eof()) if (!(iss >> valunit)) break;
+		//iss.str(string());iss.clear();
+		if(!valunit.empty())
+		{
+			if(valunit=="kB")
+				val*=1024;
+			else
+				//cerr << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+				global_log->warning() << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
 		}
 		_variableset->setVariable("procmeminfo",label,val);
 		++numvalues;
@@ -335,11 +350,11 @@ unsigned int SysMon::updateVariables_procvmstat()
 	string line,label;
 	unsigned int linenr=0;
 	while (getline(ifstrm, line))
-	{
+	{	// process line
 		++linenr;
 		istringstream iss(line);
 		if (!(iss >> label >> val)) { break; }
-		//iss.str(string());
+		//iss.str(string());iss.clear();
 		_variableset->setVariable("procvmstat",label,val);
 		++numvalues;
 	}
@@ -368,7 +383,7 @@ unsigned int SysMon::updateVariables_procloadavg()
 	istringstream iss(line);
 	if (!(iss >> loadavg1 >> loadavg5 >> loadavg15
 	          >> numschedentexec >> numschedentexist >> pidrecent)) { return 0; }
-	//iss.str(string());
+	//iss.str(string());iss.clear();
 	_variableset->setVariable("procloadavg","loadavg1",double(loadavg1));
 	++numvalues;
 	_variableset->setVariable("procloadavg","loadavg5",double(loadavg5));
@@ -419,11 +434,11 @@ unsigned int SysMon::updateVariables_procselfsched()
 	string line,label,colon;
 	unsigned int linenr=0;
 	while (getline(ifstrm, line))
-	{
+	{	// process line
 		++linenr;
 		istringstream iss(line);
 		if (!(iss >> label >> colon >> val)) { continue; }
-		//iss.str(string());
+		//iss.str(string());iss.clear();
 		if(colon!=":") continue;
 		_variableset->setVariable("procselfsched",label,val);
 		++numvalues;
@@ -449,6 +464,49 @@ unsigned int SysMon::updateVariables_procselfschedstat()
 	++numvalues;
 	_variableset->setVariable("procselfschedstat:numtasks",long(numtasks));
 	++numvalues;
+#endif
+	return numvalues;
+}
+
+unsigned int SysMon::updateVariables_procselfstatus()
+{	// 
+	unsigned int numvalues=0;
+#ifdef SYSMON_ENABLE_PROCSELFSTATUS
+	ifstream ifstrm("/proc/self/status");
+	if(!ifstrm) return 0;
+	long val=0;
+	string line,label,valunit;
+	unsigned int linenr=0;
+	while (getline(ifstrm, line))
+	{	// process line
+		++linenr;
+		istringstream iss(line);
+		if (!(iss >> label)) { continue; }
+		//iss.str(string());iss.clear();
+		size_t i=label.find_first_of(" :");
+		while(i!=string::npos)
+		{
+			label.erase(i,1);
+			i=label.find_first_of(" :");
+		}
+		if(label.find("Vm")==0 || label.find("Rss")==0 || label.find("Hugetlb")==0)
+		{
+			if (!(iss >> val)) break;
+			valunit=string();	//=""
+			if(!iss.eof()) if (!(iss >> valunit)) break;
+			if(!valunit.empty())
+			{
+				if(valunit=="kB")
+					val*=1024;
+				else
+					//cerr << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+					global_log->warning() << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+			}
+			_variableset->setVariable("procselfstatus",label,val);
+		}
+		++numvalues;
+	}
+	ifstrm.close();
 #endif
 	return numvalues;
 }

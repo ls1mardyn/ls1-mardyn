@@ -31,39 +31,66 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 
 	mardyn_assert(stageCount > 0);
 
-	global_simulation->startTimer("SIMULATION_COMPUTATION");
-	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->start("SIMULATION_COMPUTATION");
+	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_cellProcessor->initTraversal();
-	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
-	global_simulation->stopTimer("SIMULATION_COMPUTATION");
+	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 	for (unsigned int i = 0; i < static_cast<unsigned int>(stageCount); ++i) {
-		global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+#ifndef ADVANCED_OVERLAPPING
+		global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 		_domainDecomposition->prepareNonBlockingStage(false, _moleculeContainer, _domain, i);
-		global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
-
+		global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 		// Force calculation and other pair interaction related computations
 		global_log->debug() << "Traversing innermost cells" << std::endl;
-		global_simulation->startTimer("SIMULATION_COMPUTATION");
-		global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
+		global_simulation->timers()->start("SIMULATION_COMPUTATION");
+		global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 		_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i, stageCount);
-		global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
-		global_simulation->stopTimer("SIMULATION_COMPUTATION");
+		global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+		global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 
-		global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+		global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 		_domainDecomposition->finishNonBlockingStage(false, _moleculeContainer, _domain, i);
-		global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
+		global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
+#else
+		omp_set_dynamic(0);
+		omp_set_nested(1);
+		int max_threads = omp_get_max_threads();
+		#pragma omp parallel num_threads(2)
+		{
+			#pragma omp master
+			{
+				omp_set_num_threads(1);
+				global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
+				_domainDecomposition->prepareNonBlockingStage(false, _moleculeContainer, _domain, i);
+				_domainDecomposition->finishNonBlockingStage(false, _moleculeContainer, _domain, i);
+				global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
+			}
+			#pragma omp single
+			{
+				omp_set_num_threads(max_threads - 1);
+				global_simulation->timers()->start("SIMULATION_COMPUTATION");
+				global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
+				_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i, stageCount);
+				global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+				global_simulation->timers()->stop("SIMULATION_COMPUTATION");
+			}
+		}
+#endif
+
 	}
 
-	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 	_moleculeContainer->updateBoundaryAndHaloMoleculeCaches();  // update the caches of the other molecules (non-inner cells)
-	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 
 	// remaining force calculation and other pair interaction related computations
 	global_log->debug() << "Traversing non-innermost cells" << std::endl;
-	global_simulation->startTimer("SIMULATION_COMPUTATION");
-	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->start("SIMULATION_COMPUTATION");
+	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
 	_cellProcessor->endTraversal();
+<<<<<<< .working
 
 	// Update forces in molecules so they can be exchanged
 	const ParticleIterator begin = _moleculeContainer->iteratorBegin();
@@ -73,6 +100,13 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	}
 	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
 	global_simulation->stopTimer("SIMULATION_COMPUTATION");
+||||||| .merge-left.r4919
+	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
+	global_simulation->stopTimer("SIMULATION_COMPUTATION");
+=======
+	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
+	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
+>>>>>>> .merge-right.r5797
 
 	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
 	// Exchange forces if it's required by the cell container.
@@ -82,17 +116,17 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
 }
 
-void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(bool forceRebalancing) {
+void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(bool forceRebalancing, double etime) {
 
 	mardyn_assert(!forceRebalancing);
 
-	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 	_domainDecomposition->balanceAndExchangeInitNonBlocking(forceRebalancing, _moleculeContainer, _domain);
 
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateInnerMoleculeCaches(); // only the caches of the innermost molecules have to be updated.
 
-	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 }
 

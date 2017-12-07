@@ -14,7 +14,14 @@ else
   $(warning WARNING: FFTW_INCDIR not set)
 endif
 
-LDFLAGS += -lfftw3 -lfftw3f
+# if we are compiling for KNC / KNL mkl is needed for FFTW
+# TODO find compatible fftw for KNC
+ifneq (,$(findstring KNL, $(VECTORIZE_CODE)))
+  LDFLAGS += -lfftw3xc_intel -lfftw3xf_intel -mkl
+else
+  LDFLAGS += -lfftw3 -lfftw3f
+endif
+
 ifneq ($(FFTW_LIBDIR),)
   LDFLAGS += -L$(FFTW_LIBDIR)
   $(info Appended FFTW_LIBDIR)

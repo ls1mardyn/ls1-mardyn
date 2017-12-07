@@ -22,6 +22,14 @@ class TraversalTuner {
 	friend class LinkedCellsTest;
 
 public:
+	// Probably remove this once autotuning is implemented
+	enum traversalNames {
+		ORIGINAL = 0,
+		C08      = 1,
+		SLICED   = 2,
+		QSCHED   = 3
+	};
+
 	TraversalTuner();
 
 	~TraversalTuner();
@@ -35,17 +43,35 @@ public:
 
 	void traverseCellPairs(CellProcessor &cellProcessor);
 
+	void traverseCellPairs(traversalNames name, CellProcessor &cellProcessor);
+
 	void traverseCellPairsOuter(CellProcessor &cellProcessor);
 
 	void traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage, unsigned stageCount);
 
+<<<<<<< .working // Picks optimal traversal in the future?
     CellPairTraversals<ParticleCell>* getSelectedTraversal(){
     	return _optimalTravesal;
     }
+||||||| .merge-left.r4919
+=======
+	bool isTraversalApplicable(traversalNames name, const std::array<unsigned long, 3> &dims) const;
+>>>>>>> .merge-right.r5797
 
+<<<<<<< .working
 
+||||||| .merge-left.r4919
+=======
+	traversalNames getSelectedTraversal() const {
+		return selectedTraversal;
+	}
+
+>>>>>>> .merge-right.r5797
 private:
+	std::vector<CellTemplate>* _cells;
+	std::array<unsigned long, 3> _dims;
 
+<<<<<<< .working
     // Probably remove this once autotuning is implemented
     enum traversalNames {
         ORIGINAL = 0,
@@ -56,6 +82,17 @@ private:
         QSCHED   = 5
     };
 
+||||||| .merge-left.r4919
+	// Probably remove this once autotuning is implemented
+	enum traversalNames {
+		ORIGINAL = 0,
+		C08      = 1,
+		SLICED   = 2,
+		QSCHED   = 3
+	};
+
+=======
+>>>>>>> .merge-right.r5797
 	traversalNames selectedTraversal;
 
 	std::vector<std::pair<CellPairTraversals<CellTemplate> *, CellPairTraversalData *> > _traversals;
@@ -66,7 +103,7 @@ private:
 };
 
 template<class CellTemplate>
-TraversalTuner<CellTemplate>::TraversalTuner() : _optimalTravesal(nullptr) {
+TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _optimalTravesal(nullptr) {
 	// defaults:
 	selectedTraversal = {
 			mardyn_get_max_threads() > 1 ? C08 : SLICED
@@ -179,10 +216,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 	string basePath(xmlconfig.getcurrentnodepath());
 
 	int i = 1;
-
-	for (XMLfile::Query::const_iterator traversalIterator = xmlconfig.query("traversalData").begin();
-		 traversalIterator;
-		 ++traversalIterator) {
+	XMLfile::Query qry = xmlconfig.query("traversalData");
+	for (XMLfile::Query::const_iterator traversalIterator = qry.begin(); traversalIterator; ++traversalIterator) {
 		string path(basePath + "/traversalData[" + to_string(i) + "]");
 		xmlconfig.changecurrentnode(path);
 
@@ -237,6 +272,14 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 										   const std::array<unsigned long, 3> &dims) {
+<<<<<<< .working
+||||||| .merge-left.r4919
+
+=======
+	_cells = &cells;
+	_dims = dims;
+
+>>>>>>> .merge-right.r5797
 	for (auto &tPair : _traversals) {
 		// decide whether to initialize or rebuild
 		if (tPair.first == nullptr) {
@@ -276,6 +319,25 @@ void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcesso
 }
 
 template<class CellTemplate>
+inline void TraversalTuner<CellTemplate>::traverseCellPairs(traversalNames name,
+		CellProcessor& cellProcessor) {
+	if (name == getSelectedTraversal()) {
+		traverseCellPairs(cellProcessor);
+	} else {
+		SlicedCellPairTraversal<CellTemplate> slicedTraversal(*_cells, _dims);
+		switch(name) {
+		case SLICED:
+			slicedTraversal.traverseCellPairs(cellProcessor);
+			break;
+		default:
+			Log::global_log->error()<< "Calling traverseCellPairs(traversalName, CellProcessor&) for something else than the Sliced Traversal is disabled for now. Aborting." << std::endl;
+			mardyn_exit(1);
+			break;
+		}
+	}
+}
+
+template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairsOuter(CellProcessor &cellProcessor) {
 	if (_optimalTravesal == nullptr)
 		findOptimalTraversal();
@@ -290,5 +352,29 @@ void TraversalTuner<CellTemplate>::traverseCellPairsInner(CellProcessor &cellPro
 	_optimalTravesal->traverseCellPairsInner(cellProcessor, stage, stageCount);
 }
 
+template<class CellTemplate>
+inline bool TraversalTuner<CellTemplate>::isTraversalApplicable(
+		traversalNames name, const std::array<unsigned long, 3> &dims) const {
+	bool ret = true;
+	switch(name) {
+	case SLICED:
+		ret = SlicedCellPairTraversal<CellTemplate>::isApplicable(dims);
+		break;
+	case QSCHED:
+#ifdef QUICKSCHED
+		ret = true;
+#else
+		ret = false;
+#endif
+		break;
+	case C08:
+		ret = true;
+		break;
+	case ORIGINAL:
+		ret = true;
+		break;
+	}
+	return ret;
+}
 
 #endif //TRAVERSALTUNER_H_

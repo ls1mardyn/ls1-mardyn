@@ -1,31 +1,34 @@
-/*! \page "Visualisation with Paraview"
+/** \page visualisationParaview Visualisation with Paraview
 
-\see "VTKWriter Component" for implementation details.
+For visualisatin with Paraview the \ref VTKWriter can be used.
 
-!!! Building ls1/Mardyn with the VTK Writer
+Building ls1/Mardyn with VTKWriter support
+==========================================
 
-!!Prerequisite
+### Prerequisite
 If you are using Ubuntu, install the following packages.
 - libxerces-c2-dev
 - libxerces-c28
 
-!! Using the Makefile
+### Building ls1-Mardyn with VTKWriter support
 
-To build ls1 with VTK support, you have to specify "VTK=1" for the makefile:
-\verbatim
-make -f ../makefile/Makefile VTK=1
-\endverbatim
+To build ls1 with VTK support, you have to provide "VTK=1" to make
+\code{.sh}
+make  VTK=1
+\endcode
 
-!! Using something else
+
+### Manual compilation
 
 You have to
 - define the macro VTK (-DVTK)
 - add the libxsd to the include path (option -I)
 - link the object files against the Xerces-C library (-lxerces-c)
 
-!!! Generating VTK output
+Generating VTK output
+=====================
 
-! For molecule data
+### For molecule data
 
 Add the line
 \verbatim
@@ -40,7 +43,7 @@ will be generated (file ending .vtu). Running ls1 in parallel will result in one
 file per MPI-process per timestep being written. Additionally, the root node will
 create one meta-file (ending .pvtu) referencing the data files of the single processes.
 
-! For the linked cell data structure
+### For the linked cell data structure
 
 Add the line
 \verbatim
@@ -52,12 +55,12 @@ with the same name.
 
 Concerning everythin else the section above applies, too.
 
-!!! Visualising the output
+Visualising the output
+======================
 
-I assume you have Paraview (available from www.paraview.org) installed on your system.
-Start it.
+You should have installed and started Paraview (www.paraview.org) on your system.
 
-! Molecule data
+### Molecule data
 
 - choose "File->open..."
 - navigate to the directory where the files are located
@@ -69,7 +72,7 @@ a number (e.g. "_1.vtu", "_2.vtu", ...) as a sequence of output files of the sam
 - choose "Sphere" as "Glyph Type" from the menu in the lower left and klick apply.
 - Now there's plenty of options to format the glyphs. Have fun! ;)
 
-! LinkedCells Grid
+### LinkedCells Grid
 
 - choose "File->open..."
 - navigate to the directory where the files are located
@@ -78,4 +81,6 @@ file. Paraview will consider files of the same base name but ending with an unde
 a number (e.g. "_1.vtu", "_2.vtu", ...) as a sequence of output files of the same experiment.
 
 - You already should see the 3d grid. Create a view you like.
+
 */
+

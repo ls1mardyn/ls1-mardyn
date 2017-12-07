@@ -31,6 +31,7 @@ public:
 	std::string getPluginName() {
 		return std::string("CavityWriter");
 	}
+	static OutputBase* createInstance() { return new CavityWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

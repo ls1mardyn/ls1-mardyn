@@ -1,18 +1,28 @@
-/*! \page "Mardyn Input Files"
+/*! \page ls1MarDynInputFiles Mardyn Input Files
 
-@TODO write or complete the page...
+ls1-MarDyn input files use a xml syntax. Documentation about the xml structure for the various components can be found in the documentation of their readXML methods.
 
-Basically, there seem to be 2 kinds of input files:
-- a configuration file which contains determines technical stuff like io,
-  things related to parallelization and so on
-- a phase space specification file, which contains application specific thing
-  like the specification of the molecule types being simulated and the positions
+The structure of the XML configfile is
+\code{.xml}
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="STRING">
+  <simulation> <!-- processed by Simulation::readXML() --> </simulation>
+</mardyn>
+\endcode
+Related readXML() methods:
+- simulation:  Simulation::readXML() documentation,
+
+
+
+
+
+Old Config file format (used up to ls1-MarDyn 1.1)
+--------------------------------------------------
+
+Old ls1-Mardyn versions prior to version 1.2 used input consisting out of two input files:
+- a configuration file, which contained simulation related stuff like io, algorithm and output plugin selection
+- a phase space specification file, which contained the specification of the used molecule types and the positions
   of the indivudual molecules.
-
-
-!!! Config file
-
-@TODO Sketch general.
 
 MDProjectConfig
 
@@ -103,7 +113,7 @@ NumberOfComponents      1
   in the header. For each component there is a line with 5 integer values denoting
   the number of centers for
   \verbatim
-  #lennard-jones   #charge   #dipole   #quadrupole   #tersoff
+  #lennard-jones   #charge   #dipole   #quadrupole   
   \endverbatim
 
   for each of the centers there has to be a line of integers describing the center
@@ -133,6 +143,5 @@ x-   y-   z-coordinates   mass   epsilon   sigma   cutoff   doshift
 
 !! Body
 
-!!! XML File Format
 
 */

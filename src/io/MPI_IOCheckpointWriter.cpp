@@ -134,8 +134,8 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		int localNumCells = 0;
 
 		for (unsigned short i = 0; i < 3; i++) {
-			assert(lengthInCells[i] > 0);
-//			assert((lengthInCells[i] - (domain->getGlobalLength(i) / cellLength[i])) == 0);
+			mardyn_assert(lengthInCells[i] > 0);
+//			mardyn_assert((lengthInCells[i] - (domain->getGlobalLength(i) / cellLength[i])) == 0);
 
 			if (lengthInCells[i] != 0) {
 				globalNumCells *= lengthInCells[i];
@@ -210,7 +210,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		MPI_Offset offset = 0;
 		MPI_Status status;
 
-		char* fileName = (char*) filename.c_str();
+		const char* fileName = filename.c_str();
 
 		MPI_File fh;
 		MPI_Info info;
@@ -325,7 +325,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 				j++;
 			}
 			//check, if the I/O cells are each only on one process
-			assert(localNumParticlesPerCell[j] == globalNumParticlesPerCell[j]);
+			mardyn_assert(localNumParticlesPerCell[j] == globalNumParticlesPerCell[j]);
 
 			globalToLocalCell[j] = i;
 			if (globalNumParticlesPerCell[j] > 0) {
@@ -358,7 +358,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 		for (int i = 0; i < globalNumCells; i++) {
 			if (isCellOfProcess[i] == true) {
-				assert(cellCounter[globalToLocalCell[i]] == globalNumParticlesPerCell[i]);
+				mardyn_assert(cellCounter[globalToLocalCell[i]] == globalNumParticlesPerCell[i]);
 			}
 		}
 
@@ -443,6 +443,6 @@ void MPI_IOCheckpointWriter::handle_error(int i) {
 
 	global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	exit(1);
+	Simulation::exit(1);
 #endif
 }

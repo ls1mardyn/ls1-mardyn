@@ -50,15 +50,6 @@ XMLfile::XMLfile(const string& filepath)
 	initfile(filepath);
 }
 
-XMLfile::XMLfile(const char* filepath)
-{
-	clear();
-#ifdef ENABLE_MPI
-	setMPIdefaults();
-#endif
-	initfile(filepath);
-}
-
 bool XMLfile::initfile(const string& filepath)
 {
 	clear();
@@ -129,7 +120,7 @@ void XMLfile::save(string filepath)
 	printXML(of);
 }
 
-XMLfile::Query XMLfile::query(const char* querystr) const
+XMLfile::Query XMLfile::query(const string& querystr) const
 {
 	list<Node> nodes;
 	//nodes.clear();
@@ -157,7 +148,7 @@ XMLfile::Query XMLfile::query(const char* querystr) const
 }
 
 
-XMLfile::operator const string() const
+XMLfile::operator string() const
 {
 	stringstream ss;
 	ss << m_xmldoc;
@@ -308,9 +299,8 @@ void XMLfile::expandincludes()
 	}
 }
 
-unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, Node startnode) const
+unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystring, Node startnode) const
 {
-	string querystring(querystr);
 	if (querystring.empty())
 		// nothing selected
 		return 0;
@@ -336,8 +326,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, No
 		node=&m_xmldoc;
 		nodepath=querystring[pos];
 		++pos;
-		if(pos>=querystring.size())
-		{ // querystr="/": path points to rootnode
+		if(querystring == "/") {
 			nodeselection.push_back(Node(node,nodepath));
 			return 1;
 		}
@@ -380,7 +369,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, No
 				condition=nodequery.substr(tokenpos,tokenpos2-tokenpos);
 				tokenpos=tokenpos2+1;
 			} else {
-				cerr << "ERROR: missing ] after " << elename << " within query string " << querystr << endl;
+				cerr << "ERROR: missing ] after " << elename << " within query string " << querystring << endl;
 			}
 			if(!condition.empty())
 			{ // parse condition
@@ -564,7 +553,7 @@ bool XMLfile::distributeXMLstring()
 bool XMLfile::Node::isLeafNode() const
 {
 	if(!m_xmlnode) return false;
-	if(type()!=ELEMENT_Node) return true;
+	if(type()!=ELEMENT_Node) return false;
 	if(static_cast<const rapidxml::xml_node<>*>(m_xmlnode)->first_node()) return false;
 	return true;
 }
@@ -628,7 +617,6 @@ template<> bool XMLfile::Node::getValue<double>(double& value) const
 
 template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 {
-	value = false;
 	string v;
 	bool found=getValue(v);
 	if(found)

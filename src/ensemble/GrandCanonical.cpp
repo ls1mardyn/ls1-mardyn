@@ -8,77 +8,80 @@
 using namespace std;
 using Log::global_log;
 
-ChemicalPotential::ChemicalPotential() {
-	this->ownrank = -1;
-	this->muTilde = 0.0;
-	this->T = 1.0;
-	this->interval = (unsigned) ((int) -1);
-	this->instances = 0;
+ChemicalPotential::ChemicalPotential()
+{
+	_ownrank = -1;
+	_muTilde = 0.0;
+	_T = 1.0;
+	_interval = (unsigned) ((int) -1);
+	_instances = 0;
 	for (int d = 0; d < 3; d++) {
-		this->system[d] = 1.0;
-		this->minredco[d] = 0.0;
-		this->maxredco[d] = 1.0;
-		this->control_bottom[d] = 0.0;
-		this->control_top[d] = 1.0;
+		_system[d] = 1.0;
+		_minredco[d] = 0.0;
+		_maxredco[d] = 1.0;
+		_control_bottom[d] = 0.0;
+		_control_top[d] = 1.0;
 	}
-	this->nextid = 10000000;
-	this->globalN = 1;
-	this->globalV = 1.0;
-	this->restrictedControlVolume = false;
+	_nextid = 10000000;
+	_globalN = 1;
+	_globalV = 1.0;
+	_restrictedControlVolume = false;
 
-	this->remainingDeletions = list<unsigned>();
+	_remainingDeletions = list<unsigned>();
 	for (int d = 0; d < 3; d++)
-		this->remainingInsertions[d] = list<double>();
-	this->remainingInsertionIDs = list<unsigned long>();
-	this->remainingDecisions = list<float>();
-	this->reservoir = NULL;
-	this->id_increment = 1;
-	this->lambda = 1.0;
+		_remainingInsertions[d] = list<double>();
+	_remainingInsertionIDs = list<unsigned long>();
+	_remainingDecisions = list<float>();
+	_reservoir = NULL;
+	_id_increment = 1;
+	_lambda = 1.0;
 
-	this->widom = false;
+	_widom = false;
 
-	this->_localInsertionsMinusDeletions = 0;
+	_localInsertionsMinusDeletions = 0;
 }
 
 void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0,
-		double y1, double z0, double z1) {
-	this->ownrank = rank;
-	this->rnd.init(8624);
-	this->rndmomenta.init(8623);
-	if (!this->restrictedControlVolume) {
-		this->globalV = this->system[0] * this->system[1] * this->system[2];
+		double y1, double z0, double z1)
+{
+	_ownrank = rank;
+	_rnd.init(8624);
+	_rndmomenta.init(8623);
+	if (!_restrictedControlVolume) {
+		_globalV = _system[0] * _system[1] * _system[2];
 
 		for (int d = 0; d < 3; d++) {
-			this->control_bottom[d] = 0.0;
-			this->control_top[d] = this->system[d];
+			_control_bottom[d] = 0.0;
+			_control_top[d] = _system[d];
 		}
 	}
 
-	this->minredco[0] = (x0 - control_bottom[0])
-			/ (control_top[0] - control_bottom[0]);
-	this->minredco[1] = (y0 - control_bottom[1])
-			/ (control_top[1] - control_bottom[1]);
-	this->minredco[2] = (z0 - control_bottom[2])
-			/ (control_top[2] - control_bottom[2]);
-	this->maxredco[0] = (x1 - control_bottom[0])
-			/ (control_top[0] - control_bottom[0]);
-	this->maxredco[1] = (y1 - control_bottom[1])
-			/ (control_top[1] - control_bottom[1]);
-	this->maxredco[2] = (z1 - control_bottom[2])
-			/ (control_top[2] - control_bottom[2]);
+	_minredco[0] = (x0 - _control_bottom[0])
+			/ (_control_top[0] - _control_bottom[0]);
+	_minredco[1] = (y0 - _control_bottom[1])
+			/ (_control_top[1] - _control_bottom[1]);
+	_minredco[2] = (z0 - _control_bottom[2])
+			/ (_control_top[2] - _control_bottom[2]);
+	_maxredco[0] = (x1 - _control_bottom[0])
+			/ (_control_top[0] - _control_bottom[0]);
+	_maxredco[1] = (y1 - _control_bottom[1])
+			/ (_control_top[1] - _control_bottom[1]);
+	_maxredco[2] = (z1 - _control_bottom[2])
+			/ (_control_top[2] - _control_bottom[2]);
 }
 
-void ChemicalPotential::setSystem(double x, double y, double z, double m) {
-	this->system[0] = x;
-	this->system[1] = y;
-	this->system[2] = z;
-	this->molecularMass = m;
-	if (!this->restrictedControlVolume) {
-		this->globalV = x * y * z;
+void ChemicalPotential::setSystem(double x, double y, double z, double m)
+{
+	_system[0] = x;
+	_system[1] = y;
+	_system[2] = z;
+	_molecularMass = m;
+	if (!_restrictedControlVolume) {
+		_globalV = x * y * z;
 
 		for (int d = 0; d < 3; d++) {
-			this->control_bottom[d] = 0.0;
-			this->control_top[d] = this->system[d];
+			_control_bottom[d] = 0.0;
+			_control_top[d] = _system[d];
 		}
 	}
 }
@@ -86,47 +89,48 @@ void ChemicalPotential::setSystem(double x, double y, double z, double m) {
 // note that *C must not contain the halo
 // but when the decisions are evaluated, the halo must be taken into account!
 //
-void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
-		DomainDecompBase* comm) {
-	this->remainingDeletions.clear();
+void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
+		DomainDecompBase* comm)
+{
+	_remainingDeletions.clear();
 #ifndef NDEBUG
 	for (int d = 0; d < 3; d++)
-		mardyn_assert(this->remainingInsertions[d].empty());
+		mardyn_assert(_remainingInsertions[d].empty());
 #endif
-	this->remainingDecisions.clear();
+	_remainingDecisions.clear();
 
 	// get information on the system decomposition
 	//
 	unsigned localN;
-	if ((maxredco[0] < 0.0) || (maxredco[1] < 0.0) || (maxredco[2] < 0.0)
-			|| (minredco[0] > 1.0) || (minredco[1] > 1.0)
-			|| (minredco[2] > 1.0))
+	if ((_maxredco[0] < 0.0) || (_maxredco[1] < 0.0) || (_maxredco[2] < 0.0)
+			|| (_minredco[0] > 1.0) || (_minredco[1] > 1.0)
+			|| (_minredco[2] > 1.0))
 		localN = 0;
-	else if ((minredco[0] < 0.0) || (minredco[1] < 0.0) || (minredco[2] < 0.0)
-			|| (maxredco[0] > 1.0) || (maxredco[1] > 1.0)
-			|| (maxredco[2] > 1.0))
-		localN = this->countParticles(cell, this->componentid, this->control_bottom,
-				this->control_top);
+	else if ((_minredco[0] < 0.0) || (_minredco[1] < 0.0) || (_minredco[2] < 0.0)
+			|| (_maxredco[0] > 1.0) || (_maxredco[1] > 1.0)
+			|| (_maxredco[2] > 1.0))
+		localN = this->countParticles(moleculeContainer, _componentid, _control_bottom,
+				_control_top);
 	else
-		localN = this->countParticles(cell, this->componentid);
+		localN = this->countParticles(moleculeContainer, _componentid);
 	float minrnd = 0.0;
 	float maxrnd = 1.0;
-	this->globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
+	_globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
 #ifndef NDEBUG
-	global_log->debug() << " believes N(" << componentid << ")=" << globalN
-			<< ", rho=" << globalN / globalV
+	global_log->debug() << " believes N(" << _componentid << ")=" << _globalN
+			<< ", rho=" << _globalN / _globalV
 			<< ", the decisive density quotient equals "
-			<< (float) globalN / globalReducedVolume << "\n";
+			<< (float) _globalN / _globalReducedVolume << "\n";
 #endif
 
 	// construct deletions (disabled for Widom test particle method)
 	//
 	float sel, dec;
 	unsigned localIndex;
-	if (!this->widom) {
-		for (unsigned i = 0; i < this->instances; i++) {
-			sel = this->rnd.rnd();
-			dec = this->rnd.rnd();
+	if (!_widom) {
+		for (unsigned i = 0; i < _instances; i++) {
+			sel = _rnd.rnd();
+			dec = _rnd.rnd();
 #ifndef NDEBUG
 			// if(!ownrank) cout << "global index " << sel << " chosen for deletion.\n";
 #endif
@@ -136,13 +140,13 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 #ifndef NDEBUG
 				// cout << "rank " << ownrank << " will try to delete index " << localIndex << ".\n";  // \\ //
 #endif
-				this->remainingDeletions.push_back(localIndex);
-				this->remainingDecisions.push_back(dec);
+				_remainingDeletions.push_back(localIndex);
+				_remainingDecisions.push_back(dec);
 			}
 		}
 	}
 
-	int insertions = this->instances;
+	int insertions = _instances;
 #ifndef NDEBUG
 	global_log->debug() << "Number of insertions: " << insertions << ".\n";
 #endif
@@ -153,35 +157,35 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 	double tc[3];
 	for (int i = 0; i < insertions; i++) {
 		for (int d = 0; d < 3; d++)
-			redc[d] = this->rnd.rnd();
-		dec = this->rnd.rnd();
-		if ((redc[0] >= minredco[0]) && (redc[1] >= minredco[1])
-				&& (redc[2] >= minredco[2]) && (redc[0] < maxredco[0])
-				&& (redc[1] < maxredco[1]) && (redc[2] < maxredco[2])) {
+			redc[d] = _rnd.rnd();
+		dec = _rnd.rnd();
+		if ((redc[0] >= _minredco[0]) && (redc[1] >= _minredco[1])
+				&& (redc[2] >= _minredco[2]) && (redc[0] < _maxredco[0])
+				&& (redc[1] < _maxredco[1]) && (redc[2] < _maxredco[2])) {
 			for (int d = 0; d < 3; d++) {
-				tc[d] = control_bottom[d]
-						+ redc[d] * (control_top[d] - control_bottom[d]);
+				tc[d] = _control_bottom[d]
+						+ redc[d] * (_control_top[d] - _control_bottom[d]);
 			}
 #ifndef NDEBUG
 			// cout << "rank " << ownrank << " will try to insert ID "
 			//      << nextid << " (" << tc[0] << "/" << tc[1]
 			//      << "/" << tc[2] << ").\n";  // \\ //
 #endif
-			if (cell->isInBoundingBox(tc)) { // necessary because of rounding errors
+			if (moleculeContainer->isInBoundingBox(tc)) { // necessary because of rounding errors
 				for (int d = 0; d < 3; d++) {
-					this->remainingInsertions[d].push_back(tc[d]);
+					_remainingInsertions[d].push_back(tc[d]);
 				}
-				this->remainingDecisions.push_back(dec);
-				this->remainingInsertionIDs.push_back(this->nextid);
+				_remainingDecisions.push_back(dec);
+				_remainingInsertionIDs.push_back(_nextid);
 			}
 		}
-		this->nextid += id_increment;
+		_nextid += _id_increment;
 	}
 }
 
 bool ChemicalPotential::moleculeStrictlyNotInBox(const Molecule& m,
-		const double l[3], const double u[3]) const {
-
+		const double l[3], const double u[3]) const
+{
 	bool out = false;
 	for (int d = 0; d < 3; ++d) {
 		out |= m.r(d) < l[d] or m.r(d) > u[d];
@@ -189,18 +193,19 @@ bool ChemicalPotential::moleculeStrictlyNotInBox(const Molecule& m,
 	return out;
 }
 
-bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret) {
-	if (this->remainingDeletions.empty())
+bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret)
+{
+	if (_remainingDeletions.empty())
 		return false; // DELETION_FALSE (always occurring for Widom)
 
-	unsigned idx = *this->remainingDeletions.begin();
-	this->remainingDeletions.erase(this->remainingDeletions.begin());
+	unsigned idx = *_remainingDeletions.begin();
+	_remainingDeletions.erase(_remainingDeletions.begin());
 	double tminco[3];
 	double tmaxco[3];
-	if (restrictedControlVolume)
+	if (_restrictedControlVolume)
 		for (int d = 0; d < 3; d++) {
-			tminco[d] = (minco[d] > control_bottom[d]) ? minco[d] : control_bottom[d];
-			tmaxco[d] = (maxco[d] < control_top[d])    ? maxco[d] : control_top[d];
+			tminco[d] = (minco[d] > _control_bottom[d]) ? minco[d] : _control_bottom[d];
+			tmaxco[d] = (maxco[d] < _control_top[d])    ? maxco[d] : _control_top[d];
 		}
 	else
 		for (int d = 0; d < 3; d++) {
@@ -214,7 +219,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 	ParticleIterator m = moleculeContainer->iteratorBegin();
 	int j = 0;
 	for (unsigned i = 0; (i < idx); i++) {
-		while ((moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != this->componentid))
+		while ((moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != _componentid))
 				and (m != moleculeContainer->iteratorEnd()))
 		{
 			++m;
@@ -229,14 +234,12 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 		++m;
 		j++;
 		if (m == moleculeContainer->iteratorEnd()) {
-			if (j == 0)
-				return false; // DELETION_FALSE // this will never be executed?
 			m = moleculeContainer->iteratorBegin();
 			j = 0;
 		}
 	}
 
-	while (moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != this->componentid))
+	while (moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != _componentid))
 	{
 		++m;
 		if (m == moleculeContainer->iteratorEnd()) {
@@ -250,31 +253,33 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 	global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
 
-	mardyn_assert(m->id() < nextid);
+	mardyn_assert(m->id() < _nextid);
 	*ret = m;
 	return true; // DELETION_TRUE
 }
 
 // returns 0 if no insertion remains for this subdomain
-unsigned long ChemicalPotential::getInsertion(double* ins) {
-	if (this->remainingInsertionIDs.empty())
+unsigned long ChemicalPotential::getInsertion(double* ins)
+{
+	if (_remainingInsertionIDs.empty())
 		return 0;
 
 	for (int d = 0; d < 3; d++) {
-		ins[d] = *this->remainingInsertions[d].begin();
-		this->remainingInsertions[d].erase(
-				this->remainingInsertions[d].begin());
+		ins[d] = *_remainingInsertions[d].begin();
+		_remainingInsertions[d].erase(
+				_remainingInsertions[d].begin());
 	}
-	unsigned long nextid = *this->remainingInsertionIDs.begin();
-	this->remainingInsertionIDs.erase(this->remainingInsertionIDs.begin());
+	unsigned long nextid = *_remainingInsertionIDs.begin();
+	_remainingInsertionIDs.erase(_remainingInsertionIDs.begin());
 	return nextid;
 }
 
-bool ChemicalPotential::decideDeletion(double deltaUTilde) {
-	mardyn_assert(!this->widom); // the Widom test particle method should never call decideDeletion ...
+bool ChemicalPotential::decideDeletion(double deltaUTilde)
+{
+	mardyn_assert(!_widom); // the Widom test particle method should never call decideDeletion ...
 
-	if (this->remainingDecisions.empty()) {
-		if (this->widom) {
+	if (_remainingDecisions.empty()) {
+		if (_widom) {
 			global_log->error()
 					<< "SEVERE WARNING: The Widom method is (erroneously) trying to carry out test deletions.\n";
 			return false;
@@ -282,10 +287,10 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde) {
 		global_log->error() << "No decision is possible." << std::endl;
 		Simulation::exit(1);
 	}
-	float dec = *this->remainingDecisions.begin();
-	this->remainingDecisions.erase(this->remainingDecisions.begin());
-	float acc = ((float) (this->globalN)) * exp(-muTilde - deltaUTilde)
-			/ this->globalReducedVolume;
+	float dec = *_remainingDecisions.begin();
+	_remainingDecisions.erase(_remainingDecisions.begin());
+	float acc = ((float) (_globalN)) * exp(_muTilde - deltaUTilde)
+			/ _globalReducedVolume;
 	bool ans;
 	if (dec < 0.000001)
 		ans = true;
@@ -300,28 +305,29 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde) {
 	//      << ((acc > 1.0)? 1.0: acc) << ").\n"; // \\ //
 #endif
 	if (ans)
-		this->globalN -= (2 * ownrank + 1); // estimate, the precise value is communicated later
+		_globalN -= (2 * _ownrank + 1); // estimate, the precise value is communicated later
 	return ans;
 }
 
-bool ChemicalPotential::decideInsertion(double deltaUTilde) {
-	if (this->remainingDecisions.empty()) {
-		if (this->widom) {
-			global_log->error() << "!!! SEVERE WARNING on rank " << ownrank
+bool ChemicalPotential::decideInsertion(double deltaUTilde)
+{
+	if (_remainingDecisions.empty()) {
+		if (_widom) {
+			global_log->error() << "!!! SEVERE WARNING on rank " << _ownrank
 					<< ": no decision is possible !!!\n";
 			return false;
 		}
 		global_log->error() << "No decision is possible." << std::endl;
 		Simulation::exit(1);
 	}
-	double acc = this->globalReducedVolume * exp(muTilde - deltaUTilde)
-			/ (1.0 + (double) (this->globalN));
+	double acc = _globalReducedVolume * exp(_muTilde - deltaUTilde)
+			/ (1.0 + (double) (_globalN));
 
 	bool ans;
-	if (this->widom)
+	if (_widom)
 		ans = false; // the Widom method does not actually insert any particles ...
 	else {
-		float dec = *this->remainingDecisions.begin();
+		float dec = *_remainingDecisions.begin();
 		if (dec < 0.000001)
 			ans = true;
 		else if (dec > 0.999999)
@@ -335,68 +341,70 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde) {
 		//      << " (P = " << ((acc > 1.0)? 1.0: acc) << ").\n"; // \\ //
 #endif
 		if (ans)
-			this->globalN += (2 * ownrank + 1); // estimate, the precise value is communicated later
+			_globalN += (2 * _ownrank + 1); // estimate, the precise value is communicated later
 	}
-	this->remainingDecisions.erase(this->remainingDecisions.begin());
+	_remainingDecisions.erase(_remainingDecisions.begin());
 	return ans;
 }
 
-void ChemicalPotential::submitTemperature(double T_in) {
-	this->T = T_in;
-	this->muTilde = this->mu / T;
-	this->lambda = 0.39894228 * h / sqrt(molecularMass * T);
-	globalReducedVolume = globalV / (lambda * lambda * lambda);
-	this->decisive_density = (float) globalN / globalReducedVolume;
-	double doOutput = this->rnd.rnd();
+void ChemicalPotential::submitTemperature(double T_in)
+{
+	_T = T_in;
+	_muTilde = _mu / _T;
+	_lambda = 0.39894228 * _h / sqrt(_molecularMass * _T);
+	_globalReducedVolume = _globalV / (_lambda * _lambda * _lambda);
+	_decisive_density = (float) _globalN / _globalReducedVolume;
+	double doOutput = _rnd.rnd();
 #ifdef NDEBUG
-	if(ownrank) return;
+	if(_ownrank) return;
 #endif
 	if (doOutput >= 0.01)
 		return;
-	cout << "rank " << ownrank << " sets mu~ <- " << muTilde;
-	cout << ", T <- " << T << ", lambda <- " << lambda;
-	cout << ", and Vred <- " << globalReducedVolume << "\n";
+	cout << "rank " << _ownrank << " sets mu~ <- " << _muTilde;
+	cout << ", T <- " << _T << ", lambda <- " << _lambda;
+	cout << ", and Vred <- " << _globalReducedVolume << "\n";
 }
 
 void ChemicalPotential::assertSynchronization(DomainDecompBase* comm) {
-	comm->assertIntIdentity(this->rnd.getIX());
+	comm->assertIntIdentity(_rnd.getIX());
 }
 
 void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
-		double x1, double y1, double z1) {
+		double x1, double y1, double z1)
+{
 	if ((x0 >= x1) || (y0 >= y1) || (z0 >= z1)) {
 		global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
 				<< " / " << z0 << ") to (" << x1 << " / " << y1 << " / " << z1
 				<< ")." << std::endl;
 		Simulation::exit(611);
 	}
-
-	this->restrictedControlVolume = true;
-	this->globalV = (x1 - x0) * (y1 - y0) * (z1 - z0);
-	this->control_bottom[0] = x0;
-	this->control_top[0] = x1;
-	this->control_bottom[1] = y0;
-	this->control_top[1] = y1;
-	this->control_bottom[2] = z0;
-	this->control_top[2] = z1;
+	_restrictedControlVolume = true;
+	_globalV = (x1 - x0) * (y1 - y0) * (z1 - z0);
+	_control_bottom[0] = x0;
+	_control_top[0] = x1;
+	_control_bottom[1] = y0;
+	_control_top[1] = y1;
+	_control_bottom[2] = z0;
+	_control_top[2] = z1;
 }
 
-Molecule ChemicalPotential::loadMolecule() {
-	mardyn_assert(this->reservoir != NULL);
-	Molecule tmp = *reservoir;
+Molecule ChemicalPotential::loadMolecule()
+{
+	mardyn_assert(_reservoir != NULL);
+	Molecule tmp = *_reservoir;
 	unsigned rotdof = tmp.component()->getRotationalDegreesOfFreedom();
-	mardyn_assert(tmp.componentid() == componentid);
+	mardyn_assert(tmp.componentid() == _componentid);
 #ifndef NDEBUG
 	tmp.check(tmp.id());
 #endif
-	if (!this->widom) {
+	if (!_widom) {
 		double v[3];
 		double vv = 0.0;
 		for (int d = 0; d < 3; d++) {
-			v[d] = -0.5 + this->rndmomenta.rnd();
+			v[d] = -0.5 + _rndmomenta.rnd();
 			vv += v[d] * v[d];
 		}
-		double vnorm = sqrt(3.0 * T / (vv * tmp.mass()));
+		double vnorm = sqrt(3.0 * _T / (vv * tmp.mass()));
 		for (int d = 0; d < 3; d++)
 			tmp.setv(d, v[d] * vnorm);
 
@@ -404,7 +412,7 @@ Molecule ChemicalPotential::loadMolecule() {
 			double qtr[4];
 			double qqtr = 0.0;
 			for (int d = 0; d < 4; d++) {
-				qtr[d] = -0.5 + this->rndmomenta.rnd();
+				qtr[d] = -0.5 + _rndmomenta.rnd();
 				qqtr += qtr[d] * qtr[d];
 			}
 			double qtrnorm = sqrt(1.0 / qqtr);
@@ -415,12 +423,12 @@ Molecule ChemicalPotential::loadMolecule() {
 			std::array<double,3> D;
 			double Dnorm = 0.0;
 			for (int d = 0; d < 3; d++)
-				D[d] = -0.5 + this->rndmomenta.rnd();
+				D[d] = -0.5 + _rndmomenta.rnd();
 			std::array<double, 3> w = tqtr.rotateinv(D);
 			double Iw2 = w[0] * w[0] * tmp.component()->I11()
 					+ w[1] * w[1] * tmp.component()->I22()
 					+ w[2] * w[2] * tmp.component()->I33();
-			Dnorm = sqrt(T * rotdof / Iw2);
+			Dnorm = sqrt(_T * rotdof / Iw2);
 			for (int d = 0; d < 3; d++)
 				tmp.setD(d, D[d] * Dnorm);
 		}
@@ -431,7 +439,7 @@ Molecule ChemicalPotential::loadMolecule() {
 
 int ChemicalPotential::grandcanonicalBalance(DomainDecompBase* comm) {
 	comm->collCommInit(1);
-	comm->collCommAppendInt(this->_localInsertionsMinusDeletions);
+	comm->collCommAppendInt(_localInsertionsMinusDeletions);
 	comm->collCommAllreduceSum();
 	int universalInsertionsMinusDeletions = comm->collCommGetInt();
 	comm->collCommFinalize();
@@ -439,14 +447,15 @@ int ChemicalPotential::grandcanonicalBalance(DomainDecompBase* comm) {
 }
 
 void ChemicalPotential::grandcanonicalStep(
-		TMoleculeContainer* moleculeContainer, double T, Domain* domain,
-		CellProcessor* cellProcessor) {
+		ParticleContainer* moleculeContainer, double T, Domain* domain,
+		CellProcessor* cellProcessor)
+{
 	bool accept = true;
 	double DeltaUpot;
 	ParticleIterator m;
 	ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
 
-	this->_localInsertionsMinusDeletions = 0;
+	_localInsertionsMinusDeletions = 0;
 
 	this->submitTemperature(T);
 	double minco[3];
@@ -492,7 +501,7 @@ void ChemicalPotential::grandcanonicalStep(
 
 				moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2), true/*rebuildCaches*/);
 				m = moleculeContainer->iteratorBegin();
-				this->_localInsertionsMinusDeletions--;
+				_localInsertionsMinusDeletions--;
 			}
 		} /* end of second hasDeletion */
 
@@ -592,7 +601,8 @@ void ChemicalPotential::grandcanonicalStep(
 }
 
 unsigned ChemicalPotential::countParticles(
-		TMoleculeContainer* moleculeContainer, unsigned int cid) const {
+		ParticleContainer* moleculeContainer, unsigned int cid) const
+{
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles are NOT counted
 
@@ -610,8 +620,9 @@ unsigned ChemicalPotential::countParticles(
 }
 
 unsigned ChemicalPotential::countParticles(
-		TMoleculeContainer* moleculeContainer, unsigned int cid,
-		double* cbottom, double* ctop) const {
+		ParticleContainer* moleculeContainer, unsigned int cid,
+		double* cbottom, double* ctop) const
+{
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles NOT counted
 

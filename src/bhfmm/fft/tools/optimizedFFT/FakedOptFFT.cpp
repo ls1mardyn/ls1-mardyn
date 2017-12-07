@@ -12,11 +12,14 @@ FFTW_API* FakedOptFFT::getFFTW_API(const int size_x, const int size_y) {
 	p.x = size_x;
 	p.y = size_y;
 	if (_fftw_api_map.count(p) != 0) {
-		return _fftw_api_map[p];
+		return _fftw_api_map[p][mardyn_get_thread_num()];
 	} else {
-		FFTW_API* f = new FFTW_API(size_x, size_y);
-		_fftw_api_map.insert(pair<pos, FFTW_API*>(p, f));
-		return f;
+		FFTW_API** apis = new FFTW_API*[mardyn_get_max_threads()];
+		for (int i = 0; i < mardyn_get_max_threads(); ++i) {
+			apis[i] = new FFTW_API(size_x, size_y);
+		}
+		_fftw_api_map.insert(pair<pos, FFTW_API**>(p, apis));
+		return apis[mardyn_get_thread_num()];
 	}
 }
 

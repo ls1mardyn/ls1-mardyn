@@ -22,27 +22,19 @@ using namespace Log;
 #ifdef UNIT_TESTS
 
 utils::TestWithSimulationSetup::TestWithSimulationSetup()
-	: _rank(0), _domain(NULL), _domainDecomposition(NULL) { }
+	: _rank(0), _domain(nullptr), _domainDecomposition(nullptr) { }
 
 
 
 utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
-	if (_domain != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
-		delete _domain;
-	}
-
-	if (_domainDecomposition != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
-		delete _domainDecomposition;
-	}
 }
 
 
 void utils::TestWithSimulationSetup::setUp() {
 	_rank = 0;
 	Simulation* sim = new Simulation();
-	sim->initialize(); // this assigns global_simulation.
+	//deleted the next line, as it is already done in the constructor.
+	//sim->initialize(); // this assigns global_simulation.
 	#ifdef ENABLE_MPI
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_rank) );
 	#endif
@@ -53,8 +45,9 @@ void utils::TestWithSimulationSetup::setUp() {
 
 void utils::TestWithSimulationSetup::tearDown() {
 	delete global_simulation;
-	_domainDecomposition = NULL;
-	_domain = NULL;
+	global_simulation = nullptr;
+	_domain = nullptr;
+	_domainDecomposition = nullptr;
 }
 
 

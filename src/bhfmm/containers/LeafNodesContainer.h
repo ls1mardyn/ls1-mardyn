@@ -24,9 +24,15 @@ class VectorizedChargeP2PCellProcessor;
 
 class LeafNodesContainer {
 public:
-	LeafNodesContainer(double bBoxMin[3], double bBoxMax[3],
-		double LJCellLength[3], unsigned subdivisionFactor,
-		bool periodic = true);
+	LeafNodesContainer(double bBoxMin[3],
+					   double bBoxMax[3],
+					   double LJCellLength[3],
+					   unsigned subdivisionFactor,
+					   bool periodic = true
+#ifdef QUICKSCHED
+					   , qsched* scheduler = nullptr
+#endif
+    );
 
 	~LeafNodesContainer();
 
@@ -41,9 +47,16 @@ public:
 	void traverseCellPairsOrig(VectorizedChargeP2PCellProcessor& cellProcessor);
 	void traverseCellPairsC08(VectorizedChargeP2PCellProcessor& cellProcessor);
 
+    const int *getNumCellsPerDimension() const;
+
+    std::vector<ParticleCellPointers> & getCells();
+
+	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
+
+	void c08Step(long int baseIndex, VectorizedChargeP2PCellProcessor &cellProcessor);
+
 private:
 	void initializeCells();
-	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
 	void calculateNeighbourIndices();
 	void calculateCellPairOffsets();
 	unsigned long int getCellIndexOfMolecule(Molecule* molecule) const;
@@ -71,6 +84,9 @@ private:
 	unsigned int _numActiveColours;
 	std::vector<std::vector<long int> > _cellIndicesPerColour;
 
+#ifdef QUICKSCHED
+	struct qsched *_scheduler;
+#endif
 };
 
 } /* namespace bhfmm */

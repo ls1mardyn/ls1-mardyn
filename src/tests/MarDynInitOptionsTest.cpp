@@ -15,7 +15,7 @@ using namespace std;
 TEST_SUITE_REGISTRATION(MarDynInitOptionsTest);
 
 // declaration of the function to be tested in Mardyn.cpp
-optparse::Values& initOptions(optparse::OptionParser *op);
+void initOptions(optparse::OptionParser *op);
 
 
 MarDynInitOptionsTest::MarDynInitOptionsTest() {
@@ -25,31 +25,20 @@ MarDynInitOptionsTest::~MarDynInitOptionsTest() {
 }
 
 void MarDynInitOptionsTest::testAllOptions() {
-	const char* const argv[] = { "DummyProgrammeName", "-n", "4", "-t", "-v",
-	    //"--phasespace-file", "phasespace.inp",
-	    //"--particle-container", "LinkedCells",
-	    //"--domain-decomposition", "KDDecomposition",
-	    "test_prefix" };
 
-	int argc = sizeof(argv) / sizeof(char*);
 	optparse::OptionParser op;
 	initOptions(&op);
+
+	const char* const argv[] = { "DummyProgrammeName", "-n", "4", "-t", "-v" };
+	int argc = sizeof(argv) / sizeof(argv[0]);
 	optparse::Values options = op.parse_args(argc, argv);
 
-	int n = options.get("timesteps");
 	ASSERT_TRUE_MSG("timesteps isSetByUser must be true!", options.is_set_by_user("timesteps"));
-	ASSERT_EQUAL(4, n);
+	ASSERT_EQUAL(4, (int) options.get("timesteps"));
 
-	bool test(options.is_set_by_user("tests"));
-	ASSERT_TRUE_MSG("test option must be set", test);
+	ASSERT_TRUE_MSG("test option must be set", options.is_set_by_user("tests"));
 
-//	string prefix(options.get("outputprefix"));
-//	ASSERT_TRUE_MSG("outputprefix isSetByUser must be true!", options.is_set_by_user("outputprefix"));
-//	ASSERT_EQUAL(string("test_prefix"), prefix);
-
-//	bool verbose = options.get("verbose");
-	bool verbose = options.is_set_by_user("verbose");
-	ASSERT_TRUE_MSG("verbose option must be set", verbose);
+	ASSERT_TRUE_MSG("verbose option must be set", options.is_set_by_user("verbose"));
 
 	// TODO: how to query other commandline arguments!?
 

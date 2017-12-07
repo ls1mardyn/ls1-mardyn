@@ -46,6 +46,9 @@ void Comp2Param::initialize(
 			++mixpos;
 			double eta = *mixpos;
 			++mixpos;
+#ifndef NDEBUG
+			global_log->info() << "cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << endl;
+#endif
 			double shift6combined, sigperrc2, sigperrc6;
 			for (unsigned int centeri = 0; centeri < nci; ++centeri) {
 				const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));

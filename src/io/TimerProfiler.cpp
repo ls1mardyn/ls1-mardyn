@@ -5,49 +5,52 @@
  *      Author: Andrei Costinescu
  */
 
-#include <assert.h>
-#include <stdexcept>
+#include <cmath>
 #include <tuple>
-#include <utility>
 
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
+#include "utils/String_utils.h"
+#include "utils/mardyn_assert.h"
 
 using namespace std;
 using Log::global_log;
 
 const string TimerProfiler::_baseTimerName = "_baseTimer";
 
-TimerProfiler::TimerProfiler(): _timerCount(0), _numElapsedIterations(0) {
-	_timers[_baseTimerName] = _Timer(_timerCount, _baseTimerName);
-	_timerCount++;
+TimerProfiler::TimerProfiler(): _numElapsedIterations(0) {
+	_timers[_baseTimerName] = _Timer(_baseTimerName);
 	readInitialTimersFromFile("");
 }
 
 TimerProfiler::~TimerProfiler() {
 	_clearTimers();
-	assert(_timers.size() == 0);
+	mardyn_assert(_timers.size() == 0);
 }
 
 Timer* TimerProfiler::getTimer(string timerName){
-	if (!_timers.count(timerName)) throw invalid_argument("No timer with name "+timerName+".");
-	if (!_checkTimer(timerName, false)) throw invalid_argument("Timer "+timerName+" is not a timer");
-	return _timers[timerName]._timer;
+	auto timerProfiler = _timers.find(timerName);
+	if(timerProfiler != _timers.end()) {
+		return (timerProfiler->second)._timer;
+	}
+	return nullptr;
 }
 
 void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNames, Timer *timer, bool activate){
+	global_log->debug() << "Registering timer: " << timerName << "  [parents: " << string_utils::join(parentTimerNames, string(", ")) << "]" << endl;
+
 	if (!activate && timer){
 		timer->deactivateTimer();
 	}
-	_timers[timerName] = _Timer(_timerCount, timerName, timer);
+	_timers[timerName] = _Timer(timerName, timer);
 
-	if (!parentTimerNames.size()) parentTimerNames.push_back(_baseTimerName);
-	for (size_t i=0; i<parentTimerNames.size(); i++) {
-		_timers[parentTimerNames[i]]._childTimerNames.push_back(timerName);
-		_timers[timerName]._parentTimerNames.push_back(parentTimerNames[i]);
+	if (parentTimerNames.size() == 0) {
+		parentTimerNames.push_back(_baseTimerName);
 	}
-
-	_timerCount++;
+	for (auto parentTimerName : parentTimerNames) {
+		_timers[timerName]._parentTimerNames.push_back(parentTimerName);
+		_timers[parentTimerName]._childTimerNames.push_back(timerName);
+	}
 }
 
 void TimerProfiler::activateTimer(string timerName){
@@ -67,45 +70,52 @@ void TimerProfiler::setSyncTimer(string timerName, bool sync){
 
 void TimerProfiler::print(string timerName, string outputPrefix){
 	if (_checkTimer(timerName)) {
-		global_log->info()<<outputPrefix<<getOutputString(timerName)<<_timers[timerName]._timer->get_etime()<<" sec\n";
-	}
-	else {
+		global_log->info() << outputPrefix << getOutputString(timerName) << getTime(timerName) << " sec" << endl;
+	} else {
 		_debugMessage(timerName);
 	}
 }
 
-void TimerProfiler::printTimers(string startingTimerName, string outputPrefix){
-	if (!_timers.count(startingTimerName)) return ;
-	if (_checkTimer(startingTimerName)){
-		print(startingTimerName, outputPrefix);
+void TimerProfiler::printTimers(string timerName, string outputPrefix){
+	if (!_timers.count(timerName)) return ;
+	if (_checkTimer(timerName)){
+		print(timerName, outputPrefix);
 		outputPrefix += "\t";
 	}
-	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
-		printTimers(_timers[startingTimerName]._childTimerNames[i], outputPrefix);
+	for(auto childTimerName : _timers[timerName]._childTimerNames){
+		printTimers(childTimerName, outputPrefix);
 	}
 }
 
 void TimerProfiler::start(string timerName){
-	if (_checkTimer(timerName)){
-		_timers[timerName]._timer->start();
-	}
-	else{
-		_debugMessage(timerName);
+	#ifdef _OPENMP
+	#pragma omp critical
+	#endif
+	{
+		if (_checkTimer(timerName)) {
+			getTimer(timerName)->start();
+		} else {
+			_debugMessage(timerName);
+		}
 	}
 }
 
 void TimerProfiler::stop(string timerName){
-	if (_checkTimer(timerName)){
-		_timers[timerName]._timer->stop();
-	}
-	else{
-		_debugMessage(timerName);
+	#ifdef _OPENMP
+	#pragma omp critical
+	#endif
+	{
+		if (_checkTimer(timerName)) {
+			getTimer(timerName)->stop();
+		} else {
+			_debugMessage(timerName);
+		}
 	}
 }
 
 void TimerProfiler::reset(string timerName){
 	if (_checkTimer(timerName)){
-		_timers[timerName]._timer->reset();
+		getTimer(timerName)->reset();
 	}
 	else{
 		_debugMessage(timerName);
@@ -113,14 +123,14 @@ void TimerProfiler::reset(string timerName){
 }
 
 void TimerProfiler::resetTimers(string startingTimerName){
-	if (startingTimerName.compare("_baseTimer")) {
+	if (startingTimerName.compare(_baseTimerName)) {
 		_numElapsedIterations = 0;
 	}
 
 	if (!_timers.count(startingTimerName)) return ;
 	reset(startingTimerName);
-	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
-		resetTimers(_timers[startingTimerName]._childTimerNames[i]);
+	for(auto childTimerName : _timers[startingTimerName]._childTimerNames){
+		resetTimers(childTimerName);
 	}
 }
 
@@ -153,6 +163,7 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 		make_tuple("DROPLET_GENERATOR_INPUT", vector<string>{"GENERATORS"}, true),
 		make_tuple("MS2RST_GENERATOR_INPUT", vector<string>{"GENERATORS"}, true),
 		make_tuple("REYLEIGH_TAYLOR_GENERATOR_INPUT", vector<string>{"GENERATORS"}, true),
+		make_tuple("REPLICA_GENERATOR_VLE_INPUT", vector<string>{"GENERATORS"}, true),
 		make_tuple("L2P_CELL_PROCESSOR_L2P", vector<string>{"CELL_PROCESSORS"}, true),
 		make_tuple("P2M_CELL_PROCESSOR_P2M", vector<string>{"CELL_PROCESSORS"}, true),
 		make_tuple("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", vector<string>{"CELL_PROCESSORS"}, true),
@@ -164,6 +175,9 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 		make_tuple("SIMULATION_LOOP", vector<string>{"SIMULATION"}, true),
 		make_tuple("SIMULATION_DECOMPOSITION", vector<string>{"SIMULATION_LOOP"}, true),
 		make_tuple("SIMULATION_COMPUTATION", vector<string>{"SIMULATION_LOOP"}, true),
+#ifdef QUICKSCHED
+		make_tuple("QUICKSCHED", vector<string>{"SIMULATION_LOOP"}, true),
+#endif
 		make_tuple("SIMULATION_PER_STEP_IO", vector<string>{"SIMULATION_LOOP"}, true),
 		make_tuple("SIMULATION_IO", vector<string>{"SIMULATION"}, true),
 		make_tuple("SIMULATION_MPI_OMP_COMMUNICATION", vector<string>{"SIMULATION_DECOMPOSITION"}, true),
@@ -193,12 +207,11 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 		make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL", vector<string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true)
 	};
 
-	int classesTimers = timerClasses.size();
-	int actualTimers = timerAttrs.size();
-	int numberOfTimers = classesTimers + actualTimers;
-	for (int i=0; i < numberOfTimers; i++){
-		if (i < classesTimers) this->registerTimer(timerClasses[i], vector<string>());
-		else registerTimer(get<0>(timerAttrs[i - classesTimers]), get<1>(timerAttrs[i - classesTimers]), new Timer(), get<2>(timerAttrs[i - classesTimers]));
+	for (auto timerClass : timerClasses){
+		registerTimer(timerClass, vector<string>());
+	}
+	for (auto timerAttr : timerAttrs){
+		registerTimer(get<0>(timerAttr), get<1>(timerAttr), new Timer(), get<2>(timerAttr));
 	}
 }
 
@@ -211,7 +224,7 @@ void TimerProfiler::setOutputString(string timerName, string outputString){
 }
 
 string TimerProfiler::getOutputString(string timerName){
-	if (!_timers.count(timerName)) throw invalid_argument("No timer with name "+timerName+".");
+	if (!_timers.count(timerName)) return string("");
 	string output = _timers[timerName]._outputString;
 	if (output.compare("") == 0){
 		output = "Timer "+timerName+" took: ";
@@ -220,10 +233,11 @@ string TimerProfiler::getOutputString(string timerName){
 }
 
 double TimerProfiler::getTime(string timerName){
-	if (!_timers.count(timerName)) throw invalid_argument("No timer with name "+timerName+".");
-	if (!_checkTimer(timerName, false)) throw invalid_argument("Timer "+timerName+" is not a timer");
-	if (!_checkTimer(timerName)) throw invalid_argument("Timer "+timerName+" is not active");
-	return _timers[timerName]._timer->get_etime();
+	auto timer = getTimer(timerName);
+	if(timer != nullptr) {
+		return timer->get_etime();
+	}
+	return 0.0;
 }
 
 /* private Methods */
@@ -241,18 +255,18 @@ void TimerProfiler::_debugMessage(string timerName){
 	}
 }
 
-void TimerProfiler::_clearTimers(string startingTimerName){
+void TimerProfiler::_clearTimers(string timerName){
 	//if the timer is not in the container it must have already been deleted -> return
-	if (!_timers.count(startingTimerName)){
+	if (!_timers.count(timerName)){
 		return;
 	}
-	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
-		_clearTimers(_timers[startingTimerName]._childTimerNames[i]);
+	for(auto childTimerName : _timers[timerName]._childTimerNames) {
+		_clearTimers(childTimerName);
 	}
-	if (_checkTimer(startingTimerName, false)) {
-		delete _timers[startingTimerName]._timer;
+	if (_checkTimer(timerName, false)) {
+		delete _timers[timerName]._timer;
 	}
-	_timers[startingTimerName]._childTimerNames.clear();
-	_timers[startingTimerName]._parentTimerNames.clear();
-	_timers.erase(startingTimerName);
+	_timers[timerName]._childTimerNames.clear();
+	_timers[timerName]._parentTimerNames.clear();
+	_timers.erase(timerName);
 }

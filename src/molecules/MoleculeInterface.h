@@ -8,11 +8,12 @@
 #ifndef SRC_MOLECULES_MOLECULEINTERFACE_H_
 #define SRC_MOLECULES_MOLECULEINTERFACE_H_
 
+#include <array>
+
 #include "molecules/Component.h"
 #include "molecules/Quaternion.h"
 #include "particleContainer/adapter/CellDataSoABase.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
-#include <array>
 
 class MoleculeInterface {
 public:
@@ -24,7 +25,7 @@ public:
 		return ret;
 	}
 
-	virtual ~MoleculeInterface();
+	virtual ~MoleculeInterface() {}
 	virtual unsigned long id() const = 0;
 	virtual void setid(unsigned long id) = 0;
 	virtual void setComponent(Component *component) = 0;
@@ -70,14 +71,14 @@ public:
 
 	inline virtual void move(int d, double dr) = 0;
 
-	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
-	// method returns the total mass of a particle
-	virtual double gMass()= 0;
 	//by Stefan Becker
 	virtual double getI(unsigned short d) const = 0;
 
 
 	double v2() const {return v(0)*v(0)+v(1)*v(1)+v(2)*v(2); }
+	double F2() const {return F(0)*F(0)+F(1)*F(1)+F(2)*F(2); }
+	double L2() const {return D(0)*D(0)+D(1)*D(1)+D(2)*D(2); }
+	double M2() const {return M(0)*M(0)+M(1)*M(1)+M(2)*M(2); }
 
 	double U_trans() const { return 0.5 * mass() * v2(); }
 	virtual double U_rot() = 0;
@@ -186,26 +187,30 @@ public:
 	virtual void upd_preF(double dt) = 0;
 	virtual void upd_postF(double dt_halve, double& summv2, double& sumIw2) = 0;
 
-	// Integration for single-centered molecules in WR mode.
+	// Integration for single-centered molecules in RMM mode.
 	// Explicit Euler and LeapFrog without time-splitting for single-centered molecules are identical
 	// up to interpretation of whether the velocities are stored at (t) or at (t+dt/2)  (right?)
 	// Placing it here, so that we can
-	// verify the WR code against the non-WR code.
+	// verify the RMM code against the non-RMM code.
 	void ee_upd_preF(double dt) {
 		for (unsigned short d = 0; d < 3; ++d) {
 			setr(d,r(d) + dt * v(d));
 		}
 	}
-	void ee_upd_postF(double dt, double& summv2) {
+	void ee_upd_postF(double
+#ifndef ENABLE_REDUCED_MEMORY_MODE
+		dt
+#endif
+		, double& summv2) {
 
 		//calcFM(); //NOTE: This was moved to simulation.cpp calculateForces() and is called in simulate()
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 		double dtInvM = dt / component()->m();
 		for (unsigned short d = 0; d < 3; ++d) {
 			setv(d, v(d) + dtInvM * F(d));
 		}
-#endif /*MARDYN_WR */
+#endif /*ENABLE_REDUCED_MEMORY_MODE */
 
 		summv2 += component()->m() * v2();
 	}
@@ -245,8 +250,17 @@ public:
 	 * @param u upper right back corner of cube (equality not allowed)
 	 * @return true if molecule is contained in the box, false otherwise
 	 */
-	bool inBox(const double l[3], const double u[3]) const
-	{bool in = true; for(int d=0; d < 3; ++d) {in &= (r(d) >= l[d] and r(d) < u[d]);} return in;}
+	bool inBox(const double l[3], const double u[3]) const {
+		bool in = true;
+		for (int d = 0; d < 3; ++d) {
+#ifdef __INTEL_COMPILER
+			#pragma float_control(precise, on)
+			#pragma fenv_access(on)
+#endif
+			in &= (r(d) >= l[d] and r(d) < u[d]);
+		}
+		return in;
+	}
 };
 
 /** @brief Calculate the distance between two sites of two molecules.

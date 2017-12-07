@@ -11,29 +11,27 @@
 using Log::global_log;
 using namespace std;
 
-CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
-	_outputPrefix = outputPrefix;
-	_writeFrequency = writeFrequency;
-	_incremental = incremental;
-
-	if (outputPrefix == "default") {
-		_appendTimestamp = true;
-	}
-	else {
-		_appendTimestamp = false;
-	}
-}
-
-CheckpointWriter::~CheckpointWriter(){}
-
 
 void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
 
-	if(_writeFrequency == 0 ){
+	if(_writeFrequency == 0) {
 		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
+		Simulation::exit(-1);
+	}
+	
+	std::string checkpointType = "unknown";
+	xmlconfig.getNodeValue("type", checkpointType);
+	if("ASCII" == checkpointType) {
+		_useBinaryFormat = false;
+	}
+	else if("binary" == checkpointType) {
+		_useBinaryFormat = true;
+	}
+	else {
+		global_log->error() << "Unknown CheckpointWriter type '" << checkpointType << "', expected: ASCII|binary." << endl;
 		Simulation::exit(-1);
 	}
 
@@ -66,7 +64,6 @@ void CheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDeco
 
 		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			
 			unsigned long numTimesteps = _simulation.getNumTimesteps();
 			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
 			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
@@ -74,10 +71,16 @@ void CheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDeco
 		if(_appendTimestamp) {
 			filenamestream << "-" << gettimestring();
 		}
-		filenamestream << ".restart.dat";
+
+		if(_useBinaryFormat) {
+            filenamestream << ".restart";
+        }
+        else { /* ASCII mode */
+            filenamestream << ".restart.dat";
+        }
 
 		string filename = filenamestream.str();
-		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime());
+		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime(), _useBinaryFormat);
 	}
 }
 

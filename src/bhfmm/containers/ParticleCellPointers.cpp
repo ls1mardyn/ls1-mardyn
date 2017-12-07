@@ -17,8 +17,13 @@ using namespace std;
 namespace bhfmm {
 
 ParticleCellPointers::ParticleCellPointers() :
+		haloCell(false), boundaryCell(false), innerCell(false), innerMostCell(false),
 		_molecules(), _cellDataSoA(0, 0, 0, 0, 0) {
-	// TODO: disable when in Molecule_WR mode. It's only 1CLJ anyway.
+	// TODO: disable when in MoleculeRMM mode. It's only 1CLJ anyway.
+	for (int d = 0; d < 3; ++d) {
+		_boxMin[d] = 0.0;
+		_boxMax[d] = 0.0;
+	}
 }
 
 ParticleCellPointers::~ParticleCellPointers() {

@@ -13,27 +13,25 @@ class CellProcessor;
 class Domain;
 class ParticleIterator;
 
-typedef ParticleContainer TMoleculeContainer;
-
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 class ChemicalPotential {
 public:
 	ChemicalPotential();
 
-	void setMu(int cid, double chempot) { this->mu = chempot; this->componentid = cid; }
-	unsigned getInterval() { return this->interval; }
-	void setInterval(unsigned delta) { this->interval = delta; }
-	void setInstances(unsigned n) { this->instances = n; }
+	void setMu(int cid, double chempot) { _mu = chempot; _componentid = cid; }
+	unsigned getInterval() { return _interval; }
+	void setInterval(unsigned delta) { _interval = delta; }
+	void setInstances(unsigned n) { _instances = n; }
 	void setSystem(double x, double y, double z, double m);
-	void setGlobalN(unsigned long N) { this->globalN = N; }
-	void setNextID(unsigned long id) { this->nextid = id; }
+	void setGlobalN(unsigned long N) { _globalN = N; }
+	void setNextID(unsigned long id) { _nextid = id; }
 	void setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1);
-	void setIncrement(unsigned idi) { this->id_increment = idi; }
+	void setIncrement(unsigned idi) { _id_increment = idi; }
 
-	void prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm);  // C must not contain the halo!
+	void prepareTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* comm);  // C must not contain the halo!
 
 	// false if no deletion remains for this subdomain
-	bool getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret);
+	bool getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret);
 	unsigned long getInsertion(double* ins);  // 0 if no insertion remains for this subdomain
 	bool decideDeletion(double deltaUTilde);
 	bool decideInsertion(double deltaUTilde);
@@ -42,94 +40,94 @@ public:
 	void storeMolecule( Molecule& old )
 	{
 		if(hasSample()) return;
-		mardyn_assert(old.componentid() == componentid);
+		mardyn_assert(old.componentid() == _componentid);
 #ifndef NDEBUG
 		old.check(old.id());
 #endif
-		this->reservoir = new Molecule(old);
+		_reservoir = new Molecule(old);
 	}
-	bool hasSample() { return this->reservoir != NULL; }
+	bool hasSample() { return _reservoir != NULL; }
 
-	void setPlanckConstant(double h_in) { this->h = h_in; }
+	void setPlanckConstant(double h_in) { _h = h_in; }
 	void submitTemperature(double T_in);
 	void setControlVolume(
 			double x0, double y0, double z0, double x1, double y1, double z1
 	);
 
-	unsigned long getGlobalN() { return this->globalN; }
-	double getGlobalRho() { return (double)(this->globalN) / this->globalV; }
+	unsigned long getGlobalN() { return _globalN; }
+	double getGlobalRho() { return (double)(_globalN) / _globalV; }
 
-	void outputIX() { std::cout << "  r" << ownrank << "[IX" << rnd.getIX() << "]  "; }
+	void outputIX() { std::cout << "  r" << _ownrank << "[IX" << _rnd.getIX() << "]  "; }
 
 	void assertSynchronization(DomainDecompBase* comm);
 
-	double getMu() { return this->mu; }
-	unsigned int getComponentID() { return this->componentid; }
-	int rank() { return this->ownrank; }
+	double getMu() { return _mu; }
+	unsigned int getComponentID() { return _componentid; }
+	int rank() { return _ownrank; }
 
-	void disableWidom() { this->widom = false; }
-	void enableWidom() { this->widom = true; }
-	bool isWidom() { return this->widom; }
+	void disableWidom() { _widom = false; }
+	void enableWidom() { _widom = true; }
+	bool isWidom() { return _widom; }
 
-	double getLambda() { return this->lambda; }
-	float getDensityCoefficient() { return this->decisive_density; }
+	double getLambda() { return _lambda; }
+	float getDensityCoefficient() { return _decisive_density; }
 
 	/* Moved from LinkedCells! */
 	int getLocalGrandcanonicalBalance() {
-		return this->_localInsertionsMinusDeletions;
+		return _localInsertionsMinusDeletions;
 	}
 	/* Moved from LinkedCells! */
-	void grandcanonicalStep(TMoleculeContainer * moleculeContainer, double T, Domain* domain, CellProcessor* cellProcessor);
+	void grandcanonicalStep(ParticleContainer * moleculeContainer, double T, Domain* domain, CellProcessor* cellProcessor);
 	/* Moved from LinkedCells! */
 	int grandcanonicalBalance(DomainDecompBase* comm);
 
 
 private:
 	//! @brief counts all particles inside the bounding box of this container
-	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid) const;
+	unsigned countParticles(ParticleContainer * moleculeContainer, unsigned int cid) const;
 	//! @brief counts particles in the intersection of bounding box and control volume
-	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid, double * cbottom, double * ctop) const;
+	unsigned countParticles(ParticleContainer * moleculeContainer, unsigned int cid, double * cbottom, double * ctop) const;
 
 	bool moleculeStrictlyNotInBox(const Molecule& m, const double l[3], const double u[3]) const;
 
-	int ownrank;  // only for debugging purposes (indicate rank in console output)
+	int _ownrank;  // only for debugging purposes (indicate rank in console output)
 
-	double h;  // Plancksches Wirkungsquantum
-	double T;
+	double _h;  // Plancksches Wirkungsquantum
+	double _T;
 
-	double mu;
-	double muTilde;
-	unsigned int componentid;
-	unsigned interval;  // how often?
-	unsigned instances;  // how many trial insertions and deletions?
-	Random rnd, rndmomenta;
-	double system[3];  // extent of the system
-	float minredco[3];  // minimal coordinates of the subdomain reduced w. r. t. the system size
-	float maxredco[3];   // maximal coordinates of the subdomain reduced w. r. t. the system size
+	double _mu;
+	double _muTilde;
+	unsigned int _componentid;
+	unsigned _interval;  // how often?
+	unsigned _instances;  // how many trial insertions and deletions?
+	Random _rnd, _rndmomenta;
+	double _system[3];  // extent of the system
+	float _minredco[3];  // minimal coordinates of the subdomain reduced w. r. t. the system size
+	float _maxredco[3];   // maximal coordinates of the subdomain reduced w. r. t. the system size
 
-	unsigned long nextid;  // ID given to the next inserted particle
-	unsigned id_increment;
-	std::list<unsigned> remainingDeletions;  // position of the vector that should be deleted
-	std::list<double> remainingInsertions[3];
-	std::list<unsigned long> remainingInsertionIDs;
-	std::list<float> remainingDecisions;  // first deletions, then insertions
+	unsigned long _nextid;  // ID given to the next inserted particle
+	unsigned _id_increment;
+	std::list<unsigned> _remainingDeletions;  // position of the vector that should be deleted
+	std::list<double> _remainingInsertions[3];
+	std::list<unsigned long> _remainingInsertionIDs;
+	std::list<float> _remainingDecisions;  // first deletions, then insertions
 
-	unsigned long globalN;
-	double globalV;
-	double molecularMass;
-	double globalReducedVolume;
+	unsigned long _globalN;
+	double _globalV;
+	double _molecularMass;
+	double _globalReducedVolume;
 
-	bool restrictedControlVolume;
-	double control_bottom[3];
-	double control_top[3];
+	bool _restrictedControlVolume;
+	double _control_bottom[3];
+	double _control_top[3];
 
-	float decisive_density;
+	float _decisive_density;
 
-	double lambda;
+	double _lambda;
 
-	bool widom; // Widom method -> determine mu by test insertions which are all rejected
+	bool _widom; // Widom method -> determine mu by test insertions which are all rejected
 
-	Molecule* reservoir;
+	Molecule* _reservoir;
 
 	/* Moved from LinkedCells! */
 	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble

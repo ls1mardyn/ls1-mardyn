@@ -520,6 +520,7 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 		self.statusBar.setText("No configuration file loaded.")
 		self.actionSave_Configuration.setEnabled(False)
 		self.actionSave_Configuration_File_As.setEnabled(False)
+		self.selectedElement = None
 	
 	def setUnsavedContent(self, status):
 		self.unsavedContent = status
@@ -619,6 +620,7 @@ class MainApp(QMainWindow, apeui.Ui_MainWindow):
 							self.button_add.setEnabled(True)
 							self.label.setText("Select a setting to edit it.")
 							self.windowIndicator()
+							self.expandTree()
 							
 						if len(importLog) != 0:
 							importLogWindow = ImportLog(importLog, importError, filename[0], self)

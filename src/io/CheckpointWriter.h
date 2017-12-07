@@ -1,5 +1,5 @@
-#ifndef CHECKPOINTWRITER_H_
-#define CHECKPOINTWRITER_H_
+#ifndef SRC_IO_CHECKPOINTWRITER_H_
+#define SRC_IO_CHECKPOINTWRITER_H_
 
 #include <string>
 
@@ -9,19 +9,23 @@
 class CheckpointWriter : public OutputBase {
 public:
 	
-    CheckpointWriter(){}
-	//! @brief writes a checkpoint file that can be used to continue the simulation
-	//!
-	//! The format of the checkpointfile written by this method is the same as the format
-	//! of the input file.
-	//! @param filename Name of the checkpointfile (including path)
-	//! @param particleContainer The molecules that have to be written to the file are stored here
-	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
-	//!                     Methods to achieve this are available in domainDecomp
-	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-	CheckpointWriter(unsigned long writeFrequency, std::string outputPrefix, bool incremental);
-	~CheckpointWriter();
+    CheckpointWriter() {}
+	~CheckpointWriter() {}
 	
+
+	/** @brief Read in XML configuration for CheckpointWriter.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="CheckpointWriter">
+	     <type>ASCII|binary</type>
+	     <writefrequency>INTEGER</writefrequency>
+	     <outputprefix>STRING</outputprefix>
+	     <incremental>INTEGER</incremental>
+	     <appendTimestamp>INTEGER</appendTimestamp>
+	   </outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	
 	void initOutput(ParticleContainer* particleContainer,
@@ -38,11 +42,13 @@ public:
 	std::string getPluginName() {
 		return std::string("CheckpointWriter");
 	}
+	static OutputBase* createInstance() { return new CheckpointWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
+    bool    _useBinaryFormat;
 	bool	_incremental;
 	bool	_appendTimestamp;
 };
 
-#endif /*CHECKPOINTWRITER_H_*/
+#endif  // SRC_IO_CHECKPOINTWRITER_H_

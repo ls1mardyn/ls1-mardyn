@@ -31,7 +31,8 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="DomainDecomposition">
-	     <!-- no parameters -->
+	     <!-- structure handled by DomainDecompMPIBase -->
+	     <MPIGridDims> <x>INT</x> <y>INT</y> <z>INT</z> </MPIGridDims>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -46,7 +47,7 @@ public:
 	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
+	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -100,17 +101,15 @@ public:
 			unsigned int stageNumber) override;
 
 	// documentation in base class
-	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain, double etime) override;
 
 	std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
 private:
+	void initMPIGridDims();
 
-	//! Number of processes in each dimension (i.e. 2 for 8 processes)
-	int _gridSize[DIMgeom];
-
-	//! Grid coordinates of process
-	int _coords[DIMgeom];
+	int _gridSize[DIMgeom]; //!< Number of processes in each dimension of the MPI process grid
+	int _coords[DIMgeom]; //!< Coordinate of the process in the MPI process grid
 };
 
 #endif /* DOMAINDECOMPOSITION_H_ */

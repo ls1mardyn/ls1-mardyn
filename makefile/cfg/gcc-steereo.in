@@ -44,4 +44,4 @@ LINKFLAGS_PAR_RELEASE = $(GLOBAL_LINK)
 
 # Further settings, common to all configurations, which use gcc
 #########################################
-include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.in)
+include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.mk)

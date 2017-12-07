@@ -75,9 +75,9 @@ namespace rapidxml
     public:
     
         //! Constructs parse error
-        parse_error(const char *what, void *where)
+        parse_error(const char *what, void *wherePos)
             : m_what(what)
-            , m_where(where)
+            , m_where(wherePos)
         {
         }
 
@@ -665,6 +665,16 @@ namespace rapidxml
         ///////////////////////////////////////////////////////////////////////////
         // Node data access
     
+        //! Gets document of which this is a child.
+        //! \return Pointer to document that contains this attribute, or 0 if there is no parent document.
+        xml_document<Ch> *document() const
+        {
+            xml_node<Ch> *node = const_cast<xml_node<Ch> *>(this);
+            while (node->parent())
+                node = node->parent();
+            return node->type() == node_document ? static_cast<xml_document<Ch> *>(node) : 0;
+        }
+
         //! Gets name of the node. 
         //! Interpretation of name depends on type of node.
         //! Note that name will not be zero-terminated if rapidxml::parse_no_string_terminators option was selected during parse.
@@ -757,7 +767,7 @@ namespace rapidxml
 
         //! Sets value of node to a zero-terminated string.
         //! See also \ref ownership_of_strings and xml_node::value(const Ch *, std::size_t).
-        //! \param value Vame of node to set. Must be zero terminated.
+        //! \param value value of node to set. Must be zero terminated.
         void value(const Ch *value)
         {
             this->value(value, internal::measure(value));
@@ -814,20 +824,6 @@ namespace rapidxml
 
         ///////////////////////////////////////////////////////////////////////////
         // Related nodes access
-    
-        //! Gets document of which attribute is a child.
-        //! \return Pointer to document that contains this attribute, or 0 if there is no parent document.
-        xml_document<Ch> *document() const
-        {
-            if (xml_node<Ch> *node = this->parent())
-            {
-                while (node->parent())
-                    node = node->parent();
-                return node->type() == node_document ? static_cast<xml_document<Ch> *>(node) : 0;
-            }
-            else
-                return 0;
-        }
 
         //! Gets previous attribute, optionally matching attribute name. 
         //! \param name Name of attribute to find, or 0 to return previous attribute regardless of its name; this string doesn't have to be zero-terminated if name_size is non-zero
@@ -918,16 +914,6 @@ namespace rapidxml
 
         ///////////////////////////////////////////////////////////////////////////
         // Related nodes access
-    
-        //! Gets document of which node is a child.
-        //! \return Pointer to document that contains this node, or 0 if there is no parent document.
-        xml_document<Ch> *document() const
-        {
-            xml_node<Ch> *node = const_cast<xml_node<Ch> *>(this);
-            while (node->parent())
-                node = node->parent();
-            return node->type() == node_document ? static_cast<xml_document<Ch> *>(node) : 0;
-        }
 
         //! Gets first child node, optionally matching node name.
         //! \param name Name of child to find, or 0 to return first child regardless of its name; this string doesn't have to be zero-terminated if name_size is non-zero

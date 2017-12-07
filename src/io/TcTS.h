@@ -15,10 +15,7 @@ public:
 	MkTcTSGenerator(){}
 	~MkTcTSGenerator(){}
 
-	void setPhaseSpaceFile(std::string /*filename*/){}
-	void setPhaseSpaceHeaderFile(std::string /*filename*/){}
-
-	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/){}
+	void readPhaseSpaceHeader(Domain* domain, double timestep);
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
 
@@ -39,7 +36,8 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 private:
-	double heigth1;
+	double l1_ratio;
+	double l1_offset;
 
 	double rho1;
 	double rho2;

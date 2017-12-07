@@ -361,8 +361,6 @@ class ChildData(object):
 				
 		return dSettings
 	
-	dependSettings = property(getDependSettings)
-	
 	def __str__(self):
 		return self.name
 

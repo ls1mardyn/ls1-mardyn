@@ -10,6 +10,8 @@
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Component.h"
 #include "molecules/Molecule.h"
+#include "Domain.h"
+#include <set>
 
 TEST_SUITE_REGISTRATION(DomainDecompBaseTest);
 
@@ -19,11 +21,94 @@ DomainDecompBaseTest::DomainDecompBaseTest() {
 DomainDecompBaseTest::~DomainDecompBaseTest() {
 }
 
+void DomainDecompBaseTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
+	// original pointer will be deleted by tearDown()
+	_domainDecomposition = new DomainDecompBase();
+
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
+	int numMols = container->getNumberOfParticles();
+
+	_domainDecomposition->exchangeMolecules(container, _domain);
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+//	_domain->writeCheckpoint("dump.txt", container, _domainDecomposition);
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	delete _domainDecomposition;
+}
+
+void DomainDecompBaseTest::testNoDuplicatedParticles() {
+	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15.inp", 27.0);
+}
+
+
+void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, double cutoff) {
+	// original pointer will be deleted by tearDown()
+	_domainDecomposition = new DomainDecompBase();
+
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
+	int numMols = container->getNumberOfParticles();
+
+	double bBoxMin[3];
+	double bBoxMax[3];
+	for (int dim = 0; dim < 3; dim++) {
+		bBoxMin[dim] = container->getBoundingBoxMin(dim);
+		bBoxMax[dim] = container->getBoundingBoxMax(dim);
+	}
+	std::set<unsigned long> lower[3];  // the id of particles that were close to the lower boundary in the specific dimension are stored here
+	std::set<unsigned long> upper[3];  // the id of particles that were close to the upper boundary in the specific dimension are stored here
+
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		for (int dim = 0; dim < 3; dim++) {
+			if (m->r(dim) < bBoxMin[dim] + cutoff / 2.) {
+				// we shift particles close to the lower boundary to outside of the lower boundary.
+				// in this case they are put to the smallest (in abs values) negative representable number
+				// i.e. 2^(-149) = -1.4013e-45 for float resp. 4.94066e-324 for double
+				m->setr(dim, std::nexttoward((vcp_real_calc) bBoxMin[dim], bBoxMin[dim] - 1.f));
+				lower[dim].insert(m->id());
+			}
+			if (m->r(dim) > bBoxMax[dim] - cutoff / 2.) {
+				// We shift particles close to the upper boundary to outside of the upper boundary.
+				// In this case they are put at minimum to boundingBoxMax, as this is no longer inside of the domain.
+				// If the float representation of the maximum is less than the double representation, the next bigger floating point representation is used.
+				// Otherwise the maximum is used.
+				vcp_real_calc r = (float)bBoxMax[dim] >= bBoxMax[dim] ? bBoxMax[dim] : std::nexttoward((vcp_real_calc) bBoxMax[dim], bBoxMax[dim] + 1.f);
+				m->setr(dim, r);
+				upper[dim].insert(m->id());
+			}
+		}
+	}
+
+	container->update();
+
+	_domainDecomposition->exchangeMolecules(container, _domain);
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		for (int dim = 0; dim < 3; dim++) {
+			if (lower[dim].count(m->id())) {
+				// We make sure, that these particles are now at the top part of the domain.
+				ASSERT_TRUE(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
+			} else if (upper[dim].count(m->id())) {
+				// We make sure, that these particles are now at the lower part of the domain.
+				ASSERT_TRUE(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
+			}
+		}
+	}
+
+	delete _domainDecomposition;
+}
+
+void DomainDecompBaseTest::testNoLostParticles() {
+	testNoLostParticlesFilename("H20_NaBr_0.01_T_293.15_DD_2.inp", 3.0);
+}
+
 void DomainDecompBaseTest::testExchangeMoleculesSimple() {
-	std::vector<Component> components;
-	Component dummyComponent(0);
-	dummyComponent.addLJcenter(0,0,0,1,1,1,0,false);
-	components.push_back(dummyComponent);
 
 	// make sure we have a DomainDecompBase
 	_domainDecomposition = new DomainDecompBase();
@@ -62,10 +147,6 @@ void DomainDecompBaseTest::testExchangeMoleculesSimple() {
 }
 
 void DomainDecompBaseTest::testExchangeMolecules() {
-	std::vector<Component> components;
-	Component dummyComponent(0);
-	dummyComponent.addLJcenter(0,0,0,1,1,1,0,false);
-	components.push_back(dummyComponent);
 
 	// make sure we have a DomainDecompBase
 	_domainDecomposition = new DomainDecompBase();

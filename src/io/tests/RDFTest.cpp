@@ -24,10 +24,10 @@
 
 using namespace std;
 
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 TEST_SUITE_REGISTRATION(RDFTest);
 #else
-#pragma message "Compilation info: RDFTest disabled in MARDYN_WR mode"
+#pragma message "Compilation info: RDFTest disabled in reduced memory mode"
 #endif
 
 
@@ -37,6 +37,16 @@ RDFTest::RDFTest() {
 RDFTest::~RDFTest() {
 }
 
+
+void RDFTest::initRDF(RDF &rdf, double intervalLength, unsigned int bins, std::vector<Component>* components) {
+	rdf._intervalLength = intervalLength;
+	rdf._bins = bins;
+	rdf._components = components;
+	rdf._writeFrequency = 25000;
+	rdf._outputPrefix = "out";
+	rdf._readConfig=true;
+	rdf.init();
+}
 
 void RDFTest::testRDFCountSequential12_LinkedCell() {
 	// original pointer will be freed by the tearDown()-method.
@@ -61,7 +71,8 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	/* The number of pairs counted by the RDF also depends on the particles in the halo.
 	 * So count first with the halo being empty, and then being populated. */
-	RDF rdf(0.018, 100, components);
+	RDF rdf;
+	initRDF(rdf, 0.018, 100, components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
@@ -127,10 +138,12 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->deleteOuterParticles();
-	_domainDecomposition->balanceAndExchange(false, moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(1.0, false, moleculeContainer, _domain);
 	moleculeContainer->updateMoleculeCaches();
 
-	RDF rdf(0.018, 100, components);
+	RDF rdf;
+	initRDF(rdf, 0.018, 100, components);
+
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
@@ -155,7 +168,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	rdf.reset();
 
 	moleculeContainer->deleteOuterParticles();
-	_domainDecomposition->balanceAndExchange(false, moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(1.0, false, moleculeContainer, _domain);
 	moleculeContainer->updateMoleculeCaches();
 
 	rdf.tickRDF();
@@ -205,11 +218,12 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
-	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(1.0, true, moleculeContainer, _domain);
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 
-	RDF rdf(0.05, 101, components);
+	RDF rdf;
+	initRDF(rdf, 0.05, 101, components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);

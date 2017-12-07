@@ -1,12 +1,14 @@
 #ifndef COLLECTIVECOMMUNICATION_H_
 #define COLLECTIVECOMMUNICATION_H_
 
-#include "utils/Logger.h"
-#include "CollectiveCommBase.h"
 #include <mpi.h>
 
+#include "Simulation.h"
+#include "utils/Logger.h"
+#include "CollectiveCommBase.h"
 #include "CollectiveCommunicationInterface.h"
 #include "utils/mardyn_assert.h"
+
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
  * user defined reduce operation so that the MPI reduce operation is only called once. */
@@ -138,6 +140,7 @@ public:
 
 	// documentation in base class
 	void allreduceSum() override {
+		Log::global_log->debug() << "CollectiveCommunication: normal Allreduce" << std::endl;
 #if ENABLE_AGGLOMERATED_REDUCE
 		setMPIType();
 		MPI_Op agglomeratedTypeAddOperator;
@@ -156,6 +159,29 @@ public:
 			MPI_CHECK( MPI_Allreduce( MPI_IN_PLACE, _values.data(), 1, _types[i], MPI_SUM, _communicator ) );
 		}
 #endif
+	}
+
+	void allreduceCustom(ReduceType type) override{
+		Log::global_log->debug() << "CollectiveCommunication: custom Allreduce" << std::endl;
+		// TODO: add agglomerated reduce!
+		for (unsigned int i = 0; i < _types.size(); i++) {
+			MPI_Op op = MPI_NO_OP;
+			switch(type){
+			case ReduceType::SUM:
+				op = MPI_SUM;
+				break;
+			case ReduceType::MIN:
+				op = MPI_MIN;
+				break;
+			case ReduceType::MAX:
+				op = MPI_MAX;
+				break;
+			default:
+				Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
+				Simulation::exit(1);
+			}
+			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, _values.data(), 1, _types[i], op, _communicator ));
+		}
 	}
 
 	//! Performs an all-reduce (sum), however values of previous iterations are permitted.
@@ -186,6 +212,11 @@ public:
 			}
 	#endif
 		}
+
+	virtual size_t getTotalSize() override{
+		return CollectiveCommBase::getTotalSize() + _types.capacity() * sizeof(MPI_Datatype);
+	}
+
 
 protected:
 	//! @brief defines a MPI datatype which can be used to transfer a CollectiveCommunication object

@@ -8,6 +8,7 @@
 
 #include "AlignedArrayTriplet.h"
 #include "utils/mardyn_assert.h"
+#include "../particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include <array>
 
 /**
@@ -49,7 +50,7 @@ public:
 	 * \tparam coord	Indicates which of the 3 coordinates one needs. Has to be a value as specified in enum CoordinateType
 	 * \return	Pointer to the first value of the data, as indicated by the parameters
 	 */
-	T* getBeginPointer (SiteType st, CoordinateType coord) {
+	vcp_inline T* getBeginPointer (SiteType st, CoordinateType coord) {
 		T* returnPointer = nullptr;
 
 		switch (coord) {
@@ -68,10 +69,10 @@ public:
 
 		switch (st) {
 		case SiteType::QUADRUPOLE:
-			returnPointer += AlignedArray<T>::_round_up(_dipoles_num);
+			returnPointer += AlignedArray<T>::_round_up(_dipoles_num); // fallthrough
 			/* no break */
 		case SiteType::DIPOLE:
-			returnPointer += AlignedArray<T>::_round_up(_charges_num);
+			returnPointer += AlignedArray<T>::_round_up(_charges_num); // fallthrough
 			/* no break */
 		case SiteType::CHARGE:
 			returnPointer += AlignedArray<T>::_round_up(_ljc_num);
@@ -83,16 +84,16 @@ public:
 		return returnPointer;
 	}
 
-	const T* getBeginPointer (SiteType st, CoordinateType coord) const {
+	vcp_inline const T* getBeginPointer (SiteType st, CoordinateType coord) const {
 		const T* returnPointer = nullptr;
 		size_t offset = 0;
 
 		switch (st) {
 		case SiteType::QUADRUPOLE:
-			offset += AlignedArray<T>::_round_up(_dipoles_num);
+			offset += AlignedArray<T>::_round_up(_dipoles_num); // fallthrough
 			/* no break */
 		case SiteType::DIPOLE:
-			offset += AlignedArray<T>::_round_up(_charges_num);
+			offset += AlignedArray<T>::_round_up(_charges_num); // fallthrough
 			/* no break */
 		case SiteType::CHARGE:
 			offset += AlignedArray<T>::_round_up(_ljc_num);
@@ -121,7 +122,7 @@ public:
 	/**
 	 * \brief	Get the value triplet X,Y,Z of SiteType st at position index
 	 */
-	std::array<T, 3> getTriplet(SiteType st, size_t index) const {
+	vcp_inline std::array<T, 3> getTriplet(SiteType st, size_t index) const {
 		std::array<T, 3> retArray;
 		retArray[0] = getBeginPointer(st, CoordinateType::X)[index];
 		retArray[1] = getBeginPointer(st, CoordinateType::Y)[index];
@@ -132,7 +133,7 @@ public:
 	/**
 	 * \brief	Set the value triplet X,Y,Z of SiteType st at position index to given values
 	 */
-	void setTriplet(std::array<T, 3> values, SiteType st, size_t index) {
+	vcp_inline void setTriplet(std::array<T, 3> values, SiteType st, size_t index) {
 		getBeginPointer(st, CoordinateType::X)[index] = values[0];
 		getBeginPointer(st, CoordinateType::Y)[index] = values[1];
 		getBeginPointer(st, CoordinateType::Z)[index] = values[2];

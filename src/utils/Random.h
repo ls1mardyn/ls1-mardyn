@@ -9,24 +9,31 @@
  * Minimal random number generator of Park and Miller combinmed with a Marsaglia shift sequence.
  * (see Numerical Recipies in Fortran 90: The Art of Parallel Scientific Computing, Chapter B7)
  */
-class Random
-{
- public:
-   Random();
-   void init(int seed);
+class Random {
+public:
+	Random(int seed = 8624);
+	void init(int seed);
 
-   float rnd();
+	/** Produces a random number between zero and one. */
+	float rnd();
 
-   int getIX() { return this->ix; }
+	/** get a uniformly distributed random number in [a,b] */
+	float uniformRandInRange(float a, float b) {
+		return a + rnd() * (b - a);
+	}
 
-   // by Stefan Becker
-   /** returns a gaussian distributed deviate with zero mean and a standard deviation of stdDeviation
-    the returned value is in the range +/- infinity (better: smallest, largest double number)*/
-   double gaussDeviate(double stdDeviation);
+	int getIX() {
+		return this->ix;
+	}
 
- private:
-   int ix, iy;
-   float am;
+	// by Stefan Becker
+	/** returns a gaussian distributed deviate with zero mean and a standard deviation of stdDeviation
+	 the returned value is in the range +/- infinity (better: smallest, largest double number)*/
+	double gaussDeviate(double stdDeviation);
+
+private:
+	int ix, iy;
+	float am;
 };
 
 #endif

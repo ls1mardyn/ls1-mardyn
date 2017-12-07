@@ -7,58 +7,82 @@
 #include "utils/xmlfileUnits.h"
 
 #include <ctime>
-using std::ios_base;
+
 
 using namespace std;
 
-GammaWriter::GammaWriter(unsigned long writeFrequency, string outputPrefix)
-: _writeFrequency(writeFrequency),
-	_outputPrefix(outputPrefix)
-{ }
-
-GammaWriter::~GammaWriter(){}
-
-void GammaWriter::readXML(XMLfileUnits& xmlconfig)
-{
-    _writeFrequency = 1;
+void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
     global_log->info() << "GammaWriter: Write frequency: " << _writeFrequency << endl;
-
-    _outputPrefix = "gamma";
     xmlconfig.getNodeValue("outputprefix", _outputPrefix);
     global_log->info() << "GammaWriter: Output prefix: " << _outputPrefix << endl;
 }
 
-void GammaWriter::initOutput(ParticleContainer* /*particleContainer*/,
-			      DomainDecompBase* domainDecomp, Domain* /*domain*/){
-	 
-	// initialize result file
-	string resultfile(_outputPrefix+".gamma");
-	_gammaStream.precision(6);
-	time_t now;
-	time(&now);
-	if(domainDecomp->getRank()==0){
-		_gammaStream.open(resultfile.c_str());
+void GammaWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+	if(domainDecomp->getRank() == 0){
+		string resultfilename(_outputPrefix + ".gamma");
+		_gammaStream.open(resultfilename);
+		_gammaStream.precision(6);
+		time_t now;
+		time(&now);
 		_gammaStream << "# mardyn MD simulation starting at " << ctime(&now) << endl;
 		_gammaStream << "#\tgamma" << endl;
 	}
 }
 
 void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-			     unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/ )
+	unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/ )
 {
-	domain->calculateGamma(particleContainer,domainDecomp);
+	calculateGamma(particleContainer, domainDecomp);
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
-		_gammaStream << simstep << "\t"; 
-		for (unsigned i=0; i<domain->getNumberOfComponents(); i++){
-			_gammaStream << domain->getGamma(i)/_writeFrequency << "\t";
+		double globalLength[3];
+		for(int d = 0; d < 3; ++d) {
+			globalLength[d] = domain->getGlobalLength(d);
+		}
+		_gammaStream << simstep;
+		for(unsigned int componentId = 0; componentId < domain->getNumberOfComponents(); ++componentId){
+			_gammaStream << "\t" << getGamma(componentId, globalLength)/_writeFrequency;
 		}
 		_gammaStream << endl;
-		domain->resetGamma();
+		resetGamma();
 	}
 }
 
 void GammaWriter::finishOutput(ParticleContainer* /*particleContainer*/,
 				DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
 	_gammaStream.close();
+}
+
+void GammaWriter::resetGamma() {
+	for(unsigned componentId = 0; componentId < _simulation.getEnsemble()->getComponents()->size(); ++componentId) {
+		_Gamma[componentId] = 0;
+	}
+}
+
+double GammaWriter::getGamma(unsigned id, double globalLength[3]){
+	return (_Gamma[id]/(2*globalLength[0]*globalLength[2]));
+}
+
+void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom){
+	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
+	std::vector<double> _localGamma(numComp);
+	for (unsigned i=0; i<numComp; i++){
+		_localGamma[i]=0;
+	}
+	for(ParticleIterator tempMol = particleContainer->iteratorBegin(); tempMol != particleContainer->iteratorEnd(); ++tempMol){
+		unsigned cid=tempMol->componentid();
+		_localGamma[cid]+=tempMol->Vi(1)-0.5*(tempMol->Vi(0)+tempMol->Vi(2));
+	}
+	domainDecom->collCommInit(numComp);
+	for (unsigned i=0; i<numComp; i++){
+		domainDecom->collCommAppendDouble(_localGamma[i]);
+	}
+	domainDecom->collCommAllreduceSum();
+	for (unsigned i=0; i<numComp; i++){
+		_localGamma[i] = domainDecom->collCommGetDouble();
+	}
+	domainDecom->collCommFinalize();
+	for (unsigned i=0; i<numComp; i++){
+		_Gamma[i]+=_localGamma[i];
+	}
 }

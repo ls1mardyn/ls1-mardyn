@@ -8,7 +8,7 @@
 #include "KDDecompositionTest.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "io/InputOldstyle.h"
+#include "io/ASCIIReader.h"
 
 #include <sstream>
 #include <cmath>
@@ -22,6 +22,147 @@ KDDecompositionTest::KDDecompositionTest():_rank(0) {
 
 KDDecompositionTest::~KDDecompositionTest() {
 }
+
+
+void KDDecompositionTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff, double domainLength) {
+	KDDecomposition * kdd;
+	// original pointer will be deleted by tearDown()
+	_domain->setGlobalLength(0, domainLength);
+	_domain->setGlobalLength(1, domainLength);
+	_domain->setGlobalLength(2, domainLength);
+	kdd = new KDDecomposition(cutoff, _domain, 3, 1, 4);
+	_domainDecomposition = kdd;
+	_rank = kdd->_rank;
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
+
+	kdd->initCommunicationPartners(cutoff, _domain);
+
+	int numMols = container->getNumberOfParticles();
+	kdd->collCommInit(1);
+	kdd->collCommAppendInt(numMols);
+	kdd->collCommAllreduceSum();
+	numMols = kdd->collCommGetInt();
+	kdd->collCommFinalize();
+
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	// will rebalance, we thus need a reduce
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+
+	kdd->collCommInit(1);
+	kdd->collCommAppendInt(newNumMols);
+	kdd->collCommAllreduceSum();
+	newNumMols = kdd->collCommGetInt();
+	kdd->collCommFinalize();
+
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	delete _domainDecomposition;
+	delete container;
+}
+
+void KDDecompositionTest::testNoDuplicatedParticles() {
+	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15_DD.inp", 5.0, 58.5389);
+}
+void KDDecompositionTest::testNoDuplicatedParticles2() {
+	testNoDuplicatedParticlesFilename("H20_NaBr_0.01_T_293.15_DD_2.inp", 5.0, 58.5);
+}
+
+void KDDecompositionTest::testNoLostParticlesFilename(const char * filename, double cutoff, double domainLength) {
+	// original pointer will be deleted by tearDown()
+	KDDecomposition * kdd;
+	// original pointer will be deleted by tearDown()
+	_domain->setGlobalLength(0, domainLength);
+	_domain->setGlobalLength(1, domainLength);
+	_domain->setGlobalLength(2, domainLength);
+	kdd = new KDDecomposition(cutoff, _domain, 3, 1, 4);
+	_domainDecomposition = kdd;
+	_rank = kdd->_rank;
+
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
+
+	kdd->initCommunicationPartners(cutoff, _domain);
+
+	int numMols = container->getNumberOfParticles();
+	kdd->collCommInit(1);
+	kdd->collCommAppendInt(numMols);
+	kdd->collCommAllreduceSum();
+	numMols = kdd->collCommGetInt();
+	kdd->collCommFinalize();
+
+	double bBoxMin[3];
+	double bBoxMax[3];
+	for (int dim = 0; dim < 3; dim++) {
+		bBoxMin[dim] = 0.;
+		bBoxMax[dim] = _domain->getGlobalLength(dim);
+	}
+	std::set<unsigned long> lower[3];  // the id of particles that were close to the lower boundary in the specific dimension are stored here
+	std::set<unsigned long> upper[3];  // the id of particles that were close to the upper boundary in the specific dimension are stored here
+
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		for (int dim = 0; dim < 3; dim++) {
+			if (m->r(dim) < bBoxMin[dim] + cutoff / 2.) {
+				// we shift particles close to the lower boundary to outside of the lower boundary.
+				// in this case they are put to the smallest (in abs values) negative representable number
+				// i.e. 2^(-149) = -1.4013e-45 for float resp. 4.94066e-324 for double
+				m->setr(dim, std::nexttoward((vcp_real_calc) bBoxMin[dim], bBoxMin[dim] - 1.f));
+				lower[dim].insert(m->id());
+			}
+			if (m->r(dim) > bBoxMax[dim] - cutoff / 2.) {
+				// We shift particles close to the upper boundary to outside of the upper boundary.
+				// In this case they are put at minimum to boundingBoxMax, as this is no longer inside of the domain.
+				// If the float representation of the maximum is less than the double representation, the next bigger floating point representation is used.
+				// Otherwise the maximum is used.
+				vcp_real_calc r = (float)bBoxMax[dim] >= bBoxMax[dim] ? bBoxMax[dim] : std::nexttoward((vcp_real_calc) bBoxMax[dim], bBoxMax[dim] + 1.f);
+				m->setr(dim, r);
+				upper[dim].insert(m->id());
+			}
+		}
+	}
+
+	container->update();
+
+	//needed to properly exchange the particles. In the first step leaving particles are normally not exchanged...
+	dynamic_cast<KDDecomposition*>(_domainDecomposition)->_steps++;
+
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+
+	kdd->collCommInit(1);
+	kdd->collCommAppendInt(newNumMols);
+	kdd->collCommAllreduceSum();
+	newNumMols = kdd->collCommGetInt();
+	kdd->collCommFinalize();
+
+	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		for (int dim = 0; dim < 3; dim++) {
+			if (lower[dim].count(m->id())) {
+				// We make sure, that these particles are now at the top part of the domain.
+				ASSERT_TRUE(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
+			} else if (upper[dim].count(m->id())) {
+				// We make sure, that these particles are now at the lower part of the domain.
+				ASSERT_TRUE(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
+			}
+		}
+	}
+
+	delete _domainDecomposition;
+	delete container;
+}
+
+void KDDecompositionTest::testNoLostParticles() {
+	testNoLostParticlesFilename("H20_NaBr_0.01_T_293.15_DD.inp", 3.0, 58.5389);
+}
+void KDDecompositionTest::testNoLostParticles2() {
+	testNoLostParticlesFilename("H20_NaBr_0.01_T_293.15_DD_2.inp", 3.0,  58.5);
+}
+
 
 void KDDecompositionTest::testCompleteTreeInfo() {
 
@@ -45,9 +186,12 @@ void KDDecompositionTest::testCompleteTreeInfo() {
 		KDNode result(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll, 0);
 		result.buildKDTree();
 
-		KDDecomposition decomposition(1.0, _domain, 1.0, 10);
+		KDDecomposition decomposition(1.0, _domain, 1, 1.0, 10);
+		KDNode * toCleanUp = root;
 		decomposition.completeTreeInfo(root, ownArea);
+		delete toCleanUp;
 		ASSERT_TRUE(result.equals(*root));
+		delete root;
 
 	} else {
 		Log::global_log->warning() << "KDDecompositionTest::testCompleteTreeInfo():"
@@ -68,7 +212,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		_domain->setGlobalLength(0, boxL);
 		_domain->setGlobalLength(1, boxL);
 		_domain->setGlobalLength(2, boxL);
-		kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
+		kdd = new KDDecomposition(cutOff, _domain, 1, 1, fullSearchThreshold);
 
 		double bBoxMin[3];
 		double bBoxMax[3];
@@ -165,15 +309,15 @@ void KDDecompositionTest::testbalanceAndExchange() {
 	const double cutOff = 3.5;
 	int fullSearchThreshold = 2;
 
-	InputOldstyle inputReader;
+	   ASCIIReader inputReader;
 	std::string fileName2=getTestDataFilename("DomainDecompBase.inp");
 	inputReader.setPhaseSpaceHeaderFile(fileName2.c_str());
 	inputReader.setPhaseSpaceFile(fileName2.c_str());
 	inputReader.readPhaseSpaceHeader(_domain, 1.0);
 
-	kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
+	kdd = new KDDecomposition(cutOff, _domain, 1, 1, fullSearchThreshold);
 	_domainDecomposition = kdd;
-	global_simulation->setDomainDecomposition(kdd);
+
 	_rank = kdd->_rank;
 
 
@@ -191,10 +335,11 @@ void KDDecompositionTest::testbalanceAndExchange() {
 		//cout << "running " << numReps << " repetitions" << std::endl;
 	}
 	for (int i = 0; i < numReps; ++i) {
-		kdd->balanceAndExchange(true, moleculeContainer, _domain);
+		kdd->balanceAndExchange(1.0, true, moleculeContainer, _domain);
 		moleculeContainer->updateMoleculeCaches();
 	}
-
+	delete moleculeContainer;
+	delete kdd;
 
 	// SHUTDOWN
 
@@ -216,7 +361,7 @@ double KDDecompositionTest::myRand(double min, double max) const {
 	return ret;
 }
 
-void KDDecompositionTest::setNumParticlesPerCell(unsigned int * v, int len[3]) const {
+void KDDecompositionTest::setNumParticlesPerCell(std::vector<unsigned int> &v, int len[3]) const {
 
 	for (int z = 0; z < len[2]; ++z) {
 		for (int y = 0; y < len[1]; ++y) {
@@ -258,7 +403,7 @@ unsigned KDDecompositionTest::f(double x, double y, double z, int N[3], const st
 	return ret;
 }
 
-void KDDecompositionTest::clearNumParticlesPerCell(unsigned int * v, int totalLen) const {
+void KDDecompositionTest::clearNumParticlesPerCell(std::vector<unsigned int> &v, int totalLen) const {
 	for (int i = 0; i < totalLen; ++i)
 		v[i] = 0;
 }

@@ -113,6 +113,18 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 			for(RegionParticleIterator i = begin; i != end; ++i){
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
+				// some additional shifting to ensure that rounding errors do not hinder the correct placement
+				if (shift < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
+					if (m.r(dim) <= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
+						m.setr(dim, moleculeContainer->getBoundingBoxMin(dim));  // ensures that r is at least the boundingboxmin
+					}
+				} else {  // shift > 0
+					if (m.r(dim) >= moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
+						// std::nexttoward: returns the next bigger value of _boundingBoxMax
+						vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
+						m.setr(dim, std::nexttoward(r, r - 1.f));  // ensures that r is smaller than the boundingboxmax
+					}
+				}
 				moleculeContainer->addParticle(m);
 				i.deleteCurrentParticle(); //removeFromContainer = true;
 			}
@@ -146,7 +158,20 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 			for(RegionParticleIterator i = begin; i != end; ++i){
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
-				moleculeContainer->addParticle(m);
+				// checks if the molecule has been shifted to inside the domain due to rounding errors.
+				if (shift < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
+					if (m.r(dim) >= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
+						vcp_real_calc r = moleculeContainer->getBoundingBoxMin(dim);
+						m.setr(dim, std::nexttoward(r, r - 1.f));  // ensures that r is smaller than the boundingboxmin
+					}
+				} else {  // shift > 0
+					if (m.r(dim) < moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
+						// std::nextafter: returns the next bigger value of _boundingBoxMax
+						vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
+						m.setr(dim, std::nexttoward(r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
+					}
+				}
+				moleculeContainer->addHaloParticle(m);
 			}
 		}
 	}
@@ -156,11 +181,11 @@ int DomainDecompBase::getNonBlockingStageCount(){
 	return -1;
 }
 
-bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/, double etime){
 	return false;
 }
 
-void DomainDecompBase::balanceAndExchange(bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
 	exchangeMolecules(moleculeContainer, domain);
 }
 
@@ -197,7 +222,7 @@ unsigned DomainDecompBase::Ndistribution(unsigned localN, float* minrnd, float* 
 void DomainDecompBase::assertIntIdentity(int /* IX */) {
 }
 
-void DomainDecompBase::assertDisjunctivity(TMoleculeContainer* /* mm */) const {
+void DomainDecompBase::assertDisjunctivity(ParticleContainer* /* moleculeContainer */) const {
 }
 
 void DomainDecompBase::printDecomp(std::string /* filename */, Domain* /* domain */) {
@@ -220,8 +245,8 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream;
 			if(binary == true){
-//				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
-				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::app);
+//				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::app);
 			}
 			else {
 				checkpointfilestream.open(filename.c_str(), std::ios::app);
@@ -250,7 +275,7 @@ void DomainDecompBase::getBoundingBoxMinMax(Domain *domain, double *min, double 
 	}
 }
 
-void DomainDecompBase::collCommInit(int numValues) {
+void DomainDecompBase::collCommInit(int numValues, int /*key*/) {
 	_collCommBase.init(numValues);
 }
 
@@ -302,6 +327,14 @@ void DomainDecompBase::collCommAllreduceSum() {
 	_collCommBase.allreduceSum();
 }
 
+void DomainDecompBase::collCommAllreduceSumAllowPrevious() {
+	_collCommBase.allreduceSum();
+}
+
+void DomainDecompBase::collCommAllreduceCustom(ReduceType type) {
+	_collCommBase.allreduceCustom(type);
+}
+
 void DomainDecompBase::collCommScanSum() {
 	_collCommBase.scanSum();
 }
@@ -315,7 +348,7 @@ double DomainDecompBase::getIOCutoffRadius(int dim, Domain* domain,
 
 	double length = domain->getGlobalLength(dim);
 	double cutoff = moleculeContainer->getCutoff();
-	assert( ((int) length / cutoff ) == length / cutoff );
+	mardyn_assert( ((int) length / cutoff ) == length / cutoff );
 	return cutoff;
 }
 

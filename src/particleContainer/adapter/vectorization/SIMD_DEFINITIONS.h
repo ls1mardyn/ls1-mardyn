@@ -12,7 +12,11 @@
 #ifndef  SIMD_DEFINITIONS_H
 #define  SIMD_DEFINITIONS_H
 
+#if defined(__GNUC__)
 #define vcp_inline inline __attribute__((always_inline))
+#else
+#define vcp_inline inline
+#endif
 
 #ifdef IN_IDE_PARSER //just for the ide parser include the simd_types.h -- normally this is not done.
     #include "./SIMD_TYPES.h"
