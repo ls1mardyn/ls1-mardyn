@@ -1410,7 +1410,7 @@ void Simulation::simulate() {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.dat");
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
-        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, _finalCheckpointBinary);
+        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, false);
     }
 	global_log->info() << "Finish output from output plugins" << endl;
 	for (auto outputPlugin : _outputPlugins) {
