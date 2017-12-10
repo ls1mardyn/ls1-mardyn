@@ -162,6 +162,38 @@ void CommunicationBuffer::addHaloMolecule(size_t indexOfMolecule, const Molecule
 	mardyn_assert(i_runningByte - i_firstByte == _numBytesHalo);
 }
 
+void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecule& m) {
+	// some MarDynAssert?
+	size_t i_firstByte = getStartPosition(ParticleType_t::FORCE, indexOfMolecule);  // adjust getStartPosition etc.
+	// some MarDynAssert?
+	
+	size_t i_runningByte = i_firstByte;
+	
+	// add force molecule
+#ifdef ENABLE_REDUCED_MEMORY_MODE
+	// should this have some vcp stuff too?
+	i_runningByte = emplaceValue(i_runningByte, m.r(0));
+	i_runningByte = emplaceValue(i_runningByte, m.r(1));
+	i_runningByte = emplaceValue(i_runningByte, m.r(2));
+	i_runningByte = emplaceValue(i_runningByte, m.F(0));
+	i_runningByte = emplaceValue(i_runningByte, m.F(1));
+	i_runningByte = emplaceValue(i_runningByte, m.F(2)); 
+#else
+	i_runningByte = emplaceValue(i_runningByte, m.r(0));
+	i_runningByte = emplaceValue(i_runningByte, m.r(1));
+	i_runningByte = emplaceValue(i_runningByte, m.r(2));
+	i_runningByte = emplaceValue(i_runningByte, m.F(0));
+	i_runningByte = emplaceValue(i_runningByte, m.F(1));
+	i_runningByte = emplaceValue(i_runningByte, m.F(2));
+	i_runningByte = emplaceValue(i_runningByte, m.M(0));
+	i_runningByte = emplaceValue(i_runningByte, m.M(1));
+	i_runningByte = emplaceValue(i_runningByte, m.M(2));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(0));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(1));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(2));
+#endif
+}
+
 void CommunicationBuffer::readLeavingMolecule(size_t indexOfMolecule, Molecule& m) const {
 	mardyn_assert(indexOfMolecule < _numLeaving);
 
@@ -269,6 +301,51 @@ void CommunicationBuffer::readHaloMolecule(size_t indexOfMolecule, Molecule& m) 
 	mardyn_assert(i_runningByte - i_firstByte == _numBytesHalo);
 }
 
+void CommunicationBuffer::readForceMolecule(size_t IndexOfMolecule, Molecule& m) {
+	// some mardyn assert
+	size_t i_firstByte = getStartPosition(ParticleType_t::FORCE, IndexOfMolecule);
+	// some mardyn assert
+	
+	size_t i_runningByte = i_firstByte;
+	
+#ifdef ENABLE_REDUCED_MEMORY_MODE
+	// vcp stuff?
+	double rbuf[3], Fbuf[3];
+	i_runningByte = emplaceValue(i_runningByte, rbuf[0]);
+	i_runningByte = emplaceValue(i_runningByte, rbuf[1]);
+	i_runningByte = emplaceValue(i_runningByte, rbuf[2]);
+	i_runningByte = emplaceValue(i_runningByte, Fbuf[0]);
+	i_runningByte = emplaceValue(i_runningByte, Fbuf[1]);
+	i_runningByte = emplaceValue(i_runningByte, Fbuf[2]); 
+	for(int d = 0; d < 3; d++) {
+		m.setr(d, rbuf[d]);
+	}
+	m.setF(Fbuf);
+	
+#else
+	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3];
+	i_runningByte = readValue(i_runningByte, rbuf[0]);
+	i_runningByte = readValue(i_runningByte, rbuf[1]);
+	i_runningByte = readValue(i_runningByte, rbuf[2]);
+	i_runningByte = readValue(i_runningByte, Fbuf[0]);
+	i_runningByte = readValue(i_runningByte, Fbuf[1]);
+	i_runningByte = readValue(i_runningByte, Fbuf[2]);
+	i_runningByte = readValue(i_runningByte, Mbuf[0]);
+	i_runningByte = readValue(i_runningByte, Mbuf[1]);
+	i_runningByte = readValue(i_runningByte, Mbuf[2]);
+	i_runningByte = readValue(i_runningByte, Vibuf[0]);
+	i_runningByte = readValue(i_runningByte, Vibuf[1]);
+	i_runningByte = readValue(i_runningByte, Vibuf[2]);
+	for(int d = 0; d < 3; d++) {
+		m.setr(d, rbuf[d]);
+	}
+	m.setF(Fbuf);
+	m.setM(Mbuf);
+	m.setVi(Vibuf);
+#endif
+	// some mardyn assert
+}
+
 size_t CommunicationBuffer::getStartPosition(ParticleType_t type, size_t indexOfMolecule) const {
 	size_t ret = 0;
 
@@ -277,9 +354,11 @@ size_t CommunicationBuffer::getStartPosition(ParticleType_t type, size_t indexOf
 
 	if(type == ParticleType_t::LEAVING) {
 		ret += indexOfMolecule * _numBytesLeaving;
-	} else {
-		// type == ParticleType_t::HALO
+	} else if(type == ParticleType_t::HALO) {
 		ret += _numLeaving * _numBytesLeaving + indexOfMolecule * _numBytesHalo;
+	} else {
+		// type == ParticleType_t::FORCE
+		// ???
 	}
 
 	return ret;

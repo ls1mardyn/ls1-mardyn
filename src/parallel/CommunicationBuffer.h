@@ -8,8 +8,8 @@
 #ifndef SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 #define SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 
-#include "molecules/MoleculeForwardDeclaration.h"
-#include "utils/mardyn_assert.h"
+#include "molecules/MoleculeForwardDeclaration.h" 
+#include "utils/mardyn_assert.h" 
 
 #include <vector>
 #include <stddef.h>
@@ -50,10 +50,12 @@ public:
 	// write
 	void addLeavingMolecule(size_t indexOfMolecule, const Molecule& m);
 	void addHaloMolecule(size_t indexOfMolecule, const Molecule& m);
+        void addForceMolecule(size_t indexOfMolecule, const Molecule& m);
 
 	// read
 	void readLeavingMolecule(size_t indexOfMolecule, Molecule& m) const;
 	void readHaloMolecule(size_t indexOfMolecule, Molecule& m) const;
+        void readForceMolecule(size_t indexOfMolecule, Molecule& m) const;
 
 	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo);
 
@@ -73,7 +75,7 @@ private:
 	static size_t _numBytesHalo;
 	static size_t _numBytesLeaving;
 
-	enum class ParticleType_t {HALO=0, LEAVING=1};
+	enum class ParticleType_t {HALO=0, LEAVING=1, FORCE=3};
 	size_t getStartPosition(ParticleType_t type, size_t indexOfMolecule) const;
 
 	/**
