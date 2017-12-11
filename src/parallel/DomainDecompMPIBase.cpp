@@ -247,7 +247,7 @@ void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, D
 
 size_t DomainDecompMPIBase::getTotalSize() { // another new method
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
-			+ _collCommunication->getTotalSize();
+			+ _collCommunication->getTotalSmergeize();
 }
 
 void DomainDecompMPIBase::printSubInfo(int offset) { // a new method for debugging
@@ -260,4 +260,3 @@ void DomainDecompMPIBase::printSubInfo(int offset) { // a new method for debuggi
 	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication->getTotalSize() / 1.e6 << " MB" << std::endl;
 
 }
->>>>>>> .merge-right.r5797

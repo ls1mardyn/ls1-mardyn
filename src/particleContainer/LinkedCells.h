@@ -38,7 +38,7 @@ class ResortCellProcessorSliced;
 //! picture illustrates this
 //! \image particles_with_lc.jpg
 //!
-//! The spacial domain covered by the linked cells is larger then
+//! The spacial domain covered by the linked cells is larger than
 //! the bounding box of the domain. This halo region surrounding
 //! the phasespace is used for (periodic) boundary conditions
 //! and has to be at least as wide as the cutoff radius. \n
@@ -265,15 +265,11 @@ public:
 		return &(_cells.at(cellIndex));
 	}
 
-<<<<<<< .working
-	bool requiresForceExchange() const override;
 
+	bool requiresForceExchange() const override; // new
 
-||||||| .merge-left.r4919
-=======
-	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength);
+	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength); // new
 
->>>>>>> .merge-right.r5797
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########
@@ -349,19 +345,7 @@ private:
 
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
 
-<<<<<<< .working
-	std::vector<long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::vector<long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
-	long _maxNeighbourOffset;
-	long _minNeighbourOffset;
-||||||| .merge-left.r4919
-	std::array<long, 13> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
-	long _maxNeighbourOffset;
-	long _minNeighbourOffset;
-=======
-    std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner;
->>>>>>> .merge-right.r5797
+        std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner; // new
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)

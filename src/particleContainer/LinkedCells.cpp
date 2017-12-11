@@ -17,16 +17,16 @@
 #include <algorithm>
 
 #include "particleContainer/TraversalTuner.h"
-<<<<<<< .working
+
+// traversaal for each zonal method
 #include "particleContainer/LinkedCellTraversals/C08CellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/OriginalCellPairTraversal.h"
 #include "particleContainer/LinkedCellTraversals/HalfShellTraversal.h"
 #include "particleContainer/LinkedCellTraversals/QuickschedTraversal.h"
 #include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
-||||||| .merge-left.r4919
-=======
+
 #include "ResortCellProcessorSliced.h"
->>>>>>> .merge-right.r5797
+
 
 using namespace std;
 using Log::global_log;
@@ -125,16 +125,10 @@ void LinkedCells::initializeTraversal() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-<<<<<<< .working
-	_cellsInCutoff = xmlconfig.getNodeValue_int("cellsInCutoffRadius", 1);
-	mardyn_assert(_cellsInCutoff>=1);
+	_cellsInCutoff = xmlconfig.getNodeValue_int("cellsInCutoffRadius", 1); // new
+	mardyn_assert(_cellsInCutoff>=1); // new
 
-    _traversalTuner = new TraversalTuner<ParticleCell>();
-||||||| .merge-left.r4919
-    _traversalTuner = new TraversalTuner<ParticleCell>();
-=======
-    _traversalTuner = std::unique_ptr<TraversalTuner<ParticleCell>>(new TraversalTuner<ParticleCell>());
->>>>>>> .merge-right.r5797
+	_traversalTuner = std::unique_ptr<TraversalTuner<ParticleCell>>(new TraversalTuner<ParticleCell>()); // new way to assign _traversalTuner
 	_traversalTuner->readXML(xmlconfig);
 }
 
@@ -273,8 +267,8 @@ void LinkedCells::update() {
 
 void LinkedCells::update_via_copies() {
 	const vector<ParticleCell>::size_type numCells = _cells.size();
-	array<long,13> forwardNeighbourOffsets;
-	array<long,13> backwardNeighbourOffsets;
+	vector<long> forwardNeighbourOffsets; // now vector
+	vector<long> backwardNeighbourOffsets; // now vector
 	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
 	#if defined(_OPENMP)
@@ -295,7 +289,7 @@ void LinkedCells::update_via_copies() {
 			ParticleCell& cell = _cells[cellIndex];
 
 			for (unsigned long j = 0; j < backwardNeighbourOffsets.size(); j++) {
-				const unsigned long neighbourIndex = cellIndex - backwardNeighbourOffsets[j];
+				const unsigned long neighbourIndex = cellIndex - backwardNeighbourOffsets.at(j); // now vector
 				if (neighbourIndex >= _cells.size()) {
 					// handles cell_index < 0 (indices are unsigned!)
 					mardyn_assert(cell.isHaloCell());
@@ -305,7 +299,7 @@ void LinkedCells::update_via_copies() {
 			}
 
 			for (unsigned long j = 0; j < forwardNeighbourOffsets.size(); j++) {
-				const unsigned long neighbourIndex = cellIndex + forwardNeighbourOffsets[j];
+				const unsigned long neighbourIndex = cellIndex + forwardNeighbourOffsets.at(j); // now vector
 				if (neighbourIndex >= numCells) {
 					mardyn_assert(cell.isHaloCell());
 					continue;
@@ -824,23 +818,16 @@ void LinkedCells::initializeCells() {
 	}
 }
 
-void LinkedCells::calculateNeighbourIndices(std::array<long, 13>& forwardNeighbourOffsets, std::array<long, 13>& backwardNeighbourOffsets) const {
+void LinkedCells::calculateNeighbourIndices(std::vector<long>& forwardNeighbourOffsets, std::vector<long>& backwardNeighbourOffsets) const {
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
-<<<<<<< .working
 
 	// 13 neighbors for _haloWidthInNumCells = 1 or 64 for =2
 	int nNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
 
 	// Resize offset vector to number of neighbors and fill with 0
-	_forwardNeighbourOffsets.resize(nNeighbours, 0);
-	_backwardNeighbourOffsets.resize(nNeighbours, 0);
-||||||| .merge-left.r4919
-	std::fill(_forwardNeighbourOffsets.begin(), _forwardNeighbourOffsets.end(), 0);
-	std::fill(_backwardNeighbourOffsets.begin(), _backwardNeighbourOffsets.end(), 0);
-=======
-	std::fill(forwardNeighbourOffsets.begin(), forwardNeighbourOffsets.end(), 0);
-	std::fill(backwardNeighbourOffsets.begin(), backwardNeighbourOffsets.end(), 0);
->>>>>>> .merge-right.r5797
+	forwardNeighbourOffsets.resize(nNeighbours, 0);
+	backwardNeighbourOffsets.resize(nNeighbours, 0);
+
 	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
 
 	double xDistanceSquare;
@@ -876,23 +863,11 @@ void LinkedCells::calculateNeighbourIndices(std::array<long, 13>& forwardNeighbo
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex,
 							zIndex);
 					if (offset > 0) {
-<<<<<<< .working
-						_forwardNeighbourOffsets.at(forwardNeighbourIndex) = offset;
-||||||| .merge-left.r4919
-						_forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
-=======
-						forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
->>>>>>> .merge-right.r5797
+						forwardNeighbourOffsets.at(forwardNeighbourIndex) = offset; // now vector
 						++forwardNeighbourIndex;
 					}
 					if (offset < 0) {
-<<<<<<< .working
-						_backwardNeighbourOffsets.at(backwardNeighbourIndex) = abs(offset);
-||||||| .merge-left.r4919
-						_backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
-=======
-						backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
->>>>>>> .merge-right.r5797
+						backwardNeighbourOffsets.at(backwardNeighbourIndex) = abs(offset); // now vector
 						++backwardNeighbourIndex;
 					}
 				}
@@ -1201,8 +1176,8 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	u += cellProcessor->processSingleMolecule(molWithSoA, currentCell);
 
-	array<long,13> forwardNeighbourOffsets;
-	array<long,13> backwardNeighbourOffsets;
+	vector<long> forwardNeighbourOffsets; // now vector
+	vector<long> backwardNeighbourOffsets; // now vector
 	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
 	// forward neighbours

@@ -74,6 +74,7 @@ public:
 private:
 	static size_t _numBytesHalo;
 	static size_t _numBytesLeaving;
+        static size_t _numBytesForce; // where is this set?
 
 	enum class ParticleType_t {HALO=0, LEAVING=1, FORCE=3};
 	size_t getStartPosition(ParticleType_t type, size_t indexOfMolecule) const;
@@ -89,7 +90,7 @@ private:
 
 	typedef unsigned char byte_t;
 	std::vector<byte_t> _buffer;
-	size_t _numLeaving, _numHalo;
+	size_t _numLeaving, _numHalo, _numForce;
 };
 
 template<typename T>

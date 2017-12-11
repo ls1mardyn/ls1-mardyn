@@ -311,6 +311,7 @@ void CommunicationBuffer::readForceMolecule(size_t IndexOfMolecule, Molecule& m)
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	// vcp stuff?
 	double rbuf[3], Fbuf[3];
+	// id?
 	i_runningByte = emplaceValue(i_runningByte, rbuf[0]);
 	i_runningByte = emplaceValue(i_runningByte, rbuf[1]);
 	i_runningByte = emplaceValue(i_runningByte, rbuf[2]);
@@ -324,6 +325,7 @@ void CommunicationBuffer::readForceMolecule(size_t IndexOfMolecule, Molecule& m)
 	
 #else
 	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3];
+	// id?
 	i_runningByte = readValue(i_runningByte, rbuf[0]);
 	i_runningByte = readValue(i_runningByte, rbuf[1]);
 	i_runningByte = readValue(i_runningByte, rbuf[2]);
@@ -356,9 +358,8 @@ size_t CommunicationBuffer::getStartPosition(ParticleType_t type, size_t indexOf
 		ret += indexOfMolecule * _numBytesLeaving;
 	} else if(type == ParticleType_t::HALO) {
 		ret += _numLeaving * _numBytesLeaving + indexOfMolecule * _numBytesHalo;
-	} else {
-		// type == ParticleType_t::FORCE
-		// ???
+	} else if(type == ParticleType_t::FORCE) {
+		// ??? - does the force exchange happen on its own or with the other bytes?
 	}
 
 	return ret;
