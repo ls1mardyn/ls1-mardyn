@@ -228,24 +228,20 @@ public:
 	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
 	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
 
-<<<<<<< .working
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position
 	 * @param result Molecule will be returned by this pointer if found
 	 * @return Molecule was found?
 	 */
-	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0;
+	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0; // new
 
 	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	// or does this particle container calculate all forces.
-	virtual bool requiresForceExchange() const {return false;}
+	virtual bool requiresForceExchange() const {return false;} // new
+        
+	virtual unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength) = 0; // new 
 
-||||||| .merge-left.r4919
-=======
-	virtual unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength) = 0;
-
->>>>>>> .merge-right.r5797
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box
