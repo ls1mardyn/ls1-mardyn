@@ -244,7 +244,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	}
 	return _countReceived;
 }
-bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force) {
+bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force = false) {
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
 		int flag = 1;
@@ -512,8 +512,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 						}
 					}
 				} else if(haloLeaveCorr == FORCES) {
-					// force logic?
-					// shouldn't this depend on the zonal method?
+					// calls some method on ZonalMethod object in the future
 				}
 			} /* for-loop dim */
 			if (haloLeaveCorr == LEAVING) {

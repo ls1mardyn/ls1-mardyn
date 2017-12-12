@@ -26,7 +26,7 @@ size_t CommunicationBuffer::_numBytesHalo = 3 * sizeof(vcp_real_calc)
 			+ sizeof(unsigned long)
 	#endif
 		;
-size_t CommunicationBuffer::_numBytesForce = /* ... */
+size_t CommunicationBuffer::_numBytesForce = sizeof(unsigned long) + 3 * sizeof(vcp_real_calc) + 3 * sizeof(vcp_real_accum);
 #else
 // position, velocity, orientation, angular momentum, id, cid
 size_t CommunicationBuffer::_numBytesLeaving = 13 * sizeof(double) + sizeof(unsigned long) + sizeof(int);
@@ -36,7 +36,7 @@ size_t CommunicationBuffer::_numBytesHalo = 7 * sizeof(double) + sizeof(int)
 			+ sizeof(unsigned long)
 	#endif
 		;
-size_t CommunicationBuffer::_numBytesForce = /* ... */
+size_t CommunicationBuffer::_numBytesForce = sizeof(unsigned long) + 12 * sizeof(double);
 #endif
 
 
@@ -97,7 +97,15 @@ void CommunicationBuffer::resizeForAppendingHaloMolecules(unsigned long numHalo)
 	i_runningByte = emplaceValue(i_runningByte, _numHalo);
 }
 
-// there should probably be a resizeForAppendingForceMolecule
+void CommunicationBuffer::resizeForAppendingForceMolecules(unsigned long numForce) {
+	_numForces += numForce;
+	// maybe some assert
+	size_t numBytes = sizeof(_numForce) + _numForces * _numBytesForces;
+	resizeForRawBytes(numBytes);
+	
+	size_t i_runningByte = 0;
+	i_runningByte = emplaceBalue(i_runningByte, _numForces);
+}
 
 void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molecule& m) { 
 	mardyn_assert(indexOfMolecule < _numLeaving);
@@ -176,14 +184,15 @@ void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecul
 	
 	// add force molecule
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	// should this have some vcp stuff too?
-	i_runningByte = emplaceValue(i_runningByte, m.r(0));
-	i_runningByte = emplaceValue(i_runningByte, m.r(1));
-	i_runningByte = emplaceValue(i_runningByte, m.r(2));
-	i_runningByte = emplaceValue(i_runningByte, m.F(0));
-	i_runningByte = emplaceValue(i_runningByte, m.F(1));
-	i_runningByte = emplaceValue(i_runningByte, m.F(2)); 
+	i_runningByte = emplaceValue(i_runningByte, m.id());
+	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(0)));
+	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(1)));
+	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(2)));
+	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(0)));
+	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(1)));
+	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(2))); 
 #else
+	i_runningByte = emplaceValue(i_runningByte, m.id());
 	i_runningByte = emplaceValue(i_runningByte, m.r(0));
 	i_runningByte = emplaceValue(i_runningByte, m.r(1));
 	i_runningByte = emplaceValue(i_runningByte, m.r(2));
@@ -315,14 +324,18 @@ void CommunicationBuffer::readForceMolecule(size_t IndexOfMolecule, Molecule& m)
 	
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	// vcp stuff?
-	double rbuf[3], Fbuf[3];
-	// id?
-	i_runningByte = emplaceValue(i_runningByte, rbuf[0]);
-	i_runningByte = emplaceValue(i_runningByte, rbuf[1]);
-	i_runningByte = emplaceValue(i_runningByte, rbuf[2]);
-	i_runningByte = emplaceValue(i_runningByte, Fbuf[0]);
-	i_runningByte = emplaceValue(i_runningByte, Fbuf[1]);
-	i_runningByte = emplaceValue(i_runningByte, Fbuf[2]); 
+	vcp_real_calc rbuf[3]; 
+	vcp_real_accum Fbuf[3];
+	unsigned long idbuf;
+	
+	i_runningByte = readValue(i_runningByte, idbuf);
+	i_runningByte = readValue(i_runningByte, rbuf[0]);
+	i_runningByte = readValue(i_runningByte, rbuf[1]);
+	i_runningByte = readValue(i_runningByte, rbuf[2]);
+	i_runningByte = readValue(i_runningByte, Fbuf[0]);
+	i_runningByte = readValue(i_runningByte, Fbuf[1]);
+	i_runningByte = readValue(i_runningByte, Fbuf[2]); 
+	m.setid(idbuf);
 	for(int d = 0; d < 3; d++) {
 		m.setr(d, rbuf[d]);
 	}
@@ -330,7 +343,9 @@ void CommunicationBuffer::readForceMolecule(size_t IndexOfMolecule, Molecule& m)
 	
 #else
 	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3];
-	// id?
+	unsigned long idbuf;
+	
+	i_runningByte = readValue(i_runningByte, idbuf);
 	i_runningByte = readValue(i_runningByte, rbuf[0]);
 	i_runningByte = readValue(i_runningByte, rbuf[1]);
 	i_runningByte = readValue(i_runningByte, rbuf[2]);
@@ -343,6 +358,7 @@ void CommunicationBuffer::readForceMolecule(size_t IndexOfMolecule, Molecule& m)
 	i_runningByte = readValue(i_runningByte, Vibuf[0]);
 	i_runningByte = readValue(i_runningByte, Vibuf[1]);
 	i_runningByte = readValue(i_runningByte, Vibuf[2]);
+	m.setid(idbuf);
 	for(int d = 0; d < 3; d++) {
 		m.setr(d, rbuf[d]);
 	}

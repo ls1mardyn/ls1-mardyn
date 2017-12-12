@@ -42,7 +42,7 @@ public:
 
 	void resizeForAppendingLeavingMolecules(unsigned long numMols);
 	void resizeForAppendingHaloMolecules(unsigned long numMols);
-        // void resizeForAppendingForceMolecules(unsigned long numMols);
+        void resizeForAppendingForceMolecules(unsigned long numMols);
 
 	unsigned char * getDataForSending();
 	size_t getNumElementsForSending();
