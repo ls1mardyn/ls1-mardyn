@@ -27,7 +27,9 @@ public:
 		ORIGINAL = 0,
 		C08      = 1,
 		SLICED   = 2,
-		QSCHED   = 3
+                HS       = 3,
+                MP       = 4,
+		QSCHED   = 5
 	};
 
 	TraversalTuner();
@@ -49,50 +51,18 @@ public:
 
 	void traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage, unsigned stageCount);
 
-<<<<<<< .working // Picks optimal traversal in the future?
-    CellPairTraversals<ParticleCell>* getSelectedTraversal(){
-    	return _optimalTravesal;
-    }
-||||||| .merge-left.r4919
-=======
-	bool isTraversalApplicable(traversalNames name, const std::array<unsigned long, 3> &dims) const;
->>>>>>> .merge-right.r5797
 
-<<<<<<< .working
+	bool isTraversalApplicable(traversalNames name, const std::array<unsigned long, 3> &dims) const; // new
 
-||||||| .merge-left.r4919
-=======
+
 	traversalNames getSelectedTraversal() const {
 		return selectedTraversal;
 	}
-
->>>>>>> .merge-right.r5797
+        
 private:
 	std::vector<CellTemplate>* _cells;
 	std::array<unsigned long, 3> _dims;
 
-<<<<<<< .working
-    // Probably remove this once autotuning is implemented
-    enum traversalNames {
-        ORIGINAL = 0,
-        C08      = 1,
-        SLICED   = 2,
-		HS	 	 = 3,
-		MP	 	 = 4,
-        QSCHED   = 5
-    };
-
-||||||| .merge-left.r4919
-	// Probably remove this once autotuning is implemented
-	enum traversalNames {
-		ORIGINAL = 0,
-		C08      = 1,
-		SLICED   = 2,
-		QSCHED   = 3
-	};
-
-=======
->>>>>>> .merge-right.r5797
 	traversalNames selectedTraversal;
 
 	std::vector<std::pair<CellPairTraversals<CellTemplate> *, CellPairTraversalData *> > _traversals;
@@ -270,37 +240,28 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 }
 
 template<class CellTemplate>
-void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
-										   const std::array<unsigned long, 3> &dims) {
-<<<<<<< .working
-||||||| .merge-left.r4919
+void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells, 
+        const std::array<unsigned long, 3> &dims) {
+    
+	_cells = &cells; // new - what for?
+	_dims = dims; // new - what for?
 
-=======
-	_cells = &cells;
-	_dims = dims;
-
->>>>>>> .merge-right.r5797
 	for (auto &tPair : _traversals) {
 		// decide whether to initialize or rebuild
 		if (tPair.first == nullptr) {
 			if (dynamic_cast<C08CellPairTraversalData *>(tPair.second)) {
-				tPair.first = new C08CellPairTraversal<CellTemplate>(cells,
-																	 dims);
+				tPair.first = new C08CellPairTraversal<CellTemplate>(cells, dims);
 			} else if (QuickschedTraversalData *quiData = dynamic_cast<QuickschedTraversalData *>(tPair.second)) {
 				mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
-				tPair.first = new QuickschedTraversal<CellTemplate>(cells,
-																	dims,
-																	quiData->taskBlockSize);
+				tPair.first = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
 			} else if (dynamic_cast<HalfShellTraversalData *>(tPair.second)) {
 			    tPair.first = new HalfShellTraversal<CellTemplate>(cells, dims);
-		    } else if (dynamic_cast<MidpointTraversalData *>(tPair.second)) {
+                        } else if (dynamic_cast<MidpointTraversalData *>(tPair.second)) {
 			    tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
 			} else if (dynamic_cast<OriginalCellPairTraversalData *>(tPair.second)) {
-				tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells,
-																		  dims);
+				tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells, dims);
 			} else if (dynamic_cast<SlicedCellPairTraversalData *>(tPair.second)) {
-				tPair.first = new SlicedCellPairTraversal<CellTemplate>(cells,
-																		dims);
+				tPair.first = new SlicedCellPairTraversal<CellTemplate>(cells, dims);
 			} else {
 				global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << endl;
 				Simulation::exit(1);
@@ -315,7 +276,7 @@ template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcessor) {
 	if (_optimalTravesal == nullptr)
 		findOptimalTraversal();
-	_optimalTravesal->traverseCellPairs(cellProcessor);
+        _optimalTravesal->traverseCellPairs(cellProcessor);
 }
 
 template<class CellTemplate>
