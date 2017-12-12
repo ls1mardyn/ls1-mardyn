@@ -104,8 +104,8 @@ void LegacyCellProcessor::processCellPairSumHalf(ParticleCell& cell1, ParticleCe
 	} // isBoundaryCell
 }
 
-<<<<<<< .working
-void LegacyCellProcessor::processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) {
+
+void LegacyCellProcessor::processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) { // new
 	double distanceVector[3];
 
 	int currentParticleCount = cell1.getMoleculeCount();
@@ -127,15 +127,13 @@ void LegacyCellProcessor::processCellPairSumAll(ParticleCell& cell1, ParticleCel
 
 }
 
-||||||| .merge-left.r4919
-=======
 
 #if defined(ENABLE_REDUCED_MEMORY_MODE) && ENABLE_VECTORIZED_CODE==0
 #warning Reduced memory mode (RMM) should now work using LegacyCellProcessor with the introduction of SingleCellIterator-s. Please double check at first usage!
 #endif
 ////TODO: fix LegacyCellProcessor for RMM mode - especially the calls to moleculesAt(i) using the _dummy are dangerous!
 // should work now, with SingleCellIterator
->>>>>>> .merge-right.r5797
+
 void LegacyCellProcessor::processCell(ParticleCell& cell) {
 	double distanceVector[3];
 
