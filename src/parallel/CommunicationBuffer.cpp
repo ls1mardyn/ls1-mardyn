@@ -71,7 +71,7 @@ void CommunicationBuffer::resizeForReceivingMolecules(unsigned long& numLeaving,
 	numHalo = _numHalo;
 }
 
-void CommunicationBuffer::resizeForAppendingLeavingMolecules(unsigned long numLeaving) { // adjust for force exchange?
+void CommunicationBuffer::resizeForAppendingLeavingMolecules(unsigned long numLeaving) { 
 	_numLeaving += numLeaving;
 	mardyn_assert(_numHalo == 0ul); // assumption: add leaving, add leaving, then add halo, halo, halo, ... but not intertwined.
 	size_t numBytes = sizeof(_numHalo) + sizeof(_numLeaving) +
@@ -84,7 +84,7 @@ void CommunicationBuffer::resizeForAppendingLeavingMolecules(unsigned long numLe
 	i_runningByte = emplaceValue(i_runningByte, _numLeaving);
 }
 
-void CommunicationBuffer::resizeForAppendingHaloMolecules(unsigned long numHalo) { // adjust for force exchange?
+void CommunicationBuffer::resizeForAppendingHaloMolecules(unsigned long numHalo) { 
 	// _numLeaving stays
 	_numHalo += numHalo;
 	size_t numBytes = sizeof(_numHalo) + sizeof(_numLeaving) +
@@ -97,7 +97,9 @@ void CommunicationBuffer::resizeForAppendingHaloMolecules(unsigned long numHalo)
 	i_runningByte = emplaceValue(i_runningByte, _numHalo);
 }
 
-void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molecule& m) { // adjust for force exchange?
+// there should probably be a resizeForAppendingForceMolecule
+
+void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molecule& m) { 
 	mardyn_assert(indexOfMolecule < _numLeaving);
 
 	size_t i_firstByte = getStartPosition(ParticleType_t::LEAVING, indexOfMolecule);

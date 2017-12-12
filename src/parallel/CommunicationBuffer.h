@@ -42,6 +42,7 @@ public:
 
 	void resizeForAppendingLeavingMolecules(unsigned long numMols);
 	void resizeForAppendingHaloMolecules(unsigned long numMols);
+        // void resizeForAppendingForceMolecules(unsigned long numMols);
 
 	unsigned char * getDataForSending();
 	size_t getNumElementsForSending();
@@ -57,7 +58,7 @@ public:
 	void readHaloMolecule(size_t indexOfMolecule, Molecule& m) const;
         void readForceMolecule(size_t indexOfMolecule, Molecule& m) const;
 
-	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo);
+	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo); // adjust for force
 
 	size_t getNumHalo() const {
 		return _numHalo;
