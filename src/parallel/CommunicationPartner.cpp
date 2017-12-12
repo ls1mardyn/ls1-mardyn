@@ -178,7 +178,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			global_log->debug() << "sending forces" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, 
-					_haloInfo[p]._shift, false /* haloLeaveCorr = NONE */); 
+					_haloInfo[p]._shift, false, FORCES); 
 			}
 			break;
 		}
@@ -511,16 +511,17 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 						}
 					}
-				} else if(haloLeaveCorr == FORCE) {
+				} else if(haloLeaveCorr == FORCES) {
 					// force logic?
+					// shouldn't this depend on the zonal method?
 				}
 			} /* for-loop dim */
 			if (haloLeaveCorr == LEAVING) {
 				_sendBuf.addLeavingMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			} else if (haloLeaveCorr == HALO) {
 				_sendBuf.addHaloMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
-			} else if (haloLeaveCorr == FORCE) {
-				// _sendBuf.addForceMolecule(...);
+			} else if (haloLeaveCorr == FORCES) {
+				_sendBuf.addForceMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			}
 		}
 	}
