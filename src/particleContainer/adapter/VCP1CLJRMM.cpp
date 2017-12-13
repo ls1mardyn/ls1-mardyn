@@ -85,7 +85,7 @@ void VCP1CLJRMM::initTraversal() {
 	global_log->debug() << "VCP1CLJRMM::initTraversal()." << std::endl;
 }
 
-void VCP1CLJRMM::processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) {
+void VCP1CLJRMM::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) {
 	mardyn_assert(&cell1 != &cell2);
 	ParticleCellRMM & cellRMM1 = downcastCellReferenceRMM(cell1);
 	ParticleCellRMM & cellRMM2 = downcastCellReferenceRMM(cell2);
@@ -113,69 +113,42 @@ void VCP1CLJRMM::processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2
 	// This saves the Molecule::isLessThan checks
 	// and works similar to the "Half-Shell" scheme
 
-	const bool ApplyCutoff = true;
+	const bool ApplyCutoff = true; 
+	
+        if(sumAll) { // sumAll
+		const bool CalculateMacroscopic = true; // is now always set to true
         
-
-	if ((not c1Halo and not c2Halo) or						// no cell is halo or
-			(cellRMM1.getCellIndex() < cellRMM2.getCellIndex())) 		// one of them is halo, but cellRMM1.index < cellRMM2.index
-	{
-		const bool CalculateMacroscopic = true;
-
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		    _calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+		    _calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
+	} else { // sumHalf
+		if ((not c1Halo and not c2Halo) or						// no cell is halo or
+				(cellRMM1.getCellIndex() < cellRMM2.getCellIndex())) 		// one of them is halo, but cellRMM1.index < cellRMM2.index
+		{
+			const bool CalculateMacroscopic = true;
 
-	} else {
-		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
-		mardyn_assert(not (cellRMM1.getCellIndex() < cellRMM2.getCellIndex()));
+			if (calc_soa1_soa2) {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			} else {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			}
 
-		const bool CalculateMacroscopic = false;
-
-		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
+			mardyn_assert(not (cellRMM1.getCellIndex() < cellRMM2.getCellIndex()));
+
+			const bool CalculateMacroscopic = false;
+
+			if (calc_soa1_soa2) {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			} else {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			}
 		}
 	}
 }
-
-
-void VCP1CLJRMM::processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) {
-	mardyn_assert(&cell1 != &cell2);
-	ParticleCellRMM & cellRMM1 = downcastCellReferenceRMM(cell1);
-	ParticleCellRMM & cellRMM2 = downcastCellReferenceRMM(cell2);
-
-	CellDataSoARMM& soa1 = cellRMM1.getCellDataSoA();
-	CellDataSoARMM& soa2 = cellRMM2.getCellDataSoA();
-	const bool c1Halo = cellRMM1.isHaloCell();
-	const bool c2Halo = cellRMM2.isHaloCell();
-
-	// this variable determines whether
-	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
-	// is more efficient
-	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
-
-	// if one cell is empty, or both cells are Halo, skip
-	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
-		return;
-	}
-
-	// Macroscopic conditions: Sum all
-
-	const bool ApplyCutoff = true;
-
-        const bool CalculateMacroscopic = true; // is now always set to true
-        
-	if (calc_soa1_soa2) {
-            _calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
-        } else {
-            _calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
-	}
-}
-
-
 
 
 void VCP1CLJRMM::processCell(ParticleCell& cell) {

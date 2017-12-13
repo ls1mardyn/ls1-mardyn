@@ -36,6 +36,8 @@ public:
 	void initTraversal();
 
 	void preprocessCell(ParticleCell& /*cell*/) {}
+        
+        void pricessCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false);
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
 
@@ -44,17 +46,5 @@ public:
 	void postprocessCell(ParticleCell& /*cell*/) {}
 
 	void endTraversal();
-
-protected:
-	/**
-	 * Implementation of processCellPair that only sums the macroscopic values of Molecule-Molecule pairs,
-	 * not of Molecule-Halo pairs and does not calculate Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) override;
-	/**
-	 * Implementation of processCellPair that sums all macroscopic values and calculates Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) override;
-};
 
 #endif /* LEGACYCELLPROCESSOR_H_ */

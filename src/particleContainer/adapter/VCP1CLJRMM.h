@@ -38,6 +38,7 @@ public:
 	 */
 	void preprocessCell(ParticleCell& /*cell*/) {}
          
+        void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false /* related to ZonalMethod */);
         
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
 		return 0.0;
@@ -64,19 +65,6 @@ public:
 		return _dtInvm;
 	}
         
-        
-protected:
-	/**
-	 * Implementation of processCellPair that only sums the macroscopic values of Molecule-Molecule pairs,
-	 * not of Molecule-Halo pairs and does not calculate Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) override; // NEW - Everything calling processCellPair needs to call this instead
-	/**
-	 * Implementation of processCellPair that sums all macroscopic values and calculates Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) override; // NEW
-
-       
 private:
 	/**
 	 * \brief The Domain where macroscopic values will be stored.

@@ -69,9 +69,9 @@ public:
 	 * pair (i.e. pairs are not ordered).
 	 *
 	 * @note will not be called for empty cells.
-	 */
-	template<bool sumAllValues = false> // Sum up all macroscopic values (e.g. for hs) or only half of them (e.g. for fs)
-	inline void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
+	 * Sum up all macroscopic values (e.g. for hs) or only half of them (e.g. for fs)
+         */
+	virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) = 0;
 
 	/**
 	 * Called when this cell is the current cell.
@@ -91,28 +91,7 @@ public:
 	 * Called after the traversal finished.
 	 */
 	virtual void endTraversal() = 0;
-
-protected:
-	/**
-	 * Implementation of processCellPair that only sums the macroscopic values of Molecule-Molecule pairs,
-	 * not of Moleceule-Halo pairs and does not calculate Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) = 0;
-	/**
-	 * Implementation of processCellPair that sums all macroscopic values and calculates Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) = 0;
 };
 
-
-template<>
-inline void CellProcessor::processCellPair<false>(ParticleCell& cell1, ParticleCell& cell2) {
-	processCellPairSumHalf(cell1, cell2);
-}
-
-template<>
-inline void CellProcessor::processCellPair<true>(ParticleCell& cell1, ParticleCell& cell2) {
-	processCellPairSumAll(cell1, cell2);
-}
 
 #endif

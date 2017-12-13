@@ -243,14 +243,11 @@ public:
 	virtual void preprocessCell(ParticleCell& /*cell*/) {
 	}
 
-	virtual void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) override {
+	virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) { // does this need a bool
 			_cellPairProcessCount[cell1.getCellIndex()][cell2.getCellIndex()] += sign;
 			_cellPairProcessCount[cell2.getCellIndex()][cell1.getCellIndex()] += sign;  // newton 3
 	}
 
-	virtual void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) override {
-			processCellPairSumHalf(cell1, cell2);
-	}
 
 	virtual void processCell(ParticleCell& cell) {
 		_cellProcessCount[cell.getCellIndex()] += sign;

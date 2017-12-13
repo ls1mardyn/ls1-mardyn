@@ -57,6 +57,8 @@ public:
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */
 	void processCell(ParticleCell& cell);
+        
+        void processCellPair(ParticleCell& c1, ParticleCell& c2, bool sumAll = false);
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
@@ -68,16 +70,6 @@ public:
 
 	void printTimers();
 
-protected:
-	/**
-	 * Implementation of processCellPair that only sums the macroscopic values of Molecule-Molecule pairs,
-	 * not of Molecule-Halo pairs and does not calculate Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumHalf(ParticleCell& cell1, ParticleCell& cell2) override;
-	/**
-	 * Implementation of processCellPair that sums all macroscopic values and calculates Halo-Halo pairs.
-	 */
-	virtual void processCellPairSumAll(ParticleCell& cell1, ParticleCell& cell2) override;
 
 private:
 	/**
