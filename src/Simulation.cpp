@@ -896,19 +896,13 @@ void Simulation::prepare_start() {
 	// Update forces in molecules so they can be exchanged
 	updateForces();
 
-<<<<<<< .working
 	// Exchange forces if it's required by the cell container.
 	if(_moleculeContainer->requiresForceExchange()){
 		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
 	}
 
-#ifdef MARDYN_WR
-||||||| .merge-left.r4919
-#ifdef MARDYN_WR
-=======
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
->>>>>>> .merge-right.r5797
 	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
 	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m);
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
