@@ -714,7 +714,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		_nNumMoleculesChangedLocal = 0;
 
 		// update sum and summation list
-		uint64_t numMolsDeletedOrChanged;
+		uint64_t numMolsDeletedOrChanged = 0;
 		if(FRM_DELETED_MOLECULES == _nFeedRateMethod)
 			numMolsDeletedOrChanged = _nNumMoleculesDeletedGlobal;
 		else if(FRM_CHANGED_MOLECULES == _nFeedRateMethod)
@@ -805,10 +805,9 @@ void MettDeamon::InitTransitionPlane(Domain* domain)
 
 void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 {
-	cout << "INSERT: Mett-" << (uint32_t)_nMovingDirection << endl;
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
-	global_log->info() << "currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
+//	global_log->info() << "currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
 
 	for(auto mi : currentReservoirSlab)
 	{
@@ -823,7 +822,6 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 		mi.setid(_nMaxMoleculeID + id);
 		mi.setComponent(compNew);
 		mi.setr(1, mi.r(1) + _dYsum - _reservoir->getBinWidth() );
-		cout << "INSERT POS: " << mi.r(1) << ", cid=" << _vecChangeCompIDsFreeze.at(cid) << endl;
 		particleContainer->addParticle(mi);
 	}
 	_dYsum -= _reservoir->getBinWidth();  // reset feed sum
