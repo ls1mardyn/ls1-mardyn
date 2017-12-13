@@ -309,16 +309,16 @@ void FlopCounter::processCellPairSumHalf(ParticleCell & c1, ParticleCell & c2) {
 
 void FlopCounter::processCellPairSumAll(ParticleCell & c1, ParticleCell & c2) {
 	mardyn_assert(&c1 != &c2);
-#ifndef MARDYN_WR
+#ifndef ENABLE_REDUCED_MEMORY_MODE
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
 	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
 	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
 #else
-	ParticleCell_WR & wr_c1 = downcastCellReferenceWR(c1);
-	ParticleCell_WR & wr_c2 = downcastCellReferenceWR(c2);
-	const CellDataSoA_WR& soa1 = wr_c1.getCellDataSoA();
-	const CellDataSoA_WR& soa2 = wr_c2.getCellDataSoA();
+	ParticleCellRMM & rmm_c1 = downcastCellReferenceWR(c1);
+	ParticleCellRMM & rmm_c2 = downcastCellReferenceWR(c2);
+	const CellDataSoARMM& soa1 = rmm_c1.getCellDataSoA();
+	const CellDataSoARMM& soa2 = rmm_c2.getCellDataSoA();
 #endif
 
 
@@ -328,10 +328,10 @@ void FlopCounter::processCellPairSumAll(ParticleCell & c1, ParticleCell & c2) {
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {
 		return;
 	}
 

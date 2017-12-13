@@ -536,10 +536,10 @@ void VectorizedLJP2PCellProcessor::processCellPairSumAll(ParticleCell & c1, Part
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
 	// is more efficient
-	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
 	// if one cell is empty, skip
-	if (soa1._mol_num == 0 or soa2._mol_num == 0) {
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {
 		return;
 	}
 
