@@ -14,6 +14,8 @@
 
 #include "utils/Timer.h"
 
+class XMLfileUnits;
+
 /**
 @class TimerProfiler
 @brief Class for managing timers across the simulation
@@ -24,6 +26,14 @@ This class supports a hierarchical structure of the timers and can output the ti
 */
 class TimerProfiler {
 public:
+
+	enum class Displaymode {
+		ALL,
+		ACTIVE,
+		NON_ZERO,
+		NONE
+	};
+
 	/**
 	@brief Constructor of TimerProfiler
 
@@ -39,6 +49,26 @@ public:
 	Deallocates all instantiated timers and clears the content of the timer container.
 	*/
 	virtual ~TimerProfiler();
+
+	/** @brief Read in XML configuration for TimerProfiler.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <programtimers>
+	     <displaymode>all|active|non-zero|none</displaymode>
+	   </programtimers>
+	   \endcode
+	 * Display mode explanation:
+	 * - all: display all registered timer
+	 * - active: display all active timers
+	 * - non-zero: display all timers which have non zero time
+	 * - none: do not display timers
+	 */
+	void readXML(XMLfileUnits& xmlconfig);
+
+	void setDisplayMode(Displaymode mode) { _displayMode = mode; }
+	Displaymode getDisplayMode() { return _displayMode; }
+
 	/**
 	@fn void registerTimer(std::string timerName, std::vector<std::string> parentTimerNames, Timer *timer=nullptr, bool activate=true)
 	@brief Adds a timer in the container.
@@ -263,6 +293,8 @@ private:
 	std::map<std::string, _Timer> _timers;
 
 	unsigned long _numElapsedIterations;
+
+	Displaymode _displayMode;
 };
 
 #endif /* SRC_IO_TIMERPROFILER_H_ */

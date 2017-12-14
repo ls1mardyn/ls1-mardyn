@@ -178,6 +178,12 @@ void Simulation::exit(int exitcode) {
 }
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
+	/* timers */
+	if(xmlconfig.changecurrentnode("programtimers")) {
+		_timerProfiler.readXML(xmlconfig);
+		xmlconfig.changecurrentnode("..");
+	}
+
 	/* integrator */
 	if(xmlconfig.changecurrentnode("integrator")) {
 		string integratorType;
