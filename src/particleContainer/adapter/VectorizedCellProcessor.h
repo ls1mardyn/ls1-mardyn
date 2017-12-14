@@ -59,7 +59,7 @@ public:
 	 */
 	void processCell(ParticleCell& cell);
         
-        void processCellPair(ParticleCell& cell1, ParticleCell2&, bool sumAll = false);
+        void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false);
         
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
