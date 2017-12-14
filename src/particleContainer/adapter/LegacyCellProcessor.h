@@ -37,7 +37,7 @@ public:
 
 	void preprocessCell(ParticleCell& /*cell*/) {}
         
-        void pricessCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false);
+        void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false);
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
 
@@ -46,5 +46,6 @@ public:
 	void postprocessCell(ParticleCell& /*cell*/) {}
 
 	void endTraversal();
+};
 
 #endif /* LEGACYCELLPROCESSOR_H_ */

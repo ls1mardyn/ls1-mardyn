@@ -389,7 +389,6 @@ void LinkedCells::update_via_traversal() {
 				cell1.updateLeavingMoleculesBase(cell2);
 		}
 		
-		
 		void processCell(ParticleCell& cell) {}
 		double processSingleMolecule(Molecule*, ParticleCell& ) { return 0.0;}
 		void postprocessCell(ParticleCell& ) {}
