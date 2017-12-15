@@ -54,18 +54,21 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 	return u;
 }
 
-void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) {
+void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll /* = false */) {
 	double distanceVector[3];
+	
+	SingleCellIterator begin1 = cell1.iteratorBegin();
+	SingleCellIterator end1 = cell1.iteratorEnd();
+	SingleCellIterator begin2 = cell2.iteratorBegin();
+	SingleCellIterator end2 = cell2.iteratorEnd();
 
-	if(sumAll) { // sumAll
-		int currentParticleCount = cell1.getMoleculeCount();
-		int neighbourParticleCount = cell2.getMoleculeCount();
+	if(sumAll) { // sumAll - moleculesAt is gone, use SingleCellIterator now ?
 
 		// loop over all particles in the cell
-		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = cell1.moleculesAt(i);
-			for (int j = 0; j < neighbourParticleCount; j++) {
-				Molecule& molecule2 = cell2.moleculesAt(j);
+		for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+			Molecule& molecule1 = *it1; 
+			for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+				Molecule& molecule2 = *it2; 
 				if(molecule1.id() == molecule2.id()) continue;  // for grand canonical ensemble and traversal of pseudocells
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
@@ -75,12 +78,6 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 
 		}
 	} else { // sumHalf
-	
-		SingleCellIterator begin1 = cell1.iteratorBegin();
-		SingleCellIterator end1 = cell1.iteratorEnd();
-		SingleCellIterator begin2 = cell2.iteratorBegin();
-		SingleCellIterator end2 = cell2.iteratorEnd();
-
 		if (cell1.isInnerCell()) {//no cell is halo
 			// loop over all particles in the cell
 
