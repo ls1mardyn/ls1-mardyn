@@ -104,12 +104,12 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	
 
 	// - new - begin
-	global_simulation->startTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 	// Exchange forces if it's required by the cell container.
 	if(_moleculeContainer->requiresForceExchange()){
 		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
 	}
-	global_simulation->stopTimer("SIMULATION_DECOMPOSITION");
+	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 	// - new - end
 }
 

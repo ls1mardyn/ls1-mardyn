@@ -358,7 +358,7 @@ void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcess
 			CellTemplate& cell2 = this->_cells->at(cellIndex2);
 
 			const bool sumAllMacroscopic = true;
-			cellProcessor.processCellPair<sumAllMacroscopic>(cell1, cell2);
+			cellProcessor.processCellPair(cell1, cell2, sumAllMacroscopic);
 
 		}
 

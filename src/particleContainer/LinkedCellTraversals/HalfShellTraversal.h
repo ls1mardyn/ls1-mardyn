@@ -34,7 +34,7 @@ inline void HalfShellTraversal<CellTemplate>::processBaseCell(CellProcessor& cel
 			CellTemplate& neighbourCell = this->_cells->at(cellIndex + neighbourOffset);
 
 			const bool sumAllMacroscopic = true;
-			cellProcessor.processCellPair<sumAllMacroscopic>(currentCell, neighbourCell);
+			cellProcessor.processCellPair(currentCell, neighbourCell, sumAllMacroscopic);
 		}
 	}
 

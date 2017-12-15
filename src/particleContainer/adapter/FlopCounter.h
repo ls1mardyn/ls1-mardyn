@@ -92,7 +92,7 @@ public:
 	 */
 	void processCell(ParticleCell& cell);
 
-        void processCell(ParticleCell& c1, ParticleCell& c2, bool sumAll = false);
+        void processCellPair(ParticleCell& c1, ParticleCell& c2, bool sumAll = false);
         
 	/**
 	 * \brief Only pass through to child.

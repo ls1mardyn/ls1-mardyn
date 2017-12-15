@@ -67,6 +67,10 @@ public:
 	size_t getNumLeaving() const {
 		return _numLeaving;
 	}
+        
+        size_t getNumForces() const {
+            return _numForces;
+        }
 
 	static MPI_Datatype getMPIDataType() {
 		return MPI_CHAR;
@@ -75,7 +79,7 @@ public:
 private:
 	static size_t _numBytesHalo;
 	static size_t _numBytesLeaving;
-        static size_t _numBytesForce; // where is this set?
+        static size_t _numBytesForces; // where is this set?
 
 	enum class ParticleType_t {HALO=0, LEAVING=1, FORCE=3};
 	size_t getStartPosition(ParticleType_t type, size_t indexOfMolecule) const;
@@ -91,7 +95,7 @@ private:
 
 	typedef unsigned char byte_t;
 	std::vector<byte_t> _buffer;
-	size_t _numLeaving, _numHalo, _numForce;
+	size_t _numLeaving, _numHalo, _numForces;
 };
 
 template<typename T>

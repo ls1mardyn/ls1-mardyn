@@ -85,7 +85,7 @@ void VCP1CLJRMM::initTraversal() {
 	global_log->debug() << "VCP1CLJRMM::initTraversal()." << std::endl;
 }
 
-void VCP1CLJRMM::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) {
+void VCP1CLJRMM::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll) {
 	mardyn_assert(&cell1 != &cell2);
 	ParticleCellRMM & cellRMM1 = downcastCellReferenceRMM(cell1);
 	ParticleCellRMM & cellRMM2 = downcastCellReferenceRMM(cell2);

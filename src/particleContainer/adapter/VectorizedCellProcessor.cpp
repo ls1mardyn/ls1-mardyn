@@ -2647,7 +2647,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
-void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sumAll = false) {
+void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sumAll) {
 	mardyn_assert(&c1 != &c2);
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);

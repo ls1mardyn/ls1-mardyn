@@ -57,7 +57,7 @@ public:
 
 	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
+	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force = false);
 
 	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
 
@@ -116,8 +116,8 @@ private:
 	enum HaloOrLeavingCorrection{
 		HALO,
 		LEAVING,
-                FORCES, // necessary?
-		NONE
+		NONE,
+                FORCES // necessary?
 	};
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
 			const double highCorner[3], const double shift[3], const bool removeFromContainer,

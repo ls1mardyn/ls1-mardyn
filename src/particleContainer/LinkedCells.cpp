@@ -1279,9 +1279,12 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 	auto& cell = *getCell(index);
 
 	// iterate through cell and compare position of molecules with given position
-	int numMolecules = cell.getMoleculeCount();
-	for (int i = 0; i < numMolecules; ++i) {
-		auto& mol = cell.moleculesAt(i);
+	
+	SingleCellIterator begin1 = cell.iteratorBegin();
+	SingleCellIterator end1 = cell.iteratorEnd();
+	
+	for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+		auto& mol = *it1;
 
 		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {
 			// found
@@ -1293,4 +1296,4 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 	return false;
 }
 
-bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getSelectedTraversal()->requiresForceExchange();}
+bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurrentOptimalTraversal()->requiresForceExchange();}

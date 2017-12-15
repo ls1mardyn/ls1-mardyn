@@ -59,6 +59,10 @@ public:
 		return selectedTraversal;
 	}
         
+        CellPairTraversals<ParticleCell>* getCurrentOptimalTraversal() {
+                return _optimalTraversal;
+        }
+        
 private:
 	std::vector<CellTemplate>* _cells;
 	std::array<unsigned long, 3> _dims;
@@ -67,13 +71,13 @@ private:
 
 	std::vector<std::pair<CellPairTraversals<CellTemplate> *, CellPairTraversalData *> > _traversals;
 
-	CellPairTraversals<CellTemplate> *_optimalTravesal;
+	CellPairTraversals<CellTemplate> *_optimalTraversal;
 
 	unsigned _cellsInCutoff = 1;
 };
 
 template<class CellTemplate>
-TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _optimalTravesal(nullptr) {
+TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _optimalTraversal(nullptr) {
 	// defaults:
 	selectedTraversal = {
 			mardyn_get_max_threads() > 1 ? C08 : SLICED
@@ -115,31 +119,31 @@ template<class CellTemplate>
 void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	// TODO implement autotuning here! At the moment the traversal is chosen via readXML!
 
-	_optimalTravesal = _traversals[selectedTraversal].first;
+	_optimalTraversal = _traversals[selectedTraversal].first;
 
 	// log traversal
-    if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTravesal))
+    if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTraversal))
            global_log->info() << "Using HalfShellTraversal." << endl;
-    else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTravesal))
+    else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTraversal))
         global_log->info() << "Using OriginalCellPairTraversal." << endl;
-    else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTravesal))
+    else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
         global_log->info() << "Using C08CellPairTraversal." << endl;
-    else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTravesal))
+    else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
         global_log->info() << "Using MidpointTraversal." << endl;
 
-	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTravesal)) {
+	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTraversal)) {
 		global_log->info() << "Using QuickschedTraversal." << endl;
 #ifndef QUICKSCHED
 		global_log->error() << "MarDyn was compiled without Quicksched Support. Aborting!" << endl;
 		Simulation::exit(1);
 #endif
-	} else if (dynamic_cast<SlicedCellPairTraversal<CellTemplate> *>(_optimalTravesal))
+	} else if (dynamic_cast<SlicedCellPairTraversal<CellTemplate> *>(_optimalTraversal))
 		global_log->info() << "Using SlicedCellPairTraversal." << endl;
 	else
 		global_log->warning() << "Using unknown traversal." << endl;
 
 
-	mardyn_assert(_optimalTravesal->maxCellsInCutoff() >= _cellsInCutoff);
+	mardyn_assert(_optimalTraversal->maxCellsInCutoff() >= _cellsInCutoff);
 
 }
 
@@ -269,14 +273,14 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 		}
 		tPair.first->rebuild(cells, dims, tPair.second);
 	}
-	_optimalTravesal = nullptr;
+	_optimalTraversal = nullptr;
 }
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcessor) {
-	if (_optimalTravesal == nullptr)
+	if (_optimalTraversal == nullptr)
 		findOptimalTraversal();
-        _optimalTravesal->traverseCellPairs(cellProcessor);
+        _optimalTraversal->traverseCellPairs(cellProcessor);
 }
 
 template<class CellTemplate>
@@ -300,17 +304,17 @@ inline void TraversalTuner<CellTemplate>::traverseCellPairs(traversalNames name,
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairsOuter(CellProcessor &cellProcessor) {
-	if (_optimalTravesal == nullptr)
+	if (_optimalTraversal == nullptr)
 		findOptimalTraversal();
-	_optimalTravesal->traverseCellPairsOuter(cellProcessor);
+	_optimalTraversal->traverseCellPairsOuter(cellProcessor);
 }
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage,
 														  unsigned stageCount) {
-	if (_optimalTravesal == nullptr)
+	if (_optimalTraversal == nullptr)
 		findOptimalTraversal();
-	_optimalTravesal->traverseCellPairsInner(cellProcessor, stage, stageCount);
+	_optimalTraversal->traverseCellPairsInner(cellProcessor, stage, stageCount);
 }
 
 template<class CellTemplate>

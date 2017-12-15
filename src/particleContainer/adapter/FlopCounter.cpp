@@ -266,9 +266,9 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sum
 		const bool CalculateMacroscopic = true;
 
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa1, soa2);
+			_calculatePairs<CellPairPolicy_<true>, CalculateMacroscopic>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic>(soa2, soa1);
+			_calculatePairs<CellPairPolicy_<true>, CalculateMacroscopic>(soa2, soa1);
 		}
 	} else { // sumHalf
 		// if one cell is empty, or both cells are Halo, skip

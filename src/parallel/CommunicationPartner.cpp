@@ -244,7 +244,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	}
 	return _countReceived;
 }
-bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force = false) {
+bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force) {
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
 		int flag = 1;
@@ -321,26 +321,29 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				#endif
 				*/ 
 				
-				for (int i = 0; i < numrecv; i++) {  // I think this checks, if a molecule, read from the Buffer exists in the container
-					// ParticleForceData& pData = _recvBuf[i]; // this reads pData from the buffer.
-					// Molecule* original;
-
-					Molecule m;
-					_recvBuf.readForceMolecule(i, m);
-					
-					/*
-					if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) { // getMoleculeAtPosition is new or does not exist anymore
-						// This should not happen
-						global_log->error()<< "Original molecule not found!" << std::endl;
-						mardyn_exit(1);
-					}
-					
-					mardyn_assert(original->id() == pData.id);
-					*/
-					
-					//ParticleForceData::AddParticleForceDataToMolecule(pData, *original); // this writes Data to a molecule object
-					
-				}
+			
+				
+//				for (int i = 0; i < numrecv; i++) {  // I think this checks, if a molecule, read from the Buffer exists in the container
+//					// ParticleForceData& pData = _recvBuf[i]; // this reads pData from the buffer.
+//					// Molecule* original;
+//
+//					Molecule m;
+//					_recvBuf.readForceMolecule(i, m);
+//					
+//					/*
+//					if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) { // getMoleculeAtPosition is new or does not exist anymore
+//						// This should not happen
+//						global_log->error()<< "Original molecule not found!" << std::endl;
+//						mardyn_exit(1);
+//					}
+//					
+//					mardyn_assert(original->id() == pData.id);
+//					*/
+//					
+//					//ParticleForceData::AddParticleForceDataToMolecule(pData, *original); // this writes Data to a molecule object
+//					
+//				
+//				}
 				// ---------------------------------------------
 			}
 			

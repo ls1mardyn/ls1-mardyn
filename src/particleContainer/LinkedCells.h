@@ -305,7 +305,7 @@ private:
 	//! is larger than the cutoff radius, the cell can be neglected.
 	//! The distance in one dimension is the width of a cell multiplied with the number
 	//! of cells between the two cells (this is received by subtracting one of the difference).
-	void calculateNeighbourIndices(std::array<long, 13>& forward, std::array<long, 13>& backward) const;
+	void calculateNeighbourIndices(std::vector<long>& forward, std::vector<long>& backward) const;
 
 	//! @brief addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> calculateCellPairOffsets() const;

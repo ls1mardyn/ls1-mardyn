@@ -236,7 +236,7 @@ void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContai
 
 
 
-void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) { // this is new, how was this previously done?
+void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) { 
 	global_log->set_mpi_output_all();
 
 	// Using molecule exchange method with the force message type
@@ -247,10 +247,10 @@ void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, D
 
 size_t DomainDecompMPIBase::getTotalSize() { // another new method
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
-			+ _collCommunication->getTotalSmergeize();
+			+ _collCommunication->getTotalSize();
 }
 
-void DomainDecompMPIBase::printSubInfo(int offset) { // a new method for debugging
+void DomainDecompMPIBase::printSubInfo(int offset) { 
 	std::stringstream offsetstream;
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";

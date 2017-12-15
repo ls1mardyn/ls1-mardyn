@@ -55,7 +55,6 @@ void NonBlockingMPIHandlerBase::performComputation() {
 	global_simulation->timers()->start("SIMULATION_COMPUTATION");
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
-<<<<<<< .working
 
 
 	// Update forces in molecules so they can be exchanged
@@ -65,16 +64,8 @@ void NonBlockingMPIHandlerBase::performComputation() {
 		i->calcFM();
 	}
 
-	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
-	global_simulation->stopTimer("SIMULATION_COMPUTATION");
-||||||| .merge-left.r4919
-	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
-	global_simulation->stopTimer("SIMULATION_COMPUTATION");
-=======
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
->>>>>>> .merge-right.r5797
-
 
 
 	// Exchange forces if it's required by the cell container.

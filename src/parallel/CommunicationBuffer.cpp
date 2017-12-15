@@ -26,7 +26,7 @@ size_t CommunicationBuffer::_numBytesHalo = 3 * sizeof(vcp_real_calc)
 			+ sizeof(unsigned long)
 	#endif
 		;
-size_t CommunicationBuffer::_numBytesForce = sizeof(unsigned long) + 3 * sizeof(vcp_real_calc) + 3 * sizeof(vcp_real_accum);
+size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 3 * sizeof(vcp_real_calc) + 3 * sizeof(vcp_real_accum);
 #else
 // position, velocity, orientation, angular momentum, id, cid
 size_t CommunicationBuffer::_numBytesLeaving = 13 * sizeof(double) + sizeof(unsigned long) + sizeof(int);
@@ -36,7 +36,7 @@ size_t CommunicationBuffer::_numBytesHalo = 7 * sizeof(double) + sizeof(int)
 			+ sizeof(unsigned long)
 	#endif
 		;
-size_t CommunicationBuffer::_numBytesForce = sizeof(unsigned long) + 12 * sizeof(double);
+size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 12 * sizeof(double);
 #endif
 
 
@@ -51,7 +51,7 @@ size_t CommunicationBuffer::getNumElementsForSending() {
 void CommunicationBuffer::clear() {
 	_numHalo = 0;
 	_numLeaving = 0;
-	_numForce = 0;
+	_numForces = 0;
 	_buffer.clear();
 }
 
@@ -97,14 +97,14 @@ void CommunicationBuffer::resizeForAppendingHaloMolecules(unsigned long numHalo)
 	i_runningByte = emplaceValue(i_runningByte, _numHalo);
 }
 
-void CommunicationBuffer::resizeForAppendingForceMolecules(unsigned long numForce) {
-	_numForces += numForce;
+void CommunicationBuffer::resizeForAppendingForceMolecules(unsigned long numForces) {
+	_numForces += numForces;
 	// maybe some assert
-	size_t numBytes = sizeof(_numForce) + _numForces * _numBytesForces;
+	size_t numBytes = sizeof(_numForces) + _numForces * _numBytesForces;
 	resizeForRawBytes(numBytes);
 	
 	size_t i_runningByte = 0;
-	i_runningByte = emplaceBalue(i_runningByte, _numForces);
+	i_runningByte = emplaceValue(i_runningByte, _numForces);
 }
 
 void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molecule& m) { 
@@ -315,9 +315,9 @@ void CommunicationBuffer::readHaloMolecule(size_t indexOfMolecule, Molecule& m) 
 	mardyn_assert(i_runningByte - i_firstByte == _numBytesHalo);
 }
 
-void CommunicationBuffer::readForceMolecule(size_t IndexOfMolecule, Molecule& m) {
+void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m) const {
 	// some mardyn assert
-	size_t i_firstByte = getStartPosition(ParticleType_t::FORCE, IndexOfMolecule);
+	size_t i_firstByte = getStartPosition(ParticleType_t::FORCE, indexOfMolecule);
 	// some mardyn assert
 	
 	size_t i_runningByte = i_firstByte;
@@ -381,7 +381,7 @@ size_t CommunicationBuffer::getStartPosition(ParticleType_t type, size_t indexOf
 		ret += _numLeaving * _numBytesLeaving + indexOfMolecule * _numBytesHalo;
 	} else if(type == ParticleType_t::FORCE) {
 		// ??? - does the force exchange happen on its own or with the other bytes?
-		ret += indexOfMolecule * _numBytesForce; // assumed on its own.
+		ret += indexOfMolecule * _numBytesForces; // assumed on its own.
 	}
 
 	return ret;
