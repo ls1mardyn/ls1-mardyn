@@ -559,10 +559,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 
+
 		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
 		}
+
 
 		if(pluginname == "MmpldWriter") {
 			/** @todo this should be handled in the MMPLD Writer readXML() */
@@ -892,11 +894,13 @@ void Simulation::prepare_start() {
 	global_log->info() << "Performing initial force calculation" << endl;
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
+
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 	measureFLOPRate(_moleculeContainer, 0);
 	// Update forces in molecules so they can be exchanged
-	updateForces();
+	updateForces(); // new
+
 
 	// Exchange forces if it's required by the cell container.
 	if(_moleculeContainer->requiresForceExchange()){
