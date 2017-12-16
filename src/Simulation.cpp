@@ -904,14 +904,16 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 	measureFLOPRate(_moleculeContainer, 0);
-	// Update forces in molecules so they can be exchanged
-	updateForces(); // new
-
-
+	
+	/*
+	// Update forces in molecules so they can be exchanged - future
+	updateForces(); 
+	
 	// Exchange forces if it's required by the cell container.
 	if(_moleculeContainer->requiresForceExchange()){
 		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
 	}
+	*/
 
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
