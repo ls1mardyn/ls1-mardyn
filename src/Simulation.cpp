@@ -558,10 +558,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			continue;
 		}
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
+
 		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
 		}
+
 		if(pluginname == "MmpldWriter") {
 			/** @todo this should be handled in the MMPLD Writer readXML() */
 			std::string sphere_representation = "simple";
