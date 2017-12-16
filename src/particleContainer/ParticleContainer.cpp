@@ -13,7 +13,7 @@ ParticleContainer::ParticleContainer(double bBoxMin[3], double bBoxMax[3]) {
 	}
 }
 
-void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
+bool ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	global_log->info() << "REBUILD OF PARTICLE CONTAINER" << endl;
 	for (int i = 0; i < 3; i++) {
 		_boundingBoxMin[i] = bBoxMin[i];
@@ -23,6 +23,7 @@ void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 			<< bBoxMin[1] << ", " << bBoxMax[1] << "]" << " x " << "[" << bBoxMin[2] << ", " << bBoxMax[2] << "]"
 			<< std::endl;
 
+	return true; // Send leaving particles together with halo copies
 }
 
 double ParticleContainer::getBoundingBoxMin(int dimension) const {

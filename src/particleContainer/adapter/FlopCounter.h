@@ -83,11 +83,7 @@ public:
 	 * \brief Only pass through to child.
 	 */
 	void preprocessCell(ParticleCell& cell) {}
-
-	/**
-	 * \brief Count flops for this pair.
-	 */
-	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
+        
 
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }  // why 0.0 flops???
 
@@ -96,6 +92,8 @@ public:
 	 */
 	void processCell(ParticleCell& cell);
 
+        void processCellPair(ParticleCell& c1, ParticleCell& c2, bool sumAll = false);
+        
 	/**
 	 * \brief Only pass through to child.
 	 */

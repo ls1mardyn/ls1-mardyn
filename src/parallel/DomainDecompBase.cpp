@@ -4,6 +4,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "utils/mardyn_assert.h"
 
 #include <fstream>
 #include <cmath>
@@ -25,6 +26,64 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 
 	for (unsigned d = 0; d < 3; ++d) {
 		populateHaloLayerWithCopies(d, moleculeContainer);
+	}
+}
+
+void DomainDecompBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain){
+	for (unsigned d = 0; d < 3; ++d) {
+		handleForceExchange(d,moleculeContainer);
+	}
+}
+
+void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const {
+	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
+
+	// direction +1 for dim 0, +2 for dim 1, +3 for dim 2
+	//const int direction = dim+1;
+	const int sDim = dim + 1;
+	for (int direction = -sDim; direction < 2 * sDim; direction += 2 * sDim) {
+		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
+
+		// Loop over all halo particles in the positive direction
+		double startRegion[3];
+		double endRegion[3];
+
+		moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
+
+#if defined (_OPENMP)
+#pragma omp parallel shared(startRegion, endRegion)
+#endif
+		{
+			auto begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+			auto end = moleculeContainer->iterateRegionEnd();
+
+			double shiftedPosition[3];
+
+			for (auto i = begin; i != end; ++i) {
+				Molecule& molHalo = *i;
+
+				// Add force of halo particle to original particle (or other duplicates)
+				// that have a distance of -'shiftMagnitude' in the current direction
+				shiftedPosition[0] = molHalo.r(0);
+				shiftedPosition[1] = molHalo.r(1);
+				shiftedPosition[2] = molHalo.r(2);
+				shiftedPosition[dim] += shift;
+
+				Molecule* original;
+
+				if (!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)) {
+					// This should not happen
+					std::cout << "Original molecule not found";
+					mardyn_exit(1);
+				}
+
+				mardyn_assert(original->id() == molHalo.id());
+
+				original->Fadd(molHalo.F_vec());
+				original->Madd(molHalo.M_vec());
+				original->Viadd(molHalo.Vi_vec());
+			}
+		}
 	}
 }
 

@@ -338,7 +338,7 @@ void FullMolecule::upd_preF(double dt) {
 void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	using std::isnan; // C++11 needed
 
-	calcFM();
+	//calcFM(); //NOTE: This was moved to simulation.cpp calculateForces() and is called in simulate()
 
 	double dtInv2m = dt_halve / _m;
 	double v2 = 0.;

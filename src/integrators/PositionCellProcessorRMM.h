@@ -20,7 +20,7 @@ public:
 
 	void preprocessCell(ParticleCell& cell) {}
 
-	void processCellPair(ParticleCell& cell1, ParticleCell& cell2) {}
+	void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) {} // does this need bool?
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
 

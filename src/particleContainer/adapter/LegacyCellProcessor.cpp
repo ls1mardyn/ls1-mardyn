@@ -54,24 +54,21 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 	return u;
 }
 
-void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
+void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll /* = false */) {
 	double distanceVector[3];
-
+	
 	SingleCellIterator begin1 = cell1.iteratorBegin();
 	SingleCellIterator end1 = cell1.iteratorEnd();
 	SingleCellIterator begin2 = cell2.iteratorBegin();
 	SingleCellIterator end2 = cell2.iteratorEnd();
 
-	if (cell1.isInnerCell()) {//no cell is halo
+	if(sumAll) { // sumAll - moleculesAt is gone, use SingleCellIterator now ?
+
 		// loop over all particles in the cell
-
-
 		for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
-			Molecule& molecule1 = *it1;
-
+			Molecule& molecule1 = *it1; 
 			for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
-				Molecule& molecule2 = *it2;
-
+				Molecule& molecule2 = *it2; 
 				if(molecule1.id() == molecule2.id()) continue;  // for grand canonical ensemble and traversal of pseudocells
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
@@ -80,29 +77,50 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 			}
 
 		}
-	} // inner cell
+	} else { // sumHalf
+		if (cell1.isInnerCell()) {//no cell is halo
+			// loop over all particles in the cell
 
-	if (cell1.isBoundaryCell()) {//first cell is boundary
-		// loop over all particles in the cell
-		PairType pairType = MOLECULE_MOLECULE;
-		//if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//boundary <-> halo: using macroscopic boundary condition
-		if (cell2.isHaloCell() && ! (cell1.getCellIndex()<cell2.getCellIndex())) {//boundary <-> halo: not using macroscopic boundary condition, instead cell indices are compared.
-			/* Do not sum up values twice. */
-			pairType = MOLECULE_HALOMOLECULE;
-		}
 
-		for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
-			Molecule& molecule1 = *it1;
-			for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
-				Molecule& molecule2 = *it2;
-				double dd = molecule2.dist2(molecule1, distanceVector);
-				if (dd < _cutoffRadiusSquare) {
-					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare));
+			for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+				Molecule& molecule1 = *it1;
+
+				for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+					Molecule& molecule2 = *it2;
+
+					if(molecule1.id() == molecule2.id()) continue;  // for grand canonical ensemble and traversal of pseudocells
+					double dd = molecule2.dist2(molecule1, distanceVector);
+					if (dd < _cutoffRadiusSquare) {
+						_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < _LJCutoffRadiusSquare));
+					}
+				}
+
+			}
+		} // inner cell
+
+		if (cell1.isBoundaryCell()) {//first cell is boundary
+			// loop over all particles in the cell
+			PairType pairType = MOLECULE_MOLECULE;
+			//if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//boundary <-> halo: using macroscopic boundary condition
+			if (cell2.isHaloCell() && ! (cell1.getCellIndex()<cell2.getCellIndex())) {//boundary <-> halo: not using macroscopic boundary condition, instead cell indices are compared.
+				/* Do not sum up values twice. */
+				pairType = MOLECULE_HALOMOLECULE;
+			}
+
+			for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+				Molecule& molecule1 = *it1;
+				for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+					Molecule& molecule2 = *it2;
+					double dd = molecule2.dist2(molecule1, distanceVector);
+					if (dd < _cutoffRadiusSquare) {
+						_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare));
+					}
 				}
 			}
-		}
-	} // isBoundaryCell
+		} // isBoundaryCell
+	}
 }
+
 
 
 #if defined(ENABLE_REDUCED_MEMORY_MODE) && ENABLE_VECTORIZED_CODE==0
@@ -110,6 +128,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 #endif
 ////TODO: fix LegacyCellProcessor for RMM mode - especially the calls to moleculesAt(i) using the _dummy are dangerous!
 // should work now, with SingleCellIterator
+
 void LegacyCellProcessor::processCell(ParticleCell& cell) {
 	double distanceVector[3];
 

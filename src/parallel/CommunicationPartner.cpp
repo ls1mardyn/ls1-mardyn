@@ -174,6 +174,15 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			break;
 		}
+		case FORCES: {
+			global_log->debug() << "sending forces" << std::endl;
+			for(unsigned int p = 0; p < numHaloInfo; p++){
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, 
+					_haloInfo[p]._shift, false, FORCES); 
+			}
+			break;
+		}
+                
 	}
 
 	#ifndef NDEBUG
@@ -235,7 +244,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	}
 	return _countReceived;
 }
-bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
+bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force) {
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
 		int flag = 1;
@@ -252,7 +261,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			_msgReceived = true;
 
 			unsigned long numHalo, numLeaving;
-			_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo);
+			_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo); // RECV BUF
 
 			#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
@@ -260,7 +269,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				std::ostringstream buf1;
 				for (unsigned long i = 0; i < numLeaving; ++i) {
 					Molecule m;
-					_recvBuf.readLeavingMolecule(i, m);
+					_recvBuf.readLeavingMolecule(i, m); // RECV BUF
 					buf1 << m.id() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
@@ -275,32 +284,69 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				global_log->debug() << buf2.str() << std::endl;
 			#endif
 
-			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
-			unsigned long totalNumMols = numLeaving + numHalo;
-			static std::vector<Molecule> mols;
-			mols.resize(totalNumMols);
+			
+			if(!force) { // Buffer is particle data 
+				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
+				unsigned long totalNumMols = numLeaving + numHalo;
+				static std::vector<Molecule> mols;
+				mols.resize(totalNumMols);
 
-			/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
-			#pragma omp parallel for schedule(static)
-			#endif*/
-			for (unsigned long i = 0; i < totalNumMols; i++) {
-				Molecule m;
-				if (i < numLeaving) {
-					// leaving
-					_recvBuf.readLeavingMolecule(i, m);
-				} else {
-					// halo
-					_recvBuf.readHaloMolecule(i - numLeaving, m);
+				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
+				#pragma omp parallel for schedule(static)
+				#endif*/
+				for (unsigned long i = 0; i < totalNumMols; i++) {
+					Molecule m;
+					if (i < numLeaving) {
+						// leaving
+						_recvBuf.readLeavingMolecule(i, m); // RECV BUF
+					} else {
+						// halo
+						_recvBuf.readHaloMolecule(i - numLeaving, m); // RECV BUF
+					}
+					mols[i] = m;
 				}
-				mols[i] = m;
-			}
-			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
+				global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 
-			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
-			moleculeContainer->addParticles(mols, removeRecvDuplicates);
-			mols.clear();
-			_recvBuf.clear();
-			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
+				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
+				moleculeContainer->addParticles(mols, removeRecvDuplicates);
+				mols.clear();
+				_recvBuf.clear();
+				global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
+			} else { // Buffer is force data
+				// --------------------------------------------- adjust to this method
+				
+				/*
+				#if defined(_OPENMP)
+				#pragma omp for schedule(static)
+				#endif
+				*/ 
+				
+			
+				
+//				for (int i = 0; i < numrecv; i++) {  // I think this checks, if a molecule, read from the Buffer exists in the container
+//					// ParticleForceData& pData = _recvBuf[i]; // this reads pData from the buffer.
+//					// Molecule* original;
+//
+//					Molecule m;
+//					_recvBuf.readForceMolecule(i, m);
+//					
+//					/*
+//					if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) { // getMoleculeAtPosition is new or does not exist anymore
+//						// This should not happen
+//						global_log->error()<< "Original molecule not found!" << std::endl;
+//						mardyn_exit(1);
+//					}
+//					
+//					mardyn_assert(original->id() == pData.id);
+//					*/
+//					
+//					//ParticleForceData::AddParticleForceDataToMolecule(pData, *original); // this writes Data to a molecule object
+//					
+//				
+//				}
+				// ---------------------------------------------
+			}
+			
 
 		} else {
 			++_countTested;
@@ -468,12 +514,16 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 						}
 					}
-				} /* if-else HALO-LEAVING */
+				} else if(haloLeaveCorr == FORCES) {
+					// calls some method on ZonalMethod object in the future
+				}
 			} /* for-loop dim */
 			if (haloLeaveCorr == LEAVING) {
 				_sendBuf.addLeavingMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			} else if (haloLeaveCorr == HALO) {
 				_sendBuf.addHaloMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
+			} else if (haloLeaveCorr == FORCES) {
+				_sendBuf.addForceMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			}
 		}
 	}

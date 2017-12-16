@@ -49,10 +49,6 @@ public:
 	 * \brief Load the CellDataSoA for cell.
 	 */
 	void preprocessCell(ParticleCell& /*cell*/) {}
-	/**
-	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
-	 */
-	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
 		return 0.0;
@@ -62,6 +58,9 @@ public:
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */
 	void processCell(ParticleCell& cell);
+        
+        void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false);
+        
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
@@ -70,6 +69,8 @@ public:
 	 * \brief Store macroscopic values in the Domain.
 	 */
 	void endTraversal();
+
+
 private:
 	/**
 	 * \brief a vector of Molecule pointers.

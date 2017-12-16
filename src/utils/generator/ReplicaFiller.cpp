@@ -85,6 +85,8 @@ public:
 	size_t getNumCells() const { return 1; }
 	ParticleCellBase * getCell(unsigned cellIndex) { return nullptr; }
 	const ParticleCellBase* getCell(unsigned cellIndex) const { return nullptr; }
+	
+	bool getMoleculeAtPosition(const double pos[3], Molecule** result) { return false; } // pure virtual in particleContainer.h
 
 	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength) { return 0; }
 

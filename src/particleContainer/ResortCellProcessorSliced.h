@@ -42,7 +42,7 @@ public:
 	};
 	void initTraversal() {}
 	void preprocessCell(ParticleCell& ) {}
-	void processCellPair(ParticleCell&, ParticleCell&) {}
+	void processCellPair(ParticleCell&, ParticleCell&, bool) {}
 	void processCell(ParticleCell& cell) {
 		// get leaving molecules
 		std::vector<Molecule>& b = _threadData[mardyn_get_thread_num()]->_buffer;

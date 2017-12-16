@@ -90,8 +90,27 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
 	_cellProcessor->endTraversal();
+
+	// Update forces in molecules so they can be exchanged - new - begin
+	const ParticleIterator begin = _moleculeContainer->iteratorBegin();
+	const ParticleIterator end = _moleculeContainer->iteratorEnd();
+	for (ParticleIterator i = begin; i != end; ++i){
+		i->calcFM();
+	}
+	// - new - end
+	
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
+	
+
+	// - new - begin
+	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
+	// Exchange forces if it's required by the cell container.
+	if(_moleculeContainer->requiresForceExchange()){
+		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+	}
+	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
+	// - new - end
 }
 
 void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(bool forceRebalancing, double etime) {

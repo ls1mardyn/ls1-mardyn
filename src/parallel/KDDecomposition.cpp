@@ -152,14 +152,24 @@ void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber) {
 	const bool removeRecvDuplicates = true;
-	DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	if(sendLeavingWithCopies()){
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	} else {
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY, removeRecvDuplicates);
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES, removeRecvDuplicates);
+	}
 }
 
 void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber) {
 	const bool removeRecvDuplicates = true;
-	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	if(sendLeavingWithCopies()){
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+	} else {
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY, removeRecvDuplicates);
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES, removeRecvDuplicates);
+	}
 }
 
 //check whether or not to do rebalancing in the specified step
@@ -200,7 +210,12 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	const bool removeRecvDuplicates = true;
 
 	if (rebalance == false) {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+		if(sendLeavingWithCopies()){
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+		} else {
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
+		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 
@@ -248,7 +263,7 @@ void KDDecomposition::getCellIntCoordsFromRegionPeriodic(int* lo, int* hi, const
 	}
 }
 
-bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const {
+bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) {
 	// 1. compute which processes we will receive from
 	// 2. issue Irecv calls
 	// 3. compute which processes we will send to
@@ -354,7 +369,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		newBoxMin[dim] = (newOwnLeaf._lowCorner[dim]) * _cellSize[dim];
 		newBoxMax[dim] = (newOwnLeaf._highCorner[dim] + 1) * _cellSize[dim];
 	}
-	moleculeContainer->rebuild(newBoxMin, newBoxMax);
+	bool sendTogether = moleculeContainer->rebuild(newBoxMin, newBoxMax);
+	updateSendLeavingWithCopies(sendTogether);
 
 	global_log->set_mpi_output_all();
 	double waitCounter = 1.0;

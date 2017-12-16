@@ -69,8 +69,9 @@ public:
 	 * pair (i.e. pairs are not ordered).
 	 *
 	 * @note will not be called for empty cells.
-	 */
-	virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2) = 0;
+	 * Sum up all macroscopic values (e.g. for hs) or only half of them (e.g. for fs)
+         */
+	virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) = 0;
 
 	/**
 	 * Called when this cell is the current cell.
@@ -91,5 +92,6 @@ public:
 	 */
 	virtual void endTraversal() = 0;
 };
+
 
 #endif

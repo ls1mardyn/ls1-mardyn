@@ -13,7 +13,7 @@
 
 class DomainDecompMPIBase;
 class Domain;
-class FullShell;
+class ZonalMethod;
 class HaloRegion;
 class NeighbourCommunicationScheme {
 public:
@@ -26,8 +26,12 @@ public:
 		return _commDimms;
 	}
 	NeighbourCommunicationScheme() = delete;
-	NeighbourCommunicationScheme(unsigned int commDimms);
+	NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod);
+
 	virtual ~NeighbourCommunicationScheme();
+
+	NeighbourCommunicationScheme(NeighbourCommunicationScheme const &) = delete;
+	void operator=(NeighbourCommunicationScheme const &other) = delete;
 
 	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
@@ -56,6 +60,7 @@ public:
 		return neighbourRanks;
 	}
 
+
 	virtual size_t getDynamicSize() {
 		size_t totSize = 0;
 		// _fullShellNeighbours
@@ -77,6 +82,7 @@ public:
 		//std::cout << "post Neigh:" << totSize;
 		return totSize;
 	}
+
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
@@ -89,8 +95,8 @@ protected:
 
 	unsigned int _commDimms;
 
-	//! communication scheme (FullShell, EightShell, ...)
-	FullShell* _commScheme;
+	//! zonal method (FullShell, HalfShell, ...)
+	ZonalMethod* _zonalMethod;
 
 	//! list of all neighbours (non-squeezed)
 	std::vector<CommunicationPartner> _fullShellNeighbours;
@@ -99,8 +105,8 @@ protected:
 
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
-	DirectNeighbourCommunicationScheme() :
-			NeighbourCommunicationScheme(1) {
+	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
+			NeighbourCommunicationScheme(1, zonalMethod) {
 	}
 	virtual ~DirectNeighbourCommunicationScheme() {
 	}
@@ -125,7 +131,7 @@ public:
 			DomainDecompMPIBase* domainDecomp);
 
 	virtual void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
-			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp);
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
 
 protected:
 	void finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* /*domain*/, MessageType /*msgType*/,
@@ -137,13 +143,14 @@ protected:
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
 
-	IndirectNeighbourCommunicationScheme() :
-			NeighbourCommunicationScheme(3) {
+	IndirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
+			NeighbourCommunicationScheme(3, zonalMethod) {
 	}
 	virtual ~IndirectNeighbourCommunicationScheme() {
 	}
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
+
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
 			override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {

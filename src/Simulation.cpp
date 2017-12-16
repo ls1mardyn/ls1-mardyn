@@ -387,13 +387,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@type", datastructuretype);
 			global_log->info() << "Datastructure type: " << datastructuretype << endl;
 			if(datastructuretype == "LinkedCells") {
-				_moleculeContainer = new LinkedCells();
-				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
-				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
-				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
-				lc->setCutoff(_cutoffRadius);
-			}
-			else if(datastructuretype == "AdaptiveSubCells") {
+							_moleculeContainer = new LinkedCells();
+							/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
+							global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
+							LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+							lc->setCutoff(_cutoffRadius);
+			}else if(datastructuretype == "AdaptiveSubCells") {
 				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
 				Simulation::exit(-1);
 			}
@@ -406,7 +405,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			double bBoxMin[3];
 			double bBoxMax[3];
 			_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
-			_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+			bool sendTogether = _moleculeContainer->rebuild(bBoxMin, bBoxMax);
+			_domainDecomposition->updateSendLeavingWithCopies(sendTogether);
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Datastructure section missing" << endl;
@@ -564,10 +564,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			continue;
 		}
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
+
+
 		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
 		if(outputPlugin == nullptr) {
 			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
 		}
+
+
 		if(pluginname == "MmpldWriter") {
 			/** @todo this should be handled in the MMPLD Writer readXML() */
 			std::string sphere_representation = "simple";
@@ -764,6 +768,59 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	}
 }
 
+void Simulation::updateForces() {
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
+		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+
+		if(CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt) {
+
+			uint64_t id;
+			uint32_t cid;
+			double r[3];
+			double F[3];
+			double Fabs=0.;
+			double FabsSquared=0.;
+			double FmaxInitSquared=_dFmaxInit*_dFmaxInit;
+			double FmaxThresholdSquared = _dFmaxThreshold*_dFmaxThreshold;
+
+			for (ParticleIterator i = begin; i != end; ++i){
+				i->calcFM();
+
+				id=i->id();
+				cid=i->componentid()+1;
+				for(uint8_t d=0; d<3; ++d)
+				{
+					r[d]=i->r(d);
+					F[d]=i->F(d);
+				}
+				FabsSquared=(F[0]*F[0]+F[1]*F[1]+F[2]*F[2]);
+				if(FabsSquared > FmaxInitSquared)
+				{
+					Fabs=sqrt(FabsSquared);
+					_dFmaxInit=Fabs;
+					FmaxInitSquared=_dFmaxInit*_dFmaxInit;
+					_nFmaxID=id;
+				}
+				if(CFMAXOPT_CHECK_GREATER == _nFmaxOpt && FabsSquared > FmaxThresholdSquared) {
+					Fabs=sqrt(FabsSquared);
+					global_log->warning()<<"Fabs="<<Fabs<<" > "<<_dFmaxThreshold<<" (threshold) for molecule: id="<<id<<", cid="<<cid<<", "
+						"x,y,z="<<r[0]<<", "<<r[1]<<", "<<r[2]<<endl;
+				}
+			}
+			global_log->info()<<"Max. initial force is found for molecule: id="<<_nFmaxID<<", Fmax="<<_dFmaxInit<<endl;
+		}
+		else {
+			for (ParticleIterator i = begin; i != end; ++i){
+				i->calcFM();
+			}
+		}
+	} // end pragma omp parallel
+}
+
 void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
 
@@ -843,9 +900,18 @@ void Simulation::prepare_start() {
 	global_log->info() << "Performing initial force calculation" << endl;
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
+
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 	measureFLOPRate(_moleculeContainer, 0);
+	// Update forces in molecules so they can be exchanged
+	updateForces(); // new
+
+
+	// Exchange forces if it's required by the cell container.
+	if(_moleculeContainer->requiresForceExchange()){
+		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+	}
 
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
@@ -873,59 +939,10 @@ void Simulation::prepare_start() {
 
 
     _longRangeCorrection->calculateLongRange();
-
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-		const ParticleIterator end = _moleculeContainer->iteratorEnd();
-
-		if(CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt) {
-			uint64_t id;
-			uint32_t cid;
-			double r[3];
-			double F[3];
-			double Fabs=0.;
-			double FabsSquared=0.;
-			double FmaxInitSquared=_dFmaxInit*_dFmaxInit;
-			double FmaxThresholdSquared = _dFmaxThreshold*_dFmaxThreshold;
-
-			for (ParticleIterator i = begin; i != end; ++i){
-				i->calcFM();
-
-				id=i->id();
-				cid=i->componentid()+1;
-				for(uint8_t d=0; d<3; ++d)
-				{
-					r[d]=i->r(d);
-					F[d]=i->F(d);
-				}
-				FabsSquared=(F[0]*F[0]+F[1]*F[1]+F[2]*F[2]);
-				if(FabsSquared > FmaxInitSquared)
-				{
-					Fabs=sqrt(FabsSquared);
-					_dFmaxInit=Fabs;
-					FmaxInitSquared=_dFmaxInit*_dFmaxInit;
-					_nFmaxID=id;
-				}
-				if(CFMAXOPT_CHECK_GREATER == _nFmaxOpt && FabsSquared > FmaxThresholdSquared) {
-					Fabs=sqrt(FabsSquared);
-					global_log->warning()<<"Fabs="<<Fabs<<" > "<<_dFmaxThreshold<<" (threshold) for molecule: id="<<id<<", cid="<<cid<<", "
-						"x,y,z="<<r[0]<<", "<<r[1]<<", "<<r[2]<<endl;
-				}
-			}
-			global_log->info()<<"Max. initial force is found for molecule: id="<<_nFmaxID<<", Fmax="<<_dFmaxInit<<endl;
-		}
-		else {
-			for (ParticleIterator i = begin; i != end; ++i){
-				i->calcFM();
-			}
-		}
-	} // end pragma omp parallel
+	//updateForces();
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
@@ -1148,10 +1165,19 @@ void Simulation::simulate() {
 			perStepTimer.start();
 			forceCalculationTimer->start();
 			_moleculeContainer->traverseCells(*_cellProcessor);
+
+			// Update forces in molecules so they can be exchanged
+			updateForces();
 			forceCalculationTimer->stop();
 			perStepTimer.stop();
 			computationTimer->stop();
 
+			decompositionTimer->start();
+			// Exchange forces if it's required by the cell container.
+			if(_moleculeContainer->requiresForceExchange()){
+				_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+			}
+			decompositionTimer->stop();
 			_loopCompTime += computationTimer->get_etime() - startEtime;
 			_loopCompTimeSteps ++;
 		}
