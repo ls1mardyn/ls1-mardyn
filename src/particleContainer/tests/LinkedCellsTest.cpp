@@ -435,140 +435,143 @@ void LinkedCellsTest::testMidpoint() {
 	delete vectorizedCellProcessor;
 }*/
 
-void LinkedCellsTest::testHalfShellMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, 1, "indirect", "hs");
-}
+// new tests here
 
-void LinkedCellsTest::testHalfShellMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, 1, "direct", "hs");
-}
 
-void LinkedCellsTest::testMidpointMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, 2, "indirect", "mp");
-}
-
-void LinkedCellsTest::testMidpointMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, 2, "direct", "mp");
-}
-
-void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTuner<ParticleCell>::traversalNames traversal, unsigned cellsInCutoff, std::string neighbourCommScheme, std::string commScheme){
-
-	//------------------------------------------------------------
-	// Setup
-	//------------------------------------------------------------
-
-	auto domainDecompositionFS = new DomainDecomposition();
-	auto domainDecompositionTest = new DomainDecomposition();
-    domainDecompositionFS->setCommunicationScheme(neighbourCommScheme, "fs");
-    domainDecompositionTest->setCommunicationScheme(neighbourCommScheme, commScheme);
-	auto filename = inputFile.c_str();
-	auto cutoff = 1;
-
-	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
-	containerTest->_traversalTuner->selectedTraversal = traversal;
-	containerTest->initializeTraversal();
-	containerTest->_cellsInCutoff = cellsInCutoff;
-
-	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
-
-	// Legacy Processor for debugging
-	// assert in potforce.h l. 483 has to be disabled
-
-	/*
-	auto pphandler = new ParticlePairs2PotForceAdapter(*_domain);
-	auto pphandler2 = new ParticlePairs2PotForceAdapter(*_domain);
-	auto cellProc = new LegacyCellProcessor(cutoff, cutoff, pphandler);
-	auto cellProc2 = new LegacyCellProcessor(cutoff, cutoff, pphandler2);
-	*/
-
-	auto cellProc = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
-	auto cellProc2 = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
-
-	domainDecompositionFS->initCommunicationPartners(cutoff, _domain);
-	domainDecompositionTest->initCommunicationPartners(cutoff, _domain);
-
-	//------------------------------------------------------------
-	//  Calculate forces for FS and TestTraversal and compare
-	//------------------------------------------------------------
-	//------------------------------------------------------------
-		// Prepare molecule containers
-		//------------------------------------------------------------
-		container->update();
-		containerTest->update();
-		bool forceRebalancing = false;
-		domainDecompositionFS->balanceAndExchange(forceRebalancing, container,
-				_domain);
-		domainDecompositionTest->balanceAndExchange(forceRebalancing, containerTest,
-				_domain);
-		container->updateMoleculeCaches();
-		containerTest->updateMoleculeCaches();
-		//------------------------------------------------------------
-		// Do calculation with FS
-		//------------------------------------------------------------
-		{
-			container->traverseCells(*cellProc);
-			// calculate forces
-			const ParticleIterator begin = container->iteratorBegin();
-			const ParticleIterator end = container->iteratorEnd();
-			for (auto i = begin; i != end; ++i) {
-				i->calcFM();
-			}
-		}
-		//------------------------------------------------------------
-		// Do calculation with TestTraversal
-		//------------------------------------------------------------
-		{
-			containerTest->traverseCells(*cellProc2);
-			// calculate forces
-			const ParticleIterator& begin = containerTest->iteratorBegin();
-			const ParticleIterator& end = containerTest->iteratorEnd();
-			for (ParticleIterator i = begin; i != end; ++i) {
-				i->calcFM();
-			}
-			if(containerTest->requiresForceExchange()){
-				domainDecompositionTest->exchangeForces(containerTest, _domain);
-			}
-		}
-		//------------------------------------------------------------
-		container->deleteOuterParticles();
-		containerTest->deleteOuterParticles();
-
-		// Compare calculated forces
-		{
-			const ParticleIterator begin = container->iteratorBegin();
-			const ParticleIterator end = container->iteratorEnd();
-			const ParticleIterator beginHS = containerTest->iteratorBegin();
-			const ParticleIterator endHS = containerTest->iteratorEnd();
-			auto j = beginHS;
-			for (auto i = begin; i != end; ++i, ++j) {
-				CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0),
-						j->F(0), fabs(1e-7 * i->F(0)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1),
-						j->F(1), fabs(1e-7 * i->F(1)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2),
-						j->F(2), fabs(1e-7 * i->F(2)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0),
-						j->Vi(0), fabs(1e-7 * j->Vi(0)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1),
-						j->Vi(1), fabs(1e-7 * j->Vi(1)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2),
-						j->Vi(2), fabs(1e-7 * j->Vi(2)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
-						i->M(0), j->M(0), fabs(1e-7 * i->M(0)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
-						i->M(1), j->M(1), fabs(1e-7 * i->M(1)));
-				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
-						i->M(2), j->M(2), fabs(1e-7 * i->M(2)));
-			}
-		}
-	//------------------------------------------------------------
-	// Cleanup
-	//------------------------------------------------------------
-
-	delete domainDecompositionFS;
-	delete domainDecompositionTest;
-	delete cellProc;
+//void LinkedCellsTest::testHalfShellMPIIndirect() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, 1, "indirect", "hs");
+//}
+//
+//void LinkedCellsTest::testHalfShellMPIDirect() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::HS, 1, "direct", "hs");
+//}
+//
+//void LinkedCellsTest::testMidpointMPIIndirect() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, 2, "indirect", "mp");
+//}
+//
+//void LinkedCellsTest::testMidpointMPIDirect() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner<ParticleCell>::traversalNames::MP, 2, "direct", "mp");
+//}
+//
+//void LinkedCellsTest::doForceComparisonTest(std::string inputFile, TraversalTuner<ParticleCell>::traversalNames traversal, unsigned cellsInCutoff, std::string neighbourCommScheme, std::string commScheme){
+//
+//	//------------------------------------------------------------
+//	// Setup
+//	//------------------------------------------------------------
+//
+//	auto domainDecompositionFS = new DomainDecomposition();
+//	auto domainDecompositionTest = new DomainDecomposition();
+//	domainDecompositionFS->setCommunicationScheme(neighbourCommScheme, "fs");
+//	domainDecompositionTest->setCommunicationScheme(neighbourCommScheme, commScheme);
+//	auto filename = inputFile.c_str();
+//	auto cutoff = 1;
+//
+//	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
+//	containerTest->_traversalTuner->selectedTraversal = traversal;
+//	containerTest->initializeTraversal();
+//	containerTest->_cellsInCutoff = cellsInCutoff;
+//
+//	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff));
+//
+//	// Legacy Processor for debugging
+//	// assert in potforce.h l. 483 has to be disabled
+//
+//	/*
+//	auto pphandler = new ParticlePairs2PotForceAdapter(*_domain);
+//	auto pphandler2 = new ParticlePairs2PotForceAdapter(*_domain);
+//	auto cellProc = new LegacyCellProcessor(cutoff, cutoff, pphandler);
+//	auto cellProc2 = new LegacyCellProcessor(cutoff, cutoff, pphandler2);
+//	*/
+//
+//	auto cellProc = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+//	auto cellProc2 = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+//
+//	domainDecompositionFS->initCommunicationPartners(cutoff, _domain);
+//	domainDecompositionTest->initCommunicationPartners(cutoff, _domain);
+//
+//	//------------------------------------------------------------
+//	//  Calculate forces for FS and TestTraversal and compare
+//	//------------------------------------------------------------
+//	//------------------------------------------------------------
+//		// Prepare molecule containers
+//		//------------------------------------------------------------
+//		container->update();
+//		containerTest->update();
+//		bool forceRebalancing = false;
+//		domainDecompositionFS->balanceAndExchange(forceRebalancing, container,
+//				_domain);
+//		domainDecompositionTest->balanceAndExchange(forceRebalancing, containerTest,
+//				_domain);
+//		container->updateMoleculeCaches();
+//		containerTest->updateMoleculeCaches();
+//		//------------------------------------------------------------
+//		// Do calculation with FS
+//		//------------------------------------------------------------
+//		{
+//			container->traverseCells(*cellProc);
+//			// calculate forces
+//			const ParticleIterator begin = container->iteratorBegin();
+//			const ParticleIterator end = container->iteratorEnd();
+//			for (auto i = begin; i != end; ++i) {
+//				i->calcFM();
+//			}
+//		}
+//		//------------------------------------------------------------
+//		// Do calculation with TestTraversal
+//		//------------------------------------------------------------
+//		{
+//			containerTest->traverseCells(*cellProc2);
+//			// calculate forces
+//			const ParticleIterator& begin = containerTest->iteratorBegin();
+//			const ParticleIterator& end = containerTest->iteratorEnd();
+//			for (ParticleIterator i = begin; i != end; ++i) {
+//				i->calcFM();
+//			}
+//			if(containerTest->requiresForceExchange()){
+//				domainDecompositionTest->exchangeForces(containerTest, _domain);
+//			}
+//		}
+//		//------------------------------------------------------------
+//		container->deleteOuterParticles();
+//		containerTest->deleteOuterParticles();
+//
+//		// Compare calculated forces
+//		{
+//			const ParticleIterator begin = container->iteratorBegin();
+//			const ParticleIterator end = container->iteratorEnd();
+//			const ParticleIterator beginHS = containerTest->iteratorBegin();
+//			const ParticleIterator endHS = containerTest->iteratorEnd();
+//			auto j = beginHS;
+//			for (auto i = begin; i != end; ++i, ++j) {
+//				CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0),
+//						j->F(0), fabs(1e-7 * i->F(0)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1),
+//						j->F(1), fabs(1e-7 * i->F(1)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2),
+//						j->F(2), fabs(1e-7 * i->F(2)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0),
+//						j->Vi(0), fabs(1e-7 * j->Vi(0)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1),
+//						j->Vi(1), fabs(1e-7 * j->Vi(1)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2),
+//						j->Vi(2), fabs(1e-7 * j->Vi(2)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
+//						i->M(0), j->M(0), fabs(1e-7 * i->M(0)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
+//						i->M(1), j->M(1), fabs(1e-7 * i->M(1)));
+//				CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ",
+//						i->M(2), j->M(2), fabs(1e-7 * i->M(2)));
+//			}
+//		}
+//	//------------------------------------------------------------
+//	// Cleanup
+//	//------------------------------------------------------------
+//
+//	delete domainDecompositionFS;
+//	delete domainDecompositionTest;
+//	delete cellProc;
 
 
 }
