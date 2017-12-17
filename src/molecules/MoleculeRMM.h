@@ -282,6 +282,14 @@ public:
 	StorageState getStorageState() const {
 		return _state;
 	}
+        
+        // dummies for exchangeForces, which is never called in RMM
+        const double* F_vec() {return nullptr; }
+        const double* M_vec() {return nullptr; }
+        const double* Vi_vec() {return nullptr; }
+       
+        
+        
 
 private:
 	static std::array<double, 3> emptyArray3() {
