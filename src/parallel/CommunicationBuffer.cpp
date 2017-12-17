@@ -323,7 +323,6 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	size_t i_runningByte = i_firstByte;
 	
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	// vcp stuff?
 	vcp_real_calc rbuf[3]; 
 	vcp_real_accum Fbuf[3];
 	unsigned long idbuf;
@@ -339,7 +338,9 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	for(int d = 0; d < 3; d++) {
 		m.setr(d, rbuf[d]);
 	}
-	m.setF(Fbuf);
+	for(int d = 0; d < 3; d++) {
+		m.setF(d, Fbuf[d]);
+	}
 	
 #else
 	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3];

@@ -72,6 +72,7 @@ public:
 	void setid(unsigned long id);
 	void setr(unsigned short d, double r);
 	void setv(unsigned short d, double v);
+        void setF(unsigned short, double F);
 	double r(unsigned short d) const;
 	double v(unsigned short d) const;
 
@@ -213,8 +214,8 @@ public:
 		mardyn_assert(false);
 		return sizeof(*this);
 	}
-
-	void setF(double /*F*/[3]) {}
+        
+        void setF(double /*F*/ [3]) {}
 	void setM(double /*M*/[3]) {}
 	void setVi(double /*Vi*/[3]) {}
 	void Fadd(const double /*a*/[]) {}
@@ -283,7 +284,7 @@ public:
 		return _state;
 	}
         
-        // dummies for exchangeForces, which is never called in RMM
+        // dummies for method exchangeForces
         const double* F_vec() {return nullptr; }
         const double* M_vec() {return nullptr; }
         const double* Vi_vec() {return nullptr; }
@@ -309,8 +310,9 @@ private:
 
     // if the state is AOS, the following values are read:
     vcp_real_calc _r[3];  /**< position coordinates */
-	vcp_real_calc _v[3];  /**< velocity */
-	unsigned long _id;
+    vcp_real_calc _v[3];  /**< velocity */
+    vcp_real_accum _F[3]; /**< forces - not sure, if this belongs here */
+    unsigned long _id;
 
 	// if the state is SOA, the values are read from the SoA:
 	CellDataSoARMM * _soa;
