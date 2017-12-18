@@ -33,6 +33,7 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &_numProcs));
 
+	ParticleData::getMPIType(_mpiParticleType);
 
 	_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunication());
 	//_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
