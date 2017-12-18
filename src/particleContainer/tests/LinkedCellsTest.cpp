@@ -8,7 +8,7 @@
 #include "LinkedCellsTest.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecomposition.h"
+//#include "parallel/DomainDecomposition.h"
 #include "particleContainer/adapter/CellProcessor.h"
 #include <vector>
 
