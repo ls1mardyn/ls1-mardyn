@@ -347,93 +347,93 @@ void LinkedCellsTest::testTraversalMethods() {
 	cpStub.inverseSign();
 
 }
-/*
-void LinkedCellsTest::testHalfShell() {
-	//TODO: ___Extract to separate test class
-	//------------------------------------------------------------
-	// Setup
-	//------------------------------------------------------------
 
-	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "LinkedCellsTest::testHalfShell()"
-				<< " not executed (rerun with only 1 Process!)" << std::endl;
-		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
-		return;
-	}
+//void LinkedCellsTest::testHalfShell() {
+//	//TODO: ___Extract to separate test class
+//	//------------------------------------------------------------
+//	// Setup
+//	//------------------------------------------------------------
+//
+//	if (_domainDecomposition->getNumProcs() != 1) {
+//		test_log->info() << "LinkedCellsTest::testHalfShell()"
+//				<< " not executed (rerun with only 1 Process!)" << std::endl;
+//		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+//		return;
+//	}
+//
+//	auto domainDecomposition = new DomainDecompBase();
+//	auto filename = "LinkedCellsHS.inp";
+//	auto cutoff = 1;
+//
+//	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+//			filename, cutoff));
+//	containerHS->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::HS;
+//	containerHS->_traversalTuner->findOptimalTraversal();
+//	containerHS->initializeTraversal();
+//
+//	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+//			filename, cutoff));
+//
+//	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+//
+//
+//	//------------------------------------------------------------
+//	//  Calculate forces for FS and HS and compare
+//	//------------------------------------------------------------
+//
+//	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerHS);
+//
+//	//------------------------------------------------------------
+//	// Cleanup
+//	//------------------------------------------------------------
+//
+//	delete domainDecomposition;
+//	delete vectorizedCellProcessor;
+//}
 
-	auto domainDecomposition = new DomainDecompBase();
-	auto filename = "LinkedCellsHS.inp";
-	auto cutoff = 1;
-
-	LinkedCells* containerHS = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
-			filename, cutoff));
-	containerHS->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::HS;
-	containerHS->_traversalTuner->findOptimalTraversal();
-	containerHS->initializeTraversal();
-
-	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
-			filename, cutoff));
-
-	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
-
-
-	//------------------------------------------------------------
-	//  Calculate forces for FS and HS and compare
-	//------------------------------------------------------------
-
-	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerHS);
-
-	//------------------------------------------------------------
-	// Cleanup
-	//------------------------------------------------------------
-
-	delete domainDecomposition;
-	delete vectorizedCellProcessor;
-}
-
-void LinkedCellsTest::testMidpoint() {
-
-	//TODO: ___Extract to separate test class
-	//------------------------------------------------------------
-	// Setup
-	//------------------------------------------------------------
-
-	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "LinkedCellsTest::testMidpoint()"
-				<< " not executed (rerun with only 1 Process!)" << std::endl;
-		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
-		return;
-	}
-
-	auto domainDecomposition = new DomainDecompBase();
-	auto filename = "LinkedCellsHS.inp";
-	auto cutoff = 1;
-
-	LinkedCells* containerMP = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
-			filename, cutoff));
-	containerMP->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::MP;
-	containerMP->_traversalTuner->findOptimalTraversal();
-	containerMP->initializeTraversal();
-
-	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
-			filename, cutoff));
-
-	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
-
-
-	//------------------------------------------------------------
-	//  Calculate forces for FS and MP and compare
-	//------------------------------------------------------------
-
-	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerMP);
-
-	//------------------------------------------------------------
-	// Cleanup
-	//------------------------------------------------------------
-
-	delete domainDecomposition;
-	delete vectorizedCellProcessor;
-}*/
+//void LinkedCellsTest::testMidpoint() {
+//
+//	//TODO: ___Extract to separate test class
+//	//------------------------------------------------------------
+//	// Setup
+//	//------------------------------------------------------------
+//
+//	if (_domainDecomposition->getNumProcs() != 1) {
+//		test_log->info() << "LinkedCellsTest::testMidpoint()"
+//				<< " not executed (rerun with only 1 Process!)" << std::endl;
+//		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+//		return;
+//	}
+//
+//	auto domainDecomposition = new DomainDecompBase();
+//	auto filename = "LinkedCellsHS.inp";
+//	auto cutoff = 1;
+//
+//	LinkedCells* containerMP = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+//			filename, cutoff));
+//	containerMP->_traversalTuner->selectedTraversal = TraversalTuner::traversalNames::MP;
+//	containerMP->_traversalTuner->findOptimalTraversal();
+//	containerMP->initializeTraversal();
+//
+//	LinkedCells* container = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
+//			filename, cutoff));
+//
+//	auto vectorizedCellProcessor = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
+//
+//
+//	//------------------------------------------------------------
+//	//  Calculate forces for FS and MP and compare
+//	//------------------------------------------------------------
+//
+//	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerMP);
+//
+//	//------------------------------------------------------------
+//	// Cleanup
+//	//------------------------------------------------------------
+//
+//	delete domainDecomposition;
+//	delete vectorizedCellProcessor;
+//}
 
 // new tests here
 

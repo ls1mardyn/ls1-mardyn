@@ -17,8 +17,8 @@
 #include "parallel/ZonalMethods/HalfShell.h"
 #include "parallel/ZonalMethods/Midpoint.h"
 #include "parallel/ZonalMethods/NeutralTerritory.h"
-#include "parallel/CollectiveCommunication.h" // probably new stuff - add
-#include "parallel/CollectiveCommunicationNonBlocking.h" // probably new stuff - add
+#include "parallel/CollectiveCommunication.h" // new
+#include "parallel/CollectiveCommunicationNonBlocking.h" // new
 
 using Log::global_log;
 using std::endl;

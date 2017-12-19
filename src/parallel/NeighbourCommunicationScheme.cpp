@@ -74,7 +74,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		if (_neighbours[0][i].getRank() != domainDecomp->getRank()) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
 			_neighbours[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleForceType(), msgType);
+					domainDecomp->getMPIParticleType(), msgType);
 
 		}
 
@@ -113,7 +113,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		for (int i = 0; i < numNeighbours; ++i) {
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
 				allDone &= _neighbours[0][i].iprobeCount(domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleForceType());
+					domainDecomp->getMPIParticleType());
 			}
 
 		}
