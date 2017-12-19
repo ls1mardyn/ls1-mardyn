@@ -1169,7 +1169,6 @@ void Simulation::simulate() {
 			_moleculeContainer->traverseCells(*_cellProcessor);
 
 			// Update forces in molecules so they can be exchanged
-			// TODO: we need some forces to be updated to handle force exchange... but 
 			updateForces();
 			forceCalculationTimer->stop();
 			perStepTimer.stop();
