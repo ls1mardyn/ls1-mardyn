@@ -234,7 +234,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		for (int i = 0; i < numNeighbours; ++i) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleForceType(), msgType);
+					domainDecomp->getMPIParticleType(), msgType);
 		}
 
 	}
@@ -267,7 +267,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) {
 			allDone &= _neighbours[d][i].iprobeCount(domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleForceType());
+					domainDecomp->getMPIParticleType());
 		}
 
 		// unpack molecules
