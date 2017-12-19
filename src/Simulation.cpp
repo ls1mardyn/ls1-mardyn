@@ -776,7 +776,7 @@ void Simulation::updateForces() {
 		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
 		const ParticleIterator end = _moleculeContainer->iteratorEnd();
 
-		if(CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt) {
+		if(_simstep==0 && (CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt)) {
 
 			uint64_t id;
 			uint32_t cid;
@@ -1170,7 +1170,7 @@ void Simulation::simulate() {
 
 			// Update forces in molecules so they can be exchanged
 			// TODO: we need some forces to be updated to handle force exchange... but 
-			//updateForces();
+			updateForces();
 			forceCalculationTimer->stop();
 			perStepTimer.stop();
 			computationTimer->stop();
@@ -1178,6 +1178,7 @@ void Simulation::simulate() {
 			decompositionTimer->start();
 			// Exchange forces if it's required by the cell container.
 			if(_moleculeContainer->requiresForceExchange()){
+				global_log->debug() << "Exchanging Forces" << std::endl;
 				_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
 			}
 			decompositionTimer->stop();
