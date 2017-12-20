@@ -71,6 +71,15 @@ void CommunicationBuffer::resizeForReceivingMolecules(unsigned long& numLeaving,
 	numHalo = _numHalo;
 }
 
+void CommunicationBuffer::resizeForReceivingMolecules(unsigned long& numForces) {
+	// message has been received
+	
+	// read _numForces
+	size_t i_runningByte = 0;
+	i_runningByte = readValue(i_runningByte, _numForces);
+	numForces = _numForces;
+}
+
 void CommunicationBuffer::resizeForAppendingLeavingMolecules(unsigned long numLeaving) { 
 	_numLeaving += numLeaving;
 	mardyn_assert(_numHalo == 0ul); // assumption: add leaving, add leaving, then add halo, halo, halo, ... but not intertwined.

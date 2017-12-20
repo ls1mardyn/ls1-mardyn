@@ -58,7 +58,8 @@ public:
 	void readHaloMolecule(size_t indexOfMolecule, Molecule& m) const;
         void readForceMolecule(size_t indexOfMolecule, Molecule& m) const;
 
-	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo); // adjust for force
+	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo); 
+	void resizeForReceivingMolecules(unsigned long& numForces);
 
 	size_t getNumHalo() const {
 		return _numHalo;

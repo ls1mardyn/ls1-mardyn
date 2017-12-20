@@ -259,17 +259,21 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag == true) {
 			_msgReceived = true;
+			static std::vector<Molecule> mols;
+			
 
-			unsigned long numHalo, numLeaving;
-			_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo); // RECV BUF
+			
+			if(!force) { // Buffer is particle data 
+				unsigned long numHalo, numLeaving;
+				_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo); 
 
-			#ifndef NDEBUG
+#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
 				global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
 				std::ostringstream buf1;
 				for (unsigned long i = 0; i < numLeaving; ++i) {
 					Molecule m;
-					_recvBuf.readLeavingMolecule(i, m); // RECV BUF
+					_recvBuf.readLeavingMolecule(i, m); 
 					buf1 << m.id() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
@@ -282,13 +286,11 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					buf2 << m.id() << " ";
 				}
 				global_log->debug() << buf2.str() << std::endl;
-			#endif
-
-			
-			if(!force) { // Buffer is particle data 
+#endif
+				
+				
 				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 				unsigned long totalNumMols = numLeaving + numHalo;
-				static std::vector<Molecule> mols;
 				mols.resize(totalNumMols);
 
 				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
@@ -298,22 +300,14 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					Molecule m;
 					if (i < numLeaving) {
 						// leaving
-						_recvBuf.readLeavingMolecule(i, m); // RECV BUF
+						_recvBuf.readLeavingMolecule(i, m); 
 					} else {
 						// halo
-						_recvBuf.readHaloMolecule(i - numLeaving, m); // RECV BUF
+						_recvBuf.readHaloMolecule(i - numLeaving, m); 
 					}
 					mols[i] = m;
 				}
-				global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
-
-				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
-				moleculeContainer->addParticles(mols, removeRecvDuplicates);
-				mols.clear();
-				_recvBuf.clear();
-				global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 			} else { // Buffer is force data
-				// --------------------------------------------- adjust to this method
 				
 				/*
 				#if defined(_OPENMP)
@@ -321,31 +315,47 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				#endif
 				*/ 
 				
+				unsigned long numForces;
+				_recvBuf.resizeForReceivingMolecules(numForces);
 			
 				
-//				for (int i = 0; i < numrecv; i++) {  // I think this checks, if a molecule, read from the Buffer exists in the container
-//					// ParticleForceData& pData = _recvBuf[i]; // this reads pData from the buffer.
-//					// Molecule* original;
-//
-//					Molecule m;
-//					_recvBuf.readForceMolecule(i, m);
-//					
-//					/*
-//					if (!moleculeContainer->getMoleculeAtPosition(pData.r, &original)) { // getMoleculeAtPosition is new or does not exist anymore
-//						// This should not happen
-//						global_log->error()<< "Original molecule not found!" << std::endl;
-//						mardyn_exit(1);
-//					}
-//					
-//					mardyn_assert(original->id() == pData.id);
-//					*/
-//					
-//					//ParticleForceData::AddParticleForceDataToMolecule(pData, *original); // this writes Data to a molecule object
-//					
-//				
-//				}
-				// ---------------------------------------------
+#ifndef NDEBUG	
+				global_log->debug() << "Receiving particles from " << _rank << std::endl;
+				global_log->debug() << "Buffer contains " << numForces << " force particles with IDs " << std::endl;
+				std::ostringstream buf1;
+				
+				for(unsigned long i = 0; i < numForces; ++i) {
+					Molecule m;
+					_recvBuf.readForceMolecule(i, m);
+					buf1 << m.id() << " ";
+				}
+				global_log->debug() << buf1.str() << std::endl;
+				
+				
+#endif
+				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
+				mols.resize(numForces);
+				
+				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
+				#pragma omp parallel for schedule(static)
+				#endif*/
+				
+				for(unsigned i = 0; i < numForces; ++i) {
+					Molecule m;
+					_recvBuf.readForceMolecule(i, m);
+					mols[i] = m;
+				}
+				
+				
 			}
+			
+			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
+
+			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
+			moleculeContainer->addParticles(mols, removeRecvDuplicates);
+			mols.clear();
+			_recvBuf.clear();
+			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 			
 
 		} else {
