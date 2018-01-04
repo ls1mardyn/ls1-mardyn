@@ -61,11 +61,10 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	std::string zonalMethod = "fs";
 	xmlconfig.changecurrentnode("../datastructure");
 	xmlconfig.getNodeValue("traversalSelector", zonalMethod);
-	if(zonalMethod != "fs" && zonalMethod != "hs" && zonalMethod != "mp" && zonalMethod != "nt"){
-		global_log->info() << "No zonal method for " << zonalMethod << " traversal exists. Using full shell." << std::endl;
+	if(zonalMethod != "hs" && zonalMethod != "mp" && zonalMethod != "nt"){
+		global_log->info() << "Zonal Method: Defaulting to full shell." << std::endl;
 		zonalMethod = "fs";
 	}
-
 	setCommunicationScheme(neighbourCommunicationScheme, zonalMethod);
 
 	// reset path

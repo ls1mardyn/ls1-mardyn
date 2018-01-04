@@ -27,8 +27,8 @@ public:
 		ORIGINAL = 0,
 		C08      = 1,
 		SLICED   = 2,
-                HS       = 3,
-                MP       = 4,
+		HS       = 3,
+		MP       = 4,
 		QSCHED   = 5
 	};
 
@@ -171,6 +171,10 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
         selectedTraversal = HS;
     else if (traversalType.find("mp") != string::npos)
         selectedTraversal = MP;
+    else if (traversalType.find("nt") != string::npos){
+        global_log->error() << "nt method not yet properly implemented. please select a different method." << std::endl;
+		Simulation::exit(1);
+    }
 	else {
 		// selector already set in constructor, just print a warning here
 		if (mardyn_get_max_threads() > 1) {
