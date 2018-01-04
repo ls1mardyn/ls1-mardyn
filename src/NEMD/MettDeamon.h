@@ -301,8 +301,13 @@ public:
 		_numBins++;
 		_numParticles += vec.size();
 		// update max particle ID
-		std::vector<Molecule>::iterator it = max_element(vec.begin(), vec.end(), molecule_id_compare);
-		_maxID = ( (*it).id()>_maxID ? (*it).id() : _maxID);
+		if(_numParticles > 0)
+		{
+			std::vector<Molecule>::iterator it = max_element(vec.begin(), vec.end(), molecule_id_compare);
+			_maxID = ( (*it).id()>_maxID ? (*it).id() : _maxID);
+		}
+		else
+			_maxID = 0;
 		cout << "_maxID=" << _maxID << endl;
 	}
 

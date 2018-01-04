@@ -944,25 +944,29 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
 	// sort particles into bins
 	this->sortParticlesToBins();
 
+	cout << domainDecomp->getRank() << ": sortParticlesToBins() done." << endl;
+
 	// volume, density
 	this->calcNumMoleculesGlobal(domainDecomp);
 //	mardyn_assert( (_numMoleculesGlobal == _numMoleculesRead) || (RRM_READ_FROM_MEMORY == _nReadMethod) );
 	_dVolume = 1.; for(uint8_t dim=0; dim<3; dim++) _dVolume *= _arrBoxLength[dim];
 	_dDensity = _numMoleculesGlobal / _dVolume;
+	cout << "Volume of Mettdeamon Reservoir: " << _dVolume << endl;
 	cout << "Density of Mettdeamon Reservoir: " << _dDensity << endl;
 }
 
 void Reservoir::sortParticlesToBins()
 {
+	Domain* domain = global_simulation->getDomain();
 	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
 	cout << domainDecomp->getRank() << ": Reservoir::sortParticlesToBins(...)" << endl;
 	uint32_t numBins = _arrBoxLength[1] / _dBinWidthInit;
 	_dBinWidth = _arrBoxLength.at(1) / (double)(numBins);
+	cout << domainDecomp->getRank() << ": _arrBoxLength[1]="<<_arrBoxLength[1]<<endl;
 	cout << domainDecomp->getRank() << ": _dBinWidthInit="<<_dBinWidthInit<<endl;
 	cout << domainDecomp->getRank() << ": _numBins="<<numBins<<endl;
 	std::vector< std::vector<Molecule> > binVector;
 	binVector.resize(numBins);
-	Domain* domain = global_simulation->getDomain();
 	uint32_t nBinIndex;
 	for(auto&& mol:_particleVector)
 	{
@@ -982,7 +986,9 @@ void Reservoir::sortParticlesToBins()
 			mol.setr(1, y - nBinIndex*_dBinWidth + (domain->getGlobalLength(1) - _dBinWidth) );  // positions in slabs related to origin (x,y,z) == (0,0,0)
 			break;
 		}
-		binVector.at(nBinIndex).push_back(mol);
+		// check if molecule is in bounding box of the process domain
+		if (true == domainDecomp->procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain) )
+			binVector.at(nBinIndex).push_back(mol);
 	}
 
 	// add bin particle vectors to bin queue
