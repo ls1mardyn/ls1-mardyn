@@ -43,7 +43,7 @@
       <parallelisation type="DomainDecomposition"></parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
-	  <traversalSelector>hs</traversalSelector>
+	  <traversalSelector>c08</traversalSelector>
       </datastructure>
       <cutoffs type="CenterOfMass" >
         <radiusLJ unit="reduced" >5.0</radiusLJ>
