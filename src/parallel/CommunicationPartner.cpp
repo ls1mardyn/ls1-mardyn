@@ -413,12 +413,14 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	vector<vector<Molecule>> threadData;
 	vector<int> prefixArray;
 
-	// compute how many molecules are already in of this type:
+	// compute how many molecules are already in of this type: - adjust for Forces
 	unsigned long numMolsAlreadyIn = 0;
 	if (haloLeaveCorr == LEAVING) {
 		numMolsAlreadyIn = _sendBuf.getNumLeaving();
 	} else if (haloLeaveCorr == HALO) {
 		numMolsAlreadyIn = _sendBuf.getNumHalo();
+	} else if(haloLeaveCorr == FORCES) {
+		numMolsAlreadyIn = _sendBuf.getNumForces();
 	}
 
 	#if defined (_OPENMP)
@@ -509,7 +511,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							mCopy.setr(dim, std::nexttoward(r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
 						}
 					}
-				} else if (haloLeaveCorr == LEAVING) {
+				} else if (haloLeaveCorr == LEAVING || haloLeaveCorr == FORCES) {
 					// some additional shifting to ensure that rounding errors do not hinder the correct placement
 					if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
 						if (mCopy.r(dim) < 0.) { // in the lower part it was wrongly shifted if
@@ -524,9 +526,10 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 						}
 					}
-				} else if(haloLeaveCorr == FORCES) {
-					// calls some method on ZonalMethod object in the future
-				}
+				} 
+				/* else if(haloLeaveCorr == FORCES) { // using Leaving correction for now.
+					// THIS IS STILL MISSING!
+				} */
 			} /* for-loop dim */
 			if (haloLeaveCorr == LEAVING) {
 				_sendBuf.addLeavingMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
