@@ -47,6 +47,7 @@ void LinkedCellsTest::testUpdateAndDeleteOuterParticlesFilename(const char * fil
 	ASSERT_EQUAL(numMols, newNumMols);
 
 	delete _domainDecomposition;
+	delete container;
 }
 
 void LinkedCellsTest::testUpdateAndDeleteOuterParticlesH2O() {
@@ -349,7 +350,7 @@ void LinkedCellsTest::testTraversalMethods() {
 	container->traversePartialInnermostCells(cpStub, 1, 3);
 	container->traversePartialInnermostCells(cpStub, 2, 3);
 	cpStub.inverseSign();
-
+	delete container;
 }
 
 //void LinkedCellsTest::testHalfShell() {
@@ -581,5 +582,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	delete domainDecompositionTest;
 	delete cellProc;
 	delete cellProc2;
+	delete container;
+	delete containerTest;
 
 }
