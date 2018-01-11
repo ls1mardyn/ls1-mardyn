@@ -944,7 +944,7 @@ void Simulation::prepare_start() {
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
-	updateForces();
+	//updateForces();
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
