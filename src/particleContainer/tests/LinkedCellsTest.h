@@ -9,7 +9,8 @@
 #define LINKEDCELLSTEST_H_
 
 #include "particleContainer/tests/ParticleContainerTest.h"
-#include "particleContainer/LinkedCells.h"
+
+
 #include "particleContainer/TraversalTuner.h"
 
 class LinkedCellsTest: public ParticleContainerTest {

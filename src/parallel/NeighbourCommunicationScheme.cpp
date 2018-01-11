@@ -4,6 +4,9 @@
  *  Created on: Sep 29, 2016
  *      Author: seckler
  */
+class NeighbourCommunicationScheme;
+class DirectNeighbourCommunicationScheme;
+class IndirectNeighbourCommunicationScheme;
 
 #include "NeighbourCommunicationScheme.h"
 #include "DomainDecompMPIBase.h"

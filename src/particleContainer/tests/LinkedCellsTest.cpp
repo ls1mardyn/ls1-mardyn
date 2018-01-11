@@ -5,6 +5,7 @@
  * @Author: eckhardw
  */
 
+class LinkedCellsTest;
 #include "LinkedCellsTest.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
@@ -441,22 +442,22 @@ void LinkedCellsTest::testTraversalMethods() {
 // new tests here
 
 void LinkedCellsTest::testHalfShellMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
 }
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
 }
 
 void LinkedCellsTest::testMidpointMPIIndirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "indirect", "mp");
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "indirect", "mp");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "indirect", "mp");
 }
 
 void LinkedCellsTest::testMidpointMPIDirect() {
-	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
 }
 
@@ -479,7 +480,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	auto domainDecompositionTest = new DomainDecompBase();
 #endif
 	auto filename = inputFile.c_str();
-	auto cutoff = 1;
+	auto cutoff = 3;
 
 	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
@@ -561,15 +562,15 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		auto j = beginHS;
 		for (auto i = begin; i != end; ++i, ++j) {
 			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-8 * i->F(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-8 * i->F(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), fabs(1e-8 * i->F(2)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0), j->Vi(0), fabs(1e-8 * j->Vi(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1), j->Vi(1), fabs(1e-8 * j->Vi(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2), j->Vi(2), fabs(1e-8 * j->Vi(2)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(0), j->M(0), fabs(1e-8 * i->M(0)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(1), j->M(1), fabs(1e-8 * i->M(1)));
-			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(2), j->M(2), fabs(1e-8 * i->M(2)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(1e-10 * i->F(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(1e-10 * i->F(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(2), j->F(2), fabs(1e-10 * i->F(2)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0), j->Vi(0), fabs(1e-10 * j->Vi(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1), j->Vi(1), fabs(1e-10 * j->Vi(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2), j->Vi(2), fabs(1e-10 * j->Vi(2)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(0), j->M(0), fabs(1e-10 * i->M(0)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(1), j->M(1), fabs(1e-10 * i->M(1)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(2), j->M(2), fabs(1e-10 * i->M(2)));
 		}
 	}
 	//------------------------------------------------------------
@@ -579,5 +580,6 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	delete domainDecompositionFS;
 	delete domainDecompositionTest;
 	delete cellProc;
+	delete cellProc2;
 
 }
