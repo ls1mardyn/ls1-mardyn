@@ -76,7 +76,8 @@ void CommunicationBuffer::resizeForReceivingMolecules(unsigned long& numForces) 
 	
 	// read _numForces
 	size_t i_runningByte = 0;
-	i_runningByte = readValue(i_runningByte, _numForces);
+	//i_runningByte = readValue(i_runningByte, _numForces);
+	_numForces = _buffer.size() / _numBytesForces;
 	numForces = _numForces;
 }
 
@@ -391,7 +392,8 @@ size_t CommunicationBuffer::getStartPosition(ParticleType_t type, size_t indexOf
 		ret += _numLeaving * _numBytesLeaving + indexOfMolecule * _numBytesHalo;
 	} else if(type == ParticleType_t::FORCE) {
 		// ??? - does the force exchange happen on its own or with the other bytes?
-		ret += indexOfMolecule * _numBytesForces; // assumed on its own.
+		ret = indexOfMolecule * _numBytesForces; // assumed on its own.
+		//additionally no leaving or halo molecules are transmitted, thus _numLeaving, _numHalo are zero!
 	}
 
 	return ret;

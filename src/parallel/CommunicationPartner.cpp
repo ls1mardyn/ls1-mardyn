@@ -259,11 +259,12 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag == true) {
 			_msgReceived = true;
-			static std::vector<Molecule> mols;
 			
+
 
 			
 			if(!force) { // Buffer is particle data 
+				static std::vector<Molecule> mols;
 				unsigned long numHalo, numLeaving;
 				_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo); 
 
@@ -283,7 +284,6 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for (unsigned long i = 0; i < numHalo; ++i) {
 					Molecule m;
 					_recvBuf.readHaloMolecule(i, m);
-					buf2 << m.id() << " ";
 				}
 				global_log->debug() << buf2.str() << std::endl;
 #endif
@@ -307,6 +307,10 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					}
 					mols[i] = m;
 				}
+
+				moleculeContainer->addParticles(mols, removeRecvDuplicates);
+				mols.clear();
+
 			} else { // Buffer is force data
 				
 				/*
@@ -334,7 +338,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				
 #endif
 				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
-				mols.resize(numForces);
+				//mols.resize(numForces);
 				
 				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
 				#pragma omp parallel for schedule(static)
@@ -343,17 +347,21 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for(unsigned i = 0; i < numForces; ++i) {
 					Molecule m;
 					_recvBuf.readForceMolecule(i, m);
-					mols[i] = m;
+					//mols[i] = m;
+					Molecule* m_target;
+					const double position[3] = { m.r(0), m.r(1), m.r(2) };
+					moleculeContainer->getMoleculeAtPosition(position, &m_target);
+					m_target->Fadd(m.F_vec());
+					m_target->Madd(m.M_vec());
+					m_target->Viadd(m.Vi_vec());
 				}
 				
-				
+				//moleculeContainer->addParticles(mols, removeRecvDuplicates);
+
 			}
 			
-			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 
-			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
-			moleculeContainer->addParticles(mols, removeRecvDuplicates);
-			mols.clear();
+
 			_recvBuf.clear();
 			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 			
@@ -477,6 +485,8 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 				_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
 			} else if (haloLeaveCorr == HALO) {
 				_sendBuf.resizeForAppendingHaloMolecules(totalNumMolsAppended);
+			} else if (haloLeaveCorr == FORCES) {
+				_sendBuf.resizeForAppendingForceMolecules(totalNumMolsAppended);
 			}
 		}
 

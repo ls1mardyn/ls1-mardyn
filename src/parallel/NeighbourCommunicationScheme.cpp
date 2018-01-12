@@ -124,7 +124,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-					allDone &= _neighbours[0][i].testRecv(moleculeContainer, removeRecvDuplicates);
+					allDone &= _neighbours[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
 			}
 		}
 
@@ -275,7 +275,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
-			allDone &= _neighbours[d][i].testRecv(moleculeContainer, removeRecvDuplicates);
+			allDone &= _neighbours[d][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
 		}
 
 		// catch deadlocks
