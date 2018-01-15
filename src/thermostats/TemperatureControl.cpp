@@ -34,16 +34,7 @@ ControlRegionT::ControlRegionT()
 	_dUpperCorner{0.,0.,0.},
 	_nNumSlabs(0),
 	_dSlabWidth(0.0),
-	_nNumMoleculesLocal(nullptr),
-	_nNumMoleculesGlobal(nullptr),
-	_nRotDOFLocal(nullptr),
-	_nRotDOFGlobal(nullptr),
-	_d2EkinTransLocal(nullptr),
-	_d2EkinTransGlobal(nullptr),
-	_d2EkinRotLocal(nullptr),
-	_d2EkinRotGlobal(nullptr),
-	_dBetaTransGlobal(nullptr),
-	_dBetaRotGlobal(nullptr),
+	_thermVars(),
 	_dTargetTemperature(0.0),
 	_dTemperatureExponent(0.0),
 	_nTargetComponentID(0),
@@ -169,56 +160,29 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 
 void ControlRegionT::Init()
 {
-	_nNumMoleculesLocal  = new unsigned long[_nNumSlabs];
-	_nNumMoleculesGlobal = new unsigned long[_nNumSlabs];
-	_nRotDOFLocal  = new unsigned long[_nNumSlabs];
-	_nRotDOFGlobal = new unsigned long[_nNumSlabs];
-
-	_d2EkinTransLocal  = new double[_nNumSlabs];
-	_d2EkinTransGlobal = new double[_nNumSlabs];
-	_d2EkinRotLocal  = new double[_nNumSlabs];
-	_d2EkinRotGlobal = new double[_nNumSlabs];
-
-	_dBetaTransGlobal = new double[_nNumSlabs];
-	_dBetaRotGlobal   = new double[_nNumSlabs];
-
-	for(unsigned int s = 0; s<_nNumSlabs; ++s)
-	{
-		_nNumMoleculesLocal[s]  = 0;
-		_nNumMoleculesGlobal[s] = 0;
-		_nRotDOFLocal[s]  = 0;
-		_nRotDOFGlobal[s] = 0;
-
-		_d2EkinTransLocal[s]  = 0.;
-		_d2EkinTransGlobal[s] = 0.;
-		_d2EkinRotLocal[s]  = 0.;
-		_d2EkinRotGlobal[s] = 0.;
-
-		_dBetaTransGlobal[s] = 0.;
-		_dBetaRotGlobal[s]   = 0.;
-	}
+	_thermVars.resize(_nNumSlabs);
 }
 
-void ControlRegionT::CalcGlobalValues(DomainDecompBase* /*domainDecomp*/)
+void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 {
-#ifdef ENABLE_MPI
 
-	MPI_Allreduce( _nNumMoleculesLocal, _nNumMoleculesGlobal, _nNumSlabs, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce( _nRotDOFLocal, _nRotDOFGlobal, _nNumSlabs, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-
-	MPI_Allreduce( _d2EkinTransLocal, _d2EkinTransGlobal, _nNumSlabs, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce( _d2EkinRotLocal, _d2EkinRotGlobal, _nNumSlabs, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-#else
-	for(unsigned int s = 0; s<_nNumSlabs; ++s)
-	{
-		_nNumMoleculesGlobal[s] = _nNumMoleculesLocal[s];
-		_nRotDOFGlobal[s] = _nRotDOFLocal[s];
-
-		_d2EkinTransGlobal[s] = _d2EkinTransLocal[s];
-		_d2EkinRotGlobal[s] = _d2EkinRotLocal[s];
+	domainDecomp->collCommInit(_nNumSlabs * 4);
+	for (unsigned s = 0; s < _nNumSlabs; ++s) {
+		ThermostatVariables & localTV = _thermVars[s]._local; // do not forget &
+		domainDecomp->collCommAppendUnsLong(localTV._numMolecules);
+		domainDecomp->collCommAppendUnsLong(localTV._numRotationalDOF);
+		domainDecomp->collCommAppendDouble(localTV._ekinRot);
+		domainDecomp->collCommAppendDouble(localTV._ekinTrans);
 	}
-#endif
+	domainDecomp->collCommAllreduceSum();
+	for (unsigned s = 0; s < _nNumSlabs; ++s) {
+		ThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
+		globalTV._numMolecules = domainDecomp->collCommGetUnsLong();
+		globalTV._numRotationalDOF = domainDecomp->collCommGetUnsLong();
+		globalTV._ekinRot = domainDecomp->collCommGetDouble();
+		globalTV._ekinTrans = domainDecomp->collCommGetDouble();
+	}
+	domainDecomp->collCommFinalize();
 
 	// calc betaTrans, betaRot, and their sum
 	double dBetaTransSumSlabs = 0.;
@@ -226,19 +190,20 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* /*domainDecomp*/)
 
 	for(unsigned int s = 0; s<_nNumSlabs; ++s)
 	{
-		if( _nNumMoleculesGlobal[s] < 1 )
-			_dBetaTransGlobal[s] = 1.;
+		ThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
+		if( globalTV._numMolecules < 1 )
+			globalTV._betaTrans = 1.;
 		else
-			_dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * _dTargetTemperature / _d2EkinTransGlobal[s], _dTemperatureExponent);
+			globalTV._betaTrans = pow(_nNumThermostatedTransDirections * globalTV._numMolecules * _dTargetTemperature / globalTV._ekinTrans, _dTemperatureExponent);
 
-		if( _nRotDOFGlobal[s] < 1 )
-			_dBetaRotGlobal[s] = 1.;
+		if( globalTV._numRotationalDOF < 1 )
+			globalTV._betaRot = 1.;
 		else
-			_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperature / _d2EkinRotGlobal[s], _dTemperatureExponent);
+			globalTV._betaRot = pow( globalTV._numRotationalDOF * _dTargetTemperature / globalTV._ekinRot, _dTemperatureExponent);
 
 		// calc sums over all slabs
-		dBetaTransSumSlabs += _dBetaTransGlobal[s];
-		dBetaRotSumSlabs   += _dBetaRotGlobal[s];
+		dBetaTransSumSlabs += globalTV._betaTrans;
+		dBetaRotSumSlabs   += globalTV._betaRot;
 	}
 	// calc ensemble average of beta_trans, beta_rot
 	_dBetaTransSumGlobal += dBetaTransSumSlabs;
@@ -295,18 +260,19 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 	_d2EkinTransLocal[nPosIndex] += m*(vx*vx + vz*vz);
 */
 
-	_d2EkinTransLocal[nPosIndex] += _accumulator->CalcKineticEnergyContribution(mol);
+	ThermostatVariables & localTV = _thermVars[nPosIndex]._local;  // do not forget &
+	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
 
 	// sum up rot. kinetic energy (2x)
 	double dDummy = 0.;
 
-	mol->calculate_mv2_Iw2(dDummy, _d2EkinRotLocal[nPosIndex] );
+	mol->calculate_mv2_Iw2(dDummy, localTV._ekinRot );
 
 	// count num molecules
-	_nNumMoleculesLocal[nPosIndex]++;
+	localTV._numMolecules++;
 
 	// count rotational DOF
-	_nRotDOFLocal[nPosIndex] += mol->component()->getRotationalDegreesOfFreedom();
+	localTV._numRotationalDOF += mol->component()->getRotationalDegreesOfFreedom();
 }
 
 
@@ -338,13 +304,13 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 	if(nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
 		return;
 
-	if(_nNumMoleculesGlobal[nPosIndex] < 1)
+	ThermostatVariables & globalTV = _thermVars[nPosIndex]._global;  // do not forget &
+	if(globalTV._numMolecules < 1)
 		return;
 
-
 	// scale velocity
-	double vcorr = 2. - 1. / _dBetaTransGlobal[nPosIndex];
-	double Dcorr = 2. - 1. / _dBetaRotGlobal[nPosIndex];
+	double vcorr = 2. - 1. / globalTV._betaTrans;
+	double Dcorr = 2. - 1. / globalTV._betaRot;
 
 /*
 	mol->setv(0, mol->v(0) * vcorr);
@@ -362,14 +328,7 @@ void ControlRegionT::ResetLocalValues()
 	// reset local values
 	for(unsigned int s = 0; s<_nNumSlabs; ++s)
 	{
-		_nNumMoleculesLocal[s] = 0;
-		_nRotDOFLocal[s] = 0;
-
-		_d2EkinTransLocal[s] = 0.;
-		_d2EkinRotLocal[s] = 0.;
-
-		_dBetaTransGlobal[s] = 1.;
-		_dBetaRotGlobal[s] = 1.;
+		_thermVars[s]._local.clear();
 	}
 }
 
