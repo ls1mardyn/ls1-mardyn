@@ -288,6 +288,13 @@ protected:
 	 */
 	virtual void handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const;
 
+//	/**
+//	 * @brief Does the force exchange for each dimension. Will be called for dim=0, 1 and 2.
+//	 * @param dim The dimension (0,1 or 2)
+//	 * @param moleculeContainer The particle container
+//	 */
+//	virtual void handleForceExchangeDirect(unsigned dim, ParticleContainer* moleculeContainer) const;
+
 	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
 
 	//! the id of the current process

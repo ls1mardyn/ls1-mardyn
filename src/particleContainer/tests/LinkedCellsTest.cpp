@@ -449,7 +449,7 @@ void LinkedCellsTest::testHalfShellMPIIndirect() {
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
-	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
+	doForceComparisonTest("simple-lj-tiny2.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
 }
 
 void LinkedCellsTest::testMidpointMPIIndirect() {
@@ -459,7 +459,7 @@ void LinkedCellsTest::testMidpointMPIIndirect() {
 
 void LinkedCellsTest::testMidpointMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
-	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
+	doForceComparisonTest("simple-lj-tiny2.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
 }
 
 void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
@@ -545,10 +545,17 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		const ParticleIterator& end = containerTest->iteratorEnd();
 		for (ParticleIterator i = begin; i != end; ++i) {
 			i->calcFM();
+//			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
 		if (containerTest->requiresForceExchange()) {
 			domainDecompositionTest->exchangeForces(containerTest, _domain);
 		}
+		const ParticleIterator& begin2 = containerTest->iteratorBegin();
+		const ParticleIterator& end2 = containerTest->iteratorEnd();
+//		for (ParticleIterator i = begin2; i != end2; ++i) {
+//			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
+//					<< ", " << i->F(2) << std::endl;
+//		}
 	}
 	//------------------------------------------------------------
 	container->deleteOuterParticles();
