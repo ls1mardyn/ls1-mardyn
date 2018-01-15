@@ -56,43 +56,43 @@ ControlRegionT::~ControlRegionT()
 {
 }
 
-AccumulatorBase* ControlRegionT::CreateAccumulatorInstance(std::string strTransDirections)
+Accumulator* ControlRegionT::CreateAccumulatorInstance(std::string strTransDirections)
 {
-	AccumulatorBase* accumulator;
+	Accumulator* accumulator;
 
 	if(strTransDirections == "x")
 	{
-		accumulator = new AccumulatorX();
+		accumulator = new Accumulator(true, false, false);
 		_nNumThermostatedTransDirections = 1;
 	}
 	else if(strTransDirections == "y")
 	{
-		accumulator = new AccumulatorY();
+		accumulator = new Accumulator(false, true, false);
 		_nNumThermostatedTransDirections = 1;
 	}
 	else if(strTransDirections == "z")
 	{
-		accumulator = new AccumulatorZ();
+		accumulator = new Accumulator(false, false, true);
 		_nNumThermostatedTransDirections = 1;
 	}
 	else if(strTransDirections == "xy")
 	{
-		accumulator = new AccumulatorXY();
+		accumulator = new Accumulator(true, true, false);
 		_nNumThermostatedTransDirections = 2;
 	}
 	else if(strTransDirections == "xz")
 	{
-		accumulator = new AccumulatorXZ();
+		accumulator = new Accumulator(true, false, true);
 		_nNumThermostatedTransDirections = 2;
 	}
 	else if(strTransDirections == "yz")
 	{
-		accumulator = new AccumulatorYZ();
+		accumulator = new Accumulator(false, true, true);
 		_nNumThermostatedTransDirections = 2;
 	}
 	else if(strTransDirections == "xyz")
 	{
-		accumulator = new AccumulatorXYZ();
+		accumulator = new Accumulator(true, true, true);
 		_nNumThermostatedTransDirections = 3;
 	}
 	else
