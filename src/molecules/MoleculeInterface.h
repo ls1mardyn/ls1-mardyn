@@ -31,6 +31,7 @@ public:
 	virtual void setComponent(Component *component) = 0;
 	virtual void setr(unsigned short d, double r) = 0;
 	virtual void setv(unsigned short d, double v) = 0;
+        virtual void setF(unsigned short d, double F) = 0;
 	unsigned int componentid() const {
 		return component()->ID();
 	}
@@ -203,7 +204,7 @@ public:
 #endif
 		, double& summv2) {
 
-		calcFM();
+		//calcFM(); //NOTE: This was moved to simulation.cpp calculateForces() and is called in simulate()
 
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 		double dtInvM = dt / component()->m();

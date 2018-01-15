@@ -12,8 +12,13 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
-#include "parallel/CollectiveCommunication.h"
-#include "parallel/CollectiveCommunicationNonBlocking.h"
+
+#include "parallel/ZonalMethods/FullShell.h"
+#include "parallel/ZonalMethods/HalfShell.h"
+#include "parallel/ZonalMethods/Midpoint.h"
+#include "parallel/ZonalMethods/NeutralTerritory.h"
+#include "parallel/CollectiveCommunication.h" // new
+#include "parallel/CollectiveCommunicationNonBlocking.h" // new
 
 using Log::global_log;
 using std::endl;
@@ -21,15 +26,14 @@ using std::endl;
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
 
-	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme();
-	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme();
+	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(new FullShell());
+	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell());
 
 	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &_rank));
 
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &_numProcs));
 
 	ParticleData::getMPIType(_mpiParticleType);
-
 
 	_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunication());
 	//_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
@@ -38,7 +42,7 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 DomainDecompMPIBase::~DomainDecompMPIBase() {
 
 	delete _neighbourCommunicationScheme;
-	_neighbourCommunicationScheme = nullptr;
+	_neighbourCommunicationScheme = nullptr; // do you need both?
 
 	MPI_Type_free(&_mpiParticleType);
 
@@ -48,9 +52,33 @@ DomainDecompMPIBase::~DomainDecompMPIBase() {
 }
 
 void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
-	std::string communicationScheme = "indirect";
-	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
-	setCommunicationScheme(communicationScheme);
+	// store current path
+	string oldPath(xmlconfig.getcurrentnodepath());
+
+	std::string neighbourCommunicationScheme = "indirect";
+	xmlconfig.getNodeValue("CommunicationScheme", neighbourCommunicationScheme);
+
+	std::string zonalMethod = "fs";
+	std::string traversal = "c08"; // currently useless, as traversal is set elsewhere
+	
+	xmlconfig.changecurrentnode("../datastructure");
+	xmlconfig.getNodeValue("traversalSelector", traversal);
+	
+	// currently only checks, if traversal is valid - should check, if zonal method/traversal is valid
+	if(traversal != "c08" && traversal != "qui" && traversal != "slice" &&
+		traversal != "ori" && traversal != "hs" && traversal != "mp" /* &&
+		traversal != "nt" */) {
+		global_log->info() << "Defaulting to fs/c08" << std::endl;
+		
+		zonalMethod = "fs";
+		traversal = "c08";
+	}
+	
+	global_log->info() << "variable zonalMethod is: " << zonalMethod << std::endl;
+	setCommunicationScheme(neighbourCommunicationScheme, zonalMethod);
+
+	// reset path
+	xmlconfig.changecurrentnode(oldPath);
 
 	bool overlappingCollectives = false;
 	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);
@@ -66,22 +94,41 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-int DomainDecompMPIBase::getNonBlockingStageCount(){
+int DomainDecompMPIBase::getNonBlockingStageCount() {
 	return _neighbourCommunicationScheme->getCommDims();
 }
 
-void DomainDecompMPIBase::setCommunicationScheme(std::string scheme){
-	if(_neighbourCommunicationScheme!=nullptr){
+void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string zonalMethod) {
+	if(_neighbourCommunicationScheme!=nullptr) {
 		delete _neighbourCommunicationScheme;
 	}
-	if (scheme=="direct"){
+
+	ZonalMethod* zonalMethodP;
+
+	// CommunicationScheme will delete the pointer
+	if(zonalMethod=="fs") {
+		zonalMethodP = new FullShell();
+	} else if(zonalMethod=="hs") {
+		zonalMethodP = new HalfShell();
+	} else if(zonalMethod=="mp") {
+		zonalMethodP = new Midpoint();
+	} else if(zonalMethod=="nt") {
+		zonalMethodP = new NeutralTerritory();
+	} else {
+		global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'hs', 'mp' and 'nt'"
+				<< std::endl;
+		Simulation::exit(1);
+	}
+	global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
+
+	if (scheme=="direct") {
 		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme();
-	} else if(scheme=="indirect"){
+		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP);
+	} else if(scheme=="indirect") {
 		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme();
-	} else{
-		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
+		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(zonalMethodP);
+	} else {
+		global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
 		Simulation::exit(1);
 	}
@@ -197,12 +244,23 @@ void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContai
 	global_log->set_mpi_output_root(0);
 }
 
-size_t DomainDecompMPIBase::getTotalSize() {
+
+
+void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) { 
+	global_log->set_mpi_output_all();
+
+	// Using molecule exchange method with the force message type
+	_neighbourCommunicationScheme->exchangeMoleculesMPI(moleculeContainer, domain, FORCES, false, this);
+
+	global_log->set_mpi_output_root(0);
+}
+
+size_t DomainDecompMPIBase::getTotalSize() { // another new method
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
 			+ _collCommunication->getTotalSize();
 }
 
-void DomainDecompMPIBase::printSubInfo(int offset){
+void DomainDecompMPIBase::printSubInfo(int offset) { 
 	std::stringstream offsetstream;
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";

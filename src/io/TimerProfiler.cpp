@@ -12,13 +12,14 @@
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
 #include "utils/mardyn_assert.h"
+#include "utils/xmlfileUnits.h"
 
 using namespace std;
 using Log::global_log;
 
 const string TimerProfiler::_baseTimerName = "_baseTimer";
 
-TimerProfiler::TimerProfiler(): _numElapsedIterations(0) {
+TimerProfiler::TimerProfiler(): _numElapsedIterations(0), _displayMode(Displaymode::ALL) {
 	_timers[_baseTimerName] = _Timer(_baseTimerName);
 	readInitialTimersFromFile("");
 }
@@ -27,6 +28,25 @@ TimerProfiler::~TimerProfiler() {
 	_clearTimers();
 	mardyn_assert(_timers.size() == 0);
 }
+
+void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
+	std::string displayMode;
+	if(xmlconfig.getNodeValue("displaymode", displayMode)) {
+		global_log->info() << "Timer display mode: " << displayMode << endl;
+		if(displayMode == "all") {
+			setDisplayMode(Displaymode::ALL);
+		} else if (displayMode == "active") {
+			setDisplayMode(Displaymode::ACTIVE);
+		} else if (displayMode == "non-zero") {
+			setDisplayMode(Displaymode::NON_ZERO);
+		} else if (displayMode == "none") {
+			setDisplayMode(Displaymode::NONE);
+		} else {
+			global_log->error() << "Unknown display mode: " << displayMode << endl;
+		}
+	}
+}
+
 
 Timer* TimerProfiler::getTimer(string timerName){
 	auto timerProfiler = _timers.find(timerName);
@@ -69,10 +89,15 @@ void TimerProfiler::setSyncTimer(string timerName, bool sync){
 }
 
 void TimerProfiler::print(string timerName, string outputPrefix){
-	if (_checkTimer(timerName)) {
-		global_log->info() << outputPrefix << getOutputString(timerName) << getTime(timerName) << " sec" << endl;
-	} else {
+	if ( ! _checkTimer(timerName, false)) {
 		_debugMessage(timerName);
+		return;
+	}
+	if( (getDisplayMode() == Displaymode::ALL) |
+		(getDisplayMode() == Displaymode::ACTIVE && getTimer(timerName)->isActive()) |
+		(getDisplayMode() == Displaymode::NON_ZERO && getTimer(timerName)->get_etime() > 0)
+	) {
+		global_log->info() << outputPrefix << getOutputString(timerName) << getTime(timerName) << " sec" << endl;
 	}
 }
 

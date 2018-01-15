@@ -372,9 +372,9 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		stride /= 2;
 		colourStride = (((coords[2] * _numCellsOnGlobalLevel[2]) % stride) * stride   + ((coords[1] * _numCellsOnGlobalLevel[1]) %  stride)) * stride + ((coords[0] * _numCellsOnGlobalLevel[0]) % stride);
 		MPI_Comm_split(temp, colourStride, 0, &_neighbourhoodComms[i]);
-		int size;
-		MPI_Comm_size(_neighbourhoodComms[i], &size);
-		if(size > 8){ //neighbourhood comms need to have size 8
+		int size2;
+		MPI_Comm_size(_neighbourhoodComms[i], &size2);
+		if(size2 > 8){ //neighbourhood comms need to have size 8
 			std::cout << "Error wrong communicator \n";
 			Simulation::exit(1);
 		}

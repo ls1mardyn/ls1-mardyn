@@ -16,7 +16,8 @@
 typedef enum {
 	LEAVING_AND_HALO_COPIES = 0, /** send process-leaving particles and halo-copies together in one message */
 	HALO_COPIES = 1, /** send halo-copies only */
-	LEAVING_ONLY = 2 /** send process-leaving particles only */
+	LEAVING_ONLY = 2, /** send process-leaving particles only */
+	FORCES = 3 /** send forces */
 } MessageType;
 
 class ParticleContainer;
@@ -56,7 +57,7 @@ public:
 
 	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
+	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force = false);
 
 	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
 
@@ -115,7 +116,8 @@ private:
 	enum HaloOrLeavingCorrection{
 		HALO,
 		LEAVING,
-		NONE
+		NONE,
+                FORCES // necessary?
 	};
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
 			const double highCorner[3], const double shift[3], const bool removeFromContainer,
@@ -128,7 +130,7 @@ private:
 	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
-	CommunicationBuffer _sendBuf, _recvBuf;
+	CommunicationBuffer _sendBuf, _recvBuf; // used to be ParticleData and 
 	bool _msgSent, _countReceived, _msgReceived;
 
 };

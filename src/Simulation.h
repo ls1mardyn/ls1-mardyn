@@ -84,7 +84,8 @@ class Simulation {
 private:
 	Simulation(Simulation &simulation);
 	Simulation& operator=(Simulation &simulation);
-	
+	void updateForces();
+
 public:
 	/** Instantiate simulation object */
 	Simulation();
@@ -478,7 +479,6 @@ private:
 
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;
-	bool _finalCheckpointBinary;
 
 	/** List of output plugins to use */
 	std::list<OutputBase*> _outputPlugins;

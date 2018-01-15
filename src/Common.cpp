@@ -14,7 +14,10 @@ int gettimestr(const char* fmt, char *buffer, int buffsize) {
 	struct tm* timeinfo;
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 	return strftime(buffer, buffsize, fmt, timeinfo);
+#pragma GCC diagnostic pop
 }
 
 string gettimestring(const char* fmt) {

@@ -338,7 +338,7 @@ void FullMolecule::upd_preF(double dt) {
 void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	using std::isnan; // C++11 needed
 
-	calcFM();
+	//calcFM(); //NOTE: This was moved to simulation.cpp calculateForces() and is called in simulate()
 
 #ifdef MAX_FORCE_LIMIT
 	double Fmax = MAX_FORCE_LIMIT;

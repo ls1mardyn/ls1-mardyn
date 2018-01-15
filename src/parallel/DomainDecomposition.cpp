@@ -42,12 +42,23 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	if(sendLeavingWithCopies()){
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	}
+	else {
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	}
 }
 
 void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	if(sendLeavingWithCopies()){
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+	}else{
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	}
 }
 
 bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/,
@@ -57,7 +68,12 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 
 void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
-	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+	if(sendLeavingWithCopies()){
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+	}else{
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+	}
 }
 
 void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
@@ -271,8 +287,8 @@ std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegi
 		haloLow[d] = haloRegion.rmin[d];
 		haloHigh[d] = haloRegion.rmax[d];
 		//TODO: ONLY FULL SHELL!!!
-		boundaryLow[d] = haloRegion.rmin[d] - haloRegion.offset[d] * cutoff; //rmin[d] if offset[d]==0
-		boundaryHigh[d] = haloRegion.rmax[d] - haloRegion.offset[d] * cutoff; //if offset[d]!=0 : shift by cutoff in negative offset direction
+		boundaryLow[d] = haloRegion.rmin[d] - haloRegion.offset[d] * haloRegion.width; //rmin[d] if offset[d]==0
+		boundaryHigh[d] = haloRegion.rmax[d] - haloRegion.offset[d] * haloRegion.width; //if offset[d]!=0 : shift by cutoff in negative offset direction
 		if (_coords[d] == 0 and haloRegion.offset[d] == -1) {
 			shift[d] = domain->getGlobalLength(d);
 		} else if (_coords[d] == _gridSize[d] - 1 and haloRegion.offset[d] == 1) {

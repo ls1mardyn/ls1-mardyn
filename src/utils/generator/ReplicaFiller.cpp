@@ -1,3 +1,4 @@
+
 #include "utils/generator/ReplicaFiller.h"
 
 #include <string>
@@ -76,7 +77,7 @@ public:
 	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) { return true; }
 
 	double getCutoff() { return 0.0; }
-	void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {}
+	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) {}
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) { return 0.0; }
 	void updateInnerMoleculeCaches() {}
 	void updateBoundaryAndHaloMoleculeCaches() {}
@@ -84,6 +85,8 @@ public:
 	size_t getNumCells() const { return 1; }
 	ParticleCellBase * getCell(unsigned cellIndex) { return nullptr; }
 	const ParticleCellBase* getCell(unsigned cellIndex) const { return nullptr; }
+	
+	bool getMoleculeAtPosition(const double pos[3], Molecule** result) { return false; } // pure virtual in particleContainer.h
 
 	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength) { return 0; }
 

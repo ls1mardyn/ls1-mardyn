@@ -10,7 +10,9 @@
 #include <iostream>
 
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/Logger.h" // is this used?
 #include "io/MemoryProfiler.h"
+
 class Component;
 class Domain;
 class ParticleContainer;
@@ -65,6 +67,13 @@ public:
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+
+	/**
+	 * @brief Exchanges forces at the domain boundaries if it's required by the cell container.
+	 * @param moleculeContainer The particle container
+	 * @param domain
+	 */
+	virtual void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain);
 
 	/**
 	 * Specifies the amount of non-blocking stages, when performing overlapping balanceAndExchange and computation.
@@ -175,6 +184,26 @@ public:
 	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary = false) const;
 
 
+	void updateSendLeavingWithCopies(bool sendTogether){
+		using Log::global_log;
+		// Count all processes that need to send separately
+		collCommInit(1);
+		collCommAppendInt(!sendTogether);
+		collCommAllreduceSum();
+		_sendLeavingAndCopiesSeparately = collCommGetInt();
+		collCommFinalize();
+
+
+		global_log->info() << "Sending leaving particles and halo copies "
+				<< (sendLeavingWithCopies() ? "together" : "separately") << std::endl;
+	}
+
+	bool sendLeavingWithCopies() const{
+		// No process needs to send separately => send together
+		return _sendLeavingAndCopiesSeparately == 0;
+	}
+
+
 	//##################################################################
 	// The following methods with prefix "collComm" are all used
 	// in the context of collective communication. Each of the methods
@@ -249,7 +278,22 @@ public:
 	}
 
 protected:
+
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
+
+	/**
+	 * @brief Does the force exchange for each dimension. Will be called for dim=0, 1 and 2.
+	 * @param dim The dimension (0,1 or 2)
+	 * @param moleculeContainer The particle container
+	 */
+	virtual void handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const;
+
+//	/**
+//	 * @brief Does the force exchange for each dimension. Will be called for dim=0, 1 and 2.
+//	 * @param dim The dimension (0,1 or 2)
+//	 * @param moleculeContainer The particle container
+//	 */
+//	virtual void handleForceExchangeDirect(unsigned dim, ParticleContainer* moleculeContainer) const;
 
 	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
 
@@ -261,6 +305,7 @@ protected:
 
 private:
 	CollectiveCommBase _collCommBase;
+	int _sendLeavingAndCopiesSeparately = 0;
 };
 
 #endif /* DOMAINDECOMPBASE_H_ */

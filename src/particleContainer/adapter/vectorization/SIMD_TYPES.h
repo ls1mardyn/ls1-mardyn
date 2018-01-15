@@ -152,13 +152,13 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 
 	#if VCP_PREC==VCP_SPSP
 		typedef __m128 vcp_real_calc_vec;
-		typedef __m128 vcp_accum_calc_vec;
+		typedef __m128 vcp_real_accum_vec;
 	#elif VCP_PREC==VCP_SPDP
 		typedef __m128 vcp_real_calc_vec;
-		typedef __m128d vcp_accum_calc_vec;
+		typedef __m128d vcp_real_accum_vec;
 	#else // VCP_PREC==VCP_DPDP
 		typedef __m128d vcp_real_calc_vec;
-		typedef __m128d vcp_accum_calc_vec;
+		typedef __m128d vcp_real_accum_vec;
 	#endif
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
@@ -184,13 +184,13 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
 	#if VCP_PREC==VCP_SPSP
 		typedef __m256 vcp_real_calc_vec;
-		typedef __m256 vcp_accum_calc_vec;
+		typedef __m256 vcp_real_accum_vec;
 	#elif VCP_PREC==VCP_SPDP
 		typedef __m256 vcp_real_calc_vec;
-		typedef __m256d vcp_accum_calc_vec;
+		typedef __m256d vcp_real_accum_vec;
 	#else // VCP_PREC==VCP_DPDP
 		typedef __m256d vcp_real_calc_vec;
-		typedef __m256d vcp_accum_calc_vec;
+		typedef __m256d vcp_real_accum_vec;
 	#endif
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
@@ -220,13 +220,13 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 
 	#if VCP_PREC==VCP_SPSP
 		typedef __m512 vcp_real_calc_vec;
-		typedef __m512 vcp_accum_calc_vec;
+		typedef __m512 vcp_real_accum_vec;
 	#elif VCP_PREC==VCP_SPDP
 		typedef __m512 vcp_real_calc_vec;
-		typedef __m512d vcp_accum_calc_vec;
+		typedef __m512d vcp_real_accum_vec;
 	#else // VCP_PREC==VCP_DPDP
 		typedef __m512d vcp_real_calc_vec;
-		typedef __m512d vcp_accum_calc_vec;
+		typedef __m512d vcp_real_accum_vec;
 	#endif
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP

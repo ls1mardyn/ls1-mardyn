@@ -8,6 +8,13 @@ CXXFLAGS += -fsanitize=address
 LDFLAGS += -fsanitize=address
 endif
 
+# thread sanitizer:
+ifeq ($(THREAD_SANITIZER),1)
+CXXFLAGS += -fsanitize=thread
+LDFLAGS += -fsanitize=thread
+endif
+
+
 # Vectorization settings:
 #########################################
 ifeq ($(VECTORIZE_CODE),SSE)

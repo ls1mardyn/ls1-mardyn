@@ -8,8 +8,8 @@
 #ifndef SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 #define SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 
-#include "molecules/MoleculeForwardDeclaration.h"
-#include "utils/mardyn_assert.h"
+#include "molecules/MoleculeForwardDeclaration.h" 
+#include "utils/mardyn_assert.h" 
 
 #include <vector>
 #include <stddef.h>
@@ -42,6 +42,7 @@ public:
 
 	void resizeForAppendingLeavingMolecules(unsigned long numMols);
 	void resizeForAppendingHaloMolecules(unsigned long numMols);
+        void resizeForAppendingForceMolecules(unsigned long numMols);
 
 	unsigned char * getDataForSending();
 	size_t getNumElementsForSending();
@@ -50,12 +51,15 @@ public:
 	// write
 	void addLeavingMolecule(size_t indexOfMolecule, const Molecule& m);
 	void addHaloMolecule(size_t indexOfMolecule, const Molecule& m);
+        void addForceMolecule(size_t indexOfMolecule, const Molecule& m);
 
 	// read
 	void readLeavingMolecule(size_t indexOfMolecule, Molecule& m) const;
 	void readHaloMolecule(size_t indexOfMolecule, Molecule& m) const;
+        void readForceMolecule(size_t indexOfMolecule, Molecule& m) const;
 
-	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo);
+	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo); 
+	void resizeForReceivingMolecules(unsigned long& numForces);
 
 	size_t getNumHalo() const {
 		return _numHalo;
@@ -64,6 +68,10 @@ public:
 	size_t getNumLeaving() const {
 		return _numLeaving;
 	}
+        
+        size_t getNumForces() const {
+            return _numForces;
+        }
 
 	static MPI_Datatype getMPIDataType() {
 		return MPI_CHAR;
@@ -72,8 +80,9 @@ public:
 private:
 	static size_t _numBytesHalo;
 	static size_t _numBytesLeaving;
+        static size_t _numBytesForces; // where is this set?
 
-	enum class ParticleType_t {HALO=0, LEAVING=1};
+	enum class ParticleType_t {HALO=0, LEAVING=1, FORCE=3};
 	size_t getStartPosition(ParticleType_t type, size_t indexOfMolecule) const;
 
 	/**
@@ -87,7 +96,7 @@ private:
 
 	typedef unsigned char byte_t;
 	std::vector<byte_t> _buffer;
-	size_t _numLeaving, _numHalo;
+	size_t _numLeaving, _numHalo, _numForces;
 };
 
 template<typename T>

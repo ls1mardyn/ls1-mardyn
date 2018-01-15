@@ -174,6 +174,15 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			break;
 		}
+		case FORCES: {
+			global_log->debug() << "sending forces" << std::endl;
+			for(unsigned int p = 0; p < numHaloInfo; p++){
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, 
+					_haloInfo[p]._shift, false, FORCES); 
+			}
+			break;
+		}
+                
 	}
 
 	#ifndef NDEBUG
@@ -235,7 +244,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	}
 	return _countReceived;
 }
-bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
+bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force) {
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
 		int flag = 1;
@@ -250,17 +259,22 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag == true) {
 			_msgReceived = true;
+			
 
-			unsigned long numHalo, numLeaving;
-			_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo);
 
-			#ifndef NDEBUG
+			
+			if(!force) { // Buffer is particle data 
+				static std::vector<Molecule> mols;
+				unsigned long numHalo, numLeaving;
+				_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo); 
+
+#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
 				global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
 				std::ostringstream buf1;
 				for (unsigned long i = 0; i < numLeaving; ++i) {
 					Molecule m;
-					_recvBuf.readLeavingMolecule(i, m);
+					_recvBuf.readLeavingMolecule(i, m); 
 					buf1 << m.id() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
@@ -270,37 +284,87 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for (unsigned long i = 0; i < numHalo; ++i) {
 					Molecule m;
 					_recvBuf.readHaloMolecule(i, m);
-					buf2 << m.id() << " ";
 				}
 				global_log->debug() << buf2.str() << std::endl;
-			#endif
+#endif
+				
+				
+				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
+				unsigned long totalNumMols = numLeaving + numHalo;
+				mols.resize(totalNumMols);
 
-			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
-			unsigned long totalNumMols = numLeaving + numHalo;
-			static std::vector<Molecule> mols;
-			mols.resize(totalNumMols);
-
-			/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
-			#pragma omp parallel for schedule(static)
-			#endif*/
-			for (unsigned long i = 0; i < totalNumMols; i++) {
-				Molecule m;
-				if (i < numLeaving) {
-					// leaving
-					_recvBuf.readLeavingMolecule(i, m);
-				} else {
-					// halo
-					_recvBuf.readHaloMolecule(i - numLeaving, m);
+				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
+				#pragma omp parallel for schedule(static)
+				#endif*/
+				for (unsigned long i = 0; i < totalNumMols; i++) {
+					Molecule m;
+					if (i < numLeaving) {
+						// leaving
+						_recvBuf.readLeavingMolecule(i, m); 
+					} else {
+						// halo
+						_recvBuf.readHaloMolecule(i - numLeaving, m); 
+					}
+					mols[i] = m;
 				}
-				mols[i] = m;
-			}
-			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
 
-			global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
-			moleculeContainer->addParticles(mols, removeRecvDuplicates);
-			mols.clear();
+				moleculeContainer->addParticles(mols, removeRecvDuplicates);
+				mols.clear();
+
+			} else { // Buffer is force data
+				
+				/*
+				#if defined(_OPENMP)
+				#pragma omp for schedule(static)
+				#endif
+				*/ 
+				
+				unsigned long numForces;
+				_recvBuf.resizeForReceivingMolecules(numForces);
+			
+				
+#ifndef NDEBUG	
+				global_log->debug() << "Receiving particles from " << _rank << std::endl;
+				global_log->debug() << "Buffer contains " << numForces << " force particles with IDs " << std::endl;
+				std::ostringstream buf1;
+				
+				for(unsigned long i = 0; i < numForces; ++i) {
+					Molecule m;
+					_recvBuf.readForceMolecule(i, m);
+					buf1 << m.id() << " ";
+				}
+				global_log->debug() << buf1.str() << std::endl;
+				
+				
+#endif
+				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
+				//mols.resize(numForces);
+				
+				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
+				#pragma omp parallel for schedule(static)
+				#endif*/
+				
+				for(unsigned i = 0; i < numForces; ++i) {
+					Molecule m;
+					_recvBuf.readForceMolecule(i, m);
+					//mols[i] = m;
+					Molecule* m_target;
+					const double position[3] = { m.r(0), m.r(1), m.r(2) };
+					moleculeContainer->getMoleculeAtPosition(position, &m_target);
+					m_target->Fadd(m.F_vec());
+					m_target->Madd(m.M_vec());
+					m_target->Viadd(m.Vi_vec());
+				}
+				
+				//moleculeContainer->addParticles(mols, removeRecvDuplicates);
+
+			}
+			
+
+
 			_recvBuf.clear();
 			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
+			
 
 		} else {
 			++_countTested;
@@ -357,12 +421,14 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	vector<vector<Molecule>> threadData;
 	vector<int> prefixArray;
 
-	// compute how many molecules are already in of this type:
+	// compute how many molecules are already in of this type: - adjust for Forces
 	unsigned long numMolsAlreadyIn = 0;
 	if (haloLeaveCorr == LEAVING) {
 		numMolsAlreadyIn = _sendBuf.getNumLeaving();
 	} else if (haloLeaveCorr == HALO) {
 		numMolsAlreadyIn = _sendBuf.getNumHalo();
+	} else if(haloLeaveCorr == FORCES) {
+		numMolsAlreadyIn = _sendBuf.getNumForces();
 	}
 
 	#if defined (_OPENMP)
@@ -419,6 +485,8 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 				_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
 			} else if (haloLeaveCorr == HALO) {
 				_sendBuf.resizeForAppendingHaloMolecules(totalNumMolsAppended);
+			} else if (haloLeaveCorr == FORCES) {
+				_sendBuf.resizeForAppendingForceMolecules(totalNumMolsAppended);
 			}
 		}
 
@@ -453,7 +521,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							mCopy.setr(dim, std::nexttoward(r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
 						}
 					}
-				} else if (haloLeaveCorr == LEAVING) {
+				} else if (haloLeaveCorr == LEAVING || haloLeaveCorr == FORCES) {
 					// some additional shifting to ensure that rounding errors do not hinder the correct placement
 					if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
 						if (mCopy.r(dim) < 0.) { // in the lower part it was wrongly shifted if
@@ -468,12 +536,17 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 						}
 					}
-				} /* if-else HALO-LEAVING */
+				} 
+				/* else if(haloLeaveCorr == FORCES) { // using Leaving correction for now.
+					// THIS IS STILL MISSING!
+				} */
 			} /* for-loop dim */
 			if (haloLeaveCorr == LEAVING) {
 				_sendBuf.addLeavingMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			} else if (haloLeaveCorr == HALO) {
 				_sendBuf.addHaloMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
+			} else if (haloLeaveCorr == FORCES) {
+				_sendBuf.addForceMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			}
 		}
 	}

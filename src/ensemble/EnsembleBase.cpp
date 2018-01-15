@@ -15,6 +15,7 @@ using Log::global_log;
 Ensemble::~Ensemble()
 {
 	delete _domain;
+	_domain=nullptr;
 	for(auto& m : _mixingrules)
 		delete(m);
 }

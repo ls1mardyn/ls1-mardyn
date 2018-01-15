@@ -38,7 +38,7 @@ class ResortCellProcessorSliced;
 //! picture illustrates this
 //! \image particles_with_lc.jpg
 //!
-//! The spacial domain covered by the linked cells is larger then
+//! The spacial domain covered by the linked cells is larger than
 //! the bounding box of the domain. This halo region surrounding
 //! the phasespace is used for (periodic) boundary conditions
 //! and has to be at least as wide as the cutoff radius. \n
@@ -109,7 +109,7 @@ public:
 	}
 
 	// documentation see father class (ParticleContainer.h)
-	void rebuild(double bBoxMin[3], double bBoxMax[3]);
+	bool rebuild(double bBoxMin[3], double bBoxMax[3]) override;
 
 	//! Pointers to the particles are put into cells depending on the spacial position
 	//! of the particles.
@@ -172,7 +172,7 @@ public:
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
 
-	void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) override;
+	void deleteMolecule(Molecule &molecule, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
@@ -191,6 +191,14 @@ public:
 	double* cellLength() {
 		return _cellLength;
 	}
+	
+	/**
+	 * @brief Gets a molecule by its position.
+	 * @param pos Molecule position
+	 * @param result Molecule will be returned by this pointer if found
+	 * @return Molecule was found?
+	 */
+	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
 
 #ifdef VTK
 	friend class VTKGridWriter;
@@ -255,7 +263,10 @@ public:
 		return &(_cells.at(cellIndex));
 	}
 
-	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength);
+
+	bool requiresForceExchange() const override; // new
+
+	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength); // new
 
 private:
 	//####################################
@@ -292,7 +303,7 @@ private:
 	//! is larger than the cutoff radius, the cell can be neglected.
 	//! The distance in one dimension is the width of a cell multiplied with the number
 	//! of cells between the two cells (this is received by subtracting one of the difference).
-	void calculateNeighbourIndices(std::array<long, 13>& forward, std::array<long, 13>& backward) const;
+	void calculateNeighbourIndices(std::vector<long>& forward, std::vector<long>& backward) const;
 
 	//! @brief addition for compact SimpleMD-style traversal
 	std::array<std::pair<unsigned long, unsigned long>, 14> calculateCellPairOffsets() const;
@@ -332,7 +343,7 @@ private:
 
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices of all halo cells in the _cells vector
 
-    std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner;
+        std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner; // new
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
@@ -343,6 +354,7 @@ private:
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
+	unsigned _cellsInCutoff = 1; //!< Cells in cutoff radius -> cells with size cutoff / cellsInCutoff
 
 	//! @brief True if all Particles are in the right cell
 	//!

@@ -169,6 +169,8 @@ public:
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates = false);
 
+	void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) override;
+
 	virtual std::vector<int> getNeighbourRanks() =0;
 	virtual std::vector<int> getNeighbourRanksFullShell() =0;
 
@@ -178,6 +180,9 @@ public:
 #if defined(ENABLE_MPI)
 	MPI_Datatype getMPIParticleType() {
 		return _mpiParticleType;
+	}
+	MPI_Datatype getMPIParticleForceType() {
+		return _mpiParticleForceType;
 	}
 	virtual MPI_Comm getCommunicator() {
 		return _comm;
@@ -200,7 +205,7 @@ public:
 	//! Sets the communicationScheme.
 	//! If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
 	//! @param scheme
-	virtual void setCommunicationScheme(std::string scheme);
+	virtual void setCommunicationScheme(std::string scheme,std::string comScheme);
 
 	// documentation in base class
 	virtual int getNonBlockingStageCount() override;
@@ -236,6 +241,7 @@ protected:
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates = false);
 
 	MPI_Datatype _mpiParticleType;
+	MPI_Datatype _mpiParticleForceType;
 
 	MPI_Comm _comm;
 

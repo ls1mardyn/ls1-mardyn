@@ -278,14 +278,14 @@ void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
 	RealCalcVec::horizontal_add_and_store(a, mem_addr);
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-	#if VCP_PREC == VCP_SPSP
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		*mem_addr += _mm512_reduce_add_ps(a);
 	#else /* VCP_DPDP or VCP_SPDP */
 		*mem_addr += _mm512_reduce_add_pd(a);
 	#endif
 	// NOTE: separate, because only the Intel compiler provides _mm512_reduce_add_pd/ps
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	#if VCP_PREC == VCP_SPSP
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		//a		 = |  1 |  2 |  3 |  4 |  5 |....| 13 | 14 | 15 | 16 |
 		//low	 = |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |
 		//high	 = |  9 | 10 | 11 | 12 | 14 | 14 | 15 | 16 |
@@ -310,8 +310,8 @@ void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
 		// only add first float value (12345678) of t3
 		*mem_addr += _mm_cvtss_f32(t3);
 
-	#else /* VCP_DPDP or VCP_SPDP */
-		__m256d low = _mm512_castpd512_pd256(a);
+	#else /* VCP_DPDP */
+		__m256d low = _mm512_extractf64x4_pd(a, 0);
 		__m256d high = _mm512_extractf64x4_pd(a, 1);
 
 		__m256d t1 = _mm256_hadd_pd(low + high, low + high);

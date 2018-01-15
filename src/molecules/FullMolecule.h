@@ -58,9 +58,12 @@ public:
 	void setv(unsigned short d, double v) { _v[d] = v; }
 	/** get molecule's mass */
 	double mass() const { return _m; }
-
+        
+        void setF(unsigned short d, double F) { _F[d] = F; }
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
+	/** get forces onto molecule */
+	const double* F_vec() {return _F; }
 	/** get molecule's orientation */
 	const Quaternion& q() const { return _q; }
 
@@ -72,8 +75,10 @@ public:
 	double D(unsigned short d) const { return _L[d]; }
 	/** get coordinate of the current angular momentum  onto molecule */ 
 	double M(unsigned short d) const { return _M[d]; }
+	const double* M_vec() {return _M; }
 	/** get the virial **/
 	double Vi(unsigned short d) const { return _Vi[d];}
+	const double* Vi_vec() {return _Vi; }
 
 	void setD(unsigned short d, double D) { this->_L[d] = D; }
 

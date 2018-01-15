@@ -25,7 +25,7 @@ public:
 		computeNeighbourOffsets();
 	}
 
-	~OriginalCellPairTraversal() {}
+	virtual ~OriginalCellPairTraversal() {}
 
 	virtual void rebuild(std::vector<CellTemplate>& cells,
 						 const std::array<unsigned long, 3>& dims,
@@ -35,7 +35,7 @@ public:
 	void traverseCellPairsOuter(CellProcessor& cellProcessor);
 	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
-	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
+	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
 protected:
 	// couldn't get it to compile when the enum is part of the class, so making it global...
@@ -61,6 +61,8 @@ void OriginalCellPairTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> 
 	if (dynamic_cast<OriginalCellPairTraversalData *>(data)) {
 		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
 		computeNeighbourOffsets();
+
+		_innerMostCellIndices.clear();
 
 		auto maxIndex = 1;
 		for (auto d : dims)

@@ -131,6 +131,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			// simulation box dimensions
 			double globalLength[3];
 			_phaseSpaceHeaderFileStream >> globalLength[0] >> globalLength[1] >> globalLength[2];
+			delete _simulation.getEnsemble()->domain();
 			_simulation.getEnsemble()->domain() = new BoxDomain();
 			for( int d = 0; d < 3; d++ ) {
 				static_cast<BoxDomain*>(_simulation.getEnsemble()->domain())->setLength(d, globalLength[d]);

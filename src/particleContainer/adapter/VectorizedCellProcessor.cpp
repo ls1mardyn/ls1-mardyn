@@ -2647,7 +2647,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
-void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
+void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sumAll) {
 	mardyn_assert(&c1 != &c2);
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
@@ -2662,24 +2662,17 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	// is more efficient
 	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
-	// if one cell is empty, or both cells are Halo, skip
-	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
-		return;
-	}
+	
+	if(sumAll) {
+		// if one cell is empty, skip
+		if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {
+			return;
+		}
 
-	// Macroscopic conditions:
-	// if none of the cells is halo, then compute
-	// if one of them is halo:
-	// 		if full_c1-index < full_c2-index, then compute
-	// 		else, then don't compute
-	// This saves the Molecule::isLessThan checks
-	// and works similar to the "Half-Shell" scheme
+		// Macroscopic conditions: Compute always
 
-	const bool ApplyCutoff = true;
+		const bool ApplyCutoff = true;
 
-	if ((not c1Halo and not c2Halo) or						// no cell is halo or
-			(full_c1.getCellIndex() < full_c2.getCellIndex())) 		// one of them is halo, but full_c1.index < full_c2.index
-	{
 		const bool CalculateMacroscopic = true;
 
 		if (calc_soa1_soa2) {
@@ -2687,17 +2680,45 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 		} else {
 			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
-
 	} else {
-		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
-		mardyn_assert(not (full_c1.getCellIndex() < full_c2.getCellIndex()));// full_c1.index not < full_c2.index
+		// if one cell is empty, or both cells are Halo, skip
+		if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
+			return;
+		}
 
-		const bool CalculateMacroscopic = false;
+		// Macroscopic conditions:
+		// if none of the cells is halo, then compute
+		// if one of them is halo:
+		// 		if full_c1-index < full_c2-index, then compute
+		// 		else, then don't compute
+		// This saves the Molecule::isLessThan checks
+		// and works similar to the "Half-Shell" scheme
 
-		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		const bool ApplyCutoff = true;
+
+		if ((not c1Halo and not c2Halo) or						// no cell is halo or
+				(full_c1.getCellIndex() < full_c2.getCellIndex())) 		// one of them is halo, but full_c1.index < full_c2.index
+		{
+			const bool CalculateMacroscopic = true;
+
+			if (calc_soa1_soa2) {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			} else {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			}
+
 		} else {
-			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
+			mardyn_assert(not (full_c1.getCellIndex() < full_c2.getCellIndex()));// full_c1.index not < full_c2.index
+
+			const bool CalculateMacroscopic = false;
+
+			if (calc_soa1_soa2) {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			} else {
+				_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			}
 		}
 	}
 }
+
