@@ -17,7 +17,7 @@
 class XMLfileUnits;
 class DomainDecompBase;
 class ParticleContainer;
-class AccumulatorBase;
+class Accumulator;
 class ControlRegionT
 {
 public:
@@ -48,7 +48,7 @@ public:
 
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
-	AccumulatorBase* CreateAccumulatorInstance(std::string strTransDirections);
+	Accumulator* CreateAccumulatorInstance(std::string strTransDirections);
 
 private:
 	// instances / ID
@@ -70,7 +70,7 @@ private:
 
 	unsigned short _nRegionID;
 
-	AccumulatorBase* _accumulator;
+	Accumulator* _accumulator;
 
 	std::string _strFilenamePrefixBetaLog;
 	unsigned long _nWriteFreqBeta;
@@ -117,164 +117,28 @@ private:
 
 // Accumulate kinetic energy dependent on which translatoric directions should be thermostated
 
-class AccumulatorBase
+class Accumulator
 {
-protected:
-	AccumulatorBase() {}
-	virtual ~AccumulatorBase() {}
+private:
+	bool _accumulateX, _accumulateY, _accumulateZ;
 
 public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol) = 0;
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr) = 0;
-};
-
-class AccumulatorX : public AccumulatorBase
-{
-public:
-	AccumulatorX() {}
-	virtual ~AccumulatorX() {}
-
-public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol)
-	{
-		double vx = mol->v(0);
-		double m  = mol->mass();
-
-		return m * vx*vx;
+	Accumulator(bool accX, bool accY, bool accZ) :
+			_accumulateX(accX), _accumulateY(accY), _accumulateZ(accZ) {
 	}
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-	{
-		mol->setv(0, mol->v(0) * vcorr);
-	}
-};
 
-class AccumulatorY : public AccumulatorBase
-{
-public:
-	AccumulatorY() {}
-	virtual ~AccumulatorY() {}
-
-public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol)
-	{
-		double vy = mol->v(1);
-		double m  = mol->mass();
-
-		return m * vy*vy;
-	}
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-	{
-		mol->setv(1, mol->v(1) * vcorr);
-	}
-};
-
-class AccumulatorZ : public AccumulatorBase
-{
-public:
-	AccumulatorZ() {}
-	virtual ~AccumulatorZ() {}
-
-public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol)
-	{
-		double vz = mol->v(2);
-		double m  = mol->mass();
-
-		return m * vz*vz;
-	}
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-	{
-		mol->setv(2, mol->v(2) * vcorr);
-	}
-};
-
-class AccumulatorXY : public AccumulatorBase
-{
-public:
-	AccumulatorXY() {}
-	virtual ~AccumulatorXY() {}
-
-public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol)
-	{
-		double vx = mol->v(0);
-		double vy = mol->v(1);
-		double m  = mol->mass();
-
-		return m * (vx*vx + vy*vy);
-	}
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-	{
-		mol->setv(0, mol->v(0) * vcorr);
-		mol->setv(1, mol->v(1) * vcorr);
-	}
-};
-
-class AccumulatorXZ : public AccumulatorBase
-{
-public:
-	AccumulatorXZ() {}
-	virtual ~AccumulatorXZ() {}
-
-public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol)
-	{
-		double vx = mol->v(0);
-		double vz = mol->v(2);
-		double m  = mol->mass();
-
-		return m * (vx*vx + vz*vz);
-	}
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-	{
-		mol->setv(0, mol->v(0) * vcorr);
-		mol->setv(2, mol->v(2) * vcorr);
-	}
-};
-
-class AccumulatorYZ : public AccumulatorBase
-{
-public:
-	AccumulatorYZ() {}
-	virtual ~AccumulatorYZ() {}
-
-public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol)
-	{
-		double vy = mol->v(1);
-		double vz = mol->v(2);
-		double m  = mol->mass();
-
-		return m * (vy*vy + vz*vz);
-	}
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-	{
-		mol->setv(1, mol->v(1) * vcorr);
-		mol->setv(2, mol->v(2) * vcorr);
-	}
-};
-
-class AccumulatorXYZ : public AccumulatorBase
-{
-public:
-	AccumulatorXYZ() {}
-	virtual ~AccumulatorXYZ() {}
-
-public:
-	virtual double CalcKineticEnergyContribution(Molecule* mol)
-	{
-		double vx = mol->v(0);
-		double vy = mol->v(1);
-		double vz = mol->v(2);
+	double CalcKineticEnergyContribution(Molecule* mol) {
+		double vx = _accumulateX ? mol->v(0) : 0.0;
+		double vy = _accumulateY ? mol->v(1) : 0.0;
+		double vz = _accumulateZ ? mol->v(2) : 0.0;
 		double m  = mol->mass();
 
 		return m * (vx*vx + vy*vy + vz*vz);
 	}
-	virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-	{
-		mol->setv(0, mol->v(0) * vcorr);
-		mol->setv(1, mol->v(1) * vcorr);
-		mol->setv(2, mol->v(2) * vcorr);
+	void ScaleVelocityComponents(Molecule* mol, double vcorr) {
+		if (_accumulateX) mol->setv(0, mol->v(0) * vcorr);
+		if (_accumulateY) mol->setv(1, mol->v(1) * vcorr);
+		if (_accumulateZ) mol->setv(2, mol->v(2) * vcorr);
 	}
 };
 
