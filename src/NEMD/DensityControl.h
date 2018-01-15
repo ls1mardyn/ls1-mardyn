@@ -26,6 +26,7 @@ class Simulation;
 class Domain;
 class DomainDecompBase;
 class DensityControl;
+class ParticleInsertion;
 
 namespace dec
 {
@@ -50,6 +51,7 @@ public:
     void MeasureDensity(Molecule* mol);
 
     void ControlDensity(Molecule* mol, Simulation* simulation, bool& bDeleteMolecule);
+    void postLoopAction();
 
     void ResetLocalValues();
     void UpdateVolume() {_dVolume = this->GetWidth(0) * this->GetWidth(1) * this->GetWidth(2); _dInvertVolume = 1./_dVolume;}
@@ -97,6 +99,8 @@ private:
 
 	// identity change (by component ID)
 	std::vector<uint32_t> _vecChangeCompIDs;
+
+	ParticleInsertion* _insertion;
 };
 
 }
@@ -121,6 +125,7 @@ public:
     void CalcGlobalValues(unsigned long simstep);
     void UpdateGlobalDensities(unsigned long simstep, bool bDeleteMolecule );
     void ControlDensity(Molecule* mol, Simulation* simulation, unsigned long simstep, bool& bDeleteMolecule);
+    void postLoopAction();
 
     unsigned long GetControlFreq() {return _nControlFreq;}
     unsigned long GetStart() {return _nStart;}

@@ -9,6 +9,7 @@
 #include "NEMD/DistControl.h"
 #include "NEMD/MettDeamon.h"
 #include "NEMD/NEMD.h"
+#include "NEMD/ParticleInsertion.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
@@ -46,7 +47,9 @@ unsigned short dec::ControlRegion::_nStaticID = 0;
 // class dec::ControlRegion
 
 dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3] )
-		: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+	:
+	CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
+	_insertion(nullptr)
 {
 	// ID
 	_nID = ++_nStaticID;
@@ -139,6 +142,12 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("target/componentID", _nTargetComponentID);
 	xmlconfig.getNodeValue("target/density", _dTargetDensity);
 	global_log->info()<< "DensityControl: target componentID = " << _nTargetComponentID << ", target density = " << _dTargetDensity << endl;
+
+	// particle insertion
+	int ins = 0;
+	xmlconfig.getNodeValue("target/insertion", ins);
+	if(1 == ins)
+		_insertion = new BubbleMethod(this);
 
 	// change identity of molecules by component ID
 	if(xmlconfig.changecurrentnode("changes")) {
@@ -306,6 +315,14 @@ void dec::ControlRegion::CalcGlobalValues()
 		_mettDeamon->StoreDensity(_dDensityGlobal);
 		_mettDeamon->StoreValuesCV(_dTargetDensity, this->GetVolume() );  // TODO: move this, so its called only once
 	}
+
+	// particle insertion
+	if(nullptr != _insertion)
+	{
+		if(_dDensityGlobal < _dTargetDensity)
+			_insertion->setState(BMS_SELECT_RANDOM_SPOT);
+		_insertion->preLoopAction();
+	}
 }
 
 void dec::ControlRegion::UpdateGlobalDensity(bool bDeleteMolecule)
@@ -453,6 +470,11 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
         else
             bDeleteMolecule = false;
     }
+    else  // particle insertion
+    {
+    	if(nullptr != _insertion)
+    		_insertion->insideLoopAction(mol);
+    }
 
 	// sample deleted molecules data
 	if(true == bDeleteMolecule)
@@ -473,6 +495,13 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 		if(NULL != _mettDeamon)
 			_mettDeamon->IncrementDeletedMoleculesLocal();
 	}
+}
+
+void dec::ControlRegion::postLoopAction()
+{
+	if(_insertion == nullptr)
+		return;
+	_insertion->postLoopAction();
 }
 
 void dec::ControlRegion::ResetLocalValues()
@@ -776,6 +805,14 @@ void DensityControl::ControlDensity(Molecule* mol, Simulation* simulation, unsig
     {
         (*it)->ControlDensity(mol, simulation, bDeleteMolecule);
     }
+}
+
+void DensityControl::postLoopAction()
+{
+	for(auto&& reg : _vecControlRegions)
+	{
+		reg->postLoopAction();
+	}
 }
 
 void DensityControl::CheckRegionBounds()
