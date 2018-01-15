@@ -168,7 +168,7 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 
 	domainDecomp->collCommInit(_nNumSlabs * 4);
 	for (unsigned s = 0; s < _nNumSlabs; ++s) {
-		ThermostatVariables & localTV = _thermVars[s]._local; // do not forget &
+		LocalThermostatVariables & localTV = _thermVars[s]._local; // do not forget &
 		domainDecomp->collCommAppendUnsLong(localTV._numMolecules);
 		domainDecomp->collCommAppendUnsLong(localTV._numRotationalDOF);
 		domainDecomp->collCommAppendDouble(localTV._ekinRot);
@@ -176,7 +176,7 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 	}
 	domainDecomp->collCommAllreduceSum();
 	for (unsigned s = 0; s < _nNumSlabs; ++s) {
-		ThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
+		GlobalThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
 		globalTV._numMolecules = domainDecomp->collCommGetUnsLong();
 		globalTV._numRotationalDOF = domainDecomp->collCommGetUnsLong();
 		globalTV._ekinRot = domainDecomp->collCommGetDouble();
@@ -190,7 +190,7 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 
 	for(unsigned int s = 0; s<_nNumSlabs; ++s)
 	{
-		ThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
+		GlobalThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
 		if( globalTV._numMolecules < 1 )
 			globalTV._betaTrans = 1.;
 		else
@@ -260,7 +260,7 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 	_d2EkinTransLocal[nPosIndex] += m*(vx*vx + vz*vz);
 */
 
-	ThermostatVariables & localTV = _thermVars[nPosIndex]._local;  // do not forget &
+	LocalThermostatVariables & localTV = _thermVars[nPosIndex]._local;  // do not forget &
 	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
 
 	// sum up rot. kinetic energy (2x)
@@ -304,7 +304,7 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 	if(nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
 		return;
 
-	ThermostatVariables & globalTV = _thermVars[nPosIndex]._global;  // do not forget &
+	GlobalThermostatVariables & globalTV = _thermVars[nPosIndex]._global;  // do not forget &
 	if(globalTV._numMolecules < 1)
 		return;
 

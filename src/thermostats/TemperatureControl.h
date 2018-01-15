@@ -61,7 +61,7 @@ private:
 	unsigned int _nNumSlabs;
 	double _dSlabWidth;
 
-	std::vector<ThermostatVariablesLocalAndGlobal> _thermVars;
+	std::vector<LocalAndGlobalThermostatVariables> _thermVars;
 
 	double _dTargetTemperature;
 	double _dTemperatureExponent;
