@@ -47,29 +47,94 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 
 }
 
-void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
-		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp) {
-	// first use sequential version, if _coversWholeDomain
-	for (unsigned int d = 0; d < 3; d++) {
-		if (_coversWholeDomain[d]) {
-			// use the sequential version
-			switch (msgType) {
-			case LEAVING_AND_HALO_COPIES:
-				domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-				domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
-				break;
-			case LEAVING_ONLY:
-				domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-				break;
-			case HALO_COPIES:
-				domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
-				break;
-			case FORCES:
-				domainDecomp->DomainDecompBase::handleForceExchange(d, moleculeContainer);
-				break;
+void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions,
+		MessageType msgType, DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer) {
+	for (const HaloRegion& haloRegion : haloRegions) {
+		bool isinownprocess = true;
+		for (int d = 0; d < 3; d++) {
+			if (haloRegion.offset[d] && !_coversWholeDomain[d]) {
+				isinownprocess = false;
 			}
 		}
+		if (!isinownprocess) {
+			continue;
+		}
+		// use the sequential version
+		switch (msgType) {
+		case LEAVING_AND_HALO_COPIES:
+			// this should not be called!
+			assert(false);
+			break;
+		case LEAVING_ONLY:
+			domainDecomp->DomainDecompBase::handleDomainLeavingParticlesDirect(haloRegion, moleculeContainer);
+			break;
+		case HALO_COPIES:
+			domainDecomp->DomainDecompBase::populateHaloLayerWithCopiesDirect(haloRegion, moleculeContainer);
+			break;
+		case FORCES:
+			domainDecomp->DomainDecompBase::handleForceExchangeDirect(haloRegion, moleculeContainer);
+			break;
+		}
 	}
+}
+
+void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
+		Domain* domain, MessageType msgType, bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp) {
+	// first use sequential version, if _coversWholeDomain
+//	for (unsigned int d = 0; d < 3; d++) {
+//		if (_coversWholeDomain[d]) {
+//			// use the sequential version
+//			switch (msgType) {
+//			case LEAVING_AND_HALO_COPIES:
+//				domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
+//				domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+//				break;
+//			case LEAVING_ONLY:
+//				domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
+//				break;
+//			case HALO_COPIES:
+//				domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+//				break;
+//			case FORCES:
+//				domainDecomp->DomainDecompBase::handleForceExchange(d, moleculeContainer);
+//				break;
+//			}
+//		}
+//	}
+	// We mimic the direct neighbour communication also for the sequential case, otherwise things are copied multiple times or might be forgotten.
+	// We have to check each direction.
+	double rmin[DIMgeom]; // lower corner
+	double rmax[DIMgeom]; // higher corner
+
+	for (int d = 0; d < DIMgeom; d++) {
+		rmin[d] = domainDecomp->getBoundingBoxMin(d, domain);
+		rmax[d] = domainDecomp->getBoundingBoxMax(d, domain);
+	}
+	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , global_simulation->getcutoffRadius()};
+	std::vector<HaloRegion> haloRegions;
+	switch (msgType) {
+	case LEAVING_AND_HALO_COPIES:
+		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer);
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		doDirectFallBackExchange(haloRegions, HALO_COPIES, domainDecomp, moleculeContainer);
+		break;
+	case LEAVING_ONLY:
+		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
+		break;
+	case HALO_COPIES:
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
+		break;
+	case FORCES:
+		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
+		break;
+	}
+
+
+
 	// 1Stage=> only _neighbours[0] exists!
 	const int numNeighbours = _neighbours[0].size();
 	// send only if neighbour is actually a neighbour.
