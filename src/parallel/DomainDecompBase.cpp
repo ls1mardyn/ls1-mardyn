@@ -95,7 +95,7 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 	}
 
 #if defined (_OPENMP)
-#pragma omp parallel shared(startRegion, endRegion)
+#pragma omp parallel
 #endif
 	{
 		auto begin = moleculeContainer->iterateRegionBegin(haloRegion.rmin, haloRegion.rmax);
@@ -182,7 +182,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 	}
 
 #if defined (_OPENMP)
-#pragma omp parallel shared(startRegion, endRegion)
+#pragma omp parallel
 #endif
 	{
 		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(haloRegion.rmin, haloRegion.rmax);
@@ -266,7 +266,7 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 		}
 
 #if defined (_OPENMP)
-#pragma omp parallel shared(startRegion, endRegion)
+#pragma omp parallel
 #endif
 	{
 		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(haloRegion.rmin, haloRegion.rmax);
