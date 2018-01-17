@@ -14,9 +14,24 @@ using namespace autopas;
 
 class MyMolecule : public Particle {
 public:
-	MyMolecule(double r = 0.0, double f = 0.0, unsigned long i = 0ul) : Particle(r, f), _id(i) {}
-	void print() { cout << "Molecule (pos = " << _x << ", force = " << _f << ", id =" << _id << ")" << endl; }
-	unsigned long _id;
+	MyMolecule() : Particle(), _myvar(0) {}
+	MyMolecule(std::array<double, 3> r, unsigned long i, int myvar) : Particle(r, i), _myvar(myvar) {}
+	void print() {
+		cout << "Molecule with position: ";
+		for (auto & r : getR()) {
+			cout << r << ", " ;
+		}
+		cout << "and force: ";
+
+		for (auto & f : getF()) {
+			cout << f << ", " ;
+		}
+		cout << "ID: " << getID();
+		cout << " myvar: " << _myvar << endl;
+	}
+
+private:
+	int _myvar;
 };
 
 // how do we recommend to use this thing?
@@ -35,7 +50,8 @@ void addAFewParticles(ParticleCell& pc) {
 	static int i = 0;
 	int iEnd = i + 4;
 	for ( ; i < iEnd; ++i) {
-		MyMolecule m(static_cast<double>(i), static_cast<double>(i), static_cast<unsigned long>(i));
+		std::array<double, 3> arr({static_cast<double>(i), static_cast<double>(i), static_cast<double>(i)});
+		MyMolecule m(arr, static_cast<unsigned long>(i), i);
 		pc.addParticle(m);
 	}
 }
@@ -206,12 +222,14 @@ void testParticleContainerFull() {
 
 	// add a few particles to the second cell
 	for (int i = 0; i < 4; ++i) {
-		MyMolecule m(static_cast<double>(i), static_cast<double>(i), static_cast<unsigned long>(i));
+		std::array<double, 3> arr({static_cast<double>(i), static_cast<double>(i), static_cast<double>(i)});
+		MyMolecule m(arr, static_cast<unsigned long>(i), i);
 		pc.addParticle(m, 1);
 	}
 	// add a few particles to the fourth cell
 	for (int i = 4; i < 8; ++i) {
-		MyMolecule m(static_cast<double>(i), static_cast<double>(i), static_cast<unsigned long>(i));
+		std::array<double, 3> arr({static_cast<double>(i), static_cast<double>(i), static_cast<double>(i)});
+		MyMolecule m(arr, static_cast<unsigned long>(i), i);
 		pc.addParticle(m, 3);
 	}
 
@@ -229,12 +247,14 @@ void testParticleContainerRMM() {
 
 	// add a few particles to the second cell
 	for (int i = 0; i < 4; ++i) {
-		MyMolecule m(static_cast<double>(i), static_cast<double>(i), static_cast<unsigned long>(i));
+		std::array<double, 3> arr({static_cast<double>(i), static_cast<double>(i), static_cast<double>(i)});
+		MyMolecule m(arr, static_cast<unsigned long>(i), i);
 		pc.addParticle(m, 1);
 	}
 	// add a few particles to the fourth cell
 	for (int i = 4; i < 8; ++i) {
-		MyMolecule m(static_cast<double>(i), static_cast<double>(i), static_cast<unsigned long>(i));
+		std::array<double, 3> arr({static_cast<double>(i), static_cast<double>(i), static_cast<double>(i)});
+		MyMolecule m(arr, static_cast<unsigned long>(i), i);
 		pc.addParticle(m, 3);
 	}
 
