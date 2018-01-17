@@ -65,6 +65,10 @@ int main(void) {
 	testParticleContainerFull();
 	testParticleContainerRMM();
 
+	LinkedCells<MyMolecule, FullParticleCell<MyMolecule>> lc;
+//	VerletLists<MyMolecule, FullParticleCell<MyMolecule>> vl;
+	Direct<MyMolecule, FullParticleCell<MyMolecule>> dir;
+
 	cout << "Hodor" << endl;
 	return EXIT_SUCCESS;
 }
@@ -217,8 +221,8 @@ void testParticleIteratorRMM() {
 
 void testParticleContainerFull() {
 	cout << " =========== testing ParticleContainerFull ============" << endl;
-	ParticleContainer<MyMolecule, FullParticleCell<MyMolecule>> pc;
-	pc.init(5); // empty full empty full empty
+	LinkedCells<MyMolecule, FullParticleCell<MyMolecule>> pc;
+	pc.init(); // empty full empty full empty
 
 	// add a few particles to the second cell
 	for (int i = 0; i < 4; ++i) {
@@ -242,8 +246,8 @@ void testParticleContainerFull() {
 
 void testParticleContainerRMM() {
 	cout << " =========== testing ParticleContainerRMM ============" << endl;
-	ParticleContainer<MyMolecule, RMMParticleCell<MyMolecule>> pc;
-	pc.init(5); // empty full empty full empty
+	LinkedCells<MyMolecule, RMMParticleCell<MyMolecule>> pc;
+	pc.init(); // empty full empty full empty
 
 	// add a few particles to the second cell
 	for (int i = 0; i < 4; ++i) {

@@ -13,6 +13,7 @@
 
 // particles
 #include "particles/Particle.h"
+#include "particles/MoleculeLJ.h"
 
 // cells
 #include "cells/ParticleCell.h"
@@ -25,5 +26,8 @@
 
 // containers
 #include "containers/ParticleContainer.h"
+#include "containers/LinkedCells.h"
+#include "containers/VerletLists.h"
+#include "containers/Direct.h"
 
 #endif /* DEPENDENCIES_EXTERNAL_AUTOPAS_SRC_AUTOPAS_H_ */
