@@ -12,6 +12,7 @@ using Log::global_log;
 
 VelocityScalingThermostat::VelocityScalingThermostat() : _globalBetaTrans(1), _globalBetaRot(1), _globalVelocity(NULL), _componentwise(false) {
 	_globalVelocity = new double[3];
+	_molDirVelThreshold = 50;
 }
 
 VelocityScalingThermostat::~VelocityScalingThermostat() {
@@ -186,18 +187,18 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
      _countedMoleculesAll[cid] = 0;
      _universalCountedMoleculesAll[cid];
      for (unsigned d = 0; d < 3; d++){
-	_directedVelocityAll[cid][d] = 0.0;
-	_universalDirectedVelocityAll[cid][d] = 0.0;
+	_directedVelocityAll[d][cid] = 0.0;
+	_universalDirectedVelocityAll[d][cid] = 0.0;
      }
      for (double xCoord = 0.5; xCoord < xMax; xCoord++)
        for (double yCoord = 0.5; yCoord < yMax; yCoord++){
 	  _countedMolecules[cid][xCoord][yCoord] = 0;
 	  _universalCountedMolecules[cid][xCoord][yCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocity[cid][xCoord][yCoord][d] = 0.0;
-	    _universalDirectedVelocity[cid][xCoord][yCoord][d] = 0.0;
-	    if(!dode->getRank() && this->_universalPriorVelSums[cid][xCoord][yCoord][d].size() == 0){
-	      this->_averagedVelSum[cid][xCoord][yCoord][d] = 0.0;
+	    _directedVelocity[d][cid][xCoord][yCoord] = 0.0;
+	    _universalDirectedVelocity[d][cid][xCoord][yCoord] = 0.0;
+	    if(!dode->getRank() && this->_universalPriorVelSums[d][cid][xCoord][yCoord].size() == 0){
+	      this->_averagedVelSum[d][cid][xCoord][yCoord] = 0.0;
 	      this->_averagedN[cid][xCoord][yCoord] = 0;
 	    }
 	  }
@@ -214,10 +215,10 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  _countedMoleculesSlab[cid][xCoord][yCoord][zCoord] = 0;
 	  _universalCountedMoleculesSlab[cid][xCoord][yCoord][zCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocitySlab[cid][xCoord][yCoord][zCoord][d] = 0.0;
-	    _universalDirectedVelocitySlab[cid][xCoord][yCoord][zCoord][d] = 0.0;
-	    if(!dode->getRank() && this->_universalPriorVelSumsSlab[cid][xCoord][yCoord][zCoord][d].size() == 0){
-	      this->_averagedVelSumSlab[cid][xCoord][yCoord][zCoord][d] = 0.0;
+	    _directedVelocitySlab[d][cid][xCoord][yCoord][zCoord] = 0.0;
+	    _universalDirectedVelocitySlab[d][cid][xCoord][yCoord][zCoord] = 0.0;
+	    if(!dode->getRank() && this->_universalPriorVelSumsSlab[d][cid][xCoord][yCoord][zCoord].size() == 0){
+	      this->_averagedVelSumSlab[d][cid][xCoord][yCoord][zCoord] = 0.0;
 	      this->_averagedNSlab[cid][xCoord][yCoord][zCoord] = 0;
 	    }
 	  }
@@ -232,10 +233,10 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  _countedMoleculesStress[cid][xCoord][yCoord][zCoord] = 0;
 	  _universalCountedMoleculesStress[cid][xCoord][yCoord][zCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocityStress[cid][xCoord][yCoord][zCoord][d] = 0.0;
-	    _universalDirectedVelocityStress[cid][xCoord][yCoord][zCoord][d] = 0.0;
-	    if(!dode->getRank() && this->_universalPriorVelSumsStress[cid][xCoord][yCoord][zCoord][d].size() == 0){
-	      this->_averagedVelSumStress[cid][xCoord][yCoord][zCoord][d] = 0.0;
+	    _directedVelocityStress[d][cid][xCoord][yCoord][zCoord] = 0.0;
+	    _universalDirectedVelocityStress[d][cid][xCoord][yCoord][zCoord] = 0.0;
+	    if(!dode->getRank() && this->_universalPriorVelSumsStress[d][cid][xCoord][yCoord][zCoord].size() == 0){
+	      this->_averagedVelSumStress[d][cid][xCoord][yCoord][zCoord] = 0.0;
 	      this->_averagedNStress[cid][xCoord][yCoord][zCoord] = 0;
 	    }
 	  }
@@ -249,10 +250,10 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  _countedMoleculesConfinement[cid][xCoord][yCoord] = 0;
 	  _universalCountedMoleculesConfinement[cid][xCoord][yCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocityConfinement[cid][xCoord][yCoord][d] = 0.0;
-	    _universalDirectedVelocityConfinement[cid][xCoord][yCoord][d] = 0.0;
-	    if(!dode->getRank() && this->_universalPriorVelSumsConfinement[cid][xCoord][yCoord][d].size() == 0){
-	      this->_averagedVelSumConfinement[cid][xCoord][yCoord][d] = 0.0;
+	    _directedVelocityConfinement[d][cid][xCoord][yCoord] = 0.0;
+	    _universalDirectedVelocityConfinement[d][cid][xCoord][yCoord] = 0.0;
+	    if(!dode->getRank() && this->_universalPriorVelSumsConfinement[d][cid][xCoord][yCoord].size() == 0){
+	      this->_averagedVelSumConfinement[d][cid][xCoord][yCoord] = 0.0;
 	      this->_averagedNConfinement[cid][xCoord][yCoord] = 0;
 	    }
 	  }
@@ -272,22 +273,22 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
       if(CID == cid_moved || CID == cid_fixed){
 	 _countedMoleculesAll[CID]++;
 	for (unsigned d = 0; d < 3; d++)
-		_directedVelocityAll[CID][d] += molecule->v(d);     
+		_directedVelocityAll[d][CID] += molecule->v(d);     
       }
       else{
 	_countedMolecules[CID][roundX][roundY]++;
 	for (unsigned d = 0; d < 3; d++)
-		_directedVelocity[CID][roundX][roundY][d] += molecule->v(d);
+		_directedVelocity[d][CID][roundX][roundY] += molecule->v(d);
       }
      if(!_simulation.isMovingAverageSigma2D()){ 
-      if((CID != cid_moved || CID != cid_fixed) && _simulation.getSimulationStep() >= _simulation.getInitStatistics()){
+      if((CID != cid_moved && CID != cid_fixed) && _simulation.getSimulationStep() >= _simulation.getInitStatistics()){
        if(_simulation.isRecordingSlabProfile()){
 	xun = floor(molecule->r(0) / deltaX_slab);
 	yun = floor(molecule->r(1) / deltaY_slab);
 	zun = floor(molecule->r(2) / deltaZ_slab);
 	_countedMoleculesSlab[CID][xun][yun][zun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _directedVelocitySlab[CID][xun][yun][zun][d] += molecule->v(d);
+	  _directedVelocitySlab[d][CID][xun][yun][zun] += molecule->v(d);
        }
        if(_simulation.isRecordingStressProfile()){
 	xun = floor(molecule->r(0) / deltaX_stress);
@@ -295,14 +296,14 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	zun = floor(molecule->r(2) / deltaZ_stress);
 	_countedMoleculesStress[CID][xun][yun][zun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _directedVelocityStress[CID][xun][yun][zun][d] += molecule->v(d);
+	  _directedVelocityStress[d][CID][xun][yun][zun] += molecule->v(d);
        }
        if(_simulation.isRecordingConfinementProfile()){
 	xun = floor((molecule->r(0)-_simulation.getDomain()->getConfinementEdge(0)) / deltaX_conf);
 	yun = floor((molecule->r(1)-(_simulation.getDomain()->get_confinementMidPoint(3)-_simulation.getDomain()->getConfinementEdge(5))) / deltaY_conf);
 	_countedMoleculesConfinement[CID][xun][yun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _directedVelocityConfinement[CID][xun][yun][d] += molecule->v(d);
+	  _directedVelocityConfinement[d][CID][xun][yun] += molecule->v(d);
        }
       }
      }
@@ -315,11 +316,11 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	dode->collCommInit(4);
 	dode->collCommAppendUnsLong(_countedMoleculesAll[cid]);
 	for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocityAll[cid][d]);
+		dode->collCommAppendDouble(_directedVelocityAll[d][cid]);
 	dode->collCommAllreduceSum();
 	_universalCountedMoleculesAll[cid] = dode->collCommGetUnsLong();
 	for(int d = 0; d < 3; d++)
-		_universalDirectedVelocityAll[cid][d] = dode->collCommGetDouble();
+		_universalDirectedVelocityAll[d][cid] = dode->collCommGetDouble();
 	dode->collCommFinalize();
      }
    }
@@ -331,14 +332,14 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(double y = 0.5; y < yMax; y++){
 	    dode->collCommAppendUnsLong(_countedMolecules[cid][x][y]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocity[cid][x][y][d]);
+		dode->collCommAppendDouble(_directedVelocity[d][cid][x][y]);
 	  }
       dode->collCommAllreduceSum();
 	for(double x = 0.5; x < xMax; x++)
 	  for(double y = 0.5; y < yMax; y++){
 	    _universalCountedMolecules[cid][x][y] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++){
-		_universalDirectedVelocity[cid][x][y][d] = dode->collCommGetDouble();
+		_universalDirectedVelocity[d][cid][x][y] = dode->collCommGetDouble();
 	    }
 	  }
       dode->collCommFinalize();
@@ -350,12 +351,12 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 		this->_universalPriorN[cid][x][y].push_back(this->_universalCountedMolecules[cid][x][y]);
 		this->_averagedN[cid][x][y] += this->_universalCountedMolecules[cid][x][y];
 		for(int d = 0; d < 3; d++){
-		  this->_universalPriorVelSums[cid][x][y][d].push_back(this->_universalDirectedVelocity[cid][x][y][d]);
-		  this->_averagedVelSum[cid][x][y][d] += this->_universalDirectedVelocity[cid][x][y][d];
-		  if(this->_universalCountedMolecules[cid][x][y] != 0)
-		    this->_currentDirectedVel[cid][x][y][d] = this->_universalDirectedVelocity[cid][x][y][d]/this->_universalCountedMolecules[cid][x][y];
+		  this->_universalPriorVelSums[d][cid][x][y].push_back(this->_universalDirectedVelocity[d][cid][x][y]);
+		  this->_averagedVelSum[d][cid][x][y] += this->_universalDirectedVelocity[d][cid][x][y];
+		  if(this->_universalCountedMolecules[cid][x][y] > _molDirVelThreshold)
+		    this->_currentDirectedVel[d][cid][x][y] = this->_universalDirectedVelocity[d][cid][x][y]/this->_universalCountedMolecules[cid][x][y];
 		  else
-		    this->_currentDirectedVel[cid][x][y][d] = 0.0;
+		    this->_currentDirectedVel[d][cid][x][y] = 0.0;
 		}
 	      }
 	}
@@ -365,15 +366,15 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(double x = 0.5; x < xMax; x++)
 	      for(double y = 0.5; y < yMax; y++){
 		for(int d = 0; d < 3; d++){
-                  if(this->_averagedN[cid][x][y] != 0)
-                    this->_universalDirectedVelocity[cid][x][y][d] = this->_averagedVelSum[cid][x][y][d]/this->_averagedN[cid][x][y];
+                  if(this->_averagedN[cid][x][y] > _molDirVelThreshold)
+                    this->_universalDirectedVelocity[d][cid][x][y] = this->_averagedVelSum[d][cid][x][y]/this->_averagedN[cid][x][y];
                   else
-                    this->_universalDirectedVelocity[cid][x][y][d] = 0.0;  
+                    this->_universalDirectedVelocity[d][cid][x][y] = 0.0;  
 		}
-		if(this->_universalPriorVelSums[cid][x][y][0].size() == _simulation.getDirectedVelocityTime()){
+		if(this->_universalPriorVelSums[0][cid][x][y].size() == _simulation.getDirectedVelocityTime()){
 		  for(int d = 0; d < 3; d++){
-		    this->_averagedVelSum[cid][x][y][d] -= this->_universalPriorVelSums[cid][x][y][d].front();
-		    this->_universalPriorVelSums[cid][x][y][d].pop_front();
+		    this->_averagedVelSum[d][cid][x][y] -= this->_universalPriorVelSums[d][cid][x][y].front();
+		    this->_universalPriorVelSums[d][cid][x][y].pop_front();
 		  }
 		  this->_averagedN[cid][x][y] -= this->_universalPriorN[cid][x][y].front();
 		  this->_universalPriorN[cid][x][y].pop_front();
@@ -385,16 +386,16 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	for(double x = 0.5; x < xMax; x++)
 	      for(double y = 0.5; y < yMax; y++)
 		for(int d = 0; d < 3; d++){
-		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
-			dode->collCommAppendDouble(2*this->_currentDirectedVel[cid][x][y][d] - this->_universalDirectedVelocity[cid][x][y][d]);
+		  if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)
+			dode->collCommAppendDouble(2*this->_currentDirectedVel[d][cid][x][y] - this->_universalDirectedVelocity[d][cid][x][y]);
 		  else
-			dode->collCommAppendDouble(this->_universalDirectedVelocity[cid][x][y][d]);
+			dode->collCommAppendDouble(this->_universalDirectedVelocity[d][cid][x][y]);
 		}
 	dode->collCommBroadcast();
 	for(double x = 0.5; x < xMax; x++)
 	      for(double y = 0.5; y < yMax; y++)
 		for(int d = 0; d < 3; d++)
-		  this->_universalDirectedVelocity[cid][x][y][d] = dode->collCommGetDouble();
+		  this->_universalDirectedVelocity[d][cid][x][y] = dode->collCommGetDouble();
 	dode->collCommFinalize();
      }
    }
@@ -409,7 +410,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	   for(unsigned z = 0; z < zunSlab_tot; z++){ 
 	    dode->collCommAppendUnsLong(_countedMoleculesSlab[cid][x][y][z]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocitySlab[cid][x][y][z][d]);
+		dode->collCommAppendDouble(_directedVelocitySlab[d][cid][x][y][z]);
 	  }
       dode->collCommAllreduceSum();
 	for(unsigned x = 0; x < xunSlab_tot; x++)
@@ -417,7 +418,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	   for(unsigned z = 0; z < zunSlab_tot; z++){ 
 	    _universalCountedMoleculesSlab[cid][x][y][z] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++)
-	      _universalDirectedVelocitySlab[cid][x][y][z][d] = dode->collCommGetDouble();
+	      _universalDirectedVelocitySlab[d][cid][x][y][z] = dode->collCommGetDouble();
 	   }
       dode->collCommFinalize();
       
@@ -429,12 +430,12 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 		this->_universalPriorNSlab[cid][x][y][z].push_back(this->_universalCountedMoleculesSlab[cid][x][y][z]);
 		this->_averagedNSlab[cid][x][y][z] += this->_universalCountedMoleculesSlab[cid][x][y][z];
 		for(int d = 0; d < 3; d++){
-		  this->_universalPriorVelSumsSlab[cid][x][y][z][d].push_back(this->_universalDirectedVelocitySlab[cid][x][y][z][d]);
-		  this->_averagedVelSumSlab[cid][x][y][z][d] += this->_universalDirectedVelocitySlab[cid][x][y][z][d];
-		  if(this->_universalCountedMoleculesSlab[cid][x][y][z] != 0)
-		    this->_currentDirectedVelSlab[cid][x][y][z][d] = this->_universalDirectedVelocitySlab[cid][x][y][z][d]/this->_universalCountedMoleculesSlab[cid][x][y][z];
+		  this->_universalPriorVelSumsSlab[d][cid][x][y][z].push_back(this->_universalDirectedVelocitySlab[d][cid][x][y][z]);
+		  this->_averagedVelSumSlab[d][cid][x][y][z] += this->_universalDirectedVelocitySlab[d][cid][x][y][z];
+		  if(this->_universalCountedMoleculesSlab[cid][x][y][z] > _molDirVelThreshold)
+		    this->_currentDirectedVelSlab[d][cid][x][y][z] = this->_universalDirectedVelocitySlab[d][cid][x][y][z]/this->_universalCountedMoleculesSlab[cid][x][y][z];
 		  else
-		    this->_currentDirectedVelSlab[cid][x][y][z][d] = 0.0;
+		    this->_currentDirectedVelSlab[d][cid][x][y][z] = 0.0;
 		}
 	      }
 	}
@@ -445,15 +446,15 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	    for(unsigned y = 0; y < yunSlab_tot; y++)
 	      for(unsigned z = 0; z < zunSlab_tot; z++){
 		for(int d = 0; d < 3; d++){
-                  if(this->_averagedNSlab[cid][x][y][z] != 0)
-                    this->_universalDirectedVelocitySlab[cid][x][y][z][d] = this->_averagedVelSumSlab[cid][x][y][z][d]/this->_averagedNSlab[cid][x][y][z];
+                  if(this->_averagedNSlab[cid][x][y][z]  > _molDirVelThreshold)
+                    this->_universalDirectedVelocitySlab[d][cid][x][y][z] = this->_averagedVelSumSlab[d][cid][x][y][z]/this->_averagedNSlab[cid][x][y][z];
                   else
-                    this->_universalDirectedVelocitySlab[cid][x][y][z][d] = 0.0;    
+                    this->_universalDirectedVelocitySlab[d][cid][x][y][z] = 0.0;    
 		}
-		if(this->_universalPriorVelSumsSlab[cid][x][y][z][0].size() == _simulation.getDirectedVelocityTime()){
+		if(this->_universalPriorVelSumsSlab[0][cid][x][y][z].size() == _simulation.getDirectedVelocityTime()){
 		  for(int d = 0; d < 3; d++){
-		    this->_averagedVelSumSlab[cid][x][y][z][d] -= this->_universalPriorVelSumsSlab[cid][x][y][z][d].front();
-		    this->_universalPriorVelSumsSlab[cid][x][y][z][d].pop_front();
+		    this->_averagedVelSumSlab[d][cid][x][y][z] -= this->_universalPriorVelSumsSlab[d][cid][x][y][z].front();
+		    this->_universalPriorVelSumsSlab[d][cid][x][y][z].pop_front();
 		  }
 		  this->_averagedNSlab[cid][x][y][z] -= this->_universalPriorNSlab[cid][x][y][z].front();
 		  this->_universalPriorNSlab[cid][x][y][z].pop_front();
@@ -466,17 +467,17 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	    for(unsigned y = 0; y < yunSlab_tot; y++)
 	      for(unsigned z = 0; z < zunSlab_tot; z++)
 		for(int d = 0; d < 3; d++){
-		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
-			dode->collCommAppendDouble(2*this->_currentDirectedVelSlab[cid][x][y][z][d] - this->_universalDirectedVelocitySlab[cid][x][y][z][d]);
+		  if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)		
+			dode->collCommAppendDouble(2*this->_currentDirectedVelSlab[d][cid][x][y][z] - this->_universalDirectedVelocitySlab[d][cid][x][y][z]);
 		  else
-			dode->collCommAppendDouble(this->_universalDirectedVelocitySlab[cid][x][y][z][d]);
+			dode->collCommAppendDouble(this->_universalDirectedVelocitySlab[d][cid][x][y][z]);
 		}
 	dode->collCommBroadcast();
 	for(unsigned x = 0; x < xunSlab_tot; x++)
 	    for(unsigned y = 0; y < yunSlab_tot; y++)
 	      for(unsigned z = 0; z < zunSlab_tot; z++)
 		for(int d = 0; d < 3; d++)
-		  this->_universalDirectedVelocitySlab[cid][x][y][z][d] = dode->collCommGetDouble();
+		  this->_universalDirectedVelocitySlab[d][cid][x][y][z] = dode->collCommGetDouble();
 	dode->collCommFinalize();
     }
     }
@@ -488,7 +489,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	   for(unsigned z = 0; z < zunStress_tot; z++){ 
 	    dode->collCommAppendUnsLong(_countedMoleculesStress[cid][x][y][z]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocityStress[cid][x][y][z][d]);
+		dode->collCommAppendDouble(_directedVelocityStress[d][cid][x][y][z]);
 	  }
       dode->collCommAllreduceSum();
 	for(unsigned x = 0; x < xunStress_tot; x++)
@@ -496,7 +497,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	   for(unsigned z = 0; z < zunStress_tot; z++){
 	    _universalCountedMoleculesStress[cid][x][y][z] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++)
-		_universalDirectedVelocityStress[cid][x][y][z][d] = dode->collCommGetDouble();
+		_universalDirectedVelocityStress[d][cid][x][y][z] = dode->collCommGetDouble();
 	  }
       dode->collCommFinalize();
       
@@ -508,12 +509,12 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 		this->_universalPriorNStress[cid][x][y][z].push_back(this->_universalCountedMoleculesStress[cid][x][y][z]);
 		this->_averagedNStress[cid][x][y][z] += this->_universalCountedMoleculesStress[cid][x][y][z];
 		for(int d = 0; d < 3; d++){
-		  this->_universalPriorVelSumsStress[cid][x][y][z][d].push_back(this->_universalDirectedVelocityStress[cid][x][y][z][d]);
-		  this->_averagedVelSumStress[cid][x][y][z][d] += this->_universalDirectedVelocityStress[cid][x][y][z][d];
-		  if(this->_universalCountedMoleculesStress[cid][x][y][z] != 0)
-		    this->_currentDirectedVelStress[cid][x][y][z][d] = this->_universalDirectedVelocityStress[cid][x][y][z][d]/this->_universalCountedMoleculesStress[cid][x][y][z];
+		  this->_universalPriorVelSumsStress[d][cid][x][y][z].push_back(this->_universalDirectedVelocityStress[d][cid][x][y][z]);
+		  this->_averagedVelSumStress[d][cid][x][y][z] += this->_universalDirectedVelocityStress[d][cid][x][y][z];
+		  if(this->_universalCountedMoleculesStress[cid][x][y][z] > _molDirVelThreshold)
+		    this->_currentDirectedVelStress[d][cid][x][y][z] = this->_universalDirectedVelocityStress[d][cid][x][y][z]/this->_universalCountedMoleculesStress[cid][x][y][z];
 		  else
-		    this->_currentDirectedVelStress[cid][x][y][z][d] = 0.0;
+		    this->_currentDirectedVelStress[d][cid][x][y][z] = 0.0;
 		}
 	      }
 	}
@@ -524,15 +525,15 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	    for(unsigned y = 0; y < yunStress_tot; y++)
 	      for(unsigned z = 0; z < zunStress_tot; z++){
 		for(int d = 0; d < 3; d++){
-                  if(this->_averagedNStress[cid][x][y][z] != 0)
-                    this->_universalDirectedVelocityStress[cid][x][y][z][d] = this->_averagedVelSumStress[cid][x][y][z][d]/this->_averagedNStress[cid][x][y][z];
+                  if(this->_averagedNStress[cid][x][y][z]  > _molDirVelThreshold)
+                    this->_universalDirectedVelocityStress[d][cid][x][y][z] = this->_averagedVelSumStress[d][cid][x][y][z]/this->_averagedNStress[cid][x][y][z];
                   else
-                    this->_universalDirectedVelocityStress[cid][x][y][z][d] = 0.0;  
+                    this->_universalDirectedVelocityStress[d][cid][x][y][z] = 0.0;  
 		}
-		if(this->_universalPriorVelSumsStress[cid][x][y][z][0].size() == _simulation.getDirectedVelocityTime()){
+		if(this->_universalPriorVelSumsStress[0][cid][x][y][z].size() == _simulation.getDirectedVelocityTime()){
 		  for(int d = 0; d < 3; d++){
-		    this->_averagedVelSumStress[cid][x][y][z][d] -= this->_universalPriorVelSumsStress[cid][x][y][z][d].front();
-		    this->_universalPriorVelSumsStress[cid][x][y][z][d].pop_front();
+		    this->_averagedVelSumStress[d][cid][x][y][z] -= this->_universalPriorVelSumsStress[d][cid][x][y][z].front();
+		    this->_universalPriorVelSumsStress[d][cid][x][y][z].pop_front();
 		  }
 		  this->_averagedNStress[cid][x][y][z] -= this->_universalPriorNStress[cid][x][y][z].front();
 		  this->_universalPriorNStress[cid][x][y][z].pop_front();
@@ -545,17 +546,17 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(unsigned y = 0; y < yunStress_tot; y++)
 	   for(unsigned z = 0; z < zunStress_tot; z++)
 		for(int d = 0; d < 3; d++){
-		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
-			dode->collCommAppendDouble(2*this->_currentDirectedVelStress[cid][x][y][z][d] - this->_universalDirectedVelocityStress[cid][x][y][z][d]);
+		  if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)		
+			dode->collCommAppendDouble(2*this->_currentDirectedVelStress[d][cid][x][y][z] - this->_universalDirectedVelocityStress[d][cid][x][y][z]);
 		  else
-			dode->collCommAppendDouble(this->_universalDirectedVelocityStress[cid][x][y][z][d]);
+			dode->collCommAppendDouble(this->_universalDirectedVelocityStress[d][cid][x][y][z]);
 		}
 	dode->collCommBroadcast();
 	for(unsigned x = 0; x < xunStress_tot; x++)
 	  for(unsigned y = 0; y < yunStress_tot; y++)
 	   for(unsigned z = 0; z < zunStress_tot; z++)
 		for(int d = 0; d < 3; d++)
-		  this->_universalDirectedVelocityStress[cid][x][y][z][d] = dode->collCommGetDouble();
+		  this->_universalDirectedVelocityStress[d][cid][x][y][z] = dode->collCommGetDouble();
 	dode->collCommFinalize();
     }
     }
@@ -566,14 +567,14 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(unsigned y = 0; y < yunConf_tot; y++){
 	    dode->collCommAppendUnsLong(_countedMoleculesConfinement[cid][x][y]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocityConfinement[cid][x][y][d]);
+		dode->collCommAppendDouble(_directedVelocityConfinement[d][cid][x][y]);
 	  }
       dode->collCommAllreduceSum();
 	for(unsigned x = 0; x < xunConf_tot; x++)
 	  for(unsigned y = 0; y < yunConf_tot; y++){
 	    _universalCountedMoleculesConfinement[cid][x][y] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++){
-		_universalDirectedVelocityConfinement[cid][x][y][d] = dode->collCommGetDouble();
+		_universalDirectedVelocityConfinement[d][cid][x][y] = dode->collCommGetDouble();
 	    }
 	  }
       dode->collCommFinalize();
@@ -585,12 +586,12 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 		this->_universalPriorNConfinement[cid][x][y].push_back(this->_universalCountedMoleculesConfinement[cid][x][y]);
 		this->_averagedNConfinement[cid][x][y] += this->_universalCountedMoleculesConfinement[cid][x][y];
 		for(int d = 0; d < 3; d++){
-		  this->_universalPriorVelSumsConfinement[cid][x][y][d].push_back(this->_universalDirectedVelocityConfinement[cid][x][y][d]);
-		  this->_averagedVelSumConfinement[cid][x][y][d] += this->_universalDirectedVelocityConfinement[cid][x][y][d];
-		  if(this->_universalCountedMoleculesConfinement[cid][x][y] != 0)
-		    this->_currentDirectedVelConfinement[cid][x][y][d] = this->_universalDirectedVelocityConfinement[cid][x][y][d]/this->_universalCountedMoleculesConfinement[cid][x][y];
+		  this->_universalPriorVelSumsConfinement[d][cid][x][y].push_back(this->_universalDirectedVelocityConfinement[d][cid][x][y]);
+		  this->_averagedVelSumConfinement[d][cid][x][y] += this->_universalDirectedVelocityConfinement[d][cid][x][y];
+		  if(this->_universalCountedMoleculesConfinement[cid][x][y] > _molDirVelThreshold)
+		    this->_currentDirectedVelConfinement[d][cid][x][y] = this->_universalDirectedVelocityConfinement[d][cid][x][y]/this->_universalCountedMoleculesConfinement[cid][x][y];
 		  else
-		    this->_currentDirectedVelConfinement[cid][x][y][d] = 0.0;
+		    this->_currentDirectedVelConfinement[d][cid][x][y] = 0.0;
 		}
 	      }
 	}
@@ -600,15 +601,15 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(unsigned x = 0; x < xunConf_tot; x++)
 	    for(unsigned y = 0; y < yunConf_tot; y++){
 	      for(int d = 0; d < 3; d++){
-                  if(this->_averagedNConfinement[cid][x][y] != 0)
-                    this->_universalDirectedVelocityConfinement[cid][x][y][d] = this->_averagedVelSumConfinement[cid][x][y][d]/this->_averagedNConfinement[cid][x][y];
+                  if(this->_averagedNConfinement[cid][x][y]  > _molDirVelThreshold)
+                    this->_universalDirectedVelocityConfinement[d][cid][x][y] = this->_averagedVelSumConfinement[d][cid][x][y]/this->_averagedNConfinement[cid][x][y];
                   else
-                    this->_universalDirectedVelocityConfinement[cid][x][y][d] = 0.0;
+                    this->_universalDirectedVelocityConfinement[d][cid][x][y] = 0.0;
 	      }
-		if(this->_universalPriorVelSumsConfinement[cid][x][y][0].size() == _simulation.getDirectedVelocityTime()){
+		if(this->_universalPriorVelSumsConfinement[0][cid][x][y].size() == _simulation.getDirectedVelocityTime()){
 		  for(int d = 0; d < 3; d++){
-		    this->_averagedVelSumConfinement[cid][x][y][d] -= this->_universalPriorVelSumsConfinement[cid][x][y][d].front();
-		    this->_universalPriorVelSumsConfinement[cid][x][y][d].pop_front();
+		    this->_averagedVelSumConfinement[d][cid][x][y] -= this->_universalPriorVelSumsConfinement[d][cid][x][y].front();
+		    this->_universalPriorVelSumsConfinement[d][cid][x][y].pop_front();
 		  }
 		  this->_averagedNConfinement[cid][x][y] -= this->_universalPriorNConfinement[cid][x][y].front();
 		  this->_universalPriorNConfinement[cid][x][y].pop_front();
@@ -622,16 +623,16 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(unsigned y = 0; y < yunConf_tot; y++)
 		for(int d = 0; d < 3; d++){
 		//Original
-		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
-			dode->collCommAppendDouble(2*this->_currentDirectedVelConfinement[cid][x][y][d] - this->_universalDirectedVelocityConfinement[cid][x][y][d]);
+		  if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)
+			dode->collCommAppendDouble(2*this->_currentDirectedVelConfinement[d][cid][x][y] - this->_universalDirectedVelocityConfinement[d][cid][x][y]);
 		  else
-			dode->collCommAppendDouble(this->_universalDirectedVelocityConfinement[cid][x][y][d]);  	
+			dode->collCommAppendDouble(this->_universalDirectedVelocityConfinement[d][cid][x][y]);  	
 		}
 	dode->collCommBroadcast();
 	for(unsigned x = 0; x < xunConf_tot; x++)
 	  for(unsigned y = 0; y < yunConf_tot; y++)
 		for(int d = 0; d < 3; d++)
-		  this->_universalDirectedVelocityConfinement[cid][x][y][d] = dode->collCommGetDouble();
+		  this->_universalDirectedVelocityConfinement[d][cid][x][y] = dode->collCommGetDouble();
 	dode->collCommFinalize();
     }
     }
@@ -645,7 +646,9 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
      unsigned cid = molecule->componentid();
      if(cid == cid_moved || cid == cid_fixed){
 	for (int d=0; d<3; d++){
-		double vAverage = _universalDirectedVelocityAll[cid][d]/_universalCountedMoleculesAll[cid];
+		double vAverage = 0.0;
+		if(_universalCountedMoleculesAll[cid] > _molDirVelThreshold)
+			vAverage = _universalDirectedVelocityAll[d][cid]/_universalCountedMoleculesAll[cid];
 		molecule->setDirectedVelocity(d, vAverage); 
 		molecule->setDirectedVelocitySlab(d, vAverage);
 		molecule->setDirectedVelocityStress(d, vAverage); 
@@ -655,14 +658,14 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	double x = floor(molecule->r(0)) + 0.5;
 	double y = floor(molecule->r(1)) + 0.5;
 	for (int d=0; d<3; d++){
-		molecule->setDirectedVelocity(d, _universalDirectedVelocity[cid][x][y][d]);
+		molecule->setDirectedVelocity(d, _universalDirectedVelocity[d][cid][x][y]);
 		if(_simulation.isMovingAverageSigma2D()){
 			if(_simulation.isRecordingSlabProfile())	
-				molecule->setDirectedVelocitySlab(d, _universalDirectedVelocity[cid][x][y][d]); 
+				molecule->setDirectedVelocitySlab(d, _universalDirectedVelocity[d][cid][x][y]); 
 			if(_simulation.isRecordingStressProfile())
-				molecule->setDirectedVelocityStress(d, _universalDirectedVelocity[cid][x][y][d]); 
+				molecule->setDirectedVelocityStress(d, _universalDirectedVelocity[d][cid][x][y]); 
 			if(_simulation.isRecordingConfinementProfile())
-				molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocity[cid][x][y][d]);
+				molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocity[d][cid][x][y]);
 		}
 	}
        if(!_simulation.isMovingAverageSigma2D()){
@@ -671,21 +674,21 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 		yunSlab = floor(molecule->r(1) / deltaY_slab);
 		zunSlab = floor(molecule->r(2) / deltaZ_slab);
 		for (int d=0; d<3; d++)
-		molecule->setDirectedVelocitySlab(d, _universalDirectedVelocitySlab[cid][xunSlab][yunSlab][zunSlab][d]); 
+		molecule->setDirectedVelocitySlab(d, _universalDirectedVelocitySlab[d][cid][xunSlab][yunSlab][zunSlab]); 
 	}
 	if(_simulation.isRecordingStressProfile()){
 		xunStress = floor(molecule->r(0) / deltaX_stress);
 		yunStress = floor(molecule->r(1) / deltaY_stress);
 		zunStress = floor(molecule->r(2) / deltaZ_stress);
 		for (int d=0; d<3; d++)
-		molecule->setDirectedVelocityStress(d, _universalDirectedVelocityStress[cid][xunStress][yunStress][zunStress][d]); 
+		molecule->setDirectedVelocityStress(d, _universalDirectedVelocityStress[d][cid][xunStress][yunStress][zunStress]); 
 	}
 	if(_simulation.isRecordingConfinementProfile()){
 		xunConf = floor((molecule->r(0)-_simulation.getDomain()->getConfinementEdge(0)) / deltaX_conf);
 		yunConf = floor((molecule->r(1)-(_simulation.getDomain()->get_confinementMidPoint(3)-_simulation.getDomain()->getConfinementEdge(5))) / deltaY_conf);
 		if (xunConf >= 0 && xunConf < xunConf_tot && yunConf >= 0 && yunConf < yunConf_tot){
 			for (int d=0; d<3; d++){
-			molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocityConfinement[cid][xunConf][yunConf][d]);
+			molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocityConfinement[d][cid][xunConf][yunConf]);
 			}
 		}
 	}
@@ -747,9 +750,9 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
       }
       _universalCountedMolecules[CID][roundX][roundY] = 0;
       for (unsigned d = 0; d < 3; d++){
-	    _universalDirectedVelocity[CID][roundX][roundY][d] = 0.0;
-	    if(this->_universalPriorVelSums[CID][roundX][roundY][d].size() == 0){
-	      this->_averagedVelSum[CID][roundX][roundY][d] = 0.0;
+	    _universalDirectedVelocity[d][CID][roundX][roundY] = 0.0;
+	    if(this->_universalPriorVelSums[d][CID][roundX][roundY].size() == 0){
+	      this->_averagedVelSum[d][CID][roundX][roundY] = 0.0;
 	      this->_averagedN[CID][roundX][roundY] = 0;
 	    }
       }
@@ -764,9 +767,9 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 	
 	_universalCountedMoleculesSlab[CID][xun][yun][zun] = 0;
 	for (unsigned d = 0; d < 3; d++){
-	    _universalDirectedVelocitySlab[CID][xun][yun][zun][d] = 0.0;
-	    if(this->_universalPriorVelSumsSlab[CID][xun][yun][zun][d].size() == 0){
-	      this->_averagedVelSumSlab[CID][xun][yun][zun][d] = 0.0;
+	    _universalDirectedVelocitySlab[d][CID][xun][yun][zun] = 0.0;
+	    if(this->_universalPriorVelSumsSlab[d][CID][xun][yun][zun].size() == 0){
+	      this->_averagedVelSumSlab[d][CID][xun][yun][zun] = 0.0;
 	      this->_averagedNSlab[CID][xun][yun][zun] = 0;
 	    }
 	}
@@ -780,9 +783,9 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 	
 	_universalCountedMoleculesStress[CID][xun][yun][zun] = 0;
 	for (unsigned d = 0; d < 3; d++){
-	    _universalDirectedVelocityStress[CID][xun][yun][zun][d] = 0.0;
-	    if(this->_universalPriorVelSumsStress[CID][xun][yun][zun][d].size() == 0){
-	      this->_averagedVelSumStress[CID][xun][yun][zun][d] = 0.0;
+	    _universalDirectedVelocityStress[d][CID][xun][yun][zun] = 0.0;
+	    if(this->_universalPriorVelSumsStress[d][CID][xun][yun][zun].size() == 0){
+	      this->_averagedVelSumStress[d][CID][xun][yun][zun] = 0.0;
 	      this->_averagedNStress[CID][xun][yun][zun] = 0;
 	    }
 	}
@@ -795,9 +798,9 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 	
 	_universalCountedMoleculesConfinement[CID][xun][yun] = 0;
 	for (unsigned d = 0; d < 3; d++){
-	    _universalDirectedVelocityConfinement[CID][xun][yun][d] = 0.0;
-	    if(this->_universalPriorVelSumsConfinement[CID][xun][yun][d].size() == 0){
-	      this->_averagedVelSumConfinement[CID][xun][yun][d] = 0.0;
+	    _universalDirectedVelocityConfinement[d][CID][xun][yun] = 0.0;
+	    if(this->_universalPriorVelSumsConfinement[d][CID][xun][yun].size() == 0){
+	      this->_averagedVelSumConfinement[d][CID][xun][yun] = 0.0;
 	      this->_averagedNConfinement[CID][xun][yun] = 0;
 	    }
 	}
@@ -811,7 +814,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
       roundX = floor(molecule->r(0)) + 0.5;
       roundY = floor(molecule->r(1)) + 0.5;
       CID = molecule->componentid();
-      if(CID == cid_moved && CID == cid_fixed){
+      if(CID == cid_moved || CID == cid_fixed){
 	 _universalCountedMoleculesAll[CID]++;
 	for (unsigned d = 0; d < 3; d++)
 		_universalDirectedVelocityAll[d][CID] += molecule->v(d);     
@@ -819,7 +822,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
       else{
 	_universalCountedMolecules[CID][roundX][roundY]++;
 	for (unsigned d = 0; d < 3; d++)
-		_universalDirectedVelocity[CID][roundX][roundY][d] += molecule->v(d);
+		_universalDirectedVelocity[d][CID][roundX][roundY] += molecule->v(d);
       }
       
       if((CID != cid_moved && CID != cid_fixed) && _simulation.getSimulationStep() >= _simulation.getInitStatistics()){
@@ -829,7 +832,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 	zun = floor(molecule->r(2) / deltaZ_slab);
 	_universalCountedMoleculesSlab[CID][xun][yun][zun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _universalDirectedVelocitySlab[CID][xun][yun][zun][d] += molecule->v(d);
+	  _universalDirectedVelocitySlab[d][CID][xun][yun][zun] += molecule->v(d);
        }
        if(_simulation.isRecordingStressProfile()){
 	xun = floor(molecule->r(0) / deltaX_stress);
@@ -837,14 +840,14 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 	zun = floor(molecule->r(2) / deltaZ_stress);
 	_universalCountedMoleculesStress[CID][xun][yun][zun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _universalDirectedVelocityStress[CID][xun][yun][zun][d] += molecule->v(d);
+	  _universalDirectedVelocityStress[d][CID][xun][yun][zun] += molecule->v(d);
        }
        if(_simulation.isRecordingConfinementProfile()){
 	xun = floor((molecule->r(0)-_simulation.getDomain()->getConfinementEdge(0)) / deltaX_conf);
 	yun = floor((molecule->r(1)-(_simulation.getDomain()->get_confinementMidPoint(3)-_simulation.getDomain()->getConfinementEdge(5))) / deltaY_conf);
 	_universalCountedMoleculesConfinement[CID][xun][yun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _universalDirectedVelocityConfinement[CID][xun][yun][d] += molecule->v(d);
+	  _universalDirectedVelocityConfinement[d][CID][xun][yun] += molecule->v(d);
        }
       }
    }
@@ -856,33 +859,33 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 		this->_universalPriorN[out->first][in->first][inner->first].push_back(this->_universalCountedMolecules[out->first][in->first][inner->first]);
 		this->_averagedN[out->first][in->first][inner->first] += this->_universalCountedMolecules[out->first][in->first][inner->first];
 		for(int d = 0; d < 3; d++){
-			this->_universalPriorVelSums[out->first][in->first][inner->first][d].push_back(this->_universalDirectedVelocity[out->first][in->first][inner->first][d]);
-			this->_averagedVelSum[out->first][in->first][inner->first][d] += this->_universalDirectedVelocity[out->first][in->first][inner->first][d];
+			this->_universalPriorVelSums[d][out->first][in->first][inner->first].push_back(this->_universalDirectedVelocity[d][out->first][in->first][inner->first]);
+			this->_averagedVelSum[d][out->first][in->first][inner->first] += this->_universalDirectedVelocity[d][out->first][in->first][inner->first];
 			if(this->_universalCountedMolecules[out->first][in->first][inner->first] != 0)
-				this->_currentDirectedVel[out->first][in->first][inner->first][d] = this->_universalDirectedVelocity[out->first][in->first][inner->first][d]/this->_universalCountedMolecules[out->first][in->first][inner->first];
+				this->_currentDirectedVel[d][out->first][in->first][inner->first] = this->_universalDirectedVelocity[d][out->first][in->first][inner->first]/this->_universalCountedMolecules[out->first][in->first][inner->first];
 			else
-				this->_currentDirectedVel[out->first][in->first][inner->first][d] = 0.0;
+				this->_currentDirectedVel[d][out->first][in->first][inner->first] = 0.0;
 		}
 		for(int d = 0; d < 3; d++){
 			if(this->_averagedN[out->first][in->first][inner->first] != 0)
-				this->_universalDirectedVelocity[out->first][in->first][inner->first][d] = this->_averagedVelSum[out->first][in->first][inner->first][d]/this->_averagedN[out->first][in->first][inner->first];
+				this->_universalDirectedVelocity[d][out->first][in->first][inner->first] = this->_averagedVelSum[d][out->first][in->first][inner->first]/this->_averagedN[out->first][in->first][inner->first];
 			else
-				this->_universalDirectedVelocity[out->first][in->first][inner->first][d] = 0.0;  
+				this->_universalDirectedVelocity[d][out->first][in->first][inner->first] = 0.0;  
 		}
-		if(this->_universalPriorVelSums[out->first][in->first][inner->first][0].size() == _simulation.getDirectedVelocityTime()){
+		if(this->_universalPriorVelSums[0][out->first][in->first][inner->first].size() == _simulation.getDirectedVelocityTime()){
 			for(int d = 0; d < 3; d++){
-				this->_averagedVelSum[out->first][in->first][inner->first][d] -= this->_universalPriorVelSums[out->first][in->first][inner->first][d].front();
-				this->_universalPriorVelSums[out->first][in->first][inner->first][d].pop_front();
+				this->_averagedVelSum[d][out->first][in->first][inner->first] -= this->_universalPriorVelSums[d][out->first][in->first][inner->first].front();
+				this->_universalPriorVelSums[d][out->first][in->first][inner->first].pop_front();
 			}
 			this->_averagedN[out->first][in->first][inner->first] -= this->_universalPriorN[out->first][in->first][inner->first].front();
 			this->_universalPriorN[out->first][in->first][inner->first].pop_front();
 		}
 		
 		for(int d = 0; d < 3; d++){
-			if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
-				_universalDirectedVelocity[out->first][in->first][inner->first][d] = 2*this->_currentDirectedVel[out->first][in->first][inner->first][d] - this->_universalDirectedVelocity[out->first][in->first][inner->first][d];
+			if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)
+				_universalDirectedVelocity[d][out->first][in->first][inner->first] = 2*this->_currentDirectedVel[d][out->first][in->first][inner->first] - this->_universalDirectedVelocity[d][out->first][in->first][inner->first];
 			else
-				_universalDirectedVelocity[out->first][in->first][inner->first][d] = _universalDirectedVelocity[out->first][in->first][inner->first][d];
+				_universalDirectedVelocity[d][out->first][in->first][inner->first] = _universalDirectedVelocity[d][out->first][in->first][inner->first];
 		}
 	    }
      
@@ -898,34 +901,34 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 					this->_universalPriorNSlab[out->first][mid->first][in->first][inner->first].push_back(this->_universalCountedMoleculesSlab[out->first][mid->first][in->first][inner->first]);
 					this->_averagedNSlab[out->first][mid->first][in->first][inner->first] += this->_universalCountedMoleculesSlab[out->first][mid->first][in->first][inner->first];
 					for(int d = 0; d < 3; d++){
-						this->_universalPriorVelSumsSlab[out->first][mid->first][in->first][inner->first][d].push_back(this->_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d]);
-						this->_averagedVelSumSlab[out->first][mid->first][in->first][inner->first][d] += this->_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d];
+						this->_universalPriorVelSumsSlab[d][out->first][mid->first][in->first][inner->first].push_back(this->_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first]);
+						this->_averagedVelSumSlab[d][out->first][mid->first][in->first][inner->first] += this->_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first];
 						if(this->_universalCountedMoleculesSlab[out->first][mid->first][in->first][inner->first] != 0)
-							this->_currentDirectedVelSlab[out->first][mid->first][in->first][inner->first][d] = this->_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d]/this->_universalCountedMoleculesSlab[out->first][mid->first][in->first][inner->first];
+							this->_currentDirectedVelSlab[d][out->first][mid->first][in->first][inner->first] = this->_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first]/this->_universalCountedMoleculesSlab[out->first][mid->first][in->first][inner->first];
 						else
-							this->_currentDirectedVelSlab[out->first][mid->first][in->first][inner->first][d] = 0.0;
+							this->_currentDirectedVelSlab[d][out->first][mid->first][in->first][inner->first] = 0.0;
 					}
 
 					for(int d = 0; d < 3; d++){
 						if(this->_averagedNSlab[out->first][mid->first][in->first][inner->first] != 0)
-							this->_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d] = this->_averagedVelSumSlab[out->first][mid->first][in->first][inner->first][d]/this->_averagedNSlab[out->first][mid->first][in->first][inner->first];
+							this->_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first] = this->_averagedVelSumSlab[d][out->first][mid->first][in->first][inner->first]/this->_averagedNSlab[out->first][mid->first][in->first][inner->first];
 						else
-							this->_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d] = 0.0;    
+							this->_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first] = 0.0;    
 					}
-					if(this->_universalPriorVelSumsSlab[out->first][mid->first][in->first][inner->first][0].size() == _simulation.getDirectedVelocityTime()){
+					if(this->_universalPriorVelSumsSlab[0][out->first][mid->first][in->first][inner->first].size() == _simulation.getDirectedVelocityTime()){
 						for(int d = 0; d < 3; d++){
-							this->_averagedVelSumSlab[out->first][mid->first][in->first][inner->first][d] -= this->_universalPriorVelSumsSlab[out->first][mid->first][in->first][inner->first][d].front();
-							this->_universalPriorVelSumsSlab[out->first][mid->first][in->first][inner->first][d].pop_front();
+							this->_averagedVelSumSlab[d][out->first][mid->first][in->first][inner->first] -= this->_universalPriorVelSumsSlab[d][out->first][mid->first][in->first][inner->first].front();
+							this->_universalPriorVelSumsSlab[d][out->first][mid->first][in->first][inner->first].pop_front();
 						}
 						this->_averagedNSlab[out->first][mid->first][in->first][inner->first] -= this->_universalPriorNSlab[out->first][mid->first][in->first][inner->first].front();
 						this->_universalPriorNSlab[out->first][mid->first][in->first][inner->first].pop_front();
 					}
 					
 					for(int d = 0; d < 3; d++){
-						if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
-							_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d] = 2*this->_currentDirectedVelSlab[out->first][mid->first][in->first][inner->first][d] - this->_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d];
+						if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)		
+							_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first] = 2*this->_currentDirectedVelSlab[d][out->first][mid->first][in->first][inner->first] - this->_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first];
 						else
-							_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d] = _universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d];	
+							_universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first] = _universalDirectedVelocitySlab[d][out->first][mid->first][in->first][inner->first];	
 					}
 				    }
 	}
@@ -939,34 +942,34 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 					this->_universalPriorNStress[out->first][mid->first][in->first][inner->first].push_back(this->_universalCountedMoleculesStress[out->first][mid->first][in->first][inner->first]);
 					this->_averagedNStress[out->first][mid->first][in->first][inner->first] += this->_universalCountedMoleculesStress[out->first][mid->first][in->first][inner->first];
 					for(int d = 0; d < 3; d++){
-						this->_universalPriorVelSumsStress[out->first][mid->first][in->first][inner->first][d].push_back(this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d]);
-						this->_averagedVelSumStress[out->first][mid->first][in->first][inner->first][d] += this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d];
+						this->_universalPriorVelSumsStress[d][out->first][mid->first][in->first][inner->first].push_back(this->_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first]);
+						this->_averagedVelSumStress[d][out->first][mid->first][in->first][inner->first] += this->_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first];
 						if(this->_universalCountedMoleculesStress[out->first][mid->first][in->first][inner->first] != 0)
-							this->_currentDirectedVelStress[out->first][mid->first][in->first][inner->first][d] = this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d]/this->_universalCountedMoleculesStress[out->first][mid->first][in->first][inner->first];
+							this->_currentDirectedVelStress[d][out->first][mid->first][in->first][inner->first] = this->_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first]/this->_universalCountedMoleculesStress[out->first][mid->first][in->first][inner->first];
 						else
-							this->_currentDirectedVelStress[out->first][mid->first][in->first][inner->first][d] = 0.0;
+							this->_currentDirectedVelStress[d][out->first][mid->first][in->first][inner->first] = 0.0;
 					}
 
 					for(int d = 0; d < 3; d++){
 						if(this->_averagedNStress[out->first][mid->first][in->first][inner->first] != 0)
-							this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d] = this->_averagedVelSumStress[out->first][mid->first][in->first][inner->first][d]/this->_averagedNStress[out->first][mid->first][in->first][inner->first];
+							this->_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first] = this->_averagedVelSumStress[d][out->first][mid->first][in->first][inner->first]/this->_averagedNStress[out->first][mid->first][in->first][inner->first];
 						else
-							this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d] = 0.0;  
+							this->_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first] = 0.0;  
 					}
-					if(this->_universalPriorVelSumsStress[out->first][mid->first][in->first][inner->first][0].size() == _simulation.getDirectedVelocityTime()){
+					if(this->_universalPriorVelSumsStress[0][out->first][mid->first][in->first][inner->first].size() == _simulation.getDirectedVelocityTime()){
 						for(int d = 0; d < 3; d++){
-							this->_averagedVelSumStress[out->first][mid->first][in->first][inner->first][d] -= this->_universalPriorVelSumsStress[out->first][mid->first][in->first][inner->first][d].front();
-							this->_universalPriorVelSumsStress[out->first][mid->first][in->first][inner->first][d].pop_front();
+							this->_averagedVelSumStress[d][out->first][mid->first][in->first][inner->first] -= this->_universalPriorVelSumsStress[d][out->first][mid->first][in->first][inner->first].front();
+							this->_universalPriorVelSumsStress[d][out->first][mid->first][in->first][inner->first].pop_front();
 						}
 						this->_averagedNStress[out->first][mid->first][in->first][inner->first] -= this->_universalPriorNStress[out->first][mid->first][in->first][inner->first].front();
 						this->_universalPriorNStress[out->first][mid->first][in->first][inner->first].pop_front();
 					}
 					
 					for(int d = 0; d < 3; d++){
-						if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
-							_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d] = 2*this->_currentDirectedVelStress[out->first][mid->first][in->first][inner->first][d] - this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d];
+						if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)		
+							_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first] = 2*this->_currentDirectedVelStress[d][out->first][mid->first][in->first][inner->first] - this->_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first];
 						else
-							_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d] = this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d];
+							_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first] = this->_universalDirectedVelocityStress[d][out->first][mid->first][in->first][inner->first];
 					}
 				    }
 	}
@@ -979,34 +982,34 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 				this->_universalPriorNConfinement[out->first][in->first][inner->first].push_back(this->_universalCountedMoleculesConfinement[out->first][in->first][inner->first]);
 				this->_averagedNConfinement[out->first][in->first][inner->first] += this->_universalCountedMoleculesConfinement[out->first][in->first][inner->first];
 				for(int d = 0; d < 3; d++){
-					this->_universalPriorVelSumsConfinement[out->first][in->first][inner->first][d].push_back(this->_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d]);
-					this->_averagedVelSumConfinement[out->first][in->first][inner->first][d] += this->_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d];
+					this->_universalPriorVelSumsConfinement[d][out->first][in->first][inner->first].push_back(this->_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first]);
+					this->_averagedVelSumConfinement[d][out->first][in->first][inner->first] += this->_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first];
 					if(this->_universalCountedMoleculesConfinement[out->first][in->first][inner->first] != 0)
-						this->_currentDirectedVelConfinement[out->first][in->first][inner->first][d] = this->_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d]/this->_universalCountedMoleculesConfinement[out->first][in->first][inner->first];
+						this->_currentDirectedVelConfinement[d][out->first][in->first][inner->first] = this->_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first]/this->_universalCountedMoleculesConfinement[out->first][in->first][inner->first];
 					else
-						this->_currentDirectedVelConfinement[out->first][in->first][inner->first][d] = 0.0;
+						this->_currentDirectedVelConfinement[d][out->first][in->first][inner->first] = 0.0;
 					}
 
 				for(int d = 0; d < 3; d++){
 					if(this->_averagedNConfinement[out->first][in->first][inner->first] != 0)
-						this->_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d] = this->_averagedVelSumConfinement[out->first][in->first][inner->first][d]/this->_averagedNConfinement[out->first][in->first][inner->first];
+						this->_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first] = this->_averagedVelSumConfinement[d][out->first][in->first][inner->first]/this->_averagedNConfinement[out->first][in->first][inner->first];
 					else
-						this->_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d] = 0.0;
+						this->_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first] = 0.0;
 				}
-				if(this->_universalPriorVelSumsConfinement[out->first][in->first][inner->first][0].size() == _simulation.getDirectedVelocityTime()){
+				if(this->_universalPriorVelSumsConfinement[0][out->first][in->first][inner->first].size() == _simulation.getDirectedVelocityTime()){
 					for(int d = 0; d < 3; d++){
-						this->_averagedVelSumConfinement[out->first][in->first][inner->first][d] -= this->_universalPriorVelSumsConfinement[out->first][in->first][inner->first][d].front();
-						this->_universalPriorVelSumsConfinement[out->first][in->first][inner->first][d].pop_front();
+						this->_averagedVelSumConfinement[d][out->first][in->first][inner->first] -= this->_universalPriorVelSumsConfinement[d][out->first][in->first][inner->first].front();
+						this->_universalPriorVelSumsConfinement[d][out->first][in->first][inner->first].pop_front();
 					}
 					this->_averagedNConfinement[out->first][in->first][inner->first] -= this->_universalPriorNConfinement[out->first][in->first][inner->first].front();
 					this->_universalPriorNConfinement[out->first][in->first][inner->first].pop_front();
 				}
 
 				for(int d = 0; d < 3; d++){
-					if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
-						_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d] = 2*this->_currentDirectedVelConfinement[out->first][in->first][inner->first][d] - this->_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d];
+					if(_simulation.isShearRate() && _simulation.getDomain()->getShearWidth() == 0.0)
+						_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first] = 2*this->_currentDirectedVelConfinement[d][out->first][in->first][inner->first] - this->_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first];
 					else
-						_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d] = _universalDirectedVelocityConfinement[out->first][in->first][inner->first][d];  
+						_universalDirectedVelocityConfinement[d][out->first][in->first][inner->first] = _universalDirectedVelocityConfinement[d][out->first][in->first][inner->first];  
 				}
 			  }
 	}
@@ -1020,7 +1023,9 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
      unsigned cid = molecule->componentid();
      if(cid == cid_moved || cid == cid_fixed){
 	for (int d=0; d<3; d++){
-		double vAverage = _universalDirectedVelocityAll[d][cid]/_universalCountedMoleculesAll[cid];
+		double vAverage = 0.0;
+		if(_universalCountedMoleculesAll[cid] > _molDirVelThreshold)
+			vAverage = _universalDirectedVelocityAll[d][cid]/_universalCountedMoleculesAll[cid];
 		molecule->setDirectedVelocity(d, vAverage); 
 		molecule->setDirectedVelocitySlab(d, vAverage);
 		molecule->setDirectedVelocityStress(d, vAverage); 
@@ -1030,28 +1035,28 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 	double x = floor(molecule->r(0)) + 0.5;
 	double y = floor(molecule->r(1)) + 0.5;
 	for (int d=0; d<3; d++)
-		molecule->setDirectedVelocity(d, _universalDirectedVelocity[cid][x][y][d]); 
+		molecule->setDirectedVelocity(d, _universalDirectedVelocity[d][cid][x][y]); 
      
 	if(_simulation.isRecordingSlabProfile()){
 		xunSlab = floor(molecule->r(0) / deltaX_slab);
 		yunSlab = floor(molecule->r(1) / deltaY_slab);
 		zunSlab = floor(molecule->r(2) / deltaZ_slab);
 		for (int d=0; d<3; d++)
-			molecule->setDirectedVelocitySlab(d, _universalDirectedVelocitySlab[cid][xunSlab][yunSlab][zunSlab][d]); 
+			molecule->setDirectedVelocitySlab(d, _universalDirectedVelocitySlab[d][cid][xunSlab][yunSlab][zunSlab]); 
 	}
 	if(_simulation.isRecordingStressProfile()){
 		xunStress = floor(molecule->r(0) / deltaX_stress);
 		yunStress = floor(molecule->r(1) / deltaY_stress);
 		zunStress = floor(molecule->r(2) / deltaZ_stress);
 		for (int d=0; d<3; d++)
-			molecule->setDirectedVelocityStress(d, _universalDirectedVelocityStress[cid][xunStress][yunStress][zunStress][d]); 
+			molecule->setDirectedVelocityStress(d, _universalDirectedVelocityStress[d][cid][xunStress][yunStress][zunStress]); 
 	}
 	if(_simulation.isRecordingConfinementProfile()){
 		xunConf = floor((molecule->r(0)-_simulation.getDomain()->getConfinementEdge(0)) / deltaX_conf);
 		yunConf = floor((molecule->r(1)-(_simulation.getDomain()->get_confinementMidPoint(3)-_simulation.getDomain()->getConfinementEdge(5))) / deltaY_conf);
 		if (xunConf >= 0 && xunConf < xunConf_tot && yunConf >= 0 && yunConf < yunConf_tot){
 			for (int d=0; d<3; d++)
-				molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocityConfinement[cid][xunConf][yunConf][d]);
+				molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocityConfinement[d][cid][xunConf][yunConf]);
 		}
 	}
      }
@@ -1068,6 +1073,11 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
    unsigned long xunConf = 0, yunConf = 0, xunStress = 0, yunStress = 0, zunStress = 0, xunSlab = 0, yunSlab = 0, zunSlab = 0;
    double deltaX_stress = 0.0, deltaY_stress = 0.0, deltaZ_stress = 0.0, deltaX_slab = 0.0, deltaY_slab = 0.0, deltaZ_slab = 0.0, deltaX_conf = 0.0, deltaY_conf = 0.0;
    
+   string moved ("moved");
+   string fixed ("fixed");
+   unsigned cid_moved = _simulation.getDomain()->getCidMovement(moved, _simulation.getDomain()->getNumberOfComponents()) - 1;
+   unsigned cid_fixed = _simulation.getDomain()->getCidMovement(fixed, _simulation.getDomain()->getNumberOfComponents()) - 1;
+
    // ------- PREPARATION --------
    // data transfer for determination of the control volumes
    if(_simulation.isRecordingSlabProfile()){
@@ -1097,11 +1107,15 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
    // initialize molecule counting; number of molecules of a certain component-id in each control volume
    if(((_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0)){
     for (unsigned cid = 0; cid < _simulation.getDomain()->getNumberOfComponents(); cid++){
+      _countedMoleculesAll[cid] = 0;
+      for (unsigned d = 0; d < 3; d++){
+	_directedVelocityAll[d][cid] = 0.0;
+      }
      for (double xCoord = 0.5; xCoord < xMax; xCoord++)
        for (double yCoord = 0.5; yCoord < yMax; yCoord++){
 	  _countedMolecules[cid][xCoord][yCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocity[cid][xCoord][yCoord][d] = 0.0;
+	    _directedVelocity[d][cid][xCoord][yCoord] = 0.0;
 	  }
        }
     }
@@ -1109,39 +1123,39 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
   if(!_simulation.isSimpleAverageSigma2D()){
    // same for SlabProfile, StressProfile and Confinement summed up over x timesteps
    for (unsigned cid = 0; cid < _simulation.getDomain()->getNumberOfComponents(); cid++){
-    if(_simulation.isRecordingSlabProfile() && (_simulation.getSimulationStep() == 1 || (_simulation.getSimulationStep() > _simulation.getInitStatistics() && (_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0))){
+    if(_simulation.isRecordingSlabProfile() && (_simulation.getSimulationStep() == 1+_simulation.getSimulationStart() || (_simulation.getSimulationStep() > _simulation.getInitStatistics() && (_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0))){
      for (unsigned xCoord = 0; xCoord < xunSlab_tot; xCoord++){
        for (unsigned yCoord = 0; yCoord < yunSlab_tot; yCoord++){
 	 for (unsigned zCoord = 0; zCoord < zunSlab_tot; zCoord++){
 	  _countedMoleculesSlab[cid][xCoord][yCoord][zCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocitySlab[cid][xCoord][yCoord][zCoord][d] = 0.0;
-	    _universalDirectedVelocitySlab[cid][xCoord][yCoord][zCoord][d] = 0.0;
+	    _directedVelocitySlab[d][cid][xCoord][yCoord][zCoord] = 0.0;
+	    _universalDirectedVelocitySlab[d][cid][xCoord][yCoord][zCoord] = 0.0;
 	  }
 	 }
        }
      }
     }
-    if(_simulation.isRecordingStressProfile() && (_simulation.getSimulationStep() == 1 || (_simulation.getSimulationStep() > _simulation.getInitStatistics() && (_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0))){
+    if(_simulation.isRecordingStressProfile() && (_simulation.getSimulationStep() == 1+_simulation.getSimulationStart() || (_simulation.getSimulationStep() > _simulation.getInitStatistics() && (_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0))){
      for (unsigned xCoord = 0; xCoord < xunStress_tot; xCoord++){
        for (unsigned yCoord = 0; yCoord < yunStress_tot; yCoord++){
 	 for (unsigned zCoord = 0; zCoord < zunStress_tot; zCoord++){
 	  _countedMoleculesStress[cid][xCoord][yCoord][zCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocityStress[cid][xCoord][yCoord][zCoord][d] = 0.0;
-	    _universalDirectedVelocityStress[cid][xCoord][yCoord][zCoord][d] = 0.0;
+	    _directedVelocityStress[d][cid][xCoord][yCoord][zCoord] = 0.0;
+	    _universalDirectedVelocityStress[d][cid][xCoord][yCoord][zCoord] = 0.0;
 	  }
 	 }
        }
      }
     }
-    if(_simulation.isRecordingConfinementProfile() && (_simulation.getSimulationStep() == 1 || (_simulation.getSimulationStep() > _simulation.getInitStatistics() && (_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0))){
+    if(_simulation.isRecordingConfinementProfile() && (_simulation.getSimulationStep() == 1+_simulation.getSimulationStart() || (_simulation.getSimulationStep() > _simulation.getInitStatistics() && (_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0))){
      for (unsigned xCoord = 0; xCoord < xunConf_tot; xCoord++){
        for (unsigned yCoord = 0; yCoord < yunConf_tot; yCoord++){
 	  _countedMoleculesConfinement[cid][xCoord][yCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocityConfinement[cid][xCoord][yCoord][d] = 0.0;
-	    _universalDirectedVelocityConfinement[cid][xCoord][yCoord][d] = 0.0;
+	    _directedVelocityConfinement[d][cid][xCoord][yCoord] = 0.0;
+	    _universalDirectedVelocityConfinement[d][cid][xCoord][yCoord] = 0.0;
 	  }
        }
      }
@@ -1156,18 +1170,27 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
       roundX = floor(molecule->r(0)) + 0.5;
       roundY = floor(molecule->r(1)) + 0.5;
       CID = molecule->componentid();
-      _countedMolecules[CID][roundX][roundY]++;
-      for (unsigned d = 0; d < 3; d++)
-	_directedVelocity[CID][roundX][roundY][d] += molecule->v(d);
+      
+      if(CID == cid_moved || CID == cid_fixed){
+	 _countedMoleculesAll[CID]++;
+	for (unsigned d = 0; d < 3; d++)
+		_directedVelocityAll[d][CID] += molecule->v(d);     
+      }
+      else{
+	_countedMolecules[CID][roundX][roundY]++;
+	for (unsigned d = 0; d < 3; d++)
+		_directedVelocity[d][CID][roundX][roundY] += molecule->v(d);
+      }
+      
      if(!_simulation.isSimpleAverageSigma2D()){ 
-      if(_simulation.getSimulationStep() >= _simulation.getInitStatistics()){
+      if((CID != cid_moved && CID != cid_fixed) && _simulation.getSimulationStep() >= _simulation.getInitStatistics()){
        if(_simulation.isRecordingSlabProfile()){
 	xun = floor(molecule->r(0) / deltaX_slab);
 	yun = floor(molecule->r(1) / deltaY_slab);
 	zun = floor(molecule->r(2) / deltaZ_slab);
 	_countedMoleculesSlab[CID][xun][yun][zun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _directedVelocitySlab[CID][xun][yun][zun][d] += molecule->v(d);
+	  _directedVelocitySlab[d][CID][xun][yun][zun] += molecule->v(d);
        }
        if(_simulation.isRecordingStressProfile()){
 	xun = floor(molecule->r(0) / deltaX_stress);
@@ -1175,52 +1198,67 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	zun = floor(molecule->r(2) / deltaZ_stress);
 	_countedMoleculesStress[CID][xun][yun][zun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _directedVelocityStress[CID][xun][yun][zun][d] += molecule->v(d);
+	  _directedVelocityStress[d][CID][xun][yun][zun] += molecule->v(d);
        }
        if(_simulation.isRecordingConfinementProfile()){
 	xun = floor((molecule->r(0)-_simulation.getDomain()->getConfinementEdge(0)) / deltaX_conf);
 	yun = floor((molecule->r(1)-(_simulation.getDomain()->get_confinementMidPoint(3))) / deltaY_conf);
 	_countedMoleculesConfinement[CID][xun][yun]++;
 	for (unsigned d = 0; d < 3; d++)
-	  _directedVelocityConfinement[CID][xun][yun][d] += molecule->v(d);
+	  _directedVelocityConfinement[d][CID][xun][yun] += molecule->v(d);
        }
       }
      }
    }
-     
+   
    // ------- PARALLELIZATION --------
+   // for cid_fixed and cid_moved
+   if(_simulation.getSimulationStep() >= 1+_simulation.getSimulationStart()  && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
+     for (unsigned cid = 0; cid < _countedMoleculesAll.size(); cid++){
+	dode->collCommInit(4);
+	dode->collCommAppendUnsLong(_countedMoleculesAll[cid]);
+	for(int d = 0; d < 3; d++)
+		dode->collCommAppendDouble(_directedVelocityAll[d][cid]);
+	dode->collCommAllreduceSum();
+	_universalCountedMoleculesAll[cid] = dode->collCommGetUnsLong();
+	for(int d = 0; d < 3; d++)
+		_universalDirectedVelocityAll[d][cid] = dode->collCommGetDouble();
+	dode->collCommFinalize();
+     }
+   }
+   
    // carried out every X-th time step (X = _simulation.getDirectedVelocityTime())
-   if(_simulation.getSimulationStep() >= 1 && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
+   if(_simulation.getSimulationStep() >= 1+_simulation.getSimulationStart() && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
      for (unsigned cid = 0; cid < _simulation.getDomain()->getNumberOfComponents(); cid++){
       dode->collCommInit(4*round(xMax)*round(yMax));
 	for(double x = 0.5; x < xMax; x++)
 	  for(double y = 0.5; y < yMax; y++){
 	    dode->collCommAppendUnsLong(_countedMolecules[cid][x][y]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocity[cid][x][y][d]);
+		dode->collCommAppendDouble(_directedVelocity[d][cid][x][y]);
 	  }
       dode->collCommAllreduceSum();
 	for(double x = 0.5; x < xMax; x++)
 	  for(double y = 0.5; y < yMax; y++){
 	    _universalCountedMolecules[cid][x][y] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++){
-		_universalDirectedVelocity[cid][x][y][d] = dode->collCommGetDouble();
+		_universalDirectedVelocity[d][cid][x][y] = dode->collCommGetDouble();
 	    }
 	  }
       dode->collCommFinalize();
       for(double x = 0.5; x < xMax; x++)
 	  for(double y = 0.5; y < yMax; y++){
 	    for(int d = 0; d < 3; d++){
-		if (_universalCountedMolecules[cid][x][y] != 0)
-		  _universalDirectedVelocity[cid][x][y][d] = _universalDirectedVelocity[cid][x][y][d]/_universalCountedMolecules[cid][x][y];
+		if (_universalCountedMolecules[cid][x][y] > _molDirVelThreshold)
+		  _universalDirectedVelocity[d][cid][x][y] = _universalDirectedVelocity[d][cid][x][y]/_universalCountedMolecules[cid][x][y];
 		else
-		  _universalDirectedVelocity[cid][x][y][d] = 0.0;
+		  _universalDirectedVelocity[d][cid][x][y] = 0.0;
 	    }
 	  }
      }
    }
   if(!_simulation.isSimpleAverageSigma2D()){   
-   if(_simulation.getSimulationStep() > _simulation.getInitStatistics() && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
+   if(_simulation.getSimulationStep() > _simulation.getInitStatistics() && _simulation.getSimulationStep() > _simulation.getSimulationStart() && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
     //Parallelization for SlabProfile, StressProfile and Confinement
     if(_simulation.isRecordingSlabProfile()){
     for (unsigned cid = 0; cid < _simulation.getDomain()->getNumberOfComponents(); cid++){
@@ -1230,7 +1268,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	   for(unsigned z = 0; z < zunSlab_tot; z++){ 
 	    dode->collCommAppendUnsLong(_countedMoleculesSlab[cid][x][y][z]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocitySlab[cid][x][y][z][d]);
+		dode->collCommAppendDouble(_directedVelocitySlab[d][cid][x][y][z]);
 	  }
       dode->collCommAllreduceSum();
 	for(unsigned x = 0; x < xunSlab_tot; x++)
@@ -1238,7 +1276,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	   for(unsigned z = 0; z < zunSlab_tot; z++){ 
 	    _universalCountedMoleculesSlab[cid][x][y][z] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++){
-		_universalDirectedVelocitySlab[cid][x][y][z][d] = dode->collCommGetDouble();
+		_universalDirectedVelocitySlab[d][cid][x][y][z] = dode->collCommGetDouble();
 	    }
 	  }
       dode->collCommFinalize();
@@ -1246,10 +1284,10 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	  for(unsigned y = 0; y < yunSlab_tot; y++)
 	   for(unsigned z = 0; z < zunSlab_tot; z++){ 
 	    for(int d = 0; d < 3; d++){
-		if (_universalCountedMoleculesSlab[cid][x][y][z] != 0)
-		  _universalDirectedVelocitySlab[cid][x][y][z][d] = _universalDirectedVelocitySlab[cid][x][y][z][d]/_universalCountedMoleculesSlab[cid][x][y][z];
+		if (_universalCountedMoleculesSlab[cid][x][y][z] > _molDirVelThreshold)
+		  _universalDirectedVelocitySlab[d][cid][x][y][z] = _universalDirectedVelocitySlab[d][cid][x][y][z]/_universalCountedMoleculesSlab[cid][x][y][z];
 		else
-		  _universalDirectedVelocitySlab[cid][x][y][z][d] = 0.0;
+		  _universalDirectedVelocitySlab[d][cid][x][y][z] = 0.0;
 	    }
 	  }
     }
@@ -1262,7 +1300,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	   for(unsigned z = 0; z < zunStress_tot; z++){ 
 	    dode->collCommAppendUnsLong(_countedMoleculesStress[cid][x][y][z]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocityStress[cid][x][y][z][d]);
+		dode->collCommAppendDouble(_directedVelocityStress[d][cid][x][y][z]);
 	  }
       dode->collCommAllreduceSum();
 	for(unsigned x = 0; x < xunStress_tot; x++)
@@ -1270,7 +1308,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	   for(unsigned z = 0; z < zunStress_tot; z++){
 	    _universalCountedMoleculesStress[cid][x][y][z] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++){
-		_universalDirectedVelocityStress[cid][x][y][z][d] = dode->collCommGetDouble();
+		_universalDirectedVelocityStress[d][cid][x][y][z] = dode->collCommGetDouble();
 	    }
 	  }
       dode->collCommFinalize();
@@ -1278,10 +1316,10 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	  for(unsigned y = 0; y < yunStress_tot; y++)
 	   for(unsigned z = 0; z < zunStress_tot; z++){
 	    for(int d = 0; d < 3; d++){
-		if (_universalCountedMoleculesStress[cid][x][y][z] != 0)
-		  _universalDirectedVelocityStress[cid][x][y][z][d] = _universalDirectedVelocityStress[cid][x][y][z][d]/_universalCountedMoleculesStress[cid][x][y][z];
+		if (_universalCountedMoleculesStress[cid][x][y][z] > _molDirVelThreshold)
+		  _universalDirectedVelocityStress[d][cid][x][y][z] = _universalDirectedVelocityStress[d][cid][x][y][z]/_universalCountedMoleculesStress[cid][x][y][z];
 		else
-		  _universalDirectedVelocityStress[cid][x][y][z][d] = 0.0;
+		  _universalDirectedVelocityStress[d][cid][x][y][z] = 0.0;
 	    }
 	  }
     }
@@ -1293,78 +1331,89 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimple(ParticleContai
 	  for(unsigned y = 0; y < yunConf_tot; y++){
 	    dode->collCommAppendUnsLong(_countedMoleculesConfinement[cid][x][y]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocityConfinement[cid][x][y][d]);
+		dode->collCommAppendDouble(_directedVelocityConfinement[d][cid][x][y]);
 	  }
       dode->collCommAllreduceSum();
 	for(unsigned x = 0; x < xunConf_tot; x++)
 	  for(unsigned y = 0; y < yunConf_tot; y++){
 	    _universalCountedMoleculesConfinement[cid][x][y] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++){
-		_universalDirectedVelocityConfinement[cid][x][y][d] = dode->collCommGetDouble();
+		_universalDirectedVelocityConfinement[d][cid][x][y] = dode->collCommGetDouble();
 	    }
 	  }
       dode->collCommFinalize();
       for(unsigned x = 0; x < xunConf_tot; x++)
 	  for(unsigned y = 0; y < yunConf_tot; y++){
 	    for(int d = 0; d < 3; d++){
-		if (_universalCountedMoleculesConfinement[cid][x][y] != 0)
-		  _universalDirectedVelocityConfinement[cid][x][y][d] = _universalDirectedVelocityConfinement[cid][x][y][d]/_universalCountedMoleculesConfinement[cid][x][y];
+		if (_universalCountedMoleculesConfinement[cid][x][y] > _molDirVelThreshold)
+		  _universalDirectedVelocityConfinement[d][cid][x][y] = _universalDirectedVelocityConfinement[d][cid][x][y]/_universalCountedMoleculesConfinement[cid][x][y];
 		else
-		  _universalDirectedVelocityConfinement[cid][x][y][d] = 0.0;
+		  _universalDirectedVelocityConfinement[d][cid][x][y] = 0.0;
 	    }
 	  }
     }
     }
    }
   }
-   
+  
    // ------- DATA ASSIGNMENT --------
    // attachment of the _universalDirectedVelocity to each molecule in dependence on the control volume part of
    // carried out every time step since molecules move over time ---> very important!!!
-    if(_simulation.getSimulationStep() >= _simulation.getInitStatistics()+_simulation.getDirectedVelocityTime()){ 
+    if(_simulation.getSimulationStep() >= _simulation.getInitStatistics()+_simulation.getDirectedVelocityTime() && _simulation.getSimulationStep() >= _simulation.getSimulationStart()+_simulation.getDirectedVelocityTime()){ 
      for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()){
       unsigned cid = molecule->componentid();
       double x = floor(molecule->r(0)) + 0.5;
       double y = floor(molecule->r(1)) + 0.5;
-      
-      for (int d=0; d<3; d++){
-	molecule->setDirectedVelocity(d, _universalDirectedVelocity[cid][x][y][d]); 
+      if(cid == cid_moved || cid == cid_fixed){
+	for (int d=0; d<3; d++){
+		double vAverage = 0.0;
+		if(_universalCountedMoleculesAll[cid] > _molDirVelThreshold)
+			vAverage = _universalDirectedVelocityAll[d][cid]/_universalCountedMoleculesAll[cid];
+		molecule->setDirectedVelocity(d, vAverage); 
+		molecule->setDirectedVelocitySlab(d, vAverage);
+		molecule->setDirectedVelocityStress(d, vAverage); 
+		molecule->setDirectedVelocityConfinement(d, vAverage);
+	}
+      }else{
+       for (int d=0; d<3; d++){
+	molecule->setDirectedVelocity(d, _universalDirectedVelocity[d][cid][x][y]); 
 	if(_simulation.isSimpleAverageSigma2D()){
 	    if(_simulation.isRecordingSlabProfile())	
-		molecule->setDirectedVelocitySlab(d, _universalDirectedVelocity[cid][x][y][d]); 
+		molecule->setDirectedVelocitySlab(d, _universalDirectedVelocity[d][cid][x][y]); 
 	    if(_simulation.isRecordingStressProfile())
-		molecule->setDirectedVelocityStress(d, _universalDirectedVelocity[cid][x][y][d]); 
+		molecule->setDirectedVelocityStress(d, _universalDirectedVelocity[d][cid][x][y]); 
 	    if(_simulation.isRecordingConfinementProfile())
-		molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocity[cid][x][y][d]);
+		molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocity[d][cid][x][y]);
 	}
-      }
-     if(!_simulation.isSimpleAverageSigma2D()){
-      if(_simulation.isRecordingSlabProfile()){
-	xunSlab = floor(molecule->r(0) / deltaX_slab);
-	yunSlab = floor(molecule->r(1) / deltaY_slab);
-	zunSlab = floor(molecule->r(2) / deltaZ_slab);
-	for (int d=0; d<3; d++)
-	  molecule->setDirectedVelocitySlab(d, _universalDirectedVelocitySlab[cid][xunSlab][yunSlab][zunSlab][d]); 
-      }
-      if(_simulation.isRecordingStressProfile()){
-	xunStress = floor(molecule->r(0) / deltaX_stress);
-	yunStress = floor(molecule->r(1) / deltaY_stress);
-	zunStress = floor(molecule->r(2) / deltaZ_stress);
-	for (int d=0; d<3; d++)
-	  molecule->setDirectedVelocityStress(d, _universalDirectedVelocityStress[cid][xunStress][yunStress][zunStress][d]); 
-      }
-      if(_simulation.isRecordingConfinementProfile()){
-	xunConf = floor((molecule->r(0)-_simulation.getDomain()->getConfinementEdge(0)) / deltaX_conf);
-	yunConf = floor((molecule->r(1)-(_simulation.getDomain()->get_confinementMidPoint(3))) / deltaY_conf);
-	if (xunConf >= 0 && xunConf < xunConf_tot && yunConf >= 0 && yunConf < yunConf_tot){
+       }
+       if(!_simulation.isSimpleAverageSigma2D()){
+        if(_simulation.isRecordingSlabProfile()){
+	 xunSlab = floor(molecule->r(0) / deltaX_slab);
+	 yunSlab = floor(molecule->r(1) / deltaY_slab);
+	 zunSlab = floor(molecule->r(2) / deltaZ_slab);
+	 for (int d=0; d<3; d++)
+	  molecule->setDirectedVelocitySlab(d, _universalDirectedVelocitySlab[d][cid][xunSlab][yunSlab][zunSlab]); 
+        }
+        if(_simulation.isRecordingStressProfile()){
+	 xunStress = floor(molecule->r(0) / deltaX_stress);
+	 yunStress = floor(molecule->r(1) / deltaY_stress);
+	 zunStress = floor(molecule->r(2) / deltaZ_stress);
+	 for (int d=0; d<3; d++)
+	  molecule->setDirectedVelocityStress(d, _universalDirectedVelocityStress[d][cid][xunStress][yunStress][zunStress]); 
+        }
+        if(_simulation.isRecordingConfinementProfile()){
+	 xunConf = floor((molecule->r(0)-_simulation.getDomain()->getConfinementEdge(0)) / deltaX_conf);
+	 yunConf = floor((molecule->r(1)-(_simulation.getDomain()->get_confinementMidPoint(3))) / deltaY_conf);
+	 if (xunConf >= 0 && xunConf < xunConf_tot && yunConf >= 0 && yunConf < yunConf_tot){
 	  for (int d=0; d<3; d++){
-	    molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocityConfinement[cid][xunConf][yunConf][d]);
+	    molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocityConfinement[d][cid][xunConf][yunConf]);
 	  }
+	 }
 	}
+       }
       }
      }
     }
-   }
 }
 
 // calculation of the directed velocities: simple average; size of control volumes: 1*1*1
@@ -1374,17 +1423,26 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimpleSigma3D(Particl
    double zMax = _simulation.getDomain()->getGlobalLength(2);
    double roundX, roundY, roundZ;
    unsigned CID;
+   
+   string moved ("moved");
+   string fixed ("fixed");
+   unsigned cid_moved = _simulation.getDomain()->getCidMovement(moved, _simulation.getDomain()->getNumberOfComponents()) - 1;
+   unsigned cid_fixed = _simulation.getDomain()->getCidMovement(fixed, _simulation.getDomain()->getNumberOfComponents()) - 1;
 
    // ------- INITIALIZATION --------
    // initialize molecule counting; number of molecules of a certain component-id in each control volume
    if(((_simulation.getSimulationStep()-1)%_simulation.getDirectedVelocityTime() == 0)){
     for (unsigned cid = 0; cid < _simulation.getDomain()->getNumberOfComponents(); cid++){
+     _countedMoleculesAll[cid] = 0;
+     for (unsigned d = 0; d < 3; d++){
+	_directedVelocityAll[d][cid] = 0.0;
+     }	    
      for (double xCoord = 0.5; xCoord < xMax; xCoord++)
        for (double yCoord = 0.5; yCoord < yMax; yCoord++)
         for (double zCoord = 0.5; zCoord < zMax; zCoord++){
 	  _countedMolecules3D[cid][xCoord][yCoord][zCoord] = 0;
 	  for (unsigned d = 0; d < 3; d++){
-	    _directedVelocity3D[cid][xCoord][yCoord][zCoord][d] = 0.0;
+	    _directedVelocity3D[d][cid][xCoord][yCoord][zCoord] = 0.0;
 	  }
        }
     }
@@ -1398,14 +1456,35 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimpleSigma3D(Particl
       roundY = floor(molecule->r(1)) + 0.5;
       roundZ = floor(molecule->r(2)) + 0.5;
       CID = molecule->componentid();
-      _countedMolecules3D[CID][roundX][roundY][roundZ]++;
-      for (unsigned d = 0; d < 3; d++)
-	_directedVelocity3D[CID][roundX][roundY][roundZ][d] += molecule->v(d);
+      if(CID == cid_moved || CID == cid_fixed){
+	 _countedMoleculesAll[CID]++;
+	for (unsigned d = 0; d < 3; d++)
+		_directedVelocityAll[d][CID] += molecule->v(d);     
+      }else{
+	_countedMolecules3D[CID][roundX][roundY][roundZ]++;
+	for (unsigned d = 0; d < 3; d++)
+		_directedVelocity3D[d][CID][roundX][roundY][roundZ] += molecule->v(d);
+      }
    }
      
    // ------- PARALLELIZATION --------
+   // for cid_fixed and cid_moved
+   if(_simulation.getSimulationStep() >= 1+_simulation.getSimulationStart()  && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
+     for (unsigned cid = 0; cid < _countedMoleculesAll.size(); cid++){
+	dode->collCommInit(4);
+	dode->collCommAppendUnsLong(_countedMoleculesAll[cid]);
+	for(int d = 0; d < 3; d++)
+		dode->collCommAppendDouble(_directedVelocityAll[d][cid]);
+	dode->collCommAllreduceSum();
+	_universalCountedMoleculesAll[cid] = dode->collCommGetUnsLong();
+	for(int d = 0; d < 3; d++)
+		_universalDirectedVelocityAll[d][cid] = dode->collCommGetDouble();
+	dode->collCommFinalize();
+     }
+   }
+   
    // carried out every X-th time step (X = _simulation.getDirectedVelocityTime())
-   if(_simulation.getSimulationStep() >= 1 && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
+   if(_simulation.getSimulationStep() >= 1+_simulation.getSimulationStart() && _simulation.getSimulationStep()%_simulation.getDirectedVelocityTime() == 0){
      for (unsigned cid = 0; cid < _simulation.getDomain()->getNumberOfComponents(); cid++){
       dode->collCommInit(4*round(xMax)*round(yMax)*round(zMax));
 	for(double x = 0.5; x < xMax; x++)
@@ -1413,7 +1492,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimpleSigma3D(Particl
 	   for(double z = 0.5; z < zMax; z++){
 	    dode->collCommAppendUnsLong(_countedMolecules3D[cid][x][y][z]);
 	    for(int d = 0; d < 3; d++)
-		dode->collCommAppendDouble(_directedVelocity3D[cid][x][y][z][d]);
+		dode->collCommAppendDouble(_directedVelocity3D[d][cid][x][y][z]);
 	   }
       dode->collCommAllreduceSum();
 	for(double x = 0.5; x < xMax; x++)
@@ -1421,17 +1500,17 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimpleSigma3D(Particl
 	   for(double z = 0.5; z < zMax; z++){
 	    _universalCountedMolecules3D[cid][x][y][z] = dode->collCommGetUnsLong();
 	    for(int d = 0; d < 3; d++)
-		_universalDirectedVelocity3D[cid][x][y][z][d] = dode->collCommGetDouble();
+		_universalDirectedVelocity3D[d][cid][x][y][z] = dode->collCommGetDouble();
 	   }
       dode->collCommFinalize();
       for(double x = 0.5; x < xMax; x++)
 	  for(double y = 0.5; y < yMax; y++)
 	   for(double z = 0.5; z < zMax; z++){
 	    for(int d = 0; d < 3; d++){
-		if (_universalCountedMolecules3D[cid][x][y][z] != 0)
-		  _universalDirectedVelocity3D[cid][x][y][z][d] = _universalDirectedVelocity3D[cid][x][y][z][d]/_universalCountedMolecules3D[cid][x][y][z];
+		if (_universalCountedMolecules3D[cid][x][y][z] > _molDirVelThreshold)
+		  _universalDirectedVelocity3D[d][cid][x][y][z] = _universalDirectedVelocity3D[d][cid][x][y][z]/_universalCountedMolecules3D[cid][x][y][z];
 		else
-		  _universalDirectedVelocity3D[cid][x][y][z][d] = 0.0;
+		  _universalDirectedVelocity3D[d][cid][x][y][z] = 0.0;
 	    }
 	   }
      }
@@ -1440,21 +1519,32 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesSimpleSigma3D(Particl
    // ------- DATA ASSIGNMENT --------
    // attachment of the _universalDirectedVelocity to each molecule in dependence on the control volume part of
    // carried out every time step since molecules move over time ---> very important!!!
-    if(_simulation.getSimulationStep() >= _simulation.getInitStatistics()+_simulation.getDirectedVelocityTime()){ 
+    if(_simulation.getSimulationStep() >= _simulation.getInitStatistics()+_simulation.getDirectedVelocityTime() && _simulation.getSimulationStep() >= _simulation.getSimulationStart()+_simulation.getDirectedVelocityTime()){ 
      for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()){
       unsigned cid = molecule->componentid();
       double x = floor(molecule->r(0)) + 0.5;
       double y = floor(molecule->r(1)) + 0.5;
       double z = floor(molecule->r(2)) + 0.5;
-      
-      for (int d=0; d<3; d++){
-	molecule->setDirectedVelocity(d, _universalDirectedVelocity3D[cid][x][y][z][d]); 
+      if(cid == cid_moved || cid == cid_fixed){
+	for (int d=0; d<3; d++){
+		double vAverage = 0.0;
+		if(_universalCountedMoleculesAll[cid] > _molDirVelThreshold)
+			vAverage = _universalDirectedVelocityAll[d][cid]/_universalCountedMoleculesAll[cid];
+		molecule->setDirectedVelocity(d, vAverage); 
+		molecule->setDirectedVelocitySlab(d, vAverage);
+		molecule->setDirectedVelocityStress(d, vAverage); 
+		molecule->setDirectedVelocityConfinement(d, vAverage);
+	}
+      }else{
+       for (int d=0; d<3; d++){
+	molecule->setDirectedVelocity(d, _universalDirectedVelocity3D[d][cid][x][y][z]); 
 	if(_simulation.isRecordingSlabProfile())	
-		molecule->setDirectedVelocitySlab(d, _universalDirectedVelocity3D[cid][x][y][z][d]); 
+		molecule->setDirectedVelocitySlab(d, _universalDirectedVelocity3D[d][cid][x][y][z]); 
 	if(_simulation.isRecordingStressProfile())
-		molecule->setDirectedVelocityStress(d, _universalDirectedVelocity3D[cid][x][y][z][d]); 
+		molecule->setDirectedVelocityStress(d, _universalDirectedVelocity3D[d][cid][x][y][z]); 
 	if(_simulation.isRecordingConfinementProfile())
-		molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocity3D[cid][x][y][z][d]);
+		molecule->setDirectedVelocityConfinement(d, _universalDirectedVelocity3D[d][cid][x][y][z]);
+      }
       }
     }
    }

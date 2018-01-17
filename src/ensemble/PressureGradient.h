@@ -148,7 +148,8 @@ public:
 	
 	// for the measurements in the confinement
 	double getGlobalTargetVelocity(int d, int coset) { return this->_globalTargetVelocity[d][coset]; }
-
+	double getCurrentGlobalTargetVelocity(int d, int coset) { return this->_currentGlobalTargetVelocity[d][coset]; }
+	
 private:
 	unsigned int _localRank;
 
@@ -173,6 +174,8 @@ private:
 	std::map<unsigned int, double> _universalAdditionalAcceleration[3];
 	/// target average velocity for the molecules of a coset
 	std::map<unsigned int, double> _globalTargetVelocity[3];
+	/// target average velocity for the molecules of a coset in each time step;
+	std::map<unsigned int, double> _currentGlobalTargetVelocity[3];
 	/// delay variable tau of a coset
 	std::map<unsigned int, double> _universalTau;
 	/// is the tau parameter constant

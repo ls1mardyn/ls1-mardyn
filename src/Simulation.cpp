@@ -910,6 +910,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			  global_log->info() << "Continuing with output file format 'all'." << endl;
 			  global_log->error() << "Invalid type of output file format \'" << outputFormat << "\' found. [Allowed: matlab, vtk, all]" << endl;
 			}
+		} else if (token == "EnergyOutputPerComponent") {
+			_doEnergyOutputPerComponent = true;	
 		} else if (token == "profile") {   // 
 			unsigned xun, yun, zun;
 			inputfilestream >> xun >> yun >> zun;
@@ -1033,6 +1035,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			_domain->setupStressRecTime(_stressProfileRecordingTimesteps);
 		} else if (token == "stressProfileOutputTimesteps") { /* TODO: suboption of stressProfile */
 			inputfilestream >> _stressProfileOutputTimesteps;	
+			_domain->setupStressOutTime(_stressProfileOutputTimesteps);
 		} else if (token == "stressProfiledComponent") { /* TODO: suboption of stressProfile, check if required to enable output in general */
 			unsigned cid;
 			inputfilestream >> cid;
@@ -1097,10 +1100,15 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			_domain->setupConfinementRecTime(_confinementRecordingTimesteps);
 		} else if (token == "confinementOutputTimesteps") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementOutputTimesteps;
+			_domain->setupConfinementOutTime(_confinementOutputTimesteps);
 		} else if (token == "confinementProfilePrefix") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementProfileOutputPrefix;
+		} else if (token == "confinementSplitStress") { /* TODO: suboption of confinementProfile */
+			_doConfinementSplitStress = true;	
 		} else if (token == "ThWallLayer") {
-			_domain->setThermostatWallLayer( );
+			double layerThickness;
+			inputfilestream >> layerThickness;
+			_domain->setThermostatWallLayer(layerThickness);
 			// specify a thermostat for each layer in the components 'fixed' and 'moved'
 			if( !_domain->severalThermostats() )
 				_domain->enableLayerwiseWallThermostat();
@@ -1333,7 +1341,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 						<< token << endl;
 		}
 	}
-
+	
 	// read particle data
 	maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain,
 			_domainDecomposition);
@@ -1483,6 +1491,11 @@ void Simulation::prepare_start() {
 
 	_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer,
 			true, 1.0);
+	
+	// once at the beginning of the calculation the target velocity of accelerateInstantaneously is transferred (from to pressureGradient to Domain)
+	if (_domain->getPG()->isAcceleratingInstantaneously(_domain->getNumberOfComponents()))
+		_domain->setTargetVelocityAcceleration();
+		
 	global_log->debug() << "Calculating global values finished." << endl;
 
 	if (_lmu.size() + _mcav.size() > 0) {
@@ -1546,7 +1559,7 @@ void Simulation::simulate() {
 	  }
 	  
 	// reset of heat flux average
-	for (int tht_id = 0; tht_id <= 3; tht_id++)
+	for (int tht_id = 0; tht_id <= _domain->maxThermostat(); tht_id++)
 		_domain->setThT_heatFlux(tht_id, 0.0);
 	  
 	// initialize result files
@@ -1554,6 +1567,7 @@ void Simulation::simulate() {
 	    std::ofstream BulkPressure;
 	    std::ofstream Confinement;
 	    std::ofstream HeatFlux;
+	    std::ofstream Energy;
 	    
 	// writing header for result files    
 	if(_domainDecomposition->getRank() == 0){
@@ -1561,6 +1575,7 @@ void Simulation::simulate() {
 		if(BulkPressure.is_open()) BulkPressure.close();
 		if(Confinement.is_open()) Confinement.close();
 		if(HeatFlux.is_open()) HeatFlux.close();
+		if(Energy.is_open()) Energy.close();
 	  
 		ForceData.open("./Results/ForceData.dat");
 		if (!ForceData.is_open()) {
@@ -1593,12 +1608,30 @@ void Simulation::simulate() {
 		exit(1);
 		}
 		HeatFlux << "#A_Comp_2 (upper plate) " << 2*_domain->getGlobalLength(0)*_domain->getGlobalLength(2) << "\n" << "#A_Comp_3 (lower plate)" << 2*((_domain->getConfinementEdge(1)-_domain->getConfinementEdge(0)) + _domain->get_confinementMidPoint(3))*_domain->getGlobalLength(2) << "\n\n";
-		HeatFlux << "#Comp_1 (fluid) " << _domain->getThermostat(0) << "\n#Comp_2 (upper plate) " << _domain->getThermostat(1) << "\n#Comp_3 (lower plate) " <<  _domain->getThermostat(2) << "\n\n";
+		if(_domain->isThermostatWallLayer()){
+			for(int tht = 1; tht <= _domain->maxThermostat(); tht++) 
+				HeatFlux << "#Layer " << _domain->getThermostat(tht) << "\n";
+			HeatFlux << "\n";
+		}else{
+			for(unsigned cid = 0; cid < _domain->getNumberOfComponents(); cid++) 
+				HeatFlux << "#Comp " << cid << " " << _domain->getThermostat(cid) << "\n";
+			HeatFlux << "\n";
+		}
 		HeatFlux << "#step\t\t\tQ_ThT_ges\tQ_ThT_1\tQ_ThT_2\tQ_ThT_3";
 		if(_doShearRate)
 			HeatFlux << "\tdEnergy_noDirVel\tdEnergy_Default\tshearVelDelta";
 		HeatFlux << "\n\n";
 		
+		Energy.open("./Results/Energy.dat");
+		if (!Energy.is_open()) {
+		global_log->error() << "Could not open file " << "./Results/Energy.dat" << endl;
+		exit(1);
+		}
+		
+		Energy << "#step\t\t\t";
+		for(unsigned cid = 0; cid < _domain->getNumberOfComponents(); cid++) 
+			Energy << "Upot[cid]\t\tUkin[cid]\t\t";
+		Energy << "\n";	
 		//Check discjunction of thermostat layers
 		if(_domain->isThermostatLayer() == true)
 		  _domain->checkThermostatLayerDisjunct();
@@ -1934,7 +1967,6 @@ void Simulation::simulate() {
 				if (t == _domain->maxThermostat())
 					cout << endl;
 			}
-		
 		// Acceleration of the component type "moved"; independent of the shear rate calculation
 		if (_pressureGradient->isAcceleratingUniformly()) {
 			if (!(_simstep % uCAT)) {
@@ -1974,17 +2006,20 @@ void Simulation::simulate() {
 			}
 		  }
 		}
-		
 				
 		// shear rate accelerates the total system with a velocity gradient; for _doShearForce just the margin layers are fixed
 		if((_doShearRate||_doShearForce) && _simstep >= _initStatistics)
 			_integrator->shearRate(_domainDecomposition, _moleculeContainer, _domain);
-		
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
 				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
 								_simstep));
+		if(_domainDecomposition->getRank()==0 && _doEnergyOutputPerComponent == true){
+			for(unsigned comp = 0; comp < _domain->getNumberOfComponents(); comp++)
+			Energy << " Upot[" << comp << "] = " << _domain->getGlobalUpot(comp) << " Ukin[" << comp << "] = " << _domain->getGlobalUkin(comp);
+			Energy << endl;
+		}
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
 			global_log->debug() << "Velocity scaling" << endl;
@@ -2042,7 +2077,6 @@ void Simulation::simulate() {
 			    }
 			}
 		}
-		
 		// Calculate directed velocities
 		if(_boolDirectedVel == true){
 			if(_doSimpleAverage == true)
@@ -2058,9 +2092,9 @@ void Simulation::simulate() {
 			else
 				_velocityScalingThermostat.calculateDirectedVelocities(_moleculeContainer, _domainDecomposition);
 		}
-		
+
 		advanceSimulationTime(_integrator->getTimestepLength());
-		
+
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
@@ -2074,12 +2108,12 @@ void Simulation::simulate() {
 		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
 			<< endl;
 		/* END PHYSICAL SECTION */
-		
+
 		// measure per timestep IO
 		loopTimer.stop();
 		perStepIoTimer.start();
 		output(_simstep);
-		
+
 		// Writing confinement Properties as output
 		if((_simstep > _initStatistics) && _doRecordConfinement && !(_simstep % _confinementOutputTimesteps)){
 		  _domain->collectConfinementProperties(_domainDecomposition);
@@ -2117,7 +2151,9 @@ void Simulation::simulate() {
 		    osstrm.clear();
 		    
 		    // Heat flux consumed by the thermostats
-		    HeatFlux << _simstep << "\t" << _domain->getThT_heatFlux(0) << "\t" << _domain->getThT_heatFlux(1) << "\t" << _domain->getThT_heatFlux(2) << "\t" << _domain->getThT_heatFlux(3);
+		    HeatFlux << _simstep << "\t";
+		    for (int tht_id = 0; tht_id <= _domain->maxThermostat(); tht_id++)
+			HeatFlux << _domain->getThT_heatFlux(tht_id) << "\t";
 		    if(_doShearRate){
 			    HeatFlux << "\t" << 0.5 * (_domain->getPostShearEnergyConf() - _domain->getPreShearEnergyConf()) << "\t" << 0.5 * (_domain->getPostShearEnergyDefault() - _domain->getPreShearEnergyDefault()) << "\t" << _domain->getShearVelDelta()/((double)_domain->getglobalNumMolecules()*(double)_confinementOutputTimesteps);
 		    }
@@ -2125,7 +2161,7 @@ void Simulation::simulate() {
 		  }		
 		    _domain->resetConfinementProperties(); 
 		    // reset heat flux average
-		    for (int tht_id = 0; tht_id <= 3; tht_id++)
+		    for (int tht_id = 0; tht_id <= _domain->maxThermostat(); tht_id++)
 			_domain->setThT_heatFlux(tht_id, 0.0);
 		    if(_doShearRate){
 			    _domain->setPostShearEnergyConf(0.0);
@@ -2135,7 +2171,6 @@ void Simulation::simulate() {
 			    _domain->setShearVelDelta(0.0);
 		    }
 		}
-		
 		// test deletions and insertions for barostat
 		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
 			unsigned j = 0;
@@ -2179,6 +2214,7 @@ void Simulation::simulate() {
     BulkPressure.close();
     Confinement.close();
     HeatFlux.close();
+    Energy.close();
     ioTimer.start();
     if( _finalCheckpoint ) {
         /* write final checkpoint */
@@ -2405,8 +2441,10 @@ void Simulation::initialize() {
 	_doRecordBulkPressure = false;
 	_doRecordConfinement = false;
 	_doRecordStressProfile = false;
+	_doEnergyOutputPerComponent = false;
 	_doShearRate = false;
 	_doShearForce = false;
+	_doConfinementSplitStress = false;
 	_cancelMomentum = false;
 	_reduceDataSlab = false;
 	_noXYZ = false;

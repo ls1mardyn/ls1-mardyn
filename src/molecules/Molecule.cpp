@@ -17,22 +17,107 @@ Molecule::Molecule(unsigned long id, Component *component,
 	                 double rx, double ry, double rz,
 	                 double vx, double vy, double vz,
 	                 double q0, double q1, double q2, double q3,
-	                 double Dx, double Dy, double Dz)
+	                 double Dx, double Dy, double Dz,
+			 double rOldx, double rOldy, double rOldz,
+			 double rOldStressx, double rOldStressy, double rOldStressz,
+			 double vdirx, double vdiry, double vdirz,
+			 double vdirSlabx, double vdirSlaby, double vdirSlabz,
+			 double vdirStressx, double vdirStressy, double vdirStressz,
+			 double vdirConfinementx, double vdirConfinementy, double vdirConfinementz,
+			 double vdirAvConfx, double vdirAvConfy, double vdirAvConfz,
+			 double vdirAvStressx, double vdirAvStressy, double vdirAvStressz,
+			 double pressVirx, double pressViry, double pressVirz,
+			 double pressKinx, double pressKiny, double pressKinz,
+			 double pressVirConfx, double pressVirConfy, double pressVirConfz,
+			 double pressKinConfx, double pressKinConfy, double pressKinConfz,
+			 double Fx, double Fy, double Fz,
+			 double conPotHeatx, double conPotHeaty, double conPotHeatz,
+			 double conPotHeatStressx, double conPotHeatStressy, double conPotHeatStressz
+  		)
 		: _q(q0, q1, q2, q3) {
 	_id = id;
 	_component = component;
 	_r[0] = rx;
 	_r[1] = ry;
 	_r[2] = rz;
-	_rOld[0] = rx;
-	_rOld[1] = ry;
-	_rOld[2] = rz;
+	_rOld[0] = rOldx;
+	_rOld[1] = rOldy;
+	_rOld[2] = rOldz;
+	_rOldStress[0] = rOldStressx;
+	_rOldStress[1] = rOldStressy;
+	_rOldStress[2] = rOldStressz;
 	_v[0] = vx;
 	_v[1] = vy;
 	_v[2] = vz;
 	_L[0] = Dx;
 	_L[1] = Dy;
 	_L[2] = Dz; 
+	_F[0] = Fx;
+	_F[1] = Fy;
+	_F[2] = Fz;
+	_M[0] = 0.0;
+	_M[1] = 0.0;
+	_M[2] = 0.0;
+	_uPot = 0.0;
+	_uKin = 0.0;
+	
+	_directedVelocity[0] = vdirx;
+	_directedVelocity[1] = vdiry;
+	_directedVelocity[2] = vdirz;
+	
+	_directedVelocitySlab[0] = vdirSlabx;
+	_directedVelocitySlab[1] = vdirSlaby;
+	_directedVelocitySlab[2] = vdirSlabz;
+	
+	_directedVelocityStress[0] = vdirStressx;
+	_directedVelocityStress[1] = vdirStressy;
+	_directedVelocityStress[2] = vdirStressz;
+	
+	_directedVelocityConfinement[0] = vdirConfinementx;
+	_directedVelocityConfinement[1] = vdirConfinementy;
+	_directedVelocityConfinement[2] = vdirConfinementz;
+	
+	_directedVelocityAverageConfinement[0] = vdirAvConfx;
+	_directedVelocityAverageConfinement[1] = vdirAvConfy;
+	_directedVelocityAverageConfinement[2] = vdirAvConfz;
+	
+	_directedVelocityAverageStress[0] = vdirAvStressx;
+	_directedVelocityAverageStress[1] = vdirAvStressy;
+	_directedVelocityAverageStress[2] = vdirAvStressz;
+	
+	_pressureVirial[0] = pressVirx;
+	_pressureVirial[1] = pressViry;
+	_pressureVirial[2] = pressVirz;
+	
+	_pressureKin[0] = pressKinx;
+	_pressureKin[1] = pressKiny;
+	_pressureKin[2] = pressKinz;
+	
+	_pressureVirialConfinement[0] = pressVirConfx;
+	_pressureVirialConfinement[1] = pressVirConfy;
+	_pressureVirialConfinement[2] = pressVirConfz;
+	
+	_pressureKinConfinement[0] = pressKinConfx;
+	_pressureKinConfinement[1] = pressKinConfy;
+	_pressureKinConfinement[2] = pressKinConfz;
+	
+// 	_pressureVirial_barostat[0] = pressVirBarox;
+// 	_pressureVirial_barostat[1] = pressVirBaroy;
+// 	_pressureVirial_barostat[2] = pressVirBaroz;
+// 	
+// 	_pressureKin_barostat[0] = pressKinBarox;
+// 	_pressureKin_barostat[1] = pressKinBaroy;
+// 	_pressureKin_barostat[2] = pressKinBaroz;
+	
+	_convectivePotHeatflux[0] = conPotHeatx;
+	_convectivePotHeatflux[1] = conPotHeaty;
+	_convectivePotHeatflux[2] = conPotHeatz;
+	
+	_convectivePotHeatfluxStress[0] = conPotHeatStressx;
+	_convectivePotHeatfluxStress[1] = conPotHeatStressy;
+	_convectivePotHeatfluxStress[2] = conPotHeatStressz;
+	
+	
 	_sites_d = _sites_F = _osites_e = NULL;
 	//_springSites_F = NULL;
 	_numTersoffNeighbours = 0;
@@ -40,7 +125,7 @@ Molecule::Molecule(unsigned long id, Component *component,
 	fixedy = ry;
 	
 	for(int d = 0; d < 3; d++){
-	  _directedVelocity[d] = 0.0;
+	  //_directedVelocity[d] = 0.0;
 	  for(int e = 0; e < 3; e++){
 	    setVirialForce(d, e, 0.0);
 	    setVirialKin(d, e, 0.0);
@@ -49,18 +134,20 @@ Molecule::Molecule(unsigned long id, Component *component,
 	    setDiffusiveHeatflux(d, e, 0.0);
 	    setDiffusiveHeatfluxStress(d, e, 0.0);
 	  }
-	  setPressureVirial(d, 0.0);
-	  setPressureKin(d, 0.0);
-	  setPressureVirialConfinement(d, 0.0);
-	  setPressureKinConfinement(d, 0.0);
+	  //setPressureVirial(d, 0.0);
+	  //setPressureKin(d, 0.0);
+	  //setPressureVirialConfinement(d, 0.0);
+	  //setPressureKinConfinement(d, 0.0);
 	  setPressureVirial_barostat(d, 0.0);
 	  setPressureKin_barostat(d, 0.0);
-	  setConvectivePotHeatflux(d, 0.0);
-	  setConvectivePotHeatfluxStress(d, 0.0);
-	  setDirectedVelocity(d, 0.0);
-	  setDirectedVelocitySlab(d, 0.0);
-	  setDirectedVelocityStress(d, 0.0);
-	  setDirectedVelocityConfinement(d, 0.0);
+	  //setConvectivePotHeatflux(d, 0.0);
+	  //setConvectivePotHeatfluxStress(d, 0.0);
+	  //setDirectedVelocity(d, 0.0);
+	  //setDirectedVelocitySlab(d, 0.0);
+	  //setDirectedVelocityStress(d, 0.0);
+	  //setDirectedVelocityConfinement(d, 0.0);
+	  //setDirectedVelocityAverageConfinement(d, 0.0);
+	  //setDirectedVelocityAverageStress(d, 0.0);
 	}
 	
 	// Particlewise vtk-data for ParticleData
@@ -91,6 +178,9 @@ Molecule::Molecule(const Molecule& m) {
 	_rOld[0] = m._rOld[0];
 	_rOld[1] = m._rOld[1];
 	_rOld[2] = m._rOld[2];
+	_rOldStress[0] = m._rOldStress[0];
+	_rOldStress[1] = m._rOldStress[1];
+	_rOldStress[2] = m._rOldStress[2];
 	_v[0] = m._v[0];
 	_v[1] = m._v[1];
 	_v[2] = m._v[2];
@@ -104,33 +194,95 @@ Molecule::Molecule(const Molecule& m) {
 	_M[0] = m._M[0];
 	_M[1] = m._M[1];
 	_M[2] = m._M[2];
+	
+	_directedVelocity[0] = m._directedVelocity[0];
+	_directedVelocity[1] = m._directedVelocity[1];
+	_directedVelocity[2] = m._directedVelocity[2];
+	
+	_directedVelocitySlab[0] = m._directedVelocitySlab[0];
+	_directedVelocitySlab[1] = m._directedVelocitySlab[1];
+	_directedVelocitySlab[2] = m._directedVelocitySlab[2];
+	
+	_directedVelocityStress[0] = m._directedVelocityStress[0];
+	_directedVelocityStress[1] = m._directedVelocityStress[1];
+	_directedVelocityStress[2] = m._directedVelocityStress[2];
+	
+	_directedVelocityConfinement[0] = m._directedVelocityConfinement[0];
+	_directedVelocityConfinement[1] = m._directedVelocityConfinement[1];
+	_directedVelocityConfinement[2] = m._directedVelocityConfinement[2];
+	
+	_directedVelocityAverageConfinement[0] = m._directedVelocityAverageConfinement[0];
+	_directedVelocityAverageConfinement[1] = m._directedVelocityAverageConfinement[1];
+	_directedVelocityAverageConfinement[2] = m._directedVelocityAverageConfinement[2];
+	
+	_directedVelocityAverageStress[0] = m._directedVelocityAverageStress[0];
+	_directedVelocityAverageStress[1] = m._directedVelocityAverageStress[1];
+	_directedVelocityAverageStress[2] = m._directedVelocityAverageStress[2];
+	
+	_pressureVirial[0] = m._pressureVirial[0];
+	_pressureVirial[1] = m._pressureVirial[1];
+	_pressureVirial[2] = m._pressureVirial[2];
+	
+	_pressureKin[0] = m._pressureKin[0];
+	_pressureKin[1] = m._pressureKin[1];
+	_pressureKin[2] = m._pressureKin[2];
+	
+	_pressureVirialConfinement[0] = m._pressureVirialConfinement[0];
+	_pressureVirialConfinement[1] = m._pressureVirialConfinement[1];
+	_pressureVirialConfinement[2] = m._pressureVirialConfinement[2];
+	
+	_pressureKinConfinement[0] = m._pressureKinConfinement[0];
+	_pressureKinConfinement[1] = m._pressureKinConfinement[1];
+	_pressureKinConfinement[2] = m._pressureKinConfinement[2];
+	
+// 	_pressureVirial_barostat[0] = m._pressureVirial_barostat[0];
+// 	_pressureVirial_barostat[1] = m._pressureVirial_barostat[1];
+// 	_pressureVirial_barostat[2] = m._pressureVirial_barostat[2];
+// 	
+// 	_pressureKin_barostat[0] = m._pressureKin_barostat[0];
+// 	_pressureKin_barostat[1] = m._pressureKin_barostat[1];
+// 	_pressureKin_barostat[2] = m._pressureKin_barostat[2];
+	
+	_convectivePotHeatflux[0] = m._convectivePotHeatflux[0];
+	_convectivePotHeatflux[1] = m._convectivePotHeatflux[1];
+	_convectivePotHeatflux[2] = m._convectivePotHeatflux[2];
+	
+	_convectivePotHeatfluxStress[0] = m._convectivePotHeatfluxStress[0];
+	_convectivePotHeatfluxStress[1] = m._convectivePotHeatfluxStress[1];
+	_convectivePotHeatfluxStress[2] = m._convectivePotHeatfluxStress[2];
+	
+	
+	_uPot = m._uPot;
+	_uKin = m._uKin;
+	
 	_sites_d = _sites_F = _osites_e = NULL;
 	//_springSites_F = NULL;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
 
 	for(int d = 0; d < 3; d++){
-	  _directedVelocity[d] = 0.0;
 	  for(int e = 0; e < 3; e++){
-	    setVirialForce(d, e, 0.0);
-	    setVirialKin(d, e, 0.0);
-	    setVirialForceConfinement(d, e, 0.0);
-	    setVirialKinConfinement(d, e, 0.0);
-	    setDiffusiveHeatflux(d, e, 0.0);
-	    setDiffusiveHeatfluxStress(d, e, 0.0);
+	    setVirialForce(d, e, m._virialForce[d][e]);
+	    setVirialKin(d, e, m._virialKinConfinement[d][e]);
+	    setVirialForceConfinement(d, e, m._virialForceConfinement[d][e]);
+	    setVirialKinConfinement(d, e, m._virialKinConfinement[d][e]);
+	    setDiffusiveHeatflux(d, e, m._diffusiveHeatflux[d][e]);
+	    setDiffusiveHeatfluxStress(d, e, m._diffusiveHeatfluxStress[d][e]);
 	  }
-	  setPressureVirial(d, 0.0);
-	  setPressureKin(d, 0.0);
-	  setPressureVirialConfinement(d, 0.0);
-	  setPressureKinConfinement(d, 0.0);
-	  setPressureVirial_barostat(d, 0.0);
-	  setPressureKin_barostat(d, 0.0);
-	  setConvectivePotHeatflux(d, 0.0);
-	  setConvectivePotHeatfluxStress(d, 0.0);
-	  setDirectedVelocity(d, 0.0);
-	  setDirectedVelocitySlab(d, 0.0);
-	  setDirectedVelocityStress(d, 0.0);
-	  setDirectedVelocityConfinement(d, 0.0);
+	  //setPressureVirial(d, m._pressureVirial[d]);
+	  //setPressureKin(d, m._pressureKin[d]);
+	  //setPressureVirialConfinement(d, m._pressureVirialConfinement[d]);
+	  //setPressureKinConfinement(d, m._pressureKinConfinement[d]);
+	  setPressureVirial_barostat(d, m._pressureVirial_barostat[d]);
+	  setPressureKin_barostat(d, m._pressureKin_barostat[d]);
+	  //setConvectivePotHeatflux(d, m._convectivePotHeatflux[d]);
+	  //setConvectivePotHeatfluxStress(d, m._convectivePotHeatfluxStress[d]);
+	  //setDirectedVelocity(d, m._directedVelocity[d]);
+	  //setDirectedVelocitySlab(d, m._directedVelocitySlab[d]);
+	  //setDirectedVelocityStress(d, m._directedVelocityStress[d]);
+	  //setDirectedVelocityConfinement(d, m._directedVelocityConfinement[d]);
+	  //setDirectedVelocityAverageConfinement(d, m._directedVelocityAverageConfinement[d]);
+	  //setDirectedVelocityAverageStress(d, m._directedVelocityAverageStress[d]);
 	}
 	
 	// Particlewise vtk-data for ParticleData
@@ -169,28 +321,36 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr, Domain *dom) {
 	    map<int, int> Dim = dom->getDim();
 	    dim = Dim[thermostat];
 		for (unsigned short d = 0; d < 3; ++d) {
-		   if (d == 1 && dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5)
-		      _v[d] = 0.0;
-		   else if(d == dim)
-		      _v[d] = vcorr * _v[d] + dtInv2m * _F[d];
+		   if ((dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5)
+			|| ((dom->getSimstep() <= dom->getInitStatistics()) && (_id%500 == 0 && this->componentid() == cid_moved))){   
+			if(d == 1)
+				_v[d] = 0.0;
+			else if (dom->getSimstep() > dom->getInitStatistics() && dom->getTargetVelocityAcceleration(d) != 0.0){
+				_v[d] = dom->getTargetVelocityAcceleration(d);
+				_directedVelocity[d] = _v[d];  // zero temperature for fixed molecule
+			}else
+				_v[d] = vcorr * (_v[d] - _directedVelocity[d]) + _directedVelocity[d] + dtInv2m * _F[d];
+		   }else if(d == dim)
+		      _v[d] = vcorr * (_v[d] - _directedVelocity[d]) + _directedVelocity[d] + dtInv2m * _F[d];
 		   else
 		      _v[d] = _v[d] + dtInv2m * _F[d];
-		   
-		   //rOld necessary for the calculation of the diffusion coefficient
-		    _rOld[d] = _r[d];  
 		   
 		   _r[d] += dt * _v[d];
 		}
 	}
 	else{
 	    for (unsigned short d = 0; d < 3; ++d) {
-	        if (d == 1 && dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5)
-		      _v[d] = 0.0;
-		else
-			_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
-		
-		//rOld necessary for the calculation of the diffusion coefficient
-		 _rOld[d] = _r[d];
+	        if ((dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5)
+			|| ((dom->getSimstep() <= dom->getInitStatistics()) && (_id%500 == 0 && this->componentid() == cid_moved))){
+			if(d == 1)
+				_v[d] = 0.0;
+			else if (dom->getSimstep() > dom->getInitStatistics()  && dom->getTargetVelocityAcceleration(d) != 0.0){
+				_v[d] = dom->getTargetVelocityAcceleration(d);
+				_directedVelocity[d] = _v[d];  // zero temperature for fixed molecule
+			}else
+				_v[d] = vcorr * (_v[d] - _directedVelocity[d]) + _directedVelocity[d] + dtInv2m * _F[d];
+		}else
+			_v[d] =  vcorr * (_v[d] - _directedVelocity[d]) + _directedVelocity[d] + dtInv2m * _F[d];
 		
 		_r[d] += dt * _v[d];
 	    }
@@ -254,7 +414,8 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
    unsigned cid_moved =  dom->getCidMovement(moved, dom->getNumberOfComponents()) - 1;	
    double dtInv2m = dt_halve / _m;
    
-   if (dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5){
+   if ((dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5)
+      || ((dom->getSimstep() <= dom->getInitStatistics()) && (_id%500 == 0 && this->componentid() == cid_moved))){
 	summv2 += 0.0;
 	summv2_1Dim += 0.0;
 	sumIw2 += 0.0;
@@ -277,6 +438,9 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 	
 	assert(!isnan(v2)); // catches NaN
 	summv2 += _m * v2;
+	if (dom->getBoolEnergyOutput() == true)
+		setUkin(_m * v2 * 0.5);
+	
  
 	double w[3];
 	_q.rotate(_L, w); // L = D = Iw
@@ -310,7 +474,6 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 		}	  
 	}
    }
-
 }
 
 double Molecule::U_rot() {
@@ -1034,6 +1197,7 @@ void Molecule::check(unsigned long id) {
 		assert(!isnan(_M[d]));
 		assert(!isnan(_I[d]));
 		assert(!isnan(_invI[d]));
+		assert(!isnan(_rOld[d]));
 	}
 #endif
 }

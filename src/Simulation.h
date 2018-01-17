@@ -265,6 +265,9 @@ public:
 	unsigned getDirectedVelocityTime() { return _directedVelocityTime; }
 	/** Returns a boolean operator determining whether the directed velocities is calculated or not. */
 	bool getBoolDirVel() { return _boolDirectedVel; }
+	/** Returns a boolean operator determining whether the energy per component is calculated or not. */
+	bool getBoolEnergyOutput() { return _doEnergyOutputPerComponent; }
+	
 
 	double getcutoffRadius() const { return _cutoffRadius; }
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
@@ -372,6 +375,7 @@ public:
 	bool isRecordingSlabProfile() { return _doRecordSlabProfile; }
 	bool isRecordingStressProfile() { return _doRecordStressProfile; }
 	bool isRecordingConfinementProfile() { return _doRecordConfinement; }
+	bool isConfinementSplitStress() { return _doConfinementSplitStress; }
 	/** Returns a boolean operator determining whether the momentum of the total system is canceled. */
 	bool isCancelMomentum() { return _cancelMomentum; }
 	/** Stops outputting the velocity in slabProfile --> data reduction (e.g. for large simulations). */
@@ -425,6 +429,7 @@ private:
 	bool _doRecordStressProfile;
 	bool _doRecordBulkPressure;
 	bool _doRecordConfinement;
+	bool _doEnergyOutputPerComponent;
 	
 	/** flag specifying special simulation features */
 	bool _doShearRate;
@@ -432,6 +437,7 @@ private:
 	bool _cancelMomentum;
 	bool _reduceDataSlab;
 	bool _noXYZ;
+	bool _doConfinementSplitStress;
 	
 	/** flag specifying the calculation method for the directed velocities */
 	bool _doSimpleAverage;

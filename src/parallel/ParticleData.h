@@ -39,6 +39,21 @@ public:
 	double v[3];
 	double q[4];
 	double D[3];
+	double rOld[3];
+	double rOldStress[3];
+	double vdir[3];
+	double vdirSlab[3];
+	double vdirStress[3];
+	double vdirConfinement[3];
+	double vdirAvConf[3];
+	double vdirAvStress[3];
+	double pressVir[3];
+	double pressKin[3];
+	double pressVirConf[3];
+	double pressKinConf[3];
+	double F[3];
+	double conPotHeat[3];
+	double conPotHeatStress[3];
 };
 
 #endif /* PARTICLEDATA_H_ */

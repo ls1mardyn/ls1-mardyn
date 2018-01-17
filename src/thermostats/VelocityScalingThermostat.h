@@ -51,6 +51,9 @@ private:
 	double _globalBetaRot;
 	double *_globalVelocity;
 	double _globalAlphaTrans;
+	
+	// minimum number of molecules contributing to a valid directed velocity
+	unsigned _molDirVelThreshold;
 
 	bool _componentwise;
 	std::map<int, double> _componentBetaTrans;
@@ -59,8 +62,8 @@ private:
 	std::map<int, double> _componentAlphaTrans;
 	
 	// --------------- GENERAL --------------------
-	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _directedVelocity;
-	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _universalDirectedVelocity;
+	std::map< int, std::map< double, std::map< double, double > > > _directedVelocity[3];
+	std::map< int, std::map< double, std::map< double, double > > > _universalDirectedVelocity[3];
 	std::map< int, std::map< double, std::map< double, unsigned long > > > _countedMolecules;	
 	std::map< int, std::map< double, std::map< double, unsigned long > > > _universalCountedMolecules;
 	//corresponding with moving average
@@ -69,51 +72,51 @@ private:
 	std::map< int, double > _directedVelocityAll[3];
 	std::map< int, double > _universalDirectedVelocityAll[3];
 	std::map< int, std::map< double, std::map< double, unsigned long > > > _averagedN;
-	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _averagedVelSum;
-	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _currentDirectedVel;
+	std::map< int, std::map< double, std::map< double, double > > > _averagedVelSum[3];
+	std::map< int, std::map< double, std::map< double, double > > > _currentDirectedVel[3];
 	std::map< int, std::map< double, std::map< double, std::deque< unsigned long > > > > _universalPriorN;
 	std::map< int, std::map< double, std::map< double, std::deque< double > > > > _universalPriorVelSums[3];
 	//corresponding with calculateDirectedVelocitiesSimpleSigma3D()
-	std::map< int, std::map< double, std::map< double, std::map< double, std::map< unsigned, double > > > > > _directedVelocity3D;
-	std::map< int, std::map< double, std::map< double, std::map< double, std::map< unsigned, double > > > > > _universalDirectedVelocity3D;
+	std::map< int, std::map< double, std::map< double, std::map< double, double > > > > _directedVelocity3D[3];
+	std::map< int, std::map< double, std::map< double, std::map< double, double > > > > _universalDirectedVelocity3D[3];
 	std::map< int, std::map< double, std::map< double, std::map< double, unsigned long > > > > _countedMolecules3D;
 	std::map< int, std::map< double, std::map< double, std::map< double, unsigned long > > > > _universalCountedMolecules3D;
 	
 	// ------------- CONFINEMENT ------------------
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _directedVelocityConfinement;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _universalDirectedVelocityConfinement;
+	std::map< int, std::map< unsigned, std::map< unsigned, double > > > _directedVelocityConfinement[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, double > > > _universalDirectedVelocityConfinement[3];
 	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _countedMoleculesConfinement;	
 	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _universalCountedMoleculesConfinement;
 	//corresponding with moving average
 	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _averagedNConfinement;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _averagedVelSumConfinement;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _currentDirectedVelConfinement;
+	std::map< int, std::map< unsigned, std::map< unsigned, double > > > _averagedVelSumConfinement[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, double > > > _currentDirectedVelConfinement[3];
 	std::map< int, std::map< unsigned, std::map< unsigned, std::deque< unsigned long > > > > _universalPriorNConfinement;
 	std::map< int, std::map< unsigned, std::map< unsigned, std::deque< double > > > > _universalPriorVelSumsConfinement[3];
 	std::map <unsigned, double> _universalInvProfileUnitConfinement;
 	std::map <unsigned, double> _bulkCorner;
 	
 	// ---------------- SLAB ----------------------
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _directedVelocitySlab;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _universalDirectedVelocitySlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _directedVelocitySlab[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _universalDirectedVelocitySlab[3];
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _countedMoleculesSlab;	
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _universalCountedMoleculesSlab;
 	//corresponding with moving average	
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _averagedNSlab;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _averagedVelSumSlab;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _currentDirectedVelSlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _averagedVelSumSlab[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _currentDirectedVelSlab[3];
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< unsigned long > > > > > _universalPriorNSlab;
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< double > > > > > _universalPriorVelSumsSlab[3];
 	
 	// --------------- STRESS ---------------------
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _directedVelocityStress;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _universalDirectedVelocityStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _directedVelocityStress[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _universalDirectedVelocityStress[3];
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _countedMoleculesStress;	
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _universalCountedMoleculesStress;
 	//corresponding with moving average
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _averagedNStress;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _averagedVelSumStress;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _currentDirectedVelStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _averagedVelSumStress[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _currentDirectedVelStress[3];
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< unsigned long > > > > > _universalPriorNStress;
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< double > > > > > _universalPriorVelSumsStress[3];
 	std::map <unsigned, double> _universalInvProfileUnit_Stress;

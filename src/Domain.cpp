@@ -32,6 +32,8 @@ Domain::Domain(int rank, PressureGradient* pg){
         this->_localVirialIILM = 0.0;
 	_globalUpot = 0;
 	_globalVirial = 0; 
+	
+	
         for(int d=0; d < 3; d++) this->_globalVirialI[d] = 0.0;
         this->_globalVirialIILL = 0.0;
         this->_globalVirialIILM = 0.0;
@@ -60,10 +62,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_universalCentre[2] = 0.0;
 	this->_universalBTrans = map<int, double>();
 	this->_universalBTrans[0] = 1.0;
-	this->_universalThT_heatFlux[0] = 0.0;
-	this->_universalThT_heatFlux[1] = 0.0;
-	this->_universalThT_heatFlux[2] = 0.0;
-	this->_universalThT_heatFlux[3] = 0.0;
 	this->_preShearRateConf = 0.0;
 	this->_postShearRateConf = 0.0;
 	this->_preShearRateDefault = 0.0;
@@ -103,10 +101,15 @@ Domain::Domain(int rank, PressureGradient* pg){
 	  this->_barostatComponent[cid] = false;
 	  this->_confinementComponent[cid] = false;
 	  this->_confinementComponentHardy[cid] = false;
+	  this->_localUPot[cid] = 0.0;
+	  this->_globalUPot[cid] = 0.0;
+	  this->_localUKin[cid] = 0.0;
+	  this->_globalUKin[cid] = 0.0;
 	}
 	this->_differentBarostatInterval = false;
 	this->_enableThermostatLayers = false;
 	this->_enableThermostatWallLayers = false;
+	this->_maxLayerThT = 0;
 	for(int cid = 0; cid < maxThermostat(); cid++){
 	  this->_scale_v_1Dim[cid] = false;
 	  this->_alphaTransCorrection[cid] = false;
@@ -115,7 +118,9 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_isConfinement = false;
 	this->_confinementAreaFixed = false;
 	this->_confinementRecordingTimesteps = 0.0;
+	this->_confinementOutputTimesteps = 0.0;
 	this->_stressRecordingTimesteps = 0.0;
+	this->_stressOutputTimesteps = 0.0;
 	this->_local2KETrans_1Dim[0] = 0.0;
 	this->_universalATrans = map<int, double>();
 	this->_universalATrans[0] = 1.0;
@@ -289,7 +294,21 @@ void Domain::calculateGlobalValues(
         _globalVirialI[2] = VIz + _VirialCorr/3.0;
         _globalVirialIILL = VIILL;
         _globalVirialIILM = VIILM;
-
+	
+	if(getBoolEnergyOutput() == true){
+		domainDecomp->collCommInit(getNumberOfComponents()*2);
+		for (unsigned comp = 0; comp < getNumberOfComponents(); comp++){
+			domainDecomp->collCommAppendDouble(this->_localUPot[comp]);
+			domainDecomp->collCommAppendDouble(this->_localUKin[comp]);
+		}
+		domainDecomp->collCommAllreduceSum();
+		for (unsigned comp = 0; comp < getNumberOfComponents(); comp++){
+			this->_globalUPot[comp] = domainDecomp->collCommGetDouble();
+			this->_globalUKin[comp] = domainDecomp->collCommGetDouble();
+		}
+		domainDecomp->collCommFinalize();
+	}
+	
 	/*
 	 * thermostat ID 0 represents the entire system
 	 */
@@ -373,7 +392,7 @@ void Domain::calculateGlobalValues(
 		if((Ti > 0.0) && (numMolecules > 0) && !_universalNVE && getSimstep()>=_thermostatTimeSlot[0][thermit->first] && getSimstep()<=_thermostatTimeSlot[1][thermit->first])
 		{
 			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
-			_universalThT_heatFlux[thermit->first] += 0.5*(summv2 - 3.0*numMolecules*Ti);
+			
 			if(_scale_v_1Dim[thermit->first]){ 
 			  _universalATrans[thermit->first] = pow((3.0*numMolecules*Ti - summv2) / summv2_1Dim + 1, 0.4);
 			  this->_alphaTransCorrection[thermit->first] = false;
@@ -381,7 +400,12 @@ void Domain::calculateGlobalValues(
 			  if(((3.0*numMolecules*Ti - summv2) / summv2_1Dim + 1) < 0){
 			    this->_alphaTransCorrection[thermit->first] = true;
 			  }
-			}
+			  if(this->_alphaTransCorrection[thermit->first] == false)
+				  _universalThT_heatFlux[thermit->first] += 0.5*summv2*(_universalBTrans[thermit->first]*_universalBTrans[thermit->first] - 1.0);
+			}else
+				_universalThT_heatFlux[thermit->first] += 0.5*summv2*(_universalBTrans[thermit->first]*_universalBTrans[thermit->first] - 1.0);
+				//_universalThT_heatFlux[thermit->first] += 0.5*(3.0*numMolecules*Ti - summv2);
+			
 			if( sumIw2 == 0.0 ) 
 				_universalBRot[thermit->first] = 1.0;
 			else 
@@ -612,6 +636,14 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 			<< "rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
 			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
 	}
+}
+
+void Domain::setTargetVelocityAcceleration()
+{
+	string moved ("moved");
+	int cid_moved =  (int)getCidMovement(moved, getNumberOfComponents()) - 1;
+	for (int d = 0; d < 3; d++)
+		this->_targetVelocityAcc[d] = getPG()->getGlobalTargetVelocity(d,cid_moved);
 }
 
 void Domain::writeCheckpoint( string filename, 
@@ -1972,6 +2004,7 @@ void Domain::recordStressProfile(ParticleContainer* molCont, unsigned long simst
   unsigned xun, yun, zun;
   long int unID;
   int countMol = 0;
+  double diffusion, shearMove, totalMove;
   string Stress ("Stress");
   
   if (simstep == initStatistics) 
@@ -2007,8 +2040,28 @@ void Domain::recordStressProfile(ParticleContainer* molCont, unsigned long simst
 			if(distToSlab2 <= this->_maxSlabDist2_Stress){
 			 if(this->_stressOutputProperty[5] == true)
 			  for(int d = 0; d < 3; d++){
-				this->_localDiffusiveMovementStress[d][unID] += thismol->rOld(d) - thismol->r(d) - thismol->getDirectedVelocityStress(d)*getTimestepLength();
-				this->_localDiffusiveMovementStress[d][unID] *= this->_localDiffusiveMovementStress[d][unID];
+				// Self-diffusion
+				thismol->addDirectedVelocityAverageStress(d, thismol->getDirectedVelocityStress(d) * _stressRecordingTimesteps);
+				if(simstep % _stressOutputTimesteps == 0){
+					shearMove = thismol->getDirectedVelocityAverageStress(d)*getTimestepLength();
+					if(shearMove > 0.0)
+						shearMove -= floor(shearMove/_globalLength[d])*_globalLength[d];
+					else
+						shearMove -= ceil(shearMove/_globalLength[d])*_globalLength[d];
+					totalMove = thismol->r(d) - thismol->rOldStress(d);
+					// diffusion = thismol->r(d) - thismol->rOld(d) - thismol->getDirectedVelocityAverageConfinement(d)/_stressOutputTimesteps*_stressOutputTimesteps*getTimestepLength();    
+					diffusion = totalMove - shearMove;
+					if(abs(diffusion) >= _globalLength[d]/2){
+						if(diffusion > 0.0)
+							diffusion -= _globalLength[d];
+						else
+							diffusion += _globalLength[d];
+					}
+					diffusion *= diffusion;
+					this->_localDiffusiveMovementStress[d][unID] += diffusion;
+					thismol->setrOldStress(d, thismol->r(d));
+					thismol->setDirectedVelocityAverageStress(d, 0.0);
+				}  
 			  }
 			  if(thismol->isHardyStress() && this->_universalNProfileUnits_Stress[2] == 1){
 			    // for Linear the weightingFrac = 1 as long as a particle is in the control volume
@@ -2137,7 +2190,7 @@ void Domain::collectStressProfile(DomainDecompBase* dode)
 	if(this->_stressOutputProperty[5] == true)
 	  for(unsigned long unID = 0; unID < unIDs; unID++){
 	      for(int d = 0; d < 3; d++){
-		    this->_globalDiffusiveMovementStress[d][unID] = this->_globalDiffusiveMovementStress[d][unID]/(2*(long double)this->_universalNProfile_Stress[unID]*this->_globalAccumulatedDatasets_Stress*this->_stressRecordingTimesteps*getTimestepLength());
+		    this->_globalDiffusiveMovementStress[d][unID] = this->_globalDiffusiveMovementStress[d][unID]/(2*((long double)this->_universalNProfile_Stress[unID]*_stressRecordingTimesteps/_stressOutputTimesteps)*this->_stressOutputTimesteps*getTimestepLength());
 		    if (this->_globalDiffusiveMovementStress[d][unID] != this->_globalDiffusiveMovementStress[d][unID])
 		      this->_globalDiffusiveMovementStress[d][unID] = 0.0;
 	      }
@@ -2811,6 +2864,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	unsigned cid;
 	unsigned xun, yun, unID, binID, stressCalc_xun, stressCalc_yun, stressCalc_unID;
 	double origLowUp, origHiLow;
+	double diffusion, shearMove, totalMove;
 	string hardy ("Hardy");
 	string Confinement ("Confinement");
 		
@@ -2911,8 +2965,33 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			    this->_localPressureKin_Confinement[unID] += thismol->getPressureKinConfinement(d);
 			    this->_localvProfile_Confinement[d][unID] += thismol->v(d);
 			    this->_localFluidForce_Confinement[d][unID] += thismol->F(d);
-			    this->_localDiffusiveMovement[d][unID] += thismol->rOld(d) - thismol->r(d) - thismol->getDirectedVelocityConfinement(d)*getTimestepLength();
-			    this->_localDiffusiveMovement[d][unID] *= this->_localDiffusiveMovement[d][unID];
+			    
+			    // Self-diffusion
+			    thismol->addDirectedVelocityAverageConfinement(d, thismol->getDirectedVelocityConfinement(d) * _confinementRecordingTimesteps);
+			    if(simstep % _confinementOutputTimesteps == 0){
+				// convection by flow   
+				shearMove = thismol->getDirectedVelocityAverageConfinement(d)*getTimestepLength();
+				if(shearMove > 0.0)
+					shearMove -= floor(shearMove/_globalLength[d])*_globalLength[d];
+				else
+					shearMove -= ceil(shearMove/_globalLength[d])*_globalLength[d];
+				// artificial "diffusion"
+				totalMove = thismol->r(d) - thismol->rOld(d);
+				// total diffusion
+				// diffusion = thismol->r(d) - thismol->rOld(d) - thismol->getDirectedVelocityAverageConfinement(d)/_confinementOutputTimesteps*_confinementOutputTimesteps*getTimestepLength();    
+				diffusion = totalMove - shearMove;
+				// correction if the periodic boundaries are crossed
+				if(abs(diffusion) >= _globalLength[d]/2){
+					if(diffusion > 0.0)
+						diffusion -= _globalLength[d];
+					else
+						diffusion += _globalLength[d];
+				}
+				diffusion *= diffusion;
+				this->_localDiffusiveMovement[d][unID] += diffusion;
+				thismol->setrOld(d, thismol->r(d));
+				thismol->setDirectedVelocityAverageConfinement(d, 0.0);
+			    }
 			}
 			
 			// barostat current temperature and pressure calculation
@@ -3261,7 +3340,8 @@ void Domain::collectConfinementProperties(DomainDecompBase* dode)
 	for(unsigned unID = 0; unID < unIDs; unID++){
 	      for(int d = 0; d < 3; d++){
 		    this->_globalForceConfinement[d][unID] = this->_globalForceConfinement[d][unID]/this->_globalAccumulatedDatasets_ConfinementProperties;
-		    this->_globalDiffusiveMovement[d][unID] = this->_globalDiffusiveMovement[d][unID]/(2*this->_globalNConfinement[unID]*this->_globalAccumulatedDatasets_ConfinementProperties*this->_confinementRecordingTimesteps*getTimestepLength());
+		    // self-diffusion following Einstein relation: D = 1/(2*D*N*t) * sum(dr^2); D = dimension; N = number of molecules; t = time span of record 
+		    this->_globalDiffusiveMovement[d][unID] = this->_globalDiffusiveMovement[d][unID]/(2*((long double)this->_globalNConfinement[unID]*_confinementRecordingTimesteps/_confinementOutputTimesteps)*this->_confinementOutputTimesteps*getTimestepLength());
 		    if (this->_globalDiffusiveMovement[d][unID] != this->_globalDiffusiveMovement[d][unID])
 		      this->_globalDiffusiveMovement[d][unID] = 0.0;
 	      }
@@ -3363,6 +3443,8 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	 }else{
 	    nvars = 14;
 	    nvars_Stress = 1;
+	    if(isConfinementSplitStress() == true)
+		nvars = 16;
 	 }
 	 
 	 int dims[] = {NX, NY, NZ};
@@ -3375,6 +3457,8 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	 float fluidicComponent[NZ][NY][NX];
 	 float diffusion[NZ][NY][NX][3];
 	 float HydrodynamicStress[NZ_Stress][NY_Stress][NX_Stress];
+	 float Pressure_vir[NZ_Stress][NY_Stress][NX_Stress];
+	 float Pressure_kin[NZ_Stress][NY_Stress][NX_Stress];
 	 float vanMisesStress[NZ_Stress][NY_Stress][NX_Stress];
 	 float NormalStress[NZ_Stress][NY_Stress][NX_Stress][3];
 	 float ShearStress[NZ_Stress][NY_Stress][NX_Stress][3];
@@ -3435,6 +3519,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vars_Stress[6] = (float *)q_diffusive;
 	    vars_Stress[7] = (float *)q_total;
 	 }else{
+	   if(isConfinementSplitStress() == false){	 
 	    vardims[0] = 1;
 	    vardims[1] = 1;
 	    vardims[2] = 1;
@@ -3484,6 +3569,63 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vars[12] = (float *)q_total;
 	    vars[13] = (float *)diffusion;
 	    vars_Stress[0] = (float *)HydrodynamicStress;
+	   }else{
+	    vardims[0] = 1;
+	    vardims[1] = 1;
+	    vardims[2] = 1;
+	    vardims[3] = 1;
+	    vardims[4] = 3;
+	    vardims[5] = 3;
+	    vardims[6] = 3;
+	    vardims[7] = 3;
+	    vardims[8] = 1;
+	    vardims[9] = 3;
+	    vardims[10] = 3;
+	    vardims[11] = 3;
+	    vardims[12] = 3;
+	    vardims[13] = 3;
+	    vardims[14] = 1;
+	    vardims[15] = 1;
+	    vardims_Stress[0] = 3;
+	    for(int d = 0; d < nvars; d++)
+	      centering[d] = 1;
+	    for(int d = 0; d < nvars_Stress; d++)
+	      centering_Stress[d] = 1;
+	    varnames[0] = "density";
+	    varnames[1] = "temperature";
+	    varnames[2] = "HydrodynamicStress";
+	    varnames[3] = "vanMisesStress";
+	    varnames[4] = "velocity";
+	    varnames[5] = "fluidForce";
+	    varnames[6] = "NormalStress(xx,yy,zz)";
+	    varnames[7] = "ShearStress(xy,xz,yz)";
+	    varnames[8] = "fluidicComponent";
+	    varnames[9] = "q_convective_kin";
+	    varnames[10] = "q_convective_pot";
+	    varnames[11] = "q_diffusive";
+	    varnames[12] = "q_total";
+	    varnames[13] = "diffusion";
+	    varnames[14] = "pressure_vir";
+	    varnames[15] = "pressure_kin";
+	    varnames_Stress[0] = "HydrodynamicStress";
+	    vars[0] = (float *)density;
+	    vars[1] = (float *)temperature;
+	    vars[2] = (float *)HydrodynamicStress;
+	    vars[3] = (float *)vanMisesStress;
+	    vars[4] = (float *)velocity;
+	    vars[5] = (float *)fluidForce;
+	    vars[6] = (float *)NormalStress;
+	    vars[7] = (float *)ShearStress;
+	    vars[8] = (float *)fluidicComponent;
+	    vars[9] = (float *)q_convective_kin;
+	    vars[10] = (float *)q_convective_pot;
+	    vars[11] = (float *)q_diffusive;
+	    vars[12] = (float *)q_total;
+	    vars[13] = (float *)diffusion;
+	    vars[14] = (float *)Pressure_vir;
+	    vars[15] = (float *)Pressure_kin;
+	    vars_Stress[0] = (float *)HydrodynamicStress;
+	   }
 	 }
 	 
 		
@@ -3812,7 +3954,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	 for(unsigned n_y = 0; n_y < this->_universalNProfileUnitsStressConfinement[1]; n_y++)
 	  for(unsigned n_x = 0; n_x < this->_universalNProfileUnitsStressConfinement[0]; n_x++)
 	  {
-	    double stress_locxx = 0.0, stress_locyy = 0.0, stress_loczz = 0.0, stress_locxy = 0.0, stress_locxz = 0.0, stress_locyz = 0.0, stress_lochydr = 0.0, stress_locmises = 0.0;
+	    double stress_locxx = 0.0, stress_locyy = 0.0, stress_loczz = 0.0, stress_locxy = 0.0, stress_locxz = 0.0, stress_locyz = 0.0, stress_lochydr = 0.0, stress_locmises = 0.0, press_vir = 0.0, press_kin = 0.0;
 	    double aux_mis1 = 0.0, aux_mis2 = 0.0, aux_mis3 = 0.0, aux_mis4 = 0.0;
 	    double q_x_convective_kin = 0.0, q_y_convective_kin = 0.0, q_z_convective_kin = 0.0, q_x_convective_pot = 0.0, q_y_convective_pot = 0.0, q_z_convective_pot = 0.0, q_x_diffusive = 0.0, q_y_diffusive = 0.0, q_z_diffusive = 0.0, q_x_total = 0.0, q_y_total = 0.0, q_z_total = 0.0;
 	    unsigned unID = n_x * this->_universalNProfileUnitsStressConfinement[1]  + n_y;
@@ -3830,6 +3972,10 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 		aux_mis3 = (this->_globalStressConfinement[2][unID] - this->_globalStressConfinement[0][unID])*(this->_globalStressConfinement[2][unID] - this->_globalStressConfinement[0][unID]);
 		aux_mis4 = 6 * (this->_globalStressConfinement[3][unID] * this->_globalStressConfinement[3][unID] + this->_globalStressConfinement[4][unID] * this->_globalStressConfinement[4][unID] + this->_globalStressConfinement[5][unID] * this->_globalStressConfinement[5][unID]);
 		stress_locmises = sqrt(0.5 * (aux_mis1 + aux_mis2 + aux_mis3 + aux_mis4))/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		if(isConfinementSplitStress() == true){
+			press_vir = this->_globalPressureVirial_Confinement[unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+			press_kin = this->_globalPressureKin_Confinement[unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		}
 		
 	    HydrodynamicStress[0][n_y][n_x] = stress_lochydr;
 	    vanMisesStress[0][n_y][n_x] = stress_locmises;
@@ -3839,6 +3985,12 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    ShearStress[0][n_y][n_x][0] = stress_locxy;
 	    ShearStress[0][n_y][n_x][1] = stress_locxz;
 	    ShearStress[0][n_y][n_x][2] = stress_locyz;
+	    if(isConfinementSplitStress() == true){
+		    Pressure_vir[0][n_y][n_x] = press_vir;
+		    Pressure_kin[0][n_y][n_x] = press_kin;
+	    }
+	    
+	    
 	    
 	    
 	    // Heat Flux
@@ -4069,12 +4221,15 @@ void Domain::setThermostatLayer(int thermostat, double xmin, double xmax, double
 	this->_thermostatLayer[4][thermostat] = zmin;
 	this->_thermostatLayer[5][thermostat] = zmax;
 	
+	if(thermostat > this->_maxLayerThT)
+		this->_maxLayerThT = thermostat;
+	
 	this->_enableThermostatLayers = true;
 }
 
-void Domain::setThermostatWallLayer()
+void Domain::setThermostatWallLayer(double layerThickness)
 {
-	int numberOfLayersPerWall = ceil(this->_confinementMidPoint[3]/0.775)+1;
+	int numberOfLayersPerWall = ceil(this->_confinementMidPoint[3]/layerThickness)+1;
 	double lowEdgeUpperWall = this->_confinementMidPoint[1];
 	//double highEdgeLowerWall = this->_confinementMidPoint[3];
 	
@@ -4098,8 +4253,8 @@ void Domain::setThermostatWallLayer()
 				if(layerCount == 0)
 					this->_thermostatLayer[2][thermostat] = lowEdgeUpperWall - 0.350;
 				else
-					this->_thermostatLayer[2][thermostat] = this->_thermostatLayer[2][thermostat-1] + 0.776;
-				this->_thermostatLayer[3][thermostat] = this->_thermostatLayer[2][thermostat] + 0.775;
+					this->_thermostatLayer[2][thermostat] = this->_thermostatLayer[2][thermostat-1] + layerThickness+0.0001;
+				this->_thermostatLayer[3][thermostat] = this->_thermostatLayer[2][thermostat] + layerThickness;
 				this->_thermostatLayer[4][thermostat] = 0.0;
 				this->_thermostatLayer[5][thermostat] = 10000;
 				this->_thermostatLayerComp[thermostat] = 1;		// upper wall
@@ -4118,8 +4273,8 @@ void Domain::setThermostatWallLayer()
 				if(layerCount == 0)
 					this->_thermostatLayer[2][thermostat] = 0.0 - 0.350;
 				else
-					this->_thermostatLayer[2][thermostat] = this->_thermostatLayer[2][thermostat-1] + 0.776;
-				this->_thermostatLayer[3][thermostat] = this->_thermostatLayer[2][thermostat] + 0.775;
+					this->_thermostatLayer[2][thermostat] = this->_thermostatLayer[2][thermostat-1] + layerThickness+0.0001;
+				this->_thermostatLayer[3][thermostat] = this->_thermostatLayer[2][thermostat] + layerThickness;
 				this->_thermostatLayer[4][thermostat] = 0.0;
 				this->_thermostatLayer[5][thermostat] = 10000;
 				this->_thermostatLayerComp[thermostat] = 2;	// lower wall
@@ -4198,10 +4353,12 @@ int Domain::moleculeInLayer(double molX, double molY, double molZ, unsigned int 
 	goto LAYER;
       }
     }
-     LAYER:if(inside == 3)
+	
+     LAYER:if(inside == 3){
 	return layer;
-      else
+     }else{
 	return -10;
+     }
 }
 
 // determines the time span of the thermostating for each thermostat
@@ -4456,6 +4613,9 @@ double Domain::getTimestepLength(){
 unsigned long Domain::getInitStatistics(){
   return _simulation.getInitStatistics(); 
 }
+unsigned Domain::getDirectedVelocityTime(){
+  return _simulation.getDirectedVelocityTime(); 	
+}
 unsigned Domain::getStressRecordTimeStep(){
     return _simulation.getStressRecordTimestep();
 }
@@ -4477,3 +4637,13 @@ bool Domain::isShearRate(){
 bool Domain::isShearForce(){
     return _simulation.isShearForce();
 }
+double Domain::getShearWidth(){
+	return getPG()->getShearWidth();
+}
+bool Domain::getBoolEnergyOutput(){
+    return _simulation.getBoolEnergyOutput();
+}
+bool Domain::isConfinementSplitStress(){
+    return _simulation.isConfinementSplitStress();
+}
+

@@ -193,7 +193,7 @@ public:
 	// checks whether a molecule is affected by one of the thermostat layers and connects it eventually
 	int moleculeInLayer(double x, double y, double z, unsigned int cid);
 	// if the thermostat is applied to each layer in a wall instead of the complete system, the following functions become important
-	void setThermostatWallLayer();
+	void setThermostatWallLayer(double layerThickness);
 	bool isThermostatWallLayer() {return _enableThermostatWallLayers; }
 
 	//! @brief get the mixcoeff
@@ -222,6 +222,11 @@ public:
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
 	double getAverageGlobalUpot() const;
+	
+	void setLocalUpot(unsigned comp, double u) { this->_localUPot[comp] = u; };
+	void setLocalUkin(unsigned comp, double u) { this->_localUKin[comp] = u; };
+	double getGlobalUpot(unsigned comp) { return this->_globalUPot[comp]; } 
+	double getGlobalUkin(unsigned comp) { return this->_globalUKin[comp]; } 
 
 	//! @brief get the global average virial per particle
 	//!
@@ -309,6 +314,11 @@ public:
 	//! individual particle, for the purpose of aggregating the kinetic
 	//! energy of the undirected motion.
 	void calculateVelocitySums(ParticleContainer* partCont);
+	
+	//! transfers the target velocity for accelerateInstantaneously from pressureGradient to Domain
+	void setTargetVelocityAcceleration();
+	void setTargetVelocityAcceleration(int d, double vel) { this->_targetVelocityAcc[d] = vel; }
+	double getTargetVelocityAcceleration(int d) { return this->_targetVelocityAcc[d]; } 
 
 	//! Calculates the LOCAL directed kinetic energy associated
 	//! with the appropriately marked thermostats
@@ -372,7 +382,12 @@ public:
 	//! thermostat is disabled). In case of componentwise thermostats being applied,
 	//! these have the IDs from 1 to this->maxThermostat().
 	int maxThermostat() {
-		return (_componentwiseThermostat)? (_universalThermostatN.size() - 2): 0;
+		if(_componentwiseThermostat)
+			return (_componentwiseThermostat)? (_universalThermostatN.size() - 2): 0;
+		else if(_enableThermostatLayers)
+			return _maxLayerThT;
+		else
+			return -1;
 	}
 	//! @brief associates a component with a thermostat
 	//! @param cid internal ID of the component
@@ -400,6 +415,8 @@ public:
 	void setupConfinementProfile(unsigned xun,unsigned yun, double correlationLength);
 	// definition of how many time steps are inbetween the recording of data
 	void setupConfinementRecTime(unsigned long confinementRecordingTimesteps) { this->_confinementRecordingTimesteps = confinementRecordingTimesteps;}
+	// definition of how many time steps are inbetween the output of data
+	void setupConfinementOutTime(unsigned long confinementOutputTimesteps) { this->_confinementOutputTimesteps = confinementOutputTimesteps;}
 	// calculation of all the relevant data on parallel processes
 	void recordConfinementProperties(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned long simstep, unsigned long initStatistics);
 	// collection and distribution of the relevant data over all parallel processes
@@ -430,6 +447,7 @@ public:
 	bool isConfinement(int component) { return this->_confinementComponent[component]; }
 	// return boolean operator that determines whether the Hardy method for the stress calculation shall be used in the confinement area
 	bool isConfinementHardy(int component) { return this->_confinementComponentHardy[component]; }
+	bool isConfinementSplitStress(); 
 	double get_confinementMidPoint(int d) { return this->_confinementMidPoint[d]; }
 	void collectForcesOnComponentConfinement(ParticleContainer* molCont);
 	unsigned getRank() { return this->_localRank; }
@@ -497,6 +515,8 @@ public:
 	void setupStressProperties(bool properties[6]);
 	// definition of how many time steps are inbetween the recording of data
 	void setupStressRecTime(unsigned long stressRecordingTimesteps) { this->_stressRecordingTimesteps = stressRecordingTimesteps;}
+	// definition of how many time steps are inbetween the output of data
+	void setupStressOutTime(unsigned long stressOutputTimesteps) { this->_stressOutputTimesteps = stressOutputTimesteps;}
 	// calculation of all the relevant data on parallel processes
 	void recordStressProfile(ParticleContainer* molCont, unsigned long simstep, unsigned long initStatistics);
 	// collection and distribution of the relevant data over all parallel processes
@@ -575,12 +595,16 @@ public:
 	std::string getOutputFormat() { return this->_outputFormat; }
 	unsigned long getSimstep();
 	unsigned long getInitStatistics();
+	unsigned getDirectedVelocityTime();
 	double getTimestepLength();
 	double getCutoffRadius();
 	unsigned getBarostatTimeInit();
 	unsigned getBarostatTimeEnd();
 	bool isShearRate();
 	bool isShearForce();
+	double getShearWidth();
+	bool getBoolEnergyOutput();
+	
 	// Cancelling momentum for each component seperately
 	void cancelMomentum(DomainDecompBase* domainDecomp, ParticleContainer* molCont);
 	
@@ -656,6 +680,8 @@ private:
 	unsigned long _globalOrigNumMolecules;
 	//! side length of the cubic simulation box
 	double _globalLength[3];
+	
+	double _targetVelocityAcc[3];
 	
 	// ------------- CONFINEMENT ------------------
 	// local N profile map
@@ -739,6 +765,8 @@ private:
 	bool _confinementAreaFixed;
 	// how many time steps are inbetween two subsequent data recordings
 	unsigned long _confinementRecordingTimesteps;
+	// how many time steps are inbetween two subsequent data outputs
+	unsigned long _confinementOutputTimesteps;
 	// broken down parts of the heatflux (local and global)
 	std::map<int, std::map<unsigned long, double> > _localDiffusiveHeatflux;
 	std::map<int, std::map<unsigned long, double> > _globalDiffusiveHeatflux;
@@ -818,6 +846,8 @@ private:
 	bool _stressOutputProperty[6];
 	// how many time steps are inbetween two subsequent data recordings
 	unsigned long _stressRecordingTimesteps;
+	// how many time steps are inbetween two subsequent data outputs
+	unsigned long _stressOutputTimesteps;
 	// broken down parts of the heatflux (local and global)
 	std::map<int, std::map<unsigned long, double> > _localDiffusiveHeatfluxStress;
 	std::map<int, std::map<unsigned long, double> > _globalDiffusiveHeatfluxStress;
@@ -836,6 +866,7 @@ private:
 	bool _componentwiseThermostat;
 	bool _enableThermostatLayers;
 	bool _enableThermostatWallLayers;
+	int _maxLayerThT;
 	//! thermostat IDs. negative: no thermostat, 0: global, positive: componentwise
 	//! in the case of a componentwise thermostat, all components are assigned
 	//! a thermostat ID different from zero.
@@ -1006,6 +1037,11 @@ private:
 	std::map<int, unsigned long> _originalStartTime;
 	std::map<int, unsigned long> _originalEndTime;
 	std::map<int, double> _originalTargetTemp;
+	
+	std::map<unsigned, double> _localUPot;
+	std::map<unsigned, double> _globalUPot;
+	std::map<unsigned, double> _localUKin;
+	std::map<unsigned, double> _globalUKin;
 };
 
 

@@ -56,9 +56,9 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 		int thermostat;
 		unsigned molID;
 
-		string moved ("moved");
+		//string moved ("moved");
 		string fixed ("fixed");
-		unsigned cid_moved =  domain->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
+		//unsigned cid_moved =  domain->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
 		unsigned cid_fixed =  domain->getCidMovement(fixed, domain->getNumberOfComponents()) - 1;
 
 		for (tempMolecule = molCont->begin(); tempMolecule != molCont->end(); tempMolecule = molCont->next()) {
@@ -69,19 +69,34 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 			thermostat = domain->moleculeInLayer(tempMolecule->r(0), tempMolecule->r(1), tempMolecule->r(2), tempMolecule->componentid());
 		  }
 		  if (domain->isFixedEvery() == true && molID%domain->getFixEvery() == 0 && cid == cid_fixed){
-				for(unsigned short d=0;d<3;++d) tempMolecule->setv(d, 0.0);	
+				double force[3];
+				for(unsigned short d=0;d<3;++d){
+					tempMolecule->setv(d, 0.0);	
+					force[d] = 0.0;
+				}
+				tempMolecule->setF(force);	
 		  }else if (domain->isFixedRegion() == true && cid == cid_fixed
 				&& tempMolecule->r(0) > domain->getFixedRegion(0) && tempMolecule->r(0) < domain->getFixedRegion(1) 
 				&& tempMolecule->r(1) > domain->getFixedRegion(2) && tempMolecule->r(1) < domain->getFixedRegion(3)
 				&& tempMolecule->r(2) > domain->getFixedRegion(4) && tempMolecule->r(2) < domain->getFixedRegion(5)){ 
-				for(unsigned short d=0;d<3;++d) tempMolecule->setv(d, 0.0);	
-		  }else if ((domain->isFixedEvery() == false && domain->isFixedRegion() == false && molID%500 == 0 && cid == cid_fixed) 
-				|| (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){
-				for(unsigned short d=0;d<3;++d) tempMolecule->setv(d, 0.0);		
-		  }else {				
+				double force[3];
+				for(unsigned short d=0;d<3;++d){
+					tempMolecule->setv(d, 0.0);	
+					force[d] = 0.0;
+				}
+				tempMolecule->setF(force);
+// 		  }else if ((_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){
+// 				/*double force[3];
+// 				for(unsigned short d=0;d<3;++d){
+// 					tempMolecule->setv(d, 0.0);	
+// 					force[d] = 0.0;
+// 				}
+// 				tempMolecule->setF(force);*/	
+		  }else {
 			if(domain->isScaling1Dim(thermostat) && domain->getAlphaTransCorrection(thermostat) == false){
 				vcorr = 2. - 1. / domain->getGlobalAlphaTrans();
 			}
+			vcorr = 1.0;
 			tempMolecule->upd_preF(_timestepLength, vcorr, Dcorr, domain);
 		  }
 		}
@@ -116,16 +131,30 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 				cid = tM->componentid();
 				int thermostat = domain->getThermostat(cid);
 				if (domain->isFixedEvery() == true && molID%domain->getFixEvery() == 0 && cid == cid_fixed){ 
-					for(unsigned short d=0;d<3;++d) tM->setv(d, 0.0); 
+					double force[3];
+					for(unsigned short d=0;d<3;++d){
+						tM->setv(d, 0.0);	
+						force[d] = 0.0;
+					}
+					tM->setF(force);
 				}else if (domain->isFixedRegion() == true && cid == cid_fixed
 					&& tM->r(0) > domain->getFixedRegion(0) && tM->r(0) < domain->getFixedRegion(1) 
 					&& tM->r(1) > domain->getFixedRegion(2) && tM->r(1) < domain->getFixedRegion(3)
 					&& tM->r(2) > domain->getFixedRegion(4) && tM->r(2) < domain->getFixedRegion(5)){ 
-					for(unsigned short d=0;d<3;++d) tM->setv(d, 0.0); 
-				}else if ((domain->isFixedEvery() == false && domain->isFixedRegion() == false && molID%500 == 0 
-					&& cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() 
-					&& (molID%500 == 0 && cid == cid_moved))){
-					for(unsigned short d=0;d<3;++d) tM->setv(d, 0.0);
+					double force[3];
+					for(unsigned short d=0;d<3;++d){
+						tM->setv(d, 0.0);	
+						force[d] = 0.0;
+					}
+					tM->setF(force);
+// 				}else if ((_simulation.getSimulationStep() <= _simulation.getInitStatistics() 
+// 					&& (molID%500 == 0 && cid == cid_moved))){
+// 					double force[3];
+// 					for(unsigned short d=0;d<3;++d){
+// 						tM->setv(d, 0.0);	
+// 						force[d] = 0.0;
+// 					}
+// 					tM->setF(force);
 				}else {
 					if(domain->isThermostatLayer() == true || domain->isThermostatWallLayer() == true){
 						thermostat = domain->moleculeInLayer(tM->r(0), tM->r(1), tM->r(2), tM->componentid());
@@ -134,8 +163,10 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 				 
 					N[thermostat]++;
 					rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
-					if (domain->isSpringDamped() == true && tM->componentid() == cid_moved &&  domain->getSpringConst() == 0 
-						&& tM->r(1) > domain->getAverageY()-1.5){
+					if ((domain->isSpringDamped() == true && tM->componentid() == cid_moved &&  domain->getSpringConst() == 0 
+						&& tM->r(1) > domain->getAverageY()-1.5)
+						|| ((_simulation.getSimulationStep() <= _simulation.getInitStatistics() 
+						&& (molID%500 == 0 && cid == cid_moved)))){
 						N[thermostat]--;
 						rotDOF[thermostat] -= tM->component()->getRotationalDegreesOfFreedom();
 					}
@@ -151,15 +182,33 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
 				molID = tM->id();
 				cid = tM->componentid();
-				if (domain->isFixedEvery() == true && molID%domain->getFixEvery() == 0 && cid == cid_fixed){ }
-				else if (domain->isFixedRegion() == true && cid == cid_fixed
+				if (domain->isFixedEvery() == true && molID%domain->getFixEvery() == 0 && cid == cid_fixed){ 
+					double force[3];
+					for(unsigned short d=0;d<3;++d){
+						tM->setv(d, 0.0);	
+						force[d] = 0.0;
+					}
+					tM->setF(force);
+				}else if (domain->isFixedRegion() == true && cid == cid_fixed
 					&& tM->r(0) > domain->getFixedRegion(0) && tM->r(0) < domain->getFixedRegion(1) 
 					&& tM->r(1) > domain->getFixedRegion(2) && tM->r(1) < domain->getFixedRegion(3)
-					&& tM->r(2) > domain->getFixedRegion(4) && tM->r(2) < domain->getFixedRegion(5)){ }
-				else if ((domain->isFixedEvery() == false && domain->isFixedRegion() == false && molID%500 == 0 
+					&& tM->r(2) > domain->getFixedRegion(4) && tM->r(2) < domain->getFixedRegion(5)){ 
+					double force[3];
+					for(unsigned short d=0;d<3;++d){
+						tM->setv(d, 0.0);	
+						force[d] = 0.0;
+					}
+					tM->setF(force);
+				}else if ((domain->isFixedEvery() == false && domain->isFixedRegion() == false && molID%500 == 0 
 					&& cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() 
-					&& (molID%500 == 0 && cid == cid_moved))){ }
-				else {
+					&& (molID%500 == 0 && cid == cid_moved))){
+					double force[3];
+					for(unsigned short d=0;d<3;++d){
+						tM->setv(d, 0.0);	
+						force[d] = 0.0;
+					}
+					tM->setF(force);
+				}else {
 					tM->upd_postF(dt_half, summv2gt, summv2_1Dimgt, sumIw2gt, domain);
 					assert(summv2gt >= 0.0);
 					Ngt++;
@@ -183,6 +232,28 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			domain->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
 			if(domain->isScaling1Dim(thermit->first)){
 			  domain->setLocalSummv2_1Dim(summv2_1Dim[thermit->first], thermit->first);
+			}
+		}
+		
+		std::map<unsigned, double> uPot;
+		std::map<unsigned, double> uKin;
+		if(domain->getBoolEnergyOutput() == true){
+			for (unsigned comp = 0; comp < domain->getNumberOfComponents(); comp++){
+				uPot[comp] = 0.0;
+				uKin[comp] = 0.0;
+			}
+			
+			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
+				uPot[tM->componentid()] += tM->getUpot();
+				uKin[tM->componentid()] += tM->getUkin();
+				tM->setUpot(0.0);
+				tM->setUkin(0.0);
+			
+			}
+		
+			for (unsigned comp = 0; comp < domain->getNumberOfComponents(); comp++){
+				domain->setLocalUpot(comp, uPot[comp]);
+				domain->setLocalUkin(comp, uKin[comp]);
 			}
 		}
 
@@ -224,10 +295,17 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 		thismol->vadd(componentwiseVelocityDelta[0][cid],
 		              componentwiseVelocityDelta[1][cid],
 		              componentwiseVelocityDelta[2][cid]);
+		// correction of the directed velocities
+		for(int d = 0; d < 3; d++){
+			thismol->addDirectedVelocity(d,componentwiseVelocityDelta[d][cid]);
+			thismol->addDirectedVelocitySlab(d,componentwiseVelocityDelta[d][cid]);
+			thismol->addDirectedVelocityStress(d,componentwiseVelocityDelta[d][cid]);
+			thismol->addDirectedVelocityConfinement(d,componentwiseVelocityDelta[d][cid]);
+		}
 	}
 }
 
-// accelerates the component that is designated to be "moved" instantaneously (without ramp profile)
+// accelerates the component that is designated to be "moved" instantaneously (without ramp profile)---> CHANGE: NOW WITH RAMP PROFILE
 // and in each time step to a certain velocity 
 void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain) {
 	map<unsigned, double> componentwiseVelocityDelta[3];
@@ -239,18 +317,26 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 	// time span in which the acceleration or target velocity is gradually increased to its final value
 	int influencingTime = _simulation.getSimulationStep() -_simulation.getInitStatistics() - 25000;
 	// asymptotic value for the influenceFactor
-	double influenceFactor = 0.1265769815;
+	double influenceFactor[3];
+	for (int d = 0; d < 3; d++){
+		influenceFactor[d] = 0.1265769815;
 	
-	// during influencingTime span the influence of the acceleration delta_v is slowly decreased from 1 to 0.1265769815
-	// ---> at the beginning the influence of the acceleration is a lot more intense than later ---> increasing stability!
-	if(influencingTime > 0 && abs(influencingTime) < _simulation.getDirectedVelocityTime())
-		influenceFactor = 1.0 - exp((-1)*(double)_simulation.getDirectedVelocityTime()/((double)influencingTime*exp(2)));
-	else if(influencingTime <= 0)
-		influenceFactor = 1.0;
+		// during influencingTime span the influence of the acceleration delta_v is slowly decreased from 1 to 0.1265769815
+		// ---> at the beginning the influence of the acceleration is a lot more intense than later ---> increasing stability!
+		if(influencingTime > 0 && abs(influencingTime) < _simulation.getDirectedVelocityTime())
+			influenceFactor[d] = 1.0 - exp((-1)*(double)_simulation.getDirectedVelocityTime()/((double)influencingTime*exp(2)));
+		else if(influencingTime <= 0)
+			influenceFactor[d] = 1.0;
+		
+		if(domain->getPG()->getGlobalTargetVelocity(d,cid_moved) <= 1e-5)
+			influenceFactor[d] = 1.0;
+	}
         
 	// returns the value for delta_v = v_target - 2*v_directed,currently + v_directed,average
-	for (int d = 0; d < 3; d++)
+	for (int d = 0; d < 3; d++){
 	  componentwiseVelocityDelta[d][cid_moved] = domain->getPG()->getMissingVelocity(cid_moved, d, _simulation.getSimulationStep(), _simulation.getInitStatistics());
+	  domain->setTargetVelocityAcceleration(d, domain->getPG()->getCurrentGlobalTargetVelocity(d, cid_moved));
+	}
 	
 	for(int d = 0; d < 3; d++)
 	  domain->getPG()->addGlobalVelSumBeforeAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d, cid_moved) / domain->getPG()->getGlobalN(cid_moved));
@@ -259,9 +345,18 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
 		unsigned cid = thismol->componentid();
 		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
-		thismol->vadd(influenceFactor*componentwiseVelocityDelta[0][cid],
-		              influenceFactor*componentwiseVelocityDelta[1][cid],
-		              influenceFactor*componentwiseVelocityDelta[2][cid]);
+		if(cid == cid_moved){
+			thismol->vadd(influenceFactor[0]*componentwiseVelocityDelta[0][cid],
+				      influenceFactor[1]*componentwiseVelocityDelta[1][cid],
+		                      influenceFactor[2]*componentwiseVelocityDelta[2][cid]);
+			// correction of the directed velocities
+			for(int d = 0; d < 3; d++){
+				thismol->addDirectedVelocity(d,influenceFactor[d]*componentwiseVelocityDelta[d][cid]);
+				thismol->addDirectedVelocitySlab(d,influenceFactor[d]*componentwiseVelocityDelta[d][cid]);
+				thismol->addDirectedVelocityStress(d,influenceFactor[d]*componentwiseVelocityDelta[d][cid]);
+				thismol->addDirectedVelocityConfinement(d,influenceFactor[d]*componentwiseVelocityDelta[d][cid]);
+			}
+		}
 	}
 	// Control of velocity after artificial acceleration
 	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents(), _simulation.getDirectedVelocityTime());
@@ -314,6 +409,10 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 	domain->getPG()->prepareShearRate(molCont, domainDecomp, _simulation.getDirectedVelocityTime());
 
 	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
+	  // if shearWidth > 0.0 -->  the shear velocity is controlled in 2 stripes at the box margins and 2 stripes in the middle of the box
+	  // if shearWidth == 0.0 --> the shear velocity is controlled in n stripes with a width of 0.1 sigma; more accurate v-profile 
+	 if(thismol->componentid() == cid && (thismol->r(1) <= shearRateBox[3] && thismol->r(1) >= shearRateBox[2]) && (thismol->r(0) <= shearRateBox[1] && thismol->r(0) >= shearRateBox[0])){
+	  if(shearWidth > 0.0){
 		if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= shearRateBox[2] && thismol->r(1) <= shearRateBox[2] + shearWidth){
 			yun = 0;
 		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= 0.5 * (shearRateBox[3]-shearRateBox[2]) - shearWidth && thismol->r(1) < 0.5 * (shearRateBox[3]-shearRateBox[2])){
@@ -324,7 +423,13 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 			yun = 3;
 		}else
 			yun = 4;
-		if((_simulation.isShearRate() && yun < 4) || (_simulation.isShearForce() && (yun == 0 || yun == 3))){
+	  }else{
+			yun = floor((thismol->r(1) - shearRateBox[2])*10);  
+	  }
+		  
+		if((_simulation.isShearRate() && shearWidth > 0.0 && yun < 4) || (_simulation.isShearForce() && (yun == 0 || yun == 3)) 
+			|| (_simulation.isShearRate() && shearWidth == 0.0 && thismol->componentid() == cid && (thismol->r(1) <= shearRateBox[3] 
+			&& thismol->r(1) >= shearRateBox[2]) && (thismol->r(0) <= shearRateBox[1] && thismol->r(0) >= shearRateBox[0]))){
 		  directedVel = domain->getPG()->getDirectedShearVel(yun);
 		  directedVelAverage = domain->getPG()->getDirectedShearVelAverage(yun);
 		  if(_simulation.isShearRate()){
@@ -334,14 +439,14 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 			shearVelocityTarget = 0.0;  
 		  
 		  // returns the value for delta_v = v_target - 2*v_directed,currently + v_directed,average
-		  shearVelocityDelta = shearVelocityTarget - 2*directedVel + 1*directedVelAverage;
+			shearVelocityDelta = shearVelocityTarget - 2*directedVel + directedVelAverage;
 		  
 		  // damping of the influence as 1 - exp(A/t)
 		  if(influencingTime > 0)
 				shearVelocityDelta = influenceFactor*shearVelocityDelta;
 		  
-		  if(_simulation.isShearRate()){
-			// adaption of the directed velocities
+		  // adaption of the directed velocities --> GUESS
+		  if((_simulation.getSimulationStep()-_simulation.getInitStatistics()-_simulation.getDirectedVelocityTime()) < domain->getPG()->getShearRampTime()){
 			thismol->setDirectedVelocity(0, shearVelocityTarget); 
 			thismol->setDirectedVelocitySlab(0, shearVelocityTarget);
 			thismol->setDirectedVelocityStress(0, shearVelocityTarget); 
@@ -354,7 +459,10 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 			thismol->setDirectedVelocitySlab(2, 0.0);
 			thismol->setDirectedVelocityStress(2, 0.0); 
 			thismol->setDirectedVelocityConfinement(2, 0.0);
+		  }
 		  
+		  
+		  if(_simulation.isShearRate()){
 			mv2 = 0.0;
 			Iw2 = 0.0;
 			thismol->calculate_mv2_Iw2(mv2, Iw2, noDirVel);
@@ -370,6 +478,15 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 		  }
 		  // acceleration!
 		  thismol->vadd(shearVelocityDelta,0.0,0.0);
+		  
+		  // correction of the directed velocities
+		  if(((_simulation.getSimulationStep()-_simulation.getInitStatistics()-_simulation.getDirectedVelocityTime()) >= domain->getPG()->getShearRampTime())){
+			thismol->addDirectedVelocity(0,shearVelocityDelta);
+			thismol->addDirectedVelocitySlab(0,shearVelocityDelta);
+			thismol->addDirectedVelocityStress(0,shearVelocityDelta);
+			thismol->addDirectedVelocityConfinement(0,shearVelocityDelta);
+		  }
+		  
 		  domain->addShearVelDelta(shearVelocityDelta);
 		  
 		  if(_simulation.isShearRate()){
@@ -386,6 +503,7 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 			domain->addPostShearEnergyDefault(mv2);
 		  }
 		}
+	 }
 	}
 }
 

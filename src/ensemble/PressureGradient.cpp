@@ -226,8 +226,8 @@ void PressureGradient::prepare_getMissingVelocity(DomainDecompBase* domainDecomp
 		this->_globalVelocitySum[d][cid] = 0.0;
           }
 
-
-        if(!this->_localRank && _globalPriorAccVelocitySums[0].size() == 0){
+	//TEST this->_globalPriorAccVelocitySums[0][cid].size() OR this->_globalPriorAccVelocitySums[0].size() ???
+        if(!this->_localRank && _globalPriorAccVelocitySums[0][cid].size() == 0){
             for(unsigned short int d = 0; d < 3; d++)
                 this->_averagedAccVelocitySum[d][cid] = 0.0;
 	    this->_averagedAccN[cid] = 0;
@@ -273,7 +273,8 @@ void PressureGradient::prepare_getMissingVelocity(DomainDecompBase* domainDecomp
                 else
                     this->_directedAccVelAverage[d][cid] = 0.0;
         }
-        if(this->_globalPriorAccVelocitySums[cid].size() == directedVelTime){
+        //TEST this->_globalPriorAccVelocitySums[0][cid].size() OR this->_globalPriorAccVelocitySums[cid].size() ???
+        if(this->_globalPriorAccVelocitySums[0][cid].size() == directedVelTime){
             for(int d = 0; d < 3; d++){
                 this->_averagedAccVelocitySum[d][cid] -= this->_globalPriorAccVelocitySums[d][cid].front();
                 this->_globalPriorAccVelocitySums[d][cid].pop_front();
@@ -294,17 +295,22 @@ void PressureGradient::prepare_getMissingVelocity(DomainDecompBase* domainDecomp
 double PressureGradient::getMissingVelocity(unsigned int cid, unsigned short int d, unsigned long simstep, unsigned long init)
 {
 	double v_directed = this->_directedAccVel[d][cid];
-        double v_directedAverage = this->_directedAccVelAverage[d][cid];
 	double v_missing = 0.0;
 	double rampTime = 50000*_globalTargetVelocity[d][cid];
 	
 	double slowAcceleration = 1.0;
 	// slowAcceleration = [0;1]
-	if((simstep-init) < rampTime)
+	if((simstep-init) > 0 && (simstep-init) < rampTime)
 			slowAcceleration = (double)(simstep-init)/rampTime;
+	if(slowAcceleration > 1.0)
+			slowAcceleration = 1.0;
 	
-	if (this->_globalTargetVelocity[d][cid] != 0.0)
-	  v_missing = slowAcceleration * this->_globalTargetVelocity[d][cid] - 2*v_directed + v_directedAverage;
+	if (this->_globalTargetVelocity[d][cid] != 0.0 && this->_globalTargetVelocity[d][cid] > 1e-5)
+	  v_missing = slowAcceleration * this->_globalTargetVelocity[d][cid] - 2*v_directed + this->_directedAccVelAverage[d][cid];
+	else if (this->_globalTargetVelocity[d][cid] != 0.0 && this->_globalTargetVelocity[d][cid] <= 1e-5)
+	  v_missing = (-1)*v_directed; 
+	
+	this->_currentGlobalTargetVelocity[d][cid] = slowAcceleration * this->_globalTargetVelocity[d][cid];
 	
 	return v_missing;
 }
@@ -341,8 +347,17 @@ void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, dou
 
 void PressureGradient::prepareShearRate(ParticleContainer* molCont, DomainDecompBase* domainDecomp, unsigned directedVelTime)
 {	
-	unsigned yuns = 4;
-	unsigned yun; 
+	
+	
+	unsigned yuns;
+	unsigned yun;
+	
+	// if shearWidth > 0.0 -->  the shear velocity is controlled in 2 stripes at the box margins and 2 stripes in the middle of the box
+	// if shearWidth == 0.0 --> the shear velocity is controlled in n stripes with a width of 0.1 sigma; more accurate v-profile 
+	if(this->_shearWidth > 0.0)
+		yuns = 4;
+	else
+		yuns = ceil((_shearRateBox[3] - _shearRateBox[2])*10);
 	
 	for(yun = 0; yun < yuns; yun++){
 	    this->_localShearN[yun] = 0;
@@ -361,6 +376,7 @@ void PressureGradient::prepareShearRate(ParticleContainer* molCont, DomainDecomp
 	  
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
+	 if(this->_shearWidth > 0.0){	
 	  if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] && thismol->r(1) <= _shearRateBox[2] + _shearWidth){
 		this->_localShearN[0]++;
 		this->_localShearVelocitySum[0] += thismol->v(0);
@@ -374,6 +390,13 @@ void PressureGradient::prepareShearRate(ParticleContainer* molCont, DomainDecomp
 		this->_localShearN[3]++;
 		this->_localShearVelocitySum[3] += thismol->v(0);
 	  }
+	 }else{
+		if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] && thismol->r(1) <= _shearRateBox[3]){ 
+			yun = floor((thismol->r(1) - this->_shearRateBox[2])*10);
+			this->_localShearN[yun]++;
+			this->_localShearVelocitySum[yun] += thismol->v(0);
+		}
+	 }
 	}
 	
 	domainDecomp->collCommInit( 2*yuns );

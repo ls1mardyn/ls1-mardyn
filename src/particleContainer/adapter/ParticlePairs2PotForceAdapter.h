@@ -93,7 +93,7 @@ public:
                 dummy2 = 0.0; // U_polarity
                 dummy3 = 0.0; // U_dipole_reaction_field
 
-                FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ);
+                FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ, _domain);
                 return dummy1 / 6.0 + dummy2 + dummy3;
             default:
                 exit(666);

@@ -484,11 +484,18 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	ParticleData::setMPIType(mpi_Particle);
 #endif
 	
-	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
+	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, rOldx, rOldy, rOldz, rOldStressx, rOldStressy, rOldStressz;
+	double vdirx, vdiry, vdirz, vdirSlabx, vdirSlaby, vdirSlabz, vdirStressx, vdirStressy, vdirStressz,
+	       vdirConfinementx, vdirConfinementy, vdirConfinementz, vdirAvConfx, vdirAvConfy, vdirAvConfz,
+	       vdirAvStressx, vdirAvStressy, vdirAvStressz;
+	double pressVirx, pressViry, pressVirz, pressKinx, pressKiny, pressKinz, pressVirConfx, pressVirConfy, pressVirConfz,
+	       pressKinConfx, pressKinConfy, pressKinConfz, Fx, Fy, Fz, conPotHeatx, conPotHeaty, conPotHeatz, conPotHeatStressx, conPotHeatStressy, conPotHeatStressz;
 	unsigned long id;
 	unsigned int componentid;
 
-	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
+	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=rOldx=rOldy=rOldz=rOldStressx=rOldStressy=rOldStressz=0.;
+	vdirx=vdiry=vdirz=vdirSlabx=vdirSlaby=vdirSlabz=vdirStressx=vdirStressy=vdirStressz=vdirConfinementx=vdirConfinementy=vdirConfinementz=vdirAvConfx=vdirAvConfy=vdirAvConfz=vdirAvStressx=vdirAvStressy=vdirAvStressz=0.;
+	pressVirx=pressViry=pressVirz=pressKinx=pressKiny=pressKinz=pressVirConfx=pressVirConfy=pressVirConfz=pressKinConfx=pressKinConfy=pressKinConfz=Fx=Fy=Fz=conPotHeatx=conPotHeaty=conPotHeatz=conPotHeatStressx=conPotHeatStressy=conPotHeatStressz=0.;
 	q0=1.;
 
 	for( unsigned long i = 0; i < domain->getglobalNumMolecules(); i++ ) {
@@ -525,7 +532,8 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		// store only those molecules within the domain of this process
 		// The neccessary check is performed in the particleContainer addPartice method
 		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
-		Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
+		Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,rOldx,rOldy,rOldz,rOldStressx,rOldStressy,rOldStressz,vdirx,vdiry,vdirz,vdirSlabx,vdirSlaby,vdirSlabz,vdirStressx,vdirStressy,vdirStressz,vdirConfinementx,vdirConfinementy,vdirConfinementz,vdirAvConfx,vdirAvConfy,vdirAvConfz,vdirAvStressx,vdirAvStressy,vdirAvStressz,pressVirx,pressViry,pressVirz,pressKinx,pressKiny,pressKinz,pressVirConfx,pressVirConfy,pressVirConfz,pressKinConfx,pressKinConfy,pressKinConfz,Fx,Fy,Fz,conPotHeatx,conPotHeaty,conPotHeatz,conPotHeatStressx,conPotHeatStressy,conPotHeatStressz);
+// 		Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,rOldx,rOldy,rOldz,rOldStressx,rOldStressy,rOldStressz,vdirx,vdiry,vdirz,vdirSlabx,vdirSlaby,vdirSlabz,vdirStressx,vdirStressy,vdirStressz,vdirConfinementx,vdirConfinementy,vdirConfinementz,vdirAvConfx,vdirAvConfy,vdirAvConfz,vdirAvStressx,vdirAvStressy,vdirAvStressz,pressVirx,pressViry,pressVirz,pressKinx,pressKiny,pressKinz,pressVirConfx,pressVirConfy,pressVirConfz,pressKinConfx,pressKinConfy,pressKinConfz,pressVirBarox,pressVirBaroy,pressVirBaroz,pressKinBarox,pressKinBaroy,pressKinBaroz,conPotHeatx,conPotHeaty,conPotHeatz,conPotHeatStressx,conPotHeatStressy,conPotHeatStressz);
 #ifdef ENABLE_MPI
 		ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], m1);
 		} // Rank 0 only

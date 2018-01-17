@@ -142,6 +142,12 @@ public:
 
 	void collCommAllreduceSum() {
 	}
+	
+	void collCommAllreduceMax() {
+	}
+
+	void collCommAllreduceMin() {
+	}
 
 	void collCommBroadcast(int root = 0) {
 	}

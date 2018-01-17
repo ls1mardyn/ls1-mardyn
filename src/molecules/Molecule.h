@@ -29,7 +29,22 @@ public:
 	         double rx = 0., double ry = 0., double rz = 0.,
 	         double vx = 0., double vy = 0., double vz = 0.,
 	         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
-	         double Dx = 0., double Dy = 0., double Dz = 0.
+	         double Dx = 0., double Dy = 0., double Dz = 0.,
+		 double rOldx = 0., double rOldy = 0., double rOldz = 0.,
+		 double rOldStressx = 0., double rOldStressy = 0., double rOldStressz = 0.,
+		 double vdirx = 0., double vdiry = 0., double vdirz = 0.,
+		 double vdirSlabx = 0., double vdirSlaby = 0., double vdirSlabz = 0.,
+		 double vdirStressx = 0., double vdirStressy = 0., double vdirStressz = 0.,
+		 double vdirConfinementx = 0., double vdirConfinementy = 0., double vdirConfinementz = 0.,
+		 double vdirAvConfx = 0., double vdirAvConfy = 0., double vdirAvConfz = 0.,
+		 double vdirAvStressx = 0., double vdirAvStressy = 0., double vdirAvStressz = 0.,
+		 double pressVirx = 0., double pressViry = 0., double pressVirz = 0.,
+		 double pressKinx = 0., double pressKiny = 0., double pressKinz = 0.,
+		 double pressVirConfx = 0., double pressVirConfy = 0., double pressVirConfz = 0.,
+		 double pressKinConfx = 0., double pressKinConfy = 0., double pressKinConfz = 0.,
+		 double Fx = 0., double Fy = 0., double Fz = 0.,
+		 double conPotHeatx = 0., double conPotHeaty = 0., double conPotHeatz = 0.,
+		 double conPotHeatStressx = 0., double conPotHeatStressy = 0., double conPotHeatStressz = 0.
 	);
 	Molecule(const Molecule& m);
 
@@ -56,8 +71,14 @@ public:
 	Component* component() const { return _component; }
 	/** get position coordinate */
 	double r(unsigned short d) const { return _r[d]; }
-	/** get position coordinate from the previous timestep */
+	/** get position coordinate from the previous timestep --> Diffusion */
 	double rOld(unsigned short d) const { return _rOld[d]; }
+	/** set position coordinate from the "old" timestep --> Diffusion */
+	void setrOld(unsigned short d, double r) { _rOld[d] = r; }
+	/** get position coordinate from the previous timestep --> Diffusion */
+	double rOldStress(unsigned short d) const { return _rOldStress[d]; }
+	/** set position coordinate from the "old" timestep --> Diffusion */
+	void setrOldStress(unsigned short d, double r) { _rOldStress[d] = r; }
 	/** set position coordinate */
 	void setr(unsigned short d, double r) { _r[d] = r; }
 	/** get velocity coordinate */
@@ -353,14 +374,24 @@ public:
 	void clearDiffusiveHeatfluxHardyConfinement() { _diffusiveHeatfluxHardyConfinement.clear(); }
 	
 	// assignment of the directed velocities
+	void addDirectedVelocity(int d, double directedVelocity) { this->_directedVelocity[d] += directedVelocity; }
 	void setDirectedVelocity(int d, double directedVelocity) { this->_directedVelocity[d] = directedVelocity; }
 	double getDirectedVelocity(int d) { return this->_directedVelocity[d]; }
+	void addDirectedVelocitySlab(int d, double directedVelocity) { this->_directedVelocitySlab[d] += directedVelocity; }
 	void setDirectedVelocitySlab(int d, double directedVelocity) { this->_directedVelocitySlab[d] = directedVelocity; }
 	double getDirectedVelocitySlab(int d) { return this->_directedVelocitySlab[d]; }
+	void addDirectedVelocityStress(int d, double directedVelocity) { this->_directedVelocityStress[d] += directedVelocity; }
 	void setDirectedVelocityStress(int d, double directedVelocity) { this->_directedVelocityStress[d] = directedVelocity; }
 	double getDirectedVelocityStress(int d) { return this->_directedVelocityStress[d]; }
+	void addDirectedVelocityConfinement(int d, double directedVelocity) { this->_directedVelocityConfinement[d] += directedVelocity; }
 	void setDirectedVelocityConfinement(int d, double directedVelocity) { this->_directedVelocityConfinement[d] = directedVelocity; }
 	double getDirectedVelocityConfinement(int d) { return this->_directedVelocityConfinement[d]; }
+	void addDirectedVelocityAverageConfinement(int d, double directedVelocity) { this->_directedVelocityAverageConfinement[d] += directedVelocity; }
+	void setDirectedVelocityAverageConfinement(int d, double directedVelocity) { this->_directedVelocityAverageConfinement[d] = directedVelocity; }
+	double getDirectedVelocityAverageConfinement(int d) { return this->_directedVelocityAverageConfinement[d]; }
+	void addDirectedVelocityAverageStress(int d, double directedVelocity) { this->_directedVelocityAverageStress[d] += directedVelocity; }
+	void setDirectedVelocityAverageStress(int d, double directedVelocity) { this->_directedVelocityAverageStress[d] = directedVelocity; }
+	double getDirectedVelocityAverageStress(int d) { return this->_directedVelocityAverageStress[d]; }
 	
 	// Particlewise vtk-data for ParticleData
 	long double getAveragedVelocity(int d) { return this->_vAverage[d]; }
@@ -383,16 +414,28 @@ public:
 	    if (x < 0) return -1;
 	    return 1; 
 	}
+	
+	void addUpot(double u) { this->_uPot += u; }
+	void setUpot(double u) { this->_uPot = u; }
+	double getUpot() { return this->_uPot; }
+	
+	void setUkin(double u) { this->_uKin = u; }
+	double getUkin() { return this->_uKin; }
+	
 private:
         Component *_component;  /**< IDentification number of its component type */ 
 	double _r[3];  /**< position coordinates */
-	double _rOld[3]; /**< position coordinates from the previous timestep*/
+	double _rOld[3]; /**< position coordinates from the "old" timestep --> self-diffusion confinement */ 
+	double _rOldStress[3]; /**< position coordinates from the "old" timestep  --> self-diffusion stress */
 	double _F[3];  /**< forces */
 	double _v[3];  /**< velocity */
 	Quaternion _q; /**< angular orientation */
 	double _M[3];  /**< torsional moment */
 	double _L[3];  /**< angular momentum */
 	unsigned long _id;  /**< IDentification number of that molecule */
+	
+	double _uPot;
+	double _uKin;
 
 	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
@@ -434,8 +477,8 @@ private:
 	std::string _weightingFuncStress;
 	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyStress;
 	// Heatflux (Hardy-like) 
-	std::map<unsigned long, std::map<unsigned, double> > _diffusiveHeatfluxStress;
-	std::map<unsigned long, double> _convectivePotHeatfluxStress;
+	long double _diffusiveHeatfluxStress[3][3];
+	long double _convectivePotHeatfluxStress[3];
 	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > _diffusiveHeatfluxHardyStress;
 	
 	// ------------- CONFINEMENT ------------------
@@ -446,8 +489,8 @@ private:
 	std::string _weightingFuncConfinement;
 	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyConfinement;
 	// Heatflux (Hardy-like)
-	std::map<unsigned long, std::map<unsigned, double> > _diffusiveHeatflux;
-	std::map<unsigned long, double> _convectivePotHeatflux;
+	long double _diffusiveHeatflux[3][3];
+	long double _convectivePotHeatflux[3];
 	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > _diffusiveHeatfluxHardyConfinement;
 	
 	// ------------ BULK PRESSURE -----------------
@@ -458,7 +501,7 @@ private:
 	// directed velocity
 	double _directedVelocity[3];
 	double _directedVelocity2[3];
-	double _directedVelocitySlab[3], _directedVelocityStress[3], _directedVelocityConfinement[3];
+	double _directedVelocitySlab[3], _directedVelocityStress[3], _directedVelocityConfinement[3], _directedVelocityAverageConfinement[3], _directedVelocityAverageStress[3];
 	
 	// Particlewise vtk-data for ParticleData
 	long double _T;

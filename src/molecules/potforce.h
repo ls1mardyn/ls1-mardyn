@@ -93,19 +93,8 @@ inline void PotForceShear(const double shearYmax, const double shearForce, const
   if((simstep-initStatistics) < rampTime)
 			slowAccelerate = (double)(simstep-initStatistics)/rampTime;
   
-  //double shearForceTarget = shearForce * shearYmax/2 - fabs((shearYmax/2 - currentYPos) * shearForce);
-  //double auxDist = (1-(fabs((shearYmax/2 - currentYPos)/(shearYmax/2))));
-  //double shearForceTarget = shearForce * auxDist * auxDist;
-//   double shearForceTarget;
-//   if (currentYPos < shearYmax/2)
-// 	  shearForceTarget = shearForce/10.0 * (-1)/(currentYPos - shearYmax/2 - 0.1);
-//   else if (currentYPos > shearYmax/2)
-// 	  shearForceTarget = shearForce/10.0 * 1/(currentYPos - shearYmax/2 + 0.1);
-//   else
-// 	  shearForceTarget = shearForce;
-  
   double shearForceTarget = 0.0;
-  if (fabs(shearYmax/2 - currentYPos) < shearWidth)
+  //if (fabs(shearYmax/2 - currentYPos) < shearWidth)
 	  shearForceTarget = shearForce;
 		  
   shearForceTarget = slowAccelerate*shearForceTarget;
@@ -139,30 +128,23 @@ inline void PotForceShear(const double shearYmax, const double shearForce, const
   } 
 }
 
-/** @brief Calculates force as damper equivalent for upper layer of upper plate.
-inline void PotForceDamper(unsigned long maxID, unsigned long minID, const double dampConst, unsigned long molID, double currentVy, double f[3])
-{
-	if (molID <= maxID && molID >= minID){
-	    // spring force is of interest for y-direction
-	    f[0] = 0.0;
-	    f[1] = -dampConst*currentYy;
-	    f[2] = 0.0;
-	}
-	else{
-	    f[0] = 0.0;
-	    f[1] = 0.0;
-	    f[2] = 0.0;
-	}
-}	 */
-
 /** @brief Calculates potential and force between 2 Lennard-Jones 12-6 centers. */
 inline void PotForceLJ(const double dr[3], const double& invdr2,
-                       const double& eps24, const double& sig2,
-                       double& sfac, double& ffac, double f[3], double& u6)
+                       const double& eps24_orig, const double& sig2,
+                       double& sfac, double& ffac, double f[3], double& u6,
+		       unsigned long simstep)
 {
 	double lj6 = sig2 * invdr2; lj6 = lj6 * lj6 * lj6;
 	double lj12 = lj6 * lj6;
 	double lj12m6 = lj12 - lj6;
+	double eps24 = eps24_orig;
+	double slowEps = 1.0;	
+	
+	if(simstep < 5000)
+			slowEps = (double)(simstep+1)/5000;
+	
+	eps24 = slowEps*eps24;
+	
 	u6 = eps24 * lj12m6;
 	
 	double fac = eps24 * (lj12 + lj12m6) * invdr2;
@@ -173,6 +155,26 @@ inline void PotForceLJ(const double dr[3], const double& invdr2,
 	for(unsigned short d = 0; d < 3; d++) f[d] = ffac * dr[d];
         sfac = eps24 * invdr2 * (26.0*lj12 - 7.0*lj6);
 }
+
+inline void PotForceLJ(const double dr[3], const double& invdr2,
+                       const double& eps24, const double& sig2,
+                       double& sfac, double& ffac, double f[3], double& u6)
+{
+	double lj6 = sig2 * invdr2; lj6 = lj6 * lj6 * lj6;
+	double lj12 = lj6 * lj6;
+	double lj12m6 = lj12 - lj6;
+	
+	u6 = eps24 * lj12m6;
+	
+	double fac = eps24 * (lj12 + lj12m6) * invdr2;
+	for (unsigned short d = 0; d < 3; ++d)
+		f[d] = fac * dr[d];
+		
+        ffac = eps24 * (lj12 + lj12m6) * invdr2;
+	for(unsigned short d = 0; d < 3; d++) f[d] = ffac * dr[d];
+        sfac = eps24 * invdr2 * (26.0*lj12 - 7.0*lj6);
+}
+
 
 
 /** @brief Calculate potential and force between 2 Dipoles. */
@@ -417,6 +419,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
         double sfac, ffac, tfac, steric, drx2, dry2, drz2;
+	string free ("free");
         
         drx2 = drm[0]*drm[0];
         dry2 = drm[1]*drm[1];
@@ -429,6 +432,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	long double virialForce;
 	long double virialHeat_i, virialHeat_j;
 	long double convectivePotHeat_i, convectivePotHeat_j;
+	double additionalDirVel = 0.0;
 	// LJ centers
 	// no LJ interaction between solid atoms of the same component
 	if ((mi.numTersoff() == 0) || (mi.componentid() != mj.componentid())) {
@@ -447,7 +451,10 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 				params >> shift6; // must be 0.0 for full LJ
 				if (calculateLJ) {
                                         double invdr2 = 1. / dr2;
-					PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u);  // sfac = (d^2 u / dr^2), ffac = -du / r dr
+					if((mi.componentid() != mj.componentid()) || (free.compare(domain.getMovementStyle(mi.componentid()+1)) == 0 && free.compare(domain.getMovementStyle(mj.componentid()+1)) == 0))
+						PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u, domain.getSimstep());  // sfac = (d^2 u / dr^2), ffac = -du / r dr
+					else
+						PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u);  // sfac = (d^2 u / dr^2), ffac = -du / r dr	
 					u += shift6;
 					
 // even for interactions within the cell a neighbor might try to add/subtract
@@ -460,6 +467,10 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						mi.Fljcenteradd(si, f);
 						mj.Fljcentersub(sj, f);
 						Upot6LJ += u;
+						if (domain.getBoolEnergyOutput() == true){
+							mi.addUpot(0.5*u/6);
+							mj.addUpot(0.5*u/6);
+						}
 						for (unsigned short d = 0; d < 3; ++d)
 						  Virial += drm[d] * f[d];
 						VirialIX += drm[0] * f[0];
@@ -612,6 +623,13 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		for (unsigned int si = 0; si < 1; ++si) {
 		    PotForceSpring(domain.getAverageY(), domain.getMaxSpringID(), domain.getMinSpringID(), domain.getSpringConst(), mi.id(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep());
 		    mi.Fljcenteradd(si, f);
+		    // correction of the directed velocities
+		    additionalDirVel = f[1] * domain.getTimestepLength()/(2 * mi.mass());
+		    mi.addDirectedVelocity(1,additionalDirVel);
+		    mi.addDirectedVelocitySlab(1,additionalDirVel);
+		    mi.addDirectedVelocityStress(1,additionalDirVel);
+		    mi.addDirectedVelocityConfinement(1,additionalDirVel);
+		    additionalDirVel = 0.0;
 		    for (unsigned short d = 0; d < 3; ++d)
 		    {
 			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial
@@ -634,6 +652,13 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		for (unsigned int si = 0; si < 1; ++si) {
 		    PotForceGravity(domain.getGravityDir(), domain.getGravityForce(), f, domain.getInitStatistics(), domain.getSimstep());
 		    mi.Fljcenteradd(si, f);
+		    // correction of the directed velocities
+		    additionalDirVel = f[domain.getGravityDir()] * domain.getTimestepLength()/(2 * mi.mass());
+		    mi.addDirectedVelocity(domain.getGravityDir(),additionalDirVel);
+		    mi.addDirectedVelocitySlab(domain.getGravityDir(),additionalDirVel);
+		    mi.addDirectedVelocityStress(domain.getGravityDir(),additionalDirVel);
+		    mi.addDirectedVelocityConfinement(domain.getGravityDir(),additionalDirVel);
+		    additionalDirVel = 0.0;
 		    for (unsigned short d = 0; d < 3; ++d)
 			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial
 		    
@@ -652,6 +677,15 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		for (unsigned int si = 0; si < 1; ++si) {
 		    PotForceShear(domain.getPG()->getShearRateBox(3)-domain.getPG()->getShearRateBox(2), domain.getPG()->getShearRate(), domain.getPG()->getShearWidth(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep(), domain.getPG()->getShearRampTime());
 		    mi.Fljcenteradd(si, f);
+		    // correction of the directed velocities
+		    if((domain.getSimstep()-domain.getInitStatistics()-domain.getDirectedVelocityTime()) >= domain.getPG()->getShearRampTime()){
+			    additionalDirVel = f[0] * domain.getTimestepLength()/(2 * mi.mass());
+		    	    mi.addDirectedVelocity(0,additionalDirVel);
+			    mi.addDirectedVelocitySlab(0,additionalDirVel);
+		    	    mi.addDirectedVelocityStress(0,additionalDirVel);
+		    	    mi.addDirectedVelocityConfinement(0,additionalDirVel);
+		    }
+		    additionalDirVel = 0.0;
 		    for (unsigned short d = 0; d < 3; ++d)
 			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial
 		    
@@ -883,12 +917,14 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 }
 
 /** @brief Calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered) */
-inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
+inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ, Domain& domain)
 {
         double sfac, ffac;
 	double f[3];
 	double u;
 	double drs[3], dr2; // site distance vector & length^2
+	string free ("free");
+	
 	// no LJ interaction between equal solid atoms
 	const unsigned int nt1 = mi.numTersoff();
 	if ((mi.componentid() != mj.componentid()) || !nt1) {
@@ -908,7 +944,10 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 				if (calculateLJ) {
                                         double invdr2 = 1. / dr2;
-					PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u);
+					if((mi.componentid() != mj.componentid()) || (free.compare(domain.getMovementStyle(mi.componentid()+1)) == 0 && free.compare(domain.getMovementStyle(mj.componentid()+1)) == 0))
+						PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u, domain.getSimstep());  // sfac = (d^2 u / dr^2), ffac = -du / r dr
+					else
+						PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u);  // sfac = (d^2 u / dr^2), ffac = -du / r dr	
 					u += shift6;
 					Upot6LJ += u;
 				}
