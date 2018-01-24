@@ -1238,73 +1238,14 @@ void Simulation::simulate() {
 
 	//        cout << "[" << nRank << "]: " << "ProcessIsRelevant() = " << _densityControl->ProcessIsRelevant() << endl;
 
-        unsigned long nNumMoleculesDeletedLocal = 0;
-        unsigned long nNumMoleculesDeletedGlobal = 0;
+		if( _densityControl != NULL  &&
+			_densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
+			_simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
+		{
+			_densityControl->preForce_action(this);
+		}
 
-        if( _densityControl != NULL  &&
-            _densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
-            _simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
-        {
-        	/*
-			// init MPI
-        	_densityControl->InitMPI();
-
-        	// only relevant processes should do the following
-            if( !_densityControl->ProcessIsRelevant() )
-            	break;
-        	 */
-
-            // init density control (reset local values)
-            _densityControl->ResetLocalValues(_simstep);
-
-    //            unsigned long nNumMoleculesLocal = 0;
-    //            unsigned long nNumMoleculesGlobal = 0;
-
-            _densityControl->postEventNewTimestepAction();  // reset selected molecule position
-
-            for( ParticleIterator tM = _moleculeContainer->iteratorBegin();
-                 tM != _moleculeContainer->iteratorEnd();
-                 ++tM )
-            {
-                // measure density
-                _densityControl->MeasureDensity(&(*tM), _simstep);
-
-    //                nNumMoleculesLocal++;
-            }
-
-            // calc global values
-            _densityControl->CalcGlobalValues(_simstep);
-            _densityControl->CreateDeletionLists();
-
-
-            bool bDeleteMolecule;
-
-            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-                 tM != _moleculeContainer->iteratorEnd();
-                 ++tM )
-            {
-                bDeleteMolecule = false;
-
-                // control density
-                _densityControl->ControlDensity(&(*tM), this, _simstep, bDeleteMolecule);
-
-
-                if(true == bDeleteMolecule)
-                {
-					unsigned long id = tM->id();
-					double x, y, z;
-					x = tM->r(0);
-					y = tM->r(1);
-					z = tM->r(2);
-					_moleculeContainer->deleteMolecule(*tM, false);
-                    nNumMoleculesDeletedLocal++;
-                }
-            }
-            // write out deleted molecules data
-            _densityControl->WriteDataDeletedMolecules(_simstep);
-//            _densityControl->postLoopAction();
-        }
-
+/*
         // update global number of particles
         _domainDecomposition->collCommInit(1);
         _domainDecomposition->collCommAppendUnsLong(nNumMoleculesDeletedLocal);
@@ -1313,7 +1254,7 @@ void Simulation::simulate() {
         _domainDecomposition->collCommFinalize();
 
         _domain->setglobalNumMolecules(_domain->getglobalNumMolecules() - nNumMoleculesDeletedGlobal);
-
+*/
 	    // <-- DENSITY_CONTROL
 
 		// mheinen 2015-03-16 --> DISTANCE_CONTROL

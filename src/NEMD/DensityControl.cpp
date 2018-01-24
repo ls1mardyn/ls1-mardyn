@@ -509,8 +509,9 @@ void dec::ControlRegion::CreateDeletionLists()
 	}
 }
 
-void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, bool& bDeleteMolecule)
+void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation)
 {
+	ParticleContainer* particleCont = simulation->getMolecules();
 //	// particle insertion
 //	{
 //		if(nullptr != _insertion)
@@ -587,7 +588,7 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 	}
 	// <-- CHANGE_IDENTITY
 
-
+	bool bDeleteMolecule;
     if( 0.0000001 > _compVars.at(0).density.target.global)
     {
         bDeleteMolecule = true;
@@ -603,7 +604,6 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 				if(did == mid)
 				{
 					bDeleteMolecule = true;
-					break;
 				}
 			}
 			if(true == bDeleteMolecule)
@@ -614,6 +614,7 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 	// sample deleted molecules data
 	if(true == bDeleteMolecule)
 	{
+		particleCont->deleteMolecule(*mol, false);
 		_nDeletedNumMoleculesLocal++;
 		_dDeletedEkinLocal[0] += mol->U_kin();
 		_dDeletedEkinLocal[1] += mol->U_trans();
@@ -842,8 +843,12 @@ DensityControl::DensityControl(DomainDecompBase* domainDecomp, Domain* domain)
 		_nStop(1000000000),
 		_nWriteFreqDeleted(1000),
 		_bProcessIsRelevant(true),
-		_flagsNEMD(0)
+		_flagsNEMD(0),
+		_preForceAction(nullptr),
+		_postForceAction(nullptr)
 {
+	_preForceAction = new PreForceAction(this);
+	_postForceAction = new PostForceAction(this);
 }
 
 DensityControl::DensityControl(DomainDecompBase* domainDecomp, Domain* domain,
@@ -990,7 +995,6 @@ void DensityControl::CalcGlobalValues(unsigned long simstep)
 
 	for(auto&& reg : _vecControlRegions)
 		reg->CalcGlobalValues();
-	}
 }
 
 void DensityControl::CreateDeletionLists()
@@ -999,13 +1003,13 @@ void DensityControl::CreateDeletionLists()
 		reg->CreateDeletionLists();
 }
 
-void DensityControl::ControlDensity(Molecule* mol, Simulation* simulation, unsigned long simstep, bool& bDeleteMolecule)
+void DensityControl::ControlDensity(Molecule* mol, Simulation* simulation)
 {
-    if(simstep % _nControlFreq != 0)
+    if(simulation->getSimulationStep() % _nControlFreq != 0)
         return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg->ControlDensity(mol, simulation, bDeleteMolecule);
+		reg->ControlDensity(mol, simulation);
 }
 
 void DensityControl::postLoopAction()
@@ -1062,9 +1066,88 @@ void DensityControl::WriteDataDeletedMolecules(unsigned long simstep)
 		reg->WriteDataDeletedMolecules(simstep);
 }
 
+void DensityControl::preForce_action(Simulation* simulation)
+{
+	_preForceAction->performAction(simulation);
+}
+void DensityControl::postForce_action(Simulation* simulation)
+{
+	_postForceAction->performAction(simulation);
+}
+
 // Connection to MettDeamon
 void DensityControl::ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamon)
 {
 	for(auto&& reg : _vecControlRegions)
 		reg->ConnectMettDeamon(mettDeamon);
+}
+
+// class MainLoopAction
+
+void MainLoopAction::performAction(Simulation* simulation)
+{
+	ParticleContainer* particleCont = simulation->getMolecules();
+	uint64_t simstep = simulation->getSimulationStep();
+	this->preFirstLoop(simstep);
+
+	ParticleIterator pit;
+	for( pit  = particleCont->iteratorBegin();
+			pit != particleCont->iteratorEnd();
+		 ++pit )
+	{
+		this->insideFirstLoop( &(*pit), simstep);
+	}
+
+	this->postFirstPreSecondLoop(simstep);
+
+	for( pit  = particleCont->iteratorBegin();
+			pit != particleCont->iteratorEnd();
+		 ++pit )
+	{
+		this->insideSecondLoop( &(*pit), simulation);
+	}
+
+	this->postSecondLoop(simstep);
+}
+
+// class PreForceAction : public MainLoopAction
+void PreForceAction::preFirstLoop(unsigned long simstep)
+{
+	_parent->ResetLocalValues(simstep);
+	_parent->postEventNewTimestepAction();
+}
+void PreForceAction::insideFirstLoop(Molecule* mol, unsigned long simstep)
+{
+	_parent->MeasureDensity(mol, simstep);
+}
+void PreForceAction::postFirstPreSecondLoop(unsigned long simstep)
+{
+	_parent->CalcGlobalValues(simstep);
+	_parent->CreateDeletionLists();
+}
+void PreForceAction::insideSecondLoop(Molecule* mol, Simulation* simulation)
+{
+	ParticleContainer* particleCont = simulation->getMolecules();
+	_parent->ControlDensity(mol, simulation);
+}
+void PreForceAction::postSecondLoop(unsigned long simstep)
+{
+	_parent->WriteDataDeletedMolecules(simstep);
+}
+
+// class PostForceAction : public MainLoopAction
+void PostForceAction::preFirstLoop(unsigned long simstep)
+{
+}
+void PostForceAction::insideFirstLoop(Molecule* mol, unsigned long simstep)
+{
+}
+void PostForceAction::postFirstPreSecondLoop(unsigned long simstep)
+{
+}
+void PostForceAction::insideSecondLoop(Molecule* mol, Simulation* simulation)
+{
+}
+void PostForceAction::postSecondLoop(unsigned long simstep)
+{
 }

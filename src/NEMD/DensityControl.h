@@ -73,7 +73,7 @@ public:
     void CalcGlobalValues();
     void CreateDeletionLists();
 
-    void ControlDensity(Molecule* mol, Simulation* simulation, bool& bDeleteMolecule);
+    void ControlDensity(Molecule* mol, Simulation* simulation);
     void postLoopAction();
     void postEventNewTimestepAction();
     void postUpdateForcesAction();
@@ -162,6 +162,7 @@ private:
 
 }
 
+class MainLoopAction;
 class DensityControl : public ControlInstance
 {
 public:
@@ -175,6 +176,9 @@ public:
     int GetNumRegions() {return _vecControlRegions.size();}
     dec::ControlRegion* GetControlRegion(unsigned short nRegionID) {return _vecControlRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
 
+	void preForce_action(Simulation* simulation);
+	void postForce_action(Simulation* simulation);
+
     void CheckRegionBounds();
     void Init(DomainDecompBase* domainDecomp);
     void InitMPI();
@@ -182,7 +186,7 @@ public:
     void MeasureDensity(Molecule* mol, unsigned long simstep);
     void CalcGlobalValues(unsigned long simstep);
     void CreateDeletionLists();
-    void ControlDensity(Molecule* mol, Simulation* simulation, unsigned long simstep, bool& bDeleteMolecule);
+    void ControlDensity(Molecule* mol, Simulation* simulation);
     void postLoopAction();
     void postEventNewTimestepAction();
     void postUpdateForcesAction();
@@ -214,7 +218,54 @@ private:
     bool _bProcessIsRelevant;
 
 	uint32_t _flagsNEMD;
+
+	// template methods
+	MainLoopAction* _preForceAction;
+	MainLoopAction* _postForceAction;
 };
 
+class MainLoopAction
+{
+protected:
+	MainLoopAction(DensityControl* parent) : _parent(parent) {}
+	virtual ~MainLoopAction() {}
+
+protected:
+	DensityControl* _parent;
+
+public:
+	void performAction(Simulation* simulation);
+	virtual void preFirstLoop(unsigned long simstep) = 0;
+	virtual void insideFirstLoop(Molecule* mol, unsigned long simstep) = 0;
+	virtual void postFirstPreSecondLoop(unsigned long simstep) = 0;
+	virtual void insideSecondLoop(Molecule* mol, Simulation* simulation) = 0;
+	virtual void postSecondLoop(unsigned long simstep) = 0;
+};
+
+class PreForceAction : public MainLoopAction
+{
+public:
+	PreForceAction(DensityControl* parent) : MainLoopAction(parent) {}
+	virtual ~PreForceAction() {}
+
+	virtual void preFirstLoop(unsigned long simstep);
+	virtual void insideFirstLoop(Molecule* mol, unsigned long simstep);
+	virtual void postFirstPreSecondLoop(unsigned long simstep);
+	virtual void insideSecondLoop(Molecule* mol, Simulation* simulation);
+	virtual void postSecondLoop(unsigned long simstep);
+};
+
+class PostForceAction : public MainLoopAction
+{
+public:
+	PostForceAction(DensityControl* parent) : MainLoopAction(parent) {}
+	virtual ~PostForceAction() {}
+
+	virtual void preFirstLoop(unsigned long simstep);
+	virtual void insideFirstLoop(Molecule* mol, unsigned long simstep);
+	virtual void postFirstPreSecondLoop(unsigned long simstep);
+	virtual void insideSecondLoop(Molecule* mol, Simulation* simulation);
+	virtual void postSecondLoop(unsigned long simstep);
+};
 
 #endif /* DENSITYCONTROL_H_ */
