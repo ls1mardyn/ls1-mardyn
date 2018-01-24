@@ -12,10 +12,14 @@
 #include "parallel/DomainDecompBase.h"
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
+#include "Common.h"
 
 #include <vector>
+#include <list>
 #include <string>
 #include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
@@ -31,6 +35,25 @@ class ParticleInsertion;
 namespace dec
 {
 
+struct compVars
+{
+	controlVar<double> density;
+	controlVar<int64_t> numMolecules;
+	uint32_t compID;
+	uint32_t proxyID;
+	ParticleInsertion* insertion;
+	std::list<uint64_t> particleIDs;
+	std::vector<uint64_t> deletionList;
+};
+
+enum ControlRegionStates : int32_t
+{
+	CRS_UNKNOWN = -1,
+	CRS_BALANCED = 0,
+	CRS_CHANGE_MOLECULES = 1,
+	CRS_INSERT_MOLECULES = 2,
+};
+
 class ControlRegion : public CuboidRegionObs
 {
 public:
@@ -40,40 +63,74 @@ public:
 
 	void readXML(XMLfileUnits& xmlconfig);
     void CheckBounds();
-    void Init();
+    void Init(DomainDecompBase* domainDecomp);
     void InitMPI();
     bool ProcessIsRelevant() {return _bProcessIsRelevant;}
 
-    double GetDensityGlobal() {return _dDensityGlobal;}
+    double GetDensityGlobal(uint8_t cid) {return _compVars.at(cid).density.actual.global;}
 
-    void CalcGlobalValues();
-    void UpdateGlobalDensity(bool bDeleteMolecule);
     void MeasureDensity(Molecule* mol);
+    void CalcGlobalValues();
+    void CreateDeletionLists();
 
     void ControlDensity(Molecule* mol, Simulation* simulation, bool& bDeleteMolecule);
     void postLoopAction();
+    void postEventNewTimestepAction();
+    void postUpdateForcesAction();
 
     void ResetLocalValues();
-    void UpdateVolume() {_dVolume = this->GetWidth(0) * this->GetWidth(1) * this->GetWidth(2); _dInvertVolume = 1./_dVolume;}
+    void UpdateVolume(DomainDecompBase* domainDecomp);
 
     void WriteHeaderDeletedMolecules();
     void WriteDataDeletedMolecules(unsigned long simstep);
 
 	// Connection to MettDeamon
 	void ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamon) {_mettDeamon = _bMettDeamonConnected ? mettDeamon.at(_nMettDeamonInstanceIndex) : NULL;}
+private:
+	void CheckState()
+	{
+		if(_compVars.at(0).numMolecules.actual.global < _compVars.at(0).numMolecules.target.global)
+			_nState = CRS_INSERT_MOLECULES;
+		else
+			_nState = CRS_BALANCED;
+		for(auto comp : _compVars)
+		{
+			if(comp.numMolecules.actual.global < comp.numMolecules.target.global)
+			{
+				_nState = CRS_CHANGE_MOLECULES;
+				break;
+			}
+		}
+	}
+	uint32_t NextInsertionID()
+	{
+		uint32_t cid = 0;
+		uint64_t max = 0;
+		for(auto comp : _compVars)
+		{
+			if(0 == comp.compID)
+				continue;
+
+			uint64_t diff = comp.numMolecules.target.global - comp.numMolecules.actual.global;
+			if(diff > max)
+			{
+				max = diff;
+				cid = comp.compID;
+			}
+		}
+		return cid;
+	}
+	bool InsertionAllIdle();
+
+	template<typename T1, typename T2>
+	void select_rnd_elements(std::list<T1>& mylist, std::vector<T1>& myvec, T2 numSelect);
 
 private:
 	// parameter
-	unsigned int _nTargetComponentID;
-	double _dTargetDensity;
+	std::vector<compVars> _compVars;
 
-    double _dVolume;
-    double _dInvertVolume;
-    unsigned long _nNumMoleculesLocal;
-    unsigned long _nNumMoleculesGlobal;
-
-    double _dDensityGlobal;
-
+	commVar<double> _dVolume;
+	commVar<double> _dInvertVolume;
 
     int* _ranks;
     bool _bProcessIsRelevant;
@@ -100,7 +157,7 @@ private:
 	// identity change (by component ID)
 	std::vector<uint32_t> _vecChangeCompIDs;
 
-	ParticleInsertion* _insertion;
+	int32_t _nState;
 };
 
 }
@@ -119,13 +176,16 @@ public:
     dec::ControlRegion* GetControlRegion(unsigned short nRegionID) {return _vecControlRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
 
     void CheckRegionBounds();
-    void Init(unsigned long simstep);
+    void Init(DomainDecompBase* domainDecomp);
     void InitMPI();
+    void ResetLocalValues(unsigned long simstep);
     void MeasureDensity(Molecule* mol, unsigned long simstep);
     void CalcGlobalValues(unsigned long simstep);
-    void UpdateGlobalDensities(unsigned long simstep, bool bDeleteMolecule );
+    void CreateDeletionLists();
     void ControlDensity(Molecule* mol, Simulation* simulation, unsigned long simstep, bool& bDeleteMolecule);
     void postLoopAction();
+    void postEventNewTimestepAction();
+    void postUpdateForcesAction();
 
     unsigned long GetControlFreq() {return _nControlFreq;}
     unsigned long GetStart() {return _nStart;}

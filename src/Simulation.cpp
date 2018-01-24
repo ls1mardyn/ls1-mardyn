@@ -1105,7 +1105,7 @@ void Simulation::prepare_start() {
 
     if(NULL != _densityControl)
     {
-    	_densityControl->Init(_densityControl->GetControlFreq() );
+    	_densityControl->Init(_domainDecomposition);
     	_densityControl->CheckRegionBounds();
 		_densityControl->SetFlagsNEMD(_flagsNEMD);
     }
@@ -1254,11 +1254,13 @@ void Simulation::simulate() {
             	break;
         	 */
 
-            // init density control
-            _densityControl->Init(_simstep);
+            // init density control (reset local values)
+            _densityControl->ResetLocalValues(_simstep);
 
     //            unsigned long nNumMoleculesLocal = 0;
     //            unsigned long nNumMoleculesGlobal = 0;
+
+            _densityControl->postEventNewTimestepAction();  // reset selected molecule position
 
             for( ParticleIterator tM = _moleculeContainer->iteratorBegin();
                  tM != _moleculeContainer->iteratorEnd();
@@ -1272,6 +1274,7 @@ void Simulation::simulate() {
 
             // calc global values
             _densityControl->CalcGlobalValues(_simstep);
+            _densityControl->CreateDeletionLists();
 
 
             bool bDeleteMolecule;
@@ -1299,7 +1302,7 @@ void Simulation::simulate() {
             }
             // write out deleted molecules data
             _densityControl->WriteDataDeletedMolecules(_simstep);
-            _densityControl->postLoopAction();
+//            _densityControl->postLoopAction();
         }
 
         // update global number of particles
@@ -1475,8 +1478,6 @@ void Simulation::simulate() {
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
 
-
-
 		if(_wall && _applyWallFun_LJ_9_3){
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
 		}
@@ -1548,6 +1549,14 @@ void Simulation::simulate() {
 
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
+
+		if( _densityControl != NULL  &&
+			_densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
+			_simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
+		{
+			_densityControl->postUpdateForcesAction();
+			_densityControl->postLoopAction();
+		}
 
 		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		if (_simstep >= _initGrandCanonical) {
