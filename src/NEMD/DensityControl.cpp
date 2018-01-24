@@ -960,14 +960,13 @@ void DensityControl::AddRegion(dec::ControlRegion* region)
     _vecControlRegions.push_back(region);
 
     // check / set process relevance
-    std::vector<dec::ControlRegion*>::iterator it;
     bool bProcessIsRelevant = false;
 
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        if ( true == (*it)->ProcessIsRelevant() )
-            bProcessIsRelevant = true;
-    }
+	for(auto&& reg : _vecControlRegions)
+	{
+		if ( true == reg->ProcessIsRelevant() )
+			bProcessIsRelevant = true;
+	}
 
     if(true == bProcessIsRelevant)
         _bProcessIsRelevant = true;
@@ -980,13 +979,8 @@ void DensityControl::MeasureDensity(Molecule* mol, unsigned long simstep)
     if(simstep % _nControlFreq != 0)
         return;
 
-    // measure drift in each control region
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->MeasureDensity(mol);
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->MeasureDensity(mol);
 }
 
 void DensityControl::CalcGlobalValues(unsigned long simstep)
@@ -994,24 +988,15 @@ void DensityControl::CalcGlobalValues(unsigned long simstep)
     if(simstep % _nControlFreq != 0)
         return;
 
-    // calc global values for control region
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->CalcGlobalValues();
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->CalcGlobalValues();
+	}
 }
 
 void DensityControl::CreateDeletionLists()
 {
-    // calc global values for control region
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->CreateDeletionLists();
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->CreateDeletionLists();
 }
 
 void DensityControl::ControlDensity(Molecule* mol, Simulation* simulation, unsigned long simstep, bool& bDeleteMolecule)
@@ -1019,57 +1004,38 @@ void DensityControl::ControlDensity(Molecule* mol, Simulation* simulation, unsig
     if(simstep % _nControlFreq != 0)
         return;
 
-    // control drift of all regions
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->ControlDensity(mol, simulation, bDeleteMolecule);
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->ControlDensity(mol, simulation, bDeleteMolecule);
 }
 
 void DensityControl::postLoopAction()
 {
 	for(auto&& reg : _vecControlRegions)
-	{
 		reg->postLoopAction();
-	}
 }
 
 void DensityControl::postEventNewTimestepAction()
 {
 	for(auto&& reg : _vecControlRegions)
-	{
 		reg->postEventNewTimestepAction();
-	}
 }
 
 void DensityControl::postUpdateForcesAction()
 {
 	for(auto&& reg : _vecControlRegions)
-	{
 		reg->postUpdateForcesAction();
-	}
 }
 
 void DensityControl::CheckRegionBounds()
 {
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->CheckBounds();
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->CheckBounds();
 }
 
 void DensityControl::Init(DomainDecompBase* domainDecomp)
 {
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->Init(domainDecomp);
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->Init(domainDecomp);
 }
 
 void DensityControl::ResetLocalValues(unsigned long simstep)
@@ -1077,24 +1043,14 @@ void DensityControl::ResetLocalValues(unsigned long simstep)
     if(simstep % _nControlFreq != 0)
         return;
 
-    // reset local values
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->ResetLocalValues();
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->ResetLocalValues();
 }
 
 void DensityControl::InitMPI()
 {
-    // reset local values
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->InitMPI();
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->InitMPI();
 }
 
 void DensityControl::WriteDataDeletedMolecules(unsigned long simstep)
@@ -1102,17 +1058,13 @@ void DensityControl::WriteDataDeletedMolecules(unsigned long simstep)
     if(simstep % _nWriteFreqDeleted != 0)
         return;
 
-    std::vector<dec::ControlRegion*>::iterator it;
-
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->WriteDataDeletedMolecules(simstep);
-    }
+	for(auto&& reg : _vecControlRegions)
+		reg->WriteDataDeletedMolecules(simstep);
 }
 
 // Connection to MettDeamon
 void DensityControl::ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamon)
 {
-	for(auto&& ri : _vecControlRegions)
-		ri->ConnectMettDeamon(mettDeamon);
+	for(auto&& reg : _vecControlRegions)
+		reg->ConnectMettDeamon(mettDeamon);
 }
