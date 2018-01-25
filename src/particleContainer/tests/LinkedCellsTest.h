@@ -25,9 +25,9 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testParticleIteratorBeginNextEndParticleIteratorSequential);
 	TEST_METHOD(testTraversalMethods);
 #ifndef ENABLE_REDUCED_MEMORY_MODE
-//	TEST_METHOD(testHalfShellMPIDirect);
+	TEST_METHOD(testHalfShellMPIDirect);
 	TEST_METHOD(testHalfShellMPIIndirect);
-//	TEST_METHOD(testMidpointMPIDirect);
+	TEST_METHOD(testMidpointMPIDirect);
 	TEST_METHOD(testMidpointMPIIndirect);
 #else
 #pragma message "half and midpoint tests disabled for RMM"

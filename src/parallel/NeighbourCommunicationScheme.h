@@ -138,6 +138,10 @@ protected:
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp);
 	void initExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* /*domain*/, MessageType msgType,
 			bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp);
+
+private:
+	void doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions, MessageType msgType,
+			DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer);
 };
 
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {

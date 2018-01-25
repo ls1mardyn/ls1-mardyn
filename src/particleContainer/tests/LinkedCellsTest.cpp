@@ -449,7 +449,7 @@ void LinkedCellsTest::testHalfShellMPIIndirect() {
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
-	doForceComparisonTest("simple-lj-tiny2.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
 }
 
 void LinkedCellsTest::testMidpointMPIIndirect() {
@@ -459,7 +459,7 @@ void LinkedCellsTest::testMidpointMPIIndirect() {
 
 void LinkedCellsTest::testMidpointMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
-	doForceComparisonTest("simple-lj-tiny2.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
 }
 
 void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
@@ -481,7 +481,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	auto domainDecompositionTest = new DomainDecompBase();
 #endif
 	auto filename = inputFile.c_str();
-	auto cutoff = 3;
+	auto cutoff = 3.5;
 
 	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
@@ -573,7 +573,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 #ifdef MARDYN_SPSP
 			double delta=1e-6;
 #else
-			double delta=1e-10;
+			double delta=1e-9;
 #endif
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(0), j->F(0), fabs(delta * i->F(0)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Forces differ", i->F(1), j->F(1), fabs(delta * i->F(1)));

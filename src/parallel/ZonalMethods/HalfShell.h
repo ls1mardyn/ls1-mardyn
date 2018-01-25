@@ -20,8 +20,10 @@
  */
 class HalfShell: public ZonalMethod {
 public:
-	HalfShell(){}
-	virtual ~HalfShell(){}
+	HalfShell() {
+	}
+	virtual ~HalfShell() {
+	}
 
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
 			bool coversWholeDomain[3]) override {
@@ -30,6 +32,15 @@ public:
 			return pseudoCellIndex > 0;
 		};
 		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
+	}
+
+	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
+			bool coversWholeDomain[3]) override {
+		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
+			int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[2];
+			return pseudoCellIndex < 0;
+		};
+		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}
 };
 

@@ -12,6 +12,7 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h" // is this used?
 #include "io/MemoryProfiler.h"
+#include "HaloRegion.h"
 
 class Component;
 class Domain;
@@ -278,24 +279,43 @@ public:
 	}
 
 protected:
-
+	/**
+	 * Handles the sequential version of particles leaving the domain.
+	 * Also used as a fall-back for the MPI variant if a process spans an entire dimension.
+	 * @param dim
+	 * @param moleculeContainer
+	 */
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
+
+	/**
+	 * Handles the sequential version of particles leaving the domain in a direct communication pattern.
+	 * Hereby all particles will be moved directly to the specific region without intermediary copies.
+	 * x, y and z closely resemble the offset of the current region.
+	 * @param x -1, 0 or 1
+	 * @param y -1, 0 or 1
+	 * @param z -1, 0 or 1
+	 * @param moleculeContainer
+	 */
+	void handleDomainLeavingParticlesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const;
+
 
 	/**
 	 * @brief Does the force exchange for each dimension. Will be called for dim=0, 1 and 2.
 	 * @param dim The dimension (0,1 or 2)
 	 * @param moleculeContainer The particle container
 	 */
-	virtual void handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const;
+	void handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const;
 
-//	/**
-//	 * @brief Does the force exchange for each dimension. Will be called for dim=0, 1 and 2.
-//	 * @param dim The dimension (0,1 or 2)
-//	 * @param moleculeContainer The particle container
-//	 */
-//	virtual void handleForceExchangeDirect(unsigned dim, ParticleContainer* moleculeContainer) const;
+	/**
+	 * Does the force exchange for each direction.
+	 * @param haloRegion
+	 * @param moleculeContainer
+	 */
+	virtual void handleForceExchangeDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const;
 
 	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
+
+	void populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const;
 
 	//! the id of the current process
 	int _rank;

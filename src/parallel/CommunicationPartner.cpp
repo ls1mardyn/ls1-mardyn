@@ -284,6 +284,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for (unsigned long i = 0; i < numHalo; ++i) {
 					Molecule m;
 					_recvBuf.readHaloMolecule(i, m);
+					buf2 << m.id() << " ";
 				}
 				global_log->debug() << buf2.str() << std::endl;
 #endif
