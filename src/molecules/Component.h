@@ -133,6 +133,30 @@ public:
 		_lookUpID = lookUpId;
 	}
 
+	double getOuterMoleculeRadiusLJ() const
+	{
+		double rx = _ljcenters.begin()->rx();
+		double ry = _ljcenters.begin()->ry();
+		double rz = _ljcenters.begin()->rz();
+		double r2 = rx*rx + ry*ry +rz*rz;
+		double r2_max = r2;
+		double sigma = _ljcenters.begin()->sigma();
+
+		for(auto si:_ljcenters)
+		{
+			rx = si.rx();
+			ry = si.ry();
+			rz = si.rz();
+			r2 = rx*rx + ry*ry +rz*rz;
+			if(r2 > r2_max)
+			{
+				r2_max = r2;
+				sigma = si.sigma();
+			}
+		}
+		return sqrt(r2_max) + 0.5*sigma;
+	}
+
 private:
 
 	void updateMassInertia(Site& site);
