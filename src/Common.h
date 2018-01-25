@@ -47,21 +47,4 @@ void calculateDistances( float * __restrict__ valuesA[3], float* __restrict__ co
 /*void calculateDistances( double valuesA[], double const valuesB[], int numValuesA, int numValuesB,
 		double * __restrict__ distances, double * __restrict__ distanceVectors ); */
 
-template<typename T>
-class commVar
-{
-public:
-	T local;
-	T global;
-};
-
-template<typename T>
-class controlVar
-{
-public:
-	commVar<T> target;
-	commVar<T> actual;
-	commVar<T> spread;
-};
-
 #endif /*COMMON_H_*/

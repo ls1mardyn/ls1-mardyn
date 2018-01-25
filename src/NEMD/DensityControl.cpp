@@ -437,7 +437,7 @@ void dec::ControlRegion::CreateDeletionLists()
 {
 	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
 	uint8_t numComps = _compVars.size();
-	commVar<uint64_t> numDel[numComps];
+	CommVar<uint64_t> numDel[numComps];
 	if(_compVars.at(0).numMolecules.spread.global > 0)
 		numDel[0].global = _compVars.at(0).numMolecules.spread.global;
 	else
@@ -446,14 +446,14 @@ void dec::ControlRegion::CreateDeletionLists()
 			comp.deletionList.clear();
 		return;
 	}
-	commVar<int64_t> positiveSpread[numComps];
-	commVar<int64_t> positiveSpreadSumOverComp;
+	CommVar<int64_t> positiveSpread[numComps];
+	CommVar<int64_t> positiveSpreadSumOverComp;
 	positiveSpreadSumOverComp.local  = 0;
 	positiveSpreadSumOverComp.global = 0;
 
 	for(uint8_t cid=1; cid<numComps; ++cid)
 	{
-		commVar<int64_t> spread;
+		CommVar<int64_t> spread;
 		// sum over components
 		spread.global = _compVars.at(cid).numMolecules.spread.global;
 		if(spread.global > 0)
@@ -472,13 +472,13 @@ void dec::ControlRegion::CreateDeletionLists()
 	#endif
 	}
 
-	commVar<double> dInvPositiveSpread[numComps];
-	commVar<double> dInvPositiveSpreadSumOverComp;
+	CommVar<double> dInvPositiveSpread[numComps];
+	CommVar<double> dInvPositiveSpreadSumOverComp;
 	dInvPositiveSpreadSumOverComp.global = 1./( (double) (positiveSpreadSumOverComp.global) );
 
 	for(uint8_t cid=1; cid<numComps; ++cid)
 	{
-		commVar<int64_t> spread;
+		CommVar<int64_t> spread;
 		// global
 		spread.global = _compVars.at(cid).numMolecules.spread.global;
 		if(spread.global > 0)

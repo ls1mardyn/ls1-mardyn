@@ -12,7 +12,8 @@
 #include "parallel/DomainDecompBase.h"
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
-#include "Common.h"
+#include "utils/CommVar.h"
+#include "utils/CtrlVar.h"
 
 #include <vector>
 #include <list>
@@ -37,8 +38,8 @@ namespace dec
 
 struct compVars
 {
-	controlVar<double> density;
-	controlVar<int64_t> numMolecules;
+	CtrlVar<CommVar<double> > density;
+	CtrlVar<CommVar<int64_t> > numMolecules;
 	uint32_t compID;
 	uint32_t proxyID;
 	ParticleInsertion* insertion;
@@ -129,8 +130,8 @@ private:
 	// parameter
 	std::vector<compVars> _compVars;
 
-	commVar<double> _dVolume;
-	commVar<double> _dInvertVolume;
+	CommVar<double> _dVolume;
+	CommVar<double> _dInvertVolume;
 
     int* _ranks;
     bool _bProcessIsRelevant;
