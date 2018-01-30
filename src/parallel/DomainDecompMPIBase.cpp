@@ -255,7 +255,7 @@ void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, D
 	global_log->set_mpi_output_root(0);
 }
 
-size_t DomainDecompMPIBase::getTotalSize() { // another new method
+size_t DomainDecompMPIBase::getTotalSize() { 
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
 			+ _collCommunication->getTotalSize();
 }

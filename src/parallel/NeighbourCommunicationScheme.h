@@ -87,6 +87,13 @@ protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
 	std::vector<std::vector<CommunicationPartner>> _neighbours;
+	
+	// -------------------------------------------------------------------------
+	std::vector<std::vector<CommunicationPartner>> _haloOrForceNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _leavingNeighbours;
+	
+	void selectNeighbours(MessageType msgType);
+	// -------------------------------------------------------------------------
 
 	//! flag, which tells whether a processor covers the whole domain along a dimension
 	//! if true, we will use the methods provided by the base class for handling the
@@ -142,6 +149,10 @@ protected:
 private:
 	void doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions, MessageType msgType,
 			DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer);
+	
+	void aquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners);
+	void shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray);
+	bool iOwnThis(HaloRegion *myRegion, HaloRegion *inQuestion);
 };
 
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
