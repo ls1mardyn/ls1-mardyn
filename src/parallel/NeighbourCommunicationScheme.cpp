@@ -295,8 +295,11 @@ void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloR
 }
 
 bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegion* inQuestion) {
-	return myRegion->rmax[0] >= inQuestion->rmax[0] && myRegion->rmax[1] >= inQuestion->rmax[1] && myRegion->rmax[2] >= inQuestion->rmax[2] &&
-		myRegion->rmin[0] <= inQuestion->rmin[0] && myRegion->rmin[1] <= inQuestion->rmin[1] && myRegion->rmin[2] <= inQuestion->rmin[2];
+	return myRegion->rmax[0] > inQuestion->rmin[0] && myRegion->rmax[1] > inQuestion->rmin[1]
+			&& myRegion->rmax[2] > inQuestion->rmin[2] && myRegion->rmin[0] <= inQuestion->rmax[0]
+			&& myRegion->rmin[1] <= inQuestion->rmax[1] && myRegion->rmin[2] <= inQuestion->rmax[2];
+	// myRegion->rmax > inQuestion->rmin
+	// && myRegion->rmin <= inQuestion->rmax
 }
 
 /*
@@ -317,13 +320,16 @@ bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegi
 void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners) {
 	int my_rank; // my rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	int num_incoming; // the number of processes in MPI_COMM_WORLD
+	MPI_Comm_size(MPI_COMM_WORLD, &num_incoming);
 	
 	int num_regions = desiredRegions.size(); // the number of regions I would like to aquire from other processes
 	
 	// tell the other processes how much you are going to send
 	int num_bytes_send =  sizeof(int) * 2 + (sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) * 1) * num_regions; // how many bytes am I going to send to all the other processes?
-	int num_bytes_receive; // number of bytes I am going to receive
-	MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	std::vector<int> num_bytes_receive_vec(num_incoming, 0); // vector of number of bytes I am going to receive
+	//MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, MPI_COMM_WORLD);
 	
 	// create byte buffer
 	unsigned char outgoing[num_bytes_send]; // outgoing byte buffer
@@ -347,14 +353,19 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		i += sizeof(double);
 	}
 	
+	int num_bytes_receive=0;
+	std::vector<int> num_bytes_displacements(num_incoming, 0); // vector of number of bytes I am going to receive
+	for (int j = 0; j < num_incoming; j++) {
+		num_bytes_displacements[j] = num_bytes_receive;
+		num_bytes_receive += num_bytes_receive_vec[j];
+	}
 	
+	//TODO: use vectors!
 	unsigned char incoming[num_bytes_receive]; // the incoming byte buffer
 	
 	// send your regions
-	MPI_Allgather(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive, MPI_BYTE, MPI_COMM_WORLD); 
-	
-	int num_incoming; // the number of processes in MPI_COMM_WORLD
-	MPI_Comm_size(MPI_COMM_WORLD, &num_incoming);
+	//MPI_Allgather(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive, MPI_BYTE, MPI_COMM_WORLD);
+	MPI_Allgatherv(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
 	
 	std::vector<std::vector<HaloRegion>> process_regions (num_incoming); // each process has a vector of regions it desires
 	
@@ -407,18 +418,24 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	
 	// interpret the buffer
+	// TODO: use vectors + initialize to zero
 	int candidates[num_incoming]; // outgoing row
 	int rec_information[num_incoming]; // incoming column
 	// msg format one region: rmin | rmax | offset | width | shift
 	int bytesOneRegion = sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
 	std::vector<std::vector <unsigned char *>> sendingList (num_incoming); // each process gets a list of pointers - each pointer points to a region - FREE THIS LATER
-	for(int j = 0; j < process_regions.size(); j++) { // j processes
-		for(int k = 0; k < process_regions[j].size(); k++) { // k regions process j wants
+	for(unsigned int j = 0; j < process_regions.size(); j++) { // j processes
+		for(unsigned int k = 0; k < process_regions[j].size(); k++) { // k regions process j wants
+			// TODO: tu das nach oben ;)
+			// TODO: an shift denken ;)
 			if(iOwnThis(myRegion, &(process_regions[j][k]))) {
 				candidates[j]++; // this is a region I will send to j
 				double shift[3] = {0}; // calculate the shift vector for this region
 				unsigned char singleRegion[bytesOneRegion];
 				
+
+				// TODO: berechne hier den overlapp von myregion und process_region
+
 				i = 0;
 				memcpy(singleRegion + i, process_regions[j][k].rmin, sizeof(double) * 3);
 				i += sizeof(double) * 3;
@@ -467,7 +484,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j] > 0) {
 			MPI_Isend(merged[j], candidates[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD, &request); // tag is one
-			MPI_Request_free(&request); // I really hope this does not mess things up - not sure about requests
+			//MPI_Request_free(&request); // I really hope this does not mess things up - not sure about requests
 		}
 	}
 	
@@ -506,10 +523,11 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				double bLo[3];
 				double bHi[3];
 				bool enlarged[3][2];
+				//TODO: enlarged auf false
 				
 				// Adapt for constructor signature
 				// CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
-				CommunicationPartner myNewNeighbour(j, region.rmin, region.rmax, bLo, bHi, shift, region.offset, enlarged); // DO NOT KNOW ABOUT THE 0s
+				CommunicationPartner myNewNeighbour(j, region.rmin, region.rmax, region.rmin, region.rmax, shift, region.offset, enlarged); // DO NOT KNOW ABOUT THE 0s
 				comm_partners.push_back(myNewNeighbour);
 			}
 		}
@@ -545,7 +563,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 
 #if PUSH_PULL_PARTNERS
 	// halo/force regions
-	std::vector<HaloRegion> haloOrForceRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
+	std::vector<HaloRegion> haloOrForceRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<HaloRegion> leavingRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	
 	
