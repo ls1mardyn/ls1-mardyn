@@ -1495,8 +1495,9 @@ void Simulation::simulate() {
 			_densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
 			_simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
 		{
-			_densityControl->postUpdateForcesAction();
-			_densityControl->postLoopAction();
+//			_densityControl->postUpdateForcesAction();
+//			_densityControl->postLoopAction();
+			_densityControl->postForce_action(this);
 		}
 
 		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */

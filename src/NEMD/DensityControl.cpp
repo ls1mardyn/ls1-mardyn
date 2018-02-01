@@ -48,7 +48,8 @@ unsigned short dec::ControlRegion::_nStaticID = 0;
 
 dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3] )
 	:
-	CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+	CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
+	_director(nullptr)
 {
 	// ID
 	_nID = ++_nStaticID;
@@ -90,8 +91,10 @@ dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3]
 		_compVars.at(cid).numMolecules.actual.global = 0;
 		_compVars.at(cid).numMolecules.target.local = 0;
 		_compVars.at(cid).numMolecules.target.global = 0;
-		_compVars.at(cid).insertion = nullptr;
 	}
+
+	// particle manipulation director
+	_director = new ParticleManipDirector(this);
 }
 
 dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3],
@@ -181,6 +184,7 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 			if(-1 == proxyID)
 				_compVars.at(cid).proxyID = proxyID;
 
+			/*
 			// particle insertion
 			std::string strType = "unknown";
 			xmlconfig.getNodeValue("insertion@type", strType);
@@ -193,6 +197,7 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 				_compVars.at(cid).insertion->readXML(xmlconfig);
 				xmlconfig.changecurrentnode(oldpath);
 			}
+			*/
 		}
 		xmlconfig.changecurrentnode(oldpath);
 		xmlconfig.changecurrentnode("..");
@@ -223,6 +228,9 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.changecurrentnode(oldpath);
 		xmlconfig.changecurrentnode("..");
 	}
+
+	// init director
+	_director->readXML(xmlconfig);
 }
 
 void dec::ControlRegion::CheckBounds()
@@ -249,8 +257,8 @@ void dec::ControlRegion::Init(DomainDecompBase* domainDecomp)
 
 	for(auto&& comp : _compVars)
 	{
-		comp.numMolecules.target.local  = comp.density.target.local  * _dVolume.local;
-		comp.numMolecules.target.global = comp.density.target.global * _dVolume.global;
+		comp.numMolecules.target.local  = (int64_t)(comp.density.target.local  * _dVolume.local);
+		comp.numMolecules.target.global = (int64_t)(comp.density.target.global * _dVolume.global);
 	}
 }
 
@@ -355,7 +363,7 @@ void dec::ControlRegion::InitMPI()
     }
 }
 
-void dec::ControlRegion::MeasureDensity(Molecule* mol)
+void dec::ControlRegion::MeasureDensity(Simulation* simulation, Molecule* mol)
 {
 	// In vacuum evaporation simulation global density of control region has not to be calculated
 	if( 0. == _compVars.at(0).density.target.global)
@@ -380,7 +388,7 @@ void dec::ControlRegion::MeasureDensity(Molecule* mol)
 	_compVars.at(cid).particleIDs.push_back(mid);
 }
 
-void dec::ControlRegion::CalcGlobalValues()
+void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 {
 	// In vacuum evaporation simulation global density of control region has not to be calculated
 	if( 0. == _compVars.at(0).density.target.global)
@@ -392,7 +400,7 @@ void dec::ControlRegion::CalcGlobalValues()
 
 	for(auto&& comp : _compVars)
 	{
-		MPI_Allreduce( &comp.numMolecules.actual.local, &comp.numMolecules.actual.global, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD); // _newcomm);
+		MPI_Allreduce( &comp.numMolecules.actual.local, &comp.numMolecules.actual.global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD); // _newcomm);
 		comp.density.actual.global = comp.numMolecules.actual.global * _dInvertVolume.global;
 		comp.density.actual.local  = comp.numMolecules.actual.local  * _dInvertVolume.local;
 	}
@@ -419,6 +427,7 @@ void dec::ControlRegion::CalcGlobalValues()
 //		_mettDeamon->StoreValuesCV(_dTargetDensity, this->GetVolume() );  // TODO: move this, so its called only once
 	}
 
+	/*
 	// particle insertion
 	if(_nState == CRS_INSERT_MOLECULES)
 	{
@@ -431,85 +440,19 @@ void dec::ControlRegion::CalcGlobalValues()
 			insertion->preLoopAction();
 		}
 	}
+	*/
+
+	// inform director
+	for(auto&& comp : _compVars)
+	{
+		cout << "actual: " << comp.numMolecules.actual.global << ", ";
+		cout << "target: " << comp.numMolecules.target.global << ", ";
+		cout << "spread: " << comp.numMolecules.spread.global << endl;
+	}
+	_director->globalValuesCalculated(simulation);
 }
 
-void dec::ControlRegion::CreateDeletionLists()
-{
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
-	uint8_t numComps = _compVars.size();
-	CommVar<uint64_t> numDel[numComps];
-	if(_compVars.at(0).numMolecules.spread.global > 0)
-		numDel[0].global = _compVars.at(0).numMolecules.spread.global;
-	else
-	{
-		for(auto&& comp:_compVars)
-			comp.deletionList.clear();
-		return;
-	}
-	CommVar<int64_t> positiveSpread[numComps];
-	CommVar<int64_t> positiveSpreadSumOverComp;
-	positiveSpreadSumOverComp.local  = 0;
-	positiveSpreadSumOverComp.global = 0;
-
-	for(uint8_t cid=1; cid<numComps; ++cid)
-	{
-		CommVar<int64_t> spread;
-		// sum over components
-		spread.global = _compVars.at(cid).numMolecules.spread.global;
-		if(spread.global > 0)
-			positiveSpreadSumOverComp.global += spread.global;
-		// sum over processes
-		spread.local = _compVars.at(cid).numMolecules.spread.local;
-		if(spread.local > 0)
-			positiveSpread[cid].local = spread.local;
-		else
-			positiveSpread[cid].local = 0;
-
-	#ifdef ENABLE_MPI
-		MPI_Allreduce( &positiveSpread[cid].local, &positiveSpread[cid].global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
-	#else
-		positiveSpread[cid].global = positiveSpread[cid].local;
-	#endif
-	}
-
-	CommVar<double> dInvPositiveSpread[numComps];
-	CommVar<double> dInvPositiveSpreadSumOverComp;
-	dInvPositiveSpreadSumOverComp.global = 1./( (double) (positiveSpreadSumOverComp.global) );
-
-	for(uint8_t cid=1; cid<numComps; ++cid)
-	{
-		CommVar<int64_t> spread;
-		// global
-		spread.global = _compVars.at(cid).numMolecules.spread.global;
-		if(spread.global > 0)
-			numDel[cid].global = round(spread.global * dInvPositiveSpreadSumOverComp.global * numDel[0].global);
-		else
-			numDel[cid].global = 0;
-		// local
-		dInvPositiveSpread[cid].global = 1./( (double) (positiveSpread[cid].global) );
-		spread.local = _compVars.at(cid).numMolecules.spread.local;
-		cout << "Rank[" << domainDecomp.getRank() << "]: spread.local["<<(uint32_t)(cid)<<"] = " << spread.local << endl;
-		if(spread.local > 0)
-		{
-			cout << "Rank[" << domainDecomp.getRank() << "]: numDel["<<(uint32_t)(cid)<<"].local = " << numDel[cid].local << endl;
-			numDel[cid].local = round(spread.local * dInvPositiveSpread[cid].global * numDel[cid].global);
-			this->select_rnd_elements(_compVars.at(cid).particleIDs, _compVars.at(cid).deletionList, numDel[cid].local);
-		}
-		else
-			numDel[cid].local = 0;
-
-		//DEBUG
-		cout << "Rank[" << domainDecomp.getRank() << "]_compVars.at("<<(uint32_t)(cid)<<").deletionList:";
-		for(auto mid:_compVars.at(cid).deletionList)
-		{
-			cout << " " << mid;
-		}
-		cout << endl;
-		//DEBUG
-	}
-}
-
-void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation)
+void dec::ControlRegion::ManipulateParticles(Simulation* simulation, Molecule* mol)
 {
 	ParticleContainer* particleCont = simulation->getMolecules();
 //	// particle insertion
@@ -525,68 +468,15 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation)
 		return;
 	*/
 
+	_director->ManipulateParticles(simulation, mol);
+	return;
+
 //    int nRank = domainDecomp->getRank();
 //    double dPosY = mol->r(1);
 
 	// check if molecule is inside
 	for(uint8_t d=0; d<3; ++d)
 		if( !(PositionIsInside(d, mol->r(d) ) ) ) return;
-
-	// --> CHANGE_IDENTITY
-	if(cid != _vecChangeCompIDs.at(cid))
-	{
-		std::vector<Component>* ptrComps = simulation->getEnsemble()->getComponents();
-		Component* compOld = mol->component();
-		Component* compNew = &(ptrComps->at(_vecChangeCompIDs.at(cid) ) );
-
-		uint8_t numRotDOF_old = compOld->getRotationalDegreesOfFreedom();
-		uint8_t numRotDOF_new = compNew->getRotationalDegreesOfFreedom();
-		double dUkinOld = mol->U_kin();
-		double dUkinPerDOF = dUkinOld / (3 + numRotDOF_old);
-
-		// rotation
-		double U_rot = mol->U_rot();
-		global_log->info() << "U_rot_old = " << U_rot << endl;
-
-		double L[3];
-		double Ipa[3];
-
-		Ipa[0] = compNew->I11();
-		Ipa[1] = compNew->I22();
-		Ipa[2] = compNew->I33();
-
-		for(uint8_t dim=0; dim<3; ++dim)
-		{
-			L[dim] = sqrt(dUkinPerDOF * 2. * Ipa[dim] );
-			mol->setD(dim, L[dim] );
-		}
-
-#ifndef NDEBUG
-		cout << "L[0] = " << L[0] << endl;
-		cout << "L[1] = " << L[1] << endl;
-		cout << "L[2] = " << L[2] << endl;
-#endif
-		Quaternion q(1., 0., 0., 0.);
-		mol->setq(q);
-
-		mol->setComponent(compNew);
-//		mol->clearFM();  // <-- necessary?
-#ifndef NDEBUG
-		cout << "Changed cid of molecule " << mol->id() << " from: " << (int32_t)cid << " to: " << mol->componentid() << endl;
-#endif
-
-		// update transl. kin. energy
-		double dScaleFactorTrans = sqrt(6*dUkinPerDOF/compNew->m()/mol->v2() );
-		mol->scale_v(dScaleFactorTrans);
-
-		U_rot = mol->U_rot();
-		global_log->info() << "U_rot_new = " << U_rot << endl;
-
-		//connection to MettDeamon
-		if(NULL != _mettDeamon)
-			_mettDeamon->IncrementChangedMoleculesLocal();
-	}
-	// <-- CHANGE_IDENTITY
 
 	bool bDeleteMolecule;
     if( 0.0000001 > _compVars.at(0).density.target.global)
@@ -599,15 +489,15 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation)
 		bDeleteMolecule = false;
 		for(auto comp:_compVars)
 		{
-			for(auto did:comp.deletionList)
-			{
-				if(did == mid)
-				{
-					bDeleteMolecule = true;
-				}
-			}
-			if(true == bDeleteMolecule)
-				break;
+//			for(auto did:comp.deletionList)
+//			{
+//				if(did == mid)
+//				{
+//					bDeleteMolecule = true;
+//				}
+//			}
+//			if(true == bDeleteMolecule)
+//				break;
 		}
 	}
 
@@ -633,43 +523,25 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation)
 	}
 }
 
-void dec::ControlRegion::postLoopAction()
+void dec::ControlRegion::ManipulateParticleForces(Simulation* simulation, Molecule* mol)
 {
-	for(auto comp:_compVars)
-	{
-		if(comp.insertion == nullptr)
-			return;
-		comp.insertion->postLoopAction();
-	}
+	_director->ManipulateParticleForces(simulation, mol);
 }
 
-void dec::ControlRegion::postEventNewTimestepAction()
+void dec::ControlRegion::FinalizeParticleManipulation(Simulation* simulation, MainLoopAction* action)
 {
-	for(auto comp:_compVars)
-	{
-		if(comp.insertion == nullptr)
-			return;
-		comp.insertion->postEventNewTimestepAction();
-	}
+	_director->FinalizeParticleManipulation(simulation, action);
 }
 
-void dec::ControlRegion::postUpdateForcesAction()
-{
-	for(auto comp:_compVars)
-	{
-		if(comp.insertion == nullptr)
-			return;
-		comp.insertion->postUpdateForcesAction();
-	}
-}
-
-void dec::ControlRegion::ResetLocalValues()
+void dec::ControlRegion::ResetLocalValues(Simulation* simulation)
 {
 	for(auto&& comp : _compVars)
 	{
 		comp.numMolecules.actual.local = 0;
 		comp.particleIDs.clear();
 	}
+	// inform director
+	_director->localValuesReseted(simulation);
 }
 
 void dec::ControlRegion::UpdateVolume(DomainDecompBase* domainDecomp)
@@ -794,45 +666,85 @@ void dec::ControlRegion::WriteDataDeletedMolecules(unsigned long simstep)
     fileout.close();
 }
 
-bool dec::ControlRegion::InsertionAllIdle()
+// getters
+uint32_t dec::ControlRegion::getGlobalMinNumMoleculesSpreadCompID()
 {
-	bool bRet = true;
-	for(auto comp : _compVars)
-		bRet = bRet && comp.insertion->getState() == BMS_IDLE;
-	return bRet;
-}
-
-template<typename T1, typename T2>
-void dec::ControlRegion::select_rnd_elements(std::list<T1>& mylist, std::vector<T1>& myvec, T2 numSelect)
-{
-	myvec.clear();
-	if(numSelect < 1)
-		return;
-	uint64_t numElements = mylist.size();
-	uint64_t numElementsSub = numElements / numSelect;
-	T2 numResidual = numElements % numSelect;
-
-	std::vector<std::vector<T1> > mat;
-	mat.resize(numSelect);
-	for(T2 ci=0; ci<numSelect; ++ci)
+	uint32_t cidMinSpread = 0;
+	int64_t spreadMin = 0;
+	for(auto comp:_compVars)
 	{
-		if(ci<numResidual)
-			mat.at(ci).resize(numElementsSub+1);
-		else
-			mat.at(ci).resize(numElementsSub);
-
-		for(auto&& eli : mat.at(ci))
+		if(0 == comp.compID)
+			continue;
+		int64_t spread = comp.numMolecules.spread.global;
+		if(spread < spreadMin)
 		{
-			eli = mylist.front();
-			mylist.pop_front();
+			spreadMin = spread;
+			cidMinSpread = comp.compID;
 		}
-
-		std::srand(std::time(nullptr));
-		int rnd = rand()%numElementsSub;
-		myvec.push_back(mat.at(ci).at(rnd) );
 	}
+	return cidMinSpread;
 }
 
+uint32_t dec::ControlRegion::getGlobalMaxNumMoleculesSpreadCompID()
+{
+	uint32_t cidMaxSpread = 0;
+	int64_t spreadMax = 0;
+	for(auto comp:_compVars)
+	{
+		if(0 == comp.compID)
+			continue;
+		int64_t spread = comp.numMolecules.spread.global;
+		if(spread > spreadMax)
+		{
+			spreadMax = spread;
+			cidMaxSpread = comp.compID;
+		}
+	}
+	return cidMaxSpread;
+}
+
+void dec::ControlRegion::getGlobalMinMaxNumMoleculesSpreadCompIDs(uint32_t& cidMinSpread, uint32_t& cidMaxSpread)
+{
+	cidMinSpread = cidMaxSpread = 0;
+	int64_t spreadMin, spreadMax;
+	spreadMin = spreadMax = 0;
+	for(auto comp:_compVars)
+	{
+		if(0 == comp.compID)
+			continue;
+		int64_t spread = comp.numMolecules.spread.global;
+		if(spread < spreadMin)
+		{
+			spreadMin = spread;
+			cidMinSpread = comp.compID;
+		}
+		else if(spread > spreadMax)
+		{
+			spreadMax = spread;
+			cidMaxSpread = comp.compID;
+		}
+	}
+//	// DEBUG
+//	if(0 == cidMinSpread || 0 == cidMaxSpread)
+//		cout << "FAILED" << endl;
+//	// DEBUG
+}
+
+// checks
+bool dec::ControlRegion::globalCompositionBalanced()
+{
+	bool bBalanced = true;
+	for(auto comp:_compVars)
+	{
+		if(0 == comp.compID)
+			continue;
+		if(comp.numMolecules.spread.global != 0) {
+			bBalanced = false;
+			break;
+		}
+	}
+	return bBalanced;
+}
 
 // class DensityControl
 
@@ -979,55 +891,49 @@ void DensityControl::AddRegion(dec::ControlRegion* region)
         _bProcessIsRelevant = false;
 }
 
-void DensityControl::MeasureDensity(Molecule* mol, unsigned long simstep)
+void DensityControl::MeasureDensity(Simulation* simulation, Molecule* mol)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg->MeasureDensity(mol);
+		reg->MeasureDensity(simulation, mol);
 }
 
-void DensityControl::CalcGlobalValues(unsigned long simstep)
+void DensityControl::CalcGlobalValues(Simulation* simulation)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg->CalcGlobalValues();
+		reg->CalcGlobalValues(simulation);
 }
 
-void DensityControl::CreateDeletionLists()
+void DensityControl::ManipulateParticles(Simulation* simulation, Molecule* mol)
 {
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
+
 	for(auto&& reg : _vecControlRegions)
-		reg->CreateDeletionLists();
+		reg->ManipulateParticles(simulation, mol);
 }
 
-void DensityControl::ControlDensity(Molecule* mol, Simulation* simulation)
+void DensityControl::ManipulateParticleForces(Simulation* simulation, Molecule* mol)
 {
-    if(simulation->getSimulationStep() % _nControlFreq != 0)
-        return;
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg->ControlDensity(mol, simulation);
+		reg->ManipulateParticleForces(simulation, mol);
 }
 
-void DensityControl::postLoopAction()
+void DensityControl::FinalizeParticleManipulation(Simulation* simulation, MainLoopAction* action)
 {
-	for(auto&& reg : _vecControlRegions)
-		reg->postLoopAction();
-}
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
 
-void DensityControl::postEventNewTimestepAction()
-{
 	for(auto&& reg : _vecControlRegions)
-		reg->postEventNewTimestepAction();
-}
-
-void DensityControl::postUpdateForcesAction()
-{
-	for(auto&& reg : _vecControlRegions)
-		reg->postUpdateForcesAction();
+		reg->FinalizeParticleManipulation(simulation, action);
 }
 
 void DensityControl::CheckRegionBounds()
@@ -1042,13 +948,13 @@ void DensityControl::Init(DomainDecompBase* domainDecomp)
 		reg->Init(domainDecomp);
 }
 
-void DensityControl::ResetLocalValues(unsigned long simstep)
+void DensityControl::ResetLocalValues(Simulation* simulation)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg->ResetLocalValues();
+		reg->ResetLocalValues(simulation);
 }
 
 void DensityControl::InitMPI()
@@ -1057,13 +963,13 @@ void DensityControl::InitMPI()
 		reg->InitMPI();
 }
 
-void DensityControl::WriteDataDeletedMolecules(unsigned long simstep)
+void DensityControl::WriteDataDeletedMolecules(Simulation* simulation)
 {
-    if(simstep % _nWriteFreqDeleted != 0)
-        return;
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
 
 	for(auto&& reg : _vecControlRegions)
-		reg->WriteDataDeletedMolecules(simstep);
+		reg->WriteDataDeletedMolecules(simulation->getSimulationStep() );
 }
 
 void DensityControl::preForce_action(Simulation* simulation)
@@ -1082,72 +988,73 @@ void DensityControl::ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamo
 		reg->ConnectMettDeamon(mettDeamon);
 }
 
+
 // class MainLoopAction
 
 void MainLoopAction::performAction(Simulation* simulation)
 {
 	ParticleContainer* particleCont = simulation->getMolecules();
 	uint64_t simstep = simulation->getSimulationStep();
-	this->preFirstLoop(simstep);
+	this->preFirstLoop(simulation);
 
 	ParticleIterator pit;
 	for( pit  = particleCont->iteratorBegin();
 			pit != particleCont->iteratorEnd();
 		 ++pit )
 	{
-		this->insideFirstLoop( &(*pit), simstep);
+		this->insideFirstLoop(simulation, &(*pit) );
 	}
 
-	this->postFirstPreSecondLoop(simstep);
+	this->postFirstPreSecondLoop(simulation);
 
 	for( pit  = particleCont->iteratorBegin();
 			pit != particleCont->iteratorEnd();
 		 ++pit )
 	{
-		this->insideSecondLoop( &(*pit), simulation);
+		this->insideSecondLoop(simulation, &(*pit) );
 	}
 
-	this->postSecondLoop(simstep);
+	this->postSecondLoop(simulation);
 }
 
 // class PreForceAction : public MainLoopAction
-void PreForceAction::preFirstLoop(unsigned long simstep)
+void PreForceAction::preFirstLoop(Simulation* simulation)
 {
-	_parent->ResetLocalValues(simstep);
-	_parent->postEventNewTimestepAction();
+	_parent->ResetLocalValues(simulation);
 }
-void PreForceAction::insideFirstLoop(Molecule* mol, unsigned long simstep)
+void PreForceAction::insideFirstLoop(Simulation* simulation, Molecule* mol)
 {
-	_parent->MeasureDensity(mol, simstep);
+	_parent->MeasureDensity(simulation, mol);
 }
-void PreForceAction::postFirstPreSecondLoop(unsigned long simstep)
+void PreForceAction::postFirstPreSecondLoop(Simulation* simulation)
 {
-	_parent->CalcGlobalValues(simstep);
-	_parent->CreateDeletionLists();
+	_parent->CalcGlobalValues(simulation);
 }
-void PreForceAction::insideSecondLoop(Molecule* mol, Simulation* simulation)
+void PreForceAction::insideSecondLoop(Simulation* simulation, Molecule* mol)
 {
-	ParticleContainer* particleCont = simulation->getMolecules();
-	_parent->ControlDensity(mol, simulation);
+	_parent->ManipulateParticles(simulation, mol);
 }
-void PreForceAction::postSecondLoop(unsigned long simstep)
+void PreForceAction::postSecondLoop(Simulation* simulation)
 {
-	_parent->WriteDataDeletedMolecules(simstep);
+	_parent->FinalizeParticleManipulation(simulation, this);
+	_parent->WriteDataDeletedMolecules(simulation);
 }
 
 // class PostForceAction : public MainLoopAction
-void PostForceAction::preFirstLoop(unsigned long simstep)
+void PostForceAction::preFirstLoop(Simulation* simulation)
 {
 }
-void PostForceAction::insideFirstLoop(Molecule* mol, unsigned long simstep)
+void PostForceAction::insideFirstLoop(Simulation* simulation, Molecule* mol)
 {
 }
-void PostForceAction::postFirstPreSecondLoop(unsigned long simstep)
+void PostForceAction::postFirstPreSecondLoop(Simulation* simulation)
 {
 }
-void PostForceAction::insideSecondLoop(Molecule* mol, Simulation* simulation)
+void PostForceAction::insideSecondLoop(Simulation* simulation, Molecule* mol)
 {
+	_parent->ManipulateParticleForces(simulation, mol);
 }
-void PostForceAction::postSecondLoop(unsigned long simstep)
+void PostForceAction::postSecondLoop(Simulation* simulation)
 {
+	_parent->FinalizeParticleManipulation(simulation, this);
 }
