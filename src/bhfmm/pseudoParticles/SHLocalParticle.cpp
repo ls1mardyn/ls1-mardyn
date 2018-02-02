@@ -126,7 +126,7 @@ void SHLocalParticle::actOnTarget(const Vector3<double>& position, double charge
 
 	SolidHarmonicsExpansion temp_L = evaluateLOfR(_order, r_pseudo_to_target);
 
-	pot = potentialML(_expansionM, temp_L);
+	pot = charge * potentialML(_expansionM, temp_L);
 	force = charge * forceGradLAndM(temp_L, _expansionM);
 }
 

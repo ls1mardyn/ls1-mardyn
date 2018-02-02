@@ -3323,7 +3323,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCellPointers& cell)
 			P_yySum += 0.5 * -f[1] * dr[1];
 			P_zzSum += 0.5 * -f[2] * dr[2];
 			molecule1.Fchargeadd(j, f);
-			uSum += 0.5 * chargei.q() * u;
+			uSum += 0.5 * u;
 			virialSum += 0.5 * virial;
 		}// for j closed
 	} // current particle closed
