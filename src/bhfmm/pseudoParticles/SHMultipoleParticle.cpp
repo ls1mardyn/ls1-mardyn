@@ -79,7 +79,7 @@ void SHMultipoleParticle::actOnLocalParticle(LocalParticle& local) const {
 	sh_local.getExpansion() += convoluteLM(setAtMinusR(_expansionL), evaluateMOfR(_order, r_target_to_source));
 }
 
-void SHMultipoleParticle::actOnTarget(const Vector3<double>& position, double /*charge*/, double& pot,
+void SHMultipoleParticle::actOnTarget(const Vector3<double>& position, double charge, double& pot,
 		Vector3<double>& force) const {
 	Vector3<double> r_pseudo_to_target = position - _center;
 
@@ -90,8 +90,8 @@ void SHMultipoleParticle::actOnTarget(const Vector3<double>& position, double /*
 	// in order to fully utilise the current L expansion (due to particular stencil of gradient)
 	SolidHarmonicsExpansion temp_M = evaluateMOfR(_order + 1, r_pseudo_to_target);
 
-	pot = potentialML(temp_M, _expansionL);
-	force = forceLAndGradM(_expansionL, temp_M);
+	pot = charge * potentialML(temp_M, _expansionL);
+	force = charge * forceLAndGradM(_expansionL, temp_M);
 }
 
 void SHMultipoleParticle::clear() {
