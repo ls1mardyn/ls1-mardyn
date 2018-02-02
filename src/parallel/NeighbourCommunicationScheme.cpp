@@ -271,6 +271,8 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
 			_neighbours = _leavingNeighbours;
 			break;
 		case HALO_COPIES:
+			_neighbours = _haloOrForceNeighbours;
+			break;
 		case FORCES:
 			_neighbours = _haloOrForceNeighbours;
 			break;
@@ -332,24 +334,24 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, MPI_COMM_WORLD);
 	
 	// create byte buffer
-	unsigned char outgoing[num_bytes_send]; // outgoing byte buffer
+	std::vector<unsigned char> outgoing(num_bytes_send); // outgoing byte buffer
 	int i = 0;
 	
 	// msg format: rank | number_of_regions | region_01 | region_02 | ...
 	
-	memcpy(outgoing + i, &my_rank, sizeof(int));
+	memcpy(outgoing.data() + i, &my_rank, sizeof(int));
 	i += sizeof(int);
-	memcpy(outgoing + i, &num_regions, sizeof(int));
+	memcpy(outgoing.data() + i, &num_regions, sizeof(int));
 	i += sizeof(int);
 	
 	for(auto &region : desiredRegions) { // filling up the outgoing byte buffer
-		memcpy(outgoing + i, region.rmin, sizeof(double) * 3);
+		memcpy(outgoing.data() + i, region.rmin, sizeof(double) * 3);
 		i += sizeof(double) * 3;
-		memcpy(outgoing + i, region.rmax, sizeof(double) * 3);
+		memcpy(outgoing.data() + i, region.rmax, sizeof(double) * 3);
 		i += sizeof(double) * 3;
-		memcpy(outgoing + i, region.offset, sizeof(int) * 3);
+		memcpy(outgoing.data() + i, region.offset, sizeof(int) * 3);
 		i += sizeof(int) * 3;
-		memcpy(outgoing + i, &region.width, sizeof(double));
+		memcpy(outgoing.data() + i, &region.width, sizeof(double));
 		i += sizeof(double);
 	}
 	
@@ -361,38 +363,75 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	}
 	
 	//TODO: use vectors!
-	unsigned char incoming[num_bytes_receive]; // the incoming byte buffer
+	std::vector<unsigned char> incoming(num_bytes_receive); // the incoming byte buffer
 	
 	// send your regions
 	//MPI_Allgather(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive, MPI_BYTE, MPI_COMM_WORLD);
-	MPI_Allgatherv(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
+	MPI_Allgatherv(outgoing.data(), num_bytes_send, MPI_BYTE, incoming.data(), num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
 	
-	std::vector<std::vector<HaloRegion>> process_regions (num_incoming); // each process has a vector of regions it desires
+	std::vector<int> candidates(num_incoming, 0); // outgoing row
+	std::vector<int> rec_information(num_incoming, 0); // incoming column
+	int bytesOneRegion = sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
+	std::vector<std::vector <unsigned char *>> sendingList (num_incoming); // the regions I own and want to send
 	
 	i = 0;
 	while(i != num_bytes_receive) {
 		int rank;
 		int regions;
 		
-		memcpy(&rank, incoming + i, sizeof(int));
+		memcpy(&rank, incoming.data() + i, sizeof(int));
 		i += sizeof(int);
-		memcpy(&regions, incoming + i, sizeof(int));
+		memcpy(&regions, incoming.data() + i, sizeof(int));
 		i += sizeof(int);
 		
 		for(int j = 0; j < regions; j++) {
 			HaloRegion region;
-			memcpy(region.rmin, incoming + i, sizeof(double) * 3);
+			memcpy(region.rmin, incoming.data() + i, sizeof(double) * 3);
 			i += sizeof(double) * 3;
-			memcpy(region.rmax, incoming + i, sizeof(double) * 3);
+			memcpy(region.rmax, incoming.data() + i, sizeof(double) * 3);
 			i += sizeof(double) * 3;
-			memcpy(region.offset, incoming + i, sizeof(int) * 3);
+			memcpy(region.offset, incoming.data() + i, sizeof(int) * 3);
 			i += sizeof(int) * 3;
-			memcpy(&region.width, incoming + i, sizeof(double));
+			memcpy(&region.width, incoming.data() + i, sizeof(double));
 			i += sizeof(int);
 			
-			process_regions[rank].push_back(region); // append read regions to the process slot
+			
+			// msg format one region: rmin | rmax | offset | width | shift
+			std::vector<double> shift(3, 0); 
+			shiftIfNeccessary(domain, &region, shift.data());
+			
+			if(iOwnThis(myRegion, &region)) {
+				candidates[j]++; // this is a region I will send to j
+				std::vector<unsigned char> singleRegion(bytesOneRegion);
+				
+				// TODO: berechne hier den overlapp von myregion und process_region
+
+				i = 0;
+				memcpy(singleRegion.data() + i, region.rmin, sizeof(double) * 3);
+				i += sizeof(double) * 3;
+				memcpy(singleRegion.data() + i, region.rmax, sizeof(double) * 3);
+				i += sizeof(double) * 3;
+				memcpy(singleRegion.data() + i, region.offset, sizeof(int) * 3);
+				i += sizeof(int) * 3;
+				memcpy(singleRegion.data() + i, &region.width, sizeof(double));
+				i += sizeof(double);
+				memcpy(singleRegion.data() + i, shift.data(), sizeof(double) * 3);
+				i += sizeof(double) * 3;
+				
+				sendingList[j].push_back(singleRegion.data());
+			}
 		}
 	}
+	
+	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
+	for(int j = 0; j < num_incoming; j++) {
+		std::vector<unsigned char> mergedRegions(candidates[j] * bytesOneRegion);
+		
+		for(int k = 0; k < candidates[j]; k++) {
+			memcpy(mergedRegions.data() + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
+		}
+	}
+	
 	
 	// The problem is, that I do not know how many regions I am going to receive from each process
 	/* e.g.: 4x4
@@ -416,68 +455,20 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	 * 
 	 */
 	
-	
-	// interpret the buffer
-	// TODO: use vectors + initialize to zero
-	int candidates[num_incoming]; // outgoing row
-	int rec_information[num_incoming]; // incoming column
-	// msg format one region: rmin | rmax | offset | width | shift
-	int bytesOneRegion = sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
-	std::vector<std::vector <unsigned char *>> sendingList (num_incoming); // each process gets a list of pointers - each pointer points to a region - FREE THIS LATER
-	for(unsigned int j = 0; j < process_regions.size(); j++) { // j processes
-		for(unsigned int k = 0; k < process_regions[j].size(); k++) { // k regions process j wants
-			// TODO: tu das nach oben ;)
-			// TODO: an shift denken ;)
-			if(iOwnThis(myRegion, &(process_regions[j][k]))) {
-				candidates[j]++; // this is a region I will send to j
-				double shift[3] = {0}; // calculate the shift vector for this region
-				unsigned char singleRegion[bytesOneRegion];
-				
 
-				// TODO: berechne hier den overlapp von myregion und process_region
-
-				i = 0;
-				memcpy(singleRegion + i, process_regions[j][k].rmin, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				memcpy(singleRegion + i, process_regions[j][k].rmax, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				memcpy(singleRegion + i, process_regions[j][k].offset, sizeof(int) * 3);
-				i += sizeof(int) * 3;
-				memcpy(singleRegion + i, &process_regions[j][k].width, sizeof(double));
-				i += sizeof(double);
-				memcpy(singleRegion + i, shift, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				
-				sendingList[j].push_back(singleRegion);
-			}
-		}
-	}
-	
-	// find out how many neighbours I have 
-	MPI_Alltoall(candidates, num_incoming, MPI_BYTE, rec_information, num_incoming, MPI_BYTE, MPI_COMM_WORLD);
-	
-	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
-	
-	// write regions into one char array
-	for(int j = 0; j < num_incoming; j++) {
-		unsigned char mergedRegions[candidates[j] * bytesOneRegion];
-		
-		for(int k = 0; k < candidates[j]; k++) {
-			memcpy(mergedRegions + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
-		}
-	}
+	MPI_Alltoall(candidates.data(), num_incoming, MPI_BYTE, rec_information.data(), num_incoming, MPI_BYTE, MPI_COMM_WORLD);
 	
 	// all the information for the final information exchange has been collected -> final exchange
 	// buffer for the final exchange
 	std::vector<unsigned char *> incoming_byte_regions; // one knows exactly how much memory to reserve for each process.
 	for(int j = 0; j < num_incoming; j++) {
 		if(rec_information[j] > 0) {
-			unsigned char regionBuffer[rec_information[j] * bytesOneRegion];
-			incoming_byte_regions[j] = regionBuffer;
+			std::vector<unsigned char> regionBuffer(rec_information[j] * bytesOneRegion);
+			incoming_byte_regions[j] = regionBuffer.data();
 		}
 	}
 	
-	MPI_Request request;
+	MPI_Request request; // you need a vector for this stuff.
 	MPI_Status status;
 	
 	// sending (non blocking)
