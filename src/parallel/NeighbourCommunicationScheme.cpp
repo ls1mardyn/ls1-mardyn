@@ -370,7 +370,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	MPI_Allgatherv(outgoing.data(), num_bytes_send, MPI_BYTE, incoming.data(), num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
 	
 	std::vector<int> candidates(num_incoming, 0); // outgoing row
-	std::vector<int> rec_information(num_incoming, 0); // incoming column
+	std::vector<int> rec_information(num_incoming, 0); // how many bytes does each process expect?
 	int bytesOneRegion = sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
 	std::vector<std::vector <unsigned char *>> sendingList (num_incoming); // the regions I own and want to send
 	
@@ -451,79 +451,69 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	 *   -----------
 	 * 
 	 * Each process has a horizontal vector, where it marks how many regions it is going to send to another process.
-	 * Alltoall will then send one column to the process, which needs it, so the process knows how many regions it is going to receive from each process.
+	 * As allToAll is too slow or apparently too unpredictable regarding runtime,
+	 * AllReduce is used in combination with probe.
 	 * 
 	 */
 	
 
-	MPI_Alltoall(candidates.data(), num_incoming, MPI_BYTE, rec_information.data(), num_incoming, MPI_BYTE, MPI_COMM_WORLD);
+	MPI_Allreduce(candidates.data(), rec_information.data(), 1,MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	
 	// all the information for the final information exchange has been collected -> final exchange
-	// buffer for the final exchange
-	std::vector<unsigned char *> incoming_byte_regions; // one knows exactly how much memory to reserve for each process.
-	for(int j = 0; j < num_incoming; j++) {
-		if(rec_information[j] > 0) {
-			std::vector<unsigned char> regionBuffer(rec_information[j] * bytesOneRegion);
-			incoming_byte_regions[j] = regionBuffer.data();
-		}
-	}
 	
-	MPI_Request request; // you need a vector for this stuff.
-	MPI_Status status;
+	std::vector<MPI_Request> requests(num_incoming);
+	MPI_Status probe_status;
+	MPI_Status rec_status;
 	
 	// sending (non blocking)
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j] > 0) {
-			MPI_Isend(merged[j], candidates[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD, &request); // tag is one
-			//MPI_Request_free(&request); // I really hope this does not mess things up - not sure about requests
-		}
-	}
-	
-	// receive data (blocking)
-	for(int j = 0; j < num_incoming; j++) {
-		if(rec_information[j] > 0) {
-			MPI_Recv(incoming_byte_regions[j], rec_information[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD, &status);
+			MPI_Isend(merged[j], candidates[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD, &requests[j]); // tag is one
 		}
 	}
 	
 	std::vector<CommunicationPartner> comm_partners; // the communication partners
+	
+	// receive data (blocking)
+	int byte_counter = 0;
+	while(byte_counter < rec_information[my_rank]) {
+		// MPI_PROBE
+		MPI_Probe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &probe_status);
+		// interpret probe
+		int source = probe_status.MPI_SOURCE;
+		int bytes;
+		MPI_Get_count(&probe_status, MPI_BYTE, &bytes);
+		byte_counter += bytes;
+		// create buffer
+		std::vector<unsigned char> raw_neighbours(bytes);
+		MPI_Recv(raw_neighbours.data(), bytes, MPI_BYTE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &rec_status);
+		MPI_Request_free(&requests[source]);
+		// Interpret Buffer and add neighbours
+		for(int k = 0; k < (bytes / bytesOneRegion); k++) { // number of regions from this process
+			HaloRegion region;
+			double shift[3];
+			i = k * bytesOneRegion;
 
-	// interpret Data
-	for(int j = 0; j < num_incoming; j++) {
-		if(rec_information[j] > 0) {
-			for(int k = 0; k < rec_information[j]; k++) {
-				// interpret data
-				HaloRegion region;
-				double shift[3];
-				i = k * bytesOneRegion;
-				
-				memcpy(region.rmin, incoming_byte_regions[j] + i, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				memcpy(region.rmax, incoming_byte_regions[j] + i, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				memcpy(region.offset, incoming_byte_regions[j] + i, sizeof(int) * 3);
-				i += sizeof(int) * 3;
-				memcpy(&region.width, incoming_byte_regions[j] + i, sizeof(double));
-				i += sizeof(double);
-				
-				memcpy(shift, incoming_byte_regions[j] + i, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				
-				double hLo[3];
-				double hHi[3];
-				double bLo[3];
-				double bHi[3];
-				bool enlarged[3][2];
-				//TODO: enlarged auf false
-				
-				// Adapt for constructor signature
-				// CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
-				CommunicationPartner myNewNeighbour(j, region.rmin, region.rmax, region.rmin, region.rmax, shift, region.offset, enlarged); // DO NOT KNOW ABOUT THE 0s
-				comm_partners.push_back(myNewNeighbour);
-			}
+			memcpy(region.rmin, raw_neighbours.data() + i, sizeof(double) * 3);
+			i += sizeof(double) * 3;
+			memcpy(region.rmax, raw_neighbours.data() + i, sizeof(double) * 3);
+			i += sizeof(double) * 3;
+			memcpy(region.offset, raw_neighbours.data() + i, sizeof(int) * 3);
+			i += sizeof(int) * 3;
+			memcpy(&region.width, raw_neighbours.data() + i, sizeof(double));
+			i += sizeof(double);
+
+			memcpy(shift, raw_neighbours.data() + i, sizeof(double) * 3);
+			i += sizeof(double) * 3;
+
+			bool enlarged[3][2] = {{ false }};
+			
+			// CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
+			CommunicationPartner myNewNeighbour(source, region.rmin, region.rmax, region.rmin, region.rmax, shift, region.offset, enlarged); // DO NOT KNOW ABOUT THE 0s
+			comm_partners.push_back(myNewNeighbour);
+			
 		}
 	}
-	
 	
 	partners = comm_partners; // proper way to assign them? 
 }
