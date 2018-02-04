@@ -487,7 +487,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		// create buffer
 		std::vector<unsigned char> raw_neighbours(bytes);
 		MPI_Recv(raw_neighbours.data(), bytes, MPI_BYTE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &rec_status);
-		MPI_Request_free(&requests[source]);
 		// Interpret Buffer and add neighbours
 		for(int k = 0; k < (bytes / bytesOneRegion); k++) { // number of regions from this process
 			HaloRegion region;
@@ -513,6 +512,11 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			comm_partners.push_back(myNewNeighbour);
 			
 		}
+	}
+	
+	for(int j = 0; j < num_incoming; j++) {
+		if(candidates[j] > 0) 
+			MPI_Request_free(&requests[j]);
 	}
 	
 	partners = comm_partners; // proper way to assign them? 
