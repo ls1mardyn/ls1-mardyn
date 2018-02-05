@@ -108,6 +108,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	// We have to check each direction.
 	
 #if PUSH_PULL_PARTNERS
+	global_log->info() << "select call - initExchangeMoleculesMPI" << endl;
 	selectNeighbours(msgType);
 #endif
 	
@@ -164,6 +165,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 	
 #if PUSH_PULL_PARTNERS
+	global_log->info() << "select call - finalizeExchangeMoleculesMPI" << endl;
 	selectNeighbours(msgType);
 #endif
 	
@@ -259,6 +261,8 @@ std::vector<CommunicationPartner> squeezePartners(const std::vector<Communicatio
 #if PUSH_PULL_PARTNERS
 
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
+	global_log->info() << "selecting Neighbours" << endl;
+	
 	switch(msgType) {
 		case LEAVING_AND_HALO_COPIES:
 		{
@@ -333,6 +337,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	//MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, MPI_COMM_WORLD);
 	
+	global_log->info() << "exchanged number of bytes in big region exchange on rank: " << my_rank << endl;
+	
 	// create byte buffer
 	std::vector<unsigned char> outgoing(num_bytes_send); // outgoing byte buffer
 	int i = 0;
@@ -368,6 +374,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	// send your regions
 	//MPI_Allgather(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive, MPI_BYTE, MPI_COMM_WORLD);
 	MPI_Allgatherv(outgoing.data(), num_bytes_send, MPI_BYTE, incoming.data(), num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
+	
+	global_log->info() << "exchanged desired regions on rank: " << my_rank << endl;
 	
 	std::vector<int> candidates(num_incoming, 0); // outgoing row
 	std::vector<int> rec_information(num_incoming, 0); // how many bytes does each process expect?
@@ -459,6 +467,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 
 	MPI_Allreduce(candidates.data(), rec_information.data(), 1,MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	
+	global_log->info() << "exhanged number of regions for neighbour exchange on rank: " << my_rank << endl;
+	
 	// all the information for the final information exchange has been collected -> final exchange
 	
 	std::vector<MPI_Request> requests(num_incoming);
@@ -471,6 +481,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			MPI_Isend(merged[j], candidates[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD, &requests[j]); // tag is one
 		}
 	}
+	
+	global_log->info() << "sent the neighbours on rank: " << my_rank << endl;
 	
 	std::vector<CommunicationPartner> comm_partners; // the communication partners
 	
@@ -514,10 +526,14 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		}
 	}
 	
+	global_log->info() << "received the neighbours on rank: " << my_rank << endl;
+	
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j] > 0) 
 			MPI_Request_free(&requests[j]);
 	}
+	
+	global_log->info() << "freed the requests on rank: " << my_rank << endl;
 	
 	partners = comm_partners; // proper way to assign them? 
 }
@@ -528,6 +544,8 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		DomainDecompMPIBase* domainDecomp) {
 
 // corners of the process-specific domain
+	global_log->info() << "reached initCommunicationPartners" << endl;
+	
 	double rmin[DIMgeom]; // lower corner
 	double rmax[DIMgeom]; // higher corner
 
@@ -575,6 +593,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		DomainDecompMPIBase* domainDecomp) {
 	
 #if PUSH_PULL_PARTNERS
+	global_log->info() << "select call - initExchangeMoleculesMPI1D" << endl;
 	selectNeighbours(msgType);
 #endif
 	
@@ -615,6 +634,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		DomainDecompMPIBase* domainDecomp) {
 	
 #if PUSH_PULL_PARTNERS
+	global_log->info() << "select call - finalizeExchangeMoleculesMPI1D" << endl;
 	selectNeighbours(msgType);
 #endif
 	
