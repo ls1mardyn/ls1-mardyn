@@ -27,7 +27,7 @@ static vcp_inline
 void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<vcp_real_calc>& eps_sigI,
 		const vcp_ljc_id_t* const id_j, const vcp_ljc_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
 
-#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
 	const vcp_ljc_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
@@ -113,7 +113,7 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 
 	#endif /* VCP_PREC */
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
+#elif VCP_VEC_TYPE==VCP_VEC_KNL
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		__m512i indices = _mm512_load_epi32(id_j_shifted);
 		indices = _mm512_add_epi32(indices, indices);//only every second...
@@ -127,7 +127,7 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 	#endif
 
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
@@ -136,12 +136,8 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 		sig2 = _mm512_i32gather_ps(indices, eps_sigI+1, 4);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
 	#else /*VCP_DPDP*/
 
-		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-			__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, (const long long *) id_j, 8);//gather id_j using the indices
-		#else
-			__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
-			__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the indices
-		#endif
+		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
+		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the indices
 
 		indices = _mm512_add_epi64(indices, indices);//only every second...
 		eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
@@ -164,7 +160,7 @@ template <class MaskGatherChooser>
 static vcp_inline
 void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6I,
 		const vcp_ljc_id_t* id_j, const vcp_ljc_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
-#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
 	const vcp_ljc_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
@@ -237,7 +233,7 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 
 
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
+#elif VCP_VEC_TYPE==VCP_VEC_KNL
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		const __m512i indices = _mm512_load_epi32(id_j_shifted);
@@ -249,19 +245,15 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 	#endif
 
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
 		shift6 = _mm512_i32gather_ps(indices, shift6I, 4);
 
 	#else /* VCP_DPDP */
-		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-			__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, (const long long *) id_j, 8);//gather id_j using the lookupindices
-		#else
-			__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
-			__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the lookupindices
-		#endif
+		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
+		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the lookupindices
 		shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 	#endif
 
@@ -277,12 +269,6 @@ void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
 #if VCP_VEC_TYPE==VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX or VCP_VEC_TYPE == VCP_VEC_AVX2
 	RealCalcVec::horizontal_add_and_store(a, mem_addr);
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		*mem_addr += _mm512_reduce_add_ps(a);
-	#else /* VCP_DPDP or VCP_SPDP */
-		*mem_addr += _mm512_reduce_add_pd(a);
-	#endif
 	// NOTE: separate, because only the Intel compiler provides _mm512_reduce_add_pd/ps
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
@@ -407,7 +393,7 @@ public:
 
 	vcp_inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 	{
-#if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER and VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER
 		return InitJ(i);
 #else
 		return 0;

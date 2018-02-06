@@ -52,7 +52,7 @@
 
 // The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
 #if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX) || defined(VCP_VEC_AVX2) || \
-	defined(VCP_VEC_KNL) || defined(VCP_VEC_KNL_GATHER) || defined(VCP_VEC_KNC) || defined(VCP_VEC_KNC_GATHER)
+	defined(VCP_VEC_KNL) || defined(VCP_VEC_KNL_GATHER)
 	#error conflicting macro definitions
 #endif
 
@@ -61,8 +61,6 @@
 #define VCP_VEC_SSE3 1
 #define VCP_VEC_AVX 2
 #define VCP_VEC_AVX2 3
-#define VCP_VEC_KNC 4
-#define VCP_VEC_KNC_GATHER 5
 #define VCP_VEC_KNL 6
 #define VCP_VEC_KNL_GATHER 7
 
@@ -89,12 +87,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#else
 		#define VCP_VEC_TYPE VCP_VEC_KNL
 	#endif
-#elif defined(__MIC__)
-	#if defined(__VCP_GATHER__)
-		#define VCP_VEC_TYPE VCP_VEC_KNC_GATHER
-	#else
-		#define VCP_VEC_TYPE VCP_VEC_KNC
-	#endif
 #elif defined(__AVX2__) && defined(__FMA__)
 	#define VCP_VEC_TYPE VCP_VEC_AVX2
 #elif defined(__AVX__) && not defined(AVX128)
@@ -118,8 +110,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 // Include necessary files if we vectorize.
 #if VCP_VEC_TYPE==VCP_VEC_AVX or \
 	VCP_VEC_TYPE==VCP_VEC_AVX2 or \
-	VCP_VEC_TYPE==VCP_VEC_KNC or \
-	VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or\
 	VCP_VEC_TYPE==VCP_VEC_KNL or \
 	VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 	#include "immintrin.h"
@@ -213,9 +203,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 
 	#define VCP_ALIGNMENT 32
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNC or \
-	  VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
-	  VCP_VEC_TYPE==VCP_VEC_KNL or \
+#elif VCP_VEC_TYPE==VCP_VEC_KNL or \
 	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 
 	#if VCP_PREC==VCP_SPSP
@@ -244,14 +232,13 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#define VCP_VEC_WIDTH VCP_VEC_W_512
 	
 
-	#if VCP_VEC_TYPE==VCP_VEC_KNC or\
-		VCP_VEC_TYPE==VCP_VEC_KNL
+	#if VCP_VEC_TYPE==VCP_VEC_KNL
 		#define VCP_INDICES_PER_LOOKUP_SINGLE VCP_VEC_SIZE
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 VCP_VEC_SIZE_M1
 		typedef vcp_mask_vec vcp_lookupOrMask_vec;
 		typedef vcp_mask_single vcp_lookupOrMask_single;
 
-	#else  // VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	#else  // VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 		#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 		typedef __m512i vcp_lookupOrMask_vec;

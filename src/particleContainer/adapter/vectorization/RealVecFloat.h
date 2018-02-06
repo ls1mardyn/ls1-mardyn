@@ -127,7 +127,7 @@ public:
 		return (a * b) + c;
 	#elif VCP_VEC_TYPE == VCP_VEC_AVX2
 		return _mm256_fmadd_ps(a, b, c);
-	#else /* KNC or KNL */
+	#else /* KNL */
 		return _mm512_fmadd_ps(a, b, c);
 	#endif
 	}
@@ -137,7 +137,7 @@ public:
 		return c - (a * b);
 	#elif VCP_VEC_TYPE == VCP_VEC_AVX2
 		return _mm256_fnmadd_ps(a, b, c);
-	#else /* KNC or KNL */
+	#else /* KNL */
 		return _mm512_fnmadd_ps(a, b, c);
 	#endif
 	}
@@ -147,7 +147,7 @@ public:
 		return (a * b) - c;
 	#elif VCP_VEC_TYPE == VCP_VEC_AVX2
 		return _mm256_fmsub_ps(a, b, c);
-	#else /* KNC or KNL */
+	#else /* KNL */
 		return _mm512_fmsub_ps(a, b, c);
 	#endif
 	}
@@ -214,11 +214,7 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_broadcast_ss(a);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-			return _mm512_extload_ps(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X16, _MM_HINT_NONE);
-		#else
-			return _mm512_set1_ps(*a);
-		#endif
+		return _mm512_set1_ps(*a);
 	#endif
 	}
 
@@ -357,7 +353,6 @@ public:
 	//
 	// AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
 	// AVX - slow-down: fma is not available; even more pressure on multiply-add imbalance? Leaving it out
-	// KNC - small speed-up, because _mm512_div actually already uses Newton-Raphson, but doesn't assume that conversions double -> float are safe?
 	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
 	static RealVec fastReciprocal_mask(const RealVec& d, const MaskVec<float>& m) {
 
@@ -365,11 +360,7 @@ public:
 			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
 				const real_vec inv_unmasked = _mm256_rcp_ps(d); //12bit
 			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-					const RealVec inv_prec = _mm512_mask_rcp23_ps(zero(), m, d); //23bit
-				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
-					const RealVec inv_prec = _mm512_maskz_rcp28_ps(m, d); //28bit
-				#endif
+				const RealVec inv_prec = _mm512_maskz_rcp28_ps(m, d); //28bit
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec inv_unmasked = set1(1.0) / d;
 			#endif
@@ -429,7 +420,6 @@ public:
 	//
 	// AVX2 - AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
 	// AVX - not supported
-	// KNC - small speed-up, because _mm512_div actually already uses Newton-Raphson, but doesn't assume that conversions double -> float are safe?
 	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
 	static RealVec fastReciprocSqrt_mask(const RealVec& d, const MaskVec<float>& m) {
 
@@ -437,11 +427,7 @@ public:
 			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
 				const real_vec invSqrt_unmasked = _mm256_rsqrt_ps(d); //12bit
 			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-				#if VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-					const RealVec invSqrt_prec = _mm512_mask_rsqrt23_ps(zero(), m, d); //23bit
-				#else /* VCP_VEC_KNL or VCP_VEC_KNL_GATHER */
-					const RealVec invSqrt_prec = _mm512_maskz_rsqrt28_ps(m, d); //28bit
-				#endif
+				const RealVec invSqrt_prec = _mm512_maskz_rsqrt28_ps(m, d); //28bit
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec invSqrt_unmasked = set1(1.0) / sqrt(d);
 			#endif

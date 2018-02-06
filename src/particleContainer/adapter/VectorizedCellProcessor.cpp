@@ -32,8 +32,6 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	global_log->info() << "VectorizedCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VectorizedCellProcessor: using AVX2 intrinsics." << std::endl;
-#elif (VCP_VEC_TYPE==VCP_VEC_KNC) || (VCP_VEC_TYPE==VCP_VEC_KNC_GATHER)
-	global_log->info() << "VectorizedCellProcessor: using KNC intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
 	global_log->info() << "VectorizedCellProcessor: using KNL intrinsics." << std::endl;
 #endif
@@ -245,7 +243,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec c_dr2_inv = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);//masked
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec c_dr_inv = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);//masked
 #else
 	    const RealCalcVec c_dr_inv = RealCalcVec::sqrt(c_dr2_inv);//masked
@@ -294,7 +292,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
 		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
 #else
 	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
@@ -362,7 +360,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec dr2 = RealCalcVec::scal_prod(dx, dy, dz, dx, dy, dz);
 
 		const RealCalcVec dr2_inv = RealCalcVec::fastReciprocal_mask(dr2, forceMask);
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec dr_inv = RealCalcVec::fastReciprocSqrt_mask(dr2, forceMask);
 #else
 	    const RealCalcVec dr_inv = RealCalcVec::sqrt(dr2_inv);
@@ -447,7 +445,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -526,7 +524,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -643,7 +641,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
 		const RealCalcVec invdr2 = RealCalcVec::fastReciprocal_mask(c_dr2, forceMask);
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	    const RealCalcVec invdr = RealCalcVec::fastReciprocSqrt_mask(c_dr2, forceMask);
 #else
 	    const RealCalcVec invdr = RealCalcVec::sqrt(invdr2);
@@ -1062,7 +1060,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 						sum_Vz1 = sum_Vz1 + Vz;
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_ljc);
@@ -1207,7 +1205,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
@@ -1348,7 +1346,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 						sum_M_z = sum_M_z + M_z;
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
@@ -1507,7 +1505,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 						sum_M1_z = sum_M1_z + M_z;
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
@@ -1691,7 +1689,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
@@ -1856,7 +1854,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
@@ -2021,7 +2019,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
@@ -2209,7 +2207,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_z, j, M2_z, lookupORforceMask);//newton 3
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
@@ -2370,7 +2368,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
@@ -2536,7 +2534,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);

@@ -54,15 +54,22 @@ VECTORIZE_CODE ?= SSE
 # SSE      - VectorizedCellProcessor with SSE intrinsics (default)
 # AVX      - VectorizedCellProcessor with AVX intrinsics
 # AVX2     - VectorizedCellProcessor with AVX2 intrinsics
-# KNC_MASK - VectorizedCellProcessor with KNC intrinsics and masking
-# KNC_G_S  - VectorizedCellProcessor with KNC intrinsics and gather-scatter (not fully optimized yet in this branch)
 # KNL_MASK - VectorizedCellProcessor with KNL intrinsics and masking
 # KNL_G_S  - VectorizedCellProcessor with KNL intrinsics and gather-scatter (not fully optimized yet in this branch)
 # SOA      - VectorizedCellProcessor with no intrinsics
+# (Support dropped!) KNC_MASK - VectorizedCellProcessor with KNC intrinsics and masking
+# (Support dropped!) KNC_G_S  -VectorizedCellProcessor with KNC intrinsics and gather-scatter (not fully optimized yet in this branch)
 # see "make help_vect"
 vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S KNL_MASK KNL_G_S SOA SSEAMD AVXAMD
 ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
   $(error ERROR: invalid vectorize code option chosen. see "make help_vect")
+endif
+
+ifeq ($(VECTORIZE_CODE), KNC_MASK)
+  $(error ERROR: Support for KNC has been dropped!)
+endif
+ifeq ($(VECTORIZE_CODE), KNC_G_S) # someone else join these two checks...
+  $(error ERROR: Support for KNC has been dropped!)
 endif
 
 PRECISION ?= DOUBLE
@@ -297,7 +304,7 @@ help:
 help_vect:
 	@echo "Vectorization help:"
 	@echo
-	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | AVX2 | KNC_MASK | KNC_G_S | KNL_MASK | KNL_G_S"
+	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | AVX2 | KNL_MASK | KNL_G_S"
 	@echo " AOS      - use the LegacyCellProcessor"
 	@echo " SSE      - use the VectorizedCellProcessor with SSE intrinsics"
 	@echo "            This is the default option."
@@ -315,10 +322,12 @@ help_vect:
 	@echo "            Speed-up of single digit percentages compared with pure AVX instrinsics."
 	@echo "            Please make sure that you are using a reasonably updated compiler!"
 	@echo "            For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
-	@echo " KNC_MASK - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
+	@echo " KNC_MASK - Support dropped! 
+	@echo "            use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
 	@echo "            Works only on Xeon Phis of the first generation (knights corner)."
 	@echo "            Speed-up not yet tested."
-	@echo " KNC_G_S  - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
+	@echo " KNC_G_S  - Support dropped!
+	@echo "            use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
 	@echo "            Works only on Xeon Phis of the first generation (knights corner)."
 	@echo "            Speed-up not yet tested."
 	@echo " KNL_MASK - use the VectorizedCellProcessor with AVX512 (knights landing) intrinsics."

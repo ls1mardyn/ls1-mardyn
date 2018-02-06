@@ -127,8 +127,7 @@ using namespace vcp;
 			}
 		}
 	#endif
-#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or\
-	  VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){

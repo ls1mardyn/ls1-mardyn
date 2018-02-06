@@ -46,9 +46,3 @@ endif
 ifeq ($(VECTORIZE_CODE),AVX2)
 CXXFLAGS_VECTORIZE = -Mvect=256
 endif
-ifeq ($(VECTORIZE_CODE),KNC_MASK)
-$(error pgi probably does not support KNC)
-endif
-ifeq ($(VECTORIZE_CODE),KNC_G_S)
-$(error pgi probably does not support KNC)
-endif

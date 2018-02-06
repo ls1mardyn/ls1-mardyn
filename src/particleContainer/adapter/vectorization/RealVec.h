@@ -145,7 +145,6 @@ public:
 	//
 	// AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
 	// AVX - slow-down: fma is not available; even more pressure on multiply-add imbalance? Leaving it out
-	// KNC - small speed-up, because _mm512_div actually already uses Newton-Raphson, but doesn't assume that conversions double -> float are safe?
 	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
 	static RealVec fastReciprocal_mask(const RealVec& d, const MaskVec<FloatOrDouble>& m) {
 		return RealVec();
@@ -168,7 +167,6 @@ public:
 	//
 	// AVX2 - AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
 	// AVX - not supported
-	// KNC - small speed-up, because _mm512_div actually already uses Newton-Raphson, but doesn't assume that conversions double -> float are safe?
 	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
 	static RealVec fastReciprocSqrt_mask(const RealVec& d, const MaskVec<FloatOrDouble>& m) {
 		return RealVec();

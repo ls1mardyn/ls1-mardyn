@@ -26,12 +26,6 @@ endif
 ifeq ($(VECTORIZE_CODE),AVX2)
 CXXFLAGS_VECTORIZE = -mavx2 -mfma
 endif
-ifeq ($(VECTORIZE_CODE),KNC_MASK)
-$(error gcc does not support KNC)
-endif
-ifeq ($(VECTORIZE_CODE),KNC_G_S)
-$(error gcc does not support KNC)
-endif
 ifeq ($(VECTORIZE_CODE),KNL_MASK)
 CXXFLAGS_VECTORIZE = -march=knl
 endif

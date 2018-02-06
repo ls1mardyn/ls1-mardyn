@@ -150,7 +150,7 @@ public:
 	}
 
 
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
 
 		if (isFloat32()) {

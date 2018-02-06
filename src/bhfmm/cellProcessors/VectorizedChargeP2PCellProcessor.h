@@ -106,7 +106,7 @@ private:
 		/**
 		 * \brief array, that stores the dist_lookup.
 		 * For all vectorization methods, that utilize masking, this stores masks.
-		 * To utilize the gather operations of the KNC architecture, the dist_lookup is able to store the indices of the required particles.
+		 * To utilize the gather operations of the KNL architecture, the dist_lookup is able to store the indices of the required particles.
 		 */
 		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 

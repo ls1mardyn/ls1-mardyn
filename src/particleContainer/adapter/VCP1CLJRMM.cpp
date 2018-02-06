@@ -22,8 +22,6 @@ VCP1CLJRMM::VCP1CLJRMM(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 	global_log->info() << "VCP1CLJRMM: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VCP1CLJRMM: using AVX2 intrinsics." << std::endl;
-#elif (VCP_VEC_TYPE==VCP_VEC_KNC) || (VCP_VEC_TYPE==VCP_VEC_KNC_GATHER)
-	global_log->info() << "VCP1CLJRMM: using KNC intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
 	global_log->info() << "VCP1CLJRMM: using KNL intrinsics." << std::endl;
 #endif
@@ -275,7 +273,7 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2.getMolNum());
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2.getMolNum());//this is ceil _ljc_num, VCP_VEC_SIZE
 
-#if not (VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER)
+#if not (VCP_VEC_TYPE == VCP_VEC_KNL_GATHER)
 
 	const size_t soa1_mol_num = soa1.getMolNum();
 	for (size_t i = 0; i < soa1_mol_num; ++i) {
@@ -354,6 +352,6 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 
 #else
-#pragma message "TODO: RMM Mode is not implemented yet for KNC/KNL."
+#pragma message "TODO: RMM Mode is not implemented yet for KNL_G_S."
 #endif
 }

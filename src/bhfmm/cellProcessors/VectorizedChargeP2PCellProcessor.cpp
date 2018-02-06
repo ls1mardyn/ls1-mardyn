@@ -30,8 +30,6 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX2 intrinsics." << std::endl;
-#elif (VCP_VEC_TYPE==VCP_VEC_KNC) || (VCP_VEC_TYPE==VCP_VEC_KNC_GATHER)
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using KNC intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using KNL intrinsics." << std::endl;
 #endif
@@ -453,7 +451,7 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
