@@ -122,8 +122,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 // define necessary types
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
-	typedef vcp_real_calc vcp_real_calc_vec;
-	typedef vcp_real_accum vcp_real_accum_vec;
 
 	#define VCP_VEC_SIZE 1u
 	#define VCP_VEC_SIZE_M1 0u
@@ -139,17 +137,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#define VCP_ALIGNMENT 8
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
-
-	#if VCP_PREC==VCP_SPSP
-		typedef __m128 vcp_real_calc_vec;
-		typedef __m128 vcp_real_accum_vec;
-	#elif VCP_PREC==VCP_SPDP
-		typedef __m128 vcp_real_calc_vec;
-		typedef __m128d vcp_real_accum_vec;
-	#else // VCP_PREC==VCP_DPDP
-		typedef __m128d vcp_real_calc_vec;
-		typedef __m128d vcp_real_accum_vec;
-	#endif
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
 		#define VCP_VEC_SIZE 4u
@@ -172,16 +159,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#define VCP_ALIGNMENT 16
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
-	#if VCP_PREC==VCP_SPSP
-		typedef __m256 vcp_real_calc_vec;
-		typedef __m256 vcp_real_accum_vec;
-	#elif VCP_PREC==VCP_SPDP
-		typedef __m256 vcp_real_calc_vec;
-		typedef __m256d vcp_real_accum_vec;
-	#else // VCP_PREC==VCP_DPDP
-		typedef __m256d vcp_real_calc_vec;
-		typedef __m256d vcp_real_accum_vec;
-	#endif
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
 		#define VCP_VEC_SIZE 8u
@@ -205,17 +182,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or \
 	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-
-	#if VCP_PREC==VCP_SPSP
-		typedef __m512 vcp_real_calc_vec;
-		typedef __m512 vcp_real_accum_vec;
-	#elif VCP_PREC==VCP_SPDP
-		typedef __m512 vcp_real_calc_vec;
-		typedef __m512d vcp_real_accum_vec;
-	#else // VCP_PREC==VCP_DPDP
-		typedef __m512d vcp_real_calc_vec;
-		typedef __m512d vcp_real_accum_vec;
-	#endif
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
 		#define VCP_VEC_SIZE 16u
