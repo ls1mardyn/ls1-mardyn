@@ -269,23 +269,31 @@ std::vector<CommunicationPartner> squeezePartners(const std::vector<Communicatio
 #if PUSH_PULL_PARTNERS
 
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
-	global_log->info() << "selecting Neighbours" << endl;
+	
 	
 	switch(msgType) {
 		case LEAVING_AND_HALO_COPIES:
 		{
-			std::vector<std::vector <CommunicationPartner>> combined = _leavingNeighbours; // this assignment creates a new vector
-			combined.insert(combined.end(), _haloOrForceNeighbours.begin(), _haloOrForceNeighbours.end());
+			// SEGMENTATION FAULT
+			global_log->info() << "selecting Neighbours LEAVING_AND_HALO_COPIES" << endl;
+			std::vector<std::vector <CommunicationPartner>> combined;
+			combined.resize(this->getCommDims());
+			combined = _leavingNeighbours; // this assignment creates a new vector
+			for(int i = 0; i < combined.size(); i++)
+				combined[i].insert(combined[i].end(), _haloOrForceNeighbours[i].begin(), _haloOrForceNeighbours[i].end());
 			_neighbours = combined;
 			break;
 		}
 		case LEAVING_ONLY:
+			global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
 			_neighbours = _leavingNeighbours;
 			break;
 		case HALO_COPIES:
+			global_log->info() << "selecting Neighbours HALO_COPIES" << endl;
 			_neighbours = _haloOrForceNeighbours;
 			break;
 		case FORCES:
+			global_log->info() << "selecting Neighbours FORCES" << endl;
 			_neighbours = _haloOrForceNeighbours;
 			break;
 	}
@@ -295,7 +303,7 @@ void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloR
 	double domain_length[3] = { domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2) };
 	
 	for(int i = 0; i < 3; i++) // calculating shift
-		if(region->rmax[i] > domain_length[i] || region->rmin[i] > domain_length[i])
+		if(region->rmax[i] >= domain_length[i] || region->rmin[i] >= domain_length[i])
 			shiftArray[i] = -domain_length[i];
 	
 	for(int i = 0; i < 3; i++) // calculating shift
@@ -407,7 +415,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		memcpy(&regions, incoming.data() + i, sizeof(int));
 		i += sizeof(int); // 4
 		
-		cout << regions << " from: " << rank << " on: " << my_rank << endl;
+		cout << regions << " from: " << rank << " on: " << my_rank << endl; // 26 on 1 and 0 from 1 and 0 
 		
 		
 		for(int j = 0; j < regions; j++) {
@@ -424,13 +432,17 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			
 			// msg format one region: rmin | rmax | offset | width | shift
 			std::vector<double> shift(3, 0); 
-			shiftIfNeccessary(domain, &region, shift.data());
+			shiftIfNeccessary(domain, &region, shift.data()); 
 			
-			if(iOwnThis(myRegion, &region)) {
+			if(iOwnThis(myRegion, &region)) { 
 				candidates[rank]++; // this is a region I will send to rank
-				std::vector<unsigned char> singleRegion(bytesOneRegion);
 				
-
+				cout << "candidates[rank]: " << candidates[rank] << " on: " << my_rank << endl; // 26 on 1, but only 18 on 0
+				
+				// TODO: region zerlegen
+				
+				std::vector<unsigned char> singleRegion(bytesOneRegion);
+			
 				p = 0;
 				memcpy(singleRegion.data() + p, region.rmin, sizeof(double) * 3);
 				p += sizeof(double) * 3;
@@ -490,7 +502,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 
 	MPI_Allreduce(candidates.data(), rec_information.data(), 1,MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	
-	cout << "exhanged number of regions for neighbour exchange on rank: " << my_rank << endl;
+	cout << "rec_information[my_rank]: " << rec_information[my_rank] << " on: " << my_rank << endl;
 	
 	// all the information for the final information exchange has been collected -> final exchange
 	
@@ -511,13 +523,17 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	// receive data (blocking)
 	int byte_counter = 0;
-	while(byte_counter < rec_information[my_rank]) {
+	
+	while(byte_counter < rec_information[my_rank]) { // TODO: I do not know yet, how many regions I received
 		// MPI_PROBE
 		MPI_Probe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &probe_status);
 		// interpret probe
 		int source = probe_status.MPI_SOURCE;
 		int bytes;
 		MPI_Get_count(&probe_status, MPI_BYTE, &bytes);
+		
+		cout << "received neighbour bytes: " << bytes << " on: " << my_rank << endl; // only one process seems to receive 2392 bytes
+		
 		byte_counter += bytes;
 		// create buffer
 		std::vector<unsigned char> raw_neighbours(bytes);
