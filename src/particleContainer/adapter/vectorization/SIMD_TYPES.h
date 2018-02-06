@@ -123,14 +123,10 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 
-	#define VCP_VEC_SIZE 1u
-	#define VCP_VEC_SIZE_M1 0u
 	#define VCP_VEC_WIDTH VCP_VEC_W__64
 
 	typedef uint8_t vcp_mask_vec;
 	typedef uint8_t vcp_mask_single;
-	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
@@ -139,20 +135,14 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
-		#define VCP_VEC_SIZE 4u
-		#define VCP_VEC_SIZE_M1 3u
 		typedef uint32_t vcp_mask_single;
 	#else // VCP_PREC==VCP_DPDP
-		#define VCP_VEC_SIZE 2u
-		#define VCP_VEC_SIZE_M1 1u
 		typedef uint64_t vcp_mask_single;
 	#endif
 
 	#define VCP_VEC_WIDTH VCP_VEC_W_128
 
 	typedef __m128i vcp_mask_vec;
-	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
@@ -161,20 +151,14 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
-		#define VCP_VEC_SIZE 8u
-		#define VCP_VEC_SIZE_M1 7u
 		typedef uint32_t vcp_mask_single;
 	#else // VCP_PREC==VCP_DPDP
-		#define VCP_VEC_SIZE 4u
-		#define VCP_VEC_SIZE_M1 3u
 		typedef uint64_t vcp_mask_single;
 	#endif
 
 	#define VCP_VEC_WIDTH VCP_VEC_W_256	
 
 	typedef __m256i vcp_mask_vec;
-	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
@@ -184,13 +168,9 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
-		#define VCP_VEC_SIZE 16u
-		#define VCP_VEC_SIZE_M1 15u
 		typedef __mmask16 vcp_mask_vec;
 		typedef __mmask16 vcp_mask_single;
 	#else // VCP_PREC==VCP_DPDP
-		#define VCP_VEC_SIZE 8u
-		#define VCP_VEC_SIZE_M1 7u
 		typedef __mmask8 vcp_mask_vec;
 		typedef __mmask8 vcp_mask_single;
 	#endif
@@ -199,14 +179,10 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	
 
 	#if VCP_VEC_TYPE==VCP_VEC_KNL
-		#define VCP_INDICES_PER_LOOKUP_SINGLE VCP_VEC_SIZE
-		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 VCP_VEC_SIZE_M1
 		typedef vcp_mask_vec vcp_lookupOrMask_vec;
 		typedef vcp_mask_single vcp_lookupOrMask_single;
 
 	#else  // VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-		#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 		typedef __m512i vcp_lookupOrMask_vec;
 		typedef countertype32 vcp_lookupOrMask_single;
 	#endif

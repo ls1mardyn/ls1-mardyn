@@ -29,6 +29,18 @@ namespace vcp {
 	typedef RealVec<vcp_real_calc> RealCalcVec;
 }
 
+// programmatically determine and use constexpr instead of macros:
+constexpr size_t VCP_VEC_SIZE = sizeof(vcp::RealCalcVec) / sizeof(vcp_real_calc);
+constexpr size_t VCP_VEC_SIZE_M1 = VCP_VEC_SIZE - 1;
+
+#if VCP_VEC_TYPE==VCP_VEC_KNL
+	constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE = VCP_VEC_SIZE;
+	constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE_M1 = VCP_VEC_SIZE_M1;
+#else
+	constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE = 1u;
+	constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE_M1 = 0u;
+#endif
+
 #include <cmath>
 #include "sys/types.h"
 
