@@ -331,17 +331,21 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	int num_regions = desiredRegions.size(); // the number of regions I would like to aquire from other processes
 	
+	cout << "numregions: " << num_regions << " on: " << my_rank << endl;
+	
 	// tell the other processes how much you are going to send
 	int num_bytes_send =  sizeof(int) * 2 + (sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) * 1) * num_regions; // how many bytes am I going to send to all the other processes?
 	std::vector<int> num_bytes_receive_vec(num_incoming, 0); // vector of number of bytes I am going to receive
 	//MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, MPI_COMM_WORLD);
 	
-	global_log->info() << "exchanged number of bytes in big region exchange on rank: " << my_rank << endl;
+	cout << "num_bytes_send: " << num_bytes_send << " on: " << my_rank << endl;
+	cout << "exchanged number of bytes in big region exchange on rank: " << my_rank << endl;
 	
 	// create byte buffer
 	std::vector<unsigned char> outgoing(num_bytes_send); // outgoing byte buffer
 	int i = 0;
+	int p = 0;
 	
 	// msg format: rank | number_of_regions | region_01 | region_02 | ...
 	
@@ -361,21 +365,20 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		i += sizeof(double);
 	}
 	
-	int num_bytes_receive=0;
+	int num_bytes_receive = 0;
 	std::vector<int> num_bytes_displacements(num_incoming, 0); // vector of number of bytes I am going to receive
 	for (int j = 0; j < num_incoming; j++) {
 		num_bytes_displacements[j] = num_bytes_receive;
 		num_bytes_receive += num_bytes_receive_vec[j];
 	}
 	
-	//TODO: use vectors!
 	std::vector<unsigned char> incoming(num_bytes_receive); // the incoming byte buffer
 	
 	// send your regions
 	//MPI_Allgather(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive, MPI_BYTE, MPI_COMM_WORLD);
 	MPI_Allgatherv(outgoing.data(), num_bytes_send, MPI_BYTE, incoming.data(), num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
 	
-	global_log->info() << "exchanged desired regions on rank: " << my_rank << endl;
+	cout << "exchanged desired regions on rank: " << my_rank << endl;
 	
 	std::vector<int> candidates(num_incoming, 0); // outgoing row
 	std::vector<int> rec_information(num_incoming, 0); // how many bytes does each process expect?
@@ -384,24 +387,31 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	i = 0;
 	while(i != num_bytes_receive) {
+		cout << i << " " << num_bytes_receive << " " << sizeof(double) << " " << sizeof(int) << "on: " << my_rank << endl;
+		
 		int rank;
 		int regions;
 		
+		
+		
 		memcpy(&rank, incoming.data() + i, sizeof(int));
-		i += sizeof(int);
+		i += sizeof(int); // 4
 		memcpy(&regions, incoming.data() + i, sizeof(int));
-		i += sizeof(int);
+		i += sizeof(int); // 4
+		
+		cout << regions << " from: " << rank << " on: " << my_rank << endl;
+		
 		
 		for(int j = 0; j < regions; j++) {
 			HaloRegion region;
 			memcpy(region.rmin, incoming.data() + i, sizeof(double) * 3);
-			i += sizeof(double) * 3;
+			i += sizeof(double) * 3; // 24
 			memcpy(region.rmax, incoming.data() + i, sizeof(double) * 3);
-			i += sizeof(double) * 3;
+			i += sizeof(double) * 3; // 24
 			memcpy(region.offset, incoming.data() + i, sizeof(int) * 3);
-			i += sizeof(int) * 3;
+			i += sizeof(int) * 3; // 12
 			memcpy(&region.width, incoming.data() + i, sizeof(double));
-			i += sizeof(int);
+			i += sizeof(double); // 4
 			
 			
 			// msg format one region: rmin | rmax | offset | width | shift
@@ -409,34 +419,39 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			shiftIfNeccessary(domain, &region, shift.data());
 			
 			if(iOwnThis(myRegion, &region)) {
-				candidates[j]++; // this is a region I will send to j
+				candidates[rank]++; // this is a region I will send to rank
 				std::vector<unsigned char> singleRegion(bytesOneRegion);
 				
-				// TODO: berechne hier den overlapp von myregion und process_region
 
-				i = 0;
-				memcpy(singleRegion.data() + i, region.rmin, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				memcpy(singleRegion.data() + i, region.rmax, sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				memcpy(singleRegion.data() + i, region.offset, sizeof(int) * 3);
-				i += sizeof(int) * 3;
-				memcpy(singleRegion.data() + i, &region.width, sizeof(double));
-				i += sizeof(double);
-				memcpy(singleRegion.data() + i, shift.data(), sizeof(double) * 3);
-				i += sizeof(double) * 3;
-				
-				sendingList[j].push_back(singleRegion.data());
+				p = 0;
+				memcpy(singleRegion.data() + p, region.rmin, sizeof(double) * 3);
+				p += sizeof(double) * 3;
+				memcpy(singleRegion.data() + p, region.rmax, sizeof(double) * 3);
+				p += sizeof(double) * 3;
+				memcpy(singleRegion.data() + p, region.offset, sizeof(int) * 3);
+				p += sizeof(int) * 3;
+				memcpy(singleRegion.data() + p, &region.width, sizeof(double));
+				p += sizeof(double);
+				memcpy(singleRegion.data() + p, shift.data(), sizeof(double) * 3);
+				p += sizeof(double) * 3;
+			
+				sendingList[rank].push_back(singleRegion.data()); // second push_back fails
 			}
 		}
 	}
 	
+	cout << "no seg fault" << endl;
+	
 	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
 	for(int j = 0; j < num_incoming; j++) {
-		std::vector<unsigned char> mergedRegions(candidates[j] * bytesOneRegion);
-		
-		for(int k = 0; k < candidates[j]; k++) {
-			memcpy(mergedRegions.data() + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
+		if(candidates[j]  > 0) {
+			std::vector<unsigned char> mergedRegions(candidates[j] * bytesOneRegion);
+
+			for(int k = 0; k < candidates[j]; k++) {
+				memcpy(mergedRegions.data() + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
+			}
+			
+			merged[j] = mergedRegions.data();
 		}
 	}
 	
@@ -467,7 +482,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 
 	MPI_Allreduce(candidates.data(), rec_information.data(), 1,MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	
-	global_log->info() << "exhanged number of regions for neighbour exchange on rank: " << my_rank << endl;
+	cout << "exhanged number of regions for neighbour exchange on rank: " << my_rank << endl;
 	
 	// all the information for the final information exchange has been collected -> final exchange
 	
@@ -482,7 +497,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		}
 	}
 	
-	global_log->info() << "sent the neighbours on rank: " << my_rank << endl;
+	cout << "sent the neighbours on rank: " << my_rank << endl;
 	
 	std::vector<CommunicationPartner> comm_partners; // the communication partners
 	
@@ -526,16 +541,18 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		}
 	}
 	
-	global_log->info() << "received the neighbours on rank: " << my_rank << endl;
+	cout << "received the neighbours on rank: " << my_rank << endl;
 	
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j] > 0) 
 			MPI_Request_free(&requests[j]);
 	}
 	
-	global_log->info() << "freed the requests on rank: " << my_rank << endl;
+	cout << "freed the requests on rank: " << my_rank << endl;
 	
-	partners = comm_partners; // proper way to assign them? 
+	partners = comm_partners; // THIS ASSIGNMENT CAUSES A SEG-FAULT
+	
+	cout << "seg fault?" << endl;
 }
 
 #endif
@@ -544,7 +561,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		DomainDecompMPIBase* domainDecomp) {
 
 // corners of the process-specific domain
-	global_log->info() << "reached initCommunicationPartners" << endl;
+	cout << "reached initCommunicationPartners" << endl;
 	
 	double rmin[DIMgeom]; // lower corner
 	double rmax[DIMgeom]; // higher corner
