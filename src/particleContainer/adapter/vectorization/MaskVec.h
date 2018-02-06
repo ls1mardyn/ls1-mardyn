@@ -41,7 +41,7 @@ public:
 		#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 				return _mm256_setzero_si256();
 		#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-				if(isFloat32) {
+				if(isFloat32()) {
 					return 0x0000;
 				} else {
 					return 0x00;
@@ -57,7 +57,7 @@ public:
 		#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 				return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
 		#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-				if(isFloat32) {
+				if(isFloat32()) {
 					return 0xFFFF;
 				} else {
 					return 0xFF;
