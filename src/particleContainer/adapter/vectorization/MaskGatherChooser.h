@@ -105,7 +105,7 @@ public:
 		return _mm512_maskz_loadu_epi32(static_cast<__mmask16>(0xFFFF) & remainderMask, dist_lookup + offset);
 	}
 
-	inline static RealVec load(const vcp_real_calc* const src,
+	inline static RealCalcVec load(const vcp_real_calc* const src,
 			const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 			return _mm512_i32gather_ps(lookup, src, 4);
@@ -116,7 +116,7 @@ public:
 	}
 
 	inline static void store(vcp_real_calc* const addr, const size_t& offset,
-			RealVec& value, const vcp_lookupOrMask_vec& lookup) {
+			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup) {
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 			_mm512_i32scatter_ps(addr, lookup, value, 4);
 		#else
@@ -126,7 +126,7 @@ public:
 	}
 
 	inline static void storeMasked(vcp_real_calc* const addr, const size_t& offset,
-			RealVec& value, const vcp_lookupOrMask_vec& lookup, const MaskCalcVec mask) {
+			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup, const MaskCalcVec mask) {
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 			_mm512_mask_i32scatter_ps(addr, mask, lookup, value, 4);
 		#else
