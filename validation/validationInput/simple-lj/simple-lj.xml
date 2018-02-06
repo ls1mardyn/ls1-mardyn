@@ -41,7 +41,7 @@
 
     <algorithm>
       <parallelisation type="DomainDecomposition">
-        <CommunicationScheme>direct</CommunicationScheme>
+        <!-- CommunicationScheme>direct</CommunicationScheme -->
       </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
