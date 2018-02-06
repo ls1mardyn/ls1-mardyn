@@ -179,7 +179,7 @@ void VectorizedCellProcessor::endTraversal() {
 			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 			RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
-			const MaskVec& forceMask,
+			const MaskCalcVec& forceMask,
 			const RealCalcVec& eps_24, const RealCalcVec& sig2,
 			const RealCalcVec& shift6)
 	{
@@ -236,7 +236,7 @@ void VectorizedCellProcessor::endTraversal() {
 			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-			const MaskVec& forceMask)
+			const MaskCalcVec& forceMask)
 	{
 		const RealCalcVec c_dx = r1_x - r2_x;
 		const RealCalcVec c_dy = r1_y - r2_y;
@@ -285,7 +285,7 @@ void VectorizedCellProcessor::endTraversal() {
 			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 			RealCalcVec& M_x, RealCalcVec& M_y, RealCalcVec& M_z,
 			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-			const MaskVec& forceMask)
+			const MaskCalcVec& forceMask)
 	{
 		const RealCalcVec dx = r1_x - r2_x;
 		const RealCalcVec dy = r1_y - r2_y;
@@ -352,7 +352,7 @@ void VectorizedCellProcessor::endTraversal() {
 			RealCalcVec& M1_x, RealCalcVec& M1_y, RealCalcVec& M1_z,
 			RealCalcVec& M2_x, RealCalcVec& M2_y, RealCalcVec& M2_z,
 			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial, RealCalcVec& sum_myRF,
-			const MaskVec& forceMask,
+			const MaskCalcVec& forceMask,
 			const RealCalcVec& epsRFInvrc3)
 	{
 		const RealCalcVec dx = r1_x - r2_x;
@@ -438,7 +438,7 @@ void VectorizedCellProcessor::endTraversal() {
 			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 			RealCalcVec& M_x, RealCalcVec& M_y, RealCalcVec& M_z,
 			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-			const MaskVec& forceMask) {
+			const MaskCalcVec& forceMask) {
 
 		const RealCalcVec c_dx = r1_x - r2_x;
 		const RealCalcVec c_dy = r1_y - r2_y;
@@ -516,7 +516,7 @@ void VectorizedCellProcessor::endTraversal() {
 			RealCalcVec& M1_x, RealCalcVec& M1_y, RealCalcVec& M1_z,
 			RealCalcVec& M2_x, RealCalcVec& M2_y, RealCalcVec& M2_z,
 			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-			const MaskVec& forceMask) {
+			const MaskCalcVec& forceMask) {
 
 
 		const RealCalcVec c_dx = r1_x - r2_x;
@@ -634,7 +634,7 @@ void VectorizedCellProcessor::endTraversal() {
 			RealCalcVec& Mii_x, RealCalcVec& Mii_y, RealCalcVec& Mii_z,
 			RealCalcVec& Mjj_x, RealCalcVec& Mjj_y, RealCalcVec& Mjj_z,
 			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-			const MaskVec& forceMask)
+			const MaskCalcVec& forceMask)
 	{
 		const RealCalcVec c_dx = r1_x - r2_x;
 		const RealCalcVec c_dy = r1_y - r2_y;

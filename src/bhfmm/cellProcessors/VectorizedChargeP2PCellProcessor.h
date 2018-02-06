@@ -134,7 +134,7 @@ private:
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask);
+		const MaskCalcVec& forceMask);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.

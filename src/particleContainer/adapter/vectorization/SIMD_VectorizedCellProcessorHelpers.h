@@ -100,13 +100,13 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2//avx
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		__m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
+		__m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskCalcVec::ones());
 		indices = _mm256_add_epi32(indices, indices); // only every second...
 		eps_24 = _mm256_i32gather_ps(eps_sigI, indices, 4);
 		sig2 = _mm256_i32gather_ps(eps_sigI+1, indices, 4);
 
 	#else /* VCP_DPDP */
-		__m256i indices = _mm256_maskload_epi64((const long long *)(id_j_shifted), MaskVec::ones());
+		__m256i indices = _mm256_maskload_epi64((const long long *)(id_j_shifted), MaskCalcVec::ones());
 		indices = _mm256_add_epi64(indices, indices); // only every second...
 		eps_24 = _mm256_i64gather_pd(eps_sigI, indices, 8);
 		sig2 = _mm256_i64gather_pd(eps_sigI+1, indices, 8);
@@ -227,11 +227,11 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		const __m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
+		const __m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskCalcVec::ones());
 		shift6 = _mm256_i32gather_ps(shift6I, indices, 4);
 
 	#else /* VCP_DPDP */
-		__m256i indices = _mm256_maskload_epi64((const long long *)(id_j_shifted), MaskVec::ones());
+		__m256i indices = _mm256_maskload_epi64((const long long *)(id_j_shifted), MaskCalcVec::ones());
 		shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
 	#endif
 
@@ -372,7 +372,7 @@ void vcp_simd_load_fnmadd_store(vcp_real_calc * const addr, size_t offset, const
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_add_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskVec mask){
+void vcp_simd_load_add_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskCalcVec mask){
 	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum + value;
 	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
@@ -385,7 +385,7 @@ void vcp_simd_load_add_store_masked(vcp_real_calc * const addr, size_t offset, c
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_sub_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskVec mask){
+void vcp_simd_load_sub_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskCalcVec mask){
 	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum - value;
 	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
@@ -414,13 +414,13 @@ public:
 #endif
 	}
 
-	vcp_inline static MaskVec InitJ_Mask(const size_t i) {  // calculations only for i onwards.
+	vcp_inline static MaskCalcVec InitJ_Mask(const size_t i) {  // calculations only for i onwards.
 		return vcp_simd_getInitMask(i);
 	}
 
-	vcp_inline static MaskVec GetForceMask(const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskVec& j_mask) {
-		MaskVec result = (m_r2 != RealCalcVec::zero()) and j_mask;
-		j_mask = MaskVec::ones();
+	vcp_inline static MaskCalcVec GetForceMask(const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskCalcVec& j_mask) {
+		MaskCalcVec result = (m_r2 != RealCalcVec::zero()) and j_mask;
+		j_mask = MaskCalcVec::ones();
 
 		if (ApplyCutoff == true) {
 			 result = (m_r2 < rc2) and result;
@@ -450,14 +450,14 @@ public:
 		return InitJ(i);
 	}
 
-	vcp_inline static MaskVec GetForceMask (const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskVec& /*j_mask*/)
+	vcp_inline static MaskCalcVec GetForceMask (const RealCalcVec& m_r2, const RealCalcVec& rc2, MaskCalcVec& /*j_mask*/)
 	{
 		// Provide a mask with the same logic as used in
-		MaskVec result;
+		MaskCalcVec result;
 		if (ApplyCutoff == true) {
 			result = m_r2 < rc2;
 		} else {
-			result = MaskVec::ones();
+			result = MaskCalcVec::ones();
 		}
 
 		// Note: add m_r2 != 0.0, when (if) Molecules' Sites get split between cells
@@ -465,9 +465,9 @@ public:
 		return result;
 	}
 
-	vcp_inline static MaskVec InitJ_Mask (const size_t /*i*/)
+	vcp_inline static MaskCalcVec InitJ_Mask (const size_t /*i*/)
 	{
-		return MaskVec::ones();//totally unimportant, since not used...
+		return MaskCalcVec::ones();//totally unimportant, since not used...
 	}
 
 	vcp_inline static size_t NumDistanceCalculations(const size_t numSoA1, const size_t numSoA2) {
@@ -485,7 +485,7 @@ static vcp_inline calcDistLookup (const size_t & i_center_idx, const size_t & so
 		const RealCalcVec & cutoffRadiusSquareD, size_t end_j, const RealCalcVec m1_r_x, const RealCalcVec m1_r_y, const RealCalcVec m1_r_z) {
 
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
-	MaskVec initJ_mask = ForcePolicy :: InitJ_Mask(i_center_idx);
+	MaskCalcVec initJ_mask = ForcePolicy :: InitJ_Mask(i_center_idx);
 
 	MaskGatherChooser mgc(soa2_center_dist_lookup, j);
 
@@ -500,12 +500,12 @@ static vcp_inline calcDistLookup (const size_t & i_center_idx, const size_t & so
 
 		const RealCalcVec m_r2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-		const MaskVec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
+		const MaskCalcVec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
 
 		mgc.storeCalcDistLookup(j, forceMask);
 
 	}
-	const MaskVec remainderMask = vcp_simd_getRemainderMask(soa2_num_centers);
+	const MaskCalcVec remainderMask = vcp_simd_getRemainderMask(soa2_num_centers);
 	if (remainderMask.movemask()) {
 		const RealCalcVec m2_r_x = RealCalcVec::aligned_load_mask(soa2_m_r_x + j, remainderMask);
 		const RealCalcVec m2_r_y = RealCalcVec::aligned_load_mask(soa2_m_r_y + j, remainderMask);
@@ -517,7 +517,7 @@ static vcp_inline calcDistLookup (const size_t & i_center_idx, const size_t & so
 
 		const RealCalcVec m_r2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-		const MaskVec forceMask = remainderMask and ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);//AND remainderMask -> set unimportant ones to zero.
+		const MaskCalcVec forceMask = remainderMask and ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);//AND remainderMask -> set unimportant ones to zero.
 		mgc.storeCalcDistLookup(j, forceMask);
 	}
 

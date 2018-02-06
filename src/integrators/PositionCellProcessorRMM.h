@@ -61,7 +61,7 @@ public:
 			r_z.aligned_store(soa_r_z + i);
 
 		}
-		const MaskVec remainderMask = vcp_simd_getRemainderMask(soa.getMolNum());
+		const MaskCalcVec remainderMask = vcp_simd_getRemainderMask(soa.getMolNum());
 		if (remainderMask.movemask()) {
 			RealCalcVec r_x = RealCalcVec::aligned_load_mask(soa_r_x + i, remainderMask);
 			RealCalcVec r_y = RealCalcVec::aligned_load_mask(soa_r_y + i, remainderMask);

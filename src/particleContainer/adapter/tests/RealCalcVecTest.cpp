@@ -4,9 +4,7 @@
  */
 
 #include "RealCalcVecTest.h"
-#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
-#include "particleContainer/adapter/vectorization/MaskVec.h"
-#include "particleContainer/adapter/vectorization/RealCalcVec.h"
+#include "particleContainer/adapter/vectorization/SIMD_DEFINITIONS.h"
 #include "utils/AlignedArray.h"
 #include "utils/mardyn_assert.h"
 
@@ -57,15 +55,15 @@ void RealCalcVecTest::testFastReciprocalMask() {
 
 	#if VCP_VEC_TYPE == VCP_VEC_AVX2
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
 		#endif
 	#else
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = 0x0007;
+			vcp::MaskCalcVec mask = 0x0007;
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = 0x07;
+			vcp::MaskCalcVec mask = 0x07;
 		#endif
 	#endif
 
@@ -107,15 +105,15 @@ void RealCalcVecTest::testFastReciprocSqrtMask() {
 
 	#if VCP_VEC_TYPE == VCP_VEC_AVX2
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
 		#endif
 	#else
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = 0x0007;
+			vcp::MaskCalcVec mask = 0x0007;
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = 0x07;
+			vcp::MaskCalcVec mask = 0x07;
 		#endif
 	#endif
 

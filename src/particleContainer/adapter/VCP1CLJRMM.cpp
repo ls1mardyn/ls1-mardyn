@@ -197,7 +197,7 @@ vcp_inline void VCP1CLJRMM::_loopBodyLJ(
 	const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 	RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 	RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
-	const MaskVec& forceMask,
+	const MaskCalcVec& forceMask,
 	const RealCalcVec& eps_24, const RealCalcVec& sig2,
 	const RealCalcVec& shift6)
 {
@@ -280,7 +280,7 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 	const size_t soa1_mol_num = soa1.getMolNum();
 	for (size_t i = 0; i < soa1_mol_num; ++i) {
 		size_t j = ForcePolicy :: InitJ(i);
-		MaskVec initJ_mask = ForcePolicy :: InitJ_Mask(i);
+		MaskCalcVec initJ_mask = ForcePolicy :: InitJ_Mask(i);
 
 		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
 		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
@@ -301,7 +301,7 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 
 			const RealCalcVec m_r2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-			const MaskVec forceMask = ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);
+			const MaskCalcVec forceMask = ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);
 
 			if (MaskGatherChooser::computeLoop(forceMask)) {
 				RealCalcVec fx, fy, fz;
@@ -316,7 +316,7 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 				sum_fz1 = sum_fz1 + fz;
 			}
 		}
-		const MaskVec remainderMask = vcp_simd_getRemainderMask(soa2.getMolNum());
+		const MaskCalcVec remainderMask = vcp_simd_getRemainderMask(soa2.getMolNum());
 		if (remainderMask.movemask())
 		{
 			const RealCalcVec m2_r_x = RealCalcVec::aligned_load_mask(soa2_mol_pos_x + j, remainderMask);
@@ -329,7 +329,7 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 
 			const RealCalcVec m_r2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-			const MaskVec forceMask = remainderMask and ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);//AND remainderMask -> set unimportant ones to zero.
+			const MaskCalcVec forceMask = remainderMask and ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);//AND remainderMask -> set unimportant ones to zero.
 
 			if (MaskGatherChooser::computeLoop(forceMask)) {
 				RealCalcVec fx, fy, fz;

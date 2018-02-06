@@ -22,7 +22,13 @@
     #include "./SIMD_TYPES.h"
 #endif
 
-#include "RealCalcVec.h"
+#include "RealVec.h"
+
+namespace vcp {
+	typedef MaskVec<vcp_real_calc> MaskCalcVec;
+	typedef RealVec<vcp_real_calc> RealCalcVec;
+}
+
 #include <cmath>
 #include "sys/types.h"
 
@@ -114,7 +120,7 @@ using namespace vcp;
 		}
 		static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
 			switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-				case 0: return MaskVec::zero();
+				case 0: return MaskCalcVec::zero();
 				case 1: return _mm256_set_epi32(0, 0, 0, 0, 0, 0, ~0, ~0);
 				case 2: return _mm256_set_epi32(0, 0, 0, 0, ~0, ~0, ~0, ~0);
 				default: return _mm256_set_epi32(0, 0, ~0, ~0, ~0, ~0, ~0, ~0);

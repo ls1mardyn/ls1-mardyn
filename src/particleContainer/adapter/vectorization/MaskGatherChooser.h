@@ -2,7 +2,7 @@
 
 class MaskingChooser {
 private:
-	MaskVec compute_molecule=MaskVec::zero();
+	MaskCalcVec compute_molecule=MaskCalcVec::zero();
 	vcp_mask_single* const storeCalcDistLookupLocation;
 public:
 	MaskingChooser(vcp_mask_single* const soa2_center_dist_lookup, size_t /*j*/):
@@ -13,7 +13,7 @@ public:
 		return compute_molecule.movemask() ? 1 : 0;
 	}
 
-	inline void storeCalcDistLookup(size_t j, MaskVec forceMask){
+	inline void storeCalcDistLookup(size_t j, MaskCalcVec forceMask){
 		forceMask.aligned_store(storeCalcDistLookupLocation + j/VCP_INDICES_PER_LOOKUP_SINGLE);
 		compute_molecule = compute_molecule or forceMask;
 	}
@@ -23,7 +23,7 @@ public:
 	}
 
 	inline static vcp_lookupOrMask_vec loadLookupOrForceMask(vcp_lookupOrMask_single* dist_lookup, size_t offset){
-		return MaskVec::aligned_load(dist_lookup + offset/VCP_INDICES_PER_LOOKUP_SINGLE);
+		return MaskCalcVec::aligned_load(dist_lookup + offset/VCP_INDICES_PER_LOOKUP_SINGLE);
 	}
 
 	inline static RealCalcVec load(const vcp_real_calc* const src,
@@ -36,7 +36,7 @@ public:
 		value.aligned_store(addr + offset);
 	}
 
-	inline static bool computeLoop(const MaskVec& forceMask) {
+	inline static bool computeLoop(const MaskCalcVec& forceMask) {
 		return forceMask.movemask();
 	}
 
@@ -44,7 +44,7 @@ public:
 		return false;
 	}
 
-	inline static MaskVec getForceMask(const MaskVec& forceMask) {
+	inline static MaskCalcVec getForceMask(const MaskCalcVec& forceMask) {
 		return forceMask;
 	}
 
@@ -71,7 +71,7 @@ public:
 		#endif
 	}
 
-	inline void storeCalcDistLookup(size_t j, MaskVec forceMask){
+	inline void storeCalcDistLookup(size_t j, MaskCalcVec forceMask){
 		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			_mm512_mask_packstorelo_epi32(storeCalcDistLookupLocation + counter, static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
 			_mm512_mask_packstorehi_epi32(storeCalcDistLookupLocation + counter + (64 / sizeof(vcp_lookupOrMask_single)), static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
@@ -127,7 +127,7 @@ public:
 		#endif
 	}
 
-	inline static RealCalcVec load(const vcp_real_calc* const src,
+	inline static RealVec load(const vcp_real_calc* const src,
 			const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
@@ -146,7 +146,7 @@ public:
 	}
 
 	inline static void store(vcp_real_calc* const addr, const size_t& offset,
-			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup) {
+			RealVec& value, const vcp_lookupOrMask_vec& lookup) {
 		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 				_mm512_i32scatter_ps(addr, lookup, value, 4);
@@ -164,7 +164,7 @@ public:
 	}
 
 	inline static void storeMasked(vcp_real_calc* const addr, const size_t& offset,
-			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup, const MaskVec mask) {
+			RealVec& value, const vcp_lookupOrMask_vec& lookup, const MaskCalcVec mask) {
 		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 				_mm512_mask_i32scatter_ps(addr, mask, lookup, value, 4);
@@ -189,8 +189,8 @@ public:
 		return true;
 	}
 
-	inline static MaskVec getForceMask(const vcp_lookupOrMask_vec& /*forceMask*/) {
-		return MaskVec::ones();//compute everything
+	inline static MaskCalcVec getForceMask(const vcp_lookupOrMask_vec& /*forceMask*/) {
+		return MaskCalcVec::ones();//compute everything
 	}
 
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
@@ -227,7 +227,7 @@ public:
 		return _numUnmasked;
 	}
 
-	vcp_inline void storeCalcDistLookup(size_t j, MaskVec forceMask) {
+	vcp_inline void storeCalcDistLookup(size_t j, MaskCalcVec forceMask) {
 		_numUnmasked += forceMask.countUnmasked();
 	}
 };

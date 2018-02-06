@@ -115,7 +115,7 @@ public:
 			sum_summv2 = sum_summv2 + v2;
 
 		}
-		const MaskVec remainderMask = vcp_simd_getRemainderMask(soa.getMolNum());
+		const MaskCalcVec remainderMask = vcp_simd_getRemainderMask(soa.getMolNum());
 		if (remainderMask.movemask()) {
 			const RealCalcVec v_x = RealCalcVec::aligned_load_mask(soa_v_x + i, remainderMask);
 			const RealCalcVec v_y = RealCalcVec::aligned_load_mask(soa_v_y + i, remainderMask);

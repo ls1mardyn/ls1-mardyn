@@ -183,7 +183,7 @@ void VectorizedLJP2PCellProcessor :: _loopBodyLJ(
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 		RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
-		const MaskVec& forceMask,
+		const MaskCalcVec& forceMask,
 		const RealCalcVec& eps_24, const RealCalcVec& sig2,
 		const RealCalcVec& shift6)
 {
