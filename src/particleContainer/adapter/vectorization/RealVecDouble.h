@@ -56,7 +56,7 @@ public:
 
 	static MaskVec<double> cast_RealCalcVec_to_MaskVec(const RealVec& d) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return static_cast<vcp_mask_vec>(d);
+		return static_cast<MaskVec<double>>(d);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_castpd_si128(d);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -390,7 +390,7 @@ public:
 					__m128d high = _mm256_extractf128_pd(inv_prec, 1);
 					int nan_found = _mm_movemask_pd(_mm_cmpunord_pd(low, high));
 				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-					vcp_mask_vec nan_found = _mm512_cmp_pd_mask(inv_prec, inv_prec, _CMP_UNORD_Q);
+					MaskVec<double> nan_found = _mm512_cmp_pd_mask(inv_prec, inv_prec, _CMP_UNORD_Q);
 				#endif
 			if (nan_found) {
 				Log::global_log->error() << "NaN detected! Perhaps forceMask is wrong" << std::endl;
@@ -459,7 +459,7 @@ public:
 					__m128d high = _mm256_extractf128_pd(invSqrt_prec, 1);
 					int nan_found = _mm_movemask_pd(_mm_cmpunord_pd(low, high));
 				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-					vcp_mask_vec nan_found = _mm512_cmp_pd_mask(invSqrt_prec, invSqrt_prec, _CMP_UNORD_Q);
+					MaskVec<double> nan_found = _mm512_cmp_pd_mask(invSqrt_prec, invSqrt_prec, _CMP_UNORD_Q);
 				#endif
 			if (nan_found) {
 				Log::global_log->error() << "NaN detected! Perhaps forceMask is wrong" << std::endl;

@@ -56,7 +56,7 @@ public:
 
 	static MaskVec<float> cast_RealCalcVec_to_MaskVec(const RealVec& d) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return static_cast<vcp_mask_vec>(d);
+		return static_cast<MaskVec<float>>(d);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_castps_si128(d);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -391,8 +391,8 @@ public:
 					int nan_found = _mm_movemask_ps(_mm_cmpunord_ps(low, high));
 				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 					//GCC doesnt know the convenient instruction, so the explicit comparison is used (at the moment)
-					//vcp_mask_vec nan_found = _mm512_cmpunord_ps_mask(inv_prec, inv_prec);
-					vcp_mask_vec nan_found = _mm512_cmp_ps_mask(inv_prec, inv_prec, _CMP_UNORD_Q);
+					//MaskVec<float> nan_found = _mm512_cmpunord_ps_mask(inv_prec, inv_prec);
+					MaskVec<float> nan_found = _mm512_cmp_ps_mask(inv_prec, inv_prec, _CMP_UNORD_Q);
 				#endif
 			if (nan_found) {
 				Log::global_log->error() << "NaN detected! Perhaps forceMask is wrong" << std::endl;
@@ -458,8 +458,8 @@ public:
 					int nan_found = _mm_movemask_ps(_mm_cmpunord_ps(low, high));
 				#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 					//GCC doesnt know the convenient instruction, so the explicit comparison is used (at the moment)
-					//vcp_mask_vec nan_found = _mm512_cmpunord_ps_mask(invSqrt_prec, invSqrt_prec);
-					vcp_mask_vec nan_found = _mm512_cmp_ps_mask(invSqrt_prec, invSqrt_prec, _CMP_UNORD_Q);
+					//MaskVec<float> nan_found = _mm512_cmpunord_ps_mask(invSqrt_prec, invSqrt_prec);
+					MaskVec<float> nan_found = _mm512_cmp_ps_mask(invSqrt_prec, invSqrt_prec, _CMP_UNORD_Q);
 				#endif
 			if (nan_found) {
 				Log::global_log->error() << "NaN detected! Perhaps forceMask is wrong" << std::endl;
