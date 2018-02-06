@@ -22,6 +22,8 @@ class IndirectNeighbourCommunicationScheme;
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
 	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
 	_neighbours.resize(this->getCommDims());
+	_haloOrForceNeighbours.resize(this->getCommDims());
+	_leavingNeighbours.resize(this->getCommDims());
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
@@ -52,6 +54,12 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 
 void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions,
 		MessageType msgType, DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer) {
+	
+#if PUSH_PULL_PARTNERS
+	global_log->info() << "select call - initExchangeMoleculesMPI" << endl;
+	selectNeighbours(msgType);
+#endif
+	
 	for (const HaloRegion& haloRegion : haloRegions) {
 		bool isinownprocess = true;
 		for (int d = 0; d < 3; d++) {
@@ -549,10 +557,14 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	}
 	
 	cout << "freed the requests on rank: " << my_rank << endl;
-	
-	partners = comm_partners; // THIS ASSIGNMENT CAUSES A SEG-FAULT
-	
-	cout << "seg fault?" << endl;
+	cout << "number neighbours: " << comm_partners.size() << " on: " << my_rank << endl;
+	if(comm_partners.size() > 0) {
+		cout << "BEFORE CLEAR on: " << my_rank <<endl;
+		partners.clear();
+		cout << "AFTER CLEAR on: " << my_rank << endl;
+		partners.insert(partners.begin(), comm_partners.begin(), comm_partners.end());// THIS ASSIGNMENT CAUSES A SEG-FAULT
+	}
+	cout << "exit aquire" << endl;
 }
 
 #endif
@@ -585,7 +597,6 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	// halo/force regions
 	std::vector<HaloRegion> haloOrForceRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<HaloRegion> leavingRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
-	
 	
 	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, _haloOrForceNeighbours[0]);
 	aquireNeighbours(domain, &ownRegion, leavingRegions, _leavingNeighbours[0]);
