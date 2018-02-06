@@ -152,6 +152,7 @@ private:
 	
 	void aquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners);
 	void shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray);
+	void overlap(HaloRegion *myRegion, HaloRegion *inQuestion);
 	bool iOwnThis(HaloRegion *myRegion, HaloRegion *inQuestion);
 };
 

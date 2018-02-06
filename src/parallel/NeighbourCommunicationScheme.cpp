@@ -297,22 +297,36 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
 			_neighbours = _haloOrForceNeighbours;
 			break;
 	}
+	
+	cout << "exit" << endl;
 }
 
-void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray) {
+void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray) { // THIS STUFF HERE IS NOT CORRECT
 	double domain_length[3] = { domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2) };
 	
-	for(int i = 0; i < 3; i++) // calculating shift
-		if(region->rmax[i] >= domain_length[i] || region->rmin[i] >= domain_length[i])
+	for(int i = 0; i < 3; i++) // calculating shift 
+		if(region->rmin[i] >= domain_length[i])
 			shiftArray[i] = -domain_length[i];
 	
 	for(int i = 0; i < 3; i++) // calculating shift
-		if(region->rmax[i] < 0 || region->rmin[i] < 0)
+		if(region->rmax[i] <= 0)
 			shiftArray[i] = domain_length[i];
 
 	for(int i = 0; i < 3; i++) { // applying shift
 		region->rmax[i] += shiftArray[i];
 		region->rmin[i] += shiftArray[i];
+	}
+}
+
+void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
+	// CALCULATE THE OVERLAP AND WRITE IT INTO inQuestion
+	int diff;
+	for(int i = 0; i < 3; i++) {
+		if((diff = myRegion->rmax[i] - inQuestion->rmax[i]) < 0)
+			inQuestion->rmax[i] += diff;
+		
+		if((diff = myRegion->rmin[i] - inQuestion->rmin[i]) > 0)
+			inQuestion->rmin[i] += diff;
 	}
 }
 
@@ -437,9 +451,9 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			if(iOwnThis(myRegion, &region)) { 
 				candidates[rank]++; // this is a region I will send to rank
 				
-				cout << "candidates[rank]: " << candidates[rank] << " on: " << my_rank << endl; // 26 on 1, but only 18 on 0
+				// cout << "candidates[rank]: " << candidates[rank] << " on: " << my_rank << endl; // 26 on both
 				
-				// TODO: region zerlegen
+				overlap(myRegion, &region);
 				
 				std::vector<unsigned char> singleRegion(bytesOneRegion);
 			
@@ -460,7 +474,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		}
 	}
 	
-	cout << "no seg fault" << endl;
 	
 	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
 	for(int j = 0; j < num_incoming; j++) {
@@ -499,8 +512,12 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	 * 
 	 */
 	
-
-	MPI_Allreduce(candidates.data(), rec_information.data(), 1,MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	cout << "candidates: ";
+	for(int j = 0; j < num_incoming; j++) {
+		cout << candidates[j] << " ";
+	}
+	cout << endl;
+	MPI_Allreduce(candidates.data(), rec_information.data(), num_incoming,MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	
 	cout << "rec_information[my_rank]: " << rec_information[my_rank] << " on: " << my_rank << endl;
 	
@@ -539,7 +556,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		byte_counter += bytes;
 		// create buffer
 		std::vector<unsigned char> raw_neighbours(bytes);
-		MPI_Recv(raw_neighbours.data(), bytes, MPI_BYTE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &rec_status);
+		MPI_Recv(raw_neighbours.data(), bytes, MPI_BYTE, source, 1, MPI_COMM_WORLD, &rec_status);
 		// Interpret Buffer and add neighbours
 		for(int k = 0; k < (bytes / bytesOneRegion); k++) { // number of regions from this process
 			HaloRegion region;
@@ -567,6 +584,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		}
 	}
 	
+	/*
 	cout << "received the neighbours on rank: " << my_rank << endl;
 	
 	for(int j = 0; j < num_incoming; j++) {
@@ -575,12 +593,12 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	}
 	
 	cout << "freed the requests on rank: " << my_rank << endl;
+	*/
+	
 	cout << "number neighbours: " << comm_partners.size() << " on: " << my_rank << endl;
 	if(comm_partners.size() > 0) {
-		cout << "BEFORE CLEAR on: " << my_rank <<endl;
-		partners.clear();
-		cout << "AFTER CLEAR on: " << my_rank << endl;
-		partners.insert(partners.begin(), comm_partners.begin(), comm_partners.end());// THIS ASSIGNMENT CAUSES A SEG-FAULT
+		partners = squeezePartners(comm_partners);// THIS ASSIGNMENT CAUSES A SEG-FAULT
+		cout << "FINAL NUMBER OF NEIGHBOURS: " << partners.size() << " on: " << my_rank << endl;
 	}
 	cout << "exit aquire" << endl;
 }
