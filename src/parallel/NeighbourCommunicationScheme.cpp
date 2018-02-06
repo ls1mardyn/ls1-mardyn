@@ -17,7 +17,7 @@ class IndirectNeighbourCommunicationScheme;
 #include "parallel/ZonalMethods/ZonalMethod.h"
 #include <mpi.h>
 
-#define PUSH_PULL_PARTNERS 0
+#define PUSH_PULL_PARTNERS 1
 
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
 	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
@@ -516,6 +516,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			MPI_Isend(merged[j], candidates[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD, &requests[j]); // tag is one
 		}
 	}
+	
+	MPI_Barrier(MPI_COMM_WORLD);
 	
 	cout << "sent the neighbours on rank: " << my_rank << endl;
 	
