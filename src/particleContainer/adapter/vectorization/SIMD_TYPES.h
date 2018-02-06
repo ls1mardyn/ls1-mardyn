@@ -115,45 +115,37 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
-	#define VCP_ALIGNMENT 8
-
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 
-	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
-
 	#define VCP_VEC_WIDTH VCP_VEC_W_128
+
+	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
 
 	typedef __m128i vcp_mask_vec;
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
-	#define VCP_ALIGNMENT 16
-
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
 
-	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
+	#define VCP_VEC_WIDTH VCP_VEC_W_256
 
-	#define VCP_VEC_WIDTH VCP_VEC_W_256	
+	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
 
 	typedef __m256i vcp_mask_vec;
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
-	#define VCP_ALIGNMENT 32
-
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or \
 	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+
+	#define VCP_VEC_WIDTH VCP_VEC_W_512
 
 	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, __mmask16, __mmask8>::type vcp_mask_single;
 	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, __mmask16, __mmask8>::type vcp_mask_vec;
 	
-	#define VCP_VEC_WIDTH VCP_VEC_W_512
-	
 	// gather-scatter definitions:
 	typedef std::conditional<VCP_VEC_TYPE == VCP_VEC_KNL, vcp_mask_single, countertype32> vcp_lookupOrMask_single;
 	typedef std::conditional<VCP_VEC_TYPE == VCP_VEC_KNL, vcp_mask_vec, __m512i>::type vcp_lookupOrMask_vec;
-
-	#define VCP_ALIGNMENT 64
 
 #endif
 
