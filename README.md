@@ -16,6 +16,7 @@ Prerequisites:
 ### optional requirements:
 * FFTW3: <http://www.fftw.org>
 * VTK: <http://www.vtk.org>
+* QuickSched: <https://arxiv.org/abs/1601.05384>
 
 
 Installation
