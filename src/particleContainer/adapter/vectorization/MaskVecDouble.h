@@ -28,6 +28,8 @@ private:
 		typedef __m256i mask_vec;
 		typedef uint64_t mask_single;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+
+		// these can't be put in std::conditional, because it would just be too nice. warnings.
 		typedef __mmask8 mask_vec;
 		typedef __mmask8 mask_single;
 

@@ -140,12 +140,23 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 
 	#define VCP_VEC_WIDTH VCP_VEC_W_512
 
-	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, __mmask16, __mmask8>::type vcp_mask_single;
-	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, __mmask16, __mmask8>::type vcp_mask_vec;
-	
-	// gather-scatter definitions:
-	typedef std::conditional<VCP_VEC_TYPE == VCP_VEC_KNL, vcp_mask_single, countertype32> vcp_lookupOrMask_single;
-	typedef std::conditional<VCP_VEC_TYPE == VCP_VEC_KNL, vcp_mask_vec, __m512i>::type vcp_lookupOrMask_vec;
+	// these can't be put in std::conditional, because it would just be too nice. warnings.
+	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
+		typedef __mmask16 vcp_mask_vec;
+		typedef __mmask16 vcp_mask_single;
+	#else // VCP_PREC==VCP_DPDP
+		typedef __mmask8 vcp_mask_vec;
+		typedef __mmask8 vcp_mask_single;
+	#endif
+
+	#if VCP_VEC_TYPE==VCP_VEC_KNL
+		typedef vcp_mask_vec vcp_lookupOrMask_vec;
+		typedef vcp_mask_single vcp_lookupOrMask_single;
+
+	#else  // VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+		typedef __m512i vcp_lookupOrMask_vec;
+		typedef countertype32 vcp_lookupOrMask_single;
+	#endif
 
 #endif
 
