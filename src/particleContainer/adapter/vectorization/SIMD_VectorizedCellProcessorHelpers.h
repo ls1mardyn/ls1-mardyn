@@ -266,47 +266,7 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
  */
 static vcp_inline
 void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
-#if VCP_VEC_TYPE==VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX or VCP_VEC_TYPE == VCP_VEC_AVX2
 	RealCalcVec::horizontal_add_and_store(a, mem_addr);
-
-	// NOTE: separate, because only the Intel compiler provides _mm512_reduce_add_pd/ps
-#elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		//a		 = |  1 |  2 |  3 |  4 |  5 |....| 13 | 14 | 15 | 16 |
-		//low	 = |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |
-		//high	 = |  9 | 10 | 11 | 12 | 14 | 14 | 15 | 16 |
-		__m256 low = _mm512_castps512_ps256(a);
-
-		__m128 h1 = _mm512_extractf32x4_ps(a, 2);
-		__m128 h2 = _mm512_extractf32x4_ps(a, 3);
-		__m256 high = _mm256_castps128_ps256(h1);
-		high = _mm256_insertf128_ps(high, h2, 1);
-
-		//low+high 	= | 1+9 | 2+10 | 3+11 |...| 8+16 |
-		//			= |  1  |  2   |  3   |...|  8   |
-		//t1 = | 1+2 | 3+4 | 1+2 | 3+4 | 5+6 | 7+8 | 5+6 | 7+8 |
-		__m256 t1 = _mm256_hadd_ps(low + high, low + high);
-		//t1 = | 1234 | 1234 | 1234 | 1234 | 5678 | 5678 | 5678 | 5678 |
-		t1 = _mm256_hadd_ps(t1, t1);
-		//t2 = | 5678 | 5678 | 5678 | 5678 |
-		__m128 t2 = _mm256_extractf128_ps(t1,1);
-		//t3 = | 12345678 | 1234 | 1234 | 1234 |
-		__m128 t3 = _mm_add_ss(_mm256_castps256_ps128(t1), t2);
-
-		// only add first float value (12345678) of t3
-		*mem_addr += _mm_cvtss_f32(t3);
-
-	#else /* VCP_DPDP */
-		__m256d low = _mm512_extractf64x4_pd(a, 0);
-		__m256d high = _mm512_extractf64x4_pd(a, 1);
-
-		__m256d t1 = _mm256_hadd_pd(low + high, low + high);
-		__m128d t2 = _mm256_extractf128_pd(t1,1);
-		__m128d t3 = _mm_add_sd(_mm256_castpd256_pd128(t1),t2);
-
-		*mem_addr += _mm_cvtsd_f64(t3);
-	#endif
-#endif
 }
 
 static vcp_inline

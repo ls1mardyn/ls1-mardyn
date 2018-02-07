@@ -336,6 +336,14 @@ public:
 
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		// add eight doubles
+		__m256d low = _mm512_extractf64x4_pd(a, 0);
+		__m256d high = _mm512_extractf64x4_pd(a, 1);
+
+		__m256d t1 = _mm256_hadd_pd(low + high, low + high);
+		__m128d t2 = _mm256_extractf128_pd(t1,1);
+		__m128d t3 = _mm_add_sd(_mm256_castpd256_pd128(t1),t2);
+
+		*mem_addr += _mm_cvtsd_f64(t3);
 	#endif
 	}
 
