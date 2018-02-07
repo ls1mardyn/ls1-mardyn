@@ -81,7 +81,11 @@ ifeq (, $(filter $(PRECISION), $(precision_options)))
   $(error ERROR: invalid PRECISION option chosen. Set to SINGLE, MIXED or DOUBLE.)
 endif
 ifeq ($(PRECISION), MIXED)
-  $(error ERROR: MIXED precision not supported yet)
+  $(info # WARNING)
+  $(info # WARNING)
+  $(info # WARNING: MIXED precision in development! )
+  $(info # WARNING)
+  $(info # WARNING)
 endif
 
 ifeq ($(PRECISION), SINGLE)

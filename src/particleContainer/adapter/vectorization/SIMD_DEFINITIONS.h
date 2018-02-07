@@ -29,6 +29,11 @@ namespace vcp {
 	typedef RealVec<vcp_real_calc> RealCalcVec;
 }
 
+#include "RealAccumVecBackend.h"
+namespace vcp {
+	typedef RealAccumVecBackend<vcp_real_accum> RealAccumVec;
+}
+
 // use constexpr instead of conditional compilation to death:
 
 constexpr size_t VCP_VEC_SIZE = sizeof(vcp::RealCalcVec) / sizeof(vcp_real_calc);

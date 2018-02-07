@@ -29,6 +29,7 @@ private:
 		typedef __m512d real_vec;
 	#endif
 
+protected:
 	real_vec _d;
 
 public:
@@ -40,6 +41,15 @@ public:
 
 	RealVec(const real_vec & d) {
 		_d = d;
+	}
+
+	RealVec(const RealVec& rhs) {
+		_d = rhs._d;
+	}
+
+	RealVec& operator=(const RealVec& rhs) {
+		_d = rhs._d;
+		return *this;
 	}
 
 	static RealVec cast_MaskVec_to_RealCalcVec(const MaskVec<double>& m) {
