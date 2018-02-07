@@ -531,7 +531,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	// all the information for the final information exchange has been collected -> final exchange
 	
-	std::vector<MPI_Request> requests(num_incoming);
+	std::vector<MPI_Request> requests(num_incoming, MPI_REQUEST_NULL);
 	MPI_Status probe_status;
 	MPI_Status rec_status;
 	
@@ -542,7 +542,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		}
 	}
 	
-	MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Barrier(MPI_COMM_WORLD);
 	
 	cout << "sent the neighbours on rank: " << my_rank << endl;
 	
@@ -551,7 +551,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	// receive data (blocking)
 	int byte_counter = 0;
 	
-	while(byte_counter < rec_information[my_rank]) { // TODO: I do not know yet, how many regions I received
+	while(byte_counter < rec_information[my_rank] * bytesOneRegion) { // TODO: I do not know yet, how many regions I received
+
 		// MPI_PROBE
 		MPI_Probe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &probe_status);
 		// interpret probe
@@ -611,7 +612,10 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		partners = squeezePartners(comm_partners);// THIS ASSIGNMENT CAUSES A SEG-FAULT
 		cout << "FINAL NUMBER OF NEIGHBOURS: " << partners.size() << " on: " << my_rank << endl;
 	}
-	cout << "exit aquire" << endl;
+	cout << "exit aquire on rank: " << my_rank << endl;
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 #endif
