@@ -44,7 +44,7 @@ class XMLfileUnits;
  * \endcode
  *
  * Optionally each plugin can provide its own implemenation of the following method to
- * read in a corresoonding section from the xml config file:
+ * read in a corresponding section from the xml config file:
  * - readXML: read in xml section from config file
  */
 class OutputBase {
