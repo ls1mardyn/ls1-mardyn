@@ -279,7 +279,7 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
 			std::vector<std::vector <CommunicationPartner>> combined;
 			combined.resize(this->getCommDims());
 			combined = _leavingNeighbours; // this assignment creates a new vector
-			for(int i = 0; i < combined.size(); i++)
+			for(unsigned int i = 0; i < combined.size(); i++)
 				combined[i].insert(combined[i].end(), _haloOrForceNeighbours[i].begin(), _haloOrForceNeighbours[i].end());
 			_neighbours = combined;
 			break;
@@ -413,7 +413,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	std::vector<int> candidates(num_incoming, 0); // outgoing row
 	std::vector<int> rec_information(num_incoming, 0); // how many bytes does each process expect?
 	int bytesOneRegion = sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
-	std::vector<std::vector <unsigned char *>> sendingList (num_incoming); // the regions I own and want to send
+	std::vector<std::vector <unsigned char*>> sendingList (num_incoming); // the regions I own and want to send
 	
 	i = 0;
 	while(i != num_bytes_receive) {
@@ -455,21 +455,21 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				
 				overlap(myRegion, &region);
 				
-				std::vector<unsigned char>* singleRegion = new std::vector<unsigned char>(bytesOneRegion);
+				unsigned char* singleRegion = new unsigned char[bytesOneRegion];
 			
 				p = 0;
-				memcpy(singleRegion->data() + p, region.rmin, sizeof(double) * 3);
+				memcpy(singleRegion + p, region.rmin, sizeof(double) * 3);
 				p += sizeof(double) * 3;
-				memcpy(singleRegion->data() + p, region.rmax, sizeof(double) * 3);
+				memcpy(singleRegion + p, region.rmax, sizeof(double) * 3);
 				p += sizeof(double) * 3;
-				memcpy(singleRegion->data() + p, region.offset, sizeof(int) * 3);
+				memcpy(singleRegion + p, region.offset, sizeof(int) * 3);
 				p += sizeof(int) * 3;
-				memcpy(singleRegion->data() + p, &region.width, sizeof(double));
+				memcpy(singleRegion + p, &region.width, sizeof(double));
 				p += sizeof(double);
-				memcpy(singleRegion->data() + p, shift.data(), sizeof(double) * 3);
+				memcpy(singleRegion + p, shift.data(), sizeof(double) * 3);
 				p += sizeof(double) * 3;
 			
-				sendingList[rank].push_back(singleRegion->data()); // second push_back fails
+				sendingList[rank].push_back(singleRegion); // second push_back fails
 			}
 		}
 	}
@@ -478,17 +478,23 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j]  > 0) {
-			std::vector<unsigned char>* mergedRegions = new std::vector<unsigned char>(candidates[j] * bytesOneRegion);
+			unsigned char* mergedRegions = new unsigned char[candidates[j] * bytesOneRegion];
 
 			for(int k = 0; k < candidates[j]; k++) {
-				memcpy(mergedRegions->data() + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
+				memcpy(mergedRegions + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
 			}
 			
-			merged[j] = mergedRegions->data();
+			merged[j] = mergedRegions;
 		}
 	}
 	
-	//
+	// delete sendingList
+
+	for(auto one : sendingList){
+		for (auto two : one){
+			delete[] two;
+		}
+	}
 
 	
 	// The problem is, that I do not know how many regions I am going to receive from each process
@@ -586,16 +592,19 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		}
 	}
 	
-	/*
+
+
 	cout << "received the neighbours on rank: " << my_rank << endl;
 	
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j] > 0) 
-			MPI_Request_free(&requests[j]);
+			MPI_Wait(&requests[j], MPI_STATUS_IGNORE);
 	}
-	
+
 	cout << "freed the requests on rank: " << my_rank << endl;
-	*/
+	for (auto two : merged) {
+		delete[] two;
+	}
 	
 	cout << "number neighbours: " << comm_partners.size() << " on: " << my_rank << endl;
 	if(comm_partners.size() > 0) {
