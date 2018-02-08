@@ -23,7 +23,7 @@ class XMLfileUnits;
 /** @brief The outputBase class provides the interface for any kind of output classes - called "output plugins".
  *
  * There are a lot of different things that one might want to write out during a simulation,
- * e.g. thermodynimic values, graphical information, time measurements, ...
+ * e.g. thermodynamic values, graphical information, time measurements, ...
  * For all cases in which this output happens regularly at the end of each time step
  * the outputBase class provides a common interface. The interface provides access to
  * the most important data: the particle container and the domain decomposition.
@@ -73,7 +73,7 @@ public:
 	 * is created.
 	 *
 	 * @note The same output plugins may be specified multiple times in the xml config file.
-	 *       It is the responsibili of the output plugin to handle this case in a propper way.
+	 *       It is the responsibility of the output plugin to handle this case in a propper way.
 	 *
 	 * The following xml object structure will be provided to the output plugin:
 	 * \code{.xml}
@@ -85,6 +85,17 @@ public:
 	 * @param xmlconfig  section of the xml file
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig) {}
+
+
+	/** @brief Method afterForces will be called after forcefields have been applied
+	 *
+	 * make pure Virtual ?
+	 */
+
+	virtual void afterForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) {}
 
 	/** @brief Method doOutput will be called at the end of each time step.
 	 *

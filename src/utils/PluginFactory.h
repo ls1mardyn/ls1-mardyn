@@ -9,6 +9,7 @@
 #include "utils/String_utils.h"
 
 
+
 /** @brief macro used to simplify the registration of plugins in the constructor.
  * @param NAME class name of the plugin
  */

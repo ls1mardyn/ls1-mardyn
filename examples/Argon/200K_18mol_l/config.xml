@@ -56,11 +56,19 @@
         <writefrequency>5</writefrequency>
         <outputprefix>Argon</outputprefix>
       </outputplugin>
+      <outputplugin name="FlopRateWriter">
+        <writefrequency>1</writefrequency>
+        <outputprefix>Argon_FLOPS</outputprefix>
+        <mode>stdout</mode>
+      </outputplugin>
       <outputplugin name="SysMonOutput">
         <writefrequency>10000</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
       </outputplugin>
     </output>
+	<plugin name="testPlugin">
+		<writefrequency>1</writefrequency>
+	</plugin>
   </simulation>
 </mardyn>

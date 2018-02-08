@@ -23,7 +23,8 @@ PARTYPE ?= PAR
 # choose target
 # Show list of all available targets for the current config with cfg_help
 # Each config should at least provide the two targets RELEASE and DEBUG.
-TARGET ?= RELEASE
+#TARGET ?= RELEASE
+TARGET ?= DEBUG
 
 # compile using depmode
 # create dependency information for faster recompilation in case of source file changes

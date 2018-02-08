@@ -38,6 +38,8 @@
 
 #include "io/OutputBase.h"
 #include "io/OutputPluginFactory.h"
+#include "utils/PluginBase.h"
+#include "utils/PluginFactory.h"
 
 #include "io/MmpldWriter.h"
 #include "io/RDF.h"
@@ -170,6 +172,8 @@ Simulation::~Simulation() {
 	_FMM = nullptr;
 	/* destruct output plugins and remove them from the output plugin list */
 	_outputPlugins.remove_if([](OutputBase *pluginPtr) {delete pluginPtr; return true;} );
+	/* destruct plugins and remove from plugin list */
+	_plugins.remove_if([](PluginBase *pluginPtr) {delete pluginPtr; return true;} );
 }
 
 void Simulation::exit(int exitcode) {
@@ -551,7 +555,53 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->warning() << "No output plugins specified." << endl;
 	}
 
+	/* plugins */
+	long numPlugins = 0;
+	XMLfile::Query query_p = xmlconfig.query("plugin");
+	numPlugins = query_p.card();
+	global_log->info() << "Number of plugins: " << numPlugins << endl;
+	if(numPlugins < 1) {
+		global_log->warning() << "No plugins specified." << endl;
+	}
+
 	string oldpath = xmlconfig.getcurrentnodepath();
+
+	PluginFactory<PluginBase> pluginFactory;
+	// register plugins
+	pluginFactory.registerPlugin(&(testPlugin::createInstance));
+    //testPlugin* asd = new testPlugin();
+
+	for (auto pluginIter = query_p.begin(); pluginIter; ++pluginIter) {
+		xmlconfig.changecurrentnode( pluginIter );
+		string pluginname("");
+		xmlconfig.getNodeValue("@name", pluginname);
+		bool enabled = true;
+		xmlconfig.getNodeValue("@enabled", enabled);
+		if(not enabled) {
+			global_log->debug() << "skipping disabled plugin: " << pluginname << endl;
+			continue;
+		}
+		global_log->info() << "Enabling plugin: " << pluginname << endl;
+
+
+		PluginBase* plugin = pluginFactory.create(pluginname);
+		if(plugin == nullptr) {
+			global_log->warning() << "Could not create plugin using factory: " << pluginname << endl;
+		}
+
+		// add plugin specific functions
+
+
+
+        if(nullptr != plugin) {
+            plugin->readXML(xmlconfig);
+            _plugins.push_back(plugin);
+        } else {
+            global_log->warning() << "Unknown plugin " << pluginname << endl;
+        }
+	}
+
+
 	OutputPluginFactory outputPluginFactory;
 	for( auto outputPluginIter = query.begin(); outputPluginIter; ++outputPluginIter ) {
 		xmlconfig.changecurrentnode( outputPluginIter );
@@ -606,6 +656,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
 	}
+
 	xmlconfig.changecurrentnode(oldpath);
 
 	oldpath = xmlconfig.getcurrentnodepath();
@@ -903,7 +954,9 @@ void Simulation::prepare_start() {
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
-	measureFLOPRate(_moleculeContainer, 0);
+
+    // TODO: include in the plugin call
+    //measureFLOPRate(_moleculeContainer, 0);
 	
 
 	// Update forces in molecules so they can be exchanged - future
@@ -999,6 +1052,17 @@ void Simulation::prepare_start() {
 		global_simulation->timers()->registerTimer(timer_name,  vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
 		string timer_output_string = string("Output Plugin ") + timer_name + string(" took:");
 		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
+	}
+
+	// initializing plugins and starting plugin timers
+	for (auto& plugin : _plugins) {
+		global_log->info() << "Initializing plugin " << plugin->getPluginName() << endl;
+		plugin->init(_moleculeContainer, _domainDecomposition, _domain);
+		string timer_name = plugin->getPluginName();
+        // TODO: real timer
+		global_simulation->timers()->registerTimer(timer_name, vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
+		string timer_plugin_string = string("Plugin ") + timer_name + string(" took:");
+		global_simulation->timers()->setOutputString(timer_name, timer_plugin_string);
 	}
 
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
@@ -1188,7 +1252,23 @@ void Simulation::simulate() {
 		computationTimer->start();
 		perStepTimer.start();
 
-		measureFLOPRate(_moleculeContainer, _simstep);
+
+		// redundant through afterForces plugin call
+		//measureFLOPRate(_moleculeContainer, _simstep);
+
+		//afterForces Output Call
+		global_log -> info() << "[AFTER FORCES] Performing AfterForces output plugin call" << endl;
+		for (auto outputPlugin : _outputPlugins) {
+				global_log -> info() << "[AFTER FORCES] Plugin: " << outputPlugin->getPluginName() << endl;
+				outputPlugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		}
+
+		//afterForces Plugin Call
+		global_log -> info() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
+		for (auto plugin : _plugins) {
+			global_log -> info() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
+			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		}
 
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
@@ -1452,6 +1532,11 @@ void Simulation::simulate() {
 	for (auto outputPlugin : _outputPlugins) {
 		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
+
+	global_log->info() << "Finish plugins" << endl;
+	for (auto plugin : _plugins) {
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
 	global_log->info() << "Timing information:" << endl;
@@ -1491,6 +1576,34 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
+	using std::isnan;
+	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
+		global_log->error() << "NaN detected, exiting." << std::endl;
+		Simulation::exit(1);
+	}
+}
+
+void Simulation::plugin(unsigned long simstep) {
+
+	int mpi_rank = _domainDecomposition->getRank();
+
+	std::list<PluginBase*>::iterator pluginIter;
+	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
+		PluginBase* plugin = (*pluginIter);
+		global_log->debug() << "Plugin: " << plugin->getPluginName() << endl;
+		global_simulation->timers()->start(plugin->getPluginName());
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+		global_simulation->timers()->stop(plugin->getPluginName());
+	}
+
+
+	if (_domain->thermostatWarning())
+		global_log->warning() << "Thermostat!" << endl;
+	/* TODO: thermostat */
+	global_log->info() << "Simstep = " << simstep << "\tT = "
+					   << _domain->getGlobalCurrentTemperature() << "\tU_pot = "
+					   << _domain->getGlobalUpot() << "\tp = "
+					   << _domain->getGlobalPressure() << endl;
 	using std::isnan;
 	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
 		global_log->error() << "NaN detected, exiting." << std::endl;
@@ -1614,7 +1727,16 @@ OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
 	return nullptr;
 }
 
-void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
+PluginBase* Simulation::getPlugin(const std::string& name)  {
+	for(auto& plugin : _plugins) {
+		if(name.compare(plugin->getPluginName()) == 0) {
+			return plugin;
+		}
+	}
+	return nullptr;
+}
+
+/*void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
 	OutputBase * flopRateBase = getOutputPlugin("FlopRateWriter");
 	if (flopRateBase == nullptr) {
 		return;
@@ -1624,7 +1746,7 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 	mardyn_assert(flopRateWriter != nullptr);
 
 	flopRateWriter->measureFLOPS(cont, simstep);
-}
+}*/
 
 unsigned long Simulation::getNumberOfTimesteps() const {
 	return _numberOfTimesteps;

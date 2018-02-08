@@ -62,6 +62,12 @@ void FlopRateWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 }
 
+void FlopRateWriter::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep){
+	global_log->debug()  << "[FLOPRATEWRITER] after forces FLOPs" << std::endl;
+	measureFLOPS(particleContainer, simstep);
+}
+
 void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* /*domain*/, unsigned long simstep,
 		std::list<ChemicalPotential>* /*lmu*/,
