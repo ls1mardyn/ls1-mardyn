@@ -343,7 +343,7 @@ private:
 
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices of all halo cells in the _cells vector
 
-        std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner; // new
+	std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner; // new
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
