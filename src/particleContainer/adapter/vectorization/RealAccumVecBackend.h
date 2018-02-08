@@ -12,121 +12,104 @@
 
 namespace vcp {
 
-// this is a somewhat strange construction:
-// we use BOTH inheritance
-// AND delegation
-// from the SAME class
-// which needs to work with RealCalcVec, which may be a different class!
+#if VCP_VEC_WIDTH != VCP_VEC_W__64
+// the novec case is handled differently, as it requires only one RealVec<double> to store its results.
 
-template<typename FloatOrDouble>
-class RealAccumVecBackend : public RealVec<FloatOrDouble> {
+class RealAccumVecBackend {
 
-#if VCP_PREC == VCP_SPDP and VCP_VEC_WIDTH != VCP_VEC_W__64
 private:
-	RealVec<FloatOrDouble> _second;
-#endif
+	RealVec<double> _first;
+	RealVec<double> _second;
 
 public:
+	RealAccumVecBackend() {}
 
-	RealAccumVecBackend() : RealVec<FloatOrDouble>() {}
-
-#if not(VCP_PREC == VCP_SPDP and VCP_VEC_WIDTH != VCP_VEC_W__64)
-	RealAccumVecBackend(const RealCalcVec & rcv) : RealVec<FloatOrDouble>() {
-		this->_d = rcv;
+	static RealAccumVecBackend convertCalcToAccum(const RealCalcVec & rcv) {
+		RealVec<double> first = convert_low(rcv);
+		RealVec<double> second = convert_high(rcv);
+		return RealAccumVecBackend(first, second);
 	}
 
-	RealAccumVecBackend& operator=(const RealVec<FloatOrDouble>& rhs) {
-		this->_d = rhs;
-		return *this;
-	}
-#endif
-
-#if VCP_PREC == VCP_SPDP and VCP_VEC_WIDTH == VCP_VEC_W__64
-	RealAccumVecBackend(const RealVec<FloatOrDouble>& rcv) : RealVec<FloatOrDouble>() {
-		this->_d = rcv;
-	}
-#endif
-
-
-
-#if VCP_PREC == VCP_SPDP and VCP_VEC_WIDTH != VCP_VEC_W__64
-
-public:
-
-	RealAccumVecBackend(const RealCalcVec & rcv) : RealVec<FloatOrDouble>() {
-		this->_d = convert_low(rcv);
-		_second = convert_high(rcv);
-	}
-
-	RealAccumVecBackend(const RealAccumVecBackend& rhs) : RealVec<FloatOrDouble>() {
-		this->_d = rhs._d;
+	RealAccumVecBackend(const RealAccumVecBackend& rhs) {
+		_first = rhs._first;
 		_second = rhs._second;
 	}
 
-	RealAccumVecBackend(const RealVec<FloatOrDouble>& first, const RealVec<FloatOrDouble>& second) : RealVec<FloatOrDouble>() {
-		this->_d = first;
+	RealAccumVecBackend(const RealVec<double>& first, const RealVec<double>& second) {
+		_first = first;
 		_second = second;
 	}
 
 	RealAccumVecBackend& operator=(const RealAccumVecBackend& rhs) {
-		this->_d = rhs._d;
+		_first = rhs._first;
 		_second = rhs._second;
 		return *this;
 	}
 
 	static RealAccumVecBackend zero() {
 		RealAccumVecBackend result;
-		result._d = RealVec<FloatOrDouble>::zero();
-		result._second = RealVec<FloatOrDouble>::zero();
+		result._first = RealVec<double>::zero();
+		result._second = RealVec<double>::zero();
 		return result;
 	}
 
 	RealAccumVecBackend operator+(const RealAccumVecBackend& rhs) const {
 		RealAccumVecBackend result;
-		result._d = this->_d + rhs._d;
-		result._second = this->_second + rhs._second;
+		result._first = _first + rhs._first;
+		result._second = _second + rhs._second;
+		return result;
+	}
+
+	RealAccumVecBackend operator*(const RealAccumVecBackend& rhs) const {
+		RealAccumVecBackend result;
+		result._first = _first * rhs._first;
+		result._second = _second * rhs._second;
 		return result;
 	}
 
 	RealAccumVecBackend operator-(const RealAccumVecBackend& rhs) const {
 		RealAccumVecBackend result;
-		result._d = this->_d - rhs._d;
-		result._second = this->_second - rhs._second;
+		result._first = _first - rhs._first;
+		result._second = _second - rhs._second;
 		return result;
 	}
 
 	static RealAccumVecBackend fmadd(const RealAccumVecBackend & a, const RealAccumVecBackend& b, const RealAccumVecBackend& c ) {
 		RealAccumVecBackend result;
-		result._d = fmadd(a._d, b._d, c._d);
-		result._second = fmadd(a._second, b._second, c._second);
+		result._first = RealVec<double>::fmadd(a._first, b._first, c._first);
+		result._second = RealVec<double>::fmadd(a._second, b._second, c._second);
 		return result;
 	}
 
 	static RealAccumVecBackend fnmadd(const RealAccumVecBackend & a, const RealAccumVecBackend& b, const RealAccumVecBackend& c ) {
 		RealAccumVecBackend result;
-		result._d = fnmadd(a._d, b._d, c._d);
-		result._second = fnmadd(a._second, b._second, c._second);
+		result._first = RealVec<double>::fnmadd(a._first, b._first, c._first);
+		result._second = RealVec<double>::fnmadd(a._second, b._second, c._second);
 		return result;
 	}
 
-	void aligned_store(FloatOrDouble * location) const {
-		RealVec<FloatOrDouble>::aligned_store(location);
-		const size_t offset = sizeof(RealVec<FloatOrDouble>) / sizeof(FloatOrDouble);
+	void aligned_store(double * location) const {
+		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
+		_first.aligned_store(location);
 		_second.aligned_store(location + offset);
 	}
 
-	static RealAccumVecBackend aligned_load(const FloatOrDouble * const a) {
-		RealVec<FloatOrDouble> first = RealVec<FloatOrDouble>::aligned_load(a);
-		const size_t offset = sizeof(RealVec<FloatOrDouble>) / sizeof(FloatOrDouble);
-		RealVec<FloatOrDouble> second = RealVec<FloatOrDouble>::aligned_load(a + offset);
+	static RealAccumVecBackend aligned_load(const double * const a) {
+		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
+		RealVec<double> first = RealVec<double>::aligned_load(a);
+		RealVec<double> second = RealVec<double>::aligned_load(a + offset);
 		return RealAccumVecBackend(first, second);
 	}
 
-	static RealVec<FloatOrDouble> convert_low(const RealCalcVec& rhs) {
+	static RealAccumVecBackend set1(const double& v) {
+		RealVec<double> first = RealVec<double>::set1(v);
+		RealVec<double> second = RealVec<double>::set1(v);
+		return RealAccumVecBackend(first, second);
+	}
+
+	static RealVec<double> convert_low(const RealCalcVec& rhs) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		// the NOVEC case is not all that relevant and hard to handle here
-		// use both functions
-		return static_cast<vcp_real_accum>(rhs);
+		line not compiled
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_cvtps_pd(rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -137,9 +120,9 @@ public:
 
 	}
 
-	static RealVec<FloatOrDouble> convert_high(const RealCalcVec& rhs) {
+	static RealVec<double> convert_high(const RealCalcVec& rhs) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return 0.0;
+		line not compiled
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_cvtps_pd(_mm_castsi128_ps(_mm_srli_si128(_mm_castps_si128(rhs), 8)));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -148,10 +131,24 @@ public:
 		return _mm512_cvtps_pd(_mm256_castpd_ps(_mm512_extractf64x4_pd(_mm512_castps_pd(rhs), 1)));
 	#endif
 	}
-
-
-#endif /* VCP_SPDP */
 };
+
+#elif VCP_VEC_WIDTH == VCP_VEC_W__64
+
+class RealAccumVecBackend : public RealVec<double> {
+public:
+	RealAccumVecBackend() {}
+	RealAccumVecBackend(const RealVec<double>& rcv) : RealVec<double>() {
+		this->_d = rcv;
+	}
+	static RealAccumVecBackend convertCalcToAccum(const RealCalcVec & rcv) {
+		RealAccumVecBackend result;
+		result._d = rcv;
+		return result;
+	}
+};
+
+#endif /* VCP_VEC_WIDTH */
 
 } /* namespace vcp */
 

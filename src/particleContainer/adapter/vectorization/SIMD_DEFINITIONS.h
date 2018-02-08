@@ -29,10 +29,16 @@ namespace vcp {
 	typedef RealVec<vcp_real_calc> RealCalcVec;
 }
 
+#if VCP_PREC == VCP_SPDP
 #include "RealAccumVecBackend.h"
 namespace vcp {
-	typedef RealAccumVecBackend<vcp_real_accum> RealAccumVec;
+	typedef RealAccumVecBackend RealAccumVec;
 }
+#else
+namespace vcp {
+	typedef RealCalcVec RealAccumVec;
+}
+#endif
 
 // use constexpr instead of conditional compilation to death:
 

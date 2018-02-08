@@ -52,6 +52,10 @@ public:
 		return *this;
 	}
 
+	static RealVec convertCalcToAccum(const RealVec & rcv) {
+		return rcv;
+	}
+
 	static RealVec cast_MaskVec_to_RealCalcVec(const MaskVec<float>& m) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return static_cast<real_vec>(m);

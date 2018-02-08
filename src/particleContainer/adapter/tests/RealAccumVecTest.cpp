@@ -31,7 +31,7 @@ void RealAccumVecTest::testConvert() {
 
 	RealAccumVec accum;
 	accum = RealAccumVec::zero();
-	accum = calc;
+	accum = RealAccumVec::convertCalcToAccum(calc);
 
 	AlignedArray<vcp_real_accum> accumArray(VCP_VEC_SIZE);
 	vcp_real_accum * const accumArrayData = accumArray;
