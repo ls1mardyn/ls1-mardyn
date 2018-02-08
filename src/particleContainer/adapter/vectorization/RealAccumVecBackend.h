@@ -30,6 +30,11 @@ public:
 		return RealAccumVecBackend(first, second);
 	}
 
+	static RealCalcVec convertAccumToCalc(const RealAccumVecBackend & rav) {
+		RealCalcVec ret = back_convert(rav._first, rav._second);
+		return ret;
+	}
+
 	RealAccumVecBackend(const RealAccumVecBackend& rhs) {
 		_first = rhs._first;
 		_second = rhs._second;
@@ -101,11 +106,60 @@ public:
 		return RealAccumVecBackend(first, second);
 	}
 
+	static RealAccumVecBackend aligned_load_mask(const double * const a, MaskVec<float> m) {
+		// we need to make two masks of type MaskVec<double> from one MaskVec<float>
+		MaskVec<double> m_lo, m_hi;
+		convert_mask_vec(m, m_lo, m_hi);
+
+		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
+
+		RealVec<double> first = RealVec<double>::aligned_load_mask(a, m_lo);
+		RealVec<double> second = RealVec<double>::aligned_load_mask(a + offset, m_hi);
+
+		return RealAccumVecBackend(first, second);
+	}
+
 	static RealAccumVecBackend set1(const double& v) {
 		RealVec<double> first = RealVec<double>::set1(v);
 		RealVec<double> second = RealVec<double>::set1(v);
 		return RealAccumVecBackend(first, second);
 	}
+
+	vcp_inline
+	static void horizontal_add_and_store(const RealAccumVecBackend& a, double * const mem_addr) {
+		RealVec<double> sum = a._first + a._second;
+		RealVec<double>::horizontal_add_and_store(sum, mem_addr);
+	}
+
+	void aligned_load_add_store(double * location) const {
+		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
+		_first.aligned_load_add_store(location);
+		_second.aligned_load_add_store(location + offset);
+	}
+
+	static RealAccumVecBackend scal_prod(
+		const RealAccumVecBackend& a1, const RealAccumVecBackend& a2, const RealAccumVecBackend& a3,
+		const RealAccumVecBackend& b1, const RealAccumVecBackend& b2, const RealAccumVecBackend& b3) {
+		return fmadd(a1, b1, fmadd(a2, b2, a3 * b3));
+	}
+
+
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	static RealAccumVecBackend gather_load(const double * const src, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
+		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);
+		__m256i lookup_256i_hi = _mm512_extracti64x4_epi64(lookup, 1);
+		RealVec<double> first  (_mm512_i32gather_pd(lookup_256i_lo, src, 8));
+		RealVec<double> second (_mm512_i32gather_pd(lookup_256i_hi, src, 8));
+		return RealAccumVecBackend(first, second);
+	}
+
+	void gather_store(double* const addr, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
+		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);
+		__m256i lookup_256i_hi = _mm512_extracti64x4_epi64(lookup, 1);
+		_mm512_i32scatter_pd(addr, lookup_256i_lo, _first, 8);
+		_mm512_i32scatter_pd(addr, lookup_256i_hi, _second, 8);
+	}
+#endif
 
 	static RealVec<double> convert_low(const RealCalcVec& rhs) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
@@ -117,7 +171,6 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		return _mm512_cvtps_pd(_mm256_castpd_ps(_mm512_extractf64x4_pd(_mm512_castps_pd(rhs), 0)));
 	#endif
-
 	}
 
 	static RealVec<double> convert_high(const RealCalcVec& rhs) {
@@ -129,6 +182,75 @@ public:
 		return _mm256_cvtps_pd(_mm256_extractf128_ps(rhs, 1));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		return _mm512_cvtps_pd(_mm256_castpd_ps(_mm512_extractf64x4_pd(_mm512_castps_pd(rhs), 1)));
+	#endif
+	}
+
+	static RealCalcVec back_convert(const RealVec<double>& lo, const RealVec<double>& hi) {
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+		line not compiled
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+		__m128 c_lo = _mm_cvtpd_ps(lo);
+		__m128 c_hi = _mm_cvtpd_ps(hi);
+		return _mm_movelh_ps(c_lo, c_hi);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+		__m128 c_lo = _mm256_cvtpd_ps(lo);
+		__m128 c_hi = _mm256_cvtpd_ps(hi);
+
+		__m256 ret = _mm256_castps128_ps256(c_lo);
+		ret = _mm256_insertf128_ps(ret, c_hi, 1);
+
+		return ret;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		__m256 c_lo = _mm512_cvtpd_ps(lo);
+		__m256 c_hi = _mm512_cvtpd_ps(hi);
+
+		__m512 ret = _mm512_castps256_ps512(c_lo);
+		ret = _mm512_insertf32x8(ret, c_hi, 1);
+
+		return ret;
+	#endif
+	}
+
+	static void convert_mask_vec(const MaskVec<float>& src, MaskVec<double>& lo, MaskVec<double>& hi) {
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+		line not compiled
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+
+		lo = _mm_unpacklo_epi32(src, src);
+		hi = _mm_unpackhi_epi32(src, src);
+
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+		__m256 v_3210 = _mm256_castsi256_ps(src);
+
+		__m256i v_2200 = _mm256_castps_si256(_mm256_unpacklo_ps(v_3210, v_3210));
+		__m256i v_3311 = _mm256_castps_si256(_mm256_unpackhi_ps(v_3210, v_3210));
+
+		// need to swap 11 and 22
+		auto v_10 = _mm256_extract_epi64 (v_3311, 0);
+		auto v_11 = _mm256_extract_epi64 (v_3311, 1);
+
+		auto v_20 = _mm256_extract_epi64 (v_2200, 2);
+		auto v_21 = _mm256_extract_epi64 (v_2200, 3);
+
+		__m256i v_2100 = _mm256_insert_epi64 (v_2200, v_10, 2);
+		__m256i v_1100 = _mm256_insert_epi64 (v_2100, v_11, 3);
+		lo = v_1100;
+
+		__m256i v_3312 = _mm256_insert_epi64 (v_3311, v_20, 0);
+		__m256i v_3322 = _mm256_insert_epi64 (v_3312, v_21, 1);
+		hi = v_3322;
+
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		// need to make two __mmask8 from one __mmask16
+		// the intrinsics are not very helpful for working with mmask*, so...
+	    union {
+	        __mmask16 _wide;
+	        __mmask8 _narrow[2];
+	    } merged;
+	    merged._wide = src;
+	    lo = merged._narrow[0];
+	    hi = merged._narrow[1];
+
 	#endif
 	}
 };
@@ -145,6 +267,13 @@ public:
 		RealAccumVecBackend result;
 		result._d = rcv;
 		return result;
+	}
+	static RealCalcVec convertAccumToCalc(const RealAccumVecBackend & rav) {
+		RealCalcVec result(rav);
+		return result;
+	}
+	static RealAccumVecBackend aligned_load_mask(const double * const a, MaskVec<float> m) {
+		return apply_mask(aligned_load(a),MaskVec<double>(m));
 	}
 };
 

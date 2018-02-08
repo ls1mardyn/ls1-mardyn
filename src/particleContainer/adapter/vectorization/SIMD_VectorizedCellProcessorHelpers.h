@@ -265,15 +265,15 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
  * sums up values in a and adds the result to *mem_addr
  */
 static vcp_inline
-void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
-	RealCalcVec::horizontal_add_and_store(a, mem_addr);
+void hSum_Add_Store( vcp_real_accum * const mem_addr, const RealAccumVec & a ) {
+	RealAccumVec::horizontal_add_and_store(a, mem_addr);
 }
 
 static vcp_inline
-void load_hSum_Store_Clear(vcp_real_calc * const compact, vcp_real_calc * const wide) {
-	RealCalcVec wide_reg = RealCalcVec::aligned_load(wide);
+void load_hSum_Store_Clear(vcp_real_accum * const compact, vcp_real_accum * const wide) {
+	RealAccumVec wide_reg = RealAccumVec::aligned_load(wide);
 	hSum_Add_Store(compact, wide_reg);
-	wide_reg = RealCalcVec::zero();
+	wide_reg = RealAccumVec::zero();
 	wide_reg.aligned_store(wide);
 }
 
@@ -284,8 +284,8 @@ void load_hSum_Store_Clear(vcp_real_calc * const compact, vcp_real_calc * const 
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_add_store(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
-	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+void vcp_simd_load_add_store(vcp_real_accum * const addr, size_t offset, const RealAccumVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+	RealAccumVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum + value;
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
 }
@@ -297,17 +297,17 @@ void vcp_simd_load_add_store(vcp_real_calc * const addr, size_t offset, const Re
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_sub_store(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
-	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+void vcp_simd_load_sub_store(vcp_real_accum * const addr, size_t offset, const RealAccumVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+	RealAccumVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum - value;
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
 }
 
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_fnmadd_store(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const RealCalcVec& mult, const vcp_lookupOrMask_vec& lookupORforceMask) {
-	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
-	sum = RealCalcVec::fnmadd(value, mult, sum);
+void vcp_simd_load_fnmadd_store(vcp_real_accum * const addr, size_t offset, const RealAccumVec& value, const RealAccumVec& mult, const vcp_lookupOrMask_vec& lookupORforceMask) {
+	RealAccumVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+	sum = RealAccumVec::fnmadd(value, mult, sum);
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
 }
 
@@ -318,8 +318,8 @@ void vcp_simd_load_fnmadd_store(vcp_real_calc * const addr, size_t offset, const
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_add_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskCalcVec mask){
-	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+void vcp_simd_load_add_store_masked(vcp_real_accum * const addr, size_t offset, const RealAccumVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskCalcVec mask){
+	RealAccumVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum + value;
 	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
 }
@@ -331,8 +331,8 @@ void vcp_simd_load_add_store_masked(vcp_real_calc * const addr, size_t offset, c
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_sub_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskCalcVec mask){
-	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+void vcp_simd_load_sub_store_masked(vcp_real_accum * const addr, size_t offset, const RealAccumVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskCalcVec mask){
+	RealAccumVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum - value;
 	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
 }

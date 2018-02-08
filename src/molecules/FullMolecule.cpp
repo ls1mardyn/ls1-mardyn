@@ -129,7 +129,7 @@ std::array<double, 3> FullMolecule::ljcenter_d_abs(unsigned int i) const {
 	std::array<double,3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::LJC, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -142,7 +142,7 @@ std::array<double, 3> FullMolecule::charge_d_abs(unsigned int i) const {
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::CHARGE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -155,7 +155,7 @@ std::array<double, 3> FullMolecule::dipole_d_abs(unsigned int i) const {
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::DIPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -168,7 +168,7 @@ std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -179,9 +179,9 @@ std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
 std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -191,9 +191,9 @@ std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
 std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -203,9 +203,9 @@ std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
 std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -215,9 +215,9 @@ std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
 std::array<double, 3> FullMolecule::quadrupole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -244,46 +244,46 @@ std::array<double, 3> FullMolecule::quadrupole_e(unsigned int i) const {
 
 void FullMolecule::Fljcenteradd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_lj;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
 }
 
 void FullMolecule::Fchargeadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_c;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 }
 
 void FullMolecule::Fdipoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_d;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 }
 
 void FullMolecule::Fquadrupoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_q;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 }
 
 void FullMolecule::Fljcentersub(unsigned int i, double a[]) {
@@ -444,29 +444,29 @@ void FullMolecule::clearFM() {
 	_M[0] = _M[1] = _M[2] = 0.;
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
 
-	std::array<vcp_real_calc, 3> clearance = {0.0, 0.0, 0.0};
+	std::array<vcp_real_accum, 3> clearance = {0.0, 0.0, 0.0};
 
 	// clear SoA-cache (quickest way)
 	unsigned ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_lj;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::LJC, index_in_soa);
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_c;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_d;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
 
 		_soa->_dipoles_M.x(index_in_soa) = 0.0;
 		_soa->_dipoles_M.y(index_in_soa) = 0.0;
@@ -476,8 +476,8 @@ void FullMolecule::clearFM() {
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_q;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 
 		_soa->_quadrupoles_M.x(index_in_soa) = 0.0;
 		_soa->_quadrupoles_M.y(index_in_soa) = 0.0;
@@ -519,12 +519,12 @@ void FullMolecule::calcFM() {
 	double temp_M[3] = { 0., 0., 0. };
 	double temp_Vi[3] = { 0., 0., 0. };
 
-	std::array<vcp_real_calc, 3> interim;
+	std::array<vcp_real_accum, 3> interim;
 
 	ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_lj;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::LJC, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -533,7 +533,7 @@ void FullMolecule::calcFM() {
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_c;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -542,7 +542,7 @@ void FullMolecule::calcFM() {
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_d;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -554,7 +554,7 @@ void FullMolecule::calcFM() {
 	ns = numQuadrupoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_q;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];

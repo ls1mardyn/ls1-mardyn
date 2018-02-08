@@ -154,7 +154,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _ljc_dist_lookup;
 
-		AlignedArray<vcp_real_calc> _upot6ljV, _virialV;
+		AlignedArray<vcp_real_accum> _upot6ljV, _virialV;
 	};
 
 	std::vector<VLJP2PCPThreadData *> _threadData;
@@ -170,8 +170,8 @@ private:
 			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
 			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-			RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
+			RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+			RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial,
 			const MaskCalcVec& forceMask,
 			const RealCalcVec& eps_24, const RealCalcVec& sig2,
 			const RealCalcVec& shift6);

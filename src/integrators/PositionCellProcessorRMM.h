@@ -33,12 +33,12 @@ public:
 		CellDataSoARMM & soa = c.getCellDataSoA();
 		const size_t end_i = vcp_floor_to_vec_size(soa.getMolNum());
 
-		      vcp_real_calc * const soa_r_x = soa.r_xBegin();
-		      vcp_real_calc * const soa_r_y = soa.r_yBegin();
-		      vcp_real_calc * const soa_r_z = soa.r_zBegin();
-		const vcp_real_calc * const soa_v_x = soa.v_xBegin();
-		const vcp_real_calc * const soa_v_y = soa.v_yBegin();
-		const vcp_real_calc * const soa_v_z = soa.v_zBegin();
+		       vcp_real_calc * const soa_r_x = soa.r_xBegin();
+		       vcp_real_calc * const soa_r_y = soa.r_yBegin();
+		       vcp_real_calc * const soa_r_z = soa.r_zBegin();
+		const vcp_real_accum * const soa_v_x = soa.v_xBegin();
+		const vcp_real_accum * const soa_v_y = soa.v_yBegin();
+		const vcp_real_accum * const soa_v_z = soa.v_zBegin();
 
 		const RealCalcVec dt = RealCalcVec::set1(_timeStep);
 
@@ -48,13 +48,17 @@ public:
 			RealCalcVec r_y = RealCalcVec::aligned_load(soa_r_y + i);
 			RealCalcVec r_z = RealCalcVec::aligned_load(soa_r_z + i);
 
-			const RealCalcVec v_x = RealCalcVec::aligned_load(soa_v_x + i);
-			const RealCalcVec v_y = RealCalcVec::aligned_load(soa_v_y + i);
-			const RealCalcVec v_z = RealCalcVec::aligned_load(soa_v_z + i);
+			const RealAccumVec v_x = RealAccumVec::aligned_load(soa_v_x + i);
+			const RealAccumVec v_y = RealAccumVec::aligned_load(soa_v_y + i);
+			const RealAccumVec v_z = RealAccumVec::aligned_load(soa_v_z + i);
 
-			r_x = RealCalcVec::fmadd(dt, v_x, r_x);
-			r_y = RealCalcVec::fmadd(dt, v_y, r_y);
-			r_z = RealCalcVec::fmadd(dt, v_z, r_z);
+			const RealCalcVec c_v_x = RealAccumVec::convertAccumToCalc(v_x);
+			const RealCalcVec c_v_y = RealAccumVec::convertAccumToCalc(v_y);
+			const RealCalcVec c_v_z = RealAccumVec::convertAccumToCalc(v_z);
+
+			r_x = RealCalcVec::fmadd(dt, c_v_x, r_x);
+			r_y = RealCalcVec::fmadd(dt, c_v_y, r_y);
+			r_z = RealCalcVec::fmadd(dt, c_v_z, r_z);
 
 			r_x.aligned_store(soa_r_x + i);
 			r_y.aligned_store(soa_r_y + i);
@@ -67,13 +71,17 @@ public:
 			RealCalcVec r_y = RealCalcVec::aligned_load_mask(soa_r_y + i, remainderMask);
 			RealCalcVec r_z = RealCalcVec::aligned_load_mask(soa_r_z + i, remainderMask);
 
-			const RealCalcVec v_x = RealCalcVec::aligned_load_mask(soa_v_x + i, remainderMask);
-			const RealCalcVec v_y = RealCalcVec::aligned_load_mask(soa_v_y + i, remainderMask);
-			const RealCalcVec v_z = RealCalcVec::aligned_load_mask(soa_v_z + i, remainderMask);
+			const RealAccumVec v_x = RealAccumVec::aligned_load_mask(soa_v_x + i, remainderMask);
+			const RealAccumVec v_y = RealAccumVec::aligned_load_mask(soa_v_y + i, remainderMask);
+			const RealAccumVec v_z = RealAccumVec::aligned_load_mask(soa_v_z + i, remainderMask);
 
-			r_x = RealCalcVec::fmadd(dt, v_x, r_x);
-			r_y = RealCalcVec::fmadd(dt, v_y, r_y);
-			r_z = RealCalcVec::fmadd(dt, v_z, r_z);
+			const RealCalcVec c_v_x = RealAccumVec::convertAccumToCalc(v_x);
+			const RealCalcVec c_v_y = RealAccumVec::convertAccumToCalc(v_y);
+			const RealCalcVec c_v_z = RealAccumVec::convertAccumToCalc(v_z);
+
+			r_x = RealCalcVec::fmadd(dt, c_v_x, r_x);
+			r_y = RealCalcVec::fmadd(dt, c_v_y, r_y);
+			r_z = RealCalcVec::fmadd(dt, c_v_z, r_z);
 
             // TODO: handle aligned masked store properly in intrinsics.
 			// For now just store, not caring about mask. Due to internal padding, this will work without problems and will not overwrite stuff.

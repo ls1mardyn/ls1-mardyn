@@ -35,6 +35,17 @@ public:
 			RealCalcVec& value, const vcp_lookupOrMask_vec& /*lookup*/) {
 		value.aligned_store(addr + offset);
 	}
+#if VCP_PREC == VCP_SPDP
+	inline static RealAccumVec load(const vcp_real_accum* const src,
+			const size_t& offset, const vcp_lookupOrMask_vec& /*lookup*/) {
+		return RealAccumVec::aligned_load(src + offset);
+	}
+
+	inline static void store(vcp_real_accum* const addr, const size_t& offset,
+			RealAccumVec& value, const vcp_lookupOrMask_vec& /*lookup*/) {
+		value.aligned_store(addr + offset);
+	}
+#endif
 
 	inline static bool computeLoop(const MaskCalcVec& forceMask) {
 		return forceMask.movemask();
@@ -124,6 +135,18 @@ public:
 			_mm512_i32scatter_pd(addr, lookup_256i, value, 8);
 		#endif
 	}
+
+#if VCP_PREC == VCP_SPDP
+	inline static RealAccumVec load(const vcp_real_accum* const src,
+			const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
+		return RealAccumVec::gather_load(src, offset, lookup);
+	}
+
+	inline static void store(vcp_real_accum* const addr, const size_t& offset,
+			RealAccumVec& value, const vcp_lookupOrMask_vec& lookup) {
+		value.gather_store(addr, offset, lookup);
+	}
+#endif
 
 	inline static void storeMasked(vcp_real_calc* const addr, const size_t& offset,
 			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup, const MaskCalcVec mask) {

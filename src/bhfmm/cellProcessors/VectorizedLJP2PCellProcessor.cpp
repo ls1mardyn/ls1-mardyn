@@ -130,8 +130,8 @@ void VectorizedLJP2PCellProcessor::initTraversal() {
 }
 
 void VectorizedLJP2PCellProcessor::endTraversal() {
-	vcp_real_calc glob_upot6lj = 0.0;
-	vcp_real_calc glob_virial = 0.0;
+	vcp_real_accum glob_upot6lj = 0.0;
+	vcp_real_accum glob_virial = 0.0;
 
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:glob_upot6lj, glob_virial)
@@ -140,7 +140,7 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 		const int tid = mardyn_get_thread_num();
 
 		// reduce vectors and clear local variable
-		vcp_real_calc thread_upot = 0.0, thread_virial = 0.0;
+		vcp_real_accum thread_upot = 0.0, thread_virial = 0.0;
 
 		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
 		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
@@ -179,8 +179,8 @@ void VectorizedLJP2PCellProcessor :: _loopBodyLJ(
 		const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
 		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial,
 		const MaskCalcVec& forceMask,
 		const RealCalcVec& eps_24, const RealCalcVec& sig2,
 		const RealCalcVec& shift6)
@@ -211,17 +211,18 @@ void VectorizedLJP2PCellProcessor :: _loopBodyLJ(
 	const RealCalcVec m_dy = m1_r_y - m2_r_y;//1FP (virial) (does not count)
 	const RealCalcVec m_dz = m1_r_z - m2_r_z;//1FP (virial) (does not count)
 
-	V_x = m_dx * f_x;//1FP (virial)
-	V_y = m_dy * f_y;//1FP (virial)
-	V_z = m_dz * f_z;//1FP (virial)
+	V_x = RealAccumVec::convertCalcToAccum(m_dx * f_x);//1FP (virial)
+	V_y = RealAccumVec::convertCalcToAccum(m_dy * f_y);//1FP (virial)
+	V_z = RealAccumVec::convertCalcToAccum(m_dz * f_z);//1FP (virial)
 
 	// Check if we have to add the macroscopic values up
 	if (calculateMacroscopic) {
 
 		const RealCalcVec upot_sh = RealCalcVec::fmadd(eps_24, lj12m6, shift6); //2 FP upot	//shift6 is not masked -> we have to mask upot_shifted
 		const RealCalcVec upot_masked = RealCalcVec::apply_mask(upot_sh, forceMask); //mask it
+		const RealAccumVec upot_masked_accum = RealAccumVec::convertCalcToAccum(upot_masked);
 
-		sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
+		sum_upot6lj = sum_upot6lj + upot_masked_accum;//1FP (sum macro)
 
 		sum_virial = sum_virial +  V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
 	}
@@ -242,41 +243,41 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	//for better readability:
-	constexpr ConcatenatedSites<vcp_real_calc>::SiteType LJC = ConcatenatedSites<vcp_real_calc>::SiteType::LJC;
-	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
-	typedef CellDataSoA::QuantityType							QuantityType;
+	constexpr ConcSites::SiteType LJC = ConcSites::SiteType::LJC;
+	typedef ConcSites::CoordinateType	Coordinate;
+	typedef CellDataSoA::QuantityType	QuantityType;
 
 	// Pointer for LJ centers
-	const vcp_real_calc * const soa1_ljc_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
-	const vcp_real_calc * const soa1_ljc_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
-	const vcp_real_calc * const soa1_ljc_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
-	      vcp_real_calc * const soa1_ljc_f_x = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::X);
-	      vcp_real_calc * const soa1_ljc_f_y = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::Y);
-	      vcp_real_calc * const soa1_ljc_f_z = soa1.getBegin(QuantityType::FORCE, LJC, Coordinate::Z);
-	      vcp_real_calc * const soa1_ljc_V_x = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::X);
-	      vcp_real_calc * const soa1_ljc_V_y = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Y);
-	      vcp_real_calc * const soa1_ljc_V_z = soa1.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Z);
+	const vcp_real_calc * const soa1_ljc_r_x = soa1.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa1_ljc_r_y = soa1.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa1_ljc_r_z = soa1.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
+	     vcp_real_accum * const soa1_ljc_f_x = soa1.getBeginAccum(QuantityType::FORCE, LJC, Coordinate::X);
+	     vcp_real_accum * const soa1_ljc_f_y = soa1.getBeginAccum(QuantityType::FORCE, LJC, Coordinate::Y);
+	     vcp_real_accum * const soa1_ljc_f_z = soa1.getBeginAccum(QuantityType::FORCE, LJC, Coordinate::Z);
+	     vcp_real_accum * const soa1_ljc_V_x = soa1.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::X);
+	     vcp_real_accum * const soa1_ljc_V_y = soa1.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Y);
+	     vcp_real_accum * const soa1_ljc_V_z = soa1.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Z);
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X);
-	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y);
-	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z);
-	const vcp_real_calc * const soa2_ljc_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
-	const vcp_real_calc * const soa2_ljc_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
-	const vcp_real_calc * const soa2_ljc_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
-	      vcp_real_calc * const soa2_ljc_f_x = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::X);
-	      vcp_real_calc * const soa2_ljc_f_y = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::Y);
-	      vcp_real_calc * const soa2_ljc_f_z = soa2.getBegin(QuantityType::FORCE, LJC, Coordinate::Z);
-	      vcp_real_calc * const soa2_ljc_V_x = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::X);
-	      vcp_real_calc * const soa2_ljc_V_y = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Y);
-	      vcp_real_calc * const soa2_ljc_V_z = soa2.getBegin(QuantityType::VIRIAL, LJC, Coordinate::Z);
+	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::Z);
+	const vcp_real_calc * const soa2_ljc_r_x = soa2.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::X);
+	const vcp_real_calc * const soa2_ljc_r_y = soa2.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Y);
+	const vcp_real_calc * const soa2_ljc_r_z = soa2.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Z);
+	     vcp_real_accum * const soa2_ljc_f_x = soa2.getBeginAccum(QuantityType::FORCE, LJC, Coordinate::X);
+	     vcp_real_accum * const soa2_ljc_f_y = soa2.getBeginAccum(QuantityType::FORCE, LJC, Coordinate::Y);
+	     vcp_real_accum * const soa2_ljc_f_z = soa2.getBeginAccum(QuantityType::FORCE, LJC, Coordinate::Z);
+	     vcp_real_accum * const soa2_ljc_V_x = soa2.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::X);
+	     vcp_real_accum * const soa2_ljc_V_y = soa2.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Y);
+	     vcp_real_accum * const soa2_ljc_V_z = soa2.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Z);
 	const vcp_ljc_id_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
-	RealCalcVec sum_upot6lj = RealCalcVec::zero();
-	RealCalcVec sum_virial = RealCalcVec::zero();
+	RealAccumVec sum_upot6lj = RealAccumVec::zero();
+	RealAccumVec sum_virial = RealAccumVec::zero();
 
 	const RealCalcVec rc2 = RealCalcVec::set1(_LJCutoffRadiusSquare);
 
@@ -315,13 +316,13 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 		else {
 			// LJ force computation
 			for (int local_i = 0; local_i < soa1_mol_ljc_num[i]; local_i++) {//over the number of lj-centers in the molecule i
-				RealCalcVec sum_fx1 = RealCalcVec::zero();
-				RealCalcVec sum_fy1 = RealCalcVec::zero();
-				RealCalcVec sum_fz1 = RealCalcVec::zero();
+				RealAccumVec sum_fx1 = RealAccumVec::zero();
+				RealAccumVec sum_fy1 = RealAccumVec::zero();
+				RealAccumVec sum_fz1 = RealAccumVec::zero();
 
-				RealCalcVec sum_Vx1 = RealCalcVec::zero();
-				RealCalcVec sum_Vy1 = RealCalcVec::zero();
-				RealCalcVec sum_Vz1 = RealCalcVec::zero();
+				RealAccumVec sum_Vx1 = RealAccumVec::zero();
+				RealAccumVec sum_Vy1 = RealAccumVec::zero();
+				RealAccumVec sum_Vz1 = RealAccumVec::zero();
 
 				const RealCalcVec c_r_x1 = RealCalcVec::broadcast(soa1_ljc_r_x + i_ljc_idx);
 				const RealCalcVec c_r_y1 = RealCalcVec::broadcast(soa1_ljc_r_y + i_ljc_idx);
@@ -343,7 +344,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
 						RealCalcVec fx, fy, fz;
-						RealCalcVec Vx, Vy, Vz;
+						RealAccumVec Vx, Vy, Vz;
 
 						RealCalcVec eps_24;
 						RealCalcVec sig2;
@@ -362,13 +363,17 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 							eps_24, sig2,
 							shift6);
 
-						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_x, j, fx, lookupORforceMask);
-						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_y, j, fy, lookupORforceMask);
-						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_z, j, fz, lookupORforceMask);
+						RealAccumVec a_fx = RealAccumVec::convertCalcToAccum(fx);
+						RealAccumVec a_fy = RealAccumVec::convertCalcToAccum(fy);
+						RealAccumVec a_fz = RealAccumVec::convertCalcToAccum(fz);
 
-						sum_fx1 = sum_fx1 + fx;
-						sum_fy1 = sum_fy1 + fy;
-						sum_fz1 = sum_fz1 + fz;
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_x, j, a_fx, lookupORforceMask);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_y, j, a_fy, lookupORforceMask);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_z, j, a_fz, lookupORforceMask);
+
+						sum_fx1 = sum_fx1 + a_fx;
+						sum_fy1 = sum_fy1 + a_fy;
+						sum_fz1 = sum_fz1 + a_fz;
 
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_ljc_V_x, j, Vx, lookupORforceMask);
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_ljc_V_y, j, Vy, lookupORforceMask);
@@ -400,7 +405,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
 						RealCalcVec fx, fy, fz;
-						RealCalcVec Vx, Vy, Vz;
+						RealAccumVec Vx, Vy, Vz;
 
 						RealCalcVec eps_24;
 						RealCalcVec sig2;
@@ -419,13 +424,17 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 							eps_24, sig2,
 							shift6);
 
-						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_ljc_f_x, j, fx, lookupORforceMask, remainderM);
-						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_ljc_f_y, j, fy, lookupORforceMask, remainderM);
-						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_ljc_f_z, j, fz, lookupORforceMask, remainderM);
+						RealAccumVec a_fx = RealAccumVec::convertCalcToAccum(fx);
+						RealAccumVec a_fy = RealAccumVec::convertCalcToAccum(fy);
+						RealAccumVec a_fz = RealAccumVec::convertCalcToAccum(fz);
 
-						sum_fx1 = sum_fx1 + fx;
-						sum_fy1 = sum_fy1 + fy;
-						sum_fz1 = sum_fz1 + fz;
+						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_ljc_f_x, j, a_fx, lookupORforceMask, remainderM);
+						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_ljc_f_y, j, a_fy, lookupORforceMask, remainderM);
+						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_ljc_f_z, j, a_fz, lookupORforceMask, remainderM);
+
+						sum_fx1 = sum_fx1 + a_fx;
+						sum_fy1 = sum_fy1 + a_fy;
+						sum_fz1 = sum_fz1 + a_fz;
 
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_ljc_V_x, j, Vx, lookupORforceMask, remainderM);
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_ljc_V_y, j, Vy, lookupORforceMask, remainderM);

@@ -22,8 +22,8 @@
 class CellDataSoA : public CellDataSoABase {
 
 	//for better readability:
-	typedef ConcatenatedSites<vcp_real_calc>::SiteType 			SiteType;
-	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	CoordinateType;
+	typedef ConcSites::SiteType 			SiteType;
+	typedef ConcSites::CoordinateType	CoordinateType;
 
 
 public:
@@ -54,8 +54,8 @@ public:
 	// entries per center
 	ConcatenatedSites<vcp_real_calc> _centers_m_r;
 	ConcatenatedSites<vcp_real_calc> _centers_r;
-	ConcatenatedSites<vcp_real_calc> _centers_f;
-	ConcatenatedSites<vcp_real_calc> _centers_V;
+	ConcatenatedSites<vcp_real_accum> _centers_f;
+	ConcatenatedSites<vcp_real_accum> _centers_V;
 
 	// entries per lj center
 	AlignedArray<vcp_ljc_id_t> _ljc_id;
@@ -66,12 +66,12 @@ public:
 	// entries per dipole
 	AlignedArray<vcp_real_calc> _dipoles_p; // dipole moment
 	AlignedArrayTriplet<vcp_real_calc> _dipoles_e; // orientation vector of dipole moment
-	AlignedArrayTriplet<vcp_real_calc> _dipoles_M; // torque vector
+	AlignedArrayTriplet<vcp_real_accum> _dipoles_M; // torque vector
 
 	// entries per quadrupole
 	AlignedArray<vcp_real_calc> _quadrupoles_m; // quadrupole moment
 	AlignedArrayTriplet<vcp_real_calc> _quadrupoles_e; // orientation vector of quadrupole moment
-	AlignedArrayTriplet<vcp_real_calc> _quadrupoles_M; // torque vector
+	AlignedArrayTriplet<vcp_real_accum> _quadrupoles_M; // torque vector
 
 
 	/**
@@ -82,29 +82,53 @@ public:
 	 * \tparam	coord	Choose the coordinate of the site you want
 	 * \return	Pointer to the first element of the data you requested
 	 */
-	vcp_inline vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) {
-		ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
+	vcp_inline vcp_real_calc* getBeginCalc(QuantityType qt, SiteType st, CoordinateType coord) {
+		mardyn_assert(qt == QuantityType::MOL_POSITION or qt == QuantityType::CENTER_POSITION);
+		ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantityCalc(qt);
 		return thisQuantity->getBeginPointer(st, coord);
 	}
 
-	vcp_inline const vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) const {
-		const ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
+	vcp_inline const vcp_real_calc* getBeginCalc(QuantityType qt, SiteType st, CoordinateType coord) const {
+		mardyn_assert(qt == QuantityType::MOL_POSITION or qt == QuantityType::CENTER_POSITION);
+		const ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantityCalc(qt);
+		return thisQuantity->getBeginPointer(st, coord);
+	}
+
+	vcp_inline vcp_real_accum* getBeginAccum(QuantityType qt, SiteType st, CoordinateType coord) {
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		ConcatenatedSites<vcp_real_accum> * thisQuantity = resolveQuantityAccum(qt);
+		return thisQuantity->getBeginPointer(st, coord);
+	}
+
+	vcp_inline const vcp_real_accum* getBeginAccum(QuantityType qt, SiteType st, CoordinateType coord) const {
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		const ConcatenatedSites<vcp_real_accum> * thisQuantity = resolveQuantityAccum(qt);
 		return thisQuantity->getBeginPointer(st, coord);
 	}
 
 	/**
 	 * \brief	Get a triplet of data from a ConcatenatedSites at specific index
 	 */
-	vcp_inline std::array<vcp_real_calc, 3> getTriplet(QuantityType qt, SiteType st, size_t index) const {
-		const ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
+	vcp_inline std::array<vcp_real_calc, 3> getTripletCalc(QuantityType qt, SiteType st, size_t index) const {
+		const ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantityCalc(qt);
+		return thisQuantity->getTriplet(st, index);
+	}
+
+	vcp_inline std::array<vcp_real_accum, 3> getTripletAccum(QuantityType qt, SiteType st, size_t index) const {
+		const ConcatenatedSites<vcp_real_accum>* thisQuantity = resolveQuantityAccum(qt);
 		return thisQuantity->getTriplet(st, index);
 	}
 
 	/**
 	 * \brief	Set a triplet of data in a ConcatenatedSites to specified values
 	 */
-	vcp_inline void setTriplet(std::array<vcp_real_calc, 3> t, QuantityType qt, SiteType st, size_t index) {
-		ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
+	vcp_inline void setTripletCalc(std::array<vcp_real_calc, 3> t, QuantityType qt, SiteType st, size_t index) {
+		ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantityCalc(qt);
+		thisQuantity->setTriplet(t, st, index);
+	}
+
+	vcp_inline void setTripletAccum(std::array<vcp_real_accum, 3> t, QuantityType qt, SiteType st, size_t index) {
+		ConcatenatedSites<vcp_real_accum>* thisQuantity = resolveQuantityAccum(qt);
 		thisQuantity->setTriplet(t, st, index);
 	}
 
@@ -112,8 +136,8 @@ public:
 	 * \brief	Add a set of LJC-data at position index
 	 */
 	void pushBackLJC(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_ljc_id_t lookUpIndex) {
-		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::LJC, index);
-		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::LJC, index);
+		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::LJC, index);
+		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::LJC, index);
 		_ljc_id[index] = lookUpIndex;
 	}
 
@@ -121,8 +145,8 @@ public:
 	 * \brief	Add a set of charge-data at position index
 	 */
 	void pushBackCharge(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_real_calc charge) {
-		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::CHARGE, index);
-		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::CHARGE, index);
+		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::CHARGE, index);
+		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::CHARGE, index);
 		_charges_q[index] = charge;
 	}
 
@@ -131,8 +155,8 @@ public:
 	 */
 	void pushBackDipole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
 			vcp_real_calc dipoleMoment, std::array<vcp_real_calc,3> orientation) {
-		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::DIPOLE, index);
-		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::DIPOLE, index);
+		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::DIPOLE, index);
+		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::DIPOLE, index);
 		_dipoles_p[index] = dipoleMoment;
 		_dipoles_e.x(index) = orientation[0];
 		_dipoles_e.y(index) = orientation[1];
@@ -144,8 +168,8 @@ public:
 	 */
 	void pushBackQuadrupole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
 			vcp_real_calc quadrupoleMoment, std::array<vcp_real_calc,3> orientation) {
-		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, index);
-		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, index);
+		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, index);
+		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, index);
 		_quadrupoles_m[index] = quadrupoleMoment;
 		_quadrupoles_e.x(index) = orientation[0];
 		_quadrupoles_e.y(index) = orientation[1];
@@ -263,7 +287,8 @@ private:
 	/**
 	 * \brief Matches the given QuantityType and returns a pointer to the associated ConcatenatedSites
 	 */
-	vcp_inline ConcatenatedSites<vcp_real_calc>* resolveQuantity(QuantityType qt) {
+	vcp_inline ConcatenatedSites<vcp_real_calc>* resolveQuantityCalc(QuantityType qt) {
+		mardyn_assert(qt == QuantityType::MOL_POSITION or qt == QuantityType::CENTER_POSITION);
 		ConcatenatedSites<vcp_real_calc>* returnQuantity;
 		switch(qt) {
 		case QuantityType::MOL_POSITION:
@@ -272,6 +297,19 @@ private:
 		case QuantityType::CENTER_POSITION:
 			returnQuantity = &_centers_r;
 			break;
+		default:
+			returnQuantity = nullptr;
+			break;
+		}
+
+		mardyn_assert(returnQuantity != nullptr);
+		return returnQuantity;
+	}
+
+	vcp_inline ConcatenatedSites<vcp_real_accum>* resolveQuantityAccum(QuantityType qt) {
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		ConcatenatedSites<vcp_real_accum>* returnQuantity;
+		switch(qt) {
 		case QuantityType::FORCE:
 			returnQuantity = &_centers_f;
 			break;
@@ -287,7 +325,8 @@ private:
 		return returnQuantity;
 	}
 
-	vcp_inline const ConcatenatedSites<vcp_real_calc>* resolveQuantity(QuantityType qt) const {
+	vcp_inline const ConcatenatedSites<vcp_real_calc>* resolveQuantityCalc(QuantityType qt) const {
+		mardyn_assert(qt == QuantityType::MOL_POSITION or qt == QuantityType::CENTER_POSITION);
 		const ConcatenatedSites<vcp_real_calc>* returnQuantity;
 		switch(qt) {
 		case QuantityType::MOL_POSITION:
@@ -296,6 +335,19 @@ private:
 		case QuantityType::CENTER_POSITION:
 			returnQuantity = &_centers_r;
 			break;
+		default:
+			returnQuantity = nullptr;
+			break;
+		}
+
+		mardyn_assert(returnQuantity != nullptr);
+		return returnQuantity;
+	}
+
+	vcp_inline const ConcatenatedSites<vcp_real_accum>* resolveQuantityAccum(QuantityType qt) const {
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		const ConcatenatedSites<vcp_real_accum>* returnQuantity;
+		switch(qt) {
 		case QuantityType::FORCE:
 			returnQuantity = &_centers_f;
 			break;

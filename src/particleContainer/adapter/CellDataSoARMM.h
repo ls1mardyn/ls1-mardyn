@@ -14,25 +14,25 @@
  * \author Nikola Tchipev
  */
 class CellDataSoARMM : public CellDataSoABase {
-	typedef ConcatenatedAlignedArrayRMM<vcp_real_calc, uint64_t>::Quantity_t Quantity_t;
+	typedef ConcatenatedAlignedArrayRMM<vcp_real_calc, vcp_real_accum, uint64_t>::Quantity_t Quantity_t;
 public:
 	CellDataSoARMM(size_t mol_arg) {
 		resize(mol_arg);
 	}
 
-	vcp_inline vcp_real_calc* r_xBegin() { return _data.begin_real(Quantity_t::RX);}
-	vcp_inline vcp_real_calc* r_yBegin() { return _data.begin_real(Quantity_t::RY);}
-	vcp_inline vcp_real_calc* r_zBegin() { return _data.begin_real(Quantity_t::RZ);}
-	vcp_inline vcp_real_calc* v_xBegin() { return _data.begin_real(Quantity_t::VX);}
-	vcp_inline vcp_real_calc* v_yBegin() { return _data.begin_real(Quantity_t::VY);}
-	vcp_inline vcp_real_calc* v_zBegin() { return _data.begin_real(Quantity_t::VZ);}
+	vcp_inline vcp_real_calc* r_xBegin() { return _data.begin_calc(Quantity_t::RX);}
+	vcp_inline vcp_real_calc* r_yBegin() { return _data.begin_calc(Quantity_t::RY);}
+	vcp_inline vcp_real_calc* r_zBegin() { return _data.begin_calc(Quantity_t::RZ);}
+	vcp_inline vcp_real_accum* v_xBegin() { return _data.begin_accum(Quantity_t::VX);}
+	vcp_inline vcp_real_accum* v_yBegin() { return _data.begin_accum(Quantity_t::VY);}
+	vcp_inline vcp_real_accum* v_zBegin() { return _data.begin_accum(Quantity_t::VZ);}
 
-	const vcp_inline vcp_real_calc* r_xBegin() const { return _data.begin_real(Quantity_t::RX);}
-	const vcp_inline vcp_real_calc* r_yBegin() const { return _data.begin_real(Quantity_t::RY);}
-	const vcp_inline vcp_real_calc* r_zBegin() const { return _data.begin_real(Quantity_t::RZ);}
-	const vcp_inline vcp_real_calc* v_xBegin() const { return _data.begin_real(Quantity_t::VX);}
-	const vcp_inline vcp_real_calc* v_yBegin() const { return _data.begin_real(Quantity_t::VY);}
-	const vcp_inline vcp_real_calc* v_zBegin() const { return _data.begin_real(Quantity_t::VZ);}
+	const vcp_inline vcp_real_calc* r_xBegin() const { return _data.begin_calc(Quantity_t::RX);}
+	const vcp_inline vcp_real_calc* r_yBegin() const { return _data.begin_calc(Quantity_t::RY);}
+	const vcp_inline vcp_real_calc* r_zBegin() const { return _data.begin_calc(Quantity_t::RZ);}
+	const vcp_inline vcp_real_accum* v_xBegin() const { return _data.begin_accum(Quantity_t::VX);}
+	const vcp_inline vcp_real_accum* v_yBegin() const { return _data.begin_accum(Quantity_t::VY);}
+	const vcp_inline vcp_real_accum* v_zBegin() const { return _data.begin_accum(Quantity_t::VZ);}
 
 	void resize(size_t molecules_arg) {
 		const bool allow_shrink = false; // TODO shrink at some point in the future
@@ -49,16 +49,18 @@ public:
 
 	void appendMolecule(MoleculeInterface& m) {
 		MoleculeRMM& m_RMM = downcastMoleculeReferenceRMM(m);
-		std::array<vcp_real_calc,6> vals = {
+		std::array<vcp_real_calc, 3> calcs = {
 			static_cast<vcp_real_calc>(m_RMM.r(0)),
 			static_cast<vcp_real_calc>(m_RMM.r(1)),
-			static_cast<vcp_real_calc>(m_RMM.r(2)),
-			static_cast<vcp_real_calc>(m_RMM.v(0)),
-			static_cast<vcp_real_calc>(m_RMM.v(1)),
-			static_cast<vcp_real_calc>(m_RMM.v(2))
+			static_cast<vcp_real_calc>(m_RMM.r(2))
+		};
+		std::array<vcp_real_accum, 3> accums = {
+			static_cast<vcp_real_accum>(m_RMM.v(0)),
+			static_cast<vcp_real_accum>(m_RMM.v(1)),
+			static_cast<vcp_real_accum>(m_RMM.v(2))
 		};
 
-		_data.appendValues(vals, m_RMM.id(), getMolNum());
+		_data.appendValues(calcs, accums, m_RMM.id(), getMolNum());
 		incrementMolNum();
 	}
 
@@ -127,25 +129,25 @@ public:
 	vcp_real_calc getMolR(unsigned short d, size_t index) const {
 		mardyn_assert(d < 3);
 		Quantity_t q = static_cast<Quantity_t>(d);
-		return _data.get_real(q,index);
+		return _data.get_calc(q,index);
 	}
 
 	void setMolR(unsigned short d, size_t index, vcp_real_calc molR) {
 		mardyn_assert(d < 3);
 		Quantity_t q = static_cast<Quantity_t>(d);
-		_data.get_real(q,index) = molR;
+		_data.get_calc(q,index) = molR;
 	}
 
-	vcp_real_calc getMolV(unsigned short d, size_t index) const {
+	vcp_real_accum getMolV(unsigned short d, size_t index) const {
 		mardyn_assert(d < 3);
 		Quantity_t q = static_cast<Quantity_t>(d + 3); // +3 to convert to VX, VY, VZ
-		return _data.get_real(q,index);
+		return _data.get_accum(q,index);
 	}
 
-	void setMolV(unsigned short d, size_t index, vcp_real_calc molV) {
+	void setMolV(unsigned short d, size_t index, vcp_real_accum molV) {
 		mardyn_assert(d < 3);
 		Quantity_t q = static_cast<Quantity_t>(d + 3); // +3 to convert to VX, VY, VZ
-		_data.get_real(q,index) = molV;
+		_data.get_accum(q,index) = molV;
 	}
 
 	uint64_t getMolUid(size_t index) const {
@@ -160,7 +162,7 @@ public:
 
 private:
 	// entries per molecule
-	ConcatenatedAlignedArrayRMM<vcp_real_calc, uint64_t> _data;
+	ConcatenatedAlignedArrayRMM<vcp_real_calc, vcp_real_accum, uint64_t> _data;
 };
 
 #endif /* CELLDATASOARMM_H_ */
