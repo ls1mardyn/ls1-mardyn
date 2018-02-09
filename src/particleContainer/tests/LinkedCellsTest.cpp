@@ -481,7 +481,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	auto domainDecompositionTest = new DomainDecompBase();
 #endif
 	auto filename = inputFile.c_str();
-	auto cutoff = 3.5;
+	auto cutoff = 5.;
 
 	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
@@ -550,8 +550,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		if (containerTest->requiresForceExchange()) {
 			domainDecompositionTest->exchangeForces(containerTest, _domain);
 		}
-		const ParticleIterator& begin2 = containerTest->iteratorBegin();
-		const ParticleIterator& end2 = containerTest->iteratorEnd();
+//		const ParticleIterator& begin2 = containerTest->iteratorBegin();
+//		const ParticleIterator& end2 = containerTest->iteratorEnd();
 //		for (ParticleIterator i = begin2; i != end2; ++i) {
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
 //					<< ", " << i->F(2) << std::endl;

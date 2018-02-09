@@ -1252,7 +1252,6 @@ void Simulation::simulate() {
 		computationTimer->start();
 		perStepTimer.start();
 
-
 		// redundant through afterForces plugin call
 		//measureFLOPRate(_moleculeContainer, _simstep);
 

@@ -38,7 +38,7 @@ CheckpointRestartTest::~CheckpointRestartTest() {
  */
 void CheckpointRestartTest::testCheckpointRestart() {
 	ParticleContainer* particleContainer
-		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", 1.5);
+		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", 10.5);
 
 	_domain->writeCheckpoint(getTestDataFilename("restart.test.dat", false), particleContainer, _domainDecomposition, 0.);
 

@@ -69,9 +69,12 @@ void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDec
 	for (unsigned i=0; i<numComp; i++){
 		_localGamma[i]=0;
 	}
-	for(ParticleIterator tempMol = particleContainer->iteratorBegin(); tempMol != particleContainer->iteratorEnd(); ++tempMol){
-		unsigned cid=tempMol->componentid();
-		_localGamma[cid]+=tempMol->Vi(1)-0.5*(tempMol->Vi(0)+tempMol->Vi(2));
+	for (ParticleIterator tempMol = particleContainer->iteratorBegin(); tempMol != particleContainer->iteratorEnd();
+			++tempMol) {
+		if (particleContainer->isInBoundingBox(tempMol->r_arr().data())) {
+			unsigned cid = tempMol->componentid();
+			_localGamma[cid] += tempMol->Vi(1) - 0.5 * (tempMol->Vi(0) + tempMol->Vi(2));
+		}
 	}
 	domainDecom->collCommInit(numComp);
 	for (unsigned i=0; i<numComp; i++){
