@@ -24,6 +24,7 @@
 #include "utils/xmlfileUnits.h"
 //
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -258,7 +259,12 @@ void dec::ControlRegion::Init(DomainDecompBase* domainDecomp)
 	for(auto&& comp : _compVars)
 	{
 		comp.numMolecules.target.local  = (int64_t)(comp.density.target.local  * _dVolume.local);
-		comp.numMolecules.target.global = (int64_t)(comp.density.target.global * _dVolume.global);
+//		comp.numMolecules.target.global = (int64_t)(comp.density.target.global * _dVolume.global);
+#ifdef ENABLE_MPI
+		MPI_Allreduce( &comp.numMolecules.target.local, &comp.numMolecules.target.global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+#else
+		comp.numMolecules.target.global = comp.numMolecules.target.local;
+#endif
 	}
 }
 
@@ -427,28 +433,16 @@ void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 //		_mettDeamon->StoreValuesCV(_dTargetDensity, this->GetVolume() );  // TODO: move this, so its called only once
 	}
 
-	/*
-	// particle insertion
-	if(_nState == CRS_INSERT_MOLECULES)
-	{
-		uint32_t cid = this->NextInsertionID();
-		ParticleInsertion* insertion = _compVars.at(cid).insertion;
-		if(nullptr != insertion)
-		{
-			if(this->InsertionAllIdle() == true)
-				insertion->setState(BMS_SELECT_RANDOM_MOLECULE);
-			insertion->preLoopAction();
-		}
-	}
-	*/
-
-	// inform director
+	// DEBUG -->
 	for(auto&& comp : _compVars)
 	{
-		cout << "actual: " << comp.numMolecules.actual.global << ", ";
-		cout << "target: " << comp.numMolecules.target.global << ", ";
-		cout << "spread: " << comp.numMolecules.spread.global << endl;
+		cout << "actual: " << setw(7) << comp.numMolecules.actual.global << ", ";
+		cout << "target: " << setw(7) << comp.numMolecules.target.global << ", ";
+		cout << "spread: " << setw(7) << comp.numMolecules.spread.global << endl;
 	}
+	// <-- DEBUG */
+
+	// inform director
 	_director->globalValuesCalculated(simulation);
 }
 

@@ -176,7 +176,15 @@ struct BubbleVars
 {
 	CtrlVar<CommVar<double> > radius;
 	CtrlVar<CommVar<double> > radiusSquared;
-	double velocity;
+	CtrlVar<CommVar<double> > forceRadius;
+	CtrlVar<CommVar<double> > forceRadiusSquared;
+
+	struct VelocityVars
+	{
+		double mean;
+		double max;
+		double maxSquared;
+	} velocity;
 
 	struct ForceVars
 	{
@@ -229,7 +237,7 @@ private:
 	void initInsertionMolecules(Simulation* simulation);  // inserter only
 	void FreezeSelectedMolecule(Molecule* mol);
 	void resetBubbleMoleculeComponent(Molecule* mol);
-	double calcMinSquaredDistance(Molecule* mol);
+	double calcMinSquaredDistance(Molecule* mol, const double& radius);
 	bool outerMoleculeRadiusCutsBubbleRadius(Simulation* simulation, Molecule* mol, const double& dist2_min, double& dist2, double* distVec);
 	void updateActualBubbleRadiusLocal(Molecule* mol, const double& dist);
 	void updateForceOnBubbleCuttingMolecule(Molecule* mol, const double& dist2_min, const double& dist2, const double& dist, double* distVec);
@@ -244,6 +252,7 @@ private:
 	uint64_t _maxID;
 	uint64_t _selectedMoleculeID;
 	uint32_t _nType;
+	bool _bVisual;
 	std::array<double, 3> _daInsertionPosition;
 	std::array<double, 3> _selectedMoleculeInitPos;
 	ChangeVar<uint32_t> _nextChangeIDs;
@@ -256,6 +265,11 @@ private:
 		std::vector<std::array<double, 3> > initial;
 		std::vector<std::array<double, 3> > actual;
 	} _pbc;
+	struct {
+		uint32_t selected;
+		uint32_t bubble;
+		uint32_t force;
+	} _visIDs;
 };
 
 class ParticleSelector

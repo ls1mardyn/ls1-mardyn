@@ -19,6 +19,8 @@
 #include <iostream>
 #include <ctime>
 #include <vector>
+#include <limits>
+#include <algorithm>
 
 template<typename T1, typename T2>
 void select_rnd_elements(std::list<T1>& mylist, std::vector<T1>& myvec, T2 numSelect)
@@ -45,7 +47,7 @@ void select_rnd_elements(std::list<T1>& mylist, std::vector<T1>& myvec, T2 numSe
 			mylist.pop_front();
 		}
 
-		std::srand(std::time(nullptr));
+//		std::srand(std::time(nullptr));
 		int rnd = rand()%numElementsSub;
 		myvec.push_back(mat.at(ci).at(rnd) );
 	}
@@ -147,8 +149,8 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 		bool bValidIDs = this->setNextInsertIDs();
 		if(true == bValidIDs)
 		{
-//			_manipulator = _inserter.at(_nextChangeIDs.from);
-			_manipulator = nullptr;
+			_manipulator = _inserter.at(_nextChangeIDs.from);
+//			_manipulator = nullptr;
 			global_log->info() << "INSERTER activated" << endl;
 		}
 		else
@@ -231,8 +233,8 @@ bool ParticleManipDirector::setNextChangeIDs()
 	_region->getGlobalMinMaxNumMoleculesSpreadCompIDs(cidMinSpread, cidMaxSpread);
 	_nextChangeIDs.from = cidMaxSpread;
 	_nextChangeIDs.to   = cidMinSpread;
-	bRet = bRet && _nextChangeIDs.from > 0 && _nextChangeIDs.from < numComps;
-	bRet = bRet && _nextChangeIDs.to   > 0 && _nextChangeIDs.to   < numComps;
+	bRet = bRet && (_nextChangeIDs.from > 0) && (_nextChangeIDs.from < numComps);
+	bRet = bRet && (_nextChangeIDs.to   > 0) && (_nextChangeIDs.to   < numComps);
 	return bRet;
 }
 
@@ -243,8 +245,8 @@ bool ParticleManipDirector::setNextInsertIDs()
 	uint32_t cidMinSpread, cidMaxSpread;
 	_region->getGlobalMinMaxNumMoleculesSpreadCompIDs(cidMinSpread, cidMaxSpread);
 	_nextChangeIDs.from = _nextChangeIDs.to = cidMinSpread;
-	bRet = bRet && _nextChangeIDs.from > 0 && _nextChangeIDs.from < numComps;
-	bRet = bRet && _nextChangeIDs.to   > 0 && _nextChangeIDs.to   < numComps;
+	bRet = bRet && (_nextChangeIDs.from > 0) && (_nextChangeIDs.from < numComps);
+	bRet = bRet && (_nextChangeIDs.to   > 0) && (_nextChangeIDs.to   < numComps);
 	return bRet;
 }
 
@@ -283,16 +285,18 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 {
 	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
 	uint8_t numComps = compVars.size();
-	CommVar<uint64_t> numDel[numComps];
+	std::vector<CommVar<uint64_t> > numDel;
+	numDel.resize(numComps);
 	if(compVars.at(0).numMolecules.spread.global > 0)
-		numDel[0].global = compVars.at(0).numMolecules.spread.global;
+		numDel.at(0).global = compVars.at(0).numMolecules.spread.global;
 	else
 	{
 		for(uint8_t cid=0; cid<numComps; ++cid)
 			_deletionLists.at(cid).clear();
 		return;
 	}
-	CommVar<int64_t> positiveSpread[numComps];
+	std::vector<CommVar<int64_t> > positiveSpread;
+	positiveSpread.resize(numComps);
 	CommVar<int64_t> positiveSpreadSumOverComp;
 	positiveSpreadSumOverComp.local  = 0;
 	positiveSpreadSumOverComp.global = 0;
@@ -307,18 +311,19 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 		// sum over processes
 		spread.local = compVars.at(cid).numMolecules.spread.local;
 		if(spread.local > 0)
-			positiveSpread[cid].local = spread.local;
+			positiveSpread.at(cid).local = spread.local;
 		else
-			positiveSpread[cid].local = 0;
+			positiveSpread.at(cid).local = 0;
 
 	#ifdef ENABLE_MPI
-		MPI_Allreduce( &positiveSpread[cid].local, &positiveSpread[cid].global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		MPI_Allreduce( &positiveSpread.at(cid).local, &positiveSpread.at(cid).global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 	#else
-		positiveSpread[cid].global = positiveSpread[cid].local;
+		positiveSpread.at(cid).global = positiveSpread.at(cid).local;
 	#endif
 	}
 
-	CommVar<double> dInvPositiveSpread[numComps];
+	std::vector<CommVar<double> > dInvPositiveSpread;
+	dInvPositiveSpread.resize(numComps);
 	CommVar<double> dInvPositiveSpreadSumOverComp;
 	dInvPositiveSpreadSumOverComp.global = 1./( (double) (positiveSpreadSumOverComp.global) );
 
@@ -328,21 +333,21 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 		// global
 		spread.global = compVars.at(cid).numMolecules.spread.global;
 		if(spread.global > 0)
-			numDel[cid].global = round(spread.global * dInvPositiveSpreadSumOverComp.global * numDel[0].global);
+			numDel.at(cid).global = round(spread.global * dInvPositiveSpreadSumOverComp.global * numDel.at(0).global);
 		else
-			numDel[cid].global = 0;
+			numDel.at(cid).global = 0;
 		// local
-		dInvPositiveSpread[cid].global = 1./( (double) (positiveSpread[cid].global) );
+		dInvPositiveSpread.at(cid).global = 1./( (double) (positiveSpread.at(cid).global) );
 		spread.local = compVars.at(cid).numMolecules.spread.local;
 		cout << "Rank[" << domainDecomp.getRank() << "]: spread.local["<<(uint32_t)(cid)<<"] = " << spread.local << endl;
 		if(spread.local > 0)
 		{
-			numDel[cid].local = round(spread.local * dInvPositiveSpread[cid].global * numDel[cid].global);
-			cout << "Rank[" << domainDecomp.getRank() << "]: numDel["<<(uint32_t)(cid)<<"].local = " << numDel[cid].local << endl;
-			select_rnd_elements(compVars.at(cid).particleIDs, _deletionLists.at(cid), numDel[cid].local);
+			numDel.at(cid).local = round(spread.local * dInvPositiveSpread.at(cid).global * numDel.at(cid).global);
+			cout << "Rank[" << domainDecomp.getRank() << "]: numDel.at("<<(uint32_t)(cid)<<").local = " << numDel.at(cid).local << endl;
+			select_rnd_elements(compVars.at(cid).particleIDs, _deletionLists.at(cid), numDel.at(cid).local);
 		}
 		else
-			numDel[cid].local = 0;
+			numDel.at(cid).local = 0;
 
 		//DEBUG
 		cout << "Rank[" << domainDecomp.getRank() << "]compVars.at("<<(uint32_t)(cid)<<").deletionList:";
@@ -370,7 +375,8 @@ BubbleMethod::BubbleMethod(ParticleManipDirector* director, uint32_t nType)
 	_insRank(0),
 	_maxID(100000000),
 	_selectedMoleculeID(0),
-	_nType(nType)
+	_nType(nType),
+	_bVisual(false)
 {
 	_selector = new CompDependSelector(this);
 
@@ -389,7 +395,7 @@ BubbleMethod::BubbleMethod(ParticleManipDirector* director, uint32_t nType)
 				_pbc.initial.at(index).at(1) = yi*box[1];
 				_pbc.initial.at(index).at(2) = zi*box[2];
 				index++;
-				cout << index << ":("<<xi*box[0]<<","<<yi*box[1]<<","<<zi*box[2]<<")" << endl;
+//				cout << index << ":("<<xi*box[0]<<","<<yi*box[1]<<","<<zi*box[2]<<")" << endl;
 			}
 }
 
@@ -399,11 +405,35 @@ BubbleMethod::~BubbleMethod()
 
 void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
 {
+	// visual
+	{
+		std::string strVisualUpper = "";
+		bool bRet = xmlconfig.getNodeValue("@visual", strVisualUpper);
+		transform(strVisualUpper.begin(), strVisualUpper.end(), strVisualUpper.begin(), ::toupper);
+		_bVisual = bRet && ("YES" == strVisualUpper);
+		if(true == _bVisual)
+		{
+			bRet = bRet && xmlconfig.getNodeValue("visIDs/selected", _visIDs.selected);
+			bRet = bRet && xmlconfig.getNodeValue("visIDs/bubble", _visIDs.bubble);
+			bRet = bRet && xmlconfig.getNodeValue("visIDs/force", _visIDs.force);
+		}
+		if(false == bRet)
+		{
+			global_log->error() << "BubbleMethod::readXML(): Something is wrong with visIDs! Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+
 	xmlconfig.getNodeValue("maxforce", _bubble.force.maxVal);
+	xmlconfig.getNodeValue("forceradius", _bubble.forceRadius.target.global);
+	_bubble.forceRadius.target.local = _bubble.forceRadius.actual.local = _bubble.forceRadius.target.global;
+	_bubble.forceRadiusSquared.target.global = _bubble.forceRadiusSquared.target.global*_bubble.forceRadiusSquared.target.global;
 	xmlconfig.getNodeValue("bubbleradius", _bubble.radius.target.global);
 	_bubble.radius.target.local = _bubble.radius.actual.local = _bubble.radius.target.global;
 	_bubble.radiusSquared.target.global = _bubble.radius.target.global*_bubble.radius.target.global;
-	xmlconfig.getNodeValue("velocity", _bubble.velocity);
+	xmlconfig.getNodeValue("velocity/mean", _bubble.velocity.mean);
+	xmlconfig.getNodeValue("velocity/max", _bubble.velocity.max);
+	_bubble.velocity.maxSquared = _bubble.velocity.max * _bubble.velocity.max;
 
 	if(this->checkBubbleRadius() == false)
 	{
@@ -413,10 +443,12 @@ void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
 
 	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
-	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubble.radius.actual.global << endl;
-	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
-	cout << "rank[" << ownRank << "]: _bubble.radius.actual.local=" << _bubble.radius.actual.local << endl;
-	cout << "rank[" << ownRank << "]: _bubble.radius.target.local=" << _bubble.radius.target.local << endl;
+//	// DEBUG
+//	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubble.radius.actual.global << endl;
+//	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
+//	cout << "rank[" << ownRank << "]: _bubble.radius.actual.local=" << _bubble.radius.actual.local << endl;
+//	cout << "rank[" << ownRank << "]: _bubble.radius.target.local=" << _bubble.radius.target.local << endl;
+//	// DEBUG
 
 	// insertion molecules
 	{
@@ -544,21 +576,21 @@ void BubbleMethod::resetBubbleMoleculeComponent(Molecule* mol)
 	}
 }
 
-double BubbleMethod::calcMinSquaredDistance(Molecule* mol)
+double BubbleMethod::calcMinSquaredDistance(Molecule* mol, const double& radius)
 {
 	double dOuterMoleculeRadiusLJ = mol->component()->getOuterMoleculeRadiusLJ();
-	double dist2_min = (_bubble.radius.target.global+dOuterMoleculeRadiusLJ)*(_bubble.radius.target.global+dOuterMoleculeRadiusLJ);
+	double dist2_min = (radius+dOuterMoleculeRadiusLJ)*(radius+dOuterMoleculeRadiusLJ);
 	return dist2_min;
 }
 
 bool BubbleMethod::outerMoleculeRadiusCutsBubbleRadius(Simulation* simulation, Molecule* mol, const double& dist2_min, double& dist2, double* distVec)
 {
+	DomainDecompBase domainDecomp = simulation->domainDecomposition();
+	int ownRank = domainDecomp.getRank();
 	Domain* domain = simulation->getDomain();
 	double box[3];
 	for(uint8_t d=0; d<3; ++d)
 		box[d] = domain->getGlobalLength(d);
-
-//	cout << "box: " << box[0] << ", " << box[1] << ", " << box[2] << endl;
 
 	bool bCutsBubbleRadius = false;
 	for(auto pbc:_pbc.initial)
@@ -587,6 +619,9 @@ void BubbleMethod::updateActualBubbleRadiusLocal(Molecule* mol, const double& di
 
 void BubbleMethod::updateForceOnBubbleCuttingMolecule(Molecule* mol, const double& dist2_min, const double& dist2, const double& dist, double* distVec)
 {
+	double v2 = mol->v2();
+	if(v2 >= _bubble.velocity.maxSquared)
+		return;
 	double invDist = 1./dist;
 	double Fadd[3];
 	for(uint8_t d=0; d<3; ++d)
@@ -606,65 +641,90 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 		return;
 	}
 
+	/* DEBUG -->
+	double Fabs = 0.0;
+	for(uint8_t dim=0; dim<3; ++dim)
+		Fabs += mol->F(dim)*mol->F(dim);
+	Fabs = sqrt(Fabs);
+	if(Fabs > 350)
 	{
-		// skip selected molecule, but update its position
-		if(mol->id() == _selectedMoleculeID)
+		cout << "rank[" << ownRank << "]: id=" << mol->id() << ", Fabs=" << Fabs << endl;
+
+		Component* comp6 = global_simulation->getEnsemble()->getComponent(5);  // max_force_exceed
+		ID_pair ids;
+		ids.mid = mol->id();
+		ids.cid = mol->componentid();
+		_bubbleMolecules.push_back(ids);
+		mol->setComponent(comp6);
+	}
+	// <-- DEBUG */
+
+	// skip selected molecule, but update its position
+	if(mol->id() == _selectedMoleculeID)
+	{
+		cout << "rank[" << ownRank << "] BubbleMethod::GrowBubble: _selectedMoleculeID="<<_selectedMoleculeID<< endl;
+		// visual
+		if(true == _bVisual)
 		{
-			cout << "rank[" << ownRank << "] BubbleMethod::GrowBubble: _selectedMoleculeID="<<_selectedMoleculeID<< endl;
-			Component* comp4 = global_simulation->getEnsemble()->getComponent(3);  // selected
+			Component* comp = global_simulation->getEnsemble()->getComponent(_visIDs.selected-1);  // selected
 			ID_pair ids;
 			ids.mid = mol->id();
 			ids.cid = mol->componentid();
 			_bubbleMolecules.push_back(ids);
-			mol->setComponent(comp4);
-
-			return;
+			mol->setComponent(comp);
 		}
-	//	else
-	//		global_log->error() << "Selected molecule NOT found!" << endl;
 
-		/*
-		 * Change components for visualization
-		 *
-		 */
-//		Component* comp2 = global_simulation->getEnsemble()->getComponent(1);  // H2
-//		if(mol->componentid()+1 == 5)
-//			mol->setComponent(comp2);
+		return;
+	}
 
-
+	// FORCE RADIUS -->
+	bool bCutsForceRadius;
+	{
 		double distVec[3] = {0.0, 0.0, 0.0};
 		double dist2 = 0.0;
-		double dist2_min = calcMinSquaredDistance(mol);
-		bool bCutsBubbleRadius = this->outerMoleculeRadiusCutsBubbleRadius(simulation, mol, dist2_min, dist2, distVec);
-		if(false == bCutsBubbleRadius)
+		double dist2_min = calcMinSquaredDistance(mol, _bubble.forceRadius.target.global);
+		bCutsForceRadius = this->outerMoleculeRadiusCutsBubbleRadius(simulation, mol, dist2_min, dist2, distVec);
+
+		if(false == bCutsForceRadius)
 			return;
-		else
+
+		double dist = sqrt(dist2);
+		this->updateForceOnBubbleCuttingMolecule(mol, dist2_min, dist2, dist, distVec);
+		_numManipulatedParticles.local++;
+	}  // <-- FORCE RADIUS
+
+	// BUBBLE RADIUS -->
+	{
+		double distVec[3] = {0.0, 0.0, 0.0};
+		double dist2 = 0.0;
+		double dist2_min = calcMinSquaredDistance(mol, _bubble.radius.target.global);
+		bool bCutsBubbleRadius = this->outerMoleculeRadiusCutsBubbleRadius(simulation, mol, dist2_min, dist2, distVec);
+
+		/* DEBUG -->
+		if(mol->id() == 100000382)
 		{
-			Component* comp5 = global_simulation->getEnsemble()->getComponent(4);  // inside_bubble
+			cout << "rank[" << ownRank << "]: GrowBubble(), ID=" << mol->id() << ", (x,y,z): " << mol->r(0) << "," << mol->r(1) << "," << mol->r(2) << endl;
+			cout << "rank[" << ownRank << "]: GrowBubble(), dist2=" << dist2 << ", dist=" << sqrt(dist2) << endl;
+		}
+		// <-- DEBUG */
+
+		if(true == bCutsForceRadius)
+		{
+			uint32_t cid = _visIDs.force-1;
+			if(true == bCutsBubbleRadius)
+			{
+				cid = _visIDs.bubble-1;
+				double dist = sqrt(dist2);
+				this->updateActualBubbleRadiusLocal(mol, dist);
+			}
+			Component* comp = global_simulation->getEnsemble()->getComponent(cid);
 			ID_pair ids;
 			ids.mid = mol->id();
 			ids.cid = mol->componentid();
 			_bubbleMolecules.push_back(ids);
-			mol->setComponent(comp5);
+			mol->setComponent(comp);
 		}
-
-		double dist = sqrt(dist2);
-		this->updateActualBubbleRadiusLocal(mol, dist);
-		this->updateForceOnBubbleCuttingMolecule(mol, dist2_min, dist2, dist, distVec);
-
-//		// DEBUG
-//		dist2 = 0.0;
-//		for(uint8_t d=0; d<3; ++d)
-//		{
-//			distVec[d] = pit->r(d) - _selectedMoleculePos.at(d);
-//			dist2 += distVec[d]*distVec[d];
-//		}
-//		dist = sqrt(dist2);
-//		cout << "GrowBubble(), id: " << pit->id() << ", after replacement: " << _dReplacement << ", dist:" << dist << endl;
-//		// DEBUG
-
-		_numManipulatedParticles.local++;
-	}
+	}  // <-- BUBBLE RADIUS
 }
 
 void BubbleMethod::ChangeIdentity(Simulation* simulation, Molecule* mol)
@@ -741,24 +801,36 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 
 #ifdef ENABLE_MPI
 	MPI_Allreduce( &_numManipulatedParticles.local, &_numManipulatedParticles.global, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce( &_bubble.radius.actual.local, &_bubble.radius.actual.global, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	MPI_Allreduce( &_bubble.radius.actual.local, &_bubble.radius.actual.global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #else
 	_numManipulatedParticles.global = _numManipulatedParticles.local;
 	_bubble.radius.actual.global = _bubble.radius.actual.local;
 #endif
 
-	cout << "rank[" << ownRank << "]: _numManipulatedParticles.global=" << _numManipulatedParticles.global << endl;
+//	cout << "rank[" << ownRank << "]: _numManipulatedParticles.global=" << _numManipulatedParticles.global << endl;
 	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubble.radius.actual.global << endl;
-	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
-	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _selectedMoleculeID="<<_selectedMoleculeID<< endl;
-	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _nState="<<_nState<< endl;
+//	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
+//	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _selectedMoleculeID="<<_selectedMoleculeID<< endl;
+//	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _nState="<<_nState<< endl;
 
 //	if( !(BMS_GROWING_BUBBLE == _nState && _numManipulatedParticles.global == 0) )
 
 	bool bBubbleSizeReached = (_bubble.radius.actual.global >= _bubble.radius.target.global) && BMS_GROWING_BUBBLE == _nState;
-	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): bBubbleSizeReached="<<bBubbleSizeReached<< ", targetID=" << this->getTargetCompID() << endl;
+//	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): bBubbleSizeReached="<<bBubbleSizeReached<< ", targetID=" << this->getTargetCompID() << endl;
 	if(false == bBubbleSizeReached)
 		return;
+
+	// change back components, TODO: maybe better location to do so, to avoid additional loop
+	{
+		ParticleContainer* particles = global_simulation->getMolecules();
+		ParticleIterator pit;
+		for( pit  = particles->iteratorBegin();
+				pit != particles->iteratorEnd();
+			 ++pit )
+		{
+			this->resetBubbleMoleculeComponent( &(*pit) );
+		}
+	}
 
 	if(ownRank == _insRank)
 	{
@@ -784,6 +856,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 					pit != particles->iteratorEnd();
 				 ++pit )
 			{
+				this->resetBubbleMoleculeComponent( &(*pit) );
 				if(pit->id() == _selectedMoleculeID) //componentid()+1 == 3)
 				{
 					particleCont->deleteMolecule(*pit, false);
@@ -793,10 +866,10 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 	//		particleCont->addParticles(_insertMolecules, false);
 			for(auto&& mol:_insertMolecules.actual)
 			{
-				cout << "Adding particle..." << endl;
+				cout << "rank[" << ownRank << "]: Adding particle..." << endl;
 				cout << mol;
 				particleCont->addParticle(mol, true, true, true);
-				cout << "... added!" << endl;
+				cout << "rank[" << ownRank << "]: ... added!" << endl;
 			}
 		}
 	}
@@ -818,7 +891,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 	ParticleContainer* particles = global_simulation->getMolecules();
 	ParticleIterator pit;
 	double dBubbleRadius = _bubble.radius.target.global;
-	double vm = _bubble.velocity;
+	double vm = _bubble.velocity.mean;
 	for( pit  = particles->iteratorBegin();
 			pit != particles->iteratorEnd();
 		 ++pit )
@@ -877,7 +950,7 @@ void BubbleMethod::selectParticle(Simulation* simulation)
 //	selectedMolecule.setComponent(comp4);
 	uint64_t selectedMoleculeID = 0;
 	double dPos[3] = {0.0, 0.0, 0.0};
-	cout << "BubbleMethod::selectParticle: selectedMolecule.id()=" << selectedMolecule.id() << endl;
+//	cout << "BubbleMethod::selectParticle: selectedMolecule.id()=" << selectedMolecule.id() << endl;
 	if(domainDecomp->getRank() == _insRank)
 	{
 //		if(nullptr == selectedMolecule)
@@ -896,7 +969,7 @@ void BubbleMethod::selectParticle(Simulation* simulation)
 	// store selected molecule values
 	_selectedMoleculeID = selectedMoleculeID;
 	for(uint8_t d=0; d<3; ++d)
-		_selectedMoleculeInitPos.at(d) = selectedMolecule.r(d);
+		_selectedMoleculeInitPos.at(d) = dPos[d];
 
 	// inform director about selected particle
 //	_director->
@@ -929,7 +1002,7 @@ void BubbleMethod::initInsertionMolecules(Simulation* simulation)
 		for(uint8_t d=0; d<3; ++d)
 		{
 			mol.setr(d, mol.r(d) + _selectedMoleculeInitPos.at(d) );
-			mol.setv(d, vi[d]*_bubble.velocity*flip);
+			mol.setv(d, vi[d]*_bubble.velocity.mean*flip);
 		}
 	}
 }
@@ -983,7 +1056,6 @@ int RandomSelector::selectParticle(Simulation* simulation, Molecule& selectedMol
 	Domain* domain = global_simulation->getDomain();
 	double bbMin[3];
 	double bbMax[3];
-	double insPos[3];
 
 	domainDecomp.getBoundingBoxMinMax(domain, bbMin, bbMax);
 
@@ -1005,7 +1077,7 @@ int RandomSelector::selectParticle(Simulation* simulation, Molecule& selectedMol
 		double distVec[3];
 		for(uint8_t d=0; d<3; ++d)
 		{
-			distVec[d] = pit->r(d) - insPos[d];
+			distVec[d] = pit->r(d) - _daInsertionPosition.at(d);
 			dist2 += distVec[d]*distVec[d];
 		}
 		if(dist2 < dist2_min)
@@ -1058,7 +1130,7 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 	ChangeVar<uint32_t> nextChangeIDs = _parent->getNextChangeIDs();
 	std::list<uint64_t> particleIDsFrom = _parent->GetLocalParticleIDs(nextChangeIDs.from);
 	std::list<uint64_t> particleIDsTo   = _parent->GetLocalParticleIDs(nextChangeIDs.to);
-	int64_t spreadDiff = 0;
+	int64_t spreadDiff = std::numeric_limits<int64_t>::min();
 	if(particleIDsFrom.size() > 0)
 	{
 		int64_t spreadFrom = _parent->getLocalNumMoleculesSpread(nextChangeIDs.from);
@@ -1067,8 +1139,14 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 			spreadDiff = spreadFrom - spreadTo;
 		else
 			spreadDiff = spreadFrom*-1;  // insert
+
+		/* DEBUG -->
+		cout << "Rank[" << ownRank << "]:  spreadFrom=" << spreadFrom
+			<< ", spreadTo=" << spreadTo
+			<< ", spreadDiff=" << spreadDiff << endl;
+		// <-- DEBUG */
 	}
-	cout << "spreadDiff=" << spreadDiff << endl;
+	cout << "Rank[" << ownRank << "]:  spreadDiff=" << spreadDiff << endl;
 
 	struct {
 		int64_t val;
@@ -1087,6 +1165,12 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 	uint64_t selectedID = 0;
 	if(ownRank == out.rank)
 	{
+		// DEBUG -->
+		cout << "Rank[" << ownRank << "]: particleIDsFrom:" << endl;
+		for(auto&& id:particleIDsFrom)
+			cout << id << ", ";
+		cout << endl;
+		// <-- DEBUG
 		std::vector<uint64_t> selectedIDs;
 		if(particleIDsFrom.size() < 1)
 		{
@@ -1101,9 +1185,6 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 		}
 		selectedID = selectedIDs.at(0);
 	}
-
-//	selectedID = 23;  // DEBUG
-	cout << "selectedID=" << selectedID << endl;
 
 	ParticleContainer* particles = simulation->getMolecules();
 	ParticleIterator pit;

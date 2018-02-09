@@ -1221,28 +1221,29 @@ void Simulation::simulate() {
 				deamon->init_positionMap(_moleculeContainer);
 		}
 
-		_integrator->eventNewTimestep(_moleculeContainer, _domain);
+		// mheinen 2015-05-29 --> DENSITY_CONTROL
+		// --> call before eventNewTimestep because some molecules might by outside the domain
+		// should done after calling eventNewTimestep() / before force calculation, because force _F[] on molecule is deleted by method Molecule::setupCache()
+		// and this method is called when component of molecule changes by calling Molecule::setComponent()
+		// halo must not be populated, because density may be calculated wrong then.
 
-		if(_mettDeamon.size() > 0)
-		{
-			for(auto&& deamon : _mettDeamon)
-				deamon->preForce_action(_moleculeContainer, _cutoffRadius);
-		}
-
-	    // mheinen 2015-05-29 --> DENSITY_CONTROL
-	    // should done after calling eventNewTimestep() / before force calculation, because force _F[] on molecule is deleted by method Molecule::setupCache()
-	    // and this method is called when component of molecule changes by calling Molecule::setComponent()
-	    // halo must not be populated, because density may be calculated wrong then.
-
-	//        int nRank = _domainDecomposition->getRank();
-
-	//        cout << "[" << nRank << "]: " << "ProcessIsRelevant() = " << _densityControl->ProcessIsRelevant() << endl;
+//			int nRank = _domainDecomposition->getRank();
+//			cout << "[" << nRank << "]: " << "ProcessIsRelevant() = " << _densityControl->ProcessIsRelevant() << endl;
 
 		if( _densityControl != NULL  &&
 			_densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
 			_simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
 		{
 			_densityControl->preForce_action(this);
+		}
+		// <-- DENSITY_CONTROL
+
+		_integrator->eventNewTimestep(_moleculeContainer, _domain);
+
+		if(_mettDeamon.size() > 0)
+		{
+			for(auto&& deamon : _mettDeamon)
+				deamon->preForce_action(_moleculeContainer, _cutoffRadius);
 		}
 
 /*
@@ -1255,7 +1256,6 @@ void Simulation::simulate() {
 
         _domain->setglobalNumMolecules(_domain->getglobalNumMolecules() - nNumMoleculesDeletedGlobal);
 */
-	    // <-- DENSITY_CONTROL
 
 		// mheinen 2015-03-16 --> DISTANCE_CONTROL
 		if(_distControl != NULL)
@@ -1556,8 +1556,6 @@ void Simulation::simulate() {
         // mheinen 2015-02-18 --> DRIFT_CONTROL
         if(_driftControl != NULL)
         {
-            Molecule* tM;
-
             // init drift control
             _driftControl->Init(_simstep);
 
