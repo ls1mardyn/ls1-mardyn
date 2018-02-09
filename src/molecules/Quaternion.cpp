@@ -6,7 +6,7 @@ Quaternion::Quaternion(const double& alpha_rad, const std::array<double,3>& n)
 	// normalize rotation axis vector n
 	double length = 0.0;
 	for(uint16_t d=0; d<3; ++d)
-		length += n.at(d);
+		length += n.at(d)*n.at(d);
 	double inv_length = 1./sqrt(length);
 	std::array<double,3> n_norm;
 	for(uint16_t d=0; d<3; ++d)
