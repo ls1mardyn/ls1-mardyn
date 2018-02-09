@@ -127,7 +127,7 @@ class ParticleInsertion : public ParticleManipulator
 {
 protected:
 	ParticleInsertion(ParticleManipDirector* director, uint32_t state);
-	~ParticleInsertion() {}
+	virtual ~ParticleInsertion() {}
 
 public:
 	virtual void Reset(Simulation* simulation) = 0;
@@ -205,6 +205,7 @@ enum BubbleMethodTypes
 	BMT_INSERTER = 2,
 };
 
+class Quaternion;
 class ParticleSelector;
 class XMLfileUnits;
 class Random;
@@ -212,7 +213,7 @@ class BubbleMethod : public ParticleInsertion
 {
 public:
 	BubbleMethod(ParticleManipDirector* director, uint32_t nType);
-	~BubbleMethod();
+	virtual ~BubbleMethod();
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
 	virtual void Reset(Simulation* simulation);
@@ -234,6 +235,7 @@ public:
 
 private:
 	void selectParticle(Simulation* simulation);
+	Quaternion createRandomQuaternion();
 	void initInsertionMolecules(Simulation* simulation);  // inserter only
 	void FreezeSelectedMolecule(Molecule* mol);
 	void resetBubbleMoleculeComponent(Molecule* mol);
@@ -246,6 +248,7 @@ private:
 	bool checkBubbleRadius();
 
 private:
+	Random* _rnd;
 	ParticleSelector* _selector;
 	BubbleVars _bubble;
 	int _insRank;

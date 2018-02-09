@@ -13,12 +13,14 @@
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Component.h"
+#include "molecules/Quaternion.h"
 #include "NEMD/DensityControl.h"
 
 #include <cstdlib>
 #include <iostream>
 #include <ctime>
 #include <vector>
+#include <array>
 #include <limits>
 #include <algorithm>
 
@@ -371,6 +373,7 @@ ParticleInsertion::ParticleInsertion(ParticleManipDirector* director, uint32_t s
 BubbleMethod::BubbleMethod(ParticleManipDirector* director, uint32_t nType)
 	:
 	ParticleInsertion(director, BMS_IDLE),
+	_rnd(nullptr),
 	_selector(nullptr),
 	_insRank(0),
 	_maxID(100000000),
@@ -378,6 +381,10 @@ BubbleMethod::BubbleMethod(ParticleManipDirector* director, uint32_t nType)
 	_nType(nType),
 	_bVisual(false)
 {
+	// Random number generator
+	_rnd = new Random(1000);
+
+	// Particle selector
 	_selector = new CompDependSelector(this);
 
 	// init pbc vector
@@ -401,6 +408,8 @@ BubbleMethod::BubbleMethod(ParticleManipDirector* director, uint32_t nType)
 
 BubbleMethod::~BubbleMethod()
 {
+	delete _rnd;
+//	delete _selector; // TODO: not possible (protected)
 }
 
 void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
@@ -663,6 +672,7 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 	if(mol->id() == _selectedMoleculeID)
 	{
 		cout << "rank[" << ownRank << "] BubbleMethod::GrowBubble: _selectedMoleculeID="<<_selectedMoleculeID<< endl;
+		cout << *mol << endl;
 		// visual
 		if(true == _bVisual)
 		{
@@ -976,14 +986,19 @@ void BubbleMethod::selectParticle(Simulation* simulation)
 	_nState = BMS_GROWING_BUBBLE;
 }
 
+Quaternion BubbleMethod::createRandomQuaternion()
+{
+	double alpha_rad_half = M_PI*_rnd->rnd();
+	std::array<double,3> n;
+	for(uint16_t d=0; d<3; ++d)
+		n.at(d) = _rnd->rnd();
+	Quaternion q(alpha_rad_half, n);
+//	cout << "q=("<< q.qw() << "," << q.qx() << "," << q.qy() << "," << q.qz() << ")" << endl;
+	return q;
+}
+
 void BubbleMethod::initInsertionMolecules(Simulation* simulation)
 {
-	// velocity
-	Random rnd;
-	float vi[3];
-	for(uint8_t d=0; d<3; ++d)
-		vi[d] = rnd.rnd();
-
 	for(size_t mi=0; mi<_insertMolecules.actual.size(); ++mi)
 	{
 		for(uint8_t d=0; d<3; ++d)
@@ -993,18 +1008,42 @@ void BubbleMethod::initInsertionMolecules(Simulation* simulation)
 	std::vector<Component>* ptrComps = simulation->getEnsemble()->getComponents();
 	Component* compIns = &(ptrComps->at(_nTargetCompID-1) );
 
-	int16_t flip = -1;  // TODO: approach only for two insert molecules
+	Quaternion q = this->createRandomQuaternion();
+	Molecule selectedMolecule;
+	for(uint16_t d=0; d<3; ++d)
+		selectedMolecule.setr(d, _selectedMoleculeInitPos.at(d) );
 	for(auto&& mol:_insertMolecules.actual)
 	{
-		flip *= flip;
+		// rotate insertion molecules around insertion position -->
+		std::array<double, 3> pos;
+		for(uint16_t d=0; d<3; ++d)
+			pos.at(d) = mol.r(d);
+		q.rotateInPlace(pos);
+		for(uint16_t d=0; d<3; ++d)
+			pos.at(d) += _selectedMoleculeInitPos.at(d);
+		// <-- rotate insertion molecules around insertion position
+
+		// set position and component
 		mol.setid(++_maxID);
 		mol.setComponent(compIns);
-		for(uint8_t d=0; d<3; ++d)
-		{
-			mol.setr(d, mol.r(d) + _selectedMoleculeInitPos.at(d) );
-			mol.setv(d, vi[d]*_bubble.velocity.mean*flip);
-		}
+		for(uint16_t d=0; d<3; ++d)
+			mol.setr(d, pos.at(d) );
+
+		// set velocity, so that inserted pair of molecules moves apart: <-- O ... O -->
+		double vi[3];
+		double dist2 = selectedMolecule.dist2(mol, vi);
+		double inv_dist = 1./sqrt(dist2);
+		for(uint16_t d=0; d<3; ++d)
+			mol.setv(d, vi[d]*inv_dist*_bubble.velocity.mean);
 	}
+	// DEBUG -->
+	double dr_initial[3];
+	double dr_actual[3];
+	double dist2_initial = _insertMolecules.initial.at(0).dist2(_insertMolecules.initial.at(1), dr_initial);
+	double dist2_actual = _insertMolecules.actual.at(0).dist2(_insertMolecules.actual.at(1), dr_actual);
+	double dist2_diff = dist2_actual - dist2_initial;
+	mardyn_assert(fabs(dist2_diff) <= 1e-15);
+	// <-- DEBUG
 }
 
 // Selector info
