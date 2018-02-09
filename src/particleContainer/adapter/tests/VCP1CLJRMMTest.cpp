@@ -186,22 +186,22 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 		const unsigned ind = i;
 
 		//for better readability:
-		constexpr ConcatenatedSites<vcp_real_calc>::SiteType LJC = ConcatenatedSites<vcp_real_calc>::SiteType::LJC;
-		typedef ConcatenatedSites<vcp_real_calc>::CoordinateType Coordinate;
+		constexpr ConcSites::SiteType LJC = ConcSites::SiteType::LJC;
+		typedef ConcSites::CoordinateType Coordinate;
 		typedef CellDataSoA::QuantityType QuantityType;
 
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
+		fullSoA.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
+		fullSoA.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
+		fullSoA.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
+		fullSoA.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
+		fullSoA.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
+		fullSoA.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
 		fullSoA._ljc_id[ind] = 0;
 
 		// clear FM
-		std::array<vcp_real_calc, 3> clearance = { 0., 0., 0. };
-		fullSoA.setTriplet(clearance, QuantityType::FORCE, LJC, ind);
-		fullSoA.setTriplet(clearance, QuantityType::VIRIAL, LJC, ind);
+		std::array<vcp_real_accum, 3> clearance = { 0., 0., 0. };
+		fullSoA.setTripletAccum(clearance, QuantityType::FORCE, LJC, ind);
+		fullSoA.setTripletAccum(clearance, QuantityType::VIRIAL, LJC, ind);
 
 		++it;
 	}
@@ -268,7 +268,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 
 		size_t i = it.getIndex();
 
-		std::array<vcp_real_calc, 3> triple = full_SoA.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		std::array<vcp_real_accum, 3> triple = full_SoA.getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
@@ -346,7 +346,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 
 		size_t i = it1.getIndex();
 
-		std::array<vcp_real_calc, 3> triple = full_SoA1.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		std::array<vcp_real_accum, 3> triple = full_SoA1.getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
@@ -364,7 +364,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 
 		size_t i = it2.getIndex();
 
-		std::array<vcp_real_calc, 3> triple = full_SoA2.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		std::array<vcp_real_accum, 3> triple = full_SoA2.getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
