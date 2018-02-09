@@ -481,7 +481,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	auto domainDecompositionTest = new DomainDecompBase();
 #endif
 	auto filename = inputFile.c_str();
-	auto cutoff = 5.;
+	auto cutoff = 3.5;
 
 	LinkedCells* containerTest = dynamic_cast<LinkedCells*>(initializeFromFile(ParticleContainerFactory::LinkedCell,
 			filename, cutoff));
