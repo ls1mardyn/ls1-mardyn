@@ -13,6 +13,12 @@ public:
 			: m_qw(qw), m_qx(qx), m_qy(qy), m_qz(qz) {
 	}
 
+	/** @brief create a quaternion, representing a rotation around a rotation axis (vector n) by an angel alpha
+	 * @param alpha_rad the rotation angle in radiant
+	 * @param n rotation axis represented as a vector (will be normalized)
+	 */
+	Quaternion(const double& alpha_rad, const std::array<double,3>& n);
+
 	double qw() const { return m_qw; }
 	double qx() const { return m_qx; }
 	double qy() const { return m_qy; }

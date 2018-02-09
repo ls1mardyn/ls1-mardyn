@@ -1,4 +1,24 @@
 #include "Quaternion.h"
+#include <cmath>
+
+Quaternion::Quaternion(const double& alpha_rad, const std::array<double,3>& n)
+{
+	// normalize rotation axis vector n
+	double length = 0.0;
+	for(uint16_t d=0; d<3; ++d)
+		length += n.at(d);
+	double inv_length = 1./sqrt(length);
+	std::array<double,3> n_norm;
+	for(uint16_t d=0; d<3; ++d)
+		n_norm.at(d) = n.at(d) * inv_length;
+
+	double alpha_rad_half = 0.5*alpha_rad;
+	double sin_alpha_rad_half = sin(alpha_rad_half);
+	m_qw = cos(alpha_rad_half);
+	m_qx = sin_alpha_rad_half * n_norm.at(0);
+	m_qy = sin_alpha_rad_half * n_norm.at(1);
+	m_qz = sin_alpha_rad_half * n_norm.at(2);
+}
 
 void Quaternion::operator *=(const Quaternion& q) {
 	double qw = m_qw*q.m_qw - m_qx*q.m_qx - m_qy*q.m_qy - m_qz*q.m_qz;
