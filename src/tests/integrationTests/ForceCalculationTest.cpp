@@ -66,7 +66,7 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 		test_log->info() << "ForceCalculationTest::testForcePotentialCalculationF0: SKIPPED (required exactly 1 process but was run with " <<  _domainDecomposition->getNumProcs() << " processes)" << std::endl;
 		return;
 	}
-#if defined(MARDYN_DPDP) or defined(MARDYN_SPDP)
+#if defined(MARDYN_DPDP)
 	double tolerance_force = 1e-7;
 	double tolerance_virial = 1e-6;
 #else

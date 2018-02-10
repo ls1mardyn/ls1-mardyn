@@ -133,7 +133,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 		return;
 	}
 
-#if defined(MARDYN_SPDP) or defined(MARDYN_DPDP)
+#if defined(MARDYN_DPDP)
 	double Tolerance = 1e-12; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
 #else
 	double Tolerance = 1e-06; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
@@ -225,7 +225,7 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	// AVX breaks at 1e-14
 	// probably architecture dependent. set at 1e-11 to be on the safe side
 	// also on other architectures
-#if defined(MARDYN_SPDP) or defined(MARDYN_DPDP)
+#if defined(MARDYN_DPDP)
 	double Tolerance = 1e-11; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
 #else
 	double Tolerance = 1e-05; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
