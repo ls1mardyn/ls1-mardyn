@@ -72,7 +72,7 @@ public:
 	void setid(unsigned long id);
 	void setr(unsigned short d, double r);
 	void setv(unsigned short d, double v);
-        void setF(unsigned short, double F);
+	void setF(unsigned short, double F);
 	double r(unsigned short d) const;
 	double v(unsigned short d) const;
 
@@ -311,7 +311,6 @@ private:
     // if the state is AOS, the following values are read:
     vcp_real_calc _r[3];  /**< position coordinates */
     vcp_real_calc _v[3];  /**< velocity */
-    vcp_real_accum _F[3]; /**< forces - not sure, if this belongs here */
     unsigned long _id;
 
 	// if the state is SOA, the values are read from the SoA:
