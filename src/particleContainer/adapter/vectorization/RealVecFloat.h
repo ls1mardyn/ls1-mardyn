@@ -33,33 +33,41 @@ protected:
 	real_vec _d;
 
 public:
+	vcp_inline
 	RealVec() {}
 
+	vcp_inline
 	operator real_vec() const {
 		return _d;
 	}
 
+	vcp_inline
 	RealVec(const real_vec & d) {
 		_d = d;
 	}
 
+	vcp_inline
 	RealVec(const RealVec& rhs) {
 		_d = rhs._d;
 	}
 
+	vcp_inline
 	RealVec& operator=(const RealVec& rhs) {
 		_d = rhs._d;
 		return *this;
 	}
 
+	vcp_inline
 	static RealVec convertCalcToAccum(const RealVec & rcv) {
 		return rcv;
 	}
 
+	vcp_inline
 	static RealVec convertAccumToCalc(const RealVec & rav) {
 		return rav;
 	}
 
+	vcp_inline
 	static RealVec cast_MaskVec_to_RealCalcVec(const MaskVec<float>& m) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return static_cast<real_vec>(m);
@@ -72,6 +80,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static MaskVec<float> cast_RealCalcVec_to_MaskVec(const RealVec& d) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return static_cast<MaskVec<float>>(d);
@@ -84,6 +93,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec zero() {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return 0.0f;
@@ -96,6 +106,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec ones() {
 #if VCP_VEC_WIDTH != VCP_VEC_W_512
 		return cast_MaskVec_to_RealCalcVec(MaskVec<float>::ones());
@@ -104,6 +115,7 @@ public:
 #endif
 	}
 
+	vcp_inline
 	RealVec operator + (const RealVec& rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d + rhs;
@@ -116,6 +128,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	RealVec operator - (const RealVec& rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d - rhs;
@@ -128,6 +141,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	RealVec operator * (const RealVec& rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d * rhs;
@@ -140,6 +154,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec fmadd(const RealVec & a, const RealVec& b, const RealVec& c ) {
 	#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return (a * b) + c;
@@ -150,6 +165,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec fnmadd(const RealVec & a, const RealVec& b, const RealVec& c ) {
 	#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return c - (a * b);
@@ -160,6 +176,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec fmsub(const RealVec & a, const RealVec& b, const RealVec& c) {
 	#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return (a * b) - c;
@@ -170,6 +187,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	RealVec operator / (const RealVec& rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d / rhs;
@@ -182,6 +200,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec sqrt (const RealVec& rhs) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return std::sqrt(rhs);
@@ -194,12 +213,14 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec scal_prod(
 		const RealVec& a1, const RealVec& a2, const RealVec& a3,
 		const RealVec& b1, const RealVec& b2, const RealVec& b3) {
 		return fmadd(a1, b1, fmadd(a2, b2, a3 * b3));
 	}
 
+	vcp_inline
 	static RealVec set1(const float& v) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return v;
@@ -212,6 +233,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec aligned_load(const float * const a) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return *a;
@@ -224,6 +246,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec broadcast(const float * const a) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return *a;
@@ -236,6 +259,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	void aligned_store(float * location) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		*location = _d;
@@ -248,6 +272,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec unpack_lo(const RealVec& a, const RealVec& b) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return 0.0f / 0.0f; // makes no sense
@@ -260,6 +285,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec unpack_hi(const RealVec& a, const RealVec& b) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return 0.0f / 0.0f; // makes no sense
@@ -272,6 +298,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	MaskVec<float> operator < (const RealVec & rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d < rhs;
@@ -284,6 +311,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	MaskVec<float> operator != (const RealVec & rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d != rhs;
@@ -296,6 +324,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec apply_mask(const RealVec& d, const MaskVec<float>& m) {
 	#if VCP_VEC_TYPE == VCP_NOVEC
 		return m ? d : RealVec::zero();
@@ -306,6 +335,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec aligned_load_mask(const float * const a, MaskVec<float> m) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return apply_mask(RealVec::aligned_load(a),m);
@@ -373,6 +403,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	void aligned_load_add_store(float * location) const {
 		RealVec dest = aligned_load(location);
 		dest = dest + *this;
@@ -395,6 +426,7 @@ public:
 	// AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
 	// AVX - slow-down: fma is not available; even more pressure on multiply-add imbalance? Leaving it out
 	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
+	vcp_inline
 	static RealVec fastReciprocal_mask(const RealVec& d, const MaskVec<float>& m) {
 
 		/* reciprocal */
@@ -462,6 +494,7 @@ public:
 	// AVX2 - AVX2 - some speed-up for single precision. For double prec slow down. Presumably because there are no dedicated fast intrinsics for packed double
 	// AVX - not supported
 	// KNL - an educated guess would assume that AVX512ER is there for a reason :)
+	vcp_inline
 	static RealVec fastReciprocSqrt_mask(const RealVec& d, const MaskVec<float>& m) {
 
 		/* reciprocal sqrt */

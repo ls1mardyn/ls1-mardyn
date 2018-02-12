@@ -22,35 +22,42 @@ private:
 	RealVec<double> _second;
 
 public:
+	vcp_inline
 	RealAccumVecBackend() {}
 
+	vcp_inline
 	static RealAccumVecBackend convertCalcToAccum(const RealCalcVec & rcv) {
 		RealVec<double> first = convert_low(rcv);
 		RealVec<double> second = convert_high(rcv);
 		return RealAccumVecBackend(first, second);
 	}
 
+	vcp_inline
 	static RealCalcVec convertAccumToCalc(const RealAccumVecBackend & rav) {
 		RealCalcVec ret = back_convert(rav._first, rav._second);
 		return ret;
 	}
 
+	vcp_inline
 	RealAccumVecBackend(const RealAccumVecBackend& rhs) {
 		_first = rhs._first;
 		_second = rhs._second;
 	}
 
+	vcp_inline
 	RealAccumVecBackend(const RealVec<double>& first, const RealVec<double>& second) {
 		_first = first;
 		_second = second;
 	}
 
+	vcp_inline
 	RealAccumVecBackend& operator=(const RealAccumVecBackend& rhs) {
 		_first = rhs._first;
 		_second = rhs._second;
 		return *this;
 	}
 
+	vcp_inline
 	static RealAccumVecBackend zero() {
 		RealAccumVecBackend result;
 		result._first = RealVec<double>::zero();
@@ -58,6 +65,7 @@ public:
 		return result;
 	}
 
+	vcp_inline
 	RealAccumVecBackend operator+(const RealAccumVecBackend& rhs) const {
 		RealAccumVecBackend result;
 		result._first = _first + rhs._first;
@@ -65,6 +73,7 @@ public:
 		return result;
 	}
 
+	vcp_inline
 	RealAccumVecBackend operator*(const RealAccumVecBackend& rhs) const {
 		RealAccumVecBackend result;
 		result._first = _first * rhs._first;
@@ -72,6 +81,7 @@ public:
 		return result;
 	}
 
+	vcp_inline
 	RealAccumVecBackend operator-(const RealAccumVecBackend& rhs) const {
 		RealAccumVecBackend result;
 		result._first = _first - rhs._first;
@@ -79,6 +89,7 @@ public:
 		return result;
 	}
 
+	vcp_inline
 	static RealAccumVecBackend fmadd(const RealAccumVecBackend & a, const RealAccumVecBackend& b, const RealAccumVecBackend& c ) {
 		RealAccumVecBackend result;
 		result._first = RealVec<double>::fmadd(a._first, b._first, c._first);
@@ -86,6 +97,7 @@ public:
 		return result;
 	}
 
+	vcp_inline
 	static RealAccumVecBackend fnmadd(const RealAccumVecBackend & a, const RealAccumVecBackend& b, const RealAccumVecBackend& c ) {
 		RealAccumVecBackend result;
 		result._first = RealVec<double>::fnmadd(a._first, b._first, c._first);
@@ -93,12 +105,14 @@ public:
 		return result;
 	}
 
+	vcp_inline
 	void aligned_store(double * location) const {
 		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
 		_first.aligned_store(location);
 		_second.aligned_store(location + offset);
 	}
 
+	vcp_inline
 	static RealAccumVecBackend aligned_load(const double * const a) {
 		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
 		RealVec<double> first = RealVec<double>::aligned_load(a);
@@ -106,6 +120,7 @@ public:
 		return RealAccumVecBackend(first, second);
 	}
 
+	vcp_inline
 	static RealAccumVecBackend aligned_load_mask(const double * const a, MaskVec<float> m) {
 		// we need to make two masks of type MaskVec<double> from one MaskVec<float>
 		MaskVec<double> m_lo, m_hi;
@@ -119,6 +134,7 @@ public:
 		return RealAccumVecBackend(first, second);
 	}
 
+	vcp_inline
 	static RealAccumVecBackend set1(const double& v) {
 		RealVec<double> first = RealVec<double>::set1(v);
 		RealVec<double> second = RealVec<double>::set1(v);
@@ -131,12 +147,14 @@ public:
 		RealVec<double>::horizontal_add_and_store(sum, mem_addr);
 	}
 
+	vcp_inline
 	void aligned_load_add_store(double * location) const {
 		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
 		_first.aligned_load_add_store(location);
 		_second.aligned_load_add_store(location + offset);
 	}
 
+	vcp_inline
 	static RealAccumVecBackend scal_prod(
 		const RealAccumVecBackend& a1, const RealAccumVecBackend& a2, const RealAccumVecBackend& a3,
 		const RealAccumVecBackend& b1, const RealAccumVecBackend& b2, const RealAccumVecBackend& b3) {
@@ -145,6 +163,7 @@ public:
 
 
 #if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	vcp_inline
 	static RealAccumVecBackend gather_load(const double * const src, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);
 		__m256i lookup_256i_hi = _mm512_extracti64x4_epi64(lookup, 1);
@@ -153,6 +172,7 @@ public:
 		return RealAccumVecBackend(first, second);
 	}
 
+	vcp_inline
 	void gather_store(double* const addr, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);
 		__m256i lookup_256i_hi = _mm512_extracti64x4_epi64(lookup, 1);
@@ -161,6 +181,7 @@ public:
 	}
 #endif
 
+	vcp_inline
 	static RealVec<double> convert_low(const RealCalcVec& rhs) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		line not compiled
@@ -173,6 +194,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealVec<double> convert_high(const RealCalcVec& rhs) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		line not compiled
@@ -185,6 +207,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static RealCalcVec back_convert(const RealVec<double>& lo, const RealVec<double>& hi) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		line not compiled
@@ -211,6 +234,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static void convert_mask_vec(const MaskVec<float>& src, MaskVec<double>& lo, MaskVec<double>& hi) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		line not compiled
@@ -259,19 +283,28 @@ public:
 
 class RealAccumVecBackend : public RealVec<double> {
 public:
+	vcp_inline
 	RealAccumVecBackend() {}
+
+	vcp_inline
 	RealAccumVecBackend(const RealVec<double>& rcv) : RealVec<double>() {
 		this->_d = rcv;
 	}
+
+	vcp_inline
 	static RealAccumVecBackend convertCalcToAccum(const RealCalcVec & rcv) {
 		RealAccumVecBackend result;
 		result._d = rcv;
 		return result;
 	}
+
+	vcp_inline
 	static RealCalcVec convertAccumToCalc(const RealAccumVecBackend & rav) {
 		RealCalcVec result(rav);
 		return result;
 	}
+
+	vcp_inline
 	static RealAccumVecBackend aligned_load_mask(const double * const a, MaskVec<float> m) {
 		return apply_mask(aligned_load(a),MaskVec<double>(m));
 	}

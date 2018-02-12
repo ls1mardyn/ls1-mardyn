@@ -42,16 +42,20 @@ private:
 	mask_vec _m;
 
 public:
+	vcp_inline
 	MaskVec() {}
 
+	vcp_inline
 	operator mask_vec() const {
 		return _m;
 	}
 
+	vcp_inline
 	MaskVec(const mask_vec & m) {
 		_m = m;
 	}
 
+	vcp_inline
 	static MaskVec zero() {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return 0;
@@ -64,6 +68,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static MaskVec ones() {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return ~0;
@@ -76,6 +81,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	MaskVec operator and (const MaskVec& rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m & rhs;
@@ -88,6 +94,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	MaskVec operator or (const MaskVec& rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m | rhs;
@@ -100,6 +107,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	MaskVec operator xor (const MaskVec & rhs) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m xor rhs;
@@ -112,6 +120,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	static MaskVec aligned_load(const mask_single * const a) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return *a;
@@ -126,11 +135,13 @@ public:
 
 
 #if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	vcp_inline
 	static lookupOrMask_vec aligned_load(const lookupOrMask_single * const a) {
 		return _mm512_load_epi64(a);
 	}
 #endif
 
+	vcp_inline
 	void aligned_store(mask_single * location) const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			*location = _m;
@@ -143,6 +154,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	int movemask() const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m != MaskVec::zero();
@@ -155,6 +167,7 @@ public:
 	#endif
 	}
 
+	vcp_inline
 	int countUnmasked() const {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m;
