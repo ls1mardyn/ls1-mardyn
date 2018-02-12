@@ -475,6 +475,9 @@ public:
 	void initGlobalEnergyLog();
 	void writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure);
 
+	/** Refresh particle IDs */
+	void refreshParticleIDs();
+
 private:
 
 	/** Enable final checkpoint after simulation run. */

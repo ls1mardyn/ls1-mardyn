@@ -1132,6 +1132,9 @@ void Simulation::prepare_start() {
 			global_log->info() << "Connected features: MettDeamon + DensityControl." << endl;
 		}
 	}
+
+	// refresh particle IDs
+	this->refreshParticleIDs();
 }
 
 void Simulation::simulate() {
@@ -1934,3 +1937,36 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 unsigned long Simulation::getNumberOfTimesteps() const {
 	return _numberOfTimesteps;
 }
+
+void Simulation::refreshParticleIDs()
+{
+	uint64_t prevMaxID = 0;  // max ID of previous process
+	int ownRank = _domainDecomposition->getRank();
+	int numProcs = _domainDecomposition->getNumProcs();
+
+#ifdef ENABLE_MPI
+	if (ownRank != 0) {
+		MPI_Recv(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		cout << "Process " << ownRank << " received maxID=" << prevMaxID << " from process " << (ownRank-1) << "." << endl;
+	}
+#endif
+
+	uint64_t tmpID = prevMaxID;
+
+#ifdef ENABLE_MPI
+	if(ownRank < (numProcs-1) ) {
+		prevMaxID += _moleculeContainer->getNumberOfParticles();
+		MPI_Send(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank+1), 0, MPI_COMM_WORLD);
+	}
+#endif
+
+	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
+	ParticleIterator pit;
+	for( pit  = _moleculeContainer->iteratorBegin();
+			pit != _moleculeContainer->iteratorEnd();
+		 ++pit )
+	{
+		pit->setid(++tmpID);
+	}
+}
+
