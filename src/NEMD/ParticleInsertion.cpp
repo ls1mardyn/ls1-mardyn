@@ -285,15 +285,18 @@ void ParticleDeleter::ManipulateParticles(Simulation* simulation, Molecule* mol)
 
 void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compVars)
 {
+	std::srand(std::time(nullptr));
 	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
-	uint8_t numComps = compVars.size();
+	int ownRank = domainDecomp.getRank();
+	int numProcs = domainDecomp.getNumProcs();
+	uint16_t numComps = compVars.size();
 	std::vector<CommVar<uint64_t> > numDel;
 	numDel.resize(numComps);
 	if(compVars.at(0).numMolecules.spread.global > 0)
 		numDel.at(0).global = compVars.at(0).numMolecules.spread.global;
 	else
 	{
-		for(uint8_t cid=0; cid<numComps; ++cid)
+		for(uint16_t cid=0; cid<numComps; ++cid)
 			_deletionLists.at(cid).clear();
 		return;
 	}
@@ -303,7 +306,7 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 	positiveSpreadSumOverComp.local  = 0;
 	positiveSpreadSumOverComp.global = 0;
 
-	for(uint8_t cid=1; cid<numComps; ++cid)
+	for(uint16_t cid=1; cid<numComps; ++cid)
 	{
 		CommVar<int64_t> spread;
 		// sum over components
@@ -329,30 +332,131 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 	CommVar<double> dInvPositiveSpreadSumOverComp;
 	dInvPositiveSpreadSumOverComp.global = 1./( (double) (positiveSpreadSumOverComp.global) );
 
-	for(uint8_t cid=1; cid<numComps; ++cid)
+	uint64_t* numMolecules_actual_local = new uint64_t[numComps];
+	uint64_t* numMolecules_actual_gather = new uint64_t[numProcs*numComps];
+	uint64_t* numDel_local = new uint64_t[numComps];
+	uint64_t* numDel_gather = new uint64_t[numProcs*numComps];
+
+	for(uint16_t cid=1; cid<numComps; ++cid)
 	{
 		CommVar<int64_t> spread;
 		// global
 		spread.global = compVars.at(cid).numMolecules.spread.global;
 		if(spread.global > 0)
+		{
+			cout << "Rank["<<ownRank<<"]: (spread.global * dInvPositiveSpreadSumOverComp.global * numDel.at(0).global)=("
+					<<  spread.global <<" * "<< dInvPositiveSpreadSumOverComp.global <<" * "<< numDel.at(0).global << ")="
+					<< (spread.global     *     dInvPositiveSpreadSumOverComp.global     *     numDel.at(0).global     ) << endl;
 			numDel.at(cid).global = round(spread.global * dInvPositiveSpreadSumOverComp.global * numDel.at(0).global);
+		}
 		else
 			numDel.at(cid).global = 0;
+		cout << "Rank["<<ownRank<<"]: numDel.at("<<cid<<").global["<<cid<<"] = " << numDel.at(cid).global << endl;
 		// local
 		dInvPositiveSpread.at(cid).global = 1./( (double) (positiveSpread.at(cid).global) );
 		spread.local = compVars.at(cid).numMolecules.spread.local;
-		cout << "Rank[" << domainDecomp.getRank() << "]: spread.local["<<(uint32_t)(cid)<<"] = " << spread.local << endl;
+		cout << "Rank["<<ownRank<<"]: spread.local["<<cid<<"] = " << spread.local << endl;
 		if(spread.local > 0)
 		{
-			numDel.at(cid).local = round(spread.local * dInvPositiveSpread.at(cid).global * numDel.at(cid).global);
-			cout << "Rank[" << domainDecomp.getRank() << "]: numDel.at("<<(uint32_t)(cid)<<").local = " << numDel.at(cid).local << endl;
-			select_rnd_elements(compVars.at(cid).particleIDs, _deletionLists.at(cid), numDel.at(cid).local);
+			cout << "Rank["<<ownRank<<"]: (spread.local * dInvPositiveSpread.at(cid).global * numDel.at(cid).global)=("
+					<<  spread.local <<" * "<< dInvPositiveSpread.at(cid).global <<" * "<< numDel.at(cid).global << ")="
+					<< (spread.local     *     dInvPositiveSpread.at(cid).global     *     numDel.at(cid).global     ) << endl;
+			numDel.at(cid).local = floor(spread.local * dInvPositiveSpread.at(cid).global * numDel.at(cid).global);
+//			select_rnd_elements(compVars.at(cid).particleIDs, _deletionLists.at(cid), numDel.at(cid).local);
 		}
 		else
 			numDel.at(cid).local = 0;
+		cout << "Rank["<<ownRank<<"]: numDel.at("<<cid<<").local = " << numDel.at(cid).local << endl;
+
+		// distribute remaining deletions
+		numMolecules_actual_local[cid] = compVars.at(cid).numMolecules.actual.local;
+		numDel_local[cid] = numDel.at(cid).local;
+	}
+
+#ifdef ENABLE_MPI
+		MPI_Gather(numMolecules_actual_local, numComps, MPI_UNSIGNED_LONG, numMolecules_actual_gather, numComps, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+		MPI_Gather(numDel_local,              numComps, MPI_UNSIGNED_LONG, numDel_gather,              numComps, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+#else
+#endif
+	if(0 == ownRank)
+	{
+		for(int pid=0; pid<numProcs; ++pid)
+		{
+			cout << "pid=" << pid << ":";
+			for(uint16_t cid=1; cid<numComps; ++cid)
+			{
+				cout << numMolecules_actual_gather[pid*numComps+cid] << ", ";
+			}
+			cout << endl;
+		}
+		std::vector<uint64_t> cumsum;
+		cumsum.resize(numProcs);
+		for(uint16_t cid=1; cid<numComps; ++cid)
+		{
+			// skip component where no molecules have to be deleted
+			if(numDel.at(cid).global < 1)
+				continue;
+
+			uint64_t numRemainingDeletions = numDel.at(cid).global;
+			for(int pid=0; pid<numProcs; ++pid)
+				numRemainingDeletions -= numDel_gather[pid*numComps+cid];
+			cout << "numRemainingDeletions=" << numRemainingDeletions << endl;
+
+			// skip component with no (zero) remaining deletions
+			if(numRemainingDeletions < 1)
+				continue;
+
+			uint64_t numRemainingSum = 0;
+			for(int pid=0; pid<numProcs; ++pid)
+			{
+				numRemainingSum += numMolecules_actual_gather[pid*numComps+cid] - numDel_gather[pid*numComps+cid];
+				cumsum.at(pid) = numRemainingSum;
+			}
+			cout << "numParticlesSum=" << numRemainingSum << endl;
+
+			for(uint64_t di=0; di<numRemainingDeletions; ++di)
+			{
+				mardyn_assert(numRemainingSum > 0);
+				uint64_t rnd = (uint64_t)rand() % numRemainingSum;
+				cout << "rnd=" << rnd << endl;
+
+				int nRankDel = -1;
+				for(int pid=0; pid<numProcs; ++pid)
+				{
+					if(rnd < cumsum.at(pid) )
+					{
+						nRankDel = pid;
+						break;
+					}
+				}
+				cout << "nRankDel=" << nRankDel << endl;
+
+				mardyn_assert(nRankDel > 0);
+
+				numDel_gather[nRankDel*numComps+cid]++;
+				for(int pid=nRankDel+1; pid<numProcs; ++pid)
+				{
+					mardyn_assert(cumsum.at(pid) > 0);
+					cumsum.at(pid)--;
+				}
+			}
+		}
+	}  // if(0 == ownRank)
+
+#ifdef ENABLE_MPI
+		MPI_Scatter(numDel_gather, numComps, MPI_UNSIGNED_LONG, numDel_local, numComps, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+#else
+#endif
+
+	for(uint16_t cid=1; cid<numComps; ++cid)
+	{
+		// collect remaining deletions
+		numDel.at(cid).local = numDel_local[cid];
+		if(numDel.at(cid).local > 0)
+			select_rnd_elements(compVars.at(cid).particleIDs, _deletionLists.at(cid), numDel.at(cid).local);
 
 		//DEBUG
-		cout << "Rank[" << domainDecomp.getRank() << "]compVars.at("<<(uint32_t)(cid)<<").deletionList:";
+		cout << "Rank["<<ownRank<<"]compVars.at("<<cid<<").deletionList:";
 		for(auto mid:_deletionLists.at(cid) )
 		{
 			cout << " " << mid;
@@ -360,6 +464,11 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 		cout << endl;
 		//DEBUG
 	}
+
+	delete[] numMolecules_actual_local;
+	delete[] numMolecules_actual_gather;
+	delete[] numDel_local;
+	delete[] numDel_gather;
 }
 
 ParticleInsertion::ParticleInsertion(ParticleManipDirector* director, uint32_t state)
