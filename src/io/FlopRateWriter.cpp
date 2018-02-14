@@ -145,7 +145,7 @@ void FlopRateWriter::finishOutput(ParticleContainer* particleContainer,
 }
 
 void FlopRateWriter::measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep) {
-	if(simstep % _writeFrequency != 0) {
+	if ((simstep - 1) % _writeFrequency != 0) {
 		return;
 	}
 	if(_flopCounter == nullptr) {
