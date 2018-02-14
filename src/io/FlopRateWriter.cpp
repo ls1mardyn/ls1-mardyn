@@ -108,7 +108,7 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 			<< "\tFLOP-Count per Iteration           : " << flops_normalized << " " << prefix_flops << "FLOPs" << endl
 			<< "\tFLOP-rate in force calculation     : " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << endl
 			<< "\tFLOP-rate for main loop            : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << endl
-			<< "\tfraction of FLOPs for cutoff-checks: " << molDistFlops / flops << endl;
+			<< "\tfraction of FLOPs for molecule dist: " << molDistFlops / flops << endl;
 	}
 
 
