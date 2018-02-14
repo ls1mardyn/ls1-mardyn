@@ -1256,16 +1256,16 @@ void Simulation::simulate() {
 		//measureFLOPRate(_moleculeContainer, _simstep);
 
 		//afterForces Output Call
-		global_log -> info() << "[AFTER FORCES] Performing AfterForces output plugin call" << endl;
+		global_log -> debug() << "[AFTER FORCES] Performing AfterForces output plugin call" << endl;
 		for (auto outputPlugin : _outputPlugins) {
-				global_log -> info() << "[AFTER FORCES] Plugin: " << outputPlugin->getPluginName() << endl;
+				global_log -> debug() << "[AFTER FORCES] Plugin: " << outputPlugin->getPluginName() << endl;
 				outputPlugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
 		//afterForces Plugin Call
-		global_log -> info() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
+		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
 		for (auto plugin : _plugins) {
-			global_log -> info() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
+			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
