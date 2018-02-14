@@ -5,8 +5,8 @@
  *      Author: kruegener
  */
 
-#ifndef SRC_IO_FLOPRATEWRITER_H_
-#define SRC_IO_FLOPRATEWRITER_H_
+#ifndef SRC_UTILS_TESTPLUGIN_H_
+#define SRC_UTILS_TESTPLUGIN_H_
 
 #include "PluginBase.h"
 
@@ -82,4 +82,4 @@ private:
     std::string _outputPrefix;
 };
 
-#endif /* SRC_IO_FLOPRATEWRITER_H_ */
+#endif /* SRC_UTILS_TESTPLUGIN_H_ */
