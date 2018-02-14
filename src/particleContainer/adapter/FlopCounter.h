@@ -108,6 +108,10 @@ public:
 		return _totalFlopCount;
 	}
 
+	double getTotalMoleculeDistanceFlopCount() const {
+		return _currentCounts.getMoleculeDistanceFlops();
+	}
+
 	void resetCounters() {
 		_currentCounts.clear();
 //		_totalCounts.clear();
