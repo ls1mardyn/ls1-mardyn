@@ -159,6 +159,10 @@ private:
 	std::vector<double> _vecThrottleForceY;
 	std::vector<double> _vecVeloctiyBarriers;
 	RestartInfoType _restartInfo;
+	struct{
+		double ymin;
+		double ymax;
+	} _manipfree;
 };
 
 class BinQueue;

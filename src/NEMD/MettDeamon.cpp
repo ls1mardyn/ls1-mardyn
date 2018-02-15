@@ -179,6 +179,16 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			_nZone2Method = Z2M_RESET_YPOS_ONLY;
 	}
 
+	// range that is free of manipulation from MettDeamon
+	{
+		double ymin, ymax;
+		ymin = ymax = 0.;
+		xmlconfig.getNodeValue("control/manipfree/ymin", ymin);
+		xmlconfig.getNodeValue("control/manipfree/ymax", ymax);
+		_manipfree.ymin = ymin;
+		_manipfree.ymax = ymax;
+	}
+
 	// reservoir
 	{
 		string oldpath = xmlconfig.getcurrentnodepath();
@@ -420,6 +430,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	{
 		uint8_t cid = tM->componentid();
 		double dY = tM->r(1);
+
+		if(dY > _manipfree.ymin && dY < _manipfree.ymax)
+			continue;
+
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
 		bool IsBehindTransitionPlane = this->IsBehindTransitionPlane(dY);
 /*
@@ -591,6 +605,10 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM) {
 
+		double dY = tM->r(1);
+		if(dY > _manipfree.ymin && dY < _manipfree.ymax)
+			continue;
+
 		uint8_t cid = tM->componentid();
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
 		double v2 = tM->v2();
@@ -621,7 +639,6 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			if(v2 > v2max)
 			{
 				uint64_t id = tM->id();
-				double dY = tM->r(1);
 
 //				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
 //				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
@@ -691,7 +708,9 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			if(tM->r(1) >= _dMirrorPosY)
 				tM->setv(1, -1.*abs(tM->v(1) ) );
 		}
-	}
+
+	}  // loop over molecules
+
 //	particleContainer->update();
 //	particleContainer->updateMoleculeCaches();
 	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
