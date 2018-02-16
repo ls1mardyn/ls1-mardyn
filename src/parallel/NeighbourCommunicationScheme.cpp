@@ -4,9 +4,9 @@
  *  Created on: Sep 29, 2016
  *      Author: seckler
  */
-class NeighbourCommunicationScheme;
-class DirectNeighbourCommunicationScheme;
-class IndirectNeighbourCommunicationScheme;
+//class NeighbourCommunicationScheme;
+//class DirectNeighbourCommunicationScheme;
+//class IndirectNeighbourCommunicationScheme;
 
 #include "NeighbourCommunicationScheme.h"
 #include "DomainDecompMPIBase.h"
@@ -177,7 +177,14 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	selectNeighbours(msgType);
 #endif
 	
+	int my_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	
+	cout << "enter finalizeExchangeMoleculesMPI on: " << my_rank << endl;
+	
 	const int numNeighbours = _neighbours[0].size();
+	cout << "numNeighbours: " << numNeighbours << "on: " << my_rank << endl;
+	
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
 	// messages with waiting for other messages to arrive
 	bool allDone = false;
@@ -187,12 +194,16 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	for (int i = 0; i < numNeighbours; i++) {
 		removeRecvDuplicates |= (domainDecomp->getRank() == _neighbours[0][i].getRank());
 	}
+	
+	cout << "finished removeRecvDuplicates loop on: " << my_rank << endl;
 
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
+		
+		// cout << "while loop top on: " << my_rank << endl;
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) {
@@ -200,6 +211,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 				allDone &= _neighbours[0][i].testSend();
 			}
 		}
+		
+		//cout << "for 1 on: " << my_rank << endl;
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) {
@@ -209,6 +222,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 			}
 
 		}
+		
+		//cout << "for 2 on: " << my_rank << endl;
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
@@ -216,6 +231,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					allDone &= _neighbours[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
 			}
 		}
+		
+		//cout << "for 3 on: " << my_rank << endl;
 
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
@@ -230,6 +247,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					_neighbours[0][i].deadlockDiagnosticSendRecv();
 			}
 		}
+		
+		//cout << "for 4 on: " << my_rank << endl;
 
 		if (waitingTime > deadlockTimeOut) {
 			global_log->error()
@@ -242,8 +261,13 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 			}
 			Simulation::exit(457);
 		}
+		
+		//cout << "if letztes on: " << my_rank << endl;
 
 	} // while not allDone
+	
+	cout << "exit finalizeExchangeMoleculesMPI on: " << my_rank << endl;
+	
 	global_log->set_mpi_output_root(0);
 }
 
@@ -269,19 +293,29 @@ std::vector<CommunicationPartner> squeezePartners(const std::vector<Communicatio
 #if PUSH_PULL_PARTNERS
 
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
-	
+	int my_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	
 	switch(msgType) {
 		case LEAVING_AND_HALO_COPIES:
 		{
-			// SEGMENTATION FAULT
-			global_log->info() << "selecting Neighbours LEAVING_AND_HALO_COPIES" << endl;
+			// cause of out of range thingy later on ?
+			global_log->info() << "selecting Neighbours LEAVING_AND_HALO_COPIES on: " << my_rank << endl;
+			/*
 			std::vector<std::vector <CommunicationPartner>> combined;
-			combined.resize(this->getCommDims());
 			combined = _leavingNeighbours; // this assignment creates a new vector
-			for(unsigned int i = 0; i < combined.size(); i++)
+			for(int i = 0; i < combined.size(); i++)
 				combined[i].insert(combined[i].end(), _haloOrForceNeighbours[i].begin(), _haloOrForceNeighbours[i].end());
+			
+			for(int i = 0; i < combined.size(); i++) 
+				combined[i] = squeezePartners(combined[i]);
+			
 			_neighbours = combined;
+			*/
+			
+			// this should be the equivalent to leaving, right?
+			_neighbours = _leavingNeighbours;
+			
 			break;
 		}
 		case LEAVING_ONLY:
@@ -298,7 +332,7 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
 			break;
 	}
 	
-	cout << "exit" << endl;
+	cout << "exit on: " << my_rank << endl;
 }
 
 void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray) { // THIS STUFF HERE IS NOT CORRECT
