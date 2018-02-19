@@ -641,7 +641,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if(pluginname == "DomainProfiles") {
 			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
-			/** @todo This is ugly. Needed as the vectorized code does not support the virial ...*/
 			_domain->readXML(xmlconfig);
 		}
 
