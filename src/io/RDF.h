@@ -8,6 +8,7 @@
 
 #include "io/OutputBase.h"
 #include "molecules/Molecule.h"
+#include "utils/CommVar.h"
 
 class Component;
 
@@ -80,10 +81,10 @@ public:
 
 	//! count the number of molecules per component
 	//! @todo: remove it and replace it by component.getNumMolecules()
-	void accumulateNumberOfMolecules(std::vector<Component>& components) const;
+	void accumulateNumberOfMolecules(std::vector<Component>& components);
 
-	void observeRDF(Molecule const& mi, Molecule const& mj, double dd) const {
-		observeRDF(dd, mi.componentid(), mj.componentid());
+	void observeRDF(Molecule const& mi, Molecule const& mj, double dd) {
+		observeRDFMolecule(dd, mi.componentid(), mj.componentid());
 
 		if(isEnabledSiteRDF()) {
 			double drs[3];
@@ -96,7 +97,7 @@ public:
 						const std::array<double,3> dii = mi.site_d_abs(m);
 						const std::array<double,3> djj = mj.site_d_abs(n);
 						SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-						observeRDF(dr2, mi.componentid(), mj.componentid(), m, n);
+						observeRDFSite(dr2, mi.componentid(), mj.componentid(), m, n);
 					}
 				}
 			}
@@ -106,21 +107,21 @@ public:
 	/**
 	 * This method "really" counts the number of molecule pairs within a certain distance.
 	 */
-	void observeRDF(double dd, unsigned i, unsigned j) const {
+	void observeRDFMolecule(double dd, unsigned i, unsigned j) {
 		if(dd > _maxDistanceSquare) { return; }
 		if(i > j) { std::swap(j, i); }
 		size_t binId = floor( sqrt(dd) / binwidth() );
 		#if defined _OPENMP
 		#pragma omp atomic
 		#endif
-		_localDistribution[i][j-i][binId]++;
+		_distribution.local[i][j-i][binId]++;
 	}
 
 	/**
 	 * Count center pairing for particle pair for molecules i and j and centers
 	 * m_i, n_j at distance dd.
 	 */
-	inline void observeRDF(double dd, unsigned i, unsigned j, unsigned m, unsigned n) const {
+	inline void observeRDFSite(double dd, unsigned i, unsigned j, unsigned m, unsigned n) {
 		if(dd > _maxDistanceSquare) { return; }
 		if(i > j) { std::swap(j, i); }
 
@@ -128,12 +129,12 @@ public:
 		#if defined _OPENMP
 		#pragma omp atomic
 		#endif
-		_localSiteDistribution[i][j-i][m][n][binId] ++;
+		_siteDistribution.local[i][j-i][m][n][binId] ++;
 		if((i == j) && (m != n)){
 			#if defined _OPENMP
 			#pragma omp atomic
 			#endif
-			_localSiteDistribution[i][j-i][n][m][binId] ++;
+			_siteDistribution.local[i][j-i][n][m][binId] ++;
 		}
 	}
 
@@ -142,6 +143,13 @@ public:
 	void reset();  //!< reset all values to 0, except the accumulated ones.
 
 private:
+
+	template<typename T>
+	void resizeExactly(std::vector<T>& v, unsigned int numElements) const {
+		v.reserve(numElements);
+		v.resize(numElements);
+	}
+
 	void init();
 	unsigned int numBins() const { return _bins; }
 	double binwidth() const { return _intervalLength; }
@@ -182,30 +190,25 @@ private:
 	 * holds the numberOfMolecules of component i at _globalCtr[i], globally.
 	 * accumulates over time steps as the number of molecules may change
 	 */
-	unsigned long* _globalCtr;
+	std::vector<unsigned long> _globalCtr;
 
 	//! holds the numberOfMolecules of component i at _globalAccumulatedCtr[i],
 	//! globally and accumulated over all timesteps for which particles where
 	//! counted for the RDF.
-	unsigned long* _globalAccumulatedCtr;
+	std::vector<unsigned long> _globalAccumulatedCtr;
 
 	//! holds the distribution of the neighbouring particles, locally for this process,
-	//! i.e. the number of particles of components m and n in bin b: _localDistribution[m][n][b];
-	unsigned long ***_localDistribution;
-
-	//! holds the distribution of the neighbouring particles, globally.
-	unsigned long ***_globalDistribution;
+	//! i.e. the number of particles of components m and n in bin b: _distribution.local[m][n][b] or _distribution.global[m][n][b];
+	CommVar<std::vector<std::vector<std::vector<unsigned long>>>> _distribution;
 
 	//! holds the distribution of the neighbouring particles, globally accumulated.
-	unsigned long ***_globalAccumulatedDistribution;
+	std::vector<std::vector<std::vector<unsigned long>>> _globalAccumulatedDistribution;
 
 	bool _doCollectSiteRDF;
 
-	unsigned long *****_localSiteDistribution;
+	CommVar<std::vector<std::vector<std::vector<std::vector<std::vector<unsigned long>>>>>> _siteDistribution;
 
-	unsigned long *****_globalSiteDistribution;
-
-	unsigned long *****_globalAccumulatedSiteDistribution;
+	std::vector<std::vector<std::vector<std::vector<std::vector<unsigned long>>>>> _globalAccumulatedSiteDistribution;
 
 	unsigned int _writeFrequency;  //!< aggregation and output writing interval for the RDF data
 	std::string _outputPrefix;  //!< output prefix for rdf files
