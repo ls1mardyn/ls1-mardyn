@@ -275,6 +275,15 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	double vectorized_u_pot = _domain->getLocalUpot();
 	double vectorized_virial = _domain->getLocalVirial();
 
+	const bool printStats = false; // set to true if you want to seee this
+	double max_abs_F = 0.0;
+	double mean_abs_F = 0.0;
+	double max_abs_M = 0.0;
+	double mean_abs_M = 0.0;
+	double max_abs_Vi = 0.0;
+	double mean_abs_Vi = 0.0;
+	unsigned long counter = 0ul;
+
 	// Traverse both lists simultaneously, advancing both iterators together
 	// and assert that the force on the same molecule within both lists is the same:
 	ParticleIterator m_1 = container_1->iteratorBegin();
@@ -285,13 +294,35 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 			str << "Molecule id=" << m_2->id() << " index i=" << i << std::endl;
 			// check force
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
+			double abs_F = std::abs(m_1->F(i) - m_2->F(i));
+			mean_abs_F += abs_F;
+			max_abs_F = std::max(max_abs_F, abs_F);
 			// check torque
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->M(i), m_2->M(i), Tolerance);
+			double abs_M = std::abs(m_1->M(i) - m_2->M(i));
+			mean_abs_M += abs_M;
+			max_abs_M = std::max(max_abs_M, abs_M);
 			//check local molecule-wise virial
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->Vi(i), m_2->Vi(i), Tolerance);
+			double abs_Vi = std::abs(m_1->Vi(i) - m_2->Vi(i));
+			mean_abs_Vi += abs_Vi;
+			max_abs_Vi = std::max(max_abs_Vi, abs_Vi);
+			counter ++;
 		}
 		// advance molecule of first container
 		++m_1;
+	}
+
+	if(printStats) {
+		test_log->info() << endl;
+		test_log->info() << "max_abs_F: " << max_abs_F << endl;
+		test_log->info() << "max_abs_M: " << max_abs_M << endl;
+		test_log->info() << "max_abs_Vi: " << max_abs_Vi << endl;
+		test_log->info() << "mean_abs_F: "  << mean_abs_F  / counter << endl;
+		test_log->info() << "mean_abs_M: "  << mean_abs_M  / counter << endl;
+		test_log->info() << "mean_abs_Vi: " << mean_abs_Vi / counter << endl;
+		test_log->info() << "upot: " << std::abs(legacy_u_pot - vectorized_u_pot) << endl;
+		test_log->info() << "viri: " << std::abs(legacy_virial - vectorized_virial) << endl;
 	}
 
 	// Assert that macroscopic quantities are the same
