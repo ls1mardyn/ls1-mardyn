@@ -134,8 +134,7 @@ Simulation::Simulation()
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.0),
-	_dFmaxThreshold(0.0),
-	_virialRequired(false)
+	_dFmaxThreshold(0.0)
 {
 	_ensemble = new CanonicalEnsemble();
 	initialize();
@@ -643,9 +642,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "DomainProfiles") {
 			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
 			/** @todo This is ugly. Needed as the vectorized code does not support the virial ...*/
-			if(xmlconfig.getNodeValue_int("/mardyn/simulation/output/outputplugin[@name='DomainProfiles']/options/option[@keyword='profileVirial']", 0) > 0) {
-				_virialRequired = true;
-			}
 			_domain->readXML(xmlconfig);
 		}
 
@@ -878,10 +874,7 @@ void Simulation::prepare_start() {
 	global_log->info() << "Initialising cell processor" << endl;
 #if ENABLE_VECTORIZED_CODE
 #ifndef ENABLE_REDUCED_MEMORY_MODE
-	if(_virialRequired) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
-		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	} else if (nullptr != getOutputPlugin("RDF")) {
+	if (nullptr != getOutputPlugin("RDF")) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	} else {

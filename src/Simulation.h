@@ -531,8 +531,6 @@ private:
 	/** Global energy log */
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
-
-	bool _virialRequired;
 };
 #endif /*SIMULATION_H_*/
 
