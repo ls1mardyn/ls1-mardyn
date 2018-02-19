@@ -288,6 +288,7 @@ public:
 	void initCanonical(unsigned long t) { this->_initCanonical = t; }
 	void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }
+	unsigned long getInitStatistics() const { return this->_initStatistics; }
 
 	void setSimulationTime(double curtime) { _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }

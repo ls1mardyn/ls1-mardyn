@@ -14,7 +14,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
-#include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "particleContainer/adapter/RDFCellProcessor.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
@@ -62,7 +62,6 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
@@ -73,8 +72,8 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	 * So count first with the halo being empty, and then being populated. */
 	RDF rdf;
 	initRDF(rdf, 0.018, 100, components);
-	handler.setRDF(&rdf);
 	rdf.tickRDF();
+	RDFCellProcessor cellProcessor(cutoff, &rdf);
 	moleculeContainer->traverseCells(cellProcessor);
 	rdf.collectRDF(_domainDecomposition);
 
@@ -132,7 +131,6 @@ void RDFTest::testRDFCountLinkedCell() {
 void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 	
 	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
@@ -142,9 +140,9 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	moleculeContainer->updateMoleculeCaches();
 
 	RDF rdf;
+	RDFCellProcessor cellProcessor(cutoff, &rdf);
 	initRDF(rdf, 0.018, 100, components);
 
-	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
 	rdf.collectRDF(_domainDecomposition);
@@ -213,7 +211,6 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 
 	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
@@ -224,8 +221,8 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 
 	RDF rdf;
 	initRDF(rdf, 0.05, 101, components);
-	handler.setRDF(&rdf);
 	rdf.tickRDF();
+	RDFCellProcessor cellProcessor(cutoff, &rdf);
 	moleculeContainer->traverseCells(cellProcessor);
 	rdf.collectRDF(_domainDecomposition);
 

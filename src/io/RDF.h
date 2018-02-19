@@ -11,6 +11,7 @@
 #include "utils/CommVar.h"
 
 class Component;
+class RDFCellProcessor;
 
 /** @brief This class calculates the Radial Distribution Function (RDF).
  *
@@ -52,6 +53,8 @@ public:
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
+
+	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
 
 	void initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 
@@ -175,6 +178,9 @@ private:
 	//! components vector
 	std::vector<Component>* _components;
 
+	//! sample the RDF every this many iterations
+	int _samplingFrequency;
+
 	//! number of timesteps over which the counters are being accumulated
 	//! since the last calculation of the RDF.
 	int _numberOfRDFTimesteps;
@@ -215,6 +221,8 @@ private:
 
 	bool _initialized;
 	bool _readConfig;
+
+	RDFCellProcessor * _cellProcessor;
 };
 
 #endif /* RDF_H */

@@ -873,13 +873,8 @@ void Simulation::prepare_start() {
 	global_log->info() << "Initialising cell processor" << endl;
 #if ENABLE_VECTORIZED_CODE
 #ifndef ENABLE_REDUCED_MEMORY_MODE
-	if (nullptr != getOutputPlugin("RDF")) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)" << endl;
-		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	} else {
-		global_log->info() << "Using vectorized cell processor." << endl;
-		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
-	}
+	global_log->info() << "Using vectorized cell processor." << endl;
+	_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 #else
 	global_log->info() << "Using reduced memory mode (RMM) cell processor." << endl;
 	_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
@@ -1146,18 +1141,6 @@ void Simulation::simulate() {
 		}
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
-
-		/** @todo FIXME: here two things are done:
-		 * 1. the actual kernel to collect rdf data in the handler is activated which would have to be done only once.
-		 * 2. the number of sampling steps is incremented, which has to be done each time step.
-		 */
-		RDF* rdf;
-		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
-			global_log->debug() << "Activating the RDF sampling" << endl;
-			rdf->tickRDF();
-			_particlePairsHandler->setRDF(rdf);
-			rdf->accumulateNumberOfMolecules(*(getEnsemble()->getComponents()));
-		}
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
 		 *realignment tools borrowed from Martin Horsch, for the determination of the centre of mass 

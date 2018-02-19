@@ -6,6 +6,8 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
+#include "particleContainer/adapter/RDFCellProcessor.h"
+
 #include <sstream>
 #include <fstream>
 #include <map>
@@ -18,6 +20,7 @@ RDF::RDF() :
 	_bins(0),
 	_numberOfComponents(0),
 	_components(_simulation.getEnsemble()->getComponents()),
+	_samplingFrequency(1),
 	_numberOfRDFTimesteps(0),
 	_accumulatedNumberOfRDFTimesteps(0),
 	_maxDistanceSquare(0.0),
@@ -25,7 +28,8 @@ RDF::RDF() :
 	_writeFrequency(1),
 	_outputPrefix("ls1-mardyn"),
 	_initialized(false),
-	_readConfig(false)
+	_readConfig(false),
+	_cellProcessor(nullptr)
 {}
 
 void RDF::init() {
@@ -33,6 +37,9 @@ void RDF::init() {
 		global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
 		Simulation::exit(25);
 	}
+
+	_cellProcessor = new RDFCellProcessor(global_simulation->getcutoffRadius(), this);
+
 	_numberOfComponents = _components->size();
 	_doCollectSiteRDF = false;
 	_numberOfRDFTimesteps = 0;
@@ -119,6 +126,10 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+
+	_samplingFrequency = 1;
+	xmlconfig.getNodeValue("samplingfrequency", _samplingFrequency);
+	global_log->info() << "Sampling frequency: " << _samplingFrequency << endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -319,6 +330,7 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 	rdfout << "# \n# ctr_i: " << _globalCtr[i] << "\n# ctr_j: " << _globalCtr[j]
 	       << "\n# V: " << V << "\n# _universalRDFTimesteps: " << _numberOfRDFTimesteps
 	       << "\n# _universalAccumulatedTimesteps: " << _accumulatedNumberOfRDFTimesteps
+		   << "\n# _samplingFrequency: " << _samplingFrequency
 	       << "\n# rho_i: " << rho_i << " (acc. " << rho_Ai << ")"
 	       << "\n# rho_j: " << rho_j << " (acc. " << rho_Aj << ")"
 	       << "\n# \n";
@@ -391,4 +403,14 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 		rdfout << "\n";
 	}
 	rdfout.close();
+}
+
+void RDF::afterForces(ParticleContainer* particleContainer,
+		DomainDecompBase* domainDecomp, unsigned long simstep) {
+	if (simstep % _samplingFrequency == 0 && simstep > global_simulation->getInitStatistics()) {
+		global_log->debug() << "Activating the RDF sampling" << endl;
+		tickRDF();
+		accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
+		particleContainer->traverseCells(*_cellProcessor);
+	}
 }
