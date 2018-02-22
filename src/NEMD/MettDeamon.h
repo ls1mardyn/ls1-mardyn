@@ -106,6 +106,9 @@ private:
 					( MD_RIGHT_TO_LEFT == _nMovingDirection && dPosY < _dTransitionPlanePosY );
 		return bRet;
 	}
+	bool IsInsideOuterReservoirSlab(const double& dPosY, const double& dBoxY);
+	void releaseTrappedMolecule(Molecule* mol);
+	void resetPositionAndOrientation(Molecule* mol, const double& dBoxY);
 
 	void InitTransitionPlane(Domain* domain);
 	void InsertReservoirSlab(ParticleContainer* particleContainer);

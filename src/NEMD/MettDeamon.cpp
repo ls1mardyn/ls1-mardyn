@@ -410,6 +410,67 @@ void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 		}
 	}
 }
+
+bool MettDeamon::IsInsideOuterReservoirSlab(const double& dPosY, const double& dBoxY)
+{
+	bool bRet = false;
+	if(MD_LEFT_TO_RIGHT == _nMovingDirection)
+		bRet = (dPosY < _reservoir->getBinWidth() );
+	else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
+		bRet = (dPosY > (dBoxY - _reservoir->getBinWidth() ) );
+	return bRet;
+}
+
+void MettDeamon::releaseTrappedMolecule(Molecule* mol)
+{
+	uint16_t cid_zb = mol->componentid();
+	if(this->IsTrappedMolecule(cid_zb) == false || this->IsBehindTransitionPlane(mol->r(1) ) == false)
+		return;
+
+	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
+	Component* compNew = &(ptrComps->at(_vecChangeCompIDsUnfreeze.at(cid_zb) ) );
+	mol->setComponent(compNew);
+
+	mol->setv(0, 0.0);
+	if(MD_LEFT_TO_RIGHT == _nMovingDirection)
+		mol->setv(1, 3*_dY);
+	else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
+		mol->setv(1, -3*_dY);
+	mol->setv(2, 0.0);
+}
+
+void MettDeamon::resetPositionAndOrientation(Molecule* mol, const double& dBoxY)
+{
+	uint16_t cid_zb = mol->componentid();
+	if(false == this->IsTrappedMolecule(cid_zb) )
+		return;
+
+	std::map<unsigned long, std::array<double,10> >::iterator it;
+	it = _storePosition.find(mol->id() );
+	if(it == _storePosition.end() )
+		return;
+
+	// x,z position: always reset
+	mol->setr(0, it->second.at(0) );
+	mol->setr(2, it->second.at(2) );
+
+	// reset y-position
+	if(MD_LEFT_TO_RIGHT == _nMovingDirection)
+		mol->setr(1, it->second.at(1) + _dY);
+	else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
+		mol->setr(1, it->second.at(1) - _dY);
+
+	if(this->IsInsideOuterReservoirSlab(mol->r(1), dBoxY) == false)
+		return;
+
+	// reset quaternion (orientation)
+	Quaternion q(it->second.at(6),
+			it->second.at(7),
+			it->second.at(8),
+			it->second.at(9) );
+	mol->setq(q);
+}
+
 void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cutoffRadius)
 {
 	double dBoxY = global_simulation->getDomain()->getGlobalLength(1);
@@ -455,89 +516,18 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		v2 = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 //		global_log->info() << "scaled: vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
 
-		if(true == bIsTrappedMolecule && true == IsBehindTransitionPlane)
-		{
-			Component* compNew = &(ptrComps->at(_vecChangeCompIDsUnfreeze.at(cid) ) );
-			tM->setComponent(compNew);
-//			tM->setv(1, abs(tM->v(1) ) );
-			tM->setv(0, 0.0);
-			if(MD_LEFT_TO_RIGHT == _nMovingDirection)
-				tM->setv(1, 3*_dY);
-			else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
-				tM->setv(1, -3*_dY);
-			tM->setv(2, 0.0);
-			// delete fraction of non-volatile component
-			/*
-			if(tM->id()+1 == 1 && _nDeleteNonVolatile%10 != 0)
-			{
-				particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), false);
-	//			cout << "delete: dY = " << dPosY << endl;
-				particleContainer->update();
-				tM  = particleContainer->iteratorBegin();
-				this->IncrementDeletedMoleculesLocal();
-				_nDeleteNonVolatile++;
-			}
-			*/
-		}
-		/*
-		else if(dY < (_dTransitionPlanePosY+dMoleculeRadius) && dY > _dTransitionPlanePosY && tM->v(1) < 0.0 && false == bIsFrozenMolecule)
-		{
-			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), false);
-//			cout << "delete: dY = " << dPosY << endl;
-			particleContainer->update();
-			tM  = particleContainer->iteratorBegin();
-			this->IncrementDeletedMoleculesLocal();
-		}
-		*/
+		// release trapped molecule
+		this->releaseTrappedMolecule( &(*tM) );
 
-		// reset position of fixed molecules
-		std::map<unsigned long, std::array<double,10> >::iterator it;
+		// reset position and orientation of fixed molecules
+		this->resetPositionAndOrientation( &(*tM), dBoxY);
+
 		if(true == bIsTrappedMolecule)
 		{
-			it = _storePosition.find(tM->id() );
-			if(it != _storePosition.end() )
-			{
-				if(MD_LEFT_TO_RIGHT == _nMovingDirection)
-				{
-					// reset y-position
-					tM->setr(1, it->second.at(1) + _dY);
-					// reset x,z-position
-					if(dY < _reservoir->getBinWidth() || Z2M_RESET_ALL == _nZone2Method)
-					{
-						tM->setr(0, it->second.at(0) );
-						tM->setr(2, it->second.at(2) );
-
-						// reset quaternion (orientation)
-						Quaternion q(it->second.at(6),
-								it->second.at(7),
-								it->second.at(8),
-								it->second.at(9) );
-						tM->setq(q);
-					}
-				}
-				else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
-				{
-					// reset y-position
-					tM->setr(1, it->second.at(1) - _dY);
-					// reset x,z-position
-					if(dY > (dBoxY - _reservoir->getBinWidth() ) || Z2M_RESET_ALL == _nZone2Method)
-					{
-						tM->setr(0, it->second.at(0) );
-						tM->setr(2, it->second.at(2) );
-
-						// reset quaternion (orientation)
-						Quaternion q(it->second.at(6),
-								it->second.at(7),
-								it->second.at(8),
-								it->second.at(9) );
-						tM->setq(q);
-					}
-				}
-			}
 			// limit velocity of trapped molecules
-//			tM->setv(0, 0.);
+			tM->setv(0, 0.);
 			tM->setv(1, 0.);
-//			tM->setv(2, 0.);
+			tM->setv(2, 0.);
 
 			double T = 80.;
 			double m = tM->mass();
@@ -611,14 +601,13 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 		uint8_t cid = tM->componentid();
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
-		double v2 = tM->v2();
 
 		if(true == bIsTrappedMolecule)
 		{
 			// limit velocity of trapped molecules
-//			tM->setv(0, 0.);
+			tM->setv(0, 0.);
 			tM->setv(1, 0.);
-//			tM->setv(2, 0.);
+			tM->setv(2, 0.);
 
 			double T = 80.;
 			double m = tM->mass();
