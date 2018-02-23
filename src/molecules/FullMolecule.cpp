@@ -637,6 +637,33 @@ void FullMolecule::setSoA(CellDataSoABase * const s) {
 	_soa = derived;
 }
 
+void FullMolecule::buildOwnSoA() {
+	_soa = new CellDataSoA;
+	const size_t nLJ = numLJcenters();
+	const size_t nC = numCharges();
+	const size_t nD = numDipoles();
+	const size_t nQ = numQuadrupoles();
+
+	_soa->resize(1ul, nLJ, nC, nD, nQ);
+
+	_soa->_mol_ljc_num[0] = nLJ;
+	_soa->_mol_charges_num[0] = nC;
+	_soa->_mol_dipoles_num[0] = nD;
+	_soa->_mol_quadrupoles_num[0] = nQ;
+
+	_soa->_mol_pos.x(0) = r(0);
+	_soa->_mol_pos.y(0) = r(1);
+	_soa->_mol_pos.z(0) = r(2);
+
+	setupSoACache(_soa, 0ul, 0ul, 0ul, 0ul);
+	clearFM();
+
+}
+
+void FullMolecule::releaseOwnSoA() {
+
+}
+
 void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigned iC,
 		unsigned iD, unsigned iQ) {
 	setSoA(s);
