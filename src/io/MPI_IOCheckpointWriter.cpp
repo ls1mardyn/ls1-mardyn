@@ -122,7 +122,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 		//cell length for the cell structure in the output file
 		//here each cell has the same radius in x-,y- and z-direction
-		double *cellLength = lcContainer->cellLength();
+		double *cellLength = lcContainer->getCellLength();
 
 		//compute lengths and sizes of the domain
 		int lengthInCells[3];

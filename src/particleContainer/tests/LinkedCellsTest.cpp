@@ -313,7 +313,7 @@ private:
 void LinkedCellsTest::testTraversalMethods() {
 	const char* filename = "VectorizationMultiComponentMultiPotentials.inp";
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, 5.);
-	int* boxWidthInNumCells = dynamic_cast<LinkedCells*>(container)->boxWidthInNumCells();
+	int* boxWidthInNumCells = dynamic_cast<LinkedCells*>(container)->getBoxWidthInNumCells();
 	int haloWidthInNumCells = container->getHaloWidthNumCells();
 	size_t numCells = (boxWidthInNumCells[0] + 2 * haloWidthInNumCells)
 			* (boxWidthInNumCells[1] + 2 * haloWidthInNumCells) * (boxWidthInNumCells[2] + 2 * haloWidthInNumCells);

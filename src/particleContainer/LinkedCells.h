@@ -176,19 +176,11 @@ public:
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
-	double* boundingBoxMax() {
-		return _boundingBoxMax;
-	}
-
-	double* boundingBoxMin() {
-		return _boundingBoxMin;
-	}
-
-	int* boxWidthInNumCells() {
+	int* getBoxWidthInNumCells() {
 		return _boxWidthInNumCells;
 	}
 
-	double* cellLength() {
+	double* getCellLength() {
 		return _cellLength;
 	}
 	
@@ -200,6 +192,7 @@ public:
 	 */
 	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
 
+	//TODO: unfriend class VTKGridWriter. It is not hard to avoid friendship and just use public interfaces.
 #ifdef VTK
 	friend class VTKGridWriter;
 #endif
@@ -353,6 +346,7 @@ private:
 	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
+	double _cellLengthReciprocal[3]; //!< 1.0 / _cellLength, to speed-up particle sorting
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
 	unsigned _cellsInCutoff = 1; //!< Cells in cutoff radius -> cells with size cutoff / cellsInCutoff
 

@@ -55,8 +55,11 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		if (_boxWidthInNumCells[d] == 0) {
 			_boxWidthInNumCells[d] = 1;
 		}
-		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d])
-				/ _boxWidthInNumCells[d];
+
+		double diff = _boundingBoxMax[d] - _boundingBoxMin[d];
+		_cellLength[d] = diff / _boxWidthInNumCells[d];
+		_cellLengthReciprocal[d] = _boxWidthInNumCells[d] / diff;
+
 		_haloWidthInNumCells[d] = 1;
 		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
 		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloLength[d];
@@ -159,7 +162,11 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		}
 
 		numberOfCells *= _cellsPerDimension[dim];
-		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _boxWidthInNumCells[dim];
+
+		double diff = _boundingBoxMax[dim] - _boundingBoxMin[dim];
+		_cellLength[dim] = diff / _boxWidthInNumCells[dim];
+		_cellLengthReciprocal[dim] = _boxWidthInNumCells[dim] / diff;
+
 		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
 
 		_haloBoundingBoxMin[dim] = _boundingBoxMin[dim] - _haloLength[dim];
@@ -947,10 +954,10 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 
 		// ignore a bit of rounding, if the point is outside of the box.
 		if (localPoint[dim] <= _haloBoundingBoxMin[dim]){
-			localPoint[dim] += _cellLength[dim]/2;
+			localPoint[dim] += _cellLength[dim] * 0.5;
 		}
 		else if(localPoint[dim] >= _haloBoundingBoxMax[dim]){
-			localPoint[dim] -= _cellLength[dim]/2;
+			localPoint[dim] -= _cellLength[dim] * 0.5;
 		}
 
 		#ifndef NDEBUG
@@ -965,8 +972,8 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 		#endif
 
 		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
-		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
-		cellIndex[dim] = min(max(((int) floor((localPoint[dim] - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim],0),_cellsPerDimension[dim]-1);
+		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) * _cellLengthReciprocal[dim]);
+		cellIndex[dim] = min(max(((int) floor((localPoint[dim] - _boundingBoxMin[dim]) * _cellLengthReciprocal[dim])) + _haloWidthInNumCells[dim],0),_cellsPerDimension[dim]-1);
 	}
 
 	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
