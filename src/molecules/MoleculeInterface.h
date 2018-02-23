@@ -262,6 +262,16 @@ public:
 		}
 		return in;
 	}
+
+	/** In almost all cases, molecule's caches are stored in SoAs.
+	 * In some rare instances (e.g. ParticleContainer::getEnergy())
+	 * a molecule should rather better exist alone and not be part of a particleCell.
+	 * This function allocates a new SoA.
+	 * Remember to release it when no longer necessary! */
+	virtual void buildOwnSoA() = 0;
+
+	/** See above comment.*/
+	virtual void releaseOwnSoA() = 0;
 };
 
 /** @brief Calculate the distance between two sites of two molecules.

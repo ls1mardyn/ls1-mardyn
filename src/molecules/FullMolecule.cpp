@@ -656,7 +656,6 @@ void FullMolecule::buildOwnSoA() {
 
 	setupSoACache(_soa, 0ul, 0ul, 0ul, 0ul);
 	clearFM();
-
 }
 
 void FullMolecule::releaseOwnSoA() {

@@ -1131,31 +1131,18 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	double u = 0.0;
 
-	static ParticleCell dummyCell;
-	{
-		// (potentially re-) initialize dummyCell
-		dummyCell.assignCellToInnerRegion();
-		double low[3] = {m1->r(0)-10., m1->r(1)-10., m1->r(2)-10.};
-		double up[3] = {m1->r(0)+10., m1->r(1)+10., m1->r(2)+10.};
-		dummyCell.setBoxMin(low);
-		dummyCell.setBoxMax(up);
-		dummyCell.addParticle(*m1);
-
-		dummyCell.buildSoACaches();
-		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
-	}
-
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
 
 	ParticleCell& currentCell = _cells[cellIndex];
 
 	mardyn_assert(not currentCell.isHaloCell());
 
+	Molecule molWithSoA = *m1;
+	molWithSoA.buildOwnSoA();
+
 	cellProcessor->initTraversal();
 
-	Molecule * molWithSoA = &(*dummyCell.iteratorBegin());
-
-	u += cellProcessor->processSingleMolecule(molWithSoA, currentCell);
+	u += cellProcessor->processSingleMolecule(&molWithSoA, currentCell);
 
 	vector<long> forwardNeighbourOffsets; // now vector
 	vector<long> backwardNeighbourOffsets; // now vector
@@ -1166,23 +1153,23 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 			neighbourOffsetsIter != forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
+		u += cellProcessor->processSingleMolecule(&molWithSoA, neighbourCell);
 	}
 	// backward neighbours
 	for (auto neighbourOffsetsIter = backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
-		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
+		u += cellProcessor->processSingleMolecule(&molWithSoA, neighbourCell);
 	}
 
 	cellProcessor->endTraversal();
 
+	molWithSoA.releaseOwnSoA();
+
 	if (!dynamic_cast<LegacyCellProcessor*>(&cellProcessorI)) {
 		delete cellProcessor;
 	}
-
-	dummyCell.deallocateAllParticles();
 
     mardyn_assert(not std::isnan(u)); // catches NaN
 

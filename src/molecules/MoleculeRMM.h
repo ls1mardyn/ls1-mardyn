@@ -284,13 +284,17 @@ public:
 		return _state;
 	}
         
-        // dummies for method exchangeForces
-        const double* F_vec() {return nullptr; }
-        const double* M_vec() {return nullptr; }
-        const double* Vi_vec() {return nullptr; }
+	// dummies for method exchangeForces
+	const double* F_vec() { return nullptr; }
+	const double* M_vec() { return nullptr; }
+	const double* Vi_vec() { return nullptr; }
        
-        
-        
+	void buildOwnSoA() {
+		mardyn_assert(_state == STORAGE_AOS);
+	}
+	void releaseOwnSoA() {
+		mardyn_assert(_state == STORAGE_AOS);
+	}
 
 private:
 	static std::array<double, 3> emptyArray3() {
