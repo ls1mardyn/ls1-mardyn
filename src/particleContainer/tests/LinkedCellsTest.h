@@ -22,8 +22,10 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testUpdateAndDeleteOuterParticlesH2O);
 	TEST_METHOD(testUpdateAndDeleteOuterParticles8Particles);
 	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
-	TEST_METHOD(testParticleIteratorBeginNextEndParticleIteratorSequential);
 	TEST_METHOD(testTraversalMethods);
+
+	TEST_METHOD(testCellBorderAndFlagManager);
+
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 	TEST_METHOD(testHalfShellMPIDirect);
 	TEST_METHOD(testHalfShellMPIIndirect);
@@ -66,7 +68,6 @@ public:
 	void testUpdateAndDeleteOuterParticlesH2O();
 	void testUpdateAndDeleteOuterParticles8Particles();
 	void testMoleculeBeginNextEndDeleteCurrent();
-	void testParticleIteratorBeginNextEndParticleIteratorSequential();
 	void testTraversalMethods();
 	void testGetHaloBoundaryParticlesDirection();
 
@@ -77,6 +78,8 @@ public:
 	void testMidpoint();
 	void testMidpointMPIDirect();
 	void testMidpointMPIIndirect();
+
+	void testCellBorderAndFlagManager();
 
 private:
 

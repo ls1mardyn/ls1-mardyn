@@ -10,6 +10,8 @@
 #include "utils/Random.h"
 #include "Simulation.h"
 
+CellBorderAndFlagManager ParticleCellBase::_cellBorderAndFlagManager;
+
 ParticleCellBase::ParticleCellBase() {
 	// TODO Auto-generated constructor stub
 }

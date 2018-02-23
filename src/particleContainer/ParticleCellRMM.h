@@ -3,7 +3,6 @@
 
 #include "ParticleCellBase.h"
 #include "particleContainer/adapter/CellDataSoARMM.h"
-#include "CellBorderAndFlagManager.h"
 
 class ParticleCellRMM: public ParticleCellBase {
 public:
@@ -50,47 +49,6 @@ public:
 	void prefetchForForce() const;
 
 	void getLeavingMolecules(std::vector<Molecule> & appendBuffer);
-
-	static CellBorderAndFlagManager _cellBorderAndFlagManager;
-	bool isHaloCell() const {
-		return _cellBorderAndFlagManager.isHaloCell(_cellIndex);
-	}
-	bool isBoundaryCell() const {
-		return _cellBorderAndFlagManager.isBoundaryCell(_cellIndex);
-	}
-	bool isInnerCell() const {
-		return _cellBorderAndFlagManager.isInnerCell(_cellIndex);
-	}
-	bool isInnerMostCell() const {
-		return _cellBorderAndFlagManager.isInnerMostCell(_cellIndex);
-	}
-
-	void assignCellToHaloRegion() { mardyn_assert(isHaloCell()); }
-	void assignCellToBoundaryRegion() { mardyn_assert(isBoundaryCell()); }
-	void assignCellToInnerRegion() { mardyn_assert(isInnerCell()); }
-	void assignCellToInnerMostAndInnerRegion() { mardyn_assert(isInnerMostCell() and isInnerCell()); }
-
-	void skipCellFromHaloRegion() { mardyn_assert(not isHaloCell()); }
-	void skipCellFromBoundaryRegion() { mardyn_assert(not isBoundaryCell()); }
-	void skipCellFromInnerRegion() { mardyn_assert(not isInnerCell()); }
-	void skipCellFromInnerMostRegion() { mardyn_assert(not isInnerMostCell()); }
-
-	double getBoxMin(int d) const {
-		return _cellBorderAndFlagManager.getBoundingBoxMin(_cellIndex, d);
-	}
-	double getBoxMax(int d) const {
-		return _cellBorderAndFlagManager.getBoundingBoxMax(_cellIndex, d);
-	}
-	void setBoxMin(const double b[3]) {
-		for (int d = 0; d < 3; ++d) {
-			mardyn_assert(getBoxMin(d) == b[d]);
-		}
-	}
-	void setBoxMax(const double b[3]) {
-		for (int d = 0; d < 3; ++d) {
-			mardyn_assert(getBoxMax(d) == b[d]);
-		}
-	}
 
 //protected: do not use!
 	void moleculesAtNew(size_t i, Molecule *& multipurposePointer) override;

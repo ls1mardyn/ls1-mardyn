@@ -683,68 +683,19 @@ void LinkedCells::initializeCells() {
 	_haloCellIndices.clear();
 
 	long int cellIndex;
-	double cellBoxMin[3], cellBoxMax[3];
 
-#ifdef ENABLE_REDUCED_MEMORY_MODE
 	ParticleCell::_cellBorderAndFlagManager.init(_cellsPerDimension,
 			_haloBoundingBoxMin, _haloBoundingBoxMax,
 			_boundingBoxMin, _boundingBoxMax,
 			_cellLength);
-	// this code would have been much simpler if we could use CellBorderAndFlagManager in non-RMM mode...
-#endif
 
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
-		cellBoxMin[2] = iz * _cellLength[2] + _haloBoundingBoxMin[2];
-		cellBoxMax[2] = (iz + 1) * _cellLength[2] + _haloBoundingBoxMin[2];
-		if (iz == 0) {  // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMax[2] = _boundingBoxMin[2];
-		} else if (iz == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMin[2] = _boundingBoxMin[2];
-		} else if (iz == _cellsPerDimension[2] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMax[2] = _boundingBoxMax[2];
-		} else if (iz == _cellsPerDimension[2] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMin[2] = _boundingBoxMax[2];
-			cellBoxMax[2] = _haloBoundingBoxMax[2];
-		}
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
-			cellBoxMin[1] = iy * _cellLength[1] + _haloBoundingBoxMin[1];
-			cellBoxMax[1] = (iy + 1) * _cellLength[1] + _haloBoundingBoxMin[1];
-			if (iy == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMax[1] = _boundingBoxMin[1];
-			} else if (iy == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMin[1] = _boundingBoxMin[1];
-			} else if (iy == _cellsPerDimension[1] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMax[1] = _boundingBoxMax[1];
-			} else if (iy == _cellsPerDimension[1] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMin[1] = _boundingBoxMax[1];
-				cellBoxMax[1] = _haloBoundingBoxMax[1];
-			}
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
-				cellBoxMin[0] = ix * _cellLength[0] + _haloBoundingBoxMin[0];
-				cellBoxMax[0] = (ix + 1) * _cellLength[0] + _haloBoundingBoxMin[0];
-				if (ix == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMax[0] = _boundingBoxMin[0];
-				} else if (ix == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMin[0] = _boundingBoxMin[0];
-				} else if (ix == _cellsPerDimension[0] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMax[0] = _boundingBoxMax[0];
-				} else if (ix == _cellsPerDimension[0] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMin[0] = _boundingBoxMax[0];
-					cellBoxMax[0] = _haloBoundingBoxMax[0];
-				}
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
 				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
 
-				#ifndef ENABLE_REDUCED_MEMORY_MODE
-					cell.skipCellFromHaloRegion();
-					cell.skipCellFromBoundaryRegion();
-					cell.skipCellFromInnerRegion();
-					cell.skipCellFromInnerMostRegion();
-				#endif
-
-				cell.setBoxMin(cellBoxMin);
-				cell.setBoxMax(cellBoxMax);
 				if (ix < _haloWidthInNumCells[0] ||
 					iy < _haloWidthInNumCells[1] ||
 					iz < _haloWidthInNumCells[2] ||
@@ -753,49 +704,7 @@ void LinkedCells::initializeCells() {
 					iz >= _cellsPerDimension[2] - _haloWidthInNumCells[2]) {
 
 					cell.assignCellToHaloRegion();
-					#ifdef ENABLE_REDUCED_MEMORY_MODE
-						cell.skipCellFromInnerRegion();
-						cell.skipCellFromInnerMostRegion();
-					#endif
 					_haloCellIndices.push_back(cellIndex);
-				}
-				else{
-					if (ix < 2 * _haloWidthInNumCells[0] ||
-						iy < 2 * _haloWidthInNumCells[1] ||
-						iz < 2 * _haloWidthInNumCells[2] ||
-						ix >= _cellsPerDimension[0] - 2 * _haloWidthInNumCells[0] ||
-						iy >= _cellsPerDimension[1] - 2 * _haloWidthInNumCells[1] ||
-						iz >= _cellsPerDimension[2] - 2 * _haloWidthInNumCells[2]) {
-
-						cell.assignCellToBoundaryRegion();
-						#ifdef ENABLE_REDUCED_MEMORY_MODE
-							cell.skipCellFromHaloRegion();
-							cell.skipCellFromInnerRegion();
-							cell.skipCellFromInnerMostRegion();
-						#endif
-					}
-					else{
-						if (ix < 3 * _haloWidthInNumCells[0] ||
-							iy < 3 * _haloWidthInNumCells[1] ||
-							iz < 3 * _haloWidthInNumCells[2] ||
-							ix >= _cellsPerDimension[0] - 3 * _haloWidthInNumCells[0] ||
-							iy >= _cellsPerDimension[1] - 3 * _haloWidthInNumCells[1] ||
-							iz >= _cellsPerDimension[2] - 3 * _haloWidthInNumCells[2]) {
-
-							cell.assignCellToInnerRegion();
-							#ifdef ENABLE_REDUCED_MEMORY_MODE
-								cell.skipCellFromHaloRegion();
-								cell.skipCellFromBoundaryRegion();
-							#endif
-						}
-						else {
-							cell.assignCellToInnerMostAndInnerRegion();
-							#ifdef ENABLE_REDUCED_MEMORY_MODE
-								cell.skipCellFromHaloRegion();
-								cell.skipCellFromBoundaryRegion();
-							#endif
-						}
-					}
 				}
 			}
 		}

@@ -59,50 +59,34 @@ void LinkedCellsTest::testUpdateAndDeleteOuterParticles8Particles() {
 }
 
 void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
-#ifdef ENABLE_REDUCED_MEMORY_MODE
-	global_log->warning() << "LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() needs to be redone in REDUCED_MEMORY_MODE (it is currently disabled)."
-	<< std::endl;
-	//TODO: take a real scenario and proper LinkedCells object, don't be so lazy.
-	return;
-#endif
 	// NOTE: we do not open an OpenMP parallel region!
 	// Hence, this test is always executed sequentially!
 
-	Molecule dummyMolecule1(1, &_components[0], 1.0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule2(2, &_components[0], 2.0, 2.0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule3(3, &_components[0], 3.0, 3.0, 3.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule4(4, &_components[0], 5.1, 5.1, 5.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule1(1, &_components[0], 0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule2(2, &_components[0], 0.2, 0.2, 0.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule3(3, &_components[0], 0.3, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule4(4, &_components[0], 0.1, 1.5, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-	LinkedCells LC;
+
+	double bBoxMin[3] = {0.0, 0.0, 0.0};
+	double bBoxMax[3] = {2.0, 2.0, 2.0};
+	double cutoffRadius = 1.0;
+	LinkedCells LC(bBoxMin, bBoxMax, cutoffRadius);
 	ParticleIterator molIt;
 
-	std::vector < ParticleCell > &cells = LC._cells;
+	// some empty cells
 
-	cells.resize(5);
+	// particles 1,2,3 in same cell
+	LC.addParticle(dummyMolecule1);
+	LC.addParticle(dummyMolecule2);
+	LC.addParticle(dummyMolecule3);
 
-	// cell[0] is empty
+	// some empty cells
 
-	// cell[1] contains 1,2,3
-	{
-		double l[3] = { 0., 0., 0. }, u[3] = { 5., 5., 5. };
-		cells[1].setBoxMin(l);
-		cells[1].setBoxMax(u);
-	}
-	cells[1].addParticle(dummyMolecule1);
-	cells[1].addParticle(dummyMolecule2);
-	cells[1].addParticle(dummyMolecule3);
+	// particle 4
+	LC.addParticle(dummyMolecule4);
 
-	// cell[2] is empty
-
-	// cell[3] contains 4
-	{
-		double l[3] = { 5., 5., 5. }, u[3] = { 5.5, 5.5, 5.5 };
-		cells[3].setBoxMin(l);
-		cells[3].setBoxMax(u);
-	}
-	cells[3].addParticle(dummyMolecule4);
-
-	// cell[4] is empty
+	// some empty cells
 
 	// BEGIN:
 	molIt = LC.iteratorBegin();
@@ -137,62 +121,6 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	molIt.deleteCurrentParticle();
 	++molIt;
 	ASSERT_TRUE_MSG("delete() last", molIt == LC.iteratorEnd()); // cell 4 became empty, we arrived at end()
-}
-
-void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential() {
-#ifdef ENABLE_REDUCED_MEMORY_MODE
-	global_log->warning() << "LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential() needs to be redone in REDUCED_MEMORY_MODE (it is currently disabled)."
-	<< std::endl;
-	//TODO: take a real scenario and proper LinkedCells object, don't be so lazy.
-	return;
-#endif
-	// NOTE: we do not open an OpenMP parallel region!
-	// Hence, this test is always executed sequentially!
-
-	Molecule dummyMolecule1(1, &_components[0], 1.0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule2(2, &_components[0], 2.0, 2.0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule3(3, &_components[0], 3.0, 3.0, 3.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	Molecule dummyMolecule4(4, &_components[0], 5.1, 5.1, 5.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
-	LinkedCells LC;
-
-	std::vector < ParticleCell > &cells = LC._cells;
-
-	cells.resize(5);
-
-	// cell[0] is empty
-
-	// cell[1] contains 1,2,3
-	{
-		double l[3] = { 0., 0., 0. }, u[3] = { 5., 5., 5. };
-		cells[1].setBoxMin(l);
-		cells[1].setBoxMax(u);
-	}
-	cells[1].addParticle(dummyMolecule1);
-	cells[1].addParticle(dummyMolecule2);
-	cells[1].addParticle(dummyMolecule3);
-
-	// cell[2] is empty
-
-	// cell[3] contains 4
-	{
-		double l[3] = { 5., 5., 5. }, u[3] = { 5.5, 5.5, 5.5 };
-		cells[3].setBoxMin(l);
-		cells[3].setBoxMax(u);
-	}
-	cells[3].addParticle(dummyMolecule4);
-
-	// cell[4] is empty
-
-	ParticleIterator begin = LC.iteratorBegin();
-	ParticleIterator end = LC.iteratorEnd();
-
-	// test that molecule IDs are: 1, 2, 3, 4, in this order
-	// and begin and end work correctly
-	unsigned long uID = 1;
-	for (ParticleIterator mol = begin; mol != end; ++mol, ++uID) {
-		ASSERT_EQUAL(uID, mol->id());
-	}
 }
 
 #if 0
@@ -460,6 +388,101 @@ void LinkedCellsTest::testMidpointMPIIndirect() {
 void LinkedCellsTest::testMidpointMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
+}
+
+void LinkedCellsTest::testCellBorderAndFlagManager() {
+	long int cellIndex;
+	double cellBoxMin[3], cellBoxMax[3];
+
+	double bMin[3] = {0.1, 0.2, 0.3};
+	double bMax[3] = {5.1, 6.1, 7.3};
+	double cutoff = 0.7;
+	LinkedCells LC(bMin, bMax, cutoff);
+
+	// this contains all of the necessary assert-statements
+	for (int iz = 0; iz < LC._cellsPerDimension[2]; ++iz) {
+		cellBoxMin[2] = iz * LC._cellLength[2] + LC._haloBoundingBoxMin[2];
+		cellBoxMax[2] = (iz + 1) * LC._cellLength[2] + LC._haloBoundingBoxMin[2];
+		if (iz == 0) {  // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMax[2] = LC._boundingBoxMin[2];
+		} else if (iz == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMin[2] = LC._boundingBoxMin[2];
+		} else if (iz == LC._cellsPerDimension[2] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMax[2] = LC._boundingBoxMax[2];
+		} else if (iz == LC._cellsPerDimension[2] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMin[2] = LC._boundingBoxMax[2];
+			cellBoxMax[2] = LC._haloBoundingBoxMax[2];
+		}
+		for (int iy = 0; iy < LC._cellsPerDimension[1]; ++iy) {
+			cellBoxMin[1] = iy * LC._cellLength[1] + LC._haloBoundingBoxMin[1];
+			cellBoxMax[1] = (iy + 1) * LC._cellLength[1] + LC._haloBoundingBoxMin[1];
+			if (iy == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMax[1] = LC._boundingBoxMin[1];
+			} else if (iy == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMin[1] = LC._boundingBoxMin[1];
+			} else if (iy == LC._cellsPerDimension[1] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMax[1] = LC._boundingBoxMax[1];
+			} else if (iy == LC._cellsPerDimension[1] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+				cellBoxMin[1] = LC._boundingBoxMax[1];
+				cellBoxMax[1] = LC._haloBoundingBoxMax[1];
+			}
+			for (int ix = 0; ix < LC._cellsPerDimension[0]; ++ix) {
+				cellBoxMin[0] = ix * LC._cellLength[0] + LC._haloBoundingBoxMin[0];
+				cellBoxMax[0] = (ix + 1) * LC._cellLength[0] + LC._haloBoundingBoxMin[0];
+				if (ix == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMax[0] = LC._boundingBoxMin[0];
+				} else if (ix == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMin[0] = LC._boundingBoxMin[0];
+				} else if (ix == LC._cellsPerDimension[0] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMax[0] = LC._boundingBoxMax[0];
+				} else if (ix == LC._cellsPerDimension[0] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+					cellBoxMin[0] = LC._boundingBoxMax[0];
+					cellBoxMax[0] = LC._haloBoundingBoxMax[0];
+				}
+				cellIndex = LC.cellIndexOf3DIndex(ix, iy, iz);
+				ParticleCell & cell = LC._cells[cellIndex];
+				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
+
+				cell.setBoxMin(cellBoxMin);
+				cell.setBoxMax(cellBoxMax);
+				if (ix < LC._haloWidthInNumCells[0] ||
+					iy < LC._haloWidthInNumCells[1] ||
+					iz < LC._haloWidthInNumCells[2] ||
+					ix >= LC._cellsPerDimension[0] - LC._haloWidthInNumCells[0] ||
+					iy >= LC._cellsPerDimension[1] - LC._haloWidthInNumCells[1] ||
+					iz >= LC._cellsPerDimension[2] - LC._haloWidthInNumCells[2]) {
+
+					cell.assignCellToHaloRegion();
+				}
+				else{
+					if (ix < 2 * LC._haloWidthInNumCells[0] ||
+						iy < 2 * LC._haloWidthInNumCells[1] ||
+						iz < 2 * LC._haloWidthInNumCells[2] ||
+						ix >= LC._cellsPerDimension[0] - 2 * LC._haloWidthInNumCells[0] ||
+						iy >= LC._cellsPerDimension[1] - 2 * LC._haloWidthInNumCells[1] ||
+						iz >= LC._cellsPerDimension[2] - 2 * LC._haloWidthInNumCells[2]) {
+
+						cell.assignCellToBoundaryRegion();
+					}
+					else{
+						if (ix < 3 * LC._haloWidthInNumCells[0] ||
+							iy < 3 * LC._haloWidthInNumCells[1] ||
+							iz < 3 * LC._haloWidthInNumCells[2] ||
+							ix >= LC._cellsPerDimension[0] - 3 * LC._haloWidthInNumCells[0] ||
+							iy >= LC._cellsPerDimension[1] - 3 * LC._haloWidthInNumCells[1] ||
+							iz >= LC._cellsPerDimension[2] - 3 * LC._haloWidthInNumCells[2]) {
+
+							cell.assignCellToInnerRegion();
+						}
+						else {
+							cell.assignCellToInnerMostAndInnerRegion();
+						}
+					}
+				}
+			}
+		}
+	}
+
 }
 
 void LinkedCellsTest::doForceComparisonTest(std::string inputFile,

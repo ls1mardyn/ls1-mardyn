@@ -1,8 +1,6 @@
 #include "particleContainer/ParticleCellRMM.h"
 #include "particleContainer/ParticleCell.h"
 
-CellBorderAndFlagManager ParticleCellRMM::_cellBorderAndFlagManager;
-
 ParticleCellRMM::ParticleCellRMM() : _cellDataSoARMM(0) {
 	// TODO Auto-generated constructor stub
 
