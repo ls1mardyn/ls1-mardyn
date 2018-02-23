@@ -638,13 +638,12 @@ void FullMolecule::setSoA(CellDataSoABase * const s) {
 }
 
 void FullMolecule::buildOwnSoA() {
-	_soa = new CellDataSoA;
 	const size_t nLJ = numLJcenters();
 	const size_t nC = numCharges();
 	const size_t nD = numDipoles();
 	const size_t nQ = numQuadrupoles();
 
-	_soa->resize(1ul, nLJ, nC, nD, nQ);
+	_soa = new CellDataSoA(1ul, nLJ, nC, nD, nQ);
 
 	_soa->_mol_ljc_num[0] = nLJ;
 	_soa->_mol_charges_num[0] = nC;
@@ -661,7 +660,7 @@ void FullMolecule::buildOwnSoA() {
 }
 
 void FullMolecule::releaseOwnSoA() {
-
+	delete _soa;
 }
 
 void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigned iC,
