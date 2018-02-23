@@ -42,6 +42,11 @@
 
 using namespace std;
 
+std::ostream& operator<<( std::ostream& os, const double vec3d[3] ) {
+	os << "[" << vec3d[0] << " " << vec3d[1] << " " << vec3d[2] << "]";
+	return os;
+}
+
 // init static ID --> instance counting
 unsigned short dec::ControlRegion::_nStaticID = 0;
 
@@ -252,13 +257,16 @@ void dec::ControlRegion::Init(DomainDecompBase* domainDecomp)
 	this->UpdateVolume(domainDecomp);
 
 	// DEBUG
-//	cout << "Rank[" << domainDecomp->getRank() << "]: _dVolume.local  = " << _dVolume.local << endl;
-//	cout << "Rank[" << domainDecomp->getRank() << "]: _dVolume.global = " << _dVolume.global << endl;
+	cout << "Rank[" << domainDecomp->getRank() << "]: _dVolume.local  = " << _dVolume.local << endl;
+	cout << "Rank[" << domainDecomp->getRank() << "]: _dVolume.global = " << _dVolume.global << endl;
 	// DEBUG
 
 	for(auto&& comp : _compVars)
 	{
-		comp.numMolecules.target.local  = (int64_t)(comp.density.target.local  * _dVolume.local);
+		if(_dVolume.local < 0.)
+			comp.numMolecules.target.local = 0;
+		else
+			comp.numMolecules.target.local  = (int64_t)(comp.density.target.local  * _dVolume.local);
 //		comp.numMolecules.target.global = (int64_t)(comp.density.target.global * _dVolume.global);
 #ifdef ENABLE_MPI
 		MPI_Allreduce( &comp.numMolecules.target.local, &comp.numMolecules.target.global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
@@ -434,12 +442,12 @@ void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 	}
 
 	// DEBUG -->
-	for(auto&& comp : _compVars)
-	{
-		cout << "actual: " << setw(7) << comp.numMolecules.actual.global << ", ";
-		cout << "target: " << setw(7) << comp.numMolecules.target.global << ", ";
-		cout << "spread: " << setw(7) << comp.numMolecules.spread.global << endl;
-	}
+//	for(auto&& comp : _compVars)
+//	{
+//		cout << "actual: " << setw(7) << comp.numMolecules.actual.global << ", ";
+//		cout << "target: " << setw(7) << comp.numMolecules.target.global << ", ";
+//		cout << "spread: " << setw(7) << comp.numMolecules.spread.global << endl;
+//	}
 	// <-- DEBUG */
 
 	// inform director
@@ -550,7 +558,7 @@ void dec::ControlRegion::UpdateVolume(DomainDecompBase* domainDecomp)
 	double lc[3], uc[3];
 	domainDecomp->getBoundingBoxMinMax(domain, bbMin, bbMax);
 	_dVolume.local = 1.0;
-	for(uint8_t d=0; d<3; ++d)
+	for(uint16_t d=0; d<3; ++d)
 	{
 //		cout << "bb["<<(uint32_t)d<<"]: " << bbMin[d] << " - " << bbMax[d] << endl;
 		lc[d] = ( (bbMin[d] > this->GetLowerCorner(d) ) ? bbMin[d] : this->GetLowerCorner(d) );
@@ -558,6 +566,12 @@ void dec::ControlRegion::UpdateVolume(DomainDecompBase* domainDecomp)
 		_dVolume.local *= (uc[d] - lc[d]);
 	}
 	_dInvertVolume.local = 1./_dVolume.local;
+
+	// DEBUG
+//	int ownRank = domainDecomp->getRank();
+//	cout << "["<<ownRank<<"]: " << "bbMin, bbMax: " << bbMin << ", " << bbMax
+//			<< "; lc, uc: " << lc << ", " << uc << endl;
+	// DEBUG
 }
 
 void dec::ControlRegion::WriteHeaderDeletedMolecules()

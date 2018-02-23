@@ -67,7 +67,7 @@ private:
 	ParticleManipulator* _manipulator;
 	std::vector<ParticleInsertion*> _inserter;
 	std::vector<ParticleInsertion*> _changer;
-	ChangeVar<uint32_t> _nextChangeIDs;
+	ChangeVar<uint32_t> _nextChangeIDs;  // ID of 1st component: 1
 	MainLoopAction* _preForceAction;
 	MainLoopAction* _postForceAction;
 };
@@ -191,6 +191,12 @@ struct BubbleVars
 		double radius;
 		double maxVal;
 	} force;
+
+	struct {
+		uint32_t selected;
+		uint32_t bubble;
+		uint32_t force;
+	} visID;
 };
 
 struct ID_pair
@@ -245,12 +251,13 @@ private:
 	void updateForceOnBubbleCuttingMolecule(Molecule* mol, const double& dist2_min, const double& dist2, const double& dist, double* distVec);
 	void GrowBubble(Simulation* simulation, Molecule* mol);
 	void ChangeIdentity(Simulation* simulation, Molecule* mol);
-	bool checkBubbleRadius();
+	bool checkBubbleRadius(const double& radius);
+	uint16_t getBubbleVarsCompID();
 
 private:
 	Random* _rnd;
 	ParticleSelector* _selector;
-	BubbleVars _bubble;
+	std::vector<BubbleVars> _bubbleVars;
 	int _insRank;
 	uint64_t _maxID;
 	uint64_t _selectedMoleculeID;
@@ -258,6 +265,7 @@ private:
 	bool _bVisual;
 	std::array<double, 3> _daInsertionPosition;
 	std::array<double, 3> _selectedMoleculeInitPos;
+	std::array<double, 3> _selectedMoleculeInitVel;
 	ChangeVar<uint32_t> _nextChangeIDs;
 	struct {
 		std::vector<Molecule> initial;
@@ -268,11 +276,6 @@ private:
 		std::vector<std::array<double, 3> > initial;
 		std::vector<std::array<double, 3> > actual;
 	} _pbc;
-	struct {
-		uint32_t selected;
-		uint32_t bubble;
-		uint32_t force;
-	} _visIDs;
 };
 
 class ParticleSelector

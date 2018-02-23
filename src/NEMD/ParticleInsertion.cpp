@@ -146,35 +146,35 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 		_manipulator = _deleter;
 		global_log->info() << "DELETER activated" << endl;
 	}
+	// check if particle identities have to be changed
+	else if(false == _region->globalCompositionBalanced() )
+	{
+		bool bValidIDs = this->setNextChangeIDs();
+		if(true == bValidIDs)
+		{
+//				_manipulator = _changer.at(_nextChangeIDs.to);
+			_manipulator = _changer.at(_nextChangeIDs.from);
+			global_log->info() << "CHANGER activated" << endl;
+		}
+		else
+			_manipulator = nullptr;
+	}
+	// check if particles have to be added
 	else if(true == _region->globalTargetDensityUndershot(0) )
 	{
 		bool bValidIDs = this->setNextInsertIDs();
 		if(true == bValidIDs)
 		{
 			_manipulator = _inserter.at(_nextChangeIDs.from);
-//			_manipulator = nullptr;
+	//			_manipulator = nullptr;
 			global_log->info() << "INSERTER activated" << endl;
 		}
 		else
 			_manipulator = nullptr;
 	}
 	else
-	{
-		// check if particle identities have to be changed
-		if(false == _region->globalCompositionBalanced() )
-		{
-			bool bValidIDs = this->setNextChangeIDs();
-			if(true == bValidIDs)
-			{
-				_manipulator = _changer.at(_nextChangeIDs.from);
-				global_log->info() << "CHANGER activated" << endl;
-			}
-			else
-				_manipulator = nullptr;
-		}
-		else
-			_manipulator = nullptr;
-	}
+		_manipulator = nullptr;
+
 	if(nullptr != _manipulator)
 		_manipulator->PrepareParticleManipulation(simulation);
 }
@@ -242,6 +242,10 @@ bool ParticleManipDirector::setNextChangeIDs()
 
 bool ParticleManipDirector::setNextInsertIDs()
 {
+	// CHECK
+	_nextChangeIDs.from = _nextChangeIDs.to = 2;
+	return true;
+	// CHECK
 	bool bRet = true;
 	uint32_t numComps = global_simulation->getEnsemble()->getComponents()->size()+1;
 	uint32_t cidMinSpread, cidMaxSpread;
@@ -396,6 +400,8 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 			// skip component where no molecules have to be deleted
 			if(numDel.at(cid).global < 1)
 				continue;
+			else
+				cout << "numDel.at("<<cid<<").global=" << numDel.at(cid).global << endl;
 
 			uint64_t numRemainingDeletions = numDel.at(cid).global;
 			for(int pid=0; pid<numProcs; ++pid)
@@ -412,7 +418,7 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 				numRemainingSum += numMolecules_actual_gather[pid*numComps+cid] - numDel_gather[pid*numComps+cid];
 				cumsum.at(pid) = numRemainingSum;
 			}
-			cout << "numParticlesSum=" << numRemainingSum << endl;
+			cout << "numRemainingSum=" << numRemainingSum << endl;
 
 			for(uint64_t di=0; di<numRemainingDeletions; ++di)
 			{
@@ -529,44 +535,67 @@ void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
 		bool bRet = xmlconfig.getNodeValue("@visual", strVisualUpper);
 		transform(strVisualUpper.begin(), strVisualUpper.end(), strVisualUpper.begin(), ::toupper);
 		_bVisual = bRet && ("YES" == strVisualUpper);
-		if(true == _bVisual)
-		{
-			bRet = bRet && xmlconfig.getNodeValue("visIDs/selected", _visIDs.selected);
-			bRet = bRet && xmlconfig.getNodeValue("visIDs/bubble", _visIDs.bubble);
-			bRet = bRet && xmlconfig.getNodeValue("visIDs/force", _visIDs.force);
-		}
-		if(false == bRet)
-		{
-			global_log->error() << "BubbleMethod::readXML(): Something is wrong with visIDs! Program exit ..." << endl;
+	}
+
+	// component dependent bubble parameters
+	{
+		string oldpath = xmlconfig.getcurrentnodepath();
+		uint16_t numNodes = 0;
+		XMLfile::Query query = xmlconfig.query("params");
+		numNodes = query.card();
+		global_log->info() << "Number of component dependent bubble parameter sets: " << numNodes << endl;
+		if(numNodes < 1) {
+			global_log->error() << "BubbleMethod::readXML(): No parameter sets defined in XML-config file. Program exit ..." << endl;
 			Simulation::exit(-1);
 		}
+		XMLfile::Query::const_iterator nodeIter;
+		for( nodeIter = query.begin(); nodeIter; nodeIter++ )
+		{
+			xmlconfig.changecurrentnode(nodeIter);
+			uint32_t cid;
+			xmlconfig.getNodeValue("@cid", cid);
+			_bubbleVars.resize(cid+1);
+			bool bRet = _bVisual;
+			if(true == _bVisual)
+			{
+				bRet = bRet && xmlconfig.getNodeValue("visIDs/selected", _bubbleVars.at(cid).visID.selected);
+				bRet = bRet && xmlconfig.getNodeValue("visIDs/bubble", _bubbleVars.at(cid).visID.bubble);
+				bRet = bRet && xmlconfig.getNodeValue("visIDs/force", _bubbleVars.at(cid).visID.force);
+			}
+			if(false == bRet)
+			{
+				global_log->error() << "BubbleMethod::readXML(): Something is wrong with visIDs! Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+
+			xmlconfig.getNodeValue("maxforce", _bubbleVars.at(cid).force.maxVal);
+			xmlconfig.getNodeValue("forceradius", _bubbleVars.at(cid).forceRadius.target.global);
+			_bubbleVars.at(cid).forceRadius.target.local = _bubbleVars.at(cid).forceRadius.actual.local = _bubbleVars.at(cid).forceRadius.target.global;
+			_bubbleVars.at(cid).forceRadiusSquared.target.global = _bubbleVars.at(cid).forceRadiusSquared.target.global*_bubbleVars.at(cid).forceRadiusSquared.target.global;
+			xmlconfig.getNodeValue("bubbleradius", _bubbleVars.at(cid).radius.target.global);
+			_bubbleVars.at(cid).radius.target.local = _bubbleVars.at(cid).radius.actual.local = _bubbleVars.at(cid).radius.target.global;
+			_bubbleVars.at(cid).radiusSquared.target.global = _bubbleVars.at(cid).radius.target.global*_bubbleVars.at(cid).radius.target.global;
+			xmlconfig.getNodeValue("velocity/mean", _bubbleVars.at(cid).velocity.mean);
+			xmlconfig.getNodeValue("velocity/max", _bubbleVars.at(cid).velocity.max);
+			_bubbleVars.at(cid).velocity.maxSquared = _bubbleVars.at(cid).velocity.max * _bubbleVars.at(cid).velocity.max;
+
+			if(this->checkBubbleRadius(_bubbleVars.at(cid).radius.target.global) == false)
+			{
+				global_log->error() << "BubbleMethod::readXML(): Bubble radius to large! Must be smaller than (0.5*boxLength - maxOuterMoleculeRadius)! Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+
+			DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+			int ownRank = domainDecomp.getRank();
+		//	// DEBUG
+		//	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubble.radius.actual.global << endl;
+		//	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
+		//	cout << "rank[" << ownRank << "]: _bubble.radius.actual.local=" << _bubble.radius.actual.local << endl;
+		//	cout << "rank[" << ownRank << "]: _bubble.radius.target.local=" << _bubble.radius.target.local << endl;
+		//	// DEBUG
+		}
+		xmlconfig.changecurrentnode(oldpath);
 	}
-
-	xmlconfig.getNodeValue("maxforce", _bubble.force.maxVal);
-	xmlconfig.getNodeValue("forceradius", _bubble.forceRadius.target.global);
-	_bubble.forceRadius.target.local = _bubble.forceRadius.actual.local = _bubble.forceRadius.target.global;
-	_bubble.forceRadiusSquared.target.global = _bubble.forceRadiusSquared.target.global*_bubble.forceRadiusSquared.target.global;
-	xmlconfig.getNodeValue("bubbleradius", _bubble.radius.target.global);
-	_bubble.radius.target.local = _bubble.radius.actual.local = _bubble.radius.target.global;
-	_bubble.radiusSquared.target.global = _bubble.radius.target.global*_bubble.radius.target.global;
-	xmlconfig.getNodeValue("velocity/mean", _bubble.velocity.mean);
-	xmlconfig.getNodeValue("velocity/max", _bubble.velocity.max);
-	_bubble.velocity.maxSquared = _bubble.velocity.max * _bubble.velocity.max;
-
-	if(this->checkBubbleRadius() == false)
-	{
-		global_log->error() << "BubbleMethod::readXML(): Bubble radius to large! Must be smaller than (0.5*boxLength - maxOuterMoleculeRadius)! Program exit ..." << endl;
-		Simulation::exit(-1);
-	}
-
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
-	int ownRank = domainDecomp.getRank();
-//	// DEBUG
-//	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubble.radius.actual.global << endl;
-//	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
-//	cout << "rank[" << ownRank << "]: _bubble.radius.actual.local=" << _bubble.radius.actual.local << endl;
-//	cout << "rank[" << ownRank << "]: _bubble.radius.target.local=" << _bubble.radius.target.local << endl;
-//	// DEBUG
 
 	// insertion molecules
 	{
@@ -607,7 +636,7 @@ void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
 	}  // insertion molecules
 }
 
-bool BubbleMethod::checkBubbleRadius()
+bool BubbleMethod::checkBubbleRadius(const double& radius)
 {
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	double maxOuterMoleculeRadius = 0.0;
@@ -620,15 +649,28 @@ bool BubbleMethod::checkBubbleRadius()
 	Domain* domain = global_simulation->getDomain();
 	bool bValidRadius = true;
 	for(uint8_t d=0; d<3; ++d)
-		bValidRadius = (bValidRadius && (_bubble.radius.target.global < (0.5*domain->getGlobalLength(d)-maxOuterMoleculeRadius) ) );
+		bValidRadius = (bValidRadius && (radius < (0.5*domain->getGlobalLength(d)-maxOuterMoleculeRadius) ) );
 	return bValidRadius;
+}
+
+uint16_t BubbleMethod::getBubbleVarsCompID()
+{
+	uint16_t cid = 0;
+	if(BMT_CHANGER == _nType)
+		cid = _nextChangeIDs.to;
+	else if(BMT_INSERTER == _nType)
+		cid = _nextChangeIDs.from;
+	else
+		Simulation::exit(-1);
+	return cid;
 }
 
 void BubbleMethod::Reset(Simulation* simulation)
 {
 	// reset local values
 	_numManipulatedParticles.local = 0;
-	_bubble.radius.actual.local = _bubble.radius.target.global;
+	for(auto&& bi : _bubbleVars)
+		bi.radius.actual.local = bi.radius.target.global;
 
 	ParticleContainer* particleCont = simulation->getMolecules();
 	ParticleIterator pit;
@@ -730,25 +772,31 @@ bool BubbleMethod::outerMoleculeRadiusCutsBubbleRadius(Simulation* simulation, M
 
 void BubbleMethod::updateActualBubbleRadiusLocal(Molecule* mol, const double& dist)
 {
+	uint16_t cid = getBubbleVarsCompID();
+
 	double tmp = dist - mol->component()->getOuterMoleculeRadiusLJ();
-	if(tmp < _bubble.radius.actual.local)
-		_bubble.radius.actual.local = tmp;
+	if(tmp < _bubbleVars.at(cid).radius.actual.local)
+		_bubbleVars.at(cid).radius.actual.local = tmp;
 }
 
 void BubbleMethod::updateForceOnBubbleCuttingMolecule(Molecule* mol, const double& dist2_min, const double& dist2, const double& dist, double* distVec)
 {
+	uint16_t cid = mol->componentid()+1;
+
 	double v2 = mol->v2();
-	if(v2 >= _bubble.velocity.maxSquared)
+	if(v2 >= _bubbleVars.at(cid).velocity.maxSquared)
 		return;
 	double invDist = 1./dist;
 	double Fadd[3];
 	for(uint8_t d=0; d<3; ++d)
-		Fadd[d] = distVec[d] * _bubble.force.maxVal * (1-dist2/dist2_min);
+		Fadd[d] = distVec[d] * _bubbleVars.at(cid).force.maxVal * (1-dist2/dist2_min);
 	mol->Fadd(Fadd);
 }
 
 void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 {
+	uint16_t bubble_cid = getBubbleVarsCompID();
+
 	DomainDecompBase domainDecomp = simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 //	cout << "rank[" << ownRank << "]: GrowBubble(), state:" << _nState << endl;
@@ -785,10 +833,11 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 		// visual
 		if(true == _bVisual)
 		{
-			Component* comp = global_simulation->getEnsemble()->getComponent(_visIDs.selected-1);  // selected
+			uint16_t cid = mol->componentid();
+			Component* comp = global_simulation->getEnsemble()->getComponent(_bubbleVars.at(cid+1).visID.selected-1);  // selected
 			ID_pair ids;
 			ids.mid = mol->id();
-			ids.cid = mol->componentid();
+			ids.cid = cid;
 			_bubbleMolecules.push_back(ids);
 			mol->setComponent(comp);
 		}
@@ -801,7 +850,7 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 	{
 		double distVec[3] = {0.0, 0.0, 0.0};
 		double dist2 = 0.0;
-		double dist2_min = calcMinSquaredDistance(mol, _bubble.forceRadius.target.global);
+		double dist2_min = calcMinSquaredDistance(mol, _bubbleVars.at(bubble_cid).forceRadius.target.global);
 		bCutsForceRadius = this->outerMoleculeRadiusCutsBubbleRadius(simulation, mol, dist2_min, dist2, distVec);
 
 		if(false == bCutsForceRadius)
@@ -816,7 +865,7 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 	{
 		double distVec[3] = {0.0, 0.0, 0.0};
 		double dist2 = 0.0;
-		double dist2_min = calcMinSquaredDistance(mol, _bubble.radius.target.global);
+		double dist2_min = calcMinSquaredDistance(mol, _bubbleVars.at(bubble_cid).radius.target.global);
 		bool bCutsBubbleRadius = this->outerMoleculeRadiusCutsBubbleRadius(simulation, mol, dist2_min, dist2, distVec);
 
 		/* DEBUG -->
@@ -829,17 +878,18 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 
 		if(true == bCutsForceRadius)
 		{
-			uint32_t cid = _visIDs.force-1;
+			uint16_t cid_zb = mol->componentid();
+			uint16_t vis_cid = _bubbleVars.at(cid_zb+1).visID.force-1;
 			if(true == bCutsBubbleRadius)
 			{
-				cid = _visIDs.bubble-1;
+				vis_cid = _bubbleVars.at(cid_zb+1).visID.bubble-1;
 				double dist = sqrt(dist2);
 				this->updateActualBubbleRadiusLocal(mol, dist);
 			}
-			Component* comp = global_simulation->getEnsemble()->getComponent(cid);
+			Component* comp = global_simulation->getEnsemble()->getComponent(vis_cid);
 			ID_pair ids;
 			ids.mid = mol->id();
-			ids.cid = mol->componentid();
+			ids.cid = cid_zb;
 			_bubbleMolecules.push_back(ids);
 			mol->setComponent(comp);
 		}
@@ -866,8 +916,8 @@ void BubbleMethod::ChangeIdentity(Simulation* simulation, Molecule* mol)
 		double dUkinPerDOF = dUkinOld / (3 + numRotDOF_old);
 
 		// rotation
-		double U_rot = mol->U_rot();
-		global_log->info() << "U_rot_old = " << U_rot << endl;
+		double U_rot_old = mol->U_rot();
+		global_log->info() << "U_rot_old = " << U_rot_old << endl;
 
 		double L[3];
 		double Ipa[3];
@@ -892,16 +942,15 @@ void BubbleMethod::ChangeIdentity(Simulation* simulation, Molecule* mol)
 
 		mol->setComponent(compNew);
 //		mol->clearFM();  // <-- necessary?
-#ifndef NDEBUG
+
 		cout << "Changed cid of molecule " << mol->id() << " from: " << _nextChangeIDs.from << " to: " << mol->componentid()+1 << endl;
-#endif
 
 		// update transl. kin. energy
 		double dScaleFactorTrans = sqrt(6*dUkinPerDOF/compNew->m()/mol->v2() );
 		mol->scale_v(dScaleFactorTrans);
 
-		U_rot = mol->U_rot();
-		global_log->info() << "U_rot_new = " << U_rot << endl;
+		double U_rot_new = mol->U_rot();
+		cout << "U_rot_old=" << U_rot_old << ", U_rot_new=" << U_rot_new << endl;
 
 		/*
 		//connection to MettDeamon
@@ -914,27 +963,29 @@ void BubbleMethod::ChangeIdentity(Simulation* simulation, Molecule* mol)
 
 void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 {
+	uint16_t cid = getBubbleVarsCompID();
+
 	DomainDecompBase domainDecomp = simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 	ParticleContainer* particleCont = global_simulation->getMolecules();
 
 #ifdef ENABLE_MPI
 	MPI_Allreduce( &_numManipulatedParticles.local, &_numManipulatedParticles.global, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce( &_bubble.radius.actual.local, &_bubble.radius.actual.global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	MPI_Allreduce( &_bubbleVars.at(cid).radius.actual.local, &_bubbleVars.at(cid).radius.actual.global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #else
 	_numManipulatedParticles.global = _numManipulatedParticles.local;
-	_bubble.radius.actual.global = _bubble.radius.actual.local;
+	_bubbleVars.at(cid).radius.actual.global = _bubbleVars.at(cid).radius.actual.local;
 #endif
 
 //	cout << "rank[" << ownRank << "]: _numManipulatedParticles.global=" << _numManipulatedParticles.global << endl;
-	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubble.radius.actual.global << endl;
+	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubbleVars.at(cid).radius.actual.global << endl;
 //	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
 //	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _selectedMoleculeID="<<_selectedMoleculeID<< endl;
 //	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _nState="<<_nState<< endl;
 
 //	if( !(BMS_GROWING_BUBBLE == _nState && _numManipulatedParticles.global == 0) )
 
-	bool bBubbleSizeReached = (_bubble.radius.actual.global >= _bubble.radius.target.global) && BMS_GROWING_BUBBLE == _nState;
+	bool bBubbleSizeReached = (_bubbleVars.at(cid).radius.actual.global >= _bubbleVars.at(cid).radius.target.global) && BMS_GROWING_BUBBLE == _nState;
 //	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): bBubbleSizeReached="<<bBubbleSizeReached<< ", targetID=" << this->getTargetCompID() << endl;
 	if(false == bBubbleSizeReached)
 		return;
@@ -963,6 +1014,9 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 			{
 				if(pit->id() == _selectedMoleculeID) //componentid()+1 == 3)
 				{
+					// reset velocity vector before identity change
+					for(uint16_t d=0; d<3; ++d)
+						pit->setv(d, _selectedMoleculeInitVel.at(d) );
 					this->ChangeIdentity(simulation, &(*pit) );
 				}
 			}
@@ -998,59 +1052,6 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 #endif
 	_nState = BMS_IDLE;
 	_nManipState = PMS_IDLE;
-	return;
-
-	/*
-	 * change component for visualization
-	 *
-	 */
-	Component* comp2 = global_simulation->getEnsemble()->getComponent(1);  // H2
-	Component* comp6 = global_simulation->getEnsemble()->getComponent(5);  // H2 insert
-
-	ParticleContainer* particles = global_simulation->getMolecules();
-	ParticleIterator pit;
-	double dBubbleRadius = _bubble.radius.target.global;
-	double vm = _bubble.velocity.mean;
-	for( pit  = particles->iteratorBegin();
-			pit != particles->iteratorEnd();
-		 ++pit )
-	{
-		if(pit->id() == _selectedMoleculeID) //componentid()+1 == 3)
-		{
-//			pit->setComponent(comp6);
-			pit->setr(0, pit->r(0)-dBubbleRadius*0.5);
-			pit->setv(0, -vm);
-		}
-//		else if(pit->componentid()+1 == 4)
-//			pit->setComponent(comp2);
-	}
-
-	if(ownRank == _insRank)
-	{
-		double rx, ry, rz;
-		rx = _selectedMoleculeInitPos.at(0);
-		ry = _selectedMoleculeInitPos.at(1);
-		rz = _selectedMoleculeInitPos.at(2);
-		Molecule mol1(++_maxID, comp6, rx+dBubbleRadius*0.5, ry, rz, vm, 0, 0);
-		Molecule mol2(++_maxID, comp6, rx, ry+dBubbleRadius*0.5, rz, 0,  vm, 0);
-		Molecule mol3(++_maxID, comp6, rx, ry-dBubbleRadius*0.5, rz, 0, -vm, 0);
-		Molecule mol4(++_maxID, comp6, rx, ry, rz+dBubbleRadius*0.5, 0, 0,  vm);
-		Molecule mol5(++_maxID, comp6, rx, ry, rz-dBubbleRadius*0.5, 0, 0, -vm);
-
-		cout << "rank[" << ownRank << "]: postLoopAction() adding particle at: " << rx << ", " << ry << ", " << rz << endl;
-		particleCont->addParticle(mol1, true, true, true);
-		particleCont->addParticle(mol2, true, true, true);
-		particleCont->addParticle(mol3, true, true, true);
-		particleCont->addParticle(mol4, true, true, true);
-		particleCont->addParticle(mol5, true, true, true);
-	}
-
-	// update maxID
-#ifdef ENABLE_MPI
-	MPI_Bcast( &_maxID, 1, MPI_UNSIGNED_LONG, _insRank, MPI_COMM_WORLD);
-#endif
-
-	_nState = BMS_IDLE;
 }
 
 void BubbleMethod::FinalizeParticleManipulation_preForce(Simulation* simulation)
@@ -1069,6 +1070,7 @@ void BubbleMethod::selectParticle(Simulation* simulation)
 //	selectedMolecule.setComponent(comp4);
 	uint64_t selectedMoleculeID = 0;
 	double dPos[3] = {0.0, 0.0, 0.0};
+	double dVel[3] = {0.0, 0.0, 0.0};
 //	cout << "BubbleMethod::selectParticle: selectedMolecule.id()=" << selectedMolecule.id() << endl;
 	if(domainDecomp->getRank() == _insRank)
 	{
@@ -1079,16 +1081,23 @@ void BubbleMethod::selectParticle(Simulation* simulation)
 //		}
 		selectedMoleculeID = selectedMolecule.id();
 		for(uint8_t d=0; d<3; ++d)
+		{
 			dPos[d] = selectedMolecule.r(d);
+			dVel[d] = selectedMolecule.v(d);
+		}
 	}
 #ifdef ENABLE_MPI
 	MPI_Bcast( &selectedMoleculeID, 1, MPI_UNSIGNED_LONG, _insRank, MPI_COMM_WORLD);
 	MPI_Bcast( dPos, 3, MPI_DOUBLE, _insRank, MPI_COMM_WORLD);
+	MPI_Bcast( dVel, 3, MPI_DOUBLE, _insRank, MPI_COMM_WORLD);
 #endif
 	// store selected molecule values
 	_selectedMoleculeID = selectedMoleculeID;
 	for(uint8_t d=0; d<3; ++d)
+	{
 		_selectedMoleculeInitPos.at(d) = dPos[d];
+		_selectedMoleculeInitVel.at(d) = dVel[d];
+	}
 
 	// inform director about selected particle
 //	_director->
@@ -1108,6 +1117,8 @@ Quaternion BubbleMethod::createRandomQuaternion()
 
 void BubbleMethod::initInsertionMolecules(Simulation* simulation)
 {
+	uint16_t cid = getBubbleVarsCompID();
+
 	for(size_t mi=0; mi<_insertMolecules.actual.size(); ++mi)
 	{
 		for(uint8_t d=0; d<3; ++d)
@@ -1130,6 +1141,10 @@ void BubbleMethod::initInsertionMolecules(Simulation* simulation)
 		q.rotateInPlace(pos);
 		for(uint16_t d=0; d<3; ++d)
 			pos.at(d) += _selectedMoleculeInitPos.at(d);
+		// additionally the molecules itself has to be rotated
+		Quaternion qadd(q.qw(), q.qx(), q.qy(), q.qz() );
+		qadd.add(mol.q() );
+		mol.setq(qadd);
 		// <-- rotate insertion molecules around insertion position
 
 		// set position and component
@@ -1143,7 +1158,7 @@ void BubbleMethod::initInsertionMolecules(Simulation* simulation)
 		double dist2 = selectedMolecule.dist2(mol, vi);
 		double inv_dist = 1./sqrt(dist2);
 		for(uint16_t d=0; d<3; ++d)
-			mol.setv(d, vi[d]*inv_dist*_bubble.velocity.mean);
+			mol.setv(d, vi[d]*inv_dist*_bubbleVars.at(cid).velocity.mean);
 	}
 	// DEBUG -->
 	double dr_initial[3];
