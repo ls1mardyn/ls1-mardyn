@@ -1249,17 +1249,6 @@ void Simulation::simulate() {
 				deamon->preForce_action(_moleculeContainer, _cutoffRadius);
 		}
 
-/*
-        // update global number of particles
-        _domainDecomposition->collCommInit(1);
-        _domainDecomposition->collCommAppendUnsLong(nNumMoleculesDeletedLocal);
-        _domainDecomposition->collCommAllreduceSum();
-        nNumMoleculesDeletedGlobal = _domainDecomposition->collCommGetUnsLong();
-        _domainDecomposition->collCommFinalize();
-
-        _domain->setglobalNumMolecules(_domain->getglobalNumMolecules() - nNumMoleculesDeletedGlobal);
-*/
-
 		// mheinen 2015-03-16 --> DISTANCE_CONTROL
 		if(_distControl != NULL)
 		{
