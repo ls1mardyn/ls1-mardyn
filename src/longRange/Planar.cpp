@@ -185,21 +185,38 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 
 void Planar::calculateLongRange(){
 	if (_smooth){
+		const double delta_inv = 1.0 / delta;
+		const double slabsPerV = _slabs / V;
+
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
 		for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 			unsigned cid=tempMol->componentid();
 			for (unsigned i=0; i<numLJ[cid]; i++){
-				int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
+				int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1]) * delta_inv;
 				if (loc < 0){
 					loc=loc+_slabs;
 				}
 				else if (loc > sint-1){
 					loc=loc-_slabs;
 				}
-				rho_g[loc+_slabs*(i+numLJSum2[cid])]+=_slabs/V;
+				const int index = loc + _slabs * (i + numLJSum2[cid]);
+
+				#if defined(_OPENMP)
+				#pragma omp atomic
+				#endif
+				rho_g[index] += slabsPerV;
 			}
 			if (numDipole[cid] != 0){
-				int loc=tempMol->r(1)/delta;
-				rhoDipole[loc+_slabs*(numDipoleSum2[cid])]+=_slabs/V;
+				int loc=tempMol->r(1) * delta_inv;
+
+				const int index = loc + _slabs * (numDipoleSum2[cid]);
+
+				#if defined(_OPENMP)
+				#pragma omp atomic
+				#endif
+				rhoDipole[index] += slabsPerV;
 			}
 		}
 	} 
@@ -222,21 +239,37 @@ void Planar::calculateLongRange(){
 		}
 		// Calculation of the density profile for s slabs
 		if (!_smooth){
+			const double delta_inv = 1.0 / delta;
+			const double slabsPerV = _slabs / V;
+
+			#if defined(_OPENMP)
+			#pragma omp parallel
+			#endif
 			for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 				unsigned cid=tempMol->componentid();
 				for (unsigned i=0; i<numLJ[cid]; i++){
-					int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
+					int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1]) * delta_inv;
 					if (loc < 0){
 						loc=loc+_slabs;
 					}
 					else if (loc > sint-1){
 						loc=loc-_slabs;
 					}
-					rho_l[loc+_slabs*(i+numLJSum2[cid])]+=_slabs/V;
+					const int index = loc+_slabs*(i+numLJSum2[cid]);
+
+					#if defined(_OPENMP)
+					#pragma omp atomic
+					#endif
+					rho_l[index] += slabsPerV;
 				}
 				if (numDipole[cid] != 0){
-					int loc=tempMol->r(1)/delta;
-					rhoDipoleL[loc+_slabs*numDipoleSum2[cid]]+=_slabs/V;
+					int loc=tempMol->r(1) * delta_inv;
+					const int index = loc+_slabs*numDipoleSum2[cid];
+
+					#if defined(_OPENMP)
+					#pragma omp atomic
+					#endif
+					rhoDipoleL[index] += slabsPerV;
 				}
 			}
 		}
@@ -339,7 +372,7 @@ void Planar::calculateLongRange(){
 	double Upot_c=0;
 	double Virial_c=0;	// Correction used for the Pressure Calculation
 	for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
-	        unsigned cid=tempMol->componentid();
+		unsigned cid = tempMol->componentid();
 		for (unsigned i=0; i<numLJ[cid]; i++){
 			int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
 			if (loc < 0){
