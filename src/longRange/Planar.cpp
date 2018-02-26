@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
