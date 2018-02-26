@@ -573,14 +573,21 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 	double r,r2;
 	double rhoI,rhoJ;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		rhoJ=rho_l[i+sj*_slabs+_slabs*numLJSum2[cj]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*rc2+termVTRC2);
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+
+		const int index_i_sj_cj = i+sj*_slabs+_slabs*numLJSum2[cj];
+		rhoJ=rho_l[index_i_sj_cj]; // TODO: i, sj, cj? appears a few more times in other functions
+
+		vTLJ[index_i]+=rhoJ*(termVTRC1*rc2+termVTRC2);
+		uLJ[index_i]+=rhoJ*termURC;
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(j-i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				double rPt=sig/(r+t);
 				double rPt3=rPt*rPt*rPt;
@@ -596,31 +603,33 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=-rhoJ*termF*r;
+				fLJ[index_j]+=rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=-rhoJ*termFRC*r;
+				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
 		// Calculation of the Periodic boundary 
-		for (unsigned j=_slabs/2+i; j<_slabs; j++){
+		for (unsigned j=_slabs/2+i; j<_slabs; j++) {
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(_slabs-j+i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j <_slabs-cutoff_slabs+i){
 				double rPt=sig/(r+t);
 				double rPt3=rPt*rPt*rPt;
@@ -636,38 +645,45 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=-rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=rhoJ*termF*r;
+				fLJ[index_j]+=-rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=-rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=rhoJ*termFRC*r;
+				fLJ[index_j]+=-rhoI*termFRC*r;
 			}
 		}
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
 	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		rhoJ=rho_l[i+sj*_slabs+_slabs*numLJSum2[cj]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*rc2+termVTRC2);
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+
+		const int index_i_sj_cj = i+sj*_slabs+_slabs*numLJSum2[cj];
+		rhoJ=rho_l[index_i_sj_cj];
+
+		vTLJ[index_i]+=rhoJ*(termVTRC1*rc2+termVTRC2);
+		uLJ[index_i]+=rhoJ*termURC;
 		for (unsigned j=i+1; j<_slabs; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(j-i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				double rPt=sig/(r+t);
 				double rPt3=rPt*rPt*rPt;
@@ -683,28 +699,27 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=-rhoJ*termF*r;
+				fLJ[index_j]+=rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=-rhoJ*termFRC*r;
+				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
 	}
-  
 }
 
 void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj){
