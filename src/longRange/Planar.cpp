@@ -451,88 +451,99 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 	double termVN = 4*3.1416*delta*eps*sig*sig;
 	double termVT = 2*3.1416*delta*eps*sig*sig;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoI*(rc12/5-rc6/2)/rc2;
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+		vTLJ[index_i] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
+		uLJ[index_i] += termU*rhoI*(rc12/5-rc6/2)/rc2;
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=sig/((j-i)*delta);
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i]+=termVT*rhoJ*(r12/5-r6/2)/r2;
+				vTLJ[index_j]+=termVT*rhoI*(r12/5-r6/2)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j]+=termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_i]+=termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
 			}
-			uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(r12/5-r6/2)/r2;
-			vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVN*rhoJ*(r12-r6)/(r*r);
-			vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVN*rhoI*(r12-r6)/(r*r);
-			fLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += -termF*rhoJ*(r12-r6)/r;
-			fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termF*rhoI*(r12-r6)/r;
+			uLJ[index_i] += termU*rhoJ*(r12/5-r6/2)/r2;
+			uLJ[index_j] += termU*rhoI*(r12/5-r6/2)/r2;
+			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
+			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
+			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
 		// Calculation of the Periodic boundary 
 		for (unsigned j=_slabs/2+i; j<_slabs; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=sig/((_slabs-j+i)*delta);
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j <_slabs-cutoff_slabs+i){
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i] += termVT*rhoJ*(r12/5-r6/2)/r2;
+				vTLJ[index_j] += termVT*rhoI*(r12/5-r6/2)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));		
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_i] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
 			}
-			uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(r12/5-r6/2)/r2;
-			vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVN*rhoJ*(r12-r6)/(r*r);
-			vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVN*rhoI*(r12-r6)/(r*r);
-			fLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termF*rhoJ*(r12-r6)/r;
-			fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += -termF*rhoI*(r12-r6)/r;
+			uLJ[index_i] += termU*rhoJ*(r12/5-r6/2)/r2;
+			uLJ[index_j] += termU*rhoI*(r12/5-r6/2)/r2;
+			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
+			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			fLJ[index_i] += termF*rhoJ*(r12-r6)/r;
+			fLJ[index_j] += -termF*rhoI*(r12-r6)/r;
 		}
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
 	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
-		uLJ[i+si*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(rc12/5-rc6/2)/rc2;
-		for (unsigned j=i+1; j<_slabs; j++){
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+		const int index_i_cj = i+si*_slabs+_slabs*numLJSum2[cj]; // TODO: check - this is really supposed to be a mix of the i and j variables?
+
+		rhoI=rho_l[index_i];
+		vTLJ[index_i_cj] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
+		uLJ[index_i_cj] += termU*rhoI*(rc12/5-rc6/2)/rc2;
+		for (unsigned j=i+1; j<_slabs; j++) {
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=sig/((j-i)*delta);
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i] += termVT*rhoJ*(r12/5-r6/2)/r2;
+				vTLJ[index_j] += termVT*rhoI*(r12/5-r6/2)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_i] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
 			}
-			uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(r12/5-r6/2)/r2;
-			vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVN*rhoJ*(r12-r6)/(r*r);
-			vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVN*rhoI*(r12-r6)/(r*r);
-			fLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += -termF*rhoJ*(r12-r6)/r;
-			fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termF*rhoI*(r12-r6)/r;
+			uLJ[index_i] += termU*rhoJ*(r12/5-r6/2)/r2;
+			uLJ[index_j] += termU*rhoI*(r12/5-r6/2)/r2;
+			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
+			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
+			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
 	}
   
