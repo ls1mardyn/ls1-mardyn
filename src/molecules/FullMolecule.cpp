@@ -576,43 +576,37 @@ void FullMolecule::calcFM() {
 
 /**
  * catches NaN values and missing data
- *
- * @note Use isnan from cmath to check for nan.
- * If that's not available (C99), compare the value with itself. If the value
- * is NaN, the comparison will evaluate to false (according to IEEE754 spec.)
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void FullMolecule::check(unsigned long id) {
 #ifndef NDEBUG
-	using std::isfinite; // C++11 needed
+void FullMolecule::check(unsigned long id) {
 
-	mardyn_assert(_id == id);
-	mardyn_assert(_m > 0.0);
-	for (int d = 0; d < 3; d++) {
-		mardyn_assert(isfinite(_r[d]));
-		mardyn_assert(isfinite(_v[d]));
-		mardyn_assert(isfinite(_L[d]));
-		mardyn_assert(isfinite(_F[d]));
-		mardyn_assert(isfinite(_M[d]));
-		mardyn_assert(isfinite(_I[d]));
-		// mardyn_assert(!isnan(_Vi[d]));
-		mardyn_assert(isfinite(_invI[d]));
-	}
-	_q.check();
-	if(!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2]))
-	{
-	   cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")"<<endl;
-	   _Vi[0] = 0.0;
-	   _Vi[1] = 0.0;
-	   _Vi[2] = 0.0;
-	   mardyn_assert(false);
-	}
-#endif
+  using std::isfinite; // C++11 needed
+
+  mardyn_assert(_id == id);
+  mardyn_assert(_m > 0.0);
+  for (int d = 0; d < 3; d++) {
+    mardyn_assert(isfinite(_r[d]));
+    mardyn_assert(isfinite(_v[d]));
+    mardyn_assert(isfinite(_L[d]));
+    mardyn_assert(isfinite(_F[d]));
+    mardyn_assert(isfinite(_M[d]));
+    mardyn_assert(isfinite(_I[d]));
+    // mardyn_assert(!isnan(_Vi[d]));
+    mardyn_assert(isfinite(_invI[d]));
+  }
+  _q.check();
+  if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2])) {
+    cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
+         << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")" << endl;
+    _Vi[0] = 0.0;
+    _Vi[1] = 0.0;
+    _Vi[2] = 0.0;
+    mardyn_assert(false);
+  }
 }
-#pragma GCC diagnostic pop
-
-
+#else
+void FullMolecule::check(unsigned long /*id*/) {}
+#endif
 
 std::ostream& operator<<( std::ostream& os, const FullMolecule& m ) {
 	os << "ID: " << m.id() << "\n";
