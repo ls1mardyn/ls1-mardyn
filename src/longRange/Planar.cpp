@@ -949,9 +949,13 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 	double termVN= 3.1416/2*muSquare[ci]*muSquare[cj]*delta / (3*temp);
 	double termVT= termU;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
-		double rhoI = rhoDipoleL[i+si*_slabs+_slabs*numDipoleSum2[ci]];
+		const int index_i = i+si*_slabs+_slabs*numDipoleSum2[ci];
+
+		double rhoI = rhoDipoleL[index_i];
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
-			double rhoJ = rhoDipoleL[j+sj*_slabs+_slabs*numDipoleSum2[cj]];
+			const int index_j = j+sj*_slabs+_slabs*numDipoleSum2[cj];
+
+			double rhoJ = rhoDipoleL[index_j];
 			double r=(j-i)*delta;
 			double r2,r4,r6;
 			if (j> i+cutoff_slabs){
@@ -964,19 +968,21 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			  r4=rc4;
 			  r6=rc6;
 			}
-			fDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] += termF*rhoJ/r6 * r;
-			fDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termF*rhoI/r6 * r;
-			uDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termU*rhoJ/r4;
-			uDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termU*rhoI/r4;
-			vNDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVN*rhoJ/r6 *r*r;
-			vNDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVN*rhoI/r6 *r*r;
-			vTDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
-			vTDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
+			fDipole[index_i] += termF*rhoJ/r6 * r;
+			fDipole[index_j] -= termF*rhoI/r6 * r;
+			uDipole[index_i] -= termU*rhoJ/r4;
+			uDipole[index_j] -= termU*rhoI/r4;
+			vNDipole[index_i]-= termVN*rhoJ/r6 *r*r;
+			vNDipole[index_j]-= termVN*rhoI/r6 *r*r;
+			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
+			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
 			
 		}
 		// Calculation of the Periodic boundary 
 		for (unsigned j=_slabs/2+i; j<_slabs; j++){
-			double rhoJ = rhoDipoleL[j+sj*_slabs+_slabs*numDipoleSum2[cj]];
+			const int index_j = j+sj*_slabs+_slabs*numDipoleSum2[cj];
+
+			double rhoJ = rhoDipoleL[index_j];
 			double r=(_slabs-j+i)*delta;
 			double r2,r4,r6;
 			if (j <_slabs-cutoff_slabs+i){
@@ -989,22 +995,26 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			  r4=rc4;
 			  r6=rc6;
 			}
-			fDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termF*rhoJ/r6 * r;
-			fDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] += termF*rhoI/r6 * r;
-			uDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termU*rhoJ/r4;
-			uDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termU*rhoI/r4;
-			vNDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVN*rhoJ/r6 *r*r;
-			vNDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVN*rhoI/r6 *r*r;
-			vTDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
-			vTDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
+			fDipole[index_i] -= termF*rhoJ/r6 * r;
+			fDipole[index_j] += termF*rhoI/r6 * r;
+			uDipole[index_i] -= termU*rhoJ/r4;
+			uDipole[index_j] -= termU*rhoI/r4;
+			vNDipole[index_i]-= termVN*rhoJ/r6 *r*r;
+			vNDipole[index_j]-= termVN*rhoI/r6 *r*r;
+			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
+			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
 		}
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
-	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
-		double rhoI = rhoDipoleL[i+si*_slabs+_slabs*numDipoleSum2[ci]];
+	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()) {
+		const int index_i = i+si*_slabs+_slabs*numDipoleSum2[ci];
+
+		double rhoI = rhoDipoleL[index_i];
 		for (unsigned j=i+1; j<_slabs; j++){
-			double rhoJ = rhoDipoleL[j+sj*_slabs+_slabs*numDipoleSum2[cj]];
+			const int index_j = j+sj*_slabs+_slabs*numDipoleSum2[cj];
+
+			double rhoJ = rhoDipoleL[index_j];
 			double r=(j-i)*delta;
 			double r2,r4,r6;
 			if (j> i+cutoff_slabs){
@@ -1017,14 +1027,14 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			  r4=rc4;
 			  r6=rc6;
 			}
-			fDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] += termF*rhoJ/r6 * r;
-			fDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termF*rhoI/r6 * r;
-			uDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termU*rhoJ/r4;
-			uDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termU*rhoI/r4;
-			vNDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVN*rhoJ/r6 *r*r;
-			vNDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVN*rhoI/r6 *r*r;
-			vTDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
-			vTDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
+			fDipole[index_i] += termF*rhoJ/r6 * r;
+			fDipole[index_j] -= termF*rhoI/r6 * r;
+			uDipole[index_i] -= termU*rhoJ/r4;
+			uDipole[index_j] -= termU*rhoI/r4;
+			vNDipole[index_i]-= termVN*rhoJ/r6 *r*r;
+			vNDipole[index_j]-= termVN*rhoI/r6 *r*r;
+			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
+			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
 		}
 	}  
 }
