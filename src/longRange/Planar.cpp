@@ -29,31 +29,10 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	_particleContainer = particleContainer;
 	_slabs = slabs;
 	frequency=10;
-	vNDipole=nullptr;
-	numLJSum2=nullptr;
 	numComp=0;
 }
 
-Planar::~Planar()
-{
-	free(numLJ);
-	free(numDipole);
-	free(numLJSum2);
-	free(numDipoleSum2);
-	free(muSquare);
-	free(uLJ);
-	free(vNLJ);
-	free(vTLJ);
-	free(fLJ);
-	free(rho_g);
-	free(rho_l);
-	free(fDipole);
-	free(uDipole);
-	free(vNDipole);
-	free(vTDipole);
-	free(rhoDipole);
-	free(rhoDipoleL);
-	free(eLong);
+Planar::~Planar() {
 }
 
 void Planar::init()
@@ -64,12 +43,12 @@ void Planar::init()
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
-	numLJ = (unsigned *) malloc (sizeof(unsigned)*numComp);
-	numDipole = (unsigned *) malloc (sizeof(unsigned)*numComp);
+	resizeExactly(numLJ, numComp);
+	resizeExactly(numDipole, numComp);
 	numLJSum=0;
 	numDipoleSum = 0;
-	numLJSum2 = (unsigned *) malloc (sizeof(unsigned)*numComp);
-	numDipoleSum2 = (unsigned *) malloc (sizeof(unsigned)*numComp);
+	resizeExactly(numLJSum2, numComp);
+	resizeExactly(numDipoleSum2, numComp);
 	for (unsigned i =0; i< numComp; i++){
 		numLJSum2[i]=0;
 		numDipoleSum2[i]=0;
@@ -88,20 +67,20 @@ void Planar::init()
 			numDipoleSum2[j]+=numDipole[i];
 		}
 	}
-	muSquare =  (double*)malloc(sizeof(double)*numDipoleSum);
-	uLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	vNLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	vTLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	fLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	rho_g = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	rho_l = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	fDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	uDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	vNDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	vTDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	rhoDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	rhoDipoleL = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	eLong =  (double*)malloc(sizeof(double)*numLJSum);
+	resizeExactly(muSquare, numDipoleSum);
+	resizeExactly(uLJ, _slabs*numLJSum);
+	resizeExactly(vNLJ, _slabs*numLJSum);
+	resizeExactly(vTLJ, _slabs*numLJSum);
+	resizeExactly(fLJ, _slabs*numLJSum);
+	resizeExactly(rho_g, _slabs*numLJSum);
+	resizeExactly(rho_l, _slabs*numLJSum);
+	resizeExactly(fDipole, _slabs*numDipoleSum);
+	resizeExactly(uDipole, _slabs*numDipoleSum);
+	resizeExactly(vNDipole, _slabs*numDipoleSum);
+	resizeExactly(vTDipole, _slabs*numDipoleSum);
+	resizeExactly(rhoDipole, _slabs*numDipoleSum);
+	resizeExactly(rhoDipoleL, _slabs*numDipoleSum);
+	resizeExactly(eLong, numLJSum);
 	
 	unsigned counter=0;
 	for (unsigned i =0; i< numComp; i++){		// Determination of the elongation of the Lennard-Jones sites
