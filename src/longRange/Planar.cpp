@@ -224,21 +224,18 @@ void Planar::calculateLongRange(){
 	} 
 	if (simstep % frequency == 0){	// The Density Profile is only calculated once in 10 simulation steps
 
-		for (unsigned i=0; i<_slabs*numLJSum; i++){
-			rho_l[i]=0;
-			uLJ[i]=0;
-			vNLJ[i]=0;
-			vTLJ[i]=0;
-			fLJ[i]=0;
-		}
+		std::fill(rho_l.begin(), rho_l.end(), 0.0);
+		std::fill(uLJ.begin(), uLJ.end(), 0.0);
+		std::fill(vNLJ.begin(), vNLJ.end(), 0.0);
+		std::fill(vTLJ.begin(), vTLJ.end(), 0.0);
+		std::fill(fLJ.begin(), fLJ.end(), 0.0);
 		
-		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
-			fDipole[i]=0;
-			uDipole[i]=0;
-			vNDipole[i]=0;
-			vTDipole[i]=0;
-			rhoDipoleL[i]=0;
-		}
+		std::fill(fDipole.begin(), fDipole.end(), 0.0);
+		std::fill(uDipole.begin(), uDipole.end(), 0.0);
+		std::fill(vNDipole.begin(), vNDipole.end(), 0.0);
+		std::fill(vTDipole.begin(), vTDipole.end(), 0.0);
+		std::fill(rhoDipoleL.begin(), rhoDipoleL.end(), 0.0);
+
 		// Calculation of the density profile for s slabs
 		if (!_smooth){
 			const double delta_inv = 1.0 / delta;
