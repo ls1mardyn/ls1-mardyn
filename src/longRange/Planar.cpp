@@ -442,6 +442,7 @@ void Planar::calculateLongRange(){
 void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj){
 	double rc=sig/cutoff;
 	double rc2=rc*rc;
+	const double rc2_inv = 1.0 / rc2;
 	double rc6=rc2*rc2*rc2;
 	double rc12=rc6*rc6;
 	double r,r2,r6,r12;
@@ -450,13 +451,14 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 	double termF = 8*3.1416*delta*eps*sig;
 	double termVN = 4*3.1416*delta*eps*sig*sig;
 	double termVT = 2*3.1416*delta*eps*sig*sig;
-	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
+	const unsigned slabsHalf = _slabs / 2;
+	for (unsigned i=_domainDecomposition->getRank(); i<slabsHalf; i+=_domainDecomposition->getNumProcs()){
 		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
 
 		rhoI=rho_l[index_i];
-		vTLJ[index_i] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
-		uLJ[index_i] += termU*rhoI*(rc12/5-rc6/2)/rc2;
-		for (unsigned j=i+1; j<i+_slabs/2; j++){
+		vTLJ[index_i] += termVT*rhoI*(6*rc12*0.2-3*rc6*0.5)*rc2_inv;
+		uLJ[index_i] += termU*rhoI*(rc12*0.2-rc6*0.5)*rc2_inv;
+		for (unsigned j=i+1; j<i+slabsHalf; j++){
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
 			r=sig/((j-i)*delta);
@@ -465,25 +467,25 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[index_i]+=termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[index_j]+=termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i]+=termVT*rhoJ*(r12*0.2-r6*0.5)/r2;
+				vTLJ[index_j]+=termVT*rhoI*(r12*0.2-r6*0.5)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[index_j]+=termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
-				vTLJ[index_i]+=termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j]+=termVT*rhoI*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
+				vTLJ[index_i]+=termVT*rhoJ*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
 			}
-			uLJ[index_i] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[index_j] += termU*rhoI*(r12/5-r6/2)/r2;
+			uLJ[index_i] += termU*rhoJ*(r12*0.2-r6*0.5)/r2;
+			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
 			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
 		// Calculation of the Periodic boundary 
-		for (unsigned j=_slabs/2+i; j<_slabs; j++){
+		for (unsigned j=slabsHalf+i; j<_slabs; j++){
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
 			r=sig/((_slabs-j+i)*delta);
@@ -492,18 +494,18 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[index_i] += termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[index_j] += termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2-r6*0.5)/r2;
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2-r6*0.5)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[index_j] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
-				vTLJ[index_i] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
 			}
-			uLJ[index_i] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[index_j] += termU*rhoI*(r12/5-r6/2)/r2;
+			uLJ[index_i] += termU*rhoJ*(r12*0.2-r6*0.5)/r2;
+			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
 			fLJ[index_i] += termF*rhoJ*(r12-r6)/r;
@@ -512,13 +514,13 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
-	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
+	for (unsigned i=slabsHalf+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
 		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
 		const int index_i_cj = i+si*_slabs+_slabs*numLJSum2[cj]; // TODO: check - this is really supposed to be a mix of the i and j variables?
 
 		rhoI=rho_l[index_i];
-		vTLJ[index_i_cj] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
-		uLJ[index_i_cj] += termU*rhoI*(rc12/5-rc6/2)/rc2;
+		vTLJ[index_i_cj] += termVT*rhoI*(6*rc12*0.2-3*rc6*0.5)*rc2_inv;
+		uLJ[index_i_cj] += termU*rhoI*(rc12*0.2-rc6*0.5)*rc2_inv;
 		for (unsigned j=i+1; j<_slabs; j++) {
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
@@ -528,25 +530,24 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[index_i] += termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[index_j] += termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2-r6*0.5)/r2;
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2-r6*0.5)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[index_j] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
-				vTLJ[index_i] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
 			}
-			uLJ[index_i] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[index_j] += termU*rhoI*(r12/5-r6/2)/r2;
+			uLJ[index_i] += termU*rhoJ*(r12*0.2-r6*0.5)/r2;
+			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
 			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
 	}
-  
 }
 
 void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj){
