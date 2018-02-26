@@ -367,23 +367,26 @@ void Planar::calculateLongRange(){
 	}
 
 	// Adding the Force to the Molecules; this is done in every timestep
-	double Fa[3]={0};
-	double Via[3]={0};
+	const double delta_inv = 1.0 / delta;
+
 	double Upot_c=0;
 	double Virial_c=0;	// Correction used for the Pressure Calculation
 	for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
+
 		unsigned cid = tempMol->componentid();
 		for (unsigned i=0; i<numLJ[cid]; i++){
-			int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
+			int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1]) * delta_inv;
 			if (loc < 0){
 				loc=loc+_slabs;
 			}
 			else if (loc > sint-1){
 				loc=loc-_slabs;
 			}
+			double Fa[3]={0.0, 0.0, 0.0};
 			Fa[1]=fLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
 			Upot_c+=uLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
 			Virial_c+=2*vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]]+vNLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
+			double Via[3];
 			Via[0]=vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
 			Via[1]=vNLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
 			Via[2]=vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
@@ -393,10 +396,12 @@ void Planar::calculateLongRange(){
 //			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 		}
 		if (numDipole[cid] != 0){
-			int loc = tempMol->r(1)/delta;
+			int loc = tempMol->r(1) * delta_inv;
+			double Fa[3]={0.0, 0.0, 0.0};
 			Fa[1]=fDipole[loc+_slabs*numDipoleSum2[cid]];
 			Upot_c+=uDipole[loc+_slabs*numDipoleSum2[cid]];
 			Virial_c+=2*vTDipole[loc+_slabs*numDipoleSum2[cid]]+vNDipole[loc+_slabs*numDipoleSum2[cid]];
+			double Via[3];
 			Via[0]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
 			Via[1]=vNDipole[loc+_slabs*numDipoleSum2[cid]];
 			Via[2]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
