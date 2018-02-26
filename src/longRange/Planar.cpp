@@ -193,8 +193,10 @@ void Planar::calculateLongRange(){
 		#endif
 		for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 			unsigned cid=tempMol->componentid();
+			const double Ypos = tempMol->r(1);
+
 			for (unsigned i=0; i<numLJ[cid]; i++){
-				int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1]) * delta_inv;
+				int loc=(Ypos+tempMol->ljcenter_d(i)[1]) * delta_inv;
 				if (loc < 0){
 					loc=loc+_slabs;
 				}
@@ -209,7 +211,7 @@ void Planar::calculateLongRange(){
 				rho_g[index] += slabsPerV;
 			}
 			if (numDipole[cid] != 0){
-				int loc=tempMol->r(1) * delta_inv;
+				int loc=Ypos * delta_inv;
 
 				const int index = loc + _slabs * (numDipoleSum2[cid]);
 
@@ -247,8 +249,10 @@ void Planar::calculateLongRange(){
 			#endif
 			for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 				unsigned cid=tempMol->componentid();
+				const double Ypos = tempMol->r(1);
+
 				for (unsigned i=0; i<numLJ[cid]; i++){
-					int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1]) * delta_inv;
+					int loc=(Ypos+tempMol->ljcenter_d(i)[1]) * delta_inv;
 					if (loc < 0){
 						loc=loc+_slabs;
 					}
@@ -263,7 +267,7 @@ void Planar::calculateLongRange(){
 					rho_l[index] += slabsPerV;
 				}
 				if (numDipole[cid] != 0){
-					int loc=tempMol->r(1) * delta_inv;
+					int loc=Ypos * delta_inv;
 					const int index = loc+_slabs*numDipoleSum2[cid];
 
 					#if defined(_OPENMP)
@@ -369,13 +373,19 @@ void Planar::calculateLongRange(){
 	// Adding the Force to the Molecules; this is done in every timestep
 	const double delta_inv = 1.0 / delta;
 
-	double Upot_c=0;
-	double Virial_c=0;	// Correction used for the Pressure Calculation
-	for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
+	double Upot_c=0.0;
+	double Virial_c=0.0; // Correction used for the Pressure Calculation
+
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:Upot_c, Virial_c)
+	#endif
+	for (ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()) {
 
 		unsigned cid = tempMol->componentid();
+		const double Ypos = tempMol->r(1);
+
 		for (unsigned i=0; i<numLJ[cid]; i++){
-			int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1]) * delta_inv;
+			int loc=(Ypos+tempMol->ljcenter_d(i)[1]) * delta_inv;
 			if (loc < 0){
 				loc=loc+_slabs;
 			}
@@ -383,28 +393,30 @@ void Planar::calculateLongRange(){
 				loc=loc-_slabs;
 			}
 			double Fa[3]={0.0, 0.0, 0.0};
-			Fa[1]=fLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Upot_c+=uLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Virial_c+=2*vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]]+vNLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
+			const int index = loc + i * _slabs + _slabs * numLJSum2[cid];
+			Fa[1] = fLJ[index];
+			Upot_c += uLJ[index];
+			Virial_c += 2 * vTLJ[index] + vNLJ[index];
 			double Via[3];
-			Via[0]=vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Via[1]=vNLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Via[2]=vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			tempMol->Fljcenteradd(i,Fa);
-			Virial_c=Via[1];
+			Via[0] = vTLJ[index];
+			Via[1] = vNLJ[index];
+			Via[2] = vTLJ[index];
+			tempMol->Fljcenteradd(i, Fa);
+//			Virial_c=Via[1]; TODO: I, tchipevn, think that this line is a bug, so I'm commenting it out. Virial_c is a summation variable, it should not be overwritten by a value, dependent on the last molecule in the system.
 			tempMol->Viadd(Via);
 //			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 		}
 		if (numDipole[cid] != 0){
-			int loc = tempMol->r(1) * delta_inv;
-			double Fa[3]={0.0, 0.0, 0.0};
-			Fa[1]=fDipole[loc+_slabs*numDipoleSum2[cid]];
-			Upot_c+=uDipole[loc+_slabs*numDipoleSum2[cid]];
-			Virial_c+=2*vTDipole[loc+_slabs*numDipoleSum2[cid]]+vNDipole[loc+_slabs*numDipoleSum2[cid]];
+			int loc = Ypos * delta_inv;
+			double Fa[3] = { 0.0, 0.0, 0.0 };
+			const int index = loc + _slabs * numDipoleSum2[cid];
+			Fa[1] = fDipole[index];
+			Upot_c += uDipole[index];
+			Virial_c += 2 * vTDipole[index] + vNDipole[index];
 			double Via[3];
-			Via[0]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
-			Via[1]=vNDipole[loc+_slabs*numDipoleSum2[cid]];
-			Via[2]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
+			Via[0] = vTDipole[index];
+			Via[1] = vNDipole[index];
+			Via[2] = vTDipole[index];
 			tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
 			tempMol->Viadd(Via);
 //			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
