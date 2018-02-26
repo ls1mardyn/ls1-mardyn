@@ -49,9 +49,8 @@ void LeapfrogRMM::computePositions(ParticleContainer* molCont, Domain* dom) {
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = molCont->iteratorBegin();
-		const ParticleIterator end = molCont->iteratorEnd();
-		for(auto i = begin; i != end; ++i) {
+		const ParticleIterator begin = molCont->iterator();
+		for(auto i = begin; i.hasNext(); i.next()) {
 			i->ee_upd_preF(_timestepLength);
 		}
 	}
@@ -80,10 +79,9 @@ void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 		#pragma omp parallel reduction(+: red_N, red_rotDOF, red_summv2, red_sumIw2)
 		#endif
 		{
-			const ParticleIterator begin = molCont->iteratorBegin();
-			const ParticleIterator end = molCont->iteratorEnd();
+			const ParticleIterator begin = molCont->iterator();
 
-			for (ParticleIterator i = begin; i != end; ++i) {
+			for (ParticleIterator i = begin; i.hasNext(); i.next()) {
 				double dummy = 0.0;
 				i->ee_upd_postF(_timestepLength, red_summv2);
 				mardyn_assert(red_summv2 >= 0.0);

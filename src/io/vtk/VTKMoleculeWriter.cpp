@@ -52,10 +52,10 @@ void VTKMoleculeWriter::doOutput(
 
 	impl.initializeVTKFile();
 
-	ParticleIterator tmpMolecule = particleContainer->iteratorBegin();
-	while (tmpMolecule != particleContainer->iteratorEnd()) {
+	ParticleIterator tmpMolecule = particleContainer->iterator();
+	while (tmpMolecule.hasNext()) {
 		impl.plotMolecule(*tmpMolecule);
-		++tmpMolecule;
+		tmpMolecule.next();
 	}
 
 	std::stringstream fileNameStream;

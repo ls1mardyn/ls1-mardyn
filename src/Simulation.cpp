@@ -819,8 +819,7 @@ void Simulation::updateForces() {
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+		const ParticleIterator begin = _moleculeContainer->iterator();
 
 		if(_simstep==0 && (CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt)) {
 
@@ -833,7 +832,7 @@ void Simulation::updateForces() {
 			double FmaxInitSquared=_dFmaxInit*_dFmaxInit;
 			double FmaxThresholdSquared = _dFmaxThreshold*_dFmaxThreshold;
 
-			for (ParticleIterator i = begin; i != end; ++i){
+			for (ParticleIterator i = begin; i.hasNext(); i.next()){
 				i->calcFM();
 
 				id=i->id();
@@ -860,7 +859,7 @@ void Simulation::updateForces() {
 			global_log->info()<<"Max. initial force is found for molecule: id="<<_nFmaxID<<", Fmax="<<_dFmaxInit<<endl;
 		}
 		else {
-			for (ParticleIterator i = begin; i != end; ++i){
+			for (ParticleIterator i = begin; i.hasNext(); i.next()){
 				i->calcFM();
 			}
 		}
@@ -1397,7 +1396,7 @@ void Simulation::simulate() {
 				double tTarget;
 				double stdDevTrans, stdDevRot;
 				if(_domain->severalThermostats()) {
-					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
+					for (ParticleIterator tM = _moleculeContainer->iterator(); tM.hasNext(); tM.next()) {
 						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							int thermostat = _domain->getThermostat(tM->componentid());
@@ -1413,7 +1412,7 @@ void Simulation::simulate() {
 				}
 				else{
 					tTarget = _domain->getTargetTemperature(0);
-					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
+					for (ParticleIterator tM = _moleculeContainer->iterator(); tM.hasNext(); tM.next()) {
 						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity

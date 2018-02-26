@@ -10,9 +10,6 @@
 
 SingleCellIterator::SingleCellIterator(ParticleCellBase * cell_arg,
 		size_t index_arg) : _cell(cell_arg), _mol_index(index_arg), _currentParticleDeleted(false) {
-	if(_cell->isEmpty()) {
-		make_invalid();
-	}
 }
 
 Molecule& SingleCellIterator:: operator * () const {
@@ -33,14 +30,14 @@ void SingleCellIterator :: operator ++ () {
 	// and the _mol_index value should not be incremented.
 	_mol_index += _currentParticleDeleted ? 0 : 1;
 
-	if(_mol_index >= static_cast<size_t>(_cell->getMoleculeCount())) {
-		make_invalid();
-	}
-
 	_currentParticleDeleted = false;
 }
 
 void SingleCellIterator :: deleteCurrentParticle () {
 	_cell->deleteMoleculeByIndex(_mol_index);
 	_currentParticleDeleted = true;
+}
+
+bool SingleCellIterator::isValid() const {
+	return _cell != nullptr and _mol_index < static_cast<size_t>(_cell->getMoleculeCount());
 }

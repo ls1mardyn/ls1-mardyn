@@ -90,7 +90,7 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 
 		// originally VIS files had a fixed width of 8 (and no t), here I use 12 (with 2 for t)
 		//ostrm << "t           x           y           z          q0          q1          q2          q3" << endl;
-		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
+		for (ParticleIterator pos = particleContainer->iterator(); pos.hasNext(); pos.next()) {
 			bool halo = false;
 			for (unsigned short d = 0; d < 3; d++) {
 				if ((pos->r(d) < particleContainer->getBoundingBoxMin(d)) || (pos->r(d) > particleContainer->getBoundingBoxMax(d))) {

@@ -35,8 +35,7 @@ public:
 	 */
 	virtual bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) = 0;
 
-	SingleCellIterator iteratorBegin();
-	SingleCellIterator iteratorEnd();
+	SingleCellIterator iterator();
 
 	/** @brief Check if current cell contains no molecules
 	 * @return true if no molecules are in the cell, false otherwise

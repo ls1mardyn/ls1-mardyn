@@ -155,7 +155,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 
 		ParticleIterator tempMolecule;
-		for (tempMolecule = particleContainer->iteratorBegin(); tempMolecule != particleContainer->iteratorEnd(); ++tempMolecule) {
+		for (tempMolecule = particleContainer->iterator(); tempMolecule.hasNext(); tempMolecule.next()) {
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {
 				cellIndex[i]
@@ -342,7 +342,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		}
 
 		//filling of the writeArray
-		for (tempMolecule = particleContainer->iteratorBegin(); tempMolecule != particleContainer->iteratorEnd(); ++tempMolecule) {
+		for (tempMolecule = particleContainer->iterator(); tempMolecule.hasNext(); tempMolecule.next()) {
 
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {

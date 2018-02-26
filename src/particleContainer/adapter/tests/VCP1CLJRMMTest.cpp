@@ -65,11 +65,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationU0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
@@ -106,11 +106,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationF0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
@@ -143,10 +143,9 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 	size_t nQuadrupoles = 0;
 
 	ParticleCellRMM & nonconst_cell_RMM = const_cast<ParticleCellRMM&>(cell_RMM);
-	SingleCellIterator begin = nonconst_cell_RMM.iteratorBegin();
-	SingleCellIterator end = nonconst_cell_RMM.iteratorEnd();
+	SingleCellIterator begin = nonconst_cell_RMM.iterator();
 
-	for(SingleCellIterator it = begin; it != end; ++it) {
+	for(SingleCellIterator it = begin; it.hasNext(); it.next()) {
 		nLJCenters += it->numLJcenters();
 		nCharges += it->numCharges();
 		nDipoles += it->numDipoles();
@@ -203,7 +202,7 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 		fullSoA.setTripletAccum(clearance, QuantityType::FORCE, LJC, ind);
 		fullSoA.setTripletAccum(clearance, QuantityType::VIRIAL, LJC, ind);
 
-		++it;
+		it.next();
 	}
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
@@ -219,7 +218,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -258,10 +257,9 @@ void VCP1CLJRMMTest::testProcessCell() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-5*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-5*full_Virial));
 
-	SingleCellIterator begin = cell_RMM.iteratorBegin();
-	SingleCellIterator end = cell_RMM.iteratorEnd();
+	SingleCellIterator begin = cell_RMM.iterator();
 
-	for (SingleCellIterator it = begin; it != end; ++it) {
+	for (SingleCellIterator it = begin; it.hasNext(); it.next()) {
 		double RMM_f_x = it->F(0);
 		double RMM_f_y = it->F(1);
 		double RMM_f_z = it->F(2);
@@ -293,7 +291,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	// copy-paste cause I'm lazy and have no particular time for unit tests.
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -337,9 +335,8 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-7*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-7*full_Virial));
 
-	SingleCellIterator begin1 = cell_RMM1.iteratorBegin();
-	SingleCellIterator end1 = cell_RMM1.iteratorEnd();
-	for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+	SingleCellIterator begin1 = cell_RMM1.iterator();
+	for (SingleCellIterator it1 = begin1; it1.hasNext(); it1.next()) {
 		double RMM_f_x = it1->F(0);
 		double RMM_f_y = it1->F(1);
 		double RMM_f_z = it1->F(2);
@@ -355,9 +352,8 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, RMM_f_z, fabs(full_f_z*1.0e-5));
 	}
 
-	SingleCellIterator begin2 = cell_RMM2.iteratorBegin();
-	SingleCellIterator end2 = cell_RMM2.iteratorEnd();
-	for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+	SingleCellIterator begin2 = cell_RMM2.iterator();
+	for (SingleCellIterator it2 = begin2; it2.hasNext(); it2.next()) {
 		double RMM_f_x = it2->F(0);
 		double RMM_f_y = it2->F(1);
 		double RMM_f_z = it2->F(2);

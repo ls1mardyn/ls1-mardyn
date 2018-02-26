@@ -25,13 +25,14 @@ class RegionParticleIterator : public ParticleIterator {
 		RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]);
 		RegionParticleIterator& operator=(const RegionParticleIterator& other);
 
-		void operator ++ ();
-
-		static RegionParticleIterator invalid();
+		void next() {
+			operator++();
+		}
 
 	private:
+		void operator ++ ();
+
 		CellIndex_T getGlobalCellIndex();
-		void make_invalid();
 		void next_non_empty_cell();
 
 		CellIndex_T _baseX;
@@ -45,8 +46,7 @@ class RegionParticleIterator : public ParticleIterator {
 		double _endRegion[3];
 };
 
-inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(), _localCellIndex(0){
-	make_invalid();
+inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(), _localCellIndex(0) {
 }
 
 inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]) :
@@ -76,10 +76,7 @@ inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T
 	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0]; //cells.size();
 
 	// if _cell_index is out of the region => invalid <=> (_localCellIndex >= numCellsInRegion)
-	if (_localCellIndex >= numCellsInRegion) {
-		make_invalid();
-	}
-	else {
+	if (_localCellIndex < numCellsInRegion) {
 		/*
 		if (cells[_cell_index].isEmpty()) {
 			next_non_empty_cell();
@@ -117,43 +114,27 @@ inline RegionParticleIterator& RegionParticleIterator::operator=(const RegionPar
 inline void RegionParticleIterator :: operator ++() {
 	do{
 		ParticleIterator :: operator++();
-	} while (*this != ParticleIterator :: invalid() && !(this->operator*()).inBox(_startRegion, _endRegion));
+	} while (hasNext() and !(this->operator*()).inBox(_startRegion, _endRegion));
 }
 
 inline void RegionParticleIterator :: next_non_empty_cell() {
 	//cellIndex should always be the index in the cell array (_cells member variable in LinkedCells)
-	mardyn_assert(*this != ParticleIterator :: invalid());
 	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
 	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0];
 
 	// find the next non-empty cell
-	bool validCellFound = false;
 	for (_localCellIndex += _stride; _localCellIndex < numCellsInRegion; _localCellIndex += _stride) {
 
 		const ParticleCellBase & c = cells.at(getGlobalCellIndex());
 
 		if (c.isNotEmpty() and (_type == ALL_CELLS or not c.isHaloCell())) {
-			validCellFound = true;
 			_cell_index = getGlobalCellIndex();
 			updateCellIteratorCell();
 			break;
 		}
 	}
-
-	if (not validCellFound) {
-		make_invalid();
-	}
-}
-
-inline void RegionParticleIterator :: make_invalid() {
-	ParticleIterator::make_invalid();
-	_localCellIndex = 0;
-}
-
-inline RegionParticleIterator RegionParticleIterator :: invalid () {
-	return RegionParticleIterator();
 }
 
 inline ParticleIterator::CellIndex_T RegionParticleIterator :: getGlobalCellIndex() {

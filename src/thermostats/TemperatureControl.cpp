@@ -494,9 +494,9 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 		// init temperature control
 		this->Init(simstep);
 
-		for( tM  = particleContainer->iteratorBegin();
-			 tM != particleContainer->iteratorEnd();
-			 ++tM)
+		for( tM  = particleContainer->iterator();
+			 tM.hasNext();
+			 tM.next())
 		{
 			// measure kinetic energy
 			this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
@@ -510,9 +510,9 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 		// write beta_trans, beta_rot log-files
 		this->WriteBetaLogfiles(simstep);
 
-		for( tM  = particleContainer->iteratorBegin();
-			 tM != particleContainer->iteratorEnd();
-			 ++tM)
+		for( tM  = particleContainer->iterator();
+			 tM.hasNext();
+			 tM.next())
 		{
 			// control temperature
 			this->ControlTemperature(&(*tM), simstep);

@@ -206,7 +206,7 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 
 void Planar::calculateLongRange(){
 	if (_smooth){
-		for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
+		for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 			unsigned cid=tempMol->componentid();
 			for (unsigned i=0; i<numLJ[cid]; i++){
 				int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
@@ -243,7 +243,7 @@ void Planar::calculateLongRange(){
 		}
 		// Calculation of the density profile for s slabs
 		if (!_smooth){
-			for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
+			for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 				unsigned cid=tempMol->componentid();
 				for (unsigned i=0; i<numLJ[cid]; i++){
 					int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
@@ -359,7 +359,7 @@ void Planar::calculateLongRange(){
 	double Via[3]={0};
 	double Upot_c=0;
 	double Virial_c=0;	// Correction used for the Pressure Calculation
-	for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
+	for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 	        unsigned cid=tempMol->componentid();
 		for (unsigned i=0; i<numLJ[cid]; i++){
 			int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;

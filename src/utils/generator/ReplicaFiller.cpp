@@ -56,11 +56,8 @@ public:
 	void traverseNonInnermostCells(CellProcessor& cellProcessor) {}
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {}
 
-	ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) { return ParticleIterator(); }
-	RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) { return RegionParticleIterator(); }
-
-	ParticleIterator iteratorEnd () { return ParticleIterator(); }
-	RegionParticleIterator iterateRegionEnd () { return RegionParticleIterator(); }
+	ParticleIterator iterator (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) { return ParticleIterator(); }
+	RegionParticleIterator regionIterator (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) { return RegionParticleIterator(); }
 
 	double getBoundingBoxMax(int dimension) const;
 

@@ -177,14 +177,13 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
 	#pragma omp parallel shared(regionLowCorner, regionHighCorner)
 	#endif
 	{
-		RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
-		RegionParticleIterator end = partContainer->iterateRegionEnd();
+		RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
 		double f[3];
 		for(unsigned d=0; d<3; d++)
 			f[d] = 0.;
 
-		for(RegionParticleIterator mi = begin; mi != end; ++mi)
+		for(RegionParticleIterator mi = begin; mi.hasNext(); mi.next())
 		{
 			unsigned int cid = mi->componentid();
 			if(false == _bConsiderComponent.at(cid) )
@@ -238,10 +237,9 @@ void Wall::calcTSLJ_10_4( ParticleContainer* partContainer, Domain* domain) {
 			#pragma omp parallel shared(regionLowCorner, regionHighCorner)
 			#endif
 			{
-				RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
-				RegionParticleIterator end = partContainer->iterateRegionEnd();
+				RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
-				for(RegionParticleIterator i = begin; i != end; ++i){
+				for(RegionParticleIterator i = begin; i.hasNext(); i.next()){
 					//! so far for 1CLJ only, several 1CLJ-components possible
 					double y, y2, y4, y5, y10, y11;
 					unsigned cid = (*i).componentid();

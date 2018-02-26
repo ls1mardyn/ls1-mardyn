@@ -204,10 +204,9 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 void LinkedCells::check_molecules_in_box(){
 	{
-		const ParticleIterator begin = this->iteratorBegin();
-		const ParticleIterator end = this->iteratorEnd();
+		const ParticleIterator begin = this->iterator();
 
-		for (ParticleIterator tM = begin; tM != end; ++tM) {
+		for (ParticleIterator tM = begin; tM.hasNext(); tM.next()) {
 			if (not tM->inBox(_haloBoundingBoxMin,_haloBoundingBoxMax)){
 				global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
 						<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
@@ -251,7 +250,7 @@ void LinkedCells::update() {
 
 
 #ifndef NDEBUG
-	for (ParticleIterator tM = iteratorBegin(); tM != iteratorEnd(); ++tM) {
+	for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
 		if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 			global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
 					<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
@@ -558,7 +557,7 @@ void LinkedCells::clear() {
 void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) {
 	// This should be unimportant
 
-	for (auto it = iteratorBegin(); it != iteratorEnd(); ++it) {
+	for (auto it = iterator(); it.hasNext(); it.next()) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
 			it.deleteCurrentParticle();
@@ -659,7 +658,7 @@ bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[
 	return true;
 }
 
-RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
+RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
 	// parameter "type" not yet used
 	// add functionality in a future version...
 	unsigned int startRegionCellIndex;
@@ -668,10 +667,6 @@ RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[
 	getCellIndicesOfRegion(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
 
 	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex, type);
-}
-
-RegionParticleIterator LinkedCells::iterateRegionEnd() {
-	return RegionParticleIterator::invalid();
 }
 
 //################################################
@@ -976,10 +971,9 @@ unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double si
 			ParticleCell & cell = _cells[cellIndex];
 			const int numMolecules = cell.getMoleculeCount();
 
-			SingleCellIterator begin = cell.iteratorBegin();
-			SingleCellIterator end = cell.iteratorEnd();
+			SingleCellIterator begin = cell.iterator();
 
-			for (SingleCellIterator it = begin; it != end; ++it) {
+			for (SingleCellIterator it = begin; it.hasNext(); it.next()) {
 				it->setid(threadIDsAssignedByThisThread);
 				++threadIDsAssignedByThisThread;
 			}
@@ -1158,10 +1152,9 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 
 	// iterate through cell and compare position of molecules with given position
 	
-	SingleCellIterator begin1 = cell.iteratorBegin();
-	SingleCellIterator end1 = cell.iteratorEnd();
+	SingleCellIterator begin1 = cell.iterator();
 	
-	for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+	for (SingleCellIterator it1 = begin1; it1.hasNext(); it1.next()) {
 		auto& mol = *it1;
 
 		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {

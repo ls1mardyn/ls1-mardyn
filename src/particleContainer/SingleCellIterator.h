@@ -19,15 +19,12 @@ public:
 	SingleCellIterator& operator=(const SingleCellIterator& other);
 	~SingleCellIterator(){}
 
-	void operator ++();
-
-	bool operator == (const SingleCellIterator& other) const;
-	bool operator != (const SingleCellIterator& other) const;
+	void next() {
+		operator++();
+	}
 
 	Molecule& operator *  () const;
 	Molecule* operator -> () const;
-
-	static SingleCellIterator invalid();
 
 	void deleteCurrentParticle();
 
@@ -37,9 +34,14 @@ public:
 
 	ParticleCellBase * getCell() const { return _cell; }
 
-	void make_invalid ();
+	bool hasNext() const {
+		return isValid();
+	}
+
 
 private:
+	void operator ++();
+	bool isValid() const;
 
 	ParticleCellBase * _cell;
 	size_t _mol_index;
@@ -54,7 +56,6 @@ private:
 };
 
 inline SingleCellIterator::SingleCellIterator() : _cell(nullptr), _mol_index(0), _currentParticleDeleted(false) {
-	make_invalid();
 }
 
 inline SingleCellIterator& SingleCellIterator::operator=(const SingleCellIterator& other) {
@@ -65,28 +66,9 @@ inline SingleCellIterator& SingleCellIterator::operator=(const SingleCellIterato
 	return *this;
 }
 
-inline bool SingleCellIterator :: operator == (const SingleCellIterator& other) const {
-	// _currentParticleDeleted not be needed?
-	return (_cell == other._cell) and (_mol_index == other._mol_index);
-}
-
-inline bool SingleCellIterator :: operator != (const SingleCellIterator& other) const {
-	return not (*this == other);
-}
-
 // no clue why this returns a pointer
 inline Molecule* SingleCellIterator:: operator -> () const {
 	return &(this->operator*());
-}
-
-inline SingleCellIterator SingleCellIterator :: invalid () {
-	return SingleCellIterator();
-}
-
-inline void SingleCellIterator :: make_invalid () {
-	_cell = nullptr;
-	_mol_index = 0;
-	_currentParticleDeleted = false;
 }
 
 #endif /* SRC_PARTICLECONTAINER_SINGLECELLITERATOR_H_ */

@@ -29,10 +29,9 @@ void Mirror::VelocityChange( ParticleContainer* partContainer, Domain* /*domain*
 			#pragma omp parallel shared(regionLowCorner, regionHighCorner)
 			#endif
 			{
-				RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
-				RegionParticleIterator end = partContainer->iterateRegionEnd();
+				RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
-				for(RegionParticleIterator i = begin; i != end; ++i){
+				for(RegionParticleIterator i = begin; i.hasNext(); i.next()){
 					double additionalForce[3];
 					additionalForce[0] = 0;
 					additionalForce[2] = 0;

@@ -69,7 +69,7 @@ bool MPIKDNodePacked::getCoversWholeDomain(int elementIndex) const {
 void MPIKDNodePacked::setCoversWholeDomain(int elementIndex, const bool& coversWholeDomain) {
   assertion(elementIndex>=0);
   assertion(elementIndex<3);
-  assertion(!coversWholeDomain || coversWholeDomain==1);
+  //assertion(!coversWholeDomain || coversWholeDomain==1);
   int shift        = 0 + elementIndex; 
   int mask         = 1     << (shift);
   int shiftedValue = coversWholeDomain << (shift);

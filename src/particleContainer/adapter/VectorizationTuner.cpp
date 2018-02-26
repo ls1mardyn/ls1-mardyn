@@ -746,10 +746,9 @@ void VectorizationTuner::initNormalRandomMolecules(double /*boxMin*/[3], double 
 }
 
 void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
-	SingleCellIterator begin = cell.iteratorBegin();
-	SingleCellIterator end = cell.iteratorEnd();
+	SingleCellIterator begin = cell.iterator();
 
-	for(SingleCellIterator it = begin; it != end; ++it ) {
+	for(SingleCellIterator it = begin; it.hasNext(); it.next() ) {
 		Molecule& mol = *it;
 		mol.move(0, direction[0]);
 		mol.move(1, direction[1]);

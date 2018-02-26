@@ -89,38 +89,38 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	// some empty cells
 
 	// BEGIN:
-	molIt = LC.iteratorBegin();
+	molIt = LC.iterator();
 	ASSERT_TRUE_MSG("begin()", molIt->id() == 1ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
+	ASSERT_TRUE_MSG("end()", molIt.hasNext());
 
 	// NEXT:
-	++molIt;
+	molIt.next();
 	ASSERT_TRUE_MSG("next() within cell", molIt->id() == 2ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
-	++molIt;
+	ASSERT_TRUE_MSG("end()", molIt.hasNext());
+	molIt.next();
 	ASSERT_TRUE_MSG("next() within cell", molIt->id() == 3ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
-	++molIt;
+	ASSERT_TRUE_MSG("end()", molIt.hasNext());
+	molIt.next();
 	ASSERT_TRUE_MSG("next() across cells", molIt->id() == 4ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
-	++molIt;
-	ASSERT_TRUE_MSG("next() arrive at end()", molIt == LC.iteratorEnd());
+	ASSERT_TRUE_MSG("end()", molIt.hasNext());
+	molIt.next();
+	ASSERT_TRUE_MSG("next() arrive at end()", not molIt.hasNext());
 
 	// DELETECURRENT:
-	molIt = LC.iteratorBegin();
+	molIt = LC.iterator();
 
 	molIt.deleteCurrentParticle();
-	++molIt;
+	molIt.next();
 	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->id()); // 3 copied in place of 1
 	molIt.deleteCurrentParticle();
-	++molIt;
+	molIt.next();
 	ASSERT_TRUE_MSG("delete() within cell", molIt->id() == 2ul); // 2 copied in place of 3
 	molIt.deleteCurrentParticle();
-	++molIt;
+	molIt.next();
 	ASSERT_TRUE_MSG("delete() across cells", molIt->id() == 4ul); // cell 1 became empty, we advanced to cell 3
 	molIt.deleteCurrentParticle();
-	++molIt;
-	ASSERT_TRUE_MSG("delete() last", molIt == LC.iteratorEnd()); // cell 4 became empty, we arrived at end()
+	molIt.next();
+	ASSERT_TRUE_MSG("delete() last", not molIt.hasNext()); // cell 4 became empty, we arrived at end()
 }
 
 #if 0
@@ -552,9 +552,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	{
 		container->traverseCells(*cellProc);
 		// calculate forces
-		const ParticleIterator begin = container->iteratorBegin();
-		const ParticleIterator end = container->iteratorEnd();
-		for (auto i = begin; i != end; ++i) {
+		const ParticleIterator begin = container->iterator();
+		for (auto i = begin; i.hasNext(); i.next()) {
 			i->calcFM();
 		}
 	}
@@ -564,9 +563,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	{
 		containerTest->traverseCells(*cellProc2);
 		// calculate forces
-		const ParticleIterator& begin = containerTest->iteratorBegin();
-		const ParticleIterator& end = containerTest->iteratorEnd();
-		for (ParticleIterator i = begin; i != end; ++i) {
+		const ParticleIterator& begin = containerTest->iterator();
+		for (ParticleIterator i = begin; i.hasNext(); i.next()) {
 			i->calcFM();
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
@@ -574,8 +572,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 			domainDecompositionTest->exchangeForces(containerTest, _domain);
 		}
 //		const ParticleIterator& begin2 = containerTest->iteratorBegin();
-//		const ParticleIterator& end2 = containerTest->iteratorEnd();
-//		for (ParticleIterator i = begin2; i != end2; ++i) {
+//		for (ParticleIterator i = begin2; i.isValid(); i.next()) {
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
 //					<< ", " << i->F(2) << std::endl;
 //		}
@@ -586,12 +583,10 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 
 	// Compare calculated forces
 	{
-		const ParticleIterator begin = container->iteratorBegin();
-		const ParticleIterator end = container->iteratorEnd();
-		const ParticleIterator beginHS = containerTest->iteratorBegin();
-		const ParticleIterator endHS = containerTest->iteratorEnd();
+		const ParticleIterator begin = container->iterator();
+		const ParticleIterator beginHS = containerTest->iterator();
 		auto j = beginHS;
-		for (auto i = begin; i != end; ++i, ++j) {
+		for (auto i = begin; i.hasNext(); i.next(), j.next()) {
 			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
 #ifdef MARDYN_SPSP
 			double delta=1e-6;

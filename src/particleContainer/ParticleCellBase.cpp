@@ -35,10 +35,9 @@ bool ParticleCellBase::findMoleculeByID(size_t& index, unsigned long molid) cons
 	// TODO: we'd need separate classes for const and non-const iterators...
 	ParticleCellBase * nonconst_this = const_cast<ParticleCellBase *>(this);
 
-	SingleCellIterator begin = nonconst_this->iteratorBegin();
-	SingleCellIterator end = nonconst_this->iteratorEnd();
+	SingleCellIterator begin = nonconst_this->iterator();
 
-	for(SingleCellIterator it = begin; it != end; ++it) {
+	for(SingleCellIterator it = begin; it.hasNext(); it.next()) {
 		if (it->id() == molid) {
 			index = it.getIndex();
 			return true;
@@ -190,10 +189,7 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 	return numInserted;
 }
 
-SingleCellIterator ParticleCellBase::iteratorBegin() {
+SingleCellIterator ParticleCellBase::iterator() {
 	return SingleCellIterator(this);
 }
 
-SingleCellIterator ParticleCellBase::iteratorEnd() {
-	return SingleCellIterator::invalid();
-}
