@@ -22,8 +22,9 @@
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
 	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
 	_neighbours.resize(this->getCommDims());
-	_haloOrForceNeighbours.resize(this->getCommDims());
-	_leavingNeighbours.resize(this->getCommDims());
+	_haloImportForceExportNeighbours.resize(this->getCommDims());
+	_leavingExportLeavingImportNeighbours.resize(this->getCommDims());
+	_haloExportForceImportNeighbours.resize(this->getCommDims());
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
@@ -301,34 +302,21 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
 		{
 			// cause of out of range thingy later on ?
 			global_log->info() << "selecting Neighbours LEAVING_AND_HALO_COPIES on: " << my_rank << endl;
-			/*
-			std::vector<std::vector <CommunicationPartner>> combined;
-			combined = _leavingNeighbours; // this assignment creates a new vector
-			for(int i = 0; i < combined.size(); i++)
-				combined[i].insert(combined[i].end(), _haloOrForceNeighbours[i].begin(), _haloOrForceNeighbours[i].end());
-			
-			for(int i = 0; i < combined.size(); i++) 
-				combined[i] = squeezePartners(combined[i]);
-			
-			_neighbours = combined;
-			*/
-			
-			// this should be the equivalent to leaving, right?
-			_neighbours = _leavingNeighbours;
+			_neighbours = _leavingExportLeavingImportNeighbours;
 			
 			break;
 		}
 		case LEAVING_ONLY:
 			global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
-			_neighbours = _leavingNeighbours;
+			_neighbours = _leavingExportLeavingImportNeighbours;
 			break;
-		case HALO_COPIES:
+		case HALO_COPIES: // Welche Neighbours?
 			global_log->info() << "selecting Neighbours HALO_COPIES" << endl;
-			_neighbours = _haloOrForceNeighbours;
+			_neighbours = _haloImportForceExportNeighbours;
 			break;
-		case FORCES:
+		case FORCES: // Welche Neighbours?
 			global_log->info() << "selecting Neighbours FORCES" << endl;
-			_neighbours = _haloOrForceNeighbours;
+			_neighbours = _haloImportForceExportNeighbours;
 			break;
 	}
 	
@@ -387,7 +375,7 @@ bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegi
  * Send your Information to the processes who want you.
  * 
  */
-void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners) {
+void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners01, std::vector<CommunicationPartner>& partners02) {
 	int my_rank; // my rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	int num_incoming; // the number of processes in MPI_COMM_WORLD
@@ -448,6 +436,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	std::vector<int> rec_information(num_incoming, 0); // how many bytes does each process expect?
 	int bytesOneRegion = sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
 	std::vector<std::vector <unsigned char*>> sendingList (num_incoming); // the regions I own and want to send
+	std::vector<CommunicationPartner> comm_partners02;
 	
 	i = 0;
 	while(i != num_bytes_receive) {
@@ -502,12 +491,28 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				p += sizeof(double);
 				memcpy(singleRegion + p, shift.data(), sizeof(double) * 3);
 				p += sizeof(double) * 3;
+				
+				
+				// make a note in partners02 - don't forget to squeeze partners02
+				bool enlarged[3][2] = {{ false }};
+				
+				CommunicationPartner myNewNeighbour(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(), region.offset, enlarged);
+				comm_partners02.push_back(myNewNeighbour);
+				
 			
-				sendingList[rank].push_back(singleRegion); // second push_back fails
+				sendingList[rank].push_back(singleRegion); 
 			}
 		}
 	}
 	
+	
+	// squeeze here
+	if(comm_partners02.size() > 0) {
+		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners02);
+		partners02.insert(partners02.end(), squeezed.begin(), squeezed.end());
+	}
+	// assign here
+	cout << "HERE" << endl;
 	
 	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
 	for(int j = 0; j < num_incoming; j++) {
@@ -580,7 +585,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	cout << "sent the neighbours on rank: " << my_rank << endl;
 	
-	std::vector<CommunicationPartner> comm_partners; // the communication partners
+	std::vector<CommunicationPartner> comm_partners01; // the communication partners
 	
 	// receive data (blocking)
 	int byte_counter = 0;
@@ -622,7 +627,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			
 			// CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
 			CommunicationPartner myNewNeighbour(source, region.rmin, region.rmax, region.rmin, region.rmax, shift, region.offset, enlarged); // DO NOT KNOW ABOUT THE 0s
-			comm_partners.push_back(myNewNeighbour);
+			comm_partners01.push_back(myNewNeighbour);
 			
 		}
 	}
@@ -641,10 +646,11 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		delete[] two;
 	}
 	
-	cout << "number neighbours: " << comm_partners.size() << " on: " << my_rank << endl;
-	if(comm_partners.size() > 0) {
-		partners = squeezePartners(comm_partners);// THIS ASSIGNMENT CAUSES A SEG-FAULT
-		cout << "FINAL NUMBER OF NEIGHBOURS: " << partners.size() << " on: " << my_rank << endl;
+	cout << "number neighbousqueezePartrs: " << comm_partners01.size() << " on: " << my_rank << endl;
+	if(comm_partners01.size() > 0) {
+		std:vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
+		partners01.insert(partners01.end(), squeezed.begin(), squeezed.end());
+		cout << "FINAL NUMBER OF NEIGHBOURS: " << partners01.size() << " on: " << my_rank << endl;
 	}
 	cout << "exit aquire on rank: " << my_rank << endl;
 
@@ -683,8 +689,9 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	std::vector<HaloRegion> haloOrForceRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<HaloRegion> leavingRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	
-	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, _haloOrForceNeighbours[0]);
-	aquireNeighbours(domain, &ownRegion, leavingRegions, _leavingNeighbours[0]);
+	// assuming p1 sends regions to p2
+	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, _haloImportForceExportNeighbours[0], _haloExportForceImportNeighbours[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
+	aquireNeighbours(domain, &ownRegion, leavingRegions, _leavingExportLeavingImportNeighbours[0], _leavingExportLeavingImportNeighbours[0]); // p1 notes reply, p2 notes owned as leaving import
 	
 #else
 	

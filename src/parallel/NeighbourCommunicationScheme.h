@@ -89,8 +89,9 @@ protected:
 	std::vector<std::vector<CommunicationPartner>> _neighbours;
 	
 	// -------------------------------------------------------------------------
-	std::vector<std::vector<CommunicationPartner>> _haloOrForceNeighbours;
-	std::vector<std::vector<CommunicationPartner>> _leavingNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _haloImportForceExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _leavingExportLeavingImportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _haloExportForceImportNeighbours;
 	
 	void selectNeighbours(MessageType msgType);
 	// -------------------------------------------------------------------------
@@ -150,7 +151,7 @@ private:
 	void doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions, MessageType msgType,
 			DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer);
 	
-	void aquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners);
+	void aquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners01, std::vector<CommunicationPartner>& partners02);
 	void shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray);
 	void overlap(HaloRegion *myRegion, HaloRegion *inQuestion);
 	bool iOwnThis(HaloRegion *myRegion, HaloRegion *inQuestion);
