@@ -485,35 +485,36 @@ void FullMolecule::clearFM() {
 	}
 }
 
+void FullMolecule::calcFM_site(const std::array<double, 3>& dsite, const std::array<double, 3>& Fsite) {
+#ifndef NDEBUG
+	using std::isnan; // C++11 needed
+
+	/*
+	 * catches NaN assignments
+	 */
+	for (int d = 0; d < 3; d++) {
+		if (isnan(dsite[d])) {
+			global_log->error() << "Severe dsite[" << d << "] error for site of m" << _id << endl;
+			mardyn_assert(false);
+		}
+		if (isnan(Fsite[d])) {
+			global_log->error() << "Severe Fsite[" << d << "] error for site of m" << _id << endl;
+			mardyn_assert(false);
+		}
+	}
+#endif
+
+	Fadd(Fsite.data());
+	_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
+	_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
+	_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
+}
+
 void FullMolecule::calcFM() {
 	using std::isnan; // C++11 needed
 
 	//_M[0] = _M[1] = _M[2] = 0.;
-	unsigned int ns = numSites();
-	for (unsigned int si = 0; si < ns; ++si) {
-		const std::array<double,3> Fsite = site_F(si);
-		const std::array<double,3> dsite = site_d(si);
-#ifndef NDEBUG
-		/*
-		 * catches NaN assignments
-		 */
-		for (int d = 0; d < 3; d++) {
-			if (isnan(dsite[d])) {
-				global_log->error() << "Severe dsite[" << d << "] error for site " << si << " of m" << _id << endl;
-				mardyn_assert(false);
-			}
-			if (isnan(Fsite[d])) {
-				global_log->error() << "Severe Fsite[" << d << "] error for site " << si << " of m" << _id << endl;
-				mardyn_assert(false);
-			}
-		}
-#endif
-
-		Fadd(Fsite.data());
-		_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
-		_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
-		_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
-	}
+	unsigned int ns;
 
 	// accumulate virial, dipoles_M and quadrupoles_M:
 	double temp_M[3] = { 0., 0., 0. };
@@ -523,6 +524,10 @@ void FullMolecule::calcFM() {
 
 	ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = ljcenter_F(i);
+		const std::array<double,3> dsite = ljcenter_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_lj;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::LJC, index_in_soa);
 
@@ -532,6 +537,10 @@ void FullMolecule::calcFM() {
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = charge_F(i);
+		const std::array<double,3> dsite = charge_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_c;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
 
@@ -541,6 +550,10 @@ void FullMolecule::calcFM() {
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = dipole_F(i);
+		const std::array<double,3> dsite = dipole_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_d;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
 
@@ -553,6 +566,10 @@ void FullMolecule::calcFM() {
 	}
 	ns = numQuadrupoles();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = quadrupole_F(i);
+		const std::array<double,3> dsite = quadrupole_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_q;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 
