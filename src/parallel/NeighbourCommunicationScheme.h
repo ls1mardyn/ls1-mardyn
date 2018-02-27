@@ -89,9 +89,12 @@ protected:
 	std::vector<std::vector<CommunicationPartner>> _neighbours;
 	
 	// -------------------------------------------------------------------------
-	std::vector<std::vector<CommunicationPartner>> _haloImportForceExportNeighbours;
-	std::vector<std::vector<CommunicationPartner>> _leavingExportLeavingImportNeighbours;
 	std::vector<std::vector<CommunicationPartner>> _haloExportForceImportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _haloImportForceExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _leavingExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _leavingImportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _leavingExportHaloExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> _leavingImportHaloImportNeighbours;
 	
 	void selectNeighbours(MessageType msgType, bool import);
 	// -------------------------------------------------------------------------

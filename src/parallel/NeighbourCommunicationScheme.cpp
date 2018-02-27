@@ -22,9 +22,14 @@
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
 	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
 	_neighbours.resize(this->getCommDims());
-	_haloImportForceExportNeighbours.resize(this->getCommDims());
-	_leavingExportLeavingImportNeighbours.resize(this->getCommDims());
+	
 	_haloExportForceImportNeighbours.resize(this->getCommDims());
+	_haloImportForceExportNeighbours.resize(this->getCommDims());
+	_leavingExportNeighbours.resize(this->getCommDims());
+	_leavingImportNeighbours.resize(this->getCommDims());
+	_leavingExportHaloExportNeighbours.resize(this->getCommDims());
+	_leavingImportHaloImportNeighbours.resize(this->getCommDims());
+	
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
@@ -227,7 +232,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-				allDone &= _neighbours[0][i].testSend();
+				allDone &= _neighbours[0][i].testSend(); // THIS CAUSES A SEG-FAULT
 			}
 		}
 		
@@ -344,20 +349,26 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 	switch(msgType) {
 		case LEAVING_AND_HALO_COPIES:
 		{
+			// leavingExport + HaloExport / leavingImport + haloImport
 			global_log->info() << "selecting Neighbours LEAVING_AND_HALO_COPIES on: " << my_rank << endl;
-			_neighbours = _leavingExportLeavingImportNeighbours;
+			if(import) _neighbours = _leavingImportHaloImportNeighbours;
+			else _neighbours = _leavingExportHaloExportNeighbours;
 			break;
 		}
 		case LEAVING_ONLY:
+			// leavingImport / leavingExport
 			global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
-			_neighbours = _leavingExportLeavingImportNeighbours;
+			if(import) _neighbours = _leavingImportNeighbours;
+			else _neighbours = _leavingExportNeighbours;
 			break;
 		case HALO_COPIES: 
+			// haloImport / haloExport
 			global_log->info() << "selecting Neighbours HALO_COPIES" << endl;
 			if(import) _neighbours = _haloImportForceExportNeighbours;
 			else _neighbours = _haloExportForceImportNeighbours;
 			break;
 		case FORCES: 
+			// forceImport / forceExport
 			global_log->info() << "selecting Neighbours FORCES" << endl;
 			if(import) _neighbours = _haloExportForceImportNeighbours;
 			else _neighbours = _haloImportForceExportNeighbours;
@@ -515,7 +526,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			std::vector<double> shift(3, 0); 
 			shiftIfNeccessary(domain, &region, shift.data()); 
 			
-			if(iOwnThis(myRegion, &region)) { 
+			if(rank != my_rank && iOwnThis(myRegion, &region)) { 
 				candidates[rank]++; // this is a region I will send to rank
 				
 				// cout << "candidates[rank]: " << candidates[rank] << " on: " << my_rank << endl; // 26 on both
@@ -735,8 +746,16 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	
 	// assuming p1 sends regions to p2
 	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, _haloImportForceExportNeighbours[0], _haloExportForceImportNeighbours[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
-	aquireNeighbours(domain, &ownRegion, leavingRegions, _leavingExportLeavingImportNeighbours[0], _leavingExportLeavingImportNeighbours[0]); // p1 notes reply, p2 notes owned as leaving import
+	aquireNeighbours(domain, &ownRegion, leavingRegions, _leavingExportNeighbours[0], _leavingImportNeighbours[0]); // p1 notes reply, p2 notes owned as leaving import
 	
+	
+	_leavingExportHaloExportNeighbours.insert(_leavingExportHaloExportNeighbours.end(), _leavingExportNeighbours.begin(), _leavingExportNeighbours.end());
+	_leavingExportHaloExportNeighbours.insert(_leavingExportHaloExportNeighbours.end(), _haloExportForceImportNeighbours.begin(), _haloExportForceImportNeighbours.end());
+	_leavingExportHaloExportNeighbours[0] = squeezePartners(_leavingExportHaloExportNeighbours[0]);
+	
+	_leavingImportHaloImportNeighbours.insert(_leavingImportHaloImportNeighbours.end(), _leavingImportNeighbours.begin(), _leavingImportNeighbours.end());
+	_leavingImportHaloImportNeighbours.insert(_leavingImportHaloImportNeighbours.end(), _haloImportForceExportNeighbours.begin(), _haloImportForceExportNeighbours.end());
+	_leavingImportHaloImportNeighbours[0] = squeezePartners(_leavingImportHaloImportNeighbours[0]);
 #else
 	
 	std::vector<HaloRegion> haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
