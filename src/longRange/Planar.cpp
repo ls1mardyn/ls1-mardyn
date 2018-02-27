@@ -194,10 +194,9 @@ void Planar::calculateLongRange(){
 		#endif
 		for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 			unsigned cid=tempMol->componentid();
-			const double Ypos = tempMol->r(1);
 
 			for (unsigned i=0; i<numLJ[cid]; i++){
-				int loc=(Ypos+tempMol->ljcenter_d(i)[1]) * delta_inv;
+				int loc=(tempMol->ljcenter_d_abs(i)[1]) * delta_inv;
 				if (loc < 0){
 					loc=loc+_slabs;
 				}
@@ -212,7 +211,7 @@ void Planar::calculateLongRange(){
 				rho_g[index] += slabsPerV;
 			}
 			if (numDipole[cid] != 0){
-				int loc=Ypos * delta_inv;
+				int loc=tempMol->r(1) * delta_inv;
 
 				const int index = loc + _slabs * (numDipoleSum2[cid]);
 
@@ -247,10 +246,9 @@ void Planar::calculateLongRange(){
 			#endif
 			for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 				unsigned cid=tempMol->componentid();
-				const double Ypos = tempMol->r(1);
 
 				for (unsigned i=0; i<numLJ[cid]; i++){
-					int loc=(Ypos+tempMol->ljcenter_d(i)[1]) * delta_inv;
+					int loc=(tempMol->ljcenter_d_abs(i)[1]) * delta_inv;
 					if (loc < 0){
 						loc=loc+_slabs;
 					}
@@ -265,7 +263,7 @@ void Planar::calculateLongRange(){
 					rho_l[index] += slabsPerV;
 				}
 				if (numDipole[cid] != 0){
-					int loc=Ypos * delta_inv;
+					int loc=tempMol->r(1) * delta_inv;
 					const int index = loc+_slabs*numDipoleSum2[cid];
 
 					#if defined(_OPENMP)
@@ -380,10 +378,9 @@ void Planar::calculateLongRange(){
 	for (ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()) {
 
 		unsigned cid = tempMol->componentid();
-		const double Ypos = tempMol->r(1);
 
 		for (unsigned i=0; i<numLJ[cid]; i++){
-			int loc=(Ypos+tempMol->ljcenter_d(i)[1]) * delta_inv;
+			int loc=(tempMol->ljcenter_d_abs(i)[1]) * delta_inv;
 			if (loc < 0){
 				loc=loc+_slabs;
 			}
@@ -405,7 +402,7 @@ void Planar::calculateLongRange(){
 //			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 		}
 		if (numDipole[cid] != 0){
-			int loc = Ypos * delta_inv;
+			int loc = tempMol->r(1) * delta_inv;
 			double Fa[3] = { 0.0, 0.0, 0.0 };
 			const int index = loc + _slabs * numDipoleSum2[cid];
 			Fa[1] = fDipole[index];
