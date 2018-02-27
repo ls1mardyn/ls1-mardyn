@@ -93,7 +93,7 @@ protected:
 	std::vector<std::vector<CommunicationPartner>> _leavingExportLeavingImportNeighbours;
 	std::vector<std::vector<CommunicationPartner>> _haloExportForceImportNeighbours;
 	
-	void selectNeighbours(MessageType msgType);
+	void selectNeighbours(MessageType msgType, bool import);
 	// -------------------------------------------------------------------------
 
 	//! flag, which tells whether a processor covers the whole domain along a dimension

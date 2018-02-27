@@ -54,11 +54,11 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 }
 
 void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions,
-		MessageType msgType, DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer) {
+		MessageType msgType, DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer) { // Only Export?
 	
 #if PUSH_PULL_PARTNERS
 	global_log->info() << "select call - initExchangeMoleculesMPI" << endl;
-	selectNeighbours(msgType);
+	selectNeighbours(msgType, false /* export */);
 #endif
 	
 	for (const HaloRegion& haloRegion : haloRegions) {
@@ -118,7 +118,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	
 #if PUSH_PULL_PARTNERS
 	global_log->info() << "select call - initExchangeMoleculesMPI" << endl;
-	selectNeighbours(msgType);
+	selectNeighbours(msgType, false /* export */);
 #endif
 	
 	
@@ -172,29 +172,47 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
 
-	
-#if PUSH_PULL_PARTNERS
-	global_log->info() << "select call - finalizeExchangeMoleculesMPI" << endl;
-	selectNeighbours(msgType);
-#endif
-	
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	
 	cout << "enter finalizeExchangeMoleculesMPI on: " << my_rank << endl;
 	
-	const int numNeighbours = _neighbours[0].size();
-	cout << "numNeighbours: " << numNeighbours << "on: " << my_rank << endl;
+	// msg type is fixed by the fuction call, but this needs to be done for both import and export
+	int numNeighbours;
+	
+#if PUSH_PULL_PARTNERS
+	selectNeighbours(msgType, false /* export */);
+	const int numExportNeighbours = _neighbours[0].size();
+	selectNeighbours(msgType, true /* import */); // current _neighbours is import
+	const int numImportNeighbours = _neighbours[0].size(); 
+#else
+	numNeighbours = _neighbours[0].size();
+#endif
+	
 	
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
 	// messages with waiting for other messages to arrive
 	bool allDone = false;
 	double startTime = MPI_Wtime();
+	
+#if PUSH_PULL_PARTNERS
+	numNeighbours = numImportNeighbours;
+#endif
 
 	// for 1-stage: if there is at least one neighbour with the same rank as the sending rank, make sure to remove received duplicates!
 	for (int i = 0; i < numNeighbours; i++) {
 		removeRecvDuplicates |= (domainDecomp->getRank() == _neighbours[0][i].getRank());
 	}
+	
+#if PUSH_PULL_PARTNERS
+	selectNeighbours(msgType, false /* export */); // last selected is export
+	numNeighbours = numExportNeighbours;
+	
+	for (int i = 0; i < numNeighbours; i++) {
+		removeRecvDuplicates |= (domainDecomp->getRank() == _neighbours[0][i].getRank());
+	}
+#endif
+	
 	
 	cout << "finished removeRecvDuplicates loop on: " << my_rank << endl;
 
@@ -207,16 +225,21 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// cout << "while loop top on: " << my_rank << endl;
 
 		// "kickstart" processing of all Isend requests
-		for (int i = 0; i < numNeighbours; ++i) {
+		for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
 				allDone &= _neighbours[0][i].testSend();
 			}
 		}
 		
 		//cout << "for 1 on: " << my_rank << endl;
+		
+#if PUSH_PULL_PARTNERS
+		selectNeighbours(msgType, true /* import */);
+		numNeighbours = numImportNeighbours;
+#endif
 
 		// get the counts and issue the Irecv-s
-		for (int i = 0; i < numNeighbours; ++i) {
+		for (int i = 0; i < numNeighbours; ++i) { // import required
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
 				allDone &= _neighbours[0][i].iprobeCount(domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType());
@@ -227,7 +250,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		//cout << "for 2 on: " << my_rank << endl;
 
 		// unpack molecules
-		for (int i = 0; i < numNeighbours; ++i) {
+		for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
 			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
 					allDone &= _neighbours[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
 			}
@@ -243,10 +266,20 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 5.0;
-			for (int i = 0; i < numNeighbours; ++i) {
+			for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
 				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
 					_neighbours[0][i].deadlockDiagnosticSendRecv();
 			}
+			
+#if PUSH_PULL_PARTNERS
+			selectNeighbours(msgType, false /* export */);
+			numNeighbours = numExportNeighbours;
+			
+			for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
+				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
+					_neighbours[0][i].deadlockDiagnosticSendRecv();
+			}
+#endif
 		}
 		
 		//cout << "for 4 on: " << my_rank << endl;
@@ -256,10 +289,21 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
-			for (int i = 0; i < numNeighbours; ++i) {
+			for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
 				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
 					_neighbours[0][i].deadlockDiagnosticSendRecv();
 			}
+			
+#if PUSH_PULL_PARTNERS
+			selectNeighbours(msgType, true /* import */);
+			numNeighbours = numImportNeighbours;
+			
+			for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
+				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
+					_neighbours[0][i].deadlockDiagnosticSendRecv();
+			}
+#endif
+			
 			Simulation::exit(457);
 		}
 		
@@ -293,30 +337,30 @@ std::vector<CommunicationPartner> squeezePartners(const std::vector<Communicatio
 
 #if PUSH_PULL_PARTNERS
 
-void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType) {
+void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool import) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	
 	switch(msgType) {
 		case LEAVING_AND_HALO_COPIES:
 		{
-			// cause of out of range thingy later on ?
 			global_log->info() << "selecting Neighbours LEAVING_AND_HALO_COPIES on: " << my_rank << endl;
 			_neighbours = _leavingExportLeavingImportNeighbours;
-			
 			break;
 		}
 		case LEAVING_ONLY:
 			global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
 			_neighbours = _leavingExportLeavingImportNeighbours;
 			break;
-		case HALO_COPIES: // Welche Neighbours?
+		case HALO_COPIES: 
 			global_log->info() << "selecting Neighbours HALO_COPIES" << endl;
-			_neighbours = _haloImportForceExportNeighbours;
+			if(import) _neighbours = _haloImportForceExportNeighbours;
+			else _neighbours = _haloExportForceImportNeighbours;
 			break;
-		case FORCES: // Welche Neighbours?
+		case FORCES: 
 			global_log->info() << "selecting Neighbours FORCES" << endl;
-			_neighbours = _haloImportForceExportNeighbours;
+			if(import) _neighbours = _haloExportForceImportNeighbours;
+			else _neighbours = _haloImportForceExportNeighbours;
 			break;
 	}
 	
@@ -712,10 +756,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
 	
-#if PUSH_PULL_PARTNERS
 	global_log->info() << "select call - initExchangeMoleculesMPI1D" << endl;
-	selectNeighbours(msgType);
-#endif
 	
 	if (_coversWholeDomain[d]) {
 		// use the sequential version
@@ -753,15 +794,13 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
 	
-#if PUSH_PULL_PARTNERS
 	global_log->info() << "select call - finalizeExchangeMoleculesMPI1D" << endl;
-	selectNeighbours(msgType);
-#endif
 	
 	if (_coversWholeDomain[d]) {
 		return;
 	}
 
+	
 	const int numNeighbours = _neighbours[d].size();
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
 	// messages with waiting for other messages to arrive
