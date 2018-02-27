@@ -243,15 +243,6 @@ public:
 		return _cells.size();
 	}
 
-	ParticleCellBase * getCell(unsigned cellIndex) {
-		return &(_cells.at(cellIndex));
-	}
-
-	const ParticleCellBase * getCell(unsigned cellIndex) const {
-		return &(_cells.at(cellIndex));
-	}
-
-
 	bool requiresForceExchange() const override; // new
 
 	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength); // new

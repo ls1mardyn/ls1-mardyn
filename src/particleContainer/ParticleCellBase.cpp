@@ -29,23 +29,6 @@ bool ParticleCellBase::deleteMoleculeByID(unsigned long molid) {
 	return found;
 }
 
-bool ParticleCellBase::findMoleculeByID(size_t& index, unsigned long molid) const {
-	int numMolecules = getMoleculeCount();
-
-	// TODO: we'd need separate classes for const and non-const iterators...
-	ParticleCellBase * nonconst_this = const_cast<ParticleCellBase *>(this);
-
-	SingleCellIterator begin = nonconst_this->iterator();
-
-	for(SingleCellIterator it = begin; it.hasNext(); it.next()) {
-		if (it->id() == molid) {
-			index = it.getIndex();
-			return true;
-		}
-	}
-	return false;
-}
-
 template <typename T>
 std::array<T, 3> getRandomVelocity(T temperature, Random& RNG) {
 	std::array<T,3> ret;
@@ -188,8 +171,3 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 
 	return numInserted;
 }
-
-SingleCellIterator ParticleCellBase::iterator() {
-	return SingleCellIterator(this);
-}
-

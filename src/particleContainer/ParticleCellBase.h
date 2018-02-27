@@ -9,7 +9,6 @@
 #define SRC_PARTICLECONTAINER_PARTICLECELLBASE_H_
 
 #include "Cell.h"
-#include "SingleCellIterator.h"
 #include "molecules/Molecule.h"
 #include "CellBorderAndFlagManager.h"
 
@@ -34,8 +33,6 @@ public:
 	 * \return true, if inserted
 	 */
 	virtual bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) = 0;
-
-	SingleCellIterator iterator();
 
 	/** @brief Check if current cell contains no molecules
 	 * @return true if no molecules are in the cell, false otherwise
@@ -175,7 +172,7 @@ protected:
 	 * @param molid molecule ID of the molecule to be searched in the cell
 	 * @return true if molecule was found
 	 */
-	bool findMoleculeByID(size_t& index, unsigned long molid) const;
+	virtual bool findMoleculeByID(size_t& index, unsigned long molid) const = 0;
 
 #ifdef QUICKSCHED
 	qsched_res_t  _resourceId;

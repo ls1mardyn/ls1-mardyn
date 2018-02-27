@@ -143,9 +143,9 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 	size_t nQuadrupoles = 0;
 
 	ParticleCellRMM & nonconst_cell_RMM = const_cast<ParticleCellRMM&>(cell_RMM);
-	SingleCellIterator begin = nonconst_cell_RMM.iterator();
+	auto begin = nonconst_cell_RMM.iterator();
 
-	for(SingleCellIterator it = begin; it.hasNext(); it.next()) {
+	for(auto it = begin; it.hasNext(); it.next()) {
 		nLJCenters += it->numLJcenters();
 		nCharges += it->numCharges();
 		nDipoles += it->numDipoles();
@@ -164,7 +164,7 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 	size_t iDipoles = 0;
 	size_t iQuadrupoles = 0;
 
-	SingleCellIterator it = begin;
+	auto it = begin;
 	// For each molecule iterate over all its centers.
 	for (size_t i = 0; i < numMolecules; ++i) {
 		const size_t mol_ljc_num = it->numLJcenters();
@@ -257,9 +257,9 @@ void VCP1CLJRMMTest::testProcessCell() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-5*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-5*full_Virial));
 
-	SingleCellIterator begin = cell_RMM.iterator();
+	auto begin = cell_RMM.iterator();
 
-	for (SingleCellIterator it = begin; it.hasNext(); it.next()) {
+	for (auto it = begin; it.hasNext(); it.next()) {
 		double RMM_f_x = it->F(0);
 		double RMM_f_y = it->F(1);
 		double RMM_f_z = it->F(2);
@@ -335,8 +335,8 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-7*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-7*full_Virial));
 
-	SingleCellIterator begin1 = cell_RMM1.iterator();
-	for (SingleCellIterator it1 = begin1; it1.hasNext(); it1.next()) {
+	auto begin1 = cell_RMM1.iterator();
+	for (auto it1 = begin1; it1.hasNext(); it1.next()) {
 		double RMM_f_x = it1->F(0);
 		double RMM_f_y = it1->F(1);
 		double RMM_f_z = it1->F(2);
@@ -352,8 +352,8 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, RMM_f_z, fabs(full_f_z*1.0e-5));
 	}
 
-	SingleCellIterator begin2 = cell_RMM2.iterator();
-	for (SingleCellIterator it2 = begin2; it2.hasNext(); it2.next()) {
+	auto begin2 = cell_RMM2.iterator();
+	for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 		double RMM_f_x = it2->F(0);
 		double RMM_f_y = it2->F(1);
 		double RMM_f_z = it2->F(2);

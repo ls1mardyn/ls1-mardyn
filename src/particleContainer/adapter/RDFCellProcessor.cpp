@@ -17,12 +17,12 @@ using namespace Log;
 
 void RDFCellProcessor::processCell(ParticleCell& cell) {
 	if (cell.isInnerCell() || cell.isBoundaryCell()) {
-		SingleCellIterator begin = cell.iterator();
+		auto begin = cell.iterator();
 
-		for (SingleCellIterator it1 = begin; it1.hasNext(); it1.next()) {
+		for (auto it1 = begin; it1.hasNext(); it1.next()) {
 			Molecule& molecule1 = *it1;
 
-			SingleCellIterator it2 = it1;
+			auto it2 = it1;
 			it2.next();
 			for (; it2.hasNext(); it2.next()) {
 				Molecule& molecule2 = *it2;
@@ -40,15 +40,15 @@ void RDFCellProcessor::processCell(ParticleCell& cell) {
 }
 
 void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll /* = false */) {
-	SingleCellIterator begin1 = cell1.iterator();
-	SingleCellIterator begin2 = cell2.iterator();
+	auto begin1 = cell1.iterator();
+	auto begin2 = cell2.iterator();
 
-	if(sumAll) { // sumAll - moleculesAt is gone, use SingleCellIterator now ?
+	if(sumAll) { // sumAll - moleculesAt is gone, use auto now ?
 
 		// loop over all particles in the cell
-		for (SingleCellIterator it1 = begin1; it1.hasNext(); it1.next()) {
+		for (auto it1 = begin1; it1.hasNext(); it1.next()) {
 			Molecule& molecule1 = *it1; 
-			for (SingleCellIterator it2 = begin2; it2.hasNext(); it2.next()) {
+			for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 				Molecule& molecule2 = *it2; 
 
 				double dummy[3];
@@ -64,10 +64,10 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 			// loop over all particles in the cell
 
 
-			for (SingleCellIterator it1 = begin1; it1.hasNext(); it1.next()) {
+			for (auto it1 = begin1; it1.hasNext(); it1.next()) {
 				Molecule& molecule1 = *it1;
 
-				for (SingleCellIterator it2 = begin2; it2.hasNext(); it2.next()) {
+				for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 					Molecule& molecule2 = *it2;
 
 					double dummy[3];
@@ -87,9 +87,9 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 				return;
 			}
 
-			for (SingleCellIterator it1 = begin1; it1.hasNext(); it1.next()) {
+			for (auto it1 = begin1; it1.hasNext(); it1.next()) {
 				Molecule& molecule1 = *it1;
-				for (SingleCellIterator it2 = begin2; it2.hasNext(); it2.next()) {
+				for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 					Molecule& molecule2 = *it2;
 
 					double dummy[3];

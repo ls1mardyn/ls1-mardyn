@@ -967,9 +967,9 @@ unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double si
 			ParticleCell & cell = _cells[cellIndex];
 			const int numMolecules = cell.getMoleculeCount();
 
-			SingleCellIterator begin = cell.iterator();
+			SingleCellIterator<ParticleCell> begin = cell.iterator();
 
-			for (SingleCellIterator it = begin; it.hasNext(); it.next()) {
+			for (SingleCellIterator<ParticleCell> it = begin; it.hasNext(); it.next()) {
 				it->setid(threadIDsAssignedByThisThread);
 				++threadIDsAssignedByThisThread;
 			}
@@ -1144,13 +1144,13 @@ std::string LinkedCells::getName() {
 bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
 	const double epsi = this->_cutoffRadius * 1e-6;
 	auto index = getCellIndexOfPoint(pos);
-	auto& cell = *getCell(index);
+	auto& cell = _cells.at(index);
 
 	// iterate through cell and compare position of molecules with given position
 	
-	SingleCellIterator begin1 = cell.iterator();
+	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
 	
-	for (SingleCellIterator it1 = begin1; it1.hasNext(); it1.next()) {
+	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.hasNext(); it1.next()) {
 		auto& mol = *it1;
 
 		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {

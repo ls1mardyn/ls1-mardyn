@@ -222,9 +222,6 @@ public:
 
 	virtual size_t getNumCells() const = 0;
 
-	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
-	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
-
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position

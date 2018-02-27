@@ -30,6 +30,23 @@ void FullParticleCell::deallocateAllParticles() {
 	_molecules.clear();
 }
 
+bool FullParticleCell::findMoleculeByID(size_t& index, unsigned long molid) const {
+	int numMolecules = getMoleculeCount();
+
+	// TODO: we'd need separate classes for const and non-const iterators...
+	FullParticleCell * nonconst_this = const_cast<FullParticleCell *>(this);
+
+	auto begin = nonconst_this->iterator();
+
+	for(auto it = begin; it.hasNext(); it.next()) {
+		if (it->id() == molid) {
+			index = it.getIndex();
+			return true;
+		}
+	}
+	return false;
+}
+
 bool FullParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 	bool wasInserted = false;
 

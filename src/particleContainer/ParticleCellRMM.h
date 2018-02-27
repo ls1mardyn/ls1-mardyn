@@ -2,6 +2,7 @@
 #define SRC_PARTICLECONTAINER_PARTICLECELLRMM_H_
 
 #include "ParticleCellBase.h"
+#include "SingleCellIterator.h"
 #include "particleContainer/adapter/CellDataSoARMM.h"
 
 class ParticleCellRMM: public ParticleCellBase {
@@ -13,6 +14,10 @@ public:
 	}
 
 	~ParticleCellRMM();
+
+	SingleCellIterator<ParticleCellRMM> iterator() {
+		return SingleCellIterator<ParticleCellRMM>(this);
+	}
 
 	void deallocateAllParticles() override;
 
@@ -49,6 +54,8 @@ public:
 	void prefetchForForce() const;
 
 	void getLeavingMolecules(std::vector<Molecule> & appendBuffer);
+
+	bool findMoleculeByID(size_t& index, unsigned long molid) const;
 
 //protected: do not use!
 	void moleculesAtNew(size_t i, Molecule *& multipurposePointer) override;

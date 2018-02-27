@@ -13,6 +13,7 @@
 #include "Cell.h"
 #include "particleContainer/ParticleCellBase.h"
 #include "particleContainer/adapter/CellDataSoA.h"
+#include "SingleCellIterator.h"
 
 //! @brief FullParticleCell data structure. Renamed from ParticleCell.
 //! @author Martin Buchholz
@@ -59,6 +60,10 @@ public:
 	 * \author Johannes Heckl
 	 */
 	~FullParticleCell();
+
+	SingleCellIterator<FullParticleCell> iterator() {
+		return SingleCellIterator<FullParticleCell>(this);
+	}
 
 	//! removes and deallocates all elements
 	void deallocateAllParticles() override;
@@ -111,6 +116,8 @@ public:
 	void moleculesAtConstNew(size_t i, Molecule *& multipurposePointer) const override {
 		multipurposePointer = const_cast<Molecule*>(& _molecules.at(i));
 	}
+
+	bool findMoleculeByID(size_t& index, unsigned long molid) const;
 
 private:
 

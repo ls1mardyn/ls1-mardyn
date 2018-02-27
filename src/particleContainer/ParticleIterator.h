@@ -60,7 +60,7 @@ protected:
 		return _cells != nullptr and _cell_index < _cells->size() and _cell_iterator.hasNext();
 	}
 
-	SingleCellIterator _cell_iterator;
+	SingleCellIterator<ParticleCell> _cell_iterator;
 	Type _type;
 	CellContainer_T_ptr _cells;
 
@@ -166,7 +166,7 @@ inline void ParticleIterator :: deleteCurrentParticle () {
 
 inline void ParticleIterator :: updateCellIteratorCell() {
 	if(_cell_index < _cells->size()) {
-		_cell_iterator = SingleCellIterator(&_cells->at(_cell_index));
+		_cell_iterator = SingleCellIterator<ParticleCell>(&_cells->at(_cell_index));
 	}
 }
 

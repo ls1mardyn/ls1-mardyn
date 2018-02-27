@@ -14,6 +14,23 @@ void ParticleCellRMM::deallocateAllParticles() {
 	_cellDataSoARMM.resize(0);
 }
 
+bool ParticleCellRMM::findMoleculeByID(size_t& index, unsigned long molid) const {
+	int numMolecules = getMoleculeCount();
+
+	// TODO: we'd need separate classes for const and non-const iterators...
+	ParticleCellRMM * nonconst_this = const_cast<ParticleCellRMM *>(this);
+
+	auto begin = nonconst_this->iterator();
+
+	for(auto it = begin; it.hasNext(); it.next()) {
+		if (it->id() == molid) {
+			index = it.getIndex();
+			return true;
+		}
+	}
+	return false;
+}
+
 bool ParticleCellRMM::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 
 #ifndef NDEBUG
