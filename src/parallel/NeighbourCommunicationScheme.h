@@ -16,6 +16,8 @@ class Domain;
 class ZonalMethod;
 class HaloRegion;
 class NeighbourCommunicationScheme {
+	friend class NeighbourCommunicationSchemeTest;
+	
 public:
 	/**
 	 * Specifies the amount of sequential communication steps needed for the communication scheme.
@@ -93,8 +95,6 @@ protected:
 	std::vector<std::vector<CommunicationPartner>> _haloImportForceExportNeighbours;
 	std::vector<std::vector<CommunicationPartner>> _leavingExportNeighbours;
 	std::vector<std::vector<CommunicationPartner>> _leavingImportNeighbours;
-	std::vector<std::vector<CommunicationPartner>> _leavingExportHaloExportNeighbours;
-	std::vector<std::vector<CommunicationPartner>> _leavingImportHaloImportNeighbours;
 	
 	void selectNeighbours(MessageType msgType, bool import);
 	// -------------------------------------------------------------------------
@@ -115,6 +115,7 @@ protected:
 };
 
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
+	friend class NeighbourCommunicationSchemeTest;
 public:
 	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
 			NeighbourCommunicationScheme(1, zonalMethod) {
@@ -161,6 +162,7 @@ private:
 };
 
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
+	friend class NeighbourCommunicationSchemeTest;
 public:
 
 	IndirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :

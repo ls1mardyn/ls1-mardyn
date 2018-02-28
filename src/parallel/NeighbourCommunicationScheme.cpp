@@ -17,7 +17,7 @@
 #include "parallel/ZonalMethods/ZonalMethod.h"
 #include <mpi.h>
 
-#define PUSH_PULL_PARTNERS 0
+#define PUSH_PULL_PARTNERS 1
 
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
 	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
@@ -27,8 +27,6 @@ NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimm
 	_haloImportForceExportNeighbours.resize(this->getCommDims());
 	_leavingExportNeighbours.resize(this->getCommDims());
 	_leavingImportNeighbours.resize(this->getCommDims());
-	_leavingExportHaloExportNeighbours.resize(this->getCommDims());
-	_leavingImportHaloImportNeighbours.resize(this->getCommDims());
 	
 }
 
@@ -52,6 +50,16 @@ void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleCont
 
 void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
+	
+#if PUSH_PULL_PARTNERS
+	if(msgType == LEAVING_AND_HALO_COPIES) {
+		msgType = LEAVING_ONLY;
+		initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
+		finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
+		
+		msgType = HALO_COPIES;
+	}
+#endif
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 
 	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
@@ -347,14 +355,6 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	
 	switch(msgType) {
-		case LEAVING_AND_HALO_COPIES:
-		{
-			// leavingExport + HaloExport / leavingImport + haloImport
-			global_log->info() << "selecting Neighbours LEAVING_AND_HALO_COPIES on: " << my_rank << endl;
-			if(import) _neighbours = _leavingImportHaloImportNeighbours;
-			else _neighbours = _leavingExportHaloExportNeighbours;
-			break;
-		}
 		case LEAVING_ONLY:
 			// leavingImport / leavingExport
 			global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
@@ -378,7 +378,7 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 	cout << "exit on: " << my_rank << endl;
 }
 
-void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray) { // THIS STUFF HERE IS NOT CORRECT
+void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray) { // IS THIS CORRECT?
 	double domain_length[3] = { domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2) };
 	
 	for(int i = 0; i < 3; i++) // calculating shift 
@@ -395,19 +395,49 @@ void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloR
 	}
 }
 
-void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
-	// CALCULATE THE OVERLAP AND WRITE IT INTO inQuestion
-	int diff;
+void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) { // KÄSE!
+	/*
+	 * m = myRegion, q = inQuestion, o = overlap
+	 * i)  m.max < q.max ?
+	 * ii) m.min < q.min ?
+	 *
+	 * i) | ii) | Operation
+	 * -------------------------------------------
+	 *  0 |  0  | o.max = q.max and o.min = m.min 
+	 *  0 |  1  | o.max = q.max and o.min = q.min
+	 *  1 |  0  | o.max = m.max and o.min = m.min
+	 *  1 |  1  | o.max = m.max and o.min = q.min
+	 * 
+	 */
+	HaloRegion overlap;
+	
+	
 	for(int i = 0; i < 3; i++) {
-		if((diff = myRegion->rmax[i] - inQuestion->rmax[i]) < 0)
-			inQuestion->rmax[i] += diff;
-		
-		if((diff = myRegion->rmin[i] - inQuestion->rmin[i]) > 0)
-			inQuestion->rmin[i] += diff;
+		if(myRegion->rmax[i] < inQuestion->rmax[i]) { // 1
+			if(myRegion->rmin[i] < inQuestion->rmin[i]) { // 1 1
+				memcpy(overlap.rmax, myRegion->rmax, sizeof(double) * 3);
+				memcpy(overlap.rmin, inQuestion->rmin, sizeof(double) * 3);
+			} else { // 1 0
+				memcpy(overlap.rmax, myRegion->rmax, sizeof(double) * 3);
+				memcpy(overlap.rmin, myRegion->rmin, sizeof(double) * 3);
+			}
+		} else { // 0
+			if(myRegion->rmin[i] < inQuestion->rmin[i]) { // 0 1
+				memcpy(overlap.rmax, inQuestion->rmax, sizeof(double) * 3);
+				memcpy(overlap.rmin, inQuestion->rmin, sizeof(double) * 3);
+			} else { // 0 0
+				memcpy(overlap.rmax, inQuestion->rmax, sizeof(double) * 3);
+				memcpy(overlap.rmin, myRegion->rmin, sizeof(double) * 3);
+			}
+		}
 	}
+	
+	// adjust width and offset?
+	memcpy(inQuestion->rmax, overlap.rmax, sizeof(double) * 3);
+	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegion* inQuestion) {
+bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegion* inQuestion) { // IS THIS CORRECT?
 	return myRegion->rmax[0] > inQuestion->rmin[0] && myRegion->rmax[1] > inQuestion->rmin[1]
 			&& myRegion->rmax[2] > inQuestion->rmin[2] && myRegion->rmin[0] <= inQuestion->rmax[0]
 			&& myRegion->rmin[1] <= inQuestion->rmax[1] && myRegion->rmin[2] <= inQuestion->rmax[2];
@@ -531,7 +561,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				
 				// cout << "candidates[rank]: " << candidates[rank] << " on: " << my_rank << endl; // 26 on both
 				
-				overlap(myRegion, &region);
+				overlap(myRegion, &region); // different shift for the overlap?
 				
 				unsigned char* singleRegion = new unsigned char[bytesOneRegion];
 			
@@ -554,7 +584,12 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				CommunicationPartner myNewNeighbour(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(), region.offset, enlarged);
 				comm_partners02.push_back(myNewNeighbour);
 				
-			
+				// shift back
+				for(int k = 0; k < 3; k++) { // applying shift
+					region.rmax[k] -= shift[k];
+					region.rmin[k] -= shift[k];
+				}
+				
 				sendingList[rank].push_back(singleRegion); 
 			}
 		}
@@ -748,14 +783,6 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, _haloImportForceExportNeighbours[0], _haloExportForceImportNeighbours[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
 	aquireNeighbours(domain, &ownRegion, leavingRegions, _leavingExportNeighbours[0], _leavingImportNeighbours[0]); // p1 notes reply, p2 notes owned as leaving import
 	
-	
-	_leavingExportHaloExportNeighbours.insert(_leavingExportHaloExportNeighbours.end(), _leavingExportNeighbours.begin(), _leavingExportNeighbours.end());
-	_leavingExportHaloExportNeighbours.insert(_leavingExportHaloExportNeighbours.end(), _haloExportForceImportNeighbours.begin(), _haloExportForceImportNeighbours.end());
-	_leavingExportHaloExportNeighbours[0] = squeezePartners(_leavingExportHaloExportNeighbours[0]);
-	
-	_leavingImportHaloImportNeighbours.insert(_leavingImportHaloImportNeighbours.end(), _leavingImportNeighbours.begin(), _leavingImportNeighbours.end());
-	_leavingImportHaloImportNeighbours.insert(_leavingImportHaloImportNeighbours.end(), _haloImportForceExportNeighbours.begin(), _haloImportForceExportNeighbours.end());
-	_leavingImportHaloImportNeighbours[0] = squeezePartners(_leavingImportHaloImportNeighbours[0]);
 #else
 	
 	std::vector<HaloRegion> haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
