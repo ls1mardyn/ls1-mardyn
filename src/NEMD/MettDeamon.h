@@ -10,6 +10,7 @@
 
 #include "molecules/Molecule.h"
 #include "Domain.h"
+#include "utils/CommVar.h"
 
 #include <map>
 #include <array>
@@ -63,6 +64,28 @@ struct RestartInfoType
 	double dYsum;
 };
 
+struct FeedRateStruct
+{
+	uint32_t cid_target;
+
+	struct FeedStruct
+	{
+		double init;
+		double actual;
+		double target;
+		double sum;
+
+	} feed;
+
+	struct numMoleculesStruct
+	{
+		CommVar<uint64_t> inserted;
+		CommVar<uint64_t> deleted;
+		CommVar<uint64_t> changed_to;
+		CommVar<uint64_t> changed_from;
+	} numMolecules;
+};
+
 class Domain;
 class Ensemble;
 class DomainDecompBase;
@@ -89,15 +112,18 @@ public:
 	void postForce_action(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition);
 
 	// connection to DensityControl
-	void IncrementDeletedMoleculesLocal() {_nNumMoleculesDeletedLocal++;}
-	void IncrementChangedMoleculesLocal() {_nNumMoleculesChangedLocal++;}
+	uint32_t getFeedRateTargetComponentID() {return _feedrate.cid_target;}
+	void IncrementInsertedMoleculesLocal() {_feedrate.numMolecules.inserted.local++;}
+	void IncrementDeletedMoleculesLocal() {_feedrate.numMolecules.deleted.local++;}
+	void IncrementChangedToMoleculesLocal() {_feedrate.numMolecules.changed_to.local++;}
+	void IncrementChangedFromMoleculesLocal() {_feedrate.numMolecules.changed_from.local++;}
 	void StoreDensity(const double& dVal) {_vecDensityValues.push_back(dVal);}
 	void StoreValuesCV(const double& dDensity, const double& dVolume) {_dDensityTarget = dDensity; _dVolumeCV = dVolume;}
 
 private:
 	void findMaxMoleculeID(DomainDecompBase* domainDecomp);
 	void writeRestartfile();
-	void calcDeltaY() { _dY = _dDeletedMolsPerTimestep * _dInvDensityArea; }
+	void calcDeltaY() { _feedrate.feed.actual = _dDeletedMolsPerTimestep * _dInvDensityArea; }
 	void calcDeltaYbyDensity();
 	// Check if molecule is a trapped one
 	bool IsTrappedMolecule(const uint8_t& cid) {return cid != _vecChangeCompIDsUnfreeze.at(cid);}
@@ -120,9 +146,6 @@ private:
 	bool _bMirrorActivated;
 	double _dAreaXZ;
 	double _dInvDensityArea;
-	double _dY;
-	double _dYInit;
-	double _dYsum;
 	double _velocityBarrier;
 	double _dDeletedMolsPerTimestep;
 	double _dInvNumTimestepsSummation;
@@ -131,23 +154,18 @@ private:
 	double _dTransitionPlanePosY;
 	double _dDensityTarget;
 	double _dVolumeCV;
-	double _dFeedRate;
 	uint64_t _nUpdateFreq;
 	uint64_t _nWriteFreqRestart;
 	uint64_t _nMaxMoleculeID;
 	uint64_t _nMaxReservoirMoleculeID;
-	uint64_t _nNumMoleculesDeletedLocal;
-	uint64_t _nNumMoleculesDeletedGlobal;
 	uint64_t _nNumMoleculesDeletedGlobalAlltime;
-	uint64_t _nNumMoleculesChangedLocal;
-	uint64_t _nNumMoleculesChangedGlobal;
 	uint64_t _nNumMoleculesTooFast;
 	uint64_t _nNumMoleculesTooFastGlobal;
 	uint8_t _nMovingDirection;
 	uint8_t _nFeedRateMethod;
 	uint8_t _nZone2Method;
 	uint32_t _nNumValsSummation;
-	uint64_t _numDeletedMolsSum;
+	int64_t _numDeletedMolsSum;
 	uint64_t _nDeleteNonVolatile;
 	std::map<uint64_t, std::array<double,10> > _storePosition;  //Map for frozen particle position storage <"id, position">
 	std::list<uint64_t> _listDeletedMolecules;
@@ -166,6 +184,25 @@ private:
 		double ymin;
 		double ymax;
 	} _manipfree;
+	FeedRateStruct _feedrate;
+};
+
+struct FilepathStruct
+{
+	std::string data;
+	std::string header;
+};
+
+struct BoxStruct
+{
+	double volume;
+	std::array<double,3> length;
+};
+
+struct DensityStruct
+{
+	CommVar<uint64_t> numMolecules;
+	double density;
 };
 
 class BinQueue;
@@ -189,17 +226,12 @@ private:
 
 public:
 	// Getters, Setters
-	uint64_t getNumMoleculesGlobal() {return _numMoleculesGlobal;}
-//	void setNumMolecules(uint64_t nVal) {_numMolecules = nVal;}
-	std::string getFilename() {return _strFilename;}
-	std::string getFilenameHeader() {return _strFilenameHeader;}
-//	void setNumMolecules(uint64_t nVal) {_numMolecules = nVal;}
-	double getDensity() {return _dDensity;}
-	void setDensity(double dVal) {_dDensity = dVal;}
-	double getBoxLength(uint32_t nDim) {return _arrBoxLength.at(nDim);}
-	void setBoxLength(uint32_t nDim, double dVal) {_arrBoxLength.at(nDim)=dVal;}
-	double getVolume() {return _dVolume;}
-	void setVolume(double dVal) {_dVolume = dVal;}
+	double getDensity(const uint32_t& cid) {return _density.at(cid).density;}
+	void setDensity(const uint32_t& cid, const double& dVal) {_density.at(cid).density = dVal;}
+	double getBoxLength(const uint32_t& nDim) {return _box.length.at(nDim);}
+	void setBoxLength(const uint32_t& nDim, const double& dVal) {_box.length.at(nDim)=dVal;}
+	double getVolume() {return _box.volume;}
+	void setVolume(const double& dVal) {_box.volume = dVal;}
 	double getBinWidth() {return _dBinWidth;}
 
 	// queue methods
@@ -212,7 +244,7 @@ public:
 	bool activateBin(uint32_t nBinIndex);
 
 private:
-	uint64_t calcNumMoleculesGlobal(DomainDecompBase* domainDecomp);
+	void calcPartialDensities(DomainDecompBase* domainDecomp);
 	void changeComponentID(Molecule& mol, const uint32_t& cid);
 
 private:
@@ -220,20 +252,17 @@ private:
 	MoleculeDataReader* _moleculeDataReader;
 	BinQueue* _binQueue;
 	uint64_t _numMoleculesRead;
-	uint64_t _numMoleculesGlobal;
 	uint64_t _nMaxMoleculeID;
 	uint32_t _nMoleculeFormat;
 	uint8_t _nReadMethod;
 	double _dReadWidthY;
 	double _dBinWidthInit;
 	double _dBinWidth;
-	double _dDensity;
-	double _dVolume;
-	std::string _strFilename;
-	std::string _strFilenameHeader;
-	std::array<double,3> _arrBoxLength;
 	std::vector<Molecule> _particleVector;
 	std::vector<uint32_t> _vecChangeCompIDs;
+	std::vector<DensityStruct> _density;
+	FilepathStruct _filepath;
+	BoxStruct _box;
 };
 
 

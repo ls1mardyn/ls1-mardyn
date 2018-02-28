@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <list>
+#include <unordered_map>
 #include <string>
 #include <cstdint>
 #include <cstdlib>
@@ -55,6 +56,16 @@ enum ControlRegionStates : int32_t
 	CRS_INSERT_MOLECULES = 2,
 };
 
+typedef std::unordered_map<uint32_t, CommVar<uint64_t> > cid_count_map;
+struct manip_count_struct
+{
+	CommVar<uint64_t> deleted;
+	CommVar<uint64_t> inserted;
+	cid_count_map changed_to_from;
+};
+typedef std::unordered_map<uint32_t, manip_count_struct> cid_manip_count_map;
+typedef std::unordered_map<uint32_t, manip_count_struct>::iterator cid_manip_count_map_it;
+
 class ControlRegion : public CuboidRegionObs
 {
 public:
@@ -81,6 +92,8 @@ public:
 
     void WriteHeaderDeletedMolecules();
     void WriteDataDeletedMolecules(unsigned long simstep);
+	void WriteHeaderParticleManipCount();
+	void WriteDataParticleManipCount(unsigned long simstep);
 
 	// Connection to MettDeamon
 	void ConnectMettDeamon(const std::vector<MettDeamon*>& mettDeamon) {_mettDeamon = _bMettDeamonConnected ? mettDeamon.at(_nMettDeamonInstanceIndex) : NULL;}
@@ -97,6 +110,11 @@ public:
 	bool globalTargetDensityExeeded(uint32_t cid)   {return _compVars.at(cid).numMolecules.spread.global > 0;}
 	bool globalTargetDensityUndershot(uint32_t cid) {return _compVars.at(cid).numMolecules.spread.global < 0;}
 	bool globalCompositionBalanced();
+
+	// inform about particle manipulations
+	void informParticleInserted(Molecule mol);
+	void informParticleDeleted(Molecule mol);
+	void informParticleChanged(Molecule from, Molecule to);
 
 private:
 	void CheckState()
@@ -168,6 +186,8 @@ private:
 
 	int32_t _nState;
 	ParticleManipDirector* _director;
+
+	cid_manip_count_map _manip_count_map;
 };
 
 }  // namespace dec
@@ -206,6 +226,8 @@ public:
 
     void WriteHeaderDeletedMolecules();
     void WriteDataDeletedMolecules(Simulation* simulation);
+	void WriteHeaderParticleManipCount();
+	void WriteDataParticleManipCount(Simulation* simulation);
 
 	// NEMD flags
 	void     SetFlagsNEMD(const uint32_t &flagsNEMD) {_flagsNEMD = _flagsNEMD | flagsNEMD;}

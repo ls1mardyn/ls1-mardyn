@@ -56,6 +56,9 @@ public:
 	ChangeVar<uint32_t> getNextChangeIDs() {return _nextChangeIDs;}
 	std::list<uint64_t> GetLocalParticleIDs(const uint32_t& nCompID);
 	int64_t getLocalNumMoleculesSpread(uint32_t nCompID);
+	void informParticleInserted(Molecule mol);
+	void informParticleDeleted(Molecule mol);
+	void informParticleChanged(Molecule from, Molecule to);
 
 private:
 	bool setNextChangeIDs();

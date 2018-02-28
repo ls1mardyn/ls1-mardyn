@@ -170,6 +170,13 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 			global_log->error() << "No targets defined in XML-config file. Program exit ..." << endl;
 			Simulation::exit(-1);
 		}
+		else
+		{
+			// reserve places for relevant components in map for counting particle manipulations
+			_manip_count_map.reserve(numNodes);
+			_manip_count_map[0].deleted.local = _manip_count_map[0].deleted.global = 0;
+			_manip_count_map[0].inserted.local = _manip_count_map[0].inserted.global = 0;
+		}
 		string oldpath = xmlconfig.getcurrentnodepath();
 		XMLfile::Query::const_iterator nodeIter;
 		for( nodeIter = query.begin(); nodeIter; nodeIter++ ) {
@@ -182,8 +189,11 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 				global_log->error() << "Missing attribute 'cid' in target. Program exit ..." << endl;
 				Simulation::exit(-1);
 			}
-			else
+			else {
 				_compVars.at(cid).compID = cid;
+				_manip_count_map[cid].deleted.local = _manip_count_map[cid].deleted.global = 0;
+				_manip_count_map[cid].inserted.local = _manip_count_map[cid].inserted.global = 0;
+			}
 			xmlconfig.getNodeValue("density", density);
 			_compVars.at(cid).density.target.local = _compVars.at(cid).density.target.global = density;
 			xmlconfig.getNodeValue("proxyID", proxyID);
@@ -207,6 +217,13 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 		}
 		xmlconfig.changecurrentnode(oldpath);
 		xmlconfig.changecurrentnode("..");
+
+		for(auto&& ti : _manip_count_map)
+		{
+			ti.second.changed_to_from.reserve(numNodes);
+			for(auto&& ti2 : _manip_count_map)
+				ti2.second.changed_to_from[ti.first].local = ti2.second.changed_to_from[ti.first].global = 0;
+		}
 	}
 
 	cout << "current path: " << xmlconfig.getcurrentnodepath() << endl;
@@ -274,6 +291,9 @@ void dec::ControlRegion::Init(DomainDecompBase* domainDecomp)
 		comp.numMolecules.target.global = comp.numMolecules.target.local;
 #endif
 	}
+
+	// write file headers
+	this->WriteHeaderParticleManipCount();
 }
 
 void dec::ControlRegion::InitMPI()
@@ -415,17 +435,41 @@ void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 	for(auto&& comp : _compVars)
 	{
 		MPI_Allreduce( &comp.numMolecules.actual.local, &comp.numMolecules.actual.global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD); // _newcomm);
-		comp.density.actual.global = comp.numMolecules.actual.global * _dInvertVolume.global;
-		comp.density.actual.local  = comp.numMolecules.actual.local  * _dInvertVolume.local;
 	}
+
+	for(auto&& comp : _manip_count_map)
+	{
+		MPI_Allreduce( &comp.second.inserted.local, &comp.second.inserted.global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD); // _newcomm);
+		MPI_Allreduce( &comp.second.deleted.local,  &comp.second.deleted.global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD); // _newcomm);
+
+		for(auto&& comp_from : comp.second.changed_to_from)
+		{
+			MPI_Allreduce( &comp_from.second.local,  &comp_from.second.global, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD); // _newcomm);
+		}
+	}
+
 #else
 	for(auto&& comp : _compVars)
 		comp.density.actual.local = comp.density.actual.global = comp.numMolecules.actual.local * _dInvertVolume.local;
+
+	for(auto&& comp : _manip_count_map)
+	{
+		comp.second.inserted.global = comp.second.inserted.local;
+		comp.second.deleted.global = comp.second.deleted.local;
+
+		for(auto&& comp_from : comp.second.changed_to_from)
+		{
+			comp_from.second.global = comp_from.second.local;
+		}
+	}
 #endif
 
-	// calc spread between target and actual values
+	// calc actual density, and spread between target and actual values
 	for(auto&& comp : _compVars)
 	{
+		comp.density.actual.global = comp.numMolecules.actual.global * _dInvertVolume.global;
+		comp.density.actual.local  = comp.numMolecules.actual.local  * _dInvertVolume.local;
+
 		comp.numMolecules.spread.local = comp.numMolecules.actual.local - comp.numMolecules.target.local;
 		comp.numMolecules.spread.global = comp.numMolecules.actual.global - comp.numMolecules.target.global;
 		comp.density.spread.local = comp.density.actual.local - comp.density.target.local;
@@ -435,6 +479,7 @@ void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 	// change or add molecules??
 	this->CheckState();
 
+	//connection to MettDeamon
 	if(true == _bMettDeamonConnected)
 	{
 //		_mettDeamon->StoreDensity(_dDensityGlobal);
@@ -542,6 +587,7 @@ void dec::ControlRegion::ResetLocalValues(Simulation* simulation)
 		comp.numMolecules.actual.local = 0;
 		comp.particleIDs.clear();
 	}
+
 	// inform director
 	_director->localValuesReseted(simulation);
 }
@@ -674,6 +720,87 @@ void dec::ControlRegion::WriteDataDeletedMolecules(unsigned long simstep)
     fileout.close();
 }
 
+void dec::ControlRegion::WriteHeaderParticleManipCount()
+{
+	// domain decomposition
+	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+
+#ifdef ENABLE_MPI
+int rank = domainDecomp.getRank();
+// int numprocs = domainDecomp->getNumProcs();
+if (rank != 0)
+	return;
+#endif
+
+	for(auto&& comp : _manip_count_map)
+	{
+		// write header
+		stringstream outputstream;
+		stringstream sstrFilename;
+		sstrFilename << "manip-count_reg" << this->GetID() << "_cid" << comp.first << ".dat";
+
+		outputstream << "             simstep";
+		outputstream << "             deleted";
+		outputstream << "            inserted";
+		for(auto&& comp_from : comp.second.changed_to_from)
+			outputstream << "    changed_to_from" << comp_from.first;
+		outputstream << endl;
+
+		ofstream fileout(sstrFilename.str().c_str(), ios::out);
+		fileout << outputstream.str();
+		fileout.close();
+	}
+}
+
+void dec::ControlRegion::WriteDataParticleManipCount(unsigned long simstep)
+{
+	if(simstep % 100 != 0)
+		return;
+
+	// domain decomposition
+	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+
+	// write out data
+	#ifdef ENABLE_MPI
+	int rank = domainDecomp.getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank != 0)
+		return;
+	#endif
+
+	for(auto&& comp : _manip_count_map)
+	{
+		stringstream outputstream;
+		stringstream sstrFilename;
+		sstrFilename << "manip-count_reg" << this->GetID() << "_cid" << comp.first << ".dat";
+
+		outputstream << std::setw(20) << simstep;
+		outputstream << std::setw(20) << comp.second.deleted.global;
+		outputstream << std::setw(20) << comp.second.inserted.global;
+		for(auto&& comp_from : comp.second.changed_to_from)
+			outputstream << std::setw(20) << comp_from.second.global;
+
+		outputstream << endl;
+
+		ofstream fileout(sstrFilename.str().c_str(), ios::app);
+		fileout << outputstream.str();
+		fileout.close();
+	}
+
+	// reset local values
+	// count particle manipulations
+	for(auto&& comp : _manip_count_map)
+	{
+		comp.second.inserted.local = 0;
+		comp.second.deleted.local = 0;
+
+		for(auto&& comp_from : comp.second.changed_to_from)
+		{
+			comp_from.second.local = 0;
+		}
+	}
+}
+
 // getters
 uint32_t dec::ControlRegion::getGlobalMinNumMoleculesSpreadCompID()
 {
@@ -753,6 +880,68 @@ bool dec::ControlRegion::globalCompositionBalanced()
 	}
 	return bBalanced;
 }
+
+// inform about particle manipulations
+void dec::ControlRegion::informParticleInserted(Molecule mol)
+{
+	uint32_t cid_zb = mol.componentid();
+	cid_manip_count_map_it it;
+	it = _manip_count_map.find(cid_zb+1);
+	it->second.inserted.local++;
+	it = _manip_count_map.find(0);
+	it->second.inserted.local++;
+
+	//connection to MettDeamon
+	if(true == _bMettDeamonConnected)
+	{
+		if(cid_zb+1 == _mettDeamon->getFeedRateTargetComponentID() )
+			_mettDeamon->IncrementInsertedMoleculesLocal();
+	}
+}
+
+void dec::ControlRegion::informParticleDeleted(Molecule mol)
+{
+	uint32_t cid_zb = mol.componentid();
+	cid_manip_count_map_it it;
+	it = _manip_count_map.find(cid_zb+1);
+	it->second.deleted.local++;
+	it = _manip_count_map.find(0);
+	it->second.deleted.local++;
+
+	//connection to MettDeamon
+	if(true == _bMettDeamonConnected)
+	{
+		if(cid_zb+1 == _mettDeamon->getFeedRateTargetComponentID() )
+			_mettDeamon->IncrementDeletedMoleculesLocal();
+	}
+}
+
+void dec::ControlRegion::informParticleChanged(Molecule from, Molecule to)
+{
+	uint32_t cid_from_zb = from.componentid();
+	uint32_t cid_to_zb = to.componentid();
+	cid_manip_count_map_it it;
+
+	// changed to this component
+	it = _manip_count_map.find(cid_to_zb+1);
+	it->second.changed_to_from[0].local++;
+	it->second.changed_to_from[cid_from_zb+1].local++;
+
+	// changed to arbirrary component
+	it = _manip_count_map.find(0);
+	it->second.changed_to_from[0].local++;
+	it->second.changed_to_from[cid_from_zb+1].local++;
+
+	//connection to MettDeamon
+	if(true == _bMettDeamonConnected)
+	{
+		if(cid_to_zb+1 == _mettDeamon->getFeedRateTargetComponentID() )
+			_mettDeamon->IncrementChangedToMoleculesLocal();
+		if(cid_from_zb+1 == _mettDeamon->getFeedRateTargetComponentID() )
+			_mettDeamon->IncrementChangedFromMoleculesLocal();
+	}
+}
+
 
 // class DensityControl
 
@@ -980,6 +1169,15 @@ void DensityControl::WriteDataDeletedMolecules(Simulation* simulation)
 		reg->WriteDataDeletedMolecules(simulation->getSimulationStep() );
 }
 
+void DensityControl::WriteDataParticleManipCount(Simulation* simulation)
+{
+	if(simulation->getSimulationStep() % _nControlFreq != 0)
+		return;
+
+	for(auto&& reg : _vecControlRegions)
+		reg->WriteDataParticleManipCount(simulation->getSimulationStep() );
+}
+
 void DensityControl::preForce_action(Simulation* simulation)
 {
 	_preForceAction->performAction(simulation);
@@ -1065,4 +1263,5 @@ void PostForceAction::insideSecondLoop(Simulation* simulation, Molecule* mol)
 void PostForceAction::postSecondLoop(Simulation* simulation)
 {
 	_parent->FinalizeParticleManipulation(simulation, this);
+	_parent->WriteDataParticleManipCount(simulation);
 }

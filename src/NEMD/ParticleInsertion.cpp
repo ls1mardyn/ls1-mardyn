@@ -256,6 +256,21 @@ bool ParticleManipDirector::setNextInsertIDs()
 	return bRet;
 }
 
+void ParticleManipDirector::informParticleInserted(Molecule mol)
+{
+	_region->informParticleInserted(mol);
+}
+
+void ParticleManipDirector::informParticleDeleted(Molecule mol)
+{
+	_region->informParticleDeleted(mol);
+}
+
+void ParticleManipDirector::informParticleChanged(Molecule from, Molecule to)
+{
+	_region->informParticleChanged(from, to);
+}
+
 // class ParticleDeleter
 ParticleDeleter::ParticleDeleter(ParticleManipDirector* director)
 	:
@@ -276,15 +291,18 @@ void ParticleDeleter::ManipulateParticles(Simulation* simulation, Molecule* mol)
 	ParticleContainer* particleCont = simulation->getMolecules();
 
 	uint64_t mid = mol->id();
-	uint64_t cid = mol->componentid()+1;
+	uint64_t cid_ub = mol->componentid()+1;
 	bool bDeleteMolecule = false;
-	for(auto did:_deletionLists.at(cid) )
+	for(auto did:_deletionLists.at(cid_ub) )
 	{
 		if(did == mid)
 			bDeleteMolecule = true;
 	}
 	if(true == bDeleteMolecule)
+	{
 		particleCont->deleteMolecule(*mol, true);
+		_director->informParticleDeleted(*mol);
+	}
 }
 
 void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compVars)
@@ -898,6 +916,8 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 
 void BubbleMethod::ChangeIdentity(Simulation* simulation, Molecule* mol)
 {
+	Molecule mol_old(*mol);
+
 	// --> CHANGE_IDENTITY
 	{
 		std::vector<Component>* ptrComps = simulation->getEnsemble()->getComponents();
@@ -959,6 +979,9 @@ void BubbleMethod::ChangeIdentity(Simulation* simulation, Molecule* mol)
 		*/
 	}
 	// <-- CHANGE_IDENTITY
+
+	Molecule mol_new(*mol);
+	_director->informParticleChanged(mol_old, mol_new);
 }
 
 void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
@@ -1033,6 +1056,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 				if(pit->id() == _selectedMoleculeID) //componentid()+1 == 3)
 				{
 					particleCont->deleteMolecule(*pit, false);
+					_director->informParticleDeleted(*pit);
 					break;
 				}
 			}
@@ -1042,6 +1066,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 				cout << "rank[" << ownRank << "]: Adding particle..." << endl;
 				cout << mol;
 				particleCont->addParticle(mol, true, true, true);
+				_director->informParticleInserted(mol);
 				cout << "rank[" << ownRank << "]: ... added!" << endl;
 			}
 		}
