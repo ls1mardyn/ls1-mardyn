@@ -5,12 +5,13 @@
  */
 
 #include "NeighbourCommunicationSchemeTest.h"
-
+#define PUSH_PULL_NEIGHBOURS 0
 
 
 using namespace std;
 
 TEST_SUITE_REGISTRATION(NeighbourCommunicationSchemeTest);
+
 
 NeighbourCommunicationSchemeTest::NeighbourCommunicationSchemeTest() {
 	_fullShell = new FullShell();
@@ -22,7 +23,7 @@ NeighbourCommunicationSchemeTest::~NeighbourCommunicationSchemeTest() {
 	delete _directScheme;
 }
 
-
+#if PUSH_PULL_NEIGHBOURS
 
 void NeighbourCommunicationSchemeTest::testShiftIfNecessary() {
 	HaloRegion region; // rmin, rmax, offset, width
@@ -65,4 +66,5 @@ void NeighbourCommunicationSchemeTest::testIOwnThis() { // i own a part of this
 	HaloRegion region02;
 	
 }
+#endif
 

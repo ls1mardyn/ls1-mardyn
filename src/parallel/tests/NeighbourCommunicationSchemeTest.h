@@ -18,12 +18,16 @@
 #include "parallel/ZonalMethods/FullShell.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 
+#define PUSH_PULL_NEIGHBOURS 0
+
 class NeighbourCommunicationSchemeTest : public utils::TestWithSimulationSetup {
 	
 	TEST_SUITE(NeighbourCommunicationSchemeTest);
+#if PUSH_PULL_NEIGHBOURS
 	TEST_METHOD(testShiftIfNecessary);
 	TEST_METHOD(testOverlap);
 	TEST_METHOD(testIOwnThis);
+#endif
 	TEST_SUITE_END();
 	
 	public:
@@ -31,8 +35,7 @@ class NeighbourCommunicationSchemeTest : public utils::TestWithSimulationSetup {
 		~NeighbourCommunicationSchemeTest();
 		void testShiftIfNecessary();
 		void testOverlap();
-		void testIOwnThis();
-		
+		void testIOwnThis();		
 	private:
 		FullShell* _fullShell;
 		DirectNeighbourCommunicationScheme* _directScheme;
