@@ -17,7 +17,7 @@
 #include "parallel/ZonalMethods/ZonalMethod.h"
 #include <mpi.h>
 
-#define PUSH_PULL_PARTNERS 1
+#define PUSH_PULL_PARTNERS 0
 
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
 	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
@@ -378,16 +378,14 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 	cout << "exit on: " << my_rank << endl;
 }
 
-void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloRegion *region, double *shiftArray) { // IS THIS CORRECT?
-	double domain_length[3] = { domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2) };
-	
+void DirectNeighbourCommunicationScheme::shiftIfNeccessary(double *domainLength, HaloRegion *region, double *shiftArray) { // IS THIS CORRECT?
 	for(int i = 0; i < 3; i++) // calculating shift 
-		if(region->rmin[i] >= domain_length[i])
-			shiftArray[i] = -domain_length[i];
+		if(region->rmin[i] > domainLength[i])
+			shiftArray[i] = -domainLength[i];
 	
 	for(int i = 0; i < 3; i++) // calculating shift
 		if(region->rmax[i] <= 0)
-			shiftArray[i] = domain_length[i];
+			shiftArray[i] = domainLength[i];
 
 	for(int i = 0; i < 3; i++) { // applying shift
 		region->rmax[i] += shiftArray[i];
@@ -395,7 +393,7 @@ void DirectNeighbourCommunicationScheme::shiftIfNeccessary(Domain *domain, HaloR
 	}
 }
 
-void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) { // KÄSE!
+void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) { 
 	/*
 	 * m = myRegion, q = inQuestion, o = overlap
 	 * i)  m.max < q.max ?
@@ -554,7 +552,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			
 			// msg format one region: rmin | rmax | offset | width | shift
 			std::vector<double> shift(3, 0); 
-			shiftIfNeccessary(domain, &region, shift.data()); 
+			double domainLength[3] = { domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2) }; // better for testing
+			shiftIfNeccessary(domainLength, &region, shift.data()); 
 			
 			if(rank != my_rank && iOwnThis(myRegion, &region)) { 
 				candidates[rank]++; // this is a region I will send to rank
