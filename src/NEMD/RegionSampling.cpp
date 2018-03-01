@@ -1251,7 +1251,7 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 					_d2EkinTransComp[offsetSum+s] += d2EkinTrans;
 					// Ekin drift
 					unsigned long N = _nNumMoleculesGlobal[offsetN+s];
-					unsigned long dInvN = 1. / ( (double)(N) );
+					double dInvN = 1. / ( (double)(N) );
 					double vd = _dVelocityGlobal[offsetComp+s];
 					double d2EkinDrift = vd*vd * _vecMass.at(cid) * dInvN;
 					_d2EkinDriftComp[offsetComp+s] = d2EkinDrift;
