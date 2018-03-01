@@ -55,6 +55,7 @@ unsigned short dec::ControlRegion::_nStaticID = 0;
 dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3] )
 	:
 	CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
+	_bVacuum(false),
 	_director(nullptr)
 {
 	// ID
@@ -224,6 +225,12 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 			for(auto&& ti2 : _manip_count_map)
 				ti2.second.changed_to_from[ti.first].local = ti2.second.changed_to_from[ti.first].global = 0;
 		}
+	}
+	// Establish vacuum?
+	if(_compVars.at(0).density.target.global <= 1e-15)
+	{
+		_bVacuum = true;
+		_director->setVacuum(true);
 	}
 
 	cout << "current path: " << xmlconfig.getcurrentnodepath() << endl;
@@ -399,10 +406,6 @@ void dec::ControlRegion::InitMPI()
 
 void dec::ControlRegion::MeasureDensity(Simulation* simulation, Molecule* mol)
 {
-	// In vacuum evaporation simulation global density of control region has not to be calculated
-	if( 0. == _compVars.at(0).density.target.global)
-		return;
-
     // check if molecule inside control region
     for(unsigned short d = 0; d<3; ++d)
     {
@@ -424,9 +427,6 @@ void dec::ControlRegion::MeasureDensity(Simulation* simulation, Molecule* mol)
 
 void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 {
-	// In vacuum evaporation simulation global density of control region has not to be calculated
-	if( 0. == _compVars.at(0).density.target.global)
-		return;
 
 #ifdef ENABLE_MPI
 //    if (_newcomm == MPI_COMM_NULL)
@@ -486,13 +486,13 @@ void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 //		_mettDeamon->StoreValuesCV(_dTargetDensity, this->GetVolume() );  // TODO: move this, so its called only once
 	}
 
-	// DEBUG -->
-//	for(auto&& comp : _compVars)
-//	{
-//		cout << "actual: " << setw(7) << comp.numMolecules.actual.global << ", ";
-//		cout << "target: " << setw(7) << comp.numMolecules.target.global << ", ";
-//		cout << "spread: " << setw(7) << comp.numMolecules.spread.global << endl;
-//	}
+	/* DEBUG -->
+	for(auto&& comp : _compVars)
+	{
+		cout << "actual: " << setw(7) << comp.numMolecules.actual.global << ", ";
+		cout << "target: " << setw(7) << comp.numMolecules.target.global << ", ";
+		cout << "spread: " << setw(7) << comp.numMolecules.spread.global << endl;
+	}
 	// <-- DEBUG */
 
 	// inform director

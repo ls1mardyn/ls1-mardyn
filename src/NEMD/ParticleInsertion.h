@@ -56,6 +56,8 @@ public:
 	ChangeVar<uint32_t> getNextChangeIDs() {return _nextChangeIDs;}
 	std::list<uint64_t> GetLocalParticleIDs(const uint32_t& nCompID);
 	int64_t getLocalNumMoleculesSpread(uint32_t nCompID);
+	bool getVacuum() {return _bVacuum;}
+	void setVacuum(const bool& bVal);
 	void informParticleInserted(Molecule mol);
 	void informParticleDeleted(Molecule mol);
 	void informParticleChanged(Molecule from, Molecule to);
@@ -65,6 +67,7 @@ private:
 	bool setNextInsertIDs();
 
 private:
+	bool _bVacuum;
 	dec::ControlRegion* _region;
 	ParticleDeleter* _deleter;
 	ParticleManipulator* _manipulator;
@@ -119,8 +122,10 @@ public:
 	virtual void FinalizeParticleManipulation(Simulation* simulation) {_nManipState = PMS_IDLE;}
 	virtual void FinalizeParticleManipulation_preForce(Simulation* simulation) {_nManipState = PMS_IDLE;}
 	void CreateDeletionLists(std::vector<dec::CompVarsStruct> compVars);
+	void setVacuum(const bool& bVal) {_bVacuum = bVal;}
 
 private:
+	bool _bVacuum;
 	std::vector< std::vector<uint64_t> > _deletionLists;
 };
 

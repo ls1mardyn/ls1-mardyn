@@ -105,6 +105,7 @@ public:
 	std::vector<CompVarsStruct> getCompVars() {return _compVars;}
 	std::list<uint64_t> GetLocalParticleIDs(const uint32_t& nCompID) {return _compVars.at(nCompID).particleIDs;}
 	int64_t getLocalNumMoleculesSpread(uint32_t nCompID) {return _compVars.at(nCompID).numMolecules.spread.local;}
+	bool getVacuum() {return _bVacuum;}
 
 	// checks
 	bool globalTargetDensityExeeded(uint32_t cid)   {return _compVars.at(cid).numMolecules.spread.global > 0;}
@@ -153,6 +154,8 @@ private:
 	bool InsertionAllIdle();
 
 private:
+	bool _bVacuum;
+
 	// parameter
 	std::vector<CompVarsStruct> _compVars;
 

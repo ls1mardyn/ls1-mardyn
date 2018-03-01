@@ -58,6 +58,7 @@ void select_rnd_elements(std::list<T1>& mylist, std::vector<T1>& myvec, T2 numSe
 // class ParticleManipDirector
 ParticleManipDirector::ParticleManipDirector(dec::ControlRegion* region)
 	:
+	_bVacuum(false),
 	_region(region),
 	_deleter(nullptr),
 	_manipulator(nullptr)
@@ -124,6 +125,9 @@ void ParticleManipDirector::readXML(XMLfileUnits& xmlconfig)
 		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
+
+	// Vacuum?
+	_bVacuum = _region->getVacuum();
 }
 
 void ParticleManipDirector::localValuesReseted(Simulation* simulation)
@@ -147,7 +151,7 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 		global_log->info() << "DELETER activated" << endl;
 	}
 	// check if particle identities have to be changed
-	else if(false == _region->globalCompositionBalanced() )
+	else if(false == _region->globalCompositionBalanced() && false == _bVacuum)
 	{
 		bool bValidIDs = this->setNextChangeIDs();
 		if(true == bValidIDs)
@@ -160,7 +164,7 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 			_manipulator = nullptr;
 	}
 	// check if particles have to be added
-	else if(true == _region->globalTargetDensityUndershot(0) )
+	else if(true == _region->globalTargetDensityUndershot(0) && false == _bVacuum)
 	{
 		bool bValidIDs = this->setNextInsertIDs();
 		if(true == bValidIDs)
@@ -225,6 +229,11 @@ std::list<uint64_t> ParticleManipDirector::GetLocalParticleIDs(const uint32_t& n
 int64_t ParticleManipDirector::getLocalNumMoleculesSpread(uint32_t nCompID)
 {
 	return _region->getLocalNumMoleculesSpread(nCompID);
+}
+
+void ParticleManipDirector::setVacuum(const bool& bVal)
+{
+	_bVacuum = bVal; _deleter->setVacuum(bVal);
 }
 
 bool ParticleManipDirector::setNextChangeIDs()
@@ -312,6 +321,19 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 	int ownRank = domainDecomp.getRank();
 	int numProcs = domainDecomp.getNumProcs();
 	uint16_t numComps = compVars.size();
+
+	// VACUUM
+	if(true == _bVacuum)
+	{
+		for(uint16_t cid=1; cid<numComps; ++cid)
+		{
+			for(auto&& mol : compVars.at(cid).particleIDs)
+				_deletionLists.at(cid).push_back(mol);
+		}
+		return;
+	}
+	// VACUUM
+
 	std::vector<CommVar<uint64_t> > numDel;
 	numDel.resize(numComps);
 	if(compVars.at(0).numMolecules.spread.global > 0)
