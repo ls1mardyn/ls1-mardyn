@@ -210,7 +210,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 	#endif
 
 	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _sendRequest));
-	_msgSent = _countReceived = _msgReceived = false;
+	_msgSent = false;
 }
 
 bool CommunicationPartner::testSend() {
@@ -223,6 +223,11 @@ bool CommunicationPartner::testSend() {
 		}
 	}
 	return _msgSent;
+}
+
+void CommunicationPartner::resetReceive(){
+	_countReceived = _msgReceived = false;
+
 }
 
 bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& /*type*/) {

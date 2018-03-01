@@ -189,7 +189,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	// send only if neighbour is actually a neighbour.
 	for (int i = 0; i < numNeighbours; ++i) {
 		if ((*_neighbours)[0][i].getRank() != domainDecomp->getRank()) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
+			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to" << std::endl;
 			(*_neighbours)[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 
@@ -236,6 +236,12 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 	}
 	
+	for (int i = 0; i < numNeighbours; ++i) { // reset receive status
+		if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()) {
+			(*_neighbours)[0][i].resetReceive();
+		}
+	}
+
 #if PUSH_PULL_PARTNERS
 	selectNeighbours(msgType, false /* export */); // last selected is export
 	numNeighbours = numExportNeighbours;
@@ -898,6 +904,12 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
+	for (int i = 0; i < numNeighbours; ++i) { // reset receive status
+		if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()) {
+			(*_neighbours)[0][i].resetReceive();
+		}
+	}
+
 	while (not allDone) {
 		allDone = true;
 
