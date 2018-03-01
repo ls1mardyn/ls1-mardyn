@@ -17,20 +17,37 @@
 #include "parallel/ZonalMethods/ZonalMethod.h"
 #include <mpi.h>
 
-#define PUSH_PULL_PARTNERS 0
+#define PUSH_PULL_PARTNERS 1
 
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
-	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod){
-	_neighbours.resize(this->getCommDims());
+	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod) {
+#if PUSH_PULL_PARTNERS
 	
-	_haloExportForceImportNeighbours.resize(this->getCommDims());
-	_haloImportForceExportNeighbours.resize(this->getCommDims());
-	_leavingExportNeighbours.resize(this->getCommDims());
-	_leavingImportNeighbours.resize(this->getCommDims());
+	_haloExportForceImportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
+	_haloImportForceExportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
+	_leavingExportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
+	_leavingImportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
 	
+	_haloExportForceImportNeighbours->resize(this->getCommDims());
+	_haloImportForceExportNeighbours->resize(this->getCommDims());
+	_leavingExportNeighbours->resize(this->getCommDims());
+	_leavingImportNeighbours->resize(this->getCommDims());
+	
+#else
+	_neighbours = new std::vector<std::vector<CommunicationPartner>>();
+	_neighbours->resize(this->getCommDims());
+#endif	
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
+#if PUSH_PULL_PARTNERS
+	delete _haloExportForceImportNeighbours;
+	delete _haloExportForceImportNeighbours;
+	delete _leavingExportNeighbours;
+	delete _leavingImportNeighbours;
+#else
+	delete _neighbours;
+#endif
 	delete _zonalMethod;
 }
 
@@ -168,12 +185,12 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 
 
 	// 1Stage=> only _neighbours[0] exists!
-	const int numNeighbours = _neighbours[0].size();
+	const int numNeighbours = (*_neighbours)[0].size();
 	// send only if neighbour is actually a neighbour.
 	for (int i = 0; i < numNeighbours; ++i) {
-		if (_neighbours[0][i].getRank() != domainDecomp->getRank()) {
+		if ((*_neighbours)[0][i].getRank() != domainDecomp->getRank()) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
-			_neighbours[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
+			(*_neighbours)[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 
 		}
@@ -195,9 +212,11 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	
 #if PUSH_PULL_PARTNERS
 	selectNeighbours(msgType, false /* export */);
-	const int numExportNeighbours = _neighbours[0].size();
+	const int numExportNeighbours = (*_neighbours)[0].size();
+	cout << "numExportNeighbours: " << numExportNeighbours << " on: " << my_rank << endl;
 	selectNeighbours(msgType, true /* import */); // current _neighbours is import
-	const int numImportNeighbours = _neighbours[0].size(); 
+	const int numImportNeighbours = (*_neighbours)[0].size(); 
+	cout << "numImportNeighbours: " << numImportNeighbours << " on: " << my_rank << endl;
 #else
 	numNeighbours = _neighbours[0].size();
 #endif
@@ -214,7 +233,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 	// for 1-stage: if there is at least one neighbour with the same rank as the sending rank, make sure to remove received duplicates!
 	for (int i = 0; i < numNeighbours; i++) {
-		removeRecvDuplicates |= (domainDecomp->getRank() == _neighbours[0][i].getRank());
+		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 	}
 	
 #if PUSH_PULL_PARTNERS
@@ -222,7 +241,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	numNeighbours = numExportNeighbours;
 	
 	for (int i = 0; i < numNeighbours; i++) {
-		removeRecvDuplicates |= (domainDecomp->getRank() == _neighbours[0][i].getRank());
+		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 	}
 #endif
 	
@@ -234,13 +253,15 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
-		
+		cout << "loop" << endl;
 		// cout << "while loop top on: " << my_rank << endl;
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-				allDone &= _neighbours[0][i].testSend(); // THIS CAUSES A SEG-FAULT
+			cout << "kickstart loop i: " << i << " on: " << my_rank << endl;
+			cout << "neighbour rank: " << (*_neighbours)[0][i].getRank() << " on: " << my_rank << endl;
+			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
+				allDone &= (*_neighbours)[0][i].testSend(); // THIS CAUSES A SEG-FAULT
 			}
 		}
 		
@@ -253,8 +274,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) { // import required
-			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-				allDone &= _neighbours[0][i].iprobeCount(domainDecomp->getCommunicator(),
+			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
+				allDone &= (*_neighbours)[0][i].iprobeCount(domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType());
 			}
 
@@ -264,8 +285,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
-			if (domainDecomp->getRank() != _neighbours[0][i].getRank()){
-					allDone &= _neighbours[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
+			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
+					allDone &= (*_neighbours)[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
 			}
 		}
 		
@@ -280,8 +301,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					<< std::endl;
 			waitCounter += 5.0;
 			for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
-				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
-					_neighbours[0][i].deadlockDiagnosticSendRecv();
+				if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
+					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
 			}
 			
 #if PUSH_PULL_PARTNERS
@@ -289,8 +310,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 			numNeighbours = numExportNeighbours;
 			
 			for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
-				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
-					_neighbours[0][i].deadlockDiagnosticSendRecv();
+				if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
+					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
 			}
 #endif
 		}
@@ -303,8 +324,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
-					_neighbours[0][i].deadlockDiagnosticSendRecv();
+				if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
+					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
 			}
 			
 #if PUSH_PULL_PARTNERS
@@ -312,8 +333,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 			numNeighbours = numImportNeighbours;
 			
 			for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
-					_neighbours[0][i].deadlockDiagnosticSendRecv();
+				if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
+					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
 			}
 #endif
 			
@@ -413,19 +434,19 @@ void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegio
 	for(int i = 0; i < 3; i++) {
 		if(myRegion->rmax[i] < inQuestion->rmax[i]) { // 1
 			if(myRegion->rmin[i] < inQuestion->rmin[i]) { // 1 1
-				memcpy(overlap.rmax, myRegion->rmax, sizeof(double) * 3);
-				memcpy(overlap.rmin, inQuestion->rmin, sizeof(double) * 3);
+				overlap.rmax[i] = myRegion->rmax[i];
+				overlap.rmin[i] = inQuestion->rmin[i];
 			} else { // 1 0
-				memcpy(overlap.rmax, myRegion->rmax, sizeof(double) * 3);
-				memcpy(overlap.rmin, myRegion->rmin, sizeof(double) * 3);
+				overlap.rmax[i] = myRegion->rmax[i];
+				overlap.rmin[i] = myRegion->rmin[i];
 			}
 		} else { // 0
 			if(myRegion->rmin[i] < inQuestion->rmin[i]) { // 0 1
-				memcpy(overlap.rmax, inQuestion->rmax, sizeof(double) * 3);
-				memcpy(overlap.rmin, inQuestion->rmin, sizeof(double) * 3);
+				overlap.rmax[i] = inQuestion->rmax[i];
+				overlap.rmin[i] = inQuestion->rmin[i];
 			} else { // 0 0
-				memcpy(overlap.rmax, inQuestion->rmax, sizeof(double) * 3);
-				memcpy(overlap.rmin, myRegion->rmin, sizeof(double) * 3);
+				overlap.rmax[i] = inQuestion->rmax[i];
+				overlap.rmin[i] = myRegion->rmin[i];
 			}
 		}
 	}
@@ -764,10 +785,23 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		// TODO: this should be safe, as long as molecules don't start flying around
 		// at the speed of one cutoffRadius per time step
 	}
+	
+	cout << "reached01" << endl;
 
-	for (unsigned int d = 0; d < _commDimms; d++) {
-		_neighbours[d].clear();
+#if PUSH_PULL_PARTNERS
+	for(unsigned int d = 0; d < _commDimms; d++) { // why free?
+		(*_haloExportForceImportNeighbours)[d].clear();
+		(*_haloImportForceExportNeighbours)[d].clear();
+		(*_leavingExportNeighbours)[d].clear();
+		(*_leavingImportNeighbours)[d].clear();
 	}
+#else 
+	for (unsigned int d = 0; d < _commDimms; d++) { // why free?
+		(*_neighbours)[d].clear();
+	}
+#endif
+	
+	cout << "reached02" << endl;
 	
 	
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , cutoffRadius};
@@ -778,8 +812,8 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	std::vector<HaloRegion> leavingRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	
 	// assuming p1 sends regions to p2
-	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, _haloImportForceExportNeighbours[0], _haloExportForceImportNeighbours[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
-	aquireNeighbours(domain, &ownRegion, leavingRegions, _leavingExportNeighbours[0], _leavingImportNeighbours[0]); // p1 notes reply, p2 notes owned as leaving import
+	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, (*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
+	aquireNeighbours(domain, &ownRegion, leavingRegions, (*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]); // p1 notes reply, p2 notes owned as leaving import
 	
 #else
 	
@@ -791,7 +825,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	}
 	_fullShellNeighbours = commPartners;
 	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
-	_neighbours[0] = squeezePartners(commPartners);
+	(*_neighbours)[0] = squeezePartners(commPartners);
 #endif
 
 }
@@ -823,11 +857,11 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 
 	} else {
 
-		const int numNeighbours = _neighbours[d].size();
+		const int numNeighbours = (*_neighbours)[d].size();
 
 		for (int i = 0; i < numNeighbours; ++i) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
-			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
+			(*_neighbours)[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 		}
 
@@ -845,7 +879,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 	}
 
 	
-	const int numNeighbours = _neighbours[d].size();
+	const int numNeighbours = (*_neighbours)[d].size();
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
 	// messages with waiting for other messages to arrive
 	bool allDone = false;
@@ -859,18 +893,18 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) {
-			allDone &= _neighbours[d][i].testSend();
+			allDone &= (*_neighbours)[d][i].testSend();
 		}
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) {
-			allDone &= _neighbours[d][i].iprobeCount(domainDecomp->getCommunicator(),
+			allDone &= (*_neighbours)[d][i].iprobeCount(domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType());
 		}
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) {
-			allDone &= _neighbours[d][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
+			allDone &= (*_neighbours)[d][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
 		}
 
 		// catch deadlocks
@@ -882,7 +916,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 					<< std::endl;
 			waitCounter += 5.0;
 			for (int i = 0; i < numNeighbours; ++i) {
-				_neighbours[d][i].deadlockDiagnosticSendRecv();
+				(*_neighbours)[d][i].deadlockDiagnosticSendRecv();
 			}
 		}
 
@@ -892,7 +926,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {
-				_neighbours[d][i].deadlockDiagnosticSendRecv();
+				(*_neighbours)[d][i].deadlockDiagnosticSendRecv();
 			}
 			Simulation::exit(457);
 		}
@@ -966,7 +1000,7 @@ void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cuto
 	}
 
 	for (unsigned int d = 0; d < _commDimms; d++) {
-		_neighbours[d].clear();
+		(*_neighbours)[d].clear();
 	}
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, cutoffRadius}; // region of the box
 	// ---
@@ -979,9 +1013,9 @@ void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cuto
 	}
 
 	_fullShellNeighbours = commPartners;
-	convert1StageTo3StageNeighbours(commPartners, _neighbours, ownRegion, cutoffRadius);
+	convert1StageTo3StageNeighbours(commPartners, (*_neighbours), ownRegion, cutoffRadius);
 	//squeeze neighbours -> only a single send, if rightneighbour == leftneighbour
 	for (unsigned int d = 0; d < _commDimms; d++) {
-		_neighbours[d]= squeezePartners(_neighbours[d]);
+		(*_neighbours)[d]= squeezePartners((*_neighbours)[d]);
 	}
 }

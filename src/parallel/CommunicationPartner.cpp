@@ -216,7 +216,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 bool CommunicationPartner::testSend() {
 	if (not _msgSent) {
 		int flag = 0;
-		MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus));
+		MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus)); // THIS CAUSES A SEG FAULT IN PUSH_PULL_NEIGHBOURS
 		if (flag == 1) {
 			_msgSent = true;
 			_sendBuf.clear();

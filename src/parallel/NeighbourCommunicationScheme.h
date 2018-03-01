@@ -74,8 +74,8 @@ public:
 			//std::cout << "FSN:" << neigh.getDynamicSize();
 		}
 		//std::cout << "post FSN/pre neigh:" << totSize;
-		totSize += _neighbours.capacity() * sizeof(CommunicationPartner);
-		for (auto& neighList : _neighbours) {
+		totSize += (*_neighbours).capacity() * sizeof(CommunicationPartner);
+		for (auto& neighList : (*_neighbours)) {
 			for (auto& neigh : neighList) {
 				totSize += neigh.getDynamicSize();
 				//std::cout << "Neigh:" << neigh.getDynamicSize();
@@ -88,13 +88,13 @@ public:
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
-	std::vector<std::vector<CommunicationPartner>> _neighbours;
+	std::vector<std::vector<CommunicationPartner>> *_neighbours;
 	
 	// -------------------------------------------------------------------------
-	std::vector<std::vector<CommunicationPartner>> _haloExportForceImportNeighbours;
-	std::vector<std::vector<CommunicationPartner>> _haloImportForceExportNeighbours;
-	std::vector<std::vector<CommunicationPartner>> _leavingExportNeighbours;
-	std::vector<std::vector<CommunicationPartner>> _leavingImportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> *_haloExportForceImportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> *_haloImportForceExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> *_leavingExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> *_leavingImportNeighbours;
 	
 	void selectNeighbours(MessageType msgType, bool import);
 	// -------------------------------------------------------------------------
@@ -126,9 +126,9 @@ public:
 			override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {
 		std::vector<int> neighbourRanks;
-		for (unsigned int i = 0; i < _neighbours[0].size(); i++) {
-			if (_neighbours[0][i].isFaceCommunicator()) {
-				neighbourRanks.push_back(_neighbours[0][i].getRank());
+		for (unsigned int i = 0; i < (*_neighbours)[0].size(); i++) {
+			if ((*_neighbours)[0][i].isFaceCommunicator()) {
+				neighbourRanks.push_back((*_neighbours)[0][i].getRank());
 			}
 		}
 		return neighbourRanks;

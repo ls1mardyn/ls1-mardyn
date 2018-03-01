@@ -18,7 +18,7 @@
 #include "parallel/ZonalMethods/FullShell.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 
-#define PUSH_PULL_NEIGHBOURS 0
+#define PUSH_PULL_NEIGHBOURS 1
 
 class NeighbourCommunicationSchemeTest : public utils::TestWithSimulationSetup {
 	

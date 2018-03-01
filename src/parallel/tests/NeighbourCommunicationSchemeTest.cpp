@@ -5,7 +5,7 @@
  */
 
 #include "NeighbourCommunicationSchemeTest.h"
-#define PUSH_PULL_NEIGHBOURS 0
+#define PUSH_PULL_NEIGHBOURS 1
 
 
 using namespace std;
