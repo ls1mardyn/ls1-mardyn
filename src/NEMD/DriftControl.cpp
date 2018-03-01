@@ -49,8 +49,8 @@ drc::ControlRegion::ControlRegion( ControlInstance* parent, double dLowerCorner[
 	// prepare drift vector
 	this->PrepareDriftVector(dDirection, dTargetVal);
 
-    // target component ID
-    _nTargetComponentID = nTargetComponentID;
+	// target component ID
+	_nTargetComponentID = nTargetComponentID;
 }
 
 void drc::ControlRegion::readXML(XMLfileUnits& xmlconfig)
@@ -78,15 +78,15 @@ void drc::ControlRegion::CalcGlobalValues(DomainDecompBase* domainDecomp)
 
 #ifdef ENABLE_MPI
 
-    MPI_Allreduce( _dDriftVelocityLocal, _dDriftVelocityGlobal, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce( _dEkinLocal, _dEkinGlobal, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce( _dDriftVelocityLocal, _dDriftVelocityGlobal, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce( _dEkinLocal, _dEkinGlobal, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 #else
 
-    for(unsigned short d=0; d<3; ++d)
-    {
-        _dDriftVelocityGlobal[d] = _dDriftVelocityLocal[d];
-    }
+	for(unsigned short d=0; d<3; ++d)
+	{
+		_dDriftVelocityGlobal[d] = _dDriftVelocityLocal[d];
+	}
 #endif
 
 //	cout << "["<<ownRank<< "]: _dDriftVelocityLocal[0] = " << _dDriftVelocityLocal[0] << endl;
@@ -97,40 +97,40 @@ void drc::ControlRegion::CalcGlobalValues(DomainDecompBase* domainDecomp)
 //	cout << "["<<ownRank<< "]: _dDriftVelocityGlobal[1] = " << _dDriftVelocityGlobal[1] << endl;
 //	cout << "["<<ownRank<< "]: _dDriftVelocityGlobal[2] = " << _dDriftVelocityGlobal[2] << endl;
 
-    // collective Communication
-    domainDecomp->collCommInit(1);
-    domainDecomp->collCommAppendUnsLong(_nNumMoleculesLocal);
-    domainDecomp->collCommAllreduceSum();
-    _nNumMoleculesGlobal = domainDecomp->collCommGetUnsLong();
-    domainDecomp->collCommFinalize();
+	// collective Communication
+	domainDecomp->collCommInit(1);
+	domainDecomp->collCommAppendUnsLong(_nNumMoleculesLocal);
+	domainDecomp->collCommAllreduceSum();
+	_nNumMoleculesGlobal = domainDecomp->collCommGetUnsLong();
+	domainDecomp->collCommFinalize();
 
 //	cout << "["<<ownRank<< "]: _nNumMoleculesLocal = " << _nNumMoleculesLocal << endl;
 //	cout << "["<<ownRank<< "]: _nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
 
-    // velocity sum has to be divided by number of molecules taken into account
-    if(_nNumMoleculesGlobal > 0)
-    {
-        for(unsigned short d = 0; d<3; ++d)
-        {
-            _dDriftVelocityGlobal[d] = _dDriftVelocityGlobal[d] / (double) (_nNumMoleculesGlobal);
-        }
-    }
+	// velocity sum has to be divided by number of molecules taken into account
+	if(_nNumMoleculesGlobal > 0)
+	{
+		for(unsigned short d = 0; d<3; ++d)
+		{
+			_dDriftVelocityGlobal[d] = _dDriftVelocityGlobal[d] / (double) (_nNumMoleculesGlobal);
+		}
+	}
 
-    // calculate vector to add to each molecule to obtain target drift velocity of system inside control region
-    if(0. == _dDriftVelocityTargetVal)
-    {
-        for(unsigned short d = 0; d<3; ++d)
-        {
-            _dAddVector[d] = _dDriftVelocityGlobal[d] * -1.;
-        }
-    }
-    else
-    {
-        for(unsigned short d = 0; d<3; ++d)
-        {
-            _dAddVector[d] = _dDriftVelocityTargetVector[d] - _dDriftVelocityGlobal[d];
-        }
-    }
+	// calculate vector to add to each molecule to obtain target drift velocity of system inside control region
+	if(0. == _dDriftVelocityTargetVal)
+	{
+		for(unsigned short d = 0; d<3; ++d)
+		{
+			_dAddVector[d] = _dDriftVelocityGlobal[d] * -1.;
+		}
+	}
+	else
+	{
+		for(unsigned short d = 0; d<3; ++d)
+		{
+			_dAddVector[d] = _dDriftVelocityTargetVector[d] - _dDriftVelocityGlobal[d];
+		}
+	}
 
 //	cout << "["<<ownRank<< "]: _dDriftVelocityGlobal = " << _dDriftVelocityGlobal[0] << ", " << _dDriftVelocityGlobal[1] << ", " << _dDriftVelocityGlobal[2] << endl;
 //	cout << "["<<ownRank<< "]: _dDriftVelocityTargetVector = " << _dDriftVelocityTargetVector[0] << ", " << _dDriftVelocityTargetVector[1] << ", " << _dDriftVelocityTargetVector[2] << endl;
@@ -140,110 +140,110 @@ void drc::ControlRegion::CalcGlobalValues(DomainDecompBase* domainDecomp)
 
 void drc::ControlRegion::MeasureDrift(Molecule* mol)
 {
-    // check if molecule inside control region
-    for(unsigned short d = 0; d<3; ++d)
-    {
-        double dPos = mol->r(d);
+	// check if molecule inside control region
+	for(unsigned short d = 0; d<3; ++d)
+	{
+		double dPos = mol->r(d);
 
-        if(dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d] )
-            return;
-    }
+		if(dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d] )
+			return;
+	}
 
-    // sum up drift and kin. energy
-    for(unsigned short d = 0; d<3; ++d)
-    {
-        double v = mol->v(d);
+	// sum up drift and kin. energy
+	for(unsigned short d = 0; d<3; ++d)
+	{
+		double v = mol->v(d);
 
-        _dDriftVelocityLocal[d] += v;
-        _dEkinLocal[d] += v*v;  // * mol->mass();
-    }
+		_dDriftVelocityLocal[d] += v;
+		_dEkinLocal[d] += v*v;  // * mol->mass();
+	}
 
-    // count num molecules
-    _nNumMoleculesLocal++;
+	// count num molecules
+	_nNumMoleculesLocal++;
 }
 
 void drc::ControlRegion::CalcScaleFactor()
 {
-    double dEkin_new = 0;
-    double dEkin_old = 0;
-    double dDeltaEkin = 0;
+	double dEkin_new = 0;
+	double dEkin_old = 0;
+	double dDeltaEkin = 0;
 
-    // sum up x, y, z dimension of kin. energy values
-    for(unsigned short d = 0; d<3; ++d)
-    {
-        dEkin_old += _dEkinGlobal[d];
+	// sum up x, y, z dimension of kin. energy values
+	for(unsigned short d = 0; d<3; ++d)
+	{
+		dEkin_old += _dEkinGlobal[d];
 
-        // (v^2_target - v^2_drift) * N * m yields the kinetic energy added or removed from system
-        // dDeltaEkin is positive, when energy added
-        // dDeltaEkin is negative, when energy removed
-        dDeltaEkin += _dDriftVelocityTargetVector[d] * _dDriftVelocityTargetVector[d] - _dDriftVelocityGlobal[d] * _dDriftVelocityGlobal[d];
-    }
+		// (v^2_target - v^2_drift) * N * m yields the kinetic energy added or removed from system
+		// dDeltaEkin is positive, when energy added
+		// dDeltaEkin is negative, when energy removed
+		dDeltaEkin += _dDriftVelocityTargetVector[d] * _dDriftVelocityTargetVector[d] - _dDriftVelocityGlobal[d] * _dDriftVelocityGlobal[d];
+	}
 
-    dDeltaEkin = dDeltaEkin * _nNumMoleculesGlobal;
-    dEkin_new = dEkin_old +dDeltaEkin;
+	dDeltaEkin = dDeltaEkin * _nNumMoleculesGlobal;
+	dEkin_new = dEkin_old +dDeltaEkin;
 
 //    cout << "dDeltaEkin = " << dDeltaEkin << endl;
 //    cout << "dEkin_new = " << dEkin_new << endl;
 //    cout << "dEkin_old = " << dEkin_old << endl;
 
-    double f = 1.;
+	double f = 1.;
 
-    if(dEkin_new > 0.)
-        f = dEkin_old / dEkin_new;
+	if(dEkin_new > 0.)
+		f = dEkin_old / dEkin_new;
 
-    _dScaleFactor = sqrt(f);
+	_dScaleFactor = sqrt(f);
 
-    // no scaling
-    _dScaleFactor = 1.;
+	// no scaling
+	_dScaleFactor = 1.;
 }
 
 void drc::ControlRegion::ControlDrift(Molecule* mol)
 {
-    if(_nNumMoleculesGlobal < 1)
-        return;
+	if(_nNumMoleculesGlobal < 1)
+		return;
 
-    // check componentID
-        if(mol->componentid()+1 != _nTargetComponentID)  // program intern componentID starts with 0
-            return;
+	// check componentID
+		if(mol->componentid()+1 != _nTargetComponentID)  // program intern componentID starts with 0
+			return;
 
-    // check if molecule is inside
-    for(unsigned short d = 0; d<3; ++d)
-    {
-        double dPos = mol->r(d);
+	// check if molecule is inside
+	for(unsigned short d = 0; d<3; ++d)
+	{
+		double dPos = mol->r(d);
 
-        if(dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d] )
-            return;
-    }
+		if(dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d] )
+			return;
+	}
 
-    // change velocity vector
-    for(unsigned short d = 0; d<3; ++d)
-    {
-        double v = mol->v(d);
+	// change velocity vector
+	for(unsigned short d = 0; d<3; ++d)
+	{
+		double v = mol->v(d);
 
 //        cout << "v[" << d << "] = " << v << endl;
 //
 //        cout << "_dAddVector[" << d << "] = " << _dAddVector[d] << endl;
 
-        // control drift
-        mol->setv( d, (v + _dAddVector[d]) * _dScaleFactor);
+		// control drift
+		mol->setv( d, (v + _dAddVector[d]) * _dScaleFactor);
 
 //        cout << "v[" << d << "] = " << mol->v(d) << endl;
-    }
+	}
 }
 
 void drc::ControlRegion::ResetLocalValues()
 {
-    // reset local values
-    for(unsigned short d = 0; d<3; ++d)
-    {
-        _dDriftVelocityLocal[d] = 0.;
-        _dEkinLocal[d] = 0.;
-    }
+	// reset local values
+	for(unsigned short d = 0; d<3; ++d)
+	{
+		_dDriftVelocityLocal[d] = 0.;
+		_dEkinLocal[d] = 0.;
+	}
 
-    _nNumMoleculesLocal = 0;
+	_nNumMoleculesLocal = 0;
 
-    // scale factor
-    _dScaleFactor = 1.;
+	// scale factor
+	_dScaleFactor = 1.;
 }
 
 void drc::ControlRegion::PrepareDriftVector()
@@ -312,12 +312,12 @@ DriftControl::DriftControl( Domain* domain, DomainDecompBase* domainDecomp)
 DriftControl::DriftControl( Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop)
                           : ControlInstance(domain, domainDecomp)
 {
-    // control frequency
-    _nControlFreq = nControlFreq;
+	// control frequency
+	_nControlFreq = nControlFreq;
 
-    // start/stop timestep
-    _nStart = nStart;
-    _nStop  = nStop;
+	// start/stop timestep
+	_nStart = nStart;
+	_nStop  = nStop;
 }
 
 DriftControl::~DriftControl()
@@ -402,77 +402,77 @@ void DriftControl::readXML(XMLfileUnits& xmlconfig)
 
 void DriftControl::AddRegion(drc::ControlRegion* region)
 {
-    _vecControlRegions.push_back(region);
+	_vecControlRegions.push_back(region);
 }
 
 void DriftControl::MeasureDrift(Molecule* mol, unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simstep % _nControlFreq != 0)
+		return;
 
-    // measure drift in each control region
-    std::vector<drc::ControlRegion*>::iterator it;
+	// measure drift in each control region
+	std::vector<drc::ControlRegion*>::iterator it;
 
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->MeasureDrift(mol);
-    }
+	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	{
+		(*it)->MeasureDrift(mol);
+	}
 }
 
 void DriftControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simstep % _nControlFreq != 0)
+		return;
 
-    // calc global values for control region
-    std::vector<drc::ControlRegion*>::iterator it;
+	// calc global values for control region
+	std::vector<drc::ControlRegion*>::iterator it;
 
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->CalcGlobalValues(domainDecomp);
-    }
+	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	{
+		(*it)->CalcGlobalValues(domainDecomp);
+	}
 }
 
 void DriftControl::CalcScaleFactors(unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simstep % _nControlFreq != 0)
+		return;
 
-    // calc scale factors for control regions
-    std::vector<drc::ControlRegion*>::iterator it;
+	// calc scale factors for control regions
+	std::vector<drc::ControlRegion*>::iterator it;
 
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->CalcScaleFactor();
-    }
+	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	{
+		(*it)->CalcScaleFactor();
+	}
 }
 
 void DriftControl::ControlDrift(Molecule* mol, unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simstep % _nControlFreq != 0)
+		return;
 
-    // control drift of all regions
-    std::vector<drc::ControlRegion*>::iterator it;
+	// control drift of all regions
+	std::vector<drc::ControlRegion*>::iterator it;
 
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->ControlDrift(mol);
-    }
+	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	{
+		(*it)->ControlDrift(mol);
+	}
 }
 
 void DriftControl::Init(unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
-        return;
+	if(simstep % _nControlFreq != 0)
+		return;
 
-    // reset local values
-    std::vector<drc::ControlRegion*>::iterator it;
+	// reset local values
+	std::vector<drc::ControlRegion*>::iterator it;
 
-    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
-    {
-        (*it)->ResetLocalValues();
-    }
+	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	{
+		(*it)->ResetLocalValues();
+	}
 }
 
 
