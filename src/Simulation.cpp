@@ -1562,7 +1562,7 @@ void Simulation::simulate() {
             }
 
             // calc global values
-            _driftControl->CalcGlobalValues(_simstep);
+            _driftControl->CalcGlobalValues(_domainDecomposition, _simstep);
 
             // calc scale factors
             _driftControl->CalcScaleFactors(_simstep);

@@ -28,7 +28,7 @@ public:
 
 	void readXML(XMLfileUnits& xmlconfig);
     unsigned long GetDriftVelocityGlobal(unsigned short nDim) {return _dDriftVelocityGlobal[nDim];}
-    void CalcGlobalValues();
+    void CalcGlobalValues(DomainDecompBase* domainDecomp);
     void MeasureDrift(Molecule* mol);
 
     // After drift is measured by calling MeasureDrift() the scale factor has to be calculated
@@ -80,7 +80,7 @@ public:
 
     void Init(unsigned long simstep);
     void MeasureDrift(Molecule* mol, unsigned long simstep);
-    void CalcGlobalValues(unsigned long simstep);
+    void CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep);
     void CalcScaleFactors(unsigned long simstep);
     void ControlDrift(Molecule* mol, unsigned long simstep);
 

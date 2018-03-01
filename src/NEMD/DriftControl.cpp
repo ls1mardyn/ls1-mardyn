@@ -71,10 +71,10 @@ drc::ControlRegion::~ControlRegion()
 }
 
 
-void drc::ControlRegion::CalcGlobalValues()
+void drc::ControlRegion::CalcGlobalValues(DomainDecompBase* domainDecomp)
 {
 	// domain decomposition
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	int ownRank = domainDecomp->getRank();
 
 #ifdef ENABLE_MPI
 
@@ -89,23 +89,23 @@ void drc::ControlRegion::CalcGlobalValues()
     }
 #endif
 
-//    cout << "_dDriftVelocityLocal[0] = " << _dDriftVelocityLocal[0] << endl;
-//    cout << "_dDriftVelocityLocal[1] = " << _dDriftVelocityLocal[1] << endl;
-//    cout << "_dDriftVelocityLocal[2] = " << _dDriftVelocityLocal[2] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityLocal[0] = " << _dDriftVelocityLocal[0] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityLocal[1] = " << _dDriftVelocityLocal[1] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityLocal[2] = " << _dDriftVelocityLocal[2] << endl;
 //
-//    cout << "_dDriftVelocityGlobal[0] = " << _dDriftVelocityGlobal[0] << endl;
-//    cout << "_dDriftVelocityGlobal[1] = " << _dDriftVelocityGlobal[1] << endl;
-//    cout << "_dDriftVelocityGlobal[2] = " << _dDriftVelocityGlobal[2] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityGlobal[0] = " << _dDriftVelocityGlobal[0] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityGlobal[1] = " << _dDriftVelocityGlobal[1] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityGlobal[2] = " << _dDriftVelocityGlobal[2] << endl;
 
     // collective Communication
-    domainDecomp.collCommInit(1);
-    domainDecomp.collCommAppendUnsLong(_nNumMoleculesLocal);
-    domainDecomp.collCommAllreduceSum();
-    _nNumMoleculesGlobal = domainDecomp.collCommGetUnsLong();
-    domainDecomp.collCommFinalize();
+    domainDecomp->collCommInit(1);
+    domainDecomp->collCommAppendUnsLong(_nNumMoleculesLocal);
+    domainDecomp->collCommAllreduceSum();
+    _nNumMoleculesGlobal = domainDecomp->collCommGetUnsLong();
+    domainDecomp->collCommFinalize();
 
-//    cout << "_nNumMoleculesLocal = " << _nNumMoleculesLocal << endl;
-//    cout << "_nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
+//	cout << "["<<ownRank<< "]: _nNumMoleculesLocal = " << _nNumMoleculesLocal << endl;
+//	cout << "["<<ownRank<< "]: _nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
 
     // velocity sum has to be divided by number of molecules taken into account
     if(_nNumMoleculesGlobal > 0)
@@ -132,9 +132,9 @@ void drc::ControlRegion::CalcGlobalValues()
         }
     }
 
-//    cout << "_dDriftVelocityGlobal = " << _dDriftVelocityGlobal[0] << ", " << _dDriftVelocityGlobal[1] << ", " << _dDriftVelocityGlobal[2] << endl;
-//    cout << "_dDriftVelocityTargetVector = " << _dDriftVelocityTargetVector[0] << ", " << _dDriftVelocityTargetVector[1] << ", " << _dDriftVelocityTargetVector[2] << endl;
-//    cout << "_dAddVector = " << _dAddVector[0] << ", " << _dAddVector[1] << ", " << _dAddVector[2] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityGlobal = " << _dDriftVelocityGlobal[0] << ", " << _dDriftVelocityGlobal[1] << ", " << _dDriftVelocityGlobal[2] << endl;
+//	cout << "["<<ownRank<< "]: _dDriftVelocityTargetVector = " << _dDriftVelocityTargetVector[0] << ", " << _dDriftVelocityTargetVector[1] << ", " << _dDriftVelocityTargetVector[2] << endl;
+//	cout << "["<<ownRank<< "]: _dAddVector = " << _dAddVector[0] << ", " << _dAddVector[1] << ", " << _dAddVector[2] << endl;
 
 }
 
@@ -419,7 +419,7 @@ void DriftControl::MeasureDrift(Molecule* mol, unsigned long simstep)
     }
 }
 
-void DriftControl::CalcGlobalValues(unsigned long simstep)
+void DriftControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep)
 {
     if(simstep % _nControlFreq != 0)
         return;
@@ -429,7 +429,7 @@ void DriftControl::CalcGlobalValues(unsigned long simstep)
 
     for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
     {
-        (*it)->CalcGlobalValues();
+        (*it)->CalcGlobalValues(domainDecomp);
     }
 }
 
