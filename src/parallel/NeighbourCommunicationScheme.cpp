@@ -562,8 +562,19 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				
 				overlap(myRegion, &region); // different shift for the overlap?
 				
+				// make a note in partners02 - don't forget to squeeze partners02
+				bool enlarged[3][2] = {{ false }};
+				CommunicationPartner myNewNeighbour(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(), region.offset, enlarged);
+				comm_partners02.push_back(myNewNeighbour);
+
+				
+				for(int k = 0; k < 3; k++) { // shift back
+					region.rmax[k] -= shift[k];
+					region.rmin[k] -= shift[k];
+				}
+				
 				unsigned char* singleRegion = new unsigned char[bytesOneRegion];
-			
+							
 				p = 0;
 				memcpy(singleRegion + p, region.rmin, sizeof(double) * 3);
 				p += sizeof(double) * 3;
@@ -576,18 +587,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				memcpy(singleRegion + p, shift.data(), sizeof(double) * 3);
 				p += sizeof(double) * 3;
 				
-				
-				// make a note in partners02 - don't forget to squeeze partners02
-				bool enlarged[3][2] = {{ false }};
-				
-				CommunicationPartner myNewNeighbour(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(), region.offset, enlarged);
-				comm_partners02.push_back(myNewNeighbour);
-				
-				// shift back
-				for(int k = 0; k < 3; k++) { // applying shift
-					region.rmax[k] -= shift[k];
-					region.rmin[k] -= shift[k];
-				}
 				
 				sendingList[rank].push_back(singleRegion); 
 			}

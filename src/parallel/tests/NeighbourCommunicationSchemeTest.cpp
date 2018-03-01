@@ -19,7 +19,7 @@ NeighbourCommunicationSchemeTest::NeighbourCommunicationSchemeTest() {
 };
 
 NeighbourCommunicationSchemeTest::~NeighbourCommunicationSchemeTest() {
-	delete _fullShell;
+	//delete _fullShell;
 	delete _directScheme;
 }
 
@@ -59,11 +59,141 @@ void NeighbourCommunicationSchemeTest::testOverlap() { // assume this one works 
 	HaloRegion region01;
 	HaloRegion region02;
 	
+	for(int i = 0; i < 3; i++) { 
+		region01.rmax[i] = 4.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 6.0;
+		region02.rmin[i] = 3.0;
+	}
+	
+	_directScheme->overlap(&region01, &region02);
+	
+	for(int i = 0; i < 3; i++) {
+		ASSERT_EQUAL(region02.rmax[i], 4.0);
+		ASSERT_EQUAL(region02.rmin[i], 3.0);
+	}
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 6.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 5.0;
+		region02.rmin[i] = 3.0;
+	}
+	
+	_directScheme->overlap(&region01, &region02);
+	
+	for(int i = 0; i < 3; i++) {
+		ASSERT_EQUAL(region02.rmax[i], 5.0);
+		ASSERT_EQUAL(region02.rmin[i], 3.0);
+	}
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 4.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 3.0;
+		region02.rmin[i] = 1.0;
+	}
+	
+	_directScheme->overlap(&region01, &region02);
+	
+	for(int i = 0; i < 3; i++) {
+		ASSERT_EQUAL(region02.rmax[i], 3.0);
+		ASSERT_EQUAL(region02.rmin[i], 2.0);
+	}
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 4.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 6.0;
+		region02.rmin[i] = 1.0;
+	}
+	
+	_directScheme->overlap(&region01, &region02);
+	
+	for(int i = 0; i < 3; i++) {
+		ASSERT_EQUAL(region02.rmax[i], 4.0);
+		ASSERT_EQUAL(region02.rmin[i], 2.0);
+	}
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 6.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 6.0;
+		region02.rmin[i] = 2.0;
+	}
+	
+	_directScheme->overlap(&region01, &region02);
+	
+	for(int i = 0; i < 3; i++) {
+		ASSERT_EQUAL(region02.rmax[i], 6.0);
+		ASSERT_EQUAL(region02.rmin[i], 2.0);
+	}
 }
 
 void NeighbourCommunicationSchemeTest::testIOwnThis() { // i own a part of this
 	HaloRegion region01;
 	HaloRegion region02;
+	
+	for(int i = 0; i < 3; i++) { 
+		region01.rmax[i] = 4.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 6.0;
+		region02.rmin[i] = 3.0;
+	}
+	
+	ASSERT_EQUAL(_directScheme->iOwnThis(&region01, &region02), true);
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 6.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 5.0;
+		region02.rmin[i] = 3.0;
+	}
+	
+	ASSERT_EQUAL(_directScheme->iOwnThis(&region01, &region02), true);
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 4.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 3.0;
+		region02.rmin[i] = 1.0;
+	}
+	
+	ASSERT_EQUAL(_directScheme->iOwnThis(&region01, &region02), true);
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 4.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 6.0;
+		region02.rmin[i] = 1.0;
+	}
+	
+	ASSERT_EQUAL(_directScheme->iOwnThis(&region01, &region02), true); 
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 6.0;
+		region01.rmin[i] = 2.0;
+		region02.rmax[i] = 6.0;
+		region02.rmin[i] = 2.0;
+	}
+	
+	ASSERT_EQUAL(_directScheme->iOwnThis(&region01, &region02), true); 
+	
+	for(int i = 0; i < 3; i++) {
+		region01.rmax[i] = 5.0;
+		region01.rmin[i] = 1.0;
+	}
+	
+	region02.rmax[0] = 6.0;
+	region02.rmax[1] = 7.0;
+	region02.rmax[2] = 5.0;
+	
+	region02.rmin[0] = 5.0;
+	region02.rmin[1] = 6.0;
+	region02.rmin[2] = 5.0;
+	
+	ASSERT_EQUAL(_directScheme->iOwnThis(&region01, &region02), false);
+	
 	
 }
 #endif
