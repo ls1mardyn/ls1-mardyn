@@ -16,7 +16,7 @@ TEST_SUITE_REGISTRATION(NeighbourCommunicationSchemeTest);
 NeighbourCommunicationSchemeTest::NeighbourCommunicationSchemeTest() {
 	_fullShell = new FullShell();
 	_directScheme = new DirectNeighbourCommunicationScheme(_fullShell);
-};
+}
 
 NeighbourCommunicationSchemeTest::~NeighbourCommunicationSchemeTest() {
 	//delete _fullShell;

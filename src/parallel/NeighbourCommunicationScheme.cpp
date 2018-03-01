@@ -42,7 +42,7 @@ NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimm
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 #if PUSH_PULL_PARTNERS
 	delete _haloExportForceImportNeighbours;
-	delete _haloExportForceImportNeighbours;
+	delete _haloImportForceExportNeighbours;
 	delete _leavingExportNeighbours;
 	delete _leavingImportNeighbours;
 #else
@@ -253,13 +253,18 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
-		cout << "loop" << endl;
+		//cout << "loop" << endl;
 		// cout << "while loop top on: " << my_rank << endl;
+		
+#if PUSH_PULL_PARTNERS
+		selectNeighbours(msgType, false /* export */); // last selected is export
+		numNeighbours = numExportNeighbours;
+#endif
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-			cout << "kickstart loop i: " << i << " on: " << my_rank << endl;
-			cout << "neighbour rank: " << (*_neighbours)[0][i].getRank() << " on: " << my_rank << endl;
+			//cout << "kickstart loop i: " << i << " on: " << my_rank << endl;
+			//cout << "neighbour rank: " << (*_neighbours)[0][i].getRank() << " on: " << my_rank << endl;
 			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
 				allDone &= (*_neighbours)[0][i].testSend(); // THIS CAUSES A SEG-FAULT
 			}
@@ -276,7 +281,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		for (int i = 0; i < numNeighbours; ++i) { // import required
 			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
 				allDone &= (*_neighbours)[0][i].iprobeCount(domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType());
+					domainDecomp->getMPIParticleType()); // hat Einfluss
 			}
 
 		}
@@ -286,9 +291,11 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
 			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
-					allDone &= (*_neighbours)[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES);
+					allDone &= (*_neighbours)[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES); // hat Einfluss
 			}
 		}
+		
+		// --> die Kommunikation klappt nicht
 		
 		//cout << "for 3 on: " << my_rank << endl;
 
@@ -378,25 +385,25 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 	switch(msgType) {
 		case LEAVING_ONLY:
 			// leavingImport / leavingExport
-			global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
+			//global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
 			if(import) _neighbours = _leavingImportNeighbours;
 			else _neighbours = _leavingExportNeighbours;
 			break;
 		case HALO_COPIES: 
 			// haloImport / haloExport
-			global_log->info() << "selecting Neighbours HALO_COPIES" << endl;
+			//global_log->info() << "selecting Neighbours HALO_COPIES" << endl;
 			if(import) _neighbours = _haloImportForceExportNeighbours;
 			else _neighbours = _haloExportForceImportNeighbours;
 			break;
 		case FORCES: 
 			// forceImport / forceExport
-			global_log->info() << "selecting Neighbours FORCES" << endl;
+			//global_log->info() << "selecting Neighbours FORCES" << endl;
 			if(import) _neighbours = _haloExportForceImportNeighbours;
 			else _neighbours = _haloImportForceExportNeighbours;
 			break;
 	}
 	
-	cout << "exit on: " << my_rank << endl;
+	//cout << "exit on: " << my_rank << endl;
 }
 
 void DirectNeighbourCommunicationScheme::shiftIfNeccessary(double *domainLength, HaloRegion *region, double *shiftArray) { // IS THIS CORRECT?
@@ -585,9 +592,12 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 				
 				// make a note in partners02 - don't forget to squeeze partners02
 				bool enlarged[3][2] = {{ false }};
+				for(int k = 0; k < 3; k++) shift[k] *= -1;
+				
 				CommunicationPartner myNewNeighbour(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(), region.offset, enlarged);
 				comm_partners02.push_back(myNewNeighbour);
 
+				for(int k = 0; k < 3; k++) shift[k] *= -1;
 				
 				for(int k = 0; k < 3; k++) { // shift back
 					region.rmax[k] -= shift[k];
