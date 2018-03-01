@@ -413,9 +413,9 @@ void DriftControl::MeasureDrift(Molecule* mol, unsigned long simstep)
 	// measure drift in each control region
 	std::vector<drc::ControlRegion*>::iterator it;
 
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	for(auto&& reg : _vecControlRegions)
 	{
-		(*it)->MeasureDrift(mol);
+		reg->MeasureDrift(mol);
 	}
 }
 
@@ -427,9 +427,9 @@ void DriftControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned lon
 	// calc global values for control region
 	std::vector<drc::ControlRegion*>::iterator it;
 
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	for(auto&& reg : _vecControlRegions)
 	{
-		(*it)->CalcGlobalValues(domainDecomp);
+		reg->CalcGlobalValues(domainDecomp);
 	}
 }
 
@@ -441,9 +441,9 @@ void DriftControl::CalcScaleFactors(unsigned long simstep)
 	// calc scale factors for control regions
 	std::vector<drc::ControlRegion*>::iterator it;
 
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	for(auto&& reg : _vecControlRegions)
 	{
-		(*it)->CalcScaleFactor();
+		reg->CalcScaleFactor();
 	}
 }
 
@@ -455,9 +455,9 @@ void DriftControl::ControlDrift(Molecule* mol, unsigned long simstep)
 	// control drift of all regions
 	std::vector<drc::ControlRegion*>::iterator it;
 
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	for(auto&& reg : _vecControlRegions)
 	{
-		(*it)->ControlDrift(mol);
+		reg->ControlDrift(mol);
 	}
 }
 
@@ -469,9 +469,9 @@ void DriftControl::Init(unsigned long simstep)
 	// reset local values
 	std::vector<drc::ControlRegion*>::iterator it;
 
-	for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+	for(auto&& reg : _vecControlRegions)
 	{
-		(*it)->ResetLocalValues();
+		reg->ResetLocalValues();
 	}
 }
 
