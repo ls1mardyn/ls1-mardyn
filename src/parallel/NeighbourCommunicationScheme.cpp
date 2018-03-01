@@ -17,7 +17,7 @@
 #include "parallel/ZonalMethods/ZonalMethod.h"
 #include <mpi.h>
 
-#define PUSH_PULL_PARTNERS 1
+#define PUSH_PULL_PARTNERS 0
 
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
 	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod) {
