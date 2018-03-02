@@ -317,7 +317,7 @@ void ParticleDeleter::ManipulateParticles(Simulation* simulation, Molecule* mol)
 void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compVars)
 {
 	std::srand(std::time(nullptr));
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 	int numProcs = domainDecomp.getNumProcs();
 	uint16_t numComps = compVars.size();
@@ -625,7 +625,7 @@ void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
 				Simulation::exit(-1);
 			}
 
-			DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+			DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 			int ownRank = domainDecomp.getRank();
 		//	// DEBUG
 		//	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubble.radius.actual.global << endl;
@@ -785,7 +785,7 @@ double BubbleMethod::calcMinSquaredDistance(Molecule* mol, const double& radius)
 
 bool BubbleMethod::outerMoleculeRadiusCutsBubbleRadius(Simulation* simulation, Molecule* mol, const double& dist2_min, double& dist2, double* distVec)
 {
-	DomainDecompBase domainDecomp = simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 	Domain* domain = simulation->getDomain();
 	double box[3];
@@ -837,7 +837,7 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 {
 	uint16_t bubble_cid = getBubbleVarsCompID();
 
-	DomainDecompBase domainDecomp = simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 //	cout << "rank[" << ownRank << "]: GrowBubble(), state:" << _nState << endl;
 
@@ -1010,7 +1010,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 {
 	uint16_t cid = getBubbleVarsCompID();
 
-	DomainDecompBase domainDecomp = simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 	ParticleContainer* particleCont = global_simulation->getMolecules();
 
@@ -1259,7 +1259,7 @@ int RandomSelector::selectParticle(Simulation* simulation, Molecule& selectedMol
 {
 	this->collectInfo();
 
-	DomainDecompBase domainDecomp = simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 	cout << "rank[" << ownRank << "]: selectParticle()" << endl;
 
@@ -1334,7 +1334,7 @@ CompDependSelector::CompDependSelector(BubbleMethod* parent)
 
 int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selectedMolecule)
 {
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
 	cout << "ownRank=" << ownRank << endl;
 	ChangeVar<uint32_t> nextChangeIDs = _parent->getNextChangeIDs();

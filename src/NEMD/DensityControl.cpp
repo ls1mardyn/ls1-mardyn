@@ -588,7 +588,7 @@ void dec::ControlRegion::UpdateVolume(DomainDecompBase* domainDecomp)
 void dec::ControlRegion::WriteHeaderDeletedMolecules()
 {
 	// domain decomposition
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 #ifdef ENABLE_MPI
 int rank = domainDecomp.getRank();
@@ -623,7 +623,7 @@ if (rank != 0)
 void dec::ControlRegion::WriteDataDeletedMolecules(unsigned long simstep)
 {
 	// domain decomposition
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
     // calc global values 
 #ifdef ENABLE_MPI
@@ -688,7 +688,7 @@ void dec::ControlRegion::WriteDataDeletedMolecules(unsigned long simstep)
 void dec::ControlRegion::WriteHeaderParticleManipCount()
 {
 	// domain decomposition
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 #ifdef ENABLE_MPI
 int rank = domainDecomp.getRank();
@@ -723,7 +723,7 @@ void dec::ControlRegion::WriteDataParticleManipCount(unsigned long simstep)
 		return;
 
 	// domain decomposition
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 	// write out data
 	#ifdef ENABLE_MPI

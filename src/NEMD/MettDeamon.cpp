@@ -777,7 +777,7 @@ void MettDeamon::writeRestartfile()
 	if(0 != global_simulation->getSimulationStep() % _nWriteFreqRestart)
 		return;
 
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 	if(domainDecomp.getRank() != 0)
 		return;
@@ -821,7 +821,7 @@ void MettDeamon::InitTransitionPlane(Domain* domain)
 
 void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 {
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
 	cout << "[" << domainDecomp.getRank() << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
