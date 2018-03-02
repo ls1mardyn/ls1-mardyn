@@ -478,7 +478,7 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 				}
 				cout << "nRankDel=" << nRankDel << endl;
 
-				mardyn_assert(nRankDel > 0);
+				mardyn_assert(nRankDel >= 0);
 
 				numDel_gather[nRankDel*numComps+cid]++;
 				for(int pid=nRankDel+1; pid<numProcs; ++pid)
