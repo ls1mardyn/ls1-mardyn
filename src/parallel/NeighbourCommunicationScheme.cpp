@@ -4,9 +4,9 @@
  *  Created on: Sep 29, 2016
  *      Author: seckler
  */
-//class NeighbourCommunicationScheme;
-//class DirectNeighbourCommunicationScheme;
-//class IndirectNeighbourCommunicationScheme;
+class NeighbourCommunicationScheme;
+class DirectNeighbourCommunicationScheme;
+class IndirectNeighbourCommunicationScheme;
 
 #include "NeighbourCommunicationScheme.h"
 #include "DomainDecompMPIBase.h"
@@ -906,7 +906,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 	global_log->set_mpi_output_all();
 	for (int i = 0; i < numNeighbours; ++i) { // reset receive status
 		if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()) {
-			(*_neighbours)[0][i].resetReceive();
+			(*_neighbours)[d][i].resetReceive();
 		}
 	}
 
