@@ -190,7 +190,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	// send only if neighbour is actually a neighbour.
 	for (int i = 0; i < numNeighbours; ++i) {
 		if ((*_neighbours)[0][i].getRank() != domainDecomp->getRank()) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to" << std::endl;
+			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			(*_neighbours)[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 
@@ -215,7 +215,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	selectNeighbours(msgType, true /* import */); // current _neighbours is import
 	const int numImportNeighbours = (*_neighbours)[0].size(); 
 #else
-	numNeighbours = _neighbours[0].size();
+	numNeighbours = (*_neighbours)[0].size();
 #endif
 	
 	
