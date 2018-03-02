@@ -283,7 +283,8 @@ void ParticleManipDirector::informParticleChanged(Molecule from, Molecule to)
 // class ParticleDeleter
 ParticleDeleter::ParticleDeleter(ParticleManipDirector* director)
 	:
-	ParticleManipulator(director)
+	ParticleManipulator(director),
+	_bVacuum(false)
 {
 	uint32_t numComps = global_simulation->getEnsemble()->getComponents()->size()+1;
 	_deletionLists.resize(numComps);
