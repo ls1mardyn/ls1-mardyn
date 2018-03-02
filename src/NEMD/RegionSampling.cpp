@@ -217,7 +217,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 		global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No sampling module parameters specified. Program exit ..." << endl;
 		Simulation::exit(-1);
 	}
-//		string oldpath = xmlconfig.getcurrentnodepath();
+
 	XMLfile::Query::const_iterator outputSamplingIter;
 	for( outputSamplingIter = query.begin(); outputSamplingIter; outputSamplingIter++ )
 	{
@@ -293,7 +293,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				string oldpath = xmlconfig.getcurrentnodepath();
 				xmlconfig.changecurrentnode("discretizations");
 				uint32_t numDiscretizations = 0;
-				XMLfile::Query query = xmlconfig.query("discretization");
+				query = xmlconfig.query("discretization");
 				numDiscretizations = query.card();
 				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations (components for that VDF should be sampled): " << numDiscretizations << endl;
 				if(numDiscretizations < 1) {
@@ -411,7 +411,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 
 			// subdivision of region
 			uint32_t numSubdivisions = 0;
-			XMLfile::Query query = xmlconfig.query("subdivision");
+			query = xmlconfig.query("subdivision");
 			numSubdivisions = query.card();
 			if(numSubdivisions != 2) {
 				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Found " << numSubdivisions << " 'subdivision' elements, "
@@ -844,13 +844,15 @@ void SampleRegion::InitSamplingFieldYR(int nDimension)
 	}
 
 	// Init offsets
-	uint64_t nOffset = 0;
-	for(uint8_t dim = 0; dim<3; ++dim){
-		for(uint8_t sec = 0; sec<3; ++sec){
-			for(uint32_t cid = 0; cid<_numComponents; ++cid){
-				for(uint32_t si = 0; si<_nNumShellsFieldYR; ++si){
-					_nOffsetFieldYR[dim][sec][cid][si] = nOffset;
-					nOffset += _nNumBinsFieldYR;
+	{
+		uint64_t nOffset = 0;
+		for(uint8_t dim = 0; dim<3; ++dim){
+			for(uint8_t sec = 0; sec<3; ++sec){
+				for(uint32_t cid = 0; cid<_numComponents; ++cid){
+					for(uint32_t si = 0; si<_nNumShellsFieldYR; ++si){
+						_nOffsetFieldYR[dim][sec][cid][si] = nOffset;
+						nOffset += _nNumBinsFieldYR;
+					}
 				}
 			}
 		}

@@ -866,7 +866,6 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		double dTemperature[2];
 		double dExponent;
 		std::string strDirections;
-		uint32_t nNumSlabs;
 		uint32_t nCompID;
 		std::string strControlType;
 		int nControlType;

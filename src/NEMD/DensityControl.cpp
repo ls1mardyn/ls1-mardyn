@@ -110,19 +110,21 @@ dec::ControlRegion::~ControlRegion()
 
 void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 {
-	bool bRet = true;
-	int nVal = 0;
-	std::string strName;
-	std::string oldpath = xmlconfig.getcurrentnodepath();
-	bRet = bRet && xmlconfig.changecurrentnode("connect/[@name='MettDeamon']");
-	if(true == bRet)
-		bRet = bRet && xmlconfig.getNodeValue(".", nVal);
-	if(true == bRet && nVal > 0)
+	// MettDeamon connection
 	{
-		_bMettDeamonConnected = true;
-		_nMettDeamonInstanceIndex = (uint8_t)(nVal-1);
+		bool bRet = true;
+		int nVal = 0;
+		std::string oldpath = xmlconfig.getcurrentnodepath();
+		bRet = bRet && xmlconfig.changecurrentnode("connect/[@name='MettDeamon']");
+		if(true == bRet)
+			bRet = bRet && xmlconfig.getNodeValue(".", nVal);
+		if(true == bRet && nVal > 0)
+		{
+			_bMettDeamonConnected = true;
+			_nMettDeamonInstanceIndex = (uint8_t)(nVal-1);
+		}
+		xmlconfig.changecurrentnode(oldpath);
 	}
-	xmlconfig.changecurrentnode(oldpath);
 
 	// set target variables for all components
 	if(xmlconfig.changecurrentnode("targets")) {

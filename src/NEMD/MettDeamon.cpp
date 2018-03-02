@@ -482,7 +482,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	Random rnd;
 	double T = 80;
 	double v[3];
-	double v2 = 0.;
 
 	particleContainer->updateMoleculeCaches();
 
@@ -507,13 +506,13 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		v[0] = rnd.rnd();
 		v[1] = rnd.rnd();
 		v[2] = rnd.rnd();
-		v2 = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+		double v2_set = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 //		global_log->info() << "rnd: vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
-		double f = sqrt(vm2/v2);
+		double f = sqrt(vm2/v2_set);
 
 		for(uint8_t dim=0; dim<3; ++dim)
 			v[dim] *= f;
-		v2 = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+		v2_set = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 //		global_log->info() << "scaled: vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
 
 		// release trapped molecule
@@ -529,15 +528,13 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			tM->setv(1, 0.);
 			tM->setv(2, 0.);
 
-			double T = 80.;
-			double m = tM->mass();
-			double vm2 = T/m*4/9.;
+			vm2 = T/m*4/9.;
 			double v2 = tM->v2();
 
 			if(v2 > vm2)
 			{
-				double f = sqrt(vm2/v2);
-				tM->scale_v(f);
+				double fac = sqrt(vm2/v2);
+				tM->scale_v(fac);
 			}
 		}
 		else
@@ -556,8 +553,8 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	//			_nNumMoleculesDeletedLocal++;
 	//			_nNumMoleculesTooFast++;
 
-				double f = sqrt(v2max/v2);
-				tM->scale_v(f);
+				double fac = sqrt(v2max/v2);
+				tM->scale_v(fac);
 			}
 		}
 
@@ -590,7 +587,6 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 {
 	unsigned long nNumMoleculesLocal = 0;
 	unsigned long nNumMoleculesGlobal = 0;
-	double T = 80;
 
 	for (ParticleIterator tM = particleContainer->iteratorBegin();
 	tM != particleContainer->iteratorEnd(); ++tM) {

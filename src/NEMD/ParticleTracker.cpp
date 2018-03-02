@@ -228,7 +228,6 @@ void ParticleTracker::CreateDataFiles()
 	std::vector<std::string> vecFileNames;
 	vecFileNames.push_back("cid");
 
-	std::vector<std::string>::iterator it;
 	for(auto& it : vecFileNames)
 	{
 		std::string strQuantyNameDouble = it;
