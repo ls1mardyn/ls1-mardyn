@@ -71,6 +71,7 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 #if PUSH_PULL_PARTNERS
 	if(msgType == LEAVING_AND_HALO_COPIES) {
 		msgType = LEAVING_ONLY;
+		
 		initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 		finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 		
@@ -202,10 +203,8 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
 
-	int my_rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-	
-	cout << "enter finalizeExchangeMoleculesMPI on: " << my_rank << endl;
+//	int my_rank;
+//	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	
 	// msg type is fixed by the fuction call, but this needs to be done for both import and export
 	int numNeighbours;
@@ -213,10 +212,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 #if PUSH_PULL_PARTNERS
 	selectNeighbours(msgType, false /* export */);
 	const int numExportNeighbours = (*_neighbours)[0].size();
-	cout << "numExportNeighbours: " << numExportNeighbours << " on: " << my_rank << endl;
 	selectNeighbours(msgType, true /* import */); // current _neighbours is import
 	const int numImportNeighbours = (*_neighbours)[0].size(); 
-	cout << "numImportNeighbours: " << numImportNeighbours << " on: " << my_rank << endl;
 #else
 	numNeighbours = _neighbours[0].size();
 #endif
@@ -250,17 +247,12 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 	}
 #endif
-	
-	
-	cout << "finished removeRecvDuplicates loop on: " << my_rank << endl;
 
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
-		//cout << "loop" << endl;
-		// cout << "while loop top on: " << my_rank << endl;
 		
 #if PUSH_PULL_PARTNERS
 		selectNeighbours(msgType, false /* export */); // last selected is export
@@ -269,14 +261,11 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-			//cout << "kickstart loop i: " << i << " on: " << my_rank << endl;
-			//cout << "neighbour rank: " << (*_neighbours)[0][i].getRank() << " on: " << my_rank << endl;
 			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
 				allDone &= (*_neighbours)[0][i].testSend(); // THIS CAUSES A SEG-FAULT
 			}
 		}
 		
-		//cout << "for 1 on: " << my_rank << endl;
 		
 #if PUSH_PULL_PARTNERS
 		selectNeighbours(msgType, true /* import */);
@@ -292,18 +281,14 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 		}
 		
-		//cout << "for 2 on: " << my_rank << endl;
 
 		// unpack molecules
 		for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
 			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
-					allDone &= (*_neighbours)[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES); // hat Einfluss
+					allDone &= (*_neighbours)[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES); 
 			}
 		}
 		
-		// --> die Kommunikation klappt nicht
-		
-		//cout << "for 3 on: " << my_rank << endl;
 
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
@@ -329,7 +314,6 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 #endif
 		}
 		
-		//cout << "for 4 on: " << my_rank << endl;
 
 		if (waitingTime > deadlockTimeOut) {
 			global_log->error()
@@ -354,11 +338,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 			Simulation::exit(457);
 		}
 		
-		//cout << "if letztes on: " << my_rank << endl;
 
 	} // while not allDone
-	
-	cout << "exit finalizeExchangeMoleculesMPI on: " << my_rank << endl;
 	
 	global_log->set_mpi_output_root(0);
 }
@@ -391,30 +372,25 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 	switch(msgType) {
 		case LEAVING_ONLY:
 			// leavingImport / leavingExport
-			//global_log->info() << "selecting Neighbours LEAVING_ONLY" << endl;
 			if(import) _neighbours = _leavingImportNeighbours;
 			else _neighbours = _leavingExportNeighbours;
 			break;
 		case HALO_COPIES: 
 			// haloImport / haloExport
-			//global_log->info() << "selecting Neighbours HALO_COPIES" << endl;
 			if(import) _neighbours = _haloImportForceExportNeighbours;
 			else _neighbours = _haloExportForceImportNeighbours;
 			break;
 		case FORCES: 
 			// forceImport / forceExport
-			//global_log->info() << "selecting Neighbours FORCES" << endl;
 			if(import) _neighbours = _haloExportForceImportNeighbours;
 			else _neighbours = _haloImportForceExportNeighbours;
 			break;
 	}
-	
-	//cout << "exit on: " << my_rank << endl;
 }
 
 void DirectNeighbourCommunicationScheme::shiftIfNeccessary(double *domainLength, HaloRegion *region, double *shiftArray) { // IS THIS CORRECT?
 	for(int i = 0; i < 3; i++) // calculating shift 
-		if(region->rmin[i] > domainLength[i])
+		if(region->rmin[i] >= domainLength[i])
 			shiftArray[i] = -domainLength[i];
 	
 	for(int i = 0; i < 3; i++) // calculating shift
@@ -478,18 +454,8 @@ bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegi
 }
 
 /*
- * Start listening for regions of every process.
- * Send the process specific regions to every process. Tuple of process ID and region.
- * 
- * Wait till the listening got all the regions.
- * 
- * Determine who wants regions you provide.
- * --> The whos are your neighbours 
- * 
- * How many neighbours do I need to listen for? 
- * Start Listening for that amount of neighbours.
- * 
- * Send your Information to the processes who want you.
+ * 1. Initial Exchange of all desired regions.
+ * 2. Feedback from processes which own part of the region.
  * 
  */
 void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners01, std::vector<CommunicationPartner>& partners02) {
@@ -500,7 +466,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	int num_regions = desiredRegions.size(); // the number of regions I would like to aquire from other processes
 	
-	cout << "numregions: " << num_regions << " on: " << my_rank << endl;
 	
 	// tell the other processes how much you are going to send
 	int num_bytes_send =  sizeof(int) * 2 + (sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) * 1) * num_regions; // how many bytes am I going to send to all the other processes?
@@ -508,8 +473,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	//MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, MPI_COMM_WORLD);
 	
-	cout << "num_bytes_send: " << num_bytes_send << " on: " << my_rank << endl;
-	cout << "exchanged number of bytes in big region exchange on rank: " << my_rank << endl;
 	
 	// create byte buffer
 	std::vector<unsigned char> outgoing(num_bytes_send); // outgoing byte buffer
@@ -547,7 +510,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	//MPI_Allgather(&outgoing, num_bytes_send, MPI_BYTE, &incoming, num_bytes_receive, MPI_BYTE, MPI_COMM_WORLD);
 	MPI_Allgatherv(outgoing.data(), num_bytes_send, MPI_BYTE, incoming.data(), num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
 	
-	cout << "exchanged desired regions on rank: " << my_rank << endl;
 	
 	std::vector<int> candidates(num_incoming, 0); // outgoing row
 	std::vector<int> rec_information(num_incoming, 0); // how many bytes does each process expect?
@@ -557,7 +519,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	
 	i = 0;
 	while(i != num_bytes_receive) {
-		cout << i << " " << num_bytes_receive << " " << sizeof(double) << " " << sizeof(int) << "on: " << my_rank << endl;
 		
 		int rank;
 		int regions;
@@ -568,8 +529,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		i += sizeof(int); // 4
 		memcpy(&regions, incoming.data() + i, sizeof(int));
 		i += sizeof(int); // 4
-		
-		cout << regions << " from: " << rank << " on: " << my_rank << endl; // 26 on 1 and 0 from 1 and 0 
 		
 		
 		for(int j = 0; j < regions; j++) {
@@ -591,8 +550,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			
 			if(rank != my_rank && iOwnThis(myRegion, &region)) { 
 				candidates[rank]++; // this is a region I will send to rank
-				
-				// cout << "candidates[rank]: " << candidates[rank] << " on: " << my_rank << endl; // 26 on both
 				
 				overlap(myRegion, &region); // different shift for the overlap?
 				
@@ -636,8 +593,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners02);
 		partners02.insert(partners02.end(), squeezed.begin(), squeezed.end());
 	}
-	// assign here
-	cout << "HERE" << endl;
 	
 	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
 	for(int j = 0; j < num_incoming; j++) {
@@ -684,14 +639,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	 * 
 	 */
 	
-	cout << "candidates: ";
-	for(int j = 0; j < num_incoming; j++) {
-		cout << candidates[j] << " ";
-	}
-	cout << endl;
 	MPI_Allreduce(candidates.data(), rec_information.data(), num_incoming,MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-	
-	cout << "rec_information[my_rank]: " << rec_information[my_rank] << " on: " << my_rank << endl;
 	
 	// all the information for the final information exchange has been collected -> final exchange
 	
@@ -705,10 +653,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 			MPI_Isend(merged[j], candidates[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD, &requests[j]); // tag is one
 		}
 	}
-	
-	//MPI_Barrier(MPI_COMM_WORLD);
-	
-	cout << "sent the neighbours on rank: " << my_rank << endl;
 	
 	std::vector<CommunicationPartner> comm_partners01; // the communication partners
 	
@@ -724,7 +668,6 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 		int bytes;
 		MPI_Get_count(&probe_status, MPI_BYTE, &bytes);
 		
-		cout << "received neighbour bytes: " << bytes << " on: " << my_rank << endl; // only one process seems to receive 2392 bytes
 		
 		byte_counter += bytes;
 		// create buffer
@@ -758,26 +701,19 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	}
 	
 
-
-	cout << "received the neighbours on rank: " << my_rank << endl;
-	
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j] > 0) 
 			MPI_Wait(&requests[j], MPI_STATUS_IGNORE);
 	}
 
-	cout << "freed the requests on rank: " << my_rank << endl;
 	for (auto two : merged) {
 		delete[] two;
 	}
 	
-	cout << "number neighbousqueezePartrs: " << comm_partners01.size() << " on: " << my_rank << endl;
 	if(comm_partners01.size() > 0) {
 		std:vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
 		partners01.insert(partners01.end(), squeezed.begin(), squeezed.end());
-		cout << "FINAL NUMBER OF NEIGHBOURS: " << partners01.size() << " on: " << my_rank << endl;
 	}
-	cout << "exit aquire on rank: " << my_rank << endl;
 
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -789,7 +725,6 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		DomainDecompMPIBase* domainDecomp) {
 
 // corners of the process-specific domain
-	cout << "reached initCommunicationPartners" << endl;
 	
 	double rmin[DIMgeom]; // lower corner
 	double rmax[DIMgeom]; // higher corner
@@ -801,8 +736,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		// TODO: this should be safe, as long as molecules don't start flying around
 		// at the speed of one cutoffRadius per time step
 	}
-	
-	cout << "reached01" << endl;
+
 
 #if PUSH_PULL_PARTNERS
 	for(unsigned int d = 0; d < _commDimms; d++) { // why free?
@@ -816,8 +750,6 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		(*_neighbours)[d].clear();
 	}
 #endif
-	
-	cout << "reached02" << endl;
 	
 	
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , cutoffRadius};
@@ -850,7 +782,6 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
 	
-	global_log->info() << "select call - initExchangeMoleculesMPI1D" << endl;
 	
 	if (_coversWholeDomain[d]) {
 		// use the sequential version
@@ -888,7 +819,6 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
 	
-	global_log->info() << "select call - finalizeExchangeMoleculesMPI1D" << endl;
 	
 	if (_coversWholeDomain[d]) {
 		return;
