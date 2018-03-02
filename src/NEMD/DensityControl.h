@@ -70,7 +70,6 @@ class ControlRegion : public CuboidRegionObs
 {
 public:
 	ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3] );
-	ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nTargetComponentID, const double& dTargetDensity);
 	virtual ~ControlRegion();
 
 	void readXML(XMLfileUnits& xmlconfig);

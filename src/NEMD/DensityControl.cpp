@@ -104,43 +104,6 @@ dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3]
 	_director = new ParticleManipDirector(this);
 }
 
-dec::ControlRegion::ControlRegion(DensityControl* parent, double dLowerCorner[3], double dUpperCorner[3],
-		unsigned int nTargetComponentID, const double& dTargetDensity)
-		: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
-{
-	// ID
-	_nID = ++_nStaticID;
-
-    // target density
-//    _dTargetDensity = dTargetDensity;
-
-    // target component ID (inert gas)
-//    _nTargetComponentID = nTargetComponentID;
-
-    // init process relevance
-    _bProcessIsRelevant = true;
-
-    // init rank array
-    _ranks = NULL;
-
-    // reset local values
-    _nDeletedNumMoleculesLocal = 0;
-
-    for(unsigned int d=0; d<3; ++d)
-    {
-        _dDeletedVelocityLocal[d] = 0.;
-        _dDeletedVelocitySquaredLocal[d] = 0.;
-        _dDeletedEkinLocal[d] = 0.;
-    }
-
-    this->WriteHeaderDeletedMolecules();
-
-	// Connection to MettDeamon
-	_mettDeamon = NULL;
-	_bMettDeamonConnected = false;
-}
-
-
 dec::ControlRegion::~ControlRegion()
 {
 }
