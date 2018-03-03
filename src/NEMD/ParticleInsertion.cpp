@@ -310,8 +310,8 @@ void ParticleDeleter::ManipulateParticles(Simulation* simulation, Molecule* mol)
 	}
 	if(true == bDeleteMolecule)
 	{
+		_director->informParticleDeleted(*mol);  // deleted in next line
 		particleCont->deleteMolecule(*mol, true);
-		_director->informParticleDeleted(*mol);
 	}
 }
 
@@ -1078,8 +1078,8 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 				this->resetBubbleMoleculeComponent( &(*pit) );
 				if(pit->id() == _selectedMoleculeID) //componentid()+1 == 3)
 				{
+					_director->informParticleDeleted(*pit);  // deleted in next line
 					particleCont->deleteMolecule(*pit, false);
-					_director->informParticleDeleted(*pit);
 					break;
 				}
 			}
