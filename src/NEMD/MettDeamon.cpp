@@ -792,6 +792,15 @@ void MettDeamon::writeRestartfile()
 	ofs.close();
 }
 
+void MettDeamon::calcDeltaY()
+{
+	_feedrate.feed.actual = _dDeletedMolsPerTimestep * _dInvDensityArea;
+	if(MD_LEFT_TO_RIGHT == _nMovingDirection && _feedrate.feed.actual < 0.)
+		_feedrate.feed.actual = 0.;
+	else if (MD_RIGHT_TO_LEFT == _nMovingDirection && _feedrate.feed.actual > 0.)
+		_feedrate.feed.actual = 0.;
+}
+
 void MettDeamon::calcDeltaYbyDensity()
 {
 	double dDensityMean = 0.;

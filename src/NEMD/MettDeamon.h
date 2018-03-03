@@ -123,7 +123,7 @@ public:
 private:
 	void findMaxMoleculeID(DomainDecompBase* domainDecomp);
 	void writeRestartfile();
-	void calcDeltaY() { _feedrate.feed.actual = _dDeletedMolsPerTimestep * _dInvDensityArea; }
+	void calcDeltaY();
 	void calcDeltaYbyDensity();
 	// Check if molecule is a trapped one
 	bool IsTrappedMolecule(const uint8_t& cid) {return cid != _vecChangeCompIDsUnfreeze.at(cid);}
