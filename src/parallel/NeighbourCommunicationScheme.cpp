@@ -88,7 +88,6 @@ void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vec
 		MessageType msgType, DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer) { // Only Export?
 	
 #if PUSH_PULL_PARTNERS
-	global_log->info() << "select call - initExchangeMoleculesMPI" << endl;
 	selectNeighbours(msgType, false /* export */);
 #endif
 	
@@ -148,7 +147,6 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	// We have to check each direction.
 	
 #if PUSH_PULL_PARTNERS
-	global_log->info() << "select call - initExchangeMoleculesMPI" << endl;
 	selectNeighbours(msgType, false /* export */);
 #endif
 	
