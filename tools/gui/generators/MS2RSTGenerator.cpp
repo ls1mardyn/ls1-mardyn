@@ -190,7 +190,7 @@ void MS2RSTGenerator::thermostat(ParticleContainer* container) {
 	double summv2 = 0;
 	double sumIw2 = 0;
 	unsigned long numberOfRotationalDOF = 0;
-	for (ParticleIterator tM = container->iteratorBegin(); tM != container->iteratorEnd(); ++tM) {
+	for (ParticleIterator tM = container->iterator(); tM.hasNext(); tM.next()) {
 		tM->calculate_mv2_Iw2(summv2, sumIw2);
 		numberOfRotationalDOF += _components[ tM->componentid() ].getRotationalDegreesOfFreedom();
 	}
@@ -203,7 +203,7 @@ void MS2RSTGenerator::thermostat(ParticleContainer* container) {
 		betaRot = pow( numberOfRotationalDOF * _temperature / sumIw2, 0.5);
 	}
 
-	for (ParticleIterator tM = container->iteratorBegin(); tM != container->iteratorEnd(); ++tM) {
+	for (ParticleIterator tM = container->iterator(); tM.hasNext(); tM.next()) {
 		tM->scale_v(betaTrans);
 		tM->scale_D(betaRot);
 	}
