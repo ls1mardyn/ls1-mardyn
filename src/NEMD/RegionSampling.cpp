@@ -1253,7 +1253,7 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 					_d2EkinTransComp[offsetSum+s] += d2EkinTrans;
 					// Ekin drift
 					unsigned long N = _nNumMoleculesGlobal[offsetN+s];
-					double dInvN = 1. / ( (double)(N) );
+					double dInvN = (N > 0) ? (1. / ( (double)(N) ) ) : (0.);
 					double vd = _dVelocityGlobal[offsetComp+s];
 					double d2EkinDrift = vd*vd * _vecMass.at(cid) * dInvN;
 					_d2EkinDriftComp[offsetComp+s] = d2EkinDrift;
@@ -1292,9 +1292,9 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 		unsigned long nDOF_trans = nNumMolecules * 3;
 		unsigned long nDOF_rot   = _nRotDOFGlobal[i];
 		unsigned long nDOF_total = nDOF_trans + nDOF_rot;
-		double dInvDOF_trans = 1./ ( (double)(nDOF_trans) );
-		double dInvDOF_rot   = 1./ ( (double)(nDOF_rot)   );
-		double dInvDOF_total = 1./ ( (double)(nDOF_total) );
+		double dInvDOF_trans = (nDOF_trans > 0) ? (1. / ( (double)(nDOF_trans) ) ) : (0.);
+		double dInvDOF_rot   = (nDOF_rot   > 0) ? (1. / ( (double)(nDOF_rot  ) ) ) : (0.);
+		double dInvDOF_total = (nDOF_total > 0) ? (1. / ( (double)(nDOF_total) ) ) : (0.);
 
 		// density profile
 		_dDensity [i] = nNumMolecules * _dInvertBinVolSamplesProfiles;
