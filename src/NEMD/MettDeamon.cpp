@@ -461,8 +461,8 @@ void MettDeamon::resetPositionAndOrientation(Molecule* mol, const double& dBoxY)
 	else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
 		mol->setr(1, it->second.at(1) - _feedrate.feed.actual);
 
-	if(this->IsInsideOuterReservoirSlab(mol->r(1), dBoxY) == false)
-		return;
+//	if(this->IsInsideOuterReservoirSlab(mol->r(1), dBoxY) == false)
+//		return;
 
 	// reset quaternion (orientation)
 	Quaternion q(it->second.at(6),
@@ -527,6 +527,9 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			tM->setv(0, 0.);
 			tM->setv(1, 0.);
 			tM->setv(2, 0.);
+			tM->setD(0, 0.);
+			tM->setD(1, 0.);
+			tM->setD(2, 0.);
 
 			vm2 = T/m*4/9.;
 			double v2 = tM->v2();
@@ -604,6 +607,9 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			tM->setv(0, 0.);
 			tM->setv(1, 0.);
 			tM->setv(2, 0.);
+			tM->setD(0, 0.);
+			tM->setD(1, 0.);
+			tM->setD(2, 0.);
 
 			double T = 80.;
 			double m = tM->mass();
