@@ -198,8 +198,6 @@ void dec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 		_director->setVacuum(true);
 	}
 
-	cout << "current path: " << xmlconfig.getcurrentnodepath() << endl;
-
 	// change identity of molecules by component ID
 	if(xmlconfig.changecurrentnode("changes")) {
 		uint8_t numChanges = 0;
@@ -245,10 +243,10 @@ void dec::ControlRegion::Init(DomainDecompBase* domainDecomp)
 	// update region volume
 	this->UpdateVolume(domainDecomp);
 
-	// DEBUG
+#ifndef NDEBUG
 	cout << "Rank[" << domainDecomp->getRank() << "]: _dVolume.local  = " << _dVolume.local << endl;
 	cout << "Rank[" << domainDecomp->getRank() << "]: _dVolume.global = " << _dVolume.global << endl;
-	// DEBUG
+#endif
 
 	for(auto&& comp : _compVars)
 	{

@@ -344,7 +344,6 @@ public:
 		}
 		else
 			_maxID = 0;
-		cout << "_maxID=" << _maxID << endl;
 	}
 
 	void deque()

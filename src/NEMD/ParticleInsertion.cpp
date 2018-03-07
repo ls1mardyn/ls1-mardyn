@@ -389,29 +389,39 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 		spread.global = compVars.at(cid).numMolecules.spread.global;
 		if(spread.global > 0)
 		{
+#ifndef NDEBUG
 			cout << "Rank["<<ownRank<<"]: (spread.global * dInvPositiveSpreadSumOverComp.global * numDel.at(0).global)=("
 					<<  spread.global <<" * "<< dInvPositiveSpreadSumOverComp.global <<" * "<< numDel.at(0).global << ")="
 					<< (spread.global     *     dInvPositiveSpreadSumOverComp.global     *     numDel.at(0).global     ) << endl;
+#endif
 			numDel.at(cid).global = round(spread.global * dInvPositiveSpreadSumOverComp.global * numDel.at(0).global);
 		}
 		else
 			numDel.at(cid).global = 0;
+#ifndef NDEBUG
 		cout << "Rank["<<ownRank<<"]: numDel.at("<<cid<<").global["<<cid<<"] = " << numDel.at(cid).global << endl;
+#endif
 		// local
 		dInvPositiveSpread.at(cid).global = 1./( (double) (positiveSpread.at(cid).global) );
 		spread.local = compVars.at(cid).numMolecules.spread.local;
+#ifndef NDEBUG
 		cout << "Rank["<<ownRank<<"]: spread.local["<<cid<<"] = " << spread.local << endl;
+#endif
 		if(spread.local > 0)
 		{
+#ifndef NDEBUG
 			cout << "Rank["<<ownRank<<"]: (spread.local * dInvPositiveSpread.at(cid).global * numDel.at(cid).global)=("
 					<<  spread.local <<" * "<< dInvPositiveSpread.at(cid).global <<" * "<< numDel.at(cid).global << ")="
 					<< (spread.local     *     dInvPositiveSpread.at(cid).global     *     numDel.at(cid).global     ) << endl;
+#endif
 			numDel.at(cid).local = floor(spread.local * dInvPositiveSpread.at(cid).global * numDel.at(cid).global);
 //			select_rnd_elements(compVars.at(cid).particleIDs, _deletionLists.at(cid), numDel.at(cid).local);
 		}
 		else
 			numDel.at(cid).local = 0;
+#ifndef NDEBUG
 		cout << "Rank["<<ownRank<<"]: numDel.at("<<cid<<").local = " << numDel.at(cid).local << endl;
+#endif
 
 		// distribute remaining deletions
 		numMolecules_actual_local[cid] = compVars.at(cid).numMolecules.actual.local;
@@ -425,6 +435,7 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 #endif
 	if(0 == ownRank)
 	{
+#ifndef NDEBUG
 		for(int pid=0; pid<numProcs; ++pid)
 		{
 			cout << "pid=" << pid << ":";
@@ -434,6 +445,7 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 			}
 			cout << endl;
 		}
+#endif
 		std::vector<uint64_t> cumsum;
 		cumsum.resize(numProcs);
 		for(uint16_t cid=1; cid<numComps; ++cid)
@@ -442,12 +454,18 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 			if(numDel.at(cid).global < 1)
 				continue;
 			else
+			{
+#ifndef NDEBUG
 				cout << "numDel.at("<<cid<<").global=" << numDel.at(cid).global << endl;
+#endif
+			}
 
 			uint64_t numRemainingDeletions = numDel.at(cid).global;
 			for(int pid=0; pid<numProcs; ++pid)
 				numRemainingDeletions -= numDel_gather[pid*numComps+cid];
+#ifndef NDEBUG
 			cout << "numRemainingDeletions=" << numRemainingDeletions << endl;
+#endif
 
 			// skip component with no (zero) remaining deletions
 			if(numRemainingDeletions < 1)
@@ -459,13 +477,17 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 				numRemainingSum += numMolecules_actual_gather[pid*numComps+cid] - numDel_gather[pid*numComps+cid];
 				cumsum.at(pid) = numRemainingSum;
 			}
+#ifndef NDEBUG
 			cout << "numRemainingSum=" << numRemainingSum << endl;
+#endif
 
 			for(uint64_t di=0; di<numRemainingDeletions; ++di)
 			{
 				mardyn_assert(numRemainingSum > 0);
 				uint64_t rnd = (uint64_t)rand() % numRemainingSum;
+#ifndef NDEBUG
 				cout << "rnd=" << rnd << endl;
+#endif
 
 				int nRankDel = -1;
 				for(int pid=0; pid<numProcs; ++pid)
@@ -476,7 +498,9 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 						break;
 					}
 				}
+#ifndef NDEBUG
 				cout << "nRankDel=" << nRankDel << endl;
+#endif
 
 				mardyn_assert(nRankDel >= 0);
 
@@ -502,14 +526,14 @@ void ParticleDeleter::CreateDeletionLists(std::vector<dec::CompVarsStruct> compV
 		if(numDel.at(cid).local > 0)
 			select_rnd_elements(compVars.at(cid).particleIDs, _deletionLists.at(cid), numDel.at(cid).local);
 
-		//DEBUG
+#ifndef NDEBUG
 		cout << "Rank["<<ownRank<<"]compVars.at("<<cid<<").deletionList:";
 		for(auto mid:_deletionLists.at(cid) )
 		{
 			cout << " " << mid;
 		}
 		cout << endl;
-		//DEBUG
+#endif
 	}
 
 	delete[] numMolecules_actual_local;
@@ -869,8 +893,10 @@ void BubbleMethod::GrowBubble(Simulation* simulation, Molecule* mol)
 	// skip selected molecule, but update its position
 	if(mol->id() == _selectedMoleculeID)
 	{
+#ifndef NDEBUG
 		cout << "rank[" << ownRank << "] BubbleMethod::GrowBubble: _selectedMoleculeID="<<_selectedMoleculeID<< endl;
 		cout << *mol << endl;
+#endif
 		// visual
 		if(true == _bVisual)
 		{
@@ -985,16 +1011,17 @@ void BubbleMethod::ChangeIdentity(Simulation* simulation, Molecule* mol)
 
 		mol->setComponent(compNew);
 //		mol->clearFM();  // <-- necessary?
-
+#ifndef NDEBUG
 		cout << "Changed cid of molecule " << mol->id() << " from: " << _nextChangeIDs.from << " to: " << mol->componentid()+1 << endl;
-
+#endif
 		// update transl. kin. energy
 		double dScaleFactorTrans = sqrt(6*dUkinPerDOF/compNew->m()/mol->v2() );
 		mol->scale_v(dScaleFactorTrans);
 
 		double U_rot_new = mol->U_rot();
+#ifndef NDEBUG
 		cout << "U_rot_old=" << U_rot_old << ", U_rot_new=" << U_rot_new << endl;
-
+#endif
 		/*
 		//connection to MettDeamon
 		if(NULL != _mettDeamon)
@@ -1023,16 +1050,11 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 	_bubbleVars.at(cid).radius.actual.global = _bubbleVars.at(cid).radius.actual.local;
 #endif
 
-//	cout << "rank[" << ownRank << "]: _numManipulatedParticles.global=" << _numManipulatedParticles.global << endl;
+#ifndef NDEBUG
 	cout << "rank[" << ownRank << "]: _bubble.radius.actual.global=" << _bubbleVars.at(cid).radius.actual.global << endl;
-//	cout << "rank[" << ownRank << "]: _bubble.radius.target.global=" << _bubble.radius.target.global << endl;
-//	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _selectedMoleculeID="<<_selectedMoleculeID<< endl;
-//	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): _nState="<<_nState<< endl;
-
-//	if( !(BMS_GROWING_BUBBLE == _nState && _numManipulatedParticles.global == 0) )
+#endif
 
 	bool bBubbleSizeReached = (_bubbleVars.at(cid).radius.actual.global >= _bubbleVars.at(cid).radius.target.global) && BMS_GROWING_BUBBLE == _nState;
-//	cout << "rank[" << ownRank << "]: BubbleMethod::FinalizeParticleManipulation(): bBubbleSizeReached="<<bBubbleSizeReached<< ", targetID=" << this->getTargetCompID() << endl;
 	if(false == bBubbleSizeReached)
 		return;
 
@@ -1086,11 +1108,15 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 	//		particleCont->addParticles(_insertMolecules, false);
 			for(auto&& mol:_insertMolecules.actual)
 			{
+#ifndef NDEBUG
 				cout << "rank[" << ownRank << "]: Adding particle..." << endl;
 				cout << mol;
+#endif
 				particleCont->addParticle(mol, true, true, true);
 				_director->informParticleInserted(mol);
+#ifndef NDEBUG
 				cout << "rank[" << ownRank << "]: ... added!" << endl;
+#endif
 			}
 		}
 	}
@@ -1262,7 +1288,6 @@ int RandomSelector::selectParticle(Simulation* simulation, Molecule& selectedMol
 
 	DomainDecompBase& domainDecomp = simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
-	cout << "rank[" << ownRank << "]: selectParticle()" << endl;
 
 	Domain* domain = global_simulation->getDomain();
 	double bbMin[3];
@@ -1276,7 +1301,6 @@ int RandomSelector::selectParticle(Simulation* simulation, Molecule& selectedMol
 	uint64_t numMols = particles->getNumberOfParticles();
 
 	// find molecule with min distance to insertion position
-	cout << "rank[" << ownRank << "]: find molecule with min distance to insertion position" << endl;
 	double dist2_min = 1000;
 
 	ParticleIterator pit;
@@ -1311,7 +1335,10 @@ int RandomSelector::selectParticle(Simulation* simulation, Molecule& selectedMol
 #else
 	out.rank = ownRank;
 #endif
+
+#ifndef NDEBUG
 	cout << "rank["<<ownRank<<"]: dist2_min="<<dist2_min<<endl;
+#endif
 
 	return out.rank;
 }
@@ -1337,7 +1364,7 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 {
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	int ownRank = domainDecomp.getRank();
-	cout << "ownRank=" << ownRank << endl;
+
 	ChangeVar<uint32_t> nextChangeIDs = _parent->getNextChangeIDs();
 	std::list<uint64_t> particleIDsFrom = _parent->GetLocalParticleIDs(nextChangeIDs.from);
 	std::list<uint64_t> particleIDsTo   = _parent->GetLocalParticleIDs(nextChangeIDs.to);
@@ -1357,7 +1384,9 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 			<< ", spreadDiff=" << spreadDiff << endl;
 		// <-- DEBUG */
 	}
+#ifndef NDEBUG
 	cout << "Rank[" << ownRank << "]:  spreadDiff=" << spreadDiff << endl;
+#endif
 
 	struct {
 		int64_t val;
@@ -1376,11 +1405,12 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 	uint64_t selectedID = 0;
 	if(ownRank == out.rank)
 	{
-		// DEBUG -->
+#ifndef NDEBUG
 		cout << "Rank[" << ownRank << "]: particleIDsFrom:" << endl;
 		for(auto&& id:particleIDsFrom)
 			cout << id << ", ";
 		cout << endl;
+#endif
 		// <-- DEBUG
 		std::vector<uint64_t> selectedIDs;
 		if(particleIDsFrom.size() < 1)

@@ -1936,7 +1936,9 @@ void Simulation::refreshParticleIDs()
 #ifdef ENABLE_MPI
 	if (ownRank != 0) {
 		MPI_Recv(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+#ifndef NDEBUG
 		cout << "Process " << ownRank << " received maxID=" << prevMaxID << " from process " << (ownRank-1) << "." << endl;
+#endif
 	}
 #endif
 
@@ -1949,7 +1951,9 @@ void Simulation::refreshParticleIDs()
 	}
 #endif
 
+#ifndef NDEBUG
 	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
+#endif
 	ParticleIterator pit;
 	for( pit  = _moleculeContainer->iteratorBegin();
 			pit != _moleculeContainer->iteratorEnd();

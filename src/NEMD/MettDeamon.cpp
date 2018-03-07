@@ -237,7 +237,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		Simulation::exit(-1);
 	}
 
-//#ifndef NDEBUG
+#ifndef NDEBUG
 	cout << "_vecChangeCompIDsFreeze:" << endl;
 	for(uint32_t i=0; i<_vecChangeCompIDsFreeze.size(); ++i)
 	{
@@ -248,7 +248,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	{
 		std::cout << i << ": " << _vecChangeCompIDsUnfreeze.at(i) << std::endl;
 	}
-//#endif
+#endif
 
 	// molecule diameter
 	xmlconfig.getNodeValue("diameter", _dMoleculeDiameter);
@@ -331,7 +331,6 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 		this->initRestart();
 
 	this->InitTransitionPlane(global_simulation->getDomain() );
-	cout << domainDecomp->getRank() << ": Position of MettDeamons transition plane: " << _dTransitionPlanePosY << endl;
 
 	// find max molecule ID in particle container
 	this->findMaxMoleculeID(domainDecomp);
@@ -839,7 +838,9 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
+#ifndef NDEBUG
 	cout << "[" << domainDecomp.getRank() << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
+#endif
 
 	for(auto mi : currentReservoirSlab)
 	{
@@ -956,7 +957,6 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 
 void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
 {
-	cout << "Reservoir::readParticleData(...)" << endl;
 	switch(_nReadMethod)
 	{
 	case RRM_READ_FROM_MEMORY:
@@ -978,29 +978,31 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
 	// sort particles into bins
 	this->sortParticlesToBins();
 
-	cout << domainDecomp->getRank() << ": sortParticlesToBins() done." << endl;
-
 	// volume, densities
 	this->calcPartialDensities(domainDecomp);
 //	mardyn_assert( (_numMoleculesGlobal == _numMoleculesRead) || (RRM_READ_FROM_MEMORY == _nReadMethod) );
+#ifndef NDEBUG
 	cout << "Volume of Mettdeamon Reservoir: " << _box.volume << endl;
 	cout << "Density of Mettdeamon Reservoir: " << _density.at(0).density << endl;
+#endif
 }
 
 void Reservoir::sortParticlesToBins()
 {
 	Domain* domain = global_simulation->getDomain();
 	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
-	cout << domainDecomp->getRank() << ": Reservoir::sortParticlesToBins(...)" << endl;
+
 	uint32_t numBins = _box.length.at(1) / _dBinWidthInit;
 	_dBinWidth = _box.length.at(1) / (double)(numBins);
+#ifndef NDEBUG
 	cout << domainDecomp->getRank() << ": _arrBoxLength[1]="<<_box.length.at(1)<<endl;
 	cout << domainDecomp->getRank() << ": _dBinWidthInit="<<_dBinWidthInit<<endl;
 	cout << domainDecomp->getRank() << ": _numBins="<<numBins<<endl;
+	cout << domainDecomp->getRank() << ": _particleVector.size()=" << _particleVector.size() << endl;
+#endif
 	std::vector< std::vector<Molecule> > binVector;
 	binVector.resize(numBins);
 	uint32_t nBinIndex;
-	cout << domainDecomp->getRank() << ": _particleVector.size()=" << _particleVector.size() << endl;
 	for(auto&& mol:_particleVector)
 	{
 		// possibly change component IDs
@@ -1025,13 +1027,14 @@ void Reservoir::sortParticlesToBins()
 	}
 
 	// add bin particle vectors to bin queue
-	cout << domainDecomp->getRank() << ": add bin particle vectors to bin queue ..." << endl;
 	switch(_parent->getMovingDirection() )
 	{
 		case MD_LEFT_TO_RIGHT:
 			for (auto bit = binVector.rbegin(); bit != binVector.rend(); ++bit)
 			{
+#ifndef NDEBUG
 				cout << domainDecomp->getRank() << ": (*bit).size()=" << (*bit).size() << endl;
+#endif
 				_binQueue->enque(*bit);
 			}
 			break;
@@ -1039,13 +1042,14 @@ void Reservoir::sortParticlesToBins()
 		case MD_RIGHT_TO_LEFT:
 			for(auto bin:binVector)
 			{
+#ifndef NDEBUG
 				cout << domainDecomp->getRank() << ": bin.size()=" << bin.size() << endl;
+#endif
 				_binQueue->enque(bin);
 			}
 			break;
 	}
 	_binQueue->connectTailToHead();
-	cout << domainDecomp->getRank() << ": _binQueue->getNumParticles()=" << _binQueue->getNumParticles() << endl;
 }
 
 void Reservoir::readFromMemory(DomainDecompBase* domainDecomp)
@@ -1204,15 +1208,12 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp)
 			global_log->info() << "Finished reading molecules: " << i/iph << "%\r" << flush;
 	}
 
-	cout << domainDecomp->getRank() << ": Finished reading Mettdeamon Rerservoirmolecules: 100%" << endl;
-
 	ifs.close();
 }
 
 void Reservoir::readFromFileBinaryHeader()
 {
 	DomainDecompBase* domainDecomp = &global_simulation->domainDecomposition();
-	cout << domainDecomp->getRank() << ": Reservoir::readFromFileBinaryHeader(...)" << endl;
 	XMLfileUnits inp(_filepath.header);
 
 	if(false == inp.changecurrentnode("/mardyn")) {
@@ -1335,7 +1336,6 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp)
 	}
 	global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
 #endif
-	cout << domainDecomp->getRank() << ": Reading Molecules done" << endl;
 }
 
 void Reservoir::calcPartialDensities(DomainDecompBase* domainDecomp)
