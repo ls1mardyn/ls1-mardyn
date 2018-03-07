@@ -603,7 +603,7 @@ void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
 				bRet = bRet && xmlconfig.getNodeValue("visIDs/bubble", _bubbleVars.at(cid).visID.bubble);
 				bRet = bRet && xmlconfig.getNodeValue("visIDs/force", _bubbleVars.at(cid).visID.force);
 			}
-			if(false == bRet)
+			if(false == bRet && true == _bVisual)
 			{
 				global_log->error() << "BubbleMethod::readXML(): Something is wrong with visIDs! Program exit ..." << endl;
 				Simulation::exit(-1);
