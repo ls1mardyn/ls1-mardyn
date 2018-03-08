@@ -78,7 +78,6 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 	}
 
 	double flops = _flopCounter->getTotalFlopCount();
-	double molDistFlops = _flopCounter->getTotalMoleculeDistanceFlopCount();
 
 	unsigned long numElapsedIterations = global_simulation->timers()->getNumElapsedIterations();
 	double force_calculation_time = global_simulation->timers()->getTime("SIMULATION_FORCE_CALCULATION") / numElapsedIterations;
@@ -107,8 +106,8 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 		global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << endl
 			<< "\tFLOP-Count per Iteration           : " << flops_normalized << " " << prefix_flops << "FLOPs" << endl
 			<< "\tFLOP-rate in force calculation     : " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << endl
-			<< "\tFLOP-rate for main loop            : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << endl
-			<< "\tfraction of FLOPs for molecule dist: " << molDistFlops / flops << endl;
+			<< "\tFLOP-rate for main loop            : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << endl;
+		_flopCounter->printStats();
 	}
 
 

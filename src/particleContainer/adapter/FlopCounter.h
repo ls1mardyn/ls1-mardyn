@@ -123,6 +123,8 @@ public:
 		return _myFlopCount;
 	}
 
+	void printStats() const;
+
 private:
 	template<class ForcePolicy, bool CalculateMacroscopic>
 	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
@@ -178,13 +180,15 @@ private:
 		double getMacroValueSums() const {
 			return _numMacroCalls * _sumMacroMultiplier;
 		}
-		std::string printNameKernelAndMacroFlops() const {
+		std::string printNameKernelAndMacroCalls() const {
 			std::ostringstream ostr;
 
 			if (_numKernelCalls == 0) { return ostr.str(); } // potential is very likely not present
 
-			ostr << " " << _name << ": kernel: " << _numKernelCalls * _kernelMultiplier
-				<< ", macro: " << _numMacroCalls * _macroMultiplier << std::endl;
+			ostr << " " << _name
+				<< ": kernel calls: " << _numKernelCalls
+				<< " macro calls: " << _numMacroCalls
+				<< std::endl;
 			return ostr.str();
 		}
 
@@ -234,7 +238,7 @@ private:
 			}
 			return ret;
 		}
-		double process() const;
+		void print() const;
 
 		double getMoleculeDistanceFlops() const {
 			return _moleculeDistances * _distanceMultiplier;
