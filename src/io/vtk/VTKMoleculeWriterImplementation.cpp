@@ -153,7 +153,7 @@ void VTKMoleculeWriterImplementation::plotCenter(Molecule& molecule, int centerI
 	Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
 	Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
 
-	const std::array<double, 3> curr_center = molecule.ljcenter_d_abs(centerID);
+	const std::array<double, 3> curr_center = molecule.site_d_abs(centerID);
 	coordinates_iterator->push_back(curr_center[0]);
 	coordinates_iterator->push_back(curr_center[1]);
 	coordinates_iterator->push_back(curr_center[2]);
