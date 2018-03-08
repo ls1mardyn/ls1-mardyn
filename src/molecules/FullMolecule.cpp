@@ -124,6 +124,8 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 }
 
 std::array<double, 3> FullMolecule::ljcenter_d_abs(unsigned int i) const {
+	mardyn_assert(i < numLJcenters());
+
 	const unsigned index_in_soa = i + _soa_index_lj;
 
 	std::array<double,3> ret;
@@ -138,6 +140,8 @@ std::array<double, 3> FullMolecule::ljcenter_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::charge_d_abs(unsigned int i) const {
+	mardyn_assert(i < numCharges());
+
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
@@ -151,6 +155,8 @@ std::array<double, 3> FullMolecule::charge_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::dipole_d_abs(unsigned int i) const {
+	mardyn_assert(i < numDipoles());
+
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
@@ -164,6 +170,8 @@ std::array<double, 3> FullMolecule::dipole_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
+	mardyn_assert(i < numQuadrupoles());
+
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
@@ -177,6 +185,8 @@ std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
+	mardyn_assert(i < numLJcenters());
+
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double, 3> ret;
 	std::array<vcp_real_accum, 3> temp;
@@ -189,6 +199,8 @@ std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
+	mardyn_assert(i < numCharges());
+
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
 	std::array<vcp_real_accum, 3> temp;
@@ -201,6 +213,8 @@ std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
+	mardyn_assert(i < numDipoles());
+
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	std::array<vcp_real_accum, 3> temp;
@@ -213,6 +227,8 @@ std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::quadrupole_F(unsigned int i) const {
+	mardyn_assert(i < numQuadrupoles());
+
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	std::array<vcp_real_accum, 3> temp;
@@ -226,6 +242,8 @@ std::array<double, 3> FullMolecule::quadrupole_F(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::dipole_e(unsigned int i) const {
+	mardyn_assert(i < numDipoles());
+
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	ret[0] = static_cast<double>(_soa->_dipoles_e.x(index_in_soa));
@@ -234,6 +252,8 @@ std::array<double, 3> FullMolecule::dipole_e(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::quadrupole_e(unsigned int i) const {
+	mardyn_assert(i < numQuadrupoles());
+
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	ret[0] = static_cast<double>(_soa->_quadrupoles_e.x(index_in_soa));
@@ -243,6 +263,8 @@ std::array<double, 3> FullMolecule::quadrupole_e(unsigned int i) const {
 }
 
 void FullMolecule::Fljcenteradd(unsigned int i, double a[]) {
+	mardyn_assert(i < numLJcenters());
+
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<vcp_real_accum, 3> temp;
 
@@ -254,6 +276,8 @@ void FullMolecule::Fljcenteradd(unsigned int i, double a[]) {
 }
 
 void FullMolecule::Fchargeadd(unsigned int i, double a[]) {
+	mardyn_assert(i < numCharges());
+
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<vcp_real_accum, 3> temp;
 
@@ -265,6 +289,8 @@ void FullMolecule::Fchargeadd(unsigned int i, double a[]) {
 }
 
 void FullMolecule::Fdipoleadd(unsigned int i, double a[]) {
+	mardyn_assert(i < numDipoles());
+
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<vcp_real_accum, 3> temp;
 
@@ -276,6 +302,8 @@ void FullMolecule::Fdipoleadd(unsigned int i, double a[]) {
 }
 
 void FullMolecule::Fquadrupoleadd(unsigned int i, double a[]) {
+	mardyn_assert(i < numQuadrupoles());
+
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<vcp_real_accum, 3> temp;
 
