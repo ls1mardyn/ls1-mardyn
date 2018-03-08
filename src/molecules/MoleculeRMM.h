@@ -183,7 +183,7 @@ public:
 	std::array<double, 3> dipole_d(unsigned int /*i*/) const { return emptyArray3(); }
 	std::array<double, 3> quadrupole_d(unsigned int /*i*/) const { return emptyArray3(); }
 
-	std::array<double, 3> site_d_abs(unsigned int /*i*/) const { return emptyArray3(); }
+	std::array<double, 3> site_d_abs(unsigned int i) const { return ljcenter_d_abs(i); }
 	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
 		mardyn_assert(i == 0);
 		return r_arr();
