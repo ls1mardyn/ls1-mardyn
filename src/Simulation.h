@@ -60,6 +60,7 @@ class TemperatureControl;
 class ParticleTracker;
 class MemoryProfiler;
 class MettDeamon;
+class MotionLimits;
 
 // by Stefan Becker
 const int ANDERSEN_THERMOSTAT = 2;
@@ -527,6 +528,7 @@ private:
 	DensityControl*  _densityControl;
 	RegionSampling*  _regionSampling;
 	ParticleTracker* _particleTracker;
+	MotionLimits*    _motionLimits;
 	/** Algorithm to simulate stationary evaporation by backfilling liquid out of reservoir */
 	std::vector<MettDeamon*> _mettDeamon;
 

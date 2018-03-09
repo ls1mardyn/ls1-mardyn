@@ -10,8 +10,6 @@
 #include "utils/mardyn_assert.h"
 #include <string>
 
-#define MAX_FORCE_LIMIT 8000
-
 class Domain;
 class CellDataSoA;
 

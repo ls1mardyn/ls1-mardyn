@@ -81,6 +81,7 @@
 #include "NEMD/DensityControl.h"
 #include "NEMD/ParticleTracker.h"
 #include "NEMD/MettDeamon.h"
+#include "NEMD/MotionLimits.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -143,6 +144,7 @@ Simulation::Simulation()
 	_densityControl(NULL),
 	_regionSampling(NULL),
 	_particleTracker(NULL),
+	_motionLimits(NULL),
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.0),
@@ -193,6 +195,8 @@ Simulation::~Simulation() {
 	delete _distControl;
 	delete _regionSampling;
 	delete _densityControl;
+	delete _motionLimits;
+
 	for(auto&& deamon : _mettDeamon)
 		delete deamon;
 }
@@ -348,6 +352,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				MettDeamon* ptr = new MettDeamon();
 				_mettDeamon.push_back(ptr);
 				ptr->readXML(xmlconfig);
+			}
+			else if(featureName == "MotionLimits") {
+				if(NULL != _motionLimits)
+					delete _motionLimits;
+				_motionLimits = new MotionLimits(_domain, _domainDecomposition);
+				_motionLimits->readXML(xmlconfig);
 			}
 			else {
 				global_log->error() << "Unknown NEMD feature: " <<  featureName << "! Program exit..." << endl;
@@ -1243,6 +1253,10 @@ void Simulation::simulate() {
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
+		// MOTION LIMITS
+		if(_motionLimits != NULL)
+			_motionLimits->preForces(_moleculeContainer);
+
 		if(_mettDeamon.size() > 0)
 		{
 			for(auto&& deamon : _mettDeamon)
@@ -1522,6 +1536,10 @@ void Simulation::simulate() {
 
 		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
+
+		// MOTION LIMITS
+		if(_motionLimits != NULL)
+			_motionLimits->postForces(_moleculeContainer);
 
 		if(_mettDeamon.size() > 0)
 		{

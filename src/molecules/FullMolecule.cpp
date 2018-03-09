@@ -340,17 +340,6 @@ void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 
 	//calcFM(); //NOTE: This was moved to simulation.cpp calculateForces() and is called in simulate()
 
-#ifdef MAX_FORCE_LIMIT
-	double Fmax = MAX_FORCE_LIMIT;
-	double Fmax2 = Fmax*Fmax;
-	if(this->F2() > Fmax2)
-	{
-		double f = sqrt(Fmax2 / this->F2() );
-		for (unsigned short d=0; d<3; ++d)
-			_F[d] *= f;
-	}
-#endif
-
 	double dtInv2m = dt_halve / _m;
 	double v2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
