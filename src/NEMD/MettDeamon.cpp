@@ -326,6 +326,10 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 
 	_reservoir->readParticleData(domainDecomp);
 	_dInvDensityArea = 1. / (_dAreaXZ * _reservoir->getDensity(0) );
+
+	int ownRank = global_simulation->domainDecomposition().getRank();
+	cout << "["<<ownRank<<"]: _dInvDensityArea = " << _dInvDensityArea << endl;
+
 	// Activate reservoir bin with respect to restart information
 	if(true == _bIsRestart)
 		this->initRestart();
@@ -570,7 +574,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	if(FRM_CONSTANT == _nFeedRateMethod)
 		_feedrate.feed.actual = _feedrate.feed.target;
 	// DEBUG
+
 	_feedrate.feed.sum += _feedrate.feed.actual;
+	int ownRank = global_simulation->domainDecomposition().getRank();
+	cout << "["<<ownRank<<"]: _feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
 
 	if (_feedrate.feed.sum >= _reservoir->getBinWidth())
 	{
@@ -758,9 +765,10 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			this->calcDeltaY();
 		else if(FRM_DENSITY == _nFeedRateMethod)
 			this->calcDeltaYbyDensity();
-		global_log->info() << "_numDeletedMolsSum = " << _numDeletedMolsSum << endl;
-		global_log->info() << "_dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
-		global_log->info() << "_feedrate.feed.actual = " << _feedrate.feed.actual << endl;
+		int ownRank = global_simulation->domainDecomposition().getRank();
+//		cout << "["<<ownRank<<"]: _numDeletedMolsSum = " << _numDeletedMolsSum << endl;
+//		cout << "["<<ownRank<<"]: _dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
+//		cout << "["<<ownRank<<"]: _feedrate.feed.actual = " << _feedrate.feed.actual << endl;
 	}
 	else
 	{
@@ -1344,11 +1352,38 @@ void Reservoir::calcPartialDensities(DomainDecompBase* domainDecomp)
 	_box.volume = 1.; for(uint8_t dim=0; dim<3; dim++) _box.volume *= _box.length[dim];
 	double dInvVolume = 1./_box.volume;
 
+	int ownRank = global_simulation->domainDecomposition().getRank();
+	cout << "["<<ownRank<<"]: _particleVector.size() = " << _particleVector.size() << endl;
+
 	// count particles of each component
-	for(auto&& mol : _particleVector)
+	// TODO: not nice that in case of RRM_READ_FROM_MEMORY _particleVector includes only local particles, and in other case all (global) particles
+	if(RRM_READ_FROM_MEMORY == _nReadMethod)
 	{
-		uint32_t cid_zb = mol.componentid();
-		_density.at(cid_zb+1).numMolecules.global++;
+		for(auto&& mol : _particleVector)
+		{
+			uint32_t cid_zb = mol.componentid();
+			_density.at(cid_zb+1).numMolecules.local++;
+		}
+		// reduce
+		uint16_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
+		domainDecomp->collCommInit(numComponents);
+		for(uint16_t cid_ub=1; cid_ub<numComponents; ++cid_ub)
+			domainDecomp->collCommAppendUnsLong(_density.at(cid_ub).numMolecules.local);
+
+		domainDecomp->collCommAllreduceSum();
+
+		for(uint16_t cid_ub=1; cid_ub<numComponents; ++cid_ub)
+			_density.at(cid_ub).numMolecules.global = domainDecomp->collCommGetUnsLong();
+
+		domainDecomp->collCommFinalize();
+	}
+	else
+	{
+		for(auto&& mol : _particleVector)
+		{
+			uint32_t cid_zb = mol.componentid();
+			_density.at(cid_zb+1).numMolecules.global++;
+		}
 	}
 
 	// sum up total number of particles, calc partial densities
@@ -1359,6 +1394,7 @@ void Reservoir::calcPartialDensities(DomainDecompBase* domainDecomp)
 		cid.density = cid.numMolecules.global * dInvVolume;
 	}
 	_density.at(0).density = _density.at(0).numMolecules.global * dInvVolume;
+	cout << "["<<ownRank<<"]: _density.at(0).density = " << _density.at(0).density << endl;
 }
 
 void Reservoir::changeComponentID(Molecule& mol, const uint32_t& cid)
