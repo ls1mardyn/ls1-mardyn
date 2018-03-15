@@ -1034,6 +1034,10 @@ void Simulation::prepare_start() {
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
 	//updateForces();
 
+	// MOTION LIMITS
+	if(_motionLimits != NULL)
+		_motionLimits->postForces(_moleculeContainer);
+
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
 		unsigned long uCAT = _pressureGradient->getUCAT();
