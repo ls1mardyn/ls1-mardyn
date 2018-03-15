@@ -1251,11 +1251,11 @@ void Simulation::simulate() {
 		}
 		// <-- DENSITY_CONTROL
 
-		_integrator->eventNewTimestep(_moleculeContainer, _domain);
-
 		// MOTION LIMITS
 		if(_motionLimits != NULL)
 			_motionLimits->preForces(_moleculeContainer);
+
+		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
 		if(_mettDeamon.size() > 0)
 		{
@@ -1534,12 +1534,12 @@ void Simulation::simulate() {
 			}
 		}
 
-		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
-		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
-
 		// MOTION LIMITS
 		if(_motionLimits != NULL)
 			_motionLimits->postForces(_moleculeContainer);
+
+		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
+		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
 		if(_mettDeamon.size() > 0)
 		{
