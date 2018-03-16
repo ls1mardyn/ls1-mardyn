@@ -577,7 +577,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 	_feedrate.feed.sum += _feedrate.feed.actual;
 	int ownRank = global_simulation->domainDecomposition().getRank();
-	cout << "["<<ownRank<<"]: _feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
+//	cout << "["<<ownRank<<"]: _feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
 
 	if (_feedrate.feed.sum >= _reservoir->getBinWidth())
 	{
