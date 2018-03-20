@@ -563,8 +563,15 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->warning() << "No plugins specified." << endl;
 	}
 
+    // TODO: NEW COMBINED Version
+
+
+    long numAllPlugins = 0;
+    XMLfile::Query query_plugins = xmlconfig.query("plugin");
+
 	string oldpath = xmlconfig.getcurrentnodepath();
 
+    // TODO: @kruegener: move registering to Plugins
 	PluginFactory<PluginBase> pluginFactory;
 	// register plugins
 	pluginFactory.registerPlugin(&(testPlugin::createInstance));
