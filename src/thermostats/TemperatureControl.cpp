@@ -35,111 +35,117 @@ unsigned short tec::ControlRegion::_nStaticID = 0;
 
 // class tec::ControlRegion
 
-tec::ControlRegion::ControlRegion( TemperatureControl* const parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
-                                   double* dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
-                                   int nTemperatureControlType, unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq)
-: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+tec::ControlRegion::ControlRegion( TemperatureControl* const parent, double dLowerCorner[3], double dUpperCorner[3] )
+	: CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
+	_nNumSlabs(0),
+	_nNumSlabsReserve(0),
+	_dSlabWidth(0.),
+	_dSlabWidthInit(0.),
+	_nNumMoleculesLocal(NULL),
+	_nNumMoleculesGlobal(NULL),
+	_nRotDOFLocal(NULL),
+	_nRotDOFGlobal(NULL),
+	_d2EkinTransLocal(NULL),
+	_d2EkinTransGlobal(NULL),
+	_d2EkinRotLocal(NULL),
+	_d2EkinRotGlobal(NULL),
+	_dBetaTransGlobal(NULL),
+	_dBetaRotGlobal(NULL),
+	_nNumSlabsDeltaEkin(0),
+	_nNumSlabsDEkinReserve(0),
+	_dSlabWidthDeltaEkin(0.),
+	_nNumMoleculesSumLocal(NULL),
+	_nNumMoleculesSumGlobal(NULL),
+	_dDelta2EkinTransSumLocal(NULL),
+	_dDelta2EkinTransSumGlobal(NULL),
+	_dDelta2EkinRotSumLocal(NULL),
+	_dDelta2EkinRotSumGlobal(NULL)
 {
 	// ID
 	_nID = ++_nStaticID;
 
-    // init subdivision
-    _nNumSlabs = 0;
-    _dSlabWidthInit = 0.;
-
-    _nTargetComponentID = nComp;
-    _dTargetTemperature[0] = dTargetTemperature[0];
-    _dTargetTemperature[1] = dTargetTemperature[1];
-
-    _dTemperatureExponent = dTemperatureExponent;
-
-    // type of temperature control constant/gradient/adjust
-    _nTemperatureControlType = nTemperatureControlType;
-
-    // temperature control adjust
-	_nStartAdjust = nStartAdjust;
-	_nStopAdjust  = nStopAdjust;
-	_nAdjustFreq  = nAdjustFreq;
-
 	// init datastructure pointers
 	this->InitDataStructurePointers();
-
-    if(TCT_TEMPERATURE_ADJUST == _nTemperatureControlType)
-    {
-		double dAdjustFreq = (double) (_nAdjustFreq);
-		double dSteps = (_nStopAdjust - _nStartAdjust) / dAdjustFreq;
-		_dDeltaTemperatureAdjust = (dTargetTemperature[1] - dTargetTemperature[0]) / dSteps;
-		_dTargetTemperatureActual = _dTargetTemperature[0];
-    }
-    else if(TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType)
-    {
-		double dAdjustFreq = (double) (_nAdjustFreq);
-		double dSteps = (_nStopAdjust - _nStartAdjust) / dAdjustFreq;
-
-		double dT_lower = min(dTargetTemperature[0], dTargetTemperature[1]);
-		double dT_upper = max(dTargetTemperature[0], dTargetTemperature[1]);
-
-		_dDeltaTemperatureAdjust = (dT_lower - dT_upper) / dSteps;
-		_dTargetTemperatureActual = dT_upper;
-    }
-    else if(TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType)
-    {
-		double dAdjustFreq = (double) (_nAdjustFreq);
-		double dSteps = (_nStopAdjust - _nStartAdjust) / dAdjustFreq;
-
-		double dT_lower = min(dTargetTemperature[0], dTargetTemperature[1]);
-		double dT_upper = max(dTargetTemperature[0], dTargetTemperature[1]);
-
-		_dDeltaTemperatureAdjust = (dT_upper - dT_lower) / dSteps;
-		_dTargetTemperatureActual = dT_lower;
-    }
-    else
-    {
-		_dDeltaTemperatureAdjust = 0.;
-		_dTargetTemperatureActual = _dTargetTemperature[0];
-    }
-
-    // create accumulator object dependent on which translatoric directions should be thermostated (xyz)
-    if(strTransDirections == "x")
-    {
-        _accumulator = new AccumulatorXQ();
-        _nNumThermostatedTransDirections = 1;
-    }
-    else if(strTransDirections == "y")
-    {
-        _accumulator = new AccumulatorYQ();
-        _nNumThermostatedTransDirections = 1;
-    }
-    else if(strTransDirections == "z")
-    {
-        _accumulator = new AccumulatorZQ();
-        _nNumThermostatedTransDirections = 1;
-    }
-    else if(strTransDirections == "xy")
-    {
-        _accumulator = new AccumulatorXYQ();
-        _nNumThermostatedTransDirections = 2;
-    }
-    else if(strTransDirections == "xz")
-    {
-        _accumulator = new AccumulatorXZQ();
-        _nNumThermostatedTransDirections = 2;
-    }
-    else if(strTransDirections == "yz")
-    {
-        _accumulator = new AccumulatorYZQ();
-        _nNumThermostatedTransDirections = 2;
-    }
-    else if(strTransDirections == "xyz")
-    {
-        _accumulator = new AccumulatorXYZQ();
-        _nNumThermostatedTransDirections = 3;
-    }
-    else
-        _accumulator = NULL;
-
 }
 
+void tec::ControlRegion::PrepareControlType()
+{
+	if(TCT_TEMPERATURE_ADJUST == _target.controlType)
+	{
+		double dAdjustFreq = (double) (_target.adjust.control.freq);
+		double dSteps = (_target.adjust.control.stop - _target.adjust.control.start) / dAdjustFreq;
+		_target.adjust.delta = (_target.temperature.stop - _target.temperature.start) / dSteps;
+		_target.temperature.actual = _target.temperature.start;
+	}
+	else if(TCT_TEMPERATURE_GRADIENT_LOWER == _target.controlType)
+	{
+		double dAdjustFreq = (double) (_target.adjust.control.freq);
+		double dSteps = (_target.adjust.control.stop - _target.adjust.control.start) / dAdjustFreq;
+
+		double dT_lower = min(_target.temperature.start, _target.temperature.stop);
+		double dT_upper = max(_target.temperature.start, _target.temperature.stop);
+
+		_target.adjust.delta = (dT_lower - dT_upper) / dSteps;
+		_target.temperature.actual = dT_upper;
+	}
+	else if(TCT_TEMPERATURE_GRADIENT_RAISE == _target.controlType)
+	{
+		double dAdjustFreq = (double) (_target.adjust.control.freq);
+		double dSteps = (_target.adjust.control.stop - _target.adjust.control.start) / dAdjustFreq;
+
+		double dT_lower = min(_target.temperature.start, _target.temperature.stop);
+		double dT_upper = max(_target.temperature.start, _target.temperature.stop);
+
+		_target.adjust.delta = (dT_upper - dT_lower) / dSteps;
+		_target.temperature.actual = dT_lower;
+	}
+	else
+	{
+		_target.adjust.delta = 0.;
+	}
+}
+
+void tec::ControlRegion::PrepareAccumulator(const std::string& strTransDirections)
+{
+	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
+	if(strTransDirections == "x")
+	{
+		_accumulator = new AccumulatorXQ();
+		_target.numDirections = 1;
+	}
+	else if(strTransDirections == "y")
+	{
+		_accumulator = new AccumulatorYQ();
+		_target.numDirections = 1;
+	}
+	else if(strTransDirections == "z")
+	{
+		_accumulator = new AccumulatorZQ();
+		_target.numDirections = 1;
+	}
+	else if(strTransDirections == "xy")
+	{
+		_accumulator = new AccumulatorXYQ();
+		_target.numDirections = 2;
+	}
+	else if(strTransDirections == "xz")
+	{
+		_accumulator = new AccumulatorXZQ();
+		_target.numDirections = 2;
+	}
+	else if(strTransDirections == "yz")
+	{
+		_accumulator = new AccumulatorYZQ();
+		_target.numDirections = 2;
+	}
+	else if(strTransDirections == "xyz")
+	{
+		_accumulator = new AccumulatorXYZQ();
+		_target.numDirections = 3;
+	}
+	else
+		_accumulator = NULL;
+}
 
 tec::ControlRegion::~ControlRegion()
 {
@@ -156,7 +162,7 @@ tec::ControlRegion::~ControlRegion()
 	delete[] _dBetaTransGlobal;
 	delete[] _dBetaRotGlobal;
 
-	delete[] _dTargetTemperatureVec;
+	delete[] _target.vec;
 
 	delete[] _nNumMoleculesSumLocal;
 	delete[] _nNumMoleculesSumGlobal;
@@ -167,6 +173,92 @@ tec::ControlRegion::~ControlRegion()
 	delete[] _dDelta2EkinRotSumGlobal;
 
 	delete _accumulator;
+}
+
+void tec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
+{
+	std::string strControlType = "unknown";
+	std::string strDirections = "unknown";
+	xmlconfig.getNodeValue("target@type", strControlType);
+	xmlconfig.getNodeValue("target/temperature", _target.temperature.start);
+	xmlconfig.getNodeValue("target/temperature/start", _target.temperature.start);
+	xmlconfig.getNodeValue("target/temperature/stop", _target.temperature.stop);
+	_target.temperature.actual = _target.temperature.start;
+	xmlconfig.getNodeValue("target/component", _target.cID);
+	xmlconfig.getNodeValue("target/adjust/start", _target.adjust.control.start);
+	xmlconfig.getNodeValue("target/adjust/frequency", _target.adjust.control.freq);
+	xmlconfig.getNodeValue("target/adjust/stop", _target.adjust.control.stop);
+	xmlconfig.getNodeValue("settings/exponent", _target.exponent);
+	xmlconfig.getNodeValue("settings/directions", strDirections);
+	this->PrepareAccumulator(strDirections);
+
+	global_log->info() << "TemperatureControl->region["<<this->GetID()<<"]: Control type: " << strControlType << ", "
+			"target temperature: " << _target.temperature.actual << endl;
+
+	// control type
+	// TODO: adjust XML-I/O for all different control types
+
+	if("constant" == strControlType)
+		_target.controlType = TCT_CONSTANT_TEMPERATURE;
+	else if ("adjust" == strControlType)
+		_target.controlType = TCT_TEMPERATURE_ADJUST;
+	else if ("gradient" == strControlType)
+		_target.controlType = TCT_TEMPERATURE_GRADIENT;
+	else if ("gradient_lower" == strControlType)
+		_target.controlType = TCT_TEMPERATURE_GRADIENT_LOWER;
+	else if ("gradient_raise" == strControlType)
+		_target.controlType = TCT_TEMPERATURE_GRADIENT_RAISE;
+	else
+		_target.controlType = TCT_UNKNOWN;
+
+	if(TCT_UNKNOWN == _target.controlType)
+	{
+		global_log->error() << "TemperatureControl->region["<<this->GetID()<<"]: Unknown control type (attribute: target@type)! Programm exit..." << endl;
+		exit(-1);
+	}
+	this->PrepareControlType();
+
+	// subdivision of region
+	uint32_t nSubdivisionType = SDOPT_UNKNOWN;
+	std::string strSubdivisionType;
+	if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
+	{
+		global_log->error() << "TemperatureControl->region["<<this->GetID()<<"]: Missing attribute subdivision@type! Programm exit..." << endl;
+		Simulation::exit(-1);
+	}
+	if("number" == strSubdivisionType)
+	{
+		unsigned int nNumSlabs = 0;
+		if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
+		{
+			global_log->error() << "TemperatureControl->region["<<this->GetID()<<"]: Missing element subdivision/number! Programm exit..." << endl;
+			Simulation::exit(-1);
+		}
+		else
+		{
+			this->SetSubdivision(nNumSlabs);
+			global_log->info() << "TemperatureControl->region["<<this->GetID()<<"]: subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
+		}
+	}
+	else if("width" == strSubdivisionType)
+	{
+		double dSlabWidth = 0.;
+		if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
+		{
+			global_log->error() << "TemperatureControl->region["<<this->GetID()<<"]: Missing element subdivision/width! Programm exit..." << endl;
+			Simulation::exit(-1);
+		}
+		else
+		{
+			this->SetSubdivision(dSlabWidth);
+			global_log->info() << "TemperatureControl->region["<<this->GetID()<<"]: subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
+		}
+	}
+	else
+	{
+		global_log->error() << "TemperatureControl->region["<<this->GetID()<<"]: Wrong attribute subdivision@type. Expected type=\"number|width\"! Programm exit..." << endl;
+		Simulation::exit(-1);
+	}
 }
 
 void tec::ControlRegion::InitDataStructurePointers()
@@ -184,7 +276,7 @@ void tec::ControlRegion::InitDataStructurePointers()
 	_dBetaTransGlobal = NULL;
 	_dBetaRotGlobal = NULL;
 
-	_dTargetTemperatureVec = NULL;
+	_target.vec = NULL;
 
     // heat supply
 	_nNumMoleculesSumLocal  = NULL;
@@ -225,7 +317,7 @@ void tec::ControlRegion::AllocateDataStructuresT()
 	AllocateDoubleArray(_dBetaRotGlobal, _nNumSlabsReserve);
 
 	// target temperature vector to maintain a temperature gradient
-	AllocateDoubleArray(_dTargetTemperatureVec, _nNumSlabsReserve);
+	AllocateDoubleArray(_target.vec, _nNumSlabsReserve);
 }
 
 void tec::ControlRegion::InitDataStructuresT()
@@ -250,9 +342,9 @@ void tec::ControlRegion::InitDataStructuresT()
     }
 
 	// target temperature vector to maintain a temperature gradient
-    if( TCT_TEMPERATURE_GRADIENT       == _nTemperatureControlType ||
-    	TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType ||
-    	TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType )
+    if( TCT_TEMPERATURE_GRADIENT       == _target.controlType ||
+    	TCT_TEMPERATURE_GRADIENT_LOWER == _target.controlType ||
+    	TCT_TEMPERATURE_GRADIENT_RAISE == _target.controlType )
     	this->AdjustTemperatureGradient();
 }
 
@@ -326,36 +418,41 @@ void tec::ControlRegion::CalcGlobalValues(unsigned long simstep)
 #endif
 
     // calc betaTrans, betaRot
-    double dTargetTemperature = _dTargetTemperature[0];
 
-    switch(_nTemperatureControlType)
+    switch(_target.controlType)
     {
 
-    case TCT_CONSTANT_TEMPERATURE:
+	case TCT_CONSTANT_TEMPERATURE:
+	case TCT_TEMPERATURE_ADJUST:
+
+		if( TCT_TEMPERATURE_ADJUST == _target.controlType && _target.adjust.control.start < simstep && _target.adjust.control.stop >= simstep &&
+			0 == simstep % _target.adjust.control.freq)
+		{
+			_target.temperature.actual += _target.adjust.delta;
+		}
 
 		for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
 		{
 			if( _nNumMoleculesGlobal[s] < 1 )
 				_dBetaTransGlobal[s] = 1.;
 			else
-				_dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * dTargetTemperature / _d2EkinTransGlobal[s], _dTemperatureExponent);
+				_dBetaTransGlobal[s] = pow(_target.numDirections * _nNumMoleculesGlobal[s] * _target.temperature.actual / _d2EkinTransGlobal[s], _target.exponent);
 
 			if( _nRotDOFGlobal[s] < 1 )
 				_dBetaRotGlobal[s] = 1.;
 			else
-				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * dTargetTemperature / _d2EkinRotGlobal[s], _dTemperatureExponent);
+				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _target.temperature.actual / _d2EkinRotGlobal[s], _target.exponent);
 		}
 		break;
-
 
     case TCT_TEMPERATURE_GRADIENT:
     case TCT_TEMPERATURE_GRADIENT_LOWER:
     case TCT_TEMPERATURE_GRADIENT_RAISE:
 
-    	if( _nStartAdjust < simstep && _nStopAdjust >= simstep &&
-    	    0 == simstep % _nAdjustFreq && TCT_TEMPERATURE_GRADIENT != _nTemperatureControlType)
+    	if( _target.adjust.control.start < simstep && _target.adjust.control.stop >= simstep &&
+    	    0 == simstep % _target.adjust.control.freq && TCT_TEMPERATURE_GRADIENT != _target.controlType)
     	{
-    		_dTargetTemperatureActual += _dDeltaTemperatureAdjust;
+    		_target.temperature.actual += _target.adjust.delta;
     		this->AdjustTemperatureGradient();
     	}
 
@@ -364,35 +461,12 @@ void tec::ControlRegion::CalcGlobalValues(unsigned long simstep)
 			if( _nNumMoleculesGlobal[s] < 1 )
 				_dBetaTransGlobal[s] = 1.;
 			else
-				_dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * _dTargetTemperatureVec[s] / _d2EkinTransGlobal[s], _dTemperatureExponent);
+				_dBetaTransGlobal[s] = pow(_target.numDirections * _nNumMoleculesGlobal[s] * _target.vec[s] / _d2EkinTransGlobal[s], _target.exponent);
 
 			if( _nRotDOFGlobal[s] < 1 )
 				_dBetaRotGlobal[s] = 1.;
 			else
-				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperatureVec[s] / _d2EkinRotGlobal[s], _dTemperatureExponent);
-		}
-		break;
-
-    case TCT_TEMPERATURE_ADJUST:
-
-    	if( _nStartAdjust < simstep && _nStopAdjust >= simstep &&
-    	    0 == simstep % _nAdjustFreq)
-    	{
-    		_dTargetTemperatureActual += _dDeltaTemperatureAdjust;
-//    		cout << "_dTargetTemperatureActual = " << _dTargetTemperatureActual << endl;
-    	}
-
-		for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
-		{
-			if( _nNumMoleculesGlobal[s] < 1 )
-				_dBetaTransGlobal[s] = 1.;
-			else
-				_dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * _dTargetTemperatureActual / _d2EkinTransGlobal[s], _dTemperatureExponent);
-
-			if( _nRotDOFGlobal[s] < 1 )
-				_dBetaRotGlobal[s] = 1.;
-			else
-				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperatureActual / _d2EkinRotGlobal[s], _dTemperatureExponent);
+				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _target.vec[s] / _d2EkinRotGlobal[s], _target.exponent);
 		}
 		break;
 
@@ -402,10 +476,10 @@ void tec::ControlRegion::CalcGlobalValues(unsigned long simstep)
     	exit(-1);
     }
 
+    cout << "_target.temperature.actual= " << _target.temperature.actual << endl;
 
 //    cout << "_nNumMoleculesGlobal[0] = " << _nNumMoleculesGlobal[0] << endl;
 //    cout << "_dBetaTransGlobal[0] = " << _dBetaTransGlobal[0] << endl;
-//    cout << "_dTargetTemperature = " << _dTargetTemperature << endl;
 //    cout << "_d2EkinTransGlobal[0] = " << _d2EkinTransGlobal[0] << endl;
 //
 //    cout << "_nRotDOFGlobal[0] = " << _nRotDOFGlobal[0] << endl;
@@ -443,7 +517,7 @@ void tec::ControlRegion::PrepareSubdivision()
 void tec::ControlRegion::MeasureKineticEnergy(Molecule* mol)
 {
     // check componentID
-    if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
+	if(mol->componentid()+1 != _target.cID && 0 != _target.cID)  // program intern componentID starts with 0
         return;
 
     // check if molecule inside control region
@@ -500,7 +574,7 @@ void tec::ControlRegion::ControlTemperature(Molecule* mol)
 		int cid = mol->componentid();
 
     // check componentID
-    if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
+    if(mol->componentid()+1 != _target.cID && 0 != _target.cID)  // program intern componentID starts with 0
         return;
 
 //    if(mol->componentid()+1 == 2)
@@ -571,9 +645,9 @@ void tec::ControlRegion::UpdateSlabParameters()
 	_nNumSlabsDeltaEkin = _nNumSlabs;
 
     // target temperature vector to maintain a temperature gradient
-    if( TCT_TEMPERATURE_GRADIENT       == _nTemperatureControlType ||
-        TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType ||
-        TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType )
+    if( TCT_TEMPERATURE_GRADIENT       == _target.controlType ||
+        TCT_TEMPERATURE_GRADIENT_LOWER == _target.controlType ||
+        TCT_TEMPERATURE_GRADIENT_RAISE == _target.controlType )
         	this->AdjustTemperatureGradient();
 }
 
@@ -725,23 +799,23 @@ void tec::ControlRegion::WriteDataDeltaEkin(unsigned long simstep)
 void tec::ControlRegion::AdjustTemperatureGradient()
 {
 	double T[2];
-	T[0] = _dTargetTemperature[0];
-	T[1] = _dTargetTemperature[1];
+	T[0] = _target.temperature.start;
+	T[1] = _target.temperature.stop;
 
-    if(TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType)
-    {
-    	if(T[1] > T[0])
-    		T[1] = _dTargetTemperatureActual;
-    	else
-    		T[0] = _dTargetTemperatureActual;
-    }
-    else if(TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType)
-    {
-    	if(T[1] > T[0])
-    		T[0] = _dTargetTemperatureActual;
-    	else
-    		T[1] = _dTargetTemperatureActual;
-    }
+	if(TCT_TEMPERATURE_GRADIENT_RAISE == _target.controlType)
+	{
+		if(T[1] > T[0])
+			T[1] = _target.temperature.actual;
+		else
+			T[0] = _target.temperature.actual;
+	}
+	else if(TCT_TEMPERATURE_GRADIENT_LOWER == _target.controlType)
+	{
+		if(T[1] > T[0])
+			T[0] = _target.temperature.actual;
+		else
+			T[1] = _target.temperature.actual;
+	}
 
 	double dT = T[1] - T[0];
 	double dSlabsMinusOne = (double)(_nNumSlabs-1);
@@ -750,7 +824,7 @@ void tec::ControlRegion::AdjustTemperatureGradient()
 //	cout << "region: " << this->GetID() << endl;
 	for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
 	{
-		_dTargetTemperatureVec[s] = T[0] + dT/dSlabsMinusOne*s;
+		_target.vec[s] = T[0] + dT/dSlabsMinusOne*s;
 //		cout << "[" << s << "]: " << dT << " | " << dT/dSlabsMinusOne*s << " | " << T[0] << " | " << _dTargetTemperatureVec[s] << "" << endl;
 
 	}
@@ -768,11 +842,11 @@ TemperatureControl::TemperatureControl(Domain* domain, DomainDecompBase* domainD
 : ControlInstance(domain, domainDecomp)
 {
     // control frequency
-    _nControlFreq = nControlFreq;
+    _control.freq = nControlFreq;
 
     // start/stop timestep
-    _nStart = nStart;
-    _nStop  = nStop;
+    _control.start = nStart;
+    _control.stop  = nStop;
 
     // init heat supply variables
     _bWriteDataDeltaEkin = false;
@@ -791,13 +865,13 @@ TemperatureControl::~TemperatureControl()
 
 void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 {
-    // control
-    xmlconfig.getNodeValue("control/start", _nStart);
-    xmlconfig.getNodeValue("control/frequency", _nControlFreq);
-    xmlconfig.getNodeValue("control/stop", _nStop);
-    global_log->info() << "TemperatureControl: Start control from simstep: " << _nStart << endl;
-    global_log->info() << "TemperatureControl: Control with frequency: " << _nControlFreq << endl;
-    global_log->info() << "TemperatureControl: Stop control at simstep: " << _nStop << endl;
+	// control
+	xmlconfig.getNodeValue("control/start", _control.start);
+	xmlconfig.getNodeValue("control/frequency", _control.freq);
+	xmlconfig.getNodeValue("control/stop", _control.stop);
+	global_log->info() << "TemperatureControl: Start control from simstep: " << _control.start << endl;
+	global_log->info() << "TemperatureControl: Control with frequency: " << _control.freq << endl;
+	global_log->info() << "TemperatureControl: Stop control at simstep: " << _control.stop << endl;
 
 	// turn on/off explosion heuristics
     //_domain->SetExplosionHeuristics(bUseExplosionHeuristics);
@@ -863,14 +937,6 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
         double lc[3];
 		double uc[3];
 		std::string strVal[3];
-		double dTemperature[2];
-		double dExponent;
-		std::string strDirections;
-		uint32_t nCompID;
-		std::string strControlType;
-		int nControlType;
-		unsigned long nAdjustStart, nAdjustStop, nAdjustFreq;
-		nAdjustStart = nAdjustStop = nAdjustFreq = 0;
 
 		// coordinates
 		xmlconfig.getNodeValue("coords/lcx", lc[0]);
@@ -886,86 +952,9 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		global_log->info() << "TemperatureControl->region["<<nRegID<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << endl;
 		global_log->info() << "TemperatureControl->region["<<nRegID<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
 
-		xmlconfig.getNodeValue("target@type", strControlType);
-		xmlconfig.getNodeValue("target/temperature", dTemperature[0]);
-		xmlconfig.getNodeValue("target/component", nCompID);
-		xmlconfig.getNodeValue("target/adjust/start", nAdjustStart);
-		xmlconfig.getNodeValue("target/adjust/frequency", nAdjustFreq);
-		xmlconfig.getNodeValue("target/adjust/stop", nAdjustStop);
-		xmlconfig.getNodeValue("settings/exponent", dExponent);
-		xmlconfig.getNodeValue("settings/directions", strDirections);
-
-		global_log->info() << "TemperatureControl->region["<<nRegID<<"]: Control type: " << strControlType << ", "
-				"target temperature: " << dTemperature[0] << endl;
-
-		// control type
-		// TODO: adjust XML-I/O for all different control types
-
-		if("constant" == strControlType)
-			nControlType = TCT_CONSTANT_TEMPERATURE;
-		else if ("adjust" == strControlType)
-			nControlType = TCT_TEMPERATURE_ADJUST;
-		else if ("gradient" == strControlType)
-			nControlType = TCT_TEMPERATURE_GRADIENT;
-		else if ("gradient_lower" == strControlType)
-			nControlType = TCT_TEMPERATURE_GRADIENT_LOWER;
-		else if ("gradient_raise" == strControlType)
-			nControlType = TCT_TEMPERATURE_GRADIENT_RAISE;
-		else
-			nControlType = TCT_UNKNOWN;
-
-		if(TCT_UNKNOWN == nControlType)
-		{
-			global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Unknown control type (attribute: target@type)! Programm exit..." << endl;
-			exit(-1);
-		}
-
 		// add regions
-		tec::ControlRegion* region = new tec::ControlRegion( this, lc, uc, nCompID, dTemperature, dExponent, strDirections,
-				nControlType, nAdjustStart, nAdjustStop, nAdjustFreq );
+		tec::ControlRegion* region = new tec::ControlRegion(this, lc, uc);
 		this->AddRegion(region);
-
-		// subdivision of region
-		uint32_t nSubdivisionType = SDOPT_UNKNOWN;
-		std::string strSubdivisionType;
-		if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
-		{
-			global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Missing attribute subdivision@type! Programm exit..." << endl;
-			Simulation::exit(-1);
-		}
-		if("number" == strSubdivisionType)
-		{
-			unsigned int nNumSlabs = 0;
-			if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
-			{
-				global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Missing element subdivision/number! Programm exit..." << endl;
-				Simulation::exit(-1);
-			}
-			else
-			{
-				region->SetSubdivision(nNumSlabs);
-				global_log->info() << "TemperatureControl->region["<<nRegID<<"]: subdivision by '"<< strSubdivisionType << "': " << nNumSlabs << endl;
-			}
-		}
-		else if("width" == strSubdivisionType)
-		{
-			double dSlabWidth = 0.;
-			if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
-			{
-				global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Missing element subdivision/width! Programm exit..." << endl;
-				Simulation::exit(-1);
-			}
-			else
-			{
-				region->SetSubdivision(dSlabWidth);
-				global_log->info() << "TemperatureControl->region["<<nRegID<<"]: subdivision by '"<< strSubdivisionType << "': " << dSlabWidth << endl;
-			}
-		}
-		else
-		{
-			global_log->error() << "TemperatureControl->region["<<nRegID<<"]: Wrong attribute subdivision@type. Expected type=\"number|width\"! Programm exit..." << endl;
-			Simulation::exit(-1);
-		}
 
 		// observer mechanism
 		uint32_t refCoordsID[6] = {0, 0, 0, 0, 0, 0};
@@ -990,6 +979,8 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 				exit(-1);
 			}
 		}
+		// read region parameters from XML file
+		region->readXML(xmlconfig);
 		nRegID++;
 	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 }
@@ -1001,7 +992,7 @@ void TemperatureControl::AddRegion(tec::ControlRegion* region)
 
 void TemperatureControl::MeasureKineticEnergy(Molecule* mol, unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
+    if(simstep % _control.freq != 0)
         return;
 
     // measure drift in each control region
@@ -1015,7 +1006,7 @@ void TemperatureControl::MeasureKineticEnergy(Molecule* mol, unsigned long simst
 
 void TemperatureControl::CalcGlobalValues(unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
+    if(simstep % _control.freq != 0)
         return;
 
     // calc global values for control region
@@ -1030,7 +1021,7 @@ void TemperatureControl::CalcGlobalValues(unsigned long simstep)
 
 void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
+    if(simstep % _control.freq != 0)
         return;
 
     // control drift of all regions
@@ -1046,7 +1037,7 @@ void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep
 
 void TemperatureControl::InitControl(unsigned long simstep)
 {
-    if(simstep % _nControlFreq != 0)
+    if(simstep % _control.freq != 0)
         return;
 
     // reset local values

@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <cstdint>
 
 #include "molecules/Molecule.h"
 #include "utils/ObserverBase.h"
@@ -26,6 +27,31 @@ enum TemperatureControlTypes
 	TCT_TEMPERATURE_GRADIENT_RAISE = 5
 };
 
+struct TimestepControl {
+	uint64_t start, stop, freq;
+};
+
+template <typename T>
+class TargetCtrl {
+	public:
+	T start, actual, stop;
+};
+
+struct AdjustCtrl {
+	double delta;
+	TimestepControl control;
+};
+
+struct TemperatureCtrl {
+	TargetCtrl<double> temperature;
+	double exponent;
+	uint32_t cID;
+	uint16_t numDirections, controlType;
+	AdjustCtrl adjust;
+	double* vec;
+};
+
+class XMLfileUnits;
 class DomainDecompBase;
 class ParticleContainer;
 class AccumulatorBase;
@@ -37,11 +63,10 @@ namespace tec
 class ControlRegion : public CuboidRegionObs
 {
 public:
-    ControlRegion( TemperatureControl* const parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
-                   double* dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
-                   int nTemperatureControlType, unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq );
+    ControlRegion( TemperatureControl* const parent, double dLowerCorner[3], double dUpperCorner[3] );
     virtual ~ControlRegion();
 
+	void readXML(XMLfileUnits& xmlconfig);
     void SetSubdivision(unsigned int nNumSlabs) {_nNumSlabs = nNumSlabs;}
     void SetSubdivision(double dSlabWidth) {_dSlabWidthInit = dSlabWidth;}
     void PrepareSubdivision();  // need to be called before InitDataStructures()
@@ -58,14 +83,6 @@ public:
     void WriteHeaderDeltaEkin();
     void WriteDataDeltaEkin(unsigned long simstep);
 
-    // set adjust parameters
-    void SetTemperatureControlAdjustParameters(unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq)
-    {
-    	_nStartAdjust = nStartAdjust;
-    	_nStopAdjust  = nStopAdjust;
-    	_nAdjustFreq  = nAdjustFreq;
-    }
-
 	virtual void Print(std::ostream& os)
 	{
 		os << "----------------------------------------------------------------" << std::endl;
@@ -77,8 +94,8 @@ public:
 		this->GetUpperCorner(uc);
 		os << "lowerCorner: " << lc[0] << " " << lc[1] << " " << lc[2] << std::endl;
 		os << "upperCorner: " << uc[0] << " " << uc[1] << " " << uc[2] << std::endl;
-		os << "target T: " << _dTargetTemperature[0] << ", " << _dTargetTemperature[1] << std::endl;
-		os << "target cid: " << _nTargetComponentID << std::endl;
+		os << "target T: " << _target.temperature.start << ", " << _target.temperature.stop << std::endl;
+		os << "target cid: " << _target.cID << std::endl;
 		os << "----------------------------------------------------------------" << std::endl;
 	}
 
@@ -90,6 +107,8 @@ private:
 	void InitDataStructuresT();
 	void AllocateDataStructuresDEkin();
 	void InitDataStructuresDEkin();
+	void PrepareControlType();
+	void PrepareAccumulator(const std::string& strTransDirections);
 
 private:
     unsigned int _nNumSlabs;
@@ -110,21 +129,6 @@ private:
     double* _dBetaTransGlobal;
     double* _dBetaRotGlobal;
 
-    double _dTargetTemperature[2];
-    double* _dTargetTemperatureVec;
-    double _dTemperatureExponent;
-    unsigned int _nTargetComponentID;
-    unsigned short _nNumThermostatedTransDirections;
-
-    double _dTargetTemperatureActual;
-    double _dDeltaTemperatureAdjust;
-    unsigned long _nStartAdjust;
-    unsigned long _nStopAdjust;
-    unsigned long _nAdjustFreq;
-    unsigned int _nTemperatureControlType;
-
-    AccumulatorBase* _accumulator;
-
     // heat supply
     unsigned int _nNumSlabsDeltaEkin;
     unsigned int _nNumSlabsDEkinReserve;
@@ -140,9 +144,12 @@ private:
 
     // instances / ID
     static unsigned short _nStaticID;
+
+	TemperatureCtrl _target;
+	AccumulatorBase* _accumulator;
 };
 
-}
+} // namespace tec
 
 struct paramLineHeat
 {
@@ -152,7 +159,6 @@ struct paramLineHeat
 	unsigned int nWriteFreqRegions;
 };
 
-class XMLfileUnits;
 class Domain;
 class DomainDecompBase;
 class TemperatureControl : public ControlInstance
@@ -175,8 +181,8 @@ public:
     void CalcGlobalValues(unsigned long simstep);
     void ControlTemperature(Molecule* mol, unsigned long simstep);
 
-    unsigned long GetStart() {return _nStart;}
-    unsigned long GetStop()  {return _nStop;}
+    unsigned long GetStart() {return _control.start;}
+    unsigned long GetStop()  {return _control.stop;}
 
     // loops over molecule container
     void DoLoopsOverMolecules(ParticleContainer* particleContainer, unsigned long simstep);
@@ -192,9 +198,7 @@ public:
 
 private:
     std::vector<tec::ControlRegion*> _vecControlRegions;
-    unsigned long _nControlFreq;
-    unsigned long _nStart;
-    unsigned long _nStop;
+	TimestepControl _control;
 
     // heat supply
     bool _bWriteDataDeltaEkin;
