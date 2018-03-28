@@ -8,7 +8,10 @@ fi
 # in all these, cut by a tab first, because cutting only by white-space is errorprone due to time-stamp having different number of digits
 timeSec=`cat $fname | grep "Computation in main loop took" | cut -d $'\t' -f 3 | cut -d " " -f 6`
 mols=`cat $fname | grep "System contains" | cut -d $'\t' -f 3 | cut -d ' ' -f 3`
+if [[ -z ${mols} ]]; then
+	mols=`cat $fname | grep "System initialised" | cut -d $'\t' -f 3 | cut -d ' ' -f 4`
+fi
 its=`cat $fname  | grep "Simulating " | cut -d $'\t' -f 3  | cut -d ' ' -f 2`
 # million molecule updates per second
-MMUPS=`echo "scale=2 ; $mols * $its / $timeSec / 10^6" | bc`
+MMUPS=`echo "scale=6 ; $mols * $its / $timeSec / 10^6" | bc`
 echo $MMUPS

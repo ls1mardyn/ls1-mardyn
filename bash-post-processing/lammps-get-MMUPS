@@ -11,5 +11,5 @@ timeSec=`echo $relevantline | cut -d " " -f 4`
 its=`echo $relevantline | cut -d " " -f 9`
 mols=`echo $relevantline | cut -d " " -f 12`
 # million molecule updates per second
-MMUPS=`echo "scale=2 ; $mols * $its / $timeSec /10.0^6" | bc`
+MMUPS=`echo "scale=6 ; $mols * $its / $timeSec /10.0^6" | bc`
 echo $MMUPS
