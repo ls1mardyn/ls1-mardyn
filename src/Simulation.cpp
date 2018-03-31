@@ -545,123 +545,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Algorithm section missing." << endl;
 	}
 
-	/* output */
-	long numOutputPlugins = 0;
-	XMLfile::Query query = xmlconfig.query("output/outputplugin");
-	numOutputPlugins = query.card();
-	global_log->info() << "Number of output plugins: " << numOutputPlugins << endl;
-	if(numOutputPlugins < 1) {
-		global_log->warning() << "No output plugins specified." << endl;
-	}
-
-	/* plugins */
-	long numPlugins = 0;
-	XMLfile::Query query_p = xmlconfig.query("plugin");
-	numPlugins = query_p.card();
-	global_log->info() << "Number of plugins: " << numPlugins << endl;
-	if(numPlugins < 1) {
-		global_log->warning() << "No plugins specified." << endl;
-	}
-
-    // TODO: NEW COMBINED Version
-
-
-    long numAllPlugins = 0;
-    XMLfile::Query query_plugins = xmlconfig.query("plugin");
-
-	string oldpath = xmlconfig.getcurrentnodepath();
-
-    // TODO: @kruegener: move registering to Plugins
+    // REGISTERING/ENABLING PLUGINS
 	PluginFactory<PluginBase> pluginFactory;
-	// register plugins
-	pluginFactory.registerPlugin(&(testPlugin::createInstance));
-    //testPlugin* asd = new testPlugin();
+    pluginFactory.registerDefaultPlugins();
 
-	for (auto pluginIter = query_p.begin(); pluginIter; ++pluginIter) {
-		xmlconfig.changecurrentnode( pluginIter );
-		string pluginname("");
-		xmlconfig.getNodeValue("@name", pluginname);
-		bool enabled = true;
-		xmlconfig.getNodeValue("@enabled", enabled);
-		if(not enabled) {
-			global_log->debug() << "skipping disabled plugin: " << pluginname << endl;
-			continue;
-		}
-		global_log->info() << "Enabling plugin: " << pluginname << endl;
+    int numPlugs = 0;
+    numPlugs += enablePlugins(pluginFactory, xmlconfig, "plugin");
+    numPlugs += enablePlugins(pluginFactory, xmlconfig, "output/outputplugin");
+    global_log -> info() << "Number of Total Plugins: " << numPlugs << endl;
 
+    string oldpath = xmlconfig.getcurrentnodepath();
 
-		PluginBase* plugin = pluginFactory.create(pluginname);
-		if(plugin == nullptr) {
-			global_log->warning() << "Could not create plugin using factory: " << pluginname << endl;
-		}
-
-		// add plugin specific functions
-
-
-
-        if(nullptr != plugin) {
-            plugin->readXML(xmlconfig);
-            _plugins.push_back(plugin);
-        } else {
-            global_log->warning() << "Unknown plugin " << pluginname << endl;
-        }
-	}
-
-
-	OutputPluginFactory outputPluginFactory;
-	for( auto outputPluginIter = query.begin(); outputPluginIter; ++outputPluginIter ) {
-		xmlconfig.changecurrentnode( outputPluginIter );
-		string pluginname("");
-		xmlconfig.getNodeValue("@name", pluginname);
-		bool enabled = true;
-		xmlconfig.getNodeValue("@enabled", enabled);
-		if(not enabled) {
-			global_log->debug() << "Skipping disabled output plugin: " << pluginname << endl;
-			continue;
-		}
-		global_log->info() << "Enabling output plugin: " << pluginname << endl;
-
-
-		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
-		if(outputPlugin == nullptr) {
-			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
-		}
-
-
-		if(pluginname == "MmpldWriter") {
-			/** @todo this should be handled in the MMPLD Writer readXML() */
-			std::string sphere_representation = "simple";
-			xmlconfig.getNodeValue("@type", sphere_representation);
-			delete outputPlugin;
-			if("simple" == sphere_representation) {
-				outputPlugin = new MmpldWriterSimpleSphere();
-			} else if("multi" == sphere_representation) {
-				outputPlugin = new MmpldWriterMultiSphere ();
-			} else {
-				global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << endl;
-				Simulation::exit(-1);
-			}
-		}
-		/* temporary */
-		else if(pluginname == "VectorizationTuner") {
-			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
-		}
-		else if(pluginname == "DomainProfiles") {
-			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
-			_domain->readXML(xmlconfig);
-		}
-
-		if(nullptr != outputPlugin) {
-			outputPlugin->readXML(xmlconfig);
-			_outputPlugins.push_back(outputPlugin);
-		} else {
-			global_log->warning() << "Unknown plugin " << pluginname << endl;
-		}
-	}
-
-	xmlconfig.changecurrentnode(oldpath);
-
-	oldpath = xmlconfig.getcurrentnodepath();
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
 		global_log->info() << "Reading phase space from file." << endl;
 		string pspfiletype;
@@ -713,6 +607,76 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		_inputReader->readXML(xmlconfig);
 	}
 	xmlconfig.changecurrentnode(oldpath);
+}
+
+template <class T>
+int Simulation::enablePlugins(T &pluginFactory, XMLfileUnits& xmlconfig, std::string category) {
+    string oldpath = xmlconfig.getcurrentnodepath();
+
+    /* plugins */
+    long numPlugins = 0;
+    XMLfile::Query query = xmlconfig.query(category);
+    numPlugins = query.card();
+    global_log->info() << "Number of plugins with tag " << category << ": " << numPlugins << endl;
+    if(numPlugins < 1) {
+        global_log->warning() << "No plugins specified for tag" << category << "." << endl;
+    }
+
+    for (auto pluginIter = query.begin(); pluginIter; ++pluginIter) {
+        xmlconfig.changecurrentnode( pluginIter );
+        string pluginname("");
+        xmlconfig.getNodeValue("@name", pluginname);
+        bool enabled = true;
+        xmlconfig.getNodeValue("@enabled", enabled);
+        if(not enabled) {
+            global_log->debug() << "skipping disabled plugin: " << pluginname << endl;
+            continue;
+        }
+        global_log->info() << "Enabling plugin: " << pluginname << endl;
+
+
+        PluginBase* plugin = pluginFactory.create(pluginname);
+        if(plugin == nullptr) {
+            global_log->warning() << "Could not create plugin using factory: " << pluginname << endl;
+        }
+
+        //@TODO: REFACTOR
+        // add plugin specific functions
+
+        if(pluginname == "MmpldWriter") {
+            /** @todo this should be handled in the MMPLD Writer readXML() */
+            std::string sphere_representation = "simple";
+            xmlconfig.getNodeValue("@type", sphere_representation);
+            delete plugin;
+            if("simple" == sphere_representation) {
+                //plugin = new MmpldWriterSimpleSphere();
+            } else if("multi" == sphere_representation) {
+                //plugin = new MmpldWriterMultiSphere ();
+            } else {
+                global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << endl;
+                Simulation::exit(-1);
+            }
+        }
+            /* temporary */
+        else if(pluginname == "VectorizationTuner") {
+            //plugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
+        }
+        else if(pluginname == "DomainProfiles") {
+            plugin = pluginFactory.create("DensityProfileWriter");
+            _domain->readXML(xmlconfig);
+        }
+
+        if(nullptr != plugin) {
+            plugin->readXML(xmlconfig);
+            _plugins.push_back(plugin);
+        } else {
+            global_log->warning() << "Unknown plugin " << pluginname << endl;
+        }
+    }
+
+    xmlconfig.changecurrentnode(oldpath);
+
+    return numPlugins;
 }
 
 void Simulation::readConfigFile(string filename) {
@@ -1515,7 +1479,7 @@ void Simulation::simulate() {
 
 	global_log->info() << "Finish plugins" << endl;
 	for (auto plugin : _plugins) {
-		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+		plugin->finish(_moleculeContainer, _domainDecomposition, _domain);
 	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
@@ -1572,7 +1536,7 @@ void Simulation::plugin(unsigned long simstep) {
 		PluginBase* plugin = (*pluginIter);
 		global_log->debug() << "Plugin: " << plugin->getPluginName() << endl;
 		global_simulation->timers()->start(plugin->getPluginName());
-		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
 		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 
@@ -1731,3 +1695,4 @@ PluginBase* Simulation::getPlugin(const std::string& name)  {
 unsigned long Simulation::getNumberOfTimesteps() const {
 	return _numberOfTimesteps;
 }
+

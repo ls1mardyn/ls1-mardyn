@@ -21,29 +21,35 @@ public:
     //! the output can start, e.g. opening some files. This method will
     //! be called once at the beginning of the simulation (see Simulation.cpp)
     void init(ParticleContainer* particleContainer,
-                    DomainDecompBase* domainDecomp, Domain* domain) {};
+                    DomainDecompBase* domainDecomp, Domain* domain) {
+        global_log->info()  << "[TESTPLUGIN] TESTPLUGIN INIT" << std::endl;
+    }
 
-    void readXML(XMLfileUnits& /*xmlconfig*/) {};
+    void readXML(XMLfileUnits& /*xmlconfig*/) {
+        global_log -> debug() << "[TESTPLUGIN] READING XML" << endl;
+    }
 
     /** @brief Method beforeForces will be called before forcefields have been applied
             *
             * make pure Virtual ?
     */
 
-    virtual void beforeForces(
+    void beforeForces(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             unsigned long simstep
-    ) {}
+    ) {
+        global_log -> debug() << "[TESTPLUGIN] BEFORE FORCES" << endl;
+    }
 
     /** @brief Method afterForces will be called after forcefields have been applied
      *
      * make pure Virtual ?
      */
-    virtual void afterForces(
+    void afterForces(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             unsigned long simstep
     ) {
-        global_log->info()  << "[TESTPLUGIN] TESTPLUGIN AFTER FORCES" << std::endl;
+        global_log->info()  << "[TESTPLUGIN] TESTPLUGIN AFTER FORCES" << endl;
     }
 
     /** @brief Method endStep will be called at the end of each time step.
@@ -54,10 +60,14 @@ public:
      * @param domainDecomp       domain decomposition in use
      * @param domain
      */
-    virtual void endStep(
+    void endStep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain
-    ) {};
+            Domain* domain, unsigned long simstep,
+            std::list<ChemicalPotential>* lmu,
+            std::map<unsigned, CavityEnsemble>* mcav
+    ) {
+        global_log->info()  << "[TESTPLUGIN] ENDSTEP" << endl;
+    }
 
     /** @brief Method finalOutput will be called at the end of the simulation
      *
@@ -67,15 +77,16 @@ public:
      * @param domainDecomp       domain decomposition in use
      * @param domain
      */
-    virtual void finish(ParticleContainer* particleContainer,
-                        DomainDecompBase* domainDecomp, Domain* domain) {};
+    void finish(ParticleContainer* particleContainer,
+                        DomainDecompBase* domainDecomp, Domain* domain) {
+        global_log->info()  << "[TESTPLUGIN] FINISHING" << endl;
+    }
 
     /** @brief return the name of the plugin */
-    virtual std::string getPluginName()  {return "testPlugin";};
+    std::string getPluginName()  {return "testPlugin";}
     static PluginBase* createInstance() { return new testPlugin(); }
 
 private:
-    void setPrefix(double f_in, double& f_out, char& prefix) const;
 
     std::ofstream _fileStream;
     unsigned long _writeFrequency;

@@ -11,7 +11,7 @@
 #include "thermostats/VelocityScalingThermostat.h"
 
 // plugins
-#include "utils/testPlugin.h"
+#include "utils/PluginFactory.h"
 
 class Wall;
 class Mirror;
@@ -138,6 +138,14 @@ public:
 	 * execution mode.
 	 */
 	static void exit(int exitcode);
+
+    /** @brief enable plugins specified in the XML config file
+     *
+     * @param
+     */
+
+    template <class T>
+    int enablePlugins(T &pluginFactory, XMLfileUnits& xmlconfig, std::string category);
 
 	/** @brief process configuration file
 	 *
