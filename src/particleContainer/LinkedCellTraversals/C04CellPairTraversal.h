@@ -204,13 +204,18 @@ void C04CellPairTraversal<CellTemplate>::traverseSingleColor(CellProcessor& cell
 		correctParity += 4;
 	}
 
+	// to fix compiler complaints about perfectly nested loop.
+	const long startX = startOfThisColor[0], endX = end[0];
+	const long startY = startOfThisColor[1], endY = end[1];
+	const long startZ = startOfThisColor[2], endZ = end[2];
+
 	// first cartesian grid
 	#if defined(_OPENMP)
 	#pragma omp for schedule(dynamic, 1) collapse(3) nowait
 	#endif
-	for (long z = startOfThisColor[2]; z < end[2]; z += 4) {
-		for (long y = startOfThisColor[1]; y < end[1]; y += 4) {
-			for (long x = startOfThisColor[0]; x < end[0]; x += 4) {
+	for (long z = startZ; z < endZ; z += 4) {
+		for (long y = startY; y < endY; y += 4) {
+			for (long x = startX; x < endX; x += 4) {
 
 				long par = parity(x, y, z);
 
