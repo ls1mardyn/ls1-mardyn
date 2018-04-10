@@ -15,6 +15,7 @@
 #include <cstdint>
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
+#include "utils/CommVar.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 
 using namespace std;
@@ -42,10 +43,11 @@ enum DistControlInitMethods
 	DCIM_READ_FROM_FILE = 3,
 };
 
-enum DistControlFlags : uint32_t
+enum DistControlCOM : uint16_t
 {
-	DCF_DEFAULT = 0,
-	DCF_ALIGN_COM_ONLY = 1
+	DCCOM_UNKNOWN = 0,
+	DCCOM_DEFAULT = 1,
+	DCCOM_INTERFACE_POSITIONS = 2
 };
 
 class DistControl : public ControlInstance, public SubjectBase
@@ -59,8 +61,8 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
     // set subdivision
-	void SetSubdivision(unsigned int nNumSlabs) {_nNumShells = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
-    void SetSubdivision(double dSlabWidth) {_dShellWidth = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
+	void SetSubdivision(const uint32_t& numBins) {_binParams.count = numBins; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
+    void SetSubdivision(const double& dBinWidth) {_binParams.width = dBinWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
     void PrepareSubdivision();  // need to be called before PrepareDataStructures()
 
     // data structures
@@ -71,8 +73,8 @@ public:
 
     double GetInterfaceMidLeft() {return _dInterfaceMidLeft;}
     double GetInterfaceMidRight() {return _dInterfaceMidRight;}
-    unsigned int GetUpdateFreq() {return _nUpdateFreq;}
-    unsigned int GetWriteFreqProfiles() {return _nWriteFreqProfiles;}
+    unsigned int GetUpdateFreq() {return _controlFreqs.update;}
+    unsigned int GetWriteFreqProfiles() {return _controlFreqs.write.profiles;}
 
     // set update/init method
     void SetUpdateMethod(const int& nMethod, const unsigned short& nVal1, const unsigned short& nVal2, const unsigned short& nVal3, const double& dVal);
@@ -99,8 +101,9 @@ public:
 	virtual void deregisterObserver(ObserverBase* observer);
 	virtual void informObserver();
 
-	// flag
-	uint32_t GetFlag(){return _nFlag;}
+	// COM
+	bool AlignCOMactivated() {return _COM.isActive;}
+	uint16_t GetMethodCOM() {return _COM.method;}
 
 private:
     // place methods after the loop
@@ -141,13 +144,6 @@ private:
     double* _dDensityProfileSmoothedDerivation;
 	double* _dForceProfile;
     double* _dForceProfileSmoothed;
-    unsigned int _nNumShells;
-    double _dShellWidth;
-    double _dInvertShellWidth;
-    double _dShellVolume;
-    unsigned int _nUpdateFreq;
-    unsigned int _nWriteFreq;
-    unsigned int _nWriteFreqProfiles;
 
 	// update method
     int _nMethod;
@@ -163,24 +159,44 @@ private:
     std::string _strFilename;
     std::string _strFilenameProfilesPrefix;
 
-    // simtype
-    int _nSimType;
-
     // observer
 	std::vector<ObserverBase*> _observer;
 
 	int _nSubdivisionOpt;
-	uint32_t _nFlag;
 
 	// align COM
-	uint64_t* _nNumMoleculesCOMLocal;
-	uint64_t* _nNumMoleculesCOMGlobal;
-	double* _dPosSumLocal;
-	double* _dPosSumGlobal;
-	uint8_t _nCompIDTargetCOM;
-	double _dPosTargetCOM[3];
-	double _dPosCOM[3];
-	double _dAddVec[3];
+	struct COM_type
+	{
+		uint16_t method;
+		bool isActive;
+		CommVar <uint64_t*> numMolecules;
+		CommVar <double*> posSum;
+		uint16_t cidTarget;
+		struct PositionType
+		{
+			double target[3];
+			double actual[3];
+			double addVec[3];
+		} position;
+	} _COM;
+
+	struct BinParamsType
+	{
+		uint32_t count;
+		double width;
+		double invWidth;
+		double volume;
+	} _binParams;
+
+	struct ControlFreqType
+	{
+		uint32_t update;
+		struct WriteFreqType
+		{
+			uint32_t data;
+			uint32_t profiles;
+		} write;
+	} _controlFreqs;
 
 };  // class DistControl
 

@@ -1270,54 +1270,60 @@ void Simulation::simulate() {
 		// mheinen 2015-03-16 --> DISTANCE_CONTROL
 		if(_distControl != NULL)
 		{
-			if(_distControl->GetFlag() == DCF_DEFAULT)
+			for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+				 tM != _moleculeContainer->iteratorEnd();
+				 ++tM )
 			{
-				for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-					 tM != _moleculeContainer->iteratorEnd();
-					 ++tM )
-				{
-					// sample density profile
-					_distControl->SampleProfiles(&(*tM));
-				}
-
-				// determine interface midpoints and update region positions
-				_distControl->UpdatePositions(_simstep);
-
-				// write data
-				_distControl->WriteData(_simstep);
-				_distControl->WriteDataProfiles(_simstep);
-
-
-				// align system center of mass
-				for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-					 tM != _moleculeContainer->iteratorEnd();
-					 ++tM )
-				{
-					_distControl->AlignSystemCenterOfMass(&(*tM), _simstep);
-				}
+				// sample density profile
+				_distControl->SampleProfiles(&(*tM));
 			}
-			else if(_distControl->GetFlag() == DCF_ALIGN_COM_ONLY)
+
+			// determine interface midpoints and update region positions
+			_distControl->UpdatePositions(_simstep);
+
+			// write data
+			_distControl->WriteData(_simstep);
+			_distControl->WriteDataProfiles(_simstep);
+
+			if(true == _distControl->AlignCOMactivated() )
 			{
-				if(0 == _simstep % _distControl->GetUpdateFreq() )
+				switch(_distControl->GetMethodCOM() )
 				{
-					// sample COM
+				case DCCOM_DEFAULT:
+					if(0 == _simstep % _distControl->GetUpdateFreq() )
+					{
+						// sample COM
+						for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+							 tM != _moleculeContainer->iteratorEnd();
+							 ++tM )
+						{
+							_distControl->SampleCOM(&(*tM), _simstep);
+						}
+						// align COM
+
+						// calc global values
+						_distControl->CalcGlobalValuesCOM(_simstep);
+
+						for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+							 tM != _moleculeContainer->iteratorEnd();
+							 ++tM )
+						{
+							_distControl->AlignCOM(&(*tM), _simstep);
+						}
+					}
+					break;
+				case DCCOM_INTERFACE_POSITIONS:
+					// align system center of mass
 					for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
 						 tM != _moleculeContainer->iteratorEnd();
 						 ++tM )
 					{
-						_distControl->SampleCOM(&(*tM), _simstep);
+						_distControl->AlignSystemCenterOfMass(&(*tM), _simstep);
 					}
-					// align COM
-
-					// calc global values
-					_distControl->CalcGlobalValuesCOM(_simstep);
-
-					for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-						 tM != _moleculeContainer->iteratorEnd();
-						 ++tM )
-					{
-						_distControl->AlignCOM(&(*tM), _simstep);
-					}
+					break;
+				case DCCOM_UNKNOWN:
+				default:
+					global_log->error() << "DistControl: Align COM method unknown." << endl;
 				}
 			}
 		}
