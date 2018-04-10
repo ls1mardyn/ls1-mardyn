@@ -476,7 +476,7 @@ void tec::ControlRegion::CalcGlobalValues(unsigned long simstep)
     	exit(-1);
     }
 
-    cout << "_target.temperature.actual= " << _target.temperature.actual << endl;
+//    cout << "_target.temperature.actual= " << _target.temperature.actual << endl;
 
 //    cout << "_nNumMoleculesGlobal[0] = " << _nNumMoleculesGlobal[0] << endl;
 //    cout << "_dBetaTransGlobal[0] = " << _dBetaTransGlobal[0] << endl;
