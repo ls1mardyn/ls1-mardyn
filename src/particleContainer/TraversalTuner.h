@@ -10,6 +10,7 @@
 #include "LinkedCellTraversals/CellPairTraversals.h"
 #include "LinkedCellTraversals/QuickschedTraversal.h"
 #include "LinkedCellTraversals/C08CellPairTraversal.h"
+#include "LinkedCellTraversals/C04CellPairTraversal.h"
 #include "LinkedCellTraversals/OriginalCellPairTraversal.h"
 #include "LinkedCellTraversals/HalfShellTraversal.h"
 #include "LinkedCellTraversals/MidpointTraversal.h"
@@ -26,10 +27,11 @@ public:
 	enum traversalNames {
 		ORIGINAL = 0,
 		C08      = 1,
-		SLICED   = 2,
-		HS       = 3,
-		MP       = 4,
-		QSCHED   = 5
+		C04      = 2,
+		SLICED   = 3,
+		HS       = 4,
+		MP       = 5,
+		QSCHED   = 6
 	};
 
 	TraversalTuner();
@@ -83,6 +85,7 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 			mardyn_get_max_threads() > 1 ? C08 : SLICED
 	};
 	struct C08CellPairTraversalData      *c08Data    = new C08CellPairTraversalData;
+	struct C04CellPairTraversalData      *c04Data    = new C04CellPairTraversalData;
 	struct OriginalCellPairTraversalData *origData   = new OriginalCellPairTraversalData;
 	struct SlicedCellPairTraversalData   *slicedData = new SlicedCellPairTraversalData;
     struct HalfShellTraversalData    	 *hsData   	 = new HalfShellTraversalData;
@@ -92,6 +95,7 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 	_traversals = {
 			make_pair(nullptr, origData),
 			make_pair(nullptr, c08Data),
+			make_pair(nullptr, c04Data),
 			make_pair(nullptr, slicedData),
             make_pair(nullptr, hsData),
             make_pair(nullptr, mpData)
@@ -128,6 +132,8 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
         global_log->info() << "Using OriginalCellPairTraversal." << endl;
     else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
         global_log->info() << "Using C08CellPairTraversal." << endl;
+    else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTraversal))
+            global_log->info() << "Using C04CellPairTraversal." << endl;
     else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
         global_log->info() << "Using MidpointTraversal." << endl;
 
@@ -161,6 +167,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 
 	if (traversalType.find("c08") != string::npos)
 		selectedTraversal = C08;
+	else if (traversalType.find("c04") != string::npos)
+			selectedTraversal = C04;
 	else if (traversalType.find("qui") != string::npos)
 		selectedTraversal = QSCHED;
 	else if (traversalType.find("slice") != string::npos)
@@ -259,6 +267,8 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 		if (tPair.first == nullptr) {
 			if (dynamic_cast<C08CellPairTraversalData *>(tPair.second)) {
 				tPair.first = new C08CellPairTraversal<CellTemplate>(cells, dims);
+			} else if(dynamic_cast<C04CellPairTraversalData *>(tPair.second)) {
+				tPair.first = new C04CellPairTraversal<CellTemplate>(cells, dims);
 			} else if (QuickschedTraversalData *quiData = dynamic_cast<QuickschedTraversalData *>(tPair.second)) {
 				mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
 				tPair.first = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
@@ -337,6 +347,9 @@ inline bool TraversalTuner<CellTemplate>::isTraversalApplicable(
 #endif
 		break;
 	case C08:
+		ret = true;
+		break;
+	case C04:
 		ret = true;
 		break;
 	case ORIGINAL:

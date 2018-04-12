@@ -157,7 +157,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			global_log->error_always_output() << "LinkedCells::rebuild: region to small" << endl;
+			global_log->error_always_output() << "LinkedCells::rebuild: region too small" << endl;
 			Simulation::exit(1);
 		}
 

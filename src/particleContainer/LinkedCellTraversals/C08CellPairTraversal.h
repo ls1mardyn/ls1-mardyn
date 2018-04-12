@@ -32,7 +32,7 @@ public:
 	void traverseCellPairsOuter(CellProcessor& cellProcessor);
 	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
-protected:
+private:
 	void traverseCellPairsBackend(CellProcessor& cellProcessor,
 			const std::array<unsigned long, 3> & start,
 			const std::array<unsigned long, 3> & end,
