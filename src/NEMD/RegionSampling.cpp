@@ -244,7 +244,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 	}
 
 	XMLfile::Query::const_iterator outputSamplingIter;
-	for( outputSamplingIter = query.begin(); outputSamplingIter; outputSamplingIter++ )
+	for( outputSamplingIter = query.begin(); outputSamplingIter != query.end(); outputSamplingIter++ )
 	{
 		xmlconfig.changecurrentnode( outputSamplingIter );
 		std::string strSamplingModuleType = "unknown";
@@ -331,15 +331,15 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				string oldpath = xmlconfig.getcurrentnodepath();
 				xmlconfig.changecurrentnode("discretizations");
 				uint32_t numDiscretizations = 0;
-				query = xmlconfig.query("discretization");
-				numDiscretizations = query.card();
+				XMLfile::Query query_vd = xmlconfig.query("discretization");
+				numDiscretizations = query_vd.card();
 				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations (components for that VDF should be sampled): " << numDiscretizations << endl;
 				if(numDiscretizations < 1) {
 					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No velocity discretizations specified for VDF sampling. Program exit ..." << endl;
 					Simulation::exit(-1);
 				}
 				XMLfile::Query::const_iterator nodeIter;
-				for( nodeIter = query.begin(); nodeIter; nodeIter++ )
+				for( nodeIter = query_vd.begin(); nodeIter != query_vd.end(); nodeIter++ )
 				{
 					xmlconfig.changecurrentnode(nodeIter);
 					uint32_t cid = 0;
@@ -449,8 +449,8 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 
 			// subdivision of region
 			uint32_t numSubdivisions = 0;
-			query = xmlconfig.query("subdivision");
-			numSubdivisions = query.card();
+			XMLfile::Query query_sd = xmlconfig.query("subdivision");
+			numSubdivisions = query_sd.card();
 			if(numSubdivisions != 2) {
 				global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Found " << numSubdivisions << " 'subdivision' elements, "
 						"expected: 2. Program exit ..." << endl;
@@ -458,7 +458,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			}
 			string oldpath = xmlconfig.getcurrentnodepath();
 			XMLfile::Query::const_iterator outputSubdivisionIter;
-			for( outputSubdivisionIter = query.begin(); outputSubdivisionIter; outputSubdivisionIter++ )
+			for( outputSubdivisionIter = query_sd.begin(); outputSubdivisionIter != query_sd.end(); outputSubdivisionIter++ )
 			{
 				xmlconfig.changecurrentnode( outputSubdivisionIter );
 				bInputIsValid = true;
@@ -505,15 +505,15 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters for elements: 'subdivision' corrupted! Program exit..." << endl;
 					Simulation::exit(-1);
 				}
-			}
+			}  // for( outputSubdivisionIter = query.begin(); outputSubdivisionIter; outputSubdivisionIter++ )
 			xmlconfig.changecurrentnode(oldpath);
 		}
 		else
 		{
-			global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Wrong attribute 'sampling@type', expected type='profiles|VDF'! Program exit..." << endl;
+			global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Wrong attribute 'sampling@type', expected type='profiles|VDF|fieldYR'! Program exit..." << endl;
 			Simulation::exit(-1);
 		}
-	}
+	}  // for( outputSamplingIter = query.begin(); outputSamplingIter; outputSamplingIter++ )
 }
 
 void SampleRegion::PrepareSubdivisionProfiles()
