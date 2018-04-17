@@ -9,6 +9,10 @@
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
+
+// plugins
+#include "utils/testPlugin.h"
+
 class Wall;
 class Mirror;
 using optparse::Values;
@@ -22,6 +26,8 @@ extern Simulation* global_simulation;
 class PressureGradient;
 class ParticleInsertion;
 class Ensemble;
+
+
 
 /** Reference to the global simulation object */
 #define _simulation (*global_simulation)
@@ -49,6 +55,7 @@ class ParticlePairsHandler;
 class CellProcessor;
 class Integrator;
 class OutputBase;
+class PluginBase;
 class DomainDecompBase;
 class InputBase;
 class RDF;
@@ -199,6 +206,16 @@ public:
      */
 	void output(unsigned long simstep);
 
+	/** @brief call plugins every nth-simstep
+	 *
+	 * The present method serves as a redirection to the actual plugins.
+	 * That includes
+     * a) particular plugin objects included in _plugins,
+	 *
+	 * @param[in]  simstep timestep of the plugins
+     */
+	void plugin(unsigned long simstep);
+
 	/** @brief clean up simulation */
 	void finalize();
 
@@ -280,6 +297,7 @@ public:
 	void initCanonical(unsigned long t) { this->_initCanonical = t; }
 	void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }
+	unsigned long getInitStatistics() const { return this->_initStatistics; }
 
 	void setSimulationTime(double curtime) { _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }
@@ -469,8 +487,9 @@ public:
 	 * @return pointer to the output plugin if it is active, otherwise nullptr
 	 */
 	OutputBase* getOutputPlugin(const std::string& name);
+	PluginBase* getPlugin(const std::string& name);
 
-	void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
+	//void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
 
 	/** Global energy log */
 	void initGlobalEnergyLog();
@@ -486,6 +505,7 @@ private:
 
 	/** List of output plugins to use */
 	std::list<OutputBase*> _outputPlugins;
+	std::list<PluginBase*> _plugins;
 
 	VelocityScalingThermostat _velocityScalingThermostat;
 
@@ -541,8 +561,6 @@ private:
 	/** Global energy log */
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
-
-	bool _virialRequired;
 };
 #endif /*SIMULATION_H_*/
 

@@ -152,11 +152,8 @@ public:
 
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
 
-	virtual ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
-	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
-
-	virtual ParticleIterator iteratorEnd () = 0;
-	virtual RegionParticleIterator iterateRegionEnd () = 0;
+	virtual ParticleIterator iterator (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
+	virtual RegionParticleIterator regionIterator (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
 
 	//! @return the number of particles stored in this container
 	//!
@@ -224,9 +221,6 @@ public:
 	virtual void updateMoleculeCaches() = 0;
 
 	virtual size_t getNumCells() const = 0;
-
-	virtual ParticleCellBase * getCell(unsigned cellIndex) = 0;
-	virtual const ParticleCellBase * getCell(unsigned cellIndex) const = 0;
 
 	/**
 	 * @brief Gets a molecule by its position.

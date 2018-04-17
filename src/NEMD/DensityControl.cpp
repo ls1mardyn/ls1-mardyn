@@ -1166,19 +1166,14 @@ void MainLoopAction::performAction(Simulation* simulation)
 	uint64_t simstep = simulation->getSimulationStep();
 	this->preFirstLoop(simulation);
 
-	ParticleIterator pit;
-	for( pit  = particleCont->iteratorBegin();
-			pit != particleCont->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 	{
 		this->insideFirstLoop(simulation, &(*pit) );
 	}
 
 	this->postFirstPreSecondLoop(simulation);
 
-	for( pit  = particleCont->iteratorBegin();
-			pit != particleCont->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 	{
 		this->insideSecondLoop(simulation, &(*pit) );
 	}

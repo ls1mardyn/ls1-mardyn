@@ -216,36 +216,36 @@ bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double
 	if (moleculeContainer->getNumberOfParticles() == 0)
 		return false; // DELETION_INVALID
 
-	ParticleIterator m = moleculeContainer->iteratorBegin();
+	ParticleIterator m = moleculeContainer->iterator();
 	int j = 0;
 	for (unsigned i = 0; (i < idx); i++) {
 		while ((moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != _componentid))
-				and (m != moleculeContainer->iteratorEnd()))
+				and m.hasNext())
 		{
-			++m;
-			if (m == moleculeContainer->iteratorEnd()) {
+			m.next();
+			if (not m.hasNext()) {
 				if (j == 0)
 					return false; // DELETION_FALSE
-				m = moleculeContainer->iteratorBegin();
+				m = moleculeContainer->iterator();
 				j = 0;
 			}
 		} /*end while*/
 
-		++m;
+		m.next();
 		j++;
-		if (m == moleculeContainer->iteratorEnd()) {
-			m = moleculeContainer->iteratorBegin();
+		if (not m.hasNext()) {
+			m = moleculeContainer->iterator();
 			j = 0;
 		}
 	}
 
 	while (moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != _componentid))
 	{
-		++m;
-		if (m == moleculeContainer->iteratorEnd()) {
+		m.next();
+		if (not m.hasNext()) {
 			if (j == 0)
 				return false; // DELETION_FALSE
-			m = moleculeContainer->iteratorBegin();
+			m = moleculeContainer->iterator();
 		}
 	}
 
@@ -500,17 +500,17 @@ void ChemicalPotential::grandcanonicalStep(
 				this->storeMolecule(*m);
 
 				moleculeContainer->deleteMolecule(*m, true/*rebuildCaches*/);
-				m = moleculeContainer->iteratorBegin();
+				m = moleculeContainer->iterator();
 				_localInsertionsMinusDeletions--;
 			}
 		} /* end of second hasDeletion */
 
 		if (!this->hasSample()) {
-			m = moleculeContainer->iteratorBegin();
+			m = moleculeContainer->iterator();
 			bool rightComponent = false;
 			ParticleIterator mit;
 			if (m->componentid() != this->getComponentID()) {
-				for (mit = moleculeContainer->iteratorBegin(); mit != moleculeContainer->iteratorEnd(); ++mit) {
+				for (mit = moleculeContainer->iterator(); mit.hasNext(); mit.next()) {
 					if (mit->componentid() == this->getComponentID()) {
 						rightComponent = true;
 						break;
@@ -592,7 +592,7 @@ void ChemicalPotential::grandcanonicalStep(
 		}
 	}
 #ifndef NDEBUG
-	for (m = moleculeContainer->iteratorBegin(); m != moleculeContainer->iteratorEnd(); ++m) {
+	for (m = moleculeContainer->iterator(); m.hasNext(); m.next()) {
 		// cout << *m << "\n";
 		// cout.flush();
 		m->check(m->id());
@@ -606,12 +606,11 @@ unsigned ChemicalPotential::countParticles(
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles are NOT counted
 
-	ParticleIterator begin = moleculeContainer->iteratorBegin(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-	ParticleIterator end = moleculeContainer->iterateRegionEnd();
+	ParticleIterator begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 	unsigned N = 0;
 
-	for (auto m = begin; m != end; ++m) {
+	for (auto m = begin; m.hasNext(); m.next()) {
 		if (m->componentid() == cid)
 			++N;
 	}
@@ -626,11 +625,10 @@ unsigned ChemicalPotential::countParticles(
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles NOT counted
 
-	RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-	RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+	RegionParticleIterator begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 	unsigned N = 0;
-	for (auto m = begin; m != end; ++m) {
+	for (auto m = begin; m.hasNext(); m.next()) {
 		if (m->componentid() == cid) {
 			++N;
 		}

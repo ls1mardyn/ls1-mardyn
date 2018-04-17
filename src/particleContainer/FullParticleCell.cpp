@@ -17,11 +17,7 @@
 using namespace std;
 
 FullParticleCell::FullParticleCell() :
-		haloCell(false), boundaryCell(false), innerCell(false), innerMostCell(false), _molecules(), _cellDataSoA(0, 0, 0, 0, 0) {
-	for (int d = 0; d < 3; ++d) {
-		_boxMin[d] = 0.0;
-		_boxMax[d] = 0.0;
-	}
+		_molecules(), _cellDataSoA(0, 0, 0, 0, 0) {
 }
 
 FullParticleCell::~FullParticleCell() {
@@ -34,11 +30,28 @@ void FullParticleCell::deallocateAllParticles() {
 	_molecules.clear();
 }
 
+bool FullParticleCell::findMoleculeByID(size_t& index, unsigned long molid) const {
+	int numMolecules = getMoleculeCount();
+
+	// TODO: we'd need separate classes for const and non-const iterators...
+	FullParticleCell * nonconst_this = const_cast<FullParticleCell *>(this);
+
+	auto begin = nonconst_this->iterator();
+
+	for(auto it = begin; it.hasNext(); it.next()) {
+		if (it->id() == molid) {
+			index = it.getIndex();
+			return true;
+		}
+	}
+	return false;
+}
+
 bool FullParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 	bool wasInserted = false;
 
 #ifndef NDEBUG
-	bool isIn = particle.inBox(_boxMin, _boxMax);
+	bool isIn = testInBox(particle);
 	mardyn_assert(isIn);
 #endif
 
@@ -85,7 +98,7 @@ void FullParticleCell::preUpdateLeavingMolecules() {
 	for (auto mol = _molecules.begin(); mol != _molecules.end(); ) {
 		mol->setSoA(nullptr);
 
-		const bool isStaying = mol->inBox(_boxMin, _boxMax);
+		const bool isStaying = testInBox(*mol);
 
 		if (isStaying) {
 			// don't do anything, just advance iterator
@@ -108,7 +121,7 @@ void FullParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 
 void FullParticleCell::updateLeavingMolecules(FullParticleCell& otherCell){
 	for (auto m = otherCell._leavingMolecules.begin(); m != otherCell._leavingMolecules.end(); ++m) { // loop over all indices
-		if (m->inBox(_boxMin, _boxMax)) { // if molecule moves in this cell
+		if (testInBox(*m)) { // if molecule moves in this cell
 			addParticle(*m);
 		}
 	}

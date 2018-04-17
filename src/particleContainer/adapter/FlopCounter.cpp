@@ -108,21 +108,17 @@ void FlopCounter::_Counts::allReduce() {
 }
 
 
-double FlopCounter::_Counts::process() const {
+void FlopCounter::_Counts::print() const {
 	using std::endl;
 	using Log::global_log;
 
-//	global_log->info() << " Molecule distance: " << getMoleculeDistanceFlops() << endl;
-//	global_log->info() << " Center distance: " << getCenterDistanceFlops() << endl;
-	for (int i = 0; i < NUM_POTENTIALS; ++i) {
-		std::string str = _potCounts[i].printNameKernelAndMacroFlops();
-//		if(str.length() > 0) global_log->info() << str;
-	}
-//	global_log->info() << " Force/Torque Sum: " << getForceTorqueSumFlops() << endl;
-//	global_log->info() << " Macroscopic value sum: " << getMacroValueSumFlops() << endl;
-//	global_log->info() << "Total: " << getTotalFlops() << endl;
+	global_log->info() << " Molecule distances: " << _moleculeDistances << endl;
 
-	return getTotalFlops();
+	for (int i = 0; i < NUM_POTENTIALS; ++i) {
+		std::string str = _potCounts[i].printNameKernelAndMacroCalls();
+		if (str.length() > 0)
+			global_log->info() << str;
+	}
 }
 
 FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius),
@@ -187,7 +183,7 @@ void FlopCounter::endTraversal() {
 	}
 
 //	Log::global_log->info() << "FLOP counts in force calculation for this iteration:" << std::endl;
-	_totalFlopCount = _currentCounts.process();
+	_totalFlopCount = _currentCounts.getTotalFlops();
 
 //	_totalCounts.addCounts(_currentCounts);
 //	Log::global_log->info()
@@ -452,4 +448,12 @@ void FlopCounter::_calculatePairs(const CellDataSoARMM & soa1, const CellDataSoA
 
 	my_threadData._moleculeDistances += i_mm;
 	my_threadData.addKernelAndMacro(I_LJ, i_lj, CalculateMacroscopic);
+}
+
+void FlopCounter::printStats() const {
+	global_log->info() << "FlopCounter stats: " << endl;
+	_currentCounts.print();
+	global_log->info()
+			<< "\tfraction of Flops for molecule dist: "
+			<< getTotalMoleculeDistanceFlopCount() / getTotalFlopCount() << endl;
 }

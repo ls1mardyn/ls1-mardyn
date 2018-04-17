@@ -106,10 +106,8 @@ void MoleculeRMM::setid(unsigned long id) {
 	}
 }
 
-void MoleculeRMM::setF(unsigned short d, double F) {
-	// some assert?
-	// AOS ?
-	_F[d] = F;
+void MoleculeRMM::setF(unsigned short /*d*/, double /*F*/) {
+
 }
 
 std::string MoleculeRMM::getWriteFormat(){

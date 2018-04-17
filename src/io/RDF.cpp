@@ -6,6 +6,8 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
+#include "particleContainer/adapter/RDFCellProcessor.h"
+
 #include <sstream>
 #include <fstream>
 #include <map>
@@ -18,6 +20,7 @@ RDF::RDF() :
 	_bins(0),
 	_numberOfComponents(0),
 	_components(_simulation.getEnsemble()->getComponents()),
+	_samplingFrequency(1),
 	_numberOfRDFTimesteps(0),
 	_accumulatedNumberOfRDFTimesteps(0),
 	_maxDistanceSquare(0.0),
@@ -25,7 +28,8 @@ RDF::RDF() :
 	_writeFrequency(1),
 	_outputPrefix("ls1-mardyn"),
 	_initialized(false),
-	_readConfig(false)
+	_readConfig(false),
+	_cellProcessor(nullptr)
 {}
 
 void RDF::init() {
@@ -33,65 +37,80 @@ void RDF::init() {
 		global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
 		Simulation::exit(25);
 	}
+
+	_cellProcessor = new RDFCellProcessor(global_simulation->getcutoffRadius(), this);
+
 	_numberOfComponents = _components->size();
 	_doCollectSiteRDF = false;
 	_numberOfRDFTimesteps = 0;
 	_accumulatedNumberOfRDFTimesteps = 0;
 	_maxDistanceSquare = _intervalLength*_intervalLength*_bins*_bins;
 
-	_globalCtr = new unsigned long[_numberOfComponents];
-	_globalAccumulatedCtr = new unsigned long[_numberOfComponents];
-	_localDistribution = new unsigned long**[_numberOfComponents];
-	_globalDistribution = new unsigned long**[_numberOfComponents];
-	_globalAccumulatedDistribution = new unsigned long**[_numberOfComponents];
 
-	this->_localSiteDistribution = new unsigned long****[_numberOfComponents];
-	this->_globalSiteDistribution = new unsigned long****[_numberOfComponents];
-	this->_globalAccumulatedSiteDistribution = new unsigned long****[_numberOfComponents];
+	{
+		const unsigned int nC = _numberOfComponents;
+
+		resizeExactly(_globalCtr, nC);
+		resizeExactly(_globalAccumulatedCtr, nC);
+		resizeExactly(_distribution.local, nC);
+		resizeExactly(_distribution.global, nC);
+		resizeExactly(_globalAccumulatedDistribution, nC);
+
+		resizeExactly(_siteDistribution.local, nC);
+		resizeExactly(_siteDistribution.global, nC);
+		resizeExactly(_globalAccumulatedSiteDistribution, nC);
+	}
+
+
 	for(unsigned i = 0; i < _numberOfComponents; i++) {
-		this->_globalCtr[i] = 0;
-		this->_globalAccumulatedCtr[i] = 0;
+		_globalCtr[i] = 0;
+		_globalAccumulatedCtr[i] = 0;
 
-		this->_localDistribution[i] = new unsigned long*[_numberOfComponents-i];
-		this->_globalDistribution[i] = new unsigned long*[_numberOfComponents-i];
-		this->_globalAccumulatedDistribution[i] = new unsigned long*[_numberOfComponents-i];
+		{
+			const unsigned int nCmi = _numberOfComponents - i;
+
+			resizeExactly(_distribution.local[i], nCmi);
+			resizeExactly(_distribution.global[i], nCmi);
+			resizeExactly(_globalAccumulatedDistribution[i], nCmi);
+
+			resizeExactly(_siteDistribution.local[i], nCmi);
+			resizeExactly(_siteDistribution.global[i], nCmi);
+			resizeExactly(_globalAccumulatedSiteDistribution[i], nCmi);
+		}
 
 		unsigned ni = (*_components)[i].numSites();
-		this->_localSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
-		this->_globalSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
-		this->_globalAccumulatedSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
 
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
-			this->_localDistribution[i][k] = new unsigned long[_bins];
-			this->_globalDistribution[i][k] = new unsigned long[_bins];
-			this->_globalAccumulatedDistribution[i][k] = new unsigned long[_bins];
+			resizeExactly(_distribution.local[i][k], _bins);
+			resizeExactly(_distribution.global[i][k], _bins);
+			resizeExactly(_globalAccumulatedDistribution[i][k], _bins);
 
 			for(unsigned l=0; l < _bins; l++) {
-				this->_localDistribution[i][k][l] = 0;
-				this->_globalDistribution[i][k][l] = 0;
-				this->_globalAccumulatedDistribution[i][k][l] = 0;
+				_distribution.local[i][k][l] = 0;
+				_distribution.global[i][k][l] = 0;
+				_globalAccumulatedDistribution[i][k][l] = 0;
 			}
 
 			unsigned nj = (*_components)[i+k].numSites();
 			if(ni+nj > 2) {
-				this->_doCollectSiteRDF = true;
+				_doCollectSiteRDF = true;
 
-				this->_localSiteDistribution[i][k] = new unsigned long**[ni];
-				this->_globalSiteDistribution[i][k] = new unsigned long**[ni];
-				this->_globalAccumulatedSiteDistribution[i][k] = new unsigned long**[ni];
+				resizeExactly(_siteDistribution.local[i][k], ni);
+				resizeExactly(_siteDistribution.global[i][k], ni);
+				resizeExactly(_globalAccumulatedSiteDistribution[i][k], ni);
 
 				for(unsigned m=0; m < ni; m++) {
-					this->_localSiteDistribution[i][k][m] = new unsigned long*[nj];
-					this->_globalSiteDistribution[i][k][m] = new unsigned long*[nj];
-					this->_globalAccumulatedSiteDistribution[i][k][m] = new unsigned long*[nj];
+					resizeExactly(_siteDistribution.local[i][k][m], nj);
+					resizeExactly(_siteDistribution.global[i][k][m], nj);
+					resizeExactly(_globalAccumulatedSiteDistribution[i][k][m], nj);
 					for(unsigned n=0; n < nj; n++) {
-						this->_localSiteDistribution[i][k][m][n] = new unsigned long[_bins];
-						this->_globalSiteDistribution[i][k][m][n] = new unsigned long[_bins];
-						this->_globalAccumulatedSiteDistribution[i][k][m][n] = new unsigned long[_bins];
+						resizeExactly(_siteDistribution.local[i][k][m][n], _bins);
+						resizeExactly(_siteDistribution.global[i][k][m][n], _bins);
+						resizeExactly(_globalAccumulatedSiteDistribution[i][k][m][n], _bins);
 						for(unsigned l=0; l < _bins; l++) {
-							this->_localSiteDistribution[i][k][m][n][l] = 0;
-							this->_globalSiteDistribution[i][k][m][n][l] = 0;
-							this->_globalAccumulatedSiteDistribution[i][k][m][n][l] = 0;
+							_siteDistribution.local[i][k][m][n][l] = 0;
+							_siteDistribution.global[i][k][m][n][l] = 0;
+							_globalAccumulatedSiteDistribution[i][k][m][n][l] = 0;
 							// cout << "init " << i << "\t" << k << "\t" << m << "\t" << n << "\t" << l << "\n";
 						}
 					}
@@ -107,6 +126,10 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+
+	_samplingFrequency = 1;
+	xmlconfig.getNodeValue("samplingfrequency", _samplingFrequency);
+	global_log->info() << "Sampling frequency: " << _samplingFrequency << endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -132,27 +155,10 @@ void RDF::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBas
 
 
 RDF::~RDF() {
-	if (_initialized) {
-		for (unsigned i = 0; i < _numberOfComponents; i++) {
-			for (unsigned k = 0; i + k < _numberOfComponents; k++) {
-				delete[] _localDistribution[i][k];
-				delete[] _globalDistribution[i][k];
-				delete[] _globalAccumulatedDistribution[i][k];
-			}
-			delete[] _localDistribution[i];
-			delete[] _globalDistribution[i];
-			delete[] _globalAccumulatedDistribution[i];
-		}
-
-		delete[] _globalCtr;
-		delete[] _globalAccumulatedCtr;
-		delete[] _localDistribution;
-		delete[] _globalDistribution;
-		delete[] _globalAccumulatedDistribution;
-	}
+	// nothing to do since refactoring to vectors
 }
 
-void RDF::accumulateNumberOfMolecules(vector<Component>& components) const {
+void RDF::accumulateNumberOfMolecules(vector<Component>& components) {
 	for (size_t i = 0; i < components.size(); i++) {
 		_globalCtr[i] += components[i].getNumMolecules();
 	}
@@ -163,16 +169,16 @@ void RDF::accumulateRDF() {
 	if(0 >= _numberOfRDFTimesteps) return;
 	_accumulatedNumberOfRDFTimesteps += _numberOfRDFTimesteps;
 	for(unsigned i=0; i < _numberOfComponents; i++) {
-		this->_globalAccumulatedCtr[i] += this->_globalCtr[i];
+		_globalAccumulatedCtr[i] += _globalCtr[i];
 		unsigned ni = (*_components)[i].numSites();
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
 			unsigned nj = (*_components)[i+k].numSites();
 			for(unsigned l=0; l < _bins; l++) {
-				this->_globalAccumulatedDistribution[i][k][l] += this->_globalDistribution[i][k][l];
+				_globalAccumulatedDistribution[i][k][l] += _distribution.global[i][k][l];
 				if(ni + nj > 2) {
 					for(unsigned m=0; m < ni; m++) {
 						for(unsigned n=0; n < nj; n++) {
-							this->_globalAccumulatedSiteDistribution[i][k][m][n][l] += this->_globalSiteDistribution[i][k][m][n][l];
+							_globalAccumulatedSiteDistribution[i][k][m][n][l] += _siteDistribution.global[i][k][m][n][l];
 						}
 					}
 				}
@@ -188,7 +194,7 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 	for(unsigned i=0; i < _numberOfComponents; i++) {
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
 			for(unsigned l=0; l < _bins; l++) {
-				dode->collCommAppendUnsLong(_localDistribution[i][k][l]);
+				dode->collCommAppendUnsLong(_distribution.local[i][k][l]);
 			}
 		}
 	}
@@ -197,7 +203,7 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 	for(unsigned i=0; i < _numberOfComponents; i++) {
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
 			for(unsigned l=0; l < _bins; l++) {
-				_globalDistribution[i][k][l] = dode->collCommGetUnsLong();
+				_distribution.global[i][k][l] = dode->collCommGetUnsLong();
 			}
 		}
 	}
@@ -213,7 +219,7 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 				for(unsigned l=0; l < _bins; l++) {
 					for(unsigned m=0; m < ni; m++) {
 						for(unsigned n=0; n < nj; n++) {
-							dode->collCommAppendUnsLong(_localSiteDistribution[i][k][m][n][l]);
+							dode->collCommAppendUnsLong(_siteDistribution.local[i][k][m][n][l]);
 						}
 					}
 				}
@@ -223,7 +229,7 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 				for(unsigned l=0; l < _bins; l++) {
 					for(unsigned m=0; m < ni; m++) {
 						for(unsigned n=0; n < nj; n++) {
-							_globalSiteDistribution[i][k][m][n][l] = dode->collCommGetUnsLong();
+							_siteDistribution.global[i][k][m][n][l] = dode->collCommGetUnsLong();
 						}
 					}
 				}
@@ -244,14 +250,14 @@ void RDF::reset() {
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
 			unsigned nj = (*_components)[i+k].numSites();
 			for(unsigned l=0; l < _bins; l++) {
-				_localDistribution[i][k][l] = 0;
-				_globalDistribution[i][k][l] = 0;
+				_distribution.local[i][k][l] = 0;
+				_distribution.global[i][k][l] = 0;
 
 				if(ni+nj > 2) {
 					for(unsigned m=0; m < ni; m++) {
 						for(unsigned n=0; n < nj; n++) {
-							this->_localSiteDistribution[i][k][m][n][l] = 0;
-							this->_globalSiteDistribution[i][k][m][n][l] = 0;
+							_siteDistribution.local[i][k][m][n][l] = 0;
+							_siteDistribution.global[i][k][m][n][l] = 0;
 						}
 					}
 				}
@@ -324,6 +330,7 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 	rdfout << "# \n# ctr_i: " << _globalCtr[i] << "\n# ctr_j: " << _globalCtr[j]
 	       << "\n# V: " << V << "\n# _universalRDFTimesteps: " << _numberOfRDFTimesteps
 	       << "\n# _universalAccumulatedTimesteps: " << _accumulatedNumberOfRDFTimesteps
+		   << "\n# _samplingFrequency: " << _samplingFrequency
 	       << "\n# rho_i: " << rho_i << " (acc. " << rho_Ai << ")"
 	       << "\n# rho_j: " << rho_j << " (acc. " << rho_Aj << ")"
 	       << "\n# \n";
@@ -353,7 +360,7 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 		double r3max = rmax*rmax*rmax;
 		double dV = (4.0 / 3.0) * M_PI * (r3max - r3min);
 
-		double N_pair = _globalDistribution[i][j-i][l] / (double)_numberOfRDFTimesteps;
+		double N_pair = _distribution.global[i][j-i][l] / (double)_numberOfRDFTimesteps;
 		N_pair_int += N_pair;
 		double N_Apair = _globalAccumulatedDistribution[i][j-i][l] / (double)_accumulatedNumberOfRDFTimesteps;
 		N_Apair_int += N_Apair;
@@ -384,7 +391,7 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 			for(unsigned m=0; m < ni; m++) {
 				rdfout << "\t";
 				for(unsigned n=0; n < nj; n++) {
-					double p = _globalSiteDistribution[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
+					double p = _siteDistribution.global[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
 					Nsite_pair_int[m][n] += p;
 					double ap = _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;
 					Nsite_Apair_int[m][n] += ap;
@@ -396,4 +403,14 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 		rdfout << "\n";
 	}
 	rdfout.close();
+}
+
+void RDF::afterForces(ParticleContainer* particleContainer,
+		DomainDecompBase* domainDecomp, unsigned long simstep) {
+	if (simstep % _samplingFrequency == 0 && simstep > global_simulation->getInitStatistics()) {
+		global_log->debug() << "Activating the RDF sampling" << endl;
+		tickRDF();
+		accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
+		particleContainer->traverseCells(*_cellProcessor);
+	}
 }

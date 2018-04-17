@@ -33,6 +33,11 @@ public:
 	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
 
 private:
+	template<typename T>
+	void resizeExactly(std::vector<T>& v, unsigned int numElements) const {
+		v.reserve(numElements);
+		v.resize(numElements);
+	}
 
 	void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj); 
 	void centerSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
@@ -41,28 +46,28 @@ private:
 
 	unsigned _slabs;
 	unsigned numComp;
-	unsigned *numLJ;
-	unsigned *numDipole;
+	std::vector<unsigned> numLJ;
+	std::vector<unsigned> numDipole;
 	unsigned numLJSum;
 	unsigned numDipoleSum;
-	unsigned *numLJSum2;
-	unsigned *numDipoleSum2;
+	std::vector<unsigned> numLJSum2;
+	std::vector<unsigned> numDipoleSum2;
 	bool _smooth;
 //	bool _dipole;
-	double *uLJ;
-	double *vNLJ;
-	double *vTLJ;
-	double *fLJ;
-	double *rho_g;
-	double *rho_l;
-	double *fDipole;
-	double *uDipole;
-	double *vNDipole;
-	double *vTDipole;
-	double *rhoDipole;
-	double *rhoDipoleL;
-	double *muSquare;
-	double *eLong;
+	std::vector<double> uLJ;
+	std::vector<double> vNLJ;
+	std::vector<double> vTLJ;
+	std::vector<double> fLJ;
+	std::vector<double> rho_g;
+	std::vector<double> rho_l;
+	std::vector<double> fDipole;
+	std::vector<double> uDipole;
+	std::vector<double> vNDipole;
+	std::vector<double> vTDipole;
+	std::vector<double> rhoDipole;
+	std::vector<double> rhoDipoleL;
+	std::vector<double> muSquare;
+	std::vector<double> eLong;
 	double cutoff;
 	double delta;
 	unsigned cutoff_slabs;

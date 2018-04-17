@@ -756,12 +756,10 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 	{
 	case DCIM_START_CONFIGURATION:
 
-		for( ParticleIterator tM  = particleContainer->iteratorBegin();
-			 tM != particleContainer->iteratorEnd();
-			 ++tM)
+		for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
 		{
 			// sample density profile
-			this->SampleProfiles(&(*tM));
+			this->SampleProfiles(&(*pit));
 		}
 
 		// determine interface midpoints and update region positions

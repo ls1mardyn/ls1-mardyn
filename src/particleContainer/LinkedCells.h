@@ -176,19 +176,11 @@ public:
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
-	double* boundingBoxMax() {
-		return _boundingBoxMax;
-	}
-
-	double* boundingBoxMin() {
-		return _boundingBoxMin;
-	}
-
-	int* boxWidthInNumCells() {
+	int* getBoxWidthInNumCells() {
 		return _boxWidthInNumCells;
 	}
 
-	double* cellLength() {
+	double* getCellLength() {
 		return _cellLength;
 	}
 	
@@ -200,6 +192,7 @@ public:
 	 */
 	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
 
+	//TODO: unfriend class VTKGridWriter. It is not hard to avoid friendship and just use public interfaces.
 #ifdef VTK
 	friend class VTKGridWriter;
 #endif
@@ -234,18 +227,13 @@ public:
 	// documentation in base class
 	virtual void updateMoleculeCaches();
 
-	ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) {
+	ParticleIterator iterator (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) {
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
 		return ParticleIterator(t, &_cells, offset, stride);
 	}
-	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
-
-	ParticleIterator iteratorEnd () {
-		return ParticleIterator :: invalid();
-	}
-	RegionParticleIterator iterateRegionEnd ();
+	RegionParticleIterator regionIterator (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 
 	virtual size_t getTotalSize() override;
 	virtual void printSubInfo(int offset) override;
@@ -254,15 +242,6 @@ public:
 	size_t getNumCells() const {
 		return _cells.size();
 	}
-
-	ParticleCellBase * getCell(unsigned cellIndex) {
-		return &(_cells.at(cellIndex));
-	}
-
-	const ParticleCellBase * getCell(unsigned cellIndex) const {
-		return &(_cells.at(cellIndex));
-	}
-
 
 	bool requiresForceExchange() const override; // new
 
@@ -343,7 +322,7 @@ private:
 
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices of all halo cells in the _cells vector
 
-        std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner; // new
+	std::unique_ptr<TraversalTuner<ParticleCell>> _traversalTuner; // new
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
@@ -353,6 +332,7 @@ private:
 	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
+	double _cellLengthReciprocal[3]; //!< 1.0 / _cellLength, to speed-up particle sorting
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
 	unsigned _cellsInCutoff = 1; //!< Cells in cutoff radius -> cells with size cutoff / cellsInCutoff
 

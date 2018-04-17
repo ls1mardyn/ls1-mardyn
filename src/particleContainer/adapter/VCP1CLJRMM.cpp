@@ -22,8 +22,6 @@ VCP1CLJRMM::VCP1CLJRMM(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 	global_log->info() << "VCP1CLJRMM: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VCP1CLJRMM: using AVX2 intrinsics." << std::endl;
-#elif (VCP_VEC_TYPE==VCP_VEC_KNC) || (VCP_VEC_TYPE==VCP_VEC_KNC_GATHER)
-	global_log->info() << "VCP1CLJRMM: using KNC intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
 	global_log->info() << "VCP1CLJRMM: using KNL intrinsics." << std::endl;
 #endif
@@ -164,8 +162,8 @@ void VCP1CLJRMM::processCell(ParticleCell& cell) {
 }
 
 void VCP1CLJRMM::endTraversal() {
-	vcp_real_calc glob_upot6lj = 0.0;
-	vcp_real_calc glob_virial = 0.0;
+	vcp_real_accum glob_upot6lj = 0.0;
+	vcp_real_accum glob_virial = 0.0;
 
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:glob_upot6lj, glob_virial)
@@ -174,7 +172,7 @@ void VCP1CLJRMM::endTraversal() {
 		const int tid = mardyn_get_thread_num();
 
 		// reduce vectors and clear local variable
-		vcp_real_calc thread_upot = 0.0, thread_virial = 0.0;
+		vcp_real_accum thread_upot = 0.0, thread_virial = 0.0;
 
 		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
 		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
@@ -196,8 +194,8 @@ template<bool calculateMacroscopic>
 vcp_inline void VCP1CLJRMM::_loopBodyLJ(
 	const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 	RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-	RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
-	const MaskVec& forceMask,
+	RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial,
+	const MaskCalcVec& forceMask,
 	const RealCalcVec& eps_24, const RealCalcVec& sig2,
 	const RealCalcVec& shift6)
 {
@@ -228,10 +226,12 @@ vcp_inline void VCP1CLJRMM::_loopBodyLJ(
 
 		const RealCalcVec upot_sh = RealCalcVec::fmadd(eps_24, lj12m6, shift6); //2 FP upot				//shift6 is not masked -> we have to mask upot_shifted
 		const RealCalcVec upot_masked = RealCalcVec::apply_mask(upot_sh, forceMask); //mask it
+		const RealAccumVec upot_masked_accum = RealAccumVec::convertCalcToAccum(upot_masked);
 
-		sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
+		sum_upot6lj = sum_upot6lj + upot_masked_accum;//1FP (sum macro)
 
-		sum_virial = sum_virial + c_dx * f_x + c_dy * f_y + c_dz * f_z;//1 FP (sum macro) + 5 FP (virial)
+		const RealAccumVec virial = RealAccumVec::convertCalcToAccum(c_dx * f_x + c_dy * f_y + c_dz * f_z);
+		sum_virial = sum_virial + virial;//1 FP (sum macro) + 5 FP (virial)
 	}
 }
 
@@ -249,46 +249,46 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 	const vcp_real_calc * const soa1_mol_pos_y = soa1.r_yBegin();
 	const vcp_real_calc * const soa1_mol_pos_z = soa1.r_zBegin();
 
-	      vcp_real_calc * const soa1_mol_vel_x = soa1.v_xBegin();
-	      vcp_real_calc * const soa1_mol_vel_y = soa1.v_yBegin();
-	      vcp_real_calc * const soa1_mol_vel_z = soa1.v_zBegin();
+	     vcp_real_accum * const soa1_mol_vel_x = soa1.v_xBegin();
+	     vcp_real_accum * const soa1_mol_vel_y = soa1.v_yBegin();
+	     vcp_real_accum * const soa1_mol_vel_z = soa1.v_zBegin();
 
 	const vcp_real_calc * const soa2_mol_pos_x = soa2.r_xBegin();
 	const vcp_real_calc * const soa2_mol_pos_y = soa2.r_yBegin();
 	const vcp_real_calc * const soa2_mol_pos_z = soa2.r_zBegin();
 
-	      vcp_real_calc * const soa2_mol_vel_x = soa2.v_xBegin();
-	      vcp_real_calc * const soa2_mol_vel_y = soa2.v_yBegin();
-	      vcp_real_calc * const soa2_mol_vel_z = soa2.v_zBegin();
+	     vcp_real_accum * const soa2_mol_vel_x = soa2.v_xBegin();
+	     vcp_real_accum * const soa2_mol_vel_y = soa2.v_yBegin();
+	     vcp_real_accum * const soa2_mol_vel_z = soa2.v_zBegin();
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
-	RealCalcVec sum_upot6lj = RealCalcVec::zero();
-	RealCalcVec sum_virial = RealCalcVec::zero();
+	RealAccumVec sum_upot6lj = RealAccumVec::zero();
+	RealAccumVec sum_virial = RealAccumVec::zero();
 
 	const RealCalcVec rc2 = RealCalcVec::set1(_LJCutoffRadiusSquare);
 	const RealCalcVec eps24 = RealCalcVec::set1(_eps24);
 	const RealCalcVec sig2 = RealCalcVec::set1(_sig2);
 	const RealCalcVec shift6 = RealCalcVec::set1(_shift6);
-	const RealCalcVec dtInv2m = RealCalcVec::set1(_dtInvm);
+	const RealAccumVec dtInv2m = RealAccumVec::set1(_dtInvm);
 
 	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2.getMolNum());
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2.getMolNum());//this is ceil _ljc_num, VCP_VEC_SIZE
 
-#if not (VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER)
+#if not (VCP_VEC_TYPE == VCP_VEC_KNL_GATHER)
 
 	const size_t soa1_mol_num = soa1.getMolNum();
 	for (size_t i = 0; i < soa1_mol_num; ++i) {
 		size_t j = ForcePolicy :: InitJ(i);
-		MaskVec initJ_mask = ForcePolicy :: InitJ_Mask(i);
+		MaskCalcVec initJ_mask = ForcePolicy :: InitJ_Mask(i);
 
 		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
 		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
 		const RealCalcVec m1_r_z = RealCalcVec::broadcast(soa1_mol_pos_z + i);
 
-		RealCalcVec sum_fx1 = RealCalcVec::zero();
-		RealCalcVec sum_fy1 = RealCalcVec::zero();
-		RealCalcVec sum_fz1 = RealCalcVec::zero();
+		RealAccumVec sum_fx1 = RealAccumVec::zero();
+		RealAccumVec sum_fy1 = RealAccumVec::zero();
+		RealAccumVec sum_fz1 = RealAccumVec::zero();
 
 		for (; j < end_ljc_j; j += VCP_VEC_SIZE) {
 			const RealCalcVec m2_r_x = RealCalcVec::aligned_load(soa2_mol_pos_x + j);
@@ -301,22 +301,26 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 
 			const RealCalcVec m_r2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-			const MaskVec forceMask = ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);
+			const MaskCalcVec forceMask = ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);
 
 			if (MaskGatherChooser::computeLoop(forceMask)) {
 				RealCalcVec fx, fy, fz;
 				_loopBodyLJ<CalculateMacroscopic>(m_dx, m_dy, m_dz, m_r2, fx, fy, fz, sum_upot6lj, sum_virial, forceMask, eps24, sig2, shift6);
 
-				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_x, j, fx, dtInv2m, forceMask);
-				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_y, j, fy, dtInv2m, forceMask);
-				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_z, j, fz, dtInv2m, forceMask);
+				RealAccumVec a_fx = RealAccumVec::convertCalcToAccum(fx);
+				RealAccumVec a_fy = RealAccumVec::convertCalcToAccum(fy);
+				RealAccumVec a_fz = RealAccumVec::convertCalcToAccum(fz);
 
-				sum_fx1 = sum_fx1 + fx;
-				sum_fy1 = sum_fy1 + fy;
-				sum_fz1 = sum_fz1 + fz;
+				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_x, j, a_fx, dtInv2m, forceMask);
+				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_y, j, a_fy, dtInv2m, forceMask);
+				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_z, j, a_fz, dtInv2m, forceMask);
+
+				sum_fx1 = sum_fx1 + a_fx;
+				sum_fy1 = sum_fy1 + a_fy;
+				sum_fz1 = sum_fz1 + a_fz;
 			}
 		}
-		const MaskVec remainderMask = vcp_simd_getRemainderMask(soa2.getMolNum());
+		const MaskCalcVec remainderMask = vcp_simd_getRemainderMask(soa2.getMolNum());
 		if (remainderMask.movemask())
 		{
 			const RealCalcVec m2_r_x = RealCalcVec::aligned_load_mask(soa2_mol_pos_x + j, remainderMask);
@@ -329,19 +333,23 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 
 			const RealCalcVec m_r2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-			const MaskVec forceMask = remainderMask and ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);//AND remainderMask -> set unimportant ones to zero.
+			const MaskCalcVec forceMask = remainderMask and ForcePolicy::GetForceMask(m_r2, rc2, initJ_mask);//AND remainderMask -> set unimportant ones to zero.
 
 			if (MaskGatherChooser::computeLoop(forceMask)) {
 				RealCalcVec fx, fy, fz;
 				_loopBodyLJ<CalculateMacroscopic>(m_dx, m_dy, m_dz, m_r2, fx, fy, fz, sum_upot6lj, sum_virial, forceMask, eps24, sig2, shift6);
 
-				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_x, j, fx, dtInv2m, forceMask);
-				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_y, j, fy, dtInv2m, forceMask);
-				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_z, j, fz, dtInv2m, forceMask);
+				RealAccumVec a_fx = RealAccumVec::convertCalcToAccum(fx);
+				RealAccumVec a_fy = RealAccumVec::convertCalcToAccum(fy);
+				RealAccumVec a_fz = RealAccumVec::convertCalcToAccum(fz);
 
-				sum_fx1 = sum_fx1 + fx;
-				sum_fy1 = sum_fy1 + fy;
-				sum_fz1 = sum_fz1 + fz;
+				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_x, j, a_fx, dtInv2m, forceMask);
+				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_y, j, a_fy, dtInv2m, forceMask);
+				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_z, j, a_fz, dtInv2m, forceMask);
+
+				sum_fx1 = sum_fx1 + a_fx;
+				sum_fy1 = sum_fy1 + a_fy;
+				sum_fz1 = sum_fz1 + a_fz;
 			}
 		}
 
@@ -354,6 +362,6 @@ vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM
 	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 
 #else
-#pragma message "TODO: RMM Mode is not implemented yet for KNC/KNL."
+#pragma message "TODO: RMM Mode is not implemented yet for KNL_G_S."
 #endif
 }

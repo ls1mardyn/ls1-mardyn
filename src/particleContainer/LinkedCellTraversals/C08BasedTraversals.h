@@ -34,11 +34,12 @@ public:
 
 protected:
 	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
-	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
-	std::array<unsigned long, 8> _cellOffsets;
 
 private:
 	void computeOffsets();
+
+	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets8Pack;
+	std::array<unsigned long, 8> _cellOffsets8Pack;
 };
 
 template<class CellTemplate>
@@ -62,9 +63,9 @@ void C08BasedTraversals<CellTemplate>::processBaseCell(
 	}
 #endif
 
-	const int num_pairs = _cellPairOffsets.size();
+	const int num_pairs = _cellPairOffsets8Pack.size();
 	for(int j = 0; j < num_pairs; ++j) {
-		pair<long, long> current_pair = _cellPairOffsets[j];
+		pair<long, long> current_pair = _cellPairOffsets8Pack[j];
 
 		unsigned offset1 = current_pair.first;
 		unsigned cellIndex1 = baseIndex + offset1;
@@ -114,32 +115,32 @@ void C08BasedTraversals<CellTemplate>::computeOffsets() {
 
 	int i = 0;
 	// if incrementing along X, the following order will be more cache-efficient:
-	_cellPairOffsets[i++] = make_pair(o, o  );
-	_cellPairOffsets[i++] = make_pair(o, y  );
-	_cellPairOffsets[i++] = make_pair(y, z  );
-	_cellPairOffsets[i++] = make_pair(o, z  );
-	_cellPairOffsets[i++] = make_pair(o, yz );
+	_cellPairOffsets8Pack[i++] = make_pair(o, o  );
+	_cellPairOffsets8Pack[i++] = make_pair(o, y  );
+	_cellPairOffsets8Pack[i++] = make_pair(y, z  );
+	_cellPairOffsets8Pack[i++] = make_pair(o, z  );
+	_cellPairOffsets8Pack[i++] = make_pair(o, yz );
 
-	_cellPairOffsets[i++] = make_pair(x, yz );
-	_cellPairOffsets[i++] = make_pair(x, y  );
-	_cellPairOffsets[i++] = make_pair(x, z  );
-	_cellPairOffsets[i++] = make_pair(o, x  );
-	_cellPairOffsets[i++] = make_pair(o, xy );
-	_cellPairOffsets[i++] = make_pair(xy, z );
-	_cellPairOffsets[i++] = make_pair(y, xz );
-	_cellPairOffsets[i++] = make_pair(o, xz );
-	_cellPairOffsets[i++] = make_pair(o, xyz);
+	_cellPairOffsets8Pack[i++] = make_pair(x, yz );
+	_cellPairOffsets8Pack[i++] = make_pair(x, y  );
+	_cellPairOffsets8Pack[i++] = make_pair(x, z  );
+	_cellPairOffsets8Pack[i++] = make_pair(o, x  );
+	_cellPairOffsets8Pack[i++] = make_pair(o, xy );
+	_cellPairOffsets8Pack[i++] = make_pair(xy, z );
+	_cellPairOffsets8Pack[i++] = make_pair(y, xz );
+	_cellPairOffsets8Pack[i++] = make_pair(o, xz );
+	_cellPairOffsets8Pack[i++] = make_pair(o, xyz);
 
 	i = 0;
-	_cellOffsets[i++] =   o;
-	_cellOffsets[i++] =   y;
-	_cellOffsets[i++] =   z;
-	_cellOffsets[i++] =  yz;
+	_cellOffsets8Pack[i++] =   o;
+	_cellOffsets8Pack[i++] =   y;
+	_cellOffsets8Pack[i++] =   z;
+	_cellOffsets8Pack[i++] =  yz;
 
-	_cellOffsets[i++] =   x;
-	_cellOffsets[i++] =  xy;
-	_cellOffsets[i++] =  xz;
-	_cellOffsets[i++] = xyz;
+	_cellOffsets8Pack[i++] =   x;
+	_cellOffsets8Pack[i++] =  xy;
+	_cellOffsets8Pack[i++] =  xz;
+	_cellOffsets8Pack[i++] = xyz;
 
 }
 

@@ -15,6 +15,10 @@
 
     <run>
       <currenttime>0</currenttime>
+	  <equilibration> 
+	  	<!-- this value affects RDFwriter! -->
+	  	<steps>0</steps>
+	  </equilibration>
       <production>
         <steps>1000</steps>
       </production>
@@ -92,14 +96,14 @@
 				</writecontrol>
 				<outputprefix>megamol</outputprefix>
 			</outputplugin>
-<!--
 			<outputplugin name="RDF">
+	  			<!-- functionality affected by <equilibration> <steps> X </steps> </equilibration> -->
 				<writefrequency>10</writefrequency>
+				<samplingfrequency>5</samplingfrequency>
 				<outputprefix>simple-lj</outputprefix>
 				<intervallength>0.003</intervallength>
 				<bins>1000</bins>
 			</outputplugin>
--->
     </output>
   </simulation>
 </mardyn>

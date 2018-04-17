@@ -106,7 +106,7 @@ private:
 		/**
 		 * \brief array, that stores the dist_lookup.
 		 * For all vectorization methods, that utilize masking, this stores masks.
-		 * To utilize the gather operations of the KNC architecture, the dist_lookup is able to store the indices of the required particles.
+		 * To utilize the gather operations of the KNL architecture, the dist_lookup is able to store the indices of the required particles.
 		 */
 		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 
@@ -115,7 +115,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _charges_dist_lookup;
 
-		AlignedArray<vcp_real_calc> _upotXpolesV, _virialV;
+		AlignedArray<vcp_real_accum> _upotXpolesV, _virialV;
 	};
 
 	std::vector<VCP2PCPThreadData *> _threadData;
@@ -132,9 +132,9 @@ private:
 		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 		const RealCalcVec& qjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask);
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
+		const MaskCalcVec& forceMask);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.

@@ -65,10 +65,7 @@ void RegionML::preForces(ParticleContainer* particleCont)
 //	RegionParticleIterator end = particleCont->iterateRegionEnd();
 //	for(auto&& pit=begin; pit != end; ++pit)
 
-	ParticleIterator pit;
-	for( pit  = particleCont->iteratorBegin();
-		 pit != particleCont->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 	{
 		// check if particle is inside region
 		for(uint16_t d=0; d<3; ++d)
@@ -119,10 +116,7 @@ void RegionML::postForces(ParticleContainer* particleCont)
 //	RegionParticleIterator end = particleCont->iterateRegionEnd();
 //	for(auto&& pit=begin; pit != end; ++pit)
 
-	ParticleIterator pit;
-	for( pit  = particleCont->iteratorBegin();
-		 pit != particleCont->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 	{
 		// check if particle is inside region
 		for(uint16_t d=0; d<3; ++d)

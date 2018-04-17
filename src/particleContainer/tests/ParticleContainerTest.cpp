@@ -41,7 +41,7 @@ void ParticleContainerTest::testMoleculeIteration(ParticleContainer* container) 
 	setupMolecules(container);
 	unsigned long moleculeCount = 0;
 	std::set<unsigned long> ids;
-	for(auto moleculeIter = container->iteratorBegin(); moleculeIter != container->iteratorEnd(); ++moleculeIter) {
+	for(auto moleculeIter = container->iterator(); moleculeIter.hasNext(); moleculeIter.next()) {
 		test_log->debug() << "Visited Molecule with id " << moleculeIter->id() << std::endl;
 		ids.insert(moleculeIter->id());
 		moleculeCount++;
@@ -55,9 +55,9 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 	setupMolecules(container);
 
 	// iterate over molecules and move
-	ParticleIterator molecule = container->iteratorBegin();
+	ParticleIterator molecule = container->iterator();
 	int moleculeCount = 0;
-	while (molecule != container->iteratorEnd()) {
+	while (molecule.hasNext()) {
 		moleculeCount++;
 
 		if (molecule->id() == 1) {
@@ -66,7 +66,7 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 			molecule->setr(1, 1.0);
 			molecule->setr(2, 2.4);
 		}
-		++molecule;
+		molecule.next();
 	}
 
 	ASSERT_EQUAL(4, moleculeCount);
@@ -82,11 +82,11 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 	moleculeCount = 0;
 	bool ids[] = {false, false, false, false, false, false};
 
-	molecule = container->iteratorBegin();
-	while (molecule != container->iteratorEnd()) {
+	molecule = container->iterator();
+	while (molecule.hasNext()) {
 		ids[molecule->id() - 1] = true;
 		test_log->debug() << "Visited Molecule with id " << molecule->id() << std::endl;
-		++molecule;
+		molecule.next();
 		moleculeCount++;
 	}
 	ASSERT_EQUAL(6, moleculeCount);
@@ -100,12 +100,12 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 	ASSERT_EQUAL(4ul, container->getNumberOfParticles());
 	for (int i = 0; i < 6; i++) ids[i] = false;
 
-	molecule = container->iteratorBegin();
+	molecule = container->iterator();
 	moleculeCount = 0;
-	while (molecule != container->iteratorEnd()) {
+	while (molecule.hasNext()) {
 		ids[molecule->id() - 1] = true;
 		test_log->debug() << "Visited Molecule with id " << molecule->id() << std::endl;
-		++molecule;
+		molecule.next();
 		moleculeCount++;
 	}
 	ASSERT_EQUAL(4, moleculeCount);

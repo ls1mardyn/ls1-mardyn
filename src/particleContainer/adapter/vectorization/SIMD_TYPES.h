@@ -11,6 +11,7 @@
 #ifndef  SIMD_TYPES_H
 #define  SIMD_TYPES_H
 
+#include <type_traits>
 #include <cstdint>
 
 // definitions for precision:
@@ -26,33 +27,17 @@
 
 #if defined(MARDYN_SPSP)
 	#define VCP_PREC VCP_SPSP
-
-	typedef float vcp_real_calc;
-	typedef uint32_t vcp_ljc_id_t;
-	typedef float vcp_real_accum;
-
 #elif defined(MARDYN_SPDP)
 	#define VCP_PREC VCP_SPDP
-
-	typedef float vcp_real_calc;
-	typedef uint32_t vcp_ljc_id_t;
-	typedef double vcp_real_accum;
-
 #elif defined(MARDYN_DPDP)
 	#define VCP_PREC VCP_DPDP
-
-	typedef double vcp_real_calc;
-	typedef uint64_t vcp_ljc_id_t;
-	typedef double vcp_real_accum;
-
 #else
 	#error Precision macro not defined.
 #endif
 
-
 // The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
 #if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX) || defined(VCP_VEC_AVX2) || \
-	defined(VCP_VEC_KNL) || defined(VCP_VEC_KNL_GATHER) || defined(VCP_VEC_KNC) || defined(VCP_VEC_KNC_GATHER)
+	defined(VCP_VEC_KNL) || defined(VCP_VEC_KNL_GATHER)
 	#error conflicting macro definitions
 #endif
 
@@ -61,8 +46,6 @@
 #define VCP_VEC_SSE3 1
 #define VCP_VEC_AVX 2
 #define VCP_VEC_AVX2 3
-#define VCP_VEC_KNC 4
-#define VCP_VEC_KNC_GATHER 5
 #define VCP_VEC_KNL 6
 #define VCP_VEC_KNL_GATHER 7
 
@@ -70,10 +53,6 @@
 #define VCP_VEC_W_128 1
 #define VCP_VEC_W_256 2
 #define VCP_VEC_W_512 3
-
-
-typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
-
 
 #if defined(__AVX2__) && not defined(__FMA__)//fma should always be existent alongside avx2!!!
 	#warn AVX2 enabled, but no FMA found. Please enable fma to use avx2.
@@ -88,12 +67,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 		#define VCP_VEC_TYPE VCP_VEC_KNL_GATHER
 	#else
 		#define VCP_VEC_TYPE VCP_VEC_KNL
-	#endif
-#elif defined(__MIC__)
-	#if defined(__VCP_GATHER__)
-		#define VCP_VEC_TYPE VCP_VEC_KNC_GATHER
-	#else
-		#define VCP_VEC_TYPE VCP_VEC_KNC
 	#endif
 #elif defined(__AVX2__) && defined(__FMA__)
 	#define VCP_VEC_TYPE VCP_VEC_AVX2
@@ -118,8 +91,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 // Include necessary files if we vectorize.
 #if VCP_VEC_TYPE==VCP_VEC_AVX or \
 	VCP_VEC_TYPE==VCP_VEC_AVX2 or \
-	VCP_VEC_TYPE==VCP_VEC_KNC or \
-	VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or\
 	VCP_VEC_TYPE==VCP_VEC_KNL or \
 	VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 	#include "immintrin.h"
@@ -127,146 +98,67 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#include "pmmintrin.h"
 #endif
 
-
-
 // define necessary types
 
-#if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
-	typedef vcp_real_calc vcp_real_calc_vec;
-	typedef vcp_real_accum vcp_real_accum_vec;
+typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, float, double>::type vcp_real_calc;
+typedef std::conditional<VCP_PREC == VCP_SPSP                        , float, double>::type vcp_real_accum;
+typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_ljc_id_t;
 
-	#define VCP_VEC_SIZE 1u
-	#define VCP_VEC_SIZE_M1 0u
+typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
+
+#if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
+
 	#define VCP_VEC_WIDTH VCP_VEC_W__64
 
 	typedef uint8_t vcp_mask_vec;
 	typedef uint8_t vcp_mask_single;
-	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
-
-	#define VCP_ALIGNMENT 8
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 
-	#if VCP_PREC==VCP_SPSP
-		typedef __m128 vcp_real_calc_vec;
-		typedef __m128 vcp_real_accum_vec;
-	#elif VCP_PREC==VCP_SPDP
-		typedef __m128 vcp_real_calc_vec;
-		typedef __m128d vcp_real_accum_vec;
-	#else // VCP_PREC==VCP_DPDP
-		typedef __m128d vcp_real_calc_vec;
-		typedef __m128d vcp_real_accum_vec;
-	#endif
-
-	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
-		#define VCP_VEC_SIZE 4u
-		#define VCP_VEC_SIZE_M1 3u
-		typedef uint32_t vcp_mask_single;
-	#else // VCP_PREC==VCP_DPDP
-		#define VCP_VEC_SIZE 2u
-		#define VCP_VEC_SIZE_M1 1u
-		typedef uint64_t vcp_mask_single;
-	#endif
-
 	#define VCP_VEC_WIDTH VCP_VEC_W_128
 
+	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
+
 	typedef __m128i vcp_mask_vec;
-	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
-
-	#define VCP_ALIGNMENT 16
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
-	#if VCP_PREC==VCP_SPSP
-		typedef __m256 vcp_real_calc_vec;
-		typedef __m256 vcp_real_accum_vec;
-	#elif VCP_PREC==VCP_SPDP
-		typedef __m256 vcp_real_calc_vec;
-		typedef __m256d vcp_real_accum_vec;
-	#else // VCP_PREC==VCP_DPDP
-		typedef __m256d vcp_real_calc_vec;
-		typedef __m256d vcp_real_accum_vec;
-	#endif
 
-	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
-		#define VCP_VEC_SIZE 8u
-		#define VCP_VEC_SIZE_M1 7u
-		typedef uint32_t vcp_mask_single;
-	#else // VCP_PREC==VCP_DPDP
-		#define VCP_VEC_SIZE 4u
-		#define VCP_VEC_SIZE_M1 3u
-		typedef uint64_t vcp_mask_single;
-	#endif
+	#define VCP_VEC_WIDTH VCP_VEC_W_256
 
-	#define VCP_VEC_WIDTH VCP_VEC_W_256	
+	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
 
 	typedef __m256i vcp_mask_vec;
-	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
-	#define VCP_ALIGNMENT 32
-
-#elif VCP_VEC_TYPE==VCP_VEC_KNC or \
-	  VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
-	  VCP_VEC_TYPE==VCP_VEC_KNL or \
+#elif VCP_VEC_TYPE==VCP_VEC_KNL or \
 	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 
-	#if VCP_PREC==VCP_SPSP
-		typedef __m512 vcp_real_calc_vec;
-		typedef __m512 vcp_real_accum_vec;
-	#elif VCP_PREC==VCP_SPDP
-		typedef __m512 vcp_real_calc_vec;
-		typedef __m512d vcp_real_accum_vec;
-	#else // VCP_PREC==VCP_DPDP
-		typedef __m512d vcp_real_calc_vec;
-		typedef __m512d vcp_real_accum_vec;
-	#endif
+	#define VCP_VEC_WIDTH VCP_VEC_W_512
 
+	// these can't be put in std::conditional, because it would just be too nice. warnings.
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
-		#define VCP_VEC_SIZE 16u
-		#define VCP_VEC_SIZE_M1 15u
 		typedef __mmask16 vcp_mask_vec;
 		typedef __mmask16 vcp_mask_single;
 	#else // VCP_PREC==VCP_DPDP
-		#define VCP_VEC_SIZE 8u
-		#define VCP_VEC_SIZE_M1 7u
 		typedef __mmask8 vcp_mask_vec;
 		typedef __mmask8 vcp_mask_single;
 	#endif
-	
-	#define VCP_VEC_WIDTH VCP_VEC_W_512
-	
 
-	#if VCP_VEC_TYPE==VCP_VEC_KNC or\
-		VCP_VEC_TYPE==VCP_VEC_KNL
-		#define VCP_INDICES_PER_LOOKUP_SINGLE VCP_VEC_SIZE
-		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 VCP_VEC_SIZE_M1
+	#if VCP_VEC_TYPE==VCP_VEC_KNL
 		typedef vcp_mask_vec vcp_lookupOrMask_vec;
 		typedef vcp_mask_single vcp_lookupOrMask_single;
 
-	#else  // VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-		#define VCP_INDICES_PER_LOOKUP_SINGLE 1
-		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
+	#else  // VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 		typedef __m512i vcp_lookupOrMask_vec;
 		typedef countertype32 vcp_lookupOrMask_single;
 	#endif
 
-	#define VCP_ALIGNMENT 64
-
 #endif
-
-
-
-
-
-
 
 /*
  * Control macros are set

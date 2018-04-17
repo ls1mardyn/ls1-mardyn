@@ -1056,17 +1056,13 @@ void TemperatureControl::DoLoopsOverMolecules(ParticleContainer* particleContain
     {
 //        cout << "Thermostat ON!" << endl;
 
-    	ParticleIterator tM;
-
         // init temperature control
         this->InitControl(simstep);
 
-        for( tM  = particleContainer->iteratorBegin();
-             tM != particleContainer->iteratorEnd();
-             ++tM)
-        {
+		for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
+		{
             // measure kinetic energy
-            this->MeasureKineticEnergy(&(*tM), simstep);
+            this->MeasureKineticEnergy(&(*pit), simstep);
 
 //          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
         }
@@ -1076,12 +1072,10 @@ void TemperatureControl::DoLoopsOverMolecules(ParticleContainer* particleContain
         this->CalcGlobalValues(simstep);
 
 
-        for( tM  = particleContainer->iteratorBegin();
-             tM != particleContainer->iteratorEnd();
-             ++tM)
-        {
+		for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
+		{
             // control temperature
-            this->ControlTemperature(&(*tM), simstep);
+            this->ControlTemperature(&(*pit), simstep);
 
 //          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
         }

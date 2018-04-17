@@ -156,7 +156,7 @@ private:
 		/**
 		 * \brief array, that stores the dist_lookup.
 		 * For all vectorization methods, that utilize masking, this stores masks.
-		 * To utilize the gather operations of the KNC architecture, the dist_lookup is able to store the indices of the required particles.
+		 * To utilize the gather operations of the KNL architecture, the dist_lookup is able to store the indices of the required particles.
 		 */
 		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 
@@ -180,7 +180,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
 
-		AlignedArray<vcp_real_calc> _upot6ljV, _upotXpolesV, _virialV, _myRFV;
+		AlignedArray<vcp_real_accum> _upot6ljV, _upotXpolesV, _virialV, _myRFV;
 	};
 
 	std::vector<VLJCPThreadData *> _threadData;
@@ -195,9 +195,9 @@ private:
 			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
 			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-			RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
-			const MaskVec& forceMask,
+			RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+			RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial,
+			const MaskCalcVec& forceMask,
 			const RealCalcVec& eps_24, const RealCalcVec& sig2,
 			const RealCalcVec& shift6);
 
@@ -210,9 +210,9 @@ private:
 		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 		const RealCalcVec& qjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask);
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
+		const MaskCalcVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeDipole(
@@ -224,10 +224,10 @@ private:
 		const RealCalcVec& e_x, const RealCalcVec& e_y, const RealCalcVec& e_z,
 		const RealCalcVec& p,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& M_x, RealCalcVec& M_y, RealCalcVec& M_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask);
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& M_x, RealAccumVec& M_y, RealAccumVec& M_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
+		const MaskCalcVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyDipole(
@@ -240,11 +240,11 @@ private:
 		const RealCalcVec& ejj_x, const RealCalcVec& ejj_y, const RealCalcVec& ejj_z,
 		const RealCalcVec& pjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& M1_x, RealCalcVec& M1_y, RealCalcVec& M1_z,
-		RealCalcVec& M2_x, RealCalcVec& M2_y, RealCalcVec& M2_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial, RealCalcVec& sum_myRF,
-		const MaskVec& forceMask,
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& M1_x, RealAccumVec& M1_y, RealAccumVec& M1_z,
+		RealAccumVec& M2_x, RealAccumVec& M2_y, RealAccumVec& M2_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial, RealAccumVec& sum_myRF,
+		const MaskCalcVec& forceMask,
 		const RealCalcVec& epsRFInvrc3);
 
 	template<bool calculateMacroscopic>
@@ -257,10 +257,10 @@ private:
 		const RealCalcVec& ejj_x, const RealCalcVec& ejj_y, const RealCalcVec& ejj_z,
 		const RealCalcVec& m,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& M_x, RealCalcVec& M_y, RealCalcVec& M_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask);
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& M_x, RealAccumVec& M_y, RealAccumVec& M_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
+		const MaskCalcVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyDipoleQuadrupole(
@@ -273,11 +273,11 @@ private:
 		const RealCalcVec& ejj_x, const RealCalcVec& ejj_y, const RealCalcVec& ejj_z,
 		const RealCalcVec& m,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& M1_x, RealCalcVec& M1_y, RealCalcVec& M1_z,
-		RealCalcVec& M2_x, RealCalcVec& M2_y, RealCalcVec& M2_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask);
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& M1_x, RealAccumVec& M1_y, RealAccumVec& M1_z,
+		RealAccumVec& M2_x, RealAccumVec& M2_y, RealAccumVec& M2_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
+		const MaskCalcVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyQuadrupole(
@@ -290,11 +290,11 @@ private:
 		const RealCalcVec& ejj_x, const RealCalcVec& ejj_y, const RealCalcVec& ejj_z,
 		const RealCalcVec& mjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& Mii_x, RealCalcVec& Mii_y, RealCalcVec& Mii_z,
-		RealCalcVec& Mjj_x, RealCalcVec& Mjj_y, RealCalcVec& Mjj_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask);
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& Mii_x, RealAccumVec& Mii_y, RealAccumVec& Mii_z,
+		RealAccumVec& Mjj_x, RealAccumVec& Mjj_y, RealAccumVec& Mjj_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
+		const MaskCalcVec& forceMask);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.

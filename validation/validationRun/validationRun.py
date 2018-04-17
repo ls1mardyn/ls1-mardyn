@@ -36,6 +36,7 @@ xmlFilename = ''
 inpFilename = ''
 additionalFilenames = []
 comparePlugins = ['ResultWriter', 'GammaWriter', 'RDF']
+disabledPlugins = []
 numIterations = '25'
 baseisnormal = 0
 remote = ''
@@ -58,7 +59,8 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:LB:a:AS',
                              'baseRemote=',
                              'additionalFile=',
                              'allMPI',
-                             'srunFix'
+                             'srunFix',
+                             'disablePlugin='
                              ])
 nonDefaultPlugins = False
 baseIsLocal = False
@@ -85,6 +87,8 @@ for opt, arg in options:
             nonDefaultPlugins = True
             comparePlugins = []
         comparePlugins.append(arg)
+    elif opt in ('--disablePlugin'):
+        disabledPlugins.append(arg)
     elif opt in ('-I', '--numIterations'):
         numIterations = arg
     elif opt in ('-h', '--help'):
@@ -120,7 +124,10 @@ if baseIsLocal and baseRemote:
     print "defined baseIsLocal and defined a base remote host. this contradicts itself. exiting..."
     exit(1)
     
-    
+# disable disabled plugins:
+for dPlugin in disabledPlugins:
+    comparePlugins.remove(dPlugin)
+
 
 SEQ = (mpi == '-1')
 PAR = not SEQ

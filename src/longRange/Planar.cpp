@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
@@ -29,31 +30,10 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	_particleContainer = particleContainer;
 	_slabs = slabs;
 	frequency=10;
-	vNDipole=nullptr;
-	numLJSum2=nullptr;
 	numComp=0;
 }
 
-Planar::~Planar()
-{
-	free(numLJ);
-	free(numDipole);
-	free(numLJSum2);
-	free(numDipoleSum2);
-	free(muSquare);
-	free(uLJ);
-	free(vNLJ);
-	free(vTLJ);
-	free(fLJ);
-	free(rho_g);
-	free(rho_l);
-	free(fDipole);
-	free(uDipole);
-	free(vNDipole);
-	free(vTDipole);
-	free(rhoDipole);
-	free(rhoDipoleL);
-	free(eLong);
+Planar::~Planar() {
 }
 
 void Planar::init()
@@ -64,12 +44,12 @@ void Planar::init()
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
-	numLJ = (unsigned *) malloc (sizeof(unsigned)*numComp);
-	numDipole = (unsigned *) malloc (sizeof(unsigned)*numComp);
+	resizeExactly(numLJ, numComp);
+	resizeExactly(numDipole, numComp);
 	numLJSum=0;
 	numDipoleSum = 0;
-	numLJSum2 = (unsigned *) malloc (sizeof(unsigned)*numComp);
-	numDipoleSum2 = (unsigned *) malloc (sizeof(unsigned)*numComp);
+	resizeExactly(numLJSum2, numComp);
+	resizeExactly(numDipoleSum2, numComp);
 	for (unsigned i =0; i< numComp; i++){
 		numLJSum2[i]=0;
 		numDipoleSum2[i]=0;
@@ -88,20 +68,20 @@ void Planar::init()
 			numDipoleSum2[j]+=numDipole[i];
 		}
 	}
-	muSquare =  (double*)malloc(sizeof(double)*numDipoleSum);
-	uLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	vNLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	vTLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	fLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	rho_g = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	rho_l = (double*)malloc(sizeof(double)*_slabs*numLJSum);
-	fDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	uDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	vNDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	vTDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	rhoDipole = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	rhoDipoleL = (double*)malloc(sizeof(double)*_slabs*numDipoleSum);
-	eLong =  (double*)malloc(sizeof(double)*numLJSum);
+	resizeExactly(muSquare, numDipoleSum);
+	resizeExactly(uLJ, _slabs*numLJSum);
+	resizeExactly(vNLJ, _slabs*numLJSum);
+	resizeExactly(vTLJ, _slabs*numLJSum);
+	resizeExactly(fLJ, _slabs*numLJSum);
+	resizeExactly(rho_g, _slabs*numLJSum);
+	resizeExactly(rho_l, _slabs*numLJSum);
+	resizeExactly(fDipole, _slabs*numDipoleSum);
+	resizeExactly(uDipole, _slabs*numDipoleSum);
+	resizeExactly(vNDipole, _slabs*numDipoleSum);
+	resizeExactly(vTDipole, _slabs*numDipoleSum);
+	resizeExactly(rhoDipole, _slabs*numDipoleSum);
+	resizeExactly(rhoDipoleL, _slabs*numDipoleSum);
+	resizeExactly(eLong, numLJSum);
 	
 	unsigned counter=0;
 	for (unsigned i =0; i< numComp; i++){		// Determination of the elongation of the Lennard-Jones sites
@@ -206,58 +186,90 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 
 void Planar::calculateLongRange(){
 	if (_smooth){
-		for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
+		const double delta_inv = 1.0 / delta;
+		const double slabsPerV = _slabs / V;
+
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 			unsigned cid=tempMol->componentid();
+
 			for (unsigned i=0; i<numLJ[cid]; i++){
-				int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
+				int loc=(tempMol->ljcenter_d_abs(i)[1]) * delta_inv;
 				if (loc < 0){
 					loc=loc+_slabs;
 				}
 				else if (loc > sint-1){
 					loc=loc-_slabs;
 				}
-				rho_g[loc+_slabs*(i+numLJSum2[cid])]+=_slabs/V;
+				const int index = loc + _slabs * (i + numLJSum2[cid]);
+
+				#if defined(_OPENMP)
+				#pragma omp atomic
+				#endif
+				rho_g[index] += slabsPerV;
 			}
 			if (numDipole[cid] != 0){
-				int loc=tempMol->r(1)/delta;
-				rhoDipole[loc+_slabs*(numDipoleSum2[cid])]+=_slabs/V;
+				int loc=tempMol->r(1) * delta_inv;
+
+				const int index = loc + _slabs * (numDipoleSum2[cid]);
+
+				#if defined(_OPENMP)
+				#pragma omp atomic
+				#endif
+				rhoDipole[index] += slabsPerV;
 			}
 		}
 	} 
 	if (simstep % frequency == 0){	// The Density Profile is only calculated once in 10 simulation steps
 
-		for (unsigned i=0; i<_slabs*numLJSum; i++){
-			rho_l[i]=0;
-			uLJ[i]=0;
-			vNLJ[i]=0;
-			vTLJ[i]=0;
-			fLJ[i]=0;
-		}
+		std::fill(rho_l.begin(), rho_l.end(), 0.0);
+		std::fill(uLJ.begin(), uLJ.end(), 0.0);
+		std::fill(vNLJ.begin(), vNLJ.end(), 0.0);
+		std::fill(vTLJ.begin(), vTLJ.end(), 0.0);
+		std::fill(fLJ.begin(), fLJ.end(), 0.0);
 		
-		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
-			fDipole[i]=0;
-			uDipole[i]=0;
-			vNDipole[i]=0;
-			vTDipole[i]=0;
-			rhoDipoleL[i]=0;
-		}
+		std::fill(fDipole.begin(), fDipole.end(), 0.0);
+		std::fill(uDipole.begin(), uDipole.end(), 0.0);
+		std::fill(vNDipole.begin(), vNDipole.end(), 0.0);
+		std::fill(vTDipole.begin(), vTDipole.end(), 0.0);
+		std::fill(rhoDipoleL.begin(), rhoDipoleL.end(), 0.0);
+
 		// Calculation of the density profile for s slabs
 		if (!_smooth){
-			for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
+			const double delta_inv = 1.0 / delta;
+			const double slabsPerV = _slabs / V;
+
+			#if defined(_OPENMP)
+			#pragma omp parallel
+			#endif
+			for(ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()){
 				unsigned cid=tempMol->componentid();
+
 				for (unsigned i=0; i<numLJ[cid]; i++){
-					int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
+					int loc=(tempMol->ljcenter_d_abs(i)[1]) * delta_inv;
 					if (loc < 0){
 						loc=loc+_slabs;
 					}
 					else if (loc > sint-1){
 						loc=loc-_slabs;
 					}
-					rho_l[loc+_slabs*(i+numLJSum2[cid])]+=_slabs/V;
+					const int index = loc+_slabs*(i+numLJSum2[cid]);
+
+					#if defined(_OPENMP)
+					#pragma omp atomic
+					#endif
+					rho_l[index] += slabsPerV;
 				}
 				if (numDipole[cid] != 0){
-					int loc=tempMol->r(1)/delta;
-					rhoDipoleL[loc+_slabs*numDipoleSum2[cid]]+=_slabs/V;
+					int loc=tempMol->r(1) * delta_inv;
+					const int index = loc+_slabs*numDipoleSum2[cid];
+
+					#if defined(_OPENMP)
+					#pragma omp atomic
+					#endif
+					rhoDipoleL[index] += slabsPerV;
 				}
 			}
 		}
@@ -355,39 +367,51 @@ void Planar::calculateLongRange(){
 	}
 
 	// Adding the Force to the Molecules; this is done in every timestep
-	double Fa[3]={0};
-	double Via[3]={0};
-	double Upot_c=0;
-	double Virial_c=0;	// Correction used for the Pressure Calculation
-	for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
-	        unsigned cid=tempMol->componentid();
+	const double delta_inv = 1.0 / delta;
+
+	double Upot_c=0.0;
+	double Virial_c=0.0; // Correction used for the Pressure Calculation
+
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:Upot_c, Virial_c)
+	#endif
+	for (ParticleIterator tempMol = _particleContainer->iterator(); tempMol.hasNext(); tempMol.next()) {
+
+		unsigned cid = tempMol->componentid();
+
 		for (unsigned i=0; i<numLJ[cid]; i++){
-			int loc=(tempMol->r(1)+tempMol->ljcenter_d(i)[1])/delta;
+			int loc=(tempMol->ljcenter_d_abs(i)[1]) * delta_inv;
 			if (loc < 0){
 				loc=loc+_slabs;
 			}
 			else if (loc > sint-1){
 				loc=loc-_slabs;
 			}
-			Fa[1]=fLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Upot_c+=uLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Virial_c+=2*vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]]+vNLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Via[0]=vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Via[1]=vNLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			Via[2]=vTLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
-			tempMol->Fljcenteradd(i,Fa);
-			Virial_c=Via[1];
+			double Fa[3]={0.0, 0.0, 0.0};
+			const int index = loc + i * _slabs + _slabs * numLJSum2[cid];
+			Fa[1] = fLJ[index];
+			Upot_c += uLJ[index];
+			Virial_c += 2 * vTLJ[index] + vNLJ[index];
+			double Via[3];
+			Via[0] = vTLJ[index];
+			Via[1] = vNLJ[index];
+			Via[2] = vTLJ[index];
+			tempMol->Fljcenteradd(i, Fa);
+//			Virial_c=Via[1]; TODO: I, tchipevn, think that this line is a bug, so I'm commenting it out. Virial_c is a summation variable, it should not be overwritten by a value, dependent on the last molecule in the system.
 			tempMol->Viadd(Via);
 //			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 		}
 		if (numDipole[cid] != 0){
-			int loc = tempMol->r(1)/delta;
-			Fa[1]=fDipole[loc+_slabs*numDipoleSum2[cid]];
-			Upot_c+=uDipole[loc+_slabs*numDipoleSum2[cid]];
-			Virial_c+=2*vTDipole[loc+_slabs*numDipoleSum2[cid]]+vNDipole[loc+_slabs*numDipoleSum2[cid]];
-			Via[0]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
-			Via[1]=vNDipole[loc+_slabs*numDipoleSum2[cid]];
-			Via[2]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
+			int loc = tempMol->r(1) * delta_inv;
+			double Fa[3] = { 0.0, 0.0, 0.0 };
+			const int index = loc + _slabs * numDipoleSum2[cid];
+			Fa[1] = fDipole[index];
+			Upot_c += uDipole[index];
+			Virial_c += 2 * vTDipole[index] + vNDipole[index];
+			double Via[3];
+			Via[0] = vTDipole[index];
+			Via[1] = vNDipole[index];
+			Via[2] = vTDipole[index];
 			tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
 			tempMol->Viadd(Via);
 //			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
@@ -415,6 +439,7 @@ void Planar::calculateLongRange(){
 void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj){
 	double rc=sig/cutoff;
 	double rc2=rc*rc;
+	const double rc2_inv = 1.0 / rc2;
 	double rc6=rc2*rc2*rc2;
 	double rc12=rc6*rc6;
 	double r,r2,r6,r12;
@@ -423,92 +448,103 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 	double termF = 8*3.1416*delta*eps*sig;
 	double termVN = 4*3.1416*delta*eps*sig*sig;
 	double termVT = 2*3.1416*delta*eps*sig*sig;
-	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoI*(rc12/5-rc6/2)/rc2;
-		for (unsigned j=i+1; j<i+_slabs/2; j++){
+	const unsigned slabsHalf = _slabs / 2;
+	for (unsigned i=_domainDecomposition->getRank(); i<slabsHalf; i+=_domainDecomposition->getNumProcs()){
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+		vTLJ[index_i] += termVT*rhoI*(6*rc12*0.2-3*rc6*0.5)*rc2_inv;
+		uLJ[index_i] += termU*rhoI*(rc12*0.2-rc6*0.5)*rc2_inv;
+		for (unsigned j=i+1; j<i+slabsHalf; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=sig/((j-i)*delta);
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i]+=termVT*rhoJ*(r12*0.2-r6*0.5)/r2;
+				vTLJ[index_j]+=termVT*rhoI*(r12*0.2-r6*0.5)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j]+=termVT*rhoI*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
+				vTLJ[index_i]+=termVT*rhoJ*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
 			}
-			uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(r12/5-r6/2)/r2;
-			vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVN*rhoJ*(r12-r6)/(r*r);
-			vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVN*rhoI*(r12-r6)/(r*r);
-			fLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += -termF*rhoJ*(r12-r6)/r;
-			fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termF*rhoI*(r12-r6)/r;
+			uLJ[index_i] += termU*rhoJ*(r12*0.2-r6*0.5)/r2;
+			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
+			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
+			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
+			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
 		// Calculation of the Periodic boundary 
-		for (unsigned j=_slabs/2+i; j<_slabs; j++){
+		for (unsigned j=slabsHalf+i; j<_slabs; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=sig/((_slabs-j+i)*delta);
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j <_slabs-cutoff_slabs+i){
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2-r6*0.5)/r2;
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2-r6*0.5)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));		
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
 			}
-			uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(r12/5-r6/2)/r2;
-			vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVN*rhoJ*(r12-r6)/(r*r);
-			vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVN*rhoI*(r12-r6)/(r*r);
-			fLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termF*rhoJ*(r12-r6)/r;
-			fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += -termF*rhoI*(r12-r6)/r;
+			uLJ[index_i] += termU*rhoJ*(r12*0.2-r6*0.5)/r2;
+			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
+			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
+			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			fLJ[index_i] += termF*rhoJ*(r12-r6)/r;
+			fLJ[index_j] += -termF*rhoI*(r12-r6)/r;
 		}
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
-	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(6*rc12/5-3*rc6/2)/rc2;
-		uLJ[i+si*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(rc12/5-rc6/2)/rc2;
-		for (unsigned j=i+1; j<_slabs; j++){
+	for (unsigned i=slabsHalf+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+		const int index_i_cj = i+si*_slabs+_slabs*numLJSum2[cj]; // TODO: check - this is really supposed to be a mix of the i and j variables?
+
+		rhoI=rho_l[index_i];
+		vTLJ[index_i_cj] += termVT*rhoI*(6*rc12*0.2-3*rc6*0.5)*rc2_inv;
+		uLJ[index_i_cj] += termU*rhoI*(rc12*0.2-rc6*0.5)*rc2_inv;
+		for (unsigned j=i+1; j<_slabs; j++) {
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=sig/((j-i)*delta);
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				r2=r*r;
 				r6=r2*r2*r2;
 				r12=r6*r6;
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5-r6/2)/r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5-r6/2)/r2;
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2-r6*0.5)/r2;
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2-r6*0.5)/r2;
 			}
 			else{
 				r2=rc2;
 				r6=rc6;
 				r12=rc12;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVT*rhoI*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVT*rhoJ*(r12/5*(6/r2-5/(r*r))-r6/2*(3/r2-2/(r*r)));
+				vTLJ[index_j] += termVT*rhoI*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
+				vTLJ[index_i] += termVT*rhoJ*(r12*0.2*(6/r2-5/(r*r))-r6*0.5*(3/r2-2/(r*r)));
 			}
-			uLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termU*rhoJ*(r12/5-r6/2)/r2;
-			uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termU*rhoI*(r12/5-r6/2)/r2;
-			vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += termVN*rhoJ*(r12-r6)/(r*r);
-			vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termVN*rhoI*(r12-r6)/(r*r);
-			fLJ[i+si*_slabs+_slabs*numLJSum2[ci]] += -termF*rhoJ*(r12-r6)/r;
-			fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]] += termF*rhoI*(r12-r6)/r;
+			uLJ[index_i] += termU*rhoJ*(r12*0.2-r6*0.5)/r2;
+			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
+			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
+			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
+			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
 	}
-  
 }
 
 void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj){
@@ -535,14 +571,21 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 	double r,r2;
 	double rhoI,rhoJ;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		rhoJ=rho_l[i+sj*_slabs+_slabs*numLJSum2[cj]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*rc2+termVTRC2);
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+
+		const int index_i_sj_cj = i+sj*_slabs+_slabs*numLJSum2[cj];
+		rhoJ=rho_l[index_i_sj_cj]; // TODO: i, sj, cj? appears a few more times in other functions
+
+		vTLJ[index_i]+=rhoJ*(termVTRC1*rc2+termVTRC2);
+		uLJ[index_i]+=rhoJ*termURC;
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(j-i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				double rPt=sig/(r+t);
 				double rPt3=rPt*rPt*rPt;
@@ -558,31 +601,33 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=-rhoJ*termF*r;
+				fLJ[index_j]+=rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=-rhoJ*termFRC*r;
+				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
 		// Calculation of the Periodic boundary 
-		for (unsigned j=_slabs/2+i; j<_slabs; j++){
+		for (unsigned j=_slabs/2+i; j<_slabs; j++) {
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(_slabs-j+i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j <_slabs-cutoff_slabs+i){
 				double rPt=sig/(r+t);
 				double rPt3=rPt*rPt*rPt;
@@ -598,38 +643,45 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=-rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=rhoJ*termF*r;
+				fLJ[index_j]+=-rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=-rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=rhoJ*termFRC*r;
+				fLJ[index_j]+=-rhoI*termFRC*r;
 			}
 		}
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
 	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		rhoJ=rho_l[i+sj*_slabs+_slabs*numLJSum2[cj]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*rc2+termVTRC2);
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+
+		const int index_i_sj_cj = i+sj*_slabs+_slabs*numLJSum2[cj];
+		rhoJ=rho_l[index_i_sj_cj];
+
+		vTLJ[index_i]+=rhoJ*(termVTRC1*rc2+termVTRC2);
+		uLJ[index_i]+=rhoJ*termURC;
 		for (unsigned j=i+1; j<_slabs; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(j-i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				double rPt=sig/(r+t);
 				double rPt3=rPt*rPt*rPt;
@@ -645,28 +697,27 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=-rhoJ*termF*r;
+				fLJ[index_j]+=rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=-rhoJ*termFRC*r;
+				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
 	}
-  
 }
 
 void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj){
@@ -706,15 +757,22 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 	double termVTRC2=termURC/2;
 	double r,r2;
 	double rhoI,rhoJ;
-	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		rhoJ=rho_l[i+sj*_slabs+_slabs*numLJSum2[cj]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*rc2+termVTRC2);
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
+	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()) {
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+
+		const int index_i_sj_cj = i+sj*_slabs+_slabs*numLJSum2[cj];
+		rhoJ=rho_l[index_i_sj_cj];
+
+		vTLJ[index_i]+=rhoJ*(termVTRC1*rc2+termVTRC2);
+		uLJ[index_i]+=rhoJ*termURC;
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(j-i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				double rPtP=sig/(r+tP);
 				double rPtP2=rPtP*rPtP;
@@ -740,31 +798,33 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=-rhoJ*termF*r;
+				fLJ[index_j]+=rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=-rhoJ*termFRC*r;
+				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
 		// Calculation of the Periodic boundary 
-		for (unsigned j=_slabs/2+i; j<_slabs; j++){
+		for (unsigned j=_slabs/2+i; j<_slabs; j++) {
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(_slabs-j+i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j <_slabs-cutoff_slabs+i){
 				double rPtP=sig/(r+tP);
 				double rPtP2=rPtP*rPtP;
@@ -790,38 +850,45 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=-rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=rhoJ*termF*r;
+				fLJ[index_j]+=-rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=-rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=rhoJ*termFRC*r;
+				fLJ[index_j]+=-rhoI*termFRC*r;
 			}
 		}
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
-	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
-		rhoI=rho_l[i+si*_slabs+_slabs*numLJSum2[ci]];
-		rhoJ=rho_l[i+sj*_slabs+_slabs*numLJSum2[cj]];
-		vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*rc2+termVTRC2);
-		uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
+	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()) {
+		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
+
+		rhoI=rho_l[index_i];
+
+		const int index_i_sj_cj = i+sj*_slabs+_slabs*numLJSum2[cj];
+		rhoJ=rho_l[index_i_sj_cj];
+
+		vTLJ[index_i]+=rhoJ*(termVTRC1*rc2+termVTRC2);
+		uLJ[index_i]+=rhoJ*termURC;
 		for (unsigned j=i+1; j<_slabs; j++){
+			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
+
 			r=(j-i)*delta;
 			r2=r*r;
-			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
+			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
 				double rPtP=sig/(r+tP);
 				double rPtP2=rPtP*rPtP;
@@ -847,28 +914,27 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termU;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termU;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVN*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVN*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVT2;	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVT2;
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termF*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termF*r;
+				uLJ[index_i]+=rhoJ*termU;
+				uLJ[index_j]+=rhoI*termU;
+				vNLJ[index_i]+=rhoJ*termVN*r2;
+				vNLJ[index_j]+=rhoI*termVN*r2;
+				vTLJ[index_j]+=rhoI*termVT2;
+				vTLJ[index_i]+=rhoJ*termVT2;
+				fLJ[index_i]+=-rhoJ*termF*r;
+				fLJ[index_j]+=rhoI*termF*r;
 			}
 			else{
-				uLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termURC;
-				uLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termURC;
-				vNLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*termVNRC*r2;
-				vNLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termVNRC*r2;
-				vTLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);	
-				vTLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
-				fLJ[i+si*_slabs+_slabs*numLJSum2[ci]]+=-rhoJ*termFRC*r;
-				fLJ[j+sj*_slabs+_slabs*numLJSum2[cj]]+=rhoI*termFRC*r;
+				uLJ[index_i]+=rhoJ*termURC;
+				uLJ[index_j]+=rhoI*termURC;
+				vNLJ[index_i]+=rhoJ*termVNRC*r2;
+				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				fLJ[index_i]+=-rhoJ*termFRC*r;
+				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
 	}
-  
 }
 
 void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
@@ -881,9 +947,13 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 	double termVN= 3.1416/2*muSquare[ci]*muSquare[cj]*delta / (3*temp);
 	double termVT= termU;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
-		double rhoI = rhoDipoleL[i+si*_slabs+_slabs*numDipoleSum2[ci]];
+		const int index_i = i+si*_slabs+_slabs*numDipoleSum2[ci];
+
+		double rhoI = rhoDipoleL[index_i];
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
-			double rhoJ = rhoDipoleL[j+sj*_slabs+_slabs*numDipoleSum2[cj]];
+			const int index_j = j+sj*_slabs+_slabs*numDipoleSum2[cj];
+
+			double rhoJ = rhoDipoleL[index_j];
 			double r=(j-i)*delta;
 			double r2,r4,r6;
 			if (j> i+cutoff_slabs){
@@ -896,19 +966,21 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			  r4=rc4;
 			  r6=rc6;
 			}
-			fDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] += termF*rhoJ/r6 * r;
-			fDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termF*rhoI/r6 * r;
-			uDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termU*rhoJ/r4;
-			uDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termU*rhoI/r4;
-			vNDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVN*rhoJ/r6 *r*r;
-			vNDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVN*rhoI/r6 *r*r;
-			vTDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
-			vTDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
+			fDipole[index_i] += termF*rhoJ/r6 * r;
+			fDipole[index_j] -= termF*rhoI/r6 * r;
+			uDipole[index_i] -= termU*rhoJ/r4;
+			uDipole[index_j] -= termU*rhoI/r4;
+			vNDipole[index_i]-= termVN*rhoJ/r6 *r*r;
+			vNDipole[index_j]-= termVN*rhoI/r6 *r*r;
+			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
+			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
 			
 		}
 		// Calculation of the Periodic boundary 
 		for (unsigned j=_slabs/2+i; j<_slabs; j++){
-			double rhoJ = rhoDipoleL[j+sj*_slabs+_slabs*numDipoleSum2[cj]];
+			const int index_j = j+sj*_slabs+_slabs*numDipoleSum2[cj];
+
+			double rhoJ = rhoDipoleL[index_j];
 			double r=(_slabs-j+i)*delta;
 			double r2,r4,r6;
 			if (j <_slabs-cutoff_slabs+i){
@@ -921,22 +993,26 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			  r4=rc4;
 			  r6=rc6;
 			}
-			fDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termF*rhoJ/r6 * r;
-			fDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] += termF*rhoI/r6 * r;
-			uDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termU*rhoJ/r4;
-			uDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termU*rhoI/r4;
-			vNDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVN*rhoJ/r6 *r*r;
-			vNDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVN*rhoI/r6 *r*r;
-			vTDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
-			vTDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
+			fDipole[index_i] -= termF*rhoJ/r6 * r;
+			fDipole[index_j] += termF*rhoI/r6 * r;
+			uDipole[index_i] -= termU*rhoJ/r4;
+			uDipole[index_j] -= termU*rhoI/r4;
+			vNDipole[index_i]-= termVN*rhoJ/r6 *r*r;
+			vNDipole[index_j]-= termVN*rhoI/r6 *r*r;
+			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
+			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
 		}
 	}
 
 	// Calculation of the Forces on the slabs of the right hand side
-	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()){
-		double rhoI = rhoDipoleL[i+si*_slabs+_slabs*numDipoleSum2[ci]];
+	for (unsigned i=_slabs/2+_domainDecomposition->getRank(); i<_slabs; i+=_domainDecomposition->getNumProcs()) {
+		const int index_i = i+si*_slabs+_slabs*numDipoleSum2[ci];
+
+		double rhoI = rhoDipoleL[index_i];
 		for (unsigned j=i+1; j<_slabs; j++){
-			double rhoJ = rhoDipoleL[j+sj*_slabs+_slabs*numDipoleSum2[cj]];
+			const int index_j = j+sj*_slabs+_slabs*numDipoleSum2[cj];
+
+			double rhoJ = rhoDipoleL[index_j];
 			double r=(j-i)*delta;
 			double r2,r4,r6;
 			if (j> i+cutoff_slabs){
@@ -949,14 +1025,14 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			  r4=rc4;
 			  r6=rc6;
 			}
-			fDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] += termF*rhoJ/r6 * r;
-			fDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termF*rhoI/r6 * r;
-			uDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]] -= termU*rhoJ/r4;
-			uDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]] -= termU*rhoI/r4;
-			vNDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVN*rhoJ/r6 *r*r;
-			vNDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVN*rhoI/r6 *r*r;
-			vTDipole[i+si*_slabs+_slabs*numDipoleSum2[ci]]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
-			vTDipole[j+sj*_slabs+_slabs*numDipoleSum2[cj]]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
+			fDipole[index_i] += termF*rhoJ/r6 * r;
+			fDipole[index_j] -= termF*rhoI/r6 * r;
+			uDipole[index_i] -= termU*rhoJ/r4;
+			uDipole[index_j] -= termU*rhoI/r4;
+			vNDipole[index_i]-= termVN*rhoJ/r6 *r*r;
+			vNDipole[index_j]-= termVN*rhoI/r6 *r*r;
+			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
+			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
 		}
 	}  
 }

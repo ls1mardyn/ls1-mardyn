@@ -65,11 +65,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationU0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
@@ -106,11 +106,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationF0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
@@ -143,10 +143,9 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 	size_t nQuadrupoles = 0;
 
 	ParticleCellRMM & nonconst_cell_RMM = const_cast<ParticleCellRMM&>(cell_RMM);
-	SingleCellIterator begin = nonconst_cell_RMM.iteratorBegin();
-	SingleCellIterator end = nonconst_cell_RMM.iteratorEnd();
+	auto begin = nonconst_cell_RMM.iterator();
 
-	for(SingleCellIterator it = begin; it != end; ++it) {
+	for(auto it = begin; it.hasNext(); it.next()) {
 		nLJCenters += it->numLJcenters();
 		nCharges += it->numCharges();
 		nDipoles += it->numDipoles();
@@ -165,7 +164,7 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 	size_t iDipoles = 0;
 	size_t iQuadrupoles = 0;
 
-	SingleCellIterator it = begin;
+	auto it = begin;
 	// For each molecule iterate over all its centers.
 	for (size_t i = 0; i < numMolecules; ++i) {
 		const size_t mol_ljc_num = it->numLJcenters();
@@ -186,24 +185,24 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 		const unsigned ind = i;
 
 		//for better readability:
-		constexpr ConcatenatedSites<vcp_real_calc>::SiteType LJC = ConcatenatedSites<vcp_real_calc>::SiteType::LJC;
-		typedef ConcatenatedSites<vcp_real_calc>::CoordinateType Coordinate;
+		constexpr ConcSites::SiteType LJC = ConcSites::SiteType::LJC;
+		typedef ConcSites::CoordinateType Coordinate;
 		typedef CellDataSoA::QuantityType QuantityType;
 
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
-		fullSoA.getBegin(QuantityType::MOL_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
-		fullSoA.getBegin(QuantityType::CENTER_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
+		fullSoA.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
+		fullSoA.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
+		fullSoA.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
+		fullSoA.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::X)[ind] = it->r(0);
+		fullSoA.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Y)[ind] = it->r(1);
+		fullSoA.getBeginCalc(QuantityType::CENTER_POSITION, LJC, Coordinate::Z)[ind] = it->r(2);
 		fullSoA._ljc_id[ind] = 0;
 
 		// clear FM
-		std::array<vcp_real_calc, 3> clearance = { 0., 0., 0. };
-		fullSoA.setTriplet(clearance, QuantityType::FORCE, LJC, ind);
-		fullSoA.setTriplet(clearance, QuantityType::VIRIAL, LJC, ind);
+		std::array<vcp_real_accum, 3> clearance = { 0., 0., 0. };
+		fullSoA.setTripletAccum(clearance, QuantityType::FORCE, LJC, ind);
+		fullSoA.setTripletAccum(clearance, QuantityType::VIRIAL, LJC, ind);
 
-		++it;
+		it.next();
 	}
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
@@ -219,7 +218,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -258,17 +257,16 @@ void VCP1CLJRMMTest::testProcessCell() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-5*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-5*full_Virial));
 
-	SingleCellIterator begin = cell_RMM.iteratorBegin();
-	SingleCellIterator end = cell_RMM.iteratorEnd();
+	auto begin = cell_RMM.iterator();
 
-	for (SingleCellIterator it = begin; it != end; ++it) {
+	for (auto it = begin; it.hasNext(); it.next()) {
 		double RMM_f_x = it->F(0);
 		double RMM_f_y = it->F(1);
 		double RMM_f_z = it->F(2);
 
 		size_t i = it.getIndex();
 
-		std::array<vcp_real_calc, 3> triple = full_SoA.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		std::array<vcp_real_accum, 3> triple = full_SoA.getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
@@ -293,7 +291,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	// copy-paste cause I'm lazy and have no particular time for unit tests.
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -337,16 +335,15 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-7*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-7*full_Virial));
 
-	SingleCellIterator begin1 = cell_RMM1.iteratorBegin();
-	SingleCellIterator end1 = cell_RMM1.iteratorEnd();
-	for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+	auto begin1 = cell_RMM1.iterator();
+	for (auto it1 = begin1; it1.hasNext(); it1.next()) {
 		double RMM_f_x = it1->F(0);
 		double RMM_f_y = it1->F(1);
 		double RMM_f_z = it1->F(2);
 
 		size_t i = it1.getIndex();
 
-		std::array<vcp_real_calc, 3> triple = full_SoA1.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		std::array<vcp_real_accum, 3> triple = full_SoA1.getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);
@@ -355,16 +352,15 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, RMM_f_z, fabs(full_f_z*1.0e-5));
 	}
 
-	SingleCellIterator begin2 = cell_RMM2.iteratorBegin();
-	SingleCellIterator end2 = cell_RMM2.iteratorEnd();
-	for (SingleCellIterator it2 = begin2; it2 != end2; ++it2) {
+	auto begin2 = cell_RMM2.iterator();
+	for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 		double RMM_f_x = it2->F(0);
 		double RMM_f_y = it2->F(1);
 		double RMM_f_z = it2->F(2);
 
 		size_t i = it2.getIndex();
 
-		std::array<vcp_real_calc, 3> triple = full_SoA2.getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, i); //LJC equals the beginning of data
+		std::array<vcp_real_accum, 3> triple = full_SoA2.getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, i); //LJC equals the beginning of data
 		double full_f_x = static_cast<double>(triple[0]);
 		double full_f_y = static_cast<double>(triple[1]);
 		double full_f_z = static_cast<double>(triple[2]);

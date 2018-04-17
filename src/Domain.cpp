@@ -314,11 +314,10 @@ void Domain::calculateGlobalValues(
 			#pragma omp parallel
 			#endif
 			{
-				const ParticleIterator begin = particleContainer->iteratorBegin();
-				const ParticleIterator end = particleContainer->iteratorEnd();
+				const ParticleIterator begin = particleContainer->iterator();
 
 				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
-				for (ParticleIterator tM = begin; tM != end; ++tM) {
+				for (ParticleIterator tM = begin; tM.hasNext(); tM.next()) {
 					Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
 						vcorr = sqrt(limit_energy / Utrans);
@@ -424,7 +423,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 			if(thit->second)
 				for(int d=0; d < 3; d++) _localThermostatDirectedVelocity[d][thit->first] = 0.0;
 		}
-		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
+		for(tM = partCont->iterator(); tM.hasNext(); tM.next())
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -438,7 +437,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 	else if(this->_universalUndirectedThermostat[0])
 	{
 		for(int d=0; d < 3; d++) _localThermostatDirectedVelocity[d][0] = 0.0;
-		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
+		for(tM = partCont->iterator(); tM.hasNext(); tM.next())
 		{
 			for(int d=0; d < 3; d++)
 				_localThermostatDirectedVelocity[d][0] += tM->v(d);
@@ -450,7 +449,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
 	if(this->_componentwiseThermostat)
 	{
-		for(ParticleIterator tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
+		for(ParticleIterator tM = partCont->iterator(); tM.hasNext(); tM.next())
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -478,10 +477,9 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		#pragma omp parallel reduction(+:N, rotationalDOF, local2KETrans, local2KERot)
 		#endif
 		{
-			const ParticleIterator begin = partCont->iteratorBegin();
-			const ParticleIterator end = partCont->iteratorEnd();
+			const ParticleIterator begin = partCont->iterator();
 
-			for(ParticleIterator tM = begin; tM != end; ++tM) {
+			for(ParticleIterator tM = begin; tM.hasNext(); tM.next()) {
 				++N;
 				rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
 				if(this->_universalUndirectedThermostat[0]) {
@@ -715,7 +713,7 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 	unID = 0;
 	unsigned lNin = 0;
 	unsigned lNout = 0;
-	for(ParticleIterator thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol)
+	for(ParticleIterator thismol = molCont->iterator(); thismol.hasNext(); thismol.next())
 	{
 		cid = thismol->componentid();
 		if(this->_universalProfiledComponents[cid])
@@ -1345,7 +1343,7 @@ void Domain::determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer
    double localMass = 0.0;
    int cid;
 
-   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
+   for(ParticleIterator tm = molCont->iterator(); tm.hasNext(); tm.next())
    {
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
@@ -1383,7 +1381,7 @@ void Domain::determineYShift( DomainDecompBase* domainDecomp, ParticleContainer*
    double localBalance = 0.0;
    double localMass = 0.0;
    int cid;
-   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
+   for(ParticleIterator tm = molCont->iterator(); tm.hasNext(); tm.next())
    {
      cid = tm->componentid();
      if(_componentForYShift[cid])
@@ -1431,7 +1429,7 @@ void Domain::noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCon
    //static double initialCentreOfMassY;
    double localBalance = 0.0;
    double localMass = 0.0;
-   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
+   for(ParticleIterator tm = molCont->iterator(); tm.hasNext(); tm.next())
    {
 
 	double tmass = tm->mass();
@@ -1484,7 +1482,7 @@ void Domain::determineShift( DomainDecompBase* domainDecomp, ParticleContainer* 
    double localMass = 0.0;
    int cid;
 
-   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
+   for(ParticleIterator tm = molCont->iterator(); tm.hasNext(); tm.next())
    {
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
@@ -1531,7 +1529,7 @@ void Domain::realign(
 			 << "=> adjustment: (" << _universalRealignmentMotion[0] << ", " << _universalRealignmentMotion[1] << ", " << _universalRealignmentMotion[2] << ").\n";
 #endif
    }
-   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
+   for(ParticleIterator tm = molCont->iterator(); tm.hasNext(); tm.next())
    {
      for(unsigned short d=0; d<3; d++){
        tm->move(d, _universalRealignmentMotion[d]);

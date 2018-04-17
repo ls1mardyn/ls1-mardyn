@@ -4,28 +4,22 @@
  */
 
 #include "RealCalcVecTest.h"
-#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
-#include "particleContainer/adapter/vectorization/MaskVec.h"
-#include "particleContainer/adapter/vectorization/RealCalcVec.h"
+#include "particleContainer/adapter/vectorization/SIMD_DEFINITIONS.h"
 #include "utils/AlignedArray.h"
 #include "utils/mardyn_assert.h"
 
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	TEST_SUITE_REGISTRATION(RealCalcVecTest);
 #else
-	#pragma message "Compilation info: The unit tests for the fast reciproce methods are only executed with AVX2, KNC or KNL"
+	#pragma message "Compilation info: The unit tests for the fast reciproce methods are only executed with AVX2 or KNL"
 #endif
 
 
 RealCalcVecTest::RealCalcVecTest() {
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	test_log->info() << "Testing RealCalcVec fast reciproce with "
 	#if VCP_VEC_TYPE==VCP_VEC_AVX2
 		<< "AVX2 intrinsics." << std::endl;
-	#elif VCP_VEC_TYPE==VCP_VEC_KNC
-		<< "KNC_MASK intrinsics." << std::endl;
-	#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-		<< "KNC_G_S intrinsics." << std::endl;
 	#elif VCP_VEC_TYPE==VCP_VEC_KNL
 		<< "KNL_MASK intrinsics." << std::endl;
 	#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
@@ -41,7 +35,7 @@ void RealCalcVecTest::setUp() {}
 void RealCalcVecTest::tearDown() {}
 
 void RealCalcVecTest::testFastReciprocalMask() {
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 
 	AlignedArray<vcp_real_calc> storageLegacy(VCP_VEC_SIZE);
 	storageLegacy.appendValue(1.0, 0);
@@ -57,15 +51,15 @@ void RealCalcVecTest::testFastReciprocalMask() {
 
 	#if VCP_VEC_TYPE == VCP_VEC_AVX2
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
 		#endif
 	#else
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = 0x0007;
+			vcp::MaskCalcVec mask = 0x0007;
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = 0x07;
+			vcp::MaskCalcVec mask = 0x07;
 		#endif
 	#endif
 
@@ -91,7 +85,7 @@ void RealCalcVecTest::testFastReciprocalMask() {
 }
 
 void RealCalcVecTest::testFastReciprocSqrtMask() {
-#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNC or VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_AVX2 or VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 
 	AlignedArray<vcp_real_calc> storageLegacy(VCP_VEC_SIZE);
 	storageLegacy.appendValue(1.0, 0);
@@ -107,15 +101,15 @@ void RealCalcVecTest::testFastReciprocSqrtMask() {
 
 	#if VCP_VEC_TYPE == VCP_VEC_AVX2
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi32(0, 0, 0, 0, 0, ~0, ~0, ~0);
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
+			vcp::MaskCalcVec mask = _mm256_set_epi64x(0, ~0, ~0, ~0);
 		#endif
 	#else
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-			vcp::MaskVec mask = 0x0007;
+			vcp::MaskCalcVec mask = 0x0007;
 		#else /* VCP_DPDP */
-			vcp::MaskVec mask = 0x07;
+			vcp::MaskCalcVec mask = 0x07;
 		#endif
 	#endif
 

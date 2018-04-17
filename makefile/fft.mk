@@ -14,8 +14,7 @@ else
   $(warning WARNING: FFTW_INCDIR not set)
 endif
 
-# if we are compiling for KNC / KNL mkl is needed for FFTW
-# TODO find compatible fftw for KNC
+# if we are compiling for KNL mkl is needed for FFTW
 ifneq (,$(findstring KNL, $(VECTORIZE_CODE)))
   LDFLAGS += -lfftw3xc_intel -lfftw3xf_intel -mkl
 else

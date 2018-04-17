@@ -348,6 +348,20 @@ public:
 		/// \return XMLfile::Query::const_iterator	iterator
 		const_iterator rbegin() const
 			{ return const_iterator(this,m_nodes.size()-1); }
+		/// \brief get (dummy) iteration end for comparison
+		/// return false (as dummy) to enable e.g. for(it=query.begin();it!=query.end();++it)
+		/// this is preferable to just use e.g. for(it=query.begin();it;++it)
+		/// \return boolean	false
+		bool end() const
+			{ return false; }
+		/*
+		/// \brief get (dummy) iteration end for comparison
+		/// return false (as dummy) for enable e.g. for(it=query.rbegin();it!=query.rend();--it)
+		/// Note: A reverse iterator should proceed with ++it (and therefore probably a "reverse" flag iterator attribute is needed)
+		/// \return boolean	false
+		bool rend() const
+			{ return false; }
+		*/
 		
 		/// \brief get node value
 		/// get the node content and convert it to a given type

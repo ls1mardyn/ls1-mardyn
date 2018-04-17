@@ -1,7 +1,7 @@
 ls1-MarDyn Overview
 ===================
 
-ls1-MarDyn is a massively parallel Molecular Dynamics (MD) code for large systems. Its main target is the simulation of nanofluids. ls1-MarDyn is desigend with the focus on performance and easy extensibility.
+ls1-MarDyn is a massively parallel Molecular Dynamics (MD) code for large systems. Its main target is the simulation of nanofluids. ls1-MarDyn is designed with the focus on performance and easy extensibility.
 
 
 Getting Started
@@ -11,15 +11,16 @@ Prerequisites:
 --------------
 ### mandatory requirements:
 * a C++11 compiler (GCC, Clang, Intel, PGI, Cray, NEC SX, IBM XL, ...)
-* a working MPI installation compatible with the MPI 3.0 secification or later (Open MPI, MPICH, MVAPICH, Intel MPI, Cray MPI, NEC MPI, IBM Platform MPI, ...)
+* a working MPI installation compatible with the MPI 3.0 specification or later (Open MPI, MPICH, MVAPICH, Intel MPI, Cray MPI, NEC MPI, IBM Platform MPI, ...)
 
 ### optional requirements:
 * FFTW3: <http://www.fftw.org>
 * VTK: <http://www.vtk.org>
+* QuickSched: <https://arxiv.org/abs/1601.05384>
 
 
-Instalation
------------
+Installation
+------------
 
 ls1-MarDyn is build from source code using GNU make.
 
@@ -36,7 +37,7 @@ To see a list of all supported target platforms and compilers call
 ```sh
   make cfg_list
 ```
-and run then make with the desired cofiguration:
+and run then make with the desired configuration:
 ```sh
   make CFG=<config name>
 ```
@@ -80,7 +81,7 @@ as well as the documentation of the source code.
 Contact
 =======
 
-* <http://www.ls1-mardyn.de> : the official ls1-MarDyn webpage.
+* <http://www.ls1-mardyn.de> : the official ls1-MarDyn web page.
 * <mailto:contact@ls1-mardyn.de> : can be used for general questions around ls1-MarDyn.
 * <mailto:ls1-devel@lists.projects.hlrs.de> : can be used to reach the developers of ls1-MarDyn.
 

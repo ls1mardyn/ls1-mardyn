@@ -54,12 +54,11 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 #pragma omp parallel shared(startRegion, endRegion)
 #endif
 		{
-			auto begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
-			auto end = moleculeContainer->iterateRegionEnd();
+			auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
 
 			double shiftedPosition[3];
 
-			for (auto i = begin; i != end; ++i) {
+			for (auto i = begin; i.hasNext(); i.next()) {
 				Molecule& molHalo = *i;
 
 				// Add force of halo particle to original particle (or other duplicates)
@@ -91,19 +90,18 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 	double shift[3];
 	for (int dim=0;dim<3;dim++){
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-		shift[dim] *= haloRegion.offset[dim];
+		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
 	}
 
 #if defined (_OPENMP)
 #pragma omp parallel
 #endif
 	{
-		auto begin = moleculeContainer->iterateRegionBegin(haloRegion.rmin, haloRegion.rmax);
-		auto end = moleculeContainer->iterateRegionEnd();
+		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
 
 		double shiftedPosition[3];
 
-		for (auto i = begin; i != end; ++i) {
+		for (auto i = begin; i.hasNext(); i.next()) {
 			Molecule& molHalo = *i;
 
 			// Add force of halo particle to original particle (or other duplicates)
@@ -148,11 +146,10 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
 		{
-			RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
-			RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+			RegionParticleIterator begin = moleculeContainer->regionIterator(startRegion, endRegion);
 
 			//traverse and gather all halo particles in the cells
-			for(RegionParticleIterator i = begin; i != end; ++i){
+			for(RegionParticleIterator i = begin; i.hasNext(); i.next()){
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
 				// some additional shifting to ensure that rounding errors do not hinder the correct placement
@@ -178,31 +175,32 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 	double shift[3];
 	for (int dim = 0; dim < 3; dim++) {
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-		shift[dim] *= haloRegion.offset[dim];
+		shift[dim] *= haloRegion.offset[dim] *(-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
 	}
 
 #if defined (_OPENMP)
 #pragma omp parallel
 #endif
 	{
-		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(haloRegion.rmin, haloRegion.rmax);
-		RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+		RegionParticleIterator begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
 
 		//traverse and gather all halo particles in the cells
-		for (RegionParticleIterator i = begin; i != end; ++i) {
+		for (RegionParticleIterator i = begin; i.hasNext(); i.next()) {
 			Molecule m = *i;
 			for (int dim = 0; dim < 3; dim++) {
-				m.setr(dim, m.r(dim) + shift[dim]);
-				// some additional shifting to ensure that rounding errors do not hinder the correct placement
-				if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
-					if (m.r(dim) <= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
-						m.setr(dim, moleculeContainer->getBoundingBoxMin(dim)); // ensures that r is at least the boundingboxmin
-					}
-				} else {  // shift > 0
-					if (m.r(dim) >= moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
-					// std::nexttoward: returns the next bigger value of _boundingBoxMax
-						vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
-						m.setr(dim, std::nexttoward(r, r - 1.f));  // ensures that r is smaller than the boundingboxmax
+				if (shift[dim] != 0) {
+					m.setr(dim, m.r(dim) + shift[dim]);
+					// some additional shifting to ensure that rounding errors do not hinder the correct placement
+					if (shift[dim] < 0) { // if the shift was negative, it is now in the lower part of the domain -> min
+						if (m.r(dim) <= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
+							m.setr(dim, moleculeContainer->getBoundingBoxMin(dim)); // ensures that r is at least the boundingboxmin
+						}
+					} else {  // shift > 0
+						if (m.r(dim) >= moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
+						// std::nexttoward: returns the next bigger value of _boundingBoxMax
+							vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
+							m.setr(dim, std::nexttoward(r, r - 1.f)); // ensures that r is smaller than the boundingboxmax
+						}
 					}
 				}
 			}
@@ -232,11 +230,10 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
 		{
-			RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
-			RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+			RegionParticleIterator begin = moleculeContainer->regionIterator(startRegion, endRegion);
 
 			//traverse and gather all boundary particles in the cells
-			for(RegionParticleIterator i = begin; i != end; ++i){
+			for(RegionParticleIterator i = begin; i.hasNext(); i.next()){
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
 				// checks if the molecule has been shifted to inside the domain due to rounding errors.
@@ -262,32 +259,33 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 	double shift[3];
 		for (int dim=0;dim<3;dim++){
 			shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-			shift[dim] *= haloRegion.offset[dim];
+			shift[dim] *= haloRegion.offset[dim]*(-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
 		}
 
 #if defined (_OPENMP)
 #pragma omp parallel
 #endif
 	{
-		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(haloRegion.rmin, haloRegion.rmax);
-		RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+		RegionParticleIterator begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
 
 		//traverse and gather all boundary particles in the cells
-		for (RegionParticleIterator i = begin; i != end; ++i) {
+		for (RegionParticleIterator i = begin; i.hasNext(); i.next()) {
 			Molecule m = *i;
 			for (int dim = 0; dim < 3; dim++) {
-				m.setr(dim, m.r(dim) + shift[dim]);
-				// checks if the molecule has been shifted to inside the domain due to rounding errors.
-				if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
-					if (m.r(dim) >= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
-						vcp_real_calc r = moleculeContainer->getBoundingBoxMin(dim);
-						m.setr(dim, std::nexttoward(r, r - 1.f));  // ensures that r is smaller than the boundingboxmin
-					}
-				} else {  // shift > 0
-					if (m.r(dim) < moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
-					// std::nextafter: returns the next bigger value of _boundingBoxMax
-						vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
-						m.setr(dim, std::nexttoward(r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
+				if (shift[dim] != 0) {
+					m.setr(dim, m.r(dim) + shift[dim]);
+					// checks if the molecule has been shifted to inside the domain due to rounding errors.
+					if (shift[dim] < 0) { // if the shift was negative, it is now in the lower part of the domain -> min
+						if (m.r(dim) >= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
+							vcp_real_calc r = moleculeContainer->getBoundingBoxMin(dim);
+							m.setr(dim, std::nexttoward(r, r - 1.f)); // ensures that r is smaller than the boundingboxmin
+						}
+					} else {  // shift > 0
+						if (m.r(dim) < moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
+						// std::nextafter: returns the next bigger value of _boundingBoxMax
+							vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
+							m.setr(dim, std::nexttoward(r, r + 1.f)); // ensures that r is bigger than the boundingboxmax
+						}
 					}
 				}
 			}
@@ -374,7 +372,7 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 			}
 
 			ParticleIterator tempMolecule;
-			for (tempMolecule = moleculeContainer->iteratorBegin(); tempMolecule != moleculeContainer->iteratorEnd(); ++tempMolecule) {
+			for (tempMolecule = moleculeContainer->iterator(); tempMolecule.hasNext(); tempMolecule.next()) {
 				if(binary == true){
 					tempMolecule->writeBinary(checkpointfilestream);
 				}

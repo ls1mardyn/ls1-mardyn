@@ -210,13 +210,13 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 	#endif
 
 	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _sendRequest));
-	_msgSent = _countReceived = _msgReceived = false;
+	_msgSent = false;
 }
 
 bool CommunicationPartner::testSend() {
 	if (not _msgSent) {
 		int flag = 0;
-		MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus));
+		MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus)); // THIS CAUSES A SEG FAULT IN PUSH_PULL_NEIGHBOURS
 		if (flag == 1) {
 			_msgSent = true;
 			_sendBuf.clear();
@@ -225,9 +225,15 @@ bool CommunicationPartner::testSend() {
 	return _msgSent;
 }
 
+void CommunicationPartner::resetReceive(){
+	_countReceived = _msgReceived = false;
+
+}
+
 bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& /*type*/) {
 	if (not _countReceived) {
 		int flag = 0;
+		//TODO: MPI_probe mit anyrank testen!!!
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
 		if (flag == true) {
 			_countReceived = true;
@@ -438,8 +444,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	{
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(lowCorner, highCorner);
-		RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+		RegionParticleIterator begin = moleculeContainer->regionIterator(lowCorner, highCorner);
 
 		#if defined (_OPENMP)
 		#pragma omp master
@@ -453,7 +458,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
-		for (RegionParticleIterator i = begin; i != end; ++i) {
+		for (RegionParticleIterator i = begin; i.hasNext(); i.next()) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			threadData[threadNum].push_back(*i);

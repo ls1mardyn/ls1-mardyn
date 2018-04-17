@@ -159,9 +159,7 @@ public:
             double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
             
             case MOLECULE_MOLECULE : 
-                if ( _rdf != NULL )
-                    _rdf->observeRDF(molecule1, molecule2, dd);
-
+//                if ( _rdf != NULL ) _rdf->observeRDF(molecule1, molecule2, dd); // moved to RDFCellProcessor
                 PotForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles, my_threadData._myRF, Virial3, calculateLJ );
                 my_threadData._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
                 return my_threadData._upot6LJ + my_threadData._upotXpoles;

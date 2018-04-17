@@ -177,7 +177,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 		unsigned long *tids = new unsigned long[num_molecules];
 
 		int i = 0;
-		for (ParticleIterator m = moleculeContainer->iteratorBegin(); m != moleculeContainer->iteratorEnd(); ++m) {
+		for (ParticleIterator m = moleculeContainer->iterator(); m.hasNext(); m.next()) {
 			tids[i] = m->id();
 			i++;
 		}
@@ -188,7 +188,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 		/** @todo FIXME: This implementation does not scale. */
 		map<unsigned long, int> check;
 
-		for (ParticleIterator m = moleculeContainer->iteratorBegin(); m != moleculeContainer->iteratorEnd(); ++m)
+		for (ParticleIterator m = moleculeContainer->iterator(); m.hasNext(); m.next())
 			check[m->id()] = 0;
 
 		MPI_Status status;
@@ -255,7 +255,7 @@ void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, D
 	global_log->set_mpi_output_root(0);
 }
 
-size_t DomainDecompMPIBase::getTotalSize() { // another new method
+size_t DomainDecompMPIBase::getTotalSize() { 
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
 			+ _collCommunication->getTotalSize();
 }

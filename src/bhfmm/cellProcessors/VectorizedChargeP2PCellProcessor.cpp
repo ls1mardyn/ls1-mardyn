@@ -30,8 +30,6 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX2 intrinsics." << std::endl;
-#elif (VCP_VEC_TYPE==VCP_VEC_KNC) || (VCP_VEC_TYPE==VCP_VEC_KNC_GATHER)
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using KNC intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using KNL intrinsics." << std::endl;
 #endif
@@ -97,7 +95,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 		const int tid = mardyn_get_thread_num();
 
 		// reduce vectors and clear local variable
-		vcp_real_calc thread_upotXpoles = 0.0, thread_virial = 0.0;
+		vcp_real_accum thread_upotXpoles = 0.0, thread_virial = 0.0;
 
 		load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
 		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
@@ -138,22 +136,22 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 
 	//for better readability:
-	constexpr ConcatenatedSites<vcp_real_calc>::SiteType CHARGE = ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE;
-	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
-	typedef CellDataSoA::QuantityType							QuantityType;
+	constexpr ConcSites::SiteType CHARGE = ConcSites::SiteType::CHARGE;
+	typedef ConcSites::CoordinateType Coordinate;
+	typedef CellDataSoA::QuantityType QuantityType;
 
-	vcp_real_calc* const soa_charges_m_r_x = soa.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::X);
-	vcp_real_calc* const soa_charges_m_r_y = soa.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Y);
-	vcp_real_calc* const soa_charges_m_r_z = soa.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Z);
-	vcp_real_calc* const soa_charges_r_x = soa.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
-	vcp_real_calc* const soa_charges_r_y = soa.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
-	vcp_real_calc* const soa_charges_r_z = soa.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
-	vcp_real_calc* const soa_charges_f_x = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
-	vcp_real_calc* const soa_charges_f_y = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
-	vcp_real_calc* const soa_charges_f_z = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
-	vcp_real_calc* const soa_charges_V_x = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
-	vcp_real_calc* const soa_charges_V_y = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
-	vcp_real_calc* const soa_charges_V_z = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
+	vcp_real_calc* const soa_charges_m_r_x = soa.getBeginCalc(QuantityType::MOL_POSITION, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_m_r_y = soa.getBeginCalc(QuantityType::MOL_POSITION, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_m_r_z = soa.getBeginCalc(QuantityType::MOL_POSITION, CHARGE, Coordinate::Z);
+	vcp_real_calc* const soa_charges_r_x = soa.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
+	vcp_real_calc* const soa_charges_r_y = soa.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
+	vcp_real_calc* const soa_charges_r_z = soa.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
+	vcp_real_accum* const soa_charges_f_x = soa.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::X);
+	vcp_real_accum* const soa_charges_f_y = soa.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Y);
+	vcp_real_accum* const soa_charges_f_z = soa.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Z);
+	vcp_real_accum* const soa_charges_V_x = soa.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+	vcp_real_accum* const soa_charges_V_y = soa.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+	vcp_real_accum* const soa_charges_V_z = soa.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 
 	size_t iCharges = 0;
 	// For each molecule iterate over all its centers.
@@ -203,16 +201,16 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 	CellDataSoA& soa = c.getCellDataSoA();
 
 	//for better readability:
-	constexpr ConcatenatedSites<vcp_real_calc>::SiteType CHARGE = ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE;
-	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
-	typedef CellDataSoA::QuantityType							QuantityType;
+	constexpr ConcSites::SiteType CHARGE = ConcSites::SiteType::CHARGE;
+	typedef ConcSites::CoordinateType Coordinate;
+	typedef CellDataSoA::QuantityType QuantityType;
 
-	vcp_real_calc* const soa_charges_f_x = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
-	vcp_real_calc* const soa_charges_f_y = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
-	vcp_real_calc* const soa_charges_f_z = soa.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
-	vcp_real_calc* const soa_charges_V_x = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
-	vcp_real_calc* const soa_charges_V_y = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
-	vcp_real_calc* const soa_charges_V_z = soa.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
+	vcp_real_accum* const soa_charges_f_x = soa.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::X);
+	vcp_real_accum* const soa_charges_f_y = soa.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Y);
+	vcp_real_accum* const soa_charges_f_z = soa.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Z);
+	vcp_real_accum* const soa_charges_V_x = soa.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+	vcp_real_accum* const soa_charges_V_y = soa.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+	vcp_real_accum* const soa_charges_V_z = soa.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
@@ -268,9 +266,9 @@ inline void VectorizedChargeP2PCellProcessor :: _loopBodyCharge(
 		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 		const RealCalcVec& qjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-		const MaskVec& forceMask)
+		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
+		const MaskCalcVec& forceMask)
 {
 	const RealCalcVec c_dx = r1_x - r2_x;
 	const RealCalcVec c_dy = r1_y - r2_y;
@@ -293,12 +291,13 @@ inline void VectorizedChargeP2PCellProcessor :: _loopBodyCharge(
 	const RealCalcVec m_dy = m1_r_y - m2_r_y;
 	const RealCalcVec m_dz = m1_r_z - m2_r_z;
 
-	V_x = m_dx * f_x;
-	V_y = m_dy * f_y;
-	V_z = m_dz * f_z;
+	V_x = RealAccumVec::convertCalcToAccum(m_dx * f_x);
+	V_y = RealAccumVec::convertCalcToAccum(m_dy * f_y);
+	V_z = RealAccumVec::convertCalcToAccum(m_dz * f_z);
 	// Check if we have to add the macroscopic values up
 	if (calculateMacroscopic) {
-		sum_upotXpoles = sum_upotXpoles + upot;
+		const RealAccumVec upot_accum = RealAccumVec::convertCalcToAccum(upot);
+		sum_upotXpoles = sum_upotXpoles + upot_accum;
 		sum_virial = sum_virial + V_x + V_y + V_z;//DoubleVec::scal_prod(m_dx, m_dy, m_dz, f_x, f_y, f_z);
 	}
 }
@@ -318,42 +317,42 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	//for better readability:
-	constexpr ConcatenatedSites<vcp_real_calc>::SiteType CHARGE = ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE;
-	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	Coordinate;
+	constexpr ConcSites::SiteType CHARGE = ConcSites::SiteType::CHARGE;
+	typedef ConcSites::CoordinateType	Coordinate;
 	typedef CellDataSoA::QuantityType							QuantityType;
 
 	// Pointer for charges
-	const vcp_real_calc * const soa1_charges_r_x = soa1.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
-	const vcp_real_calc * const soa1_charges_r_y = soa1.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
-	const vcp_real_calc * const soa1_charges_r_z = soa1.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
-		  vcp_real_calc * const soa1_charges_f_x = soa1.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
-		  vcp_real_calc * const soa1_charges_f_y = soa1.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
-		  vcp_real_calc * const soa1_charges_f_z = soa1.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
-		  vcp_real_calc * const soa1_charges_V_x = soa1.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
-		  vcp_real_calc * const soa1_charges_V_y = soa1.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
-		  vcp_real_calc * const soa1_charges_V_z = soa1.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
+	const vcp_real_calc * const soa1_charges_r_x = soa1.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa1_charges_r_y = soa1.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa1_charges_r_z = soa1.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
+		 vcp_real_accum * const soa1_charges_f_x = soa1.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::X);
+		 vcp_real_accum * const soa1_charges_f_y = soa1.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Y);
+		 vcp_real_accum * const soa1_charges_f_z = soa1.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Z);
+		 vcp_real_accum * const soa1_charges_V_x = soa1.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+		 vcp_real_accum * const soa1_charges_V_y = soa1.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+		 vcp_real_accum * const soa1_charges_V_z = soa1.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
-	const vcp_real_calc * const soa2_charges_m_r_x = soa2.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::X);
-	const vcp_real_calc * const soa2_charges_m_r_y = soa2.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Y);
-	const vcp_real_calc * const soa2_charges_m_r_z = soa2.getBegin(QuantityType::MOL_POSITION, CHARGE, Coordinate::Z);
-	const vcp_real_calc * const soa2_charges_r_x = soa2.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
-	const vcp_real_calc * const soa2_charges_r_y = soa2.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
-	const vcp_real_calc * const soa2_charges_r_z = soa2.getBegin(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
-		  vcp_real_calc * const soa2_charges_f_x = soa2.getBegin(QuantityType::FORCE, CHARGE, Coordinate::X);
-		  vcp_real_calc * const soa2_charges_f_y = soa2.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Y);
-		  vcp_real_calc * const soa2_charges_f_z = soa2.getBegin(QuantityType::FORCE, CHARGE, Coordinate::Z);
-		  vcp_real_calc * const soa2_charges_V_x = soa2.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::X);
-		  vcp_real_calc * const soa2_charges_V_y = soa2.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
-		  vcp_real_calc * const soa2_charges_V_z = soa2.getBegin(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
+	const vcp_real_calc * const soa2_charges_m_r_x = soa2.getBeginCalc(QuantityType::MOL_POSITION, CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa2_charges_m_r_y = soa2.getBeginCalc(QuantityType::MOL_POSITION, CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa2_charges_m_r_z = soa2.getBeginCalc(QuantityType::MOL_POSITION, CHARGE, Coordinate::Z);
+	const vcp_real_calc * const soa2_charges_r_x = soa2.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::X);
+	const vcp_real_calc * const soa2_charges_r_y = soa2.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Y);
+	const vcp_real_calc * const soa2_charges_r_z = soa2.getBeginCalc(QuantityType::CENTER_POSITION, CHARGE, Coordinate::Z);
+		 vcp_real_accum * const soa2_charges_f_x = soa2.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::X);
+		 vcp_real_accum * const soa2_charges_f_y = soa2.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Y);
+		 vcp_real_accum * const soa2_charges_f_z = soa2.getBeginAccum(QuantityType::FORCE, CHARGE, Coordinate::Z);
+		 vcp_real_accum * const soa2_charges_V_x = soa2.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::X);
+		 vcp_real_accum * const soa2_charges_V_y = soa2.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Y);
+		 vcp_real_accum * const soa2_charges_V_z = soa2.getBeginAccum(QuantityType::VIRIAL, CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 
 
-	RealCalcVec sum_upotXpoles = RealCalcVec::zero();
-	RealCalcVec sum_virial = RealCalcVec::zero();
+	RealAccumVec sum_upotXpoles = RealAccumVec::zero();
+	RealAccumVec sum_virial = RealAccumVec::zero();
 
 	const RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(_cutoffRadiusSquare);
 
@@ -398,13 +397,13 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 				const RealCalcVec r1_y = RealCalcVec::broadcast(soa1_charges_r_y + i_charge_idx + local_i);
 				const RealCalcVec r1_z = RealCalcVec::broadcast(soa1_charges_r_z + i_charge_idx + local_i);
 
-				RealCalcVec sum_f1_x = RealCalcVec::zero();
-				RealCalcVec sum_f1_y = RealCalcVec::zero();
-				RealCalcVec sum_f1_z = RealCalcVec::zero();
+				RealAccumVec sum_f1_x = RealAccumVec::zero();
+				RealAccumVec sum_f1_y = RealAccumVec::zero();
+				RealAccumVec sum_f1_z = RealAccumVec::zero();
 
-				RealCalcVec sum_V1_x = RealCalcVec::zero();
-				RealCalcVec sum_V1_y = RealCalcVec::zero();
-				RealCalcVec sum_V1_z = RealCalcVec::zero();
+				RealAccumVec sum_V1_x = RealAccumVec::zero();
+				RealAccumVec sum_V1_y = RealAccumVec::zero();
+				RealAccumVec sum_V1_z = RealAccumVec::zero();
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ2(i_charge_idx + local_i);
@@ -424,7 +423,7 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 						const RealCalcVec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
 						RealCalcVec f_x, f_y, f_z;
-						RealCalcVec Vx, Vy, Vz;
+						RealAccumVec Vx, Vy, Vz;
 
 						_loopBodyCharge<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
@@ -434,15 +433,17 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
+						RealAccumVec a_fx = RealAccumVec::convertCalcToAccum(f_x);
+						RealAccumVec a_fy = RealAccumVec::convertCalcToAccum(f_y);
+						RealAccumVec a_fz = RealAccumVec::convertCalcToAccum(f_z);
 
+						sum_f1_x = sum_f1_x + a_fx;
+						sum_f1_y = sum_f1_y + a_fy;
+						sum_f1_z = sum_f1_z + a_fz;
 
-						sum_f1_x = sum_f1_x + f_x;
-						sum_f1_y = sum_f1_y + f_y;
-						sum_f1_z = sum_f1_z + f_z;
-
-						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask);
-						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask);
-						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_x, j, a_fx, lookupORforceMask);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_y, j, a_fy, lookupORforceMask);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_z, j, a_fz, lookupORforceMask);
 
 						sum_V1_x = sum_V1_x + Vx;
 						sum_V1_y = sum_V1_y + Vy;
@@ -453,7 +454,7 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 					const __mmask16 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
@@ -474,7 +475,7 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 						const RealCalcVec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
 						RealCalcVec f_x, f_y, f_z;
-						RealCalcVec Vx, Vy, Vz;
+						RealAccumVec Vx, Vy, Vz;
 
 						_loopBodyCharge<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
@@ -484,15 +485,17 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellD
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
+						RealAccumVec a_fx = RealAccumVec::convertCalcToAccum(f_x);
+						RealAccumVec a_fy = RealAccumVec::convertCalcToAccum(f_y);
+						RealAccumVec a_fz = RealAccumVec::convertCalcToAccum(f_z);
 
+						sum_f1_x = sum_f1_x + a_fx;
+						sum_f1_y = sum_f1_y + a_fy;
+						sum_f1_z = sum_f1_z + a_fz;
 
-						sum_f1_x = sum_f1_x + f_x;
-						sum_f1_y = sum_f1_y + f_y;
-						sum_f1_z = sum_f1_z + f_z;
-
-						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask, remainderM);
-						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask, remainderM);
-						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask, remainderM);
+						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_x, j, a_fx, lookupORforceMask, remainderM);
+						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_y, j, a_fy, lookupORforceMask, remainderM);
+						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_z, j, a_fz, lookupORforceMask, remainderM);
 
 						sum_V1_x = sum_V1_x + Vx;
 						sum_V1_y = sum_V1_y + Vy;

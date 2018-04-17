@@ -304,10 +304,9 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer * container, Molecule
 		hi[d] = m1->r(d) + R;
 	}
 
-	RegionParticleIterator begin = container->iterateRegionBegin(lo, hi, ParticleIterator::ALL_CELLS);
-	RegionParticleIterator end = container->iterateRegionEnd();
+	RegionParticleIterator begin = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS);
 
-	for (auto m2 = begin; m2 != end; ++m2) {
+	for (auto m2 = begin; m2.hasNext(); m2.next()) {
 		if (m2->id() == m1->id()) {
 			continue;
 		}

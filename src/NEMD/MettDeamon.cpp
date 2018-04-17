@@ -290,10 +290,9 @@ void MettDeamon::findMaxMoleculeID(DomainDecompBase* domainDecomp)
 	uint64_t nMaxMoleculeID_local = 0;
 
 	// max molecule id in particle container (local)
-	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd(); ++tM)
+	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
 	{
-		uint64_t id = tM->id();
+		uint64_t id = pit->id();
 		if(id > nMaxMoleculeID_local)
 			nMaxMoleculeID_local = id;
 	}
@@ -350,35 +349,34 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 
-	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd(); ++tM)
+	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
 	{
-		double dPosY = tM->r(1);
+		double dPosY = pit->r(1);
 		bool IsBehindTransitionPlane = this->IsBehindTransitionPlane(dPosY);
 		if(false == IsBehindTransitionPlane)
 		{
-			uint32_t cid = tM->componentid();
+			uint32_t cid = pit->componentid();
 			if(cid != _vecChangeCompIDsFreeze.at(cid))
 			{
 				Component* compNew = &(ptrComps->at(_vecChangeCompIDsFreeze.at(cid) ) );
-				tM->setComponent(compNew);
-//				cout << "cid(new) = " << tM->componentid() << endl;
+				pit->setComponent(compNew);
+//				cout << "cid(new) = " << pit->componentid() << endl;
 			}
 		}
 /*
 		else
 //		else if(dPosY < (_dTransitionPlanePosY+dMoleculeRadius) )
 		{
-			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), false);
+			particleContainer->deleteMolecule(pit->id(), pit->r(0), pit->r(1),pit->r(2), false);
 //			cout << "delete: dY = " << dPosY << endl;
 			particleContainer->update();
-			tM  = particleContainer->iteratorBegin();
+			pit  = particleContainer->iteratorBegin();
 			this->IncrementDeletedMoleculesLocal();
 		}
 
 		else if(dPosY < (_dTransitionPlanePosY+_dMoleculeDiameter) )
 		{
-			tM->setv(1, tM->r(1)-1.);
+			pit->setv(1, pit->r(1)-1.);
 		}
 		*/
 	}
@@ -387,30 +385,29 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 }
 void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 {
-	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd(); ++tM) {
-
-		uint64_t mid = tM->id();
-		uint32_t cid = tM->componentid();
+	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
+	{
+		uint64_t mid = pit->id();
+		uint32_t cid = pit->componentid();
 
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
 		if(true == bIsTrappedMolecule)
 		{
 			//savevelo
 			std::array<double,10> pos;
-			pos.at(0) = tM->r(0);
-			pos.at(1) = tM->r(1);
-			pos.at(2) = tM->r(2);
-			pos.at(3) = tM->v(0);
-			pos.at(4) = tM->v(1);
-			pos.at(5) = tM->v(2);
-			Quaternion q = tM->q();
+			pos.at(0) = pit->r(0);
+			pos.at(1) = pit->r(1);
+			pos.at(2) = pit->r(2);
+			pos.at(3) = pit->v(0);
+			pos.at(4) = pit->v(1);
+			pos.at(5) = pit->v(2);
+			Quaternion q = pit->q();
 			pos.at(6) = q.qw();
 			pos.at(7) = q.qx();
 			pos.at(8) = q.qy();
 			pos.at(9) = q.qz();
 //			_storePosition.insert ( std::pair<unsigned long, std::array<double, 3> >(mid, pos) );
-			_storePosition[tM->id()] = pos;
+			_storePosition[pit->id()] = pos;
 		}
 	}
 }
@@ -488,11 +485,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 	particleContainer->updateMoleculeCaches();
 
-	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd(); ++tM)
+	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
 	{
-		uint8_t cid = tM->componentid();
-		double dY = tM->r(1);
+		uint8_t cid = pit->componentid();
+		double dY = pit->r(1);
 
 		if(dY > _manipfree.ymin && dY < _manipfree.ymax)
 			continue;
@@ -500,10 +496,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
 		bool IsBehindTransitionPlane = this->IsBehindTransitionPlane(dY);
 /*
-		double m = tM->mass();
+		double m = pit->mass();
 		double vym = sqrt(T/m);
 */
-		double m = tM->mass();
+		double m = pit->mass();
 		double vm2 = 3*T/m;
 
 		v[0] = rnd.rnd();
@@ -519,54 +515,54 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 //		global_log->info() << "scaled: vx=" << v[0] << ", vy=" << v[1] << ", vz=" << v[2] << ", v2=" << v2 << endl;
 
 		// release trapped molecule
-		this->releaseTrappedMolecule( &(*tM) );
+		this->releaseTrappedMolecule( &(*pit) );
 
 		// reset position and orientation of fixed molecules
-		this->resetPositionAndOrientation( &(*tM), dBoxY);
+		this->resetPositionAndOrientation( &(*pit), dBoxY);
 
 		if(true == bIsTrappedMolecule)
 		{
 			// limit velocity of trapped molecules
-			tM->setv(0, 0.);
-			tM->setv(1, 0.);
-			tM->setv(2, 0.);
-			tM->setD(0, 0.);
-			tM->setD(1, 0.);
-			tM->setD(2, 0.);
+			pit->setv(0, 0.);
+			pit->setv(1, 0.);
+			pit->setv(2, 0.);
+			pit->setD(0, 0.);
+			pit->setD(1, 0.);
+			pit->setD(2, 0.);
 
 			vm2 = T/m*4/9.;
-			double v2 = tM->v2();
+			double v2 = pit->v2();
 
 			if(v2 > vm2)
 			{
 				double fac = sqrt(vm2/v2);
-				tM->scale_v(fac);
+				pit->scale_v(fac);
 			}
 		}
 		else
 		{
-			double v2 = tM->v2();
+			double v2 = pit->v2();
 			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
 
 			if(v2 > v2max)
 			{
-				uint64_t id = tM->id();
+				uint64_t id = pit->id();
 
 //				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
-//				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
+//				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(pit->v2() ) << endl;
 
-	//			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), true);
+	//			particleContainer->deleteMolecule(pit->id(), pit->r(0), pit->r(1),pit->r(2), true);
 	//			_nNumMoleculesDeletedLocal++;
 	//			_nNumMoleculesTooFast++;
 
 				double fac = sqrt(v2max/v2);
-				tM->scale_v(fac);
+				pit->scale_v(fac);
 			}
 		}
 
 		// mirror molecules back that are on the way to pass fixed molecule region
 		if(dY <= _reservoir->getBinWidth() )
-			tM->setv(1, abs(tM->v(1) ) );
+			pit->setv(1, abs(pit->v(1) ) );
 
 	}  // loop over molecules
 
@@ -597,65 +593,64 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	unsigned long nNumMoleculesLocal = 0;
 	unsigned long nNumMoleculesGlobal = 0;
 
-	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd(); ++tM) {
-
-		double dY = tM->r(1);
+	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
+	{
+		double dY = pit->r(1);
 		if(dY > _manipfree.ymin && dY < _manipfree.ymax)
 			continue;
 
-		uint8_t cid = tM->componentid();
+		uint8_t cid = pit->componentid();
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
 
 		if(true == bIsTrappedMolecule)
 		{
 			// limit velocity of trapped molecules
-			tM->setv(0, 0.);
-			tM->setv(1, 0.);
-			tM->setv(2, 0.);
-			tM->setD(0, 0.);
-			tM->setD(1, 0.);
-			tM->setD(2, 0.);
+			pit->setv(0, 0.);
+			pit->setv(1, 0.);
+			pit->setv(2, 0.);
+			pit->setD(0, 0.);
+			pit->setD(1, 0.);
+			pit->setD(2, 0.);
 
 			double T = 80.;
-			double m = tM->mass();
+			double m = pit->mass();
 			double vm2 = T/m*4/9.;
-			double v2 = tM->v2();
+			double v2 = pit->v2();
 
 			if(v2 > vm2)
 			{
 				double f = sqrt(vm2/v2);
-				tM->scale_v(f);
+				pit->scale_v(f);
 			}
 		}
 		else
 		{
-			double v2 = tM->v2();
+			double v2 = pit->v2();
 			double v2max = _vecVeloctiyBarriers.at(cid+1)*_vecVeloctiyBarriers.at(cid+1);
 
 			if(v2 > v2max)
 			{
-				uint64_t id = tM->id();
+				uint64_t id = pit->id();
 
 //				cout << "Velocity barrier for cid+1=" << cid+1 << ": " << _vecVeloctiyBarriers.at(cid+1) << endl;
-//				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(tM->v2() ) << endl;
+//				cout << "id=" << id << ", dY=" << dY << ", v=" << sqrt(pit->v2() ) << endl;
 
 				double f = sqrt(v2max/v2);
-				tM->scale_v(f);
+				pit->scale_v(f);
 			}
 		}
 		/*
 		else if(v2 > _velocityBarrier*_velocityBarrier) // v2_limit)
 		{
-			uint64_t id = tM->id();
-			double dY = tM->r(1);
+			uint64_t id = pit->id();
+			double dY = pit->r(1);
 
 			cout << "cid+1=" << cid+1 << endl;
 			cout << "id=" << id << endl;
 			cout << "dY=" << dY << endl;
 			cout << "v2=" << v2 << endl;
 
-			particleContainer->deleteMolecule(tM->id(), tM->r(0), tM->r(1),tM->r(2), true);
+			particleContainer->deleteMolecule(pit->id(), pit->r(0), pit->r(1),pit->r(2), true);
 			_nNumMoleculesDeletedLocal++;
 			_nNumMoleculesTooFast++;
 			continue;
@@ -669,14 +664,14 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 				dY > (_dTransitionPlanePosY + _vecThrottleFromPosY.at(cid) ) &&
 				dY < (_dTransitionPlanePosY +   _vecThrottleToPosY.at(cid) ) )
 		{
-			double m = tM->mass();
+			double m = pit->mass();
 //			global_log->info() << "m=" << m << endl;
 			double vm = sqrt(T/m);
 //			global_log->info() << "vym" << vym << endl;
 			double v[3];
 			for(uint8_t dim=0; dim<3; ++dim)
 			{
-				v[dim] = tM->v(dim);
+				v[dim] = pit->v(dim);
 
 				if(abs(v[dim]) > vm)
 				{
@@ -692,7 +687,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 						else
 							v[dim] = vm*-1;
 					}
-					tM->setv(dim,v[dim]);
+					pit->setv(dim,v[dim]);
 				}
 			}
 //			global_log->info() << "_dTransitionPlanePosY=" << _dTransitionPlanePosY << endl;
@@ -702,8 +697,8 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		// mirror, to simulate VLE
 		if(true == _bMirrorActivated)
 		{
-			if(tM->r(1) >= _dMirrorPosY)
-				tM->setv(1, -1.*abs(tM->v(1) ) );
+			if(pit->r(1) >= _dMirrorPosY)
+				pit->setv(1, -1.*abs(pit->v(1) ) );
 		}
 
 	}  // loop over molecules
@@ -1069,13 +1064,12 @@ void Reservoir::readFromMemory(DomainDecompBase* domainDecomp)
 	_box.length.at(1) = _dReadWidthY;
 	_box.length.at(2) = domain->getGlobalLength(2);
 
-	for (ParticleIterator tM = particleContainer->iteratorBegin();
-	tM != particleContainer->iteratorEnd(); ++tM)
+	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next())
 	{
 //		if(true == this->IsBehindTransitionPlane(y) )
 //			continue;
 
-		Molecule mol(*tM);
+		Molecule mol(*pit);
 		double y = mol.r(1);
 
 		switch(_parent->getMovingDirection() )

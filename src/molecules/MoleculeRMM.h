@@ -72,7 +72,7 @@ public:
 	void setid(unsigned long id);
 	void setr(unsigned short d, double r);
 	void setv(unsigned short d, double v);
-        void setF(unsigned short, double F);
+	void setF(unsigned short, double F);
 	double r(unsigned short d) const;
 	double v(unsigned short d) const;
 
@@ -183,7 +183,7 @@ public:
 	std::array<double, 3> dipole_d(unsigned int /*i*/) const { return emptyArray3(); }
 	std::array<double, 3> quadrupole_d(unsigned int /*i*/) const { return emptyArray3(); }
 
-	std::array<double, 3> site_d_abs(unsigned int /*i*/) const { return emptyArray3(); }
+	std::array<double, 3> site_d_abs(unsigned int i) const { return ljcenter_d_abs(i); }
 	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
 		mardyn_assert(i == 0);
 		return r_arr();
@@ -284,13 +284,17 @@ public:
 		return _state;
 	}
         
-        // dummies for method exchangeForces
-        const double* F_vec() {return nullptr; }
-        const double* M_vec() {return nullptr; }
-        const double* Vi_vec() {return nullptr; }
+	// dummies for method exchangeForces
+	const double* F_vec() { return nullptr; }
+	const double* M_vec() { return nullptr; }
+	const double* Vi_vec() { return nullptr; }
        
-        
-        
+	void buildOwnSoA() {
+		mardyn_assert(_state == STORAGE_AOS);
+	}
+	void releaseOwnSoA() {
+		mardyn_assert(_state == STORAGE_AOS);
+	}
 
 private:
 	static std::array<double, 3> emptyArray3() {
@@ -310,8 +314,7 @@ private:
 
     // if the state is AOS, the following values are read:
     vcp_real_calc _r[3];  /**< position coordinates */
-    vcp_real_calc _v[3];  /**< velocity */
-    vcp_real_accum _F[3]; /**< forces - not sure, if this belongs here */
+    vcp_real_accum _v[3];  /**< velocity */
     unsigned long _id;
 
 	// if the state is SOA, the values are read from the SoA:

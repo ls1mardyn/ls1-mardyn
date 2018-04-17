@@ -10,6 +10,8 @@
 #include "utils/Random.h"
 #include "Simulation.h"
 
+CellBorderAndFlagManager ParticleCellBase::_cellBorderAndFlagManager;
+
 ParticleCellBase::ParticleCellBase() {
 	// TODO Auto-generated constructor stub
 }
@@ -25,24 +27,6 @@ bool ParticleCellBase::deleteMoleculeByID(unsigned long molid) {
 		deleteMoleculeByIndex(index);
 	}
 	return found;
-}
-
-bool ParticleCellBase::findMoleculeByID(size_t& index, unsigned long molid) const {
-	int numMolecules = getMoleculeCount();
-
-	// TODO: we'd need separate classes for const and non-const iterators...
-	ParticleCellBase * nonconst_this = const_cast<ParticleCellBase *>(this);
-
-	SingleCellIterator begin = nonconst_this->iteratorBegin();
-	SingleCellIterator end = nonconst_this->iteratorEnd();
-
-	for(SingleCellIterator it = begin; it != end; ++it) {
-		if (it->id() == molid) {
-			index = it.getIndex();
-			return true;
-		}
-	}
-	return false;
 }
 
 template <typename T>
@@ -186,12 +170,4 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 	}
 
 	return numInserted;
-}
-
-SingleCellIterator ParticleCellBase::iteratorBegin() {
-	return SingleCellIterator(this);
-}
-
-SingleCellIterator ParticleCellBase::iteratorEnd() {
-	return SingleCellIterator::invalid();
 }

@@ -62,6 +62,12 @@ void FlopRateWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 }
 
+void FlopRateWriter::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep){
+	global_log->debug()  << "[FLOPRATEWRITER] after forces FLOPs" << std::endl;
+	measureFLOPS(particleContainer, simstep);
+}
+
 void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* /*domain*/, unsigned long simstep,
 		std::list<ChemicalPotential>* /*lmu*/,
@@ -83,7 +89,7 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 	double flop_rate_loop = flops / loop_time;
 	double percentage = flop_rate_loop / flop_rate_force * 100. ;
 
-	// compute convenient pefixes, i.e. kilo, mega, giga, tera, peta, exa
+	// compute convenient prefixes, i.e. kilo, mega, giga, tera, peta, exa
 	char prefix_flops = '0';
 	double flops_normalized;
 	setPrefix(flops, flops_normalized, prefix_flops);
@@ -98,9 +104,10 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 
 	if(_writeToStdout) {
 		global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << endl
-			<< "\tFLOP-Count per Iteration: " << flops_normalized << " " << prefix_flops << "FLOPs" << endl
-			<< "\tFLOP-rate in force calculation: " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << endl
-			<< "\tFLOP-rate for main loop       : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << endl;
+			<< "\tFLOP-Count per Iteration           : " << flops_normalized << " " << prefix_flops << "FLOPs" << endl
+			<< "\tFLOP-rate in force calculation     : " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << endl
+			<< "\tFLOP-rate for main loop            : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << endl;
+		_flopCounter->printStats();
 	}
 
 
@@ -139,7 +146,7 @@ void FlopRateWriter::finishOutput(ParticleContainer* particleContainer,
 }
 
 void FlopRateWriter::measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep) {
-	if(simstep % _writeFrequency != 0) {
+	if ((simstep - 1) % _writeFrequency != 0) {
 		return;
 	}
 	if(_flopCounter == nullptr) {

@@ -38,6 +38,8 @@
 
 #include "io/OutputBase.h"
 #include "io/OutputPluginFactory.h"
+#include "utils/PluginBase.h"
+#include "utils/PluginFactory.h"
 
 #include "io/MmpldWriter.h"
 #include "io/RDF.h"
@@ -148,8 +150,7 @@ Simulation::Simulation()
 	_nFmaxOpt(CFMAXOPT_NO_CHECK),
 	_nFmaxID(0),
 	_dFmaxInit(0.0),
-	_dFmaxThreshold(0.0),
-	_virialRequired(false)
+	_dFmaxThreshold(0.0)
 {
 	_ensemble = new CanonicalEnsemble();
 	_mettDeamon.clear();
@@ -188,6 +189,8 @@ Simulation::~Simulation() {
 	_FMM = nullptr;
 	/* destruct output plugins and remove them from the output plugin list */
 	_outputPlugins.remove_if([](OutputBase *pluginPtr) {delete pluginPtr; return true;} );
+	/* destruct plugins and remove from plugin list */
+	_plugins.remove_if([](PluginBase *pluginPtr) {delete pluginPtr; return true;} );
 
 	// NEMD features
 	delete _temperatureControl;
@@ -639,7 +642,53 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->warning() << "No output plugins specified." << endl;
 	}
 
+	/* plugins */
+	long numPlugins = 0;
+	XMLfile::Query query_p = xmlconfig.query("plugin");
+	numPlugins = query_p.card();
+	global_log->info() << "Number of plugins: " << numPlugins << endl;
+	if(numPlugins < 1) {
+		global_log->warning() << "No plugins specified." << endl;
+	}
+
 	string oldpath = xmlconfig.getcurrentnodepath();
+
+	PluginFactory<PluginBase> pluginFactory;
+	// register plugins
+	pluginFactory.registerPlugin(&(testPlugin::createInstance));
+    //testPlugin* asd = new testPlugin();
+
+	for (auto pluginIter = query_p.begin(); pluginIter; ++pluginIter) {
+		xmlconfig.changecurrentnode( pluginIter );
+		string pluginname("");
+		xmlconfig.getNodeValue("@name", pluginname);
+		bool enabled = true;
+		xmlconfig.getNodeValue("@enabled", enabled);
+		if(not enabled) {
+			global_log->debug() << "skipping disabled plugin: " << pluginname << endl;
+			continue;
+		}
+		global_log->info() << "Enabling plugin: " << pluginname << endl;
+
+
+		PluginBase* plugin = pluginFactory.create(pluginname);
+		if(plugin == nullptr) {
+			global_log->warning() << "Could not create plugin using factory: " << pluginname << endl;
+		}
+
+		// add plugin specific functions
+
+
+
+        if(nullptr != plugin) {
+            plugin->readXML(xmlconfig);
+            _plugins.push_back(plugin);
+        } else {
+            global_log->warning() << "Unknown plugin " << pluginname << endl;
+        }
+	}
+
+
 	OutputPluginFactory outputPluginFactory;
 	for( auto outputPluginIter = query.begin(); outputPluginIter; ++outputPluginIter ) {
 		xmlconfig.changecurrentnode( outputPluginIter );
@@ -680,10 +729,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if(pluginname == "DomainProfiles") {
 			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
-			/** @todo This is ugly. Needed as the vectorized code does not support the virial ...*/
-			if(xmlconfig.getNodeValue_int("/mardyn/simulation/output/outputplugin[@name='DomainProfiles']/options/option[@keyword='profileVirial']", 0) > 0) {
-				_virialRequired = true;
-			}
 			_domain->readXML(xmlconfig);
 		}
 
@@ -694,6 +739,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 		}
 	}
+
 	xmlconfig.changecurrentnode(oldpath);
 
 	oldpath = xmlconfig.getcurrentnodepath();
@@ -861,8 +907,7 @@ void Simulation::updateForces() {
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+		const ParticleIterator begin = _moleculeContainer->iterator();
 
 		if(_simstep==0 && (CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt)) {
 
@@ -875,7 +920,7 @@ void Simulation::updateForces() {
 			double FmaxInitSquared=_dFmaxInit*_dFmaxInit;
 			double FmaxThresholdSquared = _dFmaxThreshold*_dFmaxThreshold;
 
-			for (ParticleIterator i = begin; i != end; ++i){
+			for (ParticleIterator i = begin; i.hasNext(); i.next()){
 				i->calcFM();
 
 				id=i->id();
@@ -902,7 +947,7 @@ void Simulation::updateForces() {
 			global_log->info()<<"Max. initial force is found for molecule: id="<<_nFmaxID<<", Fmax="<<_dFmaxInit<<endl;
 		}
 		else {
-			for (ParticleIterator i = begin; i != end; ++i){
+			for (ParticleIterator i = begin; i.hasNext(); i.next()){
 				i->calcFM();
 			}
 		}
@@ -915,16 +960,8 @@ void Simulation::prepare_start() {
 	global_log->info() << "Initialising cell processor" << endl;
 #if ENABLE_VECTORIZED_CODE
 #ifndef ENABLE_REDUCED_MEMORY_MODE
-	if(_virialRequired) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
-		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	} else if (nullptr != getOutputPlugin("RDF")) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)" << endl;
-		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	} else {
-		global_log->info() << "Using vectorized cell processor." << endl;
-		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
-	}
+	global_log->info() << "Using vectorized cell processor." << endl;
+	_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 #else
 	global_log->info() << "Using reduced memory mode (RMM) cell processor." << endl;
 	_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
@@ -947,7 +984,7 @@ void Simulation::prepare_start() {
 			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
 		}
 		_FMM->init(globalLength, bBoxMin, bBoxMax,
-				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength(), _moleculeContainer);
+				dynamic_cast<LinkedCells*>(_moleculeContainer)->getCellLength(), _moleculeContainer);
 
 		delete _cellProcessor;
 		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
@@ -991,7 +1028,9 @@ void Simulation::prepare_start() {
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
-	measureFLOPRate(_moleculeContainer, 0);
+
+    // TODO: include in the plugin call
+    //measureFLOPRate(_moleculeContainer, 0);
 	
 
 	// Update forces in molecules so they can be exchanged - future
@@ -1091,6 +1130,17 @@ void Simulation::prepare_start() {
 		global_simulation->timers()->registerTimer(timer_name,  vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
 		string timer_output_string = string("Output Plugin ") + timer_name + string(" took:");
 		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
+	}
+
+	// initializing plugins and starting plugin timers
+	for (auto& plugin : _plugins) {
+		global_log->info() << "Initializing plugin " << plugin->getPluginName() << endl;
+		plugin->init(_moleculeContainer, _domainDecomposition, _domain);
+		string timer_name = plugin->getPluginName();
+        // TODO: real timer
+		global_simulation->timers()->registerTimer(timer_name, vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
+		string timer_plugin_string = string("Plugin ") + timer_name + string(" took:");
+		global_simulation->timers()->setOutputString(timer_name, timer_plugin_string);
 	}
 
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
@@ -1270,12 +1320,10 @@ void Simulation::simulate() {
 		// mheinen 2015-03-16 --> DISTANCE_CONTROL
 		if(_distControl != NULL)
 		{
-			for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-				 tM != _moleculeContainer->iteratorEnd();
-				 ++tM )
+			for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
 			{
 				// sample density profile
-				_distControl->SampleProfiles(&(*tM));
+				_distControl->SampleProfiles(&(*pit));
 			}
 
 			// determine interface midpoints and update region positions
@@ -1293,32 +1341,26 @@ void Simulation::simulate() {
 					if(0 == _simstep % _distControl->GetUpdateFreq() )
 					{
 						// sample COM
-						for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-							 tM != _moleculeContainer->iteratorEnd();
-							 ++tM )
+						for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
 						{
-							_distControl->SampleCOM(&(*tM), _simstep);
+							_distControl->SampleCOM(&(*pit), _simstep);
 						}
 						// align COM
 
 						// calc global values
 						_distControl->CalcGlobalValuesCOM(_simstep);
 
-						for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-							 tM != _moleculeContainer->iteratorEnd();
-							 ++tM )
+						for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
 						{
-							_distControl->AlignCOM(&(*tM), _simstep);
+							_distControl->AlignCOM(&(*pit), _simstep);
 						}
 					}
 					break;
 				case DCCOM_INTERFACE_POSITIONS:
 					// align system center of mass
-					for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-						 tM != _moleculeContainer->iteratorEnd();
-						 ++tM )
+					for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
 					{
-						_distControl->AlignSystemCenterOfMass(&(*tM), _simstep);
+						_distControl->AlignSystemCenterOfMass(&(*pit), _simstep);
 					}
 					break;
 				case DCCOM_UNKNOWN:
@@ -1335,6 +1377,10 @@ void Simulation::simulate() {
 		 * 1. the actual kernel to collect rdf data in the handler is activated which would have to be done only once.
 		 * 2. the number of sampling steps is incremented, which has to be done each time step.
 		 */
+
+		/*
+		 * Call to feature RDF has been moved to different location
+		 *
 		RDF* rdf;
 		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
 			global_log->debug() << "Activating the RDF sampling" << endl;
@@ -1342,6 +1388,7 @@ void Simulation::simulate() {
 			_particlePairsHandler->setRDF(rdf);
 			rdf->accumulateNumberOfMolecules(*(getEnsemble()->getComponents()));
 		}
+		*/
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
 		 *realignment tools borrowed from Martin Horsch, for the determination of the centre of mass 
@@ -1428,7 +1475,22 @@ void Simulation::simulate() {
 		computationTimer->start();
 		perStepTimer.start();
 
-		measureFLOPRate(_moleculeContainer, _simstep);
+		// redundant through afterForces plugin call
+		//measureFLOPRate(_moleculeContainer, _simstep);
+
+		//afterForces Output Call
+		global_log -> debug() << "[AFTER FORCES] Performing AfterForces output plugin call" << endl;
+		for (auto outputPlugin : _outputPlugins) {
+				global_log -> debug() << "[AFTER FORCES] Plugin: " << outputPlugin->getPluginName() << endl;
+				outputPlugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		}
+
+		//afterForces Plugin Call
+		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
+		for (auto plugin : _plugins) {
+			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
+			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		}
 
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
@@ -1562,11 +1624,9 @@ void Simulation::simulate() {
 		{
 			_particleTracker->PreLoopAction(_simstep);
 
-			for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-				 tM != _moleculeContainer->iteratorEnd();
-				 ++tM )
+			for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
 			{
-				_particleTracker->LoopAction(&(*tM));
+				_particleTracker->LoopAction(&(*pit));
 			}  // loop over molecules
 
 			_particleTracker->PostLoopAction();
@@ -1579,12 +1639,10 @@ void Simulation::simulate() {
             // init drift control
             _driftControl->Init(_simstep);
 
-            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-                 tM != _moleculeContainer->iteratorEnd();
-                 ++tM )
-            {
+			for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
+			{
                 // measure drift
-                _driftControl->MeasureDrift(&(*tM), _simstep);
+                _driftControl->MeasureDrift(&(*pit), _simstep);
 
 //                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
             }
@@ -1595,12 +1653,10 @@ void Simulation::simulate() {
             // calc scale factors
             _driftControl->CalcScaleFactors(_simstep);
 
-            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-                 tM != _moleculeContainer->iteratorEnd();
-                 ++tM )
-            {
+			for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
+			{
                 // measure drift
-                _driftControl->ControlDrift(&(*tM), _simstep);
+                _driftControl->ControlDrift(&(*pit), _simstep);
 
 //                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
             }
@@ -1611,12 +1667,10 @@ void Simulation::simulate() {
         // mheinen 2015-03-18 --> REGION_SAMPLING
         if(_regionSampling != NULL)
         {
-            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
-                 tM != _moleculeContainer->iteratorEnd();
-                 ++tM )
-            {
+			for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
+			{
                 // sample profiles and vdf
-                _regionSampling->DoSampling(&(*tM), _domainDecomposition, _simstep);
+                _regionSampling->DoSampling(&(*pit), _domainDecomposition, _simstep);
             }
 
             // write data
@@ -1668,7 +1722,7 @@ void Simulation::simulate() {
 				double tTarget;
 				double stdDevTrans, stdDevRot;
 				if(_domain->severalThermostats()) {
-					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
+					for (ParticleIterator tM = _moleculeContainer->iterator(); tM.hasNext(); tM.next()) {
 						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							int thermostat = _domain->getThermostat(tM->componentid());
@@ -1684,7 +1738,7 @@ void Simulation::simulate() {
 				}
 				else{
 					tTarget = _domain->getTargetTemperature(0);
-					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
+					for (ParticleIterator tM = _moleculeContainer->iterator(); tM.hasNext(); tM.next()) {
 						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
@@ -1777,6 +1831,11 @@ void Simulation::simulate() {
 	for (auto outputPlugin : _outputPlugins) {
 		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 	}
+
+	global_log->info() << "Finish plugins" << endl;
+	for (auto plugin : _plugins) {
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
 	global_log->info() << "Timing information:" << endl;
@@ -1816,6 +1875,34 @@ void Simulation::output(unsigned long simstep) {
 			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
 			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
+	using std::isnan;
+	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
+		global_log->error() << "NaN detected, exiting." << std::endl;
+		Simulation::exit(1);
+	}
+}
+
+void Simulation::plugin(unsigned long simstep) {
+
+	int mpi_rank = _domainDecomposition->getRank();
+
+	std::list<PluginBase*>::iterator pluginIter;
+	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
+		PluginBase* plugin = (*pluginIter);
+		global_log->debug() << "Plugin: " << plugin->getPluginName() << endl;
+		global_simulation->timers()->start(plugin->getPluginName());
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+		global_simulation->timers()->stop(plugin->getPluginName());
+	}
+
+
+	if (_domain->thermostatWarning())
+		global_log->warning() << "Thermostat!" << endl;
+	/* TODO: thermostat */
+	global_log->info() << "Simstep = " << simstep << "\tT = "
+					   << _domain->getGlobalCurrentTemperature() << "\tU_pot = "
+					   << _domain->getGlobalUpot() << "\tp = "
+					   << _domain->getGlobalPressure() << endl;
 	using std::isnan;
 	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
 		global_log->error() << "NaN detected, exiting." << std::endl;
@@ -1939,7 +2026,16 @@ OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
 	return nullptr;
 }
 
-void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
+PluginBase* Simulation::getPlugin(const std::string& name)  {
+	for(auto& plugin : _plugins) {
+		if(name.compare(plugin->getPluginName()) == 0) {
+			return plugin;
+		}
+	}
+	return nullptr;
+}
+
+/*void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
 	OutputBase * flopRateBase = getOutputPlugin("FlopRateWriter");
 	if (flopRateBase == nullptr) {
 		return;
@@ -1949,7 +2045,7 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 	mardyn_assert(flopRateWriter != nullptr);
 
 	flopRateWriter->measureFLOPS(cont, simstep);
-}
+}*/
 
 unsigned long Simulation::getNumberOfTimesteps() const {
 	return _numberOfTimesteps;
@@ -1982,10 +2078,7 @@ void Simulation::refreshParticleIDs()
 #ifndef NDEBUG
 	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
 #endif
-	ParticleIterator pit;
-	for( pit  = _moleculeContainer->iteratorBegin();
-			pit != _moleculeContainer->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
 	{
 		pit->setid(++tmpID);
 	}

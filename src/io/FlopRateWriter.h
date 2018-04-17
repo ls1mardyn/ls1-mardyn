@@ -27,6 +27,12 @@ public:
 
 	void readXML(XMLfileUnits& /*xmlconfig*/);
 
+	//! @brief will be called after forces have been applied and exchanged
+
+	void afterForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep);
+
 	//! @brief will be called in each time step
 	//!
 	//! Most of the times, the output should either be done every time step or at least

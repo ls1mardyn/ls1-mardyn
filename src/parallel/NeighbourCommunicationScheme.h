@@ -16,6 +16,8 @@ class Domain;
 class ZonalMethod;
 class HaloRegion;
 class NeighbourCommunicationScheme {
+	friend class NeighbourCommunicationSchemeTest;
+	
 public:
 	/**
 	 * Specifies the amount of sequential communication steps needed for the communication scheme.
@@ -72,8 +74,8 @@ public:
 			//std::cout << "FSN:" << neigh.getDynamicSize();
 		}
 		//std::cout << "post FSN/pre neigh:" << totSize;
-		totSize += _neighbours.capacity() * sizeof(CommunicationPartner);
-		for (auto& neighList : _neighbours) {
+		totSize += (*_neighbours).capacity() * sizeof(CommunicationPartner);
+		for (auto& neighList : (*_neighbours)) {
 			for (auto& neigh : neighList) {
 				totSize += neigh.getDynamicSize();
 				//std::cout << "Neigh:" << neigh.getDynamicSize();
@@ -86,7 +88,16 @@ public:
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
-	std::vector<std::vector<CommunicationPartner>> _neighbours;
+	std::vector<std::vector<CommunicationPartner>> *_neighbours;
+	
+	// -------------------------------------------------------------------------
+	std::vector<std::vector<CommunicationPartner>> *_haloExportForceImportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> *_haloImportForceExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> *_leavingExportNeighbours;
+	std::vector<std::vector<CommunicationPartner>> *_leavingImportNeighbours;
+	
+	void selectNeighbours(MessageType msgType, bool import);
+	// -------------------------------------------------------------------------
 
 	//! flag, which tells whether a processor covers the whole domain along a dimension
 	//! if true, we will use the methods provided by the base class for handling the
@@ -104,6 +115,7 @@ protected:
 };
 
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
+	friend class NeighbourCommunicationSchemeTest;
 public:
 	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
 			NeighbourCommunicationScheme(1, zonalMethod) {
@@ -114,9 +126,9 @@ public:
 			override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {
 		std::vector<int> neighbourRanks;
-		for (unsigned int i = 0; i < _neighbours[0].size(); i++) {
-			if (_neighbours[0][i].isFaceCommunicator()) {
-				neighbourRanks.push_back(_neighbours[0][i].getRank());
+		for (unsigned int i = 0; i < (*_neighbours)[0].size(); i++) {
+			if ((*_neighbours)[0][i].isFaceCommunicator()) {
+				neighbourRanks.push_back((*_neighbours)[0][i].getRank());
 			}
 		}
 		return neighbourRanks;
@@ -142,9 +154,15 @@ protected:
 private:
 	void doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions, MessageType msgType,
 			DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer);
+	
+	void aquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners01, std::vector<CommunicationPartner>& partners02);
+	void shiftIfNeccessary(double *domainLength, HaloRegion *region, double *shiftArray);
+	void overlap(HaloRegion *myRegion, HaloRegion *inQuestion);
+	bool iOwnThis(HaloRegion *myRegion, HaloRegion *inQuestion);
 };
 
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
+	friend class NeighbourCommunicationSchemeTest;
 public:
 
 	IndirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :

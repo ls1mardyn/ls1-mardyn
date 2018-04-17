@@ -10,38 +10,63 @@
 
 #include "molecules/Molecule.h"
 
-class ParticleCellBase;
-
+template<class ParticleCell>
 class SingleCellIterator {
 public:
 	SingleCellIterator();
-	SingleCellIterator(ParticleCellBase * cell_arg, size_t index_arg = 0);
+	SingleCellIterator(ParticleCell * cell_arg,
+		size_t index_arg = 0) : _cell(cell_arg), _mol_index(index_arg), _currentParticleDeleted(false) {
+	}
 	SingleCellIterator& operator=(const SingleCellIterator& other);
 	~SingleCellIterator(){}
 
-	void operator ++();
+	void next() {
+		operator++();
+	}
 
-	bool operator == (const SingleCellIterator& other) const;
-	bool operator != (const SingleCellIterator& other) const;
+	Molecule& operator *  () const {
+		// .at method performs automatically an out-of-bounds check
+		Molecule *moleculePtr = nullptr;
 
-	Molecule& operator *  () const;
+	#ifdef ENABLE_REDUCED_MEMORY_MODE
+		moleculePtr = const_cast<Molecule *>(& _AoSMoleculeReservoir);
+	#endif
+
+		_cell->moleculesAtNew(_mol_index, moleculePtr);
+
+		return *moleculePtr;
+	}
 	Molecule* operator -> () const;
 
-	static SingleCellIterator invalid();
-
-	void deleteCurrentParticle();
+	void deleteCurrentParticle() {
+		_cell->deleteMoleculeByIndex(_mol_index);
+		_currentParticleDeleted = true;
+	}
 
 	size_t getIndex() const {
 		return _mol_index;
 	}
 
-	ParticleCellBase * getCell() const { return _cell; }
+	ParticleCell * getCell() const { return _cell; }
 
-	void make_invalid ();
+	bool hasNext() const {
+		return isValid();
+	}
+
 
 private:
+	void operator ++() {
+		// if the "current" particle was deleted, then there is a new particle at _mol_index
+		// and the _mol_index value should not be incremented.
+		_mol_index += _currentParticleDeleted ? 0 : 1;
 
-	ParticleCellBase * _cell;
+		_currentParticleDeleted = false;
+	}
+	bool isValid() const {
+		return _cell != nullptr and _mol_index < static_cast<size_t>(_cell->getMoleculeCount());
+	}
+
+	ParticleCell * _cell;
 	size_t _mol_index;
 	bool _currentParticleDeleted;
 
@@ -53,11 +78,12 @@ private:
 
 };
 
-inline SingleCellIterator::SingleCellIterator() : _cell(nullptr), _mol_index(0), _currentParticleDeleted(false) {
-	make_invalid();
+template<class ParticleCell>
+inline SingleCellIterator<ParticleCell>::SingleCellIterator() : _cell(nullptr), _mol_index(0), _currentParticleDeleted(false) {
 }
 
-inline SingleCellIterator& SingleCellIterator::operator=(const SingleCellIterator& other) {
+template<class ParticleCell>
+inline SingleCellIterator<ParticleCell>& SingleCellIterator<ParticleCell>::operator=(const SingleCellIterator& other) {
 	_cell = other._cell;
 	_mol_index = other._mol_index;
 	_currentParticleDeleted = other._currentParticleDeleted;
@@ -65,28 +91,10 @@ inline SingleCellIterator& SingleCellIterator::operator=(const SingleCellIterato
 	return *this;
 }
 
-inline bool SingleCellIterator :: operator == (const SingleCellIterator& other) const {
-	// _currentParticleDeleted not be needed?
-	return (_cell == other._cell) and (_mol_index == other._mol_index);
-}
-
-inline bool SingleCellIterator :: operator != (const SingleCellIterator& other) const {
-	return not (*this == other);
-}
-
 // no clue why this returns a pointer
-inline Molecule* SingleCellIterator:: operator -> () const {
+template<class ParticleCell>
+inline Molecule* SingleCellIterator<ParticleCell>:: operator -> () const {
 	return &(this->operator*());
-}
-
-inline SingleCellIterator SingleCellIterator :: invalid () {
-	return SingleCellIterator();
-}
-
-inline void SingleCellIterator :: make_invalid () {
-	_cell = nullptr;
-	_mol_index = 0;
-	_currentParticleDeleted = false;
 }
 
 #endif /* SRC_PARTICLECONTAINER_SINGLECELLITERATOR_H_ */

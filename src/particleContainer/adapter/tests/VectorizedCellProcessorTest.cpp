@@ -59,11 +59,11 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 	VectorizedCellProcessor cellProcessor( *_domain, 1.1, 1.1);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
@@ -107,11 +107,11 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 	VectorizedCellProcessor cellProcessor( *_domain, 1.3, 1.3);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
@@ -133,7 +133,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 		return;
 	}
 
-#if defined(MARDYN_SPDP) or defined(MARDYN_DPDP)
+#if defined(MARDYN_DPDP)
 	double Tolerance = 1e-12; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
 #else
 	double Tolerance = 1e-06; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
@@ -151,7 +151,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	LegacyCellProcessor cellProcessor( ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container_1->iteratorBegin(); m != container_1->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container_1->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
@@ -176,7 +176,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 
 	container_2->traverseCells(vectorized_cell_proc);
 
-	for (ParticleIterator m = container_2->iteratorBegin(); m != container_2->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container_2->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
@@ -185,8 +185,8 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 
 	// Traverse both lists simultaneously, advancing both iterators together
 	// and assert that the force on the same molecule within both lists is the same:
-	ParticleIterator m_1 = container_1->iteratorBegin();
-	for (ParticleIterator m_2 = container_2->iteratorBegin(); m_2 != container_2->iteratorEnd(); ++m_2) {
+	ParticleIterator m_1 = container_1->iterator();
+	for (ParticleIterator m_2 = container_2->iterator(); m_2.hasNext(); m_2.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m_2->id() << " index i="<< i << std::endl;
@@ -198,7 +198,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->Vi(i), m_2->Vi(i), Tolerance);
 		}
 		// advance molecule of first container
-		++m_1;
+		m_1.next();
 	}
 
 
@@ -225,7 +225,7 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	// AVX breaks at 1e-14
 	// probably architecture dependent. set at 1e-11 to be on the safe side
 	// also on other architectures
-#if defined(MARDYN_SPDP) or defined(MARDYN_DPDP)
+#if defined(MARDYN_DPDP)
 	double Tolerance = 1e-11; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
 #else
 	double Tolerance = 1e-05; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
@@ -241,7 +241,7 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	LegacyCellProcessor cellProcessor(ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container_1->iteratorBegin(); m != container_1->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container_1->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
@@ -268,30 +268,61 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 
 	container_2->traverseCells(vectorized_cell_proc);
 
-	for (ParticleIterator m = container_2->iteratorBegin(); m != container_2->iteratorEnd(); ++m) {
+	for (ParticleIterator m = container_2->iterator(); m.hasNext(); m.next()) {
 		m->calcFM();
 	}
 
 	double vectorized_u_pot = _domain->getLocalUpot();
 	double vectorized_virial = _domain->getLocalVirial();
 
+	const bool printStats = false; // set to true if you want to seee this
+	double max_abs_F = 0.0;
+	double mean_abs_F = 0.0;
+	double max_abs_M = 0.0;
+	double mean_abs_M = 0.0;
+	double max_abs_Vi = 0.0;
+	double mean_abs_Vi = 0.0;
+	unsigned long counter = 0ul;
+
 	// Traverse both lists simultaneously, advancing both iterators together
 	// and assert that the force on the same molecule within both lists is the same:
-	ParticleIterator m_1 = container_1->iteratorBegin();
-	for (ParticleIterator m_2 = container_2->iteratorBegin(); m_2 != container_2->iteratorEnd(); ++m_2) {
+	ParticleIterator m_1 = container_1->iterator();
+	for (ParticleIterator m_2 = container_2->iterator(); m_2.hasNext(); m_2.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << filename << std::endl;
 			str << "Molecule id=" << m_2->id() << " index i=" << i << std::endl;
 			// check force
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
+			double abs_F = std::abs(m_1->F(i) - m_2->F(i));
+			mean_abs_F += abs_F;
+			max_abs_F = std::max(max_abs_F, abs_F);
 			// check torque
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->M(i), m_2->M(i), Tolerance);
+			double abs_M = std::abs(m_1->M(i) - m_2->M(i));
+			mean_abs_M += abs_M;
+			max_abs_M = std::max(max_abs_M, abs_M);
 			//check local molecule-wise virial
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->Vi(i), m_2->Vi(i), Tolerance);
+			double abs_Vi = std::abs(m_1->Vi(i) - m_2->Vi(i));
+			mean_abs_Vi += abs_Vi;
+			max_abs_Vi = std::max(max_abs_Vi, abs_Vi);
+			counter ++;
 		}
 		// advance molecule of first container
-		++m_1;
+		m_1.next();
+	}
+
+	if(printStats) {
+		test_log->info() << endl;
+		test_log->info() << "max_abs_F: " << max_abs_F << endl;
+		test_log->info() << "max_abs_M: " << max_abs_M << endl;
+		test_log->info() << "max_abs_Vi: " << max_abs_Vi << endl;
+		test_log->info() << "mean_abs_F: "  << mean_abs_F  / counter << endl;
+		test_log->info() << "mean_abs_M: "  << mean_abs_M  / counter << endl;
+		test_log->info() << "mean_abs_Vi: " << mean_abs_Vi / counter << endl;
+		test_log->info() << "upot: " << std::abs(legacy_u_pot - vectorized_u_pot) << endl;
+		test_log->info() << "viri: " << std::abs(legacy_virial - vectorized_virial) << endl;
 	}
 
 	// Assert that macroscopic quantities are the same

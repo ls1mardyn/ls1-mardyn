@@ -75,7 +75,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 void VectorizationTuner::finishOutput(ParticleContainer* /*particleContainer*/,
 			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 	// make a backup copy of CellBorderAndFlagManager
-	CellBorderAndFlagManager backup = ParticleCellRMM::_cellBorderAndFlagManager;
+	CellBorderAndFlagManager backup = ParticleCell::_cellBorderAndFlagManager;
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
 	_flopCounterZeroRc = new FlopCounter( 0., 0.);
@@ -89,7 +89,7 @@ void VectorizationTuner::finishOutput(ParticleContainer* /*particleContainer*/,
 	tune(*(_simulation.getEnsemble()->getComponents()), ownValues, faceValues, edgeValues, cornerValues);
 	 */
 	// restore CellBorderAndFlagManager to its values
-	ParticleCellRMM::_cellBorderAndFlagManager = backup;
+	ParticleCell::_cellBorderAndFlagManager = backup;
 }
 
 void VectorizationTuner::writeFile(const TunerLoad& vecs){
@@ -278,7 +278,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		double boxMin[3] = {0., 0., 0.};
 		double boxMax[3] = {2., 2., 2.};
 		double cellLength[3] = {1., 1., 1.};
-		ParticleCellRMM::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
+		ParticleCell::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
 		ParticleCell mainCell;
 		ParticleCell faceCell;
 		ParticleCell edgeCell;
@@ -418,7 +418,7 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	double boxMin[3] = {0., 0., 0.};
 	double boxMax[3] = {2., 2., 2.};
 	double cellLength[3] = {1., 1., 1.};
-	ParticleCellRMM::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
+	ParticleCell::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
 	ParticleCell firstCell;
 	ParticleCell secondCell;
 
@@ -746,10 +746,9 @@ void VectorizationTuner::initNormalRandomMolecules(double /*boxMin*/[3], double 
 }
 
 void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
-	SingleCellIterator begin = cell.iteratorBegin();
-	SingleCellIterator end = cell.iteratorEnd();
+	auto begin = cell.iterator();
 
-	for(SingleCellIterator it = begin; it != end; ++it ) {
+	for(auto it = begin; it.hasNext(); it.next() ) {
 		Molecule& mol = *it;
 		mol.move(0, direction[0]);
 		mol.move(1, direction[1]);

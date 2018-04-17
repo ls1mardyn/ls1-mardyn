@@ -124,12 +124,14 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 }
 
 std::array<double, 3> FullMolecule::ljcenter_d_abs(unsigned int i) const {
+	mardyn_assert(i < numLJcenters());
+
 	const unsigned index_in_soa = i + _soa_index_lj;
 
 	std::array<double,3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::LJC, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -138,11 +140,13 @@ std::array<double, 3> FullMolecule::ljcenter_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::charge_d_abs(unsigned int i) const {
+	mardyn_assert(i < numCharges());
+
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::CHARGE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -151,11 +155,13 @@ std::array<double, 3> FullMolecule::charge_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::dipole_d_abs(unsigned int i) const {
+	mardyn_assert(i < numDipoles());
+
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::DIPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -164,11 +170,13 @@ std::array<double, 3> FullMolecule::dipole_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
+	mardyn_assert(i < numQuadrupoles());
+
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	std::array<vcp_real_calc, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::CENTER_POSITION, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	temp = _soa->getTripletCalc(CellDataSoA::QuantityType::CENTER_POSITION, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -177,11 +185,13 @@ std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
+	mardyn_assert(i < numLJcenters());
+
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -189,11 +199,13 @@ std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
+	mardyn_assert(i < numCharges());
+
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -201,11 +213,13 @@ std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
+	mardyn_assert(i < numDipoles());
+
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -213,11 +227,13 @@ std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::quadrupole_F(unsigned int i) const {
+	mardyn_assert(i < numQuadrupoles());
+
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
-	std::array<vcp_real_calc, 3> temp;
+	std::array<vcp_real_accum, 3> temp;
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 	ret[0] = static_cast<double>(temp[0]);
 	ret[1] = static_cast<double>(temp[1]);
 	ret[2] = static_cast<double>(temp[2]);
@@ -226,6 +242,8 @@ std::array<double, 3> FullMolecule::quadrupole_F(unsigned int i) const {
 }
 
 std::array<double, 3> FullMolecule::dipole_e(unsigned int i) const {
+	mardyn_assert(i < numDipoles());
+
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	ret[0] = static_cast<double>(_soa->_dipoles_e.x(index_in_soa));
@@ -234,6 +252,8 @@ std::array<double, 3> FullMolecule::dipole_e(unsigned int i) const {
 	return ret;
 }
 std::array<double, 3> FullMolecule::quadrupole_e(unsigned int i) const {
+	mardyn_assert(i < numQuadrupoles());
+
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	ret[0] = static_cast<double>(_soa->_quadrupoles_e.x(index_in_soa));
@@ -243,47 +263,55 @@ std::array<double, 3> FullMolecule::quadrupole_e(unsigned int i) const {
 }
 
 void FullMolecule::Fljcenteradd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_lj;
-	std::array<vcp_real_calc, 3> temp;
+	mardyn_assert(i < numLJcenters());
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	const unsigned index_in_soa = i + _soa_index_lj;
+	std::array<vcp_real_accum, 3> temp;
+
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
 }
 
 void FullMolecule::Fchargeadd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_c;
-	std::array<vcp_real_calc, 3> temp;
+	mardyn_assert(i < numCharges());
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	const unsigned index_in_soa = i + _soa_index_c;
+	std::array<vcp_real_accum, 3> temp;
+
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 }
 
 void FullMolecule::Fdipoleadd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_d;
-	std::array<vcp_real_calc, 3> temp;
+	mardyn_assert(i < numDipoles());
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	const unsigned index_in_soa = i + _soa_index_d;
+	std::array<vcp_real_accum, 3> temp;
+
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 }
 
 void FullMolecule::Fquadrupoleadd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_q;
-	std::array<vcp_real_calc, 3> temp;
+	mardyn_assert(i < numQuadrupoles());
 
-	temp = _soa->getTriplet(CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	const unsigned index_in_soa = i + _soa_index_q;
+	std::array<vcp_real_accum, 3> temp;
+
+	temp = _soa->getTripletAccum(CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 	temp[0] += a[0];
 	temp[1] += a[1];
 	temp[2] += a[2];
-	_soa->setTriplet(temp, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+	_soa->setTripletAccum(temp, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 }
 
 void FullMolecule::Fljcentersub(unsigned int i, double a[]) {
@@ -454,29 +482,29 @@ void FullMolecule::clearFM() {
 	_M[0] = _M[1] = _M[2] = 0.;
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
 
-	std::array<vcp_real_calc, 3> clearance = {0.0, 0.0, 0.0};
+	std::array<vcp_real_accum, 3> clearance = {0.0, 0.0, 0.0};
 
 	// clear SoA-cache (quickest way)
 	unsigned ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_lj;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::LJC, index_in_soa);
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_c;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_d;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
 
 		_soa->_dipoles_M.x(index_in_soa) = 0.0;
 		_soa->_dipoles_M.y(index_in_soa) = 0.0;
@@ -486,8 +514,8 @@ void FullMolecule::clearFM() {
 	for (unsigned i = 0; i < ns; ++i) {
 		const unsigned index_in_soa = i + _soa_index_q;
 
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::FORCE, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
-		_soa->setTriplet(clearance, CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 
 		_soa->_quadrupoles_M.x(index_in_soa) = 0.0;
 		_soa->_quadrupoles_M.y(index_in_soa) = 0.0;
@@ -495,46 +523,51 @@ void FullMolecule::clearFM() {
 	}
 }
 
+void FullMolecule::calcFM_site(const std::array<double, 3>& dsite, const std::array<double, 3>& Fsite) {
+#ifndef NDEBUG
+	using std::isnan; // C++11 needed
+
+	/*
+	 * catches NaN assignments
+	 */
+	for (int d = 0; d < 3; d++) {
+		if (isnan(dsite[d])) {
+			global_log->error() << "Severe dsite[" << d << "] error for site of m" << _id << endl;
+			mardyn_assert(false);
+		}
+		if (isnan(Fsite[d])) {
+			global_log->error() << "Severe Fsite[" << d << "] error for site of m" << _id << endl;
+			mardyn_assert(false);
+		}
+	}
+#endif
+
+	Fadd(Fsite.data());
+	_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
+	_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
+	_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
+}
+
 void FullMolecule::calcFM() {
 	using std::isnan; // C++11 needed
 
 	//_M[0] = _M[1] = _M[2] = 0.;
-	unsigned int ns = numSites();
-	for (unsigned int si = 0; si < ns; ++si) {
-		const std::array<double,3> Fsite = site_F(si);
-		const std::array<double,3> dsite = site_d(si);
-#ifndef NDEBUG
-		/*
-		 * catches NaN assignments
-		 */
-		for (int d = 0; d < 3; d++) {
-			if (isnan(dsite[d])) {
-				global_log->error() << "Severe dsite[" << d << "] error for site " << si << " of m" << _id << endl;
-				mardyn_assert(false);
-			}
-			if (isnan(Fsite[d])) {
-				global_log->error() << "Severe Fsite[" << d << "] error for site " << si << " of m" << _id << endl;
-				mardyn_assert(false);
-			}
-		}
-#endif
-
-		Fadd(Fsite.data());
-		_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
-		_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
-		_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
-	}
+	unsigned int ns;
 
 	// accumulate virial, dipoles_M and quadrupoles_M:
 	double temp_M[3] = { 0., 0., 0. };
 	double temp_Vi[3] = { 0., 0., 0. };
 
-	std::array<vcp_real_calc, 3> interim;
+	std::array<vcp_real_accum, 3> interim;
 
 	ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = ljcenter_F(i);
+		const std::array<double,3> dsite = ljcenter_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_lj;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::LJC, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::LJC, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -542,8 +575,12 @@ void FullMolecule::calcFM() {
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = charge_F(i);
+		const std::array<double,3> dsite = charge_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_c;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::CHARGE, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -551,8 +588,12 @@ void FullMolecule::calcFM() {
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = dipole_F(i);
+		const std::array<double,3> dsite = dipole_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_d;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::DIPOLE, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -563,8 +604,12 @@ void FullMolecule::calcFM() {
 	}
 	ns = numQuadrupoles();
 	for (unsigned i = 0; i < ns; ++i) {
+		const std::array<double,3> Fsite = quadrupole_F(i);
+		const std::array<double,3> dsite = quadrupole_d(i);
+		calcFM_site(dsite, Fsite);
+
 		const unsigned index_in_soa = i + _soa_index_q;
-		interim = _soa->getTriplet(CellDataSoA::QuantityType::VIRIAL, ConcatenatedSites<vcp_real_calc>::SiteType::QUADRUPOLE, index_in_soa);
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -586,43 +631,37 @@ void FullMolecule::calcFM() {
 
 /**
  * catches NaN values and missing data
- *
- * @note Use isnan from cmath to check for nan.
- * If that's not available (C99), compare the value with itself. If the value
- * is NaN, the comparison will evaluate to false (according to IEEE754 spec.)
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void FullMolecule::check(unsigned long id) {
 #ifndef NDEBUG
-	using std::isfinite; // C++11 needed
+void FullMolecule::check(unsigned long id) {
 
-	mardyn_assert(_id == id);
-	mardyn_assert(_m > 0.0);
-	for (int d = 0; d < 3; d++) {
-		mardyn_assert(isfinite(_r[d]));
-		mardyn_assert(isfinite(_v[d]));
-		mardyn_assert(isfinite(_L[d]));
-		mardyn_assert(isfinite(_F[d]));
-		mardyn_assert(isfinite(_M[d]));
-		mardyn_assert(isfinite(_I[d]));
-		// mardyn_assert(!isnan(_Vi[d]));
-		mardyn_assert(isfinite(_invI[d]));
-	}
-	_q.check();
-	if(!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2]))
-	{
-	   cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")"<<endl;
-	   _Vi[0] = 0.0;
-	   _Vi[1] = 0.0;
-	   _Vi[2] = 0.0;
-	   mardyn_assert(false);
-	}
-#endif
+  using std::isfinite; // C++11 needed
+
+  mardyn_assert(_id == id);
+  mardyn_assert(_m > 0.0);
+  for (int d = 0; d < 3; d++) {
+    mardyn_assert(isfinite(_r[d]));
+    mardyn_assert(isfinite(_v[d]));
+    mardyn_assert(isfinite(_L[d]));
+    mardyn_assert(isfinite(_F[d]));
+    mardyn_assert(isfinite(_M[d]));
+    mardyn_assert(isfinite(_I[d]));
+    // mardyn_assert(!isnan(_Vi[d]));
+    mardyn_assert(isfinite(_invI[d]));
+  }
+  _q.check();
+  if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2])) {
+    cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
+         << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")" << endl;
+    _Vi[0] = 0.0;
+    _Vi[1] = 0.0;
+    _Vi[2] = 0.0;
+    mardyn_assert(false);
+  }
 }
-#pragma GCC diagnostic pop
-
-
+#else
+void FullMolecule::check(unsigned long /*id*/) {}
+#endif
 
 std::ostream& operator<<( std::ostream& os, const FullMolecule& m ) {
 	os << "ID: " << m.id() << "\n";
@@ -645,6 +684,31 @@ void FullMolecule::setSoA(CellDataSoABase * const s) {
 	CellDataSoA * derived;
 	derived = static_cast<CellDataSoA *>(s);
 	_soa = derived;
+}
+
+void FullMolecule::buildOwnSoA() {
+	const size_t nLJ = numLJcenters();
+	const size_t nC = numCharges();
+	const size_t nD = numDipoles();
+	const size_t nQ = numQuadrupoles();
+
+	_soa = new CellDataSoA(1ul, nLJ, nC, nD, nQ);
+
+	_soa->_mol_ljc_num[0] = nLJ;
+	_soa->_mol_charges_num[0] = nC;
+	_soa->_mol_dipoles_num[0] = nD;
+	_soa->_mol_quadrupoles_num[0] = nQ;
+
+	_soa->_mol_pos.x(0) = r(0);
+	_soa->_mol_pos.y(0) = r(1);
+	_soa->_mol_pos.z(0) = r(2);
+
+	setupSoACache(_soa, 0ul, 0ul, 0ul, 0ul);
+	clearFM();
+}
+
+void FullMolecule::releaseOwnSoA() {
+	delete _soa;
 }
 
 void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigned iC,

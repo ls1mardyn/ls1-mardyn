@@ -325,7 +325,20 @@ public:
 	/** perform data consistency check for the molecule (only debug mode) */
 	void check(unsigned long id);
 
+	/** In almost all cases, molecule's caches are stored in SoAs.
+	 * In some rare instances (e.g. ParticleContainer::getEnergy())
+	 * a molecule should rather better exist alone and not be part of a particleCell.
+	 * This function allocates a new SoA.
+	 * Remember to release it when no longer necessary! */
+	void buildOwnSoA();
+
+	/** See above comment.*/
+	void releaseOwnSoA();
+
 private:
+	/** calculate forces and moments for already given site forces, for this precise site */
+	void calcFM_site(const std::array<double, 3>& d, const std::array<double, 3>& F);
+
     Component *_component;  /**< IDentification number of its component type */
 	double _r[3];  /**< position coordinates */
 	double _F[3];  /**< forces */

@@ -239,7 +239,9 @@
       <!-- RDF plugin
       This module writes out Radial Distribution Function data -->
       <outputplugin name="RDF">
+	  	<!-- functionality affected by <equilibration> <steps> X </steps> </equilibration> -->
         <writefrequency>100</writefrequency>
+	    <samplingfrequency>5</samplingfrequency>
         <outputprefix>default</outputprefix>
         <bins>1000</bins>
         <intervallength>0.003</intervallength>

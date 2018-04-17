@@ -738,10 +738,7 @@ void BubbleMethod::Reset(Simulation* simulation)
 		bi.radius.actual.local = bi.radius.target.global;
 
 	ParticleContainer* particleCont = simulation->getMolecules();
-	ParticleIterator pit;
-	for( pit  = particleCont->iteratorBegin();
-			pit != particleCont->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 	{
 		this->resetBubbleMoleculeComponent(&(*pit) );
 	}
@@ -1061,10 +1058,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 	// change back components, TODO: maybe better location to do so, to avoid additional loop
 	{
 		ParticleContainer* particles = global_simulation->getMolecules();
-		ParticleIterator pit;
-		for( pit  = particles->iteratorBegin();
-				pit != particles->iteratorEnd();
-			 ++pit )
+		for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 		{
 			this->resetBubbleMoleculeComponent( &(*pit) );
 		}
@@ -1075,10 +1069,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 		if(BMT_CHANGER == this->getType() )
 		{
 			ParticleContainer* particles = global_simulation->getMolecules();
-			ParticleIterator pit;
-			for( pit  = particles->iteratorBegin();
-					pit != particles->iteratorEnd();
-				 ++pit )
+			for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 			{
 				if(pit->id() == _selectedMoleculeID) //componentid()+1 == 3)
 				{
@@ -1092,10 +1083,7 @@ void BubbleMethod::FinalizeParticleManipulation(Simulation* simulation)
 		else if(BMT_INSERTER == this->getType() )
 		{
 			ParticleContainer* particles = global_simulation->getMolecules();
-			ParticleIterator pit;
-			for( pit  = particles->iteratorBegin();
-					pit != particles->iteratorEnd();
-				 ++pit )
+			for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 			{
 				this->resetBubbleMoleculeComponent( &(*pit) );
 				if(pit->id() == _selectedMoleculeID) //componentid()+1 == 3)
@@ -1303,10 +1291,7 @@ int RandomSelector::selectParticle(Simulation* simulation, Molecule& selectedMol
 	// find molecule with min distance to insertion position
 	double dist2_min = 1000;
 
-	ParticleIterator pit;
-	for( pit  = particles->iteratorBegin();
-			pit != particles->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = particles->iterator(); pit.hasNext(); pit.next())
 	{
 		double dist2 = 0.0;
 		double distVec[3];
@@ -1428,10 +1413,7 @@ int CompDependSelector::selectParticle(Simulation* simulation, Molecule& selecte
 	}
 
 	ParticleContainer* particles = simulation->getMolecules();
-	ParticleIterator pit;
-	for( pit  = particles->iteratorBegin();
-			pit != particles->iteratorEnd();
-		 ++pit )
+	for (ParticleIterator pit = particles->iterator(); pit.hasNext(); pit.next())
 	{
 		uint64_t id = pit->id();
 		if(selectedID == id)

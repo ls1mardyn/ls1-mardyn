@@ -55,8 +55,11 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		if (_boxWidthInNumCells[d] == 0) {
 			_boxWidthInNumCells[d] = 1;
 		}
-		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d])
-				/ _boxWidthInNumCells[d];
+
+		double diff = _boundingBoxMax[d] - _boundingBoxMin[d];
+		_cellLength[d] = diff / _boxWidthInNumCells[d];
+		_cellLengthReciprocal[d] = _boxWidthInNumCells[d] / diff;
+
 		_haloWidthInNumCells[d] = 1;
 		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
 		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloLength[d];
@@ -154,12 +157,16 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			global_log->error_always_output() << "LinkedCells::rebuild: region to small" << endl;
+			global_log->error_always_output() << "LinkedCells::rebuild: region too small" << endl;
 			Simulation::exit(1);
 		}
 
 		numberOfCells *= _cellsPerDimension[dim];
-		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _boxWidthInNumCells[dim];
+
+		double diff = _boundingBoxMax[dim] - _boundingBoxMin[dim];
+		_cellLength[dim] = diff / _boxWidthInNumCells[dim];
+		_cellLengthReciprocal[dim] = _boxWidthInNumCells[dim] / diff;
+
 		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
 
 		_haloBoundingBoxMin[dim] = _boundingBoxMin[dim] - _haloLength[dim];
@@ -196,20 +203,15 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 }
 
 void LinkedCells::check_molecules_in_box(){
-	{
-		const ParticleIterator begin = this->iteratorBegin();
-		const ParticleIterator end = this->iteratorEnd();
-
-		for (ParticleIterator tM = begin; tM != end; ++tM) {
-			if (not tM->inBox(_haloBoundingBoxMin,_haloBoundingBoxMax)){
-				global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
-						<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
-				global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
-						<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
-						<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
-				global_log->error() << "Particle will be lost. Aboarting simulation." << std::endl;
-				Simulation::exit(311);
-			}
+	for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
+		if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
+			global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
+					<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
+			global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
+					<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
+					<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
+			global_log->error() << "Particle will be lost. Aboarting simulation." << std::endl;
+			Simulation::exit(311);
 		}
 	}
 }
@@ -244,7 +246,7 @@ void LinkedCells::update() {
 
 
 #ifndef NDEBUG
-	for (ParticleIterator tM = iteratorBegin(); tM != iteratorEnd(); ++tM) {
+	for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
 		if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 			global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
 					<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
@@ -551,7 +553,7 @@ void LinkedCells::clear() {
 void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) {
 	// This should be unimportant
 
-	for (auto it = iteratorBegin(); it != iteratorEnd(); ++it) {
+	for (auto it = iterator(); it.hasNext(); it.next()) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
 			it.deleteCurrentParticle();
@@ -652,7 +654,7 @@ bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[
 	return true;
 }
 
-RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
+RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
 	// parameter "type" not yet used
 	// add functionality in a future version...
 	unsigned int startRegionCellIndex;
@@ -661,10 +663,6 @@ RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[
 	getCellIndicesOfRegion(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
 
 	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex, type);
-}
-
-RegionParticleIterator LinkedCells::iterateRegionEnd() {
-	return RegionParticleIterator::invalid();
 }
 
 //################################################
@@ -676,68 +674,19 @@ void LinkedCells::initializeCells() {
 	_haloCellIndices.clear();
 
 	long int cellIndex;
-	double cellBoxMin[3], cellBoxMax[3];
 
-#ifdef ENABLE_REDUCED_MEMORY_MODE
 	ParticleCell::_cellBorderAndFlagManager.init(_cellsPerDimension,
 			_haloBoundingBoxMin, _haloBoundingBoxMax,
 			_boundingBoxMin, _boundingBoxMax,
 			_cellLength);
-	// this code would have been much simpler if we could use CellBorderAndFlagManager in non-RMM mode...
-#endif
 
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
-		cellBoxMin[2] = iz * _cellLength[2] + _haloBoundingBoxMin[2];
-		cellBoxMax[2] = (iz + 1) * _cellLength[2] + _haloBoundingBoxMin[2];
-		if (iz == 0) {  // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMax[2] = _boundingBoxMin[2];
-		} else if (iz == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMin[2] = _boundingBoxMin[2];
-		} else if (iz == _cellsPerDimension[2] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMax[2] = _boundingBoxMax[2];
-		} else if (iz == _cellsPerDimension[2] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-			cellBoxMin[2] = _boundingBoxMax[2];
-			cellBoxMax[2] = _haloBoundingBoxMax[2];
-		}
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
-			cellBoxMin[1] = iy * _cellLength[1] + _haloBoundingBoxMin[1];
-			cellBoxMax[1] = (iy + 1) * _cellLength[1] + _haloBoundingBoxMin[1];
-			if (iy == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMax[1] = _boundingBoxMin[1];
-			} else if (iy == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMin[1] = _boundingBoxMin[1];
-			} else if (iy == _cellsPerDimension[1] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMax[1] = _boundingBoxMax[1];
-			} else if (iy == _cellsPerDimension[1] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-				cellBoxMin[1] = _boundingBoxMax[1];
-				cellBoxMax[1] = _haloBoundingBoxMax[1];
-			}
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
-				cellBoxMin[0] = ix * _cellLength[0] + _haloBoundingBoxMin[0];
-				cellBoxMax[0] = (ix + 1) * _cellLength[0] + _haloBoundingBoxMin[0];
-				if (ix == 0) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMax[0] = _boundingBoxMin[0];
-				} else if (ix == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMin[0] = _boundingBoxMin[0];
-				} else if (ix == _cellsPerDimension[0] - 2) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMax[0] = _boundingBoxMax[0];
-				} else if (ix == _cellsPerDimension[0] - 1) { // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
-					cellBoxMin[0] = _boundingBoxMax[0];
-					cellBoxMax[0] = _haloBoundingBoxMax[0];
-				}
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
 				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
 
-				#ifndef ENABLE_REDUCED_MEMORY_MODE
-					cell.skipCellFromHaloRegion();
-					cell.skipCellFromBoundaryRegion();
-					cell.skipCellFromInnerRegion();
-					cell.skipCellFromInnerMostRegion();
-				#endif
-
-				cell.setBoxMin(cellBoxMin);
-				cell.setBoxMax(cellBoxMax);
 				if (ix < _haloWidthInNumCells[0] ||
 					iy < _haloWidthInNumCells[1] ||
 					iz < _haloWidthInNumCells[2] ||
@@ -746,49 +695,7 @@ void LinkedCells::initializeCells() {
 					iz >= _cellsPerDimension[2] - _haloWidthInNumCells[2]) {
 
 					cell.assignCellToHaloRegion();
-					#ifdef ENABLE_REDUCED_MEMORY_MODE
-						cell.skipCellFromInnerRegion();
-						cell.skipCellFromInnerMostRegion();
-					#endif
 					_haloCellIndices.push_back(cellIndex);
-				}
-				else{
-					if (ix < 2 * _haloWidthInNumCells[0] ||
-						iy < 2 * _haloWidthInNumCells[1] ||
-						iz < 2 * _haloWidthInNumCells[2] ||
-						ix >= _cellsPerDimension[0] - 2 * _haloWidthInNumCells[0] ||
-						iy >= _cellsPerDimension[1] - 2 * _haloWidthInNumCells[1] ||
-						iz >= _cellsPerDimension[2] - 2 * _haloWidthInNumCells[2]) {
-
-						cell.assignCellToBoundaryRegion();
-						#ifdef ENABLE_REDUCED_MEMORY_MODE
-							cell.skipCellFromHaloRegion();
-							cell.skipCellFromInnerRegion();
-							cell.skipCellFromInnerMostRegion();
-						#endif
-					}
-					else{
-						if (ix < 3 * _haloWidthInNumCells[0] ||
-							iy < 3 * _haloWidthInNumCells[1] ||
-							iz < 3 * _haloWidthInNumCells[2] ||
-							ix >= _cellsPerDimension[0] - 3 * _haloWidthInNumCells[0] ||
-							iy >= _cellsPerDimension[1] - 3 * _haloWidthInNumCells[1] ||
-							iz >= _cellsPerDimension[2] - 3 * _haloWidthInNumCells[2]) {
-
-							cell.assignCellToInnerRegion();
-							#ifdef ENABLE_REDUCED_MEMORY_MODE
-								cell.skipCellFromHaloRegion();
-								cell.skipCellFromBoundaryRegion();
-							#endif
-						}
-						else {
-							cell.assignCellToInnerMostAndInnerRegion();
-							#ifdef ENABLE_REDUCED_MEMORY_MODE
-								cell.skipCellFromHaloRegion();
-								cell.skipCellFromBoundaryRegion();
-							#endif
-						}
-					}
 				}
 			}
 		}
@@ -947,10 +854,10 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 
 		// ignore a bit of rounding, if the point is outside of the box.
 		if (localPoint[dim] <= _haloBoundingBoxMin[dim]){
-			localPoint[dim] += _cellLength[dim]/2;
+			localPoint[dim] += _cellLength[dim] * 0.5;
 		}
 		else if(localPoint[dim] >= _haloBoundingBoxMax[dim]){
-			localPoint[dim] -= _cellLength[dim]/2;
+			localPoint[dim] -= _cellLength[dim] * 0.5;
 		}
 
 		#ifndef NDEBUG
@@ -965,8 +872,8 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 		#endif
 
 		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
-		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
-		cellIndex[dim] = min(max(((int) floor((localPoint[dim] - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim],0),_cellsPerDimension[dim]-1);
+		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) * _cellLengthReciprocal[dim]);
+		cellIndex[dim] = min(max(((int) floor((localPoint[dim] - _boundingBoxMin[dim]) * _cellLengthReciprocal[dim])) + _haloWidthInNumCells[dim],0),_cellsPerDimension[dim]-1);
 	}
 
 	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
@@ -1060,10 +967,9 @@ unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double si
 			ParticleCell & cell = _cells[cellIndex];
 			const int numMolecules = cell.getMoleculeCount();
 
-			SingleCellIterator begin = cell.iteratorBegin();
-			SingleCellIterator end = cell.iteratorEnd();
+			SingleCellIterator<ParticleCell> begin = cell.iterator();
 
-			for (SingleCellIterator it = begin; it != end; ++it) {
+			for (SingleCellIterator<ParticleCell> it = begin; it.hasNext(); it.next()) {
 				it->setid(threadIDsAssignedByThisThread);
 				++threadIDsAssignedByThisThread;
 			}
@@ -1124,31 +1030,18 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	double u = 0.0;
 
-	static ParticleCell dummyCell;
-	{
-		// (potentially re-) initialize dummyCell
-		dummyCell.assignCellToInnerRegion();
-		double low[3] = {m1->r(0)-10., m1->r(1)-10., m1->r(2)-10.};
-		double up[3] = {m1->r(0)+10., m1->r(1)+10., m1->r(2)+10.};
-		dummyCell.setBoxMin(low);
-		dummyCell.setBoxMax(up);
-		dummyCell.addParticle(*m1);
-
-		dummyCell.buildSoACaches();
-		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
-	}
-
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
 
 	ParticleCell& currentCell = _cells[cellIndex];
 
 	mardyn_assert(not currentCell.isHaloCell());
 
+	Molecule molWithSoA = *m1;
+	molWithSoA.buildOwnSoA();
+
 	cellProcessor->initTraversal();
 
-	Molecule * molWithSoA = &(*dummyCell.iteratorBegin());
-
-	u += cellProcessor->processSingleMolecule(molWithSoA, currentCell);
+	u += cellProcessor->processSingleMolecule(&molWithSoA, currentCell);
 
 	vector<long> forwardNeighbourOffsets; // now vector
 	vector<long> backwardNeighbourOffsets; // now vector
@@ -1159,23 +1052,23 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 			neighbourOffsetsIter != forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
+		u += cellProcessor->processSingleMolecule(&molWithSoA, neighbourCell);
 	}
 	// backward neighbours
 	for (auto neighbourOffsetsIter = backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
-		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
+		u += cellProcessor->processSingleMolecule(&molWithSoA, neighbourCell);
 	}
 
 	cellProcessor->endTraversal();
 
+	molWithSoA.releaseOwnSoA();
+
 	if (!dynamic_cast<LegacyCellProcessor*>(&cellProcessorI)) {
 		delete cellProcessor;
 	}
-
-	dummyCell.deallocateAllParticles();
 
     mardyn_assert(not std::isnan(u)); // catches NaN
 
@@ -1251,14 +1144,13 @@ std::string LinkedCells::getName() {
 bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
 	const double epsi = this->_cutoffRadius * 1e-6;
 	auto index = getCellIndexOfPoint(pos);
-	auto& cell = *getCell(index);
+	auto& cell = _cells.at(index);
 
 	// iterate through cell and compare position of molecules with given position
 	
-	SingleCellIterator begin1 = cell.iteratorBegin();
-	SingleCellIterator end1 = cell.iteratorEnd();
+	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
 	
-	for (SingleCellIterator it1 = begin1; it1 != end1; ++it1) {
+	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.hasNext(); it1.next()) {
 		auto& mol = *it1;
 
 		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {

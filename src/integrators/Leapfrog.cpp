@@ -57,10 +57,9 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = molCont->iteratorBegin();
-		const ParticleIterator end = molCont->iteratorEnd();
+		const ParticleIterator begin = molCont->iterator();
 
-		for (ParticleIterator i = begin; i != end; ++i) {
+		for (ParticleIterator i = begin; i.hasNext(); i.next()) {
 			i->upd_preF(_timestepLength);
 		}
 	}
@@ -89,7 +88,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 	map<int, double> sumIw2;
 	double dt_half = 0.5 * this->_timestepLength;
 	if (domain->severalThermostats()) {
-		for (tM = molCont->iteratorBegin(); tM != molCont->iteratorEnd(); ++tM) {
+		for (tM = molCont->iterator(); tM.hasNext(); tM.next()) {
 			int cid = tM->componentid();
 			int thermostat = domain->getThermostat(cid);
 			tM->upd_postF(dt_half, summv2[thermostat], sumIw2[thermostat]);
@@ -107,10 +106,9 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			double summv2gt_l = 0.0;
 			double sumIw2gt_l = 0.0;
 
-			const ParticleIterator begin = molCont->iteratorBegin();
-			const ParticleIterator end = molCont->iteratorEnd();
+			const ParticleIterator begin = molCont->iterator();
 
-			for (ParticleIterator i = begin; i != end; ++i) {
+			for (ParticleIterator i = begin; i.hasNext(); i.next()) {
 				i->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
 				mardyn_assert(summv2gt_l >= 0.0);
 				Ngt_l++;
@@ -163,7 +161,7 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	}
 
 	ParticleIterator thismol;
-	for (thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol) {
+	for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
 		unsigned cid = thismol->componentid();
 		mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 		thismol->vadd(componentwiseVelocityDelta[0][cid],
@@ -187,7 +185,7 @@ void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* dom
 	}
 
 	ParticleIterator thismol;
-	for (thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol) {
+	for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
 		unsigned cid = thismol->componentid();
 		mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 		thismol->vadd(componentwiseVelocityDelta[0][cid],

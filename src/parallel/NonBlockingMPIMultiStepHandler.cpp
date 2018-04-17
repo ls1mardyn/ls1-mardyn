@@ -92,9 +92,8 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	_cellProcessor->endTraversal();
 
 	// Update forces in molecules so they can be exchanged - new - begin
-	const ParticleIterator begin = _moleculeContainer->iteratorBegin();
-	const ParticleIterator end = _moleculeContainer->iteratorEnd();
-	for (ParticleIterator i = begin; i != end; ++i){
+	const ParticleIterator begin = _moleculeContainer->iterator();
+	for (ParticleIterator i = begin; i.hasNext(); i.next()){
 		i->calcFM();
 	}
 	// - new - end

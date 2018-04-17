@@ -62,7 +62,7 @@ public:
 	}
 
 	void endTraversal() {
-		vcp_real_calc glob_summv2 = 0.0;
+		vcp_real_accum glob_summv2 = 0.0;
 		unsigned long glob_N = 0;
 
 		#if defined(_OPENMP)
@@ -72,7 +72,7 @@ public:
 			const int tid = mardyn_get_thread_num();
 
 			// reduce vectors and clear local variable
-			vcp_real_calc thread_summv2 = 0.0;
+			vcp_real_accum thread_summv2 = 0.0;
 
 			load_hSum_Store_Clear(&thread_summv2, _threadData[tid]->_thread_summv2V);
 
@@ -99,29 +99,29 @@ public:
 		ThreadData &my_threadData = *_threadData[tid];
 		my_threadData._thread_N += static_cast<unsigned long>(molNum);
 
-		const vcp_real_calc * const soa_v_x = soa.v_xBegin();
-		const vcp_real_calc * const soa_v_y = soa.v_yBegin();
-		const vcp_real_calc * const soa_v_z = soa.v_zBegin();
+		const vcp_real_accum * const soa_v_x = soa.v_xBegin();
+		const vcp_real_accum * const soa_v_y = soa.v_yBegin();
+		const vcp_real_accum * const soa_v_z = soa.v_zBegin();
 
-		RealCalcVec sum_summv2 = RealCalcVec::zero();
+		RealAccumVec sum_summv2 = RealAccumVec::zero();
 
 		size_t i = 0;
 		for (; i < end_i; i += VCP_VEC_SIZE) {
-			const RealCalcVec v_x = RealCalcVec::aligned_load(soa_v_x + i);
-			const RealCalcVec v_y = RealCalcVec::aligned_load(soa_v_y + i);
-			const RealCalcVec v_z = RealCalcVec::aligned_load(soa_v_z + i);
+			const RealAccumVec v_x = RealAccumVec::aligned_load(soa_v_x + i);
+			const RealAccumVec v_y = RealAccumVec::aligned_load(soa_v_y + i);
+			const RealAccumVec v_z = RealAccumVec::aligned_load(soa_v_z + i);
 
-			const RealCalcVec v2 = RealCalcVec::scal_prod(v_x, v_y, v_z, v_x, v_y, v_z);
+			const RealAccumVec v2 = RealAccumVec::scal_prod(v_x, v_y, v_z, v_x, v_y, v_z);
 			sum_summv2 = sum_summv2 + v2;
 
 		}
-		const MaskVec remainderMask = vcp_simd_getRemainderMask(soa.getMolNum());
+		const MaskCalcVec remainderMask = vcp_simd_getRemainderMask(soa.getMolNum());
 		if (remainderMask.movemask()) {
-			const RealCalcVec v_x = RealCalcVec::aligned_load_mask(soa_v_x + i, remainderMask);
-			const RealCalcVec v_y = RealCalcVec::aligned_load_mask(soa_v_y + i, remainderMask);
-			const RealCalcVec v_z = RealCalcVec::aligned_load_mask(soa_v_z + i, remainderMask);
+			const RealAccumVec v_x = RealAccumVec::aligned_load_mask(soa_v_x + i, remainderMask);
+			const RealAccumVec v_y = RealAccumVec::aligned_load_mask(soa_v_y + i, remainderMask);
+			const RealAccumVec v_z = RealAccumVec::aligned_load_mask(soa_v_z + i, remainderMask);
 
-			const RealCalcVec v2 = RealCalcVec::scal_prod(v_x, v_y, v_z, v_x, v_y, v_z);
+			const RealAccumVec v2 = RealAccumVec::scal_prod(v_x, v_y, v_z, v_x, v_y, v_z);
 			sum_summv2 = sum_summv2 + v2;
 		}
 		sum_summv2.aligned_load_add_store(&(my_threadData._thread_summv2V[0]));
@@ -138,7 +138,7 @@ public:
 			_thread_N = 0;
 		}
 
-		AlignedArray<vcp_real_calc> _thread_summv2V;
+		AlignedArray<vcp_real_accum> _thread_summv2V;
 		unsigned long _thread_N;
 	};
 
