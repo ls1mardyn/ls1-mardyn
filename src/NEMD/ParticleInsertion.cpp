@@ -678,7 +678,7 @@ void BubbleMethod::readXML(XMLfileUnits& xmlconfig)
 			for( nodeIter = query.begin(); nodeIter; nodeIter++ ) {
 				xmlconfig.changecurrentnode(nodeIter);
 				double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
-				x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz = 0.0;
+				x = y = z = vx = vy = vz = q0 = q1 = q2 = q3 = Dx = Dy = Dz = 0.0;
 				xmlconfig.getNodeValue("x", x);
 				xmlconfig.getNodeValue("y", y);
 				xmlconfig.getNodeValue("z", z);
