@@ -113,6 +113,14 @@ private:
 
 	void InitComponentSpecificParamsVDF();
 	void ShowComponentSpecificParamsVDF();
+
+	static void get_v(double* q, Molecule* mol);
+	static void get_F(double* q, Molecule* mol);
+	static void get_v2(double& q, Molecule* mol);
+	static void get_F2(double& q, Molecule* mol);
+	void(*_fptr)(double*, Molecule*);
+	void(*_f2ptr)(double&, Molecule*);
+
 private:
 	// instances / ID
 	static unsigned short _nStaticID;
@@ -243,6 +251,7 @@ private:
 	uint64_t* _VDF_njy_nvz_global;
 
 	std::array<std::array<uint64_t*,4>,3> _dataPtrs;
+	std::string _fnamePrefixVDF;
 
 	// --- fieldYR ---
 

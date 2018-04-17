@@ -33,12 +33,35 @@ using namespace std;
 // init static ID --> instance counting
 unsigned short SampleRegion::_nStaticID = 0;
 
+void SampleRegion::get_v(double* q, Molecule* mol)
+{
+	for(uint16_t d=0; d<3; ++d)
+		q[d] = mol->v(d);
+}
+
+void SampleRegion::get_F(double* q, Molecule* mol)
+{
+	for(uint16_t d=0; d<3; ++d)
+		q[d] = mol->F(d);
+}
+
+void SampleRegion::get_v2(double& q, Molecule* mol)
+{
+	q = mol->v2();
+}
+
+void SampleRegion::get_F2(double& q, Molecule* mol)
+{
+	q = mol->F2();
+}
+
 SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], double dUpperCorner[3] )
 	: CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
 	_bDiscretisationDoneProfiles(false),
 	_SamplingEnabledProfiles(false),
 	_bDiscretisationDoneVDF(false),
 	_SamplingEnabledVDF(false),
+	_fnamePrefixVDF("VDF"),
 	_bDiscretisationDoneFieldYR(false),
 	_SamplingEnabledFieldYR(false),
 	_nSubdivisionOptFieldYR_Y(SDOPT_UNKNOWN),
@@ -59,6 +82,8 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	// Init component specific parameters for VDF sampling
 	this->InitComponentSpecificParamsVDF();
 
+	_fptr = get_v;
+	_f2ptr = get_v2;
 }
 
 SampleRegion::~SampleRegion()
@@ -279,8 +304,21 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				Simulation::exit(-1);
 			}
 		}
-		else if("VDF" == strSamplingModuleType)
+		else if("VDF" == strSamplingModuleType || "FDF" == strSamplingModuleType)
 		{
+			if("VDF" == strSamplingModuleType)
+			{
+				_fptr = get_v;
+				_f2ptr = get_v2;
+				_fnamePrefixVDF = "VDF";
+			}
+			else if("FDF" == strSamplingModuleType)
+			{
+				_fptr = get_F;
+				_f2ptr = get_F2;
+				_fnamePrefixVDF = "FDF";
+			}
+
 			// enable VDF sampling
 			_SamplingEnabledVDF = true;
 			// control
@@ -1072,16 +1110,19 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 	if(nBinIndex > nIndexMax)
 		return;
 
-	double dVelocity = sqrt( molecule->v2() );
+	double absVal;
+	_f2ptr(absVal, molecule);
+	absVal = sqrt(absVal);
 	double dInvVelocityClassWidth = csp.dInvVelocityClassWidth;
-	uint32_t nVelocityClassIndex = (uint32_t)(floor(dVelocity * dInvVelocityClassWidth) );
+	uint32_t nVelocityClassIndex = (uint32_t)(floor(absVal * dInvVelocityClassWidth) );
 
 	// calculate velocity vector indices for velocity components
 	double v[3];
 	uint32_t naVelocityClassIndex[3];
 
+	_fptr(v, molecule);  // sample either velocity or force vector
 	for(unsigned int d=0; d<3; ++d) {
-		v[d] = molecule->v(d);
+		//v[d] = molecule->v(d);
 		naVelocityClassIndex[d] = (uint32_t)(floor( fabs( v[d] ) * dInvVelocityClassWidth) );
 	}
 
@@ -1652,7 +1693,7 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 
 		// concat filename string
 		for(uint32_t fi=0; fi<numFiles; ++fi)
-			sstrFilename[fi] << "VDF_reg" << this->GetID() << "_cid" << cid << strSubPrefixes.at(fi) << "_TS" << fill_width('0', 9) << simstep << ".dat";
+			sstrFilename[fi] << _fnamePrefixVDF << "_reg" << this->GetID() << "_cid" << cid << strSubPrefixes.at(fi) << "_TS" << fill_width('0', 9) << simstep << ".dat";
 
 		// write to string streams
 		sstrOutput[numFiles-1] << "            classes_cid" << cid << endl;
