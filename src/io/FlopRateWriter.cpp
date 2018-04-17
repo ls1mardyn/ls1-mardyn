@@ -45,8 +45,8 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-void FlopRateWriter::initOutput(ParticleContainer* /*particleContainer*/,
-		DomainDecompBase* domainDecomp, Domain* domain) {
+void FlopRateWriter::init(ParticleContainer * /*particleContainer*/,
+                          DomainDecompBase *domainDecomp, Domain *domain) {
 
 	if(_writeToFile != true)
 		return;
@@ -68,10 +68,10 @@ void FlopRateWriter::afterForces(ParticleContainer* particleContainer, DomainDec
 	measureFLOPS(particleContainer, simstep);
 }
 
-void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* /*domain*/, unsigned long simstep,
-		std::list<ChemicalPotential>* /*lmu*/,
-		std::map<unsigned, CavityEnsemble>* /*mcav*/) {
+void FlopRateWriter::endStep(ParticleContainer *particleContainer,
+                             DomainDecompBase *domainDecomp, Domain * /*domain*/, unsigned long simstep,
+                             std::list<ChemicalPotential> * /*lmu*/,
+                             std::map<unsigned, CavityEnsemble> * /*mcav*/) {
 
 	if (not ((_writeFrequency == 1 and simstep > 0) or simstep % _writeFrequency == 1)) {
 		return;
@@ -129,8 +129,8 @@ void FlopRateWriter::doOutput(ParticleContainer* particleContainer,
 #endif
 }
 
-void FlopRateWriter::finishOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain) {
+void FlopRateWriter::finish(ParticleContainer *particleContainer,
+							DomainDecompBase *domainDecomp, Domain *domain) {
 
 	delete _flopCounter;
 

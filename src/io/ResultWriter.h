@@ -5,7 +5,7 @@
 #include <string>
 
 #include "ensemble/GrandCanonical.h"
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #include "utils/Accumulator.h"
 
 
@@ -21,7 +21,7 @@
  * - BetaTrans
  * - BetaRot
  */
-class ResultWriter : public OutputBase {
+class ResultWriter : public PluginBase {
 public:
 	ResultWriter() {}
 	~ResultWriter() {}
@@ -39,23 +39,23 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("ResultWriter");
 	}
-	static OutputBase* createInstance() { return new ResultWriter(); }
+	static PluginBase* createInstance() { return new ResultWriter(); }
 
 private:
 	std::ofstream _resultStream;

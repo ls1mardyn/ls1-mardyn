@@ -14,7 +14,7 @@ enum MoleculeCntIncreaseTypeEnum{
 
 #include "CellProcessor.h"
 #include "FlopCounter.h"
-#include "io/OutputBase.h"
+#include "../../utils/PluginBase.h"
 #include "ensemble/EnsembleBase.h"
 #include "parallel/LoadCalc.h"
 
@@ -28,7 +28,7 @@ class Component;
  * For different scenarios, the performance is evaluated and output.
  * Later this could be used to actually use this class as a tuner, i.e. to use the best possible vectorization method for the actual computation.
  */
-class VectorizationTuner: public OutputBase {
+class VectorizationTuner: public PluginBase {
 
 public:
 	/** @brief Constructor of VectorizationTuner for the xml input mode.
@@ -45,9 +45,9 @@ public:
 	 */
 	~VectorizationTuner();
 
-	//documentation in OutputBase
-	void initOutput(ParticleContainer* particleContainer,
-				DomainDecompBase* domainDecomp, Domain* domain) override {}
+	//documentation in PluginBase
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain) override {}
 
 	/** @brief Read in XML configuration for the VectorizationTuner.
 	 *
@@ -64,17 +64,17 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-	//documentation in OutputBase, does nothing.
-	void doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/,
-			Domain* /*domain*/, unsigned long /*simstep*/,
-			std::list<ChemicalPotential>* /*lmu*/,
-			std::map<unsigned, CavityEnsemble>* /*mcav*/) override {}
+	//documentation in PluginBase, does nothing.
+	void endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+                 Domain * /*domain*/, unsigned long /*simstep*/,
+                 std::list<ChemicalPotential> * /*lmu*/,
+                 std::map<unsigned, CavityEnsemble> * /*mcav*/) override {}
 
-	//documentation in OutputBase, does nothing.
-	void finishOutput(ParticleContainer* /*particleContainer*/,
-			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) override;
+	//documentation in PluginBase, does nothing.
+	void finish(ParticleContainer * /*particleContainer*/,
+				DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) override;
 
-	//documentation in OutputBase.
+	//documentation in PluginBase.
 	std::string getPluginName() override {
 		return std::string("VectorizationTuner");
 	}

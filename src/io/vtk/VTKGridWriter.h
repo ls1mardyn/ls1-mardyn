@@ -8,7 +8,7 @@
 #ifndef VTKGRIDWRITER_H_
 #define VTKGRIDWRITER_H_
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #include "io/vtk/VTKGridCell.h"
 #include "io/vtk/VTKGridVertex.h"
 
@@ -20,7 +20,7 @@ class VTKGridWriterImplementation;
  * the actual xml writing. It is a friend class of LinkedCells, but reads only
  * its internal data to generate the vtk output.
  */
-class VTKGridWriter : public OutputBase {
+class VTKGridWriter : public PluginBase {
 
 private:
 
@@ -50,8 +50,8 @@ public:
 
 	virtual ~VTKGridWriter();
 
-	virtual void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	virtual void init(ParticleContainer *particleContainer,
+                      DomainDecompBase *domainDecomp, Domain *domain);
 
 	/**
 	 * creates the VTKGrid and sets all the data, which is then written out.
@@ -62,20 +62,20 @@ public:
 	 * Thus every time output is done, the methods setupVTKGrid() and releaseVTKGrid()
 	 * are called.
 	 */
-	virtual void doOutput(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	virtual void endStep(
+            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+            Domain *domain, unsigned long simstep,
+            std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 
-	virtual void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	virtual void finish(ParticleContainer *particleContainer,
+						DomainDecompBase *domainDecomp, Domain *domain);
 
 	std::string getPluginName() {
 		return std::string("VTKGridWriter");
 	}
-	static OutputBase* createInstance() { return new VTKGridWriter(); }
+	static PluginBase* createInstance() { return new VTKGridWriter(); }
 
 	void readXML(XMLfileUnits& xmlconfig);
 

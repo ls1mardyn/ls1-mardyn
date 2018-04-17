@@ -1,7 +1,7 @@
 #ifndef SRC_IO_GAMMAWRITER_H_
 #define SRC_IO_GAMMAWRITER_H_
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #include "ensemble/GrandCanonical.h"
 #include <string>
 #include <fstream>
@@ -15,7 +15,7 @@ class Domain;
  * @todo What is the actual surface? y-plane?
  */
 class XMLfileUnits;
-class GammaWriter : public OutputBase {
+class GammaWriter : public PluginBase {
 public:
 	GammaWriter() : _gammaStream(), _writeFrequency(1), _outputPrefix("mardyn"), _Gamma() {}
 	~GammaWriter() {}
@@ -32,23 +32,23 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	//! @todo comment
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 	//! @todo comment
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 	//! @todo comment
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("GammaWriter");
 	}
-	static OutputBase* createInstance() { return new GammaWriter(); }
+	static PluginBase* createInstance() { return new GammaWriter(); }
 
 private:
 	void calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom);

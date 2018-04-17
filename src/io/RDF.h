@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #include "molecules/Molecule.h"
 #include "utils/CommVar.h"
 
@@ -31,7 +31,7 @@ class RDFCellProcessor;
  *   of the corresponding shell
  * - divide the number density by the number density of the system.
  */
-class RDF : public OutputBase {
+class RDF : public PluginBase {
 
 	friend class RDFTest;
 
@@ -56,14 +56,14 @@ public:
 
 	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
 
-	void initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain);
 
-	void finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain);
 
 	std::string getPluginName() {
 		return std::string("RDF");
 	}
-	static OutputBase* createInstance() { return new RDF(); }
+	static PluginBase* createInstance() { return new RDF(); }
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
@@ -74,7 +74,8 @@ public:
 	void setOutputPrefix(std::string prefix) { _outputPrefix = prefix; }
 
 	//! plot all the statistics calculated to one or several files
-	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav);
+	void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomposition, Domain *domain,
+                 unsigned long simStep, std::list<ChemicalPotential> *lmu, std::map<unsigned, CavityEnsemble> *mcav);
 
 	//! increment the counter indicating for how many iterations
 	//! the molecule pairs have been counted.

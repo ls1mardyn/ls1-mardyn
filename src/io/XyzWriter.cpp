@@ -37,10 +37,12 @@ void XyzWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void XyzWriter::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void XyzWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+                     Domain * /*domain*/) {}
 
-void XyzWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* /*domain*/,
-		unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
+void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain * /*domain*/,
+                        unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
+                        map<unsigned, CavityEnsemble> * /*mcav*/) {
 	if( simstep % _writeFrequency == 0) {
 		vector<Component>*  components = _simulation.getEnsemble()->getComponents();
 		stringstream filenamestream;
@@ -112,4 +114,5 @@ void XyzWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase*
 	}
 }
 
-void XyzWriter::finishOutput( ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/ ) {}
+void XyzWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+					   Domain * /*domain*/ ) {}

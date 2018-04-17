@@ -8,12 +8,12 @@
 
 #include <string>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #ifdef ENABLE_MPI
 #include "utils/MPI_Info_object.h"
 #endif
 
-class MPICheckpointWriter : public OutputBase {
+class MPICheckpointWriter : public PluginBase {
 public:
 	
     MPICheckpointWriter(){}
@@ -42,21 +42,21 @@ public:
 	
 	void readXML(XMLfileUnits& xmlconfig);
 	
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("MPICheckpointWriter");
 	}
-	static OutputBase* createInstance() { return new MPICheckpointWriter(); }
+	static PluginBase* createInstance() { return new MPICheckpointWriter(); }
 private:
 	static const char _magicVersion[56];
 	static const int _endiannesstest;

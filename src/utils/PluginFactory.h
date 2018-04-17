@@ -4,36 +4,40 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <Simulation.h>
 
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
 
-//#include "io/CavityWriter.h"
-//#include "io/CheckpointWriter.h"
-//#include "io/DecompWriter.h"
-//#include "io/DensityProfileWriter.h"
-//#include "io/EnergyLogWriter.h"
-//#include "io/FlopRateWriter.h"
-//#include "io/GammaWriter.h"
-//#include "io/LoadBalanceWriter.h"
-//#include "io/MPICheckpointWriter.h"
-//#include "io/MmpldWriter.h"
-//#include "io/MmspdBinWriter.h"
-//#include "io/MmspdWriter.h"
-//#include "io/PovWriter.h"
-//#include "io/RDF.h"
+#include "io/CavityWriter.h"
+#include "io/CheckpointWriter.h"
+#include "io/DecompWriter.h"
+#include "io/DensityProfileWriter.h"
+#include "io/EnergyLogWriter.h"
+#include "io/FlopRateWriter.h"
+#include "io/GammaWriter.h"
+#include "io/LoadBalanceWriter.h"
+#include "io/MPICheckpointWriter.h"
+#include "io/MmpldWriter.h"
+#include "io/MmspdBinWriter.h"
+#include "io/MmspdWriter.h"
+#include "io/PovWriter.h"
+#include "io/RDF.h"
 //#include "io/ResultWriter.h"
-//#include "io/SysMonOutput.h"
+#include "io/SysMonOutput.h"
 //#include "io/VISWriter.h"
-//#include "io/XyzWriter.h"
-//#include "io/MaxWriter.h"
-//
-//#ifdef VTK
-//#include "io/vtk/VTKMoleculeWriter.h"
-//#include "io/vtk/VTKGridWriter.h"
-//#endif
-//
+#include "io/XyzWriter.h"
+#include "io/MaxWriter.h"
+
+#ifdef VTK
+#include "io/vtk/VTKMoleculeWriter.h"
+#include "io/vtk/VTKGridWriter.h"
+#endif
+
 #include "utils/testPlugin.h"
+
+class Simulation;
+
 
 
 /** @brief macro used to simplify the registration of plugins in the constructor.
@@ -59,6 +63,9 @@ template <typename T>
 class PluginFactory {
 
 typedef T* createInstanceFunc();
+
+private:
+	std::map<std::string, createInstanceFunc*> _pluginFactoryMap;
 
 public:
 	PluginFactory() {}
@@ -88,30 +95,30 @@ public:
 	 */
 	void registerDefaultPlugins() {
 		global_log -> debug() << "REGISTERING PLUGINS" << endl;
-		REGISTER_PLUGIN(testPlugin);
-//		REGISTER_PLUGIN(CavityWriter);
-//		REGISTER_PLUGIN(CheckpointWriter);
-//		REGISTER_PLUGIN(DecompWriter);
-//		REGISTER_PLUGIN(DensityProfileWriter);
-//		REGISTER_PLUGIN(EnergyLogWriter);
-//		REGISTER_PLUGIN(FlopRateWriter);
-//		REGISTER_PLUGIN(GammaWriter);
-//		REGISTER_PLUGIN(LoadbalanceWriter);
-//		REGISTER_PLUGIN(MPICheckpointWriter);
-//		REGISTER_PLUGIN(MmpldWriter);
-//		REGISTER_PLUGIN(MmspdBinWriter);
-//		REGISTER_PLUGIN(MmspdWriter);
-//		REGISTER_PLUGIN(PovWriter);
-//		REGISTER_PLUGIN(RDF);
-//		REGISTER_PLUGIN(ResultWriter);
-//		REGISTER_PLUGIN(SysMonOutput);
-//		REGISTER_PLUGIN(VISWriter);
-//		REGISTER_PLUGIN(XyzWriter);
-//		REGISTER_PLUGIN(MaxWriter);
-//#ifdef VTK
-//		REGISTER_PLUGIN(VTKMoleculeWriter);
-//		REGISTER_PLUGIN(VTKGridWriter);
-//#endif /* VTK */
+        REGISTER_PLUGIN(testPlugin);
+		REGISTER_PLUGIN(CavityWriter);
+		REGISTER_PLUGIN(CheckpointWriter);
+		REGISTER_PLUGIN(DecompWriter);
+		REGISTER_PLUGIN(DensityProfileWriter);
+		REGISTER_PLUGIN(EnergyLogWriter);
+		REGISTER_PLUGIN(FlopRateWriter);
+		REGISTER_PLUGIN(GammaWriter);
+		REGISTER_PLUGIN(LoadbalanceWriter);
+		REGISTER_PLUGIN(MPICheckpointWriter);
+		REGISTER_PLUGIN(MmpldWriter);
+		REGISTER_PLUGIN(MmspdBinWriter);
+		REGISTER_PLUGIN(MmspdWriter);
+		REGISTER_PLUGIN(PovWriter);
+		REGISTER_PLUGIN(RDF);
+		//REGISTER_PLUGIN(ResultWriter);
+		REGISTER_PLUGIN(SysMonOutput);
+		//REGISTER_PLUGIN(VISWriter);
+		REGISTER_PLUGIN(XyzWriter);
+		REGISTER_PLUGIN(MaxWriter);
+#ifdef VTK
+		REGISTER_PLUGIN(VTKMoleculeWriter);
+		REGISTER_PLUGIN(VTKGridWriter);
+#endif
 	}
 
 	/** @brief Get all names of registered plugins */
@@ -133,8 +140,7 @@ public:
 		return nullptr;
 	}
 
-private:
-	std::map<std::string, createInstanceFunc*> _pluginFactoryMap;
-};
+	long enablePlugins(std::list<PluginBase*>& _plugins, XMLfileUnits& xmlconfig, std::string category, Domain* _domain);
 
+	};
 #endif  // SRC_UTILS_PLUGINFACTORY_H_

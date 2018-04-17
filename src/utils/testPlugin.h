@@ -8,7 +8,7 @@
 #ifndef SRC_UTILS_TESTPLUGIN_H_
 #define SRC_UTILS_TESTPLUGIN_H_
 
-#include "PluginBase.h"
+#include "utils/PluginBase.h"
 
 class testPlugin: public PluginBase {
 public:
@@ -83,8 +83,12 @@ public:
     }
 
     /** @brief return the name of the plugin */
-    std::string getPluginName()  {return "testPlugin";}
-    static PluginBase* createInstance() { return new testPlugin(); }
+    std::string getPluginName()  {
+        global_log->info()  << "[TESTPLUGIN] GETTING NAME" << endl;
+        return "testPlugin";}
+    static PluginBase* createInstance() {
+        global_log->info()  << "[TESTPLUGIN] CREATE INSTANCE" << endl;
+        return new testPlugin(); }
 
 private:
 

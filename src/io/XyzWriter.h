@@ -4,7 +4,7 @@
 #include <string>
 
 #include "ensemble/GrandCanonical.h"
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 /** @brief Writes out an ASCII file in the *.xyz-format containing coordinates of each molecule.
  *
@@ -12,7 +12,7 @@
  * can be found under  http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/xyzplugin.html.
  */
 
-class XyzWriter : public OutputBase {
+class XyzWriter : public PluginBase {
 public:
 	XyzWriter() {}
 	~XyzWriter() {}
@@ -31,23 +31,23 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("XyzWriter");
 	}
-	static OutputBase* createInstance() { return new XyzWriter(); }
+	static PluginBase* createInstance() { return new XyzWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

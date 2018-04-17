@@ -50,6 +50,7 @@ class ResortCellProcessorSliced;
 class LinkedCells : public ParticleContainer {
 
 	friend class LinkedCellsTest;
+	//friend class VTKGridWriter;
 
 public:
 	//! @brief initialize the Linked Cell datastructure
