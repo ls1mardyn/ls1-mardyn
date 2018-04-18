@@ -36,11 +36,11 @@ void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
 }
 
 
-void VTKMoleculeWriter::doOutput(
-		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-		Domain* /*domain*/, unsigned long simstep,
-		std::list<ChemicalPotential>* /*lmu*/,
-		std::map<unsigned, CavityEnsemble>* /*mcav*/
+void VTKMoleculeWriter::endStep(
+        ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+        Domain * /*domain*/, unsigned long simstep,
+        std::list<ChemicalPotential> * /*lmu*/,
+        std::map<unsigned, CavityEnsemble> * /*mcav*/
 ) {
 	if (simstep % _writeFrequency != 0) {
 		return;
@@ -98,9 +98,9 @@ void VTKMoleculeWriter::outputParallelVTKFile(unsigned int numProcs, unsigned lo
 
 
 //! NOP
-void VTKMoleculeWriter::initOutput(ParticleContainer* /*particleContainer*/,
-		DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void VTKMoleculeWriter::init(ParticleContainer * /*particleContainer*/,
+                             DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {}
 
 //! NOP
-void VTKMoleculeWriter::finishOutput(ParticleContainer* /*particleContainer*/,
-		DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void VTKMoleculeWriter::finish(ParticleContainer * /*particleContainer*/,
+							   DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {}

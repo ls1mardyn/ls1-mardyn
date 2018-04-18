@@ -38,8 +38,8 @@ void LoadbalanceWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode(oldpath);
 }
 
-void LoadbalanceWriter::initOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain) {
+void LoadbalanceWriter::init(ParticleContainer *particleContainer,
+                             DomainDecompBase *domainDecomp, Domain *domain) {
 	std::string default_timer_name(LB_WRITER_DEFAULT_TIMER_NAME);
 	_defaultTimer = new Timer();
 	global_simulation->timers()->registerTimer(default_timer_name, vector<string>{"SIMULATION"}, _defaultTimer);
@@ -58,11 +58,11 @@ void LoadbalanceWriter::initOutput(ParticleContainer* particleContainer,
 	}
 }
 
-void LoadbalanceWriter::doOutput(
-		ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain,
-		unsigned long simstep, std::list<ChemicalPotential>* lmu,
-		std::map<unsigned, CavityEnsemble>* mcav
+void LoadbalanceWriter::endStep(
+        ParticleContainer *particleContainer,
+        DomainDecompBase *domainDecomp, Domain *domain,
+        unsigned long simstep, std::list<ChemicalPotential> *lmu,
+        std::map<unsigned, CavityEnsemble> *mcav
 )  {
 	_defaultTimer->stop();
 	recordTimes(simstep);

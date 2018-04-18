@@ -4,9 +4,9 @@
 #include <string>
 
 #include "ensemble/GrandCanonical.h"
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
-class MmspdBinWriter : public OutputBase{
+class MmspdBinWriter : public PluginBase{
   public:
     MmspdBinWriter(){};
 	//! @brief: writes a mmspd file used by MegaMol
@@ -25,21 +25,21 @@ class MmspdBinWriter : public OutputBase{
 
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("MmspdBinWriter");
 	}
-	static OutputBase* createInstance() { return new MmspdBinWriter(); }
+	static PluginBase* createInstance() { return new MmspdBinWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

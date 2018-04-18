@@ -11,7 +11,7 @@
 #include "thermostats/VelocityScalingThermostat.h"
 
 // plugins
-#include "utils/testPlugin.h"
+#include "utils/PluginFactory.h"
 
 class Wall;
 class Mirror;
@@ -53,7 +53,6 @@ class ParticleContainer;
 class ParticlePairsHandler;
 class CellProcessor;
 class Integrator;
-class OutputBase;
 class PluginBase;
 class DomainDecompBase;
 class InputBase;
@@ -187,15 +186,6 @@ public:
 	 */
 	void simulate();
 
-	/** @brief output results
-	 *
-	 * The present method serves as a redirection to the actual output.
-	 * That includes
-     * a) particular output objects included in _outputPlugins,
-	 * b) conventional output methods, i.e. recordProfile function
-	 * @param[in]  simstep timestep of the output
-     */
-	void output(unsigned long simstep);
 
 	/** @brief call plugins every nth-simstep
 	 *
@@ -205,7 +195,7 @@ public:
 	 *
 	 * @param[in]  simstep timestep of the plugins
      */
-	void plugin(unsigned long simstep);
+	void pluginEndStepCall(unsigned long simstep);
 
 	/** @brief clean up simulation */
 	void finalize();
@@ -468,10 +458,9 @@ public:
 	/** initialize all member variables with a suitable value */
 	void initialize();
 
-	/** @brief get output plugin
-	 * @return pointer to the output plugin if it is active, otherwise nullptr
+	/** @brief get plugin
+	 * @return pointer to the plugin if it is active, otherwise nullptr
 	 */
-	OutputBase* getOutputPlugin(const std::string& name);
 	PluginBase* getPlugin(const std::string& name);
 
 	//void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
@@ -485,8 +474,7 @@ private:
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;
 
-	/** List of output plugins to use */
-	std::list<OutputBase*> _outputPlugins;
+	/** List of plugins to use */
 	std::list<PluginBase*> _plugins;
 
 	VelocityScalingThermostat _velocityScalingThermostat;

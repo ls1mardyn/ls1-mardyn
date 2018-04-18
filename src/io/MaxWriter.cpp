@@ -50,8 +50,8 @@ void MaxWriter::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 }
 
-void MaxWriter::initOutput(ParticleContainer* /*particleContainer*/,
-			      DomainDecompBase* domainDecomp, Domain* /*domain*/)
+void MaxWriter::init(ParticleContainer * /*particleContainer*/,
+                     DomainDecompBase *domainDecomp, Domain * /*domain*/)
 {
 	// init data structures
 	this->initDataStructures();
@@ -118,8 +118,8 @@ void MaxWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 }
 
-void MaxWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-	unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* mcav )
+void MaxWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+                        unsigned long simstep, list<ChemicalPotential> * /*lmu*/, map<unsigned, CavityEnsemble> *mcav)
 {
 	this->doSampling(particleContainer);
 
@@ -132,8 +132,8 @@ void MaxWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 
 }
 
-void MaxWriter::finishOutput(ParticleContainer* /*particleContainer*/,
-				DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/)
+void MaxWriter::finish(ParticleContainer * /*particleContainer*/,
+					   DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/)
 {
 }
 

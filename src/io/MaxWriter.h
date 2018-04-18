@@ -6,14 +6,14 @@
 #include <cstdint>
 #include <limits>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
 
 /** @brief Writes max values of velocity angular momentum and force to a file.
  *
  */
-class MaxWriter : public OutputBase
+class MaxWriter : public PluginBase
 {
 public:
 	MaxWriter();
@@ -25,23 +25,23 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("MaxWriter");
 	}
-	static OutputBase* createInstance() { return new MaxWriter(); }
+	static PluginBase* createInstance() { return new MaxWriter(); }
 
 private:
 	void initDataStructures();

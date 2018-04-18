@@ -8,7 +8,7 @@
 #ifndef VTKWRITER_H_
 #define VTKWRITER_H_
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #include "io/vtk/VTKMoleculeWriterImplementation.h"
 
 /**
@@ -17,7 +17,7 @@
  * @TODO Think about a way how to handle the setup of particleConainers, Domain, etc...
  *       Maybe some kind of factory?
  */
-class VTKMoleculeWriter: public OutputBase {
+class VTKMoleculeWriter: public PluginBase {
 
 private:
 
@@ -36,25 +36,25 @@ public:
 	virtual ~VTKMoleculeWriter() {}
 
 	//! @todo document me!
-	virtual void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	virtual void init(ParticleContainer *particleContainer,
+                      DomainDecompBase *domainDecomp, Domain *domain);
 
 	//! @todo document me!
-	virtual void doOutput(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	virtual void endStep(
+            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+            Domain *domain, unsigned long simstep,
+            std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 
 	//! @todo document me!
-	virtual void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	virtual void finish(ParticleContainer *particleContainer,
+						DomainDecompBase *domainDecomp, Domain *domain);
 
 	std::string getPluginName() {
 		return std::string("VTKMoleculeWriter");
 	}
-	static OutputBase* createInstance() { return new VTKMoleculeWriter(); }
+	static PluginBase* createInstance() { return new VTKMoleculeWriter(); }
 
 	void readXML(XMLfileUnits& xmlconfig);
 

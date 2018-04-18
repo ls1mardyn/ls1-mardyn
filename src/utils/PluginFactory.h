@@ -4,9 +4,12 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <Simulation.h>
 
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
+
+#include "PluginBase.h"
 
 
 
@@ -34,9 +37,13 @@ class PluginFactory {
 
 typedef T* createInstanceFunc();
 
+private:
+	std::map<std::string, createInstanceFunc*> _pluginFactoryMap;
+
 public:
 	PluginFactory() {}
 	~PluginFactory() {}
+
 
 	/** @brief Register an output plugin
 	 *
@@ -54,6 +61,12 @@ public:
 		}
 		_pluginFactoryMap[pluginname] = createInstance;
 	}
+
+	/** @brief Register a plugin
+	 *
+	 * @param createInstance  pointer to a function returning an instance of the plugin object.
+	 */
+	void registerDefaultPlugins();
 
 	/** @brief Get all names of registered plugins */
 	std::vector<std::string> getPluginNames() {
@@ -74,8 +87,7 @@ public:
 		return nullptr;
 	}
 
-private:
-	std::map<std::string, createInstanceFunc*> _pluginFactoryMap;
-};
+	long enablePlugins(std::list<PluginBase*>& _plugins, XMLfileUnits& xmlconfig, std::string category, Domain* _domain);
 
+	};
 #endif  // SRC_UTILS_PLUGINFACTORY_H_

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #include "utils/Timer.h"
 
 /** name of the LoadbalanceWriter's default timer */
@@ -25,7 +25,7 @@
  *
  * @todo This plugin may be extended to threads
  */
-class LoadbalanceWriter : public OutputBase {
+class LoadbalanceWriter : public PluginBase {
 public:
 	LoadbalanceWriter();
 	~LoadbalanceWriter() {}
@@ -47,24 +47,24 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 
-	void finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
 		/* nothing to do */
 	}
 
 	std::string getPluginName() {
 		return std::string("LoadbalanceWriter");
 	}
-	static OutputBase* createInstance() { return new LoadbalanceWriter(); }
+	static PluginBase* createInstance() { return new LoadbalanceWriter(); }
 
 private:
 	void recordTimes(long unsigned int simstep);

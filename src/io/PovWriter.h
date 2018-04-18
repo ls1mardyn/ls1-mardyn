@@ -2,10 +2,10 @@
 #define SRC_IO_POVWRITER_H_
 
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 
-class PovWriter : public OutputBase {
+class PovWriter : public PluginBase {
 public:
 	PovWriter() {}
 	~PovWriter() {}
@@ -28,21 +28,21 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 
 	std::string getPluginName() {
 		return std::string("PovWriter");
 	}
-	static OutputBase* createInstance() { return new PovWriter(); }
+	static PluginBase* createInstance() { return new PovWriter(); }
 
 private:
 	std::string _outputPrefix;

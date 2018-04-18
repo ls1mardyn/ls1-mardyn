@@ -50,8 +50,8 @@ void MmspdWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void MmspdWriter::initOutput(ParticleContainer* /*particleContainer*/,
-			   DomainDecompBase* domainDecomp, Domain* domain){
+void MmspdWriter::init(ParticleContainer * /*particleContainer*/,
+                       DomainDecompBase *domainDecomp, Domain *domain){
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
@@ -119,12 +119,12 @@ void MmspdWriter::initOutput(ParticleContainer* /*particleContainer*/,
 #ifdef ENABLE_MPI
 	}
 #endif
-} // end initOutput()
+} // end init()
 
-void MmspdWriter::doOutput( ParticleContainer* particleContainer,
-		   DomainDecompBase* domainDecomp, Domain* domain,
-		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
-		   map<unsigned, CavityEnsemble>* /*mcav*/ ){
+void MmspdWriter::endStep(ParticleContainer *particleContainer,
+                          DomainDecompBase *domainDecomp, Domain *domain,
+                          unsigned long simstep, std::list<ChemicalPotential> * /*lmu*/,
+                          map<unsigned, CavityEnsemble> * /*mcav*/ ){
 	if (simstep % _writeFrequency == 0) {
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -188,6 +188,7 @@ void MmspdWriter::doOutput( ParticleContainer* particleContainer,
 	}
 #endif
   }
-} // end doOutput
+} // end endStep
 
-void MmspdWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void MmspdWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+						 Domain * /*domain*/) {}
