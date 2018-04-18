@@ -10,10 +10,10 @@
 
 #include "utils/PluginBase.h"
 
-class testPlugin: public PluginBase {
+class TestPlugin: public PluginBase {
 public:
-    testPlugin() {}
-    ~testPlugin() {}
+    TestPlugin() {}
+    ~TestPlugin() {}
 
     //! @brief will be called at the beginning of the simulation
     //!
@@ -22,7 +22,7 @@ public:
     //! be called once at the beginning of the simulation (see Simulation.cpp)
     void init(ParticleContainer* particleContainer,
                     DomainDecompBase* domainDecomp, Domain* domain) {
-        global_log->info()  << "[TESTPLUGIN] TESTPLUGIN INIT" << std::endl;
+        global_log->debug()  << "[TESTPLUGIN] TESTPLUGIN INIT" << std::endl;
     }
 
     void readXML(XMLfileUnits& /*xmlconfig*/) {
@@ -49,7 +49,7 @@ public:
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             unsigned long simstep
     ) {
-        global_log->info()  << "[TESTPLUGIN] TESTPLUGIN AFTER FORCES" << endl;
+        global_log->debug()  << "[TESTPLUGIN] TESTPLUGIN AFTER FORCES" << endl;
     }
 
     /** @brief Method endStep will be called at the end of each time step.
@@ -66,7 +66,7 @@ public:
             std::list<ChemicalPotential>* lmu,
             std::map<unsigned, CavityEnsemble>* mcav
     ) {
-        global_log->info()  << "[TESTPLUGIN] ENDSTEP" << endl;
+        global_log->debug()  << "[TESTPLUGIN] ENDSTEP" << endl;
     }
 
     /** @brief Method finalOutput will be called at the end of the simulation
@@ -79,16 +79,16 @@ public:
      */
     void finish(ParticleContainer* particleContainer,
                         DomainDecompBase* domainDecomp, Domain* domain) {
-        global_log->info()  << "[TESTPLUGIN] FINISHING" << endl;
+        global_log->debug()  << "[TESTPLUGIN] FINISHING" << endl;
     }
 
     /** @brief return the name of the plugin */
     std::string getPluginName()  {
-        global_log->info()  << "[TESTPLUGIN] GETTING NAME" << endl;
-        return "testPlugin";}
+        global_log->debug()  << "[TESTPLUGIN] GETTING NAME" << endl;
+        return "TestPlugin";}
     static PluginBase* createInstance() {
-        global_log->info()  << "[TESTPLUGIN] CREATE INSTANCE" << endl;
-        return new testPlugin(); }
+        global_log->debug()  << "[TESTPLUGIN] CREATE INSTANCE" << endl;
+        return new TestPlugin(); }
 
 private:
 

@@ -1070,17 +1070,26 @@ void Simulation::simulate() {
 #endif
 #endif
 		}
+
+        // beforeForces Plugin Call
+        global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
+        for (auto plugin : _plugins) {
+            global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
+            plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
+        }
+		
 		perStepTimer.stop();
 		computationTimer->stop();
 
-
+        
 
 #if defined(ENABLE_MPI) && defined(ENABLE_OVERLAPPING)
 		bool overlapCommComp = true;
 #else
 		bool overlapCommComp = false;
 #endif
-
+		
+		
 		if (overlapCommComp) {
 			performOverlappingDecompositionAndCellTraversalStep(perStepTimer.get_etime());
 		}
@@ -1118,9 +1127,6 @@ void Simulation::simulate() {
 		}
 		computationTimer->start();
 		perStepTimer.start();
-
-		// redundant through afterForces plugin call
-		//measureFLOPRate(_moleculeContainer, _simstep);
 
 		//afterForces Plugin Call
 		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
