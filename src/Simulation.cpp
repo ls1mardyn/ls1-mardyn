@@ -1050,12 +1050,7 @@ void Simulation::simulate() {
 				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 			}
 			// edited by Michaela Heier --> realign can be used when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
-			else if(_doAlignCentre && _applyWallFun_LJ_9_3){
-				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
-				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-			else if(_doAlignCentre && _applyWallFun_LJ_10_4){
+			else if(_doAlignCentre and (_applyWallFun_LJ_9_3 or _applyWallFun_LJ_10_4)){
 				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
