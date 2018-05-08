@@ -155,6 +155,7 @@ void RDF::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /
 
 
 RDF::~RDF() {
+	delete _cellProcessor;
 	// nothing to do since refactoring to vectors
 }
 

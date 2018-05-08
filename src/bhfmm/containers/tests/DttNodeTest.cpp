@@ -110,6 +110,7 @@ void DttNodeTest::testSoAConvertions(){
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong x coordinate",p_pos[0],m.r(0), 1e-12);
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong y coordinate",p_pos[1],m.r(1), 1e-12);
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong z coordinate",p_pos[2],m.r(2), 1e-12);
+	delete container;
 }
 
 void DttNodeTest::testDepth(double cutoffRadius){
