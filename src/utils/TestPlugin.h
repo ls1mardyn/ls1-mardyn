@@ -25,7 +25,7 @@ public:
         global_log->debug()  << "[TESTPLUGIN] TESTPLUGIN INIT" << std::endl;
     }
 
-    void readXML(XMLfileUnits& /*xmlconfig*/) {
+    void readXML(XMLfileUnits& xmlconfig) {
         global_log -> debug() << "[TESTPLUGIN] READING XML" << endl;
     }
 

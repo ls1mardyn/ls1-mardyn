@@ -32,6 +32,7 @@
 #include "io/VISWriter.h"
 #include "io/XyzWriter.h"
 #include "io/MaxWriter.h"
+#include "utils/COMaligner.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -67,6 +68,8 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(VISWriter);
     REGISTER_PLUGIN(XyzWriter);
     REGISTER_PLUGIN(MaxWriter);
+    REGISTER_PLUGIN(COMaligner);
+
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
     REGISTER_PLUGIN(VTKGridWriter);

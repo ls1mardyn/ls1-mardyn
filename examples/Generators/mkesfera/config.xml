@@ -37,10 +37,10 @@
 				<generator name="mkesfera">
 					<droplet>
 						<radius>23.43</radius>
-						<density>0.6231</density>
+						<density>0.06231</density>
 						<center> <x>41.43</x> <y>41.43</y> <z>41.43</z> </center>
 					</droplet>
-					<outer-density>0.06516</outer-density>
+					<outer-density>0.006516</outer-density>
 				</generator>
 			</phasespacepoint>
 		</ensemble>
@@ -119,7 +119,20 @@
 			</outputplugin>
 </C>
 			
+
+			<outputplugin name="VTKMoleculeWriter">
+        		<outputprefix>vtkOutput</outputprefix>
+        		<writefrequency>20</writefrequency>
+      			</outputplugin>
 		</output>
+
+		<plugin name="COMaligner">
+			<x>1</x>
+			<y>0</y>
+			<z>1</z>
+			<interval>2</interval>
+			<correctionFactor>.8</correctionFactor>
+		</plugin>
 		
 	</simulation>
 	  
