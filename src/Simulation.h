@@ -397,7 +397,6 @@ private:
 	bool _applyMirror;
 	
 	Wall* _wall;
-	Mirror* _mirror;
 
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;

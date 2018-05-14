@@ -33,6 +33,7 @@
 #include "io/XyzWriter.h"
 #include "io/MaxWriter.h"
 #include "utils/COMaligner.h"
+#include "molecules/Mirror.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -69,6 +70,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(XyzWriter);
     REGISTER_PLUGIN(MaxWriter);
     REGISTER_PLUGIN(COMaligner);
+    REGISTER_PLUGIN(Mirror);
 
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);

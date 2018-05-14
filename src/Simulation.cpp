@@ -116,7 +116,6 @@ Simulation::Simulation()
 	_applyWallFun_LJ_10_4(false),
 	_applyMirror(false),
 	_wall(nullptr),
-	_mirror(nullptr),
 	_momentumInterval(1000),
 	_rand(8624),
 	_longRangeCorrection(nullptr),
@@ -159,8 +158,6 @@ Simulation::~Simulation() {
 	_inputReader = nullptr;
 	delete _wall;
 	_wall = nullptr;
-	delete _mirror;
-	_mirror = nullptr;
 	delete _longRangeCorrection;
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
@@ -1143,10 +1140,6 @@ void Simulation::simulate() {
 
 		if(_wall && _applyWallFun_LJ_10_4){
 		  _wall->calcTSLJ_10_4(_moleculeContainer, _domain);
-		}
-
-		if(_mirror && _applyMirror){
-		  _mirror->VelocityChange(_moleculeContainer, _domain);
 		}
 
 		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
