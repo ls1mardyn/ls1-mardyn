@@ -70,25 +70,29 @@ bool PositionIsInBox3D(const T l[3], const T u[3], const T r[3]) {
 	return in;
 }
 
-unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
-		double simBoxLength, Random & RNG) {
+unsigned long ParticleCellBase::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, Random & RNG) {
 
-	double spacing = simBoxLength / numMoleculesPerDimension;
-	double origin1 = spacing * 0.25; // origin of the first DrawableMolecule
-	double origin2 = spacing * 0.25 * 3.; // origin of the first DrawableMolecule
+	std::array<double, 3> spacing;
+	std::array<double, 3> origin1; // origin of the first DrawableMolecule
+	std::array<double, 3> origin2; // origin of the first DrawableMolecule
+	for (int d = 0; d < 3; ++d) {
+		spacing[d] = simBoxLength[d] / numMoleculesPerDimension[d];
+		origin1[d] = spacing[d] * 0.25;
+		origin2[d] = spacing[d] * 0.25 * 3.;
+	}
 
 	vcp_real_calc T = global_simulation->getEnsemble()->T();
 
 	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
 	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
 
-	int start_i = floor((boxMin[0] / simBoxLength) * numMoleculesPerDimension) - 1;
-	int start_j = floor((boxMin[1] / simBoxLength) * numMoleculesPerDimension) - 1;
-	int start_k = floor((boxMin[2] / simBoxLength) * numMoleculesPerDimension) - 1;
+	int start_i = floor((boxMin[0] / simBoxLength[0]) * numMoleculesPerDimension[0]) - 1;
+	int start_j = floor((boxMin[1] / simBoxLength[1]) * numMoleculesPerDimension[1]) - 1;
+	int start_k = floor((boxMin[2] / simBoxLength[2]) * numMoleculesPerDimension[2]) - 1;
 
-	int end_i = ceil((boxMax[0] / simBoxLength) * numMoleculesPerDimension) + 1;
-	int end_j = ceil((boxMax[1] / simBoxLength) * numMoleculesPerDimension) + 1;
-	int end_k = ceil((boxMax[2] / simBoxLength) * numMoleculesPerDimension) + 1;
+	int end_i = ceil((boxMax[0] / simBoxLength[0]) * numMoleculesPerDimension[0]) + 1;
+	int end_j = ceil((boxMax[1] / simBoxLength[1]) * numMoleculesPerDimension[1]) + 1;
+	int end_k = ceil((boxMax[2] / simBoxLength[2]) * numMoleculesPerDimension[2]) + 1;
 
 	std::vector<Molecule> buffer;
 	int numMolsUpperBound = (end_k - start_k) * (end_j - start_j) * (end_i - start_i) * 2;
@@ -106,8 +110,8 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 		//// positions should be initially created in vcp_real_calc, but comparisons to _boxMin and _boxMax should be in double precision!
 
 		double i_rc = static_cast<double>(i);
-		vcp_real_calc x1 = origin1 + i_rc * spacing;
-		vcp_real_calc x2 = origin2 + i_rc * spacing;
+		vcp_real_calc x1 = origin1[0] + i_rc * spacing[0];
+		vcp_real_calc x2 = origin2[0] + i_rc * spacing[0];
 		bool x1In = PositionIsInBox1D(boxMin[0], boxMax[0], static_cast<double>(x1));
 		bool x2In = PositionIsInBox1D(boxMin[0], boxMax[0], static_cast<double>(x2));
 
@@ -117,8 +121,8 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 
 		for (int j = start_j; j < end_j; ++j) {
 			double j_rc = static_cast<double>(j);
-			vcp_real_calc y1 = origin1 + j_rc * spacing;
-			vcp_real_calc y2 = origin2 + j_rc * spacing;
+			vcp_real_calc y1 = origin1[1] + j_rc * spacing[1];
+			vcp_real_calc y2 = origin2[1] + j_rc * spacing[1];
 			bool y1In = PositionIsInBox1D(boxMin[1], boxMax[1], static_cast<double>(y1));
 			bool y2In = PositionIsInBox1D(boxMin[1], boxMax[1], static_cast<double>(y2));
 
@@ -129,8 +133,8 @@ unsigned long ParticleCellBase::initCubicGrid(int numMoleculesPerDimension,
 			for (int k = start_k; k < end_k; ++k) {
 
 				double k_rc = static_cast<double>(k);
-				vcp_real_calc z1 = origin1 + k_rc * spacing;
-				vcp_real_calc z2 = origin2 + k_rc * spacing;
+				vcp_real_calc z1 = origin1[2] + k_rc * spacing[2];
+				vcp_real_calc z2 = origin2[2] + k_rc * spacing[2];
 				bool z1In = PositionIsInBox1D(boxMin[2], boxMax[2], static_cast<double>(z1));
 				bool z2In = PositionIsInBox1D(boxMin[2], boxMax[2], static_cast<double>(z2));
 

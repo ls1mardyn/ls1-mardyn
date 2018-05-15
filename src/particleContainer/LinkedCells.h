@@ -246,7 +246,7 @@ public:
 
 	bool requiresForceExchange() const override; // new
 
-	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength); // new
+	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength);
 
 private:
 	//####################################

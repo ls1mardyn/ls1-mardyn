@@ -44,6 +44,15 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 private:
+
+	/**
+	 * determine Nx, Ny, Nz, s.t.
+	 * Nx * Ny * Nz * 2 = targetTotalNumMols
+	 * and
+	 * Nx : Ny : Nz = boxLength[0] : boxLength[1] : boxLength[2]
+	 */
+	std::array<unsigned long, 3> determineMolsPerDimension(unsigned long targetTotalNumMols, std::array<double, 3> boxLength) const;
+
 //	bool addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
 	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components);
 	/**

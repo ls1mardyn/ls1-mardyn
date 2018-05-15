@@ -85,7 +85,7 @@ public:
 	
 	bool getMoleculeAtPosition(const double pos[3], Molecule** result) { return false; } // pure virtual in particleContainer.h
 
-	unsigned long initCubicGrid(int numMoleculesPerDimension, double simBoxLength) { return 0; }
+	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) { return 0; }
 
 	size_t getTotalSize() { return _basis.numMolecules() * sizeof(Molecule); }
 	void printSubInfo(int offset) { return; }

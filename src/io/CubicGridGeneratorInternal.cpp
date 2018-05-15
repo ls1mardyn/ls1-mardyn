@@ -50,7 +50,10 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 					<< std::endl;
 			Simulation::exit(2342);
 		}
-		_numMolecules = density * global_simulation->getDomain()->getGlobalLength(0) * global_simulation->getDomain()->getGlobalLength(1) * global_simulation->getDomain()->getGlobalLength(2);
+		double vol = 1.0;
+		for (int d = 0; d < 3; ++d)
+			vol *= global_simulation->getDomain()->getGlobalLength(d);
+		_numMolecules = density * vol;
 		global_log->info() << "numMolecules: " << _numMolecules << std::endl;
 	}
 }
@@ -69,20 +72,21 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	// create a body centered cubic layout, by creating by placing the molecules on the
 	// vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
-	int numMoleculesPerDimension = ceil(pow((double) _numMolecules / 2.0, 1. / 3.));
+	std::array<double, 3> simBoxLength;
+	for (int d = 0; d < 3; ++d) {
+		simBoxLength[d] = global_simulation->getDomain()->getGlobalLength(d);
+	}
+
+	std::array<unsigned long, 3> numMoleculesPerDim = determineMolsPerDimension(_numMolecules, simBoxLength);
+
+
 	if (_binaryMixture) {
 		global_simulation->getEnsemble()->getComponents()->at(1).updateMassInertia();
 	}
 
 	unsigned long int id = 0;
 
-	double simBoxLength = domain->getGlobalLength(0);
-	if(domain->getGlobalLength(0)!=simBoxLength || domain->getGlobalLength(0) != simBoxLength){
-		Log::global_log->error() << "varying simBoxLength not yet supported for CubicGridGenerator" << std::endl;
-		Simulation::exit(1);
-	}
-
-    id = particleContainer->initCubicGrid(numMoleculesPerDimension, simBoxLength);
+    id = particleContainer->initCubicGrid(numMoleculesPerDim, simBoxLength);
 
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 
@@ -118,6 +122,69 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 			<< global_simulation->timers()->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	return id + idOffset;
+}
+
+std::array<unsigned long, 3> CubicGridGeneratorInternal::determineMolsPerDimension(
+		unsigned long targetTotalNumMols,
+		std::array<double, 3> boxLength) const {
+
+	unsigned long long numMoleculesHalf = targetTotalNumMols / 2; // two grids
+
+	double vol = 1.0;
+
+	for (int d = 0; d < 3; ++d) {
+		vol *= boxLength[d];
+	}
+
+	std::array<unsigned long, 3> ret;
+	for (int d = 0; d < 3; ++d) {
+		double L = boxLength[d];
+		double frac = L * L * L / vol;
+		double oneThird = 1.0 / 3.0;
+		unsigned long answer = round(pow(numMoleculesHalf * frac, oneThird));
+
+		mardyn_assert(answer >= 1);
+
+		if (answer < 1) {
+			global_log->error() << "computed num Molecules along dimension " << d << ": " << answer << std::endl;
+			global_log->error() << "Should be larger than 1. Exiting." << std::endl;
+			mardyn_exit(1);
+		}
+
+		ret[d] = answer;
+	}
+
+	// quality of approximation:
+	unsigned long larger = std::max(ret[0] * ret[1] * ret[2] * 2, targetTotalNumMols);
+	unsigned long smaller = std::min(ret[0] * ret[1] * ret[2] * 2, targetTotalNumMols);
+	unsigned long diff = larger - smaller;
+
+	// now iterate over {-1, 0, +1} for the three found numbers, to find best overall match
+	std::array<long, 3> ret2;
+	std::array<long, 3> temp;
+	for (int d = 0; d < 3; ++d)
+		temp[d] = static_cast<long>(ret[d]);
+
+	for (long z = -1; z <= +1; ++z) {
+		for (long y = -1; y <= +1; ++y) {
+			for (long x = -1; x <= +1; ++x) {
+
+				ret2[0] = temp[0] + x;
+				ret2[1] = temp[1] + y;
+				ret2[2] = temp[2] + z;
+
+				unsigned long larger2 = std::max(static_cast<unsigned long>(ret2[0] * ret2[1] * ret2[2] * 2), targetTotalNumMols);
+				unsigned long smaller2 = std::min(static_cast<unsigned long>(ret2[0] * ret2[1] * ret2[2] * 2), targetTotalNumMols);
+				if (larger2 - smaller2 < diff) {
+					diff = larger2 - smaller2;
+					for (int d = 0; d < 3; ++d)
+						ret[d] = static_cast<unsigned long>(ret2[d]);
+				}
+			}
+		}
+	}
+
+	return ret;
 }
 
 //bool CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
