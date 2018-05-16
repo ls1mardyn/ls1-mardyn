@@ -17,6 +17,7 @@
 
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
+#include "utils/arrayMath.h"
 using Log::global_log;
 
 using namespace std;
@@ -359,9 +360,7 @@ void Domain::calculateGlobalValues(
 
 		if(collectThermostatVelocities && _universalUndirectedThermostat[thermit->first])
 		{
-			double sigv[3];
-			for(int d=0; d < 3; d++)
-				sigv[d] = _localThermostatDirectedVelocity[thermit->first][d];
+			std::array<double, 3> sigv = _localThermostatDirectedVelocity[thermit->first];
 
 			domainDecomp->collCommInit(3);
 			for(int d=0; d < 3; d++) domainDecomp->collCommAppendDouble(sigv[d]);
@@ -373,8 +372,7 @@ void Domain::calculateGlobalValues(
 			_localThermostatDirectedVelocity[thermit->first].fill(0.0);
 
 			if(numMolecules > 0)
-				for(int d=0; d < 3; d++)
-					_universalThermostatDirectedVelocity[thermit->first][d] = sigv[d] / numMolecules;
+				_universalThermostatDirectedVelocity[thermit->first] = arrayMath::mulScalar(sigv, 1.0 / static_cast<double>(numMolecules));
 			else
 				_universalThermostatDirectedVelocity[thermit->first].fill(0.0);
 
@@ -423,20 +421,16 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
+
 			if(this->_universalUndirectedThermostat[thermostat])
-			{
-				for(int d=0; d < 3; d++)
-					_localThermostatDirectedVelocity[thermostat][d] += tM->v(d);
-			}
+				arrayMath::accumulate(_localThermostatDirectedVelocity[thermostat], tM->v_arr());
 		}
 	}
 	else if(this->_universalUndirectedThermostat[0])
 	{
 		_localThermostatDirectedVelocity[0].fill(0.0);
-		for(tM = partCont->iterator(); tM.hasNext(); tM.next())
-		{
-			for(int d=0; d < 3; d++)
-				_localThermostatDirectedVelocity[0][d] += tM->v(d);
+		for(tM = partCont->iterator(); tM.hasNext(); tM.next()) {
+			arrayMath::accumulate(_localThermostatDirectedVelocity[0], tM->v_arr());
 		}
 	}
 }
