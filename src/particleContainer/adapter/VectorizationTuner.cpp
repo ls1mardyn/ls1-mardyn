@@ -72,8 +72,8 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 
 }
 
-void VectorizationTuner::finishOutput(ParticleContainer* /*particleContainer*/,
-			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
+void VectorizationTuner::finish(ParticleContainer * /*particleContainer*/,
+                                DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {
 	// make a backup copy of CellBorderAndFlagManager
 	CellBorderAndFlagManager backup = ParticleCell::_cellBorderAndFlagManager;
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);

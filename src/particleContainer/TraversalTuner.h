@@ -273,9 +273,9 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 				mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
 				tPair.first = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
 			} else if (dynamic_cast<HalfShellTraversalData *>(tPair.second)) {
-			    tPair.first = new HalfShellTraversal<CellTemplate>(cells, dims);
-                        } else if (dynamic_cast<MidpointTraversalData *>(tPair.second)) {
-			    tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
+				tPair.first = new HalfShellTraversal<CellTemplate>(cells, dims);
+			} else if (dynamic_cast<MidpointTraversalData *>(tPair.second)) {
+				tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
 			} else if (dynamic_cast<OriginalCellPairTraversalData *>(tPair.second)) {
 				tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells, dims);
 			} else if (dynamic_cast<SlicedCellPairTraversalData *>(tPair.second)) {

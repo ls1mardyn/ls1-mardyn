@@ -124,6 +124,13 @@
           <component id="1"/>
         </components>
       </outputplugin>
+      <outputplugin name="VTKMoleculeWriter">
+      	<outputprefix>vtkOutput</outputprefix>
+      	<writefrequency>10</writefrequency>
+      </outputplugin>
     </output>
+    <plugin name="TestPlugin">
+		<writefrequency>1</writefrequency>
+	</plugin>
   </simulation>
 </mardyn>

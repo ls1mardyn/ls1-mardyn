@@ -18,7 +18,7 @@ void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
     global_log->info() << "GammaWriter: Output prefix: " << _outputPrefix << endl;
 }
 
-void GammaWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
 	if(domainDecomp->getRank() == 0){
 		string resultfilename(_outputPrefix + ".gamma");
 		_gammaStream.open(resultfilename);
@@ -30,8 +30,9 @@ void GammaWriter::initOutput(ParticleContainer* particleContainer, DomainDecompB
 	}
 }
 
-void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-	unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/ )
+void GammaWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+                          unsigned long simstep, std::list<ChemicalPotential> * /*lmu*/,
+                          map<unsigned, CavityEnsemble> * /*mcav*/ )
 {
 	calculateGamma(particleContainer, domainDecomp);
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
@@ -48,8 +49,8 @@ void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBa
 	}
 }
 
-void GammaWriter::finishOutput(ParticleContainer* /*particleContainer*/,
-				DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
+void GammaWriter::finish(ParticleContainer * /*particleContainer*/,
+						 DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/){
 	_gammaStream.close();
 }
 

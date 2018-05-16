@@ -36,8 +36,6 @@
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
-#include "io/OutputBase.h"
-#include "io/OutputPluginFactory.h"
 #include "utils/PluginBase.h"
 #include "utils/PluginFactory.h"
 
@@ -127,7 +125,6 @@ Simulation::Simulation()
 	_applyWallFun_LJ_10_4(false),
 	_applyMirror(false),
 	_wall(nullptr),
-	_mirror(nullptr),
 	_momentumInterval(1000),
 	_rand(8624),
 	_longRangeCorrection(nullptr),
@@ -179,16 +176,13 @@ Simulation::~Simulation() {
 	_inputReader = nullptr;
 	delete _wall;
 	_wall = nullptr;
-	delete _mirror;
-	_mirror = nullptr;
 	delete _longRangeCorrection;
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
 	_temperatureControl = nullptr;
 	delete _FMM;
 	_FMM = nullptr;
-	/* destruct output plugins and remove them from the output plugin list */
-	_outputPlugins.remove_if([](OutputBase *pluginPtr) {delete pluginPtr; return true;} );
+
 	/* destruct plugins and remove from plugin list */
 	_plugins.remove_if([](PluginBase *pluginPtr) {delete pluginPtr; return true;} );
 
@@ -633,116 +627,20 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Algorithm section missing." << endl;
 	}
 
-	/* output */
-	long numOutputPlugins = 0;
-	XMLfile::Query query = xmlconfig.query("output/outputplugin");
-	numOutputPlugins = query.card();
-	global_log->info() << "Number of output plugins: " << numOutputPlugins << endl;
-	if(numOutputPlugins < 1) {
-		global_log->warning() << "No output plugins specified." << endl;
-	}
 
-	/* plugins */
-	long numPlugins = 0;
-	XMLfile::Query query_p = xmlconfig.query("plugin");
-	numPlugins = query_p.card();
-	global_log->info() << "Number of plugins: " << numPlugins << endl;
-	if(numPlugins < 1) {
-		global_log->warning() << "No plugins specified." << endl;
-	}
-
-	string oldpath = xmlconfig.getcurrentnodepath();
-
+    // REGISTERING/ENABLING PLUGINS
 	PluginFactory<PluginBase> pluginFactory;
-	// register plugins
-	pluginFactory.registerPlugin(&(testPlugin::createInstance));
-    //testPlugin* asd = new testPlugin();
+    pluginFactory.registerDefaultPlugins();
 
-	for (auto pluginIter = query_p.begin(); pluginIter; ++pluginIter) {
-		xmlconfig.changecurrentnode( pluginIter );
-		string pluginname("");
-		xmlconfig.getNodeValue("@name", pluginname);
-		bool enabled = true;
-		xmlconfig.getNodeValue("@enabled", enabled);
-		if(not enabled) {
-			global_log->debug() << "skipping disabled plugin: " << pluginname << endl;
-			continue;
-		}
-		global_log->info() << "Enabling plugin: " << pluginname << endl;
-
-
-		PluginBase* plugin = pluginFactory.create(pluginname);
-		if(plugin == nullptr) {
-			global_log->warning() << "Could not create plugin using factory: " << pluginname << endl;
-		}
-
-		// add plugin specific functions
+    int numPlugs = 0;
+	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
+	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
+    global_log -> info() << "Number of Total Plugins: " << numPlugs << endl;
 
 
 
-        if(nullptr != plugin) {
-            plugin->readXML(xmlconfig);
-            _plugins.push_back(plugin);
-        } else {
-            global_log->warning() << "Unknown plugin " << pluginname << endl;
-        }
-	}
+    string oldpath = xmlconfig.getcurrentnodepath();
 
-
-	OutputPluginFactory outputPluginFactory;
-	for( auto outputPluginIter = query.begin(); outputPluginIter; ++outputPluginIter ) {
-		xmlconfig.changecurrentnode( outputPluginIter );
-		string pluginname("");
-		xmlconfig.getNodeValue("@name", pluginname);
-		bool enabled = true;
-		xmlconfig.getNodeValue("@enabled", enabled);
-		if(not enabled) {
-			global_log->debug() << "Skipping disabled output plugin: " << pluginname << endl;
-			continue;
-		}
-		global_log->info() << "Enabling output plugin: " << pluginname << endl;
-
-
-		OutputBase *outputPlugin = outputPluginFactory.create(pluginname);
-		if(outputPlugin == nullptr) {
-			global_log->warning() << "Could not create output plugin using factory: " << pluginname << endl;
-		}
-
-
-		if(pluginname == "MmpldWriter") {
-			/** @todo this should be handled in the MMPLD Writer readXML() */
-			std::string sphere_representation = "simple";
-			xmlconfig.getNodeValue("@type", sphere_representation);
-			delete outputPlugin;
-			if("simple" == sphere_representation) {
-				outputPlugin = new MmpldWriterSimpleSphere();
-			} else if("multi" == sphere_representation) {
-				outputPlugin = new MmpldWriterMultiSphere ();
-			} else {
-				global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << endl;
-				Simulation::exit(-1);
-			}
-		}
-		/* temporary */
-		else if(pluginname == "VectorizationTuner") {
-			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
-		}
-		else if(pluginname == "DomainProfiles") {
-			outputPlugin = outputPluginFactory.create("DensityProfileWriter");
-			_domain->readXML(xmlconfig);
-		}
-
-		if(nullptr != outputPlugin) {
-			outputPlugin->readXML(xmlconfig);
-			_outputPlugins.push_back(outputPlugin);
-		} else {
-			global_log->warning() << "Unknown plugin " << pluginname << endl;
-		}
-	}
-
-	xmlconfig.changecurrentnode(oldpath);
-
-	oldpath = xmlconfig.getcurrentnodepath();
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
 		global_log->info() << "Reading phase space from file." << endl;
 		string pspfiletype;
@@ -795,6 +693,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	xmlconfig.changecurrentnode(oldpath);
 }
+
 
 void Simulation::readConfigFile(string filename) {
 	string extension(getFileExtension(filename.c_str()));
@@ -1122,16 +1021,6 @@ void Simulation::prepare_start() {
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 
-	global_log->info() << "Initializing output plugins and corresponding output timers" << endl;
-	for (auto& outputPlugin : _outputPlugins) {
-		global_log->info() << "Initializing output plugin " << outputPlugin->getPluginName() << endl;
-		outputPlugin->initOutput(_moleculeContainer, _domainDecomposition, _domain);
-		string timer_name = outputPlugin->getPluginName();
-		global_simulation->timers()->registerTimer(timer_name,  vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
-		string timer_output_string = string("Output Plugin ") + timer_name + string(" took:");
-		global_simulation->timers()->setOutputString(timer_name, timer_output_string);
-	}
-
 	// initializing plugins and starting plugin timers
 	for (auto& plugin : _plugins) {
 		global_log->info() << "Initializing plugin " << plugin->getPluginName() << endl;
@@ -1251,7 +1140,8 @@ void Simulation::simulate() {
 	if(getMemoryProfiler()) {
 		getMemoryProfiler()->doOutput();
 	}
-	output(_initSimulation);
+
+	pluginEndStepCall(_initSimulation);
 
 	Timer perStepTimer;
 	perStepTimer.reset();
@@ -1406,12 +1296,7 @@ void Simulation::simulate() {
 				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 			}
 			// edited by Michaela Heier --> realign can be used when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
-			else if(_doAlignCentre && _applyWallFun_LJ_9_3){
-				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
-				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-			else if(_doAlignCentre && _applyWallFun_LJ_10_4){
+			else if(_doAlignCentre and (_applyWallFun_LJ_9_3 or _applyWallFun_LJ_10_4)){
 				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
@@ -1426,17 +1311,26 @@ void Simulation::simulate() {
 #endif
 #endif
 		}
+
+        // beforeForces Plugin Call
+        global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
+        for (auto plugin : _plugins) {
+            global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
+            plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
+        }
+		
 		perStepTimer.stop();
 		computationTimer->stop();
 
-
+        
 
 #if defined(ENABLE_MPI) && defined(ENABLE_OVERLAPPING)
 		bool overlapCommComp = true;
 #else
 		bool overlapCommComp = false;
 #endif
-
+		
+		
 		if (overlapCommComp) {
 			performOverlappingDecompositionAndCellTraversalStep(perStepTimer.get_etime());
 		}
@@ -1475,16 +1369,6 @@ void Simulation::simulate() {
 		computationTimer->start();
 		perStepTimer.start();
 
-		// redundant through afterForces plugin call
-		//measureFLOPRate(_moleculeContainer, _simstep);
-
-		//afterForces Output Call
-		global_log -> debug() << "[AFTER FORCES] Performing AfterForces output plugin call" << endl;
-		for (auto outputPlugin : _outputPlugins) {
-				global_log -> debug() << "[AFTER FORCES] Plugin: " << outputPlugin->getPluginName() << endl;
-				outputPlugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
-		}
-
 		//afterForces Plugin Call
 		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
 		for (auto plugin : _plugins) {
@@ -1503,10 +1387,6 @@ void Simulation::simulate() {
 
 		if(_wall && _applyWallFun_LJ_10_4){
 		  _wall->calcTSLJ_10_4(_moleculeContainer, _domain);
-		}
-
-		if(_mirror && _applyMirror){
-		  _mirror->VelocityChange(_moleculeContainer, _domain);
 		}
 
 		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
@@ -1785,7 +1665,7 @@ void Simulation::simulate() {
 		computationTimer->stop();
 		perStepIoTimer->start();
 
-		output(_simstep);
+		pluginEndStepCall(_simstep);
 
 		//! TODO: this should be moved! it is definitely not I/O
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
@@ -1827,14 +1707,10 @@ void Simulation::simulate() {
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
         _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, false);
     }
-	global_log->info() << "Finish output from output plugins" << endl;
-	for (auto outputPlugin : _outputPlugins) {
-		outputPlugin->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
-	}
 
 	global_log->info() << "Finish plugins" << endl;
 	for (auto plugin : _plugins) {
-		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+		plugin->finish(_moleculeContainer, _domainDecomposition, _domain);
 	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
@@ -1854,44 +1730,16 @@ void Simulation::simulate() {
 #endif /* WITH_PAPI */
 }
 
-void Simulation::output(unsigned long simstep) {
-
-	int mpi_rank = _domainDecomposition->getRank();
-
-	std::list<OutputBase*>::iterator outputIter;
-	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
-		OutputBase* output = (*outputIter);
-		global_log->debug() << "Output from " << output->getPluginName() << endl;
-		global_simulation->timers()->start(output->getPluginName());
-		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
-		global_simulation->timers()->stop(output->getPluginName());
-	}
-
-
-	if (_domain->thermostatWarning())
-		global_log->warning() << "Thermostat!" << endl;
-	/* TODO: thermostat */
-	global_log->info() << "Simstep = " << simstep << "\tT = "
-			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
-			<< _domain->getGlobalUpot() << "\tp = "
-			<< _domain->getGlobalPressure() << endl;
-	using std::isnan;
-	if (isnan(_domain->getGlobalCurrentTemperature()) || isnan(_domain->getGlobalUpot()) || isnan(_domain->getGlobalPressure())) {
-		global_log->error() << "NaN detected, exiting." << std::endl;
-		Simulation::exit(1);
-	}
-}
-
-void Simulation::plugin(unsigned long simstep) {
+void Simulation::pluginEndStepCall(unsigned long simstep) {
 
 	int mpi_rank = _domainDecomposition->getRank();
 
 	std::list<PluginBase*>::iterator pluginIter;
 	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
 		PluginBase* plugin = (*pluginIter);
-		global_log->debug() << "Plugin: " << plugin->getPluginName() << endl;
+		global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << endl;
 		global_simulation->timers()->start(plugin->getPluginName());
-		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain);
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
 		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 
@@ -2017,15 +1865,6 @@ void Simulation::initialize() {
 	global_log->info() << "Initialization done" << endl;
 }
 
-OutputBase* Simulation::getOutputPlugin(const std::string& name)  {
-	for(auto& outputPlugin : _outputPlugins) {
-		if(name.compare(outputPlugin->getPluginName()) == 0) {
-			return outputPlugin;
-		}
-	}
-	return nullptr;
-}
-
 PluginBase* Simulation::getPlugin(const std::string& name)  {
 	for(auto& plugin : _plugins) {
 		if(name.compare(plugin->getPluginName()) == 0) {
@@ -2036,7 +1875,7 @@ PluginBase* Simulation::getPlugin(const std::string& name)  {
 }
 
 /*void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
-	OutputBase * flopRateBase = getOutputPlugin("FlopRateWriter");
+	PluginBase * flopRateBase = getOutputPlugin("FlopRateWriter");
 	if (flopRateBase == nullptr) {
 		return;
 	}

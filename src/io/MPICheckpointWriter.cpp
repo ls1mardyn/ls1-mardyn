@@ -120,7 +120,8 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	}
 }
 
-void MPICheckpointWriter::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/)
+void MPICheckpointWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+                               Domain * /*domain*/)
 {
 		if(_incremental && _appendTimestamp)
 		{	// use the same timestamp for all increments: add it to the outputPrefix
@@ -140,8 +141,9 @@ void MPICheckpointWriter::initOutput(ParticleContainer* /*particleContainer*/, D
 		}
 }
 
-void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-		unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
+void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+                                  unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
+                                  map<unsigned, CavityEnsemble> * /*mcav*/) {
 #ifdef ENABLE_MPI
 	const char *mpidatarep = NULL;
 	if (!_datarep.empty()) mpidatarep=_datarep.c_str();
@@ -413,5 +415,6 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 	}
 }
 
-void MPICheckpointWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void MPICheckpointWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+								 Domain * /*domain*/) {}
 

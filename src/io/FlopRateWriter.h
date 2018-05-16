@@ -8,13 +8,13 @@
 #ifndef SRC_IO_FLOPRATEWRITER_H_
 #define SRC_IO_FLOPRATEWRITER_H_
 
-#include "OutputBase.h"
+#include "utils/PluginBase.h"
 
 class FlopCounter;
 
-class FlopRateWriter: public OutputBase {
+class FlopRateWriter: public PluginBase {
 public:
-	FlopRateWriter() : OutputBase(), _flopCounter(nullptr) {}
+	FlopRateWriter() : PluginBase(), _flopCounter(nullptr) {}
 	~FlopRateWriter() {}
 
 	//! @brief will be called at the beginning of the simulation
@@ -22,8 +22,8 @@ public:
 	//! Some OutputPlugins will need some initial things to be done before
 	//! the output can start, e.g. opening some files. This method will
 	//! be called once at the beginning of the simulation (see Simulation.cpp)
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 
 	void readXML(XMLfileUnits& /*xmlconfig*/);
 
@@ -39,25 +39,25 @@ public:
 	//! every n-th time step. Therefore, this method has an additional parameter simstep,
 	//! allowing to do a output depending on the current simulation time step. This method
 	//! will be called once every time step during the simulation (see Simulation.cpp)
-	void doOutput(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+            Domain *domain, unsigned long simstep,
+            std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 
 	//! @brief will be called at the end of the simulation
 	//!
 	//! Some OutputPlugins will need to do some things at the end of the simulation,
 	//! e.g. closing some files. This method will
 	//! be called once at the end of the simulation (see Simulation.cpp)
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 
 	std::string getPluginName() {
 		return std::string("FlopRateWriter");
 	}
- 	static OutputBase* createInstance() { return new FlopRateWriter(); }
+ 	static PluginBase* createInstance() { return new FlopRateWriter(); }
 
 	void measureFLOPS(ParticleContainer* particleContainer, unsigned long simstep);
 

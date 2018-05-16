@@ -1,7 +1,7 @@
 #ifndef VISWRITER_H_
 #define VISWRITER_H_
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 #include "Domain.h"
 #include "ensemble/GrandCanonical.h"
 #include <string>
@@ -12,7 +12,7 @@ class DomainDecompBase;
 class Domain;
 class ChemicalPotential;
 
-class VISWriter : public OutputBase {
+class VISWriter : public PluginBase {
 public:
     VISWriter(){}
 	//! @brief Writes out a file (using *.vis-format) containing coordinates + orientation (using quaternions)
@@ -33,21 +33,21 @@ public:
 
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("VISWriter");
 	}
-	static OutputBase* createInstance() { return new VISWriter(); }
+	static PluginBase* createInstance() { return new VISWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

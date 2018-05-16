@@ -82,7 +82,7 @@ public:
 
 	virtual void prefetchForForce() const {/*TODO*/}
 
-	unsigned long initCubicGrid(int numMoleculesPerDimension, double spacing, Random & RNG);
+	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, Random & RNG);
 
 //protected: Do not use! use SingleCellIterator instead!
 	// multipurpose:

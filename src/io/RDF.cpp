@@ -145,16 +145,17 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_readConfig = true;
 }
 
-void RDF::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
+void RDF::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {
 	init();
 }
 
-void RDF::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
+void RDF::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {
 }
 
 
 
 RDF::~RDF() {
+	delete _cellProcessor;
 	// nothing to do since refactoring to vectors
 }
 
@@ -267,8 +268,9 @@ void RDF::reset() {
 }
 
 
-void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomposition, Domain* domain,
-		unsigned long simStep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
+void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomposition, Domain *domain,
+                  unsigned long simStep, std::list<ChemicalPotential> * /*lmu*/,
+                  map<unsigned, CavityEnsemble> * /*mcav*/) {
 	if(_numberOfRDFTimesteps <= 0) return;
 
 	if((simStep > 0) && (simStep % _writeFrequency == 0)) {

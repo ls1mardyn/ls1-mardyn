@@ -66,8 +66,12 @@
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
       </outputplugin>
+      <outputplugin name="VTKMoleculeWriter">
+        <outputprefix>vtkOutput</outputprefix>
+        <writefrequency>1</writefrequency>
+      </outputplugin>
     </output>
-	<plugin name="testPlugin">
+	<plugin name="TestPlugin">
 		<writefrequency>1</writefrequency>
 	</plugin>
   </simulation>

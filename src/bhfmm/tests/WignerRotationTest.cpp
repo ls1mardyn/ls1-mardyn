@@ -116,7 +116,7 @@ void WignerRotationTest::testM2MWignerRotation() {
 
 	/* assertion */
 	ASSERT_DOUBLES_EQUAL(abs_diff, 0.0, 1e-10);
-
+	delete[] CosSin;
 }
 
 void WignerRotationTest::testL2LWignerRotation() {
@@ -213,7 +213,7 @@ void WignerRotationTest::testL2LWignerRotation() {
 
 	/* assertion */
 	ASSERT_DOUBLES_EQUAL(abs_diff, 0.0, 1e-10);
-
+	delete[] CosSin;
 }
 
 void WignerRotationTest::testM2LWignerRotation() {
@@ -312,4 +312,5 @@ void WignerRotationTest::testM2LWignerRotation() {
 
 	/* assertion */
 	ASSERT_DOUBLES_EQUAL(abs_diff, 0.0, 1e-10);
+	delete[] CosSin;
 }

@@ -6,7 +6,7 @@
 #include <array>
 
 #include "ensemble/GrandCanonical.h"
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 #ifdef ENABLE_MPI
 #include "utils/MPI_Info_object.h"
@@ -35,11 +35,9 @@ enum MMPLD_Color_type : uint8_t {
 	MMPLD_COLOR_FLOAT_RGBA = 5,
 };
 
-class Simulation;
-
 /** @brief Output plugin to generate a MegaMol™ Particle List Data file (*.mmpld).
  */
-class MmpldWriter : public OutputBase
+class MmpldWriter : public PluginBase
 {
 protected:
 	MmpldWriter();
@@ -67,21 +65,21 @@ protected:
 public:
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("MmpldWriter");
 	}
-	static OutputBase* createInstance() { return new MmpldWriter(); }
+	static PluginBase* createInstance() { return new MmpldWriter(); }
 
 	void SetInitSphereDataParameters(const uint8_t &bInitSphereData, const std::string &strSphereDataFilename) {
 		_bInitSphereData = bInitSphereData; _strSphereDataFilename = strSphereDataFilename;

@@ -5,9 +5,9 @@
 
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
-class CavityWriter : public OutputBase {
+class CavityWriter : public PluginBase {
 public:
     CavityWriter(){}
 	CavityWriter(unsigned long writeFrequency, std::string outputPrefix, bool incremental);
@@ -16,22 +16,22 @@ public:
 	
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+			  DomainDecompBase *domainDecomp, Domain *domain);
 	//! @todo comment
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu, std::map<unsigned, CavityEnsemble> *mcav
+    );
 	//! @todo comment
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+                DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("CavityWriter");
 	}
-	static OutputBase* createInstance() { return new CavityWriter(); }
+	static PluginBase* createInstance() { return new CavityWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

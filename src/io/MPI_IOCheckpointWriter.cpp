@@ -69,13 +69,15 @@ void MPI_IOCheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
-void MPI_IOCheckpointWriter::initOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain) {
+void MPI_IOCheckpointWriter::init(ParticleContainer *particleContainer,
+                                  DomainDecompBase *domainDecomp, Domain *domain) {
 
 }
 
-void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-		unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
+void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+                                     Domain *domain,
+                                     unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
+                                     map<unsigned, CavityEnsemble> * /*mcav*/) {
 #ifdef ENABLE_MPI
 	if (simstep % _writeFrequency == 0) {
 		//get the file name
@@ -429,8 +431,8 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 #endif
 }
 
-void MPI_IOCheckpointWriter::finishOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain) {
+void MPI_IOCheckpointWriter::finish(ParticleContainer *particleContainer,
+									DomainDecompBase *domainDecomp, Domain *domain) {
 
 }
 

@@ -35,6 +35,7 @@ void DomainDecompBaseTest::testNoDuplicatedParticlesFilename(const char * filena
 //	_domain->writeCheckpoint("dump.txt", container, _domainDecomposition);
 	ASSERT_EQUAL(numMols, newNumMols);
 
+	delete container;
 	delete _domainDecomposition;
 }
 
@@ -102,6 +103,7 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 	}
 
 	delete _domainDecomposition;
+	delete container;
 }
 
 void DomainDecompBaseTest::testNoLostParticles() {

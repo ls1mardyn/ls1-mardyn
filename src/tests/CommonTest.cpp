@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-TEST_SUITE_REGISTRATION(CommonTest);
+TEST_SUITE_REGISTRATION (CommonTest);
 
 CommonTest::CommonTest() {
 }
@@ -21,21 +21,22 @@ CommonTest::~CommonTest() {
 
 void CommonTest::testGetTimeString() {
 	std::string time = gettimestring();
-	ASSERT_EQUAL((size_t)13, time.size());
+	ASSERT_EQUAL((size_t) 13, time.size());
 	ASSERT_EQUAL(time[6], 'T');
 }
-
 
 void CommonTest::testAlignedNumber() {
 //	ASSERT_EQUAL_MSG("One should be zero!", 1, 0);
 
 	std::string result = aligned_number(123, 7, '.');
 	std::string expected("....123");
-	ASSERT_EQUAL_MSG("Align number 123 to 7 digits, filling char is .", expected, result);
+	ASSERT_EQUAL_MSG("Align number 123 to 7 digits, filling char is .",
+			expected, result);
 
 	result = aligned_number(-2, 6, ' ');
 	expected = "    -2";
-	ASSERT_EQUAL_MSG("Align number -2 to 6 digits, filling char is ' '(space)", expected, result);
+	ASSERT_EQUAL_MSG("Align number -2 to 6 digits, filling char is ' '(space)",
+			expected, result);
 }
 
 void CommonTest::testCalculateDistances() {
@@ -48,17 +49,16 @@ void CommonTest::testCalculateDistances() {
 		valuesB[i] = new fp_type[1];
 		valuesB[i][0] = 4.;
 		for (int j = 0; j < 3; j++) {
-			valuesA[i][j] = j+1;
+			valuesA[i][j] = j + 1;
 		}
 	}
 
 	/*for (int i = 0; i < 3; i++) {
-		std::cout << "A Points: " << valuesA[0][i] << "," << valuesA[1][i] << "," << valuesA[2][i] << std::endl;
-	}
-	for (int i = 0; i < 1; i++) {
-			std::cout << "B Points: " << valuesB[0][i] << "," << valuesB[1][i] << "," << valuesB[2][i] << std::endl;
-	}*/
-
+	 std::cout << "A Points: " << valuesA[0][i] << "," << valuesA[1][i] << "," << valuesA[2][i] << std::endl;
+	 }
+	 for (int i = 0; i < 1; i++) {
+	 std::cout << "B Points: " << valuesB[0][i] << "," << valuesB[1][i] << "," << valuesB[2][i] << std::endl;
+	 }*/
 
 	fp_type** distances;
 	distances = new fp_type*[3];
@@ -89,4 +89,22 @@ void CommonTest::testCalculateDistances() {
 	ASSERT_DOUBLES_EQUAL(distanceVectors[1][2][0], -1, 0.000001);
 	ASSERT_DOUBLES_EQUAL(distanceVectors[2][2][0], -1, 0.000001);
 	ASSERT_DOUBLES_EQUAL(distances[2][0], 3, 0.000001);
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			delete[] distanceVectors[i][j];
+		}
+		delete[] distanceVectors[i];
+	}
+
+	for (int i = 0; i < 3; i++) {
+		delete[] distances[i];
+	}
+	delete[] distances;
+
+	for (int i = 0; i < 3; i++) {
+		delete[] valuesA[i];
+		delete[] valuesB[i];
+	}
+
 }

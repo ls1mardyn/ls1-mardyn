@@ -1,10 +1,10 @@
 #ifndef SYSMONOUTPUT_H_
 #define SYSMONOUTPUT_H_
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 
-class SysMonOutput : public OutputBase {
+class SysMonOutput : public PluginBase {
 public:
 	SysMonOutput();
 	~SysMonOutput(){}
@@ -12,18 +12,19 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 	//! @todo comment
-	void initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain);
 	//! @todo comment
 
-	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav);
+	void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+                 unsigned long simstep, std::list<ChemicalPotential> *lmu, std::map<unsigned, CavityEnsemble> *mcav);
 	
 	//! @todo comment
-	void finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain);
 
 	std::string getPluginName() {
 		return std::string("SysMonOutput");
 	}
-	static OutputBase* createInstance() { return new SysMonOutput(); }
+	static PluginBase* createInstance() { return new SysMonOutput(); }
 
 private:
 	//! prefix for the names of all output files

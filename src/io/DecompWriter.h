@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 
 /** @brief writes out information about decomposition of the simulation domain.
@@ -11,7 +11,7 @@
  * Writes out decomposition information. The data written to the file depend
  * on the used domain decomposition.
  */
-class DecompWriter : public OutputBase {
+class DecompWriter : public PluginBase {
 public:
 	DecompWriter();
 	~DecompWriter() {}
@@ -32,23 +32,23 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 	//! @todo comment
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 	//! @todo comment
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
 	//! @todo comment
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("DecompWriter");
 	}
-	static OutputBase* createInstance() { return new DecompWriter(); }
+	static PluginBase* createInstance() { return new DecompWriter(); }
 private:
 	unsigned long _writeFrequency;
 	bool _appendTimestamp;

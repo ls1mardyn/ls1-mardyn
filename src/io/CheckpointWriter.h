@@ -3,10 +3,10 @@
 
 #include <string>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 
-class CheckpointWriter : public OutputBase {
+class CheckpointWriter : public PluginBase {
 public:
 	
     CheckpointWriter() {}
@@ -28,21 +28,21 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("CheckpointWriter");
 	}
-	static OutputBase* createInstance() { return new CheckpointWriter(); }
+	static PluginBase* createInstance() { return new CheckpointWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

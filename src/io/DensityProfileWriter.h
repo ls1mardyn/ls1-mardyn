@@ -1,11 +1,11 @@
 #ifndef SRC_IO_DENSITYPROFILEWRITER_H_
 #define SRC_IO_DENSITYPROFILEWRITER_H_
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 /** @brief The DensityProfileWriter obtains a planar interface density profile.
  */
-class DensityProfileWriter : public OutputBase {
+class DensityProfileWriter : public PluginBase {
 public:
 	DensityProfileWriter() : _writeFrequency(1), _initStatistics(0), _profileRecordingTimesteps(1), _outputPrefix("profile2"), _doRecordVirialProfile(false) {}
 	~DensityProfileWriter() {}
@@ -22,19 +22,19 @@ public:
 	 */
 	void readXML(XMLfileUnits & xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
 
-	void doOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain,
-		unsigned long simstep, std::list<ChemicalPotential>* lmu,
-		std::map<unsigned, CavityEnsemble>* mcav);
+	void endStep(ParticleContainer *particleContainer,
+                 DomainDecompBase *domainDecomp, Domain *domain,
+                 unsigned long simstep, std::list<ChemicalPotential> *lmu,
+                 std::map<unsigned, CavityEnsemble> *mcav);
 
-	void finishOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 
 	std::string getPluginName() { return std::string("DensityProfileWriter"); }
-	static OutputBase * createInstance() {
+	static PluginBase * createInstance() {
 		return new DensityProfileWriter();
 	}
 private:

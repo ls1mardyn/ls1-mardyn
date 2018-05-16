@@ -915,7 +915,7 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	endIndex = getCellIndexOfPoint(endRegion);
 }
 
-unsigned long LinkedCells::initCubicGrid(int numMoleculesPerDimension, double simBoxLength) {
+unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) {
 	const unsigned long numCells = _cells.size();
 
 	std::vector<unsigned long> numMoleculesPerThread;

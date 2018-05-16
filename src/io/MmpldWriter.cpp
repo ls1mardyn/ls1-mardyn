@@ -134,8 +134,8 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 }
 
 //Header Information
-void MmpldWriter::initOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain)
+void MmpldWriter::init(ParticleContainer *particleContainer,
+                       DomainDecompBase *domainDecomp, Domain *domain)
 {
 	// only executed once
 	this->PrepareWriteControl();
@@ -296,10 +296,10 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 #endif
 }
 
-void MmpldWriter::doOutput( ParticleContainer* particleContainer,
-		   DomainDecompBase* domainDecomp, Domain* domain,
-		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
-		   map<unsigned, CavityEnsemble>* /*mcav*/)
+void MmpldWriter::endStep(ParticleContainer *particleContainer,
+                          DomainDecompBase *domainDecomp, Domain *domain,
+                          unsigned long simstep, std::list<ChemicalPotential> * /*lmu*/,
+                          map<unsigned, CavityEnsemble> * /*mcav*/)
 {
 	if((simstep < _startTimestep) || (simstep > _stopTimestep) || (0 != ((simstep - _startTimestep) % _writeFrequency)) ) {
 		return;
@@ -313,7 +313,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	write_frame(particleContainer, domainDecomp);
 }
 
-void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/)
+void MmpldWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain * /*domain*/)
 {
 	string filename = getOutputFilename();
 
@@ -370,9 +370,9 @@ void MmpldWriter::InitSphereData()
 void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
-	this->finishOutput(particleContainer, domainDecomp, domain);
+	this->finish(particleContainer, domainDecomp, domain);
 	_fileCount++;
-	this->initOutput(particleContainer, domainDecomp, domain);
+    this->init(particleContainer, domainDecomp, domain);
 }
 
 void MmpldWriter::PrepareWriteControl()

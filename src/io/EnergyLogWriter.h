@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
 
 /** @brief This writer creates a global energy log file.
@@ -17,7 +17,7 @@
  * - the global temperature \f$T\f$
  * - the global pressure \f$p\f$
  */
-class EnergyLogWriter : public OutputBase {
+class EnergyLogWriter : public PluginBase {
 public:
 	EnergyLogWriter() : _outputFilename("global_energy.log"), _writeFrequency(1) {}
 	~EnergyLogWriter() {}
@@ -34,21 +34,21 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer,
+            DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, std::list<ChemicalPotential> *lmu,
+            std::map<unsigned, CavityEnsemble> *mcav
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 	
 	std::string getPluginName() {
 		return std::string("EnergyLogWriter");
 	}
-	static OutputBase* createInstance() { return new EnergyLogWriter(); }
+	static PluginBase* createInstance() { return new EnergyLogWriter(); }
 private:
 	std::string _outputFilename;
 	unsigned long _writeFrequency;

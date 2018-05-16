@@ -84,7 +84,7 @@ public:
      *
      * @param xmlconfig  section of the xml file
      */
-    virtual void readXML(XMLfileUnits& xmlconfig) {}
+    virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
 
     /** @brief Method beforeForces will be called before forcefields have been applied
@@ -95,7 +95,7 @@ public:
     virtual void beforeForces(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             unsigned long simstep
-    ) {}
+    ) {};
 
     /** @brief Method afterForces will be called after forcefields have been applied
      *
@@ -104,7 +104,7 @@ public:
     virtual void afterForces(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             unsigned long simstep
-    ) {}
+    ) {};
 
 
     // make pure virtual?
@@ -118,8 +118,10 @@ public:
      */
     virtual void endStep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain
-    ) {};
+            Domain* domain, unsigned long simstep,
+            std::list<ChemicalPotential>* lmu,
+            std::map<unsigned, CavityEnsemble>* mcav
+    ) = 0;
 
     /** @brief Method finalOutput will be called at the end of the simulation
      *
@@ -136,4 +138,4 @@ public:
     virtual std::string getPluginName()  = 0;
 };
 
-#endif /* OUTPUTBASE_H_ */
+#endif /* PLUGINBASE_H */

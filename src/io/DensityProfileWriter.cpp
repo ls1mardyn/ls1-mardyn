@@ -25,11 +25,13 @@ void DensityProfileWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "[DensityProfileWriter] profile recording timesteps: " << _profileRecordingTimesteps << endl;
 }
 
-void DensityProfileWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void DensityProfileWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
 	
 }
 
-void DensityProfileWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, std::list<ChemicalPotential>* lmu, std::map<unsigned int, CavityEnsemble>* mcav) {
+void DensityProfileWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+                                   unsigned long simstep, std::list<ChemicalPotential> *lmu,
+                                   std::map<unsigned int, CavityEnsemble> *mcav) {
 	int mpi_rank = domainDecomp->getRank();
 	if ((simstep >= _initStatistics) && (simstep % _profileRecordingTimesteps == 0)) {
 		domain->recordProfile(particleContainer, _doRecordVirialProfile);
@@ -53,6 +55,6 @@ void DensityProfileWriter::doOutput(ParticleContainer* particleContainer, Domain
 	}
 }
 
-void DensityProfileWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void DensityProfileWriter::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
 	
 }

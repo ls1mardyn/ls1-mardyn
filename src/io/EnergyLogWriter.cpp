@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void EnergyLogWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void EnergyLogWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
 	global_log->info() << "Init global energy log." << endl;
 
 #ifdef ENABLE_MPI
@@ -36,7 +36,9 @@ void EnergyLogWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Output filename: " << _outputFilename << endl;
 }
 
-void EnergyLogWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, std::list<ChemicalPotential>* lmu, std::map<unsigned int, CavityEnsemble>* mcav) {
+void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+                              unsigned long simstep, std::list<ChemicalPotential> *lmu,
+                              std::map<unsigned int, CavityEnsemble> *mcav) {
 
 	if( 0 != (simstep % _writeFrequency) ) {
 		return;
@@ -95,4 +97,4 @@ void EnergyLogWriter::doOutput(ParticleContainer* particleContainer, DomainDecom
 	fileout.close();
 }
 
-void EnergyLogWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+void EnergyLogWriter::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {}

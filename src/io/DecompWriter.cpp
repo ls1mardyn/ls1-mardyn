@@ -40,10 +40,12 @@ void DecompWriter::readXML(XMLfileUnits& xmlconfig) {
 }
 
 
-void DecompWriter::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void DecompWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+                        Domain * /*domain*/) {}
 
-void DecompWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-		unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
+void DecompWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+                           unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
+                           map<unsigned, CavityEnsemble> * /*mcav*/) {
 	if(simstep % _writeFrequency == 0) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
@@ -62,4 +64,5 @@ void DecompWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBa
 	}  
 }
 
-void DecompWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void DecompWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+						  Domain * /*domain*/) {}

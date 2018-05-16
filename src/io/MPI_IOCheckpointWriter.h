@@ -10,9 +10,9 @@
 
 #include <string>
 
-#include "io/OutputBase.h"
+#include "utils/PluginBase.h"
 
-class MPI_IOCheckpointWriter  : public OutputBase{
+class MPI_IOCheckpointWriter  : public PluginBase{
 public:
 
 	MPI_IOCheckpointWriter(){}
@@ -31,21 +31,21 @@ public:
 
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
-	void doOutput(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/
-	);
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain);
+	void endStep(
+            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
+            unsigned long simstep, list<ChemicalPotential> * /*lmu*/, map<unsigned, CavityEnsemble> * /*mcav*/
+    );
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain);
 
 	void handle_error(int i);
 
 	std::string getPluginName() {
 		return std::string("MPI_IOCheckpointWriter");
 	}
-	static OutputBase* createInstance() { return new MPI_IOCheckpointWriter(); }
+	static PluginBase* createInstance() { return new MPI_IOCheckpointWriter(); }
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;

@@ -25,8 +25,8 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Accumulation steps: " << acc_steps << endl;
 }
 
-void ResultWriter::initOutput(ParticleContainer* /*particleContainer*/,
-			      DomainDecompBase* domainDecomp, Domain* /*domain*/) {
+void ResultWriter::init(ParticleContainer * /*particleContainer*/,
+                        DomainDecompBase *domainDecomp, Domain * /*domain*/) {
 	// initialize result file
 	string resultfile(_outputPrefix+".res");
 	time_t now;
@@ -39,8 +39,9 @@ void ResultWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 }
 
-void ResultWriter::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* domain,
-	unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* mcav ) {
+void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain *domain,
+                           unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
+                           map<unsigned, CavityEnsemble> *mcav) {
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
@@ -57,8 +58,8 @@ void ResultWriter::doOutput(ParticleContainer* /*particleContainer*/, DomainDeco
 	}
 }
 
-void ResultWriter::finishOutput(ParticleContainer* /*particleContainer*/,
-				DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
+void ResultWriter::finish(ParticleContainer * /*particleContainer*/,
+						  DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/){
 	time_t now;
 	time(&now);
 	_resultStream << "# ls1 mardyn simulation finished at " << ctime(&now) << endl;
