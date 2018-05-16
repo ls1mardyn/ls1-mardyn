@@ -57,9 +57,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = molCont->iterator();
-
-		for (ParticleIterator i = begin; i.hasNext(); i.next()) {
+		for (ParticleIterator i = molCont->iterator(); i.hasNext(); i.next()) {
 			i->upd_preF(_timestepLength);
 		}
 	}
@@ -81,19 +79,38 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 	 * (here and in class Domain) is a nightmare.
 	 */
 
-	ParticleIterator tM;
 	map<int, unsigned long> N;
 	map<int, unsigned long> rotDOF;
 	map<int, double> summv2;
 	map<int, double> sumIw2;
 	double dt_half = 0.5 * this->_timestepLength;
 	if (domain->severalThermostats()) {
-		for (tM = molCont->iterator(); tM.hasNext(); tM.next()) {
-			int cid = tM->componentid();
-			int thermostat = domain->getThermostat(cid);
-			tM->upd_postF(dt_half, summv2[thermostat], sumIw2[thermostat]);
-			N[thermostat]++;
-			rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			map<int, unsigned long> N_l;
+			map<int, unsigned long> rotDOF_l;
+			map<int, double> summv2_l;
+			map<int, double> sumIw2_l;
+
+			for (ParticleIterator tM = molCont->iterator(); tM.hasNext(); tM.next()) {
+				int cid = tM->componentid();
+				int thermostat = domain->getThermostat(cid);
+				tM->upd_postF(dt_half, summv2_l[thermostat], sumIw2_l[thermostat]);
+				N_l[thermostat]++;
+				rotDOF_l[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+			}
+
+			#if defined(_OPENMP)
+			#pragma omp critical (thermostat)
+			#endif
+			{
+				for (auto it = N_l.begin(); it != N_l.end(); ++it) N[it->first] += it->second;
+				for (auto it = rotDOF_l.begin(); it != rotDOF_l.end(); ++it) rotDOF[it->first] += it->second;
+				for (auto it = summv2_l.begin(); it != summv2_l.end(); ++it) summv2[it->first] += it->second;
+				for (auto it = sumIw2_l.begin(); it != sumIw2_l.end(); ++it) sumIw2[it->first] += it->second;
+			}
 		}
 	}
 	else {
@@ -160,13 +177,18 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 				componentwiseVelocityDelta[d][compit->ID()] = 0;
 	}
 
-	ParticleIterator thismol;
-	for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
-		unsigned cid = thismol->componentid();
-		mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
-		thismol->vadd(componentwiseVelocityDelta[0][cid],
-		              componentwiseVelocityDelta[1][cid],
-		              componentwiseVelocityDelta[2][cid]);
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		ParticleIterator thismol;
+		for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
+			unsigned cid = thismol->componentid();
+			mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
+			thismol->vadd(componentwiseVelocityDelta[0][cid],
+						  componentwiseVelocityDelta[1][cid],
+						  componentwiseVelocityDelta[2][cid]);
+		}
 	}
 }
 
@@ -184,12 +206,17 @@ void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* dom
 				componentwiseVelocityDelta[d][compit->ID()] = 0;
 	}
 
-	ParticleIterator thismol;
-	for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
-		unsigned cid = thismol->componentid();
-		mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
-		thismol->vadd(componentwiseVelocityDelta[0][cid],
-		              componentwiseVelocityDelta[1][cid],
-		              componentwiseVelocityDelta[2][cid]);
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		ParticleIterator thismol;
+		for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
+			unsigned cid = thismol->componentid();
+			mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
+			thismol->vadd(componentwiseVelocityDelta[0][cid],
+						  componentwiseVelocityDelta[1][cid],
+						  componentwiseVelocityDelta[2][cid]);
+		}
 	}
 }
