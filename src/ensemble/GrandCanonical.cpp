@@ -606,13 +606,20 @@ unsigned ChemicalPotential::countParticles(
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles are NOT counted
 
-	ParticleIterator begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
 	unsigned N = 0;
 
-	for (auto m = begin; m.hasNext(); m.next()) {
-		if (m->componentid() == cid)
-			++N;
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:N)
+	#endif
+	{
+
+		ParticleIterator begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+
+		for (auto m = begin; m.hasNext(); m.next()) {
+			if (m->componentid() == cid)
+				++N;
+		}
+
 	}
 
 	return N;
@@ -625,12 +632,19 @@ unsigned ChemicalPotential::countParticles(
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles NOT counted
 
-	RegionParticleIterator begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
 	unsigned N = 0;
-	for (auto m = begin; m.hasNext(); m.next()) {
-		if (m->componentid() == cid) {
-			++N;
+
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:N)
+	#endif
+	{
+
+		RegionParticleIterator begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+
+		for (auto m = begin; m.hasNext(); m.next()) {
+			if (m->componentid() == cid) {
+				++N;
+			}
 		}
 	}
 
