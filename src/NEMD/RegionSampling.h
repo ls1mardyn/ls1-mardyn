@@ -70,10 +70,10 @@ public:
 	}
 
 	// subdivision
-	void SetSubdivisionProfiles(const unsigned int& nNumSlabs) {_nNumBinsProfiles = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
-	void SetSubdivisionProfiles(const double& dSlabWidth) {_dBinWidthProfilesInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
-	void SetSubdivisionVDF(const unsigned int& nNumSlabs) {_numBinsVDF = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
-	void SetSubdivisionVDF(const double& dSlabWidth) {_dBinWidthVDFInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
+	void SetSubdivisionProfiles(const unsigned int& nNumSlabs) {_nNumBinsProfiles = nNumSlabs; _nSubdivisionOptProfiles = SDOPT_BY_NUM_SLABS;}
+	void SetSubdivisionProfiles(const double& dSlabWidth) {_dBinWidthProfilesInit = dSlabWidth; _nSubdivisionOptProfiles = SDOPT_BY_SLAB_WIDTH;}
+	void SetSubdivisionVDF(const unsigned int& nNumSlabs) {_numBinsVDF = nNumSlabs; _nSubdivisionOptVDF = SDOPT_BY_NUM_SLABS;}
+	void SetSubdivisionVDF(const double& dSlabWidth) {_dBinWidthVDFInit = dSlabWidth; _nSubdivisionOptVDF = SDOPT_BY_SLAB_WIDTH;}
 	void PrepareSubdivisionProfiles();  // need to be called before data structure allocation
 	void PrepareSubdivisionVDF();  		// need to be called before data structure allocation
 	void PrepareSubdivisionFieldYR();  	// need to be called before data structure allocation
@@ -136,6 +136,7 @@ private:
 	// control
 	bool _bDiscretisationDoneProfiles;
 	bool _SamplingEnabledProfiles;
+	int _nSubdivisionOptProfiles;
 
 	// parameters
 	unsigned long _initSamplingProfiles;
@@ -207,6 +208,7 @@ private:
 	// control
 	bool _bDiscretisationDoneVDF;
 	bool _SamplingEnabledVDF;
+	int _nSubdivisionOptVDF;
 
 	double _dBinWidthVDF;
 	double _dInvBinWidthVDF;

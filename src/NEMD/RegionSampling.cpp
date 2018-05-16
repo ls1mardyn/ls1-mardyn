@@ -59,8 +59,10 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	: CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
 	_bDiscretisationDoneProfiles(false),
 	_SamplingEnabledProfiles(false),
+	_nSubdivisionOptProfiles(SDOPT_UNKNOWN),
 	_bDiscretisationDoneVDF(false),
 	_SamplingEnabledVDF(false),
+	_nSubdivisionOptVDF(SDOPT_UNKNOWN),
 	_fnamePrefixVDF("VDF"),
 	_bDiscretisationDoneFieldYR(false),
 	_SamplingEnabledFieldYR(false),
@@ -523,7 +525,7 @@ void SampleRegion::PrepareSubdivisionProfiles()
 
 	double dWidth = this->GetWidth(1);
 
-	switch(_nSubdivisionOpt)
+	switch(_nSubdivisionOptProfiles)
 	{
 	case SDOPT_BY_NUM_SLABS:
 		_dBinWidthProfilesInit = this->GetWidth(1) / ( (double)(_nNumBinsProfiles) );
@@ -547,7 +549,7 @@ void SampleRegion::PrepareSubdivisionVDF()
 
 	double dWidth = this->GetWidth(1);
 
-	switch(_nSubdivisionOpt)
+	switch(_nSubdivisionOptVDF)
 	{
 	case SDOPT_BY_NUM_SLABS:
 		_dBinWidthVDFInit = this->GetWidth(1) / ( (double)(_numBinsVDF) );
