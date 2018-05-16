@@ -66,11 +66,8 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_componentwiseThermostat = false;
 #ifdef COMPLEX_POTENTIAL_SET
 	this->_universalUndirectedThermostat = map<int, bool>();
-	for(int d = 0; d < 3; d++)
-	{
-		this->_universalThermostatDirectedVelocity[d] = map<int, double>();
-		this->_localThermostatDirectedVelocity[d] = map<int, double>();
-	}
+	this->_universalThermostatDirectedVelocity = map<int, std::array<double,3> >();
+	this->_localThermostatDirectedVelocity = map<int, std::array<double,3> >();
 #endif
 	this->_universalSelectiveThermostatCounter = 0;
 	this->_universalSelectiveThermostatWarning = 0;
@@ -364,7 +361,7 @@ void Domain::calculateGlobalValues(
 		{
 			double sigv[3];
 			for(int d=0; d < 3; d++)
-				sigv[d] = _localThermostatDirectedVelocity[d][thermit->first];
+				sigv[d] = _localThermostatDirectedVelocity[thermit->first][d];
 
 			domainDecomp->collCommInit(3);
 			for(int d=0; d < 3; d++) domainDecomp->collCommAppendDouble(sigv[d]);
@@ -372,21 +369,21 @@ void Domain::calculateGlobalValues(
 			for(int d=0; d < 3; d++) sigv[d] = domainDecomp->collCommGetDouble();
 			domainDecomp->collCommFinalize();
 
-			for(int d=0; d < 3; d++)
-			{
-				_localThermostatDirectedVelocity[d][thermit->first] = 0.0;
-				if(numMolecules > 0)
-					_universalThermostatDirectedVelocity[d][thermit->first] = sigv[d] / numMolecules;
-				else
-					_universalThermostatDirectedVelocity[d][thermit->first] = 0.0;
-			}
+
+			_localThermostatDirectedVelocity[thermit->first].fill(0.0);
+
+			if(numMolecules > 0)
+				for(int d=0; d < 3; d++)
+					_universalThermostatDirectedVelocity[thermit->first][d] = sigv[d] / numMolecules;
+			else
+				_universalThermostatDirectedVelocity[thermit->first].fill(0.0);
 
 #ifndef NDEBUG
 			global_log->debug() << "* thermostat " << thermit->first
 				<< " directed velocity: ("
-				<< _universalThermostatDirectedVelocity[0][thermit->first]
-				<< " / " << _universalThermostatDirectedVelocity[1][thermit->first]
-				<< " / " << _universalThermostatDirectedVelocity[2][thermit->first]
+				<< _universalThermostatDirectedVelocity[thermit->first][0]
+				<< " / " << _universalThermostatDirectedVelocity[thermit->first][1]
+				<< " / " << _universalThermostatDirectedVelocity[thermit->first][2]
 				<< ")" << endl;
 #endif
 		}
@@ -420,7 +417,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 				thit ++ )
 		{
 			if(thit->second)
-				for(int d=0; d < 3; d++) _localThermostatDirectedVelocity[d][thit->first] = 0.0;
+				_localThermostatDirectedVelocity[thit->first].fill(0.0);
 		}
 		for(tM = partCont->iterator(); tM.hasNext(); tM.next())
 		{
@@ -429,17 +426,17 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 			if(this->_universalUndirectedThermostat[thermostat])
 			{
 				for(int d=0; d < 3; d++)
-					_localThermostatDirectedVelocity[d][thermostat] += tM->v(d);
+					_localThermostatDirectedVelocity[thermostat][d] += tM->v(d);
 			}
 		}
 	}
 	else if(this->_universalUndirectedThermostat[0])
 	{
-		for(int d=0; d < 3; d++) _localThermostatDirectedVelocity[d][0] = 0.0;
+		_localThermostatDirectedVelocity[0].fill(0.0);
 		for(tM = partCont->iterator(); tM.hasNext(); tM.next())
 		{
 			for(int d=0; d < 3; d++)
-				_localThermostatDirectedVelocity[d][0] += tM->v(d);
+				_localThermostatDirectedVelocity[0][d] += tM->v(d);
 		}
 	}
 }
@@ -458,9 +455,9 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 			{
 				tM->calculate_mv2_Iw2( this->_local2KETrans[thermostat],
 						this->_local2KERot[thermostat],
-						this->_universalThermostatDirectedVelocity[0][thermostat],
-						this->_universalThermostatDirectedVelocity[1][thermostat],
-						this->_universalThermostatDirectedVelocity[2][thermostat]  );
+						this->_universalThermostatDirectedVelocity[thermostat][0],
+						this->_universalThermostatDirectedVelocity[thermostat][1],
+						this->_universalThermostatDirectedVelocity[thermostat][2]  );
 			}
 			else
 			{
@@ -485,8 +482,8 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 					tM->calculate_mv2_Iw2( local2KETrans,
 							local2KERot,
 							this->_universalThermostatDirectedVelocity[0][0],
-							this->_universalThermostatDirectedVelocity[1][0],
-							this->_universalThermostatDirectedVelocity[2][0]  );
+							this->_universalThermostatDirectedVelocity[0][1],
+							this->_universalThermostatDirectedVelocity[0][2]  );
 				} else {
 					tM->calculate_mv2_Iw2(local2KETrans, local2KERot);
 				}
@@ -1111,7 +1108,7 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 			_componentwiseThermostat = true;
 			_universalTargetTemperature.erase(0);
 			_universalUndirectedThermostat.erase(0);
-			for(int d=0; d < 3; d++) this->_universalThermostatDirectedVelocity[d].erase(0);
+			this->_universalThermostatDirectedVelocity.erase(0);
 			vector<Component>* components = _simulation.getEnsemble()->getComponents();
 			for( vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
 				if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0)) {
@@ -1139,11 +1136,8 @@ void Domain::enableComponentwiseThermostat()
 void Domain::enableUndirectedThermostat(int tst)
 {
 	this->_universalUndirectedThermostat[tst] = true;
-	for(int d=0; d < 3; d++)
-	{
-		this->_universalThermostatDirectedVelocity[d][tst] = 0.0;
-		this->_localThermostatDirectedVelocity[d][tst] = 0.0;
-	}
+	this->_localThermostatDirectedVelocity[tst].fill(0.0);
+	this->_universalThermostatDirectedVelocity[tst].fill(0.0);
 }
 
 vector<double> & Domain::getmixcoeff() { return _mixcoeff; }

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <map>
+#include <array>
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"
@@ -306,7 +307,7 @@ public:
 	//! It should be obvious that this method only returns sensible values
 	//! for thermostats marked as "undirected", because otherwise the
 	//! directed velocity is not explicitly computed.
-	double getThermostatDirectedVelocity(int thermostat, int d) { return this->_universalThermostatDirectedVelocity[d][thermostat]; }
+	double getThermostatDirectedVelocity(int thermostat, int d) { return this->_universalThermostatDirectedVelocity[thermostat][d]; }
 
 	//! @brief returns whether there are several distinct thermostats in the system
 	bool severalThermostats() { return this->_componentwiseThermostat; }
@@ -473,8 +474,8 @@ private:
 	//! should the directed movement be subtracted when calculating the temperature?
 	std::map<int, bool> _universalUndirectedThermostat;
 	//! stores the velocity of the directed movement
-	std::map<int, double> _universalThermostatDirectedVelocity[3];
-	std::map<int, double> _localThermostatDirectedVelocity[3];
+	std::map<int, std::array<double, 3> > _universalThermostatDirectedVelocity;
+	std::map<int, std::array<double, 3> > _localThermostatDirectedVelocity;
 
 	/* FIXME: This info should go into an ensemble class */
 	bool _universalNVE;
