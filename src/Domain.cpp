@@ -417,21 +417,50 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 			if(thit->second)
 				_localThermostatDirectedVelocity[thit->first].fill(0.0);
 		}
-		for(tM = partCont->iterator(); tM.hasNext(); tM.next())
-		{
-			int cid = tM->componentid();
-			int thermostat = this->_componentToThermostatIdMap[cid];
 
-			if(this->_universalUndirectedThermostat[thermostat])
-				arrayMath::accumulate(_localThermostatDirectedVelocity[thermostat], tM->v_arr());
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			std::map<int, std::array<double, 3> > localThermostatDirectedVelocity_thread;
+
+			for(tM = partCont->iterator(); tM.hasNext(); tM.next()) {
+				int cid = tM->componentid();
+				int thermostat = this->_componentToThermostatIdMap[cid];
+
+				if(this->_universalUndirectedThermostat[thermostat])
+					arrayMath::accumulate(localThermostatDirectedVelocity_thread[thermostat], tM->v_arr());
+			}
+
+			#if defined(_OPENMP)
+			#pragma omp critical(collectVelocities1111)
+			#endif
+			{
+				for (auto it = localThermostatDirectedVelocity_thread.begin(); it != localThermostatDirectedVelocity_thread.end(); ++it) {
+					arrayMath::accumulate(_localThermostatDirectedVelocity[it->first], it->second);
+				}
+			}
+
 		}
 	}
 	else if(this->_universalUndirectedThermostat[0])
 	{
-		_localThermostatDirectedVelocity[0].fill(0.0);
-		for(tM = partCont->iterator(); tM.hasNext(); tM.next()) {
-			arrayMath::accumulate(_localThermostatDirectedVelocity[0], tM->v_arr());
+		double velX = 0.0, velY = 0.0, velZ = 0.0;
+
+		#if defined(_OPENMP)
+		#pragma omp parallel reduction(+ : velX, velY, velZ)
+		#endif
+		{
+			for(tM = partCont->iterator(); tM.hasNext(); tM.next()) {
+				velX += tM->v(0);
+				velY += tM->v(1);
+				velZ += tM->v(2);
+			}
 		}
+
+		_localThermostatDirectedVelocity[0][0] = velX;
+		_localThermostatDirectedVelocity[0][1] = velY;
+		_localThermostatDirectedVelocity[0][2] = velZ;
 	}
 }
 
