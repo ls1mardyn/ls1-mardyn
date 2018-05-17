@@ -202,17 +202,40 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 }
 
-void LinkedCells::check_molecules_in_box(){
-	for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
-		if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
-			global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
-					<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
-			global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
-					<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
-					<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
-			global_log->error() << "Particle will be lost. Aboarting simulation." << std::endl;
-			Simulation::exit(311);
+void LinkedCells::check_molecules_in_box() {
+	std::vector<Molecule> badMolecules;
+	unsigned numBadMolecules = 0;
+
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+ : numBadMolecules)
+	#endif
+	{
+		for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
+			if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
+				numBadMolecules++;
+
+				#if defined(_OPENMP)
+				#pragma omp critical
+				#endif
+				{
+					badMolecules.push_back(*tM);
+				}
+
+			}
 		}
+	}
+
+	if (numBadMolecules > 0) {
+		global_log->error() << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
+		for (auto & m : badMolecules) {
+			global_log->error() << "Particle (id=" << m.id() << "), (current position: x="
+					<< m.r(0) << ", y=" << m.r(1) << ", z=" << m.r(2) << ")" << std::endl;
+		}
+		global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
+				<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
+				<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
+		global_log->error() << "Particles will be lost. Aborting simulation." << std::endl;
+		Simulation::exit(311);
 	}
 }
 
