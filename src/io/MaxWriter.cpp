@@ -205,27 +205,15 @@ void MaxWriter::doSampling(ParticleContainer* particleContainer)
 
 void MaxWriter::calculateGlobalValues(DomainDecompBase *domainDecomp)
 {
-#if 1
-#ifdef ENABLE_MPI
-
-	MPI_Reduce( _dMaxValuesLocal.data(), _dMaxValuesGlobal.data(), _numVals, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-
-#else
-	// Scalar quantities
-	for(uint32_t vi=0; vi<_numVals; ++vi)
-		_dMaxValuesGlobal[vi] = _dMaxValuesLocal[vi];
-#endif
-#else
 	domainDecomp->collCommInit(_numVals);
-	for (uint32_t i=0; i<_numVals; i++) {
-		domainDecomp->collCommAppendDouble(_dMaxValuesLocal[i]);
+	for (auto val : _dMaxValuesLocal) {
+		domainDecomp->collCommAppendDouble(val);
 	}
-	domainDecomp->collCommAllreduceCustom(MAX);
-	for (uint32_t i=0; i<_numVals; i++) {
-		_dMaxValuesGlobal[i] = domainDecomp->collCommGetDouble();
+	domainDecomp->collCommAllreduceCustom(ReduceType::MAX);
+	for (auto & val : _dMaxValuesGlobal) {
+		val = domainDecomp->collCommGetDouble();
 	}
 	domainDecomp->collCommFinalize();
-#endif
 }
 
 void MaxWriter::resetLocalValues()
