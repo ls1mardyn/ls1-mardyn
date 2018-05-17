@@ -589,6 +589,9 @@ void LinkedCells::clear() {
 void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) {
 	// This should be unimportant
 
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
 	for (auto it = iterator(); it.hasNext(); it.next()) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
