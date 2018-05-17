@@ -156,17 +156,51 @@ public:
 		MPI_CHECK(MPI_Type_free(&_agglomeratedType));
 #else
 		for(unsigned int i = 0; i < _types.size(); i++ ) {
-			MPI_CHECK( MPI_Allreduce( MPI_IN_PLACE, _values.data(), 1, _types[i], MPI_SUM, _communicator ) );
+			MPI_CHECK( MPI_Allreduce( MPI_IN_PLACE, &_values[i], 1, _types[i], MPI_SUM, _communicator ) );
 		}
 #endif
 	}
 
-	void allreduceCustom(ReduceType type) override{
+	void allreduceCustom(ReduceType type) override {
 		Log::global_log->debug() << "CollectiveCommunication: custom Allreduce" << std::endl;
-		// TODO: add agglomerated reduce!
+#if ENABLE_AGGLOMERATED_REDUCE
+		setMPIType();
+		MPI_Op agglomeratedTypeAddOperator;
+		const int commutative = 1;
+		valType * startOfValues = _values.data();
+
+		switch (type) {
+		case ReduceType::SUM:
+			MPI_CHECK(
+					MPI_Op_create(
+							(MPI_User_function * ) CollectiveCommunication::add,
+							commutative, &agglomeratedTypeAddOperator));
+			break;
+		case ReduceType::MAX:
+			MPI_CHECK(
+					MPI_Op_create(
+							(MPI_User_function * ) CollectiveCommunication::max,
+							commutative, &agglomeratedTypeAddOperator));
+			break;
+		case ReduceType::MIN:
+			MPI_CHECK(
+					MPI_Op_create(
+							(MPI_User_function * ) CollectiveCommunication::min,
+							commutative, &agglomeratedTypeAddOperator));
+			break;
+		default:
+			Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
+			Simulation::exit(1);
+		}
+
+		MPI_CHECK(
+				MPI_Allreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, agglomeratedTypeAddOperator, _communicator));
+		MPI_CHECK(MPI_Op_free(&agglomeratedTypeAddOperator));
+		MPI_CHECK(MPI_Type_free(&_agglomeratedType));
+#else
 		for (unsigned int i = 0; i < _types.size(); i++) {
 			MPI_Op op = MPI_NO_OP;
-			switch(type){
+			switch(type) {
 			case ReduceType::SUM:
 				op = MPI_SUM;
 				break;
@@ -180,8 +214,9 @@ public:
 				Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
 				Simulation::exit(1);
 			}
-			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, _values.data(), 1, _types[i], op, _communicator ));
+			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, &_values[i], 1, _types[i], op, _communicator ));
 		}
+#endif
 	}
 
 	//! Performs an all-reduce (sum), however values of previous iterations are permitted.
@@ -291,6 +326,82 @@ protected:
 			}
 			else if (arrayTypes[i] == MPI_LONG_DOUBLE) {
 				inoutvec[i].v_longDouble += invec[i].v_longDouble;
+			}
+		}
+	}
+
+	static void max(valType *invec, valType *inoutvec, int */*len*/,
+			MPI_Datatype *dtype) {
+		int numints;
+		int numaddr;
+		int numtypes;
+		int combiner;
+
+		MPI_CHECK(
+				MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes,
+						&combiner));
+
+		std::vector<int> arrayInts(numints);
+		std::vector<MPI_Aint> arrayAddr(numaddr);
+		std::vector<MPI_Datatype> arrayTypes(numtypes);
+
+		MPI_CHECK(
+				MPI_Type_get_contents(*dtype, numints, numaddr, numtypes,
+						arrayInts.data(), arrayAddr.data(), arrayTypes.data()));
+
+		for (int i = 0; i < numtypes; i++) {
+			if (arrayTypes[i] == MPI_INT) {
+				inoutvec[i].v_int = std::max(inoutvec[i].v_int, invec[i].v_int);
+			}
+			else if (arrayTypes[i] == MPI_UNSIGNED_LONG) {
+				inoutvec[i].v_unsLong = std::max(inoutvec[i].v_unsLong, invec[i].v_unsLong);
+			}
+			else if (arrayTypes[i] == MPI_FLOAT) {
+				inoutvec[i].v_float = std::max(inoutvec[i].v_float, invec[i].v_float);
+			}
+			else if (arrayTypes[i] == MPI_DOUBLE) {
+				inoutvec[i].v_double = std::max(inoutvec[i].v_double, invec[i].v_double);
+			}
+			else if (arrayTypes[i] == MPI_LONG_DOUBLE) {
+				inoutvec[i].v_longDouble = std::max(inoutvec[i].v_longDouble, invec[i].v_longDouble);
+			}
+		}
+	}
+
+	static void min(valType *invec, valType *inoutvec, int */*len*/,
+			MPI_Datatype *dtype) {
+		int numints;
+		int numaddr;
+		int numtypes;
+		int combiner;
+
+		MPI_CHECK(
+				MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes,
+						&combiner));
+
+		std::vector<int> arrayInts(numints);
+		std::vector<MPI_Aint> arrayAddr(numaddr);
+		std::vector<MPI_Datatype> arrayTypes(numtypes);
+
+		MPI_CHECK(
+				MPI_Type_get_contents(*dtype, numints, numaddr, numtypes,
+						arrayInts.data(), arrayAddr.data(), arrayTypes.data()));
+
+		for (int i = 0; i < numtypes; i++) {
+			if (arrayTypes[i] == MPI_INT) {
+				inoutvec[i].v_int = std::min(inoutvec[i].v_int, invec[i].v_int);
+			}
+			else if (arrayTypes[i] == MPI_UNSIGNED_LONG) {
+				inoutvec[i].v_unsLong = std::min(inoutvec[i].v_unsLong, invec[i].v_unsLong);
+			}
+			else if (arrayTypes[i] == MPI_FLOAT) {
+				inoutvec[i].v_float = std::min(inoutvec[i].v_float, invec[i].v_float);
+			}
+			else if (arrayTypes[i] == MPI_DOUBLE) {
+				inoutvec[i].v_double = std::min(inoutvec[i].v_double, invec[i].v_double);
+			}
+			else if (arrayTypes[i] == MPI_LONG_DOUBLE) {
+				inoutvec[i].v_longDouble = std::min(inoutvec[i].v_longDouble, invec[i].v_longDouble);
 			}
 		}
 	}
