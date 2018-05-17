@@ -17,8 +17,8 @@ MaxWriter::MaxWriter()
 	:
 	_writeFrequency(1000),
 	_outputPrefix("maxvals"),
-	_dMaxValuesLocal(nullptr),
-	_dMaxValuesGlobal(nullptr),
+	_dMaxValuesLocal(),
+	_dMaxValuesGlobal(),
 	_numQuantities(7),
 	_numValsPerQuantity(4),
 	_numValsPerComponent(7*4),
@@ -28,11 +28,7 @@ MaxWriter::MaxWriter()
 	_numComponents = global_simulation->getEnsemble()->getComponents()->size()+1;  // 0: all components
 }
 
-MaxWriter::~MaxWriter()
-{
-	delete[] _dMaxValuesLocal;
-	delete[] _dMaxValuesGlobal;
-}
+MaxWriter::~MaxWriter() {}
 
 void MaxWriter::readXML(XMLfileUnits& xmlconfig)
 {
@@ -126,7 +122,7 @@ void MaxWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 	if(simstep % _writeFrequency != 0)
 		return;
 
-	this->calculateGlobalValues();
+	this->calculateGlobalValues(domainDecomp);
 	this->resetLocalValues();
 	this->writeData(domainDecomp);
 
@@ -144,8 +140,8 @@ void MaxWriter::initDataStructures()
 	_numValsPerComponent = _numQuantities * _numValsPerQuantity;
 	_numVals = _numValsPerComponent * _numComponents;
 
-	_dMaxValuesLocal  = new double[_numVals];
-	_dMaxValuesGlobal = new double[_numVals];
+	_dMaxValuesLocal.resize(_numVals);
+	_dMaxValuesGlobal.resize(_numVals);
 
 	this->resetLocalValues();
 }
@@ -207,16 +203,28 @@ void MaxWriter::doSampling(ParticleContainer* particleContainer)
 	}
 }
 
-void MaxWriter::calculateGlobalValues()
+void MaxWriter::calculateGlobalValues(DomainDecompBase *domainDecomp)
 {
+#if 1
 #ifdef ENABLE_MPI
 
-	MPI_Reduce( _dMaxValuesLocal, _dMaxValuesGlobal, _numVals, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dMaxValuesLocal.data(), _dMaxValuesGlobal.data(), _numVals, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 #else
 	// Scalar quantities
 	for(uint32_t vi=0; vi<_numVals; ++vi)
 		_dMaxValuesGlobal[vi] = _dMaxValuesLocal[vi];
+#endif
+#else
+	domainDecomp->collCommInit(_numVals);
+	for (uint32_t i=0; i<_numVals; i++) {
+		domainDecomp->collCommAppendDouble(_dMaxValuesLocal[i]);
+	}
+	domainDecomp->collCommAllreduceCustom(MAX);
+	for (uint32_t i=0; i<_numVals; i++) {
+		_dMaxValuesGlobal[i] = domainDecomp->collCommGetDouble();
+	}
+	domainDecomp->collCommFinalize();
 #endif
 }
 
@@ -265,25 +273,3 @@ void MaxWriter::writeData(DomainDecompBase* domainDecomp)
 		ofs.close();
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
