@@ -125,13 +125,13 @@
         		<writefrequency>20</writefrequency>
       			</outputplugin>
 		</output>
-
+		<!-- ALPHA: Center of Mass alignment plugin  --> 
 		<plugin name="COMaligner">
 			<x>1</x>
 			<y>0</y>
 			<z>1</z>
-			<interval>2</interval>
-			<correctionFactor>.8</correctionFactor>
+			<interval>1</interval>
+			<correctionFactor>.5</correctionFactor>
 		</plugin>
 		
 	</simulation>
