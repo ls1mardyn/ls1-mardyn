@@ -87,7 +87,7 @@ void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDec
 		#pragma omp critical
 		#endif
 		{
-			for (int i = 0; i < numComp; ++i) {
+			for (unsigned i = 0; i < numComp; ++i) {
 				_localGamma[i] += localGamma_thread[i];
 			}
 		}
