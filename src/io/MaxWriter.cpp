@@ -184,40 +184,24 @@ void MaxWriter::doSampling(ParticleContainer* particleContainer)
 			uint32_t nOffsetQuantity = _numValsPerQuantity*qi;
 
 			// all components
-			double* ptrValueActual = &arrQuantities.at(qi).at(0);
-			double* ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity];
-			if(*ptrValueActual > *ptrValueStored)
-				*ptrValueStored = *ptrValueActual;
-			for(uint32_t dim=1; dim<4; ++dim)
-			{
+			_dMaxValuesLocal[nOffsetQuantity] = std::max(_dMaxValuesLocal[nOffsetQuantity], arrQuantities.at(qi).at(0));
+
+			for(uint32_t dim=1; dim<4; ++dim) {
 				// positive direction (+)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity+dim];
-				if(*ptrValueActual > *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetQuantity+dim] = std::max(_dMaxValuesLocal[nOffsetQuantity+dim], arrQuantities.at(qi).at(dim));
 				// negative direction (-)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity+dim+3];
-				if(*ptrValueActual < *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetQuantity+dim+3] = std::min(_dMaxValuesLocal[nOffsetQuantity+dim+3], arrQuantities.at(qi).at(dim));
 			}
+
 			// specific component
-			ptrValueActual = &arrQuantities.at(qi).at(0);
-			ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity];
-			if(*ptrValueActual > *ptrValueStored)
-				*ptrValueStored = *ptrValueActual;
-			for(uint32_t dim=1; dim<4; ++dim)
-			{
+			_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity] = std::max(_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity], arrQuantities.at(qi).at(0));
+
+			for(uint32_t dim=1; dim<4; ++dim) {
 				// positive direction (+)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim];
-				if(*ptrValueActual > *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim] = std::max(_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim], arrQuantities.at(qi).at(dim));
+
 				// negative direction (-)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim+3];
-				if(*ptrValueActual < *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim+3] = std::min(_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim+3], arrQuantities.at(qi).at(dim));
 			}
 		}
 	}
