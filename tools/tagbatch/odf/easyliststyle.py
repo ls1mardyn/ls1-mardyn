@@ -21,8 +21,8 @@
 
 import re, sys, os.path
 sys.path.append(os.path.dirname(__file__))
-from style import Style, TextProperties, ListLevelProperties
-from text import ListStyle,ListLevelStyleNumber,ListLevelStyleBullet
+from odf.style import Style, TextProperties, ListLevelProperties
+from odf.text import ListStyle,ListLevelStyleNumber,ListLevelStyleBullet
 
 """
 Create a <text:list-style> element from a string or array.
@@ -35,7 +35,8 @@ Each item in the string (or array) represents a list level
  *
  * <p>If an item contains <code>1</code>, <code>I</code>,
  * <code>i</code>, <code>A</code>, or <code>a</code>, then it is presumed
- * to be a numbering style; otherwise it is a bulleted style.</p>
+ * to be a numbering style; otherwise it is a bulleted style based on the
+ * first character in the item.</p>
 """
 
 _MAX_LIST_LEVEL = 10

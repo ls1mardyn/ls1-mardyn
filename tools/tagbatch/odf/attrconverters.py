@@ -20,7 +20,7 @@
 
 import sys, os.path
 sys.path.append(os.path.dirname(__file__))
-from namespaces import *
+from odf.namespaces import *
 import re, types
 
 pattern_color =  re.compile(r'#[0-9a-fA-F]{6}')
@@ -103,7 +103,7 @@ def cnv_family(attribute, arg, element):
 def __save_prefix(attribute, arg, element):
     prefix = arg.split(':',1)[0]
     if prefix == arg:
-        return str(arg)
+        return arg
     namespace = element.get_knownns(prefix)
     if namespace is None:
         #raise ValueError( "'%s' is an unknown prefix" % str(prefix))
@@ -784,6 +784,7 @@ attrconverters = {
 	((FORMNS,u'xforms-list-source'), None): cnv_string,
 	((FORMNS,u'xforms-submission'), None): cnv_string,
         ((GRDDLNS,u'transformation'), None): cnv_string,
+	((LOEXTNS,u'contextual-spacing'), None): cnv_boolean,
 	((MANIFESTNS,u'algorithm-name'), None): cnv_string,
 	((MANIFESTNS,u'checksum'), None): cnv_string,
 	((MANIFESTNS,u'checksum-type'), None): cnv_string,
@@ -1609,4 +1610,3 @@ class AttrConverters:
             return unicode(value)
         else:
             return str(value)
-

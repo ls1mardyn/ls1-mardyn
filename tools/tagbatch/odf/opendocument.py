@@ -24,7 +24,7 @@
 
 __doc__="""Use OpenDocument to generate your documents."""
 
-import zipfile, time, sys, mimetypes, copy, os.path
+import zipfile, time, uuid, sys, mimetypes, copy, os.path
 
 # to allow Python3 to access modules in the same path
 sys.path.append(os.path.dirname(__file__))
@@ -34,14 +34,14 @@ sys.path.append(os.path.dirname(__file__))
 # convert strings or unicode to bytes, which is valid for Python 2 and 3.
 from io import StringIO, BytesIO
 
-from namespaces import *
-import manifest
-import meta
-from office import *
-import element
-from attrconverters import make_NCName
+from odf.namespaces import *
+import odf.manifest as manifest
+import odf.meta as meta
+from odf.office import *
+import odf.element as element
+from odf.attrconverters import make_NCName
 from xml.sax.xmlreader import InputSource
-from odfmanifest import manifestlist
+from odf.odfmanifest import manifestlist
 
 if sys.version_info[0] == 3:
     unicode=str # unicode function does not exist
@@ -369,7 +369,7 @@ class OpenDocument:
             stylenamelist = self._parseoneelement(top, stylenamelist)
         stylelist = []
         for e in self.automaticstyles.childNodes:
-            if e.getAttrNS(STYLENS,u'name') in stylenamelist:
+            if isinstance(e, element.Element) and e.getAttrNS(STYLENS,u'name') in stylenamelist:
                 stylelist.append(e)
 
         # check the type of the returned data
@@ -426,7 +426,7 @@ class OpenDocument:
                 except: ext=u''
             else:
                 ext = mimetypes.guess_extension(mediatype)
-            manifestfn = u"Pictures/%0.0f%s" % ((time.time()*10000000000), ext)
+            manifestfn = u"Pictures/%s%s" % (uuid.uuid4().hex.upper(), ext)
             self.Pictures[manifestfn] = (IS_FILENAME, filename, mediatype)
             content=b""  # this value is only use by the assert further
             filename=u"" # this value is only use by the assert further
@@ -435,7 +435,6 @@ class OpenDocument:
             self.Pictures[manifestfn] = (IS_IMAGE, content, mediatype)
 
         assert(type(filename)==type(u""))
-        assert(type(mediatype)==type(u""))
         assert(type(content) == type(b""))
 
         return manifestfn
@@ -459,7 +458,7 @@ class OpenDocument:
             except ValueError: ext=u''
         else:
             ext = mimetypes.guess_extension(mediatype)
-        manifestfn = u"Pictures/%0.0f%s" % ((time.time()*10000000000), ext)
+        manifestfn = u"Pictures/%s%s" % (uuid.uuid4().hex.upper(), ext)
         self.Pictures[manifestfn] = (IS_FILENAME, filename, mediatype)
 
         assert(type(filename)==type(u""))
@@ -482,7 +481,7 @@ class OpenDocument:
         assert(type(mediatype)==type(u""))
 
         ext = mimetypes.guess_extension(mediatype)
-        manifestfn = u"Pictures/%0.0f%s" % ((time.time()*10000000000), ext)
+        manifestfn = u"Pictures/%s%s" % (uuid.uuid4().hex.upper(), ext)
         self.Pictures[manifestfn] = (IS_IMAGE, content, mediatype)
         return manifestfn
 
@@ -533,7 +532,7 @@ class OpenDocument:
             self.manifest.addElement(manifest.FileEntry(fullpath=u"%s%s" % ( folder ,arcname), mediatype=mediatype))
             hasPictures = True
             if what_it_is == IS_FILENAME:
-                self._z.write(fileobj, arcname, zipfile.ZIP_STORED)
+                self._z.write(fileobj, folder + arcname, zipfile.ZIP_STORED)
             else:
                 zi = zipfile.ZipInfo(str(arcname), self._now)
                 zi.compress_type = zipfile.ZIP_STORED
@@ -569,8 +568,6 @@ class OpenDocument:
         the ZIP content.
         @param addsuffix boolean: whether to add a suffix or not; defaults to False
         """
-        assert(type(outputfile)==type(u"") or 'wb' in repr(outputfile) or 'BufferedWriter' in repr(outputfile)  or 'BytesIO' in repr(outputfile))
-        assert(type(addsuffix)==type(True))
 
         if outputfile == u'-':
             outputfp = zipfile.ZipFile(sys.stdout,"w")
@@ -587,8 +584,6 @@ class OpenDocument:
         Writes the ZIP format
         @param outputfp open file descriptor
         """
-        assert('wb' in repr(outputfp) or 'BufferedWriter' in repr(outputfp)  or 'BytesIO' in repr(outputfp))
-
         zipoutputfp = zipfile.ZipFile(outputfp,"w")
         self.__zipwrite(zipoutputfp)
 
@@ -679,7 +674,7 @@ class OpenDocument:
             zi = zipfile.ZipInfo(u"%ssettings.xml" % folder, self._now)
             zi.compress_type = zipfile.ZIP_DEFLATED
             zi.external_attr = UNIXPERMS
-            self._z.writestr(zi, anObject.settingsxml() )
+            self._z.writestr(zi, anObject.settingsxml().encode("utf-8") )
 
         # Write meta
         if self == anObject:
@@ -687,7 +682,7 @@ class OpenDocument:
             zi = zipfile.ZipInfo(u"meta.xml", self._now)
             zi.compress_type = zipfile.ZIP_DEFLATED
             zi.external_attr = UNIXPERMS
-            self._z.writestr(zi, anObject.metaxml() )
+            self._z.writestr(zi, anObject.metaxml().encode("utf-8") )
 
         # Write subobjects
         subobjectnum = 1
@@ -869,7 +864,7 @@ def __loadxmlparts(z, manifest, doc, objectpath):
     assert(isinstance(doc, OpenDocument))
     assert(type(objectpath)==type(u""))
 
-    from load import LoadParser
+    from odf.load import LoadParser
     from xml.sax import make_parser, handler
 
     for xmlfile in (objectpath+u'settings.xml', objectpath+u'meta.xml', objectpath+u'content.xml', objectpath+u'styles.xml'):
@@ -886,6 +881,7 @@ def __loadxmlparts(z, manifest, doc, objectpath):
 
             parser = make_parser()
             parser.setFeature(handler.feature_namespaces, 1)
+            parser.setFeature(handler.feature_external_ges, 0)
             parser.setContentHandler(LoadParser(doc))
             parser.setErrorHandler(handler.ErrorHandler())
 
@@ -917,9 +913,18 @@ def __fixXmlPart(xmlpart):
                          u'svg', u'fo',u'draw', u'table',u'form')
     for prefix in requestedPrefixes:
         if u' xmlns:{prefix}'.format(prefix=prefix) not in xmlpart:
-            pos=result.index(u" xmlns:")
-            toInsert=u' xmlns:{prefix}="urn:oasis:names:tc:opendocument:xmlns:{prefix}:1.0"'.format(prefix=prefix)
-            result=result[:pos]+toInsert+result[pos:]
+            ###########################################
+            # fixed a bug triggered by math elements
+            # Notice: math elements are creectly exported to XHTML
+            #         and best viewed with MathJax javascript.
+            # 2016-02-19 G.K.
+            ###########################################
+            try:
+                pos=result.index(u" xmlns:")
+                toInsert=u' xmlns:{prefix}="urn:oasis:names:tc:opendocument:xmlns:{prefix}:1.0"'.format(prefix=prefix)
+                result=result[:pos]+toInsert+result[pos:]
+            except:
+                pass
     return result
 
 
@@ -931,8 +936,6 @@ def __detectmimetype(zipfd, odffile):
     @return a mime-type as a unicode string
     """
     assert(isinstance(zipfd, zipfile.ZipFile))
-    assert(type(odffile)==type(u"") or 'rb' in repr(odffile) \
-               or 'BufferedReader' in repr(odffile)  or 'BytesIO' in repr(odffile))
 
     try:
         mimetype = zipfd.read('mimetype').decode("utf-8")
@@ -957,9 +960,6 @@ def load(odffile):
     an open readable stream
     @return a reference to the structure (an OpenDocument instance)
     """
-    assert(type(odffile)==type(u"") or 'rb' in repr(odffile) \
-               or 'BufferedReader' in repr(odffile)  or 'BytesIO' in repr(odffile))
-
     z = zipfile.ZipFile(odffile)
     mimetype = __detectmimetype(z, odffile)
     doc = OpenDocument(mimetype, add_generator=False)
