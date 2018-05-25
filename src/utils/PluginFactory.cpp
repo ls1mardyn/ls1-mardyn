@@ -33,7 +33,7 @@
 #include "io/XyzWriter.h"
 #include "io/MaxWriter.h"
 #include "utils/COMaligner.h"
-#include "molecules/Mirror.h"
+#include "plugins/Mirror.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"

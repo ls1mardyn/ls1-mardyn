@@ -34,7 +34,7 @@
 #include "integrators/Leapfrog.h"
 #include "integrators/LeapfrogRMM.h"
 #include "molecules/Wall.h"
-#include "molecules/Mirror.h"
+#include "plugins/Mirror.h"
 
 #include "utils/PluginBase.h"
 #include "utils/PluginFactory.h"
