@@ -19,6 +19,7 @@
 #include "utils/Logger.h"
 #include "utils/CommVar.h"
 #include "utils/arrayMath.h"
+#include "utils/CommVar.h"
 using Log::global_log;
 
 using namespace std;

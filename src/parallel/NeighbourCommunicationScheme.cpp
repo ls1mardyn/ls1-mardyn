@@ -833,7 +833,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	for (int i = 0; i < numNeighbours; ++i) { // reset receive status
-		if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()) {
+		if (domainDecomp->getRank() != (*_neighbours)[d][i].getRank()) {
 			(*_neighbours)[d][i].resetReceive();
 		}
 	}

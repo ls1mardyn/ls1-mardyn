@@ -6,7 +6,7 @@
 #include <climits>
 #include <cmath>
 
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -107,12 +107,21 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("fullSearchThreshold", _fullSearchThreshold);
 	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << endl;
 	xmlconfig.getNodeValue("heterogeneousSystems", _heterogeneousSystems);
-	global_log->info() << "KDDecomposition for heterogeneous systems?: " << (_heterogeneousSystems?"yes":"no") << endl;
+	global_log->info() << "KDDecomposition for heterogeneous computing systems (old version, not compatible with new VecTuner version)?: " << (_heterogeneousSystems?"yes":"no") << endl;
+
+	bool useVecTuner = false;
+	xmlconfig.getNodeValue("useVectorizationTuner", useVecTuner);
+	global_log->info() << "KDDecomposition using vectorization tuner: " << (useVecTuner?"yes":"no") << endl;
+	if (useVecTuner){
+		delete _loadCalc;
+		_loadCalc = new TunerLoad();
+	}
+
 	xmlconfig.getNodeValue("clusterHetSys", _clusteredHeterogeneouseSystems);
 	global_log->info() << "KDDecomposition for clustered heterogeneous systems?: " << (_clusteredHeterogeneouseSystems?"yes":"no") << endl;
 	//TODO remove this check if the heterogenous Decomposition is updated to the vectorization tuner.
 	if(_heterogeneousSystems){
-		global_log->warning() << "The old version of the heterogeneous KDDecomposition shouldn't be used with the vectorization tuner!";
+		global_log->warning() << "The old version of the heterogeneous KDDecomposition shouldn't be used with the vectorization tuner!" << endl;
 	}
 	xmlconfig.getNodeValue("splitBiggestDimension", _splitBiggest);
 	global_log->info() << "KDDecomposition splits along biggest domain?: " << (_splitBiggest?"yes":"no") << endl;
@@ -902,7 +911,8 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 	}
 
 	for (size_t dim = dimInit; dim < dimEnd; dim++) {
-		if (costsLeft[dim].size()<=2){
+		// we need at least 4 cells in this direction (= 4 different splitting planes)
+		if (costsLeft[dim].size()<=3){
 			continue;
 		}
 		// if a node has some more processors, we probably don't have to find the
@@ -928,10 +938,6 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 				}
 				startIndex = max((size_t)startIndex, index);
 				endIndex = min(startIndex + 1, endIndex);
-				//The following code line seems unnecessary and leads to a bug where the KDDecomposition creates nodes that are only 1 Cell thick
-				//In that case maxEndIndex (and therefore endIndex) are 0 which means that the following line will set startIndex to -1.
-				//This leads to a termination of the program.
-				startIndex = min(endIndex-1, startIndex);
 
 				global_log->debug() << "splitLoad: startindex " << index << " of " << costsLeft[dim].size() <<std::endl;
 			} else {  // If we have more than _fullSearchThreshold processes left, we split the domain in half.
@@ -1008,9 +1014,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 				domainTooSmall = true;
 			}
 
-			// In this place, MBu had some processor shifting in his algorithm.
-			// I believe it to be unnecessary, as the ratio of left and right processors
-			// is chosen according to the load ratio (I use round instead of floor).
+			// This should never happen, but it just means, that the domain could not be split properly.
 			if ((clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) ||
 					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
 				//continue;
@@ -1768,7 +1772,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	if ((optimalNode->_child1->_numProcs <= 0 || optimalNode->_child1->_numProcs >= node->_numProcs) ||
 			(optimalNode->_child2->_numProcs <= 0 || optimalNode->_child2->_numProcs >= node->_numProcs) ){
 		//continue;
-		global_log->error_always_output() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
+		global_log->error_always_output() << "ERROR in calculateHeteroSubdivision(), part of the domain was not assigned to a proc" << endl;
 		Simulation::exit(1);
 	}
 	mardyn_assert( optimalNode->_child1->isResolvable() && optimalNode->_child2->isResolvable() );

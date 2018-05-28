@@ -25,6 +25,14 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
     xmlconfig.getNodeValue("interval", _interval);
     xmlconfig.getNodeValue("correctionFactor", _alignmentCorrection);
 
+    // SANITY CHECK
+    if(_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1){
+        global_log -> error() << "[COMaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+        _enabled = false;
+        // TODO: THROW REAL ERROR AND HALT SIMULATION?
+        return;
+    }
+
     global_log -> info() << "[COMaligner] settings:" << std::endl;
     global_log -> info() << "                  x: " << _alignX << std::endl;
     global_log -> info() << "                  y: " << _alignY << std::endl;
@@ -151,6 +159,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
     // TODO: Check if ComponentID check is important
     // TODO: CHECK IF MPI IMPLEMENTATION NECESSARY
     // TODO: WRITE UNIT TEST
+    // TODO: What about non-monitored particles (Differentiate?)
 }
 
 //! @brief called after Forces are applied
@@ -166,9 +175,11 @@ void COMaligner::endStep(ParticleContainer *particleContainer, DomainDecompBase 
                          unsigned long simstep, std::list<ChemicalPotential> *lmu,
                          std::map<unsigned, CavityEnsemble> *mcav) {
 
-    for(ParticleIterator tm = particleContainer->iterator(); tm.hasNext(); tm.next()){
-        for (int d = _dim_start; d < _dim_end; d += _dim_step){
-            tm->move(d, _motion[d]);
+    if(_enabled){
+        for(ParticleIterator tm = particleContainer->iterator(); tm.hasNext(); tm.next()){
+            for (int d = _dim_start; d < _dim_end; d += _dim_step){
+                tm->move(d, _motion[d]);
+            }
         }
     }
 }

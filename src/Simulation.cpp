@@ -34,7 +34,7 @@
 #include "integrators/Leapfrog.h"
 #include "integrators/LeapfrogRMM.h"
 #include "molecules/Wall.h"
-#include "molecules/Mirror.h"
+#include "plugins/Mirror.h"
 
 #include "utils/PluginBase.h"
 #include "utils/PluginFactory.h"
@@ -143,11 +143,7 @@ Simulation::Simulation()
 	_densityControl(NULL),
 	_regionSampling(NULL),
 	_particleTracker(NULL),
-	_motionLimits(NULL),
-	_nFmaxOpt(CFMAXOPT_NO_CHECK),
-	_nFmaxID(0),
-	_dFmaxInit(0.0),
-	_dFmaxThreshold(0.0)
+	_motionLimits(NULL)
 {
 	_ensemble = new CanonicalEnsemble();
 	_mettDeamon.clear();
@@ -271,33 +267,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		_domain->setGlobalTemperature(_ensemble->T());
 
-		/// @todo Move the phasespace check into an output plugin executed once at the start!
-		/* check phasespacepoint */
-		bool bInputOk = true;
-		_nFmaxOpt = CFMAXOPT_NO_CHECK;
-		std::string strType = "unknown";
-		std::string strOption = "unknown";
-		_dFmaxInit = 0.;
-		_dFmaxThreshold = 0.;
-		bInputOk = bInputOk && xmlconfig.getNodeValue("phasespacepoint/check/@type", strType);
-		bInputOk = bInputOk && xmlconfig.getNodeValue("phasespacepoint/check/@option", strOption);
-		if(true == bInputOk)
-		{
-			if("show-only" == strOption)
-				_nFmaxOpt = CFMAXOPT_SHOW_ONLY;
-			else if("check-greater" == strOption)
-			{
-				_nFmaxOpt = CFMAXOPT_CHECK_GREATER;
-				bInputOk = bInputOk && xmlconfig.getNodeValue("phasespacepoint/check/Fmax", _dFmaxThreshold);
-				global_log->info() << "Checking if initial max. force (Fmax) is less than:"
-						" " << _dFmaxThreshold << endl;
-			}
-			else
-				global_log->error() << "XML-I/O: Wrong option in attribute: ensemble/phasespacepoint/check/@option" << endl;
-
-			if("Fmax" == strType && CFMAXOPT_NO_CHECK != _nFmaxOpt)
-				global_log->info() << "Checking max. initial force (Fmax)." << endl;
-		}
 		xmlconfig.changecurrentnode("..");
 	}
 	else {
@@ -807,48 +776,8 @@ void Simulation::updateForces() {
 	#endif
 	{
 		const ParticleIterator begin = _moleculeContainer->iterator();
-
-		if(_simstep==0 && (CFMAXOPT_SHOW_ONLY == _nFmaxOpt || CFMAXOPT_CHECK_GREATER == _nFmaxOpt)) {
-
-			uint64_t id;
-			uint32_t cid;
-			double r[3];
-			double F[3];
-			double Fabs=0.;
-			double FabsSquared=0.;
-			double FmaxInitSquared=_dFmaxInit*_dFmaxInit;
-			double FmaxThresholdSquared = _dFmaxThreshold*_dFmaxThreshold;
-
-			for (ParticleIterator i = begin; i.hasNext(); i.next()){
-				i->calcFM();
-
-				id=i->id();
-				cid=i->componentid()+1;
-				for(uint8_t d=0; d<3; ++d)
-				{
-					r[d]=i->r(d);
-					F[d]=i->F(d);
-				}
-				FabsSquared=(F[0]*F[0]+F[1]*F[1]+F[2]*F[2]);
-				if(FabsSquared > FmaxInitSquared)
-				{
-					Fabs=sqrt(FabsSquared);
-					_dFmaxInit=Fabs;
-					FmaxInitSquared=_dFmaxInit*_dFmaxInit;
-					_nFmaxID=id;
-				}
-				if(CFMAXOPT_CHECK_GREATER == _nFmaxOpt && FabsSquared > FmaxThresholdSquared) {
-					Fabs=sqrt(FabsSquared);
-					global_log->warning()<<"Fabs="<<Fabs<<" > "<<_dFmaxThreshold<<" (threshold) for molecule: id="<<id<<", cid="<<cid<<", "
-						"x,y,z="<<r[0]<<", "<<r[1]<<", "<<r[2]<<endl;
-				}
-			}
-			global_log->info()<<"Max. initial force is found for molecule: id="<<_nFmaxID<<", Fmax="<<_dFmaxInit<<endl;
-		}
-		else {
-			for (ParticleIterator i = begin; i.hasNext(); i.next()){
-				i->calcFM();
-			}
+		for (ParticleIterator i = begin; i.hasNext(); i.next()){
+			i->calcFM();
 		}
 	} // end pragma omp parallel
 }

@@ -13,6 +13,7 @@
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
 
+// Output plugins
 #include "io/CavityWriter.h"
 #include "io/CheckpointWriter.h"
 #include "io/DecompWriter.h"
@@ -32,8 +33,11 @@
 #include "io/VISWriter.h"
 #include "io/XyzWriter.h"
 #include "io/MaxWriter.h"
-#include "utils/COMaligner.h"
-#include "molecules/Mirror.h"
+
+// General plugins
+#include "plugins/COMaligner.h"
+#include "plugins/Mirror.h"
+#include "plugins/MaxCheck.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -71,6 +75,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(MaxWriter);
     REGISTER_PLUGIN(COMaligner);
     REGISTER_PLUGIN(Mirror);
+    REGISTER_PLUGIN(MaxCheck);
 
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);

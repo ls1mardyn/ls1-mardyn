@@ -271,6 +271,8 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 
 		global_log->info() << "starting tuning..." << std::endl;
 
+		CellBorderAndFlagManager saveFlagManager = ParticleCell::_cellBorderAndFlagManager;
+
 		//init the cells
 		int cellsPerDim[3] = { 4, 4, 4 };
 		double haloBoxMin[3] = {-1., -1., -1.};
@@ -378,6 +380,9 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		(**_cellProcessor).setCutoffRadiusSquare(restoreCutoff);
 		(**_cellProcessor).setLJCutoffRadiusSquare(restoreLJCutoff);
 		global_log->info() << "finished tuning" << std::endl;
+
+		// restore the _cellBorderAndFlagManager to its original value.
+		ParticleCell::_cellBorderAndFlagManager = saveFlagManager;
 }
 
 
