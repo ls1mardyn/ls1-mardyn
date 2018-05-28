@@ -18,6 +18,7 @@
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
 #include "utils/arrayMath.h"
+#include "utils/CommVar.h"
 using Log::global_log;
 
 using namespace std;
@@ -671,6 +672,19 @@ void Domain::writeCheckpoint(string filename,
 	// 2. writing the checkpoint (with currentTime + delta T ? )
 	// 3. integrating positions by half a timestep backward (- delta T / 2)
 #endif
+
+	// update global number of particles
+	{
+		DomainDecompBase* domainDecomposition = &(global_simulation->domainDecomposition() );
+		CommVar<uint64_t> numMolecules;
+		numMolecules.local = particleContainer->getNumberOfParticles();
+		domainDecomposition->collCommInit(1);
+		domainDecomposition->collCommAppendUnsLong(numMolecules.local);
+		domainDecomposition->collCommAllreduceSum();
+		numMolecules.global = domainDecomposition->collCommGetUnsLong();
+		domainDecomposition->collCommFinalize();
+		this->setglobalNumMolecules(numMolecules.global);
+	}
 
 	if (useBinaryFormat == true) {
 		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
