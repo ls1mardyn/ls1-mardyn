@@ -911,7 +911,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 	}
 
 	for (size_t dim = dimInit; dim < dimEnd; dim++) {
-		// we need at least 4 cells in this direction (= 3 different splitting planes)
+		// we need at least 4 cells in this direction (= 4 different splitting planes)
 		if (costsLeft[dim].size()<=3){
 			continue;
 		}
