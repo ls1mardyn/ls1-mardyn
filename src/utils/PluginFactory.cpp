@@ -37,6 +37,7 @@
 // General plugins
 #include "plugins/COMaligner.h"
 #include "plugins/Mirror.h"
+#include "plugins/MaxCheck.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -74,6 +75,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(MaxWriter);
     REGISTER_PLUGIN(COMaligner);
     REGISTER_PLUGIN(Mirror);
+    REGISTER_PLUGIN(MaxCheck);
 
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
