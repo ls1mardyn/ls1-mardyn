@@ -13,6 +13,7 @@
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
 
+// Output plugins
 #include "io/CavityWriter.h"
 #include "io/CheckpointWriter.h"
 #include "io/DecompWriter.h"
@@ -32,7 +33,9 @@
 #include "io/VISWriter.h"
 #include "io/XyzWriter.h"
 #include "io/MaxWriter.h"
-#include "utils/COMaligner.h"
+
+// General plugins
+#include "plugins/COMaligner.h"
 #include "plugins/Mirror.h"
 
 #ifdef VTK
