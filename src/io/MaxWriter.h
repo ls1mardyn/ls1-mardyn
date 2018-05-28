@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 #include "utils/PluginBase.h"
 
@@ -46,15 +47,15 @@ public:
 private:
 	void initDataStructures();
 	void doSampling(ParticleContainer* particleContainer);
-	void calculateGlobalValues();
+	void calculateGlobalValues(DomainDecompBase *domainDecomp);
 	void resetLocalValues();
 	void writeData(DomainDecompBase* domainDecomp);
 
 private:
 	uint64_t _writeFrequency;
 	std::string _outputPrefix;
-	double* _dMaxValuesLocal;
-	double* _dMaxValuesGlobal;
+	std::vector<double> _dMaxValuesLocal;
+	std::vector<double> _dMaxValuesGlobal;
 	uint32_t _numQuantities;
 	uint32_t _numValsPerQuantity;
 	uint32_t _numValsPerComponent;

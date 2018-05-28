@@ -17,8 +17,8 @@ MaxWriter::MaxWriter()
 	:
 	_writeFrequency(1000),
 	_outputPrefix("maxvals"),
-	_dMaxValuesLocal(nullptr),
-	_dMaxValuesGlobal(nullptr),
+	_dMaxValuesLocal(),
+	_dMaxValuesGlobal(),
 	_numQuantities(7),
 	_numValsPerQuantity(4),
 	_numValsPerComponent(7*4),
@@ -28,11 +28,7 @@ MaxWriter::MaxWriter()
 	_numComponents = global_simulation->getEnsemble()->getComponents()->size()+1;  // 0: all components
 }
 
-MaxWriter::~MaxWriter()
-{
-	delete[] _dMaxValuesLocal;
-	delete[] _dMaxValuesGlobal;
-}
+MaxWriter::~MaxWriter() {}
 
 void MaxWriter::readXML(XMLfileUnits& xmlconfig)
 {
@@ -126,7 +122,7 @@ void MaxWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 	if(simstep % _writeFrequency != 0)
 		return;
 
-	this->calculateGlobalValues();
+	this->calculateGlobalValues(domainDecomp);
 	this->resetLocalValues();
 	this->writeData(domainDecomp);
 
@@ -144,8 +140,8 @@ void MaxWriter::initDataStructures()
 	_numValsPerComponent = _numQuantities * _numValsPerQuantity;
 	_numVals = _numValsPerComponent * _numComponents;
 
-	_dMaxValuesLocal  = new double[_numVals];
-	_dMaxValuesGlobal = new double[_numVals];
+	_dMaxValuesLocal.resize(_numVals);
+	_dMaxValuesGlobal.resize(_numVals);
 
 	this->resetLocalValues();
 }
@@ -184,56 +180,40 @@ void MaxWriter::doSampling(ParticleContainer* particleContainer)
 			uint32_t nOffsetQuantity = _numValsPerQuantity*qi;
 
 			// all components
-			double* ptrValueActual = &arrQuantities.at(qi).at(0);
-			double* ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity];
-			if(*ptrValueActual > *ptrValueStored)
-				*ptrValueStored = *ptrValueActual;
-			for(uint32_t dim=1; dim<4; ++dim)
-			{
+			_dMaxValuesLocal[nOffsetQuantity] = std::max(_dMaxValuesLocal[nOffsetQuantity], arrQuantities.at(qi).at(0));
+
+			for(uint32_t dim=1; dim<4; ++dim) {
 				// positive direction (+)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity+dim];
-				if(*ptrValueActual > *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetQuantity+dim] = std::max(_dMaxValuesLocal[nOffsetQuantity+dim], arrQuantities.at(qi).at(dim));
 				// negative direction (-)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetQuantity+dim+3];
-				if(*ptrValueActual < *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetQuantity+dim+3] = std::min(_dMaxValuesLocal[nOffsetQuantity+dim+3], arrQuantities.at(qi).at(dim));
 			}
+
 			// specific component
-			ptrValueActual = &arrQuantities.at(qi).at(0);
-			ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity];
-			if(*ptrValueActual > *ptrValueStored)
-				*ptrValueStored = *ptrValueActual;
-			for(uint32_t dim=1; dim<4; ++dim)
-			{
+			_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity] = std::max(_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity], arrQuantities.at(qi).at(0));
+
+			for(uint32_t dim=1; dim<4; ++dim) {
 				// positive direction (+)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim];
-				if(*ptrValueActual > *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim] = std::max(_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim], arrQuantities.at(qi).at(dim));
+
 				// negative direction (-)
-				ptrValueActual = &arrQuantities.at(qi).at(dim);
-				ptrValueStored = &_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim+3];
-				if(*ptrValueActual < *ptrValueStored)
-					*ptrValueStored = *ptrValueActual;
+				_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim+3] = std::min(_dMaxValuesLocal[nOffsetComponent+nOffsetQuantity+dim+3], arrQuantities.at(qi).at(dim));
 			}
 		}
 	}
 }
 
-void MaxWriter::calculateGlobalValues()
+void MaxWriter::calculateGlobalValues(DomainDecompBase *domainDecomp)
 {
-#ifdef ENABLE_MPI
-
-	MPI_Reduce( _dMaxValuesLocal, _dMaxValuesGlobal, _numVals, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-
-#else
-	// Scalar quantities
-	for(uint32_t vi=0; vi<_numVals; ++vi)
-		_dMaxValuesGlobal[vi] = _dMaxValuesLocal[vi];
-#endif
+	domainDecomp->collCommInit(_numVals);
+	for (auto val : _dMaxValuesLocal) {
+		domainDecomp->collCommAppendDouble(val);
+	}
+	domainDecomp->collCommAllreduceCustom(ReduceType::MAX);
+	for (auto & val : _dMaxValuesGlobal) {
+		val = domainDecomp->collCommGetDouble();
+	}
+	domainDecomp->collCommFinalize();
 }
 
 void MaxWriter::resetLocalValues()
@@ -281,25 +261,3 @@ void MaxWriter::writeData(DomainDecompBase* domainDecomp)
 		ofs.close();
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

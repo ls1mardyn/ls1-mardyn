@@ -1,6 +1,9 @@
-//
-// Created by Moritz Krügener
-//
+/*
+ * COMaligner.h
+ *
+ *  Created on: 7 May 2018
+ *      Author: kruegener
+ */
 
 #ifndef MARDYN_TRUNK_COMALIGNER_H
 #define MARDYN_TRUNK_COMALIGNER_H
@@ -8,6 +11,7 @@
 #include "utils/PluginBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
+#include "parallel/DomainDecompBase.h"
 
 class COMaligner : public PluginBase{
 
@@ -23,7 +27,6 @@ public:
         }
 
     }
-
 
     void readXML (XMLfileUnits& xmlconfig) override;
 
@@ -46,10 +49,18 @@ public:
 
 private:
 
+    // DEFAULT: ALIGN IN ALL DIMENSIONS
     bool _alignX = true;
     bool _alignY = true;
     bool _alignZ = true;
 
+    bool _enabled = true;
+
+    int _dim_start;
+    int _dim_end;
+    int _dim_step;
+
+    // DEFAULT: EVERY 25th FRAME FULL ALIGNMENT
     int _interval = 25;
     float _alignmentCorrection = 1.0f;
 

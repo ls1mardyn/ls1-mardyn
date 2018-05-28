@@ -48,6 +48,10 @@ public:
 		return ret;
 	}
 	virtual double v(unsigned short d) const = 0;
+	std::array<double, 3> v_arr() const {
+		std::array<double, 3> ret = {v(0), v(1), v(2)};
+		return ret;
+	}
 	virtual double mass() const {
 		return component()->m();
 	}

@@ -66,17 +66,33 @@ double GammaWriter::getGamma(unsigned id, double globalLength[3]){
 
 void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom){
 	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
-	std::vector<double> _localGamma(numComp);
-	for (unsigned i=0; i<numComp; i++){
-		_localGamma[i]=0;
-	}
-	for (ParticleIterator tempMol = particleContainer->iterator(); tempMol.hasNext();
-			tempMol.next()) {
-		if (particleContainer->isInBoundingBox(tempMol->r_arr().data())) {
-			unsigned cid = tempMol->componentid();
-			_localGamma[cid] += tempMol->Vi(1) - 0.5 * (tempMol->Vi(0) + tempMol->Vi(2));
+	std::vector<double> _localGamma(numComp, 0.0);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+
+		std::vector<double> localGamma_thread(numComp, 0.0);
+
+		for (auto tempMol = particleContainer->iterator(); tempMol.hasNext(); tempMol.next()) {
+
+			if (particleContainer->isInBoundingBox(tempMol->r_arr().data())) {
+				unsigned cid = tempMol->componentid();
+				localGamma_thread[cid] += tempMol->Vi(1) - 0.5 * (tempMol->Vi(0) + tempMol->Vi(2));
+			}
+		}
+
+		#if defined(_OPENMP)
+		#pragma omp critical
+		#endif
+		{
+			for (unsigned i = 0; i < numComp; ++i) {
+				_localGamma[i] += localGamma_thread[i];
+			}
 		}
 	}
+
 	domainDecom->collCommInit(numComp);
 	for (unsigned i=0; i<numComp; i++){
 		domainDecom->collCommAppendDouble(_localGamma[i]);

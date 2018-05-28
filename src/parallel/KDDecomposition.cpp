@@ -1321,23 +1321,34 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 	for (int dim = 0; dim < 3; dim++) {
 		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);
 	}
-	for(ParticleIterator molPtr = moleculeContainer->iterator(); molPtr.hasNext(); molPtr.next()) {
-		int localCellIndex[3]; // 3D Cell index (local)
-		int globalCellIdx[3]; // 3D Cell index (global)
-		for (int dim = 0; dim < 3; dim++) {
-			localCellIndex[dim] = (int) floor((molPtr->r(dim) - bBMin[dim]) / _cellSize[dim]);
-			globalCellIdx[dim] = _ownArea->_lowCorner[dim] + localCellIndex[dim];
-			if (globalCellIdx[dim] < 0)
-				globalCellIdx[dim] += _globalCellsPerDim[dim];
-			if (globalCellIdx[dim] >= _globalCellsPerDim[dim])
-				globalCellIdx[dim] -= _globalCellsPerDim[dim];
-		}
-		if(molPtr->componentid() == 0){
-			mardyn_assert(static_cast<int>(molPtr->componentid()) <= _numParticleTypes);
-			_numParticlesPerCell[_globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
 
-		} else {
-			_numParticlesPerCell[_globalNumCells + _globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		for(ParticleIterator molPtr = moleculeContainer->iterator(); molPtr.hasNext(); molPtr.next()) {
+			int localCellIndex[3]; // 3D Cell index (local)
+			int globalCellIdx[3]; // 3D Cell index (global)
+			for (int dim = 0; dim < 3; dim++) {
+				localCellIndex[dim] = (int) floor((molPtr->r(dim) - bBMin[dim]) / _cellSize[dim]);
+				globalCellIdx[dim] = _ownArea->_lowCorner[dim] + localCellIndex[dim];
+				if (globalCellIdx[dim] < 0)
+					globalCellIdx[dim] += _globalCellsPerDim[dim];
+				if (globalCellIdx[dim] >= _globalCellsPerDim[dim])
+					globalCellIdx[dim] -= _globalCellsPerDim[dim];
+			}
+			if(molPtr->componentid() == 0){
+				mardyn_assert(static_cast<int>(molPtr->componentid()) <= _numParticleTypes);
+				#if defined(_OPENMP)
+				#pragma omp atomic
+				#endif
+				_numParticlesPerCell[_globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
+			} else {
+				#if defined(_OPENMP)
+				#pragma omp atomic
+				#endif
+				_numParticlesPerCell[_globalNumCells + _globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
+			}
 		}
 	}
 	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell.data(), _globalNumCells * _numParticleTypes, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );

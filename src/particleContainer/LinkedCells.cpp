@@ -202,17 +202,40 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 }
 
-void LinkedCells::check_molecules_in_box(){
-	for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
-		if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
-			global_log->error() << "Particle (id=" << tM->id() << ") outside of bounding box (current position: x="
-					<< tM->r(0) << ", y=" << tM->r(1) << ", z=" << tM->r(2) << ")" << std::endl;
-			global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
-					<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
-					<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
-			global_log->error() << "Particle will be lost. Aboarting simulation." << std::endl;
-			Simulation::exit(311);
+void LinkedCells::check_molecules_in_box() {
+	std::vector<Molecule> badMolecules;
+	unsigned numBadMolecules = 0;
+
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+ : numBadMolecules)
+	#endif
+	{
+		for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
+			if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
+				numBadMolecules++;
+
+				#if defined(_OPENMP)
+				#pragma omp critical
+				#endif
+				{
+					badMolecules.push_back(*tM);
+				}
+
+			}
 		}
+	}
+
+	if (numBadMolecules > 0) {
+		global_log->error() << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
+		for (auto & m : badMolecules) {
+			global_log->error() << "Particle (id=" << m.id() << "), (current position: x="
+					<< m.r(0) << ", y=" << m.r(1) << ", z=" << m.r(2) << ")" << std::endl;
+		}
+		global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
+				<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
+				<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
+		global_log->error() << "Particles will be lost. Aborting simulation." << std::endl;
+		Simulation::exit(311);
 	}
 }
 
@@ -246,20 +269,33 @@ void LinkedCells::update() {
 
 
 #ifndef NDEBUG
-	for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
-		if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
-			global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
-					<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
-					<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
-			global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
-					<< std::endl << "cell: [" << _cells[tM.getCellIndex()].getBoxMin(0) << ", "
-					<< _cells[tM.getCellIndex()].getBoxMax(0) << "] x [" << _cells[tM.getCellIndex()].getBoxMin(1)
-					<< ", " << _cells[tM.getCellIndex()].getBoxMax(1) << "] x ["
-					<< _cells[tM.getCellIndex()].getBoxMin(2) << ", " << _cells[tM.getCellIndex()].getBoxMax(2) << "]"
-					<< std::endl;
+	unsigned numBadMolecules = 0;
 
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+: numBadMolecules)
+	#endif
+	{
+		for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
+			if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
+				numBadMolecules++;
+				global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
+						<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
+						<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
+				global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
+						<< std::endl << "cell: [" << _cells[tM.getCellIndex()].getBoxMin(0) << ", "
+						<< _cells[tM.getCellIndex()].getBoxMax(0) << "] x [" << _cells[tM.getCellIndex()].getBoxMin(1)
+						<< ", " << _cells[tM.getCellIndex()].getBoxMax(1) << "] x ["
+						<< _cells[tM.getCellIndex()].getBoxMin(2) << ", " << _cells[tM.getCellIndex()].getBoxMax(2) << "]"
+						<< std::endl;
+
+			}
 		}
-		mardyn_assert(_cells[tM.getCellIndex()].testInBox(*tM));
+	}
+
+
+	if (numBadMolecules > 0) {
+		global_log->error() << "Found " << numBadMolecules << " outside of their correct cells. Aborting." << std::endl;
+		Simulation::exit(311);
 	}
 #endif
 }
@@ -553,6 +589,9 @@ void LinkedCells::clear() {
 void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) {
 	// This should be unimportant
 
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
 	for (auto it = iterator(); it.hasNext(); it.next()) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
