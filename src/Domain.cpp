@@ -1308,6 +1308,21 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
         }
 }
 
+void Domain::outputDropMove(double _universalRealignmentMotionX,double _universalRealignmentMotionZ,string prefix, unsigned long timestep,string diff_number)
+{
+	prefix = prefix.substr(0, prefix.length()-4);	
+        string outDMname(prefix);
+        outDMname += diff_number + ".dat";
+        ofstream DM(outDMname.c_str(),ios::out|ios::app);
+
+	DM.precision(6);
+
+	_universalRealignmentMotionX = - _universalRealignmentMotionX;
+	_universalRealignmentMotionZ = - _universalRealignmentMotionZ;
+
+	DM << timestep << "\t" << _universalRealignmentMotionX << "\t" << _universalRealignmentMotionZ << "\n";
+}
+
 void Domain::resetProfile(bool virialProfile)
 {
 	unsigned unIDs = this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
@@ -1848,20 +1863,54 @@ void Domain::determineShift( DomainDecompBase* domainDecomp, ParticleContainer* 
  * this method REQUIRES the presence of the halo
  */
 void Domain::realign(
-   ParticleContainer* molCont
-) {
+   ParticleContainer* molCont, bool _dropMove,string prefix, unsigned long _simstep, string diff_number) {
    if(!this->_localRank)
    {
 #ifndef NDEBUG
       cout << "Centre of mass: (" << _globalRealignmentBalance[0]/_globalRealignmentMass[0] << " / " << _globalRealignmentBalance[1]/_globalRealignmentMass[1] << " / " << _globalRealignmentBalance[2]/_globalRealignmentMass[0] << ") "
 			 << "=> adjustment: (" << _universalRealignmentMotion[0] << ", " << _universalRealignmentMotion[1] << ", " << _universalRealignmentMotion[2] << ").\n";
 #endif
-   }
+   
+	if(_dropMove){
+		outputDropMove(_universalRealignmentMotion[0],_universalRealignmentMotion[2], prefix,_simstep, diff_number);
+	}
+ 	}
    for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
      for(unsigned short d=0; d<3; d++){
        tm->move(d, _universalRealignmentMotion[d]);
      }
+   }
+}
+
+/* by Stefan Becker, borrowed from Matrin Horsch
+ * method cancelling the net moment
+ */
+void Domain::cancelMomentum(
+     DomainDecompBase* domainDecomp,
+     ParticleContainer* molCont
+) {
+   double localMomentum[3];
+   for(unsigned d = 0; d < 3; d++) localMomentum[d] = 0.0;
+   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
+   {
+      double tmass = tm->gMass();
+      for(unsigned d = 0; d < 3; d++)
+         localMomentum[d] += tm->v(d) * tmass;
+   }
+   double globalMomentum[3];
+   for(unsigned d = 0; d < 3; d++) globalMomentum[d] = localMomentum[d];
+   domainDecomp->collCommInit(3);
+   for(unsigned short d = 0; d<3; d++)domainDecomp->collCommAppendDouble(globalMomentum[d]);
+   domainDecomp->collCommAllreduceSum();
+   for(unsigned short d = 0; d < 3; d++) globalMomentum[d]  = domainDecomp->collCommGetDouble();
+   for(unsigned short d = 0; d < 3; d++) globalMomentum[d] /= _globalNumMolecules;
+   if(!this->_localRank)
+      global_log->info() << "Average momentum: (" << globalMomentum[0] << ", " << globalMomentum[1] << ", " << globalMomentum[2] << ") => removing.\n";
+   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
+   {
+      double tmass = tm->gMass();
+      tm->vsub(globalMomentum[0]/tmass, globalMomentum[1]/tmass, globalMomentum[2]/tmass);
    }
 }
 

@@ -581,7 +581,16 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			cidMax--;
 			_domain->considerComponentForYShift(cidMin, cidMax);
 		}
-		
+		// by Michaela Heier, copied from Stefan Becker
+		else if(token == "nomomentum"){
+		      this->_doCancelMomentum = true;
+		      inputfilestream >> this->_momentumInterval;
+		}
+		// by Michaela Heier
+		else if (token == "WriteDropletMovement") {
+			_dropMove = true;
+			inputfilestream >> diff_number;
+		}
 		// chemicalPotential <mu> component <cid> [control <x0> <y0> <z0>
 		// to <x1> <y1> <z1>] conduct <ntest> tests every <nstep> steps
 		else if (token == "chemicalPotential") {
@@ -752,10 +761,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			delete[] xi_sf;
 			delete[] eta_sf;
 
-		} else if (token == "WallFun_LJ_10_4") {
+		} else if (token == "WallFun_LJ_10_4_3") {
 			double rho_w, sig_w, eps_w, y_off, y_cut, Delta;
 			unsigned numComponents;
-			_applyWallFun_LJ_10_4 = true;
+			_applyWallFun_LJ_10_4_3 = true;
 			inputfilestream >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut >> Delta;
 			double *xi_sf = new double[numComponents];
 			double *eta_sf = new double[numComponents];
@@ -765,7 +774,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 			_wall = new Wall();
-			_wall->initializeLJ104(components, rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut, Delta);
+			_wall->initializeLJ1043(components, rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut, Delta);
 			delete[] xi_sf;
 			delete[] eta_sf;
 

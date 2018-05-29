@@ -908,6 +908,8 @@ void Simulation::prepare_start() {
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
+	initOutDropMove();
+
 }
 
 void Simulation::simulate() {
@@ -1051,7 +1053,7 @@ void Simulation::simulate() {
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 			}
-			else if(_doAlignCentre && _applyWallFun_LJ_10_4){
+			else if(_doAlignCentre && _applyWallFun_LJ_10_4_3){
 				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
@@ -1113,8 +1115,8 @@ void Simulation::simulate() {
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
 		}
 
-		if(_wall && _applyWallFun_LJ_10_4){
-		  _wall->calcTSLJ_10_4(_moleculeContainer, _domain);
+		if(_wall && _applyWallFun_LJ_10_4_3){
+		  _wall->calcTSLJ_10_4_3(_moleculeContainer, _domain);
 		}
 		
 		if(_mirror && _applyMirror){
@@ -1185,6 +1187,11 @@ void Simulation::simulate() {
 		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		if (_simstep >= _initGrandCanonical) {
 			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(), _domainDecomposition);
+		}
+		
+		// by Michaela Heier from Stefan Becker
+	    if(_doCancelMomentum && !(_simstep % _momentumInterval)) {
+			_domain->cancelMomentum(_domainDecomposition, _moleculeContainer);
 		}
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
@@ -1332,7 +1339,7 @@ void Simulation::simulate() {
 		  * For the actual shift the halo MUST NOT be present!
 		  */
 		if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
-			_domain->realign(_moleculeContainer);
+			_domain->realign(_moleculeContainer,_dropMove,_outputPrefix,_simstep, diff_number);
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
 			unsigned particleNoTest = 0;
@@ -1374,6 +1381,8 @@ void Simulation::simulate() {
 	global_simulation->resetTimers();
 	_memoryProfiler->doOutput();
 	global_log->info() << endl;
+
+	//closeOutDropMove();
 
 #if WITH_PAPI
 	global_log->info() << "PAPI counter values for loop timer:"  << endl;
@@ -1552,12 +1561,14 @@ void Simulation::initialize() {
 	_rand.init(8624);
 
 	_doAlignCentre = false;
+	_dropMove = false;
 	_componentSpecificAlignment = false;
 	_alignmentInterval = 25;
 	_momentumInterval = 1000;
+	_doCancelMomentum = false;
 	_wall = NULL;
 	_applyWallFun_LJ_9_3 = false;
-	_applyWallFun_LJ_10_4 = false;
+	_applyWallFun_LJ_10_4_3 = false;
 	_mirror = NULL;
 	_applyMirror = false;
 	_kartesian2DProfile = false;
@@ -1592,4 +1603,31 @@ void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep)
 	mardyn_assert(flopRateWriter != nullptr);
 
 	flopRateWriter->measureFLOPS(cont, simstep);
+}
+
+
+void Simulation::initOutDropMove(){
+	
+	string prefix = _outputPrefix.substr(0, _outputPrefix.length()-4);
+	string outDMname(prefix);
+        outDMname += diff_number + ".dat";
+        ofstream DM(outDMname.c_str());
+
+        DM.precision(6);
+
+        DM << "# Output of the Droplet Movement in x- and z-direction.\n";
+        DM << "# \n";
+        DM << "# Timestep \t Alignment in x-Direction \t Alignment in z-Direction\n";
+        DM << "#\n";
+	
+	//DM.close();
+}
+
+void Simulation::closeOutDropMove(){
+
+	string prefix = _outputPrefix.substr(0, _outputPrefix.length()-4);
+        string outDMname(prefix);
+        outDMname += diff_number + ".dat";
+        ofstream DM(outDMname.c_str());
+	DM.close();
 }

@@ -520,9 +520,16 @@ private:
 	//! strength of the realignment
 	double _alignmentCorrection;
 	
+
+	// by Michaela Heier
+	// if _dropMove = true the movement of Align Center is written to an output file
+	
+	bool _dropMove;
+	std::string diff_number;
+
 	//! applying a field representing the wall
 	bool _applyWallFun_LJ_9_3;
-	bool _applyWallFun_LJ_10_4;
+	bool _applyWallFun_LJ_10_4_3;
 	bool _applyMirror;
 	
 	Wall* _wall;
@@ -534,7 +541,9 @@ private:
 	unsigned _momentumInterval;
 	
 	bool _kartesian2DProfile;
-
+	
+	void initOutDropMove();
+	void closeOutDropMove();
 	//! random number generator
 	Random _rand;
 
