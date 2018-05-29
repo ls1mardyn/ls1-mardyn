@@ -12,10 +12,10 @@
 
 #include <climits> /* UINT64_MAX */
 
-#if (not defined(NDEBUG)) or defined (UNIT_TESTS)
+//#if (not defined(NDEBUG)) or defined (UNIT_TESTS)
 #define SEND_UNIQUE_ID_FOR_HALO_COPIES
 #pragma message "Compilation info: Unique IDs of Halo-Molecules are sent only in Debug mode, or when Unit tests are being compiled."
-#endif
+//#endif
 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 // position, velocity, id
