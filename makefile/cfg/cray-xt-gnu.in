@@ -56,3 +56,7 @@ include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.mk)
 ifeq ($(TARGET),DEBUG)
 unexport CRAY_CPU_TARGET
 endif
+
+ifeq ($(ADDRESS_SANITIZER), 1)
+LDFLAGS += -dynamic
+endif
