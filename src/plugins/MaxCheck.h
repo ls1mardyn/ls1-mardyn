@@ -91,6 +91,7 @@ public:
 
 private:
 	double calcSquaredVectorLength(double* vec) {return (vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);}
+	void checkMaxVals(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
 
 private:
 	TimestepControl _control;
