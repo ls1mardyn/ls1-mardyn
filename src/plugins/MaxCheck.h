@@ -16,12 +16,27 @@
 #include <list>
 #include <cstdint>
 
+enum MaxCheckMethods
+{
+	MCM_UNKNOWN = 0,
+	MCM_LIMIT_TO_MAX_VALUE = 1,
+	MCM_DELETE_PARTICLES = 2
+};
+
+struct TimestepControl
+{
+	uint64_t start;
+	uint64_t freq;
+	uint64_t stop;
+};
+
 struct MaxVals
 {
 	double F;
 	double F2;
 	double v;
 	double v2;
+	uint32_t method;
 };
 typedef std::unordered_map<uint32_t, MaxVals> maxvals_map;
 
@@ -52,21 +67,21 @@ public:
 	void init(ParticleContainer *particleContainer,
 			  DomainDecompBase *domainDecomp, Domain *domain) override;
 
-    /** @brief Method afterForces will be called after forcefields have been applied
-     *
-     * make pure Virtual ?
-     */
-    void afterForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    ) override;
+	/** @brief Method afterForces will be called after forcefields have been applied
+	 *
+	 * make pure Virtual ?
+	 */
+	void afterForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) override;
 
 	void endStep(
 			ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, Domain *domain,
 			unsigned long simstep, std::list<ChemicalPotential> *lmu,
 			std::map<unsigned, CavityEnsemble> *mcav
-	) override {}
+	) override;
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override {}
@@ -78,6 +93,7 @@ private:
 	double calcSquaredVectorLength(double* vec) {return (vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);}
 
 private:
+	TimestepControl _control;
 	maxvals_map _maxVals;
 	std::vector<Molecule*> _deletions;
 };
