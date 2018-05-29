@@ -8,49 +8,36 @@
 #ifndef CELLDATASOA_H_
 #define CELLDATASOA_H_
 
+#include "CellDataSoABase.h"
 #include "utils/AlignedArrayTriplet.h"
+#include "utils/ConcatenatedSites.h"
 #include "vectorization/SIMD_TYPES.h"
+#include <cstdint>
+#include <array>
 
 /**
  * \brief Structure of Arrays for vectorized force calculation.
  * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
  */
-class CellDataSoA {
-public:
-	typedef AlignedArray<size_t> IndexArray;
-	typedef AlignedArray<double> DoubleArray;
+class CellDataSoA : public CellDataSoABase {
 
-	CellDataSoA(size_t molecules_arg, size_t lj_centers_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) :
-		_mol_num(molecules_arg),
-		_ljc_num(lj_centers_arg),
-		_charges_num(charges_arg),
-		_dipoles_num(dipoles_arg),
-		_quadrupoles_num(quadrupoles_arg),
-		_centers_num(lj_centers_arg + charges_arg + dipoles_arg + quadrupoles_arg),
-		_mol_size( molecules_arg + (molecules_arg & 1)),
-		_ljc_size(lj_centers_arg + (lj_centers_arg & 1)),
-		_charges_size(charges_arg + (charges_arg & 1)),
-		_dipoles_size(dipoles_arg + (dipoles_arg & 1)),
-		_quadrupoles_size(quadrupoles_arg + (quadrupoles_arg & 1)),
-		_centers_size(_ljc_size + _charges_size + _dipoles_size + _quadrupoles_size),
-		_mol_pos(_mol_size),
-		_mol_ljc_num(_mol_size),
-		_mol_charges_num(_mol_size),
-		_mol_dipoles_num(_mol_size),
-		_mol_quadrupoles_num(_mol_size),
-		_centers_m_r(_centers_size),
-		_centers_r(_centers_size),
-		_centers_f(_centers_size),
-		_centers_V(_centers_size),
-		_ljc_id(_ljc_size),
-		_charges_q(_charges_size),
-		_dipoles_p(_dipoles_size),
-		_dipoles_e(_dipoles_size),
-		_dipoles_M(_dipoles_size),
-		_quadrupoles_m(_quadrupoles_size),
-		_quadrupoles_e(_quadrupoles_size),
-		_quadrupoles_M(_quadrupoles_size)
-		{}
+	//for better readability:
+	typedef ConcatenatedSites<vcp_real_calc>::SiteType 			SiteType;
+	typedef ConcatenatedSites<vcp_real_calc>::CoordinateType	CoordinateType;
+
+
+public:
+	CellDataSoA(size_t mol_arg, size_t ljc_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
+		resize(mol_arg, ljc_arg, charges_arg, dipoles_arg, quadrupoles_arg);
+	}
+
+	/**
+	 * \brief
+	 */
+	enum class QuantityType {
+		MOL_POSITION, CENTER_POSITION, FORCE, VIRIAL
+	};
+
 
 	size_t _mol_num;
 	size_t _ljc_num;
@@ -59,211 +46,182 @@ public:
 	size_t _quadrupoles_num;
 	size_t _centers_num;
 
-	size_t _mol_size;
-	size_t _ljc_size;
-	size_t _charges_size;
-	size_t _dipoles_size;
-	size_t _quadrupoles_size;
-	size_t _centers_size;
-
 	// entries per molecule
-	AlignedArrayTriplet _mol_pos;
+	AlignedArrayTriplet<vcp_real_calc> _mol_pos;
 	AlignedArray<int> _mol_ljc_num;
 	AlignedArray<int> _mol_charges_num;
 	AlignedArray<int> _mol_dipoles_num;
 	AlignedArray<int> _mol_quadrupoles_num;
 
 	// entries per center
-	AlignedArrayTriplet _centers_m_r;
-	AlignedArrayTriplet _centers_r;
-	AlignedArrayTriplet _centers_f;
-	AlignedArrayTriplet _centers_V;
+	ConcatenatedSites<vcp_real_calc> _centers_m_r;
+	ConcatenatedSites<vcp_real_calc> _centers_r;
+	ConcatenatedSites<vcp_real_calc> _centers_f;
+	ConcatenatedSites<vcp_real_calc> _centers_V;
 
 	// entries per lj center
-	IndexArray _ljc_id;
+	AlignedArray<vcp_ljc_id_t> _ljc_id;
 
 	// entries per charge
-	DoubleArray _charges_q;
+	AlignedArray<vcp_real_calc> _charges_q;
 
 	// entries per dipole
-	DoubleArray _dipoles_p; // dipole moment
-	AlignedArrayTriplet _dipoles_e; // orientation vector of dipole moment
-	AlignedArrayTriplet _dipoles_M; // torque vector
+	AlignedArray<vcp_real_calc> _dipoles_p; // dipole moment
+	AlignedArrayTriplet<vcp_real_calc> _dipoles_e; // orientation vector of dipole moment
+	AlignedArrayTriplet<vcp_real_calc> _dipoles_M; // torque vector
 
 	// entries per quadrupole
-	DoubleArray _quadrupoles_m; // quadrupole moment
-	AlignedArrayTriplet _quadrupoles_e; // orientation vector of quadrupole moment
-	AlignedArrayTriplet _quadrupoles_M; // torque vector
+	AlignedArray<vcp_real_calc> _quadrupoles_m; // quadrupole moment
+	AlignedArrayTriplet<vcp_real_calc> _quadrupoles_e; // orientation vector of quadrupole moment
+	AlignedArrayTriplet<vcp_real_calc> _quadrupoles_M; // torque vector
 
-	vcp_inline double* ljc_m_r_xBegin() const { return _centers_m_r.xBegin();}
-	vcp_inline double* ljc_m_r_yBegin() const { return _centers_m_r.yBegin();}
-	vcp_inline double* ljc_m_r_zBegin() const { return _centers_m_r.zBegin();}
-	vcp_inline double* ljc_r_xBegin()   const { return _centers_r.xBegin()  ;}
-	vcp_inline double* ljc_r_yBegin()   const { return _centers_r.yBegin()  ;}
-	vcp_inline double* ljc_r_zBegin()   const { return _centers_r.zBegin()  ;}
-	vcp_inline double* ljc_f_xBegin()   const { return _centers_f.xBegin()  ;}
-	vcp_inline double* ljc_f_yBegin()   const { return _centers_f.yBegin()  ;}
-	vcp_inline double* ljc_f_zBegin()   const { return _centers_f.zBegin()  ;}
-	vcp_inline double* ljc_V_xBegin()   const { return _centers_V.xBegin()  ;}
-	vcp_inline double* ljc_V_yBegin()   const { return _centers_V.yBegin()  ;}
-	vcp_inline double* ljc_V_zBegin()   const { return _centers_V.zBegin()  ;}
 
-	vcp_inline double* charges_m_r_xBegin() const { return ljc_m_r_xBegin() + _ljc_size;}
-	vcp_inline double* charges_m_r_yBegin() const { return ljc_m_r_yBegin() + _ljc_size;}
-	vcp_inline double* charges_m_r_zBegin() const { return ljc_m_r_zBegin() + _ljc_size;}
-	vcp_inline double* charges_r_xBegin()   const { return ljc_r_xBegin()   + _ljc_size;}
-	vcp_inline double* charges_r_yBegin()   const { return ljc_r_yBegin()   + _ljc_size;}
-	vcp_inline double* charges_r_zBegin()   const { return ljc_r_zBegin()   + _ljc_size;}
-	vcp_inline double* charges_f_xBegin()   const { return ljc_f_xBegin()   + _ljc_size;}
-	vcp_inline double* charges_f_yBegin()   const { return ljc_f_yBegin()   + _ljc_size;}
-	vcp_inline double* charges_f_zBegin()   const { return ljc_f_zBegin()   + _ljc_size;}
-	vcp_inline double* charges_V_xBegin()   const { return ljc_V_xBegin()   + _ljc_size;}
-	vcp_inline double* charges_V_yBegin()   const { return ljc_V_yBegin()   + _ljc_size;}
-	vcp_inline double* charges_V_zBegin()   const { return ljc_V_zBegin()   + _ljc_size;}
+	/**
+	 * \brief	Get Pointer to the beginning of the specified data
+	 * \details
+	 * \tparam	qt	The Quantity you want to access, as defined in enum QuantityType
+	 * \tparam	st	The site one wants to access in the quantity (LJC, CHARGE, DIPOLE or QUADRUPOLE)
+	 * \tparam	coord	Choose the coordinate of the site you want
+	 * \return	Pointer to the first element of the data you requested
+	 */
+	vcp_inline vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) {
+		ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
+		return thisQuantity->getBeginPointer(st, coord);
+	}
 
-	vcp_inline double* dipoles_m_r_xBegin() const { return charges_m_r_xBegin() + _charges_size;}
-	vcp_inline double* dipoles_m_r_yBegin() const { return charges_m_r_yBegin() + _charges_size;}
-	vcp_inline double* dipoles_m_r_zBegin() const { return charges_m_r_zBegin() + _charges_size;}
-	vcp_inline double* dipoles_r_xBegin()   const { return charges_r_xBegin()   + _charges_size;}
-	vcp_inline double* dipoles_r_yBegin()   const { return charges_r_yBegin()   + _charges_size;}
-	vcp_inline double* dipoles_r_zBegin()   const { return charges_r_zBegin()   + _charges_size;}
-	vcp_inline double* dipoles_f_xBegin()   const { return charges_f_xBegin()   + _charges_size;}
-	vcp_inline double* dipoles_f_yBegin()   const { return charges_f_yBegin()   + _charges_size;}
-	vcp_inline double* dipoles_f_zBegin()   const { return charges_f_zBegin()   + _charges_size;}
-	vcp_inline double* dipoles_V_xBegin()   const { return charges_V_xBegin()   + _charges_size;}
-	vcp_inline double* dipoles_V_yBegin()   const { return charges_V_yBegin()   + _charges_size;}
-	vcp_inline double* dipoles_V_zBegin()   const { return charges_V_zBegin()   + _charges_size;}
+	vcp_inline const vcp_real_calc* getBegin(QuantityType qt, SiteType st, CoordinateType coord) const {
+		const ConcatenatedSites<vcp_real_calc> * thisQuantity = resolveQuantity(qt);
+		return thisQuantity->getBeginPointer(st, coord);
+	}
 
-	vcp_inline double* quadrupoles_m_r_xBegin() const { return dipoles_m_r_xBegin() + _dipoles_size;}
-	vcp_inline double* quadrupoles_m_r_yBegin() const { return dipoles_m_r_yBegin() + _dipoles_size;}
-	vcp_inline double* quadrupoles_m_r_zBegin() const { return dipoles_m_r_zBegin() + _dipoles_size;}
-	vcp_inline double* quadrupoles_r_xBegin()   const { return dipoles_r_xBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_r_yBegin()   const { return dipoles_r_yBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_r_zBegin()   const { return dipoles_r_zBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_f_xBegin()   const { return dipoles_f_xBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_f_yBegin()   const { return dipoles_f_yBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_f_zBegin()   const { return dipoles_f_zBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_V_xBegin()   const { return dipoles_V_xBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_V_yBegin()   const { return dipoles_V_yBegin()   + _dipoles_size;}
-	vcp_inline double* quadrupoles_V_zBegin()   const { return dipoles_V_zBegin()   + _dipoles_size;}
+	/**
+	 * \brief	Get a triplet of data from a ConcatenatedSites at specific index
+	 */
+	vcp_inline std::array<vcp_real_calc, 3> getTriplet(QuantityType qt, SiteType st, size_t index) const {
+		const ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
+		return thisQuantity->getTriplet(st, index);
+	}
 
-	void vcp_inline initDistLookupPointers(const AlignedArray<vcp_lookupOrMask_single>& centers_dist_lookup, vcp_lookupOrMask_single*& ljc_dist_lookup,
-			vcp_lookupOrMask_single*& charges_dist_lookup, vcp_lookupOrMask_single*& dipoles_dist_lookup, vcp_lookupOrMask_single*& quadrupoles_dist_lookup) const{
+	/**
+	 * \brief	Set a triplet of data in a ConcatenatedSites to specified values
+	 */
+	vcp_inline void setTriplet(std::array<vcp_real_calc, 3> t, QuantityType qt, SiteType st, size_t index) {
+		ConcatenatedSites<vcp_real_calc>* thisQuantity = resolveQuantity(qt);
+		thisQuantity->setTriplet(t, st, index);
+	}
+
+	/**
+	 * \brief	Add a set of LJC-data at position index
+	 */
+	void pushBackLJC(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_ljc_id_t lookUpIndex) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::LJC, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::LJC, index);
+		_ljc_id[index] = lookUpIndex;
+	}
+
+	/**
+	 * \brief	Add a set of charge-data at position index
+	 */
+	void pushBackCharge(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_real_calc charge) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::CHARGE, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::CHARGE, index);
+		_charges_q[index] = charge;
+	}
+
+	/**
+	 * \brief	Add a set of dipole-data at position index
+	 */
+	void pushBackDipole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
+			vcp_real_calc dipoleMoment, std::array<vcp_real_calc,3> orientation) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::DIPOLE, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::DIPOLE, index);
+		_dipoles_p[index] = dipoleMoment;
+		_dipoles_e.x(index) = orientation[0];
+		_dipoles_e.y(index) = orientation[1];
+		_dipoles_e.z(index) = orientation[2];
+	}
+
+	/**
+	 * \brief	Add a set of quadrupole-data at position index
+	 */
+	void pushBackQuadrupole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
+			vcp_real_calc quadrupoleMoment, std::array<vcp_real_calc,3> orientation) {
+		setTriplet(moleculePos, QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, index);
+		setTriplet(centerPos, QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, index);
+		_quadrupoles_m[index] = quadrupoleMoment;
+		_quadrupoles_e.x(index) = orientation[0];
+		_quadrupoles_e.y(index) = orientation[1];
+		_quadrupoles_e.z(index) = orientation[2];
+	}
+
+	void vcp_inline initDistLookupPointers(
+			AlignedArray<vcp_lookupOrMask_single>& centers_dist_lookup,
+			vcp_lookupOrMask_single*& ljc_dist_lookup,
+			vcp_lookupOrMask_single*& charges_dist_lookup,
+			vcp_lookupOrMask_single*& dipoles_dist_lookup,
+			vcp_lookupOrMask_single*& quadrupoles_dist_lookup) const {
+
+		size_t ljc_size 	= AlignedArray<vcp_real_calc>::_round_up(_ljc_num);
+		size_t charges_size = AlignedArray<vcp_real_calc>::_round_up(_charges_num);
+		size_t dipoles_size = AlignedArray<vcp_real_calc>::_round_up(_dipoles_num);
+		size_t quadrupoles_size = AlignedArray<vcp_real_calc>::_round_up(_quadrupoles_num);
+		size_t centers_size = ljc_size + charges_size + dipoles_size + quadrupoles_size;
+
+		centers_dist_lookup.resize_zero_shrink(centers_size);
+		setPaddingToZero(centers_dist_lookup);
+
 		ljc_dist_lookup = centers_dist_lookup;
-		charges_dist_lookup = ljc_dist_lookup + (_ljc_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
-		dipoles_dist_lookup = charges_dist_lookup + (_charges_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
-		quadrupoles_dist_lookup = dipoles_dist_lookup + (_dipoles_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
+		charges_dist_lookup = ljc_dist_lookup + (ljc_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
+		dipoles_dist_lookup = charges_dist_lookup + (charges_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
+		quadrupoles_dist_lookup = dipoles_dist_lookup + (dipoles_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 	}
 
-	template<class T>
-	static vcp_inline
-	void resizeLastZero(AlignedArray<T>& array, const size_t& size, const size_t& startZero){
-		array.resize(size, startZero);
-	}
+	void vcp_inline initDistLookupPointersSingle(
+			AlignedArray<vcp_lookupOrMask_single>& centers_dist_lookup,
+			vcp_lookupOrMask_single*& sites_dist_lookup,
+			size_t sites_num) const {
 
-	template<class T>
-	vcp_inline
-	void setPaddingToZero(T* ptr) const {
-		//memset(array, 0, size * sizeof(T));//sets all to zero
-		memset(ptr + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(T)); //ljc
-		ptr += _ljc_size;
-		memset(ptr + _charges_num, 0, (_charges_size - _charges_num) * sizeof(T)); //charges
-		ptr += _charges_size;
-		memset(ptr + _dipoles_num, 0, (_dipoles_size - _dipoles_num) * sizeof(T)); //dipoles
-		ptr += _dipoles_size;
-		memset(ptr + _quadrupoles_num, 0, (_quadrupoles_size - _quadrupoles_num) * sizeof(T)); //quadrupoles
-	}
-
-	/**
-	 * resizes an array for all the centers and ensures, that the additionally allocated space is at least set once (valgrind error prevention reasons)
-	 * @param array
-	 * @param size
-	 */
-	template<class T>
-	vcp_inline
-	void resizeCentersZero(AlignedArray<T>& array, const size_t& size) const{
-		array.resize(size, size);
-		T* ptr = array;
-		setPaddingToZero(ptr);
-	}
-
-	/**
-	 * resizes an array for all the centers and ensures, that the additionally allocated space is at least set once (valgrind error prevention reasons)
-	 * @param array
-	 * @param size
-	 */
-	vcp_inline
-	void resizeCentersZero(AlignedArrayTriplet& triplet, const size_t& size) const{
-
-		triplet.resize(size);
-
-		setPaddingToZero(triplet.xBegin());
-		setPaddingToZero(triplet.yBegin());
-		setPaddingToZero(triplet.zBegin());
+		centers_dist_lookup.resize_zero_shrink(sites_num, true, false);
+		sites_dist_lookup = centers_dist_lookup;
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
+		const bool allow_shrink = false; // TODO shrink at some point in the future
+
 		_mol_num = molecules_arg;
 		_ljc_num = ljcenters_arg;
 		_charges_num = charges_arg;
 		_dipoles_num = dipoles_arg;
 		_quadrupoles_num = quadrupoles_arg;
 
-		if (_ljc_num > _ljc_size ||
-			_charges_num > _charges_size ||
-			_dipoles_num > _dipoles_size ||
-			_quadrupoles_num > _quadrupoles_size ) {
+		// entries per molecule
+		_mol_pos			.resize_zero_shrink(_mol_num);
+		_mol_ljc_num		.resize_zero_shrink(_mol_num);
+		_mol_charges_num	.resize_zero_shrink(_mol_num);
+		_mol_dipoles_num	.resize_zero_shrink(_mol_num);
+		_mol_quadrupoles_num.resize_zero_shrink(_mol_num);
 
-			//TODO: "/ 8) * 8" things to be redone with AlignedArray::_round_up()
+		_centers_m_r.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
+		_centers_r	.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
+		_centers_f	.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
+		_centers_V	.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
 
-			if (_ljc_num > _ljc_size) {
-				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
-				_ljc_id.resize(_ljc_size,_ljc_size);//set0 later on...
-			}
+		// entries per lj center
+		_ljc_id.resize_zero_shrink(_ljc_num, true);
 
+		// entries per charge
+		_charges_q.resize_zero_shrink(_charges_num);
 
-			if (_charges_num > _charges_size) {
-				_charges_size = ceil( (double)_charges_num / 8) * 8;
-				resizeLastZero(_charges_q,_charges_size,_charges_num);
-			}
+		// entries per dipole
+		_dipoles_p.resize_zero_shrink(_dipoles_num);
+		_dipoles_e.resize_zero_shrink(_dipoles_num);
+		_dipoles_M.resize_zero_shrink(_dipoles_num);
 
-			if (_dipoles_num > _dipoles_size) {
-				_dipoles_size = ceil( (double)_dipoles_num / 8) * 8;
-				resizeLastZero(_dipoles_p,_dipoles_size, _dipoles_num);
-				_dipoles_e.resize(_dipoles_size);
-				_dipoles_M.resize(_dipoles_size);
-			}
+		// entries per quadrupole
+		_quadrupoles_m.resize_zero_shrink(_quadrupoles_num);
+		_quadrupoles_e.resize_zero_shrink(_quadrupoles_num);
+		_quadrupoles_M.resize_zero_shrink(_quadrupoles_num);
 
-			if (_quadrupoles_num > _quadrupoles_size) {
-				_quadrupoles_size = ceil( (double)_quadrupoles_num / 8) * 8;
-				resizeLastZero(_quadrupoles_m,_quadrupoles_size, _quadrupoles_num);
-				_quadrupoles_e.resize(_quadrupoles_size);
-				_quadrupoles_M.resize(_quadrupoles_size);
-			}
-
-			if (_centers_size < _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size)
-			{
-				_centers_size = _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size;//divisible by 8, since all others are
-				_centers_num = _ljc_num + _charges_num + _dipoles_num + _quadrupoles_num;
-				resizeCentersZero(_centers_m_r, _centers_size);
-				resizeCentersZero(_centers_r, _centers_size);
-				resizeCentersZero(_centers_f, _centers_size);
-				resizeCentersZero(_centers_V, _centers_size);
-			}
-		}
-
-		if (_mol_num > _mol_size) {
-			_mol_size = ceil( (double)molecules_arg / 8) * 8;
-			_mol_pos.resize(_mol_size);
-			resizeLastZero(_mol_ljc_num,_mol_size, _mol_num);
-			resizeLastZero(_mol_charges_num,_mol_size, _mol_num);
-			resizeLastZero(_mol_dipoles_num,_mol_size, _mol_num);
-			resizeLastZero(_mol_quadrupoles_num,_mol_size, _mol_num);
-		}
-		memset(_ljc_id + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(size_t));//set the remaining values to zero.
-			//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
-			//The array size is however long enough to vectorize over the last few entries.
-			//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.
 	}
 
 	size_t getDynamicSize() const {
@@ -290,6 +248,72 @@ public:
 
 		return total;
 	}
+
+private:
+
+	template <typename T>
+	vcp_inline void setPaddingToZero(AlignedArray<T>& t) const {
+		size_t ljc_size = t._round_up(_ljc_num);
+		size_t charges_size = t._round_up(_charges_num);
+		size_t dipoles_size = t._round_up(_dipoles_num);
+
+		t.zero(_ljc_num);
+		t.zero(ljc_size + _charges_num);
+		t.zero(ljc_size + charges_size + _dipoles_num);
+		t.zero(ljc_size + charges_size + dipoles_size + _quadrupoles_num);
+	}
+
+	/**
+	 * \brief Matches the given QuantityType and returns a pointer to the associated ConcatenatedSites
+	 */
+	vcp_inline ConcatenatedSites<vcp_real_calc>* resolveQuantity(QuantityType qt) {
+		ConcatenatedSites<vcp_real_calc>* returnQuantity;
+		switch(qt) {
+		case QuantityType::MOL_POSITION:
+			returnQuantity = &_centers_m_r;
+			break;
+		case QuantityType::CENTER_POSITION:
+			returnQuantity = &_centers_r;
+			break;
+		case QuantityType::FORCE:
+			returnQuantity = &_centers_f;
+			break;
+		case QuantityType::VIRIAL:
+			returnQuantity = &_centers_V;
+			break;
+		default:
+			returnQuantity = nullptr;
+			break;
+		}
+
+		mardyn_assert(returnQuantity != nullptr);
+		return returnQuantity;
+	}
+
+	vcp_inline const ConcatenatedSites<vcp_real_calc>* resolveQuantity(QuantityType qt) const {
+		const ConcatenatedSites<vcp_real_calc>* returnQuantity;
+		switch(qt) {
+		case QuantityType::MOL_POSITION:
+			returnQuantity = &_centers_m_r;
+			break;
+		case QuantityType::CENTER_POSITION:
+			returnQuantity = &_centers_r;
+			break;
+		case QuantityType::FORCE:
+			returnQuantity = &_centers_f;
+			break;
+		case QuantityType::VIRIAL:
+			returnQuantity = &_centers_V;
+			break;
+		default:
+			returnQuantity = nullptr;
+			break;
+		}
+
+		mardyn_assert(returnQuantity != nullptr);
+		return returnQuantity;
+	}
+
 };
 
 #endif /* CELLDATASOA_H_ */

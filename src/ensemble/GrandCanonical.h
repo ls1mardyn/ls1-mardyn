@@ -11,6 +11,7 @@ class DomainDecompBase;
 class ParticleContainer;
 class CellProcessor;
 class Domain;
+class ParticleIterator;
 
 typedef ParticleContainer TMoleculeContainer;
 
@@ -32,7 +33,7 @@ public:
 	void prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm);  // C must not contain the halo!
 
 	// false if no deletion remains for this subdomain
-	bool getDeletion(TMoleculeContainer* cell, double* minco, double* maxco);
+	bool getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret);
 	unsigned long getInsertion(double* ins);  // 0 if no insertion remains for this subdomain
 	bool decideDeletion(double deltaUTilde);
 	bool decideInsertion(double deltaUTilde);
@@ -41,7 +42,7 @@ public:
 	void storeMolecule( Molecule& old )
 	{
 		if(hasSample()) return;
-		assert(old.componentid() == componentid);
+		mardyn_assert(old.componentid() == componentid);
 #ifndef NDEBUG
 		old.check(old.id());
 #endif
@@ -66,9 +67,9 @@ public:
 	unsigned int getComponentID() { return this->componentid; }
 	int rank() { return this->ownrank; }
 
-        void disableWidom() { this->widom = false; }
-        void enableWidom() { this->widom = true; }
-        bool isWidom() { return this->widom; }
+	void disableWidom() { this->widom = false; }
+	void enableWidom() { this->widom = true; }
+	bool isWidom() { return this->widom; }
 
 	double getLambda() { return this->lambda; }
 	float getDensityCoefficient() { return this->decisive_density; }
@@ -84,6 +85,13 @@ public:
 
 
 private:
+	//! @brief counts all particles inside the bounding box of this container
+	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid) const;
+	//! @brief counts particles in the intersection of bounding box and control volume
+	unsigned countParticles(TMoleculeContainer * moleculeContainer, unsigned int cid, double * cbottom, double * ctop) const;
+
+	bool moleculeStrictlyNotInBox(const Molecule& m, const double l[3], const double u[3]) const;
+
 	int ownrank;  // only for debugging purposes (indicate rank in console output)
 
 	double h;  // Plancksches Wirkungsquantum
@@ -119,7 +127,7 @@ private:
 
 	double lambda;
 
-        bool widom;  // Widom method -> determine mu by test insertions which are all rejected
+	bool widom; // Widom method -> determine mu by test insertions which are all rejected
 
 	Molecule* reservoir;
 

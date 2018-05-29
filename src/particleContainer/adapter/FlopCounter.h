@@ -46,9 +46,11 @@
 #include <stddef.h>
 #include <string>
 #include <sstream>
-#include "../../utils/Timer.h"
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
+
+class CellDataSoA;
+class CellDataSoA_WR;
 
 /**
  * \brief
@@ -75,7 +77,7 @@ public:
 	/**
 	 * \brief Only pass through to child.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& cell) {}
 
 	/**
 	 * \brief Count flops for this pair.
@@ -83,7 +85,6 @@ public:
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }  // why 0.0 flops???
-	int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) { return 0.0; }  // analogous to "process single molecule"
 
 	/**
 	 * \brief Count flops for this cell.
@@ -93,7 +94,7 @@ public:
 	/**
 	 * \brief Only pass through to child.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& cell) {}
 
 	/**
 	 * \brief Print results.
@@ -114,7 +115,13 @@ public:
 	double getMyFlopCount() const {
 		return _myFlopCount;
 	}
+
 private:
+	template<class ForcePolicy, bool CalculateMacroscopic>
+	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
+	template<class ForcePolicy, bool CalculateMacroscopic>
+	void _calculatePairs(const CellDataSoA_WR & soa1, const CellDataSoA_WR & soa2);
+
 	void handlePair(const Molecule& Mi, const Molecule& Mj,
 			bool addMacro = true);
 
@@ -198,7 +205,7 @@ private:
 				_potCounts[i].clear();
 			}
 		}
-		void addCounts(const _Counts c) {
+		void addCounts(const _Counts& c) {
 			_moleculeDistances += c._moleculeDistances;
 
 			for (int i = 0; i < NUM_POTENTIALS; ++i) {
@@ -263,6 +270,8 @@ private:
 
 		_PotentialCounts _potCounts[NUM_POTENTIALS];
 	};
+
+	std::vector<_Counts *> _threadData;
 
 	_Counts _currentCounts;
 //	_Counts _totalCounts; TODO: is this needed?

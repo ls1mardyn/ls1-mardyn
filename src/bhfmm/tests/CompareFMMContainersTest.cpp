@@ -40,10 +40,10 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 
 	bhfmm::FastMultipoleMethod uniform;
 	uniform.setParameters(LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
-	uniform.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength);
+	uniform.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LCUniform);
 
 	uniform.computeElectrostatics(LCUniform);
-	for (Molecule* m = LCUniform->begin(); m != LCUniform->end(); m = LCUniform->next()) {
+	for (ParticleIterator m = LCUniform->iteratorBegin(); m != LCUniform->iteratorEnd(); ++m) {
 		m->calcFM();
 	}
 
@@ -57,17 +57,17 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 
 	bhfmm::FastMultipoleMethod adaptive;
 	adaptive.setParameters(LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
-	adaptive.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength);
+	adaptive.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LCAdaptive);
 
 	adaptive.computeElectrostatics(LCAdaptive);
-	for (Molecule* m = LCAdaptive->begin(); m != LCAdaptive->end(); m = LCAdaptive->next()) {
+	for (ParticleIterator m = LCAdaptive->iteratorBegin(); m != LCAdaptive->iteratorEnd(); ++m) {
 		m->calcFM();
 	}
 
 	// traverse molecules and compare forces
-	Molecule * itUniform = LCUniform->begin();
-	Molecule * itAdaptive = LCAdaptive->begin();
-	for(; itUniform != LCUniform->end() and itAdaptive != LCAdaptive->end(); itUniform = LCUniform->next(), itAdaptive = LCAdaptive->next()) {
+	ParticleIterator itUniform  = LCUniform-> iteratorBegin();
+	ParticleIterator itAdaptive = LCAdaptive->iteratorBegin();
+	for(; itUniform != LCUniform->iteratorEnd() and itAdaptive != LCAdaptive->iteratorEnd(); ++itUniform, ++itAdaptive) {
 		ASSERT_DOUBLES_EQUAL_MSG("Force component x should be equal", itUniform->F(0), itAdaptive->F(0), 1e-12);
 		ASSERT_DOUBLES_EQUAL_MSG("Force component y should be equal", itUniform->F(1), itAdaptive->F(1), 1e-12);
 		ASSERT_DOUBLES_EQUAL_MSG("Force component z should be equal", itUniform->F(2), itAdaptive->F(2), 1e-12);

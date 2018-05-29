@@ -16,7 +16,6 @@
 #include "Common.h"
 #include "Domain.h"
 #include "utils/Logger.h"
-//#include "utils/Timer.h"
 #include "parallel/DomainDecompBase.h"
 
 #ifdef ENABLE_MPI
@@ -131,7 +130,6 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 #endif
 	
 	if( simstep % _writeFrequency == 0 ) {
-		//Timer timer;
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
 		
@@ -174,7 +172,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		{	// should use Timer instead
 			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 			mpistarttime=MPI_Wtime();
-			// timer.start();
+			// global_simulation->startTimer("MPI_CHECKPOINT_WRITER_INPUT");
 		}
 		MPI_File mpifh;
 		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const char* now)
@@ -247,7 +245,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		                    << "\tstarting index=" << startidx << " numParticles=" << numParticles << endl;
 		//
 		MPI_Datatype mpidtParticleM, mpidtParticleD;
-		ParticleData::setMPIType(mpidtParticleM);
+		ParticleData::getMPIType(mpidtParticleM);
 		mpidtParticleD=mpidtParticleM;
 		MPI_Aint mpidtParticleMsize=sizeof(ParticleData);	// !=MPI_Type_size
 		// MPI_Type_get_extent
@@ -262,7 +260,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		MPI_CHECK( MPI_File_set_view(mpifh, mpioffset, mpidtParticleM, mpidtParticleM, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
 		ParticleData particleStruct;
-		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
+		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
 			//global_log->debug() << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 			ParticleData::MoleculeToParticleData(particleStruct, *pos);
 			MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
@@ -274,8 +272,8 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		{
 			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 			double mpimeasuredtime=MPI_Wtime()-mpistarttime;
-			// timer.stop();
-			// double mpimeasuredtime=timer.get_etime();
+			// global_simulation->stopTimer("MPI_CHECKPOINT_WRITER_INPUT");
+			// double mpimeasuredtime=global_simulation->getTime("MPI_CHECKPOINT_WRITER_INPUT");
 			if(ownrank==0) global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << mpimeasuredtime << " sec (par.; " << num_procs << " proc.)" << endl;
 		}
 #else
@@ -285,7 +283,10 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		if (!_datarep.empty())  global_log->info() << "MPICheckpointWriter\tsetting data represenatation (" << _datarep << ") is not supported (yet) in sequential version" << endl;
 		// should use Timer instead
 		struct timeval tod_start;
-		if(_measureTime) gettimeofday( &tod_start, NULL );	//timer.start();
+		if(_measureTime) {
+			gettimeofday( &tod_start, NULL );
+			// global_simulation->startTimer("MPI_CHECKPOINT_WRITER_INPUT");
+		}
 		//
 		ofstream ostrm(filename.c_str(),ios::out|ios::binary);
 		ostrm << _magicVersion;
@@ -314,7 +315,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		ostrm.write((char*)&startidx,sizeof(unsigned long));
 		ostrm.write((char*)&numParticles,sizeof(unsigned long));
 		//offset+=2*sizeof(unsigned long);
-		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
+		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
 			unsigned long id=pos->id();
 			ostrm.write((char*)&id,sizeof(unsigned long));
 			//unsigned int componentid=pos->componentid(); // to be compatible to struct padding
@@ -340,8 +341,8 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 			struct timeval tod_end;
 			gettimeofday( &tod_end, NULL );
 			double measuredtime=(double)(tod_end.tv_sec-tod_start.tv_sec)+(double)(tod_end.tv_usec-tod_start.tv_usec)/1.E6;
-			//timer.stop();
-			//double measuredtime=timer.get_etime();
+			// global_simulation->stopTimer("MPI_CHECKPOINT_WRITER_INPUT");
+			// double measuredtime=global_simulation->getTime("MPI_CHECKPOINT_WRITER_INPUT");
 			global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << measuredtime << " sec (seq.)" << endl;
 		}
 #endif

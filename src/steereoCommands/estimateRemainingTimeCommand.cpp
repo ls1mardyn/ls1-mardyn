@@ -8,47 +8,35 @@
 
 #include "estimateRemainingTimeCommand.h"
 #include <Simulation.h>
-#include <utils/Timer.h>
 
-EstimateRemainingTimeCommand::EstimateRemainingTimeCommand() : SteereoCommand (false, "estimateRemainingTime", 0) {
-}
+EstimateRemainingTimeCommand::EstimateRemainingTimeCommand() : SteereoCommand (false, "estimateRemainingTime", 0) {}
 
-EstimateRemainingTimeCommand::~EstimateRemainingTimeCommand() {
-}
+EstimateRemainingTimeCommand::~EstimateRemainingTimeCommand() {}
 
-ReturnType EstimateRemainingTimeCommand::execute ()
-{
+ReturnType EstimateRemainingTimeCommand::execute () {
 	Simulation* sim = (Simulation*) (this->getData(0));
-	Timer* loopTimer = sim->getLoopTimer();
-	loopTimer->stop();
-	double elapsedTime = loopTimer->get_etime();
-	unsigned long currentStep = sim->getSimStep();
+	sim->stopTimer("SIMULATION_LOOP");
+	double elapsedTime = sim->getTime("SIMULATION_LOOP");
+	unsigned long currentStep = sim->getSimulationStep();
 	unsigned long numberOfTimesteps = sim->getNumTimesteps();
 	double estimation = ((double) numberOfTimesteps / currentStep) * elapsedTime - elapsedTime;
 	SteereoStream stream;
 	stream << currentStep << numberOfTimesteps << elapsedTime << estimation;
 	logger->debug() << "estimating " << estimation << std::endl;
-	if (this->getIntraCommunicator()->amIRoot ())
-	{
+	if (this->getIntraCommunicator()->amIRoot ()) {
 		this->getCommunicator()->sendStream (this->getConnection()->getDataConnection(), stream);
 	}
-	loopTimer->start();
+	sim->startTimer("SIMULATION_LOOP");
 	return EXECUTED;
-
 }
 
-void EstimateRemainingTimeCommand::setParameters (std::list<std::string> params)
-{
+void EstimateRemainingTimeCommand::setParameters (std::list<std::string> params) {}
 
-}
-
-SteereoCommand* EstimateRemainingTimeCommand::generateNewInstance ()
-{
+SteereoCommand* EstimateRemainingTimeCommand::generateNewInstance () {
 	return new EstimateRemainingTimeCommand;
 }
 
-bool EstimateRemainingTimeCommand::condition ()
-{
+bool EstimateRemainingTimeCommand::condition () {
 	return true;
 }
 

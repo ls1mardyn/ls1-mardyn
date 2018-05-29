@@ -12,10 +12,14 @@ class Domain;
 
 //! @brief writes Surface tension to a file
 
+class XMLfileUnits;
 class GammaWriter : public OutputBase {
 public:
+	GammaWriter() {}
 	GammaWriter(unsigned long writeFrequency, std::string outputPrefix);
 	~GammaWriter();
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
 	//! @todo comment
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);

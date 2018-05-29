@@ -11,7 +11,7 @@
 #include "particleContainer/adapter/CellProcessor.h"
 
 class ParticlePairsHandler;
-class ParticleCell;
+#include "particleContainer/ParticleCellForwardDeclaration.h"
 
 /**
  * This class is a simple extraction of the cell handling from the old
@@ -40,8 +40,6 @@ public:
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
-
-        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
 
 	void processCell(ParticleCell& cell);
 

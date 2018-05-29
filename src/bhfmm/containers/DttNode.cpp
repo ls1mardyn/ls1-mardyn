@@ -186,12 +186,12 @@ void DttNode::downwardPass() {
 	}
 }
 
-std::vector<ParticleCell> DttNode::getLeafParticleCells() {
-	std::vector<ParticleCell> retval(0);
+std::vector<ParticleCellPointers> DttNode::getLeafParticleCells() {
+	std::vector<ParticleCellPointers> retval(0);
 	if (_isLeafNode) {
 		retval.push_back(_leafParticles);
 	} else {
-		std::vector<ParticleCell> lower;
+		std::vector<ParticleCellPointers> lower;
 		for (unsigned int i = 0; i < 8; i++) {
 			if (_children[i]->isEmpty())
 				continue;
@@ -211,7 +211,7 @@ void DttNode::p2p(bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p) {
 //	_leafParticles.convertSoAToAoSCharge();
 }
 
-void DttNode::p2p(std::vector<ParticleCell> leafParticlesFar,
+void DttNode::p2p(std::vector<ParticleCellPointers> leafParticlesFar,
 		bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p,
 		bhfmm::Vector3<double> shift) {
 	std::vector<double> _shift;

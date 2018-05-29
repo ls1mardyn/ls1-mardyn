@@ -24,7 +24,12 @@
 
 using namespace std;
 
+#ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(RDFTest);
+#else
+#pragma message "Compilation info: RDFTest disabled in MARDYN_WR mode"
+#endif
+
 
 RDFTest::RDFTest() {
 }
@@ -48,7 +53,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
-	vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->update();
@@ -118,7 +123,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 	
-	vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->deleteOuterParticles();
@@ -181,6 +186,9 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 
 
 void RDFTest::testSiteSiteRDFLinkedCell() {
+	if (_domainDecomposition->getNumProcs() > 8) {
+		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
+	}
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "2clj-regular.inp", 3.5);
 	testSiteSiteRDF(moleculeContainer);
 	delete moleculeContainer;
@@ -188,15 +196,13 @@ void RDFTest::testSiteSiteRDFLinkedCell() {
 
 void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 
-	if (_domainDecomposition->getNumProcs() > 8) {
-		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
-	}
+	std::cout << "RDFTest::testSiteSiteRDF with " <<_domainDecomposition->getNumProcs()<<" procs" << std::endl;
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 
-	vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);

@@ -18,7 +18,7 @@
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 class ParticleContainer;
 class DomainDecompBase; 
 class PressureGradient;
@@ -65,8 +65,23 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
+	//! @param binary indicates wheter binary I/O is used or not
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, double currentTime);
+			const DomainDecompBase* domainDecomp, double currentTime, bool binary = false);
+
+	//! @brief writes a checkpoint file that can be used to continue the simulation
+	//!
+	//! The format of the checkpointfile written by this method is the same as the format
+	//! of the input file.
+	//! @param filename Name of the header file (including path). Dependent on the I/O format, this could
+	//! 				be the same file as the data file
+	//! @param particleContainer The molecules that have to be written to the file are stored here
+	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
+	//!                     Methods to achieve this are available in domainDecomp
+	//! @param currentTime The current time to be printed.
+	void writeCheckpointHeader(std::string filename,
+			ParticleContainer* particleContainer,
+			const DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters
 	//!
@@ -219,12 +234,6 @@ public:
 	//! @brief set globalRotDOF
 	void setglobalRotDOF(unsigned long grotdof);
 
-	//! @brief get a reference to the vector of components
-	std::vector<Component>& getComponents();
-
-	//! @brief add a component to the vector of components
-	void addComponent(Component component);
-
 	//! @brief get the parameter streams
 	Comp2Param& getComp2Params();
 
@@ -317,7 +326,7 @@ public:
 	//! @param cid internal ID of the component
 	//! @param th internal ID of the thermostat
 	void setComponentThermostat(int cid, int thermostat) {
-		if((0 > cid) || (0 >= thermostat)) exit(787);
+		if((0 > cid) || (0 >= thermostat)) Simulation::exit(787);
 		this->_componentToThermostatIdMap[cid] = thermostat;
 		this->_universalThermostatN[thermostat] = 0;
 	}
@@ -586,12 +595,6 @@ private:
 
 	//! Contains the time t in reduced units
 	double currentTime;  //edited by Michaela Heier
-
-
-	// TODO: do the components belong here, or in class EnsembleBase?
-	// TODO: currently they exist in both places!
-	//! Components resp. molecule types
-	std::vector<Component> _components;
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;

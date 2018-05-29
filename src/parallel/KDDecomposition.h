@@ -10,8 +10,8 @@
 
 #include "DomainDecompMPIBase.h"
 #include "parallel/CollectiveCommunication.h"
+#include "ParticleDataForwardDeclaration.h"
 
-class ParticleData;
 class KDNode;
 
 
@@ -67,7 +67,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	   </parallelisation>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void readXML(XMLfileUnits& xmlconfig) override;
 
 	//###############################################
 	//### The following methods are those of the  ###
@@ -75,27 +75,24 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//###############################################
 
 	// documentation in base class
-	virtual int getNonBlockingStageCount();
-
-	// documentation in base class
 	virtual void prepareNonBlockingStage(bool forceRebalancing,
 				ParticleContainer* moleculeContainer, Domain* domain,
-				unsigned int stageNumber);
+				unsigned int stageNumber) override;
 
 	// documentation in base class
 	virtual void finishNonBlockingStage(bool forceRebalancing,
 			ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber);
+			unsigned int stageNumber) override;
 
 	// documentation in base class
-	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
 	//! @todo comment and thing
-	double getBoundingBoxMin(int dimension, Domain* domain);
+	double getBoundingBoxMin(int dimension, Domain* domain) override;
 	//! @todo comment and thing
-	double getBoundingBoxMax(int dimension, Domain* domain);
+	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -115,20 +112,14 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//!  20.0 30.0 25.0 62.0 62.0 62.0
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(std::string filename, Domain* domain);
+	void printDecomp(std::string filename, Domain* domain) override;
 
 	int getUpdateFrequency() { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
-	virtual std::vector<int> getNeighbourRanks(){
-		//global_log->error() << "not implemented \n";
-		exit(-1);
-		return std::vector<int> (0);
-	}
-	virtual std::vector<int> getNeighbourRanksFullShell(){
-		//global_log->error() << "not implemented \n";
-		exit(-1);
-		return std::vector<int> (0);
-	}
+	virtual std::vector<int> getNeighbourRanks() override;
+	virtual std::vector<int> getNeighbourRanksFullShell() override;
+
+	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
@@ -175,12 +166,13 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	void getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const;
 
+	void getCellIntCoordsFromRegionPeriodic(int * lo, int * hi, const double lC[3], const double hC[3], const Domain* domain) const;
 
 	//! @brief exchange decomposition data and build up the resulting tree
 	//!
-	//! After the new decomposition has been determined (by recDecompPar), each
+	//! After the new decomposition has been determined (by decompose), each
 	//! process knows its own Area (and that part of the decomp tree which lies on the
-	//! the path between the root node and the node with the own Area), but each process
+	//! path between the root node and the node with the own Area), but each process
 	//! has to know the complete decomposition. This method exchanges the decomposition
 	//! data between the processes and builds up a complete decomposition Tree on
 	//! all processes.
@@ -227,6 +219,13 @@ class KDDecomposition: public DomainDecompMPIBase {
 	
 	void updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
 			std::vector<double>& accumulatedProcessorSpeeds, ParticleContainer* moleculeContainer);
+
+	//! @brief fills the given vector with all particles in the given region of the particle container
+	//! @param moleculeContainer container with the particles to be collected
+	//! @param lowCorner minimum x-, y- and z-coordinate of the region
+	//! @param highwCorner maximum x-, y- and z-coordinate of the region
+	//! @param mols vector to put the particles in
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double startRegion[3], const double endRegion[3], std::vector<Molecule*>& mols) const;
 
 	//######################################
 	//###    private member variables    ###

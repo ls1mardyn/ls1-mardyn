@@ -5,15 +5,15 @@
 
 #include "xmlfile.h"
 
-#include<fstream>
-#include<sstream>
-#include<map>
+#include <fstream>
+#include <sstream>
+#include <map>
 
-#include<algorithm>
-#include<cassert>
-#include<cstdlib>
-#include<string>
+#include <algorithm>
+#include <cstdlib>
+#include <string>
 
+#include "utils/mardyn_assert.h"
 #include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
 
@@ -207,7 +207,7 @@ bool XMLfile::initfile_local(const string& filepath)
 	xmlstr[len]=0;
 	len -= fread(xmlstr,sizeof(char),len,fp);
 	fclose(fp);
-	assert(len == 0);
+	mardyn_assert(len == 0);
 
 	m_xmldoc.parse<0>(xmlstr);
 	expandincludes();

@@ -37,7 +37,7 @@ InputFileTest::~InputFileTest() {
  */
 void InputFileTest::testRemoveMomentum() {
 
-	std::vector<Component>& components = _domain->getComponents();
+	std::vector<Component>& components = *(global_simulation->getEnsemble()->getComponents());
 
 	ParticleContainer* particleContainer
 		= initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-2x2x3-removeMomentum.inp", 1.5);
@@ -48,14 +48,15 @@ void InputFileTest::testRemoveMomentum() {
 	double mass_sum=0.;
 	double momentum_sum[3] = {0., 0., 0.};
 
-	Molecule* molecule = particleContainer->begin();
-	while(molecule != particleContainer->end()){
+	ParticleIterator molecule = particleContainer->iteratorBegin();
+	while(molecule != particleContainer->iteratorEnd()){
+		mardyn_assert(components.size() > molecule->componentid());
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
 		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
 		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		molecule = particleContainer->next();
+		++molecule;
 	}
 
 	ASSERT_DOUBLES_EQUAL(0., momentum_sum[0],1e-6);

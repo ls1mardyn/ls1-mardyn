@@ -16,10 +16,10 @@ namespace bhfmm {
 
 L2PCellProcessor::L2PCellProcessor(
 		PseudoParticleContainer * pseudoParticleContainer) :
-		CellProcessor(0.0, 0.0),
 		_pseudoParticleContainer(pseudoParticleContainer) {
 #ifdef ENABLE_MPI
-	_L2PTimer.set_sync(false);
+	global_simulation->setOutputString("L2P_CELL_PROCESSOR_L2P", "FMM: Time spent in L2P ");
+	//global_simulation->setSyncTimer("L2P_CELL_PROCESSOR_L2P", false); //it is per default false
 #endif
 }
 
@@ -37,11 +37,11 @@ void L2PCellProcessor::initTraversal() {
 //	cout << "L2P init: LocalP_zz     " << domain->getLocalP_zz() << endl;
 }
 
-void L2PCellProcessor::processCell(ParticleCell& cell) {
+void L2PCellProcessor::processCell(ParticleCellPointers& cell) {
 	if (!cell.isHaloCell()) {
-		_L2PTimer.start();
+		global_simulation->startTimer("L2P_CELL_PROCESSOR_L2P");
 		_pseudoParticleContainer->processFarField(cell);
-		_L2PTimer.stop();
+		global_simulation->stopTimer("L2P_CELL_PROCESSOR_L2P");
 	}
 }
 
@@ -52,12 +52,11 @@ void L2PCellProcessor::printTimers() {
 	for (int i = 0; i < numprocs; i++) {
 		if (i == myrank) {
 			std::cout << "rank: " << myrank << std::endl;
-			std::cout << "\t\t" << _L2PTimer.get_etime() << "\t\t" << "s in L2P"
-					<< std::endl;
+			std::cout << "\t\t" << global_simulation->getTime("L2P_CELL_PROCESSOR_L2P") << "\t\t" << "s in L2P" << std::endl;
+			//global_simulation->printTimer("L2P_CELL_PROCESSOR_L2P");
 		}
 		domainDecomp.barrier();
 	}
-
 }
 
 void L2PCellProcessor::endTraversal() {

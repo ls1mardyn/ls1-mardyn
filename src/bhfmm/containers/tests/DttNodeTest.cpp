@@ -9,6 +9,7 @@
 #include "bhfmm/containers/tests/DttNodeTest.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "bhfmm/containers/ParticleCellPointers.h"
 
 TEST_SUITE_REGISTRATION(DttNodeTest);
 
@@ -27,7 +28,7 @@ void DttNodeTest::testUpwardDownwardWithNoInteraction(){
 
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
-	ParticleCell root;
+	ParticleCellPointers root;
 
 	double p_pos[3];
 	bool check = true;
@@ -68,7 +69,7 @@ void DttNodeTest::testSoAConvertions(){
 	}
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
-	ParticleCell root;
+	bhfmm::ParticleCellPointers root;
 	double l[3], u[3];
 	for (int d = 0; d < 3; ++d) {
 		l[d] = container->getBoundingBoxMin(d);
@@ -80,9 +81,9 @@ void DttNodeTest::testSoAConvertions(){
 	double p_pos[3];
 	bool check = true;
 
-	Molecule * it;
-	for (it = container->begin(); it != container->end(); it = container->next()) {
-		root.addParticle(it);
+	ParticleIterator it;
+	for (it = container->iteratorBegin(); it != container->iteratorEnd(); ++it) {
+		root.addParticle(&(*it));
 
 		if (check) {
 			p_pos[0] = it->r(0);
@@ -125,9 +126,9 @@ void DttNodeTest::testDepth(double cutoffRadius){
 
 	std::vector<Molecule *> particles;
 
-	Molecule * it;
-	for(it = container->begin(); it != container->end(); it = container->next()) {
-		particles.push_back(it);
+	ParticleIterator it;
+	for(it = container->iteratorBegin(); it != container->iteratorEnd(); ++it) {
+		particles.push_back(&(*it));
 	}
 	
 	int depth = log2((globalDomainLength[0] / cutoffRadius));
@@ -158,9 +159,9 @@ void DttNodeTest::testDivideParticles() {
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
 	std::vector<Molecule *> particles;
-	Molecule * it;
-	for(it = container->begin(); it != container->end(); it = container->next()) {
-		particles.push_back(it);
+	ParticleIterator it;
+	for(it = container->iteratorBegin(); it != container->iteratorEnd(); ++it) {
+		particles.push_back(&(*it));
 	}
 
 	std::array<std::vector<Molecule*>, 8> children;

@@ -23,7 +23,7 @@ enum MoleculeCntIncreaseTypeEnum{
 #include "ensemble/EnsembleBase.h"
 
 class Component;
-class ParticleCell;
+#include "particleContainer/ParticleCellForwardDeclaration.h"
 //class VectorizedCellProcessor;
 //class FlopCounter;
 
@@ -215,10 +215,10 @@ private:
 	 */
 	void clearMolecules(ParticleCell& cell);
 
-	void iterateOwn(Timer timer, long long int numRepetitions,
+	void iterateOwn(long long int numRepetitions,
 			ParticleCell& cell,
 			double& gflopsPair, FlopCounter& flopCounter);
-	void iteratePair(Timer timer, long long int numRepetitions,
+	void iteratePair(long long int numRepetitions,
 			ParticleCell& firstCell, ParticleCell& secondCell,
 			double& gflopsPair, FlopCounter& flopCounter);
 };

@@ -22,7 +22,7 @@ ForceCalculationTest::~ForceCalculationTest() {
 
 void ForceCalculationTest::testForcePotentialCalculationU0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "ForceCalculationTest::testForcePotentialCalculationU0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -45,11 +45,11 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	LegacyCellProcessor cellProcessor( 1.1, 1.1, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		m->calcFM();
 	}
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
@@ -65,11 +65,18 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 
 void ForceCalculationTest::testForcePotentialCalculationF0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "ForceCalculationTest::testForcePotentialCalculationF0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
 	}
+#if defined(MARDYN_DPDP) or defined(MARDYN_SPDP)
+	double tolerance_force = 1e-7;
+	double tolerance_virial = 1e-6;
+#else
+	double tolerance_force = 1e-6;
+	double tolerance_virial = 1e-5;
+#endif
 
 
 	// U (r_ij) = 4 epsilon * ( (sigma / r_ij)^12 - (sigma / r_ij)^6 )
@@ -84,20 +91,20 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	LegacyCellProcessor cellProcessor( 1.3, 1.3, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		m->calcFM();
 	}
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), 1e-7);
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), tolerance_force);
 		}
 	}
 
 	ASSERT_DOUBLES_EQUAL(-4, _domain->getLocalUpot(), 1e-8);
-	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-6);
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), tolerance_virial);
 
 	delete container;
 }

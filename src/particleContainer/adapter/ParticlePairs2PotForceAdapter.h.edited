@@ -133,7 +133,7 @@ public:
 		return dummy1 / 6.0 + dummy2 + dummy3;
 
 	default:
-		exit(666);
+		Simulation::exit(666);
 		}
 		return 0.0;
 	}

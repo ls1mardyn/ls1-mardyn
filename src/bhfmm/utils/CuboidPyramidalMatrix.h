@@ -8,7 +8,7 @@
 #ifndef CUBOIDPYRAMIDALMATRIX_H_
 #define CUBOIDPYRAMIDALMATRIX_H_
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <cstdlib>
 
 namespace bhfmm {
@@ -55,9 +55,9 @@ public:
     inline double access_seq_const(unsigned i) const {return _entries[i];}
 
     inline unsigned index(unsigned i, unsigned j, int k) const {
-      assert(i <= _numSlices);
-      assert(j <= i);
-      assert(static_cast<unsigned>(abs(k))<= i);
+      mardyn_assert(i <= _numSlices);
+      mardyn_assert(j <= i);
+      mardyn_assert(static_cast<unsigned>(abs(k))<= i);
       return i*(i+1)*(4*i-1)/6 + (2*i + 1)*j + i + k;  // valid for i < 1024
 
       /* i*(i+1)*(4*i-1)/6	: select slice.

@@ -27,7 +27,7 @@ public:
 			PseudoParticleContainer(orderOfExpansions), _periodicBC(periodic), _threshold(
 					threshold), root(0), halo_node(0), _domainLength(
 					domainLength), _subdivisionFactor(0) {
-		assert(_threshold > 0);
+		mardyn_assert(_threshold > 0);
 	}
 
 	AdaptivePseudoParticleContainer(double domainLength[3],
@@ -49,9 +49,9 @@ public:
 	void horizontalPass(VectorizedChargeP2PCellProcessor * cp);
 	void downwardPass(L2PCellProcessor *cp);
 
-	void processMultipole(ParticleCell& /*cell*/) {
+	void processMultipole(ParticleCellPointers& /*cell*/) {
 	}
-	void processFarField(ParticleCell& /*cell*/) {
+	void processFarField(ParticleCellPointers& /*cell*/) {
 	}
 	void processTree() {
 	}

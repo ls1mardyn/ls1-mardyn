@@ -12,20 +12,25 @@
 #include <cmath>
 #include <string>
 #include <map>
+#include <cstdint>
 
+#include "molecules/MoleculeForwardDeclaration.h"
 class Domain;
 class ParticleContainer;
-class Molecule;
 
 class Planar:public LongRangeCorrection {
 public:
 	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation);
-//	 ~Planar();	
+	virtual ~Planar() {}
 
-	void calculateLongRange();
+	virtual void init();
+	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void calculateLongRange();
 	double lrcLJ(Molecule* mol);
 	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
 	void directDensityProfile();
+	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
+	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
 
 private:
 
@@ -73,6 +78,10 @@ private:
 	Domain* _domain;
 	DomainDecompBase* _domainDecomposition;
 	
+	// write control
+	uint64_t _nStartWritingProfiles;
+	uint64_t _nWriteFreqProfiles;
+	uint64_t _nStopWritingProfiles;
 };
 
 

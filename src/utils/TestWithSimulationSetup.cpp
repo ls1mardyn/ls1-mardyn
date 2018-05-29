@@ -28,12 +28,12 @@ utils::TestWithSimulationSetup::TestWithSimulationSetup()
 
 utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
 	if (_domain != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
+		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
 		delete _domain;
 	}
 
 	if (_domainDecomposition != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
+		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
 		delete _domainDecomposition;
 	}
 }
@@ -59,7 +59,7 @@ void utils::TestWithSimulationSetup::tearDown() {
 
 
 ParticleContainer* utils::TestWithSimulationSetup::initializeFromFile(
-		ParticleContainerFactory::type type, const char* fileName, double cutoff) {
+		ParticleContainerFactory::Type type, const char* fileName, double cutoff) {
 
 	return ParticleContainerFactory::createInitializedParticleContainer(
 			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName));

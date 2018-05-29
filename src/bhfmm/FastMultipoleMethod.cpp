@@ -61,7 +61,7 @@ void FastMultipoleMethod::setParameters(unsigned LJSubdivisionFactor,
 }
 
 void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
-		double bBoxMax[3], double LJCellLength[3]) {
+		double bBoxMax[3], double LJCellLength[3], ParticleContainer* ljContainer) {
 
 	if (_LJCellSubdivisionFactor != 1
 			and _LJCellSubdivisionFactor != 2
@@ -70,7 +70,7 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 		global_log->error() << "Fast Multipole Method: bad subdivision factor:"
 				<< _LJCellSubdivisionFactor << endl;
 		global_log->error() << "expected 1,2,4 or 8" << endl;
-		exit(5);
+		Simulation::exit(5);
 	}
 	global_log->info()
 			<< "Fast Multipole Method: each LJ cell will be subdivided in "
@@ -82,13 +82,13 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 #if defined(ENABLE_MPI)
 	if (_adaptive){
 		global_log->error() << "not supported yet" << endl;
-		exit(-1);
+		Simulation::exit(-1);
 	}
 #endif
 	if (not _adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(
 				globalDomainLength, bBoxMin, bBoxMax, LJCellLength,
-				_LJCellSubdivisionFactor, _order, _periodic);
+				_LJCellSubdivisionFactor, _order, ljContainer, _periodic);
 
 	} else {
 		// TODO: Debugging in Progress!
@@ -134,6 +134,8 @@ void FastMultipoleMethod::printTimers() {
 	_P2MProcessor->printTimers();
 	_L2PProcessor->printTimers();
 	_pseudoParticleContainer->printTimers();
+	//global_simulation->printTimers("CELL_PROCESSORS");
+	//global_simulation->printTimers("UNIFORM_PSEUDO_PARTICLE_CONTAINER");
 }
 
 } /* namespace bhfmm */

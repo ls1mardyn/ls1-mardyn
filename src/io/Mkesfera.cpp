@@ -160,13 +160,16 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 					double tP = (qq > R_i*R_i)? P_out: P_in;
 					bool tfill = (tP >= rnd->rnd());
 					if(notInBox){
+						if(idx[0] >= startx[0] and idx[0] <= endx[0] and idx[1] >= startx[1] and idx[1] <= endx[1] and idx[2] >= startx[2] and idx[2] <= endx[2]){
+							fill[idx[0]-startx[0]][idx[1]-startx[1]][idx[2]-startx[2]][p] = 0;
+						}
 						continue;
 					}
 
 
 					if(idx[0] - startx[0] >= fl_units_local[0] or idx[1] - startx[1] >= fl_units_local[1] or idx[2] - startx[2] >= fl_units_local[2] or startx[0] > idx[0] or startx[1] > idx[1] or startx[2] > idx[2]){
 						global_log->error() << "Error in calculation of start and end values! \n";
-						exit(0);
+						Simulation::exit(0);
 					}
 					fill[idx[0]-startx[0]][idx[1]-startx[1]][idx[2]-startx[2]][p] = tfill;
 					if(tfill) {
@@ -189,7 +192,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 
 	double v_avg = sqrt(3.0 * T);
 
-	Component* component = _simulation.getEnsemble()->component(0);
+	Component* component = _simulation.getEnsemble()->getComponent(0);
 	unsigned ID = 1+ startID;
 	unsigned int numberOfMolecules = 0;
 	for(idx[0]= 0; idx[0] < fl_units; idx[0]++) {

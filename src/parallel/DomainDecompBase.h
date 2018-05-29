@@ -9,7 +9,7 @@
 #endif
 #include <iostream>
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 class Component;
 class Domain;
 class ParticleContainer;
@@ -45,6 +45,9 @@ typedef ParticleContainer TMoleculeContainer;
 //! case the class Simulation) can decide which implementation to use. When MPI is
 //! available, the parallel version is used, otherwise the sequential version
 class DomainDecompBase {
+	friend class NeighbourCommunicationScheme;
+	friend class IndirectNeighbourCommunicationScheme;
+	friend class DirectNeighbourCommunicationScheme;
 public:
 	//! @brief The Constructor determines the own rank and the number of the neighbours                                                       */
 	DomainDecompBase();
@@ -129,24 +132,34 @@ public:
 
 	//! @brief returns the own rank
 	//! @return rank of the process
-	virtual int getRank();
+	virtual int getRank() const;
 
 	//! @brief returns the number of processes
 	//! @return number of processes
-	virtual int getNumProcs();
+	virtual int getNumProcs() const;
 
 	//! @brief synchronizes all processes
-	virtual void barrier();
+	virtual void barrier() const;
 
 	//! @brief returns the time in seconds since some time in the past
-	virtual double getTime();
+	virtual double getTime() const;
 
 	//! @brief returns total number of molecules
 	virtual unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
 
 	//! @brief checks identity of random number generators
 	virtual void assertIntIdentity(int IX);
-	virtual void assertDisjunctivity(TMoleculeContainer* mm);
+	virtual void assertDisjunctivity(TMoleculeContainer* mm) const;
+
+	//! @brief returns an cutoff radius for a dimension for a global linked cells datastructure
+	//!
+	//! This method is e.g. used for the parallelCheckpointWriter, which builds a new global
+	//! cell structure. This method returns a cutoff radius, so that each cell is fully
+	//! contained in one process
+	//! @param dim the dimension, which will be returned
+	//! @param domain e.g. needed to get the bounding boxes
+	//! @param moleculeContainer e.g. needed for the cutoff radius
+	double getIOCutoffRadius(int dim, Domain* domain, ParticleContainer* moleculeContainer);
 
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
 	//! @param filename name of the file into which the data will be written
@@ -157,7 +170,8 @@ public:
 	//! there is a loop over all processes with a barrier in between
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
+	//! @param binary flag, that is true if the output shall be binary
+	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary = false) const;
 
 
 	//##################################################################
@@ -194,6 +208,8 @@ public:
 	virtual long double collCommGetLongDouble();
 	//! has to call allreduceSum method of a CollComm class (none in sequential version)
 	virtual void collCommAllreduceSum();
+	//! has to call scanSum method of a CollComm class (none in sequential version)
+	virtual void collCommScanSum();
 	//! has to call broadcast method of a CollComm class (none in sequential version)
 	virtual void collCommBroadcast(int root = 0);
 	//returns the ranks of the neighbours
@@ -204,6 +220,12 @@ public:
 	virtual std::vector<int> getNeighbourRanksFullShell(){
 		std::cout << "Not yet implemented";
 		return std::vector<int>(0);
+	}
+
+	//returns the ranks of all ranks
+	virtual std::vector<std::vector<std::vector<int>>> getAllRanks(){
+		std::cout << "Not yet implemented";
+		return std::vector<std::vector<std::vector<int>>>(0);
 	}
 #if defined(ENABLE_MPI)
 	virtual MPI_Comm getCommunicator(){

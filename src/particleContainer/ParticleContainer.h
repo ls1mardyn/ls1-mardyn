@@ -22,18 +22,13 @@
 
 #include <list>
 #include <vector>
-
-class CavityEnsemble;
+#include "ParticleIterator.h"
+#include "RegionParticleIterator.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+#include "io/MemoryProfiler.h"
 class CellProcessor;
-class ChemicalPotential;
-class Domain;
-class DomainDecompBase;
-class Molecule;
-class ParticleContainer;
 class ParticlePairsHandler;
 class XMLfileUnits;
-
-typedef Molecule* MoleculeIterator;
 
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
@@ -68,7 +63,7 @@ typedef Molecule* MoleculeIterator;
 //! methods a class implementing this kind of datastructure has to provide to
 //! be used by the framework. Such a class should
 //! be implemented as a subclass of this class.
-class ParticleContainer {
+class ParticleContainer: public MemoryProfilable {
 private:
 	/* Copy operator private */
 	ParticleContainer& operator=(const ParticleContainer&);
@@ -110,21 +105,15 @@ public:
 	//! responsibility of the programmer.
 	//!
 	//! @param particle reference to the particle which has to be added
+	//! @param inBoxCheckedAlready - if true, spare check whether molecule is in bounding box
+	//! @param checkWhetherDuplicate - if true, check whether molecule already exists and don't insert it.
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
-	virtual bool addParticle(Molecule& particle, const bool& rebuildCaches=false) = 0;
+	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
 
-	//! @brief add a single Molecules to the ParticleContainer.
-	//!
-	//! Note: the particle pointer is pushed, without creating a new particle.
-	//! The underlying object should not be destroyed.
-	//!
-	//! @param particle reference to the particle which has to be added
-	//! @param inBoxCheckedAlready
-	//! @param checkWhetherDuplicate
-	//! @param rebuildCaches specifies, whether the caches should be rebuild
-	//! @return true if successful, false if particle outside domain
-	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
+	//! @brief adds a whole vector of particles
+	//! @param particles reference to a vector of pointers to particles
+	virtual int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -150,9 +139,15 @@ public:
 
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
 
+	virtual ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
+	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
+
+	virtual ParticleIterator iteratorEnd () = 0;
+	virtual RegionParticleIterator iterateRegionEnd () = 0;
+
 	//! @return the number of particles stored in this container
 	//!
-	//! This number may includes particles which are outside of
+	//! This number may include particles which are outside of
 	//! the bounding box
 	virtual unsigned long getNumberOfParticles() = 0;
 
@@ -172,28 +167,8 @@ public:
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMax(int dimension) const;
 
-	//! @brief Returns a pointer to the first particle in the Container
-	virtual MoleculeIterator begin() = 0;
-
-	//! @brief Returns a pointer to the next particle in the Container
-	//!
-	//! The class internally has to store the Particle to which is currently pointed
-	//! With the call of next, this internal pointer is advanced to the next particle
-	//! and this new pointer is returned
-	virtual MoleculeIterator next() = 0;
-
-	//! @brief Returns a pointer to the current particle pointed by internal iterator
-	//!
-	//! In some while-loop traversals this is needed.
-	virtual MoleculeIterator current() = 0;
-
-	//! @brief Has to return the same as next() after it already pointed to the last particle
-	virtual MoleculeIterator end() = 0;
-
 	//! @brief Delete all molecules in container
 	virtual void clear() = 0;
-
-	virtual MoleculeIterator deleteCurrent() = 0;
 
     /* TODO can we combine this with the update method? */
 	//! @brief delete all Particles which are not within the bounding box
@@ -204,39 +179,17 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	virtual double get_halo_L(int index) const = 0;
 
-	//! @brief appends pointers to all particles in the halo region to the list
-	virtual void getHaloParticles(std::list<Molecule*> &haloParticlePtrs) = 0;
+	// get the region of the halo particles in this container based on direction
+	virtual void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
 
-	//! @brief fills the given list with pointers to all particles in the given region
-	//! @param lowCorner minimum x-, y- and z-coordinate of the region
-	//! @param highwCorner maximum x-, y- and z-coordinate of the region
-	//! @param removeFromContainer if true, particles are erased, else - left in container
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) = 0;
-	virtual void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer=false) = 0;
+	// get the region of the boundary particles in this container based on direction
+	virtual void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
 
-	/**
-	 * @brief move particles from the halo layer in the respective direction into the current vector
-	 * @param direction
-	 * @param v
-	 */
-	virtual void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false) = 0;
+	virtual bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
-	/**
-	 * @brief copy particles from the boundary layer for filling halo layers
-	 * @param direction
-	 * @param v
-	 */
-	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const = 0;
+	virtual bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
 	virtual double getCutoff() = 0;
-
-    /* TODO: This goes into the component class */
-	//! @brief counts all particles inside the bounding box
-	virtual unsigned countParticles(unsigned int cid) = 0;
-
-    /* TODO: This goes into the component class */
-	//! @brief counts particles in the intersection of bounding box and control volume
-	virtual unsigned countParticles(unsigned int cid, double* cbottom, double* ctop) = 0;
 
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) = 0;
@@ -244,10 +197,6 @@ public:
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
 
-        virtual int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR) = 0;
-        virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;
-        virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
-	
 	//! @brief Update the caches of the molecules, that lie in inner cells.
 	//! The caches of boundary and halo cells is not updated.
 	//! This method is used for a multi-step scheme of overlapping mpi communication

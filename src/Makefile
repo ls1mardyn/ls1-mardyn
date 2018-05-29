@@ -1,7 +1,7 @@
 # Find out the base directory
 MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: default help clean cleanall
+.PHONY: all default help clean cleanall test
 default: all
 
 # Check current directory
@@ -44,12 +44,41 @@ VECTORIZE_CODE ?= AOS
 # AVX2     - VectorizedCellProcessor with AVX2 intrinsics
 # KNC_MASK - VectorizedCellProcessor with KNC intrinsics and masking
 # KNC_G_S  - VectorizedCellProcessor with KNC intrinsics and gather-scatter (not fully optimized yet in this branch)
+# KNL_MASK - VectorizedCellProcessor with KNL intrinsics and masking
+# KNL_G_S  - VectorizedCellProcessor with KNL intrinsics and gather-scatter (not fully optimized yet in this branch)
 # SOA      - VectorizedCellProcessor with no intrinsics
 # see "make help_vect"
-vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S SOA SSEAMD AVXAMD
+vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S KNL_MASK KNL_G_S SOA SSEAMD AVXAMD
 ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
-  $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
+  $(error ERROR: invalid vectorize code option chosen. see "make help_vect")
 endif
+
+PRECISION ?= DOUBLE
+# SINGLE - SPSP - computation carried out in single precision, accumulation carried out in single precision
+# MIXED  - SPDP - computation carried out in single precision, accumulation carried out in double precision
+# DOUBLE - DPDP - computation carried out in double precision, accumulation carried out in double precision
+precision_options := SINGLE MIXED DOUBLE
+ifeq (, $(filter $(PRECISION), $(precision_options)))
+  $(error ERROR: invalid PRECISION option chosen. Set to SINGLE, MIXED or DOUBLE.)
+endif
+ifeq ($(PRECISION), MIXED)
+  $(error ERROR: MIXED precision not supported yet)
+endif
+
+not_supported_single_vectorizations := KNC_MASK KNC_G_S KNL_MASK KNL_G_S 
+ifeq ($(PRECISION), SINGLE)
+  $(info # WARNING)
+  $(info # WARNING)
+  $(info # WARNING: you are selecting SINGLE precision instead of DOUBLE. Proceed at own risk! )
+  $(info # WARNING)
+  $(info # WARNING)
+  ifneq (, $(filter $(VECTORIZE_CODE), $(not_supported_single_vectorizations)))
+    $(error ERROR: SINGLE precision not yet extended to 512-bits)
+  endif
+endif
+
+# Set World Record?
+WORLD_RECORD ?= 0
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
 ENABLE_FMM_FFT ?= 0
@@ -105,12 +134,12 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK -std=c++11
+CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -D MPICH_IGNORE_CXX_SEEK
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 ifeq ($(SUPPORT_GENERATOR), 1)
 LDFLAGS += -L../tools/gui/staticlibs -lCubicGridGenerator -lDropletGenerator
-CXXFLAGS += -DSUPPORT_GENERATOR
+CXXFLAGS += -D SUPPORT_GENERATOR
 INCLUDES += -I../tools/gui/ -I../tools/gui/src/
 endif
 
@@ -128,8 +157,18 @@ CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
 endif
 
+ifeq ($(PRECISION), SINGLE)
+CXXFLAGS += -D MARDYN_SPSP
+endif
+ifeq ($(PRECISION), MIXED)
+CXXFLAGS += -D MARDYN_SPDP
+endif
+ifeq ($(PRECISION), DOUBLE)
+CXXFLAGS += -D MARDYN_DPDP
+endif
+
 ifeq ($(OPENMP), 1)
-CXXFLAGS += -D ENABLE_OPENMP=1 $(FLAGS_OPENMP)
+CXXFLAGS += $(FLAGS_OPENMP)
 LDFLAGS += $(FLAGS_OPENMP)
 else
   ifeq ($(OPENMP_SIMD),1)
@@ -138,11 +177,11 @@ else
 endif
 
 ifeq ($(ENABLE_FMM_FFT),1)
-CXXFLAGS += -DFMM_FFT
+CXXFLAGS += -D FMM_FFT
 endif
 
 ifeq ($(ENABLE_OVERLAPPING),1)
-CXXFLAGS += -DENABLE_OVERLAPPING
+CXXFLAGS += -D ENABLE_OVERLAPPING
 endif
 
 ifeq ($(PAPI),1)
@@ -150,6 +189,9 @@ CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
 endif
 
+ifeq ($(WORLD_RECORD), 1)
+CXXFLAGS += -D MARDYN_WR=1
+endif
 
 ifeq ($(DEPS),1)
 # create .deps subdirectories containing dependency information
@@ -213,7 +255,7 @@ help:
 help_vect:
 	@echo "Vectorization help:"
 	@echo
-	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | AVX2 | KNC_MASK | KNC_G_S"
+	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | AVX2 | KNC_MASK | KNC_G_S | KNL_MASK | KNL_G_S"
 	@echo " AOS      - use the LegacyCellProcessor"
 	@echo " SSE      - use the VectorizedCellProcessor with SSE intrinsics"
 	@echo "            This is the default option."
@@ -236,6 +278,12 @@ help_vect:
 	@echo "            Speed-up not yet tested."
 	@echo " KNC_G_S  - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
 	@echo "            Works only on Xeon Phis of the first generation (knights corner)."
+	@echo "            Speed-up not yet tested."
+	@echo " KNL_MASK - use the VectorizedCellProcessor with AVX512 (knights landing) intrinsics."
+	@echo "            Works only on Xeon Phis of the second generation (knights landing)."
+	@echo "            Speed-up not yet tested."
+	@echo " KNL_G_S  - use the VectorizedCellProcessor with AVX512 (knights landing) intrinsics."
+	@echo "            Works only on Xeon Phis of the second generation (knights landing)."
 	@echo "            Speed-up not yet tested."
 	@echo "            Please make sure that you are using a reasonably updated compiler!"
 	@echo " SOA      - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
@@ -289,8 +337,6 @@ lcov:
 
 lcov_clean:
 	lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
-
-.PHONY: test
 
 
 test:

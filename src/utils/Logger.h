@@ -38,7 +38,7 @@
 #endif  /* ENABLE_MPI */
 
 
-/* we use a seperate namespace because we have some global definitions for
+/* we use a separate namespace because we have some global definitions for
  * the log level */
 namespace Log {
 

@@ -1,4 +1,3 @@
-
 //Calculation of the Fluid Wall interaction by a function
 
 #ifndef MIRROR_H_
@@ -15,25 +14,18 @@
 #include <string>
 #include <map>
 
-
-//using namespace std; 
-
 class Mirror{
-public:
-  
-  // constructor and destructor
-  Mirror();
- ~Mirror();
-  void initialize(const std::vector<Component>* components, double in_yMirr, double in_forceConstant);
-  void VelocityChange( ParticleContainer* partContainer, Domain* domain );
+	public:
+		// constructor and destructor
+		Mirror();
+		~Mirror();
 
-  
- 	
-private:
-  double  _yMirr;
-  double  _forceConstant;
-      
+		void initialize(const std::vector<Component>* components, double in_yMirr, double in_forceConstant);
+		void VelocityChange( ParticleContainer* partContainer, Domain* domain );
+
+	private:
+		double  _yMirr;
+		double  _forceConstant;
 };
-
 
 #endif /*MIRROR_H_*/

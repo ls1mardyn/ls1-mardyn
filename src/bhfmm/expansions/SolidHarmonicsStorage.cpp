@@ -13,7 +13,7 @@ namespace bhfmm {
 // CONSTRUCTORS //
 SolidHarmonicsStorage::SolidHarmonicsStorage(int numRows, bool initializeToZero) :
 		_numRows(numRows), _totalNumValues(numRows * (numRows + 1) / 2), _values(0) {
-	assert(numRows > 0);
+	mardyn_assert(numRows > 0);
 
 	_values = new double[_totalNumValues];
 
@@ -38,19 +38,19 @@ SolidHarmonicsStorage::~SolidHarmonicsStorage() {
 }
 
 void swap(SolidHarmonicsStorage& s1, SolidHarmonicsStorage& s2) {
-	assert(s1.getTotalNumValues() == s2.getTotalNumValues());
+	mardyn_assert(s1.getTotalNumValues() == s2.getTotalNumValues());
 	std::swap(s1._values, s2._values);
 }
 
 // OPERATORS //
 SolidHarmonicsStorage& SolidHarmonicsStorage::operator=(SolidHarmonicsStorage rhs) {
-	assert(this->_totalNumValues == rhs._totalNumValues);
+	mardyn_assert(this->_totalNumValues == rhs._totalNumValues);
 	swap(*this, rhs);
 	return *this;
 }
 
 SolidHarmonicsStorage& SolidHarmonicsStorage::operator+=(const SolidHarmonicsStorage& rhs) {
-	assert(this->_totalNumValues == rhs._totalNumValues);
+	mardyn_assert(this->_totalNumValues == rhs._totalNumValues);
 	for (int i = 0; i < _totalNumValues; ++i) {
 		this->_values[i] += rhs._values[i];
 	}

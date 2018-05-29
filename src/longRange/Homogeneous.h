@@ -15,9 +15,12 @@ class Homogeneous: public LongRangeCorrection{
 public:
 //	Homogeneous();
 	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation _simulation);
-  
-//	void initializeLongRange();
-	void calculateLongRange();
+	virtual ~Homogeneous() {}
+
+	virtual void init() {}
+	virtual void readXML(XMLfileUnits& xmlconfig) {}
+	virtual void calculateLongRange();
+	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {}
 
 private:
 	double _UpotCorr;

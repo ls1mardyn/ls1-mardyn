@@ -56,7 +56,7 @@ void XyzWriter::initOutput(ParticleContainer* /*particleContainer*/, DomainDecom
 void XyzWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* /*domain*/,
 		unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
 	if( simstep % _writeFrequency == 0) {
-		vector<Component>*  components = _simulation.getEnsemble()->components();
+		vector<Component>*  components = _simulation.getEnsemble()->getComponents();
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
 
@@ -86,8 +86,7 @@ void XyzWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase*
 			domainDecomp->barrier();
 			if( ownRank == process ){
 				ofstream xyzfilestream( filenamestream.str().c_str(), ios::app );
-				Molecule* tempMol;
-				for( tempMol = particleContainer->begin(); tempMol != particleContainer->end(); tempMol = particleContainer->next()){
+				for(ParticleIterator tempMol = particleContainer->iteratorBegin(); tempMol != particleContainer->iteratorEnd(); ++tempMol){
 					for (unsigned i=0; i< tempMol->numLJcenters(); i++){
 						if( tempMol->componentid() == 0) { xyzfilestream << "Ar ";}
 						else if( tempMol->componentid() == 1 ) { xyzfilestream << "Xe ";}

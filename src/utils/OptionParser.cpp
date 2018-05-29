@@ -345,11 +345,11 @@ void OptionParser::process_opt(const Option& o, const string& opt, const string&
 	}
 	else if (o.action() == "help") {
 		print_help();
-		global_simulation->exit(0);
+		Simulation::exit(0);
 	}
 	else if (o.action() == "version") {
 		print_version();
-		global_simulation->exit(0);
+		Simulation::exit(0);
 	}
 	else if (o.action() == "callback" && o.callback()) {
 		(*o.callback())(o, opt, value, *this);
@@ -437,12 +437,12 @@ void OptionParser::print_version() const {
 }
 
 void OptionParser::exit() const {
-	global_simulation->exit(2);
+	Simulation::exit(2);
 }
 void OptionParser::error(const string& msg) const {
 	print_usage(cerr);
 	cerr << prog() << ": " << _("error") << ": " << msg << endl;
-	global_simulation->exit(-4);
+	Simulation::exit(-4);
 }
 ////////// } class OptionParser //////////
 

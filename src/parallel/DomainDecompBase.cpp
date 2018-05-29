@@ -29,9 +29,6 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 }
 
 void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const {
-
-	std::vector<Molecule * > mols;
-	std::vector<Molecule *>::iterator it;
 	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
@@ -40,22 +37,31 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 	const int sDim = dim+1;
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
-		const bool removeFromContainer = true;
-		moleculeContainer->getHaloParticlesDirection(direction, mols, removeFromContainer);
 
-		for (it = mols.begin(); it != mols.end(); ++it) {
-			Molecule * m = *it;
-			m->setr(dim, m->r(dim) + shift);
-			moleculeContainer->addParticlePointer(m);
+		double startRegion[3];
+		double endRegion[3];
+
+		moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
+
+		#if defined (_OPENMP)
+		#pragma omp parallel shared(startRegion, endRegion)
+		#endif
+		{
+			RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+			RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+
+			//traverse and gather all halo particles in the cells
+			for(RegionParticleIterator i = begin; i != end; ++i){
+				Molecule m = *i;
+				m.setr(dim, m.r(dim) + shift);
+				moleculeContainer->addParticle(m);
+				i.deleteCurrentParticle(); //removeFromContainer = true;
+			}
 		}
-		mols.clear();
 	}
 }
 
 void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
-
-	std::vector<Molecule * > mols;
-	std::vector<Molecule *>::iterator it;
 	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
@@ -63,15 +69,27 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
 	const int sDim = dim+1;
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
-		moleculeContainer->getBoundaryParticlesDirection(direction, mols);
-
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
-		for (it = mols.begin(); it != mols.end(); ++it) {
-			Molecule m = Molecule(**it);
-			m.setr(dim, m.r(dim) + shift);
-			moleculeContainer->addParticle(m);
+
+		double startRegion[3];
+		double endRegion[3];
+
+		moleculeContainer->getBoundaryRegionPerDirection(direction, &startRegion, &endRegion);
+
+		#if defined (_OPENMP)
+		#pragma omp parallel shared(startRegion, endRegion)
+		#endif
+		{
+			RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+			RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+
+			//traverse and gather all boundary particles in the cells
+			for(RegionParticleIterator i = begin; i != end; ++i){
+				Molecule m = *i;
+				m.setr(dim, m.r(dim) + shift);
+				moleculeContainer->addParticle(m);
+			}
 		}
-		mols.clear();
 	}
 }
 
@@ -102,12 +120,12 @@ bool DomainDecompBase::procOwnsPos(double x, double y, double z, Domain* domain)
 double DomainDecompBase::getBoundingBoxMin(int /*dimension*/, Domain* /*domain*/) {
 	return 0.0;
 }
+
 double DomainDecompBase::getBoundingBoxMax(int dimension, Domain* domain) {
 	return domain->getGlobalLength(dimension);
 }
 
-
-double DomainDecompBase::getTime() {
+double DomainDecompBase::getTime() const {
 	return double(clock()) / CLOCKS_PER_SEC;
 }
 
@@ -120,32 +138,45 @@ unsigned DomainDecompBase::Ndistribution(unsigned localN, float* minrnd, float* 
 void DomainDecompBase::assertIntIdentity(int /* IX */) {
 }
 
-void DomainDecompBase::assertDisjunctivity(TMoleculeContainer* /* mm */) {
+void DomainDecompBase::assertDisjunctivity(TMoleculeContainer* /* mm */) const {
 }
 
 void DomainDecompBase::printDecomp(std::string /* filename */, Domain* /* domain */) {
 	global_log->warning() << "printDecomp useless in serial mode" << std::endl;
 }
 
-int DomainDecompBase::getRank() {
+int DomainDecompBase::getRank() const {
 	return _rank;
 }
 
-int DomainDecompBase::getNumProcs() {
+int DomainDecompBase::getNumProcs() const {
 	return _numProcs;
 }
 
-void DomainDecompBase::barrier() {
+void DomainDecompBase::barrier() const {
 }
 
-void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) {
+void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary) const{
 	for (int process = 0; process < getNumProcs(); process++) {
 		if (getRank() == process) {
-			std::ofstream checkpointfilestream(filename.c_str(), std::ios::app);
-			checkpointfilestream.precision(20);
-			Molecule* tempMolecule;
-			for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
-				tempMolecule->write(checkpointfilestream);
+			std::ofstream checkpointfilestream;
+			if(binary == true){
+//				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::app);
+			}
+			else {
+				checkpointfilestream.open(filename.c_str(), std::ios::app);
+				checkpointfilestream.precision(20);
+			}
+
+			ParticleIterator tempMolecule;
+			for (tempMolecule = moleculeContainer->iteratorBegin(); tempMolecule != moleculeContainer->iteratorEnd(); ++tempMolecule) {
+				if(binary == true){
+					tempMolecule->writeBinary(checkpointfilestream);
+				}
+				else {
+					tempMolecule->write(checkpointfilestream);
+				}
 			}
 			checkpointfilestream.close();
 		}
@@ -212,6 +243,22 @@ void DomainDecompBase::collCommAllreduceSum() {
 	_collCommBase.allreduceSum();
 }
 
+void DomainDecompBase::collCommScanSum() {
+	_collCommBase.scanSum();
+}
+
 void DomainDecompBase::collCommBroadcast(int root) {
 	_collCommBase.broadcast(root);
 }
+
+double DomainDecompBase::getIOCutoffRadius(int dim, Domain* domain,
+		ParticleContainer* moleculeContainer) {
+
+	double length = domain->getGlobalLength(dim);
+	double cutoff = moleculeContainer->getCutoff();
+	assert( ((int) length / cutoff ) == length / cutoff );
+	return cutoff;
+}
+
+
+

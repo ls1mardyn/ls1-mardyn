@@ -14,7 +14,7 @@ using namespace std;
 using namespace Log;
 
 RDF::RDF() :
-	_components(_simulation.getEnsemble()->components())
+	_components(_simulation.getEnsemble()->getComponents())
 {
 }
 

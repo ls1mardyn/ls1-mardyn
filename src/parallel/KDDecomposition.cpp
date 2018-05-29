@@ -10,12 +10,15 @@
 #include "molecules/Molecule.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
-#include "ParticleData.h"
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include "particleContainer/adapter/FlopCounter.h"
+#include "parallel/NeighbourCommunicationScheme.h"
+#include "parallel/HaloRegion.h"
+#include "WrapOpenMP.h"
 
 #include <cmath>
+#include "ParticleData.h"
 
 using namespace std;
 using Log::global_log;
@@ -65,7 +68,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int update
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
 		barrier(); // the messages above are only promoted to std::out if we have the barrier somehow...
-		global_simulation->exit(-1);
+		Simulation::exit(-1);
 	}
 	_decompTree->buildKDTree();
 	_ownArea = _decompTree->findAreaForProcess(_rank);
@@ -105,10 +108,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition splits along biggest domain?: " << (_splitBiggest?"yes":"no") << endl;
 	xmlconfig.getNodeValue("forceRatio", _forceRatio);
 	global_log->info() << "KDDecomposition forces load/performance ratio?: " << (_forceRatio?"yes":"no") << endl;
-}
-
-int KDDecomposition::getNonBlockingStageCount(){
-	return 3;
+	DomainDecompMPIBase::readXML(xmlconfig);
 }
 
 void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
@@ -158,7 +158,7 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 		if (not migrationSuccessful) {
 			global_log->error() << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << endl;
 			global_log->error() << "Aborting. Please save your input files and last available checkpoint and contact TUM SCCS." << endl;
-			global_simulation->exit(1);
+			Simulation::exit(1);
 		}
 		delete _decompTree;
 		_decompTree = newDecompRoot;
@@ -170,128 +170,8 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 	}
 }
 
-void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain * domain) {
-
-//	if(_neighboursInitialized) {
-//		return;
-//	}
-//	_neighboursInitialized = true;
-
-	int ownLo[DIM];
-	int ownHi[DIM];
-
-	for (unsigned short d = 0; d < DIM; d++) {
-		ownLo[d] = _ownArea->_lowCorner[d];
-		ownHi[d] = _ownArea->_highCorner[d];
-
-		_neighbours[d].clear();
-	}
-
-	for (unsigned short dimension = 0; dimension < DIM; dimension++) {
-		if(_coversWholeDomain[dimension]) {
-			// nothing to do;
-			continue;
-		}
-
-		for (int direction = LOWER; direction <= HIGHER; direction++) {
-			double shift[DIM];
-			for (int i = 0; i < 3; ++i) {
-				shift[i] = 0.0;
-			}
-
-			int regToSendLo[DIM];
-			int regToSendHi[DIM];
-
-			for (int i = 0; i < DIM; ++i) {
-				regToSendLo[i] = ownLo[i];
-				regToSendHi[i] = ownHi[i];
-			}
-
-			if (ownLo[dimension] == 0) {
-				regToSendLo[dimension] = _globalCellsPerDim[dimension];
-			} else if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
-				regToSendHi[dimension] = -1;
-			}
-
-			switch (direction) {
-			case LOWER:
-				--regToSendLo[dimension];
-				regToSendHi[dimension] = regToSendLo[dimension];
-				if (ownLo[dimension] == 0) {
-					shift[dimension] = domain->getGlobalLength(dimension);
-				}
-				break;
-			case HIGHER:
-				++regToSendHi[dimension];
-				regToSendLo[dimension] = regToSendHi[dimension];
-				if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
-					shift[dimension] = -domain->getGlobalLength(dimension);
-				}
-				break;
-			}
-
-			vector<int> ranks;
-			vector<int> ranges;
-			_decompTree->getOwningProcs(regToSendLo, regToSendHi, ranks, ranges);
-			int numNeighbours = ranks.size();
-			vector<int>::iterator indexIt = ranges.begin();
-			for (int n = 0; n < numNeighbours; ++n) {
-				int low[3];
-				int high[3];
-				for (int d=0; d < 3; ++d) {
-					low[d] = *(indexIt++);
-					high[d] = *(indexIt++);
-					if (d == dimension) {
-						assert(low[d] == high[d]);
-					}
-				}
-				switch (direction) {
-				case LOWER:
-					if (low[dimension] + 1 != ownLo[dimension]) {
-						low[dimension] = high[dimension] = ownLo[dimension] - 1;
-					}
-					break;
-				case HIGHER:
-					if (high[dimension] - 1 != ownHi[dimension]) {
-						high[dimension] = low[dimension] = ownHi[dimension] + 1;
-					}
-					break;
-				}
-
-				// enlarge in two "other" dimensions
-				for (unsigned short d=0; d < 3; ++d) {
-					if(d != dimension) {
-						--low[d];
-						++high[d];
-					}
-				}
-
-				// region given by the current low-high range is the halo-range
-				double haloLow[3];
-				double haloHigh[3];
-				getCellBorderFromIntCoords(haloLow, haloHigh, low, high);
-
-				switch (direction) {
-				case LOWER:
-					low[dimension]++;
-					high[dimension]++;
-					break;
-				case HIGHER:
-					low[dimension]--;
-					high[dimension]--;
-					break;
-				}
-
-				double boundaryLow[3];
-				double boundaryHigh[3];
-				getCellBorderFromIntCoords(boundaryLow, boundaryHigh, low, high);
-
-				_neighbours[dimension].push_back(CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
-
-			}
-
-		}
-	}
+void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this);
 }
 
 void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const {
@@ -301,10 +181,17 @@ void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int l
 	}
 }
 
+void KDDecomposition::getCellIntCoordsFromRegionPeriodic(int* lo, int* hi, const double lC[3], const double hC[3], const Domain* domain) const {
+	for (int d = 0; d < 3; ++d) {
+		lo[d] = round(lC[d] / _cellSize[d]);
+		hi[d] = round(hC[d] / _cellSize[d]) - 1; // no -1
+	}
+}
+
 bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const {
 	// 1. compute which processes we will receive from
 	// 2. issue Irecv calls
-	// 3. compute which prcesses we will send to
+	// 3. compute which processes we will send to
 	// 4. issue Isend calls
 	// 5. get all
 
@@ -327,11 +214,6 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		numProcsRecv = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		recvPartners.reserve(numProcsRecv);
 		for (unsigned i = 0; i < ranks.size(); ++i) {
-			int partnerRank = ranks[i];
-
-			if (partnerRank != _rank) {
-				recvPartners.push_back(CommunicationPartner(partnerRank));
-			}
 
 			int low[3];
 			int high[3];
@@ -348,7 +230,10 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				}
 			}
 
+			int partnerRank = ranks[i];
+
 			if (partnerRank != _rank) {
+				recvPartners.push_back(CommunicationPartner(partnerRank));
 				recvPartners.back().initRecv(numMols, _comm, _mpiParticleType);
 			} else {
 				migrateToSelf.reserve(numMols);
@@ -389,14 +274,17 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				const bool removeFromContainer = true;
 				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, removeFromContainer); // molecules have been taken out of container
 			} else {
-				moleculeContainer->getRegionSimple(leavingLow, leavingHigh, migrateToSelf, true);
+				if(moleculeContainer->isRegionInHaloBoundingBox(leavingLow, leavingHigh)){
+					collectMoleculesInRegion(moleculeContainer, leavingLow, leavingHigh, migrateToSelf);
+				}
+
 				// decrement numProcsSend for further uses:
-				assert(willMigrateToSelf == true);
+				mardyn_assert(willMigrateToSelf == true);
 				numProcsSend--;
 			}
 		}
 	}
-	assert(moleculeContainer->getNumberOfParticles() == 0ul);
+	mardyn_assert(moleculeContainer->getNumberOfParticles() == 0ul);
 	double newBoxMin[3];
 	double newBoxMax[3];
 	for (int dim = 0; dim < 3; dim++) {
@@ -423,7 +311,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		if (migrateToSelfDone != true) {
 			const int numMolsMigToSelf = migrateToSelf.size();
 			for (int i = 0; i < numMolsMigToSelf; i++) {
-				moleculeContainer->addParticlePointer(migrateToSelf[i], false, false);
+				moleculeContainer->addParticle(*migrateToSelf[i]);
+				delete migrateToSelf[i];
 			}
 			migrateToSelfDone = true;
 		}
@@ -436,7 +325,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning() << "Deadlock warning: Rank " << _rank
+			global_log->warning() << "KDDecomposition::migrateParticles: Deadlock warning: Rank " << _rank
 					<< " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -449,7 +338,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->warning() << "Deadlock error: Rank " << _rank
+			global_log->error() << "KDDecomposition::migrateParticles: Deadlock error: Rank " << _rank
 					<< " is waiting for more than " << deadlockTimeOut
 					<< " seconds" << std::endl;
 			for (int i = 0; i < numProcsSend; ++i) {
@@ -458,27 +347,26 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			for (int i = 0; i < numProcsRecv; ++i) {
 				recvPartners[i].deadlockDiagnosticRecv();
 			}
-			global_log->warning() << "aborting" << std::endl;
 			break;
 		}
 
 	} // while not allDone
 
-	moleculeContainer->update();
-
 	global_log->set_mpi_output_root(0);
+
+	moleculeContainer->update();
 
 	int isOK = allDone;
 
 	MPI_Allreduce(MPI_IN_PLACE, &isOK, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-	bool success = false;
-
-	if(isOK == _numProcs) {
-		success = true;
+	if (isOK == _numProcs) {
+		return true;
+	} else {
+		global_log->error() << "writing checkpoint to kddecomperror.restart.dat" << std::endl;
+		global_simulation->getDomain()->writeCheckpoint("kddecomperror.restart.dat", moleculeContainer, this, global_simulation->getSimulationTime());
+		return false;
 	}
-
-	return success;
 }
 
 void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer) {
@@ -495,7 +383,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 	completeTreeInfo(newRoot, newOwnLeaf);
 	delete toCleanUp;
 	for (int d = 0; d < 3; ++d) {
-		_coversWholeDomain[d] = newOwnLeaf->_coversWholeDomain[d];
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, newOwnLeaf->_coversWholeDomain[d]);
 	}
 
 	global_log->info() << "KDDecomposition: rebalancing finished" << endl;
@@ -567,7 +455,7 @@ void KDDecomposition::updateMeanProcessorSpeeds(std::vector<double>& processorSp
 	}
 	accumulatedProcessorSpeeds[0] = 0.;
 	for (size_t i = 0; i < processorSpeeds.size(); i++) {
-		assert(processorSpeeds[i] > 0);
+		mardyn_assert(processorSpeeds[i] > 0);
 		accumulatedProcessorSpeeds[i + 1] = accumulatedProcessorSpeeds[i] + processorSpeeds[i];
 	}
 	_totalProcessorSpeed =
@@ -719,7 +607,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 	// recursion termination criterion
 	if (fatherNode->_numProcs == 1) {
 		// own area must belong to this process!
-		assert(fatherNode->_owningProc == _rank);
+		mardyn_assert(fatherNode->_owningProc == _rank);
 		ownArea = fatherNode;
 		fatherNode->calculateDeviation(&_processorSpeeds, _totalMeanProcessorSpeed);
 		return domainTooSmall;
@@ -727,7 +615,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 
 	std::list<KDNode*> subdivisions;
 	domainTooSmall = calculateAllSubdivisions(fatherNode, subdivisions, commGroup);
-	assert(subdivisions.size() > 0);
+	mardyn_assert(subdivisions.size() > 0);
 
 	KDNode* bestSubdivision = NULL;
 	double minimalDeviation = globalMinimalDeviation;
@@ -797,7 +685,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 			deviationChildren[0] = (*iter)->_child1->_deviation;
 			domainTooSmall = (domainTooSmall || subdomainTooSmall);
 		} else {									  // ... or the second child
-			assert(_rank >= (*iter)->_child2->_owningProc);
+			mardyn_assert(_rank >= (*iter)->_child2->_owningProc);
 			bool subdomainTooSmall = decompose((*iter)->_child2, newOwnArea, newComm, minimalDeviation);
 			deviationChildren[1] = (*iter)->_child2->_deviation;
 			domainTooSmall = (domainTooSmall || subdomainTooSmall);
@@ -806,7 +694,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		MPI_CHECK( MPI_Group_free(&newGroup));
 		MPI_CHECK( MPI_Comm_free(&newComm) );
 		MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, MPI_SUM, commGroup));  // reduce the deviations
-		// TODO hetero: check whether there really has to be an allreduce (sum), since each of the processes should already possess the deviations of all its children.
+		// TODO hetero (Steffen): check whether there really has to be an allreduce (sum), since each of the processes should already possess the deviations of all its children.
 		//       with the allreduce (sum) implementation trees with a low maximal level are preferred (balanced trees).
 		//		 shouldn't this better be an average????
 		(*iter)->_child1->_deviation = deviationChildren[0];
@@ -833,14 +721,14 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		iter++;
 	}
 
-	// reassign children and delete cloned node, if a better solution
+	// reassign children and delete cloned node, if a solution
 	// was found in this subtree.
 	if (bestSubdivision == NULL) {
 		fatherNode->_deviation = FLT_MAX;
 	} else {
-		*fatherNode = *bestSubdivision;
-		bestSubdivision->_child1 = NULL;
-		bestSubdivision->_child2 = NULL;
+		*fatherNode = *bestSubdivision;  // assignment operator (NOT copy operator) -> also assigns children to fatherNode
+		bestSubdivision->_child1 = NULL;  // remove children from bestSubdivision, otherwise they will be deleted
+		bestSubdivision->_child2 = NULL;  // remove children from bestSubdivision, otherwise they will be deleted
 		delete bestSubdivision;
 	}
 #ifdef DEBUG_DECOMP
@@ -945,7 +833,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 			if (splitLoad) {  // if we split the load in a specific ratio, numProcsLeft is calculated differently
 				if(_accumulatedProcessorSpeeds.size()==0){
 					global_log->error() << "no processor speeds given" << std::endl;
-					global_simulation->exit(-1);
+					Simulation::exit(-1);
 				}
 				double optimalLoad = (_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc]) * leftRightLoadRatio
 						/ (1. + leftRightLoadRatio);
@@ -1010,9 +898,9 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
 				//continue;
 				global_log->error_always_output() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
-				global_simulation->exit(1);
+				Simulation::exit(1);
 			}
-			assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
+			mardyn_assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
 
 			clone->_child1->_load = costsLeft[dim][i];
 			clone->_child2->_load = costsRight[dim][i];
@@ -1245,7 +1133,7 @@ void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* de
 	// First find out whether the area intersects the area given by testNode
 	bool areasIntersect = true;
 	for (int dim = 0; dim < KDDIM; dim++) {
-		if (not (coversWholeDomain[dim])) { // TODO: check wheter this can be removed || _ownArea->_coversWholeDomain[dim])){
+		if (not (coversWholeDomain[dim])) { // TODO: check whether this can be removed || _ownArea->_coversWholeDomain[dim])){
 			if (overlap[dim]) {
 				if (high[dim] < testNode->_lowCorner[dim] && low[dim] > testNode->_highCorner[dim])
 					areasIntersect = false;
@@ -1287,8 +1175,8 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
 		//bBMax[dim] = moleculeContainer->getBoundingBoxMax(dim);// + moleculeContainer->get_halo_L(dim);
 	}
-	Molecule* molPtr = moleculeContainer->begin();
-	while (molPtr != moleculeContainer->end()) {
+	ParticleIterator molPtr = moleculeContainer->iteratorBegin();
+	while (molPtr != moleculeContainer->iteratorEnd()) {
 		int cellIndex[3]; // 3D Cell index (local)
 		int globalCellIdx[3]; // 3D Cell index (global)
 
@@ -1302,10 +1190,182 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 		}
 
 		_numParticlesPerCell[_globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
-		molPtr = moleculeContainer->next();
+		++molPtr;
 		count++;
 	}
 	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
 
 }
 
+std::vector<int> KDDecomposition::getNeighbourRanks() {
+	//global_log->error() << "not implemented \n";
+	Simulation::exit(-1);
+	return std::vector<int> (0);
+}
+
+std::vector<int> KDDecomposition::getNeighbourRanksFullShell() {
+	//global_log->error() << "not implemented \n";
+	Simulation::exit(-1);
+	return std::vector<int> (0);
+}
+
+std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(Domain* domain,
+		const HaloRegion& haloRegion, double cutoff) {
+//TODO: change this method for support of midpoint rule, half shell, eighth shell, Neutral Territory
+	std::vector<CommunicationPartner> temp;
+	int ownLo[DIMgeom];
+	int ownHi[DIMgeom];
+	double shift[DIMgeom];
+
+	for (unsigned short d = 0; d < DIMgeom; d++) {
+		ownLo[d] = _ownArea->_lowCorner[d];
+		ownHi[d] = _ownArea->_highCorner[d];
+		shift[d] = 0.;
+	}
+
+	int regToSendLo[DIMgeom];
+	int regToSendHi[DIMgeom];
+
+	double rmin[3], rmax[3];
+	for (unsigned int d = 0; d < DIMgeom; d++) {  // put boundary options, such that everything lies within domain
+		// TODO: only works for FullShell!
+		// (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks,
+		// i.e. if cellsize is less than 1 cutoff radius)
+		if (haloRegion.offset[d] < 0 && ownLo[d] == 0) {
+			rmin[d] = haloRegion.rmin[d] + domain->getGlobalLength(d);
+			rmax[d] = haloRegion.rmax[d] + domain->getGlobalLength(d);
+			shift[d] = domain->getGlobalLength(d);
+		} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
+			rmin[d] = haloRegion.rmin[d] - domain->getGlobalLength(d);
+			rmax[d] = haloRegion.rmax[d] - domain->getGlobalLength(d);
+			shift[d] = -domain->getGlobalLength(d);
+		} else {
+			rmin[d] = haloRegion.rmin[d];
+			rmax[d] = haloRegion.rmax[d];
+		}
+	}
+
+	getCellIntCoordsFromRegionPeriodic(regToSendLo, regToSendHi, rmin, rmax, domain);
+
+	vector<int> ranks;
+	vector<int> ranges;
+	_decompTree->getOwningProcs(regToSendLo, regToSendHi, ranks, ranges);
+	int numNeighbours = ranks.size();
+	vector<int>::iterator indexIt = ranges.begin();
+	for (int n = 0; n < numNeighbours; ++n) {
+		int low[3];
+		int high[3];
+		bool enlarged[3][2];
+		for (int d = 0; d < 3; ++d) {
+			low[d] = *(indexIt++);
+			high[d] = *(indexIt++);
+			if (haloRegion.offset[d] != 0) {
+				mardyn_assert(low[d] == high[d]); // TODO: only for FULLSHELL!!!
+			}
+			enlarged[d][0] = enlarged[d][1] = false;
+		}
+		for (unsigned int d = 0; d < DIMgeom; d++) { // put boundary options, such that they lie around ownRegion again.
+			// TODO: only for FullShell! (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks
+			if (haloRegion.offset[d] < 0 && ownLo[d] == 0) {
+				low[d] -= _globalCellsPerDim[d];
+				high[d] -= _globalCellsPerDim[d];
+			} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
+				low[d] += _globalCellsPerDim[d];
+				high[d] += _globalCellsPerDim[d];
+			} else if (haloRegion.offset[d] == 0 && ownLo[d] < low[d]){
+				low[d]--;
+				enlarged[d][0] = true;
+			} else if (haloRegion.offset[d] == 0 && ownHi[d] > high[d]){
+				high[d]++;
+				enlarged[d][1] = true;
+			}
+		}
+
+		// region given by the current low-high range is the halo-range
+		double haloLow[3];
+		double haloHigh[3];
+		getCellBorderFromIntCoords(haloLow, haloHigh, low, high);
+
+		for (unsigned int d = 0; d < DIMgeom; d++) {
+			// shift for boundaryRegion (one cell)
+			low[d] -= haloRegion.offset[d];
+			high[d] -= haloRegion.offset[d];
+		}
+
+		double boundaryLow[3];
+		double boundaryHigh[3];
+		getCellBorderFromIntCoords(boundaryLow, boundaryHigh, low, high);
+
+		temp.push_back(
+				CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset, enlarged));
+
+	}
+
+	return temp;
+}
+
+void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double startRegion[3], const double endRegion[3], vector<Molecule*>& mols) const {
+	vector<vector<Molecule*>> threadData;
+	vector<int> prefixArray;
+
+	#if defined (_OPENMP)
+	#pragma omp parallel shared(mols, threadData)
+	#endif
+	{
+		const int prevNumMols = mols.size();
+		const int numThreads = mardyn_get_num_threads();
+		const int threadNum = mardyn_get_thread_num();
+		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+		RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			threadData.resize(numThreads);
+			prefixArray.resize(numThreads + 1);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		for (RegionParticleIterator i = begin; i != end; ++i) {
+			threadData[threadNum].push_back(new Molecule(*i));
+			i.deleteCurrentParticle(); //removeFromContainer = true;
+		}
+
+		prefixArray[threadNum + 1] = threadData[threadNum].size();
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//build the prefix array and resize the molecule array
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			int totalNumMols = 0;
+			//build the prefix array
+			prefixArray[0] = 0;
+			for(int i = 1; i <= numThreads; i++){
+				prefixArray[i] += prefixArray[i - 1];
+				totalNumMols += threadData[i - 1].size();
+			}
+
+			//resize the molecule array
+			mols.resize(prevNumMols + totalNumMols);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//reduce the molecules in the molecule array
+		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+		for(int i = 0; i < myThreadMolecules; i++){
+			mols[prevNumMols + prefixArray[threadNum] + i] = threadData[threadNum][i];
+		}
+	}
+}

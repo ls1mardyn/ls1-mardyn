@@ -14,12 +14,13 @@
 #ifndef LEAFNODESCONTAINER_H_
 #define LEAFNODESCONTAINER_H_
 
-#include "particleContainer/ParticleCell.h"
+#include "bhfmm/containers/ParticleCellPointers.h"
 #include <vector>
 
-class CellProcessor;
-
 namespace bhfmm {
+
+class SimpleCellProcessor;
+class VectorizedChargeP2PCellProcessor;
 
 class LeafNodesContainer {
 public:
@@ -35,13 +36,19 @@ public:
 
 	void addParticle(Molecule& particle);
 	void clearParticles();
-	void traverseCellPairs(CellProcessor& cellProcessor);
+	void traverseCells(SimpleCellProcessor& cellProcessor);
+	void traverseCellPairs(VectorizedChargeP2PCellProcessor& cellProcessor);
+	void traverseCellPairsOrig(VectorizedChargeP2PCellProcessor& cellProcessor);
+	void traverseCellPairsC08(VectorizedChargeP2PCellProcessor& cellProcessor);
 
 private:
 	void initializeCells();
 	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
 	void calculateNeighbourIndices();
+	void calculateCellPairOffsets();
 	unsigned long int getCellIndexOfMolecule(Molecule* molecule) const;
+	//! @brief given the index in the cell vector, return the index of the cell.
+	void threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const;
 
 	bool _periodicBC;
 
@@ -52,11 +59,17 @@ private:
 	double _cellLength[3];
 	int _numInnerCellsPerDimension[3];
 	int _numCellsPerDimension[3];
-	std::vector<ParticleCell> _cells;
+	std::vector<ParticleCellPointers> _cells;
 	std::vector<unsigned long> _forwardNeighbourOffsets;
 	std::vector<unsigned long> _backwardNeighbourOffsets;
 	unsigned _maxNeighbourOffset;
 	unsigned _minNeighbourOffset;
+
+	// addition for compact SimpleMD-style traversal
+	std::vector<std::pair<unsigned long, unsigned long> > _cellPairOffsets;
+
+	unsigned int _numActiveColours;
+	std::vector<std::vector<long int> > _cellIndicesPerColour;
 
 };
 

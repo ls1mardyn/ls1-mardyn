@@ -19,7 +19,6 @@
 #endif
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "utils/Timer.h"
 
 using Log::global_log;
 using namespace std;
@@ -47,7 +46,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	if( token != "mardyn")
 	{
 		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	string inputversion;
@@ -55,18 +54,18 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
 		global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	if( strtoul(inputversion.c_str(), NULL, 0) < 20080701 ) {
 		global_log->error() << "Input version tool old (" << inputversion << ")" << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << endl;
 
 
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	bool header = true; // When the last header element is reached, "header" is set to false
 
 	while(header) {
@@ -162,7 +161,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 				if (numtersoff != 0) {
 					global_log->error() << "tersoff no longer supported."
 							<< std::endl;
-					global_simulation->exit(-1);
+					Simulation::exit(-1);
 				}
 				double x, y, z, m;
 				for( unsigned int j = 0; j < numljcenters; j++ ) {
@@ -270,8 +269,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("INPUT_OLDSTYLE_INPUT");
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
@@ -281,7 +279,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	_phaseSpaceFileStream.open( _phaseSpaceFile.c_str() );
 	if (!_phaseSpaceFileStream.is_open()) {
 		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 	global_log->info() << "Reading phase space file " << _phaseSpaceFile << endl;
 #ifdef ENABLE_MPI
@@ -289,12 +287,12 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 #endif
 
 	string token;
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	unsigned int numcomponents = dcomponents.size();
 	unsigned long nummolecules;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 	string ntypestring("ICRVQD");
-	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQDV;
+	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
@@ -305,7 +303,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	}
 	if((token != "NumberOfMolecules") && (token != "N")) {
 		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 	_phaseSpaceFileStream >> nummolecules;
 #ifdef ENABLE_MPI
@@ -335,7 +333,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		else if (ntypestring == "IRV")  ntype = IRV;
 		else {
 			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
-			exit(1);
+			Simulation::exit(1);
 		}
 	} else {
 		_phaseSpaceFileStream.seekg(spos);
@@ -359,7 +357,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	ParticleData particle_buff[PARTICLE_BUFFER_SIZE];
 	int particle_buff_pos = 0;
 	MPI_Datatype mpi_Particle;
-	ParticleData::setMPIType(mpi_Particle);
+	ParticleData::getMPIType(mpi_Particle);
 
 	int size;
 	MPI_CHECK(MPI_Type_size(mpi_Particle, &size));
@@ -404,7 +402,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 
 			if( componentid > numcomponents ) {
 				global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
-				global_simulation->exit(1);
+				Simulation::exit(1);
 			}
 			componentid --; // TODO: Component IDs start with 0 in the program.
 
@@ -422,24 +420,23 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			global_log->debug() << "broadcasting(sending/receiving) particles with buffer_position " << particle_buff_pos << std::endl;
 			MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD 
 			for (int j = 0; j < particle_buff_pos; j++) {
-				Molecule *m;
-				ParticleData::ParticleDataToMolecule(particle_buff[j], &m);
-				particleContainer->addParticle(*m);
-				componentid=m->componentid();
+				Molecule m;
+				ParticleData::ParticleDataToMolecule(particle_buff[j], m);
+				particleContainer->addParticle(m);
+				componentid=m.componentid();
 				
 				// TODO: The following should be done by the addPartice method.
 				dcomponents[componentid].incNumMolecules();
 				domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 				
-				if(m->id() > maxid) maxid = m->id();
+				if(m.id() > maxid) maxid = m.id();
 
 				std::list<ChemicalPotential>::iterator cpit;
 				for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
 					if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-						cpit->storeMolecule(*m);
+						cpit->storeMolecule(m);
 					}
 				}
-				delete m;
 			}
 			global_log->debug() << "broadcasting(sending/receiving) complete" << particle_buff_pos << std::endl;
 			particle_buff_pos = 0;
@@ -486,8 +483,9 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	} // Rank 0 only
 #endif
 
-	inputTimer.stop();
-	global_log->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->stopTimer("INPUT_OLDSTYLE_INPUT");
+	global_simulation->setOutputString("INPUT_OLDSTYLE_INPUT", "Initial IO took:                 ");
+	global_simulation->printTimer("INPUT_OLDSTYLE_INPUT");
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
 #endif

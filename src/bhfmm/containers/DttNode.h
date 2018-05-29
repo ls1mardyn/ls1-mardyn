@@ -1,13 +1,12 @@
 #ifndef DTTNODE_H_
 #define DTTNODE_H_
 
-#include "particleContainer/ParticleCell.h"
 #include "PseudoParticleContainer.h"
 #include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 #include "bhfmm/utils/Vector3.h"
 
 #include <vector>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <array>
 
 class DttNodeTest;
@@ -41,13 +40,13 @@ public:
 	void upwardPass();
 	void downwardPass();
 	void p2p(VectorizedChargeP2PCellProcessor * v_c_p2p_c_p);
-	void p2p(std::vector<ParticleCell> leafParticlesFar,
+	void p2p(std::vector<ParticleCellPointers> leafParticlesFar,
 			VectorizedChargeP2PCellProcessor * v_c_p2p_c_p,
 			Vector3<double> shift);
 	void m2l(const SHMultipoleParticle& multipole,
 			Vector3<double> periodicShift);
 
-	std::vector<ParticleCell> getLeafParticleCells();
+	std::vector<ParticleCellPointers> getLeafParticleCells();
 	int getMaxDepth() const;
 	void printSplitable(bool print) const;
 
@@ -66,7 +65,7 @@ public:
 		return _domLen;
 	}
 	double getSize(int d) const {
-		assert(d < 2 and d >= 0);
+		mardyn_assert(d < 2 and d >= 0);
 		return _domLen[d];
 	}
 	MpCell& getMpCell() {
@@ -76,7 +75,7 @@ public:
 private:
 	Vector3<double> _ctr, _domLen;
 	MpCell _mpCell;
-	ParticleCell _leafParticles;
+	ParticleCellPointers _leafParticles;
 
 	double _threshold;
 	int _order;
@@ -84,7 +83,7 @@ private:
 	std::vector<DttNode*> _children;
 	int _depth;
 	bool _srcOnly;
-	//void initTree(ParticleCell particles);
+	//void initTree(ParticleCellPointers particles);
 	void divideParticles(const std::vector<Molecule *>& particles,
 			std::array<std::vector<Molecule *>, 8>& cell_container) const;
 };

@@ -91,7 +91,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "//*PMRawBegin" << endl;
 		ostrm << "background {rgb <1,1,1>}" << endl;
 		ostrm << "//*PMRawEnd" << endl;
-		vector<Component>* dcomponents = _simulation.getEnsemble()->components();
+		vector<Component>* dcomponents = _simulation.getEnsemble()->getComponents();
 		for (unsigned int i = 0; i < dcomponents->size(); ++i) {
 			ostringstream osstrm;
 			osstrm.clear();
@@ -123,7 +123,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << endl;
 		ostrm << "// " << dcomponents->size() << " objects for the atoms following..." << endl;
 		double mrot[3][3];
-		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
+		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
 			(pos->q()).getRotMatrix(mrot);
 			//cout << "object { T0 rotate <0,0,0> translate <0,0,0>}" << endl;
 			ostrm << "object { T" << pos->componentid();

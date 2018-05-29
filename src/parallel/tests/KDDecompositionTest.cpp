@@ -8,6 +8,7 @@
 #include "KDDecompositionTest.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
+#include "io/InputOldstyle.h"
 
 #include <sstream>
 #include <cmath>
@@ -69,14 +70,13 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		_domain->setGlobalLength(2, boxL);
 		kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
 
-		double cellsInCutoffRadius = 1.0;
 		double bBoxMin[3];
 		double bBoxMax[3];
 		for (int i = 0; i < 3; i++) {
 			bBoxMin[i] = kdd->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = kdd->getBoundingBoxMax(i, _domain);
 		}
-		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff, cutOff, cellsInCutoffRadius);
+		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff);
 		moleculeContainer->update();
 		kdd->_steps = 0;
 		_rank = kdd->_rank;
@@ -154,6 +154,49 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 	// SHUTDOWN
 	delete moleculeContainer;
 	delete kdd;
+
+}
+
+void KDDecompositionTest::testbalanceAndExchange() {
+
+	// INIT
+	KDDecomposition * kdd;
+
+	const double cutOff = 3.5;
+	int fullSearchThreshold = 2;
+
+	InputOldstyle inputReader;
+	std::string fileName2=getTestDataFilename("DomainDecompBase.inp");
+	inputReader.setPhaseSpaceHeaderFile(fileName2.c_str());
+	inputReader.setPhaseSpaceFile(fileName2.c_str());
+	inputReader.readPhaseSpaceHeader(_domain, 1.0);
+
+	kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
+	_domainDecomposition = kdd;
+	global_simulation->setDomainDecomposition(kdd);
+	_rank = kdd->_rank;
+
+
+	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", cutOff);
+
+	kdd->initCommunicationPartners(cutOff, _domain);
+
+	moleculeContainer->update();
+
+
+	// TEST
+
+	const int numReps = 10;
+	if (_rank == 0) {
+		//cout << "running " << numReps << " repetitions" << std::endl;
+	}
+	for (int i = 0; i < numReps; ++i) {
+		kdd->balanceAndExchange(true, moleculeContainer, _domain);
+		moleculeContainer->updateMoleculeCaches();
+	}
+
+
+	// SHUTDOWN
 
 }
 

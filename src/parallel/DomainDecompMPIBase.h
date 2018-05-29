@@ -10,16 +10,20 @@
 
 #include "DomainDecompBase.h"
 #include "parallel/CollectiveCommunication.h"
-#include "parallel/ParticleData.h"
 #include "parallel/CommunicationPartner.h"
 
 #include <mpi.h>
 #include <vector>
-
-#define DIM 3
+#include "ParticleDataForwardDeclaration.h"
 
 #define LOWER  0
 #define HIGHER 1
+
+#define DIMgeom 3
+
+class NeighbourCommunicationScheme;
+
+struct HaloRegion;
 
 class DomainDecompMPIBase: public DomainDecompBase {
 public:
@@ -27,14 +31,16 @@ public:
 	virtual ~DomainDecompMPIBase();
 
 	// documentation see father class (DomainDecompBase.h)
-	void barrier() { MPI_CHECK( MPI_Barrier(_comm) ); }
+	void barrier() const override {
+		MPI_CHECK(MPI_Barrier(_comm));
+	}
 
 	//! @brief returns total number of molecules
 	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
 
 	//! @brief checks identity of random number generators
 	void assertIntIdentity(int IX);
-	void assertDisjunctivity(TMoleculeContainer* mm);
+	void assertDisjunctivity(TMoleculeContainer* mm) const override;
 
 	//##################################################################
 	// The following methods with prefix "collComm" are all used
@@ -97,6 +103,14 @@ public:
 		_collCommunication.allreduceSum();
 	}
 
+	void collCommAllreduceSumAllowPrevious() {
+		_collCommunication.allreduceSumAllowPrevious();
+	}
+
+	void collCommScanSum() {
+		_collCommunication.scanSum();
+	}
+
 	void collCommBroadcast(int root = 0) {
 		_collCommunication.broadcast(root);
 	}
@@ -110,8 +124,8 @@ public:
 	 * @param moleculeContainer pointer to the molecule container
 	 * @param domain pointer to the domain
 	 */
-	virtual void balanceAndExchangeInitNonBlocking(bool forceRebalancing,
-			ParticleContainer* moleculeContainer, Domain* domain);
+	virtual void balanceAndExchangeInitNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer,
+			Domain* domain);
 
 	/**
 	 * Prepares the stageNumber'th stage.
@@ -121,10 +135,8 @@ public:
 	 * @param domain pointer to the domain
 	 * @param stageNumber the number of the stage, the communication is in.
 	 */
-	virtual void prepareNonBlockingStage(bool forceRebalancing,
-			ParticleContainer* moleculeContainer, Domain* domain,
+	virtual void prepareNonBlockingStage(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber) = 0;
-
 
 	/**
 	 * Finishes the stageNumber'th stage.
@@ -134,8 +146,7 @@ public:
 	 * @param domain pointer to the domain
 	 * @param stageNumber the number of the stage, the communication is in.
 	 */
-	virtual void finishNonBlockingStage(bool forceRebalancing,
-			ParticleContainer* moleculeContainer, Domain* domain,
+	virtual void finishNonBlockingStage(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber) = 0;
 
 	//! @brief exchange molecules between processes
@@ -149,29 +160,34 @@ public:
 	//! to the lower neighbour.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates = false);
+	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
+			bool removeRecvDuplicates = false);
 
 	virtual std::vector<int> getNeighbourRanks() =0;
 	virtual std::vector<int> getNeighbourRanksFullShell() =0;
 
+	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) = 0;
+
+
 #if defined(ENABLE_MPI)
-	virtual MPI_Comm getCommunicator(){
+	MPI_Datatype getMPIParticleType() {
+		return _mpiParticleType;
+	}
+	virtual MPI_Comm getCommunicator() {
 		return _comm;
 	}
 #endif
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
+
+	//! Sets the communicationScheme.
+	//! If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
+	//! @param scheme
+	virtual void setCommunicationScheme(std::string scheme);
+
+	// documentation in base class
+	virtual int getNonBlockingStageCount() override;
 protected:
-
-	void exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
-			Domain* domain, MessageType msgType, bool removeRecvDuplicates,
-			unsigned short d);
-
-	void initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
-			Domain* domain, MessageType msgType, bool removeRecvDuplicates,
-			unsigned short d);
-
-	void finalizeExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
-			Domain* domain, MessageType msgType, bool removeRecvDuplicates,
-			unsigned short d);
 
 	/**
 	 * Prepares the stageNumber'th stage.
@@ -180,9 +196,8 @@ protected:
 	 * @param domain pointer to the domain
 	 * @param stageNumber the number of the stage, the communication is in.
 	 */
-	virtual void prepareNonBlockingStageImpl(
-			ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber,  MessageType msgType, bool removeRecvDuplicates = false);
+	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates = false);
 
 	/**
 	 * Finishes the stageNumber'th stage.
@@ -192,21 +207,14 @@ protected:
 	 * @param domain pointer to the domain
 	 * @param stageNumber the number of the stage, the communication is in.
 	 */
-	virtual void finishNonBlockingStageImpl(
-			ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber,  MessageType msgType, bool removeRecvDuplicates = false);
-
-	std::vector<CommunicationPartner> _neighbours[DIM];
+	virtual void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates = false);
 
 	MPI_Datatype _mpiParticleType;
 
 	MPI_Comm _comm;
 
-	//! flag, which tells whether a processor covers the whole domain along a dimension
-	//! if true, we will use the methods provided by the base class for handling the
-	//! respective dimension, instead of packing and unpacking messages to self
-	bool _coversWholeDomain[DIM];
-
+	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
 private:
 	CollectiveCommunication _collCommunication;
 };
