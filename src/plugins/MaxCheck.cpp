@@ -77,16 +77,33 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void MaxCheck::afterForces(
-        ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-        unsigned long simstep) {
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep)
+{
+	global_log->info() << "MaxCheck::afterForces() CHECKING for maxvals" << endl;
+	this->checkMaxVals(particleContainer, domainDecomp, simstep);
+}
+
+void MaxCheck::endStep(
+		ParticleContainer *particleContainer,
+		DomainDecompBase *domainDecomp, Domain *domain,
+		unsigned long simstep, std::list<ChemicalPotential> *lmu,
+		std::map<unsigned, CavityEnsemble> *mcav)
+{
+	global_log->info() << "MaxCheck::endStep() CHECKING for maxvals" << endl;
+	this->checkMaxVals(particleContainer, domainDecomp, simstep);
+}
+
+void MaxCheck::checkMaxVals(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep)
+{
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
 		if(simstep < _control.start || simstep > _control.stop || simstep % _control.freq != 0)
 			return;
-
-		global_log->info() << "MaxCheck::afterForces() CHECKING for maxvals" << endl;
 
 		const ParticleIterator begin = particleContainer->iterator();
 
@@ -139,59 +156,11 @@ void MaxCheck::afterForces(
 			}
 		}
 
-//		// perform deletions
-//		for(auto it:_deletions) {
-//			particleContainer->deleteMolecule(*it, true);
-//			_deletions.pop_back();
-//		}
+	//		// perform deletions
+	//		for(auto it:_deletions) {
+	//			particleContainer->deleteMolecule(*it, true);
+	//			_deletions.pop_back();
+	//		}
 
 	} // end pragma omp parallel
 }
-
-void MaxCheck::endStep(
-		ParticleContainer *particleContainer,
-		DomainDecompBase *domainDecomp, Domain *domain,
-		unsigned long simstep, std::list<ChemicalPotential> *lmu,
-		std::map<unsigned, CavityEnsemble> *mcav)
-{
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-		if(simstep < _control.start || simstep > _control.stop || simstep % _control.freq != 0)
-			return;
-
-		global_log->info() << "MaxCheck::endStep() CHECKING for maxvals" << endl;
-
-		const ParticleIterator begin = particleContainer->iterator();
-
-		uint64_t id;
-		uint32_t cid_ub;
-		double v[3];
-		MaxVals absVals;
-
-		for (ParticleIterator it = begin; it.hasNext(); it.next())
-		{
-			id=it->id();
-			cid_ub=it->componentid()+1;
-			for(uint8_t d=0; d<3; ++d)
-				v[d]=it->v(d);
-
-			// calc abs vals
-			absVals.v2 = this->calcSquaredVectorLength(v);
-
-			MaxVals &mv = _maxVals[cid_ub];
-
-			if(MCM_LIMIT_TO_MAX_VALUE == mv.method)
-			{
-				if(mv.v > 0. && absVals.v2 > mv.v2) {
-					double vabs = sqrt(absVals.v2);
-					double scale = mv.v / vabs;
-					it->scale_v(scale);
-				}
-			}
-		}
-
-	} // end pragma omp parallel
-}
-
