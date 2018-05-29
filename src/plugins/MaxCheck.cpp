@@ -29,6 +29,15 @@ void MaxCheck::init(ParticleContainer* particleContainer, DomainDecompBase* doma
 
 void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
+	// Timestep control
+	_control.start = 0;
+	_control.freq  = 1;
+	_control.stop  = 10000;
+	xmlconfig.getNodeValue("control/start",     _control.start);
+	xmlconfig.getNodeValue("control/frequency", _control.freq);
+	xmlconfig.getNodeValue("control/stop",      _control.stop);
+	global_log->info() << "MaxCheck is acting start:freq:stop = " << _control.start<<":"<<_control.freq<<":"<<_control.stop << endl;
+
 	// targets
 	uint32_t numTargets = 0;
 	XMLfile::Query query = xmlconfig.query("targets/target");
@@ -49,6 +58,10 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 		mv.F = mv.F2 = 0.;
 		mv.v = mv.v2 = 0.;
+		mv.method = MCM_UNKNOWN;
+
+		xmlconfig.getNodeValue("@method", mv.method);
+		global_log->info() << "MaxCheck: Method(cid="<<cid_ub<<"): " << mv.method << endl;
 
 		xmlconfig.getNodeValue("Fmax", mv.F);
 		global_log->info() << "MaxCheck: Fmax(cid="<<cid_ub<<"): " << mv.F << endl;
@@ -70,6 +83,11 @@ void MaxCheck::afterForces(
 	#pragma omp parallel
 	#endif
 	{
+		if(simstep < _control.start || simstep > _control.stop || simstep % _control.freq != 0)
+			return;
+
+		global_log->info() << "MaxCheck::afterForces() CHECKING for maxvals" << endl;
+
 		const ParticleIterator begin = particleContainer->iterator();
 
 		uint64_t id;
@@ -93,15 +111,32 @@ void MaxCheck::afterForces(
 			absVals.F2 = this->calcSquaredVectorLength(F);
 			absVals.v2 = this->calcSquaredVectorLength(v);
 
-			// mark for deletion
 			MaxVals &mv = _maxVals[cid_ub];
-			if(mv.F > 0. && absVals.F2 > mv.F2)
-				it.deleteCurrentParticle();
-//				_deletions.push_back(&(*it));
 
-			if(mv.v > 0. && absVals.v2 > mv.v2)
-				it.deleteCurrentParticle();
-//				_deletions.push_back(&(*it));
+			if(MCM_LIMIT_TO_MAX_VALUE == mv.method)
+			{
+				if(mv.F > 0. && absVals.F2 > mv.F2) {
+					double Fabs = sqrt(absVals.F2);
+					double scale = mv.F / Fabs;
+					it->scale_F(scale);
+				}
+
+				if(mv.v > 0. && absVals.v2 > mv.v2) {
+					double vabs = sqrt(absVals.v2);
+					double scale = mv.v / vabs;
+					it->scale_v(scale);
+				}
+			}
+			else if(MCM_DELETE_PARTICLES == mv.method)
+			{
+				if(mv.F > 0. && absVals.F2 > mv.F2)
+					it.deleteCurrentParticle();
+	//				_deletions.push_back(&(*it));
+
+				if(mv.v > 0. && absVals.v2 > mv.v2)
+					it.deleteCurrentParticle();
+	//				_deletions.push_back(&(*it));
+			}
 		}
 
 //		// perform deletions
@@ -109,6 +144,53 @@ void MaxCheck::afterForces(
 //			particleContainer->deleteMolecule(*it, true);
 //			_deletions.pop_back();
 //		}
+
+	} // end pragma omp parallel
+}
+
+void MaxCheck::endStep(
+		ParticleContainer *particleContainer,
+		DomainDecompBase *domainDecomp, Domain *domain,
+		unsigned long simstep, std::list<ChemicalPotential> *lmu,
+		std::map<unsigned, CavityEnsemble> *mcav)
+{
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		if(simstep < _control.start || simstep > _control.stop || simstep % _control.freq != 0)
+			return;
+
+		global_log->info() << "MaxCheck::endStep() CHECKING for maxvals" << endl;
+
+		const ParticleIterator begin = particleContainer->iterator();
+
+		uint64_t id;
+		uint32_t cid_ub;
+		double v[3];
+		MaxVals absVals;
+
+		for (ParticleIterator it = begin; it.hasNext(); it.next())
+		{
+			id=it->id();
+			cid_ub=it->componentid()+1;
+			for(uint8_t d=0; d<3; ++d)
+				v[d]=it->v(d);
+
+			// calc abs vals
+			absVals.v2 = this->calcSquaredVectorLength(v);
+
+			MaxVals &mv = _maxVals[cid_ub];
+
+			if(MCM_LIMIT_TO_MAX_VALUE == mv.method)
+			{
+				if(mv.v > 0. && absVals.v2 > mv.v2) {
+					double vabs = sqrt(absVals.v2);
+					double scale = mv.v / vabs;
+					it->scale_v(scale);
+				}
+			}
+		}
 
 	} // end pragma omp parallel
 }
