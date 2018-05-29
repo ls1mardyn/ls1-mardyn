@@ -75,6 +75,8 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_universalSelectiveThermostatCounter = 0;
 	this->_universalSelectiveThermostatWarning = 0;
 	this->_universalSelectiveThermostatError = 0;
+	
+	this->_numberOfProfiles = 0;		// added by Michaela Heier copied from Stephan Werth
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     _bDoExplosionHeuristics = true;
@@ -718,6 +720,8 @@ bool Domain::isCylindrical(){
 void Domain::considerComponentInProfile(int cid)
 {
 	this->_universalProfiledComponents[cid] = true;
+	this->_componentToProfile[cid]=_numberOfProfiles;		// added by Michaela Heier copied from Stephan Werth
+	this->_numberOfProfiles++;
 }
 
 void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
@@ -763,23 +767,23 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 
 // @TODO: (by Stefan Becker)  differentiation of _localNProfile by the component number cid => _localNProfile[cid][unID]!!!
 			lNin++;
-			this->_localNProfile[unID] += 1.0;
+			this->_localNProfile[_componentToProfile[cid]][unID] += 1.0;	// Changed by Michaela Heier
 			for (int d = 0; d < 3; d++) {
 				this->_localvProfile[d][unID] += thismol->v(d);
 			}
-			this->_localDOFProfile[unID] += 3.0 + (long double) (thismol->component()->getRotationalDegreesOfFreedom());
+			this->_localDOFProfile[_componentToProfile[cid]][unID] += 3.0 + (long double) (thismol->component()->getRotationalDegreesOfFreedom());  // Changed by Michaela Heier
 
 			// record _twice_ the total (ordered + unordered) kinetic energy
 			mv2 = 0.0;
 			Iw2 = 0.0;
 			thismol->calculate_mv2_Iw2(mv2, Iw2);
-			this->_localKineticProfile[unID] += mv2 + Iw2;
+			this->_localKineticProfile[_componentToProfile[cid]][unID] += mv2 + Iw2;			// Changed by Michaela Heier
 
 			if (virialProfile) {
 				// this->_localPDProfile[unID] += thismol->Vi(1)-0.5*(thismol->Vi(0)+thismol->Vi(2)); // unnecessary redundancy
-				this->_localPXProfile[unID] += thismol->Vi(0);
-				this->_localPYProfile[unID] += thismol->Vi(1);
-				this->_localPZProfile[unID] += thismol->Vi(2);
+				this->_localPXProfile[_componentToProfile[cid]][unID] += thismol->Vi(0);		// Changed by Michaela Heier
+				this->_localPYProfile[_componentToProfile[cid]][unID] += thismol->Vi(1);
+				this->_localPZProfile[_componentToProfile[cid]][unID] += thismol->Vi(2);
 			}
 		}
 	}
@@ -794,25 +798,30 @@ void Domain::collectProfile(DomainDecompBase* dode, bool virialProfile)
 {
 	unsigned unIDs = this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
 		* this->_universalNProfileUnits[2];
-	if(virialProfile) dode->collCommInit(13*unIDs);
-        else dode->collCommInit(10*unIDs);
+	//if(virialProfile) dode->collCommInit(13*unIDs);
+    //    else dode->collCommInit(10*unIDs);
+    if(virialProfile) dode->collCommInit((7+_numberOfProfiles*6)*unIDs);
+    	else dode->collCommInit((7+_numberOfProfiles*3)*unIDs);
+    
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
-		dode->collCommAppendLongDouble(this->_localNProfile[unID]);
 		for(int d=0; d<3; d++){
 			dode->collCommAppendLongDouble(_localvProfile[d][unID]);
 
 		}
-		dode->collCommAppendLongDouble(this->_localDOFProfile[unID]);
-		dode->collCommAppendLongDouble(_localKineticProfile[unID]);
+		for (unsigned i=0; i<_numberOfProfiles; i++){		// added by Michaela Heier copied from Stephan Werth
+		dode->collCommAppendLongDouble(this->_localNProfile[i][unID]);
+		dode->collCommAppendLongDouble(this->_localDOFProfile[i][unID]);
+		dode->collCommAppendLongDouble(_localKineticProfile[i][unID]);
 
                 if(virialProfile)
                 {
 		   // dode->collCommAppendLongDouble(_localPDProfile[unID]); // unnecessary redundancy
-		   dode->collCommAppendLongDouble(_localPXProfile[unID]);
-		   dode->collCommAppendLongDouble(_localPYProfile[unID]);
-		   dode->collCommAppendLongDouble(_localPZProfile[unID]);
+		   dode->collCommAppendLongDouble(_localPXProfile[i][unID]);
+		   dode->collCommAppendLongDouble(_localPYProfile[i][unID]);
+		   dode->collCommAppendLongDouble(_localPZProfile[i][unID]);
                 }
+            }
 
                 dode->collCommAppendLongDouble(this->_localWidomProfile[unID]);
                 dode->collCommAppendLongDouble(this->_localWidomInstances[unID]);
@@ -823,28 +832,25 @@ void Domain::collectProfile(DomainDecompBase* dode, bool virialProfile)
 	dode->collCommAllreduceSum();
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
-		_universalNProfile[unID] = (double)dode->collCommGetLongDouble();
 		for(int d=0; d<3; d++){
 			this->_universalvProfile[d][unID]
 				= (double)dode->collCommGetLongDouble();
 
 		}
-		this->_universalDOFProfile[unID]
-			= (double)dode->collCommGetLongDouble();
-		this->_universalKineticProfile[unID]
-			= (double)dode->collCommGetLongDouble();
+		for (unsigned i= 0; i<_numberOfProfiles; i++){
+		_universalNProfile[i][unID] = (double)dode->collCommGetLongDouble();
+		this->_universalDOFProfile[i][unID]	= (double)dode->collCommGetLongDouble();
+		this->_universalKineticProfile[i][unID]	= (double)dode->collCommGetLongDouble();
 
                 if(virialProfile)
                 {
 		   // this->_universalPDProfile[unID]
 			   // = (double)dode->collCommGetLongDouble(); // unnecessary redundancy
-		   this->_universalPXProfile[unID]
-			   = (double)dode->collCommGetLongDouble();
-		   this->_universalPYProfile[unID]
-			   = (double)dode->collCommGetLongDouble();
-		   this->_universalPZProfile[unID]
-			   = (double)dode->collCommGetLongDouble();
+		   this->_universalPXProfile[i][unID] = (double)dode->collCommGetLongDouble();
+		   this->_universalPYProfile[i][unID] = (double)dode->collCommGetLongDouble();
+		   this->_universalPZProfile[i][unID] = (double)dode->collCommGetLongDouble();
                 }
+            }
 
 		this->_globalWidomProfile[unID]
 			= (double)dode->collCommGetLongDouble();
@@ -858,38 +864,44 @@ void Domain::collectProfile(DomainDecompBase* dode, bool virialProfile)
 		/*
 		 * construct the temperature profile
 		 */
+		for (unsigned i=0; i<_numberOfProfiles; i++){
 		double Tun = this->getGlobalCurrentTemperature();
-		if((!this->_localRank) && (_universalDOFProfile[unID] >= 1000))
+		if((!this->_localRank) && (_universalDOFProfile[i][unID] >= 1000))
 		{
-		  double twoEkin = this->_universalKineticProfile[unID];
+		  double twoEkin = this->_universalKineticProfile[i][unID];
 
 		  double vvNN = 0.0;
 		  for(unsigned d = 0; d < 3; d++)
 		     vvNN += _universalvProfile[d][unID] * _universalvProfile[d][unID];
-		  double twoEkindir = _universalProfiledComponentMass * vvNN / _universalNProfile[unID];
+		  double twoEkindir = _universalProfiledComponentMass * vvNN / _universalNProfile[i][unID];
 
-		  Tun = (twoEkin - twoEkindir) / _universalDOFProfile[unID];
+		  Tun = (twoEkin - twoEkindir) / _universalDOFProfile[i][unID];
 		}
 		// domainDecomp->doBroadcast(&Tun); // no longer needed, since MPI_Reduce (branch) was replaced with MPI_Allreduce (trunk)
 		this->_universalTProfile[unID] = Tun;
 	}
 	dode->collCommFinalize();
 }
+}
 
 void Domain::outputProfile(const char* prefix, bool virialProfile)
 {
 	if(this->_localRank) return;
+	
+	for (unsigned i=0; i<_numberOfProfiles; i++){
+		
+	string s = to_string(i);
 
 	string vzpryname(prefix);
 	string Tpryname(prefix);
 	string rhpryname(prefix);
         string upryname(prefix);
 	string Vipryname(prefix);
-	rhpryname += ".rhpry";
-	vzpryname += ".vzpry";
-	Tpryname += ".Tpry";
-        upryname += ".upr";
-	Vipryname += ".Vpry";
+	rhpryname += "_comp_" + s + ".rhpry";
+	vzpryname += "_comp_" + s + ".vzpry";
+	Tpryname += "_comp_" + s + ".Tpry";
+        upryname += "_comp_" + s + ".upr";
+	Vipryname += "_comp_" + s + ".Vpry";
 	ofstream rhpry(rhpryname.c_str());
 	ofstream vzpry(vzpryname.c_str());
 	ofstream Tpry(Tpryname.c_str());
@@ -922,7 +934,7 @@ void Domain::outputProfile(const char* prefix, bool virialProfile)
 	for(unsigned y = 0; y < this->_universalNProfileUnits[1]; y++)
 	{
 		double yval = (y + 0.5) / this->_universalInvProfileUnit[1];
-
+		
 		long double Ny = 0.0;
 		long double DOFy = 0.0;
 		long double twoEkiny = 0.0;
@@ -943,9 +955,9 @@ void Domain::outputProfile(const char* prefix, bool virialProfile)
 			{
 				unsigned unID = x * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
 					+ y * this->_universalNProfileUnits[2] + z;
-				Ny += this->_universalNProfile[unID];
-				DOFy += this->_universalDOFProfile[unID];
-				twoEkiny += this->_universalKineticProfile[unID];
+				Ny += this->_universalNProfile[i][unID];
+				DOFy += this->_universalDOFProfile[i][unID];
+				twoEkiny += this->_universalKineticProfile[i][unID];
 				for(unsigned d = 0; d < 3; d++) velocitysumy[d] += this->_universalvProfile[d][unID];
                                 widomSigExpy += this->_globalWidomProfile[unID];
                                 widomInstancesy += this->_globalWidomInstances[unID];
@@ -955,9 +967,9 @@ void Domain::outputProfile(const char* prefix, bool virialProfile)
                                 if(virialProfile)
                                 {
 				   // Pd += this->_universalPDProfile[unID]; // unnecessary redundancy
-				   Px += this->_universalPXProfile[unID];
-				   Py += this->_universalPYProfile[unID];
-				   Pz += this->_universalPZProfile[unID];
+				   Px += this->_universalPXProfile[i][unID];
+				   Py += this->_universalPYProfile[i][unID];
+				   Pz += this->_universalPZProfile[i][unID];
                                 }
 			}
 		}
@@ -1020,7 +1032,7 @@ void Domain::outputProfile(const char* prefix, bool virialProfile)
 		{
 			rhpry << yval << "\t0.000\t" << DOFy << "\n";
 		}
-	}
+}
 
 	rhpry.close();
 	vzpry.close();
@@ -1031,12 +1043,18 @@ void Domain::outputProfile(const char* prefix, bool virialProfile)
            Vipry->close();
            delete Vipry;
         }
+    }
 }
 
 
 void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 {
 	if(this->_localRank) return;
+	
+	for (unsigned i = 0; i < _numberOfProfiles; i++)
+	{
+		
+	string s = to_string(i);
 
 	string vzpryname(prefix);
 	string Tprname(prefix);
@@ -1046,14 +1064,14 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
     string upryname(prefix);
 	string Viprname(prefix);
 	string Vipryname(prefix);
-	rhprname += "_Kart2D.rhpr";
-	rhpryname += ".rhpry";
-	vzpryname += ".vzpry";
-	Tprname += "_Kart2D.Tpr";
-	Tpryname += ".Tpry";
-    upryname += ".upr";
-	Viprname += "_Kart2D.Vpr";
-	Vipryname += ".Vpry";
+	rhprname += "_comp_" + s + "_Kart2D.rhpr";
+	rhpryname += "_comp_" + s + ".rhpry";
+	vzpryname += "_comp_" + s + ".vzpry";
+	Tprname += "_comp_" + s + "_Kart2D.Tpr";
+	Tpryname += "_comp_" + s + ".Tpry";
+    upryname += "_comp_" + s + ".upr";
+	Viprname += "_comp_" + s + "_Kart2D.Vpr";
+	Vipryname += "_comp_" + s + ".Vpry";
 	ofstream rhpry(rhpryname.c_str());
 	ofstream rhpr(rhprname.c_str());
 	ofstream vzpry(vzpryname.c_str());
@@ -1151,7 +1169,7 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 				{
 	   	        	unsigned unID = x * this->_universalNProfileUnits[0] * this->_universalNProfileUnits[2] + y * this->_universalNProfileUnits[1] + z;
 																	
-	   				double rho_loc = this->_universalNProfile[unID] / (segmentVolume * this->_globalAccumulatedDatasets);
+	   				double rho_loc = this->_universalNProfile[i][unID] / (segmentVolume * this->_globalAccumulatedDatasets);
 	   				rhpr << rho_loc << "\t";
 					//Ny += this->_universalNProfile[unID];
 					//DOFy += this->_universalDOFProfile[unID];
@@ -1159,11 +1177,11 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 					//for(unsigned d = 0; d < 3; d++) velocitysumy[d] += this->_universalvProfile[d][unID];
 					if(virialProfile)
 					{
-						double virial =(_globalTemperatureMap[0]*this->_universalNProfile[unID]+this->_universalPYProfile[unID]) / (segmentVolume * this->_globalAccumulatedDatasets);
+						double virial =(_globalTemperatureMap[0]*this->_universalNProfile[i][unID]+this->_universalPYProfile[i][unID]) / (segmentVolume * this->_globalAccumulatedDatasets);
 	   	        		Vipr << virial << "\t";
 					}
 				
-				if(this->_universalDOFProfile[unID] == 0.0){
+				if(this->_universalDOFProfile[i][unID] == 0.0){
 					Tpr << 0 << "\t";
 				}
 				else{
@@ -1172,12 +1190,12 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 						double vvdir = 0.0;
 						for(unsigned d = 0; d < 3; d++)
 						{
-							double vd = this->_universalvProfile[d][unID] / (this->_universalNProfile[unID]);
+							double vd = this->_universalvProfile[d][unID] / (this->_universalNProfile[i][unID]);
 							vvdir += vd*vd;
 						}
 
-						twoEkindiry = this->_universalNProfile[unID] * _universalProfiledComponentMass * vvdir;
-						Tpr << ((this->_universalKineticProfile[unID] - twoEkindiry) / (this->_universalDOFProfile[unID])) << "\t";
+						twoEkindiry = this->_universalNProfile[i][unID] * _universalProfiledComponentMass * vvdir;
+						Tpr << ((this->_universalKineticProfile[i][unID] - twoEkindiry) / (this->_universalDOFProfile[i][unID])) << "\t";
 
 					//}
 						
@@ -1187,7 +1205,7 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 	   	    rhpr << "\n";
 			Tpr << "\n";
 			if(virialProfile) Vipr << "\n";
-	   	}
+	   }
 //}
 		       
 	for(unsigned y = 0; y < this->_universalNProfileUnits[1]; y++)
@@ -1214,9 +1232,10 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 			{
 				unsigned unID = x * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
 					+ y * this->_universalNProfileUnits[2] + z;
-				Ny += this->_universalNProfile[unID];
-				DOFy += this->_universalDOFProfile[unID];
-				twoEkiny += this->_universalKineticProfile[unID];
+					
+				Ny += this->_universalNProfile[i][unID];
+				DOFy += this->_universalDOFProfile[i][unID];
+				twoEkiny += this->_universalKineticProfile[i][unID];
 				for(unsigned d = 0; d < 3; d++) velocitysumy[d] += this->_universalvProfile[d][unID];
                                 widomSigExpy += this->_globalWidomProfile[unID];
                                 widomInstancesy += this->_globalWidomInstances[unID];
@@ -1226,11 +1245,11 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
                                 if(virialProfile)
                                 {
 				  // Pd += this->_universalPDProfile[unID]; // unnecessary redundancy
-				   Px += this->_universalPXProfile[unID];
-				   Py += this->_universalPYProfile[unID];
-				   Pz += this->_universalPZProfile[unID];
+				   Px += this->_universalPXProfile[i][unID];
+				   Py += this->_universalPYProfile[i][unID];
+				   Pz += this->_universalPZProfile[i][unID];
                                }
-			}
+		
 		}
 
 		Pd = Py - 0.5*(Px + Pz);
@@ -1293,6 +1312,7 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 			rhpry << yval << "\t0.000\t" << DOFy << "\n";
 		}
 	}
+}
 
 	rhpry.close();
 	rhpr.close();
@@ -1306,6 +1326,7 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 		   Vipr.close();
            //delete Vipry;
         }
+    }
 }
 
 void Domain::outputDropMove(double _universalRealignmentMotionX,double _universalRealignmentMotionZ,string prefix, unsigned long timestep,string diff_number)
@@ -1329,8 +1350,7 @@ void Domain::resetProfile(bool virialProfile)
 		* this->_universalNProfileUnits[2];
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
-		this->_localNProfile[unID] = 0.0;
-		this->_universalNProfile[unID] = 0.0;
+
 		for(int d=0; d<3; d++)
 		{
 			this->_localvProfile[d][unID] = 0.0;
@@ -1338,22 +1358,26 @@ void Domain::resetProfile(bool virialProfile)
 //			this->_localV2Profile[d][unID] = 0.0;
 //			this->_universalV2Profile[d][unID] = 0.0;
 		}
-		this->_localDOFProfile[unID] = 0.0;
-		this->_universalDOFProfile[unID] = 0.0;
-		this->_localKineticProfile[unID] = 0.0;
-		this->_universalKineticProfile[unID] = 0.0;
+		for (unsigned i=0; i<_numberOfProfiles; i++){
+		this->_localNProfile[i][unID] = 0.0;
+		this->_universalNProfile[i][unID] = 0.0;
+		this->_localDOFProfile[i][unID] = 0.0;
+		this->_universalDOFProfile[i][unID] = 0.0;
+		this->_localKineticProfile[i][unID] = 0.0;
+		this->_universalKineticProfile[i][unID] = 0.0;
 
                 if(virialProfile)
                 {
 		   // this->_localPDProfile[unID] = 0.0;
 		   // this->_universalPDProfile[unID] = 0.0;
-		   this->_localPXProfile[unID] = 0.0;
-		   this->_universalPXProfile[unID] = 0.0;
-		   this->_localPYProfile[unID] = 0.0;
-		   this->_universalPYProfile[unID] = 0.0;
-		   this->_localPZProfile[unID] = 0.0;
-		   this->_universalPZProfile[unID] = 0.0;
+		   this->_localPXProfile[i][unID] = 0.0;
+		   this->_universalPXProfile[i][unID] = 0.0;
+		   this->_localPYProfile[i][unID] = 0.0;
+		   this->_universalPYProfile[i][unID] = 0.0;
+		   this->_localPZProfile[i][unID] = 0.0;
+		   this->_universalPZProfile[i][unID] = 0.0;
                 }
+            }
 
 		this->_localWidomProfile[unID] = 0.0;
 		this->_globalWidomProfile[unID] = 0.0;
@@ -1929,19 +1953,23 @@ void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 	   	      {
 	   	         if(!pcit->second) continue;  // ->second weist auf den key-value von map, d.h. den bool-Wert => falls falsche id, d.h. hiervon ist kein Profil zu erstellen => naechste Schleife
 
+		for (unsigned i = 0; i < _numberOfProfiles; i++)
+        {
+        	string s = to_string(i);
+
 			 // density profile
 	   	         string rhoProfName(prefix);
-	   	         rhoProfName += ".rhpr";
+	   	         rhoProfName += "_comp_" + s + ".rhpr";
 			 // temperature profile
 			 string tmpProfName(prefix);
-			 tmpProfName += ".Tpr";
+			 tmpProfName += "_comp_" + s + ".Tpr";
 			 //string yVelProfname(prefix);
 			 //yVelProfname+= ".vpry";
 			 //string xzVelProfname(prefix);
 			 //xzVelProfname+= ".vprxz";
 			 //virial profile
 			string VprProfName(prefix);
-			VprProfName += ".Vpr";
+			VprProfName += "_comp_" + s + ".Vpr";
 
 
 
@@ -1998,16 +2026,18 @@ void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 	   	        	 rhpr << "\n";
 	   	        	for(unsigned n_h = 0; n_h < this->_universalNProfileUnits[2]; n_h++)
 	   	        	{
-
+						
 	   	        		double hval = (n_h + 0.5) / this->_universalInvProfileUnit[2];
 	   	        		rhpr << hval<< "  \t";
 	   	        		for(unsigned n_r2 = 0; n_r2< this->_universalNProfileUnits[1]; n_r2++)
-	   	        		{
+	   	        		{	
+	   	        		
 	   	        			unsigned unID = n_phi * IDweight[0] + n_r2 * IDweight[1]
 	   	        				                                    + n_h * IDweight[2];
 
-	   	        		   	double rho_loc_cyl = this->_universalNProfile[unID] / (segmentVolume * this->_globalAccumulatedDatasets);
+	   	        		   	double rho_loc_cyl = this->_universalNProfile[i][unID] / (segmentVolume * this->_globalAccumulatedDatasets);
 	   	        		   	rhpr << rho_loc_cyl << "\t";
+	   	        		   
 	   	        		}
 	   	        		rhpr << "\n";
 	   	        	}
@@ -2036,13 +2066,14 @@ void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 	   	        		Tpr << hval<< "  \t";
 	   	        		for(unsigned n_r2 = 0; n_r2< this->_universalNProfileUnits[1]; n_r2++)
 	   	        		{
+	   	        		
 					  long double DOFc = 0.0;
 					  long double twoEkinc = 0.0;
 					  for(unsigned n_phi = 0; n_phi < this->_universalNProfileUnits[0]; n_phi++){
 					     unsigned unID = n_phi * IDweight[0] + n_r2 * IDweight[1]
 	   	        				                                    + n_h * IDweight[2];
-					      DOFc += this->_universalDOFProfile[unID];
-					      twoEkinc += this->_universalKineticProfile[unID];
+					      DOFc += this->_universalDOFProfile[i][unID];
+					      twoEkinc += this->_universalKineticProfile[i][unID];
 
 					   }
 					   if(DOFc == 0.0){
@@ -2052,7 +2083,8 @@ void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 					 Tpr << (twoEkinc/DOFc ) << "\t";
 
 					   }
-	   	        		}
+	   	        	
+	   	        	}
 	   	        		Tpr << "\n";
 	   	        	}
 			  //tmpProf->close();
@@ -2093,16 +2125,17 @@ void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 						//long double Pz = 0.0;
 	   	        		for(unsigned n_r2 = 0; n_r2< this->_universalNProfileUnits[1]; n_r2++)
 	   	        		{
+	   	        			
 	   	        			unsigned unID = n_phi * IDweight[0] + n_r2 * IDweight[1]
 	   	        				                                    + n_h * IDweight[2];
 							//Px += this->_universalPXProfile[unID];
 							//Py += this->_universalPYProfile[unID];
 							//Pz += this->_universalPZProfile[unID];
 
-	   	        		   	double virial_cyl =(_globalTemperatureMap[0]*this->_universalNProfile[unID]+this->_universalPYProfile[unID]) / (segmentVolume * this->_globalAccumulatedDatasets);
+	   	        		   	double virial_cyl =(_globalTemperatureMap[0]*this->_universalNProfile[i][unID]+this->_universalPYProfile[i][unID]) / (segmentVolume * this->_globalAccumulatedDatasets);
 	   	        		   	Vpr << virial_cyl << "\t";
-						}
-
+						
+					}
 	   	        		Vpr << "\n";
 	   	        	}
 	   	         }
@@ -2111,6 +2144,7 @@ void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 			  }
 	   	         //delete rhpr;*/
 				 }
+			}
 
 }
 

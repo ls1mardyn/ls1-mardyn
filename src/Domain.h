@@ -500,21 +500,21 @@ private:
 	//! number of successive profile cuboids in x/y/z direction
 	unsigned _universalNProfileUnits[3];
 	//! local N profile map
-	std::map<unsigned, long double> _localNProfile;
+	std::map<unsigned, long double> _localNProfile[3];
 	//! global N profile map
-	std::map<unsigned, double> _universalNProfile;
+	std::map<unsigned, double> _universalNProfile[3];
 	//! local directed velocity profile map
 	std::map<unsigned, long double> _localvProfile[3];
 	//! global directed velocity  profile map
 	std::map<unsigned, double> _universalvProfile[3];
 	//! local kinetic energy profile map
-	std::map<unsigned, long double> _localKineticProfile;
+	std::map<unsigned, long double> _localKineticProfile[3];
 	//! global kinetic energy profile map
-	std::map<unsigned, double> _universalKineticProfile;
+	std::map<unsigned, double> _universalKineticProfile[3];
 	//! local counter w. r. t. degrees of freedom
-	std::map<unsigned, long double> _localDOFProfile;
+	std::map<unsigned, long double> _localDOFProfile[3];
 	//! global counter w. r. t. degrees of freedom
-	std::map<unsigned, double> _universalDOFProfile;
+	std::map<unsigned, double> _universalDOFProfile[3];
 	//! how many _evaluated_ timesteps are currently accumulated in the profile?
 	unsigned _globalAccumulatedDatasets;
 	//! which components should be considered?
@@ -525,17 +525,17 @@ private:
 	// //! global virial / pressure profile map
 	// std::map<unsigned, double> _universalPDProfile;
 	//! local virial / pressure profile map
-	std::map<unsigned, long double> _localPXProfile;
+	std::map<unsigned, long double> _localPXProfile[3];
 	//! global virial / pressure profile map
-	std::map<unsigned, double> _universalPXProfile;
+	std::map<unsigned, double> _universalPXProfile[3];
 	//! local virial / pressure profile map
-	std::map<unsigned, long double> _localPYProfile;
+	std::map<unsigned, long double> _localPYProfile[3];
 	//! global virial / pressure profile map
-	std::map<unsigned, double> _universalPYProfile;
+	std::map<unsigned, double> _universalPYProfile[3];
 	//! local virial / pressure profile map
-	std::map<unsigned, long double> _localPZProfile;
+	std::map<unsigned, long double> _localPZProfile[3];
 	//! global virial / pressure profile map
-	std::map<unsigned, double> _universalPZProfile;
+	std::map<unsigned, double> _universalPZProfile[3];
 
         std::map<unsigned, double> _universalTProfile; 
         std::map<unsigned, long double> _localWidomProfile;  // submit individually
@@ -558,6 +558,12 @@ private:
 	//! offset in y-direction => to be written out along with the density profile
 	double _yOff;
 	// end
+	
+	// added by Michaela Heier copied from Stephan Werth
+	//! Number of Profiled Components
+	unsigned _numberOfProfiles;
+	//! Position of Component inside the array
+	unsigned _componentToProfile[3];
 
 	//! by Stefan Becker => implementing a new velocity profile: 
 	//! local squared value of the velocity components
