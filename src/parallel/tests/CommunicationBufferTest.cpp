@@ -54,7 +54,6 @@ void CommunicationBufferTest::testEmplaceRead() {
 	ret = buf.emplaceValue<float>(ret, f1);
 	ASSERT_EQUAL(ret, 32ul);
 
-
 	float fread1, fread2;
 	double dread1;
 	int iread1;
@@ -97,17 +96,23 @@ void CommunicationBufferTest::testHalo() {
 
 	unsigned long uid = 0;
 	Molecule m[2];
-	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1., 2., 3., -1., -2., -3.);
-	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11., 12., 13., -11., -12., -13.);
-	buf.addHaloMolecule(0,m[0]);
-	buf.addHaloMolecule(1,m[1]);
+	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1.,
+			2., 3., -1., -2., -3.);
+	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11.,
+			12., 13., -11., -12., -13.);
+	buf.addHaloMolecule(0, m[0]);
+	buf.addHaloMolecule(1, m[1]);
 
 	Molecule mread[2];
 	buf.readHaloMolecule(0, mread[0]);
 	buf.readHaloMolecule(1, mread[1]);
 
-	for(int i = 0; i < 2; ++i) {
+	for (int i = 0; i < 2; ++i) {
+#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 		ASSERT_EQUAL(m[i].id(), mread[i].id());
+#else
+		ASSERT_EQUAL(UINT64_MAX, mread[i].id());
+#endif
 		for (int d = 0; d < 3; ++d) {
 			ASSERT_DOUBLES_EQUAL(m[i].r(d), mread[i].r(d), 1e-16);
 			ASSERT_DOUBLES_EQUAL(0.0, mread[i].v(d), 1e-16);
@@ -125,16 +130,18 @@ void CommunicationBufferTest::testLeaving() {
 
 	unsigned long uid = 0;
 	Molecule m[2];
-	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1., 2., 3., -1., -2., -3.);
-	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11., 12., 13., -11., -12., -13.);
-	buf.addLeavingMolecule(0,m[0]);
-	buf.addLeavingMolecule(1,m[1]);
+	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1.,
+			2., 3., -1., -2., -3.);
+	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11.,
+			12., 13., -11., -12., -13.);
+	buf.addLeavingMolecule(0, m[0]);
+	buf.addLeavingMolecule(1, m[1]);
 
 	Molecule mread[2];
 	buf.readLeavingMolecule(0, mread[0]);
 	buf.readLeavingMolecule(1, mread[1]);
 
-	for(int i = 0; i < 2; ++i) {
+	for (int i = 0; i < 2; ++i) {
 		ASSERT_EQUAL(m[i].id(), mread[i].id());
 		for (int d = 0; d < 3; ++d) {
 			ASSERT_DOUBLES_EQUAL(m[i].r(d), mread[i].r(d), 1e-16);
@@ -149,12 +156,16 @@ void CommunicationBufferTest::testLeavingAndHalo() {
 	global_simulation->getEnsemble()->addComponent(dummyComponent);
 
 	Molecule m[5];
-	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1., 2., 3., -1., -2., -3.);
-	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11., 12., 13., -11., -12., -13.);
-	m[2] = Molecule(2, global_simulation->getEnsemble()->getComponent(0), 21., 22., 23., -21., -22., -23.);
-	m[3] = Molecule(3, global_simulation->getEnsemble()->getComponent(0), 31., 32., 33., -31., -32., -33.);
-	m[4] = Molecule(4, global_simulation->getEnsemble()->getComponent(0), 41., 42., 43., -41., -42., -43.);
-
+	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1.,
+			2., 3., -1., -2., -3.);
+	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11.,
+			12., 13., -11., -12., -13.);
+	m[2] = Molecule(2, global_simulation->getEnsemble()->getComponent(0), 21.,
+			22., 23., -21., -22., -23.);
+	m[3] = Molecule(3, global_simulation->getEnsemble()->getComponent(0), 31.,
+			32., 33., -31., -32., -33.);
+	m[4] = Molecule(4, global_simulation->getEnsemble()->getComponent(0), 41.,
+			42., 43., -41., -42., -43.);
 
 	CommunicationBuffer buf;
 	buf.resizeForAppendingLeavingMolecules(2);
@@ -173,13 +184,21 @@ void CommunicationBufferTest::testLeavingAndHalo() {
 	buf.readHaloMolecule(1, mread[3]);
 	buf.readHaloMolecule(2, mread[4]);
 
-	for(int i = 0; i < 5; ++i) {
+	for (int i = 0; i < 5; ++i) {
+		if (i < 2) {  // leaving
+			ASSERT_EQUAL(m[i].id(), mread[i].id());
+		} else {  // halo
+#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 		ASSERT_EQUAL(m[i].id(), mread[i].id());
+#else
+			ASSERT_EQUAL(UINT64_MAX, mread[i].id());
+#endif
+		}
 		for (int d = 0; d < 3; ++d) {
 			ASSERT_DOUBLES_EQUAL(m[i].r(d), mread[i].r(d), 1e-16);
-			if(i < 2) {
+			if (i < 2) {  // leaving
 				ASSERT_DOUBLES_EQUAL(m[i].v(d), mread[i].v(d), 1e-16);
-			} else {
+			} else {  // halo
 				ASSERT_DOUBLES_EQUAL(0.0, mread[i].v(d), 1e-16);
 			}
 		}
@@ -189,28 +208,33 @@ void CommunicationBufferTest::testLeavingAndHalo() {
 void CommunicationBufferTest::testPackSendRecvUnpack() {
 	if (_domainDecomposition->getNumProcs() < 2) {
 		test_log->info() << "CommunicationBufferTest::testPackSendRecvUnpack"
-				<< " not executed (rerun with more than 2 Processes!)" << std::endl;
-		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+				<< " not executed (rerun with more than 2 Processes!)"
+				<< std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs()
+				<< std::endl;
 		return;
 	}
 	Component dummyComponent(0);
 	dummyComponent.addLJcenter(0, 0, 0, 1, 1, 1, 0, false);
 	global_simulation->getEnsemble()->addComponent(dummyComponent);
 
-
 	Molecule m[5];
-	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1., 2., 3., -1., -2., -3.);
-	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11., 12., 13., -11., -12., -13.);
-	m[2] = Molecule(2, global_simulation->getEnsemble()->getComponent(0), 21., 22., 23., -21., -22., -23.);
-	m[3] = Molecule(3, global_simulation->getEnsemble()->getComponent(0), 31., 32., 33., -31., -32., -33.);
-	m[4] = Molecule(4, global_simulation->getEnsemble()->getComponent(0), 41., 42., 43., -41., -42., -43.);
+	m[0] = Molecule(0, global_simulation->getEnsemble()->getComponent(0), 1.,
+			2., 3., -1., -2., -3.);
+	m[1] = Molecule(1, global_simulation->getEnsemble()->getComponent(0), 11.,
+			12., 13., -11., -12., -13.);
+	m[2] = Molecule(2, global_simulation->getEnsemble()->getComponent(0), 21.,
+			22., 23., -21., -22., -23.);
+	m[3] = Molecule(3, global_simulation->getEnsemble()->getComponent(0), 31.,
+			32., 33., -31., -32., -33.);
+	m[4] = Molecule(4, global_simulation->getEnsemble()->getComponent(0), 41.,
+			42., 43., -41., -42., -43.);
 
 	int rank = _domainDecomposition->getRank();
 	int Tag = 17;
 
 	// rank 0 packs and sends
-	if (rank == 0)
-	{
+	if (rank == 0) {
 		CommunicationBuffer buf;
 		buf.resizeForAppendingLeavingMolecules(2);
 
@@ -223,7 +247,8 @@ void CommunicationBufferTest::testPackSendRecvUnpack() {
 		buf.addHaloMolecule(2, m[4]);
 
 		// send of course
-		MPI_Send(buf.getDataForSending(), buf.getNumElementsForSending(), buf.getMPIDataType(), 1, Tag, MPI_COMM_WORLD);
+		MPI_Send(buf.getDataForSending(), buf.getNumElementsForSending(),
+				buf.getMPIDataType(), 1, Tag, MPI_COMM_WORLD);
 	} else if (rank == 1) {
 		// probe
 		MPI_Status stat;
@@ -236,7 +261,9 @@ void CommunicationBufferTest::testPackSendRecvUnpack() {
 
 		// recv
 		buf.resizeForRawBytes(messageLengthInBytes);
-		MPI_Recv(buf.getDataForSending(), messageLengthInBytes, buf.getMPIDataType(), 0, Tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(buf.getDataForSending(), messageLengthInBytes,
+				buf.getMPIDataType(), 0, Tag, MPI_COMM_WORLD,
+				MPI_STATUS_IGNORE);
 
 		// start reading
 		unsigned long numLeaving, numHalo;
@@ -252,11 +279,19 @@ void CommunicationBufferTest::testPackSendRecvUnpack() {
 			buf.readHaloMolecule(i, mread[numLeaving + i]);
 		}
 
-		for(int i = 0; i < 5; ++i) {
-			ASSERT_EQUAL(m[i].id(), mread[i].id());
+		for (int i = 0; i < 5; ++i) {
+			if (i < 2) {  // leaving
+				ASSERT_EQUAL(m[i].id(), mread[i].id());
+			} else {  // halo
+#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
+				ASSERT_EQUAL(m[i].id(), mread[i].id());
+#else
+				ASSERT_EQUAL(UINT64_MAX, mread[i].id());
+#endif
+			}
 			for (int d = 0; d < 3; ++d) {
 				ASSERT_DOUBLES_EQUAL(m[i].r(d), mread[i].r(d), 1e-16);
-				if(i < 2) {
+				if (i < 2) {
 					ASSERT_DOUBLES_EQUAL(m[i].v(d), mread[i].v(d), 1e-16);
 				} else {
 					ASSERT_DOUBLES_EQUAL(0.0, mread[i].v(d), 1e-16);
@@ -265,7 +300,5 @@ void CommunicationBufferTest::testPackSendRecvUnpack() {
 		}
 	}
 
-
-
-	MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Barrier(MPI_COMM_WORLD);
 }

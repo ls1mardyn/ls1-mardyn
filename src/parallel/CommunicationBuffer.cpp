@@ -12,17 +12,12 @@
 
 #include <climits> /* UINT64_MAX */
 
-//#if (not defined(NDEBUG)) or defined (UNIT_TESTS)
-#define SEND_UNIQUE_ID_FOR_HALO_COPIES
-#pragma message "Compilation info: Unique IDs of Halo-Molecules are sent only in Debug mode, or when Unit tests are being compiled."
-//#endif
-
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 // position, velocity, id
 size_t CommunicationBuffer::_numBytesLeaving = 6 * sizeof(vcp_real_calc) + sizeof(unsigned long);
 // position, id (for now)
 size_t CommunicationBuffer::_numBytesHalo = 3 * sizeof(vcp_real_calc)
-	#ifdef SEND_UNIQUE_ID_FOR_HALO_COPIES
+	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 			+ sizeof(unsigned long)
 	#endif
 		;
@@ -32,7 +27,7 @@ size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 3 * sizeof
 size_t CommunicationBuffer::_numBytesLeaving = 13 * sizeof(double) + sizeof(unsigned long) + sizeof(int);
 // position, orientation, id, cid
 size_t CommunicationBuffer::_numBytesHalo = 7 * sizeof(double) + sizeof(int)
-	#ifdef SEND_UNIQUE_ID_FOR_HALO_COPIES
+	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 			+ sizeof(unsigned long)
 	#endif
 		;
@@ -162,16 +157,16 @@ void CommunicationBuffer::addHaloMolecule(size_t indexOfMolecule, const Molecule
 
 	size_t i_runningByte = i_firstByte;
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	#ifdef SEND_UNIQUE_ID_FOR_HALO_COPIES
+	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 		i_runningByte = emplaceValue(i_runningByte, m.id());
-	#endif /*SEND_UNIQUE_ID_FOR_HALO_COPIES*/
+	#endif /*LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES*/
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(0)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(1)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(2)));
 #else
-	#ifdef SEND_UNIQUE_ID_FOR_HALO_COPIES
+	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 		i_runningByte = emplaceValue(i_runningByte, m.id());
-	#endif /*SEND_UNIQUE_ID_FOR_HALO_COPIES*/
+	#endif /*LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES*/
 	i_runningByte = emplaceValue(i_runningByte, m.componentid());
 	i_runningByte = emplaceValue(i_runningByte, m.r(0));
 	i_runningByte = emplaceValue(i_runningByte, m.r(1));
@@ -284,11 +279,11 @@ void CommunicationBuffer::readHaloMolecule(size_t indexOfMolecule, Molecule& m) 
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	unsigned long idbuf;
 	vcp_real_calc rbuf[3];
-	#ifdef SEND_UNIQUE_ID_FOR_HALO_COPIES
+	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 		i_runningByte = readValue(i_runningByte, idbuf);
 	#else
 		idbuf = UINT64_MAX;
-	#endif /*SEND_UNIQUE_ID_FOR_HALO_COPIES*/
+	#endif /*LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES*/
 	i_runningByte = readValue(i_runningByte, rbuf[0]);
 	i_runningByte = readValue(i_runningByte, rbuf[1]);
 	i_runningByte = readValue(i_runningByte, rbuf[2]);
@@ -300,11 +295,11 @@ void CommunicationBuffer::readHaloMolecule(size_t indexOfMolecule, Molecule& m) 
 	unsigned long idbuf;
 	unsigned int cidbuf;
 	double rbuf[3], vbuf[3] = {0., 0., 0.}, qbuf[4], Dbuf[3] = {0., 0., 0.};
-	#ifdef SEND_UNIQUE_ID_FOR_HALO_COPIES
+	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
 		i_runningByte = readValue(i_runningByte, idbuf);
 	#else
 		idbuf = UINT64_MAX;
-	#endif /*SEND_UNIQUE_ID_FOR_HALO_COPIES*/
+	#endif /*LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES*/
 	i_runningByte = readValue(i_runningByte, cidbuf);
 	i_runningByte = readValue(i_runningByte, rbuf[0]);
 	i_runningByte = readValue(i_runningByte, rbuf[1]);
