@@ -41,7 +41,7 @@
 
     <algorithm>
       <parallelisation type="KDDecomposition">
-      	<updateFrequency>1</updateFrequency>
+      	<updateFrequency>5</updateFrequency>
 	<fullSearchThreshold>2</fullSearchThreshold>
       </parallelisation>
       <datastructure type="LinkedCells">
