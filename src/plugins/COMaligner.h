@@ -8,11 +8,11 @@
 #ifndef MARDYN_TRUNK_COMALIGNER_H
 #define MARDYN_TRUNK_COMALIGNER_H
 
+class COMalignerTest;
 #include "PluginBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
-
 
 //! @brief
 //! Plugin: can be enabled via config.xml <br>
@@ -33,7 +33,7 @@
 class COMaligner : public PluginBase{
 
 private:
-
+    friend COMalignerTest;
     // DEFAULT: ALIGN IN ALL DIMENSIONS
     bool _alignX = true;
     bool _alignY = true;
@@ -41,22 +41,28 @@ private:
 
     bool _enabled = true;
 
-    int _dim_start;
-    int _dim_end;
-    int _dim_step;
+    int _dim_start = 0;
+    int _dim_end = 3;
+    int _dim_step = 1;
 
-    // DEFAULT: EVERY 25th FRAME FULL ALIGNMENT
-    int _interval = 25;
+    // DEFAULT: EVERY FRAME FULL ALIGNMENT
+    int _interval = 1;
     float _alignmentCorrection = 1.0f;
 
     double _motion[3];
     double _balance[3];
-    double _mass;
+    double _mass = 0.0;
     double _boxLength[3];
     double _cutoff;
 
 public:
-    COMaligner(){};
+    COMaligner(){
+        // SETUP
+        for (unsigned d = 0; d < 3; d++) {
+            _balance[d] = 0.0;
+            _motion[d] = 0.0;
+        }
+    };
     ~COMaligner(){};
 
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {

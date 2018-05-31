@@ -31,7 +31,7 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
         global_log -> error() << "[COMaligner] HALTING SIMULATION" << std::endl;
         _enabled = false;
         // HALT SIM
-        global_simulation -> exit(-1);
+        global_simulation -> exit(1);
         return;
     }
 
@@ -87,13 +87,6 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
     }
 
     global_log -> debug() << "[COMaligner] dim settings are: " << _dim_start << " " << _dim_end << " " << _dim_step << std::endl;
-
-    // SETUP
-    for (unsigned d = 0; d < 3; d++) {
-        _balance[d] = 0.0;
-        _motion[d] = 0.0;
-    }
-    _mass = 0;
 
 }
 
