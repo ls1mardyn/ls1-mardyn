@@ -32,6 +32,29 @@
 //!	</plugin>
 class COMaligner : public PluginBase{
 
+private:
+
+    // DEFAULT: ALIGN IN ALL DIMENSIONS
+    bool _alignX = true;
+    bool _alignY = true;
+    bool _alignZ = true;
+
+    bool _enabled = true;
+
+    int _dim_start;
+    int _dim_end;
+    int _dim_step;
+
+    // DEFAULT: EVERY 25th FRAME FULL ALIGNMENT
+    int _interval = 25;
+    float _alignmentCorrection = 1.0f;
+
+    double _motion[3];
+    double _balance[3];
+    double _mass;
+    double _boxLength[3];
+    double _cutoff;
+
 public:
     COMaligner(){};
     ~COMaligner(){};
@@ -42,6 +65,8 @@ public:
         for(unsigned d = 0; d < 3; d++){
             _boxLength[d] = domain->getGlobalLength(d);
         }
+
+        _cutoff = .9*particleContainer->getCutoff();
 
     }
 
@@ -64,27 +89,6 @@ public:
 
     static PluginBase* createInstance(){return new COMaligner();}
 
-private:
-
-    // DEFAULT: ALIGN IN ALL DIMENSIONS
-    bool _alignX = true;
-    bool _alignY = true;
-    bool _alignZ = true;
-
-    bool _enabled = true;
-
-    int _dim_start;
-    int _dim_end;
-    int _dim_step;
-
-    // DEFAULT: EVERY 25th FRAME FULL ALIGNMENT
-    int _interval = 25;
-    float _alignmentCorrection = 1.0f;
-
-    double _motion[3];
-    double _balance[3];
-    double _mass;
-    double _boxLength[3];
 };
 
 
