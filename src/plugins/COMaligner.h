@@ -8,7 +8,7 @@
 #ifndef MARDYN_TRUNK_COMALIGNER_H
 #define MARDYN_TRUNK_COMALIGNER_H
 
-#include "utils/PluginBase.h"
+#include "PluginBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"

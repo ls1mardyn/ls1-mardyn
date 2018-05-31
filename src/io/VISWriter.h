@@ -1,7 +1,7 @@
 #ifndef VISWRITER_H_
 #define VISWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "Domain.h"
 #include "ensemble/GrandCanonical.h"
 #include <string>

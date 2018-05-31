@@ -11,7 +11,7 @@
 #include "thermostats/VelocityScalingThermostat.h"
 
 // plugins
-#include "utils/PluginFactory.h"
+#include "plugins/PluginFactory.h"
 
 class Wall;
 class Mirror;

@@ -2,7 +2,7 @@
 #define SRC_IO_POVWRITER_H_
 
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 
 class PovWriter : public PluginBase {

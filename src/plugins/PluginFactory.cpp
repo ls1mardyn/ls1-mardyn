@@ -44,7 +44,7 @@
 #include "io/vtk/VTKGridWriter.h"
 #endif
 
-#include "utils/TestPlugin.h"
+#include "plugins/TestPlugin.h"
 
 /** @brief Register all default plugins with base PluginBase
 	 *

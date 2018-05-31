@@ -8,7 +8,7 @@
 #ifndef VTKWRITER_H_
 #define VTKWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "io/vtk/VTKMoleculeWriterImplementation.h"
 
 /**

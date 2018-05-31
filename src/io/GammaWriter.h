@@ -1,7 +1,7 @@
 #ifndef SRC_IO_GAMMAWRITER_H_
 #define SRC_IO_GAMMAWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "ensemble/GrandCanonical.h"
 #include <string>
 #include <fstream>

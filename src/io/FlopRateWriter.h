@@ -8,7 +8,7 @@
 #ifndef SRC_IO_FLOPRATEWRITER_H_
 #define SRC_IO_FLOPRATEWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 class FlopCounter;
 

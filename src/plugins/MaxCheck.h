@@ -8,7 +8,7 @@
 #ifndef MAXCHECK_H_
 #define MAXCHECK_H_
 
-#include "utils/PluginBase.h"
+#include "PluginBase.h"
 
 #include <string>
 #include <map>

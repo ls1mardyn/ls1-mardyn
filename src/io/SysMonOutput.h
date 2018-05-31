@@ -1,7 +1,7 @@
 #ifndef SYSMONOUTPUT_H_
 #define SYSMONOUTPUT_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 
 class SysMonOutput : public PluginBase {

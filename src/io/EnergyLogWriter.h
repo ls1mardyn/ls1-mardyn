@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 
 /** @brief This writer creates a global energy log file.

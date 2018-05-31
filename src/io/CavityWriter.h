@@ -5,7 +5,7 @@
 
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 class CavityWriter : public PluginBase {
 public:

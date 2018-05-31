@@ -36,8 +36,8 @@
 #include "molecules/Wall.h"
 #include "plugins/Mirror.h"
 
-#include "utils/PluginBase.h"
-#include "utils/PluginFactory.h"
+#include "plugins/PluginBase.h"
+#include "plugins/PluginFactory.h"
 
 #include "io/MmpldWriter.h"
 #include "io/RDF.h"

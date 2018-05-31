@@ -7,7 +7,7 @@
 #include <limits>
 #include <vector>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
 

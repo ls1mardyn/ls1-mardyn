@@ -8,7 +8,7 @@
 #ifndef SRC_UTILS_TESTPLUGIN_H_
 #define SRC_UTILS_TESTPLUGIN_H_
 
-#include "utils/PluginBase.h"
+#include "PluginBase.h"
 
 class TestPlugin: public PluginBase {
 public:

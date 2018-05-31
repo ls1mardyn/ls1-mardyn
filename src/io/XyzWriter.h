@@ -4,7 +4,7 @@
 #include <string>
 
 #include "ensemble/GrandCanonical.h"
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 /** @brief Writes out an ASCII file in the *.xyz-format containing coordinates of each molecule.
  *

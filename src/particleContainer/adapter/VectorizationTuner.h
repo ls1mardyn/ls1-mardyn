@@ -14,7 +14,7 @@ enum MoleculeCntIncreaseTypeEnum{
 
 #include "CellProcessor.h"
 #include "FlopCounter.h"
-#include "../../utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "ensemble/EnsembleBase.h"
 #include "parallel/LoadCalc.h"
 

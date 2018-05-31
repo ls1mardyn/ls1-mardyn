@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 
 class CheckpointWriter : public PluginBase {

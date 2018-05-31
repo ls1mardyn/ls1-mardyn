@@ -3,7 +3,7 @@
 #ifndef MIRROR_H_
 #define MIRROR_H_
 
-#include "utils/PluginBase.h"
+#include "PluginBase.h"
 
 #include <string>
 #include <map>

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "utils/Timer.h"
 
 /** name of the LoadbalanceWriter's default timer */

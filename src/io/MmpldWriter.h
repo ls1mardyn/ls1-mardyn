@@ -6,7 +6,7 @@
 #include <array>
 
 #include "ensemble/GrandCanonical.h"
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 #ifdef ENABLE_MPI
 #include "utils/MPI_Info_object.h"

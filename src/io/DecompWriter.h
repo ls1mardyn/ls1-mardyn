@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 
 /** @brief writes out information about decomposition of the simulation domain.

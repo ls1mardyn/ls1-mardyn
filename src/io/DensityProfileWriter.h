@@ -1,7 +1,7 @@
 #ifndef SRC_IO_DENSITYPROFILEWRITER_H_
 #define SRC_IO_DENSITYPROFILEWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 /** @brief The DensityProfileWriter obtains a planar interface density profile.
  */

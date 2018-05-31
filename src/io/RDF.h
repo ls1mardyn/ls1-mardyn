@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "molecules/Molecule.h"
 #include "utils/CommVar.h"
 

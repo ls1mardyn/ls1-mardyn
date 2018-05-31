@@ -5,8 +5,8 @@
 #include <map>
 #include <string>
 
-#include "ensemble/GrandCanonical.h"
-#include "ensemble/CavityEnsemble.h"
+#include "../ensemble/GrandCanonical.h"
+#include "../ensemble/CavityEnsemble.h"
 
 class ParticleContainer;
 class DomainDecompBase;

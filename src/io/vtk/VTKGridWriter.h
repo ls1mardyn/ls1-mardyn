@@ -8,7 +8,7 @@
 #ifndef VTKGRIDWRITER_H_
 #define VTKGRIDWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "io/vtk/VTKGridCell.h"
 #include "io/vtk/VTKGridVertex.h"
 
