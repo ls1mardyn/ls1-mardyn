@@ -66,9 +66,7 @@ public:
 
 	//documentation in PluginBase, does nothing.
 	void endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
-                 Domain * /*domain*/, unsigned long /*simstep*/,
-                 std::list<ChemicalPotential> * /*lmu*/,
-                 std::map<unsigned, CavityEnsemble> * /*mcav*/) override {}
+                 Domain * /*domain*/, unsigned long /*simstep*/) override {}
 
 	//documentation in PluginBase, does nothing.
 	void finish(ParticleContainer * /*particleContainer*/,

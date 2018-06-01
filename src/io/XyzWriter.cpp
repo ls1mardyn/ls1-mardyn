@@ -41,8 +41,7 @@ void XyzWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase
                      Domain * /*domain*/) {}
 
 void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain * /*domain*/,
-                        unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
-                        map<unsigned, CavityEnsemble> * /*mcav*/) {
+                        unsigned long simstep) {
 	if( simstep % _writeFrequency == 0) {
 		vector<Component>*  components = _simulation.getEnsemble()->getComponents();
 		stringstream filenamestream;

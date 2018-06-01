@@ -462,6 +462,14 @@ public:
 	void initGlobalEnergyLog();
 	void writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure);
 
+	std::list<ChemicalPotential>* getLmu()  {
+		return &_lmu;
+	}
+
+	std::map<unsigned, CavityEnsemble>* getMcav()  {
+		return &_mcav;
+	}
+
 private:
 
 	/** Enable final checkpoint after simulation run. */

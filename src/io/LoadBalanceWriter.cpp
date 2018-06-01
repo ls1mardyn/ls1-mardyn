@@ -61,8 +61,7 @@ void LoadbalanceWriter::init(ParticleContainer *particleContainer,
 void LoadbalanceWriter::endStep(
         ParticleContainer *particleContainer,
         DomainDecompBase *domainDecomp, Domain *domain,
-        unsigned long simstep, std::list<ChemicalPotential> *lmu,
-        std::map<unsigned, CavityEnsemble> *mcav
+        unsigned long simstep
 )  {
 	_defaultTimer->stop();
 	recordTimes(simstep);

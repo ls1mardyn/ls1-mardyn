@@ -118,10 +118,7 @@ public:
      */
     virtual void endStep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain, unsigned long simstep,
-            std::list<ChemicalPotential>* lmu,
-            std::map<unsigned, CavityEnsemble>* mcav
-    ) = 0;
+            Domain* domain, unsigned long simstep) = 0;
 
     /** @brief Method finalOutput will be called at the end of the simulation
      *

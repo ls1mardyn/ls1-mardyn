@@ -91,9 +91,8 @@ void MaxCheck::afterForces(ParticleContainer* particleContainer,
 }
 
 void MaxCheck::endStep(ParticleContainer *particleContainer,
-		DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep,
-		std::list<ChemicalPotential> *lmu,
-		std::map<unsigned, CavityEnsemble> *mcav) {
+		DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep
+		) {
 	global_log->info() << "MaxCheck::endStep() CHECKING for maxvals" << endl;
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }

@@ -69,9 +69,8 @@ void FlopRateWriter::afterForces(ParticleContainer* particleContainer, DomainDec
 }
 
 void FlopRateWriter::endStep(ParticleContainer *particleContainer,
-                             DomainDecompBase *domainDecomp, Domain * /*domain*/, unsigned long simstep,
-                             std::list<ChemicalPotential> * /*lmu*/,
-                             std::map<unsigned, CavityEnsemble> * /*mcav*/) {
+                             DomainDecompBase *domainDecomp, Domain * /*domain*/, unsigned long simstep
+                             ) {
 
 	if (not ((_writeFrequency == 1 and simstep > 0) or simstep % _writeFrequency == 1)) {
 		return;

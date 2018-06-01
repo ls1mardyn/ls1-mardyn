@@ -42,9 +42,7 @@ public:
 	//! @todo document me!
 	virtual void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep,
-            std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            Domain *domain, unsigned long simstep
     );
 
 	//! @todo document me!

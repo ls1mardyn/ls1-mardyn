@@ -142,8 +142,7 @@ void MPICheckpointWriter::init(ParticleContainer * /*particleContainer*/, Domain
 }
 
 void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                                  unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
-                                  map<unsigned, CavityEnsemble> * /*mcav*/) {
+                                  unsigned long simstep) {
 #ifdef ENABLE_MPI
 	const char *mpidatarep = NULL;
 	if (!_datarep.empty()) mpidatarep=_datarep.c_str();

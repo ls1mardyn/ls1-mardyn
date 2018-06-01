@@ -40,8 +40,9 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 }
 
 void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain *domain,
-                           unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
-                           map<unsigned, CavityEnsemble> *mcav) {
+                           unsigned long simstep) {
+	map<unsigned, CavityEnsemble> * mcav = global_simulation->getMcav();
+
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){

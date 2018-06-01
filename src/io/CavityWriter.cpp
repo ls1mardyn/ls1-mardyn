@@ -55,8 +55,10 @@ void CavityWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompB
 						Domain * /*domain*/) {}
 
 void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp,
-                           Domain * /*domain*/, unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
-                           map<unsigned, CavityEnsemble> *mcav) {
+                           Domain * /*domain*/, unsigned long simstep) {
+
+	map<unsigned, CavityEnsemble> * mcav = global_simulation->getMcav();
+
 	if( simstep % _writeFrequency == 0) {
                 map<unsigned, CavityEnsemble>::iterator ceit;
            

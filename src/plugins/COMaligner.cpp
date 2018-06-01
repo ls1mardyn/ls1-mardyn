@@ -184,8 +184,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
 //! \param lmu
 //! \param mcav
 void COMaligner::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                         unsigned long simstep, std::list<ChemicalPotential> *lmu,
-                         std::map<unsigned, CavityEnsemble> *mcav) {
+                         unsigned long simstep) {
 
     // Moved to before Forces
     /*if(_enabled){

@@ -1342,7 +1342,7 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 		PluginBase* plugin = (*pluginIter);
 		global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << endl;
 		global_simulation->timers()->start(plugin->getPluginName());
-		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep);
 		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 

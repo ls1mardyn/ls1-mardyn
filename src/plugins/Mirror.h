@@ -49,9 +49,7 @@ public:
 	void endStep(
 			ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, Domain *domain,
-			unsigned long simstep, std::list<ChemicalPotential> *lmu,
-			std::map<unsigned, CavityEnsemble> *mcav
-	) override {}
+			unsigned long simstep) override {}
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override {}

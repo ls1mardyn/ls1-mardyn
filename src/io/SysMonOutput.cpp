@@ -45,8 +45,7 @@ void SysMonOutput::init(ParticleContainer * /*particleContainer*/, DomainDecompB
 }
 
 void SysMonOutput::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
-                           Domain * /*domain*/, unsigned long simstep,
-                           list<ChemicalPotential> * /*lmu*/, map<unsigned, CavityEnsemble> * /*mcav*/)
+                           Domain * /*domain*/, unsigned long simstep)
 {
 	if((simstep % _writeFrequency) == 0) {
 		SysMon* sysmon = SysMon::getSysMon();

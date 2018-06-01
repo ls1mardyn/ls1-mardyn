@@ -37,8 +37,7 @@ void EnergyLogWriter::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                              unsigned long simstep, std::list<ChemicalPotential> *lmu,
-                              std::map<unsigned int, CavityEnsemble> *mcav) {
+                              unsigned long simstep) {
 
 	if( 0 != (simstep % _writeFrequency) ) {
 		return;

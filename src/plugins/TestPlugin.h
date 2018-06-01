@@ -62,9 +62,7 @@ public:
      */
     void endStep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain, unsigned long simstep,
-            std::list<ChemicalPotential>* lmu,
-            std::map<unsigned, CavityEnsemble>* mcav
+            Domain* domain, unsigned long simstep
     ) {
         global_log->debug()  << "[TESTPLUGIN] ENDSTEP" << endl;
     }

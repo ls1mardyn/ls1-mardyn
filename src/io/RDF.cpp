@@ -269,8 +269,7 @@ void RDF::reset() {
 
 
 void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomposition, Domain *domain,
-                  unsigned long simStep, std::list<ChemicalPotential> * /*lmu*/,
-                  map<unsigned, CavityEnsemble> * /*mcav*/) {
+                  unsigned long simStep) {
 	if(_numberOfRDFTimesteps <= 0) return;
 
 	if((simStep > 0) && (simStep % _writeFrequency == 0)) {

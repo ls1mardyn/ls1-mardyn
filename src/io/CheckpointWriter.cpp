@@ -58,8 +58,7 @@ void CheckpointWriter::init(ParticleContainer * /*particleContainer*/, DomainDec
                             Domain * /*domain*/) {}
 
 void CheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                               unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
-                               map<unsigned, CavityEnsemble> * /*mcav*/) {
+                               unsigned long simstep) {
 	if( simstep % _writeFrequency == 0 ) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
