@@ -34,7 +34,13 @@ void COMalignerTest::testCOMalign() {
         test_log->info() << "COMalignerTest::testCOMalign: Mass Check SKIPPED (required exactly 1 process but was run with " <<  _domainDecomposition->getNumProcs() << " processes)" << std::endl;
     }
     else{
-        ASSERT_EQUAL_MSG("Mass does not match number of particles", double(container->getNumberOfParticles()), m);
+		double expectedMass; // 8.0 in Normal mode, 16.0 in RMM mode, cause of different behaviour of Molecule::mass() !
+#ifdef ENABLE_REDUCED_MEMORY_MODE
+		expectedMass = 16.0;
+#else
+		expectedMass = 8.0;
+#endif
+		ASSERT_EQUAL_MSG("Mass does not match number of particles", expectedMass, m);
     }
     // Hard Coded 8.0 instead
     //ASSERT_EQUAL_MSG("Mass does not match number of particles", 8.0, m);
