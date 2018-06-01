@@ -6,8 +6,8 @@
 #ifndef DCOMALIGNERTEST_H
 #define DCOMALIGNERTEST_H
 
-//#include "utils/Testing.h"
 #include "utils/TestWithSimulationSetup.h"
+#include "plugins/COMaligner.h"
 
 class COMalignerTest : public utils::TestWithSimulationSetup {
 

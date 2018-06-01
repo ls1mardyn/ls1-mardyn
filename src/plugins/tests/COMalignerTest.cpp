@@ -3,10 +3,6 @@
 //
 
 #include "COMalignerTest.h"
-#include "plugins/COMaligner.h"
-#include "parallel/DomainDecomposition.h"
-#include "particleContainer/ParticleContainer.h"
-#include "particleContainer/LinkedCells.h"
 
 TEST_SUITE_REGISTRATION(COMalignerTest);
 
@@ -15,8 +11,6 @@ COMalignerTest::COMalignerTest() {}
 COMalignerTest::~COMalignerTest() {}
 
 void COMalignerTest::testCOMalign() {
-
-    _domainDecomposition = new DomainDecomposition();
 
     const char* filename = "1clj-regular-2x2x2-offset.inp";
     double cutoff = 1.5;
@@ -48,5 +42,4 @@ void COMalignerTest::testCOMalign() {
         oldPos.next();
     }
 
-    delete _domainDecomposition;
 }
