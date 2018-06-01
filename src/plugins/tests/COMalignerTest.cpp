@@ -12,6 +12,11 @@ COMalignerTest::~COMalignerTest() {}
 
 void COMalignerTest::testCOMalign() {
 
+    if (_domainDecomposition->getNumProcs() >= 10){
+        test_log -> info() << "COMalignerTest::testCOMalign: SKIPPED (required fewer than 10 processes but was run with " << _domainDecomposition->getNumProcs() << " => bounding box of test setup is too small to support decomposition)" << std::endl;
+        return;
+    }
+
     const char* filename = "1clj-regular-2x2x2-offset.inp";
     double cutoff = .5;
     ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
