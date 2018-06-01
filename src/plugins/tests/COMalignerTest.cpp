@@ -28,15 +28,16 @@ void COMalignerTest::testCOMalign() {
     plugin->beforeForces(container, _domainDecomposition, 1);
 
     // TEST MASS
+    // TODO: Mass check doesnt work with multiple Particles with "World Record" engaged
     double m = plugin->_mass;
-    /*if (_domainDecomposition->getNumProcs() != 1) {
+    if (_domainDecomposition->getNumProcs() != 1) {
         test_log->info() << "COMalignerTest::testCOMalign: Mass Check SKIPPED (required exactly 1 process but was run with " <<  _domainDecomposition->getNumProcs() << " processes)" << std::endl;
     }
     else{
         ASSERT_EQUAL_MSG("Mass does not match number of particles", double(container->getNumberOfParticles()), m);
-    }*/
+    }
     // Hard Coded 8.0 instead
-    ASSERT_EQUAL_MSG("Mass does not match number of particles", 8.0, m);
+    //ASSERT_EQUAL_MSG("Mass does not match number of particles", 8.0, m);
 
     // TEST MOTION
     ASSERT_EQUAL_MSG("x motion is wrong", -.25, plugin->_motion[0]);
