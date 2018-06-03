@@ -108,10 +108,6 @@ Simulation::Simulation()
 	_domain(nullptr),
 	_inputReader(nullptr),
 	_outputPrefix("mardyn"),
-	_doAlignCentre(false),
-	_componentSpecificAlignment(false),
-	_alignmentInterval(25),
-	_alignmentCorrection(0.0),
 	_applyWallFun_LJ_9_3(false),
 	_applyWallFun_LJ_10_4(false),
 	_applyMirror(false),
@@ -960,38 +956,6 @@ void Simulation::simulate() {
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		 *realignment tools borrowed from Martin Horsch, for the determination of the centre of mass 
-		 *the halo MUST NOT be present*/
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-		particleNoTest = _moleculeContainer->getNumberOfParticles();
-		global_log->debug()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
-#endif
-#endif
-        if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
-			if(_componentSpecificAlignment) {
-				//! !!! the sequence of calling the two methods MUST be: FIRST determineXZShift() THEN determineYShift() !!!
-				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-			// edited by Michaela Heier --> realign can be used when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
-			else if(_doAlignCentre and (_applyWallFun_LJ_9_3 or _applyWallFun_LJ_10_4)){
-				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
-				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-			else{
-				_domain->determineShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI			
-			particleNoTest = _moleculeContainer->getNumberOfParticles();
-			global_log->info()<<"particles after determine shift-methods, halo not present:" << particleNoTest<< "\n";
-#endif
-#endif
-		}
-
         // beforeForces Plugin Call
         global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
         for (auto plugin : _plugins) {
@@ -1268,23 +1232,8 @@ void Simulation::simulate() {
 		computationTimer->stop();
 		perStepIoTimer->start();
 
+		// CALL ALL PLUGIN ENDSTEP METHODS
 		pluginEndStepCall(_simstep);
-
-		//! TODO: this should be moved! it is definitely not I/O
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		  * realignment tools borrowed from Martin Horsch
-		  * For the actual shift the halo MUST NOT be present!
-		  */
-		if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
-			_domain->realign(_moleculeContainer);
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-			particleNoTest = 0;
-			particleNoTest = _moleculeContainer->getNumberOfParticles();
-			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
-#endif
-#endif
-		}
 
 		if( (_forced_checkpoint_time > 0) && (loopTimer->get_etime() >= _forced_checkpoint_time) ) {
 			/* force checkpoint for specified time */

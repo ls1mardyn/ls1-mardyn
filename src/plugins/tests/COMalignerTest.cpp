@@ -42,8 +42,6 @@ void COMalignerTest::testCOMalign() {
 #endif
 		ASSERT_EQUAL_MSG("Mass does not match number of particles", expectedMass, m);
     }
-    // Hard Coded 8.0 instead
-    //ASSERT_EQUAL_MSG("Mass does not match number of particles", 8.0, m);
 
     // TEST MOTION
     ASSERT_EQUAL_MSG("x motion is wrong", -.25, plugin->_motion[0]);

@@ -171,7 +171,6 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
     }
 
     // TODO: Check for OpenMP implementation of above for-loop
-    // TODO: WRITE UNIT TEST
 }
 
 //! @brief called after Forces are applied
