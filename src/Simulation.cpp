@@ -1013,18 +1013,18 @@ void Simulation::simulate() {
 		computationTimer->start();
 		perStepTimer.start();
 
-		//afterForces Plugin Call
-		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
-		for (auto plugin : _plugins) {
-			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
-			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
-		}
 
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
 
+		//afterForces Plugin Call
+		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
+		for (auto plugin : _plugins) {
+			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
+			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		}
 
 
 		if(_wall && _applyWallFun_LJ_9_3){
