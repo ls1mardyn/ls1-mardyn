@@ -83,6 +83,12 @@ public:
     virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
 
+    /** @brief Method will be called first thing in a new timestep. */
+	virtual void beforeEventNewTimestep(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) {};
+
     /** @brief Method beforeForces will be called before forcefields have been applied
      *
      * make pure Virtual ?

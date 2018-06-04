@@ -934,6 +934,15 @@ void Simulation::simulate() {
 
 		computationTimer->start();
 		perStepTimer.start();
+
+        // beforeEventNewTimestep Plugin Call
+        global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << endl;
+        for (auto plugin : _plugins) {
+            global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << endl;
+            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+        }
+
+
 		/** @todo What is this good for? Where come the numbers from? Needs documentation */
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
