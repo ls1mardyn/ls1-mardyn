@@ -14,22 +14,24 @@ class COMalignerTest;
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 
-//! @brief
-//! Plugin: can be enabled via config.xml <br>
-//!
-//! Calculates Center of mass and moves all particles to align with center of box
-//! Individual dimensions X,Y,Z can be toogled on/off for the alignment
-//! Alignment happens once every interval-simsteps
-//! The correction factor can be set from 0-1
-//! 1 being full alignment -> 0 no alignment at all
-//!
-//! <plugin name="COMaligner">
-//!			<x>1</x>
-//!			<y>0</y>
-//!			<z>1</z>
-//!			<interval>1</interval>
-//!			<correctionFactor>.5</correctionFactor>
-//!	</plugin>
+/** @brief
+* Plugin: can be enabled via config.xml <br>
+*
+* Calculates Center of mass and moves all particles to align with center of box
+* Individual dimensions X,Y,Z can be toogled on/off for the alignment
+* Alignment happens once every interval-simsteps
+* The correction factor can be set from 0-1
+* 1 being full alignment -> 0 no alignment at all
+* \code{.xml}
+* <plugin name="COMaligner">
+*			<x>1</x>
+*			<y>0</y>
+*			<z>1</z>
+*			<interval>1</interval>
+*			<correctionFactor>.5</correctionFactor>
+*	</plugin>
+* \endcode
+*/
 class COMaligner : public PluginBase{
 
 private:

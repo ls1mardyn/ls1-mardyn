@@ -119,6 +119,7 @@ public:
 	     <output>
 	       <outputplugin name=STRING enabled="yes|no"><!-- see OutputBase class and specific plugin documentation --></outputplugin>
 	     </output>
+	     <plugin name=STRING enabled="yes|no" (default yes)><!-- see PluginBase class and specific plugin documentation --></plugin>
 	   </simulation>
 	   \endcode
 	 */
