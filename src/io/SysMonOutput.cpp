@@ -4,6 +4,7 @@
 
 #include "utils/Logger.h"
 #include "utils/SysMon.h"
+#include "utils/xmlfileUnits.h"
 
 using Log::global_log;
 using namespace std;

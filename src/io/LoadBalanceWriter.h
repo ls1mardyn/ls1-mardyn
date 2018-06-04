@@ -1,10 +1,11 @@
 #ifndef SRC_IO_LOADBALANCEWRITER_H_
 #define SRC_IO_LOADBALANCEWRITER_H_
 
-#include <string>
-
 #include "plugins/PluginBase.h"
 #include "utils/Timer.h"
+
+#include <string>
+#include <vector>
 
 /** name of the LoadbalanceWriter's default timer */
 #define LB_WRITER_DEFAULT_TIMER_NAME "LoadbalanceWriter_default"

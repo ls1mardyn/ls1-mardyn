@@ -3,6 +3,7 @@
 
 #include "plugins/PluginBase.h"
 
+#include <fstream>
 
 class SysMonOutput : public PluginBase {
 public:

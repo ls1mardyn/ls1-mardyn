@@ -5,9 +5,6 @@
 #include <map>
 #include <string>
 
-#include "../ensemble/GrandCanonical.h"
-#include "../ensemble/CavityEnsemble.h"
-
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
@@ -16,7 +13,6 @@ class XMLfileUnits;
 
 /** @todo Mark all parameters as const: output plugins should not modify the state of the simulation. */
 /** @todo get rid of the domain parameter */
-/** @todo get rid of lmu and mcav as well, if possible. */
 /** @todo clean up all classes implementing this interface */
 
 

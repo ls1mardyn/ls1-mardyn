@@ -15,6 +15,9 @@
 #include <unordered_map>
 #include <list>
 #include <cstdint>
+#include <vector>
+
+#include "molecules/MoleculeForwardDeclaration.h"
 
 class MaxCheck : public PluginBase
 {

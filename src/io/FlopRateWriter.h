@@ -10,6 +10,8 @@
 
 #include "plugins/PluginBase.h"
 
+#include <fstream>
+
 class FlopCounter;
 
 class FlopRateWriter: public PluginBase {
