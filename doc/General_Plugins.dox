@@ -3,11 +3,12 @@
 Basic Idea
 ----------
 
-The idea of the General Plugins is to allow *optional* code, which is not necessarily needed by all simulations to be inserted at specific locations in the primary simulation loop. This is to be used for various outputs, modifications to some molecules, etc. You can (and are recommended to) achieve all modifications to the primary program through such plugins. Advantages of doing so. Plugins:
+The idea of the General Plugins is to allow *optional* code, which is not necessarily needed by all simulations to be inserted at specific locations in the primary simulation loop. This is to be used for various outputs, modifications to some molecules, etc. You can (and are recommended to) achieve all modifications to the primary program through such plugins. Some advantages of doing so. Plugins:
 - provide a non-intrusive way of interacting with the main program, 
 - are easy to switch on and off via XML, 
 - are easy to maintain, 
-- are easy to exchange with other users.
+- are easy to exchange with other users,
+- do not pollute other classes, which are necessary for running the main code, such as Simulation and Domain.
 
 (Note to older developers - this is an extension of the familiar concept of output plugins, present for a long time in ls1-mardyn.)
 
@@ -25,43 +26,18 @@ When writing a new plugin, you please do the following:
 -# add your code to the PluginFactory by adding the lines
 	- #include "plugins/NewPlugin.h"
 	- REGISTER_PLUGIN(NewPlugin);
--# document your plugin here, so that other users know that it is there and would not reimplement it
+-# document your plugin in the summary \ref PluginsSummary, so that other users know that it is there and would not reimplement it
 -# write a UnitTest for it, so that other people changing base code or - potentially generalizing/optimizing/bugfixing your plugin - will know whether they have broken it.
 -# write some doxygen documentation.
 
-Summary of Plugins in Trunk
----------------------------
+Background
+----------
+The reason for introducing and insisting on using Plugins is because the classes Simulation and Domain become (became) very cluttered with application-specific code.
+This makes it very difficult to maintain the code and determine which features are on, which features are off.
+We have had grave errors due to this, e.g. have a supercomputer reserved for us an entire day only to have all our simulations crash when running on >10000 MPI, because of uninitialized values in user code, which was not supposed to be active at all.
+So, please, stick to the rules and work with Plugins as much as possible. 
+If you cannot achieve something with a plugin (i.e. the Plugin Interface needs to be extended), contact us so that we can extend them.
 
-Since the number of plugins is expected to grow quite rapidly, the following table provides a list of the currently available plugins. It is intended to be searched for with the search option of the browser to look for keywords.
-
-Plugin name  | Up to 5 Keywords | Short Description
-------------- | ------------- | --
-CavityWriter | todo | todo
-CheckpointWriter | todo | todo
-COMaligner | todo | todo
-DecompWriter | todo | todo
-DensityProfileWriter | todo | todo
-EnergyLogWriter | todo | todo
-ExamplePlugin  | example, sample, illustrate, usage | Print user-specifed text at a user-specified position in the code.  
-FlopRateWriter | todo | todo
-GammaWriter | todo | todo
-LoadbalanceWriter | todo | todo
-MaxCheck  | todo | todo
-MaxWriter  | todo | todo
-Mirror  | todo | todo
-MmpldWriter  | todo | todo
-MmspdBinWriter  | todo | todo
-MPI_IOCheckpointWriter  | todo | todo
-MPICheckpointWriter | todo | todo
-PovWriter | todo | todo
-RDF | todo | todo
-ResultWriter | print, macroscopic thermodynamic quantities, file | Write macroscopic thermodynamic quantities to file, such as temperature, pressure, BetaTrans, BetaRot, cv, number of molecules and number of cavities (?).
-SysMonOutput | todo | todo
-TestPlugin  | test | Test correctness of plugin calls within Simulation.
-VectorizationTuner | todo | todo
-VISWriter | todo | todo
-VTKGridWriter | todo | todo
-VTKMoleculeWriter | todo | todo
-XyzWriter | todo | todo
+For a summary of Plugins currently in the trunk, see \ref PluginsSummary.
 
 */
