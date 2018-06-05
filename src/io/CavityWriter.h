@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include "ensemble/CavityEnsemble.h"
-#include "ensemble/GrandCanonical.h"
 #include "plugins/PluginBase.h"
 
 class CavityWriter : public PluginBase {
