@@ -29,6 +29,14 @@ public:
         global_log -> debug() << "[TESTPLUGIN] READING XML" << endl;
     }
 
+    /** @brief Method will be called first thing in a new timestep. */
+	void beforeEventNewTimestep(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) {
+		global_log -> debug() << "[TESTPLUGIN] BEFORE EVENT NEW TIMESTEP" << endl;
+	};
+
     /** @brief Method beforeForces will be called before forcefields have been applied
             *
             * make pure Virtual ?
