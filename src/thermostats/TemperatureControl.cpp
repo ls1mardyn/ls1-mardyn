@@ -177,6 +177,9 @@ tec::ControlRegion::~ControlRegion()
 
 void tec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 {
+	_bin.width = 1.;
+	_bin.volume = 1.;
+	_bin.rho_min = 0.;
 	std::string strControlType = "unknown";
 	std::string strDirections = "unknown";
 	xmlconfig.getNodeValue("target@type", strControlType);
@@ -190,6 +193,7 @@ void tec::ControlRegion::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("target/adjust/stop", _target.adjust.control.stop);
 	xmlconfig.getNodeValue("settings/exponent", _target.exponent);
 	xmlconfig.getNodeValue("settings/directions", strDirections);
+	xmlconfig.getNodeValue("settings/rho_min", _bin.rho_min);
 	this->PrepareAccumulator(strDirections);
 
 	global_log->info() << "TemperatureControl->region["<<this->GetID()<<"]: Control type: " << strControlType << ", "
@@ -433,12 +437,13 @@ void tec::ControlRegion::CalcGlobalValues(unsigned long simstep)
 
 		for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
 		{
-			if( _nNumMoleculesGlobal[s] < 1 )
+			double rho = _nNumMoleculesGlobal[s] * _bin.volume_inv;
+			if(rho <= _bin.rho_min)
 				_dBetaTransGlobal[s] = 1.;
 			else
 				_dBetaTransGlobal[s] = pow(_target.numDirections * _nNumMoleculesGlobal[s] * _target.temperature.actual / _d2EkinTransGlobal[s], _target.exponent);
 
-			if( _nRotDOFGlobal[s] < 1 )
+			if( _nRotDOFGlobal[s] < 1 || rho <= _bin.rho_min)
 				_dBetaRotGlobal[s] = 1.;
 			else
 				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _target.temperature.actual / _d2EkinRotGlobal[s], _target.exponent);
@@ -458,12 +463,13 @@ void tec::ControlRegion::CalcGlobalValues(unsigned long simstep)
 
 		for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
 		{
-			if( _nNumMoleculesGlobal[s] < 1 )
+			double rho = _nNumMoleculesGlobal[s] * _bin.volume_inv;
+			if(rho <= _bin.rho_min)
 				_dBetaTransGlobal[s] = 1.;
 			else
 				_dBetaTransGlobal[s] = pow(_target.numDirections * _nNumMoleculesGlobal[s] * _target.vec[s] / _d2EkinTransGlobal[s], _target.exponent);
 
-			if( _nRotDOFGlobal[s] < 1 )
+			if( _nRotDOFGlobal[s] < 1 || rho <= _bin.rho_min)
 				_dBetaRotGlobal[s] = 1.;
 			else
 				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _target.vec[s] / _d2EkinRotGlobal[s], _target.exponent);
@@ -639,6 +645,13 @@ void tec::ControlRegion::UpdateSlabParameters()
 
     _nNumSlabs = round(dWidth / _dSlabWidthInit);
     _dSlabWidth =  dWidth / ( (double)(_nNumSlabs) );
+    
+    // update bin params
+    _bin.width = _dSlabWidth;
+    Domain* domain = global_simulation->getDomain();
+    double A = domain->getGlobalLength(0) * domain->getGlobalLength(2);
+    _bin.volume = _bin.width * A;
+    _bin.volume_inv = 1. / _bin.volume;
 
 	// heat supply data structure TODO: heat supply data structure --> independent number of slabs
 	_dSlabWidthDeltaEkin = _dSlabWidth;

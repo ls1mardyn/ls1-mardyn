@@ -60,6 +60,14 @@ class TemperatureControl;
 namespace tec
 {
 
+struct BinParams
+{
+	double width;
+	double volume;
+	double volume_inv;
+	double rho_min;
+};
+
 class ControlRegion : public CuboidRegionObs
 {
 public:
@@ -115,6 +123,7 @@ private:
     unsigned int _nNumSlabsReserve;
     double _dSlabWidth;
     double _dSlabWidthInit;
+    BinParams _bin;
 
     unsigned long* _nNumMoleculesLocal;
     unsigned long* _nNumMoleculesGlobal;
