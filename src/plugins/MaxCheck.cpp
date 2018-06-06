@@ -85,14 +85,19 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 void MaxCheck::afterForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep) {
-	global_log->info() << "MaxCheck::afterForces() CHECKING for maxvals"
-			<< endl;
+	if (simstep < _control.start || simstep > _control.stop
+			|| simstep % _control.freq != 0)
+		return;
+	global_log->info() << "MaxCheck::afterForces() CHECKING for maxvals" << endl;
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
 
 void MaxCheck::endStep(ParticleContainer *particleContainer,
 		DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep
 		) {
+	if (simstep < _control.start || simstep > _control.stop
+			|| simstep % _control.freq != 0)
+		return;
 	global_log->info() << "MaxCheck::endStep() CHECKING for maxvals" << endl;
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
@@ -100,9 +105,6 @@ void MaxCheck::endStep(ParticleContainer *particleContainer,
 void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep) {
 
-	if (simstep < _control.start || simstep > _control.stop
-			|| simstep % _control.freq != 0)
-		return;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
