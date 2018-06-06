@@ -76,8 +76,7 @@ void MPI_IOCheckpointWriter::init(ParticleContainer *particleContainer,
 
 void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
                                      Domain *domain,
-                                     unsigned long simstep, list<ChemicalPotential> * /*lmu*/,
-                                     map<unsigned, CavityEnsemble> * /*mcav*/) {
+                                     unsigned long simstep) {
 #ifdef ENABLE_MPI
 	if (simstep % _writeFrequency == 0) {
 		//get the file name

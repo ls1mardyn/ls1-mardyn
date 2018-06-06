@@ -36,8 +36,8 @@
 #include "molecules/Wall.h"
 #include "plugins/Mirror.h"
 
-#include "utils/PluginBase.h"
-#include "utils/PluginFactory.h"
+#include "plugins/PluginBase.h"
+#include "plugins/PluginFactory.h"
 
 #include "io/MmpldWriter.h"
 #include "io/RDF.h"
@@ -117,10 +117,6 @@ Simulation::Simulation()
 	_domain(nullptr),
 	_inputReader(nullptr),
 	_outputPrefix("mardyn"),
-	_doAlignCentre(false),
-	_componentSpecificAlignment(false),
-	_alignmentInterval(25),
-	_alignmentCorrection(0.0),
 	_applyWallFun_LJ_9_3(false),
 	_applyWallFun_LJ_10_4(false),
 	_applyMirror(false),
@@ -1081,6 +1077,15 @@ void Simulation::simulate() {
 
 		computationTimer->start();
 		perStepTimer.start();
+
+        // beforeEventNewTimestep Plugin Call
+        global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << endl;
+        for (auto plugin : _plugins) {
+            global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << endl;
+            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+        }
+
+
 		/** @todo What is this good for? Where come the numbers from? Needs documentation */
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -1190,57 +1195,6 @@ void Simulation::simulate() {
 		}
 		// <-- DISTANCE_CONTROL
 
-
-		// activate RDF sampling
-		/** @todo FIXME: here two things are done:
-		 * 1. the actual kernel to collect rdf data in the handler is activated which would have to be done only once.
-		 * 2. the number of sampling steps is incremented, which has to be done each time step.
-		 */
-
-		/*
-		 * Call to feature RDF has been moved to different location
-		 *
-		RDF* rdf;
-		if ( (_simstep >= _initStatistics) && (nullptr != (rdf = static_cast<RDF*>(getOutputPlugin("RDF")))) ) {
-			global_log->debug() << "Activating the RDF sampling" << endl;
-			rdf->tickRDF();
-			_particlePairsHandler->setRDF(rdf);
-			rdf->accumulateNumberOfMolecules(*(getEnsemble()->getComponents()));
-		}
-		*/
-
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		 *realignment tools borrowed from Martin Horsch, for the determination of the centre of mass 
-		 *the halo MUST NOT be present*/
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-		particleNoTest = _moleculeContainer->getNumberOfParticles();
-		global_log->debug()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
-#endif
-#endif
-        if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
-			if(_componentSpecificAlignment) {
-				//! !!! the sequence of calling the two methods MUST be: FIRST determineXZShift() THEN determineYShift() !!!
-				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-			// edited by Michaela Heier --> realign can be used when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
-			else if(_doAlignCentre and (_applyWallFun_LJ_9_3 or _applyWallFun_LJ_10_4)){
-				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
-				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-			else{
-				_domain->determineShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
-			}
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI			
-			particleNoTest = _moleculeContainer->getNumberOfParticles();
-			global_log->info()<<"particles after determine shift-methods, halo not present:" << particleNoTest<< "\n";
-#endif
-#endif
-		}
-
         // beforeForces Plugin Call
         global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
         for (auto plugin : _plugins) {
@@ -1298,6 +1252,12 @@ void Simulation::simulate() {
 		computationTimer->start();
 		perStepTimer.start();
 
+
+		if (_FMM != NULL) {
+			global_log->debug() << "Performing FMM calculation" << endl;
+			_FMM->computeElectrostatics(_moleculeContainer);
+		}
+
 		//afterForces Plugin Call
 		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
 		for (auto plugin : _plugins) {
@@ -1305,10 +1265,6 @@ void Simulation::simulate() {
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
-		if (_FMM != NULL) {
-			global_log->debug() << "Performing FMM calculation" << endl;
-			_FMM->computeElectrostatics(_moleculeContainer);
-		}
 
 		if(_wall && _applyWallFun_LJ_9_3){
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
@@ -1594,23 +1550,8 @@ void Simulation::simulate() {
 		computationTimer->stop();
 		perStepIoTimer->start();
 
+		// CALL ALL PLUGIN ENDSTEP METHODS
 		pluginEndStepCall(_simstep);
-
-		//! TODO: this should be moved! it is definitely not I/O
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		  * realignment tools borrowed from Martin Horsch
-		  * For the actual shift the halo MUST NOT be present!
-		  */
-		if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
-			_domain->realign(_moleculeContainer);
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-			particleNoTest = 0;
-			particleNoTest = _moleculeContainer->getNumberOfParticles();
-			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
-#endif
-#endif
-		}
 
 		if( (_forced_checkpoint_time > 0) && (loopTimer->get_etime() >= _forced_checkpoint_time) ) {
 			/* force checkpoint for specified time */
@@ -1668,7 +1609,7 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 		PluginBase* plugin = (*pluginIter);
 		global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << endl;
 		global_simulation->timers()->start(plugin->getPluginName());
-		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
+		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep);
 		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 

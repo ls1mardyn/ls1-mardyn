@@ -115,7 +115,7 @@ void MaxWriter::init(ParticleContainer * /*particleContainer*/,
 }
 
 void MaxWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                        unsigned long simstep, list<ChemicalPotential> * /*lmu*/, map<unsigned, CavityEnsemble> *mcav)
+                        unsigned long simstep)
 {
 	this->doSampling(particleContainer);
 

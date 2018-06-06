@@ -28,8 +28,10 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
     // SANITY CHECK
     if(_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1){
         global_log -> error() << "[COMaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+        global_log -> error() << "[COMaligner] HALTING SIMULATION" << std::endl;
         _enabled = false;
-        // TODO: THROW REAL ERROR AND HALT SIMULATION?
+        // HALT SIM
+        global_simulation -> exit(1);
         return;
     }
 
@@ -85,13 +87,6 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
     }
 
     global_log -> debug() << "[COMaligner] dim settings are: " << _dim_start << " " << _dim_end << " " << _dim_step << std::endl;
-
-    // SETUP
-    for (unsigned d = 0; d < 3; d++) {
-        _balance[d] = 0.0;
-        _motion[d] = 0.0;
-    }
-    _mass = 0;
 
 }
 
@@ -150,16 +145,32 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
         global_log->info() << "[COMaligner] motion is x: " << _motion[0] << " y: " << _motion[1] << " z: " << _motion[2]
                            << std::endl;
 
+        // AVOID MOVES LARGER THAN ONE CUTOFF RADIUS
+        double totalMotion = sqrt(_motion[0]*_motion[0]+_motion[1]*_motion[1]+_motion[2]*_motion[2]);
+        if(totalMotion > _cutoff){
+            double factor = _cutoff/totalMotion;
+            for(int d = 0; d < 3; d++){
+                _motion[d] *= factor;
+            }
+            global_log->info() << "[COMaligner] Motion larger than Cutoff Radius. Reducing Motion" << _motion[2]
+                               << std::endl;
+            global_log->info() << "[COMaligner] New motion is x: " << _motion[0] << " y: " << _motion[1] << " z: " << _motion[2]
+                               << std::endl;
+        }
+
+        // MOVE
+        for(ParticleIterator tm = particleContainer->iterator(); tm.hasNext(); tm.next()){
+            for (int d = _dim_start; d < _dim_end; d += _dim_step){
+                tm->move(d, _motion[d]);
+            }
+        }
+
     }
     else{
         global_log->info() << "[COMaligner] DISABLED, all dims set to 0" << std::endl;
     }
 
     // TODO: Check for OpenMP implementation of above for-loop
-    // TODO: Check if ComponentID check is important
-    // TODO: CHECK IF MPI IMPLEMENTATION NECESSARY
-    // TODO: WRITE UNIT TEST
-    // TODO: What about non-monitored particles (Differentiate?)
 }
 
 //! @brief called after Forces are applied
@@ -172,14 +183,14 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
 //! \param lmu
 //! \param mcav
 void COMaligner::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                         unsigned long simstep, std::list<ChemicalPotential> *lmu,
-                         std::map<unsigned, CavityEnsemble> *mcav) {
+                         unsigned long simstep) {
 
-    if(_enabled){
+    // Moved to before Forces
+    /*if(_enabled){
         for(ParticleIterator tm = particleContainer->iterator(); tm.hasNext(); tm.next()){
             for (int d = _dim_start; d < _dim_end; d += _dim_step){
                 tm->move(d, _motion[d]);
             }
         }
-    }
+    }*/
 }

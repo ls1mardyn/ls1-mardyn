@@ -298,8 +298,7 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 
 void MmpldWriter::endStep(ParticleContainer *particleContainer,
                           DomainDecompBase *domainDecomp, Domain *domain,
-                          unsigned long simstep, std::list<ChemicalPotential> * /*lmu*/,
-                          map<unsigned, CavityEnsemble> * /*mcav*/)
+                          unsigned long simstep)
 {
 	if((simstep < _startTimestep) || (simstep > _stopTimestep) || (0 != ((simstep - _startTimestep) % _writeFrequency)) ) {
 		return;

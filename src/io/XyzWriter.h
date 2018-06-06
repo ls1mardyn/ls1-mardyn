@@ -4,7 +4,7 @@
 #include <string>
 
 #include "ensemble/GrandCanonical.h"
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 /** @brief Writes out an ASCII file in the *.xyz-format containing coordinates of each molecule.
  *
@@ -37,8 +37,7 @@ public:
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            unsigned long simstep
     );
 
 	void finish(ParticleContainer *particleContainer,

@@ -1,7 +1,7 @@
 #ifndef VISWRITER_H_
 #define VISWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "Domain.h"
 #include "ensemble/GrandCanonical.h"
 #include <string>
@@ -38,8 +38,7 @@ public:
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            unsigned long simstep
     );
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain);

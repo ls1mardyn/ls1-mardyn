@@ -8,7 +8,7 @@
 #ifndef VTKWRITER_H_
 #define VTKWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "io/vtk/VTKMoleculeWriterImplementation.h"
 
 /**
@@ -42,9 +42,7 @@ public:
 	//! @todo document me!
 	virtual void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep,
-            std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            Domain *domain, unsigned long simstep
     );
 
 	//! @todo document me!

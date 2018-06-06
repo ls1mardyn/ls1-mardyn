@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 
 /** @brief writes out information about decomposition of the simulation domain.
@@ -38,8 +38,7 @@ public:
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            unsigned long simstep
     );
 	//! @todo comment
 	void finish(ParticleContainer *particleContainer,

@@ -30,8 +30,7 @@ void DensityProfileWriter::init(ParticleContainer *particleContainer, DomainDeco
 }
 
 void DensityProfileWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                                   unsigned long simstep, std::list<ChemicalPotential> *lmu,
-                                   std::map<unsigned int, CavityEnsemble> *mcav) {
+                                   unsigned long simstep) {
 	int mpi_rank = domainDecomp->getRank();
 	if ((simstep >= _initStatistics) && (simstep % _profileRecordingTimesteps == 0)) {
 		domain->recordProfile(particleContainer, _doRecordVirialProfile);

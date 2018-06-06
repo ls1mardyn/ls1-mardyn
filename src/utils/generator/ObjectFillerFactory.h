@@ -1,7 +1,7 @@
 #ifndef OBJECTFILLER_FACTORY
 #define OBJECTFILLER_FACTORY
 
-#include "utils/PluginFactory.h"
+#include "plugins/PluginFactory.h"
 
 class ObjectFillerBase;
 

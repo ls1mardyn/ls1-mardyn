@@ -5,9 +5,6 @@
 #include <map>
 #include <string>
 
-#include "ensemble/GrandCanonical.h"
-#include "ensemble/CavityEnsemble.h"
-
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
@@ -16,7 +13,6 @@ class XMLfileUnits;
 
 /** @todo Mark all parameters as const: output plugins should not modify the state of the simulation. */
 /** @todo get rid of the domain parameter */
-/** @todo get rid of lmu and mcav as well, if possible. */
 /** @todo clean up all classes implementing this interface */
 
 
@@ -87,6 +83,12 @@ public:
     virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
 
+    /** @brief Method will be called first thing in a new timestep. */
+	virtual void beforeEventNewTimestep(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) {};
+
     /** @brief Method beforeForces will be called before forcefields have been applied
      *
      * make pure Virtual ?
@@ -118,10 +120,7 @@ public:
      */
     virtual void endStep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain, unsigned long simstep,
-            std::list<ChemicalPotential>* lmu,
-            std::map<unsigned, CavityEnsemble>* mcav
-    ) = 0;
+            Domain* domain, unsigned long simstep) = 0;
 
     /** @brief Method finalOutput will be called at the end of the simulation
      *

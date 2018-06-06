@@ -3,15 +3,16 @@
 #define CAVITYENSEMBLE_H_
 
 #include <map>
+#include <set>
 
 #include "utils/Random.h"
-#include "molecules/Molecule.h"
-#include "molecules/Component.h"
 
 using namespace std;
 
 class DomainDecompBase;
 class ParticleContainer;
+class Component;
+#include "molecules/MoleculeForwardDeclaration.h"
 
 class CavityEnsemble {
  public:

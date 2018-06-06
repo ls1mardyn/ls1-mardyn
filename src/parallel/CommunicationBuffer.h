@@ -15,6 +15,12 @@
 #include <stddef.h>
 #include <mpi.h>
 
+// do not uncomment the if, it will break halo copies of the kddecomposition!
+//#if (not defined(NDEBUG))
+#define LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
+//#pragma message "Compilation info: Unique IDs of Halo-Molecules are always present."
+//#endif
+
 /**
  * This class enables to send only position-data when sending HALO molecules
  * and all data, when sending LEAVING molecules.
@@ -56,7 +62,7 @@ public:
 	// read
 	void readLeavingMolecule(size_t indexOfMolecule, Molecule& m) const;
 	void readHaloMolecule(size_t indexOfMolecule, Molecule& m) const;
-        void readForceMolecule(size_t indexOfMolecule, Molecule& m) const;
+	void readForceMolecule(size_t indexOfMolecule, Molecule& m) const;
 
 	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo); 
 	void resizeForReceivingMolecules(unsigned long& numForces);

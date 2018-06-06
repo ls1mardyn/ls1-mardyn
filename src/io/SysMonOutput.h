@@ -1,8 +1,9 @@
 #ifndef SYSMONOUTPUT_H_
 #define SYSMONOUTPUT_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
+#include <fstream>
 
 class SysMonOutput : public PluginBase {
 public:
@@ -16,7 +17,7 @@ public:
 	//! @todo comment
 
 	void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                 unsigned long simstep, std::list<ChemicalPotential> *lmu, std::map<unsigned, CavityEnsemble> *mcav);
+                 unsigned long simstep);
 	
 	//! @todo comment
 	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain);

@@ -7,7 +7,7 @@
 #include <limits>
 #include <vector>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
 
@@ -32,8 +32,7 @@ public:
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            unsigned long simstep
     );
 
 	void finish(ParticleContainer *particleContainer,

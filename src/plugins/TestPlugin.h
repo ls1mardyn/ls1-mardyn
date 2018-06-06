@@ -8,7 +8,7 @@
 #ifndef SRC_UTILS_TESTPLUGIN_H_
 #define SRC_UTILS_TESTPLUGIN_H_
 
-#include "utils/PluginBase.h"
+#include "PluginBase.h"
 
 class TestPlugin: public PluginBase {
 public:
@@ -28,6 +28,14 @@ public:
     void readXML(XMLfileUnits& xmlconfig) {
         global_log -> debug() << "[TESTPLUGIN] READING XML" << endl;
     }
+
+    /** @brief Method will be called first thing in a new timestep. */
+	void beforeEventNewTimestep(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) {
+		global_log -> debug() << "[TESTPLUGIN] BEFORE EVENT NEW TIMESTEP" << endl;
+	};
 
     /** @brief Method beforeForces will be called before forcefields have been applied
             *
@@ -62,9 +70,7 @@ public:
      */
     void endStep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain, unsigned long simstep,
-            std::list<ChemicalPotential>* lmu,
-            std::map<unsigned, CavityEnsemble>* mcav
+            Domain* domain, unsigned long simstep
     ) {
         global_log->debug()  << "[TESTPLUGIN] ENDSTEP" << endl;
     }

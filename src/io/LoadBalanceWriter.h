@@ -1,10 +1,11 @@
 #ifndef SRC_IO_LOADBALANCEWRITER_H_
 #define SRC_IO_LOADBALANCEWRITER_H_
 
-#include <string>
-
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "utils/Timer.h"
+
+#include <string>
+#include <vector>
 
 /** name of the LoadbalanceWriter's default timer */
 #define LB_WRITER_DEFAULT_TIMER_NAME "LoadbalanceWriter_default"
@@ -53,8 +54,7 @@ public:
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            unsigned long simstep
     );
 
 	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {

@@ -8,45 +8,44 @@
 #ifndef MAXCHECK_H_
 #define MAXCHECK_H_
 
-#include "utils/PluginBase.h"
+#include "PluginBase.h"
 
 #include <string>
 #include <map>
 #include <unordered_map>
 #include <list>
 #include <cstdint>
+#include <vector>
 
-enum MaxCheckMethods
-{
-	MCM_UNKNOWN = 0,
-	MCM_LIMIT_TO_MAX_VALUE = 1,
-	MCM_DELETE_PARTICLES = 2
-};
+#include "molecules/MoleculeForwardDeclaration.h"
 
-struct TimestepControl
-{
-	uint64_t start;
-	uint64_t freq;
-	uint64_t stop;
-};
-
-struct MaxVals
-{
-	double F;
-	double F2;
-	double v;
-	double v2;
-	uint32_t method;
-};
-typedef std::unordered_map<uint32_t, MaxVals> maxvals_map;
-
-class ParticleContainer;
-class DomainDecompBase;
-class Domain;
-class ChemicalPotential;
-class CavityEnsemble;
 class MaxCheck : public PluginBase
 {
+private:
+	enum MaxCheckMethods
+	{
+		MCM_UNKNOWN = 0,
+		MCM_LIMIT_TO_MAX_VALUE = 1,
+		MCM_DELETE_PARTICLES = 2
+	};
+
+	struct TimestepControl
+	{
+		uint64_t start;
+		uint64_t freq;
+		uint64_t stop;
+	};
+
+	struct MaxVals
+	{
+		double F;
+		double F2;
+		double v;
+		double v2;
+		uint32_t method;
+	};
+	typedef std::unordered_map<uint32_t, MaxVals> maxvals_map;
+
 public:
 	// constructor and destructor
 	MaxCheck();
@@ -79,8 +78,7 @@ public:
 	void endStep(
 			ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, Domain *domain,
-			unsigned long simstep, std::list<ChemicalPotential> *lmu,
-			std::map<unsigned, CavityEnsemble> *mcav
+			unsigned long simstep
 	) override;
 
 	void finish(ParticleContainer *particleContainer,

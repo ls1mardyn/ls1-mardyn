@@ -42,8 +42,8 @@ void VTKGridWriterTest::testEmptyGrid() {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	DomainDecomposition domainDecomposition;
 	Domain domain(rank, NULL);
-	writer.endStep(container, &domainDecomposition, &domain, 1, NULL, NULL);
-	writer.endStep(container, &domainDecomposition, &domain, 2, NULL, NULL);
+	writer.endStep(container, &domainDecomposition, &domain, 1);
+	writer.endStep(container, &domainDecomposition, &domain, 2);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank == 0) {
@@ -65,10 +65,10 @@ void VTKGridWriterTest::testEmptyGrid() {
 #else
 	Domain domain(0, NULL);
 	DomainDecompBase dummy;
-    writer.endStep(container, &dummy, &domain, 1, NULL, NULL);
+    writer.endStep(container, &dummy, &domain, 1);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKGridWriterTest_1.vtu"));
 
-    writer.endStep(container, &dummy, &domain, 2, NULL, NULL);
+    writer.endStep(container, &dummy, &domain, 2);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", fileExists("VTKGridWriterTest_2.vtu"));
 
 	removeFile("VTKGridWriterTest_2.vtu");

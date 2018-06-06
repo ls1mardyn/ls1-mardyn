@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "molecules/Molecule.h"
 #include "utils/CommVar.h"
 
@@ -75,7 +75,7 @@ public:
 
 	//! plot all the statistics calculated to one or several files
 	void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomposition, Domain *domain,
-                 unsigned long simStep, std::list<ChemicalPotential> *lmu, std::map<unsigned, CavityEnsemble> *mcav);
+                 unsigned long simStep);
 
 	//! increment the counter indicating for how many iterations
 	//! the molecule pairs have been counted.

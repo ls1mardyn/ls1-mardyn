@@ -3,9 +3,7 @@
 
 #include <string>
 
-#include "ensemble/CavityEnsemble.h"
-#include "ensemble/GrandCanonical.h"
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 class CavityWriter : public PluginBase {
 public:
@@ -22,7 +20,7 @@ public:
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, std::list<ChemicalPotential> *lmu, std::map<unsigned, CavityEnsemble> *mcav
+            unsigned long simstep
     );
 	//! @todo comment
 	void finish(ParticleContainer *particleContainer,

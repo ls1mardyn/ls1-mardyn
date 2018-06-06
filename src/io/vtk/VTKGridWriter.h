@@ -8,7 +8,7 @@
 #ifndef VTKGRIDWRITER_H_
 #define VTKGRIDWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "io/vtk/VTKGridCell.h"
 #include "io/vtk/VTKGridVertex.h"
 
@@ -64,9 +64,7 @@ public:
 	 */
 	virtual void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep,
-            std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            Domain *domain, unsigned long simstep
     );
 
 	virtual void finish(ParticleContainer *particleContainer,

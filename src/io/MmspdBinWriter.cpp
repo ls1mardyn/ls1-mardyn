@@ -174,8 +174,7 @@ void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
 
 void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
                              DomainDecompBase *domainDecomp, Domain *domain,
-                             unsigned long simstep, std::list<ChemicalPotential> * /*lmu*/,
-                             map<unsigned, CavityEnsemble> * /*mcav*/){
+                             unsigned long simstep){
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream, outputstream;
 		filenamestream << _outputPrefix;

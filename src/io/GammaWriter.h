@@ -1,7 +1,7 @@
 #ifndef SRC_IO_GAMMAWRITER_H_
 #define SRC_IO_GAMMAWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "ensemble/GrandCanonical.h"
 #include <string>
 #include <fstream>
@@ -38,8 +38,7 @@ public:
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            unsigned long simstep
     );
 	//! @todo comment
 	void finish(ParticleContainer *particleContainer,

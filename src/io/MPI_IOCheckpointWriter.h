@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
 
 class MPI_IOCheckpointWriter  : public PluginBase{
 public:
@@ -35,7 +35,7 @@ public:
               DomainDecompBase *domainDecomp, Domain *domain);
 	void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep, list<ChemicalPotential> * /*lmu*/, map<unsigned, CavityEnsemble> * /*mcav*/
+            unsigned long simstep
     );
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain);

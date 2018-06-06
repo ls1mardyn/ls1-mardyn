@@ -8,6 +8,7 @@
 // #include "io/InputPluginFactory.h"
 #include "io/BinaryReader.h"
 #include "utils/Logger.h"
+#include "utils/Coordinate3D.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
 #ifdef ENABLE_MPI
@@ -116,6 +117,13 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Input reader for original not specified." << endl;
 		Simulation::exit(1);
 	}
+	if(xmlconfig.changecurrentnode("origin")) {
+		Coordinate3D origin;
+		origin.readXML(xmlconfig);
+		origin.get(_origin);
+		xmlconfig.changecurrentnode("..");
+	}
+	global_log->info() << "Base point for the replication: [" << _origin[0] << "," << _origin[1] << "," << _origin[2] << "]" << endl;
 }
 
 
@@ -140,8 +148,7 @@ void ReplicaFiller::init() {
 	double b[3] = {0.0, domain.getGlobalLength(1), 0.0};
 	double c[3] = {0.0, 0.0, domain.getGlobalLength(2)};
 	lattice.init(triclinic, primitive, a, b, c);
-	double origin[3] = {0.0, 0.0, 0.0};
-	_gridFiller.init(lattice, basisContainer.getBasis(), origin);
+	_gridFiller.init(lattice, basisContainer.getBasis(), _origin);
 }
 
 int ReplicaFiller::getMolecule(Molecule* molecule) {

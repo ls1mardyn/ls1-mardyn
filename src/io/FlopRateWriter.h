@@ -8,7 +8,9 @@
 #ifndef SRC_IO_FLOPRATEWRITER_H_
 #define SRC_IO_FLOPRATEWRITER_H_
 
-#include "utils/PluginBase.h"
+#include "plugins/PluginBase.h"
+
+#include <fstream>
 
 class FlopCounter;
 
@@ -41,9 +43,7 @@ public:
 	//! will be called once every time step during the simulation (see Simulation.cpp)
 	void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep,
-            std::list<ChemicalPotential> *lmu,
-            std::map<unsigned, CavityEnsemble> *mcav
+            Domain *domain, unsigned long simstep
     );
 
 	//! @brief will be called at the end of the simulation

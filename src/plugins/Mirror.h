@@ -3,7 +3,7 @@
 #ifndef MIRROR_H_
 #define MIRROR_H_
 
-#include "utils/PluginBase.h"
+#include "PluginBase.h"
 
 #include <string>
 #include <map>
@@ -49,9 +49,7 @@ public:
 	void endStep(
 			ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, Domain *domain,
-			unsigned long simstep, std::list<ChemicalPotential> *lmu,
-			std::map<unsigned, CavityEnsemble> *mcav
-	) override {}
+			unsigned long simstep) override {}
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override {}

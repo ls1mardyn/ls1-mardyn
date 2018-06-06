@@ -362,22 +362,6 @@ public:
 	// setting the offset in y-direction (obtained from the config file), needed in the density profile output file 
 	void sYOffset(double in_yOff);
 	// end
-
-	// by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods providing a shift of the particles in the simulation box so that 
-	// the center of mass is placed in the middle of the box with respect of the x- and z-direction ( 0- and 2-direction), and the
-	// wall is kept at its initial position
-	void determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-			     double fraction);
-	void determineYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-			     double fraction);
-	void noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-			     double fraction);
-	// in this method there is no shift specific to different components, only the profiled component is kept in the centre of the box
-	void determineShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-                             double fraction);
-
-	// carrying out the actual shift of ALL particles
-	void realign( ParticleContainer* molCont);
 	
 	// method defining the component that is employed for determining the shift distance in y-direction
 	void considerComponentForYShift(unsigned cidMin, unsigned cidMax);
