@@ -15,6 +15,17 @@ The idea of the General Plugins is to allow *optional* code, which is not necess
 The schematic below shows the possible places in the program, at which you can insert your code.
 \image html general-plugins.png
 
+Comments about the state of the simulation at the individual interface calls
+----------------------------------------------------------------------------
+PluginBase::beforeEventNewTimestep: The iteration has just began. Molecules are sorted in the correct cells. Position and velocity are available at the exact same physical time.
+
+PluginBase::beforeForces: The positions have been updated by a full timestep, while the velocities by a half timestep (see information on the Leapfrog integration scheme). (Some of) the molecules are not sorted in the correct cells. This step is appropriate for small modifications to the positions of molecules. However, moving a molecule by a large distance (on the order of a cutoff-radius) may lead to undefined behaviour.
+
+PluginBase::afterForces: The new forces are available. There are molecules in the Halo cells (@Steffen maybe comment on the non-Full-shell MPI schemes?). Information on the individual molecular sites is up to date. This step is appropriate to compute any additional force contributions.
+
+PluginBase::endStep: Virtually the same state as beforeEventNewTimestep, but the timestep counter is also good. This step is appropriate for output.
+
+Important: if you need arguments to one of the interface calls, which are not already present, do not add them directly. Get them through the global_simulation object instead! Also, think about whether those arguments should maybe be member fields of your plugin.
 
 Writing a new Plugin
 --------------------
