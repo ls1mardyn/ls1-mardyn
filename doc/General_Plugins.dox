@@ -17,7 +17,7 @@ The schematic below shows the possible places in the program, at which you can i
 
 Comments about the state of the simulation at the individual interface calls
 ----------------------------------------------------------------------------
-PluginBase::beforeEventNewTimestep: The iteration has just began. Molecules are sorted in the correct cells. Position and velocity are available at the exact same physical time.
+PluginBase::beforeEventNewTimestep: The iteration has just began. Molecules are sorted in the correct cells. Position and velocity are available at the exact same physical time. Timestep counter has been advanced already, but not position or velocity, so look out for mismatches. Consider using PluginBase::endStep.
 
 PluginBase::beforeForces: The positions have been updated by a full timestep, while the velocities by a half timestep (see information on the Leapfrog integration scheme). (Some of) the molecules are not sorted in the correct cells. This step is appropriate for small modifications to the positions of molecules. However, moving a molecule by a large distance (on the order of a cutoff-radius) may lead to undefined behaviour.
 
