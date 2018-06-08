@@ -38,14 +38,14 @@
 #include "plugins/COMaligner.h"
 #include "plugins/Mirror.h"
 #include "plugins/MaxCheck.h"
+#include "plugins/WallPotential.h"
 #include "plugins/ExamplePlugin.h"
+#include "plugins/TestPlugin.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
 #include "io/vtk/VTKGridWriter.h"
 #endif
-
-#include "plugins/TestPlugin.h"
 
 /** @brief Register all default plugins with base PluginBase
 	 *
@@ -54,7 +54,7 @@
 template<>
 void PluginFactory<PluginBase>::registerDefaultPlugins(){
     global_log -> debug() << "REGISTERING PLUGINS" << endl;
-    REGISTER_PLUGIN(TestPlugin);
+
     REGISTER_PLUGIN(CavityWriter);
     REGISTER_PLUGIN(CheckpointWriter);
     REGISTER_PLUGIN(DecompWriter);
@@ -77,7 +77,9 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(COMaligner);
     REGISTER_PLUGIN(Mirror);
     REGISTER_PLUGIN(MaxCheck);
+    REGISTER_PLUGIN(WallPotential);
     REGISTER_PLUGIN(ExamplePlugin);
+    REGISTER_PLUGIN(TestPlugin);
 
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
