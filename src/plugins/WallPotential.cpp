@@ -1,5 +1,6 @@
 //
 // Created by Moritz on 6/8/2018.
+// moved from /molecules/Wall.cpp by mheinen
 //
 
 #include "WallPotential.h"

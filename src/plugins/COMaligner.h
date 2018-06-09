@@ -17,11 +17,13 @@ class COMalignerTest;
 /** @brief
 * Plugin: can be enabled via config.xml <br>
 *
-* Calculates Center of mass and moves all particles to align with center of box
-* Individual dimensions X,Y,Z can be toogled on/off for the alignment
-* Alignment happens once every interval-simsteps
-* The correction factor can be set from 0-1
-* 1 being full alignment -> 0 no alignment at all
+* Calculates Center of mass and moves all particles to align with center of box<br>
+* Individual dimensions X,Y,Z can be toogled on/off for the alignment<br>
+* Alignment happens once every interval-simsteps<br>
+* The correction factor can be set from 0-1<br>
+* 1 being full alignment -> 0 no alignment at all<br>
+* <b>HALO must not be present</b> for the alignment. Halo would lead to incorrect alignment.<br>
+* This is guarenteed by calling the alignment in the beforeForces step of the simulation
 * \code{.xml}
 * <plugin name="COMaligner">
 *			<x>1</x>
@@ -29,7 +31,7 @@ class COMalignerTest;
 *			<z>1</z>
 *			<interval>1</interval>
 *			<correctionFactor>.5</correctionFactor>
-*	</plugin>
+* </plugin>
 * \endcode
 */
 class COMaligner : public PluginBase{

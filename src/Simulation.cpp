@@ -33,7 +33,6 @@
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 #include "integrators/LeapfrogRMM.h"
-#include "molecules/Wall.h"
 #include "plugins/Mirror.h"
 
 #include "plugins/PluginBase.h"
@@ -108,10 +107,6 @@ Simulation::Simulation()
 	_domain(nullptr),
 	_inputReader(nullptr),
 	_outputPrefix("mardyn"),
-	_applyWallFun_LJ_9_3(false),
-	_applyWallFun_LJ_10_4(false),
-	_applyMirror(false),
-	_wall(nullptr),
 	_momentumInterval(1000),
 	_rand(8624),
 	_longRangeCorrection(nullptr),
@@ -148,8 +143,6 @@ Simulation::~Simulation() {
 	_domain = nullptr;
 	delete _inputReader;
 	_inputReader = nullptr;
-	delete _wall;
-	_wall = nullptr;
 	delete _longRangeCorrection;
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
@@ -465,36 +458,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar. Program exit ..." << endl;
                 Simulation::exit(-1);
 			}
-			xmlconfig.changecurrentnode("..");
-		}
-
-		/* features */
-		if(xmlconfig.changecurrentnode("features")) {
-			int numFeatures = 0;
-			XMLfile::Query query = xmlconfig.query("feature");
-			numFeatures = query.card();
-			global_log->info() << "Number of features: " << numFeatures << endl;
-			if(numFeatures < 1) {
-				global_log->warning() << "No feature specified." << endl;
-			}
-			string oldpath = xmlconfig.getcurrentnodepath();
-			XMLfile::Query::const_iterator featureIter;
-			for( featureIter = query.begin(); featureIter; featureIter++ ) {
-				xmlconfig.changecurrentnode( featureIter );
-				string featureName;
-				xmlconfig.getNodeValue("@name", featureName);
-				if("Wallfun" == featureName) {
-					_wall = new Wall();
-					_wall->readXML(xmlconfig);
-					_applyWallFun_LJ_9_3 = true;
-				}
-				else
-				{
-					global_log->warning() << "Unknown feature " << featureName << endl;
-					continue;
-				}
-			}
-			xmlconfig.changecurrentnode(oldpath);
 			xmlconfig.changecurrentnode("..");
 		}
 
@@ -1033,15 +996,6 @@ void Simulation::simulate() {
 		for (auto plugin : _plugins) {
 			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
-		}
-
-
-		if(_wall && _applyWallFun_LJ_9_3){
-		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
-		}
-
-		if(_wall && _applyWallFun_LJ_10_4){
-		  _wall->calcTSLJ_10_4(_moleculeContainer, _domain);
 		}
 
 		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */

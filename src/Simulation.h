@@ -372,13 +372,6 @@ private:
 
 	/** prefix for the names of all output files */
 	std::string _outputPrefix;
-	
-	//! applying a field representing the wall
-	bool _applyWallFun_LJ_9_3;
-	bool _applyWallFun_LJ_10_4;
-	bool _applyMirror;
-	
-	Wall* _wall;
 
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;

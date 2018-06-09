@@ -9,7 +9,7 @@ Plugin name  | Up to 5 Keywords | Short Description (one line)
 ------------- | ------------- | --
 CavityWriter | todo | todo
 CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up. See also MPICheckpointWriter and MPI_IOCheckpointWriter.
-COMaligner | todo | todo
+COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
 DecompWriter | todo | todo. Writes information on the MPI Domain Decomposition.
 DensityProfileWriter | todo | todo
 EnergyLogWriter | print, file, thermodynamic macroscopic quantities | Write the global \f$N\f$, \f$U_\mathrm{pot}\f$, \f$U_\mathrm{kin}\f$, \f$U_\mathrm{kinTrans}\f$, \f$U_\mathrm{kinRot}\f$, \f$T\f$, \f$p\f$ to file. Duplication with ResultWriter?
@@ -28,11 +28,12 @@ PovWriter | visualization?, todo | todo
 RDF | radial distribution function | Calculate and write the radial distribution function to file. Slows down visibly, set sampling frequency > 1.
 ResultWriter | print, macroscopic thermodynamic quantities, file | Write macroscopic thermodynamic quantities to file, such as temperature, pressure, BetaTrans, BetaRot, cv, number of molecules and number of cavities (?).
 SysMonOutput | todo | todo
-TestPlugin  | test | Test correctness of plugin calls within Simulation. Duplication with ExamplePlugin?
+TestPlugin  | test | Test correctness of plugin calls within Simulation. Simpler version without XML input of ExamplePlugin
 VectorizationTuner | todo | todo
 VISWriter | visualization?, todo | todo
 VTKGridWriter | vtk, grid | Write MPI rank, number of molecules in each cell in a .vtu or .pvtu file. Requires compiling with VTK=1.
 VTKMoleculeWriter | vtk, visualization | Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.
+WallPotential | potential, Wall, Lennard-Jones | Exerts the force of a Lennard-Jones (9-3 or 10-4) potential on the specified components or all particles.
 XyzWriter | visualization?, todo | todo
 
 */
