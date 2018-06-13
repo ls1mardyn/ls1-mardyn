@@ -623,9 +623,12 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 		MPI_Offset file_end_pos;
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_File_get_position(fh, &file_end_pos);
+		write_size += file_end_pos;
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
 		offset += file_end_pos;
+	} else {
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
 	}
-	MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
 	MPI_File_write_at(fh, offset, output_str.c_str(), output_str.size(), MPI_CHAR, MPI_STATUS_IGNORE);
 	MPI_File_close(&fh);
 #else
