@@ -443,12 +443,13 @@ void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegio
 	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegion* inQuestion) { // IS THIS CORRECT?
-	return myRegion->rmax[0] > inQuestion->rmin[0] && myRegion->rmax[1] > inQuestion->rmin[1]
-			&& myRegion->rmax[2] > inQuestion->rmin[2] && myRegion->rmin[0] <= inQuestion->rmax[0]
-			&& myRegion->rmin[1] <= inQuestion->rmax[1] && myRegion->rmin[2] <= inQuestion->rmax[2];
+bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion,
+		HaloRegion* inQuestion) {
+	return myRegion->rmax[0] > inQuestion->rmin[0] && myRegion->rmin[0] < inQuestion->rmax[0]
+		&& myRegion->rmax[1] > inQuestion->rmin[1] && myRegion->rmin[1] < inQuestion->rmax[1]
+		&& myRegion->rmax[2] > inQuestion->rmin[2] && myRegion->rmin[2] < inQuestion->rmax[2];
 	// myRegion->rmax > inQuestion->rmin
-	// && myRegion->rmin <= inQuestion->rmax
+	// && myRegion->rmin < inQuestion->rmax
 }
 
 /*
@@ -709,7 +710,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	}
 	
 	if(comm_partners01.size() > 0) {
-		std:vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
+		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
 		partners01.insert(partners01.end(), squeezed.begin(), squeezed.end());
 	}
 
