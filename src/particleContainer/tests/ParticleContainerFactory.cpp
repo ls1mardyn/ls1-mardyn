@@ -42,6 +42,8 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type t
 
 ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName) {
+	global_simulation->setcutoffRadius(cutoff);
+	global_simulation->setLJCutoff(cutoff);
 
 	   ASCIIReader inputReader;
 	inputReader.setPhaseSpaceHeaderFile(fileName.c_str());
