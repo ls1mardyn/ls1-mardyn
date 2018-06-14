@@ -76,7 +76,7 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 		
 		initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 		finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
-		
+		moleculeContainer->deleteOuterParticles();
 		msgType = HALO_COPIES;
 	}
 #endif

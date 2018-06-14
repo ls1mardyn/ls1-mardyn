@@ -223,6 +223,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 		} else {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
+			moleculeContainer->deleteOuterParticles();
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
 		}
 	} else {

@@ -72,6 +72,7 @@ void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool 
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 	}else{
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+		moleculeContainer->deleteOuterParticles();
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	}
 }
