@@ -33,7 +33,6 @@
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 #include "integrators/LeapfrogRMM.h"
-#include "plugins/Mirror.h"
 
 #include "plugins/PluginBase.h"
 #include "plugins/PluginFactory.h"

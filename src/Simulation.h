@@ -13,8 +13,6 @@
 // plugins
 #include "plugins/PluginFactory.h"
 
-class Wall;
-class Mirror;
 using optparse::Values;
 
 #if !defined (SIMULATION_SRC) or defined (IN_IDE_PARSER)
