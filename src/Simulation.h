@@ -17,7 +17,7 @@ class Wall;
 class Mirror;
 using optparse::Values;
 
-#ifndef SIMULATION_SRC
+#ifndef SIMULATION_SRC or IN_IDE_PARSER
 class Simulation;
 /** Global pointer to the simulation object. Do not use directly. Instead use the reference. */
 extern Simulation* global_simulation;
