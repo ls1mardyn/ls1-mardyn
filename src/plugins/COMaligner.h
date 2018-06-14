@@ -38,6 +38,7 @@ class COMaligner : public PluginBase{
 
 private:
     friend COMalignerTest;
+
     // DEFAULT: ALIGN IN ALL DIMENSIONS
     bool _alignX = true;
     bool _alignY = true;
