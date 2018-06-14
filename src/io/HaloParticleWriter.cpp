@@ -72,7 +72,7 @@ void HaloParticleWriter::afterForces(ParticleContainer *particleContainer, Domai
 		domainDecomp->getBoundingBoxMinMax(global_simulation->getDomain(), rmin,
 				rmax);
 		std::ofstream checkpointfilestream;
-		checkpointfilestream.open(filename.c_str(), std::ios::app);
+		checkpointfilestream.open(filename.c_str());
 		checkpointfilestream.precision(20);
 		ParticleIterator tempMolecule;
 		for (tempMolecule = particleContainer->iterator();
