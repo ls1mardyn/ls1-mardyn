@@ -33,6 +33,8 @@ NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimm
 	_leavingExportNeighbours->resize(this->getCommDims());
 	_leavingImportNeighbours->resize(this->getCommDims());
 	
+	_neighbours = nullptr;
+
 #else
 	_neighbours = new std::vector<std::vector<CommunicationPartner>>();
 	_neighbours->resize(this->getCommDims());
@@ -382,6 +384,10 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			// forceImport / forceExport
 			if(import) _neighbours = _haloExportForceImportNeighbours;
 			else _neighbours = _haloImportForceExportNeighbours;
+			break;
+		case LEAVING_AND_HALO_COPIES:
+			global_log->error()<< "WRONG type in selectNeighbours - this should not be used for push-pull-partners selectNeighbours method";
+			Simulation::exit(1);
 			break;
 	}
 }

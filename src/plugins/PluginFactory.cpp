@@ -21,6 +21,7 @@
 #include "io/EnergyLogWriter.h"
 #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
+#include "io/HaloParticleWriter.h"
 #include "io/LoadBalanceWriter.h"
 #include "io/MPICheckpointWriter.h"
 #include "io/MmpldWriter.h"
@@ -62,6 +63,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(EnergyLogWriter);
     REGISTER_PLUGIN(FlopRateWriter);
     REGISTER_PLUGIN(GammaWriter);
+    REGISTER_PLUGIN(HaloParticleWriter);
     REGISTER_PLUGIN(LoadbalanceWriter);
     REGISTER_PLUGIN(MPICheckpointWriter);
     REGISTER_PLUGIN(MmpldWriter);
