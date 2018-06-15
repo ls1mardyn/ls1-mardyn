@@ -51,11 +51,14 @@ NeighbourCommunicationScheme::NeighbourCommunicationScheme(
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
-	delete _haloExportForceImportNeighbours;
-	delete _haloImportForceExportNeighbours;
-	delete _leavingExportNeighbours;
-	delete _leavingImportNeighbours;
-	delete _neighbours;
+	if (_pushPull) {
+		delete _haloExportForceImportNeighbours;
+		delete _haloImportForceExportNeighbours;
+		delete _leavingExportNeighbours;
+		delete _leavingImportNeighbours;
+	} else {
+		delete _neighbours;
+	}
 	delete _zonalMethod;
 }
 
@@ -86,13 +89,13 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 			moleculeContainer->deleteOuterParticles();
 			msgType = HALO_COPIES;
 		}
-	} else {
-		initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
-				removeRecvDuplicates, domainDecomp);
-
-		finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType,
-				removeRecvDuplicates, domainDecomp);
 	}
+	initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
+			removeRecvDuplicates, domainDecomp);
+
+	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType,
+			removeRecvDuplicates, domainDecomp);
+
 }
 
 void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions,
