@@ -382,7 +382,7 @@ void LinkedCellsTest::testHalfShellMPIIndirect() {
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
-	doForceComparisonTest("simple-lj-tiny3.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
 }
 
 void LinkedCellsTest::testMidpointMPIIndirect() {
