@@ -534,8 +534,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	auto cellProc2 = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
 
 #ifdef ENABLE_MPI
-	domainDecompositionFS->initCommunicationPartners(cutoff, _domain);
-	domainDecompositionTest->initCommunicationPartners(cutoff, _domain);
+	domainDecompositionFS->initCommunicationPartners(cutoff, _domain, container);
+	domainDecompositionTest->initCommunicationPartners(cutoff, _domain, containerTest);
 #endif
 
 	//------------------------------------------------------------

@@ -37,7 +37,7 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(
 	ParticleContainer* container = initializeFromFile(
 			ParticleContainerFactory::LinkedCell, filename, cutoff);
 
-	kdd->initCommunicationPartners(cutoff, _domain);
+	kdd->initCommunicationPartners(cutoff, _domain, container);
 
 	int numMols = container->getNumberOfParticles();
 	kdd->collCommInit(1);
@@ -85,7 +85,7 @@ void KDDecompositionTest::testHaloCorrect() {
 			ParticleContainerFactory::LinkedCell, "haloCorrect_regular.inp",
 			cutoff);
 
-	kdd->initCommunicationPartners(cutoff, _domain);
+	kdd->initCommunicationPartners(cutoff, _domain, container);
 	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
 	// this should give us halos at -1., -2., 14., 15.
 	// we will thus iterate over
@@ -154,7 +154,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	ParticleContainer* container = initializeFromFile(
 			ParticleContainerFactory::LinkedCell, filename, cutoff);
 
-	kdd->initCommunicationPartners(cutoff, _domain);
+	kdd->initCommunicationPartners(cutoff, _domain, container);
 
 	int numMols = container->getNumberOfParticles();
 	kdd->collCommInit(1);
@@ -428,7 +428,7 @@ void KDDecompositionTest::testbalanceAndExchange() {
 			ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp",
 			cutOff);
 
-	kdd->initCommunicationPartners(cutOff, _domain);
+	kdd->initCommunicationPartners(cutOff, _domain, moleculeContainer);
 
 	moleculeContainer->update();
 

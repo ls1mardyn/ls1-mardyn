@@ -28,7 +28,7 @@ public:
 		return _commDimms;
 	}
 	NeighbourCommunicationScheme() = delete;
-	NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod);
+	NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod, bool pushPull);
 
 	virtual ~NeighbourCommunicationScheme();
 
@@ -50,7 +50,9 @@ public:
 		_coversWholeDomain[d] = covers;
 	}
 
-	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp) = 0;
+	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain,
+			DomainDecompMPIBase* domainDecomp,
+			ParticleContainer* moleculeContainer) = 0;
 
 	virtual std::vector<int> get3StageNeighbourRanks() = 0;
 
@@ -112,18 +114,20 @@ protected:
 	//! list of all neighbours (non-squeezed)
 	std::vector<CommunicationPartner> _fullShellNeighbours;
 
+	bool _pushPull;
 };
 
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 	friend class NeighbourCommunicationSchemeTest;
 public:
 	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
-			NeighbourCommunicationScheme(1, zonalMethod) {
+			NeighbourCommunicationScheme(1, zonalMethod, false) {
 	}
 	virtual ~DirectNeighbourCommunicationScheme() {
 	}
-	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
-			override;
+	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain,
+			DomainDecompMPIBase* domainDecomp,
+			ParticleContainer* moleculeContainer) override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {
 		std::vector<int> neighbourRanks;
 		for (unsigned int i = 0; i < (*_neighbours)[0].size(); i++) {
@@ -166,15 +170,16 @@ class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme 
 public:
 
 	IndirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
-			NeighbourCommunicationScheme(3, zonalMethod) {
+			NeighbourCommunicationScheme(3, zonalMethod, false) {
 	}
 	virtual ~IndirectNeighbourCommunicationScheme() {
 	}
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
 
-	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
-			override;
+	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain,
+			DomainDecompMPIBase* domainDecomp,
+			ParticleContainer* moleculeContainer) override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {
 		std::vector<int> neighbourRanks;
 		for (unsigned int i = 0; i < _fullShellNeighbours.size(); i++) {

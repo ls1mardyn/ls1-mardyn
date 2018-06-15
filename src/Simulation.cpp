@@ -582,7 +582,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	// if we are using the DomainDecomposition, please complete its initialization:
 	DomainDecomposition *temp = dynamic_cast<DomainDecomposition*>(_domainDecomposition);
 	if (temp != nullptr) {
-		temp->initCommunicationPartners(_cutoffRadius, _domain);
+		temp->initCommunicationPartners(_cutoffRadius, _domain, _moleculeContainer);
 	}
 #endif
 

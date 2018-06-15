@@ -78,7 +78,7 @@ public:
 	//! @param domain e.g. needed to get the bounding boxes
 	void printDecomp(std::string filename, Domain* domain) override;
 
-	void initCommunicationPartners(double cutoffRadius, Domain * domain);
+	void initCommunicationPartners(double cutoffRadius, Domain * domain,ParticleContainer* moleculeContainer);
 
     //returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local area)
 	std::vector<int> getNeighbourRanks() override;

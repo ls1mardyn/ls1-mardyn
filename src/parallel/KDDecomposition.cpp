@@ -249,14 +249,14 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		_decompTree = newDecompRoot;
 //		delete _ownArea; dont delete! this is a pointer only to one of the objects in the whole tree, not a real object
 		_ownArea = newOwnLeaf;
-		initCommunicationPartners(_cutoffRadius, domain);
+		initCommunicationPartners(_cutoffRadius, domain, moleculeContainer);
 
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
 	}
 }
 
-void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
-	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this);
+void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain, ParticleContainer* moleculeContainer) {
+	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this, moleculeContainer);
 }
 
 void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const {

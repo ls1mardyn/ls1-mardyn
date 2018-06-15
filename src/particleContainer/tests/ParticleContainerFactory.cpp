@@ -63,7 +63,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		DomainDecomposition * temp = 0;
 		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
 		if (temp != 0) {
-			temp->initCommunicationPartners(cutoff, domain);
+			temp->initCommunicationPartners(cutoff, domain, moleculeContainer);
 		}
 		#endif
 	} else {
