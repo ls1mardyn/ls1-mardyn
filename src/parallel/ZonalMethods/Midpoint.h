@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "Simulation.h"
 #include "ZonalMethod.h"
 
 /**
@@ -30,8 +31,9 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3]) override {
-		return getLeavingExportRegions(initialRegion, cutoffRadius / 2., coversWholeDomain);
+			bool coversWholeDomain[3], double maxCellLength) override {
+		// the midpoint traversal is cell based, so the halo region has to be maxcelllength wide.
+		return getLeavingExportRegions(initialRegion, maxCellLength, coversWholeDomain);
 	}
 
 	/**
@@ -43,12 +45,13 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3]) override {
+			bool coversWholeDomain[3], double maxCellLength) override {
 		const std::function<bool(const int[3])> condition = [](const int[3])->bool {
 			// no condition for leaving particles.
 				return true;
 			};
-		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius / 2., coversWholeDomain, condition);
+		// the midpoint traversal is cell based, so the halo region has to be maxcelllength wide.
+		return getHaloRegionsConditionalInside(initialRegion, maxCellLength, coversWholeDomain, condition);
 	}
 };
 

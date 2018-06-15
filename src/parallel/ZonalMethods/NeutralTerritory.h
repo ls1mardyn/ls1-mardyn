@@ -23,7 +23,7 @@ public:
 
 	// TODO: This is untested
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3]) override {
+			bool coversWholeDomain[3], double maxCellLength) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
 			int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[2];
 			// determines, whether the region is in the disk
@@ -40,7 +40,7 @@ public:
 
 	// TODO: This is untested
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3]) override {
+			bool coversWholeDomain[3], double maxCellLength) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
 			int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[2];
 			// determines, whether the region is in the disk

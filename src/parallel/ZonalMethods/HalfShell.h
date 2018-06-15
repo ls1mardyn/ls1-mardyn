@@ -26,19 +26,23 @@ public:
 	}
 
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3]) override {
+			bool coversWholeDomain[3], double maxCellLength) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
-			int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[2];
-			return pseudoCellIndex > 0;
+			// TODO reenable this check and fix halfshelltraversal
+			//int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[0];
+			//return pseudoCellIndex > 0;
+			return true;
 		};
 		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}
 
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3]) override {
+			bool coversWholeDomain[3], double maxCellLength) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
-			int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[2];
-			return pseudoCellIndex < 0;
+			// TODO reenable this check and fix halfshelltraversal
+			//int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[0];
+			//return pseudoCellIndex < 0;
+			return true;
 		};
 		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}

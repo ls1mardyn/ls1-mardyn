@@ -37,7 +37,6 @@ inline void HalfShellTraversal<CellTemplate>::processBaseCell(CellProcessor& cel
 			cellProcessor.processCellPair(currentCell, neighbourCell, sumAllMacroscopic);
 		}
 	}
-
 }
 
 #endif /* SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_HALFSHELLTRAVERSAL_H_ */

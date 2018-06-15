@@ -236,6 +236,7 @@ public:
         
 	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) = 0; // new
 
+	virtual double* getCellLength() = 0;
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

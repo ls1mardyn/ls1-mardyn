@@ -26,7 +26,7 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3])=0;
+			bool coversWholeDomain[3], double maxCellLength)=0;
 
 	/**
 	 * Returns the export halo Regions of the process.
@@ -37,7 +37,7 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3])=0;
+			bool coversWholeDomain[3], double maxCellLength)=0;
 
 	/**
 	 * Returns the export leaving Regions of the process.
