@@ -16,6 +16,7 @@
 // Output plugins
 #include "io/CavityWriter.h"
 #include "io/CheckpointWriter.h"
+#include "io/CommunicationPartnerWriter.h"
 #include "io/DecompWriter.h"
 #include "io/DensityProfileWriter.h"
 #include "io/EnergyLogWriter.h"
@@ -58,6 +59,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
 
     REGISTER_PLUGIN(CavityWriter);
     REGISTER_PLUGIN(CheckpointWriter);
+    REGISTER_PLUGIN(CommunicationPartnerWriter);
     REGISTER_PLUGIN(DecompWriter);
     REGISTER_PLUGIN(DensityProfileWriter);
     REGISTER_PLUGIN(EnergyLogWriter);
