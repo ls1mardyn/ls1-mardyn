@@ -66,10 +66,11 @@ void printNeigbours(std::ofstream& stream,
 		std::vector<std::vector<CommunicationPartner>>& partners) {
 	for (size_t i = 0; i < partners.size(); i++) {
 		auto& vector = partners[i];
-		stream << "neighbor dimension: " << i;
+		stream << "neighbor dimension: " << i << std::endl;
 		for (size_t j = 0; j < vector.size(); j++) {
 			auto& partner = vector[j];
 			stream << "Partner: " << j << std::endl;
+			partner.print(stream);
 		}
 	}
 }
