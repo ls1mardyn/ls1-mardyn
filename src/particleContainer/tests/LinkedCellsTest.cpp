@@ -370,6 +370,11 @@ void LinkedCellsTest::testTraversalMethods() {
 
 // new tests here
 
+void LinkedCellsTest::testFullShellMPIDirectPP() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::C08, 1, "direct-pp", "fs");
+}
+
 void LinkedCellsTest::testFullShellMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::C08, 1, "direct", "fs");
@@ -380,6 +385,11 @@ void LinkedCellsTest::testHalfShellMPIIndirect() {
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
 }
 
+void LinkedCellsTest::testHalfShellMPIDirectPP() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct-pp", "hs");
+}
+
 void LinkedCellsTest::testHalfShellMPIDirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
@@ -388,6 +398,11 @@ void LinkedCellsTest::testHalfShellMPIDirect() {
 void LinkedCellsTest::testMidpointMPIIndirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "indirect", "mp");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "indirect", "mp");
+}
+
+void LinkedCellsTest::testMidpointMPIDirectPP() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct-pp", "mp");
 }
 
 void LinkedCellsTest::testMidpointMPIDirect() {

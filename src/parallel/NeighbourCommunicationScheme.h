@@ -120,8 +120,8 @@ protected:
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 	friend class NeighbourCommunicationSchemeTest;
 public:
-	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
-			NeighbourCommunicationScheme(1, zonalMethod, false) {
+	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod, bool pushPull) :
+			NeighbourCommunicationScheme(1, zonalMethod, pushPull) {
 	}
 	virtual ~DirectNeighbourCommunicationScheme() {
 	}

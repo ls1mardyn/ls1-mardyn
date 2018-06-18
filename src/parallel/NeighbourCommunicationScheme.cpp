@@ -157,12 +157,11 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , global_simulation->getcutoffRadius()};
 	std::vector<HaloRegion> haloRegions;
 	double* cellLength = moleculeContainer->getCellLength();
-	double maxCellLength = std::max(std::max(cellLength[0],cellLength[1]),cellLength[2]);
 	switch (msgType) {
 	case LEAVING_AND_HALO_COPIES:
 		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
 		doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer);
-		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, maxCellLength);
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, HALO_COPIES, domainDecomp, moleculeContainer);
 		break;
 	case LEAVING_ONLY:
@@ -170,11 +169,11 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
 		break;
 	case HALO_COPIES:
-		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, maxCellLength);
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
 		break;
 	case FORCES:
-		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, maxCellLength);
+		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
 		break;
 	}
@@ -750,11 +749,10 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 
 	if (_pushPull) {
 		double* cellLength = moleculeContainer->getCellLength();
-		double maxCellLength = std::max(std::max(cellLength[0],cellLength[1]),cellLength[2]);
 		// halo/force regions
 		std::vector<HaloRegion> haloOrForceRegions =
 				_zonalMethod->getHaloImportForceExportRegions(ownRegion,
-						cutoffRadius, _coversWholeDomain, maxCellLength);
+						cutoffRadius, _coversWholeDomain, cellLength);
 		std::vector<HaloRegion> leavingRegions =
 				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
 						_coversWholeDomain);

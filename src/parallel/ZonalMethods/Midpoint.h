@@ -31,9 +31,9 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double maxCellLength) override {
+			bool coversWholeDomain[3], double cellLength[3]) override {
 		// the midpoint traversal is cell based, so the halo region has to be maxcelllength wide.
-		return getLeavingExportRegions(initialRegion, maxCellLength, coversWholeDomain);
+		return getLeavingExportRegions(initialRegion, cellLength, coversWholeDomain);
 	}
 
 	/**
@@ -45,13 +45,13 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double maxCellLength) override {
+			bool coversWholeDomain[3], double cellLength[3]) override {
 		const std::function<bool(const int[3])> condition = [](const int[3])->bool {
 			// no condition for leaving particles.
 				return true;
 			};
 		// the midpoint traversal is cell based, so the halo region has to be maxcelllength wide.
-		return getHaloRegionsConditionalInside(initialRegion, maxCellLength, coversWholeDomain, condition);
+		return getHaloRegionsConditionalInside(initialRegion, cellLength, coversWholeDomain, condition);
 	}
 };
 

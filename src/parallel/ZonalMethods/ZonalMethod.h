@@ -26,7 +26,7 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double maxCellLength)=0;
+			bool coversWholeDomain[3], double cellLength[3])=0;
 
 	/**
 	 * Returns the export halo Regions of the process.
@@ -37,7 +37,7 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double maxCellLength)=0;
+			bool coversWholeDomain[3], double cellLength[3])=0;
 
 	/**
 	 * Returns the export leaving Regions of the process.
@@ -48,6 +48,9 @@ public:
 	 */
 	virtual std::vector<HaloRegion> getLeavingExportRegions(HaloRegion& initialRegion, double cutoffRadius,
 			bool coversWholeDomain[3]);
+
+	virtual std::vector<HaloRegion> getLeavingExportRegions(HaloRegion& initialRegion, double cutoffRadius[3],
+				bool coversWholeDomain[3]);
 
 
 protected:
@@ -65,6 +68,9 @@ protected:
 	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
+	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius[3],
+				bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
+
 	/**
 	 * Returns the haloRegions inside of the initialRegion using an additional condition.
 	 * Up to 26 neighbouring HaloRegions are constructed. Only if the domain does not cover the whole domain
@@ -77,6 +83,9 @@ protected:
 	 */
 	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
+
+	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius[3],
+				bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
 };
 
