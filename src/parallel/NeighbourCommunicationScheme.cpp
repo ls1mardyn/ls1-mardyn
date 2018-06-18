@@ -113,7 +113,7 @@ void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleCont
 
 void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
-	if (_pushPull) {
+	//if (_pushPull) {
 		if (msgType == LEAVING_AND_HALO_COPIES) {
 			msgType = LEAVING_ONLY;
 
@@ -124,7 +124,7 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 			moleculeContainer->deleteOuterParticles();
 			msgType = HALO_COPIES;
 		}
-	}
+	//}
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
 			removeRecvDuplicates, domainDecomp);
 
