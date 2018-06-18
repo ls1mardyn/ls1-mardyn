@@ -567,7 +567,7 @@ void CommunicationPartner::print(std::ofstream& stream) const{
 	stream << "Partner rank: "<< _rank << std::endl;
 	stream << "Halo regions: " << std::endl;
 	for(auto& region : _haloInfo){
-		stream << " Region:";
+		stream << " Region:" << std::endl;
 		stream << "  both: "
 				<< " [" << region._bothLow[0] << ", " << region._bothHigh[0] << ") x "
 				<< " [" << region._bothLow[1] << ", " << region._bothHigh[1] << ") x "
