@@ -1134,7 +1134,7 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 
 	/* FIXME: Substantial change in program behavior! */
 	if(thermostatID == 0) {
-#if UNIT_TESTS==0
+#ifndef UNIT_TESTS
 		global_log->warning() << "Disabling the component wise thermostat!" << endl;
 #endif
 		disableComponentwiseThermostat();

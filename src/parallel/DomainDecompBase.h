@@ -278,6 +278,8 @@ public:
 		return "DomainDecompBase";
 	}
 
+	virtual void printCommunicationPartners(std::string filename) const {};
+
 protected:
 	/**
 	 * Handles the sequential version of particles leaving the domain.

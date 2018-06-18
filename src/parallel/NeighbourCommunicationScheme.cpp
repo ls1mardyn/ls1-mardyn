@@ -17,39 +17,85 @@ class IndirectNeighbourCommunicationScheme;
 #include "parallel/ZonalMethods/ZonalMethod.h"
 #include <mpi.h>
 
-#define PUSH_PULL_PARTNERS 0
 
-NeighbourCommunicationScheme::NeighbourCommunicationScheme(unsigned int commDimms, ZonalMethod* zonalMethod) :
-	_coversWholeDomain{false, false, false}, _commDimms(commDimms), _zonalMethod(zonalMethod) {
-#if PUSH_PULL_PARTNERS
-	
-	_haloExportForceImportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
-	_haloImportForceExportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
-	_leavingExportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
-	_leavingImportNeighbours = new std::vector<std::vector<CommunicationPartner>>();
-	
-	_haloExportForceImportNeighbours->resize(this->getCommDims());
-	_haloImportForceExportNeighbours->resize(this->getCommDims());
-	_leavingExportNeighbours->resize(this->getCommDims());
-	_leavingImportNeighbours->resize(this->getCommDims());
-	
-#else
-	_neighbours = new std::vector<std::vector<CommunicationPartner>>();
-	_neighbours->resize(this->getCommDims());
-#endif	
+NeighbourCommunicationScheme::NeighbourCommunicationScheme(
+		unsigned int commDimms, ZonalMethod* zonalMethod, bool pushPull) :
+		_coversWholeDomain { false, false, false }, _commDimms(commDimms), _zonalMethod(
+				zonalMethod), _pushPull(pushPull) {
+	if (_pushPull) {
+
+		_haloExportForceImportNeighbours = new std::vector<
+				std::vector<CommunicationPartner>>();
+		_haloImportForceExportNeighbours = new std::vector<
+				std::vector<CommunicationPartner>>();
+		_leavingExportNeighbours = new std::vector<
+				std::vector<CommunicationPartner>>();
+		_leavingImportNeighbours = new std::vector<
+				std::vector<CommunicationPartner>>();
+
+		_haloExportForceImportNeighbours->resize(this->getCommDims());
+		_haloImportForceExportNeighbours->resize(this->getCommDims());
+		_leavingExportNeighbours->resize(this->getCommDims());
+		_leavingImportNeighbours->resize(this->getCommDims());
+
+		_neighbours = nullptr;
+	} else {
+		_haloExportForceImportNeighbours = nullptr;
+		_haloImportForceExportNeighbours = nullptr;
+		_leavingExportNeighbours = nullptr;
+		_leavingImportNeighbours = nullptr;
+
+		_neighbours = new std::vector<std::vector<CommunicationPartner>>();
+		_neighbours->resize(this->getCommDims());
+	}
 }
 
 NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
-#if PUSH_PULL_PARTNERS
-	delete _haloExportForceImportNeighbours;
-	delete _haloImportForceExportNeighbours;
-	delete _leavingExportNeighbours;
-	delete _leavingImportNeighbours;
-#else
-	delete _neighbours;
-#endif
+	if (_pushPull) {
+		delete _haloExportForceImportNeighbours;
+		delete _haloImportForceExportNeighbours;
+		delete _leavingExportNeighbours;
+		delete _leavingImportNeighbours;
+	} else {
+		delete _neighbours;
+	}
 	delete _zonalMethod;
 }
+
+void printNeigbours(std::ofstream& stream,
+		std::vector<std::vector<CommunicationPartner>>& partners) {
+	for (size_t i = 0; i < partners.size(); i++) {
+		auto& vector = partners[i];
+		stream << "neighbor dimension: " << i << std::endl;
+		for (size_t j = 0; j < vector.size(); j++) {
+			auto& partner = vector[j];
+			stream << "Partner: " << j << std::endl;
+			partner.print(stream);
+		}
+	}
+}
+
+void NeighbourCommunicationScheme::printCommunicationPartners(
+		std::string filename) const {
+	std::ofstream checkpointfilestream;
+	checkpointfilestream.open(filename.c_str());
+
+	if (_pushPull) {
+		checkpointfilestream << "haloExportForceImport:" << std::endl;
+		printNeigbours(checkpointfilestream, *_haloExportForceImportNeighbours);
+		checkpointfilestream << "haloImportForceExportNeighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_haloImportForceExportNeighbours);
+		checkpointfilestream << "leavingExportNeighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_leavingExportNeighbours);
+		checkpointfilestream << "leavingImportNeighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_leavingImportNeighbours);
+	} else {
+		checkpointfilestream << "neighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_neighbours);
+	}
+	checkpointfilestream.close();
+}
+
 
 void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
@@ -67,29 +113,33 @@ void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleCont
 
 void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
-	
-#if PUSH_PULL_PARTNERS
-	if(msgType == LEAVING_AND_HALO_COPIES) {
-		msgType = LEAVING_ONLY;
-		
-		initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
-		finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
-		
-		msgType = HALO_COPIES;
-	}
-#endif
-	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
+	//if (_pushPull) {
+		if (msgType == LEAVING_AND_HALO_COPIES) {
+			msgType = LEAVING_ONLY;
 
-	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
+			initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
+					removeRecvDuplicates, domainDecomp);
+			finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType,
+					removeRecvDuplicates, domainDecomp);
+			moleculeContainer->deleteOuterParticles();
+			msgType = HALO_COPIES;
+		}
+	//}
+	initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
+			removeRecvDuplicates, domainDecomp);
+
+	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType,
+			removeRecvDuplicates, domainDecomp);
 
 }
 
 void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions,
 		MessageType msgType, DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer) { // Only Export?
 	
-#if PUSH_PULL_PARTNERS
-	selectNeighbours(msgType, false /* export */);
-#endif
+
+	if (_pushPull){
+		selectNeighbours(msgType, false /* export */);
+	}
 	
 	for (const HaloRegion& haloRegion : haloRegions) {
 		bool isinownprocess = true;
@@ -122,33 +172,14 @@ void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vec
 
 void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
 		Domain* domain, MessageType msgType, bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp) {
-	// first use sequential version, if _coversWholeDomain
-//	for (unsigned int d = 0; d < 3; d++) {
-//		if (_coversWholeDomain[d]) {
-//			// use the sequential version
-//			switch (msgType) {
-//			case LEAVING_AND_HALO_COPIES:
-//				domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-//				domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
-//				break;
-//			case LEAVING_ONLY:
-//				domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-//				break;
-//			case HALO_COPIES:
-//				domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
-//				break;
-//			case FORCES:
-//				domainDecomp->DomainDecompBase::handleForceExchange(d, moleculeContainer);
-//				break;
-//			}
-//		}
-//	}
 	// We mimic the direct neighbour communication also for the sequential case, otherwise things are copied multiple times or might be forgotten.
 	// We have to check each direction.
 	
-#if PUSH_PULL_PARTNERS
-	selectNeighbours(msgType, false /* export */);
-#endif
+
+	if (_pushPull) {
+		selectNeighbours(msgType, false /* export */);
+	}
+
 	
 	
 	double rmin[DIMgeom]; // lower corner
@@ -160,11 +191,12 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	}
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , global_simulation->getcutoffRadius()};
 	std::vector<HaloRegion> haloRegions;
+	double* cellLength = moleculeContainer->getCellLength();
 	switch (msgType) {
 	case LEAVING_AND_HALO_COPIES:
 		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
 		doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer);
-		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, HALO_COPIES, domainDecomp, moleculeContainer);
 		break;
 	case LEAVING_ONLY:
@@ -172,11 +204,11 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
 		break;
 	case HALO_COPIES:
-		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
 		break;
 	case FORCES:
-		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
 		break;
 	}
@@ -200,31 +232,29 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 
 void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
-
-//	int my_rank;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	
 	// msg type is fixed by the fuction call, but this needs to be done for both import and export
 	int numNeighbours;
-	
-#if PUSH_PULL_PARTNERS
-	selectNeighbours(msgType, false /* export */);
-	const int numExportNeighbours = (*_neighbours)[0].size();
-	selectNeighbours(msgType, true /* import */); // current _neighbours is import
-	const int numImportNeighbours = (*_neighbours)[0].size(); 
-#else
-	numNeighbours = (*_neighbours)[0].size();
-#endif
+
+	int numExportNeighbours = 0;
+	int numImportNeighbours = 0;
+	if (_pushPull) {
+		selectNeighbours(msgType, false /* export */);
+		numExportNeighbours = (*_neighbours)[0].size();
+		selectNeighbours(msgType, true /* import */); // current _neighbours is import
+		numImportNeighbours = (*_neighbours)[0].size();
+	} else {
+		numNeighbours = (*_neighbours)[0].size();
+	}
 	
 	
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
 	// messages with waiting for other messages to arrive
 	bool allDone = false;
 	double startTime = MPI_Wtime();
-	
-#if PUSH_PULL_PARTNERS
-	numNeighbours = numImportNeighbours;
-#endif
+	if (_pushPull) {
+		numNeighbours = numImportNeighbours;
+	}
 
 	// for 1-stage: if there is at least one neighbour with the same rank as the sending rank, make sure to remove received duplicates!
 	for (int i = 0; i < numNeighbours; i++) {
@@ -237,26 +267,25 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		}
 	}
 
-#if PUSH_PULL_PARTNERS
-	selectNeighbours(msgType, false /* export */); // last selected is export
-	numNeighbours = numExportNeighbours;
-	
-	for (int i = 0; i < numNeighbours; i++) {
-		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
+	if (_pushPull) {
+		selectNeighbours(msgType, false /* export */); // last selected is export
+		numNeighbours = numExportNeighbours;
+
+		for (int i = 0; i < numNeighbours; i++) {
+			removeRecvDuplicates |= (domainDecomp->getRank()
+					== (*_neighbours)[0][i].getRank());
+		}
 	}
-#endif
 
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
-		
-#if PUSH_PULL_PARTNERS
-		selectNeighbours(msgType, false /* export */); // last selected is export
-		numNeighbours = numExportNeighbours;
-#endif
-
+		if (_pushPull) {
+			selectNeighbours(msgType, false /* export */); // last selected is export
+			numNeighbours = numExportNeighbours;
+		}
 		// "kickstart" processing of all Isend requests
 		for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
 			if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
@@ -264,11 +293,10 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 			}
 		}
 		
-		
-#if PUSH_PULL_PARTNERS
-		selectNeighbours(msgType, true /* import */);
-		numNeighbours = numImportNeighbours;
-#endif
+		if (_pushPull) {
+			selectNeighbours(msgType, true /* import */);
+			numNeighbours = numImportNeighbours;
+		}
 
 		// get the counts and issue the Irecv-s
 		for (int i = 0; i < numNeighbours; ++i) { // import required
@@ -300,16 +328,16 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 				if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
 					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
 			}
-			
-#if PUSH_PULL_PARTNERS
-			selectNeighbours(msgType, false /* export */);
-			numNeighbours = numExportNeighbours;
-			
-			for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
-				if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
-					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
+			if (_pushPull) {
+				selectNeighbours(msgType, false /* export */);
+				numNeighbours = numExportNeighbours;
+
+				for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
+					if (domainDecomp->getRank()
+							!= (*_neighbours)[0][i].getRank())
+						(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
+				}
 			}
-#endif
 		}
 		
 
@@ -323,15 +351,16 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
 			}
 			
-#if PUSH_PULL_PARTNERS
-			selectNeighbours(msgType, true /* import */);
-			numNeighbours = numImportNeighbours;
-			
-			for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-				if (domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
-					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
+			if (_pushPull) {
+				selectNeighbours(msgType, true /* import */);
+				numNeighbours = numImportNeighbours;
+
+				for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
+					if (domainDecomp->getRank()
+							!= (*_neighbours)[0][i].getRank())
+						(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
+				}
 			}
-#endif
 			
 			Simulation::exit(457);
 		}
@@ -361,8 +390,6 @@ std::vector<CommunicationPartner> squeezePartners(const std::vector<Communicatio
 	return squeezedPartners;
 }
 
-#if PUSH_PULL_PARTNERS
-
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool import) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -382,6 +409,10 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			// forceImport / forceExport
 			if(import) _neighbours = _haloExportForceImportNeighbours;
 			else _neighbours = _haloImportForceExportNeighbours;
+			break;
+		case LEAVING_AND_HALO_COPIES:
+			global_log->error()<< "WRONG type in selectNeighbours - this should not be used for push-pull-partners selectNeighbours method";
+			Simulation::exit(1);
 			break;
 	}
 }
@@ -443,12 +474,13 @@ void DirectNeighbourCommunicationScheme::overlap(HaloRegion *myRegion, HaloRegio
 	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion, HaloRegion* inQuestion) { // IS THIS CORRECT?
-	return myRegion->rmax[0] > inQuestion->rmin[0] && myRegion->rmax[1] > inQuestion->rmin[1]
-			&& myRegion->rmax[2] > inQuestion->rmin[2] && myRegion->rmin[0] <= inQuestion->rmax[0]
-			&& myRegion->rmin[1] <= inQuestion->rmax[1] && myRegion->rmin[2] <= inQuestion->rmax[2];
+bool DirectNeighbourCommunicationScheme::iOwnThis(HaloRegion* myRegion,
+		HaloRegion* inQuestion) {
+	return myRegion->rmax[0] > inQuestion->rmin[0] && myRegion->rmin[0] < inQuestion->rmax[0]
+		&& myRegion->rmax[1] > inQuestion->rmin[1] && myRegion->rmin[1] < inQuestion->rmax[1]
+		&& myRegion->rmax[2] > inQuestion->rmin[2] && myRegion->rmin[2] < inQuestion->rmax[2];
 	// myRegion->rmax > inQuestion->rmin
-	// && myRegion->rmin <= inQuestion->rmax
+	// && myRegion->rmin < inQuestion->rmax
 }
 
 /*
@@ -709,7 +741,7 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	}
 	
 	if(comm_partners01.size() > 0) {
-		std:vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
+		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
 		partners01.insert(partners01.end(), squeezed.begin(), squeezed.end());
 	}
 
@@ -717,10 +749,8 @@ void DirectNeighbourCommunicationScheme::aquireNeighbours(Domain *domain, HaloRe
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
-#endif
-
 void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoffRadius, Domain * domain,
-		DomainDecompMPIBase* domainDecomp) {
+		DomainDecompMPIBase* domainDecomp, ParticleContainer* moleculeContainer) {
 
 // corners of the process-specific domain
 	
@@ -736,43 +766,54 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	}
 
 
-#if PUSH_PULL_PARTNERS
-	for(unsigned int d = 0; d < _commDimms; d++) { // why free?
-		(*_haloExportForceImportNeighbours)[d].clear();
-		(*_haloImportForceExportNeighbours)[d].clear();
-		(*_leavingExportNeighbours)[d].clear();
-		(*_leavingImportNeighbours)[d].clear();
+	if (_pushPull) {
+		for (unsigned int d = 0; d < _commDimms; d++) { // why free?
+			(*_haloExportForceImportNeighbours)[d].clear();
+			(*_haloImportForceExportNeighbours)[d].clear();
+			(*_leavingExportNeighbours)[d].clear();
+			(*_leavingImportNeighbours)[d].clear();
+		}
+	} else {
+		for (unsigned int d = 0; d < _commDimms; d++) { // why free?
+			(*_neighbours)[d].clear();
+		}
 	}
-#else 
-	for (unsigned int d = 0; d < _commDimms; d++) { // why free?
-		(*_neighbours)[d].clear();
-	}
-#endif
 	
 	
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , cutoffRadius};
 
-#if PUSH_PULL_PARTNERS
-	// halo/force regions
-	std::vector<HaloRegion> haloOrForceRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
-	std::vector<HaloRegion> leavingRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
-	
-	// assuming p1 sends regions to p2
-	aquireNeighbours(domain, &ownRegion, haloOrForceRegions, (*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
-	aquireNeighbours(domain, &ownRegion, leavingRegions, (*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]); // p1 notes reply, p2 notes owned as leaving import
-	
-#else
-	
-	std::vector<HaloRegion> haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
-	std::vector<CommunicationPartner> commPartners;
-	for (HaloRegion haloRegion : haloRegions) {
-		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
-		commPartners.insert(commPartners.end(), newCommPartners.begin(), newCommPartners.end());
+	if (_pushPull) {
+		double* cellLength = moleculeContainer->getCellLength();
+		// halo/force regions
+		std::vector<HaloRegion> haloOrForceRegions =
+				_zonalMethod->getHaloImportForceExportRegions(ownRegion,
+						cutoffRadius, _coversWholeDomain, cellLength);
+		std::vector<HaloRegion> leavingRegions =
+				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
+						_coversWholeDomain);
+
+		// assuming p1 sends regions to p2
+		aquireNeighbours(domain, &ownRegion, haloOrForceRegions,
+				(*_haloImportForceExportNeighbours)[0],
+				(*_haloExportForceImportNeighbours)[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
+		aquireNeighbours(domain, &ownRegion, leavingRegions,
+				(*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]); // p1 notes reply, p2 notes owned as leaving import
+
+	} else {
+		std::vector<HaloRegion> haloRegions =
+				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
+						_coversWholeDomain);
+		std::vector<CommunicationPartner> commPartners;
+		for (HaloRegion haloRegion : haloRegions) {
+			auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(
+					domain, haloRegion, cutoffRadius);
+			commPartners.insert(commPartners.end(), newCommPartners.begin(),
+					newCommPartners.end());
+		}
+		_fullShellNeighbours = commPartners;
+		//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
+		(*_neighbours)[0] = squeezePartners(commPartners);
 	}
-	_fullShellNeighbours = commPartners;
-	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
-	(*_neighbours)[0] = squeezePartners(commPartners);
-#endif
 
 }
 
@@ -935,7 +976,7 @@ void IndirectNeighbourCommunicationScheme::convert1StageTo3StageNeighbours(
 }
 
 void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoffRadius, Domain * domain,
-		DomainDecompMPIBase* domainDecomp) { // if this one is used, push pull should not (at least for now) be set
+		DomainDecompMPIBase* domainDecomp,ParticleContainer* /*moleculeContainer*/) { // if this one is used, push pull should not (at least for now) be set
 
 // corners of the process-specific domain
 	double rmin[DIMgeom]; // lower corner

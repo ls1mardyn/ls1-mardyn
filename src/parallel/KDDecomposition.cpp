@@ -223,6 +223,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 		} else {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
+			moleculeContainer->deleteOuterParticles();
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
 		}
 	} else {
@@ -248,14 +249,14 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		_decompTree = newDecompRoot;
 //		delete _ownArea; dont delete! this is a pointer only to one of the objects in the whole tree, not a real object
 		_ownArea = newOwnLeaf;
-		initCommunicationPartners(_cutoffRadius, domain);
+		initCommunicationPartners(_cutoffRadius, domain, moleculeContainer);
 
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
 	}
 }
 
-void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
-	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this);
+void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain, ParticleContainer* moleculeContainer) {
+	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this, moleculeContainer);
 }
 
 void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const {
@@ -623,9 +624,12 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 		MPI_Offset file_end_pos;
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_File_get_position(fh, &file_end_pos);
+		write_size += file_end_pos;
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
 		offset += file_end_pos;
+	} else {
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
 	}
-	MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
 	MPI_File_write_at(fh, offset, output_str.c_str(), output_str.size(), MPI_CHAR, MPI_STATUS_IGNORE);
 	MPI_File_close(&fh);
 #else
@@ -1433,12 +1437,15 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 			} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
 				low[d] += _globalCellsPerDim[d];
 				high[d] += _globalCellsPerDim[d];
-			} else if (haloRegion.offset[d] == 0 && ownLo[d] < low[d]){
-				low[d]--;
-				enlarged[d][0] = true;
-			} else if (haloRegion.offset[d] == 0 && ownHi[d] > high[d]){
-				high[d]++;
-				enlarged[d][1] = true;
+			} else if (haloRegion.offset[d] == 0) {
+				if (ownLo[d] < low[d]) {
+					low[d]--;
+					enlarged[d][0] = true;
+				}
+				if (ownHi[d] > high[d]) {
+					high[d]++;
+					enlarged[d][1] = true;
+				}
 			}
 		}
 

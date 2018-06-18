@@ -181,7 +181,7 @@ public:
 		return _boxWidthInNumCells;
 	}
 
-	double* getCellLength() {
+	double* getCellLength() override {
 		return _cellLength;
 	}
 	

@@ -114,19 +114,20 @@ public:
 
 	size_t getDynamicSize();
 
+	void print(std::ofstream& stream) const;
 private:
 	enum HaloOrLeavingCorrection{
 		HALO,
 		LEAVING,
 		NONE,
-                FORCES // necessary?
+		FORCES // necessary?
 	};
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
 			const double highCorner[3], const double shift[3], const bool removeFromContainer,
 			HaloOrLeavingCorrection haloLeaveCorr = HaloOrLeavingCorrection::NONE);
 
 	int _rank;
-        int _countTested;
+	int _countTested;
 	std::vector<PositionInfo> _haloInfo;
 
 	// technical variables

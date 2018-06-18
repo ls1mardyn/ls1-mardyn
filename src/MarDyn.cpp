@@ -121,11 +121,7 @@ int run_unit_tests(const Values &options, const vector<string> &args) {
 	return testresult;
 }
 
-/** @page main
- * In this project, software for molecular dynamics simulation with short-range
- * forces is developed. The aim is to have a parallel code (MPI) for
- * multi-centered molecules.
- *
+/**
  * The role of the main function is to instantiate an object of the Simulation
  * class which is actually responsible for the simulation and to run tests for
  * all classes.

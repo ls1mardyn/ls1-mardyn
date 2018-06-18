@@ -370,9 +370,24 @@ void LinkedCellsTest::testTraversalMethods() {
 
 // new tests here
 
+void LinkedCellsTest::testFullShellMPIDirectPP() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::C08, 1, "direct-pp", "fs");
+}
+
+void LinkedCellsTest::testFullShellMPIDirect() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::C08, 1, "direct", "fs");
+}
+
 void LinkedCellsTest::testHalfShellMPIIndirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "indirect", "hs");
+}
+
+void LinkedCellsTest::testHalfShellMPIDirectPP() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct", "hs");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::HS, 1, "direct-pp", "hs");
 }
 
 void LinkedCellsTest::testHalfShellMPIDirect() {
@@ -383,6 +398,11 @@ void LinkedCellsTest::testHalfShellMPIDirect() {
 void LinkedCellsTest::testMidpointMPIIndirect() {
 //	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "indirect", "mp");
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "indirect", "mp");
+}
+
+void LinkedCellsTest::testMidpointMPIDirectPP() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct-pp", "mp");
 }
 
 void LinkedCellsTest::testMidpointMPIDirect() {
@@ -496,7 +516,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 #ifdef ENABLE_MPI
 	auto domainDecompositionFS = new DomainDecomposition();
 	auto domainDecompositionTest = new DomainDecomposition();
-	domainDecompositionFS->setCommunicationScheme(neighbourCommScheme, "fs");
+	domainDecompositionFS->setCommunicationScheme("indirect", "fs");
 	domainDecompositionTest->setCommunicationScheme(neighbourCommScheme, commScheme);
 
 #else
@@ -529,8 +549,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	auto cellProc2 = new VectorizedCellProcessor(*_domain, cutoff, cutoff);
 
 #ifdef ENABLE_MPI
-	domainDecompositionFS->initCommunicationPartners(cutoff, _domain);
-	domainDecompositionTest->initCommunicationPartners(cutoff, _domain);
+	domainDecompositionFS->initCommunicationPartners(cutoff, _domain, container);
+	domainDecompositionTest->initCommunicationPartners(cutoff, _domain, containerTest);
 #endif
 
 	//------------------------------------------------------------
@@ -549,14 +569,17 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	//------------------------------------------------------------
 	// Do calculation with FS
 	//------------------------------------------------------------
+//	std::cout << std::endl<<"reference:"<<std::endl;
 	{
 		container->traverseCells(*cellProc);
 		// calculate forces
 		const ParticleIterator begin = container->iterator();
 		for (auto i = begin; i.hasNext(); i.next()) {
 			i->calcFM();
+//			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
 	}
+//	std::cout << std::endl <<"test:"<< std::endl;
 	//------------------------------------------------------------
 	// Do calculation with TestTraversal
 	//------------------------------------------------------------
@@ -564,6 +587,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		containerTest->traverseCells(*cellProc2);
 		// calculate forces
 		const ParticleIterator& begin = containerTest->iterator();
+//		std::cout << "pre force exchange:" << std::endl;
 		for (ParticleIterator i = begin; i.hasNext(); i.next()) {
 			i->calcFM();
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
@@ -571,8 +595,9 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		if (containerTest->requiresForceExchange()) {
 			domainDecompositionTest->exchangeForces(containerTest, _domain);
 		}
-//		const ParticleIterator& begin2 = containerTest->iteratorBegin();
-//		for (ParticleIterator i = begin2; i.isValid(); i.next()) {
+//		std::cout << "after force exchange:"<< std::endl;
+//		const ParticleIterator& begin2 = containerTest->iterator();
+//		for (ParticleIterator i = begin2; i.hasNext(); i.next()) {
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
 //					<< ", " << i->F(2) << std::endl;
 //		}

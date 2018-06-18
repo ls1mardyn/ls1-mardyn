@@ -16,11 +16,13 @@
 // Output plugins
 #include "io/CavityWriter.h"
 #include "io/CheckpointWriter.h"
+#include "io/CommunicationPartnerWriter.h"
 #include "io/DecompWriter.h"
 #include "io/DensityProfileWriter.h"
 #include "io/EnergyLogWriter.h"
 #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
+#include "io/HaloParticleWriter.h"
 #include "io/LoadBalanceWriter.h"
 #include "io/MPICheckpointWriter.h"
 #include "io/MmpldWriter.h"
@@ -38,14 +40,14 @@
 #include "plugins/COMaligner.h"
 #include "plugins/Mirror.h"
 #include "plugins/MaxCheck.h"
+#include "plugins/WallPotential.h"
 #include "plugins/ExamplePlugin.h"
+#include "plugins/TestPlugin.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
 #include "io/vtk/VTKGridWriter.h"
 #endif
-
-#include "plugins/TestPlugin.h"
 
 /** @brief Register all default plugins with base PluginBase
 	 *
@@ -54,14 +56,16 @@
 template<>
 void PluginFactory<PluginBase>::registerDefaultPlugins(){
     global_log -> debug() << "REGISTERING PLUGINS" << endl;
-    REGISTER_PLUGIN(TestPlugin);
+
     REGISTER_PLUGIN(CavityWriter);
     REGISTER_PLUGIN(CheckpointWriter);
+    REGISTER_PLUGIN(CommunicationPartnerWriter);
     REGISTER_PLUGIN(DecompWriter);
     REGISTER_PLUGIN(DensityProfileWriter);
     REGISTER_PLUGIN(EnergyLogWriter);
     REGISTER_PLUGIN(FlopRateWriter);
     REGISTER_PLUGIN(GammaWriter);
+    REGISTER_PLUGIN(HaloParticleWriter);
     REGISTER_PLUGIN(LoadbalanceWriter);
     REGISTER_PLUGIN(MPICheckpointWriter);
     REGISTER_PLUGIN(MmpldWriter);
@@ -77,7 +81,9 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(COMaligner);
     REGISTER_PLUGIN(Mirror);
     REGISTER_PLUGIN(MaxCheck);
+    REGISTER_PLUGIN(WallPotential);
     REGISTER_PLUGIN(ExamplePlugin);
+    REGISTER_PLUGIN(TestPlugin);
 
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);

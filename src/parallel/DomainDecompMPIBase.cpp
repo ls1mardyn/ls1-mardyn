@@ -122,8 +122,11 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string
 	global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
 	if (scheme=="direct") {
-		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP);
+		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme without push-pull neighbors" << std::endl;
+		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP, false);
+	} else if(scheme=="direct-pp") {
+		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme with push-pull neighbors" << std::endl;
+		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP, true);
 	} else if(scheme=="indirect") {
 		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
 		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(zonalMethodP);
@@ -269,4 +272,8 @@ void DomainDecompMPIBase::printSubInfo(int offset) {
 	global_log->info() << offsetstream.str() << "neighbourCommunicationScheme:\t\t" << _neighbourCommunicationScheme->getDynamicSize() / 1.e6 << " MB" << std::endl;
 	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication->getTotalSize() / 1.e6 << " MB" << std::endl;
 
+}
+
+void DomainDecompMPIBase::printCommunicationPartners(std::string filename) const{
+	_neighbourCommunicationScheme->printCommunicationPartners(filename);
 }

@@ -144,7 +144,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * @return true if OK, false if deadlock
 	 */
 	bool migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer);
-	void initCommunicationPartners(double cutoffRadius, Domain * domain);
+	void initCommunicationPartners(double cutoffRadius, Domain * domain, ParticleContainer* moleculeContainer);
 
 
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

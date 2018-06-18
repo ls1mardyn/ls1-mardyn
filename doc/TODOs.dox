@@ -1,4 +1,4 @@
-/** \page "TODOs and Open Issues"
+/** \page ls1Todos TODOs and Open Issues
 
 This page collects some todos which are not related to a specific point in the ls1 source code.
 Beside all the doxygen todos there are plenty of TODO and FIXME markers in the code, which are

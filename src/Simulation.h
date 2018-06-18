@@ -13,11 +13,9 @@
 // plugins
 #include "plugins/PluginFactory.h"
 
-class Wall;
-class Mirror;
 using optparse::Values;
 
-#ifndef SIMULATION_SRC
+#if !defined (SIMULATION_SRC) or defined (IN_IDE_PARSER)
 class Simulation;
 /** Global pointer to the simulation object. Do not use directly. Instead use the reference. */
 extern Simulation* global_simulation;
@@ -387,13 +385,6 @@ private:
 
 	/** prefix for the names of all output files */
 	std::string _outputPrefix;
-	
-	//! applying a field representing the wall
-	bool _applyWallFun_LJ_9_3;
-	bool _applyWallFun_LJ_10_4;
-	bool _applyMirror;
-	
-	Wall* _wall;
 
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;

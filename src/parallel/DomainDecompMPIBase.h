@@ -217,6 +217,8 @@ public:
 	virtual std::string getName() override {
 		return "DomainDecompMPIBase";
 	}
+
+	void printCommunicationPartners(std::string filename) const override;
 protected:
 
 	/**

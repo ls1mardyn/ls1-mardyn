@@ -72,14 +72,14 @@ private:
 	void computeOffsets3D(); // This could be changed to constexpr in C++14
 	void fillArrays();
 
-	void pairOriginWithForewardNeighbors(int& index);
+	void pairOriginWithForwardNeighbors(int& index);
 	void pairCellsWithPlane(std::array<long, 3>& cc,
 			std::array<long, 3>& oc, int& index);
 	void pairCellsWithAdjacentCorners(std::array<long, 3>& ce,
 			std::array<long, 3>& oe, int& index);
 
-	// Offsets of all centers of the surrounding cube. Opposite sides are (i+3)%6
-	std::array<std::array<long, 3>, 6> _centers;
+	// Offsets of all faces of the surrounding cube. Opposite sides are (i+3)%6
+	std::array<std::array<long, 3>, 6> _faces;
 
 	// Offsets of all edges of the surrounding cube. Opposite sides are (i+6)%12
 	std::array<std::array<long, 3>, 12> _edges;
@@ -93,14 +93,14 @@ private:
 
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::fillArrays() {
-	// Centers
-	_centers[0] = { 1, 0, 0};
-	_centers[1] = { 0, 1, 0};
-	_centers[2] = { 0, 0, 1};
+	// Faces
+	_faces[0] = { 1, 0, 0};
+	_faces[1] = { 0, 1, 0};
+	_faces[2] = { 0, 0, 1};
 	// Mirrored at origin
-	_centers[3] = {-1, 0, 0};
-	_centers[4] = { 0,-1, 0};
-	_centers[5] = { 0, 0,-1};
+	_faces[3] = {-1, 0, 0};
+	_faces[4] = { 0,-1, 0};
+	_faces[5] = { 0, 0,-1};
 
 	// Edges
 	_edges[0] = { 1, 1, 0};
@@ -140,10 +140,10 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 	// Opposite cells are set up to have index ((i+(n/2)) % n)
 	// ----------------------------------------------------
 
-	// process only half of the centers to get no pair twice
-	for(int i=0; i<3; ++i){ // centers
+	// process only half of the faces to get no pair twice
+	for(int i=0; i<3; ++i){ // faces
 		int j = (i+3)%6;
-		_offsets3D[index++] = make_pair(_centers[i], _centers[j]);
+		_offsets3D[index++] = make_pair(_faces[i], _faces[j]);
 	}
 	// process only half of the edges to get no pair twice
 	for(int i=0; i<6; ++i){ // edges
@@ -162,17 +162,17 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 	// Forward neighbors of origin (similar to half shell)
 	// ----------------------------------------------------
 
-	pairOriginWithForewardNeighbors(index);
+	pairOriginWithForwardNeighbors(index);
 
 	mardyn_assert(index == 13+13);
 
 
 	// ----------------------------------------------------
-	// 'Cone' for half the centers
+	// 'Cone' for half the faces
 	// ----------------------------------------------------
 	for(int i=0; i<3; ++i){
-		auto oc = _centers[(i+3)%6]; // opposite center
-		auto cc = _centers[i]; // current center
+		auto oc = _faces[(i+3)%6]; // opposite center
+		auto cc = _faces[i]; // current center
 
 		// Create pairs for each pair cc <--> oc + offset where offset is not in the direction of [CC Origin OC]
 		// Therefore with every cell (except OC) in the plane with normal vector [CC Origin OC] that contains OC.
@@ -236,7 +236,7 @@ void MidpointTraversal<CellTemplate>::computeOffsets() {
 }
 
 template<class CellTemplate>
-void MidpointTraversal<CellTemplate>::pairOriginWithForewardNeighbors(int& index){
+void MidpointTraversal<CellTemplate>::pairOriginWithForwardNeighbors(int& index){
 	using std::make_pair;
 
 	std::array<long, 3> origin = {0l, 0l, 0l};

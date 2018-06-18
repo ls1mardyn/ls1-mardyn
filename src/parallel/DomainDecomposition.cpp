@@ -33,11 +33,11 @@ DomainDecomposition::~DomainDecomposition() {
 	MPI_Comm_free(&_comm);
 }
 
-void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain, ParticleContainer* moleculeContainer) {
 	for (int d = 0; d < DIMgeom; ++d) {
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);
 	}
-	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this);
+	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this, moleculeContainer);
 }
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
@@ -72,6 +72,7 @@ void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool 
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 	}else{
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+		moleculeContainer->deleteOuterParticles();
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	}
 }

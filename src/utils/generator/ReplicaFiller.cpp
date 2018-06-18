@@ -91,7 +91,7 @@ public:
 	size_t getTotalSize() { return _basis.numMolecules() * sizeof(Molecule); }
 	void printSubInfo(int offset) { return; }
 	std::string getName() { return std::string("ParticleContainerToBasisWrapper"); }
-
+	double* getCellLength() override {return nullptr;}
 private:
 	Basis _basis;
 };

@@ -27,8 +27,14 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testCellBorderAndFlagManager);
 
 #ifndef ENABLE_REDUCED_MEMORY_MODE
+	TEST_METHOD(testFullShellMPIDirectPP);
+	TEST_METHOD(testFullShellMPIDirect);
+
+	TEST_METHOD(testHalfShellMPIDirectPP);
 	TEST_METHOD(testHalfShellMPIDirect);
 	TEST_METHOD(testHalfShellMPIIndirect);
+
+	TEST_METHOD(testMidpointMPIDirectPP);
 	TEST_METHOD(testMidpointMPIDirect);
 	TEST_METHOD(testMidpointMPIIndirect);
 #else
@@ -72,10 +78,16 @@ public:
 	void testGetHaloBoundaryParticlesDirection();
 
 	void testHalfShell();
+
+	void testFullShellMPIDirectPP();
+	void testFullShellMPIDirect();
+
+	void testHalfShellMPIDirectPP();
 	void testHalfShellMPIDirect();
 	void testHalfShellMPIIndirect();
 
 	void testMidpoint();
+	void testMidpointMPIDirectPP();
 	void testMidpointMPIDirect();
 	void testMidpointMPIIndirect();
 
