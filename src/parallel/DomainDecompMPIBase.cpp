@@ -273,3 +273,7 @@ void DomainDecompMPIBase::printSubInfo(int offset) {
 	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication->getTotalSize() / 1.e6 << " MB" << std::endl;
 
 }
+
+void DomainDecompMPIBase::printCommunicationPartners(std::string filename) const{
+	_neighbourCommunicationScheme->printCommunicationPartners(filename);
+}

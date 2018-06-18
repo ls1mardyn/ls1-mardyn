@@ -87,6 +87,8 @@ public:
 		return totSize;
 	}
 
+	void printCommunicationPartners(std::string filename) const;
+
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().

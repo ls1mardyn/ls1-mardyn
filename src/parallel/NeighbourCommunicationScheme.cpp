@@ -62,6 +62,40 @@ NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 	delete _zonalMethod;
 }
 
+void printNeigbours(std::ofstream& stream,
+		std::vector<std::vector<CommunicationPartner>>& partners) {
+	for (size_t i = 0; i < partners.size(); i++) {
+		auto& vector = partners[i];
+		stream << "neighbor dimension: " << i;
+		for (size_t j = 0; j < vector.size(); j++) {
+			auto& partner = vector[j];
+			stream << "Partner: " << j << std::endl;
+		}
+	}
+}
+
+void NeighbourCommunicationScheme::printCommunicationPartners(
+		std::string filename) const {
+	std::ofstream checkpointfilestream;
+	checkpointfilestream.open(filename.c_str());
+
+	if (_pushPull) {
+		checkpointfilestream << "haloExportForceImport:" << std::endl;
+		printNeigbours(checkpointfilestream, *_haloExportForceImportNeighbours);
+		checkpointfilestream << "haloImportForceExportNeighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_haloImportForceExportNeighbours);
+		checkpointfilestream << "leavingExportNeighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_leavingExportNeighbours);
+		checkpointfilestream << "leavingImportNeighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_leavingImportNeighbours);
+	} else {
+		checkpointfilestream << "neighbours:" << std::endl;
+		printNeigbours(checkpointfilestream, *_neighbours);
+	}
+	checkpointfilestream.close();
+}
+
+
 void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {

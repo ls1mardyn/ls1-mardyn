@@ -562,3 +562,26 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 size_t CommunicationPartner::getDynamicSize() {
 	return _sendBuf.getDynamicSize() + _recvBuf.getDynamicSize() + _haloInfo.capacity() * sizeof(PositionInfo);
 }
+
+void CommunicationPartner::print(std::ofstream& stream) const{
+	stream << "Partner rank: "<< _rank << std::endl;
+	stream << "Halo regions: " << std::endl;
+	for(auto& region : _haloInfo){
+		stream << " Region:";
+		stream << "  both: "
+				<< " [" << region._bothLow[0] << ", " << region._bothHigh[0] << ") x "
+				<< " [" << region._bothLow[1] << ", " << region._bothHigh[1] << ") x "
+				<< " ["	<< region._bothLow[2] << ", " << region._bothHigh[2] << ")" << std::endl;
+		stream << "  leaving: "
+				<< " [" << region._leavingLow[0] << ", " << region._leavingHigh[0] << ") x "
+				<< " [" << region._leavingLow[1] << ", " << region._leavingHigh[1] << ") x "
+				<< " ["	<< region._leavingLow[2] << ", " << region._leavingHigh[2] << ")" << std::endl;
+		stream << "  copies: "
+				<< " [" << region._copiesLow[0] << ", " << region._copiesHigh[0] << ") x "
+				<< " [" << region._copiesLow[1] << ", " << region._copiesHigh[1] << ") x "
+				<< " ["	<< region._copiesLow[2] << ", " << region._copiesHigh[2] << ")" << std::endl;
+		stream << "  offset: (" << region._offset[0] << ", " << region._offset[1] << ", " << region._offset[2] << ")" << std::endl;
+		stream << "  shift:	(" << region._shift[0] << ", " << region._shift[1]	<< ", "<< region._shift[2] << ")" << std::endl;
+
+	}
+}
