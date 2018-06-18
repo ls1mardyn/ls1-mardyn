@@ -63,7 +63,7 @@ void HaloParticleWriter::afterForces(ParticleContainer *particleContainer, Domai
 			filenamestream << "-" << gettimestring();
 		}
 
-		filenamestream << ".restart.dat";
+		filenamestream << ".halos.dat";
 
 		string filename = filenamestream.str();
 
