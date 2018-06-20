@@ -91,8 +91,8 @@ public:
         delete [] _uPot_10_4;
     };
 
-    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {
-        global_log -> debug() << "Wall enabled" << std::endl;
+    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+        global_log -> debug() << "[WallPotential] Wall enabled" << std::endl;
         _domain = domain;
     }
 

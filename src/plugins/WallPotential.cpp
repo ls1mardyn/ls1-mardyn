@@ -13,10 +13,11 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("yoff", yoff);
     xmlconfig.getNodeValue("ycut", ycut);
     xmlconfig.getNodeValue("width", _dWidth);
+    xmlconfig.getNodeValue("delta", Delta);
     _dWidthHalf = _dWidth * 0.5;
     global_log->info() << "[WallPotential] Using plugin with parameters: density=" << density << ", "
-                                                                                            "sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
-                                                                                                                                                                                      "width=" << _dWidth << endl;
+                          "sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
+                          "width=" << _dWidth << ", delta=" << Delta << endl;
 
     int potential;
     xmlconfig.getNodeValue("potential", potential);
@@ -51,9 +52,10 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     XMLfile::Query::const_iterator componentIter;
     for( componentIter = query.begin(); componentIter; componentIter++ )
     {
+        global_log->info() << "[WALL DEBUG] setting component xi eta" << std::endl;
         xmlconfig.changecurrentnode( componentIter );
         unsigned int cid;
-        xmlconfig.getNodeValue("id", cid);
+        xmlconfig.getNodeValue("@id", cid);
         xmlconfig.getNodeValue("xi",   xi_sf.at(cid-1) );
         xmlconfig.getNodeValue("eta", eta_sf.at(cid-1) );
         _bConsiderComponent.at(cid-1) = true;
@@ -76,28 +78,14 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
 
 }
 
-void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-                                unsigned long simstep) {
-
-    if(_potential == LJ9_3){
-        this->calcTSLJ_9_3(particleContainer);
-        global_log->debug() << "[WallPotential] LJ9_3 applied." << endl;
-    }
-    else if(_potential == LJ10_4){
-        this->calcTSLJ_10_4(particleContainer);
-        global_log->debug() << "[WallPotential] LJ10_4 applied." << endl;
-    }
-
-}
-
 void WallPotential::initializeLJ93(const std::vector<Component>* components,
                                    double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta,
                                    double in_yOffWall, double in_yWallCut) {
 
     global_log->info() << "[WallPotential] Initializing the wall function LJ-9-3.\n";
-    this->_rhoW = in_rhoWall;
-    this->_yc = in_yWallCut;
-    this->_yOff = in_yOffWall;
+    _rhoW = in_rhoWall;
+    _yc = in_yWallCut;
+    _yOff = in_yOffWall;
 
     /*!*** So far: only 1CLJ components allowed ****/
     _nc = components->size();
@@ -125,13 +113,14 @@ void WallPotential::initializeLJ93(const std::vector<Component>* components,
 void WallPotential::initializeLJ104(const std::vector<Component>* components,
                                     double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta,
                                     double in_yOffWall, double in_yWallCut) {
-    global_log->info() << "[WallPotential] Initializing the wall function LJ-10-4.\n";
+
     this->_rhoW = in_rhoWall;
     this->_yc = in_yWallCut;
     this->_yOff = in_yOffWall;
 
     /*!*** So far: only 1CLJ components allowed ****/
     _nc = components->size();
+    global_log->info() << "[WallPotential] Initializing the wall function LJ-10-4 with " << _nc << " components.\n" << endl;
     _eps_wi = new double[_nc];
     _sig3_wi = new double[_nc];
     _sig2_wi = new double[_nc];
@@ -158,6 +147,7 @@ void WallPotential::initializeLJ104(const std::vector<Component>* components,
         double bracket3 = bracket * bracket * bracket;
 
         _uShift_10_4[i] = 2 * M_PI * _eps_wi[i] * _rhoW * _sig2_wi[i] * Delta * (2 / 5 * sig10_sf / y10 - sig4_sf / y4 - sig4_sf / (3 * Delta * bracket3));
+        global_log->info() << "[WallPotential] LJ-10-4 : uShift " << _nc << ": " << _uShift_10_4[i] << endl;
         _uPot_10_4[i] = 0.0;
     }
 }
@@ -228,10 +218,12 @@ void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
 } // end method calcTSLJ_9_3(...)
 
 void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
+
     double regionLowCorner[3], regionHighCorner[3];
 
     /*! LJ-10-4 potential applied in y-direction */
-    if(partContainer->getBoundingBoxMin(1)){ // if linked cell within the potential range (inside the potential's cutoff)
+    //if(partContainer->getBoundingBoxMin(1) < _yc){ // if linked cell within the potential range (inside the potential's cutoff)
+        //global_log->info() << "[WallPotential] LJ10_4 afterForces." << endl;
         for(unsigned d = 0; d < 3; d++){
             regionLowCorner[d] = partContainer->getBoundingBoxMin(d);
             regionHighCorner[d] = partContainer->getBoundingBoxMax(d);
@@ -243,8 +235,9 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
             {
+                int nan = 0;
                 RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
-
+                int OoR = 0;
                 for(RegionParticleIterator i = begin; i.hasNext(); i.next()){
                     //! so far for 1CLJ only, several 1CLJ-components possible
                     double y, y2, y4, y5, y10, y11;
@@ -271,23 +264,55 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
                         double term2 = sig4_wi / y4;
                         double term3 = sig4_wi / (3 * Delta * bracket3);
                         double preFactor = 2*M_PI*_eps_wi[cid]*_rhoW*sig2_wi*Delta;
-                        _uPot_10_4[cid] += preFactor * (2 / 5 * term1 - term2 - term3) - _uShift_10_4[cid];
+                        _uPot_10_4[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4[cid];
+
                         f[1] = preFactor * (4 * sig10_wi / y11 - 4 * sig4_wi / y5 - term3 * 3 / bracket);
+                        if(isnan(f[1])){
+                            global_log->info() << "NAN value " << nan << std::endl;
+                            f[1] = 0.0;
+                            nan++;
+                            global_simulation->exit(99);
+                        }
+                        //global_log->info() << "[WallPotential] Fy: " << f[1] << endl;
                         f[0] = 0.;
                         f[2] = 0.;
                         (*i).Fljcenteradd(0, f);
                     }
+                    else{
+                        OoR++;
+                        //global_log->info() << "[WallPotential DEBUG] 10-4 out of range: " << OoR << endl;
+                        //global_log->info() << "[WallPotential DEBUG] y/yc: " << y << " / " << _yc << endl;
+                        //global_log->info() << "[WallPotential DEBUG] r/yoff: " << (*i).r(1) << " / " << _yOff << endl;
+
+                    }
                 }
             }
         }
-    }
+   // }
 
     double u_pot;
+    //global_log->debug() << "[WallPotential] LJ10_4 afterForces in Function A" << endl;
     u_pot = _uPot_10_4[0] + _domain -> getLocalUpotCompSpecific();
+    //global_log->debug() << "[WallPotential] LJ10_4 afterForces in Function B" << endl;
     _domain->setLocalUpotCompSpecific(u_pot);
     for(unsigned cid = 0; cid < _nc; cid++) {
+        //global_log->debug() << "[WallPotential] LJ10_4 afterForces in Function " << cid << endl;
         _uPot_10_4[cid] = 0.0;
     }
 }
 // end method calcTSLJ_10_4(...)
 
+void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+                                unsigned long simstep) {
+    if(_potential == LJ9_3){
+        //global_log->debug() << "[WallPotential] LJ9_3 afterForces." << endl;
+        this->calcTSLJ_9_3(particleContainer);
+        //global_log->debug() << "[WallPotential] LJ9_3 applied." << endl;
+    }
+    else if(_potential == LJ10_4){
+        //global_log->debug() << "[WallPotential] LJ10_4 afterForces. " << endl;
+        this->calcTSLJ_10_4(particleContainer);
+        //global_log->debug() << "[WallPotential] LJ10_4 applied." << endl;
+    }
+
+}
