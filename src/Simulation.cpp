@@ -756,6 +756,15 @@ void Simulation::prepare_start() {
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
+    //afterForces Plugin Call
+    global_log->debug() << "[AFTER FORCES] Performing AfterForces plugin call"
+                        << endl;
+    for (auto plugin : _plugins) {
+        global_log->debug() << "[AFTER FORCES] Plugin: "
+                            << plugin->getPluginName() << endl;
+        plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+    }
+
     // clear halo
     global_log->info() << "Clearing halos" << endl;
     _moleculeContainer->deleteOuterParticles();
@@ -826,15 +835,6 @@ void Simulation::prepare_start() {
 		string timer_plugin_string = string("Plugin ") + timer_name + string(" took:");
 		global_simulation->timers()->setOutputString(timer_name, timer_plugin_string);
 	}
-
-    //afterForces Plugin Call
-    global_log->debug() << "[AFTER FORCES] Performing AfterForces plugin call"
-                        << endl;
-    for (auto plugin : _plugins) {
-        global_log->debug() << "[AFTER FORCES] Plugin: "
-                            << plugin->getPluginName() << endl;
-        plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
-    }
 
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
 

@@ -304,6 +304,9 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 
 void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
                                 unsigned long simstep) {
+    if(simstep == 0){
+        return;
+    }
     if(_potential == LJ9_3){
         //global_log->debug() << "[WallPotential] LJ9_3 afterForces." << endl;
         this->calcTSLJ_9_3(particleContainer);
