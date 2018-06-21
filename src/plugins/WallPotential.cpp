@@ -267,12 +267,12 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
                         _uPot_10_4[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4[cid];
 
                         f[1] = preFactor * (4 * sig10_wi / y11 - 4 * sig4_wi / y5 - term3 * 3 / bracket);
-                        if(isnan(f[1])){
+                        /*if(isnan(f[1])){
                             global_log->info() << "NAN value " << nan << std::endl;
                             f[1] = 0.0;
                             nan++;
                             global_simulation->exit(99);
-                        }
+                        }*/
                         //global_log->info() << "[WallPotential] Fy: " << f[1] << endl;
                         f[0] = 0.;
                         f[2] = 0.;
