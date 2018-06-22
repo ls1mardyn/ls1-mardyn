@@ -10,12 +10,14 @@ Plugin name  | Up to 5 Keywords | Short Description (one line)
 CavityWriter | todo | todo
 CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up. See also MPICheckpointWriter and MPI_IOCheckpointWriter.
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
+CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.
 DecompWriter | todo | todo. Writes information on the MPI Domain Decomposition.
 DensityProfileWriter | todo | todo
 EnergyLogWriter | print, file, thermodynamic macroscopic quantities | Write the global \f$N\f$, \f$U_\mathrm{pot}\f$, \f$U_\mathrm{kin}\f$, \f$U_\mathrm{kinTrans}\f$, \f$U_\mathrm{kinRot}\f$, \f$T\f$, \f$p\f$ to file. Duplication with ResultWriter?
 ExamplePlugin  | example, sample, illustrate, usage | Print user-specifed text at a user-specified position in the code.  
 FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations per second at which the simulation runs. Only FLOPs in the force calculation are calculated.
 GammaWriter | todo | todo
+HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
 LoadbalanceWriter | todo | todo
 MaxCheck  | todo | todo
 MaxWriter  | todo | todo

@@ -4,7 +4,10 @@
 
 #include "plugins/PluginBase.h"
 
-
+/**
+ * Prints the CommunicationPartners for each rank in a separate file.
+ * Useful for debugging.
+ */
 class CommunicationPartnerWriter : public PluginBase {
 public:
 	

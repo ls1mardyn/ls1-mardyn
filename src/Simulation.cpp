@@ -1066,7 +1066,7 @@ void Simulation::simulate() {
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
-		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
+		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
 		if (_simstep >= _initGrandCanonical) {
 			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(), _domainDecomposition);
 		}
