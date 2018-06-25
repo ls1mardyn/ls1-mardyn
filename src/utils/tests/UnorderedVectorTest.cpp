@@ -18,27 +18,26 @@ void UnorderedVectorTest::testFastRemovalInt() {
 	vector<int> v;
 	int array[] = { 5, 4, 2, 3 };
 
-	vector<int>::iterator it = v.begin();
-	v.insert(it, array, array+4);
-	it = v.begin();
+	v.insert(v.begin(), array, array+4);
+	unsigned int index = 0;
 
-	UnorderedVector::fastRemove(v, it);
+	UnorderedVector::fastRemove(v, index);
 	// 5 was erased, 3 was copied in its place, vector contains 3, 4, 2, iterator points at 3
-	ASSERT_EQUAL(*it, 3);
+	ASSERT_EQUAL(v[index], 3);
 
-	++it;
-	UnorderedVector::fastRemove(v, it);
+	++index;
+	UnorderedVector::fastRemove(v, index);
 	// 4 was erased, 2 was copied in its place, vector contains 3, 2, iterator points at 2
-	ASSERT_EQUAL(*it, 2);
+	ASSERT_EQUAL(v[index], 2);
 
-	UnorderedVector::fastRemove(v, it);
+	UnorderedVector::fastRemove(v, index);
 	// 2 was erased, vector contains 3, iterator points at end()
-	ASSERT_TRUE(it == v.end());
+	ASSERT_TRUE(index == v.size());
 
-	it = v.begin();
-	UnorderedVector::fastRemove(v, it);
+	index = 0;
+	UnorderedVector::fastRemove(v, index);
 	// 2 was erased, vector is empty and iterator points at end()
-	ASSERT_TRUE(it == v.end());
+	ASSERT_TRUE(index == v.size());
 	ASSERT_TRUE(v.empty());
 }
 
@@ -46,7 +45,7 @@ void UnorderedVectorTest::testFastRemovalMoleculePointer() {
 	using std::vector;
 
 	vector<Molecule *> v;
-	vector<Molecule*>::iterator it = v.begin();
+	unsigned int index;
 	Component c(0);
 
 	unsigned long ids[4] = { 5ul, 4ul, 2ul, 3ul };
@@ -59,40 +58,40 @@ void UnorderedVectorTest::testFastRemovalMoleculePointer() {
 
 	// erase 5:
 
-	it = v.begin();
-	ASSERT_EQUAL((*it)->id(), 5ul);
+	index = 0;
+	ASSERT_EQUAL(v[index]->id(), 5ul);
 
-	delete *it;
-	UnorderedVector::fastRemove(v, it);
+	delete v[index];
+	UnorderedVector::fastRemove(v, index);
 	// 5 was erased, 3 was copied in its place, vector contains 3, 4, 2, iterator points at 3
-	ASSERT_EQUAL((*it)->id(), 3ul);
+	ASSERT_EQUAL((v[index])->id(), 3ul);
 
 
 	// erase 4:
 
-	++it;
-	ASSERT_EQUAL((*it)->id(), 4ul);
-	delete *it;
-	UnorderedVector::fastRemove(v, it);
+	++index;
+	ASSERT_EQUAL((v[index])->id(), 4ul);
+	delete v[index];
+	UnorderedVector::fastRemove(v, index);
 	// 4 was erased, 2 was copied in its place, vector contains 3, 2, iterator points at 2
-	ASSERT_EQUAL((*it)->id(), 2ul);
+	ASSERT_EQUAL((v[index])->id(), 2ul);
 
 
 	// erase 2:
 
-	delete *it;
-	UnorderedVector::fastRemove(v, it);
+	delete v[index];
+	UnorderedVector::fastRemove(v, index);
 	// 2 was erased, vector contains 3, iterator points at end()
-	ASSERT_TRUE(it == v.end());
+	ASSERT_TRUE(index == v.size());
 
 
 	// erase 3:
 
-	it = v.begin();
-	delete *it;
-	UnorderedVector::fastRemove(v, it);
+	index = 0;
+	delete v[index];
+	UnorderedVector::fastRemove(v, index);
 	// 3 was erased, vector is empty and iterator points at end()
-	ASSERT_TRUE(it == v.end());
+	ASSERT_TRUE(index == v.size());
 	ASSERT_TRUE(v.empty());
 
 }

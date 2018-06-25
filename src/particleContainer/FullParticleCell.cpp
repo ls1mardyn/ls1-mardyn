@@ -83,8 +83,7 @@ bool FullParticleCell::deleteMoleculeByIndex(size_t index) {
 	mardyn_assert(index < _molecules.size());
 
 	bool found = true;
-	auto it = _molecules.begin() + index;
-	UnorderedVector::fastRemove(_molecules, it);
+	UnorderedVector::fastRemove(_molecules, index);
 	return found;
 }
 
@@ -95,19 +94,16 @@ void FullParticleCell::preUpdateLeavingMolecules() {
 	const size_t size_total = _molecules.size(); // for debugging, see below
 	#endif
 
-	for (auto mol = _molecules.begin(); mol != _molecules.end(); ) {
-		mol->setSoA(nullptr);
+	for (auto it = iterator(); it.hasNext(); it.next()) {
+		it->setSoA(nullptr);
 
-		const bool isStaying = testInBox(*mol);
+		const bool isStaying = testInBox(*it);
 
 		if (isStaying) {
 			// don't do anything, just advance iterator
-			++mol;
-		}
-		else {
-			_leavingMolecules.push_back(*mol);
-			UnorderedVector::fastRemove(_molecules, mol);
-			// don't advance iterator, it now points to a new molecule
+		} else {
+			_leavingMolecules.push_back(*it);
+			it.deleteCurrentParticle();
 		}
 	}
 
@@ -131,40 +127,16 @@ void FullParticleCell::postUpdateLeavingMolecules(){
 	_leavingMolecules.clear();
 }
 
-/*
-std::vector<Molecule>& FullParticleCell::filterLeavingMolecules() {
-
-	for (auto it = _molecules.begin(); it != _molecules.end();) {
-		it->setSoA(nullptr);
-
-		bool isStaying = it->inBox(_boxMin, _boxMax);
-
-		if (isStaying) {
-			++it; // next iteration
-		} else {
-			_leavingMolecules.push_back(*it);
-			UnorderedVector::fastRemove(_molecules, it);
-			// don't advance iterator, it now points to a new molecule
-		}
-	}
-
-	return _leavingMolecules;
-}
-*/
-
 void FullParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
-	for (auto particleIter = _molecules.begin(); particleIter != _molecules.end();) {
-		if (particleIter->inBox(lowCorner, highCorner)) {
+	for (auto it = iterator(); it.hasNext(); it.next()) {
+		if (it->inBox(lowCorner, highCorner)) {
 			if (not removeFromContainer) {
-				particlePtrs.push_back(&(*particleIter));
+				particlePtrs.push_back(&(*it));
 			} else {
-				particlePtrs.push_back(new Molecule(*particleIter));
-				UnorderedVector::fastRemove(_molecules, particleIter);
-				// particleIter already points at next molecule, so continue without incrementing
-				continue;
+				particlePtrs.push_back(new Molecule(*it));
+				it.deleteCurrentParticle();
 			}
 		}
-		++particleIter;
 	}
 }
 
