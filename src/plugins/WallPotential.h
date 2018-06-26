@@ -40,15 +40,15 @@
 class WallPotential  : public PluginBase{
 
 private:
-    double _rhoW, _yc, _yOff, Delta;
+    double _rhoW, _yc, _yOff, _delta;
     double* _eps_wi;
     double* _sig3_wi;
     double* _sig2_wi;
     double* _sig_wi;
     double* _uShift_9_3;
     double* _uPot_9_3;
-    double* _uShift_10_4;
-    double* _uPot_10_4;
+    double* _uShift_10_4_3;
+    double* _uPot_10_4_3;
     unsigned _nc;
     double _dWidth;
     double _dWidthHalf;
@@ -65,15 +65,15 @@ public:
     WallPotential(): _rhoW(0.),
                      _yc(0.),
                      _yOff(0.),
-                     Delta(0.),
+                     _delta(0.),
                      _eps_wi(nullptr),
                      _sig3_wi(nullptr),
                      _sig2_wi(nullptr),
                      _sig_wi(nullptr),
                      _uShift_9_3(nullptr),
                      _uPot_9_3(nullptr),
-                     _uShift_10_4(nullptr),
-                     _uPot_10_4(nullptr),
+                     _uShift_10_4_3(nullptr),
+                     _uPot_10_4_3(nullptr),
                      _nc(0),
                      _dWidth(0.),
                      _dWidthHalf(0.){
@@ -87,8 +87,8 @@ public:
         delete [] _sig_wi;
         delete [] _uShift_9_3;
         delete [] _uPot_9_3;
-        delete [] _uShift_10_4;
-        delete [] _uPot_10_4;
+        delete [] _uShift_10_4_3;
+        delete [] _uPot_10_4_3;
     };
 
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
@@ -124,8 +124,8 @@ public:
     void initializeLJ93(const vector<Component> *components, double in_rhoWall, double in_sigWall, double in_epsWall,
                         vector<double> in_xi, vector<double> in_eta, double in_yOffWall, double in_yWallCut);
 
-    void initializeLJ104(const vector<Component> *components, double in_rhoWall, double in_sigWall, double in_epsWall,
-                         vector<double> in_xi, vector<double> in_eta, double in_yOffWall, double in_yWallCut);
+    void initializeLJ1043(const vector<Component> *components, double in_rhoWall, double in_sigWall, double in_epsWall,
+                          vector<double> in_xi, vector<double> in_eta, double in_yOffWall, double in_yWallCut);
 
     void calcTSLJ_9_3(ParticleContainer *partContainer);
 
