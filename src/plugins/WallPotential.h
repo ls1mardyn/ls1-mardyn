@@ -103,7 +103,7 @@ public:
             unsigned long simstep
     ){}
 
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {};
+    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
 
     void afterForces(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,

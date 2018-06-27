@@ -16,8 +16,8 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("delta", _delta);
     _dWidthHalf = _dWidth * 0.5;
     global_log->info() << "[WallPotential] Using plugin with parameters: density=" << density << ", "
-                          "sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
-                          "width=" << _dWidth << ", delta=" << _delta << endl;
+                                                                                                 "sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
+                                                                                                                                                                                           "width=" << _dWidth << ", delta=" << _delta << endl;
 
     int potential;
     xmlconfig.getNodeValue("potential", potential);
@@ -216,71 +216,79 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 
     /*! LJ-10-4 potential applied in y-direction */
     //if(partContainer->getBoundingBoxMin(1)< _yc+_yOff ){ // if linked cell within the potential range (inside the potential's cutoff)
-        for(unsigned d = 0; d < 3; d++){
-            regionLowCorner[d] = partContainer->getBoundingBoxMin(d);
-            regionHighCorner[d] = partContainer->getBoundingBoxMax(d);
-        }
+    for(unsigned d = 0; d < 3; d++){
+        regionLowCorner[d] = partContainer->getBoundingBoxMin(d);
+        regionHighCorner[d] = partContainer->getBoundingBoxMax(d);
+    }
 
 
-        //perform a check if the region is contained by the particleContainer???
-        if(partContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner)){
+    //perform a check if the region is contained by the particleContainer???
+    if(partContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner)){
 
 #if defined (_OPENMP)
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
-            {
-                RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
+        {
+            RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
-                for(RegionParticleIterator i = begin; i.hasNext() ; i.next()){
-                    //! so far for 1CLJ only, several 1CLJ-components possible
-                    double y, y2, y4, y5, y10, y11;
-                    unsigned cid = (*i).componentid();
+            for(RegionParticleIterator i = begin; i.hasNext() ; i.next()){
+                //! so far for 1CLJ only, several 1CLJ-components possible
+                double y, y2, y4, y5, y10, y11;
+                unsigned cid = (*i).componentid();
 
-                    y = (*i).r(1) - _yOff;
-                    if(y < _yc){
-                        y2 = y * y;
-                        y4 = y2 * y2;
-                        y5 = y4 * y;
-                        y10 = y5 * y5;
-                        y11 = y10 * y;
-                        double f[3];
-                        for(unsigned d = 0; d < 3; d++) {
-                            f[d] = 0.0;
-                        }
-
-                        double sig2_wi = _sig2_wi[cid];
-                        double sig4_wi = _sig2_wi[cid] * _sig2_wi[cid];
-                        double sig5_wi = sig4_wi * _sig_wi[cid];
-                        double sig10_wi = sig5_wi * sig5_wi;
-                        double bracket = y + 0.61 * _delta;
-                        double bracket3 = bracket * bracket * bracket;
-                        double term1 = sig10_wi / y10;
-                        double term2 = sig4_wi / y4;
-                        double term3 = sig4_wi / (3 * _delta * bracket3);
-                        double preFactor = 2*M_PI*_eps_wi[cid]*_rhoW*sig2_wi*_delta;
-                        _uPot_10_4_3[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4_3[cid];
-                        f[1] = preFactor * (4 * (sig10_wi / y11) - 4 * (sig4_wi / y5) - term3 * 3 / bracket);
-
-                        /*if(std::isnan(f[1])){
-                            global_log->info() << "NAN value " << nan << std::endl;
-                            f[1] = 0.0;
-                            global_simulation->exit(99);
-                        }*/
-                        if(y < 0){
-                            global_log->warning() << "below offset y: " << (*i).r(1) << " f " << f[1] << std::endl;
-                        }
-                        if(f[1] > 0){
-                            global_log->info() << "positive force y: " << (*i).r(1) << " " << f[1] << std::endl;
-                            //global_simulation->exit(99);
-                        }
-
-                        f[0] = 0;
-                        f[2] = 0;
-                        (*i).Fljcenteradd(0, f);
+                y = (*i).r(1) - _yOff;
+                if(y < _yc){
+                    y2 = y * y;
+                    y4 = y2 * y2;
+                    y5 = y4 * y;
+                    y10 = y5 * y5;
+                    y11 = y10 * y;
+                    double f[3];
+                    for(unsigned d = 0; d < 3; d++) {
+                        f[d] = 0.0;
                     }
+
+                    double sig2_wi = _sig2_wi[cid];
+                    double sig4_wi = _sig2_wi[cid] * _sig2_wi[cid];
+                    double sig5_wi = sig4_wi * _sig_wi[cid];
+                    double sig10_wi = sig5_wi * sig5_wi;
+                    double bracket = y + 0.61 * _delta;
+                    double bracket3 = bracket * bracket * bracket;
+                    double term1 = sig10_wi / y10;
+                    double term2 = sig4_wi / y4;
+                    double term3 = sig4_wi / (3 * _delta * bracket3);
+                    double preFactor = 2*M_PI*_eps_wi[cid]*_rhoW*sig2_wi*_delta;
+                    _uPot_10_4_3[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4_3[cid];
+                    f[1] = preFactor * (4 * (sig10_wi / y11) - 4 * (sig4_wi / y5) - term3 * 3 / bracket);
+
+                    /*if(std::isnan(f[1])){
+                        global_log->info() << "NAN value " << nan << std::endl;
+                        f[1] = 0.0;
+                        global_simulation->exit(99);
+                    }
+                    if(y < 0){
+                        global_log->warning() << "below offset y: " << (*i).r(1) << " f " << f[1] << std::endl;
+                    }
+                    if(f[1] > 0){
+                        global_log->info() << "positive force y: " << (*i).r(1) << " " << f[1] << std::endl;
+                        //global_simulation->exit(99);
+                    }
+                    if((*i).r(1) < 6){
+                        global_log->info() << "y/f1 value " << (*i).r(1) << " / " << f[1] << std::endl;
+                        global_log -> warning() << "Before " <<  i->F(1);
+                    }*/
+                    f[0] = 0;
+                    f[2] = 0;
+                    //(*i).Fljcenteradd(0, f);
+                    i->Fadd(f);
+
+                    /*if((*i).r(1) < 6) {
+                        global_log->warning() << " After " << i->F(1) << std::endl;
+                    }*/
                 }
             }
         }
+    }
     //}
 
     double u_pot;
@@ -292,6 +300,10 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
     }
 }
 // end method calcTSLJ_10_4(...)
+
+void WallPotential::beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+                                 unsigned long simstep) {
+}
 
 void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
                                 unsigned long simstep) {
@@ -308,5 +320,4 @@ void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDeco
         this->calcTSLJ_10_4(particleContainer);
         //global_log->debug() << "[WallPotential] LJ10_4 applied." << endl;
     }
-
 }
