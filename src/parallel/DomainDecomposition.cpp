@@ -105,6 +105,9 @@ double DomainDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 }
 
 double DomainDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
+	if(_coords[dimension] + 1 == _gridSize[dimension]){
+		return domain->getGlobalLength(dimension);
+	}
 	return (_coords[dimension] + 1) * domain->getGlobalLength(dimension) / _gridSize[dimension];
 }
 

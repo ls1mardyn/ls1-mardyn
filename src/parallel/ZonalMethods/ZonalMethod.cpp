@@ -60,7 +60,7 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 						} else if (d[dimension] == -1) { // LOWER
 							tmp.rmin[dimension] = initialRegion.rmin[dimension] - cutoffRadius[dimension];
 							tmp.rmax[dimension] = initialRegion.rmin[dimension];
-						} else { //d[dimension==1 - UPPER
+						} else { // d[dimension == 1 - UPPER
 							tmp.rmin[dimension] = initialRegion.rmax[dimension];
 							tmp.rmax[dimension] = initialRegion.rmax[dimension] + cutoffRadius[dimension];
 						}

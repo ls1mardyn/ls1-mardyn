@@ -589,6 +589,9 @@ double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 }
 
 double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
+	if (_ownArea->_highCorner[dimension] + 1 == _globalCellsPerDim[dimension]) {
+		return domain->getGlobalLength(dimension);
+	}
 	double globalLength = domain->getGlobalLength(dimension);
 	double pos = (_ownArea->_highCorner[dimension] + 1) * _cellSize[dimension];
 	if (pos < 0) {
