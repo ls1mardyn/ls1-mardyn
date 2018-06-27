@@ -39,6 +39,13 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 			<< _control.start << ":" << _control.freq << ":" << _control.stop
 			<< endl;
 
+	// yrange
+	Domain* domain = global_simulation->getDomain();
+	_yrange.min = 0.;
+	_yrange.max = domain->getGlobalLength(1);
+	xmlconfig.getNodeValue("yrange/min", _yrange.min);
+	xmlconfig.getNodeValue("yrange/max", _yrange.max);
+
 	// targets
 	uint32_t numTargets = 0;
 	XMLfile::Query query = xmlconfig.query("targets/target");
@@ -128,6 +135,9 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 				v[d] = it->v(d);
 			}
 
+			if(r[1] < _yrange.min || r[1] > _yrange.max)
+				continue;
+
 			// calc abs vals
 			absVals.F2 = this->calcSquaredVectorLength(F);
 			absVals.v2 = this->calcSquaredVectorLength(v);
@@ -147,11 +157,7 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 					it->scale_v(scale);
 				}
 			} else if (MCM_DELETE_PARTICLES == mv.method) {
-				if (mv.F > 0. && absVals.F2 > mv.F2)
-					it.deleteCurrentParticle();
-				//				_deletions.push_back(&(*it));
-
-				if (mv.v > 0. && absVals.v2 > mv.v2)
+				if ( (mv.F > 0. && absVals.F2 > mv.F2) || (mv.v > 0. && absVals.v2 > mv.v2) )
 					it.deleteCurrentParticle();
 				//				_deletions.push_back(&(*it));
 			}

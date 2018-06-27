@@ -5,7 +5,11 @@
 
 #include "plugins/PluginBase.h"
 
-
+/**
+ * Prints the halo particles for each process in a separate files.
+ * mainly useful for debugging purposes.
+ * uses the afterForces step
+ */
 class HaloParticleWriter : public PluginBase {
 public:
 	

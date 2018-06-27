@@ -86,11 +86,6 @@ public:
 		return _cellDataSoA;
 	}
 
-	/**
-	 * filter molecules which have left the box
-	 * @return field vector containing leaving molecules
-	 */
-	//std::vector<Molecule> & filterLeavingMolecules();
 	void preUpdateLeavingMolecules() override;
 
 	void updateLeavingMoleculesBase(ParticleCellBase& otherCell) override;

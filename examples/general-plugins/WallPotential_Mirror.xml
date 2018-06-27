@@ -68,8 +68,7 @@
       <ycut>51</ycut>
       <width>0.775</width>
       <!--
-      <component>
-        <id>1</id>
+      <component id="1">
         <xi>2</xi>
         <eta>3</eta>
       </component>

@@ -200,6 +200,9 @@ void RDFTest::testSiteSiteRDFLinkedCell() {
 	if (_domainDecomposition->getNumProcs() > 8) {
 		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
 	}
+	if (_domainDecomposition->getNumProcs() % 2) {
+		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS and not with a 3,5,7!");
+	}
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "2clj-regular.inp", 3.5);
 	testSiteSiteRDF(moleculeContainer);
 	delete moleculeContainer;

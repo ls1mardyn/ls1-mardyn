@@ -95,6 +95,7 @@ private:
 	TimestepControl _control;
 	maxvals_map _maxVals;
 	std::vector<Molecule*> _deletions;
+	struct YRange {double min, max;} _yrange;
 };
 
 #endif /*MAXCHECK_H_*/
