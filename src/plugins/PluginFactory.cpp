@@ -43,6 +43,7 @@
 #include "plugins/WallPotential.h"
 #include "plugins/ExamplePlugin.h"
 #include "plugins/TestPlugin.h"
+#include "plugins/InMemoryCheckpointing.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -84,6 +85,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(WallPotential);
     REGISTER_PLUGIN(ExamplePlugin);
     REGISTER_PLUGIN(TestPlugin);
+    REGISTER_PLUGIN(InMemoryCheckpointing);
 
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
