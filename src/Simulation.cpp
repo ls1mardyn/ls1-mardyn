@@ -12,7 +12,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <plugins/WallPotential.h>
 
 #include "Common.h"
 #include "Domain.h"

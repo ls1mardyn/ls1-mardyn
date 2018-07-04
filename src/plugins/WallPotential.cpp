@@ -5,6 +5,11 @@
 
 #include "WallPotential.h"
 
+/**
+ * @brief reads in configuration from config.xml. see class doc for example .xml
+ *
+ * @param xmlconfig config.xml
+ */
 void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     double density, sigma, epsilon, yoff, ycut;
     xmlconfig.getNodeValue("density", density);
@@ -85,6 +90,18 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
 
 }
 
+/**
+ * @brief initialize the LJ93 potential and calculate potential energy at cutoff
+ *
+ * @param components vector of components
+ * @param in_rhoWall density in wall
+ * @param in_sigWall sigmal of wall
+ * @param in_epsWall epsilon of wall
+ * @param in_xi vector for xi
+ * @param in_eta vector for eta
+ * @param in_yOffWall y-offset for wall
+ * @param in_yWallCut y-cutoff relative to wall
+ */
 void WallPotential::initializeLJ93(const std::vector<Component>* components,
                                    double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta,
                                    double in_yOffWall, double in_yWallCut) {
@@ -94,7 +111,6 @@ void WallPotential::initializeLJ93(const std::vector<Component>* components,
     this->_yc = in_yWallCut;
     this->_yOff = in_yOffWall;
 
-    /*!*** So far: only 1CLJ components allowed ****/
     _nc = components->size();
     _eps_wi = new double[_nc];
     _sig3_wi = new double[_nc];
@@ -116,7 +132,18 @@ void WallPotential::initializeLJ93(const std::vector<Component>* components,
         _uPot_9_3[i] = 0.0;
     }
 }
-
+/**
+ * @brief initialize the LJ1043 potential and calculate potential energy at cutoff
+ *
+ * @param components vector of components
+ * @param in_rhoWall density in wall
+ * @param in_sigWall sigmal of wall
+ * @param in_epsWall epsilon of wall
+ * @param in_xi vector for xi of components
+ * @param in_eta vector for eta of components
+ * @param in_yOffWall y-offset for wall
+ * @param in_yWallCut y-cutoff relative to wall
+ */
 void WallPotential::initializeLJ1043(const std::vector<Component> *components,
                                      double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi,
                                      std::vector<double> in_eta,
@@ -128,7 +155,6 @@ void WallPotential::initializeLJ1043(const std::vector<Component> *components,
     this->_yc = in_yWallCut;
     this->_yOff = in_yOffWall;
 
-    /*!*** So far: only 1CLJ components allowed ****/
     _nc = components->size();
     _eps_wi = new double[_nc];
     _sig3_wi = new double[_nc];
@@ -160,6 +186,10 @@ void WallPotential::initializeLJ1043(const std::vector<Component> *components,
     }
 }
 
+/**
+ * @brief Calculate and add forces to lennard-jones-sites. Also calculate new potential energy addition.
+ * @param partContainer
+ */
 void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
     double regionLowCorner[3], regionHighCorner[3];
 
@@ -189,7 +219,6 @@ void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
 
                     for(unsigned int si=0; si<i->numLJcenters(); ++si) {
                         double y, y3, y9, ry, ryRel;
-                        // TODO: ljcenter_d or _d_abs ?
                         const std::array<double, 3> arrSite = i->ljcenter_d_abs(si);
                         const double *posSite = arrSite.data();
                         ry = posSite[1];
@@ -231,6 +260,10 @@ void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
     }
 } // end method calcTSLJ_9_3(...)
 
+/**
+ * @brief Calculate and add forces to lennard-jones-sites. Also calculate new potential energy addition.
+ * @param partContainer
+ */
 void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 
     double regionLowCorner[3], regionHighCorner[3];
@@ -254,7 +287,6 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
             RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
             for(RegionParticleIterator i = begin; i.hasNext() ; i.next()){
-                //! so far for 1CLJ only, several 1CLJ-components possible
                 double ry, ryRel, y, y2, y4, y5, y10, y11;
                 unsigned cid = (*i).componentid();
                 if(false == _bConsiderComponent.at(cid) )
@@ -315,6 +347,13 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 }
 // end method calcTSLJ_10_4(...)
 
+/**
+ * @brief gets called during the force update step. calls the appropriate calculation function.
+ *
+ * @param particleContainer
+ * @param domainDecomp
+ * @param simstep
+ */
 void WallPotential::siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
                                    unsigned long simstep) {
 

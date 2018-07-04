@@ -16,32 +16,29 @@ class XMLfileUnits;
 /** @todo clean up all classes implementing this interface */
 
 
-/** @brief The outputBase class provides the interface for any kind of output classes - called "output plugins".
+/** @brief The PluginBase class provides the interface for any kind of output/plugin classes - called "(output) plugins".
  *
  * There are a lot of different things that one might want to write out during a simulation,
  * e.g. thermodynamic values, graphical information, time measurements, ...
  * For all cases in which this output happens regularly at the end of each time step
- * the outputBase class provides a common interface. The interface provides access to
+ * the PluginBase class provides a common interface. The interface provides access to
  * the most important data: the particle container and the domain decomposition.
  *
- * Of course, several output plugins will be needed in some cases. So the idea is, that
- * all available output plugins are registered in the OutputPluginFactory and initialized
+ * Of course, several plugins plugins will be needed in some cases. So the idea is, that
+ * all available plugins are registered in the PluginFactory and initialized
  * in the Simulation at runtime as requested by the input file. The plugin will then be
  * called at the respective points in the simulation automatically.
  *
- * Therefore, each output plugin has to implement at least the following five methods:
- * - initOutput: will be called once in the beginning
- * - doOutput: will be called each time step
- * - finishOutput: will be called at the end
+ * Therefore, each plugin has to implement at least the following five methods:
+ * - init: will be called once in the beginning
+ * - readXML: reads in the plugin configuration from config.xml
+ * - endStep: will be called each time step
+ * - finish: will be called at the end
  * - getPluginName: returning the output pulugin name
  * - createInstance: returning an instance object as follows
  * \code{.cpp}
- *   static OutputBase* createInstance() { return new MyPlugin(); }   // class name is MyPlugin
+ *   static PluginBase* createInstance() { return new MyPlugin(); }   // class name is MyPlugin
  * \endcode
- *
- * Optionally each plugin can provide its own implemenation of the following method to
- * read in a corresoonding section from the xml config file:
- * - readXML: read in xml section from config file
  */
 class PluginBase {
 public:
@@ -50,7 +47,7 @@ public:
 
     virtual ~PluginBase(){}
 
-    /** @brief Method initOutput will be called at the begin of the simulation.
+    /** @brief Method init will be called at the begin of the simulation.
      *
      * This method will be called once at the begin of the simulation just
      * right before the main time step loop.
@@ -62,20 +59,20 @@ public:
     virtual void init(ParticleContainer* particleContainer,
                             DomainDecompBase* domainDecomp, Domain* domain) = 0;
 
-    /** @brief Method readXML will be called once for each output plugin section in the input file.
+    /** @brief Method readXML will be called once for each plugin section in the input file.
      *
-     * This method can be used to read in parameters from the corresponding output plugin section in
-     * the xml config file. The method will be called once after an instance of the output plugin
+     * This method can be used to read in parameters from the corresponding plugin section in
+     * the xml config file. The method will be called once after an instance of the plugin
      * is created.
      *
-     * @note The same output plugins may be specified multiple times in the xml config file.
-     *       It is the responsibility of the output plugin to handle this case in a propper way.
+     * @note The same plugins may be specified multiple times in the xml config file.
+     *       It is the responsibility of the plugin to handle this case in a propper way.
      *
-     * The following xml object structure will be provided to the output plugin:
+     * The following xml object structure will be provided to the plugin:
      * \code{.xml}
-       <outputplugin name="plugin name">
+       <plugin name="plugin name">
          <!-- options for the specific plugin -->
-       </outputplugin>
+       </plugin>
        \endcode
      *
      * @param xmlconfig  section of the xml file
@@ -130,7 +127,7 @@ public:
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             Domain* domain, unsigned long simstep) = 0;
 
-    /** @brief Method finalOutput will be called at the end of the simulation
+    /** @brief Method finish will be called at the end of the simulation
      *
      * This method will be called once at the end of the simulation.
      * It can be used e.g. to closing output files or writing final statistics.

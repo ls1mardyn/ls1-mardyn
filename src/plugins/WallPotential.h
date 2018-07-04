@@ -24,16 +24,18 @@
  * <br>
  * \code{.xml}
  * <plugin name="WallPotential">
-      <density>1</density>
-      <sigma>1</sigma>
-      <epsilon>1</epsilon>
-      <yoff>1</yoff>
-      <ycut>1</ycut>
-      <width>5</width>
-      <potential>93</potential> // 93 OR 104
-      <@id> </@id>
-      <xi> </xi>
-      <eta> </eta>
+    	<potential>93</potential>
+        <density>1.0</density>
+        <sigma>3.499976678</sigma>
+        <epsilon>0.8</epsilon>
+        <yoff>105.23725</yoff>
+        <ycut>17.49988339</ycut>
+        <width>34.99976678</width>
+        <delta>1</delta>
+        <component id="1">
+          <xi>1.0</xi>
+          <eta>1.0</eta>
+        </component>
     </plugin>
  * \endcode
  */
