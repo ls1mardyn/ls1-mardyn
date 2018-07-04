@@ -728,10 +728,6 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
-    // TODO: include in the plugin call
-    //measureFLOPRate(_moleculeContainer, 0);
-	
-
 	// Update forces in molecules so they can be exchanged - future
 	updateForces(); 
 	
@@ -1111,6 +1107,7 @@ void Simulation::simulate() {
 				(!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
 
 		// scale velocity and angular momentum
+        // TODO: integrate into Temperature Control
 		if ( !_domain->NVE() && _temperatureControl == NULL) {
 			if (_thermostatType ==VELSCALE_THERMOSTAT) {
 				global_log->debug() << "Velocity scaling" << endl;

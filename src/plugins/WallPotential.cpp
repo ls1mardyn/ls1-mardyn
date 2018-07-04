@@ -44,12 +44,13 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     std::vector<double> xi_sf(numComponents);
     std::vector<double> eta_sf(numComponents);
 
+    _bConsiderComponent.resize(numComponents);
+
     if(numComponentsConsidered == 0){
         for(auto&& bi : _bConsiderComponent)
             bi = true;
     }
     else {
-        _bConsiderComponent.resize(numComponents);
         for (auto &&bi : _bConsiderComponent)
             bi = false;
 
