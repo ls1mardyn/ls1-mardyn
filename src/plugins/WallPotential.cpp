@@ -315,32 +315,8 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 }
 // end method calcTSLJ_10_4(...)
 
-void WallPotential::beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-                                 unsigned long simstep) {
-
-}
-
-void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-                                unsigned long simstep) {
-    /*
-    if(simstep == 0){
-        return;
-    }
-    if(_potential == LJ9_3){
-        //global_log->debug() << "[WallPotential] LJ9_3 afterForces." << endl;
-        this->calcTSLJ_9_3(particleContainer);
-        //global_log->debug() << "[WallPotential] LJ9_3 applied." << endl;
-    }
-    else if(_potential == LJ10_4){
-        //global_log->debug() << "[WallPotential] LJ10_4 afterForces. " << endl;
-        this->calcTSLJ_10_4(particleContainer);
-        //global_log->debug() << "[WallPotential] LJ10_4 applied." << endl;
-    }
-    */
-}
-
-void WallPotential::forceStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-                              unsigned long simstep) {
+void WallPotential::siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+                                   unsigned long simstep) {
 
     if(simstep == 0){
         return;

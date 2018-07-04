@@ -11,6 +11,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "particleContainer/adapter/CellProcessor.h"
+#include "plugins/PluginBase.h"
 
 using Log::global_log;
 
@@ -56,6 +57,12 @@ void NonBlockingMPIHandlerBase::performComputation() {
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
+	// siteWiseForces Plugin Call
+	global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin (nonBlocking) call" << endl;
+	for (PluginBase* plugin : *global_simulation->getPluginList()) {
+		global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+		plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, global_simulation->getSimulationStep());
+	}
 
 	// Update forces in molecules so they can be exchanged
 	const ParticleIterator begin = _moleculeContainer->iterator();

@@ -90,8 +90,8 @@ public:
 	) {};
 
     /** @brief Method beforeForces will be called before forcefields have been applied
+     * no alterations w.r.t. Forces shall be made here
      *
-     * make pure Virtual ?
      */
 
     virtual void beforeForces(
@@ -99,9 +99,17 @@ public:
             unsigned long simstep
     ) {};
 
+    /** @brief Method siteWiseForces will be called before forcefields have been applied
+     *  alterations to sitewise forces and fullMolecule forces can be made here
+     */
+
+    virtual void siteWiseForces(
+            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+            unsigned long simstep
+    ) {};
+
     /** @brief Method afterForces will be called after forcefields have been applied
-     *
-     * make pure Virtual ?
+     *  no sitewise Forces can be applied here
      */
     virtual void afterForces(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,

@@ -368,6 +368,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			Simulation::exit(1);
 		}
 
+		// TODO: move parts to readXML in TemperatureControl?
 		/* thermostats */
 		if(xmlconfig.changecurrentnode("thermostats")) {
 			long numThermostats = 0;
@@ -413,6 +414,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..." << endl;
 						Simulation::exit(-1);
 					}
+				}
+				else if(thermostattype == "Andersen"){
+
 				}
 				else
 				{
@@ -971,11 +975,12 @@ void Simulation::simulate() {
 
 			_moleculeContainer->traverseCells(*_cellProcessor);
 
-            // TODO: REMOVE HACK AND INTRODUCE PLUGIN STEP
-            WallPotential* wp = dynamic_cast<WallPotential*>(getPlugin("WallPotential"));
-            if(wp != NULL){
-                wp -> forceStep(_moleculeContainer, _domainDecomposition, _simstep);
-            }
+			// siteWiseForces Plugin Call
+			global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
+			for (auto plugin : _plugins) {
+				global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+				plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
+			}
 
 			// Update forces in molecules so they can be exchanged
 			updateForces();
@@ -1401,18 +1406,6 @@ PluginBase* Simulation::getPlugin(const std::string& name)  {
 	}
 	return nullptr;
 }
-
-/*void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
-	PluginBase * flopRateBase = getOutputPlugin("FlopRateWriter");
-	if (flopRateBase == nullptr) {
-		return;
-	}
-
-	FlopRateWriter * flopRateWriter = dynamic_cast<FlopRateWriter * >(flopRateBase);
-	mardyn_assert(flopRateWriter != nullptr);
-
-	flopRateWriter->measureFLOPS(cont, simstep);
-}*/
 
 unsigned long Simulation::getNumberOfTimesteps() const {
 	return _numberOfTimesteps;

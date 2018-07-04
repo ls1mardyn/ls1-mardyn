@@ -91,24 +91,12 @@ public:
         delete [] _uPot_10_4_3;
     };
 
-    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {
         global_log -> debug() << "[WallPotential] Wall enabled" << std::endl;
         _domain = domain;
     }
 
-    void readXML (XMLfileUnits& xmlconfig);
-
-    void beforeEventNewTimestep(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    ){}
-
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
-
-    void afterForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    );
+    void readXML (XMLfileUnits& xmlconfig) override;
 
     void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
@@ -131,7 +119,7 @@ public:
 
     void calcTSLJ_10_4(ParticleContainer *partContainer);
 
-    void forceStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+    void siteWiseForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
                    unsigned long simstep);
 };
 

@@ -91,6 +91,13 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
 	_cellProcessor->endTraversal();
 
+	// siteWiseForces Plugin Call
+	global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin (nonBlocking) call" << endl;
+	for (PluginBase* plugin : *global_simulation->getPluginList()) {
+		global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+		plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, global_simulation->getSimulationStep());
+	}
+
 	// Update forces in molecules so they can be exchanged - new - begin
 	const ParticleIterator begin = _moleculeContainer->iterator();
 	for (ParticleIterator i = begin; i.hasNext(); i.next()){
