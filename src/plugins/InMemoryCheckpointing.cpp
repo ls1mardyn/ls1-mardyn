@@ -70,6 +70,7 @@ void InMemoryCheckpointing::endStep(ParticleContainer* particleContainer,
 	global_log->info() << "InMemoryCheckpointWriter: writing snapshot: " << std::endl;
 
 	// put the molecules in the buffer
+	_snapshot.clearMolecules();
 	for (ParticleIterator m = particleContainer->iterator(); m.hasNext(); m.next()) {
 		_snapshot.addMolecule(*m);
 	}

@@ -109,6 +109,10 @@ public:
 			return _molecules;
 		}
 
+		void clearMolecules() {
+			_molecules.clear();
+		}
+
 	private:
 		std::vector<Molecule> _molecules;
 		double _currentTime;
