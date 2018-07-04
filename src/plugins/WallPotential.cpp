@@ -44,24 +44,30 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     std::vector<double> xi_sf(numComponents);
     std::vector<double> eta_sf(numComponents);
 
-    _bConsiderComponent.resize(numComponents);
-    for(auto&& bi : _bConsiderComponent)
-        bi = false;
-
-    string oldpath = xmlconfig.getcurrentnodepath();
-    XMLfile::Query::const_iterator componentIter;
-    for( componentIter = query.begin(); componentIter; componentIter++ )
-    {
-        global_log->info() << "[WALL DEBUG] setting component xi eta" << std::endl;
-        xmlconfig.changecurrentnode( componentIter );
-        unsigned int cid;
-        xmlconfig.getNodeValue("@id", cid);
-        xmlconfig.getNodeValue("xi",   xi_sf.at(cid-1) );
-        xmlconfig.getNodeValue("eta", eta_sf.at(cid-1) );
-        _bConsiderComponent.at(cid-1) = true;
-        global_log->info() << "[WALL DEBUG] " << cid << " " << xi_sf.at(cid-1) << " " << eta_sf.at(cid-1) << " " << std::endl;
+    if(numComponentsConsidered == 0){
+        for(auto&& bi : _bConsiderComponent)
+            bi = true;
     }
-    xmlconfig.changecurrentnode(oldpath);
+    else {
+        _bConsiderComponent.resize(numComponents);
+        for (auto &&bi : _bConsiderComponent)
+            bi = false;
+
+        string oldpath = xmlconfig.getcurrentnodepath();
+        XMLfile::Query::const_iterator componentIter;
+        for (componentIter = query.begin(); componentIter; componentIter++) {
+            xmlconfig.changecurrentnode(componentIter);
+            unsigned int cid;
+            xmlconfig.getNodeValue("@id", cid);
+            xmlconfig.getNodeValue("xi", xi_sf.at(cid - 1));
+            xmlconfig.getNodeValue("eta", eta_sf.at(cid - 1));
+            _bConsiderComponent.at(cid - 1) = true;
+            global_log->info() << "[WallPotential] " << cid << " " << xi_sf.at(cid - 1) << " " << eta_sf.at(cid - 1)
+                               << " " << std::endl;
+        }
+        xmlconfig.changecurrentnode(oldpath);
+    }
+
 
     if(_potential == LJ9_3){
         this->initializeLJ93(components, density, sigma, epsilon, xi_sf, eta_sf, yoff, ycut);
@@ -176,25 +182,40 @@ void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
                     f[d] = 0.;
 
                 for(RegionParticleIterator i = begin; i.hasNext(); i.next()){
-                    //! so far for 1CLJ only, several 1CLJ-components possible
-                    double y, y3, y9;
                     unsigned cid = (*i).componentid();
-                    y = (*i).r(1) - _yOff;
-                    if(y < _yc){
-                        y3 = y * y * y;
-                        y9 = y3 * y3 * y3;
-                        for(unsigned d = 0; d < 3; d++) {
-                            f[d] = 0.0;
-                        }
+                    if(false == _bConsiderComponent.at(cid) )
+                        continue;  // only add Wall force to molecules of component that should be considered
 
-                        double sig9_wi;
-                        sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
-                        f[cid] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / y;
-                        _uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] * (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
-                        f[1] = f[cid];
-                        f[0] = 0;
-                        f[2] = 0;
-                        (*i).Fljcenteradd(0, f);
+                    for(unsigned int si=0; si<i->numLJcenters(); ++si) {
+                        double y, y3, y9, ry, ryRel;
+                        // TODO: ljcenter_d or _d_abs ?
+                        const std::array<double, 3> arrSite = i->ljcenter_d_abs(si);
+                        const double *posSite = arrSite.data();
+                        ry = posSite[1];
+                        ryRel = (ry > _yOff) ? (ry - (_yOff + _dWidthHalf)) : (ry - (_yOff - _dWidthHalf));
+                        y = abs(ryRel);
+                        //y = ryRel;
+
+                        if (y < _yc) {
+                            y3 = y * y * y;
+                            y9 = y3 * y3 * y3;
+                            for (unsigned d = 0; d < 3; d++) {
+                                f[d] = 0.0;
+                            }
+
+                            double sig9_wi;
+                            sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
+                            f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] *
+                                   (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / y;
+                            if(ryRel < 0){
+                                f[1] = -f[1];
+                            }
+                            _uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] *
+                                              (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
+                            f[0] = 0;
+                            f[2] = 0;
+                            i->Fljcenteradd(si, f);
+                        }
                     }
                 }
             }
@@ -233,63 +254,55 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 
             for(RegionParticleIterator i = begin; i.hasNext() ; i.next()){
                 //! so far for 1CLJ only, several 1CLJ-components possible
-                double y, y2, y4, y5, y10, y11;
+                double ry, ryRel, y, y2, y4, y5, y10, y11;
                 unsigned cid = (*i).componentid();
+                if(false == _bConsiderComponent.at(cid) )
+                    continue;  // only add Wall force to molecules of component that should be considered
 
-                y = (*i).r(1) - _yOff;
-                if(y < _yc){
-                    y2 = y * y;
-                    y4 = y2 * y2;
-                    y5 = y4 * y;
-                    y10 = y5 * y5;
-                    y11 = y10 * y;
-                    double f[3];
-                    for(unsigned d = 0; d < 3; d++) {
-                        f[d] = 0.0;
-                    }
+                for(unsigned int si=0; si<i->numLJcenters(); ++si) {
+                    const std::array<double,3> arrSite = i->ljcenter_d_abs(si);
+                    const double* posSite = arrSite.data();
+                    //y = (*i).r(1) - _yOff;
+                    ry = posSite[1];
+                    ryRel = (ry > _yOff) ? (ry - (_yOff + _dWidthHalf)) : (ry - (_yOff - _dWidthHalf));
+                    y = abs(ryRel);
+                    if (y < _yc) {
+                        y2 = y * y;
+                        y4 = y2 * y2;
+                        y5 = y4 * y;
+                        y10 = y5 * y5;
+                        y11 = y10 * y;
+                        double f[3];
+                        for (unsigned d = 0; d < 3; d++) {
+                            f[d] = 0.0;
+                        }
 
-                    double sig2_wi = _sig2_wi[cid];
-                    double sig4_wi = _sig2_wi[cid] * _sig2_wi[cid];
-                    double sig5_wi = sig4_wi * _sig_wi[cid];
-                    double sig10_wi = sig5_wi * sig5_wi;
-                    double bracket = y + 0.61 * _delta;
-                    double bracket3 = bracket * bracket * bracket;
-                    double term1 = sig10_wi / y10;
-                    double term2 = sig4_wi / y4;
-                    double term3 = sig4_wi / (3 * _delta * bracket3);
-                    double preFactor = 2*M_PI*_eps_wi[cid]*_rhoW*sig2_wi*_delta;
-                    _uPot_10_4_3[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4_3[cid];
-                    f[1] = preFactor * (4 * (sig10_wi / y11) - 4 * (sig4_wi / y5) - term3 * 3 / bracket);
+                        double sig2_wi = _sig2_wi[cid];
+                        double sig4_wi = _sig2_wi[cid] * _sig2_wi[cid];
+                        double sig5_wi = sig4_wi * _sig_wi[cid];
+                        double sig10_wi = sig5_wi * sig5_wi;
+                        double bracket = y + 0.61 * _delta;
+                        double bracket3 = bracket * bracket * bracket;
+                        double term1 = sig10_wi / y10;
+                        double term2 = sig4_wi / y4;
+                        double term3 = sig4_wi / (3 * _delta * bracket3);
+                        double preFactor = 2 * M_PI * _eps_wi[cid] * _rhoW * sig2_wi * _delta;
+                        _uPot_10_4_3[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4_3[cid];
+                        f[1] = preFactor * (4 * (sig10_wi / y11) - 4 * (sig4_wi / y5) - term3 * 3 / bracket);
+                        if(ryRel < 0){
+                            f[1] = -f[1];
+                        }
+                        f[0] = 0;
+                        f[2] = 0;
 
-                    /*if(std::isnan(f[1])){
-                        global_log->info() << "NAN value " << nan << std::endl;
-                        f[1] = 0.0;
-                        global_simulation->exit(99);
+                        i->Fljcenteradd(si, f);
+                        //i->calcFM_site(i->ljcenter_d(si), i->ljcenter_F(si));
+                        //i->Fadd(f);
                     }
-                    if(y < 0){
-                        global_log->warning() << "below offset y: " << (*i).r(1) << " f " << f[1] << std::endl;
-                    }
-                    if(f[1] > 0){
-                        global_log->info() << "positive force y: " << (*i).r(1) << " " << f[1] << std::endl;
-                        //global_simulation->exit(99);
-                    }
-                    if((*i).r(1) < 6){
-                        global_log->info() << "y/f1 value " << (*i).r(1) << " / " << f[1] << std::endl;
-                        global_log -> warning() << "Before " <<  i->F(1);
-                    }*/
-                    f[0] = 0;
-                    f[2] = 0;
-                    //(*i).Fljcenteradd(0, f);
-                    i->Fadd(f);
-
-                    /*if((*i).r(1) < 6) {
-                        global_log->warning() << " After " << i->F(1) << std::endl;
-                    }*/
                 }
             }
         }
     }
-    //}
 
     double u_pot;
     // TODO: sum up upot for all components
@@ -303,10 +316,12 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 
 void WallPotential::beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
                                  unsigned long simstep) {
+
 }
 
 void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
                                 unsigned long simstep) {
+    /*
     if(simstep == 0){
         return;
     }
@@ -320,4 +335,24 @@ void WallPotential::afterForces(ParticleContainer *particleContainer, DomainDeco
         this->calcTSLJ_10_4(particleContainer);
         //global_log->debug() << "[WallPotential] LJ10_4 applied." << endl;
     }
+    */
+}
+
+void WallPotential::forceStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+                              unsigned long simstep) {
+
+    if(simstep == 0){
+        return;
+    }
+    if(_potential == LJ9_3){
+        //global_log->debug() << "[WallPotential] LJ9_3 afterForces." << endl;
+        this->calcTSLJ_9_3(particleContainer);
+        //global_log->debug() << "[WallPotential] LJ9_3 applied." << endl;
+    }
+    else if(_potential == LJ10_4){
+        //global_log->debug() << "[WallPotential] LJ10_4 afterForces. " << endl;
+        this->calcTSLJ_10_4(particleContainer);
+        //global_log->debug() << "[WallPotential] LJ10_4 applied." << endl;
+    }
+
 }

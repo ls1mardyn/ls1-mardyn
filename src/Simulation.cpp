@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <plugins/WallPotential.h>
 
 #include "Common.h"
 #include "Domain.h"
@@ -89,7 +90,7 @@ Simulation::Simulation()
 	_LJCutoffRadius(0.0),
 	_collectThermostatDirectedVelocity(100),
 	_thermostatType(VELSCALE_THERMOSTAT),
-	_nuAndersen(0.0),
+	_nuAndersen(0.05),
 	_numberOfTimesteps(1),
 	_simstep(0),
 	_initSimulation(0),
@@ -974,8 +975,15 @@ void Simulation::simulate() {
 
 			_moleculeContainer->traverseCells(*_cellProcessor);
 
+            // TODO: REMOVE HACK AND INTRODUCE PLUGIN STEP
+            WallPotential* wp = dynamic_cast<WallPotential*>(getPlugin("WallPotential"));
+            if(wp != NULL){
+                wp -> forceStep(_moleculeContainer, _domainDecomposition, _simstep);
+            }
+
 			// Update forces in molecules so they can be exchanged
 			updateForces();
+
 			forceCalculationTimer->stop();
 			perStepTimer.stop();
 			computationTimer->stop();

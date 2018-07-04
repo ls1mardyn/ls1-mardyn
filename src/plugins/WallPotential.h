@@ -130,6 +130,9 @@ public:
     void calcTSLJ_9_3(ParticleContainer *partContainer);
 
     void calcTSLJ_10_4(ParticleContainer *partContainer);
+
+    void forceStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+                   unsigned long simstep);
 };
 
 
