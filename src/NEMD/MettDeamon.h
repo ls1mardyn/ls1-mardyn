@@ -392,8 +392,10 @@ public:
 		while(ptr != nullptr)
 		{
 			cout << "ptr->_nIndex="<<ptr->_nIndex<<", nBinIndex="<<nBinIndex<<endl;
-			if(ptr->_nIndex == nBinIndex)
+			if(ptr->_nIndex == nBinIndex) {
+				_actual = ptr;
 				return true;
+			}
 			ptr = ptr->_next;
 			if(ptr == _first)
 				break;
