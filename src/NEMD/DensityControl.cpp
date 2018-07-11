@@ -832,15 +832,15 @@ void dec::ControlRegion::getGlobalMinMaxNumMoleculesSpreadCompIDs(uint32_t& cidM
 bool dec::ControlRegion::globalCompositionBalanced()
 {
 	bool bBalanced = true;
+	uint16_t numSpreadsNotZero = 0;
 	for(auto comp:_compVars)
 	{
 		if(0 == comp.compID)
 			continue;
-		if(comp.numMolecules.spread.global != 0) {
-			bBalanced = false;
-			break;
-		}
+		if(comp.numMolecules.spread.global != 0)
+			numSpreadsNotZero++;
 	}
+	bBalanced = numSpreadsNotZero < 2;
 	return bBalanced;
 }
 
