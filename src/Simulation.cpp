@@ -401,22 +401,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << endl;
 					}
 				}
-				else if(thermostattype == "TemperatureControl")
-				{
-					if(NULL == _temperatureControl)
-					{
-						_temperatureControl = new TemperatureControl();
-						_temperatureControl->readXML(xmlconfig);
-					}
-					else
-					{
-						global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..." << endl;
-						Simulation::exit(-1);
-					}
-				}
-				else if(thermostattype == "Andersen"){
-
-				}
+				else if(thermostattype == "TemperatureControl") {
+                    if (NULL == _temperatureControl) {
+                        _temperatureControl = new TemperatureControl();
+                        _temperatureControl->readXML(xmlconfig);
+                    } else {
+                        global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
+                                            << endl;
+                        Simulation::exit(-1);
+                    }
+                }
 				else
 				{
 					global_log->warning() << "Unknown thermostat " << thermostattype << endl;

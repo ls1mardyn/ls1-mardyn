@@ -13,6 +13,7 @@
 
 #include "molecules/Molecule.h"
 #include "ThermostatVariables.h"
+#include "utils/Random.h"
 
 class XMLfileUnits;
 class DomainDecompBase;
@@ -46,11 +47,16 @@ public:
 	void InitBetaLogfile();
 	void WriteBetaLogfile(unsigned long simstep);
 
+	enum LocalControlMethod {
+		Default,
+		Andersen,
+	};
+	LocalControlMethod _localMethod;
+
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
 	Accumulator* CreateAccumulatorInstance(std::string strTransDirections);
 
-private:
 	// instances / ID
 	static unsigned short _nStaticID;
 	unsigned short _nID;
@@ -77,6 +83,9 @@ private:
 	unsigned long _numSampledConfigs;
 	double _dBetaTransSumGlobal;
 	double _dBetaRotSumGlobal;
+	double _nuAndersen;
+	double _timestep;
+	Random _rand;
 };
 
 
@@ -106,12 +115,21 @@ public:
 
 	// loops over molecule container
 	void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
+	void DoLoopsDefault(DomainDecompBase*, ParticleContainer*, unsigned long simstep);
+	void DoLoopsAndersen(DomainDecompBase*, ParticleContainer*, unsigned long simstep);
 
 private:
 	std::vector<ControlRegionT*> _vecControlRegions;
 	unsigned long _nControlFreq;
 	unsigned long _nStart;
 	unsigned long _nStop;
+
+	enum ControlMethod {
+		Default,
+		Andersen,
+		Mixed
+	};
+	ControlMethod _method = Default;
 };
 
 

@@ -8,6 +8,9 @@
 #ifndef SRC_THERMOSTATS_THERMOSTATVARIABLES_H_
 #define SRC_THERMOSTATS_THERMOSTATVARIABLES_H_
 
+/**
+ * @brief Stores Variables that are local to the regions
+ */
 class LocalThermostatVariables {
 public:
 	LocalThermostatVariables() : _numMolecules(0ul), _numRotationalDOF(0ul), _ekinTrans(0.0), _ekinRot(0.0) {}
@@ -20,6 +23,9 @@ public:
 	double _ekinTrans, _ekinRot;
 };
 
+/**
+ * @brief Extends LocalThermostatVariables. Collects global values from local variables. Holds additional global variables
+ */
 class GlobalThermostatVariables : public LocalThermostatVariables {
 public:
 	GlobalThermostatVariables() : LocalThermostatVariables(), _betaTrans(1.0), _betaRot(1.0) {}
@@ -31,6 +37,9 @@ public:
 	double _betaTrans, _betaRot;
 };
 
+/**
+ * @brief Stitches together GlobalThermostatVariables & LocalThermostatVariables
+ */
 class LocalAndGlobalThermostatVariables {
 public:
 	LocalAndGlobalThermostatVariables() : _local(), _global() { }
