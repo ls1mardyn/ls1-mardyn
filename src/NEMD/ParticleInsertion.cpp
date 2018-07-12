@@ -183,10 +183,11 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 		_manipulator->PrepareParticleManipulation(simulation);
 }
 
-void ParticleManipDirector::ManipulateParticles(Simulation* simulation, Molecule* mol)
+void ParticleManipDirector::ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
 {
+	bDeleteMolecule = false;
 	if(nullptr != _manipulator)
-		_manipulator->ManipulateParticles(simulation, mol);
+		_manipulator->ManipulateParticles(simulation, mol, bDeleteMolecule);
 }
 
 void ParticleManipDirector::ManipulateParticleForces(Simulation* simulation, Molecule* mol)
@@ -296,13 +297,13 @@ void ParticleDeleter::PrepareParticleManipulation(Simulation* simulation)
 	this->CreateDeletionLists(_director->getCompVars() );
 }
 
-void ParticleDeleter::ManipulateParticles(Simulation* simulation, Molecule* mol)
+void ParticleDeleter::ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
 {
 	ParticleContainer* particleCont = simulation->getMolecules();
 
 	uint64_t mid = mol->id();
 	uint64_t cid_ub = mol->componentid()+1;
-	bool bDeleteMolecule = false;
+	bDeleteMolecule = false;
 	for(auto did:_deletionLists.at(cid_ub) )
 	{
 		if(did == mid)
@@ -311,7 +312,7 @@ void ParticleDeleter::ManipulateParticles(Simulation* simulation, Molecule* mol)
 	if(true == bDeleteMolecule)
 	{
 		_director->informParticleDeleted(*mol);  // deleted in next line
-		particleCont->deleteMolecule(*mol, true);
+//		particleCont->deleteMolecule(*mol, true);  <-- delete molecule directly in loop over molecules
 	}
 }
 
@@ -761,8 +762,9 @@ void BubbleMethod::PrepareParticleManipulation(Simulation* simulation)
 		this->initInsertionMolecules(simulation);
 }
 
-void BubbleMethod::ManipulateParticles(Simulation* simulation, Molecule* mol)
+void BubbleMethod::ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
 {
+	bDeleteMolecule = false;
 	this->FreezeSelectedMolecule(mol);
 }
 

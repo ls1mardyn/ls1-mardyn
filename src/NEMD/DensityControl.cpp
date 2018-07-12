@@ -462,7 +462,7 @@ void dec::ControlRegion::CalcGlobalValues(Simulation* simulation)
 	_director->globalValuesCalculated(simulation);
 }
 
-void dec::ControlRegion::ManipulateParticles(Simulation* simulation, Molecule* mol)
+void dec::ControlRegion::ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
 {
 	ParticleContainer* particleCont = simulation->getMolecules();
 //	// particle insertion
@@ -478,7 +478,7 @@ void dec::ControlRegion::ManipulateParticles(Simulation* simulation, Molecule* m
 		return;
 	*/
 
-	_director->ManipulateParticles(simulation, mol);
+	_director->ManipulateParticles(simulation, mol, bDeleteMolecule);
 	return;
 
 //    int nRank = domainDecomp->getRank();
@@ -488,7 +488,7 @@ void dec::ControlRegion::ManipulateParticles(Simulation* simulation, Molecule* m
 	for(uint8_t d=0; d<3; ++d)
 		if( !(PositionIsInside(d, mol->r(d) ) ) ) return;
 
-	bool bDeleteMolecule;
+	bDeleteMolecule = false;
     if( 0.0000001 > _compVars.at(0).density.target.global)
     {
         bDeleteMolecule = true;
@@ -1069,13 +1069,17 @@ void DensityControl::CalcGlobalValues(Simulation* simulation)
 		reg->CalcGlobalValues(simulation);
 }
 
-void DensityControl::ManipulateParticles(Simulation* simulation, Molecule* mol)
+void DensityControl::ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
 {
 	if(simulation->getSimulationStep() % _nControlFreq != 0)
 		return;
 
-	for(auto&& reg : _vecControlRegions)
-		reg->ManipulateParticles(simulation, mol);
+	bDeleteMolecule = false;
+	for(auto&& reg : _vecControlRegions) {
+		bool bDeleteMoleculeRegion = false;
+		reg->ManipulateParticles(simulation, mol, bDeleteMoleculeRegion);
+		bDeleteMolecule = bDeleteMolecule || bDeleteMoleculeRegion;
+	}
 }
 
 void DensityControl::ManipulateParticleForces(Simulation* simulation, Molecule* mol)
@@ -1175,7 +1179,13 @@ void MainLoopAction::performAction(Simulation* simulation)
 
 	for (ParticleIterator pit = particleCont->iterator(); pit.hasNext(); pit.next())
 	{
-		this->insideSecondLoop(simulation, &(*pit) );
+		bool bDeleteMolecule = false;
+		this->insideSecondLoop(simulation, &(*pit), bDeleteMolecule);
+		if(true == bDeleteMolecule)
+		{
+//			cout << "DEL molecule with mid=" << pit->id() << endl;
+			pit.deleteCurrentParticle();
+		}
 	}
 
 	this->postSecondLoop(simulation);
@@ -1194,9 +1204,9 @@ void PreForceAction::postFirstPreSecondLoop(Simulation* simulation)
 {
 	_parent->CalcGlobalValues(simulation);
 }
-void PreForceAction::insideSecondLoop(Simulation* simulation, Molecule* mol)
+void PreForceAction::insideSecondLoop(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
 {
-	_parent->ManipulateParticles(simulation, mol);
+	_parent->ManipulateParticles(simulation, mol, bDeleteMolecule);
 }
 void PreForceAction::postSecondLoop(Simulation* simulation)
 {
@@ -1214,7 +1224,7 @@ void PostForceAction::insideFirstLoop(Simulation* simulation, Molecule* mol)
 void PostForceAction::postFirstPreSecondLoop(Simulation* simulation)
 {
 }
-void PostForceAction::insideSecondLoop(Simulation* simulation, Molecule* mol)
+void PostForceAction::insideSecondLoop(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
 {
 	_parent->ManipulateParticleForces(simulation, mol);
 }

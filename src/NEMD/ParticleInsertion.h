@@ -47,7 +47,7 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 	void localValuesReseted(Simulation* simulation);
 	void globalValuesCalculated(Simulation* simulation);
-	void ManipulateParticles(Simulation* simulation, Molecule* mol);
+	void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
 	void ManipulateParticleForces(Simulation* simulation, Molecule* mol);
 	void FinalizeParticleManipulation(Simulation* simulation, MainLoopAction* action);
 	std::vector<dec::CompVarsStruct> getCompVars();
@@ -94,7 +94,7 @@ public:
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 	virtual void Reset(Simulation* simulation) = 0;
 	virtual void PrepareParticleManipulation(Simulation* simulation) = 0;
-	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol) = 0;
+	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule) = 0;
 	virtual void ManipulateParticleForces(Simulation* simulation, Molecule* mol) = 0;
 	virtual void FinalizeParticleManipulation(Simulation* simulation) = 0;
 	virtual void FinalizeParticleManipulation_preForce(Simulation* simulation) = 0;
@@ -117,7 +117,7 @@ public:
 	virtual void readXML(XMLfileUnits& xmlconfig) {}
 	virtual void Reset(Simulation* simulation) {}
 	virtual void PrepareParticleManipulation(Simulation* simulation);
-	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol);
+	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
 	virtual void ManipulateParticleForces(Simulation* simulation, Molecule* mol) {}
 	virtual void FinalizeParticleManipulation(Simulation* simulation) {_nManipState = PMS_IDLE;}
 	virtual void FinalizeParticleManipulation_preForce(Simulation* simulation) {_nManipState = PMS_IDLE;}
@@ -140,7 +140,7 @@ protected:
 public:
 	virtual void Reset(Simulation* simulation) = 0;
 	virtual void PrepareParticleManipulation(Simulation* simulation) = 0;
-	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol) = 0;
+	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule) = 0;
 	virtual void ManipulateParticleForces(Simulation* simulation, Molecule* mol) = 0;
 	virtual void FinalizeParticleManipulation(Simulation* simulation) = 0;
 	virtual void FinalizeParticleManipulation_preForce(Simulation* simulation) = 0;
@@ -232,7 +232,7 @@ public:
 	virtual void readXML(XMLfileUnits& xmlconfig);
 	virtual void Reset(Simulation* simulation);
 	virtual void PrepareParticleManipulation(Simulation* simulation);
-	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol);
+	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
 	virtual void ManipulateParticleForces(Simulation* simulation, Molecule* mol);
 	virtual void FinalizeParticleManipulation(Simulation* simulation);
 	virtual void FinalizeParticleManipulation_preForce(Simulation* simulation);

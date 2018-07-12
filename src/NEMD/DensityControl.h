@@ -82,7 +82,7 @@ public:
 
     void MeasureDensity(Simulation* simulation, Molecule* mol);
     void CalcGlobalValues(Simulation* simulation);
-    void ManipulateParticles(Simulation* simulation, Molecule* mol);
+    void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
     void ManipulateParticleForces(Simulation* simulation, Molecule* mol);
     void FinalizeParticleManipulation(Simulation* simulation, MainLoopAction* action);
 
@@ -216,7 +216,7 @@ public:
     void ResetLocalValues(Simulation* simulation);
     void MeasureDensity(Simulation* simulation, Molecule* mol);
     void CalcGlobalValues(Simulation* simulation);
-    void ManipulateParticles(Simulation* simulation, Molecule* mol);
+    void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
     void ManipulateParticleForces(Simulation* simulation, Molecule* mol);
     void FinalizeParticleManipulation(Simulation* simulation, MainLoopAction* action);
 
@@ -272,7 +272,7 @@ public:
 	virtual void preFirstLoop(Simulation* simulation) = 0;
 	virtual void insideFirstLoop(Simulation* simulation, Molecule* mol) = 0;
 	virtual void postFirstPreSecondLoop(Simulation* simulation) = 0;
-	virtual void insideSecondLoop(Simulation* simulation, Molecule* mol) = 0;
+	virtual void insideSecondLoop(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule) = 0;
 	virtual void postSecondLoop(Simulation* simulation) = 0;
 };
 
@@ -285,7 +285,7 @@ public:
 	virtual void preFirstLoop(Simulation* simulation);
 	virtual void insideFirstLoop(Simulation* simulation, Molecule* mol);
 	virtual void postFirstPreSecondLoop(Simulation* simulation);
-	virtual void insideSecondLoop(Simulation* simulation, Molecule* mol);
+	virtual void insideSecondLoop(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
 	virtual void postSecondLoop(Simulation* simulation);
 };
 
@@ -298,7 +298,7 @@ public:
 	virtual void preFirstLoop(Simulation* simulation);
 	virtual void insideFirstLoop(Simulation* simulation, Molecule* mol);
 	virtual void postFirstPreSecondLoop(Simulation* simulation);
-	virtual void insideSecondLoop(Simulation* simulation, Molecule* mol);
+	virtual void insideSecondLoop(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
 	virtual void postSecondLoop(Simulation* simulation);
 };
 
