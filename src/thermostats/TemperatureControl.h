@@ -14,6 +14,7 @@
 #include "molecules/Molecule.h"
 #include "ThermostatVariables.h"
 #include "utils/Random.h"
+#include "integrators/Integrator.h"
 
 class XMLfileUnits;
 class DomainDecompBase;
@@ -28,7 +29,7 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 	unsigned int GetID(){return _nID;}
-	void Init();
+	void VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections);
 
 	double* GetLowerCorner() {return _dLowerCorner;}
 	double* GetUpperCorner() {return _dUpperCorner;}
@@ -48,7 +49,7 @@ public:
 	void WriteBetaLogfile(unsigned long simstep);
 
 	enum LocalControlMethod {
-		Default,
+		VelocityScaling,
 		Andersen,
 	};
 	LocalControlMethod _localMethod;
@@ -85,6 +86,7 @@ private:
 	double _dBetaRotSumGlobal;
 	double _nuAndersen;
 	double _timestep;
+	double _nuDt;
 	Random _rand;
 };
 
@@ -115,8 +117,7 @@ public:
 
 	// loops over molecule container
 	void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
-	void DoLoopsDefault(DomainDecompBase*, ParticleContainer*, unsigned long simstep);
-	void DoLoopsAndersen(DomainDecompBase*, ParticleContainer*, unsigned long simstep);
+	void VelocityScalingPreparation(DomainDecompBase *, ParticleContainer *, unsigned long simstep);
 
 private:
 	std::vector<ControlRegionT*> _vecControlRegions;
@@ -125,11 +126,11 @@ private:
 	unsigned long _nStop;
 
 	enum ControlMethod {
-		Default,
+		VelocityScaling,
 		Andersen,
 		Mixed
 	};
-	ControlMethod _method = Default;
+	ControlMethod _method = VelocityScaling;
 };
 
 

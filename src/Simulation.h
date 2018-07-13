@@ -57,7 +57,6 @@ class TemperatureControl;
 class MemoryProfiler;
 
 // by Stefan Becker
-const int ANDERSEN_THERMOSTAT = 2;
 const int VELSCALE_THERMOSTAT = 1;
 
 namespace bhfmm {
@@ -322,7 +321,6 @@ private:
 	//! by Stefan Becker: the Type of the thermostat(velocity scaling or Andersen or...)
 	//! appropriate tokens stored as constants at the top of this file
 	int _thermostatType;
-	double _nuAndersen;
 
 	unsigned long _numberOfTimesteps;
 public:

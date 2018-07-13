@@ -88,8 +88,8 @@ Simulation::Simulation()
 	_cutoffRadius(0.0),
 	_LJCutoffRadius(0.0),
 	_collectThermostatDirectedVelocity(100),
+	// ANDERSEN DEPRECATED
 	_thermostatType(VELSCALE_THERMOSTAT),
-	_nuAndersen(0.05),
 	_numberOfTimesteps(1),
 	_simstep(0),
 	_initSimulation(0),
@@ -1134,45 +1134,6 @@ void Simulation::simulate() {
 				_velocityScalingThermostat.apply(_moleculeContainer);
 
 
-			}
-			else if(_thermostatType == ANDERSEN_THERMOSTAT) { //! the Andersen Thermostat
-				//global_log->info() << "Andersen Thermostat" << endl;
-				double nuDt = _nuAndersen * _integrator->getTimestepLength();
-				//global_log->info() << "Timestep length = " << _integrator->getTimestepLength() << " nuDt = " << nuDt << "\n";
-				unsigned numPartThermo = 0; // for testing reasons
-				double tTarget;
-				double stdDevTrans, stdDevRot;
-				if(_domain->severalThermostats()) {
-					for (ParticleIterator tM = _moleculeContainer->iterator(); tM.hasNext(); tM.next()) {
-						if (_rand.rnd() < nuDt) {
-							numPartThermo++;
-							int thermostat = _domain->getThermostat(tM->componentid());
-							tTarget = _domain->getTargetTemperature(thermostat);
-							stdDevTrans = sqrt(tTarget/tM->mass());
-							for(unsigned short d = 0; d < 3; d++) {
-								stdDevRot = sqrt(tTarget*tM->getI(d));
-								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
-								tM->setD(d,_rand.gaussDeviate(stdDevRot));
-							}
-						}
-					}
-				}
-				else{
-					tTarget = _domain->getTargetTemperature(0);
-					for (ParticleIterator tM = _moleculeContainer->iterator(); tM.hasNext(); tM.next()) {
-						if (_rand.rnd() < nuDt) {
-							numPartThermo++;
-							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
-							stdDevTrans = sqrt(tTarget/tM->mass());
-							for(unsigned short d = 0; d < 3; d++) {
-								stdDevRot = sqrt(tTarget*tM->getI(d));
-								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
-								tM->setD(d,_rand.gaussDeviate(stdDevRot));
-							}
-						}
-					}
-				}
-				//global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
 			}
 		}
 

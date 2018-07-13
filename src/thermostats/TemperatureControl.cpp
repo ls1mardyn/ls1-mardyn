@@ -134,40 +134,21 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
 	xmlconfig.getNodeValue("target/component", _nTargetComponentID);
 
-	// ControlMethod "Default/Andersen/Mixed"
+	// ControlMethod "VelocityScaling/Andersen/Mixed"
 	std::string methods = "";
 	xmlconfig.getNodeValue("method", methods);
 	if(methods != "") {
-		if(methods == "Default") {
-			_localMethod = Default;
-
-			// settings
-			xmlconfig.getNodeValue("settings/numslabs", _nNumSlabs);
-			xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
-			xmlconfig.getNodeValue("settings/directions", strDirections);
-			// calc slab width
-			_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
-			// create accumulator instance
-			_accumulator = this->CreateAccumulatorInstance(strDirections);
-
-			// write control for beta_trans and beta_rot log file
-			_nWriteFreqBeta = 1000;
-			_strFilenamePrefixBetaLog = "beta_log";
-			xmlconfig.getNodeValue("writefreq",  _nWriteFreqBeta);
-			xmlconfig.getNodeValue("fileprefix", _strFilenamePrefixBetaLog);
-			if(_nWriteFreqBeta==0) {
-				global_log->warning() << "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000." << std::endl;
-				_nWriteFreqBeta = 1000;
-			}
-			this->InitBetaLogfile();
+		if(methods == "VelocityScaling") {
+			_localMethod = VelocityScaling;
 
 			// init data structures
-			this->Init();
+			this->VelocityScalingInit(xmlconfig, strDirections);
 		}
 		else if(methods == "Andersen") {
 			_localMethod = Andersen;
 			xmlconfig.getNodeValue("settings/nu", _nuAndersen);
-			xmlconfig.getNodeValue("settings/timestep", _timestep);
+			_timestep = global_simulation->getIntegrator()->getTimestepLength();
+			_nuDt = _nuAndersen*_timestep;
 		}
 		else {
 			global_log -> error() << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
@@ -175,43 +156,44 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 		}
 		global_log -> info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
 	}
+	//
 	else {
-		_localMethod = Default;
-		global_log -> info() << "[TemperatureControl] REGION: no method specified, selecting Default" << std::endl;
-
-		// settings
-		xmlconfig.getNodeValue("settings/numslabs", _nNumSlabs);
-		xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
-		xmlconfig.getNodeValue("settings/directions", strDirections);
-		// calc slab width
-		_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
-		// create accumulator instance
-		_accumulator = this->CreateAccumulatorInstance(strDirections);
-
-		// write control for beta_trans and beta_rot log file
-		_nWriteFreqBeta = 1000;
-		_strFilenamePrefixBetaLog = "beta_log";
-		xmlconfig.getNodeValue("writefreq",  _nWriteFreqBeta);
-		xmlconfig.getNodeValue("fileprefix", _strFilenamePrefixBetaLog);
-		if(_nWriteFreqBeta==0) {
-			global_log->warning() << "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000." << std::endl;
-			_nWriteFreqBeta = 1000;
-		}
-		this->InitBetaLogfile();
+		_localMethod = VelocityScaling;
+		global_log -> info() << "[TemperatureControl] REGION: no method specified, selecting VelocityScaling" << std::endl;
 
 		// init data structures
-		this->Init();
+		this->VelocityScalingInit(xmlconfig, strDirections);
 	}
 }
 
-void ControlRegionT::Init()
+void ControlRegionT::VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections)
 {
+	// settings
+	xmlconfig.getNodeValue("settings/numslabs", _nNumSlabs);
+	xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
+	xmlconfig.getNodeValue("settings/directions", strDirections);
+	// calc slab width
+	_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
+	// create accumulator instance
+	_accumulator = this->CreateAccumulatorInstance(strDirections);
+
+	// write control for beta_trans and beta_rot log file
+	_nWriteFreqBeta = 1000;
+	_strFilenamePrefixBetaLog = "beta_log";
+	xmlconfig.getNodeValue("writefreq",  _nWriteFreqBeta);
+	xmlconfig.getNodeValue("fileprefix", _strFilenamePrefixBetaLog);
+	if(_nWriteFreqBeta==0) {
+		global_log->warning() << "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000." << std::endl;
+		_nWriteFreqBeta = 1000;
+	}
+	this->InitBetaLogfile();
 	_thermVars.resize(_nNumSlabs);
 }
 
 void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 {
-
+	if(_localMethod != VelocityScaling)
+		return;
 	domainDecomp->collCommInit(_nNumSlabs * 4);
 	for (unsigned s = 0; s < _nNumSlabs; ++s) {
 		LocalThermostatVariables & localTV = _thermVars[s]._local; // do not forget &
@@ -269,6 +251,8 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 
 void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*domainDecomp*/)
 {
+	if(_localMethod != VelocityScaling)
+		return;
 	// check componentID
 	if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
 		return;
@@ -337,7 +321,8 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 			return;
 	}
 
-	if(_localMethod == Default) {
+	// check for method
+	if(_localMethod == VelocityScaling) {
 		unsigned int nPosIndex;
 		unsigned int nIndexMax = _nNumSlabs - 1;
 
@@ -371,7 +356,7 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 	}
 	else if(_localMethod == Andersen) {
 		double stdDevTrans, stdDevRot;
-		if(_rand.rnd() < _nuAndersen*_timestep) {
+		if(_rand.rnd() < _nuDt) {
 			stdDevTrans = sqrt(_dTargetTemperature/mol->mass());
 			for(unsigned short d = 0; d < 3; d++) {
 				stdDevRot = sqrt(_dTargetTemperature*mol->getI(d));
@@ -397,7 +382,7 @@ void ControlRegionT::ResetLocalValues()
 
 void ControlRegionT::InitBetaLogfile()
 {
-    if(_localMethod == Default) {
+    if(_localMethod == VelocityScaling) {
         DomainDecompBase *domainDecomp = &(global_simulation->domainDecomposition());
 
 #ifdef ENABLE_MPI
@@ -420,6 +405,8 @@ void ControlRegionT::InitBetaLogfile()
 
 void ControlRegionT::WriteBetaLogfile(unsigned long simstep)
 {
+    if(_localMethod != VelocityScaling)
+        return;
 	if(0 != (simstep % _nWriteFreqBeta) )
 		return;
 
@@ -471,29 +458,6 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "Control with frequency: " << _nControlFreq << endl;
 	global_log->info() << "Stop control at simstep: " << _nStop << endl;
 
-	// ControlMethod "Default/Andersen/Mixed"
-	std::string methods = "";
-	xmlconfig.getNodeValue("control/methods", methods);
-	if(methods != "") {
-		if(methods == "Default") {
-			_method = Default;
-		}
-		else if(methods == "Andersen") {
-			_method = Andersen;
-		}
-		else if(methods == "Mixed") {
-			_method = Mixed;
-		}
-		else {
-			global_log -> error() << "[TemperatureControl] Invalid 'methods' param: " << methods << std::endl;
-			Simulation::exit(-1);
-		}
-	}
-	else {
-		_method = Default;
-		global_log -> info() << "[TemperatureControl] no method specified, selecting Default" << std::endl;
-	}
-	global_log -> info() << "[TemperatureControl] 'methods' param: " << methods << std::endl;
 	// turn on/off explosion heuristics
 	// domain->SetExplosionHeuristics(bUseExplosionHeuristics);
 
@@ -513,6 +477,28 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		ControlRegionT* region = new ControlRegionT();
 		region->readXML(xmlconfig);
 		this->AddRegion(region);
+	}
+
+	bool Vel = false;
+	bool And = false;
+	// check for mixed mode
+	for(auto&& reg : _vecControlRegions){
+		if(reg->_localMethod == ControlRegionT::LocalControlMethod::VelocityScaling)
+			Vel = true;
+		else if(reg->_localMethod == ControlRegionT::LocalControlMethod::Andersen)
+			And = true;
+	}
+	if(Vel && And){
+		_method = Mixed;
+		global_log -> info() << "[TemperatureControl] Mixed methods across regions\n";
+	}
+	else if(!Vel && And){
+		_method = Andersen;
+		global_log -> info() << "[TemperatureControl] Andersen in all regions\n";
+	}
+	else{
+		_method = VelocityScaling;
+		global_log -> info() << "[TemperatureControl] VelocityControl in all regions\n";
 	}
 }
 
@@ -579,20 +565,12 @@ void TemperatureControl::WriteBetaLogfiles(unsigned long simstep)
  */
 void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned long simstep)
 {
-	if(_method == Default){
-		this->DoLoopsDefault(domainDecomposition, particleContainer, simstep);
+	if(_method == VelocityScaling || _method == Mixed){
+		this->VelocityScalingPreparation(domainDecomposition, particleContainer, simstep);
+		global_log->debug() << "[TemperatureControl] VelocityScalingPreparation\n";
 	}
-	else if(_method == Andersen){
-		this->DoLoopsAndersen(domainDecomposition, particleContainer, simstep);
-	}
-	else if(_method == Mixed) {
-		this->DoLoopsDefault(domainDecomposition, particleContainer, simstep);
-		this->DoLoopsAndersen(domainDecomposition, particleContainer, simstep);
-	}
-	else{
-		global_log -> error() << "Unknown TemperatureControlMethod" << _method << std::endl;
-		Simulation::exit(-1);
-	}
+
+	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in
 	ParticleIterator tM;
 	for( tM  = particleContainer->iterator();
 		 tM.hasNext();
@@ -604,13 +582,14 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 }
 
 /**
- * @brief Use default control method and Loop over Molecules
+ * @brief Prepare for VelocityScaling control method
  *
  * @param domainDecomposition
  * @param particleContainer
  * @param simstep
  */
-void TemperatureControl::DoLoopsDefault(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned long simstep) {
+void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDecomposition,
+													ParticleContainer *particleContainer, unsigned long simstep) {
 	// respect start/stop
 	if(this->GetStart() <= simstep && this->GetStop() > simstep)
 	{
@@ -637,17 +616,6 @@ void TemperatureControl::DoLoopsDefault(DomainDecompBase* domainDecomposition, P
 		// write beta_trans, beta_rot log-files
 		this->WriteBetaLogfiles(simstep);
 	}
-}
-
-/**
- * @brief Use Andersen Thermostat Control and Loop over Molecules
- *
- * @param domainDecomposition
- * @param particleContainer
- * @param simstep
- */
-void TemperatureControl::DoLoopsAndersen(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned long simstep) {
-	global_log->info() << "Andersen Thermostat\n";
 }
 
 
