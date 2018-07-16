@@ -33,6 +33,8 @@ void select_rnd_elements(std::list<T1>& mylist, std::vector<T1>& myvec, T2 numSe
 	uint64_t numElements = mylist.size();
 	uint64_t numElementsSub = numElements / numSelect;
 	T2 numResidual = numElements % numSelect;
+	if(numElementsSub < 1)
+		return;
 
 	std::vector<std::vector<T1> > mat;
 	mat.resize(numSelect);
