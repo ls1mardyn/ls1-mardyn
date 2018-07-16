@@ -1278,7 +1278,7 @@ double BubbleMethod::GetLowerCorner(uint32_t nDim)
 
 double BubbleMethod::GetWidth(uint32_t nDim)
 {
-	return _director->GetLowerCorner(nDim);
+	return _director->GetWidth(nDim);
 }
 
 std::list<uint64_t> BubbleMethod::GetLocalParticleIDs(const uint32_t& nCompID)
