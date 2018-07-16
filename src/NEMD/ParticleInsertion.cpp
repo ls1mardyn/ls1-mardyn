@@ -88,6 +88,16 @@ void ParticleManipDirector::readXML(XMLfileUnits& xmlconfig)
 {
 	string oldpath = xmlconfig.getcurrentnodepath();
 
+	// deleter
+	{
+		std::string strType;
+		xmlconfig.getNodeValue("deleter@type", strType);
+		if(strType == "Off") {
+			delete _deleter;
+			_deleter = nullptr;
+		}
+	}
+
 	// set target variables for all components
 	if(xmlconfig.changecurrentnode("targets")) {
 		uint8_t numNodes = 0;
@@ -110,6 +120,12 @@ void ParticleManipDirector::readXML(XMLfileUnits& xmlconfig)
 			else {
 				// inserter
 				if(xmlconfig.changecurrentnode("insertion") ) {
+					std::string strType;
+					xmlconfig.getNodeValue("@type", strType);
+					if(strType == "MirrorMethod") {
+						delete _inserter.at(cid);
+						_inserter.at(cid) = new MirrorMethod(this, BMT_MIRROR);
+					}
 					_inserter.at(cid)->readXML(xmlconfig);
 					_inserter.at(cid)->setTargetCompID(cid);
 					xmlconfig.changecurrentnode("..");
@@ -148,7 +164,8 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 	if(true == _region->globalTargetDensityExeeded(0) )
 	{
 		_manipulator = _deleter;
-		global_log->info() << "DELETER activated" << endl;
+		if(nullptr != _manipulator)
+			global_log->info() << "DELETER activated" << endl;
 	}
 	// check if particle identities have to be changed
 	else if(false == _region->globalCompositionBalanced() && false == _bVacuum)
@@ -171,7 +188,9 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 		{
 			_manipulator = _inserter.at(_nextChangeIDs.from);
 	//			_manipulator = nullptr;
-			global_log->info() << "INSERTER activated" << endl;
+			MirrorMethod* mmptr = dynamic_cast<MirrorMethod*>(_manipulator);//returns 0 if ptr is not really an A*
+			if(mmptr == 0)  // not MirrorMethod
+				global_log->info() << "INSERTER activated" << endl;
 		}
 		else
 			_manipulator = nullptr;
@@ -217,6 +236,11 @@ double ParticleManipDirector::GetLowerCorner(uint32_t nDim)
 	return _region->GetLowerCorner(nDim);
 }
 
+double ParticleManipDirector::GetUpperCorner(uint32_t nDim)
+{
+	return _region->GetUpperCorner(nDim);
+}
+
 double ParticleManipDirector::GetWidth(uint32_t nDim)
 {
 	return _region->GetWidth(nDim);
@@ -253,7 +277,7 @@ bool ParticleManipDirector::setNextChangeIDs()
 bool ParticleManipDirector::setNextInsertIDs()
 {
 	// CHECK
-	_nextChangeIDs.from = _nextChangeIDs.to = 2;
+	_nextChangeIDs.from = _nextChangeIDs.to = 1;
 	return true;
 	// CHECK
 	bool bRet = true;
@@ -279,6 +303,18 @@ void ParticleManipDirector::informParticleDeleted(Molecule mol)
 void ParticleManipDirector::informParticleChanged(Molecule from, Molecule to)
 {
 	_region->informParticleChanged(from, to);
+}
+
+uint64_t ParticleManipDirector::getGlobalNumMolecules(const uint32_t& nCompID)
+{
+	_region->getGlobalNumMolecules(nCompID);
+}
+
+bool ParticleManipDirector::particleIsInside(Molecule* mol)
+{
+	// check if molecule is inside
+	for(uint8_t d=0; d<3; ++d)
+		if( !(_region->PositionIsInside(d, mol->r(d) ) ) ) return false;
 }
 
 // class ParticleDeleter
@@ -1253,6 +1289,76 @@ std::list<uint64_t> BubbleMethod::GetLocalParticleIDs(const uint32_t& nCompID)
 int64_t BubbleMethod::getLocalNumMoleculesSpread(uint32_t nCompID)
 {
 	return _director->getLocalNumMoleculesSpread(nCompID);
+}
+
+// MirrorMethod
+MirrorMethod::MirrorMethod(ParticleManipDirector* director, uint32_t nType)
+:
+ParticleInsertion(director, BMS_IDLE)
+{
+	_Py.local = 0.;
+}
+MirrorMethod::~MirrorMethod()
+{
+
+}
+
+void MirrorMethod::readXML(XMLfileUnits& xmlconfig)
+{
+
+}
+void MirrorMethod::Reset(Simulation* simulation)
+{
+
+}
+void MirrorMethod::PrepareParticleManipulation(Simulation* simulation)
+{
+
+}
+void MirrorMethod::ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule)
+{
+	double uc = _director->GetUpperCorner(1);
+	Component* comp = mol->component();
+	double rad = comp->getOuterMoleculeRadiusLJ();
+	double yLimit = uc - rad;
+	if(mol->r(1) < yLimit)
+		return;
+	else {  // limit exceed
+//		cout << "limit exceed! y=" << mol->r(1) << ", yLimit=" << yLimit << endl;
+		double vy = mol->v(1);
+		mol->setv(1,-vy);
+		_Py.local += 2. * vy * comp->m();  // Added momentum by reversing velocity component vy
+	}
+}
+void MirrorMethod::ManipulateParticleForces(Simulation* simulation, Molecule* mol)
+{
+	if(false == _director->particleIsInside(mol) )
+		return;
+
+	Component* comp = mol->component();
+	double dInvMass = 1. / comp->m();
+	double vyAdd = _PyAdd * dInvMass;
+	mol->setv(1, mol->v(1) + vyAdd);
+}
+void MirrorMethod::FinalizeParticleManipulation(Simulation* simulation)
+{
+	DomainDecompBase& domainDecomp = simulation->domainDecomposition();
+	domainDecomp.collCommInit(1);
+	domainDecomp.collCommAppendDouble(_Py.local);
+	domainDecomp.collCommAllreduceSum();
+	_Py.global = domainDecomp.collCommGetDouble();
+	domainDecomp.collCommFinalize();
+
+	// Momentum to add on every single molecule inside control volume CV
+	double dInvNumMolecules = 1. / _director->getGlobalNumMolecules(0);
+	_PyAdd = _Py.global * dInvNumMolecules;
+
+	// Reset local value
+	_Py.local = 0.;
+}
+void MirrorMethod::FinalizeParticleManipulation_preForce(Simulation* simulation)
+{
+
 }
 
 // class RandomSelector : public ParticleSelector

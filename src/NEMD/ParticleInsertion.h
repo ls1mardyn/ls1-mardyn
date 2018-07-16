@@ -52,6 +52,7 @@ public:
 	void FinalizeParticleManipulation(Simulation* simulation, MainLoopAction* action);
 	std::vector<dec::CompVarsStruct> getCompVars();
 	double GetLowerCorner(uint32_t nDim);
+	double GetUpperCorner(uint32_t nDim);
 	double GetWidth(uint32_t nDim);
 	ChangeVar<uint32_t> getNextChangeIDs() {return _nextChangeIDs;}
 	std::list<uint64_t> GetLocalParticleIDs(const uint32_t& nCompID);
@@ -61,6 +62,8 @@ public:
 	void informParticleInserted(Molecule mol);
 	void informParticleDeleted(Molecule mol);
 	void informParticleChanged(Molecule from, Molecule to);
+	uint64_t getGlobalNumMolecules(const uint32_t& nCompID);
+	bool particleIsInside(Molecule* mol);
 
 private:
 	bool setNextChangeIDs();
@@ -135,6 +138,7 @@ class ParticleInsertion : public ParticleManipulator
 {
 protected:
 	ParticleInsertion(ParticleManipDirector* director, uint32_t state);
+public:
 	virtual ~ParticleInsertion() {}
 
 public:
@@ -217,6 +221,7 @@ enum BubbleMethodTypes
 {
 	BMT_CHANGER = 1,
 	BMT_INSERTER = 2,
+	BMT_MIRROR = 3
 };
 
 class Quaternion;
@@ -284,6 +289,25 @@ private:
 		std::vector<std::array<double, 3> > initial;
 		std::vector<std::array<double, 3> > actual;
 	} _pbc;
+};
+
+class MirrorMethod : public ParticleInsertion
+{
+public:
+	MirrorMethod(ParticleManipDirector* director, uint32_t nType);
+	virtual ~MirrorMethod();
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void Reset(Simulation* simulation);
+	virtual void PrepareParticleManipulation(Simulation* simulation);
+	virtual void ManipulateParticles(Simulation* simulation, Molecule* mol, bool& bDeleteMolecule);
+	virtual void ManipulateParticleForces(Simulation* simulation, Molecule* mol);
+	virtual void FinalizeParticleManipulation(Simulation* simulation);
+	virtual void FinalizeParticleManipulation_preForce(Simulation* simulation);
+
+private:
+	CommVar<double> _Py;  // Added momentum by mirror reflection
+	double _PyAdd;  // Momentum to add on single molecules inside CV to conserve momentum
 };
 
 class ParticleSelector

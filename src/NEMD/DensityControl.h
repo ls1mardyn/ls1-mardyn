@@ -105,6 +105,7 @@ public:
 	std::list<uint64_t> GetLocalParticleIDs(const uint32_t& nCompID) {return _compVars.at(nCompID).particleIDs;}
 	int64_t getLocalNumMoleculesSpread(uint32_t nCompID) {return _compVars.at(nCompID).numMolecules.spread.local;}
 	bool getVacuum() {return _bVacuum;}
+	uint64_t getGlobalNumMolecules(const uint32_t& nCompID) {return _compVars.at(nCompID).numMolecules.actual.global;}
 
 	// checks
 	bool globalTargetDensityExeeded(uint32_t cid)   {return _compVars.at(cid).numMolecules.spread.global > 0;}
