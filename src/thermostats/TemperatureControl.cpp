@@ -405,10 +405,12 @@ void ControlRegionT::InitBetaLogfile()
 
 void ControlRegionT::WriteBetaLogfile(unsigned long simstep)
 {
-    if(_localMethod != VelocityScaling)
+    if(_localMethod != VelocityScaling) { 
         return;
-	if(0 != (simstep % _nWriteFreqBeta) )
+	}
+	if(0 != (simstep % _nWriteFreqBeta) ) {
 		return;
+	}
 
 	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition() );
 
