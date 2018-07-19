@@ -44,6 +44,7 @@
 #include "plugins/ExamplePlugin.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/InMemoryCheckpointing.h"
+#include "plugins/RedundancyResilience.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -86,7 +87,8 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(ExamplePlugin);
     REGISTER_PLUGIN(TestPlugin);
     REGISTER_PLUGIN(InMemoryCheckpointing);
-
+    REGISTER_PLUGIN(RedundancyResilience);
+    // REGISTER_PLUGIN(InSituMegamolComm);
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
     REGISTER_PLUGIN(VTKGridWriter);
