@@ -15,6 +15,8 @@
 
 #include "PluginBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
+
+#ifdef ENABLE_MPI
 #include "parallel/ResilienceComm.h"
 
 #include <set>
@@ -202,7 +204,7 @@ private:
 	 * serialized data. (atm: sizeof(int) bytes -> int rank, sizeof(double) bytes -> currentTime, n*sizeof(Molecule) -> std::vector<Molecule>)
 	 * @param[in] snapshotStart Iterator to the start of the the snapshot's byte data
 	 * @param[in] snapshotEnd Iterator to the end of the the snapshot's byte data. snapshotEnd itself is not part of the snapshot
-	 * @param[out] snapshot 
+	 * @param[out] snapshot Target for the incoming data
 	 */
 	std::vector<char>::iterator _deserializeSnapshot(std::vector<char>::iterator snapshotStart,
                                                      std::vector<char>::iterator snapshotEnd,
@@ -217,5 +219,50 @@ private:
 	unsigned long _backupInterval;
 	int _numberOfBackups;                        // number of ranks to backup
 };
+
+#else /* ENABLE_MPI */
+
+class Snapshot;
+
+class RedundancyResilience: public PluginBase {
+public:
+	RedundancyResilience() {};
+ 	virtual ~RedundancyResilience() {}
+ 	void init(ParticleContainer* particleContainer,
+ 			DomainDecompBase* domainDecomp, Domain* domain) {}
+
+    void readXML(XMLfileUnits& xmlconfig) {}
+	void beforeEventNewTimestep(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) {}
+
+    void beforeForces(
+            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+            unsigned long simstep
+    ) {}
+
+    void afterForces(
+            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+            unsigned long simstep
+    ) {}
+    void endStep(
+            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+            Domain* domain, unsigned long simstep) {};
+
+    void finish(ParticleContainer* particleContainer,
+                              DomainDecompBase* domainDecomp, Domain* domain
+	) {}
+
+    std::string getPluginName() {
+    	return std::string("RedundancyResilience");
+    }
+
+	static PluginBase* createInstance() { 
+		return new RedundancyResilience(); 
+	}
+};
+
+#endif /* ENABLE_MPI */
 
 #endif /* SRC_PLUGINS_REDUNDANCYRESILIENCE_H_ */

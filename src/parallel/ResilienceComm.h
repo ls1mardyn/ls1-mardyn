@@ -4,10 +4,10 @@
  *  Created on: 11 July 2018
  *      Author: Oliver Fernandes
  */
-
 #ifndef SRC_PARALLEL_RESILIENCECOMM_H_
 #define SRC_PARALLEL_RESILIENCECOMM_H_
 
+#ifdef ENABLE_MPI
 #include "utils/mardyn_assert.h" 
 
 #include <memory>
@@ -94,5 +94,5 @@ private:
 	int const _numProcs;
 	int const _rank;
 };
-
+#endif /* ENABLE_MPI */
 #endif /* SRC_PARALLEL_RESILIENCECOMM_H_ */

@@ -5,6 +5,8 @@
  *      Author: tchipevn / Oliver Fernandes
  */
 
+#ifdef ENABLE_MPI
+
 #include "RedundancyResilience.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
@@ -123,7 +125,6 @@ std::vector<char> RedundancyResilience::_serializeSnapshot(void) const {
 	byteData.insert(byteData.end(), 
 	                reinterpret_cast<char const*>(&currentTime), 
 					reinterpret_cast<char const*>(&currentTime)+sizeof(currentTime));
-
 	mardyn_assert(byteData.size() == totalBytes);
 	return byteData;
 }
@@ -184,4 +185,4 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 	}
 	return backupInfo;
 }
-
+#endif /*ENABLE_MPI */

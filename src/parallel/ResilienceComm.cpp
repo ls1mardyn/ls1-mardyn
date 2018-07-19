@@ -5,6 +5,7 @@
  *      Author: fernanor
  */
 
+#ifdef ENABLE_MPI
 #include "ResilienceComm.h"
 
 #include <climits> /* UINT64_MAX */
@@ -150,3 +151,4 @@ int ResilienceComm::exchangeSnapshots(
 	mardyn_assert(status == MPI_SUCCESS);
 	return 0;
 }
+#endif /* ENABLE_MPI */

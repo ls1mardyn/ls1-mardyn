@@ -4,7 +4,7 @@
  *  Created on: 16 Oct 2017
  *      Author: tchipevn
  */
-
+#ifdef ENABLE_MPI
 #ifndef SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 #define SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 
@@ -137,3 +137,4 @@ inline size_t CommunicationBuffer::readValue(size_t indexInBytes, T& passByRefer
 
 
 #endif /* SRC_PARALLEL_COMMUNICATIONBUFFER_H_ */
+#endif /* ENABLE_MPI */
