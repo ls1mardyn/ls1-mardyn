@@ -34,22 +34,19 @@ int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo,
 	                      std::vector<int>& backing, 
 	                      std::vector<int>& backedBy, 
 						  int const numberOfBackups) {
-	size_t totalBytesSend = backupInfo.size()*sizeof(int);
 	size_t totalBytesRecv = 2*numberOfBackups*sizeof(int);
-	std::unique_ptr<char[]> sendArray(new char[totalBytesSend]);
+	std::vector<char> recvArray2(totalBytesRecv);
 	std::unique_ptr<char[]> recvArray(new char[totalBytesRecv]);
 	if (_rank == 0) {
 		mardyn_assert(static_cast<uint>(2*numberOfBackups*_numProcs) == backupInfo.size());
-		memcpy(reinterpret_cast<void*>(sendArray.get()), reinterpret_cast<void*>(backupInfo.data()), totalBytesSend);
 	}
 	else {
-		memset(sendArray.get(), 0, totalBytesSend);
+		mardyn_assert(backupInfo.empty());
 	}
-	memset(recvArray.get(), 0, totalBytesRecv);
-	int mpi_error =	MPI_Scatter(sendArray.get(),
+	int mpi_error =	MPI_Scatter(reinterpret_cast<char*>(backupInfo.data()),
 	                            totalBytesRecv,        //the call expects the number of bytes to send PER RANK
 	 			                MPI_CHAR,
-				                recvArray.get(),
+				                recvArray2.data(),
 				                totalBytesRecv,
 				                MPI_CHAR,
 				                0,
@@ -57,13 +54,13 @@ int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo,
 	mardyn_assert(mpi_error == MPI_SUCCESS);
 	backing.resize(numberOfBackups);
 	backedBy.resize(numberOfBackups);
-	memcpy(backing.data(), reinterpret_cast<void*>(recvArray.get()), totalBytesRecv/2);
-	memcpy(backedBy.data(), reinterpret_cast<void*>(recvArray.get()+totalBytesRecv/2), totalBytesRecv/2);
+	std::copy(recvArray2.begin(), recvArray2.begin()+totalBytesRecv/2, backing.begin());
+	std::copy(recvArray2.begin()+totalBytesRecv/2, recvArray2.end(), backing.begin());
 	for (int i=0; i<numberOfBackups; ++i) {
 		mardyn_assert(backing[i]<_numProcs);
 		mardyn_assert(backedBy[i]<_numProcs);
 	}
-	// (re-)init the request buffers
+	// (re-)allocate the request buffers
 	_exchangeSizesRequests.clear();
 	_exchangeSnapshotsRequests.clear();
 	_exchangeSizesRequests.resize(backing.size()+backedBy.size());
