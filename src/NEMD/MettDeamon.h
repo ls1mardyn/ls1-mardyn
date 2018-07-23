@@ -391,7 +391,7 @@ public:
 		Bin* ptr = _first;
 		while(ptr != nullptr)
 		{
-			cout << "ptr->_nIndex="<<ptr->_nIndex<<", nBinIndex="<<nBinIndex<<endl;
+//			cout << "ptr->_nIndex="<<ptr->_nIndex<<", nBinIndex="<<nBinIndex<<endl;
 			if(ptr->_nIndex == nBinIndex) {
 				_actual = ptr;
 				return true;
