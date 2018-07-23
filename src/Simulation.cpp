@@ -747,6 +747,17 @@ void Simulation::prepare_start() {
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
+	// initializing plugins and starting plugin timers
+	for (auto& plugin : _plugins) {
+		global_log->info() << "Initializing plugin " << plugin->getPluginName() << endl;
+		plugin->init(_moleculeContainer, _domainDecomposition, _domain);
+		string timer_name = plugin->getPluginName();
+		// TODO: real timer
+		global_simulation->timers()->registerTimer(timer_name, vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
+		string timer_plugin_string = string("Plugin ") + timer_name + string(" took:");
+		global_simulation->timers()->setOutputString(timer_name, timer_plugin_string);
+	}
+
 	//afterForces Plugin Call
 	global_log->debug() << "[AFTER FORCES] Performing AfterForces plugin call"
 						<< endl;
@@ -763,7 +774,6 @@ void Simulation::prepare_start() {
 	if (_longRangeCorrection == NULL){
 		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
 	}
-
 
 	_longRangeCorrection->calculateLongRange();
 	// here we have to call calcFM() manually, otherwise force and moment are not
@@ -815,18 +825,6 @@ void Simulation::prepare_start() {
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
-
-	// initializing plugins and starting plugin timers
-	for (auto& plugin : _plugins) {
-		global_log->info() << "Initializing plugin " << plugin->getPluginName() << endl;
-		plugin->init(_moleculeContainer, _domainDecomposition, _domain);
-		string timer_name = plugin->getPluginName();
-		// TODO: real timer
-		global_simulation->timers()->registerTimer(timer_name, vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
-		string timer_plugin_string = string("Plugin ") + timer_name + string(" took:");
-		global_simulation->timers()->setOutputString(timer_name, timer_plugin_string);
-	}
-
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
 
 	/** Init TemperatureControl beta_trans, beta_rot log-files*/
