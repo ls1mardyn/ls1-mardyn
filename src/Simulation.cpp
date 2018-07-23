@@ -733,8 +733,6 @@ void Simulation::prepare_start() {
 		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
 	}
 
-
-
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	// now set vcp1clj_wr_cellProcessor::_dtInvm back.
 	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m);
@@ -744,31 +742,30 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->reset("SIMULATION_FORCE_CALCULATION");
 	++_loopCompTimeSteps;
 
-
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
-    //afterForces Plugin Call
-    global_log->debug() << "[AFTER FORCES] Performing AfterForces plugin call"
-                        << endl;
-    for (auto plugin : _plugins) {
-        global_log->debug() << "[AFTER FORCES] Plugin: "
-                            << plugin->getPluginName() << endl;
-        plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
-    }
+	//afterForces Plugin Call
+	global_log->debug() << "[AFTER FORCES] Performing AfterForces plugin call"
+						<< endl;
+	for (auto plugin : _plugins) {
+		global_log->debug() << "[AFTER FORCES] Plugin: "
+							<< plugin->getPluginName() << endl;
+		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+	}
 
-    // clear halo
-    global_log->info() << "Clearing halos" << endl;
-    _moleculeContainer->deleteOuterParticles();
+	// clear halo
+	global_log->info() << "Clearing halos" << endl;
+	_moleculeContainer->deleteOuterParticles();
 
-    if (_longRangeCorrection == NULL){
-        _longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
-    }
+	if (_longRangeCorrection == NULL){
+		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
+	}
 
 
-    _longRangeCorrection->calculateLongRange();
+	_longRangeCorrection->calculateLongRange();
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
@@ -810,9 +807,9 @@ void Simulation::prepare_start() {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(h);
 		}
-                map<unsigned, CavityEnsemble>::iterator ceit;
+		map<unsigned, CavityEnsemble>::iterator ceit;
 		for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
-		   ceit->second.submitTemperature(Tcur);
+			ceit->second.submitTemperature(Tcur);
 		}
 	}
 
@@ -824,7 +821,7 @@ void Simulation::prepare_start() {
 		global_log->info() << "Initializing plugin " << plugin->getPluginName() << endl;
 		plugin->init(_moleculeContainer, _domainDecomposition, _domain);
 		string timer_name = plugin->getPluginName();
-        // TODO: real timer
+		// TODO: real timer
 		global_simulation->timers()->registerTimer(timer_name, vector<string>{"SIMULATION_PER_STEP_IO"}, new Timer());
 		string timer_plugin_string = string("Plugin ") + timer_name + string(" took:");
 		global_simulation->timers()->setOutputString(timer_name, timer_plugin_string);
