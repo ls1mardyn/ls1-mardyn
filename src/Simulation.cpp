@@ -98,7 +98,7 @@ Simulation::Simulation()
 	_LJCutoffRadius(0.0),
 	_collectThermostatDirectedVelocity(100),
 	_thermostatType(VELSCALE_THERMOSTAT),
-	_nuAndersen(0.0),
+	_nuAndersen(0.05),
 	_numberOfTimesteps(1),
 	_simstep(0),
 	_initSimulation(0),
@@ -455,6 +455,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			Simulation::exit(1);
 		}
 
+		// TODO: move parts to readXML in TemperatureControl?
 		/* thermostats */
 		if(xmlconfig.changecurrentnode("thermostats")) {
 			long numThermostats = 0;
@@ -500,6 +501,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..." << endl;
 						Simulation::exit(-1);
 					}
+				}
+				else if(thermostattype == "Andersen"){
+
 				}
 				else
 				{
@@ -814,10 +818,6 @@ void Simulation::prepare_start() {
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
-
-    // TODO: include in the plugin call
-    //measureFLOPRate(_moleculeContainer, 0);
-	
 
 	// Update forces in molecules so they can be exchanged - future
 	updateForces(); 
@@ -1204,8 +1204,16 @@ void Simulation::simulate() {
 
 			_moleculeContainer->traverseCells(*_cellProcessor);
 
+			// siteWiseForces Plugin Call
+			global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
+			for (auto plugin : _plugins) {
+				global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+				plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
+			}
+
 			// Update forces in molecules so they can be exchanged
 			updateForces();
+
 			forceCalculationTimer->stop();
 			perStepTimer.stop();
 			computationTimer->stop();
@@ -1412,6 +1420,7 @@ void Simulation::simulate() {
 				(!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
 
 		// scale velocity and angular momentum
+        // TODO: integrate into Temperature Control
 		if ( !_domain->NVE() && _temperatureControl == NULL) {
 			if (_thermostatType ==VELSCALE_THERMOSTAT) {
 				global_log->debug() << "Velocity scaling" << endl;
@@ -1705,18 +1714,6 @@ PluginBase* Simulation::getPlugin(const std::string& name)  {
 	}
 	return nullptr;
 }
-
-/*void Simulation::measureFLOPRate(ParticleContainer* cont, unsigned long simstep) {
-	PluginBase * flopRateBase = getOutputPlugin("FlopRateWriter");
-	if (flopRateBase == nullptr) {
-		return;
-	}
-
-	FlopRateWriter * flopRateWriter = dynamic_cast<FlopRateWriter * >(flopRateBase);
-	mardyn_assert(flopRateWriter != nullptr);
-
-	flopRateWriter->measureFLOPS(cont, simstep);
-}*/
 
 unsigned long Simulation::getNumberOfTimesteps() const {
 	return _numberOfTimesteps;

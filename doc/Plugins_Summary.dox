@@ -18,6 +18,7 @@ ExamplePlugin  | example, sample, illustrate, usage | Print user-specifed text a
 FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations per second at which the simulation runs. Only FLOPs in the force calculation are calculated.
 GammaWriter | todo | todo
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
+InMemoryCheckpointing | resilience, checkpoint, fault tolerance, in-memory | In-memory Checkpointing. Save and restore the state of a simulation from a previous snapshot stored in RAM. Under development.
 LoadbalanceWriter | todo | todo
 MaxCheck  | todo | todo
 MaxWriter  | todo | todo

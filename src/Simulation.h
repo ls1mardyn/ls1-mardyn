@@ -450,7 +450,9 @@ public:
 	 */
 	PluginBase* getPlugin(const std::string& name);
 
-	//void measureFLOPRate(ParticleContainer * cont, unsigned long simstep);
+	std::list<PluginBase*>* getPluginList(){
+		return &_plugins;
+	}
 
 	/** Global energy log */
 	void initGlobalEnergyLog();
