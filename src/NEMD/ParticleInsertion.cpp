@@ -69,7 +69,7 @@ ParticleManipDirector::ParticleManipDirector(dec::ControlRegion* region)
 	_inserter.resize(numComps);
 //	_inserter.at(0) = nullptr;
 	for(auto&& ins:_inserter)
-		ins = new BubbleMethod(this, BMT_INSERTER);
+		ins = nullptr;  // new BubbleMethod(this, BMT_INSERTER);
 
 	// deleter
 	_deleter = new ParticleDeleter(this);
@@ -122,11 +122,19 @@ void ParticleManipDirector::readXML(XMLfileUnits& xmlconfig)
 			else {
 				// inserter
 				if(xmlconfig.changecurrentnode("insertion") ) {
-					std::string strType;
+					std::string strType = "unknown";
 					xmlconfig.getNodeValue("@type", strType);
 					if(strType == "MirrorMethod") {
 						delete _inserter.at(cid);
 						_inserter.at(cid) = new MirrorMethod(this, BMT_MIRROR);
+					}
+					else if(strType == "BubbleMethod") {
+						delete _inserter.at(cid);
+						_inserter.at(cid) = new BubbleMethod(this, BMT_INSERTER);
+					}
+					else {
+						delete _inserter.at(cid);
+						_inserter.at(cid) = nullptr;
 					}
 					_inserter.at(cid)->readXML(xmlconfig);
 					_inserter.at(cid)->setTargetCompID(cid);
@@ -191,7 +199,7 @@ void ParticleManipDirector::globalValuesCalculated(Simulation* simulation)
 			_manipulator = _inserter.at(_nextChangeIDs.from);
 	//			_manipulator = nullptr;
 			MirrorMethod* mmptr = dynamic_cast<MirrorMethod*>(_manipulator);//returns 0 if ptr is not really an A*
-			if(mmptr == 0)  // not MirrorMethod
+			if(mmptr == 0 && nullptr != _manipulator)  // not MirrorMethod
 				global_log->info() << "INSERTER activated" << endl;
 		}
 		else
@@ -309,7 +317,7 @@ void ParticleManipDirector::informParticleChanged(Molecule from, Molecule to)
 
 uint64_t ParticleManipDirector::getGlobalNumMolecules(const uint32_t& nCompID)
 {
-	_region->getGlobalNumMolecules(nCompID);
+	return _region->getGlobalNumMolecules(nCompID);
 }
 
 bool ParticleManipDirector::particleIsInside(Molecule* mol)
@@ -317,6 +325,7 @@ bool ParticleManipDirector::particleIsInside(Molecule* mol)
 	// check if molecule is inside
 	for(uint8_t d=0; d<3; ++d)
 		if( !(_region->PositionIsInside(d, mol->r(d) ) ) ) return false;
+	return true;  // x,y,z coordinate check did not fail => position is inside!
 }
 
 // class ParticleDeleter
