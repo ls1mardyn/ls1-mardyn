@@ -26,7 +26,8 @@ private:
 	{
 		MCM_UNKNOWN = 0,
 		MCM_LIMIT_TO_MAX_VALUE = 1,
-		MCM_DELETE_PARTICLES = 2
+		MCM_LIMIT_TO_MAX_VALUE_OVERLAPS = 2,
+		MCM_DELETE_PARTICLES = 3
 	};
 
 	struct TimestepControl

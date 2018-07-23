@@ -156,6 +156,18 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 					double scale = mv.v / vabs;
 					it->scale_v(scale);
 				}
+			} else if (MCM_LIMIT_TO_MAX_VALUE_OVERLAPS == mv.method) {
+				if (mv.F > 0. && absVals.F2 > mv.F2) {
+					double Fabs = sqrt(absVals.F2);
+					double scale = mv.F / Fabs;
+					it->scale_F(scale);
+
+					if (mv.v > 0. && absVals.v2 > mv.v2) {
+						double vabs = sqrt(absVals.v2);
+						scale = mv.v / vabs;
+						it->scale_v(scale);
+					}
+				}
 			} else if (MCM_DELETE_PARTICLES == mv.method) {
 				if ( (mv.F > 0. && absVals.F2 > mv.F2) || (mv.v > 0. && absVals.v2 > mv.v2) )
 					it.deleteCurrentParticle();
