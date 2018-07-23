@@ -88,6 +88,5 @@ public:
 	}
 
 	long enablePlugins(std::list<PluginBase*>& _plugins, XMLfileUnits& xmlconfig, std::string category, Domain* _domain);
-
-	};
+};
 #endif  // SRC_UTILS_PLUGINFACTORY_H_
