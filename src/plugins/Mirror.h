@@ -9,6 +9,11 @@
 #include <map>
 #include <list>
 
+enum MirrorDirections {
+	MD_LEFT_MIRROR = 0,
+	MD_RIGHT_MIRROR = 1
+};
+
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
@@ -59,11 +64,22 @@ public:
 
 private:
 		void VelocityChange(ParticleContainer* particleContainer);
+		void readNormDistr();
 
 private:
 	double _yPos;
 	double _forceConstant;
 	int _direction;
+	bool _bReflect;
+	struct NormMB{
+		bool enabled;
+		struct NormFnames{
+			std::string vxz;
+			std::string vy;
+		} fname;
+		std::list<double> vxz;
+		std::list<double> vy;
+	} _norm;
 };
 
 #endif /*MIRROR_H_*/
