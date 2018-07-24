@@ -415,9 +415,9 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 	  if(shearWidth > 0.0){
 		if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= shearRateBox[2] && thismol->r(1) <= shearRateBox[2] + shearWidth){
 			yun = 0;
-		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= 0.5 * (shearRateBox[3]-shearRateBox[2]) - shearWidth && thismol->r(1) < 0.5 * (shearRateBox[3]-shearRateBox[2])){
+		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= shearRateBox[2] + 0.5 * (shearRateBox[3]-shearRateBox[2]) - shearWidth && thismol->r(1) < shearRateBox[2] + 0.5 * (shearRateBox[3]-shearRateBox[2])){
 			yun = 1;
-		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= 0.5 * (shearRateBox[3]-shearRateBox[2]) && thismol->r(1) <= 0.5 * (shearRateBox[3]-shearRateBox[2]) + shearWidth){
+		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= shearRateBox[2] + 0.5 * (shearRateBox[3]-shearRateBox[2]) && thismol->r(1) <= shearRateBox[2] + 0.5 * (shearRateBox[3]-shearRateBox[2]) + shearWidth){
 			yun = 2;	
 		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= shearRateBox[3] - shearWidth && thismol->r(1) <= shearRateBox[3]){
 			yun = 3;
@@ -433,7 +433,7 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 		  directedVel = domain->getPG()->getDirectedShearVel(yun);
 		  directedVelAverage = domain->getPG()->getDirectedShearVelAverage(yun);
 		  if(_simulation.isShearRate()){
-			shearVelocityTarget = shearRate * shearYmax/2 - fabs((shearYmax/2 - thismol->r(1)) * shearRate);
+			shearVelocityTarget = shearRate * shearYmax/2 - fabs((shearYmax/2 - (thismol->r(1)-shearRateBox[2])) * shearRate);
 			shearVelocityTarget = slowAcceleration*shearVelocityTarget;
 		  }else
 			shearVelocityTarget = 0.0;  

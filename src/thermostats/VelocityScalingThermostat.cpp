@@ -112,7 +112,7 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer, Doma
 		if(_simulation.getDomain()->isBulkPressure(molecule->componentid())){
 		  if((molecule->r(0) >= _simulation.getDomain()->getBulkBoundary(0)-_simulation.getLJCutoff() && molecule->r(0) <= _simulation.getDomain()->getBulkBoundary(1)+_simulation.getLJCutoff() && molecule->r(1) >= _simulation.getDomain()->getBulkBoundary(2)-_simulation.getLJCutoff() && molecule->r(1) <= _simulation.getDomain()->getBulkBoundary(3)+_simulation.getLJCutoff())){
 		    for (unsigned short d = 0; d < 3; ++d){
-			long double v_d = molecule->v(d) - molecule->getDirectedVelocityStress(d);
+			long double v_d = molecule->v(d) - molecule->getDirectedVelocity(d);
 			long double kinTrans = v_d * v_d * molecule->mass();
 			molecule->addPressureKin(d, kinTrans);
 		    }

@@ -776,6 +776,8 @@ private:
 	std::map<int, std::map<unsigned long, double> > _globalConvectivePotHeatflux;
 	std::map<int, std::map<unsigned long, double> > _localTotalHeatflux;
 	std::map<int, std::map<unsigned long, double> > _globalTotalHeatflux;
+	std::map<unsigned long, double> _localPotEnergy;
+	std::map<unsigned long, double> _globalPotEnergy;
 	// local and global diffusion constant
 	std::map<int, std::map<unsigned long, double> > _localDiffusiveMovement;
 	std::map<int, std::map<unsigned long, double> > _globalDiffusiveMovement;

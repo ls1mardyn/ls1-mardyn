@@ -380,10 +380,10 @@ void PressureGradient::prepareShearRate(ParticleContainer* molCont, DomainDecomp
 	  if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] && thismol->r(1) <= _shearRateBox[2] + _shearWidth){
 		this->_localShearN[0]++;
 		this->_localShearVelocitySum[0] += thismol->v(0);
-	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= 0.5 * (_shearRateBox[3]-_shearRateBox[2]) - _shearWidth && thismol->r(1) < 0.5 * (_shearRateBox[3]-_shearRateBox[2])){
+	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] + 0.5 * (_shearRateBox[3]-_shearRateBox[2]) - _shearWidth && thismol->r(1) < _shearRateBox[2] + 0.5 * (_shearRateBox[3]-_shearRateBox[2])){
 		this->_localShearN[1]++;
 		this->_localShearVelocitySum[1] += thismol->v(0);
-	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= 0.5 * (_shearRateBox[3]-_shearRateBox[2]) && thismol->r(1) <= 0.5 * (_shearRateBox[3]-_shearRateBox[2]) + _shearWidth){
+	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] + 0.5 * (_shearRateBox[3]-_shearRateBox[2]) && thismol->r(1) <= _shearRateBox[2] + 0.5 * (_shearRateBox[3]-_shearRateBox[2]) + _shearWidth){
 		this->_localShearN[2]++;
 		this->_localShearVelocitySum[2] += thismol->v(0);	
 	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[3] - _shearWidth && thismol->r(1) <= _shearRateBox[3]){
