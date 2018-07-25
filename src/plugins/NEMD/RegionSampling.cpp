@@ -821,7 +821,7 @@ void SampleRegion::initSamplingVDF(int nDimension)
 
 #ifndef NDEBUG
 	// show component specific parameters
-	this->ShowComponentSpecificParamsVDF();
+	this->showComponentSpecificParamsVDF();
 #endif
 }
 
