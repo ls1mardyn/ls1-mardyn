@@ -399,6 +399,16 @@ double FullMolecule::U_rot() {
 	return 0.5 * Iw2;
 }
 
+double FullMolecule::U_rot_2() {
+	std::array<double, 3> w = _q.rotateinv(D_arr());
+	double Iw2 = 0.;
+	for (unsigned short d = 0; d < 3; ++d) {
+		w[d] *= _invI[d];
+		Iw2 += _I[d] * w[d] * w[d];
+	}
+	return Iw2;
+}
+
 void FullMolecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 	summv2 += _m * v2();
 	std::array<double, 3> w = _q.rotateinv(D_arr());
