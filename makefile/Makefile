@@ -38,6 +38,10 @@ UNIT_TESTS ?= 0
 # 0: disbaled, 1: enabled
 VTK ?= 0
 
+# build with INSITU support
+# 0: disbaled, 1: enabled
+INSITU ?= 0
+
 # bind to TBB proxy malloc
 # 0: disbaled, 1: enabled
 TBB ?= 0
@@ -97,7 +101,7 @@ ifeq ($(PRECISION), SINGLE)
 endif
 
 # build ls1-MarDyn for the reduced memory mode
-# If enabled the reduced memory mode reduces the ammount of memory required by
+# If enabled the reduced memory mode reduces the amount of memory required by
 # ls1-MarDyn for very large simulations.
 # However, not all features will work in this mode.
 # 0: disbaled, 1: enabled
@@ -166,7 +170,7 @@ endif
 
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -D MPICH_IGNORE_CXX_SEEK
-LDFLAGS += $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
+LDFLAGS += $(LINKFLAGS_$(PARTYPE)_$(TARGET))
 
 # additional setup for unit tests
 ifneq ($(UNIT_TESTS),0)
@@ -234,6 +238,10 @@ else
   DEPCOMP =
 endif
 
+ifeq ($(INSITU), 1)
+	INSITU_MAKEFILE := $(realpath $(MAKEFILEDIR)/insitu.mk ) 
+  include $(INSITU_MAKEFILE)
+endif
 
 ifeq ($(VTK), 1)
   VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)/vtkwriter.mk ) 
