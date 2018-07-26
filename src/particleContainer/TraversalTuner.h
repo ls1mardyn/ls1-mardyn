@@ -355,6 +355,8 @@ inline bool TraversalTuner<CellTemplate>::isTraversalApplicable(
 	case ORIGINAL:
 		ret = true;
 		break;
+	default:
+		global_log->warning() << "unknown traversal given in TraversalTuner::isTraversalApplicable, assuming that is applicable" << std::endl;
 	}
 	return ret;
 }

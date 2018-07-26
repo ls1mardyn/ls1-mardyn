@@ -85,8 +85,10 @@ public:
 	double L2() const {return D(0)*D(0)+D(1)*D(1)+D(2)*D(2); }
 	double M2() const {return M(0)*M(0)+M(1)*M(1)+M(2)*M(2); }
 
-	double U_trans() const { return 0.5 * mass() * v2(); }
+	virtual double U_trans() const { return 0.5 * mass() * v2(); }
+	virtual double U_trans_2() const { return mass() * v2(); }
 	virtual double U_rot() = 0;
+	virtual double U_rot_2() = 0;
 	double U_kin() { return U_trans() + U_rot(); }
 
 	virtual void updateMassInertia() = 0;

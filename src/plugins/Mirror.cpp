@@ -95,7 +95,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 									_norm.vxz.pop_front();
 									_norm.vxz.push_back(vx);
 
-									double vy = _norm.vy.front();
+									/*double*/ vy = _norm.vy.front();  // double vy already declared
 									_norm.vy.pop_front();
 									_norm.vy.push_back(vy);
 

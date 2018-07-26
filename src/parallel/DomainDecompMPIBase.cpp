@@ -103,7 +103,7 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string
 		delete _neighbourCommunicationScheme;
 	}
 
-	ZonalMethod* zonalMethodP;
+	ZonalMethod* zonalMethodP = nullptr;
 
 	// CommunicationScheme will delete the pointer
 	if(zonalMethod=="fs") {

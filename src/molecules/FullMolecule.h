@@ -114,11 +114,11 @@ public:
 	double M2() const {return _M[0]*_M[0]+_M[1]*_M[1]+_M[2]*_M[2]; }
 
 	/** return the translational energy of the molecule */
-	double U_trans() const { return 0.5 * _m * v2(); }
-	double U_trans_2() const { return _m * v2(); }
+	double U_trans() const override { return 0.5 * _m * v2(); }
+	double U_trans_2() const override { return _m * v2(); }
 	/** return the rotational energy of the molecule */
-	double U_rot();
-	double U_rot_2();
+	double U_rot() override ;
+	double U_rot_2() override ;
 	/** return total kinetic energy of the molecule */
 	double U_kin() { return U_trans() + U_rot(); }
 	

@@ -129,7 +129,11 @@ public:
 
 
 	double U_rot() {
-		return 0.0;
+		return 0.;
+	}
+
+	double U_rot_2() override {
+		return 0.;
 	}
 
 	void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned /*iC*/, unsigned /*iD*/, unsigned /*iQ*/) {

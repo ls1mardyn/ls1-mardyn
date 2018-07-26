@@ -252,7 +252,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	//num_cells_in_level = 1;
 	Vector3<double> current_pos;
 	Vector3<double> current_cell_length(domainLength);
-	int num_cells_in_level_global = 1;
+	size_t num_cells_in_level_global = 1;
 #if defined(ENABLE_MPI)
 	Vector3<double> globalLevelCellLength = Vector3<double>(domainLength)
 						* (1.0 / pow(2,_globalLevel));
@@ -262,13 +262,13 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #endif
 	//initialization of global top part of tree
 	for (int n = 0; n <= _globalLevel; ++n) {
-		for (int z = 0; z < num_cells_in_level_global; ++z) {
-			for (int y = 0; y < num_cells_in_level_global; ++y) {
-				for (int x = 0; x < num_cells_in_level_global; ++x) {
+		for (unsigned int z = 0; z < num_cells_in_level_global; ++z) {
+			for (unsigned int y = 0; y < num_cells_in_level_global; ++y) {
+				for (unsigned int x = 0; x < num_cells_in_level_global; ++x) {
 					current_pos[0] = (x + 0.5) * current_cell_length[0];
 					current_pos[1] = (y + 0.5) * current_cell_length[1];
 					current_pos[2] = (z + 0.5) * current_cell_length[2];
-					int cellIndex = ((z * num_cells_in_level_global + y)
+					size_t cellIndex = ((z * num_cells_in_level_global + y)
 							* num_cells_in_level_global) + x;
 					_mpCellGlobalTop[n][cellIndex].multipole.setCenter(current_pos);
 					_mpCellGlobalTop[n][cellIndex].multipole.setRadius(

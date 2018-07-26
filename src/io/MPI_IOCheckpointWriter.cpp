@@ -132,7 +132,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		}
 
 		long globalNumCells = 1;
-		int localNumCells = 0;
+		size_t localNumCells = 0;
 
 		for (unsigned short i = 0; i < 3; i++) {
 			mardyn_assert(lengthInCells[i] > 0);
@@ -320,7 +320,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		//entry of the array is -1 if the cell is not located at this process
 		std::vector<int> globalToLocalCell(globalNumCells);
 		int j = 0;
-		for (int i = 0; i < localNumCells; i++) {
+		for (size_t i = 0; i < localNumCells; i++) {
 			while (isCellOfProcess[j] == false) {
 				globalToLocalCell[j] = -1;
 				j++;
@@ -338,7 +338,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		//counter for each cell
 		std::vector<int> cellCounter;
 		cellCounter.resize(localNumCells);
-		for (int i = 0; i < localNumCells; i++) {
+		for (size_t i = 0; i < localNumCells; i++) {
 			cellCounter[i] = 0;
 		}
 
@@ -420,7 +420,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		*/
 
 		//delete tempMolecule;
-		for (int i = 0; i < localNumCells; i++) {
+		for (size_t i = 0; i < localNumCells; i++) {
 			delete[] writeArray[i];
 		}
 		MPI_Type_free(&mpiParticleData);

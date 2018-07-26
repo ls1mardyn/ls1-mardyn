@@ -183,7 +183,7 @@ void C04CellPairTraversal<CellTemplate>::traverseSingleColor(CellProcessor& cell
 	// colors 1 and 3 form another cartesian grid, whose origin is shifted by (2,2,2)
 
 	// determine a starting point of one of the grids
-	std::array<long, 3> startOfThisColor;
+	std::array<long, 3> startOfThisColor {0l, 0l, 0l};
 
 	switch(color % 2) {
 	case 0:

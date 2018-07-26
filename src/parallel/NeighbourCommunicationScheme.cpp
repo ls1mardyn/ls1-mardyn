@@ -234,7 +234,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
 	
 	// msg type is fixed by the fuction call, but this needs to be done for both import and export
-	int numNeighbours;
+	int numNeighbours = 0;
 
 	int numExportNeighbours = 0;
 	int numImportNeighbours = 0;
