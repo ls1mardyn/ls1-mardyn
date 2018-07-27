@@ -1,0 +1,14 @@
+
+# Figure to script correspondence:
+
+## Figure 3 - simd comparison and particle variation, 8 nodes
+a,b)   SuperMUC-Phase1/Node-Level/simd-performance
+       HAZEL
+c)     SuperMUC-Phase1/Node-Level/particleTest-final-8-nodes
+       HAZEL
+
+## Figure 4 - omp strong scaling, 1 node
+a)     SuperMUC-Phase1/Node-Level/omp-strong-scaling
+b)     HAZEL
+
+## Figure 5 - 
