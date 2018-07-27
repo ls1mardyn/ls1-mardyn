@@ -168,6 +168,7 @@ protected:
 	Snapshot _snapshot; // make an std::vector eventually
 private:
 	// XML settings
+	int _writeInterval;
 	int _replyBufferSize;
 	std::string _connectionName;
 

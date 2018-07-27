@@ -16,6 +16,12 @@
 
 using Log::global_log;
 
+#define NO_MM_MODE
+
+#ifdef NO_MM_MODE
+#warning LS1 NOT WAITING ON MegaMol
+#endif
+
 #ifdef INSITU
 InSituMegamol::InSituMegamol(void) {
 	constexpr bool uint64_tIsSize_t = std::is_same<uint64_t, size_t>::value;
@@ -31,6 +37,7 @@ void InSituMegamol::init(ParticleContainer* particleContainer,
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
+	_writeInterval = 20;
 	_replyBufferSize = 1024;
 	_connectionName.assign("tcp://localhost:33333");
 	// _backupInterval = 5;
@@ -50,7 +57,7 @@ void InSituMegamol::beforeEventNewTimestep(
 
 void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {
-	if (simstep == 10) {
+	if (!(simstep % _writeInterval)) {
 		//get bbox 
 		float bbox[6] {
 			0.0f, 0.0f, 0.0f,
@@ -212,16 +219,16 @@ void* InSituMegamol::createSharedMemory(size_t size) {
 }
 
 /////////////////////////////////////////////////////
-
 InSituMegamol::ZmqManager::ZmqManager(void) 
 		: _context(zmq_ctx_new(), &zmq_ctx_destroy)
 		, _requester(zmq_socket(_context.get(), ZMQ_REQ), &zmq_close) 
 		, _publisher(zmq_socket(_context.get(), ZMQ_PUB), &zmq_close) {
-	mardyn_assert(_context);
-	mardyn_assert(_requester);
-	mardyn_assert(_publisher);
+	mardyn_assert(_context.get());
+	mardyn_assert(_requester.get());
+	mardyn_assert(_publisher.get());
+	int lingerTime=0;
+	zmq_setsockopt(_requester.get(), ZMQ_LINGER, &lingerTime, sizeof(int));
 	global_log->info() << "    ISM: Acquired ZmqManager resources." << std::endl;
-
 }
 
 InSituMegamol::ZmqManager::~ZmqManager(void) {
@@ -258,40 +265,48 @@ void InSituMegamol::ZmqManager::setModuleNames(int rank) {
 }
 
 void InSituMegamol::ZmqManager::triggerModuleCreation(void) {
+	std::string reply;
+	int replySize = 0;
 	std::stringstream msg;
+	mardyn_assert(_replyBuffer.size() == static_cast<size_t>(_replyBufferSize));
 	msg << "mmCreateModule(\"MMPLDDataSource\", \"" << _datTag.str() << "\")\n"
 		<< "mmCreateModule(\"OSPRayNHSphereGeometry\", \"" << _geoTag.str() << "\")\n"
 		<< "mmCreateCall(\"MultiParticleDataCall\", \"" << _geoTag.str() << "::getData\", \"" << _datTag.str() << "::getData\")\n"
 		<< "mmCreateCall(\"CallOSPRayMaterial\", \""<< _geoTag.str() <<"::getMaterialSlot\", " << "\"::mat::deployMaterialSlot\")\n"
 		<< "mmCreateChainCall(\"CallOSPRayStructure\", \"::rnd::getStructure\", \"" << _geoTag.str() << "::deployStructureSlot\")\n";
 	global_log->info() << "    ISM: Sending creation message\n" << msg.str() << std::endl;
+#ifdef NO_MM_MODE
+	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
+	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
+#else
 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), 0);
-
-	std::string reply;
-	int replySize = 0;
-	
-	mardyn_assert(_replyBuffer.size() == static_cast<size_t>(_replyBufferSize));
 	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
+#endif
 	if (replySize > _replyBufferSize) {
 		//TODO some error
 	}
 	else {
 		reply.assign(_replyBuffer.data(), 0, replySize);
-		global_log->info() << "    ISM: ZMQ reply: " << reply << std::endl;
-		//TODO check for modules
+		if (replySize == 0) {
+			global_log->info() << "    ISM: ZMQ reply was empty." << std::endl;
+		}
+		else {
+			global_log->info() << "    ISM: ZMQ reply: " << reply << std::endl;
+		}
 	}
 }
 
 void InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
 	std::stringstream msg;
 	msg << "mmSetParamValue(\"" << _datTag.str() << "::filename\", \"" << fname << "\")";
-	zmq_send(_publisher.get(), msg.str().data(), msg.str().size(), 0);
+	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
+	zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
 }
 #else
 
 InSituMegamol::InSituMegamol(void) {
 	global_log->info() << "InSituMegamol: This is a just a dummy."
-			<< "Set INSITU=1 on make command line to enable."
+			<< "Set INSITU=1 on make command line to enable the actual plugin."
 			<< std::endl;
 }
 
