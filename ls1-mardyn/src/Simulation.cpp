@@ -356,8 +356,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new DomainDecomposition();
 			}
 			else if(parallelisationtype == "KDDecomposition") {
-				delete _domainDecomposition;
-				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
+				global_log->error() << "KDDecomposition is deactivated for this WR release." << std::endl;
+				Simulation::exit(1);
+				// delete _domainDecomposition;
+				// _domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
 			}
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
