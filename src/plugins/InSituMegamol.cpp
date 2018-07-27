@@ -24,14 +24,15 @@ InSituMegamol::InSituMegamol(void) {
 
 void InSituMegamol::init(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {
-	std::string connectionName("tcp://localhost:33333");
-	_zmqManager.setConnection(connectionName);	
+	_zmqManager.setConnection(_connectionName);	
+	_zmqManager.setReplyBufferSize(_replyBufferSize);
 	_zmqManager.setModuleNames(domainDecomp->getRank());
-	// // TODO: check if megamol is ready here
 	_zmqManager.triggerModuleCreation();
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
+	_replyBufferSize = 1024;
+	_connectionName.assign("tcp://localhost:33333");
 	// _backupInterval = 5;
 	// xmlconfig.getNodeValue("backupInterval", _backupInterval);
 	// global_log->info() << "    RR: Backup interval: " << _backupInterval << std::endl;
@@ -74,7 +75,8 @@ void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		global_log->info() << "second seekTable entry: " << *reinterpret_cast<size_t*>(seekTable.data()+sizeof(size_t))
 		                   << " size of mmpldBuffer: " << _mmpldBuffer.size() << std::endl;
 		mardyn_assert(*reinterpret_cast<size_t*>(seekTable.data()+sizeof(size_t)) == _mmpldBuffer.size());
-		// _writeMmpldBuffer(domainDecomp->getRank());
+		std::string fname = _writeMmpldBuffer(domainDecomp->getRank());
+		_zmqManager.triggerUpdate(fname);
 	}
 }
 
@@ -184,7 +186,7 @@ std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particle
 	return dataList;
 }
 
-void InSituMegamol::_writeMmpldBuffer(int rank) {
+std::string InSituMegamol::_writeMmpldBuffer(int rank) {
 	// all data should be stored, fill in post-data-collection values
 	ofstream mmpldFile;
 	std::stringstream fname;
@@ -193,6 +195,7 @@ void InSituMegamol::_writeMmpldBuffer(int rank) {
 	mmpldFile.write(_mmpldBuffer.data(), _mmpldBuffer.size());
 	mmpldFile.close();
 	global_log->info() << "    InSituMegamol: Shared memory file written." << std::endl;
+	return fname.str();
 }
 
 ///shared memory version
@@ -207,6 +210,8 @@ void* InSituMegamol::createSharedMemory(size_t size) {
 	return mmap(NULL, size, protection, visibility, 0, 0);
 	int error = shm_unlink("/_sharedData");
 }
+
+/////////////////////////////////////////////////////
 
 InSituMegamol::ZmqManager::ZmqManager(void) 
 		: _context(zmq_ctx_new(), &zmq_ctx_destroy)
@@ -259,13 +264,28 @@ void InSituMegamol::ZmqManager::triggerModuleCreation(void) {
 		<< "mmCreateCall(\"MultiParticleDataCall\", \"" << _geoTag.str() << "::getData\", \"" << _datTag.str() << "::getData\")\n"
 		<< "mmCreateCall(\"CallOSPRayMaterial\", \""<< _geoTag.str() <<"::getMaterialSlot\", " << "\"::mat::deployMaterialSlot\")\n"
 		<< "mmCreateChainCall(\"CallOSPRayStructure\", \"::rnd::getStructure\", \"" << _geoTag.str() << "::deployStructureSlot\")\n";
-	char buffer[1024];
+	global_log->info() << "    ISM: Sending creation message\n" << msg.str() << std::endl;
 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), 0);
-	zmq_recv(_requester.get(), buffer, 1024, 0);
+
+	std::string reply;
+	int replySize = 0;
+	
+	mardyn_assert(_replyBuffer.size() == static_cast<size_t>(_replyBufferSize));
+	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
+	if (replySize > _replyBufferSize) {
+		//TODO some error
+	}
+	else {
+		reply.assign(_replyBuffer.data(), 0, replySize);
+		global_log->info() << "    ISM: ZMQ reply: " << reply << std::endl;
+		//TODO check for modules
+	}
 }
 
-void InSituMegamol::ZmqManager::triggerUpdate(void) {
-
+void InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
+	std::stringstream msg;
+	msg << "mmSetParamValue(\"" << _datTag.str() << "::filename\", \"" << fname << "\")";
+	zmq_send(_publisher.get(), msg.str().data(), msg.str().size(), 0);
 }
 #else
 

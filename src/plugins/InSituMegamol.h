@@ -45,7 +45,15 @@ class InSituMegamol: public PluginBase {
 		void setConnection(std::string);
 		void setModuleNames(int rank);
 		void triggerModuleCreation(void);
+		void triggerUpdate(std::string fname);
+		void setReplyBufferSize(int replyBufferSize) {
+			_replyBufferSize = replyBufferSize;
+			_replyBuffer.clear();
+			_replyBuffer.resize(_replyBufferSize, 0);
+		}
 	private:
+		int _replyBufferSize;
+		std::vector<char> _replyBuffer;
 		std::stringstream _datTag; 
 		std::stringstream _geoTag;
 	 	std::unique_ptr<ZmqContext, decltype(&zmq_ctx_destroy)> _context;
@@ -159,6 +167,10 @@ public:
 protected:
 	Snapshot _snapshot; // make an std::vector eventually
 private:
+	// XML settings
+	int _replyBufferSize;
+	std::string _connectionName;
+
 	//gather data
 	std::vector<char> _generateMmpldSeekTable(std::vector< std::vector<char> >& dataLists);
 	std::vector<char> _buildMmpldDataList(ParticleContainer* particleContainer);
@@ -168,7 +180,7 @@ private:
 	void _addMmpldHeader(float* bbox, float simTime);
 	void _addMmpldSeekTable(std::vector<char> seekTable);
 	void _addMmpldFrame(std::vector< std::vector<char> > dataLists);
-	void _writeMmpldBuffer(int rank);
+	std::string _writeMmpldBuffer(int rank);
 
 	std::vector<char> _mmpldBuffer;
 	std::vector<char>::iterator _mmpldSize;
