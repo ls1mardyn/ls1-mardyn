@@ -1,0 +1,17 @@
+
+DISK GROUP QUOTAS for home and project file systems:
+Filesystem                                 Quota     Used Space     Free Space
+/home/hpc/pr48te          ($HOME)        100.0GB   90.4GB (90%)    9.6GB (10%)
+/gpfs/work/pr48te         ($WORK)        1000.0GB  608.1GB (61%)  391.9GB (39%)
+-------------------------------------------------------------------------------
+
+Executing LRZ User Prolog ...
+ERROR(mpi.intel): LoadLeveler jobs using Intel MPI must specify "@ job_type = MPICH". Aborting load of module.
+Module ERROR: Occurred in file /lrz/sys/share/modules/files/parallel/mpi.intel/5.1:no such variable
+    (read trace on "env(PBS_JOBID)")
+    invoked from within
+"set JOB_ID $env(PBS_JOBID) "
+Please contact: root@localhost
+ERROR(ddt): Not supported on this system or with the
+               loaded MPI environment. Please contact the LRZ service
+               desk if you really need DDT for this case.

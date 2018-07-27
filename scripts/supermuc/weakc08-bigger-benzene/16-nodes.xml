@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.1</length>
+    <mass unit="u">1</mass>
+    <energy unit="K">1</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.00182367</timestep>
+    </integrator>
+    <run>
+      <currenttime>0</currenttime>
+      <production>
+        <steps>10000</steps>
+      </production>
+    </run>
+    <ensemble type="NVT">
+      <temperature unit="reduced">280</temperature>
+      <domain type="box">
+        <lx>2631.55095</lx>
+        <ly>2631.55095</ly>
+        <lz>2631.55095</lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">baseinput/components_benzene.xml</include>
+      </components>
+      <phasespacepoint>
+        <generator name="ReplicaGenerator">
+          <type>homogeneous</type>
+          <files>
+            <vapor>
+              <header>baseinput/cp_binary-1.restart.header.xml</header>
+              <data>baseinput/cp_binary-1.restart.xdr</data>
+            </vapor>
+          </files>
+          <numblocks>
+            <xz>50</xz>
+            <vapor>50</vapor>
+          </numblocks>
+          <diameter>5.0</diameter>
+        </generator>
+      </phasespacepoint>
+    </ensemble>
+    <algorithm>
+      <parallelisation type="DomainDecomposition">
+        <overlappingCollectives>yes</overlappingCollectives>
+        <CommunicationScheme>indirect</CommunicationScheme> 
+      </parallelisation>
+      <datastructure type="LinkedCells">
+        <cellsInCutoffRadius>1</cellsInCutoffRadius>
+		<traversalSelector>c08</traversalSelector>
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">20.139112002</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+    </algorithm>
+    <output>
+		<outputplugin name="FlopRateWriter">
+			<mode>stdout</mode>
+			<writefrequency>5</writefrequency>
+		</outputplugin>
+		<outputplugin name="VectorizationTuner">
+			<mode>statistics</mode>
+			<outputprefix>vect</outputprefix>
+			<minmoleculecnt>50</minmoleculecnt>
+			<maxmoleculecnt>50</maxmoleculecnt>
+			<numRepetitionsMax>2500000</numRepetitionsMax>
+			<moleculecntincreasetype>0</moleculenctincreasetype>
+		</outputplugin>
+
+	  <!--
+      <outputplugin name="CheckpointWriter">
+        <type>binary</type>
+        <writefrequency>10000</writefrequency>
+        <outputprefix>cp_binary</outputprefix>
+      </outputplugin>
+      <outputplugin name="MmpldWriter" type="multi">
+        <include query="/spheres">../../sphereparams_benzene.xml</include>
+        <writecontrol>
+          <start>0</start>
+          <writefrequency>50</writefrequency>
+          <stop>10000</stop>
+          <framesperfile>0</framesperfile>
+        </writecontrol>
+        <outputprefix>megamol</outputprefix>
+      </outputplugin>
+	  -->
+    </output>
+  </simulation>
+</mardyn>

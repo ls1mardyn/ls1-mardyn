@@ -1,0 +1,318 @@
+ERROR(mpi.intel): LoadLeveler jobs using Intel MPI must specify "@ job_type = MPICH". Aborting load of module.
+Module ERROR: Occurred in file /lrz/sys/share/modules/files/parallel/mpi.intel/5.1:no such variable
+    (read trace on "env(PBS_JOBID)")
+    invoked from within
+"set JOB_ID $env(PBS_JOBID) "
+Please contact: root@localhost
+env var before
+env var after
+INFO:	20171122T095239 0.000354 [0]	Running ls1-MarDyn version 1.2.0beta
+INFO:	20171122T095239 0.000429 [0]	Compiler: GNU 7.2.0
+INFO:	20171122T095239 0.000447 [0]	Compiled: Oct 23 2017 15:57:07
+INFO:	20171122T095239 0.000461 [0]	MPI library: unknown (MPI 3.0)
+INFO:	20171122T095239 0.000473 [0]	Precision: Double
+INFO:	20171122T095239 0.000486 [0]	Compiled with OpenMP support
+INFO:	20171122T095239 0.000502 [0]	Started: D22-11-2017 T9:52:39
+INFO:	20171122T095239 0.000518 [0]	Execution host: i05r06c05
+INFO:	20171122T095239 0.000533 [0]	Started with arguments:  /home/hpc/pr48te/di25hup2/2017-10-21-benzene/executables/MarDyn-gcc72-ibmmpi-14-DOUBLE-5676 256-nodes.xml --steps 11 --final-checkpoint=0
+INFO:	20171122T095239 0.000551 [0]	Running with 512 MPI processes.
+INFO:	20171122T095239 0.000567 [0]	Running with 16 OpenMP threads.
+INFO:	20171122T095239 0.001253 [0]	Initializing the standard domain decomposition ... 
+INFO:	20171122T095239 0.001903 [0]	MPI grid dimensions: 8, 8, 8
+INFO:	20171122T095239 0.001933 [0]	MPI coordinate of current process: 0, 0, 0
+INFO:	20171122T095239 0.001965 [0]	Constructing domain ...
+INFO:	20171122T095239 0.001992 [0]	Domain construction done.
+INFO:	20171122T095239  0.00202 [0]	ParticlePairs2PotForceAdapter: allocate data for 16 threads.
+INFO:	20171122T095239  0.00318 [0]	Initialization done
+INFO:	20171122T095239 0.013084 [0]	Config file: 256-nodes.xml
+INFO:	20171122T095239 0.013121 [0]	Initializing XML config file: 256-nodes.xml
+INFO:	20171122T095239 0.030072 [0]	MarDyn XML config file version: 20100525
+INFO:	20171122T095239 0.030114 [0]	Integrator type: Leapfrog
+INFO:	20171122T095239 0.030166 [0]	Timestep: 0.00182367
+INFO:	20171122T095239 0.030214 [0]	Simulation start time: 0
+INFO:	20171122T095239 0.030239 [0]	Number of equilibration steps: 20000
+INFO:	20171122T095239 0.030281 [0]	Number of timesteps: 10000
+INFO:	20171122T095239 0.030313 [0]	Ensemble: NVT
+INFO:	20171122T095239 0.030414 [0]	Number of components: 1
+INFO:	20171122T095239 0.030531 [0]	Reading in component
+INFO:	20171122T095239 0.030563 [0]	Component ID:1
+INFO:	20171122T095239 0.030582 [0]	Component name:benzene
+INFO:	20171122T095239 0.030625 [0]	Adding site of type LJ126
+INFO:	20171122T095239 0.030835 [0]	Adding site of type LJ126
+INFO:	20171122T095239 0.031038 [0]	Adding site of type LJ126
+INFO:	20171122T095239 0.031224 [0]	Adding site of type LJ126
+INFO:	20171122T095239 0.031365 [0]	Adding site of type LJ126
+INFO:	20171122T095239 0.031555 [0]	Adding site of type LJ126
+INFO:	20171122T095239 0.031747 [0]	Adding site of type Quadrupole
+INFO:	20171122T095239 0.031965 [0]	Adding site of type Quadrupole
+INFO:	20171122T095239 0.032178 [0]	Adding site of type Quadrupole
+INFO:	20171122T095239 0.032391 [0]	Adding site of type Quadrupole
+INFO:	20171122T095239   0.0326 [0]	Adding site of type Quadrupole
+INFO:	20171122T095239 0.032798 [0]	Adding site of type Quadrupole
+INFO:	20171122T095239 0.033023 [0]	Found 0 mixing rules.
+INFO:	20171122T095239 0.033074 [0]	Temperature: 280
+INFO:	20171122T095239 0.033104 [0]	Domain type: box
+INFO:	20171122T095239 0.033171 [0]	Box lower corner (x,y,z): 0,0,0
+INFO:	20171122T095239 0.033201 [0]	Box upper corner  (x,y,z): 6631.51,6631.51,6631.51
+INFO:	20171122T095239  0.03325 [0]	Volume: 2.91633e+11
+WARNING:	20171122T095239 0.033292 [0]	Box dimensions not set yet in domain class
+INFO:	20171122T095239 0.033349 [0]	dimensionless LJ cutoff radius:	20.1391
+INFO:	20171122T095239 0.033411 [0]	dimensionless cutoff radius:	20.1391
+INFO:	20171122T095239 0.033514 [0]	Epsilon Reaction Field: 1e+10
+INFO:	20171122T095239 0.033568 [0]	Parallelisation type: DomainDecomposition
+INFO:	20171122T095239 0.345643 [0]	MPI grid dimensions: 8, 8, 8
+INFO:	20171122T095239 0.345669 [0]	MPI coordinate of current process: 0, 0, 0
+INFO:	20171122T095239 0.345713 [0]	DomainDecompMPIBase: Using IndirectCommunicationScheme
+INFO:	20171122T095239 0.345796 [0]	DomainDecompMPIBase: Using Overlapping Collectives
+INFO:	20171122T095239 0.345869 [0]	Datastructure type: LinkedCells
+INFO:	20171122T095239 0.345899 [0]	Setting cell cutoff radius for linked cell datastructure to 20.1391
+INFO:	20171122T095239 0.346082 [0]	REBUILD OF LinkedCells
+INFO:	20171122T095239 0.346134 [0]	Bounding box: [0, 828.939] x [0, 828.939] x [0, 828.939]
+INFO:	20171122T095239 0.346166 [0]	Cells per dimension (incl. halo): 43 x 43 x 43
+INFO:	20171122T095239 0.399749 [0]	Neighbour offsets are bounded by 1893, 1893
+INFO:	20171122T095239 0.399796 [0]	Neighbour offsets are bounded by 1893, 1893
+WARNING:	20171122T095239  0.40257 [0]	Thermostats section missing.
+INFO:	20171122T095239 0.402619 [0]	Number of output plugins: 2
+INFO:	20171122T095239 0.402636 [0]	Registering plugin with name CavityWriter
+INFO:	20171122T095239 0.402653 [0]	Registering plugin with name CheckpointWriter
+INFO:	20171122T095239 0.402669 [0]	Registering plugin with name DecompWriter
+INFO:	20171122T095239 0.402751 [0]	Registering plugin with name DensityProfileWriter
+INFO:	20171122T095239 0.402771 [0]	Registering plugin with name EnergyLogWriter
+INFO:	20171122T095239 0.402816 [0]	Registering plugin with name FlopRateWriter
+INFO:	20171122T095239 0.402895 [0]	Registering plugin with name GammaWriter
+INFO:	20171122T095239 0.402926 [0]	Registering plugin with name LoadbalanceWriter
+INFO:	20171122T095239 0.402941 [0]	Registering plugin with name MPICheckpointWriter
+INFO:	20171122T095239 0.402965 [0]	Registering plugin with name MmpldWriter
+INFO:	20171122T095239 0.403085 [0]	Registering plugin with name MmspdBinWriter
+INFO:	20171122T095239 0.403109 [0]	Registering plugin with name MmspdWriter
+INFO:	20171122T095239 0.403124 [0]	Registering plugin with name PovWriter
+INFO:	20171122T095239 0.403148 [0]	Registering plugin with name RDF
+INFO:	20171122T095239 0.403275 [0]	Registering plugin with name ResultWriter
+INFO:	20171122T095239 0.403299 [0]	Registering plugin with name SysMonOutput
+INFO:	20171122T095239 0.403313 [0]	Registering plugin with name VISWriter
+INFO:	20171122T095239 0.403433 [0]	Registering plugin with name XyzWriter
+INFO:	20171122T095239 0.403456 [0]	Registering plugin with name MaxWriter
+INFO:	20171122T095239 0.403479 [0]	Enabling output plugin: FlopRateWriter
+INFO:	20171122T095239 0.403514 [0]	Write frequency: 5
+INFO:	20171122T095239 0.403637 [0]	Enabling output plugin: VectorizationTuner
+WARNING:	20171122T095239 0.403659 [0]	Plugin not found: VectorizationTuner
+WARNING:	20171122T095239 0.403672 [0]	Could not create output plugin using factory: VectorizationTuner
+INFO:	20171122T095239 0.403781 [0]	Output prefix: vect
+INFO:	20171122T095239  0.40382 [0]	Minimal molecule count: 50
+INFO:	20171122T095239 0.403864 [0]	Maximal molecule count: 50
+INFO:	20171122T095239 0.403962 [0]	Maximal number of repetitions: 2500000
+INFO:	20171122T095239 0.403983 [0]	Molecule count increase type: 0
+INFO:	20171122T095239 0.404163 [0]	Initializing phase space using generator: ReplicaGenerator
+INFO:	20171122T095239 0.404305 [0]	Replicating 126 x 126 boxes in XZ layers.
+INFO:	20171122T095239 0.404439 [0]	0: Init Replica VLE ...
+INFO:	20171122T095239  0.42201 [0]	Opening phase space file baseinput/cp_binary-1.restart.xdr
+INFO:	20171122T095239 0.424924 [0]	Reading phase space file baseinput/cp_binary-1.restart.xdr
+INFO:	20171122T095239 0.426402 [0]	Finished reading molecules: 0%INFO:	20171122T095239 0.426443 [0]	Finished reading molecules: 1%INFO:	20171122T095239 0.426468 [0]	Finished reading molecules: 2%INFO:	20171122T095239 0.426492 [0]	Finished reading molecules: 3%INFO:	20171122T095239 0.426532 [0]	Finished reading molecules: 4%INFO:	20171122T095239 0.426559 [0]	Finished reading molecules: 5%INFO:	20171122T095239 0.426587 [0]	Finished reading molecules: 6%INFO:	20171122T095239 0.426629 [0]	Finished reading molecules: 7%INFO:	20171122T095239 0.426657 [0]	Finished reading molecules: 8%INFO:	20171122T095239 0.426706 [0]	Finished reading molecules: 9%INFO:	20171122T095239 0.426862 [0]	Finished reading molecules: 10%INFO:	20171122T095239 0.426912 [0]	Finished reading molecules: 11%INFO:	20171122T095239 0.426953 [0]	Finished reading molecules: 12%INFO:	20171122T095239 0.427012 [0]	Finished reading molecules: 13%INFO:	20171122T095239 0.427041 [0]	Finished reading molecules: 14%INFO:	20171122T095239 0.427074 [0]	Finished reading molecules: 15%INFO:	20171122T095239 0.427159 [0]	Finished reading molecules: 16%INFO:	20171122T095239 0.427232 [0]	Finished reading molecules: 17%INFO:	20171122T095239 0.427253 [0]	Finished reading molecules: 18%INFO:	20171122T095239 0.427296 [0]	Finished reading molecules: 19%INFO:	20171122T095239 0.427388 [0]	Finished reading molecules: 20%INFO:	20171122T095239 0.427449 [0]	Finished reading molecules: 21%INFO:	20171122T095239  0.42748 [0]	Finished reading molecules: 22%INFO:	20171122T095239 0.427502 [0]	Finished reading molecules: 23%INFO:	20171122T095239 0.427539 [0]	Finished reading molecules: 24%INFO:	20171122T095239 0.427624 [0]	Finished reading molecules: 25%INFO:	20171122T095239 0.427721 [0]	Finished reading molecules: 26%INFO:	20171122T095239 0.427821 [0]	Finished reading molecules: 27%INFO:	20171122T095239 0.427875 [0]	Finished reading molecules: 28%INFO:	20171122T095239 0.428388 [0]	Finished reading molecules: 29%INFO:	20171122T095239 0.428417 [0]	Finished reading molecules: 30%INFO:	20171122T095239 0.428441 [0]	Finished reading molecules: 31%INFO:	20171122T095239 0.428467 [0]	Finished reading molecules: 32%INFO:	20171122T095239  0.42849 [0]	Finished reading molecules: 33%INFO:	20171122T095239 0.428516 [0]	Finished reading molecules: 34%INFO:	20171122T095239 0.428672 [0]	Finished reading molecules: 35%INFO:	20171122T095239  0.42871 [0]	Finished reading molecules: 36%INFO:	20171122T095239 0.428741 [0]	Finished reading molecules: 37%INFO:	20171122T095239 0.428767 [0]	Finished reading molecules: 38%INFO:	20171122T095239 0.428839 [0]	Finished reading molecules: 39%INFO:	20171122T095239 0.428919 [0]	Finished reading molecules: 40%INFO:	20171122T095239 0.428951 [0]	Finished reading molecules: 41%INFO:	20171122T095239 0.428986 [0]	Finished reading molecules: 42%INFO:	20171122T095239 0.429087 [0]	Finished reading molecules: 43%INFO:	20171122T095239 0.429119 [0]	Finished reading molecules: 44%INFO:	20171122T095239 0.429142 [0]	Finished reading molecules: 45%INFO:	20171122T095239 0.429166 [0]	Finished reading molecules: 46%INFO:	20171122T095239 0.429252 [0]	Finished reading molecules: 47%INFO:	20171122T095239 0.429283 [0]	Finished reading molecules: 48%INFO:	20171122T095239 0.429306 [0]	Finished reading molecules: 49%INFO:	20171122T095239  0.42941 [0]	Finished reading molecules: 50%INFO:	20171122T095239 0.429441 [0]	Finished reading molecules: 51%INFO:	20171122T095239 0.429615 [0]	Finished reading molecules: 52%INFO:	20171122T095239  0.42965 [0]	Finished reading molecules: 53%INFO:	20171122T095239 0.429692 [0]	Finished reading molecules: 54%INFO:	20171122T095239 0.429783 [0]	Finished reading molecules: 55%INFO:	20171122T095239 0.429816 [0]	Finished reading molecules: 56%INFO:	20171122T095239  0.42985 [0]	Finished reading molecules: 57%INFO:	20171122T095239 0.429889 [0]	Finished reading molecules: 58%INFO:	20171122T095239 0.429973 [0]	Finished reading molecules: 59%INFO:	20171122T095239 0.430007 [0]	Finished reading molecules: 60%INFO:	20171122T095239 0.430032 [0]	Finished reading molecules: 61%INFO:	20171122T095239  0.43006 [0]	Finished reading molecules: 62%INFO:	20171122T095239 0.430088 [0]	Finished reading molecules: 63%INFO:	20171122T095239 0.430186 [0]	Finished reading molecules: 64%INFO:	20171122T095239 0.430219 [0]	Finished reading molecules: 65%INFO:	20171122T095239 0.430247 [0]	Finished reading molecules: 66%INFO:	20171122T095239 0.430327 [0]	Finished reading molecules: 67%INFO:	20171122T095239 0.430387 [0]	Finished reading molecules: 68%INFO:	20171122T095239 0.430493 [0]	Finished reading molecules: 69%INFO:	20171122T095239  0.43061 [0]	Finished reading molecules: 70%INFO:	20171122T095239 0.430653 [0]	Finished reading molecules: 71%INFO:	20171122T095239 0.430748 [0]	Finished reading molecules: 72%INFO:	20171122T095239 0.430791 [0]	Finished reading molecules: 73%INFO:	20171122T095239 0.430903 [0]	Finished reading molecules: 74%INFO:	20171122T095239 0.430937 [0]	Finished reading molecules: 75%INFO:	20171122T095239 0.430969 [0]	Finished reading molecules: 76%INFO:	20171122T095239 0.431061 [0]	Finished reading molecules: 77%INFO:	20171122T095239 0.431103 [0]	Finished reading molecules: 78%INFO:	20171122T095239  0.43113 [0]	Finished reading molecules: 79%INFO:	20171122T095239 0.431154 [0]	Finished reading molecules: 80%INFO:	20171122T095239 0.431282 [0]	Finished reading molecules: 81%INFO:	20171122T095239  0.43133 [0]	Finished reading molecules: 82%INFO:	20171122T095239 0.431361 [0]	Finished reading molecules: 83%INFO:	20171122T095239 0.431494 [0]	Finished reading molecules: 84%INFO:	20171122T095239 0.431535 [0]	Finished reading molecules: 85%INFO:	20171122T095239 0.431613 [0]	Finished reading molecules: 86%INFO:	20171122T095239  0.43168 [0]	Finished reading molecules: 87%INFO:	20171122T095239  0.43178 [0]	Finished reading molecules: 88%INFO:	20171122T095239 0.431878 [0]	Finished reading molecules: 89%INFO:	20171122T095239 0.431913 [0]	Finished reading molecules: 90%INFO:	20171122T095239 0.431943 [0]	Finished reading molecules: 91%INFO:	20171122T095239 0.432014 [0]	Finished reading molecules: 92%INFO:	20171122T095239 0.432109 [0]	Finished reading molecules: 93%INFO:	20171122T095239 0.432145 [0]	Finished reading molecules: 94%INFO:	20171122T095239 0.432173 [0]	Finished reading molecules: 95%INFO:	20171122T095239 0.432258 [0]	Finished reading molecules: 96%INFO:	20171122T095239 0.432292 [0]	Finished reading molecules: 97%INFO:	20171122T095239  0.43232 [0]	Finished reading molecules: 98%INFO:	20171122T095239 0.432373 [0]	Finished reading molecules: 99%INFO:	20171122T095239 0.432472 [0]	Finished reading molecules: 100%
+INFO:	20171122T095239  0.43249 [0]	Reading Molecules done
+INFO:	20171122T095239 0.432511 [0]	Domain box length = 6631.51, 6631.51, 6631.51
+INFO:	20171122T095239 0.432855 [0]	Constructing Replica VLE
+INFO:	20171122T095242  2.98368 [0]	Number of particles calculated by number of blocks  :               2000376000
+INFO:	20171122T095242  2.98373 [0]	Number of particles located in freespace (not added):                        0
+INFO:	20171122T095242  2.98374 [0]	Number of particles added to particle container     :               2000376000
+INFO:	20171122T095242  2.98377 [0]	Initial IO took:                 2.55092 sec
+INFO:	20171122T095242  2.98379 [0]	------------------------------------------------------------------------
+INFO:	20171122T095242  3.08345 [0]	Final checkpoint disabled.
+INFO:	20171122T095242   3.0835 [0]	Simulating 11 steps.
+INFO:	20171122T095242  3.08352 [0]	Default output prefix: 256-nodes
+INFO:	20171122T095242  3.08354 [0]	Initializing simulation
+INFO:	20171122T095242  3.08355 [0]	Initialising cell processor
+INFO:	20171122T095242  3.08357 [0]	Using vectorized cell processor.
+INFO:	20171122T095242  3.08358 [0]	VectorizedCellProcessor: using AVX intrinsics.
+INFO:	20171122T095242  3.08361 [0]	VectorizedCellProcessor: allocate data for 16 threads.
+INFO:	20171122T095242  3.08402 [0]	Clearing halos
+INFO:	20171122T095242  3.08413 [0]	Updating domain decomposition
+INFO:	20171122T095242  3.08433 [0]	Memory consumption (without halo copies):
+INFO:	20171122T095242  3.08435 [0]		Memory usage (System total):	5737 MB out of 32083 MB (17.8817%)
+INFO:	20171122T095242  3.10479 [0]		By own process:			1305 MB (4.06756% of total memory)
+INFO:	20171122T095242  3.10484 [0]			LinkedCells: 1309.59 MB
+INFO:	20171122T095242  3.13084 [0]				own datastructures:	0.000272 MB
+INFO:	20171122T095242   3.1309 [0]				cells total:		1309.46 MB
+INFO:	20171122T095242  3.13093 [0]				cells SoAs:		0 MB
+INFO:	20171122T095242  3.13095 [0]				cells molecule vectors:	1236.95 MB
+INFO:	20171122T095242  3.13098 [0]				indexVectors:		0.131072 MB
+INFO:	20171122T095242    3.131 [0]			DomainDecompMPIBase: 0.010624 MB
+INFO:	20171122T095242  3.13103 [0]				own datastructures:	8e-05 MB
+INFO:	20171122T095242  3.13106 [0]				neighbourCommunicationScheme:		0.010624 MB
+INFO:	20171122T095242  3.13109 [0]				collective Communication:		0 MB
+INFO:	20171122T095305  26.2746 [0]	Memory consumption (with halo copies):
+INFO:	20171122T095305  26.2746 [0]		Memory usage (System total):	20149 MB out of 32083 MB (62.8027%)
+INFO:	20171122T095305  26.3582 [0]		By own process:			8507.03 MB (26.5157% of total memory)
+INFO:	20171122T095305  26.3583 [0]			LinkedCells: 8434.03 MB
+INFO:	20171122T095305  26.3738 [0]				own datastructures:	0.000272 MB
+INFO:	20171122T095305  26.3739 [0]				cells total:		8433.9 MB
+INFO:	20171122T095305  26.3739 [0]				cells SoAs:		6956.66 MB
+INFO:	20171122T095305  26.3739 [0]				cells molecule vectors:	1404.73 MB
+INFO:	20171122T095305  26.3739 [0]				indexVectors:		0.131072 MB
+INFO:	20171122T095305  26.3739 [0]			DomainDecompMPIBase: 71.532 MB
+INFO:	20171122T095305  26.3739 [0]				own datastructures:	8e-05 MB
+INFO:	20171122T095305   26.374 [0]				neighbourCommunicationScheme:		71.532 MB
+INFO:	20171122T095305   26.374 [0]				collective Communication:		0 MB
+INFO:	20171122T095305   26.374 [0]	Performing initial force calculation
+INFO:	20171122T095305  26.3741 [0]	Using C08CellPairTraversal.
+INFO:	20171122T095439  120.065 [0]	Performing initial FLOP count (if necessary)
+INFO:	20171122T095439  120.065 [0]	FlopCounter: allocate data for 16 threads.
+INFO:	20171122T095442  123.048 [0]	Clearing halos
+INFO:	20171122T095442  123.051 [0]	Long range correction for homogeneous systems is used 
+INFO:	20171122T095442  123.051 [0]	Far field terms: U_pot_correction  = 0 virial_correction = -0
+INFO:	20171122T095442   123.33 [0]	Calculating global values
+INFO:	20171122T095442  123.414 [0]	Set initial time step to start from to 0
+INFO:	20171122T095442  123.414 [0]	Initializing output plugins and corresponding output timers
+INFO:	20171122T095442  123.414 [0]	Initializing output plugin FlopRateWriter
+INFO:	20171122T095442  123.414 [0]	Initializing output plugin VectorizationTuner
+INFO:	20171122T095442  123.414 [0]	System initialised
+
+INFO:	20171122T095442  123.414 [0]	System contains 2000376000 molecules.
+INFO:	20171122T095442  123.414 [0]	Started simulation
+INFO:	20171122T095442  123.458 [0]	Memory consumption:
+INFO:	20171122T095442  123.458 [0]		Memory usage (System total):	20157 MB out of 32083 MB (62.8277%)
+INFO:	20171122T095442   123.54 [0]		By own process:			8507.38 MB (26.5168% of total memory)
+INFO:	20171122T095442   123.54 [0]			LinkedCells: 8434.03 MB
+INFO:	20171122T095442  123.567 [0]				own datastructures:	0.000272 MB
+INFO:	20171122T095442  123.567 [0]				cells total:		8433.9 MB
+INFO:	20171122T095442  123.567 [0]				cells SoAs:		6956.66 MB
+INFO:	20171122T095442  123.567 [0]				cells molecule vectors:	1404.73 MB
+INFO:	20171122T095442  123.567 [0]				indexVectors:		0.131072 MB
+INFO:	20171122T095442  123.567 [0]			DomainDecompMPIBase: 71.5325 MB
+INFO:	20171122T095442  123.567 [0]				own datastructures:	8e-05 MB
+INFO:	20171122T095442  123.567 [0]				neighbourCommunicationScheme:		71.532 MB
+INFO:	20171122T095442  123.567 [0]				collective Communication:		0.0005 MB
+INFO:	20171122T095442  123.567 [0]	Simstep = 0	T = 279.973	U_pot = -7.81518e+12	p = 0.309313
+INFO:	20171122T095618  218.935 [0]	FlopRateWriter (simulation step 1)
+	FLOP-Count per Iteration: 1.7566 PFLOPs
+	FLOP-rate in force calculation: 18.7412 TFLOP/sec
+	FLOP-rate for main loop       : 18.3982 TFLOP/sec (98.1696 %)
+INFO:	20171122T095618  218.935 [0]	Simstep = 1	T = 279.973	U_pot = -7.81518e+12	p = 0.309313
+INFO:	20171122T095753  314.482 [0]	Simstep = 2	T = 279.857	U_pot = -7.81448e+12	p = 0.321494
+INFO:	20171122T095929  410.403 [0]	Simstep = 3	T = 279.755	U_pot = -7.81374e+12	p = 0.33506
+INFO:	20171122T100105  506.586 [0]	Simstep = 4	T = 279.738	U_pot = -7.81296e+12	p = 0.350647
+INFO:	20171122T100244  604.786 [0]	Simstep = 5	T = 279.795	U_pot = -7.81212e+12	p = 0.368312
+INFO:	20171122T100420  701.147 [0]	FlopRateWriter (simulation step 6)
+	FLOP-Count per Iteration: 1.7566 PFLOPs
+	FLOP-rate in force calculation: 18.7396 TFLOP/sec
+	FLOP-rate for main loop       : 18.2444 TFLOP/sec (97.3576 %)
+INFO:	20171122T100420  701.147 [0]	Simstep = 6	T = 279.856	U_pot = -7.81123e+12	p = 0.387625
+INFO:	20171122T100556    797.2 [0]	Simstep = 7	T = 279.865	U_pot = -7.81029e+12	p = 0.408262
+INFO:	20171122T100732  892.912 [0]	Simstep = 8	T = 279.816	U_pot = -7.80931e+12	p = 0.430021
+INFO:	20171122T100908  989.309 [0]	Simstep = 9	T = 279.753	U_pot = -7.80828e+12	p = 0.453289
+INFO:	20171122T101046  1087.31 [0]	Simstep = 10	T = 279.723	U_pot = -7.80722e+12	p = 0.478128
+INFO:	20171122T101223  1183.96 [0]	FlopRateWriter (simulation step 11)
+	FLOP-Count per Iteration: 1.7565 PFLOPs
+	FLOP-rate in force calculation: 18.7536 TFLOP/sec
+	FLOP-rate for main loop       : 18.2192 TFLOP/sec (97.1502 %)
+INFO:	20171122T101223  1183.96 [0]	Simstep = 11	T = 279.738	U_pot = -7.80613e+12	p = 0.504477
+INFO:	20171122T101223  1183.96 [0]	Finish output from output plugins
+INFO:	20171122T101223  1183.96 [0]	FlopCounter: allocate data for 16 threads.
+INFO:	20171122T101223  1183.96 [0]	FlopCounter: allocate data for 16 threads.
+INFO:	20171122T101223  1183.96 [0]	FlopCounter: allocate data for 16 threads.
+INFO:	20171122T101223  1183.96 [0]	VT: begin VECTORIZATION TUNING 
+INFO:	20171122T101223  1183.96 [0]	VT: Writing to global_log 
+INFO:	20171122T101223  1183.96 [0]	Vectorization Tuner File
+The Cutoff Radii were: 
+NormalRc=20.1391 , LJCutoffRadiusNormal=20.1391
+BigRC=5 , BigLJCR=5
+INFO:	20171122T101223  1183.96 [0]	--------------------------Molecule count: 50--------------------------
+INFO:	20171122T101223     1184 [0]	single rank: FLOP-Count per Iteration: 1.75672e+15 FLOPs
+INFO:	20171122T101223     1184 [0]	single rank: FLOP-rate: 4.40025e+10 GFLOPS
+INFO:	20171122T101223     1184 [0]	single rank: number of iterations: 1000
+INFO:	20171122T101223     1184 [0]	single rank: total time: 0.0371813s
+INFO:	20171122T101223     1184 [0]	single rank: time per iteration: 3.71813e-05s 
+
+INFO:	20171122T101224  1185.03 [0]	FLOP-Count per Iteration: 8.02816e+07 FLOPs
+INFO:	20171122T101224  1185.03 [0]	FLOP-rate: 1092.57 GFLOPS
+INFO:	20171122T101224  1185.03 [0]	number of iterations: 1000
+INFO:	20171122T101224  1185.03 [0]	total time: 0.0684332s
+INFO:	20171122T101224  1185.03 [0]	time per iteration: 6.84332e-05s 
+
+INFO:	20171122T101227  1188.23 [0]	single rank: FLOP-Count per Iteration: 1.6384e+08 FLOPs
+INFO:	20171122T101227  1188.23 [0]	single rank: FLOP-rate: 47.9148 GFLOPS
+INFO:	20171122T101227  1188.23 [0]	single rank: number of iterations: 1000
+INFO:	20171122T101227  1188.23 [0]	single rank: total time: 3.18457s
+INFO:	20171122T101227  1188.23 [0]	single rank: time per iteration: 0.00318457s 
+
+INFO:	20171122T101234  1194.94 [0]	FLOP-Count per Iteration: 7.30563e+10 FLOPs
+INFO:	20171122T101234  1194.94 [0]	FLOP-rate: 10401.6 GFLOPS
+INFO:	20171122T101234  1194.94 [0]	number of iterations: 1000
+INFO:	20171122T101234  1194.94 [0]	total time: 6.54122s
+INFO:	20171122T101234  1194.94 [0]	time per iteration: 0.00654122s 
+
+INFO:	20171122T101234  1194.94 [0]	Vectorization Tuner Statistics:
+INFO:	20171122T101234  1194.94 [0]	Number of molecules per cell: 50
+INFO:	20171122T101234  1194.94 [0]	values in GFlop/s
+INFO:	20171122T101234  1195.25 [0]	gflopsOwnBig:	Average: 47.5034	std.deviation(abs): 0.657998	Min: 45.4147	Max: 48.8371
+INFO:	20171122T101234  1195.25 [0]	gflopsPairBig:	Average: 10428	std.deviation(abs): 137.596	Min: 9922.64	Max: 10773.2
+INFO:	20171122T101234  1195.25 [0]	gflopsOwnZero:	Average: 4.14736e+10	std.deviation(abs): 3.95556e+09	Min: 3.48091e+10	Max: 5.31218e+10
+INFO:	20171122T101234  1195.25 [0]	gflopsPairZero:	Average: 1085.24	std.deviation(abs): 35.8872	Min: 978.397	Max: 1399.72
+INFO:	20171122T101234  1195.25 [0]	VECTORIZATION TUNING completed 
+INFO:	20171122T101234  1195.25 [0]	Timing information:
+INFO:	20171122T101234  1195.25 [0]	initSend() took: 0.929926 sec
+INFO:	20171122T101234  1195.25 [0]	testRecv() took: 2.78691 sec
+INFO:	20171122T101234  1195.25 [0]	Computation in main loop took: 1060.5 sec
+INFO:	20171122T101234  1195.25 [0]		Decomposition took: 18.4674 sec
+INFO:	20171122T101234  1195.25 [0]			Communication took: 12.4645 sec
+INFO:	20171122T101234  1195.25 [0]				initSend() took: 0.929926 sec
+INFO:	20171122T101234  1195.25 [0]				testRecv() took: 2.78691 sec
+INFO:	20171122T101234  1195.25 [0]		Computation took: 1041.92 sec
+INFO:	20171122T101234  1195.26 [0]			Force calculation took: 1030.28 sec
+INFO:	20171122T101234  1195.26 [0]		IO in main loop took: 0.00161253 sec
+INFO:	20171122T101234  1195.26 [0]			Output Plugin FlopRateWriter took: 0.000376595 sec
+INFO:	20171122T101234  1195.26 [0]			Output Plugin VectorizationTuner took: 1.93808e-05 sec
+INFO:	20171122T101234  1195.26 [0]	Final IO took: 11.296 sec
+INFO:	20171122T101234  1195.26 [0]		Timer SIMULATION_IO_PHASESPACE_CREATION took: 2.55097 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROCESS_CELLS took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_LOKAL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROCESS_FAR_FIELD took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMMUNICATION_HALOS took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_EVAL_M took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_EVAL_LM took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer AQUEOUS_NA_CL_GENERATOR_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer CRYSTAL_LATTICE_GENERATOR_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer CUBIC_GRID_GENERATOR_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer DROPLET_GENERATOR_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer MS2RST_GENERATOR_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer REYLEIGH_TAYLOR_GENERATOR_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Initial IO took:                 2.55092 sec
+INFO:	20171122T101234  1195.26 [0]	Timer L2P_CELL_PROCESSOR_L2P took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer P2M_CELL_PROCESSOR_P2M took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer VECTORIZATION_TUNER_TUNER took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer BINARY_READER_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer INPUT_OLDSTYLE_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer MPI_IO_READER_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Timer MPI_CHECKPOINT_WRITER_INPUT took: 0 sec
+INFO:	20171122T101234  1195.26 [0]	Memory consumption:
+INFO:	20171122T101234  1195.26 [0]		Memory usage (System total):	20682 MB out of 32083 MB (64.464%)
+INFO:	20171122T101234  1195.34 [0]		By own process:			8759.84 MB (27.3037% of total memory)
+INFO:	20171122T101234  1195.34 [0]			LinkedCells: 8460.78 MB
+INFO:	20171122T101234  1195.36 [0]				own datastructures:	0.000272 MB
+INFO:	20171122T101234  1195.36 [0]				cells total:		8460.65 MB
+INFO:	20171122T101234  1195.36 [0]				cells SoAs:		6979.11 MB
+INFO:	20171122T101234  1195.36 [0]				cells molecule vectors:	1409.03 MB
+INFO:	20171122T101234  1195.36 [0]				indexVectors:		0.131072 MB
+INFO:	20171122T101234  1195.36 [0]			DomainDecompMPIBase: 71.6361 MB
+INFO:	20171122T101234  1195.36 [0]				own datastructures:	8e-05 MB
+INFO:	20171122T101234  1195.36 [0]				neighbourCommunicationScheme:		71.6356 MB
+INFO:	20171122T101234  1195.36 [0]				collective Communication:		0.0005 MB
+INFO:	20171122T101234  1195.36 [0]	
+INFO:	20171122T101234  1195.36 [0]	main: used 1071.95 seconds
+INFO:	20171122T101234  1195.36 [0]	Simulation speed: 2.24e+07 Molecule-updates per second.
