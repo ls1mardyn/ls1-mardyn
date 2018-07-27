@@ -10,6 +10,7 @@
 #include "LinkedCellTraversals/CellPairTraversals.h"
 #include "LinkedCellTraversals/QuickschedTraversal.h"
 #include "LinkedCellTraversals/C08CellPairTraversal.h"
+#include "LinkedCellTraversals/C04CellPairTraversal.h"
 #include "LinkedCellTraversals/OriginalCellPairTraversal.h"
 #include "LinkedCellTraversals/SlicedCellPairTraversal.h"
 
@@ -23,8 +24,9 @@ public:
 	enum traversalNames {
 		ORIGINAL = 0,
 		C08      = 1,
-		SLICED   = 2,
-		QSCHED   = 3
+		C04      = 2,
+		SLICED   = 3,
+		QSCHED   = 4
 	};
 
 	TraversalTuner();
@@ -70,6 +72,7 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 			mardyn_get_max_threads() > 1 ? C08 : SLICED
 	};
 	struct C08CellPairTraversalData      *c08Data    = new C08CellPairTraversalData;
+	struct C04CellPairTraversalData      *c04Data    = new C04CellPairTraversalData;
 	struct OriginalCellPairTraversalData *origData   = new OriginalCellPairTraversalData;
 	struct SlicedCellPairTraversalData   *slicedData = new SlicedCellPairTraversalData;
 
@@ -77,6 +80,7 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 	_traversals = {
 			make_pair(nullptr, origData),
 			make_pair(nullptr, c08Data),
+			make_pair(nullptr, c04Data),
 			make_pair(nullptr, slicedData),
 	};
 #ifdef QUICKSCHED
@@ -109,6 +113,8 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 		global_log->info() << "Using OriginalCellPairTraversal." << endl;
 	else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTravesal))
 		global_log->info() << "Using C08CellPairTraversal." << endl;
+	else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTravesal))
+            global_log->info() << "Using C04CellPairTraversal." << endl;
 	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTravesal)) {
 		global_log->info() << "Using QuickschedTraversal." << endl;
 #ifndef QUICKSCHED
@@ -136,6 +142,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 
 	if (traversalType.find("c08") != string::npos)
 		selectedTraversal = C08;
+	else if (traversalType.find("c04") != string::npos)
+		selectedTraversal = C04;
 	else if (traversalType.find("qui") != string::npos)
 		selectedTraversal = QSCHED;
 	else if (traversalType.find("slice") != string::npos)
@@ -160,9 +168,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 
 	int i = 1;
 
-	for (XMLfile::Query::const_iterator traversalIterator = xmlconfig.query("traversalData").begin();
-		 traversalIterator;
-		 ++traversalIterator) {
+	XMLfile::Query qry = xmlconfig.query("traversalData");
+	for (XMLfile::Query::const_iterator traversalIterator = qry.begin(); traversalIterator; ++traversalIterator) {
 		string path(basePath + "/traversalData[" + to_string(i) + "]");
 		xmlconfig.changecurrentnode(path);
 
@@ -224,19 +231,16 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 		// decide whether to initialize or rebuild
 		if (tPair.first == nullptr) {
 			if (dynamic_cast<C08CellPairTraversalData *>(tPair.second)) {
-				tPair.first = new C08CellPairTraversal<CellTemplate>(cells,
-																	 dims);
+				tPair.first = new C08CellPairTraversal<CellTemplate>(cells, dims);
+			} else if(dynamic_cast<C04CellPairTraversalData *>(tPair.second)) {
+				tPair.first = new C04CellPairTraversal<CellTemplate>(cells, dims);
 			} else if (QuickschedTraversalData *quiData = dynamic_cast<QuickschedTraversalData *>(tPair.second)) {
 				mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
-				tPair.first = new QuickschedTraversal<CellTemplate>(cells,
-																	dims,
-																	quiData->taskBlockSize);
+				tPair.first = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
 			} else if (dynamic_cast<OriginalCellPairTraversalData *>(tPair.second)) {
-				tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells,
-																		  dims);
+				tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells, dims);
 			} else if (dynamic_cast<SlicedCellPairTraversalData *>(tPair.second)) {
-				tPair.first = new SlicedCellPairTraversal<CellTemplate>(cells,
-																		dims);
+				tPair.first = new SlicedCellPairTraversal<CellTemplate>(cells, dims);
 			} else {
 				global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << endl;
 				Simulation::exit(1);
@@ -304,6 +308,9 @@ inline bool TraversalTuner<CellTemplate>::isTraversalApplicable(
 #endif
 		break;
 	case C08:
+		ret = true;
+		break;
+	case C04:
 		ret = true;
 		break;
 	case ORIGINAL:
