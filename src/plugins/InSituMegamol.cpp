@@ -37,16 +37,21 @@ void InSituMegamol::init(ParticleContainer* particleContainer,
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
-	_writeInterval = 20;
-	_replyBufferSize = 1024;
-	_connectionName.assign("tcp://localhost:33333");
-	// _backupInterval = 5;
-	// xmlconfig.getNodeValue("backupInterval", _backupInterval);
-	// global_log->info() << "    RR: Backup interval: " << _backupInterval << std::endl;
+	_snapshotInterval = 20;
+	xmlconfig.getNodeValue("snapshotInterval", _snapshotInterval);
+	global_log->info() << "    ISM: Snapshot interval: "
+	        << _snapshotInterval << std::endl;
 
-	// _numberOfBackups = 1;
-	// xmlconfig.getNodeValue("numberOfBackups", _numberOfBackups);
-	// global_log->info() << "    RR: Number of ranks to back up: " << _numberOfBackups << std::endl;
+	_connectionName.assign("tcp://localhost:33333");
+	xmlconfig.getNodeValue("connectionName", _connectionName);
+	global_log->info() << "    ISM: Connecting to Megamol on: <" 
+	        << _connectionName << ">" << std::endl;
+
+	_replyBufferSize = 16384;
+	xmlconfig.getNodeValue("replyBufferSize", _replyBufferSize);
+	global_log->info() << "    ISM: Megamol reply buffer size (defaults to 16384 byte): "
+	        << _replyBufferSize << std::endl;
+
 }
 
 ///reset the particle container with a saved snapshot
@@ -57,7 +62,7 @@ void InSituMegamol::beforeEventNewTimestep(
 
 void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {
-	if (!(simstep % _writeInterval)) {
+	if (!(simstep % _snapshotInterval)) {
 		//get bbox 
 		float bbox[6] {
 			0.0f, 0.0f, 0.0f,
@@ -79,8 +84,6 @@ void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		_addMmpldSeekTable(seekTable);
 		mardyn_assert(*reinterpret_cast<size_t*>(seekTable.data()) == _mmpldBuffer.size());
 		_addMmpldFrame(particleLists);
-		global_log->info() << "second seekTable entry: " << *reinterpret_cast<size_t*>(seekTable.data()+sizeof(size_t))
-		                   << " size of mmpldBuffer: " << _mmpldBuffer.size() << std::endl;
 		mardyn_assert(*reinterpret_cast<size_t*>(seekTable.data()+sizeof(size_t)) == _mmpldBuffer.size());
 		std::string fname = _writeMmpldBuffer(domainDecomp->getRank());
 		_zmqManager.triggerUpdate(fname);
@@ -201,7 +204,7 @@ std::string InSituMegamol::_writeMmpldBuffer(int rank) {
 	mmpldFile.open(fname.str(), std::ios::binary | std::ios::trunc);
 	mmpldFile.write(_mmpldBuffer.data(), _mmpldBuffer.size());
 	mmpldFile.close();
-	global_log->info() << "    InSituMegamol: Shared memory file written." << std::endl;
+	global_log->info() << "    ISM: Shared memory file written." << std::endl;
 	return fname.str();
 }
 
@@ -265,6 +268,10 @@ void InSituMegamol::ZmqManager::setModuleNames(int rank) {
 }
 
 void InSituMegamol::ZmqManager::triggerModuleCreation(void) {
+	while (!synchronizeMegamol()) {
+		//wait
+	}
+
 	std::string reply;
 	int replySize = 0;
 	std::stringstream msg;
@@ -275,24 +282,55 @@ void InSituMegamol::ZmqManager::triggerModuleCreation(void) {
 		<< "mmCreateCall(\"CallOSPRayMaterial\", \""<< _geoTag.str() <<"::getMaterialSlot\", " << "\"::mat::deployMaterialSlot\")\n"
 		<< "mmCreateChainCall(\"CallOSPRayStructure\", \"::rnd::getStructure\", \"" << _geoTag.str() << "::deployStructureSlot\")\n";
 	global_log->info() << "    ISM: Sending creation message\n" << msg.str() << std::endl;
-#ifdef NO_MM_MODE
-	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
-	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
-#else
-	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), 0);
-	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
-#endif
-	if (replySize > _replyBufferSize) {
-		//TODO some error
-	}
-	else {
-		reply.assign(_replyBuffer.data(), 0, replySize);
-		if (replySize == 0) {
-			global_log->info() << "    ISM: ZMQ reply was empty." << std::endl;
+// #ifdef NO_MM_MODE
+// 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
+// 	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
+// #else
+// 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), 0);
+// 	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
+// #endif
+// 	if (replySize > _replyBufferSize) {
+// 		//TODO some error
+// 	}
+// 	else {
+// 		reply.assign(_replyBuffer.data(), 0, replySize);
+// 		if (replySize == -1 || replySize == 0) {
+// 			global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
+// 		}
+// 		else {
+// 			global_log->info() << "    ISM: ZMQ reply: " << replySize << std::endl;
+// 		}
+// 	}
+}
+
+bool InSituMegamol::ZmqManager::synchronizeMegamol(void) {
+	int iterationCounter = 0;
+	while (true) {
+		std::string msg("return mmListModules()");
+		std::string reply;
+		global_log->info() << "    ISM: Requesting module list ("<< iterationCounter << ")" << std::endl;
+		zmq_send(_requester.get(), msg.data(), msg.size(), 0);
+		int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
+		if (replySize > _replyBufferSize) {
+			//TODO some error
 		}
 		else {
-			global_log->info() << "    ISM: ZMQ reply: " << reply << std::endl;
+			reply.assign(_replyBuffer.data(), 0, replySize);
+			if (replySize == -1 || replySize == 0) {
+				global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
+			}
+			else {
+				global_log->info() << "    ISM: ZMQ reply: " << reply << std::endl;
+				if (reply.find("OSPRayRenderer") != std::string::npos) {
+					global_log->info() << "    ISM: Synchronized Megamol after " << iterationCounter << " retries." << std::endl;
+					return true;
+				}
+			}
 		}
+		std::chrono::high_resolution_clock hrc;
+		auto again = hrc.now() + std::chrono::milliseconds(1000);
+		while (hrc.now() < again);
+		++iterationCounter;
 	}
 }
 
@@ -302,6 +340,7 @@ void InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
 	zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
 }
+
 #else
 
 InSituMegamol::InSituMegamol(void) {

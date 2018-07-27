@@ -16,6 +16,7 @@
 #include "PluginBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 
+#include <chrono>
 #include <set>
 #include <sstream>
 #include <iomanip>
@@ -35,23 +36,33 @@ typedef void ZmqRequest;
 typedef void ZmqPublish;
 
 class InSituMegamol: public PluginBase {
-
+	/**
+	 * @brief Manages the ZMQ calls to Megamol
+	 * 
+	 * Used to abstract the messages sent to Megamol. Also manages the resources
+	 * required for the communication.
+	 */
 	class ZmqManager {
 	public:
 		ZmqManager();
 		~ZmqManager();
-		ZmqManager(ZmqManager const& rhs);
+		ZmqManager(ZmqManager const& rhs); //not a real copy: new resources get allocated. should probably share context...
+
 		void getZmqVersion(void) const;
 		void setConnection(std::string);
 		void setModuleNames(int rank);
 		void triggerModuleCreation(void);
 		void triggerUpdate(std::string fname);
+		bool synchronizeMegamol(void);
+
+		//setter/getter
 		void setReplyBufferSize(int replyBufferSize) {
 			_replyBufferSize = replyBufferSize;
 			_replyBuffer.clear();
 			_replyBuffer.resize(_replyBufferSize, 0);
 		}
 	private:
+		ZmqManager& operator=(ZmqManager const& rhs); //definitely disallow this guy
 		int _replyBufferSize;
 		std::vector<char> _replyBuffer;
 		std::stringstream _datTag; 
@@ -168,7 +179,7 @@ protected:
 	Snapshot _snapshot; // make an std::vector eventually
 private:
 	// XML settings
-	int _writeInterval;
+	int _snapshotInterval;
 	int _replyBufferSize;
 	std::string _connectionName;
 

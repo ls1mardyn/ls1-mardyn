@@ -60,7 +60,9 @@
 
     <output>
 			<outputplugin name="InSituMegamol">
-        <!-- <port></port> -->
+        <snapshotInterval>20</snapshotInterval>
+        <connectionName>tcp://localhost:33333</connectionName>
+        <replyBufferSize>16384</replyBufferSize>
 			</outputplugin>
     </output>
   </simulation>
