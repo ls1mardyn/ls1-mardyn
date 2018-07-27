@@ -23,10 +23,10 @@ CXXFLAGS += $(CXXFLAGS_WARNINGS)
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -g -ggdb -Wno-unused-parameter -cxx=g++
+CXXFLAGS_SEQ_DEBUG  = -Wall -g -ggdb -Wno-unused-parameter -cxx=g++
 LINKFLAGS_SEQ_DEBUG =  -cxx=g++
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = -O3 -Wall -Werror -DNDEBUG  -cxx=g++
+CXXFLAGS_SEQ_RELEASE  = -O3 -Wall -DNDEBUG  -cxx=g++
 LINKFLAGS_SEQ_RELEASE = -cxx=g++
 # COVERAGE
 CXXFLAGS_SEQ_COVERAGE  = $(CXXFLAGS_SEQ_RELEASE) --coverage
