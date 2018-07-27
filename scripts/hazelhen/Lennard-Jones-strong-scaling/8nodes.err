@@ -1,0 +1,76 @@
+Currently Loaded Modulefiles:
+  1) modules/3.2.10.6
+  2) nodestat/2.2-1.0502.60539.1.31.ari
+  3) sdb/1.1-1.0502.63652.4.25.ari
+  4) alps/5.2.4-2.0502.9822.32.1.ari
+  5) lustre-cray_ari_s/2.5_3.0.101_0.46.1_1.0502.8871.20.1-1.0502.21481.23.2
+  6) udreg/2.3.2-1.0502.10518.2.17.ari
+  7) ugni/6.0-1.0502.10863.8.29.ari
+  8) gni-headers/4.0-1.0502.10859.7.8.ari
+  9) dmapp/7.0.1-1.0502.11080.8.76.ari
+ 10) xpmem/0.1-2.0502.64982.5.3.ari
+ 11) hss-llm/7.2.0
+ 12) Base-opts/1.0.2-1.0502.60680.2.4.ari
+ 13) craype-network-aries
+ 14) craype-hugepages16M
+ 15) craype-haswell
+ 16) craype/2.5.13
+ 17) cray-mpich/7.6.3
+ 18) torque/4.2.10.h1
+ 19) moab/7.2.9-2014091214-96b8ec34-b9-SUSE11
+ 20) system/ws_tools
+ 21) system/hlrs-defaults
+ 22) gcc/7.2.0
+ 23) cray-libsci/17.11.1
+ 24) pmi/5.0.12
+ 25) atp/2.1.1
+ 26) PrgEnv-gnu/5.2.82
+libhugetlbfs [nid04501:10574]: WARNING: New heap segment map at 0x100de000000 failed: Cannot allocate memory
+libhugetlbfs [nid04502:12713]: WARNING: New heap segment map at 0x100db000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10573]: WARNING: New heap segment map at 0x100e4000000 failed: Cannot allocate memory
+libhugetlbfs [nid04502:12716]: WARNING: New heap segment map at 0x100de000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10576]: WARNING: New heap segment map at 0x100f1000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10575]: WARNING: New heap segment map at 0x1009c000000 failed: Cannot allocate memory
+libhugetlbfs [nid04502:12717]: WARNING: New heap segment map at 0x100e6000000 failed: Cannot allocate memory
+libhugetlbfs [nid04502:12718]: WARNING: New heap segment map at 0x100b7000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10572]: WARNING: New heap segment map at 0x100e1000000 failed: Cannot allocate memory
+libhugetlbfs [nid04500:7985]: WARNING: New heap segment map at 0x100e0000000 failed: Cannot allocate memory
+libhugetlbfs [nid04500:7986]: WARNING: New heap segment map at 0x100a4000000 failed: Cannot allocate memory
+libhugetlbfs [nid04500:7986]: WARNING: New heap segment map at 0x100a4000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10574]: WARNING: New heap segment map at 0x100de000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10572]: WARNING: New heap segment map at 0x100e1000000 failed: Cannot allocate memory
+libhugetlbfs [nid04500:7985]: WARNING: New heap segment map at 0x100e0000000 failed: Cannot allocate memory
+libhugetlbfs [nid04502:12714]: WARNING: New heap segment map at 0x100e0000000 failed: Cannot allocate memory
+libhugetlbfs [nid04500:7986]: WARNING: New heap segment map at 0x100a4000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10575]: WARNING: New heap segment map at 0x1009c000000 failed: Cannot allocate memory
+libhugetlbfs [nid04504:11881]: WARNING: New heap segment map at 0x100e2000000 failed: Cannot allocate memory
+libhugetlbfs [nid04504:11881]: WARNING: New heap segment map at 0x100e2000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10575]: WARNING: New heap segment map at 0x1009c000000 failed: Cannot allocate memory
+libhugetlbfs [nid04504:11882]: WARNING: New heap segment map at 0x100e4000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10571]: WARNING: New heap segment map at 0x1009d000000 failed: Cannot allocate memory
+[NID 04504] 2017-11-25 02:16:33 Apid 11635797: initiated application termination
+[NID 04504] 2017-11-25 02:16:44 Apid 11635797: OOM killer terminated this process.
+libhugetlbfs [nid04501:10736]: WARNING: New heap segment map at 0x100ec000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10731]: WARNING: New heap segment map at 0x100e2000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:10731]: WARNING: New heap segment map at 0x100e2000000 failed: Cannot allocate memory
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[NID 04501] 2017-11-25 02:34:57 Apid 11635812: initiated application termination
+[NID 04501] 2017-11-25 02:35:00 Apid 11635812: OOM killer terminated this process.
+libhugetlbfs [nid04505:19242]: WARNING: New heap segment map at 0x100e1000000 failed: Cannot allocate memory
+libhugetlbfs [nid04505:19242]: WARNING: New heap segment map at 0x100e1000000 failed: Cannot allocate memory
+terminate called after throwing an instance of 'std::bad_alloc'
+terminate called recursively
+  what():  std::bad_alloc
+[NID 04505] 2017-11-25 03:47:40 Apid 11635839: initiated application termination
+[NID 04505] 2017-11-25 03:47:42 Apid 11635839: OOM killer terminated this process.
+libhugetlbfs [nid04505:19904]: WARNING: New heap segment map at 0x100e8000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:11935]: WARNING: New heap segment map at 0x100aa000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:11935]: WARNING: New heap segment map at 0x100aa000000 failed: Cannot allocate memory
+libhugetlbfs [nid04501:11935]: WARNING: New heap segment map at 0x100aa000000 failed: Cannot allocate memory
+[NID 04504] 2017-11-25 05:22:40 Apid 11635872: initiated application termination
+[NID 04504] 2017-11-25 05:22:49 Apid 11635872: OOM killer terminated this process.
+[NID 04500] 2017-11-25 06:36:41 Apid 11635943: initiated application termination
+[NID 04500] 2017-11-25 06:36:50 Apid 11635943: OOM killer terminated this process.
+[NID 04504] 2017-11-25 08:10:20 Apid 11636008: initiated application termination
+[NID 04504] 2017-11-25 08:10:22 Apid 11636008: OOM killer terminated this process.
