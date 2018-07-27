@@ -1,0 +1,28 @@
+This is a release of ls1 mardyn for the World Record paper.
+
+# Paper
+
+TODO: cite paper here
+
+# Directories
+
+
+## ls1 mardyn
+
+Based on ls1 mardyn trunk svn revision 5713.
+
+With the following additions:
+* C04 (rev 6390) + adaptions to TraversalTuner.h
+
+Bugfixes:
+* rev 5795: fixes address sanitizer error in TraversalTuner::readXML()
+
+
+### Limitations
+* The k-d decomposition in this version is deactivated, as some bugs have been identified and fixed afterwards, please use another release of ls1 mardyn if you want to use the k-d decomposition. (A new version of mardyn is expected by end of 2018.)
+
+
+## Scripts
+
+This directory includes a variety of scripts to start and run jobs to reproduce the results.
+A more detailed description is given in the Readme's that you can find in the respective directories.
