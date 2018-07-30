@@ -16,12 +16,6 @@
 
 using Log::global_log;
 
-#define NO_MM_MODE
-
-#ifdef NO_MM_MODE
-#warning LS1 NOT WAITING ON MegaMol
-#endif
-
 #ifdef INSITU
 InSituMegamol::InSituMegamol(void) {
 	constexpr bool uint64_tIsSize_t = std::is_same<uint64_t, size_t>::value;
@@ -32,8 +26,9 @@ void InSituMegamol::init(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {
 	_zmqManager.setConnection(_connectionName);	
 	_zmqManager.setReplyBufferSize(_replyBufferSize);
+	_zmqManager.setSyncTimeout(_syncTimeout);
 	_zmqManager.setModuleNames(domainDecomp->getRank());
-	_zmqManager.triggerModuleCreation();
+	_zmqManager.triggerChainModuleSetup();
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
@@ -51,7 +46,10 @@ void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("replyBufferSize", _replyBufferSize);
 	global_log->info() << "    ISM: Megamol reply buffer size (defaults to 16384 byte): "
 	        << _replyBufferSize << std::endl;
-
+	_syncTimeout = 10;
+	xmlconfig.getNodeValue("syncTimeout", _syncTimeout);
+	global_log->info() << "    ISM: Synchronization timeout (s): "
+	        << _syncTimeout << std::endl;
 }
 
 ///reset the particle container with a saved snapshot
@@ -171,7 +169,7 @@ std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particle
 	          reinterpret_cast<char*>(&radius)+sizeof(float),
 			  std::back_inserter(dataList));
 	// dummies for Global RGB Color
-	dataList.insert(dataList.end(), 4, 0);
+	dataList.insert(dataList.end(), 4, static_cast<unsigned char>(0.8*255.0));
 
 	// number of particles
 	size_t particleCount = static_cast<size_t>(particleContainer->getNumberOfParticles());
@@ -208,20 +206,6 @@ std::string InSituMegamol::_writeMmpldBuffer(int rank) {
 	return fname.str();
 }
 
-///shared memory version
-void* InSituMegamol::createSharedMemory(size_t size) {
-	// protection status
-	int const protection = PROT_READ | PROT_WRITE;
-	// create flags
-	int const visibility = MAP_SHARED;
-	// use shared memory file
-	// int const key = shm_open("/_sharedData", O_RDWR | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
-	// create the memory
-	return mmap(NULL, size, protection, visibility, 0, 0);
-	int error = shm_unlink("/_sharedData");
-}
-
-/////////////////////////////////////////////////////
 InSituMegamol::ZmqManager::ZmqManager(void) 
 		: _context(zmq_ctx_new(), &zmq_ctx_destroy)
 		, _requester(zmq_socket(_context.get(), ZMQ_REQ), &zmq_close) 
@@ -267,10 +251,19 @@ void InSituMegamol::ZmqManager::setModuleNames(int rank) {
 	_geoTag << "::geo" << std::setfill('0') << std::setw(6) << rank;
 }
 
-void InSituMegamol::ZmqManager::triggerModuleCreation(void) {
-	while (!synchronizeMegamol()) {
-		//wait
-	}
+void InSituMegamol::ZmqManager::triggerChainModuleSetup(void) {
+	InSituMegamol::ISM_SYNC_STATUS ismStatus = ISM_SYNC_SYNCHRONIZING;
+	do {
+		// try to sync to Megamol. Abort either on error or after _syncTimeout sec.
+		ismStatus = synchronizeMegamol();
+		global_log->info() << "ismStatus: " << ismStatus << std::endl;
+		if (ismStatus == ISM_SYNC_TIMEOUT
+				|| ismStatus == ISM_SYNC_REPLY_BUFFER_OVERFLOW
+				|| ismStatus == ISM_SYNC_UNKNOWN_ERROR) {
+			global_log->info() << "    ISM: Megamol sync failed." << std::endl;
+			return;
+		}
+	} while (ismStatus != ISM_SYNC_SUCCESS);
 
 	std::string reply;
 	int replySize = 0;
@@ -282,56 +275,79 @@ void InSituMegamol::ZmqManager::triggerModuleCreation(void) {
 		<< "mmCreateCall(\"CallOSPRayMaterial\", \""<< _geoTag.str() <<"::getMaterialSlot\", " << "\"::mat::deployMaterialSlot\")\n"
 		<< "mmCreateChainCall(\"CallOSPRayStructure\", \"::rnd::getStructure\", \"" << _geoTag.str() << "::deployStructureSlot\")\n";
 	global_log->info() << "    ISM: Sending creation message\n" << msg.str() << std::endl;
-// #ifdef NO_MM_MODE
-// 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
-// 	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
-// #else
-// 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), 0);
-// 	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
-// #endif
-// 	if (replySize > _replyBufferSize) {
-// 		//TODO some error
-// 	}
-// 	else {
-// 		reply.assign(_replyBuffer.data(), 0, replySize);
-// 		if (replySize == -1 || replySize == 0) {
-// 			global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
-// 		}
-// 		else {
-// 			global_log->info() << "    ISM: ZMQ reply: " << replySize << std::endl;
-// 		}
-// 	}
+	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), 0);
+	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
+	// if (replySize > _replyBufferSize) {
+	// 	//some errror
+	// }
+	// else {
+	// 	reply.assign(_replyBuffer.data(), 0, replySize);
+	// 	if (replySize == -1 || replySize == 0) {
+	// 		global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
+	// 	}
+	// 	else {
+	// 		global_log->info() << "    ISM: ZMQ reply: " << replySize << std::endl;
+	// 	}
+	// }
 }
 
-bool InSituMegamol::ZmqManager::synchronizeMegamol(void) {
-	int iterationCounter = 0;
-	while (true) {
-		std::string msg("return mmListModules()");
-		std::string reply;
-		global_log->info() << "    ISM: Requesting module list ("<< iterationCounter << ")" << std::endl;
-		zmq_send(_requester.get(), msg.data(), msg.size(), 0);
-		int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
-		if (replySize > _replyBufferSize) {
-			//TODO some error
+InSituMegamol::ISM_SYNC_STATUS InSituMegamol::ZmqManager::synchronizeMegamol(void) {
+	std::string msg("return mmListModules()");
+	std::string reply;
+	global_log->info() << "    ISM: Requesting module list" << std::endl;
+	zmq_send(_requester.get(), msg.data(), msg.size(), ZMQ_DONTWAIT);
+	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
+	InSituMegamol::ISM_SYNC_STATUS currentStatus;
+	// evaluate Megamol's reply
+	if (replySize > _replyBufferSize) {
+		// This is an error. Return and handle outside. Should probably do an exception here.
+		global_log->info() << "    ISM: reply size exceeded buffer size." << std::endl;
+		return InSituMegamol::ISM_SYNC_REPLY_BUFFER_OVERFLOW;
+	}
+	if (replySize == -1) {
+		// No reply from Megamol yet, let's wait.
+		global_log->info() << "    ISM: Megamol not ready.("<< replySize <<")" << std::endl;
+		currentStatus = InSituMegamol::ISM_SYNC_SYNCHRONIZING;
+		if ((_timeoutClock()) > _syncTimeout) {
+			// we waited long enough, consider the sync failed
+			return InSituMegamol::ISM_SYNC_TIMEOUT;
 		}
 		else {
-			reply.assign(_replyBuffer.data(), 0, replySize);
-			if (replySize == -1 || replySize == 0) {
-				global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
+			return InSituMegamol::ISM_SYNC_SYNCHRONIZING;
+		}
+	} 
+	if (replySize == 0) {
+		// Megamol replied, but does not seem ready yet, let's wait.
+		global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
+		if (_timeoutClock() > _syncTimeout) {
+			// we waited long enough, consider the sync failed
+			return InSituMegamol::ISM_SYNC_TIMEOUT;
+		}
+		else {
+			return InSituMegamol::ISM_SYNC_SYNCHRONIZING;
+		}
+	}
+	if (replySize > 0 && replySize < _replyBufferSize) {
+		// Check Megamol's reply
+		reply.assign(_replyBuffer.data(), 0, replySize);
+		global_log->info() << "    ISM: ZMQ reply received." << std::endl;
+		if (reply.find("OSPRayRenderer") != std::string::npos) {
+			// Megamol seems ready. Confirm synchronization.
+			global_log->info() << "    ISM: Synchronized Megamol." << std::endl;
+			return InSituMegamol::ISM_SYNC_SUCCESS;
+		}
+		else {
+ 			// Megamol replied, but does not seem ready yet, let's wait.
+			if (_timeoutClock() > _syncTimeout) {
+				// we waited long enough, consider the sync failed
+				return InSituMegamol::ISM_SYNC_TIMEOUT;
 			}
 			else {
-				global_log->info() << "    ISM: ZMQ reply: " << reply << std::endl;
-				if (reply.find("OSPRayRenderer") != std::string::npos) {
-					global_log->info() << "    ISM: Synchronized Megamol after " << iterationCounter << " retries." << std::endl;
-					return true;
-				}
+				return InSituMegamol::ISM_SYNC_SYNCHRONIZING;
 			}
 		}
-		std::chrono::high_resolution_clock hrc;
-		auto again = hrc.now() + std::chrono::milliseconds(1000);
-		while (hrc.now() < again);
-		++iterationCounter;
 	}
+	return InSituMegamol::ISM_SYNC_UNKNOWN_ERROR;
 }
 
 void InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {

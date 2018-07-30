@@ -22,8 +22,6 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
-#include <sys/mman.h>
-#include <fcntl.h>
 
 class Snapshot;
 
@@ -36,6 +34,18 @@ typedef void ZmqRequest;
 typedef void ZmqPublish;
 
 class InSituMegamol: public PluginBase {
+	/**
+	 * @brief Sync status return 
+	 * 
+	 * 
+	 */
+	enum ISM_SYNC_STATUS {
+		ISM_SYNC_SUCCESS = 0,           // 0
+		ISM_SYNC_SYNCHRONIZING,         // 1
+		ISM_SYNC_REPLY_BUFFER_OVERFLOW, // 2
+		ISM_SYNC_TIMEOUT,               // 3
+		ISM_SYNC_UNKNOWN_ERROR          // 4
+	};
 	/**
 	 * @brief Manages the ZMQ calls to Megamol
 	 * 
@@ -51,9 +61,9 @@ class InSituMegamol: public PluginBase {
 		void getZmqVersion(void) const;
 		void setConnection(std::string);
 		void setModuleNames(int rank);
-		void triggerModuleCreation(void);
+		void triggerChainModuleSetup(void);
 		void triggerUpdate(std::string fname);
-		bool synchronizeMegamol(void);
+		InSituMegamol::ISM_SYNC_STATUS synchronizeMegamol(void);
 
 		//setter/getter
 		void setReplyBufferSize(int replyBufferSize) {
@@ -61,9 +71,24 @@ class InSituMegamol: public PluginBase {
 			_replyBuffer.clear();
 			_replyBuffer.resize(_replyBufferSize, 0);
 		}
+		void setSyncTimeout(int syncTimeout) {
+			_syncTimeout = syncTimeout;
+		}
 	private:
+		/**
+		 * @brief Waits a sec, then returns a counter which inits at 0
+		 */
+		int _timeoutClock(void) const {
+			static int iterationCounter = 0;
+			std::chrono::high_resolution_clock hrc;
+			auto again = hrc.now() + std::chrono::milliseconds(1000);
+			while (hrc.now() < again);
+			++iterationCounter;
+			return iterationCounter;
+		}
 		ZmqManager& operator=(ZmqManager const& rhs); //definitely disallow this guy
 		int _replyBufferSize;
+		int _syncTimeout;
 		std::vector<char> _replyBuffer;
 		std::stringstream _datTag; 
 		std::stringstream _geoTag;
@@ -76,7 +101,8 @@ public:
 	virtual ~InSituMegamol() {};
 
 	void init(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain);
+			DomainDecompBase* domainDecomp, Domain* domain
+	);
 
     void readXML(XMLfileUnits& xmlconfig);
 
@@ -97,19 +123,18 @@ public:
 
     void endStep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain, unsigned long simstep);
+            Domain* domain, unsigned long simstep
+	);
     
 	void finish(ParticleContainer* particleContainer,
-            DomainDecompBase* domainDecomp, Domain* domain) {}
+            DomainDecompBase* domainDecomp, Domain* domain
+	) {}
 
     std::string getPluginName() {
     	return std::string("InSituMegamol");
     }
 
 	static PluginBase* createInstance() { return new InSituMegamol(); }
-
-	//create shared memory
-	void* createSharedMemory(size_t size);
 
 	class Snapshot {
 	public:
@@ -181,6 +206,7 @@ private:
 	// XML settings
 	int _snapshotInterval;
 	int _replyBufferSize;
+	int _syncTimeout;
 	std::string _connectionName;
 
 	//gather data
