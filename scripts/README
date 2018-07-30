@@ -20,13 +20,6 @@ b)     TODO: SuperMUC
 ## Figure 7  - hybrid mpi-openmp, HAZEL
 *      HazelHen/Node-Level/hybrid-tests
 
-## Figure 8  - ls1, lammps comparison
-a)     SuperMUC-Phase1/lammps-comparison
-b)     TODO
-
-## Figure 9  - ls1, lammps, Gromacs comparison
-       TODO
-
 ## Figure 10 - overlapping collectives, SuperMUC
        SuperMUC-Phase1/Multi-Node/overlapping-collectives
 
