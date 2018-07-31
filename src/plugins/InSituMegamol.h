@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
+#include <errno.h>
 
 class Snapshot;
 
@@ -44,7 +45,8 @@ class InSituMegamol: public PluginBase {
 		ISM_SYNC_SYNCHRONIZING,         // 1
 		ISM_SYNC_REPLY_BUFFER_OVERFLOW, // 2
 		ISM_SYNC_TIMEOUT,               // 3
-		ISM_SYNC_UNKNOWN_ERROR          // 4
+		ISM_SYNC_SEND_FAILED,           // 4
+		ISM_SYNC_UNKNOWN_ERROR          // 5
 	};
 	/**
 	 * @brief Manages the ZMQ calls to Megamol
@@ -65,7 +67,7 @@ class InSituMegamol: public PluginBase {
 		/**
 		 * @brief This is called after the data in the shared memory file has been updated.
 		 */
-		void triggerUpdate(std::string fname);
+		bool triggerUpdate(std::string fname);
 		/**
 		 * @brief Return a string with the ZMQ version number
 		 */
@@ -102,9 +104,18 @@ class InSituMegamol: public PluginBase {
 		 * @brief Waits a sec, returns either ISM_SYNC_TIMEOUT or ISM_SYNC_SYNCHRONIZING
 		 */
 		InSituMegamol::ISM_SYNC_STATUS _timeoutCheck(void) const;
-	
+		/**
+		 * @brief Wraps the zmq_send. Wrapper needed to handle the internal send/recv matching.
+		 */
+		int _send(std::string msg, int blockPolicy);
+		/**
+		 * @brief Wraps the zmq_recv. Wrapper needed to handle the internal send/recv matching.
+		 */
+		int _recv(int blockPolicy);
+
 		int _replyBufferSize;
 		int _syncTimeout;
+		int _sendCount;
 		std::vector<char> _replyBuffer;
 		std::stringstream _datTag; 
 		std::stringstream _geoTag;

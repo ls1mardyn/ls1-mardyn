@@ -17,11 +17,11 @@
 using Log::global_log;
 
 #ifdef INSITU
-
 #define BLOCK_POLICY_HANDSHAKE 0
 #define BLOCK_POLICY_UPDATE ZMQ_DONTWAIT
 
-InSituMegamol::InSituMegamol(void) : _isEnabled(false) {
+InSituMegamol::InSituMegamol(void) 
+		: _isEnabled(false) {
 	constexpr bool uint64_tIsSize_t = std::is_same<uint64_t, size_t>::value;
 	mardyn_assert(uint64_tIsSize_t);
 }
@@ -94,7 +94,7 @@ void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		std::string fname = _writeMmpldBuffer(domainDecomp->getRank(), simstep);
 		// std::stringstream temp;
 		// temp << fname << "_" << simstep << std::endl;
-		_zmqManager.triggerUpdate(fname);
+		_isEnabled = _zmqManager.triggerUpdate(fname);
 	}
 }
 
@@ -218,7 +218,8 @@ std::string InSituMegamol::_writeMmpldBuffer(int rank, unsigned long simstep) {
 }
 
 InSituMegamol::ZmqManager::ZmqManager(void) 
-		: _context(zmq_ctx_new(), &zmq_ctx_destroy)
+		: _sendCount(0)
+		, _context(zmq_ctx_new(), &zmq_ctx_destroy)
 		, _requester(zmq_socket(_context.get(), ZMQ_REQ), &zmq_close) 
 		, _publisher(zmq_socket(_context.get(), ZMQ_PUB), &zmq_close) {
 	mardyn_assert(_context.get());
@@ -271,6 +272,7 @@ bool InSituMegamol::ZmqManager::performHandshake(void) {
 		ismStatus = _synchronizeMegamol();
 		if (ismStatus == ISM_SYNC_TIMEOUT
 				|| ismStatus == ISM_SYNC_REPLY_BUFFER_OVERFLOW
+				|| ismStatus == ISM_SYNC_SEND_FAILED
 				|| ismStatus == ISM_SYNC_UNKNOWN_ERROR) {
 			global_log->info() << "    ISM: Megamol sync failed." << std::endl;
 			return false;
@@ -278,7 +280,6 @@ bool InSituMegamol::ZmqManager::performHandshake(void) {
 	} while (ismStatus != ISM_SYNC_SUCCESS);
 
 	std::string reply;
-	int replySize = 0;
 	std::stringstream msg;
 	mardyn_assert(_replyBuffer.size() == static_cast<size_t>(_replyBufferSize));
 	msg << "mmCreateModule(\"MMPLDDataSource\", \"" << _datTag.str() << "\")\n"
@@ -288,7 +289,8 @@ bool InSituMegamol::ZmqManager::performHandshake(void) {
 		<< "mmCreateChainCall(\"CallOSPRayStructure\", \"::rnd::getStructure\", \"" << _geoTag.str() << "::deployStructureSlot\")\n";
 	global_log->info() << "    ISM: Sending creation message.\n" << std::endl;
 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), BLOCK_POLICY_HANDSHAKE);
-	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, BLOCK_POLICY_HANDSHAKE);
+	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, BLOCK_POLICY_HANDSHAKE);
+	// surprisingly, stuff actually worked, enable the plugin
 	return true;
 }
 
@@ -297,22 +299,24 @@ InSituMegamol::ISM_SYNC_STATUS InSituMegamol::ZmqManager::_synchronizeMegamol(vo
 	std::string reply;
 	std::stringstream statusStr("");
 	statusStr << "    ISM: Requesting module list...";
-	zmq_send(_requester.get(), msg.data(), msg.size(), ZMQ_DONTWAIT);
-	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
-	InSituMegamol::ISM_SYNC_STATUS currentStatus;
+	if (zmq_send(_requester.get(), msg.data(), msg.size(), BLOCK_POLICY_HANDSHAKE) == -1) {
+		statusStr << "send message failed. Error: " << strerror(errno);
+		global_log->info() << statusStr.str() << std::endl;
+		return InSituMegamol::ISM_SYNC_SEND_FAILED;
+	}
+	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, BLOCK_POLICY_HANDSHAKE);
 	// evaluate Megamol's reply
+	if (replySize == -1) {
+		// No reply from Megamol yet, let's wait.
+		statusStr << "Megamol not responding. Error: " << strerror(errno);
+		global_log->info() << statusStr.str() << std::endl;
+		return _timeoutCheck();
+	} 
 	if (replySize > _replyBufferSize) {
 		// This is an error. Return and handle outside. Should probably do an exception here.
 		global_log->info() << "    ISM: reply size exceeded buffer size." << std::endl;
 		return InSituMegamol::ISM_SYNC_REPLY_BUFFER_OVERFLOW;
 	}
-	if (replySize == -1) {
-		// No reply from Megamol yet, let's wait.
-		statusStr << "Megamol not ready.";
-		global_log->info() << statusStr.str() << std::endl;
-		currentStatus = InSituMegamol::ISM_SYNC_SYNCHRONIZING;
-		return _timeoutCheck();
-	} 
 	if (replySize == 0) {
 		// Megamol replied, but does not seem ready yet, let's wait.
 		statusStr << "ZMQ reply was empty.";
@@ -353,36 +357,67 @@ InSituMegamol::ISM_SYNC_STATUS InSituMegamol::ZmqManager::_timeoutCheck(void) co
 	}
 }
 
-void InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
+bool InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
 	std::stringstream msg;
 	msg << "mmSetParamValue(\"" << _datTag.str() << "::filename\", \"" << fname << "\")";
-	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
-	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
+	_send(msg.str(), BLOCK_POLICY_HANDSHAKE);
+	int replySize = _recv(BLOCK_POLICY_UPDATE);
 	std::stringstream statusStr;
 	if (replySize > _replyBufferSize) {
-		// This is an error. Return and handle outside. Should probably throw here.
-		global_log->info() << "    ISM: reply size exceeded buffer size." << std::endl;
+		// This is an error. Should probably throw here.
+		global_log->info() << "    ISM: reply size exceeded buffer size. Disabling plugin." << std::endl;
+		return false;
 	}
 	if (replySize == -1) {
-		// No reply from Megamol yet, let's wait.
-		statusStr << "Megamol not ready (size: -1).";
+		// Reply failed, raise unhandled reply counter
+		if (_sendCount > 1)
+		statusStr << "    ISM: Megamol not ready (size: -1). ";
 		global_log->info() << statusStr.str() << std::endl;
+		return true;
 	} 
 	if (replySize == 0) {
-		// Megamol replied, but does not seem ready yet, let's wait.
-		statusStr << "ZMQ reply was empty (size: 0).";
+		// Megamol replied with 0. This is what we want.
+		statusStr << "    ISM: ZMQ reply was empty (size: 0).";
 		global_log->info() << statusStr.str() << std::endl;
+		return true;
 	}
 	if (replySize > 0 && replySize < _replyBufferSize) {
-		// Check Megamol's reply
+		// Megamol's reply was not empty. Dump the reply, stop the plugin.
 		std::string reply;
 		reply.assign(_replyBuffer.data(), 0, replySize);
-		statusStr << "ZMQ reply received (size: " << replySize << ").";
+		statusStr << "    ISM: ZMQ reply received (size: " << replySize << ", should be 0).";
+		statusStr << "    ISM: Reply: <" << reply << ">. Disabling plugin.";
 		global_log->info() << statusStr.str() << std::endl;
+		return false;
 	}
-
+	return false;
 }
 
+int InSituMegamol::ZmqManager::_send(std::string msg, int blockPolicy) {
+	int status;
+	global_log->info() << "    ISM: _sendCount: " << _sendCount << std::endl;
+	// empty the queue...
+	while (_sendCount > 0) {
+		status = _recv(blockPolicy);
+		if (status == -1 && errno != EAGAIN) {
+			global_log->info() << "    ISM: Stuff is really messed up." << std::endl;
+			return status;
+		}
+	}
+	status = zmq_send(_requester.get(), msg.data(), msg.size(), blockPolicy);
+	if (status != -1) {
+		++_sendCount;
+	}
+	return status;
+}
+
+int InSituMegamol::ZmqManager::_recv(int blockPolicy) {
+	int status = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, blockPolicy);
+	if (status != -1) {
+		--_sendCount;
+	}
+	return status;
+}
 #else
 
 InSituMegamol::InSituMegamol(void) {
