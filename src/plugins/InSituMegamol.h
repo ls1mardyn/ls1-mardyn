@@ -58,35 +58,51 @@ class InSituMegamol: public PluginBase {
 		~ZmqManager();
 		ZmqManager(ZmqManager const& rhs); //not a real copy: new resources get allocated. should probably share context...
 
-		void getZmqVersion(void) const;
-		void setConnection(std::string);
-		void setModuleNames(int rank);
-		void triggerChainModuleSetup(void);
+		/**
+		 * @brief First 'handshake' communication with Megamol. If this fails (returns false), deactivate the plugin
+		 */
+		bool performHandshake(void);
+		/**
+		 * @brief This is called after the data in the shared memory file has been updated.
+		 */
 		void triggerUpdate(std::string fname);
-		InSituMegamol::ISM_SYNC_STATUS synchronizeMegamol(void);
-
-		//setter/getter
+		/**
+		 * @brief Return a string with the ZMQ version number
+		 */
+		std::string getZmqVersion(void) const;
+		/**
+		 * @brief Connect the requester object to the connection name contained in XML input
+		 */
+		void setConnection(std::string);
+		/**
+		 * @brief Generate name internal module names strings tied to rank, so Megamol can discriminate
+		 */
+		void setModuleNames(int rank);
+		/**
+		 * @brief Sets the maximum size of the buffer for Megamol's reply in zmq_recv call.
+		 */
 		void setReplyBufferSize(int replyBufferSize) {
 			_replyBufferSize = replyBufferSize;
 			_replyBuffer.clear();
 			_replyBuffer.resize(_replyBufferSize, 0);
 		}
+		/**
+		 * @brief Pass on XML input
+		 */
 		void setSyncTimeout(int syncTimeout) {
 			_syncTimeout = syncTimeout;
 		}
 	private:
-		/**
-		 * @brief Waits a sec, then returns a counter which inits at 0
-		 */
-		int _timeoutClock(void) const {
-			static int iterationCounter = 0;
-			std::chrono::high_resolution_clock hrc;
-			auto again = hrc.now() + std::chrono::milliseconds(1000);
-			while (hrc.now() < again);
-			++iterationCounter;
-			return iterationCounter;
-		}
 		ZmqManager& operator=(ZmqManager const& rhs); //definitely disallow this guy
+		/**
+		 * @brief Evaluates replies from Megamol during handshake
+		 */
+		InSituMegamol::ISM_SYNC_STATUS _synchronizeMegamol(void);
+		/**
+		 * @brief Waits a sec, returns either ISM_SYNC_TIMEOUT or ISM_SYNC_SYNCHRONIZING
+		 */
+		InSituMegamol::ISM_SYNC_STATUS _timeoutCheck(void) const;
+	
 		int _replyBufferSize;
 		int _syncTimeout;
 		std::vector<char> _replyBuffer;
@@ -218,11 +234,12 @@ private:
 	void _addMmpldHeader(float* bbox, float simTime);
 	void _addMmpldSeekTable(std::vector<char> seekTable);
 	void _addMmpldFrame(std::vector< std::vector<char> > dataLists);
-	std::string _writeMmpldBuffer(int rank);
+	std::string _writeMmpldBuffer(int rank, unsigned long simstep);
 
 	std::vector<char> _mmpldBuffer;
 	std::vector<char>::iterator _mmpldSize;
 	ZmqManager _zmqManager;
+	bool _isEnabled;
 };
 #else
 class InSituMegamol: public PluginBase {

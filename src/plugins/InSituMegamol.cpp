@@ -17,7 +17,11 @@
 using Log::global_log;
 
 #ifdef INSITU
-InSituMegamol::InSituMegamol(void) {
+
+#define BLOCK_POLICY_HANDSHAKE 0
+#define BLOCK_POLICY_UPDATE ZMQ_DONTWAIT
+
+InSituMegamol::InSituMegamol(void) : _isEnabled(false) {
 	constexpr bool uint64_tIsSize_t = std::is_same<uint64_t, size_t>::value;
 	mardyn_assert(uint64_tIsSize_t);
 }
@@ -28,7 +32,7 @@ void InSituMegamol::init(ParticleContainer* particleContainer,
 	_zmqManager.setReplyBufferSize(_replyBufferSize);
 	_zmqManager.setSyncTimeout(_syncTimeout);
 	_zmqManager.setModuleNames(domainDecomp->getRank());
-	_zmqManager.triggerChainModuleSetup();
+	_isEnabled = _zmqManager.performHandshake();
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
@@ -61,6 +65,10 @@ void InSituMegamol::beforeEventNewTimestep(
 void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {
 	if (!(simstep % _snapshotInterval)) {
+		if (!_isEnabled) {
+			global_log->info() << "    ISM: Disabled. Skipping InSitu plugin." << std::endl;
+			return;
+		}
 		//get bbox 
 		float bbox[6] {
 			0.0f, 0.0f, 0.0f,
@@ -83,7 +91,9 @@ void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		mardyn_assert(*reinterpret_cast<size_t*>(seekTable.data()) == _mmpldBuffer.size());
 		_addMmpldFrame(particleLists);
 		mardyn_assert(*reinterpret_cast<size_t*>(seekTable.data()+sizeof(size_t)) == _mmpldBuffer.size());
-		std::string fname = _writeMmpldBuffer(domainDecomp->getRank());
+		std::string fname = _writeMmpldBuffer(domainDecomp->getRank(), simstep);
+		// std::stringstream temp;
+		// temp << fname << "_" << simstep << std::endl;
 		_zmqManager.triggerUpdate(fname);
 	}
 }
@@ -157,7 +167,7 @@ void InSituMegamol::_addMmpldFrame(std::vector< std::vector<char> > particleList
 	}
 }
 
-std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particleContainer) { 
+std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particleContainer) {
 	// add list header
 	std::vector<char> dataList;
 	dataList.push_back(1); //vertex type
@@ -194,11 +204,12 @@ std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particle
 	return dataList;
 }
 
-std::string InSituMegamol::_writeMmpldBuffer(int rank) {
+std::string InSituMegamol::_writeMmpldBuffer(int rank, unsigned long simstep) {
 	// all data should be stored, fill in post-data-collection values
 	ofstream mmpldFile;
 	std::stringstream fname;
-	fname << "/dev/shm/part_rnk" << std::setfill('0') << std::setw(6) << rank << ".mmpld";
+	fname << "/dev/shm/part_rnkI" << std::setfill('0') << std::setw(6) << rank 
+			<< "_T" << std::setfill('0') << std::setw(7) << simstep << ".mmpld";
 	mmpldFile.open(fname.str(), std::ios::binary | std::ios::trunc);
 	mmpldFile.write(_mmpldBuffer.data(), _mmpldBuffer.size());
 	mmpldFile.close();
@@ -216,6 +227,7 @@ InSituMegamol::ZmqManager::ZmqManager(void)
 	int lingerTime=0;
 	zmq_setsockopt(_requester.get(), ZMQ_LINGER, &lingerTime, sizeof(int));
 	global_log->info() << "    ISM: Acquired ZmqManager resources." << std::endl;
+	global_log->info() << "    ISM: Using ZeroMQ version: " << getZmqVersion() << std::endl;
 }
 
 InSituMegamol::ZmqManager::~ZmqManager(void) {
@@ -224,18 +236,19 @@ InSituMegamol::ZmqManager::~ZmqManager(void) {
 	_context.reset();
 }
 
-InSituMegamol::ZmqManager::ZmqManager(ZmqManager const& rhs) 
+InSituMegamol::ZmqManager::ZmqManager(ZmqManager const& rhs)
 		: _context(zmq_ctx_new(), &zmq_ctx_destroy)
 		, _requester(zmq_socket(_context.get(), ZMQ_REQ), &zmq_close) 
 		, _publisher(zmq_socket(_context.get(), ZMQ_PUB), &zmq_close) {
 	
 }
 
-void InSituMegamol::ZmqManager::getZmqVersion(void) const {
-	global_log->info() << "    ISM: Using ZeroMQ version: " 
-	                   << ZMQ_VERSION_MAJOR << "."
-	                   << ZMQ_VERSION_MINOR << "."
-	                   << ZMQ_VERSION_PATCH << std::endl;
+std::string InSituMegamol::ZmqManager::getZmqVersion(void) const {
+	std::stringstream version;
+	version << ZMQ_VERSION_MAJOR << "."
+	        << ZMQ_VERSION_MINOR << "."
+	        << ZMQ_VERSION_PATCH;
+	return version.str();
 }
 
 void InSituMegamol::ZmqManager::setConnection(std::string connectionName) {
@@ -251,17 +264,16 @@ void InSituMegamol::ZmqManager::setModuleNames(int rank) {
 	_geoTag << "::geo" << std::setfill('0') << std::setw(6) << rank;
 }
 
-void InSituMegamol::ZmqManager::triggerChainModuleSetup(void) {
+bool InSituMegamol::ZmqManager::performHandshake(void) {
 	InSituMegamol::ISM_SYNC_STATUS ismStatus = ISM_SYNC_SYNCHRONIZING;
 	do {
 		// try to sync to Megamol. Abort either on error or after _syncTimeout sec.
-		ismStatus = synchronizeMegamol();
-		global_log->info() << "ismStatus: " << ismStatus << std::endl;
+		ismStatus = _synchronizeMegamol();
 		if (ismStatus == ISM_SYNC_TIMEOUT
 				|| ismStatus == ISM_SYNC_REPLY_BUFFER_OVERFLOW
 				|| ismStatus == ISM_SYNC_UNKNOWN_ERROR) {
 			global_log->info() << "    ISM: Megamol sync failed." << std::endl;
-			return;
+			return false;
 		}
 	} while (ismStatus != ISM_SYNC_SUCCESS);
 
@@ -274,27 +286,17 @@ void InSituMegamol::ZmqManager::triggerChainModuleSetup(void) {
 		<< "mmCreateCall(\"MultiParticleDataCall\", \"" << _geoTag.str() << "::getData\", \"" << _datTag.str() << "::getData\")\n"
 		<< "mmCreateCall(\"CallOSPRayMaterial\", \""<< _geoTag.str() <<"::getMaterialSlot\", " << "\"::mat::deployMaterialSlot\")\n"
 		<< "mmCreateChainCall(\"CallOSPRayStructure\", \"::rnd::getStructure\", \"" << _geoTag.str() << "::deployStructureSlot\")\n";
-	global_log->info() << "    ISM: Sending creation message\n" << msg.str() << std::endl;
-	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), 0);
-	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, 0);
-	// if (replySize > _replyBufferSize) {
-	// 	//some errror
-	// }
-	// else {
-	// 	reply.assign(_replyBuffer.data(), 0, replySize);
-	// 	if (replySize == -1 || replySize == 0) {
-	// 		global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
-	// 	}
-	// 	else {
-	// 		global_log->info() << "    ISM: ZMQ reply: " << replySize << std::endl;
-	// 	}
-	// }
+	global_log->info() << "    ISM: Sending creation message.\n" << std::endl;
+	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), BLOCK_POLICY_HANDSHAKE);
+	replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, BLOCK_POLICY_HANDSHAKE);
+	return true;
 }
 
-InSituMegamol::ISM_SYNC_STATUS InSituMegamol::ZmqManager::synchronizeMegamol(void) {
+InSituMegamol::ISM_SYNC_STATUS InSituMegamol::ZmqManager::_synchronizeMegamol(void) {
 	std::string msg("return mmListModules()");
 	std::string reply;
-	global_log->info() << "    ISM: Requesting module list" << std::endl;
+	std::stringstream statusStr("");
+	statusStr << "    ISM: Requesting module list...";
 	zmq_send(_requester.get(), msg.data(), msg.size(), ZMQ_DONTWAIT);
 	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
 	InSituMegamol::ISM_SYNC_STATUS currentStatus;
@@ -306,55 +308,79 @@ InSituMegamol::ISM_SYNC_STATUS InSituMegamol::ZmqManager::synchronizeMegamol(voi
 	}
 	if (replySize == -1) {
 		// No reply from Megamol yet, let's wait.
-		global_log->info() << "    ISM: Megamol not ready.("<< replySize <<")" << std::endl;
+		statusStr << "Megamol not ready.";
+		global_log->info() << statusStr.str() << std::endl;
 		currentStatus = InSituMegamol::ISM_SYNC_SYNCHRONIZING;
-		if ((_timeoutClock()) > _syncTimeout) {
-			// we waited long enough, consider the sync failed
-			return InSituMegamol::ISM_SYNC_TIMEOUT;
-		}
-		else {
-			return InSituMegamol::ISM_SYNC_SYNCHRONIZING;
-		}
+		return _timeoutCheck();
 	} 
 	if (replySize == 0) {
 		// Megamol replied, but does not seem ready yet, let's wait.
-		global_log->info() << "    ISM: ZMQ reply was empty.("<< replySize <<")" << std::endl;
-		if (_timeoutClock() > _syncTimeout) {
-			// we waited long enough, consider the sync failed
-			return InSituMegamol::ISM_SYNC_TIMEOUT;
-		}
-		else {
-			return InSituMegamol::ISM_SYNC_SYNCHRONIZING;
-		}
+		statusStr << "ZMQ reply was empty.";
+		global_log->info() << statusStr.str() << std::endl;
+		return _timeoutCheck();
 	}
 	if (replySize > 0 && replySize < _replyBufferSize) {
 		// Check Megamol's reply
 		reply.assign(_replyBuffer.data(), 0, replySize);
-		global_log->info() << "    ISM: ZMQ reply received." << std::endl;
+		statusStr << "ZMQ reply received (size: " << replySize << ").";
+		global_log->info() << statusStr.str() << std::endl;
 		if (reply.find("OSPRayRenderer") != std::string::npos) {
-			// Megamol seems ready. Confirm synchronization.
+			// Megamol seems ready. Confirm synchronization happened.
 			global_log->info() << "    ISM: Synchronized Megamol." << std::endl;
 			return InSituMegamol::ISM_SYNC_SUCCESS;
 		}
 		else {
  			// Megamol replied, but does not seem ready yet, let's wait.
-			if (_timeoutClock() > _syncTimeout) {
-				// we waited long enough, consider the sync failed
-				return InSituMegamol::ISM_SYNC_TIMEOUT;
-			}
-			else {
-				return InSituMegamol::ISM_SYNC_SYNCHRONIZING;
-			}
+			return _timeoutCheck();
 		}
 	}
 	return InSituMegamol::ISM_SYNC_UNKNOWN_ERROR;
+}
+
+InSituMegamol::ISM_SYNC_STATUS InSituMegamol::ZmqManager::_timeoutCheck(void) const {
+	static int iterationCounter = 0;
+	std::chrono::high_resolution_clock hrc;
+	auto again = hrc.now() + std::chrono::milliseconds(1000);
+	while (hrc.now() < again);
+	++iterationCounter;
+	// return iterationCounter > _syncTimeout;
+	if (iterationCounter > _syncTimeout) {
+		// we waited long enough, consider the sync failed
+		return InSituMegamol::ISM_SYNC_TIMEOUT;
+	}
+	else {
+		return InSituMegamol::ISM_SYNC_SYNCHRONIZING;
+	}
 }
 
 void InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
 	std::stringstream msg;
 	msg << "mmSetParamValue(\"" << _datTag.str() << "::filename\", \"" << fname << "\")";
 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), ZMQ_DONTWAIT);
-	zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
+	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, ZMQ_DONTWAIT);
+	std::stringstream statusStr;
+	if (replySize > _replyBufferSize) {
+		// This is an error. Return and handle outside. Should probably throw here.
+		global_log->info() << "    ISM: reply size exceeded buffer size." << std::endl;
+	}
+	if (replySize == -1) {
+		// No reply from Megamol yet, let's wait.
+		statusStr << "Megamol not ready (size: -1).";
+		global_log->info() << statusStr.str() << std::endl;
+	} 
+	if (replySize == 0) {
+		// Megamol replied, but does not seem ready yet, let's wait.
+		statusStr << "ZMQ reply was empty (size: 0).";
+		global_log->info() << statusStr.str() << std::endl;
+	}
+	if (replySize > 0 && replySize < _replyBufferSize) {
+		// Check Megamol's reply
+		std::string reply;
+		reply.assign(_replyBuffer.data(), 0, replySize);
+		statusStr << "ZMQ reply received (size: " << replySize << ").";
+		global_log->info() << statusStr.str() << std::endl;
+	}
+
 }
 
 #else
