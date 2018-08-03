@@ -25,8 +25,9 @@ void RedundancyResilience::init(ParticleContainer* particleContainer,
 								DomainDecompBase* domainDecomp,
 								Domain* domain) {
 	// instantiate the MPI communication object, and init it
-	_comm = std::unique_ptr<ResilienceComm>(new ResilienceComm(domainDecomp->getNumProcs(),
-	                                                           domainDecomp->getRank()));
+	_comm = std::unique_ptr<ResilienceComm>(
+			new ResilienceComm(domainDecomp->getNumProcs(),
+	                domainDecomp->getRank()));
 	// create a vector containing backup assignments (on root)
 	std::vector< int > allBackupIds = _determineBackups(domainDecomp);
 	// give each rank set of ids to backup (_backing) and tell each one which rank is backing it up (_backedBy)
@@ -88,15 +89,18 @@ void RedundancyResilience::endStep(ParticleContainer* particleContainer,
 	std::vector<int> backupDataSizes(_numberOfBackups);
 	std::vector<char> backupData;
 	_comm->exchangeSnapshotSizes(_backing,
-					    	     _backedBy,
-								 snapshotDataAsBytes.size(),
-						         backupDataSizes);
+			_backedBy,
+			snapshotDataAsBytes.size(),
+			backupDataSizes);
+	global_log->set_mpi_output_all();
 	_comm->exchangeSnapshots(_backing,
-					    	 _backedBy,
-						     backupDataSizes,
-						     snapshotDataAsBytes,
-						     backupData);
-	_storeSnapshots(backupDataSizes, backupData);	
+			_backedBy,
+			backupDataSizes,
+			snapshotDataAsBytes,
+			backupData);
+	global_log->set_mpi_output_root();
+	global_log->info() << "    RR: Snapshots exchanged " << simstep << std::endl;
+	_storeSnapshots(backupDataSizes, backupData);
 }
 
 void RedundancyResilience::_saveLocalSnapshot(ParticleContainer* particleContainer,
@@ -117,15 +121,21 @@ std::vector<char> RedundancyResilience::_serializeSnapshot(void) const {
 	auto const rank = _snapshot.getRank();
 	auto const currentTime = _snapshot.getCurrentTime();
 
-	size_t totalBytes = sizeof(rank)+sizeof(currentTime);
 	std::vector<char> byteData;
 	byteData.insert(byteData.end(), 
-	                reinterpret_cast<char const*>(&rank), 
-					reinterpret_cast<char const*>(&rank)+sizeof(rank));
+			reinterpret_cast<char const*>(&rank), 
+			reinterpret_cast<char const*>(&rank)+sizeof(rank));
+	mardyn_assert(byteData.size() == sizeof(rank));
 	byteData.insert(byteData.end(), 
-	                reinterpret_cast<char const*>(&currentTime), 
-					reinterpret_cast<char const*>(&currentTime)+sizeof(currentTime));
-	mardyn_assert(byteData.size() == totalBytes);
+	        reinterpret_cast<char const*>(&currentTime), 
+			reinterpret_cast<char const*>(&currentTime)+sizeof(currentTime));
+	mardyn_assert(byteData.size() == sizeof(rank)+sizeof(currentTime));
+	//append 0,...,rank as char to generate different sized data for each rank while encoding some info
+#warning serializing and deserializing is generating fake data
+	for (char fakeData = 0; fakeData<rank+1; ++fakeData) {
+		byteData.push_back(fakeData);
+	}
+	mardyn_assert(byteData.size() == sizeof(rank)+sizeof(currentTime)+static_cast<size_t>(rank)+1);
 	return byteData;
 }
 
@@ -141,7 +151,9 @@ void RedundancyResilience::_storeSnapshots(std::vector<int>& backupDataSizes, st
 		++snapshotSize;
 		_backupSnapshots.push_back(newSnapshot);
 	}
-	global_log->info() << "_backupSnapshots.size(): " << _backupSnapshots.size() << " numberOfBackups: " <<  static_cast<size_t>(_numberOfBackups) << std::endl;
+	// global_log->info() 
+	// 		<< "_backupSnapshots.size(): " << _backupSnapshots.size() 
+	// 		<< " numberOfBackups: " <<  static_cast<size_t>(_numberOfBackups) << std::endl;
 	mardyn_assert(_backupSnapshots.size() == static_cast<size_t>(_numberOfBackups));
 }
 
@@ -154,9 +166,24 @@ std::vector<char>::iterator RedundancyResilience::_deserializeSnapshot(std::vect
 	std::copy(valueStart, valueEnd, reinterpret_cast<char*>(&rank));
 	valueStart = valueEnd;
 	valueEnd = valueStart+sizeof(currentTime);
-	std::copy(snapshotStart, snapshotStart+sizeof(rank), reinterpret_cast<char*>(&rank));
+	std::copy(valueStart, valueEnd, reinterpret_cast<char*>(&currentTime));
+	valueStart = valueEnd;
+	valueEnd = snapshotEnd;
+	// deserialize the fake data, used for debug purposes
+	std::vector<char> fakeData(valueEnd - valueStart);
+	std::copy(valueStart, valueEnd, fakeData.begin());
+	_validateFakeData(fakeData);
 	mardyn_assert(valueEnd == snapshotEnd);
 	return snapshotEnd;
+}
+
+bool RedundancyResilience::_validateFakeData(std::vector<char>& fakeData) {
+	for (int ib=0; ib<_numberOfBackups; ++ib) {
+		mardyn_assert(fakeData.size() == static_cast<size_t>(_backing[ib]+1));
+		mardyn_assert(*fakeData.begin() == 0);
+		mardyn_assert(*(fakeData.end()-1) == _backing[ib]);
+	}
+	return true;
 }
 
 std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const* domainDecomp) {
@@ -170,7 +197,7 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 		for (int ib=0; ib<_numberOfBackups; ++ib) {
 			for (int rank=0; rank<numRanks; ++rank) {
 				// determine which node backs up what by some clever scheme 
-				// (here: stupid scheme which simply selects ranks {n+i | i=1,...,numberOfBackups} for rank n)
+				// (here: stupid scheme which simply selects ranks {n+i | i=1,...,numberOfBackups} for backing rank n)
 				int newBackup = rank+ib+1;
 				if (newBackup >= numRanks) newBackup=newBackup%numRanks;
 				mardyn_assert(newBackup < numRanks);

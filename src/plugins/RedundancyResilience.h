@@ -209,7 +209,11 @@ private:
 	std::vector<char>::iterator _deserializeSnapshot(std::vector<char>::iterator snapshotStart,
                                                      std::vector<char>::iterator snapshotEnd,
 													 Snapshot& snapshot);
-
+	/**
+	 * @brief Validate the fake data to be correct for debugging
+	 */
+	bool _validateFakeData(std::vector<char>& fakeData);
+	
 	std::unique_ptr<ResilienceComm> _comm;       ///< store the communication handling object
 	std::vector<int> _backing;                   ///< contains the rank ids this rank does redundancy backups for
 	std::vector<int> _backedBy;                  ///< contains the ranks of processes which create backups for this rank
