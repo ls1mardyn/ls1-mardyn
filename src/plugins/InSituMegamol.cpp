@@ -396,7 +396,6 @@ bool InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
 int InSituMegamol::ZmqManager::_send(std::string msg, int blockPolicy) {
 	int status;
 	global_log->info() << "    ISM: _sendCount: " << _sendCount << std::endl;
-	// empty the queue...
 	while (_sendCount > 0) {
 		status = _recv(blockPolicy);
 		if (status == -1 && errno != EAGAIN) {
