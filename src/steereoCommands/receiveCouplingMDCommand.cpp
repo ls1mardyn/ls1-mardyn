@@ -193,7 +193,7 @@ double ReceiveCouplingMDCommand::getPotentialEnergyAndForce (Molecule* victim)
 {
 	Simulation* theSim = (Simulation*) this->getData();
 	//Domain* domain = (Domain*) theSim->getDomain();
-	ParticleContainer* molecules = theSim->getMolecules();
+	ParticleContainer* molecules = theSim->getMoleculeContainer();
 	double potEnergy = molecules->getEnergy(victim);
 	victim->calcFM();
 	return potEnergy;

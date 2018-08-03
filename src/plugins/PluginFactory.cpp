@@ -25,6 +25,7 @@
 #include "io/HaloParticleWriter.h"
 #include "io/LoadBalanceWriter.h"
 #include "io/MPICheckpointWriter.h"
+#include "io/MaxWriter.h"
 #include "io/MmpldWriter.h"
 #include "io/MmspdBinWriter.h"
 #include "io/MmspdWriter.h"
@@ -34,19 +35,19 @@
 #include "io/SysMonOutput.h"
 #include "io/VISWriter.h"
 #include "io/XyzWriter.h"
-#include "io/MaxWriter.h"
 
 // General plugins
 #include "plugins/COMaligner.h"
-#include "plugins/Mirror.h"
-#include "plugins/MaxCheck.h"
-#include "plugins/WallPotential.h"
 #include "plugins/ExamplePlugin.h"
-#include "plugins/TestPlugin.h"
 #include "plugins/InMemoryCheckpointing.h"
 #include "plugins/InSituMegamol.h"
-#include "plugins/RedundancyResilience.h"
+#include "plugins/MaxCheck.h"
+#include "plugins/Mirror.h"
 #include "plugins/NEMD/RegionSampling.h"
+#include "plugins/RedundancyResilience.h"
+#include "plugins/TestPlugin.h"
+#include "plugins/VectorizationTuner.h"
+#include "plugins/WallPotential.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -61,37 +62,38 @@ template<>
 void PluginFactory<PluginBase>::registerDefaultPlugins(){
     global_log -> debug() << "REGISTERING PLUGINS" << endl;
 
+    REGISTER_PLUGIN(COMaligner);
     REGISTER_PLUGIN(CavityWriter);
     REGISTER_PLUGIN(CheckpointWriter);
     REGISTER_PLUGIN(CommunicationPartnerWriter);
     REGISTER_PLUGIN(DecompWriter);
     REGISTER_PLUGIN(DensityProfileWriter);
     REGISTER_PLUGIN(EnergyLogWriter);
+    REGISTER_PLUGIN(ExamplePlugin);
     REGISTER_PLUGIN(FlopRateWriter);
     REGISTER_PLUGIN(GammaWriter);
     REGISTER_PLUGIN(HaloParticleWriter);
+    REGISTER_PLUGIN(InMemoryCheckpointing);
+    REGISTER_PLUGIN(InSituMegamol);
     REGISTER_PLUGIN(LoadbalanceWriter);
     REGISTER_PLUGIN(MPICheckpointWriter);
+    REGISTER_PLUGIN(MaxCheck);
+    REGISTER_PLUGIN(MaxWriter);
+    REGISTER_PLUGIN(Mirror);
     REGISTER_PLUGIN(MmpldWriter);
     REGISTER_PLUGIN(MmspdBinWriter);
     REGISTER_PLUGIN(MmspdWriter);
     REGISTER_PLUGIN(PovWriter);
     REGISTER_PLUGIN(RDF);
+    REGISTER_PLUGIN(RedundancyResilience);
+    REGISTER_PLUGIN(RegionSampling);
     REGISTER_PLUGIN(ResultWriter);
     REGISTER_PLUGIN(SysMonOutput);
-    REGISTER_PLUGIN(VISWriter);
-    REGISTER_PLUGIN(XyzWriter);
-    REGISTER_PLUGIN(MaxWriter);
-    REGISTER_PLUGIN(COMaligner);
-    REGISTER_PLUGIN(Mirror);
-    REGISTER_PLUGIN(MaxCheck);
-    REGISTER_PLUGIN(WallPotential);
-    REGISTER_PLUGIN(ExamplePlugin);
     REGISTER_PLUGIN(TestPlugin);
-    REGISTER_PLUGIN(InMemoryCheckpointing);
-    REGISTER_PLUGIN(RedundancyResilience);
-    REGISTER_PLUGIN(InSituMegamol);
-    REGISTER_PLUGIN(RegionSampling);
+    REGISTER_PLUGIN(VectorizationTuner);
+    REGISTER_PLUGIN(VISWriter);
+    REGISTER_PLUGIN(WallPotential);
+    REGISTER_PLUGIN(XyzWriter);
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
     REGISTER_PLUGIN(VTKGridWriter);
@@ -145,10 +147,6 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
                 global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << endl;
                 Simulation::exit(-1);
             }
-        }
-            // temporary
-        else if(pluginname == "VectorizationTuner") {
-            //plugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
         }
         else if(pluginname == "DomainProfiles") {
             plugin = this->create("DensityProfileWriter");

@@ -12,8 +12,8 @@ enum MoleculeCntIncreaseTypeEnum{
 #include <vector>
 #include <string>
 
-#include "CellProcessor.h"
-#include "FlopCounter.h"
+#include "particleContainer/adapter/CellProcessor.h"
+#include "particleContainer/adapter/FlopCounter.h"
 #include "plugins/PluginBase.h"
 #include "ensemble/EnsembleBase.h"
 #include "parallel/LoadCalc.h"
@@ -38,7 +38,7 @@ public:
 	 * @param LJCutoffRadius
 	 * @param cellProcessor pointer to the pointer of the cellProcessor. This is needed, since the cell processor is not yet set, when this function is called.
 	 */
-	VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor);
+    VectorizationTuner();
 
 	/**
 	 * destructor of the VectorizationTuner class.
@@ -47,7 +47,7 @@ public:
 
 	//documentation in PluginBase
 	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain) override {}
+              DomainDecompBase *domainDecomp, Domain *domain) override;
 
 	/** @brief Read in XML configuration for the VectorizationTuner.
 	 *
@@ -64,6 +64,10 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
+  static PluginBase* createInstance() {
+	  return new VectorizationTuner();
+  }
+
 	//documentation in PluginBase, does nothing.
 	void endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
                  Domain * /*domain*/, unsigned long /*simstep*/) override {}
@@ -77,7 +81,7 @@ public:
 		return std::string("VectorizationTuner");
 	}
 
-	/*
+	/**
 	 * used in the KDDecomposition to fill the TunerTimes object
 	 *
 	 * particleNums stores the number of particles until which the tuner should measure the values
@@ -103,7 +107,7 @@ private:
 	MoleculeCntIncreaseTypeEnum _moleculeCntIncreaseType;
 
 	/// The CellProcessor, that should be used to iterate over the cells.
-	CellProcessor** _cellProcessor;
+	CellProcessor* _cellProcessor;
 
 	/// The cutoff radius
 	double _cutoffRadius;

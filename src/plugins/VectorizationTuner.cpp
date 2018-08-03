@@ -13,7 +13,7 @@
 #include "molecules/Component.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleCell.h"
-#include "CellDataSoA.h"
+#include "particleContainer/adapter/CellDataSoA.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
@@ -29,9 +29,9 @@
 //preprocessing macros
 //#define MASKING
 
-VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
+VectorizationTuner::VectorizationTuner() :
 	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
-	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _numRepetitionsMax(4000000) , _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL) {
+	_cellProcessor(nullptr), _cutoffRadius(0), _LJCutoffRadius(0), _numRepetitionsMax(4000000) , _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL) {
 	vtWriter = std::unique_ptr<VTWriterI>(new VTWriter());
 }
 
@@ -161,7 +161,7 @@ void VectorizationTuner::iterateOwn(long long int numRepetitions,
 	runOwn(flopCounter, cell, 1);
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
-	runOwn(**_cellProcessor, cell, numRepetitions);
+	runOwn(*_cellProcessor, cell, numRepetitions);
 	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
@@ -180,7 +180,7 @@ void VectorizationTuner::iterateOwn (long long int numRepetitions,
 	runOwn(flopCounter, cell, 1);
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
-	runOwn(**_cellProcessor, cell, numRepetitions);
+	runOwn(*_cellProcessor, cell, numRepetitions);
 	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
@@ -198,7 +198,7 @@ void VectorizationTuner::iteratePair (long long int numRepetitions,
 	runPair(flopCounter, firstCell, secondCell, 1);
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
-	runPair(**_cellProcessor, firstCell, secondCell, numRepetitions);
+	runPair(*_cellProcessor, firstCell, secondCell, numRepetitions);
 	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
@@ -303,10 +303,10 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 
 		FlopCounter counter = FlopCounter {1, 1};
 
-		const double restoreCutoff = (**_cellProcessor).getCutoffRadiusSquare();
-		const double restoreLJCutoff = (**_cellProcessor).getLJCutoffRadiusSquare();
-		(**_cellProcessor).setCutoffRadius(1.);
-		(**_cellProcessor).setLJCutoffRadius(1.);
+		const double restoreCutoff = _cellProcessor->getCutoffRadiusSquare();
+		const double restoreLJCutoff = _cellProcessor->getLJCutoffRadiusSquare();
+		_cellProcessor->setCutoffRadius(1.);
+		_cellProcessor->setLJCutoffRadius(1.);
 		std::vector<double> ownValues;
 		std::vector<double> faceValues;
 		std::vector<double> edgeValues;
@@ -377,8 +377,8 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 			writeFile(times);
 		}
 
-		(**_cellProcessor).setCutoffRadiusSquare(restoreCutoff);
-		(**_cellProcessor).setLJCutoffRadiusSquare(restoreLJCutoff);
+		_cellProcessor->setCutoffRadiusSquare(restoreCutoff);
+		_cellProcessor->setLJCutoffRadiusSquare(restoreLJCutoff);
 		global_log->info() << "finished tuning" << std::endl;
 
 		// restore the _cellBorderAndFlagManager to its original value.
@@ -392,7 +392,7 @@ void VectorizationTuner::iteratePair(long long int numRepetitions, ParticleCell&
 	runPair(flopCounter, firstCell, secondCell, 1);
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
-	runPair(**_cellProcessor, firstCell, secondCell, numRepetitions);
+	runPair(*_cellProcessor, firstCell, secondCell, numRepetitions);
 	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
@@ -410,8 +410,8 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 		double& gflopsPairBig, double& /*gflopsOwnNormal*/, double& /*gflopsPairNormalFace*/, double& /*gflopsPairNormalEdge*/,
 		double& /*gflopsPairNormalCorner*/, double& gflopsOwnZero, double& gflopsPairZero) {
 
-	const double restoreCutoff = (**_cellProcessor).getCutoffRadiusSquare();
-	const double restoreLJCutoff = (**_cellProcessor).getLJCutoffRadiusSquare();
+	const double restoreCutoff = _cellProcessor->getCutoffRadiusSquare();
+	const double restoreLJCutoff = _cellProcessor->getLJCutoffRadiusSquare();
 
 	// get (first) component
 	Component& comp = ComponentList[0];
@@ -468,13 +468,13 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 
 
 	//0a,0b: 0RC
-		(**_cellProcessor).setCutoffRadius(0.);
-		(**_cellProcessor).setLJCutoffRadius(0.);
+		_cellProcessor->setCutoffRadius(0.);
+		_cellProcessor->setLJCutoffRadius(0.);
 		iterateOwn(numRepetitions, firstCell, gflopsOwnZero, *_flopCounterZeroRc);
 		iteratePair(numRepetitions, firstCell, secondCell, gflopsPairZero, *_flopCounterZeroRc);
     //1+2: bigRC
-	(**_cellProcessor).setCutoffRadius(_cutoffRadiusBig);
-	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadiusBig);
+	_cellProcessor->setCutoffRadius(_cutoffRadiusBig);
+	_cellProcessor->setLJCutoffRadius(_LJCutoffRadiusBig);
     //1. own, bigRC
 		iterateOwn(numRepetitions, firstCell, gflopsOwnBig, *_flopCounterBigRc);
 	//2. pair, bigRC
@@ -482,8 +482,8 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 #if 0
 		TODO: redo these with mesh of molecules
 	//3,...: normalRC
-	(**_cellProcessor).setCutoffRadius(_cutoffRadius);
-	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadius);
+	_cellProcessor->setCutoffRadius(_cutoffRadius);
+	_cellProcessor->setLJCutoffRadius(_LJCutoffRadius);
 	//3. own, normalRC
 		iterateOwn(numRepetitions, firstCell, gflopsOwnNormal, *_flopCounterNormalRc);
 	//4. pair, normalRC face
@@ -500,8 +500,8 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	clearMolecules(firstCell);
 	clearMolecules(secondCell);
 
-	(**_cellProcessor).setCutoffRadiusSquare(restoreCutoff);
-	(**_cellProcessor).setLJCutoffRadiusSquare(restoreLJCutoff);
+	_cellProcessor->setCutoffRadiusSquare(restoreCutoff);
+	_cellProcessor->setLJCutoffRadiusSquare(restoreLJCutoff);
 
 }
 
@@ -760,6 +760,12 @@ void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
 		mol.move(2, direction[2]);
 		//global_log->info() << mol->r(0) << " " << mol->r(1) << " " << mol->r(2) << std::endl;
 	}
+}
+
+void VectorizationTuner::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
+	_cutoffRadius = global_simulation->getcutoffRadius();
+	_cellProcessor = global_simulation->getCellProcessor();
+	_LJCutoffRadius = global_simulation->getLJCutoff();
 }
 
 void VectorizationTuner::VTWriter::initWrite(const std::string& outputPrefix, double cutoffRadius,

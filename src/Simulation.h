@@ -222,7 +222,7 @@ public:
 	Integrator* getIntegrator() {return _integrator; }
 
 	/** Get pointer to the molecule container */
-	ParticleContainer* getMolecules() { return _moleculeContainer; }
+	ParticleContainer* getMoleculeContainer() { return _moleculeContainer; }
 	
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
@@ -449,7 +449,8 @@ public:
 		return &_mcav;
 	}
 
-private:
+  CellProcessor *getCellProcessor() const;
+ private:
 
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;

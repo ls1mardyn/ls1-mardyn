@@ -21,7 +21,7 @@
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "parallel/HaloRegion.h"
 #include "WrapOpenMP.h"
-#include "particleContainer/adapter/VectorizationTuner.h"
+#include "plugins/VectorizationTuner.h"
 
 #include "ParticleData.h"
 #include "KDNode.h"
@@ -464,7 +464,8 @@ void KDDecomposition::fillTimeVecs(CellProcessor **cellProc){
 		Simulation::exit(1);
 	}
 	if(dynamic_cast<TunerLoad*>(_loadCalc) != nullptr){
-		VectorizationTuner tuner {1, 1, cellProc};
+		VectorizationTuner tuner;
+		tuner.init(global_simulation->getMoleculeContainer(), &global_simulation->domainDecomposition(), global_simulation->getDomain());
 		mardyn_assert(cellProc && (*cellProc));
 		tuner.tune(*(_simulation.getEnsemble()->getComponents()), *static_cast<TunerLoad*>(_loadCalc), _vecTunParticleNums, _generateNewFiles, _useExistingFiles);
 	}

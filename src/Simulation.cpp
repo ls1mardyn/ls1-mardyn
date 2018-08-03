@@ -70,7 +70,7 @@
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
 
-#include "particleContainer/adapter/VectorizationTuner.h"
+#include "plugins/VectorizationTuner.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -1358,5 +1358,9 @@ PluginBase* Simulation::getPlugin(const std::string& name)  {
 
 unsigned long Simulation::getNumberOfTimesteps() const {
 	return _numberOfTimesteps;
+}
+
+CellProcessor *Simulation::getCellProcessor() const {
+	return _cellProcessor;
 }
 

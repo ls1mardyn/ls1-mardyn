@@ -81,7 +81,7 @@ ReturnType SendCouplingMDCommand::executeProcessing()
 	logger->debug() << "starting SendCouplingMDCommand::executeProcessing" << std::endl;
 	CouplingInformationType* couplingInfo = (CouplingInformationType*) this->getData(0);
 	Simulation* theSim = (Simulation*) this->getData(1);
-	ParticleContainer* moleculeContainer = theSim->getMolecules();
+	ParticleContainer* moleculeContainer = theSim->getMoleculeContainer();
 
 	if (transferContainer == NULL)
 	{
