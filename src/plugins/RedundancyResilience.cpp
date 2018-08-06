@@ -88,11 +88,16 @@ void RedundancyResilience::endStep(ParticleContainer* particleContainer,
 	std::vector<char> snapshotDataAsBytes = _serializeSnapshot();
 	std::vector<int> backupDataSizes(_numberOfBackups);
 	std::vector<char> backupData;
+	global_log->set_mpi_output_all();
 	_comm->exchangeSnapshotSizes(_backing,
 			_backedBy,
 			snapshotDataAsBytes.size(),
 			backupDataSizes);
-	global_log->set_mpi_output_all();
+	std::stringstream szStr;
+	for (auto const sz : backupDataSizes) {
+		szStr << sz << ", ";
+	}	
+	global_log->info() << szStr.str() << std::endl;
 	_comm->exchangeSnapshots(_backing,
 			_backedBy,
 			backupDataSizes,
@@ -140,30 +145,28 @@ std::vector<char> RedundancyResilience::_serializeSnapshot(void) const {
 }
 
 void RedundancyResilience::_storeSnapshots(std::vector<int>& backupDataSizes, std::vector<char>& backupData) {
-	auto snapshotStart = backupData.begin();
-	auto snapshotSize = backupDataSizes.begin();
+	auto snapshotStartIt = backupData.begin();
+	auto snapshotSizeIt = backupDataSizes.begin();
 	_backupSnapshots.clear();
-	while (snapshotStart != backupData.end()) {
+	while (snapshotStartIt != backupData.end()) {
 		Snapshot newSnapshot;
-		assert(snapshotSize != backupDataSizes.end());
-		auto snapshotEnd = snapshotStart+*snapshotSize;
-		snapshotStart = _deserializeSnapshot(snapshotStart, snapshotEnd, newSnapshot);
-		++snapshotSize;
+		assert(snapshotSizeIt != backupDataSizes.end());
+		auto snapshotEndIt = snapshotStartIt+*snapshotSizeIt;
+		snapshotStartIt = _deserializeSnapshot(snapshotStartIt, snapshotEndIt, newSnapshot);
+		++snapshotSizeIt;
 		_backupSnapshots.push_back(newSnapshot);
 	}
-	// global_log->info() 
-	// 		<< "_backupSnapshots.size(): " << _backupSnapshots.size() 
-	// 		<< " numberOfBackups: " <<  static_cast<size_t>(_numberOfBackups) << std::endl;
 	mardyn_assert(_backupSnapshots.size() == static_cast<size_t>(_numberOfBackups));
 }
 
-std::vector<char>::iterator RedundancyResilience::_deserializeSnapshot(std::vector<char>::iterator snapshotStart,
-        std::vector<char>::iterator snapshotEnd, Snapshot& snapshot) {
+std::vector<char>::iterator RedundancyResilience::_deserializeSnapshot(std::vector<char>::iterator const snapshotStart,
+        std::vector<char>::iterator const snapshotEnd, Snapshot& newSnapshot) {
 	int rank;
 	double currentTime;
 	auto valueStart = snapshotStart;
 	auto valueEnd = snapshotStart+sizeof(rank);
 	std::copy(valueStart, valueEnd, reinterpret_cast<char*>(&rank));
+	newSnapshot.setRank(rank);
 	valueStart = valueEnd;
 	valueEnd = valueStart+sizeof(currentTime);
 	std::copy(valueStart, valueEnd, reinterpret_cast<char*>(&currentTime));
@@ -172,16 +175,18 @@ std::vector<char>::iterator RedundancyResilience::_deserializeSnapshot(std::vect
 	// deserialize the fake data, used for debug purposes
 	std::vector<char> fakeData(valueEnd - valueStart);
 	std::copy(valueStart, valueEnd, fakeData.begin());
-	_validateFakeData(fakeData);
+	_validateFakeData(rank, fakeData);
 	mardyn_assert(valueEnd == snapshotEnd);
 	return snapshotEnd;
 }
 
-bool RedundancyResilience::_validateFakeData(std::vector<char>& fakeData) {
-	for (int ib=0; ib<_numberOfBackups; ++ib) {
-		mardyn_assert(fakeData.size() == static_cast<size_t>(_backing[ib]+1));
-		mardyn_assert(*fakeData.begin() == 0);
-		mardyn_assert(*(fakeData.end()-1) == _backing[ib]);
+bool RedundancyResilience::_validateFakeData(int const rank, std::vector<char>& fakeData) {
+	mardyn_assert(fakeData.size() == static_cast<size_t>(rank+1));
+	mardyn_assert(*fakeData.begin() == 0);
+	mardyn_assert(*(fakeData.end()-1) == rank);
+	int i=0;
+	for (auto fDit=fakeData.begin(); fDit!=fakeData.end(); ++fDit, ++i) {
+		mardyn_assert(*fDit == i);
 	}
 	return true;
 }
@@ -210,6 +215,14 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 		}
 		mardyn_assert(backupInfo.size() == static_cast<unsigned int>(2*numRanks*_numberOfBackups));
 	}
+
+	// std::stringstream bkinf;
+	// bkinf << "    RR: backupInfo: \n";
+	// for (auto const& rnk : backupInfo) {
+	// 	bkinf << rnk << ", ";
+	// }
+	// global_log->info() << bkinf.str() << std::endl;
+
 	return backupInfo;
 }
 #endif /*ENABLE_MPI */

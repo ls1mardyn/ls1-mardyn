@@ -59,17 +59,17 @@
     </algorithm>
 
     <output>
-
+<!-- 
       <outputplugin name="SysMonOutput">
         <expression>procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
         <expression>procselfstatm:size 1048576. /</expression>
         <writefrequency>100</writefrequency>
-      </outputplugin>
+      </outputplugin> -->
 
 			<outputplugin name="RedundancyResilience">
 				<backupInterval>10</backupInterval>
-        <numberOfBackups>1</numberOfBackups>
+        <numberOfBackups>2</numberOfBackups>
 			</outputplugin>
     </output>
   </simulation>

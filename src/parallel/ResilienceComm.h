@@ -89,8 +89,6 @@ public:
 			std::vector<char>& recvData
 	);
 private:
-	std::vector<MPI_Request> _exchangeSizesRequests;
-	std::vector<MPI_Request> _exchangeSnapshotsRequests;
 	int const _numProcs;
 	int const _rank;
 };

@@ -59,7 +59,7 @@
     </algorithm>
 
     <output>
-      <outputplugin name="MmpldWriter" type="simple">
+      <!-- <outputplugin name="MmpldWriter" type="simple">
         <include query="/spheres">sphereparams_1clj.xml</include>
         <writecontrol>
           <start>0</start>
@@ -68,7 +68,7 @@
           <framesperfile>0</framesperfile>
         </writecontrol>
         <outputprefix>megamol</outputprefix>
-      </outputplugin>
+      </outputplugin> -->
       
 			<outputplugin name="InSituMegamol">
         <snapshotInterval>20</snapshotInterval>
