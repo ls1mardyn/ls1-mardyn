@@ -22,6 +22,7 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include <map>
 
 class Snapshot;
 
@@ -222,6 +223,7 @@ private:
 	Snapshot _snapshot; // make an std::vector eventually
 	unsigned long _backupInterval;
 	int _numberOfBackups;                        // number of ranks to backup
+	int _sizePerRank;
 };
 
 #else /* ENABLE_MPI */

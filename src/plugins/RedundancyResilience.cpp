@@ -28,10 +28,12 @@ void RedundancyResilience::init(ParticleContainer* particleContainer,
 	_comm = std::unique_ptr<ResilienceComm>(
 			new ResilienceComm(domainDecomp->getNumProcs(),
 	                domainDecomp->getRank()));
+	// size per backup entry
+	_sizePerRank = 4;
 	// create a vector containing backup assignments (on root)
 	std::vector< int > allBackupIds = _determineBackups(domainDecomp);
 	// give each rank set of ids to backup (_backing) and tell each one which rank is backing it up (_backedBy)
-	_comm->scatterBackupInfo(allBackupIds, _backing, _backedBy, _numberOfBackups);
+	_comm->scatterBackupInfo(allBackupIds, _backing, _backedBy, _numberOfBackups, _sizePerRank);
 }
 
 void RedundancyResilience::readXML(XMLfileUnits& xmlconfig) {
@@ -197,8 +199,9 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 	if (domainDecomp->getRank() == 0) {
 		global_log->info() << "    RR: Determining new backup rank distribution. " << std::endl;
 		int const numRanks = domainDecomp->getNumProcs();
-		backupInfo.resize(2*numRanks*_numberOfBackups);
-		// ib denotes the i-th backup
+		backupInfo.resize(_sizePerRank*numRanks*_numberOfBackups);
+		// generate the pairs rank->backed up rank. Also fill out the reverse.
+		// and the tag for both
 		for (int ib=0; ib<_numberOfBackups; ++ib) {
 			for (int rank=0; rank<numRanks; ++rank) {
 				// determine which node backs up what by some clever scheme 
@@ -207,13 +210,13 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 				if (newBackup >= numRanks) newBackup=newBackup%numRanks;
 				mardyn_assert(newBackup < numRanks);
 				// => newBackup will be backed up by rank
-				int const backupIdx = rank*_numberOfBackups*2+ib;
-				int const backedByIdx = newBackup*_numberOfBackups*2+_numberOfBackups+ib;
+				int const backupIdx =        rank*_numberOfBackups*_sizePerRank + 0*_numberOfBackups + ib;
+				int const backedByIdx = newBackup*_numberOfBackups*_sizePerRank + 1*_numberOfBackups + ib;
 				backupInfo[backupIdx] = newBackup;
 				backupInfo[backedByIdx] = rank;
 			}
 		}
-		mardyn_assert(backupInfo.size() == static_cast<unsigned int>(2*numRanks*_numberOfBackups));
+		mardyn_assert(backupInfo.size() == static_cast<unsigned int>(_sizePerRank*numRanks*_numberOfBackups));
 	}
 
 	// std::stringstream bkinf;

@@ -30,6 +30,7 @@
  * due to CHAR conversion.
  *
  */
+#define RR_INTS_PER_RANK 4
 class ResilienceComm {
 
 public:
@@ -51,7 +52,8 @@ public:
 			std::vector<int>& backupInfo, 
 	        std::vector<int>& backing, 
 	        std::vector<int>& backedBy, 
-			int const numberOfBackups
+			int const numberOfBackups,
+			size_t const sizePerRank
 	);
 	/**
 	 * Send snapshot size from caller to ranks backing it.

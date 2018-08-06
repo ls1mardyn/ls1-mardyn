@@ -33,8 +33,9 @@ ResilienceComm::~ResilienceComm() {
 int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo, 
 	                      std::vector<int>& backing, 
 	                      std::vector<int>& backedBy, 
-						  int const numberOfBackups) {
-	size_t totalBytesRecv = 2*numberOfBackups*sizeof(int);
+						  int const numberOfBackups,
+						  size_t const sizePerRank) {
+	size_t totalBytesRecv = sizePerRank*numberOfBackups*sizeof(int);
 	std::vector<char> recvArray(totalBytesRecv);
 	if (_rank == 0) {
 		std::stringstream bkinf;
@@ -43,7 +44,7 @@ int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo,
 			bkinf << rnk << ", ";
 		}
 		global_log->info() << bkinf.str() << std::endl;
-		mardyn_assert(static_cast<uint>(2*numberOfBackups*_numProcs) == backupInfo.size());
+		mardyn_assert(static_cast<uint>(sizePerRank*numberOfBackups*_numProcs) == backupInfo.size());
 	}
 	else {
 		mardyn_assert(backupInfo.empty());
@@ -62,8 +63,8 @@ int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo,
 	backedBy.resize(numberOfBackups);
 	auto backingAsChar = reinterpret_cast<char*>(backing.data());
 	auto backedByAsChar = reinterpret_cast<char*>(backedBy.data());
-	std::copy(recvArray.begin(), recvArray.begin()+totalBytesRecv/2, backingAsChar);
-	std::copy(recvArray.begin()+totalBytesRecv/2, recvArray.end(), backedByAsChar);
+	std::copy(recvArray.begin(),                  recvArray.begin()+  totalBytesRecv/4, backingAsChar);
+	std::copy(recvArray.begin()+totalBytesRecv/4, recvArray.begin()+  totalBytesRecv/2, backedByAsChar);
 	// global_log->info() << "    RR: Dumping scattered backup info: " << std::endl;
 	// global_log->set_mpi_output_all();
 	// std::stringstream bckd, bckBy;
