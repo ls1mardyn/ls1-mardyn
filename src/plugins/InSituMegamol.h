@@ -33,6 +33,7 @@ class Snapshot;
 typedef void ZmqContext;
 typedef void ZmqRequest;
 typedef void ZmqPublish;
+typedef std::vector<std::string> RingBuffer;
 
 class InSituMegamol: public PluginBase {
 	/**
@@ -233,8 +234,12 @@ private:
 	// XML settings
 	int _snapshotInterval;
 	int _replyBufferSize;
+	int _ringBufferSize;
 	int _syncTimeout;
 	std::string _connectionName;
+
+	//other setup functions
+	void _createFnameRingBuffer(int const rank, int const size);
 
 	//gather data
 	std::vector<char> _generateMmpldSeekTable(std::vector< std::vector<char> >& dataLists);
@@ -242,6 +247,7 @@ private:
 
 	// serialize all
 	void _resetMmpldBuffer(void);
+	std::string _getNextFname(void);
 	void _addMmpldHeader(float* bbox, float simTime);
 	void _addMmpldSeekTable(std::vector<char> seekTable);
 	void _addMmpldFrame(std::vector< std::vector<char> > dataLists);
@@ -249,6 +255,7 @@ private:
 
 	std::vector<char> _mmpldBuffer;
 	std::vector<char>::iterator _mmpldSize;
+	RingBuffer _fnameRingBuffer;
 	ZmqManager _zmqManager;
 	bool _isEnabled;
 };

@@ -33,6 +33,7 @@ void InSituMegamol::init(ParticleContainer* particleContainer,
 	_zmqManager.setSyncTimeout(_syncTimeout);
 	_zmqManager.setModuleNames(domainDecomp->getRank());
 	_isEnabled = _zmqManager.performHandshake();
+	_createFnameRingBuffer(domainDecomp->getRank(), 5);
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
@@ -54,6 +55,10 @@ void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("syncTimeout", _syncTimeout);
 	global_log->info() << "    ISM: Synchronization timeout (s): "
 	        << _syncTimeout << std::endl;
+	_ringBufferSize = 5;
+	xmlconfig.getNodeValue("ringBufferSize", _ringBufferSize);
+	global_log->info() << "    ISM: Ring buffer size: "
+	        << _ringBufferSize << std::endl;
 }
 
 ///reset the particle container with a saved snapshot
@@ -207,15 +212,36 @@ std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particle
 std::string InSituMegamol::_writeMmpldBuffer(int rank, unsigned long simstep) {
 	// all data should be stored, fill in post-data-collection values
 	ofstream mmpldFile;
-	std::stringstream fname;
-	fname << "/dev/shm/part_rnkI" << std::setfill('0') << std::setw(6) << rank 
-			<< "_T" << std::setfill('0') << std::setw(7) << simstep << ".mmpld";
-	mmpldFile.open(fname.str(), std::ios::binary | std::ios::trunc);
+	// std::stringstream fname;
+	// fname << "/dev/shm/part_rnkI" << std::setfill('0') << std::setw(6) << rank 
+	// 		<< "_T" << std::setfill('0') << std::setw(7) << simstep << ".mmpld";
+	std::string fname(_getNextFname());
+	mmpldFile.open(fname, std::ios::binary | std::ios::trunc);
 	mmpldFile.write(_mmpldBuffer.data(), _mmpldBuffer.size());
 	mmpldFile.close();
 	global_log->info() << "    ISM: Shared memory file written." << std::endl;
-	return fname.str();
+	return fname;
 }
+
+void InSituMegamol::_createFnameRingBuffer(int const rank, int const size) {
+	std::stringstream fname;
+	for (size_t i=0; i<5; ++i) {
+		fname << "/dev/shm/part_rnk" << std::setfill('0') << std::setw(6) << rank 
+				<< "_buf" << std::setfill('0') << std::setw(2) << i << ".mmpld";
+		_fnameRingBuffer.push_back(fname.str());
+		fname.str("");
+	}
+}
+
+std::string InSituMegamol::_getNextFname(void) {
+	static RingBuffer::iterator nextFname = _fnameRingBuffer.begin();
+	auto temp = nextFname;
+	if (++nextFname == _fnameRingBuffer.end()) {
+		nextFname = _fnameRingBuffer.begin();
+	}
+	return *temp;
+}
+
 
 InSituMegamol::ZmqManager::ZmqManager(void) 
 		: _sendCount(0)
@@ -287,7 +313,7 @@ bool InSituMegamol::ZmqManager::performHandshake(void) {
 		<< "mmCreateCall(\"MultiParticleDataCall\", \"" << _geoTag.str() << "::getData\", \"" << _datTag.str() << "::getData\")\n"
 		<< "mmCreateCall(\"CallOSPRayMaterial\", \""<< _geoTag.str() <<"::getMaterialSlot\", " << "\"::mat::deployMaterialSlot\")\n"
 		<< "mmCreateChainCall(\"CallOSPRayStructure\", \"::rnd::getStructure\", \"" << _geoTag.str() << "::deployStructureSlot\")\n";
-	global_log->info() << "    ISM: Sending creation message.\n" << std::endl;
+	global_log->info() << "    ISM: Sending creation message." << std::endl;
 	zmq_send(_requester.get(), msg.str().data(), msg.str().size(), BLOCK_POLICY_HANDSHAKE);
 	int replySize = zmq_recv(_requester.get(), _replyBuffer.data(), _replyBufferSize, BLOCK_POLICY_HANDSHAKE);
 	// surprisingly, stuff actually worked, enable the plugin
@@ -370,7 +396,6 @@ bool InSituMegamol::ZmqManager::triggerUpdate(std::string fname) {
 	}
 	if (replySize == -1) {
 		// Reply failed, raise unhandled reply counter
-		if (_sendCount > 1)
 		statusStr << "    ISM: Megamol not ready (size: -1). ";
 		global_log->info() << statusStr.str() << std::endl;
 		return true;

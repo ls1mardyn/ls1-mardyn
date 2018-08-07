@@ -31,21 +31,21 @@ ResilienceComm::~ResilienceComm() {
 }
 
 int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo, 
+						  int const numberOfBackups,
+						  size_t const sizePerRank,
 	                      std::vector<int>& backing, 
 	                      std::vector<int>& backedBy, 
 	                      std::vector<int>& backingTags, 
-	                      std::vector<int>& backedByTags, 
-						  int const numberOfBackups,
-						  size_t const sizePerRank) {
+	                      std::vector<int>& backedByTags) {
 	size_t totalBytesRecv = sizePerRank*numberOfBackups*sizeof(int);
 	std::vector<char> recvArray(totalBytesRecv);
 	if (_rank == 0) {
 		std::stringstream bkinf;
-		bkinf << "    RR: backupInfo: " << totalBytesRecv << "\n";
-		for (auto const& rnk : backupInfo) {
-			bkinf << rnk << ", ";
-		}
-		global_log->info() << bkinf.str() << std::endl;
+		// bkinf << "    RR: backupInfo: " << totalBytesRecv << "\n";
+		// for (auto const& rnk : backupInfo) {
+		// 	bkinf << rnk << ", ";
+		// }
+		// global_log->info() << bkinf.str() << std::endl;
 		mardyn_assert(static_cast<uint>(sizePerRank*numberOfBackups*_numProcs) == backupInfo.size());
 	}
 	else {
@@ -69,30 +69,31 @@ int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo,
 	auto backedByAsChar = reinterpret_cast<char*>(backedBy.data());
 	auto backingTagsAsChar = reinterpret_cast<char*>(backingTags.data());
 	auto backedByTagsAsChar = reinterpret_cast<char*>(backedByTags.data());
-	std::copy(recvArray.begin()+0*totalBytesRecv/4, recvArray.begin()+1*totalBytesRecv/4, backingAsChar);
-	std::copy(recvArray.begin()+1*totalBytesRecv/4, recvArray.begin()+2*totalBytesRecv/4, backedByAsChar);
-	std::copy(recvArray.begin()+2*totalBytesRecv/4, recvArray.begin()+3*totalBytesRecv/4, backingTagsAsChar);
-	std::copy(recvArray.begin()+3*totalBytesRecv/4, recvArray.begin()+4*totalBytesRecv/4, backedByTagsAsChar);
-
-	global_log->info() << "    RR: Dumping scattered backup info: " << std::endl;
-	global_log->set_mpi_output_all();
-	std::stringstream bckd, bckBy, bckdTags, bckByTags;
-	for (int i=0; i<numberOfBackups; ++i) {
-		mardyn_assert(backing[i]<_numProcs);
-		mardyn_assert(backedBy[i]<_numProcs);
-		bckd << backing[i] << ", ";
-		bckBy << backedBy[i] << ", ";
-		bckdTags << backingTags[i] << ", ";
-		bckByTags << backedByTags[i] << ", ";
-	}
-	global_log->info() << "        Backed: " << bckd.str() << " Backed by: " << bckBy.str() << std::endl;
-	global_log->info() << "        Backed tags: " << bckdTags.str() << " Backed by tags: " << bckByTags.str() << std::endl;
+	std::copy(recvArray.begin()+0*totalBytesRecv/sizePerRank, recvArray.begin()+1*totalBytesRecv/sizePerRank, backingAsChar);
+	std::copy(recvArray.begin()+1*totalBytesRecv/sizePerRank, recvArray.begin()+2*totalBytesRecv/sizePerRank, backedByAsChar);
+	std::copy(recvArray.begin()+2*totalBytesRecv/sizePerRank, recvArray.begin()+3*totalBytesRecv/sizePerRank, backingTagsAsChar);
+	std::copy(recvArray.begin()+3*totalBytesRecv/sizePerRank, recvArray.begin()+4*totalBytesRecv/sizePerRank, backedByTagsAsChar);
+	// global_log->info() << "    RR: Dumping scattered backup info: " << std::endl;
+	// global_log->set_mpi_output_all();
+	// std::stringstream bckd, bckBy, bckdTags, bckByTags;
+	// for (int i=0; i<numberOfBackups; ++i) {
+	// 	mardyn_assert(backing[i]<_numProcs);
+	// 	mardyn_assert(backedBy[i]<_numProcs);
+	// 	bckd << backing[i] << ", ";
+	// 	bckBy << backedBy[i] << ", ";
+	// 	bckdTags << backingTags[i] << ", ";
+	// 	bckByTags << backedByTags[i] << ", ";
+	// }
+	// global_log->info() << "        Backed: " << bckd.str() << " Backed by: " << bckBy.str() << std::endl;
+	// global_log->info() << "        Backed tags: " << bckdTags.str() << " Backed by tags: " << bckByTags.str() << std::endl;
 	return 0;
 }
 
 int ResilienceComm::exchangeSnapshotSizes(
 		std::vector<int>& backing,
 		std::vector<int>& backedBy,
+		std::vector<int>& backingTags,
+		std::vector<int>& backedByTags,
 		size_t const snapshotSize,
 		std::vector<int>& backupDataSizes) {
 	// send the size of this snapshot to all ranks backing it
@@ -103,7 +104,7 @@ int ResilienceComm::exchangeSnapshotSizes(
 	for (size_t ib=0; ib<backedBy.size(); ++ib) {
 		MPI_Request request=0;
 		dest = backedBy[ib];
-		tag = (_rank<<16)+dest; // maybe a better tag 
+		tag = backedByTags[ib];
 		// status = MPI_Isend(&snapshotSize, sizeof(snapshotSize), MPI_CHAR, dest, tag, MPI_COMM_WORLD, &request);
 		status = MPI_Bsend(&snapshotSize, sizeof(snapshotSize), MPI_CHAR, dest, tag, MPI_COMM_WORLD);
 		mardyn_assert(status == MPI_SUCCESS);
@@ -113,7 +114,7 @@ int ResilienceComm::exchangeSnapshotSizes(
 	for (size_t ib=0; ib<backing.size(); ++ib) {
 		MPI_Status recvStatus; 
 		src = backing[ib];
-		tag = (src<<16)+_rank;
+		tag = backingTags[ib];
 		void* target = &(backupDataSizes.data()[ib]);
 		// status = MPI_Irecv(target, sizeof(snapshotSize), MPI_CHAR, src, tag, MPI_COMM_WORLD, &request);
 		status = MPI_Recv(&(backupDataSizes.data()[ib]), sizeof(snapshotSize), MPI_CHAR, src, tag, MPI_COMM_WORLD, &recvStatus);
@@ -126,6 +127,8 @@ int ResilienceComm::exchangeSnapshotSizes(
 int ResilienceComm::exchangeSnapshots(
 		std::vector<int>& backing,
 		std::vector<int>& backedBy,
+		std::vector<int>& backingTags,
+		std::vector<int>& backedByTags,
 		std::vector<int>& backupDataSizes,
 		std::vector<char>& sendData,
 		std::vector<char>& recvData) {
@@ -148,9 +151,9 @@ int ResilienceComm::exchangeSnapshots(
 
 	for (size_t ib=0; ib<backedBy.size(); ++ib) {
 		dest = backedBy[ib];
-		tag = (_rank<<16)+dest; // maybe a better tag 
-		global_log->info() << "    RR: Sending " << sendData.size()
-				<< " bytes to: " << dest << " using tag: " << tag << std::endl;
+		tag = backedByTags[ib];
+		// global_log->info() << "    RR: Sending " << sendData.size()
+		// 		<< " bytes to: " << dest << " using tag: " << tag << std::endl;
 		status = MPI_Bsend(sendData.data(), sendData.size(), MPI_CHAR, dest, tag, MPI_COMM_WORLD);
 		mardyn_assert(status == MPI_SUCCESS);
 	}
@@ -158,12 +161,12 @@ int ResilienceComm::exchangeSnapshots(
 	for (size_t ib=0; ib<backing.size(); ++ib) {
 		MPI_Status recvStatus;
 		src = backing[ib];
-		tag = (src<<16) +_rank;
+		tag = backingTags[ib];
 		size_t const recvIndex = recvIndices[ib];
-		global_log->info() << "    RR: Receiving " 
-				<< backupDataSizes[ib] << " bytes from " 
-				<< src << " at " 
-				<< recvIndices[ib] << " using tag: " << tag << std::endl;
+		// global_log->info() << "    RR: Receiving " 
+		// 		<< backupDataSizes[ib] << " bytes from " 
+		// 		<< src << " at " 
+		// 		<< recvIndices[ib] << " using tag: " << tag << std::endl;
 		status = MPI_Recv(&recvData.data()[recvIndex], backupDataSizes[ib], MPI_CHAR, src, tag, MPI_COMM_WORLD, &recvStatus);
 		mardyn_assert(status == MPI_SUCCESS);
 		//verify a bunch of stuff

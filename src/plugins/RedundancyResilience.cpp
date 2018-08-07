@@ -34,13 +34,12 @@ void RedundancyResilience::init(ParticleContainer* particleContainer,
 	std::vector< int > allBackupIds = _determineBackups(domainDecomp);
 	// give each rank set of ids to backup (_backing) and tell each one which rank is backing it up (_backedBy)
 	_comm->scatterBackupInfo(allBackupIds, 
+			_numberOfBackups,
+			_sizePerRank,
 			_backing,
 			_backedBy,
 			_backingTags,
-			_backedByTags,
-			_numberOfBackups,
-			_sizePerRank);
-	
+			_backedByTags);
 }
 
 void RedundancyResilience::readXML(XMLfileUnits& xmlconfig) {
@@ -92,28 +91,27 @@ void RedundancyResilience::endStep(ParticleContainer* particleContainer,
 	if (simstep % _backupInterval != 0) {
 		return;
 	}
-	global_log->info() << "    RR: Creating in-memory backups " << simstep << std::endl;
+	global_log->info() << "    RR: Creating in-memory backups... " << std::endl;
 	_saveLocalSnapshot(particleContainer, domainDecomp, domain, simstep);
 	std::vector<char> snapshotDataAsBytes = _serializeSnapshot();
 	std::vector<int> backupDataSizes(_numberOfBackups);
 	std::vector<char> backupData;
-	global_log->set_mpi_output_all();
-	_comm->exchangeSnapshotSizes(_backing,
+	_comm->exchangeSnapshotSizes(
+			_backing,
 			_backedBy,
+			_backingTags,
+			_backedByTags,
 			snapshotDataAsBytes.size(),
 			backupDataSizes);
-	std::stringstream szStr;
-	for (auto const sz : backupDataSizes) {
-		szStr << sz << ", ";
-	}	
-	global_log->info() << szStr.str() << std::endl;
-	_comm->exchangeSnapshots(_backing,
+	_comm->exchangeSnapshots(
+			_backing,
 			_backedBy,
+			_backingTags,
+			_backedByTags,
 			backupDataSizes,
 			snapshotDataAsBytes,
 			backupData);
-	global_log->set_mpi_output_root();
-	global_log->info() << "    RR: Snapshots exchanged " << simstep << std::endl;
+	global_log->info() << "    RR: Snapshots exchanged for timestep " << simstep << std::endl;
 	_storeSnapshots(backupDataSizes, backupData);
 }
 
@@ -229,6 +227,7 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 				++tag;
 			}
 		}
+		mardyn_assert(tag == numRanks*_numberOfBackups);
 		mardyn_assert(backupInfo.size() == static_cast<unsigned int>(_sizePerRank*numRanks*_numberOfBackups));
 	}
 

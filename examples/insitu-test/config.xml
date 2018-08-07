@@ -74,6 +74,7 @@
         <snapshotInterval>20</snapshotInterval>
         <connectionName>tcp://localhost:33333</connectionName>
         <replyBufferSize>16384</replyBufferSize>
+        <ringBufferSize>3</ringBufferSize>
         <syncTimeout>5</syncTimeout>
 			</outputplugin>
     </output>

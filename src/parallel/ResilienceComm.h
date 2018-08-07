@@ -45,20 +45,21 @@ public:
 	 * The method modifies the request buffers (RedundancyComm::_exchangeSizesRequests and RedundancyComm::_exchangeSnapshotRequests)
 	 * The tags are used to identify the messages in send/recv calls.
 	 * @param[in] backupInfo Contains the rank configuration. Set up in RedundancyResilience::_determineBackups, check there for layout.
+	 * @param[in] numberOfBackups how many backups are made per rank
+	 * @param[in] sizePerRank Number of information elements per rank (numberOfBackups*number of arrays, atm 4)
 	 * @param[out] backing A list of ranks being backed by the current rank
-	 * @param[out] backedBy A list of ranks being backed by the current rank
-	 * @param[out] backingTags The tags associated with the communication of the ranks in backing 
-	 * @param[out] backedByTags The tags associated with the communication of the ranks in backedBy
-	 * @param[out] numberOfBackups how many backups are made per rank
+	 * @param[out] backedBy A list of ranks backing the current rank
+	 * @param[out] backingTags The tags associated with the communication of the ranks in backing (used in recv)
+	 * @param[out] backedByTags The tags associated with the communication of the ranks in backedBy (used in send)
 	 */
 	int scatterBackupInfo(
 			std::vector<int>& backupInfo, 
+			int const numberOfBackups,
+			size_t const sizePerRank,
 	        std::vector<int>& backing, 
 	        std::vector<int>& backedBy, 
 	        std::vector<int>& backingTags, 
-	        std::vector<int>& backedByTags, 
-			int const numberOfBackups,
-			size_t const sizePerRank
+	        std::vector<int>& backedByTags
 	);
 	/**
 	 * Send snapshot size from caller to ranks backing it.
@@ -68,12 +69,16 @@ public:
 	 * Updates request buffer _exchangeSizesRequests.
 	 * @param[in] backing A list of ranks being backed by the current rank
 	 * @param[in] backedBy A list of ranks the current rank is backing up
+	 * @param[in] backingTags The tags associated with the communication of the ranks in backing (used in recv)
+	 * @param[in] backedByTags The tags associated with the communication of the ranks in backedBy (used in send)
 	 * @param[in] snapshotSize Size of the local snapshot data in bytes
 	 * @param[out] backupDataSizes The individual sizes of the snapshots acquired 
 	 */
 	int exchangeSnapshotSizes(
 			std::vector<int>& backing,
 			std::vector<int>& backedBy,
+			std::vector<int>& backingTags,
+			std::vector<int>& backedByTags,
 			size_t const snapshotSize, 
 			std::vector<int>& backupDataSizes
 	);
@@ -84,13 +89,17 @@ public:
 	 * Updates request buffer _exchangeSnapshotRequests.
 	 * @param[in] backing A list of ranks being backed by the current rank
 	 * @param[in] backedBy A list of ranks the current rank is backing up
+	 * @param[in] backingTags The tags associated with the communication of the ranks in backing (used in recv)
+	 * @param[in] backedByTags The tags associated with the communication of the ranks in backedBy (used in send)
 	 * @param[in] backupDataSizes The individual sizes of the snapshots acquired 
 	 * @param[in] sendData The local snapshot data as char vector
-	 * @param[out] recvData The snapshot data of the ranks being backed
+	 * @param[out] recvData The complete snapshot datas of the ranks being backed
 	 */
 	int exchangeSnapshots(
 			std::vector<int>& backing,
 			std::vector<int>& backedBy,
+			std::vector<int>& backingTags,
+			std::vector<int>& backedByTags,
 			std::vector<int>& backupDataSizes,
 			std::vector<char>& sendData,
 			std::vector<char>& recvData
