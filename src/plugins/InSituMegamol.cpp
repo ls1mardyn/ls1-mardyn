@@ -33,7 +33,7 @@ void InSituMegamol::init(ParticleContainer* particleContainer,
 	_zmqManager.setSyncTimeout(_syncTimeout);
 	_zmqManager.setModuleNames(domainDecomp->getRank());
 	_isEnabled = _zmqManager.performHandshake();
-	_createFnameRingBuffer(domainDecomp->getRank(), 5);
+	_createFnameRingBuffer(domainDecomp->getRank(), _ringBufferSize);
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
