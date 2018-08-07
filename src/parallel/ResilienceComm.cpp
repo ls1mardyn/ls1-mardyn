@@ -67,24 +67,24 @@ int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo,
 	auto backedByAsChar = reinterpret_cast<char*>(backedBy.data());
 	auto backingTagsAsChar = reinterpret_cast<char*>(backingTags.data());
 	auto backedByTagsAsChar = reinterpret_cast<char*>(backedByTags.data());
-	std::copy(recvArray.begin(),0*totalBytesRecv/4, recvArray.begin()+1*totalBytesRecv/4, backingAsChar);
+	std::copy(recvArray.begin()+0*totalBytesRecv/4, recvArray.begin()+1*totalBytesRecv/4, backingAsChar);
 	std::copy(recvArray.begin()+1*totalBytesRecv/4, recvArray.begin()+2*totalBytesRecv/4, backedByAsChar);
 	std::copy(recvArray.begin()+2*totalBytesRecv/4, recvArray.begin()+3*totalBytesRecv/4, backingTagsAsChar);
 	std::copy(recvArray.begin()+3*totalBytesRecv/4, recvArray.begin()+4*totalBytesRecv/4, backedByTagsAsChar);
 
-	// global_log->info() << "    RR: Dumping scattered backup info: " << std::endl;
-	// global_log->set_mpi_output_all();
-	// std::stringstream bckd, bckBy, bckdTags, bckByTags;
-	// for (int i=0; i<numberOfBackups; ++i) {
-	// 	mardyn_assert(backing[i]<_numProcs);
-	// 	mardyn_assert(backedBy[i]<_numProcs);
-	// 	bckd << backing[i] << ", ";
-	// 	bckBy << backedBy[i] << ", ";
-	// 	bckdTags << backingTags[i] << ", ";
-	// 	bckByTags << backedByTags[i] << ", ";
-	// }
-	// global_log->info() << "        Backed: " << bckd.str() << " Backed by: " << bckBy.str() << std::endl;
-	// global_log->info() << "        Backed tags: " << bckdTags.str() << " Backed by tags: " << bckByTags.str() << std::endl;
+	global_log->info() << "    RR: Dumping scattered backup info: " << std::endl;
+	global_log->set_mpi_output_all();
+	std::stringstream bckd, bckBy, bckdTags, bckByTags;
+	for (int i=0; i<numberOfBackups; ++i) {
+		mardyn_assert(backing[i]<_numProcs);
+		mardyn_assert(backedBy[i]<_numProcs);
+		bckd << backing[i] << ", ";
+		bckBy << backedBy[i] << ", ";
+		bckdTags << backingTags[i] << ", ";
+		bckByTags << backedByTags[i] << ", ";
+	}
+	global_log->info() << "        Backed: " << bckd.str() << " Backed by: " << bckBy.str() << std::endl;
+	global_log->info() << "        Backed tags: " << bckdTags.str() << " Backed by tags: " << bckByTags.str() << std::endl;
 	return 0;
 }
 
