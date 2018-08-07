@@ -63,6 +63,8 @@ int ResilienceComm::scatterBackupInfo(std::vector<int>& backupInfo,
 	mardyn_assert(mpi_error == MPI_SUCCESS);
 	backing.resize(numberOfBackups);
 	backedBy.resize(numberOfBackups);
+	backingTags.resize(numberOfBackups);
+	backedByTags.resize(numberOfBackups);
 	auto backingAsChar = reinterpret_cast<char*>(backing.data());
 	auto backedByAsChar = reinterpret_cast<char*>(backedBy.data());
 	auto backingTagsAsChar = reinterpret_cast<char*>(backingTags.data());
