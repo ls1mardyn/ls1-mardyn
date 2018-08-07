@@ -43,15 +43,20 @@ public:
 	 * Scatters info about which rank should backup which. This data is only produced on the root node, and needs
 	 * to be scattered. The method assumes that: #ranks being backed by current rank = #ranks backing current rank = numberOfBackups
 	 * The method modifies the request buffers (RedundancyComm::_exchangeSizesRequests and RedundancyComm::_exchangeSnapshotRequests)
+	 * The tags are used to identify the messages in send/recv calls.
 	 * @param[in] backupInfo Contains the rank configuration. Set up in RedundancyResilience::_determineBackups, check there for layout.
 	 * @param[out] backing A list of ranks being backed by the current rank
 	 * @param[out] backedBy A list of ranks being backed by the current rank
+	 * @param[out] backingTags The tags associated with the communication of the ranks in backing 
+	 * @param[out] backedByTags The tags associated with the communication of the ranks in backedBy
 	 * @param[out] numberOfBackups how many backups are made per rank
 	 */
 	int scatterBackupInfo(
 			std::vector<int>& backupInfo, 
 	        std::vector<int>& backing, 
 	        std::vector<int>& backedBy, 
+	        std::vector<int>& backingTags, 
+	        std::vector<int>& backedByTags, 
 			int const numberOfBackups,
 			size_t const sizePerRank
 	);

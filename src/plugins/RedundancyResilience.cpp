@@ -33,7 +33,14 @@ void RedundancyResilience::init(ParticleContainer* particleContainer,
 	// create a vector containing backup assignments (on root)
 	std::vector< int > allBackupIds = _determineBackups(domainDecomp);
 	// give each rank set of ids to backup (_backing) and tell each one which rank is backing it up (_backedBy)
-	_comm->scatterBackupInfo(allBackupIds, _backing, _backedBy, _numberOfBackups, _sizePerRank);
+	_comm->scatterBackupInfo(allBackupIds, 
+			_backing,
+			_backedBy,
+			_backingTags,
+			_backedByTags,
+			_numberOfBackups,
+			_sizePerRank);
+	
 }
 
 void RedundancyResilience::readXML(XMLfileUnits& xmlconfig) {
@@ -201,7 +208,8 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 		int const numRanks = domainDecomp->getNumProcs();
 		backupInfo.resize(_sizePerRank*numRanks*_numberOfBackups);
 		// generate the pairs rank->backed up rank. Also fill out the reverse.
-		// and the tag for both
+		// and enumerate the association the tag for both
+		int tag = 0;
 		for (int ib=0; ib<_numberOfBackups; ++ib) {
 			for (int rank=0; rank<numRanks; ++rank) {
 				// determine which node backs up what by some clever scheme 
@@ -210,10 +218,15 @@ std::vector<int> RedundancyResilience::_determineBackups(DomainDecompBase const*
 				if (newBackup >= numRanks) newBackup=newBackup%numRanks;
 				mardyn_assert(newBackup < numRanks);
 				// => newBackup will be backed up by rank
-				int const backupIdx =        rank*_numberOfBackups*_sizePerRank + 0*_numberOfBackups + ib;
+				int const backupIdx = rank*_numberOfBackups*_sizePerRank + 0*_numberOfBackups + ib;
 				int const backedByIdx = newBackup*_numberOfBackups*_sizePerRank + 1*_numberOfBackups + ib;
+				int const tagBackupIdx = backupIdx + 2*_numberOfBackups;
+				int const tagBackedByIdx = backedByIdx + 2*_numberOfBackups;
 				backupInfo[backupIdx] = newBackup;
 				backupInfo[backedByIdx] = rank;
+				backupInfo[tagBackupIdx] = tag;
+				backupInfo[tagBackedByIdx] = tag;
+				++tag;
 			}
 		}
 		mardyn_assert(backupInfo.size() == static_cast<unsigned int>(_sizePerRank*numRanks*_numberOfBackups));

@@ -217,7 +217,9 @@ private:
 	
 	std::unique_ptr<ResilienceComm> _comm;       ///< store the communication handling object
 	std::vector<int> _backing;                   ///< contains the rank ids this rank does redundancy backups for
+	std::vector<int> _backingTags;               ///< contains the associated comm tags for the ranks in _backing
 	std::vector<int> _backedBy;                  ///< contains the ranks of processes which create backups for this rank
+	std::vector<int> _backedByTags;              ///< contains the associated comm tags for the ranks in _backedBy
 	std::vector<Snapshot> _backupSnapshots;      ///< contains the data of the backed up ranks
 
 	Snapshot _snapshot; // make an std::vector eventually
