@@ -68,7 +68,7 @@ public:
 	//! @param currentTime The current time to be printed.
 	//! @param useBinaryFormat indicates wheter binary I/O is used or not
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime, bool useBinaryFormat = false);
+			DomainDecompBase* domainDecomp, double currentTime, bool useBinaryFormat = false);
 
 	//! @brief writes a checkpoint file that can be used to continue the simulation
 	//!
@@ -191,6 +191,9 @@ public:
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);
+
+	//! @brief update globalNumMolecules
+	void updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 	//! @brief get the global pressure
 	double getGlobalPressure();

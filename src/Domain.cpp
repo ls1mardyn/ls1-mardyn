@@ -659,7 +659,7 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 }
 
 void Domain::writeCheckpoint(string filename,
-		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime,
 		bool useBinaryFormat) {
 	domainDecomp->assertDisjunctivity(particleContainer);
 #ifdef ENABLE_REDUCED_MEMORY_MODE
@@ -672,17 +672,7 @@ void Domain::writeCheckpoint(string filename,
 #endif
 
 	// update global number of particles
-	{
-		DomainDecompBase* domainDecomposition = &(global_simulation->domainDecomposition() );
-		CommVar<uint64_t> numMolecules;
-		numMolecules.local = particleContainer->getNumberOfParticles();
-		domainDecomposition->collCommInit(1);
-		domainDecomposition->collCommAppendUnsLong(numMolecules.local);
-		domainDecomposition->collCommAllreduceSum();
-		numMolecules.global = domainDecomposition->collCommGetUnsLong();
-		domainDecomposition->collCommFinalize();
-		this->setglobalNumMolecules(numMolecules.global);
-	}
+	this->updateglobalNumMolecules(particleContainer, domainDecomp);
 
 	if (useBinaryFormat == true) {
 		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
@@ -1184,6 +1174,17 @@ void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules; }
 
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
+
+void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
+	CommVar<uint64_t> numMolecules;
+	numMolecules.local = particleContainer->getNumberOfParticles();
+	domainDecomp->collCommInit(1);
+	domainDecomp->collCommAppendUnsLong(numMolecules.local);
+	domainDecomp->collCommAllreduceSum();
+	numMolecules.global = domainDecomp->collCommGetUnsLong();
+	domainDecomp->collCommFinalize();
+	this->setglobalNumMolecules(numMolecules.global);
+}
 
 double Domain::getglobalRho(){ return _globalRho;}
 

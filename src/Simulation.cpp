@@ -588,20 +588,21 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	timers()->registerTimer("PHASESPACE_CREATION",  vector<string>{"SIMULATION_IO"}, new Timer());
 	timers()->setOutputString("PHASESPACE_CREATION", "Phasespace creation took:");
 	timers()->getTimer("PHASESPACE_CREATION")->start();
-	unsigned long globalNumMolecules = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
+	unsigned long maxID = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
 	timers()->getTimer("PHASESPACE_CREATION")->stop();
 
+	_moleculeContainer->update();
+	_moleculeContainer->deleteOuterParticles();
+
+	_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
+	unsigned long globalNumMolecules = _domain->getglobalNumMolecules();
 	double rho_global = globalNumMolecules/ _ensemble->V();
 	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << endl;
-	_domain->setglobalNumMolecules(globalNumMolecules);
 	_domain->setGlobalTemperature(_ensemble->T());
 	_domain->setglobalRho(rho_global);
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
-
-	_moleculeContainer->update();
-	_moleculeContainer->deleteOuterParticles();
 
 	int ownrank = 0;
 #ifdef ENABLE_MPI
