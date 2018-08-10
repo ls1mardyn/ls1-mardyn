@@ -60,6 +60,7 @@ private:
 	std::shared_ptr<InputBase> _inputReader;
 	GridFiller _gridFiller;
 	double _origin[3];
+	unsigned int _componentid;
 };
 
 #endif  // REPLICAFILLER_H_

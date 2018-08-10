@@ -97,6 +97,8 @@ private:
 };
 
 void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
+//	_gridFiller.readXML(xmlconfig);  <-- TODO: check if this would be better solution to change component, where required
+
 	if(xmlconfig.changecurrentnode("input")) {
 		std::string inputPluginName;
 		xmlconfig.getNodeValue("@type", inputPluginName);
@@ -124,6 +126,11 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 	}
 	global_log->info() << "Base point for the replication: [" << _origin[0] << "," << _origin[1] << "," << _origin[2] << "]" << endl;
+
+	unsigned int componentid = 0;
+	_componentid = 0;
+	if(xmlconfig.getNodeValue("componentid", componentid) )
+		_componentid = componentid;
 }
 
 
@@ -153,6 +160,13 @@ void ReplicaFiller::init() {
 
 int ReplicaFiller::getMolecule(Molecule* molecule) {
 	int ret = _gridFiller.getMolecule(molecule);
+
+	// change component if specified
+	if(molecule->componentid() != _componentid) {
+		cout << "Set componentid: " << _componentid << endl;
+		molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid) );
+	}
+
 	return ret;
 }
 
