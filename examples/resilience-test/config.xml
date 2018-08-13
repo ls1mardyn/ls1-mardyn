@@ -67,10 +67,10 @@
         <writefrequency>100</writefrequency>
       </outputplugin> -->
 
-			<outputplugin name="RedundancyResilience">
+			<!-- <outputplugin name="RedundancyResilience">
 				<backupInterval>10</backupInterval>
         <numberOfBackups>2</numberOfBackups>
-			</outputplugin>
+			</outputplugin> -->
     </output>
   </simulation>
 </mardyn>

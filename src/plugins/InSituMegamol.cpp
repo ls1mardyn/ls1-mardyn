@@ -32,8 +32,10 @@ void InSituMegamol::init(ParticleContainer* particleContainer,
 	_zmqManager.setReplyBufferSize(_replyBufferSize);
 	_zmqManager.setSyncTimeout(_syncTimeout);
 	_zmqManager.setModuleNames(domainDecomp->getRank());
-	_isEnabled = _zmqManager.performHandshake();
 	_createFnameRingBuffer(domainDecomp->getRank(), _ringBufferSize);
+	_isEnabled = _zmqManager.performHandshake();
+	std::stringstream llFname;
+	llFname << "/dev/shm/local" << std::setfill('0') << std::setw(6) << ".log";
 }
 
 void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
@@ -41,12 +43,10 @@ void InSituMegamol::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("snapshotInterval", _snapshotInterval);
 	global_log->info() << "    ISM: Snapshot interval: "
 	        << _snapshotInterval << std::endl;
-
 	_connectionName.assign("tcp://localhost:33333");
 	xmlconfig.getNodeValue("connectionName", _connectionName);
 	global_log->info() << "    ISM: Connecting to Megamol on: <" 
 	        << _connectionName << ">" << std::endl;
-
 	_replyBufferSize = 16384;
 	xmlconfig.getNodeValue("replyBufferSize", _replyBufferSize);
 	global_log->info() << "    ISM: Megamol reply buffer size (defaults to 16384 byte): "
@@ -74,6 +74,7 @@ void InSituMegamol::endStep(ParticleContainer* particleContainer,
 			global_log->info() << "    ISM: Disabled. Skipping InSitu plugin." << std::endl;
 			return;
 		}
+		auto start = std::chrono::high_resolution_clock::now();
 		//get bbox 
 		float bbox[6] {
 			0.0f, 0.0f, 0.0f,
@@ -97,8 +98,8 @@ void InSituMegamol::endStep(ParticleContainer* particleContainer,
 		_addMmpldFrame(particleLists);
 		mardyn_assert(*reinterpret_cast<size_t*>(seekTable.data()+sizeof(size_t)) == _mmpldBuffer.size());
 		std::string fname = _writeMmpldBuffer(domainDecomp->getRank(), simstep);
-		// std::stringstream temp;
-		// temp << fname << "_" << simstep << std::endl;
+		auto end = std::chrono::high_resolution_clock::now();
+		_addTimerEntry(simstep, std::chrono::duration<double>(end-start).count());
 		_isEnabled = _zmqManager.triggerUpdate(fname);
 	}
 }
@@ -183,7 +184,7 @@ std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particle
 	std::copy(reinterpret_cast<char*>(&radius),
 	          reinterpret_cast<char*>(&radius)+sizeof(float),
 			  std::back_inserter(dataList));
-	// dummies for Global RGB Color
+	// dummies for Global RGB Color, insert 0.8*255 4 times for RGBA.
 	dataList.insert(dataList.end(), 4, static_cast<unsigned char>(0.8*255.0));
 
 	// number of particles
@@ -242,6 +243,16 @@ std::string InSituMegamol::_getNextFname(void) {
 	return *temp;
 }
 
+void InSituMegamol::_addTimerEntry(unsigned long simstep, double secs) {
+	std::ofstream localLog;
+	std::stringstream timerLine;
+	// dump times in microseconds
+	timerLine << "T: " << std::setfill(' ') << std::setw(8) <<  simstep 
+			<< " d: " << std::fixed << std::setprecision(6);
+	localLog.open(_localLogFname, std::ios::ate);
+	localLog << timerLine.str() << "\n";
+	localLog.close();
+}
 
 InSituMegamol::ZmqManager::ZmqManager(void) 
 		: _sendCount(0)
@@ -267,7 +278,6 @@ InSituMegamol::ZmqManager::ZmqManager(ZmqManager const& rhs)
 		: _context(zmq_ctx_new(), &zmq_ctx_destroy)
 		, _requester(zmq_socket(_context.get(), ZMQ_REQ), &zmq_close) 
 		, _publisher(zmq_socket(_context.get(), ZMQ_PUB), &zmq_close) {
-	
 }
 
 std::string InSituMegamol::ZmqManager::getZmqVersion(void) const {
@@ -281,9 +291,9 @@ std::string InSituMegamol::ZmqManager::getZmqVersion(void) const {
 void InSituMegamol::ZmqManager::setConnection(std::string connectionName) {
 	if (zmq_connect(_requester.get(), connectionName.data())) {
 		global_log->info() << "    ISM: Connection failed, releasing resources." << std::endl;
-		//TODO stop plugin
+		// TODO: propagate plugin shutdown;
 	}
-	global_log->info() << "    ISM: Connecting to MegaMol on port: " << connectionName << std::endl;
+	global_log->info() << "    ISM: Requester initialized." << std::endl;
 }
 
 void InSituMegamol::ZmqManager::setModuleNames(int rank) {

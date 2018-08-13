@@ -245,6 +245,10 @@ private:
 	std::vector<char> _generateMmpldSeekTable(std::vector< std::vector<char> >& dataLists);
 	std::vector<char> _buildMmpldDataList(ParticleContainer* particleContainer);
 
+	//per node performance logging
+	std::string _localLogFname;
+	void _addTimerEntry(unsigned long simstep, double secs);
+
 	// serialize all
 	void _resetMmpldBuffer(void);
 	std::string _getNextFname(void);

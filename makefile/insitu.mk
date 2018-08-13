@@ -11,7 +11,7 @@ INCLUDES += -isystem ../dependencies-external/zeromq/include
 #   $(warning WARNING: INSITU_INCDIR not set)
 # endif
 
-LDFLAGS += -lzmq -L"/usr/lib64"
+LDFLAGS += -lzmq -L"/home1/05799/fernanor/zeromq/install/lib"
 # ifneq ($(ZMQ_LIBDIR),)
 #   LDFLAGS += -L$(ZMQ_LIBDIR)
 #   $(info Appended ZMQ_LIBDIR)

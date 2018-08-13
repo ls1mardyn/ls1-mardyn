@@ -47,7 +47,7 @@ std::string MmpldWriter::getOutputFilename() {
 MmpldWriter::MmpldWriter() :
 		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _writeBufferSize(32768), _outputPrefix("unknown"),
 		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
-		_fileCount(1), _numFramesPerFile(0), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_NONE)
+		_fileCount(1), _numFramesPerFile(0), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_FLOAT_RGB)
 {}
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
@@ -430,7 +430,7 @@ long MmpldWriter::get_data_list_header_size() {
 	return data_list_header_size;
 }
 
-long MmpldWriter::get_particle_data_size(){
+long MmpldWriter::get_particle_data_size() {
 	long elemsize = 0;
 	switch(_vertex_type) {
 		case MMPLD_VERTEX_NONE:
@@ -444,6 +444,20 @@ long MmpldWriter::get_particle_data_size(){
 			break;
 		case MMPLD_VERTEX_SHORT_XYZ:
 			elemsize = 3 * sizeof(uint16_t);
+	}
+	switch(_color_type) {
+		case MMPLD_COLOR_FLOAT_RGB:
+			elemsize += 3 * sizeof(float);
+			break;
+		case MMPLD_COLOR_FLOAT_RGBA:
+			elemsize += 4 * sizeof(float);
+			break;
+		case MMPLD_COLOR_FLOAT_I:
+			elemsize += sizeof(float);
+			break;
+		case MMPLD_COLOR_UINT8_RGBA:
+			elemsize += 4 * sizeof(uint8_t);
+			break;
 	}
 	return elemsize;
 }
@@ -515,6 +529,7 @@ bool MmpldWriterSimpleSphere::GetSpherePos(float *spherePos, Molecule* mol, uint
 {
 	uint8_t cid = mol->componentid();
 	for (unsigned short d = 0; d < 3; ++d) spherePos[d] = (float)mol->r(d);
+	for (unsigned short d = 0; d < 3; ++d) spherePos[d+3] = (float)mol->v(d);
 	return (cid == nSphereTypeIndex);
 }
 
