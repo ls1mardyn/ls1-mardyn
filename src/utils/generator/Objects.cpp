@@ -203,3 +203,24 @@ void ObjectIntersection::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 	}
 }
+
+
+ObjectShifter::ObjectShifter() : _obj(nullptr) {
+	_shift[0] = 0.0;
+	_shift[1] = 0.0;
+	_shift[2] = 0.0;
+}
+
+void ObjectShifter::readXML(XMLfileUnits& xmlconfig) {
+	ObjectFactory object_factory;
+	if(xmlconfig.changecurrentnode("object")) {
+		std::string object_type;
+		xmlconfig.getNodeValue("@type", object_type);
+		_obj = std::shared_ptr<Object>(object_factory.create(object_type));
+		_obj->readXML(xmlconfig);
+		xmlconfig.changecurrentnode("..");
+	}
+	Coordinate3D shift(xmlconfig, "shift");
+	shift.get(_shift);
+	global_log->info() << "shift vector: "<< _shift[0] << ", " << _shift[1] << ", " << _shift[2] << endl;
+}

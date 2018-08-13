@@ -9,4 +9,5 @@ ObjectFactory::ObjectFactory() {
 	REGISTER_PLUGIN(ObjectUnification);
 	REGISTER_PLUGIN(ObjectSubtractor);
 	REGISTER_PLUGIN(ObjectIntersection);
+	REGISTER_PLUGIN(ObjectShifter);
 }

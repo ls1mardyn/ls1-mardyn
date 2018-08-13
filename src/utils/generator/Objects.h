@@ -296,4 +296,66 @@ private:
 	std::shared_ptr<Object> _ob2;
 };
 
+/** Abstract class to shift an object */
+class ObjectShifter : public Object {
+public:
+	ObjectShifter();
+	ObjectShifter(std::shared_ptr<Object> obj, double shift[3]) : _obj(obj) {
+		_shift[0] = shift[0];
+		_shift[1] = shift[1];
+		_shift[2] = shift[2];
+	}
+
+	/** @brief Read in XML configuration for ObjectIntersection and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <object>
+	     <object type="..."> <!-- ... --> </object>
+	     <shift> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </shift>
+	   </object>
+	   \endcode
+	 */
+	void readXML(XMLfileUnits& xmlconfig);
+	std::string getName() { return std::string("ObjectShifter"); }
+	static Object* createInstance() { return new ObjectShifter(); }
+
+
+	bool isInside(double r[3]) {
+		double r_transformed[3] = {
+			r[0] - _shift[0],
+			r[1] - _shift[1],
+			r[2] - _shift[2]
+		};
+		return _obj->isInside(r_transformed);
+	}
+
+	bool isInsideNoBorder(double r[3]) {
+		double r_transformed[3] = {
+			r[0] - _shift[0],
+			r[1] - _shift[1],
+			r[2] - _shift[2]
+		};
+		return _obj->isInsideNoBorder(r_transformed);
+	}
+
+	void getBboxMin(double rmin[3]) {
+		_obj->getBboxMin(rmin);
+		for(int d = 0; d < 3; d++) {
+			rmin[d] += _shift[d];
+		}
+	}
+
+	void getBboxMax(double rmax[3]) {
+		_obj->getBboxMax(rmax);
+		for(int d = 0; d < 3; d++) {
+			rmax[d] += _shift[d];
+		}
+	}
+
+private:
+	std::shared_ptr<Object> _obj;
+	double _shift[3];
+};
+
 #endif /* OBJECTS_H */
