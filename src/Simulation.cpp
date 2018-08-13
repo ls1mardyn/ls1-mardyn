@@ -529,6 +529,38 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		_inputReader->readXML(xmlconfig);
 	}
 	xmlconfig.changecurrentnode(oldpath);
+
+	/** Prepare start options, affecting behavior of method prepare_start() */
+	_prepare_start_opt.refreshIDs = false;
+
+	oldpath = xmlconfig.getcurrentnodepath();
+	if(xmlconfig.changecurrentnode("options")) {
+		unsigned int numOptions = 0;
+		XMLfile::Query query = xmlconfig.query("option");
+		numOptions = query.card();
+		global_log->info() << "Number of prepare start options: " << numOptions << endl;
+
+		XMLfile::Query::const_iterator optionIter;
+		for( optionIter = query.begin(); optionIter; optionIter++ ) {
+			xmlconfig.changecurrentnode(optionIter);
+			std::string strOptionName;
+			xmlconfig.getNodeValue("@name", strOptionName);
+			if(strOptionName == "refreshIDs") {
+				bool bVal = false;
+				xmlconfig.getNodeValue(".", bVal);
+				_prepare_start_opt.refreshIDs = bVal;
+				if(true == _prepare_start_opt.refreshIDs)
+					global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
+				else
+					global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
+			}
+			else
+			{
+				global_log->warning() << "Unknown option '" << strOptionName << "'" << endl;
+			}
+		}
+	}
+	xmlconfig.changecurrentnode(oldpath);
 }
 
 
@@ -831,6 +863,10 @@ void Simulation::prepare_start() {
 	/** Init TemperatureControl beta_trans, beta_rot log-files*/
 	if(NULL != _temperatureControl)
 		_temperatureControl->InitBetaLogfiles();
+
+	/** refresh particle IDs */
+	if(true == _prepare_start_opt.refreshIDs)
+		this->refreshParticleIDs();
 }
 
 void Simulation::simulate() {
@@ -1365,3 +1401,35 @@ CellProcessor *Simulation::getCellProcessor() const {
 	return _cellProcessor;
 }
 
+void Simulation::refreshParticleIDs()
+{
+	uint64_t prevMaxID = 0;  // max ID of previous process
+	int ownRank = _domainDecomposition->getRank();
+	int numProcs = _domainDecomposition->getNumProcs();
+
+#ifdef ENABLE_MPI
+	if (ownRank != 0) {
+		MPI_Recv(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+#ifndef NDEBUG
+		cout << "Process " << ownRank << " received maxID=" << prevMaxID << " from process " << (ownRank-1) << "." << endl;
+#endif
+	}
+#endif
+
+	uint64_t tmpID = prevMaxID;
+
+#ifdef ENABLE_MPI
+	if(ownRank < (numProcs-1) ) {
+		prevMaxID += _moleculeContainer->getNumberOfParticles();
+		MPI_Send(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank+1), 0, MPI_COMM_WORLD);
+	}
+#endif
+
+#ifndef NDEBUG
+	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
+#endif
+	for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
+	{
+		pit->setid(++tmpID);
+	}
+}

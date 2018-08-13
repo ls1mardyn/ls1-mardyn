@@ -449,7 +449,11 @@ public:
 		return &_mcav;
 	}
 
-  CellProcessor *getCellProcessor() const;
+	CellProcessor *getCellProcessor() const;
+
+	/** @brief Refresh particle IDs to continuous numbering*/
+	void refreshParticleIDs();
+
  private:
 
 	/** Enable final checkpoint after simulation run. */
@@ -495,6 +499,16 @@ public:
 	/** Global energy log */
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
+
+	/** Prepare start options, affecting behavior of method prepare_start()
+	 * Options
+	 * -------
+	 * refreshIDs: Refresh particle IDs to continuous numbering by method refreshParticleIDs()
+	 *
+	 */
+	struct PrepareStartOptions {
+		bool refreshIDs;
+	} _prepare_start_opt;
 };
 #endif /*SIMULATION_H_*/
 
