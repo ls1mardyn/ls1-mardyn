@@ -35,7 +35,12 @@ public:
 	~ParticleContainerToBasisWrapper() {}
 	void readXML(XMLfileUnits& xmlconfig) {};
 
+	void setBoundingBox(std::shared_ptr<Object> object) { _object = object; }
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) {
+		double r[3] = {particle.r(0), particle.r(1), particle.r(2)};
+		if(_object && !_object->isInside(r)){
+			return false;
+		}
 		_basis.addMolecule(particle);
 		return true;
 	}
@@ -92,13 +97,18 @@ public:
 	void printSubInfo(int offset) { return; }
 	std::string getName() { return std::string("ParticleContainerToBasisWrapper"); }
 	double* getCellLength() override {return nullptr;}
+
 private:
 	Basis _basis;
+	std::shared_ptr<Object> _object;
 };
 
-void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
-//	_gridFiller.readXML(xmlconfig);  <-- TODO: check if this would be better solution to change component, where required
 
+void ReplicaFiller::setObject(Object* object) { _object = object; }
+
+Object * ReplicaFiller::getObject() { return _object; }
+
+void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("input")) {
 		std::string inputPluginName;
 		xmlconfig.getNodeValue("@type", inputPluginName);
@@ -136,6 +146,9 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 
 void ReplicaFiller::init() {
 	ParticleContainerToBasisWrapper basisContainer;
+	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(std::shared_ptr<Object>(_object), _origin);
+	basisContainer.setBoundingBox(object);
+
 	std::list<ChemicalPotential> lmu;
 #ifdef ENABLE_MPI
 	DomainDecomposition domainDecomp;
@@ -155,6 +168,7 @@ void ReplicaFiller::init() {
 	double b[3] = {0.0, domain.getGlobalLength(1), 0.0};
 	double c[3] = {0.0, 0.0, domain.getGlobalLength(2)};
 	lattice.init(triclinic, primitive, a, b, c);
+	_gridFiller.setObject(getObject());
 	_gridFiller.init(lattice, basisContainer.getBasis(), _origin);
 }
 
