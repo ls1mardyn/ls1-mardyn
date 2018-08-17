@@ -47,7 +47,7 @@ std::string MmpldWriter::getOutputFilename() {
 MmpldWriter::MmpldWriter() :
 		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _writeBufferSize(32768), _outputPrefix("unknown"),
 		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
-		_fileCount(1), _numFramesPerFile(0), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_FLOAT_RGB)
+		_fileCount(1), _numFramesPerFile(0), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_NONE)
 {}
 
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
@@ -64,6 +64,31 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 
 void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 {
+	// color type
+	_color_type = MMPLD_COLOR_NONE;
+	int ctype = 0;
+	xmlconfig.getNodeValue("@ctype", ctype);
+	switch(ctype) {
+		case 0:
+			_color_type = MMPLD_COLOR_NONE;
+			break;
+		case 1:
+			_color_type = MMPLD_COLOR_UINT8_RGB;
+			break;
+		case 2:
+			_color_type = MMPLD_COLOR_UINT8_RGBA;
+			break;
+		case 3:
+			_color_type = MMPLD_COLOR_FLOAT_I;
+			break;
+		case 4:
+			_color_type = MMPLD_COLOR_FLOAT_RGB;
+			break;
+		case 5:
+			_color_type = MMPLD_COLOR_FLOAT_RGBA;
+			break;
+	}
+
 	// write control
 	xmlconfig.getNodeValue("writecontrol/start", _startTimestep);
 	xmlconfig.getNodeValue("writecontrol/writefrequency", _writeFrequency);
@@ -529,7 +554,8 @@ bool MmpldWriterSimpleSphere::GetSpherePos(float *spherePos, Molecule* mol, uint
 {
 	uint8_t cid = mol->componentid();
 	for (unsigned short d = 0; d < 3; ++d) spherePos[d] = (float)mol->r(d);
-	for (unsigned short d = 0; d < 3; ++d) spherePos[d+3] = (float)mol->v(d);
+	if(MMPLD_COLOR_FLOAT_RGB == _color_type)  // color hack
+		for (unsigned short d = 0; d < 3; ++d) spherePos[d+3] = (float)mol->v(d);
 	return (cid == nSphereTypeIndex);
 }
 
