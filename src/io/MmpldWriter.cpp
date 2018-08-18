@@ -19,6 +19,7 @@
 #include <vector>
 #include <array>
 #include <iostream>
+#include <cstdint>
 
 #include "Common.h"
 #include "Domain.h"
@@ -66,28 +67,9 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 {
 	// color type
 	_color_type = MMPLD_COLOR_NONE;
-	int ctype = 0;
+	uint32_t ctype = 0;
 	xmlconfig.getNodeValue("@ctype", ctype);
-	switch(ctype) {
-		case 0:
-			_color_type = MMPLD_COLOR_NONE;
-			break;
-		case 1:
-			_color_type = MMPLD_COLOR_UINT8_RGB;
-			break;
-		case 2:
-			_color_type = MMPLD_COLOR_UINT8_RGBA;
-			break;
-		case 3:
-			_color_type = MMPLD_COLOR_FLOAT_I;
-			break;
-		case 4:
-			_color_type = MMPLD_COLOR_FLOAT_RGB;
-			break;
-		case 5:
-			_color_type = MMPLD_COLOR_FLOAT_RGBA;
-			break;
-	}
+	_color_type = static_cast<MMPLD_Color_type>(ctype);
 
 	// write control
 	xmlconfig.getNodeValue("writecontrol/start", _startTimestep);
