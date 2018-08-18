@@ -453,17 +453,22 @@ long MmpldWriter::get_particle_data_size() {
 			elemsize = 3 * sizeof(uint16_t);
 	}
 	switch(_color_type) {
+        case MMPLD_COLOR_NONE:
+            break;
+        case MMPLD_COLOR_UINT8_RGB:
+            elemsize += 3 * sizeof(uint8_t);
+            break;
+        case MMPLD_COLOR_UINT8_RGBA:
+            elemsize += 4 * sizeof(uint8_t);
+            break;
+        case MMPLD_COLOR_FLOAT_I:
+            elemsize += sizeof(float);
+            break;
 		case MMPLD_COLOR_FLOAT_RGB:
 			elemsize += 3 * sizeof(float);
 			break;
 		case MMPLD_COLOR_FLOAT_RGBA:
 			elemsize += 4 * sizeof(float);
-			break;
-		case MMPLD_COLOR_FLOAT_I:
-			elemsize += sizeof(float);
-			break;
-		case MMPLD_COLOR_UINT8_RGBA:
-			elemsize += 4 * sizeof(uint8_t);
 			break;
 	}
 	return elemsize;
