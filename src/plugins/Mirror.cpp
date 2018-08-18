@@ -7,13 +7,13 @@
 
 #include <fstream>
 #include <cmath>
+#include <cstdlib>
 
 using namespace std;
 using Log::global_log;
 
 Mirror::Mirror()
 {
-	_bReflect = true;
 }
 
 Mirror::~Mirror()
@@ -33,20 +33,129 @@ void Mirror::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("forceConstant", _forceConstant);
 	global_log->info() << "Mirror: force constant = " << _forceConstant << endl;
 
-	_direction = 0.;
-	xmlconfig.getNodeValue("direction", _direction);
+	/** mirror type */
+	_type = MT_UNKNOWN;
+	uint32_t type = 0;
+    xmlconfig.getNodeValue("@type", type);
+    _type = static_cast<MirrorType>(type); 
+
+	/** mirror direction */
+	_direction = MD_LEFT_MIRROR;
+	uint32_t dir = 0;
+	xmlconfig.getNodeValue("direction", dir);	
+	_direction = static_cast<MirrorDirection>(dir);
+	std::string strDirection = "unknown";
+	xmlconfig.getNodeValue("@dir", strDirection);
+	if("|<--" == strDirection)
+		_direction = MD_LEFT_MIRROR;
+	else if("-->|" == strDirection)
+		_direction = MD_RIGHT_MIRROR;
 	if(MD_LEFT_MIRROR == _direction)
 		global_log->info() << "Mirror: direction |<--" << endl;
 	else if(MD_RIGHT_MIRROR == _direction)
 		global_log->info() << "Mirror: direction -->|" << endl;
 
-	// normal distributions
-	bool bRet1 = xmlconfig.getNodeValue("norm/vxz", _norm.fname.vxz);
-	bool bRet2 = xmlconfig.getNodeValue("norm/vy",  _norm.fname.vy);
-	_norm.enabled = bRet1 && bRet2;
-	if(true == _norm.enabled) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
-		global_log->info() << "Mirror uses MB from files." << std::endl;
-		this->readNormDistr();
+	// ratio to reflect
+	_ratio = 1.;
+	xmlconfig.getNodeValue("ratio", _ratio);
+
+	/** normal distributions */
+	if(MT_NORMDISTR_MB == _type)
+	{
+		bool bRet = true;
+		bRet = bRet && xmlconfig.getNodeValue("norm/vxz", _norm.fname.vxz);
+		bRet = bRet && xmlconfig.getNodeValue("norm/vy",  _norm.fname.vy);
+		if(true == bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
+			global_log->info() << "Mirror uses MB from files." << std::endl;
+			this->readNormDistr();
+		}
+	}
+
+	/** zero gradient */
+	if(MT_ZERO_GRADIENT == _type)
+	{
+		bool bRet = true;
+		bRet = bRet && xmlconfig.getNodeValue("CV/width", _cv.width);
+		bRet = bRet && xmlconfig.getNodeValue("CV/margin", _cv.margin);
+		bRet = bRet && xmlconfig.getNodeValue("CV/cids/original", _cids.original);
+		bRet = bRet && xmlconfig.getNodeValue("CV/cids/forward", _cids.forward);
+		bRet = bRet && xmlconfig.getNodeValue("CV/cids/backward", _cids.backward);
+		bRet = bRet && xmlconfig.getNodeValue("CV/cids/reflected", _cids.reflected);
+		bRet = bRet && xmlconfig.getNodeValue("CV/cids/permitted", _cids.permitted);
+		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/numvals", _veloList.numvals);
+		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/initvals/x", _veloList.initvals[0]);
+		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/initvals/y", _veloList.initvals[1]);
+		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/initvals/z", _veloList.initvals[2]);
+
+		if(true == bRet)
+		{
+			// CV boundaries
+			if(MD_LEFT_MIRROR == _direction) {
+				_cv.left  = _yPos;
+				_cv.right = _cv.left + _cv.width;
+			}
+			else if(MD_RIGHT_MIRROR == _direction) {
+				_cv.right = _yPos;
+				_cv.left  = _cv.right - _cv.width;
+			}
+			_cv.left_outer = _cv.left - _cv.margin;
+			_cv.right_outer = _cv.right + _cv.margin;
+
+			// velocity list
+			_veloList.list.resize(_veloList.numvals);
+			for(auto&& val:_veloList.list) {
+				val.at(0) = _veloList.initvals.at(0);
+				val.at(1) = _veloList.initvals.at(1);
+				val.at(2) = _veloList.initvals.at(2);
+			}
+/*			for(auto&& val:_veloList.list)
+				cout << "v=" << val.at(0) << "," << val.at(1) << "," << val.at(2) << endl; */
+		}
+	}
+}
+
+void Mirror::beforeForces(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
+) {
+	if(MT_ZERO_GRADIENT != _type)
+		return;
+
+	const ParticleIterator begin = particleContainer->iterator();
+	for(ParticleIterator it = begin; it.hasNext(); it.next()) {
+		uint32_t cid_zb = it->componentid();
+		uint32_t cid_ub = cid_zb+1;
+		double ry = it->r(1);
+		double vy = it->v(1);
+
+		// no action
+		if(ry < _cv.left_outer || ry > _cv.right_outer || cid_ub == _cids.permitted)
+			continue;
+
+		// change back to original component
+		if(ry > _cv.left_outer && ry < _cv.left) {
+			Component* comp = global_simulation->getEnsemble()->getComponent(_cids.original-1);
+			it->setComponent(comp);
+		}
+
+		// inside CV
+		if(ry > _cv.left && ry < _cv.right) {
+			Component* comp;
+			if(vy > 0.) {
+				comp = global_simulation->getEnsemble()->getComponent(_cids.forward-1);
+				it->setComponent(comp);
+			}
+			if(vy < 0. && cid_ub == _cids.forward) {
+				comp = global_simulation->getEnsemble()->getComponent(_cids.backward-1);
+				it->setComponent(comp);
+				_veloList.list.pop_front();
+				std::array<double, 3> v;
+				v.at(0) = it->v(0);
+				v.at(1) = it->v(1);
+				v.at(2) = it->v(2);
+				_veloList.list.push_back(v);
+			}
+		}
 	}
 }
 
@@ -84,13 +193,46 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 					double vy = it->v(1);
 					if( (MD_RIGHT_MIRROR == _direction && ry > _yPos) || (MD_LEFT_MIRROR == _direction && ry < _yPos) ) {
 
-						if(true == _bReflect) {
+						if(MT_REFLECT == _type || MT_ZERO_GRADIENT == _type) {
 
 							if( (MD_RIGHT_MIRROR == _direction && vy > 0.) || (MD_LEFT_MIRROR == _direction && vy < 0.) ) {
 
-								if(false == _norm.enabled)
+								if(MT_REFLECT == _type)
 									it->setv(1, -vy);
-								else {
+								else if(MT_ZERO_GRADIENT == _type) {
+									uint32_t cid_ub = it->componentid()+1;
+									if(cid_ub != _cids.permitted) {
+										float frnd = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+										//cout << "frnd=" << frnd << endl;
+										if(frnd <= _ratio) {
+											int irnd = rand() % _veloList.numvals;
+											//cout << "irnd=" << irnd << endl;
+											std::list<std::array<double, 3> > list(_veloList.list);
+											/*cout << "VELOLIST" << endl;
+											cout << "--------------------------------" << endl;
+											for(auto&& val:list)
+												cout << "v=" << val.at(0) << "," << val.at(1) << "," << val.at(2) << endl; */
+											for(int i=0; i<irnd; i++)
+												list.pop_front();
+											std::array<double, 3> velo = list.front();
+											it->setv(0, velo.at(0) );
+											it->setv(1, velo.at(1) );
+											it->setv(2, velo.at(2) );
+											//cout << "setv=" << velo.at(0) << "," << velo.at(1) << "," << velo.at(2) << endl;
+
+											Component* comp;
+                                            comp = global_simulation->getEnsemble()->getComponent(_cids.reflected-1);
+                                            it->setComponent(comp);
+										}
+										else {
+											Component* comp;
+											comp = global_simulation->getEnsemble()->getComponent(_cids.permitted-1);
+											it->setComponent(comp);
+											//cout << "PERMITTED" << endl;
+										}
+									}
+								}
+								else if(MT_NORMDISTR_MB == _type) {
 									double vx = _norm.vxz.front();
 									_norm.vxz.pop_front();
 									_norm.vxz.push_back(vx);
@@ -109,7 +251,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 								}
 							}
 						}
-						else {
+						else if(MT_FORCE_CONSTANT == _type){
 							double distance = _yPos - ry;
 							additionalForce[1] = _forceConstant * distance;
 	//						cout << "additionalForce[1]=" << additionalForce[1] << endl;

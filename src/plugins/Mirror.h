@@ -8,10 +8,19 @@
 #include <string>
 #include <map>
 #include <list>
+#include <cstdint>
 
-enum MirrorDirections {
+enum MirrorDirection : uint16_t {
 	MD_LEFT_MIRROR = 0,
 	MD_RIGHT_MIRROR = 1
+};
+
+enum MirrorType : uint16_t {
+	MT_UNKNOWN = 0,
+    MT_REFLECT = 1,
+    MT_FORCE_CONSTANT = 2,
+	MT_ZERO_GRADIENT = 3,
+	MT_NORMDISTR_MB = 4
 };
 
 class ParticleContainer;
@@ -42,6 +51,11 @@ public:
 	void init(ParticleContainer *particleContainer,
 			  DomainDecompBase *domainDecomp, Domain *domain) override;
 
+	void beforeForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) override;
+
     /** @brief Method afterForces will be called after forcefields have been applied
      *
      * make pure Virtual ?
@@ -69,10 +83,9 @@ private:
 private:
 	double _yPos;
 	double _forceConstant;
-	int _direction;
-	bool _bReflect;
+	MirrorDirection _direction;
+	MirrorType _type;
 	struct NormMB{
-		bool enabled;
 		struct NormFnames{
 			std::string vxz;
 			std::string vy;
@@ -80,6 +93,33 @@ private:
 		std::list<double> vxz;
 		std::list<double> vy;
 	} _norm;
+
+	/** ratio of particles to reflect */
+	float _ratio;
+
+	/** zero gradient BC */
+	struct ComponentIDs {
+		uint32_t original;
+		uint32_t forward;
+		uint32_t backward;
+		uint32_t reflected;
+		uint32_t permitted;
+	} _cids;  // unity based
+
+	struct ControlVolume {
+		double left;
+		double right;
+		double left_outer;
+		double right_outer;
+		double width;
+		double margin;
+	} _cv;
+
+	struct VelocityList {
+		std::array<double, 3> initvals;
+		uint32_t numvals;
+		std::list<std::array<double, 3> > list;
+	} _veloList;
 };
 
 #endif /*MIRROR_H_*/
