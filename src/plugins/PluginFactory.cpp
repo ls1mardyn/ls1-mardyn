@@ -41,6 +41,7 @@
 #include "plugins/ExamplePlugin.h"
 #include "plugins/InMemoryCheckpointing.h"
 #include "plugins/InSituMegamol.h"
+#include "plugins/KartesianProfile.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/NEMD/RegionSampling.h"
@@ -75,6 +76,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(HaloParticleWriter);
     REGISTER_PLUGIN(InMemoryCheckpointing);
     REGISTER_PLUGIN(InSituMegamol);
+    REGISTER_PLUGIN(KartesianProfile);
     REGISTER_PLUGIN(LoadbalanceWriter);
     REGISTER_PLUGIN(MPICheckpointWriter);
     REGISTER_PLUGIN(MaxCheck);
