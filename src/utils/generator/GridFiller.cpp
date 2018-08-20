@@ -78,6 +78,10 @@ void GridFiller::init() {
         }
     }
 
+    for(int i = 0; i < 3; i++) {
+    	delete[] A[i];
+    }
+
     _lattice.setDimsMin(startdims);
     _lattice.setDimsMax(enddims);
 }

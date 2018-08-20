@@ -26,7 +26,11 @@
 using Log::global_log;
 using namespace std;
 
-MultiObjectGenerator::MultiObjectGenerator::~MultiObjectGenerator() {}
+MultiObjectGenerator::MultiObjectGenerator::~MultiObjectGenerator() {
+	for(auto& generator : _generators){
+		delete generator;
+	}
+}
 
 
 void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
