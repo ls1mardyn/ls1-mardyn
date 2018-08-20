@@ -136,40 +136,6 @@ SampleRegion::~SampleRegion()
 		delete [] _dTemperatureComp;
 	}
 
-	// VDF sampling
-	if(true == _SamplingEnabledVDF)
-	{
-		// local
-		delete [] _VDF_pjy_abs_local;
-		delete [] _VDF_pjy_pvx_local;
-		delete [] _VDF_pjy_pvy_local;
-		delete [] _VDF_pjy_pvz_local;
-		delete [] _VDF_pjy_nvx_local;
-		delete [] _VDF_pjy_nvz_local;
-
-		delete [] _VDF_njy_abs_local;
-		delete [] _VDF_njy_pvx_local;
-		delete [] _VDF_njy_pvz_local;
-		delete [] _VDF_njy_nvx_local;
-		delete [] _VDF_njy_nvy_local;
-		delete [] _VDF_njy_nvz_local;
-
-		// global
-		delete [] _VDF_pjy_abs_global;
-		delete [] _VDF_pjy_pvx_global;
-		delete [] _VDF_pjy_pvy_global;
-		delete [] _VDF_pjy_pvz_global;
-		delete [] _VDF_pjy_nvx_global;
-		delete [] _VDF_pjy_nvz_global;
-
-		delete [] _VDF_njy_abs_global;
-		delete [] _VDF_njy_pvx_global;
-		delete [] _VDF_njy_pvz_global;
-		delete [] _VDF_njy_nvx_global;
-		delete [] _VDF_njy_nvy_global;
-		delete [] _VDF_njy_nvz_global;
-	}
-
 	// fieldYR sampling
 	if(true == _SamplingEnabledFieldYR)
 	{
@@ -763,48 +729,48 @@ void SampleRegion::initSamplingVDF(int nDimension)
 	std::fill (_dBinMidpointsVDF.begin(),_dBinMidpointsVDF.end(),0);
 
 	// local
-	_VDF_pjy_abs_local = new uint64_t[_numValsVDF];
-	_VDF_pjy_pvx_local = new uint64_t[_numValsVDF];
-	_VDF_pjy_pvy_local = new uint64_t[_numValsVDF];
-	_VDF_pjy_pvz_local = new uint64_t[_numValsVDF];
-	_VDF_pjy_nvx_local = new uint64_t[_numValsVDF];
-	_VDF_pjy_nvz_local = new uint64_t[_numValsVDF];
+	resizeExactly(_VDF_pjy_abs_local, _numValsVDF);
+	resizeExactly(_VDF_pjy_pvx_local, _numValsVDF);
+	resizeExactly(_VDF_pjy_pvy_local, _numValsVDF);
+	resizeExactly(_VDF_pjy_pvz_local, _numValsVDF);
+	resizeExactly(_VDF_pjy_nvx_local, _numValsVDF);
+	resizeExactly(_VDF_pjy_nvz_local, _numValsVDF);
 
-	_VDF_njy_abs_local = new uint64_t[_numValsVDF];
-	_VDF_njy_pvx_local = new uint64_t[_numValsVDF];
-	_VDF_njy_pvz_local = new uint64_t[_numValsVDF];
-	_VDF_njy_nvx_local = new uint64_t[_numValsVDF];
-	_VDF_njy_nvy_local = new uint64_t[_numValsVDF];
-	_VDF_njy_nvz_local = new uint64_t[_numValsVDF];
+	resizeExactly(_VDF_njy_abs_local, _numValsVDF);
+	resizeExactly(_VDF_njy_pvx_local, _numValsVDF);
+	resizeExactly(_VDF_njy_pvz_local, _numValsVDF);
+	resizeExactly(_VDF_njy_nvx_local, _numValsVDF);
+	resizeExactly(_VDF_njy_nvy_local, _numValsVDF);
+	resizeExactly(_VDF_njy_nvz_local, _numValsVDF);
 
 	// global
-	_VDF_pjy_abs_global = new uint64_t[_numValsVDF];
-	_VDF_pjy_pvx_global = new uint64_t[_numValsVDF];
-	_VDF_pjy_pvy_global = new uint64_t[_numValsVDF];
-	_VDF_pjy_pvz_global = new uint64_t[_numValsVDF];
-	_VDF_pjy_nvx_global = new uint64_t[_numValsVDF];
-	_VDF_pjy_nvz_global = new uint64_t[_numValsVDF];
+	resizeExactly(_VDF_pjy_abs_global, _numValsVDF);
+	resizeExactly(_VDF_pjy_pvx_global, _numValsVDF);
+	resizeExactly(_VDF_pjy_pvy_global, _numValsVDF);
+	resizeExactly(_VDF_pjy_pvz_global, _numValsVDF);
+	resizeExactly(_VDF_pjy_nvx_global, _numValsVDF);
+	resizeExactly(_VDF_pjy_nvz_global, _numValsVDF);
 
-	_VDF_njy_abs_global = new uint64_t[_numValsVDF];
-	_VDF_njy_pvx_global = new uint64_t[_numValsVDF];
-	_VDF_njy_pvz_global = new uint64_t[_numValsVDF];
-	_VDF_njy_nvx_global = new uint64_t[_numValsVDF];
-	_VDF_njy_nvy_global = new uint64_t[_numValsVDF];
-	_VDF_njy_nvz_global = new uint64_t[_numValsVDF];
+	resizeExactly(_VDF_njy_abs_global, _numValsVDF);
+	resizeExactly(_VDF_njy_pvx_global, _numValsVDF);
+	resizeExactly(_VDF_njy_pvz_global, _numValsVDF);
+	resizeExactly(_VDF_njy_nvx_global, _numValsVDF);
+	resizeExactly(_VDF_njy_nvy_global, _numValsVDF);
+	resizeExactly(_VDF_njy_nvz_global, _numValsVDF);
 
 	// store pointers of local data structures (velocity component only) in 2D array
-	_dataPtrs.at(0).at(0) = _VDF_njy_nvx_local;
-	_dataPtrs.at(0).at(1) = _VDF_njy_pvx_local;
-	_dataPtrs.at(0).at(2) = _VDF_pjy_nvx_local;
-	_dataPtrs.at(0).at(3) = _VDF_pjy_pvx_local;
-	_dataPtrs.at(1).at(0) = _VDF_njy_nvy_local;
-	_dataPtrs.at(1).at(1) = NULL;
-	_dataPtrs.at(1).at(2) = NULL;
-	_dataPtrs.at(1).at(3) = _VDF_pjy_pvy_local;
-	_dataPtrs.at(2).at(0) = _VDF_njy_nvz_local;
-	_dataPtrs.at(2).at(1) = _VDF_njy_pvz_local;
-	_dataPtrs.at(2).at(2) = _VDF_pjy_nvz_local;
-	_dataPtrs.at(2).at(3) = _VDF_pjy_pvz_local;
+	_dataPtrs.at(0).at(0) = _VDF_njy_nvx_local.data();
+	_dataPtrs.at(0).at(1) = _VDF_njy_pvx_local.data();
+	_dataPtrs.at(0).at(2) = _VDF_pjy_nvx_local.data();
+	_dataPtrs.at(0).at(3) = _VDF_pjy_pvx_local.data();
+	_dataPtrs.at(1).at(0) = _VDF_njy_nvy_local.data();
+	_dataPtrs.at(1).at(1) = nullptr;
+	_dataPtrs.at(1).at(2) = nullptr;
+	_dataPtrs.at(1).at(3) = _VDF_pjy_pvy_local.data();
+	_dataPtrs.at(2).at(0) = _VDF_njy_nvz_local.data();
+	_dataPtrs.at(2).at(1) = _VDF_njy_pvz_local.data();
+	_dataPtrs.at(2).at(2) = _VDF_pjy_nvz_local.data();
+	_dataPtrs.at(2).at(3) = _VDF_pjy_pvz_local.data();
 
 
 	// init local values
@@ -1387,25 +1353,25 @@ void SampleRegion::calcGlobalValuesVDF()
 	#ifdef ENABLE_MPI
 
 		// positive y-direction
-		MPI_Reduce( _VDF_pjy_abs_local, _VDF_pjy_abs_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_abs_local.data(), _VDF_pjy_abs_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_pjy_pvx_local, _VDF_pjy_pvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_pjy_pvy_local, _VDF_pjy_pvy_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_pjy_pvz_local, _VDF_pjy_pvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_pvx_local.data(), _VDF_pjy_pvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_pvy_local.data(), _VDF_pjy_pvy_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_pvz_local.data(), _VDF_pjy_pvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_pjy_nvx_local, _VDF_pjy_nvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_pjy_nvz_local, _VDF_pjy_nvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_nvx_local.data(), _VDF_pjy_nvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_pjy_nvz_local.data(), _VDF_pjy_nvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
 
 		// negative y-direction
-		MPI_Reduce( _VDF_njy_abs_local, _VDF_njy_abs_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_abs_local.data(), _VDF_njy_abs_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_njy_pvx_local, _VDF_njy_pvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_njy_pvz_local, _VDF_njy_pvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_pvx_local.data(), _VDF_njy_pvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_pvz_local.data(), _VDF_njy_pvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_njy_nvx_local, _VDF_njy_nvx_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_njy_nvy_local, _VDF_njy_nvy_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_njy_nvz_local, _VDF_njy_nvz_global, _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_nvx_local.data(), _VDF_njy_nvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_nvy_local.data(), _VDF_njy_nvy_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce( _VDF_njy_nvz_local.data(), _VDF_njy_nvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	#else
 		for(uint32_t vi=0; vi<_numValsVDF; ++vi)
@@ -1672,18 +1638,18 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 			"_classes"};
 
 	std::array<uint64_t*,12> dataPtrs;
-	dataPtrs.at(0)  = _VDF_pjy_abs_global;
-	dataPtrs.at(1)  = _VDF_pjy_pvx_global;
-	dataPtrs.at(2)  = _VDF_pjy_pvy_global;
-	dataPtrs.at(3)  = _VDF_pjy_pvz_global;
-	dataPtrs.at(4)  = _VDF_pjy_nvx_global;
-	dataPtrs.at(5)  = _VDF_pjy_nvz_global;
-	dataPtrs.at(6)  = _VDF_njy_abs_global;
-	dataPtrs.at(7)  = _VDF_njy_pvx_global;
-	dataPtrs.at(8)  = _VDF_njy_pvz_global;
-	dataPtrs.at(9)  = _VDF_njy_nvx_global;
-	dataPtrs.at(10) = _VDF_njy_nvy_global;
-	dataPtrs.at(11) = _VDF_njy_nvz_global;
+	dataPtrs.at(0)  = _VDF_pjy_abs_global.data();
+	dataPtrs.at(1)  = _VDF_pjy_pvx_global.data();
+	dataPtrs.at(2)  = _VDF_pjy_pvy_global.data();
+	dataPtrs.at(3)  = _VDF_pjy_pvz_global.data();
+	dataPtrs.at(4)  = _VDF_pjy_nvx_global.data();
+	dataPtrs.at(5)  = _VDF_pjy_nvz_global.data();
+	dataPtrs.at(6)  = _VDF_njy_abs_global.data();
+	dataPtrs.at(7)  = _VDF_njy_pvx_global.data();
+	dataPtrs.at(8)  = _VDF_njy_pvz_global.data();
+	dataPtrs.at(9)  = _VDF_njy_nvx_global.data();
+	dataPtrs.at(10) = _VDF_njy_nvy_global.data();
+	dataPtrs.at(11) = _VDF_njy_nvz_global.data();
 
 	for(uint64_t cid=0; cid<_numComponents; ++cid)
 	{
@@ -1830,22 +1796,19 @@ void SampleRegion::resetLocalValuesVDF()
 	if(false == _SamplingEnabledVDF)
 		return;
 
-	for(uint32_t vi=0; vi<_numValsVDF; ++vi)
-	{
-		_VDF_pjy_abs_local[vi] = 0;
-		_VDF_pjy_pvx_local[vi] = 0;
-		_VDF_pjy_pvy_local[vi] = 0;
-		_VDF_pjy_pvz_local[vi] = 0;
-		_VDF_pjy_nvx_local[vi] = 0;
-		_VDF_pjy_nvz_local[vi] = 0;
+	std::fill(_VDF_pjy_abs_local.begin(), _VDF_pjy_abs_local.end(), 0);
+	std::fill(_VDF_pjy_pvx_local.begin(), _VDF_pjy_pvx_local.end(), 0);
+	std::fill(_VDF_pjy_pvy_local.begin(), _VDF_pjy_pvy_local.end(), 0);
+	std::fill(_VDF_pjy_pvz_local.begin(), _VDF_pjy_pvz_local.end(), 0);
+	std::fill(_VDF_pjy_nvx_local.begin(), _VDF_pjy_nvx_local.end(), 0);
+	std::fill(_VDF_pjy_nvz_local.begin(), _VDF_pjy_nvz_local.end(), 0);
 
-		_VDF_njy_abs_local[vi] = 0;
-		_VDF_njy_pvx_local[vi] = 0;
-		_VDF_njy_pvz_local[vi] = 0;
-		_VDF_njy_nvx_local[vi] = 0;
-		_VDF_njy_nvy_local[vi] = 0;
-		_VDF_njy_nvz_local[vi] = 0;
-	}
+	std::fill(_VDF_njy_abs_local.begin(), _VDF_njy_abs_local.end(), 0);
+	std::fill(_VDF_njy_pvx_local.begin(), _VDF_njy_pvx_local.end(), 0);
+	std::fill(_VDF_njy_pvz_local.begin(), _VDF_njy_pvz_local.end(), 0);
+	std::fill(_VDF_njy_nvx_local.begin(), _VDF_njy_nvx_local.end(), 0);
+	std::fill(_VDF_njy_nvy_local.begin(), _VDF_njy_nvy_local.end(), 0);
+	std::fill(_VDF_njy_nvz_local.begin(), _VDF_njy_nvz_local.end(), 0);
 }
 
 
@@ -2008,7 +1971,7 @@ void RegionSampling::readXML(XMLfileUnits& xmlconfig)
 			/*
 			 * TODO: Find solution for registering Observer
 			 *
-			if(global_simulation->GetDistControl() != NULL)
+			if(global_simulation->GetDistControl() != nullptr)
 				global_simulation->GetDistControl()->registerObserver(region);
 			else
 			{

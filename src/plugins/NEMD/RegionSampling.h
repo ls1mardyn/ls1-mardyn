@@ -123,6 +123,12 @@ private:
 	void(*_f2ptr)(double&, Molecule*);
 
 private:
+	template<typename T>
+	void resizeExactly(std::vector<T>& v, unsigned int numElements) const {
+		v.reserve(numElements);
+		v.resize(numElements);
+	}
+
 	// instances / ID
 	static unsigned short _nStaticID;
 
@@ -224,34 +230,34 @@ private:
 	uint32_t _numValsVDF;
 
 	// local
-	uint64_t* _VDF_pjy_abs_local;
-	uint64_t* _VDF_pjy_pvx_local;
-	uint64_t* _VDF_pjy_pvy_local;
-	uint64_t* _VDF_pjy_pvz_local;
-	uint64_t* _VDF_pjy_nvx_local;
-	uint64_t* _VDF_pjy_nvz_local;
+	std::vector<uint64_t> _VDF_pjy_abs_local;
+	std::vector<uint64_t> _VDF_pjy_pvx_local;
+	std::vector<uint64_t> _VDF_pjy_pvy_local;
+	std::vector<uint64_t> _VDF_pjy_pvz_local;
+	std::vector<uint64_t> _VDF_pjy_nvx_local;
+	std::vector<uint64_t> _VDF_pjy_nvz_local;
 
-	uint64_t* _VDF_njy_abs_local;
-	uint64_t* _VDF_njy_pvx_local;
-	uint64_t* _VDF_njy_pvz_local;
-	uint64_t* _VDF_njy_nvx_local;
-	uint64_t* _VDF_njy_nvy_local;
-	uint64_t* _VDF_njy_nvz_local;
+	std::vector<uint64_t> _VDF_njy_abs_local;
+	std::vector<uint64_t> _VDF_njy_pvx_local;
+	std::vector<uint64_t> _VDF_njy_pvz_local;
+	std::vector<uint64_t> _VDF_njy_nvx_local;
+	std::vector<uint64_t> _VDF_njy_nvy_local;
+	std::vector<uint64_t> _VDF_njy_nvz_local;
 
 	// global
-	uint64_t* _VDF_pjy_abs_global;
-	uint64_t* _VDF_pjy_pvx_global;
-	uint64_t* _VDF_pjy_pvy_global;
-	uint64_t* _VDF_pjy_pvz_global;
-	uint64_t* _VDF_pjy_nvx_global;
-	uint64_t* _VDF_pjy_nvz_global;
+	std::vector<uint64_t> _VDF_pjy_abs_global;
+	std::vector<uint64_t> _VDF_pjy_pvx_global;
+	std::vector<uint64_t> _VDF_pjy_pvy_global;
+	std::vector<uint64_t> _VDF_pjy_pvz_global;
+	std::vector<uint64_t> _VDF_pjy_nvx_global;
+	std::vector<uint64_t> _VDF_pjy_nvz_global;
 
-	uint64_t* _VDF_njy_abs_global;
-	uint64_t* _VDF_njy_pvx_global;
-	uint64_t* _VDF_njy_pvz_global;
-	uint64_t* _VDF_njy_nvx_global;
-	uint64_t* _VDF_njy_nvy_global;
-	uint64_t* _VDF_njy_nvz_global;
+	std::vector<uint64_t> _VDF_njy_abs_global;
+	std::vector<uint64_t> _VDF_njy_pvx_global;
+	std::vector<uint64_t> _VDF_njy_pvz_global;
+	std::vector<uint64_t> _VDF_njy_nvx_global;
+	std::vector<uint64_t> _VDF_njy_nvy_global;
+	std::vector<uint64_t> _VDF_njy_nvz_global;
 
 	std::array<std::array<uint64_t*,4>,3> _dataPtrs;
 	std::string _fnamePrefixVDF;
