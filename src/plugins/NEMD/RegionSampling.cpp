@@ -94,16 +94,6 @@ SampleRegion::~SampleRegion()
 	// profile sampling
 	if(true == _SamplingEnabledProfiles)
 	{
-		delete [] _dBinMidpointsProfiles;
-		// Offsets
-		for(uint8_t dir = 0; dir<3; ++dir)
-			delete [] _nOffsetScalar[dir];
-
-		for(uint8_t dim = 0; dim<3; ++dim)
-		{
-			for(uint8_t dir = 0; dir<3; ++dir)
-				delete [] _nOffsetVector[dim][dir];
-		}
 		// Scalar quantities
 		delete [] _nNumMoleculesLocal;
 		delete [] _nNumMoleculesGlobal;
@@ -612,7 +602,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 
 
 	// discrete values: Bin midpoints, velocity values
-	_dBinMidpointsProfiles = new double[_nNumBinsProfiles];
+	resizeExactly(_dBinMidpointsProfiles,_nNumBinsProfiles);
 
 	_nNumValsScalar = _nNumBinsProfiles * _numComponents * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
 	_nNumValsVector = _nNumValsScalar * 3;                        // * 3: x, y, z-component
@@ -625,17 +615,12 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 #endif
 
 	// Offsets
-	_nOffsetScalar = new unsigned long*[3];
 	for(unsigned int dir = 0; dir<3; ++dir)
-		_nOffsetScalar[dir] = new unsigned long[_numComponents];
+		resizeExactly(_nOffsetScalar[dir],_numComponents);
 
-	_nOffsetVector = new unsigned long**[3];
 	for(unsigned int dim = 0; dim<3; ++dim)
-	{
-		_nOffsetVector[dim] = new unsigned long*[3];
 		for(unsigned int dir = 0; dir<3; ++dir)
-			_nOffsetVector[dim][dir] = new unsigned long[_numComponents];
-	}
+			resizeExactly(_nOffsetVector[dim][dir], _numComponents);
 
 	unsigned long nOffset;
 

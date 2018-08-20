@@ -154,12 +154,12 @@ private:
 	double  _dBinWidthProfiles;
 	double  _dBinWidthProfilesInit;
 	double  _dBinVolumeProfiles;
-	double* _dBinMidpointsProfiles;
+	std::vector<double> _dBinMidpointsProfiles;
 
 	// offsets
 	// TODO: Use only 1 offset array: for scalar one can take the offsets of dimension x, right???
-	unsigned long**  _nOffsetScalar;  //                  [direction all|+|-][component]
-	unsigned long*** _nOffsetVector;  // [dimension x|y|z][direction all|+|-][component]
+	std::array<std::vector<unsigned long>, 3> _nOffsetScalar; //                                  [direction all|+|-][component]
+	std::array<std::array<std::vector<unsigned long>, 3>, 3> _nOffsetVector;  // [dimension x|y|z][direction all|+|-][component]
 
 	unsigned long _nNumValsScalar;
 	unsigned long _nNumValsVector;
