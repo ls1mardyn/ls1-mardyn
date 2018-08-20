@@ -14,9 +14,6 @@
 class KartesianProfile : public PluginBase{
 
 public:
-    KartesianProfile(){};
-    ~KartesianProfile(){};
-
     /**
      *
      * Initialize Arrays

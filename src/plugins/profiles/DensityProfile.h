@@ -10,9 +10,6 @@
 
 class DensityProfile : public ProfileBase {
 public:
-    DensityProfile()
-    { global_log->info() << "[DensityProfile] enabled" << std::endl; };
-
     void record(ParticleIterator *mol, unsigned long uID) override;
     void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) override;
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) override;

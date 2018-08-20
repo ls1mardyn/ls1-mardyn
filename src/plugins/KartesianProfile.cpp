@@ -42,8 +42,8 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
         universalInvProfileUnit[i] = universalProfileUnit[i] / globalLength[i];
         global_log->info() << "[KartesianProfile] universalInvProfileUnit " << universalInvProfileUnit[i] << "\n";
     }
-    _uIDs = this->universalProfileUnit[0] * this->universalProfileUnit[1]
-            * this->universalProfileUnit[2];
+    _uIDs = (unsigned long) (this->universalProfileUnit[0] * this->universalProfileUnit[1]
+            * this->universalProfileUnit[2]);
     global_log->info() << "[KartesianProfile] number uID " << _uIDs << "\n";
 
     segmentVolume = this->globalLength[0] * this->globalLength[1] * this->globalLength[2]
@@ -73,8 +73,8 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
             xun = (unsigned) floor(thismol->r(0) * this->universalInvProfileUnit[0]);
             yun = (unsigned) floor(thismol->r(1) * this->universalInvProfileUnit[1]);
             zun = (unsigned) floor(thismol->r(2) * this->universalInvProfileUnit[2]);
-            uID = xun * this->universalProfileUnit[1] * this->universalProfileUnit[2]
-                  + yun * this->universalProfileUnit[2] + zun;
+            uID = (unsigned long) (xun * this->universalProfileUnit[1] * this->universalProfileUnit[2]
+                  + yun * this->universalProfileUnit[2] + zun);
 
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->record(&thismol, uID);
