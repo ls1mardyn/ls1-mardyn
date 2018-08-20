@@ -944,12 +944,30 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 		mardyn_assert(indexCID < _nNumValsScalar);
 
 		// Scalar quantities
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nNumMoleculesLocal[ indexAll ] ++;  // all components
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nNumMoleculesLocal[ indexCID ] ++;  // specific component
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nRotDOFLocal      [ indexAll ] += nRotDOF;
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nRotDOFLocal      [ indexCID ] += nRotDOF;
 
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_d2EkinRotLocal    [ indexAll ] += d2EkinRot;
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_d2EkinRotLocal    [ indexCID ] += d2EkinRot;
 
 		// Vector quantities
@@ -962,11 +980,29 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 			mardyn_assert(vIndexAll < _nNumValsVector);
 			mardyn_assert(vIndexCID < _nNumValsVector);
 
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_dVelocityLocal       [ vIndexAll ] += v[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_dVelocityLocal       [ vIndexCID ] += v[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_dSquaredVelocityLocal[ vIndexAll ] += v2[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_dSquaredVelocityLocal[ vIndexCID ] += v2[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_dForceLocal          [ vIndexAll ] += F[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_dForceLocal          [ vIndexCID ] += F[dim];
 		}
 	}
@@ -1032,9 +1068,16 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 	for(unsigned int d=0; d<3; ++d)
 	{
 		uint8_t ptrIndex = 2*(v[1]>0.)+(v[d]>0.);
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_dataPtrs.at(d).at(ptrIndex)[ nOffset + naVelocityClassIndex[d] ]++;
-		if(true == bSampleComponentSum)
+		if(true == bSampleComponentSum) {
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_dataPtrs.at(d).at(ptrIndex)[ nBinOffset + naVelocityClassIndex[d] ]++;
+		}
 	}
 
 	// absolute velocity
@@ -1043,14 +1086,28 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 
 	if(v[1] > 0.)  // particle flux in positive y-direction
 	{
-		if(true == bSampleComponentSum)
+		if(true == bSampleComponentSum) {
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_VDF_pjy_abs_local[nBinOffset + nVelocityClassIndex]++;
+		}
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_VDF_pjy_abs_local[nOffset + nVelocityClassIndex]++;
 	}
 	else  // particle flux in negative y-direction
 	{
-		if(true == bSampleComponentSum)
+		if(true == bSampleComponentSum) {
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
 			_VDF_njy_abs_local[nBinOffset + nVelocityClassIndex]++;
+		}
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_VDF_njy_abs_local[nOffset + nVelocityClassIndex]++;
 	}
 }
@@ -1096,17 +1153,35 @@ void SampleRegion::sampleFieldYR(Molecule* molecule)
 	}
 
 	// Scalar quantities
+	#if defined(_OPENMP)
+	#pragma omp atomic
+	#endif
 	_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][0][0  ][nPosIndexR] + nPosIndexY ] ++;  // all components
+	#if defined(_OPENMP)
+	#pragma omp atomic
+	#endif
 	_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][0][cid][nPosIndexR] + nPosIndexY ] ++;  // specific component
 
 	if(dPosRelativeX >= 0.)
 	{
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][1][0  ][nPosIndexR] + nPosIndexY ] ++;  // all components
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][1][cid][nPosIndexR] + nPosIndexY ] ++;  // specific component
 	}
 	else
 	{
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][2][0  ][nPosIndexR] + nPosIndexY ] ++;  // all components
+		#if defined(_OPENMP)
+		#pragma omp atomic
+		#endif
 		_nNumMoleculesFieldYRLocal[ _nOffsetFieldYR[0][2][cid][nPosIndexR] + nPosIndexY ] ++;  // specific component
 	}
 }
@@ -1928,6 +2003,9 @@ void RegionSampling::endStep(ParticleContainer *particleContainer,
 		DomainDecompBase *domainDecomp, Domain * /*domain */,
 		unsigned long simstep) {
 
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
 	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next() )
 		this->doSampling(&(*pit), domainDecomp, simstep);
 
