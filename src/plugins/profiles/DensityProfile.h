@@ -6,16 +6,18 @@
 #define MARDYN_TRUNK_DENSITYPROFILE_H
 
 #include "ProfileBase.h"
+#include "../KartesianProfile.h"
 
 class DensityProfile : public ProfileBase {
 public:
-    DensityProfile(){global_log->info() << "[DensityProfile] enabled" << std::endl;};
+    DensityProfile()
+    { global_log->info() << "[DensityProfile] enabled" << std::endl; };
 
-    void record(ParticleIterator* mol, long int uID) override;
-    void collectAppend() override;
-    void collectRetrieve() override;
-    void output() override;
-    void reset() override;
+    void record(ParticleIterator *mol, unsigned long uID) override;
+    void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) override;
+    void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) override;
+    void output(string prefix) override;
+    void reset(unsigned long uID) override;
 };
 
 

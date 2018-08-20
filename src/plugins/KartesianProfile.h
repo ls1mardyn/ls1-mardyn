@@ -25,9 +25,7 @@ public:
      * @param domainDecomp
      * @param domain
      */
-    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {
-        global_log -> debug() << "[KartesianProfile] enabled" << std::endl;
-    }
+    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
     /**
      * Read in Profile Steps
@@ -45,18 +43,24 @@ public:
 
     static PluginBase* createInstance(){return new KartesianProfile();}
 
+    double universalInvProfileUnit[3];
+    double universalProfileUnit[3];
+    long accumulatedDatasets;
+    double globalLength[3];
+    double segmentVolume;
+    Domain* dom;
+
 private:
     unsigned long _writeFrequency;  // File Output / Reset frequency
     unsigned long _initStatistics;  // Timesteps to skip
     unsigned long _profileRecordingTimesteps;  // Sampling frequency
     std::string _outputPrefix;  // File name prefix
 
-    long _universalInvProfileUnit[3];
-    long _universalProfileUnit[3];
+
+    unsigned long _uIDs;
 
     vector<ProfileBase*> _profiles;
 
-    DensityProfile* _density;
 };
 
 
