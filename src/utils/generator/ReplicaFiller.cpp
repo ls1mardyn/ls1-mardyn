@@ -104,9 +104,9 @@ private:
 };
 
 
-void ReplicaFiller::setObject(Object* object) { _object = object; }
+void ReplicaFiller::setObject(std::shared_ptr<Object> object) { _object = object; }
 
-Object * ReplicaFiller::getObject() { return _object; }
+std::shared_ptr<Object> ReplicaFiller::getObject() { return _object; }
 
 void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("input")) {
@@ -146,7 +146,7 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 
 void ReplicaFiller::init() {
 	ParticleContainerToBasisWrapper basisContainer;
-	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(std::shared_ptr<Object>(_object), _origin);
+	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
 	basisContainer.setBoundingBox(object);
 
 	std::list<ChemicalPotential> lmu;
@@ -158,7 +158,7 @@ void ReplicaFiller::init() {
 	Domain domain(0, nullptr);
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
 	_inputReader->readPhaseSpace(&basisContainer, &lmu, &domain, &domainDecomp);
-	global_log->info() << "Number of moleucles in the replica: " << basisContainer.getNumberOfParticles() << endl;
+	global_log->info() << "Number of molecules in the replica: " << basisContainer.getNumberOfParticles() << endl;
 
 	global_log->info() << "Setting simulation time to 0." << endl;
 	_simulation.setSimulationTime(0);

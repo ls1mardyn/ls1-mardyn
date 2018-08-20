@@ -44,10 +44,10 @@ public:
 	void setInputReader(std::shared_ptr<InputBase> inputReader) { _inputReader = inputReader; }
 
 	/* Set object to fill */
-	void setObject(Object *object);
+	void setObject(std::shared_ptr<Object> object);
 
 	/* Get object to fill */
-	Object * getObject();
+	std::shared_ptr<Object> getObject();
 
 	/** Get a single molecule
 	 * By subsequent calls all molecules will be returned, one by one.
@@ -62,7 +62,7 @@ public:
 private:
 	std::shared_ptr<InputBase> _inputReader;
 	GridFiller _gridFiller;
-	Object *_object;
+	std::shared_ptr<Object> _object;
 	double _origin[3];
 	unsigned int _componentid;
 };

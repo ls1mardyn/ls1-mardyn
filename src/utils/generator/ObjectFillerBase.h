@@ -28,7 +28,7 @@ public:
 	virtual void init() = 0;
 
 	/* Set object to fill */
-	virtual void setObject(Object *object) = 0;
+	virtual void setObject(std::shared_ptr<Object> object) = 0;
 
 	/** Get a single molecule
 	 * By subsequent calls all molecules will be returned, one by one.

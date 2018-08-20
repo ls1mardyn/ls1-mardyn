@@ -56,7 +56,7 @@ public:
 	void init();
 
 	/* Set object to fill */
-	void setObject(Object *object) { _object = object; }
+	void setObject(std::shared_ptr<Object> object) { _object = object; }
 
 	/** Get a single molecule
 	 * By subsequent calls all molecules will be returned, one by one.
@@ -72,7 +72,7 @@ private:
 	Lattice _lattice;
 	Basis _basis;
 	std::array<double, 3> _origin;
-	Object *_object;
+	std::shared_ptr<Object> _object;
 	double _latticeOccupancy;
 
 	std::uniform_real_distribution<> _dis;

@@ -102,7 +102,7 @@ unsigned long ObjectGenerator::readPhaseSpace(ParticleContainer* particleContain
 	domainDecomp->getBoundingBoxMinMax(domain, bBoxMin, bBoxMax);
 	std::shared_ptr<Object> bBox = std::make_shared<BoundingBox>(bBoxMin, bBoxMax);
 	std::shared_ptr<Object> boundedObject = std::make_shared<ObjectIntersection>(bBox, _object);
-	_filler->setObject(boundedObject.get());
+	_filler->setObject(boundedObject);
 	_filler->init();
 
 	Molecule molecule;
