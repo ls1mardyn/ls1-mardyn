@@ -937,31 +937,37 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 		if(2==dir && v[1] > 0.)
 			continue;
 
-		mardyn_assert(_nOffsetScalar[dir][0  ] + nPosIndex < _nNumValsScalar);
-		mardyn_assert(_nOffsetScalar[dir][cid] + nPosIndex < _nNumValsScalar);
+		unsigned long indexAll = _nOffsetScalar[dir][0  ] + nPosIndex;
+		unsigned long indexCID = _nOffsetScalar[dir][cid] + nPosIndex;
+
+		mardyn_assert(indexAll < _nNumValsScalar);
+		mardyn_assert(indexCID < _nNumValsScalar);
 
 		// Scalar quantities
-		_nNumMoleculesLocal[ _nOffsetScalar[dir][0  ] + nPosIndex ] ++;  // all components
-		_nNumMoleculesLocal[ _nOffsetScalar[dir][cid] + nPosIndex ] ++;  // specific component
-		_nRotDOFLocal      [ _nOffsetScalar[dir][0  ] + nPosIndex ] += nRotDOF;
-		_nRotDOFLocal      [ _nOffsetScalar[dir][cid] + nPosIndex ] += nRotDOF;
+		_nNumMoleculesLocal[ indexAll ] ++;  // all components
+		_nNumMoleculesLocal[ indexCID ] ++;  // specific component
+		_nRotDOFLocal      [ indexAll ] += nRotDOF;
+		_nRotDOFLocal      [ indexCID ] += nRotDOF;
 
-		_d2EkinRotLocal    [ _nOffsetScalar[dir][0  ] + nPosIndex ] += d2EkinRot;
-		_d2EkinRotLocal    [ _nOffsetScalar[dir][cid] + nPosIndex ] += d2EkinRot;
+		_d2EkinRotLocal    [ indexAll ] += d2EkinRot;
+		_d2EkinRotLocal    [ indexCID ] += d2EkinRot;
 
 		// Vector quantities
 		// Loop over dimensions  x, y, z (vector components)
 		for(unsigned int dim = 0; dim<3; ++dim)
 		{
-			mardyn_assert(_nOffsetVector[dim][dir][0  ] + nPosIndex < _nNumValsVector);
-			mardyn_assert(_nOffsetVector[dim][dir][cid] + nPosIndex < _nNumValsVector);
+			unsigned long vIndexAll = _nOffsetVector[dim][dir][0  ] + nPosIndex;
+			unsigned long vIndexCID = _nOffsetVector[dim][dir][cid] + nPosIndex;
 
-			_dVelocityLocal       [ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += v[dim];
-			_dVelocityLocal       [ _nOffsetVector[dim][dir][cid] + nPosIndex ] += v[dim];
-			_dSquaredVelocityLocal[ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += v2[dim];
-			_dSquaredVelocityLocal[ _nOffsetVector[dim][dir][cid] + nPosIndex ] += v2[dim];
-			_dForceLocal          [ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += F[dim];
-			_dForceLocal          [ _nOffsetVector[dim][dir][cid] + nPosIndex ] += F[dim];
+			mardyn_assert(vIndexAll < _nNumValsVector);
+			mardyn_assert(vIndexCID < _nNumValsVector);
+
+			_dVelocityLocal       [ vIndexAll ] += v[dim];
+			_dVelocityLocal       [ vIndexCID ] += v[dim];
+			_dSquaredVelocityLocal[ vIndexAll ] += v2[dim];
+			_dSquaredVelocityLocal[ vIndexCID ] += v2[dim];
+			_dForceLocal          [ vIndexAll ] += F[dim];
+			_dForceLocal          [ vIndexCID ] += F[dim];
 		}
 	}
 }
@@ -1902,8 +1908,8 @@ void RegionSampling::prepareRegionSubdivisions()
 	}
 }
 
-void RegionSampling::init(ParticleContainer *particleContainer,
-		DomainDecompBase *domainDecomp, Domain *domain)
+void RegionSampling::init(ParticleContainer * /*particleContainer */,
+		DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/)
 {
 	this->prepareRegionSubdivisions();
 
@@ -1919,7 +1925,7 @@ void RegionSampling::init(ParticleContainer *particleContainer,
 }
 
 void RegionSampling::endStep(ParticleContainer *particleContainer,
-		DomainDecompBase *domainDecomp, Domain *domain,
+		DomainDecompBase *domainDecomp, Domain * /*domain */,
 		unsigned long simstep) {
 
 	for (ParticleIterator pit = particleContainer->iterator(); pit.hasNext(); pit.next() )
