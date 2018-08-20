@@ -282,25 +282,25 @@ private:
 	double  _dBinWidthFieldYR;
 	double  _dShellWidthFieldYR;
 	double  _dShellWidthSquaredFieldYR;
-	double* _dBinMidpointsFieldYR;
-	double* _dShellMidpointsFieldYR;
-	double* _dShellVolumesFieldYR;
-	double* _dInvShellVolumesFieldYR;
+	std::vector<double> _dBinMidpointsFieldYR;
+	std::vector<double> _dShellMidpointsFieldYR;
+	std::vector<double> _dShellVolumesFieldYR;
+	std::vector<double> _dInvShellVolumesFieldYR;
 	// equal shell volumes
 	double _dShellVolumeFieldYR;
 	double _dInvShellVolumeFieldYR;
 
 	// offsets
-	uint64_t**** _nOffsetFieldYR;  // [dimension x|y|z][component][section][positionR], dimension = 0 for scalar values, section: 0: all, 1: upper, 2: lower section
+	std::array<std::array<std::vector<std::vector<uint64_t>>, 3>, 3> _nOffsetFieldYR; // [dimension x|y|z][component][section][positionR], dimension = 0 for scalar values, section: 0: all, 1: upper, 2: lower section
 	uint64_t _nNumValsFieldYR;
 
 	// Scalar quantities
 	// [component][section][positionR][positionY]
-	uint64_t* _nNumMoleculesFieldYRLocal;
-	uint64_t* _nNumMoleculesFieldYRGlobal;
+	std::vector<uint64_t> _nNumMoleculesFieldYRLocal;
+	std::vector<uint64_t> _nNumMoleculesFieldYRGlobal;
 
 	// output profiles
-	double* _dDensityFieldYR;
+	std::vector<double> _dDensityFieldYR;
 
 	// output file
 	std::string _strFilePrefixFieldYR;

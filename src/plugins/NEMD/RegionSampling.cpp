@@ -125,33 +125,6 @@ SampleRegion::~SampleRegion()
 		delete [] _d2EkinDriftComp;
 		delete [] _dTemperatureComp;
 	}
-
-	// fieldYR sampling
-	if(true == _SamplingEnabledFieldYR)
-	{
-		delete [] _dShellVolumesFieldYR;
-		delete [] _dBinMidpointsFieldYR;
-		delete [] _dShellMidpointsFieldYR;
-		// Offsets
-		for(uint8_t dim=0; dim<3; ++dim)
-		{
-			for(uint8_t sec=0; sec<3; ++sec)
-			{
-				for(uint32_t cid = 0; cid<_numComponents; ++cid)
-					delete [] _nOffsetFieldYR[dim][sec][cid];
-				delete [] _nOffsetFieldYR[dim][sec];
-			}
-			delete [] _nOffsetFieldYR[dim];
-		}
-		delete [] _nOffsetFieldYR;
-
-		// Scalar quantities
-		delete [] _nNumMoleculesFieldYRLocal;
-		delete [] _nNumMoleculesFieldYRGlobal;
-		// output profiles
-		delete [] _dDensityFieldYR;
-		delete [] _dInvShellVolumesFieldYR;
-	}
 }
 
 void SampleRegion::initComponentSpecificParamsVDF()
@@ -794,7 +767,7 @@ void SampleRegion::initSamplingFieldYR(int nDimension)
 	_dShellWidthSquaredFieldYR = _dShellWidthFieldYR*_dShellWidthFieldYR;
 
 	// shell volumes
-	_dShellVolumesFieldYR = new double[_nNumShellsFieldYR];
+	resizeExactly(_dShellVolumesFieldYR, _nNumShellsFieldYR);
 
 	/*
 	 * TODO: Implement both variants
@@ -810,8 +783,8 @@ void SampleRegion::initSamplingFieldYR(int nDimension)
 	*/
 
 	// discrete values: Bin midpoints, Shell midpoints
-	_dBinMidpointsFieldYR = new double[_nNumBinsFieldYR];
-	_dShellMidpointsFieldYR = new double[_nNumShellsFieldYR];
+	resizeExactly(_dBinMidpointsFieldYR, _nNumBinsFieldYR);
+	resizeExactly(_dShellMidpointsFieldYR, _nNumShellsFieldYR);
 
 	_nNumValsFieldYR = _numComponents * 3 * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
 
@@ -823,15 +796,11 @@ void SampleRegion::initSamplingFieldYR(int nDimension)
 #endif
 
 	// Offsets
-	_nOffsetFieldYR = new uint64_t***[3];
-	for(uint8_t dim=0; dim<3; ++dim)
-	{
-		_nOffsetFieldYR[dim] = new uint64_t**[3];
-		for(uint8_t sec=0; sec<3; ++sec)
-		{
-			_nOffsetFieldYR[dim][sec] = new uint64_t*[_numComponents];
+	for(uint8_t dim=0; dim<3; ++dim) {
+		for(uint8_t sec=0; sec<3; ++sec) {
+			resizeExactly(_nOffsetFieldYR[dim][sec], _numComponents);
 			for(uint32_t cid = 0; cid<_numComponents; ++cid)
-				_nOffsetFieldYR[dim][sec][cid] = new uint64_t[_nNumShellsFieldYR];
+				resizeExactly(_nOffsetFieldYR[dim][sec][cid], _nNumShellsFieldYR);
 		}
 	}
 
@@ -852,12 +821,12 @@ void SampleRegion::initSamplingFieldYR(int nDimension)
 
 	// Scalar quantities
 	// [direction all|+|-][component][position]
-	_nNumMoleculesFieldYRLocal  = new unsigned long[_nNumValsFieldYR];
-	_nNumMoleculesFieldYRGlobal = new unsigned long[_nNumValsFieldYR];
+	resizeExactly(_nNumMoleculesFieldYRLocal  , _nNumValsFieldYR);
+	resizeExactly(_nNumMoleculesFieldYRGlobal , _nNumValsFieldYR);
 
 	// output profiles
-	_dDensityFieldYR = new double[_nNumValsFieldYR];
-	_dInvShellVolumesFieldYR = new double[_nNumValsFieldYR];
+	resizeExactly(_dDensityFieldYR, _nNumValsFieldYR);
+	resizeExactly(_dInvShellVolumesFieldYR, _nNumValsFieldYR);
 
 	// section shell volume factor
 	 float faSecFac[3] = {1., 2., 2.};
@@ -1388,7 +1357,7 @@ void SampleRegion::calcGlobalValuesFieldYR(DomainDecompBase* domainDecomp, Domai
 
 	// Scalar quantities
 	// [dimension x|y|z][component][positionR][positionY]
-	MPI_Reduce( _nNumMoleculesFieldYRLocal, _nNumMoleculesFieldYRGlobal, _nNumValsFieldYR, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _nNumMoleculesFieldYRLocal.data(), _nNumMoleculesFieldYRGlobal.data(), _nNumValsFieldYR, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
 #else
 	// Scalar quantities
@@ -1845,10 +1814,7 @@ void SampleRegion::resetLocalValuesFieldYR()
 		return;
 
 	// Scalar quantities
-	for(unsigned int i = 0; i < _nNumValsFieldYR; ++i)
-	{
-		_nNumMoleculesFieldYRLocal[i] = 0;
-	}
+	std::fill(_nNumMoleculesFieldYRLocal.begin(), _nNumMoleculesFieldYRLocal.end(), 0);
 }
 
 void SampleRegion::updateSlabParameters()
