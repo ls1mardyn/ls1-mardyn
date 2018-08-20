@@ -89,43 +89,7 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	_f2ptr = get_v2;
 }
 
-SampleRegion::~SampleRegion()
-{
-	// profile sampling
-	if(true == _SamplingEnabledProfiles)
-	{
-		// Scalar quantities
-		delete [] _nNumMoleculesLocal;
-		delete [] _nNumMoleculesGlobal;
-		delete [] _nRotDOFLocal;
-		delete [] _nRotDOFGlobal;
-		delete [] _d2EkinRotLocal;
-		delete [] _d2EkinRotGlobal;
-		// output profiles
-		delete [] _dDensity;
-		delete [] _d2EkinTotal;
-		delete [] _d2EkinTrans;
-		delete [] _d2EkinDrift;
-		delete [] _d2EkinRot;
-		delete [] _d2EkinT;
-		delete [] _dTemperature;
-		delete [] _dTemperatureTrans;
-		delete [] _dTemperatureRot;
-		// Vector quantities
-		delete [] _dVelocityLocal;
-		delete [] _dVelocityGlobal;
-		delete [] _dSquaredVelocityLocal;
-		delete [] _dSquaredVelocityGlobal;
-		delete [] _dForceLocal;
-		delete [] _dForceGlobal;
-		// output profiles
-		delete [] _dForce;
-		delete [] _dDriftVelocity;
-		delete [] _d2EkinTransComp;
-		delete [] _d2EkinDriftComp;
-		delete [] _dTemperatureComp;
-	}
-}
+SampleRegion::~SampleRegion() {}
 
 void SampleRegion::initComponentSpecificParamsVDF()
 {
@@ -618,39 +582,39 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 
 	// Scalar quantities
 	// [direction all|+|-][component][position]
-	_nNumMoleculesLocal  = new unsigned long[_nNumValsScalar];
-	_nNumMoleculesGlobal = new unsigned long[_nNumValsScalar];
-	_nRotDOFLocal  = new unsigned long[_nNumValsScalar];
-	_nRotDOFGlobal = new unsigned long[_nNumValsScalar];
-	_d2EkinRotLocal  = new double[_nNumValsScalar];
-	_d2EkinRotGlobal = new double[_nNumValsScalar];
+	resizeExactly(_nNumMoleculesLocal, _nNumValsScalar);
+	resizeExactly(_nNumMoleculesGlobal, _nNumValsScalar);
+	resizeExactly(_nRotDOFLocal, _nNumValsScalar);
+	resizeExactly(_nRotDOFGlobal, _nNumValsScalar);
+	resizeExactly(_d2EkinRotLocal,  _nNumValsScalar);
+	resizeExactly(_d2EkinRotGlobal, _nNumValsScalar);
 
 	// output profiles
-	_dDensity = new double[_nNumValsScalar];
-	_d2EkinTotal = new double[_nNumValsScalar];
-	_d2EkinTrans = new double[_nNumValsScalar];
-	_d2EkinDrift = new double[_nNumValsScalar];
-	_d2EkinRot   = new double[_nNumValsScalar];
-	_d2EkinT     = new double[_nNumValsScalar];
-	_dTemperature      = new double[_nNumValsScalar];
-	_dTemperatureTrans = new double[_nNumValsScalar];
-	_dTemperatureRot   = new double[_nNumValsScalar];
+	resizeExactly(_dDensity, _nNumValsScalar);
+	resizeExactly(_d2EkinTotal, _nNumValsScalar);
+	resizeExactly(_d2EkinTrans, _nNumValsScalar);
+	resizeExactly(_d2EkinDrift, _nNumValsScalar);
+	resizeExactly(_d2EkinRot, _nNumValsScalar);
+	resizeExactly(_d2EkinT, _nNumValsScalar);
+	resizeExactly(_dTemperature, _nNumValsScalar);
+	resizeExactly(_dTemperatureTrans, _nNumValsScalar);
+	resizeExactly(_dTemperatureRot, _nNumValsScalar);
 
 	// Vector quantities
 	// [direction all|+|-][component][position][dimension x|y|z]
-	_dVelocityLocal  = new double[_nNumValsVector];
-	_dVelocityGlobal = new double[_nNumValsVector];
-	_dSquaredVelocityLocal  = new double[_nNumValsVector];
-	_dSquaredVelocityGlobal = new double[_nNumValsVector];
-	_dForceLocal  = new double[_nNumValsVector];
-	_dForceGlobal = new double[_nNumValsVector];
+	resizeExactly(_dVelocityLocal, _nNumValsVector);
+	resizeExactly(_dVelocityGlobal, _nNumValsVector);
+	resizeExactly(_dSquaredVelocityLocal, _nNumValsVector);
+	resizeExactly(_dSquaredVelocityGlobal, _nNumValsVector);
+	resizeExactly(_dForceLocal, _nNumValsVector);
+	resizeExactly(_dForceGlobal, _nNumValsVector);
 
 	// output profiles
-	_dForce = new double[_nNumValsVector];
-	_dDriftVelocity   = new double[_nNumValsVector];
-	_d2EkinTransComp   = new double[_nNumValsVector];
-	_d2EkinDriftComp   = new double[_nNumValsVector];
-	_dTemperatureComp = new double[_nNumValsVector];
+	resizeExactly(_dForce, _nNumValsVector);
+	resizeExactly(_dDriftVelocity, _nNumValsVector);
+	resizeExactly(_d2EkinTransComp, _nNumValsVector);
+	resizeExactly(_d2EkinDriftComp, _nNumValsVector);
+	resizeExactly(_dTemperatureComp, _nNumValsVector);
 
 	// init sampling data structures
 	this->resetLocalValuesProfiles();
@@ -1151,15 +1115,15 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 
 	// Scalar quantities
 	// [direction all|+|-][component][position]
-	MPI_Reduce( _nNumMoleculesLocal, _nNumMoleculesGlobal, _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-	MPI_Reduce( _nRotDOFLocal,       _nRotDOFGlobal,       _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-	MPI_Reduce( _d2EkinRotLocal,     _d2EkinRotGlobal,     _nNumValsScalar, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _nNumMoleculesLocal.data(), _nNumMoleculesGlobal.data(), _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _nRotDOFLocal.data(),       _nRotDOFGlobal.data(),       _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _d2EkinRotLocal.data(),     _d2EkinRotGlobal.data(),     _nNumValsScalar, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	// Vector quantities
 	// [dimension x|y|z][direction all|+|-][component][position]
-	MPI_Reduce( _dVelocityLocal,        _dVelocityGlobal,        _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	MPI_Reduce( _dSquaredVelocityLocal, _dSquaredVelocityGlobal, _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	MPI_Reduce( _dForceLocal,           _dForceGlobal,           _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dVelocityLocal.data(),        _dVelocityGlobal.data(),        _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dSquaredVelocityLocal.data(), _dSquaredVelocityGlobal.data(), _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dForceLocal.data(),           _dForceGlobal.data(),           _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 #else
 	// Scalar quantities
@@ -1772,20 +1736,14 @@ void SampleRegion::resetLocalValuesProfiles()
 		return;
 
 	// Scalar quantities
-	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
-	{
-		_nNumMoleculesLocal[i] = 0;
-		_nRotDOFLocal[i] = 0;
-		_d2EkinRotLocal[i]   = 0.;
-	}
+	std::fill(_nNumMoleculesLocal.begin(), _nNumMoleculesLocal.end(), 0);
+	std::fill(_nRotDOFLocal.begin(), _nRotDOFLocal.end(), 0);
+	std::fill(_d2EkinRotLocal.begin(), _d2EkinRotLocal.end(), 0.);
 
 	// Vector quantities
-	for(unsigned int i = 0; i < _nNumValsVector; ++i)
-	{
-		_dVelocityLocal[i] = 0.;
-		_dSquaredVelocityLocal[i] = 0.;
-		_dForceLocal[i] = 0.;
-	}
+	std::fill(_dVelocityLocal.begin(), _dVelocityLocal.end(), 0.);
+	std::fill(_dSquaredVelocityLocal.begin(), _dSquaredVelocityLocal.end(), 0.);
+	std::fill(_dForceLocal.begin(), _dForceLocal.end(), 0.);
 }
 
 void SampleRegion::resetOutputDataProfiles()
@@ -1794,18 +1752,12 @@ void SampleRegion::resetOutputDataProfiles()
 		return;
 
 	// Scalar quantities
-	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
-	{
-		_d2EkinTrans[i] = 0.;
-		_d2EkinDrift[i] = 0.;
-	}
+	std::fill(_d2EkinTrans.begin(), _d2EkinTrans.end(), 0.);
+	std::fill(_d2EkinDrift.begin(), _d2EkinDrift.end(), 0.);
 
 	// Vector quantities
-	for(unsigned int i = 0; i < _nNumValsVector; ++i)
-	{
-		_d2EkinTransComp[i] = 0.;
-		_d2EkinDriftComp[i] = 0.;
-	}
+	std::fill(_d2EkinTransComp.begin(), _d2EkinTransComp.end(), 0.);
+	std::fill(_d2EkinDriftComp.begin(), _d2EkinDriftComp.end(), 0.);
 }
 
 void SampleRegion::resetLocalValuesFieldYR()

@@ -171,39 +171,39 @@ private:
 
 	// Scalar quantities
 	// [direction all|+|-][component][position]
-	unsigned long* _nNumMoleculesLocal;
-	unsigned long* _nNumMoleculesGlobal;
-	unsigned long* _nRotDOFLocal;
-	unsigned long* _nRotDOFGlobal;
-	double* _d2EkinRotLocal;
-	double* _d2EkinRotGlobal;
+	std::vector<unsigned long> _nNumMoleculesLocal;
+	std::vector<unsigned long> _nNumMoleculesGlobal;
+	std::vector<unsigned long> _nRotDOFLocal;
+	std::vector<unsigned long> _nRotDOFGlobal;
+	std::vector<double> _d2EkinRotLocal;
+	std::vector<double> _d2EkinRotGlobal;
 
 	// output profiles
-	double* _dDensity;
-	double* _d2EkinTotal;
-	double* _d2EkinTrans;
-	double* _d2EkinDrift;
-	double* _d2EkinRot;
-	double* _d2EkinT;
-	double* _dTemperature;
-	double* _dTemperatureTrans;
-	double* _dTemperatureRot;
+	std::vector<double> _dDensity;
+	std::vector<double> _d2EkinTotal;
+	std::vector<double> _d2EkinTrans;
+	std::vector<double> _d2EkinDrift;
+	std::vector<double> _d2EkinRot;
+	std::vector<double> _d2EkinT;
+	std::vector<double> _dTemperature;
+	std::vector<double> _dTemperatureTrans;
+	std::vector<double> _dTemperatureRot;
 
 	// Vector quantities
 	// [dimension x|y|z][direction all|+|-][component][position]
-	double* _dVelocityLocal;
-	double* _dVelocityGlobal;
-	double* _dSquaredVelocityLocal;
-	double* _dSquaredVelocityGlobal;
-	double* _dForceLocal;
-	double* _dForceGlobal;
+	std::vector<double> _dVelocityLocal;
+	std::vector<double> _dVelocityGlobal;
+	std::vector<double> _dSquaredVelocityLocal;
+	std::vector<double> _dSquaredVelocityGlobal;
+	std::vector<double> _dForceLocal;
+	std::vector<double> _dForceGlobal;
 
 	// output profiles
-	double* _dForce;
-	double* _dDriftVelocity;
-	double* _d2EkinTransComp;
-	double* _d2EkinDriftComp;
-	double* _dTemperatureComp;
+	std::vector<double> _dForce;
+	std::vector<double> _dDriftVelocity;
+	std::vector<double> _d2EkinTransComp;
+	std::vector<double> _d2EkinDriftComp;
+	std::vector<double> _dTemperatureComp;
 
 	// --- VDF ---
 
