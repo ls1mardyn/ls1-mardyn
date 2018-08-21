@@ -10,7 +10,7 @@
 class KartesianProfile;
 
 class ProfileBase {
-
+	virtual ~ProfileBase(){};
 public:
     virtual void init(KartesianProfile* kartProf) {_kartProf = kartProf;};
     virtual void record(ParticleIterator *mol, unsigned long uID) = 0;
