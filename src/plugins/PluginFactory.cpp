@@ -44,6 +44,7 @@
 #include "plugins/KartesianProfile.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
+#include "plugins/MirrorSystem.h"
 #include "plugins/NEMD/RegionSampling.h"
 #include "plugins/RedundancyResilience.h"
 #include "plugins/TestPlugin.h"
@@ -82,6 +83,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(MaxCheck);
     REGISTER_PLUGIN(MaxWriter);
     REGISTER_PLUGIN(Mirror);
+    REGISTER_PLUGIN(MirrorSystem);
     REGISTER_PLUGIN(MmpldWriter);
     REGISTER_PLUGIN(MmspdBinWriter);
     REGISTER_PLUGIN(MmspdWriter);
