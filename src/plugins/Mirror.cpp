@@ -129,7 +129,7 @@ void Mirror::beforeForces(
 		double vy = it->v(1);
 
 		// no action
-		if(ry < _cv.left_outer || ry > _cv.right_outer || cid_ub == _cids.permitted)
+		if(ry < _cv.left_outer || ry > _cv.right_outer)
 			continue;
 
 		// change back to original component
@@ -155,6 +155,13 @@ void Mirror::beforeForces(
 				v.at(2) = it->v(2);
 				_veloList.list.push_back(v);
 			}
+		}
+
+		// permitted
+		if(cid_ub == _cids.permitted) {
+			it->setv(0, 0.);
+			it->setv(1, 3.);
+			it->setv(2, 0.);
 		}
 	}
 }
@@ -265,6 +272,21 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 			}
 		}
 	}
+    if(MT_ZERO_GRADIENT != _type)
+        return;
+
+    const ParticleIterator begin = particleContainer->iterator();
+    for(ParticleIterator it = begin; it.hasNext(); it.next()) {
+        uint32_t cid_zb = it->componentid();
+        uint32_t cid_ub = cid_zb+1;
+
+        // permitted
+        if(cid_ub == _cids.permitted) {
+            it->setv(0, 0.);
+            it->setv(1, 3.);
+            it->setv(2, 0.);
+        }
+    }
 }
 
 void Mirror::readNormDistr()
