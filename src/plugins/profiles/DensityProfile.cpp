@@ -4,22 +4,6 @@
 
 #include "DensityProfile.h"
 
-inline void DensityProfile::record(ParticleIterator *mol, unsigned long uID) {
-    //global_log->info() << "[DensityProfile] record" << std::endl;
-    _localProfile[uID] += 1;
-}
-
-inline void DensityProfile::collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) {
-    //global_log->info() << "[DensityProfile] collectAppend" << std::endl;
-    domainDecomp->collCommAppendLongDouble(_localProfile[uID]);
-    global_log->info() << "[DensityProfile] localProfile " << uID << ": " << _localProfile[uID] << "\n";
-}
-
-inline void DensityProfile::collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) {
-    _globalProfile[uID] = domainDecomp->collCommGetLongDouble();
-    global_log->info() << "[DensityProfile] globalProfile " << uID << ": " << _globalProfile[uID] << "\n";
-}
-
 void DensityProfile::output(string prefix) {
     global_log->info() << "[DensityProfile] output" << std::endl;
     _profilePrefix = prefix;
@@ -62,8 +46,3 @@ void DensityProfile::output(string prefix) {
     outfile.close();
 }
 
-inline void DensityProfile::reset(unsigned long uID) {
-    //global_log->info() << "[DensityProfile] reset" << std::endl;
-    _localProfile[uID] = 0.0;
-    _globalProfile[uID] = 0.0;
-}

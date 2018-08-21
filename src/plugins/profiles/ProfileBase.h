@@ -13,7 +13,7 @@ class ProfileBase {
 
 public:
 	virtual ~ProfileBase(){};
-    virtual void init(KartesianProfile* kartProf) {_kartProf = kartProf;};
+    void init(KartesianProfile* kartProf) {_kartProf = kartProf;};
     virtual void record(ParticleIterator *mol, unsigned long uID) = 0;
     virtual void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) = 0;
     virtual void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) = 0;
