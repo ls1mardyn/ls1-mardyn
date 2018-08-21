@@ -54,6 +54,7 @@ ControlRegionT::ControlRegionT()
 
 ControlRegionT::~ControlRegionT()
 {
+	delete _accumulator;
 }
 
 Accumulator* ControlRegionT::CreateAccumulatorInstance(std::string strTransDirections)
@@ -447,7 +448,9 @@ TemperatureControl::TemperatureControl()
 
 TemperatureControl::~TemperatureControl()
 {
-
+	for (auto region : _vecControlRegions) {
+		delete region;
+	}
 }
 
 void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
