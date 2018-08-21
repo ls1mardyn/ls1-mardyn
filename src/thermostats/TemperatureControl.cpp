@@ -32,7 +32,7 @@ ControlRegionT::ControlRegionT()
 		_nID(0),
 		_dLowerCorner{0.,0.,0.},
 		_dUpperCorner{0.,0.,0.},
-		_nNumSlabs(0),
+		_nNumSlabs(1),
 		_dSlabWidth(0.0),
 		_thermVars(),
 		_dTargetTemperature(0.0),
@@ -171,6 +171,10 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits &xmlconfig, std::string st
 {
 	// settings
 	xmlconfig.getNodeValue("settings/numslabs", _nNumSlabs);
+	if(_nNumSlabs < 1){
+		global_log->fatal() << "TemperatureControl: need at least one slab! (settings/numslabs)";
+		Simulation::exit(932);
+	}
 	xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
 	xmlconfig.getNodeValue("settings/directions", strDirections);
 	// calc slab width
@@ -291,7 +295,7 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 	_d2EkinTransLocal[nPosIndex] += m*(vx*vx + vz*vz);
 */
 
-	LocalThermostatVariables & localTV = _thermVars[nPosIndex]._local;  // do not forget &
+	LocalThermostatVariables & localTV = _thermVars.at(nPosIndex)._local;  // do not forget &
 	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
 
 	// sum up rot. kinetic energy (2x)
