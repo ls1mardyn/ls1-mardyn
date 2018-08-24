@@ -240,21 +240,21 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 									}
 								}
 								else if(MT_NORMDISTR_MB == _type) {
-									double vx = _norm.vxz.front();
+									double vx_norm = _norm.vxz.front();
 									_norm.vxz.pop_front();
-									_norm.vxz.push_back(vx);
+									_norm.vxz.push_back(vx_norm);
 
-									double vy = _norm.vy.front();
+									double vy_norm = _norm.vy.front();
 									_norm.vy.pop_front();
-									_norm.vy.push_back(vy);
+									_norm.vy.push_back(vy_norm);
 
-									double vz = _norm.vxz.front();
+									double vz_norm = _norm.vxz.front();
 									_norm.vxz.pop_front();
-									_norm.vxz.push_back(vz);
+									_norm.vxz.push_back(vz_norm);
 
-									it->setv(0, vx);
-									it->setv(1, vy);
-									it->setv(2, vz);
+									it->setv(0, vx_norm);
+									it->setv(1, vy_norm);
+									it->setv(2, vz_norm);
 								}
 							}
 						}
