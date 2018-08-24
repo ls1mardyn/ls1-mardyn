@@ -358,7 +358,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 		kdd->barrier();
 		bool isOK = kdd->migrateParticles(*newDecompRoot, *newOwnLeaf,
-				moleculeContainer);
+				moleculeContainer, _domain);
 
 		if (not isOK and _rank == 0) {
 			std::stringstream fOld, fNew;

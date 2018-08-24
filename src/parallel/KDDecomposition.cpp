@@ -239,7 +239,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 
 		calcNumParticlesPerCell(moleculeContainer);
 		constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
-		bool migrationSuccessful = migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
+		bool migrationSuccessful = migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer, domain);
 		if (not migrationSuccessful) {
 			global_log->error() << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << endl;
 			global_log->error() << "Aborting. Please save your input files and last available checkpoint and contact TUM SCCS." << endl;
@@ -273,7 +273,7 @@ void KDDecomposition::getCellIntCoordsFromRegionPeriodic(int* lo, int* hi, const
 	}
 }
 
-bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) {
+bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer, Domain* domain) {
 	// 1. compute which processes we will receive from
 	// 2. issue Irecv calls
 	// 3. compute which processes we will send to
@@ -378,6 +378,10 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	for (int dim = 0; dim < 3; dim++) {
 		newBoxMin[dim] = (newOwnLeaf._lowCorner[dim]) * _cellSize[dim];
 		newBoxMax[dim] = (newOwnLeaf._highCorner[dim] + 1) * _cellSize[dim];
+		// for the last process the boxmax always has to be exactly domain->getGlobalLength().
+		if (newOwnLeaf._highCorner[dim] + 1 == _globalCellsPerDim[dim]) {
+			newBoxMax[dim] = domain->getGlobalLength(dim);
+		}
 	}
 	bool sendTogether = moleculeContainer->rebuild(newBoxMin, newBoxMax);
 	updateSendLeavingWithCopies(sendTogether);
@@ -619,7 +623,7 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 			<< getBoundingBoxMin(2,domain) << " " << getBoundingBoxMax(0,domain) << " "
 			<< getBoundingBoxMax(1,domain) << " " << getBoundingBoxMax(2,domain) << "\n";
 	string output_str = output.str();
-#if ENABLE_MPI
+#ifdef ENABLE_MPI
 	MPI_File fh;
 	MPI_File_open(_comm, filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
 	uint64_t write_size = output_str.size();
