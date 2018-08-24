@@ -124,7 +124,7 @@ private:
 	};
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
 			const double highCorner[3], const double shift[3], const bool removeFromContainer,
-			HaloOrLeavingCorrection haloLeaveCorr = HaloOrLeavingCorrection::NONE);
+			HaloOrLeavingCorrection haloLeaveCorr);
 
 	int _rank;
 	int _countTested;
