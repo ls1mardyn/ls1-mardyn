@@ -19,6 +19,8 @@ public:
     virtual void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) = 0;
     virtual void output(string prefix) = 0;
     virtual void reset(unsigned long uID) = 0;
+    // number of needed communications
+    virtual int comms() = 0;
 
 protected:
     // TODO: Add necessary maps for profiles
@@ -31,8 +33,9 @@ protected:
     // Global 3D Profile
     std::map<unsigned, long double> _global3dProfile;
 
+    // output file prefix
     string _profilePrefix;
-
+    // KartesianProfile managing class pointer for meta info
     KartesianProfile* _kartProf;
 };
 

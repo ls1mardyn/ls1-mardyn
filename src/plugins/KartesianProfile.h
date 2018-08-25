@@ -57,6 +57,8 @@ private:
     unsigned long _uIDs;
 
     vector<ProfileBase*> _profiles;
+    int _comms = 0;
+    //DensityProfile _densProfile;
 
 };
 

@@ -20,9 +20,13 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     // TODO: add options to enable different profiles
     //xmlconfig.getNodeValue("options/option@[keyword='profileVirial']", doRecordVirialProfile);
     if(DENSITY){
+        //_densProfile = DensityProfile();
+        //_densProfile.init(this);
+        //_profiles.push_back(//_densProfile);
         ProfileBase* profile = new DensityProfile();
         profile->init(this);
         _profiles.push_back(profile);
+        _comms += profile->comms();
     }
 
     xmlconfig.getNodeValue("timesteps/init", _initStatistics);
@@ -84,27 +88,30 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
     }
     if ((simstep >= _initStatistics) && (simstep % _writeFrequency == 0)) {
         // COLLECTIVE COMMUNICATION
-        global_log->info() << "[KartesianProfile] profile collectAppend" << std::endl;
+        global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << accumulatedDatasets << "\n";
+        domainDecomp->collCommInit(_comms*_uIDs);
+        //global_log->info() << "[KartesianProfile] profile collectAppend" << std::endl;
         for(unsigned long uID = 0; uID < _uIDs; uID++){
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->collectAppend(domainDecomp, uID);
             }
         }
-        global_log->info() << "[KartesianProfile] Allreduce" << std::endl;
+        //global_log->info() << "[KartesianProfile] Allreduce" << std::endl;
         domainDecomp->collCommAllreduceSum();
-        global_log->info() << "[KartesianProfile] profile collectRetrieve" << std::endl;
+        //global_log->info() << "[KartesianProfile] profile collectRetrieve" << std::endl;
         for(unsigned long uID = 0; uID < _uIDs; uID++) {
             for (unsigned i = 0; i < _profiles.size(); i++) {
                 _profiles[i]->collectRetrieve(domainDecomp, uID);
             }
         }
+        domainDecomp->collCommFinalize();
         if (mpi_rank == 0) {
-            global_log->info() << "[KartesianProfile] profile output" << std::endl;
+            global_log->info() << "[KartesianProfile] Writing profile output" << std::endl;
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->output(_outputPrefix + "_" + std::to_string(simstep));
             }
         }
-        global_log->info() << "[KartesianProfile] profile reset" << std::endl;
+        //global_log->info() << "[KartesianProfile] profile reset" << std::endl;
         for(unsigned long uID = 0; uID < _uIDs; uID++) {
             for (unsigned i = 0; i < _profiles.size(); i++) {
                 _profiles[i]->reset(uID);

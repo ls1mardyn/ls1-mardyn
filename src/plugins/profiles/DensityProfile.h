@@ -11,25 +11,24 @@
 class DensityProfile : public ProfileBase {
 public:
 	~DensityProfile(){};
-    void record(ParticleIterator *mol, unsigned long uID) override  {
-        //global_log->info() << "[DensityProfile] record" << std::endl;
+    inline void record(ParticleIterator *mol, unsigned long uID) final  {
         _localProfile[uID] += 1;
     }
-    void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) override {
-        //global_log->info() << "[DensityProfile] collectAppend" << std::endl;
+    inline void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {
         domainDecomp->collCommAppendLongDouble(_localProfile[uID]);
-        global_log->info() << "[DensityProfile] localProfile " << uID << ": " << _localProfile[uID] << "\n";
+        //global_log->info() << "[DensityProfile] localProfile " << uID << ": " << _localProfile[uID] << "\n";
     }
-    void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) override {
+    inline void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
         _globalProfile[uID] = domainDecomp->collCommGetLongDouble();
-        global_log->info() << "[DensityProfile] globalProfile " << uID << ": " << _globalProfile[uID] << "\n";
+        //global_log->info() << "[DensityProfile] globalProfile " << uID << ": " << _globalProfile[uID] << "\n";
     }
     void output(string prefix) override;
-    void reset(unsigned long uID) override  {
-        //global_log->info() << "[DensityProfile] reset" << std::endl;
+    inline void reset(unsigned long uID) final  {
         _localProfile[uID] = 0.0;
         _globalProfile[uID] = 0.0;
     }
+    // set correct number of communications needed for this profile
+    int comms() override {return 1;}
 };
 
 
