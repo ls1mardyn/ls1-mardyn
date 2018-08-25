@@ -4,8 +4,6 @@
 
 #include "KartesianProfile.h"
 
-bool DENSITY = true;
-
 void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     global_log -> debug() << "[KartesianProfile] enabled" << std::endl;
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
@@ -17,16 +15,41 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("y", universalProfileUnit[1]);
     xmlconfig.getNodeValue("z", universalProfileUnit[2]);
     global_log->info() << "[KartesianProfile] Binning units: " << universalProfileUnit[0] << " " << universalProfileUnit[1] << " " << universalProfileUnit[2] << "\n";
-    // TODO: add options to enable different profiles
-    //xmlconfig.getNodeValue("options/option@[keyword='profileVirial']", doRecordVirialProfile);
-    if(DENSITY){
-        //_densProfile = DensityProfile();
-        //_densProfile.init(this);
-        //_profiles.push_back(//_densProfile);
+
+    // CHECKING FOR ENABLED PROFILES
+    int numProfiles = 0;
+    xmlconfig.getNodeValue("profiles/density", _DENSITY);
+    if(_DENSITY){
+        global_log->info() << "[KartesianProfile] DENSITY PROFILE ENABLED\n";
+        numProfiles++;
+    }
+    xmlconfig.getNodeValue("profiles/temperature", _TEMPERATURE);
+    if(_TEMPERATURE){
+        global_log->info() << "[KartesianProfile] TEMPERATURE PROFILE ENABLED\n";
+        numProfiles++;
+    }
+    xmlconfig.getNodeValue("profiles/velocity", _VELOCITY);
+    if(_VELOCITY){
+        global_log->info() << "[KartesianProfile] VELOCITY PROFILE ENABLED\n";
+        numProfiles++;
+    }
+    global_log->info() << "[KartesianProfile] Number of profiles: " << numProfiles << "\n";
+    if(numProfiles < 1){
+        global_log->warning() << "[KartesianProfile] NO PROFILES SPECIFIED -> Outputting all\n";
+        _ALL = true;
+    }
+    // ADDING PROFILES
+    if(_DENSITY || _ALL){
         ProfileBase* profile = new DensityProfile();
         profile->init(this);
         _profiles.push_back(profile);
         _comms += profile->comms();
+    }
+    if(_TEMPERATURE || _ALL){
+        // TODO
+    }
+    if(_VELOCITY || _ALL){
+        // TODO
     }
 
     xmlconfig.getNodeValue("timesteps/init", _initStatistics);

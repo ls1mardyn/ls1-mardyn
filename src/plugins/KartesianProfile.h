@@ -52,13 +52,18 @@ private:
     unsigned long _initStatistics;  // Timesteps to skip
     unsigned long _profileRecordingTimesteps;  // Sampling frequency
     std::string _outputPrefix;  // File name prefix
-
+    std::string _mode;
 
     unsigned long _uIDs;
 
     vector<ProfileBase*> _profiles;
     int _comms = 0;
     //DensityProfile _densProfile;
+
+    bool _ALL = false;
+    bool _DENSITY = false;
+    bool _TEMPERATURE = false;
+    bool _VELOCITY = false;
 
 };
 
