@@ -11,19 +11,19 @@
 class DensityProfile : public ProfileBase {
 public:
 	~DensityProfile(){};
-    inline void record(ParticleIterator *mol, unsigned long uID) final  {
+    void record(ParticleIterator *mol, unsigned long uID) final  {
         _localProfile[uID] += 1;
     }
-    inline void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {
+    void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {
         domainDecomp->collCommAppendLongDouble(_localProfile[uID]);
         //global_log->info() << "[DensityProfile] localProfile " << uID << ": " << _localProfile[uID] << "\n";
     }
-    inline void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
+    void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
         _globalProfile[uID] = domainDecomp->collCommGetLongDouble();
         //global_log->info() << "[DensityProfile] globalProfile " << uID << ": " << _globalProfile[uID] << "\n";
     }
     void output(string prefix) override;
-    inline void reset(unsigned long uID) final  {
+    void reset(unsigned long uID) final  {
         _localProfile[uID] = 0.0;
         _globalProfile[uID] = 0.0;
     }
