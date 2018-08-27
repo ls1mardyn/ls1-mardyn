@@ -10,6 +10,14 @@
 
 class KartesianProfile;
 
+/** @brief Base class for all Profile outputs used by KartesianProfile.
+ *
+ * The major steps for all profiles are recording the profile data, communication, output and reset. Each of these steps
+ * has a function associated with it that needs to be implemented by all profiles inheriting this class to be able to
+ * work with KartesianProfile. KartesianProfile also needs to know the number of items added to the communication per
+ * Molecule. So a DensityProfile should return 1 via comms(). A Velocity3dProfile should return 3.
+ *
+ */
 class ProfileBase {
 
 public:

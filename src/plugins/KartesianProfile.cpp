@@ -4,6 +4,10 @@
 
 #include "KartesianProfile.h"
 
+/**
+     * Read in Information about write/record frequencies and which profiles are enabled. Also create needed profiles and initialize them. New Profiles need to be handled via the XML here as well.
+     * @param xmlconfig
+     */
 void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     global_log -> debug() << "[KartesianProfile] enabled" << std::endl;
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
@@ -64,6 +68,14 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
 
 }
 
+/**
+     *
+     * Initialize Arrays needed for calculating the profiles. Also get reference to domain for specific quantities. All profiles will be reset here before using.
+     *
+     * @param particleContainer
+     * @param domainDecomp
+     * @param domain
+     */
 void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
     for(unsigned d = 0; d < 3; d ++){
         globalLength[d] = domain->getGlobalLength(d);
@@ -90,6 +102,14 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
     }
 }
 
+/**
+ * @brief Iterates over all molecules and passes them together with their Bin ID to the profiles for further processing.
+ * If the current timestep hits the writefrequency the profile writes/resets are triggered here.
+ * @param particleContainer
+ * @param domainDecomp
+ * @param domain
+ * @param simstep
+ */
 void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                                unsigned long simstep) {
     int mpi_rank = domainDecomp->getRank();
