@@ -7,6 +7,7 @@
 
 #include "../../Domain.h"
 #include "../../parallel/DomainDecompBase.h"
+
 class KartesianProfile;
 
 class ProfileBase {
@@ -22,6 +23,9 @@ public:
     // number of needed communications
     virtual int comms() = 0;
 
+    std::map<unsigned, long double> getProfile(){return _globalProfile;};
+    std::map<unsigned, long double>* get3dProfile(){return _global3dProfile;};
+
 protected:
     // TODO: Add necessary maps for profiles
     // Local 1D Profile
@@ -29,9 +33,9 @@ protected:
     // Global 1D Profile
     std::map<unsigned, long double> _globalProfile;
     // Local 3D Profile
-    std::map<unsigned, long double> _local3dProfile;
+    std::map<unsigned, long double> _local3dProfile[3];
     // Global 3D Profile
-    std::map<unsigned, long double> _global3dProfile;
+    std::map<unsigned, long double> _global3dProfile[3];
 
     // output file prefix
     string _profilePrefix;

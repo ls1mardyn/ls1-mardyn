@@ -8,9 +8,10 @@
 #include "ProfileBase.h"
 #include "../KartesianProfile.h"
 
+
 class DensityProfile : public ProfileBase {
 public:
-	~DensityProfile(){};
+	~DensityProfile() final {};
     void record(ParticleIterator *mol, unsigned long uID) final  {
         _localProfile[uID] += 1;
     }
@@ -22,13 +23,13 @@ public:
         _globalProfile[uID] = domainDecomp->collCommGetLongDouble();
         //global_log->info() << "[DensityProfile] globalProfile " << uID << ": " << _globalProfile[uID] << "\n";
     }
-    void output(string prefix) override;
+    void output(string prefix) final;
     void reset(unsigned long uID) final  {
         _localProfile[uID] = 0.0;
         _globalProfile[uID] = 0.0;
     }
     // set correct number of communications needed for this profile
-    int comms() override {return 1;}
+    int comms() final {return 1;}
 };
 
 

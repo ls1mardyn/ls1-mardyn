@@ -39,17 +39,21 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
         _ALL = true;
     }
     // ADDING PROFILES
-    if(_DENSITY || _ALL){
-        ProfileBase* profile = new DensityProfile();
-        profile->init(this);
-        _profiles.push_back(profile);
-        _comms += profile->comms();
+    // Need DensityProfile for Velocity3dProfile
+    if(_DENSITY || _VELOCITY || _ALL){
+        _densProfile = new DensityProfile();
+        _densProfile->init(this);
+        _profiles.push_back(_densProfile);
+        _comms += _densProfile->comms();
     }
     if(_TEMPERATURE || _ALL){
         // TODO
     }
     if(_VELOCITY || _ALL){
-        // TODO
+        ProfileBase* profile = new Velocity3dProfile();
+        profile->init(this);
+        _profiles.push_back(profile);
+        _comms += profile->comms();
     }
 
     xmlconfig.getNodeValue("timesteps/init", _initStatistics);

@@ -7,7 +7,7 @@
 void DensityProfile::output(string prefix) {
     global_log->info() << "[DensityProfile] output" << std::endl;
     _profilePrefix = prefix;
-    _profilePrefix += "_kartesian.ndpr";
+    _profilePrefix += "_kartesian.NDpr";
     ofstream outfile(_profilePrefix.c_str());
     outfile.precision(6);
     // TODO: FIX ACCESS TO ELEMENTS / _yOff ???

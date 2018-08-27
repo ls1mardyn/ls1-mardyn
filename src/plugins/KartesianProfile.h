@@ -8,6 +8,8 @@
 #include "PluginBase.h"
 #include "Domain.h"
 #include "profiles/DensityProfile.h"
+#include "plugins/profiles/Velocity3dProfile.h"
+
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 
@@ -46,6 +48,7 @@ public:
     double globalLength[3];
     double segmentVolume;
     Domain* dom;
+    ProfileBase* _densProfile;
 
 private:
     unsigned long _writeFrequency;  // File Output / Reset frequency
@@ -58,7 +61,6 @@ private:
 
     vector<ProfileBase*> _profiles;
     int _comms = 0;
-    //DensityProfile _densProfile;
 
     bool _ALL = false;
     bool _DENSITY = false;
