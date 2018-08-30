@@ -90,6 +90,9 @@ inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T
 			// else, find a particle in the box
 			this->operator++();
 		}
+	} else {
+		// set to invalid
+		_cells = nullptr;
 	}
 }
 
