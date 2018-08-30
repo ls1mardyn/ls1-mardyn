@@ -5,9 +5,10 @@
 #include "KartesianProfile.h"
 
 /**
-     * Read in Information about write/record frequencies and which profiles are enabled. Also create needed profiles and initialize them. New Profiles need to be handled via the XML here as well.
-     * @param xmlconfig
-     */
+* @brief Read in Information about write/record frequencies, Sampling Grid and which profiles are enabled.
+ * Also create needed profiles and initialize them. New Profiles need to be handled via the XML here as well.
+* @param xmlconfig
+*/
 void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     global_log -> debug() << "[KartesianProfile] enabled" << std::endl;
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
@@ -53,11 +54,16 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     if(_TEMPERATURE || _ALL){
         // TODO
     }
+    // TODO: Different XML for different velocity profiles
     if(_VELOCITY || _ALL){
         ProfileBase* profile = new Velocity3dProfile();
         profile->init(this);
         _profiles.push_back(profile);
         _comms += profile->comms();
+        ProfileBase* profile_abs = new VelocityAbsProfile();
+        profile_abs->init(this);
+        _profiles.push_back(profile_abs);
+        _comms += profile_abs->comms();
     }
 
     xmlconfig.getNodeValue("timesteps/init", _initStatistics);
@@ -68,9 +74,11 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
 
 }
 
-/**
+    /**
      *
-     * Initialize Arrays needed for calculating the profiles. Also get reference to domain for specific quantities. All profiles will be reset here before using.
+     * @brief Initialize Arrays needed for calculating the profiles. Also get reference to domain for specific quantities.
+     * All profiles will be reset here to 0 before starting the recording frame. The uIDs are can be calculated from the
+     * globalLength and the number of divisions specified for the Sampling grid.
      *
      * @param particleContainer
      * @param domainDecomp
@@ -86,7 +94,7 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
         global_log->info() << "[KartesianProfile] universalInvProfileUnit " << universalInvProfileUnit[i] << "\n";
     }
     _uIDs = (unsigned long) (this->universalProfileUnit[0] * this->universalProfileUnit[1]
-            * this->universalProfileUnit[2]);
+                             * this->universalProfileUnit[2]);
     global_log->info() << "[KartesianProfile] number uID " << _uIDs << "\n";
 
     segmentVolume = this->globalLength[0] * this->globalLength[1] * this->globalLength[2]
@@ -105,6 +113,7 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
 /**
  * @brief Iterates over all molecules and passes them together with their Bin ID to the profiles for further processing.
  * If the current timestep hits the writefrequency the profile writes/resets are triggered here.
+ * All of this only occurs after the initStatistics are passed.
  * @param particleContainer
  * @param domainDecomp
  * @param domain
@@ -116,26 +125,27 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
 
     unsigned xun, yun, zun;
     if ((simstep >= _initStatistics) && (simstep % _profileRecordingTimesteps == 0)) {
-        // TODO: RECORD PROFILES
         long int uID;
-        // Loop over all particles and bin them
+        // Loop over all particles and bin them with uIDs
         for(ParticleIterator thismol = particleContainer->iterator(); thismol.hasNext(); thismol.next()){
             // Calculate uID
             xun = (unsigned) floor(thismol->r(0) * this->universalInvProfileUnit[0]);
             yun = (unsigned) floor(thismol->r(1) * this->universalInvProfileUnit[1]);
             zun = (unsigned) floor(thismol->r(2) * this->universalInvProfileUnit[2]);
             uID = (unsigned long) (xun * this->universalProfileUnit[1] * this->universalProfileUnit[2]
-                  + yun * this->universalProfileUnit[2] + zun);
-
+                                   + yun * this->universalProfileUnit[2] + zun);
+            // pass mol + uID to all profiles
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->record(&thismol, uID);
             }
         }
+        // Record number of Timesteps recorded since last output write
         accumulatedDatasets++;
     }
     if ((simstep >= _initStatistics) && (simstep % _writeFrequency == 0)) {
         // COLLECTIVE COMMUNICATION
         global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << accumulatedDatasets << "\n";
+        // Initialize Communication with number of bins * number of total comms needed per bin by all profiles.
         domainDecomp->collCommInit(_comms*_uIDs);
         //global_log->info() << "[KartesianProfile] profile collectAppend" << std::endl;
         for(unsigned long uID = 0; uID < _uIDs; uID++){
@@ -143,22 +153,24 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
                 _profiles[i]->collectAppend(domainDecomp, uID);
             }
         }
-        //global_log->info() << "[KartesianProfile] Allreduce" << std::endl;
+        // Reduction Communication to get global values
         domainDecomp->collCommAllreduceSum();
-        //global_log->info() << "[KartesianProfile] profile collectRetrieve" << std::endl;
+        // Write global values in all bins in all profiles
         for(unsigned long uID = 0; uID < _uIDs; uID++) {
             for (unsigned i = 0; i < _profiles.size(); i++) {
                 _profiles[i]->collectRetrieve(domainDecomp, uID);
             }
         }
+        // Finalize Communication
         domainDecomp->collCommFinalize();
+        // Initialize Output from rank 0 process
         if (mpi_rank == 0) {
             global_log->info() << "[KartesianProfile] Writing profile output" << std::endl;
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->output(_outputPrefix + "_" + std::to_string(simstep));
             }
         }
-        //global_log->info() << "[KartesianProfile] profile reset" << std::endl;
+        // Reset profile arrays for next recording frame.
         for(unsigned long uID = 0; uID < _uIDs; uID++) {
             for (unsigned i = 0; i < _profiles.size(); i++) {
                 _profiles[i]->reset(uID);

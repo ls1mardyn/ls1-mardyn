@@ -8,7 +8,9 @@
 #include "ProfileBase.h"
 #include "../KartesianProfile.h"
 
-
+/**
+ * @brief Outputs the XYZ velocity components per bin specified by Sampling grid in KartesianProfile.
+ */
 class Velocity3dProfile : public ProfileBase {
 public:
     ~Velocity3dProfile() final = default;

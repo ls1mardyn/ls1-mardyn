@@ -7,8 +7,9 @@
 
 #include "PluginBase.h"
 #include "Domain.h"
-#include "profiles/DensityProfile.h"
+#include "plugins/profiles/DensityProfile.h"
 #include "plugins/profiles/Velocity3dProfile.h"
+#include "plugins/profiles/VelocityAbsProfile.h"
 
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
@@ -59,26 +60,27 @@ public:
 
     static PluginBase* createInstance(){return new KartesianProfile();}
 
-    double universalInvProfileUnit[3];
-    double universalProfileUnit[3];
-    long accumulatedDatasets;
-    double globalLength[3];
-    double segmentVolume;
-    Domain* dom;
+    double universalInvProfileUnit[3]; // Inv. Bin Sizes
+    double universalProfileUnit[3]; // Bin Sizes
+    long accumulatedDatasets; // Number of Datasets between output writes / profile resets
+    double globalLength[3]; // Size of Domain
+    double segmentVolume; // Size of one Sampling grid bin
+    Domain* dom; // Reference to global Domain
     ProfileBase* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
 
 private:
-    unsigned long _writeFrequency;
-    unsigned long _initStatistics;
-    unsigned long _profileRecordingTimesteps;
-    std::string _outputPrefix;
+    unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
+    unsigned long _initStatistics; // Timesteps to skip at start of the simulation
+    unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
+    std::string _outputPrefix; // File prefix for all profiles
     std::string _mode;
 
-    unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total cells in the grid.
+    unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 
-    vector<ProfileBase*> _profiles;
-    int _comms = 0;
+    vector<ProfileBase*> _profiles; // vector holding all enabled profiles
+    int _comms = 0; // total number of communications per bin needed by all profiles.
 
+    // Needed for XML check for enabled profiles.
     bool _ALL = false;
     bool _DENSITY = false;
     bool _TEMPERATURE = false;
