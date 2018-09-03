@@ -71,7 +71,7 @@ void MirrorSystem::beforeEventNewTimestep(
 	}
 	else if(_type == MST_ENLARGE) {
 		// add vapor
-		std:vector<std::array<int32_t,3> > mask;
+		std::vector<std::array<int32_t,3> > mask;
 		std::array<int32_t,3> arr;
 		// z=0
 		// y=0
