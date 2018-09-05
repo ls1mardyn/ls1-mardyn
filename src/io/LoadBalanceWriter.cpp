@@ -33,7 +33,17 @@ void LoadbalanceWriter::readXML(XMLfileUnits& xmlconfig) {
 		double warninglevel = 0;
 		xmlconfig.getNodeValue("warninglevel", warninglevel);
 		_warninglevels[timername] = warninglevel;
-		global_log->info() << "Added timer for LB monitoring: " <<  timername << ", warninglevel: " << warninglevel << std::endl;
+
+		bool incrementalTimer = false;  // if the timer is increasing in every time step, this should be true
+		xmlconfig.getNodeValue("incremental", incrementalTimer);
+		_incremental[timername] = incrementalTimer;
+		if (incrementalTimer) {
+			_incremental_previous_times[timername] = 0.;
+		}
+
+		global_log->info() << "Added timer for LB monitoring: " << timername << ", warninglevel: " << warninglevel
+				<< ", incremental: " << incrementalTimer << std::endl;
+
 	}
 	xmlconfig.changecurrentnode(oldpath);
 }
@@ -92,6 +102,11 @@ void LoadbalanceWriter::recordTimes(unsigned long simstep) {
 	for(auto timername : _timerNames) {
 		Timer *timer = global_simulation->timers()->getTimer(timername);
 		double time = timer->get_etime();
+		if(_incremental[timername]){
+			// timer is incremental, so we should subtract the previous time of the timer from the current time.
+			time -= _incremental_previous_times[timername];
+			_incremental_previous_times[timername] += time;  // add the time from the current
+		}
 		_times.push_back(time);  // needed for maximum
 		_times.push_back(-time); // needed for minimum
 	}

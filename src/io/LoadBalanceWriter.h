@@ -34,13 +34,19 @@ public:
 	/** @brief Read in XML configuration for DecompWriter.
 	 *
 	 * The following xml object structure is handled by this method:
+	 * parameters:
+	 * 	name: name of the timer
+	 * 	warninglevel: warnings will be printed if "max time / min time > warninglevel"
+	 * 	incremental: specifies whether the timer is incremental or not,
+	 * 		e.g., a timer just measuring the time for the current time step is not incremental,
+	 * 			but one measuring the time since the first time step is incremental.
 	 * \code{.xml}
 	   <outputplugin name="LoadbalanceWriter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputfilename>STRING</outputfilename>
 	     <timers> <!-- additional timers -->
 	        <timer> <name>LoadbalanceWriter_default</name> <warninglevel>DOUBLE</warninglevel> </timer>
-	        <timer> <name>STRING</name> <warninglevel>DOUBLE</warninglevel> </timer>
+	        <timer> <name>STRING</name> <warninglevel>DOUBLE</warninglevel> <incremental>BOOL</incremental> </timer>
 	        <!-- ... -->
 	     </timers>
 	   </outputplugin>
@@ -82,6 +88,8 @@ private:
 	std::vector<double> _global_times;
 	std::vector<unsigned long> _simsteps;
 	std::map<std::string, double> _warninglevels;
+	std::map<std::string, bool> _incremental;  // describes whether the timer will continuously increase and the difference between two calls should be used as timer value
+	std::map<std::string, double> _incremental_previous_times;  // previous times of the incremental timers
 };
 
 #endif  // SRC_IO_LOADBALANCEWRITER_H_
