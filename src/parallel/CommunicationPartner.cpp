@@ -462,6 +462,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			threadData[threadNum].push_back(*i);
+			mardyn_assert(i->inBox(lowCorner, highCorner));
 			if (removeFromContainer) {
 				i.deleteCurrentParticle();
 			}

@@ -392,8 +392,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	updateSendLeavingWithCopies(sendTogether);
 
 	global_log->set_mpi_output_all();
-	double waitCounter = 1.0;
-	double deadlockTimeOut = 60.0;
+	double waitCounter = 5.0;
+	double deadlockTimeOut = 360.0;
 	bool allDone = false;
 	double startTime = MPI_Wtime();
 	bool migrateToSelfDone = not willMigrateToSelf;
