@@ -165,10 +165,10 @@ private:
 			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero);
 
 	void iteratePair (long long int numRepetitions,
-			ParticleCell& firstCell, ParticleCell& secondCell, double& gflops, double& flopCount, double& time, FlopCounter& flopCounter);
+			ParticleCell& firstCell, ParticleCell& secondCell, double& time);
 
 	void iterateOwn (long long int numRepetitions,
-			ParticleCell& cell, double& gflops, double& flopCount, double& time, FlopCounter& flopCounter);
+			ParticleCell& cell, double& time);
 
 
 	/**

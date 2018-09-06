@@ -176,38 +176,30 @@ void VectorizationTuner::iterateOwn(long long int numRepetitions,
 }
 
 void VectorizationTuner::iterateOwn (long long int numRepetitions,
-		ParticleCell& cell, double& gflops, double& flopCount, double& time, FlopCounter& flopCounter) {
-	runOwn(flopCounter, cell, 1);
+		ParticleCell& cell, double& time) {
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
 	runOwn(*_cellProcessor, cell, numRepetitions);
 	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
-	gflops = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024 * 1024 * 1024);
-	flopCount = flopCounter.getTotalFlopCount();
 	time = tuningTime / numRepetitions;
 	//global_log->info() << "flop count per iterations: " << flopCount << std::endl;
 	//global_log->info() << "time per iteration: " << time << "s " << std::endl;
-	flopCounter.resetCounters();
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
 
 void VectorizationTuner::iteratePair (long long int numRepetitions,
-		ParticleCell& firstCell, ParticleCell& secondCell, double& gflops, double& flopCount, double& time, FlopCounter& flopCounter) {
-	runPair(flopCounter, firstCell, secondCell, 1);
+		ParticleCell& firstCell, ParticleCell& secondCell, double& time) {
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
 	runPair(*_cellProcessor, firstCell, secondCell, numRepetitions);
 	global_simulation->timers()->stop("VECTORIZATION_TUNER_TUNER");
 	// get Gflops for pair computations
 	double tuningTime = global_simulation->timers()->getTime("VECTORIZATION_TUNER_TUNER");
-	gflops = flopCounter.getTotalFlopCount() * numRepetitions / tuningTime / (1024 * 1024 * 1024);
-	flopCount = flopCounter.getTotalFlopCount();
 	time = tuningTime / numRepetitions;
 	//global_log->info() << "flop count per iterations: " << flopCount << std::endl;
 	//global_log->info() << "time per iteration: " << time << "s " << std::endl;
-	flopCounter.resetCounters();
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
 
@@ -335,23 +327,20 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 
 				numRepetitions = std::max(10000u / std::max(1u, (weight*weight*numProcs)), 10u);
 
-				//the gflops and flopCount are ignored only the time is needed
-				double gflops = 0;
-				double flopCount = 0;
 				double time = 0;
 				counter.resetCounters();
 
-				iterateOwn(numRepetitions, faceCell, gflops, flopCount, time, counter);
+				iterateOwn(numRepetitions, faceCell, time);
 				ownValues.push_back(time/numProcs);
 				clearMolecules(mainCell);
 				counter.resetCounters();
-				iteratePair(numRepetitions, mainCell, faceCell, gflops, flopCount, time, counter);
+				iteratePair(numRepetitions, mainCell, faceCell, time);
 				faceValues.push_back(time/numProcs);
 				counter.resetCounters();
-				iteratePair(numRepetitions, mainCell, edgeCell, gflops, flopCount, time, counter);
+				iteratePair(numRepetitions, mainCell, edgeCell, time);
 				edgeValues.push_back(time/numProcs);
 				counter.resetCounters();
-				iteratePair(numRepetitions, mainCell, cornerCell, gflops, flopCount, time, counter);
+				iteratePair(numRepetitions, mainCell, cornerCell, time);
 				cornerValues.push_back(time/numProcs);
 				counter.resetCounters();
 
