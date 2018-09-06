@@ -293,7 +293,6 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		Component& c1 = componentList[0];
 		Component& c2 = componentList.size() >= 2 ? componentList[1] : c1;
 
-		FlopCounter counter = FlopCounter {1, 1};
 
 		const double restoreCutoff = _cellProcessor->getCutoffRadiusSquare();
 		const double restoreLJCutoff = _cellProcessor->getLJCutoffRadiusSquare();
@@ -328,21 +327,19 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 				numRepetitions = std::max(10000u / std::max(1u, (weight*weight*numProcs)), 10u);
 
 				double time = 0;
-				counter.resetCounters();
 
 				iterateOwn(numRepetitions, faceCell, time);
 				ownValues.push_back(time/numProcs);
-				clearMolecules(mainCell);
-				counter.resetCounters();
+
 				iteratePair(numRepetitions, mainCell, faceCell, time);
 				faceValues.push_back(time/numProcs);
-				counter.resetCounters();
+
 				iteratePair(numRepetitions, mainCell, edgeCell, time);
 				edgeValues.push_back(time/numProcs);
-				counter.resetCounters();
+
 				iteratePair(numRepetitions, mainCell, cornerCell, time);
 				cornerValues.push_back(time/numProcs);
-				counter.resetCounters();
+
 
 				clearMolecules(mainCell);
 				clearMolecules(faceCell);
