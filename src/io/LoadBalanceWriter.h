@@ -76,7 +76,7 @@ private:
 	void recordTimes(long unsigned int simstep);
 	void resetTimes();
 	void writeOutputFileHeader();
-	void writeLBEntry(size_t id, std::ofstream &outputfile);
+	void writeLBEntry(size_t id, std::ofstream &outputfile, int numRanks);
 	void flush(DomainDecompBase* domainDecomp);
 	void displayWarning(unsigned long simstep, std::string timername, double f_LB);
 
@@ -85,6 +85,8 @@ private:
 	Timer *_defaultTimer;
 	std::vector<std::string> _timerNames;
 	std::vector<double> _times;
+	std::vector<double> _sum_times;
+	std::vector<double> _global_sum_times;
 	std::vector<double> _global_times;
 	std::vector<unsigned long> _simsteps;
 	std::map<std::string, double> _warninglevels;

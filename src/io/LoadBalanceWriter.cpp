@@ -55,15 +55,22 @@ void LoadbalanceWriter::init(ParticleContainer *particleContainer,
 	global_simulation->timers()->registerTimer(default_timer_name, vector<string>{"SIMULATION"}, _defaultTimer);
 	_timerNames.push_back(default_timer_name);
 
-	size_t timestep_entry_offset = 2* _timerNames.size();
+	size_t timestep_entry_offset = 2 * _timerNames.size();
 	_simsteps.reserve(_writeFrequency);
 	_times.reserve(timestep_entry_offset * _writeFrequency);
+	_sum_times.reserve(_timerNames.size() * _writeFrequency);
+
+	// global_times is needed at every process!
 	_global_times.reserve(timestep_entry_offset * _writeFrequency);
+
+	if (domainDecomp->getRank() == 0) {
+		_global_sum_times.reserve(_timerNames.size() * _writeFrequency);
+	}
 
 	_defaultTimer->reset();
 	_defaultTimer->start();
 
-	if(0 == domainDecomp->getRank()) {
+	if(domainDecomp->getRank() == 0) {
 		writeOutputFileHeader();
 	}
 }
@@ -89,9 +96,9 @@ void LoadbalanceWriter::writeOutputFileHeader() {
 	for(auto timername : _timerNames) {
 		outputfile << "\t#" << timername <<"#\t\t";
 	}
-	outputfile << "\n\t";
+	outputfile << "\n";
 	for(auto timername : _timerNames) {
-		outputfile << "\tmin\tmax\tf_LB";
+		outputfile << "\tmin\tmax\tf_LB\timbalance";
 	}
 	outputfile << std::endl;
 	outputfile.close();
@@ -115,37 +122,52 @@ void LoadbalanceWriter::recordTimes(unsigned long simstep) {
 void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
 #ifdef ENABLE_MPI
 	//! @todo If this shall become a general LB monitor/manager a MPI_Allreduce will be needed here
-	MPI_CHECK(MPI_Reduce( _times.data(), _global_times.data(), _times.size(), MPI_DOUBLE, MPI_MAX, 0, domainDecomp->getCommunicator()));
+	MPI_CHECK(
+			MPI_Reduce( _times.data(), _global_times.data(), _times.size(), MPI_DOUBLE, MPI_MAX,0, domainDecomp->getCommunicator()));
+	for (size_t ind = 0; ind < _times.size(); ind += 2) {
+		// sum of +time
+		_sum_times.push_back(_times[ind]);
+		MPI_CHECK(
+				MPI_Reduce( _sum_times.data(), _global_sum_times.data(), _sum_times.size(), MPI_DOUBLE, MPI_SUM, 0, domainDecomp->getCommunicator()));
+	}
 #else
 	//! @todo in case we do not reuse _times later on, we may use here  _global_times = std::move(_times);
 	_global_times = _times;
+	for(size_t ind = 0; ind < _times.size(); ind += 2) {
+		_sum_times.push_back(_times[ind]);
+		_global_sum_times.push_back(_times[ind]);
+	}
 #endif
 	if(0 == domainDecomp->getRank()) {
 		std::ofstream outputfile(_outputFilename,  std::ofstream::app);
 		for(size_t i = 0; i < _simsteps.size(); ++i) {
-			writeLBEntry(i, outputfile);
+			writeLBEntry(i, outputfile, domainDecomp->getNumProcs());
 		}
 		outputfile.close();
 	}
 	resetTimes();
 }
 
-void LoadbalanceWriter::writeLBEntry(size_t id, std::ofstream &outputfile) {
+void LoadbalanceWriter::writeLBEntry(size_t id, std::ofstream &outputfile, int numRanks) {
 	outputfile << _simsteps[id];
 	size_t timestep_entry_offset = 2* _timerNames.size();
 	size_t base_offset = timestep_entry_offset * id;
+	size_t single_offset = _timerNames.size() * id;
 	for(size_t timer_id = 0; timer_id < _timerNames.size(); ++timer_id) {
-		double min, max, f_LB;
+		double min, max, f_LB, imbalance;
 		size_t timer_offset = 2 * timer_id;
 		size_t offset = base_offset + timer_offset;
 		max = _global_times[offset];
 		min = -_global_times[offset + 1];
+		// imbalance = 1 - (average of time) / maximal time -- fraction: time spent useless / really needed time
+		double optimaltime = (_global_sum_times[timer_id + single_offset] / numRanks);
+		imbalance = 1 - optimaltime / max;
 		f_LB = max / min;
 		std::string timername = _timerNames[timer_id];
 		if(_warninglevels.count(timername) > 0 && _warninglevels[timername] < f_LB) {
 			displayWarning(_simsteps[id], timername, f_LB);
 		}
-		outputfile << "\t" << min << "\t" << max << "\t" << f_LB;
+		outputfile << "\t" << min << "\t" << max << "\t" << f_LB << "\t" << imbalance;
 	}
 	outputfile << std::endl;
 }
@@ -161,4 +183,6 @@ void LoadbalanceWriter::resetTimes() {
 	_times.clear();
 	_global_times.clear();
 	_simsteps.clear();
+	_sum_times.clear();
+	_global_sum_times.clear();
 }
