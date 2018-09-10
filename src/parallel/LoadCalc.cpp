@@ -6,7 +6,8 @@
  */
 
 #include "LoadCalc.h"
-
+#include "DomainDecompBase.h"
+#include "mpi.h"
 
 std::vector<double> TunerLoad::readVec(std::istream& in, int& count1, int& count2) {
 	std::vector<double> vec;
@@ -186,4 +187,66 @@ TunerLoad TunerLoad::read(std::istream& stream){
 	}
 	auto cornerTime = readVec(stream, count1, count2);
 	return TunerLoad {count1, count2, std::move(ownTime), std::move(faceTime), std::move(edgeTime), std::move(cornerTime)};
+}
+
+
+// MEASURELOAD
+std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
+
+void MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
+	int numRanks = decomp->getNumProcs();
+
+	// owntime = time since last check
+	double ownTime = global_simulation->timers()->getTime(TIMER_NAME) - _previousTime;
+	_previousTime += ownTime;
+
+	std::vector<double> neededTimes(numRanks);
+	MPI_Gather(&ownTime, 1, MPI_DOUBLE, neededTimes.data(), numRanks, MPI_DOUBLE, 0, comm);
+
+
+	std::vector<unsigned long> statistics = global_simulation->getMoleculeContainer()->getParticleCellStatistics();
+	int maxParticleCount = statistics.size();
+	if(numRanks < maxParticleCount){
+		Log::global_log->fatal() << "Not enough processes to sample from. Aborting!" << std::endl;
+		global_simulation->exit(559);
+	}
+
+	int global_maxParticleCount = 0;
+	MPI_Allreduce(&maxParticleCount, &global_maxParticleCount, 1, MPI_INT, MPI_MAX, comm);
+	statistics.resize(global_maxParticleCount);
+	if (decomp->getRank() == 0) {
+		std::vector<unsigned long> global_statistics(global_maxParticleCount * numRanks);
+		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(),
+				global_statistics.size(), MPI_UINT64_T, 0, comm);
+
+		// right hand side = global_statistics ^ T \cdot neededTimes
+		std::vector<double> right_hand_side(global_maxParticleCount, 0.);
+		for (int particleCount = 0; particleCount < global_maxParticleCount; particleCount++) {
+			for (int rank = 0; rank < numRanks; rank++) {
+				right_hand_side[particleCount] += global_statistics[global_maxParticleCount * rank + particleCount]
+						* neededTimes[rank];
+			}
+		}
+
+		// system matrix is: global_statistics ^ T \cdot global_statistics
+		std::vector<unsigned long> system_matrix(global_maxParticleCount * global_maxParticleCount, 0ul);
+		for (int particleCount1 = 0; particleCount1 < global_maxParticleCount; particleCount1++) {
+			for (int rank = 0; rank < numRanks; rank++) {
+				for (int particleCount2 = 0; particleCount2 < global_maxParticleCount; particleCount2++) {
+					system_matrix[particleCount1 * global_maxParticleCount + particleCount2] +=
+							global_statistics[global_maxParticleCount * rank + particleCount1]
+									* global_statistics[global_maxParticleCount * rank + particleCount2];
+				}
+			}
+		}
+
+		// now we have to solve: system_matrix \cdot cell_time_vector = right_hand_side
+
+
+
+	} else {
+		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr,
+				0 /*here insignificant*/, MPI_UINT64_T, 0, comm);
+	}
+
 }

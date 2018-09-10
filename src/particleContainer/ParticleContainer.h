@@ -237,6 +237,12 @@ public:
 	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) = 0; // new
 
 	virtual double* getCellLength() = 0;
+
+	/**
+	 * Get a statistics of the cells found in this container.
+	 * @return A vector, where particleCellStatistics[partCount] represents the number of cells with partCount particles.
+	 */
+	virtual std::vector<unsigned long> getParticleCellStatistics() {return std::vector<unsigned long>();}
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

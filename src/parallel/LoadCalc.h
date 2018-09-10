@@ -13,7 +13,10 @@
 
 #include <utils/Logger.h>
 
+class DomainDecompBase;
+
 #include "Simulation.h"
+
 
 class LoadCalc {
 public:
@@ -208,3 +211,39 @@ public:
 	}
 };
 
+
+/**
+ * This class provides loads by time-measurements of the real simulation.
+ * The time needed by each process is measured and based on that the time needed for each cell is reconstructed.
+ */
+class MeasureLoad: public LoadCalc {
+	static std::string TIMER_NAME;
+
+public:
+	double getOwn(int index1, int index2) const override {
+		return getValue(index1);
+	}
+
+	double getFace(int index1, int index2) const override {
+		return getValue(index1);
+	}
+
+	double getEdge(int index1, int index2) const override {
+		return getValue(index1);
+	}
+
+	double getCorner(int index1, int index2) const override {
+		return getValue(index1);
+	}
+
+	void prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm);
+
+private:
+	double getValue(int numParticles) const;
+
+
+	std::vector<double> _times;  /// stores the times needed for the cells
+	std::vector<double> _constants;  /// for extrapolation
+
+	double _previousTime;
+};

@@ -1203,3 +1203,16 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 }
 
 bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurrentOptimalTraversal()->requiresForceExchange();}
+
+std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {
+	int maxParticles = 0;
+	for (auto& cell : _cells) {
+		maxParticles = std::max(maxParticles, cell.getMoleculeCount());
+	}
+
+	std::vector<unsigned long> statistics(maxParticles, 0ul);
+	for (auto& cell : _cells) {
+		statistics[cell.getMoleculeCount()]++;
+	}
+	return statistics;
+}

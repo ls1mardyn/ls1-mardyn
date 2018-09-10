@@ -248,6 +248,8 @@ public:
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength);
 
+	std::vector<unsigned long> LinkedCells::getParticleCellStatistics() override;
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########
