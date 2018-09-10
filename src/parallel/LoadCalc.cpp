@@ -2,7 +2,7 @@
  * LoadCalc.cpp
  *
  *  Created on: 10.06.2017
- *      Author: simon
+ *      Author: griebel_s
  */
 
 #include "LoadCalc.h"
@@ -62,7 +62,7 @@ std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, 
 			if (quot == 0) {
 				quot = 1;
 			}
-			temp1.push_back(acessVec(timeVec, i, 0) / quot);
+			temp1.push_back(accessVec(timeVec, i, 0) / quot);
 		}
 		//calculates the median
 		std::sort(temp1.begin(), temp1.end());
@@ -75,7 +75,7 @@ std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, 
 			if (quot == 0) {
 				quot = 1;
 			}
-			temp2.push_back(acessVec(timeVec, 0, i) / quot);
+			temp2.push_back(accessVec(timeVec, 0, i) / quot);
 		}
 		std::sort(temp2.begin(), temp2.end());
 		consts[1] = temp2.at(temp2.size() / 2);
@@ -99,7 +99,7 @@ std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, 
 				if (quot == 0) {
 					quot = 1;
 				}
-				temp3.push_back((acessVec(timeVec, index1, index2) - fac1 * consts[0] - fac2 * consts[1]) / quot);
+				temp3.push_back((accessVec(timeVec, index1, index2) - fac1 * consts[0] - fac2 * consts[1]) / quot);
 			}
 		}
 		std::sort(temp3.begin(), temp3.end());

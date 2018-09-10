@@ -1,12 +1,12 @@
 /*
- * MulDimVector.h
+ * LoadCalc.h
  *
  *  Created on: 10.06.2017
- *      Author: simon
+ *      Author: griebel_s
  */
 
-#ifndef SRC_UTILS_MULDIMVECTOR_H_
-#define SRC_UTILS_MULDIMVECTOR_H_
+#pragma once
+
 #include <array>
 #include <vector>
 #include <algorithm>
@@ -30,7 +30,7 @@ public:
 	virtual double getCorner(int index1, int index2) const = 0;
 };
 
-/*
+/**
  * Stores the measured time for the vectorization tuner.
  *
  * Extrapolates times when needed
@@ -38,7 +38,7 @@ public:
 class TunerLoad: public LoadCalc {
 public:
 
-	/*
+	/**
 	 * The whole idea of this class is to take the ownership of the measured values of the tuner, so they are given by rvalue reference
 	 */
 	TunerLoad(int count1, int count2, std::vector<double>&& ownTime, std::vector<double>&& faceTime,
@@ -47,15 +47,14 @@ public:
 	TunerLoad() :
 			_count1 { 0 }, _count2 { 0 } {
 	}
-	;
 
-	/*
+	/**
 	 * These function get the load for inner cell interactions and for the different neighbor types,
 	 * using extrapolation if necessary
 	 */
 	double getOwn(int index1, int index2) const override {
 		if (index2 < _count2 && index1 < _count1) {
-			return acessVec(_ownTime, index1, index2);
+			return accessVec(_ownTime, index1, index2);
 		} else {
 			return index1 * (index1 - 1) / 2 * _ownConst[0] + index2 * (index2 - 1) / 2 * _ownConst[1]
 					+ index2 * index1 * _ownConst[2];
@@ -64,7 +63,7 @@ public:
 
 	double getFace(int index1, int index2) const override {
 		if (index2 < _count2 && index1 < _count1) {
-			return acessVec(_faceTime, index1, index2);
+			return accessVec(_faceTime, index1, index2);
 		} else {
 			return costsNeighbour(index1, index2, _faceConst);
 		}
@@ -72,7 +71,7 @@ public:
 
 	double getEdge(int index1, int index2) const override {
 		if (index2 < _count2 && index1 < _count1) {
-			return acessVec(_edgeTime, index1, index2);
+			return accessVec(_edgeTime, index1, index2);
 		} else {
 			return costsNeighbour(index1, index2, _edgeConst);
 		}
@@ -80,7 +79,7 @@ public:
 
 	double getCorner(int index1, int index2) const override {
 		if (index2 < _count2 && index1 < _count1) {
-			return acessVec(_cornerTime, index1, index2);
+			return accessVec(_cornerTime, index1, index2);
 		} else {
 			return costsNeighbour(index1, index2, _cornerConst);
 		}
@@ -94,7 +93,7 @@ public:
 		return _count2;
 	}
 
-	/*
+	/**
 	 * Writes the given TunerTime object to the given Stream
 	 */
 	static void write(std::ostream& stream, const TunerLoad& time) {
@@ -115,20 +114,20 @@ public:
 	static TunerLoad read(std::istream& stream);
 
 private:
-	/*
+	/**
 	 * Reads a single two dimensional vector (double values separated by ; )
 	 * whose dimensions are stored in the given integers
 	 */
 	static std::vector<double> readVec(std::istream& in, int& count1, int& count2);
 
-	/*
+	/**
 	 * Extrapolation for vectors storing the neighbor times
 	 */
 	static double costsNeighbour(int index1, int index2, std::array<double, 3> consts) noexcept {
 		return index1 * index1 * consts[0] + index2 * index2 * consts[1] + index1 * index2 * 2 * consts[2];
 	}
 
-	/*
+	/**
 	 * Writes the given two dimensional array to the given stream
 	 *
 	 * The data of each dimension is stored in a line, where the single elements are separated by a ;
@@ -136,17 +135,17 @@ private:
 	void writeVec(std::ostream& out, const std::vector<double>& vec) const {
 		for (int index1 = 0; index1 < _count1; ++index1) {
 			for (int index2 = 0; index2 < _count2 - 1; ++index2) {
-				out << acessVec(vec, index1, index2) << ";";
+				out << accessVec(vec, index1, index2) << ";";
 			}
 			//no terminating ; for the last entry
 			if (vec.size() != 0) {
-				out << acessVec(vec, index1, _count2 - 1);
+				out << accessVec(vec, index1, _count2 - 1);
 			}
 			out << std::endl;
 		}
 	}
 
-	/*
+	/**
 	 * calculates the time needed for a single interaction for the neighbourType represented by the given vector
 	 *
 	 * Neighbor and inner cell interactions have to be treated differently since, if they have the same amount of particles
@@ -154,15 +153,8 @@ private:
 	 */
 	std::array<double, 3> calcConsts(const std::vector<double>& timeVec, bool inner);
 
-	double acessVec(const std::vector<double>& vec, int index1, int index2) const {
+	double accessVec(const std::vector<double>& vec, int index1, int index2) const {
 		return vec[index2 + _count2 * index1];
-	}
-
-	/*
-	 * used for debug purposes only
-	 */
-	double acessVecChecked(const std::vector<double>& vec, int index1, int index2) const {
-		return vec.at(index2 + _count2 * index1);
 	}
 
 	/*
@@ -194,7 +186,7 @@ private:
 	std::array<double, 3> _cornerConst;
 };
 
-/*
+/**
  * The load estimation function previously used in MarDyn
  */
 class TradLoad: public LoadCalc {
@@ -216,4 +208,3 @@ public:
 	}
 };
 
-#endif /* SRC_UTILS_MULDIMVECTOR_H_ */
