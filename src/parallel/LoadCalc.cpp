@@ -5,9 +5,13 @@
  *      Author: griebel_s
  */
 
+#include <armadillo>
+#include "mpi.h"
+
 #include "LoadCalc.h"
 #include "DomainDecompBase.h"
-#include "mpi.h"
+
+
 
 std::vector<double> TunerLoad::readVec(std::istream& in, int& count1, int& count2) {
 	std::vector<double> vec;
@@ -241,8 +245,15 @@ void MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		}
 
 		// now we have to solve: system_matrix \cdot cell_time_vector = right_hand_side
-
-
+		arma::mat arma_system_matrix(global_maxParticleCount, global_maxParticleCount);
+		for(int row = 0; row < global_maxParticleCount; row ++){
+			for(int column = 0; column < global_maxParticleCount; column ++){
+				arma_system_matrix[row * global_maxParticleCount + column] = system_matrix[row * global_maxParticleCount
+						+ column];
+			}
+		}
+		arma::vec arma_rhs(right_hand_side);
+		arma::vec cell_time_vec = arma::solve(arma_system_matrix, arma_rhs);
 
 	} else {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr,
