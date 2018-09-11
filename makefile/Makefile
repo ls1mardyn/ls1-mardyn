@@ -132,16 +132,16 @@ ARMADILLO ?= 0
 ARMADILLO_NOWRAP ?= 1
 ARMADILLO_BUNDLEDINCLUDE ?= 0
 ifeq ($(ARMADILLO), 1)
-CXXFLAGS += -DMARDYN_ARMADILLO
-ifeq ($(ARMADILLO_NOWRAP), 1)
-ifeq ($(ARMADILLO_BUNDLEDINCLUDE), 1)
-CXXFLAGS += -L
-endif
-CXXFLAGS += -DARMA_DONT_USE_WRAPPER
-LDFLAGS += -lblas -llapack
-else
-LDFLAGS += -larmadillo
-endif
+	CXXFLAGS += -DMARDYN_ARMADILLO
+	ifeq ($(ARMADILLO_NOWRAP), 1)
+		ifeq ($(ARMADILLO_BUNDLEDINCLUDE), 1)
+			CXXFLAGS += -L../dependencies-external/armadillo
+		endif
+		CXXFLAGS += -DARMA_DONT_USE_WRAPPER
+		LDFLAGS += -lblas -llapack
+	else
+		LDFLAGS += -larmadillo
+	endif
 endif
 
 
