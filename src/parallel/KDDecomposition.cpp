@@ -226,13 +226,13 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	if(_steps == measureLoadInitTimers){
 		_measureTimeCalc = new MeasureLoad();
 	}
-	size_t measureLoadStart = 50;
+	size_t measureLoadStart = 3;
 	if (_steps == measureLoadStart) {
 		bool faulty = _measureTimeCalc->prepareLoads(this, _comm);
 		if (faulty) {
-			global_log->info() << "not using MeasureLoad as there are not enough processes" << std::endl;
+			global_log->info() << "not using MeasureLoad as there are not enough processes. No rebalance forced." << std::endl;
 		} else {
-			global_log->info() << "start using MeasureLoad" << std::endl;
+			global_log->info() << "start using MeasureLoad, will force rebalance." << std::endl;
 			delete _loadCalc;
 			_loadCalc = _measureTimeCalc;
 			_measureTimeCalc = nullptr;

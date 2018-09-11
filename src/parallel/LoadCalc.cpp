@@ -224,8 +224,8 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	MPI_Allreduce(&maxParticleCount, &global_maxParticleCount, 1, MPI_INT, MPI_MAX, comm);
 
 	if (numRanks < global_maxParticleCount) {
-		Log::global_log->warning() << "Not enough processes to sample from(maxParticles: " << global_maxParticleCount
-				<< ", numRanks: " << numRanks << "). Aborting!" << std::endl;
+		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from(maxParticles: " << global_maxParticleCount
+				<< ", numRanks: " << numRanks << ")." << std::endl;
 
 		return 1;
 	}
@@ -300,7 +300,7 @@ void MeasureLoad::calcConstants() {
 		numElements = _times.size() - start;
 	}
 
-	std::array<double,4> momentsX;  // stores the moments of x: sum{t^i}
+	std::array<double,5> momentsX;  // stores the moments of x: sum{t^i}
 	std::array<double,3> momentsYX;  // stores the following: sum{d* t^i}
 
 	momentsX[0] = numElements;
@@ -317,6 +317,7 @@ void MeasureLoad::calcConstants() {
 		momentsX[1] += x;
 		momentsX[2] += x2;
 		momentsX[3] += x3;
+		momentsX[4] += x4;
 		momentsYX[0] += y;
 		momentsYX[1] += yx;
 		momentsYX[2] += yx2;
