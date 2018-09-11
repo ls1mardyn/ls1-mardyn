@@ -131,11 +131,15 @@ ARMADILLO ?= 0
 
 ARMADILLO_NOWRAP ?= 1
 
+ARMADILLO_NOLINK ?= 0
+
 ifeq ($(ARMADILLO), 1)
 	CXXFLAGS += -DMARDYN_ARMADILLO
 	ifeq ($(ARMADILLO_NOWRAP), 1)
 		CXXFLAGS += -DARMA_DONT_USE_WRAPPER
-		LDFLAGS += -lblas -llapack
+		ifeq ($(ARMADILLO_NOLINK), 0)
+			LDFLAGS += -lblas -llapack
+		endif
 	else
 		LDFLAGS += -larmadillo
 	endif
