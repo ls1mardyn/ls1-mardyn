@@ -226,7 +226,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	int maxParticlesP1 = statistics.size();
 
 
-	int global_maxParticlesP1 = 0;
+	int global_maxParticlesP1 = 0;  // maxParticle Count + 1 = degrees of freedom
 	MPI_Allreduce(&maxParticlesP1, &global_maxParticlesP1, 1, MPI_INT, MPI_MAX, comm);
 
 	if (numRanks < global_maxParticlesP1) {
