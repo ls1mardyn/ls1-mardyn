@@ -1210,7 +1210,7 @@ std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {
 		maxParticles = std::max(maxParticles, cell.getMoleculeCount());
 	}
 
-	std::vector<unsigned long> statistics(maxParticles, 0ul);
+	std::vector<unsigned long> statistics(maxParticles + 1, 0ul);
 	for (auto& cell : _cells) {
 		statistics[cell.getMoleculeCount()]++;
 	}

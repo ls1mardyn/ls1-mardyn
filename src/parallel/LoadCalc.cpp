@@ -223,51 +223,51 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
 
 	std::vector<unsigned long> statistics = global_simulation->getMoleculeContainer()->getParticleCellStatistics();
-	int maxParticleCount = statistics.size();
+	int maxParticlesP1 = statistics.size();
 
 
-	int global_maxParticleCount = 0;
-	MPI_Allreduce(&maxParticleCount, &global_maxParticleCount, 1, MPI_INT, MPI_MAX, comm);
+	int global_maxParticlesP1 = 0;
+	MPI_Allreduce(&maxParticlesP1, &global_maxParticlesP1, 1, MPI_INT, MPI_MAX, comm);
 
-	if (numRanks < global_maxParticleCount) {
-		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from(maxParticles: " << global_maxParticleCount
+	if (numRanks < global_maxParticlesP1) {
+		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (maxParticlesP1: " << global_maxParticlesP1
 				<< ", numRanks: " << numRanks << ")." << std::endl;
 
 		return 1;
 	}
 
-	statistics.resize(global_maxParticleCount);
+	statistics.resize(global_maxParticlesP1);
 	if (decomp->getRank() == 0) {
-		std::vector<unsigned long> global_statistics(global_maxParticleCount * numRanks);
+		std::vector<unsigned long> global_statistics(global_maxParticlesP1 * numRanks);
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(),
 				global_statistics.size(), MPI_UINT64_T, 0, comm);
 
 		// right hand side = global_statistics ^ T \cdot neededTimes
-		std::vector<double> right_hand_side(global_maxParticleCount, 0.);
-		for (int particleCount = 0; particleCount < global_maxParticleCount; particleCount++) {
+		std::vector<double> right_hand_side(global_maxParticlesP1, 0.);
+		for (int particleCount = 0; particleCount < global_maxParticlesP1; particleCount++) {
 			for (int rank = 0; rank < numRanks; rank++) {
-				right_hand_side[particleCount] += global_statistics[global_maxParticleCount * rank + particleCount]
+				right_hand_side[particleCount] += global_statistics[global_maxParticlesP1 * rank + particleCount]
 						* neededTimes[rank];
 			}
 		}
 
 		// system matrix is: global_statistics ^ T \cdot global_statistics
-		std::vector<unsigned long> system_matrix(global_maxParticleCount * global_maxParticleCount, 0ul);
-		for (int particleCount1 = 0; particleCount1 < global_maxParticleCount; particleCount1++) {
+		std::vector<unsigned long> system_matrix(global_maxParticlesP1 * global_maxParticlesP1, 0ul);
+		for (int particleCount1 = 0; particleCount1 < global_maxParticlesP1; particleCount1++) {
 			for (int rank = 0; rank < numRanks; rank++) {
-				for (int particleCount2 = 0; particleCount2 < global_maxParticleCount; particleCount2++) {
-					system_matrix[particleCount1 * global_maxParticleCount + particleCount2] +=
-							global_statistics[global_maxParticleCount * rank + particleCount1]
-									* global_statistics[global_maxParticleCount * rank + particleCount2];
+				for (int particleCount2 = 0; particleCount2 < global_maxParticlesP1; particleCount2++) {
+					system_matrix[particleCount1 * global_maxParticlesP1 + particleCount2] +=
+							global_statistics[global_maxParticlesP1 * rank + particleCount1]
+									* global_statistics[global_maxParticlesP1 * rank + particleCount2];
 				}
 			}
 		}
 
 		// now we have to solve: system_matrix \cdot cell_time_vector = right_hand_side
-		arma::mat arma_system_matrix(global_maxParticleCount, global_maxParticleCount);
-		for(int row = 0; row < global_maxParticleCount; row ++){
-			for(int column = 0; column < global_maxParticleCount; column ++){
-				arma_system_matrix[row * global_maxParticleCount + column] = system_matrix[row * global_maxParticleCount
+		arma::mat arma_system_matrix(global_maxParticlesP1, global_maxParticlesP1);
+		for(int row = 0; row < global_maxParticlesP1; row ++){
+			for(int column = 0; column < global_maxParticlesP1; column ++){
+				arma_system_matrix[row * global_maxParticlesP1 + column] = system_matrix[row * global_maxParticlesP1
 						+ column];
 			}
 		}
@@ -276,13 +276,13 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
 		global_log->info() << "cell_time_vec: " << cell_time_vec << std::endl;
 		_times = arma::conv_to< std::vector<double> >::from(cell_time_vec);
-		mardyn_assert(_times.size() == global_maxParticleCount);
-		MPI_Bcast(_times.data(),global_maxParticleCount, MPI_DOUBLE, 0, comm);
+		mardyn_assert(_times.size() == global_maxParticlesP1);
+		MPI_Bcast(_times.data(),global_maxParticlesP1, MPI_DOUBLE, 0, comm);
 	} else {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr,
 				0 /*here insignificant*/, MPI_UINT64_T, 0, comm);
-		_times.resize(global_maxParticleCount);
-		MPI_Bcast(_times.data(),global_maxParticleCount, MPI_DOUBLE, 0, comm);
+		_times.resize(global_maxParticlesP1);
+		MPI_Bcast(_times.data(),global_maxParticlesP1, MPI_DOUBLE, 0, comm);
 	}
 
 	// extrapolation constants:
@@ -356,13 +356,13 @@ void MeasureLoad::calcConstants() {
 double MeasureLoad::getValue(int numParticles) const {
 	mardyn_assert(numParticles > 0);
 	mardyn_assert(_preparedLoad);
-
-	if (numParticles < _times.size()) {
+	size_t numPart = numParticles;
+	if (numPart < _times.size()) {
 		// if we are within the known (i.e. measured) particle count, just use the known values
-		return _times[numParticles];
+		return _times[numPart];
 	} else {
 		// otherwise we interpolate
-		return _extrapolationConst[0] * numParticles * numParticles + _extrapolationConst[1] * numParticles
+		return _extrapolationConst[0] * numPart * numPart + _extrapolationConst[1] * numPart
 				+ _extrapolationConst[2];
 	}
 }
