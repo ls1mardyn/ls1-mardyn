@@ -298,11 +298,11 @@ void MeasureLoad::calcConstants() {
 	// we need at least three entries for that!
 	mardyn_assert(_times.size() >= 3);
 
-	// we do a least square fit of the last 10% of the data:
+	// we do a least square fit of the last 50% of the data:
 	size_t start, numElements;
 	{
 		size_t one = _times.size() - 3;
-		size_t two = _times.size() * 0.9;
+		size_t two = _times.size() * 0.5;
 		start = std::min(one, two);
 		numElements = _times.size() - start;
 	}
