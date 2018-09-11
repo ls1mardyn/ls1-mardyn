@@ -219,7 +219,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	_previousTime += ownTime;
 
 	std::vector<double> neededTimes(numRanks);
-	MPI_Gather(&ownTime, 1, MPI_DOUBLE, neededTimes.data(), numRanks, MPI_DOUBLE, 0, comm);
+	MPI_Gather(&ownTime, 1, MPI_DOUBLE, neededTimes.data(), 1, MPI_DOUBLE, 0, comm);
 
 
 	std::vector<unsigned long> statistics = global_simulation->getMoleculeContainer()->getParticleCellStatistics();
@@ -240,7 +240,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	if (decomp->getRank() == 0) {
 		std::vector<unsigned long> global_statistics(global_maxParticlesP1 * numRanks);
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(),
-				global_statistics.size(), MPI_UINT64_T, 0, comm);
+				statistics.size(), MPI_UINT64_T, 0, comm);
 
 		// right hand side = global_statistics ^ T \cdot neededTimes
 		std::vector<double> right_hand_side(global_maxParticlesP1, 0.);
