@@ -4,8 +4,9 @@
  *  Created on: 10.06.2017
  *      Author: griebel_s
  */
-
+#ifdef MARDYN_ARMADILLO
 #include <armadillo>
+#endif
 #include "mpi.h"
 
 #include "LoadCalc.h"
@@ -206,6 +207,11 @@ MeasureLoad::MeasureLoad() :
 
 
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
+
+#ifndef MARDYN_ARMADILLO
+	global_log->info() << "not compiled with armadillo. MeasureLoad not usable." << std::endl;
+	return 1;
+#else
 	int numRanks = decomp->getNumProcs();
 
 	// owntime = time since last check
@@ -283,6 +289,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	calcConstants();
 	_preparedLoad = true;
 	return 0;
+#endif
 }
 
 void MeasureLoad::calcConstants() {
@@ -322,7 +329,7 @@ void MeasureLoad::calcConstants() {
 		momentsYX[1] += yx;
 		momentsYX[2] += yx2;
 	}
-
+#ifdef MARDYN_ARMADILLO
 	// 3x3 matrix:
 	arma::mat system_matrix(3, 3);
 
@@ -342,6 +349,7 @@ void MeasureLoad::calcConstants() {
 		_extrapolationConst[row] = solution[row];
 	}
 	global_log->info() << "extrapolationconst: " << solution << std::endl;
+#endif
 
 }
 
