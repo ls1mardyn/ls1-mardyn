@@ -226,7 +226,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	if(_steps == measureLoadInitTimers){
 		_measureTimeCalc = new MeasureLoad();
 	}
-	size_t measureLoadStart = 3;
+	size_t measureLoadStart = 50;
 	if (_steps == measureLoadStart) {
 		bool faulty = _measureTimeCalc->prepareLoads(this, _comm);
 		if (faulty) {
