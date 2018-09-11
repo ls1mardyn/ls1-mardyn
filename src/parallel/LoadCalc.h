@@ -220,6 +220,8 @@ class MeasureLoad: public LoadCalc {
 	static std::string TIMER_NAME;
 
 public:
+	MeasureLoad();
+
 	double getOwn(int index1, int index2) const override {
 		return getValue(index1);
 	}
@@ -236,14 +238,15 @@ public:
 		return getValue(index1);
 	}
 
-	void prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm);
+	int prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm);
 
 private:
 	double getValue(int numParticles) const;
-
+	void calcConstants();
 
 	std::vector<double> _times;  /// stores the times needed for the cells
-	std::vector<double> _constants;  /// for extrapolation
+	std::array<double, 3> _extrapolationConst;  /// stores values of the extrapolation of the form y = a x^2 + b x + c
 
+	bool _preparedLoad;
 	double _previousTime;
 };

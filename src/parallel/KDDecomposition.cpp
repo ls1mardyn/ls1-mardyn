@@ -38,6 +38,7 @@ KDDecomposition::KDDecomposition() :
 		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
 		_useExistingFiles {}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
+	_measureTimeCalc = nullptr;
 }
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
@@ -49,6 +50,8 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
 		_useExistingFiles {true}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
+	_measureTimeCalc = nullptr;
+
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
@@ -98,6 +101,7 @@ KDDecomposition::~KDDecomposition() {
 	delete _decompTree;
 	KDNode::shutdownMPIDataType();
 	delete _loadCalc;
+	delete _measureTimeCalc;
 }
 
 void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
@@ -214,9 +218,27 @@ bool KDDecomposition::checkNeedRebalance(double lastTraversalTime) {
 
 void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
 	bool needsRebalance = checkNeedRebalance(lastTraversalTime);
-	const bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
+	bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;
+
+	size_t measureLoadInitTimers = 2;
+	if(_steps == measureLoadInitTimers){
+		_measureTimeCalc = new MeasureLoad();
+	}
+	size_t measureLoadStart = 50;
+	if (_steps == measureLoadStart) {
+		bool faulty = _measureTimeCalc->prepareLoads(this, _comm);
+		if (faulty) {
+			global_log->info() << "not using MeasureLoad as there are not enough processes" << std::endl;
+		} else {
+			global_log->info() << "start using MeasureLoad" << std::endl;
+			delete _loadCalc;
+			_loadCalc = _measureTimeCalc;
+			_measureTimeCalc = nullptr;
+			rebalance = true;
+		}
+	}
 
 	if (rebalance == false) {
 		if(sendLeavingWithCopies()){

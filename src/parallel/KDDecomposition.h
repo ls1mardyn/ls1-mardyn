@@ -337,7 +337,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Cluster 2: (partitionRank; maxRank)
 	 */
 	const int _partitionRank;
-	LoadCalc* _loadCalc; // stores the measured times (and constants) of measured by the vectorization tuner
+	LoadCalc* _loadCalc;  // stores the times (and constants) measured by the vectorization tuner
+	MeasureLoad* _measureTimeCalc;  // stores the measured times of the real-world simulations
 
 	/*
 	 * The following Variables are only used for as parameters for the Vectorization tuner constructor.

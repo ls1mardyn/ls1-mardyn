@@ -55,9 +55,9 @@ std::vector<double> TunerLoad::readVec(std::istream& in, int& count1, int& count
 }
 
 std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, bool inner) {
-	//take the median of the last 10% of the times
+	// take the median of the last 10% of the times
 	std::array<double,3> consts {};
-	//the blocks are here to avoid at least some copy paste mistakes
+	// the blocks are here to avoid at least some copy paste mistakes
 	{
 		std::vector<double> temp1 {};
 		for (int i = timeVec.size() / _count2 * 9 / 10;i < _count1;++i) {
@@ -69,7 +69,7 @@ std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, 
 			}
 			temp1.push_back(accessVec(timeVec, i, 0) / quot);
 		}
-		//calculates the median
+		// calculates the median
 		std::sort(temp1.begin(), temp1.end());
 		consts[0] = temp1.at(temp1.size() / 2);
 	}
@@ -197,7 +197,15 @@ TunerLoad TunerLoad::read(std::istream& stream){
 // MEASURELOAD
 std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
 
-void MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
+MeasureLoad::MeasureLoad() :
+		_times() {
+	_previousTime = global_simulation->timers()->getTime(TIMER_NAME);
+	_extrapolationConst = {0., 0., 0.};
+	_preparedLoad = false;
+}
+
+
+int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	int numRanks = decomp->getNumProcs();
 
 	// owntime = time since last check
@@ -210,13 +218,18 @@ void MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
 	std::vector<unsigned long> statistics = global_simulation->getMoleculeContainer()->getParticleCellStatistics();
 	int maxParticleCount = statistics.size();
-	if(numRanks < maxParticleCount){
-		Log::global_log->fatal() << "Not enough processes to sample from. Aborting!" << std::endl;
-		global_simulation->exit(559);
-	}
+
 
 	int global_maxParticleCount = 0;
 	MPI_Allreduce(&maxParticleCount, &global_maxParticleCount, 1, MPI_INT, MPI_MAX, comm);
+
+	if (numRanks < global_maxParticleCount) {
+		Log::global_log->warning() << "Not enough processes to sample from(maxParticles: " << global_maxParticleCount
+				<< ", numRanks: " << numRanks << "). Aborting!" << std::endl;
+
+		return 1;
+	}
+
 	statistics.resize(global_maxParticleCount);
 	if (decomp->getRank() == 0) {
 		std::vector<unsigned long> global_statistics(global_maxParticleCount * numRanks);
@@ -255,9 +268,92 @@ void MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		arma::vec arma_rhs(right_hand_side);
 		arma::vec cell_time_vec = arma::solve(arma_system_matrix, arma_rhs);
 
+		global_log->info() << "cell_time_vec: " << cell_time_vec << std::endl;
+		_times = arma::conv_to< std::vector<double> >::from(cell_time_vec);
+		mardyn_assert(_times.size() == global_maxParticleCount);
+		MPI_Bcast(_times.data(),global_maxParticleCount, MPI_DOUBLE, 0, comm);
 	} else {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr,
 				0 /*here insignificant*/, MPI_UINT64_T, 0, comm);
+		_times.resize(global_maxParticleCount);
+		MPI_Bcast(_times.data(),global_maxParticleCount, MPI_DOUBLE, 0, comm);
 	}
 
+	// extrapolation constants:
+	calcConstants();
+	_preparedLoad = true;
+	return 0;
+}
+
+void MeasureLoad::calcConstants() {
+	// we do a least squares fit of: y = a x^2 + b x + c
+
+	// we need at least three entries for that!
+	mardyn_assert(_times.size() >= 3);
+
+	// we do a least square fit of the last 10% of the data:
+	size_t start, numElements;
+	{
+		size_t one = _times.size() - 3;
+		size_t two = _times.size() * 0.9;
+		start = std::min(one, two);
+		numElements = _times.size() - start;
+	}
+
+	std::array<double,4> momentsX;  // stores the moments of x: sum{t^i}
+	std::array<double,3> momentsYX;  // stores the following: sum{d* t^i}
+
+	momentsX[0] = numElements;
+
+	for (size_t i = start; i < _times.size(); i++) {
+		double x = i;
+		double x2 = x * x;
+		double x3 = x2 * x;
+		double x4 = x2 * x2;
+		double y = _times[i];
+		double yx = y * x;
+		double yx2 = y * x2;
+
+		momentsX[1] += x;
+		momentsX[2] += x2;
+		momentsX[3] += x3;
+		momentsYX[0] += y;
+		momentsYX[1] += yx;
+		momentsYX[2] += yx2;
+	}
+
+	// 3x3 matrix:
+	arma::mat system_matrix(3, 3);
+
+	// 3x1 vector from moments:
+	arma::vec rhs(3);
+
+	for (size_t row = 0; row < 3ul; ++row) {
+		rhs[row] = momentsYX[row];
+		for (size_t col = 0; col < 3ul; ++col) {
+			system_matrix.at(row, col) = momentsX[row + col];
+		}
+	}
+
+	arma::vec solution = arma::solve(system_matrix, rhs);
+
+	for (size_t row = 0; row < 3ul; row++) {
+		_extrapolationConst[row] = solution[row];
+	}
+	global_log->info() << "extrapolationconst: " << solution << std::endl;
+
+}
+
+double MeasureLoad::getValue(int numParticles) const {
+	mardyn_assert(numParticles > 0);
+	mardyn_assert(_preparedLoad);
+
+	if (numParticles < _times.size()) {
+		// if we are within the known (i.e. measured) particle count, just use the known values
+		return _times[numParticles];
+	} else {
+		// otherwise we interpolate
+		return _extrapolationConst[0] * numParticles * numParticles + _extrapolationConst[1] * numParticles
+				+ _extrapolationConst[2];
+	}
 }
