@@ -346,7 +346,7 @@ void MeasureLoad::calcConstants() {
 	arma::vec solution = arma::solve(system_matrix, rhs);
 
 	for (size_t row = 0; row < 3ul; row++) {
-		_extrapolationConst[row] = solution[row];
+		_extrapolationConst[row] = solution[2-row];
 	}
 	global_log->info() << "extrapolationconst: " << solution << std::endl;
 #endif
