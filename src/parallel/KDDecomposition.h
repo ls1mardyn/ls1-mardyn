@@ -71,11 +71,15 @@ class KDDecomposition: public DomainDecompMPIBase {
 	     <updateFrequency>INTEGER</updateFrequency>
 	     <fullSearchThreshold>INTEGER</fullSearchThreshold>
 	     <heterogeneousSystems>BOOL</heterogeneousSystems>
+	     <useVectorizationTuner>BOOL</useVectorizationTuner>
 	     <clusterHetSys>BOOL</clusterHetSys>
-	     <splitBiggestDimension>BBOL</splitBiggestDimension>
+	     <splitBiggestDimension>BOOL</splitBiggestDimension>
 	     <forceRatio>BOOL</forceRatio>
 	     <rebalanceLimit>DOUBLE</rebalanceLimit>
 	     <splitThreshold>INTEGER</splitThreshold>
+		 <generateNewFiles>BOOL</generateNewFiles>
+		 <useExistingFiles>BOOL</useExistingFiles>
+		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -315,6 +319,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 	bool _splitBiggest;  // indicates, whether a subdomain is to be split along its biggest size
 	bool _forceRatio;  // if you want to enable forcing the above ratio, enable this.
 
+	bool _doMeasureLoadCalc;  //
+
 	//The decomp. only searches in all direction, if _splitBiggest is false and the number of processors in a node is less then the _splitThreshold
 	int _splitThreshold;
 	int _numParticleTypes;
@@ -338,7 +344,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 */
 	const int _partitionRank;
 	LoadCalc* _loadCalc;  // stores the times (and constants) measured by the vectorization tuner
-	MeasureLoad* _measureTimeCalc;  // stores the measured times of the real-world simulations
+	MeasureLoad* _measureLoadCalc;  // stores the measured times of the real-world simulations
 
 	/*
 	 * The following Variables are only used for as parameters for the Vectorization tuner constructor.

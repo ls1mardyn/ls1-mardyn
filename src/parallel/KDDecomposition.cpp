@@ -38,7 +38,7 @@ KDDecomposition::KDDecomposition() :
 		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
 		_useExistingFiles {}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
-	_measureTimeCalc = nullptr;
+	_measureLoadCalc = nullptr;
 }
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
@@ -50,7 +50,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
 		_useExistingFiles {true}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
-	_measureTimeCalc = nullptr;
+	_measureLoadCalc = nullptr;
 
 	_cutoffRadius = cutoffRadius;
 
@@ -101,7 +101,7 @@ KDDecomposition::~KDDecomposition() {
 	delete _decompTree;
 	KDNode::shutdownMPIDataType();
 	delete _loadCalc;
-	delete _measureTimeCalc;
+	delete _measureLoadCalc;
 }
 
 void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
@@ -158,6 +158,8 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
 	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
 
+	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
+	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
 	DomainDecompMPIBase::readXML(xmlconfig);
 }
 
@@ -223,19 +225,19 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	const bool removeRecvDuplicates = true;
 
 	size_t measureLoadInitTimers = 2;
-	if(_steps == measureLoadInitTimers){
-		_measureTimeCalc = new MeasureLoad();
+	if(_steps == measureLoadInitTimers and _doMeasureLoadCalc){
+		_measureLoadCalc = new MeasureLoad();
 	}
 	size_t measureLoadStart = 50;
-	if (_steps == measureLoadStart) {
-		bool faulty = _measureTimeCalc->prepareLoads(this, _comm);
+	if (_steps == measureLoadStart and _doMeasureLoadCalc) {
+		bool faulty = _measureLoadCalc->prepareLoads(this, _comm);
 		if (faulty) {
 			global_log->info() << "not using MeasureLoad as there are not enough processes. No rebalance forced." << std::endl;
 		} else {
 			global_log->info() << "start using MeasureLoad, will force rebalance." << std::endl;
 			delete _loadCalc;
-			_loadCalc = _measureTimeCalc;
-			_measureTimeCalc = nullptr;
+			_loadCalc = _measureLoadCalc;
+			_measureLoadCalc = nullptr;
 			rebalance = true;
 		}
 	}
