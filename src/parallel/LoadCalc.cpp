@@ -12,8 +12,6 @@
 #include "LoadCalc.h"
 #include "DomainDecompBase.h"
 
-
-
 std::vector<double> TunerLoad::readVec(std::istream& in, int& count1, int& count2) {
 	std::vector<double> vec;
 	int tempCount1 = 0;
@@ -57,12 +55,12 @@ std::vector<double> TunerLoad::readVec(std::istream& in, int& count1, int& count
 
 std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, bool inner) {
 	// take the median of the last 10% of the times
-	std::array<double,3> consts {};
+	std::array<double, 3> consts { };
 	// the blocks are here to avoid at least some copy paste mistakes
 	{
-		std::vector<double> temp1 {};
-		for (int i = timeVec.size() / _count2 * 9 / 10;i < _count1;++i) {
-			double quot = inner ? i * (i - 1)/2 : i * i;
+		std::vector<double> temp1 { };
+		for (int i = timeVec.size() / _count2 * 9 / 10; i < _count1; ++i) {
+			double quot = inner ? i * (i - 1) / 2 : i * i;
 			//if quot is zero (which can happen if i == 0 || (i == 1 && own)), than Infinity would be pushed into the vector
 			//so this is caught before it happens
 			if (quot == 0) {
@@ -75,9 +73,9 @@ std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, 
 		consts[0] = temp1.at(temp1.size() / 2);
 	}
 	{
-		std::vector<double> temp2 {};
-		for (int i = timeVec.size() / _count1 * 9 / 10;i < _count2;++i) {
-			double quot = inner ? i * (i - 1)/2 : i * i;
+		std::vector<double> temp2 { };
+		for (int i = timeVec.size() / _count1 * 9 / 10; i < _count2; ++i) {
+			double quot = inner ? i * (i - 1) / 2 : i * i;
 			if (quot == 0) {
 				quot = 1;
 			}
@@ -87,9 +85,9 @@ std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, 
 		consts[1] = temp2.at(temp2.size() / 2);
 	}
 	{
-		std::vector<double> temp3 {};
-		for (int index1 = timeVec.size() / _count2 * 9 / 10;index1 < _count1;++index1) {
-			for (int index2 = timeVec.size() / _count1 * 9 / 10;index2 < _count2;++index2) {
+		std::vector<double> temp3 { };
+		for (int index1 = timeVec.size() / _count2 * 9 / 10; index1 < _count1; ++index1) {
+			for (int index2 = timeVec.size() / _count1 * 9 / 10; index2 < _count2; ++index2) {
 				double fac1;
 				double fac2;
 				double quot;
@@ -114,44 +112,38 @@ std::array<double, 3> TunerLoad::calcConsts(const std::vector<double>& timeVec, 
 	return consts;
 }
 
-TunerLoad::TunerLoad(int count1, int count2,
-		std::vector<double>&& ownTime, std::vector<double>&& faceTime,
+TunerLoad::TunerLoad(int count1, int count2, std::vector<double>&& ownTime, std::vector<double>&& faceTime,
 		std::vector<double>&& edgeTime, std::vector<double>&& cornerTime) :
-		_count1 { count1 }, _count2 { count2 },
-		_ownTime { std::move(ownTime) }, _faceTime {std::move(faceTime) },
-		_edgeTime { std::move(edgeTime) }, _cornerTime { std::move(cornerTime) },
-		_ownConst ( calcConsts(_ownTime, true) ), _faceConst ( calcConsts(_faceTime, false) ),
-		_edgeConst ( calcConsts(_edgeTime, false) ), _cornerConst ( calcConsts(_cornerTime, false) ) {
+		_count1 { count1 }, _count2 { count2 }, _ownTime { std::move(ownTime) }, _faceTime { std::move(faceTime) }, _edgeTime {
+				std::move(edgeTime) }, _cornerTime { std::move(cornerTime) }, _ownConst(calcConsts(_ownTime, true)), _faceConst(
+				calcConsts(_faceTime, false)), _edgeConst(calcConsts(_edgeTime, false)), _cornerConst(
+				calcConsts(_cornerTime, false)) {
 
 	if (_ownTime.size() != size_t(_count1 * _count2)) {
-		global_log->error_always_output()
-				<< "_edgeTime was initialized with the wrong size of "
-				<< _ownTime.size() << " expected: " << _count1 * _count2;
+		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _ownTime.size()
+				<< " expected: " << _count1 * _count2;
 	}
 
 	if (_faceTime.size() != size_t(count1 * _count2)) {
-		global_log->error_always_output()
-				<< "_edgeTime was initialized with the wrong size of "
-				<< _faceTime.size() << " expected: " << _count1 * _count2;
+		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _faceTime.size()
+				<< " expected: " << _count1 * _count2;
 	}
 
 	if (_edgeTime.size() != size_t(_count1 * _count2)) {
-		global_log->error_always_output()
-				<< "_edgeTime was initialized with the wrong size of "
-				<< _edgeTime.size() << " expected: " << _count1 * _count2;
+		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _edgeTime.size()
+				<< " expected: " << _count1 * _count2;
 	}
 
 	if (_cornerTime.size() != size_t(_count1 * _count2)) {
-		global_log->error_always_output()
-				<< "_edgeTime was initialized with the wrong size of "
-				<< _cornerTime.size() << " expected: " << _count1 * _count2;
+		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _cornerTime.size()
+				<< " expected: " << _count1 * _count2;
 	}
 }
 
-TunerLoad TunerLoad::read(std::istream& stream){
-	std::string inStr {};
+TunerLoad TunerLoad::read(std::istream& stream) {
+	std::string inStr { };
 	std::getline(stream, inStr);
-	if(inStr != "Vectorization Tuner File"){
+	if (inStr != "Vectorization Tuner File") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing header \"Vectorization Tuner File\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
 		Simulation::exit(1);
@@ -161,7 +153,7 @@ TunerLoad TunerLoad::read(std::istream& stream){
 	int count2;
 
 	std::getline(stream, inStr);
-	if(inStr != "own"){
+	if (inStr != "own") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"own\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
 		Simulation::exit(1);
@@ -169,7 +161,7 @@ TunerLoad TunerLoad::read(std::istream& stream){
 	auto ownTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
 
-	if(inStr != "face"){
+	if (inStr != "face") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"face\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
 		Simulation::exit(1);
@@ -177,7 +169,7 @@ TunerLoad TunerLoad::read(std::istream& stream){
 	auto faceTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
 
-	if(inStr != "edge"){
+	if (inStr != "edge") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"edge\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
 		Simulation::exit(1);
@@ -185,15 +177,15 @@ TunerLoad TunerLoad::read(std::istream& stream){
 	auto edgeTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
 
-	if(inStr != "corner"){
+	if (inStr != "corner") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"corner\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
 		Simulation::exit(1);
 	}
 	auto cornerTime = readVec(stream, count1, count2);
-	return TunerLoad {count1, count2, std::move(ownTime), std::move(faceTime), std::move(edgeTime), std::move(cornerTime)};
+	return TunerLoad { count1, count2, std::move(ownTime), std::move(faceTime), std::move(edgeTime), std::move(
+			cornerTime) };
 }
-
 
 // MEASURELOAD
 std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
@@ -205,6 +197,38 @@ MeasureLoad::MeasureLoad() :
 	_preparedLoad = false;
 }
 
+#ifdef MARDYN_ARMADILLO
+// this non-negative least-squares (nnls) algorithm is taken from:
+// https://github.com/linxihui/Misc/blob/master/Practice/NMF/nnls.cpp
+arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-6) {
+	/*
+	 * Description: sequential Coordinate-wise algorithm for non-negative least square regression A x = b, s.t. x >= 0
+	 * 	Reference: http://cmp.felk.cvut.cz/ftp/articles/franc/Franc-TR-2005-06.pdf
+	 */
+
+	arma::vec mu = -A.t() * b;
+	arma::mat H = A.t() * A;
+	arma::vec x(A.n_cols), x0(A.n_cols);
+	x.fill(0);
+	x0.fill(-9999);
+
+	int i = 0;
+	double tmp;
+	while (i < max_iter && max(abs(x - x0)) > tol) {
+		x0 = x;
+		for (int k = 0; k < A.n_cols; k++) {
+			tmp = x[k] - mu[k] / H.at(k, k);
+			if (tmp < 0)
+				tmp = 0;
+			if (tmp != x[k])
+				mu += (tmp - x[k]) * H.col(k);
+			x[k] = tmp;
+		}
+		++i;
+	}
+	return x;
+}
+#endif
 
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
@@ -221,17 +245,15 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	std::vector<double> neededTimes(numRanks);
 	MPI_Gather(&ownTime, 1, MPI_DOUBLE, neededTimes.data(), 1, MPI_DOUBLE, 0, comm);
 
-
 	std::vector<unsigned long> statistics = global_simulation->getMoleculeContainer()->getParticleCellStatistics();
 	int maxParticlesP1 = statistics.size();
-
 
 	int global_maxParticlesP1 = 0;  // maxParticle Count + 1 = degrees of freedom
 	MPI_Allreduce(&maxParticlesP1, &global_maxParticlesP1, 1, MPI_INT, MPI_MAX, comm);
 
 	if (numRanks < global_maxParticlesP1) {
-		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (maxParticlesP1: " << global_maxParticlesP1
-				<< ", numRanks: " << numRanks << ")." << std::endl;
+		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (maxParticlesP1: "
+				<< global_maxParticlesP1 << ", numRanks: " << numRanks << ")." << std::endl;
 
 		return 1;
 	}
@@ -239,8 +261,8 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	statistics.resize(global_maxParticlesP1);
 	if (decomp->getRank() == 0) {
 		std::vector<unsigned long> global_statistics(global_maxParticlesP1 * numRanks);
-		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(),
-				statistics.size(), MPI_UINT64_T, 0, comm);
+		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(), statistics.size(),
+				MPI_UINT64_T, 0, comm);
 
 		// right hand side = global_statistics ^ T \cdot neededTimes
 		std::vector<double> right_hand_side(global_maxParticlesP1, 0.);
@@ -265,28 +287,56 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
 		// now we have to solve: system_matrix \cdot cell_time_vector = right_hand_side
 		arma::mat arma_system_matrix(global_maxParticlesP1, global_maxParticlesP1);
-		for(int row = 0; row < global_maxParticlesP1; row ++){
-			for(int column = 0; column < global_maxParticlesP1; column ++){
+		for (int row = 0; row < global_maxParticlesP1; row++) {
+			for (int column = 0; column < global_maxParticlesP1; column++) {
 				arma_system_matrix[row * global_maxParticlesP1 + column] = system_matrix[row * global_maxParticlesP1
 						+ column];
 			}
 		}
+#ifndef MARDYN_MEASURECALC_V1
+		arma::mat quadratic_equation_fit_matrix(global_maxParticlesP1, 3);
+		for (int row = 0; row < global_maxParticlesP1; row++) {
+			quadratic_equation_fit_matrix.at(row, 0) = row * row;
+			quadratic_equation_fit_matrix.at(row, 1) = row;
+			quadratic_equation_fit_matrix.at(row, 2) = 1;
+		}
+		arma_system_matrix = quadratic_equation_fit_matrix.t() * arma_system_matrix * quadratic_equation_fit_matrix;
+		arma::vec arma_rhs(right_hand_side);
+		arma_rhs = quadratic_equation_fit_matrix.t() * arma_rhs;
+		arma::vec coefficient_vec = nnls(arma_system_matrix, arma_rhs);
+		mardyn_assert(coefficient_vec.size() == 3);
+		global_log->info() << "coefficient_vec: " << std::endl << coefficient_vec << std::endl;
+		for (int i = 0; i < 3; i++) {
+			_extrapolationConst[i] = coefficient_vec[i];
+		}
+		MPI_Bcast(_extrapolationConst.data(), 3, MPI_DOUBLE, 0, comm);
+#else
+		// old version
 		arma::vec arma_rhs(right_hand_side);
 		arma::vec cell_time_vec = arma::solve(arma_system_matrix, arma_rhs);
 
 		global_log->info() << "cell_time_vec: " << cell_time_vec << std::endl;
 		_times = arma::conv_to< std::vector<double> >::from(cell_time_vec);
 		mardyn_assert(_times.size() == global_maxParticlesP1);
-		MPI_Bcast(_times.data(),global_maxParticlesP1, MPI_DOUBLE, 0, comm);
+		MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
+#endif
 	} else {
-		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr,
-				0 /*here insignificant*/, MPI_UINT64_T, 0, comm);
+		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr, 0 /*here insignificant*/, MPI_UINT64_T,
+				0, comm);
+#ifndef MARDYN_MEASURECALC_V1
+		MPI_Bcast(_extrapolationConst.data(), 3, MPI_DOUBLE, 0, comm);
+#else
+		// old version
 		_times.resize(global_maxParticlesP1);
-		MPI_Bcast(_times.data(),global_maxParticlesP1, MPI_DOUBLE, 0, comm);
+		MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
+#endif
 	}
 
 	// extrapolation constants:
+#ifdef MARDYN_MEASURECALC_V1
+	// old version
 	calcConstants();
+#endif
 	_preparedLoad = true;
 	return 0;
 #endif
@@ -307,8 +357,8 @@ void MeasureLoad::calcConstants() {
 		numElements = _times.size() - start;
 	}
 
-	std::array<double,5> momentsX;  // stores the moments of x: sum{t^i}
-	std::array<double,3> momentsYX;  // stores the following: sum{d* t^i}
+	std::array<double, 5> momentsX;  // stores the moments of x: sum{t^i}
+	std::array<double, 3> momentsYX;  // stores the following: sum{d* t^i}
 
 	momentsX[0] = numElements;
 
@@ -346,7 +396,7 @@ void MeasureLoad::calcConstants() {
 	arma::vec solution = arma::solve(system_matrix, rhs);
 
 	for (size_t row = 0; row < 3ul; row++) {
-		_extrapolationConst[row] = solution[2-row];
+		_extrapolationConst[row] = solution[2 - row];
 	}
 	global_log->info() << "extrapolationconst: " << solution << std::endl;
 #endif
@@ -362,7 +412,6 @@ double MeasureLoad::getValue(int numParticles) const {
 		return _times[numPart];
 	} else {
 		// otherwise we interpolate
-		return _extrapolationConst[0] * numPart * numPart + _extrapolationConst[1] * numPart
-				+ _extrapolationConst[2];
+		return _extrapolationConst[0] * numPart * numPart + _extrapolationConst[1] * numPart + _extrapolationConst[2];
 	}
 }
