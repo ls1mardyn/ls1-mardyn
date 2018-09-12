@@ -216,7 +216,7 @@ arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, doubl
 	double tmp;
 	while (i < max_iter && max(abs(x - x0)) > tol) {
 		x0 = x;
-		for (int k = 0; k < A.n_cols; k++) {
+		for (unsigned int k = 0; k < A.n_cols; k++) {
 			tmp = x[k] - mu[k] / H.at(k, k);
 			if (tmp < 0)
 				tmp = 0;
@@ -406,6 +406,10 @@ void MeasureLoad::calcConstants() {
 double MeasureLoad::getValue(int numParticles) const {
 	mardyn_assert(numParticles > 0);
 	mardyn_assert(_preparedLoad);
+
+#ifndef MARDYN_MEASURECALC_V1
+	return _extrapolationConst[0] * numParticles * numParticles + _extrapolationConst[1] * numParticles + _extrapolationConst[2];
+#else
 	size_t numPart = numParticles;
 	if (numPart < _times.size()) {
 		// if we are within the known (i.e. measured) particle count, just use the known values
@@ -414,4 +418,5 @@ double MeasureLoad::getValue(int numParticles) const {
 		// otherwise we interpolate
 		return _extrapolationConst[0] * numPart * numPart + _extrapolationConst[1] * numPart + _extrapolationConst[2];
 	}
+#endif
 }
