@@ -200,7 +200,7 @@ MeasureLoad::MeasureLoad() :
 #ifdef MARDYN_ARMADILLO
 // this non-negative least-squares (nnls) algorithm is taken from:
 // https://github.com/linxihui/Misc/blob/master/Practice/NMF/nnls.cpp
-arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-6) {
+arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-8) {
 	/*
 	 * Description: sequential Coordinate-wise algorithm for non-negative least square regression A x = b, s.t. x >= 0
 	 * 	Reference: http://cmp.felk.cvut.cz/ftp/articles/franc/Franc-TR-2005-06.pdf
@@ -263,6 +263,9 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		std::vector<unsigned long> global_statistics(global_maxParticlesP1 * numRanks);
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(), statistics.size(),
 				MPI_UINT64_T, 0, comm);
+
+
+
 
 		// right hand side = global_statistics ^ T \cdot neededTimes
 		std::vector<double> right_hand_side(global_maxParticlesP1, 0.);
