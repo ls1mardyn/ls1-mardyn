@@ -16,23 +16,19 @@
 #include "LinkedCellTraversals/MidpointTraversal.h"
 #include "LinkedCellTraversals/SlicedCellPairTraversal.h"
 
+#include "Traversals.h"
+#include "PerformanceModels.h"
+#include "Domain.h"
+
 using Log::global_log;
 
 template<class CellTemplate>
 class TraversalTuner {
 	friend class LinkedCellsTest;
 
+	typedef Traversals::traversalNames traversalNames; // Forward to new enum location
+
 public:
-	// Probably remove this once autotuning is implemented
-	enum traversalNames {
-		ORIGINAL = 0,
-		C08      = 1,
-		C04      = 2,
-		SLICED   = 3,
-		HS       = 4,
-		MP       = 5,
-		QSCHED   = 6
-	};
 
 	TraversalTuner();
 
@@ -61,9 +57,9 @@ public:
 		return selectedTraversal;
 	}
         
-        CellPairTraversals<ParticleCell>* getCurrentOptimalTraversal() {
-                return _optimalTraversal;
-        }
+	CellPairTraversals<ParticleCell>* getCurrentOptimalTraversal() {
+			return _optimalTraversal;
+	}
         
 private:
 	std::vector<CellTemplate>* _cells;
@@ -75,14 +71,17 @@ private:
 
 	CellPairTraversals<CellTemplate> *_optimalTraversal;
 
+	PerformanceModels _performanceModels;
+
 	unsigned _cellsInCutoff = 1;
 };
 
 template<class CellTemplate>
-TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _optimalTraversal(nullptr) {
+TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _optimalTraversal(nullptr),
+	_performanceModels() {
 	// defaults:
 	selectedTraversal = {
-			mardyn_get_max_threads() > 1 ? C08 : SLICED
+			mardyn_get_max_threads() > 1 ? Traversals::C08 : Traversals::SLICED
 	};
 	struct C08CellPairTraversalData      *c08Data    = new C08CellPairTraversalData;
 	struct C04CellPairTraversalData      *c04Data    = new C04CellPairTraversalData;
@@ -122,6 +121,22 @@ TraversalTuner<CellTemplate>::~TraversalTuner() {
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	// TODO implement autotuning here! At the moment the traversal is chosen via readXML!
+    // TODO Include switch to disable autotuning
+
+	// TODO Find applicable traversals (depending on compilation? e.g. MPI / OpenMP / Quickshed / ...)
+	std::vector<Traversals::traversalNames > applicableTraversals ({Traversals::C04, Traversals::C08, Traversals::SLICED});
+
+
+	double cutoff = _simulation.getLJCutoff();
+
+	// TODO Use density in MPI rank instead of global density?
+	auto domain = _simulation.getDomain();
+	double density = domain->getglobalRho();
+
+	selectedTraversal = _performanceModels.predictBest(cutoff, density, applicableTraversals);
+
+	global_log->info() << "Traversal " << selectedTraversal <<
+	" selected by autotuning based on cutoff=" << cutoff << " and density=" << density <<std::endl;
 
 	_optimalTraversal = _traversals[selectedTraversal].first;
 
@@ -166,19 +181,19 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 			  ::tolower);
 
 	if (traversalType.find("c08") != string::npos)
-		selectedTraversal = C08;
+		selectedTraversal = Traversals::C08;
 	else if (traversalType.find("c04") != string::npos)
-			selectedTraversal = C04;
+			selectedTraversal = Traversals::C04;
 	else if (traversalType.find("qui") != string::npos)
-		selectedTraversal = QSCHED;
+		selectedTraversal = Traversals::QSCHED;
 	else if (traversalType.find("slice") != string::npos)
-		selectedTraversal = SLICED;
+		selectedTraversal = Traversals::SLICED;
 	else if (traversalType.find("ori") != string::npos)
-		selectedTraversal = ORIGINAL;
+		selectedTraversal = Traversals::ORIGINAL;
     else if (traversalType.find("hs") != string::npos)
-        selectedTraversal = HS;
+        selectedTraversal = Traversals::HS;
     else if (traversalType.find("mp") != string::npos)
-        selectedTraversal = MP;
+        selectedTraversal = Traversals::MP;
     else if (traversalType.find("nt") != string::npos){
         global_log->error() << "nt method not yet properly implemented. please select a different method." << std::endl;
 		Simulation::exit(1);
@@ -305,7 +320,7 @@ inline void TraversalTuner<CellTemplate>::traverseCellPairs(traversalNames name,
 	} else {
 		SlicedCellPairTraversal<CellTemplate> slicedTraversal(*_cells, _dims);
 		switch(name) {
-		case SLICED:
+		case Traversals::SLICED:
 			slicedTraversal.traverseCellPairs(cellProcessor);
 			break;
 		default:
@@ -336,23 +351,23 @@ inline bool TraversalTuner<CellTemplate>::isTraversalApplicable(
 		traversalNames name, const std::array<unsigned long, 3> &dims) const {
 	bool ret = true;
 	switch(name) {
-	case SLICED:
+	case Traversals::SLICED:
 		ret = SlicedCellPairTraversal<CellTemplate>::isApplicable(dims);
 		break;
-	case QSCHED:
+	case Traversals::QSCHED:
 #ifdef QUICKSCHED
 		ret = true;
 #else
 		ret = false;
 #endif
 		break;
-	case C08:
+	case Traversals::C08:
 		ret = true;
 		break;
-	case C04:
+	case Traversals::C04:
 		ret = true;
 		break;
-	case ORIGINAL:
+	case Traversals::ORIGINAL:
 		ret = true;
 		break;
 	default:
