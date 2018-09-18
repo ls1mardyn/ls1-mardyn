@@ -126,6 +126,26 @@ PAPI ?= 0
 
 ENABLE_QUICKSCHED ?= 0
 
+# use armadillo?
+ARMADILLO ?= 0
+
+ARMADILLO_NOWRAP ?= 1
+
+ARMADILLO_NOLINK ?= 0
+
+ifeq ($(ARMADILLO), 1)
+	CXXFLAGS += -DMARDYN_ARMADILLO
+	ifeq ($(ARMADILLO_NOWRAP), 1)
+		CXXFLAGS += -DARMA_DONT_USE_WRAPPER
+		ifeq ($(ARMADILLO_NOLINK), 0)
+			LDFLAGS += -lblas -llapack
+		endif
+	else
+		LDFLAGS += -larmadillo
+	endif
+endif
+
+
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1

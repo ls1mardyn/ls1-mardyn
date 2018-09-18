@@ -38,6 +38,7 @@ KDDecomposition::KDDecomposition() :
 		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
 		_useExistingFiles {}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
+	_measureLoadCalc = nullptr;
 }
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
@@ -49,6 +50,8 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
 		_useExistingFiles {true}, _rebalanceLimit(0) {
 	_loadCalc = new TradLoad();
+	_measureLoadCalc = nullptr;
+
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
@@ -98,6 +101,7 @@ KDDecomposition::~KDDecomposition() {
 	delete _decompTree;
 	KDNode::shutdownMPIDataType();
 	delete _loadCalc;
+	delete _measureLoadCalc;
 }
 
 void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
@@ -154,6 +158,8 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
 	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
 
+	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
+	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
 	DomainDecompMPIBase::readXML(xmlconfig);
 }
 
@@ -214,9 +220,27 @@ bool KDDecomposition::checkNeedRebalance(double lastTraversalTime) {
 
 void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
 	bool needsRebalance = checkNeedRebalance(lastTraversalTime);
-	const bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
+	bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;
+
+	size_t measureLoadInitTimers = 2;
+	if(_steps == measureLoadInitTimers and _doMeasureLoadCalc){
+		_measureLoadCalc = new MeasureLoad();
+	}
+	size_t measureLoadStart = 50;
+	if (_steps == measureLoadStart and _doMeasureLoadCalc) {
+		bool faulty = _measureLoadCalc->prepareLoads(this, _comm);
+		if (faulty) {
+			global_log->info() << "not using MeasureLoad as there are not enough processes. No rebalance forced." << std::endl;
+		} else {
+			global_log->info() << "start using MeasureLoad, will force rebalance." << std::endl;
+			delete _loadCalc;
+			_loadCalc = _measureLoadCalc;
+			_measureLoadCalc = nullptr;
+			rebalance = true;
+		}
+	}
 
 	if (rebalance == false) {
 		if(sendLeavingWithCopies()){
