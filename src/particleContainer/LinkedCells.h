@@ -50,7 +50,10 @@ class ResortCellProcessorSliced;
 class LinkedCells : public ParticleContainer {
 
 	friend class LinkedCellsTest;
-	//friend class VTKGridWriter;
+#ifdef VTK
+	friend class VTKGridWriter;
+#endif
+
 
 public:
 	//! @brief initialize the Linked Cell datastructure
@@ -192,12 +195,6 @@ public:
 	 * @return Molecule was found?
 	 */
 	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
-
-	//TODO: unfriend class VTKGridWriter. It is not hard to avoid friendship and just use public interfaces.
-#ifdef VTK
-	friend class VTKGridWriter;
-#endif
-
 
 	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!
