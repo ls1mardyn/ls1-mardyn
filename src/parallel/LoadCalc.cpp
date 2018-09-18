@@ -7,7 +7,6 @@
 #ifdef MARDYN_ARMADILLO
 #include <armadillo>
 #endif
-#include "mpi.h"
 
 #include "LoadCalc.h"
 #include "DomainDecompBase.h"
@@ -229,7 +228,7 @@ arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, doubl
 	return x;
 }
 #endif
-
+#ifdef ENABLE_MPI
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
 #ifndef MARDYN_ARMADILLO
@@ -344,7 +343,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	return 0;
 #endif
 }
-
+#endif  // ENABLE_MPI
 void MeasureLoad::calcConstants() {
 	// we do a least squares fit of: y = a x^2 + b x + c
 
