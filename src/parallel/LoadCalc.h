@@ -10,6 +10,9 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
 
 #include <utils/Logger.h>
 
@@ -237,9 +240,9 @@ public:
 	double getCorner(int index1, int index2) const override {
 		return getValue(index1);
 	}
-
+#ifdef ENABLE_MPI
 	int prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm);
-
+#endif
 private:
 	double getValue(int numParticles) const;
 	void calcConstants();
