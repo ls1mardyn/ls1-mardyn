@@ -1,0 +1,50 @@
+file(GLOB_RECURSE MY_SRC
+        "*.cpp"
+        "*.h"
+        )
+
+# if unit tests are disabled, remove the unit tests!
+if(NOT ENABLE_UNIT_TESTS)
+    list(FILTER MY_SRC EXCLUDE REGEX "/tests/")
+endif()
+
+# if mpi is not enabled, remove the uneeded source files
+if(NOT ENABLE_MPI)
+    # duplicate the list
+    set(MY_SRC_BACK ${MY_SRC})
+    # exclude everything from parallel
+    list(FILTER MY_SRC EXCLUDE REGEX "/parallel/")
+
+    # but include DomainDecompBase* and LoadCalc*
+    list(FILTER MY_SRC_BACK INCLUDE REGEX "/parallel/")
+    list(FILTER MY_SRC_BACK INCLUDE REGEX "DomainDecompBase|LoadCalc")
+    list(APPEND MY_SRC ${MY_SRC_BACK})
+endif()
+
+# if fmm fft is disabled, remove everything in an fft directory
+if(NOT ENABLE_FMM_FFT)
+    list(FILTER MY_SRC EXCLUDE REGEX "/fft/")
+endif()
+
+# if vtk is disabled, remove everything in a vtk directory
+if(NOT ENABLE_VTK)
+    list(FILTER MY_SRC EXCLUDE REGEX "/vtk/")
+endif()
+
+# add the executable
+ADD_EXECUTABLE(MarDyn
+        ${MY_SRC}
+        )
+
+# we just add all libraries here. If a library is not set, it will simply be ignored.
+TARGET_LINK_LIBRARIES(MarDyn
+        ${BLAS_LIB}    # for armadillo
+        ${LAPACK_LIB}  # for armadillo
+        ${VTK_LIB}     # for VTK/xerces
+        ${CPPUNIT_LIB} # for unit tests
+        )
+
+ADD_TEST(
+        NAME MarDyn_test
+        COMMAND MarDyn -t -d ${PROJECT_SOURCE_DIR}/test_input
+)

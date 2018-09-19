@@ -1,0 +1,12 @@
+# vtk things
+option(ENABLE_VTK "Enable VTK" OFF)
+if(ENABLE_VTK)
+    message(STATUS "VTK Enabled")
+    find_library(VTK_LIB xerces-c)
+    if(NOT VTK_LIB)
+        message(FATAL_ERROR "xerces lib not found. Disable VTK support, if you do not need it.")
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVTK")
+else()
+    message(STATUS "VTK Disabled")
+endif()

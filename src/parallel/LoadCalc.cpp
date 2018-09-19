@@ -228,6 +228,7 @@ arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, doubl
 	return x;
 }
 #endif
+
 #ifdef ENABLE_MPI
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 

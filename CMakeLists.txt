@@ -1,58 +1,61 @@
-cmake_minimum_required(VERSION 3.5)
-project(MarDyn_trunk)
-set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+# disable in source builds
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
+project(MarDyn)
+
+cmake_minimum_required(VERSION 3.3)
 
 set(CMAKE_CXX_STANDARD 11)
 
-# custom target basically just uses the makefile
-# configure here as needed
-add_custom_target(MarDyn COMMAND make -C ${SOURCE_DIR}
-        CFG=gcc
-        PARTYPE=SEQ
-        VECTORIZE_CODE=AVX
-        OPENMP=1
-        ENABLE_QUICKSCHED=0
-        -j12
-        UNIT_TESTS=0
-        CLION_EXE_DIR=${SOURCE_DIR}
-        )
+# cmake < 3.6 ignores "set(CMAKE_CXX_STANDARD 11)" when using icpc
+if (CMAKE_VERSION VERSION_LESS "3.6" AND CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+endif ()
 
-# globs for IDEs to see the necessary code
-file(GLOB_RECURSE DEPENDENCIES-EXTERNAL
-        "dependencies-external/*.cpp"
-        "dependencies-external/*.c"
-        "dependencies-external/*.h"
-        "dependencies-external/*.hxx"
-        )
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-file(GLOB_RECURSE SOURCE_FILES
-        "src/*.cpp"
-        "src/*.c"
-        "src/*.h"
-        "src/*.hpp"
-        )
+# let ccmake and cmake-gui offer the default build type options
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel")
 
-file(GLOB_RECURSE TOOLS
-        "tools/*.cpp"
-        "src/*.h"
-        )
+# set Release as the default build type if it is not yet set.
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+            "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
+# generates test target
+ENABLE_TESTING()
+
+# modules
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules/)
+
+# ----- first: include option files
+# include vectorization module
+include(vectorization)
+# include OpenMP module
+include(OpenMP)
+# include options module
+include(options)
+# include mpi module
+include(mpi)
+
+# ----- second: include libraries, etc.
+# include armadillo module
+include(armadillo)
+# include vtk module
+include(vtk)
+# include cppunit module
+include(cppunit)
+# include bhfmm module
+include(bhfmm)
+
+# ----- third: include autopas
+# TODO include autopas
 
 
-# Manually set flags for an IDE to see what you want it to see
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_VECTORIZED_CODE=1")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMARDYN_DPDP")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -DENABLE_OPENMP")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQUICKSCHED")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFMM_FFT")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTASKTIMINGPROFILE")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNIT_TESTS")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_MPI")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTIMERS")
+# add mardyn
+ADD_SUBDIRECTORY(src)
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp ${MARDYN_FLAGS} ${QUICKSCHED_FLAGS}")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTIMERS")
-
-include_directories(${SOURCE_DIR})
-include_directories(dependencies-external/quicksched/src)
-add_executable(MarDyn_cmake ${DEPENDENCIES-EXTERNAL} ${SOURCE_FILES} ${TOOLS})
-
+# add libraries
+ADD_SUBDIRECTORY(libs)

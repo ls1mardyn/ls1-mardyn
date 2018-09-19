@@ -1,0 +1,15 @@
+# vtk things
+option(ENABLE_UNIT_TESTS "Enable Unit Tests" OFF)
+if(ENABLE_UNIT_TESTS)
+    message(STATUS "Unit Tests Enabled")
+    find_library(CPPUNIT_LIB cppunit)
+    if(CPPUNIT_LIB)
+        message(STATUS "libcppunit found")
+    else()
+        # TODO: build cppunit on your own if it is not found
+        message(FATAL_ERROR "cppunit lib not found. Disable unit test support, if you do not need it.")
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNIT_TESTS")
+else()
+    message(STATUS "Unit Tests Disabled")
+endif()
