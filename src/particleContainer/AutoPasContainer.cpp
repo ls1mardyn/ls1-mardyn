@@ -1,6 +1,8 @@
-//
-// Created by seckler on 19.09.18.
-//
+/**
+ * @file AutoPasContainer.cpp
+ * @author seckler
+ * @date 19.09.18
+ */
 
 #include "AutoPasContainer.h"
 
