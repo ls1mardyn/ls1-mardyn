@@ -51,7 +51,7 @@ include(cppunit)
 include(bhfmm)
 
 # ----- third: include autopas
-# TODO include autopas
+include(autopas)
 
 
 # add mardyn

@@ -31,6 +31,10 @@ if(NOT ENABLE_VTK)
     list(FILTER MY_SRC EXCLUDE REGEX "/vtk/")
 endif()
 
+if (NOT ENABLE_AUTOPAS)
+    list(FILTER MY_SRC EXCLUDE REGEX "AutoPas")
+endif ()
+
 # add the executable
 ADD_EXECUTABLE(MarDyn
         ${MY_SRC}
@@ -42,6 +46,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${LAPACK_LIB}  # for armadillo
         ${VTK_LIB}     # for VTK/xerces
         ${CPPUNIT_LIB} # for unit tests
+        ${autopas_lib}  # for autopas
         )
 
 ADD_TEST(
