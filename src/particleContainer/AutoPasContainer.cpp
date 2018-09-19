@@ -7,5 +7,5 @@
 #include "autopas/AutoPas.h"
 
 AutoPasContainer::AutoPasContainer() {
-	autopas::AutoPas autopasContainer();
+	autopas::AutoPas<autopas::Particle, autopas::FullParticleCell<autopas::Particle>> autopasContainer();
 }

@@ -31,9 +31,15 @@ if(ENABLE_AUTOPAS)
     add_library(libautopas IMPORTED STATIC GLOBAL)
     add_dependencies(libautopas autopas)
 
+    set_target_properties(libautopas PROPERTIES
+            "IMPORTED_LOCATION" "${binary_dir}/src/autopas/libautopas.a"
+            "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+            )
+
     # I couldn't make it work with INTERFACE_INCLUDE_DIRECTORIES
     include_directories(SYSTEM
             "${source_dir}/src"
+            "${source_dir}/libs/spdlog-0.16.3/include"
             )
 
     set(autopas_lib "libautopas")
