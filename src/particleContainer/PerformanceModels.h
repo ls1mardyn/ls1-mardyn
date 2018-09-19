@@ -47,6 +47,7 @@ public:
         TRAVERSAL bestTraversal = applicableTraversals.front();
         double bestTime = std::numeric_limits<double>::infinity();
 
+        // Search through applicable traversals and find the one with the shortest predicted time
         for(auto traversal : applicableTraversals){
 
             auto model = models.at(traversal);

@@ -73,6 +73,10 @@ private:
 
 	PerformanceModels _performanceModels;
 
+	bool _enableAutotuning = false;
+	int _stepsUntilReevaluation = 100;
+	int _currentStep = 0;
+
 	unsigned _cellsInCutoff = 1;
 };
 
@@ -120,23 +124,28 @@ TraversalTuner<CellTemplate>::~TraversalTuner() {
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::findOptimalTraversal() {
-	// TODO implement autotuning here! At the moment the traversal is chosen via readXML!
-    // TODO Include switch to disable autotuning
 
-	// TODO Find applicable traversals (depending on compilation? e.g. MPI / OpenMP / Quickshed / ...)
-	std::vector<Traversals::traversalNames > applicableTraversals ({Traversals::C04, Traversals::C08, Traversals::SLICED});
+    if(_enableAutotuning) {
+        // TODO implement autotuning here! At the moment the traversal is chosen via readXML!
+
+        // TODO Find applicable traversals (depending on compilation? e.g. MPI / OpenMP / Quickshed / ...)
+        std::vector<Traversals::traversalNames> applicableTraversals(
+                {Traversals::C04, Traversals::C08, Traversals::SLICED});
 
 
-	double cutoff = _simulation.getLJCutoff();
+        double cutoff = _simulation.getLJCutoff();
 
-	// TODO Use density in MPI rank instead of global density?
-	auto domain = _simulation.getDomain();
-	double density = domain->getglobalRho();
+        // TODO Use density in MPI rank instead of global density?
+        _simulation.domainDecomposition().
+        auto domain = _simulation.getDomain();
+        double density = domain->getglobalRho();
 
-	selectedTraversal = _performanceModels.predictBest(cutoff, density, applicableTraversals);
+        selectedTraversal = _performanceModels.predictBest(cutoff, density, applicableTraversals);
 
-	global_log->info() << "Traversal " << selectedTraversal <<
-	" selected by autotuning based on cutoff=" << cutoff << " and density=" << density <<std::endl;
+        global_log->info() << "Traversal " << selectedTraversal <<
+                           " selected by autotuning based on cutoff=" << cutoff << " and density=" << density
+                           << std::endl;
+    }
 
 	_optimalTraversal = _traversals[selectedTraversal].first;
 
@@ -206,6 +215,9 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 			global_log->warning() << "No traversal type selected. Defaulting to sliced traversal." << endl;
 		}
 	}
+
+	_enableAutotuning = xmlconfig.getNodeValue_bool("autotuning", true); //TODO default false
+	_stepsUntilReevaluation = xmlconfig.getNodeValue_int("autotuningSteps", 100);
 
 	_cellsInCutoff = xmlconfig.getNodeValue_int("cellsInCutoffRadius", 1); // This is currently only used for an assert
 
@@ -307,6 +319,13 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcessor) {
+    if(_enableAutotuning) {
+        ++_currentStep;
+        if (_currentStep >= _stepsUntilReevaluation) {
+            _optimalTraversal = nullptr;
+            _currentStep = 0;
+        }
+    }
 	if (_optimalTraversal == nullptr)
 		findOptimalTraversal();
         _optimalTraversal->traverseCellPairs(cellProcessor);
@@ -341,6 +360,13 @@ void TraversalTuner<CellTemplate>::traverseCellPairsOuter(CellProcessor &cellPro
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage,
 														  unsigned stageCount) {
+    if(_enableAutotuning) {
+        ++_currentStep; // TODO Check if this works correctly with an overlapping traversal
+        if (_currentStep >= _stepsUntilReevaluation) {
+            _optimalTraversal = nullptr;
+            _currentStep = 0;
+        }
+    }
 	if (_optimalTraversal == nullptr)
 		findOptimalTraversal();
 	_optimalTraversal->traverseCellPairsInner(cellProcessor, stage, stageCount);
