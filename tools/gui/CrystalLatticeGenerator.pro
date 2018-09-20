@@ -79,3 +79,5 @@ SOURCES  += generators/common/OutputConfiguration.cpp
 INCLUDEPATH += ./src/
 INCLUDEPATH += ../../src/
 INCLUDEPATH += ../../src/External/
+INCLUDEPATH += ../../libs/armadillo/
+INCLUDEPATH += ../../libs/rapidxml/

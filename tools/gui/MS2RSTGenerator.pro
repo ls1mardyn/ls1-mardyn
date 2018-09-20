@@ -80,3 +80,5 @@ SOURCES  += generators/common/MS2RestartReader.cpp
 INCLUDEPATH += ./src/
 INCLUDEPATH += ../../src/
 INCLUDEPATH += ../../src/External/
+INCLUDEPATH += ../../libs/armadillo/
+INCLUDEPATH += ../../libs/rapidxml/
