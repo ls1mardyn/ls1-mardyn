@@ -167,14 +167,13 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	double get_halo_L(int index) const;
 
-	void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
 	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
 
 	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]);
 	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]);
 
 	double getCutoff() { return _cutoffRadius; }
-	void setCutoff(double rc) { _cutoffRadius = rc; }
+	void setCutoff(double rc) override { _cutoffRadius = rc; }
 
 	void deleteMolecule(Molecule &molecule, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
@@ -233,11 +232,11 @@ public:
 	}
 	RegionParticleIterator regionIterator (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 
-	virtual size_t getTotalSize() override;
-	virtual void printSubInfo(int offset) override;
-	virtual std::string getName() override;
+	size_t getTotalSize() override;
+	void printSubInfo(int offset) override;
+	std::string getName() override;
 
-	size_t getNumCells() const {
+	size_t getNumCells() const override {
 		return _cells.size();
 	}
 

@@ -71,8 +71,6 @@ public:
 
 	double get_halo_L(int index) const { return 0.0; }
 
-	void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) {}
-
 	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) {}
 
 	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) { return false;}

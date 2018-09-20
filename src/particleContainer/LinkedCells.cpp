@@ -419,11 +419,11 @@ void LinkedCells::update_via_traversal() {
 		ResortCellProcessor() : CellProcessor(0.0, 0.0) {}
 		void initTraversal() {}
 		void preprocessCell(ParticleCell& ) {}
-		
+
 		void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) { // does this need a bool?
 				cell1.updateLeavingMoleculesBase(cell2);
 		}
-		
+
 		void processCell(ParticleCell& cell) {}
 		double processSingleMolecule(Molecule*, ParticleCell& ) { return 0.0;}
 		void postprocessCell(ParticleCell& ) {}
@@ -621,30 +621,6 @@ void LinkedCells::deleteOuterParticles() {
 
 double LinkedCells::get_halo_L(int index) const {
 	return _haloLength[index];
-}
-
-void LinkedCells::getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]){
-	mardyn_assert(direction != 0);
-
-	int startIndex[3] = { 0, 0, 0 };
-	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
-
-	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
-	unsigned dim = abs(direction) - 1;
-	if (direction < 0) {
-		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-	else {
-		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-
-	unsigned int startCellIndex = cellIndexOf3DIndex(startIndex[0], startIndex[1], startIndex[2]);
-	unsigned int endCellIndex = cellIndexOf3DIndex(stopIndex[0], stopIndex[1], stopIndex[2]);
-
-	for(int d = 0; d < 3; d++){
-		(*startRegion)[d] = _cells[startCellIndex].getBoxMin(d);
-		(*endRegion)[d] = _cells[endCellIndex].getBoxMax(d);
-	}
 }
 
 void LinkedCells::getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]){
@@ -1186,9 +1162,9 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 	auto& cell = _cells.at(index);
 
 	// iterate through cell and compare position of molecules with given position
-	
+
 	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
-	
+
 	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.hasNext(); it1.next()) {
 		auto& mol = *it1;
 
