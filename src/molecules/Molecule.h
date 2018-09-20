@@ -18,7 +18,12 @@
 #include "MoleculeRMM.h"
 
 #ifndef ENABLE_REDUCED_MEMORY_MODE
+#ifdef MARDYN_AUTOPAS
+	#include "AutoPasFullMolecule.h"
+	typedef AutoPasFullMolecule Molecule;
+#else
 	typedef FullMolecule Molecule;
+#endif
 #else
 	typedef MoleculeRMM Molecule;
 #endif

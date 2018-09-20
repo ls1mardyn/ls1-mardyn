@@ -335,7 +335,7 @@ public:
 	/** See above comment.*/
 	void releaseOwnSoA();
 
-private:
+protected:
 	/** calculate forces and moments for already given site forces, for this precise site */
 	void calcFM_site(const std::array<double, 3>& d, const std::array<double, 3>& F);
 
@@ -358,6 +358,7 @@ private:
 	unsigned _soa_index_c;
 	unsigned _soa_index_d;
 	unsigned _soa_index_q;
+
 };
 
 std::ostream& operator<<( std::ostream& os, const FullMolecule& m );

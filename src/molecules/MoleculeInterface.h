@@ -63,10 +63,7 @@ public:
 
 	virtual double D(unsigned short d) const = 0;
 	std::array<double, 3> D_arr() const {
-		std::array<double, 3> ret;
-		for (int d = 0; d < 3; ++d) {
-			ret[d] = D(d);
-		}
+		std::array<double, 3> ret{D(0), D(1), D(2)};
 		return ret;
 	}
 	virtual double M(unsigned short d) const = 0;
@@ -257,7 +254,7 @@ public:
 	 * @param u upper right back corner of cube (equality not allowed)
 	 * @return true if molecule is contained in the box, false otherwise
 	 */
-	bool inBox(const double l[3], const double u[3]) const {
+	virtual bool inBox(const double l[3], const double u[3]) const {
 		bool in = true;
 		for (int d = 0; d < 3; ++d) {
 #ifdef __INTEL_COMPILER
