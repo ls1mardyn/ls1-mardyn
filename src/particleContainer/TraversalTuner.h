@@ -136,9 +136,15 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
         double cutoff = _simulation.getLJCutoff();
 
         // TODO Use density in MPI rank instead of global density?
-        _simulation.domainDecomposition().
-        auto domain = _simulation.getDomain();
-        double density = domain->getglobalRho();
+		auto particleNum = _simulation.getMoleculeContainer()->getNumberOfParticles();
+		auto bx = _simulation.getMoleculeContainer()->getBoundingBoxMax(0)-
+				_simulation.getMoleculeContainer()->getBoundingBoxMin(0);
+		auto by = _simulation.getMoleculeContainer()->getBoundingBoxMax(1)-
+				_simulation.getMoleculeContainer()->getBoundingBoxMin(1);
+		auto bz = _simulation.getMoleculeContainer()->getBoundingBoxMax(2)-
+				_simulation.getMoleculeContainer()->getBoundingBoxMin(2);
+
+        double density = particleNum / bx / by / bz;
 
         selectedTraversal = _performanceModels.predictBest(cutoff, density, applicableTraversals);
 
