@@ -191,9 +191,6 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	virtual double get_halo_L(int index) const = 0;
 
-	// get the region of the boundary particles in this container based on direction
-	virtual void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
-
 	virtual bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
 	virtual bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) = 0;

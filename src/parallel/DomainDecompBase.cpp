@@ -38,17 +38,26 @@ void DomainDecompBase::exchangeForces(ParticleContainer* moleculeContainer, Doma
 void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* moleculeContainer) const {
 	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
-	// direction +1 for dim 0, +2 for dim 1, +3 for dim 2
+	// direction +1/-1 for dim 0, +2/-2 for dim 1, +3/-3 for dim 2
 	//const int direction = dim+1;
 	const int sDim = dim + 1;
 	for (int direction = -sDim; direction < 2 * sDim; direction += 2 * sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
 		// Loop over all halo particles in the positive direction
-		double startRegion[3];
-		double endRegion[3];
+		double cutoff = moleculeContainer->getCutoff();
+		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
+							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
+							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
+		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
+							moleculeContainer->getBoundingBoxMax(1) + cutoff,
+							moleculeContainer->getBoundingBoxMax(2) + cutoff};
 
-		moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
+		if (direction < 0) {
+			endRegion[dim] = moleculeContainer->getBoundingBoxMin(dim);
+		} else {
+			startRegion[dim] = moleculeContainer->getBoundingBoxMax(dim);
+		}
 
 #if defined (_OPENMP)
 #pragma omp parallel shared(startRegion, endRegion)
@@ -137,10 +146,19 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
-		double startRegion[3];
-		double endRegion[3];
+		double cutoff = moleculeContainer->getCutoff();
+		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
+							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
+							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
+		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
+		                    moleculeContainer->getBoundingBoxMax(1) + cutoff,
+		                    moleculeContainer->getBoundingBoxMax(2) + cutoff};
 
-		moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
+		if (direction < 0) {
+			endRegion[dim] = moleculeContainer->getBoundingBoxMin(dim);
+		} else {
+			startRegion[dim] = moleculeContainer->getBoundingBoxMax(dim);
+		}
 
 		#if defined (_OPENMP)
 		#pragma omp parallel shared(startRegion, endRegion)
@@ -221,10 +239,20 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
-		double startRegion[3];
-		double endRegion[3];
+		double cutoff = moleculeContainer->getCutoff();
+		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0), moleculeContainer->getBoundingBoxMin(1),
+							  moleculeContainer->getBoundingBoxMin(2)};
+		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0), moleculeContainer->getBoundingBoxMax(1),
+							moleculeContainer->getBoundingBoxMax(2)};
 
-		moleculeContainer->getBoundaryRegionPerDirection(direction, &startRegion, &endRegion);
+		if (direction < 0) {
+			startRegion[dim] = moleculeContainer->getBoundingBoxMin(dim);
+			endRegion[dim] = moleculeContainer->getBoundingBoxMin(dim) + cutoff;
+		} else {
+			startRegion[dim] = moleculeContainer->getBoundingBoxMax(dim) - cutoff;
+			endRegion[dim] = moleculeContainer->getBoundingBoxMax(dim);
+		}
+
 
 		#if defined (_OPENMP)
 		#pragma omp parallel shared(startRegion, endRegion)

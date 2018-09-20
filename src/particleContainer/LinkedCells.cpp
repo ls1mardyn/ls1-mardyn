@@ -623,32 +623,6 @@ double LinkedCells::get_halo_L(int index) const {
 	return _haloLength[index];
 }
 
-void LinkedCells::getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]){
-	mardyn_assert(direction != 0);
-
-	int startIndex[3] = { 0, 0, 0 };
-	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
-
-	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
-	unsigned dim = abs(direction) - 1;
-	if (direction < 0) {
-		startIndex[dim] = _haloWidthInNumCells[dim];
-		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-	else {  // direction > 0
-		stopIndex[dim] = _boxWidthInNumCells[dim];
-		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-
-	unsigned int startCellIndex = cellIndexOf3DIndex(startIndex[0], startIndex[1], startIndex[2]);
-	unsigned int endCellIndex = cellIndexOf3DIndex(stopIndex[0], stopIndex[1], stopIndex[2]);
-
-	for(int d = 0; d < 3; d++){
-		(*startRegion)[d] = _cells[startCellIndex].getBoxMin(d);
-		(*endRegion)[d] = _cells[endCellIndex].getBoxMax(d);
-	}
-}
-
 bool LinkedCells::isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]){
 	for (int dim = 0; dim < 3; dim++) {
 		if (!(startRegion[dim] <= this->_haloBoundingBoxMax[dim] && endRegion[dim] >= this->_haloBoundingBoxMin[dim])) {

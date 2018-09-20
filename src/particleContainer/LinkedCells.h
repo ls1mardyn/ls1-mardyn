@@ -167,8 +167,6 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	double get_halo_L(int index) const;
 
-	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
-
 	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]);
 	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]);
 
