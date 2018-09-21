@@ -20,10 +20,6 @@ public:
 	SingleCellIterator& operator=(const SingleCellIterator& other);
 	~SingleCellIterator(){}
 
-	void next() {
-		operator++();
-	}
-
 	Molecule& operator *  () const {
 		// .at method performs automatically an out-of-bounds check
 		Molecule *moleculePtr = nullptr;
@@ -53,7 +49,6 @@ public:
 		return _cell != nullptr and _mol_index < static_cast<size_t>(_cell->getMoleculeCount());
 	}
 
-private:
 	void operator ++() {
 		// if the "current" particle was deleted, then there is a new particle at _mol_index
 		// and the _mol_index value should not be incremented.
@@ -62,6 +57,7 @@ private:
 		_currentParticleDeleted = false;
 	}
 
+private:
 
 	ParticleCell * _cell;
 	size_t _mol_index;

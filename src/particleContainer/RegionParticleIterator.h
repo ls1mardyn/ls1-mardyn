@@ -1,4 +1,4 @@
-/***********************************************************************************//**
+/**************************************************************************************
  *
  * \file RegionParticleIterator.h
  *
@@ -25,12 +25,8 @@ class RegionParticleIterator : public ParticleIterator {
 		RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]);
 		RegionParticleIterator& operator=(const RegionParticleIterator& other);
 
-		void next() {
-			operator++();
-		}
-
+		void operator++() override;
 	private:
-		void operator ++ ();
 
 		CellIndex_T getGlobalCellIndex();
 		void next_non_empty_cell();
