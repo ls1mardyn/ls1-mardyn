@@ -93,3 +93,16 @@ void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
 }
 
+bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
+	return false;
+}
+
+unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
+                                              std::array<double, 3> simBoxLength) {
+	throw std::runtime_error("not yet implemented");
+}
+
+double *AutoPasContainer::getCellLength() {
+	throw std::runtime_error("not yet implemented");
+}
+
