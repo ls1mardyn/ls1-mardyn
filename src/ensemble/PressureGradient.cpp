@@ -70,7 +70,7 @@ void PressureGradient::determineAdditionalAcceleration
 	// TODO: consider parallelization, but when we have input
 	const ParticleIterator mBegin = molCont->iterator();
 
-	for(ParticleIterator thismol = mBegin; thismol.hasNext(); thismol.next())
+	for(ParticleIterator thismol = mBegin; thismol.isValid(); thismol.next())
 	{
 		unsigned int cid = thismol->componentid();
 		map<unsigned int, unsigned int>::iterator uCSIDit = this->_universalComponentSetID.find(cid);

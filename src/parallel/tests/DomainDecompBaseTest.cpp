@@ -60,7 +60,7 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 	std::set<unsigned long> lower[3];  // the id of particles that were close to the lower boundary in the specific dimension are stored here
 	std::set<unsigned long> upper[3];  // the id of particles that were close to the upper boundary in the specific dimension are stored here
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (ParticleIterator m = container->iterator(); m.isValid(); m.next()) {
 		for (int dim = 0; dim < 3; dim++) {
 			if (m->r(dim) < bBoxMin[dim] + cutoff / 2.) {
 				// we shift particles close to the lower boundary to outside of the lower boundary.
@@ -90,7 +90,7 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
 	ASSERT_EQUAL(numMols, newNumMols);
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (ParticleIterator m = container->iterator(); m.isValid(); m.next()) {
 		for (int dim = 0; dim < 3; dim++) {
 			if (lower[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the top part of the domain.
@@ -120,7 +120,7 @@ void DomainDecompBaseTest::testExchangeMoleculesSimple() {
 	ASSERT_EQUAL(8ul, container->getNumberOfParticles());
 
 	ParticleIterator m = container->iterator();
-	while ( m.hasNext()) {
+	while ( m.isValid()) {
 		count[m->getID()]++;
 		m.next();
 	}
@@ -135,7 +135,7 @@ void DomainDecompBaseTest::testExchangeMoleculesSimple() {
 	ASSERT_EQUAL(64ul, container->getNumberOfParticles());
 
 	m = container->iterator();
-	while(m.hasNext()) {
+	while(m.isValid()) {
 		count[m->getID()]++;
 		m.next();
 	}
@@ -158,7 +158,7 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	ASSERT_EQUAL(3ul, container->getNumberOfParticles());
 
 	ParticleIterator m = container->iterator();
-	while ( m.hasNext()) {
+	while ( m.isValid()) {
 		count[m->getID()]++;
 		m.next();
 	}
@@ -173,7 +173,7 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 
 	m = container->iterator();
-	while(m.hasNext()) {
+	while(m.isValid()) {
 		count[m->getID()]++;
 		m.next();
 	}

@@ -50,15 +50,12 @@ public:
 
 	CellIndex_T getCellIndex(){return _cell_index;}
 
-	bool hasNext() const {
-		return isValid();
+	bool isValid() const {
+		return _cells != nullptr and _cell_index < _cells->size() and _cell_iterator.isValid();
 	}
 
 protected:
 	void operator ++ ();
-	bool isValid() const {
-		return _cells != nullptr and _cell_index < _cells->size() and _cell_iterator.hasNext();
-	}
 
 	SingleCellIterator<ParticleCell> _cell_iterator;
 	Type _type;
@@ -138,13 +135,13 @@ inline void ParticleIterator :: next_non_empty_cell() {
 
 inline void ParticleIterator :: operator ++ () {
 
-	if (_cell_iterator.hasNext()) {
+	if (_cell_iterator.isValid()) {
 		_cell_iterator.next();
 	}
 
 	// don't merge into if-else, _cell_iterator may become invalid after ++
 
-	if (not _cell_iterator.hasNext()) {
+	if (not _cell_iterator.isValid()) {
 		next_non_empty_cell();
 	}
 }

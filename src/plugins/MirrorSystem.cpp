@@ -47,7 +47,7 @@ void MirrorSystem::beforeEventNewTimestep(
 		width.at(2) = _box_new.at(2) - _box_old.at(2);
 
 		// shift system
-		for(ParticleIterator it = begin; it.hasNext(); it.next()) {
+		for(ParticleIterator it = begin; it.isValid(); it.next()) {
 
 			std::array<double,3> oldPos;
 			std::array<double,3> newPos;
@@ -203,7 +203,7 @@ void MirrorSystem::beforeEventNewTimestep(
 
 		const ParticleIterator begin = particleContainer->iterator();
 
-		for(ParticleIterator it = begin; it.hasNext(); it.next()) {
+		for(ParticleIterator it = begin; it.isValid(); it.next()) {
 			std::array<double,3> oldPos;
 			oldPos.at(0) = it->r(0);
 			oldPos.at(1) = it->r(1);

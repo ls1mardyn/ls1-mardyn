@@ -51,7 +51,7 @@ void VTKMoleculeWriter::endStep(
 	impl.initializeVTKFile();
 
 	ParticleIterator tmpMolecule = particleContainer->iterator();
-	while (tmpMolecule.hasNext()) {
+	while (tmpMolecule.isValid()) {
 		impl.plotMolecule(*tmpMolecule);
 		tmpMolecule.next();
 	}

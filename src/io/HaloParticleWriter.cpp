@@ -76,7 +76,7 @@ void HaloParticleWriter::afterForces(ParticleContainer *particleContainer, Domai
 		checkpointfilestream.precision(20);
 		ParticleIterator tempMolecule;
 		for (tempMolecule = particleContainer->iterator();
-				tempMolecule.hasNext(); tempMolecule.next()) {
+				tempMolecule.isValid(); tempMolecule.next()) {
 			double r[3];
 			for (int i = 0; i < 3; i++) {
 				r[i] = tempMolecule->r(i);

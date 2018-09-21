@@ -103,7 +103,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	{
 		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator mol = begin; mol.hasNext(); mol.next()) {
+		for (ParticleIterator mol = begin; mol.isValid(); mol.next()) {
 			mol->setid(mol->getID() + idOffset);
 		}
 	}
@@ -237,7 +237,7 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	{
 		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator molecule = begin; molecule.hasNext(); molecule.next()) {
+		for (ParticleIterator molecule = begin; molecule.isValid(); molecule.next()) {
 			double mass = components[molecule->componentid()].m();
 			mass_sum += mass;
 			momentum_sum0 += mass * molecule->v(0);
@@ -258,7 +258,7 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	{
 		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator molecule = begin; molecule.hasNext(); molecule.next()) {
+		for (ParticleIterator molecule = begin; molecule.isValid(); molecule.next()) {
 			molecule->vsub(v_sub0, v_sub1, v_sub2);
 		}
 	}
@@ -276,7 +276,7 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	{
 		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator molecule = begin; molecule.hasNext(); molecule.next()) {
+		for (ParticleIterator molecule = begin; molecule.isValid(); molecule.next()) {
 			double mass = components[molecule->componentid()].m();
 			momentum_sum0 += mass * molecule->v(0);
 			momentum_sum1 += mass * molecule->v(1);

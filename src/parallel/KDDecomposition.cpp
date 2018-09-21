@@ -1377,7 +1377,7 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 	#pragma omp parallel
 	#endif
 	{
-		for(ParticleIterator molPtr = moleculeContainer->iterator(); molPtr.hasNext(); molPtr.next()) {
+		for(ParticleIterator molPtr = moleculeContainer->iterator(); molPtr.isValid(); molPtr.next()) {
 			int localCellIndex[3]; // 3D Cell index (local)
 			int globalCellIdx[3]; // 3D Cell index (global)
 			for (int dim = 0; dim < 3; dim++) {
@@ -1540,7 +1540,7 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 		#pragma omp barrier
 		#endif
 
-		for (RegionParticleIterator i = begin; i.hasNext(); i.next()) {
+		for (RegionParticleIterator i = begin; i.isValid(); i.next()) {
 			threadData[threadNum].push_back(new Molecule(*i));
 			i.deleteCurrentParticle(); //removeFromContainer = true;
 		}

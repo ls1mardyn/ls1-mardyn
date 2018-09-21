@@ -49,7 +49,7 @@ public:
 
 	ParticleCell * getCell() const { return _cell; }
 
-	bool hasNext() const {
+	bool isValid() const {
 		return isValid();
 	}
 

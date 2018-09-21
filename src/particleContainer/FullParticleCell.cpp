@@ -38,7 +38,7 @@ bool FullParticleCell::findMoleculeByID(size_t& index, unsigned long molid) cons
 
 	auto begin = nonconst_this->iterator();
 
-	for(auto it = begin; it.hasNext(); it.next()) {
+	for(auto it = begin; it.isValid(); it.next()) {
 		if (it->getID() == molid) {
 			index = it.getIndex();
 			return true;
@@ -94,7 +94,7 @@ void FullParticleCell::preUpdateLeavingMolecules() {
 	const size_t size_total = _molecules.size(); // for debugging, see below
 	#endif
 
-	for (auto it = iterator(); it.hasNext(); it.next()) {
+	for (auto it = iterator(); it.isValid(); it.next()) {
 		it->setSoA(nullptr);
 
 		const bool isStaying = testInBox(*it);
@@ -128,7 +128,7 @@ void FullParticleCell::postUpdateLeavingMolecules(){
 }
 
 void FullParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
-	for (auto it = iterator(); it.hasNext(); it.next()) {
+	for (auto it = iterator(); it.isValid(); it.next()) {
 		if (it->inBox(lowCorner, highCorner)) {
 			if (not removeFromContainer) {
 				particlePtrs.push_back(&(*it));

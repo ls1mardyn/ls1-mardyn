@@ -23,7 +23,7 @@ void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 	double highBound[3] = { _domainLength[0], _domainLength[1], _domainLength[2]};
 
 	ParticleIterator tM;
-	for (tM = pc->iterator(); tM.hasNext(); tM.next()) {
+	for (tM = pc->iterator(); tM.isValid(); tM.next()) {
 		if (tM->inBox(lowBound, highBound)) {
 			_particles.push_back(&(*tM));
 		}

@@ -117,7 +117,7 @@ inline RegionParticleIterator& RegionParticleIterator::operator=(const RegionPar
 inline void RegionParticleIterator :: operator ++() {
 	do{
 		ParticleIterator :: operator++();
-	} while (hasNext() and !(this->operator*()).inBox(_startRegion, _endRegion));
+	} while (isValid() and !(this->operator*()).inBox(_startRegion, _endRegion));
 }
 
 inline void RegionParticleIterator :: next_non_empty_cell() {

@@ -677,7 +677,7 @@ void Simulation::updateForces() {
 	#endif
 	{
 		const ParticleIterator begin = _moleculeContainer->iterator();
-		for (ParticleIterator i = begin; i.hasNext(); i.next()){
+		for (ParticleIterator i = begin; i.isValid(); i.next()){
 			i->calcFM();
 		}
 	} // end pragma omp parallel
@@ -1428,7 +1428,7 @@ void Simulation::refreshParticleIDs()
 #ifndef NDEBUG
 	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
 #endif
-	for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
+	for (ParticleIterator pit = _moleculeContainer->iterator(); pit.isValid(); pit.next())
 	{
 		pit->setid(++tmpID);
 	}

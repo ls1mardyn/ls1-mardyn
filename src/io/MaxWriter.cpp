@@ -149,7 +149,7 @@ void MaxWriter::initDataStructures()
 void MaxWriter::doSampling(ParticleContainer* particleContainer)
 {
 	for (ParticleIterator pit = particleContainer->iterator();
-			pit.hasNext(); pit.next())
+			pit.isValid(); pit.next())
 	{
 		uint32_t cid = pit->componentid()+1;  // 0: all components
 		uint32_t nOffsetComponent = cid*_numValsPerComponent;

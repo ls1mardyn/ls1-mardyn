@@ -57,7 +57,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 	#pragma omp parallel
 	#endif
 	{
-		for (ParticleIterator i = molCont->iterator(); i.hasNext(); i.next()) {
+		for (ParticleIterator i = molCont->iterator(); i.isValid(); i.next()) {
 			i->upd_preF(_timestepLength);
 		}
 	}
@@ -94,7 +94,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			map<int, double> summv2_l;
 			map<int, double> sumIw2_l;
 
-			for (ParticleIterator tM = molCont->iterator(); tM.hasNext(); tM.next()) {
+			for (ParticleIterator tM = molCont->iterator(); tM.isValid(); tM.next()) {
 				int cid = tM->componentid();
 				int thermostat = domain->getThermostat(cid);
 				tM->upd_postF(dt_half, summv2_l[thermostat], sumIw2_l[thermostat]);
@@ -125,7 +125,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 
 			const ParticleIterator begin = molCont->iterator();
 
-			for (ParticleIterator i = begin; i.hasNext(); i.next()) {
+			for (ParticleIterator i = begin; i.isValid(); i.next()) {
 				i->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
 				mardyn_assert(summv2gt_l >= 0.0);
 				Ngt_l++;
@@ -182,7 +182,7 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	#endif
 	{
 		ParticleIterator thismol;
-		for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
+		for (thismol = molCont->iterator(); thismol.isValid(); thismol.next()) {
 			unsigned cid = thismol->componentid();
 			mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 			thismol->vadd(componentwiseVelocityDelta[0][cid],
@@ -211,7 +211,7 @@ void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* dom
 	#endif
 	{
 		ParticleIterator thismol;
-		for (thismol = molCont->iterator(); thismol.hasNext(); thismol.next()) {
+		for (thismol = molCont->iterator(); thismol.isValid(); thismol.next()) {
 			unsigned cid = thismol->componentid();
 			mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 			thismol->vadd(componentwiseVelocityDelta[0][cid],

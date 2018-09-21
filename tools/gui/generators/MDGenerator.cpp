@@ -110,7 +110,7 @@ void MDGenerator::generatePreview() {
 	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << endl;
 
 	ParticleIterator molecule = container.iterator();
-	while (molecule.hasNext()) {
+	while (molecule.isValid()) {
 		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, global_simulation->getEnsemble()->getComponents()->size()-1));
 		molecule.next();
 	}
@@ -224,7 +224,7 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	double momentum_sum[3] = { 0., 0., 0. };
 
 	ParticleIterator molecule = particleContainer->iterator();
-	while(molecule.hasNext()){
+	while(molecule.isValid()){
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
@@ -238,7 +238,7 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	double momentum_sub2 = momentum_sum[2] / mass_sum;
 
 	molecule = particleContainer->iterator();
-	while (molecule.hasNext()) {
+	while (molecule.isValid()) {
 		molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
 		molecule.next();
 	}
@@ -249,7 +249,7 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	momentum_sum[2] = 0.;
 
 	molecule = particleContainer->iterator();
-	while (molecule.hasNext()) {
+	while (molecule.isValid()) {
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);

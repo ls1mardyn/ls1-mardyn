@@ -220,10 +220,10 @@ bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double
 	int j = 0;
 	for (unsigned i = 0; (i < idx); i++) {
 		while ((moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != _componentid))
-				and m.hasNext())
+				and m.isValid())
 		{
 			m.next();
-			if (not m.hasNext()) {
+			if (not m.isValid()) {
 				if (j == 0)
 					return false; // DELETION_FALSE
 				m = moleculeContainer->iterator();
@@ -233,7 +233,7 @@ bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double
 
 		m.next();
 		j++;
-		if (not m.hasNext()) {
+		if (not m.isValid()) {
 			m = moleculeContainer->iterator();
 			j = 0;
 		}
@@ -242,7 +242,7 @@ bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double
 	while (moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != _componentid))
 	{
 		m.next();
-		if (not m.hasNext()) {
+		if (not m.isValid()) {
 			if (j == 0)
 				return false; // DELETION_FALSE
 			m = moleculeContainer->iterator();
@@ -510,7 +510,7 @@ void ChemicalPotential::grandcanonicalStep(
 			bool rightComponent = false;
 			ParticleIterator mit;
 			if (m->componentid() != this->getComponentID()) {
-				for (mit = moleculeContainer->iterator(); mit.hasNext(); mit.next()) {
+				for (mit = moleculeContainer->iterator(); mit.isValid(); mit.next()) {
 					if (mit->componentid() == this->getComponentID()) {
 						rightComponent = true;
 						break;
@@ -592,7 +592,7 @@ void ChemicalPotential::grandcanonicalStep(
 		}
 	}
 #ifndef NDEBUG
-	for (m = moleculeContainer->iterator(); m.hasNext(); m.next()) {
+	for (m = moleculeContainer->iterator(); m.isValid(); m.next()) {
 		// cout << *m << "\n";
 		// cout.flush();
 		m->check(m->getID());
@@ -615,7 +615,7 @@ unsigned ChemicalPotential::countParticles(
 
 		ParticleIterator begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
-		for (auto m = begin; m.hasNext(); m.next()) {
+		for (auto m = begin; m.isValid(); m.next()) {
 			if (m->componentid() == cid)
 				++N;
 		}
@@ -641,7 +641,7 @@ unsigned ChemicalPotential::countParticles(
 
 		RegionParticleIterator begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
-		for (auto m = begin; m.hasNext(); m.next()) {
+		for (auto m = begin; m.isValid(); m.next()) {
 			if (m->componentid() == cid) {
 				++N;
 			}

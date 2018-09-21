@@ -74,7 +74,7 @@ void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDec
 
 		std::vector<double> localGamma_thread(numComp, 0.0);
 
-		for (auto tempMol = particleContainer->iterator(); tempMol.hasNext(); tempMol.next()) {
+		for (auto tempMol = particleContainer->iterator(); tempMol.isValid(); tempMol.next()) {
 
 			if (particleContainer->isInBoundingBox(tempMol->r_arr().data())) {
 				unsigned cid = tempMol->componentid();

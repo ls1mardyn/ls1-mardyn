@@ -51,7 +51,7 @@ void COMalignerTest::testCOMalign() {
     // TEST IF MOTION WAS APPLIED
     ParticleIterator newPos = container->iterator();
     ParticleIterator oldPos = oldContainer->iterator();
-    while(newPos.hasNext()){
+    while(newPos.isValid()){
         for(int d = 0; d < 3; d++){
             ASSERT_EQUAL_MSG("Motion has not been properly applied" ,oldPos->r(d) - .25, newPos->r(d));
         }
