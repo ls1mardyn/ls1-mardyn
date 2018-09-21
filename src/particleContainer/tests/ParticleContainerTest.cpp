@@ -41,7 +41,7 @@ void ParticleContainerTest::testMoleculeIteration(ParticleContainer* container) 
 	setupMolecules(container);
 	unsigned long moleculeCount = 0;
 	std::set<unsigned long> ids;
-	for(auto moleculeIter = container->iterator(); moleculeIter.isValid(); moleculeIter.next()) {
+	for(auto moleculeIter = container->iterator(); moleculeIter.isValid(); ++moleculeIter) {
 		test_log->debug() << "Visited Molecule with id " << moleculeIter->getID() << std::endl;
 		ids.insert(moleculeIter->getID());
 		moleculeCount++;
@@ -66,7 +66,7 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 			molecule->setr(1, 1.0);
 			molecule->setr(2, 2.4);
 		}
-		molecule.next();
+		++molecule;
 	}
 
 	ASSERT_EQUAL(4, moleculeCount);
@@ -86,7 +86,7 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 	while (molecule.isValid()) {
 		ids[molecule->getID() - 1] = true;
 		test_log->debug() << "Visited Molecule with id " << molecule->getID() << std::endl;
-		molecule.next();
+		++molecule;
 		moleculeCount++;
 	}
 	ASSERT_EQUAL(6, moleculeCount);
@@ -105,7 +105,7 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 	while (molecule.isValid()) {
 		ids[molecule->getID() - 1] = true;
 		test_log->debug() << "Visited Molecule with id " << molecule->getID() << std::endl;
-		molecule.next();
+		++molecule;
 		moleculeCount++;
 	}
 	ASSERT_EQUAL(4, moleculeCount);

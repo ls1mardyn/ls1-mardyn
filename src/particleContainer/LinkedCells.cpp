@@ -210,7 +210,7 @@ void LinkedCells::check_molecules_in_box() {
 	#pragma omp parallel reduction(+ : numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.isValid(); tM.next()) {
+		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
 			if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
 				numBadMolecules++;
 
@@ -275,7 +275,7 @@ void LinkedCells::update() {
 	#pragma omp parallel reduction(+: numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.isValid(); tM.next()) {
+		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
 			if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 				numBadMolecules++;
 				global_log->error_always_output() << "particle " << tM->getID() << " in cell " << tM.getCellIndex()
@@ -592,7 +592,7 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
-	for (auto it = iterator(); it.isValid(); it.next()) {
+	for (auto it = iterator(); it.isValid(); ++it) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
 			it.deleteCurrentParticle();
@@ -938,7 +938,7 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 
 			SingleCellIterator<ParticleCell> begin = cell.iterator();
 
-			for (SingleCellIterator<ParticleCell> it = begin; it.isValid(); it.next()) {
+			for (SingleCellIterator<ParticleCell> it = begin; it.isValid(); ++it) {
 				it->setid(threadIDsAssignedByThisThread);
 				++threadIDsAssignedByThisThread;
 			}
@@ -1119,7 +1119,7 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 
 	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
 
-	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.isValid(); it1.next()) {
+	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.isValid(); ++it1) {
 		auto& mol = *it1;
 
 		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {

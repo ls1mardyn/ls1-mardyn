@@ -458,7 +458,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
-		for (RegionParticleIterator i = begin; i.isValid(); i.next()) {
+		for (RegionParticleIterator i = begin; i.isValid(); ++i) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			threadData[threadNum].push_back(*i);

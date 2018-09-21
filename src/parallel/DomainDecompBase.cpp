@@ -67,7 +67,7 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 
 			double shiftedPosition[3];
 
-			for (auto i = begin; i.isValid(); i.next()) {
+			for (auto i = begin; i.isValid(); ++i) {
 				Molecule& molHalo = *i;
 
 				// Add force of halo particle to original particle (or other duplicates)
@@ -110,7 +110,7 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 
 		double shiftedPosition[3];
 
-		for (auto i = begin; i.isValid(); i.next()) {
+		for (auto i = begin; i.isValid(); ++i) {
 			Molecule& molHalo = *i;
 
 			// Add force of halo particle to original particle (or other duplicates)
@@ -167,7 +167,7 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 			RegionParticleIterator begin = moleculeContainer->regionIterator(startRegion, endRegion);
 
 			//traverse and gather all halo particles in the cells
-			for(RegionParticleIterator i = begin; i.isValid(); i.next()){
+			for(RegionParticleIterator i = begin; i.isValid(); ++i){
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
 				// some additional shifting to ensure that rounding errors do not hinder the correct placement
@@ -203,7 +203,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 		RegionParticleIterator begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
 
 		//traverse and gather all halo particles in the cells
-		for (RegionParticleIterator i = begin; i.isValid(); i.next()) {
+		for (RegionParticleIterator i = begin; i.isValid(); ++i) {
 			Molecule m = *i;
 			for (int dim = 0; dim < 3; dim++) {
 				if (shift[dim] != 0) {
@@ -261,7 +261,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 			RegionParticleIterator begin = moleculeContainer->regionIterator(startRegion, endRegion);
 
 			//traverse and gather all boundary particles in the cells
-			for(RegionParticleIterator i = begin; i.isValid(); i.next()){
+			for(RegionParticleIterator i = begin; i.isValid(); ++i){
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
 				// checks if the molecule has been shifted to inside the domain due to rounding errors.
@@ -297,7 +297,7 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 		RegionParticleIterator begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
 
 		//traverse and gather all boundary particles in the cells
-		for (RegionParticleIterator i = begin; i.isValid(); i.next()) {
+		for (RegionParticleIterator i = begin; i.isValid(); ++i) {
 			Molecule m = *i;
 			for (int dim = 0; dim < 3; dim++) {
 				if (shift[dim] != 0) {
@@ -400,7 +400,7 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 			}
 
 			ParticleIterator tempMolecule;
-			for (tempMolecule = moleculeContainer->iterator(); tempMolecule.isValid(); tempMolecule.next()) {
+			for (tempMolecule = moleculeContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
 				if(binary == true){
 					tempMolecule->writeBinary(checkpointfilestream);
 				}

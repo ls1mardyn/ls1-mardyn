@@ -127,7 +127,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
     if ((simstep >= _initStatistics) && (simstep % _profileRecordingTimesteps == 0)) {
         long int uID;
         // Loop over all particles and bin them with uIDs
-        for(ParticleIterator thismol = particleContainer->iterator(); thismol.isValid(); thismol.next()){
+        for(ParticleIterator thismol = particleContainer->iterator(); thismol.isValid(); ++thismol){
             // Calculate uID
             xun = (unsigned) floor(thismol->r(0) * this->universalInvProfileUnit[0]);
             yun = (unsigned) floor(thismol->r(1) * this->universalInvProfileUnit[1]);

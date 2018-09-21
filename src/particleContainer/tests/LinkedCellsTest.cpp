@@ -94,32 +94,32 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	ASSERT_TRUE_MSG("end()", molIt.isValid());
 
 	// NEXT:
-	molIt.next();
+	++molIt;
 	ASSERT_TRUE_MSG("next() within cell", molIt->getID() == 2ul);
 	ASSERT_TRUE_MSG("end()", molIt.isValid());
-	molIt.next();
+	++molIt;
 	ASSERT_TRUE_MSG("next() within cell", molIt->getID() == 3ul);
 	ASSERT_TRUE_MSG("end()", molIt.isValid());
-	molIt.next();
+	++molIt;
 	ASSERT_TRUE_MSG("next() across cells", molIt->getID() == 4ul);
 	ASSERT_TRUE_MSG("end()", molIt.isValid());
-	molIt.next();
+	++molIt;
 	ASSERT_TRUE_MSG("next() arrive at end()", not molIt.isValid());
 
 	// DELETECURRENT:
 	molIt = LC.iterator();
 
 	molIt.deleteCurrentParticle();
-	molIt.next();
+	++molIt;
 	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->getID()); // 3 copied in place of 1
 	molIt.deleteCurrentParticle();
-	molIt.next();
+	++molIt;
 	ASSERT_TRUE_MSG("delete() within cell", molIt->getID() == 2ul); // 2 copied in place of 3
 	molIt.deleteCurrentParticle();
-	molIt.next();
+	++molIt;
 	ASSERT_TRUE_MSG("delete() across cells", molIt->getID() == 4ul); // cell 1 became empty, we advanced to cell 3
 	molIt.deleteCurrentParticle();
-	molIt.next();
+	++molIt;
 	ASSERT_TRUE_MSG("delete() last", not molIt.isValid()); // cell 4 became empty, we arrived at end()
 }
 
@@ -574,7 +574,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		container->traverseCells(*cellProc);
 		// calculate forces
 		const ParticleIterator begin = container->iterator();
-		for (auto i = begin; i.isValid(); i.next()) {
+		for (auto i = begin; i.isValid(); ++i) {
 			i->calcFM();
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
@@ -588,7 +588,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		// calculate forces
 		const ParticleIterator& begin = containerTest->iterator();
 //		std::cout << "pre force exchange:" << std::endl;
-		for (ParticleIterator i = begin; i.isValid(); i.next()) {
+		for (ParticleIterator i = begin; i.isValid(); ++i) {
 			i->calcFM();
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
@@ -597,7 +597,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		}
 //		std::cout << "after force exchange:"<< std::endl;
 //		const ParticleIterator& begin2 = containerTest->iterator();
-//		for (ParticleIterator i = begin2; i.isValid(); i.next()) {
+//		for (ParticleIterator i = begin2; i.isValid(); ++i) {
 //			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
 //					<< ", " << i->F(2) << std::endl;
 //		}
@@ -611,7 +611,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		const ParticleIterator begin = container->iterator();
 		const ParticleIterator beginHS = containerTest->iterator();
 		auto j = beginHS;
-		for (auto i = begin; i.isValid(); i.next(), j.next()) {
+		for (auto i = begin; i.isValid(); ++i, ++j) {
 			CPPUNIT_ASSERT_EQUAL(j->getID(), i->getID());
 #ifdef MARDYN_SPSP
 			double delta=1e-6;

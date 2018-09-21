@@ -112,7 +112,7 @@ void MDGenerator::generatePreview() {
 	ParticleIterator molecule = container.iterator();
 	while (molecule.isValid()) {
 		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, global_simulation->getEnsemble()->getComponents()->size()-1));
-		molecule.next();
+		++molecule;
 	}
 #endif
 }
@@ -230,7 +230,7 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
 		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
 		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		molecule.next();
+		++molecule;
 	}
 
 	double momentum_sub0 = momentum_sum[0] / mass_sum;
@@ -240,7 +240,7 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	molecule = particleContainer->iterator();
 	while (molecule.isValid()) {
 		molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
-		molecule.next();
+		++molecule;
 	}
 
 	//test
@@ -255,7 +255,7 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
 		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
 		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		molecule.next();
+		++molecule;
 	}
 
 	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);

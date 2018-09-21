@@ -117,7 +117,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
         _mass = 0;
 
         // ITERATE OVER PARTICLES
-        for (ParticleIterator tm = particleContainer->iterator(); tm.isValid(); tm.next()) {
+        for (ParticleIterator tm = particleContainer->iterator(); tm.isValid(); ++tm) {
             double partMass = tm->mass();
             _mass += partMass;
             for (int d = _dim_start; d < _dim_end; d += _dim_step) {
@@ -159,7 +159,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
         }
 
         // MOVE
-        for(ParticleIterator tm = particleContainer->iterator(); tm.isValid(); tm.next()){
+        for(ParticleIterator tm = particleContainer->iterator(); tm.isValid(); ++tm){
             for (int d = _dim_start; d < _dim_end; d += _dim_step){
                 tm->move(d, _motion[d]);
             }
@@ -187,7 +187,7 @@ void COMaligner::endStep(ParticleContainer *particleContainer, DomainDecompBase 
 
     // Moved to before Forces
     /*if(_enabled){
-        for(ParticleIterator tm = particleContainer->iterator(); tm.isValid(); tm.next()){
+        for(ParticleIterator tm = particleContainer->iterator(); tm.isValid(); ++tm){
             for (int d = _dim_start; d < _dim_end; d += _dim_step){
                 tm->move(d, _motion[d]);
             }

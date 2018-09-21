@@ -73,7 +73,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 			domainDecomp->barrier();
 			if( ownRank == process ){
 				ofstream xyzfilestream( filenamestream.str().c_str(), ios::app );
-				for(ParticleIterator tempMol = particleContainer->iterator(); tempMol.isValid(); tempMol.next()){
+				for(ParticleIterator tempMol = particleContainer->iterator(); tempMol.isValid(); ++tempMol){
 					for (unsigned i=0; i< tempMol->numLJcenters(); i++){
 						if( tempMol->componentid() == 0) { xyzfilestream << "Ar ";}
 						else if( tempMol->componentid() == 1 ) { xyzfilestream << "Xe ";}

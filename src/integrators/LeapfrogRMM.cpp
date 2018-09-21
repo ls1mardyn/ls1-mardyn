@@ -50,7 +50,7 @@ void LeapfrogRMM::computePositions(ParticleContainer* molCont, Domain* dom) {
 	#endif
 	{
 		const ParticleIterator begin = molCont->iterator();
-		for(auto i = begin; i.isValid(); i.next()) {
+		for(auto i = begin; i.isValid(); ++i) {
 			i->ee_upd_preF(_timestepLength);
 		}
 	}
@@ -81,7 +81,7 @@ void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 		{
 			const ParticleIterator begin = molCont->iterator();
 
-			for (ParticleIterator i = begin; i.isValid(); i.next()) {
+			for (ParticleIterator i = begin; i.isValid(); ++i) {
 				double dummy = 0.0;
 				i->ee_upd_postF(_timestepLength, red_summv2);
 				mardyn_assert(red_summv2 >= 0.0);

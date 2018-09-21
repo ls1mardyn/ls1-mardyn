@@ -306,7 +306,7 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer * container, Molecule
 
 	RegionParticleIterator begin = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS);
 
-	for (auto m2 = begin; m2.isValid(); m2.next()) {
+	for (auto m2 = begin; m2.isValid(); ++m2) {
 		if (m2->getID() == m1->getID()) {
 			continue;
 		}

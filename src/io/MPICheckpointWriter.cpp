@@ -291,7 +291,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		{
 			ParticleData* particleStructBuffer=new ParticleData[_particlesbuffersize];
 			unsigned long bufidx=0;
-			for (ParticleIterator pos = particleContainer->iterator(); pos.isValid(); pos.next()) {
+			for (ParticleIterator pos = particleContainer->iterator(); pos.isValid(); ++pos) {
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 				ParticleData::MoleculeToParticleData(particleStructBuffer[bufidx], *pos);
 				++bufidx;
@@ -314,7 +314,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		else
 		{
 			ParticleData particleStruct;
-			for (ParticleIterator pos = particleContainer->iterator(); pos.isValid(); pos.next()) {
+			for (ParticleIterator pos = particleContainer->iterator(); pos.isValid(); ++pos) {
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 				ParticleData::MoleculeToParticleData(particleStruct, *pos);
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting particle" << endl
@@ -380,7 +380,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		ostrm.write((char*)&startidx,sizeof(unsigned long));
 		ostrm.write((char*)&numParticles,sizeof(unsigned long));
 		//offset+=2*sizeof(unsigned long);
-		for (ParticleIterator pos = particleContainer->iterator(); pos.isValid(); pos.next()) {
+		for (ParticleIterator pos = particleContainer->iterator(); pos.isValid(); ++pos) {
 			unsigned long id=pos->getID();
 			ostrm.write((char*)&id,sizeof(unsigned long));
 			//unsigned int componentid=pos->componentid(); // to be compatible to struct padding

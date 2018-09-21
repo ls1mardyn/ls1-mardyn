@@ -22,7 +22,7 @@ bool ParticleCellRMM::findMoleculeByID(size_t& index, unsigned long molid) const
 
 	auto begin = nonconst_this->iterator();
 
-	for(auto it = begin; it.isValid(); it.next()) {
+	for(auto it = begin; it.isValid(); ++it) {
 		if (it->getID() == molid) {
 			index = it.getIndex();
 			return true;

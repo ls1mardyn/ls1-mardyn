@@ -100,7 +100,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 
 	// Update forces in molecules so they can be exchanged - new - begin
 	const ParticleIterator begin = _moleculeContainer->iterator();
-	for (ParticleIterator i = begin; i.isValid(); i.next()){
+	for (ParticleIterator i = begin; i.isValid(); ++i){
 		i->calcFM();
 	}
 	// - new - end

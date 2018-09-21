@@ -55,8 +55,8 @@ void COMalignerTest::testCOMalign() {
         for(int d = 0; d < 3; d++){
             ASSERT_EQUAL_MSG("Motion has not been properly applied" ,oldPos->r(d) - .25, newPos->r(d));
         }
-        newPos.next();
-        oldPos.next();
+        ++newPos;
+        ++oldPos;
     }
 
 }

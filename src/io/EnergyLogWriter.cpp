@@ -51,7 +51,7 @@ void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecomp
 	#pragma omp parallel reduction(+:nNumMolsGlobalEnergyLocal,UkinLocal,UkinTransLocal,UkinRotLocal)
 	#endif
 	{
-		for (auto moleculeIter = particleContainer->iterator(); moleculeIter.isValid(); moleculeIter.next()) {
+		for (auto moleculeIter = particleContainer->iterator(); moleculeIter.isValid(); ++moleculeIter) {
 			nNumMolsGlobalEnergyLocal++;
 			UkinLocal += moleculeIter->U_kin();
 			UkinTransLocal += moleculeIter->U_trans();

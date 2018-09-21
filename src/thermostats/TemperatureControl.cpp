@@ -583,7 +583,7 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 	ParticleIterator tM;
 	for( tM  = particleContainer->iterator();
 		 tM.isValid();
-		 tM.next())
+		 ++tM)
 	{
 		// control temperature
 		this->ControlTemperature(&(*tM), simstep);
@@ -611,7 +611,7 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 
 		for( tM  = particleContainer->iterator();
 			 tM.isValid();
-			 tM.next())
+			 ++tM)
 		{
 			// measure kinetic energy
 			this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
