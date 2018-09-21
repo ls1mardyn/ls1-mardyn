@@ -50,9 +50,8 @@ public:
 	ParticleCell * getCell() const { return _cell; }
 
 	bool isValid() const {
-		return isValid();
+		return _cell != nullptr and _mol_index < static_cast<size_t>(_cell->getMoleculeCount());
 	}
-
 
 private:
 	void operator ++() {
@@ -62,9 +61,7 @@ private:
 
 		_currentParticleDeleted = false;
 	}
-	bool isValid() const {
-		return _cell != nullptr and _mol_index < static_cast<size_t>(_cell->getMoleculeCount());
-	}
+
 
 	ParticleCell * _cell;
 	size_t _mol_index;
