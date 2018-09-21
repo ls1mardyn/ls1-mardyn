@@ -76,7 +76,7 @@ public:
 	void updateInnerMoleculeCaches() {}
 	void updateBoundaryAndHaloMoleculeCaches() {}
 	void updateMoleculeCaches() {}
-	size_t getNumCells() const { return 1; }
+
 	ParticleCellBase * getCell(unsigned cellIndex) { return nullptr; }
 	const ParticleCellBase* getCell(unsigned cellIndex) const { return nullptr; }
 	

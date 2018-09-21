@@ -63,8 +63,6 @@ public:
 
 	void updateMoleculeCaches() override;
 
-	size_t getNumCells() const override;
-
 	bool getMoleculeAtPosition(const double pos[3], Molecule **result) override;
 
 	unsigned long

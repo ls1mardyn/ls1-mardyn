@@ -231,10 +231,6 @@ public:
 	void printSubInfo(int offset) override;
 	std::string getName() override;
 
-	size_t getNumCells() const override {
-		return _cells.size();
-	}
-
 	bool requiresForceExchange() const override; // new
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength);

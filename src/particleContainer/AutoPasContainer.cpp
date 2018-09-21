@@ -72,3 +72,24 @@ double AutoPasContainer::getCutoff() {
 	return _cutoff;
 }
 
+void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
+	throw std::runtime_error("not yet implemented");
+}
+
+double AutoPasContainer::getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1,
+								   CellProcessor &cellProcessor) {
+	throw std::runtime_error("not yet implemented");
+}
+
+void AutoPasContainer::updateInnerMoleculeCaches() {
+	throw std::runtime_error("not yet implemented");
+}
+
+void AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() {
+	throw std::runtime_error("not yet implemented");
+}
+
+void AutoPasContainer::updateMoleculeCaches() {
+	// nothing needed
+}
+
