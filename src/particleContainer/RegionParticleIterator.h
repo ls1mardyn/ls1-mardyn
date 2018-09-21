@@ -11,8 +11,18 @@
  *
  **************************************************************************************/
 
-#ifndef  RegionParticleIterator_INC
-#define  RegionParticleIterator_INC
+#pragma once
+
+#ifdef MARDYN_AUTOPAS
+
+#include "ParticleIterator.h"
+class RegionParticleIterator : public ParticleIterator {
+public:
+	RegionParticleIterator(){};
+	RegionParticleIterator(autopas::ParticleIteratorWrapper<AutoPasFullMolecule> parent) : ParticleIterator(parent){};
+};
+
+#else
 
 #include <vector>
 #include <stdexcept>
@@ -143,5 +153,4 @@ inline ParticleIterator::CellIndex_T RegionParticleIterator :: getGlobalCellInde
 	return (_baseX + dx) + (_baseY + dy) * _globalDimensions[0] + (_baseZ + dz) * _globalDimensions[0] * _globalDimensions[1];
 }
 
-
-#endif /* #ifndef RegionParticleIterator_INC */
+#endif  // MARDYN_AUTOPAS

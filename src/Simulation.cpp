@@ -341,11 +341,15 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@type", datastructuretype);
 			global_log->info() << "Datastructure type: " << datastructuretype << endl;
 			if(datastructuretype == "LinkedCells") {
-							_moleculeContainer = new LinkedCells();
-							/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
-							global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
-							LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
-							lc->setCutoff(_cutoffRadius);
+#ifdef MARDYN_AUTOPAS
+				global_log->fatal() << "LinkedCells not compiled (use AutoPas instead) !!!" << std::endl;
+#else
+				_moleculeContainer = new LinkedCells();
+				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
+				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
+				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+				lc->setCutoff(_cutoffRadius);
+#endif
 			}else if(datastructuretype == "AdaptiveSubCells") {
 				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
 				Simulation::exit(-1);
@@ -711,8 +715,7 @@ void Simulation::prepare_start() {
 			bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
 		}
-		_FMM->init(globalLength, bBoxMin, bBoxMax,
-				dynamic_cast<LinkedCells*>(_moleculeContainer)->getCellLength(), _moleculeContainer);
+		_FMM->init(globalLength, bBoxMin, bBoxMax, _moleculeContainer->getCellLength(), _moleculeContainer);
 
 		delete _cellProcessor;
 		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);

@@ -1,5 +1,6 @@
-#ifndef LINKEDCELLS_H_
-#define LINKEDCELLS_H_
+#pragma once
+
+#ifndef MARDYN_AUTOPAS
 
 #include <vector>
 #include <array>
@@ -343,4 +344,4 @@ private:
 	ResortCellProcessorSliced * _resortCellProcessorSliced;
 };
 
-#endif /* LINKEDCELLS_H_ */
+#endif  // MARDYN_AUTOPAS

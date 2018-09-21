@@ -11,6 +11,7 @@
 #include "utils/Coordinate3D.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
+#include "particleContainer/ParticleCellBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #else

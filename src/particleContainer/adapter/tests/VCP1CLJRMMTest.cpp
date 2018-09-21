@@ -9,6 +9,7 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/LinkedCells.h"
+#include "particleContainer/ParticleCellRMM.h"
 #include "particleContainer/adapter/VCP1CLJRMM.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"

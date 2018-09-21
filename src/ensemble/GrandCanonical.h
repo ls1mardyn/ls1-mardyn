@@ -31,7 +31,7 @@ public:
 	void prepareTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* comm);  // C must not contain the halo!
 
 	// false if no deletion remains for this subdomain
-	bool getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret);
+	ParticleIterator getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxcoy);
 	unsigned long getInsertion(double* ins);  // 0 if no insertion remains for this subdomain
 	bool decideDeletion(double deltaUTilde);
 	bool decideInsertion(double deltaUTilde);

@@ -33,6 +33,12 @@ endif()
 
 if (NOT ENABLE_AUTOPAS)
     list(FILTER MY_SRC EXCLUDE REGEX "AutoPas")
+else()
+#    set(MY_SRC_BACK ${MY_SRC})
+#    list(FILTER MY_SRC_BACK INCLUDE REGEX "AutoPas|ParticleIterator")
+#    list(FILTER MY_SRC EXCLUDE REGEX "/particleContainer/")
+#    list(APPEND MY_SRC ${MY_SRC_BACK})
+    list(FILTER MY_SRC EXCLUDE REGEX "LinkedCells")
 endif ()
 
 # add the executable

@@ -7,6 +7,9 @@
 
 #include "KDDecompositionTest.h"
 #include "Domain.h"
+#ifdef MARDYN_AUTOPAS
+#include "particleContainer/AutoPasContainer.h"
+#endif
 #include "particleContainer/LinkedCells.h"
 #include "io/ASCIIReader.h"
 
@@ -309,7 +312,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 	// INIT
 	KDDecomposition * kdd;
-	LinkedCells * moleculeContainer;
+	ParticleContainer * moleculeContainer;
 	{
 		const double boxL = 1241.26574;
 		const double cutOff = 26.4562;
@@ -326,7 +329,13 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 			bBoxMin[i] = kdd->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = kdd->getBoundingBoxMax(i, _domain);
 		}
+#ifndef MARDYN_AUTOPAS
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff);
+#else
+		moleculeContainer = new AutoPasContainer();
+		moleculeContainer->setCutoff(cutOff);
+		moleculeContainer->rebuild(bBoxMin, bBoxMax);
+#endif
 		moleculeContainer->update();
 		kdd->_steps = 0;
 		_rank = kdd->_rank;

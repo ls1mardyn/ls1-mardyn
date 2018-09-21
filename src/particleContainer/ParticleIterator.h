@@ -11,9 +11,35 @@
  *
  **************************************************************************************/
 
-#ifndef  ParticleIterator_INC
-#define  ParticleIterator_INC
+#pragma once
 
+#ifdef MARDYN_AUTOPAS
+// AUTOPAS WRAPPER
+#include "molecules/AutoPasFullMolecule.h"
+#include <autopas/iterators/ParticleIteratorWrapper.h>
+
+/**
+ * Wrapper class for AutoPas' ParticleIterator
+ */
+class ParticleIterator : public autopas::ParticleIteratorWrapper<AutoPasFullMolecule> {
+public:
+
+	enum Type {
+		ALL_CELLS=0, /* iterates every cell */
+		ONLY_INNER_AND_BOUNDARY=1, /* iterates only inner and boundary cells, i.e. no halo cells */
+	};
+
+	ParticleIterator(){};
+
+	ParticleIterator(autopas::ParticleIteratorWrapper<AutoPasFullMolecule> parent)
+		: autopas::ParticleIteratorWrapper<AutoPasFullMolecule>(parent) {}
+
+	size_t getCellIndex(){
+		return 0; // not yet implemented
+	}
+};
+
+#else
 #include <vector>
 #include <stdexcept>
 #include "utils/mardyn_assert.h"
@@ -164,6 +190,4 @@ inline void ParticleIterator :: updateCellIteratorCell() {
 		_cell_iterator = SingleCellIterator<ParticleCell>(&_cells->at(_cell_index));
 	}
 }
-
-
-#endif /* #ifndef ParticleIterator_INC */
+#endif  // MARDYN_AUTOPAS

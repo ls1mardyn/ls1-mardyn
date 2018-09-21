@@ -106,3 +106,12 @@ double *AutoPasContainer::getCellLength() {
 	throw std::runtime_error("not yet implemented");
 }
 
+ParticleIterator AutoPasContainer::iterator(ParticleIterator::Type t) {
+	return _autopasContainer.getIterator();
+}
+
+RegionParticleIterator
+AutoPasContainer::regionIterator(const double *startCorner, const double *endCorner, ParticleIterator::Type t) {
+	return _autopasContainer.getRegionIterator();
+}
+

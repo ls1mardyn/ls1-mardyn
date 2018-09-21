@@ -19,6 +19,11 @@
 #include "io/ASCIIReader.h"
 #include "utils/Logger.h"
 
+#ifdef MARDYN_AUTOPAS
+
+#include "particleContainer/AutoPasContainer.h"
+#endif
+
 #include <list>
 
 using namespace Log;
@@ -28,8 +33,13 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type t
 		double bBoxMin[] = {0.0, 0.0, 0.0, 0.0};
 		double bBoxMax[] = {2.0, 2.0, 2.0, 2.0};
 		double cutoffRadius = 1.0;
-
+#ifndef MARDYN_AUTOPAS
 		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoffRadius);
+#else
+		AutoPasContainer* container = new AutoPasContainer();
+		container->setCutoff(cutoffRadius);
+		container->rebuild(bBoxMin, bBoxMax);
+#endif
 		return container;
 
 	} else {
@@ -58,7 +68,13 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 
 	ParticleContainer* moleculeContainer;
 	if (type == Type::LinkedCell) {
-		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff);
+#ifndef MARDYN_AUTOPAS
+		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoff);
+#else
+		AutoPasContainer* container = new AutoPasContainer();
+		container->setCutoff(cutoff);
+		container->rebuild(bBoxMin, bBoxMax);
+#endif
 		#ifdef ENABLE_MPI
 		DomainDecomposition * temp = 0;
 		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
