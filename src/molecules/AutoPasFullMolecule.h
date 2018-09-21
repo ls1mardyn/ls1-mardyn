@@ -32,6 +32,33 @@ public:
 	const std::array<double, 3> &getR() const;
 
 	/**
+	 * Get the force acting on the particle as std::array.
+	 * @return
+	 */
+	const std::array<double, 3> &getF() const;
+
+	/**
+	 * Set the force acting on the particle as std::array.
+	 * @param F force acting on the particle
+	 */
+	void setF(const std::array<double, 3>& F);
+
+	/**
+	 * Adds F to the force acting on the particle.
+	 * @param F force to be added
+	 */
+	void addF(const std::array<double, 3>& F);
+
+	/**
+	 * Substracts F to the force acting on the particle.
+	 * @param F force to be substracted
+	 */
+	void subF(const std::array<double, 3>& F);
+
+	// somehow the definition in MoleculeInterface is not found, so we add it here, again...
+	void setF(double F[3]) override;
+
+	/**
 	 * test whether the particle is in the box specified by rmin and rmax
 	 * @param rmin lower corner of the box (inclusive)
 	 * @param rmax upper corner of the box (exclusive)
@@ -39,7 +66,7 @@ public:
 	 */
 	bool inBox(const std::array<double, 3> &rmin, const std::array<double, 3>& rmax) const;
 
-	// somehow the definition in MoleculeInterface is not found by some compilers, so we add it here, again...
+	// somehow the definition in MoleculeInterface is not found, so we add it here, again...
 	bool inBox(const double rmin[3], const double rmax[3]) const override {
 		return MoleculeInterface::inBox(rmin, rmax);
 	}
@@ -49,6 +76,11 @@ public:
 	 * @return
 	 */
 	std::string toString();
+
+	/**
+	 * Enums used as ids for accessing and creating a dynamically sized SoA.
+	 */
+	enum AttributeNames : int { id, posX, posY, posZ, forceX, forceY, forceZ };
 
 	/**
 	 * typedef needed for soa's of autopas

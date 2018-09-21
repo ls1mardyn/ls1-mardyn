@@ -616,7 +616,7 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 			// measure kinetic energy
 			this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
 
-//          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
+//          cout << "id = " << tM->getID() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
 		}
 
 		// calc global values

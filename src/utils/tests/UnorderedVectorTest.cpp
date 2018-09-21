@@ -59,22 +59,22 @@ void UnorderedVectorTest::testFastRemovalMoleculePointer() {
 	// erase 5:
 
 	index = 0;
-	ASSERT_EQUAL(v[index]->id(), 5ul);
+	ASSERT_EQUAL(v[index]->getID(), 5ul);
 
 	delete v[index];
 	UnorderedVector::fastRemove(v, index);
 	// 5 was erased, 3 was copied in its place, vector contains 3, 4, 2, iterator points at 3
-	ASSERT_EQUAL((v[index])->id(), 3ul);
+	ASSERT_EQUAL((v[index])->getID(), 3ul);
 
 
 	// erase 4:
 
 	++index;
-	ASSERT_EQUAL((v[index])->id(), 4ul);
+	ASSERT_EQUAL((v[index])->getID(), 4ul);
 	delete v[index];
 	UnorderedVector::fastRemove(v, index);
 	// 4 was erased, 2 was copied in its place, vector contains 3, 2, iterator points at 2
-	ASSERT_EQUAL((v[index])->id(), 2ul);
+	ASSERT_EQUAL((v[index])->getID(), 2ul);
 
 
 	// erase 2:

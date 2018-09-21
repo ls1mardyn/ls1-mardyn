@@ -39,7 +39,7 @@ bool FullParticleCell::findMoleculeByID(size_t& index, unsigned long molid) cons
 	auto begin = nonconst_this->iterator();
 
 	for(auto it = begin; it.hasNext(); it.next()) {
-		if (it->id() == molid) {
+		if (it->getID() == molid) {
 			index = it.getIndex();
 			return true;
 		}
@@ -61,7 +61,7 @@ bool FullParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicat
 	} else {
 		// perform a check whether this molecule exists (has been received) already
 		size_t index;
-		bool found = findMoleculeByID(index, particle.id());
+		bool found = findMoleculeByID(index, particle.getID());
 		if (not found) {
 			_molecules.push_back(particle);
 			wasInserted = true;

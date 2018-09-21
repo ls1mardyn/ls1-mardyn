@@ -66,11 +66,11 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
+			str << "Molecule id=" << m->getID() << " index i="<< i << std::endl;
 			#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-				ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-4);
+				ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->getID()-1][i], m->F(i), 1e-4);
 			#else /* VCP_DPDP */
-				ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-8);
+				ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->getID()-1][i], m->F(i), 1e-8);
 			#endif
 		}
 	}
@@ -114,7 +114,7 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
+			str << "Molecule id=" << m->getID() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), 1e-7);
 		}
 	}
@@ -189,7 +189,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	for (ParticleIterator m_2 = container_2->iterator(); m_2.hasNext(); m_2.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m_2->id() << " index i="<< i << std::endl;
+			str << "Molecule id=" << m_2->getID() << " index i="<< i << std::endl;
 			// check force
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
 			// check torque
@@ -291,7 +291,7 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << filename << std::endl;
-			str << "Molecule id=" << m_2->id() << " index i=" << i << std::endl;
+			str << "Molecule id=" << m_2->getID() << " index i=" << i << std::endl;
 			// check force
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
 			double abs_F = std::abs(m_1->F(i) - m_2->F(i));

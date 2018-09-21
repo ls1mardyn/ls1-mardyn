@@ -155,7 +155,7 @@ void checkMoleculeContainer(ParticleContainer* pc) {
 			if ((currentMolecule->r(i) > high_limit) || (currentMolecule->r(i) < low_limit))
 			{
 				outOfBounds++;
-				std::cout << "current molecule " << currentMolecule->id() << " is out of bounds: "
+				std::cout << "current molecule " << currentMolecule->getID() << " is out of bounds: "
 						<< currentMolecule->r(0) << "," << currentMolecule->r(1) << "," << currentMolecule->r(2) << std::endl;
 			}
 		}

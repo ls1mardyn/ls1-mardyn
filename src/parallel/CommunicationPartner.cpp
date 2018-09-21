@@ -193,7 +193,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		for (int i = 0; i < numLeaving; ++i) {
 			Molecule m;
 			_sendBuf.readLeavingMolecule(i, m);
-			buf1 << m.id() << " ";
+			buf1 << m.getID() << " ";
 		}
 		global_log->debug() << buf1.str() << std::endl;
 
@@ -202,7 +202,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		for (int i = 0; i < numHalo; ++i) {
 			Molecule m;
 			_sendBuf.readHaloMolecule(i, m);
-			buf2 << m.id() << " ";
+			buf2 << m.getID() << " ";
 		}
 		global_log->debug() << buf2.str() << std::endl;
 
@@ -281,7 +281,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for (unsigned long i = 0; i < numLeaving; ++i) {
 					Molecule m;
 					_recvBuf.readLeavingMolecule(i, m); 
-					buf1 << m.id() << " ";
+					buf1 << m.getID() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
 
@@ -290,7 +290,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for (unsigned long i = 0; i < numHalo; ++i) {
 					Molecule m;
 					_recvBuf.readHaloMolecule(i, m);
-					buf2 << m.id() << " ";
+					buf2 << m.getID() << " ";
 				}
 				global_log->debug() << buf2.str() << std::endl;
 #endif
@@ -338,7 +338,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for(unsigned long i = 0; i < numForces; ++i) {
 					Molecule m;
 					_recvBuf.readForceMolecule(i, m);
-					buf1 << m.id() << " ";
+					buf1 << m.getID() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
 				

@@ -98,7 +98,7 @@ void VISWriter::endStep(ParticleContainer *particleContainer,
 				}
 			}
 			if (!halo) {
-				outputstream << setiosflags(ios::fixed) << setw(8) << pos->id() << setw(2)
+				outputstream << setiosflags(ios::fixed) << setw(8) << pos->getID() << setw(2)
 				            << pos->componentid() << setprecision(3);
 				for (unsigned short d = 0; d < 3; d++) outputstream << setw(11) << pos->r(d);
 				outputstream << setprecision(3) << setw(7) << pos->q().qw() << setw(7) << pos->q().qx()

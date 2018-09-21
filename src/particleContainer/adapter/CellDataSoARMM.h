@@ -60,7 +60,7 @@ public:
 			static_cast<vcp_real_accum>(m_RMM.v(2))
 		};
 
-		_data.appendValues(calcs, accums, m_RMM.id(), getMolNum());
+		_data.appendValues(calcs, accums, m_RMM.getID(), getMolNum());
 		incrementMolNum();
 	}
 
@@ -105,7 +105,7 @@ public:
 		setMolV(0, i, static_cast<vcp_real_calc>(m.v(0)));
 		setMolV(1, i, static_cast<vcp_real_calc>(m.v(1)));
 		setMolV(2, i, static_cast<vcp_real_calc>(m.v(2)));
-		setMolUid(i, m.id());
+		setMolUid(i, m.getID());
 	}
 
 	void deleteMolecule(size_t index) {

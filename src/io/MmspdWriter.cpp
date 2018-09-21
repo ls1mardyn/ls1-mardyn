@@ -141,7 +141,7 @@ void MmspdWriter::endStep(ParticleContainer *particleContainer,
 				}
 			}
 			if (!halo) {
-				mmspdfstream << setiosflags(ios::fixed) << setw(8) << pos->id() << setw(3)
+				mmspdfstream << setiosflags(ios::fixed) << setw(8) << pos->getID() << setw(3)
 					<< pos->componentid() << setprecision(3) << " ";
 				for (unsigned short d = 0; d < 3; d++) mmspdfstream << setw(7) << pos->r(d) << " " ;
 				mmspdfstream << "\n";
@@ -174,7 +174,7 @@ void MmspdWriter::endStep(ParticleContainer *particleContainer,
 				}
 			}
 			if (!halo) {
-				mmspdfstream << setiosflags(ios::fixed) << setw(8) << pos->id() << setw(3)
+				mmspdfstream << setiosflags(ios::fixed) << setw(8) << pos->getID() << setw(3)
 					<< pos->componentid() << setprecision(3) << " ";
 				for (unsigned short d = 0; d < 3; d++) mmspdfstream << setw(7) << pos->r(d) << " " ;
 				mmspdfstream << "\n";

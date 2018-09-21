@@ -317,7 +317,7 @@ void Domain::calculateGlobalValues(
 					Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
 						vcorr = sqrt(limit_energy / Utrans);
-						global_log->debug() << ": v(m" << tM->id() << ") *= " << vcorr << endl;
+						global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << endl;
 						tM->scale_v(vcorr);
 						tM->scale_F(vcorr);
 					}
@@ -328,7 +328,7 @@ void Domain::calculateGlobalValues(
 						Urot = tM->U_rot();
 						if (Urot > limit_rot_energy) {
 							Dcorr = sqrt(limit_rot_energy / Urot);
-							global_log->debug() << "D(m" << tM->id() << ") *= " << Dcorr << endl;
+							global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << endl;
 							tM->scale_D(Dcorr);
 							tM->scale_M(Dcorr);
 						}

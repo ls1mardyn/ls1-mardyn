@@ -90,18 +90,18 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 
 	// BEGIN:
 	molIt = LC.iterator();
-	ASSERT_TRUE_MSG("begin()", molIt->id() == 1ul);
+	ASSERT_TRUE_MSG("begin()", molIt->getID() == 1ul);
 	ASSERT_TRUE_MSG("end()", molIt.hasNext());
 
 	// NEXT:
 	molIt.next();
-	ASSERT_TRUE_MSG("next() within cell", molIt->id() == 2ul);
+	ASSERT_TRUE_MSG("next() within cell", molIt->getID() == 2ul);
 	ASSERT_TRUE_MSG("end()", molIt.hasNext());
 	molIt.next();
-	ASSERT_TRUE_MSG("next() within cell", molIt->id() == 3ul);
+	ASSERT_TRUE_MSG("next() within cell", molIt->getID() == 3ul);
 	ASSERT_TRUE_MSG("end()", molIt.hasNext());
 	molIt.next();
-	ASSERT_TRUE_MSG("next() across cells", molIt->id() == 4ul);
+	ASSERT_TRUE_MSG("next() across cells", molIt->getID() == 4ul);
 	ASSERT_TRUE_MSG("end()", molIt.hasNext());
 	molIt.next();
 	ASSERT_TRUE_MSG("next() arrive at end()", not molIt.hasNext());
@@ -111,13 +111,13 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 
 	molIt.deleteCurrentParticle();
 	molIt.next();
-	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->id()); // 3 copied in place of 1
+	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->getID()); // 3 copied in place of 1
 	molIt.deleteCurrentParticle();
 	molIt.next();
-	ASSERT_TRUE_MSG("delete() within cell", molIt->id() == 2ul); // 2 copied in place of 3
+	ASSERT_TRUE_MSG("delete() within cell", molIt->getID() == 2ul); // 2 copied in place of 3
 	molIt.deleteCurrentParticle();
 	molIt.next();
-	ASSERT_TRUE_MSG("delete() across cells", molIt->id() == 4ul); // cell 1 became empty, we advanced to cell 3
+	ASSERT_TRUE_MSG("delete() across cells", molIt->getID() == 4ul); // cell 1 became empty, we advanced to cell 3
 	molIt.deleteCurrentParticle();
 	molIt.next();
 	ASSERT_TRUE_MSG("delete() last", not molIt.hasNext()); // cell 4 became empty, we arrived at end()
@@ -612,7 +612,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		const ParticleIterator beginHS = containerTest->iterator();
 		auto j = beginHS;
 		for (auto i = begin; i.hasNext(); i.next(), j.next()) {
-			CPPUNIT_ASSERT_EQUAL(j->id(), i->id());
+			CPPUNIT_ASSERT_EQUAL(j->getID(), i->getID());
 #ifdef MARDYN_SPSP
 			double delta=1e-6;
 #else

@@ -103,7 +103,7 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 				(*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
 		PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
 		// id
-		data_iterator->push_back(molecule.id());
+		data_iterator->push_back(molecule.getID());
 		data_iterator++;
 		// componentID
 		data_iterator->push_back(molecule.componentid());
@@ -131,7 +131,7 @@ void VTKMoleculeWriterImplementation::plotCenter(Molecule& molecule, int centerI
 	PointData::DataArray_sequence& pointDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
 	PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
 
-	data_iterator->push_back(molecule.id());
+	data_iterator->push_back(molecule.getID());
 	data_iterator++;
 
 	data_iterator->push_back(molecule.componentid());

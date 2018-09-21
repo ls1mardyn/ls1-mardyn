@@ -10,9 +10,10 @@ if(ENABLE_AUTOPAS)
     # Download and install autopas
     ExternalProject_Add(
             autopas
-            URL https://github.com/AutoPas/AutoPas/archive/0c3d8b07a2e38940057fafd21b98645cb074e729.zip
-            #${CMAKE_SOURCE_DIR}/libs/googletest-master.zip
-            URL_HASH MD5=6e70656897167140c1221eecc6ad872d
+            GIT_REPOSITORY https://github.com/AutoPas/AutoPas.git
+            #URL https://github.com/AutoPas/AutoPas/archive/0c3d8b07a2e38940057fafd21b98645cb074e729.zip # zip option
+            #${CMAKE_SOURCE_DIR}/libs/googletest-master.zip # bundled option
+            #URL_HASH MD5=6e70656897167140c1221eecc6ad872d
             BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/src/autopas/libautopas.a
             PREFIX ${CMAKE_CURRENT_BINARY_DIR}/autopas
             # Disable install step

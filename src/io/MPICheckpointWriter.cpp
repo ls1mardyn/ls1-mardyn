@@ -292,7 +292,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 			ParticleData* particleStructBuffer=new ParticleData[_particlesbuffersize];
 			unsigned long bufidx=0;
 			for (ParticleIterator pos = particleContainer->iterator(); pos.hasNext(); pos.next()) {
-				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
+				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 				ParticleData::MoleculeToParticleData(particleStructBuffer[bufidx], *pos);
 				++bufidx;
 				if(bufidx==_particlesbuffersize)
@@ -315,7 +315,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		{
 			ParticleData particleStruct;
 			for (ParticleIterator pos = particleContainer->iterator(); pos.hasNext(); pos.next()) {
-				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
+				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 				ParticleData::MoleculeToParticleData(particleStruct, *pos);
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting particle" << endl
 				MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
@@ -381,7 +381,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		ostrm.write((char*)&numParticles,sizeof(unsigned long));
 		//offset+=2*sizeof(unsigned long);
 		for (ParticleIterator pos = particleContainer->iterator(); pos.hasNext(); pos.next()) {
-			unsigned long id=pos->id();
+			unsigned long id=pos->getID();
 			ostrm.write((char*)&id,sizeof(unsigned long));
 			//unsigned int componentid=pos->componentid(); // to be compatible to struct padding
 			unsigned long componentid=pos->componentid();

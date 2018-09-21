@@ -228,7 +228,7 @@ void LinkedCells::check_molecules_in_box() {
 	if (numBadMolecules > 0) {
 		global_log->error() << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
 		for (auto & m : badMolecules) {
-			global_log->error() << "Particle (id=" << m.id() << "), (current position: x="
+			global_log->error() << "Particle (id=" << m.getID() << "), (current position: x="
 					<< m.r(0) << ", y=" << m.r(1) << ", z=" << m.r(2) << ")" << std::endl;
 		}
 		global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
@@ -278,7 +278,7 @@ void LinkedCells::update() {
 		for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
 			if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 				numBadMolecules++;
-				global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
+				global_log->error_always_output() << "particle " << tM->getID() << " in cell " << tM.getCellIndex()
 						<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
 						<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
 				global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
@@ -472,7 +472,7 @@ void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDup
 
 			#ifndef NDEBUG
 				if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
-					global_log->error()<<"At particle with ID "<<particle.id()<<" assertion failed..."<<endl;
+					global_log->error()<<"At particle with ID "<< particle.getID()<<" assertion failed..."<<endl;
 				}
 				mardyn_assert(particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
 			#endif
@@ -996,10 +996,10 @@ void LinkedCells::deleteMolecule(Molecule &molecule, const bool& rebuildCaches) 
 		Simulation::exit(1);
 	}
 
-	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.id());
+	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.getID());
 
 	if (!found) {
-		global_log->error_always_output() << "could not delete molecule " << molecule.id() << "."
+		global_log->error_always_output() << "could not delete molecule " << molecule.getID() << "."
 				<< endl;
 		Simulation::exit(1);
 	}

@@ -26,7 +26,7 @@ public:
 	}
 
 	virtual ~MoleculeInterface() {}
-	virtual unsigned long id() const = 0;
+	virtual unsigned long getID() const = 0;
 	virtual void setid(unsigned long id) = 0;
 	virtual void setComponent(Component *component) = 0;
 	virtual void setr(unsigned short d, double r) = 0;

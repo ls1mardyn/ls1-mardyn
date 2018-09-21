@@ -104,7 +104,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 		const ParticleIterator begin = particleContainer->iterator();
 
 		for (ParticleIterator mol = begin; mol.hasNext(); mol.next()) {
-			mol->setid(mol->id() + idOffset);
+			mol->setid(mol->getID() + idOffset);
 		}
 	}
 	Log::global_log->info() << "CGG: ids done" << std::endl;

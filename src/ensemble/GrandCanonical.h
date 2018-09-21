@@ -42,7 +42,7 @@ public:
 		if(hasSample()) return;
 		mardyn_assert(old.componentid() == _componentid);
 #ifndef NDEBUG
-		old.check(old.id());
+		old.check(old.getID());
 #endif
 		_reservoir = new Molecule(old);
 	}

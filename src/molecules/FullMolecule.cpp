@@ -664,7 +664,7 @@ void FullMolecule::check(unsigned long /*id*/) {}
 #endif
 
 std::ostream& operator<<( std::ostream& os, const FullMolecule& m ) {
-	os << "ID: " << m.id() << "\n";
+	os << "ID: " << m.getID() << "\n";
 	os << "r:  (" << m.r(0) << ", " << m.r(1) << ", " << m.r(2) << ")\n" ;
 	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
 	os << "F:  (" << m.F(0) << ", " << m.F(1) << ", " << m.F(2) << ")\n" ;

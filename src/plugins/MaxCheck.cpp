@@ -127,7 +127,7 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 		MaxVals absVals;
 
 		for (ParticleIterator it = begin; it.hasNext(); it.next()) {
-			id = it->id();
+			id = it->getID();
 			cid_ub = it->componentid() + 1;
 			for (uint8_t d = 0; d < 3; ++d) {
 				r[d] = it->r(d);

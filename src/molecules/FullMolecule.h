@@ -38,7 +38,7 @@ public:
 	}
 
 	/** get molecule ID */
-	unsigned long id() const { return _id; }
+	unsigned long getID() const { return _id; }
 	/** set molecule ID */
 	void setid(unsigned long id) { _id = id; }
 	/** set the molecule's component */

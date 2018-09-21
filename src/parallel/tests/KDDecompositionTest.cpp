@@ -190,7 +190,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 					m->setr(dim,
 							std::nexttoward((vcp_real_calc) bBoxMin[dim],
 									bBoxMin[dim] - 1.f));
-					lower_thread[dim].insert(m->id());
+					lower_thread[dim].insert(m->getID());
 				}
 				if (m->r(dim) > bBoxMax[dim] - cutoff * 0.5) {
 					// We shift particles close to the upper boundary to outside of the upper boundary.
@@ -204,7 +204,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 											(vcp_real_calc) bBoxMax[dim],
 											bBoxMax[dim] + 1.f);
 					m->setr(dim, r);
-					upper_thread[dim].insert(m->id());
+					upper_thread[dim].insert(m->getID());
 				}
 			}
 		}
@@ -246,10 +246,10 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int dim = 0; dim < 3; dim++) {
-			if (lower[dim].count(m->id())) {
+			if (lower[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the top part of the domain.
 				ASSERT_TRUE(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
-			} else if (upper[dim].count(m->id())) {
+			} else if (upper[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the lower part of the domain.
 				ASSERT_TRUE(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
 			}

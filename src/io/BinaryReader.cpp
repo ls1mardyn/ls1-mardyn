@@ -252,8 +252,8 @@ unsigned long BinaryReader::readPhaseSpace(
 						dcomponents[m.componentid()].getRotationalDegreesOfFreedom()
 								+ domain->getglobalRotDOF());
 
-				if (m.id() > maxid)
-					maxid = m.id();
+				if (m.getID() > maxid)
+					maxid = m.getID();
 
 				std::list<ChemicalPotential>::iterator cpit;
 				for (cpit = lmu->begin(); cpit != lmu->end(); cpit++) {

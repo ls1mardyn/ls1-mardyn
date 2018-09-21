@@ -42,7 +42,7 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 
 	for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 		Molecule& molecule2 = *it2;
-		if(m1->id() == molecule2.id()) continue;
+		if(m1->getID() == molecule2.getID()) continue;
 		double dd = molecule2.dist2(*m1, distanceVector);
 		if (dd < _cutoffRadiusSquare)
 		{
@@ -66,7 +66,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 			Molecule& molecule1 = *it1; 
 			for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 				Molecule& molecule2 = *it2; 
-				if(molecule1.id() == molecule2.id()) continue;  // for grand canonical ensemble and traversal of pseudocells
+				if(molecule1.getID() == molecule2.getID()) continue;  // for grand canonical ensemble and traversal of pseudocells
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
 					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < _LJCutoffRadiusSquare));
@@ -85,7 +85,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 				for (auto it2 = begin2; it2.hasNext(); it2.next()) {
 					Molecule& molecule2 = *it2;
 
-					if(molecule1.id() == molecule2.id()) continue;  // for grand canonical ensemble and traversal of pseudocells
+					if(molecule1.getID() == molecule2.getID()) continue;  // for grand canonical ensemble and traversal of pseudocells
 					double dd = molecule2.dist2(molecule1, distanceVector);
 					if (dd < _cutoffRadiusSquare) {
 						_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < _LJCutoffRadiusSquare));

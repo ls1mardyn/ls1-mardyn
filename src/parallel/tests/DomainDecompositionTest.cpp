@@ -84,7 +84,7 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 				// in this case they are put to the smallest (in abs values) negative representable number
 				// i.e. 2^(-149) = -1.4013e-45 for float resp. 4.94066e-324 for double
 				m->setr(dim, std::nexttoward((vcp_real_calc) bBoxMin[dim], bBoxMin[dim] - 1.f));
-				lower[dim].insert(m->id());
+				lower[dim].insert(m->getID());
 			}
 			if (m->r(dim) > bBoxMax[dim] - cutoff / 2.) {
 				// We shift particles close to the upper boundary to outside of the upper boundary.
@@ -93,7 +93,7 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 				// Otherwise the maximum is used.
 				vcp_real_calc r = (float)bBoxMax[dim] >= bBoxMax[dim] ? bBoxMax[dim] : std::nexttoward((vcp_real_calc) bBoxMax[dim], bBoxMax[dim] + 1.f);
 				m->setr(dim, r);
-				upper[dim].insert(m->id());
+				upper[dim].insert(m->getID());
 			}
 		}
 	}
@@ -116,10 +116,10 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int dim = 0; dim < 3; dim++) {
-			if (lower[dim].count(m->id())) {
+			if (lower[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the top part of the domain.
 				ASSERT_TRUE(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
-			} else if (upper[dim].count(m->id())) {
+			} else if (upper[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the lower part of the domain.
 				ASSERT_TRUE(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
 			}
@@ -148,7 +148,7 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 
 	ParticleIterator m = container->iterator();
 	while ( m.hasNext()) {
-		count[m->id()]++;
+		count[m->getID()]++;
 		m.next();
 	}
 
@@ -163,7 +163,7 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 
 	m = container->iterator();
 	while(m.hasNext()) {
-		count[m->id()]++;
+		count[m->getID()]++;
 		m.next();
 	}
 

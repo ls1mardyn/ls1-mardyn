@@ -72,8 +72,8 @@ void VCP1CLJRMMTest::testForcePotentialCalculationU0() {
 	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-4);
+			str << "Molecule id=" << m->getID() << " index i="<< i << std::endl;
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->getID()-1][i], m->F(i), 1e-4);
 		}
 	}
 
@@ -113,7 +113,7 @@ void VCP1CLJRMMTest::testForcePotentialCalculationF0() {
 	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
+			str << "Molecule id=" << m->getID() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), 1e-7);
 		}
 	}

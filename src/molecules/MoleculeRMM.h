@@ -51,7 +51,7 @@ public:
 			setr(d, other.r(d));
 			setv(d, other.v(d));
 		}
-		_id = other.id();
+		_id = other.getID();
 		_soa = nullptr;
 		_soa_index = 0;
 	}
@@ -68,7 +68,7 @@ public:
 
 	~MoleculeRMM() {}
 
-	unsigned long id() const;
+	unsigned long getID() const;
 	void setid(unsigned long id);
 	void setr(unsigned short d, double r);
 	void setv(unsigned short d, double v);

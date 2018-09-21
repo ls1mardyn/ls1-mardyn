@@ -250,10 +250,10 @@ bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double
 	}
 
 #ifndef NDEBUG
-	global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." << std::endl;
+	global_log->debug() << "ID " << m->getID() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
 
-	mardyn_assert(m->id() < _nextid);
+	mardyn_assert(m->getID() < _nextid);
 	*ret = m;
 	return true; // DELETION_TRUE
 }
@@ -395,7 +395,7 @@ Molecule ChemicalPotential::loadMolecule()
 	unsigned rotdof = tmp.component()->getRotationalDegreesOfFreedom();
 	mardyn_assert(tmp.componentid() == _componentid);
 #ifndef NDEBUG
-	tmp.check(tmp.id());
+	tmp.check(tmp.getID());
 #endif
 	if (!_widom) {
 		double v[3];
@@ -478,12 +478,12 @@ void ChemicalPotential::grandcanonicalStep(
 			accept = this->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
 			if (accept) {
-				cout << "r" << this->rank() << "d" << m->id() << " with energy " << DeltaUpot << endl;
+				cout << "r" << this->rank() << "d" << m->getID() << " with energy " << DeltaUpot << endl;
 				cout.flush();
 			}
 			/*
 			 else
-			 cout << "   (r" << this->rank() << "-d" << m->id()
+			 cout << "   (r" << this->rank() << "-d" << m->getID()
 			 << ")" << endl;
 			 */
 #endif
@@ -549,7 +549,7 @@ void ChemicalPotential::grandcanonicalStep(
 #ifndef NDEBUG
 			/*
 			 cout << "rank " << this->rank() << ": insert "
-			 << m->id() << " at the reduced position (" << ins[0] << "/"
+			 << m->getID() << " at the reduced position (" << ins[0] << "/"
 			 << ins[1] << "/" << ins[2] << ")? " << endl;
 			 */
 #endif
@@ -563,14 +563,14 @@ void ChemicalPotential::grandcanonicalStep(
 
 #ifndef NDEBUG
 			if (accept) {
-				cout << "r" << this->rank() << "i" << mit->id()
+				cout << "r" << this->rank() << "i" << mit->getID()
 						<< " with energy " << DeltaUpot << endl;
 				cout.flush();
 			}
 			/*
 			 else
 			 cout << "   (r" << this->rank() << "-i"
-			 << mit->id() << ")" << endl;
+			 << mit->getID() << ")" << endl;
 			 */
 #endif
 			if (accept) {
@@ -580,13 +580,13 @@ void ChemicalPotential::grandcanonicalStep(
 				bool inBoxCheckedAlready = false, checkWhetherDuplicate = false, rebuildCaches = true;
 				moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
 			} else {
-				// moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
-//				moleculeContainer->_cells[cellid].deleteMolecule(m->id());
+				// moleculeContainer->deleteMolecule(m->getID(), m->r(0), m->r(1), m->r(2));
+//				moleculeContainer->_cells[cellid].deleteMolecule(m->getID());
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
 				mit->setF(zeroVec);
 				mit->setM(zeroVec);
 				mit->setVi(zeroVec);
-				mit->check(mit->id());
+				mit->check(mit->getID());
 //				moleculeContainer->_particles.erase(mit);
 			}
 		}
@@ -595,7 +595,7 @@ void ChemicalPotential::grandcanonicalStep(
 	for (m = moleculeContainer->iterator(); m.hasNext(); m.next()) {
 		// cout << *m << "\n";
 		// cout.flush();
-		m->check(m->id());
+		m->check(m->getID());
 	}
 #endif
 }
