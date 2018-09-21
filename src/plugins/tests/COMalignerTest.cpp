@@ -49,8 +49,8 @@ void COMalignerTest::testCOMalign() {
     ASSERT_EQUAL_MSG("z motion is wrong", -.25, plugin->_motion[2]);
 
     // TEST IF MOTION WAS APPLIED
-    ParticleIterator newPos = container->iterator();
-    ParticleIterator oldPos = oldContainer->iterator();
+    auto newPos = container->iterator();
+    auto oldPos = oldContainer->iterator();
     while(newPos.isValid()){
         for(int d = 0; d < 3; d++){
             ASSERT_EQUAL_MSG("Motion has not been properly applied" ,oldPos->r(d) - .25, newPos->r(d));

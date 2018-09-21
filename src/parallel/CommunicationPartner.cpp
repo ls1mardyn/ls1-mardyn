@@ -444,7 +444,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	{
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		RegionParticleIterator begin = moleculeContainer->regionIterator(lowCorner, highCorner);
+		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner);
 
 		#if defined (_OPENMP)
 		#pragma omp master
@@ -458,7 +458,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
-		for (RegionParticleIterator i = begin; i.isValid(); ++i) {
+		for (auto i = begin; i.isValid(); ++i) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			threadData[threadNum].push_back(*i);

@@ -109,7 +109,7 @@ void MDGenerator::generatePreview() {
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << endl;
 
-	ParticleIterator molecule = container.iterator();
+	auto molecule = container.iterator();
 	while (molecule.isValid()) {
 		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, global_simulation->getEnsemble()->getComponents()->size()-1));
 		++molecule;
@@ -223,7 +223,7 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	double mass_sum = 0.;
 	double momentum_sum[3] = { 0., 0., 0. };
 
-	ParticleIterator molecule = particleContainer->iterator();
+	auto molecule = particleContainer->iterator();
 	while(molecule.isValid()){
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;

@@ -14,9 +14,9 @@
 class Velocity3dProfile : public ProfileBase {
 public:
     ~Velocity3dProfile() final = default;
-    void record(ParticleIterator *mol, unsigned long uID) final  {
+    void record(Molecule &mol, unsigned long uID) final  {
         for(unsigned short d = 0; d < 3; d++){
-            _local3dProfile[d][uID] += (*mol)->v(d);
+            _local3dProfile[d][uID] += mol.v(d);
         }
     }
     void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {

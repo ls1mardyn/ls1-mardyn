@@ -65,11 +65,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationU0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->getID() << " index i="<< i << std::endl;
@@ -106,11 +106,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationF0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->getID() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
@@ -218,7 +218,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -291,7 +291,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	// copy-paste cause I'm lazy and have no particular time for unit tests.
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}

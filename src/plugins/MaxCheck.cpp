@@ -117,8 +117,6 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 #endif
 	{
 
-		const ParticleIterator begin = particleContainer->iterator();
-
 		uint64_t id;
 		uint32_t cid_ub;
 		double r[3];
@@ -126,7 +124,7 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 		double v[3];
 		MaxVals absVals;
 
-		for (ParticleIterator it = begin; it.isValid(); ++it) {
+		for (auto it = particleContainer->iterator(); it.isValid(); ++it) {
 			id = it->getID();
 			cid_ub = it->componentid() + 1;
 			for (uint8_t d = 0; d < 3; ++d) {

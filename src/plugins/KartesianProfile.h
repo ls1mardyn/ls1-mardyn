@@ -43,7 +43,7 @@
     </plugin>
 * \endcode
  */
-class KartesianProfile : public PluginBase{
+class KartesianProfile : public PluginBase {
 
 public:
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;

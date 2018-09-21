@@ -216,7 +216,7 @@ bool ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double
 	if (moleculeContainer->getNumberOfParticles() == 0)
 		return false; // DELETION_INVALID
 
-	ParticleIterator m = moleculeContainer->iterator();
+	auto m = moleculeContainer->iterator();
 	int j = 0;
 	for (unsigned i = 0; (i < idx); i++) {
 		while ((moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != _componentid))
@@ -613,7 +613,7 @@ unsigned ChemicalPotential::countParticles(
 	#endif
 	{
 
-		ParticleIterator begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		auto begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 		for (auto m = begin; m.isValid(); ++m) {
 			if (m->componentid() == cid)
@@ -639,7 +639,7 @@ unsigned ChemicalPotential::countParticles(
 	#endif
 	{
 
-		RegionParticleIterator begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		auto begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 		for (auto m = begin; m.isValid(); ++m) {
 			if (m->componentid() == cid) {

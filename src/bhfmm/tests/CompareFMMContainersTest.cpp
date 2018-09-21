@@ -43,7 +43,7 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 	uniform.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LCUniform);
 
 	uniform.computeElectrostatics(LCUniform);
-	for (ParticleIterator m = LCUniform->iterator(); m.isValid(); ++m) {
+	for (auto m = LCUniform->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
@@ -60,13 +60,13 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 	adaptive.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LCAdaptive);
 
 	adaptive.computeElectrostatics(LCAdaptive);
-	for (ParticleIterator m = LCAdaptive->iterator(); m.isValid(); ++m) {
+	for (auto m = LCAdaptive->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
 	// traverse molecules and compare forces
-	ParticleIterator itUniform  = LCUniform-> iterator();
-	ParticleIterator itAdaptive = LCAdaptive->iterator();
+	auto itUniform  = LCUniform-> iterator();
+	auto itAdaptive = LCAdaptive->iterator();
 	for(; itUniform.isValid() and itAdaptive.isValid(); ++itUniform, ++itAdaptive) {
 		ASSERT_DOUBLES_EQUAL_MSG("Force component x should be equal", itUniform->F(0), itAdaptive->F(0), 1e-12);
 		ASSERT_DOUBLES_EQUAL_MSG("Force component y should be equal", itUniform->F(1), itAdaptive->F(1), 1e-12);

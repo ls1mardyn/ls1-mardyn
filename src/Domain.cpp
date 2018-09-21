@@ -310,10 +310,9 @@ void Domain::calculateGlobalValues(
 			#pragma omp parallel
 			#endif
 			{
-				const ParticleIterator begin = particleContainer->iterator();
 
 				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
-				for (ParticleIterator tM = begin; tM.isValid(); ++tM) {
+				for (auto tM = particleContainer->iterator(); tM.isValid(); ++tM) {
 					Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
 						vcorr = sqrt(limit_energy / Utrans);
@@ -406,7 +405,6 @@ void Domain::calculateGlobalValues(
 
 void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 {
-	ParticleIterator tM;
 	if(this->_componentwiseThermostat)
 	{
 		for( map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
@@ -423,7 +421,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		{
 			std::map<int, std::array<double, 3> > localThermostatDirectedVelocity_thread;
 
-			for(tM = partCont->iterator(); tM.isValid(); ++tM) {
+			for(auto tM = partCont->iterator(); tM.isValid(); ++tM) {
 				int cid = tM->componentid();
 				int thermostat = this->_componentToThermostatIdMap[cid];
 
@@ -450,7 +448,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		#pragma omp parallel reduction(+ : velX, velY, velZ)
 		#endif
 		{
-			for(tM = partCont->iterator(); tM.isValid(); ++tM) {
+			for(auto tM = partCont->iterator(); tM.isValid(); ++tM) {
 				velX += tM->v(0);
 				velY += tM->v(1);
 				velZ += tM->v(2);
@@ -467,7 +465,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
 	if(this->_componentwiseThermostat)
 	{
-		for(ParticleIterator tM = partCont->iterator(); tM.isValid(); ++tM)
+		for(auto tM = partCont->iterator(); tM.isValid(); ++tM)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -495,9 +493,8 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		#pragma omp parallel reduction(+:N, rotationalDOF, local2KETrans, local2KERot)
 		#endif
 		{
-			const ParticleIterator begin = partCont->iterator();
 
-			for(ParticleIterator tM = begin; tM.isValid(); ++tM) {
+			for(auto tM = partCont->iterator(); tM.isValid(); ++tM) {
 				++N;
 				rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
 				if(this->_universalUndirectedThermostat[0]) {
@@ -721,7 +718,7 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 	unID = 0;
 	unsigned lNin = 0;
 	unsigned lNout = 0;
-	for(ParticleIterator thismol = molCont->iterator(); thismol.isValid(); ++thismol)
+	for(auto thismol = molCont->iterator(); thismol.isValid(); ++thismol)
 	{
 		cid = thismol->componentid();
 		if(this->_universalProfiledComponents[cid])

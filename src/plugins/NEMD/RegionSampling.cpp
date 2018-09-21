@@ -2006,7 +2006,7 @@ void RegionSampling::endStep(ParticleContainer *particleContainer,
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
-	for (ParticleIterator pit = particleContainer->iterator(); pit.isValid(); ++pit )
+	for (auto pit = particleContainer->iterator(); pit.isValid(); ++pit )
 		this->doSampling(&(*pit), domainDecomp, simstep);
 
 	// write data

@@ -101,9 +101,8 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* part
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator mol = begin; mol.isValid(); ++mol) {
+		for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
 			mol->setid(mol->getID() + idOffset);
 		}
 	}
@@ -235,9 +234,8 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	#pragma omp parallel reduction(+:mass_sum,momentum_sum0,momentum_sum1,momentum_sum2)
 	#endif
 	{
-		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator molecule = begin; molecule.isValid(); ++molecule) {
+		for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
 			double mass = components[molecule->componentid()].m();
 			mass_sum += mass;
 			momentum_sum0 += mass * molecule->v(0);
@@ -256,9 +254,8 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator molecule = begin; molecule.isValid(); ++molecule) {
+		for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
 			molecule->vsub(v_sub0, v_sub1, v_sub2);
 		}
 	}
@@ -274,9 +271,8 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	#pragma omp parallel reduction(+:momentum_sum0,momentum_sum1,momentum_sum2)
 	#endif
 	{
-		const ParticleIterator begin = particleContainer->iterator();
 
-		for (ParticleIterator molecule = begin; molecule.isValid(); ++molecule) {
+		for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
 			double mass = components[molecule->componentid()].m();
 			momentum_sum0 += mass * molecule->v(0);
 			momentum_sum1 += mass * molecule->v(1);

@@ -204,13 +204,13 @@ void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
         {
-            RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
+            auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
             double f[3];
             for(unsigned d=0; d<3; d++)
                 f[d] = 0.;
 
-            for(RegionParticleIterator i = begin; i.isValid(); ++i){
+            for(auto i = begin; i.isValid(); ++i){
                 unsigned cid = (*i).componentid();
                 if(false == _bConsiderComponent.at(cid) )
                     continue;  // only add Wall force to molecules of component that should be considered
@@ -279,9 +279,9 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
     {
-        RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
+        auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
-        for(RegionParticleIterator i = begin; i.isValid() ; ++i){
+        for(auto i = begin; i.isValid() ; ++i){
             double ry, ryRel, y, y2, y4, y5, y10, y11;
             unsigned cid = (*i).componentid();
             if(false == _bConsiderComponent.at(cid) )

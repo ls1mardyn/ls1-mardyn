@@ -121,8 +121,7 @@ void Mirror::beforeForces(
 	if(MT_ZERO_GRADIENT != _type)
 		return;
 
-	const ParticleIterator begin = particleContainer->iterator();
-	for(ParticleIterator it = begin; it.isValid(); ++it) {
+	for(auto it = particleContainer->iterator(); it.isValid(); ++it) {
 		uint32_t cid_zb = it->componentid();
 		uint32_t cid_ub = cid_zb+1;
 		double ry = it->r(1);
@@ -190,9 +189,9 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 		#pragma omp parallel shared(regionLowCorner, regionHighCorner)
 		#endif
 		{
-			RegionParticleIterator begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner);  //, ParticleIterator::ALL_CELLS);
+			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner);  // over all cell types
 
-			for(RegionParticleIterator it = begin; it.isValid(); ++it){
+			for(auto it = begin; it.isValid(); ++it){
 				double additionalForce[3];
 				additionalForce[0] = 0;
 				additionalForce[2] = 0;
@@ -275,8 +274,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
     if(MT_ZERO_GRADIENT != _type)
         return;
 
-    const ParticleIterator begin = particleContainer->iterator();
-    for(ParticleIterator it = begin; it.isValid(); ++it) {
+    for(auto it = particleContainer->iterator(); it.isValid(); ++it) {
         uint32_t cid_zb = it->componentid();
         uint32_t cid_ub = cid_zb+1;
 

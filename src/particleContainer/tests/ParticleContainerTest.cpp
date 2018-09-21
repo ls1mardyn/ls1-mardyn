@@ -55,7 +55,7 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 	setupMolecules(container);
 
 	// iterate over molecules and move
-	ParticleIterator molecule = container->iterator();
+	auto molecule = container->iterator();
 	int moleculeCount = 0;
 	while (molecule.isValid()) {
 		moleculeCount++;

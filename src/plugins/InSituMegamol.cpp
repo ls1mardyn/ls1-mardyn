@@ -197,7 +197,7 @@ std::vector<char> InSituMegamol::_buildMmpldDataList(ParticleContainer* particle
 	dataList.insert(dataList.end(), 6*sizeof(float), 0);
 
 	// add vertex data
-	for (ParticleIterator mol = particleContainer->iterator(); mol.isValid(); ++mol) {
+	for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
 		float pos[3] {
 			static_cast<float>(mol->r(0)),
 			static_cast<float>(mol->r(1)),

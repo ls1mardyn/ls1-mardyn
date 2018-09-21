@@ -14,11 +14,11 @@
 class VelocityAbsProfile : public ProfileBase {
 public:
     ~VelocityAbsProfile() final = default;
-    void record(ParticleIterator *mol, unsigned long uID) final  {
+    void record(Molecule& mol, unsigned long uID) final  {
         double absV = 0.0;
         double v;
         for(unsigned short d = 0; d < 3; d++){
-            v = (*mol)->v(d);
+            v = mol.v(d);
             absV += v*v;
         }
         absV = sqrt(absV);

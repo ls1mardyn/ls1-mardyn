@@ -531,7 +531,7 @@ void MmpldWriter::write_particle_list_header(uint64_t particle_count, int sphere
 // derived classes
 void MmpldWriterSimpleSphere::CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType)
 {
-	for (ParticleIterator mol = particleContainer->iterator(); mol.isValid(); ++mol) {
+	for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
 		uint8_t cid = mol->componentid();
 		numSpheresPerType[cid]++;
 	}
@@ -549,7 +549,7 @@ bool MmpldWriterSimpleSphere::GetSpherePos(float *spherePos, Molecule* mol, uint
 
 void MmpldWriterMultiSphere::CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType)
 {
-	for (ParticleIterator mol = particleContainer->iterator(); mol.isValid(); ++mol) {
+	for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
 		uint8_t cid = mol->componentid();
 		uint8_t offset = _nCompSitesOffset.at(cid);
 		for (uint8_t si = 0; si < _numSitesPerComp.at(cid); ++si)

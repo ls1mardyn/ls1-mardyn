@@ -39,7 +39,7 @@ void MirrorSystem::beforeEventNewTimestep(
 	Domain* domain = global_simulation->getDomain();
 
 	if(_type == MST_SHIFT) {
-		const ParticleIterator begin = particleContainer->iterator();
+		const auto begin = particleContainer->iterator();
 
 		std::array<double,3> width;
 		width.at(0) = _box_new.at(0) - _box_old.at(0);
@@ -47,7 +47,7 @@ void MirrorSystem::beforeEventNewTimestep(
 		width.at(2) = _box_new.at(2) - _box_old.at(2);
 
 		// shift system
-		for(ParticleIterator it = begin; it.isValid(); ++it) {
+		for(auto it = begin; it.isValid(); ++it) {
 
 			std::array<double,3> oldPos;
 			std::array<double,3> newPos;
@@ -201,9 +201,7 @@ void MirrorSystem::beforeEventNewTimestep(
 		cout << domainDecomp->getRank() << ": bbMin = " << bbMin[0] << "," << bbMin[1] << "," << bbMin[2] << endl;
 		cout << domainDecomp->getRank() << ": bbMax = " << bbMax[0] << "," << bbMax[1] << "," << bbMax[2] << endl;
 
-		const ParticleIterator begin = particleContainer->iterator();
-
-		for(ParticleIterator it = begin; it.isValid(); ++it) {
+		for(auto it = particleContainer->iterator(); it.isValid(); ++it) {
 			std::array<double,3> oldPos;
 			oldPos.at(0) = it->r(0);
 			oldPos.at(1) = it->r(1);

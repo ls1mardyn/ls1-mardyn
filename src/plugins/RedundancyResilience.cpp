@@ -119,7 +119,7 @@ void RedundancyResilience::_saveLocalSnapshot(ParticleContainer* particleContain
 		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {
 	// put the molecules in the buffer
 	_snapshot.clearMolecules();
-	for (ParticleIterator m = particleContainer->iterator(); m.isValid(); ++m) {
+	for (auto m = particleContainer->iterator(); m.isValid(); ++m) {
 		_snapshot.addMolecule(*m);
 	}
 	//set time, global number of molecules and temperature
