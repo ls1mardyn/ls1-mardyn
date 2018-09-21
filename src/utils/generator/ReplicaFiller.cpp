@@ -70,11 +70,6 @@ public:
 	void deleteOuterParticles() {}
 
 	double get_halo_L(int index) const { return 0.0; }
-
-	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) { return false;}
-
-	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) { return true; }
-
 	double getCutoff() { return 0.0; }
 	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) {}
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) { return 0.0; }

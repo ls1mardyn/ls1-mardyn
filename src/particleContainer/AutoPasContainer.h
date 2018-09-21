@@ -51,10 +51,6 @@ public:
 
 	double get_halo_L(int index) const override;
 
-	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) override;
-
-	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) override;
-
 	double getCutoff() override;
 
 	void deleteMolecule(Molecule &molecule, const bool &rebuildCaches) override;

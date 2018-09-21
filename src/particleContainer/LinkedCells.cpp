@@ -623,26 +623,6 @@ double LinkedCells::get_halo_L(int index) const {
 	return _haloLength[index];
 }
 
-bool LinkedCells::isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]){
-	for (int dim = 0; dim < 3; dim++) {
-		if (!(startRegion[dim] <= this->_haloBoundingBoxMax[dim] && endRegion[dim] >= this->_haloBoundingBoxMin[dim])) {
-			// No Part of the given region is owned by this process
-			return false;
-		}
-	}
-	return true;
-}
-
-bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[3]){
-	for (int dim = 0; dim < 3; dim++) {
-		if (!(startRegion[dim] < this->_boundingBoxMax[dim] && endRegion[dim] > this->_boundingBoxMin[dim])) {
-			// No Part of the given region is owned by this process
-			return false;
-		}
-	}
-	return true;
-}
-
 RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
 	// parameter "type" not yet used
 	// add functionality in a future version...

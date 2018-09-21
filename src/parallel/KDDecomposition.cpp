@@ -319,7 +319,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		_decompTree->getOwningProcs(newOwnLeaf._lowCorner, newOwnLeaf._highCorner, ranks, indices);
 
 		vector<int> numMolsToRecv;
-		vector<int>::iterator indexIt = indices.begin();
+		auto indexIt = indices.begin();
 		numProcsRecv = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		recvPartners.reserve(numProcsRecv);
 		for (unsigned i = 0; i < ranks.size(); ++i) {
@@ -345,7 +345,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			int partnerRank = ranks[i];
 
 			if (partnerRank != _rank) {
-				recvPartners.push_back(CommunicationPartner(partnerRank));
+				recvPartners.emplace_back(partnerRank);
 				recvPartners.back().initRecv(numMols, _comm, _mpiParticleType);
 			} else {
 				migrateToSelf.reserve(numMols);
@@ -366,7 +366,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		vector<int> indices;
 		newRoot.getOwningProcs(_ownArea->_lowCorner, _ownArea->_highCorner, ranks, indices);
 
-		vector<int>::iterator indexIt = indices.begin();
+		auto indexIt = indices.begin();
 		numProcsSend = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		sendPartners.reserve(numProcsSend);
 		for (unsigned i = 0; i < ranks.size(); ++i) {
@@ -386,12 +386,17 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				const bool removeFromContainer = true;
 				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, removeFromContainer); // molecules have been taken out of container
 			} else {
-				if(moleculeContainer->isRegionInHaloBoundingBox(leavingLow, leavingHigh)){
+				bool inHaloRegion = true;
+				for (unsigned int dimindex = 0; dimindex <3; dimindex ++){
+					inHaloRegion &= leavingLow[dimindex] < getBoundingBoxMax(dimindex, domain);
+					inHaloRegion &= leavingHigh[dimindex] >= getBoundingBoxMin(dimindex, domain);
+				}
+				if (inHaloRegion) {
 					collectMoleculesInRegion(moleculeContainer, leavingLow, leavingHigh, migrateToSelf);
 				}
 
 				// decrement numProcsSend for further uses:
-				mardyn_assert(willMigrateToSelf == true);
+				mardyn_assert(willMigrateToSelf);
 				numProcsSend--;
 			}
 		}
@@ -411,7 +416,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 
 	// the indirect neighborcommunicationscheme in combination with the kddecomposition is not allowed
 	// to send halo and leaving particles together, as long as halo particles are not send with all data (velocity, etc.)
-	bool neighborschemeAllowsDirect = dynamic_cast<DirectNeighbourCommunicationScheme*>(_neighbourCommunicationScheme)?true:false;
+	bool neighborschemeAllowsDirect =
+		dynamic_cast<DirectNeighbourCommunicationScheme*>(_neighbourCommunicationScheme) != nullptr;
 	sendTogether &= neighborschemeAllowsDirect;
 	updateSendLeavingWithCopies(sendTogether);
 

@@ -167,9 +167,6 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	double get_halo_L(int index) const;
 
-	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]);
-	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]);
-
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) override { _cutoffRadius = rc; }
 

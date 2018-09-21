@@ -184,93 +184,93 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 			regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
 		}
 
-		//perform a check if the region is contained by the particleContainer???
-		if(particleContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner)){
-			#if defined (_OPENMP)
-			#pragma omp parallel shared(regionLowCorner, regionHighCorner)
-			#endif
-			{
-				RegionParticleIterator begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner);  //, ParticleIterator::ALL_CELLS);
+		regionLowCorner[1] = _yPos;
 
-				for(RegionParticleIterator it = begin; it.hasNext(); it.next()){
-					double additionalForce[3];
-					additionalForce[0] = 0;
-					additionalForce[2] = 0;
-					double ry = it->r(1);
-					double vy = it->v(1);
-					if( (MD_RIGHT_MIRROR == _direction && ry > _yPos) || (MD_LEFT_MIRROR == _direction && ry < _yPos) ) {
+		#if defined (_OPENMP)
+		#pragma omp parallel shared(regionLowCorner, regionHighCorner)
+		#endif
+		{
+			RegionParticleIterator begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner);  //, ParticleIterator::ALL_CELLS);
 
-						if(MT_REFLECT == _type || MT_ZERO_GRADIENT == _type) {
+			for(RegionParticleIterator it = begin; it.hasNext(); it.next()){
+				double additionalForce[3];
+				additionalForce[0] = 0;
+				additionalForce[2] = 0;
+				double ry = it->r(1);
+				double vy = it->v(1);
+				if( (MD_RIGHT_MIRROR == _direction && ry > _yPos) || (MD_LEFT_MIRROR == _direction && ry < _yPos) ) {
 
-							if( (MD_RIGHT_MIRROR == _direction && vy > 0.) || (MD_LEFT_MIRROR == _direction && vy < 0.) ) {
+					if(MT_REFLECT == _type || MT_ZERO_GRADIENT == _type) {
 
-								if(MT_REFLECT == _type)
-									it->setv(1, -vy);
-								else if(MT_ZERO_GRADIENT == _type) {
-									uint32_t cid_ub = it->componentid()+1;
-									if(cid_ub != _cids.permitted) {
-										float frnd = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-										//cout << "frnd=" << frnd << endl;
-										if(frnd <= _ratio) {
-											int irnd = rand() % _veloList.numvals;
-											//cout << "irnd=" << irnd << endl;
-											std::list<std::array<double, 3> > list(_veloList.list);
-											/*cout << "VELOLIST" << endl;
-											cout << "--------------------------------" << endl;
-											for(auto&& val:list)
-												cout << "v=" << val.at(0) << "," << val.at(1) << "," << val.at(2) << endl; */
-											for(int i=0; i<irnd; i++)
-												list.pop_front();
-											std::array<double, 3> velo = list.front();
-											it->setv(0, velo.at(0) );
-											it->setv(1, velo.at(1) );
-											it->setv(2, velo.at(2) );
-											//cout << "setv=" << velo.at(0) << "," << velo.at(1) << "," << velo.at(2) << endl;
+						if( (MD_RIGHT_MIRROR == _direction && vy > 0.) || (MD_LEFT_MIRROR == _direction && vy < 0.) ) {
 
-											Component* comp;
-                                            comp = global_simulation->getEnsemble()->getComponent(_cids.reflected-1);
-                                            it->setComponent(comp);
-										}
-										else {
-											Component* comp;
-											comp = global_simulation->getEnsemble()->getComponent(_cids.permitted-1);
-											it->setComponent(comp);
-											//cout << "PERMITTED" << endl;
-										}
+							if(MT_REFLECT == _type)
+								it->setv(1, -vy);
+							else if(MT_ZERO_GRADIENT == _type) {
+								uint32_t cid_ub = it->componentid()+1;
+								if(cid_ub != _cids.permitted) {
+									float frnd = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+									//cout << "frnd=" << frnd << endl;
+									if(frnd <= _ratio) {
+										int irnd = rand() % _veloList.numvals;
+										//cout << "irnd=" << irnd << endl;
+										std::list<std::array<double, 3> > list(_veloList.list);
+										/*cout << "VELOLIST" << endl;
+										cout << "--------------------------------" << endl;
+										for(auto&& val:list)
+											cout << "v=" << val.at(0) << "," << val.at(1) << "," << val.at(2) << endl; */
+										for(int i=0; i<irnd; i++)
+											list.pop_front();
+										std::array<double, 3> velo = list.front();
+										it->setv(0, velo.at(0) );
+										it->setv(1, velo.at(1) );
+										it->setv(2, velo.at(2) );
+										//cout << "setv=" << velo.at(0) << "," << velo.at(1) << "," << velo.at(2) << endl;
+
+										Component* comp;
+                                        comp = global_simulation->getEnsemble()->getComponent(_cids.reflected-1);
+                                        it->setComponent(comp);
+									}
+									else {
+										Component* comp;
+										comp = global_simulation->getEnsemble()->getComponent(_cids.permitted-1);
+										it->setComponent(comp);
+										//cout << "PERMITTED" << endl;
 									}
 								}
-								else if(MT_NORMDISTR_MB == _type) {
-									double vx_norm = _norm.vxz.front();
-									_norm.vxz.pop_front();
-									_norm.vxz.push_back(vx_norm);
+							}
+							else if(MT_NORMDISTR_MB == _type) {
+								double vx_norm = _norm.vxz.front();
+								_norm.vxz.pop_front();
+								_norm.vxz.push_back(vx_norm);
 
-									double vy_norm = _norm.vy.front();
-									_norm.vy.pop_front();
-									_norm.vy.push_back(vy_norm);
+								double vy_norm = _norm.vy.front();
+								_norm.vy.pop_front();
+								_norm.vy.push_back(vy_norm);
 
-									double vz_norm = _norm.vxz.front();
-									_norm.vxz.pop_front();
-									_norm.vxz.push_back(vz_norm);
+								double vz_norm = _norm.vxz.front();
+								_norm.vxz.pop_front();
+								_norm.vxz.push_back(vz_norm);
 
-									it->setv(0, vx_norm);
-									it->setv(1, vy_norm);
-									it->setv(2, vz_norm);
-								}
+								it->setv(0, vx_norm);
+								it->setv(1, vy_norm);
+								it->setv(2, vz_norm);
 							}
 						}
-						else if(MT_FORCE_CONSTANT == _type){
-							double distance = _yPos - ry;
-							additionalForce[1] = _forceConstant * distance;
-	//						cout << "additionalForce[1]=" << additionalForce[1] << endl;
-	//						cout << "before: " << (*it) << endl;
-	//						it->Fljcenteradd(0, additionalForce);  TODO: Can additional force be added on the LJ sites instead of adding to COM of molecule?
-							it->Fadd(additionalForce);
-	//						cout << "after: " << (*it) << endl;
-						}
+					}
+					else if(MT_FORCE_CONSTANT == _type){
+						double distance = _yPos - ry;
+						additionalForce[1] = _forceConstant * distance;
+//						cout << "additionalForce[1]=" << additionalForce[1] << endl;
+//						cout << "before: " << (*it) << endl;
+//						it->Fljcenteradd(0, additionalForce);  TODO: Can additional force be added on the LJ sites instead of adding to COM of molecule?
+						it->Fadd(additionalForce);
+//						cout << "after: " << (*it) << endl;
 					}
 				}
 			}
 		}
+
 	}
     if(MT_ZERO_GRADIENT != _type)
         return;

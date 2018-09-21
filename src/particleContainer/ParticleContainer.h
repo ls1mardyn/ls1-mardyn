@@ -191,9 +191,6 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	virtual double get_halo_L(int index) const = 0;
 
-	virtual bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) = 0;
-
-	virtual bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
 	virtual double getCutoff() = 0;
 
