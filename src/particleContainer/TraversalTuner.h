@@ -125,34 +125,25 @@ TraversalTuner<CellTemplate>::~TraversalTuner() {
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 
-    if(_enableAutotuning) {
-        // TODO implement autotuning here! At the moment the traversal is chosen via readXML!
+    if (_enableAutotuning) {
 
         // TODO Find applicable traversals (depending on compilation? e.g. MPI / OpenMP / Quickshed / ...)
         std::vector<Traversals::traversalNames> applicableTraversals(
                 {Traversals::C04, Traversals::C08, Traversals::SLICED});
 
+        auto container = _simulation.getMoleculeContainer();
 
-        double cutoff = _simulation.getLJCutoff();
-
-        // TODO Use density in MPI rank instead of global density?
-		auto particleNum = _simulation.getMoleculeContainer()->getNumberOfParticles();
-		auto bx = _simulation.getMoleculeContainer()->getBoundingBoxMax(0)-
-				_simulation.getMoleculeContainer()->getBoundingBoxMin(0);
-		auto by = _simulation.getMoleculeContainer()->getBoundingBoxMax(1)-
-				_simulation.getMoleculeContainer()->getBoundingBoxMin(1);
-		auto bz = _simulation.getMoleculeContainer()->getBoundingBoxMax(2)-
-				_simulation.getMoleculeContainer()->getBoundingBoxMin(2);
-
-        double density = particleNum / bx / by / bz;
+        double cutoff = container->getCutoff();
+        double density = container->getDensity();
 
         selectedTraversal = _performanceModels.predictBest(cutoff, density, applicableTraversals);
 
-        global_log->info() << "Traversal " << selectedTraversal <<
-                           " selected by autotuning based on cutoff=" << cutoff << " and density=" << density
-                           << std::endl;
+        // Using cout instead of logger to get the message from each MPI rank
+        std::cout << "Traversal " << selectedTraversal << " selected by autotuning based on cutoff=" << cutoff
+                  << " and density=" << density << std::endl;
     }
 
+    // This will select the traversal from the xml file when autotuning is deactivated
 	_optimalTraversal = _traversals[selectedTraversal].first;
 
 	// log traversal
@@ -222,8 +213,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 		}
 	}
 
-	_enableAutotuning = xmlconfig.getNodeValue_bool("autotuning", true); //TODO default false
-	_stepsUntilReevaluation = xmlconfig.getNodeValue_int("autotuningSteps", 100);
+	_enableAutotuning = xmlconfig.getNodeValue_bool("autotuning", false);
+	_stepsUntilReevaluation = xmlconfig.getNodeValue_int("autotuningSteps", 1000);
 
 	_cellsInCutoff = xmlconfig.getNodeValue_int("cellsInCutoffRadius", 1); // This is currently only used for an assert
 

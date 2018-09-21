@@ -177,6 +177,8 @@ public:
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMax(int dimension) const;
 
+	double getDensity();
+
 	//! @brief Delete all molecules in container
 	virtual void clear() = 0;
 

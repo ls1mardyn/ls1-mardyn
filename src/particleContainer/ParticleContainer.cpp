@@ -43,6 +43,15 @@ bool ParticleContainer::isInBoundingBox(double r[3]) const {
 	}
 }
 
+double ParticleContainer::getDensity() {
+    auto particleNum = this->getNumberOfParticles();
+    auto bx = this->getBoundingBoxMax(0) - this->getBoundingBoxMin(0);
+    auto by = this->getBoundingBoxMax(1) - this->getBoundingBoxMin(1);
+    auto bz = this->getBoundingBoxMax(2) - this->getBoundingBoxMin(2);
+
+    return particleNum / bx / by / bz;
+}
+
 int ParticleContainer::getHaloWidthNumCells() {
 	return 0;
 }
