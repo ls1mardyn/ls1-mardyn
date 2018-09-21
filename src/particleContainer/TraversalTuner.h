@@ -1,6 +1,11 @@
 #ifndef TRAVERSALTUNER_H_
 #define TRAVERSALTUNER_H_
 
+
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
+
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -138,8 +143,13 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 
         selectedTraversal = _performanceModels.predictBest(cutoff, density, applicableTraversals);
 
+        int rank = 0;
+#ifdef ENABLE_MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
         // Using cout instead of logger to get the message from each MPI rank
-        std::cout << "Traversal " << selectedTraversal << " selected by autotuning based on cutoff=" << cutoff
+        std::cout << "rank " << rank << ": Traversal " << selectedTraversal
+                  << " selected by autotuning based on cutoff=" << cutoff
                   << " and density=" << density << std::endl;
     }
 
