@@ -358,9 +358,9 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					Molecule* m_target;
 					const double position[3] = { m.r(0), m.r(1), m.r(2) };
 					moleculeContainer->getMoleculeAtPosition(position, &m_target);
-					m_target->Fadd(m.F_vec());
-					m_target->Madd(m.M_vec());
-					m_target->Viadd(m.Vi_vec());
+					m_target->Fadd(m.F_arr().data());
+					m_target->Madd(m.M_arr().data());
+					m_target->Viadd(m.Vi_arr().data());
 				}
 				
 				//moleculeContainer->addParticles(mols, removeRecvDuplicates);

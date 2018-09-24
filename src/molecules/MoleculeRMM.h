@@ -179,10 +179,7 @@ public:
 
 	std::array<double, 3> site_d(unsigned int /*i*/) const { return emptyArray3(); }
 
-	std::array<double, 3> ljcenter_d(unsigned int i) const {
-		mardyn_assert(i == 0);
-		return r_arr();
-	}
+	std::array<double, 3> ljcenter_d(unsigned int i) const { return emptyArray3(); }
 	std::array<double, 3> charge_d(unsigned int /*i*/) const { return emptyArray3(); }
 	std::array<double, 3> dipole_d(unsigned int /*i*/) const { return emptyArray3(); }
 	std::array<double, 3> quadrupole_d(unsigned int /*i*/) const { return emptyArray3(); }
@@ -219,7 +216,7 @@ public:
 		return sizeof(*this);
 	}
         
-        void setF(double /*F*/ [3]) {}
+	void setF(double /*F*/ [3]) {}
 	void setM(double /*M*/[3]) {}
 	void setVi(double /*Vi*/[3]) {}
 	void Fadd(const double /*a*/[]) {}
@@ -288,11 +285,7 @@ public:
 		return _state;
 	}
         
-	// dummies for method exchangeForces
-	const double* F_vec() { return nullptr; }
-	const double* M_vec() { return nullptr; }
-	const double* Vi_vec() { return nullptr; }
-       
+
 	void buildOwnSoA() {
 		mardyn_assert(_state == STORAGE_AOS);
 	}

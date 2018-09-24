@@ -87,9 +87,9 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 
 				mardyn_assert(original->getID() == molHalo.getID());
 
-				original->Fadd(molHalo.F_vec());
-				original->Madd(molHalo.M_vec());
-				original->Viadd(molHalo.Vi_vec());
+				original->Fadd(molHalo.F_arr().data());
+				original->Madd(molHalo.M_arr().data());
+				original->Viadd(molHalo.Vi_arr().data());
 			}
 		}
 	}
@@ -128,9 +128,9 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 
 			mardyn_assert(original->getID() == molHalo.getID());
 
-			original->Fadd(molHalo.F_vec());
-			original->Madd(molHalo.M_vec());
-			original->Viadd(molHalo.Vi_vec());
+			original->Fadd(molHalo.F_arr().data());
+			original->Madd(molHalo.M_arr().data());
+			original->Viadd(molHalo.Vi_arr().data());
 		}
 	}
 

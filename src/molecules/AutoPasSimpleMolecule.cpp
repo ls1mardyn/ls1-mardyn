@@ -5,60 +5,50 @@
  */
 
 #include "AutoPasSimpleMolecule.h"
+#include "Simulation.h"
 
-const std::array<double, 3> &AutoPasSimpleMolecule::getR() const {
-	// this works as long as std::array is plain old data.
-	auto &pos = reinterpret_cast<const std::array<double, 3> &>(_r);
-	mardyn_assert(pos.data() == _r);
-	return pos;
-}
 
-bool AutoPasSimpleMolecule::inBox(const std::array<double, 3> &rmin, const std::array<double, 3> &rmax) const {
-	return MoleculeInterface::inBox(rmin.data(), rmax.data());
-}
+Component* AutoPasSimpleMolecule::_component = nullptr;
 
-std::string AutoPasSimpleMolecule::toString() {
-	std::ostringstream text;
-	// clang-format off
-	text << "Particle"
-	     << "\nID      : " << _id
-	     << "\nPosition: "
-	     << _r[0] << " | " << _r[1] << " | " << _r[2]
-	     << "\nVelocity: "
-	     << _v[0] << " | " << _v[1] << " | " << _v[2]
-	     << "\nForce   : "
-	     << _F[0] << " | " << _F[1] << " | " << _F[2];
-	// clang-format on
-	return text.str();
-}
+Quaternion AutoPasSimpleMolecule::_quaternion = Quaternion(1.0, 0.0, 0.0, 0.0);
 
-const std::array<double, 3> &AutoPasSimpleMolecule::getF() const {
-	// this works as long as std::array is plain old data.
-	auto &force = reinterpret_cast<const std::array<double, 3> &>(_F);
-	mardyn_assert(force.data() == _F);
-	return force;
-}
-
-void AutoPasSimpleMolecule::setF(const std::array<double, 3>& F) {
-	for (unsigned short i = 0; i < 3; i++) {
-		_F[i] = F[i];
+AutoPasSimpleMolecule::AutoPasSimpleMolecule(unsigned long id, Component* component, double rx, double ry, double rz,
+											 double vx, double vy, double vz, double q0, double q1, double q2,
+											 double q3, double Dx, double Dy, double Dz)
+	: autopas::MoleculeLJ({rx, ry, rz}, {vx, vy, vz}, id) {
+	if (_component == nullptr) {
+		_component = component;
+	} else if (_component != component and component != nullptr) {
+		global_log->fatal() << "AutoPasSimpleMolecule can only handle one component" << std::endl;
+		Simulation::exit(32);
 	}
 }
 
-void AutoPasSimpleMolecule::setF(double F[3]) {
-	for (unsigned short i = 0; i < 3; i++) {
-		_F[i] = F[i];
+void AutoPasSimpleMolecule::upd_preF(double dt) {
+
+	double mass = component()->m();
+	mardyn_assert(mass > 0);
+	double dt_halve = .5 * dt;
+	double dtInv2m = dt_halve / mass;
+	for (unsigned short d = 0; d < 3; ++d) {
+		_v[d] += dtInv2m * _f[d];
+		_r[d] += dt * _v[d];
 	}
+
 }
 
-void AutoPasSimpleMolecule::addF(const std::array<double, 3> &F) {
-	for (unsigned short i = 0; i < 3; i++) {
-		_F[i] += F[i];
+void AutoPasSimpleMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
+	using std::isnan; // C++11 needed
+
+	double mass = component()->m();
+	double dtInv2m = dt_halve / mass;
+	double v2 = 0.;
+	for (unsigned short d = 0; d < 3; ++d) {
+		_v[d] += dtInv2m * _f[d];
+		v2 += _v[d] * _v[d];
 	}
+	mardyn_assert(!isnan(v2)); // catches NaN
+	summv2 += mass * v2;
+
 }
 
-void AutoPasSimpleMolecule::subF(const std::array<double, 3> &F) {
-	for (unsigned short i = 0; i < 3; i++) {
-		_F[i] -= F[i];
-	}
-}
