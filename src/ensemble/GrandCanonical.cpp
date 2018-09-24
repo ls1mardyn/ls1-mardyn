@@ -196,10 +196,8 @@ bool ChemicalPotential::moleculeStrictlyNotInBox(const Molecule& m,
 ParticleIterator ChemicalPotential::getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxco)
 {
 	if (_remainingDeletions.empty()) {
-		auto m = moleculeContainer->iterator();
-		// ensure that the iterator is false
-		while(m.isValid())
-			++m;
+		ParticleIterator m;
+		// a default constructed iterator is always invalid.
 		return m; // DELETION_FALSE (always occurring for Widom)
 	}
 	unsigned idx = *_remainingDeletions.begin();
