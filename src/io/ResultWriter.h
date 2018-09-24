@@ -23,8 +23,11 @@
  */
 class ResultWriter : public PluginBase {
 public:
-	ResultWriter() {}
-	~ResultWriter() {}
+	ResultWriter() : _U_pot_acc(nullptr), _p_acc(nullptr) {}
+	~ResultWriter() {
+		delete _U_pot_acc;
+		delete _p_acc;
+	}
 
 	/** @brief Read in XML configuration for ResultWriter and all its included objects.
 	 *
