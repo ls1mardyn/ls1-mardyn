@@ -165,7 +165,7 @@ else
   $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/)")
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/|AutoPas)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase\|LoadCalc" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/)")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE)) 

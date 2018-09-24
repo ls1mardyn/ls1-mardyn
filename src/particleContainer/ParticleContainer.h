@@ -88,6 +88,8 @@ public:
 	//! This method basically does what the constructor does as well, with the difference,
 	//! that there are already particles stored, and particles which don't belong to the
 	//! new region have to be deleted after rebuild
+	//! @parameter bBoxMin minimum of the box
+	//! @parameter bBoxMax maximum of the box
 	virtual bool rebuild(double bBoxMin[3], double bBoxMax[3]);
 
 	//! @brief do necessary updates resulting from changed particle positions
@@ -189,15 +191,6 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	virtual double get_halo_L(int index) const = 0;
 
-	// get the region of the halo particles in this container based on direction
-	virtual void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
-
-	// get the region of the boundary particles in this container based on direction
-	virtual void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
-
-	virtual bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) = 0;
-
-	virtual bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
 	virtual double getCutoff() = 0;
 
@@ -220,8 +213,6 @@ public:
 	//! @brief Update the caches of the molecules.
 	virtual void updateMoleculeCaches() = 0;
 
-	virtual size_t getNumCells() const = 0;
-
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position
@@ -243,6 +234,12 @@ public:
 	 * @return A vector, where particleCellStatistics[partCount] represents the number of cells with partCount particles.
 	 */
 	virtual std::vector<unsigned long> getParticleCellStatistics() {return std::vector<unsigned long>();}
+
+	/**
+	 * set the cutoff
+	 * @param rc
+	 */
+	virtual void setCutoff(double rc){};
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

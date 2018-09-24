@@ -6,7 +6,7 @@ project(MarDyn)
 
 cmake_minimum_required(VERSION 3.3)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # cmake < 3.6 ignores "set(CMAKE_CXX_STANDARD 11)" when using icpc
 if (CMAKE_VERSION VERSION_LESS "3.6" AND CMAKE_CXX_COMPILER_ID MATCHES "Intel")
@@ -39,6 +39,8 @@ include(OpenMP)
 include(options)
 # include mpi module
 include(mpi)
+# include module for clang sanitizers
+include(clang-sanitizers)
 
 # ----- second: include libraries, etc.
 # include armadillo module
@@ -51,7 +53,7 @@ include(cppunit)
 include(bhfmm)
 
 # ----- third: include autopas
-# TODO include autopas
+include(autopas)
 
 
 # add mardyn

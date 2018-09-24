@@ -217,8 +217,8 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
 	domainDecomp->collCommFinalize();
 	// fix ID's to be unique:
-	for (auto mol = particleContainer->iterator(); mol.hasNext(); mol.next()) {
-		mol->setid(mol->id()+idOffset);
+	for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
+		mol->setid(mol->getID()+idOffset);
 	}
 	//std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
 	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;

@@ -4,7 +4,8 @@
 
 #include <cmath>
 
-//class Domain;
+class Domain;
+class DomainDecompBase;
 //class Planar;
 //class Homogeneous;
 class XMLfileUnits;

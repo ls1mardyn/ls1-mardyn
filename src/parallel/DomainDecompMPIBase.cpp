@@ -180,8 +180,8 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 		unsigned long *tids = new unsigned long[num_molecules];
 
 		int i = 0;
-		for (ParticleIterator m = moleculeContainer->iterator(); m.hasNext(); m.next()) {
-			tids[i] = m->id();
+		for (auto m = moleculeContainer->iterator(); m.isValid(); ++m) {
+			tids[i] = m->getID();
 			i++;
 		}
 		MPI_CHECK(MPI_Send(tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
@@ -191,8 +191,8 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 		/** @todo FIXME: This implementation does not scale. */
 		map<unsigned long, int> check;
 
-		for (ParticleIterator m = moleculeContainer->iterator(); m.hasNext(); m.next())
-			check[m->id()] = 0;
+		for (auto m = moleculeContainer->iterator(); m.isValid(); ++m)
+			check[m->getID()] = 0;
 
 		MPI_Status status;
 		for (int i = 1; i < _numProcs; i++) {

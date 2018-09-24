@@ -44,7 +44,7 @@ void VelocityScalingThermostat::setVelocity(int componentId, double v[3]) {
 
 void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 	if(_componentwise ) {
-		for (ParticleIterator molecule = moleculeContainer->iterator(); molecule.hasNext(); molecule.next()) {
+		for (auto molecule = moleculeContainer->iterator(); molecule.isValid(); ++molecule) {
 			int thermostatId;
 			double betaTrans = _globalBetaTrans;
 			double betaRot = _globalBetaRot;
@@ -76,9 +76,7 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 			global_log->debug() << "Beta rot: " << betaRot << endl;
 			global_log->debug() << "Beta trans: " << betaTrans << endl;
 
-			const ParticleIterator begin = moleculeContainer->iterator();
-
-			for (ParticleIterator i = begin; i.hasNext(); i.next()) {
+			for (auto i = moleculeContainer->iterator(); i.isValid(); ++i) {
 				if(this->_useGlobalVelocity) {
 					i->vsub(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
 					i->scale_v(betaTrans);

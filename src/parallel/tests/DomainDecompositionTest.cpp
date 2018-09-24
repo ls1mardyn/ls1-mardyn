@@ -77,14 +77,14 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	std::set<unsigned long> lower[3];  // the id of particles that were close to the lower boundary in the specific dimension are stored here
 	std::set<unsigned long> upper[3];  // the id of particles that were close to the upper boundary in the specific dimension are stored here
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int dim = 0; dim < 3; dim++) {
 			if (m->r(dim) < bBoxMin[dim] + cutoff / 2.) {
 				// we shift particles close to the lower boundary to outside of the lower boundary.
 				// in this case they are put to the smallest (in abs values) negative representable number
 				// i.e. 2^(-149) = -1.4013e-45 for float resp. 4.94066e-324 for double
 				m->setr(dim, std::nexttoward((vcp_real_calc) bBoxMin[dim], bBoxMin[dim] - 1.f));
-				lower[dim].insert(m->id());
+				lower[dim].insert(m->getID());
 			}
 			if (m->r(dim) > bBoxMax[dim] - cutoff / 2.) {
 				// We shift particles close to the upper boundary to outside of the upper boundary.
@@ -93,7 +93,7 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 				// Otherwise the maximum is used.
 				vcp_real_calc r = (float)bBoxMax[dim] >= bBoxMax[dim] ? bBoxMax[dim] : std::nexttoward((vcp_real_calc) bBoxMax[dim], bBoxMax[dim] + 1.f);
 				m->setr(dim, r);
-				upper[dim].insert(m->id());
+				upper[dim].insert(m->getID());
 			}
 		}
 	}
@@ -114,12 +114,12 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
 	ASSERT_EQUAL(numMols, newNumMols);
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int dim = 0; dim < 3; dim++) {
-			if (lower[dim].count(m->id())) {
+			if (lower[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the top part of the domain.
 				ASSERT_TRUE(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
-			} else if (upper[dim].count(m->id())) {
+			} else if (upper[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the lower part of the domain.
 				ASSERT_TRUE(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
 			}
@@ -146,10 +146,10 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 	unsigned int count[3] = {0};
 	ASSERT_EQUAL(3ul, container->getNumberOfParticles());
 
-	ParticleIterator m = container->iterator();
-	while ( m.hasNext()) {
-		count[m->id()]++;
-		m.next();
+	auto m = container->iterator();
+	while ( m.isValid()) {
+		count[m->getID()]++;
+		++m;
 	}
 
 	for (int i = 0; i < 3; i++) {
@@ -162,9 +162,9 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 
 	m = container->iterator();
-	while(m.hasNext()) {
-		count[m->id()]++;
-		m.next();
+	while(m.isValid()) {
+		count[m->getID()]++;
+		++m;
 	}
 
 	for (int i = 0; i < 3; i++) {

@@ -304,10 +304,10 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer * container, Molecule
 		hi[d] = m1->r(d) + R;
 	}
 
-	RegionParticleIterator begin = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS);
+	auto begin = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS);
 
-	for (auto m2 = begin; m2.hasNext(); m2.next()) {
-		if (m2->id() == m1->id()) {
+	for (auto m2 = begin; m2.isValid(); ++m2) {
+		if (m2->getID() == m1->getID()) {
 			continue;
 		}
         double distanceVectorDummy[3] = {0.0, 0.0, 0.0};
@@ -330,7 +330,7 @@ void CavityEnsemble::cavityStep(ParticleContainer * globalMoleculeContainer) {
 		Molecule* m1 = pcit->second;
 		unsigned neigh = this->countNeighbours(globalMoleculeContainer, m1);
 		unsigned long m1id = pcit->first;
-		mardyn_assert(m1id == m1->id());
+		mardyn_assert(m1id == m1->getID());
 		this->decideActivity(neigh, m1id);
 	}
 }

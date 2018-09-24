@@ -16,6 +16,11 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
+
+#ifdef MARDYN_AUTOPAS
+#include "particleContainer/AutoPasContainer.h"
+#endif
+
 #include "parallel/DomainDecompBase.h"
 #include "parallel/NonBlockingMPIHandlerBase.h"
 #include "parallel/NonBlockingMPIMultiStepHandler.h"
@@ -341,14 +346,30 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.getNodeValue("@type", datastructuretype);
 			global_log->info() << "Datastructure type: " << datastructuretype << endl;
 			if(datastructuretype == "LinkedCells") {
-							_moleculeContainer = new LinkedCells();
-							/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
-							global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
-							LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
-							lc->setCutoff(_cutoffRadius);
-			}else if(datastructuretype == "AdaptiveSubCells") {
+#ifdef MARDYN_AUTOPAS
+				global_log->fatal()
+					<< "LinkedCells not compiled (use AutoPas instead, or compile with disabled autopas mode)!"
+					<< std::endl;
+				Simulation::exit(33);
+#else
+				_moleculeContainer = new LinkedCells();
+				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
+				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
+				_moleculeContainer->setCutoff(_cutoffRadius);
+#endif
+			} else if(datastructuretype == "AdaptiveSubCells") {
 				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
 				Simulation::exit(-1);
+			} else if(datastructuretype == "AutoPas" || datastructuretype == "AutoPasContainer") {
+#ifdef MARDYN_AUTOPAS
+				global_log->info() << "Using AutoPas container." << std::endl;
+				_moleculeContainer = new AutoPasContainer();
+				global_log->info() << "Setting cell cutoff radius for AutoPas container to " << _cutoffRadius << endl;
+				_moleculeContainer->setCutoff(_cutoffRadius);
+#else
+				global_log->fatal() << "AutoPas not compiled (use LinkedCells instead, or compile with enabled autopas mode)!" << std::endl;
+				Simulation::exit(33);
+#endif
 			}
 			else {
 				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
@@ -445,7 +466,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			{
 				/*
 				 * Needs to be initialized later for some reason, done in Simulation::prepare_start()
-				 * TODO: perhabs work on this, to make it more robust 
+				 * TODO: perhaps work on this, to make it more robust
 				 *
 				 *_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
                  */
@@ -676,8 +697,7 @@ void Simulation::updateForces() {
 	#pragma omp parallel
 	#endif
 	{
-		const ParticleIterator begin = _moleculeContainer->iterator();
-		for (ParticleIterator i = begin; i.hasNext(); i.next()){
+		for (auto i = _moleculeContainer->iterator(); i.isValid(); ++i){
 			i->calcFM();
 		}
 	} // end pragma omp parallel
@@ -712,8 +732,7 @@ void Simulation::prepare_start() {
 			bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
 		}
-		_FMM->init(globalLength, bBoxMin, bBoxMax,
-				dynamic_cast<LinkedCells*>(_moleculeContainer)->getCellLength(), _moleculeContainer);
+		_FMM->init(globalLength, bBoxMin, bBoxMax, _moleculeContainer->getCellLength(), _moleculeContainer);
 
 		delete _cellProcessor;
 		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
@@ -1428,7 +1447,7 @@ void Simulation::refreshParticleIDs()
 #ifndef NDEBUG
 	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
 #endif
-	for (ParticleIterator pit = _moleculeContainer->iterator(); pit.hasNext(); pit.next())
+	for (auto pit = _moleculeContainer->iterator(); pit.isValid(); ++pit)
 	{
 		pit->setid(++tmpID);
 	}

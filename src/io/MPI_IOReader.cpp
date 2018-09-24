@@ -556,8 +556,8 @@ unsigned long MPI_IOReader::readPhaseSpace(
 					dcomponents[m.componentid()].incNumMolecules();
 				}
 
-				if (m.id() > localMaxid) {
-					localMaxid = m.id();
+				if (m.getID() > localMaxid) {
+					localMaxid = m.getID();
 				}
 
 				std::list<ChemicalPotential>::iterator cpit;

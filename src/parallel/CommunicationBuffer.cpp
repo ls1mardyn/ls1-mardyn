@@ -121,7 +121,7 @@ void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molec
 	size_t i_runningByte = i_firstByte;
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	// add id, r, v
-	i_runningByte = emplaceValue(i_runningByte, m.id());
+	i_runningByte = emplaceValue(i_runningByte, m.getID());
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(0)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(1)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(2)));
@@ -129,7 +129,7 @@ void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molec
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.v(1)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.v(2)));
 #else
-	i_runningByte = emplaceValue(i_runningByte, m.id());
+	i_runningByte = emplaceValue(i_runningByte, m.getID());
 	i_runningByte = emplaceValue(i_runningByte, m.componentid());
 	i_runningByte = emplaceValue(i_runningByte, m.r(0));
 	i_runningByte = emplaceValue(i_runningByte, m.r(1));
@@ -158,14 +158,14 @@ void CommunicationBuffer::addHaloMolecule(size_t indexOfMolecule, const Molecule
 	size_t i_runningByte = i_firstByte;
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
-		i_runningByte = emplaceValue(i_runningByte, m.id());
+		i_runningByte = emplaceValue(i_runningByte, m.getID());
 	#endif /*LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES*/
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(0)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(1)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(2)));
 #else
 	#ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
-		i_runningByte = emplaceValue(i_runningByte, m.id());
+		i_runningByte = emplaceValue(i_runningByte, m.getID());
 	#endif /*LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES*/
 	i_runningByte = emplaceValue(i_runningByte, m.componentid());
 	i_runningByte = emplaceValue(i_runningByte, m.r(0));
@@ -189,7 +189,7 @@ void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecul
 	
 	// add force molecule
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	i_runningByte = emplaceValue(i_runningByte, m.id());
+	i_runningByte = emplaceValue(i_runningByte, m.getID());
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(0)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(1)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(2)));
@@ -197,7 +197,7 @@ void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecul
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(1)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(2))); 
 #else
-	i_runningByte = emplaceValue(i_runningByte, m.id());
+	i_runningByte = emplaceValue(i_runningByte, m.getID());
 	i_runningByte = emplaceValue(i_runningByte, m.r(0));
 	i_runningByte = emplaceValue(i_runningByte, m.r(1));
 	i_runningByte = emplaceValue(i_runningByte, m.r(2));

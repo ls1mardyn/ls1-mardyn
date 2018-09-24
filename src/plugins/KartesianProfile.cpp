@@ -127,7 +127,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
     if ((simstep >= _initStatistics) && (simstep % _profileRecordingTimesteps == 0)) {
         long int uID;
         // Loop over all particles and bin them with uIDs
-        for(ParticleIterator thismol = particleContainer->iterator(); thismol.hasNext(); thismol.next()){
+        for(auto thismol = particleContainer->iterator(); thismol.isValid(); ++thismol){
             // Calculate uID
             xun = (unsigned) floor(thismol->r(0) * this->universalInvProfileUnit[0]);
             yun = (unsigned) floor(thismol->r(1) * this->universalInvProfileUnit[1]);
@@ -136,7 +136,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
                                    + yun * this->universalProfileUnit[2] + zun);
             // pass mol + uID to all profiles
             for(unsigned i = 0; i < _profiles.size(); i++){
-                _profiles[i]->record(&thismol, uID);
+                _profiles[i]->record(*thismol, uID);
             }
         }
         // Record number of Timesteps recorded since last output write
@@ -146,8 +146,8 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
         // COLLECTIVE COMMUNICATION
         global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << accumulatedDatasets << "\n";
         // Initialize Communication with number of bins * number of total comms needed per bin by all profiles.
-        domainDecomp->collCommInit(_comms*_uIDs);
-        //global_log->info() << "[KartesianProfile] profile collectAppend" << std::endl;
+		domainDecomp->collCommInit(_comms * _uIDs);
+		//global_log->info() << "[KartesianProfile] profile collectAppend" << std::endl;
         for(unsigned long uID = 0; uID < _uIDs; uID++){
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->collectAppend(domainDecomp, uID);

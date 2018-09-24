@@ -20,11 +20,11 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("width", _dWidth);
     xmlconfig.getNodeValue("delta", _delta);
     _dWidthHalf = _dWidth * 0.5;
-    global_log->info() << "[WallPotential] Using plugin with parameters: density=" << density << ", "
-                                                                                                 "sigma=" << sigma << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", "
-                                                                                                                                                                                           "width=" << _dWidth << ", delta=" << _delta << endl;
+	global_log->info() << "[WallPotential] Using plugin with parameters: density=" << density << ", sigma=" << sigma
+					   << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", width=" << _dWidth
+					   << ", delta=" << _delta << endl;
 
-    int potential;
+	int potential;
     xmlconfig.getNodeValue("potential", potential);
     if(potential == 93){
         _potential = LJ9_3;
@@ -194,58 +194,55 @@ void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
     double regionLowCorner[3], regionHighCorner[3];
 
     /*! LJ-9-3 potential applied in y-direction */
-    if(partContainer->getBoundingBoxMin(1) < _yc+_yOff){ // if linked cell within the potential range (inside the potential's cutoff)
+    if(partContainer->getBoundingBoxMin(1) < _yc + _yOff) { // if linked cell within the potential range (inside the potential's cutoff)
         for(unsigned d = 0; d < 3; d++){
             regionLowCorner[d] = partContainer->getBoundingBoxMin(d);
             regionHighCorner[d] = partContainer->getBoundingBoxMax(d);
         }
 
-        //perform a check if the region is contained by the particleContainer???
-        if (partContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner)){
 #if defined (_OPENMP)
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
-            {
-                RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
+        {
+            auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
-                double f[3];
-                for(unsigned d=0; d<3; d++)
-                    f[d] = 0.;
+            double f[3];
+            for(unsigned d=0; d<3; d++)
+                f[d] = 0.;
 
-                for(RegionParticleIterator i = begin; i.hasNext(); i.next()){
-                    unsigned cid = (*i).componentid();
-                    if(false == _bConsiderComponent.at(cid) )
-                        continue;  // only add Wall force to molecules of component that should be considered
+            for(auto i = begin; i.isValid(); ++i){
+                unsigned cid = (*i).componentid();
+                if(false == _bConsiderComponent.at(cid) )
+                    continue;  // only add Wall force to molecules of component that should be considered
 
-                    for(unsigned int si=0; si<i->numLJcenters(); ++si) {
-                        double y, y3, y9, ry, ryRel;
-                        const std::array<double, 3> arrSite = i->ljcenter_d_abs(si);
-                        const double *posSite = arrSite.data();
-                        ry = posSite[1];
-                        ryRel = (ry > _yOff) ? (ry - (_yOff + _dWidthHalf)) : (ry - (_yOff - _dWidthHalf));
-                        y = abs(ryRel);
-                        //y = ryRel;
+                for(unsigned int si=0; si<i->numLJcenters(); ++si) {
+                    double y, y3, y9, ry, ryRel;
+                    const std::array<double, 3> arrSite = i->ljcenter_d_abs(si);
+                    const double *posSite = arrSite.data();
+                    ry = posSite[1];
+                    ryRel = (ry > _yOff) ? (ry - (_yOff + _dWidthHalf)) : (ry - (_yOff - _dWidthHalf));
+                    y = abs(ryRel);
+                    //y = ryRel;
 
-                        if (y < _yc) {
-                            y3 = y * y * y;
-                            y9 = y3 * y3 * y3;
-                            for (unsigned d = 0; d < 3; d++) {
-                                f[d] = 0.0;
-                            }
-
-                            double sig9_wi;
-                            sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
-                            f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] *
-                                   (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / y;
-                            if(ryRel < 0){
-                                f[1] = -f[1];
-                            }
-                            _uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] *
-                                              (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
-                            f[0] = 0;
-                            f[2] = 0;
-                            i->Fljcenteradd(si, f);
+                    if (y < _yc) {
+                        y3 = y * y * y;
+                        y9 = y3 * y3 * y3;
+                        for (unsigned d = 0; d < 3; d++) {
+                            f[d] = 0.0;
                         }
+
+                        double sig9_wi;
+                        sig9_wi = _sig3_wi[cid] * _sig3_wi[cid] * _sig3_wi[cid];
+                        f[1] = 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] *
+                               (sig9_wi / 5.0 / y9 - _sig3_wi[cid] / 2.0 / y3) / y;
+                        if(ryRel < 0){
+                            f[1] = -f[1];
+                        }
+                        _uPot_9_3[cid] += 4.0 * M_PI * _rhoW * _eps_wi[cid] * _sig3_wi[cid] *
+                                          (sig9_wi / 45.0 / y9 - _sig3_wi[cid] / 6.0 / y3) - _uShift_9_3[cid];
+                        f[0] = 0;
+                        f[2] = 0;
+                        i->Fljcenteradd(si, f);
                     }
                 }
             }
@@ -277,61 +274,58 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
     }
 
 
-    //perform a check if the region is contained by the particleContainer???
-    if(partContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner)){
 
 #if defined (_OPENMP)
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
-        {
-            RegionParticleIterator begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
+    {
+        auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
 
-            for(RegionParticleIterator i = begin; i.hasNext() ; i.next()){
-                double ry, ryRel, y, y2, y4, y5, y10, y11;
-                unsigned cid = (*i).componentid();
-                if(false == _bConsiderComponent.at(cid) )
-                    continue;  // only add Wall force to molecules of component that should be considered
+        for(auto i = begin; i.isValid() ; ++i){
+            double ry, ryRel, y, y2, y4, y5, y10, y11;
+            unsigned cid = (*i).componentid();
+            if(false == _bConsiderComponent.at(cid) )
+                continue;  // only add Wall force to molecules of component that should be considered
 
-                for(unsigned int si=0; si<i->numLJcenters(); ++si) {
-                    const std::array<double,3> arrSite = i->ljcenter_d_abs(si);
-                    const double* posSite = arrSite.data();
-                    //y = (*i).r(1) - _yOff;
-                    ry = posSite[1];
-                    ryRel = (ry > _yOff) ? (ry - (_yOff + _dWidthHalf)) : (ry - (_yOff - _dWidthHalf));
-                    y = abs(ryRel);
-                    if (y < _yc) {
-                        y2 = y * y;
-                        y4 = y2 * y2;
-                        y5 = y4 * y;
-                        y10 = y5 * y5;
-                        y11 = y10 * y;
-                        double f[3];
-                        for (unsigned d = 0; d < 3; d++) {
-                            f[d] = 0.0;
-                        }
-
-                        double sig2_wi = _sig2_wi[cid];
-                        double sig4_wi = _sig2_wi[cid] * _sig2_wi[cid];
-                        double sig5_wi = sig4_wi * _sig_wi[cid];
-                        double sig10_wi = sig5_wi * sig5_wi;
-                        double bracket = y + 0.61 * _delta;
-                        double bracket3 = bracket * bracket * bracket;
-                        double term1 = sig10_wi / y10;
-                        double term2 = sig4_wi / y4;
-                        double term3 = sig4_wi / (3 * _delta * bracket3);
-                        double preFactor = 2 * M_PI * _eps_wi[cid] * _rhoW * sig2_wi * _delta;
-                        _uPot_10_4_3[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4_3[cid];
-                        f[1] = preFactor * (4 * (sig10_wi / y11) - 4 * (sig4_wi / y5) - term3 * 3 / bracket);
-                        if(ryRel < 0){
-                            f[1] = -f[1];
-                        }
-                        f[0] = 0;
-                        f[2] = 0;
-
-                        i->Fljcenteradd(si, f);
-                        //i->calcFM_site(i->ljcenter_d(si), i->ljcenter_F(si));
-                        //i->Fadd(f);
+            for(unsigned int si=0; si<i->numLJcenters(); ++si) {
+                const std::array<double,3> arrSite = i->ljcenter_d_abs(si);
+                const double* posSite = arrSite.data();
+                //y = (*i).r(1) - _yOff;
+                ry = posSite[1];
+                ryRel = (ry > _yOff) ? (ry - (_yOff + _dWidthHalf)) : (ry - (_yOff - _dWidthHalf));
+                y = abs(ryRel);
+                if (y < _yc) {
+                    y2 = y * y;
+                    y4 = y2 * y2;
+                    y5 = y4 * y;
+                    y10 = y5 * y5;
+                    y11 = y10 * y;
+                    double f[3];
+                    for (unsigned d = 0; d < 3; d++) {
+                        f[d] = 0.0;
                     }
+
+                    double sig2_wi = _sig2_wi[cid];
+                    double sig4_wi = _sig2_wi[cid] * _sig2_wi[cid];
+                    double sig5_wi = sig4_wi * _sig_wi[cid];
+                    double sig10_wi = sig5_wi * sig5_wi;
+                    double bracket = y + 0.61 * _delta;
+                    double bracket3 = bracket * bracket * bracket;
+                    double term1 = sig10_wi / y10;
+                    double term2 = sig4_wi / y4;
+                    double term3 = sig4_wi / (3 * _delta * bracket3);
+                    double preFactor = 2 * M_PI * _eps_wi[cid] * _rhoW * sig2_wi * _delta;
+                    _uPot_10_4_3[cid] += preFactor * ((2 / 5) * term1 - term2 - term3) - _uShift_10_4_3[cid];
+                    f[1] = preFactor * (4 * (sig10_wi / y11) - 4 * (sig4_wi / y5) - term3 * 3 / bracket);
+                    if(ryRel < 0){
+                        f[1] = -f[1];
+                    }
+                    f[0] = 0;
+                    f[2] = 0;
+
+                    i->Fljcenteradd(si, f);
+                    //i->calcFM_site(i->ljcenter_d(si), i->ljcenter_F(si));
+                    //i->Fadd(f);
                 }
             }
         }

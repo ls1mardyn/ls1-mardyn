@@ -66,7 +66,7 @@ double MoleculeRMM::v(unsigned short d) const {
 	}
 }
 
-unsigned long MoleculeRMM::id() const {
+unsigned long MoleculeRMM::getID() const {
 	mardyn_assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
 	if (_state == STORAGE_AOS) {
@@ -115,14 +115,14 @@ std::string MoleculeRMM::getWriteFormat(){
 }
 
 void MoleculeRMM::write(std::ostream& ostrm) const {
-	ostrm << id() << "\t"
+	ostrm << getID() << "\t"
 		  << r(0) << " " << r(1) << " " << r(2) << "\t"
 		  << v(0) << " " << v(1) << " " << v(2) << "\t"
 		  << endl;
 }
 
 std::ostream& operator<<( std::ostream& os, const MoleculeRMM& m ) {
-	os << "ID: " << m.id() << "\n";
+	os << "ID: " << m.getID() << "\n";
 	os << "r:  (" << m.r(0) << ", " << m.r(1) << ", " << m.r(2) << ")\n" ;
 	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
 	return os;

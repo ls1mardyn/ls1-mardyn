@@ -210,7 +210,7 @@ void LinkedCells::check_molecules_in_box() {
 	#pragma omp parallel reduction(+ : numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
+		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
 			if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
 				numBadMolecules++;
 
@@ -228,7 +228,7 @@ void LinkedCells::check_molecules_in_box() {
 	if (numBadMolecules > 0) {
 		global_log->error() << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
 		for (auto & m : badMolecules) {
-			global_log->error() << "Particle (id=" << m.id() << "), (current position: x="
+			global_log->error() << "Particle (id=" << m.getID() << "), (current position: x="
 					<< m.r(0) << ", y=" << m.r(1) << ", z=" << m.r(2) << ")" << std::endl;
 		}
 		global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
@@ -275,10 +275,10 @@ void LinkedCells::update() {
 	#pragma omp parallel reduction(+: numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.hasNext(); tM.next()) {
+		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
 			if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 				numBadMolecules++;
-				global_log->error_always_output() << "particle " << tM->id() << " in cell " << tM.getCellIndex()
+				global_log->error_always_output() << "particle " << tM->getID() << " in cell " << tM.getCellIndex()
 						<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
 						<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
 				global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
@@ -419,11 +419,11 @@ void LinkedCells::update_via_traversal() {
 		ResortCellProcessor() : CellProcessor(0.0, 0.0) {}
 		void initTraversal() {}
 		void preprocessCell(ParticleCell& ) {}
-		
+
 		void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) { // does this need a bool?
 				cell1.updateLeavingMoleculesBase(cell2);
 		}
-		
+
 		void processCell(ParticleCell& cell) {}
 		double processSingleMolecule(Molecule*, ParticleCell& ) { return 0.0;}
 		void postprocessCell(ParticleCell& ) {}
@@ -472,7 +472,7 @@ void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDup
 
 			#ifndef NDEBUG
 				if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
-					global_log->error()<<"At particle with ID "<<particle.id()<<" assertion failed..."<<endl;
+					global_log->error()<<"At particle with ID "<< particle.getID()<<" assertion failed..."<<endl;
 				}
 				mardyn_assert(particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
 			#endif
@@ -592,7 +592,7 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
-	for (auto it = iterator(); it.hasNext(); it.next()) {
+	for (auto it = iterator(); it.isValid(); ++it) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
 			it.deleteCurrentParticle();
@@ -621,76 +621,6 @@ void LinkedCells::deleteOuterParticles() {
 
 double LinkedCells::get_halo_L(int index) const {
 	return _haloLength[index];
-}
-
-void LinkedCells::getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]){
-	mardyn_assert(direction != 0);
-
-	int startIndex[3] = { 0, 0, 0 };
-	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
-
-	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
-	unsigned dim = abs(direction) - 1;
-	if (direction < 0) {
-		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-	else {
-		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-
-	unsigned int startCellIndex = cellIndexOf3DIndex(startIndex[0], startIndex[1], startIndex[2]);
-	unsigned int endCellIndex = cellIndexOf3DIndex(stopIndex[0], stopIndex[1], stopIndex[2]);
-
-	for(int d = 0; d < 3; d++){
-		(*startRegion)[d] = _cells[startCellIndex].getBoxMin(d);
-		(*endRegion)[d] = _cells[endCellIndex].getBoxMax(d);
-	}
-}
-
-void LinkedCells::getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]){
-	mardyn_assert(direction != 0);
-
-	int startIndex[3] = { 0, 0, 0 };
-	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
-
-	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
-	unsigned dim = abs(direction) - 1;
-	if (direction < 0) {
-		startIndex[dim] = _haloWidthInNumCells[dim];
-		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-	else {  // direction > 0
-		stopIndex[dim] = _boxWidthInNumCells[dim];
-		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for function below
-	}
-
-	unsigned int startCellIndex = cellIndexOf3DIndex(startIndex[0], startIndex[1], startIndex[2]);
-	unsigned int endCellIndex = cellIndexOf3DIndex(stopIndex[0], stopIndex[1], stopIndex[2]);
-
-	for(int d = 0; d < 3; d++){
-		(*startRegion)[d] = _cells[startCellIndex].getBoxMin(d);
-		(*endRegion)[d] = _cells[endCellIndex].getBoxMax(d);
-	}
-}
-
-bool LinkedCells::isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]){
-	for (int dim = 0; dim < 3; dim++) {
-		if (!(startRegion[dim] <= this->_haloBoundingBoxMax[dim] && endRegion[dim] >= this->_haloBoundingBoxMin[dim])) {
-			// No Part of the given region is owned by this process
-			return false;
-		}
-	}
-	return true;
-}
-
-bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[3]){
-	for (int dim = 0; dim < 3; dim++) {
-		if (!(startRegion[dim] < this->_boundingBoxMax[dim] && endRegion[dim] > this->_boundingBoxMin[dim])) {
-			// No Part of the given region is owned by this process
-			return false;
-		}
-	}
-	return true;
 }
 
 RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
@@ -1008,7 +938,7 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 
 			SingleCellIterator<ParticleCell> begin = cell.iterator();
 
-			for (SingleCellIterator<ParticleCell> it = begin; it.hasNext(); it.next()) {
+			for (SingleCellIterator<ParticleCell> it = begin; it.isValid(); ++it) {
 				it->setid(threadIDsAssignedByThisThread);
 				++threadIDsAssignedByThisThread;
 			}
@@ -1046,10 +976,10 @@ void LinkedCells::deleteMolecule(Molecule &molecule, const bool& rebuildCaches) 
 		Simulation::exit(1);
 	}
 
-	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.id());
+	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.getID());
 
 	if (!found) {
-		global_log->error_always_output() << "could not delete molecule " << molecule.id() << "."
+		global_log->error_always_output() << "could not delete molecule " << molecule.getID() << "."
 				<< endl;
 		Simulation::exit(1);
 	}
@@ -1186,10 +1116,10 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 	auto& cell = _cells.at(index);
 
 	// iterate through cell and compare position of molecules with given position
-	
+
 	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
-	
-	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.hasNext(); it1.next()) {
+
+	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.isValid(); ++it1) {
 		auto& mol = *it1;
 
 		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {

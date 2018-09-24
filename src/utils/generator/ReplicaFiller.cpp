@@ -11,6 +11,7 @@
 #include "utils/Coordinate3D.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
+#include "particleContainer/ParticleCellBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #else
@@ -70,22 +71,13 @@ public:
 	void deleteOuterParticles() {}
 
 	double get_halo_L(int index) const { return 0.0; }
-
-	void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) {}
-
-	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) {}
-
-	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) { return false;}
-
-	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) { return true; }
-
 	double getCutoff() { return 0.0; }
 	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) {}
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) { return 0.0; }
 	void updateInnerMoleculeCaches() {}
 	void updateBoundaryAndHaloMoleculeCaches() {}
 	void updateMoleculeCaches() {}
-	size_t getNumCells() const { return 1; }
+
 	ParticleCellBase * getCell(unsigned cellIndex) { return nullptr; }
 	const ParticleCellBase* getCell(unsigned cellIndex) const { return nullptr; }
 	

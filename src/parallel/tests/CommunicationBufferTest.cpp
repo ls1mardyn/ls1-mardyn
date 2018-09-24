@@ -109,9 +109,9 @@ void CommunicationBufferTest::testHalo() {
 
 	for (int i = 0; i < 2; ++i) {
 #ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
-		ASSERT_EQUAL(m[i].id(), mread[i].id());
+		ASSERT_EQUAL(m[i].getID(), mread[i].getID());
 #else
-		ASSERT_EQUAL(UINT64_MAX, mread[i].id());
+		ASSERT_EQUAL(UINT64_MAX, mread[i].getID());
 #endif
 		for (int d = 0; d < 3; ++d) {
 			ASSERT_DOUBLES_EQUAL(m[i].r(d), mread[i].r(d), 1e-16);
@@ -142,7 +142,7 @@ void CommunicationBufferTest::testLeaving() {
 	buf.readLeavingMolecule(1, mread[1]);
 
 	for (int i = 0; i < 2; ++i) {
-		ASSERT_EQUAL(m[i].id(), mread[i].id());
+		ASSERT_EQUAL(m[i].getID(), mread[i].getID());
 		for (int d = 0; d < 3; ++d) {
 			ASSERT_DOUBLES_EQUAL(m[i].r(d), mread[i].r(d), 1e-16);
 			ASSERT_DOUBLES_EQUAL(m[i].v(d), mread[i].v(d), 1e-16);
@@ -186,12 +186,12 @@ void CommunicationBufferTest::testLeavingAndHalo() {
 
 	for (int i = 0; i < 5; ++i) {
 		if (i < 2) {  // leaving
-			ASSERT_EQUAL(m[i].id(), mread[i].id());
+			ASSERT_EQUAL(m[i].getID(), mread[i].getID());
 		} else {  // halo
 #ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
-		ASSERT_EQUAL(m[i].id(), mread[i].id());
+		ASSERT_EQUAL(m[i].getID(), mread[i].getID());
 #else
-			ASSERT_EQUAL(UINT64_MAX, mread[i].id());
+			ASSERT_EQUAL(UINT64_MAX, mread[i].getID());
 #endif
 		}
 		for (int d = 0; d < 3; ++d) {
@@ -281,12 +281,12 @@ void CommunicationBufferTest::testPackSendRecvUnpack() {
 
 		for (int i = 0; i < 5; ++i) {
 			if (i < 2) {  // leaving
-				ASSERT_EQUAL(m[i].id(), mread[i].id());
+				ASSERT_EQUAL(m[i].getID(), mread[i].getID());
 			} else {  // halo
 #ifdef LS1_SEND_UNIQUE_ID_FOR_HALO_COPIES
-				ASSERT_EQUAL(m[i].id(), mread[i].id());
+				ASSERT_EQUAL(m[i].getID(), mread[i].getID());
 #else
-				ASSERT_EQUAL(UINT64_MAX, mread[i].id());
+				ASSERT_EQUAL(UINT64_MAX, mread[i].getID());
 #endif
 			}
 			for (int d = 0; d < 3; ++d) {

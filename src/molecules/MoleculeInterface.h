@@ -26,12 +26,12 @@ public:
 	}
 
 	virtual ~MoleculeInterface() {}
-	virtual unsigned long id() const = 0;
+	virtual unsigned long getID() const = 0;
 	virtual void setid(unsigned long id) = 0;
 	virtual void setComponent(Component *component) = 0;
 	virtual void setr(unsigned short d, double r) = 0;
 	virtual void setv(unsigned short d, double v) = 0;
-        virtual void setF(unsigned short d, double F) = 0;
+	virtual void setF(unsigned short d, double F) = 0;
 	unsigned int componentid() const {
 		return component()->ID();
 	}
@@ -56,6 +56,21 @@ public:
 		return component()->m();
 	}
 	virtual double F(unsigned short d) const = 0;
+
+	virtual std::array<double, 3> F_arr() {
+		std::array<double, 3> f_ret{F(0), F(1), F(2)};
+		return f_ret;
+	}
+
+	virtual std::array<double, 3> M_arr() {
+		std::array<double, 3> m_ret{M(0), M(1), M(2)};
+		return m_ret;
+	}
+	virtual std::array<double, 3> Vi_arr() {
+		std::array<double, 3> vi_ret{Vi(0), Vi(1), Vi(2)};
+		return vi_ret;
+	}
+
 	virtual const Quaternion& q() const = 0;
 
 
@@ -63,10 +78,7 @@ public:
 
 	virtual double D(unsigned short d) const = 0;
 	std::array<double, 3> D_arr() const {
-		std::array<double, 3> ret;
-		for (int d = 0; d < 3; ++d) {
-			ret[d] = D(d);
-		}
+		std::array<double, 3> ret{D(0), D(1), D(2)};
 		return ret;
 	}
 	virtual double M(unsigned short d) const = 0;
@@ -108,12 +120,14 @@ public:
 	virtual unsigned int numDipoles() const = 0;
 	virtual unsigned int numQuadrupoles() const = 0;
 
+	// relative positions to CM
 	virtual std::array<double, 3> site_d(unsigned int i) const = 0;
 	virtual std::array<double, 3> ljcenter_d(unsigned int i) const = 0;
 	virtual std::array<double, 3> charge_d(unsigned int i) const = 0;
 	virtual std::array<double, 3> dipole_d(unsigned int i) const = 0;
 	virtual std::array<double, 3> quadrupole_d(unsigned int i) const = 0;
 
+	// absolute positions to global zero
 	virtual std::array<double, 3> site_d_abs(unsigned int i) const = 0;
 	virtual std::array<double, 3> ljcenter_d_abs(unsigned int i) const = 0;
 	virtual std::array<double, 3> charge_d_abs(unsigned int i) const = 0;
@@ -226,12 +240,13 @@ public:
 	virtual void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) = 0;
 	static std::string getWriteFormat(); // TODO
 	virtual void write(std::ostream& ostrm) const = 0;
+	virtual void writeBinary(std::ostream& ostrm) const = 0;
 	virtual void clearFM() = 0;
 	virtual void calcFM() = 0;
 	virtual void check(unsigned long id) = 0;
 
 	//! NOTE: Vectorized force calculation doesn't use this anymore
-	//! 
+	//!
 	//! @brief find out whether m1 is before m2 (in some global ordering)
 	//!
 	//! Compares this molecule to m2 based on their coordinates.
@@ -257,7 +272,7 @@ public:
 	 * @param u upper right back corner of cube (equality not allowed)
 	 * @return true if molecule is contained in the box, false otherwise
 	 */
-	bool inBox(const double l[3], const double u[3]) const {
+	virtual bool inBox(const double l[3], const double u[3]) const {
 		bool in = true;
 		for (int d = 0; d < 3; ++d) {
 #ifdef __INTEL_COMPILER

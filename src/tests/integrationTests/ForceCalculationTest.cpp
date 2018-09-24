@@ -43,15 +43,15 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	LegacyCellProcessor cellProcessor( 1.1, 1.1, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-8);
+			str << "Molecule id=" << m->getID() << " index i="<< i << std::endl;
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->getID()-1][i], m->F(i), 1e-8);
 		}
 	}
 
@@ -87,14 +87,14 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	LegacyCellProcessor cellProcessor( 1.3, 1.3, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
+			str << "Molecule id=" << m->getID() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), tolerance_force);
 		}
 	}

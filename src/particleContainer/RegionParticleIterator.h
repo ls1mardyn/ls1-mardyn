@@ -1,4 +1,4 @@
-/***********************************************************************************//**
+/**************************************************************************************
  *
  * \file RegionParticleIterator.h
  *
@@ -11,8 +11,18 @@
  *
  **************************************************************************************/
 
-#ifndef  RegionParticleIterator_INC
-#define  RegionParticleIterator_INC
+#pragma once
+
+#ifdef MARDYN_AUTOPAS
+
+#include "ParticleIterator.h"
+class RegionParticleIterator : public ParticleIterator {
+public:
+	RegionParticleIterator(){};
+	RegionParticleIterator(autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> parent) : ParticleIterator(parent){};
+};
+
+#else
 
 #include <vector>
 #include <stdexcept>
@@ -25,12 +35,8 @@ class RegionParticleIterator : public ParticleIterator {
 		RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]);
 		RegionParticleIterator& operator=(const RegionParticleIterator& other);
 
-		void next() {
-			operator++();
-		}
-
+		void operator++() override;
 	private:
-		void operator ++ ();
 
 		CellIndex_T getGlobalCellIndex();
 		void next_non_empty_cell();
@@ -117,7 +123,7 @@ inline RegionParticleIterator& RegionParticleIterator::operator=(const RegionPar
 inline void RegionParticleIterator :: operator ++() {
 	do{
 		ParticleIterator :: operator++();
-	} while (hasNext() and !(this->operator*()).inBox(_startRegion, _endRegion));
+	} while (isValid() and !(this->operator*()).inBox(_startRegion, _endRegion));
 }
 
 inline void RegionParticleIterator :: next_non_empty_cell() {
@@ -147,5 +153,4 @@ inline ParticleIterator::CellIndex_T RegionParticleIterator :: getGlobalCellInde
 	return (_baseX + dx) + (_baseY + dy) * _globalDimensions[0] + (_baseZ + dz) * _globalDimensions[0] * _globalDimensions[1];
 }
 
-
-#endif /* #ifndef RegionParticleIterator_INC */
+#endif  // MARDYN_AUTOPAS

@@ -109,10 +109,10 @@ void MDGenerator::generatePreview() {
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << endl;
 
-	ParticleIterator molecule = container.iterator();
-	while (molecule.hasNext()) {
+	auto molecule = container.iterator();
+	while (molecule.isValid()) {
 		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, global_simulation->getEnsemble()->getComponents()->size()-1));
-		molecule.next();
+		++molecule;
 	}
 #endif
 }
@@ -223,14 +223,14 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	double mass_sum = 0.;
 	double momentum_sum[3] = { 0., 0., 0. };
 
-	ParticleIterator molecule = particleContainer->iterator();
-	while(molecule.hasNext()){
+	auto molecule = particleContainer->iterator();
+	while(molecule.isValid()){
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
 		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
 		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		molecule.next();
+		++molecule;
 	}
 
 	double momentum_sub0 = momentum_sum[0] / mass_sum;
@@ -238,9 +238,9 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	double momentum_sub2 = momentum_sum[2] / mass_sum;
 
 	molecule = particleContainer->iterator();
-	while (molecule.hasNext()) {
+	while (molecule.isValid()) {
 		molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
-		molecule.next();
+		++molecule;
 	}
 
 	//test
@@ -249,13 +249,13 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 	momentum_sum[2] = 0.;
 
 	molecule = particleContainer->iterator();
-	while (molecule.hasNext()) {
+	while (molecule.isValid()) {
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
 		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
 		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
-		molecule.next();
+		++molecule;
 	}
 
 	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);

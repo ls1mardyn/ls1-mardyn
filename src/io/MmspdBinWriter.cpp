@@ -236,8 +236,8 @@ void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
 		if (domain->getNumberOfComponents() == 1){
 			unsigned long molid;
 			float molpos[3];
-			for (ParticleIterator pos = particleContainer->iterator(); pos.hasNext(); pos.next()) {
-				molid = pos->id();
+			for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
+				molid = pos->getID();
 				for (unsigned short d = 0; d < 3; ++d) molpos[d] = (float)pos->r(d);
 				MPI_File_write(fh, &molid, 1, MPI_UNSIGNED_LONG, &status);
 				MPI_File_write(fh, &molpos, 3, MPI_FLOAT, &status);
@@ -246,8 +246,8 @@ void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
 			unsigned long molid;
 			unsigned int molcid;
 			float molpos[3];
-			for (ParticleIterator pos = particleContainer->iterator(); pos.hasNext(); pos.next()) {
-				molid = pos->id();
+			for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
+				molid = pos->getID();
 				molcid = pos->componentid();
 				for (unsigned short d = 0; d < 3; ++d) molpos[d] = (float)pos->r(d);
 				MPI_File_write(fh, &molid, 1, MPI_UNSIGNED_LONG, &status);

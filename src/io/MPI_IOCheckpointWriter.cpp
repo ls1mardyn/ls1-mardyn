@@ -101,14 +101,6 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		std::string filename = filenamestream.str();
 
 
-		LinkedCells* lcContainer = dynamic_cast<LinkedCells*>(particleContainer);
-		#ifndef NDEBUG
-			if (lcContainer == NULL) {
-				global_log->error() << "MPI_IOCheckpointwriter works only with LinkedCells!" << std::endl;
-				Simulation::exit(1);
-			}
-		#endif
-
 		//some debug stuff to gather cell information from the LinkedCells Class
 		/*
 		int *boxCellDimension = lcContainer->boxWidthInNumCells();
@@ -123,7 +115,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 
 		//cell length for the cell structure in the output file
 		//here each cell has the same radius in x-,y- and z-direction
-		double *cellLength = lcContainer->getCellLength();
+		double *cellLength = particleContainer->getCellLength();
 
 		//compute lengths and sizes of the domain
 		int lengthInCells[3];
@@ -155,8 +147,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		}
 
 
-		ParticleIterator tempMolecule;
-		for (tempMolecule = particleContainer->iterator(); tempMolecule.hasNext(); tempMolecule.next()) {
+		for (auto tempMolecule = particleContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {
 				cellIndex[i]
@@ -343,7 +334,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		}
 
 		//filling of the writeArray
-		for (tempMolecule = particleContainer->iterator(); tempMolecule.hasNext(); tempMolecule.next()) {
+		for (auto tempMolecule = particleContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
 
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {

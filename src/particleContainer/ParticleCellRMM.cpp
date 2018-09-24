@@ -22,8 +22,8 @@ bool ParticleCellRMM::findMoleculeByID(size_t& index, unsigned long molid) const
 
 	auto begin = nonconst_this->iterator();
 
-	for(auto it = begin; it.hasNext(); it.next()) {
-		if (it->id() == molid) {
+	for(auto it = begin; it.isValid(); ++it) {
+		if (it->getID() == molid) {
 			index = it.getIndex();
 			return true;
 		}
@@ -44,7 +44,7 @@ bool ParticleCellRMM::addParticle(Molecule& particle, bool checkWhetherDuplicate
 
 	if (checkWhetherDuplicate) {
 		size_t index;
-		found = findMoleculeByID(index, particle.id());
+		found = findMoleculeByID(index, particle.getID());
 	}
 
 	if (not found) {

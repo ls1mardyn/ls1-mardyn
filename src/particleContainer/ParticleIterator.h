@@ -11,9 +11,35 @@
  *
  **************************************************************************************/
 
-#ifndef  ParticleIterator_INC
-#define  ParticleIterator_INC
+#pragma once
 
+#ifdef MARDYN_AUTOPAS
+// AUTOPAS WRAPPER
+#include "molecules/AutoPasSimpleMolecule.h"
+#include <autopas/iterators/ParticleIteratorWrapper.h>
+
+/**
+ * Wrapper class for AutoPas' ParticleIterator
+ */
+class ParticleIterator : public autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> {
+public:
+
+	enum Type {
+		ALL_CELLS=0, /* iterates every cell */
+		ONLY_INNER_AND_BOUNDARY=1, /* iterates only inner and boundary cells, i.e. no halo cells */
+	};
+
+	ParticleIterator(){};
+
+	ParticleIterator(autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> parent)
+		: autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule>(parent) {}
+
+	size_t getCellIndex(){
+		return 0; // not yet implemented
+	}
+};
+
+#else
 #include <vector>
 #include <stdexcept>
 #include "utils/mardyn_assert.h"
@@ -39,10 +65,6 @@ public:
 
 	virtual ~ParticleIterator(){}
 
-	void next() {
-		operator++();
-	}
-
 	Molecule& operator *  () const;
 	Molecule* operator -> () const;
 
@@ -50,15 +72,14 @@ public:
 
 	CellIndex_T getCellIndex(){return _cell_index;}
 
-	bool hasNext() const {
-		return isValid();
+	bool isValid() const {
+		return _cells != nullptr and _cell_index < _cells->size() and _cell_iterator.isValid();
 	}
 
+	virtual void operator ++ ();
+
 protected:
-	void operator ++ ();
-	bool isValid() const {
-		return _cells != nullptr and _cell_index < _cells->size() and _cell_iterator.hasNext();
-	}
+
 
 	SingleCellIterator<ParticleCell> _cell_iterator;
 	Type _type;
@@ -138,13 +159,13 @@ inline void ParticleIterator :: next_non_empty_cell() {
 
 inline void ParticleIterator :: operator ++ () {
 
-	if (_cell_iterator.hasNext()) {
-		_cell_iterator.next();
+	if (_cell_iterator.isValid()) {
+		++_cell_iterator;
 	}
 
 	// don't merge into if-else, _cell_iterator may become invalid after ++
 
-	if (not _cell_iterator.hasNext()) {
+	if (not _cell_iterator.isValid()) {
 		next_non_empty_cell();
 	}
 }
@@ -169,6 +190,4 @@ inline void ParticleIterator :: updateCellIteratorCell() {
 		_cell_iterator = SingleCellIterator<ParticleCell>(&_cells->at(_cell_index));
 	}
 }
-
-
-#endif /* #ifndef ParticleIterator_INC */
+#endif  // MARDYN_AUTOPAS

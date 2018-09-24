@@ -14,7 +14,7 @@
 class DensityProfile : public ProfileBase {
 public:
 	~DensityProfile() final {};
-    void record(ParticleIterator *mol, unsigned long uID) final  {
+    void record(Molecule &mol, unsigned long uID) final  {
         _localProfile[uID] += 1;
     }
     void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {

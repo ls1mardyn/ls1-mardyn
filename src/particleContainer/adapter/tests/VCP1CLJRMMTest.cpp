@@ -9,6 +9,7 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/LinkedCells.h"
+#include "particleContainer/ParticleCellRMM.h"
 #include "particleContainer/adapter/VCP1CLJRMM.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
@@ -65,15 +66,15 @@ void VCP1CLJRMMTest::testForcePotentialCalculationU0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->id()-1][i], m->F(i), 1e-4);
+			str << "Molecule id=" << m->getID() << " index i="<< i << std::endl;
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), forces[m->getID()-1][i], m->F(i), 1e-4);
 		}
 	}
 
@@ -106,14 +107,14 @@ void VCP1CLJRMMTest::testForcePotentialCalculationF0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
+			str << "Molecule id=" << m->getID() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), 1e-7);
 		}
 	}
@@ -145,7 +146,7 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 	ParticleCellRMM & nonconst_cell_RMM = const_cast<ParticleCellRMM&>(cell_RMM);
 	auto begin = nonconst_cell_RMM.iterator();
 
-	for(auto it = begin; it.hasNext(); it.next()) {
+	for(auto it = begin; it.isValid(); ++it) {
 		nLJCenters += it->numLJcenters();
 		nCharges += it->numCharges();
 		nDipoles += it->numDipoles();
@@ -202,7 +203,7 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 		fullSoA.setTripletAccum(clearance, QuantityType::FORCE, LJC, ind);
 		fullSoA.setTripletAccum(clearance, QuantityType::VIRIAL, LJC, ind);
 
-		it.next();
+		++it;
 	}
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 }
@@ -218,7 +219,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -259,7 +260,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 
 	auto begin = cell_RMM.iterator();
 
-	for (auto it = begin; it.hasNext(); it.next()) {
+	for (auto it = begin; it.isValid(); ++it) {
 		double RMM_f_x = it->F(0);
 		double RMM_f_y = it->F(1);
 		double RMM_f_z = it->F(2);
@@ -291,7 +292,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	// copy-paste cause I'm lazy and have no particular time for unit tests.
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -336,7 +337,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-7*full_Virial));
 
 	auto begin1 = cell_RMM1.iterator();
-	for (auto it1 = begin1; it1.hasNext(); it1.next()) {
+	for (auto it1 = begin1; it1.isValid(); ++it1) {
 		double RMM_f_x = it1->F(0);
 		double RMM_f_y = it1->F(1);
 		double RMM_f_z = it1->F(2);
@@ -353,7 +354,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	}
 
 	auto begin2 = cell_RMM2.iterator();
-	for (auto it2 = begin2; it2.hasNext(); it2.next()) {
+	for (auto it2 = begin2; it2.isValid(); ++it2) {
 		double RMM_f_x = it2->F(0);
 		double RMM_f_y = it2->F(1);
 		double RMM_f_z = it2->F(2);

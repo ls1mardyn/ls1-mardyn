@@ -7,6 +7,9 @@
 
 #include "KDDecompositionTest.h"
 #include "Domain.h"
+#ifdef MARDYN_AUTOPAS
+#include "particleContainer/AutoPasContainer.h"
+#endif
 #include "particleContainer/LinkedCells.h"
 #include "io/ASCIIReader.h"
 
@@ -180,8 +183,8 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		std::set<unsigned long> lower_thread[3]; // the id of particles that were close to the lower boundary in the specific dimension are stored here
 		std::set<unsigned long> upper_thread[3]; // the id of particles that were close to the upper boundary in the specific dimension are stored here
 
-		for (ParticleIterator m = container->iterator(); m.hasNext();
-				m.next()) {
+		for (auto m = container->iterator(); m.isValid();
+				++m) {
 			for (int dim = 0; dim < 3; dim++) {
 				if (m->r(dim) < bBoxMin[dim] + cutoff * 0.5) {
 					// we shift particles close to the lower boundary to outside of the lower boundary.
@@ -190,7 +193,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 					m->setr(dim,
 							std::nexttoward((vcp_real_calc) bBoxMin[dim],
 									bBoxMin[dim] - 1.f));
-					lower_thread[dim].insert(m->id());
+					lower_thread[dim].insert(m->getID());
 				}
 				if (m->r(dim) > bBoxMax[dim] - cutoff * 0.5) {
 					// We shift particles close to the upper boundary to outside of the upper boundary.
@@ -204,7 +207,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 											(vcp_real_calc) bBoxMax[dim],
 											bBoxMax[dim] + 1.f);
 					m->setr(dim, r);
-					upper_thread[dim].insert(m->id());
+					upper_thread[dim].insert(m->getID());
 				}
 			}
 		}
@@ -244,12 +247,12 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
 	ASSERT_EQUAL(numMols, newNumMols);
 
-	for (ParticleIterator m = container->iterator(); m.hasNext(); m.next()) {
+	for (auto m = container->iterator(); m.isValid(); ++m) {
 		for (int dim = 0; dim < 3; dim++) {
-			if (lower[dim].count(m->id())) {
+			if (lower[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the top part of the domain.
 				ASSERT_TRUE(m->r(dim) >= bBoxMax[dim] - cutoff / 2.);
-			} else if (upper[dim].count(m->id())) {
+			} else if (upper[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the lower part of the domain.
 				ASSERT_TRUE(m->r(dim) <= bBoxMin[dim] + cutoff / 2.);
 			}
@@ -309,7 +312,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 	// INIT
 	KDDecomposition * kdd;
-	LinkedCells * moleculeContainer;
+	ParticleContainer * moleculeContainer;
 	{
 		const double boxL = 1241.26574;
 		const double cutOff = 26.4562;
@@ -326,7 +329,13 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 			bBoxMin[i] = kdd->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = kdd->getBoundingBoxMax(i, _domain);
 		}
+#ifndef MARDYN_AUTOPAS
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff);
+#else
+		moleculeContainer = new AutoPasContainer();
+		moleculeContainer->setCutoff(cutOff);
+		moleculeContainer->rebuild(bBoxMin, bBoxMax);
+#endif
 		moleculeContainer->update();
 		kdd->_steps = 0;
 		_rank = kdd->_rank;

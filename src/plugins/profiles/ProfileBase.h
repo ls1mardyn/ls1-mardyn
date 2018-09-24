@@ -34,7 +34,7 @@ public:
      * @param mol Reference to Molecule, needed to extract info such as velocity or Virial.
      * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
      */
-    virtual void record(ParticleIterator *mol, unsigned long uID) = 0;
+    virtual void record(Molecule &mol, unsigned long uID) = 0;
     /** @brief Append all necessary communication per bin to the DomainDecomposition. Append from e.g. _localProfile.
      *
      * @param domainDecomp DomainDecomposition handling the communication.

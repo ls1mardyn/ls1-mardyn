@@ -193,7 +193,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		for (int i = 0; i < numLeaving; ++i) {
 			Molecule m;
 			_sendBuf.readLeavingMolecule(i, m);
-			buf1 << m.id() << " ";
+			buf1 << m.getID() << " ";
 		}
 		global_log->debug() << buf1.str() << std::endl;
 
@@ -202,7 +202,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		for (int i = 0; i < numHalo; ++i) {
 			Molecule m;
 			_sendBuf.readHaloMolecule(i, m);
-			buf2 << m.id() << " ";
+			buf2 << m.getID() << " ";
 		}
 		global_log->debug() << buf2.str() << std::endl;
 
@@ -281,7 +281,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for (unsigned long i = 0; i < numLeaving; ++i) {
 					Molecule m;
 					_recvBuf.readLeavingMolecule(i, m); 
-					buf1 << m.id() << " ";
+					buf1 << m.getID() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
 
@@ -290,7 +290,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for (unsigned long i = 0; i < numHalo; ++i) {
 					Molecule m;
 					_recvBuf.readHaloMolecule(i, m);
-					buf2 << m.id() << " ";
+					buf2 << m.getID() << " ";
 				}
 				global_log->debug() << buf2.str() << std::endl;
 #endif
@@ -338,7 +338,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				for(unsigned long i = 0; i < numForces; ++i) {
 					Molecule m;
 					_recvBuf.readForceMolecule(i, m);
-					buf1 << m.id() << " ";
+					buf1 << m.getID() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
 				
@@ -358,9 +358,9 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					Molecule* m_target;
 					const double position[3] = { m.r(0), m.r(1), m.r(2) };
 					moleculeContainer->getMoleculeAtPosition(position, &m_target);
-					m_target->Fadd(m.F_vec());
-					m_target->Madd(m.M_vec());
-					m_target->Viadd(m.Vi_vec());
+					m_target->Fadd(m.F_arr().data());
+					m_target->Madd(m.M_arr().data());
+					m_target->Viadd(m.Vi_arr().data());
 				}
 				
 				//moleculeContainer->addParticles(mols, removeRecvDuplicates);
@@ -444,7 +444,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	{
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		RegionParticleIterator begin = moleculeContainer->regionIterator(lowCorner, highCorner);
+		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner);
 
 		#if defined (_OPENMP)
 		#pragma omp master
@@ -458,7 +458,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
-		for (RegionParticleIterator i = begin; i.hasNext(); i.next()) {
+		for (auto i = begin; i.isValid(); ++i) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			threadData[threadNum].push_back(*i);

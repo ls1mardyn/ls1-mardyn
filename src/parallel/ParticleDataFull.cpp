@@ -43,7 +43,7 @@ MPI_CHECK( MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType)
 }
 
 void ParticleDataFull::MoleculeToParticleData(ParticleDataFull &particleStruct, Molecule &molecule) {
-	particleStruct.id = molecule.id();
+	particleStruct.id = molecule.getID();
 	particleStruct.cid = molecule.componentid();
 	particleStruct.r[0] = molecule.r(0);
 	particleStruct.r[1] = molecule.r(1);

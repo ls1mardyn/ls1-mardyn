@@ -580,10 +580,10 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 	}
 
 	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in
-	ParticleIterator tM;
-	for( tM  = particleContainer->iterator();
-		 tM.hasNext();
-		 tM.next())
+
+	for( auto tM  = particleContainer->iterator();
+		 tM.isValid();
+		 ++tM)
 	{
 		// control temperature
 		this->ControlTemperature(&(*tM), simstep);
@@ -604,19 +604,17 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 	{
 //		global_log->info() << "Thermostat ON!" << endl;
 
-		ParticleIterator tM;
-
 		// init temperature control
 		this->Init(simstep);
 
-		for( tM  = particleContainer->iterator();
-			 tM.hasNext();
-			 tM.next())
+		for( auto tM  = particleContainer->iterator();
+			 tM.isValid();
+			 ++tM)
 		{
 			// measure kinetic energy
 			this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
 
-//          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
+//          cout << "id = " << tM->getID() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
 		}
 
 		// calc global values

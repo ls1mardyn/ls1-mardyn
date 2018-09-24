@@ -57,7 +57,7 @@ void ParticleDataRMM::getMPIType(MPI_Datatype &sendPartType) {
 }
 
 void ParticleDataRMM::MoleculeToParticleData(ParticleDataRMM &particleStruct, Molecule &molecule) {
-	particleStruct.id = molecule.id();
+	particleStruct.id = molecule.getID();
 	particleStruct.r[0] = molecule.r(0);
 	particleStruct.r[1] = molecule.r(1);
 	particleStruct.r[2] = molecule.r(2);

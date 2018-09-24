@@ -36,8 +36,8 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		#endif
 		{
 			std::vector<unsigned long> numMolecules_private(numComponents, 0ul);
-			const ParticleIterator begin = particleContainer->iterator();
-			for (auto molecule = begin; molecule.hasNext(); molecule.next()) {
+
+			for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
 				numMolecules_private[molecule->componentid()]++;
 			}
 
@@ -98,8 +98,8 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		{
 			std::vector<unsigned long> E_trans_priv(numComponents, 0.);
 			std::vector<unsigned long> E_rot_priv(numComponents, 0.);
-			const ParticleIterator begin = particleContainer->iterator();
-			for (auto molecule = begin; molecule.hasNext(); molecule.next()) {
+
+			for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
 				const int cid = molecule->componentid();
 				double E_trans_loc = 0.0;
 				double E_rot_loc = 0.0;

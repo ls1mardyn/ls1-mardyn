@@ -38,7 +38,7 @@ public:
 	}
 
 	/** get molecule ID */
-	unsigned long id() const { return _id; }
+	unsigned long getID() const { return _id; }
 	/** set molecule ID */
 	void setid(unsigned long id) { _id = id; }
 	/** set the molecule's component */
@@ -58,11 +58,10 @@ public:
 	/** get molecule's mass */
 	double mass() const { return _m; }
         
-        void setF(unsigned short d, double F) { _F[d] = F; }
+	void setF(unsigned short d, double F) { _F[d] = F; }
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
-	/** get forces onto molecule */
-	const double* F_vec() {return _F; }
+
 	/** get molecule's orientation */
 	const Quaternion& q() const { return _q; }
 
@@ -72,12 +71,12 @@ public:
 
 	/** get coordinate of the rotatational speed */
 	double D(unsigned short d) const { return _L[d]; }
-	/** get coordinate of the current angular momentum  onto molecule */ 
+
+	/** get coordinate of the current angular momentum  onto molecule */
 	double M(unsigned short d) const { return _M[d]; }
-	const double* M_vec() {return _M; }
+
 	/** get the virial **/
 	double Vi(unsigned short d) const { return _Vi[d];}
-	const double* Vi_vec() {return _Vi; }
 
 	void setD(unsigned short d, double D) { this->_L[d] = D; }
 
@@ -312,10 +311,10 @@ public:
 	static std::string getWriteFormat();
 
 	/** write information to stream */
-	void write(std::ostream& ostrm) const;
+	void write(std::ostream& ostrm) const override;
 
 	/** write binary information to stream */
-	void writeBinary(std::ostream& ostrm) const;
+	void writeBinary(std::ostream& ostrm) const override;
 
 	/** clear forces and moments */
 	void clearFM();
@@ -335,7 +334,7 @@ public:
 	/** See above comment.*/
 	void releaseOwnSoA();
 
-private:
+protected:
 	/** calculate forces and moments for already given site forces, for this precise site */
 	void calcFM_site(const std::array<double, 3>& d, const std::array<double, 3>& F);
 
@@ -358,6 +357,7 @@ private:
 	unsigned _soa_index_c;
 	unsigned _soa_index_d;
 	unsigned _soa_index_q;
+
 };
 
 std::ostream& operator<<( std::ostream& os, const FullMolecule& m );

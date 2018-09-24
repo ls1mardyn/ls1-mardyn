@@ -89,7 +89,7 @@ void VISWriter::endStep(ParticleContainer *particleContainer,
 
 		// originally VIS files had a fixed width of 8 (and no t), here I use 12 (with 2 for t)
 		//ostrm << "t           x           y           z          q0          q1          q2          q3" << endl;
-		for (ParticleIterator pos = particleContainer->iterator(); pos.hasNext(); pos.next()) {
+		for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
 			bool halo = false;
 			for (unsigned short d = 0; d < 3; d++) {
 				if ((pos->r(d) < particleContainer->getBoundingBoxMin(d)) || (pos->r(d) > particleContainer->getBoundingBoxMax(d))) {
@@ -98,7 +98,7 @@ void VISWriter::endStep(ParticleContainer *particleContainer,
 				}
 			}
 			if (!halo) {
-				outputstream << setiosflags(ios::fixed) << setw(8) << pos->id() << setw(2)
+				outputstream << setiosflags(ios::fixed) << setw(8) << pos->getID() << setw(2)
 				            << pos->componentid() << setprecision(3);
 				for (unsigned short d = 0; d < 3; d++) outputstream << setw(11) << pos->r(d);
 				outputstream << setprecision(3) << setw(7) << pos->q().qw() << setw(7) << pos->q().qx()
