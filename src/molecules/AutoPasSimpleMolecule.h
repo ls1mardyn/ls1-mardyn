@@ -22,8 +22,6 @@ public:
 								   double q1 = 1., double q2 = 0., double q3 = 0., double Dx = 0., double Dy = 0.,
 								   double Dz = 0.);
 
-
-
 	AutoPasSimpleMolecule(const AutoPasSimpleMolecule &m) = default;
 
 	~AutoPasSimpleMolecule() override = default;

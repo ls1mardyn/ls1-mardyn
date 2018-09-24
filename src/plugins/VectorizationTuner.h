@@ -43,7 +43,7 @@ public:
 	/**
 	 * destructor of the VectorizationTuner class.
 	 */
-	~VectorizationTuner();
+	~VectorizationTuner() override;
 
 	//documentation in PluginBase
 	void init(ParticleContainer *particleContainer,
@@ -252,6 +252,7 @@ private:
 
 	class VTWriterI {
 	public:
+		virtual ~VTWriterI() = default;
 		virtual void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
 				double cutoffRadiusBig, double LJCutoffRadiusBig)=0;
 		virtual void writeHeader(const std::string& distributionTypeString)=0;
