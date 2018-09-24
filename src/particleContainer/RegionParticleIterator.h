@@ -19,7 +19,7 @@
 class RegionParticleIterator : public ParticleIterator {
 public:
 	RegionParticleIterator(){};
-	RegionParticleIterator(autopas::ParticleIteratorWrapper<AutoPasFullMolecule> parent) : ParticleIterator(parent){};
+	RegionParticleIterator(autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> parent) : ParticleIterator(parent){};
 };
 
 #else

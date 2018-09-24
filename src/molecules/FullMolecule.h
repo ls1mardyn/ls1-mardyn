@@ -58,7 +58,7 @@ public:
 	/** get molecule's mass */
 	double mass() const { return _m; }
         
-        void setF(unsigned short d, double F) { _F[d] = F; }
+	void setF(unsigned short d, double F) { _F[d] = F; }
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
 	/** get forces onto molecule */

@@ -4,20 +4,20 @@
  * @date 20.09.18
  */
 
-#include "AutoPasFullMolecule.h"
+#include "AutoPasSimpleMolecule.h"
 
-const std::array<double, 3> &AutoPasFullMolecule::getR() const {
+const std::array<double, 3> &AutoPasSimpleMolecule::getR() const {
 	// this works as long as std::array is plain old data.
 	auto &pos = reinterpret_cast<const std::array<double, 3> &>(_r);
 	mardyn_assert(pos.data() == _r);
 	return pos;
 }
 
-bool AutoPasFullMolecule::inBox(const std::array<double, 3> &rmin, const std::array<double, 3> &rmax) const {
+bool AutoPasSimpleMolecule::inBox(const std::array<double, 3> &rmin, const std::array<double, 3> &rmax) const {
 	return MoleculeInterface::inBox(rmin.data(), rmax.data());
 }
 
-std::string AutoPasFullMolecule::toString() {
+std::string AutoPasSimpleMolecule::toString() {
 	std::ostringstream text;
 	// clang-format off
 	text << "Particle"
@@ -32,32 +32,32 @@ std::string AutoPasFullMolecule::toString() {
 	return text.str();
 }
 
-const std::array<double, 3> &AutoPasFullMolecule::getF() const {
+const std::array<double, 3> &AutoPasSimpleMolecule::getF() const {
 	// this works as long as std::array is plain old data.
 	auto &force = reinterpret_cast<const std::array<double, 3> &>(_F);
 	mardyn_assert(force.data() == _F);
 	return force;
 }
 
-void AutoPasFullMolecule::setF(const std::array<double, 3>& F) {
+void AutoPasSimpleMolecule::setF(const std::array<double, 3>& F) {
 	for (unsigned short i = 0; i < 3; i++) {
 		_F[i] = F[i];
 	}
 }
 
-void AutoPasFullMolecule::setF(double F[3]) {
+void AutoPasSimpleMolecule::setF(double F[3]) {
 	for (unsigned short i = 0; i < 3; i++) {
 		_F[i] = F[i];
 	}
 }
 
-void AutoPasFullMolecule::addF(const std::array<double, 3> &F) {
+void AutoPasSimpleMolecule::addF(const std::array<double, 3> &F) {
 	for (unsigned short i = 0; i < 3; i++) {
 		_F[i] += F[i];
 	}
 }
 
-void AutoPasFullMolecule::subF(const std::array<double, 3> &F) {
+void AutoPasSimpleMolecule::subF(const std::array<double, 3> &F) {
 	for (unsigned short i = 0; i < 3; i++) {
 		_F[i] -= F[i];
 	}

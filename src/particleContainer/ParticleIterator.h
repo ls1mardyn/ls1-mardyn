@@ -15,13 +15,13 @@
 
 #ifdef MARDYN_AUTOPAS
 // AUTOPAS WRAPPER
-#include "molecules/AutoPasFullMolecule.h"
+#include "molecules/AutoPasSimpleMolecule.h"
 #include <autopas/iterators/ParticleIteratorWrapper.h>
 
 /**
  * Wrapper class for AutoPas' ParticleIterator
  */
-class ParticleIterator : public autopas::ParticleIteratorWrapper<AutoPasFullMolecule> {
+class ParticleIterator : public autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> {
 public:
 
 	enum Type {
@@ -31,8 +31,8 @@ public:
 
 	ParticleIterator(){};
 
-	ParticleIterator(autopas::ParticleIteratorWrapper<AutoPasFullMolecule> parent)
-		: autopas::ParticleIteratorWrapper<AutoPasFullMolecule>(parent) {}
+	ParticleIterator(autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> parent)
+		: autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule>(parent) {}
 
 	size_t getCellIndex(){
 		return 0; // not yet implemented

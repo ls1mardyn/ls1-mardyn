@@ -16,6 +16,11 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
+
+#ifdef MARDYN_AUTOPAS
+#include "particleContainer/AutoPasContainer.h"
+#endif
+
 #include "parallel/DomainDecompBase.h"
 #include "parallel/NonBlockingMPIHandlerBase.h"
 #include "parallel/NonBlockingMPIMultiStepHandler.h"
@@ -342,17 +347,29 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->info() << "Datastructure type: " << datastructuretype << endl;
 			if(datastructuretype == "LinkedCells") {
 #ifdef MARDYN_AUTOPAS
-				global_log->fatal() << "LinkedCells not compiled (use AutoPas instead) !!!" << std::endl;
+				global_log->fatal()
+					<< "LinkedCells not compiled (use AutoPas instead, or compile with disabled autopas mode)!"
+					<< std::endl;
+				Simulation::exit(33);
 #else
 				_moleculeContainer = new LinkedCells();
 				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
 				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
-				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
-				lc->setCutoff(_cutoffRadius);
+				_moleculeContainer->setCutoff(_cutoffRadius);
 #endif
-			}else if(datastructuretype == "AdaptiveSubCells") {
+			} else if(datastructuretype == "AdaptiveSubCells") {
 				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
 				Simulation::exit(-1);
+			} else if(datastructuretype == "AutoPas" || datastructuretype == "AutoPasContainer") {
+#ifdef MARDYN_AUTOPAS
+				global_log->info() << "Using AutoPas container." << std::endl;
+				_moleculeContainer = new AutoPasContainer();
+				global_log->info() << "Setting cell cutoff radius for AutoPas container to " << _cutoffRadius << endl;
+				_moleculeContainer->setCutoff(_cutoffRadius);
+#else
+				global_log->fatal() << "AutoPas not compiled (use LinkedCells instead, or compile with enabled autopas mode)!" << std::endl;
+				Simulation::exit(33);
+#endif
 			}
 			else {
 				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;

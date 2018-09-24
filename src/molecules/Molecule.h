@@ -19,8 +19,8 @@
 
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 #ifdef MARDYN_AUTOPAS
-	#include "AutoPasFullMolecule.h"
-	typedef AutoPasFullMolecule Molecule;
+	#include "AutoPasSimpleMolecule.h"
+	typedef AutoPasSimpleMolecule Molecule;
 #else
 	typedef FullMolecule Molecule;
 #endif

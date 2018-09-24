@@ -10,8 +10,8 @@
 
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 #ifdef MARDYN_AUTOPAS
-	class AutoPasFullMolecule;
-	typedef AutoPasFullMolecule Molecule;
+	class AutoPasSimpleMolecule;
+	typedef AutoPasSimpleMolecule Molecule;
 #else
 	class FullMolecule;
 	typedef FullMolecule Molecule;

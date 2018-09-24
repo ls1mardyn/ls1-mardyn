@@ -14,16 +14,16 @@
 /**
  * class that implements additional functions to make the molecule compatible with autopas
  */
-class AutoPasFullMolecule : public FullMolecule {
+class AutoPasSimpleMolecule : public FullMolecule {
 public:
-	explicit AutoPasFullMolecule(unsigned long id = 0, Component *component = nullptr,
+	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component *component = nullptr,
 	                    double rx = 0., double ry = 0., double rz = 0.,
 	                    double vx = 0., double vy = 0., double vz = 0.,
 	                    double q0 = 1., double q1 = 1., double q2 = 0., double q3 = 0.,
 	                    double Dx = 0., double Dy = 0., double Dz = 0.
 	) : FullMolecule(id, component, rx, ry, rz, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz) {}
 
-	AutoPasFullMolecule(const AutoPasFullMolecule &m) = default;
+	AutoPasSimpleMolecule(const AutoPasSimpleMolecule &m) = default;
 
 	/**
 	 * get the position of the particle as std::array
