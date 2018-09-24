@@ -23,6 +23,7 @@ if(ENABLE_AUTOPAS)
             -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
             -DBUILD_TESTS=OFF
             -DBUILD_EXAMPLES=OFF
+            -DENABLE_ADDRESS_SANITIZER=ON
     )
 
     # Get autopas source and binary directories from CMake project
