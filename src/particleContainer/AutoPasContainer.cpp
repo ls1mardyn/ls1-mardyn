@@ -106,12 +106,24 @@ double *AutoPasContainer::getCellLength() {
 	throw std::runtime_error("not yet implemented");
 }
 
+autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t){
+	switch(t){
+		case ParticleIterator::Type::ALL_CELLS:
+			return autopas::IteratorBehavior::haloAndOwned;
+		case ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY:
+			return autopas::IteratorBehavior::ownedOnly;
+	}
+}
+
 ParticleIterator AutoPasContainer::iterator(ParticleIterator::Type t) {
-	return _autopasContainer.getIterator();
+
+	return _autopasContainer.begin(convertBehaviorToAutoPas(t));
 }
 
 RegionParticleIterator
 AutoPasContainer::regionIterator(const double *startCorner, const double *endCorner, ParticleIterator::Type t) {
-	return _autopasContainer.getRegionIterator();
+	std::array<double, 3> lowCorner{startCorner[0],startCorner[1],startCorner[2]};
+	std::array<double, 3> highCorner{endCorner[0],endCorner[1],endCorner[2]};
+	return _autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t));
 }
 
