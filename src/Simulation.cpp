@@ -466,7 +466,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			{
 				/*
 				 * Needs to be initialized later for some reason, done in Simulation::prepare_start()
-				 * TODO: perhabs work on this, to make it more robust 
+				 * TODO: perhaps work on this, to make it more robust
 				 *
 				 *_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
                  */

@@ -65,7 +65,7 @@ void AutoPasContainer::traversePartialInnermostCells(CellProcessor &cellProcesso
 }
 
 unsigned long AutoPasContainer::getNumberOfParticles() {
-	return 0;
+	return _autopasContainer.getNumberOfParticles();
 }
 
 void AutoPasContainer::clear() {

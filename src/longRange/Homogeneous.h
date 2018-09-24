@@ -3,9 +3,11 @@
 #define HOMOGENEOUS_H__
 
 #include "LongRangeCorrection.h"
-
+#include "molecules/Component.h"
+#include "molecules/Comp2Param.h"
 #include <cmath>
 
+class Simulation;
 class Domain;
 class LongRangeCorrection;
 

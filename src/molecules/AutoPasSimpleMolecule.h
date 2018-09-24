@@ -210,7 +210,7 @@ public:
 			  << "\t" << std::endl;
 	}
 
-	virtual void writeBinary(std::ostream& ostrm) const override {
+	void writeBinary(std::ostream& ostrm) const override {
 		ostrm.write(reinterpret_cast<const char*>(&_id), 8);
 		ostrm.write(reinterpret_cast<const char*>(&(_r[0])), 8);
 		ostrm.write(reinterpret_cast<const char*>(&(_r[1])), 8);
@@ -225,15 +225,8 @@ public:
 	void calcFM() override {}
 	void check(unsigned long id) override {}
 
-
-	/** In almost all cases, molecule's caches are stored in SoAs.
-	 * In some rare instances (e.g. ParticleContainer::getEnergy())
-	 * a molecule should rather better exist alone and not be part of a particleCell.
-	 * This function allocates a new SoA.
-	 * Remember to release it when no longer necessary! */
 	void buildOwnSoA() override {}
 
-	/** See above comment.*/
 	void releaseOwnSoA() override {}
 
 	bool inBox(const double rmin[3], const double rmax[3]) const override {
