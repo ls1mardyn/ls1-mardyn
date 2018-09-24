@@ -18,7 +18,8 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
 	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, autopas::allContainerOptions,
 	                       autopas::allTraversalOptions, _tuningFrequency);
-
+	memcpy(_boundingBoxMin, bBoxMin, 3*sizeof(double));
+	memcpy(_boundingBoxMax, bBoxMax, 3*sizeof(double));
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
 	return false;
 }
@@ -29,7 +30,18 @@ void AutoPasContainer::update() {
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
                                    const bool &rebuildCaches) {
-	_autopasContainer.addParticle(particle);
+	if(particle.inBox(_boundingBoxMin, _boundingBoxMax)){
+		_autopasContainer.addParticle(particle);
+	} else {
+		_autopasContainer.addHaloParticle(particle);
+	}
+
+}
+
+bool AutoPasContainer::addHaloParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
+                                       const bool &rebuildCaches) {
+	_autopasContainer.addHaloParticle(particle);
+	return true;
 }
 
 void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool checkWhetherDuplicate) {
@@ -126,4 +138,6 @@ AutoPasContainer::regionIterator(const double *startCorner, const double *endCor
 	std::array<double, 3> highCorner{endCorner[0],endCorner[1],endCorner[2]};
 	return _autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t));
 }
+
+
 

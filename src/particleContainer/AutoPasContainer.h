@@ -30,6 +30,9 @@ public:
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 	                 const bool &rebuildCaches = false) override;
 
+	bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+	                     const bool& rebuildCaches = false) override;
+
 	void addParticles(std::vector<Molecule> &particles, bool checkWhetherDuplicate = false) override;
 
 	void traverseCells(CellProcessor &cellProcessor) override;
