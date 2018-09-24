@@ -14,7 +14,7 @@ endif
 LDFLAGS  += -lcppunit
 
 
-CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "vtk/" | grep "/tests/")
+CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "AutoPas" | grep -v "parallel/" | grep -v "vtk/" | grep "/tests/")
 ifneq ($(PARTYPE), PAR)
 #include the sequential DomainDecompBaseTest (if SEQTYPE == PAR, it will be included below with the parallel tests)
 CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep "parallel/tests/DomainDecompBaseTest")
