@@ -4,6 +4,8 @@
  * @date 19.09.18
  */
 #include <exception>
+#include <particleContainer/adapter/VectorizedCellProcessor.h>
+#include <particleContainer/adapter/LegacyCellProcessor.h>
 #include "AutoPasContainer.h"
 
 AutoPasContainer::AutoPasContainer() :
@@ -51,9 +53,24 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 }
 
 void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
-	autopas::LJFunctor<Molecule, CellType> functor;
-	functor.setGlobals(_cutoff, 1., 1., 0.);
-	_autopasContainer.iteratePairwise(&functor, autopas::DataLayoutOption::aos);
+	if(dynamic_cast<VectorizedCellProcessor*> (&cellProcessor) or dynamic_cast<LegacyCellProcessor*> (&cellProcessor)){
+		autopas::LJFunctor<Molecule, CellType> functor;
+		{
+			auto iter = iterator();
+			if (not iter.isValid()) {
+				return;
+			}
+			auto ljcenter = iter->component()->ljcenter(0);
+			double epsilon = ljcenter.eps();
+			double sigma = ljcenter.sigma();
+			double shift = ljcenter.shift6()/6.;
+			functor.setGlobals(_cutoff, epsilon, sigma, shift);
+		}
+		_autopasContainer.iteratePairwise(&functor, autopas::DataLayoutOption::aos);
+	}
+	else{
+		global_log->warning() << "only lj functors are supported for traversals." << std::endl;
+	}
 }
 
 void AutoPasContainer::traverseNonInnermostCells(CellProcessor &cellProcessor) {
