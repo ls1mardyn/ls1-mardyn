@@ -168,18 +168,8 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 		count[i] = 0;
 	}
 
-	std::cout << std::endl << "preexchange:" << std::endl;
-	for(auto iter = container->iterator(); iter.isValid(); ++iter){
-		iter->write(std::cout);
-	}
-
 	// after the exchange, there have to be 21 copies in the halos, i.e. 24 molecules in total
 	_domainDecomposition->exchangeMolecules(container, _domain);
-
-	std::cout << std::endl << "postexchange:" << std::endl;
-	for(auto iter = container->iterator(); iter.isValid(); ++iter){
-		iter->write(std::cout);
-	}
 
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 
