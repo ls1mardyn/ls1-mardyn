@@ -147,10 +147,15 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 #ifdef ENABLE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-        // Using cout instead of logger to get the message from each MPI rank
-        std::cout << "rank " << rank << ": Traversal " << selectedTraversal
-                  << " selected by autotuning based on cutoff=" << cutoff
-                  << " and density=" << density << std::endl;
+
+		// Using cout instead of logger to get the message from each MPI rank
+		// Create the complete string before printing
+		// to prevent multiple ranks from interfering with each other's output
+        std::stringstream outputStream;
+        outputStream << "rank " << rank << ": Traversal " << selectedTraversal
+									 << " selected by autotuning based on cutoff=" << cutoff
+									 << " and density=" << density << std::endl;
+        std::cout << outputStream.str();
     }
 
     // This will select the traversal from the xml file when autotuning is deactivated
