@@ -51,7 +51,8 @@
       	<CommunicationScheme>indirect</CommunicationScheme>
       </parallelisation>
       <datastructure type="LinkedCells">
-      	  <autotuning>true</autotuning>
+          <traversalSelector>c04</traversalSelector>
+      	  <autotuning>false</autotuning>
           <autotuningSteps>3000</autotuningSteps>
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
