@@ -141,7 +141,7 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 		return;
 	}
 
-	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", 17.0);
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", 21.0);
 
 	unsigned int count[3] = {0};
 	ASSERT_EQUAL(3ul, container->getNumberOfParticles());

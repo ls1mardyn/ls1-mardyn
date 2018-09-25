@@ -240,10 +240,12 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
 		double cutoff = moleculeContainer->getCutoff();
-		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0), moleculeContainer->getBoundingBoxMin(1),
-							  moleculeContainer->getBoundingBoxMin(2)};
-		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0), moleculeContainer->getBoundingBoxMax(1),
-							moleculeContainer->getBoundingBoxMax(2)};
+		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
+							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
+							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
+		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
+							moleculeContainer->getBoundingBoxMax(1) + cutoff,
+							moleculeContainer->getBoundingBoxMax(2) + cutoff};
 
 		if (direction < 0) {
 			startRegion[dim] = moleculeContainer->getBoundingBoxMin(dim);

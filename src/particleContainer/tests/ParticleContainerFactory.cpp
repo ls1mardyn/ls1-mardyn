@@ -69,11 +69,11 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 	ParticleContainer* moleculeContainer;
 	if (type == Type::LinkedCell) {
 #ifndef MARDYN_AUTOPAS
-		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoff);
+		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff);
 #else
-		AutoPasContainer* container = new AutoPasContainer();
-		container->setCutoff(cutoff);
-		container->rebuild(bBoxMin, bBoxMax);
+		moleculeContainer = new AutoPasContainer();
+		moleculeContainer->setCutoff(cutoff);
+		moleculeContainer->rebuild(bBoxMin, bBoxMax);
 #endif
 		#ifdef ENABLE_MPI
 		DomainDecomposition * temp = 0;

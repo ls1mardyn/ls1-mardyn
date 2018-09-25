@@ -152,7 +152,7 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 
 	// make sure we have a DomainDecompBase
 	_domainDecomposition = new DomainDecompBase();
-	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", 17.0);
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", 21.0);
 
 	unsigned int count[3] = {0};
 	ASSERT_EQUAL(3ul, container->getNumberOfParticles());
@@ -168,8 +168,19 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 		count[i] = 0;
 	}
 
+	std::cout << std::endl << "preexchange:" << std::endl;
+	for(auto iter = container->iterator(); iter.isValid(); ++iter){
+		iter->write(std::cout);
+	}
+
 	// after the exchange, there have to be 21 copies in the halos, i.e. 24 molecules in total
 	_domainDecomposition->exchangeMolecules(container, _domain);
+
+	std::cout << std::endl << "postexchange:" << std::endl;
+	for(auto iter = container->iterator(); iter.isValid(); ++iter){
+		iter->write(std::cout);
+	}
+
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 
 	m = container->iterator();
