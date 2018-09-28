@@ -1,0 +1,37 @@
+# Reference: M. Orsi, Comparative assessment of the ELBA coarse-grained 
+# model for water, Molecular Physics (2014), 112, 1566-1576
+
+units real
+atom_style full
+boundary        p p p
+#read_data data.singleTIP4P-2005
+read_data final_data.wat.ascii_373K
+include forcefield.TIP4P-2005
+
+replicate 8 8 8
+
+variable Nrun equal 101
+
+variable Text equal 373.15
+variable Pext equal 1.0
+
+group hydrogen type 1
+group oxygen type 2
+
+#velocity all create ${Text} 1234
+
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check yes
+
+timestep 2.0
+
+fix constrain all shake 1.0e-4 100 0 b 1 a 1
+#fix integrate all npt temp ${Text} ${Text} 500.0 iso ${Pext} ${Pext} 1000.0
+fix integrate all nvt temp ${Text} ${Text} 10.0
+fix removeMomentum all momentum 1 linear 1 1 1
+
+#thermo_style custom step temp f_TempAve press f_PressAve f_PEAve_Mol f_DensAve 
+thermo          25
+thermo_modify   flush yes
+
+run ${Nrun}

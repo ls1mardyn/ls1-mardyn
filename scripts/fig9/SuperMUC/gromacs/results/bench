@@ -1,0 +1,21 @@
+MoleculeType   TIP4P
+NumMolecules  456651
+NumAtoms     1826604
+Timesteps        100
+
+
+MPIxOMP     Force(s)    RealTime(s)     MMUPs/s  MPIloadImbalance(%)
+ 1x32         15.147             37        1.25                  NaN
+ 2x16         15.745             41        1.12                  0.8
+ 4x8          14.958             38        1.21                  1.8
+ 8x4          14.657             38        1.21                  2.2
+16x2          14.472             35        1.32                  0.7
+32x1          14.340             35        1.32                  2.5
+
+
+MPIxOMP     Force(s)    RealTime(s)     MMUPs/s  MPIloadImbalance(%)
+ 1x16         15.031             38        1.21
+ 2x8          15.092             39        1.18
+ 4x4          14.920             37        1.25
+ 8x2          14.813             37        1.25
+16x1          14.784             37        1.25

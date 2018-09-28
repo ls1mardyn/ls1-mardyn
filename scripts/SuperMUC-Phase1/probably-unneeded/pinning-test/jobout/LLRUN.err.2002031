@@ -1,8 +1,0 @@
-
-DISK GROUP QUOTAS for home and project file systems:
-Filesystem                                 Quota     Used Space     Free Space
-/home/hpc/pr48te          ($HOME)        100.0GB   89.1GB (89%)   10.9GB (11%)
-/gpfs/work/pr48te         ($WORK)        1000.0GB  600.3GB (60%)  399.7GB (40%)
--------------------------------------------------------------------------------
-
-Executing LRZ User Prolog ...

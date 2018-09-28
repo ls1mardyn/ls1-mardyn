@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+	
+	<moleculetype id="1" name="tip4p2005" >
+		<site type="LJ126" id="1" >
+			<coords> <x>0.0</x> <y>-0.6555840160E-01</y> <z>-0.5680543405E-17</z> </coords>
+			<mass>15.999</mass>
+			<sigma>3.1589</sigma>
+			<epsilon>93.2</epsilon>
+		</site>
+		<site type="Charge" id="2" >
+			<coords> <x>0.0</x> <y>0.8904159840E-01</y> <z>0.4004216760E-17</z> </coords>
+			<mass>0.0</mass>
+			<charge>-455.059106554158</charge>
+		</site>
+		<site type="Charge" id="3" >
+			<coords> <x>0.0</x> <y>0.5203238750</y> <z>0.7569503273</z> </coords>
+			<mass>1.0079</mass>
+			<charge>227.529553277079</charge>
+		</site>
+		<site type="Charge" id="4" >
+			<coords> <x>0.0</x> <y>0.5203238750</y> <z>-0.7569503273</z> </coords>
+			<mass>1.0079</mass>
+			<charge>227.529553277079</charge>
+		</site>
+		<momentsofinertia rotaxes="xyz" >
+			<Ixx>1.769514262</Ixx>
+			<Iyy>1.155000582</Iyy>
+			<Izz>0.6145136798</Izz>
+		</momentsofinertia>
+	</moleculetype>
+
+</components>

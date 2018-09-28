@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.1</length>
+    <mass unit="u">1</mass>
+    <energy unit="K">1</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.00182367</timestep>
+    </integrator>
+    <run>
+      <currenttime>0</currenttime>
+      <production>
+        <steps>1000</steps>
+      </production>
+    </run>
+    <ensemble type="NVT">
+      <temperature unit="reduced">373.15</temperature>
+      <domain type="box">
+		<!-- 31.504495 63.00899 126.019980 -->
+		<!-- 63.00899000000000 -->
+		<!-- 126.017980000000 -->
+		<!-- 252.035960000000 -->
+        <lx> 252.035960000000 </lx>
+        <ly> 252.035960000000 </ly>
+        <lz> 252.035960000000 </lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">components_tip4p2005.xml</include>
+      </components>
+      <phasespacepoint>
+        <generator name="ReplicaGenerator">
+          <type>homogeneous</type>
+          <files>
+            <vapor>
+              <!--
+			  <header>../run01/cp_binary-0.restart.header.xml</header>
+              <data>../run01/cp_binary-0.restart.dat</data>
+			  -->
+              <header>8000-mols.header.xml</header>
+              <data>8000-mols.dat</data>
+            </vapor>
+          </files>
+          <numblocks>
+            <xz>4</xz>
+            <vapor>4</vapor>
+          </numblocks>
+          <diameter>5.0</diameter>
+        </generator>
+      </phasespacepoint>
+    </ensemble>
+    <algorithm>
+      <parallelisation type="DomainDecomposition"/>
+      <datastructure type="LinkedCells">
+        <cellsInCutoffRadius>1</cellsInCutoffRadius>
+		<traversalSelector>c08</traversalSelector>
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">10.0</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+    </algorithm>
+    <output>
+	  <outputplugin name="FlopRateWriter">
+		  <mode>stdout</mode>
+		  <writefrequency>25</writefrequency>
+	  </outputplugin>
+	  <!--
+      <outputplugin name="VTKMoleculeWriter">
+        <writefrequency>100</writefrequency>
+        <outputprefix>vtk</outputprefix>
+      </outputplugin>
+      <outputplugin name="CheckpointWriter">
+        <type>binary</type>
+        <writefrequency>500</writefrequency>
+        <outputprefix>cp_binary</outputprefix>
+      </outputplugin>
+	  -->
+    </output>
+  </simulation>
+</mardyn>
