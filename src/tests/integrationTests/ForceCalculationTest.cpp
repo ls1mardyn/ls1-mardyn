@@ -37,7 +37,11 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "ForceCalculationTestU0.inp", 1.1);
 
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
+#ifndef MARDYN_AUTOPAS
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
+#else
+#warning virial not supported in autopas mode
+#endif
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
 	LegacyCellProcessor cellProcessor( 1.1, 1.1, &forceAdapter);
@@ -56,8 +60,11 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	}
 
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
+#ifndef MARDYN_AUTOPAS
 	ASSERT_DOUBLES_EQUAL(96, _domain->getLocalVirial(), 1e-8);
-
+#else
+#warning virial not supported in autopas mode
+#endif
 	delete container;
 }
 
@@ -81,7 +88,11 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "ForceCalculationTestF0.inp", 1.3);
 
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
+#ifndef MARDYN_AUTOPAS
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
+#else
+#warning virial not supported in autopas mode
+#endif
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
 	LegacyCellProcessor cellProcessor( 1.3, 1.3, &forceAdapter);
@@ -100,7 +111,10 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	}
 
 	ASSERT_DOUBLES_EQUAL(-4, _domain->getLocalUpot(), 1e-8);
+#ifndef MARDYN_AUTOPAS
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), tolerance_virial);
-
+#else
+#warning virial not supported in autopas mode
+#endif
 	delete container;
 }

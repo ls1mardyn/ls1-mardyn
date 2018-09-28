@@ -20,10 +20,10 @@ using namespace std;
 
 class MDGenerator;
 
-#ifndef ENABLE_REDUCED_MEMORY_MODE
+#if !defined(ENABLE_REDUCED_MEMORY_MODE) && !defined(MARDYN_AUTOPAS)
 TEST_SUITE_REGISTRATION(CheckpointRestartTest);
 #else
-#pragma message "Compilation Info: CheckpointRestartTest disabled in reduced memory mode."
+#pragma message "Compilation Info: CheckpointRestartTest disabled in reduced memory mode and autopas mode."
 #endif
 
 

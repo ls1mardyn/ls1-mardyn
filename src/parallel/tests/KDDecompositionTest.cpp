@@ -230,6 +230,17 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	container->update();
 
+	for(auto iter = container->iterator(ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
+		bool found = false;
+		auto id = iter->getID();
+		for(unsigned short dim = 0; dim < 3; ++dim){
+			if(lower[dim].count(id) or upper[dim].count(id)){
+				found = true;
+			}
+		}
+		ASSERT_EQUAL_MSG("shifted molecule still in inner cells", found, false);
+	}
+
 	//needed to properly exchange the particles. In the first step leaving particles are normally not exchanged...
 	dynamic_cast<KDDecomposition*>(_domainDecomposition)->_steps++;
 

@@ -123,6 +123,13 @@ void AutoPasContainer::updateMoleculeCaches() {
 }
 
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
+	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
+	for (auto iter = iterator(); iter.isValid(); ++iter) {
+		if (iter->getR() == pos_arr) {
+			*result = &(*iter);
+			return true;
+		}
+	}
 	return false;
 }
 

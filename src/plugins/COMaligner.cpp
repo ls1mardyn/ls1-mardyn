@@ -31,7 +31,7 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
         global_log -> error() << "[COMaligner] HALTING SIMULATION" << std::endl;
         _enabled = false;
         // HALT SIM
-        global_simulation -> exit(1);
+        Simulation::exit(1);
         return;
     }
 

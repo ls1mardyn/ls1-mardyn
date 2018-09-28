@@ -24,10 +24,10 @@
 
 using namespace std;
 
-#ifndef ENABLE_REDUCED_MEMORY_MODE
+#if !defined(ENABLE_REDUCED_MEMORY_MODE) && !defined(MARDYN_AUTOPAS)
 TEST_SUITE_REGISTRATION(RDFTest);
 #else
-#pragma message "Compilation info: RDFTest disabled in reduced memory mode"
+#pragma message "Compilation info: RDFTest disabled in reduced memory mode and autopas mode"
 #endif
 
 

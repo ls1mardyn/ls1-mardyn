@@ -19,8 +19,9 @@ AutoPasSimpleMolecule::AutoPasSimpleMolecule(unsigned long id, Component* compon
 	if (_component == nullptr) {
 		_component = component;
 	} else if (_component != component and component != nullptr) {
-		global_log->fatal() << "AutoPasSimpleMolecule can only handle one component" << std::endl;
-		Simulation::exit(32);
+		global_log->debug() << "AutoPasSimpleMolecule can only handle one component" << std::endl;
+		_component = component;
+		//Simulation::exit(32);
 	}
 }
 

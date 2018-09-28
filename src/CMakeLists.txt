@@ -38,7 +38,7 @@ else()
 #    list(FILTER MY_SRC_BACK INCLUDE REGEX "AutoPas|ParticleIterator")
 #    list(FILTER MY_SRC EXCLUDE REGEX "/particleContainer/")
 #    list(APPEND MY_SRC ${MY_SRC_BACK})
-    list(FILTER MY_SRC EXCLUDE REGEX "LinkedCells")
+    list(FILTER MY_SRC EXCLUDE REGEX "LinkedCells|VectorizedCellProcessorTest")
 endif ()
 
 # add the executable
