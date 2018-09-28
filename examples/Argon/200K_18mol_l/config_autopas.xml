@@ -55,11 +55,6 @@
         <writefrequency>5</writefrequency>
         <outputprefix>Argon</outputprefix>
       </outputplugin>
-      <outputplugin name="FlopRateWriter">
-        <writefrequency>1</writefrequency>
-        <outputprefix>Argon_FLOPS</outputprefix>
-        <mode>stdout</mode>
-      </outputplugin>
       <outputplugin name="SysMonOutput">
         <writefrequency>10000</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
