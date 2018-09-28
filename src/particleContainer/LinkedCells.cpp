@@ -601,12 +601,12 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 }
 
 void LinkedCells::deleteOuterParticles() {
-	if (_cellsValid == false) {
+	/*if (_cellsValid == false) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first"
 				<< endl;
 		Simulation::exit(1);
-	}
+	}*/
 
 	const int numHaloCells = _haloCellIndices.size();
 

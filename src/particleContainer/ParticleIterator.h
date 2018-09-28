@@ -114,7 +114,7 @@ inline ParticleIterator :: ParticleIterator (Type t_arg, CellContainer_T_ptr cel
 	const CellContainer_T& cells = *_cells;
 
 	if(_cell_index < cells.size()) {
-		if(cells.at(_cell_index).isEmpty()) {
+		if(cells.at(_cell_index).isEmpty() or (_type == ONLY_INNER_AND_BOUNDARY and cells.at(_cell_index).isHaloCell())) {
 			next_non_empty_cell();
 		}
 		/*
@@ -150,7 +150,13 @@ inline void ParticleIterator :: next_non_empty_cell() {
 
 		const ParticleCellBase & c = cells.at(_cell_index);
 
-		if(c.isNotEmpty() and (_type == ALL_CELLS or not c.isHaloCell())) {
+		// if we want only inner/boundary cells: check if it is a halo cell
+		if(_type == ONLY_INNER_AND_BOUNDARY and c.isHaloCell()){
+			continue;
+		}
+
+		// only use this cell if it is not empty
+		if(c.isNotEmpty()) {
 			updateCellIteratorCell();
 			break;
 		}

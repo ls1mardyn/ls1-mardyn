@@ -90,6 +90,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 	std::list<ChemicalPotential> chemPot;
 	inputReader.readPhaseSpace(moleculeContainer, &chemPot, domain, domainDecomposition);
 	moleculeContainer->deleteOuterParticles();
+	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 
 	domain->initParameterStreams(cutoff, cutoff);
