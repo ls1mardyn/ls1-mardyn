@@ -409,6 +409,11 @@ void LinkedCellsTest::testMidpointMPIDirect() {
 	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
 }
 
+void LinkedCellsTest::testEighthShellMPIDirectPP() {
+//	doForceComparisonTest("simple-lj.inp", TraversalTuner < ParticleCell > ::traversalNames::MP, 2, "direct", "mp");
+	doForceComparisonTest("simple-lj-tiny.inp", TraversalTuner < ParticleCell > ::traversalNames::C08ES, 2, "direct-pp", "es");
+}
+
 void LinkedCellsTest::testCellBorderAndFlagManager() {
 	long int cellIndex;
 	double cellBoxMin[3], cellBoxMax[3];
@@ -568,17 +573,17 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	//------------------------------------------------------------
 	// Do calculation with FS
 	//------------------------------------------------------------
-//	std::cout << std::endl<<"reference:"<<std::endl;
+	std::cout << std::endl<<"reference:"<<std::endl;
 	{
 		container->traverseCells(*cellProc);
 		// calculate forces
 		const auto begin = container->iterator();
 		for (auto i = begin; i.isValid(); ++i) {
 			i->calcFM();
-//			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
+			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
 	}
-//	std::cout << std::endl <<"test:"<< std::endl;
+	std::cout << std::endl <<"test:"<< std::endl;
 	//------------------------------------------------------------
 	// Do calculation with TestTraversal
 	//------------------------------------------------------------
@@ -586,20 +591,20 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		containerTest->traverseCells(*cellProc2);
 		// calculate forces
 
-//		std::cout << "pre force exchange:" << std::endl;
+		std::cout << "pre force exchange:" << std::endl;
 		for (auto i = containerTest->iterator(); i.isValid(); ++i) {
 			i->calcFM();
-//			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
+			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
 		if (containerTest->requiresForceExchange()) {
 			domainDecompositionTest->exchangeForces(containerTest, _domain);
 		}
-//		std::cout << "after force exchange:"<< std::endl;
+		std::cout << "after force exchange:"<< std::endl;
 
-//		for (auto i = containerTest->iterator(); i.isValid(); ++i) {
-//			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
-//					<< ", " << i->F(2) << std::endl;
-//		}
+		for (auto i = containerTest->iterator(); i.isValid(); ++i) {
+			std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
+					<< ", " << i->F(2) << std::endl;
+		}
 	}
 	//------------------------------------------------------------
 	container->deleteOuterParticles();

@@ -9,7 +9,7 @@
 
 #include <vector>
 #include <functional>
-#include "../HaloRegion.h"
+#include "parallel/HaloRegion.h"
 
 class ZonalMethod {
 public:

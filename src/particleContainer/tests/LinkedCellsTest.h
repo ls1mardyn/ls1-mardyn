@@ -37,6 +37,8 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testMidpointMPIDirectPP);
 	TEST_METHOD(testMidpointMPIDirect);
 	TEST_METHOD(testMidpointMPIIndirect);
+
+	TEST_METHOD(testEighthShellMPIDirectPP);
 #else
 #pragma message "half and midpoint tests disabled for RMM"
 #endif
@@ -90,6 +92,8 @@ public:
 	void testMidpointMPIDirectPP();
 	void testMidpointMPIDirect();
 	void testMidpointMPIIndirect();
+
+	void testEighthShellMPIDirectPP();
 
 	void testCellBorderAndFlagManager();
 

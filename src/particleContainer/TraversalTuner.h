@@ -31,7 +31,8 @@ public:
 		SLICED   = 3,
 		HS       = 4,
 		MP       = 5,
-		QSCHED   = 6
+		C08ES    = 6,
+		QSCHED   = 7,
 	};
 
 	TraversalTuner();
@@ -61,9 +62,9 @@ public:
 		return selectedTraversal;
 	}
         
-        CellPairTraversals<ParticleCell>* getCurrentOptimalTraversal() {
-                return _optimalTraversal;
-        }
+    CellPairTraversals<ParticleCell>* getCurrentOptimalTraversal() {
+            return _optimalTraversal;
+    }
         
 private:
 	std::vector<CellTemplate>* _cells;
@@ -90,6 +91,7 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 	struct SlicedCellPairTraversalData   *slicedData = new SlicedCellPairTraversalData;
     struct HalfShellTraversalData    	 *hsData   	 = new HalfShellTraversalData;
     struct MidpointTraversalData    	 *mpData   	 = new MidpointTraversalData;
+	struct C08CellPairTraversalData    	 *c08esData  = new C08CellPairTraversalData;
 
 
 	_traversals = {
@@ -98,7 +100,8 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 			make_pair(nullptr, c04Data),
 			make_pair(nullptr, slicedData),
             make_pair(nullptr, hsData),
-            make_pair(nullptr, mpData)
+            make_pair(nullptr, mpData),
+			make_pair(nullptr, c08esData)
 	};
 #ifdef QUICKSCHED
 	struct QuickschedTraversalData *quiData = new QuickschedTraversalData;
@@ -127,16 +130,17 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 
 	// log traversal
     if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTraversal))
-           global_log->info() << "Using HalfShellTraversal." << endl;
+    	global_log->info() << "Using HalfShellTraversal." << endl;
     else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTraversal))
         global_log->info() << "Using OriginalCellPairTraversal." << endl;
     else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-        global_log->info() << "Using C08CellPairTraversal." << endl;
+        global_log->info() << "Using C08CellPairTraversal without eighthShell." << endl;
+    else if (dynamic_cast<C08CellPairTraversal<CellTemplate, true> *>(_optimalTraversal))
+	    global_log->info() << "Using C08CellPairTraversal with eighthShell." << endl;
     else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-            global_log->info() << "Using C04CellPairTraversal." << endl;
+    	global_log->info() << "Using C04CellPairTraversal." << endl;
     else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
         global_log->info() << "Using MidpointTraversal." << endl;
-
 	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTraversal)) {
 		global_log->info() << "Using QuickschedTraversal." << endl;
 #ifndef QUICKSCHED
@@ -165,7 +169,9 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 			  traversalType.begin(),
 			  ::tolower);
 
-	if (traversalType.find("c08") != string::npos)
+	if (traversalType.find("c08es") != string::npos)
+		selectedTraversal = C08ES;
+	else if (traversalType.find("c08") != string::npos)
 		selectedTraversal = C08;
 	else if (traversalType.find("c04") != string::npos)
 			selectedTraversal = C04;
@@ -262,27 +268,40 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 	_cells = &cells; // new - what for?
 	_dims = dims; // new - what for?
 
-	for (auto &tPair : _traversals) {
+	for (auto i = 0; i < _traversals.size(); ++i) {
+		auto& tPair = _traversals[i];
 		// decide whether to initialize or rebuild
 		if (tPair.first == nullptr) {
-			if (dynamic_cast<C08CellPairTraversalData *>(tPair.second)) {
-				tPair.first = new C08CellPairTraversal<CellTemplate>(cells, dims);
-			} else if(dynamic_cast<C04CellPairTraversalData *>(tPair.second)) {
-				tPair.first = new C04CellPairTraversal<CellTemplate>(cells, dims);
-			} else if (QuickschedTraversalData *quiData = dynamic_cast<QuickschedTraversalData *>(tPair.second)) {
-				mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
-				tPair.first = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
-			} else if (dynamic_cast<HalfShellTraversalData *>(tPair.second)) {
-				tPair.first = new HalfShellTraversal<CellTemplate>(cells, dims);
-			} else if (dynamic_cast<MidpointTraversalData *>(tPair.second)) {
-				tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
-			} else if (dynamic_cast<OriginalCellPairTraversalData *>(tPair.second)) {
-				tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells, dims);
-			} else if (dynamic_cast<SlicedCellPairTraversalData *>(tPair.second)) {
-				tPair.first = new SlicedCellPairTraversal<CellTemplate>(cells, dims);
-			} else {
-				global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << endl;
-				Simulation::exit(1);
+			switch (i) {
+				case traversalNames ::ORIGINAL:
+					tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells, dims);
+					break;
+				case traversalNames::C08:
+					tPair.first = new C08CellPairTraversal<CellTemplate>(cells, dims);
+					break;
+				case traversalNames::C04:
+					tPair.first = new C04CellPairTraversal<CellTemplate>(cells, dims);
+					break;
+				case traversalNames::SLICED:
+					tPair.first = new SlicedCellPairTraversal<CellTemplate>(cells, dims);
+					break;
+				case traversalNames::HS:
+					tPair.first = new HalfShellTraversal<CellTemplate>(cells, dims);
+					break;
+				case traversalNames::MP:
+					tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
+					break;
+				case traversalNames::C08ES:
+					tPair.first = new C08CellPairTraversal<CellTemplate, true>(cells, dims);
+					break;
+				case traversalNames::QSCHED: {
+					mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
+					QuickschedTraversalData *quiData = dynamic_cast<QuickschedTraversalData *>(tPair.second);
+					tPair.first = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
+				} break;
+				default:
+					global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << endl;
+					Simulation::exit(1);
 			}
 		}
 		tPair.first->rebuild(cells, dims, tPair.second);

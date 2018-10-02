@@ -5,6 +5,7 @@
  *      Author: tchipevn
  */
 #include <memory>
+#include <algorithm>
 
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
@@ -14,6 +15,7 @@
 #include "ParticleData.h"
 
 #include "parallel/ZonalMethods/FullShell.h"
+#include "parallel/ZonalMethods/EighthShell.h"
 #include "parallel/ZonalMethods/HalfShell.h"
 #include "parallel/ZonalMethods/Midpoint.h"
 #include "parallel/ZonalMethods/NeutralTerritory.h"
@@ -63,16 +65,23 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	
 	xmlconfig.changecurrentnode("../datastructure");
 	xmlconfig.getNodeValue("traversalSelector", traversal);
-	
+	transform(traversal.begin(),
+	          traversal.end(),
+	          traversal.begin(),
+	          ::tolower);
 	// currently only checks, if traversal is valid - should check, if zonal method/traversal is valid
-	if(traversal != "c08" && traversal != "qui" && traversal != "slice" &&
-		traversal != "ori" && traversal != "hs" && traversal != "mp" /* &&
-		traversal != "nt" */) {
+	if(traversal.find("hs") != string::npos || traversal.find("mp") != string::npos /* || traversal == "nt" */) {
+		zonalMethod = traversal;
+	} else if(traversal.find("es") != string::npos){
+		zonalMethod = "es";
+	}
+	else{
 		global_log->info() << "Defaulting to fs/c08" << std::endl;
-		
+
 		zonalMethod = "fs";
 		traversal = "c08";
 	}
+
 	
 	global_log->info() << "variable zonalMethod is: " << zonalMethod << std::endl;
 	setCommunicationScheme(neighbourCommunicationScheme, zonalMethod);
@@ -99,15 +108,17 @@ int DomainDecompMPIBase::getNonBlockingStageCount() {
 }
 
 void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string zonalMethod) {
-	if(_neighbourCommunicationScheme!=nullptr) {
-		delete _neighbourCommunicationScheme;
-	}
+	// delete if it exists already
+	delete _neighbourCommunicationScheme;
+	_neighbourCommunicationScheme = nullptr;
 
 	ZonalMethod* zonalMethodP = nullptr;
 
 	// CommunicationScheme will delete the pointer
 	if(zonalMethod=="fs") {
 		zonalMethodP = new FullShell();
+	} else if(zonalMethod=="es") {
+		zonalMethodP = new EighthShell();
 	} else if(zonalMethod=="hs") {
 		zonalMethodP = new HalfShell();
 	} else if(zonalMethod=="mp") {

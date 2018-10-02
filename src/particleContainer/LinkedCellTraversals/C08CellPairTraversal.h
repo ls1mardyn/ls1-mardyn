@@ -11,12 +11,13 @@
 #include "particleContainer/LinkedCellTraversals/C08BasedTraversals.h"
 #include "utils/threeDimensionalMapping.h"
 #include "utils/mardyn_assert.h"
+#include "C08BasedTraversals.h"
 
 struct C08CellPairTraversalData : CellPairTraversalData {
 };
 
-template <class CellTemplate>
-class C08CellPairTraversal: public C08BasedTraversals<CellTemplate> {
+template <class CellTemplate, bool eighthShell = false>
+class C08CellPairTraversal : public C08BasedTraversals<CellTemplate> {
 public:
 	C08CellPairTraversal(
 			std::vector<CellTemplate>& cells,
@@ -32,6 +33,8 @@ public:
 	void traverseCellPairsOuter(CellProcessor& cellProcessor);
 	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 
+	bool requiresForceExchange() const override {return eighthShell;}
+
 private:
 	void traverseCellPairsBackend(CellProcessor& cellProcessor,
 			const std::array<unsigned long, 3> & start,
@@ -40,8 +43,8 @@ private:
 };
 
 
-template<class CellTemplate>
-void C08CellPairTraversal<CellTemplate>::traverseCellPairs(
+template<class CellTemplate, bool eighthShell>
+void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairs(
 		CellProcessor& cellProcessor) {
 
 	using std::array;
@@ -57,7 +60,12 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairs(
 	{
 		for (unsigned long col = 0; col < 8; ++col) {
 			std::array<unsigned long, 3> begin = threeDimensionalMapping::oneToThreeD(col, strides);
-
+			if (eighthShell) {
+				// if we are using eighth shell, we start at 1,1,1 instead of 0,0,0
+				for (unsigned short i = 0; i < 3; ++i) {
+					begin[i] += 1;
+				}
+			}
 			traverseCellPairsBackend(cellProcessor, begin, end, strides);
 			#if defined(_OPENMP)
 			#pragma omp barrier
@@ -67,10 +75,13 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairs(
 	}
 }
 
-template<class CellTemplate>
-void C08CellPairTraversal<CellTemplate>::traverseCellPairsOuter(
+template<class CellTemplate, bool eighthShell>
+void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsOuter(
 		CellProcessor& cellProcessor) {
-
+	if(eighthShell){
+		global_log->error() << "eightshell + overlapping not yet supported." << std::endl;
+		Simulation::exit(-2);
+	}
 	using std::array;
 
 	{
@@ -124,8 +135,8 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairsOuter(
 	} // end pragma omp parallel
 }
 
-template<class CellTemplate>
-void C08CellPairTraversal<CellTemplate>::traverseCellPairsInner(
+template<class CellTemplate, bool eighthShell>
+void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsInner(
 		CellProcessor& cellProcessor, unsigned stage,
 		unsigned stageCount) {
 	using std::array;
@@ -182,8 +193,8 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairsInner(
 }
 
 
-template<class CellTemplate>
-void C08CellPairTraversal<CellTemplate>::traverseCellPairsBackend(CellProcessor& cellProcessor,
+template<class CellTemplate, bool eighthShell>
+void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsBackend(CellProcessor& cellProcessor,
 		const std::array<unsigned long, 3>& start, const std::array<unsigned long, 3>& end,
 		const std::array<unsigned long, 3>& stride) const {
 
@@ -202,7 +213,7 @@ void C08CellPairTraversal<CellTemplate>::traverseCellPairsBackend(CellProcessor&
 		for (unsigned long y = start_y; y < end_y; y += stride_y) {
 			for (unsigned long x = start_x; x < end_x; x += stride_x) {
 				unsigned long baseIndex = threeDimensionalMapping::threeToOneD(x, y, z, this->_dims);
-				this->processBaseCell(cellProcessor, baseIndex);
+				C08BasedTraversals<CellTemplate>::template processBaseCell<eighthShell>(cellProcessor, baseIndex);
 			}
 		}
 	}

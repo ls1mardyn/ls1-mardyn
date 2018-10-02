@@ -33,6 +33,7 @@ public:
 	};
 
 protected:
+	template <bool eighthShell=false>
 	void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
 
 private:
@@ -43,15 +44,14 @@ private:
 };
 
 template<class CellTemplate>
-void C08BasedTraversals<CellTemplate>::processBaseCell(
-		CellProcessor& cellProcessor, unsigned long baseIndex) const {
-
-// leads to performance degradation!
-//#ifdef ENABLE_REDUCED_MEMORY_MODE
-//	for (int i = 0; i < 8; ++i) {
-//		this->_cells->at(baseIndex + _cellOffsets[i]).prefetchForForce();
-//	}
-//#endif /* ENABLE_REDUCED_MEMORY_MODE */
+template<bool eighthShell>
+void C08BasedTraversals<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long baseIndex) const {
+	// leads to performance degradation!
+	//#ifdef ENABLE_REDUCED_MEMORY_MODE
+	//	for (int i = 0; i < 8; ++i) {
+	//		this->_cells->at(baseIndex + _cellOffsets[i]).prefetchForForce();
+	//	}
+	//#endif /* ENABLE_REDUCED_MEMORY_MODE */
 
 	using std::pair;
 
@@ -76,7 +76,7 @@ void C08BasedTraversals<CellTemplate>::processBaseCell(
 		CellTemplate& cell1 = this->_cells->at(cellIndex1);
 		CellTemplate& cell2 = this->_cells->at(cellIndex2);
 
-		if(cell1.isHaloCell() and cell2.isHaloCell()) {
+		if((not eighthShell) and cell1.isHaloCell() and cell2.isHaloCell()) {
 			continue;
 		}
 
@@ -84,11 +84,15 @@ void C08BasedTraversals<CellTemplate>::processBaseCell(
 			cellProcessor.processCell(cell1);
 		}
 		else {
-			if(!cell1.isHaloCell()) {
-				cellProcessor.processCellPair(cell1, cell2);
-			}
-			else {
-				cellProcessor.processCellPair(cell2, cell1);
+			if(not eighthShell) {
+				if (!cell1.isHaloCell()) {
+					cellProcessor.processCellPair(cell1, cell2);
+				} else {
+					cellProcessor.processCellPair(cell2, cell1);
+				}
+			} else {
+				// if we use eighthShell, we have to sum everything. also we don't care about order of the cells!
+				cellProcessor.processCellPair(cell1, cell2, true);
 			}
 		}
 	}
