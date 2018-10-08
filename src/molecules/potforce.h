@@ -6,6 +6,13 @@
 #include "molecules/Comp2Param.h"
 #include "molecules/Molecule.h"
 
+/**
+ * The formulas for dipole-dipole, dipole-quadrupole and quadrupole-quadrupole are from
+ * Gray and Gubbins, Theory of molecular Fluids, Oxford, 1984.
+ * The individual formulas are specified below.
+ * They are from Section "Explicit angle dependence" in Chapter 2.4 Multipole Interactions.
+ * They are given in electrostatic units, meaning the 1 / 4 pi eps_0 Coulomb constant is left out.
+ */
 
 /** @brief Calculates potential and force between 2 Lennard-Jones 12-6 centers. */
 inline void PotForceLJ(const double dr[3], const double& dr2,
@@ -23,7 +30,9 @@ inline void PotForceLJ(const double dr[3], const double& dr2,
 }
 
 
-/** @brief Calculate potential and force between 2 Dipoles. */
+/** @brief Calculate potential and force between 2 Dipoles.
+ * Formula (2.180) in Gray and Gubbins, see comment at start of this file.
+ */
 inline void PotForce2Dipole(const double dr[3], const double& dr2, const double* eii, const double* ejj,
                             const double& my2, const double& rffac,
                             double f[3], double m1[3], double m2[3], double& u, double& MyRF)
@@ -71,7 +80,9 @@ inline void PotForce2Dipole(const double dr[3], const double& dr2, const double*
 }
 
 
-/** @brief Calculate potential and force between 2 Quadrupoles. */
+/** @brief Calculate potential and force between 2 Quadrupoles.
+ * Formula (2.184) in Gray and Gubbins, see comment at start of this file.
+ */
 inline void PotForce2Quadrupole(const double dr[3], const double& dr2, const double* eii, const double* ejj,
                                 const double& q2075,
                                 double f[3], double m1[3], double m2[3], double& u)
@@ -122,7 +133,9 @@ inline void PotForce2Quadrupole(const double dr[3], const double& dr2, const dou
 }
 
 
-/** @brief Calculate potential and force between a Dipole and Quadrupole. */
+/** @brief Calculate potential and force between a Dipole and Quadrupole.
+ *  Formula (2.182) in Gray and Gubbins, see comment at start of this file.
+ */
 inline void PotForceDiQuadrupole(const double dr[3], const double& dr2, const double* eii, const double* ejj,
                                  const double& myq15,
                                  double f[3], double m1[3], double m2[3], double& u)
@@ -171,7 +184,9 @@ inline void PotForceDiQuadrupole(const double dr[3], const double& dr2, const do
 }
 
 
-/** @brief Calculate potential and force between two point charges. */
+/** @brief Calculate potential and force between two point charges. 
+ * Coulomb's law.
+ */
 inline void PotForce2Charge(const double dr[3], const double& dr2,
                             const double& q1q2per4pie0, double f[3], double& u)
 {
@@ -184,7 +199,9 @@ inline void PotForce2Charge(const double dr[3], const double& dr2,
 }
 
 
-/** @brief Calculate potential and force between an electric charge and a quadrupole. */
+/** @brief Calculate potential and force between an electric charge and a quadrupole.
+ * Just Quadrupole electric field times charge magnitude.
+ */
 inline void PotForceChargeQuadrupole(const double dr[3], const double& dr2,
                                      const double* ejj, const double& qQ05per4pie0,
                                      double f[3], double m2[3], double& u)
@@ -214,7 +231,9 @@ inline void PotForceChargeQuadrupole(const double dr[3], const double& dr2,
 }
 
 
-/** @brief Calculate potential and force between an electric charge and a dipole. */
+/** @brief Calculate potential and force between an electric charge and a dipole.
+ * Just Dipole electric field times charge magnitude.
+ */
 inline void PotForceChargeDipole(const double dr[3], const double& dr2,
                                  const double* ejj, const double& minusqmyper4pie0,
                                  double f[3], double m2[3], double& u)
