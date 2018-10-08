@@ -66,6 +66,8 @@ void program_build_info(Log::Logger *log) {
 #endif
 #if defined(MARDYN_SPSP)
 	log->info() << "Precision: Single" << endl;
+#elif defined(MARDYN_SPDP)
+	log->info() << "Precision: Mixed" << endl;
 #else
 	log->info() << "Precision: Double" << endl;
 #endif
