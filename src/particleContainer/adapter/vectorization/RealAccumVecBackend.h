@@ -173,11 +173,21 @@ public:
 	}
 
 	vcp_inline
-	void gather_store(double* const addr, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
+	void scatter_store(double* const addr, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);
 		__m256i lookup_256i_hi = _mm512_extracti64x4_epi64(lookup, 1);
 		_mm512_i32scatter_pd(addr, lookup_256i_lo, _first, 8);
 		_mm512_i32scatter_pd(addr, lookup_256i_hi, _second, 8);
+	}
+
+	vcp_inline
+	void scatter_store_mask(double* const addr, const size_t& offset, const vcp_lookupOrMask_vec& lookup, const MaskVec<float>& mask) {
+		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);
+		__m256i lookup_256i_hi = _mm512_extracti64x4_epi64(lookup, 1);
+		MaskVec<double> m_lo, m_hi;
+		convert_mask_vec(mask, m_lo, m_hi);
+		_mm512_mask_i32scatter_pd(addr, m_lo, lookup_256i_lo, _first, 8);
+		_mm512_mask_i32scatter_pd(addr, m_hi, lookup_256i_hi, _second, 8);
 	}
 #endif
 

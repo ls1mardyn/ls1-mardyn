@@ -61,7 +61,7 @@ public:
 
 };
 #if VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-class GatherChooser { //MIC ONLY!!!
+class GatherChooser { //KNL ONLY!!!
 private:
 	__m512i indices;
 	vcp_lookupOrMask_single* const storeCalcDistLookupLocation;
@@ -136,18 +136,6 @@ public:
 		#endif
 	}
 
-#if VCP_PREC == VCP_SPDP
-	inline static RealAccumVec load(const vcp_real_accum* const src,
-			const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
-		return RealAccumVec::gather_load(src, offset, lookup);
-	}
-
-	inline static void store(vcp_real_accum* const addr, const size_t& offset,
-			RealAccumVec& value, const vcp_lookupOrMask_vec& lookup) {
-		value.gather_store(addr, offset, lookup);
-	}
-#endif
-
 	inline static void storeMasked(vcp_real_calc* const addr, const size_t& offset,
 			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup, const MaskCalcVec mask) {
 		#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
@@ -157,6 +145,25 @@ public:
 			_mm512_mask_i32scatter_pd(addr, mask, lookup_256i, value, 8);
 		#endif
 	}
+
+
+#if VCP_PREC == VCP_SPDP
+	inline static RealAccumVec load(const vcp_real_accum* const src,
+			const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
+		return RealAccumVec::gather_load(src, offset, lookup);
+	}
+
+	inline static void store(vcp_real_accum* const addr, const size_t& offset,
+			RealAccumVec& value, const vcp_lookupOrMask_vec& lookup) {
+		value.scatter_store(addr, offset, lookup);
+	}
+
+	inline static void storeMasked(vcp_real_accum* const addr, const size_t& offset,
+			RealAccumVec& value, const vcp_lookupOrMask_vec& lookup, const MaskCalcVec mask) {
+		value.scatter_store_mask(addr, offset, lookup, mask);
+	}
+#endif
+
 
 	inline static bool computeLoop(const vcp_lookupOrMask_vec& forceMask) {
 		return true;
