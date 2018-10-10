@@ -85,23 +85,28 @@ pipeline {
         }
         stage('post-build'){
             parallel {
-                stage('Documentation') {
+                stage('documentation') {
                     agent { label 'atsccs11' }
-                    when { branch 'master' }
-                    steps {
-                        sh """pwd
-                            mkdir doxygen_doc
-                            doxygen
-                            rm -rf /home/wwwsccs/html/mardyn/doc
-                            rm -rf /home/wwwsccs/html/mardyn/doxys_docs
-                            cp -r doc /home/wwwsccs/html/mardyn
-                            cp -r doxygen_doc /home/wwwsccs/html/mardyn
-
-                            chmod -R 775 /home/wwwsccs/html/mardyn/doc
-                            chmod -R 775 /home/wwwsccs/html/mardyn/doxygen_doc"""
+                    stages {
+                        stage('build documentation') {
+                            steps {
+                                sh "mkdir doxygen_doc"
+                                sh "doxygen"
+                            }
+                        }
+                        stage('release documentation') {
+                            when { branch 'master' }
+                            steps {
+                                sh "rm -rf /home/wwwsccs/html/mardyn/doc /home/wwwsccs/html/mardyn/doxys_docs"
+                                sh "cp -r doc /home/wwwsccs/html/mardyn"
+                                sh "cp -r doxygen_doc /home/wwwsccs/html/mardyn"
+                                sh "chmod -R 775 /home/wwwsccs/html/mardyn/doc"
+                                sh "chmod -R 775 /home/wwwsccs/html/mardyn/doxygen_doc"
+                            }
+                        }
                     }
                 }
-                stage('Libraries and Generators') {
+                stage('libs and generators') {
                     agent { label 'atsccs11' }
                     steps {
                         // Build lib
