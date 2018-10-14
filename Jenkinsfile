@@ -1,6 +1,6 @@
 #!groovy
 pipeline {
-    agent any
+    agent { label 'openshift-autoscale' }
     options {
         gitLabConnection('ls1-mardyn')
         disableConcurrentBuilds()
@@ -16,32 +16,17 @@ pipeline {
                     stages {
                         stage('build (x86)') {
                             steps {
-                                updateGitlabCommitStatus name: 'build (x86)', state: 'pending'
                                 build job: 'mardyn-build-git-x86', parameters: [string(name: 'GIT_BRANCH', value: BRANCH_NAME)]
-                            }
-                            post {
-                                success { updateGitlabCommitStatus name: 'build (x86)', state: 'success' }
-                                failure { updateGitlabCommitStatus name: 'build (x86)', state: 'failed' }
                             }
                         }
                         stage('unit-test (x86)') {
                             steps {
-                                updateGitlabCommitStatus name: 'unit-test (x86)', state: 'pending'
                                 build job: 'mardyn-unit-test-git-x86', parameters: [string(name: 'GIT_BRANCH', value: BRANCH_NAME)]
-                            }
-                            post {
-                                success { updateGitlabCommitStatus name: 'unit-test (x86)', state: 'success' }
-                                failure { updateGitlabCommitStatus name: 'unit-test (x86)', state: 'failed' }
                             }
                         }
                         stage('validation-test (x86)') {
                             steps {
-                                updateGitlabCommitStatus name: 'validation-test (x86)', state: 'pending'
                                 build job: 'mardyn-validation-test-git-x86', parameters: [string(name: 'GIT_BRANCH', value: BRANCH_NAME)]
-                            }
-                            post {
-                                success { updateGitlabCommitStatus name: 'validation-test (x86)', state: 'success' }
-                                failure { updateGitlabCommitStatus name: 'validation-test (x86)', state: 'failed' }
                             }
                         }
                     }
@@ -51,32 +36,17 @@ pipeline {
                     stages {
                         stage('build (knl)') {
                             steps {
-                                updateGitlabCommitStatus name: 'build (knl)', state: 'pending'
                                 build job: 'mardyn-build-git-knl', parameters: [string(name: 'GIT_BRANCH', value: BRANCH_NAME)]
-                            }
-                            post {
-                                success { updateGitlabCommitStatus name: 'build (knl)', state: 'success' }
-                                failure { updateGitlabCommitStatus name: 'build (knl)', state: 'failed' }
                             }
                         }
                         stage('unit-test (knl)') {
                             steps {
-                                updateGitlabCommitStatus name: 'unit-test (knl)', state: 'pending'
                                 build job: 'mardyn-unit-test-git-knl', parameters: [string(name: 'GIT_BRANCH', value: BRANCH_NAME)]
-                            }
-                            post {
-                                success { updateGitlabCommitStatus name: 'unit-test (knl)', state: 'success' }
-                                failure { updateGitlabCommitStatus name: 'unit-test (knl)', state: 'failed' }
                             }
                         }
                         stage('validation-test (knl)') {
                             steps {
-                                updateGitlabCommitStatus name: 'validation-test (knl)', state: 'pending'
                                 build job: 'mardyn-validation-test-git-knl', parameters: [string(name: 'GIT_BRANCH', value: BRANCH_NAME)]
-                            }
-                            post {
-                                success { updateGitlabCommitStatus name: 'validation-test (knl)', state: 'success' }
-                                failure { updateGitlabCommitStatus name: 'validation-test (knl)', state: 'failed' }
                             }
                         }
                     }
@@ -157,10 +127,6 @@ pipeline {
                             mpirun -n 2 ./MarDyn examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0 """
                     }
                 }
-            }
-            post {
-                success { updateGitlabCommitStatus name: 'post-build', state: 'success' }
-                failure { updateGitlabCommitStatus name: 'post-build', state: 'failed' }
             }
         }
     }
