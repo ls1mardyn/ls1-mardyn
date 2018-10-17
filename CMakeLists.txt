@@ -24,6 +24,16 @@ if(NOT CMAKE_BUILD_TYPE)
             "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+# the -dynamic flag seems to be needed on hazelhen. no idea what it does, but it fixes some GLIBC linker issue
+# this was done following stackoverflow.com/questions/28198965/how-to-resolve-tls-get-addrglibc-2-3-error-on-compiling-gcc-itself
+
+if(CMAKE_CXX_COMPILER_ID MATCHES Cray)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -dynamic")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -dynamic")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -dynamic")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -dynamic")
+endif()
+
 # generates test target
 ENABLE_TESTING()
 
