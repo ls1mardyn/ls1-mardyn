@@ -30,9 +30,9 @@ namespace vcp {
 }
 
 #if VCP_PREC == VCP_SPDP
-#include "RealAccumVecBackend.h"
+#include "RealAccumVecSPDP.h"
 namespace vcp {
-	typedef RealAccumVecBackend RealAccumVec;
+	typedef RealAccumVecSPDP RealAccumVec;
 }
 #else
 namespace vcp {

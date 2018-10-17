@@ -5,8 +5,8 @@
  *      Author: tchipevn
  */
 
-#ifndef SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALACCUMVECBACKEND_H_
-#define SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALACCUMVECBACKEND_H_
+#ifndef SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALACCUMVECSPDP_H_
+#define SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALACCUMVECSPDP_H_
 
 #include "RealVec.h"
 
@@ -15,7 +15,7 @@ namespace vcp {
 #if VCP_VEC_WIDTH != VCP_VEC_W__64
 // the novec case is handled differently, as it requires only one RealVec<double> to store its results.
 
-class RealAccumVecBackend {
+class RealAccumVecSPDP {
 
 private:
 	RealVec<double> _first;
@@ -23,83 +23,83 @@ private:
 
 public:
 	vcp_inline
-	RealAccumVecBackend() {}
+	RealAccumVecSPDP() {}
 
 	vcp_inline
-	static RealAccumVecBackend convertCalcToAccum(const RealCalcVec & rcv) {
+	static RealAccumVecSPDP convertCalcToAccum(const RealCalcVec & rcv) {
 		RealVec<double> first = convert_low(rcv);
 		RealVec<double> second = convert_high(rcv);
-		return RealAccumVecBackend(first, second);
+		return RealAccumVecSPDP(first, second);
 	}
 
 	vcp_inline
-	static RealCalcVec convertAccumToCalc(const RealAccumVecBackend & rav) {
+	static RealCalcVec convertAccumToCalc(const RealAccumVecSPDP & rav) {
 		RealCalcVec ret = back_convert(rav._first, rav._second);
 		return ret;
 	}
 
 	vcp_inline
-	RealAccumVecBackend(const RealAccumVecBackend& rhs) {
+	RealAccumVecSPDP(const RealAccumVecSPDP& rhs) {
 		_first = rhs._first;
 		_second = rhs._second;
 	}
 
 	vcp_inline
-	RealAccumVecBackend(const RealVec<double>& first, const RealVec<double>& second) {
+	RealAccumVecSPDP(const RealVec<double>& first, const RealVec<double>& second) {
 		_first = first;
 		_second = second;
 	}
 
 	vcp_inline
-	RealAccumVecBackend& operator=(const RealAccumVecBackend& rhs) {
+	RealAccumVecSPDP& operator=(const RealAccumVecSPDP& rhs) {
 		_first = rhs._first;
 		_second = rhs._second;
 		return *this;
 	}
 
 	vcp_inline
-	static RealAccumVecBackend zero() {
-		RealAccumVecBackend result;
+	static RealAccumVecSPDP zero() {
+		RealAccumVecSPDP result;
 		result._first = RealVec<double>::zero();
 		result._second = RealVec<double>::zero();
 		return result;
 	}
 
 	vcp_inline
-	RealAccumVecBackend operator+(const RealAccumVecBackend& rhs) const {
-		RealAccumVecBackend result;
+	RealAccumVecSPDP operator+(const RealAccumVecSPDP& rhs) const {
+		RealAccumVecSPDP result;
 		result._first = _first + rhs._first;
 		result._second = _second + rhs._second;
 		return result;
 	}
 
 	vcp_inline
-	RealAccumVecBackend operator*(const RealAccumVecBackend& rhs) const {
-		RealAccumVecBackend result;
+	RealAccumVecSPDP operator*(const RealAccumVecSPDP& rhs) const {
+		RealAccumVecSPDP result;
 		result._first = _first * rhs._first;
 		result._second = _second * rhs._second;
 		return result;
 	}
 
 	vcp_inline
-	RealAccumVecBackend operator-(const RealAccumVecBackend& rhs) const {
-		RealAccumVecBackend result;
+	RealAccumVecSPDP operator-(const RealAccumVecSPDP& rhs) const {
+		RealAccumVecSPDP result;
 		result._first = _first - rhs._first;
 		result._second = _second - rhs._second;
 		return result;
 	}
 
 	vcp_inline
-	static RealAccumVecBackend fmadd(const RealAccumVecBackend & a, const RealAccumVecBackend& b, const RealAccumVecBackend& c ) {
-		RealAccumVecBackend result;
+	static RealAccumVecSPDP fmadd(const RealAccumVecSPDP & a, const RealAccumVecSPDP& b, const RealAccumVecSPDP& c ) {
+		RealAccumVecSPDP result;
 		result._first = RealVec<double>::fmadd(a._first, b._first, c._first);
 		result._second = RealVec<double>::fmadd(a._second, b._second, c._second);
 		return result;
 	}
 
 	vcp_inline
-	static RealAccumVecBackend fnmadd(const RealAccumVecBackend & a, const RealAccumVecBackend& b, const RealAccumVecBackend& c ) {
-		RealAccumVecBackend result;
+	static RealAccumVecSPDP fnmadd(const RealAccumVecSPDP & a, const RealAccumVecSPDP& b, const RealAccumVecSPDP& c ) {
+		RealAccumVecSPDP result;
 		result._first = RealVec<double>::fnmadd(a._first, b._first, c._first);
 		result._second = RealVec<double>::fnmadd(a._second, b._second, c._second);
 		return result;
@@ -113,15 +113,15 @@ public:
 	}
 
 	vcp_inline
-	static RealAccumVecBackend aligned_load(const double * const a) {
+	static RealAccumVecSPDP aligned_load(const double * const a) {
 		const size_t offset = sizeof(RealVec<double>) / sizeof(double);
 		RealVec<double> first = RealVec<double>::aligned_load(a);
 		RealVec<double> second = RealVec<double>::aligned_load(a + offset);
-		return RealAccumVecBackend(first, second);
+		return RealAccumVecSPDP(first, second);
 	}
 
 	vcp_inline
-	static RealAccumVecBackend aligned_load_mask(const double * const a, MaskVec<float> m) {
+	static RealAccumVecSPDP aligned_load_mask(const double * const a, MaskVec<float> m) {
 		// we need to make two masks of type MaskVec<double> from one MaskVec<float>
 		MaskVec<double> m_lo, m_hi;
 		convert_mask_vec(m, m_lo, m_hi);
@@ -131,18 +131,18 @@ public:
 		RealVec<double> first = RealVec<double>::aligned_load_mask(a, m_lo);
 		RealVec<double> second = RealVec<double>::aligned_load_mask(a + offset, m_hi);
 
-		return RealAccumVecBackend(first, second);
+		return RealAccumVecSPDP(first, second);
 	}
 
 	vcp_inline
-	static RealAccumVecBackend set1(const double& v) {
+	static RealAccumVecSPDP set1(const double& v) {
 		RealVec<double> first = RealVec<double>::set1(v);
 		RealVec<double> second = RealVec<double>::set1(v);
-		return RealAccumVecBackend(first, second);
+		return RealAccumVecSPDP(first, second);
 	}
 
 	vcp_inline
-	static void horizontal_add_and_store(const RealAccumVecBackend& a, double * const mem_addr) {
+	static void horizontal_add_and_store(const RealAccumVecSPDP& a, double * const mem_addr) {
 		RealVec<double> sum = a._first + a._second;
 		RealVec<double>::horizontal_add_and_store(sum, mem_addr);
 	}
@@ -155,21 +155,21 @@ public:
 	}
 
 	vcp_inline
-	static RealAccumVecBackend scal_prod(
-		const RealAccumVecBackend& a1, const RealAccumVecBackend& a2, const RealAccumVecBackend& a3,
-		const RealAccumVecBackend& b1, const RealAccumVecBackend& b2, const RealAccumVecBackend& b3) {
+	static RealAccumVecSPDP scal_prod(
+		const RealAccumVecSPDP& a1, const RealAccumVecSPDP& a2, const RealAccumVecSPDP& a3,
+		const RealAccumVecSPDP& b1, const RealAccumVecSPDP& b2, const RealAccumVecSPDP& b3) {
 		return fmadd(a1, b1, fmadd(a2, b2, a3 * b3));
 	}
 
 
 #if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	vcp_inline
-	static RealAccumVecBackend gather_load(const double * const src, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
+	static RealAccumVecSPDP gather_load(const double * const src, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);
 		__m256i lookup_256i_hi = _mm512_extracti64x4_epi64(lookup, 1);
 		RealVec<double> first  (_mm512_i32gather_pd(lookup_256i_lo, src, 8));
 		RealVec<double> second (_mm512_i32gather_pd(lookup_256i_hi, src, 8));
-		return RealAccumVecBackend(first, second);
+		return RealAccumVecSPDP(first, second);
 	}
 
 	vcp_inline
@@ -291,31 +291,31 @@ public:
 
 #elif VCP_VEC_WIDTH == VCP_VEC_W__64
 
-class RealAccumVecBackend : public RealVec<double> {
+class RealAccumVecSPDP : public RealVec<double> {
 public:
 	vcp_inline
-	RealAccumVecBackend() {}
+	RealAccumVecSPDP() {}
 
 	vcp_inline
-	RealAccumVecBackend(const RealVec<double>& rcv) : RealVec<double>() {
+	RealAccumVecSPDP(const RealVec<double>& rcv) : RealVec<double>() {
 		this->_d = rcv;
 	}
 
 	vcp_inline
-	static RealAccumVecBackend convertCalcToAccum(const RealCalcVec & rcv) {
-		RealAccumVecBackend result;
+	static RealAccumVecSPDP convertCalcToAccum(const RealCalcVec & rcv) {
+		RealAccumVecSPDP result;
 		result._d = rcv;
 		return result;
 	}
 
 	vcp_inline
-	static RealCalcVec convertAccumToCalc(const RealAccumVecBackend & rav) {
+	static RealCalcVec convertAccumToCalc(const RealAccumVecSPDP & rav) {
 		RealCalcVec result(rav);
 		return result;
 	}
 
 	vcp_inline
-	static RealAccumVecBackend aligned_load_mask(const double * const a, MaskVec<float> m) {
+	static RealAccumVecSPDP aligned_load_mask(const double * const a, MaskVec<float> m) {
 		return apply_mask(aligned_load(a),MaskVec<double>(m));
 	}
 };
@@ -324,4 +324,4 @@ public:
 
 } /* namespace vcp */
 
-#endif /* SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALACCUMVECBACKEND_H_ */
+#endif /* SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALACCUMVECSPDP_H_ */
