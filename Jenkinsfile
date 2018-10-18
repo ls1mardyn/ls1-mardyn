@@ -1,8 +1,7 @@
 #!groovy
 pipeline {
-    agent { label 'openshift-autoscale' }
+    agent none
     options {
-        gitLabConnection('ls1-mardyn')
         disableConcurrentBuilds()
         buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '60', numToKeepStr: '5')
         skipStagesAfterUnstable()
