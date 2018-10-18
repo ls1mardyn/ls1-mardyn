@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <set>
+#include <string>
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -47,7 +48,8 @@ class InSituMegamol: public PluginBase {
 		ISM_SYNC_REPLY_BUFFER_OVERFLOW, // 2
 		ISM_SYNC_TIMEOUT,               // 3
 		ISM_SYNC_SEND_FAILED,           // 4
-		ISM_SYNC_UNKNOWN_ERROR          // 5
+		ISM_SYNC_RESET,                 // 5
+		ISM_SYNC_UNKNOWN_ERROR          // 6
 	};
 	/**
 	 * @brief Manages the ZMQ calls to Megamol
@@ -98,13 +100,29 @@ class InSituMegamol: public PluginBase {
 	private:
 		ZmqManager& operator=(ZmqManager const& rhs); //definitely disallow this guy
 		/**
+		 * @brief Connect the pairsocket object to the connection name obtained from Megamol
+		 */
+		int setPairConnection(std::string);
+		/**
 		 * @brief Evaluates replies from Megamol during handshake
 		 */
-		InSituMegamol::ISM_SYNC_STATUS _synchronizeMegamol(void);
+		InSituMegamol::ISM_SYNC_STATUS _getMegamolPairPort(void);
+		/**
+		 * @brief Evaluates replies from Megamol during handshake
+		 */
+		InSituMegamol::ISM_SYNC_STATUS _waitOnMegamolModules(void);
+		/**
+		 * @brief Evaluates replies from Megamol during handshake
+		 */
+		InSituMegamol::ISM_SYNC_STATUS _recvCreationMessageAck(void);
+		/**
+		 * @brief Evaluates replies from Megamol during handshake
+		 */
+		InSituMegamol::ISM_SYNC_STATUS _recvFileAck(void);
 		/**
 		 * @brief Waits a sec, returns either ISM_SYNC_TIMEOUT or ISM_SYNC_SYNCHRONIZING
 		 */
-		InSituMegamol::ISM_SYNC_STATUS _timeoutCheck(void) const;
+		InSituMegamol::ISM_SYNC_STATUS _timeoutCheck(bool const reset=false) const;
 		/**
 		 * @brief Wraps the zmq_send. Wrapper needed to handle the internal send/recv matching.
 		 */
@@ -117,12 +135,14 @@ class InSituMegamol: public PluginBase {
 		int _replyBufferSize;
 		int _syncTimeout;
 		int _sendCount;
+		std::string _pairPort;
 		std::vector<char> _replyBuffer;
 		std::stringstream _datTag; 
 		std::stringstream _geoTag;
+		std::stringstream _concatTag;
 	 	std::unique_ptr<ZmqContext, decltype(&zmq_ctx_destroy)> _context;
 		std::unique_ptr<ZmqRequest, decltype(&zmq_close)> _requester;
-		std::unique_ptr<ZmqPublish, decltype(&zmq_close)> _publisher;
+		std::unique_ptr<ZmqPublish, decltype(&zmq_close)> _pairsocket;
 	};
 public:
 	InSituMegamol(); 
@@ -247,7 +267,7 @@ private:
 
 	//per node performance logging
 	std::string _localLogFname;
-	void _addTimerEntry(unsigned long simstep, double secs);
+	void _addTimerEntry(std::string prefix, unsigned long simstep, double secs);
 
 	// serialize all
 	void _resetMmpldBuffer(void);
