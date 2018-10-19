@@ -366,12 +366,12 @@ void RedundancyResilience::_storeSnapshots(std::vector<int>& backupDataSizes, st
 
 std::vector<char>::iterator RedundancyResilience::_deserializeSnapshot(std::vector<char>::iterator const snapshotStart,
         std::vector<char>::iterator const snapshotEnd, Snapshot& newSnapshot) {
-	int rank;
+	int snapshotRank;
 	double currentTime;
 	auto valueStart = snapshotStart;
-	auto valueEnd = snapshotStart+sizeof(rank);
-	std::copy(valueStart, valueEnd, reinterpret_cast<char*>(&rank));
-	newSnapshot.setRank(rank);
+	auto valueEnd = snapshotStart+sizeof(snapshotRank);
+	std::copy(valueStart, valueEnd, reinterpret_cast<char*>(&snapshotRank));
+	newSnapshot.setRank(snapshotRank);
 	valueStart = valueEnd;
 	valueEnd = valueStart+sizeof(currentTime);
 	std::copy(valueStart, valueEnd, reinterpret_cast<char*>(&currentTime));
@@ -380,7 +380,7 @@ std::vector<char>::iterator RedundancyResilience::_deserializeSnapshot(std::vect
 	// deserialize the fake data, used for debug purposes
 	std::vector<char> fakeData(valueEnd - valueStart);
 	std::copy(valueStart, valueEnd, fakeData.begin());
-	_validateFakeData(rank, fakeData);
+	_validateFakeData(snapshotRank, fakeData);
 	mardyn_assert(valueEnd == snapshotEnd);
 	return snapshotEnd;
 }

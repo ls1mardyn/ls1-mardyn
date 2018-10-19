@@ -1,11 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mardyn version="20100525" >
-
-	<refunits type="SI">
-		<length unit="nm">0.1</length>
-		<mass unit="u">1</mass>
-		<energy unit="K">1</energy>
-	</refunits>
+  <refunits type="SI">
+    <length unit="nm">0.1</length>
+    <mass unit="u">1</mass>
+    <energy unit="K">1</energy>
+  </refunits>
 
   <simulation type="MD" >
     <integrator type="Leapfrog" >
@@ -28,10 +27,9 @@
           <ly>60.0</ly>
           <lz>30.0</lz>
       </domain>
-
-			<components>
-				<include query="/components/moleculetype">./components.xml</include>
-			</components>
+      <components>
+        <include query="/components/moleculetype">./components.xml</include>
+      </components>
 
       <phasespacepoint>
         <generator name="mkTcTS">

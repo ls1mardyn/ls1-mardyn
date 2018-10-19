@@ -305,6 +305,8 @@ private:
 													 Snapshot& snapshot);
 	/**
 	 * @brief Validate the fake data to be correct for debugging
+	 * The fake data for a snapshot is just an array of ints going from 0 to the snapshots rank
+	 * In actual scenarios, this would be particle data.
 	 */
 	bool _validateFakeData(int const rank, std::vector<char>& fakeData);
 	
