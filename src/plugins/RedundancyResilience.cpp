@@ -21,13 +21,13 @@ using Log::global_log;
 #include <sstream>
 using Log::global_log;
 
-//pretty much default
+/////////////////////////////////////////////////////////////////////////////
+// Redundancy Resilience class
 ResilienceComm::ResilienceComm(int numProcs, int rank)
 		: _numProcs(numProcs)
 		, _rank(rank) {
 }
 
-//copy constructor
 ResilienceComm::ResilienceComm(ResilienceComm const& rc)
 		: _numProcs(rc._numProcs)
 		, _rank(rc._rank) {
@@ -103,31 +103,45 @@ int ResilienceComm::exchangeSnapshotSizes(
 		std::vector<int>& backedByTags,
 		size_t const snapshotSize,
 		std::vector<int>& backupDataSizes) {
-	// send the size of this snapshot to all ranks backing it
+
+	//prepare the attach buffer for the sends
+	int status = MPI_ERR_UNKNOWN;
+	int sendSize = 0;
+	status = MPI_Pack_size(sizeof(snapshotSize), MPI_CHAR, MPI_COMM_WORLD, &sendSize);
+	size_t const mpiAttachBufferSize = (sendSize+MPI_BSEND_OVERHEAD)*backedBy.size();
+	std::vector<char> mpiAttachBuffer(mpiAttachBufferSize);
+	status = MPI_Buffer_attach(reinterpret_cast<void*>(mpiAttachBuffer.data()), mpiAttachBuffer.size());
+
+	//loop over the sends, using the data element "snapshotSize", destination node and edge tag
 	int src = -1;
 	int dest = -1;
 	int tag = -1;
-	int status = MPI_ERR_UNKNOWN;
 	for (size_t ib=0; ib<backedBy.size(); ++ib) {
 		MPI_Request request=0;
 		dest = backedBy[ib];
 		tag = backedByTags[ib];
-		// status = MPI_Isend(&snapshotSize, sizeof(snapshotSize), MPI_CHAR, dest, tag, MPI_COMM_WORLD, &request);
 		status = MPI_Bsend(&snapshotSize, sizeof(snapshotSize), MPI_CHAR, dest, tag, MPI_COMM_WORLD);
 		mardyn_assert(status == MPI_SUCCESS);
 	}
-	// MPI_Barrier(MPI_COMM_WORLD);
+
 	// setup the receiving buffers too for all ranks the current one is backing
 	for (size_t ib=0; ib<backing.size(); ++ib) {
+		MPI_Request request=0;
 		MPI_Status recvStatus; 
 		src = backing[ib];
 		tag = backingTags[ib];
 		void* target = &(backupDataSizes.data()[ib]);
-		// status = MPI_Irecv(target, sizeof(snapshotSize), MPI_CHAR, src, tag, MPI_COMM_WORLD, &request);
 		status = MPI_Recv(&(backupDataSizes.data()[ib]), sizeof(snapshotSize), MPI_CHAR, src, tag, MPI_COMM_WORLD, &recvStatus);
 		mardyn_assert(status == MPI_SUCCESS);
 	}
+
+	// the following will wait for sends to complete before moving on (MPI_Buffer_detach). recvs may still be pending.
+	decltype(mpiAttachBuffer.data()) address;
+	int size = 0;
+	status = MPI_Buffer_detach(&address, &size);
 	mardyn_assert(status == MPI_SUCCESS);
+	mardyn_assert(address == mpiAttachBuffer.data());
+	mardyn_assert(size == mpiAttachBuffer.size());
 	return 0;
 }
 
@@ -140,10 +154,18 @@ int ResilienceComm::exchangeSnapshots(
 		std::vector<char>& sendData,
 		std::vector<char>& recvData) {
 	// send the snapshot to all ranks backing it
+	
+	//prepare the attach buffer for the sends
+	int status = MPI_ERR_UNKNOWN;
+	int sendSize = 0;
+	status = MPI_Pack_size(sendData.size(), MPI_CHAR, MPI_COMM_WORLD, &sendSize);
+	size_t const mpiAttachBufferSize = (sendSize+MPI_BSEND_OVERHEAD)*backedBy.size();
+	std::vector<char> mpiAttachBuffer(mpiAttachBufferSize);
+	status = MPI_Buffer_attach(reinterpret_cast<void*>(mpiAttachBuffer.data()), mpiAttachBuffer.size());
+	
 	int src = -1;
 	int dest = -1;
 	int tag = -1;
-	int status = MPI_ERR_UNKNOWN;
 	//prepare memory, create prefix sum
 	std::vector<int> recvIndices(backupDataSizes.size());
 	recvIndices[0] = 0; //first index always 0
@@ -184,9 +206,19 @@ int ResilienceComm::exchangeSnapshots(
 		mardyn_assert(recvStatus.MPI_TAG == tag);
 		mardyn_assert(status == MPI_SUCCESS);
 	}
+
+	// the following line will wait for sends to complete before moving on. recvs may still be pending.
+	decltype(mpiAttachBuffer.data()) address;
+	int size = 0;
+	status = MPI_Buffer_detach(&address, &size);
+	mardyn_assert(status == MPI_SUCCESS);
+	mardyn_assert(address == mpiAttachBuffer.data());
+	mardyn_assert(size == mpiAttachBuffer.size());
 	return 0;
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// Redundancy Resilience class
 void RedundancyResilience::init(ParticleContainer* particleContainer,
 								DomainDecompBase* domainDecomp,
 								Domain* domain) {

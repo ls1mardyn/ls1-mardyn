@@ -55,7 +55,6 @@ public:
 	 * Scatters which rank is backing which and the inverse, i.e. which rank is being backed by which.
 	 * Scatters info about which rank should backup which. This data is only produced on the root node, and needs
 	 * to be scattered. The method assumes that: #ranks being backed by current rank = #ranks backing current rank = numberOfBackups
-	 * The method modifies the request buffers (RedundancyComm::_exchangeSizesRequests and RedundancyComm::_exchangeSnapshotRequests)
 	 * The tags are used to identify the messages in send/recv calls.
 	 * @param[in] backupInfo Contains the rank configuration. Set up in RedundancyResilience::_determineBackups, check there for layout.
 	 * @param[in] numberOfBackups how many backups are made per rank
@@ -79,7 +78,6 @@ public:
 	 * Called by each process after setting up the new snapshot.
 	 * Needs to be called before calling RedundancyResilience::exchangeSnapshots. If this was done already
 	 * should probably be checked in that method. But it isn't.
-	 * Updates request buffer _exchangeSizesRequests.
 	 * @param[in] backing A list of ranks being backed by the current rank
 	 * @param[in] backedBy A list of ranks the current rank is backing up
 	 * @param[in] backingTags The tags associated with the communication of the ranks in backing (used in recv)
@@ -99,7 +97,6 @@ public:
 	 * Send snapshot meta data from caller to ranks backing it.
 	 * Called by each process after trading the backup snapshot sizes.
 	 * This will perform the actual sending of snapshot data for each of the backup ranks.
-	 * Updates request buffer _exchangeSnapshotRequests.
 	 * @param[in] backing A list of ranks being backed by the current rank
 	 * @param[in] backedBy A list of ranks the current rank is backing up
 	 * @param[in] backingTags The tags associated with the communication of the ranks in backing (used in recv)
@@ -340,6 +337,7 @@ public:
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			unsigned long simstep
 	) {}
+	MPI_Buffer_attach()
 
     void beforeForces(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
