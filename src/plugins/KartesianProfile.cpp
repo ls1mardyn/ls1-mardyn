@@ -50,11 +50,12 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     }
 
     // ADDING PROFILES
-    // Need DensityProfile for Velocity3dProfile
+    // Need DensityProfile for Velocity*Profile / Temperature
     if(_DENSITY || _VELOCITY || _VELOCITY3D || _ALL){
         _densProfile = new DensityProfile();
         addProfile(_densProfile);
     }
+    // Need Velocity for Temperature
     if(_VELOCITY || _ALL){
         _velAbsProfile = new VelocityAbsProfile();
         addProfile(_velAbsProfile);
@@ -64,14 +65,18 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
         addProfile(_vel3dProfile);
     }
     if(_TEMPERATURE || _ALL){
-        // TODO
+        _dofProfile = new DOFProfile();
+        addProfile(_dofProfile);
+        _kineticProfile = new KineticProfile();
+        addProfile(_kineticProfile);
+        _tempProfile = new TemperatureProfile();
+        addProfile(_tempProfile);
     }
 
     xmlconfig.getNodeValue("timesteps/init", _initStatistics);
     global_log->info() << "[KartesianProfile] init statistics: " << _initStatistics << endl;
     xmlconfig.getNodeValue("timesteps/recording", _profileRecordingTimesteps);
     global_log->info() << "[KartesianProfile] profile recording timesteps: " << _profileRecordingTimesteps << endl;
-
 
 }
 

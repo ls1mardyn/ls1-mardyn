@@ -10,6 +10,9 @@
 #include "plugins/profiles/DensityProfile.h"
 #include "plugins/profiles/Velocity3dProfile.h"
 #include "plugins/profiles/VelocityAbsProfile.h"
+#include "plugins/profiles/TemperatureProfile.h"
+#include "plugins/profiles/KineticProfile.h"
+#include "plugins/profiles/DOFProfile.h"
 
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
@@ -73,6 +76,9 @@ public:
     ProfileBase* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
     ProfileBase* _velAbsProfile;
     ProfileBase* _vel3dProfile;
+    ProfileBase* _tempProfile;
+    ProfileBase* _dofProfile;
+    ProfileBase* _kineticProfile;
 
 private:
 
