@@ -56,6 +56,8 @@ public:
     void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain) override {};
 
+    unsigned long getUID(ParticleIterator thismol);
+
     std::string getPluginName()override {return std::string("KartesianProfile");}
 
     static PluginBase* createInstance(){return new KartesianProfile();}
@@ -66,9 +68,16 @@ public:
     double globalLength[3]; // Size of Domain
     double segmentVolume; // Size of one Sampling grid bin
     Domain* dom; // Reference to global Domain
+
+    // Profile pointers for data reuse
     ProfileBase* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
+    ProfileBase* _velAbsProfile;
+    ProfileBase* _vel3dProfile;
 
 private:
+
+    void addProfile(ProfileBase* profile);
+
     unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
     unsigned long _initStatistics; // Timesteps to skip at start of the simulation
     unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
@@ -83,8 +92,9 @@ private:
     // Needed for XML check for enabled profiles.
     bool _ALL = false;
     bool _DENSITY = false;
-    bool _TEMPERATURE = false;
     bool _VELOCITY = false;
+    bool _VELOCITY3D = false;
+    bool _TEMPERATURE = false;
 
 };
 

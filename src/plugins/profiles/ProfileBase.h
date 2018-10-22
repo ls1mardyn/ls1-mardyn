@@ -68,25 +68,28 @@ public:
      */
     virtual int comms() = 0;
     /** @brief 1D Profile access. Some Profiles need information from others, so this enables sharing arrays between profiles.
+     * If no 1D Map is used, throw error and exit.
      *
      * @return Internal Global Arrays after communication.
      */
-    std::map<unsigned, long double> getProfile(){return _globalProfile;};
+    virtual std::map<unsigned, long double> getProfile() = 0;//{return _globalProfile;};
     /** @brief 3D Profile access. Some Profiles need information from others, so this enables sharing arrays between profiles.
+     * If no 3D Map is used, throw error and exit.
      *
      * @return Internal Global Arrays after communication.
      */
-    std::map<unsigned, long double>* get3dProfile(){return _global3dProfile;};
+    virtual std::map<unsigned, long double>* get3dProfile() = 0;//{return _global3dProfile;};
 
 protected:
+    // Maps that are needed by a specific profile are to be defined in the .h of the profile.
     // Local 1D Profile
-    std::map<unsigned, long double> _localProfile;
+    //std::map<unsigned, long double> _localProfile;
     // Global 1D Profile
-    std::map<unsigned, long double> _globalProfile;
+    //std::map<unsigned, long double> _globalProfile;
     // Local 3D Profile
-    std::map<unsigned, long double> _local3dProfile[3];
+    //std::map<unsigned, long double> _local3dProfile[3];
     // Global 3D Profile
-    std::map<unsigned, long double> _global3dProfile[3];
+    //std::map<unsigned, long double> _global3dProfile[3];
 
     // output file prefix
     string _profilePrefix;

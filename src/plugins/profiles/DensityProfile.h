@@ -29,6 +29,14 @@ public:
         _globalProfile[uID] = 0.0;
     }
     int comms() final {return 1;}
+    std::map<unsigned, long double> getProfile();
+    std::map<unsigned, long double>* get3dProfile();
+
+private:
+    // Local 1D Profile
+    std::map<unsigned, long double> _localProfile;
+    // Global 1D Profile
+    std::map<unsigned, long double> _globalProfile;
 };
 
 

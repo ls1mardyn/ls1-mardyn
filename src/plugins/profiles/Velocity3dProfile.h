@@ -38,6 +38,14 @@ public:
     }
     // set correct number of communications needed for this profile
     int comms() final {return 3;}
+    std::map<unsigned, long double> getProfile();
+    std::map<unsigned, long double>* get3dProfile();
+
+private:
+    // Local 3D Profile
+    std::map<unsigned, long double> _local3dProfile[3];
+    // Global 3D Profile
+    std::map<unsigned, long double> _global3dProfile[3];
 };
 
 

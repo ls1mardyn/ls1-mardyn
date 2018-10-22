@@ -37,6 +37,14 @@ public:
     }
     // set correct number of communications needed for this profile
     int comms() final {return 1;}
+    std::map<unsigned, long double> getProfile();
+    std::map<unsigned, long double>* get3dProfile();
+
+private:
+    // Local 1D Profile
+    std::map<unsigned, long double> _localProfile;
+    // Global 1D Profile
+    std::map<unsigned, long double> _globalProfile;
 };
 
 #endif //MARDYN_TRUNK_VELOCITYABSPROFILE_H

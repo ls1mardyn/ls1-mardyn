@@ -45,3 +45,11 @@ void DensityProfile::output(string prefix) {
     outfile.close();
 }
 
+std::map<unsigned, long double> DensityProfile::getProfile() {
+    return _globalProfile;
+}
+
+std::map<unsigned, long double>* DensityProfile::get3dProfile() {
+    global_log->error() << "[DensityProfile] Does not support/use 3D Map. Use getProfile for 1D map instead." << std::endl;
+    Simulation::exit(-1);
+}

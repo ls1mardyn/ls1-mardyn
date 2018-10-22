@@ -54,3 +54,12 @@ void Velocity3dProfile::output(string prefix) {
     outfile.close();
 
 }
+
+std::map<unsigned, long double> Velocity3dProfile::getProfile() {
+    global_log->error() << "[Velocity3dProfile] Does not support/use 1D Map. Use get3dProfile for 3D map instead." << std::endl;
+    Simulation::exit(-1);
+}
+
+std::map<unsigned, long double>* Velocity3dProfile::get3dProfile() {
+    return _global3dProfile;
+}

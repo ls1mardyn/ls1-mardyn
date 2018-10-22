@@ -28,14 +28,19 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
         global_log->info() << "[KartesianProfile] DENSITY PROFILE ENABLED\n";
         numProfiles++;
     }
-    xmlconfig.getNodeValue("profiles/temperature", _TEMPERATURE);
-    if(_TEMPERATURE){
-        global_log->info() << "[KartesianProfile] TEMPERATURE PROFILE ENABLED\n";
-        numProfiles++;
-    }
     xmlconfig.getNodeValue("profiles/velocity", _VELOCITY);
     if(_VELOCITY){
         global_log->info() << "[KartesianProfile] VELOCITY PROFILE ENABLED\n";
+        numProfiles++;
+    }
+    xmlconfig.getNodeValue("profiles/velocity3d", _VELOCITY3D);
+    if(_VELOCITY){
+        global_log->info() << "[KartesianProfile] VELOCITY3D PROFILE ENABLED\n";
+        numProfiles++;
+    }
+    xmlconfig.getNodeValue("profiles/temperature", _TEMPERATURE);
+    if(_TEMPERATURE){
+        global_log->info() << "[KartesianProfile] TEMPERATURE PROFILE ENABLED\n";
         numProfiles++;
     }
     global_log->info() << "[KartesianProfile] Number of profiles: " << numProfiles << "\n";
@@ -43,27 +48,23 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
         global_log->warning() << "[KartesianProfile] NO PROFILES SPECIFIED -> Outputting all\n";
         _ALL = true;
     }
+
     // ADDING PROFILES
     // Need DensityProfile for Velocity3dProfile
-    if(_DENSITY || _VELOCITY || _ALL){
+    if(_DENSITY || _VELOCITY || _VELOCITY3D || _ALL){
         _densProfile = new DensityProfile();
-        _densProfile->init(this);
-        _profiles.push_back(_densProfile);
-        _comms += _densProfile->comms();
+        addProfile(_densProfile);
+    }
+    if(_VELOCITY || _ALL){
+        _velAbsProfile = new VelocityAbsProfile();
+        addProfile(_velAbsProfile);
+    }
+    if(_VELOCITY3D || _ALL){
+        _vel3dProfile = new Velocity3dProfile();
+        addProfile(_vel3dProfile);
     }
     if(_TEMPERATURE || _ALL){
         // TODO
-    }
-    // TODO: Different XML for different velocity profiles
-    if(_VELOCITY || _ALL){
-        ProfileBase* profile = new Velocity3dProfile();
-        profile->init(this);
-        _profiles.push_back(profile);
-        _comms += profile->comms();
-        ProfileBase* profile_abs = new VelocityAbsProfile();
-        profile_abs->init(this);
-        _profiles.push_back(profile_abs);
-        _comms += profile_abs->comms();
     }
 
     xmlconfig.getNodeValue("timesteps/init", _initStatistics);
@@ -125,44 +126,49 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
 
     unsigned xun, yun, zun;
     if ((simstep >= _initStatistics) && (simstep % _profileRecordingTimesteps == 0)) {
-        long int uID;
+        unsigned long uID;
+
         // Loop over all particles and bin them with uIDs
         for(auto thismol = particleContainer->iterator(); thismol.isValid(); ++thismol){
-            // Calculate uID
-            xun = (unsigned) floor(thismol->r(0) * this->universalInvProfileUnit[0]);
-            yun = (unsigned) floor(thismol->r(1) * this->universalInvProfileUnit[1]);
-            zun = (unsigned) floor(thismol->r(2) * this->universalInvProfileUnit[2]);
-            uID = (unsigned long) (xun * this->universalProfileUnit[1] * this->universalProfileUnit[2]
-                                   + yun * this->universalProfileUnit[2] + zun);
+            // Get uID
+            uID = getUID(thismol);
             // pass mol + uID to all profiles
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->record(*thismol, uID);
             }
         }
+
         // Record number of Timesteps recorded since last output write
         accumulatedDatasets++;
     }
     if ((simstep >= _initStatistics) && (simstep % _writeFrequency == 0)) {
+
         // COLLECTIVE COMMUNICATION
         global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << accumulatedDatasets << "\n";
+
         // Initialize Communication with number of bins * number of total comms needed per bin by all profiles.
 		domainDecomp->collCommInit(_comms * _uIDs);
-		//global_log->info() << "[KartesianProfile] profile collectAppend" << std::endl;
+
+		// Append Communications
         for(unsigned long uID = 0; uID < _uIDs; uID++){
             for(unsigned i = 0; i < _profiles.size(); i++){
                 _profiles[i]->collectAppend(domainDecomp, uID);
             }
         }
+
         // Reduction Communication to get global values
         domainDecomp->collCommAllreduceSum();
+
         // Write global values in all bins in all profiles
         for(unsigned long uID = 0; uID < _uIDs; uID++) {
             for (unsigned i = 0; i < _profiles.size(); i++) {
                 _profiles[i]->collectRetrieve(domainDecomp, uID);
             }
         }
+
         // Finalize Communication
         domainDecomp->collCommFinalize();
+
         // Initialize Output from rank 0 process
         if (mpi_rank == 0) {
             global_log->info() << "[KartesianProfile] Writing profile output" << std::endl;
@@ -170,6 +176,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
                 _profiles[i]->output(_outputPrefix + "_" + std::to_string(simstep));
             }
         }
+
         // Reset profile arrays for next recording frame.
         for(unsigned long uID = 0; uID < _uIDs; uID++) {
             for (unsigned i = 0; i < _profiles.size(); i++) {
@@ -178,4 +185,19 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
         }
         accumulatedDatasets = 0;
     }
+}
+
+unsigned long KartesianProfile::getUID(ParticleIterator thismol) {
+    auto xun = (unsigned) floor(thismol->r(0) * this->universalInvProfileUnit[0]);
+    auto yun = (unsigned) floor(thismol->r(1) * this->universalInvProfileUnit[1]);
+    auto zun = (unsigned) floor(thismol->r(2) * this->universalInvProfileUnit[2]);
+    auto uID = (unsigned long) (xun * this->universalProfileUnit[1] * this->universalProfileUnit[2]
+                           + yun * this->universalProfileUnit[2] + zun);
+    return uID;
+}
+
+void KartesianProfile::addProfile(ProfileBase *profile) {
+    profile->init(this);
+    _profiles.push_back(profile);
+    _comms += profile->comms();
 }
