@@ -26,8 +26,8 @@ public:
     }
     void output(string prefix) final;
     void reset(unsigned long uID) final  {
-        _localProfile[uID] = 0.0;
-        _globalProfile[uID] = 0.0;
+        _localProfile[uID] = 0;
+        _globalProfile[uID] = 0;
     }
     int comms() final {return 1;}
 
