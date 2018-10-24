@@ -73,6 +73,19 @@ protected:
     string _profilePrefix;
     // KartesianProfile managing class pointer for meta info
     KartesianProfile* _kartProf;
+
+    /** @brief Write Single Data Entry for Matrix with given uID to outfile
+     *
+     * @param uID unique ID of bin
+     * @param outfile outfile to write to
+     */
+    virtual void writeDataEntry(unsigned long uID, ofstream &outfile) const = 0;
+
+    /**@brief Matrix writing routine to avoid code duplication
+     *
+     * @param outfile opened filestream from Profile
+     */
+    void writeMatrix(ofstream &outfile);
 };
 
 

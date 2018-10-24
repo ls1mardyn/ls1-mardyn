@@ -5,5 +5,9 @@
 #include "DOFProfile.h"
 
 void DOFProfile::output(string prefix) {
-    global_log->info() << "[DOFProfile] has no output.\n";
+    global_log->debug() << "[DOFProfile] has no output.\n";
+}
+
+void DOFProfile::writeDataEntry(unsigned long uID, ofstream &outfile) const {
+    global_log->debug() << "[DOFProfile] has no writeDataEntry.\n";
 }

@@ -40,6 +40,8 @@ private:
     std::map<unsigned, int> _localProfile;
     // Global 1D Profile
     std::map<unsigned, int> _globalProfile;
+
+    void writeDataEntry(unsigned long uID, ofstream &outfile) const final;
 };
 
 
