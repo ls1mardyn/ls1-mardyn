@@ -8,11 +8,17 @@
 #include "ProfileBase.h"
 #include "../KartesianProfile.h"
 
+class DOFProfile;
+class KineticProfile;
+
 /**
  * @brief Outputs the temperature of molecules per bin specified by Sampling grid in KartesianProfile.
  */
 class TemperatureProfile : public ProfileBase {
 public:
+	TemperatureProfile(DOFProfile * dofProf, KineticProfile * kinProf) :
+			_dofProfile(dofProf), _kineticProfile(kinProf), _localProfile(), _globalProfile() {
+	}
     ~TemperatureProfile() final {};
     void record(Molecule &mol, unsigned long uID) final  {
         _localProfile[uID] += 1;
@@ -29,10 +35,11 @@ public:
         _globalProfile[uID] = 0.0;
     }
     int comms() final {return 1;}
-    std::map<unsigned, long double> getProfile();
-    std::map<unsigned, long double>* get3dProfile();
 
 private:
+    DOFProfile * _dofProfile;
+    KineticProfile * _kineticProfile;
+
     // Local 1D Profile
     std::map<unsigned, long double> _localProfile;
     // Global 1D Profile

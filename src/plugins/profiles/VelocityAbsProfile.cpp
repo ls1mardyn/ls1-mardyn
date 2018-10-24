@@ -3,6 +3,7 @@
 //
 
 #include "VelocityAbsProfile.h"
+#include "plugins/profiles/DensityProfile.h"
 
 void VelocityAbsProfile::output(string prefix) {
     global_log->info() << "[VelocityAbsProfile] output" << std::endl;
@@ -10,7 +11,6 @@ void VelocityAbsProfile::output(string prefix) {
     _profilePrefix += "_kartesian.VAbspr";
 
     // Need to get DensityProfile to calculate average velocities per bin independent of number density.
-    std::map<unsigned, long double> dens = _kartProf->_densProfile->getProfile();
 
     ofstream outfile(_profilePrefix.c_str());
     outfile.precision(6);
@@ -37,8 +37,9 @@ void VelocityAbsProfile::output(string prefix) {
                 long unID = (long) (x * _kartProf->universalProfileUnit[0] * _kartProf->universalProfileUnit[2] + y * _kartProf->universalProfileUnit[1] + z);
                 // Abs output
                 // Check for division by 0
-                if(dens[unID] != 0){
-                    vd = _globalProfile[unID] / dens[unID];
+                int numberDensity = _densityProfile->getGlobalNumberDensity(unID);
+                if(numberDensity != 0){
+                    vd = _globalProfile[unID] / numberDensity;
                 }
                 else{
                     vd = 0;
@@ -49,13 +50,4 @@ void VelocityAbsProfile::output(string prefix) {
         outfile << "\n";
     }
     outfile.close();
-}
-
-std::map<unsigned, long double> VelocityAbsProfile::getProfile() {
-    return _globalProfile;
-}
-
-std::map<unsigned, long double>* VelocityAbsProfile::get3dProfile() {
-    global_log->error() << "[VelocityAbsProfile] Does not support/use 3D Map. Use getProfile for 1D map instead." << std::endl;
-    Simulation::exit(-1);
 }

@@ -4,14 +4,12 @@
 //
 
 #include "Velocity3dProfile.h"
+#include "DensityProfile.h"
 
 void Velocity3dProfile::output(string prefix) {
     global_log->info() << "[Velocity3dProfile] output" << std::endl;
     _profilePrefix = prefix;
     _profilePrefix += "_kartesian.V3Dpr";
-
-    // Need to get DensityProfile to calculate average velocities per bin independent of number density.
-    std::map<unsigned, long double> dens = _kartProf->_densProfile->getProfile();
 
     ofstream outfile(_profilePrefix.c_str());
     outfile.precision(6);
@@ -39,8 +37,9 @@ void Velocity3dProfile::output(string prefix) {
                 // X - Y - Z output
                 for(unsigned d = 0; d < 3; d++){
                     // Check for division by 0
-                    if(dens[unID] != 0){
-                        vd = _global3dProfile[d][unID] / dens[unID];
+                	int numberDensity = _densityProfile->getGlobalNumberDensity(unID);
+                    if(numberDensity != 0){
+                        vd = _global3dProfile[unID][d] / numberDensity;
                     }
                     else{
                         vd = 0;
@@ -53,13 +52,4 @@ void Velocity3dProfile::output(string prefix) {
     }
     outfile.close();
 
-}
-
-std::map<unsigned, long double> Velocity3dProfile::getProfile() {
-    global_log->error() << "[Velocity3dProfile] Does not support/use 1D Map. Use get3dProfile for 3D map instead." << std::endl;
-    Simulation::exit(-1);
-}
-
-std::map<unsigned, long double>* Velocity3dProfile::get3dProfile() {
-    return _global3dProfile;
 }

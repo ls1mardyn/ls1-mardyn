@@ -18,25 +18,27 @@ public:
         _localProfile[uID] += 1;
     }
     void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {
-        domainDecomp->collCommAppendLongDouble(_localProfile[uID]);
+        domainDecomp->collCommAppendInt(_localProfile[uID]);
     }
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
-        _globalProfile[uID] = domainDecomp->collCommGetLongDouble();
+        _globalProfile[uID] = domainDecomp->collCommGetInt();
     }
     void output(string prefix) final;
     void reset(unsigned long uID) final  {
-        _localProfile[uID] = 0.0;
-        _globalProfile[uID] = 0.0;
+        _localProfile[uID] = 0;
+        _globalProfile[uID] = 0;
     }
     int comms() final {return 1;}
-    std::map<unsigned, long double> getProfile();
-    std::map<unsigned, long double>* get3dProfile();
+
+    int getGlobalNumberDensity(unsigned long uid) const {
+    	return _globalProfile.at(uid);
+    }
 
 private:
     // Local 1D Profile
-    std::map<unsigned, long double> _localProfile;
+    std::map<unsigned, int> _localProfile;
     // Global 1D Profile
-    std::map<unsigned, long double> _globalProfile;
+    std::map<unsigned, int> _globalProfile;
 };
 
 

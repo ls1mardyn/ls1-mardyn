@@ -3,6 +3,13 @@
 //
 
 #include "KartesianProfile.h"
+#include "plugins/profiles/ProfileBase.h"
+#include "plugins/profiles/DensityProfile.h"
+#include "plugins/profiles/Velocity3dProfile.h"
+#include "plugins/profiles/VelocityAbsProfile.h"
+#include "plugins/profiles/TemperatureProfile.h"
+#include "plugins/profiles/KineticProfile.h"
+#include "plugins/profiles/DOFProfile.h"
 
 /**
 * @brief Read in Information about write/record frequencies, Sampling Grid and which profiles are enabled.
@@ -57,11 +64,11 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     }
     // Need Velocity for Temperature
     if(_VELOCITY || _ALL){
-        _velAbsProfile = new VelocityAbsProfile();
+        _velAbsProfile = new VelocityAbsProfile(_densProfile);
         addProfile(_velAbsProfile);
     }
     if(_VELOCITY3D || _ALL){
-        _vel3dProfile = new Velocity3dProfile();
+        _vel3dProfile = new Velocity3dProfile(_densProfile);
         addProfile(_vel3dProfile);
     }
     if(_TEMPERATURE || _ALL){
@@ -69,7 +76,7 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
         addProfile(_dofProfile);
         _kineticProfile = new KineticProfile();
         addProfile(_kineticProfile);
-        _tempProfile = new TemperatureProfile();
+        _tempProfile = new TemperatureProfile(_dofProfile, _kineticProfile);
         addProfile(_tempProfile);
     }
 

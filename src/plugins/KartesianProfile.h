@@ -7,15 +7,16 @@
 
 #include "PluginBase.h"
 #include "Domain.h"
-#include "plugins/profiles/DensityProfile.h"
-#include "plugins/profiles/Velocity3dProfile.h"
-#include "plugins/profiles/VelocityAbsProfile.h"
-#include "plugins/profiles/TemperatureProfile.h"
-#include "plugins/profiles/KineticProfile.h"
-#include "plugins/profiles/DOFProfile.h"
-
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+
+class DensityProfile;
+class Velocity3dProfile;
+class VelocityAbsProfile;
+class TemperatureProfile;
+class KineticProfile;
+class DOFProfile;
+class ProfileBase;
 
 /** @brief KartesianProfile is a Plugin that is called like any other plugin derived from PluginBase. It handles all profiles in /plugins/profiles. <br>
  * New profiles must be added via the plugins/ ProfileBase to comply with this Plugin. <br>
@@ -73,12 +74,12 @@ public:
     Domain* dom; // Reference to global Domain
 
     // Profile pointers for data reuse
-    ProfileBase* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
-    ProfileBase* _velAbsProfile;
-    ProfileBase* _vel3dProfile;
-    ProfileBase* _tempProfile;
-    ProfileBase* _dofProfile;
-    ProfileBase* _kineticProfile;
+    DensityProfile* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
+    VelocityAbsProfile* _velAbsProfile;
+    Velocity3dProfile* _vel3dProfile;
+    TemperatureProfile* _tempProfile;
+    DOFProfile* _dofProfile;
+    KineticProfile* _kineticProfile;
 
 private:
 

@@ -21,10 +21,10 @@ public:
         _localProfile[uID] += mv2 + Iw2;
     }
     void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {
-        domainDecomp->collCommAppendLongDouble(_localProfile[uID]);
+        domainDecomp->collCommAppendDouble(_localProfile[uID]);
     }
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
-        _globalProfile[uID] = domainDecomp->collCommGetLongDouble();
+        _globalProfile[uID] = domainDecomp->collCommGetDouble();
     }
     void output(string prefix) final;
     void reset(unsigned long uID) final  {
@@ -32,14 +32,16 @@ public:
         _globalProfile[uID] = 0.0;
     }
     int comms() final {return 1;}
-    std::map<unsigned, long double> getProfile();
-    std::map<unsigned, long double>* get3dProfile();
+
+    double getGlobalKineticEnergy(unsigned long uid) const {
+    	return _globalProfile.at(uid);
+    }
 
 private:
     // Local 1D Profile
-    std::map<unsigned, long double> _localProfile;
+    std::map<unsigned, double> _localProfile;
     // Global 1D Profile
-    std::map<unsigned, long double> _globalProfile;
+    std::map<unsigned, double> _globalProfile;
 };
 
 
