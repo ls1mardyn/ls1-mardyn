@@ -10,3 +10,6 @@ src/MarDyn_*.*
 !src/MarDyn_version.h
 .project
 .settings
+*.so.1.0
+*.a
+*.so
