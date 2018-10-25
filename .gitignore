@@ -2,3 +2,7 @@ cmake-build-*/
 build*/
 *.swp
 .idea/
+*.o
+src/MarDyn
+src/MarDyn.*
+!src/MarDyn.cpp
