@@ -53,6 +53,8 @@ private:
     std::map<unsigned, std::array<double,3>> _local3dProfile;
     // Global 3D Profile
     std::map<unsigned, std::array<double,3>> _global3dProfile;
+
+    void writeDataEntry(unsigned long uID, ofstream &outfile) const final;
 };
 
 
