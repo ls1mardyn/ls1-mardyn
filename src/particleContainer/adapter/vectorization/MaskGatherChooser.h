@@ -60,7 +60,7 @@ public:
 	}
 
 };
-#if VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER
 class GatherChooser { //KNL ONLY!!!
 private:
 	__m512i indices;
@@ -194,7 +194,7 @@ public:
 };
 #endif
 
-#if VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER and VCP_VEC_TYPE!=VCP_VEC_AVX512F_GATHER
 	typedef MaskingChooser MaskGatherC;
 #else
 	typedef GatherChooser MaskGatherC;

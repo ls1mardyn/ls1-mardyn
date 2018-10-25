@@ -27,7 +27,7 @@ static vcp_inline
 void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<vcp_real_calc>& eps_sigI,
 		const vcp_ljc_id_t* const id_j, const vcp_ljc_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
 
-#if VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE != VCP_VEC_KNL_GATHER and VCP_VEC_TYPE != VCP_VEC_AVX512F_GATHER
 	const vcp_ljc_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
@@ -113,7 +113,7 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 
 	#endif /* VCP_PREC */
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNL
+#elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_AVX512F
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		__m512i indices = _mm512_load_epi32(id_j_shifted);
 		indices = _mm512_add_epi32(indices, indices);//only every second...
@@ -127,7 +127,7 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 	#endif
 
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
@@ -233,7 +233,7 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 
 
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNL
+#elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_AVX512F
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		const __m512i indices = _mm512_load_epi32(id_j_shifted);
@@ -245,7 +245,7 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 	#endif
 
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
@@ -353,7 +353,7 @@ public:
 
 	vcp_inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 	{
-#if VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER and VCP_VEC_TYPE!=VCP_VEC_AVX512F_GATHER
 		return InitJ(i);
 #else
 		return 0;

@@ -48,6 +48,8 @@
 #define VCP_VEC_AVX2 3
 #define VCP_VEC_KNL 6
 #define VCP_VEC_KNL_GATHER 7
+#define VCP_VEC_AVX512F 8
+#define VCP_VEC_AVX512F_GATHER 9
 
 #define VCP_VEC_W__64 0
 #define VCP_VEC_W_128 1
@@ -59,14 +61,17 @@
 #endif
 
 // define symbols for vectorization
-#if defined(__AVX512F__)
-	#if not defined(__AVX512ER__)
-	#error currently only KNL is supported, not SKX
-	#endif
+#if defined(__AVX512F__) && defined(__AVX512ER__)
 	#if defined(__VCP_GATHER__)
 		#define VCP_VEC_TYPE VCP_VEC_KNL_GATHER
 	#else
 		#define VCP_VEC_TYPE VCP_VEC_KNL
+	#endif
+#elif defined(__AVX512F__)
+	#if defined(__VCP_GATHER__)
+		#define VCP_VEC_TYPE VCP_VEC_AVX512F_GATHER
+	#else
+		#define VCP_VEC_TYPE VCP_VEC_AVX512F
 	#endif
 #elif defined(__AVX2__) && defined(__FMA__)
 	#define VCP_VEC_TYPE VCP_VEC_AVX2
@@ -89,13 +94,13 @@
 #endif
 
 // Include necessary files if we vectorize.
-#if VCP_VEC_TYPE==VCP_VEC_AVX or \
-	VCP_VEC_TYPE==VCP_VEC_AVX2 or \
-	VCP_VEC_TYPE==VCP_VEC_KNL or \
-	VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	#include "immintrin.h"
+#if VCP_VEC_TYPE==VCP_NOVEC
+	// no file to include
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
+#else
+	// all others need immintrin.h
+	#include "immintrin.h"
 #endif
 
 // define necessary types
@@ -136,7 +141,9 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or \
-	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or \
+	  VCP_VEC_TYPE==VCP_VEC_AVX512F or \
+	  VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER
 
 	#define VCP_VEC_WIDTH VCP_VEC_W_512
 
@@ -149,7 +156,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 		typedef __mmask8 vcp_mask_single;
 	#endif
 
-	#if VCP_VEC_TYPE==VCP_VEC_KNL
+	#if VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_AVX512F
 		typedef vcp_mask_vec vcp_lookupOrMask_vec;
 		typedef vcp_mask_single vcp_lookupOrMask_single;
 

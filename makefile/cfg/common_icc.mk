@@ -23,6 +23,12 @@ endif
 ifeq ($(VECTORIZE_CODE),KNL_G_S)
 CXXFLAGS_VECTORIZE = -xMIC-AVX512 -D__VCP_GATHER__ -fp-model precise
 endif
+ifeq ($(VECTORIZE_CODE),KNL_MASK)
+CXXFLAGS_VECTORIZE = -xCore-AVX512 -fp-model precise
+endif
+ifeq ($(VECTORIZE_CODE),KNL_G_S)
+CXXFLAGS_VECTORIZE = -xCore-AVX512 -D__VCP_GATHER__ -fp-model precise
+endif
 
 # OpenMP settings:
 #########################################
