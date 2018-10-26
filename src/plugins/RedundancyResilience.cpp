@@ -22,7 +22,7 @@ using Log::global_log;
 using Log::global_log;
 
 /////////////////////////////////////////////////////////////////////////////
-// Redundancy Resilience class
+// Resilience Communication class
 ResilienceComm::ResilienceComm(int numProcs, int rank)
 		: _numProcs(numProcs)
 		, _rank(rank) {
