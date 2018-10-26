@@ -202,7 +202,7 @@ MeasureLoad::MeasureLoad() :
 arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-8) {
 	/*
 	 * Description: sequential Coordinate-wise algorithm for non-negative least square regression A x = b, s.t. x >= 0
-	 * 	Reference: http://cmp.felk.cvut.cz/ftp/articles/franc/Franc-TR-2005-06.pdf
+	 * Reference: http://cmp.felk.cvut.cz/ftp/articles/franc/Franc-TR-2005-06.pdf
 	 */
 
 	arma::vec mu = -A.t() * b;

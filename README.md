@@ -7,6 +7,11 @@ ls1-MarDyn is a massively parallel Molecular Dynamics (MD) code for large system
 Getting Started
 ===============
 
+Documentation:
+--------------
+The current doxygen documentation can be found here:
+https://www5.in.tum.de/mardyn/doxygen_doc/html/
+
 Prerequisites:
 --------------
 ### mandatory requirements:

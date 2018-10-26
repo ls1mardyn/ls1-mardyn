@@ -8,11 +8,16 @@
 #include "ProfileBase.h"
 #include "../KartesianProfile.h"
 
+class DensityProfile;
+
 /**
  * @brief Outputs the magnitude of the velocity per bin specified by Sampling grid in KartesianProfile.
  */
 class VelocityAbsProfile : public ProfileBase {
 public:
+	VelocityAbsProfile(DensityProfile * dens) :
+			_densityProfile(dens), _localProfile(), _globalProfile() {
+	}
     ~VelocityAbsProfile() final = default;
     void record(Molecule& mol, unsigned long uID) final  {
         double absV = 0.0;
@@ -25,10 +30,10 @@ public:
         _localProfile[uID] += absV;
     }
     void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {
-        domainDecomp->collCommAppendLongDouble(_localProfile[uID]);
+        domainDecomp->collCommAppendDouble(_localProfile[uID]);
     }
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
-        _globalProfile[uID] = domainDecomp->collCommGetLongDouble();
+        _globalProfile[uID] = domainDecomp->collCommGetDouble();
     }
     void output(string prefix) final;
     void reset(unsigned long uID) final  {
@@ -37,6 +42,16 @@ public:
     }
     // set correct number of communications needed for this profile
     int comms() final {return 1;}
+
+private:
+    DensityProfile * _densityProfile;
+
+    // Local 1D Profile
+    std::map<unsigned, double> _localProfile;
+    // Global 1D Profile
+    std::map<unsigned, double> _globalProfile;
+
+    void writeDataEntry(unsigned long uID, ofstream &outfile) const final;
 };
 
 #endif //MARDYN_TRUNK_VELOCITYABSPROFILE_H

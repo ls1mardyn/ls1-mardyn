@@ -1,21 +1,22 @@
 //
-// Created by Kruegener on 8/19/2018.
+// Created by Kruegener on 10/22/2018.
 //
 
-#ifndef MARDYN_TRUNK_DENSITYPROFILE_H
-#define MARDYN_TRUNK_DENSITYPROFILE_H
+#ifndef MARDYN_DOFPROFILE_H
+#define MARDYN_DOFPROFILE_H
+
 
 #include "ProfileBase.h"
 #include "../KartesianProfile.h"
 
 /**
- * @brief Outputs the number density of molecules per bin specified by Sampling grid in KartesianProfile.
+ * @brief Records (NO OUTPUT) the DOF of molecules per bin specified by Sampling grid in KartesianProfile.
  */
-class DensityProfile : public ProfileBase {
+class DOFProfile : public ProfileBase {
 public:
-	~DensityProfile() final {};
+    ~DOFProfile() final {};
     void record(Molecule &mol, unsigned long uID) final  {
-        _localProfile[uID] += 1;
+        _localProfile[uID] += 3.0 + (long double) (mol.component()->getRotationalDegreesOfFreedom());
     }
     void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) final {
         domainDecomp->collCommAppendInt(_localProfile[uID]);
@@ -30,7 +31,7 @@ public:
     }
     int comms() final {return 1;}
 
-    int getGlobalNumberDensity(unsigned long uid) const {
+    int getGlobalDOF(unsigned long uid) const {
     	return _globalProfile.at(uid);
     }
 
@@ -44,4 +45,4 @@ private:
 };
 
 
-#endif //MARDYN_TRUNK_DENSITYPROFILE_H
+#endif //MARDYN_DOFPROFILE_H

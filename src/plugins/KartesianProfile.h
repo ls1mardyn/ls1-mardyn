@@ -7,12 +7,16 @@
 
 #include "PluginBase.h"
 #include "Domain.h"
-#include "plugins/profiles/DensityProfile.h"
-#include "plugins/profiles/Velocity3dProfile.h"
-#include "plugins/profiles/VelocityAbsProfile.h"
-
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+
+class DensityProfile;
+class Velocity3dProfile;
+class VelocityAbsProfile;
+class TemperatureProfile;
+class KineticProfile;
+class DOFProfile;
+class ProfileBase;
 
 /** @brief KartesianProfile is a Plugin that is called like any other plugin derived from PluginBase. It handles all profiles in /plugins/profiles. <br>
  * New profiles must be added via the plugins/ ProfileBase to comply with this Plugin. <br>
@@ -56,6 +60,8 @@ public:
     void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain) override {};
 
+    unsigned long getUID(ParticleIterator thismol);
+
     std::string getPluginName()override {return std::string("KartesianProfile");}
 
     static PluginBase* createInstance(){return new KartesianProfile();}
@@ -66,9 +72,19 @@ public:
     double globalLength[3]; // Size of Domain
     double segmentVolume; // Size of one Sampling grid bin
     Domain* dom; // Reference to global Domain
-    ProfileBase* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
+
+    // Profile pointers for data reuse
+    DensityProfile* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
+    VelocityAbsProfile* _velAbsProfile;
+    Velocity3dProfile* _vel3dProfile;
+    TemperatureProfile* _tempProfile;
+    DOFProfile* _dofProfile;
+    KineticProfile* _kineticProfile;
 
 private:
+
+    void addProfile(ProfileBase* profile);
+
     unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
     unsigned long _initStatistics; // Timesteps to skip at start of the simulation
     unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
@@ -83,8 +99,9 @@ private:
     // Needed for XML check for enabled profiles.
     bool _ALL = false;
     bool _DENSITY = false;
-    bool _TEMPERATURE = false;
     bool _VELOCITY = false;
+    bool _VELOCITY3D = false;
+    bool _TEMPERATURE = false;
 
 };
 
