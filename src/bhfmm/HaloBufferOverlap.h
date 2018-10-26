@@ -9,9 +9,10 @@
 #define HALOBUFFEROVERLAP_H_
 #include "bhfmm/utils/Vector3.h"
 #include <math.h>
-
+#include <vector>
 #ifdef ENABLE_MPI
 
+#include "mpi.h"
 
 namespace bhfmm{
 template <class T>
@@ -36,16 +37,6 @@ public:
 	}
 	std::vector<T *>& getCornerBuffers(){
 		return _cornerBuffers;
-	}
-
-	int  getAreaSize(){
-		return _areaHaloSize;
-	}
-	int  getEdgeSize(){
-		return _edgeHaloSize;
-	}
-	int  getCornerSize(){
-		return _cornerHaloSize;
 	}
 
 	void setNumberOfGlobalLevelsInBuffer(int number){
