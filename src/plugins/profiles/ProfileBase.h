@@ -67,31 +67,25 @@ public:
      * @return Number of nedded communications per bin so the communicator can be setup correctly.
      */
     virtual int comms() = 0;
-    /** @brief 1D Profile access. Some Profiles need information from others, so this enables sharing arrays between profiles.
-     *
-     * @return Internal Global Arrays after communication.
-     */
-    std::map<unsigned, long double> getProfile(){return _globalProfile;};
-    /** @brief 3D Profile access. Some Profiles need information from others, so this enables sharing arrays between profiles.
-     *
-     * @return Internal Global Arrays after communication.
-     */
-    std::map<unsigned, long double>* get3dProfile(){return _global3dProfile;};
 
 protected:
-    // Local 1D Profile
-    std::map<unsigned, long double> _localProfile;
-    // Global 1D Profile
-    std::map<unsigned, long double> _globalProfile;
-    // Local 3D Profile
-    std::map<unsigned, long double> _local3dProfile[3];
-    // Global 3D Profile
-    std::map<unsigned, long double> _global3dProfile[3];
-
     // output file prefix
     string _profilePrefix;
     // KartesianProfile managing class pointer for meta info
     KartesianProfile* _kartProf;
+
+    /** @brief Write Single Data Entry for Matrix with given uID to outfile
+     *
+     * @param uID unique ID of bin
+     * @param outfile outfile to write to
+     */
+    virtual void writeDataEntry(unsigned long uID, ofstream &outfile) const = 0;
+
+    /**@brief Matrix writing routine to avoid code duplication
+     *
+     * @param outfile opened filestream from Profile
+     */
+    void writeMatrix(ofstream &outfile);
 };
 
 

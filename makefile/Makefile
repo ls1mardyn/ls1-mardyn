@@ -175,11 +175,11 @@ OBJECTS = $(SOURCES:.cpp=.o)
 INCLUDES = -I$(SRCDIR) -isystem $(SRCDIR)/../libs/rapidxml -isystem $(SRCDIR)/../libs/armadillo
 
 BINARY_BASENAME = MarDyn
-ifneq ("$(wildcard $(SRCDIR)/../.svn)","")
-  $(info Building from an svn version.)
-  SVN_VERSION = $(shell svnversion | sed -e "s/:/-/")
-  ifneq ($(SVN_VERSION),)
-    BINARY = $(BINARY_BASENAME)_$(SVN_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
+ifneq ("$(wildcard $(SRCDIR)/../.git)","")
+  $(info Building from a git version.)
+  GIT_VERSION = $(shell git rev-parse --short HEAD | sed -e "s/:/-/")
+  ifneq ($(GIT_VERSION),)
+    BINARY = $(BINARY_BASENAME)_$(GIT_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   else
     BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   endif

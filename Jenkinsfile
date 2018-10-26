@@ -1,4 +1,4 @@
-#!groovy
+#!/usr/bin/groovy
 pipeline {
     agent none
     options {
