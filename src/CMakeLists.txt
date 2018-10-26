@@ -48,6 +48,7 @@ ADD_EXECUTABLE(MarDyn
 
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
+        ${MPI_CXX_LIBRARIES} # mpi   
         ${BLAS_LIB}    # for armadillo
         ${LAPACK_LIB}  # for armadillo
         ${VTK_LIB}     # for VTK/xerces
