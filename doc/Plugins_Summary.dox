@@ -19,6 +19,11 @@ FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations
 GammaWriter | todo | todo
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
 InMemoryCheckpointing | resilience, checkpoint, fault tolerance, in-memory | In-memory Checkpointing. Save and restore the state of a simulation from a previous snapshot stored in RAM. Under development.
+KartesianProfile (KP) | kartesian sampling profile output | Enables Profiles (via ProfileBase) to record and output quantities from a kartesian sampling grid. Currently available profile outputs under plugins/profiles.
+KP / DensityProfile | number density profile output | Outputs number density per bin.
+KP / VelocityAbsProfile | velocity magnitude profile output | Outputs average magnitude per bin. Requires/auto enables DensityProfile.
+KP / Velocity3dProfile | velocity 3d vector profile output | Outputs average velocity 3d-components per bin. Requires/auto enables DensityProfile.
+KP / TemperatureProfile | temperature profile output | Outputs the average temperature per sampling bin. Requires/auto enables DOFProfile and KineticProfile which dont write to file (as of now).
 LoadbalanceWriter | todo | todo
 MaxCheck  | todo | todo
 MaxWriter  | todo | todo
