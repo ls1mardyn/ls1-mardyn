@@ -160,7 +160,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 		typedef vcp_mask_vec vcp_lookupOrMask_vec;
 		typedef vcp_mask_single vcp_lookupOrMask_single;
 
-	#else  // VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	#else  // VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_AVX512F_GATHER
 		typedef __m512i vcp_lookupOrMask_vec;
 		typedef countertype32 vcp_lookupOrMask_single;
 	#endif

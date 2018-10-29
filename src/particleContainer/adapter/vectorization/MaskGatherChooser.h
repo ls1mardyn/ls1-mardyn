@@ -61,7 +61,7 @@ public:
 
 };
 #if VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER
-class GatherChooser { //KNL ONLY!!!
+class GatherChooser { //scatter needed, i.e. AVX512
 private:
 	__m512i indices;
 	vcp_lookupOrMask_single* const storeCalcDistLookupLocation;
