@@ -29,3 +29,7 @@ void ProfileBase::writeMatrix(ofstream &outfile) {
     }
 
 }
+
+void ProfileBase::writeSimpleMatrix(ofstream &outfile) {
+    global_log->info() << "IMPLEMENT ME BEFORE USING\n";
+}

@@ -86,6 +86,13 @@ protected:
      * @param outfile opened filestream from Profile
      */
     void writeMatrix(ofstream &outfile);
+
+    /**@brief STUB for simple Matrix output without headers
+     *
+     * @param outfile opened filestream from Profile
+     */
+     // TODO: implement if needed
+    void writeSimpleMatrix(ofstream &outfile);
 };
 
 
