@@ -5,6 +5,7 @@
 #ifndef MARDYN_TRUNK_KARTESIAN2DPROFILE_H
 #define MARDYN_TRUNK_KARTESIAN2DPROFILE_H
 
+#include <plugins/profiles/ProfileBase.h>
 #include "PluginBase.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
@@ -56,7 +57,6 @@ public:
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
             Domain *domain, unsigned long simstep) override;
 
-    // TODO: cleanup?
     void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain) override {};
 
@@ -66,12 +66,15 @@ public:
 
     static PluginBase* createInstance(){return new KartesianProfile();}
 
+    SamplingInformation samplInfo;
+
+    /*
     double universalInvProfileUnit[3]; // Inv. Bin Sizes
     double universalProfileUnit[3]; // Bin Sizes
     long accumulatedDatasets; // Number of Datasets between output writes / profile resets
     double globalLength[3]; // Size of Domain
     double segmentVolume; // Size of one Sampling grid bin
-    Domain* dom; // Reference to global Domain
+    */
 
     // Profile pointers for data reuse
     DensityProfile* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles

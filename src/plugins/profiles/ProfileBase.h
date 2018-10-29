@@ -10,6 +10,14 @@
 
 class KartesianProfile;
 
+struct SamplingInformation{
+    double universalInvProfileUnit[3]; // Inv. Bin Sizes
+    double universalProfileUnit[3]; // Bin Sizes
+    long accumulatedDatasets; // Number of Datasets between output writes / profile resets
+    double globalLength[3]; // Size of Domain
+    double segmentVolume; // Size of one Sampling grid bin
+};
+
 /** @brief Base class for all Profile outputs used by KartesianProfile.
  *
  * The major steps for all profiles are <b>recording</b> the profile data, <b>communication</b>, writing the <b>output file</b>
@@ -28,7 +36,7 @@ public:
 	 *
 	 * @param kartProf Pointer to KartesianProfile. Grants access to necessary global params.
 	 */
-    void init(KartesianProfile* kartProf) {_kartProf = kartProf;};
+    void init(SamplingInformation &samplingInformation) { _samplInfo = samplingInformation;};
     /** @brief The recording step defines what kind of data needs to be recorded for a single molecule with a corresponding uID.
      *
      * @param mol Reference to Molecule, needed to extract info such as velocity or Virial.
@@ -72,7 +80,9 @@ protected:
     // output file prefix
     string _profilePrefix;
     // KartesianProfile managing class pointer for meta info
-    KartesianProfile* _kartProf;
+    //KartesianProfile* _kartProf;
+
+    SamplingInformation _samplInfo;
 
     /** @brief Write Single Data Entry for Matrix with given uID to outfile
      *
@@ -94,6 +104,5 @@ protected:
      // TODO: implement if needed
     void writeSimpleMatrix(ofstream &outfile);
 };
-
 
 #endif //MARDYN_TRUNK_PROFILEBASE_H

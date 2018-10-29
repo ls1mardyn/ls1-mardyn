@@ -23,10 +23,10 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("outputprefix", _outputPrefix);
     global_log->info() << "[KartesianProfile] Output prefix: " << _outputPrefix << endl;
 
-    xmlconfig.getNodeValue("x", universalProfileUnit[0]);
-    xmlconfig.getNodeValue("y", universalProfileUnit[1]);
-    xmlconfig.getNodeValue("z", universalProfileUnit[2]);
-    global_log->info() << "[KartesianProfile] Binning units: " << universalProfileUnit[0] << " " << universalProfileUnit[1] << " " << universalProfileUnit[2] << "\n";
+    xmlconfig.getNodeValue("x", samplInfo.universalProfileUnit[0]);
+    xmlconfig.getNodeValue("y", samplInfo.universalProfileUnit[1]);
+    xmlconfig.getNodeValue("z", samplInfo.universalProfileUnit[2]);
+    global_log->info() << "[KartesianProfile] Binning units: " << samplInfo.universalProfileUnit[0] << " " << samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
 
     // CHECKING FOR ENABLED PROFILES
     int numProfiles = 0;
@@ -99,21 +99,20 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
      */
 void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
     for(unsigned d = 0; d < 3; d ++){
-        globalLength[d] = domain->getGlobalLength(d);
-        global_log->info() << "[KartesianProfile] globalLength " << globalLength[d] << "\n";
+        samplInfo.globalLength[d] = domain->getGlobalLength(d);
+        global_log->info() << "[KartesianProfile] globalLength " << samplInfo.globalLength[d] << "\n";
     }
     for(unsigned i = 0; i < 3; i++){
-        universalInvProfileUnit[i] = universalProfileUnit[i] / globalLength[i];
-        global_log->info() << "[KartesianProfile] universalInvProfileUnit " << universalInvProfileUnit[i] << "\n";
+        samplInfo.universalInvProfileUnit[i] = samplInfo.universalProfileUnit[i] / samplInfo.globalLength[i];
+        global_log->info() << "[KartesianProfile] universalInvProfileUnit " << samplInfo.universalInvProfileUnit[i] << "\n";
     }
-    _uIDs = (unsigned long) (this->universalProfileUnit[0] * this->universalProfileUnit[1]
-                             * this->universalProfileUnit[2]);
+    _uIDs = (unsigned long) (this->samplInfo.universalProfileUnit[0] * this->samplInfo.universalProfileUnit[1]
+                             * this->samplInfo.universalProfileUnit[2]);
     global_log->info() << "[KartesianProfile] number uID " << _uIDs << "\n";
 
-    segmentVolume = this->globalLength[0] * this->globalLength[1] * this->globalLength[2]
-                    / (this->universalProfileUnit[0]*this->universalProfileUnit[1]*this->universalProfileUnit[2]);
-    global_log->info() << "[KartesianProfile] segmentVolume " << segmentVolume << "\n";
-    dom = domain;
+    samplInfo.segmentVolume = this->samplInfo.globalLength[0] * this->samplInfo.globalLength[1] * this->samplInfo.globalLength[2]
+                    / (this->samplInfo.universalProfileUnit[0]*this->samplInfo.universalProfileUnit[1]*this->samplInfo.universalProfileUnit[2]);
+    global_log->info() << "[KartesianProfile] segmentVolume " << samplInfo.segmentVolume << "\n";
 
     global_log->info() << "[KartesianProfile] profile init" << std::endl;
     for(unsigned long uID = 0; uID < _uIDs; uID++) {
@@ -151,12 +150,12 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
         }
 
         // Record number of Timesteps recorded since last output write
-        accumulatedDatasets++;
+        samplInfo.accumulatedDatasets++;
     }
     if ((simstep >= _initStatistics) && (simstep % _writeFrequency == 0)) {
 
         // COLLECTIVE COMMUNICATION
-        global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << accumulatedDatasets << "\n";
+        global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << samplInfo.accumulatedDatasets << "\n";
 
         // Initialize Communication with number of bins * number of total comms needed per bin by all profiles.
 		domainDecomp->collCommInit(_comms * _uIDs);
@@ -195,21 +194,21 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
                 _profiles[i]->reset(uID);
             }
         }
-        accumulatedDatasets = 0;
+        samplInfo.accumulatedDatasets = 0;
     }
 }
 
 unsigned long KartesianProfile::getUID(ParticleIterator thismol) {
-    auto xun = (unsigned) floor(thismol->r(0) * this->universalInvProfileUnit[0]);
-    auto yun = (unsigned) floor(thismol->r(1) * this->universalInvProfileUnit[1]);
-    auto zun = (unsigned) floor(thismol->r(2) * this->universalInvProfileUnit[2]);
-    auto uID = (unsigned long) (xun * this->universalProfileUnit[1] * this->universalProfileUnit[2]
-                           + yun * this->universalProfileUnit[2] + zun);
+    auto xun = (unsigned) floor(thismol->r(0) * this->samplInfo.universalInvProfileUnit[0]);
+    auto yun = (unsigned) floor(thismol->r(1) * this->samplInfo.universalInvProfileUnit[1]);
+    auto zun = (unsigned) floor(thismol->r(2) * this->samplInfo.universalInvProfileUnit[2]);
+    auto uID = (unsigned long) (xun * this->samplInfo.universalProfileUnit[1] * this->samplInfo.universalProfileUnit[2]
+                           + yun * this->samplInfo.universalProfileUnit[2] + zun);
     return uID;
 }
 
 void KartesianProfile::addProfile(ProfileBase *profile) {
-    profile->init(this);
+    profile->init(samplInfo);
     _profiles.push_back(profile);
     _comms += profile->comms();
 }
