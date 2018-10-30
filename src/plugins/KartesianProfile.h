@@ -70,6 +70,8 @@ public:
 
     SamplingInformation samplInfo;
 
+private:
+
     // Profile pointers for data reuse
     DensityProfile* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
     VelocityAbsProfile* _velAbsProfile;
@@ -78,16 +80,11 @@ public:
     DOFProfile* _dofProfile;
     KineticProfile* _kineticProfile;
 
-private:
-
-    void addProfile(ProfileBase* profile);
-
     unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
     unsigned long _initStatistics; // Timesteps to skip at start of the simulation
     unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
     long _accumulatedDatasets; // Number of Datasets between output writes / profile resets
     std::string _outputPrefix; // File prefix for all profiles
-    std::string _mode;
 
     unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 
@@ -100,6 +97,8 @@ private:
     bool _VELOCITY = false;
     bool _VELOCITY3D = false;
     bool _TEMPERATURE = false;
+
+    void addProfile(ProfileBase* profile);
 
 };
 
