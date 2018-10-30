@@ -207,8 +207,13 @@ unsigned long KartesianProfile::getUID(ParticleIterator thismol) {
     return uID;
 }
 
+unsigned long KartesianProfile::getCylUID(ParticleIterator thismol) {
+    return -1;
+}
+
 void KartesianProfile::addProfile(ProfileBase *profile) {
     profile->init(samplInfo);
     _profiles.push_back(profile);
     _comms += profile->comms();
 }
+

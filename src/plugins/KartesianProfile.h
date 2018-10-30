@@ -62,6 +62,8 @@ public:
 
     unsigned long getUID(ParticleIterator thismol);
 
+    unsigned long getCylUID(ParticleIterator thismol);
+
     std::string getPluginName()override {return std::string("KartesianProfile");}
 
     static PluginBase* createInstance(){return new KartesianProfile();}
