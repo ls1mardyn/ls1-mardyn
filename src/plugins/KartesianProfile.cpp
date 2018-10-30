@@ -98,25 +98,35 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
      * @param domain
      */
 void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+    // Get Global length
     for(unsigned d = 0; d < 3; d ++){
         samplInfo.globalLength[d] = domain->getGlobalLength(d);
         global_log->info() << "[KartesianProfile] globalLength " << samplInfo.globalLength[d] << "\n";
     }
+    // Calculate sampling units
     for(unsigned i = 0; i < 3; i++){
         samplInfo.universalInvProfileUnit[i] = samplInfo.universalProfileUnit[i] / samplInfo.globalLength[i];
         global_log->info() << "[KartesianProfile] universalInvProfileUnit " << samplInfo.universalInvProfileUnit[i] << "\n";
     }
+    // Calculate total number of bins
+    // TODO: Adapt for option of cylinder uID
     _uIDs = (unsigned long) (this->samplInfo.universalProfileUnit[0] * this->samplInfo.universalProfileUnit[1]
                              * this->samplInfo.universalProfileUnit[2]);
     global_log->info() << "[KartesianProfile] number uID " << _uIDs << "\n";
 
+    // Calculate bin Volume
+    // TODO: again, cylinder uID
     samplInfo.segmentVolume = this->samplInfo.globalLength[0] * this->samplInfo.globalLength[1] * this->samplInfo.globalLength[2]
                     / (this->samplInfo.universalProfileUnit[0]*this->samplInfo.universalProfileUnit[1]*this->samplInfo.universalProfileUnit[2]);
     global_log->info() << "[KartesianProfile] segmentVolume " << samplInfo.segmentVolume << "\n";
 
     global_log->info() << "[KartesianProfile] profile init" << std::endl;
+
+
+    // Init profiles with sampling information and reset maps
     for(unsigned long uID = 0; uID < _uIDs; uID++) {
         for (unsigned i = 0; i < _profiles.size(); i++) {
+            _profiles[i]->init(samplInfo);
             _profiles[i]->reset(uID);
         }
     }
@@ -212,7 +222,6 @@ unsigned long KartesianProfile::getCylUID(ParticleIterator thismol) {
 }
 
 void KartesianProfile::addProfile(ProfileBase *profile) {
-    profile->init(samplInfo);
     _profiles.push_back(profile);
     _comms += profile->comms();
 }
