@@ -70,14 +70,6 @@ public:
 
     SamplingInformation samplInfo;
 
-    /*
-    double universalInvProfileUnit[3]; // Inv. Bin Sizes
-    double universalProfileUnit[3]; // Bin Sizes
-    long accumulatedDatasets; // Number of Datasets between output writes / profile resets
-    double globalLength[3]; // Size of Domain
-    double segmentVolume; // Size of one Sampling grid bin
-    */
-
     // Profile pointers for data reuse
     DensityProfile* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
     VelocityAbsProfile* _velAbsProfile;
@@ -93,6 +85,7 @@ private:
     unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
     unsigned long _initStatistics; // Timesteps to skip at start of the simulation
     unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
+    long _accumulatedDatasets; // Number of Datasets between output writes / profile resets
     std::string _outputPrefix; // File prefix for all profiles
     std::string _mode;
 

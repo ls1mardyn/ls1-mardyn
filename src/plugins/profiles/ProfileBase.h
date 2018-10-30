@@ -13,7 +13,6 @@ class KartesianProfile;
 struct SamplingInformation{
     double universalInvProfileUnit[3]; // Inv. Bin Sizes
     double universalProfileUnit[3]; // Bin Sizes
-    long accumulatedDatasets; // Number of Datasets between output writes / profile resets
     double globalLength[3]; // Size of Domain
     double segmentVolume; // Size of one Sampling grid bin
 };
@@ -62,7 +61,7 @@ public:
      * @param prefix File prefix including the global _outputPrefix for all profiles and the current timestep. Should be
      * appended by some specific file ending for this specific profile.
      */
-    virtual void output(string prefix) = 0;
+    virtual void output(string prefix, long unsigned accumulatedDatasets) = 0;
     /** @brief Used to reset all array contents for a specific uID in order to start the next recording timeframe.
      *
      * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
@@ -79,10 +78,9 @@ public:
 protected:
     // output file prefix
     string _profilePrefix;
-    // KartesianProfile managing class pointer for meta info
-    //KartesianProfile* _kartProf;
 
     SamplingInformation _samplInfo;
+    long _accumulatedDatasets = -1; // Number of Datasets between output writes / profile resets // -1 if not set properly
 
     /** @brief Write Single Data Entry for Matrix with given uID to outfile
      *

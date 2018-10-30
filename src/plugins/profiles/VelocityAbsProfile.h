@@ -35,7 +35,7 @@ public:
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
         _globalProfile[uID] = domainDecomp->collCommGetDouble();
     }
-    void output(string prefix) final;
+    void output(string prefix, long unsigned accumulatedDatasets) final;
     void reset(unsigned long uID) final  {
         _localProfile[uID] = 0.0;
         _globalProfile[uID] = 0.0;

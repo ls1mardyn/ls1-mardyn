@@ -36,7 +36,7 @@ public:
             _global3dProfile[uID][d] = domainDecomp->collCommGetDouble();
         }
     }
-    void output(string prefix) final;
+    void output(string prefix, long unsigned accumulatedDatasets) final;
     void reset(unsigned long uID) final  {
         for(unsigned d = 0; d < 3; d++){
             _local3dProfile[uID][d] = 0.0;

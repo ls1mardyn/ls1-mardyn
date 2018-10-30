@@ -4,7 +4,7 @@
 
 #include "KineticProfile.h"
 
-void KineticProfile::output(string prefix) {
+void KineticProfile::output(string prefix, long unsigned accumulatedDatasets) {
     global_log->info() << "[KineticProfile] has no output.\n";
 }
 

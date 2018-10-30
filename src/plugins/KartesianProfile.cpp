@@ -150,12 +150,12 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
         }
 
         // Record number of Timesteps recorded since last output write
-        samplInfo.accumulatedDatasets++;
+        _accumulatedDatasets++;
     }
     if ((simstep >= _initStatistics) && (simstep % _writeFrequency == 0)) {
 
         // COLLECTIVE COMMUNICATION
-        global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << samplInfo.accumulatedDatasets << "\n";
+        global_log->info() << "[KartesianProfile] uIDs: " << _uIDs << " acc. Data: " << _accumulatedDatasets << "\n";
 
         // Initialize Communication with number of bins * number of total comms needed per bin by all profiles.
 		domainDecomp->collCommInit(_comms * _uIDs);
@@ -184,7 +184,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
         if (mpi_rank == 0) {
             global_log->info() << "[KartesianProfile] Writing profile output" << std::endl;
             for(unsigned i = 0; i < _profiles.size(); i++){
-                _profiles[i]->output(_outputPrefix + "_" + std::to_string(simstep));
+                _profiles[i]->output(_outputPrefix + "_" + std::to_string(simstep), _accumulatedDatasets);
             }
         }
 
@@ -194,7 +194,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
                 _profiles[i]->reset(uID);
             }
         }
-        samplInfo.accumulatedDatasets = 0;
+        _accumulatedDatasets = 0;
     }
 }
 
