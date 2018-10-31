@@ -13,7 +13,7 @@
 
 // DEBUGGING ONLY
 
-bool CYLINDER_DEBUG = true;
+bool CYLINDER_DEBUG = false;
 
 /**
 * @brief Read in Information about write/record frequencies, Sampling Grid and which profiles are enabled.
