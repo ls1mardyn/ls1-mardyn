@@ -15,6 +15,7 @@ struct SamplingInformation{
     double universalProfileUnit[3]; // Bin Sizes
     double globalLength[3]; // Size of Domain
     double segmentVolume; // Size of one Sampling grid bin
+    double universalCentre[3]; // Centre coords for cylinder system
 };
 
 /** @brief Base class for all Profile outputs used by KartesianProfile.
@@ -101,6 +102,13 @@ protected:
      */
      // TODO: implement if needed
     void writeSimpleMatrix(ofstream &outfile);
+
+    /**@brief STUB for cylinder Matrix output without headers
+     *
+     * @param outfile opened filestream from Profile
+     */
+    // TODO: implement when order is known
+    void writeCylMatrix(ofstream &outfile);
 };
 
 #endif //MARDYN_TRUNK_PROFILEBASE_H

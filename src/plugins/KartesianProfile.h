@@ -60,9 +60,9 @@ public:
     void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain) override {};
 
-    unsigned long getUID(ParticleIterator thismol);
+    unsigned long getUID(ParticleIterator& thismol);
 
-    unsigned long getCylUID(ParticleIterator thismol);
+    unsigned long getCylUID(ParticleIterator& thismol);
 
     std::string getPluginName()override {return std::string("KartesianProfile");}
 
