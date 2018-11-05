@@ -417,8 +417,10 @@ public:
 				const __m128 recip_ps = _mm_rcp_ps(denom_ps);
 
 				const real_vec inv_unmasked = _mm256_cvtps_pd(recip_ps); //12bit
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				const RealVec inv = _mm512_maskz_rcp28_pd(m, d); //28bit
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec inv = _mm512_maskz_rcp14_pd(m, d); //14bit
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec inv_unmasked = set1(1.0) / d;
 			#endif
@@ -430,8 +432,11 @@ public:
 				const RealVec inv_24bits = inv * fnmadd(d, inv, set1(2.0)); 				//24bit, 1. N-R-Iteration
 				const RealVec inv_48bits = inv_24bits * fnmadd(d, inv_24bits, set1(2.0));	//48bit, 2. N-R-Iteration
 				const RealVec inv_prec = inv_48bits * fnmadd(d, inv_48bits, set1(2.0)); 	//96bit, 3. N-R-Iteration
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				const RealVec inv_prec = inv * fnmadd(d, inv, set1(2.0)); //56bit, 1 N-R-Iteration
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec inv_28bits = inv * fnmadd(d, inv, set1(2.0));					//28bit, 1. N-R-Iteration
+				const RealVec inv_prec = inv_28bits * fnmadd(d, inv_28bits, set1(2.0)); 	//56bit, 2. N-R-Iteration
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec inv_prec = apply_mask(inv_unmasked, m);
 			#endif
@@ -486,8 +491,10 @@ public:
 				const __m128 recipSqrt_ps = _mm_rsqrt_ps(denom_ps);
 
 				const real_vec invSqrt_unmasked = _mm256_cvtps_pd(recipSqrt_ps); //12bit
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				const RealVec invSqrt = _mm512_maskz_rsqrt28_pd(m, d); //28bit
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec invSqrt = _mm512_maskz_rsqrt14_pd(m, d); //14bit
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec invSqrt_unmasked = set1(1.0) / sqrt(d);
 			#endif
@@ -500,8 +507,12 @@ public:
 				const RealVec invSqrt_24bits = invSqrt 		  * fnmadd(d2, invSqrt * invSqrt, set1(1.5)); 				//24bit, 1. N-R-Iteration
 				const RealVec invSqrt_48bits = invSqrt_24bits * fnmadd(d2, invSqrt_24bits * invSqrt_24bits, set1(1.5));	//48bit, 2. N-R-Iteration
 				const RealVec invSqrt_prec   = invSqrt_48bits * fnmadd(d2, invSqrt_48bits * invSqrt_48bits, set1(1.5)); //96bit, 3. N-R-Iteration
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				const RealVec invSqrt_prec = invSqrt * fnmadd(d * set1(0.5), invSqrt * invSqrt, set1(1.5)); //56bit, 1 N-R-Iteration
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec d2 = d * set1(0.5);
+				const RealVec invSqrt_28bits = invSqrt        *fnmadd(d2, invSqrt * invSqrt, set1(1.5)); // 28bit, 1 N-R-Iteration
+				const RealVec invSqrt_prec = invSqrt_28bits *fnmadd(d2, invSqrt_28bits * invSqrt_28bits, set1(1.5)); // 56bit, 2 N-R-Iteration
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec invSqrt_prec = apply_mask(invSqrt_unmasked, m);
 			#endif

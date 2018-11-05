@@ -33,7 +33,7 @@ private:
 		typedef __mmask8 mask_vec;
 		typedef __mmask8 mask_single;
 
-		#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+		#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
 			typedef __m512i lookupOrMask_vec;
 			typedef countertype32 lookupOrMask_single;
 		#endif
@@ -134,7 +134,7 @@ public:
 	}
 
 
-#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
 	vcp_inline
 	static lookupOrMask_vec aligned_load(const lookupOrMask_single * const a) {
 		return _mm512_load_epi64(a);

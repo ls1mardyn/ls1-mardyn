@@ -432,8 +432,10 @@ public:
 		/* reciprocal */
 			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
 				const real_vec inv_unmasked = _mm256_rcp_ps(d); //12bit
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				const RealVec inv_prec = _mm512_maskz_rcp28_ps(m, d); //28bit
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec inv = _mm512_maskz_rcp14_ps(m, d); //14bit
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec inv_unmasked = set1(1.0) / d;
 			#endif
@@ -443,9 +445,11 @@ public:
 				const RealVec inv = apply_mask(inv_unmasked, m); //12bit
 
 				const RealVec inv_prec = inv * fnmadd(d, inv, set1(2.0)); //24bit, 1 N-R-Iteration
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				//do nothing
 				//no Newton-Raphson required in SP, as the rcp-intrinsic is already precise enough
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec inv_prec = inv * fnmadd(d, inv, set1(2.0)); // 28bit, 1 N-R-Iteration
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec inv_prec = apply_mask(inv_unmasked, m);
 			#endif
@@ -500,8 +504,10 @@ public:
 		/* reciprocal sqrt */
 			#if VCP_VEC_WIDTH == VCP_VEC_W_256 and VCP_VEC_TYPE == VCP_VEC_AVX2
 				const real_vec invSqrt_unmasked = _mm256_rsqrt_ps(d); //12bit
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				const RealVec invSqrt_prec = _mm512_maskz_rsqrt28_ps(m, d); //28bit
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec invSqrt = _mm512_maskz_rsqrt14_ps(m, d); //14bit
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec invSqrt_unmasked = set1(1.0) / sqrt(d);
 			#endif
@@ -511,9 +517,11 @@ public:
 				const RealVec invSqrt = apply_mask(invSqrt_unmasked, m); //12bit
 
 				const RealVec invSqrt_prec = invSqrt * fnmadd(d * set1(0.5), invSqrt * invSqrt, set1(1.5)); //24bit, 1 N-R-Iteration
-			#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			#elif VCP_VEC_TYPE == VCP_VEC_KNL or VCP_VEC_TYPE == VCP_VEC_KNL
 				//do nothing
 				//no Newton-Raphson required in SP, as the rsqrt-intrinsic is already precise enough
+			#elif VCP_VEC_TYPE == VCP_VEC_AVX512F or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+				const RealVec invSqrt_prec = invSqrt * fnmadd(d * set1(0.5), invSqrt * invSqrt, set1(1.5)); //28bit, 1 N-R-Iteration
 			#else /* VCP_VEC_WIDTH == 64/128/256AVX */
 				const RealVec invSqrt_prec = apply_mask(invSqrt_unmasked, m);
 			#endif
