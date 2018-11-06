@@ -316,6 +316,9 @@ public:
 	/** write binary information to stream */
 	void writeBinary(std::ostream& ostrm) const override;
 
+	/** store molecule information to byte buffer. Arguments are first and last element of destination*/
+	void serialize(std::vector<char>::iterator first, std::vector<char>::iterator last) const override;
+
 	/** clear forces and moments */
 	void clearFM();
 	/** calculate forces and moments for already given site forces */
