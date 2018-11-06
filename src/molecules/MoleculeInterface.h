@@ -241,7 +241,7 @@ public:
 	static std::string getWriteFormat(); // TODO
 	virtual void write(std::ostream& ostrm) const = 0;
 	virtual void writeBinary(std::ostream& ostrm) const = 0;
-	virtual void serialize(std::vector<char>::iterator first, std::vector<char>::iterator last) const = 0;
+	virtual std::vector<char>::iterator serialize(std::vector<char>::iterator first) const = 0;
 	virtual size_t serializedSize(void) const = 0;
 	virtual void clearFM() = 0;
 	virtual void calcFM() = 0;

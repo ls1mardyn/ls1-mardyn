@@ -472,14 +472,12 @@ void FullMolecule::writeBinary(std::ostream& ostrm) const {
 	ostrm.write(reinterpret_cast<const char*>(&(_L[2])), 8);
 }
 
-void FullMolecule::serialize(std::vector<char>::iterator first, std::vector<char>::iterator last) const {
+std::vector<char>::iterator FullMolecule::serialize(std::vector<char>::iterator first) const {
 	unsigned int cid = _component->ID() + 1;
 	double qw = _q.qw();
 	double qx = _q.qx();
 	double qy = _q.qy();
 	double qz = _q.qz();
-	// determine size of serialized data, only really needed for assertion
-	mardyn_assert(serializedSize() == last-first);
 	// copy
 	auto sDpos = first;
 	sDpos = std::copy(reinterpret_cast<const char*>(&_id), reinterpret_cast<const char*>(&_id)+sizeof(_id), sDpos);
@@ -497,7 +495,8 @@ void FullMolecule::serialize(std::vector<char>::iterator first, std::vector<char
 	sDpos = std::copy(reinterpret_cast<const char*>(&_L[0]), reinterpret_cast<const char*>(&_L[0])+sizeof(_L[0]), sDpos);
 	sDpos = std::copy(reinterpret_cast<const char*>(&_L[1]), reinterpret_cast<const char*>(&_L[1])+sizeof(_L[1]), sDpos);
 	sDpos = std::copy(reinterpret_cast<const char*>(&_L[2]), reinterpret_cast<const char*>(&_L[2])+sizeof(_L[2]), sDpos);
-	mardyn_assert(sDpos == last);
+	mardyn_assert(sDpos-first == serializedSize());
+	return sDpos;
 }
 
 size_t FullMolecule::serializedSize(void) const {

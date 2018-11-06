@@ -269,7 +269,7 @@ public:
 	static std::string getWriteFormat();
 	void write(std::ostream& /*ostrm*/) const;
 	void writeBinary(std::ostream& /*ostrm*/) const {}
-	void serialize(std::vector<char>::iterator first, std::vector<char>::iterator last) const {}
+	std::vector<char>::iterator serialize(std::vector<char>::iterator first) const {return first;}
 	size_t serializedSize(void) const {return 0;}
 	void clearFM() {}
 	void calcFM() {}
