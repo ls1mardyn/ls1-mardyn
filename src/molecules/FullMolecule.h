@@ -319,6 +319,9 @@ public:
 	/** store molecule information to byte buffer. Arguments are first and last element of destination*/
 	void serialize(std::vector<char>::iterator first, std::vector<char>::iterator last) const override;
 
+	/** returns the (fixed) size of a molecule's data in bytes. should be changed to constexpr in c++20*/
+	size_t serializedSize(void) const override;
+
 	/** clear forces and moments */
 	void clearFM();
 	/** calculate forces and moments for already given site forces */

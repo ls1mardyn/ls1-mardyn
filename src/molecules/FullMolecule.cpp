@@ -479,13 +479,7 @@ void FullMolecule::serialize(std::vector<char>::iterator first, std::vector<char
 	double qy = _q.qy();
 	double qz = _q.qz();
 	// determine size of serialized data, only really needed for assertion
-	constexpr auto totalDataSize = 
-			sizeof(_id)+sizeof(cid)
-			+sizeof(_r[0])+sizeof(_r[1])+sizeof(_r[2])
-			+sizeof(_v[0])+sizeof(_v[1])+sizeof(_v[2])
-			+sizeof(qw)+sizeof(qx)+sizeof(qy)+sizeof(qz)
-			+sizeof(_L[0])+sizeof(_L[1])+sizeof(_L[2]);
-	mardyn_assert(totalDataSize == last-first);
+	mardyn_assert(serializedSize() == last-first);
 	// copy
 	auto sDpos = first;
 	sDpos = std::copy(reinterpret_cast<const char*>(&_id), reinterpret_cast<const char*>(&_id)+sizeof(_id), sDpos);
@@ -504,6 +498,16 @@ void FullMolecule::serialize(std::vector<char>::iterator first, std::vector<char
 	sDpos = std::copy(reinterpret_cast<const char*>(&_L[1]), reinterpret_cast<const char*>(&_L[1])+sizeof(_L[1]), sDpos);
 	sDpos = std::copy(reinterpret_cast<const char*>(&_L[2]), reinterpret_cast<const char*>(&_L[2])+sizeof(_L[2]), sDpos);
 	mardyn_assert(sDpos == last);
+}
+
+size_t FullMolecule::serializedSize(void) const {
+	constexpr auto totalDataSize = 
+			sizeof(_id)+sizeof(_component->ID())
+			+sizeof(_r[0])+sizeof(_r[1])+sizeof(_r[2])
+			+sizeof(_v[0])+sizeof(_v[1])+sizeof(_v[2])
+			+sizeof(_q.qw())+sizeof(_q.qx())+sizeof(_q.qy())+sizeof(_q.qz())
+			+sizeof(_L[0])+sizeof(_L[1])+sizeof(_L[2]);
+	return totalDataSize;
 }
 
 // private functions

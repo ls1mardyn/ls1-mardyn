@@ -270,6 +270,7 @@ public:
 	void write(std::ostream& /*ostrm*/) const;
 	void writeBinary(std::ostream& /*ostrm*/) const {}
 	void serialize(std::vector<char>::iterator first, std::vector<char>::iterator last) const {}
+	size_t serializedSize(void) const {return 0;}
 	void clearFM() {}
 	void calcFM() {}
 	void check(unsigned long /*id*/) {}
