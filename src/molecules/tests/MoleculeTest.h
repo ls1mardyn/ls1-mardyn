@@ -14,6 +14,7 @@ class MoleculeTest : public utils::Test {
 
 	TEST_SUITE(MoleculeTest);
 	TEST_METHOD(testIsLessThan);
+	TEST_METHOD(testSerialize);
 	TEST_SUITE_END();
 
 public:
@@ -23,6 +24,8 @@ public:
 	virtual ~MoleculeTest();
 
 	void testIsLessThan();
+
+	void testSerialize();
 
 };
 

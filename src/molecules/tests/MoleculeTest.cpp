@@ -17,6 +17,19 @@ MoleculeTest::MoleculeTest() {
 MoleculeTest::~MoleculeTest() {
 }
 
+void MoleculeTest::testSerialize() {
+	Component dummyComponent(0);
+	Molecule a(0,                 //id
+			&dummyComponent,      //component id (address)???
+			1.0,1.0,1.0,          //r
+			0.0,0.0,0.0,          //v
+			0.0,0.0,0.0,0.0,      //q
+			0,0,0);               //L
+	
+	std::vector<char> buffer(a.serializedSize());
+	auto lastElement = a.serialize(buffer.begin());
+	ASSERT_TRUE(!(lastElement-buffer.end()));
+}
 
 void MoleculeTest::testIsLessThan() {
 	std::vector<Component> components;
