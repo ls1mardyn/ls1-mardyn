@@ -11,10 +11,6 @@
 #include "plugins/profiles/KineticProfile.h"
 #include "plugins/profiles/DOFProfile.h"
 
-// DEBUGGING ONLY
-
-bool CYLINDER_DEBUG = false;
-
 /**
 * @brief Read in Information about write/record frequencies, Sampling Grid and which profiles are enabled.
  * Also create needed profiles and initialize them. New Profiles need to be handled via the XML here as well.
@@ -28,9 +24,17 @@ void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     global_log->info() << "[KartesianProfile] Output prefix: " << _outputPrefix << endl;
 
     // TODO: options for cylinder / CLEAR WHAT UNIT DOES WHAT / DO WE WANT LINEAR RADIAL SAMPLING?
-    xmlconfig.getNodeValue("x", samplInfo.universalProfileUnit[0]); // Doubles as Phi
-    xmlconfig.getNodeValue("y", samplInfo.universalProfileUnit[1]); // Doubles as R
-    xmlconfig.getNodeValue("z", samplInfo.universalProfileUnit[2]); // Doubles as H
+    if(CYLINDER_DEBUG){
+        xmlconfig.getNodeValue("r", samplInfo.universalProfileUnit[0]);
+        xmlconfig.getNodeValue("h", samplInfo.universalProfileUnit[1]);
+        xmlconfig.getNodeValue("phi", samplInfo.universalProfileUnit[2]);
+    }
+    else{
+        xmlconfig.getNodeValue("x", samplInfo.universalProfileUnit[0]);
+        xmlconfig.getNodeValue("y", samplInfo.universalProfileUnit[1]);
+        xmlconfig.getNodeValue("z", samplInfo.universalProfileUnit[2]);
+    }
+
     global_log->info() << "[KartesianProfile] Binning units: " << samplInfo.universalProfileUnit[0] << " " << samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
 
     // CHECKING FOR ENABLED PROFILES
@@ -118,9 +122,12 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
         // R < .5minXZ -> R2max < .25minXZminXZ
         double Rmax = .5*minXZ;
         // TODO: WHY ARE THE DIMENSIONS SO JUMBLED???
-        samplInfo.universalInvProfileUnit[0] = this->samplInfo.universalProfileUnit[0]/(2*M_PI);                   // delta_phi
-        samplInfo.universalInvProfileUnit[1] = this->samplInfo.universalProfileUnit[1]/(Rmax);  // delta_R^2 -> delta R
-        samplInfo.universalInvProfileUnit[2] = this->samplInfo.universalProfileUnit[2]/(samplInfo.globalLength[1]); // delta_H
+        samplInfo.universalInvProfileUnit[0] = this->samplInfo.universalProfileUnit[0]/(Rmax);                   // delta_R
+        samplInfo.universalInvProfileUnit[1] = this->samplInfo.universalProfileUnit[1]/(samplInfo.globalLength[1]);  // delta_H
+        samplInfo.universalInvProfileUnit[2] = this->samplInfo.universalProfileUnit[2]/(2*M_PI); // delta_Phi
+                global_log->info() << "[CylinderProfile] dR: " <<  samplInfo.universalInvProfileUnit[0]
+                                                               << " dH: " << samplInfo.universalInvProfileUnit[1]
+                                                                          << " dPhi: " << samplInfo.universalInvProfileUnit[2];
     }
     else{
         for(unsigned i = 0; i < 3; i++){
@@ -177,7 +184,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
 
     unsigned xun, yun, zun;
     if ((simstep >= _initStatistics) && (simstep % _profileRecordingTimesteps == 0)) {
-        unsigned long uID;
+        long uID;
 
         // Loop over all particles and bin them with uIDs
         for(auto thismol = particleContainer->iterator(); thismol.isValid(); ++thismol){
@@ -185,13 +192,17 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
             // TODO: SELECT OPTION
             if(CYLINDER_DEBUG){
                 uID = getCylUID(thismol);
+                if (uID == -1){
+                    // Invalid uID -> Molecule not in cylinder -> continue
+                    continue;
+                }
             }
             else{
                 uID = getUID(thismol);
             }
             // pass mol + uID to all profiles
             for(unsigned i = 0; i < _profiles.size(); i++){
-                _profiles[i]->record(*thismol, uID);
+                _profiles[i]->record(*thismol, (unsigned)uID);
             }
         }
 
@@ -244,18 +255,18 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
     }
 }
 
-unsigned long KartesianProfile::getUID(ParticleIterator& thismol) {
-    auto xun = (unsigned) floor(thismol->r(0) * this->samplInfo.universalInvProfileUnit[0]);
-    auto yun = (unsigned) floor(thismol->r(1) * this->samplInfo.universalInvProfileUnit[1]);
-    auto zun = (unsigned) floor(thismol->r(2) * this->samplInfo.universalInvProfileUnit[2]);
-    auto uID = (unsigned long) (xun * this->samplInfo.universalProfileUnit[1] * this->samplInfo.universalProfileUnit[2]
-                           + yun * this->samplInfo.universalProfileUnit[2] + zun);
+unsigned long KartesianProfile::getUID(ParticleIterator &thismol) {
+    auto xun = (unsigned) floor(thismol->r(0) * samplInfo.universalInvProfileUnit[0]);
+    auto yun = (unsigned) floor(thismol->r(1) * samplInfo.universalInvProfileUnit[1]);
+    auto zun = (unsigned) floor(thismol->r(2) * samplInfo.universalInvProfileUnit[2]);
+    auto uID = (unsigned long) (xun * samplInfo.universalProfileUnit[1] * samplInfo.universalProfileUnit[2]
+                           + yun * samplInfo.universalProfileUnit[2] + zun);
     return uID;
 }
 
-unsigned long KartesianProfile::getCylUID(ParticleIterator& thismol) {
+long KartesianProfile::getCylUID(ParticleIterator &thismol) {
 
-    int xun,yun,zun;// (phiUn,r2Un,yun): bin number in a special direction, e.g. r2Un==5 corresponds to the 5th bin in the radial direction,
+    int phiUn,rUn,hUn;// (phiUn,rUn,yun): bin number in a special direction, e.g. rUn==5 corresponds to the 5th bin in the radial direction,
     long unID;	// as usual
     double xc,yc,zc; // distance of a particle with respect to the origin of the cylindrical coordinate system
 
@@ -268,25 +279,31 @@ unsigned long KartesianProfile::getCylUID(ParticleIterator& thismol) {
     // transformation in polar coordinates
     double R2 = xc*xc + zc*zc;
     // TODO: CHANGED TO R
-    double R = sqrt(R);
-    double phi = asin(zc/sqrt(R2)) + ((xc>=0.0) ? 0:M_PI);
+    double R = sqrt(R2);
+    double phi = atan2(zc, xc); // asin(zc/sqrt(R2)) + ((xc>=0.0) ? 0:M_PI);
     if(phi<0.0) {phi = phi + 2.0*M_PI;}
 
-    xun = (int)floor(phi * samplInfo.universalInvProfileUnit[0]);   // bin no. in phi-direction
-    yun = (int)floor(R *  samplInfo.universalInvProfileUnit[1]);   // bin no. in R-direction
-    zun = (int)floor(yc *  samplInfo.universalInvProfileUnit[2]);   // bin no. in H-direction
+    rUn = (int)floor(R * samplInfo.universalInvProfileUnit[0]);   // bin no. in R-direction
+    hUn = (int)floor(yc *  samplInfo.universalInvProfileUnit[1]);   // bin no. in H-direction
+    phiUn = (int)floor(phi *  samplInfo.universalInvProfileUnit[2]);   // bin no. in Phi-direction
 
-    if((xun >= 0) && (yun >= 0) && (zun >= 0) &&
-       (xun < (int)samplInfo.universalProfileUnit[0]) && (yun < (int)samplInfo.universalProfileUnit[2]) && (zun < (int)samplInfo.universalProfileUnit[1]))
+    // Check if R is inside cylinder
+    if(rUn >= (int)samplInfo.universalProfileUnit[0])   {
+        return -1;
+    }
+
+    if((rUn >= 0) && (hUn >= 0) && (phiUn >= 0) &&
+       (rUn < (int)samplInfo.universalProfileUnit[0]) && (hUn < (int)samplInfo.universalProfileUnit[1]) && (phiUn < (int)samplInfo.universalProfileUnit[2]))
     {
-        unID = (long) (xun * samplInfo.universalProfileUnit[1] * samplInfo.universalProfileUnit[2]
-               + yun * samplInfo.universalProfileUnit[2] + zun);
+        unID = (long) (hUn * samplInfo.universalProfileUnit[0] * samplInfo.universalProfileUnit[2]
+               + rUn * samplInfo.universalProfileUnit[2] + phiUn);
     }
     else
     {
         global_log->error() << "INV PROFILE UNITS " << samplInfo.universalInvProfileUnit[0] << " " << samplInfo.universalInvProfileUnit[1] << " " << samplInfo.universalInvProfileUnit[2] << "\n";
         global_log->error() << "PROFILE UNITS " << samplInfo.universalProfileUnit[0] << " " << samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
-        global_log->error() << "Severe error!! Invalid profile unit (" << xun << " / " << yun << " / " << zun << ").\n\n";
+        global_log->error() << "Severe error!! Invalid profile ID (" << rUn << " / " << hUn << " / " << phiUn << ").\n\n";
+        global_log->error() << "Severe error!! Invalid profile unit (" << R << " / " << yc << " / " << phi << ").\n\n";
         global_log->error() << "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
         global_log->error() << "unID = " << unID << "\n";
         Simulation::exit(707);

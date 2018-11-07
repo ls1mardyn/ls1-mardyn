@@ -51,6 +51,9 @@ class ProfileBase;
 class KartesianProfile : public PluginBase {
 
 public:
+
+    bool CYLINDER_DEBUG = true;
+
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
     void readXML(XMLfileUnits& xmlconfig) override;
     void endStep(
@@ -60,9 +63,9 @@ public:
     void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain) override {};
 
-    unsigned long getUID(ParticleIterator& thismol);
+    unsigned long getUID(ParticleIterator &thismol);
 
-    unsigned long getCylUID(ParticleIterator& thismol);
+    long getCylUID(ParticleIterator &thismol);
 
     std::string getPluginName()override {return std::string("KartesianProfile");}
 

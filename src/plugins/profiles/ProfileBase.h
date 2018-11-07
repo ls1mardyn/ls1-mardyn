@@ -31,6 +31,9 @@ struct SamplingInformation{
 class ProfileBase {
 
 public:
+
+    bool CYLINDER_DEBUG = true;
+
 	virtual ~ProfileBase(){};
 	/** @brief Init function is given a pointer to the KartesianProfile object handling this profile. Same for all profiles.
 	 *
@@ -95,6 +98,8 @@ protected:
      * @param outfile opened filestream from Profile
      */
     void writeMatrix(ofstream &outfile);
+
+    void writeKartMatrix(ofstream &outfile);
 
     /**@brief STUB for simple Matrix output without headers
      *

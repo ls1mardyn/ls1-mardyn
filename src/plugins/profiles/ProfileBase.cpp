@@ -6,6 +6,15 @@
 #include "../KartesianProfile.h"
 
 void ProfileBase::writeMatrix(ofstream &outfile) {
+    if(CYLINDER_DEBUG){
+        writeCylMatrix(outfile);
+    }
+    else {
+        writeKartMatrix(outfile);
+    }
+}
+
+void ProfileBase::writeKartMatrix(ofstream &outfile) {
     // Write Data
     // Assuming x = 1 -> projection along x axis
     // Z - axis label
@@ -41,4 +50,25 @@ void ProfileBase::writeCylMatrix(ofstream &outfile) {
     // TODO: Line 1452ff: H -> R^2 -> Phi
     // Actually wrong in both cases. Only works if number of bins in Phi direction == 1 !!!
     // Otherwise, radial header gets rewritten all the time.
+    // Write Data
+    // Assuming phi = 1 -> projection along phi axis
+    // R - axis label
+    for(unsigned r = 0; r < _samplInfo.universalProfileUnit[0]; r++){
+        outfile << (r+0.5) / _samplInfo.universalInvProfileUnit[0] <<"  \t"; // Eintragen der R Koordinaten in Header
+    }
+    outfile << "END R";
+    outfile << "\n";
+    // Y - axis label
+    for(unsigned h = 0; h < _samplInfo.universalProfileUnit[1]; h++){
+        double hval = (h + 0.5) / _samplInfo.universalInvProfileUnit[1];
+        outfile << hval << "  \t";
+        for(unsigned phi = 0; phi < _samplInfo.universalProfileUnit[2]; phi++){
+            for(unsigned r = 0; r < _samplInfo.universalProfileUnit[0]; r++){
+                auto unID = (long) (h * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2]
+                                           + r * _samplInfo.universalProfileUnit[2] + phi);
+                this->writeDataEntry(unID, outfile);
+            }
+        }
+        outfile << "\n";
+    }
 }
