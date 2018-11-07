@@ -241,7 +241,21 @@ public:
 	static std::string getWriteFormat(); // TODO
 	virtual void write(std::ostream& ostrm) const = 0;
 	virtual void writeBinary(std::ostream& ostrm) const = 0;
+	/**
+	 * @brief Serializes the data for a molecule
+	 * This method fills a buffer with the data from a molecule instance.
+	 * The target buffer is specified with the iterator in the argument, and needs to be large enough to hold
+	 * the data (use MoleculeInterface::serializedSize() to determine).
+	 * Reimplemented in FullMolecule::serialize and MoleculeRMM::serialize
+	 * @param[in] first Iterator of the first element in the destination buffer
+	 * @return An iterator pointing to the element
+	 */
 	virtual std::vector<char>::iterator serialize(std::vector<char>::iterator first) const = 0;
+	/**
+	 * @brief Returns the size of a molecule in bytes
+	 * Returns the size of a molecule in bytes, reimplemented in FullMolecule::serializedSize and MoleculeRMM::serializedSize
+	 * @return The size of a molecule in bytes
+	 */
 	virtual size_t serializedSize(void) const = 0;
 	virtual void clearFM() = 0;
 	virtual void calcFM() = 0;

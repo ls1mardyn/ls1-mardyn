@@ -316,10 +316,20 @@ public:
 	/** write binary information to stream */
 	void writeBinary(std::ostream& ostrm) const override;
 
-	/** store molecule information to byte buffer. Arguments are first and last element of destination*/
+	/**
+	 * @brief Serializes the data for a molecule
+	 * This method fills a buffer with the data from a molecule instance.
+	 * The target buffer is specified with the iterator in the argument, and needs to 
+	 * be large enough to hold the data (use MoleculeInterface::serializedSize() to determine).
+	 * @param[in] first Iterator of the first element in the destination buffer
+	 * @return An iterator pointing to the element after the last copied element in the target buffer
+	 */
 	std::vector<char>::iterator serialize(std::vector<char>::iterator first) const override;
 
-	/** returns the (fixed) size of a molecule's data in bytes. should be changed to constexpr in c++20*/
+	/**
+	 * @brief Returns the size of a molecule in bytes
+	 * @return The size of a molecule in bytes
+	 */
 	size_t serializedSize(void) const override;
 
 	/** clear forces and moments */

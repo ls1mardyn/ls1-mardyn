@@ -269,7 +269,18 @@ public:
 	static std::string getWriteFormat();
 	void write(std::ostream& /*ostrm*/) const;
 	void writeBinary(std::ostream& /*ostrm*/) const {}
+	/**
+	 * @brief Implements MoleculeInterface::serialize 
+	 * This method does nothing. It's just a dummy to complete the type.
+	 * @param[in] first Iterator of the first element in the destination buffer
+	 * @return Returns first
+	 */
 	std::vector<char>::iterator serialize(std::vector<char>::iterator first) const {return first;}
+	/**
+	 * @brief Implements MoleculeInterface::serializedSize
+	 * This method always returns zero, as the MoleculeRMM::serialize method is just a dummy.
+	 * @return Returns 0
+	 */
 	size_t serializedSize(void) const {return 0;}
 	void clearFM() {}
 	void calcFM() {}
