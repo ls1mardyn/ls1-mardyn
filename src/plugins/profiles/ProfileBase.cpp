@@ -53,11 +53,11 @@ void ProfileBase::writeCylMatrix(ofstream &outfile) {
     // Write Data
     // Assuming phi = 1 -> projection along phi axis
     // R2 - axis label
-    outfile << "R2 labels\n";
+    //outfile << "R2 labels\n";
     for(unsigned r = 0; r < _samplInfo.universalProfileUnit[0]; r++){
         outfile << (r+0.5) / _samplInfo.universalInvProfileUnit[0] <<"  \t"; // Eintragen der R Koordinaten in Header
     }
-    outfile << "END R2";
+    //outfile << "END R2";
     outfile << "\n";
     // Y - axis label
     for(unsigned h = 0; h < _samplInfo.universalProfileUnit[1]; h++){
