@@ -28,6 +28,14 @@ VectorizedCellProcessorTest::VectorizedCellProcessorTest() {
 	test_log->info() << "VectorizedCellProcessorTest: testing AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	test_log->info() << "VectorizedCellProcessorTest: testing AVX2 intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_KNL
+	test_log->info() << "VectorizedCellProcessorTest: testing KNL_MASK intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	test_log->info() << "VectorizedCellProcessorTest: testing KNL_GATHER intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_AVX512F
+	test_log->info() << "VectorizedCellProcessorTest: testing AVX512F_MASK intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER
+	test_log->info() << "VectorizedCellProcessorTest: testing AVX512F_GATHER intrinsics." << std::endl;
 #endif
 }
 

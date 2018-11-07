@@ -60,11 +60,14 @@ VECTORIZE_CODE ?= SSE
 # AVX2     - VectorizedCellProcessor with AVX2 intrinsics
 # KNL_MASK - VectorizedCellProcessor with KNL intrinsics and masking
 # KNL_G_S  - VectorizedCellProcessor with KNL intrinsics and gather-scatter (not fully optimized yet in this branch)
+# SKX_MASK - VectorizedCellProcessor with SKX intrinsics and masking
+# SKX_G_S  - VectorizedCellProcessor with SKX intrinsics and gather-scatter (not fully optimized yet in this branch)
+### note to the SKX variants: Uses only AVX512F. Only the flags passed to the compiler assume SKX, but not the used intrinsics code.
 # SOA      - VectorizedCellProcessor with no intrinsics
 # (Support dropped!) KNC_MASK - VectorizedCellProcessor with KNC intrinsics and masking
 # (Support dropped!) KNC_G_S  -VectorizedCellProcessor with KNC intrinsics and gather-scatter (not fully optimized yet in this branch)
 # see "make help_vect"
-vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S KNL_MASK KNL_G_S SOA SSEAMD AVXAMD
+vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S KNL_MASK KNL_G_S SKX_MASK SKX_G_S SOA SSEAMD AVXAMD
 ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
   $(error ERROR: invalid vectorize code option chosen. see "make help_vect")
 endif
@@ -366,6 +369,12 @@ help_vect:
 	@echo "            Speed-up not yet tested."
 	@echo " KNL_G_S  - use the VectorizedCellProcessor with AVX512 (knights landing) intrinsics."
 	@echo "            Works only on Xeon Phis of the second generation (knights landing)."
+	@echo "            Speed-up not yet tested."
+	@echo " SKX_MASK - use the VectorizedCellProcessor with AVX512F intrinsics."
+	@echo "            Uses only AVX512F. Only the flags passed to the compiler assume SKX, but not the used intrinsics code."
+	@echo "            Speed-up not yet tested."
+	@echo " SKX_G_S  - use the VectorizedCellProcessor with AVX512F intrinsics."
+	@echo "            Uses only AVX512F. Only the flags passed to the compiler assume SKX, but not the used intrinsics code."
 	@echo "            Speed-up not yet tested."
 	@echo "            Please make sure that you are using a reasonably updated compiler!"
 	@echo " SOA      - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
