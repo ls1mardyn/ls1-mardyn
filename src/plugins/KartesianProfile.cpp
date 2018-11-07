@@ -120,9 +120,10 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
             minXZ = this->samplInfo.globalLength[2];
         }
         // R < .5minXZ -> R2max < .25minXZminXZ
-        double Rmax = .5*minXZ;
+        //double Rmax = .5*minXZ;
+        double R2max = .24*minXZ*minXZ;
         // TODO: WHY ARE THE DIMENSIONS SO JUMBLED???
-        samplInfo.universalInvProfileUnit[0] = this->samplInfo.universalProfileUnit[0]/(Rmax);                   // delta_R
+        samplInfo.universalInvProfileUnit[0] = this->samplInfo.universalProfileUnit[0]/(R2max);                   // delta_R2
         samplInfo.universalInvProfileUnit[1] = this->samplInfo.universalProfileUnit[1]/(samplInfo.globalLength[1]);  // delta_H
         samplInfo.universalInvProfileUnit[2] = this->samplInfo.universalProfileUnit[2]/(2*M_PI); // delta_Phi
                 global_log->info() << "[CylinderProfile] dR: " <<  samplInfo.universalInvProfileUnit[0]
@@ -279,11 +280,11 @@ long KartesianProfile::getCylUID(ParticleIterator &thismol) {
     // transformation in polar coordinates
     double R2 = xc*xc + zc*zc;
     // TODO: CHANGED TO R
-    double R = sqrt(R2);
+    //double R = sqrt(R2);
     double phi = atan2(zc, xc); // asin(zc/sqrt(R2)) + ((xc>=0.0) ? 0:M_PI);
     if(phi<0.0) {phi = phi + 2.0*M_PI;}
 
-    rUn = (int)floor(R * samplInfo.universalInvProfileUnit[0]);   // bin no. in R-direction
+    rUn = (int)floor(R2 * samplInfo.universalInvProfileUnit[0]);   // bin no. in R-direction
     hUn = (int)floor(yc *  samplInfo.universalInvProfileUnit[1]);   // bin no. in H-direction
     phiUn = (int)floor(phi *  samplInfo.universalInvProfileUnit[2]);   // bin no. in Phi-direction
 
@@ -303,7 +304,7 @@ long KartesianProfile::getCylUID(ParticleIterator &thismol) {
         global_log->error() << "INV PROFILE UNITS " << samplInfo.universalInvProfileUnit[0] << " " << samplInfo.universalInvProfileUnit[1] << " " << samplInfo.universalInvProfileUnit[2] << "\n";
         global_log->error() << "PROFILE UNITS " << samplInfo.universalProfileUnit[0] << " " << samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
         global_log->error() << "Severe error!! Invalid profile ID (" << rUn << " / " << hUn << " / " << phiUn << ").\n\n";
-        global_log->error() << "Severe error!! Invalid profile unit (" << R << " / " << yc << " / " << phi << ").\n\n";
+        global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / " << phi << ").\n\n";
         global_log->error() << "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
         global_log->error() << "unID = " << unID << "\n";
         Simulation::exit(707);
