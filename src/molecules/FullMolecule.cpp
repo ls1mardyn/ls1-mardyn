@@ -510,7 +510,9 @@ std::vector<char>::iterator FullMolecule::deserialize(std::vector<char>::iterato
 	// component id
 	unsigned int const cid = *reinterpret_cast<unsigned int*>(&(*first));
 	first += sizeof(unsigned int);
-#warning Molecule component not set. Retrieve the correct component via the component id retrieved above
+
+#warning Molecule component not set. Retrieve the correct component via the deserialized component id.
+
 	// position
 	setr(0, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
 	setr(1, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
