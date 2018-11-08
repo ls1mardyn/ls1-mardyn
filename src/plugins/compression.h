@@ -33,7 +33,8 @@ public:
 	 * @param[in] compressedStart Iterator pointing to the start of the array to be decompressed
 	 * @param[in] compressedEnd Iterator pointing to the element past the last element of the array to be decompressed
 	 * @param[in] decompressed A std::vector<char> holding the decompressed result. The vector will be appropriately resized.
-     *                         Any previous contents will be destroyed.
+     *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
+	 *                         size.
 	 */
     virtual int decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) = 0;
 };
