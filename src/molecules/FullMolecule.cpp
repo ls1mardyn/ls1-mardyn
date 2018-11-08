@@ -499,6 +499,39 @@ std::vector<char>::iterator FullMolecule::serialize(std::vector<char>::iterator 
 	return sDpos;
 }
 
+std::vector<char>::iterator FullMolecule::deserialize(std::vector<char>::iterator first) {
+	using PositionType = std::remove_reference<decltype(_r[0])>::type;
+	using VelocityType = std::remove_reference<decltype(_v[0])>::type;
+	using QuaternionType = decltype(declval<Quaternion>().qw());
+	using AngularMomentumType = std::remove_reference<decltype(_L[0])>::type;
+	// molecule id
+	setid(*reinterpret_cast<decltype(_id)*>(&(*first))); first += sizeof(_id);
+	// component id
+	setComponent(*reinterpret_cast<decltype(_component)*>(&(*first))); first += sizeof(_component);
+	// position
+	setr(0, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
+	setr(1, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
+	setr(2, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
+	// velocity
+	setv(0, *(reinterpret_cast< VelocityType *>(&(*first)))); first += sizeof(VelocityType);
+	setv(1, *(reinterpret_cast< VelocityType *>(&(*first)))); first += sizeof(VelocityType);
+	setv(2, *(reinterpret_cast< VelocityType *>(&(*first)))); first += sizeof(VelocityType);
+	// rotation
+	Quaternion q(
+			*(reinterpret_cast<QuaternionType*>(&first[0*sizeof(QuaternionType)])),
+			*(reinterpret_cast<QuaternionType*>(&first[1*sizeof(QuaternionType)])),
+			*(reinterpret_cast<QuaternionType*>(&first[2*sizeof(QuaternionType)])),
+			*(reinterpret_cast<QuaternionType*>(&first[3*sizeof(QuaternionType)]))
+	);
+	first += 4*sizeof(QuaternionType);
+	setq(q);
+	// angular momentum
+	setD(0, *(reinterpret_cast< AngularMomentumType *>(&(*first)))); first += sizeof(AngularMomentumType);
+	setD(1, *(reinterpret_cast< AngularMomentumType *>(&(*first)))); first += sizeof(AngularMomentumType);
+	setD(2, *(reinterpret_cast< AngularMomentumType *>(&(*first)))); first += sizeof(AngularMomentumType);
+	return first;
+}
+
 size_t FullMolecule::serializedSize(void) const {
 	constexpr auto totalDataSize = 
 			sizeof(_id)+sizeof(_component->ID())
