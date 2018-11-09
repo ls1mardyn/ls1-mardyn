@@ -52,8 +52,8 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${LAPACK_LIB}  # for armadillo
         ${VTK_LIB}     # for VTK/xerces
         ${CPPUNIT_LIB} # for unit tests
-        ${autopas_lib}  # for autopas
-        ${LZ4_LIB}     # for Resilience Plugin
+        ${autopas_lib} # for autopas
+        ${LZ4_LIB}     # for LZ4 compression
         )
 
 ADD_TEST(

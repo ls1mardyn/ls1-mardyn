@@ -15,9 +15,9 @@ if(ENABLE_LZ4)
             GIT_REPOSITORY https://github.com/lz4/lz4.git
             GIT_TAG dev
             SOURCE_DIR ${LZ4_SOURCE_DIR}
-            CMAKE_ARGS ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial
-            # compile settings
+            BINARY_DIR ${LZ4_BINARY_DIR}
             INSTALL_COMMAND ""
+            CMAKE_ARGS ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial
             -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     )
 
@@ -28,10 +28,14 @@ if(ENABLE_LZ4)
     add_library(liblz4 IMPORTED SHARED GLOBAL)
     add_dependencies(liblz4 lz4)
 
-    set_target_properties(liblz4 PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${LZ4_SOURCE_DIR}/lib
+#     set_target_properties(liblz4 PROPERTIES
+#         INTERFACE_INCLUDE_DIRECTORIES ${LZ4_SOURCE_DIR}/lib
+#     )
+    include_directories(
+        ${LZ4_SOURCE_DIR}/lib
     )
+    set(LZ4_LIB ${LZ4_BINARY_DIR}/liblz4.so)
 else()
     message(STATUS "Not using LZ4.")
-    set(liblz4 "")
+    set(LZ4_LIB "")
 endif()

@@ -16,7 +16,7 @@ int Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncomp
     uncompressedSize = uncompressedEnd-uncompressedStart;
     compressed.resize(uncompressedSize+sizeof(size_t));
     // compress the uncompressed source
-    actualCompressedSize = LZ4_compress_default(
+    auto actualCompressedSize = LZ4_compress_default(
             &(*uncompressedStart),
             compressed.data()+sizeof(size_t),
             uncompressedSize,
