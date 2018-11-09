@@ -36,23 +36,28 @@ int Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncomp
 }
 
 int Lz4Compression::decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) {
-    compressedSize = compressedEnd-compressedStart-sizeof(size_t);
+    compressedSize = compressedEnd-compressedStart;
     // get the decompressed size
     std::copy(&(*compressedStart),
             &(*compressedStart)+sizeof(size_t),
             reinterpret_cast<char*>(&uncompressedSize));
     decompressed.resize(uncompressedSize);
-    auto actual_decompressedSize = LZ4_decompress_safe(&(*compressedStart)+sizeof(size_t), decompressed.data(), compressedSize, uncompressedSize);
-    if (actual_decompressedSize != uncompressedSize) {
+    auto actualDecompressedSize = LZ4_decompress_safe(&(*compressedStart)+sizeof(size_t),
+            decompressed.data(),
+            compressedSize-sizeof(size_t),
+            uncompressedSize);
+    if (actualDecompressedSize != uncompressedSize) {
         error = CompressionError::COMP_ERR_DECOMPRESSION_FAILED;
-        return static_cast<int>(actual_decompressedSize);
+        return static_cast<int>(actualDecompressedSize);
     }
     error = CompressionError::COMP_SUCCESS;
     return 0;
 }
 
 int NoCompression::compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) {
-    compressed.resize(uncompressedEnd-uncompressedStart);
+    uncompressedSize = uncompressedEnd-uncompressedStart;
+    compressedSize = uncompressedSize;
+    compressed.resize(compressedSize);
     auto curPosCompressed = compressed.begin();
     while (uncompressedStart != uncompressedEnd) {
         *curPosCompressed = *uncompressedStart;
@@ -64,7 +69,9 @@ int NoCompression::compress(ByteIterator uncompressedStart, ByteIterator uncompr
 }
 
 int NoCompression::decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) {
-    decompressed.resize(compressedEnd-compressedStart);
+    compressedSize = compressedEnd-compressedStart;
+    uncompressedSize = compressedSize;
+    decompressed.resize(uncompressedSize);
     auto curPosDecompressed = decompressed.begin();
     while (compressedStart != compressedEnd) {
         *curPosDecompressed = *compressedStart;

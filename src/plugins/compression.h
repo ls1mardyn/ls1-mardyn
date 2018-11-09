@@ -45,12 +45,34 @@ public:
 	 *                         size.
 	 */
     virtual int decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) = 0;
-	size_t getUncompressedSize(void) const {
+	/**
+	 * Returns the uncompressed size of the data.
+     * Returns the uncompressed size of the data. This will only give sane results if either compression or decompression has
+	 * been attempted. Negative values mean that there is no data, or something went wrong during the processing calls.
+	 * @return Uncompressed size of data. Depending on if the instance was used for compression or decompression, this is the
+	 *         input or output size, respectively.
+	 */
+	long long getUncompressedSize(void) const {
 		return uncompressedSize;
 	};
-	size_t getCompressedSize(void) const {
+	/**
+	 * Returns the compressed size of the data.
+     * Returns the compressed size of the data. This will only give sane results if either compression or decompression has
+	 * been attempted. Negative values mean that there is no data, or something went wrong during the processing calls.
+	 * @return Uncompressed size of data. Depending on if the instance was used for compression or decompression, this is the
+	 *         output or input size, respectively.
+	 */
+	long long getCompressedSize(void) const {
 		return compressedSize;
 	};
+	/**
+	 * Returns the error state of the instance.
+     * Returns the last error encountered. Should be checked after every call to compress/decompress.
+	 * If this returns something else than CompressionError::COMP_SUCCESS, the return value of the compress/decompress call may
+	 * help identifying the issue.
+	 * @return Uncompressed size of data. Depending on if the instance was used for compression or decompression, this is the
+	 *         output or input size, respectively.
+	 */
 	CompressionError getError(void) const {
 		return error;
 	}
@@ -63,8 +85,8 @@ public:
 	 */
 	static std::unique_ptr<Compression> create(std::string encoding);
 protected:
-	size_t uncompressedSize;
-	size_t compressedSize;
+	long long uncompressedSize = -1;
+	long long compressedSize = -1;
 	CompressionError error;
 };
 
