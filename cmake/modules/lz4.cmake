@@ -1,5 +1,8 @@
 # lz4 library
-option(ENABLE_LZ4 "Use lz4 library" OFF)
+if (NOT ${LZ4_ENABLED})
+    set(LZ4_ENABLED OFF)
+endif()
+option(ENABLE_LZ4 "Use lz4 library" ${LZ4_ENABLED})
 if(ENABLE_LZ4)
     message(STATUS "Using LZ4.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMARDYN_LZ4")
