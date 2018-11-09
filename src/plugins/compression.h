@@ -8,13 +8,21 @@
 #ifndef SRC_PLUGINS_COMPRESSION_H_
 #define SRC_PLUGINS_COMPRESSION_H_
 
-#include <vector>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <memory>
+#include <vector>
+
 
 #include "lz4.h"
 
 using ByteIterator = std::vector<char>::iterator;
+
+enum CompressionError {
+	COMP_SUCCESS = 0,
+	COMP_ERR_COMPRESSION_FAILED = 200,
+	COMP_ERR_DECOMPRESSION_FAILED = 300
+};
 
 class Compression {
 public:
@@ -37,6 +45,15 @@ public:
 	 *                         size.
 	 */
     virtual int decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) = 0;
+	size_t getUncompressedSize(void) const {
+		return uncompressedSize;
+	};
+	size_t getCompressedSize(void) const {
+		return compressedSize;
+	};
+	CompressionError getError(void) const {
+		return error;
+	}
 	/**
 	 * Create an instance of the Compression class.
      * Use this to instantiate an object which is able to do compression on arrays. The argument passed is a std::string
@@ -45,6 +62,10 @@ public:
 	 * @return A std::unique_ptr to the Compression object.
 	 */
 	static std::unique_ptr<Compression> create(std::string encoding);
+protected:
+	size_t uncompressedSize;
+	size_t compressedSize;
+	CompressionError error;
 };
 
 class NoCompression : public Compression {
