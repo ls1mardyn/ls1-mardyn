@@ -56,8 +56,7 @@ include(bhfmm)
 include(autopas)
 
 # ----- resilience plugin dependencies are set here
-include(resilience)
-
+include(lz4)
 
 # add mardyn
 ADD_SUBDIRECTORY(src)
