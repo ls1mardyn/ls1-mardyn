@@ -13,8 +13,9 @@
 #include <memory>
 #include <vector>
 
-
+#ifdef ENABLE_LZ4
 #include "lz4.h"
+#endif
 
 using ByteIterator = std::vector<char>::iterator;
 
@@ -114,10 +115,12 @@ public:
     int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
 
+#ifdef ENABLE_LZ4
 class Lz4Compression : public Compression {
 public:
     int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
     int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
+#endif /* ENABLE_LZ4 */
 
 #endif /* SRC_PLUGINS_COMPRESSION_H_ */

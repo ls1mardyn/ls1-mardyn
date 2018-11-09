@@ -1,10 +1,13 @@
 #include "compression.h"
 
 std::unique_ptr<Compression> Compression::create(std::string encoding) {
+#ifdef ENABLE_LZ4
     if (encoding.compare("LZ4") == 0) {
         return std::make_unique<Lz4Compression>();
     }
-    else if (encoding.compare("None") == 0) {
+    else
+#endif /* ENABLE_LZ4 */
+    if (encoding.compare("None") == 0) {
         return std::make_unique<NoCompression>();
     }
     else {
@@ -12,6 +15,7 @@ std::unique_ptr<Compression> Compression::create(std::string encoding) {
     }
 }
 
+#ifdef ENABLE_LZ4
 int Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) {
     uncompressedSize = uncompressedEnd-uncompressedStart;
     compressed.resize(uncompressedSize+sizeof(size_t));
@@ -56,6 +60,7 @@ int Lz4Compression::decompress(ByteIterator compressedStart, ByteIterator compre
     error = CompressionError::COMP_SUCCESS;
     return 0;
 }
+#endif /* ENABLE_LZ4 */
 
 int NoCompression::compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) {
     uncompressedSize = uncompressedEnd-uncompressedStart;

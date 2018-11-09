@@ -1,0 +1,36 @@
+/** \page compression Compression algorithm wrapper
+
+This wrapper provides some convenience when you want to use some sort of compression
+somewhere in the project. The syntax is simple and LZ4 is already included as one
+compression algorithm.
+
+To use the functionality, turn on the option `ENABLE_COMPRESSION` in the CMake options.
+New options to turn on individual encoding algorithms will be available.
+Set LZ4 is on by default when the wrapper was enabled.
+
+In the code, instantiate a `Compression` object, passing the requested compression algorithm as a std::string tag, which will offer the necessary functionality.
+Consider the following snippet:
+
+    #include <memory>
+    #include "compression.h"
+    
+    std::vector<char> data;         //your data
+    std::vector<char> compressed;   //object to store the compressed result
+    std::vector<char> decompressed; //object to store the decompressed result
+
+    std::unique_ptr<Compression> compression_instance;
+    compression_instance = Compression::create("LZ4");
+
+    //run compression algorithm
+    compression_instance.compress(data.begin(), data.end(), compressed);
+
+    //encoded data now stored in "compressed". the first size_t bytes contain 
+    //the uncompressed size. Additional error checking can be done, see class page.
+
+    compression_instance.decompress(compressed.begin(), compressed.end(), decompressed);
+
+    //decompressed now contains exactly the same values as "data"
+
+If things are going wrong, refer to the class page for more information. 
+Note that the instance is created on the heap, and needs to be freed by the programmer (or use smart pointers or something).
+
