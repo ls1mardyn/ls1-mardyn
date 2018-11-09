@@ -48,21 +48,21 @@ public:
 	/**
 	 * Returns the uncompressed size of the data.
      * Returns the uncompressed size of the data. This will only give sane results if either compression or decompression has
-	 * been attempted. Negative values mean that there is no data, or something went wrong during the processing calls.
+	 * been attempted. Zero means that there is no data, or something went wrong during the processing calls.
 	 * @return Uncompressed size of data. Depending on if the instance was used for compression or decompression, this is the
 	 *         input or output size, respectively.
 	 */
-	long long getUncompressedSize(void) const {
+	size_t getUncompressedSize(void) const {
 		return uncompressedSize;
 	};
 	/**
 	 * Returns the compressed size of the data.
      * Returns the compressed size of the data. This will only give sane results if either compression or decompression has
-	 * been attempted. Negative values mean that there is no data, or something went wrong during the processing calls.
+	 * been attempted. Zero means that there is no data, or something went wrong during the processing calls.
 	 * @return Uncompressed size of data. Depending on if the instance was used for compression or decompression, this is the
 	 *         output or input size, respectively.
 	 */
-	long long getCompressedSize(void) const {
+	size_t getCompressedSize(void) const {
 		return compressedSize;
 	};
 	/**
@@ -85,14 +85,32 @@ public:
 	 */
 	static std::unique_ptr<Compression> create(std::string encoding);
 protected:
-	long long uncompressedSize = -1;
-	long long compressedSize = -1;
+	size_t uncompressedSize = 0;
+	size_t compressedSize = 0;
 	CompressionError error;
 };
 
 class NoCompression : public Compression {
 public:
+	/**
+	 * Copies a series of bytes.
+     * As the class name says, it just does a copy.
+	 * @param[in] compressedStart Iterator pointing to the start of the array to be copied.
+	 * @param[in] compressedEnd Iterator pointing to the element past the last element of the array to be compressed
+	 * @param[in] decompressed A std::vector<char> holding the copied result. The vector will be appropriately resized.
+     *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
+	 *                         size.
+	 */
     int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
+	/**
+	 * Decompresses a series of bytes.
+     * Call this to decompress data.
+	 * @param[in] compressedStart Iterator pointing to the start of the array to be decompressed
+	 * @param[in] compressedEnd Iterator pointing to the element past the last element of the array to be decompressed
+	 * @param[in] decompressed A std::vector<char> holding the decompressed result. The vector will be appropriately resized.
+     *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
+	 *                         size.
+	 */
     int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
 

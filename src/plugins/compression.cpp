@@ -16,14 +16,17 @@ int Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncomp
     uncompressedSize = uncompressedEnd-uncompressedStart;
     compressed.resize(uncompressedSize+sizeof(size_t));
     // compress the uncompressed source
-    compressedSize = LZ4_compress_default(
+    actualCompressedSize = LZ4_compress_default(
             &(*uncompressedStart),
             compressed.data()+sizeof(size_t),
             uncompressedSize,
             uncompressedSize);
-    if (compressedSize < 0) {
+    if (actualCompressedSize < 0) {
         error = CompressionError::COMP_ERR_COMPRESSION_FAILED;
-        return static_cast<int>(compressedSize);
+        return static_cast<int>(actualCompressedSize);
+    }
+    else {
+        compressedSize = actualCompressedSize;
     }
     // add the uncompressed size to the beginning of the result array
     std::copy(reinterpret_cast<char*>(&uncompressedSize),
