@@ -1,5 +1,9 @@
 #include "compression.h"
 
+unique_ptr<Compression> Compression::create(std::string encoding) {
+    return std::unique_ptr<Compression>(nullptr);
+}
+
 int Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) {
     std::cout << "Compressing using LZ4" << std::endl;
     size_t uncompressedSize = uncompressedEnd-uncompressedStart;

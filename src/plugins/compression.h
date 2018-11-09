@@ -16,7 +16,7 @@
 
 using ByteIterator = std::vector<char>::iterator;
 
-class CompressionInterface {
+class Compression {
 public:
 	/**
 	 * Compresses a series of bytes.
@@ -37,15 +37,23 @@ public:
 	 *                         size.
 	 */
     virtual int decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) = 0;
+	/**
+	 * Create an instance of the Compression class.
+     * Use this to instantiate an object which is able to do compression on arrays. The argument passed is a std::string
+	 * containing the tag of the compression algorithm. At the moment, this is just "LZ4" and "None".
+	 * @param[in] encoding A tag from a list of tags associated with various compression algorithms.
+	 * @return A std::unique_ptr to the Compression object.
+	 */
+	static std::unique_ptr<Compression> create(std::string encoding);
 };
 
-class NoCompression : public CompressionInterface {
+class NoCompression : public Compression {
 public:
     int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
     int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
 
-class Lz4Compression : public CompressionInterface {
+class Lz4Compression : public Compression {
 public:
     int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
     int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
