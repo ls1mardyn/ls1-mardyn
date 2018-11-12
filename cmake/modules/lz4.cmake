@@ -17,11 +17,11 @@ if(ENABLE_LZ4)
             lz4
             GIT_REPOSITORY https://github.com/lz4/lz4.git
             GIT_TAG dev
-            SOURCE_DIR ${LZ4_SOURCE_DIR}
+            SOURCE_DIR ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial
             BINARY_DIR ${LZ4_BINARY_DIR}
             INSTALL_COMMAND ""
-            CMAKE_ARGS ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial
-            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+            CMAKE_ARGS 
+                -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     )
 
     # Get lz4 source and binary directories from CMake project
