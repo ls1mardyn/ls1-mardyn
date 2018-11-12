@@ -7,16 +7,18 @@ if(ENABLE_LZ4)
     include(ExternalProject)
 
     set(LZ4_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/lz4)
-    set(LZ4_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
+    set(LZ4_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/libs/lz4)
     # Download and install lz4
     ExternalProject_Add(
             lz4
             GIT_REPOSITORY https://github.com/lz4/lz4.git
             GIT_TAG dev
-            SOURCE_DIR ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial
+            SOURCE_DIR ${LZ4_SOURCE_DIR}
             BINARY_DIR ${LZ4_BINARY_DIR}
+            CONFIGURE_COMMAND ""
+            BUILD_COMMAND cmake ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial
             INSTALL_COMMAND ""
-            CMAKE_ARGS 
+            CMAKE_ARGS
                 -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     )
 
