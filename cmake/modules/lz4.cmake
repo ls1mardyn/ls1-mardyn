@@ -30,7 +30,7 @@ if(ENABLE_LZ4)
     include_directories(
         ${LZ4_SOURCE_DIR}/lib
     )
-    set(LZ4_LIB ${LZ4_BINARY_DIR}/liblz4.so)
+    set(LZ4_LIB ${LZ4_BINARY_DIR}/liblz4.a)
 else()
     message(STATUS "Not using LZ4.")
     set(LZ4_LIB "")
