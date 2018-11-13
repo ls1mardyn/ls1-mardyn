@@ -148,7 +148,8 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
     // Calculate bin Volume
     // TODO: again, cylinder, whats happening here?
     if(CYLINDER_DEBUG){
-        samplInfo.segmentVolume = M_PI / (this->samplInfo.universalInvProfileUnit[1] * this->samplInfo.universalInvProfileUnit[2] * this->samplInfo.universalProfileUnit[0]);
+        // When linearly sampling in R^2 domain -> Slice size stays constant with V = PI * (R_max^2 / nR) * (H / nH) * (1 / nPhi)
+        samplInfo.segmentVolume = M_PI / (this->samplInfo.universalInvProfileUnit[0] * this->samplInfo.universalInvProfileUnit[1] * this->samplInfo.universalProfileUnit[2]);
     }
     else{
         samplInfo.segmentVolume = this->samplInfo.globalLength[0] * this->samplInfo.globalLength[1] * this->samplInfo.globalLength[2]
