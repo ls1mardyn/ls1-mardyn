@@ -7,6 +7,8 @@
 #include <particleContainer/adapter/VectorizedCellProcessor.h>
 #include <particleContainer/adapter/LegacyCellProcessor.h>
 #include "AutoPasContainer.h"
+#include "Simulation.h"
+#include "Domain.h"
 
 AutoPasContainer::AutoPasContainer() :
 		_cutoff(0.), _verletSkin(0.3), _verletRebuildFrequency(10u), _tuningFrequency(100u), _autopasContainer() {
@@ -54,21 +56,39 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 
 void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if(dynamic_cast<VectorizedCellProcessor*> (&cellProcessor) or dynamic_cast<LegacyCellProcessor*> (&cellProcessor)){
-		autopas::LJFunctor<Molecule, CellType> functor;
+
+		double epsilon, sigma, shift;
 		{
 			auto iter = iterator();
 			if (not iter.isValid()) {
 				return;
 			}
 			auto ljcenter = iter->component()->ljcenter(0);
-			double epsilon = ljcenter.eps();
-			double sigma = ljcenter.sigma();
-			double shift = ljcenter.shift6()/6.;
-			functor.setGlobals(_cutoff, epsilon, sigma, shift);
+			epsilon = ljcenter.eps();
+			sigma = ljcenter.sigma();
+			shift = ljcenter.shift6()/6.;
+
 		}
+		// lower and upper corner of the local domain needed to correctly calculate the global values
+		std::array<double, 3> lowCorner = {_boundingBoxMin[0],_boundingBoxMin[1],_boundingBoxMin[2]};
+		std::array<double, 3> highCorner = {_boundingBoxMax[0],_boundingBoxMax[1],_boundingBoxMax[2]};
+
+		// generate the functor
+		autopas::LJFunctor<Molecule, CellType, /*calculateGlobals*/ true> functor(_cutoff, epsilon, sigma, shift,
+																				  lowCorner, highCorner,
+																				  /*duplicatedCalculation*/ true);
+
+		functor.resetGlobalValues();
 		_autopasContainer.iteratePairwise(&functor, autopas::DataLayoutOption::aos);
-	}
-	else{
+		functor.postProcessGlobalValues(/*newton3*/ true);
+		double upot = functor.getUpot();
+		double virial = functor.getVirial();
+
+		// _myRF is always zero for lj only!
+		global_simulation->getDomain()->setLocalVirial(virial /*+ 3.0 * _myRF*/);
+		// _upotXpoles is zero as we do not have any dipoles or quadrupoles
+		global_simulation->getDomain()->setLocalUpot(upot /* _upotXpoles + _myRF*/);
+	} else {
 		global_log->warning() << "only lj functors are supported for traversals." << std::endl;
 	}
 }

@@ -219,7 +219,7 @@ void VectorizedCellProcessor::endTraversal() {
 
 			sum_upot6lj = sum_upot6lj + upot_accum;//1FP (sum macro)
 
-			sum_virial = sum_virial +  V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
+			sum_virial = sum_virial + V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
 		}
 	}
 

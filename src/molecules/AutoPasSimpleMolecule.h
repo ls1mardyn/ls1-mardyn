@@ -8,6 +8,7 @@
 
 
 #include <autopas/utils/SoAType.h>
+#include <autopas/utils/inBox.h>
 #include <autopas/particles/MoleculeLJ.h>
 
 #include "FullMolecule.h"
@@ -234,7 +235,7 @@ public:
 	}
 
 	bool inBox(const std::array<double, 3> &rmin, const std::array<double, 3> &rmax) const {
-		return autopas::Particle::inBox(rmin, rmax);
+		return autopas::utils::inBox(this->getR(), rmin, rmax);
 	}
 
 
