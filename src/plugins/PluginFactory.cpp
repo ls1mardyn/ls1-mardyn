@@ -74,7 +74,6 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(GammaWriter);
     REGISTER_PLUGIN(HaloParticleWriter);
     REGISTER_PLUGIN(InMemoryCheckpointing);
-    REGISTER_PLUGIN(InSituMegamol);
     REGISTER_PLUGIN(KartesianProfile);
     REGISTER_PLUGIN(LoadbalanceWriter);
     REGISTER_PLUGIN(MPICheckpointWriter);
@@ -87,7 +86,6 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(MmspdWriter);
     REGISTER_PLUGIN(PovWriter);
     REGISTER_PLUGIN(RDF);
-    REGISTER_PLUGIN(RedundancyResilience);
     REGISTER_PLUGIN(RegionSampling);
     REGISTER_PLUGIN(ResultWriter);
     REGISTER_PLUGIN(SysMonOutput);
