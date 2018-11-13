@@ -13,3 +13,8 @@ src/MarDyn_*.*
 *.so.1.0
 *.a
 *.so
+
+## Oli chose to ignore these on git commands:
+.gitignore
+Doxyfile
+
