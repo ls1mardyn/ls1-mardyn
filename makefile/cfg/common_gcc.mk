@@ -32,6 +32,12 @@ endif
 ifeq ($(VECTORIZE_CODE),KNL_G_S)
 CXXFLAGS_VECTORIZE = -march=knl -D__VCP_GATHER__
 endif
+ifeq ($(VECTORIZE_CODE),SKX_MASK)
+CXXFLAGS_VECTORIZE = -march=skylake-avx512
+endif
+ifeq ($(VECTORIZE_CODE),SKX_G_S)
+CXXFLAGS_VECTORIZE = -march=skylake-avx512 -D__VCP_GATHER__
+endif
 
 # On AMD BUlldozer:
 ifeq ($(VECTORIZE_CODE),SSEAMD)

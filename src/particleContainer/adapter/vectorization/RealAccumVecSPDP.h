@@ -162,7 +162,7 @@ public:
 	}
 
 
-#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
 	vcp_inline
 	static RealAccumVecSPDP gather_load(const double * const src, const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		__m256i lookup_256i_lo = _mm512_extracti64x4_epi64(lookup, 0);

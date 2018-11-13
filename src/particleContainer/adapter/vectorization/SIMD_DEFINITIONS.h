@@ -45,8 +45,8 @@ namespace vcp {
 constexpr size_t VCP_VEC_SIZE = sizeof(vcp::RealCalcVec) / sizeof(vcp_real_calc);
 constexpr size_t VCP_VEC_SIZE_M1 = VCP_VEC_SIZE - 1u;
 
-constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE = (VCP_VEC_TYPE != VCP_VEC_KNL) ? 1u : VCP_VEC_SIZE;
-constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE_M1 = (VCP_VEC_TYPE != VCP_VEC_KNL) ? 0u : VCP_VEC_SIZE_M1;
+constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE    = (VCP_VEC_TYPE != VCP_VEC_KNL) and (VCP_VEC_TYPE != VCP_VEC_AVX512F) ? 1u : VCP_VEC_SIZE;
+constexpr size_t VCP_INDICES_PER_LOOKUP_SINGLE_M1 = (VCP_VEC_TYPE != VCP_VEC_KNL) and (VCP_VEC_TYPE != VCP_VEC_AVX512F) ? 0u : VCP_VEC_SIZE_M1;
 
 constexpr size_t VCP_ALIGNMENT = (VCP_VEC_TYPE != VCP_NOVEC) ? sizeof(vcp::RealCalcVec) : 8u;
 
@@ -148,7 +148,7 @@ using namespace vcp;
 			}
 		}
 	#endif
-#elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+#elif VCP_VEC_WIDTH==VCP_VEC_W_512
 
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 		static vcp_inline MaskCalcVec vcp_simd_getInitMask(const size_t& i){
