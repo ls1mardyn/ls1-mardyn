@@ -16,6 +16,7 @@
  * Also create needed profiles and initialize them. New Profiles need to be handled via the XML here as well.
 * @param xmlconfig
 */
+// TODO: add CYLINDER XML OPTION
 void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     global_log -> debug() << "[KartesianProfile] enabled" << std::endl;
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
