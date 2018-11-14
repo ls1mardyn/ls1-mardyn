@@ -18,7 +18,6 @@
 #include "io/CheckpointWriter.h"
 #include "io/CommunicationPartnerWriter.h"
 #include "io/DecompWriter.h"
-#include "io/DensityProfileWriter.h"
 #include "io/EnergyLogWriter.h"
 #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
@@ -69,7 +68,6 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(CheckpointWriter);
     REGISTER_PLUGIN(CommunicationPartnerWriter);
     REGISTER_PLUGIN(DecompWriter);
-    REGISTER_PLUGIN(DensityProfileWriter);
     REGISTER_PLUGIN(EnergyLogWriter);
     REGISTER_PLUGIN(ExamplePlugin);
     REGISTER_PLUGIN(FlopRateWriter);
