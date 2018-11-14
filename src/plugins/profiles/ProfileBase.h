@@ -16,6 +16,7 @@ struct SamplingInformation{
     double globalLength[3]; // Size of Domain
     double segmentVolume; // Size of one Sampling grid bin
     double universalCentre[3]; // Centre coords for cylinder system
+    bool cylinder;
 };
 
 /** @brief Base class for all Profile outputs used by KartesianProfile.
@@ -31,8 +32,6 @@ struct SamplingInformation{
 class ProfileBase {
 
 public:
-
-    bool CYLINDER_DEBUG = true;
 
 	virtual ~ProfileBase(){};
 	/** @brief Init function is given a pointer to the KartesianProfile object handling this profile. Same for all profiles.

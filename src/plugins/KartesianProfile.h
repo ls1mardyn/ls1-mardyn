@@ -31,9 +31,13 @@ class ProfileBase;
  * <b>profiles</b>: Enable/disable the different profiles. If one is needed for another (Density for Velocity) it is enabled automatically. If none are specified here all profiles will be written.<br>
  * \code{.xml}
 * <plugin name="KartesianProfile">
+ *    <mode>cylinder</mode> (kartesian)
       <x>1</x>
       <y>20</y>
       <z>20</z>
+      <r>20</r>
+      <h>20</h>
+      <phi>1</phi>
       <writefrequency>100</writefrequency>
       <timesteps>
         <init>1</init>
@@ -44,6 +48,7 @@ class ProfileBase;
         <density>1</density>
         <temperature>0</temperature>
         <velocity>1</velocity>
+        <velocity3d>1</velocity>
       </profiles>
     </plugin>
 * \endcode
@@ -51,8 +56,6 @@ class ProfileBase;
 class KartesianProfile : public PluginBase {
 
 public:
-
-    bool CYLINDER_DEBUG = true;
 
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
     void readXML(XMLfileUnits& xmlconfig) override;
@@ -88,6 +91,7 @@ private:
     unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
     long _accumulatedDatasets; // Number of Datasets between output writes / profile resets
     std::string _outputPrefix; // File prefix for all profiles
+    std::string _mode;
 
     unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 

@@ -16,24 +16,31 @@
  * Also create needed profiles and initialize them. New Profiles need to be handled via the XML here as well.
 * @param xmlconfig
 */
-// TODO: add CYLINDER XML OPTION
+
 void KartesianProfile::readXML(XMLfileUnits &xmlconfig) {
     global_log -> debug() << "[KartesianProfile] enabled" << std::endl;
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
     global_log->info() << "[KartesianProfile] Write frequency: " << _writeFrequency << endl;
     xmlconfig.getNodeValue("outputprefix", _outputPrefix);
     global_log->info() << "[KartesianProfile] Output prefix: " << _outputPrefix << endl;
+    xmlconfig.getNodeValue("mode", _mode);
+    global_log->info() << "[KartesianProfile] Mode " << _mode << endl;
 
-    // TODO: options for cylinder / CLEAR WHAT UNIT DOES WHAT / DO WE WANT LINEAR RADIAL SAMPLING?
-    if(CYLINDER_DEBUG){
+    if(_mode == "cylinder"){
         xmlconfig.getNodeValue("r", samplInfo.universalProfileUnit[0]);
         xmlconfig.getNodeValue("h", samplInfo.universalProfileUnit[1]);
         xmlconfig.getNodeValue("phi", samplInfo.universalProfileUnit[2]);
+        samplInfo.cylinder = true;
     }
-    else{
+    else if (_mode == "kartesian"){
         xmlconfig.getNodeValue("x", samplInfo.universalProfileUnit[0]);
         xmlconfig.getNodeValue("y", samplInfo.universalProfileUnit[1]);
         xmlconfig.getNodeValue("z", samplInfo.universalProfileUnit[2]);
+        samplInfo.cylinder = false;
+    }
+    else{
+        global_log -> error() << "[KartesianProfile] Invalid mode. cylinder/kartesian" << endl;
+        Simulation::exit(-1);
     }
 
     global_log->info() << "[KartesianProfile] Binning units: " << samplInfo.universalProfileUnit[0] << " " << samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
@@ -114,8 +121,7 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
         global_log->info() << "[KartesianProfile] globalLength " << samplInfo.globalLength[d] << "\n";
     }
     // Calculate sampling units
-    // TODO: Adapt for option of cylinder uID, none of this actually makes too much sense for phi-bins > 1
-    if(CYLINDER_DEBUG){
+    if(samplInfo.cylinder){
         double minXZ = this->samplInfo.globalLength[0];
         if(this->samplInfo.globalLength[2]<minXZ){
             minXZ = this->samplInfo.globalLength[2];
@@ -146,8 +152,7 @@ void KartesianProfile::init(ParticleContainer* particleContainer, DomainDecompBa
     global_log->info() << "[KartesianProfile] number uID " << _uIDs << "\n";
 
     // Calculate bin Volume
-    // TODO: again, cylinder, whats happening here?
-    if(CYLINDER_DEBUG){
+    if(samplInfo.cylinder){
         // When linearly sampling in R^2 domain -> Slice size stays constant with V = PI * (R_max^2 / nR) * (H / nH) * (1 / nPhi)
         samplInfo.segmentVolume = M_PI / (this->samplInfo.universalInvProfileUnit[0] * this->samplInfo.universalInvProfileUnit[1] * this->samplInfo.universalProfileUnit[2]);
     }
@@ -192,8 +197,7 @@ void KartesianProfile::endStep(ParticleContainer *particleContainer, DomainDecom
         // Loop over all particles and bin them with uIDs
         for(auto thismol = particleContainer->iterator(); thismol.isValid(); ++thismol){
             // Get uID
-            // TODO: SELECT OPTION
-            if(CYLINDER_DEBUG){
+            if(samplInfo.cylinder){
                 uID = getCylUID(thismol);
                 if (uID == -1){
                     // Invalid uID -> Molecule not in cylinder -> continue

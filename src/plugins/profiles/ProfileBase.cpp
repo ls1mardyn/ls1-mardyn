@@ -6,7 +6,7 @@
 #include "../KartesianProfile.h"
 
 void ProfileBase::writeMatrix(ofstream &outfile) {
-    if(CYLINDER_DEBUG){
+    if(_samplInfo.cylinder){
         writeCylMatrix(outfile);
     }
     else {
