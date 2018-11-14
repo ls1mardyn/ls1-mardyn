@@ -129,7 +129,7 @@
 	      </outputplugin>
    		</output>
 
-		<!-- ALPHA: Center of Mass alignment plugin  --> 
+		<!-- CENTER OF MASS ALIGNMENT  --> 
 		<plugin name="COMaligner">
 			<x>1</x>
 			<y>0</y>
@@ -138,7 +138,7 @@
 			<correctionFactor>.5</correctionFactor>
 		</plugin>
 
-		<!-- WALLPOTENTIAL -->
+		<!-- LENNARD JONES WALL POTENTIAL -->
 		<plugin name="WallPotential">
 	      <potential>104</potential>
 	      <density>1.07</density>
@@ -160,8 +160,10 @@
 	      <direction>0</direction>
 	    </plugin>
 
-	    <!-- KARTESIAN/CYLINDER PROFILE -->
+	    <!-- KARTESIAN/CYLINDER PROFILE OUTPUT -->
 	    <plugin name="KartesianProfile">
+
+	      <mode>cylinder</mode>
 	      <x>1</x>
 	      <y>20</y>
 	      <z>20</z>
@@ -169,15 +171,15 @@
 	      <r>400</r>
 	      <h>400</h>
 	      <phi>1</phi>
-	      <writefrequency>50000</writefrequency>
+	      <writefrequency>1000</writefrequency>
 	      <timesteps>
 	        <init>1</init>
-	        <recording>100</recording>
+	        <recording>10</recording>
 	      </timesteps>
 	      <outputprefix>drop.cyl.</outputprefix>
 	      <profiles>
 	        <density>1</density>
-	        <temperature>0</temperature>
+	        <temperature>1</temperature>
 	        <velocity>0</velocity>
 	        <velocity3d>0</velocity3d>
 	      </profiles>
