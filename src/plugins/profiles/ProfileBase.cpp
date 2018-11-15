@@ -40,16 +40,10 @@ void ProfileBase::writeKartMatrix(ofstream &outfile) {
 }
 
 void ProfileBase::writeSimpleMatrix(ofstream &outfile) {
-    global_log->error() << "IMPLEMENT ME BEFORE USING\n";
+    global_log->error() << "SIMPLE MATRIX OUTPUT NOT IMPLEMENTED!\n";
 }
 
 void ProfileBase::writeCylMatrix(ofstream &outfile) {
-    global_log->error() << "IMPLEMENT ME BEFORE USING\n";
-    // TODO: varying order of loops in Domain.cpp:
-    // TODO: line 1415ff / 1502ff: Phi -> H -> R^2
-    // TODO: Line 1452ff: H -> R^2 -> Phi
-    // Actually wrong in both cases. Only works if number of bins in Phi direction == 1 !!!
-    // Otherwise, radial header gets rewritten all the time.
     // Write Data
     // Assuming phi = 1 -> projection along phi axis
     // R2 - axis label

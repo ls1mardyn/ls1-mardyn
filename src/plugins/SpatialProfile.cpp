@@ -205,7 +205,7 @@ void SpatialProfile::endStep(ParticleContainer *particleContainer, DomainDecompB
                 }
             }
             else{
-                uID = getUID(thismol);
+                uID = getCartesianUID(thismol);
             }
             // pass mol + uID to all profiles
             for(unsigned i = 0; i < _profiles.size(); i++){
@@ -262,7 +262,7 @@ void SpatialProfile::endStep(ParticleContainer *particleContainer, DomainDecompB
     }
 }
 
-unsigned long SpatialProfile::getUID(ParticleIterator &thismol) {
+unsigned long SpatialProfile::getCartesianUID(ParticleIterator &thismol) {
     auto xun = (unsigned) floor(thismol->r(0) * samplInfo.universalInvProfileUnit[0]);
     auto yun = (unsigned) floor(thismol->r(1) * samplInfo.universalInvProfileUnit[1]);
     auto zun = (unsigned) floor(thismol->r(2) * samplInfo.universalInvProfileUnit[2]);
@@ -319,7 +319,7 @@ long SpatialProfile::getCylUID(ParticleIterator &thismol) {
 }
 
 void SpatialProfile::addProfile(ProfileBase *profile) {
-    global_log->info() << "PROFILE ADD\n";
+    global_log->info() << "[SpatialProfile] Profile added: \n";
     _profiles.push_back(profile);
     _comms += profile->comms();
 }

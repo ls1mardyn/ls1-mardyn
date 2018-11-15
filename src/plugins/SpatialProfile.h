@@ -66,7 +66,7 @@ public:
     void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain) override {};
 
-    unsigned long getUID(ParticleIterator &thismol);
+    unsigned long getCartesianUID(ParticleIterator &thismol);
 
     long getCylUID(ParticleIterator &thismol);
 
