@@ -356,7 +356,8 @@ public:
 	bool thermostatWarning() { return (this->_universalSelectiveThermostatWarning > 0); }
 
 	void evaluateRho(unsigned long localN, DomainDecompBase* comm);
-        void setLambda(double lambda) { this->_universalLambda = lambda; }
+	void submitDU(unsigned cid, double DU, double* r);
+	void setLambda(double lambda) { this->_universalLambda = lambda; }
         void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
         void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
 

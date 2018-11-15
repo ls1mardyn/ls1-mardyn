@@ -556,6 +556,7 @@ void ChemicalPotential::grandcanonicalStep(
 //			moleculeContainer->_cells[cellid].addParticle(m);
 			DeltaUpot = moleculeContainer->getEnergy(&particlePairsHandler, mit,
 					*cellProcessor);
+			domain->submitDU(this->getComponentID(), DeltaUpot, ins);
 			accept = this->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG

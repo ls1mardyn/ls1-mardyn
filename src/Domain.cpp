@@ -808,6 +808,28 @@ unsigned Domain::getNumberOfComponents(){
   return _simulation.getEnsemble()->getComponents()->size();
 }
 
+// Profiling done in the Domain class anymore. Use SpatialProfile to add profile functionalities.
+void Domain::submitDU(unsigned /*cid*/, double DU, double* r)
+{
+	/*unsigned xun, yun, zun;
+	xun = (unsigned)floor(r[0] * this->_universalInvProfileUnit[0]);
+	yun = (unsigned)floor(r[1] * this->_universalInvProfileUnit[1]);
+	zun = (unsigned)floor(r[2] * this->_universalInvProfileUnit[2]);
+	int unID = xun * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
+			   + yun * this->_universalNProfileUnits[2] + zun;
+	if(unID < 0) return;
+
+	_localWidomProfile[unID] += exp(-DU / _globalTemperatureMap[0]);
+	_localWidomInstances[unID] += 1.0;
+
+	double Tloc = _universalTProfile[unID];
+	if(Tloc != 0.0)
+	{
+		_localWidomProfileTloc[unID] += exp(-DU/Tloc);
+		_localWidomInstancesTloc[unID] += 1.0;
+	}*/
+}
+
  void Domain::setLocalUpotCompSpecific(double UpotCspec){_localUpotCspecif = UpotCspec;}
 
  double Domain::getLocalUpotCompSpecific(){return _localUpotCspecif;}
