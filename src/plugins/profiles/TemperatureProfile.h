@@ -6,7 +6,7 @@
 #define MARDYN_TEMPERATUREPROFILE_H
 
 #include "ProfileBase.h"
-#include "../KartesianProfile.h"
+#include "plugins/SpatialProfile.h"
 
 class DOFProfile;
 class KineticProfile;

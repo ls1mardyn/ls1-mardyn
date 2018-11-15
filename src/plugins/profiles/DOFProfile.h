@@ -7,7 +7,7 @@
 
 
 #include "ProfileBase.h"
-#include "../KartesianProfile.h"
+#include "plugins/SpatialProfile.h"
 
 /**
  * @brief Records (NO OUTPUT) the DOF of molecules per bin specified by Sampling grid in KartesianProfile.

@@ -3,7 +3,7 @@
 //
 
 #include "ProfileBase.h"
-#include "../KartesianProfile.h"
+#include "plugins/SpatialProfile.h"
 
 void ProfileBase::writeMatrix(ofstream &outfile) {
     if(_samplInfo.cylinder){

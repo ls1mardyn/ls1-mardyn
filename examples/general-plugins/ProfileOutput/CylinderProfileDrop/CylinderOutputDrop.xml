@@ -160,8 +160,8 @@
 	      <direction>0</direction>
 	    </plugin>
 
-	    <!-- KARTESIAN/CYLINDER PROFILE -->
-	    <plugin name="KartesianProfile">
+	    <!-- CARTESIAN/CYLINDER PROFILE -->
+	    <plugin name="SpatialProfile">
 	      <mode>cylinder</mode>
 	      <x>1</x>
 	      <y>20</y>

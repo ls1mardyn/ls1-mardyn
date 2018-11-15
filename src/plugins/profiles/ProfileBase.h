@@ -8,7 +8,7 @@
 #include "../../Domain.h"
 #include "../../parallel/DomainDecompBase.h"
 
-class KartesianProfile;
+class SpatialProfile;
 
 struct SamplingInformation{
     double universalInvProfileUnit[3]; // Inv. Bin Sizes
