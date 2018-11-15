@@ -271,6 +271,22 @@ unsigned long SpatialProfile::getCartesianUID(ParticleIterator &thismol) {
     return uID;
 }
 
+/**
+ *
+ * @brief getCylUID samples the domain in cylinder coordinate bins.
+ *
+ * The sampling is done in linear increments both in the h- and phi-axis.
+ * In the r-axis, the sampling is done linearly in R^2 space, which means the distance between sampling bins
+ * R_i ^2 - R_i+1 ^2 is always the same. This results in smaller r distance between bins in outer regions.
+ * This has the benefit, that the volume of all sampling bins is equal, meaning the volume of each ring slice, no matter
+ * if sampled in the inner region of the cylinder or in the outer is the same.
+ * This results from V_segment = PI*h*(r_i+1 ^2 - r_i ^2)
+ * As said earlier, the R^2 difference terms are always the same if sampling is done linearly in R^2 - space.
+ * The h term is a linear sampling size in h-axis, so also a constant as is PI.
+ *
+ * @param thismol
+ * @return
+ */
 long SpatialProfile::getCylUID(ParticleIterator &thismol) {
 
     int phiUn,rUn,hUn;// (phiUn,rUn,yun): bin number in a special direction, e.g. rUn==5 corresponds to the 5th bin in the radial direction,
