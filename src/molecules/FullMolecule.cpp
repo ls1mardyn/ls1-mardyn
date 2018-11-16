@@ -1,6 +1,13 @@
 #include "FullMolecule.h"
 #include "particleContainer/adapter/CellDataSoA.h"
 
+//the following headers are included to get access to the Component vector (cf. serialize())
+#include "ensemble/BoxDomain.h"
+#include "ensemble/EnsembleBase.h"
+#include "ensemble/GrandCanonical.h"
+#include "ensemble/PressureGradient.h"
+#include "Simulation.h"
+
 #include "utils/mardyn_assert.h"
 #include <cmath>
 #include <fstream>
@@ -9,7 +16,6 @@
 
 using namespace std;
 using Log::global_log;
-
 
 FullMolecule::FullMolecule(unsigned long id, Component *component,
 	                 double rx,  double ry,  double rz,
@@ -505,14 +511,13 @@ std::vector<char>::iterator FullMolecule::deserialize(std::vector<char>::iterato
 	using VelocityType = std::remove_reference<decltype(_v[0])>::type;
 	using QuaternionType = decltype(declval<Quaternion>().qw());
 	using AngularMomentumType = std::remove_reference<decltype(_L[0])>::type;
+	// reference to component data base
+	std::vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
+
 	// molecule id
 	setid(*reinterpret_cast<decltype(_id)*>(&(*first))); first += sizeof(_id);
 	// component id
-	unsigned int const cid = *reinterpret_cast<unsigned int*>(&(*first));
-	first += sizeof(unsigned int);
-
-#warning Molecule component not set. Retrieve the correct component via the deserialized component id.
-
+	setComponent(&dcomponents[*reinterpret_cast<unsigned int*>(&(*first))]); first += sizeof(unsigned int);
 	// position
 	setr(0, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
 	setr(1, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
