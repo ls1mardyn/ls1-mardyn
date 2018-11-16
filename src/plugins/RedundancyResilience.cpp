@@ -143,7 +143,7 @@ std::vector<char> RedundancyResilience::_serializeSnapshot(void) const {
 			reinterpret_cast<char const*>(&currentTime)+sizeof(currentTime));
 	mardyn_assert(byteData.size() == sizeof(rank)+sizeof(currentTime));
 	//append 0,...,rank as char to generate different sized data for each rank while encoding some info
-#warning serializing and deserializing is generating fake data
+#pragma message "serializing and deserializing is generating fake data"
 	for (char fakeData = 0; fakeData<rank+1; ++fakeData) {
 		byteData.push_back(fakeData);
 	}
