@@ -19,18 +19,13 @@ if(ENABLE_LZ4)
             BUILD_COMMAND make
             INSTALL_COMMAND ""    
     )
-
-    # Get lz4 source and binary directories from CMake project
-    ExternalProject_Get_Property(lz4 source_dir binary_dir)
-
     # Create a liblz4 target to be used as a dependency by the program
-    add_library(liblz4 IMPORTED STATIC GLOBAL)
+    add_library(liblz4 IMPORTED SHARED)
     add_dependencies(liblz4 lz4)
 
-    include_directories(
-        ${LZ4_SOURCE_DIR}/lib
-    )
-    set(LZ4_LIB ${LZ4_BINARY_DIR}/liblz4.a)
+    # set include directory associated with this target
+    include_directories(${LZ4_SOURCE_DIR}/lib)
+    set(LZ4_LIB ${LZ4_BINARY_DIR}/liblz4.so)
 else()
     message(STATUS "Not using LZ4.")
     set(LZ4_LIB "")
