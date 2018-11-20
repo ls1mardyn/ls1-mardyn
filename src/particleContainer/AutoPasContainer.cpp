@@ -77,7 +77,9 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		autopas::LJFunctor<Molecule, CellType, /*calculateGlobals*/ true> functor(_cutoff, epsilon, sigma, shift,
 																				  lowCorner, highCorner,
 																				  /*duplicatedCalculation*/ true);
-
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
 		for(auto iter = iterator(); iter.isValid(); ++iter){
 			iter->clearFM();
 		}
