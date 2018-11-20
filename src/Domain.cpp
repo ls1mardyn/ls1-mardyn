@@ -475,7 +475,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		this->_local2KERot[0] = local2KERot;
 
 		global_log->debug() << "      * N = " << this->_localThermostatN[0]
-			<< "rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
+			<< " rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
 			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
 	}
 }
