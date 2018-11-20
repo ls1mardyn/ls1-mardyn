@@ -222,7 +222,11 @@ public:
 	}
 
 
-	void clearFM() override {}
+	void clearFM() override {
+		for (unsigned short d = 0; d < 3; ++d) {
+			setF(d, 0.);
+		}
+	}
 	void calcFM() override {}
 	void check(unsigned long id) override {}
 

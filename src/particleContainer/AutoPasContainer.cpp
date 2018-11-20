@@ -78,6 +78,10 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 																				  lowCorner, highCorner,
 																				  /*duplicatedCalculation*/ true);
 
+		for(auto iter = iterator(); iter.isValid(); ++iter){
+			iter->clearFM();
+		}
+
 		functor.resetGlobalValues();
 		_autopasContainer.iteratePairwise(&functor, autopas::DataLayoutOption::aos);
 		functor.postProcessGlobalValues(/*newton3*/ true);
