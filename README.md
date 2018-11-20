@@ -1,7 +1,7 @@
 ls1-MarDyn Overview
 ===================
 
-ls1-MarDyn is a massively parallel Molecular Dynamics (MD) code for large systems. Its main target is the simulation of nanofluids. ls1-MarDyn is designed with the focus on performance and easy extensibility.
+ls1-MarDyn is a massively parallel Molecular Dynamics (MD) code for large systems. Its main target is the simulation of thermodynamics and nanofluidics. ls1-MarDyn is designed with a focus on performance and easy extensibility.
 
 
 Getting Started
