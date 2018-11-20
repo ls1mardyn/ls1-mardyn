@@ -42,19 +42,19 @@
         <file type="ASCII">Ads_LJ1043.inp</file>
       </phasespacepoint>
     </ensemble>
+    
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
       <datastructure type="LinkedCells">
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
-
-      <cutoffs type="CenterOfMass">
+       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">2.5</radiusLJ>
       </cutoffs>
-
-      <electrostatic type="ReactionField">
+       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
       </electrostatic>
+
       <thermostats>
         <thermostat type="TemperatureControl">
           <control>
@@ -84,17 +84,20 @@
           </regions>
         </thermostat>
       </thermostats>
+     </algorithm>
+     <output>
 
-    </algorithm>
+      <!-- VTK WRITER -->
 
-    <output>
       <outputplugin name="VTKMoleculeWriter">
         <outputprefix>vtkOutput</outputprefix>
         <writefrequency>100</writefrequency>
       </outputplugin>
     </output>
 
-    <plugin name="WallPotential">
+    <!-- WALL -->
+
+     <plugin name="WallPotential">
       <potential>104</potential>
       <density>1.07</density>
       <sigma>1</sigma>
@@ -108,13 +111,18 @@
       </component>
     </plugin>
 
-    <plugin name="Mirror">
+    <!-- MIRROR -->
+
+     <plugin name="Mirror">
       <yPos>55</yPos>
       <forceConstant>10</forceConstant>
       <direction>0</direction>
     </plugin>
 
-    <plugin name="KartesianProfile">
+    <!-- SPATIAL PROFILE OUTPUT -->
+
+     <plugin name="SpatialProfile">
+      <mode>cartesian</mode>
       <x>1</x>
       <y>20</y>
       <z>20</z>
@@ -123,7 +131,7 @@
         <init>1</init>
         <recording>1</recording>
       </timesteps>
-      <outputprefix>comparison</outputprefix>
+      <outputprefix>cartesian</outputprefix>
       <profiles>
         <density>1</density>
         <temperature>1</temperature>
@@ -131,6 +139,5 @@
         <velocity3d>1</velocity3d>
       </profiles>
     </plugin>
-
-  </simulation>
+   </simulation>
 </mardyn>

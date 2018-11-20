@@ -8,7 +8,16 @@
 #include "../../Domain.h"
 #include "../../parallel/DomainDecompBase.h"
 
-class KartesianProfile;
+class SpatialProfile;
+
+struct SamplingInformation{
+    double universalInvProfileUnit[3]; // Inv. Bin Sizes
+    double universalProfileUnit[3]; // Bin Sizes
+    double globalLength[3]; // Size of Domain
+    double segmentVolume; // Size of one Sampling grid bin
+    double universalCentre[3]; // Centre coords for cylinder system
+    bool cylinder;
+};
 
 /** @brief Base class for all Profile outputs used by KartesianProfile.
  *
@@ -23,12 +32,13 @@ class KartesianProfile;
 class ProfileBase {
 
 public:
+
 	virtual ~ProfileBase(){};
 	/** @brief Init function is given a pointer to the KartesianProfile object handling this profile. Same for all profiles.
 	 *
 	 * @param kartProf Pointer to KartesianProfile. Grants access to necessary global params.
 	 */
-    void init(KartesianProfile* kartProf) {_kartProf = kartProf;};
+    void init(SamplingInformation &samplingInformation) { _samplInfo = samplingInformation;};
     /** @brief The recording step defines what kind of data needs to be recorded for a single molecule with a corresponding uID.
      *
      * @param mol Reference to Molecule, needed to extract info such as velocity or Virial.
@@ -54,7 +64,7 @@ public:
      * @param prefix File prefix including the global _outputPrefix for all profiles and the current timestep. Should be
      * appended by some specific file ending for this specific profile.
      */
-    virtual void output(string prefix) = 0;
+    virtual void output(string prefix, long unsigned accumulatedDatasets) = 0;
     /** @brief Used to reset all array contents for a specific uID in order to start the next recording timeframe.
      *
      * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
@@ -71,8 +81,9 @@ public:
 protected:
     // output file prefix
     string _profilePrefix;
-    // KartesianProfile managing class pointer for meta info
-    KartesianProfile* _kartProf;
+
+    SamplingInformation _samplInfo;
+    long _accumulatedDatasets = -1; // Number of Datasets between output writes / profile resets // -1 if not set properly
 
     /** @brief Write Single Data Entry for Matrix with given uID to outfile
      *
@@ -86,7 +97,22 @@ protected:
      * @param outfile opened filestream from Profile
      */
     void writeMatrix(ofstream &outfile);
-};
 
+    void writeKartMatrix(ofstream &outfile);
+
+    /**@brief STUB for simple Matrix output without headers
+     *
+     * @param outfile opened filestream from Profile
+     */
+     // TODO: implement if needed
+    void writeSimpleMatrix(ofstream &outfile);
+
+    /**@brief STUB for cylinder Matrix output without headers
+     *
+     * @param outfile opened filestream from Profile
+     */
+    // TODO: implement when order is known
+    void writeCylMatrix(ofstream &outfile);
+};
 
 #endif //MARDYN_TRUNK_PROFILEBASE_H
