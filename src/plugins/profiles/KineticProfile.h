@@ -6,7 +6,7 @@
 #define MARDYN_KINETICPROFILE_H
 
 #include "ProfileBase.h"
-#include "../KartesianProfile.h"
+#include "plugins/SpatialProfile.h"
 
 /**
  * @brief Records (NO OUTPUT) the 2xKinetic Profile of molecules per bin specified by Sampling grid in KartesianProfile.
@@ -26,7 +26,7 @@ public:
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
         _globalProfile[uID] = domainDecomp->collCommGetDouble();
     }
-    void output(string prefix) final;
+    void output(string prefix, long unsigned accumulatedDatasets) final;
     void reset(unsigned long uID) final  {
         _localProfile[uID] = 0.0;
         _globalProfile[uID] = 0.0;

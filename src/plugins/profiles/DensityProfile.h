@@ -6,7 +6,7 @@
 #define MARDYN_TRUNK_DENSITYPROFILE_H
 
 #include "ProfileBase.h"
-#include "../KartesianProfile.h"
+#include "plugins/SpatialProfile.h"
 
 /**
  * @brief Outputs the number density of molecules per bin specified by Sampling grid in KartesianProfile.
@@ -23,7 +23,7 @@ public:
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
         _globalProfile[uID] = domainDecomp->collCommGetInt();
     }
-    void output(string prefix) final;
+    void output(string prefix, long unsigned accumulatedDatasets) final;
     void reset(unsigned long uID) final  {
         _localProfile[uID] = 0;
         _globalProfile[uID] = 0;

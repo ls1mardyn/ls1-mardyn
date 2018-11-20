@@ -4,7 +4,7 @@
 
 #include "DOFProfile.h"
 
-void DOFProfile::output(string prefix) {
+void DOFProfile::output(string prefix, long unsigned accumulatedDatasets) {
     global_log->debug() << "[DOFProfile] has no output.\n";
 }
 

@@ -268,7 +268,7 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 	_cells = &cells; // new - what for?
 	_dims = dims; // new - what for?
 
-	for (auto i = 0; i < _traversals.size(); ++i) {
+	for (size_t i = 0ul; i < _traversals.size(); ++i) {
 		auto& tPair = _traversals[i];
 		// decide whether to initialize or rebuild
 		if (tPair.first == nullptr) {

@@ -344,32 +344,6 @@ public:
 
 	PressureGradient* getPG() { return this->_universalPG; }
 
-	void setupProfile(unsigned xun, unsigned yun, unsigned zun);
-	void considerComponentInProfile(int cid);
-	void recordProfile(ParticleContainer* molCont, bool virialProfile);
-	void collectProfile(DomainDecompBase* domainDecomp, bool virialProfile);
-	void outputProfile(const char* prefix, bool virialProfile);
-	void resetProfile(bool virialProfile);
-
-
-	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods employed for setting up a density profile in cylindrical coordinates
-	//begin
-	// prerequisite for the cylindrical coordinate system: R2max, centre, InvProfileUnit[3] => counterpart of setupProfile(), beyond that recordProfile() is extended
-	void sesDrop();
-	// number of the current bin a particle is located in. Actual parameters: global cartesian coordinates of the particle with respect to the simulation box coordinate system
-	long int unID(double qx, double qy, double qz);
-	// returning the parameter that controls wheter or not a cylindrical profile is created. method called by Simulation::output()
-	bool isCylindrical();
-	// writing out a 3-dimensional density profile in cylindrical coordinates, counterpart of outputProfile.
-	void outputCylProfile(const char* prefix, bool virialProfile);
-	// setting the offset in y-direction (obtained from the config file), needed in the density profile output file 
-	void sYOffset(double in_yOff);
-	// end
-	
-	// method defining the component that is employed for determining the shift distance in y-direction
-	void considerComponentForYShift(unsigned cidMin, unsigned cidMax);
-
-
 	unsigned long N() {return _globalNumMolecules;}
 
 	void Nadd(unsigned cid, int N, int localN);
@@ -382,8 +356,8 @@ public:
 	bool thermostatWarning() { return (this->_universalSelectiveThermostatWarning > 0); }
 
 	void evaluateRho(unsigned long localN, DomainDecompBase* comm);
-        void submitDU(unsigned cid, double DU, double* r);
-        void setLambda(double lambda) { this->_universalLambda = lambda; }
+	void submitDU(unsigned cid, double DU, double* r);
+	void setLambda(double lambda) { this->_universalLambda = lambda; }
         void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
         void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
 
@@ -473,87 +447,11 @@ private:
 	unsigned _globalUSteps;
 	double _globalSigmaU;
 	double _globalSigmaUU;
-
-	//! 1 / dimension of a profile cuboid
-	double _universalInvProfileUnit[3];
-	//! number of successive profile cuboids in x/y/z direction
-	unsigned _universalNProfileUnits[3];
-	//! local N profile map
-	std::map<unsigned, long double> _localNProfile;
-	//! global N profile map
-	std::map<unsigned, double> _universalNProfile;
-	//! local directed velocity profile map
-	std::map<unsigned, long double> _localvProfile[3];
-	//! global directed velocity  profile map
-	std::map<unsigned, double> _universalvProfile[3];
-	//! local kinetic energy profile map
-	std::map<unsigned, long double> _localKineticProfile;
-	//! global kinetic energy profile map
-	std::map<unsigned, double> _universalKineticProfile;
-	//! local counter w. r. t. degrees of freedom
-	std::map<unsigned, long double> _localDOFProfile;
-	//! global counter w. r. t. degrees of freedom
-	std::map<unsigned, double> _universalDOFProfile;
-	//! how many _evaluated_ timesteps are currently accumulated in the profile?
-	unsigned _globalAccumulatedDatasets;
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
         double _universalProfiledComponentMass;  // set from outside
-	// //! local virial / pressure profile map
-	// std::map<unsigned, long double> _localPDProfile;
-	// //! global virial / pressure profile map
-	// std::map<unsigned, double> _universalPDProfile;
-	//! local virial / pressure profile map
-	std::map<unsigned, long double> _localPXProfile;
-	//! global virial / pressure profile map
-	std::map<unsigned, double> _universalPXProfile;
-	//! local virial / pressure profile map
-	std::map<unsigned, long double> _localPYProfile;
-	//! global virial / pressure profile map
-	std::map<unsigned, double> _universalPYProfile;
-	//! local virial / pressure profile map
-	std::map<unsigned, long double> _localPZProfile;
-	//! global virial / pressure profile map
-	std::map<unsigned, double> _universalPZProfile;
-
-        std::map<unsigned, double> _universalTProfile; 
-        std::map<unsigned, long double> _localWidomProfile;  // submit individually
-        std::map<unsigned, double> _globalWidomProfile;
-        std::map<unsigned, long double> _localWidomProfileTloc;  // submit individually
-        std::map<unsigned, double> _globalWidomProfileTloc;
-        std::map<unsigned, long double> _localWidomInstances;  // submit individually
-        std::map<unsigned, double> _globalWidomInstances;
-        std::map<unsigned, long double> _localWidomInstancesTloc;  // submit individually
-        std::map<unsigned, double> _globalWidomInstancesTloc;
         double _universalLambda;  // set from outside
         float _globalDecisiveDensity;  // set from outside
-
-	//! writing out a density profile in cylindrical coordinates
-	bool _universalCylindricalGeometry=false;
-	//! centre of the cylindrical coordinate system
-	double _universalCentre[3];
-	//! outermost radial distance up to which the binning is applied
-	double _universalR2max;
-	//! offset in y-direction => to be written out along with the density profile
-	double _yOff;
-	// end
-
-	//! by Stefan Becker => implementing a new velocity profile: 
-	//! local squared value of the velocity components
-	//!@TODO: kind of redundant to kinetic profile
-//	std::map<unsigned,double> _localV2Profile[3];
-	//! global squared value of the velocity components
-//	std::map<unsigned,double> _universalV2Profile[3];
-
-	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>  => concerning the realignment tool: realignment to the centre of mass
-	// begin 
-	// _globalRealignmentMass[0] corresponds to the xz-shift,  _globalRealignmentMass[1] to the y-shift
-	double _globalRealignmentMass[2];
-	double _globalRealignmentBalance[3];
-	double _universalRealignmentMotion[3];
-	// The component responsible for the shift in y-direction
-	std::map<unsigned,bool> _componentForYShift;
-	//end
 
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;
