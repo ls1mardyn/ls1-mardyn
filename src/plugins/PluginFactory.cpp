@@ -43,7 +43,6 @@
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
 #include "plugins/NEMD/RegionSampling.h"
-#include "plugins/RedundancyResilience.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
