@@ -18,17 +18,34 @@ MoleculeTest::~MoleculeTest() {
 }
 
 void MoleculeTest::testSerialize() {
-	Component dummyComponent(0);
-	Molecule a(0,                 //id
-			&dummyComponent,      //component id (address)???
-			1.0,1.0,1.0,          //r
-			0.0,0.0,0.0,          //v
-			0.0,0.0,0.0,0.0,      //q
-			0,0,0);               //L
-	
-	std::vector<char> buffer(a.serializedSize());
+    decltype(std::declval<Component>().ID()) const id = 0;
+    Component dummyComponent(0);
+	Molecule a(42,                //id
+			&dummyComponent,      //component id
+			1.0,2.0,3.0,          //r
+			4.0,5.0,6.0,          //v
+			7.0,8.0,9.0,10.0,     //q
+			11.0,12.0,13.0);      //L
+    std::vector<char> buffer(a.serializedSize());
 	auto lastElement = a.serialize(buffer.begin());
-	// ASSERT_TRUE(!(lastElement-buffer.end()));
+
+    //these unit test will all break if the type of the molecule interface data changes
+	ASSERT_TRUE(!(lastElement-buffer.end()));
+    ASSERT_TRUE(*reinterpret_cast<unsigned long*>(&buffer[0]) == 42);
+    ASSERT_TRUE(*reinterpret_cast<decltype(id)*>(&buffer[8]) == id+1);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[12]) == 1.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[20]) == 2.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[28]) == 3.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[36]) == 4.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[44]) == 5.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[52]) == 6.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[60]) == 7.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[68]) == 8.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[76]) == 9.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[84]) == 10.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[92]) == 11.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[100]) == 12.0);
+    ASSERT_TRUE(*reinterpret_cast<double*>(&buffer[108]) == 13.0);
 }
 
 void MoleculeTest::testIsLessThan() {
