@@ -517,7 +517,7 @@ std::vector<char>::iterator FullMolecule::deserialize(std::vector<char>::iterato
 	// molecule id
 	setid(*reinterpret_cast<decltype(_id)*>(&(*first))); first += sizeof(_id);
 	// component id
-	setComponent(&dcomponents[*reinterpret_cast<unsigned int*>(&(*first))]); first += sizeof(unsigned int);
+	setComponent(&dcomponents[*reinterpret_cast<unsigned int*>(&(*first))-1]); first += sizeof(unsigned int);
 	// position
 	setr(0, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
 	setr(1, *(reinterpret_cast< PositionType *>(&(*first)))); first += sizeof(PositionType);
