@@ -4,7 +4,7 @@ if (USE_VECTORIZATION)
     MESSAGE(STATUS "vectorization enabled")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_VECTORIZED_CODE=1")
     # list of available options
-    set(VECTOR_INSTRUCTIONS_OPTIONS "NATIVE;SSE;AVX;AVX2;KNL")
+    set(VECTOR_INSTRUCTIONS_OPTIONS "NONE;NATIVE;SSE;AVX;AVX2;KNL")
     # set instruction set type
     set(VECTOR_INSTRUCTIONS "NATIVE" CACHE STRING "Vector instruction set to use\
  (${VECTOR_INSTRUCTIONS_OPTIONS}).")
@@ -14,7 +14,9 @@ if (USE_VECTORIZATION)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp-simd")
 
-        if (VECTOR_INSTRUCTIONS MATCHES "^NATIVE$")
+        if (VECTOR_INSTRUCTIONS MATCHES "^NONE$")
+            # nothing to do here.
+        elseif (VECTOR_INSTRUCTIONS MATCHES "^NATIVE$")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
         elseif (VECTOR_INSTRUCTIONS MATCHES "^SSE$")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
@@ -31,7 +33,9 @@ if (USE_VECTORIZATION)
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp-simd")
 
-        if (VECTOR_INSTRUCTIONS MATCHES "^NATIVE$")
+        if (VECTOR_INSTRUCTIONS MATCHES "^NONE$")
+            # nothing to do here.
+        elseif (VECTOR_INSTRUCTIONS MATCHES "^NATIVE$")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
         elseif (VECTOR_INSTRUCTIONS MATCHES "^SSE$")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
