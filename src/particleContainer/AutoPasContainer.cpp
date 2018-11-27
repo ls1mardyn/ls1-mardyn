@@ -38,6 +38,7 @@ bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready,
 	} else {
 		_autopasContainer.addHaloParticle(particle);
 	}
+	return true;
 }
 
 bool AutoPasContainer::addHaloParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
