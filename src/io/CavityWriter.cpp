@@ -10,6 +10,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 #include "Simulation.h"
+#include "ensemble/CavityEnsemble.h"
 
 using Log::global_log;
 using namespace std;
@@ -25,6 +26,9 @@ CavityWriter::CavityWriter(unsigned long writeFrequency, string outputPrefix, bo
 	else {
 		_appendTimestamp = false;
 	}
+
+	this->_mcav = map<unsigned, CavityEnsemble>();
+
 }
 
 CavityWriter::~CavityWriter(){}
@@ -52,7 +56,62 @@ void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void CavityWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
-						Domain * /*domain*/) {}
+						Domain * domain) {
+	double Tcur = domain->getGlobalCurrentTemperature();
+
+	/* FIXME: target temperature from thermostat ID 0 or 1? */
+	double Ttar = domain->severalThermostats() ? domain->getTargetTemperature(1)
+												 : domain->getTargetTemperature(0);
+	if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
+		Tcur = Ttar;
+
+	map<unsigned, CavityEnsemble>::iterator ceit;
+	for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
+		ceit->second.submitTemperature(Tcur);
+	}
+}
+
+void CavityWriter::beforeEventNewTimestep(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
+) {
+	if (simstep >= global_simulation->getInitStatistics()) {
+		map<unsigned, CavityEnsemble>::iterator ceit;
+		for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
+			if (!((simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
+				ceit->second.preprocessStep();
+			}
+		}
+	}
+}
+
+void CavityWriter::afterForces(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
+) {
+	if(simstep >= global_simulation->getInitStatistics()) {
+		map<unsigned, CavityEnsemble>::iterator ceit;
+		for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
+
+			unsigned cavityComponentID = ceit->first;
+			CavityEnsemble & cavEns = ceit->second;
+
+			if (!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
+				global_log->debug() << "Cavity ensemble for component " << cavityComponentID << ".\n";
+
+				cavEns.cavityStep(particleContainer);
+			}
+
+			if( (!((simstep + 2 * cavityComponentID + 7) % cavEns.getInterval())) ||
+				(!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) ||
+				(!((simstep + 2 * cavityComponentID - 1) % cavEns.getInterval())) ) {
+
+				// warning, return value is ignored!
+				/*unsigned long ret = */ cavEns.communicateNumCavities(domainDecomp);
+			}
+		}
+	}
+}
 
 void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp,
                            Domain * /*domain*/, unsigned long simstep) {

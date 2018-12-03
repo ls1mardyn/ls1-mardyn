@@ -5,6 +5,8 @@
 
 #include "plugins/PluginBase.h"
 
+class CavityEnsemble;
+
 class CavityWriter : public PluginBase {
 public:
     CavityWriter(){}
@@ -16,6 +18,21 @@ public:
 
 	void init(ParticleContainer *particleContainer,
 			  DomainDecompBase *domainDecomp, Domain *domain);
+
+	/** @brief Method will be called first thing in a new timestep. */
+	void beforeEventNewTimestep(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) final {};
+
+	/** @brief Method afterForces will be called after forcefields have been applied
+     *  no sitewise Forces can be applied here
+     */
+	void afterForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) final {};
+
 	//! @todo comment
 	void endStep(
             ParticleContainer *particleContainer,
@@ -35,6 +52,7 @@ private:
 	unsigned long _writeFrequency;
 	bool _appendTimestamp;
 	bool _incremental;
+	std::map<unsigned, CavityEnsemble> _mcav;
 };
 
 #endif /* CAVITYWRITER_H_ */
