@@ -23,7 +23,7 @@ public:
 	void beforeEventNewTimestep(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			unsigned long simstep
-	) final {};
+	) final;
 
 	/** @brief Method afterForces will be called after forcefields have been applied
      *  no sitewise Forces can be applied here
@@ -31,7 +31,7 @@ public:
 	void afterForces(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			unsigned long simstep
-	) final {};
+	) final;
 
 	//! @todo comment
 	void endStep(
