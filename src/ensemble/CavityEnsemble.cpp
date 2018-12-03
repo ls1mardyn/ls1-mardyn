@@ -13,10 +13,11 @@ using Log::global_log;
 
 CavityEnsemble::CavityEnsemble()
 {
+   // TODO: via XML set System, Subdomain, maxNeighbors, Radius
    this->ownrank = -1;
    this->initialized = false;
    this->rotated = false;
-   this->interval = 1000;
+   this->interval = 100;
    this->componentid = (unsigned)-1;
    this->T = -1.0;
 
@@ -36,7 +37,7 @@ CavityEnsemble::CavityEnsemble()
    this->boundarySpecified = false;
    
    this->maxNeighbours = 1024;
-   this->r2n = 0.0;
+   this->r2n = 40.0;
    this->idoffset = 0;
 }
 

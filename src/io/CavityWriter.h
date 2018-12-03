@@ -11,7 +11,7 @@ class CavityWriter : public PluginBase {
 public:
     CavityWriter(){}
 	CavityWriter(unsigned long writeFrequency, std::string outputPrefix, bool incremental);
-	~CavityWriter();
+	~CavityWriter(){};
 	//! @todo comment
 	
 	void readXML(XMLfileUnits& xmlconfig);

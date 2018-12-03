@@ -15,23 +15,6 @@
 using Log::global_log;
 using namespace std;
 
-CavityWriter::CavityWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
-	_outputPrefix= outputPrefix;
-	_writeFrequency = writeFrequency;
-	_incremental = incremental;
-
-	if (outputPrefix == "default") {
-		_appendTimestamp = true;
-	}
-	else {
-		_appendTimestamp = false;
-	}
-
-	this->_mcav = map<unsigned, CavityEnsemble>();
-
-}
-
-CavityWriter::~CavityWriter(){}
 
 void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
@@ -53,10 +36,33 @@ void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 		_appendTimestamp = true;
 	}
 	global_log->info() << "[CavityWriter] Append timestamp: " << _appendTimestamp << endl;
+
+	// Get components to check
+    // get root
+    string oldpath = xmlconfig.getcurrentnodepath();
+
+    this->_mcav = map<unsigned, CavityEnsemble>();
+
+    // iterate over all components
+    XMLfile::Query query = xmlconfig.query("componentid");
+    for (auto pluginIter = query.begin(); pluginIter; ++pluginIter) {
+        xmlconfig.changecurrentnode(pluginIter);
+        int componentID = -1;
+        xmlconfig.getNodeValue(xmlconfig.getcurrentnodepath(), componentID);
+        global_log->info() << "[CavityWriter] Component: " << componentID << endl;
+        CavityEnsemble cav = CavityEnsemble();
+        _mcav[componentID] = cav;
+    }
+
+    // go back to root
+    xmlconfig.changecurrentnode(oldpath);
 }
 
-void CavityWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
+void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase * domainDecomp,
 						Domain * domain) {
+
+    // set initial values for CavityEnsemble
+
 	double Tcur = domain->getGlobalCurrentTemperature();
 
 	/* FIXME: target temperature from thermostat ID 0 or 1? */
@@ -67,8 +73,21 @@ void CavityWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompB
 
 	map<unsigned, CavityEnsemble>::iterator ceit;
 	for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
+
+        // setup
+        // TODO: Subdomain via XML params
+        ceit->second.setSystem(domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2));
+        ceit->second.setSubdomain(domainDecomp->getRank(), 0, domain->getGlobalLength(0), 0, domain->getGlobalLength(1), 0, domain->getGlobalLength(2));
+        // optional here: setControlVolume
 		ceit->second.submitTemperature(Tcur);
-	}
+		int cID = ceit->first;
+		Component* c = global_simulation->getEnsemble()->getComponent(cID);
+		global_log->info() << "[Cavity Writer] init: " << cID << endl;
+		// TODO: Nx, Ny, Nz via XML params
+        ceit->second.init(c, 80, 80, 80);
+        global_log->info() << "[Cavity Writer] init done: " << cID << endl;
+    }
+	//Simulation::exit(999);
 }
 
 void CavityWriter::beforeEventNewTimestep(
@@ -96,6 +115,8 @@ void CavityWriter::afterForces(
 			unsigned cavityComponentID = ceit->first;
 			CavityEnsemble & cavEns = ceit->second;
 
+			//TODO: cavEns calculate Interval / max Neighbors, via XML
+
 			if (!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
 				global_log->debug() << "Cavity ensemble for component " << cavityComponentID << ".\n";
 
@@ -116,49 +137,58 @@ void CavityWriter::afterForces(
 void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp,
                            Domain * /*domain*/, unsigned long simstep) {
 
-	map<unsigned, CavityEnsemble> * mcav = global_simulation->getMcav();
+	//map<unsigned, CavityEnsemble> * mcav = global_simulation->getMcav();
 
 	if( simstep % _writeFrequency == 0) {
-                map<unsigned, CavityEnsemble>::iterator ceit;
+        map<unsigned, CavityEnsemble>::iterator ceit;
            
-                map<unsigned, stringstream*> cav_filenamestream;
-                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
-                {
-                   cav_filenamestream[ceit->first] = new stringstream;
-                   *cav_filenamestream[ceit->first] << _outputPrefix << "-c" << ceit->first;
-                }
+        map<unsigned, stringstream*> cav_filenamestream;
+        for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
+        {
+            cav_filenamestream[ceit->first] = new stringstream;
+            *cav_filenamestream[ceit->first] << _outputPrefix << "-c" << ceit->first;
+        }
 
-		if(_incremental) {
+        if(_incremental) {
 			unsigned long numTimesteps = _simulation.getNumTimesteps();
 			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
-                        for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
-                           *cav_filenamestream[ceit->first] << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+			for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++){
+                *cav_filenamestream[ceit->first] << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+			}
 		}
-                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
-                   *cav_filenamestream[ceit->first] << ".cav.xyz";
-		
+
+		for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++){
+            *cav_filenamestream[ceit->first] << ".cav.xyz";
+            global_log->info() << "[CavityWriter] outputName: " << cav_filenamestream[ceit->first]->str() << endl;
+        }
+
 		int ownRank = domainDecomp->getRank();
 		if( ownRank == 0 ) {
-                        for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
-                        {
-                           ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str() );
-                           cavfilestream << ceit->second.numCavities() << endl;
-                           cavfilestream << "comment line" << endl;
-                           cavfilestream.close();
-                        }
+            for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
+            {
+                ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str() );
+                cavfilestream << ceit->second.numCavities() << endl;
+                cavfilestream << "comment line" << endl;
+                cavfilestream.close();
+            }
 		}
+
 		for( int process = 0; process < domainDecomp->getNumProcs(); process++ ){
 			domainDecomp->barrier();
 			if( ownRank == process ){
-                                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
+                                for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
                                 {
-                                   ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str(), ios::app );
+                                    global_log->info() << "[CavityWriter] output5" << endl;
+
+                                    ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str(), ios::app );
                                    
                                    map<unsigned long, Molecule*> tcav = ceit->second.activeParticleContainer();
                                    map<unsigned long, Molecule*>::iterator tcit;
                                    for(tcit = tcav.begin(); tcit != tcav.end(); tcit++)
                                    {
-                                      if( ceit->first == 0 ) { cavfilestream << "C ";}
+                                       global_log->info() << "[CavityWriter] output6" << endl;
+
+                                       if( ceit->first == 0 ) { cavfilestream << "C ";}
                                       else if( ceit->first == 1 ) { cavfilestream << "N ";}
                                       else if( ceit->first == 2 ) { cavfilestream << "O ";}
                                       else if( ceit->first == 3 ) { cavfilestream << "F ";}
