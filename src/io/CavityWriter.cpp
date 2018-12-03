@@ -36,23 +36,23 @@ CavityWriter::~CavityWriter(){}
 void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "[CavityWriter] Write frequency: " << _writeFrequency << endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "[CavityWriter] Output prefix: " << _outputPrefix << endl;
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
-	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	global_log->info() << "[CavityWriter] Incremental numbers: " << _incremental << endl;
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+	global_log->info() << "[CavityWriter] Append timestamp: " << _appendTimestamp << endl;
 }
 
 void CavityWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
