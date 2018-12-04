@@ -304,19 +304,19 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer * container, Molecule
 		lo[d] = std::max(0.0, m1->r(d) - R);
 		hi[d] = std::min(system[d], m1->r(d) + R);
 	}
-    global_log->info() << "[CavityWriter] post_lo_hi" << endl;
+    //global_log->info() << "[CavityWriter] post_lo_hi" << endl;
 
 	auto begin = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS);
-    global_log->info() << "[CavityWriter] post region iterator" << endl;
+    //global_log->info() << "[CavityWriter] post region iterator" << endl;
 
     for (auto m2 = begin; m2.isValid(); ++m2) {
 		if (m2->getID() == m1->getID()) {
-            global_log->info() << "[CavityWriter] same ID" << endl;
+            //global_log->info() << "[CavityWriter] same ID" << endl;
             continue;
 		}
         double distanceVectorDummy[3] = {0.0, 0.0, 0.0};
-		double dd = 0;//m2->dist2(*m1, distanceVectorDummy);
-        global_log->info() << "[CavityWriter] post distance" << endl;
+		double dd = m2->dist2(*m1, distanceVectorDummy);
+        //global_log->info() << "[CavityWriter] post distance" << endl;
         if (dd < RR) {
 			++m1neigh;
 		}
@@ -333,13 +333,13 @@ void CavityEnsemble::cavityStep(ParticleContainer * globalMoleculeContainer) {
 	for (map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
 		mardyn_assert(pcit->second != NULL);
 		Molecule* m1 = pcit->second;
-        global_log->info() << "[CavityWriter] pre-neighbors" << endl;
+        //global_log->info() << "[CavityWriter] pre-neighbors" << endl;
         unsigned neigh = this->countNeighbours(globalMoleculeContainer, m1);
-        global_log->info() << "[CavityWriter] post-neighbors" << endl;
+        //global_log->info() << "[CavityWriter] post-neighbors" << endl;
         unsigned long m1id = pcit->first;
 		mardyn_assert(m1id == m1->getID());
 		this->decideActivity(neigh, m1id);
-        global_log->info() << "[CavityWriter] post-activity" << endl;
+        //global_log->info() << "[CavityWriter] post-activity" << endl;
 
     }
 }
