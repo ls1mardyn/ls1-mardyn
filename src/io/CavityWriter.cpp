@@ -108,6 +108,7 @@ void CavityWriter::afterForces(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 		unsigned long simstep
 ) {
+
 	if(simstep >= global_simulation->getInitStatistics()) {
 		map<unsigned, CavityEnsemble>::iterator ceit;
 		for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
@@ -118,7 +119,7 @@ void CavityWriter::afterForces(
 			//TODO: cavEns calculate Interval / max Neighbors, via XML
 
 			if (!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
-				global_log->debug() << "Cavity ensemble for component " << cavityComponentID << ".\n";
+				global_log->info() << "Cavity ensemble for component " << cavityComponentID << ".\n";
 
 				cavEns.cavityStep(particleContainer);
 			}
@@ -126,6 +127,7 @@ void CavityWriter::afterForces(
 			if( (!((simstep + 2 * cavityComponentID + 7) % cavEns.getInterval())) ||
 				(!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) ||
 				(!((simstep + 2 * cavityComponentID - 1) % cavEns.getInterval())) ) {
+                global_log->info() << "Cavity communication for component " << cavityComponentID << ".\n";
 
 				// warning, return value is ignored!
 				/*unsigned long ret = */ cavEns.communicateNumCavities(domainDecomp);
