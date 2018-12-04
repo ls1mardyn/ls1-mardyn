@@ -13,11 +13,10 @@ using Log::global_log;
 
 CavityEnsemble::CavityEnsemble()
 {
-   // TODO: via XML set System, Subdomain, maxNeighbors, Radius
    this->ownrank = -1;
    this->initialized = false;
    this->rotated = false;
-   this->interval = 5;
+   //this->interval = 5;
    this->componentid = (unsigned)-1;
    this->T = -1.0;
 
@@ -35,14 +34,15 @@ CavityEnsemble::CavityEnsemble()
    this->globalActive = 0;
 
    this->boundarySpecified = false;
-   
-   this->maxNeighbours = 1;
-   this->r2n = 1.0f;
+
    this->idoffset = 0;
 }
 
-void CavityEnsemble::setSystem(double x, double y, double z)
+void CavityEnsemble::setSystem(double x, double y, double z, int maxNeighbors, float radius)
 {
+   this->maxNeighbours = maxNeighbors;
+   this->r2n = radius*radius;
+
    this->system[0] = x; this->system[1] = y; this->system[2] = z;
    if(!this->restrictedControlVolume)
    {

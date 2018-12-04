@@ -37,6 +37,34 @@ void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 	}
 	global_log->info() << "[CavityWriter] Append timestamp: " << _appendTimestamp << endl;
 
+
+	xmlconfig.getNodeValue("maxNeighbours", _maxNeighbors);
+	if(_maxNeighbors <= 0){
+	    global_log->error() << "[CavityWriter] Invalid number of maxNeighbors: " << _maxNeighbors << endl;
+	    Simulation::exit(999);
+	}
+
+    xmlconfig.getNodeValue("radius", _radius);
+    if(_radius <= 0.0f){
+        global_log->error() << "[CavityWriter] Invalid size of radius: " << _radius << endl;
+        Simulation::exit(999);
+    }
+	xmlconfig.getNodeValue("Nx", _Nx);
+	if(_Nx <= 0){
+		global_log->error() << "[CavityWriter] Invalid number of cells Nx: " << _Nx << endl;
+		Simulation::exit(999);
+	}
+	xmlconfig.getNodeValue("Ny", _Ny);
+	if(_Ny <= 0){
+		global_log->error() << "[CavityWriter] Invalid number of cells Ny: " << _Ny << endl;
+		Simulation::exit(999);
+	}
+	xmlconfig.getNodeValue("Nz", _Nz);
+	if(_Nz <= 0){
+		global_log->error() << "[CavityWriter] Invalid number of cells Nz: " << _Nz << endl;
+		Simulation::exit(999);
+	}
+
 	// Get components to check
     // get root
     string oldpath = xmlconfig.getcurrentnodepath();
@@ -75,8 +103,7 @@ void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase 
 	for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
 
         // setup
-        // TODO: Subdomain via XML params
-        ceit->second.setSystem(domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2));
+        ceit->second.setSystem(domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2), _maxNeighbors, _radius);
         int rank = domainDecomp->getRank();
         double min[3], max[3];
         domainDecomp->getBoundingBoxMinMax(domain, min, max);
@@ -87,7 +114,7 @@ void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase 
 		Component* c = global_simulation->getEnsemble()->getComponent(cID);
 		global_log->info() << "[Cavity Writer] init: " << cID << endl;
 		// TODO: Nx, Ny, Nz via XML params
-        ceit->second.init(c, 10, 10, 10);
+        ceit->second.init(c, _Nx, _Ny, _Nz);
         global_log->info() << "[Cavity Writer] init done: " << cID << endl;
     }
 	//Simulation::exit(999);
@@ -97,12 +124,13 @@ void CavityWriter::beforeEventNewTimestep(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 		unsigned long simstep
 ) {
-	if (simstep >= global_simulation->getInitStatistics()) {
+	if (simstep >= global_simulation->getInitStatistics() && simstep % _writeFrequency == 0) {
 		map<unsigned, CavityEnsemble>::iterator ceit;
 		for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
-			if (!((simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
-				ceit->second.preprocessStep();
-			}
+			//if (!((simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
+			//	ceit->second.preprocessStep();
+			//}
+            ceit->second.preprocessStep();
 		}
 	}
 }
@@ -112,7 +140,7 @@ void CavityWriter::afterForces(
 		unsigned long simstep
 ) {
 
-	if(simstep >= global_simulation->getInitStatistics()) {
+	if(simstep >= global_simulation->getInitStatistics() && simstep % _writeFrequency == 0) {
 		map<unsigned, CavityEnsemble>::iterator ceit;
 		for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
 
@@ -189,7 +217,7 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 			if( ownRank == process ){
                                 for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
                                 {
-                                    global_log->info() << "[CavityWriter] output5" << endl;
+                                    //global_log->info() << "[CavityWriter] output5" << endl;
 
                                     ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str(), ios::app );
                                    

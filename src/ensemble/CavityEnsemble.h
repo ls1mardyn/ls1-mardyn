@@ -18,9 +18,9 @@ class CavityEnsemble {
  public:
    CavityEnsemble();
 
-   unsigned getInterval() { return this->interval; }
-   void setInterval(unsigned delta) { this->interval = delta; }
-   void setSystem(double x, double y, double z);
+   //unsigned getInterval() { return this->interval; }
+   //void setInterval(unsigned delta) { this->interval = delta; }
+   void setSystem(double x, double y, double z, int maxNeighbors, float radius);
    double systemSize(int d) { return this->system[d]; }
    
    void setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1);
@@ -59,7 +59,7 @@ class CavityEnsemble {
    int ownrank;  // for debugging purposes (indicate rank in console output)
    bool initialized;
    bool rotated;
-   unsigned interval;  // how often?
+   //unsigned interval;  // how often?
 
    unsigned componentid;
    double T;

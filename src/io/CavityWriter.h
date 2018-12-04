@@ -52,6 +52,9 @@ private:
 	unsigned long _writeFrequency;
 	bool _appendTimestamp;
 	bool _incremental;
+	int _Nx = 0, _Ny = 0, _Nz = 0;
+    int _maxNeighbors = 0;
+    float _radius = 0.0f;
 	std::map<unsigned, CavityEnsemble> _mcav;
 };
 
