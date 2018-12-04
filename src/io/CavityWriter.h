@@ -47,6 +47,8 @@ public:
 		return std::string("CavityWriter");
 	}
 	static PluginBase* createInstance() { return new CavityWriter(); }
+
+	std::map<unsigned, CavityEnsemble> getMcav(){ return _mcav;}
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
