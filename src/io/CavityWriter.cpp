@@ -77,7 +77,10 @@ void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase 
         // setup
         // TODO: Subdomain via XML params
         ceit->second.setSystem(domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2));
-        ceit->second.setSubdomain(domainDecomp->getRank(), 0, domain->getGlobalLength(0), 0, domain->getGlobalLength(1), 0, domain->getGlobalLength(2));
+        int rank = domainDecomp->getRank();
+        double min[3], max[3];
+        domainDecomp->getBoundingBoxMinMax(domain, min, max);
+        ceit->second.setSubdomain(rank, min[0], max[0], min[1], max[1], min[2], max[2]);
         // optional here: setControlVolume
 		ceit->second.submitTemperature(Tcur);
 		int cID = ceit->first;
@@ -118,7 +121,8 @@ void CavityWriter::afterForces(
 
 			//TODO: cavEns calculate Interval / max Neighbors, via XML
 
-			if (!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
+			/*
+			        if (!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
 				global_log->info() << "Cavity ensemble for component " << cavityComponentID << ".\n";
 
 				cavEns.cavityStep(particleContainer);
@@ -130,9 +134,14 @@ void CavityWriter::afterForces(
                 global_log->info() << "Cavity communication for component " << cavityComponentID << ".\n";
 
 				// warning, return value is ignored!
-				/*unsigned long ret = */ cavEns.communicateNumCavities(domainDecomp);
+				cavEns.communicateNumCavities(domainDecomp);
 			}
-		}
+			*/
+
+            cavEns.cavityStep(particleContainer);
+            cavEns.communicateNumCavities(domainDecomp);
+
+        }
 	}
 }
 
