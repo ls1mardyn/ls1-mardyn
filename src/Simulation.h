@@ -445,9 +445,10 @@ public:
 		return &_lmu;
 	}
 
-	std::map<unsigned, CavityEnsemble>* getMcav()  {
-		return &_mcav;
-	}
+	// Not needed outside CavityWriter
+	//std::map<unsigned, CavityEnsemble>* getMcav()  {
+	//	return &_mcav;
+	//}
 
 	CellProcessor *getCellProcessor() const;
 
@@ -477,7 +478,8 @@ public:
 	 * gradient of the chemical potential.
 	 */
 	std::list<ChemicalPotential> _lmu;
-	std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
+	// Only needed inside CavityWriter
+	//std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
 
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).

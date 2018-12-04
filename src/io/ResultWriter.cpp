@@ -41,7 +41,8 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 
 void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain *domain,
                            unsigned long simstep) {
-	map<unsigned, CavityEnsemble> * mcav = global_simulation->getMcav();
+	// moved to CavityWriter
+	//map<unsigned, CavityEnsemble> * mcav = global_simulation->getMcav();
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
@@ -51,10 +52,10 @@ void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 			<< "\t\t" << domain->getGlobalPressure() << "\t" << _p_acc->getAverage()
 			<< "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
 			<< "\t\t" << domain->cv() << "\t\t" << domain->getglobalNumMolecules();
-		map<unsigned, CavityEnsemble>::iterator ceit;
+		/*map<unsigned, CavityEnsemble>::iterator ceit;
 		for(ceit = mcav->begin(); ceit != mcav->end(); ceit++) {
 			_resultStream << "\t" << ceit->second.numCavities();
-		}
+		}*/
 		_resultStream << "\n";
 	}
 }
