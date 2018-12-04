@@ -17,7 +17,7 @@ CavityEnsemble::CavityEnsemble()
    this->ownrank = -1;
    this->initialized = false;
    this->rotated = false;
-   this->interval = 1;
+   this->interval = 5;
    this->componentid = (unsigned)-1;
    this->T = -1.0;
 
@@ -36,8 +36,8 @@ CavityEnsemble::CavityEnsemble()
 
    this->boundarySpecified = false;
    
-   this->maxNeighbours = 1024;
-   this->r2n = 40.0;
+   this->maxNeighbours = 1;
+   this->r2n = 1.0f;
    this->idoffset = 0;
 }
 
@@ -263,7 +263,7 @@ void CavityEnsemble::preprocessStep()
 
 bool CavityEnsemble::decideActivity(unsigned neighbours, unsigned long tmid)
 {
-   bool isActive = (this->maxNeighbours >= neighbours);
+   bool isActive = (neighbours <= this->maxNeighbours);
    if(isActive) this->active.insert(tmid);
    else this->active.erase(tmid);
    return isActive;

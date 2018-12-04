@@ -84,7 +84,7 @@ void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase 
 		Component* c = global_simulation->getEnsemble()->getComponent(cID);
 		global_log->info() << "[Cavity Writer] init: " << cID << endl;
 		// TODO: Nx, Ny, Nz via XML params
-        ceit->second.init(c, 80, 80, 80);
+        ceit->second.init(c, 10, 10, 10);
         global_log->info() << "[Cavity Writer] init done: " << cID << endl;
     }
 	//Simulation::exit(999);
@@ -188,7 +188,7 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
                                    map<unsigned long, Molecule*>::iterator tcit;
                                    for(tcit = tcav.begin(); tcit != tcav.end(); tcit++)
                                    {
-                                       global_log->info() << "[CavityWriter] output6" << endl;
+                                       //global_log->info() << "[CavityWriter] output6" << endl;
 
                                        if( ceit->first == 0 ) { cavfilestream << "C ";}
                                       else if( ceit->first == 1 ) { cavfilestream << "N ";}
