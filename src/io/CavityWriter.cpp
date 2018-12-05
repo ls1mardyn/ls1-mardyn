@@ -93,7 +93,7 @@ void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
     // get root
     string oldpath = xmlconfig.getcurrentnodepath();
 
-    this->_mcav = map<unsigned, CavityEnsemble>();
+    this->_mcav = map<unsigned, CavityEnsemble*>();
 
     // iterate over all components
     XMLfile::Query query = xmlconfig.query("componentid");
@@ -102,7 +102,7 @@ void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
         int componentID = -1;
         xmlconfig.getNodeValue(xmlconfig.getcurrentnodepath(), componentID);
         global_log->info() << "[CavityWriter] Component: " << componentID << endl;
-        CavityEnsemble cav = CavityEnsemble();
+        CavityEnsemble* cav = new CavityEnsemble();
         _mcav[componentID] = cav;
     }
 
@@ -123,22 +123,21 @@ void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase 
 	if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 		Tcur = Ttar;
 
-	map<unsigned, CavityEnsemble>::iterator ceit;
+	map<unsigned, CavityEnsemble*>::iterator ceit;
 	for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
 
         // setup
-        ceit->second.setSystem(domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2), _maxNeighbors, _radius);
+        ceit->second->setSystem(domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2), _maxNeighbors, _radius);
         int rank = domainDecomp->getRank();
         double min[3], max[3];
         domainDecomp->getBoundingBoxMinMax(domain, min, max);
-        ceit->second.setSubdomain(rank, min[0], max[0], min[1], max[1], min[2], max[2]);
+        ceit->second->setSubdomain(rank, min[0], max[0], min[1], max[1], min[2], max[2]);
         // optional here: setControlVolume
-		ceit->second.submitTemperature(Tcur);
+		ceit->second->submitTemperature(Tcur);
 		int cID = ceit->first;
 		Component* c = global_simulation->getEnsemble()->getComponent(cID);
 		global_log->info() << "[Cavity Writer] init: " << cID << endl;
-		// TODO: Nx, Ny, Nz via XML params
-        ceit->second.init(c, _Nx, _Ny, _Nz);
+        ceit->second->init(c, _Nx, _Ny, _Nz);
         global_log->info() << "[Cavity Writer] init done: " << cID << endl;
     }
 	//Simulation::exit(999);
@@ -149,12 +148,9 @@ void CavityWriter::beforeEventNewTimestep(
 		unsigned long simstep
 ) {
 	if (simstep >= global_simulation->getInitStatistics() && simstep % _writeFrequency == 0) {
-		map<unsigned, CavityEnsemble>::iterator ceit;
+		map<unsigned, CavityEnsemble*>::iterator ceit;
 		for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
-			//if (!((simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
-			//	ceit->second.preprocessStep();
-			//}
-            ceit->second.preprocessStep();
+            ceit->second->preprocessStep();
 		}
 	}
 }
@@ -165,33 +161,11 @@ void CavityWriter::afterForces(
 ) {
 
 	if(simstep >= global_simulation->getInitStatistics() && simstep % _writeFrequency == 0) {
-		map<unsigned, CavityEnsemble>::iterator ceit;
+		map<unsigned, CavityEnsemble*>::iterator ceit;
 		for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
 
-			unsigned cavityComponentID = ceit->first;
-			CavityEnsemble & cavEns = ceit->second;
-
-			//TODO: cavEns calculate Interval / max Neighbors, via XML
-
-			/*
-			        if (!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
-				global_log->info() << "Cavity ensemble for component " << cavityComponentID << ".\n";
-
-				cavEns.cavityStep(particleContainer);
-			}
-
-			if( (!((simstep + 2 * cavityComponentID + 7) % cavEns.getInterval())) ||
-				(!((simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) ||
-				(!((simstep + 2 * cavityComponentID - 1) % cavEns.getInterval())) ) {
-                global_log->info() << "Cavity communication for component " << cavityComponentID << ".\n";
-
-				// warning, return value is ignored!
-				cavEns.communicateNumCavities(domainDecomp);
-			}
-			*/
-
-            cavEns.cavityStep(particleContainer);
-            cavEns.communicateNumCavities(domainDecomp);
+			ceit->second->cavityStep(particleContainer);
+			ceit->second->communicateNumCavities(domainDecomp);
 
         }
 	}
@@ -200,10 +174,8 @@ void CavityWriter::afterForces(
 void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp,
                            Domain * /*domain*/, unsigned long simstep) {
 
-	//map<unsigned, CavityEnsemble> * mcav = global_simulation->getMcav();
-
 	if( simstep % _writeFrequency == 0) {
-        map<unsigned, CavityEnsemble>::iterator ceit;
+        map<unsigned, CavityEnsemble*>::iterator ceit;
            
         map<unsigned, stringstream*> cav_filenamestream;
         for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
@@ -230,7 +202,7 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
             for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
             {
                 ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str() );
-                cavfilestream << ceit->second.numCavities() << endl;
+                cavfilestream << ceit->second->numCavities() << endl;
                 cavfilestream << "comment line" << endl;
                 cavfilestream.close();
             }
@@ -245,7 +217,7 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 
                                     ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str(), ios::app );
                                    
-                                   map<unsigned long, Molecule*> tcav = ceit->second.activeParticleContainer();
+                                   map<unsigned long, Molecule*> tcav = ceit->second->activeParticleContainer();
                                    map<unsigned long, Molecule*>::iterator tcit;
                                    for(tcit = tcav.begin(); tcit != tcav.end(); tcit++)
                                    {

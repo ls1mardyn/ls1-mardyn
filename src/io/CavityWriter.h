@@ -48,7 +48,7 @@ public:
 	}
 	static PluginBase* createInstance() { return new CavityWriter(); }
 
-	std::map<unsigned, CavityEnsemble> getMcav(){ return _mcav;}
+	std::map<unsigned, CavityEnsemble*> getMcav(){ return _mcav;}
 private:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
@@ -57,7 +57,7 @@ private:
 	int _Nx = 0, _Ny = 0, _Nz = 0;
     int _maxNeighbors = 0;
     float _radius = 0.0f;
-	std::map<unsigned, CavityEnsemble> _mcav;
+	std::map<unsigned, CavityEnsemble*> _mcav;
 };
 
 #endif /* CAVITYWRITER_H_ */
