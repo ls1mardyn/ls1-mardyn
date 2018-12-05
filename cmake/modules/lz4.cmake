@@ -15,21 +15,16 @@ if(ENABLE_LZ4)
             GIT_TAG dev
             SOURCE_DIR ${LZ4_SOURCE_DIR}
             BINARY_DIR ${LZ4_BINARY_DIR}
-            CONFIGURE_COMMAND cmake ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+            CONFIGURE_COMMAND cmake ${LZ4_SOURCE_DIR}/contrib/cmake_unofficial -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DBUILD_STATIC_LIBS=ON
             BUILD_COMMAND make
             INSTALL_COMMAND ""    
     )
-
-    # Get lz4 source and binary directories from CMake project
-    ExternalProject_Get_Property(lz4 source_dir binary_dir)
-
     # Create a liblz4 target to be used as a dependency by the program
-    add_library(liblz4 IMPORTED STATIC GLOBAL)
+    add_library(liblz4 IMPORTED STATIC)
     add_dependencies(liblz4 lz4)
 
-    include_directories(
-        ${LZ4_SOURCE_DIR}/lib
-    )
+    # set include directory associated with this target
+    include_directories(${LZ4_SOURCE_DIR}/lib)
     set(LZ4_LIB ${LZ4_BINARY_DIR}/liblz4.a)
 else()
     message(STATUS "Not using LZ4.")
