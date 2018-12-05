@@ -5,7 +5,7 @@ somewhere in the project. The syntax is simple and LZ4 is already included as on
 compression algorithm.\n
 To use the functionality, turn on the option `ENABLE_COMPRESSION` in the CMake options.
 New options to turn on individual encoding algorithms will be available.\n
-Set LZ4 is on by default when the wrapper was enabled.\n
+LZ4 is used by default when the wrapper was enabled.\n
 In the code, instantiate a `Compression` object, passing the requested compression algorithm as a std::string tag (see \ref tags below), which will offer the necessary functionality.
 Consider the following snippet:
 
@@ -21,7 +21,7 @@ Consider the following snippet:
 
     compression_instance.compress(data.begin(), data.end(), compressed); //run compression algorithm
 
-The encoded data now stored in `compressed`. The first size_t bytes contain the uncompressed size.\n
+The encoded data is now stored in `compressed`. The first size_t bytes contain the uncompressed size.\n
 Additional error checking can be done, see Compression class page.\n
 Decompression works similarly:
 
