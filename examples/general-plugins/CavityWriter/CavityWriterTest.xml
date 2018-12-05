@@ -1,4 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
+
+<!-- NOTE:
+In this setup, there is no actual cavitation.
+However, it is used to test the CavityWriter + Ensemble functionality.
+It detects the less dense space around the dense drop as a cavity.
+ -->
+
 <mardyn version="20100525" >
 	
 	<refunits type="SI">
