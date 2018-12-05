@@ -25,6 +25,16 @@ enum CompressionError {
 	COMP_ERR_DECOMPRESSION_FAILED = 300
 };
 
+/** @brief The Compression class provides easy to use compression methods.
+ *
+ * The idea of this class is to provide a "drop-in" possibility to (de-)compress a std::vector, without worrying
+ * about to much boiler plate code. The usage is simple, consider the following:
+ * 
+ * \code{.cpp}
+ *   Compression * createInstance() { return new MyPlugin(); }   // class name is MyPlugin
+ * \endcode
+ */
+
 class Compression {
 public:
 	/**
@@ -107,11 +117,11 @@ public:
 	 */
     int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 	/**
-	 * Decompresses a series of bytes.
+	 * Copies a series of bytes back.
      * Call this to decompress data.
 	 * @param[in] compressedStart Iterator pointing to the start of the array to be decompressed
 	 * @param[in] compressedEnd Iterator pointing to the element past the last element of the array to be decompressed
-	 * @param[in] decompressed A std::vector<char> holding the decompressed result. The vector will be appropriately resized.
+	 * @param[in] decompressed A std::vector<char> holding the copied result. The vector will be appropriately resized.
      *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
 	 *                         size.
      * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation.
@@ -122,7 +132,27 @@ public:
 #ifdef ENABLE_LZ4
 class Lz4Compression : public Compression {
 public:
+	/**
+	 * Copies a series of bytes.
+     * As the class name says, it just does a copy.
+	 * @param[in] compressedStart Iterator pointing to the start of the array to be copied.
+	 * @param[in] compressedEnd Iterator pointing to the element past the last element of the array to be compressed
+	 * @param[in] decompressed A std::vector<char> holding the compressed result. The vector will be appropriately resized.
+     *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
+	 *                         size.
+     * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation.
+	 */
     int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
+	/**
+	 * Decompresses a series of bytes.
+     * Call this to decompress data.
+	 * @param[in] compressedStart Iterator pointing to the start of the array to be decompressed
+	 * @param[in] compressedEnd Iterator pointing to the element past the last element of the array to be decompressed
+	 * @param[in] decompressed A std::vector<char> holding the decompressed result. The vector will be appropriately resized.
+     *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
+	 *                         size.
+     * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation.
+	 */
     int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
 #endif /* ENABLE_LZ4 */
