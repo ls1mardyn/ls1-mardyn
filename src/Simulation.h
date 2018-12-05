@@ -445,11 +445,6 @@ public:
 		return &_lmu;
 	}
 
-	// Not needed outside CavityWriter
-	//std::map<unsigned, CavityEnsemble>* getMcav()  {
-	//	return &_mcav;
-	//}
-
 	CellProcessor *getCellProcessor() const;
 
 	/** @brief Refresh particle IDs to continuous numbering*/
@@ -478,7 +473,8 @@ public:
 	 * gradient of the chemical potential.
 	 */
 	std::list<ChemicalPotential> _lmu;
-	// Only needed inside CavityWriter
+
+	// Moved inside CavityWriter
 	//std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
 
 	/** This is Planck's constant. (Required for the Metropolis
