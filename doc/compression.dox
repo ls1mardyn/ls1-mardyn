@@ -29,7 +29,6 @@ Decompression works similarly:
 
 Decompressed now contains exactly the same values as `data`.\n
 If things are going wrong, refer to the class page for more information.\n
-Note that the instance is created on the heap, and needs to be freed by the programmer (or use smart pointers or something).
 
 <table>
 <caption id="tags">Algorithm Tags</caption>

@@ -17,7 +17,6 @@
 #include "lz4.h"
 #endif
 
-
 enum CompressionError {
 	COMP_SUCCESS = 0,
 	COMP_ERR_COMPRESSION_FAILED = 200,
