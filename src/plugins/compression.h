@@ -34,6 +34,7 @@ public:
 	 * @param[in] uncompressedEnd Iterator pointing to the element past the last element of the array to be compressed
 	 * @param[in] compressed A std::vector<char> holding the compressed result. The vector will be appropriately resized.
      *                       Any previous contents will be destroyed.
+     * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation.
 	 */
     virtual int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) = 0;
 	/**
@@ -44,6 +45,7 @@ public:
 	 * @param[in] decompressed A std::vector<char> holding the decompressed result. The vector will be appropriately resized.
      *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
 	 *                         size.
+     * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation.
 	 */
     virtual int decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) = 0;
 	/**
@@ -101,6 +103,7 @@ public:
 	 * @param[in] decompressed A std::vector<char> holding the copied result. The vector will be appropriately resized.
      *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
 	 *                         size.
+     * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation.
 	 */
     int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 	/**
@@ -111,6 +114,7 @@ public:
 	 * @param[in] decompressed A std::vector<char> holding the decompressed result. The vector will be appropriately resized.
      *                         Any previous contents will be destroyed. The first sizeof(size_t) bytes hold the uncompressed
 	 *                         size.
+     * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation.
 	 */
     int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
