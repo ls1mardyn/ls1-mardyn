@@ -21,8 +21,12 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	mardyn_assert(_cutoff > 0.);
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
-	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, autopas::allContainerOptions,
-						   autopas::allTraversalOptions, _tuningFrequency);
+	std::vector<autopas::ContainerOptions> containerOptions = {/*autopas::ContainerOptions ::directSum,*/
+															   autopas::ContainerOptions ::linkedCells};
+	unsigned int numSamples = 5;
+	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, containerOptions,
+						   autopas::allTraversalOptions, autopas::SelectorStrategy::fastestMean,
+						   autopas::SelectorStrategy::fastestMean, _tuningFrequency, numSamples);
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
