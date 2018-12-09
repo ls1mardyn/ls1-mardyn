@@ -148,7 +148,7 @@ pipeline {
                                 srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
                               """
                             }
-                            junit allowEmptyResults: true, testResults: 'results.xml'
+                            xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
                             results[it.join('-')].put("unit-test", "success")
                           } catch (err) {
                             results[it.join('-')].put("unit-test", "failure")
