@@ -117,8 +117,9 @@ pipeline {
                                   "VTK=1"
                                 ) + " -j4"
                             sh "mv `readlink MarDyn` ${it.join('-')}"
-                            archiveArtifacts artifacts: "${it.join('-')}", onlyIfSuccessful: true
-                            stash includes: "${it.join('-')}", name: "${it.join('-')}"
+                            if (it.join('-') == "AVX2-DEBUG-0-PAR-DOUBLE-0") {
+                              stash includes: "AVX2-DEBUG-0-PAR-DOUBLE-0", name: "build"
+                            }
                             results[it.join('-')].put("build", "success")
                           }
                         } catch (err) {
@@ -285,8 +286,6 @@ pipeline {
               """
             }
 
-            archiveArtifacts artifacts: "src/libMardyn.so.1.0", onlyIfSuccessful: true
-
             // Build generators
             dir ('tools/gui') {
               sh """
@@ -312,10 +311,10 @@ pipeline {
             }
 
             // Mktcts generator
-            unarchive mapping: ['AVX2-DEBUG-0-PAR-DOUBLE-0': 'MarDyn']
+            unstash "build"
             sh """
-              chmod 770 MarDyn
-              mpirun -n 2 ./MarDyn examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
+              chmod 770 AVX2-DEBUG-0-PAR-DOUBLE-0
+              mpirun -n 2 ./AVX2-DEBUG-0-PAR-DOUBLE-0 examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
             """
           }
         }
