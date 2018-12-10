@@ -234,12 +234,12 @@ for comparePostfix in comparePostfixes:
     comparisonFilenames.append('val.comparison' + comparePostfix)
 
 if doReferenceRun:
-    call(['mkdir', 'reference/'])
+    call(['mkdir', '-p', 'reference/'])
     call(['cp', xmlBase, 'reference/'])
     call(['cp', inpBase, 'reference/'])
     call(['cp'] + additionalFileBases + ['reference/'])
     call(['cp', oldMarDynBase, 'reference/'])
-call(['mkdir', 'new/'])
+call(['mkdir', '-p', 'new/'])
 call(['cp', xmlBase, 'new/'])
 call(['cp', inpBase, 'new/'])
 call(['cp'] + additionalFileBases + ['new/'])
