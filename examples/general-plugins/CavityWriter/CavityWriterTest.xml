@@ -181,6 +181,14 @@ It detects the less dense space around the dense drop as a cavity.
 	    	<Nx>40</Nx>
 	    	<Ny>40</Ny>
 	    	<Nz>40</Nz>
+	    	<ControlVolume>
+	    	    <x0> 0.0 </x0>
+	    	    <x1> 80.0 </x1>
+	    	    <y0> 0.0 </y0>
+	    	    <y1> 80.0 </y1>
+	    	    <z0> 20.0 </z0>
+	    	    <z1> 60.0 </z1>
+	    	</ControlVolume>
 	    </plugin>
 
 	</simulation>
