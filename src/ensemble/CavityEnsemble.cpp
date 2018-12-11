@@ -145,13 +145,13 @@ void CavityEnsemble::init(Component* component, unsigned Nx, unsigned Ny, unsign
       minlu[d] = (int)round(nun[d] * this->minredco[d] - 0.0009756);
       maxlu[d] = (int)round(nun[d] * this->maxredco[d] - 0.0009756) - 1;
    }
-
+/*
    cout << "nun: " << nun[0] << " / " << nun[1] << " / " << nun[2] << "\n";
    cout << "minredco: " << minredco[0] << " / " << minredco[1] << " / " << minredco[2] << "\n";
    cout << "minlu: " << minlu[0] << " / " << minlu[1] << " / " << minlu[2] << "\n";
    cout << "maxredco: " << maxredco[0] << " / " << maxredco[1] << " / " << maxredco[2] << "\n";
    cout << "maxlu: " << maxlu[0] << " / " << maxlu[1] << " / " << maxlu[2] << "\n";
-
+*/
 
    double max_spacing = 0.0;
    double grid_spacing[3];
