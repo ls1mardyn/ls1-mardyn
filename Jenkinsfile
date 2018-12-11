@@ -127,34 +127,31 @@ pipeline {
                           error err
                         }
                       }
-                      // FIXME: Mixed precision unit-tests fail with rmm
-                      if ((PRECISION=="MIXED").implies(REDUCED_MEMORY_MODE=="0")) {
-                        stage("unit-test/${it.join('-')}") {
-                          try {
-                            printVariation(it)
-                            if (ARCH=="HSW" && PARTYPE=="PAR") {
-                              sh "mpirun -n 4 ./src/${it.join('-')} -t -d ./test_input/"
-                            } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
-                              sh "./src/${it.join('-')} -t -d ./test_input/"
-                            } else if (ARCH=="KNL" && PARTYPE=="PAR") {
-                              sh """
-                                source /etc/profile.d/modules.sh
-                                export OMP_NUM_THREADS=10
-                                srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
-                              """
-                            } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
-                              sh """
-                                source /etc/profile.d/modules.sh
-                                export OMP_NUM_THREADS=1
-                                srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
-                              """
-                            }
-                            xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
-                            results[it.join('-')].put("unit-test", "success")
-                          } catch (err) {
-                            results[it.join('-')].put("unit-test", "failure")
-                            error err
+                      stage("unit-test/${it.join('-')}") {
+                        try {
+                          printVariation(it)
+                          if (ARCH=="HSW" && PARTYPE=="PAR") {
+                            sh "mpirun -n 4 ./src/${it.join('-')} -t -d ./test_input/"
+                          } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
+                            sh "./src/${it.join('-')} -t -d ./test_input/"
+                          } else if (ARCH=="KNL" && PARTYPE=="PAR") {
+                            sh """
+                              source /etc/profile.d/modules.sh
+                              export OMP_NUM_THREADS=10
+                              srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
+                            """
+                          } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
+                            sh """
+                              source /etc/profile.d/modules.sh
+                              export OMP_NUM_THREADS=1
+                              srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
+                            """
                           }
+                          xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
+                          results[it.join('-')].put("unit-test", "success")
+                        } catch (err) {
+                          results[it.join('-')].put("unit-test", "failure")
+                          error err
                         }
                       }
                       if (PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
