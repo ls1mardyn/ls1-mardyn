@@ -139,19 +139,19 @@ void CavityEnsemble::init(Component* component, unsigned Nx, unsigned Ny, unsign
    nun[0] = Nx; nun[1] = Ny; nun[2] = Nz;
 
    // reduced lattice in each dimension given by epsilon + 0.5/N, epsilon + 1.5/N, ..., epsilon + (N-0.5)/N
-   unsigned minlu[3]; unsigned maxlu[3];
+   int minlu[3]; int maxlu[3];
    for(int d = 0; d < 3; d++)
    {
-      minlu[d] = (unsigned)round(nun[d] * this->minredco[d] - 0.0009756);
-      maxlu[d] = (unsigned)round(nun[d] * this->maxredco[d] - 0.0009756) - 1;
+      minlu[d] = (int)round(nun[d] * this->minredco[d] - 0.0009756);
+      maxlu[d] = (int)round(nun[d] * this->maxredco[d] - 0.0009756) - 1;
    }
-   /*
+
    cout << "nun: " << nun[0] << " / " << nun[1] << " / " << nun[2] << "\n";
    cout << "minredco: " << minredco[0] << " / " << minredco[1] << " / " << minredco[2] << "\n";
    cout << "minlu: " << minlu[0] << " / " << minlu[1] << " / " << minlu[2] << "\n";
    cout << "maxredco: " << maxredco[0] << " / " << maxredco[1] << " / " << maxredco[2] << "\n";
    cout << "maxlu: " << maxlu[0] << " / " << maxlu[1] << " / " << maxlu[2] << "\n";
-   */
+
 
    double max_spacing = 0.0;
    double grid_spacing[3];
@@ -161,8 +161,8 @@ void CavityEnsemble::init(Component* component, unsigned Nx, unsigned Ny, unsign
       if(grid_spacing[d] > max_spacing) max_spacing = grid_spacing[d];
    }
 
-   unsigned tid;
-   unsigned tlu[3];
+   int tid;
+   int tlu[3];
    double tq[3];
    Molecule* tm;
    for(tlu[0] = minlu[0]; maxlu[0] >= tlu[0]; tlu[0]++)

@@ -35,6 +35,14 @@ using namespace std;
 	    	<Nx>40</Nx>
 	    	<Ny>40</Ny>
 	    	<Nz>40</Nz>
+	    	<ControlVolume>
+	    	    <x0> LowerBound (1.0) </x0>
+	    	    <x1> UpperBound (2.0) </x1>
+	    	    <y0> LowerBound (1.0) </y0>
+	    	    <y1> UpperBound (2.0) </y1>
+	    	    <z0> LowerBound (1.0) </z0>
+	    	    <z1> UpperBound (2.0) </z1>
+	    	</ControlVolume>
 	    </plugin>
  *\endcode
  *
@@ -89,6 +97,31 @@ void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 		Simulation::exit(999);
 	}
 
+	// Default Control Volume is entire Domain
+	for(int d = 0; d < 3; d++) {
+		_controlVolume[d * 2] = 0;
+		_controlVolume[d * 2 + 1] = global_simulation->getDomain()->getGlobalLength(d);
+	}
+	xmlconfig.getNodeValue("ControlVolume/x0", _controlVolume[0]);
+	xmlconfig.getNodeValue("ControlVolume/x1", _controlVolume[1]);
+	xmlconfig.getNodeValue("ControlVolume/y0", _controlVolume[2]);
+	xmlconfig.getNodeValue("ControlVolume/y1", _controlVolume[3]);
+	xmlconfig.getNodeValue("ControlVolume/z0", _controlVolume[4]);
+	xmlconfig.getNodeValue("ControlVolume/z1", _controlVolume[5]);
+	for(int d = 0; d < 3; d++) {
+		if (_controlVolume[d * 2] > _controlVolume[d * 2 + 1]) {
+			global_log->error() << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound. "
+								<< endl;
+			Simulation::exit(999);
+		}
+		if (_controlVolume[d * 2] < 0 ||
+			_controlVolume[d * 2 + 1] > global_simulation->getDomain()->getGlobalLength(d)) {
+			global_log->error() << "[CavityWriter] Control volume bounds may not be outside of domain boundaries. "
+								<< endl;
+			Simulation::exit(999);
+		}
+	}
+
 	// Get components to check
     // get root
     string oldpath = xmlconfig.getcurrentnodepath();
@@ -131,9 +164,9 @@ void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase 
         int rank = domainDecomp->getRank();
         double min[3], max[3];
         domainDecomp->getBoundingBoxMinMax(domain, min, max);
+        ceit->second->setControlVolume(_controlVolume[0], _controlVolume[2], _controlVolume[4], _controlVolume[1], _controlVolume[3], _controlVolume[5]);
         ceit->second->setSubdomain(rank, min[0], max[0], min[1], max[1], min[2], max[2]);
-        // optional here: setControlVolume
-		ceit->second->submitTemperature(Tcur);
+        ceit->second->submitTemperature(Tcur);
 		int cID = ceit->first;
 		Component* c = global_simulation->getEnsemble()->getComponent(cID);
 		global_log->info() << "[Cavity Writer] init: " << cID << endl;

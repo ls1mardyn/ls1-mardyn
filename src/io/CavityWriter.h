@@ -58,6 +58,7 @@ private:
     int _maxNeighbors = 0;
     float _radius = 0.0f;
 	std::map<unsigned, CavityEnsemble*> _mcav;
+	double _controlVolume[6];
 };
 
 #endif /* CAVITYWRITER_H_ */
