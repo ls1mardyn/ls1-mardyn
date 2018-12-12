@@ -318,6 +318,19 @@ pipeline {
             """
           }
         }
+        stage('export-src') {
+          agent { label 'atsccs11' }
+          steps {
+            unstash 'repo'
+            sh './export-src.sh'
+            dir('unarchive') {
+              sh 'tar -xf ../Mardyn-src.tar.gz'
+              dir('src') {
+                sh 'make'
+              }
+            }
+          }
+        }
       }
     }
   }
