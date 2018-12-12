@@ -26,6 +26,7 @@ if(ENABLE_AUTOPAS)
             -DBUILD_EXAMPLES=OFF
             -DENABLE_ADDRESS_SANITIZER=${ENABLE_ADDRESS_SANITIZER}
             -DOPENMP=${OPENMP}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     )
 
     # Get autopas source and binary directories from CMake project
