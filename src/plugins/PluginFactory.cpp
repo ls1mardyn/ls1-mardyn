@@ -18,7 +18,6 @@
 #include "io/CheckpointWriter.h"
 #include "io/CommunicationPartnerWriter.h"
 #include "io/DecompWriter.h"
-#include "io/DensityProfileWriter.h"
 #include "io/EnergyLogWriter.h"
 #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
@@ -40,11 +39,11 @@
 #include "plugins/COMaligner.h"
 #include "plugins/ExamplePlugin.h"
 #include "plugins/InMemoryCheckpointing.h"
-#include "plugins/KartesianProfile.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
 #include "plugins/NEMD/RegionSampling.h"
+#include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
@@ -67,14 +66,13 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(CheckpointWriter);
     REGISTER_PLUGIN(CommunicationPartnerWriter);
     REGISTER_PLUGIN(DecompWriter);
-    REGISTER_PLUGIN(DensityProfileWriter);
     REGISTER_PLUGIN(EnergyLogWriter);
     REGISTER_PLUGIN(ExamplePlugin);
     REGISTER_PLUGIN(FlopRateWriter);
     REGISTER_PLUGIN(GammaWriter);
     REGISTER_PLUGIN(HaloParticleWriter);
     REGISTER_PLUGIN(InMemoryCheckpointing);
-    REGISTER_PLUGIN(KartesianProfile);
+    REGISTER_PLUGIN(SpatialProfile);
     REGISTER_PLUGIN(LoadbalanceWriter);
     REGISTER_PLUGIN(MPICheckpointWriter);
     REGISTER_PLUGIN(MaxCheck);

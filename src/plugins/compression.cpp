@@ -3,12 +3,12 @@
 std::unique_ptr<Compression> Compression::create(std::string encoding) {
 #ifdef ENABLE_LZ4
     if (encoding.compare("LZ4") == 0) {
-        return std::make_unique<Lz4Compression>();
+        return std::unique_ptr<Lz4Compression>(new Lz4Compression());
     }
     else
 #endif /* ENABLE_LZ4 */
     if (encoding.compare("None") == 0) {
-        return std::make_unique<NoCompression>();
+        return std::unique_ptr<NoCompression>(new NoCompression());
     }
     else {
         return std::unique_ptr<Compression>(nullptr);

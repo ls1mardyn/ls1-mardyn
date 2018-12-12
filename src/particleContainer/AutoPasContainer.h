@@ -13,8 +13,7 @@
 /**
  * A wrapper for the AutoPas library.
  */
-class AutoPasContainer
-		: public ParticleContainer {
+class AutoPasContainer : public ParticleContainer {
 public:
 	AutoPasContainer();
 
@@ -28,10 +27,10 @@ public:
 	void update() override;
 
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-	                 const bool &rebuildCaches = false) override;
+					 const bool &rebuildCaches = false) override;
 
-	bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-	                     const bool& rebuildCaches = false) override;
+	bool addHaloParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+						 const bool &rebuildCaches = false) override;
 
 	void addParticles(std::vector<Molecule> &particles, bool checkWhetherDuplicate = false) override;
 
@@ -44,7 +43,7 @@ public:
 	ParticleIterator iterator(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override;
 
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
-	                                      ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override;
+										  ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override;
 
 	unsigned long getNumberOfParticles() override;
 
@@ -68,8 +67,8 @@ public:
 
 	bool getMoleculeAtPosition(const double pos[3], Molecule **result) override;
 
-	unsigned long
-	initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) override;
+	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
+								std::array<double, 3> simBoxLength) override;
 
 	double *getCellLength() override;
 
@@ -80,7 +79,8 @@ public:
 
 	std::string getName() override { return "AutoPasContainer"; }
 
-	void setCutoff(double cutoff) override {_cutoff = cutoff;}
+	void setCutoff(double cutoff) override { _cutoff = cutoff; }
+
 private:
 	double _cutoff;
 	double _verletSkin;
@@ -89,4 +89,3 @@ private:
 	typedef autopas::FullParticleCell<Molecule> CellType;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 };
-
