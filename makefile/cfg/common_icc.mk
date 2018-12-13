@@ -3,7 +3,7 @@
 # In that case, an error may occur here!
 
 # C++11
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++11 -fp-model precise
 
 
 # Vectorization settings:
@@ -15,19 +15,20 @@ ifeq ($(VECTORIZE_CODE),AVX)
 CXXFLAGS_VECTORIZE = -mavx
 endif
 ifeq ($(VECTORIZE_CODE),AVX2)
-CXXFLAGS_VECTORIZE = -march=core-avx2 -fma # march=... should enable -fma automatically, but we will ensure it.
+CXXFLAGS_VECTORIZE = -march=core-avx2 -fma
+# march=... should enable -fma automatically, but we will ensure it.
 endif
 ifeq ($(VECTORIZE_CODE),KNL_MASK)
-CXXFLAGS_VECTORIZE = -xMIC-AVX512 -fp-model precise
+CXXFLAGS_VECTORIZE = -xMIC-AVX512
 endif
 ifeq ($(VECTORIZE_CODE),KNL_G_S)
-CXXFLAGS_VECTORIZE = -xMIC-AVX512 -D__VCP_GATHER__ -fp-model precise
+CXXFLAGS_VECTORIZE = -xMIC-AVX512 -D__VCP_GATHER__
 endif
 ifeq ($(VECTORIZE_CODE),SKX_MASK)
-CXXFLAGS_VECTORIZE = -xCore-AVX512 -fp-model precise
+CXXFLAGS_VECTORIZE = -xCore-AVX512
 endif
 ifeq ($(VECTORIZE_CODE),SKX_G_S)
-CXXFLAGS_VECTORIZE = -xCore-AVX512 -D__VCP_GATHER__ -fp-model precise
+CXXFLAGS_VECTORIZE = -xCore-AVX512 -D__VCP_GATHER__
 endif
 
 # OpenMP settings:
