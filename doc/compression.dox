@@ -21,14 +21,18 @@ Consider the following snippet:
 
     compression_instance.compress(data.begin(), data.end(), compressed); //run compression algorithm
 
-The encoded data is now stored in `compressed`. The first size_t bytes contain the uncompressed size.\n
-Additional error checking can be done, see Compression class page.\n
+The encoded data is now stored in `compressed`. The first size_t bytes (actually decltype(_uncompressedSize), see Compression class) contain the uncompressed size.\n
+If the instance creation fails, create() will throw a std::invalid_argument (strong guarantee). The string in the error message is the string the factory received to select an encoding, which should be one of the tags in \ref tags.
+If the compression fails, compress() will throw a std::exception (strong guarantee). The error code from the message can be looked up in the errors of the documentation matching the encoding, i.e. it will show the error code returned by the library function. E.g. for lz4, you would need to go the lz4 github page and read the appropriate docs.
+
 Decompression works similarly:
 
     compression_instance.decompress(compressed.begin(), compressed.end(), decompressed);
 
 Decompressed now contains exactly the same values as `data`.\n
-If things are going wrong, refer to the class page for more information.\n
+The decompression will throw on failure. The error code provided is again library specific.
+
+If you are having issues with any library, try using "None" as encoding tag. This will only do a copy, and therefore is less error prone.
 
 <table>
 <caption id="tags">Algorithm Tags</caption>
