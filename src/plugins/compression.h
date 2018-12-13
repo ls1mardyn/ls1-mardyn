@@ -24,18 +24,6 @@ enum CompressionError {
 	COMP_ERR_DECOMPRESSION_FAILED = 300
 };
 
-/** @brief Class to wrap Compression class specific exceptions
- *
- */
-
-class InvalidEncoding : public std::invalid_argument {
-public:
-    InvalidEncoding(std::string const encoding) : std::invalid_argument(encoding) {}
-    virtual char const* invalid_argument(const std::string& what_arg) const throw () {
-        return (std::string("The chosen encoding in invalid: ")+what_arg).c_str();
-    }
-};
-
 /** @brief The Compression class provides easy to use compression methods.
  *
  * The idea of this class is to provide a "drop-in" possibility to (de-)compress a std::vector<char>, without worrying

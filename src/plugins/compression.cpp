@@ -13,7 +13,8 @@ std::unique_ptr<Compression> Compression::create(std::string encoding) {
         return std::unique_ptr<NoCompression>(new NoCompression());
     }
     else {
-        throw InvalidEncoding(encoding);
+        std::string const errormsg("CompressionWrapper error! Invalid encoding: "+encoding);
+        throw std::invalid_argument(errormsg);
     }
 }
 
