@@ -1,5 +1,7 @@
 #include "compression.h"
 
+
+
 std::unique_ptr<Compression> Compression::create(std::string encoding) {
 #ifdef ENABLE_LZ4
     if (encoding.compare("LZ4") == 0) {
@@ -11,7 +13,7 @@ std::unique_ptr<Compression> Compression::create(std::string encoding) {
         return std::unique_ptr<NoCompression>(new NoCompression());
     }
     else {
-        return std::unique_ptr<Compression>(nullptr);
+        throw InvalidEncoding(encoding);
     }
 }
 

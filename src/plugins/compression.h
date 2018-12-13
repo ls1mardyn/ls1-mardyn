@@ -8,6 +8,7 @@
 #ifndef SRC_PLUGINS_COMPRESSION_H_
 #define SRC_PLUGINS_COMPRESSION_H_
 
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -21,6 +22,18 @@ enum CompressionError {
 	COMP_SUCCESS = 0,
 	COMP_ERR_COMPRESSION_FAILED = 200,
 	COMP_ERR_DECOMPRESSION_FAILED = 300
+};
+
+/** @brief Class to wrap Compression class specific exceptions
+ *
+ */
+
+class InvalidEncoding : public std::invalid_argument {
+public:
+    InvalidEncoding(std::string const encoding) : std::invalid_argument(encoding) {}
+    virtual char const* invalid_argument(const std::string& what_arg) const throw () {
+        return (std::string("The chosen encoding in invalid: ")+what_arg).c_str();
+    }
 };
 
 /** @brief The Compression class provides easy to use compression methods.
