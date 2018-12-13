@@ -149,12 +149,12 @@ pipeline {
                                 srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
                               """
                             }
-                            xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
                             results[it.join('-')].put("unit-test", "success")
                           } catch (err) {
                             results[it.join('-')].put("unit-test", "failure")
                             error err
                           }
+                          xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
                         }
                       }
                       if (PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
