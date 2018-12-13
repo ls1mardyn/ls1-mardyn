@@ -18,12 +18,6 @@
 #include "lz4.h"
 #endif
 
-enum CompressionError {
-	COMP_SUCCESS = 0,
-	COMP_ERR_COMPRESSION_FAILED = 200,
-	COMP_ERR_DECOMPRESSION_FAILED = 300
-};
-
 /** @brief The Compression class provides easy to use compression methods.
  *
  * The idea of this class is to provide a "drop-in" possibility to (de-)compress a std::vector<char>, without worrying

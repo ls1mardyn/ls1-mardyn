@@ -23,7 +23,6 @@ void Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncom
     // create a temp vector to store the compressed data
     std::vector<char> temp;
     temp.resize(uncompressedSize+sizeof(decltype(_compressedSize)));
-    // compressed.resize(uncompressedSize+sizeof(size_t));
     // compress the uncompressed source
     auto actualCompressedSize = LZ4_compress_default(
             &(*uncompressedStart),
@@ -46,7 +45,7 @@ void Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncom
             temp.data());
     // add these extra bytes for the meta data to the tracked size
     compressedSize += sizeof(decltype(_uncompressedSize));
-    compressed.resize(compressedSize);
+    temp.resize(compressedSize);
     // If vector allocators match (and they have to as method is not templated),
     // swap can't throw -> method has strong guarantee
     _uncompressedSize = uncompressedSize;
@@ -59,7 +58,7 @@ void Lz4Compression::decompress(ByteIterator compressedStart, ByteIterator compr
     decltype(_uncompressedSize) uncompressedSize;
     // get the decompressed size, may throw
     std::copy(&(*compressedStart),
-            &(*compressedStart)+sizeof(_uncompressedSize),
+            &(*compressedStart)+sizeof(decltype(_uncompressedSize)),
             reinterpret_cast<char*>(&uncompressedSize));
     // resize may throw
     std::vector<char> temp;
@@ -106,7 +105,7 @@ void NoCompression::decompress(ByteIterator compressedStart, ByteIterator compre
     auto compressedSize = compressedEnd-compressedStart;
     auto uncompressedSize = compressedSize;
     temp.resize(uncompressedSize);
-    auto curPosDecompressed = decompressed.begin();
+    auto curPosDecompressed = temp.begin();
     while (compressedStart != compressedEnd) {
         *curPosDecompressed = *compressedStart;
         ++curPosDecompressed;
