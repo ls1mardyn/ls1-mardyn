@@ -15,7 +15,8 @@ ifeq ($(VECTORIZE_CODE),AVX)
 CXXFLAGS_VECTORIZE = -mavx
 endif
 ifeq ($(VECTORIZE_CODE),AVX2)
-CXXFLAGS_VECTORIZE = -march=core-avx2 -fma# march=... should enable -fma automatically, but we will ensure it.
+CXXFLAGS_VECTORIZE = -march=core-avx2 -fma
+# march=... should enable -fma automatically, but we will ensure it.
 endif
 ifeq ($(VECTORIZE_CODE),KNL_MASK)
 CXXFLAGS_VECTORIZE = -xMIC-AVX512
