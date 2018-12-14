@@ -62,7 +62,7 @@ void compressionTest::testLz4() {
     //compression
     compInstance->compress(someData.begin(), someData.end(), compressedData);
     size_t correctUncompressedSize = datasize;
-    std::cout << compInstance->getCompressedSize() << std::endl;
+    std::cout << "acs:" << compInstance->getCompressedSize() << std::endl;
     // ASSERT_EQUAL(someData.size(), compInstance->getUncompressedSize());
     // ASSERT_EQUAL(correctUncompressedSize, compInstance->getUncompressedSize());
     // ASSERT_EQUAL(compressedData.size(), compInstance->getCompressedSize());
@@ -72,7 +72,7 @@ void compressionTest::testLz4() {
     // compInstance->decompress(compressedData.begin(), compressedData.end(), decompressedData);
     // ASSERT_EQUAL(correctUncompressedSize, decompressedData.size());
 
-    //assert symmetry
+    // assert symmetry
     // for (auto i=0; i<decompressedData.size(); ++i) {
     //     ASSERT_EQUAL(decompressedData[i], someData[i]);
     // }

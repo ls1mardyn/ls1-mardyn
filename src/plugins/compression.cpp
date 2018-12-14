@@ -22,15 +22,15 @@ void Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncom
     decltype(_compressedSize) compressedSize;
     // create a temp vector to store the compressed data
     std::vector<char> temp;
-    temp.resize(uncompressedSize+sizeof(decltype(_compressedSize)));
+    temp.resize(LZ4_compressBound(uncompressedSize));
     // compress the uncompressed source
     auto actualCompressedSize = LZ4_compress_default(
-            &(*uncompressedStart),
-            temp.data()+sizeof(decltype(_compressedSize)),
-            uncompressedSize,
-            uncompressedSize);
+            &(*uncompressedStart),                           //input data begin of type char*
+            temp.data()+sizeof(decltype(_compressedSize)),   //output data pointer of type char*
+            uncompressedSize,                                //input data size (decltype of _uncompressedSize, usually size_t), imp. cast to int
+            temp.size());                                    //output data pointer of decltype(temp.size()), most probably size_t, imp. cast to int 
     //following may throw (duh)
-    if (actualCompressedSize < 0) {
+    if (actualCompressedSize == 0) {
         std::string const errormsg(
             "CompressionWrapper error > LZ4_compress_default failed with error code: "
             +std::to_string(actualCompressedSize));
