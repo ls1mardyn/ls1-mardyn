@@ -8,6 +8,7 @@
 #ifndef SRC_PLUGINS_COMPRESSION_H_
 #define SRC_PLUGINS_COMPRESSION_H_
 
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -16,12 +17,6 @@
 #ifdef ENABLE_LZ4
 #include "lz4.h"
 #endif
-
-enum CompressionError {
-	COMP_SUCCESS = 0,
-	COMP_ERR_COMPRESSION_FAILED = 200,
-	COMP_ERR_DECOMPRESSION_FAILED = 300
-};
 
 /** @brief The Compression class provides easy to use compression methods.
  *
@@ -58,7 +53,7 @@ public:
      *                       Any previous contents will be destroyed.
      * @return Error codes. Returns 0 on success. Error codes are specific to the employed algorithm.
 	 */
-    virtual int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) = 0;
+    virtual void compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) = 0;
 	/**
 	 * Decompresses a series of bytes.
      * 
@@ -70,7 +65,7 @@ public:
 	 *                         size.
      * @return Error codes. Returns 0 on success. Error codes are specific to the employed algorithm.
 	 */
-    virtual int decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) = 0;
+    virtual void decompress(ByteIterator compressedStart, ByteIterator compressedEnd, std::vector<char>& decompressed) = 0;
 	/**
 	 * Returns the uncompressed size of the data.
      * 
@@ -80,7 +75,7 @@ public:
 	 *         input or output size, respectively.
 	 */
 	size_t getUncompressedSize(void) const {
-		return uncompressedSize;
+		return _uncompressedSize;
 	};
 	/**
 	 * Returns the compressed size of the data.
@@ -91,20 +86,8 @@ public:
 	 *         output or input size, respectively.
 	 */
 	size_t getCompressedSize(void) const {
-		return compressedSize;
+		return _compressedSize;
 	};
-	/**
-	 * Returns the error state of the instance.
-     * 
-     * Returns the last error encountered. Should be checked after every call to compress/decompress.
-	 * If this returns something else than CompressionError::COMP_SUCCESS, the return value of the actual compress/decompress 
-     * call may help identifying the issue.
-	 * @return Uncompressed size of data. Depending on if the instance was used for compression or decompression, this is the
-	 *         output or input size, respectively.
-	 */
-	CompressionError getError(void) const {
-		return error;
-	}
 	/**
 	 * Create an instance of the Compression class.
      * 
@@ -116,9 +99,8 @@ public:
 	 */
 	static std::unique_ptr<Compression> create(std::string encoding);
 protected:
-	size_t uncompressedSize = 0;
-	size_t compressedSize = 0;
-	CompressionError error;
+	size_t _uncompressedSize = 0;
+	size_t _compressedSize = 0;
 };
 
 class NoCompression : public Compression {
@@ -133,7 +115,7 @@ public:
 	 *                         size.
      * @return Error codes. Returns 0 on success. May provide additional information when getError() is not COMP_SUCCESS.
 	 */
-    int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
+    void compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 	/**
 	 * Copies a series of bytes back.
      * Call this to decompress data.
@@ -144,7 +126,7 @@ public:
 	 *                         size.
      * @return Error codes. Returns 0 on success. May provide additional information when getError() is not COMP_SUCCESS.
 	 */
-    int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
+    void decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
 
 #ifdef ENABLE_LZ4
@@ -161,7 +143,7 @@ public:
      * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation. May provide additional information
      *         when getError() is not COMP_SUCCESS.
 	 */
-    int compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
+    void compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 	/**
 	 * Decompresses a series of bytes.
      * Call this to decompress data.
@@ -173,7 +155,7 @@ public:
      * @return Error codes. Returns 0 on success. Error codes match the LZ4 documentation. May provide additional information
      *         when getError() is not COMP_SUCCESS.
 	 */
-    int decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
+    void decompress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) override;
 };
 #endif /* ENABLE_LZ4 */
 
