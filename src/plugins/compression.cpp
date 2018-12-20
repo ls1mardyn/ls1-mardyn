@@ -20,13 +20,13 @@ std::unique_ptr<Compression> Compression::create(std::string encoding) {
 void Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncompressedEnd, std::vector<char>& compressed) {
     decltype(_uncompressedSize) uncompressedSize = uncompressedEnd-uncompressedStart;
     decltype(_compressedSize) compressedSize;
-    // create a temp vector to store the compressed data
+    // create a temp vector to store the compressed data (may throw)
     std::vector<char> temp;
     temp.resize(LZ4_compressBound(uncompressedSize));
-    // compress the uncompressed source
+    // compress the uncompressed source (may throw)
     auto actualCompressedSize = LZ4_compress_default(
             &(*uncompressedStart),                           //input data begin of type char*
-            temp.data()+sizeof(decltype(_compressedSize)),   //output data pointer of type char*
+            temp.data()+sizeof(_compressedSize),             //output data pointer of type char*
             uncompressedSize,                                //input data size (decltype of _uncompressedSize, usually size_t), imp. cast to int
             temp.size());                                    //output data pointer of decltype(temp.size()), most probably size_t, imp. cast to int 
     //following may throw (duh)
@@ -39,12 +39,12 @@ void Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncom
     else {
         compressedSize = actualCompressedSize;
     }
-    // add the uncompressed size to the beginning of the result array as meta data(may throw)
+    // add the uncompressed size to the beginning of the result array as meta data (may throw)
     std::copy(reinterpret_cast<char*>(&uncompressedSize),
-            reinterpret_cast<char*>(&uncompressedSize)+sizeof(decltype(_uncompressedSize)),
+            reinterpret_cast<char*>(&uncompressedSize)+sizeof(_uncompressedSize),
             temp.data());
     // add these extra bytes for the meta data to the tracked size
-    compressedSize += sizeof(decltype(_uncompressedSize));
+    compressedSize += sizeof(_uncompressedSize);
     temp.resize(compressedSize);
     // If vector allocators match (and they have to as method is not templated),
     // swap can't throw -> method has strong guarantee
@@ -58,14 +58,14 @@ void Lz4Compression::decompress(ByteIterator compressedStart, ByteIterator compr
     decltype(_uncompressedSize) uncompressedSize;
     // get the decompressed size, may throw
     std::copy(&(*compressedStart),
-            &(*compressedStart)+sizeof(decltype(_uncompressedSize)),
+            &(*compressedStart)+sizeof(_uncompressedSize),
             reinterpret_cast<char*>(&uncompressedSize));
     // resize may throw
     std::vector<char> temp;
     temp.resize(uncompressedSize);
-    auto actualDecompressedSize = LZ4_decompress_safe(&(*compressedStart)+sizeof(decltype(_uncompressedSize)),
+    auto actualDecompressedSize = LZ4_decompress_safe(&(*compressedStart)+sizeof(_uncompressedSize),
             temp.data(),
-            compressedSize-sizeof(decltype(_uncompressedSize)),
+            compressedSize-sizeof(_uncompressedSize),
             uncompressedSize);
     // following may throw (duh)
     if (actualDecompressedSize != uncompressedSize) {
