@@ -16,7 +16,6 @@ CavityEnsemble::CavityEnsemble()
    this->ownrank = -1;
    this->initialized = false;
    this->rotated = false;
-   //this->interval = 5;
    this->componentid = (unsigned)-1;
    this->T = -1.0;
 

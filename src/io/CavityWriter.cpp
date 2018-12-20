@@ -173,7 +173,7 @@ void CavityWriter::init(ParticleContainer * particleContainer, DomainDecompBase 
         ceit->second->init(c, _Nx, _Ny, _Nz);
         global_log->info() << "[Cavity Writer] init done: " << cID << endl;
     }
-	//Simulation::exit(999);
+
 }
 
 void CavityWriter::beforeEventNewTimestep(
@@ -246,7 +246,6 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 			if( ownRank == process ){
                                 for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
                                 {
-                                    //global_log->info() << "[CavityWriter] output5" << endl;
 
                                     ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str(), ios::app );
                                    

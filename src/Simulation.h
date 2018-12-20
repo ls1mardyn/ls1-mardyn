@@ -474,9 +474,6 @@ public:
 	 */
 	std::list<ChemicalPotential> _lmu;
 
-	// Moved inside CavityWriter
-	//std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
-
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).
 	 * Of course, what is actually specified here is not the value
