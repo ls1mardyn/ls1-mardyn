@@ -852,7 +852,7 @@ void Simulation::prepare_start() {
 			true, 1.0);
 	global_log->debug() << "Calculating global values finished." << endl;
 
-	if (_lmu.size() + _mcav.size() > 0) {
+	if (_lmu.size() > 0) {
 		/* TODO: thermostat */
 		double Tcur = _domain->getGlobalCurrentTemperature();
 		/* FIXME: target temperature from thermostat ID 0 or 1? */
@@ -868,10 +868,6 @@ void Simulation::prepare_start() {
 		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(h);
-		}
-		map<unsigned, CavityEnsemble>::iterator ceit;
-		for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
-			ceit->second.submitTemperature(Tcur);
 		}
 	}
 
@@ -970,14 +966,7 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
-		if (_simstep >= _initStatistics) {
-		   map<unsigned, CavityEnsemble>::iterator ceit;
-		   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
-			  if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
-				 ceit->second.preprocessStep();
-			  }
-		   }
-		}
+
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
@@ -1090,29 +1079,6 @@ void Simulation::simulate() {
 				}
 
 				j++;
-			}
-		}
-
-		if(_simstep >= _initStatistics) {
-			map<unsigned, CavityEnsemble>::iterator ceit;
-			for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
-
-				unsigned cavityComponentID = ceit->first;
-				CavityEnsemble & cavEns = ceit->second;
-
-				if (!((_simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
-					global_log->debug() << "Cavity ensemble for component " << cavityComponentID << ".\n";
-
-					cavEns.cavityStep(this->_moleculeContainer);
-				}
-
-				if( (!((_simstep + 2 * cavityComponentID + 7) % cavEns.getInterval())) ||
-					(!((_simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) ||
-					(!((_simstep + 2 * cavityComponentID - 1) % cavEns.getInterval())) ) {
-
-					// warning, return value is ignored!
-					/*unsigned long ret = */ cavEns.communicateNumCavities(this->_domainDecomposition);
-				}
 			}
 		}
 
@@ -1397,8 +1363,6 @@ void Simulation::initialize() {
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Creating ParticlePairs2PotForceAdapter ..." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
-
-	this->_mcav = map<unsigned, CavityEnsemble>();
 
 	global_log->info() << "Initialization done" << endl;
 }

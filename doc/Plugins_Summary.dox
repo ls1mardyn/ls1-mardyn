@@ -7,7 +7,7 @@ Since the number of plugins is expected to grow quite rapidly, the following tab
 
 Plugin name  | Up to 5 Keywords | Short Description (one line)
 ------------- | ------------- | --
-CavityWriter | todo | todo
+CavityWriter | cavity, output, profile, grid | Sets up a grid of pseudo-molecules that check for neighbours in radius. Threshold determines if grid point counts as cavity or not. Output in .xyz format.
 CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up. See also MPICheckpointWriter and MPI_IOCheckpointWriter.
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
 CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.

@@ -109,23 +109,6 @@ void FlopRateWriter::endStep(ParticleContainer *particleContainer,
 		_flopCounter->printStats();
 	}
 
-
-#if 0
-	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
-		_resultStream << simstep << "\t" << _simulation.getSimulationTime()
-		              << "\t\t" << domain->getGlobalUpot() << "\t" << _U_pot_acc->getAverage()
-					  << "\t\t" << domain->getGlobalPressure() << "\t" << _p_acc->getAverage()
-		              << "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
-		              << "\t\t" << domain->cv() << "\t\t" << domain->getglobalNumMolecules();
-
-                map<unsigned, CavityEnsemble>::iterator ceit;
-                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
-                {
-                   _resultStream << "\t" << ceit->second.numCavities();
-                }
-                _resultStream << "\n";
-	}
-#endif
 }
 
 void FlopRateWriter::finish(ParticleContainer *particleContainer,
