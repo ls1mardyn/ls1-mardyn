@@ -15,39 +15,6 @@
 using Log::global_log;
 using namespace std;
 
-/** @brief reads in parameters for CavityEnsemble and output
- *<br>
- *	writefrequency: output timestep frequency AFTER initStatistics timesteps<br>
- *	componentid: can be multiple. Starts separate CavityEnsembles for each component.<br>
- *	radius: search radius around pseudo-molecules to look for neighbors with componentid=0/1...<br>
- *	maxNeighbours: number of neighbours allowed in radius for a pseudo-molecule to count as a cavity<br>
- *	Nx,Ny,Nz: grid numbers for grid of pseudo-molecules, sampling cavity properties at their grid position<br>
- *	<br>
- *	for non-overlapping coverage: radius*N_xyz = domainSize_xyz<br>
- *	<br>
- * \code{.xml}
- * <plugin name="CavityWriter" enabled="1">
-	    	<writefrequency>10</writefrequency>
-	    	<componentid>0</componentid>
-	    	<componentid>1</componentid>
-	    	<radius>2.0</radius>
-	    	<maxNeighbours>1</maxNeighbours>
-	    	<Nx>40</Nx>
-	    	<Ny>40</Ny>
-	    	<Nz>40</Nz>
-	    	<ControlVolume>
-	    	    <x0> LowerBound (1.0) </x0>
-	    	    <x1> UpperBound (2.0) </x1>
-	    	    <y0> LowerBound (1.0) </y0>
-	    	    <y1> UpperBound (2.0) </y1>
-	    	    <z0> LowerBound (1.0) </z0>
-	    	    <z1> UpperBound (2.0) </z1>
-	    	</ControlVolume>
-	    </plugin>
- *\endcode
- *
- * @param xmlconfig
- */
 void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
