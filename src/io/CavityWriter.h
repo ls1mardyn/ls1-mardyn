@@ -14,9 +14,10 @@ class CavityWriter : public PluginBase {
 public:
     /** @brief Initialisation of all necessary field is done in readXML and init.*/
     CavityWriter() = default;
-	~CavityWriter() final = default;
 
-	/** @brief reads in parameters for CavityEnsemble and output
+    ~CavityWriter() final = default;
+
+    /** @brief reads in parameters for CavityEnsemble and output
      *<br>
      *	writefrequency: output timestep frequency AFTER initStatistics timesteps<br>
      *	componentid: can be multiple. Starts separate CavityEnsembles for each component.<br>
@@ -49,83 +50,84 @@ public:
      *
      * @param xmlconfig
      */
-	void readXML(XMLfileUnits& xmlconfig) final;
+    void readXML(XMLfileUnits &xmlconfig) final;
 
-	/** @brief
-	 *
-	 * Set all necessary variables for each CavityEnsemble. One is used per Component.
-	 * Ensembles are assigned subDomains depending on the rank of the MPI process.
-	 * Also, if a smaller controlVolume is specified it gets passed here.
-	 *
-	 * @param particleContainer
-	 * @param domainDecomp
-	 * @param domain
-	 */
-	void init(ParticleContainer *particleContainer,
-			  DomainDecompBase *domainDecomp, Domain *domain) final;
+    /** @brief
+     *
+     * Set all necessary variables for each CavityEnsemble. One is used per Component.
+     * Ensembles are assigned subDomains depending on the rank of the MPI process.
+     * Also, if a smaller controlVolume is specified it gets passed here.
+     *
+     * @param particleContainer
+     * @param domainDecomp
+     * @param domain
+     */
+    void init(ParticleContainer *particleContainer,
+              DomainDecompBase *domainDecomp, Domain *domain) final;
 
-	/** @brief Method will be called first thing in a new timestep.
-	 * If the writeFrequency is reached and this is the first time, this will
-	 * set the required Quaternions for the pseudo-molecules.*/
-	void beforeEventNewTimestep(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			unsigned long simstep
-	) final;
+    /** @brief Method will be called first thing in a new timestep.
+     * If the writeFrequency is reached and this is the first time, this will
+     * set the required Quaternions for the pseudo-molecules.*/
+    void beforeEventNewTimestep(
+            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+            unsigned long simstep
+    ) final;
 
-	/** @brief Method afterForces will be called after forcefields have been applied
+    /** @brief Method afterForces will be called after forcefields have been applied
      *  no sitewise Forces can be applied here.
      *
      * If the writeFrequency is reached, this will trigger a loop through all pseudo-molecules
-	 * to determine their status as either cavity or non-cavity and start the communication.
+     * to determine their status as either cavity or non-cavity and start the communication.
      */
-	void afterForces(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			unsigned long simstep
-	) final;
+    void afterForces(
+            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+            unsigned long simstep
+    ) final;
 
-	/** @brief
-	 *
-	 * Output the sampled cavity information from all ensembles to file.
-	 *
-	 * @param particleContainer
-	 * @param domainDecomp
-	 * @param domain
-	 * @param simstep
-	 */
-	void endStep(
+    /** @brief
+     *
+     * Output the sampled cavity information from all ensembles to file.
+     *
+     * @param particleContainer
+     * @param domainDecomp
+     * @param domain
+     * @param simstep
+     */
+    void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
             unsigned long simstep
     ) final;
 
-	/** @brief
-	 *
-	 * Nothing done here. Necessary for inheritance from PluginBase.
-	 *
-	 * @param particleContainer
-	 * @param domainDecomp
-	 * @param domain
-	 */
-	void finish(ParticleContainer *particleContainer,
+    /** @brief
+     *
+     * Nothing done here. Necessary for inheritance from PluginBase.
+     *
+     * @param particleContainer
+     * @param domainDecomp
+     * @param domain
+     */
+    void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain);
-	
-	std::string getPluginName() final {
-		return std::string("CavityWriter");
-	}
-	static PluginBase* createInstance() { return new CavityWriter(); }
 
-	std::map<unsigned, CavityEnsemble*> getMcav(){ return _mcav;}
+    std::string getPluginName() final {
+        return std::string("CavityWriter");
+    }
+
+    static PluginBase *createInstance() { return new CavityWriter(); }
+
+    std::map<unsigned, CavityEnsemble *> getMcav() { return _mcav; }
 
 private:
-	std::string _outputPrefix;
-	unsigned long _writeFrequency;
-	bool _appendTimestamp;
-	bool _incremental;
-	int _Nx = 0, _Ny = 0, _Nz = 0;
+    std::string _outputPrefix;
+    unsigned long _writeFrequency;
+    bool _appendTimestamp;
+    bool _incremental;
+    int _Nx = 0, _Ny = 0, _Nz = 0;
     int _maxNeighbors = 0;
     float _radius = 0.0f;
-	std::map<unsigned, CavityEnsemble*> _mcav;
-	double _controlVolume[6];
+    std::map<unsigned, CavityEnsemble *> _mcav;
+    double _controlVolume[6];
 };
 
 #endif /* CAVITYWRITER_H_ */
