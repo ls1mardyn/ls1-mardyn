@@ -9,7 +9,7 @@
 #include "EnsembleBase.h"
 #include "ChemicalPotential.h"
 
-class GrandCanonicalEnsemble : private Ensemble{
+class GrandCanonicalEnsemble : public Ensemble{
 
 public:
     GrandCanonicalEnsemble()  :
