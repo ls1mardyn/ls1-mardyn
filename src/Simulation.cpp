@@ -56,7 +56,7 @@
 #include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
 
-#include "ensemble/ChemicalPotential.h"
+#include "ensemble/GrandCanonicalEnsemble.h"
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
 #include "ensemble/CavityEnsemble.h"
@@ -218,8 +218,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
+            _ensemble = new GrandCanonicalEnsemble();
 			Simulation::exit(1);
-			// _ensemble = new GrandCanonicalEnsemble();
 		} else {
 			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
 			Simulation::exit(1);
