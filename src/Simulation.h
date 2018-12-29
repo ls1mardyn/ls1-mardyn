@@ -441,10 +441,6 @@ public:
 	void initGlobalEnergyLog();
 	void writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure);
 
-	std::list<ChemicalPotential>* getLmu()  {
-		return _ensemble->getLmu();
-	}
-
 	CellProcessor *getCellProcessor() const;
 
 	/** @brief Refresh particle IDs to continuous numbering*/
