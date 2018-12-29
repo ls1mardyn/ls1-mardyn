@@ -17,7 +17,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
 #include "ensemble/PressureGradient.h"
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/ChemicalPotential.h"
 #include "io/CheckpointWriter.h"
 #include "Domain.h"
 

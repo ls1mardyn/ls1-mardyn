@@ -1,4 +1,4 @@
-#include "GrandCanonical.h"
+#include "ChemicalPotential.h"
 
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"

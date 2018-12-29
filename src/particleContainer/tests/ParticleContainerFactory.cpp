@@ -9,7 +9,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
 
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/ChemicalPotential.h"
 #include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"

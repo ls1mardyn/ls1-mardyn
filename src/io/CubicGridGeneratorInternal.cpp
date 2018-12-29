@@ -11,7 +11,7 @@
 #include "CubicGridGeneratorInternal.h"
 #include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/ChemicalPotential.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 

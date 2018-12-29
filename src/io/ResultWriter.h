@@ -4,7 +4,7 @@
 #include <fstream>
 #include <string>
 
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/ChemicalPotential.h"
 #include "plugins/PluginBase.h"
 #include "utils/Accumulator.h"
 

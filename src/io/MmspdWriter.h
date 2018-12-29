@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/ChemicalPotential.h"
 #include "plugins/PluginBase.h"
 
 class MmspdWriter : public PluginBase{

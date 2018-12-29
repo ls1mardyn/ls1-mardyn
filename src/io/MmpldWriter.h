@@ -5,7 +5,7 @@
 #include <vector>
 #include <array>
 
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/ChemicalPotential.h"
 #include "plugins/PluginBase.h"
 
 #ifdef ENABLE_MPI

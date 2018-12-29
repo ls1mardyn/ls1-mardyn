@@ -56,7 +56,7 @@
 #include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
 
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/ChemicalPotential.h"
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
 #include "ensemble/CavityEnsemble.h"
