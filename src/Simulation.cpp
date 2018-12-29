@@ -229,7 +229,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		_ensemble->readXML(xmlconfig);
 		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
 		for (int d = 0; d < 3; d++) {
-			_domain->setGlobalLength(d, _ensemble->domain()->getGlobalLength(d));
+			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
 		}
 		_domain->setGlobalTemperature(_ensemble->T());
 

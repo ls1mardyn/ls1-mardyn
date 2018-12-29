@@ -2,9 +2,16 @@
 // Created by Kruegener on 12/29/2018.
 //
 
-#include "GrandCanonicalEnsemble.h"
 #include "Simulation.h"
+#include "GrandCanonicalEnsemble.h"
 #include "DomainBase.h"
+#include "ChemicalPotential.h"
+
+GrandCanonicalEnsemble::GrandCanonicalEnsemble() :
+        _N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
+    _type = "muVT";
+    _simulationDomain = global_simulation->getDomain();
+}
 
 void GrandCanonicalEnsemble::initConfigXML(ParticleContainer *moleculeContainer, double h) {
     int ownrank = 0;

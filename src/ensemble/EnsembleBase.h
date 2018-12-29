@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 
+#include "DomainBase.h"
 #include "Domain.h"
 
 class ParticleContainer;
@@ -24,7 +25,6 @@ enum GlobalVariable {
 };
 
 class XMLfileUnits;
-class DomainBase;
 
 //! @brief Base class for ensembles
 //! @author Christoph Niethammer <niethammer@hlrs.de>
