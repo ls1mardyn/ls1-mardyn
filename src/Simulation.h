@@ -442,7 +442,7 @@ public:
 	void writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure);
 
 	std::list<ChemicalPotential>* getLmu()  {
-		return &_lmu;
+		return _ensemble->getLmu();
 	}
 
 	CellProcessor *getCellProcessor() const;
@@ -459,20 +459,6 @@ public:
 	std::list<PluginBase*> _plugins;
 
 	VelocityScalingThermostat _velocityScalingThermostat;
-
-	/** List of ChemicalPotential objects, each of which describes a
-	 * particular control volume for the grand canonical ensemble with
-	 * respect to one of the simulated components.
-	 *
-	 * It may at first be unclear why one could want to specify
-	 * several grand canonical ensembles, which are then stored in a
-	 * list. However, note that for every component a distinct
-	 * chemical potential can be specified, and this is of course
-	 * essential in certain cases. Also, different chemical potentials
-	 * can be specified for different control volumes to induce a
-	 * gradient of the chemical potential.
-	 */
-	std::list<ChemicalPotential> _lmu;
 
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).

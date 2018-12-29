@@ -48,6 +48,9 @@ public:
     // TODO: Implement
     void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override {};
 
+    // Returns _lmu pointer for processing by external plugins
+    std::list<ChemicalPotential>* getLmu() override {return &_lmu;}
+
 private:
 
     /** List of ChemicalPotential objects, each of which describes a

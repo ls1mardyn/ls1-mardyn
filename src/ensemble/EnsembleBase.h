@@ -11,7 +11,7 @@
 
 class ParticleContainer;
 class MixingRuleBase;
-
+class ChemicalPotential;
 
 //! list of updatable values
 enum GlobalVariable {
@@ -69,6 +69,8 @@ public:
 	void setComponentLookUpIDs();
 
 	std::string getType(){return _type;}
+
+    virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
 
 protected:
 	std::vector<Component> _components;

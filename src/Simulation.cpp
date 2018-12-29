@@ -643,7 +643,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	timers()->registerTimer("PHASESPACE_CREATION",  vector<string>{"SIMULATION_IO"}, new Timer());
 	timers()->setOutputString("PHASESPACE_CREATION", "Phasespace creation took:");
 	timers()->getTimer("PHASESPACE_CREATION")->start();
-	unsigned long maxID = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
+
+	unsigned long maxID = _inputReader->readPhaseSpace(_moleculeContainer, _ensemble->getLmu(), _domain, _domainDecomposition);
 	timers()->getTimer("PHASESPACE_CREATION")->stop();
 
 	_moleculeContainer->update();
