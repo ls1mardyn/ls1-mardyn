@@ -11,7 +11,39 @@
 
 class GrandCanonicalEnsemble : public Ensemble{
 
-    GrandCanonicalEnsemble() {}
+public:
+    GrandCanonicalEnsemble()  :
+            _N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
+    }
+
+    virtual ~GrandCanonicalEnsemble() override {
+    }
+
+    // TODO: Implement STUB
+    void readXML(XMLfileUnits& xmlconfig) override {};
+
+    unsigned long N() override {
+        return _N;
+    }
+    double V() override {
+        return _V;
+    }
+    double T() override {
+        return _T;
+    }
+
+    double mu() override {
+        return _mu;
+    }
+    double p() override {
+        return _p;
+    }
+    double E() override {
+        return _E;
+    }
+
+    // TODO: Implement
+    void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override {};
 
 private:
 
@@ -28,6 +60,17 @@ private:
 	 * gradient of the chemical potential.
 	 */
     std::list<ChemicalPotential> _lmu;
+
+    unsigned long _N;
+    double _V;
+    double _T;
+
+    double _mu;
+    double _p;
+    double _E;
+
+    double _E_trans;
+    double _E_rot;
 };
 
 

@@ -218,8 +218,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
-            _ensemble = new GrandCanonicalEnsemble();
-			Simulation::exit(1);
+            /* TODO: This line is here for debugging purposes, the Simulation is should still be terminated,
+             as readXML is not implemented */
+			_ensemble = new GrandCanonicalEnsemble();
+			//Simulation::exit(1);
 		} else {
 			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
 			Simulation::exit(1);
