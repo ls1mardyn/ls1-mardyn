@@ -56,7 +56,7 @@ public:
 	//! @param variable Variable to be updated.
 	virtual void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) = 0;
 
-	Domain *& domain() { return _domain; }
+	DomainBase* &domain() { return _domain; }
 	Component* getComponent(int cid) {
 		mardyn_assert(cid < static_cast<int>(_components.size()));
 		return &_components.at(cid);
@@ -79,7 +79,7 @@ protected:
 	std::vector<Component> _components;
 	std::map<std::string,int> _componentnamesToIds;
 	std::vector<MixingRuleBase*> _mixingrules;
-	Domain *_domain;
+	DomainBase* _domain;
 	std::string _type = "Undefined";
 };
 
