@@ -51,6 +51,8 @@ public:
     // Returns _lmu pointer for processing by external plugins
     std::list<ChemicalPotential>* getLmu() override {return &_lmu;}
 
+    void initConfigXML(ParticleContainer *moleculeContainer) override;
+
 private:
 
     /** List of ChemicalPotential objects, each of which describes a

@@ -664,35 +664,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
-	unsigned idi = _lmu.size();
-	unsigned j = 0;
-	std::list<ChemicalPotential>::iterator cpit;
-	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-		cpit->setIncrement(idi);
-		double tmp_molecularMass = global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->m();
-		cpit->setSystem(_domain->getGlobalLength(0),
-				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
-				tmp_molecularMass);
-		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
-		cpit->setNextID(j + (int) (1.001 * (256 + globalNumMolecules)));
 
-		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
-				_moleculeContainer->getBoundingBoxMax(0),
-				_moleculeContainer->getBoundingBoxMin(1),
-				_moleculeContainer->getBoundingBoxMax(1),
-				_moleculeContainer->getBoundingBoxMin(2),
-				_moleculeContainer->getBoundingBoxMax(2));
-		/* TODO: thermostat */
-		double Tcur = _domain->getCurrentTemperature(0);
-		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(0);
-		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
-			Tcur = Ttar;
-		cpit->submitTemperature(Tcur);
-		if (h != 0.0)
-			cpit->setPlanckConstant(h);
-		j++;
-	}
+	// TODO: ENSEMBLEBASE: initConfigXML
+    _ensemble->initConfigXML(_moleculeContainer);
 }
 
 void Simulation::updateForces() {

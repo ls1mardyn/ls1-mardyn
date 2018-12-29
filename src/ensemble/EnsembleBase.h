@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-#include "DomainBase.h"
+#include "Domain.h"
 
 class ParticleContainer;
 class MixingRuleBase;
@@ -56,7 +56,7 @@ public:
 	//! @param variable Variable to be updated.
 	virtual void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) = 0;
 
-	DomainBase* &domain() { return _domain; }
+	Domain *& domain() { return _domain; }
 	Component* getComponent(int cid) {
 		mardyn_assert(cid < static_cast<int>(_components.size()));
 		return &_components.at(cid);
@@ -70,13 +70,16 @@ public:
 
 	std::string getType(){return _type;}
 
+	// returns nullptrs for canonical ensemble or gets overridden by GrandCanonical
     virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
+
+    virtual void initConfigXML(ParticleContainer *moleculeContainer) {};
 
 protected:
 	std::vector<Component> _components;
 	std::map<std::string,int> _componentnamesToIds;
 	std::vector<MixingRuleBase*> _mixingrules;
-	DomainBase *_domain;
+	Domain *_domain;
 	std::string _type = "Undefined";
 };
 
