@@ -229,7 +229,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		_ensemble->readXML(xmlconfig);
 		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
 		for (int d = 0; d < 3; d++) {
-			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
+			_domain->setGlobalLength(d, _ensemble->domain()->getGlobalLength(d));
 		}
 		_domain->setGlobalTemperature(_ensemble->T());
 
@@ -660,13 +660,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
-	int ownrank = 0;
-#ifdef ENABLE_MPI
-	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-#endif
-
 	// TODO: ENSEMBLEBASE: initConfigXML
-    _ensemble->initConfigXML(_moleculeContainer);
+    _ensemble->initConfigXML(_moleculeContainer, h);
 }
 
 void Simulation::updateForces() {
@@ -829,24 +824,27 @@ void Simulation::prepare_start() {
 			true, 1.0);
 	global_log->debug() << "Calculating global values finished." << endl;
 
-	if (_lmu.size() > 0) {
-		/* TODO: thermostat */
-		double Tcur = _domain->getGlobalCurrentTemperature();
-		/* FIXME: target temperature from thermostat ID 0 or 1? */
-		double
-				Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
-								: _domain->getTargetTemperature(0);
-		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
-			Tcur = Ttar;
+	// TODO: ENSEMBLEBASE: prepare_start
 
-		list<ChemicalPotential>::iterator cpit;
-		if (h == 0.0)
-			h = sqrt(6.2831853 * Ttar);
-		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-			cpit->submitTemperature(Tcur);
-			cpit->setPlanckConstant(h);
-		}
-	}
+//	if (_lmu.size() > 0) {
+//		/* TODO: thermostat */
+//		double Tcur = _domain->getGlobalCurrentTemperature();
+//		/* FIXME: target temperature from thermostat ID 0 or 1? */
+//		double
+//				Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
+//								: _domain->getTargetTemperature(0);
+//		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
+//			Tcur = Ttar;
+//
+//		list<ChemicalPotential>::iterator cpit;
+//		if (h == 0.0)
+//			h = sqrt(6.2831853 * Ttar);
+//		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+//			cpit->submitTemperature(Tcur);
+//			cpit->setPlanckConstant(h);
+//		}
+//	}
+
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
@@ -933,7 +931,8 @@ void Simulation::simulate() {
 
 
 		/** @todo What is this good for? Where come the numbers from? Needs documentation */
-		if (_simstep >= _initGrandCanonical) {
+		// TODO: ENSEMBLEBASE simulate (initGrandCanonical usually too large to matter)
+		/*if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
@@ -942,7 +941,7 @@ void Simulation::simulate() {
 				}
 				j++;
 			}
-		}
+		}*/
 
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
@@ -1027,6 +1026,9 @@ void Simulation::simulate() {
 
 		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
+		// TODO: ENSEMBLEBASE: simulate2 (mind initGrandCanonical)
+
+		/*
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
 			list<ChemicalPotential>::iterator cpit;
@@ -1042,11 +1044,12 @@ void Simulation::simulate() {
 							_cellProcessor);
 					_domain->setLocalUpot(localUpotBackup);
 					_domain->setLocalVirial(localVirialBackup);
+					*/
 #ifndef NDEBUG
 					/* check if random numbers inserted are the same for all processes... */
-					cpit->assertSynchronization(_domainDecomposition);
+					// TODO: cpit->assertSynchronization(_domainDecomposition);
 #endif
-
+            /*
 					int localBalance = cpit->getLocalGrandcanonicalBalance();
 					int balance = cpit->grandcanonicalBalance(_domainDecomposition);
 					global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
@@ -1058,6 +1061,7 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
+		*/
 
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();

@@ -73,7 +73,7 @@ public:
 	// returns nullptrs for canonical ensemble or gets overridden by GrandCanonical
     virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
 
-    virtual void initConfigXML(ParticleContainer *moleculeContainer) {};
+    virtual void initConfigXML(ParticleContainer *moleculeContainer, double h) {};
 
 protected:
 	std::vector<Component> _components;
