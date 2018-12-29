@@ -1110,7 +1110,7 @@ void Simulation::simulate() {
 
 		/* radial distribution function */
 		if (_simstep >= _initStatistics) {
-			if (this->_lmu.size() == 0) {
+			if (this->_ensemble->getType() == "NVT") {
 				this->_domain->record_cv();
 			}
 		}

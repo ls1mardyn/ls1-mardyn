@@ -68,11 +68,14 @@ public:
 	//! prepare the _compIDs used by the Vectorized*CellProcessors
 	void setComponentLookUpIDs();
 
+	std::string getType(){return _type;}
+
 protected:
 	std::vector<Component> _components;
 	std::map<std::string,int> _componentnamesToIds;
 	std::vector<MixingRuleBase*> _mixingrules;
 	DomainBase *_domain;
+	std::string _type = "Undefined";
 };
 
 #endif /* ENSEMBLE_BASE_H_ */

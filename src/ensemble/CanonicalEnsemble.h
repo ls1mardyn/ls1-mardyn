@@ -26,6 +26,7 @@ public:
 
 	CanonicalEnsemble() :
 			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
+	    _type = "NVT";
 	}
 
 	virtual ~CanonicalEnsemble() {
