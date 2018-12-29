@@ -20,7 +20,9 @@ public:
     }
 
     // TODO: Implement STUB
-    void readXML(XMLfileUnits& xmlconfig) override {};
+    void readXML(XMLfileUnits& xmlconfig) override {
+        global_log->info() << "[GrandCanonicalEnsemble] readXML not implemented!" << std::endl;
+    };
 
     unsigned long N() override {
         return _N;
