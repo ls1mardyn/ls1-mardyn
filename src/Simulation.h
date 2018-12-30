@@ -287,6 +287,11 @@ public:
 		return &_timerProfiler;
 	}
 
+	//! get Planck constant
+	double getH() {return h;}
+	//! set Planck constant
+    void setH(double h_extern) {h = h_extern;}
+
 private:
 
 

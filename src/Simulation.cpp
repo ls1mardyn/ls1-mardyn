@@ -661,7 +661,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// TODO: ENSEMBLEBASE: initConfigXML
-    _ensemble->initConfigXML(_moleculeContainer, h);
+    _ensemble->initConfigXML(_moleculeContainer);
 }
 
 void Simulation::updateForces() {
@@ -825,25 +825,7 @@ void Simulation::prepare_start() {
 	global_log->debug() << "Calculating global values finished." << endl;
 
 	// TODO: ENSEMBLEBASE: prepare_start
-
-//	if (_lmu.size() > 0) {
-//		/* TODO: thermostat */
-//		double Tcur = _domain->getGlobalCurrentTemperature();
-//		/* FIXME: target temperature from thermostat ID 0 or 1? */
-//		double
-//				Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
-//								: _domain->getTargetTemperature(0);
-//		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
-//			Tcur = Ttar;
-//
-//		list<ChemicalPotential>::iterator cpit;
-//		if (h == 0.0)
-//			h = sqrt(6.2831853 * Ttar);
-//		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-//			cpit->submitTemperature(Tcur);
-//			cpit->setPlanckConstant(h);
-//		}
-//	}
+	_ensemble->prepare_start();
 
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );

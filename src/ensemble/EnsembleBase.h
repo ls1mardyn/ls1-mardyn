@@ -67,12 +67,16 @@ public:
 	//! prepare the _compIDs used by the Vectorized*CellProcessors
 	void setComponentLookUpIDs();
 
+	/*! get Ensemble Type (NVT or muVT) */
 	std::string getType(){return _type;}
 
-	// returns nullptrs for canonical ensemble or gets overridden by GrandCanonical
+	/*! returns nullptrs for canonical ensemble or gets overridden by GrandCanonical */
     virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
 
-    virtual void initConfigXML(ParticleContainer *moleculeContainer, double h) {};
+    /*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
+    virtual void initConfigXML(ParticleContainer *moleculeContainer) {};
+    /*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
+    virtual void prepare_start() {};
 
 protected:
 	std::vector<Component> _components;

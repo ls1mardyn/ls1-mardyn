@@ -1,5 +1,5 @@
 //
-// Created by Kruegener on 12/29/2018.
+// Created by Kruegener
 //
 
 #ifndef MARDYN_GRANDCANONICAL_H
@@ -9,6 +9,7 @@
 #include "EnsembleBase.h"
 
 class ChemicalPotential;
+class Domain;
 
 class GrandCanonicalEnsemble : public Ensemble{
 
@@ -46,10 +47,14 @@ public:
     // TODO: Implement
     void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override {};
 
-    // Returns _lmu pointer for processing by external plugins
+    /*! Returns _lmu pointer for processing by external plugins */
     std::list<ChemicalPotential>* getLmu() override {return &_lmu;}
 
-    void initConfigXML(ParticleContainer *moleculeContainer, double h) override;
+    /*! Runs steps formerly in initConfigXML in simulation.cpp */
+    void initConfigXML(ParticleContainer *moleculeContainer) override;
+
+    /*! Runs steps formerly in prepare_start in simulation.cpp */
+    void prepare_start() override;
 
 private:
 
