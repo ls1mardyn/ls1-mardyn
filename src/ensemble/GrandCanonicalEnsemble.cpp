@@ -3,7 +3,6 @@
 //
 
 #include "GrandCanonicalEnsemble.h"
-#include "Simulation.h"
 #include "DomainBase.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"

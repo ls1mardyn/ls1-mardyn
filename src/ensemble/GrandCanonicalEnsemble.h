@@ -7,6 +7,7 @@
 
 
 #include "EnsembleBase.h"
+#include "Simulation.h"
 
 class ChemicalPotential;
 class Domain;
@@ -47,10 +48,10 @@ public:
     }
 
     // TODO: Implement
-    void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override {};
-
-    /*! Returns _lmu pointer for processing by external plugins */
-    std::list<ChemicalPotential>* getLmu() override {return &_lmu;}
+    void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override {
+        global_log->info() << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
+        Simulation::exit(-1);
+    };
 
     /*! Runs steps formerly in initConfigXML in simulation.cpp */
     void initConfigXML(ParticleContainer *moleculeContainer) override;
@@ -68,20 +69,6 @@ public:
 
 private:
 
-    /** List of ChemicalPotential objects, each of which describes a
-	 * particular control volume for the grand canonical ensemble with
-	 * respect to one of the simulated components.
-	 *
-	 * It may at first be unclear why one could want to specify
-	 * several grand canonical ensembles, which are then stored in a
-	 * list. However, note that for every component a distinct
-	 * chemical potential can be specified, and this is of course
-	 * essential in certain cases. Also, different chemical potentials
-	 * can be specified for different control volumes to induce a
-	 * gradient of the chemical potential.
-	 */
-    std::list<ChemicalPotential> _lmu;
-
     unsigned long _N;
     double _V;
     double _T;
@@ -97,6 +84,10 @@ private:
     // Functionality of GrandCanonical not proven, probably lost during move to new input format
     unsigned long _initGrandCanonical = 10000000;
 
+    /* EnsembleBase has a DomainBase pointer _domain, however this is not compatible
+     * with the needed Domain* for the ChemicalPotential
+     * and for whatever reason, Domain does not inherit from DomainBase.
+    */
     Domain* _simulationDomain;
 };
 
