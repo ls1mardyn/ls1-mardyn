@@ -12,6 +12,7 @@
 class ParticleContainer;
 class MixingRuleBase;
 class ChemicalPotential;
+class DomainDecompBase;
 
 //! list of updatable values
 enum GlobalVariable {
@@ -77,6 +78,10 @@ public:
     virtual void initConfigXML(ParticleContainer *moleculeContainer) {};
     /*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
     virtual void prepare_start() {};
+    /*! runs simulate step needed inf GrandCanonical, nothing for canonical */
+    virtual void
+    beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
+                           unsigned long simstep) {};
 
 protected:
 	std::vector<Component> _components;

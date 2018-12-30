@@ -911,20 +911,8 @@ void Simulation::simulate() {
             plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
         }
 
-
-		/** @todo What is this good for? Where come the numbers from? Needs documentation */
-		// TODO: ENSEMBLEBASE simulate (initGrandCanonical usually too large to matter)
-		/*if (_simstep >= _initGrandCanonical) {
-			unsigned j = 0;
-			list<ChemicalPotential>::iterator cpit;
-			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					cpit->prepareTimestep(_moleculeContainer, _domainDecomposition);
-				}
-				j++;
-			}
-		}*/
-
+		// TODO: ENSEMBLEBASE beforeEventNewTimestep (initGrandCanonical usually too large to matter)
+        _ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 

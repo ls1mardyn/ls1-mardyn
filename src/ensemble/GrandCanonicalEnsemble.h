@@ -10,6 +10,7 @@
 
 class ChemicalPotential;
 class Domain;
+class DomainDecompBase;
 
 class GrandCanonicalEnsemble : public Ensemble{
 
@@ -56,6 +57,10 @@ public:
     /*! Runs steps formerly in prepare_start in simulation.cpp */
     void prepare_start() override;
 
+    /*! Runs steps formerly in simulate in simulation.cpp */
+    void beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
+                                unsigned long simstep) override;
+
 private:
 
     /** List of ChemicalPotential objects, each of which describes a
@@ -82,6 +87,10 @@ private:
 
     double _E_trans;
     double _E_rot;
+
+    // Taken from simulation.cpp defaults. usually too large to have ever been used
+    // Functionality of GrandCanonical not proven, probably lost during move to new input format
+    unsigned long _initGrandCanonical = 10000000;
 
     Domain* _simulationDomain;
 };

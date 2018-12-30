@@ -6,6 +6,7 @@
 #include "Simulation.h"
 #include "DomainBase.h"
 #include "Domain.h"
+#include "parallel/DomainDecompBase.h"
 #include "ChemicalPotential.h"
 
 GrandCanonicalEnsemble::GrandCanonicalEnsemble() :
@@ -70,4 +71,19 @@ void GrandCanonicalEnsemble::prepare_start() {
 			cpit->setPlanckConstant(global_simulation->getH());
 		}
 	}
+}
+
+void GrandCanonicalEnsemble::beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
+                                                    unsigned long simstep) {
+    /** @todo What is this good for? Where come the numbers from? Needs documentation */
+    if (simstep >= _initGrandCanonical) {
+			unsigned j = 0;
+			list<ChemicalPotential>::iterator cpit;
+			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+				if (!((simstep + 2 * j + 3) % cpit->getInterval())) {
+					cpit->prepareTimestep(moleculeContainer, domainDecomposition);
+				}
+				j++;
+			}
+    }
 }
