@@ -994,45 +994,10 @@ void Simulation::simulate() {
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
-		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
-		// test deletions and insertions
-		// TODO: ENSEMBLEBASE: simulate2 (mind initGrandCanonical)
+		// TODO: ENSEMBLEBASE: afterForces (mind initGrandCanonical)
+        _ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
 
-		/*
-		if (_simstep >= _initGrandCanonical) {
-			unsigned j = 0;
-			list<ChemicalPotential>::iterator cpit;
-			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
-							<< endl;
-					this->_domain->setLambda(cpit->getLambda());
-					this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
-					double localUpotBackup = _domain->getLocalUpot();
-					double localVirialBackup = _domain->getLocalVirial();
-					cpit->grandcanonicalStep(_moleculeContainer, _domain->getGlobalCurrentTemperature(), this->_domain,
-							_cellProcessor);
-					_domain->setLocalUpot(localUpotBackup);
-					_domain->setLocalVirial(localVirialBackup);
-					*/
-#ifndef NDEBUG
-					/* check if random numbers inserted are the same for all processes... */
-					// TODO: cpit->assertSynchronization(_domainDecomposition);
-#endif
-            /*
-					int localBalance = cpit->getLocalGrandcanonicalBalance();
-					int balance = cpit->grandcanonicalBalance(_domainDecomposition);
-					global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
-							<< ((localBalance > 0) ? "+" : "") << localBalance << ")" << " / c = "
-							<< cpit->getComponentID() << "]   " << endl;
-					_domain->Nadd(cpit->getComponentID(), balance, localBalance);
-				}
-
-				j++;
-			}
-		}
-		*/
-
+        // TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 

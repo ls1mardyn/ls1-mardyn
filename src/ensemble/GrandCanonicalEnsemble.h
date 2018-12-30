@@ -11,6 +11,7 @@
 class ChemicalPotential;
 class Domain;
 class DomainDecompBase;
+class CellProcessor;
 
 class GrandCanonicalEnsemble : public Ensemble{
 
@@ -60,6 +61,10 @@ public:
     /*! Runs steps formerly in simulate in simulation.cpp */
     void beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
                                 unsigned long simstep) override;
+
+    /*! Runs steps formerly in afterForces(simulate) in simulation.cpp */
+    void afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
+                         unsigned long simstep) override;
 
 private:
 

@@ -87,3 +87,41 @@ void GrandCanonicalEnsemble::beforeEventNewTimestep(ParticleContainer *moleculeC
 			}
     }
 }
+
+void GrandCanonicalEnsemble::afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
+                                         unsigned long simstep) {
+
+    if (simstep >= _initGrandCanonical) {
+        unsigned j = 0;
+        list<ChemicalPotential>::iterator cpit;
+        for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+            if (!((simstep + 2 * j + 3) % cpit->getInterval())) {
+                global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
+                        << endl;
+                this->_simulationDomain->setLambda(cpit->getLambda());
+                this->_simulationDomain->setDensityCoefficient(cpit->getDensityCoefficient());
+                double localUpotBackup = _simulationDomain->getLocalUpot();
+                double localVirialBackup = _simulationDomain->getLocalVirial();
+                cpit->grandcanonicalStep(moleculeContainer, _simulationDomain->getGlobalCurrentTemperature(), this->_simulationDomain,
+                        cellProcessor);
+                _simulationDomain->setLocalUpot(localUpotBackup);
+                _simulationDomain->setLocalVirial(localVirialBackup);
+
+#ifndef NDEBUG
+    /* check if random numbers inserted are the same for all processes... */
+    cpit->assertSynchronization(domainDecomposition);
+#endif
+
+                int localBalance = cpit->getLocalGrandcanonicalBalance();
+                int balance = cpit->grandcanonicalBalance(domainDecomposition);
+                global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
+                        << ((localBalance > 0) ? "+" : "") << localBalance << ")" << " / c = "
+                        << cpit->getComponentID() << "]   " << endl;
+                _simulationDomain->Nadd(cpit->getComponentID(), balance, localBalance);
+            }
+
+            j++;
+        }
+    }
+
+}
