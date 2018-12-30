@@ -8,7 +8,6 @@
 #include <map>
 
 #include "DomainBase.h"
-#include "Domain.h"
 
 class ParticleContainer;
 class MixingRuleBase;
