@@ -140,13 +140,13 @@ pipeline {
                               sh """
                                 source /etc/profile.d/modules.sh
                                 export OMP_NUM_THREADS=10
-                                srun -n 2 --time=00:10:00 ./src/${it.join('-')} -t -d ./test_input/
+                                srun -n 2 --time=00:30:00 ./src/${it.join('-')} -t -d ./test_input/
                               """
                             } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
                               sh """
                                 source /etc/profile.d/modules.sh
                                 export OMP_NUM_THREADS=1
-                                srun -n 1 --time=00:10:00 ./src/${it.join('-')} -t -d ./test_input/
+                                srun -n 1 --time=00:30:00 ./src/${it.join('-')} -t -d ./test_input/
                               """
                             }
                             results[it.join('-')].put("unit-test", "success")
