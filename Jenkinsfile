@@ -256,7 +256,8 @@ pipeline {
           stages {
             stage('build documentation') {
               steps {
-                sh "mkdir doxygen_doc || echo 'Folder exists already'"
+                unstash 'repo'
+                sh "mkdir doxygen_doc || echo 'doxygen_doc Folder exists already'"
                 sh "doxygen"
               }
             }
