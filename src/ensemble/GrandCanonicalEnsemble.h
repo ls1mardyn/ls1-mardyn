@@ -14,17 +14,33 @@ class Domain;
 class DomainDecompBase;
 class CellProcessor;
 
+/** @brief GrandCanonicalEnsemble was moved here from Simulation.cpp and partially adapted to Ensemble base class<br>
+ * <br>
+ * The GrandCanonicalEnsemble probably used to be a functional muVT ensemble class, that was somewhat dropped with
+ * the move to XML inputs. The routines were all over simulation.cpp but never ran.<br>
+ * This is a STUB implementation, mainly lacking readXML and updateGlobalVariable.<br>
+ * <br>
+ * Work done till now:<br>
+ *      - GrandCanonical inherits from Ensemble base class like the NVT Ensemble<br>
+ *      - Ensemble Base was extended with additional calls at the appropriate points in the simulation loop<br>
+ *      - Simulation.h/.cpp is rid of _lmu list and only uses general _ensemble calls<br>
+ * <br>
+ * To Do:<br>
+ *      - Make GrandCanonical functional again<br>
+ *      - Adapt oldInput style to XML<br>
+ *      - Test against a known simulation result<br>
+ */
 class GrandCanonicalEnsemble : public Ensemble{
 
 public:
     GrandCanonicalEnsemble();
 
-    virtual ~GrandCanonicalEnsemble() override {
-    }
+    ~GrandCanonicalEnsemble() override = default;
 
     // TODO: Implement STUB
     void readXML(XMLfileUnits& xmlconfig) override {
         global_log->info() << "[GrandCanonicalEnsemble] readXML not implemented!" << std::endl;
+        Simulation::exit(-1);
     };
 
     unsigned long N() override {
