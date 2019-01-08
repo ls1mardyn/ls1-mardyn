@@ -140,12 +140,14 @@ pipeline {
                               sh """
                                 source /etc/profile.d/modules.sh
                                 export OMP_NUM_THREADS=10
+                                export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
                               """
                             } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
                               sh """
                                 source /etc/profile.d/modules.sh
                                 export OMP_NUM_THREADS=1
+                                export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
                               """
                             }
@@ -256,7 +258,8 @@ pipeline {
           stages {
             stage('build documentation') {
               steps {
-                sh "mkdir doxygen_doc || echo 'Folder exists already'"
+                unstash 'repo'
+                sh "mkdir doxygen_doc || echo 'doxygen_doc Folder exists already'"
                 sh "doxygen"
               }
             }
