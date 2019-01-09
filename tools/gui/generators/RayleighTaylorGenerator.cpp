@@ -82,7 +82,7 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double /*time
 }
 
 unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
+		Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("REYLEIGH_TAYLOR_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (RayleighTaylorGenerator)." << endl;

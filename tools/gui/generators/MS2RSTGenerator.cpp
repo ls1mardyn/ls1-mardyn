@@ -139,7 +139,7 @@ void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 
 unsigned long MS2RSTGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
+		Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("MS2RST_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (MS2RSTGenerator)." << endl;

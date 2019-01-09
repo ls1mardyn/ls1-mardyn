@@ -143,7 +143,7 @@ public:
 	 *  Returns "the highest molecule ID found in the phase space file";
 	 *  // todo why? should it be some kind of upper bound for the number of molecules???
 	 */
-	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
+	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) = 0;
 
 	/**
 	 * Remove the system of momentum from particle container.
