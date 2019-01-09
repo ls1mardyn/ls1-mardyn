@@ -8,6 +8,7 @@
 #include <map>
 
 #include "DomainBase.h"
+#include "molecules/Molecule.h"
 
 class ParticleContainer;
 class MixingRuleBase;
@@ -91,6 +92,9 @@ public:
 
     /*! runs before temperature control is applied, but after force calculations */
     virtual void beforeThermostat(unsigned long simstep, unsigned long initStatistics){};
+
+    /*! Store Sample molecule from old input readers in lmu */
+    virtual void storeSample(Molecule* m, uint32_t componentid) {};
 
 protected:
 	std::vector<Component> _components;
