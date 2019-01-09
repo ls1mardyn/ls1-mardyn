@@ -254,6 +254,8 @@ BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 				if (m.getID() > maxid)
 					maxid = m.getID();
 
+				// TODO lmu:
+				/*
 				std::list<ChemicalPotential>::iterator cpit;
 				for (cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
 					if (!cpit->hasSample() && (componentid
@@ -261,6 +263,7 @@ BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 						cpit->storeMolecule(m);
 					}
 				}
+				 */
 			}
 			particle_buff_pos = 0;
 		}
@@ -276,12 +279,15 @@ BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 		if (id > maxid)
 		maxid = id;
 
+		// TODO lmu:
+		/*
 		std::list<ChemicalPotential>::iterator cpit;
 		for (cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
 			if (!cpit->hasSample() && (componentid == cpit->getComponentID())) {
 				cpit->storeMolecule(m1);
 			}
 		}
+		 */
 #endif
 
 		// Print status message
