@@ -9,7 +9,6 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
 
-#include "ensemble/ChemicalPotential.h"
 #include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
@@ -87,8 +86,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		return NULL;
 	}
 
-	std::list<ChemicalPotential> chemPot;
-	inputReader.readPhaseSpace(moleculeContainer, &chemPot, domain, domainDecomposition);
+	inputReader.readPhaseSpace(moleculeContainer, domain, domainDecomposition);
 	moleculeContainer->deleteOuterParticles();
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
