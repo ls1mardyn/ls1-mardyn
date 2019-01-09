@@ -83,7 +83,11 @@ public:
     void afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
                          unsigned long simstep) override;
 
+    /*! stores a molecule as a sample for a given component */
     void storeSample(Molecule* m, uint32_t componentid) override;
+
+    /*! Returns _lmu pointer for processing by external plugins */
+    virtual std::list<ChemicalPotential>* getLmu(){return &_lmu;}
 
 private:
 
@@ -101,6 +105,20 @@ private:
     // Taken from simulation.cpp defaults. usually too large to have ever been used
     // Functionality of GrandCanonical not proven, probably lost during move to new input format
     unsigned long _initGrandCanonical = 10000000;
+
+    /** List of ChemicalPotential objects needed for GrandCanonical only, each of which describes a
+     * particular control volume for the grand canonical ensemble with
+     * respect to one of the simulated components.
+     *
+     * It may at first be unclear why one could want to specify
+     * several grand canonical ensembles, which are then stored in a
+     * list. However, note that for every component a distinct
+     * chemical potential can be specified, and this is of course
+     * essential in certain cases. Also, different chemical potentials
+     * can be specified for different control volumes to induce a
+     * gradient of the chemical potential.
+     */
+    std::list<ChemicalPotential> _lmu;
 
 };
 
