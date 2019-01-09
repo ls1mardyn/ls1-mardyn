@@ -15,7 +15,7 @@ class Component;
 class DomainBase;
 /* Fix problem with Cray compiler which requires the actual size of the component class. */
 #include "molecules/Component.h" 
-
+#include "Simulation.h"
 
 class CanonicalEnsemble : public Ensemble {
 	
@@ -27,7 +27,8 @@ public:
 	CanonicalEnsemble() :
 			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
 	    _type = "NVT";
-	}
+        _simulationDomain = global_simulation->getDomain();
+    }
 
 	virtual ~CanonicalEnsemble() {
 	}
@@ -56,8 +57,8 @@ public:
 
 	void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override;
 
-
-
+    /*! runs before temperature control is applied, but after force calculations, triggers radial distribution call in Domain only for NVT */
+    void beforeThermostat(unsigned long simstep, unsigned long initStatistics) override;
 
 private:
 

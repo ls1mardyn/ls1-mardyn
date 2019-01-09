@@ -4,6 +4,7 @@
 
 #include "BoxDomain.h"
 #include "DomainBase.h"
+#include "Domain.h"
 #include "molecules/Component.h"
 #include "molecules/Molecule.h"
 #ifdef ENABLE_MPI
@@ -197,4 +198,10 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 	_V = _domain->V();
 	global_log->info() << "Volume: " << _V << endl;
 	global_log->warning() << "Box dimensions not set yet in domain class" << endl;
+}
+
+void CanonicalEnsemble::beforeThermostat(unsigned long simstep, unsigned long initStatistics){
+    if (simstep >= initStatistics) {
+            _simulationDomain->record_cv();
+    }
 }

@@ -1016,12 +1016,7 @@ void Simulation::simulate() {
 		_longRangeCorrection->calculateLongRange();
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 
-		/* radial distribution function */
-		if (_simstep >= _initStatistics) {
-			if (this->_ensemble->getType() == "NVT") {
-				this->_domain->record_cv();
-			}
-		}
+		_ensemble->beforeThermostat(_simstep, _initStatistics);
 
 		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);

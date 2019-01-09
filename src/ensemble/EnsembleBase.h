@@ -14,6 +14,7 @@ class MixingRuleBase;
 class ChemicalPotential;
 class DomainDecompBase;
 class CellProcessor;
+class Domain;
 
 //! list of updatable values
 enum GlobalVariable {
@@ -88,6 +89,9 @@ public:
     afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
                     unsigned long simstep) {};
 
+    /*! runs before temperature control is applied, but after force calculations */
+    virtual void beforeThermostat(unsigned long simstep, unsigned long initStatistics){};
+
 protected:
 	std::vector<Component> _components;
 	std::map<std::string,int> _componentnamesToIds;
@@ -110,6 +114,12 @@ protected:
      // This is needed in the EnsembleBase because several plugins dont check for ensemble type and try to iterate through this list
      // Would be nicer to only have it in GrandCanonical, but that would mean implementing ensemble type checks in those other classes.
     std::list<ChemicalPotential> _lmu;
+
+    /* EnsembleBase has a DomainBase pointer _domain, however this is not compatible
+     * with the needed Domain* for the ChemicalPotential/radial function
+     * and for whatever reason, Domain does not inherit from DomainBase.
+    */
+    Domain* _simulationDomain;
 };
 
 #endif /* ENSEMBLE_BASE_H_ */

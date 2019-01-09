@@ -100,11 +100,6 @@ private:
     // Functionality of GrandCanonical not proven, probably lost during move to new input format
     unsigned long _initGrandCanonical = 10000000;
 
-    /* EnsembleBase has a DomainBase pointer _domain, however this is not compatible
-     * with the needed Domain* for the ChemicalPotential
-     * and for whatever reason, Domain does not inherit from DomainBase.
-    */
-    Domain* _simulationDomain;
 };
 
 
