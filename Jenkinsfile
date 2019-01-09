@@ -312,13 +312,14 @@ pipeline {
                 make -f Makefile.rayleigh -j2
               """
             }
-
-            // Mktcts generator
-            unstash "build"
-            sh """
-              chmod 770 AVX2-DEBUG-0-PAR-DOUBLE-0
-              mpirun -n 2 ./AVX2-DEBUG-0-PAR-DOUBLE-0 examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
-            """
+            dir ('executablerun') {
+                // Mktcts generator
+                unstash "build"
+                sh """
+                  chmod 770 AVX2-DEBUG-0-PAR-DOUBLE-0
+                  mpirun -n 2 ./AVX2-DEBUG-0-PAR-DOUBLE-0 ../examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
+                """
+            }
           }
         }
         stage('export-src') {
