@@ -2,7 +2,6 @@
 #define SRC_IO_GAMMAWRITER_H_
 
 #include "plugins/PluginBase.h"
-#include "ensemble/ChemicalPotential.h"
 #include <string>
 #include <fstream>
 

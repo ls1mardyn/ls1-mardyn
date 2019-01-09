@@ -5,8 +5,8 @@
 #include <vector>
 #include <array>
 
-#include "ensemble/ChemicalPotential.h"
 #include "plugins/PluginBase.h"
+#include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI
 #include "utils/MPI_Info_object.h"

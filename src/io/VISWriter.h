@@ -3,7 +3,6 @@
 
 #include "plugins/PluginBase.h"
 #include "Domain.h"
-#include "ensemble/ChemicalPotential.h"
 #include <string>
 #include <list>
 
