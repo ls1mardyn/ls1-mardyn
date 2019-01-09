@@ -91,7 +91,8 @@ public:
 	std::string getName() { return std::string("BoundingBox"); };
 };
 
-unsigned long ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long
+ObjectGenerator::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
 	unsigned long numMolecules = 0;
 	if(_moleculeIdPool == nullptr) {
 		_moleculeIdPool = std::make_shared<MoleculeIdPool>(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());

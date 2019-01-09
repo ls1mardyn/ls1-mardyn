@@ -304,9 +304,8 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream.close();
 }
 
-unsigned long MPI_IOReader::readPhaseSpace(
-		ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
-		Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long
+MPI_IOReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
 #ifdef ENABLE_MPI
 	Timer inputTimer;
 	inputTimer.start();

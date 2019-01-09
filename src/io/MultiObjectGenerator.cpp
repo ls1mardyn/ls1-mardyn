@@ -48,14 +48,13 @@ void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 }
 
 
-long unsigned int MultiObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
-		Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long MultiObjectGenerator::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
 	unsigned long numMolecules = 0;
 	std::shared_ptr<MoleculeIdPool> moleculeIdPool = std::make_shared<MoleculeIdPool>(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());
 
 	for(auto generator : _generators) {
 		generator->setMoleculeIDPool(moleculeIdPool);
-		numMolecules += generator->readPhaseSpace(particleContainer, lmu, domain, domainDecomp);
+		numMolecules += generator->readPhaseSpace(particleContainer, domain, domainDecomp);
 	}
 	particleContainer->updateMoleculeCaches();
 	global_log->info() << "Number of locally inserted molecules: " << numMolecules << endl;

@@ -50,8 +50,8 @@ void MkesferaGenerator::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Droplet center: " << center[0] << ", " << center[0] << ", " << center[0] << endl;
 }
 
-long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* /*domainDecomp*/) {
+unsigned long
+MkesferaGenerator::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *) {
 
 	int fl_units;
 	double rhomax = (rho_i > rho_o)? rho_i: rho_o;

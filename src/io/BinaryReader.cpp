@@ -116,9 +116,8 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 	domain->setglobalNumMolecules(numMolecules);
 }
 
-unsigned long BinaryReader::readPhaseSpace(
-		ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
-		Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long
+BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();

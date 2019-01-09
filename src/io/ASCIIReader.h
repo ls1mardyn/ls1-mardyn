@@ -71,7 +71,7 @@ public:
 	//!
 	//! @param particleContainer Here the Molecules from the input file are stored
 	//! @return Number of molecules read in from the input phase space file
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+    unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
 private:
 
 	std::string  _phaseSpaceFile;

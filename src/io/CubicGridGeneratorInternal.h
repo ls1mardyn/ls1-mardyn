@@ -30,8 +30,7 @@ public:
 
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {
 	}
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu,
-			Domain* domain, DomainDecompBase* domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
 
 	/** @brief Read in XML configuration for MkTcTSGenerator and all its included objects.
 	 *

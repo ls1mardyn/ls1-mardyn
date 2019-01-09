@@ -30,7 +30,8 @@ public:
 	/** @brief read the actual phase space information
 	 * @return number of read in molecules added to the particle containers of all processes
 	 */
-	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
+	virtual unsigned long
+    readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) = 0;
 
 };
 

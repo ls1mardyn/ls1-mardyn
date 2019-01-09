@@ -273,7 +273,8 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream.close();
 }
 
-unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long
+ASCIIReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
 
 	global_simulation->timers()->start("INPUT_OLDSTYLE_INPUT");
 

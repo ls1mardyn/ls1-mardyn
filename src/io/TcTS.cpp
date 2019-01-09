@@ -38,8 +38,8 @@ void MkTcTSGenerator::readXML(XMLfileUnits& xmlconfig) {
 void MkTcTSGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/){
 }
 
-long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* /*lmu*/,
-		Domain* domain, DomainDecompBase* /*domainDecomp*/) {
+unsigned long
+MkTcTSGenerator::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *) {
 	// Mixing coefficients
 	vector<double>& dmixcoeff = domain->getmixcoeff();
 	dmixcoeff.clear();

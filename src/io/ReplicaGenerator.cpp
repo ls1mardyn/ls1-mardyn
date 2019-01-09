@@ -373,8 +373,7 @@ void ReplicaGenerator::init()
 	}
 }
 
-long unsigned int ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp)
+unsigned long ReplicaGenerator::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp)
 {
 //	if(3 != domainDecomp->getRank() )
 //		return 0;

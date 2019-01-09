@@ -30,7 +30,7 @@ public:
 
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {}
 
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
 
 private:
 

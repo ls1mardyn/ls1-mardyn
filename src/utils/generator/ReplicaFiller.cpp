@@ -149,7 +149,7 @@ void ReplicaFiller::init() {
 #endif
 	Domain domain(0, nullptr);
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
-	_inputReader->readPhaseSpace(&basisContainer, &lmu, &domain, &domainDecomp);
+    _inputReader->readPhaseSpace(&basisContainer, &domain, &domainDecomp);
 	global_log->info() << "Number of molecules in the replica: " << basisContainer.getNumberOfParticles() << endl;
 
 	global_log->info() << "Setting simulation time to 0." << endl;
