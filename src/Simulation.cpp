@@ -911,7 +911,6 @@ void Simulation::simulate() {
             plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
         }
 
-		// TODO: ENSEMBLEBASE beforeEventNewTimestep (initGrandCanonical usually too large to matter)
         _ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
@@ -994,17 +993,12 @@ void Simulation::simulate() {
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
-		// TODO: ENSEMBLEBASE: afterForces (mind initGrandCanonical)
         _ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
 
         // TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
-		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
-		if (_simstep >= _initGrandCanonical) {
-			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(), _domainDecomposition);
-		}
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);

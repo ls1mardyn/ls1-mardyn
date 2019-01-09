@@ -121,6 +121,12 @@ void GrandCanonicalEnsemble::afterForces(ParticleContainer *moleculeContainer, D
 
             j++;
         }
+
+        // TODO: Originally this comes after the deleteOuterParticles call
+
+        _simulationDomain->evaluateRho(moleculeContainer->getNumberOfParticles(), domainDecomposition);
+
+
     }
 
 }
