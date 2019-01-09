@@ -434,15 +434,9 @@ ASCIIReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain
 				
 				if(m.getID() > maxid) maxid = m.getID();
 
-				// TODO lmu:
-				/*
-				std::list<ChemicalPotential>::iterator cpit;
-				for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
-					if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-						cpit->storeMolecule(m);
-					}
-				}
-				 */
+				// Only called inside GrandCanonical
+		        global_simulation->getEnsemble()->storeSample(&m, componentid);
+
 			}
 			global_log->debug() << "broadcasting(sending/receiving) complete" << particle_buff_pos << std::endl;
 			particle_buff_pos = 0;
@@ -457,15 +451,8 @@ ASCIIReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain
 		
 		if(id > maxid) maxid = id;
 
-		// TODO lmu:
-		/*
-		std::list<ChemicalPotential>::iterator cpit;
-		for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
-			if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-				cpit->storeMolecule(m1);
-			}
-		}
-		 */
+		// Only called inside GrandCanonical
+		global_simulation->getEnsemble()->storeSample(&m1, componentid);
 
 #endif
 	}

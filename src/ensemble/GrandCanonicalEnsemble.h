@@ -83,6 +83,8 @@ public:
     void afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
                          unsigned long simstep) override;
 
+    void storeSample(Molecule* m, uint32_t componentid) override;
+
 private:
 
     unsigned long _N;

@@ -559,16 +559,8 @@ MPI_IOReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 					localMaxid = m.getID();
 				}
 
-				// TODO lmu:
-				/*
-				std::list<ChemicalPotential>::iterator cpit;
-				for (cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
-					if (!cpit->hasSample() && (m.componentid()
-							== cpit->getComponentID())) {
-						cpit->storeMolecule(m);
-					}
-				}
-				 */
+				// Only called inside GrandCanonical
+		        global_simulation->getEnsemble()->storeSample(&m, componentid);
 			}
 		}
 

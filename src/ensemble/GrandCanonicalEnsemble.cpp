@@ -130,3 +130,11 @@ void GrandCanonicalEnsemble::afterForces(ParticleContainer *moleculeContainer, D
     }
 
 }
+void GrandCanonicalEnsemble::storeSample(Molecule* m, uint32_t componentid) {
+    std::list<ChemicalPotential>::iterator cpit;
+    for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+        if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
+            cpit->storeMolecule(*m);
+        }
+    }
+}
