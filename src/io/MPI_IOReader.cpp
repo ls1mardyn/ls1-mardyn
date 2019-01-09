@@ -560,7 +560,7 @@ MPI_IOReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 				}
 
 				// Only called inside GrandCanonical
-		        global_simulation->getEnsemble()->storeSample(&m, componentid);
+		        global_simulation->getEnsemble()->storeSample(&m, m.componentid());
 			}
 		}
 
