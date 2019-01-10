@@ -8,10 +8,17 @@ if(ENABLE_LZ4)
 
     set(LZ4_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/lz4)
     set(LZ4_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/libs/lz4)
+
+    # Select https (default) or ssh path.
+    set(lz4RepoPath https://github.com/lz4/lz4.git)
+    if(GIT_SUBMODULES_SSH)
+        set(lz4RepoPath git@github.com:lz4/lz4.git)
+    endif()
+
     # Download and install lz4
     ExternalProject_Add(
             lz4
-            GIT_REPOSITORY https://github.com/lz4/lz4.git
+            GIT_REPOSITORY ${lz4RepoPath}
             GIT_TAG dev
             SOURCE_DIR ${LZ4_SOURCE_DIR}
             BINARY_DIR ${LZ4_BINARY_DIR}
