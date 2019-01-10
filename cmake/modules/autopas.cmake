@@ -1,5 +1,6 @@
 # autopas library
 option(ENABLE_AUTOPAS "Use autopas library" OFF)
+option(GIT_SUBMODULES_SSH "Use SSH for git submodules instead of HTTPS" OFF)
 if(ENABLE_AUTOPAS)
     message(STATUS "Using AutoPas.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMARDYN_AUTOPAS")
@@ -7,10 +8,16 @@ if(ENABLE_AUTOPAS)
     # Enable ExternalProject CMake module
     include(ExternalProject)
 
+    # Select https (default) or ssh path.
+    set(autopasRepoPath https://github.com/AutoPas/AutoPas.git)
+    if(GIT_SUBMODULES_SSH)
+        set(autopasRepoPath git@github.com:AutoPas/AutoPas.git)
+    endif()
+
     # Download and install autopas
     ExternalProject_Add(
             autopas
-            GIT_REPOSITORY https://github.com/AutoPas/AutoPas.git
+            GIT_REPOSITORY ${autopasRepoPath}
             GIT_TAG origin/master
             #URL https://github.com/AutoPas/AutoPas/archive/0c3d8b07a2e38940057fafd21b98645cb074e729.zip # zip option
             #${CMAKE_SOURCE_DIR}/libs/googletest-master.zip # bundled option
