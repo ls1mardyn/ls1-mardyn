@@ -27,6 +27,12 @@ enum GlobalVariable {
 	PRESSURE           = 1<<5
 };
 
+enum Type {
+		undefined,
+		NVT,
+		muVT
+};
+
 class XMLfileUnits;
 
 //! @brief Base class for ensembles
@@ -39,6 +45,7 @@ public:
 	Ensemble() :
 			_domain(nullptr) {
 	}
+
 	virtual ~Ensemble();
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
@@ -72,7 +79,7 @@ public:
 	void setComponentLookUpIDs();
 
 	/*! get Ensemble Type (NVT or muVT) */
-	std::string getType(){return _type;}
+	int getType(){return _type;}
 
 	/*! Returns _lmu pointer for processing by external plugins */
 	virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
@@ -97,11 +104,13 @@ public:
 	virtual void storeSample(Molecule* m, uint32_t componentid) {};
 
 protected:
+
+
 	std::vector<Component> _components;
 	std::map<std::string,int> _componentnamesToIds;
 	std::vector<MixingRuleBase*> _mixingrules;
 	DomainBase* _domain;
-	std::string _type = "Undefined";
+	Type _type = undefined;
 
 	/* EnsembleBase has a DomainBase pointer _domain, however this is not compatible
 	 * with the needed Domain* for the ChemicalPotential/radial function
