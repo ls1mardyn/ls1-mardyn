@@ -7,7 +7,6 @@
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
-class ChemicalPotential;
 class XMLfileUnits;
 
 //! @brief interface for any kind of input class

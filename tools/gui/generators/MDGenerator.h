@@ -22,7 +22,6 @@
 class Domain;
 class DomainDecompBase;
 class ParticleContainer;
-class ChemicalPotential;
 class ParameterCollection;
 class Parameter;
 

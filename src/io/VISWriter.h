@@ -9,7 +9,6 @@
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
-class ChemicalPotential;
 
 class VISWriter : public PluginBase {
 public:

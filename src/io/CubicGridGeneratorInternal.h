@@ -12,7 +12,6 @@
 #include "utils/Random.h"
 
 class ParticleContainer;
-class ChemicalPotential;
 class Domain;
 class DomainDecompBase;
 
