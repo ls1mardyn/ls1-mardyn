@@ -21,9 +21,9 @@ using namespace std;
 using Log::global_log;
 
 CanonicalEnsemble::CanonicalEnsemble() :
-    _N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
-        _type = "NVT";
-    }
+		_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
+	_type = "NVT";
+}
 
 
 void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable ) {
@@ -38,9 +38,9 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		/* initializes the number of molecules present in each component! */
 		std::vector<unsigned long> numMolecules(numComponents, 0ul);
 
-		#if defined(_OPENMP)
-		#pragma omp parallel
-		#endif
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
 		{
 			std::vector<unsigned long> numMolecules_private(numComponents, 0ul);
 
@@ -48,9 +48,9 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 				numMolecules_private[molecule->componentid()]++;
 			}
 
-			#if defined(_OPENMP)
-			#pragma omp critical
-			#endif
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
 			{
 				for (unsigned int i = 0; i < numMolecules.size(); i++) {
 					numMolecules[i] += numMolecules_private[i];
@@ -80,8 +80,8 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 
 	if ( variable & VOLUME ) {
 		global_log->debug() << "Updating volume" << endl;
-	  /* TODO: calculate actual volume or return specified volume as 
-	   * the canonical ensemble should have a fixed volume? */
+		/* TODO: calculate actual volume or return specified volume as
+		 * the canonical ensemble should have a fixed volume? */
 	}
 
 	/* variable variables of this ensemble */
@@ -99,9 +99,9 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		std::vector<double> E_rot(numComponents, 0.);
 
 
-		#if defined(_OPENMP)
-		#pragma omp parallel
-		#endif
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
 		{
 			std::vector<unsigned long> E_trans_priv(numComponents, 0.);
 			std::vector<unsigned long> E_rot_priv(numComponents, 0.);
@@ -114,9 +114,9 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 				E_trans_priv[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
 				E_rot_priv[cid] += E_rot_loc;  // 2*k_{B} * E_{rot}
 			}
-			#if defined(_OPENMP)
-			#pragma omp critical
-			#endif
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
 			{
 				for (unsigned int i = 0; i < E_trans_priv.size(); i++) {
 					E_trans[i] += E_trans_priv[i];
@@ -126,33 +126,33 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		}
 
 #ifdef ENABLE_MPI
-	  _simulation.domainDecomposition().collCommInit(2*numComponents);
+		_simulation.domainDecomposition().collCommInit(2*numComponents);
 	  for( int cid = 0; cid < numComponents; cid++ ) {
 		  _simulation.domainDecomposition().collCommAppendDouble(E_trans[cid]);
 		  _simulation.domainDecomposition().collCommAppendDouble(E_rot[cid]);
 	  }
 	  _simulation.domainDecomposition().collCommAllreduceSum();
 #endif
-	  _E = _E_trans = _E_rot = 0.0;
-	  for( int cid = 0; cid < numComponents; cid++) {
+		_E = _E_trans = _E_rot = 0.0;
+		for( int cid = 0; cid < numComponents; cid++) {
 #ifdef ENABLE_MPI
-		  E_trans[cid] =  _simulation.domainDecomposition().collCommGetDouble();
+			E_trans[cid] =  _simulation.domainDecomposition().collCommGetDouble();
 		  E_rot[cid]   =  _simulation.domainDecomposition().collCommGetDouble();
 #endif
-		  global_log->debug() << "Kinetic energy in component " << cid << ": " << 
-			  "E_trans = " << E_trans[cid] << ", E_rot = " << E_rot[cid] << endl;
-		  _components[cid].setE_trans(E_trans[cid]);
-		  _components[cid].setE_rot(E_rot[cid]);
-		  _E_trans += E_trans[cid];
-		  _E_rot   += E_rot[cid];
-	  }
+			global_log->debug() << "Kinetic energy in component " << cid << ": " <<
+								"E_trans = " << E_trans[cid] << ", E_rot = " << E_rot[cid] << endl;
+			_components[cid].setE_trans(E_trans[cid]);
+			_components[cid].setE_rot(E_rot[cid]);
+			_E_trans += E_trans[cid];
+			_E_rot   += E_rot[cid];
+		}
 #ifdef ENABLE_MPI
-	  _simulation.domainDecomposition().collCommFinalize();
+		_simulation.domainDecomposition().collCommFinalize();
 #endif
 
-	  global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans 
-		  << ", 2*E_rot = " << _E_rot << endl;
-	  _E = _E_trans + _E_rot;
+		global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans
+							<< ", 2*E_rot = " << _E_rot << endl;
+		_E = _E_trans + _E_rot;
 	}
 
 	if ( variable & TEMPERATURE ) {
@@ -166,10 +166,10 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 			long long degreesOfFreedom = (3 + rdf) * N;
 			totalDegreesOfFreedom += degreesOfFreedom;
 
-			double E_kin = _components[cid].E(); 
+			double E_kin = _components[cid].E();
 			double T = E_kin / degreesOfFreedom;
 			global_log->debug() << "Temperature of component " << cid << ": " <<
-				              "T = " << T << endl;
+								"T = " << T << endl;
 			_components[cid].setT( T );
 		}
 		_T = _E / totalDegreesOfFreedom;
@@ -207,7 +207,7 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void CanonicalEnsemble::beforeThermostat(unsigned long simstep, unsigned long initStatistics){
-    if (simstep >= initStatistics) {
-        global_simulation->getDomain()->record_cv();
-    }
+	if (simstep >= initStatistics) {
+		global_simulation->getDomain()->record_cv();
+	}
 }

@@ -14,13 +14,13 @@
 class Component;
 class DomainBase;
 /* Fix problem with Cray compiler which requires the actual size of the component class. */
-#include "molecules/Component.h" 
+#include "molecules/Component.h"
 
 class CanonicalEnsemble : public Ensemble {
-	
+
 private:
 	CanonicalEnsemble& operator=(CanonicalEnsemble ensemble);
-	
+
 public:
 
 	CanonicalEnsemble();
@@ -52,8 +52,8 @@ public:
 
 	void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override;
 
-    /*! runs before temperature control is applied, but after force calculations, triggers radial distribution call in Domain only for NVT */
-    void beforeThermostat(unsigned long simstep, unsigned long initStatistics) override;
+	/*! runs before temperature control is applied, but after force calculations, triggers radial distribution call in Domain only for NVT */
+	void beforeThermostat(unsigned long simstep, unsigned long initStatistics) override;
 
 private:
 

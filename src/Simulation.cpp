@@ -218,8 +218,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
-            /* TODO: This line is here for debugging purposes, the Simulation is should still be terminated,
-             as readXML is not implemented */
+			/* TODO: This line is here for debugging purposes, the Simulation is should still be terminated,
+			 as readXML is not implemented */
 			_ensemble = new GrandCanonicalEnsemble();
 			//Simulation::exit(1);
 		} else {
@@ -990,9 +990,9 @@ void Simulation::simulate() {
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
-        _ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
+		_ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
 
-        // TODO: test deletions and insertions
+		// TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 

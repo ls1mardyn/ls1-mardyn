@@ -8,7 +8,7 @@
 #include <map>
 
 #include "DomainBase.h"
-#include "molecules/Molecule.h"
+#include "molecules/MoleculeForwardDeclaration.h"
 
 class ParticleContainer;
 class MixingRuleBase;
@@ -74,27 +74,27 @@ public:
 	/*! get Ensemble Type (NVT or muVT) */
 	std::string getType(){return _type;}
 
-    /*! Returns _lmu pointer for processing by external plugins */
-    virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
+	/*! Returns _lmu pointer for processing by external plugins */
+	virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
 
-    /*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
-    virtual void initConfigXML(ParticleContainer *moleculeContainer) {};
-    /*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
-    virtual void prepare_start() {};
-    /*! runs simulate step needed in GrandCanonical, nothing for canonical */
-    virtual void
-    beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
-                           unsigned long simstep) {};
-    /*! runs after forces step for GrandCanonical, nothing for canonical */
-    virtual void
-    afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
-                    unsigned long simstep) {};
+	/*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
+	virtual void initConfigXML(ParticleContainer *moleculeContainer) {};
+	/*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
+	virtual void prepare_start() {};
+	/*! runs simulate step needed in GrandCanonical, nothing for canonical */
+	virtual void
+	beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
+						   unsigned long simstep) {};
+	/*! runs after forces step for GrandCanonical, nothing for canonical */
+	virtual void
+	afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
+				unsigned long simstep) {};
 
-    /*! runs before temperature control is applied, but after force calculations */
-    virtual void beforeThermostat(unsigned long simstep, unsigned long initStatistics){};
+	/*! runs before temperature control is applied, but after force calculations */
+	virtual void beforeThermostat(unsigned long simstep, unsigned long initStatistics){};
 
-    /*! Store Sample molecule from old input readers in lmu */
-    virtual void storeSample(Molecule* m, uint32_t componentid) {};
+	/*! Store Sample molecule from old input readers in lmu */
+	virtual void storeSample(Molecule* m, uint32_t componentid) {};
 
 protected:
 	std::vector<Component> _components;
@@ -103,11 +103,11 @@ protected:
 	DomainBase* _domain;
 	std::string _type = "Undefined";
 
-    /* EnsembleBase has a DomainBase pointer _domain, however this is not compatible
-     * with the needed Domain* for the ChemicalPotential/radial function
-     * and for whatever reason, Domain does not inherit from DomainBase.
-    */
-    Domain* _simulationDomain;
+	/* EnsembleBase has a DomainBase pointer _domain, however this is not compatible
+	 * with the needed Domain* for the ChemicalPotential/radial function
+	 * and for whatever reason, Domain does not inherit from DomainBase.
+	*/
+	Domain* _simulationDomain;
 };
 
 #endif /* ENSEMBLE_BASE_H_ */
