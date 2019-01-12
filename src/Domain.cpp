@@ -9,7 +9,6 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
-#include "ensemble/ChemicalPotential.h"
 #include "ensemble/PressureGradient.h"
 //#include "CutoffCorrections.h"
 #include "Simulation.h"

@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "ensemble/CavityEnsemble.h"
-#include "ensemble/ChemicalPotential.h"
 #include "io/TimerProfiler.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"

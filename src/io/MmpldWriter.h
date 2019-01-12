@@ -6,7 +6,7 @@
 #include <array>
 
 #include "plugins/PluginBase.h"
-#include "molecules/Molecule.h"
+#include "molecules/MoleculeForwardDeclaration.h"
 
 #ifdef ENABLE_MPI
 #include "utils/MPI_Info_object.h"

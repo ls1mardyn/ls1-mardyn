@@ -141,7 +141,7 @@ void ReplicaFiller::init() {
 	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
 	basisContainer.setBoundingBox(object);
 
-	std::list<ChemicalPotential> lmu;
+
 #ifdef ENABLE_MPI
 	DomainDecomposition domainDecomp;
 #else

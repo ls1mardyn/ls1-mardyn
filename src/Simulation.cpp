@@ -660,7 +660,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
-	// TODO: ENSEMBLEBASE: initConfigXML
     _ensemble->initConfigXML(_moleculeContainer);
 }
 
@@ -824,9 +823,7 @@ void Simulation::prepare_start() {
 			true, 1.0);
 	global_log->debug() << "Calculating global values finished." << endl;
 
-	// TODO: ENSEMBLEBASE: prepare_start
 	_ensemble->prepare_start();
-
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
