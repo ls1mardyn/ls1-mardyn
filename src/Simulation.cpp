@@ -1635,6 +1635,7 @@ void Simulation::simulate() {
 		//Check discjunction of thermostat layers
 		if(_domain->isThermostatLayer() == true)
 		  _domain->checkThermostatLayerDisjunct();
+		cout << "LOST" << endl;
 	}
 	
 		
