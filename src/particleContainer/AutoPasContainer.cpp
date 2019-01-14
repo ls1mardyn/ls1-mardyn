@@ -15,14 +15,35 @@ AutoPasContainer::AutoPasContainer()
 	// autopas::Logger::get()->set_level(spdlog::level::debug);
 }
 
-void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {}
+void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
+	string oldPath(xmlconfig.getcurrentnodepath());
+
+	// set default values here!
+
+	_traversalChoices(autopas::utils::StringParser::parseTraversalOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08"))));
+	_containerChoices(autopas::utils::StringParser::parseContainerOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell"))));
+
+	_traversalSelectorStrategy(autopas::utils::StringParser::parseSelectorStrategy(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("traversalSelectorStrategy", "median"))));
+	_containerSelectorStrategy(autopas::utils::StringParser::parseSelectorStrategy(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("containerSelectorStrategy", "median"))));
+
+	_dataLayout(autopas::utils::StringParser::parseDataLayout(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa"))));
+
+	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
+	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
+}
 
 bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	mardyn_assert(_cutoff > 0.);
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
-	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, autopas::allContainerOptions,
-						   autopas::allTraversalOptions, _tuningFrequency);
+	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, _containerChoices,
+						   _traversalChoices, _containerSelectorStrategy, _traversalSelectorStrategy, _tuningFrequency,
+						   _tuningSamples);
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
