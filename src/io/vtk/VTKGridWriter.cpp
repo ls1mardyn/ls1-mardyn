@@ -5,6 +5,8 @@
  * @Author: eckhardw
  */
 
+#ifndef MARDYN_AUTOPAS
+
 #include "VTKGridWriter.h"
 #include "particleContainer/LinkedCells.h"
 #include "io/vtk/VTKGridWriterImplementation.h"
@@ -46,7 +48,7 @@ void  VTKGridWriter::endStep(
 	LinkedCells* container = dynamic_cast<LinkedCells*>(particleContainer);
 #ifndef NDEBUG
 	if (container == NULL) {
-		global_log->error() << "VTKGridWriter works only with PlottableLinkCells!" << std::endl;
+		global_log->error() << "VTKGridWriter works only with plottable LinkCells!" << std::endl;
 		Simulation::exit(1);
 	}
 #endif
@@ -185,3 +187,5 @@ void VTKGridWriter::getCellData(LinkedCells* container, VTKGridCell& cell) {
 //! NOP
 void  VTKGridWriter::finish(ParticleContainer * /*particleContainer*/,
 							DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) { }
+
+#endif /* MARDYN_AUTOPAS */
