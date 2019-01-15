@@ -137,6 +137,7 @@
         <temperature>1</temperature>
         <velocity>1</velocity>
         <velocity3d>1</velocity3d>
+        <virial>1</virial>
       </profiles>
     </plugin>
    </simulation>
