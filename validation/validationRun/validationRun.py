@@ -123,7 +123,7 @@ for opt, arg in options:
 if baseIsLocal and baseRemote:
     print "defined baseIsLocal and defined a base remote host. this contradicts itself. exiting..."
     exit(1)
-    
+
 # disable disabled plugins:
 for dPlugin in disabledPlugins:
     comparePlugins.remove(dPlugin)
@@ -205,7 +205,7 @@ with open(xmlBase, "r") as prev_file:
             contents.insert(i+1,"""<equilibration><steps>0</steps></equilibration>\n""")
             i+=1
             continue
-        
+
         if line.find("<output>") != -1:
             for comparePlugin in comparePlugins:
                 if comparePlugin == 'RDF':  # configuring RDF within the xml is different...
@@ -225,7 +225,7 @@ with open(xmlBase, "r") as prev_file:
             <outputprefix>val.comparison</outputprefix>
         </outputplugin>""")
                     i+=1
-                  #myfile.write("output " + comparePlugin + " 1 val.comparison\n")  
+                  #myfile.write("output " + comparePlugin + " 1 val.comparison\n")
     new_file.write("".join(contents))
 call(['mv','tmp.xml',xmlBase])
 
@@ -234,10 +234,12 @@ for comparePostfix in comparePostfixes:
     comparisonFilenames.append('val.comparison' + comparePostfix)
 
 if doReferenceRun:
+    call(['mkdir', '-p', 'reference/'])
     call(['cp', xmlBase, 'reference/'])
     call(['cp', inpBase, 'reference/'])
     call(['cp'] + additionalFileBases + ['reference/'])
     call(['cp', oldMarDynBase, 'reference/'])
+call(['mkdir', '-p', 'new/'])
 call(['cp', xmlBase, 'new/'])
 call(['cp', inpBase, 'new/'])
 call(['cp'] + additionalFileBases + ['new/'])
@@ -252,14 +254,14 @@ def doRun(directory, MardynExe):
     os.chdir(directory)
     call(['chmod', '+x', MardynExe])
     cmd = []
-    
+
     doRemote = localRemote and (directory == 'new' or not baseIsLocal)
-    
+
     if doRemote:
         rsyncremote = localRemote
         if localRemote.endswith('-mic0') or localRemote.endswith('-mic1'):
             rsyncremote = localRemote[:-5]
-        command = "mkdir -p " + remoteprefix    
+        command = "mkdir -p " + remoteprefix
         mkdircmd = []
         mkdircmd.extend(['ssh', rsyncremote, command])
         p = Popen(mkdircmd, stdout=PIPE, stderr=PIPE)
@@ -278,21 +280,21 @@ def doRun(directory, MardynExe):
             exit(1)
         command = "cd " + remotedirectory + " && pwd && "
         cmd.extend(['ssh', localRemote, command])
-    
+
     if allMPI:
         cmd.extend(split(MPI_START))
         if directory == 'new' or not baseisnormal:
             cmd.extend(['-n', str(mpi)])
         else:
             cmd.extend(['-n', '1'])
-    else:    
+    else:
         if PAR and (directory == 'new' or not baseisnormal):
             cmd.extend(split(MPI_START))
             cmd.extend(['-n', str(mpi)])
-        
-        
-    cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations]); 
-    #cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]); 
+
+
+    cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations]);
+    #cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]);
     print cmd
     print "================"
     t = time.time()
@@ -310,7 +312,7 @@ def doRun(directory, MardynExe):
         print command
         p = Popen(split(command))
         p.wait()
-    
+
     if "RDF" in comparePlugins:
         p = Popen(['ls', '-r'] + glob("val.comparison*.rdf"), stdout=PIPE, stderr=PIPE)
         out, err = p.communicate()
@@ -319,7 +321,7 @@ def doRun(directory, MardynExe):
         p.wait()
     for comparisonFilename in  comparisonFilenames:
         # possible switch/if statements if other comparison plugins require different output.
-        p = Popen(split("sed -i.bak '/^#/d; s/[[:blank:]]*$//; /^$/d' " + comparisonFilename))  # deletes lines starting with #. 
+        p = Popen(split("sed -i.bak '/^#/d; s/[[:blank:]]*$//; /^$/d' " + comparisonFilename))  # deletes lines starting with #.
         # These are the lines containing timestamps, and have to be removed for proper comparison.
         p.wait()
     os.chdir('..')

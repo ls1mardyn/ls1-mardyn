@@ -27,7 +27,7 @@ class ParticleContainer;
 class DomainDecompBase;
 class Domain;
 class ChemicalPotential;
-class CavityEnsemble;
+
 class Mirror : public PluginBase
 {
 public:

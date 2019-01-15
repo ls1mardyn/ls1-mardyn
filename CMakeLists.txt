@@ -55,6 +55,8 @@ include(bhfmm)
 # ----- third: include autopas
 include(autopas)
 
+# ----- resilience plugin dependencies are set here
+include(compression)
 
 # add mardyn
 ADD_SUBDIRECTORY(src)

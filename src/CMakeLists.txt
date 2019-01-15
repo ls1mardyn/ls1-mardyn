@@ -46,13 +46,19 @@ ADD_EXECUTABLE(MarDyn
         ${MY_SRC}
         )
 
+# dependencies for lz4
+if (ENABLE_LZ4)
+    add_dependencies(MarDyn liblz4)
+endif()
+
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
         ${BLAS_LIB}    # for armadillo
         ${LAPACK_LIB}  # for armadillo
         ${VTK_LIB}     # for VTK/xerces
         ${CPPUNIT_LIB} # for unit tests
-        ${autopas_lib}  # for autopas
+        ${autopas_lib} # for autopas
+        ${LZ4_LIB}     # for LZ4 compression
         )
 
 ADD_TEST(
