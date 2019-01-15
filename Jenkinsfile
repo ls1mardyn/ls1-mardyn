@@ -265,7 +265,7 @@ pipeline {
                     make -j8
                   """
                 }
-                includes: "src/MarDyn", name: "autopas_exec"
+                stash includes: "src/MarDyn", name: "autopas_exec"
               }
             }
             stage('unit test with autopas') {
