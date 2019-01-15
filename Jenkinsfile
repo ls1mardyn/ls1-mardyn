@@ -246,8 +246,8 @@ pipeline {
             }
           }
 
-          node { matrixBuilder(ciMatrix, 0) }
-          parallel variations
+          //node { matrixBuilder(ciMatrix, 0) }
+          //parallel variations
         }
       }
     }
