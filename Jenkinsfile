@@ -265,6 +265,19 @@ pipeline {
                     make -j8
                   """
                 }
+                includes: "src/MarDyn", name: "autopas_exec"
+              }
+            }
+            stage('run with autopas') {
+              steps {
+                unstash 'repo'
+                unstash 'autopas_exec'
+                dir ("build"){
+                  sh """
+                    ./src/MarDyn -t -d ../test_input/
+                    ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas.xml --steps=10
+                  """
+                }
               }
             }
           }
