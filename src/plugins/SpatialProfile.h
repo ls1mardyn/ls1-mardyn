@@ -11,13 +11,15 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 
+class ProfileBase;
 class DensityProfile;
 class Velocity3dProfile;
 class VelocityAbsProfile;
-class TemperatureProfile;
 class KineticProfile;
 class DOFProfile;
-class ProfileBase;
+class TemperatureProfile;
+class VirialProfile;
+
 
 /** @brief SpatialProfile is a Plugin that is called like any other plugin derived from PluginBase. It handles all profiles in /plugins/profiles. <br>
  * New profiles must be added via the plugins/ ProfileBase to comply with this Plugin. <br>
@@ -49,6 +51,7 @@ class ProfileBase;
         <temperature>0</temperature>
         <velocity>1</velocity>
         <velocity3d>1</velocity>
+        <virial>1</virial>
       </profiles>
     </plugin>
 * \endcode
@@ -85,6 +88,7 @@ private:
     TemperatureProfile* _tempProfile;
     DOFProfile* _dofProfile;
     KineticProfile* _kineticProfile;
+    VirialProfile* _virialProfile;
 
     unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
     unsigned long _initStatistics; // Timesteps to skip at start of the simulation
@@ -104,6 +108,7 @@ private:
     bool _VELOCITY = false;
     bool _VELOCITY3D = false;
     bool _TEMPERATURE = false;
+    bool _VIRIAL = false;
 
     void addProfile(ProfileBase* profile);
 

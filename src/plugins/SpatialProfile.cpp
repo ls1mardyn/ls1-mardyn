@@ -10,6 +10,7 @@
 #include "plugins/profiles/TemperatureProfile.h"
 #include "plugins/profiles/KineticProfile.h"
 #include "plugins/profiles/DOFProfile.h"
+#include "plugins/profiles/VirialProfile.h"
 
 /**
 * @brief Read in Information about write/record frequencies, Sampling Grid and which profiles are enabled.
@@ -67,6 +68,11 @@ void SpatialProfile::readXML(XMLfileUnits &xmlconfig) {
         global_log->info() << "[SpatialProfile] TEMPERATURE PROFILE ENABLED\n";
         numProfiles++;
     }
+	xmlconfig.getNodeValue("profiles/virial", _VIRIAL);
+	if(_VIRIAL){
+		global_log->info() << "[SpatialProfile] VIRIAL PROFILE ENABLED\n";
+		numProfiles++;
+	}
     global_log->info() << "[SpatialProfile] Number of profiles: " << numProfiles << "\n";
     if(numProfiles < 1){
         global_log->warning() << "[SpatialProfile] NO PROFILES SPECIFIED -> Outputting all\n";
@@ -74,8 +80,8 @@ void SpatialProfile::readXML(XMLfileUnits &xmlconfig) {
     }
 
     // ADDING PROFILES
-    // Need DensityProfile for Velocity*Profile / Temperature
-    if(_DENSITY || _VELOCITY || _VELOCITY3D || _ALL){
+    // Need DensityProfile for Velocity*Profile / Temperature / Virial
+    if(_DENSITY || _VELOCITY || _VELOCITY3D || _VIRIAL || _ALL){
         _densProfile = new DensityProfile();
         addProfile(_densProfile);
     }
@@ -87,6 +93,10 @@ void SpatialProfile::readXML(XMLfileUnits &xmlconfig) {
     if(_VELOCITY3D || _ALL){
         _vel3dProfile = new Velocity3dProfile(_densProfile);
         addProfile(_vel3dProfile);
+    }
+    if(_VIRIAL || _ALL){
+    	_virialProfile = new VirialProfile(_densProfile);
+    	addProfile(_virialProfile);
     }
     if(_TEMPERATURE || _ALL){
         _dofProfile = new DOFProfile();
@@ -129,7 +139,7 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
         // R < .5minXZ -> R2max < .25minXZminXZ
         //double Rmax = .5*minXZ;
         double R2max = .24*minXZ*minXZ;
-        // TODO: WHY ARE THE DIMENSIONS SO JUMBLED???
+
         samplInfo.universalInvProfileUnit[0] = this->samplInfo.universalProfileUnit[0]/(R2max);                   // delta_R2
         samplInfo.universalInvProfileUnit[1] = this->samplInfo.universalProfileUnit[1]/(samplInfo.globalLength[1]);  // delta_H
         samplInfo.universalInvProfileUnit[2] = this->samplInfo.universalProfileUnit[2]/(2*M_PI); // delta_Phi
@@ -301,8 +311,7 @@ long SpatialProfile::getCylUID(ParticleIterator &thismol) {
 
     // transformation in polar coordinates
     double R2 = xc*xc + zc*zc;
-    // TODO: CHANGED TO R
-    //double R = sqrt(R2);
+
     double phi = atan2(zc, xc); // asin(zc/sqrt(R2)) + ((xc>=0.0) ? 0:M_PI);
     if(phi<0.0) {phi = phi + 2.0*M_PI;}
 
