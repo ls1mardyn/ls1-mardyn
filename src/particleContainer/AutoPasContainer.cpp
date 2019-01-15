@@ -9,6 +9,7 @@
 #include <exception>
 #include "Domain.h"
 #include "Simulation.h"
+#include "autopas/utils/StringParser.h"
 
 AutoPasContainer::AutoPasContainer()
 	: _cutoff(0.), _verletSkin(0.3), _verletRebuildFrequency(10u), _tuningFrequency(100u), _autopasContainer() {
@@ -20,18 +21,18 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	// set default values here!
 
-	_traversalChoices(autopas::utils::StringParser::parseTraversalOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08"))));
-	_containerChoices(autopas::utils::StringParser::parseContainerOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell"))));
+	_traversalChoices = autopas::utils::StringParser::parseTraversalOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08")));
+	_containerChoices = autopas::utils::StringParser::parseContainerOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell")));
 
-	_traversalSelectorStrategy(autopas::utils::StringParser::parseSelectorStrategy(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("traversalSelectorStrategy", "median"))));
-	_containerSelectorStrategy(autopas::utils::StringParser::parseSelectorStrategy(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("containerSelectorStrategy", "median"))));
+	_traversalSelectorStrategy = autopas::utils::StringParser::parseSelectorStrategy(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("traversalSelectorStrategy", "median")));
+	_containerSelectorStrategy = autopas::utils::StringParser::parseSelectorStrategy(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("containerSelectorStrategy", "median")));
 
-	_dataLayout(autopas::utils::StringParser::parseDataLayout(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa"))));
+	_dataLayout = autopas::utils::StringParser::parseDataLayout(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa")));
 
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
