@@ -31,7 +31,7 @@ void VelocityAbsProfile::output(string prefix, long unsigned accumulatedDatasets
 void VelocityAbsProfile::writeDataEntry(unsigned long uID, ofstream &outfile) const {
     // Check for division by 0
     long double vd;
-    int numberDensity = _densityProfile->getGlobalNumberDensity(uID);
+    int numberDensity = _densityProfile->getGlobalNumber(uID);
     if(numberDensity != 0){
         vd = _globalProfile.at(uID) / numberDensity;
     }

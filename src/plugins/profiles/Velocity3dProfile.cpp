@@ -36,7 +36,7 @@ void Velocity3dProfile::writeDataEntry(unsigned long uID, ofstream &outfile) con
     // X - Y - Z output
     for(unsigned d = 0; d < 3; d++){
         // Check for division by 0
-        int numberDensity = _densityProfile->getGlobalNumberDensity(uID);
+        int numberDensity = _densityProfile->getGlobalNumber(uID);
         if(numberDensity != 0){
             vd = _global3dProfile.at(uID)[d] / numberDensity;
         }
