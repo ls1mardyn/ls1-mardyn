@@ -9,19 +9,20 @@
  */
 class ASCIIReader : public InputBase {
 public:
-	ASCIIReader();
-	~ASCIIReader() {}
+	ASCIIReader ();
 
-	void readXML(XMLfileUnits& xmlconfig);
+	~ASCIIReader () {}
+
+	void readXML (XMLfileUnits& xmlconfig);
 
 	/** @brief Set the phase space file to be read.
 	 *
 	 * @param filename full path to the phase space file
 	 */
-	void setPhaseSpaceFile(std::string filename);
+	void setPhaseSpaceFile (std::string filename);
 
 	//! @brief For this class, header and data are in the same file, so there is no separate header file
-	void setPhaseSpaceHeaderFile(std::string filename);
+	void setPhaseSpaceHeaderFile (std::string filename);
 
 	//! @brief reads in header of the input file (including component description)
 	//!
@@ -55,7 +56,7 @@ public:
 	//!     - For each pair of different components: xi, eta (both double)
 	//!     - epsilonRF (double)
 	//! \li NumberOfMolecules: One token follows with the number of molecules
-	void readPhaseSpaceHeader(Domain* domain, double timestep);
+	void readPhaseSpaceHeader (Domain* domain, double timestep);
 
 	//! @brief reads in the data of all molecules
 	//!
@@ -71,11 +72,12 @@ public:
 	//!
 	//! @param particleContainer Here the Molecules from the input file are stored
 	//! @return Number of molecules read in from the input phase space file
-    unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
+	unsigned long readPhaseSpace (ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+
 private:
 
-	std::string  _phaseSpaceFile;
-	std::string  _phaseSpaceHeaderFile;
+	std::string _phaseSpaceFile;
+	std::string _phaseSpaceHeaderFile;
 	std::fstream _phaseSpaceFileStream;
 	std::fstream _phaseSpaceHeaderFileStream;
 
