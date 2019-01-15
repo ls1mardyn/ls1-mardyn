@@ -253,6 +253,22 @@ pipeline {
     }
     stage('post-build'){
       parallel {
+        stage('checkAutoPas integration') {
+          agent { label 'atsccs11' }
+          stages {
+            stage('build with autopas') {
+              steps {
+                unstash 'repo'
+                dir ("build"){
+                  sh """
+                    cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON ..
+                    make -j8
+                  """
+                }
+              }
+            }
+          }
+        }
         stage('documentation') {
           agent { label 'atsccs11' }
           stages {
