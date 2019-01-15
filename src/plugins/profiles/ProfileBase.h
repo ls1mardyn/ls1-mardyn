@@ -39,7 +39,7 @@ public:
 	 *
 	 * @param kartProf Pointer to KartesianProfile. Grants access to necessary global params.
 	 */
-    void init(SamplingInformation &samplingInformation) { _samplInfo = samplingInformation;};
+    virtual void init(SamplingInformation &samplingInformation) { _samplInfo = samplingInformation;};
     /** @brief The recording step defines what kind of data needs to be recorded for a single molecule with a corresponding uID.
      *
      * @param mol Reference to Molecule, needed to extract info such as velocity or Virial.

@@ -6,7 +6,8 @@
 #include "DensityProfile.h"
 
 void VirialProfile::output (string prefix, long unsigned accumulatedDatasets) {
-	global_log->info() << "[DensityProfile] output" << std::endl;
+
+	global_log->info() << "[VirialProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
@@ -29,7 +30,6 @@ void VirialProfile::output (string prefix, long unsigned accumulatedDatasets) {
 	// Calculate Pressures on layer, then write 1D output
 	for(unsigned y = 0; y < _samplInfo.universalProfileUnit[1]; y++){
 		double hval = (y + 0.5) / _samplInfo.universalInvProfileUnit[1];
-		outfile << hval << "  \t";
 		long double Pd = 0.0;
 		long double Px = 0.0;
 		long double Py = 0.0;

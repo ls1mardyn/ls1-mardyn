@@ -16,6 +16,14 @@ public:
 
 	~VirialProfile () = default;
 
+	void init (SamplingInformation& samplingInformation){
+		_samplInfo = samplingInformation;
+		if(_samplInfo.cylinder){
+			global_log->error() << "[VirialProfile] SAMPLING ERROR: Currently only set up for cartesian sampling.\n";
+			Simulation::exit(-1);
+		}
+	}
+
 	void record (Molecule& mol, unsigned long uID) final {
 		for(unsigned short d = 0; d < 3; d++){
 			_local3dProfile[uID][d] += mol.Vi(d);
