@@ -34,6 +34,13 @@ public:
 		}
 	}
 
+	/*! VirialProfile is writing a special 1D output in Y dimension and does therefore
+	 * not call the normal writeMatrix function. The output is always the same, regardless
+	 * of cartesian or cylindrical sampling.
+	 *
+	 * @param prefix
+	 * @param accumulatedDatasets
+	 */
 	void output (string prefix, long unsigned accumulatedDatasets) final;
 
 	void reset (unsigned long uID) final {
@@ -53,7 +60,9 @@ private:
 	// Global 3D Profile
 	std::map<unsigned, std::array<double, 3>> _global3dProfile;
 
-	void writeDataEntry (unsigned long uID, ofstream& outfile) const final;
+	// Only needed because its abstract, all output handled by output()
+	void writeDataEntry (unsigned long uID, ofstream& outfile) const final {};
+
 };
 
 

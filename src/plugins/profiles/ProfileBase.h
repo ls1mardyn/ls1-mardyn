@@ -16,7 +16,8 @@ struct SamplingInformation{
     double globalLength[3]; // Size of Domain
     double segmentVolume; // Size of one Sampling grid bin
     double universalCentre[3]; // Centre coords for cylinder system
-    bool cylinder;
+    bool cylinder; // Cartesian or Cylinder output
+	double globalTemperature; // From Domain/Thermostat[0] for Virial
 };
 
 /** @brief Base class for all Profile outputs used by KartesianProfile.
@@ -107,11 +108,10 @@ protected:
      // TODO: implement if needed
     void writeSimpleMatrix(ofstream &outfile);
 
-    /**@brief STUB for cylinder Matrix output without headers
+    /**@brief cylinder Matrix output
      *
      * @param outfile opened filestream from Profile
      */
-    // TODO: implement when order is known
     void writeCylMatrix(ofstream &outfile);
 };
 

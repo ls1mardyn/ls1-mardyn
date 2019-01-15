@@ -130,6 +130,8 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
         samplInfo.globalLength[d] = domain->getGlobalLength(d);
         global_log->info() << "[SpatialProfile] globalLength " << samplInfo.globalLength[d] << "\n";
     }
+    // Get Temperature
+	samplInfo.globalTemperature = domain->getCurrentTemperature(0);
     // Calculate sampling units
     if(samplInfo.cylinder){
         double minXZ = this->samplInfo.globalLength[0];
