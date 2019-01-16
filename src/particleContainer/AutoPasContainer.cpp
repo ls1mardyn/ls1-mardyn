@@ -38,19 +38,19 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
 
-	std::stringstream containerChoicesStram;
+	std::stringstream containerChoicesStream;
 	for_each(_containerChoices.begin(), _containerChoices.end(),
-			 [&](auto &choice) { containerChoicesStram << autopas::utils::StringUtils::to_string(choice) << " "; });
-	std::stringstream traversalChoicesStram;
+			 [&](auto &choice) { containerChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+	std::stringstream traversalChoicesStream;
 	for_each(_traversalChoices.begin(), _traversalChoices.end(),
-			 [&](auto &choice) { traversalChoicesStram << autopas::utils::StringUtils::to_string(choice) << " "; });
+			 [&](auto &choice) { traversalChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
 
 	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << endl
 	                   << setw(valueOffset) << left << "Data Layout " << ": " << autopas::utils::StringUtils::to_string(_dataLayout) << endl
-					   << setw(valueOffset) << left << "Container " << ": " << containerChoicesStram.str() << endl
+					   << setw(valueOffset) << left << "Container " << ": " << containerChoicesStream.str() << endl
 					   << setw(valueOffset) << left << "Container selector strategy " << ": " << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
-					   << setw(valueOffset) << left << "Traversals " << ": " << traversalChoicesStram.str() << endl
+					   << setw(valueOffset) << left << "Traversals " << ": " << traversalChoicesStream.str() << endl
 					   << setw(valueOffset) << left << "Traversal selector strategy " << ": "  << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
 					   << setw(valueOffset) << left << "Tuning frequency" << ": "  << _tuningFrequency << endl
 					   << setw(valueOffset) << left << "Number of samples " << ": "  << _tuningSamples << endl
@@ -64,6 +64,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, _containerChoices,
 						   _traversalChoices, _containerSelectorStrategy, _traversalSelectorStrategy, _tuningFrequency,
 						   _tuningSamples);
+	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
