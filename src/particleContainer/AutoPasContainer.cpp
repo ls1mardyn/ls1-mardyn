@@ -9,7 +9,8 @@
 #include <exception>
 #include "Domain.h"
 #include "Simulation.h"
-#include "autopas/utils/StringParser.h"
+#include "autopas/utils/Logger.h"
+#include "autopas/utils/StringUtils.h"
 
 AutoPasContainer::AutoPasContainer()
 	: _cutoff(0.), _verletSkin(0.3), _verletRebuildFrequency(10u), _tuningFrequency(100u), _autopasContainer() {
@@ -21,21 +22,39 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	// set default values here!
 
-	_traversalChoices = autopas::utils::StringParser::parseTraversalOptions(
+	_traversalChoices = autopas::utils::StringUtils::parseTraversalOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08")));
-	_containerChoices = autopas::utils::StringParser::parseContainerOptions(
+	_containerChoices = autopas::utils::StringUtils::parseContainerOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell")));
 
-	_traversalSelectorStrategy = autopas::utils::StringParser::parseSelectorStrategy(
+	_traversalSelectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("traversalSelectorStrategy", "median")));
-	_containerSelectorStrategy = autopas::utils::StringParser::parseSelectorStrategy(
+	_containerSelectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("containerSelectorStrategy", "median")));
 
-	_dataLayout = autopas::utils::StringParser::parseDataLayout(
+	_dataLayout = autopas::utils::StringUtils::parseDataLayout(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa")));
 
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
+
+	std::stringstream containerChoicesStram;
+	for_each(_containerChoices.begin(), _containerChoices.end(),
+			 [&](auto &choice) { containerChoicesStram << autopas::utils::StringUtils::to_string(choice) << " "; });
+	std::stringstream traversalChoicesStram;
+	for_each(_traversalChoices.begin(), _traversalChoices.end(),
+			 [&](auto &choice) { traversalChoicesStram << autopas::utils::StringUtils::to_string(choice) << " "; });
+
+	int valueOffset = 28;
+	global_log->info() << "AutoPas configuration:" << endl
+	                   << setw(valueOffset) << left << "Data Layout " << ": " << autopas::utils::StringUtils::to_string(_dataLayout) << endl
+					   << setw(valueOffset) << left << "Container " << ": " << containerChoicesStram.str() << endl
+					   << setw(valueOffset) << left << "Container selector strategy " << ": " << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Traversals " << ": " << traversalChoicesStram.str() << endl
+					   << setw(valueOffset) << left << "Traversal selector strategy " << ": "  << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Tuning frequency" << ": "  << _tuningFrequency << endl
+					   << setw(valueOffset) << left << "Number of samples " << ": "  << _tuningSamples << endl
+					   ;
 }
 
 bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
