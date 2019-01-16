@@ -13,7 +13,16 @@
 #include "autopas/utils/StringUtils.h"
 
 AutoPasContainer::AutoPasContainer()
-	: _cutoff(0.), _verletSkin(0.3), _verletRebuildFrequency(10u), _tuningFrequency(100u), _autopasContainer() {
+    : _cutoff(0.),
+	  _verletSkin(0.3),
+	  _verletRebuildFrequency(10u),
+	  _tuningFrequency(100u),
+	  _autopasContainer(),
+	  _traversalChoices(autopas::allTraversalOptions),
+	  _containerChoices(autopas::allContainerOptions),
+	  _traversalSelectorStrategy(autopas::SelectorStrategy::fastestMedian),
+	  _containerSelectorStrategy(autopas::SelectorStrategy::fastestMedian),
+	  _dataLayout(autopas::DataLayoutOption::soa){
 	// autopas::Logger::get()->set_level(spdlog::level::debug);
 }
 
@@ -47,11 +56,14 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << endl
-	                   << setw(valueOffset) << left << "Data Layout " << ": " << autopas::utils::StringUtils::to_string(_dataLayout) << endl
+	                   << setw(valueOffset) << left << "Data Layout " << ": "
+	                   << autopas::utils::StringUtils::to_string(_dataLayout) << endl
 					   << setw(valueOffset) << left << "Container " << ": " << containerChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Container selector strategy " << ": " << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Container selector strategy " << ": "
+					   << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
 					   << setw(valueOffset) << left << "Traversals " << ": " << traversalChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Traversal selector strategy " << ": "  << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Traversal selector strategy " << ": "
+					   << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
 					   << setw(valueOffset) << left << "Tuning frequency" << ": "  << _tuningFrequency << endl
 					   << setw(valueOffset) << left << "Number of samples " << ": "  << _tuningSamples << endl
 					   ;
