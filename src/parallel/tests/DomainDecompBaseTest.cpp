@@ -15,23 +15,21 @@
 
 TEST_SUITE_REGISTRATION(DomainDecompBaseTest);
 
-DomainDecompBaseTest::DomainDecompBaseTest() {
-}
+DomainDecompBaseTest::DomainDecompBaseTest() = default;
 
-DomainDecompBaseTest::~DomainDecompBaseTest() {
-}
+DomainDecompBaseTest::~DomainDecompBaseTest() = default;
 
 void DomainDecompBaseTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
 	// original pointer will be deleted by tearDown()
 	_domainDecomposition = new DomainDecompBase();
 
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
-	int numMols = container->getNumberOfParticles();
+	unsigned long numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->exchangeMolecules(container, _domain);
 	container->deleteOuterParticles();
 
-	int newNumMols = container->getNumberOfParticles();
+	unsigned long newNumMols = container->getNumberOfParticles();
 //	_domain->writeCheckpoint("dump.txt", container, _domainDecomposition);
 	ASSERT_EQUAL(numMols, newNumMols);
 
@@ -49,7 +47,7 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 	_domainDecomposition = new DomainDecompBase();
 
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
-	int numMols = container->getNumberOfParticles();
+	unsigned long numMols = container->getNumberOfParticles();
 
 	double bBoxMin[3];
 	double bBoxMax[3];
@@ -61,7 +59,7 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 	std::set<unsigned long> upper[3];  // the id of particles that were close to the upper boundary in the specific dimension are stored here
 
 	for (auto m = container->iterator(); m.isValid(); ++m) {
-		for (int dim = 0; dim < 3; dim++) {
+		for (unsigned short dim = 0; dim < 3; dim++) {
 			if (m->r(dim) < bBoxMin[dim] + cutoff / 2.) {
 				// we shift particles close to the lower boundary to outside of the lower boundary.
 				// in this case they are put to the smallest (in abs values) negative representable number
@@ -86,7 +84,7 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 	_domainDecomposition->exchangeMolecules(container, _domain);
 	container->deleteOuterParticles();
 
-	int newNumMols = container->getNumberOfParticles();
+	unsigned long newNumMols = container->getNumberOfParticles();
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
 	ASSERT_EQUAL(numMols, newNumMols);
 
