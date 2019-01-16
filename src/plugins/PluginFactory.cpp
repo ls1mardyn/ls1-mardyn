@@ -94,7 +94,9 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(XyzWriter);
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
+#ifndef MARDYN_AUTOPAS
     REGISTER_PLUGIN(VTKGridWriter);
+#endif
 #endif
 }
 

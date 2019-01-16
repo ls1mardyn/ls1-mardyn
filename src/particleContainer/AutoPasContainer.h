@@ -86,6 +86,13 @@ private:
 	double _verletSkin;
 	unsigned int _verletRebuildFrequency;
 	unsigned int _tuningFrequency;
+	unsigned int _tuningSamples;
 	typedef autopas::FullParticleCell<Molecule> CellType;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
+
+	std::vector<autopas::TraversalOptions>_traversalChoices;
+	std::vector<autopas::ContainerOptions>_containerChoices;
+	autopas::SelectorStrategy _traversalSelectorStrategy;
+	autopas::SelectorStrategy _containerSelectorStrategy;
+	autopas::DataLayoutOption _dataLayout;
 };

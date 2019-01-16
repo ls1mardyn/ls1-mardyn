@@ -9,24 +9,64 @@
 #include <exception>
 #include "Domain.h"
 #include "Simulation.h"
+#include "autopas/utils/Logger.h"
+#include "autopas/utils/StringUtils.h"
 
 AutoPasContainer::AutoPasContainer()
 	: _cutoff(0.), _verletSkin(0.3), _verletRebuildFrequency(10u), _tuningFrequency(100u), _autopasContainer() {
 	// autopas::Logger::get()->set_level(spdlog::level::debug);
 }
 
-void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {}
+void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
+	string oldPath(xmlconfig.getcurrentnodepath());
+
+	// set default values here!
+
+	_traversalChoices = autopas::utils::StringUtils::parseTraversalOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08")));
+	_containerChoices = autopas::utils::StringUtils::parseContainerOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell")));
+
+	_traversalSelectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("traversalSelectorStrategy", "median")));
+	_containerSelectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("containerSelectorStrategy", "median")));
+
+	_dataLayout = autopas::utils::StringUtils::parseDataLayout(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa")));
+
+	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
+	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
+
+	std::stringstream containerChoicesStream;
+	for_each(_containerChoices.begin(), _containerChoices.end(),
+			 [&](auto &choice) { containerChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+	std::stringstream traversalChoicesStream;
+	for_each(_traversalChoices.begin(), _traversalChoices.end(),
+			 [&](auto &choice) { traversalChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+
+	int valueOffset = 28;
+	global_log->info() << "AutoPas configuration:" << endl
+	                   << setw(valueOffset) << left << "Data Layout " << ": " << autopas::utils::StringUtils::to_string(_dataLayout) << endl
+					   << setw(valueOffset) << left << "Container " << ": " << containerChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Container selector strategy " << ": " << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Traversals " << ": " << traversalChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Traversal selector strategy " << ": "  << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Tuning frequency" << ": "  << _tuningFrequency << endl
+					   << setw(valueOffset) << left << "Number of samples " << ": "  << _tuningSamples << endl
+					   ;
+}
 
 bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	mardyn_assert(_cutoff > 0.);
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
-	std::vector<autopas::ContainerOptions> containerOptions = {/*autopas::ContainerOptions ::directSum,*/
-															   autopas::ContainerOptions ::linkedCells};
-	unsigned int numSamples = 5;
-	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, containerOptions,
-						   autopas::allTraversalOptions, autopas::SelectorStrategy::fastestMean,
-						   autopas::SelectorStrategy::fastestMean, _tuningFrequency, numSamples);
+
+	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, _containerChoices,
+						   _traversalChoices, _containerSelectorStrategy, _traversalSelectorStrategy, _tuningFrequency,
+						   _tuningSamples);
+	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
+
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.

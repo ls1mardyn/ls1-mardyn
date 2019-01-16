@@ -157,6 +157,30 @@
           </traversalData>
       </datastructure>
 
+      <datastructure type="AutoPas">
+        <!-- specify all allowed traversals as a comma separated list -->
+        <allowedTraversals>c08, sli</allowedTraversals>
+        <!-- specify all allowed containers as a comma separated list -->
+        <!-- possible values:
+          - directSum
+          - linkedCells
+          - verlet
+          - vcells
+          - vcluster
+          -->
+        <allowedContainers>linkedCells, vcells, vcluster</allowedContainers>
+        <!-- specify what metric the respective selector should use to determine the optimal traversal -->
+        <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
+        <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
+        <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
+        <!-- Data layout to be used: AoS or SoA -->
+        <dataLayout>SoA</dataLayout>
+        <!-- How many iterations before retuning -->
+        <tuningInterval>1000</tuningInterval>
+        <!-- How many samples should the tuner take for each tested combination -->
+        <tuningSamples>5</tuningSamples>
+      </datastructure>
+
       <!-- cutoff definitions -->
       <cutoffs type="CenterOfMass" >
         <!-- Lennard Jones cutoff radius -->
