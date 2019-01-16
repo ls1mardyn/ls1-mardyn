@@ -8,7 +8,15 @@
 #include "ProfileBase.h"
 #include "plugins/SpatialProfile.h"
 
-
+/* @brief VirialProfile is writing a special 1D output in Y dimension and does therefore
+	 * not call the normal writeMatrix function. The output is always the same, regardless
+	 * of cartesian or cylindrical sampling. For this output, pressures in x,y,z and the pressure differential in
+	 * y-direction are computed in each layer and output as one line. There is therefore no spatial resolution
+	 * inside the layer.
+	 * Each line is: y-value, PD, PX, PY, PZ
+	 *
+	 * VirialProfile also depends on a DensityProfile, which is triggered automatically
+*/
 class VirialProfile : public ProfileBase {
 public:
 	VirialProfile(DensityProfile* densProf) :
@@ -34,9 +42,7 @@ public:
 		}
 	}
 
-	/*! VirialProfile is writing a special 1D output in Y dimension and does therefore
-	 * not call the normal writeMatrix function. The output is always the same, regardless
-	 * of cartesian or cylindrical sampling.
+	/*! Special 1D output
 	 *
 	 * @param prefix
 	 * @param accumulatedDatasets

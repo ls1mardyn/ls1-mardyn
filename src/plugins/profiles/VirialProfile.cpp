@@ -30,15 +30,20 @@ void VirialProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	double layerVolume;
 	double layerHeight = _samplInfo.globalLength[1] / _samplInfo.universalProfileUnit[1];
 	if (_samplInfo.cylinder) {
+		// V = height * PI * R^2
 		layerVolume = layerHeight * M_PI * _samplInfo.globalLength[0] * _samplInfo.globalLength[0];
 	} else {
+		// V = height * X * Z
 		layerVolume = layerHeight * _samplInfo.globalLength[0] * _samplInfo.globalLength[2];
 	}
+	// Get current temperature from 0 thermostat -> temperature of all molecules even if not under thermostat control
 	double globalTemperature = global_simulation->getDomain()->getCurrentTemperature(0);
+
 	// Pressure increases with "Depth" in Y
 	// Calculate Pressures on layer, then write 1D output
 	for (unsigned y = 0; y < _samplInfo.universalProfileUnit[1]; y++) {
 		double hval = (y + 0.5) / _samplInfo.universalInvProfileUnit[1];
+		// Partial pressures
 		long double Pd = 0.0;
 		long double Px = 0.0;
 		long double Py = 0.0;
