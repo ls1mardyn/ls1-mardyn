@@ -26,7 +26,15 @@ void VirialProfile::output (string prefix, long unsigned accumulatedDatasets) {
 	// y value, PD, PX, PY, PZ
 	outfile << "# y\tvn-vt\tpx\tpy\tpz\n# \n";
 
-	double layerVolume = _samplInfo.globalLength[0] * _samplInfo.globalLength[1];
+	unsigned long unID;
+	double layerVolume;
+    double layerHeight = _samplInfo.globalLength[1]/_samplInfo.universalProfileUnit[1];
+	if(_samplInfo.cylinder){
+	    layerVolume = layerHeight * M_PI * _samplInfo.globalLength[0]*_samplInfo.globalLength[0];
+	}
+	else{
+	    layerVolume = layerHeight * _samplInfo.globalLength[0] * _samplInfo.globalLength[2];
+	}
 	double globalTemperature = global_simulation->getDomain()->getCurrentTemperature(0);
 	// Pressure increases with "Depth" in Y
 	// Calculate Pressures on layer, then write 1D output
@@ -40,11 +48,19 @@ void VirialProfile::output (string prefix, long unsigned accumulatedDatasets) {
 		long double Ny = 0.0;
 
 		// Build values from new X-Z layer
-		for (unsigned x = 0; x < _samplInfo.universalProfileUnit[0]; x++) {
-			for (unsigned z = 0; z < _samplInfo.universalProfileUnit[2]; z++) {
-				auto unID = (unsigned long) (
-						x * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2] +
-						y * _samplInfo.universalProfileUnit[1] + z);
+		// a: x in cart / rho in cyl
+		// b: z in cart / phi in cyl
+		for (unsigned a = 0; a < _samplInfo.universalProfileUnit[0]; a++) {
+			for (unsigned b = 0; b < _samplInfo.universalProfileUnit[2]; b++) {
+			    if(_samplInfo.cylinder){
+			        unID = (unsigned long) (y * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2]
+                                   + a * _samplInfo.universalProfileUnit[2] + b);
+                }
+			    else{
+                    unID = (unsigned long) (
+                            a * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2] +
+                            y * _samplInfo.universalProfileUnit[1] + b);
+			    }
 				// Add pressures
 				Px += _global3dProfile[unID][0];
 				Py += _global3dProfile[unID][1];
