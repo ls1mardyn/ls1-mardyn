@@ -261,7 +261,7 @@ pipeline {
                 unstash 'repo'
                 dir ("build"){
                   sh """
-                    cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON ..
+                    cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
                     make -j8
                   """
                 }
