@@ -11,7 +11,7 @@ if(ENABLE_VTK)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVTK")
     include_directories(SYSTEM
             "${PROJECT_SOURCE_DIR}/dependencies-external/libxsd"
-            "$ENV{XERCES_INCDIR}"
+            $ENV{XERCES_INCDIR}
             )
 else()
     message(STATUS "VTK Disabled")
