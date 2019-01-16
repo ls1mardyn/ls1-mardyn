@@ -67,24 +67,24 @@ class SpatialProfile : public PluginBase {
 
 public:
 
-	void init (ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
+	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
-	void readXML (XMLfileUnits& xmlconfig) override;
+	void readXML(XMLfileUnits& xmlconfig) override;
 
-	void endStep (
+	void endStep(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep) override;
 
-	void finish (ParticleContainer* particleContainer,
-				 DomainDecompBase* domainDecomp, Domain* domain) override {};
+	void finish(ParticleContainer* particleContainer,
+				DomainDecompBase* domainDecomp, Domain* domain) override {};
 
-	unsigned long getCartesianUID (ParticleIterator& thismol);
+	unsigned long getCartesianUID(ParticleIterator& thismol);
 
-	long getCylUID (ParticleIterator& thismol);
+	long getCylUID(ParticleIterator& thismol);
 
-	std::string getPluginName () override { return std::string("SpatialProfile"); }
+	std::string getPluginName() override { return std::string("SpatialProfile"); }
 
-	static PluginBase* createInstance () { return new SpatialProfile(); }
+	static PluginBase* createInstance() { return new SpatialProfile(); }
 
 	SamplingInformation samplInfo;
 
@@ -119,7 +119,7 @@ private:
 	bool _TEMPERATURE = false;
 	bool _VIRIAL = false;
 
-	void addProfile (ProfileBase* profile);
+	void addProfile(ProfileBase* profile);
 
 };
 

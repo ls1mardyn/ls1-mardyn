@@ -18,7 +18,7 @@
 * @param xmlconfig
 */
 
-void SpatialProfile::readXML (XMLfileUnits& xmlconfig) {
+void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 	global_log->debug() << "[SpatialProfile] enabled" << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "[SpatialProfile] Write frequency: " << _writeFrequency << endl;
@@ -123,7 +123,7 @@ void SpatialProfile::readXML (XMLfileUnits& xmlconfig) {
  * @param domainDecomp
  * @param domain
  */
-void SpatialProfile::init (ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 	// Get Global length
 	for (unsigned d = 0; d < 3; d++) {
 		samplInfo.globalLength[d] = domain->getGlobalLength(d);
@@ -200,8 +200,8 @@ void SpatialProfile::init (ParticleContainer* particleContainer, DomainDecompBas
  * @param domain
  * @param simstep
  */
-void SpatialProfile::endStep (ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-							  unsigned long simstep) {
+void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
+							 unsigned long simstep) {
 	int mpi_rank = domainDecomp->getRank();
 
 	unsigned xun, yun, zun;
@@ -275,7 +275,7 @@ void SpatialProfile::endStep (ParticleContainer* particleContainer, DomainDecomp
 	}
 }
 
-unsigned long SpatialProfile::getCartesianUID (ParticleIterator& thismol) {
+unsigned long SpatialProfile::getCartesianUID(ParticleIterator& thismol) {
 	auto xun = (unsigned) floor(thismol->r(0) * samplInfo.universalInvProfileUnit[0]);
 	auto yun = (unsigned) floor(thismol->r(1) * samplInfo.universalInvProfileUnit[1]);
 	auto zun = (unsigned) floor(thismol->r(2) * samplInfo.universalInvProfileUnit[2]);
@@ -300,7 +300,7 @@ unsigned long SpatialProfile::getCartesianUID (ParticleIterator& thismol) {
  * @param thismol
  * @return
  */
-long SpatialProfile::getCylUID (ParticleIterator& thismol) {
+long SpatialProfile::getCylUID(ParticleIterator& thismol) {
 
 	int phiUn, rUn, hUn;// (phiUn,rUn,yun): bin number in a special direction, e.g. rUn==5 corresponds to the 5th bin in the radial direction,
 	long unID;    // as usual
@@ -348,7 +348,7 @@ long SpatialProfile::getCylUID (ParticleIterator& thismol) {
 	return unID;
 }
 
-void SpatialProfile::addProfile (ProfileBase* profile) {
+void SpatialProfile::addProfile(ProfileBase* profile) {
 	global_log->info() << "[SpatialProfile] Profile added: \n";
 	_profiles.push_back(profile);
 	_comms += profile->comms();
