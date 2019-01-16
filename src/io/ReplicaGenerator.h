@@ -12,21 +12,19 @@
 
 using namespace std;
 
-enum SystemTypes : uint8_t
-{
+enum SystemTypes : uint8_t {
 	ST_UNKNOWN = 0,
 	ST_HOMOGENEOUS = 1,
 	ST_HETEROGENEOUS_VAPOR_LIQUID_VAPOR = 2,
 	ST_HETEROGENEOUS_LIQUID_VAPOR = 3,
 };
 
-struct SubDomain
-{
+struct SubDomain {
 	std::string strFilePathHeader;
 	std::string strFilePathData;
 	std::vector<Molecule> vecParticles;
 	uint64_t numParticles;
-	std::array<double,3> arrBoxLength;
+	std::array<double, 3> arrBoxLength;
 	double dVolume;
 	double dDensity;
 };
@@ -36,15 +34,18 @@ struct SubDomain
  * Description
  */
 class DomainDecompBase;
+
 class MoleculeDataReader;
-class ReplicaGenerator : public InputBase
-{
+
+class ReplicaGenerator : public InputBase {
 public:
 	ReplicaGenerator();
+
 	~ReplicaGenerator();
 
-	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/){}
-	unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
+	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {}
+
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
 
 	/** @brief Read in XML configuration for MkesferaGenerator and all its included objects.
 	 *
@@ -58,7 +59,9 @@ public:
 
 private:
 	void init();
+
 	void readReplicaPhaseSpaceHeader(SubDomain& subDomain);
+
 	void readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDecompBase* domainDecomp);
 
 private:
@@ -78,23 +81,24 @@ private:
 	std::vector<uint32_t> _vecChangeCompIDsLiq;
 };
 
-class MoleculeDataReader
-{
+class MoleculeDataReader {
 protected:
 	MoleculeDataReader() {}
+
 public:
 	virtual ~MoleculeDataReader() {};
+
 	virtual void read(std::ifstream& ifs, Molecule& mol, std::vector<Component>& components) = 0;
 };
 
-class MoleculeDataReaderICRVQD : public MoleculeDataReader
-{
+class MoleculeDataReaderICRVQD : public MoleculeDataReader {
 public:
 	MoleculeDataReaderICRVQD() {}
+
 public:
 	virtual ~MoleculeDataReaderICRVQD() {};
-	virtual void read(std::ifstream& ifs, Molecule& mol, std::vector<Component>& components)
-	{
+
+	virtual void read(std::ifstream& ifs, Molecule& mol, std::vector<Component>& components) {
 		double rx, ry, rz, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
 		rx = ry = rz = vx = vy = vz = q0 = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 		uint64_t id = 0;
@@ -116,24 +120,24 @@ public:
 		ifs.read(reinterpret_cast<char*> (&Dy), 8);
 		ifs.read(reinterpret_cast<char*> (&Dz), 8);
 
-		Component* component = &components.at(cid-1);
+		Component* component = &components.at(cid - 1);
 		Molecule tmp(id, component,
-				rx, ry ,rz,
-				vx, vy, vz,
-				q0, q1, q2, q3,
-				Dx, Dy, Dz);
+					 rx, ry, rz,
+					 vx, vy, vz,
+					 q0, q1, q2, q3,
+					 Dx, Dy, Dz);
 		mol = tmp;
 	}
 };
 
-class MoleculeDataReaderICRV : public MoleculeDataReader
-{
+class MoleculeDataReaderICRV : public MoleculeDataReader {
 public:
 	MoleculeDataReaderICRV() {}
+
 public:
 	virtual ~MoleculeDataReaderICRV() {};
-	virtual void read(std::ifstream& ifs, Molecule& mol, std::vector<Component>& components)
-	{
+
+	virtual void read(std::ifstream& ifs, Molecule& mol, std::vector<Component>& components) {
 		double rx, ry, rz, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
 		rx = ry = rz = vx = vy = vz = q0 = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 		uint64_t id = 0;
@@ -148,24 +152,24 @@ public:
 		ifs.read(reinterpret_cast<char*> (&vy), 8);
 		ifs.read(reinterpret_cast<char*> (&vz), 8);
 
-		Component* component = &components.at(cid-1);
+		Component* component = &components.at(cid - 1);
 		Molecule tmp(id, component,
-				rx, ry ,rz,
-				vx, vy, vz,
-				q0, q1, q2, q3,
-				Dx, Dy, Dz);
+					 rx, ry, rz,
+					 vx, vy, vz,
+					 q0, q1, q2, q3,
+					 Dx, Dy, Dz);
 		mol = tmp;
 	}
 };
 
-class MoleculeDataReaderIRV : public MoleculeDataReader
-{
+class MoleculeDataReaderIRV : public MoleculeDataReader {
 public:
 	MoleculeDataReaderIRV() {}
+
 public:
 	virtual ~MoleculeDataReaderIRV() {};
-	virtual void read(std::ifstream& ifs, Molecule& mol, std::vector<Component>& components)
-	{
+
+	virtual void read(std::ifstream& ifs, Molecule& mol, std::vector<Component>& components) {
 		double rx, ry, rz, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
 		rx = ry = rz = vx = vy = vz = q0 = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 		uint64_t id = 0;
@@ -181,10 +185,10 @@ public:
 
 		Component* component = &components.at(0);
 		Molecule tmp(id, component,
-				rx, ry ,rz,
-				vx, vy, vz,
-				q0, q1, q2, q3,
-				Dx, Dy, Dz);
+					 rx, ry, rz,
+					 vx, vy, vz,
+					 q0, q1, q2, q3,
+					 Dx, Dy, Dz);
 		mol = tmp;
 	}
 };

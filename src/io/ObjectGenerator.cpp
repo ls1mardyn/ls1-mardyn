@@ -70,7 +70,8 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		_velocityAssigner->setTemperature(ensemble->T());
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->warning() << "No velocityAssigner specified.  Will not change velocities provided by filler." << endl;
+		global_log->warning() << "No velocityAssigner specified.  Will not change velocities provided by filler."
+							  << endl;
 	}
 }
 
@@ -83,19 +84,22 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 class BoundingBox : public Cuboid {
 public:
 	BoundingBox(double bBoxMin[3], double bBoxMax[3]) : Cuboid(bBoxMin, bBoxMax) {}
+
 	bool isInside(double r[3]) {
 		return (lowerCorner(0) <= r[0] && r[0] < upperCorner(0))
-			&& (lowerCorner(1) <= r[1] && r[1] < upperCorner(1))
-			&& (lowerCorner(2) <= r[2] && r[2] < upperCorner(2));
+			   && (lowerCorner(1) <= r[1] && r[1] < upperCorner(1))
+			   && (lowerCorner(2) <= r[2] && r[2] < upperCorner(2));
 	}
+
 	std::string getName() { return std::string("BoundingBox"); };
 };
 
 unsigned long
-ObjectGenerator::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
+ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
 	unsigned long numMolecules = 0;
 	if(_moleculeIdPool == nullptr) {
-		_moleculeIdPool = std::make_shared<MoleculeIdPool>(std::numeric_limits<unsigned long>::max(), domainDecomp->getNumProcs(), domainDecomp->getRank());
+		_moleculeIdPool = std::make_shared<MoleculeIdPool>(std::numeric_limits<unsigned long>::max(),
+														   domainDecomp->getNumProcs(), domainDecomp->getRank());
 	}
 
 	double bBoxMin[3];
@@ -114,7 +118,7 @@ ObjectGenerator::readPhaseSpace(ParticleContainer *particleContainer, Domain *do
 			_velocityAssigner->assignVelocity(&molecule);
 		}
 		bool inserted = particleContainer->addParticle(molecule);
-		if(inserted){
+		if(inserted) {
 			numMolecules++;
 			moleculeID = _moleculeIdPool->getNewMoleculeId();
 		}

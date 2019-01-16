@@ -17,23 +17,23 @@ class XMLfileUnits;
 //! @todo more comment
 class InputBase {
 public:
-	InputBase () {}
+	InputBase() {}
 
-	virtual ~InputBase () {}
+	virtual ~InputBase() {}
 
 	/** @brief read the phase space components and header information
 	 * @param domain  pointer to domain object
 	 * @param timestep timestep length
 	 */
-	virtual void readPhaseSpaceHeader (Domain* domain, double timestep) = 0;
+	virtual void readPhaseSpaceHeader(Domain* domain, double timestep) = 0;
 
-	virtual void readXML (XMLfileUnits& /*xmlconfig*/) {}
+	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
 
 	/** @brief read the actual phase space information
 	 * @return number of read in molecules added to the particle containers of all processes
 	 */
 	virtual unsigned long
-	readPhaseSpace (ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) = 0;
+	readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) = 0;
 
 };
 

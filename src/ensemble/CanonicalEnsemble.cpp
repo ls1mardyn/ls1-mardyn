@@ -7,9 +7,11 @@
 #include "Domain.h"
 #include "molecules/Component.h"
 #include "molecules/Molecule.h"
+
 #ifdef ENABLE_MPI
 #include "parallel/CollectiveCommunication.h"
 #endif
+
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
@@ -26,14 +28,14 @@ CanonicalEnsemble::CanonicalEnsemble() :
 }
 
 
-void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable ) {
+void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) {
 
 	const int numComponents = this->numComponents();
 
 	/* calculate local variables */
 
 	/* "fixed" variables of this ensemble */
-	if ( (variable & NUM_PARTICLES) | (variable & TEMPERATURE) ) {
+	if((variable & NUM_PARTICLES) | (variable & TEMPERATURE)) {
 		global_log->debug() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
 		std::vector<unsigned long> numMolecules(numComponents, 0ul);
@@ -44,7 +46,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		{
 			std::vector<unsigned long> numMolecules_private(numComponents, 0ul);
 
-			for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
+			for(auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
 				numMolecules_private[molecule->componentid()]++;
 			}
 
@@ -52,7 +54,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 #pragma omp critical
 #endif
 			{
-				for (unsigned int i = 0; i < numMolecules.size(); i++) {
+				for(unsigned int i = 0; i < numMolecules.size(); i++) {
 					numMolecules[i] += numMolecules_private[i];
 				}
 
@@ -65,7 +67,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		_simulation.domainDecomposition().collCommAllreduceSum();
 #endif
 		_N = 0;
-		for( int cid = 0; cid < numComponents; cid++) {
+		for(int cid = 0; cid < numComponents; cid++) {
 #ifdef ENABLE_MPI
 			numMolecules[cid] =  _simulation.domainDecomposition().collCommGetUnsLong();
 #endif
@@ -78,22 +80,22 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 #endif
 	}
 
-	if ( variable & VOLUME ) {
+	if(variable & VOLUME) {
 		global_log->debug() << "Updating volume" << endl;
 		/* TODO: calculate actual volume or return specified volume as
 		 * the canonical ensemble should have a fixed volume? */
 	}
 
 	/* variable variables of this ensemble */
-	if ( variable & CHEMICAL_POTENTIAL ) {
+	if(variable & CHEMICAL_POTENTIAL) {
 		global_log->debug() << "Updating chemical potential" << endl;
 	}
 
-	if ( variable & PRESSURE ) {
+	if(variable & PRESSURE) {
 		global_log->info() << "Updating pressure" << endl;
 	}
 
-	if ( (variable & ENERGY) | (variable & TEMPERATURE) ) {
+	if((variable & ENERGY) | (variable & TEMPERATURE)) {
 		global_log->debug() << "Updating energy" << endl;
 		std::vector<double> E_trans(numComponents, 0.);
 		std::vector<double> E_rot(numComponents, 0.);
@@ -106,7 +108,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 			std::vector<unsigned long> E_trans_priv(numComponents, 0.);
 			std::vector<unsigned long> E_rot_priv(numComponents, 0.);
 
-			for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
+			for(auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
 				const int cid = molecule->componentid();
 				double E_trans_loc = 0.0;
 				double E_rot_loc = 0.0;
@@ -118,7 +120,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 #pragma omp critical
 #endif
 			{
-				for (unsigned int i = 0; i < E_trans_priv.size(); i++) {
+				for(unsigned int i = 0; i < E_trans_priv.size(); i++) {
 					E_trans[i] += E_trans_priv[i];
 					E_rot[i] += E_rot[i];
 				}
@@ -134,7 +136,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 	  _simulation.domainDecomposition().collCommAllreduceSum();
 #endif
 		_E = _E_trans = _E_rot = 0.0;
-		for( int cid = 0; cid < numComponents; cid++) {
+		for(int cid = 0; cid < numComponents; cid++) {
 #ifdef ENABLE_MPI
 			E_trans[cid] =  _simulation.domainDecomposition().collCommGetDouble();
 		  E_rot[cid]   =  _simulation.domainDecomposition().collCommGetDouble();
@@ -144,7 +146,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 			_components[cid].setE_trans(E_trans[cid]);
 			_components[cid].setE_rot(E_rot[cid]);
 			_E_trans += E_trans[cid];
-			_E_rot   += E_rot[cid];
+			_E_rot += E_rot[cid];
 		}
 #ifdef ENABLE_MPI
 		_simulation.domainDecomposition().collCommFinalize();
@@ -155,14 +157,14 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 		_E = _E_trans + _E_rot;
 	}
 
-	if ( variable & TEMPERATURE ) {
+	if(variable & TEMPERATURE) {
 		global_log->debug() << "Updating temperature" << endl;
 		/* TODO: calculate actual temperature or return specified temperature as 
 		 * the canonical ensemble should have a fixed temperature? */
 		long long totalDegreesOfFreedom = 0;
-		for( int cid = 0; cid < numComponents; cid++) {
+		for(int cid = 0; cid < numComponents; cid++) {
 			unsigned int rdf = _components[cid].getRotationalDegreesOfFreedom();
-			long long N      = _components[cid].getNumMolecules();
+			long long N = _components[cid].getNumMolecules();
 			long long degreesOfFreedom = (3 + rdf) * N;
 			totalDegreesOfFreedom += degreesOfFreedom;
 
@@ -170,7 +172,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer *particleContaine
 			double T = E_kin / degreesOfFreedom;
 			global_log->debug() << "Temperature of component " << cid << ": " <<
 								"T = " << T << endl;
-			_components[cid].setT( T );
+			_components[cid].setT(T);
 		}
 		_T = _E / totalDegreesOfFreedom;
 	}
@@ -191,10 +193,9 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 	string domaintype;
 	xmlconfig.getNodeValue("domain@type", domaintype);
 	global_log->info() << "Domain type: " << domaintype << endl;
-	if( "box" == domaintype) {
+	if("box" == domaintype) {
 		_domain = new BoxDomain();
-	}
-	else {
+	} else {
 		global_log->error() << "Volume type not supported." << endl;
 		Simulation::exit(1);
 	}
@@ -206,8 +207,8 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 	global_log->warning() << "Box dimensions not set yet in domain class" << endl;
 }
 
-void CanonicalEnsemble::beforeThermostat(unsigned long simstep, unsigned long initStatistics){
-	if (simstep >= initStatistics) {
+void CanonicalEnsemble::beforeThermostat(unsigned long simstep, unsigned long initStatistics) {
+	if(simstep >= initStatistics) {
 		global_simulation->getDomain()->record_cv();
 	}
 }

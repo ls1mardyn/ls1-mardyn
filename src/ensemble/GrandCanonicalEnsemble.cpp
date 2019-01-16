@@ -14,7 +14,7 @@ GrandCanonicalEnsemble::GrandCanonicalEnsemble() :
 	_simulationDomain = global_simulation->getDomain();
 }
 
-void GrandCanonicalEnsemble::initConfigXML(ParticleContainer *moleculeContainer) {
+void GrandCanonicalEnsemble::initConfigXML(ParticleContainer* moleculeContainer) {
 	int ownrank = 0;
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
@@ -23,7 +23,7 @@ void GrandCanonicalEnsemble::initConfigXML(ParticleContainer *moleculeContainer)
 	unsigned idi = _lmu.size();
 	unsigned j = 0;
 	std::list<ChemicalPotential>::iterator cpit;
-	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+	for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 		cpit->setIncrement(idi);
 		double tmp_molecularMass = global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->m();
 		cpit->setSystem(_simulationDomain->getGlobalLength(0),
@@ -41,45 +41,47 @@ void GrandCanonicalEnsemble::initConfigXML(ParticleContainer *moleculeContainer)
 		/* TODO: thermostat */
 		double Tcur = _simulationDomain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double Ttar = _simulationDomain->severalThermostats() ? _simulationDomain->getTargetTemperature(1) : _simulationDomain->getTargetTemperature(0);
-		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
+		double Ttar = _simulationDomain->severalThermostats() ? _simulationDomain->getTargetTemperature(1)
+															  : _simulationDomain->getTargetTemperature(0);
+		if((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 		cpit->submitTemperature(Tcur);
-		if (global_simulation->getH() != 0.0)
+		if(global_simulation->getH() != 0.0)
 			cpit->setPlanckConstant(global_simulation->getH());
 		j++;
 	}
 }
 
 void GrandCanonicalEnsemble::prepare_start() {
-	if (_lmu.size() > 0) {
+	if(_lmu.size() > 0) {
 		/* TODO: thermostat */
 		double Tcur = _simulationDomain->getGlobalCurrentTemperature();
 		/* FIXME: target temperature from thermostat ID 0 or 1? */
 		double
 				Ttar = _simulationDomain->severalThermostats() ? _simulationDomain->getTargetTemperature(1)
 															   : _simulationDomain->getTargetTemperature(0);
-		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
+		if((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 
 		list<ChemicalPotential>::iterator cpit;
-		if (global_simulation->getH() == 0.0)
+		if(global_simulation->getH() == 0.0)
 			global_simulation->setH(sqrt(6.2831853 * Ttar));
-		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+		for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(global_simulation->getH());
 		}
 	}
 }
 
-void GrandCanonicalEnsemble::beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
+void GrandCanonicalEnsemble::beforeEventNewTimestep(ParticleContainer* moleculeContainer,
+													DomainDecompBase* domainDecomposition,
 													unsigned long simstep) {
 	/** @todo What is this good for? Where come the numbers from? Needs documentation */
-	if (simstep >= _initGrandCanonical) {
+	if(simstep >= _initGrandCanonical) {
 		unsigned j = 0;
 		list<ChemicalPotential>::iterator cpit;
-		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-			if (!((simstep + 2 * j + 3) % cpit->getInterval())) {
+		for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+			if(!((simstep + 2 * j + 3) % cpit->getInterval())) {
 				cpit->prepareTimestep(moleculeContainer, domainDecomposition);
 			}
 			j++;
@@ -87,21 +89,23 @@ void GrandCanonicalEnsemble::beforeEventNewTimestep(ParticleContainer *moleculeC
 	}
 }
 
-void GrandCanonicalEnsemble::afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
+void GrandCanonicalEnsemble::afterForces(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
+										 CellProcessor* cellProcessor,
 										 unsigned long simstep) {
 
-	if (simstep >= _initGrandCanonical) {
+	if(simstep >= _initGrandCanonical) {
 		unsigned j = 0;
 		list<ChemicalPotential>::iterator cpit;
-		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-			if (!((simstep + 2 * j + 3) % cpit->getInterval())) {
+		for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+			if(!((simstep + 2 * j + 3) % cpit->getInterval())) {
 				global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
 									<< endl;
 				this->_simulationDomain->setLambda(cpit->getLambda());
 				this->_simulationDomain->setDensityCoefficient(cpit->getDensityCoefficient());
 				double localUpotBackup = _simulationDomain->getLocalUpot();
 				double localVirialBackup = _simulationDomain->getLocalVirial();
-				cpit->grandcanonicalStep(moleculeContainer, _simulationDomain->getGlobalCurrentTemperature(), this->_simulationDomain,
+				cpit->grandcanonicalStep(moleculeContainer, _simulationDomain->getGlobalCurrentTemperature(),
+										 this->_simulationDomain,
 										 cellProcessor);
 				_simulationDomain->setLocalUpot(localUpotBackup);
 				_simulationDomain->setLocalVirial(localVirialBackup);
@@ -130,10 +134,11 @@ void GrandCanonicalEnsemble::afterForces(ParticleContainer *moleculeContainer, D
 	}
 
 }
+
 void GrandCanonicalEnsemble::storeSample(Molecule* m, uint32_t componentid) {
 	std::list<ChemicalPotential>::iterator cpit;
 	for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-		if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
+		if(!cpit->hasSample() && (componentid == cpit->getComponentID())) {
 			cpit->storeMolecule(*m);
 		}
 	}

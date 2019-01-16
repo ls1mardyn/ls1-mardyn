@@ -11,7 +11,9 @@
 #include "ChemicalPotential.h"
 
 class Domain;
+
 class DomainDecompBase;
+
 class CellProcessor;
 
 /** @brief GrandCanonicalEnsemble was moved here from Simulation.cpp and partially adapted to Ensemble base class<br>
@@ -46,9 +48,11 @@ public:
 	unsigned long N() override {
 		return _N;
 	}
+
 	double V() override {
 		return _V;
 	}
+
 	double T() override {
 		return _T;
 	}
@@ -56,38 +60,41 @@ public:
 	double mu() override {
 		return _mu;
 	}
+
 	double p() override {
 		return _p;
 	}
+
 	double E() override {
 		return _E;
 	}
 
 	// TODO: Implement
-	void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override {
+	void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) override {
 		global_log->info() << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
 		Simulation::exit(-1);
 	};
 
 	/*! Runs steps formerly in initConfigXML in simulation.cpp */
-	void initConfigXML(ParticleContainer *moleculeContainer) override;
+	void initConfigXML(ParticleContainer* moleculeContainer) override;
 
 	/*! Runs steps formerly in prepare_start in simulation.cpp */
 	void prepare_start() override;
 
 	/*! Runs steps formerly in simulate in simulation.cpp */
-	void beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
+	void beforeEventNewTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
 								unsigned long simstep) override;
 
 	/*! Runs steps formerly in afterForces(simulate) in simulation.cpp */
-	void afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
+	void afterForces(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
+					 CellProcessor* cellProcessor,
 					 unsigned long simstep) override;
 
 	/*! stores a molecule as a sample for a given component */
 	void storeSample(Molecule* m, uint32_t componentid) override;
 
 	/*! Returns _lmu pointer for processing by external plugins */
-	virtual std::list<ChemicalPotential>* getLmu(){return &_lmu;}
+	virtual std::list<ChemicalPotential>* getLmu() { return &_lmu; }
 
 private:
 

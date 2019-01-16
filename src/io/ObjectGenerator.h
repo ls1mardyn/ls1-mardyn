@@ -6,8 +6,11 @@
 #include "io/InputBase.h"
 
 class ObjectFillerBase;
+
 class Object;
+
 class VelocityAssignerBase;
+
 class MoleculeIdPool;
 
 /** @brief The ObjectGenerator sets up a phase space by filling volumetric objects.
@@ -35,13 +38,16 @@ public:
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	void setFiller(std::shared_ptr<ObjectFillerBase> filler) { _filler = filler; }
+
 	void setObject(std::shared_ptr<Object> object) { _object = object; }
+
 	void setVelocityAssigner(std::shared_ptr<VelocityAssignerBase> vAssigner) { _velocityAssigner = vAssigner; }
+
 	void setMoleculeIDPool(std::shared_ptr<MoleculeIdPool> moleculeIdPool) { _moleculeIdPool = moleculeIdPool; }
 
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {}
 
-	unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
 
 private:
 	std::shared_ptr<ObjectFillerBase> _filler;

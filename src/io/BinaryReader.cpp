@@ -17,10 +17,12 @@
 #include "ensemble/PressureGradient.h"
 #include "Simulation.h"
 #include "molecules/Molecule.h"
+
 #ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
 #include "parallel/DomainDecompBase.h"
 #endif
+
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 #include "utils/Timer.h"
@@ -38,8 +40,7 @@ enum MoleculeFormat : uint32_t {
 };
 
 BinaryReader::BinaryReader()
-	: _nMoleculeFormat(ICRVQD)
-{
+		: _nMoleculeFormat(ICRVQD) {
 	// TODO Auto-generated constructor stub
 }
 
@@ -66,8 +67,7 @@ void BinaryReader::setPhaseSpaceHeaderFile(string filename) {
 	_phaseSpaceHeaderFile = filename;
 }
 
-void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep)
-{
+void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	XMLfileUnits inp(_phaseSpaceHeaderFile);
 
 	if(false == inp.changecurrentnode("/mardyn")) {
@@ -83,14 +83,13 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 	std::string strMoleculeFormat;
 	bInputOk = bInputOk && inp.changecurrentnode("headerinfo");
 	bInputOk = bInputOk && inp.getNodeValue("time", dCurrentTime);
-	bInputOk = bInputOk && inp.getNodeValue("length/x", dBoxLength[0] );
-	bInputOk = bInputOk && inp.getNodeValue("length/y", dBoxLength[1] );
-	bInputOk = bInputOk && inp.getNodeValue("length/z", dBoxLength[2] );
+	bInputOk = bInputOk && inp.getNodeValue("length/x", dBoxLength[0]);
+	bInputOk = bInputOk && inp.getNodeValue("length/y", dBoxLength[1]);
+	bInputOk = bInputOk && inp.getNodeValue("length/z", dBoxLength[2]);
 	bInputOk = bInputOk && inp.getNodeValue("number", numMolecules);
 	bInputOk = bInputOk && inp.getNodeValue("format@type", strMoleculeFormat);
 
-	if(false == bInputOk)
-	{
+	if(false == bInputOk) {
 		global_log->error() << "Content of file: '" << _phaseSpaceHeaderFile << "' corrupted! Program exit ..." << endl;
 		Simulation::exit(1);
 	}
@@ -101,22 +100,21 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 		_nMoleculeFormat = IRV;
 	else if("ICRV" == strMoleculeFormat)
 		_nMoleculeFormat = ICRV;
-	else
-	{
+	else {
 		global_log->error() << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << endl;
 		Simulation::exit(1);
 	}
 
 	// Set parameters of Domain and Simulation class
 	_simulation.setSimulationTime(dCurrentTime);
-	for( uint8_t d=0; d<3; ++d) {
+	for(uint8_t d = 0; d < 3; ++d) {
 		domain->setGlobalLength(d, dBoxLength[d]);
 	}
 	domain->setglobalNumMolecules(numMolecules);
 }
 
 unsigned long
-BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
+BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();
@@ -124,17 +122,17 @@ BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
-		global_log->info() << "Opening phase space file " << _phaseSpaceFile
-				<< endl;
-		_phaseSpaceFileStream.open(_phaseSpaceFile.c_str(),
-				ios::binary | ios::in);
-		if (!_phaseSpaceFileStream.is_open()) {
-			global_log->error() << "Could not open phaseSpaceFile "
-					<< _phaseSpaceFile << endl;
-			Simulation::exit(1);
-		}
-		global_log->info() << "Reading phase space file " << _phaseSpaceFile
-				<< endl;
+	global_log->info() << "Opening phase space file " << _phaseSpaceFile
+					   << endl;
+	_phaseSpaceFileStream.open(_phaseSpaceFile.c_str(),
+							   ios::binary | ios::in);
+	if(!_phaseSpaceFileStream.is_open()) {
+		global_log->error() << "Could not open phaseSpaceFile "
+							<< _phaseSpaceFile << endl;
+		Simulation::exit(1);
+	}
+	global_log->info() << "Reading phase space file " << _phaseSpaceFile
+					   << endl;
 #ifdef ENABLE_MPI
 	} // Rank 0 only
 #endif
@@ -165,13 +163,13 @@ BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 	q0 = 1.;
 
 	uint64_t numMolecules = domain->getglobalNumMolecules();
-	for (uint64_t i=0; i<numMolecules; i++) {
+	for(uint64_t i = 0; i < numMolecules; i++) {
 
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
-			_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
-			switch (_nMoleculeFormat) {
+		_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
+		switch (_nMoleculeFormat) {
 			case ICRVQD:
 				_phaseSpaceFileStream.read(
 						reinterpret_cast<char*> (&componentid), 4);
@@ -207,57 +205,59 @@ BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&vy), 8);
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&vz), 8);
 				break;
-			}
-			if ((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y
-					>= domain->getGlobalLength(1)) || (z < 0.0 || z
-					>= domain->getGlobalLength(2))) {
-				global_log->warning() << "Molecule " << id << " out of box: "
-						<< x << ";" << y << ";" << z << endl;
-			}
-
-			if (componentid > numcomponents || componentid == 0) {
-				global_log->error() << "Molecule id " << id
-						<< " has wrong componentid: " << componentid << ">"
-						<< numcomponents << endl;
-				Simulation::exit(1);
-			}
-			componentid--; // TODO: Component IDs start with 0 in the program.
-
-			// store only those molecules within the domain of this process
-			// The neccessary check is performed in the particleContainer addPartice method
-			// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
-			Molecule m1 = Molecule(id, &dcomponents[componentid], x, y, z, vx,
-					vy, vz, q0, q1, q2, q3, Dx, Dy, Dz);
-#ifdef ENABLE_MPI
-			ParticleData::MoleculeToParticleData(
-					particle_buff[particle_buff_pos], m1);
-		} // Rank 0 only
-
-		particle_buff_pos++;
-		if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i
-				== domain->getglobalNumMolecules() - 1)) {
-			MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
-			MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0,
-					MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD
-			for (int j = 0; j < particle_buff_pos; j++) {
-				Molecule m;
-				ParticleData::ParticleDataToMolecule(particle_buff[j], m);
-				particleContainer->addParticle(m, false, true);
-
-				// TODO: The following should be done by the addPartice method.
-				dcomponents[m.componentid()].incNumMolecules();
-				domain->setglobalRotDOF(
-						dcomponents[m.componentid()].getRotationalDegreesOfFreedom()
-								+ domain->getglobalRotDOF());
-
-				if (m.getID() > maxid)
-					maxid = m.getID();
-
-				// Only called inside GrandCanonical
-		        global_simulation->getEnsemble()->storeSample(&m, componentid);
-			}
-			particle_buff_pos = 0;
 		}
+		if((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y
+																	   >= domain->getGlobalLength(1)) || (z < 0.0 || z
+																													 >=
+																													 domain->getGlobalLength(
+																															 2))) {
+			global_log->warning() << "Molecule " << id << " out of box: "
+								  << x << ";" << y << ";" << z << endl;
+		}
+
+		if(componentid > numcomponents || componentid == 0) {
+			global_log->error() << "Molecule id " << id
+								<< " has wrong componentid: " << componentid << ">"
+								<< numcomponents << endl;
+			Simulation::exit(1);
+		}
+		componentid--; // TODO: Component IDs start with 0 in the program.
+
+		// store only those molecules within the domain of this process
+		// The neccessary check is performed in the particleContainer addPartice method
+		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
+		Molecule m1 = Molecule(id, &dcomponents[componentid], x, y, z, vx,
+							   vy, vz, q0, q1, q2, q3, Dx, Dy, Dz);
+#ifdef ENABLE_MPI
+		ParticleData::MoleculeToParticleData(
+				particle_buff[particle_buff_pos], m1);
+	} // Rank 0 only
+
+	particle_buff_pos++;
+	if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i
+			== domain->getglobalNumMolecules() - 1)) {
+		MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0,
+				MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD
+		for (int j = 0; j < particle_buff_pos; j++) {
+			Molecule m;
+			ParticleData::ParticleDataToMolecule(particle_buff[j], m);
+			particleContainer->addParticle(m, false, true);
+
+			// TODO: The following should be done by the addPartice method.
+			dcomponents[m.componentid()].incNumMolecules();
+			domain->setglobalRotDOF(
+					dcomponents[m.componentid()].getRotationalDegreesOfFreedom()
+							+ domain->getglobalRotDOF());
+
+			if (m.getID() > maxid)
+				maxid = m.getID();
+
+			// Only called inside GrandCanonical
+			global_simulation->getEnsemble()->storeSample(&m, componentid);
+		}
+		particle_buff_pos = 0;
+	}
 #else
 		particleContainer->addParticle(m1, false, true);
 
@@ -267,42 +267,42 @@ BinaryReader::readPhaseSpace(ParticleContainer *particleContainer, Domain *domai
 				dcomponents[componentid].getRotationalDegreesOfFreedom()
 				+ domain->getglobalRotDOF());
 
-		if (id > maxid)
-		maxid = id;
+		if(id > maxid)
+			maxid = id;
 
-        // Only called inside GrandCanonical
-        global_simulation->getEnsemble()->storeSample(&m1, componentid);
+		// Only called inside GrandCanonical
+		global_simulation->getEnsemble()->storeSample(&m1, componentid);
 #endif
 
 		// Print status message
 		unsigned long iph = domain->getglobalNumMolecules() / 100;
-		if (iph != 0 && (i % iph) == 0)
+		if(iph != 0 && (i % iph) == 0)
 			global_log->info() << "Finished reading molecules: " << i / iph
-					<< "%\r" << flush;
+							   << "%\r" << flush;
 	}
 
 	global_log->info() << "Finished reading molecules: 100%" << endl;
 	global_log->info() << "Reading Molecules done" << endl;
 
 	// TODO: Shouldn't we always calculate this?
-	if (!domain->getglobalRho()) {
+	if(!domain->getglobalRho()) {
 		domain->setglobalRho(
 				domain->getglobalNumMolecules() / domain->getGlobalVolume());
 		global_log->info() << "Calculated Rho_global = "
-				<< domain->getglobalRho() << endl;
+						   << domain->getglobalRho() << endl;
 	}
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
-		_phaseSpaceFileStream.close();
+	_phaseSpaceFileStream.close();
 #ifdef ENABLE_MPI
 	} // Rank 0 only
 #endif
 
 	inputTimer.stop();
 	global_log->info() << "Initial IO took:                 "
-			<< inputTimer.get_etime() << " sec" << endl;
+					   << inputTimer.get_etime() << " sec" << endl;
 #ifdef ENABLE_MPI
 	MPI_CHECK(MPI_Type_free(&mpi_Particle));
 #endif

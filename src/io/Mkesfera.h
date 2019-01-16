@@ -13,11 +13,13 @@
 class MkesferaGenerator : public InputBase {
 
 public:
-	MkesferaGenerator(){}
-	~MkesferaGenerator(){}
+	MkesferaGenerator() {}
 
-	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/){}
-	unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
+	~MkesferaGenerator() {}
+
+	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {}
+
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
 
 	/** @brief Read in XML configuration for MkesferaGenerator and all its included objects.
 	 *

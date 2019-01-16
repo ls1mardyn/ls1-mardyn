@@ -11,26 +11,31 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 
 class ParticleContainer;
+
 class MixingRuleBase;
+
 class ChemicalPotential;
+
 class DomainDecompBase;
+
 class CellProcessor;
+
 class Domain;
 
 //! list of updatable values
 enum GlobalVariable {
-	NUM_PARTICLES      = 1<<0,
-	ENERGY             = 1<<1,
-	VOLUME             = 1<<2,
-	CHEMICAL_POTENTIAL = 1<<3,
-	TEMPERATURE        = 1<<4,
-	PRESSURE           = 1<<5
+	NUM_PARTICLES = 1 << 0,
+	ENERGY = 1 << 1,
+	VOLUME = 1 << 2,
+	CHEMICAL_POTENTIAL = 1 << 3,
+	TEMPERATURE = 1 << 4,
+	PRESSURE = 1 << 5
 };
 
 enum Type {
-		undefined,
-		NVT,
-		muVT
+	undefined,
+	NVT,
+	muVT
 };
 
 class XMLfileUnits;
@@ -47,58 +52,72 @@ public:
 	}
 
 	virtual ~Ensemble();
+
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! @brief Returns the global number of Molecules of the ensemble.
 	virtual unsigned long N() = 0;
+
 	//! @brief Returns the global volume of the ensemble
 	virtual double V() = 0;
+
 	//! @brief Returns the global energy of the ensemble
 	virtual double E() = 0;
+
 	//! @brief Returns the global chemical potential of the ensemble
 	virtual double mu() = 0;
+
 	//! @brief Returns the global presure of the ensemble.
 	virtual double p() = 0;
+
 	//! @brief Returns the global Temperature of the ensemble.
 	virtual double T() = 0;
 
 	//! @brief Calculate global variables
 	//! @param variable Variable to be updated.
-	virtual void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) = 0;
+	virtual void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) = 0;
 
-	DomainBase* &domain() { return _domain; }
+	DomainBase*& domain() { return _domain; }
+
 	Component* getComponent(int cid) {
 		mardyn_assert(cid < static_cast<int>(_components.size()));
 		return &_components.at(cid);
 	}
+
 	Component* getComponent(std::string name) { return getComponent(_componentnamesToIds[name]); }
+
 	std::vector<Component>* getComponents() { return &_components; }
+
 	void addComponent(Component& component) { _components.push_back(component); }
 
 	//! prepare the _compIDs used by the Vectorized*CellProcessors
 	void setComponentLookUpIDs();
 
 	/*! get Ensemble Type (NVT or muVT) */
-	int getType(){return _type;}
+	int getType() { return _type; }
 
 	/*! Returns _lmu pointer for processing by external plugins */
-	virtual std::list<ChemicalPotential>* getLmu(){return nullptr;}
+	virtual std::list<ChemicalPotential>* getLmu() { return nullptr; }
 
 	/*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
-	virtual void initConfigXML(ParticleContainer *moleculeContainer) {};
+	virtual void initConfigXML(ParticleContainer* moleculeContainer) {};
+
 	/*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
 	virtual void prepare_start() {};
+
 	/*! runs simulate step needed in GrandCanonical, nothing for canonical */
 	virtual void
-	beforeEventNewTimestep(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition,
+	beforeEventNewTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
 						   unsigned long simstep) {};
+
 	/*! runs after forces step for GrandCanonical, nothing for canonical */
 	virtual void
-	afterForces(ParticleContainer *moleculeContainer, DomainDecompBase *domainDecomposition, CellProcessor *cellProcessor,
+	afterForces(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
+				CellProcessor* cellProcessor,
 				unsigned long simstep) {};
 
 	/*! runs before temperature control is applied, but after force calculations */
-	virtual void beforeThermostat(unsigned long simstep, unsigned long initStatistics){};
+	virtual void beforeThermostat(unsigned long simstep, unsigned long initStatistics) {};
 
 	/*! Store Sample molecule from old input readers in lmu */
 	virtual void storeSample(Molecule* m, uint32_t componentid) {};
@@ -107,7 +126,7 @@ protected:
 
 
 	std::vector<Component> _components;
-	std::map<std::string,int> _componentnamesToIds;
+	std::map<std::string, int> _componentnamesToIds;
 	std::vector<MixingRuleBase*> _mixingrules;
 	DomainBase* _domain;
 	Type _type = undefined;

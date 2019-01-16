@@ -12,11 +12,13 @@
 class MkTcTSGenerator : public InputBase {
 
 public:
-	MkTcTSGenerator(){}
-	~MkTcTSGenerator(){}
+	MkTcTSGenerator() {}
+
+	~MkTcTSGenerator() {}
 
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
-	unsigned long readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp);
+
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
 
 
 	/** @brief Read in XML configuration for MkTcTSGenerator and all its included objects.
@@ -41,7 +43,8 @@ private:
 
 	double rho1;
 	double rho2;
-    void _msimulation(int arg1);
+
+	void _msimulation(int arg1);
 };
 
 #endif /* TCTS_H_ */
