@@ -8,8 +8,8 @@
 
 #include "EnsembleBase.h"
 #include "Simulation.h"
+#include "ChemicalPotential.h"
 
-class ChemicalPotential;
 class Domain;
 class DomainDecompBase;
 class CellProcessor;
