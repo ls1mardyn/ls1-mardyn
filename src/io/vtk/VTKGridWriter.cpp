@@ -48,7 +48,7 @@ void  VTKGridWriter::endStep(
 	LinkedCells* container = dynamic_cast<LinkedCells*>(particleContainer);
 #ifndef NDEBUG
 	if (container == NULL) {
-		global_log->error() << "VTKGridWriter works only with plottable LinkCells!" << std::endl;
+		global_log->error() << "VTKGridWriter works only with plottable LinkedCells!" << std::endl;
 		Simulation::exit(1);
 	}
 #endif
