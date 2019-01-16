@@ -17,7 +17,6 @@ struct SamplingInformation {
 	double segmentVolume; // Size of one Sampling grid bin
 	double universalCentre[3]; // Centre coords for cylinder system
 	bool cylinder; // Cartesian or Cylinder output
-	double globalTemperature; // From Domain/Thermostat[0] for Virial
 };
 
 /** @brief Base class for all Profile outputs used by KartesianProfile.

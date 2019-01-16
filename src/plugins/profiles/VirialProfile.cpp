@@ -27,7 +27,7 @@ void VirialProfile::output (string prefix, long unsigned accumulatedDatasets) {
 	outfile << "# y\tvn-vt\tpx\tpy\tpz\n# \n";
 
 	double layerVolume = _samplInfo.globalLength[0] * _samplInfo.globalLength[1];
-	double globalTemperature = _samplInfo.globalTemperature;
+	double globalTemperature = global_simulation->getDomain()->getCurrentTemperature(0);
 	// Pressure increases with "Depth" in Y
 	// Calculate Pressures on layer, then write 1D output
 	for (unsigned y = 0; y < _samplInfo.universalProfileUnit[1]; y++) {
