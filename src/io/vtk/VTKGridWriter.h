@@ -5,8 +5,9 @@
  * @Author: eckhardw
  */
 
-#ifndef VTKGRIDWRITER_H_
-#define VTKGRIDWRITER_H_
+#pragma once
+
+#ifndef MARDYN_AUTOPAS
 
 #include "plugins/PluginBase.h"
 #include "io/vtk/VTKGridCell.h"
@@ -90,4 +91,4 @@ private:
 
 };
 
-#endif /* VTKGRIDWRITER_H_ */
+#endif /* MARDYN_AUTOPAS */

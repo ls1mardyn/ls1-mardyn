@@ -1,6 +1,5 @@
 # autopas library
 option(ENABLE_AUTOPAS "Use autopas library" OFF)
-option(GIT_SUBMODULES_SSH "Use SSH for git submodules instead of HTTPS" OFF)
 if(ENABLE_AUTOPAS)
     message(STATUS "Using AutoPas.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMARDYN_AUTOPAS")

@@ -1,8 +1,8 @@
-#ifndef STRING_UTILS_H
-#define STRING_UTILS_H
+#pragma once
 
-#include <string>
+#include <algorithm>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace string_utils {
@@ -19,6 +19,16 @@ static std::string join(const std::vector<T>& vec, const std::string delimiter) 
 	return ss.str();
 }
 
+/**
+ * Converts a string to lower case.
+ * @param s input string.
+ * @return Copy of s in lower case.
+ */
+static std::string toLowercase(const std::string& s) {
+	std::string ret;
+	ret.resize(s.length());
+	std::transform(s.begin(), s.end(), ret.begin(), ::tolower);
+	return ret;
 }
 
-#endif
+}  // namespace string_utils
