@@ -16,28 +16,28 @@ public:
 
 	~VirialProfile () = default;
 
-	void init (SamplingInformation& samplingInformation){
+	void init (SamplingInformation& samplingInformation) {
 		_samplInfo = samplingInformation;
-		if(_samplInfo.cylinder){
+		if (_samplInfo.cylinder) {
 			global_log->error() << "[VirialProfile] SAMPLING ERROR: Currently only set up for cartesian sampling.\n";
 			Simulation::exit(-1);
 		}
 	}
 
 	void record (Molecule& mol, unsigned long uID) final {
-		for(unsigned short d = 0; d < 3; d++){
+		for (unsigned short d = 0; d < 3; d++) {
 			_local3dProfile[uID][d] += mol.Vi(d);
 		}
 	}
 
 	void collectAppend (DomainDecompBase* domainDecomp, unsigned long uID) final {
-		for(unsigned short d = 0; d < 3; d++){
+		for (unsigned short d = 0; d < 3; d++) {
 			domainDecomp->collCommAppendDouble(_local3dProfile[uID][d]);
 		}
 	}
 
 	void collectRetrieve (DomainDecompBase* domainDecomp, unsigned long uID) final {
-		for(unsigned short d = 0; d < 3; d++){
+		for (unsigned short d = 0; d < 3; d++) {
 			_global3dProfile[uID][d] = domainDecomp->collCommGetDouble();
 		}
 	}
@@ -52,7 +52,7 @@ public:
 	void output (string prefix, long unsigned accumulatedDatasets) final;
 
 	void reset (unsigned long uID) final {
-		for(unsigned d = 0; d < 3; d++){
+		for (unsigned d = 0; d < 3; d++) {
 			_local3dProfile[uID][d] = 0.0;
 			_global3dProfile[uID][d] = 0.0;
 		}

@@ -12,12 +12,19 @@
 #include "particleContainer/ParticleContainer.h"
 
 class ProfileBase;
+
 class DensityProfile;
+
 class Velocity3dProfile;
+
 class VelocityAbsProfile;
+
 class KineticProfile;
+
 class DOFProfile;
+
 class TemperatureProfile;
+
 class VirialProfile;
 
 
@@ -60,57 +67,59 @@ class SpatialProfile : public PluginBase {
 
 public:
 
-    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-    void readXML(XMLfileUnits& xmlconfig) override;
-    void endStep(
-            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep) override;
+	void init (ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
-    void finish(ParticleContainer *particleContainer,
-                DomainDecompBase *domainDecomp, Domain *domain) override {};
+	void readXML (XMLfileUnits& xmlconfig) override;
 
-    unsigned long getCartesianUID(ParticleIterator &thismol);
+	void endStep (
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			Domain* domain, unsigned long simstep) override;
 
-    long getCylUID(ParticleIterator &thismol);
+	void finish (ParticleContainer* particleContainer,
+				 DomainDecompBase* domainDecomp, Domain* domain) override {};
 
-    std::string getPluginName()override {return std::string("SpatialProfile");}
+	unsigned long getCartesianUID (ParticleIterator& thismol);
 
-    static PluginBase* createInstance(){return new SpatialProfile();}
+	long getCylUID (ParticleIterator& thismol);
 
-    SamplingInformation samplInfo;
+	std::string getPluginName () override { return std::string("SpatialProfile"); }
+
+	static PluginBase* createInstance () { return new SpatialProfile(); }
+
+	SamplingInformation samplInfo;
 
 private:
 
-    // Profile pointers for data reuse
-    DensityProfile* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
-    VelocityAbsProfile* _velAbsProfile;
-    Velocity3dProfile* _vel3dProfile;
-    TemperatureProfile* _tempProfile;
-    DOFProfile* _dofProfile;
-    KineticProfile* _kineticProfile;
-    VirialProfile* _virialProfile;
+	// Profile pointers for data reuse
+	DensityProfile* _densProfile; //!< Reference to DensityProfile as it is needed by most other profiles
+	VelocityAbsProfile* _velAbsProfile;
+	Velocity3dProfile* _vel3dProfile;
+	TemperatureProfile* _tempProfile;
+	DOFProfile* _dofProfile;
+	KineticProfile* _kineticProfile;
+	VirialProfile* _virialProfile;
 
-    unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
-    unsigned long _initStatistics; // Timesteps to skip at start of the simulation
-    unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
-    long _accumulatedDatasets; // Number of Datasets between output writes / profile resets
-    std::string _outputPrefix; // File prefix for all profiles
-    std::string _mode;
+	unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
+	unsigned long _initStatistics; // Timesteps to skip at start of the simulation
+	unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
+	long _accumulatedDatasets; // Number of Datasets between output writes / profile resets
+	std::string _outputPrefix; // File prefix for all profiles
+	std::string _mode;
 
-    unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
+	unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 
-    vector<ProfileBase*> _profiles; // vector holding all enabled profiles
-    int _comms = 0; // total number of communications per bin needed by all profiles.
+	vector<ProfileBase*> _profiles; // vector holding all enabled profiles
+	int _comms = 0; // total number of communications per bin needed by all profiles.
 
-    // Needed for XML check for enabled profiles.
-    bool _ALL = false;
-    bool _DENSITY = false;
-    bool _VELOCITY = false;
-    bool _VELOCITY3D = false;
-    bool _TEMPERATURE = false;
-    bool _VIRIAL = false;
+	// Needed for XML check for enabled profiles.
+	bool _ALL = false;
+	bool _DENSITY = false;
+	bool _VELOCITY = false;
+	bool _VELOCITY3D = false;
+	bool _TEMPERATURE = false;
+	bool _VIRIAL = false;
 
-    void addProfile(ProfileBase* profile);
+	void addProfile (ProfileBase* profile);
 
 };
 

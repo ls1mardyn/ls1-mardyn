@@ -10,13 +10,13 @@
 
 class SpatialProfile;
 
-struct SamplingInformation{
-    double universalInvProfileUnit[3]; // Inv. Bin Sizes
-    double universalProfileUnit[3]; // Bin Sizes
-    double globalLength[3]; // Size of Domain
-    double segmentVolume; // Size of one Sampling grid bin
-    double universalCentre[3]; // Centre coords for cylinder system
-    bool cylinder; // Cartesian or Cylinder output
+struct SamplingInformation {
+	double universalInvProfileUnit[3]; // Inv. Bin Sizes
+	double universalProfileUnit[3]; // Bin Sizes
+	double globalLength[3]; // Size of Domain
+	double segmentVolume; // Size of one Sampling grid bin
+	double universalCentre[3]; // Centre coords for cylinder system
+	bool cylinder; // Cartesian or Cylinder output
 	double globalTemperature; // From Domain/Thermostat[0] for Virial
 };
 
@@ -34,85 +34,91 @@ class ProfileBase {
 
 public:
 
-	virtual ~ProfileBase(){};
+	virtual ~ProfileBase () {};
+
 	/** @brief Init function is given a pointer to the KartesianProfile object handling this profile. Same for all profiles.
 	 *
 	 * @param kartProf Pointer to KartesianProfile. Grants access to necessary global params.
 	 */
-    virtual void init(SamplingInformation &samplingInformation) { _samplInfo = samplingInformation;};
-    /** @brief The recording step defines what kind of data needs to be recorded for a single molecule with a corresponding uID.
-     *
-     * @param mol Reference to Molecule, needed to extract info such as velocity or Virial.
-     * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
-     */
-    virtual void record(Molecule &mol, unsigned long uID) = 0;
-    /** @brief Append all necessary communication per bin to the DomainDecomposition. Append from e.g. _localProfile.
-     *
-     * @param domainDecomp DomainDecomposition handling the communication.
-     * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
-     */
-    virtual void collectAppend(DomainDecompBase *domainDecomp, unsigned long uID) = 0;
-    /** @brief Get global values after AllReduceSum per bin. Write to e.g. _globalProfile.
-     *
-     * @param domainDecomp DomainDecomposition handling the communication.
-     * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
-     */
-    virtual void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) = 0;
-    /** @brief Whatever is necessary to output for this profile.
-     *
-     * This function varies wildly between profiles. The Profile should output to its desired format here and handle all
-     * file IO for one profile writing step.
-     * @param prefix File prefix including the global _outputPrefix for all profiles and the current timestep. Should be
-     * appended by some specific file ending for this specific profile.
-     */
-    virtual void output(string prefix, long unsigned accumulatedDatasets) = 0;
-    /** @brief Used to reset all array contents for a specific uID in order to start the next recording timeframe.
-     *
-     * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
-     */
-    virtual void reset(unsigned long uID) = 0;
+	virtual void init (SamplingInformation& samplingInformation) { _samplInfo = samplingInformation; };
 
-    /** @brief 1D profiles like a number density profile should return 1 here. 3D profiles that have 3 entries per bin
-     * that need to be communicated would need to return 3. Adjust as needed. Same number as commAppends in collectAppend.
-     *
-     * @return Number of nedded communications per bin so the communicator can be setup correctly.
-     */
-    virtual int comms() = 0;
+	/** @brief The recording step defines what kind of data needs to be recorded for a single molecule with a corresponding uID.
+	 *
+	 * @param mol Reference to Molecule, needed to extract info such as velocity or Virial.
+	 * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
+	 */
+	virtual void record (Molecule& mol, unsigned long uID) = 0;
+
+	/** @brief Append all necessary communication per bin to the DomainDecomposition. Append from e.g. _localProfile.
+	 *
+	 * @param domainDecomp DomainDecomposition handling the communication.
+	 * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
+	 */
+	virtual void collectAppend (DomainDecompBase* domainDecomp, unsigned long uID) = 0;
+
+	/** @brief Get global values after AllReduceSum per bin. Write to e.g. _globalProfile.
+	 *
+	 * @param domainDecomp DomainDecomposition handling the communication.
+	 * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
+	 */
+	virtual void collectRetrieve (DomainDecompBase* domainDecomp, unsigned long uID) = 0;
+
+	/** @brief Whatever is necessary to output for this profile.
+	 *
+	 * This function varies wildly between profiles. The Profile should output to its desired format here and handle all
+	 * file IO for one profile writing step.
+	 * @param prefix File prefix including the global _outputPrefix for all profiles and the current timestep. Should be
+	 * appended by some specific file ending for this specific profile.
+	 */
+	virtual void output (string prefix, long unsigned accumulatedDatasets) = 0;
+
+	/** @brief Used to reset all array contents for a specific uID in order to start the next recording timeframe.
+	 *
+	 * @param uID uID of molecule in sampling grid, needed to put data in right spot in the profile arrays.
+	 */
+	virtual void reset (unsigned long uID) = 0;
+
+	/** @brief 1D profiles like a number density profile should return 1 here. 3D profiles that have 3 entries per bin
+	 * that need to be communicated would need to return 3. Adjust as needed. Same number as commAppends in collectAppend.
+	 *
+	 * @return Number of nedded communications per bin so the communicator can be setup correctly.
+	 */
+	virtual int comms () = 0;
 
 protected:
-    // output file prefix
-    string _profilePrefix;
+	// output file prefix
+	string _profilePrefix;
 
-    SamplingInformation _samplInfo;
-    long _accumulatedDatasets = -1; // Number of Datasets between output writes / profile resets // -1 if not set properly
+	SamplingInformation _samplInfo;
+	long _accumulatedDatasets = -1; // Number of Datasets between output writes / profile resets // -1 if not set properly
 
-    /** @brief Write Single Data Entry for Matrix with given uID to outfile
-     *
-     * @param uID unique ID of bin
-     * @param outfile outfile to write to
-     */
-    virtual void writeDataEntry(unsigned long uID, ofstream &outfile) const = 0;
+	/** @brief Write Single Data Entry for Matrix with given uID to outfile
+	 *
+	 * @param uID unique ID of bin
+	 * @param outfile outfile to write to
+	 */
+	virtual void writeDataEntry (unsigned long uID, ofstream& outfile) const = 0;
 
-    /**@brief Matrix writing routine to avoid code duplication
-     *
-     * @param outfile opened filestream from Profile
-     */
-    void writeMatrix(ofstream &outfile);
+	/**@brief Matrix writing routine to avoid code duplication
+	 *
+	 * @param outfile opened filestream from Profile
+	 */
+	void writeMatrix (ofstream& outfile);
 
-    void writeKartMatrix(ofstream &outfile);
+	void writeKartMatrix (ofstream& outfile);
 
-    /**@brief STUB for simple Matrix output without headers
-     *
-     * @param outfile opened filestream from Profile
-     */
-     // TODO: implement if needed
-    void writeSimpleMatrix(ofstream &outfile);
+	/**@brief STUB for simple Matrix output without headers
+	 *
+	 * @param outfile opened filestream from Profile
+	 */
+	// TODO: implement if needed
+	void writeSimpleMatrix (ofstream& outfile);
 
-    /**@brief cylinder Matrix output
-     *
-     * @param outfile opened filestream from Profile
-     */
-    void writeCylMatrix(ofstream &outfile);
+	/**@brief cylinder Matrix output
+	 *
+	 * @param outfile opened filestream from Profile
+	 */
+	void writeCylMatrix (ofstream& outfile);
 };
 
 #endif //MARDYN_TRUNK_PROFILEBASE_H
