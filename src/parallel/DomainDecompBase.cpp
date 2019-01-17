@@ -183,7 +183,7 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 					}
 				}
 				moleculeContainer->addParticle(m);
-				i.deleteCurrentParticle(); //removeFromContainer = true;
+				i.deleteCurrentParticle();  // removeFromContainer = true;
 			}
 		}
 	}

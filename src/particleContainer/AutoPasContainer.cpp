@@ -74,10 +74,12 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	mardyn_assert(_cutoff > 0.);
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
+
 	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, _containerChoices,
 						   _traversalChoices, _containerSelectorStrategy, _traversalSelectorStrategy, _tuningFrequency,
 						   _tuningSamples);
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
+
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
@@ -93,6 +95,7 @@ bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready,
 	} else {
 		_autopasContainer.addHaloParticle(particle);
 	}
+	return true;
 }
 
 bool AutoPasContainer::addHaloParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
