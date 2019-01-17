@@ -32,6 +32,13 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
       <datastructure type="AutoPas">
+        <allowedTraversals>c08, sli</allowedTraversals>
+        <allowedContainers>linkedCells</allowedContainers>
+        <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
+        <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
+        <dataLayout>SoA</dataLayout>
+        <tuningInterval>1000</tuningInterval>
+        <tuningSamples>3</tuningSamples>
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">33.0702</radiusLJ>
@@ -51,10 +58,10 @@
         </writecontrol>
         <outputprefix>megamol</outputprefix>
       </outputplugin>
-      <outputplugin name="ResultWriter">
-        <writefrequency>5</writefrequency>
-        <outputprefix>Argon</outputprefix>
-      </outputplugin>
+      <!-- <outputplugin name="ResultWriter"> -->
+        <!-- <writefrequency>5</writefrequency> -->
+        <!-- <outputprefix>Argon</outputprefix> -->
+      <!-- </outputplugin> -->
       <outputplugin name="SysMonOutput">
         <writefrequency>10000</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
