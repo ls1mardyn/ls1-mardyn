@@ -285,7 +285,11 @@ pipeline {
                 unstash 'autopas_exec'
                 dir ("build"){
                   sh """
-                    ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas.xml --steps=10
+                    ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas.xml --steps=10 | tee autopas_run_log.txt
+                    grep "Simstep = 10" autopas_run_log.txt > simstep10.txt
+                    grep "T = 0.000634365" simstep10.txt
+                    grep "U_pot = -2.12238" simstep10.txt
+                    grep "p = 6.15963e-07" simstep10.txt
                   """
                 }
               }
