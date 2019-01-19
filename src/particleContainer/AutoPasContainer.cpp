@@ -68,6 +68,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 					   << setw(valueOffset) << left << "Tuning frequency" << ": "  << _tuningFrequency << endl
 					   << setw(valueOffset) << left << "Number of samples " << ": "  << _tuningSamples << endl
 					   ;
+	xmlconfig.changecurrentnode(oldPath);
 }
 
 bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
