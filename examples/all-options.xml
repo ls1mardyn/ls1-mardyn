@@ -88,6 +88,50 @@
         <file type="ASCII" >test.inp</file>
 
 
+        <generator name="ReplicaGenerator">
+          <!-- Define system type -->
+          <!-- possible values:
+            - homogeneous
+            - heterogeneous_VLV
+            - heterogeneous_LV
+            -->
+          <type>homogeneous</type>
+          <!-- Files to be replicated -->
+          <files>
+            <!-- always used -->
+            <vapor>
+              <header>vapor_cp_binary-0.restart.header.xml</header>
+              <data>vapor_cp_binary-0.restart.dat</data>
+            </vapor>
+            <!-- only used for heterogeneous cases -->
+            <liquid>
+              <header>liquid_cp_binary-0.restart.header.xml</header>
+              <data>liquid_cp_binary-0.restart.dat</data>
+            </liquid>
+          </files>
+
+          <!-- number of block replications -->
+          <numblocks>
+            <!-- number of blocks to be replicated along x and z axis EACH -->
+            <xz>5</xz>
+            <!-- number of vapor blocks along y axis -->
+            <vapor>5</vapor>
+            <!-- number of vapor blocks along y axis -->
+            <!-- only used for heterogeneous cases -->
+            <liquid>5</liquid>
+          </numblocks>
+          <!-- Molecule diameter, used for spacing between phases -->
+          <diameter>1.0</diameter>
+          <componentIDs>
+            <vapor>
+              <change> <from>1</from> <to>2</to> </change>
+            </vapor>
+            <liquid>
+              <change> <from>1</from> <to>1</to> </change>
+            </liquid>
+          </componentIDs>
+        </generator>
+
         <!-- options for internal mkesfera generator -->
         <generator src="internal" id="mkesfera" >
           <droplet>
