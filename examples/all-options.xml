@@ -68,7 +68,7 @@
             <momentsofinertia>
               <Ixx>47.02459341</Ixx>
               <Iyy>47.02459341</Iyy>
-              <Izz>47.02459341</Iyy>
+              <Izz>47.02459341</Izz>
             </momentsofinertia>
           </moleculetype>
           
@@ -176,7 +176,7 @@
     <!-- algorithm specific configuration options -->
     <algorithm>
       <parallelisation type="DomainDecomposition">
-          <CommunicationScheme>direct<CommunicationScheme>
+          <CommunicationScheme>direct</CommunicationScheme>
       </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
