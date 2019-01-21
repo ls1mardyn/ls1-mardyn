@@ -215,6 +215,7 @@ autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 		case ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY:
 			return autopas::IteratorBehavior::ownedOnly;
 	}
+	throw std::runtime_error("Unknown iterator type.");
 }
 
 ParticleIterator AutoPasContainer::iterator(ParticleIterator::Type t) {
