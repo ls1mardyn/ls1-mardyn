@@ -32,7 +32,7 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
       <datastructure type="AutoPas">
-        <allowedTraversals>c08, sli</allowedTraversals>
+        <allowedTraversals>c01, c08, c18, sli</allowedTraversals>
         <allowedContainers>linkedCells</allowedContainers>
         <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
         <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
