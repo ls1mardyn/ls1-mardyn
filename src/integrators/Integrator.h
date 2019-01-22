@@ -75,15 +75,6 @@ public:
 		return _timestepLength;
 	}
 
-	virtual void accelerateUniformly(
-			ParticleContainer* molCont,
-			Domain* domain
-	) = 0;
-	virtual void accelerateInstantaneously(
-			ParticleContainer* molCont,
-			Domain* domain
-	) = 0;
-
 protected:
 
 	//! time between time step n and time step (n+1)

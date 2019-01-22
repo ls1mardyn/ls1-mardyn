@@ -23,15 +23,6 @@ public:
 		computePositions(moleculeContainer, domain);
 	}
 
-	void accelerateUniformly(
-			ParticleContainer* molCont,
-			Domain* domain
-	) {}
-	void accelerateInstantaneously(
-			ParticleContainer* molCont,
-			Domain* domain
-	) {}
-
 private:
 	
 	void computePositions(ParticleContainer* molCont, Domain* dom);
