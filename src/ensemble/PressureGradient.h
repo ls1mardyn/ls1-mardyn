@@ -136,6 +136,9 @@ private:
 				delete tacc;
 			}
 
+	// Function in Domain
+ 		PressureGradient* getPG() { return this->_universalPG; }
+
 	- removed forward declaration and include from Simulation.h/.cpp
 
 		PressureGradient* _pressureGradient;

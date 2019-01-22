@@ -341,8 +341,6 @@ public:
 	//! @param tst internal ID of the respective thermostat
 	void enableUndirectedThermostat(int thermostat);
 
-	PressureGradient* getPG() { return this->_universalPG; }
-
 	unsigned long N() {return _globalNumMolecules;}
 
 	void Nadd(unsigned cid, int N, int localN);
