@@ -312,7 +312,6 @@ private:
 				_phaseSpaceHeaderFileStream >> ainit[d];
 			domain->getPG()->specifyComponentSet(cosetid, v, tau, ainit, timestep);
 		}
-
 	##### Removed unused includes
  		Simulation
  		Leapfrog

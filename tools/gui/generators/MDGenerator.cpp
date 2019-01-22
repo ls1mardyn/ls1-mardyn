@@ -84,8 +84,7 @@ void MDGenerator::generatePreview() {
 	srand(1);
 #ifndef MARDYN
 	int rank = 0;
-	PressureGradient gradient(rank);
-	Domain domain(rank, &gradient);
+	Domain domain(rank);
 	DomainDecompBase domainDecomposition;
 	list<ChemicalPotential> lmu;
 
@@ -134,8 +133,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 
 	std::cout << "MDGenerator::config file written!" << endl;
 	int rank = 0;
-	PressureGradient gradient(rank);
-	Domain domain(rank, &gradient);
+	Domain domain(rank);
 	DomainDecompBase domainDecomposition;
 	list<ChemicalPotential> lmu;
 
