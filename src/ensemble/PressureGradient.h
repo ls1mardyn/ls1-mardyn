@@ -267,6 +267,49 @@ private:
 			}
 		}
 
+ 	##### removed getPG() related functions
 
+ 	// ASCIIReader.cpp after: else if((token == "NumberOfMolecules") || (token == "N")) {
 
+ 		else if((token == "AssignCoset") || (token == "S")) {
+			unsigned component_id, cosetid;
+			_phaseSpaceHeaderFileStream >> component_id >> cosetid;
+			component_id--; // FIXME: Component ID starting with 0 in program ...
+			domain->getPG()->assignCoset( component_id, cosetid );
+		}
+		else if((token == "Accelerate") || (token == "A")) {
+			unsigned cosetid;
+			_phaseSpaceHeaderFileStream >> cosetid;
+			double v[3];
+			for(unsigned d = 0; d < 3; d++)
+				_phaseSpaceHeaderFileStream >> v[d];
+			double tau;
+			_phaseSpaceHeaderFileStream >> tau;
+			double ainit[3];
+			for(unsigned d = 0; d < 3; d++)
+				_phaseSpaceHeaderFileStream >> ainit[d];
+			domain->getPG()->specifyComponentSet(cosetid, v, tau, ainit, timestep);
+		}
+
+ 	// MPI_IOReader after: else if((token == "NumberOfMolecules") || (token == "N")) {
+
+ 		else if((token == "AssignCoset") || (token == "S")) {
+			unsigned component_id, cosetid;
+			_phaseSpaceHeaderFileStream >> component_id >> cosetid;
+			component_id--; // FIXME: Component ID starting with 0 in program ...
+			domain->getPG()->assignCoset( component_id, cosetid );
+		}
+		else if((token == "Accelerate") || (token == "A")) {
+			unsigned cosetid;
+			_phaseSpaceHeaderFileStream >> cosetid;
+			double v[3];
+			for(unsigned d = 0; d < 3; d++)
+				_phaseSpaceHeaderFileStream >> v[d];
+			double tau;
+			_phaseSpaceHeaderFileStream >> tau;
+			double ainit[3];
+			for(unsigned d = 0; d < 3; d++)
+				_phaseSpaceHeaderFileStream >> ainit[d];
+			domain->getPG()->specifyComponentSet(cosetid, v, tau, ainit, timestep);
+		}
 */

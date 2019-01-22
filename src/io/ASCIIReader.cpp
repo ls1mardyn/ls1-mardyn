@@ -243,25 +243,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			_phaseSpaceHeaderFileStream >> token;
 			domain->setglobalNumMolecules( strtoul(token.c_str(),NULL,0) );
 		}
-		else if((token == "AssignCoset") || (token == "S")) {
-			unsigned component_id, cosetid;
-			_phaseSpaceHeaderFileStream >> component_id >> cosetid;
-			component_id--; // FIXME: Component ID starting with 0 in program ...
-			domain->getPG()->assignCoset( component_id, cosetid );
-		}
-		else if((token == "Accelerate") || (token == "A")) {
-			unsigned cosetid;
-			_phaseSpaceHeaderFileStream >> cosetid;
-			double v[3];
-			for(unsigned d = 0; d < 3; d++) 
-				_phaseSpaceHeaderFileStream >> v[d];
-			double tau;
-			_phaseSpaceHeaderFileStream >> tau;
-			double ainit[3];
-			for(unsigned d = 0; d < 3; d++) 
-				_phaseSpaceHeaderFileStream >> ainit[d];
-			domain->getPG()->specifyComponentSet(cosetid, v, tau, ainit, timestep);
-		}
+		// LOCATION OF OLD PRESSURE GRADIENT TOKENS
 		else {
 			global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << endl;
 			header = false;
