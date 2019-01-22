@@ -105,3 +105,41 @@ private:
 	std::map<unsigned int, unsigned int> _globalVelocityQueuelength;
 };
 #endif /* PRESSUREGRADIENT_H_ */
+
+/* PROCEDURE TO REMOVE UNUSED PRESSURE GRADIENT FROM CODEBASE:
+
+ 	- removed pg from Domain constructor -> removed universalPG -> removed forward decl in .h and include in .cpp
+
+ 	// Domain.cpp
+	this->_universalPG = pg;
+	// after: checkpointfilestream << _epsilonRF << endl;
+			map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
+			for( map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
+					uCSIDit != componentSets.end();
+					uCSIDit++ )
+			{
+				if(uCSIDit->first > 100) continue;
+				checkpointfilestream << " S\t" << 1+uCSIDit->first << "\t" << uCSIDit->second << "\n";
+			}
+			map<unsigned, double> tau = this->_universalPG->getTau();
+			for( map<unsigned, double>::const_iterator gTit = tau.begin();
+					gTit != tau.end();
+					gTit++ )
+			{
+				unsigned cosetid = gTit->first;
+				double* ttargetv = this->_universalPG->getTargetVelocity(cosetid);
+				double* tacc = this->_universalPG->getAdditionalAcceleration(cosetid);
+				checkpointfilestream << " A\t" << cosetid << "\t"
+					<< ttargetv[0] << " " << ttargetv[1] << " " << ttargetv[2] << "\t"
+					<< gTit->second << "\t"
+					<< tacc[0] << " " << tacc[1] << " " << tacc[2] << "\n";
+				delete ttargetv;
+				delete tacc;
+			}
+
+	- removed forward declarations:
+ 		- Simulation.h
+
+
+
+*/

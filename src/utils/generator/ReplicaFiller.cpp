@@ -147,7 +147,7 @@ void ReplicaFiller::init() {
 #else
 	DomainDecompBase domainDecomp;
 #endif
-	Domain domain(0, nullptr);
+	Domain domain(0);
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
 	_inputReader->readPhaseSpace(&basisContainer, &lmu, &domain, &domainDecomp);
 	global_log->info() << "Number of molecules in the replica: " << basisContainer.getNumberOfParticles() << endl;

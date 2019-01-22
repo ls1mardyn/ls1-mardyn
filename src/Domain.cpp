@@ -10,7 +10,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
-#include "ensemble/PressureGradient.h"
 //#include "CutoffCorrections.h"
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
@@ -24,15 +23,13 @@ using Log::global_log;
 using namespace std;
 
 
-Domain::Domain(int rank, PressureGradient* pg){
+Domain::Domain(int rank) {
 	_localRank = rank;
 	_localUpot = 0;
 	_localVirial = 0;
 	_globalUpot = 0;
 	_globalVirial = 0;
 	_globalRho = 0;
-
-	this->_universalPG = pg;
 
 	this->_componentToThermostatIdMap = map<int, int>();
 	this->_localThermostatN = map<int, unsigned long>();
@@ -552,29 +549,6 @@ void Domain::writeCheckpointHeader(string filename,
 				}
 			}
 			checkpointfilestream << _epsilonRF << endl;
-			map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
-			for( map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
-					uCSIDit != componentSets.end();
-					uCSIDit++ )
-			{
-				if(uCSIDit->first > 100) continue;
-				checkpointfilestream << " S\t" << 1+uCSIDit->first << "\t" << uCSIDit->second << "\n";
-			}
-			map<unsigned, double> tau = this->_universalPG->getTau();
-			for( map<unsigned, double>::const_iterator gTit = tau.begin();
-					gTit != tau.end();
-					gTit++ )
-			{
-				unsigned cosetid = gTit->first;
-				double* ttargetv = this->_universalPG->getTargetVelocity(cosetid);
-				double* tacc = this->_universalPG->getAdditionalAcceleration(cosetid);
-				checkpointfilestream << " A\t" << cosetid << "\t"
-					<< ttargetv[0] << " " << ttargetv[1] << " " << ttargetv[2] << "\t"
-					<< gTit->second << "\t"
-					<< tacc[0] << " " << tacc[1] << " " << tacc[2] << "\n";
-				delete ttargetv;
-				delete tacc;
-			}
 			for( map<int, bool>::iterator uutit = this->_universalUndirectedThermostat.begin();
 					uutit != this->_universalUndirectedThermostat.end();
 					uutit++ )

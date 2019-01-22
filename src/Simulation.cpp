@@ -1360,7 +1360,7 @@ void Simulation::initialize() {
 	_pressureGradient = new PressureGradient(ownrank);
 
 	global_log->info() << "Creating domain ..." << endl;
-	_domain = new Domain(ownrank, this->_pressureGradient);
+	_domain = new Domain(ownrank);
 	global_log->info() << "Creating ParticlePairs2PotForceAdapter ..." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 

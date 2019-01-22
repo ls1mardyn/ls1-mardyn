@@ -21,8 +21,7 @@
 
 #include "molecules/MoleculeForwardDeclaration.h"
 class ParticleContainer;
-class DomainDecompBase; 
-class PressureGradient;
+class DomainDecompBase;
 class XMLfileUnits;
 
 //! @brief This class is used to read in the phasespace and to handle macroscopic values
@@ -54,7 +53,7 @@ private:
 	
 public:
 	//! The constructor sets _localRank to rank and initializes all member variables
-	Domain(int rank, PressureGradient* pg);
+	Domain(int rank);
 
 	void readXML(XMLfileUnits& xmlconfig);
 	//! @brief writes a checkpoint file that can be used to continue the simulation
@@ -440,8 +439,6 @@ private:
 
 	/* FIXME: This info should go into an ensemble class */
 	bool _universalNVE;
-
-	PressureGradient* _universalPG;
 
 	//! computation of the isochoric heat capacity
 	unsigned _globalUSteps;
