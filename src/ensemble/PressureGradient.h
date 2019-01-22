@@ -110,7 +110,6 @@ private:
 
  	- removed pg from Domain constructor -> removed universalPG -> removed forward decl in .h and include in .cpp
 
- 	// Domain.cpp
 	this->_universalPG = pg;
 	// after: checkpointfilestream << _epsilonRF << endl;
 			map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
@@ -137,9 +136,38 @@ private:
 				delete tacc;
 			}
 
-	- removed forward declarations:
- 		- Simulation.h
+	- removed forward declaration and include from Simulation.h/.cpp
 
+		PressureGradient* _pressureGradient;
+ 		//after: 	_longRangeCorrection->calculateLongRange(); in #######
+			if (_pressureGradient->isAcceleratingUniformly()) {
+			global_log->info() << "Initialising uniform acceleration." << endl;
+			unsigned long uCAT = _pressureGradient->getUCAT();
+			global_log->info() << "uCAT: " << uCAT << " steps." << endl;
+			_pressureGradient->determineAdditionalAcceleration(
+					_domainDecomposition, _moleculeContainer, uCAT
+							* _integrator->getTimestepLength());
+			global_log->info() << "Uniform acceleration initialised." << endl;
+			}
 
+		// first in simulate()
+			// (universal) constant acceleration (number of) timesteps
+			unsigned uCAT = _pressureGradient->getUCAT();
 
+		// after: _domain->calculateThermostatDirectedVelocity(_moleculeContainer); in simulate()
+			if (_pressureGradient->isAcceleratingUniformly()) {
+				if (!(_simstep % uCAT)) {
+					global_log->debug() << "Determine the additional acceleration" << endl;
+					_pressureGradient->determineAdditionalAcceleration(
+							_domainDecomposition, _moleculeContainer, uCAT
+							* _integrator->getTimestepLength());
+				}
+				global_log->debug() << "Process the uniform acceleration" << endl;
+				_integrator->accelerateUniformly(_moleculeContainer, _domain);
+				_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
+			}
+
+		// in initialize() before Domain()
+			global_log->info() << "Creating PressureGradient ... " << endl;
+			_pressureGradient = new PressureGradient(ownrank);
 */
