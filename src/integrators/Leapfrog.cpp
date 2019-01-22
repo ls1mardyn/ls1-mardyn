@@ -4,7 +4,6 @@
 
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
-#include "ensemble/PressureGradient.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"

@@ -18,7 +18,6 @@
 #include "ensemble/BoxDomain.h"
 #include "ensemble/EnsembleBase.h"
 #include "ensemble/GrandCanonical.h"
-#include "ensemble/PressureGradient.h"
 #include "Simulation.h"
 #include "molecules/Molecule.h"
 #ifdef ENABLE_MPI

@@ -10,7 +10,6 @@
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
 #include "io/CheckpointWriter.h"
-#include "ensemble/PressureGradient.h"
 #include "particleContainer/LinkedCells.h"
 #include "Domain.h"
 
