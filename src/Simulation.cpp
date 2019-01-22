@@ -203,6 +203,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
 		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
 		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
+		xmlconfig.getNodeValue("production/looptimelimit", _maxWallTime);
+		if(_maxWallTime != -1) {
+			global_log->info() << "Maxmimum Wall time of main loop: " << _maxWallTime;
+			_wallTimeEnabled = true;
+		}
 		xmlconfig.changecurrentnode("..");
 	} else {
 		global_log->error() << "Run section missing." << endl;
@@ -939,7 +944,13 @@ void Simulation::simulate() {
 
 	Timer perStepTimer;
 	perStepTimer.reset();
-	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
+
+	_simstep = _initSimulation + 1;
+#ifdef ENABLE_MPI
+	_mainLoopStartTime = MPI_Wtime();
+#endif
+	// TODO: TESTING
+	while (keepRunning()) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 		global_simulation->timers()->incrementTimerTimestepCounter();
@@ -1366,6 +1377,33 @@ void Simulation::initialize() {
 
 	global_log->info() << "Initialization done" << endl;
 }
+
+bool Simulation::keepRunning() {
+
+#ifdef ENABLE_MPI
+	double time = MPI_Wtime();
+#else
+	double time = 0;
+	global_log->error() << "WallTime only works with MPI support" << std::endl;
+	Simulation::exit(-1);
+#endif
+
+	// Simstep Criterion
+	if (_simstep > _numberOfTimesteps){
+		global_log->warning() << "Maximum Simstep reached: " << _simstep << std::endl;
+		return false;
+	}
+	// WallTime Criterion
+	else if(_wallTimeEnabled && time > _mainLoopStartTime + _maxWallTime){
+		global_log->warning() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
+		return false;
+	}
+	else{
+		_simstep++;
+		return true;
+	}
+}
+
 
 PluginBase* Simulation::getPlugin(const std::string& name)  {
 	for(auto& plugin : _plugins) {

@@ -450,6 +450,13 @@ public:
 	/** @brief Refresh particle IDs to continuous numbering*/
 	void refreshParticleIDs();
 
+	/** @brief Checks if Simsteps or MaxWallTime are reached */
+	bool keepRunning();
+
+	double _mainLoopStartTime;
+	double _maxWallTime = -1;
+	bool _wallTimeEnabled = false;
+
  private:
 
 	/** Enable final checkpoint after simulation run. */
