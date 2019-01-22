@@ -8,6 +8,14 @@
 class DomainDecompBase;
 class ParticleContainer;
 
+/*! @brief DEPRECATED CLASS
+ *
+ * PressureGradient functionality was lost at the latest with the move to the .XML input format.
+ * Code includes and usage was removed for code clarity and performance with a pull request by Kruegener on 01/22/2019.
+ * The removed code was attached to PressureGradient.h for reference.
+ * If the functionality would be needed, it should be implemented via the standard PluginBase interfaces, as the new
+ * plugin system is powerful enough to implement this functionality without direct intervention all over the code base.
+ */
 class PressureGradient {
 public:
 	PressureGradient(int rank);
