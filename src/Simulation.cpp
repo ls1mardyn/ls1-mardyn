@@ -203,7 +203,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
 		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
 		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
-		xmlconfig.getNodeValue("production/looptimelimit", _maxWallTime);
+		xmlconfig.getNodeValue("production/looptime", _maxWallTime);
 		if(_maxWallTime != -1) {
 			global_log->info() << "Maxmimum Wall time of main loop: " << _maxWallTime;
 			_wallTimeEnabled = true;

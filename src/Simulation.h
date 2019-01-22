@@ -232,6 +232,8 @@ public:
 	unsigned long getNumInitTimesteps() { return _initSimulation; }
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimulationStep() { return _simstep; }
+	/** Set Loop Time Limit in seconds */
+	void setLoopTime(double time) { _maxWallTime = time; }
 
 	double getcutoffRadius() const { return _cutoffRadius; }
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
