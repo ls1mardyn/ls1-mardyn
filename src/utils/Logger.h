@@ -252,6 +252,8 @@ public:
 		gettimeofday(&tod, 0);
 		double runTime = tod.tv_sec - _starttime.tv_sec + (tod.tv_usec - _starttime.tv_usec) / 1.E6;
 #else
+		time_t t;
+		t = time(NULL);
 		double runTime = t-_starttime;
 #endif
 	return runTime;
