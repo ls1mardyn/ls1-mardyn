@@ -945,7 +945,8 @@ void Simulation::simulate() {
 	Timer perStepTimer;
 	perStepTimer.reset();
 
-	_simstep = _initSimulation + 1;
+	// keppRunning increments the simstep counter before the first iteration
+	_simstep = _initSimulation;
 
 	while (keepRunning()) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
