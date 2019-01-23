@@ -203,7 +203,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
 		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
 		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
-		xmlconfig.getNodeValue("production/looptime", _maxWallTime);
+		xmlconfig.getNodeValue("production/walltime", _maxWallTime);
 		if(_maxWallTime != -1) {
 			global_log->info() << "Maxmimum Wall time of main loop: " << _maxWallTime << endl;
 			_wallTimeEnabled = true;
@@ -946,10 +946,7 @@ void Simulation::simulate() {
 	perStepTimer.reset();
 
 	_simstep = _initSimulation + 1;
-#ifdef ENABLE_MPI
-	_mainLoopStartTime = MPI_Wtime();
-#endif
-	// TODO: TESTING
+
 	while (keepRunning()) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
@@ -1380,21 +1377,13 @@ void Simulation::initialize() {
 
 bool Simulation::keepRunning() {
 
-#ifdef ENABLE_MPI
-	double time = MPI_Wtime();
-#else
-	double time = 0;
-	global_log->error() << "WallTime only works with MPI support" << std::endl;
-	Simulation::exit(-1);
-#endif
-
 	// Simstep Criterion
 	if (_simstep > _numberOfTimesteps){
 		global_log->warning() << "Maximum Simstep reached: " << _simstep << std::endl;
 		return false;
 	}
 	// WallTime Criterion
-	else if(_wallTimeEnabled && time > _mainLoopStartTime + _maxWallTime){
+	else if(_wallTimeEnabled && global_log->getRunTime() > _maxWallTime){
 		global_log->warning() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
 		return false;
 	}
