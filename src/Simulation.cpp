@@ -56,7 +56,7 @@
 #include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
 
-#include "ensemble/GrandCanonical.h"
+#include "ensemble/GrandCanonicalEnsemble.h"
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
 #include "ensemble/CavityEnsemble.h"
@@ -218,8 +218,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
-			Simulation::exit(1);
-			// _ensemble = new GrandCanonicalEnsemble();
+			/* TODO: GrandCanonical terminates as readXML is not implemented and it is not tested yet. */
+			_ensemble = new GrandCanonicalEnsemble();
 		} else {
 			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
 			Simulation::exit(1);
@@ -641,7 +641,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	timers()->registerTimer("PHASESPACE_CREATION",  vector<string>{"SIMULATION_IO"}, new Timer());
 	timers()->setOutputString("PHASESPACE_CREATION", "Phasespace creation took:");
 	timers()->getTimer("PHASESPACE_CREATION")->start();
-	unsigned long maxID = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
+
+	unsigned long maxID = _inputReader->readPhaseSpace(_moleculeContainer, _domain, _domainDecomposition);
 	timers()->getTimer("PHASESPACE_CREATION")->stop();
 
 	_moleculeContainer->update();
@@ -657,39 +658,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
-	int ownrank = 0;
-#ifdef ENABLE_MPI
-	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-#endif
-	unsigned idi = _lmu.size();
-	unsigned j = 0;
-	std::list<ChemicalPotential>::iterator cpit;
-	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-		cpit->setIncrement(idi);
-		double tmp_molecularMass = global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->m();
-		cpit->setSystem(_domain->getGlobalLength(0),
-				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
-				tmp_molecularMass);
-		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
-		cpit->setNextID(j + (int) (1.001 * (256 + globalNumMolecules)));
-
-		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
-				_moleculeContainer->getBoundingBoxMax(0),
-				_moleculeContainer->getBoundingBoxMin(1),
-				_moleculeContainer->getBoundingBoxMax(1),
-				_moleculeContainer->getBoundingBoxMin(2),
-				_moleculeContainer->getBoundingBoxMax(2));
-		/* TODO: thermostat */
-		double Tcur = _domain->getCurrentTemperature(0);
-		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(0);
-		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
-			Tcur = Ttar;
-		cpit->submitTemperature(Tcur);
-		if (h != 0.0)
-			cpit->setPlanckConstant(h);
-		j++;
-	}
+    _ensemble->initConfigXML(_moleculeContainer);
 }
 
 void Simulation::updateForces() {
@@ -852,24 +821,7 @@ void Simulation::prepare_start() {
 			true, 1.0);
 	global_log->debug() << "Calculating global values finished." << endl;
 
-	if (_lmu.size() > 0) {
-		/* TODO: thermostat */
-		double Tcur = _domain->getGlobalCurrentTemperature();
-		/* FIXME: target temperature from thermostat ID 0 or 1? */
-		double
-				Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
-								: _domain->getTargetTemperature(0);
-		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
-			Tcur = Ttar;
-
-		list<ChemicalPotential>::iterator cpit;
-		if (h == 0.0)
-			h = sqrt(6.2831853 * Ttar);
-		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-			cpit->submitTemperature(Tcur);
-			cpit->setPlanckConstant(h);
-		}
-	}
+	_ensemble->prepare_start();
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
@@ -954,19 +906,7 @@ void Simulation::simulate() {
             plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
         }
 
-
-		/** @todo What is this good for? Where come the numbers from? Needs documentation */
-		if (_simstep >= _initGrandCanonical) {
-			unsigned j = 0;
-			list<ChemicalPotential>::iterator cpit;
-			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					cpit->prepareTimestep(_moleculeContainer, _domainDecomposition);
-				}
-				j++;
-			}
-		}
-
+        _ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
@@ -1048,47 +988,12 @@ void Simulation::simulate() {
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
-		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
-		// test deletions and insertions
-		if (_simstep >= _initGrandCanonical) {
-			unsigned j = 0;
-			list<ChemicalPotential>::iterator cpit;
-			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
-							<< endl;
-					this->_domain->setLambda(cpit->getLambda());
-					this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
-					double localUpotBackup = _domain->getLocalUpot();
-					double localVirialBackup = _domain->getLocalVirial();
-					cpit->grandcanonicalStep(_moleculeContainer, _domain->getGlobalCurrentTemperature(), this->_domain,
-							_cellProcessor);
-					_domain->setLocalUpot(localUpotBackup);
-					_domain->setLocalVirial(localVirialBackup);
-#ifndef NDEBUG
-					/* check if random numbers inserted are the same for all processes... */
-					cpit->assertSynchronization(_domainDecomposition);
-#endif
+		_ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
 
-					int localBalance = cpit->getLocalGrandcanonicalBalance();
-					int balance = cpit->grandcanonicalBalance(_domainDecomposition);
-					global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
-							<< ((localBalance > 0) ? "+" : "") << localBalance << ")" << " / c = "
-							<< cpit->getComponentID() << "]   " << endl;
-					_domain->Nadd(cpit->getComponentID(), balance, localBalance);
-				}
-
-				j++;
-			}
-		}
-
+		// TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
-		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
-		if (_simstep >= _initGrandCanonical) {
-			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(), _domainDecomposition);
-		}
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
@@ -1106,12 +1011,7 @@ void Simulation::simulate() {
 		_longRangeCorrection->calculateLongRange();
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 
-		/* radial distribution function */
-		if (_simstep >= _initStatistics) {
-			if (this->_lmu.size() == 0) {
-				this->_domain->record_cv();
-			}
-		}
+		_ensemble->beforeThermostat(_simstep, _initStatistics);
 
 		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);

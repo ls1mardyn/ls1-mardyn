@@ -90,7 +90,7 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/)
 
 unsigned long DropletGenerator::readPhaseSpace(
 		ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* /*lmu*/, Domain* domain,
+		Domain* domain,
 		DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("DROPLET_GENERATOR_INPUT");

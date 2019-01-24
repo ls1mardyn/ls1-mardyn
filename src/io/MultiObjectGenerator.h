@@ -7,11 +7,13 @@
 #include "io/InputBase.h"
 
 class ObjectGenerator;
+
 class VelocityAssignerBase;
 
 class MultiObjectGenerator : public InputBase {
 public:
 	MultiObjectGenerator() : _globalNumMolecules(0) {}
+
 	~MultiObjectGenerator();
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
@@ -30,7 +32,7 @@ public:
 
 	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/) {}
 
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
 
 private:
 

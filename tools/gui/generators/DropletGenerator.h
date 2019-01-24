@@ -140,7 +140,7 @@ public:
 
 	//! @brief read the phase space components and header information
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer,
-			std::list<ChemicalPotential>* lmu, Domain* domain,
+			Domain* domain,
 			DomainDecompBase* domainDecomp);
 
 	vector<ParameterCollection*> getParameters();

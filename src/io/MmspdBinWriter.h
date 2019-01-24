@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "ensemble/GrandCanonical.h"
 #include "plugins/PluginBase.h"
 
 class MmspdBinWriter : public PluginBase{

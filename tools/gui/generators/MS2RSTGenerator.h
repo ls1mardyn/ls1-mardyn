@@ -17,7 +17,6 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
 #include "ensemble/PressureGradient.h"
-#include "ensemble/GrandCanonical.h"
 #include "io/CheckpointWriter.h"
 #include "Domain.h"
 
@@ -80,7 +79,7 @@ public:
 	 *  // todo why? should it be some kind of upper bound for the number of molecules???
 	 */
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer,
-			std::list<ChemicalPotential>* lmu, Domain* domain,
+			Domain* domain,
 			DomainDecompBase* domainDecomp);
 
 private:

@@ -13,11 +13,12 @@
 #include "utils/xmlfile.h"
 #include "io/InputBase.h"
 
-class BinaryReader  : public InputBase {
+class BinaryReader : public InputBase {
 
 public:
 
 	BinaryReader();
+
 	~BinaryReader();
 
 	void readXML(XMLfileUnits& xmlconfig);
@@ -85,13 +86,14 @@ public:
 	//! An example can be seen in the documentation of this class
 	//! @param particleContainer Here the Molecules from the input file are stored
 	//! @return Highest molecule ID found in the input phase space file.
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+
 private:
 
 	uint32_t _nMoleculeFormat;
 	std::string _moleculeFormat;
-	std::string  _phaseSpaceFile;
-	std::string  _phaseSpaceHeaderFile;
+	std::string _phaseSpaceFile;
+	std::string _phaseSpaceHeaderFile;
 	std::ifstream _phaseSpaceFileStream;
 	std::fstream _phaseSpaceHeaderFileStream;
 

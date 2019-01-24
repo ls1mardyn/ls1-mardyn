@@ -4,7 +4,6 @@
 #include <fstream>
 #include <string>
 
-#include "ensemble/GrandCanonical.h"
 #include "plugins/PluginBase.h"
 #include "utils/Accumulator.h"
 

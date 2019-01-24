@@ -12,21 +12,19 @@
  * This class provides access to all global variables of the canonical ensemble (NVT).
  **/
 class Component;
+
 class DomainBase;
 /* Fix problem with Cray compiler which requires the actual size of the component class. */
-#include "molecules/Component.h" 
-
+#include "molecules/Component.h"
 
 class CanonicalEnsemble : public Ensemble {
-	
+
 private:
 	CanonicalEnsemble& operator=(CanonicalEnsemble ensemble);
-	
+
 public:
 
-	CanonicalEnsemble() :
-			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
-	}
+	CanonicalEnsemble();
 
 	virtual ~CanonicalEnsemble() {
 	}
@@ -36,9 +34,11 @@ public:
 	unsigned long N() override {
 		return _N;
 	}
+
 	double V() override {
 		return _V;
 	}
+
 	double T() override {
 		return _T;
 	}
@@ -46,17 +46,19 @@ public:
 	double mu() override {
 		return _mu;
 	}
+
 	double p() override {
 		return _p;
 	}
+
 	double E() override {
 		return _E;
 	}
 
-	void updateGlobalVariable(ParticleContainer *particleContainer, GlobalVariable variable) override;
+	void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) override;
 
-
-
+	/*! runs before temperature control is applied, but after force calculations, triggers radial distribution call in Domain only for NVT */
+	void beforeThermostat(unsigned long simstep, unsigned long initStatistics) override;
 
 private:
 
