@@ -63,7 +63,7 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	int rank = 0;
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &rank) );
 	DomainDecomposition domainDecomposition;
-	Domain domain(rank, NULL);
+	Domain domain(rank);
 	writer.endStep(&container, &domainDecomposition, &domain, 1);
 	writer.endStep(&container, &domainDecomposition, &domain, 2);
 
@@ -85,7 +85,7 @@ void VTKMoleculeWriterTest::testDoOutput() {
 		}
 	}
 #else
-	Domain domain(0, NULL);
+	Domain domain(0);
 	DomainDecompBase dummy;
     writer.endStep(&container, &dummy, &domain, 1);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKMoleculeWriterTest_1.vtu"));
