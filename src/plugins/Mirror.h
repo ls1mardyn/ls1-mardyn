@@ -26,7 +26,6 @@ enum MirrorType : uint16_t {
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
-class ChemicalPotential;
 
 class Mirror : public PluginBase
 {

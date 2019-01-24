@@ -17,7 +17,9 @@ class MPI_IOReader : public InputBase {
 public:
 
 	MPI_IOReader();
+
 	~MPI_IOReader();
+
 	//! @brief gets a filename and opens an ifstream associated with the given file
 	//!
 	//! As the reading of the phasespace file is separated into two parts,
@@ -81,14 +83,15 @@ public:
 	//! An example can be seen in the documentation of this class
 	//! @param particleContainer Here the Molecules from the input file are stored
 	//! @return Highest molecule ID found in the input phase space file.
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
 
 	void handle_error(int i);
+
 private:
 
 	std::string _moleculeFormat;
-	std::string  _phaseSpaceFile;
-	std::string  _phaseSpaceHeaderFile;
+	std::string _phaseSpaceFile;
+	std::string _phaseSpaceHeaderFile;
 	std::ifstream _phaseSpaceFileStream;
 	std::fstream _phaseSpaceHeaderFileStream;
 

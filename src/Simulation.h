@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "ensemble/CavityEnsemble.h"
-#include "ensemble/GrandCanonical.h"
 #include "io/TimerProfiler.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
@@ -286,6 +285,11 @@ public:
 		return &_timerProfiler;
 	}
 
+	//! get Planck constant
+	double getH() {return h;}
+	//! set Planck constant
+    void setH(double h_extern) {h = h_extern;}
+
 private:
 
 
@@ -437,10 +441,6 @@ public:
 	void initGlobalEnergyLog();
 	void writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure);
 
-	std::list<ChemicalPotential>* getLmu()  {
-		return &_lmu;
-	}
-
 	CellProcessor *getCellProcessor() const;
 
 	/** @brief Refresh particle IDs to continuous numbering*/
@@ -455,20 +455,6 @@ public:
 	std::list<PluginBase*> _plugins;
 
 	VelocityScalingThermostat _velocityScalingThermostat;
-
-	/** List of ChemicalPotential objects, each of which describes a
-	 * particular control volume for the grand canonical ensemble with
-	 * respect to one of the simulated components.
-	 *
-	 * It may at first be unclear why one could want to specify
-	 * several grand canonical ensembles, which are then stored in a
-	 * list. However, note that for every component a distinct
-	 * chemical potential can be specified, and this is of course
-	 * essential in certain cases. Also, different chemical potentials
-	 * can be specified for different control volumes to induce a
-	 * gradient of the chemical potential.
-	 */
-	std::list<ChemicalPotential> _lmu;
 
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).

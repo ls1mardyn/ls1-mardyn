@@ -30,7 +30,7 @@ public:
     }
     int comms() final {return 1;}
 
-    int getGlobalNumberDensity(unsigned long uid) const {
+    int getGlobalNumber (unsigned long uid) const {
     	return _globalProfile.at(uid);
     }
 

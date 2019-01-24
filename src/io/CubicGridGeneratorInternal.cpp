@@ -11,7 +11,6 @@
 #include "CubicGridGeneratorInternal.h"
 #include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
-#include "ensemble/GrandCanonical.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 
@@ -58,8 +57,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *particleContainer, Domain *domain, DomainDecompBase *domainDecomp) {
 	global_simulation->timers()->start("CUBIC_GRID_GENERATOR_INPUT");
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 

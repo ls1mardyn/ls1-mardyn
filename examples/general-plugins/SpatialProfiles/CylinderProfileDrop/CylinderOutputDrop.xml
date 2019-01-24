@@ -181,6 +181,7 @@
 	        <temperature>0</temperature>
 	        <velocity>0</velocity>
 	        <velocity3d>0</velocity3d>
+	        <virial>0</virial>
 	      </profiles>
 	    </plugin>
 

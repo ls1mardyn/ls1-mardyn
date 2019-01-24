@@ -10,13 +10,14 @@
 #include "Domain.h"
 #include "ensemble/BoxDomain.h"
 #include "ensemble/EnsembleBase.h"
-#include "ensemble/GrandCanonical.h"
 #include "Simulation.h"
 #include "molecules/Molecule.h"
+
 #ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
 #include "parallel/DomainDecompBase.h"
 #endif
+
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 
@@ -36,7 +37,7 @@ void ASCIIReader::setPhaseSpaceHeaderFile(string filename) {
 
 void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 	string pspfile;
-	if (xmlconfig.getNodeValue(".", pspfile)) {
+	if(xmlconfig.getNodeValue(".", pspfile)) {
 		pspfile.insert(0, xmlconfig.getDir());
 		global_log->info() << "phasespacepoint description file:\t" << pspfile << endl;
 	}
@@ -47,9 +48,9 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	string token;
 
 	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << endl;
-	_phaseSpaceHeaderFileStream.open( _phaseSpaceHeaderFile.c_str() );
+	_phaseSpaceHeaderFileStream.open(_phaseSpaceHeaderFile.c_str());
 	_phaseSpaceHeaderFileStream >> token;
-	if( token != "mardyn") {
+	if(token != "mardyn") {
 		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;
 		Simulation::exit(1);
 	}
@@ -62,7 +63,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		Simulation::exit(1);
 	}
 
-	if( std::stoi(inputversion) < 20080701 ) {
+	if(std::stoi(inputversion) < 20080701) {
 		global_log->error() << "Input version too old (" << inputversion << ")" << endl;
 		Simulation::exit(1);
 	}
@@ -77,7 +78,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		_phaseSpaceHeaderFileStream >> c;
 		if(c == '#') {
 			// comment line
-			_phaseSpaceHeaderFileStream.ignore( INT_MAX,'\n' );
+			_phaseSpaceHeaderFileStream.ignore(INT_MAX, '\n');
 			continue;
 		}
 		_phaseSpaceHeaderFileStream.putback(c);
@@ -89,62 +90,55 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		if((token == "currentTime") || (token == "t")) {
 			// set current simulation time
 			_phaseSpaceHeaderFileStream >> token;
-			_simulation.setSimulationTime( strtod(token.c_str(), NULL) );
-		}
-		else if((token == "Temperature") || (token == "T")) {
+			_simulation.setSimulationTime(strtod(token.c_str(), NULL));
+		} else if((token == "Temperature") || (token == "T")) {
 			// set global thermostat temperature
 			domain->disableComponentwiseThermostat(); //disable component wise thermostats
 			double targetT;
 			_phaseSpaceHeaderFileStream >> targetT;
-			domain->setGlobalTemperature( targetT );
-		}
-		else if((token == "ThermostatTemperature") || (token == "ThT") || (token == "h")) {
+			domain->setGlobalTemperature(targetT);
+		} else if((token == "ThermostatTemperature") || (token == "ThT") || (token == "h")) {
 			// set up a new thermostat
 			int thermostat_id;
 			double targetT;
 			_phaseSpaceHeaderFileStream >> thermostat_id;
 			_phaseSpaceHeaderFileStream >> targetT;
 			global_log->info() << "Thermostat number " << thermostat_id << " has T = " << targetT << ".\n";
-			domain->setTargetTemperature( thermostat_id, targetT );
-		}
-		else if((token == "ComponentThermostat") || (token == "CT") || (token == "o")) {
+			domain->setTargetTemperature(thermostat_id, targetT);
+		} else if((token == "ComponentThermostat") || (token == "CT") || (token == "o")) {
 			// specify a thermostat for a component
-			if( !domain->severalThermostats() )
+			if(!domain->severalThermostats())
 				domain->enableComponentwiseThermostat();
 			int component_id;
 			int thermostat_id;
 			_phaseSpaceHeaderFileStream >> component_id >> thermostat_id;
-			global_log->info() << "Component " << component_id << " (internally: " << component_id - 1 << ") is regulated by thermostat number " << thermostat_id << ".\n";
+			global_log->info() << "Component " << component_id << " (internally: " << component_id - 1
+							   << ") is regulated by thermostat number " << thermostat_id << ".\n";
 			component_id--; // FIXME thermostat IDs start with 0 in the program but not in the config file?!
-			if( thermostat_id < 0 ) // thermostat IDs start with 0
+			if(thermostat_id < 0) // thermostat IDs start with 0
 				continue;
-			domain->setComponentThermostat( component_id, thermostat_id );
-		}
-		else if((token == "Undirected") || (token == "U")) {
+			domain->setComponentThermostat(component_id, thermostat_id);
+		} else if((token == "Undirected") || (token == "U")) {
 			// set undirected thermostat
 			int thermostat_id;
 			_phaseSpaceHeaderFileStream >> thermostat_id;
-			domain->enableUndirectedThermostat( thermostat_id );
-		}
-		else if((token == "Length") || (token == "L")) {
+			domain->enableUndirectedThermostat(thermostat_id);
+		} else if((token == "Length") || (token == "L")) {
 			// simulation box dimensions
 			double globalLength[3];
 			_phaseSpaceHeaderFileStream >> globalLength[0] >> globalLength[1] >> globalLength[2];
 			delete _simulation.getEnsemble()->domain();
 			_simulation.getEnsemble()->domain() = new BoxDomain();
-			for( int d = 0; d < 3; d++ ) {
+			for(int d = 0; d < 3; d++) {
 				static_cast<BoxDomain*>(_simulation.getEnsemble()->domain())->setLength(d, globalLength[d]);
-				domain->setGlobalLength( d, _simulation.getEnsemble()->domain()->length(d));
+				domain->setGlobalLength(d, _simulation.getEnsemble()->domain()->length(d));
 			}
-		}
-		else if((token == "HeatCapacity") || (token == "cv") || (token == "I"))
-		{
+		} else if((token == "HeatCapacity") || (token == "cv") || (token == "I")) {
 			unsigned N;
 			double U, UU;
 			_phaseSpaceFileStream >> N >> U >> UU;
 			domain->init_cv(N, U, UU);
-		}
-		else if((token == "NumberOfComponents") || (token == "C")) {
+		} else if((token == "NumberOfComponents") || (token == "C")) {
 			// read in component definitions and
 			// read in mixing coefficients
 
@@ -153,59 +147,61 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			_phaseSpaceHeaderFileStream >> numcomponents;
 			global_log->info() << "Reading " << numcomponents << " components" << endl;
 			dcomponents.resize(numcomponents);
-			for( unsigned int i = 0; i < numcomponents; i++ ) {
-                                global_log->info() << "comp. i = " << i << ": " << endl;
+			for(unsigned int i = 0; i < numcomponents; i++) {
+				global_log->info() << "comp. i = " << i << ": " << endl;
 				dcomponents[i].setID(i);
 				unsigned int numljcenters = 0;
 				unsigned int numcharges = 0;
 				unsigned int numdipoles = 0;
 				unsigned int numquadrupoles = 0;
 				unsigned int numtersoff = 0; //previously tersoff
-				_phaseSpaceHeaderFileStream >> numljcenters >> numcharges >> numdipoles 
-					>> numquadrupoles >> numtersoff;
-				if (numtersoff != 0) {
+				_phaseSpaceHeaderFileStream >> numljcenters >> numcharges >> numdipoles
+											>> numquadrupoles >> numtersoff;
+				if(numtersoff != 0) {
 					global_log->error() << "tersoff no longer supported."
-							<< std::endl;
+										<< std::endl;
 					Simulation::exit(-1);
 				}
 				double x, y, z, m;
-				for( unsigned int j = 0; j < numljcenters; j++ ) {
+				for(unsigned int j = 0; j < numljcenters; j++) {
 					double eps, sigma, tcutoff, do_shift;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
-					dcomponents[i].addLJcenter( x, y, z, m, eps, sigma, tcutoff, (do_shift != 0) );
-                                        global_log->info() << "LJ at [" << x << " " << y << " " << z << "], mass: " << m << ", epsilon: " << eps << ", sigma: " << sigma << endl;
+					dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, tcutoff, (do_shift != 0));
+					global_log->info() << "LJ at [" << x << " " << y << " " << z << "], mass: " << m << ", epsilon: "
+									   << eps << ", sigma: " << sigma << endl;
 				}
-				for( unsigned int j = 0; j < numcharges; j++ ) {
+				for(unsigned int j = 0; j < numcharges; j++) {
 					double q;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> q;
-					dcomponents[i].addCharge( x, y, z, m, q );
-                                        global_log->info() << "charge at [" << x << " " << y << " " << z << "], mass: " << m << ", q: " << q << endl;
+					dcomponents[i].addCharge(x, y, z, m, q);
+					global_log->info() << "charge at [" << x << " " << y << " " << z << "], mass: " << m << ", q: " << q
+									   << endl;
 				}
-				for( unsigned int j = 0; j < numdipoles; j++ ) {
-					double eMyx,eMyy,eMyz,absMy;
+				for(unsigned int j = 0; j < numdipoles; j++) {
+					double eMyx, eMyy, eMyz, absMy;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eMyx >> eMyy >> eMyz >> absMy;
-					dcomponents[i].addDipole( x, y, z, eMyx, eMyy, eMyz, absMy );
-                                        global_log->info() << "dipole at [" << x << " " << y << " " << z << "] " << endl;
+					dcomponents[i].addDipole(x, y, z, eMyx, eMyy, eMyz, absMy);
+					global_log->info() << "dipole at [" << x << " " << y << " " << z << "] " << endl;
 				}
-				for( unsigned int j = 0; j < numquadrupoles; j++ ) {
-					double eQx,eQy,eQz,absQ;
+				for(unsigned int j = 0; j < numquadrupoles; j++) {
+					double eQx, eQy, eQz, absQ;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
-					dcomponents[i].addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
-                                        global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << endl;
+					dcomponents[i].addQuadrupole(x, y, z, eQx, eQy, eQz, absQ);
+					global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << endl;
 				}
-				double IDummy1,IDummy2,IDummy3;
+				double IDummy1, IDummy2, IDummy3;
 				// FIXME! Was soll das hier? Was ist mit der Initialisierung im Fall I <= 0.
 				_phaseSpaceHeaderFileStream >> IDummy1 >> IDummy2 >> IDummy3;
-				if( IDummy1 > 0. ) dcomponents[i].setI11(IDummy1);
-				if( IDummy2 > 0. ) dcomponents[i].setI22(IDummy2);
-				if( IDummy3 > 0. ) dcomponents[i].setI33(IDummy3);
-                                domain->setProfiledComponentMass(dcomponents[i].m());
-                                global_log->info() << endl;
+				if(IDummy1 > 0.) dcomponents[i].setI11(IDummy1);
+				if(IDummy2 > 0.) dcomponents[i].setI22(IDummy2);
+				if(IDummy3 > 0.) dcomponents[i].setI33(IDummy3);
+				domain->setProfiledComponentMass(dcomponents[i].m());
+				global_log->info() << endl;
 			}
 
 #ifndef NDEBUG
-			for (unsigned int i = 0; i < numcomponents; i++) {
-				global_log->debug() << "Component " << (i+1) << " of " << numcomponents << endl;
+			for(unsigned int i = 0; i < numcomponents; i++) {
+				global_log->debug() << "Component " << (i + 1) << " of " << numcomponents << endl;
 				global_log->debug() << dcomponents[i] << endl;
 			}
 #endif
@@ -213,30 +209,29 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			// Mixing coefficients
 			vector<double>& dmixcoeff = domain->getmixcoeff();
 			dmixcoeff.clear();
-			for( unsigned int i = 1; i < numcomponents; i++ ) {
-				for( unsigned int j = i + 1; j <= numcomponents; j++ ) {
+			for(unsigned int i = 1; i < numcomponents; i++) {
+				for(unsigned int j = i + 1; j <= numcomponents; j++) {
 					double xi, eta;
 					_phaseSpaceHeaderFileStream >> xi >> eta;
-					dmixcoeff.push_back( xi );
-					dmixcoeff.push_back( eta );
+					dmixcoeff.push_back(xi);
+					dmixcoeff.push_back(eta);
 				}
 			}
 			// read in global factor \epsilon_{RF}
 			// FIXME: Maybe this should go better to a seperate token?!
 			_phaseSpaceHeaderFileStream >> token;
-			domain->setepsilonRF( strtod(token.c_str(),NULL) );
+			domain->setepsilonRF(strtod(token.c_str(), NULL));
 			long int fpos;
-			if( _phaseSpaceFile == _phaseSpaceHeaderFile ) {
+			if(_phaseSpaceFile == _phaseSpaceHeaderFile) {
 				// in the case of a single phase space header + phase space file
 				// find out the actual position, because the phase space definition will follow
 				// FIXME: is there a more elegant way?
 				fpos = _phaseSpaceHeaderFileStream.tellg();
-				_phaseSpaceFileStream.seekg( fpos, ios::beg );
+				_phaseSpaceFileStream.seekg(fpos, ios::beg);
 			}
 			// FIXME: Is there a better solution than skipping the rest of the file?
 			header = false;
-		}
-		else if((token == "NumberOfMolecules") || (token == "N")) {
+		} else if((token == "NumberOfMolecules") || (token == "N")) {
 			// set number of Molecules 
 			// FIXME: Is this part called in any case as the token is handled in the readPhaseSpace method?
 			_phaseSpaceHeaderFileStream >> token;
@@ -254,17 +249,18 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream.close();
 }
 
-unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long
+ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("INPUT_OLDSTYLE_INPUT");
 
 #ifdef ENABLE_MPI
-	if (domainDecomp->getRank() == 0) 
+	if (domainDecomp->getRank() == 0)
 	{ // Rank 0 only
 #endif
 	global_log->info() << "Opening phase space file " << _phaseSpaceFile << endl;
-	_phaseSpaceFileStream.open( _phaseSpaceFile.c_str() );
-	if (!_phaseSpaceFileStream.is_open()) {
+	_phaseSpaceFileStream.open(_phaseSpaceFile.c_str());
+	if(!_phaseSpaceFileStream.is_open()) {
 		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
 		Simulation::exit(1);
 	}
@@ -279,10 +275,12 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	unsigned long nummolecules = 0;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 	string ntypestring("ICRVQD");
-	enum class Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = Ndatatype::ICRVQD;
+	enum class Ndatatype {
+		ICRVQDV, ICRVQD, IRV, ICRV
+	} ntype = Ndatatype::ICRVQD;
 
 #ifdef ENABLE_MPI
-	if (domainDecomp->getRank() == 0) 
+	if (domainDecomp->getRank() == 0)
 	{ // Rank 0 only
 #endif
 	while(_phaseSpaceFileStream && (token != "NumberOfMolecules") && (token != "N")) {
@@ -300,21 +298,21 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 #endif
 	global_log->info() << " number of molecules: " << nummolecules << endl;
 
-	
+
 #ifdef ENABLE_MPI
-	if (domainDecomp->getRank() == 0) 
+	if (domainDecomp->getRank() == 0)
 	{ // Rank 0 only
 #endif
 	streampos spos = _phaseSpaceFileStream.tellg();
 	_phaseSpaceFileStream >> token;
-	if((token=="MoleculeFormat") || (token == "M")) {
-        _phaseSpaceFileStream >> ntypestring;
-		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
-		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
-		if (ntypestring == "ICRVQDV") ntype = Ndatatype::ICRVQDV;
-		else if (ntypestring == "ICRVQD") ntype = Ndatatype::ICRVQD;
-		else if (ntypestring == "ICRV") ntype = Ndatatype::ICRV;
-		else if (ntypestring == "IRV")  ntype = Ndatatype::IRV;
+	if((token == "MoleculeFormat") || (token == "M")) {
+		_phaseSpaceFileStream >> ntypestring;
+		ntypestring.erase(ntypestring.find_last_not_of(" \t\n") + 1);
+		ntypestring.erase(0, ntypestring.find_first_not_of(" \t\n"));
+		if(ntypestring == "ICRVQDV") ntype = Ndatatype::ICRVQDV;
+		else if(ntypestring == "ICRVQD") ntype = Ndatatype::ICRVQD;
+		else if(ntypestring == "ICRV") ntype = Ndatatype::ICRV;
+		else if(ntypestring == "IRV") ntype = Ndatatype::IRV;
 		else {
 			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
 			Simulation::exit(1);
@@ -323,10 +321,10 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 		_phaseSpaceFileStream.seekg(spos);
 	}
 	global_log->info() << " molecule format: " << ntypestring << endl;
-	if( numcomponents < 1 ) {
+	if(numcomponents < 1) {
 		global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
 		numcomponents = 1;
-		dcomponents.resize( numcomponents );
+		dcomponents.resize(numcomponents);
 		dcomponents[0].setID(0);
 		dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
 	}
@@ -347,108 +345,102 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	global_log->debug() << "size of custom datatype is " << size << std::endl;
 
 #endif
-	
+
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
 	unsigned long id;
 	unsigned int componentid = std::numeric_limits<unsigned int>::max();
 
-	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
-	q0=1.;
+	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = Vix = Viy = Viz = 0.;
+	q0 = 1.;
 
-	for( unsigned long i = 0; i < nummolecules; i++ ) {
+	for(unsigned long i = 0; i < nummolecules; i++) {
 
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
-#endif	
-			switch ( ntype ) {
-				case Ndatatype::ICRVQDV:
-					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
-						>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Vix >> Viy >> Viz;
-					break;
-				case Ndatatype::ICRVQD:
-					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
-						>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
-					break;
-				case Ndatatype::ICRV :
-					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
-					break;
-				case Ndatatype::IRV :
-					_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
-					break;
-			}
-			if(        ( x < 0.0 || x >= domain->getGlobalLength(0) )
-					|| ( y < 0.0 || y >= domain->getGlobalLength(1) )
-					|| ( z < 0.0 || z >= domain->getGlobalLength(2) ) )
-			{
-				global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
-			}
-
-			if( componentid > numcomponents ) {
-				global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
-				Simulation::exit(1);
-			}
-			componentid --; // TODO: Component IDs start with 0 in the program.
-
-			// store only those molecules within the domain of this process
-			// The necessary check is performed in the particleContainer addParticle method
-			// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
-			Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
-#ifdef ENABLE_MPI
-			ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], m1);
-		} // Rank 0 only
-		
-		particle_buff_pos++;
-		if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == nummolecules - 1)) {
-			//MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
-			global_log->debug() << "broadcasting(sending/receiving) particles with buffer_position " << particle_buff_pos << std::endl;
-			MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD 
-			for (int j = 0; j < particle_buff_pos; j++) {
-				Molecule m;
-				ParticleData::ParticleDataToMolecule(particle_buff[j], m);
-				particleContainer->addParticle(m, false, true);
-				componentid=m.componentid();
-				
-				// TODO: The following should be done by the addPartice method.
-				dcomponents[componentid].incNumMolecules();
-				domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
-				
-				if(m.getID() > maxid) maxid = m.getID();
-
-				std::list<ChemicalPotential>::iterator cpit;
-				for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
-					if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-						cpit->storeMolecule(m);
-					}
-				}
-			}
-			global_log->debug() << "broadcasting(sending/receiving) complete" << particle_buff_pos << std::endl;
-			particle_buff_pos = 0;
+#endif
+		switch (ntype) {
+			case Ndatatype::ICRVQDV:
+				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
+									  >> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Vix >> Viy >> Viz;
+				break;
+			case Ndatatype::ICRVQD:
+				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
+									  >> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
+				break;
+			case Ndatatype::ICRV :
+				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
+				break;
+			case Ndatatype::IRV :
+				_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
+				break;
 		}
+		if((x < 0.0 || x >= domain->getGlobalLength(0))
+		   || (y < 0.0 || y >= domain->getGlobalLength(1))
+		   || (z < 0.0 || z >= domain->getGlobalLength(2))) {
+			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
+		}
+
+		if(componentid > numcomponents) {
+			global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">"
+								<< numcomponents << endl;
+			Simulation::exit(1);
+		}
+		componentid--; // TODO: Component IDs start with 0 in the program.
+
+		// store only those molecules within the domain of this process
+		// The necessary check is performed in the particleContainer addParticle method
+		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
+		Molecule m1 = Molecule(id, &dcomponents[componentid], x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz);
+#ifdef ENABLE_MPI
+		ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], m1);
+	} // Rank 0 only
+
+	particle_buff_pos++;
+	if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == nummolecules - 1)) {
+		//MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		global_log->debug() << "broadcasting(sending/receiving) particles with buffer_position " << particle_buff_pos << std::endl;
+		MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD
+		for (int j = 0; j < particle_buff_pos; j++) {
+			Molecule m;
+			ParticleData::ParticleDataToMolecule(particle_buff[j], m);
+			particleContainer->addParticle(m, false, true);
+			componentid=m.componentid();
+
+			// TODO: The following should be done by the addPartice method.
+			dcomponents[componentid].incNumMolecules();
+			domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
+
+			if(m.getID() > maxid) maxid = m.getID();
+
+			// Only called inside GrandCanonical
+			global_simulation->getEnsemble()->storeSample(&m, componentid);
+
+		}
+		global_log->debug() << "broadcasting(sending/receiving) complete" << particle_buff_pos << std::endl;
+		particle_buff_pos = 0;
+	}
 #else
 		particleContainer->addParticle(m1, false, true);
-		
-		componentid=m1.componentid();
+
+		componentid = m1.componentid();
 		// TODO: The following should be done by the addPartice method.
 		dcomponents[componentid].incNumMolecules();
 		domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
-		
+
 		if(id > maxid) maxid = id;
 
-		std::list<ChemicalPotential>::iterator cpit;
-		for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
-			if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-				cpit->storeMolecule(m1);
-			}
-		}
+		// Only called inside GrandCanonical
+		global_simulation->getEnsemble()->storeSample(&m1, componentid);
+
 #endif
 	}
 	global_log->info() << "Reading Molecules done" << endl;
 
 
 #ifdef ENABLE_MPI
-	if (domainDecomp->getRank() == 0) 
+	if (domainDecomp->getRank() == 0)
 	{ // Rank 0 only
-#endif	
+#endif
 	_phaseSpaceFileStream.close();
 #ifdef ENABLE_MPI
 	} // Rank 0 only
@@ -460,7 +452,7 @@ unsigned long ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, 
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
 #endif
-	domain->setglobalNumMolecules( nummolecules );
-	domain->setglobalRho( domain->getglobalNumMolecules() / domain->getGlobalVolume() );
+	domain->setglobalNumMolecules(nummolecules);
+	domain->setglobalRho(domain->getglobalNumMolecules() / domain->getGlobalVolume());
 	return maxid;
 }

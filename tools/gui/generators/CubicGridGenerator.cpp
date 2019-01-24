@@ -142,7 +142,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
+		Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("CUBIC_GRID_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;

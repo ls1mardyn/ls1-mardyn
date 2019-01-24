@@ -12,12 +12,11 @@
 using namespace std;
 using Log::global_log;
 
-Ensemble::~Ensemble()
-{
+Ensemble::~Ensemble() {
 	delete _domain;
-	_domain=nullptr;
+	_domain = nullptr;
 	for(auto& m : _mixingrules)
-		delete(m);
+		delete (m);
 }
 
 void Ensemble::readXML(XMLfileUnits& xmlconfig) {
@@ -28,10 +27,10 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	_components.resize(numComponents);
 	XMLfile::Query::const_iterator componentIter;
 	string oldpath = xmlconfig.getcurrentnodepath();
-	for( componentIter = query.begin(); componentIter; componentIter++) {
-		xmlconfig.changecurrentnode( componentIter );
+	for(componentIter = query.begin(); componentIter; componentIter++) {
+		xmlconfig.changecurrentnode(componentIter);
 		unsigned int cid = 0;
-		xmlconfig.getNodeValue( "@id", cid );
+		xmlconfig.getNodeValue("@id", cid);
 		_components[cid - 1].readXML(xmlconfig);
 		_componentnamesToIds[_components[cid - 1].getName()] = cid - 1;
 		global_log->debug() << _components[cid - 1].getName() << " --> " << cid - 1 << endl;
@@ -50,18 +49,17 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	std::vector<double>& dmixcoeff = global_simulation->getDomain()->getmixcoeff();
 	dmixcoeff.clear();
 
-	for( mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++ ) {
-		xmlconfig.changecurrentnode( mixingruletIter );
-		MixingRuleBase *mixingrule = nullptr;
+	for(mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++) {
+		xmlconfig.changecurrentnode(mixingruletIter);
+		MixingRuleBase* mixingrule = nullptr;
 		string mixingruletype;
 
 		xmlconfig.getNodeValue("@type", mixingruletype);
 		global_log->info() << "Mixing rule type: " << mixingruletype << endl;
-		if( "LB" == mixingruletype ) {
+		if("LB" == mixingruletype) {
 			mixingrule = new LorentzBerthelotMixingRule();
 
-		}
-		else {
+		} else {
 			global_log->error() << "Unknown mixing rule " << mixingruletype << endl;
 			Simulation::exit(1);
 		}
@@ -79,8 +77,8 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		double xi, eta;
 		xmlconfig.getNodeValue("xi", xi);
 		xmlconfig.getNodeValue("eta", eta);
-		dmixcoeff.push_back( xi );
-		dmixcoeff.push_back( eta );
+		dmixcoeff.push_back(xi);
+		dmixcoeff.push_back(eta);
 	}
 	xmlconfig.changecurrentnode(oldpath);
 	setComponentLookUpIDs();
@@ -89,13 +87,13 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 void Ensemble::setComponentLookUpIDs() {
 	// Get the maximum Component ID.
 	unsigned maxID = 0;
-	for (auto c = _components.begin(); c != _components.end(); ++c)
+	for(auto c = _components.begin(); c != _components.end(); ++c)
 		maxID = std::max(maxID, c->ID());
 
 	// we need a look-up table for the Lennard-Jones centers in the Vectorized*CellProcessors
 	// (for no other centers)
 	unsigned centers = 0;
-	for (auto c = _components.begin(); c != _components.end(); ++c) {
+	for(auto c = _components.begin(); c != _components.end(); ++c) {
 		c->setLookUpId(centers);
 		centers += c->numLJcenters();
 	}

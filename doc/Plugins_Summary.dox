@@ -24,6 +24,7 @@ SP / DensityProfile | number density profile output | Outputs number density per
 SP / VelocityAbsProfile | velocity magnitude profile output | Outputs average magnitude per bin. Requires/auto enables DensityProfile.
 SP / Velocity3dProfile | velocity 3d vector profile output | Outputs average velocity 3d-components per bin. Requires/auto enables DensityProfile.
 SP / TemperatureProfile | temperature profile output | Outputs the average temperature per sampling bin. Requires/auto enables DOFProfile and KineticProfile which dont write to file (as of now).
+SP / VirialProfile | virial pressure profile output | Outputs the virial/partial pressures in a special 1D output in y-direction. Requires/auto enables DensityProfile.
 LoadbalanceWriter | todo | todo
 MaxCheck  | todo | todo
 MaxWriter  | todo | todo

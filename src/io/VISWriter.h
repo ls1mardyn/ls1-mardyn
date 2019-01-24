@@ -3,14 +3,12 @@
 
 #include "plugins/PluginBase.h"
 #include "Domain.h"
-#include "ensemble/GrandCanonical.h"
 #include <string>
 #include <list>
 
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
-class ChemicalPotential;
 
 class VISWriter : public PluginBase {
 public:
