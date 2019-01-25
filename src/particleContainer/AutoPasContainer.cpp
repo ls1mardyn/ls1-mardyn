@@ -176,6 +176,8 @@ double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
 
 double AutoPasContainer::getCutoff() { return _cutoff; }
 
+double AutoPasContainer::getSkin() { return _verletSkin; }
+
 void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
 	throw std::runtime_error("not yet implemented");
 }

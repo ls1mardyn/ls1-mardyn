@@ -55,6 +55,8 @@ public:
 
 	double getCutoff() override;
 
+	double getSkin() override;
+
 	void deleteMolecule(Molecule &molecule, const bool &rebuildCaches) override;
 
 	double getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1, CellProcessor &cellProcessor) override;

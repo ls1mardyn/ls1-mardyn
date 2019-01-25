@@ -243,7 +243,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 		auto& listI = _verletHaloSendingList[shiftVec];
 		double shift = shiftMagnitude * (-direction);
 
-		double cutoff = moleculeContainer->getCutoff();
+		double cutoff = moleculeContainer->getCutoff() + moleculeContainer->getSkin();
 		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(2) - cutoff};

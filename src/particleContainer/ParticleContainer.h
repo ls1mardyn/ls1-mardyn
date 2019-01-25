@@ -194,6 +194,8 @@ public:
 
 	virtual double getCutoff() = 0;
 
+	virtual double getSkin() {return 0.;};
+
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) = 0;
 
