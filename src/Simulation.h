@@ -233,8 +233,8 @@ public:
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimulationStep() { return _simstep; }
 	/** Set Loop Time Limit in seconds */
-	void setWallTime(double time) {
-		global_log->info() << "Max Walltime set: " << time << "\n";
+	void setLoopAbortTime(double time) {
+		global_log->info() << "Max loop-abort-time set: " << time << "\n";
 		_wallTimeEnabled = true;
 		_maxWallTime = time;
 	}

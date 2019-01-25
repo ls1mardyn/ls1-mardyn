@@ -35,7 +35,7 @@ void initOptions(optparse::OptionParser *op) {
 		"%prog --tests --test-dir <test input data directory> [<name of testcase>]");
 	op->version("%prog " + MARDYN_VERSION);
 	op->description("ls1-MarDyn (Large Scale SImulation MoleculAR DYNamics)");
-	op->add_option("-w", "--walltime").dest("walltime").type("float") .metavar("NUM") .set_default(-1) .help("(optional) max walltime allowed in (s) before stop of main loop (default: %default)");
+	op->add_option("-a", "--loop-abort-time").dest("loop-abort-time").type("float") .metavar("TIME") .set_default(-1) .help("(optional) max walltime allowed in (s) before stop of main loop (default: %default)");
 	op->add_option("-n", "--steps").dest("timesteps").type("int") .metavar("NUM") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op->add_option("-p", "--outprefix").dest("outputprefix").type("string") .metavar("STR") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
 	op->add_option("-v", "--verbose").dest("verbose").type("bool") .action("store_true") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
@@ -217,8 +217,8 @@ int main(int argc, char** argv) {
 	if (options.is_set_by_user("timesteps")) {
 		simulation.setNumTimesteps(options.get("timesteps").operator unsigned long int());
 	}
-	if (options.is_set_by_user("walltime")) {
-		simulation.setWallTime(options.get("walltime").operator double());
+	if (options.is_set_by_user("loop-abort-time")) {
+		simulation.setLoopAbortTime(options.get("loop-abort-time").operator double());
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
