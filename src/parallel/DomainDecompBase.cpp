@@ -12,14 +12,17 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
-void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* /*domain*/) {
+void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, bool generateVerletHaloCopyList) {
 
 	for (unsigned d = 0; d < 3; ++d) {
 		handleDomainLeavingParticles(d, moleculeContainer);
 	}
-
+	if(generateVerletHaloCopyList){
+		_verletHaloSendingList.clear();
+		_verletHaloReceivingList.clear();
+	}
 	for (unsigned d = 0; d < 3; ++d) {
-		populateHaloLayerWithCopies(d, moleculeContainer);
+		populateHaloLayerWithCopies(d, moleculeContainer, generateVerletHaloCopyList);
 	}
 }
 
@@ -93,7 +96,8 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 	double shift[3];
 	for (int dim=0;dim<3;dim++){
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
+		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the
+													  // offset is in negative direction of the shift
 	}
 
 #if defined (_OPENMP)
@@ -136,9 +140,9 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 	// molecules that have crossed the lower boundary need a positive shift
 	// molecules that have crossed the higher boundary need a negative shift
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
-	const int sDim = dim+1;
-	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
-		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
+
+	for(int direction = -1; direction < 2; direction += 2) {
+		double shift = shiftMagnitude * (-direction);
 
 		double cutoff = moleculeContainer->getCutoff();
 		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
@@ -187,7 +191,8 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 	double shift[3];
 	for (int dim = 0; dim < 3; dim++) {
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-		shift[dim] *= haloRegion.offset[dim] *(-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
+		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the
+													  // offset is in negative direction of the shift
 	}
 
 #if defined (_OPENMP)
@@ -223,15 +228,20 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 
 }
 
-void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
+void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer,
+												   bool generateVerletHaloCopyList) {
+	std::array<int, 3> shiftVec {0,0,0};
+
 	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
 	// molecules that have crossed the higher boundary need a negative shift
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
-	const int sDim = dim+1;
-	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
-		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
+
+	for(int direction = -1; direction < 2; direction += 2) {
+		shiftVec[dim] = direction;
+		auto& listI = _verletHaloSendingList[shiftVec];
+		double shift = shiftMagnitude * (-direction);
 
 		double cutoff = moleculeContainer->getCutoff();
 		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
@@ -251,7 +261,8 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 
 
 		#if defined (_OPENMP)
-		#pragma omp parallel shared(startRegion, endRegion)
+		#pragma omp declare reduction(vecMerge : std::vector<Molecule*> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
+		#pragma omp parallel shared(startRegion, endRegion) reduction (vecMerge: listI)
 		#endif
 		{
 			auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
@@ -259,6 +270,9 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 			//traverse and gather all boundary particles in the cells
 			for(auto i = begin; i.isValid(); ++i){
 				Molecule m = *i;
+				if(generateVerletHaloCopyList){
+					listI.push_back(&*i);
+				}
 				m.setr(dim, m.r(dim) + shift);
 				// checks if the molecule has been shifted to inside the domain due to rounding errors.
 				if (shift < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
@@ -330,11 +344,51 @@ bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancin
 void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */,
 										  ParticleContainer* moleculeContainer, Domain* domain,
 										  bool generateVerletHaloCopyList) {
-	exchangeMolecules(moleculeContainer, domain);
+	exchangeMolecules(moleculeContainer, generateVerletHaloCopyList);
 }
 
 void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* domain){
+	bool useReceivingList = not _verletHaloReceivingList.empty();
+	for(auto& listSendPair : _verletHaloSendingList){
 
+		std::array<int, 3> shiftVec = listSendPair.first;
+		std::array<double, 3> shift {};
+		for (int dim = 0; dim < 3; ++dim) {
+			shift[dim] =
+				(moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim)) * (-shiftVec[dim]);
+		}
+
+		auto &listSend = listSendPair.second;
+		auto &listReceive = _verletHaloReceivingList[listSendPair.first];
+
+		#if defined (_OPENMP)
+		// not easily parallelizable, as particles in listSend can be in same cells...
+		// #pragma omp parallel
+		#endif
+		{
+			// loop over all molecules in the list
+			for(auto i = 0; i < listSend.size(); ++i) {
+				Molecule m = *listSend[i];
+
+				for (unsigned short dim = 0; dim < 3; ++dim) {
+					m.setr(dim, m.r(dim) + shift[dim]);
+					// the checks from the normal halo copy are here not necessary, as particles will only be moved.
+				}
+				if(useReceivingList){
+					for(unsigned short dim = 0; dim < 3; ++dim) {
+						listReceive[i]->setr(dim, m.r(dim));
+					}
+				} else {
+					double pos[3] = {m.r(0), m.r(1), m.r(2)};
+					Molecule* haloPointer = moleculeContainer->getMoleculeCloseToPosition(pos, m.getID());
+					for(unsigned short dim = 0; dim < 3; ++dim) {
+						haloPointer->setr(dim, pos[dim]);
+					}
+					listReceive.push_back(haloPointer);
+				}
+			}
+		}
+	}
 }
 
 bool DomainDecompBase::procOwnsPos(double x, double y, double z, Domain* domain) {

@@ -210,13 +210,27 @@ bool AutoPasContainer::queryVerletListsValid() {
 
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
-	for (auto iter = iterator(); iter.isValid(); ++iter) {
+	std::array<double, 3> lowCorner{pos[0] - _verletSkin, pos[1] - _verletSkin, pos[2] - _verletSkin};
+	std::array<double, 3> highCorner{pos[0] + _verletSkin, pos[1] + _verletSkin, pos[2] + _verletSkin};
+	for (auto iter = _autopasContainer.getRegionIterator( lowCorner,  highCorner); iter.isValid(); ++iter) {
 		if (iter->getR() == pos_arr) {
 			*result = &(*iter);
 			return true;
 		}
 	}
 	return false;
+}
+
+Molecule* AutoPasContainer::getMoleculeCloseToPosition(const double *pos, unsigned long id){
+	std::array<double, 3> lowCorner{pos[0] - _verletSkin, pos[1] - _verletSkin, pos[2] - _verletSkin};
+	std::array<double, 3> highCorner{pos[0] + _verletSkin, pos[1] + _verletSkin, pos[2] + _verletSkin};
+	for (auto iter = _autopasContainer.getRegionIterator(lowCorner, highCorner, autopas::IteratorBehavior::haloOnly);
+		 iter.isValid(); ++iter) {
+		if (iter->getID() == id) {
+			return &*iter;
+		}
+	}
+	throw std::runtime_error("no fitting halo molecule found");
 }
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,

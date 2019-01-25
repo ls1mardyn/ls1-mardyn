@@ -828,13 +828,13 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		switch (msgType) {
 		case LEAVING_AND_HALO_COPIES:
 			domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer, false);
 			break;
 		case LEAVING_ONLY:
 			domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
 			break;
 		case HALO_COPIES:
-			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer, false);
 			break;
 		case FORCES:
 			domainDecomp->DomainDecompBase::handleForceExchange(d, moleculeContainer);

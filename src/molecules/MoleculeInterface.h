@@ -41,8 +41,8 @@ public:
 	}
 	virtual double r(unsigned short d) const = 0;
 	std::array<double, 3> r_arr() const {
-		std::array<double, 3> ret;
-		for(int d=0; d < 3; ++d) {
+		std::array<double, 3> ret{};
+		for (unsigned short d = 0; d < 3; ++d) {
 			ret[d] = r(d);
 		}
 		return ret;

@@ -67,6 +67,8 @@ public:
 
 	bool getMoleculeAtPosition(const double pos[3], Molecule **result) override;
 
+	Molecule* getMoleculeCloseToPosition(const double *pos, unsigned long id) override;
+
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 								std::array<double, 3> simBoxLength) override;
 

@@ -26,7 +26,7 @@ void DomainDecompBaseTest::testNoDuplicatedParticlesFilename(const char * filena
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
 	unsigned long numMols = container->getNumberOfParticles();
 
-	_domainDecomposition->exchangeMolecules(container, _domain);
+	_domainDecomposition->exchangeMolecules(container, false);
 	container->deleteOuterParticles();
 
 	unsigned long newNumMols = container->getNumberOfParticles();
@@ -81,7 +81,7 @@ void DomainDecompBaseTest::testNoLostParticlesFilename(const char * filename, do
 
 	container->update();
 
-	_domainDecomposition->exchangeMolecules(container, _domain);
+	_domainDecomposition->exchangeMolecules(container, false);
 	container->deleteOuterParticles();
 
 	unsigned long newNumMols = container->getNumberOfParticles();
@@ -129,7 +129,7 @@ void DomainDecompBaseTest::testExchangeMoleculesSimple() {
 	}
 
 	// after the exchange, every molecule should be replicated 7 times, i.e. there have to be 64 molecules in total
-	_domainDecomposition->exchangeMolecules(container, _domain);
+	_domainDecomposition->exchangeMolecules(container, false);
 	ASSERT_EQUAL(64ul, container->getNumberOfParticles());
 
 	m = container->iterator();
@@ -167,7 +167,7 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	}
 
 	// after the exchange, there have to be 21 copies in the halos, i.e. 24 molecules in total
-	_domainDecomposition->exchangeMolecules(container, _domain);
+	_domainDecomposition->exchangeMolecules(container, false);
 
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 

@@ -221,6 +221,8 @@ public:
 	 */
 	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0; // new
 
+	virtual Molecule* getMoleculeCloseToPosition(const double *pos, unsigned long id) = 0;
+
 	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	// or does this particle container calculate all forces.
 	virtual bool requiresForceExchange() const {return false;} // new

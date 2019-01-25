@@ -98,7 +98,7 @@ public:
 	//! 					otherwise automatic balancing of Decomposition is applied
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
-	//! @param generateVerletHaloCopyList decides, whether a list of halo molecules for the verlet generation should be
+	//! @param generateVerletHaloCopyList Determines, whether a list of halo molecules for the verlet generation should be
 	//! build.
 	virtual void balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 									ParticleContainer* moleculeContainer, Domain* domain,
@@ -287,8 +287,9 @@ protected:
 	//! molecules for the halo-region are transferred.
 	//! This implementation is the one used in sequential mode.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+	//! @param generateVerletHaloCopyList Determines, whether a list of halo molecules for the verlet generation should be
+	//! build.
+	void exchangeMolecules(ParticleContainer* moleculeContainer, bool generateVerletHaloCopyList);
 
 	/**
 	 * Handles the sequential version of particles leaving the domain.
@@ -324,7 +325,8 @@ protected:
 	 */
 	virtual void handleForceExchangeDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const;
 
-	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
+	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer,
+									 bool generateVerletHaloCopyList);
 
 	void populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const;
 
@@ -335,6 +337,8 @@ protected:
 	int _numProcs;
 
 private:
+	std::map<std::array<int, 3>, std::vector<Molecule*>> _verletHaloSendingList;
+	std::map<std::array<int, 3>, std::vector<Molecule*>> _verletHaloReceivingList;
 	CollectiveCommBase _collCommBase;
 	int _sendLeavingAndCopiesSeparately = 0;
 };
