@@ -69,6 +69,10 @@ ls1-MarDyn comes with a set of examples, which can be found in the examples fold
 cd examples/EOX/305K_liq
 mpirun -np 2 ../../../src/MarDyn config.xml  --steps 10
 ```
+optional: to make the simulation aware of time limits like on a compute node, which should stop the simulation even if the desired amount of steps is not reached use ```loop-abort-time``` in (s) in XML or CLI:
+```sh
+mpirun -np 2 ../../../src/MarDyn config.xml  --steps 10 --loop-abort-time 3600
+```
 
 Additional resources
 ====================
