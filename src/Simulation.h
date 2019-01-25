@@ -230,6 +230,12 @@ public:
 	unsigned long getNumInitTimesteps() { return _initSimulation; }
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimulationStep() { return _simstep; }
+	/** Set Loop Time Limit in seconds */
+	void setLoopAbortTime(double time) {
+		global_log->info() << "Max loop-abort-time set: " << time << "\n";
+		_wallTimeEnabled = true;
+		_maxWallTime = time;
+	}
 
 	double getcutoffRadius() const { return _cutoffRadius; }
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
@@ -446,7 +452,14 @@ public:
 	/** @brief Refresh particle IDs to continuous numbering*/
 	void refreshParticleIDs();
 
- private:
+	/** @brief Checks if Simsteps or MaxWallTime are reached */
+	bool keepRunning();
+
+private:
+
+	Timer _timeFromStart;
+	double _maxWallTime = -1;
+	bool _wallTimeEnabled = false;
 
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;

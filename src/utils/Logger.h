@@ -245,6 +245,8 @@ public:
 	/// allow a set of processes for logging
 	bool set_mpi_output_ranks(int num_nums, int* nums);
 
+
+
 }; /* end of class Logger */
 } /* end of namespace */
 
