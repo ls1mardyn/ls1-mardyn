@@ -120,7 +120,7 @@ Simulation::Simulation()
 #endif /* TASKTIMINGPROFILE */
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.0),
-	_loopCompTimeSteps(0.0)
+	_loopCompTimeSteps(0)
 {
 	_ensemble = new CanonicalEnsemble();
 	initialize();
@@ -210,7 +210,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@type", ensembletype);
 		global_log->info() << "Ensemble: " << ensembletype<< endl;
 		if (ensembletype == "NVT") {
-			if(_ensemble != NULL) delete _ensemble;
+			delete _ensemble;
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
@@ -419,7 +419,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					}
 				}
 				else if(thermostattype == "TemperatureControl") {
-                    if (NULL == _temperatureControl) {
+                    if (nullptr == _temperatureControl) {
                         _temperatureControl = new TemperatureControl();
                         _temperatureControl->readXML(xmlconfig);
                     } else {
@@ -453,8 +453,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			if("planar" == type)
 			{
 				unsigned int nSlabs = 10;
-				if(NULL != _longRangeCorrection)
-					delete _longRangeCorrection;
+				delete _longRangeCorrection;
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
@@ -552,7 +551,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 	oldpath = xmlconfig.getcurrentnodepath();
 	if(xmlconfig.changecurrentnode("options")) {
-		unsigned int numOptions = 0;
+		unsigned long numOptions = 0;
 		XMLfile::Query query = xmlconfig.query("option");
 		numOptions = query.card();
 		global_log->info() << "Number of prepare start options: " << numOptions << endl;
@@ -566,7 +565,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				bool bVal = false;
 				xmlconfig.getNodeValue(".", bVal);
 				_prepare_start_opt.refreshIDs = bVal;
-				if(true == _prepare_start_opt.refreshIDs)
+				if(_prepare_start_opt.refreshIDs)
 					global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
 				else
 					global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
@@ -638,7 +637,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	timers()->setOutputString("PHASESPACE_CREATION", "Phasespace creation took:");
 	timers()->getTimer("PHASESPACE_CREATION")->start();
 
-	unsigned long maxID = _inputReader->readPhaseSpace(_moleculeContainer, _domain, _domainDecomposition);
+	_inputReader->readPhaseSpace(_moleculeContainer, _domain, _domainDecomposition);
 	timers()->getTimer("PHASESPACE_CREATION")->stop();
 
 	_moleculeContainer->update();
@@ -685,7 +684,7 @@ void Simulation::prepare_start() {
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 #endif // ENABLE_VECTORIZED_CODE
 
-	if (_FMM != NULL) {
+	if (_FMM != nullptr) {
 
 		double globalLength[3];
 		for (int i = 0; i < 3; i++) {
@@ -759,7 +758,7 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->reset("SIMULATION_FORCE_CALCULATION");
 	++_loopCompTimeSteps;
 
-	if (_FMM != NULL) {
+	if (_FMM != nullptr) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
@@ -788,7 +787,7 @@ void Simulation::prepare_start() {
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
 
-	if (_longRangeCorrection == NULL){
+	if (_longRangeCorrection == nullptr){
 		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
 	}
 
@@ -814,11 +813,11 @@ void Simulation::prepare_start() {
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
 
 	/** Init TemperatureControl beta_trans, beta_rot log-files*/
-	if(NULL != _temperatureControl)
+	if(nullptr != _temperatureControl)
 		_temperatureControl->InitBetaLogfiles();
 
 	/** refresh particle IDs */
-	if(true == _prepare_start_opt.refreshIDs)
+	if(_prepare_start_opt.refreshIDs)
 		this->refreshParticleIDs();
 }
 
@@ -959,7 +958,7 @@ void Simulation::simulate() {
 		perStepTimer.start();
 
 
-		if (_FMM != NULL) {
+		if (_FMM != nullptr) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
@@ -995,7 +994,7 @@ void Simulation::simulate() {
 
 		// scale velocity and angular momentum
         // TODO: integrate into Temperature Control
-		if ( !_domain->NVE() && _temperatureControl == NULL) {
+		if ( !_domain->NVE() && _temperatureControl == nullptr) {
 			if (_thermostatType ==VELSCALE_THERMOSTAT) {
 				global_log->debug() << "Velocity scaling" << endl;
 				if (_domain->severalThermostats()) {
@@ -1024,11 +1023,9 @@ void Simulation::simulate() {
 
 
 			}
-		}
-
-		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
-        else if ( _temperatureControl != NULL) {
-            _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
+		} else if ( _temperatureControl != nullptr) {
+			// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
+           _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
 
@@ -1108,8 +1105,6 @@ void Simulation::simulate() {
 
 void Simulation::pluginEndStepCall(unsigned long simstep) {
 
-	int mpi_rank = _domainDecomposition->getRank();
-
 	std::list<PluginBase*>::iterator pluginIter;
 	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
 		PluginBase* plugin = (*pluginIter);
@@ -1135,9 +1130,9 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 }
 
 void Simulation::finalize() {
-	if (_FMM != NULL) {
+	if (_FMM != nullptr) {
 		_FMM->printTimers();
-		bhfmm::VectorizedLJP2PCellProcessor * temp = dynamic_cast<bhfmm::VectorizedLJP2PCellProcessor*>(_cellProcessor);
+		auto * temp = dynamic_cast<bhfmm::VectorizedLJP2PCellProcessor*>(_cellProcessor);
 		temp->printTimers();
 	}
 
@@ -1148,11 +1143,11 @@ void Simulation::finalize() {
 	_taskTimingProfiler->dump(outputFileName);
 #endif /* TASKTIMINGPROFILE */
 
-	if (_domainDecomposition != NULL) {
+	if (_domainDecomposition != nullptr) {
 		delete _domainDecomposition;
-		_domainDecomposition = NULL;
+		_domainDecomposition = nullptr;
 	}
-	global_simulation = NULL;
+	global_simulation = nullptr;
 }
 
 void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime) {
@@ -1238,7 +1233,7 @@ void Simulation::initialize() {
 
 PluginBase* Simulation::getPlugin(const std::string& name)  {
 	for(auto& plugin : _plugins) {
-		if(name.compare(plugin->getPluginName()) == 0) {
+		if(name == plugin->getPluginName()) {
 			return plugin;
 		}
 	}
@@ -1257,9 +1252,9 @@ void Simulation::refreshParticleIDs()
 {
 	uint64_t prevMaxID = 0;  // max ID of previous process
 	int ownRank = _domainDecomposition->getRank();
-	int numProcs = _domainDecomposition->getNumProcs();
 
 #ifdef ENABLE_MPI
+	int numProcs = _domainDecomposition->getNumProcs();
 	if (ownRank != 0) {
 		MPI_Recv(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 #ifndef NDEBUG
