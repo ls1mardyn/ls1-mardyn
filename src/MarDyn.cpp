@@ -183,19 +183,19 @@ int main(int argc, char** argv) {
 	/* Set up and run regular Simulation */
 	Simulation simulation;
 
-	unsigned int numargs = args.size();
-	if(numargs != 1) {
+	auto numArgs = args.size();
+	if(numArgs != 1) {
 		global_log->error() << "Incorrect number of arguments provided." << std::endl;
 		op.print_usage();
 		Simulation::exit(-1);
 	}
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
-	std::string configfilename(args[0]);
-	if( fileExists(configfilename.c_str()) ) {
-		global_log->info() << "Config file: " << configfilename << endl;
-		simulation.readConfigFile(configfilename);
+	std::string configFileName(args[0]);
+	if( fileExists(configFileName.c_str()) ) {
+		global_log->info() << "Config file: " << configFileName << endl;
+		simulation.readConfigFile(configFileName);
 	} else {
-		global_log->error() << "Cannot open config file '" << configfilename << "'" << endl;
+		global_log->error() << "Cannot open config file '" << configFileName << "'" << endl;
 		Simulation::exit(-2);
 	}
 
@@ -223,12 +223,12 @@ int main(int argc, char** argv) {
 		global_log->info() << "Enabling memory info output" << endl;
 		simulation.enableMemoryProfiler();
 	}
-	size_t lastindex = configfilename.rfind(".");
-	std::string outprefix = configfilename.substr(0, lastindex);
+	size_t lastIndex = configFileName.rfind(".");
+	std::string outPrefix = configFileName.substr(0, lastIndex);
 	if( options.is_set_by_user("outputprefix") ) {
-		outprefix = options["outputprefix"];
+		outPrefix = options["outputprefix"];
 	}
-	simulation.setOutputPrefix(outprefix.c_str());
+	simulation.setOutputPrefix(outPrefix.c_str());
 	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << endl;
 
 
