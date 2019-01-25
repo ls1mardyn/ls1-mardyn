@@ -1380,12 +1380,12 @@ bool Simulation::keepRunning() {
 
 	// Simstep Criterion
 	if (_simstep > _numberOfTimesteps){
-		global_log->warning() << "Maximum Simstep reached: " << _simstep << std::endl;
+		global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
 		return false;
 	}
 	// WallTime Criterion
 	else if(_wallTimeEnabled && global_log->getRunTime() > _maxWallTime){
-		global_log->warning() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
+		global_log->info() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
 		return false;
 	}
 	else{
