@@ -974,8 +974,9 @@ void Simulation::simulate() {
 
 		// TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
-		_moleculeContainer->deleteOuterParticles();
-
+		if(not _moleculeContainer->isVerletContainer()) {
+			_moleculeContainer->deleteOuterParticles();
+		}
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
@@ -1163,6 +1164,9 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 		_domainDecomposition->doVerletHaloCopy(_moleculeContainer, _domain);
 		global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 	} else {
+		if(isVerlet){
+			_moleculeContainer->deleteOuterParticles();
+		}
 		// The particles have moved, so the neighborhood relations have
 		// changed and have to be adjusted
 		_moleculeContainer->update();
