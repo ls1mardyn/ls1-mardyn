@@ -72,6 +72,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 }
 
 bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
+
+	// in ls1 mardyn there do not exist any particles, when this rebuild function is called.
+
 	mardyn_assert(_cutoff > 0.);
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
