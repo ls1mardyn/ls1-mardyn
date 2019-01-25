@@ -34,7 +34,7 @@ void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * fil
 	numMols = _domainDecomposition->collCommGetInt();
 	_domainDecomposition->collCommFinalize();
 
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain, false);
 	container->deleteOuterParticles();
 
 	int newNumMols = container->getNumberOfParticles();
@@ -100,7 +100,7 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	container->update();
 
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain, false);
 	container->deleteOuterParticles();
 
 	int newNumMols = container->getNumberOfParticles();

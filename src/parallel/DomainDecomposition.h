@@ -1,5 +1,4 @@
-#ifndef DOMAINDECOMPOSITION_H_
-#define DOMAINDECOMPOSITION_H_
+#pragma once
 
 #include "DomainDecompMPIBase.h"
 
@@ -47,7 +46,8 @@ public:
 	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
-	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
+	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer,
+							Domain* domain, bool generateVerletHaloCopyList) override;
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -111,5 +111,3 @@ private:
 	int _gridSize[DIMgeom]; //!< Number of processes in each dimension of the MPI process grid
 	int _coords[DIMgeom]; //!< Coordinate of the process in the MPI process grid
 };
-
-#endif /* DOMAINDECOMPOSITION_H_ */

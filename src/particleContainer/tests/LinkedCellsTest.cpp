@@ -565,8 +565,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	container->update();
 	containerTest->update();
 	bool forceRebalancing = false;
-	domainDecompositionFS->balanceAndExchange(0.,forceRebalancing, container, _domain);
-	domainDecompositionTest->balanceAndExchange(0.,forceRebalancing, containerTest, _domain);
+	domainDecompositionFS->balanceAndExchange(0.,forceRebalancing, container, _domain, false);
+	domainDecompositionTest->balanceAndExchange(0.,forceRebalancing, containerTest, _domain, false);
 	container->updateMoleculeCaches();
 	containerTest->updateMoleculeCaches();
 	//------------------------------------------------------------

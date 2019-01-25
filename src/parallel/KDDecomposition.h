@@ -96,9 +96,11 @@ class KDDecomposition: public DomainDecompMPIBase {
 			unsigned int stageNumber) override;
 
 	// documentation in base class
-	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain, double etime) override;
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
+											double etime) override;
 
-	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer,
+							Domain* domain, bool generateVerletHaloCopyList) override;
 
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain) override;

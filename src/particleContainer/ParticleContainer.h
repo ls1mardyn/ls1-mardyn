@@ -239,7 +239,20 @@ public:
 	 * set the cutoff
 	 * @param rc
 	 */
-	virtual void setCutoff(double rc){};
+	virtual void setCutoff(double rc) {}
+
+	/**
+	 * Returns whether this container is a verlet list type container.
+	 * @return true if it is a verlet list type container.
+	 */
+	virtual bool isVerletContainer() { return false; }
+
+	/**
+	 * Query if the verlet lists are valid.
+	 * @return True if they are valid and can be reused.
+	 */
+	virtual bool queryVerletListsValid() {return false; }
+
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

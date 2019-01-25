@@ -193,6 +193,21 @@ void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
 }
 
+bool AutoPasContainer::isVerletContainer() {
+	switch(_autopasContainer.getContainer()->getContainerType()){
+		case autopas::ContainerOptions::verletLists:
+		case autopas::ContainerOptions::verletListsCells:
+		case autopas::ContainerOptions::verletClusterLists:
+			return true;
+		default:
+			return false;
+	}
+}
+
+bool AutoPasContainer::queryVerletListsValid() {
+	return _autopasContainer.isNeighborListValid();
+}
+
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
 	for (auto iter = iterator(); iter.isValid(); ++iter) {

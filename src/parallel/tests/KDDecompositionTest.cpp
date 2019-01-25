@@ -49,7 +49,7 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(
 	numMols = kdd->collCommGetInt();
 	kdd->collCommFinalize();
 
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain, false);
 	// will rebalance, we thus need a reduce
 	container->deleteOuterParticles();
 
@@ -89,7 +89,7 @@ void KDDecompositionTest::testHaloCorrect() {
 			cutoff);
 
 	kdd->initCommunicationPartners(cutoff, _domain, container);
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain, false);
 	// this should give us halos at -1., -2., 14., 15.
 	// we will thus iterate over
 
@@ -244,7 +244,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	//needed to properly exchange the particles. In the first step leaving particles are normally not exchanged...
 	dynamic_cast<KDDecomposition*>(_domainDecomposition)->_steps++;
 
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain, false);
 	container->deleteOuterParticles();
 
 	int newNumMols = container->getNumberOfParticles();
@@ -459,7 +459,7 @@ void KDDecompositionTest::testbalanceAndExchange() {
 		//cout << "running " << numReps << " repetitions" << std::endl;
 	}
 	for (int i = 0; i < numReps; ++i) {
-		kdd->balanceAndExchange(1.0, true, moleculeContainer, _domain);
+		kdd->balanceAndExchange(1.0, true, moleculeContainer, _domain, false);
 		moleculeContainer->updateMoleculeCaches();
 	}
 	delete moleculeContainer;

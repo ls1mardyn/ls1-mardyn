@@ -31,11 +31,9 @@ TEST_SUITE_REGISTRATION(RDFTest);
 #endif
 
 
-RDFTest::RDFTest() {
-}
+RDFTest::RDFTest() = default;
 
-RDFTest::~RDFTest() {
-}
+RDFTest::~RDFTest() = default;
 
 
 void RDFTest::initRDF(RDF &rdf, double intervalLength, unsigned int bins, std::vector<Component>* components) {
@@ -136,7 +134,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->deleteOuterParticles();
-	_domainDecomposition->balanceAndExchange(1.0, false, moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(1.0, false, moleculeContainer, _domain, false);
 	moleculeContainer->updateMoleculeCaches();
 
 	RDF rdf;
@@ -166,7 +164,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	rdf.reset();
 
 	moleculeContainer->deleteOuterParticles();
-	_domainDecomposition->balanceAndExchange(1.0, false, moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(1.0, false, moleculeContainer, _domain, false);
 	moleculeContainer->updateMoleculeCaches();
 
 	rdf.tickRDF();
@@ -215,7 +213,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
-	_domainDecomposition->balanceAndExchange(1.0, true, moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(1.0, true, moleculeContainer, _domain, false);
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 

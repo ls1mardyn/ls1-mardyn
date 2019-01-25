@@ -81,6 +81,10 @@ public:
 
 	void setCutoff(double cutoff) override { _cutoff = cutoff; }
 
+	bool isVerletContainer() override;
+
+	bool queryVerletListsValid() override;
+
 private:
 	double _cutoff;
 	double _verletSkin;

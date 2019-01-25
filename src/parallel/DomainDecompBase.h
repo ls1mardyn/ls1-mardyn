@@ -101,11 +101,19 @@ public:
 	//! This method is then also responsible for redistributing all particles, so after the
 	//! method was called, each process has a domain with all particles belonging to this
 	//! domain (as if exchangeParticles was called after the new decomposition).
-	//! @param balance if true, a rebalancing is forced;
+	//! @param lastTraversalTime Time it took to iterate through the last traversal. Can be used to check the load
+	//! balance.
+	//! @param forceRebalancing if true, a rebalancing is forced;
 	//! 					otherwise automatic balancing of Decomposition is applied
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	//! @param generateVerletHaloCopyList decides, whether a list of halo molecules for the verlet generation should be
+	//! build.
+	virtual void balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
+									ParticleContainer* moleculeContainer, Domain* domain,
+									bool generateVerletHaloCopyList);
+
+	virtual void doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief find out whether the given position belongs to the domain of this process
 	//!

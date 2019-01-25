@@ -333,8 +333,14 @@ bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancin
 	return false;
 }
 
-void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */,
+										  ParticleContainer* moleculeContainer, Domain* domain,
+										  bool generateVerletHaloCopyList) {
 	exchangeMolecules(moleculeContainer, domain);
+}
+
+void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* domain){
+
 }
 
 bool DomainDecompBase::procOwnsPos(double x, double y, double z, Domain* domain) {

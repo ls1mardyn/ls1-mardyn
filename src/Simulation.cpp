@@ -1151,16 +1151,32 @@ void Simulation::finalize() {
 }
 
 void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime) {
-	// The particles have moved, so the neighborhood relations have
-	// changed and have to be adjusted
-	_moleculeContainer->update();
-	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
-	bool forceRebalancing = false;
-	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain);
-	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+	bool isVerlet = _moleculeContainer->isVerletContainer();
+	bool reuseVerlet = false;
+	if(isVerlet){
+		reuseVerlet = _moleculeContainer->queryVerletListsValid();
+	}
+
+	if(reuseVerlet) {
+		// if we are reusing verlet lists, call different functions of the _domainDecomposition
+		global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
+		_domainDecomposition->doVerletHaloCopy(_moleculeContainer, _domain);
+		global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+	} else {
+		// The particles have moved, so the neighborhood relations have
+		// changed and have to be adjusted
+		_moleculeContainer->update();
+		//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+		bool forceRebalancing = false;
+		global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
+		_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain,
+												 isVerlet);
+		global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+	}
+
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
+	// This does not influence autopas, as we do not have rmm there, yet.
 	_moleculeContainer->updateMoleculeCaches();
 }
 
