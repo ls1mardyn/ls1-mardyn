@@ -459,10 +459,11 @@ public:
 	/** @brief Checks if Simsteps or MaxWallTime are reached */
 	bool keepRunning();
 
+private:
+
+	Timer _timeFromStart;
 	double _maxWallTime = -1;
 	bool _wallTimeEnabled = false;
-
- private:
 
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;

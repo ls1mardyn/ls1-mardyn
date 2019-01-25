@@ -124,6 +124,7 @@ Simulation::Simulation()
 	_loopCompTime(0.0),
 	_loopCompTimeSteps(0.0)
 {
+	_timeFromStart.start();
 	_ensemble = new CanonicalEnsemble();
 	initialize();
 }
@@ -1383,8 +1384,8 @@ bool Simulation::keepRunning() {
 		global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
 		return false;
 	}
-	// WallTime Criterion
-	else if(_wallTimeEnabled && global_log->getRunTime() > _maxWallTime){
+	// WallTime Criterion, elapsed time since Simulation constructor
+	else if(_wallTimeEnabled && _timeFromStart.get_etime_running() > _maxWallTime){
 		global_log->info() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
 		return false;
 	}
