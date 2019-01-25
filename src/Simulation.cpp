@@ -1181,9 +1181,9 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 }
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etime) {
-	bool forceRebalancing = false;
-
 	#ifdef ENABLE_MPI
+		bool forceRebalancing = false;
+
 		#ifdef ENABLE_OVERLAPPING
 			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
 					new NonBlockingMPIMultiStepHandler(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
