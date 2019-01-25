@@ -1,13 +1,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
 #include "Domain.h"
-#include "ensemble/EnsembleBase.h"
-#include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
-#include "utils/mardyn_assert.h"
-
-#include <fstream>
-#include <cmath>
 
 DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
 }

@@ -50,6 +50,7 @@ class DomainDecompBase: public MemoryProfilable {
 	friend class NeighbourCommunicationScheme;
 	friend class IndirectNeighbourCommunicationScheme;
 	friend class DirectNeighbourCommunicationScheme;
+	friend class DomainDecompBaseTest;
 public:
 	//! @brief The Constructor determines the own rank and the number of the neighbours                                                       */
 	DomainDecompBase();
@@ -58,16 +59,6 @@ public:
 	virtual ~DomainDecompBase();
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
-
-	//! @brief exchange molecules between processes
-	//!
-	//! molecules which aren't in the domain of their process any
-	//! more are transferred to their neighbours. Additionally, the
-	//! molecules for the halo-region are transferred.
-	//! This implementation is the one used in sequential mode.
-	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	/**
 	 * @brief Exchanges forces at the domain boundaries if it's required by the cell container.
@@ -289,6 +280,16 @@ public:
 	virtual void printCommunicationPartners(std::string filename) const {};
 
 protected:
+	//! @brief exchange molecules between processes
+	//!
+	//! molecules which aren't in the domain of their process any
+	//! more are transferred to their neighbours. Additionally, the
+	//! molecules for the halo-region are transferred.
+	//! This implementation is the one used in sequential mode.
+	//! @param moleculeContainer needed to get those molecules which have to be exchanged
+	//! @param domain is e.g. needed to get the size of the local domain
+	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+
 	/**
 	 * Handles the sequential version of particles leaving the domain.
 	 * Also used as a fall-back for the MPI variant if a process spans an entire dimension.

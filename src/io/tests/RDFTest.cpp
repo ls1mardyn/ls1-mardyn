@@ -92,7 +92,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	rdf.tickRDF();
 
 	// now the same with halo particles present.
-	_domainDecomposition->exchangeMolecules(moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(0., false, moleculeContainer, _domain, false);
 	moleculeContainer->traverseCells(cellProcessor);
 	rdf.collectRDF(_domainDecomposition);
 	rdf.accumulateRDF();

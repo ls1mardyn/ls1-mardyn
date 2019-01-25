@@ -38,7 +38,7 @@ void LinkedCellsTest::testUpdateAndDeleteOuterParticlesFilename(const char * fil
 			filename, cutoff));
 	int numMols = container->getNumberOfParticles();
 
-	_domainDecomposition->exchangeMolecules(container, _domain);
+	_domainDecomposition->balanceAndExchange(0., false, container, _domain, false);
 	container->deleteOuterParticles();
 
 	int newNumMols = container->getNumberOfParticles();
