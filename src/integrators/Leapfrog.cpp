@@ -4,7 +4,6 @@
 
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
-#include "ensemble/PressureGradient.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
@@ -156,63 +155,5 @@ void Leapfrog::transition3to1(ParticleContainer* /*molCont*/, Domain* /*domain*/
 	}
 	else {
 		global_log->error() << "Leapfrog::transition3to1(...): Wrong state for state transition" << endl;
-	}
-}
-
-void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
-	map<unsigned, double>* additionalAcceleration = domain->getPG()->getUAA();
-	vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
-	vector<Component>::iterator compit;
-	map<unsigned, double> componentwiseVelocityDelta[3];
-	for (compit = comp.begin(); compit != comp.end(); compit++) {
-		unsigned cosetid = domain->getPG()->getComponentSet(compit->ID());
-		if (cosetid != 0)
-			for (unsigned d = 0; d < 3; d++)
-				componentwiseVelocityDelta[d][compit->ID()] = _timestepLength * additionalAcceleration[d][cosetid];
-		else
-			for (unsigned d = 0; d < 3; d++)
-				componentwiseVelocityDelta[d][compit->ID()] = 0;
-	}
-
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-		for (auto thismol = molCont->iterator(); thismol.isValid(); ++thismol) {
-			unsigned cid = thismol->componentid();
-			mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
-			thismol->vadd(componentwiseVelocityDelta[0][cid],
-						  componentwiseVelocityDelta[1][cid],
-						  componentwiseVelocityDelta[2][cid]);
-		}
-	}
-}
-
-void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* domain) {
-	vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
-	vector<Component>::iterator compit;
-	map<unsigned, double> componentwiseVelocityDelta[3];
-	for (compit = comp.begin(); compit != comp.end(); compit++) {
-		unsigned cosetid = domain->getPG()->getComponentSet(compit->ID());
-		if (cosetid != 0)
-			for (unsigned d = 0; d < 3; d++)
-				componentwiseVelocityDelta[d][compit->ID()] = domain->getPG()->getMissingVelocity(cosetid, d);
-		else
-			for (unsigned d = 0; d < 3; d++)
-				componentwiseVelocityDelta[d][compit->ID()] = 0;
-	}
-
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-
-		for (auto thismol = molCont->iterator(); thismol.isValid(); ++thismol) {
-			unsigned cid = thismol->componentid();
-			mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
-			thismol->vadd(componentwiseVelocityDelta[0][cid],
-						  componentwiseVelocityDelta[1][cid],
-						  componentwiseVelocityDelta[2][cid]);
-		}
 	}
 }

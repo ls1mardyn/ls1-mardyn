@@ -16,7 +16,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
-#include "ensemble/PressureGradient.h"
 #include "io/CheckpointWriter.h"
 #include "Domain.h"
 

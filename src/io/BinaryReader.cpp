@@ -14,7 +14,6 @@
 #include "Domain.h"
 #include "ensemble/BoxDomain.h"
 #include "ensemble/EnsembleBase.h"
-#include "ensemble/PressureGradient.h"
 #include "Simulation.h"
 #include "molecules/Molecule.h"
 

@@ -15,7 +15,6 @@ class LinkedCellsTest;
 #include "particleContainer/adapter/CellProcessor.h"
 #include <vector>
 
-#include "ensemble/PressureGradient.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"

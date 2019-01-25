@@ -73,15 +73,6 @@ public:
 	//! checks whether the current state of the integrator allows that this method is called
 	void eventNewTimestep(ParticleContainer* molCont, Domain* domain);
 
-	virtual void accelerateUniformly(
-			ParticleContainer* molCont,
-			Domain* domain
-	);
-	virtual void accelerateInstantaneously(
-			ParticleContainer* molCont,
-			Domain* domain
-	);
-
 private:
 
 	//! state in which the integrator is

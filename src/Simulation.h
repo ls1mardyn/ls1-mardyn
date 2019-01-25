@@ -20,7 +20,6 @@ class Simulation;
 extern Simulation* global_simulation;
 #endif
 
-class PressureGradient;
 class ParticleInsertion;
 class Ensemble;
 
@@ -345,9 +344,6 @@ private:
 	unsigned long _initStatistics;
 
 	Ensemble* _ensemble;
-
-	/** Flow regulation */
-	PressureGradient* _pressureGradient;
 
 	/** Datastructure for finding neighbours efficiently */
 	ParticleContainer* _moleculeContainer;

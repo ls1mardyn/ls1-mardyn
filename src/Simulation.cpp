@@ -58,7 +58,6 @@
 
 #include "ensemble/GrandCanonicalEnsemble.h"
 #include "ensemble/CanonicalEnsemble.h"
-#include "ensemble/PressureGradient.h"
 #include "ensemble/CavityEnsemble.h"
 
 #include "thermostats/VelocityScalingThermostat.h"
@@ -102,7 +101,6 @@ Simulation::Simulation()
 	_initGrandCanonical(10000000),
 	_initStatistics(20000),
 	_ensemble(nullptr),
-	_pressureGradient(nullptr),
 	_moleculeContainer(nullptr),
 	_particlePairsHandler(nullptr),
 	_cellProcessor(nullptr),
@@ -131,8 +129,6 @@ Simulation::Simulation()
 Simulation::~Simulation() {
 	delete _ensemble;
 	_ensemble = nullptr;
-	delete _pressureGradient;
-	_pressureGradient = nullptr;
 	delete _moleculeContainer;
 	_moleculeContainer = nullptr;
 	delete _particlePairsHandler;
@@ -802,16 +798,6 @@ void Simulation::prepare_start() {
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
 	//updateForces();
 
-	if (_pressureGradient->isAcceleratingUniformly()) {
-		global_log->info() << "Initialising uniform acceleration." << endl;
-		unsigned long uCAT = _pressureGradient->getUCAT();
-		global_log->info() << "uCAT: " << uCAT << " steps." << endl;
-		_pressureGradient->determineAdditionalAcceleration(
-				_domainDecomposition, _moleculeContainer, uCAT
-						* _integrator->getTimestepLength());
-		global_log->info() << "Uniform acceleration initialised." << endl;
-	}
-
 	global_log->info() << "Calculating global values" << endl;
 	_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
 
@@ -838,9 +824,6 @@ void Simulation::prepare_start() {
 
 void Simulation::simulate() {
 	global_log->info() << "Started simulation" << endl;
-
-	// (universal) constant acceleration (number of) timesteps
-	unsigned uCAT = _pressureGradient->getUCAT();
 
 	_ensemble->updateGlobalVariable(_moleculeContainer, NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << endl;
@@ -997,17 +980,6 @@ void Simulation::simulate() {
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-		if (_pressureGradient->isAcceleratingUniformly()) {
-			if (!(_simstep % uCAT)) {
-				global_log->debug() << "Determine the additional acceleration" << endl;
-				_pressureGradient->determineAdditionalAcceleration(
-						_domainDecomposition, _moleculeContainer, uCAT
-						* _integrator->getTimestepLength());
-			}
-			global_log->debug() << "Process the uniform acceleration" << endl;
-			_integrator->accelerateUniformly(_moleculeContainer, _domain);
-			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
-		}
 		_longRangeCorrection->calculateLongRange();
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 
@@ -1256,11 +1228,8 @@ void Simulation::initialize() {
 
 	_outputPrefix.append(gettimestring());
 
-	global_log->info() << "Creating PressureGradient ... " << endl;
-	_pressureGradient = new PressureGradient(ownrank);
-
 	global_log->info() << "Creating domain ..." << endl;
-	_domain = new Domain(ownrank, this->_pressureGradient);
+	_domain = new Domain(ownrank);
 	global_log->info() << "Creating ParticlePairs2PotForceAdapter ..." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 
