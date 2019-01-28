@@ -385,7 +385,7 @@ void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Do
 					}
 				} else {
 					double pos[3] = {m.r(0), m.r(1), m.r(2)};
-					Molecule* haloPointer = moleculeContainer->getMoleculeCloseToPosition(pos, m.getID());
+					Molecule* haloPointer = moleculeContainer->getHaloMoleculeCloseToPosition(pos, m.getID());
 					for(unsigned short dim = 0; dim < 3; ++dim) {
 						haloPointer->setr(dim, pos[dim]);
 					}

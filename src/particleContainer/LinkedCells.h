@@ -191,6 +191,8 @@ public:
 	 */
 	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
 
+	Molecule* getHaloMoleculeCloseToPosition(const double *pos, unsigned long id) override;
+
 	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!
 	//! each spatial position within the bounding box of the linked cells

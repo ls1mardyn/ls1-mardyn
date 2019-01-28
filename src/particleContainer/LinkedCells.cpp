@@ -1132,6 +1132,18 @@ bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) 
 	return false;
 }
 
+Molecule* LinkedCells::getHaloMoleculeCloseToPosition(const double *pos, unsigned long id) {
+	double lowCorner[3] = {pos[0] - _cutoffRadius, pos[1] - _cutoffRadius, pos[2] - _cutoffRadius};
+	double highCorner[3] = {pos[0] + _cutoffRadius, pos[1] + _cutoffRadius, pos[2] + _cutoffRadius};
+	for (auto iter = regionIterator(lowCorner, highCorner);
+	     iter.isValid(); ++iter) {
+		if (iter->getID() == id) {
+			return &*iter;
+		}
+	}
+	throw std::runtime_error("no fitting halo molecule found");
+}
+
 bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurrentOptimalTraversal()->requiresForceExchange();}
 
 std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {

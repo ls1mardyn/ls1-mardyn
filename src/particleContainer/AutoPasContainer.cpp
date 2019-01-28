@@ -223,7 +223,7 @@ bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **resul
 	return false;
 }
 
-Molecule* AutoPasContainer::getMoleculeCloseToPosition(const double *pos, unsigned long id){
+Molecule* AutoPasContainer::getHaloMoleculeCloseToPosition(const double *pos, unsigned long id){
 	std::array<double, 3> lowCorner{pos[0] - _verletSkin, pos[1] - _verletSkin, pos[2] - _verletSkin};
 	std::array<double, 3> highCorner{pos[0] + _verletSkin, pos[1] + _verletSkin, pos[2] + _verletSkin};
 	for (auto iter = _autopasContainer.getRegionIterator(lowCorner, highCorner, autopas::IteratorBehavior::haloOnly);
