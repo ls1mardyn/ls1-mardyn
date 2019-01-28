@@ -207,7 +207,7 @@ bool AutoPasContainer::isVerletContainer() {
 }
 
 bool AutoPasContainer::queryVerletListsValid() {
-	return _autopasContainer.isNeighborListValid();
+	return not _autopasContainer.needsContainerUpdate();
 }
 
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
