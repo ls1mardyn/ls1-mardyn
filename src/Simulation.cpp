@@ -1244,7 +1244,7 @@ void Simulation::initialize() {
 bool Simulation::keepRunning() {
 
 	// Simstep Criterion
-	if (_simstep > _numberOfTimesteps){
+	if (_simstep >= _numberOfTimesteps){
 		global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
 		return false;
 	}
