@@ -55,7 +55,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 	#pragma omp parallel
 	#endif
 	{
-		for (auto i = molCont->iterator(); i.isValid(); ++i) {
+		for (auto i = molCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); i.isValid(); ++i) {
 			i->upd_preF(_timestepLength);
 		}
 	}
@@ -121,7 +121,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			double summv2gt_l = 0.0;
 			double sumIw2gt_l = 0.0;
 
-			for (auto i = molCont->iterator(); i.isValid(); ++i) {
+			for (auto i = molCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); i.isValid(); ++i) {
 				i->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
 				mardyn_assert(summv2gt_l >= 0.0);
 				Ngt_l++;

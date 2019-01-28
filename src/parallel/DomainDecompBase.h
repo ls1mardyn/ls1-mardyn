@@ -337,8 +337,8 @@ protected:
 	int _numProcs;
 
 private:
-	std::map<std::array<int, 3>, std::vector<Molecule*>> _verletHaloSendingList;
-	std::map<std::array<int, 3>, std::vector<Molecule*>> _verletHaloReceivingList;
+	std::vector<std::pair<std::array<int, 3>, std::vector<Molecule*>>> _verletHaloSendingList;
+	std::vector<std::pair<std::array<int, 3>, std::vector<Molecule*>>> _verletHaloReceivingList;
 	CollectiveCommBase _collCommBase;
 	int _sendLeavingAndCopiesSeparately = 0;
 };

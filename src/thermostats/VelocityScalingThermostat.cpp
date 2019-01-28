@@ -76,7 +76,7 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 			global_log->debug() << "Beta rot: " << betaRot << endl;
 			global_log->debug() << "Beta trans: " << betaTrans << endl;
 
-			for (auto i = moleculeContainer->iterator(); i.isValid(); ++i) {
+			for (auto i = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); i.isValid(); ++i) {
 				if(this->_useGlobalVelocity) {
 					i->vsub(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
 					i->scale_v(betaTrans);

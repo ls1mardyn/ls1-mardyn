@@ -240,7 +240,8 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 
 	for(int direction = -1; direction < 2; direction += 2) {
 		shiftVec[dim] = direction;
-		auto& listI = _verletHaloSendingList[shiftVec];
+
+		std::vector<Molecule*> listI{};
 		double shift = shiftMagnitude * (-direction);
 
 		double cutoff = moleculeContainer->getCutoff() + moleculeContainer->getSkin();
@@ -261,8 +262,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 
 
 		#if defined (_OPENMP)
-		#pragma omp declare reduction(vecMerge : std::vector<Molecule*> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
-		#pragma omp parallel shared(startRegion, endRegion) reduction (vecMerge: listI)
+		#pragma omp parallel shared(startRegion, endRegion) if(not generateVerletHaloCopyList)
 		#endif
 		{
 			auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
@@ -290,15 +290,17 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 				moleculeContainer->addHaloParticle(m);
 			}
 		}
+		_verletHaloSendingList.emplace_back(shiftVec, listI);
 	}
 }
 
 void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const {
 	double shift[3];
-		for (int dim=0;dim<3;dim++){
-			shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-			shift[dim] *= haloRegion.offset[dim]*(-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
-		}
+	for (int dim = 0; dim < 3; dim++) {
+		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
+		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the
+													  // offset is in negative direction of the shift
+	}
 
 #if defined (_OPENMP)
 #pragma omp parallel
@@ -349,8 +351,9 @@ void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* 
 
 void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* domain){
 	bool useReceivingList = not _verletHaloReceivingList.empty();
-	for(auto& listSendPair : _verletHaloSendingList){
 
+	for (size_t i = 0; i < _verletHaloSendingList.size(); ++i) {
+		auto& listSendPair = _verletHaloSendingList[i];
 		std::array<int, 3> shiftVec = listSendPair.first;
 		std::array<double, 3> shift {};
 		for (int dim = 0; dim < 3; ++dim) {
@@ -359,10 +362,12 @@ void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Do
 		}
 
 		auto &listSend = listSendPair.second;
-		auto &listReceive = _verletHaloReceivingList[listSendPair.first];
+		std::vector<Molecule*> listReceiveNew{};
+		std::vector<Molecule*>* listReceiveOld = useReceivingList ? &_verletHaloReceivingList[i].second : nullptr;
 
 		#if defined (_OPENMP)
 		// not easily parallelizable, as particles in listSend can be in same cells...
+		// so this is commented out for a reason!
 		// #pragma omp parallel
 		#endif
 		{
@@ -376,7 +381,7 @@ void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Do
 				}
 				if(useReceivingList){
 					for(unsigned short dim = 0; dim < 3; ++dim) {
-						listReceive[i]->setr(dim, m.r(dim));
+						(*listReceiveOld)[i]->setr(dim, m.r(dim));
 					}
 				} else {
 					double pos[3] = {m.r(0), m.r(1), m.r(2)};
@@ -384,9 +389,12 @@ void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Do
 					for(unsigned short dim = 0; dim < 3; ++dim) {
 						haloPointer->setr(dim, pos[dim]);
 					}
-					listReceive.push_back(haloPointer);
+					listReceiveNew.push_back(haloPointer);
 				}
 			}
+		}
+		if(not useReceivingList){
+			_verletHaloReceivingList.emplace_back(shiftVec, listReceiveNew);
 		}
 	}
 }

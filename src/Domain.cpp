@@ -450,7 +450,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		#endif
 		{
 
-			for(auto tM = partCont->iterator(); tM.isValid(); ++tM) {
+			for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 				++N;
 				rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
 				if(this->_universalUndirectedThermostat[0]) {

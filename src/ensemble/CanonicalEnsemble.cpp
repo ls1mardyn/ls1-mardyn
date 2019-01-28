@@ -46,7 +46,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 		{
 			std::vector<unsigned long> numMolecules_private(numComponents, 0ul);
 
-			for(auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
+			for(auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid(); ++molecule) {
 				numMolecules_private[molecule->componentid()]++;
 			}
 
