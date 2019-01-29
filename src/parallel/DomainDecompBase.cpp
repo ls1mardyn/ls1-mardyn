@@ -3,8 +3,7 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 
-DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
-}
+DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1), _verletHaloSendingList{}, _verletHaloReceivingList{} {}
 
 DomainDecompBase::~DomainDecompBase() {
 }
@@ -17,10 +16,10 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, b
 	for (unsigned d = 0; d < 3; ++d) {
 		handleDomainLeavingParticles(d, moleculeContainer);
 	}
-	if(generateVerletHaloCopyList){
-		_verletHaloSendingList.clear();
-		_verletHaloReceivingList.clear();
-	}
+
+	_verletHaloSendingList.clear();
+	_verletHaloReceivingList.clear();
+
 	for (unsigned d = 0; d < 3; ++d) {
 		populateHaloLayerWithCopies(d, moleculeContainer, generateVerletHaloCopyList);
 	}
@@ -290,7 +289,9 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 				moleculeContainer->addHaloParticle(m);
 			}
 		}
-		_verletHaloSendingList.emplace_back(shiftVec, listI);
+		if(generateVerletHaloCopyList) {
+			_verletHaloSendingList.emplace_back(shiftVec, listI);
+		}
 	}
 }
 

@@ -106,6 +106,8 @@ public:
 
 	virtual void doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* domain);
 
+	virtual bool haloCopyValid() { return _verletHaloSendingList.size() != 0; }
+
 	//! @brief find out whether the given position belongs to the domain of this process
 	//!
 	//! This method is e.g. used by a particle generator which creates particles within
