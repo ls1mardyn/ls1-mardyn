@@ -133,7 +133,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		std::array<double, 3> highCorner = {_boundingBoxMax[0], _boundingBoxMax[1], _boundingBoxMax[2]};
 
 		// generate the functor
-		autopas::LJFunctor<Molecule, CellType, /*calculateGlobals*/ true> functor(_cutoff, epsilon, sigma, shift,
+		autopas::LJFunctor<Molecule, CellType, /*newton3*/ true, /*calculateGlobals*/ true> functor(_cutoff, epsilon, sigma, shift,
 																				  lowCorner, highCorner,
 																				  /*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
