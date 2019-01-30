@@ -211,8 +211,8 @@ pipeline {
                                   set +e
                                   output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
-                                  if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
-                                    echo "srun submit limit reached, trying again in 60s"
+                                  if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                    echo "srun submit limit reached or socket timed out error, trying again in 60s"
                                     sleep 60
                                     continue
                                   fi
@@ -230,8 +230,8 @@ pipeline {
                                   set +e
                                   output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
-                                  if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
-                                    echo "srun submit limit reached, trying again in 60s"
+                                  if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                    echo "srun submit limit reached or socket timed out error, trying again in 60s"
                                     sleep 60
                                     continue
                                   fi

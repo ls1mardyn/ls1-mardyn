@@ -302,8 +302,8 @@ def doRun(directory, MardynExe):
         # repeatedly try this if srun was not working
         p = Popen(cmd, stdout=PIPE, stderr=PIPE)
         out, err = p.communicate()
-        if p.returncode == 1 and "Job violates accounting/QOS policy" in err:
-            print "srun submit limit reached, trying again in 60s"
+        if p.returncode == 1 and ("Job violates accounting/QOS policy" in err or "Socket timed out on send/recv" in err):
+            print "srun submit limit reached or socket timed out error, trying again in 60s"
             time.sleep(60)
             continue
         break
