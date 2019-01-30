@@ -105,7 +105,7 @@ public:
 	bool getMoleculeAtPosition(const double pos[3],
 							   Molecule** result) { return false; } // pure virtual in particleContainer.h
 
-	Molecule* getHaloMoleculeCloseToPosition(const double pos[3], unsigned long id) override{};
+	Molecule* getHaloMoleculeCloseToPosition(const double pos[3], unsigned long id) override { return nullptr; }
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 								std::array<double, 3> simBoxLength) { return 0; }
