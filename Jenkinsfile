@@ -420,7 +420,7 @@ pipeline {
             dir('unarchive') {
               sh 'tar -xf ../Mardyn-src.tar.gz'
               dir('src') {
-                sh 'make'
+                sh 'make -j4'
               }
             }
           }
