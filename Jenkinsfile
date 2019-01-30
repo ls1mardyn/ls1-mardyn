@@ -143,14 +143,14 @@ pipeline {
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 while : ; do
                                   output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
-                                  rc=$?
-                                  if [[ $rc == 1 &&  $output == *"Job violates accounting/QOS policy"* ]] ; then
+                                  rc=\$?
+                                  if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
                                     echo "srun submit limit reached, trying again in 30s"
                                     sleep 30
                                     continue
                                   fi
-                                  echo $output
-                                  exit $rc
+                                  echo \$output
+                                  exit \$rc
                                 done
                               """
                             } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
@@ -160,14 +160,14 @@ pipeline {
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 while : ; do
                                   output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
-                                  rc=$?
-                                  if [[ $rc == 1 &&  $output == *"Job violates accounting/QOS policy"* ]] ; then
+                                  rc=\$?
+                                  if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
                                     echo "srun submit limit reached, trying again in 30s"
                                     sleep 30
                                     continue
                                   fi
-                                  echo $output
-                                  exit $rc
+                                  echo \$output
+                                  exit \$rc
                                 done
                               """
                             }
