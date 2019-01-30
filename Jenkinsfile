@@ -141,14 +141,38 @@ pipeline {
                                 source /etc/profile.d/modules.sh
                                 export OMP_NUM_THREADS=10
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
-                                srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
+                                while : ; do
+                                  set +e
+                                  output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
+                                  rc=\$?
+                                  if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
+                                    echo "srun submit limit reached, trying again in 60s"
+                                    sleep 60
+                                    continue
+                                  fi
+                                  set -e
+                                  echo \$output
+                                  exit \$rc
+                                done
                               """
                             } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
                               sh """
                                 source /etc/profile.d/modules.sh
-                                export OMP_NUM_THREADS=1
+                                export OMP_NUM_THREADS=10
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
-                                srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/
+                                while : ; do
+                                  set +e
+                                  output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
+                                  rc=\$?
+                                  if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
+                                    echo "srun submit limit reached, trying again in 60s"
+                                    sleep 60
+                                    continue
+                                  fi
+                                  set -e
+                                  echo \$output
+                                  exit \$rc
+                                done
                               """
                             }
                             results[it.join('-')].put("unit-test", "success")
