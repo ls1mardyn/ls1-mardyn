@@ -142,6 +142,7 @@ pipeline {
                                 export OMP_NUM_THREADS=10
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 while : ; do
+                                  set +e
                                   output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
                                   if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
@@ -149,6 +150,7 @@ pipeline {
                                     sleep 30
                                     continue
                                   fi
+                                  set -e
                                   echo \$output
                                   exit \$rc
                                 done
@@ -159,6 +161,7 @@ pipeline {
                                 export OMP_NUM_THREADS=10
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 while : ; do
+                                  set +e
                                   output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
                                   if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
@@ -166,6 +169,7 @@ pipeline {
                                     sleep 30
                                     continue
                                   fi
+                                  set -e
                                   echo \$output
                                   exit \$rc
                                 done
