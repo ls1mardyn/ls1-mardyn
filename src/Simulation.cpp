@@ -122,6 +122,7 @@ Simulation::Simulation()
 	_loopCompTime(0.0),
 	_loopCompTimeSteps(0)
 {
+	_timeFromStart.start();
 	_ensemble = new CanonicalEnsemble();
 	initialize();
 }
@@ -199,6 +200,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
 		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
 		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
+		xmlconfig.getNodeValue("production/loop-abort-time", _maxWallTime);
+		if(_maxWallTime != -1) {
+			global_log->info() << "Max loop-abort-time set: " << _maxWallTime << endl;
+			_wallTimeEnabled = true;
+		}
 		xmlconfig.changecurrentnode("..");
 	} else {
 		global_log->error() << "Run section missing." << endl;
@@ -873,7 +879,11 @@ void Simulation::simulate() {
 
 	Timer perStepTimer;
 	perStepTimer.reset();
-	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
+
+	// keepRunning() increments the simstep counter before the first iteration
+	_simstep = _initSimulation;
+
+	while (keepRunning()) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 		global_simulation->timers()->incrementTimerTimestepCounter();
@@ -1256,6 +1266,25 @@ void Simulation::initialize() {
 
 	global_log->info() << "Initialization done" << endl;
 }
+
+bool Simulation::keepRunning() {
+
+	// Simstep Criterion
+	if (_simstep >= _numberOfTimesteps){
+		global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
+		return false;
+	}
+	// WallTime Criterion, elapsed time since Simulation constructor
+	else if(_wallTimeEnabled && _timeFromStart.get_etime_running() > _maxWallTime){
+		global_log->info() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
+		return false;
+	}
+	else{
+		_simstep++;
+		return true;
+	}
+}
+
 
 PluginBase* Simulation::getPlugin(const std::string& name)  {
 	for(auto& plugin : _plugins) {

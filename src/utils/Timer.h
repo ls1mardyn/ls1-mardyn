@@ -113,6 +113,9 @@ public:
 	double get_etime() {
 		return _etime;
 	}
+	double get_etime_running() {
+		return timer() - _start;
+	}
 	timer_state get_state() {
 		return _state;
 	}
