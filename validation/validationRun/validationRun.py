@@ -303,8 +303,8 @@ def doRun(directory, MardynExe):
         p = Popen(cmd, stdout=PIPE, stderr=PIPE)
         out, err = p.communicate()
         if p.returncode == 1 and "Job violates accounting/QOS policy" in err:
-            print "srun submit limit reached, trying again in 30s"
-            time.sleep(30)
+            print "srun submit limit reached, trying again in 60s"
+            time.sleep(60)
             continue
         break
     t = time.time() - t

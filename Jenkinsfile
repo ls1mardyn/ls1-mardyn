@@ -146,8 +146,8 @@ pipeline {
                                   output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
                                   if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
-                                    echo "srun submit limit reached, trying again in 30s"
-                                    sleep 30
+                                    echo "srun submit limit reached, trying again in 60s"
+                                    sleep 60
                                     continue
                                   fi
                                   set -e
@@ -165,8 +165,8 @@ pipeline {
                                   output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
                                   if [[ \$rc == 1 && \$output == *"Job violates accounting/QOS policy"* ]] ; then
-                                    echo "srun submit limit reached, trying again in 30s"
-                                    sleep 30
+                                    echo "srun submit limit reached, trying again in 60s"
+                                    sleep 60
                                     continue
                                   fi
                                   set -e
