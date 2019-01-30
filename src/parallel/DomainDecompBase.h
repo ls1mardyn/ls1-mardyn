@@ -101,12 +101,9 @@ public:
 	//! @param generateVerletHaloCopyList Determines, whether a list of halo molecules for the verlet generation should be
 	//! build.
 	virtual void balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
-									ParticleContainer* moleculeContainer, Domain* domain,
-									bool generateVerletHaloCopyList);
+									ParticleContainer* moleculeContainer, Domain* domain);
 
 	virtual void doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* domain);
-
-	virtual bool haloCopyValid() { return _verletHaloSendingList.size() != 0; }
 
 	//! @brief find out whether the given position belongs to the domain of this process
 	//!

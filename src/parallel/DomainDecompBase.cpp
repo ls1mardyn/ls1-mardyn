@@ -345,12 +345,33 @@ bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancin
 }
 
 void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */,
-										  ParticleContainer* moleculeContainer, Domain* domain,
-										  bool generateVerletHaloCopyList) {
-	exchangeMolecules(moleculeContainer, generateVerletHaloCopyList);
+										  ParticleContainer* moleculeContainer, Domain* domain) {
+	bool isVerlet = moleculeContainer->isVerletContainer();
+	bool reuseVerlet = false, haloCopyValid = false;
+	if(isVerlet){
+		reuseVerlet = moleculeContainer->queryVerletListsValid();
+		global_log->info() << "VerletList container detected! VerletListsValid: " << (reuseVerlet ? "true" : "false")
+		                   << std::endl;
+		haloCopyValid = _verletHaloSendingList.size() != 0;
+		global_log->info() << "VerletList container detected! haloCopyValid: " << (haloCopyValid ? "true" : "false")
+		                   << std::endl;
+	}
+
+	if(reuseVerlet and haloCopyValid) {
+		// if we are reusing verlet lists, call different functions of the _domainDecomposition
+		doVerletHaloCopy(moleculeContainer, domain);
+	} else {
+		if(isVerlet){
+			moleculeContainer->deleteOuterParticles();
+		}
+		// The particles have moved, so the neighborhood relations have
+		// changed and have to be adjusted
+		moleculeContainer->update();
+		exchangeMolecules(moleculeContainer, isVerlet);
+	}
 }
 
-void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* domain){
+void DomainDecompBase::doVerletHaloCopy(ParticleContainer* moleculeContainer, Domain* /*domain*/){
 	bool useReceivingList = not _verletHaloReceivingList.empty();
 
 	for (size_t i = 0; i < _verletHaloSendingList.size(); ++i) {
@@ -455,7 +476,7 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 	for (int process = 0; process < getNumProcs(); process++) {
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream;
-			if(binary == true){
+			if(binary){
 //				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
 				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::app);
 			}
@@ -465,7 +486,7 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 			}
 
 			for (auto tempMolecule = moleculeContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
-				if(binary == true){
+				if(binary){
 					tempMolecule->writeBinary(checkpointfilestream);
 				}
 				else {

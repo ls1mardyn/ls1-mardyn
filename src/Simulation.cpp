@@ -1162,37 +1162,11 @@ void Simulation::finalize() {
 }
 
 void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime) {
-	bool isVerlet = _moleculeContainer->isVerletContainer();
-	bool reuseVerlet = false, haloCopyValid = false;
-	if(isVerlet){
-		reuseVerlet = _moleculeContainer->queryVerletListsValid();
-		global_log->info() << "VerletList container detected! VerletListsValid: " << (reuseVerlet ? "true" : "false")
-						   << std::endl;
-		haloCopyValid = _domainDecomposition->haloCopyValid();
-		global_log->info() << "VerletList container detected! haloCopyValid: " << (haloCopyValid ? "true" : "false")
-		                   << std::endl;
-	}
 
-
-	if(reuseVerlet and haloCopyValid) {
-		// if we are reusing verlet lists, call different functions of the _domainDecomposition
-		global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-		_domainDecomposition->doVerletHaloCopy(_moleculeContainer, _domain);
-		global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
-	} else {
-		if(isVerlet){
-			_moleculeContainer->deleteOuterParticles();
-		}
-		// The particles have moved, so the neighborhood relations have
-		// changed and have to be adjusted
-		_moleculeContainer->update();
-		//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
-		bool forceRebalancing = false;
-		global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-		_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain,
-												 isVerlet);
-		global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
-	}
+	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
+	bool forceRebalancing = false;
+	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain);
+	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred

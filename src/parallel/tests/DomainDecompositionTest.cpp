@@ -34,7 +34,7 @@ void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * fil
 	numMols = _domainDecomposition->collCommGetInt();
 	_domainDecomposition->collCommFinalize();
 
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain, false);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
 	container->deleteOuterParticles();
 
 	int newNumMols = container->getNumberOfParticles();
@@ -98,9 +98,7 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		}
 	}
 
-	container->update();
-
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain, false);
+	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
 	container->deleteOuterParticles();
 
 	int newNumMols = container->getNumberOfParticles();
@@ -158,7 +156,7 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 	}
 
 	// after the exchange, there have to be 21 copies in the halos, i.e. 24 molecules in total
-	_domainDecomposition->balanceAndExchange(0., false, container, _domain, false);
+	_domainDecomposition->balanceAndExchange(0., false, container, _domain);
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 
 	m = container->iterator();

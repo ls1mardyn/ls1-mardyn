@@ -100,7 +100,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 											double etime) override;
 
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer,
-							Domain* domain, bool generateVerletHaloCopyList) override;
+							Domain* domain) override;
 
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain) override;

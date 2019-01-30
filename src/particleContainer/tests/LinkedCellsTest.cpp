@@ -38,7 +38,7 @@ void LinkedCellsTest::testUpdateAndDeleteOuterParticlesFilename(const char * fil
 			filename, cutoff));
 	int numMols = container->getNumberOfParticles();
 
-	_domainDecomposition->balanceAndExchange(0., false, container, _domain, false);
+	_domainDecomposition->balanceAndExchange(0., false, container, _domain);
 	container->deleteOuterParticles();
 
 	int newNumMols = container->getNumberOfParticles();
@@ -565,8 +565,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	container->update();
 	containerTest->update();
 	bool forceRebalancing = false;
-	domainDecompositionFS->balanceAndExchange(0.,forceRebalancing, container, _domain, false);
-	domainDecompositionTest->balanceAndExchange(0.,forceRebalancing, containerTest, _domain, false);
+	domainDecompositionFS->balanceAndExchange(0.,forceRebalancing, container, _domain);
+	domainDecompositionTest->balanceAndExchange(0.,forceRebalancing, containerTest, _domain);
 	container->updateMoleculeCaches();
 	containerTest->updateMoleculeCaches();
 	//------------------------------------------------------------

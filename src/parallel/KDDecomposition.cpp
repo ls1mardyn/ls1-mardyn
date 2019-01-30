@@ -219,8 +219,12 @@ bool KDDecomposition::checkNeedRebalance(double lastTraversalTime) {
 }
 
 void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
-										 ParticleContainer* moleculeContainer, Domain* domain,
-										 bool generateVerletHaloCopyList) {
+										 ParticleContainer* moleculeContainer, Domain* domain) {
+	if(moleculeContainer->isVerletContainer()) {
+		moleculeContainer->deleteOuterParticles();
+	}
+	moleculeContainer->update();
+
 	bool needsRebalance = checkNeedRebalance(lastTraversalTime);
 	bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 	_steps++;

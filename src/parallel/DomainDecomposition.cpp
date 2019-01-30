@@ -67,7 +67,11 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 }
 
 void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
-		Domain* domain, bool generateVerletHaloCopyList) {
+		Domain* domain) {
+	if(moleculeContainer->isVerletContainer()) {
+		moleculeContainer->deleteOuterParticles();
+	}
+	moleculeContainer->update();
 	if(sendLeavingWithCopies()){
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 	}else{

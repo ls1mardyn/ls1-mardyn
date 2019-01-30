@@ -83,7 +83,7 @@ void NonBlockingMPIHandlerBase::performComputation() {
 void NonBlockingMPIHandlerBase::initBalanceAndExchange(bool forceRebalancing, double etime) {
 	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 
-	_domainDecomposition->balanceAndExchange(etime, forceRebalancing, _moleculeContainer, _domain, false);
+	_domainDecomposition->balanceAndExchange(etime, forceRebalancing, _moleculeContainer, _domain);
 
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
