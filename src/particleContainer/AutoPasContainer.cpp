@@ -196,14 +196,9 @@ void AutoPasContainer::updateMoleculeCaches() {
 }
 
 bool AutoPasContainer::isVerletContainer() {
-	switch(_autopasContainer.getContainer()->getContainerType()){
-		case autopas::ContainerOptions::verletLists:
-		case autopas::ContainerOptions::verletListsCells:
-		case autopas::ContainerOptions::verletClusterLists:
-			return true;
-		default:
-			return false;
-	}
+	auto type = _autopasContainer.getContainer()->getContainerType();
+	auto typeString = autopas::utils::StringUtils::to_string(type);
+	return typeString.find("Verlet") != std::string::npos;
 }
 
 bool AutoPasContainer::queryVerletListsValid() {
