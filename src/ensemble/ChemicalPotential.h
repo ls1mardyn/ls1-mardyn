@@ -1,6 +1,5 @@
 
-#ifndef GRANDCANONICAL_H_
-#define GRANDCANONICAL_H_
+#pragma once
 
 #include <list>
 
@@ -132,5 +131,3 @@ private:
 	/* Moved from LinkedCells! */
 	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
 };
-
-#endif /* GRANDCANONICAL_H_ */

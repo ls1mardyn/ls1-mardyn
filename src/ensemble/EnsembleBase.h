@@ -1,5 +1,4 @@
-#ifndef ENSEMBLE_BASE_H_
-#define ENSEMBLE_BASE_H_
+#pragma once
 
 #include "molecules/Component.h"
 
@@ -137,5 +136,3 @@ protected:
 	*/
 	Domain* _simulationDomain;
 };
-
-#endif /* ENSEMBLE_BASE_H_ */
