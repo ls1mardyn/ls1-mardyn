@@ -176,7 +176,7 @@ double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
 
 double AutoPasContainer::getCutoff() { return _cutoff; }
 
-double AutoPasContainer::getSkin() { return _verletSkin; }
+double AutoPasContainer::getSkin() { return isVerletContainer() ? _verletSkin : 0.; }
 
 void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
 	throw std::runtime_error("not yet implemented");
@@ -232,7 +232,7 @@ Molecule* AutoPasContainer::getHaloMoleculeCloseToPosition(const double *pos, un
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 											  std::array<double, 3> simBoxLength) {
-	throw std::runtime_error("not yet implemented");
+	throw std::runtime_error("not yet implemented: AutoPasContainer::initCubicGrid");
 }
 
 double *AutoPasContainer::getCellLength() { throw std::runtime_error("not yet implemented"); }
