@@ -213,8 +213,10 @@
           - vcluster
           -->
         <allowedContainers>linkedCells, vcells, vcluster</allowedContainers>
+	<!-- specify whether the blackboxmode shall be used -->
+        <blackBoxMode>true</blackBoxMode>
         <!-- specify what metric the respective selector should use to determine the optimal traversal -->
-        <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
+	<!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
         <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
         <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
         <!-- Data layout to be used: AoS or SoA -->
