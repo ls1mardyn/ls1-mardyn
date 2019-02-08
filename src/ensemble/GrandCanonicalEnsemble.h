@@ -2,8 +2,7 @@
 // Created by Kruegener
 //
 
-#ifndef MARDYN_GRANDCANONICAL_H
-#define MARDYN_GRANDCANONICAL_H
+#pragma once
 
 
 #include "EnsembleBase.h"
@@ -128,6 +127,3 @@ private:
 	std::list<ChemicalPotential> _lmu;
 
 };
-
-
-#endif //MARDYN_GRANDCANONICAL_H

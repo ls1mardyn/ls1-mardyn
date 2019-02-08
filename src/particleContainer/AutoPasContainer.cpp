@@ -153,6 +153,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		autopas::LJFunctor<Molecule, CellType, /*newton3*/ true, /*calculateGlobals*/ true> functor(
 			_cutoff, epsilon, sigma, shift, lowCorner, highCorner,
 			/*duplicatedCalculation*/ true);
+
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
