@@ -17,7 +17,8 @@ if(ENABLE_AUTOPAS)
     ExternalProject_Add(
             autopas
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG origin/master
+            #GIT_TAG origin/master
+            GIT_TAG origin/feature/blackBoxVerlet
             #URL https://github.com/AutoPas/AutoPas/archive/0c3d8b07a2e38940057fafd21b98645cb074e729.zip # zip option
             #${CMAKE_SOURCE_DIR}/libs/googletest-master.zip # bundled option
             #URL_HASH MD5=6e70656897167140c1221eecc6ad872d

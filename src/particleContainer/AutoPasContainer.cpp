@@ -13,7 +13,7 @@
 #include "autopas/utils/StringUtils.h"
 
 AutoPasContainer::AutoPasContainer()
-    : _cutoff(0.),
+	: _cutoff(0.),
 	  _verletSkin(0.3),
 	  _verletRebuildFrequency(10u),
 	  _tuningFrequency(1000u),
@@ -23,7 +23,8 @@ AutoPasContainer::AutoPasContainer()
 	  _containerChoices(autopas::allContainerOptions),
 	  _traversalSelectorStrategy(autopas::SelectorStrategy::fastestMedian),
 	  _containerSelectorStrategy(autopas::SelectorStrategy::fastestMedian),
-	  _dataLayout(autopas::DataLayoutOption::soa){
+	  _dataLayout(autopas::DataLayoutOption::soa),
+	  _blackBoxMode(true) {
 	// autopas::Logger::get()->set_level(spdlog::level::debug);
 }
 
@@ -31,6 +32,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	string oldPath(xmlconfig.getcurrentnodepath());
 
 	// set default values here!
+	xmlconfig.getNodeValue("blackBoxMode", _blackBoxMode);
 
 	_traversalChoices = autopas::utils::StringUtils::parseTraversalOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08")));
@@ -57,22 +59,26 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << endl
-	                   << setw(valueOffset) << left << "Data Layout " << ": "
-	                   << autopas::utils::StringUtils::to_string(_dataLayout) << endl
-					   << setw(valueOffset) << left << "Container " << ": " << containerChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Container selector strategy " << ": "
-					   << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
-					   << setw(valueOffset) << left << "Traversals " << ": " << traversalChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Traversal selector strategy " << ": "
-					   << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
-					   << setw(valueOffset) << left << "Tuning frequency" << ": "  << _tuningFrequency << endl
-					   << setw(valueOffset) << left << "Number of samples " << ": "  << _tuningSamples << endl
-					   ;
+					   << setw(valueOffset) << left << "Data Layout "
+					   << ": " << autopas::utils::StringUtils::to_string(_dataLayout) << endl
+					   << setw(valueOffset) << left << "Container "
+					   << ": " << containerChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Container selector strategy "
+					   << ": " << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Traversals "
+					   << ": " << traversalChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Traversal selector strategy "
+					   << ": " << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
+					   << setw(valueOffset) << left << "Tuning frequency"
+					   << ": " << _tuningFrequency << endl
+					   << setw(valueOffset) << left << "Number of samples "
+					   << ": " << _tuningSamples << endl
+					   << setw(valueOffset) << left << "blackBoxMode "
+					   << ": " << (_blackBoxMode ? "true" : "false") << endl;
 	xmlconfig.changecurrentnode(oldPath);
 }
 
 bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
-
 	// in ls1 mardyn there do not exist any particles, when this rebuild function is called.
 
 	mardyn_assert(_cutoff > 0.);
@@ -81,7 +87,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 
 	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, _containerChoices,
 						   _traversalChoices, _containerSelectorStrategy, _traversalSelectorStrategy, _tuningFrequency,
-						   _tuningSamples);
+						   _tuningSamples, _blackBoxMode);
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
@@ -90,7 +96,18 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	return false;
 }
 
-void AutoPasContainer::update() { _autopasContainer.updateContainer(); }
+void AutoPasContainer::update() {
+	if (not _blackBoxMode) {
+		_autopasContainer.updateContainer();
+	} else {
+		auto type = _autopasContainer.getContainer()->getContainerType();
+		auto typeString = autopas::utils::StringUtils::to_string(type);
+		bool isVerlet = typeString.find("Verlet") != std::string::npos;
+		if (not isVerlet or _autopasContainer.needsContainerUpdate()) {
+			_autopasContainer.updateContainer();
+		}
+	}
+}
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
 								   const bool &rebuildCaches) {
@@ -133,9 +150,9 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		std::array<double, 3> highCorner = {_boundingBoxMax[0], _boundingBoxMax[1], _boundingBoxMax[2]};
 
 		// generate the functor
-		autopas::LJFunctor<Molecule, CellType, /*newton3*/ true, /*calculateGlobals*/ true> functor(_cutoff, epsilon, sigma, shift,
-																				  lowCorner, highCorner,
-																				  /*duplicatedCalculation*/ true);
+		autopas::LJFunctor<Molecule, CellType, /*newton3*/ true, /*calculateGlobals*/ true> functor(
+			_cutoff, epsilon, sigma, shift, lowCorner, highCorner,
+			/*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -198,18 +215,16 @@ void AutoPasContainer::updateMoleculeCaches() {
 bool AutoPasContainer::isVerletContainer() {
 	auto type = _autopasContainer.getContainer()->getContainerType();
 	auto typeString = autopas::utils::StringUtils::to_string(type);
-	return typeString.find("Verlet") != std::string::npos;
+	return typeString.find("Verlet") != std::string::npos and not _blackBoxMode;
 }
 
-bool AutoPasContainer::queryVerletListsValid() {
-	return not _autopasContainer.needsContainerUpdate();
-}
+bool AutoPasContainer::queryVerletListsValid() { return not _autopasContainer.needsContainerUpdate(); }
 
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
 	std::array<double, 3> lowCorner{pos[0] - _verletSkin, pos[1] - _verletSkin, pos[2] - _verletSkin};
 	std::array<double, 3> highCorner{pos[0] + _verletSkin, pos[1] + _verletSkin, pos[2] + _verletSkin};
-	for (auto iter = _autopasContainer.getRegionIterator( lowCorner,  highCorner); iter.isValid(); ++iter) {
+	for (auto iter = _autopasContainer.getRegionIterator(lowCorner, highCorner); iter.isValid(); ++iter) {
 		if (iter->getR() == pos_arr) {
 			*result = &(*iter);
 			return true;
@@ -218,7 +233,7 @@ bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **resul
 	return false;
 }
 
-Molecule* AutoPasContainer::getHaloMoleculeCloseToPosition(const double *pos, unsigned long id){
+Molecule *AutoPasContainer::getHaloMoleculeCloseToPosition(const double *pos, unsigned long id) {
 	std::array<double, 3> lowCorner{pos[0] - _verletSkin, pos[1] - _verletSkin, pos[2] - _verletSkin};
 	std::array<double, 3> highCorner{pos[0] + _verletSkin, pos[1] + _verletSkin, pos[2] + _verletSkin};
 	for (auto iter = _autopasContainer.getRegionIterator(lowCorner, highCorner, autopas::IteratorBehavior::haloOnly);

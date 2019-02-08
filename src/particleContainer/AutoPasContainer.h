@@ -95,6 +95,7 @@ private:
 	unsigned int _verletRebuildFrequency;
 	unsigned int _tuningFrequency;
 	unsigned int _tuningSamples;
+	bool _blackBoxMode;
 	typedef autopas::FullParticleCell<Molecule> CellType;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 
