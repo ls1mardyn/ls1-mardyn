@@ -372,6 +372,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 				break;
 			case Ndatatype::IRV :
 				_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
+				componentid = 1;
 				break;
 		}
 		if((x < 0.0 || x >= domain->getGlobalLength(0))

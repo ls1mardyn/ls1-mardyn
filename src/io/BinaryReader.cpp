@@ -197,6 +197,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&vz), 8);
 				break;
 			case IRV:
+				componentid = 1;
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&x), 8);
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&y), 8);
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&z), 8);
