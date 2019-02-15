@@ -19,6 +19,8 @@
       </equilibration>
     </run>
 
+    <!-- When compiled with RMM=1 use -->
+    <!--<integrator type="LeapfrogRMM" >-->
     <integrator type="Leapfrog" >
       <!-- MD ODE integrator -->
       <timestep unit="reduced" >0.01</timestep>
