@@ -64,12 +64,12 @@ private:
 		if (type == IsCell_t::HALO or type == IsCell_t::BOUNDARY) {
 			ret = false;
 			for (int d = 0; d < 3; ++d) {
-				ret = ret or isCell1D(type, r[d], d);
+				ret |= isCell1D(type, r[d], d);
 			}
 		} else {
 			ret = true;
 			for (int d = 0; d < 3; ++d) {
-				ret = ret and isCell1D(type, r[d], d);
+				ret &= isCell1D(type, r[d], d);
 			}
 		}
 		return ret;
