@@ -40,6 +40,11 @@ public:
 		_initCalled = true;
 	}
 
+	// NOTE: attempted to optimise isHaloCell for runtime by:
+	// 		* storing bool-s per dimension and computing isHaloCell as a tensor product
+	// 		* simplifying the logic
+	// but neither brought any visible acceleration (tested in RMM mode with low density and low cutoff).
+	// One should instead probably try to reduce the number of calls to isHaloCell().
 	bool isHaloCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::HALO, cellIndex); }
 	bool isBoundaryCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::BOUNDARY, cellIndex); }
 	bool isInnerCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::INNER, cellIndex); }
