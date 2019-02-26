@@ -320,9 +320,9 @@ pipeline {
                     }
                   }
                 }
+                finished_matrix_jobs++;
               }
             }
-            finished_matrix_jobs++;
           }
 
           // return all combinations
@@ -336,8 +336,8 @@ pipeline {
                   knl_jobid = "something";
                   println knl_jobid;
                   while (finished_matrix_jobs < (variations.size() - 1)) {
-                    printf variations.size()
-                    printf "."
+                    println variations.size()
+                    println "."
                   }
                 }
               }
