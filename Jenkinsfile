@@ -214,7 +214,7 @@ pipeline {
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 while : ; do
                                   set +e
-                                  output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
+                                  output=`srun --jobid=$knl_jobid ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
                                   if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
                                     echo "srun submit limit reached or socket timed out error, trying again in 60s"
@@ -233,7 +233,7 @@ pipeline {
                                 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                 while : ; do
                                   set +e
-                                  output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
+                                  output=`srun --jobid=$knl_jobid ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                   rc=\$?
                                   if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
                                     echo "srun submit limit reached or socket timed out error, trying again in 60s"
@@ -272,7 +272,7 @@ pipeline {
                               dir("validation/validationBase") {
                                 def sameParTypeOption = (fileExists ('../validationInput/' + configDirVar + '/compareSameParType')) ? "" : "-b"
                                 def mpicmd = (PARTYPE=="PAR" ? "-m 4" : "-m 1")
-                                def mpiextra = (ARCH=="KNL" ? "-M \"srun\"" : "")
+                                def mpiextra = (ARCH=="KNL" ? "-M \"srun --jobid=" + knl_jobid + "\"" : "")
                                 def allmpi = (ARCH=="KNL" ? "--allMPI" : "")
                                 def srunfix = (ARCH=="KNL" ? "--srunFix" : "")
                                 def icount = (ARCH=="KNL" ? "-I 5" : "")
