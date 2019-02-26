@@ -335,7 +335,7 @@ pipeline {
                   // Allocate a new job
                   sh "salloc --nodes=1-2 --tasks-per-node=3 --time=02:00:00 --begin=now+300 &"
                   // Store jobid
-                  knl_jobid = sh(returnStdout: true, script: 'squeue -O jobid | sed -n 2p')
+                  knl_jobid = sh(returnStdout: true, script: 'squeue -O jobid | sed -n 2p').replace("\n", "")
                   println "Scheduled job " + knl_jobid
                   while (finished_matrix_jobs < (variations.size() - 1)) {
                     sleep 60
