@@ -333,7 +333,7 @@ pipeline {
               node("KNL_PRIO") {
                 stage("allocation") {
                   // Allocate a new job
-                  sh "salloc --nodes=1-2 --tasks-per-node=3 --time=02:00:00 --begin=now+180 :"
+                  sh "salloc --nodes=1-2 --tasks-per-node=3 --time=02:00:00 --begin=now+180 &"
                   // Store jobid
                   knl_jobid = sh(returnStdout: true, script: 'squeue -O jobid | sed -n 2p')
                   println "Scheduled job " + knl_jobid
