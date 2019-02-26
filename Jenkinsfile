@@ -338,8 +338,7 @@ pipeline {
                   knl_jobid = sh(returnStdout: true, script: 'squeue -O jobid | sed -n 2p')
                   println "Scheduled job " + knl_jobid
                   while (finished_matrix_jobs < (variations.size() - 1)) {
-                    println variations.size()
-                    println "."
+                    sleep 10
                   }
                   sh "scancel $knl_jobid -f --user=ga38cor3"
                 }
