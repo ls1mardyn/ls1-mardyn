@@ -156,171 +156,176 @@ pipeline {
             // return the job
             if (combinationFilter(it)) {
               return {
-                node(VECTORIZE_CODE) {
-                  def ARCH = (NODE_NAME == "KNL-Cluster-login") ? "KNL" : "HSW"
-                  results.put(it.join('-'), [:])
-                  results[it.join('-')].put("runOn", ARCH)
-                  stage("${it.join('-')}") {
-                    sh "rm -rf ${it.join('-')} || echo ''"
-                    ws("${WORKSPACE}/${it.join('-')}") {
-                      unstash 'repo'
-                      stage("build/${it.join('-')}") {
-                        try {
-                          printVariation(it)
-                          dir("src") {
-                            if(ARCH == "HSW") {
-                              sh "export VTK_INCDIR=/usr/include/vtk-6.3"
-                              sh "export VTK_LIBDIR=/usr/lib"
-                            } else {
-                              sh "source /etc/profile.d/modules.sh"
-                            }
-                            sh """
-                              make TARGET=$TARGET \
-                                PARTYPE=$PARTYPE \
-                                PRECISION=$PRECISION \
-                                OPENMP=$OPENMP \
-                                REDUCED_MEMORY_MODE=$REDUCED_MEMORY_MODE \
-                                UNIT_TESTS=1 \
-                                VECTORIZE_CODE=$VECTORIZE_CODE \
-                                """ +
-                                ((ARCH=="KNL") ?
-                                  "VTK=0 CFG=" + (PARTYPE == "PAR" ? "icc-impi" : "icc") :
-                                  "VTK=1"
-                                ) + " -j4"
-                            sh "mv `readlink MarDyn` ${it.join('-')}"
-                            if (it.join('-') == "AVX2-DEBUG-0-PAR-DOUBLE-0") {
-                              stash includes: "AVX2-DEBUG-0-PAR-DOUBLE-0", name: "build"
-                            }
-                            results[it.join('-')].put("build", "success")
-                          }
-                        } catch (err) {
-                          results[it.join('-')].put("build", "failure")
-                          error err
-                        }
-                      }
-                      // FIXME: Mixed precision unit-tests fail with rmm
-                      if ((PRECISION=="MIXED").implies(REDUCED_MEMORY_MODE=="0")) {
-                        stage("unit-test/${it.join('-')}") {
+                try {
+                  node(VECTORIZE_CODE) {
+                    def ARCH = (NODE_NAME == "KNL-Cluster-login") ? "KNL" : "HSW"
+                    results.put(it.join('-'), [:])
+                    results[it.join('-')].put("runOn", ARCH)
+                    stage("${it.join('-')}") {
+                      sh "rm -rf ${it.join('-')} || echo ''"
+                      ws("${WORKSPACE}/${it.join('-')}") {
+                        unstash 'repo'
+                        stage("build/${it.join('-')}") {
                           try {
                             printVariation(it)
-                            if (ARCH=="HSW" && PARTYPE=="PAR") {
-                              sh "mpirun -n 4 ./src/${it.join('-')} -t -d ./test_input/"
-                            } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
-                              sh "./src/${it.join('-')} -t -d ./test_input/"
-                            } else if (ARCH=="KNL" && PARTYPE=="PAR") {
+                            dir("src") {
+                              if(ARCH == "HSW") {
+                                sh "export VTK_INCDIR=/usr/include/vtk-6.3"
+                                sh "export VTK_LIBDIR=/usr/lib"
+                              } else {
+                                sh "source /etc/profile.d/modules.sh"
+                              }
                               sh """
-                                source /etc/profile.d/modules.sh
-                                export OMP_NUM_THREADS=10
-                                export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
-                                while : ; do
-                                  set +e
-                                  output=`srun --jobid=$knl_jobid "./src/${it.join('-')} -t -d ./test_input/" 2>&1`
-                                  rc=\$?
-                                  if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
-                                    echo "srun submit limit reached or socket timed out error, trying again in 60s"
-                                    sleep 60
-                                    continue
-                                  fi
-                                  set -e
-                                  echo \$output
-                                  exit \$rc
-                                done
-                              """
-                            } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
-                              sh """
-                                source /etc/profile.d/modules.sh
-                                export OMP_NUM_THREADS=10
-                                export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
-                                while : ; do
-                                  set +e
-                                  output=`srun --jobid=$knl_jobid "./src/${it.join('-')} -t -d ./test_input/" 2>&1`
-                                  rc=\$?
-                                  if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
-                                    echo "srun submit limit reached or socket timed out error, trying again in 60s"
-                                    sleep 60
-                                    continue
-                                  fi
-                                  set -e
-                                  echo \$output
-                                  exit \$rc
-                                done
-                              """
+                                make TARGET=$TARGET \
+                                  PARTYPE=$PARTYPE \
+                                  PRECISION=$PRECISION \
+                                  OPENMP=$OPENMP \
+                                  REDUCED_MEMORY_MODE=$REDUCED_MEMORY_MODE \
+                                  UNIT_TESTS=1 \
+                                  VECTORIZE_CODE=$VECTORIZE_CODE \
+                                  """ +
+                                  ((ARCH=="KNL") ?
+                                    "VTK=0 CFG=" + (PARTYPE == "PAR" ? "icc-impi" : "icc") :
+                                    "VTK=1"
+                                  ) + " -j4"
+                              sh "mv `readlink MarDyn` ${it.join('-')}"
+                              if (it.join('-') == "AVX2-DEBUG-0-PAR-DOUBLE-0") {
+                                stash includes: "AVX2-DEBUG-0-PAR-DOUBLE-0", name: "build"
+                              }
+                              results[it.join('-')].put("build", "success")
                             }
-                            results[it.join('-')].put("unit-test", "success")
                           } catch (err) {
-                            results[it.join('-')].put("unit-test", "failure")
+                            results[it.join('-')].put("build", "failure")
                             error err
                           }
-                          xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
                         }
-                      }
-                      if (false && PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
-                        stage("validation-test/${it.join('-')}") {
-                          try {
-                            copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: 'MardynUpdateValidationBase', selector: lastSuccessful()
-                            sh "pwd && ls"
-                            def configDirs = [
-                              "simple-lj",
-                              "simple-lj-mp",
-                              "surface-tension_LRC_CO2_Merker_280",
-                              "simple-lj_kdd",
-                              "simple-lj-direct-mp",
-                              "simple-lj-direct"
-                            ]
-                            for (configDirVar in configDirs) {
-                              println configDirVar
-                              dir("validation/validationBase") {
-                                def sameParTypeOption = (fileExists ('../validationInput/' + configDirVar + '/compareSameParType')) ? "" : "-b"
-                                def mpicmd = (PARTYPE=="PAR" ? "-m 4" : "-m 1")
-                                def mpiextra = (ARCH=="KNL" ? "-M \"srun --jobid=" + knl_jobid + "\"" : "")
-                                def allmpi = (ARCH=="KNL" ? "--allMPI" : "")
-                                def srunfix = (ARCH=="KNL" ? "--srunFix" : "")
-                                def icount = (ARCH=="KNL" ? "-I 5" : "")
-                                def oldexec = "MarDyn_ValidationBase" + (ARCH=="KNL" ? "_KNL" : "")
-                                def plugins = (VECTORIZE_CODE=="AOS" ? "" : "--disablePlugin RDF") +
-                                              ((fileExists ('../validationInput/' + configDirVar + '/noGamma') ) ?
-                                              " --disablePlugin GammaWriter" : "")
-                                for (partypeToCompare in ["PAR", "SEQ"]) {
-                                  if ((sameParTypeOption=="").implies(partypeToCompare == PARTYPE)) {
-                                    dir(partypeToCompare) {
-                                      printVariation(it)
-                                      if (!fileExists ("./${oldexec}")) {
-                                        sh "ls -Ra"
-                                        error 'Validation base not found!'
-                                      } else if (!fileExists ("${WORKSPACE}/src/${it.join('-')}")) {
-                                        sh "ls -Ra ../../.."
-                                        error 'New build not found!'
+                        // FIXME: Mixed precision unit-tests fail with rmm
+                        if ((PRECISION=="MIXED").implies(REDUCED_MEMORY_MODE=="0")) {
+                          stage("unit-test/${it.join('-')}") {
+                            try {
+                              printVariation(it)
+                              if (ARCH=="HSW" && PARTYPE=="PAR") {
+                                sh "mpirun -n 4 ./src/${it.join('-')} -t -d ./test_input/"
+                              } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
+                                sh "./src/${it.join('-')} -t -d ./test_input/"
+                              } else if (ARCH=="KNL" && PARTYPE=="PAR") {
+                                sh """
+                                  source /etc/profile.d/modules.sh
+                                  export OMP_NUM_THREADS=10
+                                  export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
+                                  while : ; do
+                                    set +e
+                                    output=`srun --jobid=$knl_jobid "./src/${it.join('-')} -t -d ./test_input/" 2>&1`
+                                    rc=\$?
+                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                      echo "srun submit limit reached or socket timed out error, trying again in 60s"
+                                      sleep 60
+                                      continue
+                                    fi
+                                    set -e
+                                    echo \$output
+                                    exit \$rc
+                                  done
+                                """
+                              } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
+                                sh """
+                                  source /etc/profile.d/modules.sh
+                                  export OMP_NUM_THREADS=10
+                                  export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
+                                  while : ; do
+                                    set +e
+                                    output=`srun --jobid=$knl_jobid "./src/${it.join('-')} -t -d ./test_input/" 2>&1`
+                                    rc=\$?
+                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                      echo "srun submit limit reached or socket timed out error, trying again in 60s"
+                                      sleep 60
+                                      continue
+                                    fi
+                                    set -e
+                                    echo \$output
+                                    exit \$rc
+                                  done
+                                """
+                              }
+                              results[it.join('-')].put("unit-test", "success")
+                            } catch (err) {
+                              results[it.join('-')].put("unit-test", "failure")
+                              error err
+                            }
+                            xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
+                          }
+                        }
+                        if (false && PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
+                          stage("validation-test/${it.join('-')}") {
+                            try {
+                              copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: 'MardynUpdateValidationBase', selector: lastSuccessful()
+                              sh "pwd && ls"
+                              def configDirs = [
+                                "simple-lj",
+                                "simple-lj-mp",
+                                "surface-tension_LRC_CO2_Merker_280",
+                                "simple-lj_kdd",
+                                "simple-lj-direct-mp",
+                                "simple-lj-direct"
+                              ]
+                              for (configDirVar in configDirs) {
+                                println configDirVar
+                                dir("validation/validationBase") {
+                                  def sameParTypeOption = (fileExists ('../validationInput/' + configDirVar + '/compareSameParType')) ? "" : "-b"
+                                  def mpicmd = (PARTYPE=="PAR" ? "-m 4" : "-m 1")
+                                  def mpiextra = (ARCH=="KNL" ? "-M \"srun --jobid=" + knl_jobid + "\"" : "")
+                                  def allmpi = (ARCH=="KNL" ? "--allMPI" : "")
+                                  def srunfix = (ARCH=="KNL" ? "--srunFix" : "")
+                                  def icount = (ARCH=="KNL" ? "-I 5" : "")
+                                  def oldexec = "MarDyn_ValidationBase" + (ARCH=="KNL" ? "_KNL" : "")
+                                  def plugins = (VECTORIZE_CODE=="AOS" ? "" : "--disablePlugin RDF") +
+                                                ((fileExists ('../validationInput/' + configDirVar + '/noGamma') ) ?
+                                                " --disablePlugin GammaWriter" : "")
+                                  for (partypeToCompare in ["PAR", "SEQ"]) {
+                                    if ((sameParTypeOption=="").implies(partypeToCompare == PARTYPE)) {
+                                      dir(partypeToCompare) {
+                                        printVariation(it)
+                                        if (!fileExists ("./${oldexec}")) {
+                                          sh "ls -Ra"
+                                          error 'Validation base not found!'
+                                        } else if (!fileExists ("${WORKSPACE}/src/${it.join('-')}")) {
+                                          sh "ls -Ra ../../.."
+                                          error 'New build not found!'
+                                        }
+                                        sh """
+                                          echo "Running validation tests"
+                                          rm ${it.join('-')} || echo ""
+                                          cp ${WORKSPACE}/src/${it.join('-')} .
+                                          pwd && ls
+                                          ../../validationRun/validationRun.py \
+                                            $srunfix \
+                                            -o ./$oldexec \
+                                            -n ./${it.join('-')} \
+                                            $allmpi \
+                                            -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name *.xml) )\" \
+                                            -i \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f \\( -iname \\*.dat -o -iname \\*.inp -o -iname \\*.xdr \\)) )\" \
+                                            $plugins $icount $sameParTypeOption $mpicmd $mpiextra
+                                        """
                                       }
-                                      sh """
-                                        echo "Running validation tests"
-                                        rm ${it.join('-')} || echo ""
-                                        cp ${WORKSPACE}/src/${it.join('-')} .
-                                        pwd && ls
-                                        ../../validationRun/validationRun.py \
-                                          $srunfix \
-                                          -o ./$oldexec \
-                                          -n ./${it.join('-')} \
-                                          $allmpi \
-                                          -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name *.xml) )\" \
-                                          -i \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f \\( -iname \\*.dat -o -iname \\*.inp -o -iname \\*.xdr \\)) )\" \
-                                          $plugins $icount $sameParTypeOption $mpicmd $mpiextra
-                                      """
                                     }
                                   }
                                 }
                               }
+                              results[it.join('-')].put("validation-test", "success")
+                            } catch (err) {
+                              results[it.join('-')].put("validation-test", "failure")
+                              error err
                             }
-                            results[it.join('-')].put("validation-test", "success")
-                          } catch (err) {
-                            results[it.join('-')].put("validation-test", "failure")
-                            error err
                           }
                         }
                       }
                     }
                   }
+                  finished_matrix_jobs++;
+                } catch (err) {
+                  finished_matrix_jobs++;
+                  error err
                 }
-                finished_matrix_jobs++;
               }
             }
           }
