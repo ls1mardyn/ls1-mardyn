@@ -49,9 +49,10 @@ def combinationFilter(def it) {
 
 // Holds the build results
 def results = [:]
-
 // Holds the id of the allocated slurm job
 def knl_jobid
+// Holds the number of terminated matrix jobs
+def finished_matrix_jobs = 0
 
 pipeline {
   agent none
@@ -321,6 +322,7 @@ pipeline {
                 }
               }
             }
+            finished_matrix_jobs++;
           }
 
           // return all combinations
@@ -333,6 +335,10 @@ pipeline {
                   println "Looks like it works"
                   knl_jobid = "something";
                   println knl_jobid;
+                  while (finished_matrix_jobs < (variations.size() - 1)) {
+                    printf variations.size()
+                    printf "."
+                  }
                 }
               }
             }
