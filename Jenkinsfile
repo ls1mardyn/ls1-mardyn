@@ -332,13 +332,16 @@ pipeline {
             variations["allocation"] = {
               node("KNL_PRIO") {
                 stage("allocation") {
-                  println "Looks like it works"
-                  knl_jobid = "something";
-                  println knl_jobid;
+                  // Allocate a new job
+                  sh "salloc --nodes=1-2 --tasks-per-node=3 --time=02:00:00 --begin=now+180"
+                  // Store jobid
+                  knl_jobid = sh(returnStdout: true, script: 'squeue -O jobid | sed -n 2p')
+                  println "Scheduled job " + knl_jobid
                   while (finished_matrix_jobs < (variations.size() - 1)) {
                     println variations.size()
                     println "."
                   }
+                  sh "scancel $knl_jobid -f --user=ga38cor3"
                 }
               }
             }
