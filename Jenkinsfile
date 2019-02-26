@@ -50,6 +50,9 @@ def combinationFilter(def it) {
 // Holds the build results
 def results = [:]
 
+// Holds the id of the allocated slurm job
+def knl_jobid
+
 pipeline {
   agent none
   options {
@@ -324,6 +327,15 @@ pipeline {
           // FIXME can't be defined globally due to a bug in Jenkins:
           // https://issues.jenkins-ci.org/browse/JENKINS-49826
           matrixBuilder = { def matrix, int level ->
+            variations["allocation"] = {
+              node("KNL_PRIO") {
+                stage("allocation") {
+                  println "Looks like it works"
+                  knl_jobid = "something";
+                  println knl_jobid;
+                }
+              }
+            }
             for ( entry in matrix[0] ) {
               matrixEntry[level] = entry
               if (matrix.size() > 1 ) {
