@@ -12,7 +12,7 @@ def printVariation(def it) {
 
 def ciMatrix = [
   //["SSE","AOS","AVX","AVX2","SOA","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
-  ["SSE","AOS","AVX","AVX2","SOA"], // VECTORIZE_CODE
+  ["KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
   ["DEBUG","RELEASE"],                                   // TARGET
   ["0","1"],                                             // OPENMP
   ["PAR","SEQ"],                                         // PARTYPE
@@ -250,7 +250,7 @@ pipeline {
                           xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
                         }
                       }
-                      if (PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
+                      if (false && PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
                         stage("validation-test/${it.join('-')}") {
                           try {
                             copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: 'MardynUpdateValidationBase', selector: lastSuccessful()
