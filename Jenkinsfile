@@ -215,7 +215,7 @@ pipeline {
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                   while : ; do
                                     set +e
-                                    output=`srun --jobid=$knl_jobid "./src/${it.join('-')} -t -d ./test_input/" 2>&1`
+                                    output=`srun --jobid=$knl_jobid ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                     rc=\$?
                                     if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
                                       echo "srun submit limit reached or socket timed out error, trying again in 60s"
@@ -234,7 +234,7 @@ pipeline {
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                   while : ; do
                                     set +e
-                                    output=`srun --jobid=$knl_jobid "./src/${it.join('-')} -t -d ./test_input/" 2>&1`
+                                    output=`srun --jobid=$knl_jobid ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                     rc=\$?
                                     if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
                                       echo "srun submit limit reached or socket timed out error, trying again in 60s"
@@ -337,11 +337,10 @@ pipeline {
             variations["allocation"] = {
               node("KNL_PRIO") {
                 stage("allocation") {
-                  sleep 150
                   // Allocate a new job
                   sh """
                     salloc --job-name=ls1-mardyn --nodes=1-2 \
-                      --tasks-per-node=3 --time=02:00:00 \
+                      --tasks-per-node=3 --time=02:00:00 --begin=now+150\
                       sleep 7200
                   """
                 }
@@ -350,7 +349,7 @@ pipeline {
             variations["slurmcontrol"] = {
               node("KNL_PRIO") {
                 stage("slurmcontrol") {
-                  sleep 160
+                  sleep 150
                   // Store jobid
                   knl_jobid = sh(
                     returnStdout: true,
