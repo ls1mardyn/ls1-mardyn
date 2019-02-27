@@ -339,7 +339,11 @@ pipeline {
                 stage("allocation") {
                   sleep 150
                   // Allocate a new job
-                  sh "salloc --job-name=ls1-mardyn --nodes=1-2 --tasks-per-node=3 --time=02:00:00 cat"
+                  sh """
+                    salloc --job-name=ls1-mardyn --nodes=1-2 \
+                      --tasks-per-node=3 --time=02:00:00 \
+                      \"while :; do sleep 30; done\"
+                  """
                 }
               }
             }
