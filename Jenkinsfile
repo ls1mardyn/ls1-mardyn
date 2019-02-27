@@ -366,7 +366,7 @@ pipeline {
                     script: 'squeue -O jobid | sed -n 2p'
                   ).replace("\n", "")
                   println "Scheduled job " + knl_jobid
-                  while (results.size() < (variations.size() - 2)) {
+                  while (results.size() < (variations.size() - 3)) {
                     println "variations.size() " + variations.size()
                     println "results.size() " + results.size()
                     sleep 60
