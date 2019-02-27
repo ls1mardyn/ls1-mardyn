@@ -334,6 +334,7 @@ pipeline {
           // FIXME can't be defined globally due to a bug in Jenkins:
           // https://issues.jenkins-ci.org/browse/JENKINS-49826
           matrixBuilder = { def matrix, int level ->
+            variations.failFast = true
             variations["allocation"] = {
               node("KNL_PRIO") {
                 stage("allocation") {
