@@ -215,7 +215,7 @@ pipeline {
                                     set +e
                                     output=`srun --jobid=$knl_jobid -n 4 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
                                     rc=\$?
-                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"* || \$output == *"Communication connection failure"*)]] ; then
                                       echo "srun submit limit reached or socket timed out error, trying again in 60s"
                                       sleep 60
                                       continue
