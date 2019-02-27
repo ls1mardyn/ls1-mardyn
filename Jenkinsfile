@@ -255,7 +255,7 @@ pipeline {
                             xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
                           }
                         }
-                        if (false && PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
+                        if (PRECISION=="DOUBLE" && REDUCED_MEMORY_MODE=="0") {
                           stage("validation-test/${it.join('-')}") {
                             try {
                               copyArtifacts filter: '**/*', fingerprintArtifacts: true, projectName: 'MardynUpdateValidationBase', selector: lastSuccessful()
