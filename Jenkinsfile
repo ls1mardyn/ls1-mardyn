@@ -11,8 +11,7 @@ def printVariation(def it) {
 }
 
 def ciMatrix = [
-  //["SSE","AOS","AVX","AVX2","SOA","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
-  ["KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
+  ["SSE","AOS","AVX","AVX2","SOA","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
   ["DEBUG","RELEASE"],                                   // TARGET
   ["0","1"],                                             // OPENMP
   ["PAR","SEQ"],                                         // PARTYPE
