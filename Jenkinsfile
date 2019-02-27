@@ -342,43 +342,43 @@ pipeline {
           // https://issues.jenkins-ci.org/browse/JENKINS-49826
           matrixBuilder = { def matrix, int level ->
             variations.failFast = true
-            variations["allocation"] = {
-              node("KNL_PRIO") {
-                stage("allocation") {
-                  // Allocate a new job
-                  try {
-                    timeout(time: 2, unit: 'HOURS') {
-                      sh """
-                        salloc --job-name=ls1-mardyn --nodes=1-2 \
-                          --nodelist=mpp3r03c05s01,mpp3r03c05s02\
-                          --tasks-per-node=3 --time=02:00:00 --begin=now+150\
-                          sleep 7200 &
-                        echo \$! | tee /home/hpc/pr63so/ga38cor3/.runningslurmprocess
-                      """
+            variations["slurm"] = {
+              try {
+                node("KNL_PRIO") {
+                  parallel "allocation": {
+                    try {
+                      timeout(time: 2, unit: 'HOURS') {
+                        // Allocate a new job
+                        sh """
+                          salloc --job-name=ls1-mardyn --nodes=1-2 \
+                            --nodelist=mpp3r03c05s01,mpp3r03c05s02\
+                            --tasks-per-node=3 --time=02:00:00 --begin=now+150\
+                            sleep 7200 || echo 0
+                            sleep 7200
+                        """
+                      }
                     }
-                  }
-                  catch (err) {
-                    println err
-                  }
+                    catch (err) {
+                      println err
+                    }
+                  }, "slurmcontrol": {
+                    sleep 150
+                    // Store jobid
+                    knl_jobid = sh(
+                      returnStdout: true,
+                      script: 'squeue -O jobid | sed -n 2p'
+                    ).replace("\n", "")
+                    println "Scheduled job " + knl_jobid
+                    while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
+                      sleep 120
+                    }
+                    sh "scancel $knl_jobid -f --user=ga38cor3"
+                  },
+                  failFast: true
                 }
               }
-            }
-            variations["slurmcontrol"] = {
-              node("KNL_PRIO") {
-                stage("slurmcontrol") {
-                  sleep 150
-                  // Store jobid
-                  knl_jobid = sh(
-                    returnStdout: true,
-                    script: 'squeue -O jobid | sed -n 2p'
-                  ).replace("\n", "")
-                  println "Scheduled job " + knl_jobid
-                  while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
-                    sleep 120
-                  }
-                  sh "scancel $knl_jobid -f --user=ga38cor3"
-                  sh "kill -0 `cat /home/hpc/pr63so/ga38cor3/.runningslurmprocess` && kill `cat /home/hpc/pr63so/ga38cor3/.runningslurmprocess`"
-                }
+              catch (err) {
+                println err
               }
             }
             for ( entry in matrix[0] ) {
