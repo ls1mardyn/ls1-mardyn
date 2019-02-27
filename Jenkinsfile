@@ -390,7 +390,9 @@ pipeline {
           }
 
           node { matrixBuilder(ciMatrix, 0) }
-          parallel variations
+          lock('KNL_slurm_allocation') {
+            parallel variations
+          }
         }
       }
     }
