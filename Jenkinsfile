@@ -350,7 +350,7 @@ pipeline {
                       timeout(time: 2, unit: 'HOURS') {
                         // Allocate a new job
                         sh """
-                          salloc --job-name=ls1-mardyn --nodes=1-2 \
+                          salloc --job-name=mardyn-test --nodes=1-2 \
                             --nodelist=mpp3r03c05s01,mpp3r03c05s02\
                             --tasks-per-node=3 --time=02:00:00 --begin=now+150\
                             sleep 7200 || echo 0
@@ -373,6 +373,7 @@ pipeline {
                       sleep 120
                     }
                     sh "scancel $knl_jobid -f --user=ga38cor3"
+                    error "all finished"
                   },
                   failFast: true
                 }
