@@ -346,13 +346,20 @@ pipeline {
               node("KNL_PRIO") {
                 stage("allocation") {
                   // Allocate a new job
-                  sh """
-                    salloc --job-name=ls1-mardyn --nodes=1-2 \
-                      --nodelist=mpp3r03c05s01,mpp3r03c05s02\
-                      --tasks-per-node=3 --time=02:00:00 --begin=now+150\
-                      sleep 7200 && exit 0
-                    exit 0
-                  """
+                  try {
+                    timeout(time: 2, unit: 'HOURS') {
+                      sh """
+                        salloc --job-name=ls1-mardyn --nodes=1-2 \
+                          --nodelist=mpp3r03c05s01,mpp3r03c05s02\
+                          --tasks-per-node=3 --time=02:00:00 --begin=now+150\
+                          sleep 7200 && exit 0
+                        exit 0
+                      """
+                    }
+                  }
+                  catch (err) {
+                    println err
+                  }
                 }
               }
             }
