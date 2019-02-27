@@ -354,7 +354,6 @@ pipeline {
                           --tasks-per-node=3 --time=02:00:00 --begin=now+150\
                           sleep 7200 &
                         echo \$! | tee /home/hpc/pr63so/ga38cor3/.runningslurmprocess
-                        sleep 7200 || exit 0
                       """
                     }
                   }
