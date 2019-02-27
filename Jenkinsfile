@@ -359,6 +359,9 @@ pipeline {
                   ).replace("\n", "")
                   println "Scheduled job " + knl_jobid
                   while (finished_matrix_jobs < (variations.size() - 2)) {
+                    println "finished_matrix_jobs" + finished_matrix_jobs
+                    println "variations.size() " + variations.size()
+                    println "results.size() " + results.size()
                     sleep 60
                   }
                   sh "scancel $knl_jobid -f --user=ga38cor3"
