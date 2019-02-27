@@ -51,8 +51,6 @@ def combinationFilter(def it) {
 def results = [:]
 // Holds the id of the allocated slurm job
 def knl_jobid
-// Holds the number of terminated matrix jobs
-def finished_matrix_jobs = 0
 
 pipeline {
   agent none
@@ -156,11 +154,12 @@ pipeline {
             // return the job
             if (combinationFilter(it)) {
               return {
-                try {
-                  node(VECTORIZE_CODE) {
-                    def ARCH = (NODE_NAME == "KNL-Cluster-login") ? "KNL" : "HSW"
-                    results.put(it.join('-'), [:])
-                    results[it.join('-')].put("runOn", ARCH)
+                node(VECTORIZE_CODE) {
+                  def ARCH = (NODE_NAME == "KNL-Cluster-login") ? "KNL" : "HSW"
+                  def build_result = "not run"
+                  def unit_test_result = "not run"
+                  def validation_test_result = "not run"
+                  try {
                     stage("${it.join('-')}") {
                       sh "rm -rf ${it.join('-')} || echo ''"
                       ws("${WORKSPACE}/${it.join('-')}") {
@@ -192,10 +191,10 @@ pipeline {
                               if (it.join('-') == "AVX2-DEBUG-0-PAR-DOUBLE-0") {
                                 stash includes: "AVX2-DEBUG-0-PAR-DOUBLE-0", name: "build"
                               }
-                              results[it.join('-')].put("build", "success")
+                              build_result = "success"
                             }
                           } catch (err) {
-                            results[it.join('-')].put("build", "failure")
+                            build_result = "failure"
                             error err
                           }
                         }
@@ -247,9 +246,9 @@ pipeline {
                                   done
                                 """
                               }
-                              results[it.join('-')].put("unit-test", "success")
+                              unit_test_result = "success"
                             } catch (err) {
-                              results[it.join('-')].put("unit-test", "failure")
+                              unit_test_result = "failure"
                               error err
                             }
                             xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
@@ -311,20 +310,29 @@ pipeline {
                                   }
                                 }
                               }
-                              results[it.join('-')].put("validation-test", "success")
+                              validation_test_result = "success"
                             } catch (err) {
-                              results[it.join('-')].put("validation-test", "failure")
+                              validation_test_result = "failure"
                               error err
                             }
                           }
                         }
                       }
                     }
+                    results.put(it.join('-'), [:])
+                    results[it.join('-')].put("runOn", ARCH)
+                    results[it.join('-')].put("build", build_result)
+                    results[it.join('-')].put("unit-test", unit_test_result)
+                    results[it.join('-')].put("validation-test", validation_test_result)
                   }
-                  finished_matrix_jobs++;
-                } catch (err) {
-                  finished_matrix_jobs++;
-                  error err
+                  catch (err) {
+                    results.put(it.join('-'), [:])
+                    results[it.join('-')].put("runOn", ARCH)
+                    results[it.join('-')].put("build", build_result)
+                    results[it.join('-')].put("unit-test", unit_test_result)
+                    results[it.join('-')].put("validation-test", validation_test_result)
+                    error err
+                 }
                 }
               }
             }
@@ -358,8 +366,7 @@ pipeline {
                     script: 'squeue -O jobid | sed -n 2p'
                   ).replace("\n", "")
                   println "Scheduled job " + knl_jobid
-                  while (finished_matrix_jobs < (variations.size() - 2)) {
-                    println "finished_matrix_jobs" + finished_matrix_jobs
+                  while (results.size() < (variations.size() - 2)) {
                     println "variations.size() " + variations.size()
                     println "results.size() " + results.size()
                     sleep 60
