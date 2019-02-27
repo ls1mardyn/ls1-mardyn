@@ -339,7 +339,7 @@ pipeline {
                 stage("allocation") {
                   sleep 150
                   // Allocate a new job
-                  sh "salloc --job-name=ls1-mardyn --nodes=1-2 --tasks-per-node=3 --time=02:00:00"
+                  sh "salloc --job-name=ls1-mardyn --nodes=1-2 --tasks-per-node=3 --time=02:00:00 cat"
                 }
               }
             }
@@ -348,9 +348,12 @@ pipeline {
                 stage("slurmcontrol") {
                   sleep 160
                   // Store jobid
-                  knl_jobid = sh(returnStdout: true, script: 'squeue -O jobid | sed -n 2p').replace("\n", "")
+                  knl_jobid = sh(
+                    returnStdout: true,
+                    script: 'squeue -O jobid | sed -n 2p'
+                  ).replace("\n", "")
                   println "Scheduled job " + knl_jobid
-                  while (finished_matrix_jobs < (variations.size() - 1)) {
+                  while (finished_matrix_jobs < (variations.size() - 2)) {
                     sleep 60
                   }
                   sh "scancel $knl_jobid -f --user=ga38cor3"
