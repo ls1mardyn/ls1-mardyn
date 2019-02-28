@@ -59,11 +59,13 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:LB:a:AS',
                              'baseRemote=',
                              'additionalFile=',
                              'allMPI',
+                             'legacy-cell-processor',
                              'srunFix',
                              'disablePlugin='
                              ])
 nonDefaultPlugins = False
 baseIsLocal = False
+legacyCellProcessor = False
 
 allMPI = False
 MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
@@ -114,6 +116,8 @@ for opt, arg in options:
         additionalFilenames.append(arg)
     elif opt in ('-A', '--allMPI'):
         allMPI = True
+    elif opt in ('', '--legacy-cell-processor'):
+        legacyCellProcessor = True
     elif opt in ('-S', '--srunFix'):
         os.environ["I_MPI_PMI_LIBRARY"] = "/usr/lib64/libpmi.so"
     else:
@@ -294,8 +298,10 @@ def doRun(directory, MardynExe):
             cmd.extend(split(MPI_START))
             cmd.extend(['-n', str(mpi)])
 
-
-    cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations]);
+    if legacyCellProcessor and directory == "new":
+        cmd.extend(['./' + MardynExe, "--legacy-cell-processor", "--final-checkpoint=0", xmlBase, "--steps", numIterations]);
+    else:
+        cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations]);
     #cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]);
     print cmd
     print "================"
