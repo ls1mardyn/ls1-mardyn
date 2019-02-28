@@ -237,13 +237,13 @@ if doReferenceRun:
     call(['mkdir', '-p', 'reference/'])
     call(['cp', xmlBase, 'reference/'])
     call(['cp', inpBase, 'reference/'])
-    if additionalFileBases.size:
+    if len(additionalFileBases):
         call(['cp'] + additionalFileBases + ['reference/'])
     call(['cp', oldMarDynBase, 'reference/'])
 call(['mkdir', '-p', 'new/'])
 call(['cp', xmlBase, 'new/'])
 call(['cp', inpBase, 'new/'])
-if additionalFileBases.size:
+if len(additionalFileBases):
     call(['cp'] + additionalFileBases + ['new/'])
 call(['cp', newMarDynBase, 'new/'])
 
