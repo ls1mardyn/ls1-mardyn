@@ -46,10 +46,10 @@ INSITU ?= 0
 # 0: disbaled, 1: enabled
 TBB ?= 0
 
-# clang's address sanitizer 
+# clang's address sanitizer
 ADDRESS_SANITIZER ?= 0
 
-# clang's thread sanitizer 
+# clang's thread sanitizer
 THREAD_SANITIZER ?= 0
 
 # select vectorization mode:
@@ -171,7 +171,7 @@ endif
 SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/|AutoPas)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase\|LoadCalc" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/)")
-SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE)) 
+SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
 
 
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -261,22 +261,22 @@ else
 endif
 
 ifeq ($(INSITU), 1)
-	INSITU_MAKEFILE := $(realpath $(MAKEFILEDIR)/insitu.mk ) 
+	INSITU_MAKEFILE := $(realpath $(MAKEFILEDIR)/insitu.mk )
   include $(INSITU_MAKEFILE)
 endif
 
 ifeq ($(VTK), 1)
-  VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)/vtkwriter.mk ) 
+  VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)/vtkwriter.mk )
   include $(VTK_MAKEFILE)
 endif
 
 ifeq ($(TBB), 1)
-  TBB_MAKEFILE := $(realpath $(MAKEFILEDIR)/tbbmalloc.mk ) 
+  TBB_MAKEFILE := $(realpath $(MAKEFILEDIR)/tbbmalloc.mk )
   include $(TBB_MAKEFILE)
 endif
 
 ifeq ($(USE_FFTW), 1)
-  FFTW_MAKEFILE := $(realpath $(MAKEFILEDIR)/fft.mk ) 
+  FFTW_MAKEFILE := $(realpath $(MAKEFILEDIR)/fft.mk )
   include $(FFTW_MAKEFILE)
 endif
 
@@ -315,7 +315,7 @@ help:
 	@echo "make TARGET=DEBUG | $(call underline,RELEASE)       			choose target (see cfg_help)"
 	@echo "make DEPS=$(call underline,0) | 1                   			compile using dependancy tracking"
 	@echo "make UNIT_TESTS=$(call underline,0) | 1             			compile with or without unit tests (and build cppunit if neccessary)"
-	@echo "make VTK=$(call underline,0) | 1                    	 		compile with or without the vtk output plugin" 
+	@echo "make VTK=$(call underline,0) | 1                    	 		compile with or without the vtk output plugin"
 	@echo "make VECTORIZE_CODE=AOS | $(call underline,SSE) | AVX | ...		compile with vectorization support (see help_vect)"
 	@echo "make OPENMP=$(call underline,0) | 1                   			build with OpenMP support"
 	@echo "make PAPI=$(call underline,0) | 1			                   	compile with PAPI counter support"
@@ -337,7 +337,7 @@ help:
 
 help_vect:
 	@echo "Vectorization help:"
-	@echo
+	@echo ""
 	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | AVX2 | KNL_MASK | KNL_G_S"
 	@echo " AOS      - use the LegacyCellProcessor"
 	@echo " SSE      - use the VectorizedCellProcessor with SSE intrinsics"
@@ -356,11 +356,11 @@ help_vect:
 	@echo "            Speed-up of single digit percentages compared with pure AVX instrinsics."
 	@echo "            Please make sure that you are using a reasonably updated compiler!"
 	@echo "            For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
-	@echo " KNC_MASK - Support dropped! 
+	@echo " KNC_MASK - Support dropped!"
 	@echo "            use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
 	@echo "            Works only on Xeon Phis of the first generation (knights corner)."
 	@echo "            Speed-up not yet tested."
-	@echo " KNC_G_S  - Support dropped!
+	@echo " KNC_G_S  - Support dropped!"
 	@echo "            use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
 	@echo "            Works only on Xeon Phis of the first generation (knights corner)."
 	@echo "            Speed-up not yet tested."
@@ -377,7 +377,7 @@ help_vect:
 	@echo "            Uses only AVX512F. Only the flags passed to the compiler assume SKX, but not the used intrinsics code."
 	@echo "            Speed-up not yet tested."
 	@echo "            Please make sure that you are using a reasonably updated compiler!"
-	@echo " SOA      - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
+	@echo " SOA      - use the VectorizedCellProcessor with no intrinsics (\"no-vec\" mode)"
 	@echo "            For development purposes only. Often slower than the LegacyCellProcessor."
 	@echo " To determine, whether your current CPU supports SSE, AVX, AVX2, call, respectively: "
 	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep sse3 "
@@ -385,7 +385,7 @@ help_vect:
 	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep avx2 "
 	@echo " If the return line is non-empty, then the CPU supports the respective vectorization mode."
 	@echo " Any further encountered problems are likely due to an outdated or misconfigured compiler."
-	@echo
+	@echo ""
 	@echo " For the best experience, use AVX2 with either the latest GNU or Intel compiler on Intel processors."
 
 
@@ -398,12 +398,12 @@ cfg_list:
 #print info about the selected configuration
 cfg_help:
 	@echo "Current configuration: $(CFG_INFO)"
-	@echo 
+	@echo
 	@echo "Available PARTYPEs:"
 	@echo -e $(CFG_PARTYPES)
 	@echo "Available TARGETs:"
 	@echo -e $(CFG_TARGETS)
-	
+
 
 clean:
 	find -type f -name '*.o' -delete
