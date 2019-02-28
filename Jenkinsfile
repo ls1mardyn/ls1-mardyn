@@ -11,8 +11,8 @@ def printVariation(def it) {
 }
 
 def ciMatrix = [
-  //["SSE","AOS","AVX","AVX2","SOA","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
-  ["SSE","AOS","AVX","AVX2","SOA"], // VECTORIZE_CODE
+  //["SSE","NOVEC","AVX","AVX2","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
+  ["SSE","NOVEC","AVX","AVX2"], // VECTORIZE_CODE
   ["DEBUG","RELEASE"],                                   // TARGET
   ["0","1"],                                             // OPENMP
   ["PAR","SEQ"],                                         // PARTYPE
@@ -29,20 +29,11 @@ def combinationFilter(def it) {
   def REDUCED_MEMORY_MODE = it[5]
 
   return (
-    ( // Mandatory restrictions
-      ( // REDUCED_MEMORY_MODE can't be w/ AOS
-        (VECTORIZE_CODE=="AOS").implies(REDUCED_MEMORY_MODE=="0")
-      )
-    ) &&
-    (
-      ( // Combination filters
-        ( // 42
-          TARGET=="RELEASE" && OPENMP=="1" && PARTYPE=="PAR"
-        ) ||
-        ( // 16
-          VECTORIZE_CODE=="AVX2" && PRECISION=="DOUBLE"
-        )
-      )
+    ( // 42
+      TARGET=="RELEASE" && OPENMP=="1" && PARTYPE=="PAR"
+    ) ||
+    ( // 16
+      VECTORIZE_CODE=="AVX2" && PRECISION=="DOUBLE"
     )
   )
 }
@@ -101,7 +92,7 @@ pipeline {
                   unstash 'autopas_exec'
                   dir ("build"){
                     sh """
-                      ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
+                      ./src/MarDyn --legacy-cell-processor ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
                       grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
                       grep "T = 0.000633975" simstep20.txt
                       grep "U_pot = -2.14161" simstep20.txt
@@ -199,48 +190,53 @@ pipeline {
                         stage("unit-test/${it.join('-')}") {
                           try {
                             printVariation(it)
-                            if (ARCH=="HSW" && PARTYPE=="PAR") {
-                              sh "mpirun -n 4 ./src/${it.join('-')} -t -d ./test_input/"
-                            } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
-                              sh "./src/${it.join('-')} -t -d ./test_input/"
-                            } else if (ARCH=="KNL" && PARTYPE=="PAR") {
-                              sh """
-                                source /etc/profile.d/modules.sh
-                                export OMP_NUM_THREADS=10
-                                export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
-                                while : ; do
-                                  set +e
-                                  output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
-                                  rc=\$?
-                                  if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
-                                    echo "srun submit limit reached or socket timed out error, trying again in 60s"
-                                    sleep 60
-                                    continue
-                                  fi
-                                  set -e
-                                  echo \$output
-                                  exit \$rc
-                                done
-                              """
-                            } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
-                              sh """
-                                source /etc/profile.d/modules.sh
-                                export OMP_NUM_THREADS=10
-                                export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
-                                while : ; do
-                                  set +e
-                                  output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
-                                  rc=\$?
-                                  if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
-                                    echo "srun submit limit reached or socket timed out error, trying again in 60s"
-                                    sleep 60
-                                    continue
-                                  fi
-                                  set -e
-                                  echo \$output
-                                  exit \$rc
-                                done
-                              """
+                            def legacyCellProcessorOptions = (VECTORIZE_CODE == "NOVEC" ? [false, true] : [false])
+                            for (legacyCellProcessor in legacyCellProcessorOptions) {
+                              def legacyCellProcessorOption = (legacyCellProcessor ? "--legacy-cell-processor" : "")
+                              println "Cell processor is " + (legacyCellProcessor ? "legacy" : "vectorized")
+                              if (ARCH=="HSW" && PARTYPE=="PAR") {
+                                sh "mpirun -n 4 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/"
+                              } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
+                                sh "./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/"
+                              } else if (ARCH=="KNL" && PARTYPE=="PAR") {
+                                sh """
+                                  source /etc/profile.d/modules.sh
+                                  export OMP_NUM_THREADS=10
+                                  export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
+                                  while : ; do
+                                    set +e
+                                    output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
+                                    rc=\$?
+                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                      echo "srun submit limit reached or socket timed out error, trying again in 60s"
+                                      sleep 60
+                                      continue
+                                    fi
+                                    set -e
+                                    echo \$output
+                                    exit \$rc
+                                  done
+                                """
+                              } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
+                                sh """
+                                  source /etc/profile.d/modules.sh
+                                  export OMP_NUM_THREADS=10
+                                  export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
+                                  while : ; do
+                                    set +e
+                                    output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
+                                    rc=\$?
+                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                      echo "srun submit limit reached or socket timed out error, trying again in 60s"
+                                      sleep 60
+                                      continue
+                                    fi
+                                    set -e
+                                    echo \$output
+                                    exit \$rc
+                                  done
+                                """
+                              }
                             }
                             results[it.join('-')].put("unit-test", "success")
                           } catch (err) {
@@ -263,44 +259,50 @@ pipeline {
                               "simple-lj-direct-mp",
                               "simple-lj-direct"
                             ]
-                            for (configDirVar in configDirs) {
-                              println configDirVar
-                              dir("validation/validationBase") {
-                                def sameParTypeOption = (fileExists ('../validationInput/' + configDirVar + '/compareSameParType')) ? "" : "-b"
-                                def mpicmd = (PARTYPE=="PAR" ? "-m 4" : "-m 1")
-                                def mpiextra = (ARCH=="KNL" ? "-M \"srun\"" : "")
-                                def allmpi = (ARCH=="KNL" ? "--allMPI" : "")
-                                def srunfix = (ARCH=="KNL" ? "--srunFix" : "")
-                                def icount = (ARCH=="KNL" ? "-I 5" : "")
-                                def oldexec = "MarDyn_ValidationBase" + (ARCH=="KNL" ? "_KNL" : "")
-                                def plugins = (VECTORIZE_CODE=="AOS" ? "" : "--disablePlugin RDF") +
-                                              ((fileExists ('../validationInput/' + configDirVar + '/noGamma') ) ?
-                                              " --disablePlugin GammaWriter" : "")
-                                for (partypeToCompare in ["PAR", "SEQ"]) {
-                                  if ((sameParTypeOption=="").implies(partypeToCompare == PARTYPE)) {
-                                    dir(partypeToCompare) {
-                                      printVariation(it)
-                                      if (!fileExists ("./${oldexec}")) {
-                                        sh "ls -Ra"
-                                        error 'Validation base not found!'
-                                      } else if (!fileExists ("${WORKSPACE}/src/${it.join('-')}")) {
-                                        sh "ls -Ra ../../.."
-                                        error 'New build not found!'
+                            def legacyCellProcessorOptions = (VECTORIZE_CODE == "NOVEC" ? [false, true] : [false])
+                            for (legacyCellProcessor in legacyCellProcessorOptions) {
+                              println "Cell processor is " + (legacyCellProcessor ? "legacy" : "vectorized")
+                              for (configDirVar in configDirs) {
+                                println configDirVar
+                                dir("validation/validationBase") {
+                                  def sameParTypeOption = (fileExists ('../validationInput/' + configDirVar + '/compareSameParType')) ? "" : "-b"
+                                  def mpicmd = (PARTYPE=="PAR" ? "-m 4" : "-m 1")
+                                  def mpiextra = (ARCH=="KNL" ? "-M \"srun\"" : "")
+                                  def allmpi = (ARCH=="KNL" ? "--allMPI" : "")
+                                  def legacyCellProcessorOption = (legacyCellProcessor ? "--legacy-cell-processor" : "")
+                                  def srunfix = (ARCH=="KNL" ? "--srunFix" : "")
+                                  def icount = (ARCH=="KNL" ? "-I 5" : "")
+                                  def oldexec = "MarDyn_ValidationBase" + (ARCH=="KNL" ? "_KNL" : "")
+                                  def plugins = (legacyCellProcessor ? "" : "--disablePlugin RDF") +
+                                                ((fileExists ('../validationInput/' + configDirVar + '/noGamma') ) ?
+                                                " --disablePlugin GammaWriter" : "")
+                                  for (partypeToCompare in ["PAR", "SEQ"]) {
+                                    if ((sameParTypeOption=="").implies(partypeToCompare == PARTYPE)) {
+                                      dir(partypeToCompare) {
+                                        printVariation(it)
+                                        if (!fileExists ("./${oldexec}")) {
+                                          sh "ls -Ra"
+                                          error 'Validation base not found!'
+                                        } else if (!fileExists ("${WORKSPACE}/src/${it.join('-')}")) {
+                                          sh "ls -Ra ../../.."
+                                          error 'New build not found!'
+                                        }
+                                        sh """
+                                          echo "Running validation tests"
+                                          rm ${it.join('-')} || echo ""
+                                          cp ${WORKSPACE}/src/${it.join('-')} .
+                                          pwd && ls
+                                          ../../validationRun/validationRun.py \
+                                            $srunfix \
+                                            -o ./$oldexec \
+                                            -n ./${it.join('-')} \
+                                            $legacyCellProcessorOption \
+                                            $allmpi \
+                                            -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name *.xml) )\" \
+                                            -i \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f \\( -iname \\*.dat -o -iname \\*.inp -o -iname \\*.xdr \\)) )\" \
+                                            $plugins $icount $sameParTypeOption $mpicmd $mpiextra
+                                        """
                                       }
-                                      sh """
-                                        echo "Running validation tests"
-                                        rm ${it.join('-')} || echo ""
-                                        cp ${WORKSPACE}/src/${it.join('-')} .
-                                        pwd && ls
-                                        ../../validationRun/validationRun.py \
-                                          $srunfix \
-                                          -o ./$oldexec \
-                                          -n ./${it.join('-')} \
-                                          $allmpi \
-                                          -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name *.xml) )\" \
-                                          -i \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f \\( -iname \\*.dat -o -iname \\*.inp -o -iname \\*.xdr \\)) )\" \
-                                          $plugins $icount $sameParTypeOption $mpicmd $mpiextra
-                                      """
                                     }
                                   }
                                 }
