@@ -41,6 +41,7 @@ void initOptions(optparse::OptionParser *op) {
 	op->add_option("-v", "--verbose").dest("verbose").type("bool") .action("store_true") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
 	op->add_option("--print-meminfo").dest("print-meminfo").type("bool").action("store_true").set_default(false).help("Print memory consumtion info (default: %default)");
 	op->add_option("--logfile").dest("logfile").type("string").metavar("PREFIX").set_default("MarDyn").help("enable output to logfile using given prefix for the filename (default: %default)");
+	op->add_option("--legacy-cell-processor").dest("legacy-cell-processor").type("bool").set_default(false).help("use legacyCellProcessor (AoS) (default: %default)");
 	op->add_option("--final-checkpoint").dest("final-checkpoint").type("int").metavar("(1|0)").set_default(1).help("enable/disable final checkopint (default: %default)");
 	op->add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").metavar("TIME").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced, disable: -1. (default: %default)");
 #ifdef ENABLE_SIGHANDLER
@@ -200,6 +201,11 @@ int main(int argc, char** argv) {
 	}
 
 	/* processing command line arguments */
+	if ( options.get("legacy-cell-processor") ) {
+		simulation.useLegacyCellProcessor();
+		global_log->info() << "--legacy-cell-processor specified, using legacyCellProcessor" << endl;
+	}
+
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
 		global_log->info() << "Final checkpoint enabled" << endl;
@@ -221,7 +227,7 @@ int main(int argc, char** argv) {
 		simulation.setLoopAbortTime(options.get("loop-abort-time").operator double());
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
-    
+
 	if(options.is_set_by_user("print-meminfo")) {
 		global_log->info() << "Enabling memory info output" << endl;
 		simulation.enableMemoryProfiler();
