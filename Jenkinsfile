@@ -50,7 +50,7 @@ def combinationFilter(def it) {
 def results = [:]
 // Holds the id of the allocated slurm job and state
 def knl_jobid
-def knl_jobstate
+def knl_jobstate = "PENDING"
 
 pipeline {
   agent none
