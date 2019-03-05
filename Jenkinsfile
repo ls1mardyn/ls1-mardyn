@@ -365,9 +365,9 @@ pipeline {
                         sh """
                           export SLURM_CONF=$HOME/slurm.conf
                           salloc --job-name=mardyn-test --nodes=1-4 --partition=mpp3_batch\
-                            --tasks-per-node=3 --time=02:00:00 --begin=now+150\
-                            sleep 43200 || echo 0
-                          sleep 43200
+                            --tasks-per-node=3 --time=00:45:00 --begin=now+150\
+                            sleep 45m || echo 0
+                          sleep 6h
                         """
                       }
                     }
