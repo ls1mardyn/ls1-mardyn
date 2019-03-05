@@ -29,6 +29,7 @@ public:
 			double haloBoxMin[3], double haloBoxMax[3],
 			double boxMin[3], double boxMax[3],
 			double cellLength[3]) {
+		int totalNumCells = 1;
 		for (int d = 0; d < 3; ++d) {
 			_cellsPerDimension[d] = cellsPerDim[d];
 			_haloBoundingBoxMin[d] = haloBoxMin[d];
@@ -36,16 +37,46 @@ public:
 			_boundingBoxMin[d] = boxMin[d];
 			_boundingBoxMax[d] = boxMax[d];
 			_cellLength[d] = cellLength[d];
+
+			totalNumCells *= cellsPerDim[d];
+		}
+
+		_haloCellFlags.resize(totalNumCells);
+
+		int runningIndex = 0;
+
+		for (unsigned z = 0; z < _cellsPerDimension[2]; ++z) {
+			bool isHaloZ = (z == 0 or z == _cellsPerDimension[2]-1);
+
+			for (unsigned y = 0; y < _cellsPerDimension[1]; ++y) {
+				bool isHaloY = (y == 0 or y == _cellsPerDimension[1]-1);
+
+				for (unsigned x = 0; x < _cellsPerDimension[0]; ++x) {
+					bool isHaloX = (x == 0 or x == _cellsPerDimension[0]-1);
+
+					if (isHaloZ or isHaloY or isHaloX) {
+						_haloCellFlags.at(runningIndex) = true;
+					} else {
+						_haloCellFlags.at(runningIndex) = false;
+					}
+					runningIndex++;
+				}
+			}
 		}
 		_initCalled = true;
 	}
 
-	// NOTE: attempted to optimise isHaloCell for runtime by:
+	// NOTE: optimised isHaloCell for runtime. Uses 1 bit per cell.
+	//
+	// old attempts:
 	// 		* storing bool-s per dimension and computing isHaloCell as a tensor product
 	// 		* simplifying the logic
 	// but neither brought any visible acceleration (tested in RMM mode with low density and low cutoff).
-	// One should instead probably try to reduce the number of calls to isHaloCell().
-	bool isHaloCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::HALO, cellIndex); }
+	// One could also try to reduce the number of calls to isHaloCell().
+//	bool isHaloCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::HALO, cellIndex); } // <- this still works
+	bool isHaloCell(GlobalLinearizedIndex_t cellIndex) const {
+		return _haloCellFlags[cellIndex];
+	}
 	bool isBoundaryCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::BOUNDARY, cellIndex); }
 	bool isInnerCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::INNER, cellIndex); }
 	bool isInnerMostCell(GlobalLinearizedIndex_t cellIndex) const { return isCell(IsCell_t::INNERMOST, cellIndex); }
@@ -129,6 +160,9 @@ private:
 	std::array<double, 3> _boundingBoxMin, _boundingBoxMax;
 	std::array<double, 3> _haloBoundingBoxMin, _haloBoundingBoxMax;
 	std::array<double, 3> _cellLength;
+
+	// is (should be) space-optimised by compiler to store 1 bit per entry, instead of 1 byte.
+	std::vector<bool> _haloCellFlags;
 
 };
 
