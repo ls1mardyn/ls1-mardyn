@@ -48,8 +48,9 @@ def combinationFilter(def it) {
 
 // Holds the build results
 def results = [:]
-// Holds the id of the allocated slurm job
+// Holds the id of the allocated slurm job and state
 def knl_jobid
+def knl_jobstate
 
 pipeline {
   agent none
@@ -202,6 +203,8 @@ pipeline {
                           stage("unit-test/${it.join('-')}") {
                             try {
                               printVariation(it)
+                              // Wait for allocation if necessary
+                              while (ARCH=="KNL" && knl_jobstate=="PENDING") { sleep 150 }
                               if (ARCH=="HSW" && PARTYPE=="PAR") {
                                 sh "mpirun -n 4 ./src/${it.join('-')} -t -d ./test_input/"
                               } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
@@ -376,7 +379,7 @@ pipeline {
                     }
                   }, "slurmcontrol": {
                     // Wait for slurm.allocation to work its magic
-                    sleep 150
+                    sleep 10
                     // Store jobid
                     knl_jobid = sh(
                       returnStdout: true,
@@ -386,7 +389,11 @@ pipeline {
                     // Wait for all KNL jobs to finish by comparing the list
                     // of scheduled jobs with the list of results
                     while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
-                      sleep 120
+                      knl_jobstate = sh(
+                        returnStdout: true,
+                        script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -j $knl_jobid -O state | sed -n 2p'
+                      ).replace("\n", "")
+                      sleep 150
                     }
                     // Revoke slurm job allocation
                     sh "scancel $knl_jobid -f --user=ga38cor3"
