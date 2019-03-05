@@ -209,7 +209,7 @@ pipeline {
                               } else if (ARCH=="KNL" && PARTYPE=="PAR") {
                                 sh """
                                   source /etc/profile.d/modules.sh
-                                  export OMP_NUM_THREADS=10
+                                  export OMP_NUM_THREADS=64
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                   export SLURM_CONF=$HOME/slurm.conf
                                   while : ; do
@@ -229,7 +229,7 @@ pipeline {
                               } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
                                 sh """
                                   source /etc/profile.d/modules.sh
-                                  export OMP_NUM_THREADS=10
+                                  export OMP_NUM_THREADS=64
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                   export SLURM_CONF=$HOME/slurm.conf
                                   while : ; do
@@ -293,6 +293,7 @@ pipeline {
                                           error 'New build not found!'
                                         }
                                         sh """
+                                          export OMP_NUM_THREADS=64
                                           export SLURM_CONF=$HOME/slurm.conf
                                           echo "Running validation tests"
                                           rm ${it.join('-')} || echo ""
@@ -351,7 +352,7 @@ pipeline {
                 node("KNL_PRIO") { // Executor on the CoolMUC3 login node reserved for slurm allocation and management
                   parallel "allocation": {
                     try {
-                      timeout(time: 2, unit: 'HOURS') {
+                      timeout(time: 6, unit: 'HOURS') {
                         // Allocate a new interactive job with up to three nodes
                         // and two hours maximum run time. The ci-matrix will
                         // attach subjobs to this via srun and the slurm.slurmcontrol
@@ -362,8 +363,8 @@ pipeline {
                           export SLURM_CONF=$HOME/slurm.conf
                           salloc --job-name=mardyn-test --nodes=1-4 --partition=mpp3_batch\
                             --tasks-per-node=3 --time=02:00:00 --begin=now+150\
-                            sleep 7200 || echo 0
-                          sleep 7200
+                            sleep 43200 || echo 0
+                          sleep 43200
                         """
                       }
                     }
@@ -379,7 +380,7 @@ pipeline {
                     // Store jobid
                     knl_jobid = sh(
                       returnStdout: true,
-                      script: 'squeue -O jobid | sed -n 2p'
+                      script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -O jobid | sed -n 2p'
                     ).replace("\n", "")
                     println "Scheduled job " + knl_jobid
                     // Wait for all KNL jobs to finish by comparing the list
