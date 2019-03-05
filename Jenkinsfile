@@ -190,7 +190,7 @@ pipeline {
                         stage("unit-test/${it.join('-')}") {
                           try {
                             printVariation(it)
-                            def legacyCellProcessorOptions = (VECTORIZE_CODE == "NOVEC" ? [false, true] : [false])
+                            def legacyCellProcessorOptions = ((VECTORIZE_CODE == "NOVEC") && (REDUCED_MEMORY_MODE == "0") ? [false, true] : [false])
                             for (legacyCellProcessor in legacyCellProcessorOptions) {
                               def legacyCellProcessorOption = (legacyCellProcessor ? "--legacy-cell-processor" : "")
                               println "Cell processor is " + (legacyCellProcessor ? "legacy" : "vectorized")
@@ -259,7 +259,7 @@ pipeline {
                               "simple-lj-direct-mp",
                               "simple-lj-direct"
                             ]
-                            def legacyCellProcessorOptions = (VECTORIZE_CODE == "NOVEC" ? [false, true] : [false])
+                            def legacyCellProcessorOptions = ((VECTORIZE_CODE == "NOVEC") && (REDUCED_MEMORY_MODE == "0") ? [false, true] : [false])
                             for (legacyCellProcessor in legacyCellProcessorOptions) {
                               println "Cell processor is " + (legacyCellProcessor ? "legacy" : "vectorized")
                               for (configDirVar in configDirs) {
