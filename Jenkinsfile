@@ -211,6 +211,7 @@ pipeline {
                                   source /etc/profile.d/modules.sh
                                   export OMP_NUM_THREADS=10
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
+                                  export SLURM_CONF=$HOME/slurm.conf
                                   while : ; do
                                     set +e
                                     output=`srun --jobid=$knl_jobid -n 4 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
@@ -230,6 +231,7 @@ pipeline {
                                   source /etc/profile.d/modules.sh
                                   export OMP_NUM_THREADS=10
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
+                                  export SLURM_CONF=$HOME/slurm.conf
                                   while : ; do
                                     set +e
                                     output=`srun --jobid=$knl_jobid -n 1 ./src/${it.join('-')} -t -d ./test_input/ 2>&1`
@@ -291,6 +293,7 @@ pipeline {
                                           error 'New build not found!'
                                         }
                                         sh """
+                                          export SLURM_CONF=$HOME/slurm.conf
                                           echo "Running validation tests"
                                           rm ${it.join('-')} || echo ""
                                           cp ${WORKSPACE}/src/${it.join('-')} .
@@ -342,26 +345,36 @@ pipeline {
           // https://issues.jenkins-ci.org/browse/JENKINS-49826
           matrixBuilder = { def matrix, int level ->
             variations.failFast = true
+            // HACK Jobs to manage resource allocation on the knl cluster
             variations["slurm"] = {
               try {
-                node("KNL_PRIO") {
+                node("KNL_PRIO") { // Executor on the CoolMUC3 login node reserved for slurm allocation and management
                   parallel "allocation": {
                     try {
                       timeout(time: 2, unit: 'HOURS') {
-                        // Allocate a new job
+                        // Allocate a new interactive job with up to three nodes
+                        // and two hours maximum run time. The ci-matrix will
+                        // attach subjobs to this via srun and the slurm.slurmcontrol
+                        // stage will revoke the allocation as soon as we are done.
+                        // Until that, the shell needs to stay open for the job
+                        // to survive. Hence the second "sleep 7200".
                         sh """
-                          salloc --job-name=mardyn-test --nodes=1-2 \
-                            --nodelist=mpp3r03c05s01,mpp3r03c05s02\
+                          export SLURM_CONF=$HOME/slurm.conf
+                          salloc --job-name=mardyn-test --nodes=1-4 \
                             --tasks-per-node=3 --time=02:00:00 --begin=now+150\
                             sleep 7200 || echo 0
-                            sleep 7200
+                          sleep 7200
                         """
                       }
                     }
+                    // Stop the slurm.allocation on any error, but do not
+                    // propatate. Needed to allow slurm.slurmcontrol (below)
+                    // to kill slurm.* by throwing an error.
                     catch (err) {
                       println err
                     }
                   }, "slurmcontrol": {
+                    // Wait for slurm.allocation to work its magic
                     sleep 150
                     // Store jobid
                     knl_jobid = sh(
@@ -369,19 +382,27 @@ pipeline {
                       script: 'squeue -O jobid | sed -n 2p'
                     ).replace("\n", "")
                     println "Scheduled job " + knl_jobid
+                    // Wait for all KNL jobs to finish by comparing the list
+                    // of scheduled jobs with the list of results
                     while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
                       sleep 120
                     }
+                    // Revoke slurm job allocation
                     sh "scancel $knl_jobid -f --user=ga38cor3"
+                    // Throw an error (that will not be propagated) to kill the
+                    // slurm.* stages. Without this, slurm.allocation would keep
+                    // running even after the allocation is revoked.
                     error "all finished"
                   },
-                  failFast: true
+                  failFast: true // If one of the slurm.* stages throws an error, slurm.* is cancelled
                 }
               }
+              // Only print all error signals. See above.
               catch (err) {
                 println err
               }
             }
+            // Assemble the ci-matrix in a map
             for ( entry in matrix[0] ) {
               matrixEntry[level] = entry
               if (matrix.size() > 1 ) {
@@ -396,6 +417,11 @@ pipeline {
           }
 
           node { matrixBuilder(ciMatrix, 0) }
+          // Lock the KNL cluster while running the ci-matrix. This is needed
+          // because we are not allowed to submit more than one interactive job
+          // at a time. As soon as we're in post-build, the lock is released
+          // and another running job can access KNL.
+          // https://doku.lrz.de/display/PUBLIC/Resource+limits+for+parallel+jobs+on+Linux+Cluster
           lock('KNL_slurm_allocation') {
             parallel variations
           }
