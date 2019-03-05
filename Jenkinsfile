@@ -391,11 +391,12 @@ pipeline {
                     // Wait for all KNL jobs to finish by comparing the list
                     // of scheduled jobs with the list of results
                     while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
+                      sleep 150
                       knl_jobstate = sh(
                         returnStdout: true,
                         script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -j $knl_jobid -O state | sed -n 2p'
                       ).replace("\n", "")
-                      sleep 150
+                      println knl_jobstate
                     }
                     // Revoke slurm job allocation
                     sh "scancel $knl_jobid -f --user=ga38cor3"
