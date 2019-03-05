@@ -204,7 +204,9 @@ pipeline {
                             try {
                               printVariation(it)
                               // Wait for allocation if necessary
-                              while (ARCH=="KNL" && knl_jobstate=="PENDING") { sleep 150 }
+                              while (ARCH=="KNL" && knl_jobstate=="PENDING") {
+                                sleep 150
+                              }
                               if (ARCH=="HSW" && PARTYPE=="PAR") {
                                 sh "mpirun -n 4 ./src/${it.join('-')} -t -d ./test_input/"
                               } else if (ARCH=="HSW" && PARTYPE=="SEQ") {
