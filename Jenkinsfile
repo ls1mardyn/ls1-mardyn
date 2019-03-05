@@ -360,7 +360,7 @@ pipeline {
                         // to survive. Hence the second "sleep 7200".
                         sh """
                           export SLURM_CONF=$HOME/slurm.conf
-                          salloc --job-name=mardyn-test --nodes=1-4 \
+                          salloc --job-name=mardyn-test --nodes=1-4 --partition=mpp3_batch\
                             --tasks-per-node=3 --time=02:00:00 --begin=now+150\
                             sleep 7200 || echo 0
                           sleep 7200
