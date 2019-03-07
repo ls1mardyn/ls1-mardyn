@@ -677,18 +677,18 @@ void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
 
 	global_log->info() << "Initialising cell processor" << endl;
-#if ENABLE_VECTORIZED_CODE
+	if (!_legacyCellProcessor) {
 #ifndef ENABLE_REDUCED_MEMORY_MODE
-	global_log->info() << "Using vectorized cell processor." << endl;
-	_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
+		global_log->info() << "Using vectorized cell processor." << endl;
+		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 #else
-	global_log->info() << "Using reduced memory mode (RMM) cell processor." << endl;
-	_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
-#endif // ENABLE_REDUCED_MEMORY_MODE
-#else
-	global_log->info() << "Using legacy cell processor." << endl;
-	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-#endif // ENABLE_VECTORIZED_CODE
+		global_log->info() << "Using reduced memory mode (RMM) cell processor." << endl;
+		_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
+#endif
+	} else {
+		global_log->info() << "Using legacy cell processor." << endl;
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+	}
 
 	if (_FMM != nullptr) {
 
@@ -748,8 +748,8 @@ void Simulation::prepare_start() {
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
 	// Update forces in molecules so they can be exchanged - future
-	updateForces(); 
-	
+	updateForces();
+
 	// Exchange forces if it's required by the cell container.
 	if(_moleculeContainer->requiresForceExchange()){
 		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
@@ -908,19 +908,19 @@ void Simulation::simulate() {
             global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
             plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
         }
-		
+
 		perStepTimer.stop();
 		computationTimer->stop();
 
-        
+
 
 #if defined(ENABLE_MPI) && defined(ENABLE_OVERLAPPING)
 		bool overlapCommComp = true;
 #else
 		bool overlapCommComp = false;
 #endif
-		
-		
+
+
 		if (overlapCommComp) {
 			performOverlappingDecompositionAndCellTraversalStep(perStepTimer.get_etime());
 		}
@@ -999,7 +999,7 @@ void Simulation::simulate() {
 
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
-		_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, 
+		_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer,
 				(!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
 
 		// scale velocity and angular momentum

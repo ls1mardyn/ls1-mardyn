@@ -221,7 +221,7 @@ public:
 
 	/** Get pointer to the molecule container */
 	ParticleContainer* getMoleculeContainer() { return _moleculeContainer; }
-	
+
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
 	/** Get the number of time steps to be performed in the simulation */
@@ -377,7 +377,7 @@ private:
 
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;
-	
+
 	//! random number generator
 	Random _rand;
 
@@ -423,6 +423,8 @@ public:
 	void enableFinalCheckpoint() { _finalCheckpoint = true; }
 	void disableFinalCheckpoint() { _finalCheckpoint = false; }
 
+	void useLegacyCellProcessor() { _legacyCellProcessor = true; }
+
 	void enableMemoryProfiler() {
 		_memoryProfiler = std::make_shared<MemoryProfiler>();
 		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
@@ -464,6 +466,9 @@ private:
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;
 
+	/** use legacyCellProcessor instead of vectorizedCellProcessor */
+	bool _legacyCellProcessor = false;
+
 	/** List of plugins to use */
 	std::list<PluginBase*> _plugins;
 
@@ -501,4 +506,3 @@ private:
 	} _prepare_start_opt;
 };
 #endif /*SIMULATION_H_*/
-
