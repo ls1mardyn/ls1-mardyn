@@ -92,7 +92,7 @@ pipeline {
                   unstash 'autopas_exec'
                   dir ("build"){
                     sh """
-                      ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 --legacy-cell-processor | tee autopas_run_log.txt
+                      ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
                       grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
                       grep "T = 0.000633975" simstep20.txt
                       grep "U_pot = -2.14161" simstep20.txt
