@@ -182,7 +182,10 @@ void MS2RSTGenerator::addMolecule(MS2RestartReader::MoleculeData& ms2mol, Partic
 			ms2mol.v[0], ms2mol.v[1], ms2mol.v[2], // velocity
 			ms2mol.q[0], ms2mol.q[1], ms2mol.q[2], ms2mol.q[3],
 			ms2mol.d[0], ms2mol.d[1], ms2mol.d[2] );
-	particleContainer->addParticle(m);
+	if (particleContainer->isInBoundingBox(m.r_arr().data())) {
+		bool inChecked = true;
+		particleContainer->addParticle(m, inChecked);
+	}
 }
 
 

@@ -177,7 +177,10 @@ void CrystalLatticeGenerator::addMolecule(double x, double y, double z, unsigned
 			0.0, 0.0, 0.0, // velocity
 			1.0, 0.0, 0.0, 0.0, // orientation
 			0.0, 0.0, 0.0);
-	particleContainer->addParticle(m);
+	if (particleContainer->isInBoundingBox(m.r_arr().data())) {
+		bool inChecked = true;
+		particleContainer->addParticle(m, inChecked);
+	}
 }
 
 

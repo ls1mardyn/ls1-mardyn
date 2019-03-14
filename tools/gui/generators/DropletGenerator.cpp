@@ -370,7 +370,10 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 							vector<double> v = getRandomVelocity(_temperature);
 							Molecule m(molCount, &_components[0], r_[0], r_[1], r_[2], v[0], v[1], v[2],
 									q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2]);
-							particleContainer->addParticle(m);
+							if (particleContainer->isInBoundingBox(m.r_arr().data())) {
+								bool inChecked = true;
+								particleContainer->addParticle(m, inChecked);
+							}
 							molCount++;
 						}
 					}
@@ -441,8 +444,11 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 						 vector<double> v = getRandomVelocity(_temperature);
 						 Molecule m(molCount, &_components[0], r_[0], r_[1], r_[2], v[0], v[1], v[2],
 								 q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2]);
-						 particleContainer->addParticle(m);
-						 molCount++;
+						if (particleContainer->isInBoundingBox(m.r_arr().data())) {
+							bool inChecked = true;
+							particleContainer->addParticle(m, inChecked);
+						}
+						molCount++;
 					 }
 				}
 			}
