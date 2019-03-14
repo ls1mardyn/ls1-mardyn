@@ -422,7 +422,9 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		particle_buff_pos = 0;
 	}
 #else
-		particleContainer->addParticle(m1, false, true);
+		if(particleContainer->isInBoundingBox(m1.r_arr().data())) {
+			particleContainer->addParticle(m1, true, false);
+		}
 
 		componentid = m1.componentid();
 		// TODO: The following should be done by the addPartice method.
