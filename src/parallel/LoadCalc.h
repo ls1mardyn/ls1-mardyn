@@ -62,6 +62,7 @@ public:
 		if (index2 < _count2 && index1 < _count1) {
 			return accessVec(_ownTime, index1, index2);
 		} else {
+			// extrapolation
 			return index1 * (index1 - 1) / 2 * _ownConst[0] + index2 * (index2 - 1) / 2 * _ownConst[1]
 					+ index2 * index1 * _ownConst[2];
 		}
