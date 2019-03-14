@@ -238,7 +238,7 @@ vcp_inline void VCP1CLJRMM::_loopBodyLJ(
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-vcp_inline void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM& soa2) {
+void VCP1CLJRMM::_calculatePairs(CellDataSoARMM& soa1, CellDataSoARMM& soa2) {
 
 	const int tid = mardyn_get_thread_num();
 	VCP1CLJRMMThreadData &my_threadData = *_threadData[tid];
