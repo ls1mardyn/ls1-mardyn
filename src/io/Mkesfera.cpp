@@ -215,11 +215,11 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 						if(fill[idx[0] - startx[0]][idx[1] - startx[1]][idx[2] - startx[2]][p]) {
 							//global_log->debug() << "Inserting: " << idx[0] << "," << idx[1] << "," << idx[2] << "; " << p << endl;
 							double q[3];
-							bool notInBox = 0;
+							bool notInBox = false;
 							for(int d = 0; d < 3; d++) {
 								q[d] = (idx[d] + VARFRACTION * (random1 - 0.5) + goffset[d][p]) * fl_unit;
-								if(q[d] < box_min_local[d]) notInBox = 1;
-								else if(q[d] > box_max_local[d]) notInBox = 1;
+								if(q[d] < box_min_local[d]) notInBox = true;
+								else if(q[d] > box_max_local[d]) notInBox = true;
 							}
 							if(notInBox) continue;
 							double phi = 2 * M_PI * random2;
@@ -230,7 +230,10 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 							v[1] = v_avg * cos(phi) * sin(omega);
 							v[2] = v_avg * sin(phi);
 							Molecule molecule(ID, component, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
-							particleContainer->addParticle(molecule);
+
+							// particle position is already checked for this container.
+							particleContainer->addParticle(molecule, true, false);
+
 							ID++;
 							numberOfMolecules++;
 						}

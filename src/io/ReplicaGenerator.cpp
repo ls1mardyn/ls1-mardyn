@@ -480,14 +480,15 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 						bIsInsideFreespace = (ry > _fspY[0] && ry < _fspY[1]) || (ry > _fspY[2] && ry < _fspY[3]) ||
 											 (ry > _fspY[4] && ry < _fspY[5]);
 
-					if(true == particleContainer->isInBoundingBox(r)) {
-						if(false == bIsInsideFreespace) {
+					if(particleContainer->isInBoundingBox(r)) {
+						if(not bIsInsideFreespace) {
 							// set component
 							uint32_t cid = mol.componentid();
 							Component* comp = &ptrComponents->at(ptrChangeVec->at(cid));
 							mol.setComponent(comp);
 							mol.setid(++nActID);
-							particleContainer->addParticle(mol);
+							// inbox check already performed a few lines earlier.
+							particleContainer->addParticle(mol, true, false);
 							numAddedParticlesLocal++;
 						} else
 							numAddedParticlesFreespaceLocal++;
