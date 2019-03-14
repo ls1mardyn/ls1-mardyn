@@ -511,7 +511,10 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 				ParticleData::ParticleDataToMolecule(data[l], m);
 
-				particleContainer->addParticle(m);
+				// only add particle if it is inside of the own domain!
+				if(particleContainer->isInBoundingBox(m.r_arr().data())) {
+					particleContainer->addParticle(m, true, false);
+				}
 				mardyn_assert(m.mass() != 0);
 
 				// TODO: The following should be done by the addPartice method.

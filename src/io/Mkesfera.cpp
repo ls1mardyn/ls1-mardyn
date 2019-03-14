@@ -230,7 +230,9 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 							v[1] = v_avg * cos(phi) * sin(omega);
 							v[2] = v_avg * sin(phi);
 							Molecule molecule(ID, component, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
-							particleContainer->addParticle(molecule);
+							if(particleContainer->isInBoundingBox(molecule.r_arr().data())) {
+								particleContainer->addParticle(molecule, true, false);
+							}
 							ID++;
 							numberOfMolecules++;
 						}

@@ -242,9 +242,11 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		for (int j = 0; j < particle_buff_pos; j++) {
 			Molecule m;
 			ParticleData::ParticleDataToMolecule(particle_buff[j], m);
-			particleContainer->addParticle(m, false, true);
+			// only add particle if it is inside of the own domain!
+			if(particleContainer->isInBoundingBox(m.r_arr().data())) {
+				particleContainer->addParticle(m, true, false);
+			}
 
-			// TODO: The following should be done by the addPartice method.
 			dcomponents[m.componentid()].incNumMolecules();
 			domain->setglobalRotDOF(
 					dcomponents[m.componentid()].getRotationalDegreesOfFreedom()

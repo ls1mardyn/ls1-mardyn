@@ -404,10 +404,12 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		for (int j = 0; j < particle_buff_pos; j++) {
 			Molecule m;
 			ParticleData::ParticleDataToMolecule(particle_buff[j], m);
-			particleContainer->addParticle(m, false, true);
+			// only add particle if it is inside of the own domain!
+			if(particleContainer->isInBoundingBox(m.r_arr().data())) {
+				particleContainer->addParticle(m, true, false);
+			}
 			componentid=m.componentid();
 
-			// TODO: The following should be done by the addPartice method.
 			dcomponents[componentid].incNumMolecules();
 			domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 
@@ -415,7 +417,6 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 
 			// Only called inside GrandCanonical
 			global_simulation->getEnsemble()->storeSample(&m, componentid);
-
 		}
 		global_log->debug() << "broadcasting(sending/receiving) complete" << particle_buff_pos << std::endl;
 		particle_buff_pos = 0;

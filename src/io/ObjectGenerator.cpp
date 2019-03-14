@@ -117,8 +117,9 @@ ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* do
 		if(_velocityAssigner) {
 			_velocityAssigner->assignVelocity(&molecule);
 		}
-		bool inserted = particleContainer->addParticle(molecule);
-		if(inserted) {
+		// only add particle if it is inside of the own domain!
+		if(particleContainer->isInBoundingBox(molecule.r_arr().data())) {
+			particleContainer->addParticle(molecule, true, false);
 			numMolecules++;
 			moleculeID = _moleculeIdPool->getNewMoleculeId();
 		}

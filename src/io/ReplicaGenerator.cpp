@@ -487,7 +487,10 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 							Component* comp = &ptrComponents->at(ptrChangeVec->at(cid));
 							mol.setComponent(comp);
 							mol.setid(++nActID);
-							particleContainer->addParticle(mol);
+							// only add particle if it is inside of the own domain!
+							if(particleContainer->isInBoundingBox(mol.r_arr().data())) {
+								particleContainer->addParticle(mol, true, false);
+							}
 							numAddedParticlesLocal++;
 						} else
 							numAddedParticlesFreespaceLocal++;
