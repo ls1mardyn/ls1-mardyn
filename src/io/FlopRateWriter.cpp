@@ -139,20 +139,20 @@ void FlopRateWriter::measureFLOPS(ParticleContainer* particleContainer, unsigned
 
 void FlopRateWriter::setPrefix(double f_in, double& f_out, char& prefix) const {
 	// powers of two or powers of ten?
-//	double kilo = 1024.0;
-//	double mega = 1024.0 * 1024.0;
-//	double giga = 1024.0 * 1024.0 * 1024.0;
-//	double tera = 1024.0 * 1024.0 * 1024.0 * 1024.0;
-//	double peta = 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0;
-//	double exa  = 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0;
+	double kilo = 1024.0;
+	double mega = 1024.0 * 1024.0;
+	double giga = 1024.0 * 1024.0 * 1024.0;
+	double tera = 1024.0 * 1024.0 * 1024.0 * 1024.0;
+	double peta = 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0;
+	double exa  = 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0;
 
-	// use powers of ten for correct comparison to TrillionAtoms run. (10-12% difference at tera-peta scale)
-	double kilo = 1e+3;
-	double mega = 1e+6;
-	double giga = 1e+9;
-	double tera = 1e+12;
-	double peta = 1e+15;
-	double exa  = 1e+18;
+//	// use powers of ten for correct comparison to TrillionAtoms run.
+//	double kilo = 1e+3;
+//	double mega = 1e+6;
+//	double giga = 1e+9;
+//	double tera = 1e+12;
+//	double peta = 1e+15;
+//	double exa  = 1e+18;
 
 	if (f_in >= exa) {
 		f_out = f_in / exa;
