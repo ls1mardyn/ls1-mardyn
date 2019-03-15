@@ -1,5 +1,7 @@
 from tinydb import Query
-
+import os
+from subprocess import run, PIPE
+import re
 
 class SingleTest:
     """SingleTest class
@@ -13,11 +15,12 @@ class SingleTest:
             - Domain size
     """
 
-    def __init__(self, commit="abcdef", mpi=False, openMP=False, vec="AVX2", RMM=True, size=50):
+    def __init__(self, path, commit, mpi=False, openMP=False, vec="AVX2", RMM=True, size=50):
         """Constructor
 
         Init the Test instance with all necessary params.
         """
+        self.path = path
         self.commit = commit
         self.mpi = mpi
         self.openMP = openMP
@@ -33,7 +36,32 @@ class SingleTest:
         Saving the data is not part of running the test, so running multiple test concurrently somewhere is ok for the
         database file.
         """
-        self.MMUPS = 10.50
+        old_dir = os.getcwd()
+        source_dir = self.path.strip(".git") + "src"
+        # Run make in source directory
+        os.chdir(source_dir)
+        print(os.getcwd())
+        output = run(["make", "-f","../makefile/Makefile", "-j", "2", "-B"])
+        if output.returncode == 0:
+            # Run tests
+            print("success")
+            # TODO: run real MarDyn with a proper test scenario
+            test = run(["./MarDyn"], stdout=PIPE, stderr=PIPE)
+            if test.returncode == 0:
+                # Parse results
+                # TODO: Scientific notation
+                performance = re.search("([0-9]*.[0-9]*) Molecule-updates per second", str(test.stdout)).group(1)
+                self.MMUPS = performance
+            else:
+                print("error", test.stderr)
+                # dont break on error, but set MMUPS to negative to indicate failure
+                self.MMUPS = -1
+
+        # change back
+        os.chdir(old_dir)
+
+        # TODO: remove exit
+        #exit(1)
 
     def save(self, db):
         """Saving

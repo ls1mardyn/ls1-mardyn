@@ -17,13 +17,14 @@ class Commit:
     def __init__(self, repo, commit):
         # Reset Dir to specified commit
         repo.head.reset(commit, index=True, working_tree=True)
-        self.commit = commit
         print("New commit:", commit)
+        self.commit = commit
+        self.repo = repo
 
     def singleDimension(self, db, config):
         """Run tests for a commit only on a single config"""
         print("Single config:", self.commit, config)
-        t = SingleTest(commit=self.commit, mpi=config["mpi"], openMP=config["openMP"], vec=config["vec"], RMM=config["RMM"],
+        t = SingleTest(path=self.repo.git_dir, commit=self.commit, mpi=config["mpi"], openMP=config["openMP"], vec=config["vec"], RMM=config["RMM"],
                        size=config["size"])
         t.test()
         t.save(db)
@@ -40,6 +41,6 @@ class Commit:
                 for vec in dVec:
                     for RMM in dRMM:
                         for size in dSize:
-                            t = SingleTest(commit=self.commit, mpi=mpi, openMP=openMP, vec=vec, RMM=RMM, size=size)
+                            t = SingleTest(path=self.repo.git_dir, commit=self.commit, mpi=mpi, openMP=openMP, vec=vec, RMM=RMM, size=size)
                             t.test()
                             t.save(db)

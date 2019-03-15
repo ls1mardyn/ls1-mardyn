@@ -45,7 +45,7 @@ if __name__ == "__main__":
     # TODO: Get from github
     #commits = ["abcdef", "zxywv"]
 
-    gitPath = "C:\MarDyn\MockPerformance"
+    gitPath = "/mnt/c/MarDyn/MockPerformance"
 
     fullH = FullHistory(gitPath)
 

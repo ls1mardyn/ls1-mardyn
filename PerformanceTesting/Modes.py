@@ -24,11 +24,16 @@ class FullHistory:
     def run(self, db):
         for ci in self.commits:
             c = Commit(self.repo, ci.hexsha)
-            c.fullRun(db)
+            #c.fullRun(db)
+            c.singleDimension(db, {"commit": ci,
+                                   "mpi": False,
+                                   "openMP": False,
+                                   "vec": "AVX",
+                                   "RMM": True,
+                                   "size": 50})
 
         # reset to previous state
         self.repo.head.reset(self.initialHead, index=True, working_tree=True)
-
 
 # TODO: Implement
 class UpdateHistory:
