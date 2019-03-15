@@ -24,6 +24,7 @@ dVec = ["AVX", "AVX2", "SSE"]
 dRMM = [True, False]
 dSize = [50]
 
+
 class SingleTest:
     """SingleTest class
 
@@ -47,6 +48,7 @@ class SingleTest:
         self.vec = vec
         self.RMM = RMM
         self.size = size
+        self.MMUPS = -1
 
     def test(self):
         """Test
@@ -77,14 +79,14 @@ class SingleTest:
         # If no entry exists, it just inserts.
         # TODO: Define behaviour for full run after partial run. Redo every entry or keep already given test results?
         db.upsert(string, (q.commit == self.commit)
-                            & (q.mpi == self.mpi)
-                            & (q.openMP == self.openMP)
-                            & (q.vec == self.vec)
-                            & (q.RMM == self.RMM)
-                            & (q.size == self.size))
+                  & (q.mpi == self.mpi)
+                  & (q.openMP == self.openMP)
+                  & (q.vec == self.vec)
+                  & (q.RMM == self.RMM)
+                  & (q.size == self.size))
 
         # TODO: OR just to insert and deal with doubles later. MUCH faster than upsert, as no query needed
-        #db.insert(string)
+        # db.insert(string)
 
 
 class Commit:
@@ -92,6 +94,7 @@ class Commit:
 
     Running a full or partial test suite for a given commit
     """
+
     def __init__(self, commit):
         self.commit = commit
         print("New commit:", commit)
@@ -99,7 +102,8 @@ class Commit:
     def singleDimension(self, db, config):
         """Run tests for a commit only on a single config"""
         print("Single config:", self.commit, config)
-        t = SingleTest(commit=commit, mpi=config["mpi"], openMP=config["openMP"], vec=config["vec"], RMM=config["RMM"], size=config["size"])
+        t = SingleTest(commit=commit, mpi=config["mpi"], openMP=config["openMP"], vec=config["vec"], RMM=config["RMM"],
+                       size=config["size"])
         t.test()
         t.save(db)
 
@@ -140,18 +144,18 @@ if __name__ == "__main__":
         c = Commit(commit)
         c.fullRun(db)
         c.singleDimension(db, {"commit": commit,
-                  "mpi": False,
-                  "openMP": False,
-                  "vec": "AVX",
-                  "RMM": True,
-                  "size": 50})
+                               "mpi": False,
+                               "openMP": False,
+                               "vec": "AVX",
+                               "RMM": True,
+                               "size": 50})
 
     # Query to test functions
     q = Query()
     print(db.all())
-    avx2 = db.search((q.vec == "AVX2") & (q.mpi == True))
+    avx2 = db.search((q.vec == "AVX2") & q.mpi)
     for result in avx2:
         print(result["commit"], result["MMUPS"])
 
     end = time.time()
-    print("DURATION", end-start)
+    print("DURATION", end - start)
