@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
 	//!@todo is this correct w.r.t. starting from time > 0 ? We keep changing this...
 	const unsigned long numForceCalculations = simulation.getNumTimesteps();
 	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
-	global_log->info() << "Simulation speed: " << scientific << speed << " Molecule-updates per second." << endl;
+	global_log->info() << "Simulation speed: " << scientific << setprecision(8) << speed << " Molecule-updates per second." << endl;
 
 	simulation.finalize();
 
