@@ -19,8 +19,8 @@
 /** Structure holding the basis used within a unit cell */
 class Basis {
 public:
-	Basis(){}
-	~Basis(){}
+	Basis() = default;
+	~Basis() = default;
 
 	/** @brief Read in XML configuration for Basis and all its included objects.
 	 *
@@ -45,7 +45,7 @@ public:
 	/** Number of molecules of the basis
 	 * @return  number of molecules in the basis
 	 */
-	int numMolecules();
+	size_t numMolecules();
 
 	/** Obtain molecule from basis
 	 * @param[in]  i  Position of molecule to be returned

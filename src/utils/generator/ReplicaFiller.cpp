@@ -28,16 +28,19 @@
 using Log::global_log;
 using std::endl;
 
-
-/** The ParticleContainerToBasisWrapper class is there to read in any phase space input and save it into a Basis object instead of a regular particle container, so it can be used for the grid filler.
- * @warning While providing all interface methods the ParticleContainerToBasisWrapper is not a fully working particle container!
- * @todo Find a better way to reuse all the different I/O classes and their readPhase space methods. Maybe bring back the Dummy domain decomposition?
+/**
+ * The ParticleContainerToBasisWrapper class is there to read in any phase space input and save it into a Basis object
+ * instead of a regular particle container, so it can be used for the grid filler.
+ * @warning While providing all interface methods the ParticleContainerToBasisWrapper is not a fully working particle
+ * container!
+ * @todo Find a better way to reuse all the different I/O classes and their readPhase space methods. Maybe bring back
+ * the Dummy domain decomposition?
  */
 class ParticleContainerToBasisWrapper : public ParticleContainer {
 public:
 	ParticleContainerToBasisWrapper() = default;
 
-	~ParticleContainerToBasisWrapper() = default;
+	~ParticleContainerToBasisWrapper() override = default;
 
 	void readXML(XMLfileUnits& xmlconfig) override {};
 
@@ -60,19 +63,19 @@ public:
 
 	unsigned long getNumberOfParticles() override { return _basis.numMolecules(); }
 
-	double getBoundingBoxMin(int dimension) const override{
+	double getBoundingBoxMin(int dimension) const override {
 		double min[3];
 		_object->getBboxMin(min);
 		return min[dimension];
 	}
 
-	double getBoundingBoxMax(int dimension) const override{
+	double getBoundingBoxMax(int dimension) const override {
 		double max[3];
 		_object->getBboxMax(max);
 		return max[dimension];
 	}
 
-	bool isInBoundingBox(double r[3]) const override{
+	bool isInBoundingBox(double r[3]) const override {
 		_object->isInside(r);
 	}
 
@@ -173,7 +176,6 @@ void ReplicaFiller::init() {
 	ParticleContainerToBasisWrapper basisContainer;
 	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
 	basisContainer.setBoundingBox(object);
-
 
 #ifdef ENABLE_MPI
 	DomainDecomposition domainDecomp;

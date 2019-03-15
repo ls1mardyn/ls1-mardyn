@@ -51,6 +51,6 @@ Molecule Basis::getMolecule(int i) {
 }
 
 
-int Basis::numMolecules(){
+size_t Basis::numMolecules(){
 	return _molecules.size();
 }
