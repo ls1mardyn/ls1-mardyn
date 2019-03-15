@@ -64,19 +64,19 @@ public:
 	unsigned long getNumberOfParticles() override { return _basis.numMolecules(); }
 
 	double getBoundingBoxMin(int dimension) const override {
-		double min[3];
-		_object->getBboxMin(min);
+		double min[3] = {std::numeric_limits<double>::min(),std::numeric_limits<double>::min(),std::numeric_limits<double>::min()};
+	//	_object->getBboxMin(min);
 		return min[dimension];
 	}
 
 	double getBoundingBoxMax(int dimension) const override {
-		double max[3];
-		_object->getBboxMax(max);
+		double max[3] = {std::numeric_limits<double>::max(),std::numeric_limits<double>::max(),std::numeric_limits<double>::max()};
+	//	_object->getBboxMax(max);
 		return max[dimension];
 	}
 
 	bool isInBoundingBox(double r[3]) const override {
-		_object->isInside(r);
+		true;
 	}
 
 	void update() override {}
@@ -175,7 +175,7 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 void ReplicaFiller::init() {
 	ParticleContainerToBasisWrapper basisContainer;
 	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
-	basisContainer.setBoundingBox(object);
+	basisContainer.setBoundingBox(nullptr);
 
 #ifdef ENABLE_MPI
 	DomainDecomposition domainDecomp;
@@ -189,7 +189,7 @@ void ReplicaFiller::init() {
 	global_log->info() << "Number of molecules in the replica: " << numberOfParticles << endl;
 
 	if(numberOfParticles == 0){
-		global_log->error() << "No molecules in replica, aborting! " << endl;
+		global_log->error_always_output() << "No molecules in replica, aborting! " << endl;
 		Simulation::exit(1);
 	}
 
