@@ -210,13 +210,9 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 									<< "Aborting simulation." << std::endl;
 				Simulation::exit(12);
 		}
-		if((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y
-																	   >= domain->getGlobalLength(1)) || (z < 0.0 || z
-																													 >=
-																													 domain->getGlobalLength(
-																															 2))) {
-			global_log->warning() << "Molecule " << id << " out of box: "
-								  << x << ";" << y << ";" << z << endl;
+		if ((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y >= domain->getGlobalLength(1)) ||
+			(z < 0.0 || z >= domain->getGlobalLength(2))) {
+			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
 		}
 
 		if(componentid > numcomponents || componentid == 0) {
