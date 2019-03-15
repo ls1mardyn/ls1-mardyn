@@ -9,11 +9,11 @@ system which does not require a server to run in the background, like MongoDB et
 
 """
 
-from Commit import Commit
-import ujson
-from tinydb import TinyDB, Query
-import time
 
+import ujson
+from tinydb import TinyDB
+import time
+from Modes import FullHistory
 
 """ tinyDB is super lightweight both in installation and during runtime. Not optimal for performance or multi-process
 accesses, but these limitations make it very portable and the database file is still human-readable. It doesnt need a
@@ -32,19 +32,29 @@ if __name__ == "__main__":
 
     start = time.time()
 
-    print("Starting main tests")
-
-    # Commits to test
-    # TODO: Get from github
-    commits = ["abcdef", "zxywv"]
-
     # Databse file
     db = TinyDB("results.json")
+
+    # TODO: this is for debugging only!
     # Clean the entire DB
     db.purge_tables()
 
+    print("Getting repo history")
+
+    # Commits to test
+    # TODO: Get from github
+    #commits = ["abcdef", "zxywv"]
+
+    gitPath = "C:\MarDyn\MockPerformance"
+
+    fullH = FullHistory(gitPath)
+
+    print("Starting main tests")
+
+    fullH.run(db)
+
     # Iterate over given commits
-    for commit in commits:
+    '''for commit in commits:
         c = Commit(commit)
         c.fullRun(db)
         c.singleDimension(db, {"commit": commit,
@@ -60,6 +70,6 @@ if __name__ == "__main__":
     avx2 = db.search((q.vec == "AVX2") & q.mpi)
     for result in avx2:
         print(result["commit"], result["MMUPS"])
-
+    '''
     end = time.time()
     print("DURATION", end - start, "seconds")

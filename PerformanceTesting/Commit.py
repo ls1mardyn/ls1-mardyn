@@ -1,3 +1,4 @@
+from git import Repo
 from SingleTest import SingleTest
 
 dMPI = [True, False]
@@ -13,7 +14,9 @@ class Commit:
     Running a full or partial test suite for a given commit
     """
 
-    def __init__(self, commit):
+    def __init__(self, repo, commit):
+        # Reset Dir to specified commit
+        repo.head.reset(commit, index=True, working_tree=True)
         self.commit = commit
         print("New commit:", commit)
 
