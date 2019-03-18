@@ -109,6 +109,7 @@ ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* do
 	std::shared_ptr<Object> boundedObject = std::make_shared<ObjectIntersection>(bBox, _object);
 	_filler->setObject(boundedObject);
 	_filler->init();
+
 	Molecule molecule;
 	unsigned long moleculeID = _moleculeIdPool->getNewMoleculeId();
 	while(_filler->getMolecule(&molecule) > 0) {

@@ -76,6 +76,7 @@ public:
 	}
 
 	bool isInBoundingBox(double r[3]) const override {
+		// _object->isInside(r);
 		true;
 	}
 
@@ -175,7 +176,10 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 void ReplicaFiller::init() {
 	ParticleContainerToBasisWrapper basisContainer;
 	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
-	basisContainer.setBoundingBox(nullptr);
+
+	// the following line is commented out, because the selection should not yet happen at this stage.
+	// see https://github.com/ls1mardyn/ls1-mardyn/pull/64
+	// basisContainer.setBoundingBox(object);
 
 #ifdef ENABLE_MPI
 	DomainDecomposition domainDecomp;

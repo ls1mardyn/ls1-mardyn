@@ -289,7 +289,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	global_log->info() << "Reading Molecules done" << endl;
 
 	// TODO: Shouldn't we always calculate this?
-	if(domain->getglobalRho() != 0) {
+	if(domain->getglobalRho() == 0.) {
 		domain->setglobalRho(
 				domain->getglobalNumMolecules() / domain->getGlobalVolume());
 		global_log->info() << "Calculated Rho_global = "
