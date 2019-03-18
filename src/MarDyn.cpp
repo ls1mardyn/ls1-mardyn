@@ -247,13 +247,17 @@ int main(int argc, char** argv) {
 	sim_timer.stop();
 	double runtime = sim_timer.get_etime();
 	//!@todo time only for simulation.simulate not "main"!
-	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
+	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl << fixed << setprecision(5);
 
 	// print out total simulation speed
 	//!@todo is this correct w.r.t. starting from time > 0 ? We keep changing this...
 	const unsigned long numForceCalculations = simulation.getNumTimesteps();
 	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
-	global_log->info() << "Simulation speed: " << scientific << setprecision(8) << speed << " Molecule-updates per second." << endl;
+	global_log->info() << "Simulation speed: " << scientific << setprecision(6) << speed << " Molecule-updates per second." << endl << fixed << setprecision(5);
+
+	const double iterationsPerSecond = simulation.getNumTimesteps() / runtime;
+	global_log->info() << "Iterations per second: " << fixed << setprecision(3) << iterationsPerSecond << endl << fixed << setprecision(5);
+	global_log->info() << "Time per iteration: " << fixed << setprecision(3) << 1.0 / iterationsPerSecond << " seconds." << endl << fixed << setprecision(5);
 
 	simulation.finalize();
 
