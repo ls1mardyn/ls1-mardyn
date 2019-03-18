@@ -61,20 +61,16 @@ void program_build_info(Log::Logger *log) {
 	log->info() << "Compiler: " << info_str << endl;
 	get_compile_time(info_str);
 	log->info() << "Compiled: " << info_str << endl;
-#ifdef ENABLE_MPI
+	get_precision_info(info_str);
+	log->info() << "Compiled in " << info_str << " precision." << endl;
+	get_intrinsics_info(info_str);
+	log->info() << "Compiled with " << info_str << " intrinsics." << endl;
+	get_rmm_normal_info(info_str);
+	log->info() << "RMM/normal: compiled in " << info_str << endl;
+	get_openmp_info(info_str);
+	log->info() << "Compiled " << info_str << endl;
 	get_mpi_info(info_str);
-	log->info() << "MPI library: " << info_str << endl;
-#endif
-#if defined(MARDYN_SPSP)
-	log->info() << "Precision: Single" << endl;
-#elif defined(MARDYN_SPDP)
-	log->info() << "Precision: Mixed" << endl;
-#else
-	log->info() << "Precision: Double" << endl;
-#endif
-#if defined(_OPENMP)
-	log->info() << "Compiled with OpenMP support" << endl;
-#endif
+	log->info() << info_str << endl;
 }
 
 /**
@@ -91,20 +87,18 @@ void program_execution_info(int argc, char **argv, Log::Logger *log) {
 		arguments << " " << argv[i];
 	}
 	log->info() << "Started with arguments: " << arguments.str() << endl;
+
+#if defined(_OPENMP)
+	int num_threads = mardyn_get_max_threads();
+	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
+	// print thread pinning info
+	PrintThreadPinningToCPU();
+#endif
+
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
 	global_log->info() << "Running with " << world_size << " MPI processes." << endl;
-#endif
-#if defined(_OPENMP)
-	int num_threads = mardyn_get_max_threads();
-	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
-
-	#if defined(ENABLE_REDUCED_MEMORY_MODE)
-	global_log->warning() << "Running in reduced memory mode. Not all features work in this mode." << endl;
-		// print thread pinning info
-		PrintThreadPinningToCPU();
-	#endif
 #endif
 }
 

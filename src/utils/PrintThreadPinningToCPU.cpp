@@ -52,7 +52,7 @@ void PrintThreadPinningToCPU() {
 using Log::global_log;
 
 void PrintThreadPinningToCPU() {
-	global_log->warning() << "Thread pinning information cannot be obtained for this system by ls1. Please use OpenMP runtime system capabilities, e.g. KMP_AFFINITY=verbose with the Intel Compiler." << endl;
+	global_log->warning() << "Thread pinning information cannot be obtained for this system/compiler by ls1. Please use OpenMP runtime system capabilities, i.e. KMP_AFFINITY=verbose with the Intel Compiler." << endl;
 }
 
 #endif

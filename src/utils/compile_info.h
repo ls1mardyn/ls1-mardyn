@@ -66,26 +66,37 @@ int get_compiler_info(char *info_str) {
 
 	return 0;
 }
-#if defined(MPI_VERSION) and defined(MPI_SUBVERSION)
 
 int get_mpi_info(char *info_str) {
 
-#if defined(MVAPICH2)
-	sprintf(info_str, "MVAPICH2 (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
-#elif defined(OPEN_MPI)
-	sprintf(info_str, "Open MPI %d.%d.%d (MPI %d.%d)", OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION, MPI_VERSION, MPI_SUBVERSION);
-#elif defined(CRAY_MPICH_VERSION)
-	sprintf(info_str, "Cray MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
-#elif defined(I_MPI_VERSION)
-	sprintf(info_str, "Intel MPI %s (MPI %d.%d)", I_MPI_VERSION, MPI_VERSION, MPI_SUBVERSION);
-#else
-	// unknown
-	sprintf(info_str, "unknown (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
-#endif
+#ifdef ENABLE_MPI
+
+	#if defined(MPI_VERSION) and defined(MPI_SUBVERSION)
+
+		#if defined(MVAPICH2)
+			sprintf(info_str, "MPI library: MVAPICH2 (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+		#elif defined(OPEN_MPI)
+			sprintf(info_str, "MPI library: Open MPI %d.%d.%d (MPI %d.%d)", OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION, MPI_VERSION, MPI_SUBVERSION);
+		#elif defined(CRAY_MPICH_VERSION)
+			sprintf(info_str, "MPI library: Cray MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+		#elif defined(I_MPI_VERSION)
+			sprintf(info_str, "MPI library: Intel MPI %s (MPI %d.%d)", I_MPI_VERSION, MPI_VERSION, MPI_SUBVERSION);
+		#else
+			// unknown
+			sprintf(info_str, "MPI library: unknown (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+		#endif
+
+	#else /* MPI_VERSION and MPI_SUBVERSION */
+			// I guess this can never happen, as it will fail on #include "mpi.h"?
+	#endif /* MPI_VERSION and MPI_SUBVERSION */
+
+#else /* ENABLE_MPI */
+	sprintf(info_str, "%s", "Compiled without MPI support.");
+#endif /* ENABLE_MPI */
+
 	return 0;
 }
 
-#endif
 
 int get_compile_time(char *info_str) {
 	sprintf(info_str, "%s %s", __DATE__, __TIME__);
@@ -113,6 +124,53 @@ int get_host(char *info_str) {
 #endif
 	sprintf(info_str, "%s", hostname);
 	return 0;
+}
+
+void get_precision_info(char *info_str) {
+#if defined(MARDYN_SPSP)
+	sprintf(info_str, "%s", "Single (SPSP)");
+#elif defined(MARDYN_SPDP)
+	sprintf(info_str, "%s", "Mixed (SPDP)");
+#else
+	sprintf(info_str, "%s", "Double (DPDP)");
+#endif
+}
+
+void get_intrinsics_info(char *info_str) {
+#if VCP_VEC_TYPE==VCP_NOVEC
+	sprintf(info_str, "%s", "without");
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
+	sprintf(info_str, "%s", "SSE3");
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
+	sprintf(info_str, "%s", "AVX");
+#elif VCP_VEC_TYPE==VCP_VEC_AVX2
+	sprintf(info_str, "%s", "AVX2");
+#elif VCP_VEC_TYPE==VCP_VEC_KNL
+	sprintf(info_str, "%s", "KNL masking");
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	sprintf(info_str, "%s", "KNL gather/scatter");
+#elif VCP_VEC_TYPE==VCP_VEC_AVX512F
+	sprintf(info_str, "%s", "SKX masking");
+#elif VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER
+	sprintf(info_str, "%s", "SKX gather/scatter");
+#endif
+}
+
+void get_rmm_normal_info(char *info_str) {
+#if defined(ENABLE_REDUCED_MEMORY_MODE)
+	sprintf(info_str, "%s", "reduced memory mode (RMM). Not all features work in this mode.");
+#else
+	sprintf(info_str, "%s", "normal mode. All features work in this mode.");
+#endif
+}
+
+void get_openmp_info(char *info_str) {
+#if defined(_OPENMP)
+	sprintf(info_str, "%s%d%s", "with OpenMP support, dated ", _OPENMP, ".");
+#else
+	sprintf(info_str, "%s", "without OpenMP support.");
+#endif
+
 }
 
 #endif /*COMPILE_INFO_H_*/
