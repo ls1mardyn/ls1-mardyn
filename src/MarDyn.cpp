@@ -248,6 +248,7 @@ int main(int argc, char** argv) {
 	double runtime = sim_timer.get_etime();
 	//!@todo time only for simulation.simulate not "main"!
 	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl << fixed << setprecision(5);
+	//  FIXME: The statements "<< fixed << setprecision(5)" after endl are so that the next logger timestamp appears as expected. A better solution would be nice, of course.
 
 	// print out total simulation speed
 	//!@todo is this correct w.r.t. starting from time > 0 ? We keep changing this...
