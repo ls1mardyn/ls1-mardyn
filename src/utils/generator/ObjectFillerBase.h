@@ -10,8 +10,8 @@
 /** FillerBase interface */
 class ObjectFillerBase {
 public:
-	ObjectFillerBase(){}
-	virtual ~ObjectFillerBase(){}
+	ObjectFillerBase() = default;
+	virtual ~ObjectFillerBase() = default;
 
 	/** @brief Read in XML configuration for Filler and all its included objects.
 	 *

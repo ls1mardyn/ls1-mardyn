@@ -43,7 +43,7 @@ BinaryReader::BinaryReader()
 	// TODO Auto-generated constructor stub
 }
 
-BinaryReader::~BinaryReader() {}
+BinaryReader::~BinaryReader() = default;
 
 void BinaryReader::readXML(XMLfileUnits& xmlconfig) {
 	string pspfile;
@@ -69,7 +69,7 @@ void BinaryReader::setPhaseSpaceHeaderFile(string filename) {
 void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	XMLfileUnits inp(_phaseSpaceHeaderFile);
 
-	if(false == inp.changecurrentnode("/mardyn")) {
+	if(not inp.changecurrentnode("/mardyn")) {
 		global_log->error() << "Could not find root node /mardyn in XML input file." << endl;
 		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
 		Simulation::exit(1);
@@ -88,7 +88,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	bInputOk = bInputOk && inp.getNodeValue("number", numMolecules);
 	bInputOk = bInputOk && inp.getNodeValue("format@type", strMoleculeFormat);
 
-	if(false == bInputOk) {
+	if(not bInputOk) {
 		global_log->error() << "Content of file: '" << _phaseSpaceHeaderFile << "' corrupted! Program exit ..." << endl;
 		Simulation::exit(1);
 	}
@@ -138,7 +138,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 	string token;
 	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
-	unsigned int numcomponents = dcomponents.size();
+	size_t numcomponents = dcomponents.size();
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 
 #ifdef ENABLE_MPI
@@ -156,7 +156,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
 	uint64_t id;
-	uint32_t componentid;
+	uint32_t componentid = 0;
 
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 	q0 = 1.;
@@ -205,14 +205,14 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&vy), 8);
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&vz), 8);
 				break;
+			default:
+				global_log->error() << "BinaryReader: Unknown phase space format: " << _nMoleculeFormat << std::endl
+									<< "Aborting simulation." << std::endl;
+				Simulation::exit(12);
 		}
-		if((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y
-																	   >= domain->getGlobalLength(1)) || (z < 0.0 || z
-																													 >=
-																													 domain->getGlobalLength(
-																															 2))) {
-			global_log->warning() << "Molecule " << id << " out of box: "
-								  << x << ";" << y << ";" << z << endl;
+		if ((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y >= domain->getGlobalLength(1)) ||
+			(z < 0.0 || z >= domain->getGlobalLength(2))) {
+			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
 		}
 
 		if(componentid > numcomponents || componentid == 0) {
@@ -289,7 +289,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	global_log->info() << "Reading Molecules done" << endl;
 
 	// TODO: Shouldn't we always calculate this?
-	if(!domain->getglobalRho()) {
+	if(domain->getglobalRho() == 0.) {
 		domain->setglobalRho(
 				domain->getglobalNumMolecules() / domain->getGlobalVolume());
 		global_log->info() << "Calculated Rho_global = "

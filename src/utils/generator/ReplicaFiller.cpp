@@ -28,23 +28,26 @@
 using Log::global_log;
 using std::endl;
 
-
-/** The ParticleContainerToBasisWrapper class is there to read in any phase space input and save it into a Basis object instead of a regular particle container, so it can be used for the grid filler.
- * @warning While providing all interface methods the ParticleContainerToBasisWrapper is not a fully working particle container!
- * @todo Find a better way to reuse all the different I/O classes and their readPhase space methods. Maybe bring back the Dummy domain decomposition?
+/**
+ * The ParticleContainerToBasisWrapper class is there to read in any phase space input and save it into a Basis object
+ * instead of a regular particle container, so it can be used for the grid filler.
+ * @warning While providing all interface methods the ParticleContainerToBasisWrapper is not a fully working particle
+ * container!
+ * @todo Find a better way to reuse all the different I/O classes and their readPhase space methods. Maybe bring back
+ * the Dummy domain decomposition?
  */
 class ParticleContainerToBasisWrapper : public ParticleContainer {
 public:
-	ParticleContainerToBasisWrapper() {}
+	ParticleContainerToBasisWrapper() = default;
 
-	~ParticleContainerToBasisWrapper() {}
+	~ParticleContainerToBasisWrapper() override = default;
 
-	void readXML(XMLfileUnits& xmlconfig) {};
+	void readXML(XMLfileUnits& xmlconfig) override {};
 
-	void setBoundingBox(std::shared_ptr<Object> object) { _object = object; }
+	void setBoundingBox(std::shared_ptr<Object> object) { _object = std::move(object); }
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-					 const bool& rebuildCaches = false) {
+					 const bool& rebuildCaches = false) override {
 		double r[3] = {particle.r(0), particle.r(1), particle.r(2)};
 		if(_object && !_object->isInside(r)) {
 			return false;
@@ -56,63 +59,70 @@ public:
 	/** @brief return reference to internal basis object. */
 	Basis& getBasis() { return _basis; }
 
-	void clear() { _basis = Basis(); }
+	void clear() override { _basis = Basis(); }
 
-	unsigned long getNumberOfParticles() { return _basis.numMolecules(); }
+	unsigned long getNumberOfParticles() override { return _basis.numMolecules(); }
 
-	double getBoundingBoxMin(int dimension) const;
+	double getBoundingBoxMin(int dimension) const override {
+		double min[3] = {std::numeric_limits<double>::min(),std::numeric_limits<double>::min(),std::numeric_limits<double>::min()};
+	//	_object->getBboxMin(min);
+		return min[dimension];
+	}
 
-	bool isInBoundingBox(double r[3]) const;
+	double getBoundingBoxMax(int dimension) const override {
+		double max[3] = {std::numeric_limits<double>::max(),std::numeric_limits<double>::max(),std::numeric_limits<double>::max()};
+	//	_object->getBboxMax(max);
+		return max[dimension];
+	}
 
-	void update() {}
+	bool isInBoundingBox(double r[3]) const override {
+		// _object->isInside(r);
+		true;
+	}
 
-	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate = false) {}
+	void update() override {}
 
-	void traverseCells(CellProcessor& cellProcessor) {}
+	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate = false) override {}
 
-	void traverseNonInnermostCells(CellProcessor& cellProcessor) {}
+	void traverseCells(CellProcessor& cellProcessor) override {}
 
-	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {}
+	void traverseNonInnermostCells(CellProcessor& cellProcessor) override {}
 
-	ParticleIterator iterator(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) { return ParticleIterator(); }
+	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override {}
+
+	ParticleIterator iterator(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override { return ParticleIterator(); }
 
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
-										  ParticleIterator::Type t = ParticleIterator::ALL_CELLS) { return RegionParticleIterator(); }
+										  ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override { return RegionParticleIterator(); }
 
-	double getBoundingBoxMax(int dimension) const;
+	void deleteOuterParticles() override {}
 
-	void deleteOuterParticles() {}
+	double get_halo_L(int index) const override { return 0.0; }
 
-	double get_halo_L(int index) const { return 0.0; }
+	double getCutoff() override { return 0.0; }
 
-	double getCutoff() { return 0.0; }
-
-	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) {}
+	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) override {}
 
 	double
-	getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) { return 0.0; }
+	getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override { return 0.0; }
 
-	void updateInnerMoleculeCaches() {}
+	void updateInnerMoleculeCaches() override {}
 
-	void updateBoundaryAndHaloMoleculeCaches() {}
+	void updateBoundaryAndHaloMoleculeCaches() override {}
 
-	void updateMoleculeCaches() {}
-
-	ParticleCellBase* getCell(unsigned cellIndex) { return nullptr; }
-
-	const ParticleCellBase* getCell(unsigned cellIndex) const { return nullptr; }
+	void updateMoleculeCaches() override {}
 
 	bool getMoleculeAtPosition(const double pos[3],
-							   Molecule** result) { return false; } // pure virtual in particleContainer.h
+							   Molecule** result) override { return false; } // pure virtual in particleContainer.h
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength) { return 0; }
+								std::array<double, 3> simBoxLength) override { return 0; }
 
-	size_t getTotalSize() { return _basis.numMolecules() * sizeof(Molecule); }
+	size_t getTotalSize() override { return _basis.numMolecules() * sizeof(Molecule); }
 
-	void printSubInfo(int offset) { return; }
+	void printSubInfo(int offset) override { }
 
-	std::string getName() { return std::string("ParticleContainerToBasisWrapper"); }
+	std::string getName() override { return std::string("ParticleContainerToBasisWrapper"); }
 
 	double* getCellLength() override { return nullptr; }
 
@@ -166,8 +176,10 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 void ReplicaFiller::init() {
 	ParticleContainerToBasisWrapper basisContainer;
 	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
-	basisContainer.setBoundingBox(object);
 
+	// the following line is commented out, because the selection should not yet happen at this stage.
+	// see https://github.com/ls1mardyn/ls1-mardyn/pull/64
+	// basisContainer.setBoundingBox(object);
 
 #ifdef ENABLE_MPI
 	DomainDecomposition domainDecomp;
@@ -177,7 +189,13 @@ void ReplicaFiller::init() {
 	Domain domain(0);
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
 	_inputReader->readPhaseSpace(&basisContainer, &domain, &domainDecomp);
-	global_log->info() << "Number of molecules in the replica: " << basisContainer.getNumberOfParticles() << endl;
+	unsigned long numberOfParticles = basisContainer.getNumberOfParticles();
+	global_log->info() << "Number of molecules in the replica: " << numberOfParticles << endl;
+
+	if(numberOfParticles == 0){
+		global_log->error_always_output() << "No molecules in replica, aborting! " << endl;
+		Simulation::exit(1);
+	}
 
 	global_log->info() << "Setting simulation time to 0." << endl;
 	_simulation.setSimulationTime(0);
