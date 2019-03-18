@@ -18,8 +18,8 @@ using std::endl;
 void PrintThreadPinningToCPU() {
 	int mastercpu = sched_getcpu();
 
-	global_log->info() << "Thread pinning:" << std::endl;
-	global_log->info() << "Master thread running on " << mastercpu << std::endl;
+	global_log->info() << "	Thread pinning:" << std::endl;
+	global_log->info() << "	Master thread running on " << mastercpu << std::endl;
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -39,7 +39,7 @@ void PrintThreadPinningToCPU() {
 
 		for (int i = 0; i < numThreads; ++i) {
 			if (i == myID) {
-				global_log->info() << "	Thread with id " << myID << " is running on " << cpu << "." << endl;
+				global_log->info() << "		Thread with id " << myID << " is running on " << cpu << "." << endl;
 			}
 
 			#if defined(_OPENMP)
@@ -52,7 +52,7 @@ void PrintThreadPinningToCPU() {
 using Log::global_log;
 
 void PrintThreadPinningToCPU() {
-	global_log->warning() << "Thread pinning information cannot be obtained for this system/compiler by ls1. Please use OpenMP runtime system capabilities, i.e. KMP_AFFINITY=verbose with the Intel Compiler." << endl;
+	global_log->warning() << "	Thread pinning information cannot be obtained for this system/compiler by ls1. Please use OpenMP runtime system capabilities, i.e. KMP_AFFINITY=verbose with the Intel Compiler." << endl;
 }
 
 #endif

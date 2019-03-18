@@ -74,16 +74,16 @@ int get_mpi_info(char *info_str) {
 	#if defined(MPI_VERSION) and defined(MPI_SUBVERSION)
 
 		#if defined(MVAPICH2)
-			sprintf(info_str, "MPI library: MVAPICH2 (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+			sprintf(info_str, "with MVAPICH2 (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
 		#elif defined(OPEN_MPI)
-			sprintf(info_str, "MPI library: Open MPI %d.%d.%d (MPI %d.%d)", OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION, MPI_VERSION, MPI_SUBVERSION);
+			sprintf(info_str, "with Open MPI %d.%d.%d (MPI %d.%d)", OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION, MPI_VERSION, MPI_SUBVERSION);
 		#elif defined(CRAY_MPICH_VERSION)
-			sprintf(info_str, "MPI library: Cray MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+			sprintf(info_str, "with Cray MPI (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
 		#elif defined(I_MPI_VERSION)
-			sprintf(info_str, "MPI library: Intel MPI %s (MPI %d.%d)", I_MPI_VERSION, MPI_VERSION, MPI_SUBVERSION);
+			sprintf(info_str, "with Intel MPI %s (MPI %d.%d)", I_MPI_VERSION, MPI_VERSION, MPI_SUBVERSION);
 		#else
 			// unknown
-			sprintf(info_str, "MPI library: unknown (MPI %d.%d)", MPI_VERSION, MPI_SUBVERSION);
+			sprintf(info_str, "with unknown MPI (version %d.%d)", MPI_VERSION, MPI_SUBVERSION);
 		#endif
 
 	#else /* MPI_VERSION and MPI_SUBVERSION */
@@ -91,7 +91,7 @@ int get_mpi_info(char *info_str) {
 	#endif /* MPI_VERSION and MPI_SUBVERSION */
 
 #else /* ENABLE_MPI */
-	sprintf(info_str, "%s", "Compiled without MPI support.");
+	sprintf(info_str, "%s", "without MPI support.");
 #endif /* ENABLE_MPI */
 
 	return 0;
@@ -138,7 +138,7 @@ void get_precision_info(char *info_str) {
 
 void get_intrinsics_info(char *info_str) {
 #if VCP_VEC_TYPE==VCP_NOVEC
-	sprintf(info_str, "%s", "without");
+	sprintf(info_str, "%s", "none");
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	sprintf(info_str, "%s", "SSE3");
 #elif VCP_VEC_TYPE==VCP_VEC_AVX

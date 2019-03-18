@@ -56,41 +56,45 @@ void initOptions(optparse::OptionParser *op) {
  * @brief Helper function outputting program build information to given logger
  */
 void program_build_info(Log::Logger *log) {
+	log->info() << "Compilation info:" << endl;
+
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
-	log->info() << "Compiler: " << info_str << endl;
+	log->info() << "	Compiler:	" << info_str << endl;
 	get_compile_time(info_str);
-	log->info() << "Compiled: " << info_str << endl;
+	log->info() << "	Compiled on:	" << info_str << endl;
 	get_precision_info(info_str);
-	log->info() << "Compiled in " << info_str << " precision." << endl;
+	log->info() << "	Precision:	" << info_str << endl;
 	get_intrinsics_info(info_str);
-	log->info() << "Compiled with " << info_str << " intrinsics." << endl;
+	log->info() << "	Intrinsics:	" << info_str << endl;
 	get_rmm_normal_info(info_str);
-	log->info() << "RMM/normal: compiled in " << info_str << endl;
+	log->info() << "	RMM/normal:	" << info_str << endl;
 	get_openmp_info(info_str);
-	log->info() << "Compiled " << info_str << endl;
+	log->info() << "	OpenMP:		" << info_str << endl;
 	get_mpi_info(info_str);
-	log->info() << info_str << endl;
+	log->info() << "	MPI:		" << info_str << endl;
 }
 
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
 void program_execution_info(int argc, char **argv, Log::Logger *log) {
+	log->info() << "Execution info:" << endl;
+
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_timestamp(info_str);
-	log->info() << "Started: " << info_str << endl;
+	log->info() << "	Started: " << info_str << endl;
 	get_host(info_str);
-	log->info() << "Execution host: " << info_str << endl;
+	log->info() << "	Execution host: " << info_str << endl;
 	std::stringstream arguments;
 	for (int i = 0; i < argc; i++) {
 		arguments << " " << argv[i];
 	}
-	log->info() << "Started with arguments: " << arguments.str() << endl;
+	log->info() << "	Started with arguments: " << arguments.str() << endl;
 
 #if defined(_OPENMP)
 	int num_threads = mardyn_get_max_threads();
-	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
+	global_log->info() << "	Running with " << num_threads << " OpenMP threads." << endl;
 	// print thread pinning info
 	PrintThreadPinningToCPU();
 #endif
@@ -98,7 +102,7 @@ void program_execution_info(int argc, char **argv, Log::Logger *log) {
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
-	global_log->info() << "Running with " << world_size << " MPI processes." << endl;
+	global_log->info() << "	Running with " << world_size << " MPI processes." << endl;
 #endif
 }
 
