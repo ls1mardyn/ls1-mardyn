@@ -22,7 +22,7 @@ AutoPasContainer::AutoPasContainer()
 	  _traversalChoices(autopas::allTraversalOptions),
 	  _containerChoices(autopas::allContainerOptions),
 	  _selectorStrategy(autopas::SelectorStrategy::fastestMedian),
-	  _dataLayoutChoices(autopas::DataLayoutOption::soa){
+	  _dataLayoutChoices{autopas::DataLayoutOption::soa}{
 	// autopas::Logger::get()->set_level(spdlog::level::debug);
 }
 
