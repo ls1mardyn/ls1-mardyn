@@ -90,9 +90,9 @@ private:
 	typedef autopas::FullParticleCell<Molecule> CellType;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 
-	std::vector<autopas::TraversalOptions> _traversalChoices;
-	std::vector<autopas::ContainerOptions> _containerChoices;
-	autopas::SelectorStrategy _traversalSelectorStrategy;
-	autopas::SelectorStrategy _containerSelectorStrategy;
-	autopas::DataLayoutOption _dataLayout;
+	std::vector<autopas::TraversalOption> _traversalChoices;
+	std::vector<autopas::ContainerOption> _containerChoices;
+	autopas::SelectorStrategy _selectorStrategy;
+	std::vector<autopas::DataLayoutOption> _dataLayoutChoices;
+	std::vector<autopas::Newton3Option> _newton3Choices;
 };

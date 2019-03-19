@@ -34,9 +34,9 @@
       <datastructure type="AutoPas">
         <allowedTraversals>c01, c08, c18, sli, directsumtraversal</allowedTraversals>
         <allowedContainers>linkedCells, verletLists, directsum</allowedContainers>
-        <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
-        <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
-        <dataLayout>SoA</dataLayout>
+        <selectorStrategy>fastestMedian</selectorStrategy>
+        <dataLayouts>SoA</dataLayouts>
+        <newton3>enabled</newton3>
         <tuningInterval>1000</tuningInterval>
         <tuningSamples>3</tuningSamples>
       </datastructure>
