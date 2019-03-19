@@ -11,13 +11,12 @@ def printVariation(def it) {
 }
 
 def ciMatrix = [
-  //["SSE","NOVEC","AVX","AVX2","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
-  ["SSE","NOVEC","AVX","AVX2"], // VECTORIZE_CODE
-  ["DEBUG","RELEASE"],                                   // TARGET
-  ["0","1"],                                             // OPENMP
-  ["PAR","SEQ"],                                         // PARTYPE
-  ["DOUBLE","SINGLE","MIXED"],                           // PRECISION
-  ["0","1"]                                              // REDUCED_MEMORY_MODE
+  ["SSE","NOVEC","AVX","AVX2","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
+  ["DEBUG","RELEASE"],                               // TARGET
+  ["0","1"],                                         // OPENMP
+  ["PAR","SEQ"],                                     // PARTYPE
+  ["DOUBLE","SINGLE","MIXED"],                       // PRECISION
+  ["0","1"]                                          // REDUCED_MEMORY_MODE
 ]
 
 def combinationFilter(def it) {
@@ -40,6 +39,9 @@ def combinationFilter(def it) {
 
 // Holds the build results
 def results = [:]
+// Holds the id of the allocated slurm job and state
+def knl_jobid
+def knl_jobstate = "PENDING"
 
 pipeline {
   agent none
@@ -145,8 +147,10 @@ pipeline {
               return {
                 node(VECTORIZE_CODE) {
                   def ARCH = (NODE_NAME == "KNL-Cluster-login") ? "KNL" : "HSW"
-                  results.put(it.join('-'), [:])
-                  results[it.join('-')].put("runOn", ARCH)
+                  def build_result = "not run"
+                  def unit_test_result = "not run"
+                  def validation_test_result = "not run"
+                  try {
                   stage("${it.join('-')}") {
                     sh "rm -rf ${it.join('-')} || echo ''"
                     ws("${WORKSPACE}/${it.join('-')}") {
@@ -178,10 +182,10 @@ pipeline {
                             if (it.join('-') == "AVX2-DEBUG-0-PAR-DOUBLE-0") {
                               stash includes: "AVX2-DEBUG-0-PAR-DOUBLE-0", name: "build"
                             }
-                            results[it.join('-')].put("build", "success")
+                            build_result = "success"
                           }
                         } catch (err) {
-                          results[it.join('-')].put("build", "failure")
+                          build_result = "failure"
                           error err
                         }
                       }
@@ -190,6 +194,9 @@ pipeline {
                         stage("unit-test/${it.join('-')}") {
                           try {
                             printVariation(it)
+                            while (ARCH=="KNL" && knl_jobstate=="PENDING") {
+                              sleep 150
+                            }
                             def legacyCellProcessorOptions = ((VECTORIZE_CODE == "NOVEC") && (REDUCED_MEMORY_MODE == "0") ? [false, true] : [false])
                             for (legacyCellProcessor in legacyCellProcessorOptions) {
                               def legacyCellProcessorOption = (legacyCellProcessor ? "--legacy-cell-processor" : "")
@@ -201,13 +208,14 @@ pipeline {
                               } else if (ARCH=="KNL" && PARTYPE=="PAR") {
                                 sh """
                                   source /etc/profile.d/modules.sh
+                                  export SLURM_CONF=$HOME/slurm.conf
                                   export OMP_NUM_THREADS=10
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                   while : ; do
                                     set +e
-                                    output=`srun -n 2 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
+                                    output=`srun --jobid=$knl_jobid -n 4 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
                                     rc=\$?
-                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"* || \$output == *"Communication connection failure"*)]] ; then
                                       echo "srun submit limit reached or socket timed out error, trying again in 60s"
                                       sleep 60
                                       continue
@@ -220,13 +228,14 @@ pipeline {
                               } else if (ARCH=="KNL" && PARTYPE=="SEQ") {
                                 sh """
                                   source /etc/profile.d/modules.sh
+                                  export SLURM_CONF=$HOME/slurm.conf
                                   export OMP_NUM_THREADS=10
                                   export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                   while : ; do
                                     set +e
-                                    output=`srun -n 1 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
+                                    output=`srun --jobid=$knl_jobid -n 1 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
                                     rc=\$?
-                                    if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"*)]] ; then
+                                     if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"* || \$output == *"Communication connection failure"*)]] ; then
                                       echo "srun submit limit reached or socket timed out error, trying again in 60s"
                                       sleep 60
                                       continue
@@ -238,9 +247,9 @@ pipeline {
                                 """
                               }
                             }
-                            results[it.join('-')].put("unit-test", "success")
+                            unit_test_result = "success"
                           } catch (err) {
-                            results[it.join('-')].put("unit-test", "failure")
+                            unit_test_result = "failure"
                             error err
                           }
                           xunit([CppUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: 'results.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
@@ -267,7 +276,7 @@ pipeline {
                                 dir("validation/validationBase") {
                                   def sameParTypeOption = (fileExists ('../validationInput/' + configDirVar + '/compareSameParType')) ? "" : "-b"
                                   def mpicmd = (PARTYPE=="PAR" ? "-m 4" : "-m 1")
-                                  def mpiextra = (ARCH=="KNL" ? "-M \"srun\"" : "")
+                                  def mpiextra = (ARCH=="KNL" ? "-M \"srun --jobid=" + knl_jobid + "\"" : "")
                                   def allmpi = (ARCH=="KNL" ? "--allMPI" : "")
                                   def legacyCellProcessorOption = (legacyCellProcessor ? "--legacy-cell-processor" : "")
                                   def srunfix = (ARCH=="KNL" ? "--srunFix" : "")
@@ -288,6 +297,8 @@ pipeline {
                                           error 'New build not found!'
                                         }
                                         sh """
+                                          export OMP_NUM_THREADS=64
+                                          export SLURM_CONF=$HOME/slurm.conf
                                           echo "Running validation tests"
                                           rm ${it.join('-')} || echo ""
                                           cp ${WORKSPACE}/src/${it.join('-')} .
@@ -308,14 +319,28 @@ pipeline {
                                 }
                               }
                             }
-                            results[it.join('-')].put("validation-test", "success")
+                            validation_test_result = "success"
                           } catch (err) {
-                            results[it.join('-')].put("validation-test", "failure")
+                            validation_test_result = "failure"
                             error err
                           }
                         }
                       }
                     }
+                  }
+                  results.put(it.join('-'), [:])
+                  results[it.join('-')].put("runOn", ARCH)
+                  results[it.join('-')].put("build", build_result)
+                  results[it.join('-')].put("unit-test", unit_test_result)
+                  results[it.join('-')].put("validation-test", validation_test_result)
+                  }
+                  catch (err) {
+                    results.put(it.join('-'), [:])
+                    results[it.join('-')].put("runOn", ARCH)
+                    results[it.join('-')].put("build", build_result)
+                    results[it.join('-')].put("unit-test", unit_test_result)
+                    results[it.join('-')].put("validation-test", validation_test_result)
+                    error err
                   }
                 }
               }
@@ -326,6 +351,70 @@ pipeline {
           // FIXME can't be defined globally due to a bug in Jenkins:
           // https://issues.jenkins-ci.org/browse/JENKINS-49826
           matrixBuilder = { def matrix, int level ->
+            variations.failFast = true
+            // HACK Jobs to manage resource allocation on the knl cluster
+            variations["slurm"] = {
+              try {
+                node("KNL_PRIO") { // Executor on the CoolMUC3 login node reserved for slurm allocation and management
+                  parallel "allocation": {
+                    try {
+                      timeout(time: 6, unit: 'HOURS') {
+                        // Allocate a new interactive job with up to three nodes
+                        // and two hours maximum run time. The ci-matrix will
+                        // attach subjobs to this via srun and the slurm.slurmcontrol
+                        // stage will revoke the allocation as soon as we are done.
+                        // Until that, the shell needs to stay open for the job
+                        // to survive. Hence the second "sleep 7200".
+                        sh """
+                          export SLURM_CONF=$HOME/slurm.conf
+                          salloc --job-name=mardyn-test --nodes=1-4 --partition=mpp3_batch\
+                            --tasks-per-node=3 --time=00:45:00 --begin=now+150\
+                            sleep 45m || echo 0
+                          sleep 6h
+                        """
+                      }
+                    }
+                    // Stop the slurm.allocation on any error, but do not
+                    // propatate. Needed to allow slurm.slurmcontrol (below)
+                    // to kill slurm.* by throwing an error.
+                    catch (err) {
+                      println err
+                    }
+                  }, "slurmcontrol": {
+                    // Wait for slurm.allocation to work its magic
+                    sleep 10
+                    // Store jobid
+                    knl_jobid = sh(
+                      returnStdout: true,
+                      script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -O jobid | sed -n 2p'
+                    ).replace("\n", "")
+                    println "Scheduled job " + knl_jobid
+                    // Wait for all KNL jobs to finish by comparing the list
+                    // of scheduled jobs with the list of results
+                    while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
+                      sleep 150
+                      knl_jobstate = sh(
+                        returnStdout: true,
+                        script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -j $knl_jobid -O state | sed -n 2p'
+                      ).replace("\n", "")
+                      println knl_jobstate
+                    }
+                    // Revoke slurm job allocation
+                    sh "scancel $knl_jobid -f --user=ga38cor3"
+                    // Throw an error (that will not be propagated) to kill the
+                    // slurm.* stages. Without this, slurm.allocation would keep
+                    // running even after the allocation is revoked.
+                    error "all finished"
+                  },
+                  failFast: true // If one of the slurm.* stages throws an error, slurm.* is cancelled
+                }
+              }
+              // Only print all error signals. See above.
+              catch (err) {
+                println err
+              }
+            }
+            // Assemble CI-Matrix in a map
             for ( entry in matrix[0] ) {
               matrixEntry[level] = entry
               if (matrix.size() > 1 ) {
@@ -340,7 +429,14 @@ pipeline {
           }
 
           node { matrixBuilder(ciMatrix, 0) }
-          parallel variations
+          // Lock the KNL cluster while running the ci-matrix. This is needed
+          // because we are not allowed to submit more than one interactive job
+          // at a time. As soon as we're in post-build, the lock is released
+          // and another running job can access KNL.
+          // https://doku.lrz.de/display/PUBLIC/Resource+limits+for+parallel+jobs+on+Linux+Cluster
+          lock('KNL_slurm_allocation') {
+            parallel variations
+          }
         }
       }
     }
