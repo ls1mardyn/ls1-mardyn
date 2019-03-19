@@ -22,7 +22,9 @@ AutoPasContainer::AutoPasContainer()
 	  _traversalChoices(autopas::allTraversalOptions),
 	  _containerChoices(autopas::allContainerOptions),
 	  _selectorStrategy(autopas::SelectorStrategy::fastestMedian),
-	  _dataLayoutChoices{autopas::DataLayoutOption::soa}{
+	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
+	  _newton3Choices{autopas::Newton3Option::enabled}
+	  {
 	// autopas::Logger::get()->set_level(spdlog::level::debug);
 }
 
@@ -42,6 +44,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_dataLayoutChoices = autopas::utils::StringUtils::parseDataLayout(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa")));
 
+	_newton3Choices = autopas::utils::StringUtils::parseNewton3Options(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("newton3", "enabled")));
+
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
 
@@ -58,7 +63,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << endl
-					   << setw(valueOffset) << left << "Data Layout "
+					   << setw(valueOffset) << std::centi << "Data Layout "
 					   << ": " << dataLayoutChoicesStream.str() << endl
 					   << setw(valueOffset) << left << "Container "
 					   << ": " << containerChoicesStream.str() << endl
@@ -89,7 +94,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setAllowedContainers(_containerChoices);
 	_autopasContainer.setAllowedTraversals(_traversalChoices);
 	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
-	//_autopasContainer.setAllowedNewton3Options(_newton3Choices);
+	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 

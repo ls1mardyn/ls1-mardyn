@@ -94,4 +94,5 @@ private:
 	std::vector<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategy _selectorStrategy;
 	std::vector<autopas::DataLayoutOption> _dataLayoutChoices;
+	std::vector<autopas::Newton3Option> _newton3Choices;
 };

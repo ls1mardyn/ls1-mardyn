@@ -215,12 +215,13 @@
           - vcluster
           -->
         <allowedContainers>linkedCells, vcells, vcluster</allowedContainers>
-        <!-- specify what metric the respective selector should use to determine the optimal traversal -->
+        <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
-        <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
-        <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
-        <!-- Data layout to be used: AoS or SoA -->
-        <dataLayout>SoA</dataLayout>
+        <selectorStrategy>fastestMedian</selectorStrategy>
+        <!-- Data layouts to be used: AoS, SoA -->
+        <dataLayouts>SoA</dataLayouts>
+        <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
+        <newton3>enabled</newton3>
         <!-- How many iterations before retuning -->
         <tuningInterval>1000</tuningInterval>
         <!-- How many samples should the tuner take for each tested combination -->
