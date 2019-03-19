@@ -34,9 +34,9 @@
       <datastructure type="AutoPas">
         <allowedTraversals></allowedTraversals>
         <allowedContainers>verletLists</allowedContainers>
-        <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
-        <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
-        <dataLayout>aos</dataLayout>
+        <selectorStrategy>fastestMedian</selectorStrategy>
+        <dataLayouts>aos</dataLayouts>
+        <newton3>enabled</newton3>
         <tuningInterval>1000</tuningInterval>
         <tuningSamples>3</tuningSamples>
       </datastructure>

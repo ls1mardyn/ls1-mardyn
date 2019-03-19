@@ -42,7 +42,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median")));
 
 	_dataLayoutChoices = autopas::utils::StringUtils::parseDataLayout(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa")));
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayouts", "soa")));
 
 	_newton3Choices = autopas::utils::StringUtils::parseNewton3Options(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("newton3", "enabled")));
