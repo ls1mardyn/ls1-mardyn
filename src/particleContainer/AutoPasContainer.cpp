@@ -63,7 +63,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << endl
-					   << setw(valueOffset) << std::centi << "Data Layout "
+					   << setw(valueOffset) << left << "Data Layout "
 					   << ": " << dataLayoutChoicesStream.str() << endl
 					   << setw(valueOffset) << left << "Container "
 					   << ": " << containerChoicesStream.str() << endl
