@@ -21,9 +21,8 @@ AutoPasContainer::AutoPasContainer()
 	  _autopasContainer(),
 	  _traversalChoices(autopas::allTraversalOptions),
 	  _containerChoices(autopas::allContainerOptions),
-	  _traversalSelectorStrategy(autopas::SelectorStrategy::fastestMedian),
-	  _containerSelectorStrategy(autopas::SelectorStrategy::fastestMedian),
-	  _dataLayout(autopas::DataLayoutOption::soa){
+	  _selectorStrategy(autopas::SelectorStrategy::fastestMedian),
+	  _dataLayoutChoices(autopas::DataLayoutOption::soa){
 	// autopas::Logger::get()->set_level(spdlog::level::debug);
 }
 
@@ -37,17 +36,19 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_containerChoices = autopas::utils::StringUtils::parseContainerOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell")));
 
-	_traversalSelectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("traversalSelectorStrategy", "median")));
-	_containerSelectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("containerSelectorStrategy", "median")));
+	_selectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median")));
 
-	_dataLayout = autopas::utils::StringUtils::parseDataLayout(
+	_dataLayoutChoices = autopas::utils::StringUtils::parseDataLayout(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayout", "soa")));
 
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
 
+
+	std::stringstream dataLayoutChoicesStream;
+	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
+	         [&](auto &choice) { dataLayoutChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
 	std::stringstream containerChoicesStream;
 	for_each(_containerChoices.begin(), _containerChoices.end(),
 			 [&](auto &choice) { containerChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
@@ -57,17 +58,18 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << endl
-	                   << setw(valueOffset) << left << "Data Layout " << ": "
-	                   << autopas::utils::StringUtils::to_string(_dataLayout) << endl
-					   << setw(valueOffset) << left << "Container " << ": " << containerChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Container selector strategy " << ": "
-					   << autopas::utils::StringUtils::to_string(_containerSelectorStrategy) << endl
-					   << setw(valueOffset) << left << "Traversals " << ": " << traversalChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Traversal selector strategy " << ": "
-					   << autopas::utils::StringUtils::to_string(_traversalSelectorStrategy) << endl
-					   << setw(valueOffset) << left << "Tuning frequency" << ": "  << _tuningFrequency << endl
-					   << setw(valueOffset) << left << "Number of samples " << ": "  << _tuningSamples << endl
-					   ;
+					   << setw(valueOffset) << left << "Data Layout "
+					   << ": " << dataLayoutChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Container "
+					   << ": " << containerChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Traversals "
+					   << ": " << traversalChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Selector strategy "
+					   << ": " << autopas::utils::StringUtils::to_string(_selectorStrategy) << endl
+					   << setw(valueOffset) << left << "Tuning frequency"
+					   << ": " << _tuningFrequency << endl
+					   << setw(valueOffset) << left << "Number of samples "
+					   << ": " << _tuningSamples << endl;
 	xmlconfig.changecurrentnode(oldPath);
 }
 
@@ -76,9 +78,19 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
 
-	_autopasContainer.init(boxMin, boxMax, _cutoff, _verletSkin, _verletRebuildFrequency, _containerChoices,
-						   _traversalChoices, _containerSelectorStrategy, _traversalSelectorStrategy, _tuningFrequency,
-						   _tuningSamples);
+	_autopasContainer.setBoxMin(boxMin);
+	_autopasContainer.setBoxMax(boxMax);
+	_autopasContainer.setCutoff(_cutoff);
+	_autopasContainer.setVerletSkin(_verletSkin);
+	_autopasContainer.setVerletRebuildFrequency(_verletRebuildFrequency);
+	_autopasContainer.setTuningInterval(_tuningFrequency);
+	_autopasContainer.setNumSamples(_tuningSamples);
+	_autopasContainer.setSelectorStrategy(_selectorStrategy);
+	_autopasContainer.setAllowedContainers(_containerChoices);
+	_autopasContainer.setAllowedTraversals(_traversalChoices);
+	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
+	//_autopasContainer.setAllowedNewton3Options(_newton3Choices);
+	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
@@ -130,9 +142,10 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		std::array<double, 3> highCorner = {_boundingBoxMax[0], _boundingBoxMax[1], _boundingBoxMax[2]};
 
 		// generate the functor
-		autopas::LJFunctor<Molecule, CellType, /*newton3*/ true, /*calculateGlobals*/ true> functor(_cutoff, epsilon, sigma, shift,
-																				  lowCorner, highCorner,
-																				  /*duplicatedCalculation*/ true);
+		autopas::LJFunctor<Molecule, CellType, autopas::FunctorN3Modes::Both,
+						   /*calculateGlobals*/ true>
+			functor(_cutoff, epsilon, sigma, shift, lowCorner, highCorner,
+					/*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -141,7 +154,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		}
 
 		functor.resetGlobalValues();
-		_autopasContainer.iteratePairwise(&functor, _dataLayout);
+		_autopasContainer.iteratePairwise(&functor);
 		functor.postProcessGlobalValues(/*newton3*/ true);
 		double upot = functor.getUpot();
 		double virial = functor.getVirial();
