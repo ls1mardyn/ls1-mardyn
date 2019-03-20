@@ -56,55 +56,53 @@ void initOptions(optparse::OptionParser *op) {
  * @brief Helper function outputting program build information to given logger
  */
 void program_build_info(Log::Logger *log) {
+	log->info() << "Compilation info:" << endl;
+
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
-	log->info() << "Compiler: " << info_str << endl;
+	log->info() << "	Compiler:	" << info_str << endl;
 	get_compile_time(info_str);
-	log->info() << "Compiled: " << info_str << endl;
-#ifdef ENABLE_MPI
+	log->info() << "	Compiled on:	" << info_str << endl;
+	get_precision_info(info_str);
+	log->info() << "	Precision:	" << info_str << endl;
+	get_intrinsics_info(info_str);
+	log->info() << "	Intrinsics:	" << info_str << endl;
+	get_rmm_normal_info(info_str);
+	log->info() << "	RMM/normal:	" << info_str << endl;
+	get_openmp_info(info_str);
+	log->info() << "	OpenMP:		" << info_str << endl;
 	get_mpi_info(info_str);
-	log->info() << "MPI library: " << info_str << endl;
-#endif
-#if defined(MARDYN_SPSP)
-	log->info() << "Precision: Single" << endl;
-#elif defined(MARDYN_SPDP)
-	log->info() << "Precision: Mixed" << endl;
-#else
-	log->info() << "Precision: Double" << endl;
-#endif
-#if defined(_OPENMP)
-	log->info() << "Compiled with OpenMP support" << endl;
-#endif
+	log->info() << "	MPI:		" << info_str << endl;
 }
 
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
 void program_execution_info(int argc, char **argv, Log::Logger *log) {
+	log->info() << "Execution info:" << endl;
+
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_timestamp(info_str);
-	log->info() << "Started: " << info_str << endl;
+	log->info() << "	Started: " << info_str << endl;
 	get_host(info_str);
-	log->info() << "Execution host: " << info_str << endl;
+	log->info() << "	Execution host: " << info_str << endl;
 	std::stringstream arguments;
 	for (int i = 0; i < argc; i++) {
 		arguments << " " << argv[i];
 	}
-	log->info() << "Started with arguments: " << arguments.str() << endl;
+	log->info() << "	Started with arguments: " << arguments.str() << endl;
+
+#if defined(_OPENMP)
+	int num_threads = mardyn_get_max_threads();
+	global_log->info() << "	Running with " << num_threads << " OpenMP threads." << endl;
+	// print thread pinning info
+	PrintThreadPinningToCPU();
+#endif
+
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
-	global_log->info() << "Running with " << world_size << " MPI processes." << endl;
-#endif
-#if defined(_OPENMP)
-	int num_threads = mardyn_get_max_threads();
-	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
-
-	#if defined(ENABLE_REDUCED_MEMORY_MODE)
-	global_log->warning() << "Running in reduced memory mode. Not all features work in this mode." << endl;
-		// print thread pinning info
-		PrintThreadPinningToCPU();
-	#endif
+	global_log->info() << "	Running with " << world_size << " MPI processes." << endl;
 #endif
 }
 
@@ -249,13 +247,18 @@ int main(int argc, char** argv) {
 	sim_timer.stop();
 	double runtime = sim_timer.get_etime();
 	//!@todo time only for simulation.simulate not "main"!
-	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
+	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl << fixed << setprecision(5);
+	//  FIXME: The statements "<< fixed << setprecision(5)" after endl are so that the next logger timestamp appears as expected. A better solution would be nice, of course.
 
 	// print out total simulation speed
 	//!@todo is this correct w.r.t. starting from time > 0 ? We keep changing this...
 	const unsigned long numForceCalculations = simulation.getNumTimesteps();
 	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
-	global_log->info() << "Simulation speed: " << scientific << speed << " Molecule-updates per second." << endl;
+	global_log->info() << "Simulation speed: " << scientific << setprecision(6) << speed << " Molecule-updates per second." << endl << fixed << setprecision(5);
+
+	const double iterationsPerSecond = simulation.getNumTimesteps() / runtime;
+	global_log->info() << "Iterations per second: " << fixed << setprecision(3) << iterationsPerSecond << endl << fixed << setprecision(5);
+	global_log->info() << "Time per iteration: " << fixed << setprecision(3) << 1.0 / iterationsPerSecond << " seconds." << endl << fixed << setprecision(5);
 
 	simulation.finalize();
 
