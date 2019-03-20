@@ -1,0 +1,2 @@
+sudo dpkg -r ls1-standalone-generators
+
