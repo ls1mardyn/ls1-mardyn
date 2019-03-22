@@ -60,8 +60,11 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	std::stringstream traversalChoicesStream;
 	for_each(_traversalChoices.begin(), _traversalChoices.end(),
 			 [&](auto &choice) { traversalChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+	std::stringstream newton3ChoicesStream;
+	for_each(_newton3Choices.begin(), _newton3Choices.end(),
+	         [&](auto &choice) { newton3ChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
 
-	int valueOffset = 28;
+	int valueOffset = 20;
 	global_log->info() << "AutoPas configuration:" << endl
 					   << setw(valueOffset) << left << "Data Layout "
 					   << ": " << dataLayoutChoicesStream.str() << endl
@@ -74,7 +77,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 					   << setw(valueOffset) << left << "Tuning frequency"
 					   << ": " << _tuningFrequency << endl
 					   << setw(valueOffset) << left << "Number of samples "
-					   << ": " << _tuningSamples << endl;
+					   << ": " << _tuningSamples << endl
+					   << setw(valueOffset) << left << "Newton3"
+					   << ": " << newton3ChoicesStream.str() << endl;
 	xmlconfig.changecurrentnode(oldPath);
 }
 
