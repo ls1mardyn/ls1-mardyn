@@ -413,6 +413,13 @@ pipeline {
                   mpirun -n 2 ./AVX2-DEBUG-0-PAR-DOUBLE-0 ../examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
                 """
             }
+            dir ('tools/standalone-generators/build') {
+                sh """
+                    cmake ..
+                    make package
+                    make
+                """
+            }
           }
         }
         stage('export-src') {
@@ -423,7 +430,10 @@ pipeline {
             dir('unarchive') {
               sh 'tar -xf ../Mardyn-src.tar.gz'
               dir('src') {
-                sh 'make'
+                sh 'make -j4'
+              }
+              dir('build') {
+                sh 'cmake .. && make -j4'
               }
             }
           }

@@ -1,0 +1,3 @@
+make clean; rm -rf CMakeFiles */CMakeFiles _CPack_Packages install_manifest.txt *cmake */*cmake Makefile */Makefile CMakeCache.txt
+
+
