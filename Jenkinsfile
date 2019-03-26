@@ -413,6 +413,11 @@ pipeline {
                   mpirun -n 2 ./AVX2-DEBUG-0-PAR-DOUBLE-0 ../examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
                 """
             }
+            dir ('tools/standalone-generators/build') {
+                cmake ..
+                make package
+                make
+            }
           }
         }
         stage('export-src') {
