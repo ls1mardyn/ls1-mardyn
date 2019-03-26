@@ -11,7 +11,7 @@ add_subdirectory(mkesfera)
 add_subdirectory(mktcts)
 
 set(CPACK_GENERATOR "DEB")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "standalone external scenario generators for the MD code ls1 mardyn")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "standalone external scenario generators for the MD code ls1 mardyn")
 set(CPACK_PACKAGE_VERSION_MAJOR "1")
 set(CPACK_PACKAGE_VERSION_MINOR "2")
 set(CPACK_PACKAGE_VERSION_PATCH "1")
