@@ -414,9 +414,11 @@ pipeline {
                 """
             }
             dir ('tools/standalone-generators/build') {
-                cmake ..
-                make package
-                make
+                sh """
+                    cmake ..
+                    make package
+                    make
+                """
             }
           }
         }
