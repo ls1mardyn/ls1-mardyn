@@ -11,8 +11,12 @@ system which does not require a server to run in the background, like MongoDB et
 
 
 import ujson
-from tinydb import TinyDB
+from tinydb import TinyDB, Query
 import time
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 from Modes import FullHistory
 
 """ tinyDB is super lightweight both in installation and during runtime. Not optimal for performance or multi-process
@@ -32,8 +36,10 @@ if __name__ == "__main__":
 
     start = time.time()
 
+    gitPath = "/var/lib/jenkins/workspace/Testing/"
+
     # Databse file
-    db = TinyDB("results.json")
+    db = TinyDB(gitPath + "results.json")
 
     # TODO: this is for debugging only!
     # Clean the entire DB
@@ -45,7 +51,7 @@ if __name__ == "__main__":
     # TODO: Get from github
     #commits = ["abcdef", "zxywv"]
 
-    gitPath = "/mnt/c/MarDyn/MockPerformance"
+    
 
     fullH = FullHistory(gitPath)
 
@@ -71,5 +77,25 @@ if __name__ == "__main__":
     for result in avx2:
         print(result["commit"], result["MMUPS"])
     '''
+
+    q = Query()
+    res = db.search(q.vec == "AVX")
+    Cs = []
+    Ms = []
+    csv = open(gitPath + "data.csv", "w+")
+    csv.write("commit,MMUPS\n")
+    for r in res:
+    	print(r)
+    	csv.write(r["commit"] + "," + str(r["MMUPS"]) + "\n")
+    	Cs.append(r["commit"])
+    	Ms.append(r["MMUPS"])
+    csv.close()
+
+    plt.plot(Ms)
+    plt.xticks([i for i in range(0,len(Cs))], Cs, rotation="vertical")
+    plt.gca().invert_yaxis()
+    plt.gca().invert_xaxis()
+    plt.savefig(gitPath + "perf.png")
+
     end = time.time()
     print("DURATION", end - start, "seconds")
