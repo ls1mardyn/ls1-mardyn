@@ -9,7 +9,7 @@ system which does not require a server to run in the background, like MongoDB et
 
 """
 
-
+import sys
 import ujson
 from tinydb import TinyDB, Query
 import time
@@ -34,9 +34,23 @@ dSize = [50]
 
 if __name__ == "__main__":
 
+    REAL = False
+
+    if len(sys.argv) > 1:
+        print("arguments given: ")
+        print(str(sys.argv))
+
+        if sys.argv[1] == "-MarDyn":
+            gitPath = "/var/lib/jenkins/workspace/MarDynFull/"
+            REAL = True
+        else:
+            gitPath = "/var/lib/jenkins/workspace/Testing/"
+
+    else:
+        gitPath = "/var/lib/jenkins/workspace/Testing/"
+
     start = time.time()
 
-    gitPath = "/var/lib/jenkins/workspace/Testing/"
 
     # Databse file
     db = TinyDB(gitPath + "results.json")
