@@ -194,7 +194,7 @@ pipeline {
                           stage("unit-test/${it.join('-')}") {
                             try {
                               printVariation(it)
-                              while (ARCH=="KNL" && knl_jobstate=="PENDING") {
+                              while (ARCH=="KNL" && knl_jobstate != "RUNNING") {
                                 sleep 150
                               }
                               def legacyCellProcessorOptions = ((VECTORIZE_CODE == "NOVEC") && (REDUCED_MEMORY_MODE == "0") ? [false, true] : [false])
@@ -213,7 +213,7 @@ pipeline {
                                     export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                     while : ; do
                                       set +e
-                                      output=`srun --jobid=$knl_jobid -n 4 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
+                                      output=`srun --jobid=$knl_jobid -n 4 --time=00:10:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
                                       rc=\$?
                                       if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"* || \$output == *"Communication connection failure"*)]] ; then
                                         echo "srun submit limit reached or socket timed out error, trying again in 60s"
@@ -233,7 +233,7 @@ pipeline {
                                     export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
                                     while : ; do
                                       set +e
-                                      output=`srun --jobid=$knl_jobid -n 1 --time=00:05:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
+                                      output=`srun --jobid=$knl_jobid -n 1 --time=00:10:00 ./src/${it.join('-')} $legacyCellProcessorOption -t -d ./test_input/ 2>&1`
                                       rc=\$?
                                        if [[ \$rc == 1 && (\$output == *"Job violates accounting/QOS policy"* || \$output == *"Socket timed out on send/recv"* || \$output == *"Communication connection failure"*)]] ; then
                                         echo "srun submit limit reached or socket timed out error, trying again in 60s"
@@ -351,6 +351,7 @@ pipeline {
           // FIXME can't be defined globally due to a bug in Jenkins:
           // https://issues.jenkins-ci.org/browse/JENKINS-49826
           matrixBuilder = { def matrix, int level ->
+            // Fail the entire pipeline if one step fails
             variations.failFast = true
             // HACK Jobs to manage resource allocation on the knl cluster
             variations["slurm"] = {
