@@ -39,9 +39,26 @@ def combinationFilter(def it) {
 
 // Holds the build results
 def results = [:]
-// Holds the id of the allocated slurm job and state
-def knl_jobid
-def knl_jobstate = "PENDING"
+
+// Needed due to scope issues with global variables in groovy
+def getKnlJobid() {
+  def ret = sh(
+    returnStdout: true,
+    script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -O jobid | sed -n 2p'
+  ).replace("\n", "")
+  println ret
+  return ret
+}
+
+// Needed due to scope issues with global variables in groovy
+def getKnlJobstate(def knl_jobid) {
+  def ret = sh(
+    returnStdout: true,
+    script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -j $knl_jobid -O state | sed -n 2p'
+  ).replace("\n", "")
+  println ret
+  return ret
+}
 
 pipeline {
   agent none
@@ -194,8 +211,21 @@ pipeline {
                           stage("unit-test/${it.join('-')}") {
                             try {
                               printVariation(it)
-                              while (ARCH=="KNL" && knl_jobstate != "RUNNING") {
-                                sleep 150
+                              def knl_jobid
+                              def knl_jobstate
+                              if (ARCH=="KNL") {
+                                knl_jobid = getKnlJobid()
+                                knl_jobstate = getKnlJobstate(knl_jobid)
+                                while (knl_jobstate.contains("PENDING")) {
+                                  echo "Pending..."
+                                  sleep 300
+                                  knl_jobstate = getKnlJobstate(knl_jobid)
+                                }
+                                if (knl_jobstate.contains("RUNNING")) {
+                                  echo "Job running!"
+                                } else {
+                                  error "Unrecognized job state " + knl_jobstate
+                                }
                               }
                               def legacyCellProcessorOptions = ((VECTORIZE_CODE == "NOVEC") && (REDUCED_MEMORY_MODE == "0") ? [false, true] : [false])
                               for (legacyCellProcessor in legacyCellProcessorOptions) {
@@ -276,7 +306,7 @@ pipeline {
                                   dir("validation/validationBase") {
                                     def sameParTypeOption = (fileExists ('../validationInput/' + configDirVar + '/compareSameParType')) ? "" : "-b"
                                     def mpicmd = (PARTYPE=="PAR" ? "-m 4" : "-m 1")
-                                    def mpiextra = (ARCH=="KNL" ? "-M \"srun --jobid=" + knl_jobid + "\"" : "")
+                                    def mpiextra = (ARCH=="KNL" ? "-M \"srun --jobid=" + getKnlJobid() + "\"" : "")
                                     def allmpi = (ARCH=="KNL" ? "--allMPI" : "")
                                     def legacyCellProcessorOption = (legacyCellProcessor ? "--legacy-cell-processor" : "")
                                     def srunfix = (ARCH=="KNL" ? "--srunFix" : "")
@@ -385,20 +415,12 @@ pipeline {
                     // Wait for slurm.allocation to work its magic
                     sleep 10
                     // Store jobid
-                    knl_jobid = sh(
-                      returnStdout: true,
-                      script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -O jobid | sed -n 2p'
-                    ).replace("\n", "")
+                    knl_jobid = getKnlJobid()
                     println "Scheduled job " + knl_jobid
                     // Wait for all KNL jobs to finish by comparing the list
                     // of scheduled jobs with the list of results
                     while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
                       sleep 150
-                      knl_jobstate = sh(
-                        returnStdout: true,
-                        script: 'export SLURM_CONF=$HOME/slurm.conf && squeue -j $knl_jobid -O state | sed -n 2p'
-                      ).replace("\n", "")
-                      println knl_jobstate
                     }
                     // Revoke slurm job allocation
                     sh "scancel $knl_jobid -f --user=ga38cor3"
