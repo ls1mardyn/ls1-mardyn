@@ -196,9 +196,6 @@ pipeline {
                                     "VTK=1"
                                   ) + " -j4"
                               sh "mv `readlink MarDyn` ${it.join('-')}"
-                              if (it.join('-') == "AVX2-DEBUG-0-PAR-DOUBLE-0") {
-                                stash includes: "AVX2-DEBUG-0-PAR-DOUBLE-0", name: "build"
-                              }
                               build_result = "success"
                             }
                           } catch (err) {
@@ -391,16 +388,16 @@ pipeline {
                     try {
                       timeout(time: 6, unit: 'HOURS') {
                         // Allocate a new interactive job with up to three nodes
-                        // and two hours maximum run time. The ci-matrix will
+                        // and one hour maximum run time. The ci-matrix will
                         // attach subjobs to this via srun and the slurm.slurmcontrol
                         // stage will revoke the allocation as soon as we are done.
                         // Until that, the shell needs to stay open for the job
-                        // to survive. Hence the second "sleep 7200".
+                        // to survive. Hence the second sleep.
                         sh """
                           export SLURM_CONF=$HOME/slurm.conf
                           salloc --job-name=mardyn-test --nodes=1-4 --partition=mpp3_batch\
-                            --tasks-per-node=3 --time=00:45:00 --begin=now+150\
-                            sleep 45m || echo 0
+                            --tasks-per-node=3 --time=01:00:00 --begin=now+150\
+                            sleep 1h || echo 0
                           sleep 6h
                         """
                       }
@@ -417,10 +414,12 @@ pipeline {
                     // Store jobid
                     knl_jobid = getKnlJobid()
                     println "Scheduled job " + knl_jobid
-                    // Wait for all KNL jobs to finish by comparing the list
-                    // of scheduled jobs with the list of results
-                    while (results.count { key, value -> key.contains("KNL") } < variations.count { key, value -> key.contains("KNL") }) {
+                    // Wait for all jobs to finish by comparing the list of
+                    // scheduled jobs with the list of results
+                    while (results.size() < (variations.size()-1)) {
                       sleep 150
+                      println "variations: " + variations.size()
+                      println "results: " + results.size()
                     }
                     // Revoke slurm job allocation
                     sh "scancel $knl_jobid -f --user=ga38cor3"
@@ -526,8 +525,9 @@ pipeline {
             }
             dir ('executablerun') {
                 // Mktcts generator
-                unstash "build"
                 sh """
+                  make TARGET=DEBUG PARTYPE=PAR PRECISION=DOUBLE OPENMP=0 VTK=1 \
+                    REDUCED_MEMORY_MODE=0 UNIT_TESTS=1 VECTORIZE_CODE=AVX2 -j4
                   chmod 770 AVX2-DEBUG-0-PAR-DOUBLE-0
                   mpirun -n 2 ./AVX2-DEBUG-0-PAR-DOUBLE-0 ../examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
                 """
