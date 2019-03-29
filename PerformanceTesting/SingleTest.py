@@ -42,7 +42,7 @@ class SingleTest:
         os.chdir(source_dir)
         print(os.getcwd())
         #output = run(["make", "-f","../makefile/Makefile", "-j", "4", "-B"])
-        output = run(["make", "-f","../makefile/Makefile", "-j", "16"])
+        output = run(["make", "-f","../makefile/Makefile", "-j", "16", "-B"])
         if output.returncode == 0:
             # Run tests
             print("success")
