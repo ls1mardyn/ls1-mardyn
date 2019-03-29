@@ -49,7 +49,14 @@ class SingleTest:
             # TODO: run real MarDyn with a proper test scenario
             os.chdir("..")
             # TODO: Nest with try
-            test = run(["./src/MarDyn", "--steps", "100", "examples/general-plugins/example-plugin.xml"], stdout=PIPE, stderr=PIPE)
+            print(os.getcwd())
+            try:
+                test = run(["./src/MarDyn", "--steps", "100", "examples/general-plugins/example-plugin.xml"], stdout=PIPE, stderr=PIPE)
+                print(test.stdout)
+            except:
+                print(test.stdout)
+                print(test.stderr)
+                
             if test.returncode == 0:
                 try:
                     performance = float(re.search("([0-9]*\.[0-9]*e\+[0-9]*) Molecule-updates per second", str(test.stdout)).group(1))
