@@ -48,7 +48,7 @@ class SingleTest:
             print("success")
             # TODO: run real MarDyn with a proper test scenario
             os.chdir("..")
-            test = run(["./src/MarDyn", "--steps", "100", "examples/general-plugins/example-plugin.xml"], stdout=PIPE, stderr=PIPE)
+            test = run(["srun ./src/MarDyn", "--steps", "100", "examples/general-plugins/example-plugin.xml"], stdout=PIPE, stderr=PIPE)
             if test.returncode == 0:
                 try:
                     performance = float(re.search("([0-9]*\.[0-9]*e\+[0-9]*) Molecule-updates per second", str(test.stdout)).group(1))
