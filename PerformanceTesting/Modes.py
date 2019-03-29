@@ -16,7 +16,7 @@ class FullHistory:
         self.initialHead = self.repo.head.commit
         # Check for proper Repo
         if not self.repo.bare:
-            self.commits = list(self.repo.iter_commits(branch))
+            self.commits = list(self.repo.iter_commits())
         else:
             print("empty repo")
             exit(-1)
