@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     start = time.time()
 
-    gitPath = "/var/lib/jenkins/workspace/Remote Testing/MarDyn/"
+    gitPath = "/var/lib/jenkins/workspace/RemoteTesting/MarDyn/"
 
     # Databse file
     db = TinyDB(gitPath + "results.json")
