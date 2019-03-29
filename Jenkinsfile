@@ -416,7 +416,7 @@ pipeline {
                     println "Scheduled job " + knl_jobid
                     // Wait for all jobs to finish by comparing the list of
                     // scheduled jobs with the list of results
-                    while (results.size() < (variations.size()-1)) {
+                    while (results.size() < (variations.size()-2)) {
                       sleep 150
                       println "variations: " + variations.size()
                       println "results: " + results.size()
@@ -523,13 +523,17 @@ pipeline {
                 make -f Makefile.rayleigh -j2
               """
             }
+
+            // Build again normally
+            dir ('src') {
+              sh "make TARGET=DEBUG PARTYPE=PAR PRECISION=DOUBLE OPENMP=0 VTK=1 \
+                  REDUCED_MEMORY_MODE=0 UNIT_TESTS=1 VECTORIZE_CODE=AVX2 -j4"
+            }
             dir ('executablerun') {
                 // Mktcts generator
                 sh """
-                  make TARGET=DEBUG PARTYPE=PAR PRECISION=DOUBLE OPENMP=0 VTK=1 \
-                    REDUCED_MEMORY_MODE=0 UNIT_TESTS=1 VECTORIZE_CODE=AVX2 -j4
-                  chmod 770 AVX2-DEBUG-0-PAR-DOUBLE-0
-                  mpirun -n 2 ./AVX2-DEBUG-0-PAR-DOUBLE-0 ../examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
+                  chmod 770 ../src/AVX2-DEBUG-0-PAR-DOUBLE-0
+                  mpirun -n 2 ../src/AVX2-DEBUG-0-PAR-DOUBLE-0 ../examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
                 """
             }
             dir ('tools/standalone-generators/build') {
