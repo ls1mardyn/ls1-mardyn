@@ -42,7 +42,7 @@ class SingleTest:
         os.chdir(source_dir)
         print(os.getcwd())
         #output = run(["make", "-f","../makefile/Makefile", "-j", "4", "-B"])
-        output = run(["make", "-f","../makefile/Makefile", "-j", "4"])
+        output = run(["make", "-f","../makefile/Makefile", "-j", "16"])
         if output.returncode == 0:
             # Run tests
             print("success")
@@ -51,12 +51,12 @@ class SingleTest:
             # TODO: Nest with try
             print(os.getcwd())
             try:
-                test = run(["./src/MarDyn", "--steps", "100", "examples/general-plugins/example-plugin.xml"], stdout=PIPE, stderr=PIPE)
+                test = run(["./src/MarDyn", "--steps", "10", "--final-checkpoint", "0", "PerformanceTesting/TestScenario.xml"], stdout=PIPE, stderr=PIPE)
                 print(test.stdout)
             except:
                 print(test.stdout)
                 print(test.stderr)
-                
+
             if test.returncode == 0:
                 try:
                     performance = float(re.search("([0-9]*\.[0-9]*e\+[0-9]*) Molecule-updates per second", str(test.stdout)).group(1))
