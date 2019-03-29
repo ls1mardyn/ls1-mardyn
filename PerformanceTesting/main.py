@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     
 
-    fullH = FullHistory(gitPath)
+    fullH = FullHistory(gitPath, branch="kruegener_PerformanceIntegration")
 
     print("Starting main tests")
 
