@@ -41,11 +41,13 @@ class SingleTest:
         # Run make in source directory
         os.chdir(source_dir)
         print(os.getcwd())
-        output = run(["make", "-f","../makefile/Makefile", "-j", "4", "-B"])
+        #output = run(["make", "-f","../makefile/Makefile", "-j", "4", "-B"])
+        output = run(["make", "-f","../makefile/Makefile", "-j", "4"])
         if output.returncode == 0:
             # Run tests
             print("success")
             # TODO: run real MarDyn with a proper test scenario
+            os.chdir("..")
             test = run(["./src/MarDyn", "--steps", "100", "examples/general-plugins/example-plugin.xml"], stdout=PIPE, stderr=PIPE)
             if test.returncode == 0:
                 try:
