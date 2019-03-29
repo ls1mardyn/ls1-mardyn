@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     start = time.time()
 
-    gitPath = "/var/lib/jenkins/workspace/Testing/"
+    gitPath = "/var/lib/jenkins/workspace/Remote Testing/MarDyn/"
 
     # Databse file
     db = TinyDB(gitPath + "results.json")
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     plt.plot(Ms)
     plt.xticks([i for i in range(0,len(Cs))], Cs, rotation="vertical")
-    plt.gca().invert_yaxis()
+    #plt.gca().invert_yaxis()
     plt.gca().invert_xaxis()
     plt.savefig(gitPath + "perf.png")
 

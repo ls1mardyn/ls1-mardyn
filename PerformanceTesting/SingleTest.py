@@ -46,12 +46,13 @@ class SingleTest:
             # Run tests
             print("success")
             # TODO: run real MarDyn with a proper test scenario
-            test = run(["./MarDyn"], stdout=PIPE, stderr=PIPE)
+            test = run(["./src/MarDyn", "--steps", "100", "examples/general-plugins/example-plugin.xml"], stdout=PIPE, stderr=PIPE)
             if test.returncode == 0:
-                # Parse results
-                # TODO: Scientific notation
-                performance = re.search("([0-9]*.[0-9]*) Molecule-updates per second", str(test.stdout)).group(1)
-                self.MMUPS = performance
+                try:
+                    performance = float(re.search("([0-9]*\.[0-9]*e\+[0-9]*) Molecule-updates per second", str(test.stdout)).group(1))
+                    self.MMUPS = performance
+                except:
+                    self.MMUPS = -2
             else:
                 print("error", test.stderr)
                 # dont break on error, but set MMUPS to negative to indicate failure
