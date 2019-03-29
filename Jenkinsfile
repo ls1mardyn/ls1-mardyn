@@ -526,8 +526,12 @@ pipeline {
 
             // Build again normally
             dir ('src') {
-              sh "make TARGET=DEBUG PARTYPE=PAR PRECISION=DOUBLE OPENMP=0 VTK=1 \
-                  REDUCED_MEMORY_MODE=0 UNIT_TESTS=1 VECTORIZE_CODE=AVX2 -j4"
+              sh """
+                export VTK_INCDIR=/usr/include/vtk-6.3
+                export VTK_LIBDIR=/usr/lib
+                make TARGET=DEBUG PARTYPE=PAR PRECISION=DOUBLE OPENMP=0 \
+                  REDUCED_MEMORY_MODE=0 UNIT_TESTS=1 VECTORIZE_CODE=AVX2 VTK=1 -j4
+              """
             }
             dir ('executablerun') {
                 // Mktcts generator
