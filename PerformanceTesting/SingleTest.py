@@ -51,7 +51,8 @@ class SingleTest:
             # TODO: Nest with try
             print(os.getcwd())
             try:
-                test = run(["./src/MarDyn", "--steps", "10", "--final-checkpoint", "0", "PerformanceTesting/TestScenario.xml"], stdout=PIPE, stderr=PIPE)
+                # TODO better way of doing the testScenario location
+                test = run(["./src/MarDyn", "--steps", "10", "--final-checkpoint", "0", "/home/hpc/pr63so/di52sum/jenkins/workspace/RemoteTesting/testScript/PerformanceTesting/TestScenario.xml"], stdout=PIPE, stderr=PIPE)
                 print(test.stdout)
             except:
                 print(test.stdout)
