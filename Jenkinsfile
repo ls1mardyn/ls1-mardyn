@@ -489,20 +489,17 @@ pipeline {
         stage('libs and generators') {
           agent { label 'atsccs11' }
           steps {
-            // Build lib
-            sh "ls"
             unstash 'repo'
             dir('src') {
-              sh """
+              sh label: "Build libs", script: """
                 pwd
                 make -f ../makefile/Makefile.lib UNIT_TESTS=0 VTK=0 PARTYPE=SEQ TARGET=RELEASE -j3 clean
                 make -f ../makefile/Makefile.lib UNIT_TESTS=0 VTK=0 PARTYPE=SEQ TARGET=RELEASE -j3 lib
               """
             }
 
-            // Build generators
             dir ('tools/gui') {
-              sh """
+              sh label: "Build generators", script: """
                 export VTKINCLUDEPATH=/usr/include/vtk-6.3
                 tar xfz ScenarioGenerator.tar.gz
 
@@ -524,24 +521,26 @@ pipeline {
               """
             }
 
-            // Build again normally
             dir ('src') {
-              sh """
+              sh label: "Build again normally", script: """
                 export VTK_INCDIR=/usr/include/vtk-6.3
-                export VTK_LIBDIR=/usr/lib
+                export VTK_LIBDIR=/usr/lib7
+                make cleanall
                 make TARGET=DEBUG PARTYPE=PAR PRECISION=DOUBLE OPENMP=0 \
                   REDUCED_MEMORY_MODE=0 UNIT_TESTS=1 VECTORIZE_CODE=AVX2 VTK=1 -j4
               """
             }
             dir ('executablerun') {
-                // Mktcts generator
-                sh """
-                  chmod 770 ../src/AVX2-DEBUG-0-PAR-DOUBLE-0
-                  mpirun -n 2 ../src/AVX2-DEBUG-0-PAR-DOUBLE-0 ../examples/Generators/mkTcTS/config.xml --steps 100 --final-checkpoint=0
+                sh label: "Mktcts generator", script: """
+                  chmod 770 ../src/MarDyn.PAR_DEBUG_AVX2
+                  mpirun -n 2 ../src/MarDyn.PAR_DEBUG_AVX2 \
+                    ../examples/Generators/mkTcTS/config.xml --steps 100 \
+                    --final-checkpoint=0
                 """
             }
+
             dir ('tools/standalone-generators/build') {
-                sh """
+                sh label: "Build package", script: """
                     cmake ..
                     make package
                     make
