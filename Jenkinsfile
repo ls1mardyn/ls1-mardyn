@@ -532,10 +532,10 @@ pipeline {
             }
             dir ('executablerun') {
                 sh label: "Mktcts generator", script: """
-                  chmod 770 ../src/MarDyn.PAR_DEBUG_AVX2
-                  mpirun -n 2 ../src/MarDyn.PAR_DEBUG_AVX2 \
-                    ../examples/Generators/mkTcTS/config.xml --steps 100 \
-                    --final-checkpoint=0
+                  mv ../src/MarDyn*.PAR_DEBUG_AVX2 ./MarDyn
+                  chmod 770 ./MarDyn
+                  mpirun -n 2 ./MarDyn ../examples/Generators/mkTcTS/config.xml \
+                    --steps 100 --final-checkpoint=0
                 """
             }
 
