@@ -1,5 +1,5 @@
 # armadillo library
-option(ENABLE_ARMADILLO "Add armadillo" ON)
+option(ENABLE_ARMADILLO "Add armadillo" OFF)
 if(ENABLE_ARMADILLO)
   message(STATUS "Armadillo enabled")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMARDYN_ARMADILLO")
