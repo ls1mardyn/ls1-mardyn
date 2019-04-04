@@ -24,7 +24,7 @@ class FullHistory:
     def run(self, db):
         # TODO: max commits
         MAX_COMMITS = 1000
-        INTERVAL = 25
+        INTERVAL = 50
         for ci in self.commits[0:MAX_COMMITS:INTERVAL]:
             c = Commit(self.repo, ci.hexsha)
             #c.fullRun(db)
