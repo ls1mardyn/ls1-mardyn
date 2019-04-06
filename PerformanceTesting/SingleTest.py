@@ -52,7 +52,8 @@ class SingleTest:
             print(os.getcwd())
             try:
                 # TODO better way of doing the testScenario location
-                test = run(["./src/MarDyn", "--steps", "1000", "--final-checkpoint", "0", "/home/hpc/pr63so/di52sum/jenkins/workspace/RemoteTesting/testScript/PerformanceTesting/TestScenario.xml"], stdout=PIPE, stderr=PIPE)
+                # TODO: make srun optional
+                test = run(["srun ./src/MarDyn", "--steps", "1000", "--final-checkpoint", "0", "/home/hpc/pr63so/di52sum/jenkins/workspace/RemoteTesting/testScript/PerformanceTesting/TestScenario.xml"], stdout=PIPE, stderr=PIPE)
                 print(test.stdout)
             except:
                 print(test.stdout)
