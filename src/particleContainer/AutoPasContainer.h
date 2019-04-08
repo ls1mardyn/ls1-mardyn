@@ -19,7 +19,7 @@ public:
 
 	~AutoPasContainer() override {
 #ifdef ENABLE_MPI
-		_logFile.close()
+		_logFile.close();
 #endif
 	};
 
