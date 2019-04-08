@@ -17,7 +17,11 @@ class AutoPasContainer : public ParticleContainer {
 public:
 	AutoPasContainer();
 
-	~AutoPasContainer() override {};
+	~AutoPasContainer() override {
+#ifdef ENABLE_MPI
+		_logFile.close()
+#endif
+	};
 
 	// from ParticleContainer
 	void readXML(XMLfileUnits &xmlconfig) override;
