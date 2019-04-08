@@ -182,9 +182,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 			iter->clearFM();
 		}
 
-		functor.resetGlobalValues();
 		_autopasContainer.iteratePairwise(&functor);
-		functor.postProcessGlobalValues(/*newton3*/ true);
 		double upot = functor.getUpot();
 		double virial = functor.getVirial();
 
