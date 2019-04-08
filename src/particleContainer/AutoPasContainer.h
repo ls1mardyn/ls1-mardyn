@@ -17,7 +17,7 @@ class AutoPasContainer : public ParticleContainer {
 public:
 	AutoPasContainer();
 
-	~AutoPasContainer() override = default;
+	~AutoPasContainer() override {};
 
 	// from ParticleContainer
 	void readXML(XMLfileUnits &xmlconfig) override;
@@ -95,4 +95,8 @@ private:
 	autopas::SelectorStrategy _selectorStrategy;
 	std::vector<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::vector<autopas::Newton3Option> _newton3Choices;
+
+#ifdef ENABLE_MPI
+  	std::ofstream _logFile;
+#endif
 };
