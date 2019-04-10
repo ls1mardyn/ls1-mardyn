@@ -206,13 +206,13 @@ void ReplicaFiller::init() {
 
 int ReplicaFiller::getMolecule(Molecule* molecule) {
 	int ret = _gridFiller.getMolecule(molecule);
-
-	// change component if specified
-	if(molecule->componentid() != _componentid) {
-		cout << "Set componentid: " << _componentid << endl;
-		molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
+	if(ret != 0) {
+		// change component if specified
+		if (molecule->componentid() != _componentid) {
+			cout << "Set componentid: " << _componentid << endl;
+			molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
+		}
 	}
-
 	return ret;
 }
 
