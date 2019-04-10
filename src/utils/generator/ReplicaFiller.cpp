@@ -181,14 +181,9 @@ void ReplicaFiller::init() {
 	// see https://github.com/ls1mardyn/ls1-mardyn/pull/64
 	// basisContainer.setBoundingBox(object);
 
-#ifdef ENABLE_MPI
-	DomainDecomposition domainDecomp;
-#else
-	DomainDecompBase domainDecomp;
-#endif
 	Domain domain(0);
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
-	_inputReader->readPhaseSpace(&basisContainer, &domain, &domainDecomp);
+	_inputReader->readPhaseSpace(&basisContainer, &domain, &global_simulation->domainDecomposition());
 	unsigned long numberOfParticles = basisContainer.getNumberOfParticles();
 	global_log->info() << "Number of molecules in the replica: " << numberOfParticles << endl;
 
