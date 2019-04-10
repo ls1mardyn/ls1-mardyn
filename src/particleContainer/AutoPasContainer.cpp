@@ -196,11 +196,11 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 }
 
 void AutoPasContainer::traverseNonInnermostCells(CellProcessor &cellProcessor) {
-	throw std::runtime_error("not yet implemented");
+	throw std::runtime_error("AutoPasContainer::traverseNonInnermostCells() not yet implemented");
 }
 
 void AutoPasContainer::traversePartialInnermostCells(CellProcessor &cellProcessor, unsigned int stage, int stageCount) {
-	throw std::runtime_error("not yet implemented");
+	throw std::runtime_error("AutoPasContainer::traversePartialInnermostCells() not yet implemented");
 }
 
 unsigned long AutoPasContainer::getNumberOfParticles() { return _autopasContainer.getNumberOfParticles(); }
@@ -214,17 +214,17 @@ double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
 double AutoPasContainer::getCutoff() { return _cutoff; }
 
 void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
-	throw std::runtime_error("not yet implemented");
+	throw std::runtime_error("AutoPasContainer::deleteMolecule() not yet implemented");
 }
 
 double AutoPasContainer::getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1,
 								   CellProcessor &cellProcessor) {
-	throw std::runtime_error("not yet implemented");
+	throw std::runtime_error("AutoPasContainer::getEnergy() not yet implemented");
 }
 
-void AutoPasContainer::updateInnerMoleculeCaches() { throw std::runtime_error("not yet implemented"); }
+void AutoPasContainer::updateInnerMoleculeCaches() { throw std::runtime_error("AutoPasContainer::updateInnerMoleculeCaches() not yet implemented"); }
 
-void AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() { throw std::runtime_error("not yet implemented"); }
+void AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() { throw std::runtime_error("AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() not yet implemented"); }
 
 void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
@@ -243,10 +243,10 @@ bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **resul
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 											  std::array<double, 3> simBoxLength) {
-	throw std::runtime_error("not yet implemented");
+	throw std::runtime_error("AutoPasContainer::initCubicGrid() not yet implemented");
 }
 
-double *AutoPasContainer::getCellLength() { throw std::runtime_error("not yet implemented"); }
+double *AutoPasContainer::getCellLength() { throw std::runtime_error("AutoPasContainer::getCellLength() not yet implemented"); }
 
 autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 	switch (t) {
