@@ -239,7 +239,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				{
 					xmlconfig.changecurrentnode(nodeIter);
 					uint32_t cid = 0;
-					if(false == (xmlconfig.getNodeValue("@cid", cid) && cid < _numComponents) )
+					if(not (xmlconfig.getNodeValue("@cid", cid) && cid < _numComponents) )
 						global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << endl;
 
 					ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
@@ -307,7 +307,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			_nFileTypeFieldYR = RSFT_BINARY;
 			_strFilePrefixFieldYR = "fieldYR";
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("outputfile/@type", strFileTypeFieldYR);
-			if(true == bInputIsValid)
+			if(bInputIsValid)
 			{
 				if("ASCII" == strFileTypeFieldYR)
 					_nFileTypeFieldYR = RSFT_ASCII;
@@ -317,7 +317,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 					bInputIsValid = false;
 			}
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("outputfile/prefix", _strFilePrefixFieldYR);
-			if(true == bInputIsValid)
+			if(bInputIsValid)
 				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Writing y-r-field data to '" << strFileTypeFieldYR << "'-files "
 				"staring with prefix: " << _strFilePrefixFieldYR << endl;
 			else
@@ -331,7 +331,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/start", _initSamplingFieldYR);
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/frequency", _writeFrequencyFieldYR);
 			bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("control/stop", _stopSamplingFieldYR);
-			if(true == bInputIsValid)
+			if(bInputIsValid)
 			{
 				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Start sampling from simstep: " << _initSamplingFieldYR << endl;
 				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Sample with frequency: " << _writeFrequencyFieldYR << endl;
@@ -396,7 +396,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				else
 					bInputIsValid = false;
 
-				if(false == bInputIsValid)
+				if(not bInputIsValid)
 				{
 					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters for elements: 'subdivision' corrupted! Program exit..." << endl;
 					Simulation::exit(-1);
@@ -414,7 +414,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 
 void SampleRegion::prepareSubdivisionProfiles()
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
 	double dWidth = this->GetWidth(1);
@@ -438,7 +438,7 @@ void SampleRegion::prepareSubdivisionProfiles()
 
 void SampleRegion::prepareSubdivisionVDF()
 {
-	if(false == _SamplingEnabledVDF)
+	if(not _SamplingEnabledVDF)
 		return;
 
 	double dWidth = this->GetWidth(1);
@@ -462,7 +462,7 @@ void SampleRegion::prepareSubdivisionVDF()
 
 void SampleRegion::prepareSubdivisionFieldYR()
 {
-	if(false == _SamplingEnabledFieldYR)
+	if(not _SamplingEnabledFieldYR)
 		return;
 
 	double dWidth = this->GetWidth(1);
@@ -505,7 +505,7 @@ void SampleRegion::prepareSubdivisionFieldYR()
 
 void SampleRegion::initSamplingProfiles(int nDimension)
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
 	// Bin width
@@ -552,18 +552,18 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 #endif
 
 	// Offsets
-	for(unsigned int dir = 0; dir<3; ++dir)
+	for(unsigned int dir = 0; dir < 3; ++dir)
 		resizeExactly(_nOffsetScalar[dir],_numComponents);
 
-	for(unsigned int dim = 0; dim<3; ++dim)
-		for(unsigned int dir = 0; dir<3; ++dir)
+	for(unsigned int dim = 0; dim < 3; ++dim)
+		for(unsigned int dir = 0; dir < 3; ++dir)
 			resizeExactly(_nOffsetVector[dim][dir], _numComponents);
 
 	unsigned long nOffset;
 
 	// Scalar quantities
 	nOffset = 0;
-	for(unsigned int dir = 0; dir<3; ++dir){
+	for(unsigned int dir = 0; dir < 3; ++dir){
 		for(unsigned int cid = 0; cid<_numComponents; ++cid){
 			_nOffsetScalar[dir][cid] = nOffset;
 			nOffset += _nNumBinsProfiles;
@@ -571,8 +571,8 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	}
 	// Vector quantities
 	nOffset = 0;
-	for(unsigned int dim = 0; dim<3; ++dim){
-		for(unsigned int dir = 0; dir<3; ++dir){
+	for(unsigned int dim = 0; dim < 3; ++dim){
+		for(unsigned int dir = 0; dir < 3; ++dir){
 			for(unsigned int cid = 0; cid<_numComponents; ++cid){
 				_nOffsetVector[dim][dir][cid] = nOffset;
 				nOffset += _nNumBinsProfiles;
@@ -626,14 +626,14 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 
 void SampleRegion::initSamplingVDF(int nDimension)
 {
-	if(false == _SamplingEnabledVDF)
+	if(not _SamplingEnabledVDF)
 		return;
 
 	// Init component specific parameters
 	uint32_t nOffsetDataStructure = 0;
 	for(auto&& csp : _vecComponentSpecificParamsVDF)
 	{
-		if(false == csp.bSamplingEnabled)
+		if(not csp.bSamplingEnabled)
 			continue;
 		csp.nOffsetDataStructure = nOffsetDataStructure;
 		csp.dVelocityClassWidth = csp.dVeloMax / ((double)(csp.numVelocityClasses));
@@ -716,7 +716,7 @@ void SampleRegion::initSamplingVDF(int nDimension)
 
 void SampleRegion::initSamplingFieldYR(int nDimension)
 {
-	if(false == _SamplingEnabledFieldYR)
+	if(not _SamplingEnabledFieldYR)
 		return;
 
 	// equal shell volumes
@@ -824,10 +824,10 @@ void SampleRegion::initSamplingFieldYR(int nDimension)
 
 void SampleRegion::doDiscretisationProfiles(int nDimension)
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
-	if(_bDiscretisationDoneProfiles == true)  // if allready done -> return
+	if(_bDiscretisationDoneProfiles)  // if allready done -> return
 		return;
 
 	double* dLowerCorner = this->GetLowerCorner();
@@ -844,10 +844,10 @@ void SampleRegion::doDiscretisationProfiles(int nDimension)
 
 void SampleRegion::doDiscretisationVDF(int nDimension)
 {
-	if(false == _SamplingEnabledVDF)
+	if(not _SamplingEnabledVDF)
 		return;
 
-	if(_bDiscretisationDoneVDF == true)  // if allready done -> return
+	if(_bDiscretisationDoneVDF)  // if allready done -> return
 		return;
 
 	// calc discrete velocity values
@@ -867,10 +867,10 @@ void SampleRegion::doDiscretisationVDF(int nDimension)
 
 void SampleRegion::doDiscretisationFieldYR(int nDimension)
 {
-	if(false == _SamplingEnabledFieldYR)
+	if(not _SamplingEnabledFieldYR)
 		return;
 
-	if(_bDiscretisationDoneFieldYR == true)  // if allready done -> return
+	if(_bDiscretisationDoneFieldYR)  // if allready done -> return
 		return;
 
 	double* dLowerCorner = this->GetLowerCorner();
@@ -891,7 +891,7 @@ void SampleRegion::doDiscretisationFieldYR(int nDimension)
 
 void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
 	unsigned int nPosIndex;
@@ -928,7 +928,7 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 	v2[2] = v[2]*v[2];
 
 	// Loop over directions: all (+/-) | only (+) | only (-)
-	for(unsigned int dir = 0; dir<3; ++dir)
+	for(unsigned int dir = 0; dir < 3; ++dir)
 	{
 		// only (+)
 		if(1==dir && v[1] < 0.)
@@ -972,7 +972,7 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 
 		// Vector quantities
 		// Loop over dimensions  x, y, z (vector components)
-		for(unsigned int dim = 0; dim<3; ++dim)
+		for(unsigned int dim = 0; dim < 3; ++dim)
 		{
 			unsigned long vIndexAll = _nOffsetVector[dim][dir][0  ] + nPosIndex;
 			unsigned long vIndexCID = _nOffsetVector[dim][dir][cid] + nPosIndex;
@@ -1012,17 +1012,17 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 {
 
-	if(false == _SamplingEnabledVDF)
+	if(not _SamplingEnabledVDF)
 		return;
 
 	// return if discretisation is not done yet
 	// reason: v_max has to be determined first (when not set manually)
-	if(false == _bDiscretisationDoneVDF)
+	if(not _bDiscretisationDoneVDF)
 		return;
 
 	uint32_t cid = molecule->componentid()+1;  // 0: all components
 	const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
-	if(false == csp.bSamplingEnabled)
+	if(not csp.bSamplingEnabled)
 		return;
 	uint32_t nComponentOffset = csp.nOffsetDataStructure;
 
@@ -1050,14 +1050,14 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 	uint32_t naVelocityClassIndex[3];
 
 	_fptr(v, molecule);  // sample either velocity or force vector
-	for(unsigned int d=0; d<3; ++d) {
+	for(unsigned int d=0; d < 3; ++d) {
 		//v[d] = molecule->v(d);
 		naVelocityClassIndex[d] = (uint32_t)(floor( fabs( v[d] ) * dInvVelocityClassWidth) );
 	}
 
 	// respect finite resolution of velocity
 	uint32_t nIndexMaxVelo = numVelocityClasses - 1;
-	for(unsigned int d=0; d<3; ++d) {
+	for(unsigned int d=0; d < 3; ++d) {
 		if(naVelocityClassIndex[d] > nIndexMaxVelo)
 			return;
 	}
@@ -1065,14 +1065,14 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 	// sampling
 	bool bSampleComponentSum = _vecComponentSpecificParamsVDF.at(0).bSamplingEnabled;
 	// velocity components
-	for(unsigned int d=0; d<3; ++d)
+	for(unsigned int d=0; d < 3; ++d)
 	{
 		uint8_t ptrIndex = 2*(v[1]>0.)+(v[d]>0.);
 		#if defined(_OPENMP)
 		#pragma omp atomic
 		#endif
 		_dataPtrs.at(d).at(ptrIndex)[ nOffset + naVelocityClassIndex[d] ]++;
-		if(true == bSampleComponentSum) {
+		if(bSampleComponentSum) {
 			#if defined(_OPENMP)
 			#pragma omp atomic
 			#endif
@@ -1086,7 +1086,7 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 
 	if(v[1] > 0.)  // particle flux in positive y-direction
 	{
-		if(true == bSampleComponentSum) {
+		if(bSampleComponentSum) {
 			#if defined(_OPENMP)
 			#pragma omp atomic
 			#endif
@@ -1099,7 +1099,7 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 	}
 	else  // particle flux in negative y-direction
 	{
-		if(true == bSampleComponentSum) {
+		if(bSampleComponentSum) {
 			#if defined(_OPENMP)
 			#pragma omp atomic
 			#endif
@@ -1114,7 +1114,7 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 
 void SampleRegion::sampleFieldYR(Molecule* molecule)
 {
-	if(false == _SamplingEnabledFieldYR)
+	if(not _SamplingEnabledFieldYR)
 		return;
 
 	uint32_t nPosIndexY;
@@ -1188,7 +1188,7 @@ void SampleRegion::sampleFieldYR(Molecule* molecule)
 
 void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Domain* domain)
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
 	// perform reduce operation, process further calculations
@@ -1322,7 +1322,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	}
 
 	// Vector quantities
-	for(unsigned int dim = 0; dim<3; ++dim)
+	for(unsigned int dim = 0; dim < 3; ++dim)
 	{
 		unsigned long nDimOffset = _nNumValsScalar*dim;
 
@@ -1346,55 +1346,55 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 
 void SampleRegion::calcGlobalValuesVDF()
 {
-	if(false == _SamplingEnabledVDF)
+	if(not _SamplingEnabledVDF)
 		return;
 
-	#ifdef ENABLE_MPI
+#ifdef ENABLE_MPI
 
-		// positive y-direction
-		MPI_Reduce( _VDF_pjy_abs_local.data(), _VDF_pjy_abs_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	// positive y-direction
+	MPI_Reduce( _VDF_pjy_abs_local.data(), _VDF_pjy_abs_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_pjy_pvx_local.data(), _VDF_pjy_pvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_pjy_pvy_local.data(), _VDF_pjy_pvy_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_pjy_pvz_local.data(), _VDF_pjy_pvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_pjy_pvx_local.data(), _VDF_pjy_pvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_pjy_pvy_local.data(), _VDF_pjy_pvy_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_pjy_pvz_local.data(), _VDF_pjy_pvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_pjy_nvx_local.data(), _VDF_pjy_nvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_pjy_nvz_local.data(), _VDF_pjy_nvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_pjy_nvx_local.data(), _VDF_pjy_nvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_pjy_nvz_local.data(), _VDF_pjy_nvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
 
-		// negative y-direction
-		MPI_Reduce( _VDF_njy_abs_local.data(), _VDF_njy_abs_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	// negative y-direction
+	MPI_Reduce( _VDF_njy_abs_local.data(), _VDF_njy_abs_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_njy_pvx_local.data(), _VDF_njy_pvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_njy_pvz_local.data(), _VDF_njy_pvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_njy_pvx_local.data(), _VDF_njy_pvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_njy_pvz_local.data(), _VDF_njy_pvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		MPI_Reduce( _VDF_njy_nvx_local.data(), _VDF_njy_nvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_njy_nvy_local.data(), _VDF_njy_nvy_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Reduce( _VDF_njy_nvz_local.data(), _VDF_njy_nvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_njy_nvx_local.data(), _VDF_njy_nvx_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_njy_nvy_local.data(), _VDF_njy_nvy_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _VDF_njy_nvz_local.data(), _VDF_njy_nvz_global.data(), _numValsVDF, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-	#else
-		for(uint32_t vi=0; vi<_numValsVDF; ++vi)
-		{
-			_VDF_pjy_abs_global[vi] = _VDF_pjy_abs_local[vi];
-			_VDF_pjy_pvx_global[vi] = _VDF_pjy_pvx_local[vi];
-			_VDF_pjy_pvy_global[vi] = _VDF_pjy_pvy_local[vi];
-			_VDF_pjy_pvz_global[vi] = _VDF_pjy_pvz_local[vi];
-			_VDF_pjy_nvx_global[vi] = _VDF_pjy_nvx_local[vi];
-			_VDF_pjy_nvz_global[vi] = _VDF_pjy_nvz_local[vi];
+#else
+	for(uint32_t vi=0; vi<_numValsVDF; ++vi)
+	{
+		_VDF_pjy_abs_global[vi] = _VDF_pjy_abs_local[vi];
+		_VDF_pjy_pvx_global[vi] = _VDF_pjy_pvx_local[vi];
+		_VDF_pjy_pvy_global[vi] = _VDF_pjy_pvy_local[vi];
+		_VDF_pjy_pvz_global[vi] = _VDF_pjy_pvz_local[vi];
+		_VDF_pjy_nvx_global[vi] = _VDF_pjy_nvx_local[vi];
+		_VDF_pjy_nvz_global[vi] = _VDF_pjy_nvz_local[vi];
 
-			_VDF_njy_abs_global[vi] = _VDF_njy_abs_local[vi];
-			_VDF_njy_pvx_global[vi] = _VDF_njy_pvx_local[vi];
-			_VDF_njy_pvz_global[vi] = _VDF_njy_pvz_local[vi];
-			_VDF_njy_nvx_global[vi] = _VDF_njy_nvx_local[vi];
-			_VDF_njy_nvy_global[vi] = _VDF_njy_nvy_local[vi];
-			_VDF_njy_nvz_global[vi] = _VDF_njy_nvz_local[vi];
-		}
-	#endif
+		_VDF_njy_abs_global[vi] = _VDF_njy_abs_local[vi];
+		_VDF_njy_pvx_global[vi] = _VDF_njy_pvx_local[vi];
+		_VDF_njy_pvz_global[vi] = _VDF_njy_pvz_local[vi];
+		_VDF_njy_nvx_global[vi] = _VDF_njy_nvx_local[vi];
+		_VDF_njy_nvy_global[vi] = _VDF_njy_nvy_local[vi];
+		_VDF_njy_nvz_global[vi] = _VDF_njy_nvz_local[vi];
+	}
+#endif
 }
 
 void SampleRegion::calcGlobalValuesFieldYR(DomainDecompBase* domainDecomp, Domain* domain)
 {
-	if(false == _SamplingEnabledFieldYR)
+	if(not _SamplingEnabledFieldYR)
 		return;
 
 	// perform reduce operation, process further calculations
@@ -1436,7 +1436,7 @@ void SampleRegion::calcGlobalValuesFieldYR(DomainDecompBase* domainDecomp, Domai
 
 void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
 	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
@@ -1596,7 +1596,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 
 void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long simstep)
 {
-	if(false == _SamplingEnabledVDF)
+	if(not _SamplingEnabledVDF)
 		return;
 
 	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
@@ -1653,7 +1653,7 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 	for(uint64_t cid=0; cid<_numComponents; ++cid)
 	{
 		const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
-		if(false == csp.bSamplingEnabled)
+		if(not csp.bSamplingEnabled)
 			continue;
 
 		std::stringstream sstrOutput[numFiles];
@@ -1718,7 +1718,7 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 
 void SampleRegion::writeDataFieldYR(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
 {
-	if(false == _SamplingEnabledFieldYR)
+	if(not _SamplingEnabledFieldYR)
 		return;
 
 	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
@@ -1792,7 +1792,7 @@ void SampleRegion::writeDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 
 void SampleRegion::resetLocalValuesVDF()
 {
-	if(false == _SamplingEnabledVDF)
+	if(not _SamplingEnabledVDF)
 		return;
 
 	std::fill(_VDF_pjy_abs_local.begin(), _VDF_pjy_abs_local.end(), 0);
@@ -1813,7 +1813,7 @@ void SampleRegion::resetLocalValuesVDF()
 
 void SampleRegion::resetLocalValuesProfiles()
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
 	// Scalar quantities
@@ -1829,7 +1829,7 @@ void SampleRegion::resetLocalValuesProfiles()
 
 void SampleRegion::resetOutputDataProfiles()
 {
-	if(false == _SamplingEnabledProfiles)
+	if(not _SamplingEnabledProfiles)
 		return;
 
 	// Scalar quantities
@@ -1843,7 +1843,7 @@ void SampleRegion::resetOutputDataProfiles()
 
 void SampleRegion::resetLocalValuesFieldYR()
 {
-	if(false == _SamplingEnabledFieldYR)
+	if(not _SamplingEnabledFieldYR)
 		return;
 
 	// Scalar quantities
@@ -1859,7 +1859,7 @@ void SampleRegion::updateSlabParameters()
 	double* dLowerCorner = this->GetLowerCorner();
 
 	// profiles
-	if(true == _SamplingEnabledProfiles)
+	if(_SamplingEnabledProfiles)
 	{
 		_nNumBinsProfiles = round(dWidth / _dBinWidthProfilesInit);
 		_dBinWidthProfiles = dWidth / ( (double)(_nNumBinsProfiles) );
@@ -1870,7 +1870,7 @@ void SampleRegion::updateSlabParameters()
 	}
 
 	// VDF
-	if(true == _SamplingEnabledVDF)
+	if(_SamplingEnabledVDF)
 	{
 		_numBinsVDF = round(dWidth / _dBinWidthVDFInit);
 		_dBinWidthVDF = dWidth / ( (double)(_numBinsVDF) );
@@ -1948,7 +1948,7 @@ void RegionSampling::readXML(XMLfileUnits& xmlconfig)
 
 		bool bIsObserver = (refCoordsID[0]+refCoordsID[1]+refCoordsID[2]+refCoordsID[3]+refCoordsID[4]+refCoordsID[5]) > 0;
 
-		if(true == bIsObserver)
+		if(bIsObserver)
 		{
 			region->PrepareAsObserver(refCoordsID);
 			global_log->warning() << "Registration of Observer by plugin DistControl not possible yet." << endl;
