@@ -29,6 +29,7 @@
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
+#include "parallel/MultiSectionMethod.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -315,6 +316,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
+			}
+			else if(parallelisationtype == "MultiSectionMethod") {
+				delete _domainDecomposition;
+				_domainDecomposition = new MultiSectionMethod();
 			}
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
