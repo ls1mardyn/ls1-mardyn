@@ -246,7 +246,9 @@ unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMo
 	throw std::runtime_error("AutoPasContainer::initCubicGrid() not yet implemented");
 }
 
-double *AutoPasContainer::getCellLength() { throw std::runtime_error("AutoPasContainer::getCellLength() not yet implemented"); }
+double *AutoPasContainer::getCellLength() {
+	throw std::runtime_error("AutoPasContainer::getCellLength() not yet implemented");
+}
 
 autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 	switch (t) {
