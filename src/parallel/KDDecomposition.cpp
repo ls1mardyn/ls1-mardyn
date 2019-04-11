@@ -31,7 +31,7 @@ using Log::global_log;
 
 
 KDDecomposition::KDDecomposition() :
-		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(), _steps(0), _frequency(1.),
+		_globalNumCells(1), _decompTree(nullptr), _ownArea(nullptr), _numParticlesPerCell(), _steps(0), _frequency(1.),
 		_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
 		_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _clusteredHeterogeneouseSystems {false}, _splitBiggest(true), _forceRatio(false),
 		_splitThreshold(std::numeric_limits<int>::max()), _numParticleTypes {}, _maxPars{std::numeric_limits<int>::min()},
@@ -242,7 +242,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		}
 	}
 
-	if (rebalance == false) {
+	if (not rebalance) {
 		if(sendLeavingWithCopies()){
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 		} else {

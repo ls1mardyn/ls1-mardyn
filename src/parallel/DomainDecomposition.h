@@ -39,9 +39,6 @@ public:
 	void readXML(XMLfileUnits& xmlconfig) override;
 
 	// documentation see father class (DomainDecompBase.h)
-	bool procOwnsPos(double x, double y, double z, Domain* domain) override;
-
-	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain) override;
 
 	// documentation see father class (DomainDecompBase.h)

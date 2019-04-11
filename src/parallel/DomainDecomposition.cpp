@@ -89,17 +89,6 @@ void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {
-	if (x < getBoundingBoxMin(0, domain) || x >= getBoundingBoxMax(0, domain))
-		return false;
-	else if (y < getBoundingBoxMin(1, domain) || y >= getBoundingBoxMax(1, domain))
-		return false;
-	else if (z < getBoundingBoxMin(2, domain) || z >= getBoundingBoxMax(2, domain))
-		return false;
-	else
-		return true;
-}
-
 double DomainDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	return _coords[dimension] * domain->getGlobalLength(dimension) / _gridSize[dimension];
 }
