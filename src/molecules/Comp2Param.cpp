@@ -73,6 +73,10 @@ void Comp2Param::initialize(
 				}
 			}
 			ParaStrm& pstrmji = m_ssparatbl(compj, compi);
+			double xi_other = *mixpos;
+			++mixpos;
+			double eta_other = *mixpos;
+			++mixpos;
 			for (unsigned int centerj = 0; centerj < ncj; ++centerj) {
 				const LJcenter& ljcenterj = static_cast<const LJcenter&>(components[compj].ljcenter(centerj));
 				epsj = ljcenterj.eps();
@@ -81,8 +85,8 @@ void Comp2Param::initialize(
 					const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
 					epsi = ljcenteri.eps();
 					sigi = ljcenteri.sigma();
-					epsilon24 = 24. * xi * sqrt(epsi * epsj);
-					sigma2 = eta * .5 * (sigi + sigj);
+					epsilon24 = 24. * xi_other * sqrt(epsi * epsj);
+					sigma2 = eta_other * .5 * (sigi + sigj);
 					sigma2 *= sigma2;
 					sigperrc2 = sigma2 / (rcLJ * rcLJ);
 					sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
