@@ -15,10 +15,10 @@ class MultiSectionMethodTest : public utils::TestWithSimulationSetup {
 	TEST_SUITE_END();
 
 public:
-	void testGetOptimalGrid();
-	void testGetCoordsFromRank();
-	void testInitializeRegularGrid();
+	static void testGetOptimalGrid();
+	static void testGetCoordsFromRank();
+	static void testInitializeRegularGrid();
 
 private:
-	void testGetOptimalGridBody(std::array<double, 3> domainLength, int numProcs);
+	static void testGetOptimalGridBody(std::array<double, 3> domainLength, int numProcs);
 };

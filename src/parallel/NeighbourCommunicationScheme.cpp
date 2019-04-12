@@ -155,7 +155,7 @@ void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vec
 		switch (msgType) {
 		case LEAVING_AND_HALO_COPIES:
 			// this should not be called!
-			assert(false);
+			mardyn_assert(false);
 			break;
 		case LEAVING_ONLY:
 			domainDecomp->DomainDecompBase::handleDomainLeavingParticlesDirect(haloRegion, moleculeContainer);
@@ -191,7 +191,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	}
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , global_simulation->getcutoffRadius()};
 	std::vector<HaloRegion> haloRegions;
-	double* cellLength = moleculeContainer->getCellLength();
+	double* cellLength = moleculeContainer->getHaloSize();
 	switch (msgType) {
 	case LEAVING_AND_HALO_COPIES:
 		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
@@ -783,7 +783,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , cutoffRadius};
 
 	if (_pushPull) {
-		double* cellLength = moleculeContainer->getCellLength();
+		double* cellLength = moleculeContainer->getHaloSize();
 		// halo/force regions
 		std::vector<HaloRegion> haloOrForceRegions =
 				_zonalMethod->getHaloImportForceExportRegions(ownRegion,

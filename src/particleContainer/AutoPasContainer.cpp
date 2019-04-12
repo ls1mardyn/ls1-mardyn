@@ -14,7 +14,7 @@
 #include "parallel/DomainDecompBase.h"
 
 AutoPasContainer::AutoPasContainer()
-    : _cutoff(0.),
+	: _cutoff(0.),
 	  _verletSkin(0.3),
 	  _verletRebuildFrequency(10u),
 	  _tuningFrequency(1000u),
@@ -24,26 +24,22 @@ AutoPasContainer::AutoPasContainer()
 	  _containerChoices(autopas::allContainerOptions),
 	  _selectorStrategy(autopas::SelectorStrategy::fastestMedian),
 	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
-	  _newton3Choices{autopas::Newton3Option::enabled}
-	  {
-
+	  _newton3Choices{autopas::Newton3Option::enabled} {
 #ifdef ENABLE_MPI
-        std::stringstream logFileName;
+	std::stringstream logFileName;
 
-        auto timeNow = chrono::system_clock::now();
-        auto time_tNow = std::chrono::system_clock::to_time_t(timeNow);
+	auto timeNow = chrono::system_clock::now();
+	auto time_tNow = std::chrono::system_clock::to_time_t(timeNow);
 
-        auto maxRank = global_simulation->domainDecomposition().getNumProcs();
-        auto numDigitsMaxRank = std::to_string(maxRank).length();
+	auto maxRank = global_simulation->domainDecomposition().getNumProcs();
+	auto numDigitsMaxRank = std::to_string(maxRank).length();
 
-        logFileName << "AutoPas_Rank"
-                    << setfill('0') << setw(numDigitsMaxRank)
-                    << global_simulation->domainDecomposition().getRank() << "_"
-                    << std::put_time(std::localtime(&time_tNow), "%Y-%m-%d_%H-%M-%S")
-                    << ".log";
+	logFileName << "AutoPas_Rank" << setfill('0') << setw(numDigitsMaxRank)
+				<< global_simulation->domainDecomposition().getRank() << "_"
+				<< std::put_time(std::localtime(&time_tNow), "%Y-%m-%d_%H-%M-%S") << ".log";
 
-        _logFile.open(logFileName.str());
-        _autopasContainer = decltype(_autopasContainer)(_logFile);
+	_logFile.open(logFileName.str());
+	_autopasContainer = decltype(_autopasContainer)(_logFile);
 #endif
 }
 
@@ -69,10 +65,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
 
-
 	std::stringstream dataLayoutChoicesStream;
 	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
-	         [&](auto &choice) { dataLayoutChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+			 [&](auto &choice) { dataLayoutChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
 	std::stringstream containerChoicesStream;
 	for_each(_containerChoices.begin(), _containerChoices.end(),
 			 [&](auto &choice) { containerChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
@@ -81,7 +76,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 			 [&](auto &choice) { traversalChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
 	std::stringstream newton3ChoicesStream;
 	for_each(_newton3Choices.begin(), _newton3Choices.end(),
-	         [&](auto &choice) { newton3ChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+			 [&](auto &choice) { newton3ChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
 
 	int valueOffset = 20;
 	global_log->info() << "AutoPas configuration:" << endl
@@ -222,9 +217,13 @@ double AutoPasContainer::getEnergy(ParticlePairsHandler *particlePairsHandler, M
 	throw std::runtime_error("AutoPasContainer::getEnergy() not yet implemented");
 }
 
-void AutoPasContainer::updateInnerMoleculeCaches() { throw std::runtime_error("AutoPasContainer::updateInnerMoleculeCaches() not yet implemented"); }
+void AutoPasContainer::updateInnerMoleculeCaches() {
+	throw std::runtime_error("AutoPasContainer::updateInnerMoleculeCaches() not yet implemented");
+}
 
-void AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() { throw std::runtime_error("AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() not yet implemented"); }
+void AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() {
+	throw std::runtime_error("AutoPasContainer::updateBoundaryAndHaloMoleculeCaches() not yet implemented");
+}
 
 void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
@@ -248,6 +247,11 @@ unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMo
 
 double *AutoPasContainer::getCellLength() {
 	throw std::runtime_error("AutoPasContainer::getCellLength() not yet implemented");
+}
+
+double *AutoPasContainer::getHaloSize() {
+	static std::array<double, 3> haloLength{_verletSkin + _cutoff};
+	return haloLength.data();
 }
 
 autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {

@@ -6,6 +6,7 @@
 
 #include "MultiSectionMethod.h"
 #include "Domain.h"
+#include "NeighbourCommunicationScheme.h"
 
 MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
 	: _boxMin{0.}, _boxMax{0.}, _gridSize{0}, _gridCoords{0}, _cutoffRadius{cutoffRadius} {
@@ -15,6 +16,9 @@ MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
 	_gridSize = getOptimalGrid(domainLength, this->getNumProcs());
 	_gridCoords = getCoordsFromRank(_gridSize, _rank);
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, _gridSize, _gridCoords);
+	global_log->info() << "MultiSectionMethod initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
+					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
+					   << std::endl;
 }
 
 double MultiSectionMethod::getBoundingBoxMin(int dimension, Domain* /*domain*/) { return _boxMin[dimension]; }
@@ -25,11 +29,23 @@ double MultiSectionMethod::getBoundingBoxMax(int dimension, Domain* /*domain*/) 
 
 void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 											ParticleContainer* moleculeContainer, Domain* domain) {
-	// TODO
+	for (int d = 0; d < DIMgeom; ++d) {
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);
+	}
+	_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
+	if (sendLeavingWithCopies()) {
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+	} else {
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+		moleculeContainer->deleteOuterParticles();
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+	}
 }
 
 void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
 	DomainDecompMPIBase::readXML(xmlconfig);
+	global_log->info() << "The MultiSectionMethod is enforcing the direct-pp neighbor scheme using fs, so setting it."
+					   << std::endl;
 	setCommunicationScheme("direct-pp", "fs");
 }
 

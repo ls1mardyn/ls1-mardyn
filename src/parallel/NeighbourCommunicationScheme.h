@@ -130,6 +130,7 @@ public:
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain,
 			DomainDecompMPIBase* domainDecomp,
 			ParticleContainer* moleculeContainer) override;
+
 	virtual std::vector<int> get3StageNeighbourRanks() override {
 		std::vector<int> neighbourRanks;
 		for (unsigned int i = 0; i < (*_neighbours)[0].size(); i++) {
