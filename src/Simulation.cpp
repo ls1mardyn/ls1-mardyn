@@ -319,7 +319,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(parallelisationtype == "MultiSectionMethod") {
 				delete _domainDecomposition;
-				_domainDecomposition = new MultiSectionMethod();
+				_domainDecomposition = new MultiSectionMethod(getcutoffRadius(), _domain);
 			}
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;

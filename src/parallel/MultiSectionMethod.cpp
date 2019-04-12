@@ -17,20 +17,16 @@
  * @return The ordering.
  */
 template <typename ArrayType>
-std::vector<size_t>&& getOrdering(const ArrayType& data){
+std::vector<size_t> getOrdering(const ArrayType& data) {
 	std::vector<size_t> index(data.size(), 0);
-	for (int i = 0 ; i != index.size() ; i++) {
+	for (int i = 0; i != index.size(); i++) {
 		index[i] = i;
 	}
-	std::sort(index.begin(), index.end(),
-	     [&](const size_t& a, const size_t& b) {
-	       return (data[a] < data[b]);
-	     }
-	);
-	return std::move(index);
+	std::sort(index.begin(), index.end(), [&](const size_t& a, const size_t& b) { return (data[a] < data[b]); });
+	return index;
 }
 
-std::array<size_t, 3> getOptimalGrid(const std::array<double, 3>& domainLength, int numProcs) {
+std::array<size_t, 3> MultiSectionMethod::getOptimalGrid(const std::array<double, 3>& domainLength, int numProcs) {
 	// generate default grid
 	std::array<int, 3> gridSize{0};
 	MPI_CHECK(MPI_Dims_create(numProcs, 3, gridSize.data()));
@@ -48,9 +44,8 @@ std::array<size_t, 3> getOptimalGrid(const std::array<double, 3>& domainLength, 
 MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
 	: _boxMin{0.}, _boxMax{0.}, _gridSize{0}, _coords{0}, _cutoffRadius{cutoffRadius} {
 	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
-	                                      domain->getGlobalLength(2)};
+										  domain->getGlobalLength(2)};
 	_gridSize = getOptimalGrid(domainLength, this->getNumProcs());
-	
 }
 
 double MultiSectionMethod::getBoundingBoxMin(int dimension, Domain* /*domain*/) { return _boxMin[dimension]; }

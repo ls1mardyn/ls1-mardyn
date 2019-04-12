@@ -81,11 +81,22 @@ public:
 	}
 
 private:
-
+	/**
+	 * Get the optimal grid for the given dimensions of the box and the number of processes.
+	 * The grid is produced, s.t., the number of grid[0] * grid[1] * grid[2] == numProcs
+	 * The edge lengths of the grid will resemble the lengths of the domain, i.e., the longest edge of the domain will
+	 * also have the largest amount of grid points.
+	 * @param domainLength
+	 * @param numProcs
+	 * @return
+	 */
+	static std::array<size_t, 3> getOptimalGrid(const std::array<double, 3>& domainLength, int numProcs);
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
-	std::array<size_t, 3> _gridSize; //!< Number of processes in each dimension of the MPI process grid used by the MSM
-	std::array<size_t, 3> _coords; //!< Coordinate of the process in the MPI process grid used by the MSM
+	std::array<size_t, 3> _gridSize;  //!< Number of processes in each dimension of the MPI process grid used by the MSM
+	std::array<size_t, 3> _coords;    //!< Coordinate of the process in the MPI process grid used by the MSM
 	double _cutoffRadius;
+
+	friend class MultiSectionMethodTest;
 };
