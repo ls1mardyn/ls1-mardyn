@@ -41,18 +41,7 @@ void MkTcTSGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/) 
 unsigned long
 MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase*) {
 	// Mixing coefficients
-	vector<double>& dmixcoeff = domain->getmixcoeff();
-	dmixcoeff.clear();
-
-	unsigned int numcomponents = _simulation.getEnsemble()->getComponents()->size();
-	for(unsigned int i = 1; i < numcomponents; i++) {
-		for(unsigned int j = i + 1; j <= numcomponents; j++) {
-			double xi = 1., eta = 1.;
-
-			dmixcoeff.push_back(xi);
-			dmixcoeff.push_back(eta);
-		}
-	}
+	// Mixing coefficients are now only read from the XML file!
 
 	double T = _simulation.getEnsemble()->T();
 	double box[3];

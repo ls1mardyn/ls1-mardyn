@@ -531,6 +531,7 @@ void Domain::writeCheckpointHeader(string filename,
 			}
 			unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
 			unsigned int iout=0;
+			// TODO: this should be removed, but there will be backwards compatibility issues with reading.
 			for(vector<double>::const_iterator pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
 				checkpointfilestream << *pos;
 				iout++;

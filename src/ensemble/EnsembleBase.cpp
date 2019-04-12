@@ -138,4 +138,3 @@ void Ensemble::setComponentLookUpIDs() {
 		centers += c->numLJcenters();
 	}
 }
-
