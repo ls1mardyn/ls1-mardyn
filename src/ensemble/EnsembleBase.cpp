@@ -8,6 +8,7 @@
 #include "Domain.h"
 
 #include <vector>
+#include <array>
 
 using namespace std;
 using Log::global_log;
@@ -43,11 +44,6 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	uint32_t numMixingrules = 0;
 	numMixingrules = query.card();
 	global_log->info() << "Found " << numMixingrules << " mixing rules." << endl;
-	_mixingrules.resize(numMixingrules);
-
-	// data structure for mixing coefficients of domain class (still in use!!!)
-	std::vector<double>& dmixcoeff = global_simulation->getDomain()->getmixcoeff();
-	dmixcoeff.clear();
 
 	for(mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++) {
 		xmlconfig.changecurrentnode(mixingruletIter);
@@ -65,23 +61,67 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		}
 		mixingrule->readXML(xmlconfig);
 		_mixingrules.push_back(mixingrule);
-
-		/*
-		 * Mixing coefficients
-		 *
-		 * TODO: information of mixing rules (eta, xi) is stored in Domain class and its actually in use
-		 * --> we need to decide where this information should be stored in future, in ensemble class,
-		 * in the way it is done above?
-		 *
-		 */
-		double xi, eta;
-		xmlconfig.getNodeValue("xi", xi);
-		xmlconfig.getNodeValue("eta", eta);
-		dmixcoeff.push_back(xi);
-		dmixcoeff.push_back(eta);
 	}
+
+	setVectorOfMixingCoefficientsForComp2Param();
+
 	xmlconfig.changecurrentnode(oldpath);
 	setComponentLookUpIDs();
+}
+
+void Ensemble::setVectorOfMixingCoefficientsForComp2Param() const {
+	using std::vector;
+	using std::array;
+
+	// data structure for mixing coefficients of domain class (still in use!!!)
+
+	/*
+	 * Mixing coefficients
+	 *
+	 * TODO: information of mixing rules (eta, xi) is stored in Domain class and its actually in use
+	 * --> we need to decide where this information should be stored in future, in ensemble class,
+	 * in the way it is done above?
+	 *
+	 */
+
+	int numComponents = _components.size();
+
+	std::vector<double>& dmixcoeff = global_simulation->getDomain()->getmixcoeff();
+	dmixcoeff.clear();
+
+	// two dimensional vector of Xi and Eta values
+	// NOTE: initialise non-specified ones with default values of 1.0, 1.0
+	vector<vector<array<double, 2>>> values(numComponents, vector<array<double, 2>>(numComponents,{1.0, 1.0}));
+
+	for(auto m = _mixingrules.begin(); m != _mixingrules.end(); ++m) {
+		// cast to LB mixing rule
+		LorentzBerthelotMixingRule & rule = dynamic_cast<LorentzBerthelotMixingRule &>(**m);
+		unsigned compID1 = rule.getCid1()-1;
+		unsigned compID2 = rule.getCid2()-1;
+
+		values[compID1][compID2][0] = rule.getEta();
+		values[compID1][compID2][1] = rule.getXi();
+	}
+
+	// follow the precise way of initialising shit in Comp2Param::initialize
+	// i.e. sort-of symmetrically initialised
+	for (int cid1 = 0; cid1 < numComponents; ++cid1) {
+		for (int cid2 = cid1 + 1; cid2 < numComponents; ++cid2) {
+			{
+				double eta = values[cid1][cid2][0];
+				double xi = values[cid1][cid2][1];
+				dmixcoeff.push_back(eta);
+				dmixcoeff.push_back(xi);
+			}
+			// now push symmetric value, because of how values are read
+			{
+				double eta = values[cid2][cid1][0];
+				double xi = values[cid2][cid1][1];
+				dmixcoeff.push_back(eta);
+				dmixcoeff.push_back(xi);
+			}
+		}
+	}
 }
 
 void Ensemble::setComponentLookUpIDs() {
@@ -98,3 +138,4 @@ void Ensemble::setComponentLookUpIDs() {
 		centers += c->numLJcenters();
 	}
 }
+

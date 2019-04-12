@@ -11,9 +11,18 @@ public:
 	virtual ~MixingRuleBase(){};
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
+
+	unsigned int getCid1() const {
+		return _cid1;
+	}
+
+	unsigned int getCid2() const {
+		return _cid2;
+	}
+
 private:
-	std::string _cid1;
-	std::string _cid2;
+	unsigned int _cid1;
+	unsigned int _cid2;
 };
 
 #endif /* MIXINGRULE_BASE_H_ */

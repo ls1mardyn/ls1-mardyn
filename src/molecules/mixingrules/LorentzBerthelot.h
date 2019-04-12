@@ -11,6 +11,14 @@ public:
 	virtual ~LorentzBerthelotMixingRule() {}
 	void readXML(XMLfileUnits& xmlconfig);
 
+	double getEta() const {
+		return _eta;
+	}
+
+	double getXi() const {
+		return _xi;
+	}
+
 private:
 	double _eta;
 	double _xi;

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include <map>
 
 #include "DomainBase.h"
@@ -123,6 +124,7 @@ public:
 
 protected:
 
+	void setVectorOfMixingCoefficientsForComp2Param() const;
 
 	std::vector<Component> _components;
 	std::map<std::string, int> _componentnamesToIds;

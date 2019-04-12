@@ -11,5 +11,7 @@ void MixingRuleBase::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("@cid2", _cid2);
 	global_log->info() << "Component id1: " << _cid1 << endl;
 	global_log->info() << "Component id2: " << _cid2 << endl;
+
+
 }
 
