@@ -7,6 +7,32 @@
 #include "MultiSectionMethod.h"
 #include "Domain.h"
 
+MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
+	: _boxMin{0.}, _boxMax{0.}, _gridSize{0}, _gridCoords{0}, _cutoffRadius{cutoffRadius} {
+	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
+										  domain->getGlobalLength(2)};
+
+	_gridSize = getOptimalGrid(domainLength, this->getNumProcs());
+	_gridCoords = getCoordsFromRank(_gridSize, _rank);
+	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, _gridSize, _gridCoords);
+}
+
+double MultiSectionMethod::getBoundingBoxMin(int dimension, Domain* /*domain*/) { return _boxMin[dimension]; }
+
+MultiSectionMethod::~MultiSectionMethod() = default;
+
+double MultiSectionMethod::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _boxMax[dimension]; }
+
+void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
+											ParticleContainer* moleculeContainer, Domain* domain) {
+	// TODO
+}
+
+void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
+	DomainDecompMPIBase::readXML(xmlconfig);
+	setCommunicationScheme("direct-pp", "fs");
+}
+
 /**
  * Get the ordering of the input data.
  * The ordering will contain indices of elements of data, starting with the smallest going to the biggest.
@@ -41,23 +67,29 @@ std::array<size_t, 3> MultiSectionMethod::getOptimalGrid(const std::array<double
 	return grid;
 }
 
-MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
-	: _boxMin{0.}, _boxMax{0.}, _gridSize{0}, _coords{0}, _cutoffRadius{cutoffRadius} {
-	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
-										  domain->getGlobalLength(2)};
-	_gridSize = getOptimalGrid(domainLength, this->getNumProcs());
+std::array<size_t, 3> MultiSectionMethod::getCoordsFromRank(const std::array<size_t, 3>& gridSize, int rank) {
+	auto yzSize = gridSize[1] * gridSize[2];
+	auto zSize = gridSize[2];
+	auto x = rank / yzSize;
+	auto y = (rank - x * yzSize) / zSize;
+	auto z = (rank - x * yzSize - y * zSize);
+	return {x, y, z};
 }
 
-double MultiSectionMethod::getBoundingBoxMin(int dimension, Domain* /*domain*/) { return _boxMin[dimension]; }
-
-MultiSectionMethod::~MultiSectionMethod() = default;
-
-double MultiSectionMethod::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _boxMax[dimension]; }
-
-void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
-											ParticleContainer* moleculeContainer, Domain* domain) {}
-
-void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
-	DomainDecompMPIBase::readXML(xmlconfig);
-	setCommunicationScheme("direct-pp", "fs");
+std::tuple<std::array<double, 3>, std::array<double, 3>> MultiSectionMethod::initializeRegularGrid(
+	const std::array<double, 3>& domainLength, const std::array<size_t, 3>& gridSize,
+	const std::array<size_t, 3>& gridCoords) {
+	std::array<double, 3> boxMin{0.};
+	std::array<double, 3> boxMax{0.};
+	// initialize it as regular grid!
+	for (size_t dim = 0; dim < 3; ++dim) {
+		boxMin[dim] = gridCoords[dim] * domainLength[dim] / gridSize[dim];
+		boxMax[dim] = (gridCoords[dim] + 1) * domainLength[dim] / gridSize[dim];
+		if (gridCoords[dim] == gridSize[dim] - 1) {
+			// ensure that the upper domain boundaries match.
+			// lower domain boundaries always match, because they are 0.
+			boxMax[dim] = domainLength[dim];
+		}
+	}
+	return std::make_tuple(boxMin, boxMax);
 }

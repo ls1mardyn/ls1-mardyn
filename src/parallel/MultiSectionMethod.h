@@ -8,6 +8,12 @@
 
 #include "DomainDecompMPIBase.h"
 
+/**
+ * This method uses sth. similar to a grid of mpi-ranks and works in the following way:
+ * 1. First the domain is split along the x dimension.
+ * 2. Secondly in the y dimension
+ * 3. Thirdly in the z dimension
+ */
 class MultiSectionMethod : public DomainDecompMPIBase {
 public:
 	/**
@@ -91,11 +97,32 @@ private:
 	 * @return
 	 */
 	static std::array<size_t, 3> getOptimalGrid(const std::array<double, 3>& domainLength, int numProcs);
+
+	/**
+	 * Get the coordinates from the rank.
+	 * S.t. rank = x * gridSize[1]*gridSize[2] + y * gridSize[2] + z
+	 * @param gridSize
+	 * @param rank
+	 * @return
+	 */
+	static std::array<size_t, 3> getCoordsFromRank(const std::array<size_t, 3>& gridSize, int rank);
+
+	/**
+	 * Returns boxMin and boxMax according to regular grid.
+	 * @param domainLength
+	 * @param gridSize
+	 * @param gridCoords
+	 * @return boxMin and boxMax
+	 */
+	static std::tuple<std::array<double, 3>, std::array<double, 3>> initializeRegularGrid(
+		const std::array<double, 3>& domainLength, const std::array<size_t, 3>& gridSize,
+		const std::array<size_t, 3>& gridCoords);
+
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
 	std::array<size_t, 3> _gridSize;  //!< Number of processes in each dimension of the MPI process grid used by the MSM
-	std::array<size_t, 3> _coords;    //!< Coordinate of the process in the MPI process grid used by the MSM
+	std::array<size_t, 3> _gridCoords;  //!< Coordinate of the process in the MPI process grid used by the MSM
 	double _cutoffRadius;
 
 	friend class MultiSectionMethodTest;
