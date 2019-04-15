@@ -44,6 +44,9 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	uint32_t numMixingrules = 0;
 	numMixingrules = query.card();
 	global_log->info() << "Found " << numMixingrules << " mixing rules." << endl;
+	if(numMixingrules > 0) {
+		global_log->info() << "Mixing rules are applied symmetrically: specifying a rule for AB also sets BA." << endl;
+	}
 
 	for(mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++) {
 		xmlconfig.changecurrentnode(mixingruletIter);
@@ -57,16 +60,69 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 
 		} else {
 			global_log->error() << "Unknown mixing rule " << mixingruletype << endl;
+			global_log->error() << "Only rule type LB supported." << endl;
 			Simulation::exit(1);
 		}
 		mixingrule->readXML(xmlconfig);
 		_mixingrules.push_back(mixingrule);
 	}
 
+	checkMixingRules();
 	setVectorOfMixingCoefficientsForComp2Param();
 
 	xmlconfig.changecurrentnode(oldpath);
 	setComponentLookUpIDs();
+}
+
+void Ensemble::checkMixingRules() const {
+	using std::vector;
+
+	int numMixingRules = _mixingrules.size();
+	int numComponents = _components.size();
+
+	//1 Comps: 0 coeffs; 2 Comps: 1 coeffs; 3 Comps: 3 coeffs; 4 Comps 6 coeffs : C * (C-1) / 2
+	int exactNumMixingRules = numComponents * (numComponents - 1) / 2;
+
+	if (numMixingRules < exactNumMixingRules) {
+		global_log->info() << "Found " << numMixingRules << " which is smaller than total number of mixing rules: " << exactNumMixingRules << "." << endl;
+		global_log->info() << "The remaining mixing rules are populated with default values of (xi, eta) = (1.0, 1.0)." << endl;
+	} else if (numMixingRules > exactNumMixingRules) {
+		global_log->error() << "Found " << numMixingRules << " which is larger than total number of mixing rules: " << exactNumMixingRules << "." << endl;
+		global_log->error() << "Aborting." << endl;
+		Simulation::exit(2019);
+	}
+
+
+	// check that:
+	// II doesn't appear,
+	// if IJ appears, then JI doesn't appear.
+	vector<vector<int>> flags(numComponents, vector<int>(numComponents, 0));
+
+	for(auto m = _mixingrules.begin(); m != _mixingrules.end(); ++m) {
+
+		unsigned compID1 = (*m)->getCid1()-1;
+		unsigned compID2 = (*m)->getCid2()-1;
+
+		if (compID1 == compID2) {
+			global_log->error() << "Specified rule for same component ids: " << compID1 << " and " << compID2 <<", which is not allowed." << endl;
+			global_log->error() << "Aborting." << endl;
+			Simulation::exit(2019);
+		}
+
+		flags[compID1][compID2] ++;
+	}
+
+	for (int cid1 = 0; cid1 < numComponents; ++cid1) {
+		for (int cid2 = cid1 + 1; cid2 < numComponents; ++cid2) {
+			int flag = flags[cid1][cid2];
+			if (flag > 1) {
+				global_log->error() << "Specified rule for component ids: " << cid1 << " and " << cid2 <<" more than once, which is not allowed." << endl;
+				global_log->error() << "If you specify " << cid1 << " and " << cid2 <<", then you must not specify " << cid2 << " and " << cid1 << "." << endl;
+				global_log->error() << "Aborting." << endl;
+				Simulation::exit(2019);
+			}
+		}
+	}
 }
 
 void Ensemble::setVectorOfMixingCoefficientsForComp2Param() const {
@@ -107,19 +163,10 @@ void Ensemble::setVectorOfMixingCoefficientsForComp2Param() const {
 	// i.e. sort-of symmetrically initialised
 	for (int cid1 = 0; cid1 < numComponents; ++cid1) {
 		for (int cid2 = cid1 + 1; cid2 < numComponents; ++cid2) {
-			{
-				double eta = values[cid1][cid2][0];
-				double xi = values[cid1][cid2][1];
-				dmixcoeff.push_back(eta);
-				dmixcoeff.push_back(xi);
-			}
-			// now push symmetric value, because of how values are read
-			{
-				double eta = values[cid2][cid1][0];
-				double xi = values[cid2][cid1][1];
-				dmixcoeff.push_back(eta);
-				dmixcoeff.push_back(xi);
-			}
+			double eta = values[cid1][cid2][0];
+			double xi = values[cid1][cid2][1];
+			dmixcoeff.push_back(eta);
+			dmixcoeff.push_back(xi);
 		}
 	}
 }

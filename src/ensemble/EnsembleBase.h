@@ -123,6 +123,11 @@ public:
 
 protected:
 
+	/*! We don't support unsymmetric mixing rules.
+	 * Check that I-J rule appears only once and no II combination appears.
+	 * */
+	void checkMixingRules() const;
+
 	void setVectorOfMixingCoefficientsForComp2Param() const;
 
 	std::vector<Component> _components;

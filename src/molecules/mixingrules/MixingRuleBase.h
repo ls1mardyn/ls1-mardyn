@@ -10,6 +10,9 @@ public:
 	MixingRuleBase(){};
 	virtual ~MixingRuleBase(){};
 
+	/** Automatically sets cid1 <= cid2.
+	 * Validity checks are performed elsewhere.
+	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	unsigned int getCid1() const {
