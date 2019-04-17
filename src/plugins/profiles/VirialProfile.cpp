@@ -61,8 +61,8 @@ void VirialProfile::output(string prefix, long unsigned accumulatedDatasets) {
 											+ a * _samplInfo.universalProfileUnit[2] + b);
 				} else {
 					unID = (unsigned long) (
-							a * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2] +
-							y * _samplInfo.universalProfileUnit[1] + b);
+							a * _samplInfo.universalProfileUnit[1] * _samplInfo.universalProfileUnit[2] +
+							y * _samplInfo.universalProfileUnit[2] + b);
 				}
 				// Add pressures
 				Px += _global3dProfile[unID][0];

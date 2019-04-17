@@ -30,8 +30,8 @@ void ProfileBase::writeKartMatrix (ofstream& outfile) {
 		for (unsigned z = 0; z < _samplInfo.universalProfileUnit[2]; z++) {
 			for (unsigned x = 0; x < _samplInfo.universalProfileUnit[0]; x++) {
 				auto unID = (unsigned long) (
-						x * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2] +
-						y * _samplInfo.universalProfileUnit[1] + z);
+						x * _samplInfo.universalProfileUnit[1] * _samplInfo.universalProfileUnit[2] +
+						y * _samplInfo.universalProfileUnit[2] + z);
 				this->writeDataEntry(unID, outfile);
 			}
 		}
