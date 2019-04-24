@@ -29,6 +29,8 @@ void ProfileBase::writeKartMatrix (ofstream& outfile) {
 		// number density values
 		for (unsigned z = 0; z < _samplInfo.universalProfileUnit[2]; z++) {
 			for (unsigned x = 0; x < _samplInfo.universalProfileUnit[0]; x++) {
+				// CRUCIAL:
+				// Do not change unID calculation. Has to be the same as in SpatialProfile.cpp
 				auto unID = (unsigned long) (
 						x * _samplInfo.universalProfileUnit[1] * _samplInfo.universalProfileUnit[2] +
 						y * _samplInfo.universalProfileUnit[2] + z);
@@ -60,6 +62,8 @@ void ProfileBase::writeCylMatrix (ofstream& outfile) {
 		outfile << hval << "  \t";
 		for (unsigned phi = 0; phi < _samplInfo.universalProfileUnit[2]; phi++) {
 			for (unsigned r = 0; r < _samplInfo.universalProfileUnit[0]; r++) {
+				// CRUCIAL:
+				// Do not change unID calculation. Has to be the same as in SpatialProfile.cpp
 				auto unID = (long) (h * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2]
 									+ r * _samplInfo.universalProfileUnit[2] + phi);
 				this->writeDataEntry(unID, outfile);

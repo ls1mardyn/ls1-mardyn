@@ -275,6 +275,15 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 	}
 }
 
+/**
+ * @brief getCartesianUID samples the domain cartesian coordinate bins.
+ *
+ * The calculation of uID has to be the same as used in the actual sampling profiles.
+ * E.g. ProfileBase / Child classes of Profile Base.
+ *
+ * @param thismol
+ * @return
+ */
 unsigned long SpatialProfile::getCartesianUID(ParticleIterator& thismol) {
 	auto xun = (unsigned) floor(thismol->r(0) * samplInfo.universalInvProfileUnit[0]);
 	auto yun = (unsigned) floor(thismol->r(1) * samplInfo.universalInvProfileUnit[1]);

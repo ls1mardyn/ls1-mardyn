@@ -57,9 +57,15 @@ void VirialProfile::output(string prefix, long unsigned accumulatedDatasets) {
 		for (unsigned a = 0; a < _samplInfo.universalProfileUnit[0]; a++) {
 			for (unsigned b = 0; b < _samplInfo.universalProfileUnit[2]; b++) {
 				if (_samplInfo.cylinder) {
+					// CRUCIAL:
+					// Do not change unID calculation. Has to be the same as in SpatialProfile.cpp
+					// VirialProfile overwrites the default output routine of ProfileBase, so has to calculate unID on its own
 					unID = (unsigned long) (y * _samplInfo.universalProfileUnit[0] * _samplInfo.universalProfileUnit[2]
 											+ a * _samplInfo.universalProfileUnit[2] + b);
 				} else {
+					// CRUCIAL:
+					// Do not change unID calculation. Has to be the same as in SpatialProfile.cpp
+					// VirialProfile overwrites the default output routine of ProfileBase, so has to calculate unID on its own
 					unID = (unsigned long) (
 							a * _samplInfo.universalProfileUnit[1] * _samplInfo.universalProfileUnit[2] +
 							y * _samplInfo.universalProfileUnit[2] + b);
