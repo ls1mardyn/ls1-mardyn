@@ -50,13 +50,12 @@ ReplicaGenerator::ReplicaGenerator()
 	std::iota(std::begin(_vecChangeCompIDsLiq), std::end(_vecChangeCompIDsLiq), 0);
 }
 
-ReplicaGenerator::~ReplicaGenerator() {
-}
+ReplicaGenerator::~ReplicaGenerator() = default;
 
 void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	XMLfileUnits inp(subDomain.strFilePathHeader);
 
-	if(false == inp.changecurrentnode("/mardyn")) {
+	if(not inp.changecurrentnode("/mardyn")) {
 		global_log->error() << "Could not find root node /mardyn in XML input file." << endl;
 		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
 		Simulation::exit(1);
@@ -80,7 +79,7 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	}
 	subDomain.dDensity = subDomain.numParticles / subDomain.dVolume;
 
-	if(false == bInputOk) {
+	if(not bInputOk) {
 		global_log->error() << "Content of file: '" << subDomain.strFilePathHeader << "' corrupted! Program exit ..."
 							<< endl;
 		Simulation::exit(1);
@@ -102,6 +101,7 @@ void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDec
 #ifdef ENABLE_MPI
 	if(domainDecomp->getRank() == 0) {
 #endif
+	subDomain.strFilePathData = string_utils::trim(subDomain.strFilePathData);
 	global_log->info() << "Opening phase space file " << subDomain.strFilePathData << endl;
 	std::ifstream ifs;
 	ifs.open(subDomain.strFilePathData.c_str(), ios::binary | ios::in);
