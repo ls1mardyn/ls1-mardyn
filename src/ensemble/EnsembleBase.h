@@ -123,6 +123,9 @@ public:
 
 protected:
 
+	/*! Check that CID's are between 1 and the number of components */
+	void checkMixingRuleCID(unsigned cid) const;
+
 	/*! We don't support unsymmetric mixing rules.
 	 * Check that I-J rule appears only once and no II combination appears.
 	 * */

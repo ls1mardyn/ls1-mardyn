@@ -74,6 +74,25 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	setComponentLookUpIDs();
 }
 
+
+void Ensemble::checkMixingRuleCID(unsigned cid) const {
+	int internalCID = static_cast<int>(cid) - 1;
+	if (internalCID < 0) {
+		global_log->error() << "Found mixing rule for component ID " << cid << ", which is not allowed." << endl;
+		global_log->error() << "Component IDs start from 1." << endl;
+		global_log->error() << "Aborting." << endl;
+		Simulation::exit(2019);
+	}
+
+	int numComponents = _components.size();
+	if (internalCID >= numComponents) {
+		global_log->error() << "Found mixing rule for component ID " << cid << ", which is not allowed." << endl;
+		global_log->error() << "Maximal component ID: " << numComponents << "." << endl;
+		global_log->error() << "Aborting." << endl;
+		Simulation::exit(2019);
+	}
+}
+
 void Ensemble::checkMixingRules() const {
 	using std::vector;
 
@@ -84,10 +103,10 @@ void Ensemble::checkMixingRules() const {
 	int exactNumMixingRules = numComponents * (numComponents - 1) / 2;
 
 	if (numMixingRules < exactNumMixingRules) {
-		global_log->info() << "Found " << numMixingRules << " which is smaller than total number of mixing rules: " << exactNumMixingRules << "." << endl;
+		global_log->info() << "Found " << numMixingRules << " mixing rules, which is smaller than exact number of mixing rules: " << exactNumMixingRules << "." << endl;
 		global_log->info() << "The remaining mixing rules are populated with default values of (xi, eta) = (1.0, 1.0)." << endl;
 	} else if (numMixingRules > exactNumMixingRules) {
-		global_log->error() << "Found " << numMixingRules << " which is larger than total number of mixing rules: " << exactNumMixingRules << "." << endl;
+		global_log->error() << "Found " << numMixingRules << " mixing rules, which is larger than exact number of mixing rules: " << exactNumMixingRules << "." << endl;
 		global_log->error() << "Aborting." << endl;
 		Simulation::exit(2019);
 	}
@@ -99,12 +118,16 @@ void Ensemble::checkMixingRules() const {
 	vector<vector<int>> flags(numComponents, vector<int>(numComponents, 0));
 
 	for(auto m = _mixingrules.begin(); m != _mixingrules.end(); ++m) {
+		unsigned outerCID1 = (*m)->getCid1();
+		unsigned outerCID2 = (*m)->getCid2();
+		checkMixingRuleCID(outerCID1);
+		checkMixingRuleCID(outerCID2);
 
-		unsigned compID1 = (*m)->getCid1()-1;
-		unsigned compID2 = (*m)->getCid2()-1;
+		unsigned compID1 = outerCID1-1;
+		unsigned compID2 = outerCID2-1;
 
 		if (compID1 == compID2) {
-			global_log->error() << "Specified rule for same component ids: " << compID1 << " and " << compID2 <<", which is not allowed." << endl;
+			global_log->error() << "Specified rule for same component ids: " << compID1+1 << " and " << compID2+1 <<", which is not allowed." << endl;
 			global_log->error() << "Aborting." << endl;
 			Simulation::exit(2019);
 		}
@@ -116,8 +139,8 @@ void Ensemble::checkMixingRules() const {
 		for (int cid2 = cid1 + 1; cid2 < numComponents; ++cid2) {
 			int flag = flags[cid1][cid2];
 			if (flag > 1) {
-				global_log->error() << "Specified rule for component ids: " << cid1 << " and " << cid2 <<" more than once, which is not allowed." << endl;
-				global_log->error() << "If you specify " << cid1 << " and " << cid2 <<", then you must not specify " << cid2 << " and " << cid1 << "." << endl;
+				global_log->error() << "Specified rule for component ids: " << cid1+1 << " and " << cid2+1 <<" more than once, which is not allowed." << endl;
+				global_log->error() << "If you specify " << cid1+1 << " and " << cid2+1 <<", then you must not specify " << cid2+1 << " and " << cid1+1 << "." << endl;
 				global_log->error() << "Aborting." << endl;
 				Simulation::exit(2019);
 			}
