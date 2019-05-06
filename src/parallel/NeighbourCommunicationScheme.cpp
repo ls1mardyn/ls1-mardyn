@@ -444,12 +444,12 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 						_coversWholeDomain);
 
 		// assuming p1 sends regions to p2
-		NeighborAcquirer::acquireNeighbours(
-			domain, &ownRegion, haloOrForceRegions, (*_haloImportForceExportNeighbours)[0],
-			(*_haloExportForceImportNeighbours)[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
-		NeighborAcquirer::acquireNeighbours(
-			domain, &ownRegion, leavingRegions, (*_leavingExportNeighbours)[0],
-			(*_leavingImportNeighbours)[0]); // p1 notes reply, p2 notes owned as leaving import
+		std::tie((*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]) =
+			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, haloOrForceRegions);
+		// p1 notes reply, p2 notes owned as haloExportForceImport
+		std::tie((*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]) =
+			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, leavingRegions);
+		// p1 notes reply, p2 notes owned as leaving import
 
 	} else {
 		std::vector<HaloRegion> haloRegions =

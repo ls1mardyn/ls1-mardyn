@@ -10,18 +10,20 @@
 
 /*
  * 1. Initial Exchange of all desired regions.
- * 2. Feedback from processes which own part of the region.
- *
+ * 2. Each process checks whether he owns parts of the desired regions and will save those regions in partners02.
+ * 3. Each process will notify the other processes whether they own parts of their desired domains (i.e. whether they
+ * are a partner for them)
+ * 4. The processes talk with each other to specify the exact domains they will communicate. Received parts will be
+ * saved in partners01.
  */
-void NeighborAcquirer::acquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion> &desiredRegions,
-										std::vector<CommunicationPartner> &partners01,
-										std::vector<CommunicationPartner> &partners02) {
+std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
+	Domain *domain, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions) {
 	int my_rank;  // my rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	int num_incoming;  // the number of processes in MPI_COMM_WORLD
 	MPI_Comm_size(MPI_COMM_WORLD, &num_incoming);
 
-	int num_regions = desiredRegions.size();  // the number of regions I would like to aquire from other processes
+	int num_regions = desiredRegions.size();  // the number of regions I would like to acquire from other processes
 
 	// tell the other processes how much you are going to send
 	int num_bytes_send =
@@ -102,18 +104,17 @@ void NeighborAcquirer::acquireNeighbours(Domain *domain, HaloRegion *haloRegion,
 									  domain->getGlobalLength(2)};  // better for testing
 			shiftIfNecessary(domainLength, &region, shift.data());
 
-			if (rank != my_rank && isIncluded(haloRegion, &region)) {
+			if (rank != my_rank && isIncluded(ownRegion, &region)) {
 				candidates[rank]++;  // this is a region I will send to rank
 
-				overlap(haloRegion, &region);  // different shift for the overlap?
+				overlap(ownRegion, &region);  // different shift for the overlap?
 
 				// make a note in partners02 - don't forget to squeeze partners02
 				bool enlarged[3][2] = {{false}};
 				for (int k = 0; k < 3; k++) shift[k] *= -1;
 
-				CommunicationPartner myNewNeighbour(rank, region.rmin, region.rmax, region.rmin, region.rmax,
-													shift.data(), region.offset, enlarged);
-				comm_partners02.push_back(myNewNeighbour);
+				comm_partners02.emplace_back(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(),
+											 region.offset, enlarged);
 
 				for (int k = 0; k < 3; k++) shift[k] *= -1;
 
@@ -139,12 +140,6 @@ void NeighborAcquirer::acquireNeighbours(Domain *domain, HaloRegion *haloRegion,
 				sendingList[rank].push_back(singleRegion);
 			}
 		}
-	}
-
-	// squeeze here
-	if (not comm_partners02.empty()) {
-		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners02);
-		partners02.insert(partners02.end(), squeezed.begin(), squeezed.end());
 	}
 
 	std::vector<unsigned char *> merged(num_incoming);  // Merge each list of char arrays into one char array
@@ -246,11 +241,8 @@ void NeighborAcquirer::acquireNeighbours(Domain *domain, HaloRegion *haloRegion,
 
 			bool enlarged[3][2] = {{false}};
 
-			// CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], const
-			// double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
-			CommunicationPartner myNewNeighbour(source, region.rmin, region.rmax, region.rmin, region.rmax, shift,
-												region.offset, enlarged);  // DO NOT KNOW ABOUT THE 0s
-			comm_partners01.push_back(myNewNeighbour);
+			comm_partners01.emplace_back(source, region.rmin, region.rmax, region.rmin, region.rmax, shift,
+										 region.offset, enlarged);
 		}
 	}
 
@@ -262,12 +254,9 @@ void NeighborAcquirer::acquireNeighbours(Domain *domain, HaloRegion *haloRegion,
 		delete[] two;
 	}
 
-	if (not comm_partners01.empty()) {
-		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
-		partners01.insert(partners01.end(), squeezed.begin(), squeezed.end());
-	}
-
 	MPI_Barrier(MPI_COMM_WORLD);
+
+	return std::make_tuple(squeezePartners(comm_partners01), squeezePartners(comm_partners02));
 }
 
 std::vector<CommunicationPartner> NeighborAcquirer::squeezePartners(const std::vector<CommunicationPartner> &partners) {
