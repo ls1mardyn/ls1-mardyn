@@ -145,8 +145,16 @@ private:
 																		   ParticleContainer* particleContainer,
 																		   Domain* domain);
 
-	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> oldMin,
-	                      std::array<double, 3> oldMax, std::array<double, 3> newMin, std::array<double, 3> newMax);
+	/**
+	 * Exchange the particles, s.t., particles are withing the particleContainer of the process they belong to.
+	 * This function will rebuild the particleContainer.
+	 * @param domain
+	 * @param particleContainer
+	 * @param newMin new minimum of the own subdomain
+	 * @param newMax new maximum of the own subdomain
+	 */
+	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> newMin,
+						  std::array<double, 3> newMax);
 
 	// variables
 	std::array<double, 3> _boxMin;

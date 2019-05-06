@@ -58,7 +58,7 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 			std::tie(newBoxMin, newBoxMax) = doRebalancing(lastTraversalTime, moleculeContainer, domain);
 
 			// migrate the particles, this will rebuild the moleculeContainer!
-			migrateParticles(domain, moleculeContainer, _boxMin, _boxMax, newBoxMin, newBoxMax);
+			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
 
 			// set new boxMin and boxMax
 			_boxMin = newBoxMin;
@@ -84,8 +84,15 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> MultiSectionMethod::doR
 	return std::make_tuple(_boxMin, _boxMax);
 }
 
-void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* particleContainer, array<double, 3> oldMin,
-										  array<double, 3> oldMax, array<double, 3> newMin, array<double, 3> newMax) {}
+void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* particleContainer, array<double, 3> newMin,
+										  array<double, 3> newMax) {
+	std::array<double, 3> oldBoxMin{particleContainer->getBoundingBoxMin(0), particleContainer->getBoundingBoxMin(1),
+								 particleContainer->getBoundingBoxMin(2)};
+	std::array<double, 3> oldBoxMax{particleContainer->getBoundingBoxMax(0), particleContainer->getBoundingBoxMax(1),
+								 particleContainer->getBoundingBoxMax(2)};
+
+
+}
 
 void MultiSectionMethod::initCommPartners(ParticleContainer* moleculeContainer,
 										  Domain* domain) {  // init communication partners
