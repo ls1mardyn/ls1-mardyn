@@ -1,5 +1,5 @@
 /**
- * @file NeighborAquirer.cpp
+ * @file NeighborAcquirer.cpp
  * @author seckler
  * @date 06.05.19
  */
@@ -100,7 +100,7 @@ void NeighborAcquirer::acquireNeighbours(Domain *domain, HaloRegion *haloRegion,
 			std::vector<double> shift(3, 0);
 			double domainLength[3] = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 									  domain->getGlobalLength(2)};  // better for testing
-			shiftIfNeccessary(domainLength, &region, shift.data());
+			shiftIfNecessary(domainLength, &region, shift.data());
 
 			if (rank != my_rank && isIncluded(haloRegion, &region)) {
 				candidates[rank]++;  // this is a region I will send to rank
@@ -337,7 +337,7 @@ void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-void NeighborAcquirer::shiftIfNeccessary(const double *domainLength, HaloRegion *region, double *shiftArray) {
+void NeighborAcquirer::shiftIfNecessary(const double *domainLength, HaloRegion *region, double *shiftArray) {
 	for (int i = 0; i < 3; i++)  // calculating shift
 		if (region->rmin[i] >= domainLength[i]) shiftArray[i] = -domainLength[i];
 
