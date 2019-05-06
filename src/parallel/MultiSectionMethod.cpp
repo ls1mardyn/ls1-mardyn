@@ -68,6 +68,7 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 
 			// init communication partners
 			initCommPartners(moleculeContainer, domain);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 		} else {
 			if (sendLeavingWithCopies()) {
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
