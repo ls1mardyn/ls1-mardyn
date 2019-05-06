@@ -9,7 +9,13 @@
 #include "NeighbourCommunicationScheme.h"
 
 MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
-	: _boxMin{0.}, _boxMax{0.}, _gridSize{0}, _gridCoords{0}, _cutoffRadius{cutoffRadius} {
+	: _boxMin{0.},
+	  _boxMax{0.},
+	  _gridSize{0},
+	  _gridCoords{0},
+	  _cutoffRadius{cutoffRadius},
+	  _step{0},
+	  _updateFrequency{10} {
 	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 										  domain->getGlobalLength(2)};
 
@@ -27,19 +33,50 @@ MultiSectionMethod::~MultiSectionMethod() = default;
 
 double MultiSectionMethod::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _boxMax[dimension]; }
 
+bool MultiSectionMethod::queryRebalancing(size_t step, size_t updateFrequency, double /*lastTraversalTime*/) {
+	return step % updateFrequency == 0;
+}
+
 void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 											ParticleContainer* moleculeContainer, Domain* domain) {
+	bool rebalance = queryRebalancing(_step, _updateFrequency, lastTraversalTime) or forceRebalancing;
+	if (_step == 0) {
+		// ensure that there are no outer particles
+		moleculeContainer->deleteOuterParticles();
+		// init communication partners
+		initCommPartners(moleculeContainer, domain);
+	} else {
+		if (rebalance) {
+			// first transfer leaving particles
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+			// ensure that there are no outer particles
+			moleculeContainer->deleteOuterParticles();
+
+			// rebalance
+			
+
+			// init new partners
+			initCommPartners(moleculeContainer, domain);
+		} else {
+			if (sendLeavingWithCopies()) {
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+			} else {
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+				moleculeContainer->deleteOuterParticles();
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+			}
+		}
+	}
+	++_step;
+}
+
+void MultiSectionMethod::initCommPartners(ParticleContainer* moleculeContainer, Domain* domain) {  // init communication partners
 	for (int d = 0; d < DIMgeom; ++d) {
+		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);
 	}
 	_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
-	if (sendLeavingWithCopies()) {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
-	} else {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-		moleculeContainer->deleteOuterParticles();
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
-	}
+	exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 }
 
 void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
@@ -47,6 +84,9 @@ void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "The MultiSectionMethod is enforcing the direct-pp neighbor scheme using fs, so setting it."
 					   << std::endl;
 	setCommunicationScheme("direct-pp", "fs");
+
+	xmlconfig.getNodeValue("updateFrequency", _updateFrequency);
+	global_log->info() << "MultiSectionMethod update frequency: " << _updateFrequency << endl;
 }
 
 /**

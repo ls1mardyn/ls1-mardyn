@@ -118,12 +118,31 @@ private:
 		const std::array<double, 3>& domainLength, const std::array<size_t, 3>& gridSize,
 		const std::array<size_t, 3>& gridCoords);
 
+	/**
+	 * Check whether a rebalancing is necessary
+	 * @param step the step number
+	 * @param updateFrequency the frequency defining how often
+	 * @param lastTraversalTime the time of the last traversal for this node
+	 * @return true if a rebuild is necessary
+	 */
+	static bool queryRebalancing(size_t step, size_t updateFrequency, double lastTraversalTime);
+
+	/**
+	 * Initializes communication partners
+	 * @param moleculeContainer
+	 * @param domain
+	 */
+	void initCommPartners(ParticleContainer* moleculeContainer, Domain* domain);
+
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
 	std::array<size_t, 3> _gridSize;  //!< Number of processes in each dimension of the MPI process grid used by the MSM
 	std::array<size_t, 3> _gridCoords;  //!< Coordinate of the process in the MPI process grid used by the MSM
 	double _cutoffRadius;
+	size_t _step;
+	size_t _updateFrequency;
 
 	friend class MultiSectionMethodTest;
+
 };
