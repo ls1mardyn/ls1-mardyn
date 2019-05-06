@@ -14,7 +14,9 @@
  * 2. Feedback from processes which own part of the region.
  *
  */
-void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners01, std::vector<CommunicationPartner>& partners02) {
+void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std::vector<HaloRegion> &desiredRegions,
+									   std::vector<CommunicationPartner> &partners01,
+									   std::vector<CommunicationPartner> &partners02) {
 	int my_rank; // my rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	int num_incoming; // the number of processes in MPI_COMM_WORLD
@@ -88,7 +90,7 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 
 
 		for(int j = 0; j < regions; j++) {
-			HaloRegion region;
+			HaloRegion region{};
 			memcpy(region.rmin, incoming.data() + i, sizeof(double) * 3);
 			i += sizeof(double) * 3; // 24
 			memcpy(region.rmax, incoming.data() + i, sizeof(double) * 3);
@@ -123,7 +125,7 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 					region.rmin[k] -= shift[k];
 				}
 
-				unsigned char* singleRegion = new unsigned char[bytesOneRegion];
+				auto* singleRegion = new unsigned char[bytesOneRegion];
 
 				p = 0;
 				memcpy(singleRegion + p, region.rmin, sizeof(double) * 3);
@@ -145,7 +147,7 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 
 
 	// squeeze here
-	if(comm_partners02.size() > 0) {
+	if(not comm_partners02.empty()) {
 		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners02);
 		partners02.insert(partners02.end(), squeezed.begin(), squeezed.end());
 	}
@@ -153,7 +155,7 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 	std::vector<unsigned char *> merged (num_incoming); // Merge each list of char arrays into one char array
 	for(int j = 0; j < num_incoming; j++) {
 		if(candidates[j]  > 0) {
-			unsigned char* mergedRegions = new unsigned char[candidates[j] * bytesOneRegion];
+			auto* mergedRegions = new unsigned char[candidates[j] * bytesOneRegion];
 
 			for(int k = 0; k < candidates[j]; k++) {
 				memcpy(mergedRegions + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
@@ -266,7 +268,7 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 		delete[] two;
 	}
 
-	if(comm_partners01.size() > 0) {
+	if(not comm_partners01.empty()) {
 		std::vector<CommunicationPartner> squeezed = squeezePartners(comm_partners01);
 		partners01.insert(partners01.end(), squeezed.begin(), squeezed.end());
 	}
