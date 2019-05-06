@@ -46,6 +46,7 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 		moleculeContainer->deleteOuterParticles();
 		// init communication partners
 		initCommPartners(moleculeContainer, domain);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	} else {
 		if (rebalance) {
 			// first transfer leaving particles
@@ -175,7 +176,6 @@ void MultiSectionMethod::initCommPartners(ParticleContainer* moleculeContainer,
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);
 	}
 	_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
-	exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 }
 
 void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
