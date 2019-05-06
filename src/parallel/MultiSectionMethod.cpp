@@ -49,13 +49,22 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 		if (rebalance) {
 			// first transfer leaving particles
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+
 			// ensure that there are no outer particles
 			moleculeContainer->deleteOuterParticles();
 
 			// rebalance
-			
+			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
+			std::tie(newBoxMin, newBoxMax) = doRebalancing(lastTraversalTime, moleculeContainer, domain);
 
-			// init new partners
+			// migrate the particles, this will rebuild the moleculeContainer!
+			migrateParticles(domain, moleculeContainer, _boxMin, _boxMax, newBoxMin, newBoxMax);
+
+			// set new boxMin and boxMax
+			_boxMin = newBoxMin;
+			_boxMax = newBoxMax;
+
+			// init communication partners
 			initCommPartners(moleculeContainer, domain);
 		} else {
 			if (sendLeavingWithCopies()) {
@@ -70,7 +79,16 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 	++_step;
 }
 
-void MultiSectionMethod::initCommPartners(ParticleContainer* moleculeContainer, Domain* domain) {  // init communication partners
+std::tuple<std::array<double, 3>, std::array<double, 3>> MultiSectionMethod::doRebalancing(
+	double lastTraversalTime, ParticleContainer* particleContainer, Domain* domain) {
+	return std::make_tuple(_boxMin, _boxMax);
+}
+
+void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* particleContainer, array<double, 3> oldMin,
+										  array<double, 3> oldMax, array<double, 3> newMin, array<double, 3> newMax) {}
+
+void MultiSectionMethod::initCommPartners(ParticleContainer* moleculeContainer,
+										  Domain* domain) {  // init communication partners
 	for (int d = 0; d < DIMgeom; ++d) {
 		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);

@@ -134,6 +134,20 @@ private:
 	 */
 	void initCommPartners(ParticleContainer* moleculeContainer, Domain* domain);
 
+	/**
+	 *
+	 * @param lastTraversalTime time for last traversal
+	 * @param particleContainer the ParticleContainer
+	 * @param domain the domain
+	 * @return tuple of new boxMin and boxMax
+	 */
+	std::tuple<std::array<double, 3>, std::array<double, 3>> doRebalancing(double lastTraversalTime,
+																		   ParticleContainer* particleContainer,
+																		   Domain* domain);
+
+	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> oldMin,
+	                      std::array<double, 3> oldMax, std::array<double, 3> newMin, std::array<double, 3> newMax);
+
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
@@ -144,5 +158,4 @@ private:
 	size_t _updateFrequency;
 
 	friend class MultiSectionMethodTest;
-
 };
