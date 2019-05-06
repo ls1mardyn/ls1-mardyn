@@ -59,8 +59,9 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
 			global_log->info() << "rebalancing..." << std::endl;
 			std::tie(newBoxMin, newBoxMax) = doRebalancing(lastTraversalTime, moleculeContainer, domain);
-			global_log->info() << "migrating particles" << std::endl;
+
 			// migrate the particles, this will rebuild the moleculeContainer!
+			global_log->info() << "migrating particles" << std::endl;
 			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
 
 			// set new boxMin and boxMax
