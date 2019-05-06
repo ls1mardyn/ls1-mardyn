@@ -20,7 +20,6 @@ MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
 	  _updateFrequency{10} {
 	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 										  domain->getGlobalLength(2)};
-
 	_gridSize = getOptimalGrid(domainLength, this->getNumProcs());
 	_gridCoords = getCoordsFromRank(_gridSize, _rank);
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, _gridSize, _gridCoords);
@@ -57,8 +56,9 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 
 			// rebalance
 			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
+			global_log->info() << "rebalancing..." << std::endl;
 			std::tie(newBoxMin, newBoxMax) = doRebalancing(lastTraversalTime, moleculeContainer, domain);
-
+			global_log->info() << "migrating particles" << std::endl;
 			// migrate the particles, this will rebuild the moleculeContainer!
 			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
 
@@ -67,7 +67,9 @@ void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool force
 			_boxMax = newBoxMax;
 
 			// init communication partners
+			global_log->info() << "updating communication partners" << std::endl;
 			initCommPartners(moleculeContainer, domain);
+			global_log->info() << "rebalancing finished" << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 		} else {
 			if (sendLeavingWithCopies()) {
@@ -106,21 +108,26 @@ void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* par
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
 	std::tie(recvNeighbors, sendNeighbors) = NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain);
-	for(auto& sender : sendNeighbors){
+	for (auto& sender : sendNeighbors) {
 		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, true /*removeFromContainer*/);
 	}
 	std::vector<Molecule> ownMolecules{};
-	for(auto iter = particleContainer->iterator(); iter.isValid(); ++iter){
+	for (auto iter = particleContainer->iterator(); iter.isValid(); ++iter) {
 		ownMolecules.push_back(*iter);
+		if (not iter->inBox(newMin.data(), newMax.data())) {
+			global_log->error_always_output()
+				<< "particle still in domain that should have been migrated." << std::endl;
+			Simulation::exit(2315);
+		}
 	}
 	particleContainer->clear();
-	particleContainer->rebuild(newMin.data(),newMax.data());
+	particleContainer->rebuild(newMin.data(), newMax.data());
 	particleContainer->addParticles(ownMolecules);
 	bool allDone = false;
 	double waitCounter = 30.0;
 	double deadlockTimeOut = 360.0;
 	double startTime = MPI_Wtime();
-	while (not allDone){
+	while (not allDone) {
 		allDone = true;
 
 		// "kickstart" processing of all Isend requests
@@ -129,7 +136,7 @@ void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* par
 		}
 
 		// unpack molecules
-		for (auto & recv : recvNeighbors) {
+		for (auto& recv : recvNeighbors) {
 			allDone &= recv.testRecv(particleContainer, false);
 		}
 
@@ -137,25 +144,23 @@ void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* par
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
 			global_log->warning() << "KDDecomposition::migrateParticles: Deadlock warning: Rank " << _rank
-			                      << " is waiting for more than " << waitCounter << " seconds"
-			                      << std::endl;
+								  << " is waiting for more than " << waitCounter << " seconds" << std::endl;
 			waitCounter += 1.0;
 			for (auto& sender : sendNeighbors) {
 				sender.deadlockDiagnosticSend();
 			}
-			for (auto & recv : recvNeighbors) {
+			for (auto& recv : recvNeighbors) {
 				recv.deadlockDiagnosticRecv();
 			}
 		}
 
 		if (waitingTime > deadlockTimeOut) {
 			global_log->error() << "KDDecomposition::migrateParticles: Deadlock error: Rank " << _rank
-			                    << " is waiting for more than " << deadlockTimeOut
-			                    << " seconds" << std::endl;
+								<< " is waiting for more than " << deadlockTimeOut << " seconds" << std::endl;
 			for (auto& sender : sendNeighbors) {
 				sender.deadlockDiagnosticSend();
 			}
-			for (auto & recv : recvNeighbors) {
+			for (auto& recv : recvNeighbors) {
 				recv.deadlockDiagnosticRecv();
 			}
 			break;
