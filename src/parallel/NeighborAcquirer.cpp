@@ -4,7 +4,7 @@
  * @date 06.05.19
  */
 
-#include "NeighborAquirer.h"
+#include "NeighborAcquirer.h"
 #include "Domain.h"
 #include "HaloRegion.h"
 
@@ -13,9 +13,9 @@
  * 2. Feedback from processes which own part of the region.
  *
  */
-void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std::vector<HaloRegion> &desiredRegions,
-									   std::vector<CommunicationPartner> &partners01,
-									   std::vector<CommunicationPartner> &partners02) {
+void NeighborAcquirer::acquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion> &desiredRegions,
+										std::vector<CommunicationPartner> &partners01,
+										std::vector<CommunicationPartner> &partners02) {
 	int my_rank;  // my rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	int num_incoming;  // the number of processes in MPI_COMM_WORLD
@@ -102,10 +102,10 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 									  domain->getGlobalLength(2)};  // better for testing
 			shiftIfNeccessary(domainLength, &region, shift.data());
 
-			if (rank != my_rank && isIncluded(myRegion, &region)) {
+			if (rank != my_rank && isIncluded(haloRegion, &region)) {
 				candidates[rank]++;  // this is a region I will send to rank
 
-				overlap(myRegion, &region);  // different shift for the overlap?
+				overlap(haloRegion, &region);  // different shift for the overlap?
 
 				// make a note in partners02 - don't forget to squeeze partners02
 				bool enlarged[3][2] = {{false}};
@@ -270,7 +270,7 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
-std::vector<CommunicationPartner> NeighborAquirer::squeezePartners(const std::vector<CommunicationPartner> &partners) {
+std::vector<CommunicationPartner> NeighborAcquirer::squeezePartners(const std::vector<CommunicationPartner> &partners) {
 	std::vector<CommunicationPartner> squeezedPartners;
 	std::vector<bool> used(partners.size(),
 						   false);  // flag table, that describes, whether a certain comm-partner has already been added
@@ -288,7 +288,7 @@ std::vector<CommunicationPartner> NeighborAquirer::squeezePartners(const std::ve
 	return squeezedPartners;
 }
 
-bool NeighborAquirer::isIncluded(HaloRegion *myRegion, HaloRegion *inQuestion) {
+bool NeighborAcquirer::isIncluded(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	return myRegion->rmax[0] > inQuestion->rmin[0] && myRegion->rmin[0] < inQuestion->rmax[0] &&
 		   myRegion->rmax[1] > inQuestion->rmin[1] && myRegion->rmin[1] < inQuestion->rmax[1] &&
 		   myRegion->rmax[2] > inQuestion->rmin[2] && myRegion->rmin[2] < inQuestion->rmax[2];
@@ -296,7 +296,7 @@ bool NeighborAquirer::isIncluded(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	// && myRegion->rmin < inQuestion->rmax
 }
 
-void NeighborAquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
+void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	/*
 	 * m = myRegion, q = inQuestion, o = overlap
 	 * i)  m.max < q.max ?
@@ -337,7 +337,7 @@ void NeighborAquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-void NeighborAquirer::shiftIfNeccessary(const double *domainLength, HaloRegion *region, double *shiftArray) {
+void NeighborAcquirer::shiftIfNeccessary(const double *domainLength, HaloRegion *region, double *shiftArray) {
 	for (int i = 0; i < 3; i++)  // calculating shift
 		if (region->rmin[i] >= domainLength[i]) shiftArray[i] = -domainLength[i];
 

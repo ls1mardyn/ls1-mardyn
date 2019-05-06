@@ -11,11 +11,11 @@
 class Domain;
 class HaloRegion;
 
-class NeighborAquirer {
+class NeighborAcquirer {
 public:
-	static void aquireNeighbours(Domain* domain, HaloRegion* haloRegion, std::vector<HaloRegion>& desiredRegions,
-								 std::vector<CommunicationPartner>& partners01,
-								 std::vector<CommunicationPartner>& partners02);
+	static void acquireNeighbours(Domain* domain, HaloRegion* haloRegion, std::vector<HaloRegion>& desiredRegions,
+								  std::vector<CommunicationPartner>& partners01,
+								  std::vector<CommunicationPartner>& partners02);
 	static std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners);
 
 private:

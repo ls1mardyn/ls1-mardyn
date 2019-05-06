@@ -9,15 +9,14 @@ class DirectNeighbourCommunicationScheme;
 class IndirectNeighbourCommunicationScheme;
 
 #include "NeighbourCommunicationScheme.h"
+#include <mpi.h>
+#include "Domain.h"
 #include "DomainDecompMPIBase.h"
+#include "NeighborAcquirer.h"
+#include "Simulation.h"
+#include "ZonalMethods/ZonalMethod.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
-#include "Simulation.h"
-#include "Domain.h"
-#include "ZonalMethods/ZonalMethod.h"
-#include "NeighborAquirer.h"
-#include <mpi.h>
-
 
 NeighbourCommunicationScheme::NeighbourCommunicationScheme(
 		unsigned int commDimms, ZonalMethod* zonalMethod, bool pushPull) :
@@ -445,11 +444,12 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 						_coversWholeDomain);
 
 		// assuming p1 sends regions to p2
-		NeighborAquirer::aquireNeighbours(domain, &ownRegion, haloOrForceRegions,
-				(*_haloImportForceExportNeighbours)[0],
-				(*_haloExportForceImportNeighbours)[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
-		NeighborAquirer::aquireNeighbours(domain, &ownRegion, leavingRegions,
-				(*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]); // p1 notes reply, p2 notes owned as leaving import
+		NeighborAcquirer::acquireNeighbours(
+			domain, &ownRegion, haloOrForceRegions, (*_haloImportForceExportNeighbours)[0],
+			(*_haloExportForceImportNeighbours)[0]); // p1 notes reply, p2 notes owned as haloExportForceImport
+		NeighborAcquirer::acquireNeighbours(
+			domain, &ownRegion, leavingRegions, (*_leavingExportNeighbours)[0],
+			(*_leavingImportNeighbours)[0]); // p1 notes reply, p2 notes owned as leaving import
 
 	} else {
 		std::vector<HaloRegion> haloRegions =
@@ -464,7 +464,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		}
 		_fullShellNeighbours = commPartners;
 		//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
-		(*_neighbours)[0] = NeighborAquirer::squeezePartners(commPartners);
+		(*_neighbours)[0] = NeighborAcquirer::squeezePartners(commPartners);
 	}
 
 }
@@ -659,6 +659,6 @@ void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cuto
 	convert1StageTo3StageNeighbours(commPartners, (*_neighbours), ownRegion, cutoffRadius);
 	//squeeze neighbours -> only a single send, if rightneighbour == leftneighbour
 	for (unsigned int d = 0; d < _commDimms; d++) {
-		(*_neighbours)[d]= NeighborAquirer::squeezePartners((*_neighbours)[d]);
+		(*_neighbours)[d]= NeighborAcquirer::squeezePartners((*_neighbours)[d]);
 	}
 }
