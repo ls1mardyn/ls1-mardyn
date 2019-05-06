@@ -165,7 +165,7 @@ void NeighborAquirer::aquireNeighbours(Domain *domain, HaloRegion *myRegion, std
 
 	// delete sendingList
 
-	for(auto one : sendingList){
+	for(const auto& one : sendingList){
 		for (auto two : one){
 			delete[] two;
 		}
