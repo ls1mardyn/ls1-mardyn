@@ -52,11 +52,11 @@ void BinaryReader::readXML(XMLfileUnits& xmlconfig) {
 	pspheaderfile.insert(0, xmlconfig.getDir());
 	global_log->info() << "phase space header file: " << pspheaderfile << endl;
 	xmlconfig.getNodeValue("data", pspfile);
-    pspfile = string_utils::trim(pspfile);
-    // only prefix xml dir if path is not absolute
-    if (pspfile[0] != '/') {
-      pspfile.insert(0, xmlconfig.getDir());
-    }
+	pspfile = string_utils::trim(pspfile);
+	// only prefix xml dir if path is not absolute
+	if (pspfile[0] != '/') {
+	  pspfile.insert(0, xmlconfig.getDir());
+	}
 	global_log->info() << "phase space header file: " << pspfile << endl;
 	setPhaseSpaceHeaderFile(pspheaderfile);
 	setPhaseSpaceFile(pspfile);
