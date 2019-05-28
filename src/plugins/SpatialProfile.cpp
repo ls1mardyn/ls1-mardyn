@@ -26,6 +26,12 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "[SpatialProfile] Output prefix: " << _outputPrefix << endl;
 	xmlconfig.getNodeValue("mode", _mode);
 	global_log->info() << "[SpatialProfile] Mode " << _mode << endl;
+	xmlconfig.getNodeValue("profiledComponent", _profiledCompString);
+	global_log->info() << "[SpatialProfile] Profiled Component:" << _profiledCompString << endl;
+	
+	if (_profiledCompString != "all") {
+		_profiledComp = std::stoi(_profiledCompString);
+	}
 
 	if (_mode == "cylinder") {
 		xmlconfig.getNodeValue("r", samplInfo.universalProfileUnit[0]);
@@ -210,19 +216,41 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 
 		// Loop over all particles and bin them with uIDs
 		for (auto thismol = particleContainer->iterator(); thismol.isValid(); ++thismol) {
-			// Get uID
-			if (samplInfo.cylinder) {
-				uID = getCylUID(thismol);
-				if (uID == -1) {
-					// Invalid uID -> Molecule not in cylinder -> continue
-					continue;
+			
+			if ((_profiledCompString != "all") && (thismol->componentid() == _profiledComp-1)) {
+				
+				// Get uID
+				if (samplInfo.cylinder) {
+					uID = getCylUID(thismol);
+					if (uID == -1) {
+						// Invalid uID -> Molecule not in cylinder -> continue
+						continue;
+					}
+				} else {
+					uID = getCartesianUID(thismol);
 				}
-			} else {
-				uID = getCartesianUID(thismol);
+				// pass mol + uID to all profiles
+				for (unsigned i = 0; i < _profiles.size(); i++) {
+					_profiles[i]->record(*thismol, (unsigned) uID);
+				}
 			}
-			// pass mol + uID to all profiles
-			for (unsigned i = 0; i < _profiles.size(); i++) {
-				_profiles[i]->record(*thismol, (unsigned) uID);
+			
+			if (_profiledCompString == "all"){
+							
+				// Get uID
+				if (samplInfo.cylinder) {
+					uID = getCylUID(thismol);
+					if (uID == -1) {
+						// Invalid uID -> Molecule not in cylinder -> continue
+						continue;
+					}
+				} else {
+					uID = getCartesianUID(thismol);
+				}
+				// pass mol + uID to all profiles
+				for (unsigned i = 0; i < _profiles.size(); i++) {
+					_profiles[i]->record(*thismol, (unsigned) uID);
+				}
 			}
 		}
 
