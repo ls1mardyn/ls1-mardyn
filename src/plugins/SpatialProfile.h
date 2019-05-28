@@ -105,6 +105,9 @@ private:
 	long _accumulatedDatasets; // Number of Datasets between output writes / profile resets
 	std::string _outputPrefix; // File prefix for all profiles
 	std::string _mode;
+	std::string _profiledCompString;
+	unsigned int _profiledComp;
+	
 
 	unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 
