@@ -5,8 +5,9 @@
  */
 
 #include "ALLLoadBalancer.h"
-ALLLoadBalancer::ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma, MPI_Comm comm,
-						   std::array<size_t, 3> globalSize, std::array<size_t, 3> localCoordinates)
+ALLLoadBalancer::ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma,
+								 MPI_Comm comm, std::array<size_t, 3> globalSize,
+								 std::array<size_t, 3> localCoordinates, double minimalPartitionSize)
 	: _all(3 /*dim*/, gamma) {
 	std::vector<Point> points;
 	points.emplace_back(3, boxMin.data());
@@ -18,6 +19,8 @@ ALLLoadBalancer::ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double
 							  static_cast<int>(localCoordinates[2])};
 	_all.set_proc_grid_params(global_size.data(), coords.data());
 	_all.set_communicator(comm);
+	std::array<double, 3> minDomainSize{minimalPartitionSize, minimalPartitionSize, minimalPartitionSize};
+	_all.set_min_domain_size(ALL_LB_t::STAGGERED, minDomainSize.data());
 
 	_all.setup(ALL_LB_t::STAGGERED);
 }

@@ -19,8 +19,9 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Doma
 	auto gridCoords = getCoordsFromRank(gridSize, _rank);
 	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
-	_loadBalancer =
-		std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize, gridCoords);
+	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
+													  gridCoords, cutoffRadius /*minimal domain size*/);
+	///@todo: change minimal domain size to include skin! -- this is not so trivial here!
 
 	global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
 					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
