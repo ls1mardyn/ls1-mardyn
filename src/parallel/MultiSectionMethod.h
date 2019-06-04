@@ -78,7 +78,8 @@ public:
 	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
 											double etime) override {
-		throw std::runtime_error("MultiSectionMethod::queryBalanceAndExchangeNonBlocking() not yet implemented");
+	  // no non-blocking support yet, so we return false
+	  return false;
 	}
 
 	std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion,
