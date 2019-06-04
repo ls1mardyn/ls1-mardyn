@@ -117,6 +117,33 @@ private:
 		const std::array<double, 3>& domainLength, const std::array<size_t, 3>& gridSize,
 		const std::array<size_t, 3>& gridCoords);
 
+	/**
+	 * Check whether a rebalancing is necessary
+	 * @param step the step number
+	 * @param updateFrequency the frequency defining how often
+	 * @param lastTraversalTime the time of the last traversal for this node
+	 * @return true if a rebuild is necessary
+	 */
+	static bool queryRebalancing(size_t step, size_t updateFrequency, double lastTraversalTime);
+
+	/**
+	 * Initializes communication partners
+	 * @param moleculeContainer
+	 * @param domain
+	 */
+	void initCommPartners(ParticleContainer* moleculeContainer, Domain* domain);
+
+	/**
+	 * Exchange the particles, s.t., particles are withing the particleContainer of the process they belong to.
+	 * This function will rebuild the particleContainer.
+	 * @param domain
+	 * @param particleContainer
+	 * @param newMin new minimum of the own subdomain
+	 * @param newMax new maximum of the own subdomain
+	 */
+	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> newMin,
+						  std::array<double, 3> newMax);
+
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;

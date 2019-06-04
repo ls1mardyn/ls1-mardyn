@@ -7,6 +7,7 @@
 #include "GeneralDomainDecomposition.h"
 #include "ALLLoadBalancer.h"
 #include "Domain.h"
+#include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
 GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Domain* domain)
@@ -32,40 +33,144 @@ GeneralDomainDecomposition::~GeneralDomainDecomposition() = default;
 
 double GeneralDomainDecomposition::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _boxMax[dimension]; }
 
+bool GeneralDomainDecomposition::queryRebalancing(size_t step, size_t updateFrequency, double /*lastTraversalTime*/) {
+	return step % updateFrequency == 0;
+}
+
 void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 													ParticleContainer* moleculeContainer, Domain* domain) {
-	bool doRebalancing = forceRebalancing or ((_steps % _rebuildFrequency == 0 or _steps <= 1));
-	if (doRebalancing) {
-		if (_steps > 0) {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-		}
+	bool rebalance = queryRebalancing(_steps, _rebuildFrequency, lastTraversalTime) or forceRebalancing;
+	if (_steps == 0) {
+		// ensure that there are no outer particles
 		moleculeContainer->deleteOuterParticles();
-
-		std::array<double, 3> newBoxMin{};
-		std::array<double, 3> newBoxMax{};
-		std::tie(newBoxMin, newBoxMax) = _loadBalancer->rebalance(lastTraversalTime);
-
-        migrateParticles(newBoxMin, newBoxMax);
-
-		std::tie(_boxMin, _boxMax) = std::tie(newBoxMin, newBoxMax);
-
-		_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
+		// init communication partners
+		initCommPartners(moleculeContainer, domain);
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	} else {
-		for (int d = 0; d < DIMgeom; ++d) {
-			_neighbourCommunicationScheme->setCoverWholeDomain(d, _coversWholeDomain[d]);
-		}
-		_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
-		if (sendLeavingWithCopies()) {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
-		} else {
+		if (rebalance) {
+			// first transfer leaving particles
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+
+			// ensure that there are no outer particles
 			moleculeContainer->deleteOuterParticles();
+
+			// rebalance
+			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
+			global_log->info() << "rebalancing..." << std::endl;
+			std::tie(newBoxMin, newBoxMax) = _loadBalancer->rebalance(lastTraversalTime);
+
+			// migrate the particles, this will rebuild the moleculeContainer!
+			global_log->info() << "migrating particles" << std::endl;
+			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
+
+			// set new boxMin and boxMax
+			_boxMin = newBoxMin;
+			_boxMax = newBoxMax;
+
+			// init communication partners
+			global_log->info() << "updating communication partners" << std::endl;
+			initCommPartners(moleculeContainer, domain);
+			global_log->info() << "rebalancing finished" << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+		} else {
+			if (sendLeavingWithCopies()) {
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+			} else {
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+				moleculeContainer->deleteOuterParticles();
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+			}
 		}
 	}
+	++_steps;
+}
 
-	_steps++;
+void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContainer* particleContainer,
+												  array<double, 3> newMin, array<double, 3> newMax) {
+	std::array<double, 3> oldBoxMin{particleContainer->getBoundingBoxMin(0), particleContainer->getBoundingBoxMin(1),
+									particleContainer->getBoundingBoxMin(2)};
+	std::array<double, 3> oldBoxMax{particleContainer->getBoundingBoxMax(0), particleContainer->getBoundingBoxMax(1),
+									particleContainer->getBoundingBoxMax(2)};
+
+	HaloRegion ownDomain{}, newDomain{};
+	for (size_t i = 0; i < 3; ++i) {
+		ownDomain.rmin[i] = oldBoxMin[i];
+		newDomain.rmin[i] = newMin[i];
+		ownDomain.rmax[i] = oldBoxMax[i];
+		newDomain.rmax[i] = newMax[i];
+		ownDomain.offset[i] = 0;
+		newDomain.offset[i] = 0;
+	}
+	std::vector<HaloRegion> desiredDomain{newDomain};
+	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
+	std::tie(recvNeighbors, sendNeighbors) = NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain);
+	for (auto& sender : sendNeighbors) {
+		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, true /*removeFromContainer*/);
+	}
+	std::vector<Molecule> ownMolecules{};
+	for (auto iter = particleContainer->iterator(); iter.isValid(); ++iter) {
+		ownMolecules.push_back(*iter);
+		if (not iter->inBox(newMin.data(), newMax.data())) {
+			global_log->error_always_output()
+				<< "particle still in domain that should have been migrated." << std::endl;
+			Simulation::exit(2315);
+		}
+	}
+	particleContainer->clear();
+	particleContainer->rebuild(newMin.data(), newMax.data());
+	particleContainer->addParticles(ownMolecules);
+	bool allDone = false;
+	double waitCounter = 30.0;
+	double deadlockTimeOut = 360.0;
+	double startTime = MPI_Wtime();
+	while (not allDone) {
+		allDone = true;
+
+		// "kickstart" processing of all Isend requests
+		for (auto& sender : sendNeighbors) {
+			allDone &= sender.testSend();
+		}
+
+		// unpack molecules
+		for (auto& recv : recvNeighbors) {
+			allDone &= recv.testRecv(particleContainer, false);
+		}
+
+		// catch deadlocks
+		double waitingTime = MPI_Wtime() - startTime;
+		if (waitingTime > waitCounter) {
+			global_log->warning() << "KDDecomposition::migrateParticles: Deadlock warning: Rank " << _rank
+								  << " is waiting for more than " << waitCounter << " seconds" << std::endl;
+			waitCounter += 1.0;
+			for (auto& sender : sendNeighbors) {
+				sender.deadlockDiagnosticSend();
+			}
+			for (auto& recv : recvNeighbors) {
+				recv.deadlockDiagnosticRecv();
+			}
+		}
+
+		if (waitingTime > deadlockTimeOut) {
+			global_log->error() << "KDDecomposition::migrateParticles: Deadlock error: Rank " << _rank
+								<< " is waiting for more than " << deadlockTimeOut << " seconds" << std::endl;
+			for (auto& sender : sendNeighbors) {
+				sender.deadlockDiagnosticSend();
+			}
+			for (auto& recv : recvNeighbors) {
+				recv.deadlockDiagnosticRecv();
+			}
+			break;
+		}
+	}
+}
+
+void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeContainer,
+												  Domain* domain) {  // init communication partners
+	for (int d = 0; d < DIMgeom; ++d) {
+		// this needs to be updated for proper initialization of the neighbours
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, _coversWholeDomain[d]);
+	}
+	_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
 }
 
 void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
@@ -74,6 +179,9 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		<< "The GeneralDomainDecomposition is enforcing the direct-pp neighbor scheme using fs, so setting it."
 		<< std::endl;
 	setCommunicationScheme("direct-pp", "fs");
+
+	xmlconfig.getNodeValue("updateFrequency", _rebuildFrequency);
+	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;
 }
 
 /**
