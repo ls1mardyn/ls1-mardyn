@@ -30,6 +30,7 @@
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #include "parallel/MultiSectionMethod.h"
+#include "parallel/GeneralDomainDecomposition.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -321,6 +322,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				delete _domainDecomposition;
 				_domainDecomposition = new MultiSectionMethod(getcutoffRadius(), _domain);
 			}
+            else if(parallelisationtype == "GeneralDomainDecomposition") {
+              delete _domainDecomposition;
+              _domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius(), _domain);
+            }
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);

@@ -52,6 +52,8 @@ include(vtk)
 include(cppunit)
 # include bhfmm module
 include(bhfmm)
+# include ALL load balanding library
+include(ALL)
 
 # ----- third: include autopas
 include(autopas)
