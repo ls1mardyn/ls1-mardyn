@@ -55,7 +55,7 @@ if(ENABLE_AUTOPAS)
     # Using INTERFACE_INCLUDE_DIRECTORIES is only possible starting with cmake 3.11, so we use include_directories here!
     include_directories(SYSTEM
             "${source_dir}/src"
-            "${source_dir}/libs/spdlog-0.16.3/include"
+            "${source_dir}/libs/spdlog-1.3.1/include"
             )
 
     set(autopas_lib "libautopas")
