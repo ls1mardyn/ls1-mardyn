@@ -3,16 +3,23 @@
  * @author seckler
  * @date 11.04.19
  */
-
 #include "MultiSectionMethod.h"
+#include <tuple>
+#include "CommunicationPartner.h"
 #include "Domain.h"
+#include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
 MultiSectionMethod::MultiSectionMethod(double cutoffRadius, Domain* domain)
-	: _boxMin{0.}, _boxMax{0.}, _gridSize{0}, _gridCoords{0}, _cutoffRadius{cutoffRadius} {
+	: _boxMin{0.},
+	  _boxMax{0.},
+	  _gridSize{0},
+	  _gridCoords{0},
+	  _cutoffRadius{cutoffRadius},
+	  _step{0},
+	  _updateFrequency{10} {
 	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 										  domain->getGlobalLength(2)};
-
 	_gridSize = getOptimalGrid(domainLength, this->getNumProcs());
 	_gridCoords = getCoordsFromRank(_gridSize, _rank);
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, _gridSize, _gridCoords);
@@ -27,19 +34,149 @@ MultiSectionMethod::~MultiSectionMethod() = default;
 
 double MultiSectionMethod::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _boxMax[dimension]; }
 
+bool MultiSectionMethod::queryRebalancing(size_t step, size_t updateFrequency, double /*lastTraversalTime*/) {
+	return step % updateFrequency == 0;
+}
+
 void MultiSectionMethod::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 											ParticleContainer* moleculeContainer, Domain* domain) {
+	bool rebalance = queryRebalancing(_step, _updateFrequency, lastTraversalTime) or forceRebalancing;
+	if (_step == 0) {
+		// ensure that there are no outer particles
+		moleculeContainer->deleteOuterParticles();
+		// init communication partners
+		initCommPartners(moleculeContainer, domain);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+	} else {
+		if (rebalance) {
+			// first transfer leaving particles
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+
+			// ensure that there are no outer particles
+			moleculeContainer->deleteOuterParticles();
+
+			// rebalance
+			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
+			global_log->info() << "rebalancing..." << std::endl;
+			std::tie(newBoxMin, newBoxMax) = doRebalancing(lastTraversalTime, moleculeContainer, domain);
+
+			// migrate the particles, this will rebuild the moleculeContainer!
+			global_log->info() << "migrating particles" << std::endl;
+			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
+
+			// set new boxMin and boxMax
+			_boxMin = newBoxMin;
+			_boxMax = newBoxMax;
+
+			// init communication partners
+			global_log->info() << "updating communication partners" << std::endl;
+			initCommPartners(moleculeContainer, domain);
+			global_log->info() << "rebalancing finished" << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+		} else {
+			if (sendLeavingWithCopies()) {
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+			} else {
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+				moleculeContainer->deleteOuterParticles();
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+			}
+		}
+	}
+	++_step;
+}
+
+std::tuple<std::array<double, 3>, std::array<double, 3>> MultiSectionMethod::doRebalancing(
+	double lastTraversalTime, ParticleContainer* particleContainer, Domain* domain) {
+	return std::make_tuple(_boxMin, _boxMax);
+}
+
+void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* particleContainer, array<double, 3> newMin,
+										  array<double, 3> newMax) {
+	std::array<double, 3> oldBoxMin{particleContainer->getBoundingBoxMin(0), particleContainer->getBoundingBoxMin(1),
+									particleContainer->getBoundingBoxMin(2)};
+	std::array<double, 3> oldBoxMax{particleContainer->getBoundingBoxMax(0), particleContainer->getBoundingBoxMax(1),
+									particleContainer->getBoundingBoxMax(2)};
+
+	HaloRegion ownDomain{}, newDomain{};
+	for (size_t i = 0; i < 3; ++i) {
+		ownDomain.rmin[i] = oldBoxMin[i];
+		newDomain.rmin[i] = newMin[i];
+		ownDomain.rmax[i] = oldBoxMax[i];
+		newDomain.rmax[i] = newMax[i];
+		ownDomain.offset[i] = 0;
+		newDomain.offset[i] = 0;
+	}
+	std::vector<HaloRegion> desiredDomain{newDomain};
+	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
+	std::tie(recvNeighbors, sendNeighbors) = NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain);
+	for (auto& sender : sendNeighbors) {
+		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, true /*removeFromContainer*/);
+	}
+	std::vector<Molecule> ownMolecules{};
+	for (auto iter = particleContainer->iterator(); iter.isValid(); ++iter) {
+		ownMolecules.push_back(*iter);
+		if (not iter->inBox(newMin.data(), newMax.data())) {
+			global_log->error_always_output()
+				<< "particle still in domain that should have been migrated." << std::endl;
+			Simulation::exit(2315);
+		}
+	}
+	particleContainer->clear();
+	particleContainer->rebuild(newMin.data(), newMax.data());
+	particleContainer->addParticles(ownMolecules);
+	bool allDone = false;
+	double waitCounter = 30.0;
+	double deadlockTimeOut = 360.0;
+	double startTime = MPI_Wtime();
+	while (not allDone) {
+		allDone = true;
+
+		// "kickstart" processing of all Isend requests
+		for (auto& sender : sendNeighbors) {
+			allDone &= sender.testSend();
+		}
+
+		// unpack molecules
+		for (auto& recv : recvNeighbors) {
+			allDone &= recv.testRecv(particleContainer, false);
+		}
+
+		// catch deadlocks
+		double waitingTime = MPI_Wtime() - startTime;
+		if (waitingTime > waitCounter) {
+			global_log->warning() << "KDDecomposition::migrateParticles: Deadlock warning: Rank " << _rank
+								  << " is waiting for more than " << waitCounter << " seconds" << std::endl;
+			waitCounter += 1.0;
+			for (auto& sender : sendNeighbors) {
+				sender.deadlockDiagnosticSend();
+			}
+			for (auto& recv : recvNeighbors) {
+				recv.deadlockDiagnosticRecv();
+			}
+		}
+
+		if (waitingTime > deadlockTimeOut) {
+			global_log->error() << "KDDecomposition::migrateParticles: Deadlock error: Rank " << _rank
+								<< " is waiting for more than " << deadlockTimeOut << " seconds" << std::endl;
+			for (auto& sender : sendNeighbors) {
+				sender.deadlockDiagnosticSend();
+			}
+			for (auto& recv : recvNeighbors) {
+				recv.deadlockDiagnosticRecv();
+			}
+			break;
+		}
+	}
+}
+
+void MultiSectionMethod::initCommPartners(ParticleContainer* moleculeContainer,
+										  Domain* domain) {  // init communication partners
 	for (int d = 0; d < DIMgeom; ++d) {
+		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);
 	}
 	_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
-	if (sendLeavingWithCopies()) {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
-	} else {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-		moleculeContainer->deleteOuterParticles();
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
-	}
 }
 
 void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
@@ -47,6 +184,9 @@ void MultiSectionMethod::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "The MultiSectionMethod is enforcing the direct-pp neighbor scheme using fs, so setting it."
 					   << std::endl;
 	setCommunicationScheme("direct-pp", "fs");
+
+	xmlconfig.getNodeValue("updateFrequency", _updateFrequency);
+	global_log->info() << "MultiSectionMethod update frequency: " << _updateFrequency << endl;
 }
 
 /**

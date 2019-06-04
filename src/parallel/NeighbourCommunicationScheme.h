@@ -161,11 +161,7 @@ protected:
 private:
 	void doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions, MessageType msgType,
 			DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer);
-	
-	void aquireNeighbours(Domain *domain, HaloRegion *haloRegion, std::vector<HaloRegion>& desiredRegions, std::vector<CommunicationPartner>& partners01, std::vector<CommunicationPartner>& partners02);
-	void shiftIfNeccessary(double *domainLength, HaloRegion *region, double *shiftArray);
-	void overlap(HaloRegion *myRegion, HaloRegion *inQuestion);
-	bool iOwnThis(HaloRegion *myRegion, HaloRegion *inQuestion);
+
 };
 
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {

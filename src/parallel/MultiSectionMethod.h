@@ -78,7 +78,8 @@ public:
 	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
 											double etime) override {
-		throw std::runtime_error("MultiSectionMethod::queryBalanceAndExchangeNonBlocking() not yet implemented");
+	  // no non-blocking support yet, so we return false
+	  return false;
 	}
 
 	std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion,
@@ -118,12 +119,52 @@ private:
 		const std::array<double, 3>& domainLength, const std::array<size_t, 3>& gridSize,
 		const std::array<size_t, 3>& gridCoords);
 
+	/**
+	 * Check whether a rebalancing is necessary
+	 * @param step the step number
+	 * @param updateFrequency the frequency defining how often
+	 * @param lastTraversalTime the time of the last traversal for this node
+	 * @return true if a rebuild is necessary
+	 */
+	static bool queryRebalancing(size_t step, size_t updateFrequency, double lastTraversalTime);
+
+	/**
+	 * Initializes communication partners
+	 * @param moleculeContainer
+	 * @param domain
+	 */
+	void initCommPartners(ParticleContainer* moleculeContainer, Domain* domain);
+
+	/**
+	 *
+	 * @param lastTraversalTime time for last traversal
+	 * @param particleContainer the ParticleContainer
+	 * @param domain the domain
+	 * @return tuple of new boxMin and boxMax
+	 */
+	std::tuple<std::array<double, 3>, std::array<double, 3>> doRebalancing(double lastTraversalTime,
+																		   ParticleContainer* particleContainer,
+																		   Domain* domain);
+
+	/**
+	 * Exchange the particles, s.t., particles are withing the particleContainer of the process they belong to.
+	 * This function will rebuild the particleContainer.
+	 * @param domain
+	 * @param particleContainer
+	 * @param newMin new minimum of the own subdomain
+	 * @param newMax new maximum of the own subdomain
+	 */
+	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> newMin,
+						  std::array<double, 3> newMax);
+
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
 	std::array<size_t, 3> _gridSize;  //!< Number of processes in each dimension of the MPI process grid used by the MSM
 	std::array<size_t, 3> _gridCoords;  //!< Coordinate of the process in the MPI process grid used by the MSM
 	double _cutoffRadius;
+	size_t _step;
+	size_t _updateFrequency;
 
 	friend class MultiSectionMethodTest;
 };
