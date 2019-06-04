@@ -42,6 +42,8 @@ include(options)
 include(mpi)
 # include module for clang sanitizers
 include(clang-sanitizers)
+# ccache
+include(ccache)
 
 # ----- second: include libraries, etc.
 # include armadillo module

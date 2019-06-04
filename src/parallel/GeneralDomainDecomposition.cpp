@@ -18,6 +18,9 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Doma
 	auto gridSize = getOptimalGrid(domainLength, this->getNumProcs());
 	auto gridCoords = getCoordsFromRank(gridSize, _rank);
 	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
+	global_log->set_mpi_output_all();
+	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
+	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, cutoffRadius /*minimal domain size*/);
@@ -102,6 +105,16 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		ownDomain.offset[i] = 0;
 		newDomain.offset[i] = 0;
 	}
+	global_log->set_mpi_output_all();
+	global_log->info() << "migrating from"
+					   << " [" << oldBoxMin[0] << ", " << oldBoxMax[0] << "] x"
+					   << " [" << oldBoxMin[1] << ", " << oldBoxMax[1] << "] x"
+					   << " [" << oldBoxMin[2] << ", " << oldBoxMax[2] << "] " << std::endl
+					   << "to"
+					   << " [" << newMin[0] << ", " << newMax[0] << "] x"
+					   << " [" << newMin[1] << ", " << newMax[1] << "] x"
+					   << " [" << newMin[2] << ", " << newMax[2] << "]." << std::endl;
+	global_log->set_mpi_output_root(0);
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
 	std::tie(recvNeighbors, sendNeighbors) = NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain);
