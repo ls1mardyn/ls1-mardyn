@@ -139,6 +139,7 @@ void MultiSectionMethod::migrateParticles(Domain* domain, ParticleContainer* par
 
 		// unpack molecules
 		for (auto& recv : recvNeighbors) {
+			allDone &= recv.iprobeCount(this->getCommunicator(), this->getMPIParticleType());
 			allDone &= recv.testRecv(particleContainer, false);
 		}
 
