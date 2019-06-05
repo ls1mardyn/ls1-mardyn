@@ -61,6 +61,10 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			// rebalance
 			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
 			global_log->info() << "rebalancing..." << std::endl;
+
+			global_log->set_mpi_output_all();
+			global_log->info() << "work:" << lastTraversalTime << std::endl;
+			global_log->set_mpi_output_root(0);
 			std::tie(newBoxMin, newBoxMax) = _loadBalancer->rebalance(lastTraversalTime);
 
 			// migrate the particles, this will rebuild the moleculeContainer!
@@ -109,8 +113,8 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	global_log->info() << "migrating from"
 					   << " [" << oldBoxMin[0] << ", " << oldBoxMax[0] << "] x"
 					   << " [" << oldBoxMin[1] << ", " << oldBoxMax[1] << "] x"
-					   << " [" << oldBoxMin[2] << ", " << oldBoxMax[2] << "] " << std::endl
-					   << "to"
+					   << " [" << oldBoxMin[2] << ", " << oldBoxMax[2] << "] " << std::endl;
+	global_log->info() << "to"
 					   << " [" << newMin[0] << ", " << newMax[0] << "] x"
 					   << " [" << newMin[1] << ", " << newMax[1] << "] x"
 					   << " [" << newMin[2] << ", " << newMax[2] << "]." << std::endl;

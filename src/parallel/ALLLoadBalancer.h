@@ -19,4 +19,5 @@ public:
 private:
 	ALL<double, double> _all;
 	using Point = ALL_Point<double>;
+	double _minimalPartitionSize{};
 };
