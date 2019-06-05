@@ -151,6 +151,8 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 		// unpack molecules
 		for (auto& recv : recvNeighbors) {
+			allDone &= recv.iprobeCount(this->getCommunicator(),
+										this->getMPIParticleType());
 			allDone &= recv.testRecv(particleContainer, false);
 		}
 
