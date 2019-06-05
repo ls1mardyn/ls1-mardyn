@@ -110,6 +110,14 @@ void Domain::setLocalUpot(double Upot) {_localUpot = Upot;}
 
 double Domain::getLocalUpot() const {return _localUpot; }
 
+void Domain::setLocaldUdV(const double& dUdV) {_localdUdV = dUdV;}
+
+double Domain::getLocaldUdV() const {return _localdUdV; }
+
+void Domain::setLocald2UdV2(const double& d2UdV2) {_locald2UdV2 = d2UdV2;}
+
+double Domain::getLocald2UdV2() const {return _locald2UdV2; }
+
 void Domain::setLocalVirial(double Virial) {_localVirial = Virial;}
 
 double Domain::getLocalVirial() const {return _localVirial; }

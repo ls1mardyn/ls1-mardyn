@@ -130,6 +130,18 @@ public:
 	//! @brief get the potential of the local process
 	double getLocalUpot() const;
 	
+	//! @brief set the 1st volume derivative of the potential energy of the local process
+	void setLocaldUdV(const double& dUdV);
+
+	//! @brief get the 1st volume derivative of the potential energy of the local process
+	double getLocaldUdV() const;
+
+	//! @brief set the 2nd volume derivative of the potential energy of the local process
+	void setLocald2UdV2(const double& d2UdV2);
+
+	//! @brief get the 2nd volume derivative of the potential energy of the local process
+	double getLocald2UdV2() const;
+
 	//! @brief set the fluid and fluid-solid potential of the local process
 	void setLocalUpotCompSpecific(double UpotCspec);
 
@@ -386,6 +398,10 @@ private:
 
 	//! Potential of the local process
 	double _localUpot;
+	//! 1st volume derivative of the potential energy of the local process
+	double _localdUdV;
+	//! 2nd volume derivative of the potential energy of the local process
+	double _locald2UdV2;
 	//! by Stefan Becker: component specific potential of the local process (fluid-fluid and fluid-solid, but not solid-solid)
 	double _localUpotCspecif;
 	//! by Stefan Becker: number of fluid components specified in the config file 

@@ -137,6 +137,16 @@ private:
 	 */
 	double _myRF;
 
+	/**
+	 * \brief 1st volume derivative of potential energy
+	 */
+	double _dUdVm3;
+
+	/**
+	 * \brief 2nd volume derivative of potential energy
+	 */
+	double _d2UdV2m3;
+
 	struct VLJCPThreadData {
 	public:
 		VLJCPThreadData(): _ljc_dist_lookup(nullptr), _charges_dist_lookup(nullptr), _dipoles_dist_lookup(nullptr), _quadrupoles_dist_lookup(nullptr){
@@ -144,12 +154,17 @@ private:
 			_upotXpolesV.resize(_numVectorElements);
 			_virialV.resize(_numVectorElements);
 			_myRFV.resize(_numVectorElements);
+			_dUdVm3V.resize(_numVectorElements);
+			_d2UdV2m3V.resize(_numVectorElements);
 
 			for (size_t j = 0; j < _numVectorElements; ++j) {
 				_upot6ljV[j] = 0.0;
 				_upotXpolesV[j] = 0.0;
 				_virialV[j] = 0.0;
 				_myRFV[j] = 0.0;
+				_dUdVm3V[j] = 0.0;
+				_d2UdV2m3V[j] = 0.0;
+
 			}
 		}
 
@@ -180,7 +195,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
 
-		AlignedArray<vcp_real_accum> _upot6ljV, _upotXpolesV, _virialV, _myRFV;
+		AlignedArray<vcp_real_accum> _upot6ljV, _upotXpolesV, _virialV, _myRFV, _dUdVm3V, _d2UdV2m3V;
 	};
 
 	std::vector<VLJCPThreadData *> _threadData;
@@ -196,7 +211,7 @@ private:
 			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 			RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
-			RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial,
+			RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial, RealAccumVec& sum_dUdVm3, RealAccumVec& sum_d2UdV2m3,
 			const MaskCalcVec& forceMask,
 			const RealCalcVec& eps_24, const RealCalcVec& sig2,
 			const RealCalcVec& shift6);

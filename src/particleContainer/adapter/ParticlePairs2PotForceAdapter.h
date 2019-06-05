@@ -58,6 +58,8 @@ public:
 		_upot6LJ = 0;
 		_upotXpoles = 0;
 		_myRF = 0;
+		_dUdVm3 = 0.0;
+		_d2UdV2m3 = 0.0;
 
 		#if defined(_OPENMP)
 		#pragma omp parallel
@@ -78,9 +80,11 @@ public:
 		double glob_upot6LJ = 0.0;
 		double glob_upotXpoles = 0.0;
 		double glob_myRF = 0.0;
+		double glob_dUdVm3 = 0.0;
+		double glob_d2UdV2m3 = 0.0;
 
 		#if defined(_OPENMP)
-		#pragma omp parallel reduction(+:glob_virial, glob_upot6LJ, glob_upotXpoles, glob_myRF)
+		#pragma omp parallel reduction(+:glob_virial, glob_upot6LJ, glob_upotXpoles, glob_myRF, glob_dUdVm3, glob_d2UdV2m3)
 		#endif
 		{
 			const int myid = mardyn_get_thread_num();
@@ -88,19 +92,25 @@ public:
 			glob_upot6LJ += _threadData[myid]->_upot6LJ;
 			glob_upotXpoles += _threadData[myid]->_upotXpoles;
 			glob_myRF += _threadData[myid]->_myRF;
+			glob_dUdVm3 += _threadData[myid]->_dUdVm3;
+			glob_d2UdV2m3 += _threadData[myid]->_d2UdV2m3;
 		} // end pragma omp parallel reduction
 
 		_virial = glob_virial;
 		_upot6LJ = glob_upot6LJ;
 		_upotXpoles = glob_upotXpoles;
 		_myRF = glob_myRF;
+		_dUdVm3 = glob_dUdVm3;
+		_d2UdV2m3 = glob_d2UdV2m3;
 
 		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF);
 		_domain.setLocalVirial(_virial + 3.0 * _myRF);
+		_domain.setLocaldUdV(_dUdVm3 / 3.0);
+		_domain.setLocald2UdV2(_d2UdV2m3 / 3.0);
 	}
 
 	struct PP2PFAThreadData {
-		PP2PFAThreadData() : _virial(0.0), _upot6LJ(0.0), _upotXpoles(0.0), _myRF(0.0), _comp2Param(0) {}
+		PP2PFAThreadData() : _virial(0.0), _upot6LJ(0.0), _upotXpoles(0.0), _myRF(0.0), _dUdVm3(0.0), _d2UdV2m3(0.0), _comp2Param(0) {}
 
 		~PP2PFAThreadData() {
 			if(_comp2Param != 0) {
@@ -121,12 +131,16 @@ public:
 			_upot6LJ = 0.0;
 			_upotXpoles = 0.0;
 			_myRF = 0.0;
+			_dUdVm3 = 0.0;
+			_d2UdV2m3 = 0.0;
 		}
 
 		double _virial;
 		double _upot6LJ;
 		double _upotXpoles;
 		double _myRF;
+		double _dUdVm3;
+		double _d2UdV2m3;
 		Comp2Param * _comp2Param;
 	};
 
@@ -156,16 +170,16 @@ public:
 
 		switch (pairType) {
 
-            double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
+            double dummy1, dummy2, dummy3, dummy4[3], Virial3[3], dummy5, dummy6;
             
             case MOLECULE_MOLECULE : 
 //                if ( _rdf != NULL ) _rdf->observeRDF(molecule1, molecule2, dd); // moved to RDFCellProcessor
-                PotForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles, my_threadData._myRF, Virial3, calculateLJ );
+                PotForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles, my_threadData._myRF, Virial3, calculateLJ, my_threadData._dUdVm3, my_threadData._d2UdV2m3);
                 my_threadData._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
                 return my_threadData._upot6LJ + my_threadData._upotXpoles;
             case MOLECULE_HALOMOLECULE : 
 
-                PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);
+                PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ, dummy5, dummy6);
                 return 0.0;
             case MOLECULE_MOLECULE_FLUID : 
                 dummy1 = 0.0; // 6*U_LJ
@@ -197,6 +211,10 @@ private:
 	double _upotXpoles;
 	//! @brief variable used to sum the MyRF contribution of all pairs
 	double _myRF;
+	//! @brief variable used to sum the dUdVm3 (1st volume derivative of potential energy) contribution of all pairs
+	double _dUdVm3;
+	//! @brief variable used to sum the d2UdV2m3 (2nd volume derivative of potential energy) contribution of all pairs
+	double _d2UdV2m3;
 
 //	bool _doRecordRDF;
 };
