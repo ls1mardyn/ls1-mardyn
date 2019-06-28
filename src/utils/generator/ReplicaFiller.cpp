@@ -77,7 +77,7 @@ public:
 
 	bool isInBoundingBox(double r[3]) const override {
 		// _object->isInside(r);
-		true;
+		return true;
 	}
 
 	void update() override {}
