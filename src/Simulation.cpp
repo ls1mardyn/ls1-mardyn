@@ -984,8 +984,9 @@ void Simulation::simulate() {
 
 		// TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
+#ifndef MARDYN_AUTOPAS
 		_moleculeContainer->deleteOuterParticles();
-
+#endif
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);

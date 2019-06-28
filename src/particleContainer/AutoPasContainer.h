@@ -94,13 +94,14 @@ private:
 	typedef autopas::FullParticleCell<Molecule> CellType;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 
-	std::vector<autopas::TraversalOption> _traversalChoices;
-	std::vector<autopas::ContainerOption> _containerChoices;
-	autopas::SelectorStrategy _selectorStrategy;
-	std::vector<autopas::DataLayoutOption> _dataLayoutChoices;
-	std::vector<autopas::Newton3Option> _newton3Choices;
+	std::set<autopas::TraversalOption> _traversalChoices;
+	std::set<autopas::ContainerOption> _containerChoices;
+	autopas::SelectorStrategyOption _selectorStrategy;
+	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
+	std::set<autopas::Newton3Option> _newton3Choices;
 
+	std::vector<Molecule> _invalidParticles;
 #ifdef ENABLE_MPI
-  	std::ofstream _logFile;
+	std::ofstream _logFile;
 #endif
 };
