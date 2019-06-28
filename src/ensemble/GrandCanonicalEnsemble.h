@@ -93,7 +93,7 @@ public:
 	void storeSample(Molecule* m, uint32_t componentid) override;
 
 	/*! Returns _lmu pointer for processing by external plugins */
-	virtual std::list<ChemicalPotential>* getLmu() { return &_lmu; }
+	std::list<ChemicalPotential>* getLmu() override { return &_lmu; }
 
 private:
 

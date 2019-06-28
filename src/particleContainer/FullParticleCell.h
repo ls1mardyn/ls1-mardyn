@@ -112,7 +112,7 @@ public:
 		multipurposePointer = const_cast<Molecule*>(& _molecules.at(i));
 	}
 
-	bool findMoleculeByID(size_t& index, unsigned long molid) const;
+	bool findMoleculeByID(size_t& index, unsigned long molid) const override;
 
 private:
 
