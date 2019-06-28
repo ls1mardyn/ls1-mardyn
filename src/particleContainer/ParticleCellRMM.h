@@ -9,11 +9,9 @@ class ParticleCellRMM: public ParticleCellBase {
 public:
 	ParticleCellRMM();
 
-	ParticleCellRMM(const ParticleCellRMM& other) :
-			ParticleCellBase(other), _cellDataSoARMM(other._cellDataSoARMM) {
-	}
+	ParticleCellRMM(const ParticleCellRMM& other) = default;
 
-	~ParticleCellRMM();
+	~ParticleCellRMM() override;
 
 	SingleCellIterator<ParticleCellRMM> iterator() {
 		return SingleCellIterator<ParticleCellRMM>(this);
@@ -51,11 +49,11 @@ public:
 
 	size_t getMoleculeVectorDynamicSize() const override {return 0;}
 
-	void prefetchForForce() const;
+	void prefetchForForce() const override;
 
-	void getLeavingMolecules(std::vector<Molecule> & appendBuffer);
+	void getLeavingMolecules(std::vector<Molecule> & appendBuffer) override;
 
-	bool findMoleculeByID(size_t& index, unsigned long molid) const;
+	bool findMoleculeByID(size_t& index, unsigned long molid) const override;
 
 //protected: do not use!
 	void moleculesAtNew(size_t i, Molecule *& multipurposePointer) override;
