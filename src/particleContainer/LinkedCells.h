@@ -168,7 +168,7 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	double get_halo_L(int index) const;
 
-	double getCutoff() { return _cutoffRadius; }
+	double getCutoff() override const { return _cutoffRadius; }
 	void setCutoff(double rc) override { _cutoffRadius = rc; }
 
 	void deleteMolecule(Molecule &molecule, const bool& rebuildCaches) override;

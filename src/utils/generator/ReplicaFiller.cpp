@@ -99,12 +99,13 @@ public:
 
 	double get_halo_L(int index) const override { return 0.0; }
 
-	double getCutoff() override { return 0.0; }
+	double getCutoff() const override { return 0.0; }
 
 	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) override {}
 
-	double
-	getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override { return 0.0; }
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
+		return 0.0;
+	}
 
 	void updateInnerMoleculeCaches() override {}
 

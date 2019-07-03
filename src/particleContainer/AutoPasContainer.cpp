@@ -124,10 +124,10 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 }
 
 void AutoPasContainer::update() {
-	if (_invalidParticles.size() != 0) {
+	if (not _invalidParticles.empty()) {
 		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still exist."
 							<< std::endl;
-		Simulation::exit(43);
+		Simulation::exit(434);
 	}
 	_invalidParticles = _autopasContainer.updateContainer();
 }
@@ -213,7 +213,9 @@ void AutoPasContainer::deleteOuterParticles() { /*ignored*/
 
 double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
 
-double AutoPasContainer::getCutoff() { return _cutoff; }
+double AutoPasContainer::getCutoff() const { return _cutoff; }
+
+double AutoPasContainer::getInteractionLength() const { return _cutoff + _verletSkin; }
 
 void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
 	throw std::runtime_error("AutoPasContainer::deleteMolecule() not yet implemented");
@@ -237,14 +239,8 @@ void AutoPasContainer::updateMoleculeCaches() {
 }
 
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
-	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
-	for (auto iter = iterator(); iter.isValid(); ++iter) {
-		if (iter->getR() == pos_arr) {
-			*result = &(*iter);
-			return true;
-		}
-	}
-	return false;
+	throw std::runtime_error(
+		"getMoleculeAtPosition not supported by AutoPasContainer. Please use a FullShell traversal.");
 }
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
@@ -274,5 +270,6 @@ RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorne
 														ParticleIterator::Type t) {
 	std::array<double, 3> lowCorner{startCorner[0], startCorner[1], startCorner[2]};
 	std::array<double, 3> highCorner{endCorner[0], endCorner[1], endCorner[2]};
-	return _autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t));
+	return RegionParticleIterator{
+		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }

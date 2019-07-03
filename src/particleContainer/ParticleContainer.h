@@ -192,7 +192,9 @@ public:
 	virtual double get_halo_L(int index) const = 0;
 
 
-	virtual double getCutoff() = 0;
+	virtual double getCutoff() const = 0;
+
+	virtual double getInteractionLength() const {return getCutoff();}
 
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) = 0;
@@ -240,6 +242,11 @@ public:
 	 * @param rc
 	 */
 	virtual void setCutoff(double rc){};
+
+	virtual std::vector<Molecule> getInvalidParticles() { return {}; }
+
+	virtual bool isInvalidParticleReturner() { return false; }
+
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

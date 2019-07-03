@@ -18,12 +18,41 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
-void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* /*domain*/) {
-
-	for (unsigned d = 0; d < 3; ++d) {
-		handleDomainLeavingParticles(d, moleculeContainer);
+void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
+										   ParticleContainer* moleculeContainer) {
+	for (auto& molecule : invalidMolecules) {
+		for (auto dim : {0, 1, 2}) {
+			auto shift = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
+			auto r = molecule.r(dim);
+			if (r < moleculeContainer->getBoundingBoxMin(dim)) {
+				r = r + shift;
+				if (r >= moleculeContainer->getBoundingBoxMax(dim)) {
+					r = std::nextafter(moleculeContainer->getBoundingBoxMax(dim), -1);
+				}
+			} else if (r >= moleculeContainer->getBoundingBoxMax(dim)) {
+				r = r - shift;
+				if (r < moleculeContainer->getBoundingBoxMin(dim)) {
+					r = moleculeContainer->getBoundingBoxMin(dim);
+				}
+			}
+			molecule.setr(dim, r);
+		}
 	}
+	moleculeContainer->addParticles(invalidMolecules);
+}
 
+void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* /*domain*/) {
+	if(moleculeContainer->isInvalidParticleReturner()){
+		// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them
+		// directly.
+		auto invalidParticles = moleculeContainer->getInvalidParticles();
+		addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
+	}
+	else {
+		for (unsigned d = 0; d < 3; ++d) {
+			handleDomainLeavingParticles(d, moleculeContainer);
+		}
+	}
 	for (unsigned d = 0; d < 3; ++d) {
 		populateHaloLayerWithCopies(d, moleculeContainer);
 	}
@@ -226,7 +255,6 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 			i.deleteCurrentParticle(); //removeFromContainer = true;
 		}
 	}
-
 }
 
 void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
@@ -236,22 +264,23 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	// molecules that have crossed the higher boundary need a negative shift
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
 	const int sDim = dim+1;
+	double interactionLength = moleculeContainer->getInteractionLength();
+
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
-		double cutoff = moleculeContainer->getCutoff();
-		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
-							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
-							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
-		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
-							moleculeContainer->getBoundingBoxMax(1) + cutoff,
-							moleculeContainer->getBoundingBoxMax(2) + cutoff};
+		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - interactionLength,
+							  moleculeContainer->getBoundingBoxMin(1) - interactionLength,
+							  moleculeContainer->getBoundingBoxMin(2) - interactionLength};
+		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + interactionLength,
+							moleculeContainer->getBoundingBoxMax(1) + interactionLength,
+							moleculeContainer->getBoundingBoxMax(2) + interactionLength};
 
 		if (direction < 0) {
 			startRegion[dim] = moleculeContainer->getBoundingBoxMin(dim);
-			endRegion[dim] = moleculeContainer->getBoundingBoxMin(dim) + cutoff;
+			endRegion[dim] = moleculeContainer->getBoundingBoxMin(dim) + interactionLength;
 		} else {
-			startRegion[dim] = moleculeContainer->getBoundingBoxMax(dim) - cutoff;
+			startRegion[dim] = moleculeContainer->getBoundingBoxMax(dim) - interactionLength;
 			endRegion[dim] = moleculeContainer->getBoundingBoxMax(dim);
 		}
 

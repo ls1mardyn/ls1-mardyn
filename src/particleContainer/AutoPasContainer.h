@@ -57,7 +57,9 @@ public:
 
 	double get_halo_L(int index) const override;
 
-	double getCutoff() override;
+	double getCutoff() const override;
+
+	double getInteractionLength() const override;
 
 	void deleteMolecule(Molecule &molecule, const bool &rebuildCaches) override;
 
@@ -84,6 +86,10 @@ public:
 	std::string getName() override { return "AutoPasContainer"; }
 
 	void setCutoff(double cutoff) override { _cutoff = cutoff; }
+
+	std::vector<Molecule> getInvalidParticles() override { return std::move(_invalidParticles); }
+
+	bool isInvalidParticleReturner() override { return true; }
 
 private:
 	double _cutoff;
