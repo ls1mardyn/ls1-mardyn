@@ -273,7 +273,7 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 		long offset = _seekTable.at(_frameCount) + dataListBeginOffsets[sphereTypeId] + dataListWriteOffsets[sphereTypeId];
 		MPI_File_seek(_mpifh, offset, MPI_SEEK_SET);
 		buffer_pos = 0;
-		for (auto moleculeIter = particleContainer->iterator(); moleculeIter.isValid(); ++moleculeIter) {
+		for (auto moleculeIter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); moleculeIter.isValid(); ++moleculeIter) {
 			if(true == GetSpherePos(reinterpret_cast<float*>(&writeBuffer[buffer_pos]), &(*moleculeIter), sphereTypeId)) {
 				buffer_pos += get_particle_data_size();
 				if(buffer_pos > _writeBufferSize - get_particle_data_size()) {
@@ -531,7 +531,7 @@ void MmpldWriter::write_particle_list_header(uint64_t particle_count, int sphere
 // derived classes
 void MmpldWriterSimpleSphere::CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType)
 {
-	for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
+	for (auto mol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
 		uint8_t cid = mol->componentid();
 		numSpheresPerType[cid]++;
 	}
@@ -549,7 +549,7 @@ bool MmpldWriterSimpleSphere::GetSpherePos(float *spherePos, Molecule* mol, uint
 
 void MmpldWriterMultiSphere::CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType)
 {
-	for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
+	for (auto mol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
 		uint8_t cid = mol->componentid();
 		uint8_t offset = _nCompSitesOffset.at(cid);
 		for (uint8_t si = 0; si < _numSitesPerComp.at(cid); ++si)

@@ -132,7 +132,7 @@ void MmspdWriter::endStep(ParticleContainer *particleContainer,
 #endif
 		ofstream mmspdfstream(_filename.c_str(), ios::out|ios::app);
 		mmspdfstream << "> " << domain->getglobalNumMolecules() << "\n";
-		for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
+		for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
 			bool halo = false;
 			for (unsigned short d = 0; d < 3; d++) {
 				if ((pos->r(d) < particleContainer->getBoundingBoxMin(d)) || (pos->r(d) > particleContainer->getBoundingBoxMax(d))) {
@@ -165,7 +165,7 @@ void MmspdWriter::endStep(ParticleContainer *particleContainer,
 	}
 	else {
 		stringstream mmspdfstream;
-		for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
+		for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
 			bool halo = false;
 			for (unsigned short d = 0; d < 3; d++) {
 				if ((pos->r(d) < particleContainer->getBoundingBoxMin(d)) || (pos->r(d) > particleContainer->getBoundingBoxMax(d))) {

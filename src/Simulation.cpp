@@ -667,7 +667,8 @@ void Simulation::updateForces() {
 	#pragma omp parallel
 	#endif
 	{
-		for (auto i = _moleculeContainer->iterator(); i.isValid(); ++i){
+		// iterate over all particles in case we are not using the Full Shell method.
+		for (auto i = _moleculeContainer->iterator(ParticleIterator::ALL_CELLS); i.isValid(); ++i){
 			i->calcFM();
 		}
 	} // end pragma omp parallel
@@ -1305,7 +1306,7 @@ void Simulation::refreshParticleIDs()
 #ifndef NDEBUG
 	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
 #endif
-	for (auto pit = _moleculeContainer->iterator(); pit.isValid(); ++pit)
+	for (auto pit = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{
 		pit->setid(++tmpID);
 	}

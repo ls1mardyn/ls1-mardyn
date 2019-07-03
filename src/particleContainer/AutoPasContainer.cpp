@@ -159,7 +159,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
 		double epsilon, sigma, shift;
 		{
-			auto iter = iterator();
+			auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 			if (not iter.isValid()) {
 				return;
 			}
@@ -179,7 +179,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
-		for (auto iter = iterator(); iter.isValid(); ++iter) {
+		for (auto iter = iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
 			iter->clearFM();
 		}
 

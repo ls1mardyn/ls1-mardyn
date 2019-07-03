@@ -1377,7 +1377,7 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 	#pragma omp parallel
 	#endif
 	{
-		for(auto molPtr = moleculeContainer->iterator(); molPtr.isValid(); ++molPtr) {
+		for(auto molPtr = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molPtr.isValid(); ++molPtr) {
 			int localCellIndex[3]; // 3D Cell index (local)
 			int globalCellIdx[3]; // 3D Cell index (global)
 			for (int dim = 0; dim < 3; dim++) {
@@ -1526,7 +1526,7 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 		const int prevNumMols = mols.size();
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
+		auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 		#if defined (_OPENMP)
 		#pragma omp master

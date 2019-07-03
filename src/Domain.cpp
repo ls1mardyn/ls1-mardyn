@@ -268,7 +268,7 @@ void Domain::calculateGlobalValues(
 			{
 
 				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
-				for (auto tM = particleContainer->iterator(); tM.isValid(); ++tM) {
+				for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 					Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
 						vcorr = sqrt(limit_energy / Utrans);
@@ -377,7 +377,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		{
 			std::map<int, std::array<double, 3> > localThermostatDirectedVelocity_thread;
 
-			for(auto tM = partCont->iterator(); tM.isValid(); ++tM) {
+			for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 				int cid = tM->componentid();
 				int thermostat = this->_componentToThermostatIdMap[cid];
 
@@ -404,7 +404,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		#pragma omp parallel reduction(+ : velX, velY, velZ)
 		#endif
 		{
-			for(auto tM = partCont->iterator(); tM.isValid(); ++tM) {
+			for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 				velX += tM->v(0);
 				velY += tM->v(1);
 				velZ += tM->v(2);
@@ -421,7 +421,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
 	if(this->_componentwiseThermostat)
 	{
-		for(auto tM = partCont->iterator(); tM.isValid(); ++tM)
+		for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -450,7 +450,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		#endif
 		{
 
-			for(auto tM = partCont->iterator(); tM.isValid(); ++tM) {
+			for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 				++N;
 				rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
 				if(this->_universalUndirectedThermostat[0]) {

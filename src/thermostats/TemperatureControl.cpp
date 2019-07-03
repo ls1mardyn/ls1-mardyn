@@ -581,7 +581,7 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 
 	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in
 
-	for( auto tM  = particleContainer->iterator();
+	for( auto tM  = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 		 tM.isValid();
 		 ++tM)
 	{
@@ -607,7 +607,7 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 		// init temperature control
 		this->Init(simstep);
 
-		for( auto tM  = particleContainer->iterator();
+		for( auto tM  = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 			 tM.isValid();
 			 ++tM)
 		{

@@ -204,7 +204,7 @@ void WallPotential::calcTSLJ_9_3(ParticleContainer *partContainer) {
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
         {
-            auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
+            auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);
 
             double f[3];
             for(unsigned d=0; d<3; d++)
@@ -279,7 +279,7 @@ void WallPotential::calcTSLJ_10_4(ParticleContainer *partContainer) {
 #pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
     {
-        auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner);
+        auto begin = partContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);
 
         for(auto i = begin; i.isValid() ; ++i){
             double ry, ryRel, y, y2, y4, y5, y10, y11;

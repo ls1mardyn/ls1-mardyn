@@ -70,7 +70,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	// create a body centered cubic layout, by creating by placing the molecules on the
 	// vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
-	std::array<double, 3> simBoxLength;
+	std::array<double, 3> simBoxLength{};
 	for (int d = 0; d < 3; ++d) {
 		simBoxLength[d] = global_simulation->getDomain()->getGlobalLength(d);
 	}
@@ -100,7 +100,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	#endif
 	{
 
-		for (auto mol = particleContainer->iterator(); mol.isValid(); ++mol) {
+		for (auto mol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
 			mol->setid(mol->getID() + idOffset);
 		}
 	}
@@ -232,8 +232,8 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	#pragma omp parallel reduction(+:mass_sum,momentum_sum0,momentum_sum1,momentum_sum2)
 	#endif
 	{
-
-		for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
+		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid();
+			 ++molecule) {
 			double mass = components[molecule->componentid()].m();
 			mass_sum += mass;
 			momentum_sum0 += mass * molecule->v(0);
@@ -246,19 +246,26 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	double v_sub0 = momentum_sum0 / mass_sum;
 	double v_sub1 = momentum_sum1 / mass_sum;
 	double v_sub2 = momentum_sum2 / mass_sum;
-	Log::global_log->info() << "v_sub: " << v_sub0 << " " << v_sub1<< " " << v_sub2 << std::endl;
-	Log::global_log->info() << "m1 v: " << std::setprecision(10) << particleContainer->iterator()->v(0) << " " << particleContainer->iterator()->v(1)<< " " << particleContainer->iterator()->v(2) << std::endl;
+	{
+		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		Log::global_log->info() << "v_sub: " << v_sub0 << " " << v_sub1 << " " << v_sub2 << std::endl;
+		Log::global_log->info() << "m1 v: " << std::setprecision(10) << iter->v(0) << " " << iter->v(1) << " "
+								<< iter->v(2) << std::endl;
+	}
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
 
-		for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
+		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid(); ++molecule) {
 			molecule->vsub(v_sub0, v_sub1, v_sub2);
 		}
 	}
-	Log::global_log->info() << "m1 v: " << particleContainer->iterator()->v(0) << " " << particleContainer->iterator()->v(1)<< " " << particleContainer->iterator()->v(2) <<std::setprecision(5)<< std::endl;
-
+	{
+		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		Log::global_log->info() << "m1 v: " << iter->v(0) << " " << iter->v(1) << " " << iter->v(2)
+								<< std::setprecision(5) << std::endl;
+	}
 #ifndef NDEBUG
 	//test
 	momentum_sum0 = 0.;
@@ -270,7 +277,7 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	#endif
 	{
 
-		for (auto molecule = particleContainer->iterator(); molecule.isValid(); ++molecule) {
+		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid(); ++molecule) {
 			double mass = components[molecule->componentid()].m();
 			momentum_sum0 += mass * molecule->v(0);
 			momentum_sum1 += mass * molecule->v(1);

@@ -759,7 +759,7 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 	{
 	case DCIM_START_CONFIGURATION:
 
-		for (auto pit = particleContainer->iterator(); pit.isValid(); ++pit)
+		for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 		{
 			// sample density profile
 			this->SampleProfiles(&(*pit));

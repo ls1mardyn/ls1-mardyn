@@ -147,7 +147,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		}
 
 
-		for (auto tempMolecule = particleContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
+		for (auto tempMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMolecule.isValid(); ++tempMolecule) {
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {
 				cellIndex[i]
@@ -334,7 +334,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		}
 
 		//filling of the writeArray
-		for (auto tempMolecule = particleContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
+		for (auto tempMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMolecule.isValid(); ++tempMolecule) {
 
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {

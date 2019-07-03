@@ -183,7 +183,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		std::set<unsigned long> lower_thread[3]; // the id of particles that were close to the lower boundary in the specific dimension are stored here
 		std::set<unsigned long> upper_thread[3]; // the id of particles that were close to the upper boundary in the specific dimension are stored here
 
-		for (auto m = container->iterator(); m.isValid();
+		for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid();
 				++m) {
 			for (int dim = 0; dim < 3; dim++) {
 				if (m->r(dim) < bBoxMin[dim] + cutoff * 0.5) {
@@ -230,7 +230,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	container->update();
 
-	for(auto iter = container->iterator(ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
+	for(auto iter = container->iterator(ParticleIterator::Type::ALL_CELLS); iter.isValid(); ++iter){
 		bool found = false;
 		auto id = iter->getID();
 		for(unsigned short dim = 0; dim < 3; ++dim){
@@ -258,7 +258,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
 	ASSERT_EQUAL(numMols, newNumMols);
 
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 		for (int dim = 0; dim < 3; dim++) {
 			if (lower[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the top part of the domain.

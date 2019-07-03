@@ -292,11 +292,10 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer *container, Molecule 
     }
     //global_log->info() << "[CavityWriter] post_lo_hi" << endl;
 
-    auto begin = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS);
     //global_log->info() << "[CavityWriter] post region iterator" << endl;
 
-    for (auto m2 = begin; m2.isValid(); ++m2) {
-        if (m2->getID() == m1->getID()) {
+	for (auto m2 = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS); m2.isValid(); ++m2) {
+		if (m2->getID() == m1->getID()) {
             //global_log->info() << "[CavityWriter] same ID" << endl;
             continue;
         }
@@ -316,7 +315,7 @@ void CavityEnsemble::cavityStep(ParticleContainer *globalMoleculeContainer) {
     // don't confuse with the other ParticleContainer, the base-class of LinkedCells!
     map<unsigned long, Molecule *> *pc = this->particleContainer();
 
-    for (map<unsigned long, Molecule *>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
+    for (auto pcit = pc->begin(); pcit != pc->end(); pcit++) {
         mardyn_assert(pcit->second != NULL);
         Molecule *m1 = pcit->second;
         //global_log->info() << "[CavityWriter] pre-neighbors" << endl;

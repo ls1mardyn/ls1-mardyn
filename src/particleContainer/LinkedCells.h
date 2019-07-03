@@ -220,13 +220,13 @@ public:
 	// documentation in base class
 	virtual void updateMoleculeCaches();
 
-	ParticleIterator iterator (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) {
+	ParticleIterator iterator (ParticleIterator::Type t) {
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
 		return ParticleIterator(t, &_cells, offset, stride);
 	}
-	RegionParticleIterator regionIterator (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
+	RegionParticleIterator regionIterator (const double startRegion[3], const double endRegion[3]);
 
 	size_t getTotalSize() override;
 	void printSubInfo(int offset) override;

@@ -192,7 +192,7 @@ void Planar::calculateLongRange(){
 		#if defined(_OPENMP)
 		#pragma omp parallel
 		#endif
-		for(auto tempMol = _particleContainer->iterator(); tempMol.isValid(); ++tempMol){
+		for(auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol){
 			unsigned cid=tempMol->componentid();
 
 			for (unsigned i=0; i<numLJ[cid]; i++){
@@ -244,7 +244,7 @@ void Planar::calculateLongRange(){
 			#if defined(_OPENMP)
 			#pragma omp parallel
 			#endif
-			for(auto tempMol = _particleContainer->iterator(); tempMol.isValid(); ++tempMol){
+			for(auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol){
 				unsigned cid=tempMol->componentid();
 
 				for (unsigned i=0; i<numLJ[cid]; i++){
@@ -375,7 +375,7 @@ void Planar::calculateLongRange(){
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:Upot_c, Virial_c)
 	#endif
-	for (auto tempMol = _particleContainer->iterator(); tempMol.isValid(); ++tempMol) {
+	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
 
 		unsigned cid = tempMol->componentid();
 

@@ -44,10 +44,10 @@ public:
 
 	void traversePartialInnermostCells(CellProcessor &cellProcessor, unsigned int stage, int stageCount) override;
 
-	ParticleIterator iterator(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override;
+	ParticleIterator iterator(ParticleIterator::Type t) override;
 
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
-										  ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override;
+										  ParticleIterator::Type t) override;
 
 	unsigned long getNumberOfParticles() override;
 

@@ -117,7 +117,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
         _mass = 0;
 
         // ITERATE OVER PARTICLES
-        for (auto tm = particleContainer->iterator(); tm.isValid(); ++tm) {
+        for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
             double partMass = tm->mass();
             _mass += partMass;
             for (int d = _dim_start; d < _dim_end; d += _dim_step) {
@@ -159,7 +159,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
         }
 
         // MOVE
-        for(auto tm = particleContainer->iterator(); tm.isValid(); ++tm){
+        for(auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm){
             for (int d = _dim_start; d < _dim_end; d += _dim_step){
                 tm->move(d, _motion[d]);
             }

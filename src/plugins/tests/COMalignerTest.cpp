@@ -45,8 +45,8 @@ void COMalignerTest::testCOMalign() {
     // initialize oldContainer only now, to prevent it from interfering with anything relevant!
     ParticleContainer* oldContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
     // TEST IF MOTION WAS APPLIED
-    auto newPos = container->iterator();
-    auto oldPos = oldContainer->iterator();
+    auto newPos = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+    auto oldPos = oldContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     while(newPos.isValid()){
         for(int d = 0; d < 3; d++){
             ASSERT_EQUAL_MSG("Motion has not been properly applied" ,oldPos->r(d) - .25, newPos->r(d));

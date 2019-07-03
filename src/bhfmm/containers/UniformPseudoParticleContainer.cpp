@@ -1133,7 +1133,7 @@ void UniformPseudoParticleContainer::generateP2PTasks(qsched *scheduler) {
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 	global_simulation->timers()->start("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
 	_leafContainer->clearParticles();
-	for(auto tM = pc->iterator(); tM.isValid(); ++tM) {
+	for(auto tM = pc->iterator(ParticleIterator::ALL_CELLS); tM.isValid(); ++tM) {
 		_leafContainer->addParticle(*tM);
 	}
 }

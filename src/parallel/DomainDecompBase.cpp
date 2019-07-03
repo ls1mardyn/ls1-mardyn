@@ -92,7 +92,7 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 #pragma omp parallel shared(startRegion, endRegion)
 #endif
 		{
-			auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
+			auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
 
 			double shiftedPosition[3];
 
@@ -135,7 +135,7 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 #pragma omp parallel
 #endif
 	{
-		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
+		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
 
 		double shiftedPosition[3];
 
@@ -193,7 +193,7 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
 		{
-			auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
+			auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
 
 			//traverse and gather all halo particles in the cells
 			for(auto i = begin; i.isValid(); ++i){
@@ -229,7 +229,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 #pragma omp parallel
 #endif
 	{
-		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
+		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
 
 		//traverse and gather all halo particles in the cells
 		for (auto i = begin; i.isValid(); ++i) {
@@ -289,7 +289,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
 		{
-			auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
+			auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
 
 			//traverse and gather all boundary particles in the cells
 			for(auto i = begin; i.isValid(); ++i){
@@ -325,7 +325,7 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 #pragma omp parallel
 #endif
 	{
-		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax);
+		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 		//traverse and gather all boundary particles in the cells
 		for (auto i = begin; i.isValid(); ++i) {
@@ -421,7 +421,7 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 	for (int process = 0; process < getNumProcs(); process++) {
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream;
-			if(binary == true){
+			if(binary){
 //				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
 				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::app);
 			}
@@ -430,8 +430,9 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 				checkpointfilestream.precision(20);
 			}
 
-			for (auto tempMolecule = moleculeContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
-				if(binary == true){
+			for (auto tempMolecule = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				 tempMolecule.isValid(); ++tempMolecule) {
+				if(binary){
 					tempMolecule->writeBinary(checkpointfilestream);
 				}
 				else {

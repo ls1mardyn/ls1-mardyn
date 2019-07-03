@@ -154,8 +154,8 @@ public:
 
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
 
-	virtual ParticleIterator iterator (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
-	virtual RegionParticleIterator regionIterator (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
+	virtual ParticleIterator iterator (ParticleIterator::Type t) = 0;
+	virtual RegionParticleIterator regionIterator (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t) = 0;
 
 	//! @return the number of particles stored in this container
 	//!

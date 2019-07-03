@@ -444,7 +444,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	{
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner);
+		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner, ParticleIterator::ALL_CELLS);
 
 		#if defined (_OPENMP)
 		#pragma omp master

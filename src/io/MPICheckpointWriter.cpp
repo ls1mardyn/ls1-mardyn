@@ -291,7 +291,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		{
 			ParticleData* particleStructBuffer=new ParticleData[_particlesbuffersize];
 			unsigned long bufidx=0;
-			for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
+			for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 				ParticleData::MoleculeToParticleData(particleStructBuffer[bufidx], *pos);
 				++bufidx;
@@ -314,7 +314,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		else
 		{
 			ParticleData particleStruct;
-			for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
+			for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 				ParticleData::MoleculeToParticleData(particleStruct, *pos);
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting particle" << endl

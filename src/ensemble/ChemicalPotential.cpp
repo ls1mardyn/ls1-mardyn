@@ -215,7 +215,7 @@ ParticleIterator ChemicalPotential::getDeletion(ParticleContainer* moleculeConta
 			tmaxco[d] = maxco[d];
 		}
 
-	auto m = moleculeContainer->iterator();
+	auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 	if (not m.isValid()){
 		return m; // DELETION_INVALID
 	}
@@ -229,7 +229,7 @@ ParticleIterator ChemicalPotential::getDeletion(ParticleContainer* moleculeConta
 			if (not m.isValid()) {
 				if (j == 0)
 					return m; // DELETION_FALSE
-				m = moleculeContainer->iterator();
+				m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 				j = 0;
 			}
 		} /*end while*/
@@ -237,7 +237,7 @@ ParticleIterator ChemicalPotential::getDeletion(ParticleContainer* moleculeConta
 		++m;
 		j++;
 		if (not m.isValid()) {
-			m = moleculeContainer->iterator();
+			m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 			j = 0;
 		}
 	}
@@ -248,7 +248,7 @@ ParticleIterator ChemicalPotential::getDeletion(ParticleContainer* moleculeConta
 		if (not m.isValid()) {
 			if (j == 0)
 				return m; // DELETION_FALSE
-			m = moleculeContainer->iterator();
+			m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 		}
 	}
 
@@ -502,7 +502,7 @@ void ChemicalPotential::grandcanonicalStep(
 					this->storeMolecule(*m);
 
 					moleculeContainer->deleteMolecule(*m, true/*rebuildCaches*/);
-					m = moleculeContainer->iterator();
+					m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 					_localInsertionsMinusDeletions--;
 				}
 			} else{
@@ -511,7 +511,7 @@ void ChemicalPotential::grandcanonicalStep(
 		} /* end of second hasDeletion */
 
 		if (!this->hasSample()) {
-			for (auto mit = moleculeContainer->iterator(); mit.isValid(); ++mit) {
+			for (auto mit = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mit.isValid(); ++mit) {
 				if (mit->componentid() == this->getComponentID()) {
 
 					this->storeMolecule(*mit);
@@ -590,7 +590,7 @@ void ChemicalPotential::grandcanonicalStep(
 		}
 	}
 #ifndef NDEBUG
-	for (auto m = moleculeContainer->iterator(); m.isValid(); ++m) {
+	for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 		// cout << *m << "\n";
 		// cout.flush();
 		m->check(m->getID());
