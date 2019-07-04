@@ -104,10 +104,10 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			#pragma omp critical (thermostat)
 			#endif
 			{
-				for (auto it = N_l.begin(); it != N_l.end(); ++it) N[it->first] += it->second;
-				for (auto it = rotDOF_l.begin(); it != rotDOF_l.end(); ++it) rotDOF[it->first] += it->second;
-				for (auto it = summv2_l.begin(); it != summv2_l.end(); ++it) summv2[it->first] += it->second;
-				for (auto it = sumIw2_l.begin(); it != sumIw2_l.end(); ++it) sumIw2[it->first] += it->second;
+				for (auto & it : N_l) N[it.first] += it.second;
+				for (auto & it : rotDOF_l) rotDOF[it.first] += it.second;
+				for (auto & it : summv2_l) summv2[it.first] += it.second;
+				for (auto & it : sumIw2_l) sumIw2[it.first] += it.second;
 			}
 		}
 	}
@@ -139,10 +139,10 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			}
 		} // end pragma omp parallel
 	}
-	for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
-		domain->setLocalSummv2(thermit->second, thermit->first);
-		domain->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
-		domain->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
+	for (auto & thermit : summv2) {
+		domain->setLocalSummv2(thermit.second, thermit.first);
+		domain->setLocalSumIw2(sumIw2[thermit.first], thermit.first);
+		domain->setLocalNrotDOF(thermit.first, N[thermit.first], rotDOF[thermit.first]);
 	}
 
 	this->_state = STATE_POST_FORCE_CALCULATION;
