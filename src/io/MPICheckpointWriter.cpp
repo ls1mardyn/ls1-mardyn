@@ -380,7 +380,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		ostrm.write((char*)&startidx,sizeof(unsigned long));
 		ostrm.write((char*)&numParticles,sizeof(unsigned long));
 		//offset+=2*sizeof(unsigned long);
-		for (auto pos = particleContainer->iterator(); pos.isValid(); ++pos) {
+		for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
 			unsigned long id=pos->getID();
 			ostrm.write((char*)&id,sizeof(unsigned long));
 			//unsigned int componentid=pos->componentid(); // to be compatible to struct padding

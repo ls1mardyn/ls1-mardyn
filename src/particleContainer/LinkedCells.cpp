@@ -210,7 +210,7 @@ void LinkedCells::check_molecules_in_box() {
 	#pragma omp parallel reduction(+ : numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
+		for (ParticleIterator tM = iterator(ParticleIterator::ALL_CELLS); tM.isValid(); ++tM) {
 			if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
 				numBadMolecules++;
 
@@ -275,7 +275,7 @@ void LinkedCells::update() {
 	#pragma omp parallel reduction(+: numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
+		for (ParticleIterator tM = iterator(ParticleIterator::ALL_CELLS); tM.isValid(); ++tM) {
 			if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 				numBadMolecules++;
 				global_log->error_always_output() << "particle " << tM->getID() << " in cell " << tM.getCellIndex()
@@ -592,7 +592,7 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
-	for (auto it = iterator(); it.isValid(); ++it) {
+	for (auto it = iterator(ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
 			it.deleteCurrentParticle();
@@ -623,7 +623,8 @@ double LinkedCells::get_halo_L(int index) const {
 	return _haloLength[index];
 }
 
-RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
+RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3],
+												   ParticleIterator::Type type) {
 	// parameter "type" not yet used
 	// add functionality in a future version...
 	unsigned int startRegionCellIndex;

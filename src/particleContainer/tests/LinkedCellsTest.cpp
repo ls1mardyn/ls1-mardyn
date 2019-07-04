@@ -87,7 +87,7 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	// some empty cells
 
 	// BEGIN:
-	auto molIt = LC.iterator();
+	auto molIt = LC.iterator(ParticleIterator::ALL_CELLS);
 	ASSERT_TRUE_MSG("begin()", molIt->getID() == 1ul);
 	ASSERT_TRUE_MSG("end()", molIt.isValid());
 
@@ -105,7 +105,7 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	ASSERT_TRUE_MSG("next() arrive at end()", not molIt.isValid());
 
 	// DELETECURRENT:
-	molIt = LC.iterator();
+	molIt = LC.iterator(ParticleIterator::ALL_CELLS);
 
 	molIt.deleteCurrentParticle();
 	++molIt;
@@ -576,7 +576,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 	{
 		container->traverseCells(*cellProc);
 		// calculate forces
-		const auto begin = container->iterator();
+		const auto begin = container->iterator(ParticleIterator::ALL_CELLS);
 		for (auto i = begin; i.isValid(); ++i) {
 			i->calcFM();
 	//		std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
@@ -591,7 +591,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		// calculate forces
 
 	//	std::cout << "pre force exchange:" << std::endl;
-		for (auto i = containerTest->iterator(); i.isValid(); ++i) {
+		for (auto i = containerTest->iterator(ParticleIterator::ALL_CELLS); i.isValid(); ++i) {
 			i->calcFM();
 	//		std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", "<< i->r(2) << ", F: "<< i->F(0) << ", "<< i->F(1) << ", "<< i->F(2) << std::endl;
 		}
@@ -600,7 +600,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 		}
 		std::cout << "after force exchange:"<< std::endl;
 
-		for (auto i = containerTest->iterator(); i.isValid(); ++i) {
+		for (auto i = containerTest->iterator(ParticleIterator::ALL_CELLS); i.isValid(); ++i) {
 	//		std::cout << "r: " << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ", F: " << i->F(0) << ", " << i->F(1)
 	//				<< ", " << i->F(2) << std::endl;
 		}
@@ -611,8 +611,8 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 
 	// Compare calculated forces
 	{
-		const auto begin = container->iterator();
-		const auto beginHS = containerTest->iterator();
+		const auto begin = container->iterator(ParticleIterator::ALL_CELLS);
+		const auto beginHS = containerTest->iterator(ParticleIterator::ALL_CELLS);
 		auto j = beginHS;
 		for (auto i = begin; i.isValid(); ++i, ++j) {
 			CPPUNIT_ASSERT_EQUAL(j->getID(), i->getID());
