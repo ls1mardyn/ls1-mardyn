@@ -65,6 +65,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
 
+	xmlconfig.getNodeValue("rebuildFrequency", _verletRebuildFrequency);
+	xmlconfig.getNodeValue("skin", _verletSkin);
+
 	std::stringstream dataLayoutChoicesStream;
 	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
 			 [&](auto &choice) { dataLayoutChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
@@ -157,6 +160,7 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
+		global_log->info() << "AutoPasContainer: traverseCells" << std::endl;
 		double epsilon, sigma, shift;
 		{
 			auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
@@ -192,7 +196,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		// _upotXpoles is zero as we do not have any dipoles or quadrupoles
 		global_simulation->getDomain()->setLocalUpot(upot /* _upotXpoles + _myRF*/);
 	} else {
-		global_log->warning() << "only lj functors are supported for traversals." << std::endl;
+		global_log->warning() << "only lj functors are supported as traversals." << std::endl;
 	}
 }
 
@@ -209,6 +213,7 @@ unsigned long AutoPasContainer::getNumberOfParticles() { return _autopasContaine
 void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
 void AutoPasContainer::deleteOuterParticles() {
+	global_log->info() << "deleting outer particles by using forced update" << std::endl;
 	auto invalidParticles = _autopasContainer.updateContainerForced();
 	if (not invalidParticles.empty()) {
 		throw std::runtime_error(
