@@ -208,7 +208,13 @@ unsigned long AutoPasContainer::getNumberOfParticles() { return _autopasContaine
 
 void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
-void AutoPasContainer::deleteOuterParticles() { /*ignored*/
+void AutoPasContainer::deleteOuterParticles() {
+	auto invalidParticles = _autopasContainer.updateContainerForced();
+	if (not invalidParticles.empty()) {
+		throw std::runtime_error(
+			"AutoPasContainer: Invalid particles ignored in deleteOuterParticles, check that your rebalance rate is a "
+			"multiple of the rebuild rate!");
+	}
 }
 
 double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
