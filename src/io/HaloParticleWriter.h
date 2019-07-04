@@ -13,8 +13,8 @@
 class HaloParticleWriter : public PluginBase {
 public:
 	
-    HaloParticleWriter() {}
-	~HaloParticleWriter() {}
+    HaloParticleWriter() = default;
+	~HaloParticleWriter() override = default;
 	
 
 	/** @brief Read in XML configuration for HaloParticleWriter.
@@ -29,10 +29,10 @@ public:
 	   </outputplugin>
 	   \endcode
 	 */
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 	
 	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain);
+              DomainDecompBase *domainDecomp, Domain *domain) override;
 	void afterForces(ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, unsigned long simstep) override;
 
@@ -42,17 +42,17 @@ public:
 	}
 
 	void finish(ParticleContainer *particleContainer,
-				DomainDecompBase *domainDecomp, Domain *domain);
+				DomainDecompBase *domainDecomp, Domain *domain) override;
 	
-	std::string getPluginName() {
+	std::string getPluginName() override {
 		return std::string("HaloParticleWriter");
 	}
 	static PluginBase* createInstance() { return new HaloParticleWriter(); }
 private:
-	std::string _outputPrefix;
-	unsigned long _writeFrequency;
-	bool	_incremental;
-	bool	_appendTimestamp;
+	std::string _outputPrefix {};
+	unsigned long _writeFrequency {10};
+	bool	_incremental {};
+	bool	_appendTimestamp {};
 };
 
 #endif  // SRC_IO_HALOPARTICLEWRITER_H_

@@ -29,8 +29,8 @@ public:
 	using C08BasedTraversals<CellTemplate>::rebuild;
 
 	void traverseCellPairs(CellProcessor& cellProcessor) override;
-	void traverseCellPairsOuter(CellProcessor& cellProcessor);
-	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
+	void traverseCellPairsOuter(CellProcessor& cellProcessor) override;
+	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) override;
 
 	bool requiresForceExchange() const override {return eighthShell;}
 

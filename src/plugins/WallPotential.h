@@ -102,7 +102,7 @@ public:
 
     void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep){};
+            Domain *domain, unsigned long simstep) override {};
 
     void finish(ParticleContainer *particleContainer,
                 DomainDecompBase *domainDecomp, Domain *domain) override {};
@@ -122,7 +122,7 @@ public:
     void calcTSLJ_10_4(ParticleContainer *partContainer);
 
     void siteWiseForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-                   unsigned long simstep);
+                   unsigned long simstep) override;
 };
 
 

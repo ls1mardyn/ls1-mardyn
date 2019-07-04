@@ -87,7 +87,7 @@ public:
 
     void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep);
+            Domain *domain, unsigned long simstep) override;
 
 
     void finish(ParticleContainer *particleContainer,
