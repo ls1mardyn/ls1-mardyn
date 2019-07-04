@@ -24,12 +24,11 @@ public:
 			const std::array<unsigned long, 3>& dims) :
 			C08BasedTraversals<CellTemplate>(cells, dims) {
 	}
-	~C08CellPairTraversal() {
-	}
+	~C08CellPairTraversal() = default;
 
 	using C08BasedTraversals<CellTemplate>::rebuild;
 
-	void traverseCellPairs(CellProcessor& cellProcessor);
+	void traverseCellPairs(CellProcessor& cellProcessor) override;
 	void traverseCellPairsOuter(CellProcessor& cellProcessor);
 	void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
 

@@ -107,9 +107,9 @@ public:
 	   </datastructure>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 
-	int getHaloWidthNumCells() {
+	int getHaloWidthNumCells() override {
 		return _haloWidthInNumCells[0];
 	}
 
@@ -123,7 +123,7 @@ public:
 	//! first all cells are cleared and then filled again depending on the spacial position
 	//! of the molecules. After the update, exactly one pointer for each particle in this
 	//! ParticleContainer is it's corresponding cell.
-	void update();
+	void update() override;
 
 	void update_via_copies();
 	void update_via_coloring();
@@ -132,7 +132,7 @@ public:
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
-	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
+	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) override;
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -148,32 +148,32 @@ public:
 	//! @param particlePairsHandler specified concrete action to be done for each pair
 //	void traversePairs(ParticlePairsHandler* particlePairsHandler);
 
-	void traverseCells(CellProcessor& cellProcessor);
+	void traverseCells(CellProcessor& cellProcessor) override;
 
-	void traverseNonInnermostCells(CellProcessor& cellProcessor);
+	void traverseNonInnermostCells(CellProcessor& cellProcessor) override;
 
-	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
+	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override;
 
 	//! @return the number of particles stored in the Linked Cells
-	unsigned long getNumberOfParticles();
+	unsigned long getNumberOfParticles() override;
 
 	// @todo: where is this function called?
-	void clear();
+	void clear() override;
 
 	//! @brief delete all Particles which are not within the bounding box
-	void deleteOuterParticles();
+	void deleteOuterParticles() override;
 
 	//! @brief gets the width of the halo region in dimension index
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
-	double get_halo_L(int index) const;
+	double get_halo_L(int index) const override;
 
-	double getCutoff() override const { return _cutoffRadius; }
+	double getCutoff() const override { return _cutoffRadius; }
 	void setCutoff(double rc) override { _cutoffRadius = rc; }
 
 	void deleteMolecule(Molecule &molecule, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
-	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override;
 
 	int* getBoxWidthInNumCells() {
 		return _boxWidthInNumCells;
@@ -189,7 +189,7 @@ public:
 	 * @param result Molecule will be returned by this pointer if found
 	 * @return Molecule was found?
 	 */
-	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
+	bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
 
 	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!
@@ -212,21 +212,22 @@ public:
 	ParticleCell& getCellReference(int idx){ return _cells[idx];}
 
 	// documentation in base class
-	virtual void updateInnerMoleculeCaches();
+	virtual void updateInnerMoleculeCaches() override;
 
 	// documentation in base class
-	virtual void updateBoundaryAndHaloMoleculeCaches();
+	virtual void updateBoundaryAndHaloMoleculeCaches() override;
 
 	// documentation in base class
-	virtual void updateMoleculeCaches();
+	virtual void updateMoleculeCaches() override;
 
-	ParticleIterator iterator (ParticleIterator::Type t) {
+	ParticleIterator iterator (ParticleIterator::Type t) override {
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
 		return ParticleIterator(t, &_cells, offset, stride);
 	}
-	RegionParticleIterator regionIterator (const double startRegion[3], const double endRegion[3]);
+	RegionParticleIterator regionIterator(const double startRegion[3], const double endRegion[3],
+										  ParticleIterator::Type type) override;
 
 	size_t getTotalSize() override;
 	void printSubInfo(int offset) override;
@@ -234,7 +235,8 @@ public:
 
 	bool requiresForceExchange() const override; // new
 
-	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength);
+	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
+								std::array<double, 3> simBoxLength) override;
 
 	std::vector<unsigned long> getParticleCellStatistics() override;
 

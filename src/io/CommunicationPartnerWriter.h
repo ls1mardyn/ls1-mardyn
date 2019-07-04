@@ -27,10 +27,10 @@ public:
 	   </outputplugin>
 	   \endcode
 	 */
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 	
 	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain);
+              DomainDecompBase *domainDecomp, Domain *domain) override;
 	void afterForces(ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, unsigned long simstep) override;
 
@@ -40,9 +40,9 @@ public:
 	}
 
 	void finish(ParticleContainer *particleContainer,
-				DomainDecompBase *domainDecomp, Domain *domain);
+				DomainDecompBase *domainDecomp, Domain *domain) override;
 	
-	std::string getPluginName() {
+	std::string getPluginName() override {
 		return std::string("CommunicationPartnerWriter");
 	}
 	static PluginBase* createInstance() { return new CommunicationPartnerWriter(); }
