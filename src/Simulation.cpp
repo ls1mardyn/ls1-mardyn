@@ -790,9 +790,11 @@ void Simulation::prepare_start() {
 		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 	}
 
+#ifndef MARDYN_AUTOPAS
 	// clear halo
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
+#endif
 
 	if (_longRangeCorrection == nullptr){
 		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
