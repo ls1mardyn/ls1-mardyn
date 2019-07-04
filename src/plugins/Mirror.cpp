@@ -183,7 +183,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 			regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
 		}
 
-		regionLowCorner[1] = 0.; // _yPos;
+		regionLowCorner[1] = _yPos;
 
 		#if defined (_OPENMP)
 		#pragma omp parallel shared(regionLowCorner, regionHighCorner)
@@ -197,17 +197,14 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 				additionalForce[2] = 0;
 				double ry = it->r(1);
 				double vy = it->v(1);
-				cout << "ry,vy=" << ry << "," << vy << endl;
 				if( (MD_RIGHT_MIRROR == _direction && ry > _yPos) || (MD_LEFT_MIRROR == _direction && ry < _yPos) ) {
-					cout << "if1 passed" << endl;
+
 					if(MT_REFLECT == _type || MT_ZERO_GRADIENT == _type) {
-						cout << "if2 passed" << endl;
+
 						if( (MD_RIGHT_MIRROR == _direction && vy > 0.) || (MD_LEFT_MIRROR == _direction && vy < 0.) ) {
-							cout << "if3 passed" << endl;
-							if(MT_REFLECT == _type){
-								cout << "if4 passed" << endl;
+
+							if(MT_REFLECT == _type)
 								it->setv(1, -vy);
-							}
 							else if(MT_ZERO_GRADIENT == _type) {
 								uint32_t cid_ub = it->componentid()+1;
 								if(cid_ub != _cids.permitted) {
