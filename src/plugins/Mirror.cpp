@@ -183,7 +183,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 			regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
 		}
 
-		regionLowCorner[1] = _yPos;
+		regionLowCorner[1] = 0.; // _yPos;
 
 		#if defined (_OPENMP)
 		#pragma omp parallel shared(regionLowCorner, regionHighCorner)
