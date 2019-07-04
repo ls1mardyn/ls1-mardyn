@@ -57,7 +57,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${LAPACK_LIB}  # for armadillo
         ${VTK_LIB}     # for VTK/xerces
         ${CPPUNIT_LIB} # for unit tests
-        ${autopas_lib} # for autopas
+        ${AUTOPAS_LIB} # for autopas
         ${LZ4_LIB}     # for LZ4 compression
         )
 

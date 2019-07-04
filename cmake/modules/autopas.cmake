@@ -21,7 +21,8 @@ if(ENABLE_AUTOPAS)
             #URL https://github.com/AutoPas/AutoPas/archive/0c3d8b07a2e38940057fafd21b98645cb074e729.zip # zip option
             #${CMAKE_SOURCE_DIR}/libs/googletest-master.zip # bundled option
             #URL_HASH MD5=6e70656897167140c1221eecc6ad872d
-            BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/src/autopas/libautopas.a
+            BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/autopas/build
+            BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/build/src/autopas/libautopas.a
             PREFIX ${CMAKE_CURRENT_BINARY_DIR}/autopas
             # Disable install step
             INSTALL_COMMAND ""
@@ -52,14 +53,17 @@ if(ENABLE_AUTOPAS)
             "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
             )
 
-    # Using INTERFACE_INCLUDE_DIRECTORIES is only possible starting with cmake 3.11, so we use include_directories here!
-    include_directories(SYSTEM
+    # workaround for INTERFACE_INCLUDE_DIRECTORIES requiring existent paths, so we create them here...
+    file(MAKE_DIRECTORY ${source_dir}/src)
+    file(MAKE_DIRECTORY ${source_dir}/libs/spdlog-1.3.1/include)
+
+    target_include_directories(libautopas SYSTEM INTERFACE
             "${source_dir}/src"
             "${source_dir}/libs/spdlog-1.3.1/include"
             )
 
-    set(autopas_lib "libautopas")
+    set(AUTOPAS_LIB "libautopas")
 else()
     message(STATUS "Not using AutoPas.")
-    set(autopas_lib "")
+    set(AUTOPAS_LIB "")
 endif()
