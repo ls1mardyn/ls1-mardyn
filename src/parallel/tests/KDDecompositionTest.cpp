@@ -230,7 +230,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	container->update();
 
-	for(auto iter = container->iterator(ParticleIterator::Type::ALL_CELLS); iter.isValid(); ++iter){
+	for(auto iter = container->iterator(ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
 		bool found = false;
 		auto id = iter->getID();
 		for(unsigned short dim = 0; dim < 3; ++dim){
