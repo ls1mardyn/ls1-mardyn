@@ -50,7 +50,8 @@ void VTKMoleculeWriter::endStep(
 
 	impl.initializeVTKFile();
 
-	for (auto tmpMolecule = particleContainer->iterator(); tmpMolecule.isValid(); ++tmpMolecule) {
+	for (auto tmpMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		 tmpMolecule.isValid(); ++tmpMolecule) {
 		impl.plotMolecule(*tmpMolecule);
 	}
 
