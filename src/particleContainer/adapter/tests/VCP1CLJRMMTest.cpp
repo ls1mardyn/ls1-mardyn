@@ -66,11 +66,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationU0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->getID() << " index i="<< i << std::endl;
@@ -107,11 +107,11 @@ void VCP1CLJRMMTest::testForcePotentialCalculationF0() {
 	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid(); ++m) {
 		m->calcFM();
 	}
 
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->getID() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
@@ -144,7 +144,7 @@ void VCP1CLJRMMTest__initFullCellSoA(const ParticleCellRMM & cell_RMM, CellDataS
 	size_t nQuadrupoles = 0;
 
 	ParticleCellRMM & nonconst_cell_RMM = const_cast<ParticleCellRMM&>(cell_RMM);
-	auto begin = nonconst_cell_RMM.iterator();
+	auto begin = nonconst_cell_RMM.iterator(ParticleIterator::ALL_CELLS);
 
 	for(auto it = begin; it.isValid(); ++it) {
 		nLJCenters += it->numLJcenters();
@@ -219,7 +219,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid(); ++m) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -258,7 +258,7 @@ void VCP1CLJRMMTest::testProcessCell() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-5*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-5*full_Virial));
 
-	auto begin = cell_RMM.iterator();
+	auto begin = cell_RMM.iterator(ParticleIterator::ALL_CELLS);
 
 	for (auto it = begin; it.isValid(); ++it) {
 		double RMM_f_x = it->F(0);
@@ -292,7 +292,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	// copy-paste cause I'm lazy and have no particular time for unit tests.
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid(); ++m) {
 		for (int d = 0; d < 3; ++d) {
 			m->setv(d, 0.0);
 		}
@@ -336,7 +336,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 	ASSERT_DOUBLES_EQUAL(full_Upot, RMM_Upot, fabs(1.0e-7*full_Upot));
 	ASSERT_DOUBLES_EQUAL(full_Virial, RMM_Virial, fabs(1.0e-7*full_Virial));
 
-	auto begin1 = cell_RMM1.iterator();
+	auto begin1 = cell_RMM1.iterator(ParticleIterator::ALL_CELLS);
 	for (auto it1 = begin1; it1.isValid(); ++it1) {
 		double RMM_f_x = it1->F(0);
 		double RMM_f_y = it1->F(1);
@@ -353,7 +353,7 @@ void VCP1CLJRMMTest::testProcessCellPair() {
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, RMM_f_z, fabs(full_f_z*1.0e-5));
 	}
 
-	auto begin2 = cell_RMM2.iterator();
+	auto begin2 = cell_RMM2.iterator(ParticleIterator::ALL_CELLS);
 	for (auto it2 = begin2; it2.isValid(); ++it2) {
 		double RMM_f_x = it2->F(0);
 		double RMM_f_y = it2->F(1);
