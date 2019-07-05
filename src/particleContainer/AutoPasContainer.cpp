@@ -228,6 +228,8 @@ double AutoPasContainer::getCutoff() const { return _cutoff; }
 
 double AutoPasContainer::getInteractionLength() const { return _cutoff + _verletSkin; }
 
+double AutoPasContainer::getSkin() const { return _verletSkin; }
+
 void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
 	throw std::runtime_error("AutoPasContainer::deleteMolecule() not yet implemented");
 }

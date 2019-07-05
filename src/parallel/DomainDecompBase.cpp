@@ -1,3 +1,6 @@
+#include <cmath>
+#include <fstream>
+
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
 #include "Domain.h"
@@ -5,9 +8,8 @@
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "utils/mardyn_assert.h"
+#include "ZonalMethods/FullShell.h"
 
-#include <fstream>
-#include <cmath>
 
 DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
 }
@@ -41,20 +43,43 @@ void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecu
 	moleculeContainer->addParticles(invalidMolecules);
 }
 
-void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* /*domain*/) {
-	if(moleculeContainer->isInvalidParticleReturner()){
+void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
+	if (moleculeContainer->isInvalidParticleReturner()) {
+		// autopas mode!
 		// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them
 		// directly.
 		auto invalidParticles = moleculeContainer->getInvalidParticles();
 		addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
-	}
-	else {
+
+		// now use direct scheme to transfer the rest!
+		FullShell fs;
+		double rmin[3];  // lower corner
+		double rmax[3];  // higher corner
+		for (int d = 0; d < 3; d++) {
+			rmin[d] = getBoundingBoxMin(d, domain);
+			rmax[d] = getBoundingBoxMax(d, domain);
+		}
+		HaloRegion ownRegion = {rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, 0.};
+		bool coversWholeDomain[3];
+		double cellLengthDummy[3]{};
+
+		auto haloExportRegions = fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
+																	coversWholeDomain, cellLengthDummy);
+		double skin = moleculeContainer->getSkin();
+		for (auto haloExportRegion : haloExportRegions) {
+			for (int i = 0; i < 3; ++i) {
+				haloExportRegion.rmin[i] -= skin;
+				haloExportRegion.rmax[i] += skin;
+			}
+			populateHaloLayerWithCopiesDirect(haloExportRegion, moleculeContainer, false /*positionCheck*/);
+		}
+	} else {
 		for (unsigned d = 0; d < 3; ++d) {
 			handleDomainLeavingParticles(d, moleculeContainer);
 		}
-	}
-	for (unsigned d = 0; d < 3; ++d) {
-		populateHaloLayerWithCopies(d, moleculeContainer);
+		for (unsigned d = 0; d < 3; ++d) {
+			populateHaloLayerWithCopies(d, moleculeContainer);
+		}
 	}
 }
 
@@ -314,12 +339,14 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	}
 }
 
-void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const {
+void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion,
+														 ParticleContainer* moleculeContainer, bool positionCheck) const {
 	double shift[3];
-		for (int dim=0;dim<3;dim++){
-			shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-			shift[dim] *= haloRegion.offset[dim]*(-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
-		}
+	for (int dim = 0; dim < 3; dim++) {
+		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
+		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the
+													  // offset is in negative direction of the shift
+	}
 
 #if defined (_OPENMP)
 #pragma omp parallel
@@ -333,17 +360,24 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 			for (int dim = 0; dim < 3; dim++) {
 				if (shift[dim] != 0) {
 					m.setr(dim, m.r(dim) + shift[dim]);
-					// checks if the molecule has been shifted to inside the domain due to rounding errors.
-					if (shift[dim] < 0) { // if the shift was negative, it is now in the lower part of the domain -> min
-						if (m.r(dim) >= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
-							vcp_real_calc r = moleculeContainer->getBoundingBoxMin(dim);
-							m.setr(dim, std::nexttoward(r, r - 1.f)); // ensures that r is smaller than the boundingboxmin
-						}
-					} else {  // shift > 0
-						if (m.r(dim) < moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
-						// std::nextafter: returns the next bigger value of _boundingBoxMax
-							vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
-							m.setr(dim, std::nexttoward(r, r + 1.f)); // ensures that r is bigger than the boundingboxmax
+					if (positionCheck) {
+						// checks if the molecule has been shifted to inside the domain due to rounding errors.
+						if (shift[dim] <
+							0) {  // if the shift was negative, it is now in the lower part of the domain -> min
+							if (m.r(dim) >= moleculeContainer->getBoundingBoxMin(
+												dim)) {  // in the lower part it was wrongly shifted if
+								vcp_real_calc r = moleculeContainer->getBoundingBoxMin(dim);
+								m.setr(dim, std::nexttoward(
+												r, r - 1.f));  // ensures that r is smaller than the boundingboxmin
+							}
+						} else {  // shift > 0
+							if (m.r(dim) < moleculeContainer->getBoundingBoxMax(
+											   dim)) {  // in the lower part it was wrongly shifted if
+								// std::nextafter: returns the next bigger value of _boundingBoxMax
+								vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
+								m.setr(dim, std::nexttoward(
+												r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
+							}
 						}
 					}
 				}
@@ -351,7 +385,6 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 			moleculeContainer->addHaloParticle(m);
 		}
 	}
-
 }
 
 int DomainDecompBase::getNonBlockingStageCount(){

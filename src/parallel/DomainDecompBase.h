@@ -319,7 +319,8 @@ protected:
 
 	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
 
-	void populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const;
+	void populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer,
+										   bool positionCheck = true) const;
 
 	//! the id of the current process
 	int _rank;

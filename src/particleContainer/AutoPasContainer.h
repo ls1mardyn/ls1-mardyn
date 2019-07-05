@@ -61,6 +61,8 @@ public:
 
 	double getInteractionLength() const override;
 
+	double getSkin() const override;
+
 	void deleteMolecule(Molecule &molecule, const bool &rebuildCaches) override;
 
 	double getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1, CellProcessor &cellProcessor) override;

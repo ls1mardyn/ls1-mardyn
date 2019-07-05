@@ -196,6 +196,8 @@ public:
 
 	virtual double getInteractionLength() const {return getCutoff();}
 
+	virtual double getSkin() const {return 0.;}
+
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) = 0;
 
