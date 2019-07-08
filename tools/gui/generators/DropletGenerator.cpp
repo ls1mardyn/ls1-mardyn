@@ -571,7 +571,7 @@ unsigned long DropletGenerator::countMolecules(DomainDecompBase* domainDecomp, P
 	}
 
 
-	for (auto tempMolecule = moleculeContainer->iterator(); tempMolecule.isValid(); ++tempMolecule) {
+	for (auto tempMolecule = moleculeContainer->iterator(ParticleIterator::ALL_CELLS); tempMolecule.isValid(); ++tempMolecule) {
 		localCompCount[tempMolecule->componentid()] += 1;
 	}
 
