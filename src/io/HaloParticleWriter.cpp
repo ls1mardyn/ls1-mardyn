@@ -29,18 +29,14 @@ void HaloParticleWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
 
-	int incremental = 1;
-	xmlconfig.getNodeValue("incremental", incremental);
-	_incremental = (incremental != 0);
+	_incremental = true;
+	xmlconfig.getNodeValue("incremental", _incremental);
+
 	global_log->info() << "Incremental numbers: " << _incremental << endl;
 
-	int appendTimestamp = 0;
-	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
-	if(appendTimestamp > 0) {
-		_appendTimestamp = true;
-	}else{
-		_appendTimestamp = false;
-	}
+	_appendTimestamp = false;
+	xmlconfig.getNodeValue("appendTimestamp", _appendTimestamp);
+
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
@@ -55,7 +51,7 @@ void HaloParticleWriter::afterForces(ParticleContainer *particleContainer, Domai
 
 		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			unsigned long numTimesteps = _simulation.getNumTimesteps();
+			unsigned long numTimesteps = global_simulation->getNumTimesteps();
 			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
 			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 		}
