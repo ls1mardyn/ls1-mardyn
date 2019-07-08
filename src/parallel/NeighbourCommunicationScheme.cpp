@@ -8,8 +8,8 @@ class NeighbourCommunicationScheme;
 class DirectNeighbourCommunicationScheme;
 class IndirectNeighbourCommunicationScheme;
 
-#include "NeighbourCommunicationScheme.h"
 #include <mpi.h>
+#include "NeighbourCommunicationScheme.h"
 #include "Domain.h"
 #include "DomainDecompMPIBase.h"
 #include "NeighborAcquirer.h"

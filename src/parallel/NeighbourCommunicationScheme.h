@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "parallel/CommunicationPartner.h"
-
 #include <vector>
+
+#include "parallel/CommunicationPartner.h"
 
 class DomainDecompMPIBase;
 class Domain;
@@ -58,8 +58,8 @@ public:
 
 	virtual std::vector<int> getFullShellNeighbourRanks() {
 		std::vector<int> neighbourRanks;
-		for (unsigned int i = 0; i < _fullShellNeighbours.size(); i++) {
-			neighbourRanks.push_back(_fullShellNeighbours[i].getRank());
+		for (auto & _fullShellNeighbour : _fullShellNeighbours) {
+			neighbourRanks.push_back(_fullShellNeighbour.getRank());
 		}
 		return neighbourRanks;
 	}
@@ -125,31 +125,30 @@ public:
 	DirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod, bool pushPull) :
 			NeighbourCommunicationScheme(1, zonalMethod, pushPull) {
 	}
-	virtual ~DirectNeighbourCommunicationScheme() {
-	}
-	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain,
+	~DirectNeighbourCommunicationScheme() override = default;
+	void initCommunicationPartners(double cutoffRadius, Domain * domain,
 			DomainDecompMPIBase* domainDecomp,
 			ParticleContainer* moleculeContainer) override;
 
-	virtual std::vector<int> get3StageNeighbourRanks() override {
+	std::vector<int> get3StageNeighbourRanks() override {
 		std::vector<int> neighbourRanks;
-		for (unsigned int i = 0; i < (*_neighbours)[0].size(); i++) {
-			if ((*_neighbours)[0][i].isFaceCommunicator()) {
-				neighbourRanks.push_back((*_neighbours)[0][i].getRank());
+		for (auto & i : (*_neighbours)[0]) {
+			if (i.isFaceCommunicator()) {
+				neighbourRanks.push_back(i.getRank());
 			}
 		}
 		return neighbourRanks;
 	}
 
-	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+	void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp);
+			DomainDecompMPIBase* domainDecomp) override;
 
-	virtual void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+	void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp);
+			DomainDecompMPIBase* domainDecomp) override;
 
-	virtual void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
+	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
 
 protected:
@@ -168,34 +167,33 @@ class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme 
 	friend class NeighbourCommunicationSchemeTest;
 public:
 
-	IndirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
+	explicit IndirectNeighbourCommunicationScheme(ZonalMethod* zonalMethod) :
 			NeighbourCommunicationScheme(3, zonalMethod, false) {
 	}
-	virtual ~IndirectNeighbourCommunicationScheme() {
-	}
+	~IndirectNeighbourCommunicationScheme() override = default;
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
 
-	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain,
+	void initCommunicationPartners(double cutoffRadius, Domain * domain,
 			DomainDecompMPIBase* domainDecomp,
 			ParticleContainer* moleculeContainer) override;
-	virtual std::vector<int> get3StageNeighbourRanks() override {
+	std::vector<int> get3StageNeighbourRanks() override {
 		std::vector<int> neighbourRanks;
-		for (unsigned int i = 0; i < _fullShellNeighbours.size(); i++) {
-			if (_fullShellNeighbours[i].isFaceCommunicator()) {
-				neighbourRanks.push_back(_fullShellNeighbours[i].getRank());
+		for (auto & _fullShellNeighbour : _fullShellNeighbours) {
+			if (_fullShellNeighbour.isFaceCommunicator()) {
+				neighbourRanks.push_back(_fullShellNeighbour.getRank());
 			}
 		}
 		return neighbourRanks;
 	}
 
-	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+	void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp);
+			DomainDecompMPIBase* domainDecomp) override;
 
-	virtual void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+	void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp);
+			DomainDecompMPIBase* domainDecomp) override;
 
 protected:
 	void initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
