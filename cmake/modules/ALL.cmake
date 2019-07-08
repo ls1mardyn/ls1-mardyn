@@ -2,7 +2,7 @@
 
 option(ENABLE_ALLLBL "Enable ALL load balancing library" OFF)
 if(ENABLE_ALLLBL)
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVTK")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_ALLLBL")
     message(STATUS "ALL load balancing library support enabled")
 else()
     message(STATUS "ALL load balancing library support disabled")

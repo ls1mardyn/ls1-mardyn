@@ -19,6 +19,10 @@ if(NOT ENABLE_MPI)
     list(FILTER MY_SRC_BACK INCLUDE REGEX "/parallel/")
     list(FILTER MY_SRC_BACK INCLUDE REGEX "DomainDecompBase|LoadCalc|Zonal")
     list(APPEND MY_SRC ${MY_SRC_BACK})
+else()
+    if(NOT ENABLE_ALLLBL)
+        list(FILTER MY_SRC EXCLUDE REGEX "ALLLoadBalancer")
+    endif()
 endif()
 
 # if fmm fft is disabled, remove everything in an fft directory

@@ -22,8 +22,13 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Doma
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
+#ifdef ENABLE_ALLLBL
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, cutoffRadius /*minimal domain size*/);
+#else
+	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
+	Simulation::exit(24235);
+#endif
 	///@todo: change minimal domain size to include skin! -- this is not so trivial here!
 
 	global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
@@ -126,7 +131,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, true /*removeFromContainer*/);
 	}
 	std::vector<Molecule> ownMolecules{};
-	for (auto iter = particleContainer->iterator(); iter.isValid(); ++iter) {
+	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
 		ownMolecules.push_back(*iter);
 		if (not iter->inBox(newMin.data(), newMax.data())) {
 			global_log->error_always_output()
