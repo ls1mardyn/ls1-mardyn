@@ -362,21 +362,20 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 					m.setr(dim, m.r(dim) + shift[dim]);
 					if (positionCheck) {
 						// checks if the molecule has been shifted to inside the domain due to rounding errors.
-						if (shift[dim] <
-							0) {  // if the shift was negative, it is now in the lower part of the domain -> min
-							if (m.r(dim) >= moleculeContainer->getBoundingBoxMin(
-												dim)) {  // in the lower part it was wrongly shifted if
+						if (shift[dim] < 0) {
+							// if the shift was negative, it is now in the lower part of the domain -> min
+							if (m.r(dim) >= moleculeContainer->getBoundingBoxMin(dim)) {
+								// in the lower part it was wrongly shifted if it is at least boxMin
 								vcp_real_calc r = moleculeContainer->getBoundingBoxMin(dim);
 								m.setr(dim, std::nexttoward(
 												r, r - 1.f));  // ensures that r is smaller than the boundingboxmin
 							}
 						} else {  // shift > 0
-							if (m.r(dim) < moleculeContainer->getBoundingBoxMax(
-											   dim)) {  // in the lower part it was wrongly shifted if
+							if (m.r(dim) < moleculeContainer->getBoundingBoxMax(dim)) {
+								// in the lower part it was wrongly shifted if
 								// std::nextafter: returns the next bigger value of _boundingBoxMax
 								vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
-								m.setr(dim, std::nexttoward(
-												r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
+								m.setr(dim, r);  // ensures that r is at least boundingboxmax
 							}
 						}
 					}
