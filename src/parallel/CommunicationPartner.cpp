@@ -143,7 +143,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 
 	const unsigned int numHaloInfo = _haloInfo.size();
 	switch (msgType){
-		case LEAVING_AND_HALO_COPIES: {
+		case MessageType::LEAVING_AND_HALO_COPIES: {
 			global_log->debug() << "sending halo and boundary particles together" << std::endl;
 			// first leaving particles:
 			for (unsigned int p = 0; p < numHaloInfo; p++) {
@@ -158,7 +158,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			break;
 		}
-		case LEAVING_ONLY: {
+		case MessageType::LEAVING_ONLY: {
 			global_log->debug() << "sending leaving particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
@@ -166,7 +166,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			break;
 		}
-		case HALO_COPIES: {
+		case MessageType::HALO_COPIES: {
 			global_log->debug() << "sending halo particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh,
@@ -174,7 +174,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			break;
 		}
-		case FORCES: {
+		case MessageType::FORCES: {
 			global_log->debug() << "sending forces" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, 
@@ -235,7 +235,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 		int flag = 0;
 		//TODO: MPI_probe mit anyrank testen!!!
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
-		if (flag == true) {
+		if (flag != 0) {
 			_countReceived = true;
 			_countTested = 0;
 			int numrecv;
@@ -263,7 +263,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		} else {
 			MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
 		}
-		if (flag == true) {
+		if (flag != 0) {
 			_msgReceived = true;
 			
 
