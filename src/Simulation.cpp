@@ -29,7 +29,6 @@
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
-#include "parallel/MultiSectionMethod.h"
 #include "parallel/GeneralDomainDecomposition.h"
 #endif
 
@@ -318,11 +317,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				delete _domainDecomposition;
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
 			}
-			else if(parallelisationtype == "MultiSectionMethod") {
-				delete _domainDecomposition;
-				_domainDecomposition = new MultiSectionMethod(getcutoffRadius(), _domain);
-			}
-            else if(parallelisationtype == "GeneralDomainDecomposition") {
+			else if(parallelisationtype == "GeneralDomainDecomposition") {
               delete _domainDecomposition;
               _domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius(), _domain);
             }
