@@ -430,11 +430,11 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 
 	// compute how many molecules are already in of this type: - adjust for Forces
 	unsigned long numMolsAlreadyIn = 0;
-	if (haloLeaveCorr == LEAVING) {
+	if (haloLeaveCorr == HaloOrLeavingCorrection::LEAVING) {
 		numMolsAlreadyIn = _sendBuf.getNumLeaving();
-	} else if (haloLeaveCorr == HALO) {
+	} else if (haloLeaveCorr == HaloOrLeavingCorrection::HALO) {
 		numMolsAlreadyIn = _sendBuf.getNumHalo();
-	} else if(haloLeaveCorr == FORCES) {
+	} else if(haloLeaveCorr == HaloOrLeavingCorrection::FORCES) {
 		numMolsAlreadyIn = _sendBuf.getNumForces();
 	}
 
@@ -488,11 +488,11 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			}
 
 			//resize the send buffer
-			if (haloLeaveCorr == LEAVING) {
+			if (haloLeaveCorr == HaloOrLeavingCorrection::LEAVING) {
 				_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
-			} else if (haloLeaveCorr == HALO) {
+			} else if (haloLeaveCorr == HaloOrLeavingCorrection::HALO) {
 				_sendBuf.resizeForAppendingHaloMolecules(totalNumMolsAppended);
-			} else if (haloLeaveCorr == FORCES) {
+			} else if (haloLeaveCorr == HaloOrLeavingCorrection::FORCES) {
 				_sendBuf.resizeForAppendingForceMolecules(totalNumMolsAppended);
 			}
 		}
@@ -512,7 +512,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			mCopy.move(1, shift[1]);
 			mCopy.move(2, shift[2]);
 			for (int dim = 0; dim < 3; dim++) {
-				if (haloLeaveCorr == HALO) {
+				if (haloLeaveCorr == HaloOrLeavingCorrection::HALO) {
 					// checks if the molecule has been shifted to inside the domain due to rounding errors.
 					if (shift[dim] < 0.) { // if the shift was negative, it is now in the lower part of the domain -> min
 						if (mCopy.r(dim) >= 0.) {  // in the lower part it was wrongly shifted
@@ -528,7 +528,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							mCopy.setr(dim, std::nexttoward(r, r + 1.f));  // ensures that r is bigger than the boundingboxmax
 						}
 					}
-				} else if (haloLeaveCorr == LEAVING || haloLeaveCorr == FORCES) {
+				} else if (haloLeaveCorr == HaloOrLeavingCorrection::LEAVING || haloLeaveCorr == HaloOrLeavingCorrection::FORCES) {
 					// some additional shifting to ensure that rounding errors do not hinder the correct placement
 					if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
 						if (mCopy.r(dim) < 0.) { // in the lower part it was wrongly shifted if
@@ -544,15 +544,15 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 						}
 					}
 				} 
-				/* else if(haloLeaveCorr == FORCES) { // using Leaving correction for now.
+				/* else if(haloLeaveCorr == HaloOrLeavingCorrection::FORCES) { // using Leaving correction for now.
 					// THIS IS STILL MISSING!
 				} */
 			} /* for-loop dim */
-			if (haloLeaveCorr == LEAVING) {
+			if (haloLeaveCorr == HaloOrLeavingCorrection::LEAVING) {
 				_sendBuf.addLeavingMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
-			} else if (haloLeaveCorr == HALO) {
+			} else if (haloLeaveCorr == HaloOrLeavingCorrection::HALO) {
 				_sendBuf.addHaloMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
-			} else if (haloLeaveCorr == FORCES) {
+			} else if (haloLeaveCorr == HaloOrLeavingCorrection::FORCES) {
 				_sendBuf.addForceMolecule(numMolsAlreadyIn + prefixArray[threadNum] + i, mCopy);
 			}
 		}
