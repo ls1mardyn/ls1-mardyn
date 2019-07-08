@@ -42,6 +42,8 @@ include(options)
 include(mpi)
 # include module for clang sanitizers
 include(clang-sanitizers)
+# ccache
+include(ccache)
 
 # ----- second: include libraries, etc.
 # include armadillo module
@@ -52,6 +54,8 @@ include(vtk)
 include(cppunit)
 # include bhfmm module
 include(bhfmm)
+# include ALL load balanding library
+include(ALL)
 
 # ----- third: include autopas
 include(autopas)

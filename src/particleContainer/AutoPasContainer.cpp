@@ -265,6 +265,11 @@ double *AutoPasContainer::getCellLength() {
 	throw std::runtime_error("AutoPasContainer::getCellLength() not yet implemented");
 }
 
+double *AutoPasContainer::getHaloSize() {
+	static std::array<double, 3> haloLength{_verletSkin + _cutoff};
+	return haloLength.data();
+}
+
 autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 	switch (t) {
 		case ParticleIterator::Type::ALL_CELLS:

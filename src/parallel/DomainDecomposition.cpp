@@ -68,9 +68,9 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 
 void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
-	if(sendLeavingWithCopies()){
+	if (sendLeavingWithCopies()) {
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
-	}else{
+	} else {
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
 		moleculeContainer->deleteOuterParticles();
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
@@ -87,17 +87,6 @@ void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 		initMPIGridDims();
 	}
-}
-
-bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {
-	if (x < getBoundingBoxMin(0, domain) || x >= getBoundingBoxMax(0, domain))
-		return false;
-	else if (y < getBoundingBoxMin(1, domain) || y >= getBoundingBoxMax(1, domain))
-		return false;
-	else if (z < getBoundingBoxMin(2, domain) || z >= getBoundingBoxMax(2, domain))
-		return false;
-	else
-		return true;
 }
 
 double DomainDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {

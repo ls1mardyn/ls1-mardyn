@@ -116,7 +116,7 @@ public:
 	//! @param y y-coordinate of the position to be checked
 	//! @param z z-coordinate of the position to be checked
 	//! @param domain might be needed to get the bounding box
-	virtual bool procOwnsPos(double x, double y, double z, Domain* domain);
+	virtual bool procOwnsPos(double x, double y, double z, Domain* domain) final;
 
 	//! @brief get the minimum and maximum coordinate of the bounding box of this process' domain
 	//! @param domain

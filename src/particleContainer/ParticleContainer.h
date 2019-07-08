@@ -234,6 +234,14 @@ public:
 	virtual double* getCellLength() = 0;
 
 	/**
+	 * Return the size of the halo
+	 * @return
+	 */
+	virtual double* getHaloSize() {
+		return getCellLength();
+	};
+
+	/**
 	 * Get a statistics of the cells found in this container.
 	 * @return A vector, where particleCellStatistics[partCount] represents the number of cells with partCount particles.
 	 */

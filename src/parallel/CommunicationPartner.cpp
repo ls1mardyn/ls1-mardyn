@@ -233,7 +233,6 @@ void CommunicationPartner::resetReceive(){
 bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& /*type*/) {
 	if (not _countReceived) {
 		int flag = 0;
-		//TODO: MPI_probe mit anyrank testen!!!
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
 		if (flag != 0) {
 			_countReceived = true;
@@ -265,9 +264,6 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag != 0) {
 			_msgReceived = true;
-			
-
-
 			
 			if(!force) { // Buffer is particle data 
 				static std::vector<Molecule> mols;

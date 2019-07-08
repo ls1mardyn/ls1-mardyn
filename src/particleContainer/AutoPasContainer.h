@@ -80,6 +80,8 @@ public:
 
 	double *getCellLength() override;
 
+	double *getHaloSize() override;
+
 	// from MemoryProfilable
 	size_t getTotalSize() override { return 0; }
 

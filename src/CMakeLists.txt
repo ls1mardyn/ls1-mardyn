@@ -59,6 +59,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${CPPUNIT_LIB} # for unit tests
         ${AUTOPAS_LIB} # for autopas
         ${LZ4_LIB}     # for LZ4 compression
+        ${ALL_LIB}     # for ALL
         )
 
 ADD_TEST(

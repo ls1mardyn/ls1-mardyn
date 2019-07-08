@@ -49,10 +49,10 @@ public:
 	}
 	static PluginBase* createInstance() { return new HaloParticleWriter(); }
 private:
-	std::string _outputPrefix {};
-	unsigned long _writeFrequency {10};
-	bool	_incremental {};
-	bool	_appendTimestamp {};
+	std::string _outputPrefix;
+	unsigned long _writeFrequency{1000};
+	bool _incremental{true};
+	bool _appendTimestamp{false};
 };
 
 #endif  // SRC_IO_HALOPARTICLEWRITER_H_

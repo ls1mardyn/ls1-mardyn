@@ -399,15 +399,9 @@ void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* 
 }
 
 bool DomainDecompBase::procOwnsPos(double x, double y, double z, Domain* domain) {
-	if (x < getBoundingBoxMin(0, domain)
-			|| x >= getBoundingBoxMax(0, domain)
-			|| y < getBoundingBoxMin(1, domain)
-			|| y >= getBoundingBoxMax(1, domain)
-			|| z < getBoundingBoxMin(2, domain)
-			|| z >= getBoundingBoxMax(2, domain))
-		return false;
-	else
-		return true;
+	return !(x < getBoundingBoxMin(0, domain) || x >= getBoundingBoxMax(0, domain) ||
+			 y < getBoundingBoxMin(1, domain) || y >= getBoundingBoxMax(1, domain) ||
+			 z < getBoundingBoxMin(2, domain) || z >= getBoundingBoxMax(2, domain));
 }
 
 double DomainDecompBase::getBoundingBoxMin(int /*dimension*/, Domain* /*domain*/) {
