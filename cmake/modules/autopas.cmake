@@ -56,10 +56,12 @@ if(ENABLE_AUTOPAS)
     # workaround for INTERFACE_INCLUDE_DIRECTORIES requiring existent paths, so we create them here...
     file(MAKE_DIRECTORY ${source_dir}/src)
     file(MAKE_DIRECTORY ${source_dir}/libs/spdlog-1.3.1/include)
+    file(MAKE_DIRECTORY ${binary_dir}/libs/eigen-3/include)
 
     target_include_directories(libautopas SYSTEM INTERFACE
             "${source_dir}/src"
             "${source_dir}/libs/spdlog-1.3.1/include"
+            "${binary_dir}/libs/eigen-3/include"
             )
 
     set(AUTOPAS_LIB "libautopas")

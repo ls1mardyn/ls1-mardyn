@@ -6,7 +6,10 @@ project(MarDyn)
 
 cmake_minimum_required(VERSION 3.11)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+if (NOT CYGWIN)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif ()
 
 # cmake < 3.6 ignores "set(CMAKE_CXX_STANDARD 11)" when using icpc
 if (CMAKE_VERSION VERSION_LESS "3.6" AND CMAKE_CXX_COMPILER_ID MATCHES "Intel")
