@@ -230,7 +230,9 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 
 	}
 	if(not invalidParticles.empty()){
-		global_log->error_always_output() << "Missing invalid particles that should have been removed, but weren't." << std::endl;
+		global_log->error_always_output() << "NeighbourCommunicationScheme: Invalid particles that should have been "
+											 "removed, are still existent. They would be lost. Aborting..."
+										  << std::endl;
 		Simulation::exit(544);
 	}
 
