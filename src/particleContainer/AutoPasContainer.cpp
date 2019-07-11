@@ -132,7 +132,18 @@ void AutoPasContainer::update() {
 							<< std::endl;
 		Simulation::exit(434);
 	}
-	_invalidParticles = _autopasContainer.updateContainer();
+
+	std::tie(_invalidParticles, _hasInvalidParticles) = _autopasContainer.updateContainer();
+}
+
+void AutoPasContainer::forcedUpdate() {
+	if (not _invalidParticles.empty()) {
+		global_log->error() << "AutoPasContainer: trying to force update container, even though invalidParticles still exist."
+		                    << std::endl;
+		Simulation::exit(435);
+	}
+	_hasInvalidParticles = true;
+	_invalidParticles = _autopasContainer.updateContainerForced();
 }
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,

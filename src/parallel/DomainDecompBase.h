@@ -299,9 +299,10 @@ protected:
 	 * @param y -1, 0 or 1
 	 * @param z -1, 0 or 1
 	 * @param moleculeContainer
+	 * @param invalidParticles used if moleculeContainer->isInvalidParticleReturner() is true
 	 */
-	void handleDomainLeavingParticlesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const;
-
+	void handleDomainLeavingParticlesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer,
+											std::vector<Molecule>& invalidParticles) const;
 
 	/**
 	 * @brief Does the force exchange for each dimension. Will be called for dim=0, 1 and 2.

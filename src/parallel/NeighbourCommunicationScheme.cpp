@@ -133,22 +133,22 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 
 }
 
-void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions,
-		MessageType msgType, DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer) { // Only Export?
-	
+void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(
+	const std::vector<HaloRegion>& haloRegions, MessageType msgType, DomainDecompMPIBase* domainDecomp,
+	ParticleContainer*& moleculeContainer, std::vector<Molecule>& invalidParticles) {  // Only Export?
 
 	if (_pushPull){
 		selectNeighbours(msgType, false /* export */);
 	}
 	
 	for (const HaloRegion& haloRegion : haloRegions) {
-		bool isinownprocess = true;
+		bool isInOwnProcess = true;
 		for (int d = 0; d < 3; d++) {
 			if (haloRegion.offset[d] && !_coversWholeDomain[d]) {
-				isinownprocess = false;
+				isInOwnProcess = false;
 			}
 		}
-		if (!isinownprocess) {
+		if (not isInOwnProcess) {
 			continue;
 		}
 		// use the sequential version
@@ -158,7 +158,8 @@ void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(const std::vec
 			mardyn_assert(false);
 			break;
 		case LEAVING_ONLY:
-			domainDecomp->DomainDecompBase::handleDomainLeavingParticlesDirect(haloRegion, moleculeContainer);
+			domainDecomp->DomainDecompBase::handleDomainLeavingParticlesDirect(haloRegion, moleculeContainer,
+																			   invalidParticles);
 			break;
 		case HALO_COPIES:
 			domainDecomp->DomainDecompBase::populateHaloLayerWithCopiesDirect(haloRegion, moleculeContainer);
@@ -180,7 +181,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		selectNeighbours(msgType, false /* export */);
 	}
 
-	
+	auto invalidParticles = moleculeContainer->getInvalidParticles();
 	
 	double rmin[DIMgeom]; // lower corner
 	double rmax[DIMgeom]; // higher corner
@@ -192,24 +193,25 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , global_simulation->getcutoffRadius()};
 	std::vector<HaloRegion> haloRegions;
 	double* cellLength = moleculeContainer->getHaloSize();
+	std::vector<Molecule> dummy{};
 	switch (msgType) {
 	case LEAVING_AND_HALO_COPIES:
 		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
-		doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer);
+		doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer, invalidParticles);
 		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
-		doDirectFallBackExchange(haloRegions, HALO_COPIES, domainDecomp, moleculeContainer);
+		doDirectFallBackExchange(haloRegions, HALO_COPIES, domainDecomp, moleculeContainer, dummy);
 		break;
 	case LEAVING_ONLY:
 		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
-		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
+		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, invalidParticles);
 		break;
 	case HALO_COPIES:
 		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
-		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
+		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy);
 		break;
 	case FORCES:
 		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
-		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer);
+		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy);
 		break;
 	}
 
@@ -226,6 +228,10 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 
 		}
 
+	}
+	if(not invalidParticles.empty()){
+		global_log->error_always_output() << "Missing invalid particles that should have been removed, but weren't." << std::endl;
+		Simulation::exit(544);
 	}
 
 }

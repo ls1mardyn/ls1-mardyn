@@ -30,6 +30,8 @@ public:
 
 	void update() override;
 
+	void forcedUpdate() override;
+
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 					 const bool &rebuildCaches = false) override;
 
@@ -91,7 +93,14 @@ public:
 
 	void setCutoff(double cutoff) override { _cutoff = cutoff; }
 
-	std::vector<Molecule> getInvalidParticles() override { return std::move(_invalidParticles); }
+	std::vector<Molecule> getInvalidParticles() override {
+		_hasInvalidParticles = false;
+		return std::move(_invalidParticles);
+	}
+
+	bool hasInvalidParticles() override {
+		return _hasInvalidParticles;
+	}
 
 	bool isInvalidParticleReturner() override { return true; }
 
@@ -111,6 +120,7 @@ private:
 	std::set<autopas::Newton3Option> _newton3Choices;
 
 	std::vector<Molecule> _invalidParticles;
+	bool _hasInvalidParticles{false};
 #ifdef ENABLE_MPI
 	std::ofstream _logFile;
 #endif

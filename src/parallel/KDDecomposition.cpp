@@ -252,7 +252,9 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
-
+		if(moleculeContainer->isInvalidParticleReturner() and not moleculeContainer->hasInvalidParticles()){
+			moleculeContainer->forcedUpdate();
+		}
 		if (_steps != 1) {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
 		}

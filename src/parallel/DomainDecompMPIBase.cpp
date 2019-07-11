@@ -27,8 +27,12 @@ using std::endl;
 
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
-
+#ifndef MARDYN_AUTOPAS
 	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(new FullShell());
+#else
+	// direct push-pull
+	_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell(), true);
+#endif
 	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell());
 
 	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &_rank));

@@ -243,41 +243,64 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 	}
 }
 
-void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const {
+void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& haloRegion,
+														  ParticleContainer* moleculeContainer,
+														  std::vector<Molecule>& invalidParticles) const {
 	double shift[3];
 	for (int dim = 0; dim < 3; dim++) {
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
-		shift[dim] *= haloRegion.offset[dim] *(-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
+		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the
+													  // offset is in negative direction of the shift
 	}
 
-#if defined (_OPENMP)
-#pragma omp parallel
-#endif
-	{
-		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
-
-		//traverse and gather all halo particles in the cells
-		for (auto i = begin; i.isValid(); ++i) {
-			Molecule m = *i;
-			for (int dim = 0; dim < 3; dim++) {
-				if (shift[dim] != 0) {
-					m.setr(dim, m.r(dim) + shift[dim]);
-					// some additional shifting to ensure that rounding errors do not hinder the correct placement
-					if (shift[dim] < 0) { // if the shift was negative, it is now in the lower part of the domain -> min
-						if (m.r(dim) <= moleculeContainer->getBoundingBoxMin(dim)) { // in the lower part it was wrongly shifted if
-							m.setr(dim, moleculeContainer->getBoundingBoxMin(dim)); // ensures that r is at least the boundingboxmin
-						}
-					} else {  // shift > 0
-						if (m.r(dim) >= moleculeContainer->getBoundingBoxMax(dim)) { // in the lower part it was wrongly shifted if
+	auto shiftAndAdd = [&moleculeContainer, haloRegion, shift](Molecule& m) {
+		if (not m.inBox(haloRegion.rmin, haloRegion.rmax)) {
+			global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
+			Simulation::exit(456);
+		}
+		for (int dim = 0; dim < 3; dim++) {
+			if (shift[dim] != 0) {
+				m.setr(dim, m.r(dim) + shift[dim]);
+				// some additional shifting to ensure that rounding errors do not hinder the correct
+				// placement
+				if (shift[dim] < 0) {  // if the shift was negative, it is now in the lower part of the domain -> min
+					if (m.r(dim) <=
+						moleculeContainer->getBoundingBoxMin(dim)) {  // in the lower part it was wrongly shifted if
+						m.setr(dim, moleculeContainer->getBoundingBoxMin(
+										dim));  // ensures that r is at least the boundingBoxMin
+					}
+				} else {  // shift > 0
+					if (m.r(dim) >=
+						moleculeContainer->getBoundingBoxMax(dim)) {  // in the lower part it was wrongly shifted if
 						// std::nexttoward: returns the next bigger value of _boundingBoxMax
-							vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
-							m.setr(dim, std::nexttoward(r, r - 1.f)); // ensures that r is smaller than the boundingboxmax
-						}
+						vcp_real_calc r = moleculeContainer->getBoundingBoxMax(dim);
+						m.setr(dim, std::nexttoward(r, r - 1.f));  // ensures that r is smaller than the boundingBoxMax
 					}
 				}
 			}
-			moleculeContainer->addParticle(m);
-			i.deleteCurrentParticle(); //removeFromContainer = true;
+		}
+		moleculeContainer->addParticle(m);
+	};
+
+	if (moleculeContainer->isInvalidParticleReturner()) {
+		auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
+			return not m.inBox(haloRegion.rmin, haloRegion.rmax);
+		});
+		std::for_each(removeBegin, invalidParticles.end(), shiftAndAdd);
+		invalidParticles.erase(removeBegin, invalidParticles.end());
+	} else {
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+		{
+			auto begin =
+				moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
+
+			// traverse and gather all halo particles in the cells
+			for (auto i = begin; i.isValid(); ++i) {
+				shiftAndAdd(*i);
+				i.deleteCurrentParticle();  // removeFromContainer = true;
+			}
 		}
 	}
 }

@@ -12,6 +12,7 @@
 #endif
 #include "particleContainer/LinkedCells.h"
 #include "io/ASCIIReader.h"
+#include "parallel/NeighbourCommunicationScheme.h"
 
 #include <sstream>
 #include <cmath>
@@ -68,7 +69,7 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(
 }
 
 /**
- * checks if the halo is correct (not duplicate and no lost
+ * checks if the halo is correct (not duplicate and no lost)
  */
 void KDDecompositionTest::testHaloCorrect() {
 	KDDecomposition * kdd;
@@ -157,6 +158,9 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	ParticleContainer* container = initializeFromFile(
 			ParticleContainerFactory::LinkedCell, filename, cutoff);
 
+	for (int d = 0; d < 3; ++d) {
+		kdd->_neighbourCommunicationScheme->setCoverWholeDomain(d, kdd->_ownArea->_coversWholeDomain[d]);
+	}
 	kdd->initCommunicationPartners(cutoff, _domain, container);
 
 	int numMols = container->getNumberOfParticles();
@@ -228,7 +232,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		}
 	}
 
-	container->update();
+	container->forcedUpdate();
 
 	for(auto iter = container->iterator(ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
 		bool found = false;
@@ -365,8 +369,8 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		// initialize currentCoeffs
 		initCoeffs(_currentCoeffs);
 
-		KDNode * newDecompRoot = NULL;
-		KDNode * newOwnLeaf = NULL;
+		KDNode * newDecompRoot = nullptr;
+		KDNode * newOwnLeaf = nullptr;
 
 		setNumParticlesPerCell(kdd->_numParticlesPerCell,
 				kdd->_globalCellsPerDim);
@@ -391,13 +395,13 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 			cout << "current coeffs: " << std::endl;
 			cout << setprecision(17);
-			for (unsigned int j = 0; j < _currentCoeffs.size(); ++j) {
-				cout << _currentCoeffs[j] << std::endl;
+			for (double _currentCoeff : _currentCoeffs) {
+				cout << _currentCoeff << std::endl;
 			}
 			cout << std::endl;
 			cout << "old coeffs: " << std::endl;
-			for (unsigned int j = 0; j < _oldCoeffs.size(); ++j) {
-				cout << _oldCoeffs[j] << std::endl;
+			for (double _oldCoeff : _oldCoeffs) {
+				cout << _oldCoeff << std::endl;
 			}
 		}
 

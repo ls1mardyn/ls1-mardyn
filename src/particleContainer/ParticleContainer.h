@@ -101,6 +101,11 @@ public:
 	//! invalid. This method restores a valid representation.
 	virtual void update() = 0;
 
+	/**
+	 * Same as ParticleContainer:update() but forces the update.
+	 */
+	virtual void forcedUpdate() { update(); }
+
 	//! @brief add a single Molecule to the ParticleContainer.
 	//!
 	//! Note: a copy of the particle is pushed. Destroying the argument is
@@ -256,6 +261,8 @@ public:
 	virtual std::vector<Molecule> getInvalidParticles() { return {}; }
 
 	virtual bool isInvalidParticleReturner() { return false; }
+
+	virtual bool hasInvalidParticles() { return false; }
 
 protected:
 
