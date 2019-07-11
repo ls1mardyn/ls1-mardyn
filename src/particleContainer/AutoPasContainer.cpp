@@ -252,8 +252,14 @@ void AutoPasContainer::updateMoleculeCaches() {
 }
 
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
-	throw std::runtime_error(
-		"getMoleculeAtPosition not supported by AutoPasContainer. Please use a FullShell traversal.");
+	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
+	for (auto iter = this->iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
+		if (iter->getR() == pos_arr) {
+			*result = &(*iter);
+			return true;
+		}
+	}
+	return false;
 }
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
