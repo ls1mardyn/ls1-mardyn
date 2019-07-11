@@ -73,7 +73,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 	// ensure that enough cells for the number of procs are available
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain, 0);
 	if (!_decompTree->isResolvable()) {
-		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
+		global_log->error() << "KDDecomposition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
 		Simulation::exit(-1);
 	}
@@ -258,8 +258,8 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		}
 		moleculeContainer->deleteOuterParticles();
 
-		KDNode * newDecompRoot = NULL;
-		KDNode * newOwnLeaf = NULL;
+		KDNode * newDecompRoot = nullptr;
+		KDNode * newOwnLeaf = nullptr;
 
 		calcNumParticlesPerCell(moleculeContainer);
 		constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
