@@ -22,7 +22,7 @@ public:
 	}
 
 	// TODO: This is untested
-	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
 			int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[2];
@@ -35,7 +35,7 @@ public:
 				// return true, if region is in the tower or in the disk
 				return inDisk || inTower;
 			};
-		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
+		return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}
 
 	// TODO: This is untested
@@ -52,7 +52,7 @@ public:
 				// return true, if region is in the tower or in the disk
 				return inDisk || inTower;
 			};
-		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
+		return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}
 };
 

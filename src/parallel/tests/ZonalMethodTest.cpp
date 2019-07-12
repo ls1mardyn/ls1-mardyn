@@ -44,7 +44,8 @@ void ZonalMethodTest::testES() {
 		}
 	}
 
-	auto haloImportForceExportRegions = es.getHaloImportForceExportRegions(initialRegion, cutoffRadius, coversWholeDomain, cellLength);
+	auto haloImportForceExportRegions =
+		es.getHaloImportForceExportRegions(initialRegion, cutoffRadius, 0., coversWholeDomain, cellLength);
 	std::cout << std::endl << "haloImport:" << std::endl;
 	for(auto region : haloImportForceExportRegions){
 		ASSERT_TRUE(region.offset[0] + region.offset[1] + region.offset[2] > 0 );

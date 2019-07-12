@@ -31,7 +31,7 @@ std::vector<HaloRegion> ZonalMethod::getLeavingExportRegions(HaloRegion& initial
 		// no condition for leaving particles.
 		return true;
 	};
-	return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
+	return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 }
 
 
@@ -77,10 +77,19 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 		return regions;
 }
 
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius,
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius, double skin,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
 	double cutoffArr[3] = {cutoffRadius, cutoffRadius, cutoffRadius};
-	return getHaloRegionsConditional(initialRegion, cutoffArr, coversWholeDomain, condition);
+	auto regions = getHaloRegionsConditional(initialRegion, cutoffArr, coversWholeDomain, condition);
+	if(skin != 0.) {
+		for (auto& region : regions) {
+			for (int i = 0; i < 3; ++i) {
+				region.rmin[i] -= skin;
+				region.rmax[i] += skin;
+			}
+		}
+	}
+	return regions;
 }
 
 // protected, used for child classes

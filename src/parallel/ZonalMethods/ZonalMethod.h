@@ -26,7 +26,8 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double cellLength[3])=0;
+																	double skin, bool coversWholeDomain[3],
+																	double cellLength[3]) = 0;
 
 	/**
 	 * Returns the export halo Regions of the process.
@@ -67,7 +68,7 @@ protected:
 	 * @param condition should return true, if the HaloRegion shall be included in the return value. Its input argument is the array of offsets.
 	 * @return vector of HaloRegions
 	 */
-	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius, double skin,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
 	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius[3],

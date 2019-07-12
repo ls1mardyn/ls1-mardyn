@@ -216,7 +216,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy, doHaloPositionCheck);
 		break;
 	case FORCES:
-		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, moleculeContainer->getCutoff(), _coversWholeDomain, cellLength);
+		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, moleculeContainer->getCutoff(), 0./*skin*/, _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy, doHaloPositionCheck);
 		break;
 	}
@@ -451,7 +451,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		// halo/force regions
 		std::vector<HaloRegion> haloOrForceRegions =
 				_zonalMethod->getHaloImportForceExportRegions(ownRegion,
-						cutoffRadius, _coversWholeDomain, cellLength);
+						cutoffRadius, moleculeContainer->getSkin(), _coversWholeDomain, cellLength);
 		std::vector<HaloRegion> leavingRegions =
 				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
 						_coversWholeDomain);
