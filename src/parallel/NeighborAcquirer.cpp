@@ -17,7 +17,7 @@
  * saved in partners01.
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
-	Domain *domain, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions) {
+	Domain *domain, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin) {
 	int my_rank;  // my rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	int num_incoming;  // the number of processes in MPI_COMM_WORLD
@@ -102,7 +102,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			std::vector<double> shift(3, 0);
 			double domainLength[3] = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 									  domain->getGlobalLength(2)};  // better for testing
-			shiftIfNecessary(domainLength, &region, shift.data());
+			shiftIfNecessary(domainLength, &region, shift.data(), skin);
 
 			if (rank != my_rank && isIncluded(ownRegion, &region)) {
 				candidates[rank]++;  // this is a region I will send to rank
@@ -326,12 +326,13 @@ void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-void NeighborAcquirer::shiftIfNecessary(const double *domainLength, HaloRegion *region, double *shiftArray) {
+void NeighborAcquirer::shiftIfNecessary(const double *domainLength, HaloRegion *region, double *shiftArray,
+										double skin) {
 	for (int i = 0; i < 3; i++)  // calculating shift
-		if (region->rmin[i] >= domainLength[i]) shiftArray[i] = -domainLength[i];
+		if (region->rmin[i] >= domainLength[i] - skin) shiftArray[i] = -domainLength[i];
 
 	for (int i = 0; i < 3; i++)  // calculating shift
-		if (region->rmax[i] <= 0) shiftArray[i] = domainLength[i];
+		if (region->rmax[i] <= skin) shiftArray[i] = domainLength[i];
 
 	for (int i = 0; i < 3; i++) {  // applying shift
 		region->rmax[i] += shiftArray[i];

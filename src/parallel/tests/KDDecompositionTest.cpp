@@ -89,6 +89,9 @@ void KDDecompositionTest::testHaloCorrect() {
 			ParticleContainerFactory::LinkedCell, "haloCorrect_regular.inp",
 			cutoff);
 
+	for (int d = 0; d < 3; ++d) {
+		kdd->_neighbourCommunicationScheme->setCoverWholeDomain(d, kdd->_ownArea->_coversWholeDomain[d]);
+	}
 	kdd->initCommunicationPartners(cutoff, _domain, container);
 	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
 	// this should give us halos at -1., -2., 14., 15.

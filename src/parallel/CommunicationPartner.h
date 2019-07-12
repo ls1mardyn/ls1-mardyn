@@ -115,7 +115,7 @@ public:
 
 	size_t getDynamicSize();
 
-	void print(std::ofstream& stream) const;
+	void print(std::ostream& stream) const;
 private:
 	enum HaloOrLeavingCorrection{
 		HALO,

@@ -277,7 +277,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			_msgReceived = true;
 			
 			if(!force) { // Buffer is particle data 
-				static std::vector<Molecule> mols;
+
 				unsigned long numHalo, numLeaving;
 				_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo); 
 
@@ -301,11 +301,10 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				}
 				global_log->debug() << buf2.str() << std::endl;
 #endif
-				
-				
+
 				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 				unsigned long totalNumMols = numLeaving + numHalo;
-				mols.resize(totalNumMols);
+
 
 				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
 				#pragma omp parallel for schedule(static)
@@ -314,17 +313,14 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					Molecule m;
 					if (i < numLeaving) {
 						// leaving
-						_recvBuf.readLeavingMolecule(i, m); 
+						_recvBuf.readLeavingMolecule(i, m);
+						moleculeContainer->addParticle(m, false, removeRecvDuplicates);
 					} else {
 						// halo
-						_recvBuf.readHaloMolecule(i - numLeaving, m); 
+						_recvBuf.readHaloMolecule(i - numLeaving, m);
+						moleculeContainer->addHaloParticle(m, false, removeRecvDuplicates);
 					}
-					mols[i] = m;
 				}
-
-				moleculeContainer->addParticles(mols, removeRecvDuplicates);
-				mols.clear();
-
 			} else { // Buffer is force data
 				
 				/*
@@ -638,7 +634,7 @@ size_t CommunicationPartner::getDynamicSize() {
 	return _sendBuf.getDynamicSize() + _recvBuf.getDynamicSize() + _haloInfo.capacity() * sizeof(PositionInfo);
 }
 
-void CommunicationPartner::print(std::ofstream& stream) const{
+void CommunicationPartner::print(std::ostream& stream) const {
 	stream << "Partner rank: "<< _rank << std::endl;
 	stream << "Halo regions: " << std::endl;
 	for(auto& region : _haloInfo){

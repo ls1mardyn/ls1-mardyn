@@ -32,21 +32,21 @@ void NeighbourCommunicationSchemeTest::testShiftIfNecessary() {
 	for(int i = 0; i < 3; i++) region.rmax[i] = 5.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = 3.0;
 
-	NeighborAcquirer::shiftIfNecessary(domainLength, &region, shift); // region is within domain box
+	NeighborAcquirer::shiftIfNecessary(domainLength, &region, shift, 0.); // region is within domain box
 	
 	for(int i = 0; i < 3; i++) ASSERT_EQUAL(shift[i], 0.0);
 	
 	for(int i = 0; i < 3; i++) region.rmax[i] = 12.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = 11.0;
 
-	NeighborAcquirer::shiftIfNecessary(domainLength, &region, shift);
+	NeighborAcquirer::shiftIfNecessary(domainLength, &region, shift, 0.);
 	
 	for(int i = 0; i < 3; i++) { ASSERT_EQUAL(shift[i], -10.0); shift[i] = 0.0; }
 	
 	for(int i = 0; i < 3; i++) region.rmax[i] = 0.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = -1.0;
 
-	NeighborAcquirer::shiftIfNecessary(domainLength, &region, shift);
+	NeighborAcquirer::shiftIfNecessary(domainLength, &region, shift, 0.);
 	
 	for(int i = 0; i < 3; i++) { ASSERT_EQUAL(shift[i], 10.0); shift[i] = 0.0; }
 	

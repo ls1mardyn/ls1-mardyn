@@ -26,13 +26,13 @@ public:
 	 * second vector will own the particles.
 	 */
 	static std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> acquireNeighbors(
-		Domain* domain, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions);
+		Domain* domain, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions, double skin);
 	static std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners);
 
 private:
 	static bool isIncluded(HaloRegion* myRegion, HaloRegion* inQuestion);
 	static void overlap(HaloRegion* myRegion, HaloRegion* inQuestion);
-	static void shiftIfNecessary(const double* domainLength, HaloRegion* region, double* shiftArray);
+	static void shiftIfNecessary(const double* domainLength, HaloRegion* region, double* shiftArray, double skin);
 
 	friend class NeighbourCommunicationSchemeTest;
 };
