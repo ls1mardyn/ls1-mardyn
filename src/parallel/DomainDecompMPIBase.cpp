@@ -61,8 +61,12 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	// store current path
 	string oldPath(xmlconfig.getcurrentnodepath());
 
+#ifndef MARDYN_AUTOPAS
 	std::string neighbourCommunicationScheme = "indirect";
 	xmlconfig.getNodeValue("CommunicationScheme", neighbourCommunicationScheme);
+#else
+	std::string neighbourCommunicationScheme = "direct-pp";
+#endif
 
 	std::string zonalMethod = "fs";
 	std::string traversal = "c08"; // currently useless, as traversal is set elsewhere
