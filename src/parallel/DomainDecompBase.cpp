@@ -46,11 +46,11 @@ void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecu
 void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	if (moleculeContainer->isInvalidParticleReturner()) {
 		// autopas mode!
-		// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them
-		// directly.
-		auto invalidParticles = moleculeContainer->getInvalidParticles();
-		addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
-
+		if(moleculeContainer->hasInvalidParticles()) {
+			// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them directly.
+			auto invalidParticles = moleculeContainer->getInvalidParticles();
+			addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
+		}
 		// now use direct scheme to transfer the rest!
 		FullShell fs;
 		double rmin[3];  // lower corner
