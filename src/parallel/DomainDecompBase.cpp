@@ -283,10 +283,14 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 	};
 
 	if (moleculeContainer->isInvalidParticleReturner()) {
+		// move all particles that will be inserted now to the end of the container
 		auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
+			// if this is true, it will be put in the first part of the partition, if it is false, in the second.
 			return not m.inBox(haloRegion.rmin, haloRegion.rmax);
 		});
+		// now insert all particles that are in the second partition.
 		std::for_each(removeBegin, invalidParticles.end(), shiftAndAdd);
+		// remove them from the vector.
 		invalidParticles.erase(removeBegin, invalidParticles.end());
 	} else {
 #if defined(_OPENMP)
