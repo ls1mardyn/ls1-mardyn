@@ -100,7 +100,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	bool bInputOk = true;
 	double temperature = 0.;
 	bInputOk = bInputOk && xmlconfig.getNodeValueReduced("temperature", temperature);
-	if(true == bInputOk) {
+	if(bInputOk) {
 		setGlobalTemperature(temperature);
 		global_log->info() << "Temperature: " << temperature << endl;
 	}
