@@ -51,7 +51,7 @@ public:
 	~CommunicationPartner();
 
 	void initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
-			MessageType msgType, bool removeFromContainer = false);
+			MessageType msgType, std::vector<Molecule>& invalidParticles, bool mightUseInvalidParticles, bool removeFromContainer = false);
 
 	bool testSend();
 
@@ -123,7 +123,7 @@ private:
 		FORCES // necessary?
 	};
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
-			const double highCorner[3], const double shift[3], const bool removeFromContainer,
+			const double highCorner[3], const double shift[3], bool removeFromContainer,
 			HaloOrLeavingCorrection haloLeaveCorr);
 
 	int _rank;
@@ -136,6 +136,7 @@ private:
 	CommunicationBuffer _sendBuf, _recvBuf; // used to be ParticleData and 
 	bool _msgSent, _countReceived, _msgReceived;
 
+	void collectLeavingMoleculesFromInvalidParticles(std::vector<Molecule>& invalidParticles, double lowCorner [3], double highCorner [3], double shift [3]);
 };
 
 #endif /* COMMUNICATIONPARTNER_H_ */

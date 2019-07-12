@@ -224,8 +224,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		if ((*_neighbours)[0][i].getRank() != domainDecomp->getRank()) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			(*_neighbours)[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType);
-
+					domainDecomp->getMPIParticleType(), msgType, invalidParticles, true);
 		}
 
 	}
@@ -504,11 +503,11 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 	} else {
 
 		const int numNeighbours = (*_neighbours)[d].size();
-
+		std::vector<Molecule> dummy;
 		for (int i = 0; i < numNeighbours; ++i) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			(*_neighbours)[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType);
+					domainDecomp->getMPIParticleType(), msgType, dummy, false);
 		}
 
 	}

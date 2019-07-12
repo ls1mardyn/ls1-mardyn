@@ -136,8 +136,9 @@ CommunicationPartner::~CommunicationPartner() {
 }
 
 void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm,
-		const MPI_Datatype& type, MessageType msgType, bool removeFromContainer) {
-
+									const MPI_Datatype& type, MessageType msgType,
+									std::vector<Molecule>& invalidParticles, bool mightUseInvalidParticles,
+									bool removeFromContainer) {
 	global_log->debug() << _rank << std::endl;
 	_sendBuf.clear();
 
@@ -147,8 +148,13 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			global_log->debug() << "sending halo and boundary particles together" << std::endl;
 			// first leaving particles:
 			for (unsigned int p = 0; p < numHaloInfo; p++) {
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
-						_haloInfo[p]._shift, removeFromContainer, LEAVING);
+				if (moleculeContainer->isInvalidParticleReturner() and mightUseInvalidParticles) {
+					collectLeavingMoleculesFromInvalidParticles(invalidParticles, _haloInfo[p]._leavingLow,
+																_haloInfo[p]._leavingHigh, _haloInfo[p]._shift);
+				} else {
+					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
+											 _haloInfo[p]._shift, removeFromContainer, LEAVING);
+				}
 			}
 
 			// then halo particles/copies:
@@ -161,8 +167,13 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		case MessageType::LEAVING_ONLY: {
 			global_log->debug() << "sending leaving particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
-						_haloInfo[p]._shift, removeFromContainer, LEAVING);
+				if (moleculeContainer->isInvalidParticleReturner() and mightUseInvalidParticles) {
+					collectLeavingMoleculesFromInvalidParticles(invalidParticles, _haloInfo[p]._leavingLow,
+																_haloInfo[p]._leavingHigh, _haloInfo[p]._shift);
+				} else {
+					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
+											 _haloInfo[p]._shift, removeFromContainer, LEAVING);
+				}
 			}
 			break;
 		}
@@ -418,7 +429,9 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 }
 
 void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
-		const double highCorner[3], const double shift[3], const bool removeFromContainer, HaloOrLeavingCorrection haloLeaveCorr) {
+													const double highCorner[3], const double shift[3],
+													const bool removeFromContainer,
+													const HaloOrLeavingCorrection haloLeaveCorr) {
 	using std::vector;
 	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
 	vector<vector<Molecule>> threadData;
@@ -556,6 +569,64 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	global_simulation->timers()->stop("COMMUNICATION_PARTNER_INIT_SEND");
 }
 
+void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vector<Molecule>& invalidParticles, double* lowCorner,
+                                                                       double* highCorner, double* shift) {
+
+	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
+
+	// compute how many molecules are already in of this type: - adjust for Forces
+
+
+	auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
+	  // if this is true, it will be put in the first part of the partition, if it is false, in the second.
+	  return not m.inBox(lowCorner, highCorner);
+	});
+
+	unsigned long numMolsAlreadyIn = 0;
+	numMolsAlreadyIn = _sendBuf.getNumLeaving();
+	int totalNumMolsAppended = invalidParticles.end() - removeBegin;
+	// resize the send buffer
+	_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
+
+	Domain* domain = global_simulation->getDomain();
+
+	auto shiftAndAdd = [domain, lowCorner, highCorner, shift, this, &numMolsAlreadyIn](Molecule& m) {
+		if (not m.inBox(lowCorner, highCorner)) {
+			global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
+			Simulation::exit(456);
+		}
+		for (int dim = 0; dim < 3; dim++) {
+			if (shift[dim] != 0) {
+				m.setr(dim, m.r(dim) + shift[dim]);
+				// some additional shifting to ensure that rounding errors do not hinder the correct
+				// placement
+				if (shift[dim] < 0) {    // if the shift was negative, it is now in the lower part of the domain -> min
+					if (m.r(dim) < 0) {  // in the lower part it was wrongly shifted if
+						m.setr(dim, 0);  // ensures that r is at least the boundingBoxMin
+					}
+				} else {                                             // shift > 0
+					if (m.r(dim) >= domain->getGlobalLength(dim)) {  // in the lower part it was wrongly shifted if
+						// std::nexttoward: returns the next bigger value of _boundingBoxMax
+						vcp_real_calc r = domain->getGlobalLength(dim);
+						m.setr(dim, std::nexttoward(r, r - 1.f));  // ensures that r is smaller than the boundingBoxMax
+					}
+				}
+			}
+		}
+		_sendBuf.addLeavingMolecule(numMolsAlreadyIn, m);
+		++numMolsAlreadyIn;
+	};
+
+	// now insert all particles that are in the second partition to _sendBuf.
+	std::for_each(removeBegin, invalidParticles.end(), shiftAndAdd);
+
+	// remove the now already processed particles from the invalidParticles vector.
+	invalidParticles.erase(removeBegin, invalidParticles.end());
+
+	global_simulation->timers()->stop("COMMUNICATION_PARTNER_INIT_SEND");
+
+}
+
 size_t CommunicationPartner::getDynamicSize() {
 	return _sendBuf.getDynamicSize() + _recvBuf.getDynamicSize() + _haloInfo.capacity() * sizeof(PositionInfo);
 }
@@ -582,3 +653,4 @@ void CommunicationPartner::print(std::ofstream& stream) const{
 
 	}
 }
+

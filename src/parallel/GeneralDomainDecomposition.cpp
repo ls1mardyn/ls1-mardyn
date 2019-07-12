@@ -127,8 +127,10 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
 	std::tie(recvNeighbors, sendNeighbors) = NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain);
+	std::vector<Molecule> dummy;
 	for (auto& sender : sendNeighbors) {
-		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, true /*removeFromContainer*/);
+		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
+						false /*don't use invalid particles*/, true /*removeFromContainer*/);
 	}
 	std::vector<Molecule> ownMolecules{};
 	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {

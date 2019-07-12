@@ -371,6 +371,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		auto indexIt = indices.begin();
 		numProcsSend = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		sendPartners.reserve(numProcsSend);
+		std::vector<Molecule> dummy;
 		for (unsigned i = 0; i < ranks.size(); ++i) {
 			int low[3];
 			int high[3];
@@ -384,9 +385,11 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			}
 			int partnerRank = ranks[i];
 			if (partnerRank != _rank) {
-				sendPartners.push_back(CommunicationPartner(partnerRank, leavingLow, leavingHigh));
+				sendPartners.emplace_back(partnerRank, leavingLow, leavingHigh);
 				const bool removeFromContainer = true;
-				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, removeFromContainer); // molecules have been taken out of container
+				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
+											 /*don't use invalid particles*/ false, removeFromContainer);
+				// molecules are taken out of container
 			} else {
 				bool inHaloRegion = true;
 				for (unsigned int dimindex = 0; dimindex <3; dimindex ++){
