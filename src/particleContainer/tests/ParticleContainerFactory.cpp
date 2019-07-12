@@ -81,7 +81,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		#endif
 	} else {
 		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
-		return NULL;
+		return nullptr;
 	}
 
 	inputReader.readPhaseSpace(moleculeContainer, domain, domainDecomposition);
