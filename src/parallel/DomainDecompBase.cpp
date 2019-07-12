@@ -46,7 +46,8 @@ void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecu
 void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	if (moleculeContainer->isInvalidParticleReturner()) {
 		// autopas mode!
-		if(moleculeContainer->hasInvalidParticles()) {
+		bool doLeavingExchange = moleculeContainer->hasInvalidParticles();
+		if(doLeavingExchange) {
 			// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them directly.
 			auto invalidParticles = moleculeContainer->getInvalidParticles();
 			addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
@@ -67,7 +68,8 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(),
 											   coversWholeDomain, cellLengthDummy);
 		for (auto haloExportRegion : haloExportRegions) {
-			populateHaloLayerWithCopiesDirect(haloExportRegion, moleculeContainer, false /*positionCheck*/);
+			populateHaloLayerWithCopiesDirect(haloExportRegion, moleculeContainer,
+											  doLeavingExchange /*positionCheck, same as doLeavingExchange*/);
 		}
 	} else {
 		for (unsigned d = 0; d < 3; ++d) {

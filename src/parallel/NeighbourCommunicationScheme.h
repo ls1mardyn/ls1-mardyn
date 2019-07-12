@@ -160,7 +160,7 @@ protected:
 private:
 	void doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions, MessageType msgType,
 								  DomainDecompMPIBase* domainDecomp, ParticleContainer*& moleculeContainer,
-								  std::vector<Molecule>& invalidParticles);
+								  std::vector<Molecule>& invalidParticles, bool doHaloPositionCheck);
 };
 
 class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
