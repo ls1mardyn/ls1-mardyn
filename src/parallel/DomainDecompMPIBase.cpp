@@ -257,11 +257,12 @@ void DomainDecompMPIBase::finishNonBlockingStageImpl(ParticleContainer* molecule
 }
 
 void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
-		MessageType msgType, bool removeRecvDuplicates) {
+		MessageType msgType, bool doHaloPositionCheck, bool removeRecvDuplicates) {
 
 	global_log->set_mpi_output_all();
 
-	_neighbourCommunicationScheme->exchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, this);
+	_neighbourCommunicationScheme->exchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates,
+														this, doHaloPositionCheck);
 
 	global_log->set_mpi_output_root(0);
 }

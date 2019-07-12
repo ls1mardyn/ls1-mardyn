@@ -243,12 +243,24 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	}
 
 	if (not rebalance) {
-		if(sendLeavingWithCopies()){
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+		if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
+			if (sendLeavingWithCopies()) {
+				global_log->info() << "kDD: Sending Leaving and Halos." << std::endl;
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES,
+				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
+			} else {
+				global_log->info() << "kDD: Sending Leaving." << std::endl;
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
+				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
+#ifndef MARDYN_AUTOPAS
+				moleculeContainer->deleteOuterParticles();
+#endif
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
+				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
+			}
 		} else {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
-			moleculeContainer->deleteOuterParticles();
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
+			global_log->info() << "kDD: Sending Halos." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, false /*dohaloPositionCheck*/);
 		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
@@ -256,7 +268,8 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 			moleculeContainer->forcedUpdate();
 		}
 		if (_steps != 1) {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
 		}
 		moleculeContainer->deleteOuterParticles();
 
@@ -277,7 +290,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		_ownArea = newOwnLeaf;
 		initCommunicationPartners(_cutoffRadius, domain, moleculeContainer);
 
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, true /*doHaloPositionCheck*/, removeRecvDuplicates);
 	}
 }
 

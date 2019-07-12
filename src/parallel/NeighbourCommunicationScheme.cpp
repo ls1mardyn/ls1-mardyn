@@ -101,7 +101,7 @@ void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleCon
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
 	mardyn_assert(stageNumber < getCommDims());
-	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
+	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp, true);
 }
 
 void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
@@ -112,13 +112,13 @@ void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleCont
 }
 
 void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
-		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
+		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp, bool doHaloPositionCheck) {
 	//if (_pushPull) {
 		if (msgType == LEAVING_AND_HALO_COPIES) {
 			msgType = LEAVING_ONLY;
 
 			initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
-					removeRecvDuplicates, domainDecomp);
+					removeRecvDuplicates, domainDecomp, doHaloPositionCheck);
 			finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType,
 					removeRecvDuplicates, domainDecomp);
 			moleculeContainer->deleteOuterParticles();
@@ -126,7 +126,7 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 		}
 	//}
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
-			removeRecvDuplicates, domainDecomp);
+			removeRecvDuplicates, domainDecomp, doHaloPositionCheck);
 
 	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType,
 			removeRecvDuplicates, domainDecomp);
@@ -171,8 +171,11 @@ void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(
 	}
 }
 
-void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
-		Domain* domain, MessageType msgType, bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp) {
+void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
+																  MessageType msgType, bool /*removeRecvDuplicates*/,
+																  DomainDecompMPIBase* domainDecomp,
+																  bool doHaloPositionCheck) {
+	global_log->info() << "doHaloPositionCheck: " << doHaloPositionCheck << std::endl;
 	// We mimic the direct neighbour communication also for the sequential case, otherwise things are copied multiple times or might be forgotten.
 	// We have to check each direction.
 	
@@ -182,8 +185,6 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	}
 
 	// halo position check needs to be done, unless it is a invalidParticle returner and it had no invalid particles.
-	bool doHaloPositionCheck =
-		moleculeContainer->isInvalidParticleReturner() ? moleculeContainer->hasInvalidParticles() : true;
 	auto invalidParticles = moleculeContainer->getInvalidParticles();
 	
 	double rmin[DIMgeom]; // lower corner
@@ -600,12 +601,10 @@ void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContai
 }
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
-		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
-
+		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp, bool /*doHaloPositionCheck*/) {
 	for (unsigned short d = 0; d < getCommDims(); d++) {
 		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
 	}
-
 }
 
 

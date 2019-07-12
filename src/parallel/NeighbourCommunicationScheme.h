@@ -44,7 +44,7 @@ public:
 			DomainDecompMPIBase* domainDecomp) = 0;
 
 	virtual void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
-			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) = 0;
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp, bool doHaloPositionCheck=true) = 0;
 
 	void setCoverWholeDomain(unsigned int d, bool covers) {
 		_coversWholeDomain[d] = covers;
@@ -149,13 +149,13 @@ public:
 			DomainDecompMPIBase* domainDecomp) override;
 
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
-			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp, bool doHaloPositionCheck=true) override;
 
 protected:
 	void finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* /*domain*/, MessageType /*msgType*/,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp);
 	void initExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* /*domain*/, MessageType msgType,
-			bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp);
+			bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp, bool doHaloPositionCheck);
 
 private:
 	void doDirectFallBackExchange(const std::vector<HaloRegion>& haloRegions, MessageType msgType,
@@ -172,7 +172,7 @@ public:
 	}
 	~IndirectNeighbourCommunicationScheme() override = default;
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
-			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp, bool doHaloPositionCheck=true) override;
 
 	void initCommunicationPartners(double cutoffRadius, Domain * domain,
 			DomainDecompMPIBase* domainDecomp,
