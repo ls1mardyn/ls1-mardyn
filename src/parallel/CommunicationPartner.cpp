@@ -138,7 +138,7 @@ CommunicationPartner::~CommunicationPartner() {
 void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm,
 									const MPI_Datatype& type, MessageType msgType,
 									std::vector<Molecule>& invalidParticles, bool mightUseInvalidParticles,
-									bool removeFromContainer) {
+									bool doHaloPositionCheck, bool removeFromContainer) {
 	global_log->debug() << _rank << std::endl;
 	_sendBuf.clear();
 
@@ -160,7 +160,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			// then halo particles/copies:
 			for (unsigned int p = 0; p < numHaloInfo; p++) {
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh,
-						_haloInfo[p]._shift, false, HALO);
+						_haloInfo[p]._shift, false, HALO, doHaloPositionCheck);
 			}
 			break;
 		}
@@ -181,7 +181,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			global_log->debug() << "sending halo particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh,
-						_haloInfo[p]._shift, false, HALO);
+						_haloInfo[p]._shift, false, HALO, doHaloPositionCheck);
 			}
 			break;
 		}
@@ -431,7 +431,8 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
 													const double highCorner[3], const double shift[3],
 													const bool removeFromContainer,
-													const HaloOrLeavingCorrection haloLeaveCorr) {
+													const HaloOrLeavingCorrection haloLeaveCorr,
+													bool doHaloPositionCheck) {
 	using std::vector;
 	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
 	vector<vector<Molecule>> threadData;
@@ -451,9 +452,15 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	#pragma omp parallel shared(threadData, numMolsAlreadyIn)
 	#endif
 	{
+		// in the case of an autopas container, we only want to iterate over inner particle cells if we are sending
+		// halos (this assumes the direct communication scheme!)
+		ParticleIterator::Type iteratorType =
+			haloLeaveCorr == HaloOrLeavingCorrection::HALO and moleculeContainer->isInvalidParticleReturner()
+				? ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY
+				: ParticleIterator::Type::ALL_CELLS;
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner, ParticleIterator::ALL_CELLS);
+		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner, iteratorType);
 
 		#if defined (_OPENMP)
 		#pragma omp master
@@ -521,7 +528,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			mCopy.move(1, shift[1]);
 			mCopy.move(2, shift[2]);
 			for (int dim = 0; dim < 3; dim++) {
-				if (haloLeaveCorr == HaloOrLeavingCorrection::HALO) {
+				if (haloLeaveCorr == HaloOrLeavingCorrection::HALO and doHaloPositionCheck) {
 					// checks if the molecule has been shifted to inside the domain due to rounding errors.
 					if (shift[dim] < 0.) { // if the shift was negative, it is now in the lower part of the domain -> min
 						if (mCopy.r(dim) >= 0.) {  // in the lower part it was wrongly shifted

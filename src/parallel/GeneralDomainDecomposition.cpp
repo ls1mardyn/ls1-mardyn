@@ -130,7 +130,8 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	std::vector<Molecule> dummy;
 	for (auto& sender : sendNeighbors) {
 		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
-						false /*don't use invalid particles*/, true /*removeFromContainer*/);
+						false /*don't use invalid particles*/, true /*do halo position change*/,
+						true /*removeFromContainer*/);
 	}
 	std::vector<Molecule> ownMolecules{};
 	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {

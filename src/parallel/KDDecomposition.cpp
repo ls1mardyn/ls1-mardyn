@@ -388,7 +388,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				sendPartners.emplace_back(partnerRank, leavingLow, leavingHigh);
 				const bool removeFromContainer = true;
 				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
-											 /*don't use invalid particles*/ false, removeFromContainer);
+											 /*don't use invalid particles*/ false, true /*do halo position change*/,
+											 removeFromContainer);
 				// molecules are taken out of container
 			} else {
 				bool inHaloRegion = true;

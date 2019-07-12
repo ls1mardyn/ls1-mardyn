@@ -229,7 +229,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		if ((*_neighbours)[0][i].getRank() != domainDecomp->getRank()) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			(*_neighbours)[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType, invalidParticles, true);
+					domainDecomp->getMPIParticleType(), msgType, invalidParticles, true, doHaloPositionCheck);
 		}
 
 	}
@@ -512,7 +512,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		for (int i = 0; i < numNeighbours; ++i) {
 			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			(*_neighbours)[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType, dummy, false);
+					domainDecomp->getMPIParticleType(), msgType, dummy, false, true/*do halo position change*/);
 		}
 
 	}
