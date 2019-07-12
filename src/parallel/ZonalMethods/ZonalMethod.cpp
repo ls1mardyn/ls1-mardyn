@@ -69,7 +69,7 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 					tmp.offset[1] = d[1];
 					tmp.offset[2] = d[2];
 
-					tmp.width = std::max(std::max(cutoffRadius[0],cutoffRadius[1]),cutoffRadius[2]);
+					tmp.width = std::max({cutoffRadius[0], cutoffRadius[1], cutoffRadius[2]});
 					regions.push_back(tmp);
 				}
 			}
@@ -116,7 +116,7 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion&
 					tmp.offset[1] = d[1];
 					tmp.offset[2] = d[2];
 
-					tmp.width = std::max(std::max(cutoffRadius[0],cutoffRadius[1]),cutoffRadius[2]);
+					tmp.width = std::max({cutoffRadius[0], cutoffRadius[1], cutoffRadius[2]});
 					regions.push_back(tmp);
 				}
 			}
