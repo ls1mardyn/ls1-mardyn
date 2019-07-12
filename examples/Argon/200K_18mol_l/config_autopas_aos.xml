@@ -72,8 +72,8 @@
         <writefrequency>1</writefrequency>
       </outputplugin>
     </output>
-	<plugin name="TestPlugin">
+<!--	<plugin name="TestPlugin">
 		<writefrequency>1</writefrequency>
-	</plugin>
+	</plugin>-->
   </simulation>
 </mardyn>
