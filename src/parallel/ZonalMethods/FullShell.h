@@ -23,18 +23,18 @@ public:
 	 * @param cutoffRadius
 	 * @return vector of regions
 	 */
-	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
 			bool coversWholeDomain[3], double cellLength[3]) override {
 		return getLeavingExportRegions(initialRegion, cutoffRadius, coversWholeDomain);
 	}
 
-	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius, double skin,
 				bool coversWholeDomain[3], double cellLength[3]) override {
 		const std::function<bool(const int[3])> condition = [](const int[3])->bool {
 			// no condition for leaving particles.
 				return true;
 			};
-		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
+		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, skin, coversWholeDomain, condition);
 	}
 };
 

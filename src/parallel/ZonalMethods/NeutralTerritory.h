@@ -39,7 +39,7 @@ public:
 	}
 
 	// TODO: This is untested
-	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
 			int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[2];

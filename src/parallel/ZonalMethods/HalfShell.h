@@ -36,7 +36,7 @@ public:
 		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}
 
-	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
+	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
 			// TODO reenable this check and fix halfshelltraversal
@@ -44,7 +44,7 @@ public:
 			//return pseudoCellIndex < 0;
 			return true;
 		};
-		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
+		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}
 };
 

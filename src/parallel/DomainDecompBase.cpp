@@ -63,14 +63,10 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		bool coversWholeDomain[3];
 		double cellLengthDummy[3]{};
 
-		auto haloExportRegions = fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
-																	coversWholeDomain, cellLengthDummy);
-		double skin = moleculeContainer->getSkin();
+		auto haloExportRegions =
+			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(),
+											   coversWholeDomain, cellLengthDummy);
 		for (auto haloExportRegion : haloExportRegions) {
-			for (int i = 0; i < 3; ++i) {
-				haloExportRegion.rmin[i] -= skin;
-				haloExportRegion.rmax[i] += skin;
-			}
 			populateHaloLayerWithCopiesDirect(haloExportRegion, moleculeContainer, false /*positionCheck*/);
 		}
 	} else {

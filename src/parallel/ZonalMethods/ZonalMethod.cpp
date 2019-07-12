@@ -124,8 +124,18 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion&
 		return regions;
 }
 
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(
+	HaloRegion& initialRegion, double cutoffRadius, double skin, bool coversWholeDomain[3],
+	const std::function<bool(const int[3])>& condition) {
 	double cutoffArr[3] = {cutoffRadius, cutoffRadius, cutoffRadius};
-	return getHaloRegionsConditionalInside(initialRegion, cutoffArr, coversWholeDomain, condition);
+	auto regions = getHaloRegionsConditionalInside(initialRegion, cutoffArr, coversWholeDomain, condition);
+	if(skin != 0.) {
+		for (auto& region : regions) {
+			for (int i = 0; i < 3; ++i) {
+				region.rmin[i] -= skin;
+				region.rmax[i] += skin;
+			}
+		}
+	}
+	return regions;
 }

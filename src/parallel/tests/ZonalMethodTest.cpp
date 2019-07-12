@@ -22,7 +22,7 @@ void ZonalMethodTest::testES() {
 	bool coversWholeDomain[3] = {false, false, false};
 	double cellLength[3] = {0.2, 0.2, 0.2};
 
-	auto haloExportForceImportRegions = es.getHaloExportForceImportRegions(initialRegion, cutoffRadius, coversWholeDomain, cellLength);
+	auto haloExportForceImportRegions = es.getHaloExportForceImportRegions(initialRegion, cutoffRadius, 0., coversWholeDomain, cellLength);
 	// 7 neighbors
 	ASSERT_EQUAL(haloExportForceImportRegions.size(), 7ul);
 

@@ -33,7 +33,8 @@ public:
 	}
 
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double cellLength[3]) override {
+																	double /*skin*/, bool coversWholeDomain[3],
+																	double cellLength[3]) override {
 		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
 			bool good = true;
 			for(unsigned short i = 0; i < 3; ++i){
@@ -41,7 +42,7 @@ public:
 			}
 			return good;
 		};
-		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
+		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}
 };
 

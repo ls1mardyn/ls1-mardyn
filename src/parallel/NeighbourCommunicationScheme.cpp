@@ -196,21 +196,23 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	std::vector<Molecule> dummy{};
 	switch (msgType) {
 	case LEAVING_AND_HALO_COPIES:
-		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, moleculeContainer->getCutoff(), _coversWholeDomain);
 		doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer, invalidParticles);
-		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(
+			ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, HALO_COPIES, domainDecomp, moleculeContainer, dummy);
 		break;
 	case LEAVING_ONLY:
-		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain);
+		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, moleculeContainer->getCutoff(), _coversWholeDomain);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, invalidParticles);
 		break;
 	case HALO_COPIES:
-		haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
+		haloRegions = _zonalMethod->getHaloExportForceImportRegions(
+			ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy);
 		break;
 	case FORCES:
-		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, global_simulation->getcutoffRadius(), _coversWholeDomain, cellLength);
+		haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, moleculeContainer->getCutoff(), _coversWholeDomain, cellLength);
 		doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy);
 		break;
 	}
