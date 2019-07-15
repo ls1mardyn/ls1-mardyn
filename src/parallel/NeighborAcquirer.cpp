@@ -120,6 +120,16 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 				bool enlarged[3][2] = {{false}};
 				for (int k = 0; k < 3; k++) shift[k] *= -1;
 
+				if(skin != 0.){
+					for(size_t dim =0;dim<3;++dim){
+						if(region.offset[dim]==-1 and region.rmax[dim] == ownRegion->rmax[dim]){
+							region.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
+						} else if(region.offset[dim]==1 and region.rmin[dim] == ownRegion->rmin[dim]){
+							region.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
+						}
+					}
+				}
+
 				comm_partners02.emplace_back(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(),
 											 region.offset, enlarged);
 
