@@ -71,7 +71,7 @@ protected:
 	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius, double skin,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
-	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius[3],
+	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, const double cutoffRadius[3],
 				bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
 	/**
@@ -88,7 +88,7 @@ protected:
 	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius, double skin,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
-	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius[3],
+	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, const double cutoffRadius[3],
 				bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
 };

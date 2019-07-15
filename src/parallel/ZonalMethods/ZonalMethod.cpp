@@ -8,13 +8,9 @@
 #include "ZonalMethod.h"
 #include "Simulation.h"
 
-ZonalMethod::ZonalMethod() {
+ZonalMethod::ZonalMethod() = default;
 
-}
-
-ZonalMethod::~ZonalMethod() {
-
-}
+ZonalMethod::~ZonalMethod() = default;
 
 std::vector<HaloRegion> ZonalMethod::getLeavingExportRegions(HaloRegion& initialRegion, double cutoffRadius[3],
 		bool coversWholeDomain[3]) {
@@ -37,7 +33,7 @@ std::vector<HaloRegion> ZonalMethod::getLeavingExportRegions(HaloRegion& initial
 
 
 // protected, used for child classes
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius[3],
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, const double cutoffRadius[3],
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
 	std::vector<HaloRegion> regions;
 		int d[3];
@@ -77,8 +73,9 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 		return regions;
 }
 
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius, double skin,
-			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius,
+															   double skin, bool coversWholeDomain[3],
+															   const std::function<bool(const int[3])>& condition) {
 	double cutoffArr[3] = {cutoffRadius, cutoffRadius, cutoffRadius};
 	auto regions = getHaloRegionsConditional(initialRegion, cutoffArr, coversWholeDomain, condition);
 	if(skin != 0.) {
@@ -96,8 +93,9 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 }
 
 // protected, used for child classes
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius[3],
-			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(
+	HaloRegion& initialRegion, const double cutoffRadius[3], bool coversWholeDomain[3],
+	const std::function<bool(const int[3])>& condition) {
 	std::vector<HaloRegion> regions;
 		int d[3];
 		for (d[0] = -1; d[0] <= 1; d[0]++) {

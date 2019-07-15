@@ -163,7 +163,8 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 		}
 	}
 
-	// The problem is, that I do not know how many regions I am going to receive from each process
+	// The problem is, that we cannot know how many regions we are going to receive from each process a-priori.
+	// So we need to figure this out:
 	/* e.g.: 4x4
 	 *
 	 * row := sender
