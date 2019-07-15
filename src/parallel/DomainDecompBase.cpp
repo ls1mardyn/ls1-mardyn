@@ -65,9 +65,9 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		bool coversWholeDomain[3];
 		double cellLengthDummy[3]{};
 		global_log->info() << "DDBase: Populating halo." << std::endl;
-		auto haloExportRegions = fs.getHaloExportForceImportRegions(
-			ownRegion, moleculeContainer->getCutoff(), doLeavingExchange ? 0. : moleculeContainer->getSkin(),
-			coversWholeDomain, cellLengthDummy);
+		auto haloExportRegions =
+			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(),
+											   coversWholeDomain, cellLengthDummy);
 		for (auto haloExportRegion : haloExportRegions) {
 			populateHaloLayerWithCopiesDirect(haloExportRegion, moleculeContainer,
 											  doLeavingExchange /*positionCheck, same as doLeavingExchange*/);
