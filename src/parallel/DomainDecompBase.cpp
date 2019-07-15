@@ -454,7 +454,7 @@ void DomainDecompBase::assertIntIdentity(int /* IX */) {
 void DomainDecompBase::assertDisjunctivity(ParticleContainer* /* moleculeContainer */) const {
 }
 
-void DomainDecompBase::printDecomp(std::string /* filename */, Domain* /* domain */) {
+void DomainDecompBase::printDecomp(const std::string& /*filename*/, Domain* /* domain */) {
 	global_log->warning() << "printDecomp useless in serial mode" << std::endl;
 }
 
@@ -469,7 +469,7 @@ int DomainDecompBase::getNumProcs() const {
 void DomainDecompBase::barrier() const {
 }
 
-void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary) const{
+void DomainDecompBase::writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer, bool binary) const{
 	for (int process = 0; process < getNumProcs(); process++) {
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream;

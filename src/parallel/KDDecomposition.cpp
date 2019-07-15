@@ -664,7 +664,7 @@ double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	}
 }
 
-void KDDecomposition::printDecomp(string filename, Domain* domain) {
+void KDDecomposition::printDecomp(const std::string& filename, Domain* domain) {
 	if (_rank == 0) {
 		ofstream povcfgstrm(filename.c_str());
 		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " " << domain->getGlobalLength(2) << endl;

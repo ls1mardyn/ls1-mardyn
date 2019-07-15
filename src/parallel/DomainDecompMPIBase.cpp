@@ -196,32 +196,34 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 
 	if (_rank) {
 		unsigned long num_molecules = moleculeContainer->getNumberOfParticles();
-		auto *tids = new unsigned long[num_molecules];
+		std::vector<unsigned long> tids(num_molecules);
 
 		int i = 0;
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 			tids[i] = m->getID();
 			i++;
 		}
-		MPI_CHECK(MPI_Send(tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
-		delete[] tids;
+		MPI_CHECK(MPI_Send(tids.data(), num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	} else {
 		/** @todo FIXME: This implementation does not scale. */
 		map<unsigned long, int> check;
 
-		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m)
+		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
+			if(check.find(m->getID()) != check.end()){
+				global_log->error() << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
+				MPI_Abort(MPI_COMM_WORLD, 1);
+			}
 			check[m->getID()] = 0;
-
+		}
 		MPI_Status status;
 		for (int i = 1; i < _numProcs; i++) {
 			int num_recv = 0;
-			unsigned long *recv;
 			MPI_CHECK(MPI_Probe(i, 2674 + i, _comm, &status));
 			MPI_CHECK(MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv));
-			recv = new unsigned long[num_recv];
+			std::vector<unsigned long> recv(num_recv);
 
-			MPI_CHECK(MPI_Recv(recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status));
+			MPI_CHECK(MPI_Recv(recv.data(), num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status));
 			for (int j = 0; j < num_recv; j++) {
 				if (check.find(recv[j]) != check.end()) {
 					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
@@ -230,7 +232,6 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 				} else
 					check[recv[j]] = i;
 			}
-			delete[] recv;
 		}
 		global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
 				<< " entries." << endl;

@@ -55,7 +55,7 @@ public:
 	DomainDecompBase();
 
 	//! @brief The Destructor finalizes MPI
-	virtual ~DomainDecompBase();
+	~DomainDecompBase() override;
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
@@ -138,7 +138,7 @@ public:
 	//!        The format is not strictly defined and depends on the decomposition
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	virtual void printDecomp(std::string filename, Domain* domain);
+	virtual void printDecomp(const std::string& filename, Domain* domain);
 
 
 	//! @brief returns the own rank
@@ -182,7 +182,7 @@ public:
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
 	//! @param binary flag, that is true if the output shall be binary
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary = false) const;
+	void writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer, bool binary = false) const;
 
 
 	void updateSendLeavingWithCopies(bool sendTogether){
