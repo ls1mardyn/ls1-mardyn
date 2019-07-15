@@ -84,8 +84,11 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 	if(skin != 0.) {
 		for (auto& region : regions) {
 			for (int i = 0; i < 3; ++i) {
-				region.rmin[i] -= skin;
-				region.rmax[i] += skin;
+				if (region.offset[i] == -1) {
+					region.rmin[i] -= skin;
+				} else if (region.offset[i] == 1) {
+					region.rmax[i] += skin;
+				}
 			}
 		}
 	}
@@ -141,6 +144,7 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(
 	if(skin != 0.) {
 		for (auto& region : regions) {
 			for (int i = 0; i < 3; ++i) {
+				// todo: do we need to adapt this by adding if's (as in getHaloRegionsConditional)?
 				region.rmin[i] -= skin;
 				region.rmax[i] += skin;
 			}
