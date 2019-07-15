@@ -457,14 +457,9 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
 						_coversWholeDomain);
 
-		HaloRegion ownRegionEnlargedBySkin = ownRegion;
-		for(unsigned int dim = 0; dim < 3; ++dim){
-			ownRegionEnlargedBySkin.rmin[dim] -= skin;
-			ownRegionEnlargedBySkin.rmax[dim] += skin;
-		}
 		// assuming p1 sends regions to p2
 		std::tie((*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]) =
-			NeighborAcquirer::acquireNeighbors(domain, &ownRegionEnlargedBySkin, haloOrForceRegions, skin);
+			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, haloOrForceRegions, skin);
 		// p1 notes reply, p2 notes owned as haloExportForceImport
 		std::tie((*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]) =
 			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, leavingRegions, 0.);

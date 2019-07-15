@@ -18,6 +18,13 @@
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
 	Domain *domain, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin) {
+
+	HaloRegion ownRegionEnlargedBySkin = *ownRegion;
+	for(unsigned int dim = 0; dim < 3; ++dim){
+		ownRegionEnlargedBySkin.rmin[dim] -= skin;
+		ownRegionEnlargedBySkin.rmax[dim] += skin;
+	}
+
 	int my_rank;  // my rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	int num_incoming;  // the number of processes in MPI_COMM_WORLD
@@ -104,10 +111,10 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 									  domain->getGlobalLength(2)};  // better for testing
 			shiftIfNecessary(domainLength, &region, shift.data(), skin);
 
-			if (rank != my_rank && isIncluded(ownRegion, &region)) {
+			if (rank != my_rank && isIncluded(&ownRegionEnlargedBySkin, &region)) {
 				candidates[rank]++;  // this is a region I will send to rank
 
-				overlap(ownRegion, &region);  // different shift for the overlap?
+				overlap(&ownRegionEnlargedBySkin, &region);  // different shift for the overlap?
 
 				// make a note in partners02 - don't forget to squeeze partners02
 				bool enlarged[3][2] = {{false}};
