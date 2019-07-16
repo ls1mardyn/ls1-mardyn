@@ -116,7 +116,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 					wasShifted = true;
 				}
 			}
-			if(wasShifted and skin != 0.){
+			if (wasShifted and skin != 0.) {
 				/*also test unshifted region if the skin is non-zero!*/
 				regionsToTest.push_back(region);
 			}
@@ -351,11 +351,17 @@ void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 
 HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const double *domainLength, const HaloRegion &region,
 														 double *shiftArray, double skin) {
-	for (int i = 0; i < 3; i++)  // calculating shift
-		if (region.rmin[i] >= domainLength[i] - skin) shiftArray[i] = -domainLength[i];
+	for (int i = 0; i < 3; i++) {  // calculating shift
+		if (region.rmin[i] >= domainLength[i] - skin) {
+			shiftArray[i] = -domainLength[i];
+		}
+	}
 
-	for (int i = 0; i < 3; i++)  // calculating shift
-		if (region.rmax[i] <= skin) shiftArray[i] = domainLength[i];
+	for (int i = 0; i < 3; i++) {  // calculating shift
+		if (region.rmax[i] <= skin) {
+			shiftArray[i] = domainLength[i];
+		}
+	}
 
 	auto shiftedRegion = region;
 	for (int i = 0; i < 3; i++) {  // applying shift
