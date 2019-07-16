@@ -80,7 +80,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 	int bytesOneRegion =
 		sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
-	std::vector<std::vector<unsigned char *>> sendingList(num_processes);  // the regions I own and want to send
+	std::vector<std::vector<std::vector<unsigned char>>> sendingList(num_processes);  // the regions I own and want to send
 	std::vector<CommunicationPartner> comm_partners02;
 
 	i = 0;
@@ -108,74 +108,78 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			std::vector<double> shift(3, 0);
 			double domainLength[3] = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 									  domain->getGlobalLength(2)};  // better for testing
-			shiftIfNecessary(domainLength, &region, shift.data(), skin);
+			auto shiftedRegion = getPotentiallyShiftedRegion(domainLength, region, shift.data(), skin);
+			bool wasShifted = false;
+			std::vector<HaloRegion> regionsToTest{shiftedRegion};
+			for (int dim = 0; dim < 3; ++i) {
+				if (shiftedRegion.rmin[dim] != region.rmin[dim]) {
+					wasShifted = true;
+				}
+			}
+			if(wasShifted and skin != 0.){
+				/*also test unshifted region if the skin is non-zero!*/
+				regionsToTest.push_back(region);
+			}
+			for(auto regionToTest : regionsToTest){
+				if (rank != my_rank && isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
+					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
 
-			if (rank != my_rank && isIncluded(&ownRegionEnlargedBySkin, &region)) {
-				numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
+					overlap(&ownRegionEnlargedBySkin, &regionToTest);  // different shift for the overlap?
 
-				overlap(&ownRegionEnlargedBySkin, &region);  // different shift for the overlap?
+					// make a note in partners02 - don't forget to squeeze partners02
+					bool enlarged[3][2] = {{false}};
+					for (int k = 0; k < 3; k++) shift[k] *= -1;
 
-				// make a note in partners02 - don't forget to squeeze partners02
-				bool enlarged[3][2] = {{false}};
-				for (int k = 0; k < 3; k++) shift[k] *= -1;
-
-				if (skin != 0.) {
-					for (size_t dim = 0; dim < 3; ++dim) {
-						if (region.offset[dim] == -1 and region.rmax[dim] == ownRegion->rmax[dim]) {
-							region.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
-						} else if (region.offset[dim] == 1 and region.rmin[dim] == ownRegion->rmin[dim]) {
-							region.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
+					if (skin != 0.) {
+						for (size_t dim = 0; dim < 3; ++dim) {
+							if (regionToTest.offset[dim] == -1 and regionToTest.rmax[dim] == ownRegion->rmax[dim]) {
+								regionToTest.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
+							} else if (regionToTest.offset[dim] == 1 and regionToTest.rmin[dim] == ownRegion->rmin[dim]) {
+								regionToTest.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
+							}
 						}
 					}
+
+					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin, regionToTest.rmax, shift.data(),
+					                             regionToTest.offset, enlarged);
+
+					for (int k = 0; k < 3; k++) shift[k] *= -1;
+
+					for (int k = 0; k < 3; k++) {  // shift back
+						regionToTest.rmax[k] -= shift[k];
+						regionToTest.rmin[k] -= shift[k];
+					}
+
+					std::vector<unsigned char> singleRegion(bytesOneRegion);
+
+					p = 0;
+					memcpy(&singleRegion[p], regionToTest.rmin, sizeof(double) * 3);
+					p += sizeof(double) * 3;
+					memcpy(&singleRegion[p], regionToTest.rmax, sizeof(double) * 3);
+					p += sizeof(double) * 3;
+					memcpy(&singleRegion[p], regionToTest.offset, sizeof(int) * 3);
+					p += sizeof(int) * 3;
+					memcpy(&singleRegion[p], &regionToTest.width, sizeof(double));
+					p += sizeof(double);
+					memcpy(&singleRegion[p], shift.data(), sizeof(double) * 3);
+					//p += sizeof(double) * 3;
+
+					sendingList[rank].push_back(std::move(singleRegion));
 				}
-
-				comm_partners02.emplace_back(rank, region.rmin, region.rmax, region.rmin, region.rmax, shift.data(),
-											 region.offset, enlarged);
-
-				for (int k = 0; k < 3; k++) shift[k] *= -1;
-
-				for (int k = 0; k < 3; k++) {  // shift back
-					region.rmax[k] -= shift[k];
-					region.rmin[k] -= shift[k];
-				}
-
-				auto *singleRegion = new unsigned char[bytesOneRegion];
-
-				p = 0;
-				memcpy(singleRegion + p, region.rmin, sizeof(double) * 3);
-				p += sizeof(double) * 3;
-				memcpy(singleRegion + p, region.rmax, sizeof(double) * 3);
-				p += sizeof(double) * 3;
-				memcpy(singleRegion + p, region.offset, sizeof(int) * 3);
-				p += sizeof(int) * 3;
-				memcpy(singleRegion + p, &region.width, sizeof(double));
-				p += sizeof(double);
-				memcpy(singleRegion + p, shift.data(), sizeof(double) * 3);
-				p += sizeof(double) * 3;
-
-				sendingList[rank].push_back(singleRegion);
 			}
 		}
 	}
 
-	std::vector<unsigned char *> merged(num_processes);  // Merge each list of char arrays into one char array
+	std::vector<std::vector<unsigned char>> merged(num_processes);  // Merge each list of char arrays into one char array
 	for (int j = 0; j < num_processes; j++) {
 		if (numberOfRegionsToSendToRank[j] > 0) {
-			auto *mergedRegions = new unsigned char[numberOfRegionsToSendToRank[j] * bytesOneRegion];
+			std::vector<unsigned char> mergedRegions(numberOfRegionsToSendToRank[j] * bytesOneRegion);
 
 			for (int k = 0; k < numberOfRegionsToSendToRank[j]; k++) {
-				memcpy(mergedRegions + k * bytesOneRegion, sendingList[j][k], bytesOneRegion);
+				memcpy(&mergedRegions[k * bytesOneRegion], sendingList[j][k].data(), bytesOneRegion);
 			}
 
-			merged[j] = mergedRegions;
-		}
-	}
-
-	// delete sendingList
-
-	for (const auto &one : sendingList) {
-		for (auto two : one) {
-			delete[] two;
+			merged[j] = std::move(mergedRegions);
 		}
 	}
 
@@ -215,7 +219,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 	// sending (non blocking)
 	for (int j = 0; j < num_processes; j++) {
 		if (numberOfRegionsToSendToRank[j] > 0) {
-			MPI_Isend(merged[j], numberOfRegionsToSendToRank[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD,
+			MPI_Isend(merged[j].data(), numberOfRegionsToSendToRank[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD,
 					  &requests[j]);  // tag is one
 		}
 	}
@@ -267,14 +271,12 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 		}
 	}
 
+	// ensure that all sends have been finished.
 	for (int j = 0; j < num_processes; j++) {
 		if (numberOfRegionsToSendToRank[j] > 0) MPI_Wait(&requests[j], MPI_STATUS_IGNORE);
 	}
 
-	for (auto two : merged) {
-		delete[] two;
-	}
-
+	// barrier for safety.
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	return std::make_tuple(squeezePartners(comm_partners01), squeezePartners(comm_partners02));
@@ -347,16 +349,18 @@ void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-void NeighborAcquirer::shiftIfNecessary(const double *domainLength, HaloRegion *region, double *shiftArray,
-										double skin) {
+HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const double *domainLength, const HaloRegion &region,
+														 double *shiftArray, double skin) {
 	for (int i = 0; i < 3; i++)  // calculating shift
-		if (region->rmin[i] >= domainLength[i] - skin) shiftArray[i] = -domainLength[i];
+		if (region.rmin[i] >= domainLength[i] - skin) shiftArray[i] = -domainLength[i];
 
 	for (int i = 0; i < 3; i++)  // calculating shift
-		if (region->rmax[i] <= skin) shiftArray[i] = domainLength[i];
+		if (region.rmax[i] <= skin) shiftArray[i] = domainLength[i];
 
+	auto shiftedRegion = region;
 	for (int i = 0; i < 3; i++) {  // applying shift
-		region->rmax[i] += shiftArray[i];
-		region->rmin[i] += shiftArray[i];
+		shiftedRegion.rmax[i] += shiftArray[i];
+		shiftedRegion.rmin[i] += shiftArray[i];
 	}
+	return shiftedRegion;
 }

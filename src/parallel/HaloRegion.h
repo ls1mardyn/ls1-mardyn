@@ -5,8 +5,7 @@
  *      Author: seckler
  */
 
-#ifndef SRC_PARALLEL_HALOREGION_H_
-#define SRC_PARALLEL_HALOREGION_H_
+#pragma once
 
 struct HaloRegion {
 	double rmin[3]; // lower corner
@@ -14,5 +13,3 @@ struct HaloRegion {
 	int offset[3]; // offset (direction) of the halo region
 	double width; // Halo width (e.g. one cutoff)
 };
-
-#endif /* SRC_PARALLEL_HALOREGION_H_ */

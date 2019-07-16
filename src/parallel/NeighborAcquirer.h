@@ -32,7 +32,8 @@ public:
 private:
 	static bool isIncluded(HaloRegion* myRegion, HaloRegion* inQuestion);
 	static void overlap(HaloRegion* myRegion, HaloRegion* inQuestion);
-	static void shiftIfNecessary(const double* domainLength, HaloRegion* region, double* shiftArray, double skin);
+	static HaloRegion getPotentiallyShiftedRegion(const double* domainLength, const HaloRegion& region,
+												  double* shiftArray, double skin);
 
 	friend class NeighbourCommunicationSchemeTest;
 };
