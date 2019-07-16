@@ -147,6 +147,8 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin,
 												 regionToTest.rmax, currentShift.data(), regionToTest.offset, enlarged);
 
+					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
+
 					std::vector<unsigned char> singleRegion(bytesOneRegion);
 
 					// use unshifted region here!
