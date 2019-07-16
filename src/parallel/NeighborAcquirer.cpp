@@ -94,31 +94,31 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 		i += sizeof(int);  // 4
 
 		for (int j = 0; j < regions; j++) {
-			HaloRegion region{};
-			memcpy(region.rmin, incomingDesiredRegionsVector.data() + i, sizeof(double) * 3);
+			HaloRegion unshiftedRegion{};
+			memcpy(unshiftedRegion.rmin, incomingDesiredRegionsVector.data() + i, sizeof(double) * 3);
 			i += sizeof(double) * 3;  // 24
-			memcpy(region.rmax, incomingDesiredRegionsVector.data() + i, sizeof(double) * 3);
+			memcpy(unshiftedRegion.rmax, incomingDesiredRegionsVector.data() + i, sizeof(double) * 3);
 			i += sizeof(double) * 3;  // 24
-			memcpy(region.offset, incomingDesiredRegionsVector.data() + i, sizeof(int) * 3);
+			memcpy(unshiftedRegion.offset, incomingDesiredRegionsVector.data() + i, sizeof(int) * 3);
 			i += sizeof(int) * 3;  // 12
-			memcpy(&region.width, incomingDesiredRegionsVector.data() + i, sizeof(double));
+			memcpy(&unshiftedRegion.width, incomingDesiredRegionsVector.data() + i, sizeof(double));
 			i += sizeof(double);  // 4
 
 			// msg format one region: rmin | rmax | offset | width | shift
 			std::vector<double> shift(3, 0);
 			double domainLength[3] = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 									  domain->getGlobalLength(2)};  // better for testing
-			auto shiftedRegion = getPotentiallyShiftedRegion(domainLength, region, shift.data(), skin);
+			auto shiftedRegion = getPotentiallyShiftedRegion(domainLength, unshiftedRegion, shift.data(), skin);
 			bool wasShifted = false;
 			std::vector<HaloRegion> regionsToTest{shiftedRegion};
 			for (int dim = 0; dim < 3; ++dim) {
-				if (shiftedRegion.rmin[dim] != region.rmin[dim]) {
+				if (shiftedRegion.rmin[dim] != unshiftedRegion.rmin[dim]) {
 					wasShifted = true;
 				}
 			}
 			if (wasShifted and skin != 0.) {
 				/*also test unshifted region if the skin is non-zero!*/
-				regionsToTest.push_back(region);
+				regionsToTest.push_back(unshiftedRegion);
 			}
 			for(auto regionToTest : regionsToTest){
 				if (rank != my_rank && isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
@@ -140,20 +140,20 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 						}
 					}
 
-					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin, regionToTest.rmax, shift.data(),
-					                             regionToTest.offset, enlarged);
+					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin,
+												 regionToTest.rmax, shift.data(), regionToTest.offset, enlarged);
 
 					std::vector<unsigned char> singleRegion(bytesOneRegion);
 
 					// use unshifted region here!
 					p = 0;
-					memcpy(&singleRegion[p], region.rmin, sizeof(double) * 3);
+					memcpy(&singleRegion[p], unshiftedRegion.rmin, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], region.rmax, sizeof(double) * 3);
+					memcpy(&singleRegion[p], unshiftedRegion.rmax, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], region.offset, sizeof(int) * 3);
+					memcpy(&singleRegion[p], unshiftedRegion.offset, sizeof(int) * 3);
 					p += sizeof(int) * 3;
-					memcpy(&singleRegion[p], &region.width, sizeof(double));
+					memcpy(&singleRegion[p], &unshiftedRegion.width, sizeof(double));
 					p += sizeof(double);
 					memcpy(&singleRegion[p], shift.data(), sizeof(double) * 3);
 					//p += sizeof(double) * 3;
