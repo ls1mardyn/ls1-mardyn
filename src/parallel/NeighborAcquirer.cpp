@@ -143,23 +143,17 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin, regionToTest.rmax, shift.data(),
 					                             regionToTest.offset, enlarged);
 
-					for (int k = 0; k < 3; k++) shift[k] *= -1;
-
-					for (int k = 0; k < 3; k++) {  // shift back
-						regionToTest.rmax[k] -= shift[k];
-						regionToTest.rmin[k] -= shift[k];
-					}
-
 					std::vector<unsigned char> singleRegion(bytesOneRegion);
 
+					// use unshifted region here!
 					p = 0;
-					memcpy(&singleRegion[p], regionToTest.rmin, sizeof(double) * 3);
+					memcpy(&singleRegion[p], region.rmin, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], regionToTest.rmax, sizeof(double) * 3);
+					memcpy(&singleRegion[p], region.rmax, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], regionToTest.offset, sizeof(int) * 3);
+					memcpy(&singleRegion[p], region.offset, sizeof(int) * 3);
 					p += sizeof(int) * 3;
-					memcpy(&singleRegion[p], &regionToTest.width, sizeof(double));
+					memcpy(&singleRegion[p], &region.width, sizeof(double));
 					p += sizeof(double);
 					memcpy(&singleRegion[p], shift.data(), sizeof(double) * 3);
 					//p += sizeof(double) * 3;
