@@ -111,7 +111,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			auto shiftedRegion = getPotentiallyShiftedRegion(domainLength, region, shift.data(), skin);
 			bool wasShifted = false;
 			std::vector<HaloRegion> regionsToTest{shiftedRegion};
-			for (int dim = 0; dim < 3; ++i) {
+			for (int dim = 0; dim < 3; ++dim) {
 				if (shiftedRegion.rmin[dim] != region.rmin[dim]) {
 					wasShifted = true;
 				}
