@@ -4,6 +4,7 @@
  * @date 06.05.19
  */
 
+#include <tuple>
 #include "NeighborAcquirer.h"
 #include "Domain.h"
 #include "HaloRegion.h"
@@ -105,30 +106,33 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			i += sizeof(double);  // 4
 
 			// msg format one region: rmin | rmax | offset | width | shift
-			std::vector<double> shift(3, 0);
+			std::array<double, 3> shift{};
 			double domainLength[3] = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 									  domain->getGlobalLength(2)};  // better for testing
 			auto shiftedRegion = getPotentiallyShiftedRegion(domainLength, unshiftedRegion, shift.data(), skin);
-			bool wasShifted = false;
-			std::vector<HaloRegion> regionsToTest{shiftedRegion};
-			for (int dim = 0; dim < 3; ++dim) {
-				if (shiftedRegion.rmin[dim] != unshiftedRegion.rmin[dim]) {
-					wasShifted = true;
-				}
+
+			std::vector<HaloRegion> regionsToTest;
+			std::vector<std::array<double, 3>> shifts;
+			if(skin == 0.){
+				regionsToTest = {shiftedRegion};
+				shifts = {shift};
+			} else {
+				std::tie(regionsToTest, shifts) =
+					getAllShiftedAndNonShiftedRegionsAndShifts(unshiftedRegion, shiftedRegion, shift);
 			}
-			if (wasShifted and skin != 0.) {
-				/*also test unshifted region if the skin is non-zero!*/
-				regionsToTest.push_back(unshiftedRegion);
-			}
-			for(auto regionToTest : regionsToTest){
+
+			for(size_t regionIndex = 0; regionIndex < regionsToTest.size(); ++regionIndex){
+				auto regionToTest = regionsToTest[regionIndex];
 				if (rank != my_rank && isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
+					auto currentShift = shifts[regionIndex];
+
 					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
 
 					overlap(&ownRegionEnlargedBySkin, &regionToTest);  // different shift for the overlap?
 
 					// make a note in partners02 - don't forget to squeeze partners02
 					bool enlarged[3][2] = {{false}};
-					for (int k = 0; k < 3; k++) shift[k] *= -1;
+					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
 
 					if (skin != 0.) {
 						for (size_t dim = 0; dim < 3; ++dim) {
@@ -141,7 +145,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 					}
 
 					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin,
-												 regionToTest.rmax, shift.data(), regionToTest.offset, enlarged);
+												 regionToTest.rmax, currentShift.data(), regionToTest.offset, enlarged);
 
 					std::vector<unsigned char> singleRegion(bytesOneRegion);
 
@@ -155,7 +159,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 					p += sizeof(int) * 3;
 					memcpy(&singleRegion[p], &unshiftedRegion.width, sizeof(double));
 					p += sizeof(double);
-					memcpy(&singleRegion[p], shift.data(), sizeof(double) * 3);
+					memcpy(&singleRegion[p], currentShift.data(), sizeof(double) * 3);
 					//p += sizeof(double) * 3;
 
 					sendingList[rank].push_back(std::move(singleRegion));
@@ -363,4 +367,41 @@ HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const double *domainLen
 		shiftedRegion.rmin[i] += shiftArray[i];
 	}
 	return shiftedRegion;
+}
+
+std::tuple<std::vector<HaloRegion>, std::vector<std::array<double, 3>>>
+NeighborAcquirer::getAllShiftedAndNonShiftedRegionsAndShifts(HaloRegion nonShiftedRegion, HaloRegion shiftedRegion,
+															 std::array<double, 3> defaultShift) {
+	std::vector<HaloRegion> haloRegionVector;
+	std::vector<std::array<double, 3>> shiftVector;
+	std::array<std::vector<bool>, 3> doUnshiftVector;
+	for (int dim = 0; dim < 3; ++dim) {
+		bool isShifted = defaultShift[dim] != 0.;
+		if (isShifted) {
+			doUnshiftVector[dim] = {false, true};
+		} else {
+			doUnshiftVector[dim] = {false};
+		}
+	}
+
+	for (auto doUnShiftX : doUnshiftVector[0]) {
+		for (auto doUnShiftY : doUnshiftVector[1]) {
+			for (auto doUnShiftZ : doUnshiftVector[2]) {
+				std::array<bool, 3> doUnShift{doUnShiftX, doUnShiftY, doUnShiftZ};
+				HaloRegion region{shiftedRegion};
+				std::array<double, 3> shift{defaultShift};
+
+				for (int dim = 0; dim < 3; ++dim) {
+					if (doUnShift[dim]) {
+						region.rmin[dim] = nonShiftedRegion.rmin[dim];
+						region.rmax[dim] = nonShiftedRegion.rmax[dim];
+						shift[dim] = 0;
+					}
+				}
+				haloRegionVector.push_back(region);
+				shiftVector.push_back(shift);
+			}
+		}
+	}
+	return std::make_tuple(haloRegionVector, shiftVector);
 }

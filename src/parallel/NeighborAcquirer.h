@@ -36,4 +36,7 @@ private:
 												  double* shiftArray, double skin);
 
 	friend class NeighbourCommunicationSchemeTest;
+	static std::tuple<std::vector<HaloRegion>, std::vector<std::array<double, 3>>>
+	getAllShiftedAndNonShiftedRegionsAndShifts(HaloRegion nonShiftedRegion, HaloRegion shiftedRegion,
+											  std::array<double, 3> shift);
 };
