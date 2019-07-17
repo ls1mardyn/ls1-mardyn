@@ -48,7 +48,7 @@
       </electrostatic>
     </algorithm>
     <output>
-      <outputplugin name="MmpldWriter" type="simple">
+      <!--<outputplugin name="MmpldWriter" type="simple">
         <include query="/spheres">../sphereparams_argon.xml</include>
         <writecontrol>
           <start>0</start>
@@ -57,12 +57,12 @@
           <framesperfile>0</framesperfile>
         </writecontrol>
         <outputprefix>megamol</outputprefix>
-      </outputplugin>
+      </outputplugin>-->
       <!-- <outputplugin name="ResultWriter"> -->
         <!-- <writefrequency>5</writefrequency> -->
         <!-- <outputprefix>Argon</outputprefix> -->
       <!-- </outputplugin> -->
-      <outputplugin name="SysMonOutput">
+      <!--<outputplugin name="SysMonOutput">
         <writefrequency>10000</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
@@ -70,7 +70,7 @@
       <outputplugin name="VTKMoleculeWriter">
         <outputprefix>vtkOutput</outputprefix>
         <writefrequency>1</writefrequency>
-      </outputplugin>
+      </outputplugin>-->
     </output>
 <!--	<plugin name="TestPlugin">
 		<writefrequency>1</writefrequency>
