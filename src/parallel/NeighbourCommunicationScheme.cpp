@@ -465,10 +465,10 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, leavingRegions, 0.);
 		// p1 notes reply, p2 notes owned as leaving import
 
-		std::cout << "haloImportNeighbors:" << std::endl;
-		for(const auto& neighbor : (*_haloImportForceExportNeighbours)[0] ){
-			neighbor.print(std::cout);
-		}
+		//std::cout << "haloImportNeighbors:" << std::endl;
+		//for(const auto& neighbor : (*_haloImportForceExportNeighbours)[0] ){
+//			neighbor.print(std::cout);
+//		}
 
 	} else {
 		std::vector<HaloRegion> haloRegions =
