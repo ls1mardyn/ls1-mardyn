@@ -172,16 +172,15 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
 		global_log->info() << "AutoPasContainer: traverseCells" << std::endl;
-		double epsilon, sigma, shift;
+		double epsilon=0., sigma=0., shift=0.;
 		{
 			auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-			if (not iter.isValid()) {
-				return;
+			if (iter.isValid()) {
+				auto ljcenter = iter->component()->ljcenter(0);
+				epsilon = ljcenter.eps();
+				sigma = ljcenter.sigma();
+				shift = ljcenter.shift6() / 6.;
 			}
-			auto ljcenter = iter->component()->ljcenter(0);
-			epsilon = ljcenter.eps();
-			sigma = ljcenter.sigma();
-			shift = ljcenter.shift6() / 6.;
 		}
 		// lower and upper corner of the local domain needed to correctly calculate the global values
 		std::array<double, 3> lowCorner = {_boundingBoxMin[0], _boundingBoxMin[1], _boundingBoxMin[2]};
