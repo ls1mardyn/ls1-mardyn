@@ -96,26 +96,14 @@ pipeline {
             stage('build MPI') {
               steps {
                 unstash 'repo'
-                dir ("build-mpi"){
-                  sh """
-                    CC=mpicc CXX=mpicxx cmake -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
-                    make -j8
-                  """
-                }
-                stash includes: "build-mpi/src/MarDyn", name: "autopas_mpi_exec"
-              }
-            }
-            stage('build MPI with ALL') {
-              steps {
-                unstash 'repo'
                 sh "cp -r /work/jenkins/ALL libs/ALL/ALL"
-                dir ("build-mpi-all"){
+                dir ("build-mpi"){
                   sh """
                     CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
                     make -j8
                   """
                 }
-                stash includes: "build-mpi-all/src/MarDyn", name: "autopas_mpi_exec_all"
+                stash includes: "build-mpi/src/MarDyn", name: "autopas_mpi_exec"
               }
             }
           }
@@ -208,8 +196,8 @@ pipeline {
               steps {
                 dir('alltest'){
                   unstash 'repo'
-                  unstash 'autopas_mpi_exec_all'
-                  dir ("build-mpi-all"){
+                  unstash 'autopas_mpi_exec'
+                  dir ("build-mpi"){
                     sh """
                       mpirun -n 3 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_lc_ALL.xml --steps=20 | tee autopas_run_log.txt
                       grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
