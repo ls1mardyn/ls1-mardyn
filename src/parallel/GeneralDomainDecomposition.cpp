@@ -86,12 +86,17 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			global_log->info() << "rebalancing finished" << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 		} else {
-			if (sendLeavingWithCopies()) {
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+			if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
+				if (sendLeavingWithCopies()) {
+					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+				} else {
+					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+					moleculeContainer->deleteOuterParticles();
+					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+				}
 			} else {
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-				moleculeContainer->deleteOuterParticles();
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
+														  false /*dohaloPositionCheck*/);
 			}
 		}
 	}
@@ -159,8 +164,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 		// unpack molecules
 		for (auto& recv : recvNeighbors) {
-			allDone &= recv.iprobeCount(this->getCommunicator(),
-										this->getMPIParticleType());
+			allDone &= recv.iprobeCount(this->getCommunicator(), this->getMPIParticleType());
 			allDone &= recv.testRecv(particleContainer, false);
 		}
 
