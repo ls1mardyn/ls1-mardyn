@@ -96,9 +96,11 @@ pipeline {
             stage('build MPI') {
               steps {
                 unstash 'repo'
+                sh "rm -rf libs/ALL/ALL"
+                sh "cp -r /work/jenkins/ALL libs/ALL/ALL"
                 dir ("build-mpi"){
                   sh """
-                    CC=mpicc CXX=mpicxx cmake -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
+                    CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
                     make -j8
                   """
                 }
@@ -182,6 +184,23 @@ pipeline {
                   dir ("build-mpi"){
                     sh """
                       mpirun -n 4 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
+                      grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
+                      grep "T = 0.000633975" simstep20.txt
+                      grep "U_pot = -2.14161" simstep20.txt
+                      grep "p = 5.34057e-07" simstep20.txt
+                    """
+                  }
+                }
+              }
+            }
+            stage('run with autopas ALLLB') {
+              steps {
+                dir('alltest'){
+                  unstash 'repo'
+                  unstash 'autopas_mpi_exec'
+                  dir ("build-mpi"){
+                    sh """
+                      mpirun -n 3 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_lc_ALL.xml --steps=20 | tee autopas_run_log.txt
                       grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
                       grep "T = 0.000633975" simstep20.txt
                       grep "U_pot = -2.14161" simstep20.txt

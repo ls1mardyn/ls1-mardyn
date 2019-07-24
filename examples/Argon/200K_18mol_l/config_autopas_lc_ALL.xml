@@ -31,19 +31,19 @@
     </ensemble>
     <algorithm>
 	    <parallelisation type="GeneralDomainDecomposition">
-		    <updateFrequency>50</updateFrequency>
+		    <updateFrequency>10</updateFrequency>
 	    </parallelisation>
       <datastructure type="AutoPas">
         <allowedTraversals>c01, c08, c18, sli</allowedTraversals>
         <allowedContainers>linkedCells</allowedContainers>
         <selectorStrategy>fastestMedian</selectorStrategy>
-        <dataLayouts>SoA</dataLayouts>
+        <dataLayouts>AoS</dataLayouts>
         <newton3>enabled</newton3>
         <tuningInterval>1000</tuningInterval>
-        <tuningSamples>3</tuningSamples>
+        <tuningSamples>2</tuningSamples>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">10.0702</radiusLJ>
+        <radiusLJ unit="reduced">33.0702</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
