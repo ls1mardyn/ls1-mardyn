@@ -386,7 +386,7 @@ pipeline {
                 node("KNL_PRIO") { // Executor on the CoolMUC3 login node reserved for slurm allocation and management
                   parallel "allocation": {
                     try {
-                      timeout(time: 6, unit: 'HOURS') {
+                      timeout(time: 10, unit: 'HOURS') {
                         // Allocate a new interactive job with up to three nodes
                         // and one hour maximum run time. The ci-matrix will
                         // attach subjobs to this via srun and the slurm.slurmcontrol
@@ -396,8 +396,8 @@ pipeline {
                         sh """
                           export SLURM_CONF=$HOME/slurm.conf
                           salloc --job-name=mardyn-test --nodes=1-4 --partition=mpp3_batch\
-                            --tasks-per-node=3 --time=01:00:00 --begin=now+150\
-                            sleep 1h || echo 0
+                            --tasks-per-node=3 --time=04:00:00 --begin=now+150\
+                            sleep 4h || echo 0
                           sleep 6h
                         """
                       }
