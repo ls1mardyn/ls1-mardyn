@@ -12,8 +12,8 @@
 
 class FullShell: public ZonalMethod {
 public:
-	FullShell()= default;
-	~FullShell() override{}
+	FullShell() = default;
+	~FullShell() override= default;
 
 	/**
 	 * Returns up to 26 halo Regions of the process.
@@ -25,7 +25,7 @@ public:
 	 */
 	std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius, double skin,
 			bool coversWholeDomain[3], double cellLength[3]) override {
-		const std::function<bool(const int[3])> condition = [](const int[3])->bool {
+		auto condition = [](const int[3])->bool {
 			// no condition for leaving particles.
 			return true;
 		};
@@ -34,7 +34,7 @@ public:
 
 	std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius, double skin,
 				bool coversWholeDomain[3], double cellLength[3]) override {
-		const std::function<bool(const int[3])> condition = [](const int[3])->bool {
+		auto condition = [](const int[3])->bool {
 			// no condition for leaving particles.
 				return true;
 			};
