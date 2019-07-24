@@ -117,6 +117,8 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 				regionsToTest = {shiftedRegion};
 				shifts = {shift};
 			} else {
+				// if the skin is not zero, the neighbor which owns a particle is no longer uniquely defined.
+				// We thus have to check multiple different possible shifts.
 				std::tie(regionsToTest, shifts) =
 					getAllShiftedAndNonShiftedRegionsAndShifts(unshiftedRegion, shiftedRegion, shift);
 			}

@@ -11,11 +11,6 @@ if (NOT CYGWIN)
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif ()
 
-# cmake < 3.6 ignores "set(CMAKE_CXX_STANDARD 11)" when using icpc
-if (CMAKE_VERSION VERSION_LESS "3.6" AND CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-endif ()
-
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # let ccmake and cmake-gui offer the default build type options

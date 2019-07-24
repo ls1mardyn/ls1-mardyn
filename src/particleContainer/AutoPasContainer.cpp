@@ -128,7 +128,8 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 
 void AutoPasContainer::update() {
 	if (not _invalidParticles.empty()) {
-		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still exist."
+		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
+							   "exist. This would lead to lost particle => ERROR!"
 							<< std::endl;
 		Simulation::exit(434);
 	}
@@ -138,8 +139,9 @@ void AutoPasContainer::update() {
 
 void AutoPasContainer::forcedUpdate() {
 	if (not _invalidParticles.empty()) {
-		global_log->error() << "AutoPasContainer: trying to force update container, even though invalidParticles still exist."
-		                    << std::endl;
+		global_log->error() << "AutoPasContainer: trying to force update container, even though invalidParticles still "
+							   "exist. This would lead to lost particle => ERROR!"
+							<< std::endl;
 		Simulation::exit(435);
 	}
 	_hasInvalidParticles = true;
@@ -206,7 +208,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		// _upotXpoles is zero as we do not have any dipoles or quadrupoles
 		global_simulation->getDomain()->setLocalUpot(upot /* _upotXpoles + _myRF*/);
 	} else {
-		global_log->warning() << "only lj functors are supported as traversals." << std::endl;
+		global_log->warning() << "only lj functors are supported for traversals." << std::endl;
 	}
 }
 

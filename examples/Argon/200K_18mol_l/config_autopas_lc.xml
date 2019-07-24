@@ -40,10 +40,10 @@
         <tuningInterval>1000</tuningInterval>
         <tuningSamples>3</tuningSamples>
         <rebuildFrequency>3</rebuildFrequency>
-	<skin>10.</skin>
+	    <skin>4.</skin>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">10.0702</radiusLJ>
+        <radiusLJ unit="reduced">33.0702</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>

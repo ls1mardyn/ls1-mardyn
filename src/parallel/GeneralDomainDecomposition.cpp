@@ -131,7 +131,11 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	global_log->set_mpi_output_root(0);
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
-	std::tie(recvNeighbors, sendNeighbors) = NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain, 0.);
+
+	// 0. skin, as it is not needed for the migration of particles!
+	std::tie(recvNeighbors, sendNeighbors) =
+		NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain, 0. /*skin*/);
+
 	std::vector<Molecule> dummy;
 	for (auto& sender : sendNeighbors) {
 		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,

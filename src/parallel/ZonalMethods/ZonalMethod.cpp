@@ -142,7 +142,8 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(
 	if(skin != 0.) {
 		for (auto& region : regions) {
 			for (int i = 0; i < 3; ++i) {
-				// todo: do we need to adapt this by adding if's (as in getHaloRegionsConditional)?
+				// We need the extension in all directions for this part, as it is only used in the sequential parts or
+				// resp. in the sequential fallbacks. Here it is always needed in all directions.
 				region.rmin[i] -= skin;
 				region.rmax[i] += skin;
 			}

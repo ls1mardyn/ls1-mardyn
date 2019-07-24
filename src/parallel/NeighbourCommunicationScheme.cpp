@@ -135,7 +135,7 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 
 void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(
 	const std::vector<HaloRegion>& haloRegions, MessageType msgType, DomainDecompMPIBase* domainDecomp,
-	ParticleContainer*& moleculeContainer, std::vector<Molecule>& invalidParticles, bool doHaloPositionCheck) {  // Only Export?
+	ParticleContainer*& moleculeContainer, std::vector<Molecule>& invalidParticles, bool doHaloPositionCheck) {
 
 	if (_pushPull){
 		selectNeighbours(msgType, false /* export */);
@@ -175,10 +175,9 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 																  MessageType msgType, bool /*removeRecvDuplicates*/,
 																  DomainDecompMPIBase* domainDecomp,
 																  bool doHaloPositionCheck) {
-	global_log->info() << "doHaloPositionCheck: " << doHaloPositionCheck << std::endl;
-	// We mimic the direct neighbour communication also for the sequential case, otherwise things are copied multiple times or might be forgotten.
+	// We mimic the direct neighbour communication also for the sequential case, otherwise things are copied multiple
+	// times or might be forgotten.
 	// We have to check each direction.
-	
 
 	if (_pushPull) {
 		selectNeighbours(msgType, false /* export */);
@@ -465,10 +464,6 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, leavingRegions, 0.);
 		// p1 notes reply, p2 notes owned as leaving import
 
-		//std::cout << "haloImportNeighbors:" << std::endl;
-		//for(const auto& neighbor : (*_haloImportForceExportNeighbours)[0] ){
-//			neighbor.print(std::cout);
-//		}
 
 	} else {
 		std::vector<HaloRegion> haloRegions =

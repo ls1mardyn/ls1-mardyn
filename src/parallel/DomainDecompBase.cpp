@@ -73,6 +73,7 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 											  doLeavingExchange /*positionCheck, same as doLeavingExchange*/);
 		}
 	} else {
+	    // default ls1-mode (non-autopas, so linked-cells!)
 		for (unsigned d = 0; d < 3; ++d) {
 			handleDomainLeavingParticles(d, moleculeContainer);
 		}
