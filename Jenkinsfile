@@ -96,6 +96,7 @@ pipeline {
             stage('build MPI') {
               steps {
                 unstash 'repo'
+                sh "rm -rf libs/ALL/ALL"
                 sh "cp -r /work/jenkins/ALL libs/ALL/ALL"
                 dir ("build-mpi"){
                   sh """
