@@ -26,13 +26,32 @@ public:
 	 * second vector will own the particles.
 	 */
 	static std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> acquireNeighbors(
-		Domain* domain, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions);
+		Domain* domain, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions, double skin);
 	static std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners);
 
 private:
 	static bool isIncluded(HaloRegion* myRegion, HaloRegion* inQuestion);
 	static void overlap(HaloRegion* myRegion, HaloRegion* inQuestion);
-	static void shiftIfNecessary(const double* domainLength, HaloRegion* region, double* shiftArray);
+	static HaloRegion getPotentiallyShiftedRegion(const double* domainLength, const HaloRegion& region,
+												  double* shiftArray, double skin);
+	/**
+	 * Get all possible combinations of halo regions and shifts, where the given halo region nonShiftedRegion can get
+	 * particles from.
+	 * For that all possible combinations of the shifted and non-shifted regions will be taken.
+	 * If, e.g., the shift happens in the dimensions 1(+) and 2(-) and no shift happens in the direction 0, the returned halo regions will have the shifts:
+	 * (0,0,0), (0,0,-), (0,+,0), (0,+,-).
+	 * If the shift has 0 non-zero entries, the length of the returned vectors is 1=2^0.
+	 * If the shift has 1 non-zero entries, the length of the returned vectors is 2=2^1.
+	 * If the shift has 2 non-zero entries, the length of the returned vectors is 4=2^2.
+	 * If the shift has 3 non-zero entries, the length of the returned vectors is 8=2^3.
+	 * @param nonShiftedRegion
+	 * @param shiftedRegion
+	 * @param shift
+	 * @return tuple of vectors of halo regions with the according shifts.
+	 */
+	static std::tuple<std::vector<HaloRegion>, std::vector<std::array<double, 3>>>
+	getAllShiftedAndNonShiftedRegionsAndShifts(HaloRegion nonShiftedRegion, HaloRegion shiftedRegion,
+											  std::array<double, 3> shift);
+    friend class NeighbourCommunicationSchemeTest;
 
-	friend class NeighbourCommunicationSchemeTest;
 };

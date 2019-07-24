@@ -5,7 +5,7 @@
  */
 
 #pragma once
-
+#ifdef ENABLE_ALLLBL
 #include <ALL.hpp>
 #include "LoadBalancer.h"
 
@@ -21,3 +21,4 @@ private:
 	using Point = ALL_Point<double>;
 	double _minimalPartitionSize{};
 };
+#endif

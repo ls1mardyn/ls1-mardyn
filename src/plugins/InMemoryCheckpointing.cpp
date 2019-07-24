@@ -71,7 +71,7 @@ void InMemoryCheckpointing::endStep(ParticleContainer* particleContainer,
 
 	// put the molecules in the buffer
 	_snapshot.clearMolecules();
-	for (auto m = particleContainer->iterator(); m.isValid(); ++m) {
+	for (auto m = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 		_snapshot.addMolecule(*m);
 	}
 

@@ -167,12 +167,12 @@ public:
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
-			bool removeRecvDuplicates = false);
+							  bool doHaloPositionCheck = true, bool removeRecvDuplicates = false);
 
 	void exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) override;
 
-	virtual std::vector<int> getNeighbourRanks() =0;
-	virtual std::vector<int> getNeighbourRanksFullShell() =0;
+	std::vector<int> getNeighbourRanks() override = 0;
+	std::vector<int> getNeighbourRanksFullShell() override = 0;
 
 	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) = 0;
 
@@ -184,7 +184,7 @@ public:
 	MPI_Datatype getMPIParticleForceType() {
 		return _mpiParticleForceType;
 	}
-	virtual MPI_Comm getCommunicator() {
+	MPI_Comm getCommunicator() override {
 		return _comm;
 	}
 #endif

@@ -58,7 +58,7 @@ void PressureGradient::determineAdditionalAcceleration
  DomainDecompBase* domainDecomp,
  ParticleContainer* molCont, double dtConstantAcc )
 {
-	for( map<unsigned int, double>::iterator uAAit = _universalAdditionalAcceleration[0].begin();
+	for( auto uAAit = _universalAdditionalAcceleration[0].begin();
 			uAAit != _universalAdditionalAcceleration[0].end();
 			uAAit++ )
 	{
@@ -69,10 +69,10 @@ void PressureGradient::determineAdditionalAcceleration
 
 	// TODO: consider parallelization, but when we have input
 
-	for(auto thismol = molCont->iterator(); thismol.isValid(); ++thismol)
+	for(auto thismol = molCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); thismol.isValid(); ++thismol)
 	{
 		unsigned int cid = thismol->componentid();
-		map<unsigned int, unsigned int>::iterator uCSIDit = this->_universalComponentSetID.find(cid);
+		auto uCSIDit = this->_universalComponentSetID.find(cid);
 		if(uCSIDit == _universalComponentSetID.end()) continue;
 		unsigned cosetid = uCSIDit->second;
 		this->_localN[cosetid]++;
@@ -83,14 +83,14 @@ void PressureGradient::determineAdditionalAcceleration
 	// domainDecomp->collectCosetVelocity(&_localN, _localVelocitySum, &_globalN, _globalVelocitySum);
 	//
 	domainDecomp->collCommInit( 4 * _localN.size() );
-	for( map<unsigned int, unsigned int long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	for( auto lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
 	{
 		domainDecomp->collCommAppendUnsLong(lNit->second);
 		for(int d = 0; d < 3; d++)
 			domainDecomp->collCommAppendDouble( this->_localVelocitySum[d][lNit->first]);
 	}
 	domainDecomp->collCommAllreduceSum();
-	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	for(auto lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
 	{
 		_globalN[lNit->first] = domainDecomp->collCommGetUnsLong();
 		for(int d = 0; d < 3; d++)
@@ -142,7 +142,7 @@ void PressureGradient::determineAdditionalAcceleration
 	}
 
 	domainDecomp->collCommInit(7*this->_localN.size());
-	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin();
+	for( auto lNit = _localN.begin();
 			lNit != this->_localN.end();
 			lNit++ )
 	{
@@ -158,7 +158,7 @@ void PressureGradient::determineAdditionalAcceleration
 		}
 	}
 	domainDecomp->collCommBroadcast();
-	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin();
+	for( auto lNit = _localN.begin();
 			lNit != this->_localN.end();
 			lNit++ )
 	{

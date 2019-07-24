@@ -85,7 +85,7 @@ void DttNodeTest::testSoAConvertions(){
 	double p_pos[3];
 	bool check = true;
 
-	for (auto it = container->iterator(); it.isValid(); ++it) {
+	for (auto it = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		root.addParticle(&(*it));
 
 		if (check) {
@@ -130,7 +130,7 @@ void DttNodeTest::testDepth(double cutoffRadius){
 
 	std::vector<Molecule *> particles;
 
-	for(auto it = container->iterator(); it.isValid(); ++it) {
+	for(auto it = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		particles.push_back(&(*it));
 	}
 	
@@ -163,7 +163,7 @@ void DttNodeTest::testDivideParticles() {
 
 	std::vector<Molecule *> particles;
 
-	for(auto it = container->iterator(); it.isValid(); ++it) {
+	for(auto it = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		particles.push_back(&(*it));
 	}
 

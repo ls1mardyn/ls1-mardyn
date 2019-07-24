@@ -51,7 +51,8 @@ public:
 	~CommunicationPartner();
 
 	void initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
-			MessageType msgType, bool removeFromContainer = false);
+				  MessageType msgType, std::vector<Molecule>& invalidParticles, bool mightUseInvalidParticles,
+				  bool doHaloPositionCheck, bool removeFromContainer = false);
 
 	bool testSend();
 
@@ -114,7 +115,7 @@ public:
 
 	size_t getDynamicSize();
 
-	void print(std::ofstream& stream) const;
+	void print(std::ostream& stream) const;
 private:
 	enum HaloOrLeavingCorrection{
 		HALO,
@@ -123,8 +124,8 @@ private:
 		FORCES // necessary?
 	};
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3],
-			const double highCorner[3], const double shift[3], const bool removeFromContainer,
-			HaloOrLeavingCorrection haloLeaveCorr);
+			const double highCorner[3], const double shift[3], bool removeFromContainer,
+			HaloOrLeavingCorrection haloLeaveCorr, bool doHaloPositionCheck = true);
 
 	int _rank;
 	int _countTested;
@@ -136,6 +137,7 @@ private:
 	CommunicationBuffer _sendBuf, _recvBuf; // used to be ParticleData and 
 	bool _msgSent, _countReceived, _msgReceived;
 
+	void collectLeavingMoleculesFromInvalidParticles(std::vector<Molecule>& invalidParticles, double lowCorner [3], double highCorner [3], double shift [3]);
 };
 
 #endif /* COMMUNICATIONPARTNER_H_ */

@@ -66,69 +66,69 @@ public:
 		}
 	}
 
-	~MoleculeRMM() {}
+	~MoleculeRMM() override = default;
 
-	unsigned long getID() const;
-	void setid(unsigned long id);
-	void setr(unsigned short d, double r);
-	void setv(unsigned short d, double v);
-	void setF(unsigned short, double F);
-	double r(unsigned short d) const;
-	double v(unsigned short d) const;
+	unsigned long getID() const override;
+	void setid(unsigned long id) override;
+	void setr(unsigned short d, double r) override;
+	void setv(unsigned short d, double v) override;
+	void setF(unsigned short, double F) override;
+	double r(unsigned short d) const override;
+	double v(unsigned short d) const override;
 
 
-	void setComponent(Component *component) {
+	void setComponent(Component *component) override {
 		_component = component;
 		this->updateMassInertia();
 	}
 
-	Component* component() const {
+	Component* component() const override {
 		return _component;
 	}
 
 #ifndef DEBUG_FUNCTIONALITY_HACKS
-	double F(unsigned short /*d*/) const {
+	double F(unsigned short /*d*/) const override {
 		mardyn_assert(false);
 		return 0.0;
 	}
 #else
-	double F(unsigned short d) const { return v(d);}
+	double F(unsigned short d) const override { return v(d);}
 #endif
 
-	const Quaternion& q() const {
+	const Quaternion& q() const override {
 		return _quaternion;
 	}
 
-	void setq(Quaternion q) {
+	void setq(Quaternion q) override {
 		_quaternion = q;
 	}
 
-	double D(unsigned short /*d*/) const {
+	double D(unsigned short /*d*/) const override {
 		return 0.0;
 	}
-	double M(unsigned short /*d*/) const {
+	double M(unsigned short /*d*/) const override {
 		return 0.0;
 	}
-	double Vi(unsigned short /*d*/) const {
+	double Vi(unsigned short /*d*/) const override {
 		return 0.0;
 	}
 
-	void setD(unsigned short /*d*/, double /*D*/) {}
+	void setD(unsigned short /*d*/, double /*D*/) override {}
 
-	inline void move(int d, double dr) {
+	inline void move(int d, double dr) override {
 		setr(d, r(d) + dr);
 	}
 
-	double getI(unsigned short /*d*/) const {
+	double getI(unsigned short /*d*/) const override {
 		mardyn_assert(false);
 		// TODO: check values for single-centered molecules
 		return 0.0;
 	}
 
-	void updateMassInertia() {}
+	void updateMassInertia() override {}
 
 
-	double U_rot() {
+	double U_rot() override {
 		return 0.;
 	}
 
@@ -136,142 +136,142 @@ public:
 		return 0.;
 	}
 
-	void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned /*iC*/, unsigned /*iD*/, unsigned /*iQ*/) {
+	void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned /*iC*/, unsigned /*iD*/, unsigned /*iQ*/) override {
 		mardyn_assert(false);
 		// should this ever be like called?
 		setSoA(s);
 		_soa_index = iLJ;
 	}
 
-	void setSoA(CellDataSoABase * const s);
+	void setSoA(CellDataSoABase * s) override;
 
-	void setStartIndexSoA_LJ(unsigned i) {
+	void setStartIndexSoA_LJ(unsigned i) override {
 		_soa_index = i;
 	}
-	void setStartIndexSoA_C(unsigned /*i*/) {
+	void setStartIndexSoA_C(unsigned /*i*/) override {
 		mardyn_assert(false);
 	}
-	void setStartIndexSoA_D(unsigned /*i*/) {
+	void setStartIndexSoA_D(unsigned /*i*/) override {
 		mardyn_assert(false);
 	}
-	void setStartIndexSoA_Q(unsigned /*i*/) {
+	void setStartIndexSoA_Q(unsigned /*i*/) override {
 		mardyn_assert(false);
 	}
 
-	unsigned int numSites() const {
+	unsigned int numSites() const override {
 		return 1;
 	}
-	unsigned int numOrientedSites() const {
+	unsigned int numOrientedSites() const override {
 		return 0;
 	}
-	unsigned int numLJcenters() const {
+	unsigned int numLJcenters() const override {
 		return 1;
 	}
-	unsigned int numCharges() const {
+	unsigned int numCharges() const override {
 		return 0;
 	}
-	unsigned int numDipoles() const {
+	unsigned int numDipoles() const override {
 		return 0;
 	}
-	unsigned int numQuadrupoles() const {
+	unsigned int numQuadrupoles() const override {
 		return 0;
 	}
 
-	std::array<double, 3> site_d(unsigned int /*i*/) const { return emptyArray3(); }
+	std::array<double, 3> site_d(unsigned int /*i*/) const override { return emptyArray3(); }
 
-	std::array<double, 3> ljcenter_d(unsigned int i) const { return emptyArray3(); }
-	std::array<double, 3> charge_d(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> dipole_d(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> quadrupole_d(unsigned int /*i*/) const { return emptyArray3(); }
+	std::array<double, 3> ljcenter_d(unsigned int i) const override { return emptyArray3(); }
+	std::array<double, 3> charge_d(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> dipole_d(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> quadrupole_d(unsigned int /*i*/) const override { return emptyArray3(); }
 
-	std::array<double, 3> site_d_abs(unsigned int i) const { return ljcenter_d_abs(i); }
-	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
+	std::array<double, 3> site_d_abs(unsigned int i) const override { return ljcenter_d_abs(i); }
+	std::array<double, 3> ljcenter_d_abs(unsigned int i) const override {
 		mardyn_assert(i == 0);
 		return r_arr();
 	}
-	std::array<double, 3> charge_d_abs(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> dipole_d_abs(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> quadrupole_d_abs(unsigned int /*i*/) const { return emptyArray3(); }
+	std::array<double, 3> charge_d_abs(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> dipole_d_abs(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> quadrupole_d_abs(unsigned int /*i*/) const override { return emptyArray3(); }
 
-	std::array<double, 3> dipole_e(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> quadrupole_e(unsigned int /*i*/) const { return emptyArray3(); }
+	std::array<double, 3> dipole_e(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> quadrupole_e(unsigned int /*i*/) const override { return emptyArray3(); }
 
-	std::array<double, 3> site_F(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> ljcenter_F(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> charge_F(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> dipole_F(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> quadrupole_F(unsigned int /*i*/) const { return emptyArray3(); }
+	std::array<double, 3> site_F(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> ljcenter_F(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> charge_F(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> dipole_F(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> quadrupole_F(unsigned int /*i*/) const override { return emptyArray3(); }
 
-	void normalizeQuaternion() {}
-	std::array<double, 3> computeLJcenter_d(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> computeCharge_d(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> computeDipole_d(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> computeQuadrupole_d(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> computeDipole_e(unsigned int /*i*/) const { return emptyArray3(); }
-	std::array<double, 3> computeQuadrupole_e(unsigned int /*i*/) const { return emptyArray3(); }
+	void normalizeQuaternion() override {}
+	std::array<double, 3> computeLJcenter_d(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> computeCharge_d(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> computeDipole_d(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> computeQuadrupole_d(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> computeDipole_e(unsigned int /*i*/) const override { return emptyArray3(); }
+	std::array<double, 3> computeQuadrupole_e(unsigned int /*i*/) const override { return emptyArray3(); }
 
-	unsigned long totalMemsize() const {
+	unsigned long totalMemsize() const override {
 		//todo: check
 		mardyn_assert(false);
 		return sizeof(*this);
 	}
         
-	void setF(double /*F*/ [3]) {}
-	void setM(double /*M*/[3]) {}
-	void setVi(double /*Vi*/[3]) {}
-	void Fadd(const double /*a*/[]) {}
-	void Madd(const double /*a*/[]) {}
-	void Viadd(const double /*a*/[]) {}
-	void vadd(const double ax, const double ay, const double az) {
+	void setF(double /*F*/ [3]) override {}
+	void setM(double /*M*/[3]) override {}
+	void setVi(double /*Vi*/[3]) override {}
+	void Fadd(const double /*a*/[]) override {}
+	void Madd(const double /*a*/[]) override {}
+	void Viadd(const double /*a*/[]) override {}
+	void vadd(const double ax, const double ay, const double az) override {
 		setv(0, v(0) + ax); setv(1, v(1) + ay); setv(2, v(2) + az);
 	}
-	void vsub(const double ax, const double ay, const double az) {
+	void vsub(const double ax, const double ay, const double az) override {
 		setv(0, v(0) - ax); setv(1, v(1) - ay); setv(2, v(2) - az);
 	}
 
 #ifndef DEBUG_FUNCTIONALITY_HACKS
-	void Fljcenteradd(unsigned int /*i*/, double /*a*/[]) {}
-	void Fljcentersub(unsigned int /*i*/, double /*a*/[]) {}
+	void Fljcenteradd(unsigned int /*i*/, double /*a*/[]) override {}
+	void Fljcentersub(unsigned int /*i*/, double /*a*/[]) override {}
 #else
-	void Fljcenteradd(unsigned int i, double a[]) {
+	void Fljcenteradd(unsigned int i, double a[]) override {
 		mardyn_assert(i == 0);
 		for(int d = 0; d < 3; ++d)
 			setv(d, v(d) + a[d]);
 	}
-	void Fljcentersub(unsigned int i, double a[]) {
+	void Fljcentersub(unsigned int i, double a[]) override {
 		mardyn_assert(i == 0);
 		for(int d = 0; d < 3; ++d)
 			setv(d, v(d) - a[d]);
 	}
 #endif
 
-	void Fchargeadd(unsigned int /*i*/, double /*a*/[]) {}
-	void Fchargesub(unsigned int /*i*/, double /*a*/[]) {}
-	void Fdipoleadd(unsigned int /*i*/, double /*a*/[]) {}
-	void Fdipolesub(unsigned int /*i*/, double /*a*/[]) {}
-	void Fquadrupoleadd(unsigned int /*i*/, double /*a*/[]) {}
-	void Fquadrupolesub(unsigned int /*i*/, double /*a*/[]) {}
-	void upd_preF(double /*dt*/) {
+	void Fchargeadd(unsigned int /*i*/, double /*a*/[]) override {}
+	void Fchargesub(unsigned int /*i*/, double /*a*/[]) override {}
+	void Fdipoleadd(unsigned int /*i*/, double /*a*/[]) override {}
+	void Fdipolesub(unsigned int /*i*/, double /*a*/[]) override {}
+	void Fquadrupoleadd(unsigned int /*i*/, double /*a*/[]) override {}
+	void Fquadrupolesub(unsigned int /*i*/, double /*a*/[]) override {}
+	void upd_preF(double /*dt*/) override {
 		mardyn_assert(false);
 	}
-	void upd_postF(double /*dt_halve*/, double& /*summv2*/, double& /*sumIw2*/) {
+	void upd_postF(double /*dt_halve*/, double& /*summv2*/, double& /*sumIw2*/) override {
 		mardyn_assert(false);
 	}
-	void calculate_mv2_Iw2(double& summv2, double& /*sumIw2*/) {
+	void calculate_mv2_Iw2(double& summv2, double& /*sumIw2*/) override {
 		summv2 += _component->m() * v2();
 	}
-	void calculate_mv2_Iw2(double& summv2, double& /*sumIw2*/, double offx, double offy, double offz) {
+	void calculate_mv2_Iw2(double& summv2, double& /*sumIw2*/, double offx, double offy, double offz) override {
 		double vcx = _v[0] - offx;
 		double vcy = _v[1] - offy;
 		double vcz = _v[2] - offz;
 		summv2 += _component->m() * (vcx*vcx + vcy*vcy + vcz*vcz);
 	}
 	static std::string getWriteFormat();
-	void write(std::ostream& /*ostrm*/) const;
-	void writeBinary(std::ostream& /*ostrm*/) const {}
-	void clearFM() {}
-	void calcFM() {}
-	void check(unsigned long /*id*/) {}
+	void write(std::ostream& /*ostrm*/) const override;
+	void writeBinary(std::ostream& /*ostrm*/) const override {}
+	void clearFM() override {}
+	void calcFM() override {}
+	void check(unsigned long /*id*/) override {}
 
 	static Component * getStaticRMMComponent() {
 		return _component;
@@ -286,18 +286,17 @@ public:
 	}
         
 
-	void buildOwnSoA() {
+	void buildOwnSoA() override {
 		mardyn_assert(_state == STORAGE_AOS);
 	}
-	void releaseOwnSoA() {
+	void releaseOwnSoA() override {
 		mardyn_assert(_state == STORAGE_AOS);
 	}
 
 private:
 	static std::array<double, 3> emptyArray3() {
 		//mardyn_assert(false);
-		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		std::array<double, 3> ret{0., 0., 0.};
 		return ret;
 	}
 

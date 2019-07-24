@@ -20,31 +20,29 @@
  */
 class HalfShell: public ZonalMethod {
 public:
-	HalfShell() {
-	}
-	virtual ~HalfShell() {
-	}
+	HalfShell() = default;
+	~HalfShell() override = default;
 
-	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
-		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
+		auto condition = [](const int d[3])->bool {
 			// TODO reenable this check and fix halfshelltraversal
 			//int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[0];
 			//return pseudoCellIndex > 0;
 			return true;
 		};
-		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
+		return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}
 
-	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
-		const std::function<bool(const int[3])> condition = [](const int d[3])->bool {
+		auto condition = [](const int d[3])->bool {
 			// TODO reenable this check and fix halfshelltraversal
 			//int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[0];
 			//return pseudoCellIndex < 0;
 			return true;
 		};
-		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
+		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}
 };
 

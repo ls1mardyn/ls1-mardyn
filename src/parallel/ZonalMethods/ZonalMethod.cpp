@@ -8,13 +8,9 @@
 #include "ZonalMethod.h"
 #include "Simulation.h"
 
-ZonalMethod::ZonalMethod() {
+ZonalMethod::ZonalMethod() = default;
 
-}
-
-ZonalMethod::~ZonalMethod() {
-
-}
+ZonalMethod::~ZonalMethod() = default;
 
 std::vector<HaloRegion> ZonalMethod::getLeavingExportRegions(HaloRegion& initialRegion, double cutoffRadius[3],
 		bool coversWholeDomain[3]) {
@@ -31,13 +27,13 @@ std::vector<HaloRegion> ZonalMethod::getLeavingExportRegions(HaloRegion& initial
 		// no condition for leaving particles.
 		return true;
 	};
-	return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
+	return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 }
 
 
 
 // protected, used for child classes
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius[3],
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, const double cutoffRadius[3],
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
 	std::vector<HaloRegion> regions;
 		int d[3];
@@ -69,7 +65,7 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 					tmp.offset[1] = d[1];
 					tmp.offset[2] = d[2];
 
-					tmp.width = std::max(std::max(cutoffRadius[0],cutoffRadius[1]),cutoffRadius[2]);
+					tmp.width = std::max({cutoffRadius[0], cutoffRadius[1], cutoffRadius[2]});
 					regions.push_back(tmp);
 				}
 			}
@@ -78,14 +74,28 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initi
 }
 
 std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
+															   double skin, bool coversWholeDomain[3],
+															   const std::function<bool(const int[3])>& condition) {
 	double cutoffArr[3] = {cutoffRadius, cutoffRadius, cutoffRadius};
-	return getHaloRegionsConditional(initialRegion, cutoffArr, coversWholeDomain, condition);
+	auto regions = getHaloRegionsConditional(initialRegion, cutoffArr, coversWholeDomain, condition);
+	if(skin != 0.) {
+		for (auto& region : regions) {
+			for (int i = 0; i < 3; ++i) {
+				if (region.offset[i] == -1) {
+					region.rmin[i] -= skin;
+				} else if (region.offset[i] == 1) {
+					region.rmax[i] += skin;
+				}
+			}
+		}
+	}
+	return regions;
 }
 
 // protected, used for child classes
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius[3],
-			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(
+	HaloRegion& initialRegion, const double cutoffRadius[3], bool coversWholeDomain[3],
+	const std::function<bool(const int[3])>& condition) {
 	std::vector<HaloRegion> regions;
 		int d[3];
 		for (d[0] = -1; d[0] <= 1; d[0]++) {
@@ -116,7 +126,7 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion&
 					tmp.offset[1] = d[1];
 					tmp.offset[2] = d[2];
 
-					tmp.width = std::max(std::max(cutoffRadius[0],cutoffRadius[1]),cutoffRadius[2]);
+					tmp.width = std::max({cutoffRadius[0], cutoffRadius[1], cutoffRadius[2]});
 					regions.push_back(tmp);
 				}
 			}
@@ -124,8 +134,20 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion&
 		return regions;
 }
 
-std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition){
+std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(
+	HaloRegion& initialRegion, double cutoffRadius, double skin, bool coversWholeDomain[3],
+	const std::function<bool(const int[3])>& condition) {
 	double cutoffArr[3] = {cutoffRadius, cutoffRadius, cutoffRadius};
-	return getHaloRegionsConditionalInside(initialRegion, cutoffArr, coversWholeDomain, condition);
+	auto regions = getHaloRegionsConditionalInside(initialRegion, cutoffArr, coversWholeDomain, condition);
+	if(skin != 0.) {
+		for (auto& region : regions) {
+			for (int i = 0; i < 3; ++i) {
+				// We need the extension in all directions for this part, as it is only used in the sequential parts or
+				// resp. in the sequential fallbacks. Here it is always needed in all directions.
+				region.rmin[i] -= skin;
+				region.rmax[i] += skin;
+			}
+		}
+	}
+	return regions;
 }

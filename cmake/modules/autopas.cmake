@@ -18,20 +18,22 @@ if(ENABLE_AUTOPAS)
             autopas
             GIT_REPOSITORY ${autopasRepoPath}
             GIT_TAG origin/master
+            #GIT_TAG origin/feature/regionParticleIteratorIncrease
             #URL https://github.com/AutoPas/AutoPas/archive/0c3d8b07a2e38940057fafd21b98645cb074e729.zip # zip option
             #${CMAKE_SOURCE_DIR}/libs/googletest-master.zip # bundled option
             #URL_HASH MD5=6e70656897167140c1221eecc6ad872d
-            BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/src/autopas/libautopas.a
+            BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/autopas/build
+            BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/build/src/autopas/libautopas.a
             PREFIX ${CMAKE_CURRENT_BINARY_DIR}/autopas
             # Disable install step
             INSTALL_COMMAND ""
             CMAKE_ARGS
             -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DBUILD_TESTS=OFF
-            -DBUILD_EXAMPLES=OFF
-            -DENABLE_ADDRESS_SANITIZER=${ENABLE_ADDRESS_SANITIZER}
-            -DOPENMP=${OPENMP}
+            -DAUTOPAS_BUILD_TESTS=OFF
+            -DAUTOPAS_BUILD_EXAMPLES=OFF
+            -DAUTOPAS_ENABLE_ADDRESS_SANITIZER=${ENABLE_ADDRESS_SANITIZER}
+            -DAUTOPAS_OPENMP=${OPENMP}
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     )
 
@@ -52,14 +54,19 @@ if(ENABLE_AUTOPAS)
             "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
             )
 
-    # Using INTERFACE_INCLUDE_DIRECTORIES is only possible starting with cmake 3.11, so we use include_directories here!
-    include_directories(SYSTEM
+    # workaround for INTERFACE_INCLUDE_DIRECTORIES requiring existent paths, so we create them here...
+    file(MAKE_DIRECTORY ${source_dir}/src)
+    file(MAKE_DIRECTORY ${source_dir}/libs/spdlog-1.3.1/include)
+    file(MAKE_DIRECTORY ${binary_dir}/libs/eigen-3/include)
+
+    target_include_directories(libautopas SYSTEM INTERFACE
             "${source_dir}/src"
             "${source_dir}/libs/spdlog-1.3.1/include"
+            "${binary_dir}/libs/eigen-3/include"
             )
 
-    set(autopas_lib "libautopas")
+    set(AUTOPAS_LIB "libautopas")
 else()
     message(STATUS "Not using AutoPas.")
-    set(autopas_lib "")
+    set(AUTOPAS_LIB "")
 endif()

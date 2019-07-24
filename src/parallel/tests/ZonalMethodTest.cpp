@@ -22,7 +22,7 @@ void ZonalMethodTest::testES() {
 	bool coversWholeDomain[3] = {false, false, false};
 	double cellLength[3] = {0.2, 0.2, 0.2};
 
-	auto haloExportForceImportRegions = es.getHaloExportForceImportRegions(initialRegion, cutoffRadius, coversWholeDomain, cellLength);
+	auto haloExportForceImportRegions = es.getHaloExportForceImportRegions(initialRegion, cutoffRadius, 0., coversWholeDomain, cellLength);
 	// 7 neighbors
 	ASSERT_EQUAL(haloExportForceImportRegions.size(), 7ul);
 
@@ -44,7 +44,8 @@ void ZonalMethodTest::testES() {
 		}
 	}
 
-	auto haloImportForceExportRegions = es.getHaloImportForceExportRegions(initialRegion, cutoffRadius, coversWholeDomain, cellLength);
+	auto haloImportForceExportRegions =
+		es.getHaloImportForceExportRegions(initialRegion, cutoffRadius, 0., coversWholeDomain, cellLength);
 	std::cout << std::endl << "haloImport:" << std::endl;
 	for(auto region : haloImportForceExportRegions){
 		ASSERT_TRUE(region.offset[0] + region.offset[1] + region.offset[2] > 0 );

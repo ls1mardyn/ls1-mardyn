@@ -65,7 +65,7 @@ void NonBlockingMPIHandlerBase::performComputation() {
 	}
 
 	// Update forces in molecules so they can be exchanged
-	const auto begin = _moleculeContainer->iterator();
+	const auto begin = _moleculeContainer->iterator(ParticleIterator::ALL_CELLS);
 	for (auto i = begin; i.isValid(); ++i){
 		i->calcFM();
 	}

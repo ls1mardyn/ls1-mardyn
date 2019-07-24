@@ -12,6 +12,7 @@
 #endif
 #include "particleContainer/LinkedCells.h"
 #include "io/ASCIIReader.h"
+#include "parallel/NeighbourCommunicationScheme.h"
 
 #include <sstream>
 #include <cmath>
@@ -68,7 +69,7 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(
 }
 
 /**
- * checks if the halo is correct (not duplicate and no lost
+ * checks if the halo is correct (not duplicate and no lost)
  */
 void KDDecompositionTest::testHaloCorrect() {
 	KDDecomposition * kdd;
@@ -88,6 +89,9 @@ void KDDecompositionTest::testHaloCorrect() {
 			ParticleContainerFactory::LinkedCell, "haloCorrect_regular.inp",
 			cutoff);
 
+	for (int d = 0; d < 3; ++d) {
+		kdd->_neighbourCommunicationScheme->setCoverWholeDomain(d, kdd->_ownArea->_coversWholeDomain[d]);
+	}
 	kdd->initCommunicationPartners(cutoff, _domain, container);
 	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
 	// this should give us halos at -1., -2., 14., 15.
@@ -157,6 +161,9 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	ParticleContainer* container = initializeFromFile(
 			ParticleContainerFactory::LinkedCell, filename, cutoff);
 
+	for (int d = 0; d < 3; ++d) {
+		kdd->_neighbourCommunicationScheme->setCoverWholeDomain(d, kdd->_ownArea->_coversWholeDomain[d]);
+	}
 	kdd->initCommunicationPartners(cutoff, _domain, container);
 
 	int numMols = container->getNumberOfParticles();
@@ -183,7 +190,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		std::set<unsigned long> lower_thread[3]; // the id of particles that were close to the lower boundary in the specific dimension are stored here
 		std::set<unsigned long> upper_thread[3]; // the id of particles that were close to the upper boundary in the specific dimension are stored here
 
-		for (auto m = container->iterator(); m.isValid();
+		for (auto m = container->iterator(ParticleIterator::ALL_CELLS); m.isValid();
 				++m) {
 			for (int dim = 0; dim < 3; dim++) {
 				if (m->r(dim) < bBoxMin[dim] + cutoff * 0.5) {
@@ -228,7 +235,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		}
 	}
 
-	container->update();
+	container->forcedUpdate();
 
 	for(auto iter = container->iterator(ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
 		bool found = false;
@@ -258,7 +265,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
 	ASSERT_EQUAL(numMols, newNumMols);
 
-	for (auto m = container->iterator(); m.isValid(); ++m) {
+	for (auto m = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 		for (int dim = 0; dim < 3; dim++) {
 			if (lower[dim].count(m->getID())) {
 				// We make sure, that these particles are now at the top part of the domain.
@@ -365,8 +372,8 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		// initialize currentCoeffs
 		initCoeffs(_currentCoeffs);
 
-		KDNode * newDecompRoot = NULL;
-		KDNode * newOwnLeaf = NULL;
+		KDNode * newDecompRoot = nullptr;
+		KDNode * newOwnLeaf = nullptr;
 
 		setNumParticlesPerCell(kdd->_numParticlesPerCell,
 				kdd->_globalCellsPerDim);
@@ -391,13 +398,13 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 			cout << "current coeffs: " << std::endl;
 			cout << setprecision(17);
-			for (unsigned int j = 0; j < _currentCoeffs.size(); ++j) {
-				cout << _currentCoeffs[j] << std::endl;
+			for (double _currentCoeff : _currentCoeffs) {
+				cout << _currentCoeff << std::endl;
 			}
 			cout << std::endl;
 			cout << "old coeffs: " << std::endl;
-			for (unsigned int j = 0; j < _oldCoeffs.size(); ++j) {
-				cout << _oldCoeffs[j] << std::endl;
+			for (double _oldCoeff : _oldCoeffs) {
+				cout << _oldCoeff << std::endl;
 			}
 		}
 

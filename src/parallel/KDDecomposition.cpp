@@ -73,7 +73,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 	// ensure that enough cells for the number of procs are available
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain, 0);
 	if (!_decompTree->isResolvable()) {
-		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
+		global_log->error() << "KDDecomposition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
 		Simulation::exit(-1);
 	}
@@ -243,23 +243,38 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	}
 
 	if (not rebalance) {
-		if(sendLeavingWithCopies()){
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+		if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
+			if (sendLeavingWithCopies()) {
+				global_log->info() << "kDD: Sending Leaving and Halos." << std::endl;
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES,
+				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
+			} else {
+				global_log->info() << "kDD: Sending Leaving." << std::endl;
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
+				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
+#ifndef MARDYN_AUTOPAS
+				moleculeContainer->deleteOuterParticles();
+#endif
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
+				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
+			}
 		} else {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
-			moleculeContainer->deleteOuterParticles();
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
+			global_log->info() << "kDD: Sending Halos." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, false /*dohaloPositionCheck*/);
 		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
-
+		if(moleculeContainer->isInvalidParticleReturner() and not moleculeContainer->hasInvalidParticles()){
+			moleculeContainer->forcedUpdate();
+		}
 		if (_steps != 1) {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
 		}
 		moleculeContainer->deleteOuterParticles();
 
-		KDNode * newDecompRoot = NULL;
-		KDNode * newOwnLeaf = NULL;
+		KDNode * newDecompRoot = nullptr;
+		KDNode * newOwnLeaf = nullptr;
 
 		calcNumParticlesPerCell(moleculeContainer);
 		constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
@@ -275,7 +290,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		_ownArea = newOwnLeaf;
 		initCommunicationPartners(_cutoffRadius, domain, moleculeContainer);
 
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, true /*doHaloPositionCheck*/, removeRecvDuplicates);
 	}
 }
 
@@ -369,6 +384,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		auto indexIt = indices.begin();
 		numProcsSend = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		sendPartners.reserve(numProcsSend);
+		std::vector<Molecule> dummy;
 		for (unsigned i = 0; i < ranks.size(); ++i) {
 			int low[3];
 			int high[3];
@@ -382,9 +398,12 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			}
 			int partnerRank = ranks[i];
 			if (partnerRank != _rank) {
-				sendPartners.push_back(CommunicationPartner(partnerRank, leavingLow, leavingHigh));
+				sendPartners.emplace_back(partnerRank, leavingLow, leavingHigh);
 				const bool removeFromContainer = true;
-				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, removeFromContainer); // molecules have been taken out of container
+				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
+											 /*don't use invalid particles*/ false, true /*do halo position change*/,
+											 removeFromContainer);
+				// molecules are taken out of container
 			} else {
 				bool inHaloRegion = true;
 				for (unsigned int dimindex = 0; dimindex <3; dimindex ++){
@@ -645,7 +664,7 @@ double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	}
 }
 
-void KDDecomposition::printDecomp(string filename, Domain* domain) {
+void KDDecomposition::printDecomp(const std::string& filename, Domain* domain) {
 	if (_rank == 0) {
 		ofstream povcfgstrm(filename.c_str());
 		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " " << domain->getGlobalLength(2) << endl;
@@ -1377,7 +1396,7 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 	#pragma omp parallel
 	#endif
 	{
-		for(auto molPtr = moleculeContainer->iterator(); molPtr.isValid(); ++molPtr) {
+		for(auto molPtr = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molPtr.isValid(); ++molPtr) {
 			int localCellIndex[3]; // 3D Cell index (local)
 			int globalCellIdx[3]; // 3D Cell index (global)
 			for (int dim = 0; dim < 3; dim++) {
@@ -1526,7 +1545,7 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 		const int prevNumMols = mols.size();
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(startRegion, endRegion);
+		auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 		#if defined (_OPENMP)
 		#pragma omp master

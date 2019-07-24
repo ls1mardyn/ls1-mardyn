@@ -672,7 +672,8 @@ void Simulation::updateForces() {
 	#pragma omp parallel
 	#endif
 	{
-		for (auto i = _moleculeContainer->iterator(); i.isValid(); ++i){
+		// iterate over all particles in case we are not using the Full Shell method.
+		for (auto i = _moleculeContainer->iterator(ParticleIterator::ALL_CELLS); i.isValid(); ++i){
 			i->calcFM();
 		}
 	} // end pragma omp parallel
@@ -794,9 +795,11 @@ void Simulation::prepare_start() {
 		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 	}
 
+#ifndef MARDYN_AUTOPAS
 	// clear halo
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
+#endif
 
 	if (_longRangeCorrection == nullptr){
 		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
@@ -989,8 +992,9 @@ void Simulation::simulate() {
 
 		// TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
+#ifndef MARDYN_AUTOPAS
 		_moleculeContainer->deleteOuterParticles();
-
+#endif
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
@@ -1309,7 +1313,7 @@ void Simulation::refreshParticleIDs()
 #ifndef NDEBUG
 	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
 #endif
-	for (auto pit = _moleculeContainer->iterator(); pit.isValid(); ++pit)
+	for (auto pit = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{
 		pit->setid(++tmpID);
 	}

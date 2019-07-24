@@ -4,13 +4,11 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 project(MarDyn)
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.11)
 
-set(CMAKE_CXX_STANDARD 14)
-
-# cmake < 3.6 ignores "set(CMAKE_CXX_STANDARD 11)" when using icpc
-if (CMAKE_VERSION VERSION_LESS "3.6" AND CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_STANDARD 17)
+if (NOT CYGWIN)
+    set(CMAKE_CXX_EXTENSIONS OFF)
 endif ()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

@@ -215,7 +215,7 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 		long uID;
 
 		// Loop over all particles and bin them with uIDs
-		for (auto thismol = particleContainer->iterator(); thismol.isValid(); ++thismol) {
+		for (auto thismol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); thismol.isValid(); ++thismol) {
 			
 			if ((_profiledCompString != "all") && (thismol->componentid() == _profiledComp-1)) {
 				

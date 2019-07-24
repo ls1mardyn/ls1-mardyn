@@ -49,9 +49,9 @@ public:
 		}
 	}
 
-	virtual void traverseCellPairs(CellProcessor& cellProcessor);
-	virtual void traverseCellPairsOuter(CellProcessor& cellProcessor);
-	virtual void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount);
+	virtual void traverseCellPairs(CellProcessor& cellProcessor) override;
+	virtual void traverseCellPairsOuter(CellProcessor& cellProcessor) override;
+	virtual void traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage, unsigned stageCount) override;
 
 	// Midpoint traversal requires force exchange
 	virtual bool requiresForceExchange() const override {return true;}
@@ -59,7 +59,7 @@ public:
 	virtual unsigned maxCellsInCutoff() const override {return 2;}
 
 protected:
-	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long cellIndex) const;
+	virtual void processBaseCell(CellProcessor& cellProcessor, unsigned long baseIndex) const;
 
 	// All pairs that have to be processed when calculating the forces (excluding self)
 	std::array<std::pair<long, long>, 62> _cellPairOffsets;

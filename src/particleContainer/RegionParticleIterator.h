@@ -18,8 +18,9 @@
 #include "ParticleIterator.h"
 class RegionParticleIterator : public ParticleIterator {
 public:
-	RegionParticleIterator(){};
-	RegionParticleIterator(autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> parent) : ParticleIterator(parent){};
+	RegionParticleIterator() = default;
+	explicit RegionParticleIterator(const autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule>& parent)
+		: ParticleIterator(parent){};
 };
 
 #else
@@ -39,7 +40,7 @@ class RegionParticleIterator : public ParticleIterator {
 	private:
 
 		CellIndex_T getGlobalCellIndex();
-		void next_non_empty_cell();
+		void next_non_empty_cell() override;
 
 		CellIndex_T _baseX;
 		CellIndex_T _baseY;

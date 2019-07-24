@@ -46,7 +46,7 @@ public:
 
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(std::string filename, Domain* domain) override {
+	void printDecomp(const std::string& filename, Domain* domain) override {
 		throw std::runtime_error("GeneralDomainDecomposition::printDecomp() not yet implemented");
 	}
 

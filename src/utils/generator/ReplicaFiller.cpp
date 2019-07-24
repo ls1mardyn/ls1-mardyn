@@ -90,21 +90,22 @@ public:
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override {}
 
-	ParticleIterator iterator(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override { return ParticleIterator(); }
+	ParticleIterator iterator(ParticleIterator::Type t) override { return ParticleIterator(); }
 
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
-										  ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override { return RegionParticleIterator(); }
+										  ParticleIterator::Type t) override { return RegionParticleIterator(); }
 
 	void deleteOuterParticles() override {}
 
 	double get_halo_L(int index) const override { return 0.0; }
 
-	double getCutoff() override { return 0.0; }
+	double getCutoff() const override { return 0.0; }
 
 	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) override {}
 
-	double
-	getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override { return 0.0; }
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
+		return 0.0;
+	}
 
 	void updateInnerMoleculeCaches() override {}
 

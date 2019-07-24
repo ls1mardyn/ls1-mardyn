@@ -100,7 +100,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 
 	// Update forces in molecules so they can be exchanged - new - begin
 
-	for (auto i = _moleculeContainer->iterator(); i.isValid(); ++i){
+	for (auto i = _moleculeContainer->iterator(ParticleIterator::ALL_CELLS); i.isValid(); ++i){
 		i->calcFM();
 	}
 	// - new - end

@@ -39,6 +39,7 @@
 
 class Compression {
 public:
+	virtual ~Compression() = default;
     /**
      * Just a type alias to avoid some typing
      */

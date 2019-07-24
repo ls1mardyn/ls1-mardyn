@@ -210,7 +210,7 @@ void LinkedCells::check_molecules_in_box() {
 	#pragma omp parallel reduction(+ : numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
+		for (ParticleIterator tM = iterator(ParticleIterator::ALL_CELLS); tM.isValid(); ++tM) {
 			if (not tM->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)) {
 				numBadMolecules++;
 
@@ -275,7 +275,7 @@ void LinkedCells::update() {
 	#pragma omp parallel reduction(+: numBadMolecules)
 	#endif
 	{
-		for (ParticleIterator tM = iterator(); tM.isValid(); ++tM) {
+		for (ParticleIterator tM = iterator(ParticleIterator::ALL_CELLS); tM.isValid(); ++tM) {
 			if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 				numBadMolecules++;
 				global_log->error_always_output() << "particle " << tM->getID() << " in cell " << tM.getCellIndex()
@@ -532,11 +532,10 @@ void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDup
 	global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<endl;
 #endif
 
-	return;
 }
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
-	if (_cellsValid == false) {
+	if (not _cellsValid) {
 		global_log->error() << "Cell structure in LinkedCells (traverseNonInnermostCells) invalid, call update first" << endl;
 		Simulation::exit(1);
 	}
@@ -545,7 +544,7 @@ void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 }
 
 void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
-	if (_cellsValid == false) {
+	if (not _cellsValid) {
 		global_log->error() << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << endl;
 		Simulation::exit(1);
 	}
@@ -554,7 +553,7 @@ void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, un
 }
 
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
-	if (_cellsValid == false) {
+	if (not _cellsValid) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (traversePairs) invalid, call update first"
 				<< endl;
@@ -592,7 +591,7 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
-	for (auto it = iterator(); it.isValid(); ++it) {
+	for (auto it = iterator(ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
 		bool outside = not it->inBox(boxMin, boxMax);
 		if (outside) {
 			it.deleteCurrentParticle();
@@ -623,7 +622,8 @@ double LinkedCells::get_halo_L(int index) const {
 	return _haloLength[index];
 }
 
-RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
+RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], const double endRegion[3],
+												   ParticleIterator::Type type) {
 	// parameter "type" not yet used
 	// add functionality in a future version...
 	unsigned int startRegionCellIndex;

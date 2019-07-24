@@ -75,15 +75,13 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		moleculeContainer->rebuild(bBoxMin, bBoxMax);
 #endif
 		#ifdef ENABLE_MPI
-		DomainDecomposition * temp = 0;
-		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
-		if (temp != 0) {
+		if (auto temp = dynamic_cast<DomainDecomposition *>(domainDecomposition)) {
 			temp->initCommunicationPartners(cutoff, domain, moleculeContainer);
 		}
 		#endif
 	} else {
 		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
-		return NULL;
+		return nullptr;
 	}
 
 	inputReader.readPhaseSpace(moleculeContainer, domain, domainDecomposition);

@@ -68,12 +68,22 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 
 void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
-	if (sendLeavingWithCopies()) {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+	if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
+		if (sendLeavingWithCopies()) {
+			//global_log->info() << "DD: Sending Leaving and Halos." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+		} else {
+			//global_log->info() << "DD: Sending Leaving." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+#ifndef MARDYN_AUTOPAS
+			moleculeContainer->deleteOuterParticles();
+#endif
+			//global_log->info() << "DD: Sending Halos." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+		}
 	} else {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-		moleculeContainer->deleteOuterParticles();
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+		//global_log->info() << "DD: Sending Halos." << std::endl;
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, false /*dohaloPositionCheck*/);
 	}
 }
 
@@ -100,7 +110,7 @@ double DomainDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	return (_coords[dimension] + 1) * domain->getGlobalLength(dimension) / _gridSize[dimension];
 }
 
-void DomainDecomposition::printDecomp(string filename, Domain* domain) {
+void DomainDecomposition::printDecomp(const string& filename, Domain* domain) {
 
 	if (_rank == 0) {
 		ofstream povcfgstrm(filename.c_str());

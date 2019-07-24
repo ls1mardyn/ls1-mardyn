@@ -22,8 +22,13 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Doma
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
+#ifdef ENABLE_ALLLBL
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, cutoffRadius /*minimal domain size*/);
+#else
+	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
+	Simulation::exit(24235);
+#endif
 	///@todo: change minimal domain size to include skin! -- this is not so trivial here!
 
 	global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
@@ -81,12 +86,17 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			global_log->info() << "rebalancing finished" << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 		} else {
-			if (sendLeavingWithCopies()) {
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+			if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
+				if (sendLeavingWithCopies()) {
+					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+				} else {
+					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+					moleculeContainer->deleteOuterParticles();
+					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+				}
 			} else {
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-				moleculeContainer->deleteOuterParticles();
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
+														  false /*dohaloPositionCheck*/);
 			}
 		}
 	}
@@ -121,12 +131,19 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	global_log->set_mpi_output_root(0);
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
-	std::tie(recvNeighbors, sendNeighbors) = NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain);
+
+	// 0. skin, as it is not needed for the migration of particles!
+	std::tie(recvNeighbors, sendNeighbors) =
+		NeighborAcquirer::acquireNeighbors(domain, &ownDomain, desiredDomain, 0. /*skin*/);
+
+	std::vector<Molecule> dummy;
 	for (auto& sender : sendNeighbors) {
-		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, true /*removeFromContainer*/);
+		sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
+						false /*don't use invalid particles*/, true /*do halo position change*/,
+						true /*removeFromContainer*/);
 	}
 	std::vector<Molecule> ownMolecules{};
-	for (auto iter = particleContainer->iterator(); iter.isValid(); ++iter) {
+	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
 		ownMolecules.push_back(*iter);
 		if (not iter->inBox(newMin.data(), newMax.data())) {
 			global_log->error_always_output()
@@ -151,8 +168,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 		// unpack molecules
 		for (auto& recv : recvNeighbors) {
-			allDone &= recv.iprobeCount(this->getCommunicator(),
-										this->getMPIParticleType());
+			allDone &= recv.iprobeCount(this->getCommunicator(), this->getMPIParticleType());
 			allDone &= recv.testRecv(particleContainer, false);
 		}
 

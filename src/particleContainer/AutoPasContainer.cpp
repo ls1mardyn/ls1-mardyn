@@ -22,7 +22,7 @@ AutoPasContainer::AutoPasContainer()
 	  _autopasContainer(),
 	  _traversalChoices(autopas::allTraversalOptions),
 	  _containerChoices(autopas::allContainerOptions),
-	  _selectorStrategy(autopas::SelectorStrategy::fastestMedian),
+	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
 	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
 	  _newton3Choices{autopas::Newton3Option::enabled} {
 #ifdef ENABLE_MPI
@@ -64,6 +64,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
+
+	xmlconfig.getNodeValue("rebuildFrequency", _verletRebuildFrequency);
+	xmlconfig.getNodeValue("skin", _verletSkin);
 
 	std::stringstream dataLayoutChoicesStream;
 	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
@@ -123,21 +126,43 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	return false;
 }
 
-void AutoPasContainer::update() { _autopasContainer.updateContainer(); }
+void AutoPasContainer::update() {
+    // in case we update the container before handling the invalid particles, this might lead to lost particles.
+	if (not _invalidParticles.empty()) {
+		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
+							   "exist. This would lead to lost particle => ERROR!"
+							<< std::endl;
+		Simulation::exit(434);
+	}
+
+	std::tie(_invalidParticles, _hasInvalidParticles) = _autopasContainer.updateContainer();
+}
+
+void AutoPasContainer::forcedUpdate() {
+    // in case we update the container before handling the invalid particles, this might lead to lost particles.
+	if (not _invalidParticles.empty()) {
+		global_log->error() << "AutoPasContainer: trying to force update container, even though invalidParticles still "
+							   "exist. This would lead to lost particle => ERROR!"
+							<< std::endl;
+		Simulation::exit(435);
+	}
+	_hasInvalidParticles = true;
+	_invalidParticles = _autopasContainer.updateContainerForced();
+}
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
 								   const bool &rebuildCaches) {
 	if (particle.inBox(_boundingBoxMin, _boundingBoxMax)) {
 		_autopasContainer.addParticle(particle);
 	} else {
-		_autopasContainer.addHaloParticle(particle);
+		_autopasContainer.addOrUpdateHaloParticle(particle);
 	}
 	return true;
 }
 
 bool AutoPasContainer::addHaloParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
 									   const bool &rebuildCaches) {
-	_autopasContainer.addHaloParticle(particle);
+	_autopasContainer.addOrUpdateHaloParticle(particle);
 	return true;
 }
 
@@ -150,16 +175,18 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
-		double epsilon, sigma, shift;
+		global_log->info() << "AutoPasContainer: traverseCells" << std::endl;
+
+		// we need to know the values of eps, sigma and the shift for the LJFunctor.
+		double epsilon=0., sigma=0., shift=0.;
 		{
-			auto iter = iterator();
-			if (not iter.isValid()) {
-				return;
+			auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			if (iter.isValid()) {
+				auto ljcenter = iter->component()->ljcenter(0);
+				epsilon = ljcenter.eps();
+				sigma = ljcenter.sigma();
+				shift = ljcenter.shift6() / 6.;
 			}
-			auto ljcenter = iter->component()->ljcenter(0);
-			epsilon = ljcenter.eps();
-			sigma = ljcenter.sigma();
-			shift = ljcenter.shift6() / 6.;
 		}
 		// lower and upper corner of the local domain needed to correctly calculate the global values
 		std::array<double, 3> lowCorner = {_boundingBoxMin[0], _boundingBoxMin[1], _boundingBoxMin[2]};
@@ -168,15 +195,15 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		// generate the functor
 		autopas::LJFunctor<Molecule, CellType, autopas::FunctorN3Modes::Both,
 						   /*calculateGlobals*/ true>
-			functor(_cutoff, epsilon, sigma, shift, lowCorner, highCorner,
-					/*duplicatedCalculation*/ true);
+			functor(_cutoff, epsilon, sigma, shift, /*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
-		for (auto iter = iterator(); iter.isValid(); ++iter) {
+		for (auto iter = iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
 			iter->clearFM();
 		}
 
+		// here we call the actual autopas' iteratePairwise method to compute the forces.
 		_autopasContainer.iteratePairwise(&functor);
 		double upot = functor.getUpot();
 		double virial = functor.getVirial();
@@ -198,15 +225,34 @@ void AutoPasContainer::traversePartialInnermostCells(CellProcessor &cellProcesso
 	throw std::runtime_error("AutoPasContainer::traversePartialInnermostCells() not yet implemented");
 }
 
-unsigned long AutoPasContainer::getNumberOfParticles() { return _autopasContainer.getNumberOfParticles(); }
+unsigned long AutoPasContainer::getNumberOfParticles() {
+	unsigned long count = 0;
+	for(auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
+		++count;
+	}
+	return count;
+	//return _autopasContainer.getNumberOfParticles(); // todo: this is currently buggy!, so we use iterators instead.
+}
 
 void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
-void AutoPasContainer::deleteOuterParticles() { _autopasContainer.deleteHaloParticles(); }
+void AutoPasContainer::deleteOuterParticles() {
+	global_log->info() << "deleting outer particles by using forced update" << std::endl;
+	auto invalidParticles = _autopasContainer.updateContainerForced();
+	if (not invalidParticles.empty()) {
+		throw std::runtime_error(
+			"AutoPasContainer: Invalid particles ignored in deleteOuterParticles, check that your rebalance rate is a "
+			"multiple of the rebuild rate!");
+	}
+}
 
 double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
 
-double AutoPasContainer::getCutoff() { return _cutoff; }
+double AutoPasContainer::getCutoff() const { return _cutoff; }
+
+double AutoPasContainer::getInteractionLength() const { return _cutoff + _verletSkin; }
+
+double AutoPasContainer::getSkin() const { return _verletSkin; }
 
 void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
 	throw std::runtime_error("AutoPasContainer::deleteMolecule() not yet implemented");
@@ -231,7 +277,7 @@ void AutoPasContainer::updateMoleculeCaches() {
 
 bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
-	for (auto iter = iterator(); iter.isValid(); ++iter) {
+	for (auto iter = this->iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
 		if (iter->getR() == pos_arr) {
 			*result = &(*iter);
 			return true;
@@ -272,5 +318,6 @@ RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorne
 														ParticleIterator::Type t) {
 	std::array<double, 3> lowCorner{startCorner[0], startCorner[1], startCorner[2]};
 	std::array<double, 3> highCorner{endCorner[0], endCorner[1], endCorner[2]};
-	return _autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t));
+	return RegionParticleIterator{
+		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }

@@ -32,60 +32,60 @@ public:
 
 	FullMolecule& operator=(const FullMolecule& m);
 
-	~FullMolecule() {
+	~FullMolecule() override {
 		// don't delete SoA
 		_soa = nullptr;
 	}
 
 	/** get molecule ID */
-	unsigned long getID() const { return _id; }
+	unsigned long getID() const override { return _id; }
 	/** set molecule ID */
-	void setid(unsigned long id) { _id = id; }
+	void setid(unsigned long id) override { _id = id; }
 	/** set the molecule's component */
-	void setComponent(Component *component) { _component = component; this->updateMassInertia();}
+	void setComponent(Component *component) override { _component = component; this->updateMassInertia();}
 	/** return pointer to component to which the molecule belongs */
-	Component* component() const { return _component; }
+	Component* component() const override { return _component; }
 	/** get component lookUpID */
-	unsigned getComponentLookUpID() const { return _component->getLookUpId();}
+	unsigned getComponentLookUpID() const override { return _component->getLookUpId();}
 	/** get position coordinate */
-	double r(unsigned short d) const { return _r[d]; }
+	double r(unsigned short d) const override { return _r[d]; }
 	/** set position coordinate */
-	void setr(unsigned short d, double r) { _r[d] = r; }
+	void setr(unsigned short d, double r) override { _r[d] = r; }
 	/** get velocity coordinate */
-	double v(unsigned short d) const { return _v[d]; }
+	double v(unsigned short d) const override { return _v[d]; }
 	/** set velocity */
-	void setv(unsigned short d, double v) { _v[d] = v; }
+	void setv(unsigned short d, double v) override { _v[d] = v; }
 	/** get molecule's mass */
-	double mass() const { return _m; }
+	double mass() const override { return _m; }
         
-	void setF(unsigned short d, double F) { _F[d] = F; }
+	void setF(unsigned short d, double F) override { _F[d] = F; }
 	/** get coordinate of current force onto molecule */
-	double F(unsigned short d) const {return _F[d]; }
+	double F(unsigned short d) const override {return _F[d]; }
 
 	/** get molecule's orientation */
-	const Quaternion& q() const { return _q; }
+	const Quaternion& q() const override { return _q; }
 
 
 	/** set molecule's orientation */
-	void setq(Quaternion q){ _q = q; }
+	void setq(Quaternion q) override{ _q = q; }
 
 	/** get coordinate of the rotatational speed */
-	double D(unsigned short d) const { return _L[d]; }
+	double D(unsigned short d) const override { return _L[d]; }
 
 	/** get coordinate of the current angular momentum  onto molecule */
-	double M(unsigned short d) const { return _M[d]; }
+	double M(unsigned short d) const override { return _M[d]; }
 
 	/** get the virial **/
-	double Vi(unsigned short d) const { return _Vi[d];}
+	double Vi(unsigned short d) const override { return _Vi[d];}
 
-	void setD(unsigned short d, double D) { this->_L[d] = D; }
+	void setD(unsigned short d, double D) override { this->_L[d] = D; }
 
-	inline void move(int d, double dr) { _r[d] += dr; }
+	inline void move(int d, double dr) override { _r[d] += dr; }
 
 	/** get the moment of inertia of a particle */
-	double getI(unsigned short d) const { return _I[d]; }
+	double getI(unsigned short d) const override { return _I[d]; }
 	/** update mass and moment of inertia by component definition */
-	void updateMassInertia() {
+	void updateMassInertia() override {
 		if (_component != nullptr) {
 			_m = _component->m();
 			_I[0] = _component->I11();
@@ -101,16 +101,16 @@ public:
 	}
 
 	/** calculate and return the square velocity */
-	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
+	double v2() const override {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
 	
 	/** calculate and return the square angular momentum */
-	double L2() const {return _L[0]*_L[0]+_L[1]*_L[1]+_L[2]*_L[2]; }
+	double L2() const override {return _L[0]*_L[0]+_L[1]*_L[1]+_L[2]*_L[2]; }
 
 	/** calculate and return the square force */
-	double F2() const {return _F[0]*_F[0]+_F[1]*_F[1]+_F[2]*_F[2]; }
+	double F2() const override {return _F[0]*_F[0]+_F[1]*_F[1]+_F[2]*_F[2]; }
 
 	/** calculate and return the square torque */
-	double M2() const {return _M[0]*_M[0]+_M[1]*_M[1]+_M[2]*_M[2]; }
+	double M2() const override {return _M[0]*_M[0]+_M[1]*_M[1]+_M[2]*_M[2]; }
 
 	/** return the translational energy of the molecule */
 	double U_trans() const override { return 0.5 * _m * v2(); }
@@ -119,28 +119,28 @@ public:
 	double U_rot() override ;
 	double U_rot_2() override ;
 	/** return total kinetic energy of the molecule */
-	double U_kin() { return U_trans() + U_rot(); }
+	double U_kin() override { return U_trans() + U_rot(); }
 	
-	void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ);
+	void setupSoACache(CellDataSoABase * s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ) override;
 
-	void setSoA(CellDataSoABase * const s);
-	void setStartIndexSoA_LJ(unsigned i) {_soa_index_lj = i;}
-	void setStartIndexSoA_C(unsigned i) {_soa_index_c = i;}
-	void setStartIndexSoA_D(unsigned i) {_soa_index_d = i;}
-	void setStartIndexSoA_Q(unsigned i) {_soa_index_q = i;}
+	void setSoA(CellDataSoABase * s) override;
+	void setStartIndexSoA_LJ(unsigned i) override {_soa_index_lj = i;}
+	void setStartIndexSoA_C(unsigned i) override {_soa_index_c = i;}
+	void setStartIndexSoA_D(unsigned i) override {_soa_index_d = i;}
+	void setStartIndexSoA_Q(unsigned i) override {_soa_index_q = i;}
 
 	/* TODO: Maybe we should better do this using the component directly? 
 	 * In the GNU STL vector.size() causes two memory accesses and one subtraction!
 	 */
 	/** get number of sites */
-	unsigned int numSites() const { return _component->numSites(); }
-	unsigned int numOrientedSites() const { return _component->numOrientedSites();  }
-	unsigned int numLJcenters() const { return _component->numLJcenters(); }
-	unsigned int numCharges() const { return _component->numCharges(); }
-	unsigned int numDipoles() const { return _component->numDipoles(); }
-	unsigned int numQuadrupoles() const { return _component->numQuadrupoles(); }
+	unsigned int numSites() const override { return _component->numSites(); }
+	unsigned int numOrientedSites() const override { return _component->numOrientedSites();  }
+	unsigned int numLJcenters() const override { return _component->numLJcenters(); }
+	unsigned int numCharges() const override { return _component->numCharges(); }
+	unsigned int numDipoles() const override { return _component->numDipoles(); }
+	unsigned int numQuadrupoles() const override { return _component->numQuadrupoles(); }
 
-	std::array<double, 3> site_d(unsigned int i) const {
+	std::array<double, 3> site_d(unsigned int i) const override {
 		const unsigned n1 = numLJcenters(), n2 = numCharges()+ n1, n3 = numDipoles() + n2;
 #ifndef NDEBUG
 		const unsigned n4 = numQuadrupoles() + n3;
@@ -155,20 +155,20 @@ public:
 			return quadrupole_d(i - n3);
 		}
 	}
-	std::array<double, 3> ljcenter_d(unsigned int i) const {
+	std::array<double, 3> ljcenter_d(unsigned int i) const override {
 		return computeLJcenter_d(i);
 	}
-	std::array<double, 3> charge_d(unsigned int i) const {
+	std::array<double, 3> charge_d(unsigned int i) const override {
 		return computeCharge_d(i);
 	}
-	std::array<double, 3> dipole_d(unsigned int i) const {
+	std::array<double, 3> dipole_d(unsigned int i) const override {
 		return computeDipole_d(i);
 	}
-	std::array<double, 3> quadrupole_d(unsigned int i) const {
+	std::array<double, 3> quadrupole_d(unsigned int i) const override {
 		return computeQuadrupole_d(i);
 	}
 
-	std::array<double, 3> site_d_abs(unsigned int i) const {
+	std::array<double, 3> site_d_abs(unsigned int i) const override {
 		const unsigned n1 = numLJcenters(), n2 = numCharges()+ n1, n3 = numDipoles() + n2;
 #ifndef NDEBUG
 		const unsigned n4 = numQuadrupoles() + n3;
@@ -183,15 +183,15 @@ public:
 			return quadrupole_d_abs(i - n3);
 		}
 	}
-	std::array<double, 3> ljcenter_d_abs(unsigned int i) const;
-	std::array<double, 3> charge_d_abs(unsigned int i) const;
-	std::array<double, 3> dipole_d_abs(unsigned int i) const;
-	std::array<double, 3> quadrupole_d_abs(unsigned int i) const;
+	std::array<double, 3> ljcenter_d_abs(unsigned int i) const override;
+	std::array<double, 3> charge_d_abs(unsigned int i) const override;
+	std::array<double, 3> dipole_d_abs(unsigned int i) const override;
+	std::array<double, 3> quadrupole_d_abs(unsigned int i) const override;
 
-	std::array<double, 3> dipole_e(unsigned int i) const;
-	std::array<double, 3> quadrupole_e(unsigned int i) const;
+	std::array<double, 3> dipole_e(unsigned int i) const override;
+	std::array<double, 3> quadrupole_e(unsigned int i) const override;
 
-	std::array<double, 3> site_F(unsigned int i) const {
+	std::array<double, 3> site_F(unsigned int i) const override {
 		const unsigned n1 = numLJcenters(), n2 = numCharges()+ n1, n3 = numDipoles() + n2;
 #ifndef NDEBUG
 		const unsigned n4 = numQuadrupoles() + n3;
@@ -206,35 +206,35 @@ public:
 			return quadrupole_F(i - n3);
 		}
 	}
-	std::array<double, 3> ljcenter_F(unsigned int i) const;
-	std::array<double, 3> charge_F(unsigned int i) const;
-	std::array<double, 3> dipole_F(unsigned int i) const;
-	std::array<double, 3> quadrupole_F(unsigned int i) const;
+	std::array<double, 3> ljcenter_F(unsigned int i) const override;
+	std::array<double, 3> charge_F(unsigned int i) const override;
+	std::array<double, 3> dipole_F(unsigned int i) const override;
+	std::array<double, 3> quadrupole_F(unsigned int i) const override;
 
-	void normalizeQuaternion() {
+	void normalizeQuaternion() override {
 		_q.normalize();
 	}
-	std::array<double, 3> computeLJcenter_d(unsigned int i) const {
+	std::array<double, 3> computeLJcenter_d(unsigned int i) const override {
 		mardyn_assert(_q.isNormalized());
 		return _q.rotate(_component->ljcenter(i).r());
 	}
-	std::array<double, 3> computeCharge_d(unsigned int i) const {
+	std::array<double, 3> computeCharge_d(unsigned int i) const override {
 		mardyn_assert(_q.isNormalized());
 		return _q.rotate(_component->charge(i).r());
 	}
-	std::array<double, 3> computeDipole_d(unsigned int i) const {
+	std::array<double, 3> computeDipole_d(unsigned int i) const override {
 		mardyn_assert(_q.isNormalized());
 		return _q.rotate(_component->dipole(i).r());
 	}
-	std::array<double, 3> computeQuadrupole_d(unsigned int i) const {
+	std::array<double, 3> computeQuadrupole_d(unsigned int i) const override {
 		mardyn_assert(_q.isNormalized());
 		return _q.rotate(_component->quadrupole(i).r());
 	}
-	std::array<double, 3> computeDipole_e(unsigned int i) const {
+	std::array<double, 3> computeDipole_e(unsigned int i) const override {
 		mardyn_assert(_q.isNormalized());
 		return _q.rotate(_component->dipole(i).e());
 	}
-	std::array<double, 3> computeQuadrupole_e(unsigned int i) const {
+	std::array<double, 3> computeQuadrupole_e(unsigned int i) const override {
 		mardyn_assert(_q.isNormalized());
 		return _q.rotate(_component->quadrupole(i).e());
 	}
@@ -245,7 +245,7 @@ public:
 	 * \Note You can retrieve the size of the molecule class itself simply
 	 *       with the sizeof()-operator.
 	 */
-	unsigned long totalMemsize() const;
+	unsigned long totalMemsize() const override;
 
 
 	/* TODO: Is this realy necessary? Better use a function like dist2(m1.r(), m2.r()). */
@@ -266,44 +266,44 @@ public:
 	/** set force acting on molecule
 	 * @param[out] F force vector (x,y,z)
 	 */
-	void setF(double F[3]) { for(int d = 0; d < 3; d++ ) { _F[d] = F[d]; } }
+	void setF(double F[3]) override { for(int d = 0; d < 3; d++ ) { _F[d] = F[d]; } }
 
 	/** set momentum acting on molecule 
 	 * @param M force vector (x,y,z)
 	 */
-	void setM(double M[3]) { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
-	void setVi(double Vi[3]) { for(int d = 0; d < 3; d++) { _Vi[d] = Vi[d]; } }
+	void setM(double M[3]) override { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
+	void setVi(double Vi[3]) override { for(int d = 0; d < 3; d++) { _Vi[d] = Vi[d]; } }
 
-	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
-	void Madd(const double a[]) { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
-	void Viadd(const double a[]) { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
-	void vadd(const double ax, const double ay, const double az) {
+	void Fadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
+	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
+	void Viadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
+	void vadd(const double ax, const double ay, const double az) override {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
 	}
-	void vsub(const double ax, const double ay, const double az) {
+	void vsub(const double ax, const double ay, const double az) override {
 		_v[0] -= ax; _v[1] -= ay; _v[2] -= az;
 	}
 
-	void Fljcenteradd(unsigned int i, double a[]);
-	void Fljcentersub(unsigned int i, double a[]);
-	void Fchargeadd(unsigned int i, double a[]);
-	void Fchargesub(unsigned int i, double a[]);
-	void Fdipoleadd(unsigned int i, double a[]);
-	void Fdipolesub(unsigned int i, double a[]);
-	void Fquadrupoleadd(unsigned int i, double a[]);
-	void Fquadrupolesub(unsigned int i, double a[]);
+	void Fljcenteradd(unsigned int i, double a[]) override;
+	void Fljcentersub(unsigned int i, double a[]) override;
+	void Fchargeadd(unsigned int i, double a[]) override;
+	void Fchargesub(unsigned int i, double a[]) override;
+	void Fdipoleadd(unsigned int i, double a[]) override;
+	void Fdipolesub(unsigned int i, double a[]) override;
+	void Fquadrupoleadd(unsigned int i, double a[]) override;
+	void Fquadrupolesub(unsigned int i, double a[]) override;
 
 	/** First step of the leap frog integrator */
-	void upd_preF(double dt);
+	void upd_preF(double dt) override;
 	/** second step of the leap frog integrator */
-	void upd_postF(double dt_halve, double& summv2, double& sumIw2);
+	void upd_postF(double dt_halve, double& summv2, double& sumIw2) override;
 
 	/** @brief Calculate twice the translational and rotational kinetic energies
 	 * @param[out] summv2   twice the translational kinetic energy \f$ m v^2 \f$
 	 * @param[out] sumIw2   twice the rotational kinetic energy \f$ I \omega^2 \f$
 	 */
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2);
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2) override;
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) override;
 
 	/**
 	 * @return format of the function write(...)
@@ -317,22 +317,22 @@ public:
 	void writeBinary(std::ostream& ostrm) const override;
 
 	/** clear forces and moments */
-	void clearFM();
+	void clearFM() override;
 	/** calculate forces and moments for already given site forces */
-	void calcFM();
+	void calcFM() override;
 	
 	/** perform data consistency check for the molecule (only debug mode) */
-	void check(unsigned long id);
+	void check(unsigned long id) override;
 
 	/** In almost all cases, molecule's caches are stored in SoAs.
 	 * In some rare instances (e.g. ParticleContainer::getEnergy())
 	 * a molecule should rather better exist alone and not be part of a particleCell.
 	 * This function allocates a new SoA.
 	 * Remember to release it when no longer necessary! */
-	void buildOwnSoA();
+	void buildOwnSoA() override;
 
 	/** See above comment.*/
-	void releaseOwnSoA();
+	void releaseOwnSoA() override;
 
 protected:
 	/** calculate forces and moments for already given site forces, for this precise site */

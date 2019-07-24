@@ -26,7 +26,8 @@ public:
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double cellLength[3])=0;
+																	double skin, bool coversWholeDomain[3],
+																	double cellLength[3]) = 0;
 
 	/**
 	 * Returns the export halo Regions of the process.
@@ -34,10 +35,12 @@ public:
 	 * This indicates, where the processes lie that require halo copies from the current process.
 	 * @param initialRegion boundary of the current process
 	 * @param cutoffRadius
+	 * @param skin
 	 * @return vector of regions
 	 */
 	virtual std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-			bool coversWholeDomain[3], double cellLength[3])=0;
+																	double skin, bool coversWholeDomain[3],
+																	double cellLength[3]) = 0;
 
 	/**
 	 * Returns the export leaving Regions of the process.
@@ -65,10 +68,10 @@ protected:
 	 * @param condition should return true, if the HaloRegion shall be included in the return value. Its input argument is the array of offsets.
 	 * @return vector of HaloRegions
 	 */
-	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius, double skin,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
-	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, double cutoffRadius[3],
+	std::vector<HaloRegion> getHaloRegionsConditional(HaloRegion& initialRegion, const double cutoffRadius[3],
 				bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
 	/**
@@ -77,14 +80,15 @@ protected:
 	 * and if the condition is fulfilled the Region is constructed.
 	 * @param initialRegion
 	 * @param cutoffRadius
+	 * @param skin
 	 * @param coversWholeDomain
 	 * @param condition should return true, if the HaloRegion shall be included in the return value. Its input argument is the array of offsets.
 	 * @return vector of HaloRegions
 	 */
-	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius,
+	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius, double skin,
 			bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
-	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, double cutoffRadius[3],
+	std::vector<HaloRegion> getHaloRegionsConditionalInside(HaloRegion& initialRegion, const double cutoffRadius[3],
 				bool coversWholeDomain[3], const std::function<bool(const int[3])>& condition);
 
 };
