@@ -127,6 +127,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 }
 
 void AutoPasContainer::update() {
+    // in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
 		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
 							   "exist. This would lead to lost particle => ERROR!"
@@ -138,6 +139,7 @@ void AutoPasContainer::update() {
 }
 
 void AutoPasContainer::forcedUpdate() {
+    // in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
 		global_log->error() << "AutoPasContainer: trying to force update container, even though invalidParticles still "
 							   "exist. This would lead to lost particle => ERROR!"
@@ -174,6 +176,8 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
 		global_log->info() << "AutoPasContainer: traverseCells" << std::endl;
+
+		// we need to know the values of eps, sigma and the shift for the LJFunctor.
 		double epsilon=0., sigma=0., shift=0.;
 		{
 			auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
@@ -199,6 +203,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 			iter->clearFM();
 		}
 
+		// here we call the actual autopas' iteratePairwise method to compute the forces.
 		_autopasContainer.iteratePairwise(&functor);
 		double upot = functor.getUpot();
 		double virial = functor.getVirial();
@@ -226,7 +231,7 @@ unsigned long AutoPasContainer::getNumberOfParticles() {
 		++count;
 	}
 	return count;
-	//return _autopasContainer.getNumberOfParticles(); // this is currently buggy!, so we use iterators instead.
+	//return _autopasContainer.getNumberOfParticles(); // todo: this is currently buggy!, so we use iterators instead.
 }
 
 void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
