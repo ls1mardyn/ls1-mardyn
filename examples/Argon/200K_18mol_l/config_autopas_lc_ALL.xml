@@ -39,10 +39,10 @@
         <selectorStrategy>fastestMedian</selectorStrategy>
         <dataLayouts>AoS</dataLayouts>
         <newton3>enabled</newton3>
-        <tuningInterval>1000</tuningInterval>
-        <tuningSamples>4</tuningSamples>
-        <rebuildFrequency>4</rebuildFrequency>
-        <skin>3.3</skin><!--roughly 10% of cutoff-->
+        <tuningInterval>10000</tuningInterval>
+        <tuningSamples>10</tuningSamples>
+        <rebuildFrequency>10</rebuildFrequency>
+        <skin>1.</skin><!--roughly 10% of cutoff-->
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">33.0702</radiusLJ>
