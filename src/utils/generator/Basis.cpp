@@ -42,7 +42,7 @@ void Basis::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode(oldpath);
 }
 
-void Basis::addMolecule(Molecule molecule) {
+void Basis::addMolecule(const Molecule& molecule) {
 	_molecules.push_back(molecule);
 }
 
