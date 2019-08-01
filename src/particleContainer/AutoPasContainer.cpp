@@ -175,7 +175,7 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
-		global_log->info() << "AutoPasContainer: traverseCells" << std::endl;
+		// global_log->info() << "AutoPasContainer: traverseCells" << std::endl;
 
 		// we need to know the values of eps, sigma and the shift for the LJFunctor.
 		double epsilon=0., sigma=0., shift=0.;
