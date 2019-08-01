@@ -29,10 +29,19 @@
 //preprocessing macros
 //#define MASKING
 
-VectorizationTuner::VectorizationTuner() :
-	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
-	_cellProcessor(nullptr), _cutoffRadius(0), _LJCutoffRadius(0), _numRepetitionsMax(4000000) , _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL) {
-	vtWriter = std::unique_ptr<VTWriterI>(new VTWriter());
+VectorizationTuner::VectorizationTuner()
+	: _outputPrefix("Mardyn"),
+	  _minMoleculeCnt(2),
+	  _maxMoleculeCnt(512),
+	  _moleculeCntIncreaseType(both),
+	  _cellProcessor(nullptr),
+	  _cutoffRadius(0),
+	  _LJCutoffRadius(0),
+	  _numRepetitionsMax(4000000),
+	  _flopCounterBigRc(nullptr),
+	  _flopCounterNormalRc(nullptr),
+	  _flopCounterZeroRc(nullptr) {
+	vtWriter.reset(new VTWriter());
 }
 
 VectorizationTuner::~VectorizationTuner() {
@@ -42,12 +51,12 @@ VectorizationTuner::~VectorizationTuner() {
 void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 	std::string mode = "file";
 	xmlconfig.getNodeValue("mode", mode);
-	if (mode.compare("statistics") == 0) {
-		vtWriter = std::unique_ptr<VTWriterI>(new VTWriterStatistics());
-	} else if (mode.compare("file") == 0) {
-		vtWriter = std::unique_ptr<VTWriterI>(new VTWriter());
+	if (mode == "statistics") {
+		vtWriter.reset(new VTWriterStatistics());
+	} else if (mode == "file") {
+		vtWriter.reset(new VTWriter());
 	} else {
-		global_log->error() << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << endl;
+		global_log->error() << R"(Unknown FlopRateOutputPlugin::mode. Choose "stdout", "file" or "both".)" << endl;
 		Simulation::exit(1);
 	}
 
@@ -76,9 +85,9 @@ void VectorizationTuner::finish(ParticleContainer * /*particleContainer*/,
                                 DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {
 	// make a backup copy of CellBorderAndFlagManager
 	CellBorderAndFlagManager backup = ParticleCell::_cellBorderAndFlagManager;
-	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
-	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
-	_flopCounterZeroRc = new FlopCounter( 0., 0.);
+	_flopCounterNormalRc.reset(new FlopCounter(_cutoffRadius, _LJCutoffRadius));
+	_flopCounterBigRc.reset(new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig));
+	_flopCounterZeroRc.reset(new FlopCounter( 0., 0.));
 	tune(*(_simulation.getEnsemble()->getComponents()));
 
 	/*
