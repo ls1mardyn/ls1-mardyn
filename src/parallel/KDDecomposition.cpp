@@ -111,7 +111,9 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("fullSearchThreshold", _fullSearchThreshold);
 	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << endl;
 	xmlconfig.getNodeValue("heterogeneousSystems", _heterogeneousSystems);
-	global_log->info() << "KDDecomposition for heterogeneous computing systems (old version, not compatible with new VecTuner version)?: " << (_heterogeneousSystems?"yes":"no") << endl;
+	global_log->info() << "KDDecomposition for heterogeneous computing systems (old version, not compatible with new "
+						  "VecTuner version)?: "
+					   << (_heterogeneousSystems ? "yes" : "no") << endl;
 
 	bool useVecTuner = false;
 	xmlconfig.getNodeValue("useVectorizationTuner", useVecTuner);
