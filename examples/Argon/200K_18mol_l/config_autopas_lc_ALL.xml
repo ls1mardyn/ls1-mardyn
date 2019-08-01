@@ -31,7 +31,7 @@
     </ensemble>
     <algorithm>
 	    <parallelisation type="GeneralDomainDecomposition">
-		    <updateFrequency>10</updateFrequency>
+		    <updateFrequency>1000</updateFrequency>
 	    </parallelisation>
       <datastructure type="AutoPas">
         <allowedTraversals>c01, c08, c18, sli</allowedTraversals>
@@ -40,7 +40,9 @@
         <dataLayouts>AoS</dataLayouts>
         <newton3>enabled</newton3>
         <tuningInterval>1000</tuningInterval>
-        <tuningSamples>2</tuningSamples>
+        <tuningSamples>4</tuningSamples>
+        <rebuildFrequency>4</rebuildFrequency>
+        <skin>3.3</skin><!--roughly 10% of cutoff-->
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">33.0702</radiusLJ>
