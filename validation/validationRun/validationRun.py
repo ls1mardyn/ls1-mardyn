@@ -17,16 +17,13 @@ from getopt import getopt
 from sys import argv
 from subprocess import call
 from glob import glob
-from ntpath import basename
 import os
 import ntpath
 import cmd
 from subprocess import Popen, PIPE
 from shlex import split
 import compareHelpers
-from datetime import date
 import time
-import fileinput
 # from twisted.internet.defer import returnValue
 
 mpi = '-1'
