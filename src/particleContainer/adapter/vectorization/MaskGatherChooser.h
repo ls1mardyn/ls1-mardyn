@@ -1,3 +1,5 @@
+#pragma once
+
 #include "SIMD_TYPES.h"
 
 class MaskingChooser {

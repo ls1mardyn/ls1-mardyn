@@ -40,7 +40,7 @@ public:
 	/** Add molecule to basis
 	 * @param[in]  molecule  Molecule to be added to the basis
 	 */
-	void addMolecule(Molecule molecule);
+	void addMolecule(const Molecule& molecule);
 
 	/** Number of molecules of the basis
 	 * @return  number of molecules in the basis

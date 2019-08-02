@@ -124,13 +124,13 @@ private:
 	static constexpr double _LJCutoffRadiusBig=5.;
 
 	/// FlopCounter that utilizes a big cutoff radius
-	FlopCounter* _flopCounterBigRc;
+	std::unique_ptr<FlopCounter> _flopCounterBigRc;
 
 	/// FlopCounter that utilizes a normal cutoff radius
-	FlopCounter* _flopCounterNormalRc;
+	std::unique_ptr<FlopCounter> _flopCounterNormalRc;
 
 	/// FlopCounter for zero cutoff radius
-	FlopCounter* _flopCounterZeroRc;
+	std::unique_ptr<FlopCounter> _flopCounterZeroRc;
 
 	/*
 	 * Writes the given TunerTimes to a file
