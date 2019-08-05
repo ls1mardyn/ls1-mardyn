@@ -38,7 +38,11 @@ void ASCIIReader::setPhaseSpaceHeaderFile(string filename) {
 void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 	string pspfile;
 	if(xmlconfig.getNodeValue(".", pspfile)) {
-		pspfile.insert(0, xmlconfig.getDir());
+		pspfile = string_utils::trim(pspfile);
+		// only prefix xml dir if path is not absolute
+		if (pspfile[0] != '/') {
+			pspfile.insert(0, xmlconfig.getDir());
+		}
 		global_log->info() << "phasespacepoint description file:\t" << pspfile << endl;
 	}
 	setPhaseSpaceFile(pspfile);

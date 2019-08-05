@@ -16,6 +16,7 @@
 #include "utils/mardyn_assert.h"
 //#include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
+#include "String_utils.h"
 
 //#include <cstdio>	// fseek(),fread(); should be included after mpi.h
 //#ifdef __linux__
@@ -178,62 +179,32 @@ void XMLfile::clear()
 	invalidateQueries();
 }
 
-bool XMLfile::initfile_local(const string& filepath)
-{
+bool XMLfile::initfile_local(const string& filepath) {
 	clear();
-	std::size_t fnpos=filepath.find_last_of('/');
-	if (fnpos!=string::npos)
-	{
-		m_filedir=string(filepath).substr(0,fnpos+1);
-		m_filename=string(filepath).substr(fnpos+1);
+	auto filepathTrimmed = string_utils::trim(filepath);
+	std::size_t fnpos=filepathTrimmed.find_last_of('/');
+	if (fnpos!=string::npos) {
+		m_filedir=string(filepathTrimmed).substr(0,fnpos+1);
+		m_filename=string(filepathTrimmed).substr(fnpos+1);
 	}
-	else
-	{
+	else {
 		m_filedir=string();
-		m_filename=string(filepath);
+		m_filename=string(filepathTrimmed);
 	}
 	
-	// read filepath file content -> xmlstr
-	// determination of the file size, reading a file to memory (string),... should probably better be outsourced to extra utility functions
-/*version using cstdio
-	FILE *fp;
-	fp=fopen(filepath.c_str(),"rb");
-	if(!fp)
-	{
-		cerr << "ERROR opening " << filepath << endl;
-		clear();
-		return false;
-	}
-	// determine file size
-#ifdef __linux__
-	struct stat st;
-	stat(filepath.c_str(), &st);
-	off_t filesize = st.st_size;
-#else
-	// Warning: SEEK_END and SEEK_SET will also be defined in the now obsolete C++ binding of MPI 2!
-	// -> compilation with -D MPICH_IGNORE_CXX_SEEK 
-	fseek(fp,0,SEEK_END);
-	size_t filesize=ftell(fp);
-	fseek(fp,0,SEEK_SET);
-#endif
-	char* xmlstr = m_xmldoc.allocate_string(NULL,filesize+1);
-	xmlstr[filesize]=0;
-	filesize -= fread(xmlstr,sizeof(char),filesize,fp);
-	fclose(fp);
-*/
-//version using ifstream
-	ifstream fstrm(filepath.c_str(),ifstream::binary|ifstream::ate);
+    //version using ifstream
+	ifstream fstrm(filepathTrimmed.c_str(),ifstream::binary|ifstream::ate);
 	if(!fstrm) {
-		cerr << "ERROR opening " << filepath << endl;
+		cerr << "ERROR opening " << filepathTrimmed << endl;
 		clear();
 		return false;
 	}
 	ifstream::pos_type filesize=fstrm.tellg();
 	fstrm.close(); fstrm.clear();
-	char* xmlstr = m_xmldoc.allocate_string(NULL,static_cast<size_t>(filesize)+1);
+	char* xmlstr = m_xmldoc.allocate_string(nullptr,static_cast<size_t>(filesize)+1);
 	xmlstr[filesize]=0;
 	//                          ios::binary
-	fstrm.open(filepath.c_str(),ifstream::binary);
+	fstrm.open(filepathTrimmed.c_str(),ifstream::binary);
 	//checking if(!fstrm) again should not be necessary 
 	fstrm.read(xmlstr,filesize);
 	filesize-=fstrm.gcount();
