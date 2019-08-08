@@ -407,7 +407,7 @@ void MeasureLoad::calcConstants() {
 }
 
 double MeasureLoad::getValue(int numParticles) const {
-	mardyn_assert(numParticles > 0);
+	mardyn_assert(numParticles >= 0);
 	mardyn_assert(_preparedLoad);
 
 #ifndef MARDYN_MEASURECALC_V1
