@@ -49,7 +49,10 @@ void BinaryReader::readXML(XMLfileUnits& xmlconfig) {
 	string pspfile;
 	string pspheaderfile;
 	xmlconfig.getNodeValue("header", pspheaderfile);
-	pspheaderfile.insert(0, xmlconfig.getDir());
+    pspheaderfile = string_utils::trim(pspheaderfile);
+    if (pspheaderfile[0] != '/') {
+      pspheaderfile.insert(0, xmlconfig.getDir());
+    }
 	global_log->info() << "phase space header file: " << pspheaderfile << endl;
 	xmlconfig.getNodeValue("data", pspfile);
 	pspfile = string_utils::trim(pspfile);
@@ -57,7 +60,7 @@ void BinaryReader::readXML(XMLfileUnits& xmlconfig) {
 	if (pspfile[0] != '/') {
 	  pspfile.insert(0, xmlconfig.getDir());
 	}
-	global_log->info() << "phase space header file: " << pspfile << endl;
+	global_log->info() << "phase space data file: " << pspfile << endl;
 	setPhaseSpaceHeaderFile(pspheaderfile);
 	setPhaseSpaceFile(pspfile);
 }
