@@ -218,6 +218,9 @@
         <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
         <selectorStrategy>fastestMedian</selectorStrategy>
+        <!-- specify which tuning algorithm should be used -->
+        <!-- possible values: fullSearch, bayesian -->
+        <selectorStrategy>fastestMedian</selectorStrategy>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->

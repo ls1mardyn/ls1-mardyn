@@ -116,6 +116,7 @@ private:
 	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
+	autopas::TuningStrategyOption _tuningStrategyOption;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::set<autopas::Newton3Option> _newton3Choices;
 

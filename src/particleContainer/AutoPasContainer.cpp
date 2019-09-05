@@ -23,6 +23,7 @@ AutoPasContainer::AutoPasContainer()
 	  _traversalChoices(autopas::allTraversalOptions),
 	  _containerChoices(autopas::allContainerOptions),
 	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
+	  _tuningStrategyOption(autopas::TuningStrategyOption::fullSearch),
 	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
 	  _newton3Choices{autopas::Newton3Option::enabled} {
 #ifdef ENABLE_MPI
@@ -55,6 +56,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	_selectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median")));
+
+	_tuningStrategyOption = autopas::utils::StringUtils::parseTuningStrategyOption(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningStrategy", "fullSearch")));
 
 	_dataLayoutChoices = autopas::utils::StringUtils::parseDataLayout(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayouts", "soa")));
@@ -117,6 +121,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setAllowedTraversals(_traversalChoices);
 	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
 	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
+	_autopasContainer.setTuningStrategyOption(_tuningStrategyOption);
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
