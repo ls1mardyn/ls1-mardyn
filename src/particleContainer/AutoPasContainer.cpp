@@ -19,11 +19,13 @@ AutoPasContainer::AutoPasContainer()
 	  _verletRebuildFrequency(10u),
 	  _tuningFrequency(1000u),
 	  _tuningSamples(3u),
+	  _maxEvidence(20),
 	  _autopasContainer(),
 	  _traversalChoices(autopas::allTraversalOptions),
 	  _containerChoices(autopas::allContainerOptions),
 	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
 	  _tuningStrategyOption(autopas::TuningStrategyOption::fullSearch),
+	  _tuningAcquisitionFunction(autopas::AcquisitionFunctionOption::upperConfidenceBound),
 	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
 	  _newton3Choices{autopas::Newton3Option::enabled} {
 #ifdef ENABLE_MPI
@@ -66,6 +68,10 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_newton3Choices = autopas::utils::StringUtils::parseNewton3Options(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("newton3", "enabled")));
 
+    _tuningAcquisitionFunction = autopas::utils::StringUtils::parseAcquisitionFunctionOption(
+        string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningAcquisitionFunction", "ucb")));
+
+    _maxEvidence = (unsigned int)xmlconfig.getNodeValue_int("maxEvidence", 20);
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
 
@@ -122,6 +128,8 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
 	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
 	_autopasContainer.setTuningStrategyOption(_tuningStrategyOption);
+	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
+	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 

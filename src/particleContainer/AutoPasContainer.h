@@ -110,6 +110,7 @@ private:
 	unsigned int _verletRebuildFrequency;
 	unsigned int _tuningFrequency;
 	unsigned int _tuningSamples;
+	unsigned int _maxEvidence;
 	typedef autopas::FullParticleCell<Molecule> CellType;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 
@@ -117,6 +118,7 @@ private:
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
 	autopas::TuningStrategyOption _tuningStrategyOption;
+	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::set<autopas::Newton3Option> _newton3Choices;
 

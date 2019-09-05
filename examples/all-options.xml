@@ -227,8 +227,10 @@
         <newton3>enabled</newton3>
         <!-- How many iterations before retuning -->
         <tuningInterval>1000</tuningInterval>
-        <!-- How many samples should the tuner take for each tested combination -->
+        <!-- How many samples should the tuner take for each tested combination (=1 Evidence) -->
         <tuningSamples>5</tuningSamples>
+        <!-- How many evidences a tuning strategy should sample (not used by all strategies, i.e. fullSearch) -->
+        <maxEvidence>20</maxEvidence>
       </datastructure>
 
       <!-- cutoff definitions -->
