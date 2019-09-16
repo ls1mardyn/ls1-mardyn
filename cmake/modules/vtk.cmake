@@ -6,7 +6,6 @@ if(ENABLE_VTK)
       HINTS $ENV{XERCES_LIBDIR}
       )
 
-    # /lrz/mnt/sys.x86_sles12/spack/18.2/opt/x86_avx2/xerces-c/3.2.1-gcc-jz3anmr/include/
     if(NOT VTK_LIB)
         message(FATAL_ERROR "xerces-c lib not found. Disable VTK support, if you do not need it.")
     endif()
