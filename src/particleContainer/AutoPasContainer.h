@@ -110,7 +110,7 @@ private:
 	unsigned int _verletRebuildFrequency;
 	unsigned int _tuningFrequency;
 	unsigned int _tuningSamples;
-	typedef autopas::FullParticleCell<Molecule> CellType;
+	using CellType = autopas::FullParticleCell<Molecule>;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 
 	std::set<autopas::TraversalOption> _traversalChoices;

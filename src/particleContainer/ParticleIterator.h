@@ -1,4 +1,4 @@
-/***********************************************************************************//**
+/*************************************************************************************
  *
  * \file ParticleIterator.h
  *
@@ -21,7 +21,7 @@
 /**
  * Wrapper class for AutoPas' ParticleIterator
  */
-class ParticleIterator : public autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> {
+class ParticleIterator : public autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule, true> {
 public:
 
 	enum Type {
@@ -29,13 +29,13 @@ public:
 		ONLY_INNER_AND_BOUNDARY=1, /* iterates only inner and boundary cells, i.e. no halo cells */
 	};
 
-	ParticleIterator(){};
+	ParticleIterator() = default;
 
-	ParticleIterator(autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule> parent)
-		: autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule>(parent) {}
+	ParticleIterator(const autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t& parent)
+		: autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule, true>(parent) {}
 
-	size_t getCellIndex(){
-		return 0; // not yet implemented
+	size_t getCellIndex() {
+		return 0;  // not yet implemented
 	}
 };
 
