@@ -34,13 +34,13 @@
       <datastructure type="AutoPas">
         <allowedTraversals>c01, c08, c04, c18, sli, verlet, slicedVerlet, v01, v18, directsum, varVerlet</allowedTraversals>
         <allowedContainers>linkedCells, verletLists, directsum, verletListsCells, varVerletListsAsBuild</allowedContainers>
-        <selectorStrategy>fastestMedian</selectorStrategy>
+        <selectorStrategy>fastestMean</selectorStrategy>
         <dataLayouts>AoS, SoA</dataLayouts>
         <newton3>enabled, disabled</newton3>
         <tuningInterval>1000</tuningInterval>
-        <tuningSamples>3</tuningSamples>
+        <tuningSamples>10</tuningSamples>
         <rebuildFrequency>10</rebuildFrequency>
-        <skin>0.4</skin>
+        <skin>0.5</skin>
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">33.0702</radiusLJ>
