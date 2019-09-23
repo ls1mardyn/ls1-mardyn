@@ -36,9 +36,11 @@
         <allowedContainers>linkedCells, verletLists, directsum</allowedContainers>
         <selectorStrategy>fastestMedian</selectorStrategy>
         <dataLayouts>AoS</dataLayouts>
-        <newton3>enabled</newton3>
+        <newton3>enabled, disabled</newton3>
         <tuningInterval>1000</tuningInterval>
         <tuningSamples>3</tuningSamples>
+        <rebuildFrequency>10</rebuildFrequency>
+        <skin>0.4</skin>
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">33.0702</radiusLJ>
