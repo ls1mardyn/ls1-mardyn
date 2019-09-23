@@ -21,7 +21,7 @@
 /**
  * Wrapper class for AutoPas' ParticleIterator
  */
-class ParticleIterator : public autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule, true> {
+class ParticleIterator : public autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t {
 public:
 
 	enum Type {
@@ -32,7 +32,7 @@ public:
 	ParticleIterator() = default;
 
 	ParticleIterator(const autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t& parent)
-		: autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule, true>(parent) {}
+		: autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t(parent) {}
 
 	size_t getCellIndex() {
 		return 0;  // not yet implemented
