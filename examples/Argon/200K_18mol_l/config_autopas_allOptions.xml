@@ -32,9 +32,9 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
       <datastructure type="AutoPas">
-        <allowedTraversals>c01, c08, c04, c18, sli, verlet, slicedVerlet, v01, v18, directsum, varVerlet</allowedTraversals>
+        <allowedTraversals>c01, c08, c04, c18, sli, verlet-lists, slicedVerlet, v01, v18, directsum, varVerlet</allowedTraversals>
         <allowedContainers>linkedCells, verletLists, directsum, verletListsCells, varVerletListsAsBuild</allowedContainers>
-        <selectorStrategy>fastestMean</selectorStrategy>
+        <selectorStrategy>fastestMean</selectorStrategy><!--fastestMedian,fastestAbs-->
         <dataLayouts>AoS, SoA</dataLayouts>
         <newton3>enabled, disabled</newton3>
         <tuningInterval>1000</tuningInterval>
