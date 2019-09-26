@@ -14,13 +14,7 @@
 #include "parallel/DomainDecompBase.h"
 
 AutoPasContainer::AutoPasContainer()
-	: _cutoff(0.),
-	  _verletSkin(0.3),
-	  _verletRebuildFrequency(10u),
-	  _tuningFrequency(1000u),
-	  _tuningSamples(3u),
-	  _autopasContainer(),
-	  _traversalChoices(autopas::allTraversalOptions),
+	: _traversalChoices(autopas::allTraversalOptions),
 	  _containerChoices(autopas::allContainerOptions),
 	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
 	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
