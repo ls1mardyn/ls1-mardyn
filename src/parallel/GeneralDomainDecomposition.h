@@ -46,9 +46,7 @@ public:
 
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(const std::string& filename, Domain* domain) override {
-		throw std::runtime_error("GeneralDomainDecomposition::printDecomp() not yet implemented");
-	}
+	void printDecomp(const std::string& filename, Domain* domain) override;
 
 	// returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local
 	// area)
