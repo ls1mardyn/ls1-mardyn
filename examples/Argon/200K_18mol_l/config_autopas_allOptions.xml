@@ -32,9 +32,10 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
       <!--<parallelisation type="GeneralDomainDecomposition">
-		  <updateFrequency>1000</updateFrequency>
+		  <updateFrequency>1000</updateFrequency><comment>updateFrequency specifies how often a rebalancing will occur.</comment>
 		  <initialPhaseTime>10000</initialPhaseTime>
-          <initialPhaseFrequency>500</initialPhaseFrequency>
+		  <comment>initialPhaseTime specifies for how many time steps the initial rebalancing phase should last, in which initialPhaseFrequency is applied instead of updateFrequency.</comment>
+          <initialPhaseFrequency>500</initialPhaseFrequency><comment>initialPhaseFrequency specifies how often a rebalancing will occur within the initial rebalancing phase.</comment>
       </parallelisation>-->
       <datastructure type="AutoPas">
         <allowedTraversals>c01, c08, c04, c18, sli, verlet-lists, slicedVerlet, v01, v18, directsum, varVerlet</allowedTraversals>
