@@ -42,13 +42,15 @@ GeneralDomainDecomposition::~GeneralDomainDecomposition() = default;
 
 double GeneralDomainDecomposition::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _boxMax[dimension]; }
 
-bool GeneralDomainDecomposition::queryRebalancing(size_t step, size_t updateFrequency, double /*lastTraversalTime*/) {
-	return step % updateFrequency == 0;
+bool GeneralDomainDecomposition::queryRebalancing(size_t step, size_t updateFrequency, size_t initPhase,
+												  size_t initUpdateFrequency, double /*lastTraversalTime*/) {
+	return step <= initPhase ? step % initUpdateFrequency == 0 : step % updateFrequency == 0;
 }
 
 void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 													ParticleContainer* moleculeContainer, Domain* domain) {
-	bool rebalance = queryRebalancing(_steps, _rebuildFrequency, lastTraversalTime) or forceRebalancing;
+	bool rebalance =
+		queryRebalancing(_steps, _rebuildFrequency, _initPhase, _initFrequency, lastTraversalTime) or forceRebalancing;
 	if (_steps == 0) {
 		// ensure that there are no outer particles
 		moleculeContainer->deleteOuterParticles();
@@ -57,7 +59,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	} else {
 		if (rebalance) {
-			if(moleculeContainer->isInvalidParticleReturner() and not moleculeContainer->hasInvalidParticles()){
+			if (moleculeContainer->isInvalidParticleReturner() and not moleculeContainer->hasInvalidParticles()) {
 				moleculeContainer->forcedUpdate();
 			}
 			// first transfer leaving particles
@@ -124,13 +126,13 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	}
 	global_log->set_mpi_output_all();
 	global_log->debug() << "migrating from"
-					   << " [" << oldBoxMin[0] << ", " << oldBoxMax[0] << "] x"
-					   << " [" << oldBoxMin[1] << ", " << oldBoxMax[1] << "] x"
-					   << " [" << oldBoxMin[2] << ", " << oldBoxMax[2] << "] " << std::endl;
+						<< " [" << oldBoxMin[0] << ", " << oldBoxMax[0] << "] x"
+						<< " [" << oldBoxMin[1] << ", " << oldBoxMax[1] << "] x"
+						<< " [" << oldBoxMin[2] << ", " << oldBoxMax[2] << "] " << std::endl;
 	global_log->debug() << "to"
-					   << " [" << newMin[0] << ", " << newMax[0] << "] x"
-					   << " [" << newMin[1] << ", " << newMax[1] << "] x"
-					   << " [" << newMin[2] << ", " << newMax[2] << "]." << std::endl;
+						<< " [" << newMin[0] << ", " << newMax[0] << "] x"
+						<< " [" << newMin[1] << ", " << newMax[1] << "] x"
+						<< " [" << newMin[2] << ", " << newMax[2] << "]." << std::endl;
 	global_log->set_mpi_output_root(0);
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
@@ -221,6 +223,14 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 
 	xmlconfig.getNodeValue("updateFrequency", _rebuildFrequency);
 	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;
+
+	xmlconfig.getNodeValue("initialPhaseTime", _initPhase);
+	global_log->info() << "GeneralDomainDecomposition time for initial rebalancing phase: " << _rebuildFrequency
+					   << endl;
+
+	xmlconfig.getNodeValue("initialPhaseFrequency", _initFrequency);
+	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _rebuildFrequency
+					   << endl;
 }
 
 /**
