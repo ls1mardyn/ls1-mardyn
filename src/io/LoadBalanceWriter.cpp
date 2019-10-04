@@ -48,8 +48,8 @@ void LoadbalanceWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode(oldpath);
 }
 
-void LoadbalanceWriter::init(ParticleContainer *particleContainer,
-                             DomainDecompBase *domainDecomp, Domain *domain) {
+void LoadbalanceWriter::init(ParticleContainer */*particleContainer*/,
+                             DomainDecompBase *domainDecomp, Domain */*domain*/) {
 	std::string default_timer_name(LB_WRITER_DEFAULT_TIMER_NAME);
 	_defaultTimer = new Timer();
 	global_simulation->timers()->registerTimer(default_timer_name, vector<string>{"SIMULATION"}, _defaultTimer);
@@ -76,8 +76,8 @@ void LoadbalanceWriter::init(ParticleContainer *particleContainer,
 }
 
 void LoadbalanceWriter::endStep(
-        ParticleContainer *particleContainer,
-        DomainDecompBase *domainDecomp, Domain *domain,
+        ParticleContainer */*particleContainer*/,
+        DomainDecompBase *domainDecomp, Domain */*domain*/,
         unsigned long simstep
 )  {
 	_defaultTimer->stop();
@@ -93,11 +93,11 @@ void LoadbalanceWriter::endStep(
 void LoadbalanceWriter::writeOutputFileHeader() {
 	std::ofstream outputfile(_outputFilename, std::ofstream::out);
 	outputfile << "#simstep";
-	for(auto timername : _timerNames) {
+	for(const auto& timername : _timerNames) {
 		outputfile << "\t#" << timername <<"#\t\t";
 	}
 	outputfile << "\n";
-	for(auto timername : _timerNames) {
+	for(const auto& timername : _timerNames) {
 		outputfile << "\tmin\tmax\tf_LB\timbalance";
 	}
 	outputfile << std::endl;
@@ -106,7 +106,7 @@ void LoadbalanceWriter::writeOutputFileHeader() {
 
 void LoadbalanceWriter::recordTimes(unsigned long simstep) {
 	_simsteps.push_back(simstep);
-	for(auto timername : _timerNames) {
+	for(const auto& timername : _timerNames) {
 		Timer *timer = global_simulation->timers()->getTimer(timername);
 		double time = timer->get_etime();
 		if(_incremental[timername]){
@@ -124,12 +124,14 @@ void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
 	//! @todo If this shall become a general LB monitor/manager a MPI_Allreduce will be needed here
 	MPI_CHECK(
 			MPI_Reduce( _times.data(), _global_times.data(), _times.size(), MPI_DOUBLE, MPI_MAX,0, domainDecomp->getCommunicator()));
+
+	// only sum over the positive times, so "+2"
 	for (size_t ind = 0; ind < _times.size(); ind += 2) {
-		// sum of +time
+		// sum of +time (not the negative ones!)
 		_sum_times.push_back(_times[ind]);
-		MPI_CHECK(
-				MPI_Reduce( _sum_times.data(), _global_sum_times.data(), _sum_times.size(), MPI_DOUBLE, MPI_SUM, 0, domainDecomp->getCommunicator()));
 	}
+	MPI_CHECK(MPI_Reduce(_sum_times.data(), _global_sum_times.data(), _sum_times.size(), MPI_DOUBLE, MPI_SUM, 0,
+						 domainDecomp->getCommunicator()));
 #else
 	//! @todo in case we do not reuse _times later on, we may use here  _global_times = std::move(_times);
 	_global_times = _times;
@@ -172,7 +174,7 @@ void LoadbalanceWriter::writeLBEntry(size_t id, std::ofstream &outputfile, int n
 	outputfile << std::endl;
 }
 
-void LoadbalanceWriter::displayWarning(unsigned long simstep, std::string timername, double f_LB) {
+void LoadbalanceWriter::displayWarning(unsigned long simstep, const std::string& timername, double f_LB) {
 	global_log->warning() << "Load balance limit exceeded in simstep " << simstep
 		<< " for timer " << timername
 		<< ", limit: " << _warninglevels[timername]

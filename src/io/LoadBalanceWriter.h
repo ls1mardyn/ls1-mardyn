@@ -78,7 +78,7 @@ private:
 	void writeOutputFileHeader();
 	void writeLBEntry(size_t id, std::ofstream &outputfile, int numRanks);
 	void flush(DomainDecompBase* domainDecomp);
-	void displayWarning(unsigned long simstep, std::string timername, double f_LB);
+	void displayWarning(unsigned long simstep, const std::string& timername, double f_LB);
 
 	unsigned long _writeFrequency;
 	std::string _outputFilename;
