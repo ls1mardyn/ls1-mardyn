@@ -20,7 +20,6 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength,
 	auto gridSize = getOptimalGrid(domainLength, this->getNumProcs());
 	auto gridCoords = getCoordsFromRank(gridSize, _rank);
 	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
-	global_log->set_mpi_output_all();
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
@@ -75,7 +74,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			global_log->info() << "rebalancing..." << std::endl;
 
 			global_log->set_mpi_output_all();
-			global_log->info() << "work:" << lastTraversalTime << std::endl;
+			global_log->debug() << "work:" << lastTraversalTime << std::endl;
 			global_log->set_mpi_output_root(0);
 			std::tie(newBoxMin, newBoxMax) = _loadBalancer->rebalance(lastTraversalTime);
 
