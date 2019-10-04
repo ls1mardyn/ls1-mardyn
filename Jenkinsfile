@@ -451,7 +451,7 @@ pipeline {
           // https://issues.jenkins-ci.org/browse/JENKINS-49826
           matrixBuilder = { def matrix, int level ->
             // Fail the entire pipeline if one step fails
-            variations.failFast = true
+            variations.failFast = false
             // HACK Jobs to manage resource allocation on the knl cluster
             variations["slurm"] = {
               try {
