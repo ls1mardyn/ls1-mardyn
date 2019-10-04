@@ -5,13 +5,15 @@
  */
 
 #include "GeneralDomainDecomposition.h"
+#ifdef ENABLE_ALLLBL
 #include "ALLLoadBalancer.h"
+#endif
 #include "Domain.h"
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
-GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Domain* domain)
-	: _boxMin{0.}, _boxMax{0.}, _cutoffRadius{cutoffRadius} {
+GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain)
+	: _boxMin{0.}, _boxMax{0.} {
 	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 										  domain->getGlobalLength(2)};
 
@@ -24,7 +26,7 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Doma
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
 #ifdef ENABLE_ALLLBL
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
-													  gridCoords, cutoffRadius /*minimal domain size*/);
+													  gridCoords, interactionLength /*minimal domain size*/);
 #else
 	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
 	Simulation::exit(24235);
@@ -211,7 +213,7 @@ void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeCon
 		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _coversWholeDomain[d]);
 	}
-	_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
+	_neighbourCommunicationScheme->initCommunicationPartners(moleculeContainer->getCutoff(), domain, this, moleculeContainer);
 }
 
 void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
