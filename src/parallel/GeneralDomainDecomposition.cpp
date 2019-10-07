@@ -5,26 +5,27 @@
  */
 
 #include "GeneralDomainDecomposition.h"
+#ifdef ENABLE_ALLLBL
 #include "ALLLoadBalancer.h"
+#endif
 #include "Domain.h"
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
-GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, Domain* domain)
-	: _boxMin{0.}, _boxMax{0.}, _cutoffRadius{cutoffRadius} {
+GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain)
+	: _boxMin{0.}, _boxMax{0.} {
 	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 										  domain->getGlobalLength(2)};
 
 	auto gridSize = getOptimalGrid(domainLength, this->getNumProcs());
 	auto gridCoords = getCoordsFromRank(gridSize, _rank);
 	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
-	global_log->set_mpi_output_all();
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
 #ifdef ENABLE_ALLLBL
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
-													  gridCoords, cutoffRadius /*minimal domain size*/);
+													  gridCoords, interactionLength /*minimal domain size*/);
 #else
 	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
 	Simulation::exit(24235);
@@ -73,7 +74,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			global_log->info() << "rebalancing..." << std::endl;
 
 			global_log->set_mpi_output_all();
-			global_log->info() << "work:" << lastTraversalTime << std::endl;
+			global_log->debug() << "work:" << lastTraversalTime << std::endl;
 			global_log->set_mpi_output_root(0);
 			std::tie(newBoxMin, newBoxMax) = _loadBalancer->rebalance(lastTraversalTime);
 
@@ -211,7 +212,7 @@ void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeCon
 		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _coversWholeDomain[d]);
 	}
-	_neighbourCommunicationScheme->initCommunicationPartners(_cutoffRadius, domain, this, moleculeContainer);
+	_neighbourCommunicationScheme->initCommunicationPartners(moleculeContainer->getCutoff(), domain, this, moleculeContainer);
 }
 
 void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {

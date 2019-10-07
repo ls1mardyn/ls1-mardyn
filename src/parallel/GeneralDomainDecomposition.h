@@ -15,11 +15,11 @@
 class GeneralDomainDecomposition : public DomainDecompMPIBase {
 public:
 	/**
-	 * Constructor for the GeneralDomainDecomposition
-	 * @param cutoffRadius
+	 * Constructor for the GeneralDomainDecomposition.
+	 * @param interactionLength
 	 * @param domain
 	 */
-	GeneralDomainDecomposition(double cutoffRadius, Domain* domain);
+	GeneralDomainDecomposition(double interactionLength, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
 	~GeneralDomainDecomposition() override;
@@ -151,7 +151,7 @@ private:
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
-	double _cutoffRadius;
+
 	std::array<bool, 3> _coversWholeDomain{};
 
 	size_t _steps{0};
