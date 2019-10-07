@@ -324,12 +324,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				if (xmlconfig.changecurrentnode("datastructure")) {
 					string datastructuretype;
 					xmlconfig.getNodeValue("@type", datastructuretype);
-					if (datastructuretype == "AutoPas" || datastructuretype == "AutoPasContainer") {
+					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
 						xmlconfig.getNodeValue("skin", skin);
 						global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 					} else {
 						global_log->error() << "Using the GeneralDomainDecomposition is only supported when using "
-											   "AutoPas, but AutoPas is not used."
+											   "AutoPas, but the configuration file does not use it."
 											<< endl;
 						Simulation::exit(2);
 					}
