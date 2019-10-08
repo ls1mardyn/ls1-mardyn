@@ -15,11 +15,9 @@
 
 TEST_SUITE_REGISTRATION(DomainDecompositionTest);
 
-DomainDecompositionTest::DomainDecompositionTest() {
-}
+DomainDecompositionTest::DomainDecompositionTest() = default;
 
-DomainDecompositionTest::~DomainDecompositionTest() {
-}
+DomainDecompositionTest::~DomainDecompositionTest() = default;
 
 void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
 	// original pointer will be deleted by tearDown() (delete global_simulation)
@@ -27,7 +25,7 @@ void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * fil
 
 	std::unique_ptr<ParticleContainer> container{
 		initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff)};
-	int numMols = container->getNumberOfParticles();
+	auto numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
 	_domainDecomposition->collCommAppendInt(numMols);
@@ -38,7 +36,7 @@ void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * fil
 	_domainDecomposition->balanceAndExchange(0., true, container.get(), _domain);
 	container->deleteOuterParticles();
 
-	int newNumMols = container->getNumberOfParticles();
+	auto newNumMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
 	_domainDecomposition->collCommAppendInt(newNumMols);
@@ -59,7 +57,7 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	std::unique_ptr<ParticleContainer> container{
 		initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff)};
-	int numMols = container->getNumberOfParticles();
+	auto numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
 	_domainDecomposition->collCommAppendInt(numMols);
@@ -103,7 +101,7 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	_domainDecomposition->balanceAndExchange(0., true, container.get(), _domain);
 	container->deleteOuterParticles();
 
-	int newNumMols = container->getNumberOfParticles();
+	auto newNumMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
 	_domainDecomposition->collCommAppendInt(newNumMols);
