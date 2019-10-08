@@ -21,7 +21,7 @@ DomainDecompositionTest::~DomainDecompositionTest() = default;
 
 void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
 	// original pointer will be deleted by tearDown() (delete global_simulation)
-	std::unique_ptr<DomainDecomposition> _domainDecomposition {new DomainDecomposition()};
+	_domainDecomposition = new DomainDecomposition();
 
 	std::unique_ptr<ParticleContainer> container{
 		initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff)};
@@ -45,6 +45,8 @@ void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * fil
 	_domainDecomposition->collCommFinalize();
 
 	ASSERT_EQUAL(numMols, newNumMols);
+
+	delete _domainDecomposition;
 }
 
 void DomainDecompositionTest::testNoDuplicatedParticles() {
@@ -52,8 +54,7 @@ void DomainDecompositionTest::testNoDuplicatedParticles() {
 }
 
 void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename, double cutoff) {
-	// original pointer will be deleted by tearDown() (delete global_simulation)
-	std::unique_ptr<DomainDecomposition> _domainDecomposition{new DomainDecomposition()};
+	_domainDecomposition = new DomainDecomposition();
 
 	std::unique_ptr<ParticleContainer> container{
 		initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff)};
@@ -123,6 +124,8 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 			}
 		}
 	}
+
+	delete _domainDecomposition;
 }
 
 void DomainDecompositionTest::testNoLostParticles() {
