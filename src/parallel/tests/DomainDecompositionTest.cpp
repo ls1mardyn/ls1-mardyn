@@ -28,9 +28,9 @@ void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * fil
 	auto numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(numMols);
+	_domainDecomposition->collCommAppendUnsLong(numMols);
 	_domainDecomposition->collCommAllreduceSum();
-	numMols = _domainDecomposition->collCommGetInt();
+	numMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
 	_domainDecomposition->balanceAndExchange(0., true, container.get(), _domain);
@@ -39,9 +39,9 @@ void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * fil
 	auto newNumMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(newNumMols);
+	_domainDecomposition->collCommAppendUnsLong(newNumMols);
 	_domainDecomposition->collCommAllreduceSum();
-	newNumMols = _domainDecomposition->collCommGetInt();
+	newNumMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
 	ASSERT_EQUAL(numMols, newNumMols);
@@ -61,9 +61,9 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	auto numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(numMols);
+	_domainDecomposition->collCommAppendUnsLong(numMols);
 	_domainDecomposition->collCommAllreduceSum();
-	numMols = _domainDecomposition->collCommGetInt();
+	numMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
 
@@ -105,9 +105,9 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	auto newNumMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(newNumMols);
+	_domainDecomposition->collCommAppendUnsLong(newNumMols);
 	_domainDecomposition->collCommAllreduceSum();
-	newNumMols = _domainDecomposition->collCommGetInt();
+	newNumMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);
