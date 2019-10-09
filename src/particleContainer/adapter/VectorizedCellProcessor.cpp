@@ -126,34 +126,44 @@ void VectorizedCellProcessor::endTraversal() {
 	vcp_real_accum glob_upotXpoles = 0.0;
 	vcp_real_accum glob_virial = 0.0;
 	vcp_real_accum glob_myRF = 0.0;
+	vcp_real_accum glob_dUdVm3 = 0.0;
+	vcp_real_accum glob_d2UdV2m3 = 0.0;
 
 	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:glob_upot6lj, glob_upotXpoles, glob_virial, glob_myRF)
+	#pragma omp parallel reduction(+:glob_upot6lj, glob_upotXpoles, glob_virial, glob_myRF, glob_dUdVm3, glob_d2UdV2m3)
 	#endif
 	{
 		const int tid = mardyn_get_thread_num();
 
 		// reduce vectors and clear local variable
-		vcp_real_accum thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0;
+		vcp_real_accum thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0, thread_dUdVm3 = 0.0, thread_d2UdV2m3 = 0.0;
 
 		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
 		load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
 		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
 		load_hSum_Store_Clear(&thread_myRF, _threadData[tid]->_myRFV);
+		load_hSum_Store_Clear(&thread_dUdVm3, _threadData[tid]->_dUdVm3V);
+		load_hSum_Store_Clear(&thread_d2UdV2m3, _threadData[tid]->_d2UdV2m3V);
 
 		// add to global sum
 		glob_upot6lj += thread_upot;
 		glob_upotXpoles += thread_upotXpoles;
 		glob_virial += thread_virial;
 		glob_myRF += thread_myRF;
+		glob_dUdVm3 += thread_dUdVm3;
+		glob_d2UdV2m3 += thread_d2UdV2m3;
 	} // end pragma omp parallel reduction
 
 	_upot6lj = glob_upot6lj;
 	_upotXpoles = glob_upotXpoles;
 	_virial = glob_virial;
 	_myRF = glob_myRF;
+	_dUdVm3 = glob_dUdVm3;
+	_d2UdV2m3 = glob_d2UdV2m3;
 	_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	_domain.setLocalUpot(_upot6lj / 6.0 + _upotXpoles + _myRF);
+	_domain.setLocaldUdV(_dUdVm3 / 3.0);
+	_domain.setLocald2UdV2(_d2UdV2m3 / 3.0);
 }
 
 	//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
@@ -178,7 +188,7 @@ void VectorizedCellProcessor::endTraversal() {
 			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 			RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
-			RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial,
+			RealAccumVec& sum_upot6lj, RealAccumVec& sum_virial, RealAccumVec& sum_dUdVm3, RealAccumVec& sum_d2UdV2m3,
 			const MaskCalcVec& forceMask,
 			const RealCalcVec& eps_24, const RealCalcVec& sig2,
 			const RealCalcVec& shift6)
@@ -212,6 +222,9 @@ void VectorizedCellProcessor::endTraversal() {
 		V_y = RealAccumVec::convertCalcToAccum(m_dy * f_y);//1FP (virial)
 		V_z = RealAccumVec::convertCalcToAccum(m_dz * f_z);//1FP (virial)
 
+		const RealCalcVec dudVm3   = eps_24*(two*lj12 -       lj6);
+		const RealCalcVec d2udV2m3 = eps_24*(ten*lj12 - three*lj6);
+
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 
@@ -219,9 +232,18 @@ void VectorizedCellProcessor::endTraversal() {
 			const RealCalcVec upot_masked = RealCalcVec::apply_mask(upot_sh, forceMask); //mask it
 			const RealAccumVec upot_accum = RealAccumVec::convertCalcToAccum(upot_masked);
 
+			const RealCalcVec dudVm3_masked   = RealCalcVec::apply_mask(dudVm3,   forceMask); //mask it
+			const RealCalcVec d2udV2m3_masked = RealCalcVec::apply_mask(d2udV2m3, forceMask); //mask it
+			const RealAccumVec dudVm3_accum = RealAccumVec::convertCalcToAccum(dudVm3_masked);
+			const RealAccumVec d2udV2m3_accum = RealAccumVec::convertCalcToAccum(d2udV2m3_masked);
+
 			sum_upot6lj = sum_upot6lj + upot_accum;//1FP (sum macro)
 
 			sum_virial = sum_virial + V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
+
+			// Lustig Formalism
+			sum_dUdVm3   = sum_dUdVm3   + dudVm3_accum;
+			sum_d2UdV2m3 = sum_d2UdV2m3 + d2udV2m3_accum;
 		}
 	}
 
@@ -963,6 +985,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	RealAccumVec sum_upotXpoles = RealAccumVec::zero();
 	RealAccumVec sum_virial = RealAccumVec::zero();
 	RealAccumVec sum_myRF = RealAccumVec::zero();
+	RealAccumVec sum_dUdVm3 = RealAccumVec::zero();
+	RealAccumVec sum_d2UdV2m3 = RealAccumVec::zero();
 
 	const RealCalcVec ljrc2 = RealCalcVec::set1(static_cast<vcp_real_calc>(_LJCutoffRadiusSquare));
 	const RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(static_cast<vcp_real_calc>(_cutoffRadiusSquare));
@@ -1076,7 +1100,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
 							fx, fy, fz,
 							Vx, Vy, Vz,
-							sum_upot6lj, sum_virial,
+							sum_upot6lj, sum_virial, sum_dUdVm3, sum_d2UdV2m3,
 							MaskGatherChooser::getForceMask(lookupORforceMask),
 							eps_24, sig2,
 							shift6);
@@ -1137,7 +1161,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
 							fx, fy, fz,
 							Vx, Vy, Vz,
-							sum_upot6lj, sum_virial,
+							sum_upot6lj, sum_virial, sum_dUdVm3, sum_d2UdV2m3,
 							remainderM,//use remainder mask as forcemask
 							eps_24, sig2,
 							shift6);
@@ -2728,6 +2752,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	sum_virial.aligned_load_add_store(&my_threadData._virialV[0]);
 	const RealAccumVec negative_sum_myRF = RealAccumVec::zero() - sum_myRF;
 	negative_sum_myRF.aligned_load_add_store(&my_threadData._myRFV[0]);
+	sum_dUdVm3.aligned_load_add_store(&my_threadData._dUdVm3V[0]);
+	sum_d2UdV2m3.aligned_load_add_store(&my_threadData._d2UdV2m3V[0]);
 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 

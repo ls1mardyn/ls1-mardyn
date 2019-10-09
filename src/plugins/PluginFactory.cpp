@@ -47,6 +47,7 @@
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
+#include "plugins/LustigFormalism.h"
 
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -92,6 +93,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(VISWriter);
     REGISTER_PLUGIN(WallPotential);
     REGISTER_PLUGIN(XyzWriter);
+    REGISTER_PLUGIN(LustigFormalism);
 #ifdef VTK
     REGISTER_PLUGIN(VTKMoleculeWriter);
 #ifndef MARDYN_AUTOPAS

@@ -17,7 +17,7 @@
 /** @brief Calculates potential and force between 2 Lennard-Jones 12-6 centers. */
 inline void PotForceLJ(const double dr[3], const double& dr2,
                        const double& eps24, const double& sig2,
-                       double f[3], double& u6)
+                       double f[3], double& u6, double& dudVm3, double& d2udV2m3)
 {
 	double invdr2 = 1. / dr2;
 	double lj6 = sig2 * invdr2; lj6 = lj6 * lj6 * lj6;
@@ -27,6 +27,10 @@ inline void PotForceLJ(const double dr[3], const double& dr2,
 	double fac = eps24 * (lj12 + lj12m6) * invdr2;
 	for (unsigned short d = 0; d < 3; ++d)
 		f[d] = fac * dr[d];
+
+	// Lustig formalism
+	dudVm3   = eps24*( 2.*lj12 -    lj6);
+	d2udV2m3 = eps24*(10.*lj12 - 3.*lj6);
 }
 
 
@@ -279,12 +283,14 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
  * @param[out] Virial   Virial
  * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
  */
-inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calculateLJ)
+inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calculateLJ, double& dUdVm3, double& d2UdV2m3)
 // ???better calc Virial, when molecule forces are calculated:
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
 	double f[3];
 	double u;
+	double dudVm3;
+	double d2udV2m3;
 	double drs[3], dr2; // site distance vector & length^2
 	Virial[0]=0.;
 	Virial[1]=0.;
@@ -306,12 +312,14 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			double shift6;
 			params >> shift6; // must be 0.0 for full LJ
 			if (calculateLJ) {
-				PotForceLJ(drs, dr2, eps24, sig2, f, u);
+				PotForceLJ(drs, dr2, eps24, sig2, f, u, dudVm3, d2udV2m3);
 				u += shift6;
 
 				mi.Fljcenteradd(si, f);
 				mj.Fljcentersub(sj, f);
 				Upot6LJ += u;
+				dUdVm3    += dudVm3;
+				d2UdV2m3  += d2udV2m3;
 				for (unsigned short d = 0; d < 3; ++d)
 					Virial[d] += 0.5*drm[d] * f[d];
 			}
@@ -507,6 +515,7 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*
 {
 	double f[3];
 	double u;
+	double dummy1, dummy2;
 	double drs[3], dr2; // site distance vector & length^2
 	// no LJ interaction between equal solid atoms
 
@@ -525,7 +534,7 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*
 			params >> shift6; // must be 0.0 for full LJ
 
 			if (calculateLJ) {
-				PotForceLJ(drs, dr2, eps24, sig2, f, u);
+				PotForceLJ(drs, dr2, eps24, sig2, f, u, dummy1, dummy2);
 				u += shift6;
 				Upot6LJ += u;
 			}
