@@ -28,6 +28,7 @@
 #include "io/MmpldWriter.h"
 #include "io/MmspdBinWriter.h"
 #include "io/MmspdWriter.h"
+#include "io/ODF.h"
 #include "io/PovWriter.h"
 #include "io/RDF.h"
 #include "io/ResultWriter.h"
@@ -82,6 +83,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(MmpldWriter);
     REGISTER_PLUGIN(MmspdBinWriter);
     REGISTER_PLUGIN(MmspdWriter);
+	REGISTER_PLUGIN(ODF);
     REGISTER_PLUGIN(PovWriter);
     REGISTER_PLUGIN(RDF);
     REGISTER_PLUGIN(RegionSampling);

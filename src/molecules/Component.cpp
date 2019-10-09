@@ -63,6 +63,13 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			dipoleSite.readXML(xmlconfig);
 			addDipole(dipoleSite);
 		} else
+		if ( siteType == "Stockmayer" ) {		
+			_rot_dof = 3;
+			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [1 1 1]" << endl;
+			for (unsigned short d = 0; d < 3; ++d) {
+				_Ipa[d] = 1.0;
+			}
+		} else
 		if ( siteType == "Quadrupole" ) {
 			Quadrupole quadrupoleSite;
 			quadrupoleSite.readXML(xmlconfig);
