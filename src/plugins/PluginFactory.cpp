@@ -32,6 +32,7 @@
 #include "io/RDF.h"
 #include "io/ResultWriter.h"
 #include "io/SysMonOutput.h"
+#include "io/TimerWriter.h"
 #include "io/VISWriter.h"
 #include "io/XyzWriter.h"
 
@@ -88,6 +89,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins(){
     REGISTER_PLUGIN(ResultWriter);
     REGISTER_PLUGIN(SysMonOutput);
     REGISTER_PLUGIN(TestPlugin);
+	REGISTER_PLUGIN(TimerWriter);
     REGISTER_PLUGIN(VectorizationTuner);
     REGISTER_PLUGIN(VISWriter);
     REGISTER_PLUGIN(WallPotential);
