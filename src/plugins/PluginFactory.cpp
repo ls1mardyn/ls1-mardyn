@@ -59,7 +59,7 @@
  *
  * @param createInstance  pointer to a function returning an instance of the plugin object.
  */
-template<>
+template <>
 void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
@@ -84,7 +84,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MmpldWriter);
 	REGISTER_PLUGIN(MmspdBinWriter);
 	REGISTER_PLUGIN(MmspdWriter);
-  REGISTER_PLUGIN(ODF);
+	REGISTER_PLUGIN(ODF);
 	REGISTER_PLUGIN(PovWriter);
 	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(RegionSampling);
