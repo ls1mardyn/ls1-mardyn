@@ -1,43 +1,36 @@
-//Created by Joshua Marx 08/2019
-//Only works for pure fluids and binary mixtures for now
+// Created by Joshua Marx 08/2019
+// Only works for pure fluids and binary mixtures for now
 
 #ifndef SRC_PLUGINS_ODF_H_
 #define SRC_PLUGINS_ODF_H_
 
-
-#include "plugins/PluginBase.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+#include "plugins/PluginBase.h"
 
 class ODF : public PluginBase {
-
 public:
-
-void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-void readXML(XMLfileUnits& xmlconfig) override;
-void endStep(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			Domain* domain, unsigned long simstep) override;
-void reset();
-void resetTempParticles(Domain* domain);
-void collectTempParticles(Domain* domain, DomainDecompBase* domainDecomp);
-void record(ParticleContainer* particleContainer, Domain* domain,DomainDecompBase* domainDecomp, unsigned long simstep);
-void calculateOrientation(ParticleContainer* particleContainer, Domain* domain, unsigned index);
-void collect(DomainDecompBase* domainDecomp);
-void output(Domain* domain, long unsigned timestep);
-void finish(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain) override {};
-std::string getPluginName() override { return std::string("ODF"); }
-static PluginBase* createInstance() { return new ODF(); }
-
-
+	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
+	void readXML(XMLfileUnits& xmlconfig) override;
+	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
+				 unsigned long simstep) override;
+	void reset();
+	void resetTempParticles(Domain* domain);
+	void collectTempParticles(Domain* domain, DomainDecompBase* domainDecomp);
+	void record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp,
+				unsigned long simstep);
+	void calculateOrientation(ParticleContainer* particleContainer, Domain* domain, unsigned index);
+	void collect(DomainDecompBase* domainDecomp);
+	void output(Domain* domain, long unsigned timestep);
+	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
+	std::string getPluginName() override { return std::string("ODF"); }
+	static PluginBase* createInstance() { return new ODF(); }
 
 private:
-
-	unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
-	unsigned long _initStatistics; // Timesteps to skip at start of the simulation
-	unsigned long _recordingTimesteps; // Record every Nth timestep during recording frame
+	unsigned long _writeFrequency;      // Write frequency for all profiles -> Length of recording frame before output
+	unsigned long _initStatistics;      // Timesteps to skip at start of the simulation
+	unsigned long _recordingTimesteps;  // Record every Nth timestep during recording frame
 	unsigned _phi1Increments;
 	unsigned _phi2Increments;
 	unsigned _gammaIncrements;
@@ -63,7 +56,7 @@ private:
 	std::map<unsigned long, unsigned long> _localODF11;
 	std::map<unsigned long, unsigned long> _localODF12;
 	std::map<unsigned long, unsigned long> _localODF21;
-	std::map<unsigned long, unsigned long> _localODF22;	
+	std::map<unsigned long, unsigned long> _localODF22;
 };
 
 #endif /* SRC_PLUGINS_ODF_H_ */
