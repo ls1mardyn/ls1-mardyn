@@ -11,7 +11,7 @@ CavityWriter | cavity, output, profile, grid | Sets up a grid of pseudo-molecule
 CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up. See also MPICheckpointWriter and MPI_IOCheckpointWriter.
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
 CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.
-DecompWriter | todo | todo. Writes information on the MPI Domain Decomposition.
+DecompWriter | mpi, print | Writes information on the MPI Domain Decomposition. For each rank the boxmin and boxmax is printed.
 DensityProfileWriter | todo | todo
 EnergyLogWriter | print, file, thermodynamic macroscopic quantities | Write the global \f$N\f$, \f$U_\mathrm{pot}\f$, \f$U_\mathrm{kin}\f$, \f$U_\mathrm{kinTrans}\f$, \f$U_\mathrm{kinRot}\f$, \f$T\f$, \f$p\f$ to file. Duplication with ResultWriter?
 ExamplePlugin  | example, sample, illustrate, usage | Print user-specifed text at a user-specified position in the code.  
@@ -25,7 +25,7 @@ SP / VelocityAbsProfile | velocity magnitude profile output | Outputs average ma
 SP / Velocity3dProfile | velocity 3d vector profile output | Outputs average velocity 3d-components per bin. Requires/auto enables DensityProfile.
 SP / TemperatureProfile | temperature profile output | Outputs the average temperature per sampling bin. Requires/auto enables DOFProfile and KineticProfile which dont write to file (as of now).
 SP / VirialProfile | virial pressure profile output | Outputs the virial/partial pressures in a special 1D output in y-direction. Requires/auto enables DensityProfile.
-LoadbalanceWriter | todo | todo
+LoadbalanceWriter | print, mpi, load balance, timers | Writes load balance information. Averages, min, max and a load balance is written. For more detailed output use the TimerWriter.
 MaxCheck  | todo | todo
 MaxWriter  | todo | todo
 Mirror  | todo | todo
@@ -38,6 +38,7 @@ RDF | radial distribution function | Calculate and write the radial distribution
 ResultWriter | print, macroscopic thermodynamic quantities, file | Write macroscopic thermodynamic quantities to file, such as temperature, pressure, BetaTrans, BetaRot, cv, number of molecules and number of cavities (?).
 SysMonOutput | todo | todo
 TestPlugin  | test | Test correctness of plugin calls within Simulation. Simpler version without XML input of ExamplePlugin
+TimerWriter | Timers, mpi, print, load balance | Prints the average time for the specified timers as a transient. Separate output for each rank. Can be used to gather information of the load balance.
 VectorizationTuner | todo | todo
 VISWriter | visualization?, todo | todo
 VTKGridWriter | vtk, grid | Write MPI rank, number of molecules in each cell in a .vtu or .pvtu file. Requires compiling with VTK=1.

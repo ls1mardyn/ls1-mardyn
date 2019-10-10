@@ -33,6 +33,7 @@
 #include "io/RDF.h"
 #include "io/ResultWriter.h"
 #include "io/SysMonOutput.h"
+#include "io/TimerWriter.h"
 #include "io/VISWriter.h"
 #include "io/XyzWriter.h"
 
@@ -55,49 +56,50 @@
 #endif
 
 /** @brief Register all default plugins with base PluginBase
-	 *
-	 * @param createInstance  pointer to a function returning an instance of the plugin object.
-	 */
+ *
+ * @param createInstance  pointer to a function returning an instance of the plugin object.
+ */
 template<>
-void PluginFactory<PluginBase>::registerDefaultPlugins(){
-    global_log -> debug() << "REGISTERING PLUGINS" << endl;
+void PluginFactory<PluginBase>::registerDefaultPlugins() {
+	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
-    REGISTER_PLUGIN(COMaligner);
-    REGISTER_PLUGIN(CavityWriter);
-    REGISTER_PLUGIN(CheckpointWriter);
-    REGISTER_PLUGIN(CommunicationPartnerWriter);
-    REGISTER_PLUGIN(DecompWriter);
-    REGISTER_PLUGIN(EnergyLogWriter);
-    REGISTER_PLUGIN(ExamplePlugin);
-    REGISTER_PLUGIN(FlopRateWriter);
-    REGISTER_PLUGIN(GammaWriter);
-    REGISTER_PLUGIN(HaloParticleWriter);
-    REGISTER_PLUGIN(InMemoryCheckpointing);
-    REGISTER_PLUGIN(SpatialProfile);
-    REGISTER_PLUGIN(LoadbalanceWriter);
-    REGISTER_PLUGIN(MPICheckpointWriter);
-    REGISTER_PLUGIN(MaxCheck);
-    REGISTER_PLUGIN(MaxWriter);
-    REGISTER_PLUGIN(Mirror);
-    REGISTER_PLUGIN(MirrorSystem);
-    REGISTER_PLUGIN(MmpldWriter);
-    REGISTER_PLUGIN(MmspdBinWriter);
-    REGISTER_PLUGIN(MmspdWriter);
-	REGISTER_PLUGIN(ODF);
-    REGISTER_PLUGIN(PovWriter);
-    REGISTER_PLUGIN(RDF);
-    REGISTER_PLUGIN(RegionSampling);
-    REGISTER_PLUGIN(ResultWriter);
-    REGISTER_PLUGIN(SysMonOutput);
-    REGISTER_PLUGIN(TestPlugin);
-    REGISTER_PLUGIN(VectorizationTuner);
-    REGISTER_PLUGIN(VISWriter);
-    REGISTER_PLUGIN(WallPotential);
-    REGISTER_PLUGIN(XyzWriter);
+	REGISTER_PLUGIN(COMaligner);
+	REGISTER_PLUGIN(CavityWriter);
+	REGISTER_PLUGIN(CheckpointWriter);
+	REGISTER_PLUGIN(CommunicationPartnerWriter);
+	REGISTER_PLUGIN(DecompWriter);
+	REGISTER_PLUGIN(EnergyLogWriter);
+	REGISTER_PLUGIN(ExamplePlugin);
+	REGISTER_PLUGIN(FlopRateWriter);
+	REGISTER_PLUGIN(GammaWriter);
+	REGISTER_PLUGIN(HaloParticleWriter);
+	REGISTER_PLUGIN(InMemoryCheckpointing);
+	REGISTER_PLUGIN(SpatialProfile);
+	REGISTER_PLUGIN(LoadbalanceWriter);
+	REGISTER_PLUGIN(MPICheckpointWriter);
+	REGISTER_PLUGIN(MaxCheck);
+	REGISTER_PLUGIN(MaxWriter);
+	REGISTER_PLUGIN(Mirror);
+	REGISTER_PLUGIN(MirrorSystem);
+	REGISTER_PLUGIN(MmpldWriter);
+	REGISTER_PLUGIN(MmspdBinWriter);
+	REGISTER_PLUGIN(MmspdWriter);
+  REGISTER_PLUGIN(ODF);
+	REGISTER_PLUGIN(PovWriter);
+	REGISTER_PLUGIN(RDF);
+	REGISTER_PLUGIN(RegionSampling);
+	REGISTER_PLUGIN(ResultWriter);
+	REGISTER_PLUGIN(SysMonOutput);
+	REGISTER_PLUGIN(TestPlugin);
+	REGISTER_PLUGIN(TimerWriter);
+	REGISTER_PLUGIN(VectorizationTuner);
+	REGISTER_PLUGIN(VISWriter);
+	REGISTER_PLUGIN(WallPotential);
+	REGISTER_PLUGIN(XyzWriter);
 #ifdef VTK
-    REGISTER_PLUGIN(VTKMoleculeWriter);
+	REGISTER_PLUGIN(VTKMoleculeWriter);
 #ifndef MARDYN_AUTOPAS
-    REGISTER_PLUGIN(VTKGridWriter);
+	REGISTER_PLUGIN(VTKGridWriter);
 #endif
 #endif
 }
