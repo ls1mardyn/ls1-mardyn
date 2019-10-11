@@ -48,6 +48,14 @@ void ODF::init(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*dom
 	this->_numElements = this->_phi1Increments * this->_phi2Increments * this->_gammaIncrements + 1;
 	global_log->info() << "ODF arrays contains " << this->_numElements << " elements each for " << this->_numPairs
 					   << "pairings" << endl;
+	this->_ODF11.resize(_numElements);
+	this->_ODF12.resize(_numElements);
+	this->_ODF21.resize(_numElements);
+	this->_ODF22.resize(_numElements);
+	this->_localODF11.resize(_numElements);
+	this->_localODF12.resize(_numElements);
+	this->_localODF21.resize(_numElements);
+	this->_localODF22.resize(_numElements);
 
 	if (this->_numPairs < 1) {
 		global_log->error() << "No components with dipoles. ODFs not being calculated!" << endl;
@@ -66,10 +74,11 @@ unsigned long simstep){
 	}
 }
 
-void ODF::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
+void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* domain,
 				  unsigned long simstep) {
 
 	if (simstep > this->_initStatistics && simstep % this->_writeFrequency == 0) {
+		this->collect(domainDecomp);
 		this->output(domain, simstep);
 		this->reset();
 	}
@@ -78,11 +87,11 @@ void ODF::endStep(ParticleContainer* particleContainer, DomainDecompBase* domain
 void ODF::reset() {
 	global_log->info() << "[ODF] resetting data sets" << endl;
 
-	for (unsigned i = 0; i < this->_numElements; i++) {
-		//		this->_ODF11[i] = 0;
-		//		this->_ODF12[i] = 0;
-		//		this->_ODF21[i] = 0;
-		//		this->_ODF22[i] = 0;
+	for (unsigned long i = 0; i < this->_numElements; i++) {
+		this->_ODF11[i] = 0;
+		this->_ODF12[i] = 0;
+		this->_ODF21[i] = 0;
+		this->_ODF22[i] = 0;
 		this->_localODF11[i] = 0;
 		this->_localODF12[i] = 0;
 		this->_localODF21[i] = 0;
@@ -140,7 +149,7 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 			}
 
 			if (this->_mixingRule == 1) {
-				shellcutoff = 1 / 3 * this->_shellCutOff[cid] + this->_shellCutOff[it->getComponentLookUpID()];
+				shellcutoff = 1. / 3 * this->_shellCutOff[cid] + this->_shellCutOff[it->getComponentLookUpID()];
 			}
 
 			if (distanceSquared < shellcutoff * shellcutoff && mol1.getID() != it->getID()) {
@@ -323,6 +332,44 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 	}
 }
 
+void ODF::collect(DomainDecompBase* domainDecomp) {
+	if (this->_numPairs == 1) {
+		domainDecomp->collCommInit(this->_numElements);
+
+		for (unsigned long i = 0; i < this->_numElements; i++) {
+			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
+		}
+		domainDecomp->collCommAllreduceSum();
+
+		for (unsigned long i = 0; i < this->_numElements; i++) {
+			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
+		}
+		domainDecomp->collCommFinalize();
+	}
+
+	else {
+		domainDecomp->collCommInit(this->_numElements * 4);
+
+		for (unsigned long i = 0; i < this->_numElements; i++) {
+			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
+			domainDecomp->collCommAppendUnsLong(this->_localODF12[i]);
+			domainDecomp->collCommAppendUnsLong(this->_localODF22[i]);
+			domainDecomp->collCommAppendUnsLong(this->_localODF21[i]);
+		}
+		domainDecomp->collCommAllreduceSum();
+
+		for (unsigned long i = 0; i < this->_numElements; i++) {
+			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
+			this->_ODF12[i] = domainDecomp->collCommGetUnsLong();
+			this->_ODF22[i] = domainDecomp->collCommGetUnsLong();
+			this->_ODF21[i] = domainDecomp->collCommGetUnsLong();
+		}
+		domainDecomp->collCommFinalize();
+	}
+}
+
+
+
 void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	global_log->info() << "[ODF] writing output" << std::endl;
 	// Setup outfile
@@ -358,7 +405,7 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 				cosPhi1 -= 2. / (double)this->_phi1Increments;
 				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
 			}
-			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_localODF11[i + 1] << "\n";
+			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
 		}
 		outfile.close();
 	} else {

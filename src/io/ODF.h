@@ -20,6 +20,7 @@ public:
 	void reset();
 	void record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp,
 				unsigned long simstep);
+	void collect(DomainDecompBase* domainDecomp);
 	void calculateOrientation(ParticleContainer* particleContainer, Domain* domain, const Molecule& mol1);
 	void output(Domain* domain, long unsigned timestep);
 	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
@@ -39,20 +40,15 @@ private:
 	double _shellCutOff[2];
 	bool _mixingRule;
 	std::string _outputPrefix;
-//	std::map<unsigned long, unsigned> _cid;
-//	std::map<unsigned long, unsigned> _molID;
-//	std::map<unsigned long, unsigned long> _doODF;
-//	std::map<unsigned long, std::map<unsigned long, double>> _Q1;
-//	std::map<unsigned long, std::map<unsigned long, double>> _upVec1;
-//	std::map<unsigned long, std::map<unsigned long, double>> _r1;
-//	std::map<unsigned long, unsigned long> _ODF11;
-//	std::map<unsigned long, unsigned long> _ODF12;
-//	std::map<unsigned long, unsigned long> _ODF21;
-//	std::map<unsigned long, unsigned long> _ODF22;
-	std::map<unsigned long, unsigned long> _localODF11;
-	std::map<unsigned long, unsigned long> _localODF12;
-	std::map<unsigned long, unsigned long> _localODF21;
-	std::map<unsigned long, unsigned long> _localODF22;
+
+	std::vector<unsigned long> _ODF11;
+	std::vector<unsigned long> _ODF12;
+	std::vector<unsigned long> _ODF21;
+	std::vector<unsigned long> _ODF22;
+	std::vector<unsigned long> _localODF11;
+	std::vector<unsigned long> _localODF12;
+	std::vector<unsigned long> _localODF21;
+	std::vector<unsigned long> _localODF22;
 };
 
 #endif /* SRC_PLUGINS_ODF_H_ */
