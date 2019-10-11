@@ -29,9 +29,8 @@ void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "[ODF] Shell mixing rule: " << _mixingRule << endl;
 }
 
-void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void ODF::init(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
-	this->_numMolecules = domain->getglobalNumMolecules();
 	this->_numComponents = components->size();
 	std::vector<unsigned int> isDipole(this->_numComponents);
 	unsigned int numPairs = 0;
@@ -76,10 +75,10 @@ void ODF::reset() {
 	global_log->info() << "[ODF] resetting data sets" << endl;
 
 	for (unsigned i = 0; i < this->_numElements; i++) {
-//		this->_ODF11[i] = 0;
-//		this->_ODF12[i] = 0;
-//		this->_ODF21[i] = 0;
-//		this->_ODF22[i] = 0;
+		//		this->_ODF11[i] = 0;
+		//		this->_ODF12[i] = 0;
+		//		this->_ODF21[i] = 0;
+		//		this->_ODF22[i] = 0;
 		this->_localODF11[i] = 0;
 		this->_localODF12[i] = 0;
 		this->_localODF21[i] = 0;
@@ -87,12 +86,9 @@ void ODF::reset() {
 	}
 }
 
-void ODF::record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp,
-				 unsigned long simstep) {
-
-	for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid();
-		 ++it) {
-
+void ODF::record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* /*domainDecomp*/,
+				 unsigned long /*simstep*/) {
+	for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		if (it->numDipoles() == 1) {
 			this->calculateOrientation(particleContainer, domain, *it);
 		}
@@ -113,22 +109,20 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 
 	// TODO Implement rotation matrices to calculate orientations for dipole direction unit vectors other than [0 0 1];
 	double Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3], projection2[3];
-	// r1[0] = this->_r1[0][index];
-	// r1[1] = this->_r1[1][index];
-	// r1[2] = this->_r1[2][index];
-	// upVec1[0] = this->_upVec1[0][index];
-	// upVec1[1] = this->_upVec1[1][index];
-	// upVec1[2] = this->_upVec1[2][index];
+
 	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff;
 	double roundingThreshold = 0.0001;
 	unsigned long ind_phi1, ind_phi2, ind_gamma, elementID;
 	unsigned maximum;
 	bool bool1, bool2, bool3;
 	auto cid = mol1.getComponentLookUpID();
-
-	for (auto it = particleContainer->iterator(ParticleIterator::ALL_CELLS); it.isValid();
-		 ++it) {  // inner loop over all particles. this should only loop over the neighbours of the particle from the
-				  // outer loop to improve efficiency
+	shellcutoff = this->_shellCutOff[cid];
+	std::array<double, 3> boxMin{r1[0] - shellcutoff, r1[1] - shellcutoff, r1[2] - shellcutoff};
+	std::array<double, 3> boxMax{r1[0] + shellcutoff, r1[1] + shellcutoff, r1[2] + shellcutoff};
+	for (auto it = particleContainer->regionIterator(boxMin.data(), boxMax.data(), ParticleIterator::ALL_CELLS);
+		 it.isValid(); ++it) {
+		// inner loop over all particles. this should only loop over the neighbours of the particle from the
+		// outer loop to improve efficiency
 
 		if (it->numDipoles() == 1) {
 			double distanceSquared = 0.;
@@ -140,8 +134,6 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 				}
 				distanceSquared += dist1D[i] * dist1D[i];
 			}
-
-			shellcutoff = this->_shellCutOff[cid];
 
 			if (this->_mixingRule == 1) {
 				shellcutoff = 1 / 3 * this->_shellCutOff[cid] + this->_shellCutOff[it->getComponentLookUpID()];
@@ -183,7 +175,7 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 
 				normr12 = sqrt(normr12);
 
-				for (double & i : r12) {
+				for (double& i : r12) {
 					i /= normr12;
 				}
 
@@ -327,7 +319,7 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 	}
 }
 
-void ODF::output(Domain* domain, long unsigned timestep) {
+void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	global_log->info() << "[ODF] writing output" << std::endl;
 	// Setup outfile
 
@@ -404,10 +396,10 @@ void ODF::output(Domain* domain, long unsigned timestep) {
 				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
 			}
 
-//			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
-//			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
-//			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
-//			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
+			//			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
+			//			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
+			//			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
+			//			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
 		}
 		ODF11.close();
 		ODF12.close();

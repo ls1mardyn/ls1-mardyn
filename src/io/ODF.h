@@ -33,10 +33,7 @@ private:
 	unsigned _gammaIncrements;
 	unsigned _numPairs;
 	unsigned _numComponents;
-	unsigned long _numComp1;
-	unsigned long _numComp2;
 	unsigned long _numElements;
-	unsigned long _numMolecules;
 	double _shellCutOff[2];
 	bool _mixingRule;
 	std::string _outputPrefix;
