@@ -97,234 +97,208 @@ void ODF::reset() {
 	}
 }
 
-void ODF::record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* /*domainDecomp*/,
-				 unsigned long /*simstep*/) {
-	for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-		if (it->numDipoles() == 1) {
-			this->calculateOrientation(particleContainer, domain, *it);
-		}
+void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecule& mol1, const Molecule& mol2,
+							   const array<double, 3>& upVec1) {
+	if (mol2.numDipoles() != 1) {
+		return;
 	}
-}
-
-void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* domain, const Molecule& mol1) {
-	std::array<double, 3> r1{mol1.r(0), mol1.r(1), mol1.r(2)};
-
-	std::array<double, 3> upVec1{};
-	{
-		std::array<double, 4> q1{mol1.q().qw(), mol1.q().qx(), mol1.q().qy(), mol1.q().qz()};
-		upVec1[0] = 2 * (q1[1] * q1[3] + q1[0] * q1[2]);
-		upVec1[1] = 2 * (q1[2] * q1[3] - q1[0] * q1[1]);
-		upVec1[2] = 1 - 2 * (q1[1] * q1[1] + q1[2] * q1[2]);
-	}
-	// records mutual orientation of particle pairs
 
 	// TODO Implement rotation matrices to calculate orientations for dipole direction unit vectors other than [0 0 1];
-	double Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3], projection2[3];
 
-	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff;
+	// FIXME: rename (almost all of) these to something more meaningful
+	double Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3], projection2[3];
+	auto cid = mol1.getComponentLookUpID();
+	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff = this->_shellCutOff[cid];
 	double roundingThreshold = 0.0001;
 	unsigned long ind_phi1, ind_phi2, ind_gamma, elementID;
 	unsigned maximum;
-	bool bool1, bool2, bool3;
-	auto cid = mol1.getComponentLookUpID();
-	shellcutoff = this->_shellCutOff[cid];
-	std::array<double, 3> boxMin{r1[0] - shellcutoff, r1[1] - shellcutoff, r1[2] - shellcutoff};
-	std::array<double, 3> boxMax{r1[0] + shellcutoff, r1[1] + shellcutoff, r1[2] + shellcutoff};
-	for (auto it = particleContainer->regionIterator(boxMin.data(), boxMax.data(), ParticleIterator::ALL_CELLS);
-		 it.isValid(); ++it) {
-		// inner loop over all particles. this should only loop over the neighbours of the particle from the
-		// outer loop to improve efficiency
+	bool bool1, bool2, bool3;  // FIXME: <- seriously? rename this....
 
-		if (it->numDipoles() == 1) {
-			double distanceSquared = 0.;
-			// minimum image convention
-			for (int i = 0; i < 3; i++) {
-				dist1D[i] = r1[i] - it->r(i);
-				if (abs(dist1D[i]) > 0.5 * domain->getGlobalLength(i)) {
-					dist1D[i] = domain->getGlobalLength(i) - abs(dist1D[i]);
-				}
-				distanceSquared += dist1D[i] * dist1D[i];
+	double distanceSquared = 0.;
+	// minimum image convention
+	for (int i = 0; i < 3; i++) {
+		dist1D[i] = mol1.r(i) - mol2.r(i);
+		if (abs(dist1D[i]) > 0.5 * simBoxSize[i]) {
+			dist1D[i] = simBoxSize[i] - abs(dist1D[i]);
+		}
+		distanceSquared += dist1D[i] * dist1D[i];
+	}
+
+	if (this->_mixingRule == 1) {
+		shellcutoff = 1. / 3 * this->_shellCutOff[cid] + this->_shellCutOff[mol2.getComponentLookUpID()];
+	}
+
+	if (distanceSquared < shellcutoff * shellcutoff && mol1.getID() != mol2.getID()) {
+		normr12 = 0.;
+
+		// reading second molecule's quaternions
+
+		Q2[0] = mol2.q().qw();
+		Q2[1] = mol2.q().qx();
+		Q2[2] = mol2.q().qy();
+		Q2[3] = mol2.q().qz();
+
+		cosPhi1 = 0.;
+		cosPhi2 = 0.;
+		cosGamma12 = 0.;
+		norm1 = 0.;
+		norm2 = 0.;
+		ind_phi1 = 0;
+		ind_phi2 = 0;
+		ind_gamma = 0;
+		bool1 = false;
+		bool2 = false;
+		bool3 = false;
+
+		// calculate distance vector between molecules
+		for (unsigned i = 0; i < 3; i++) {
+			r12[i] = mol2.r(i) - mol1.r(i);
+			if (r12[i] > 0.5 * simBoxSize[i]) {
+				r12[i] = -(simBoxSize[i] - r12[i]);
+			} else if (r12[i] < -0.5 * simBoxSize[i]) {
+				r12[i] = -(r12[i] - simBoxSize[i]);
+			}
+			normr12 += r12[i] * r12[i];
+		}
+
+		normr12 = sqrt(normr12);
+
+		for (double& i : r12) {
+			i /= normr12;
+		}
+
+		// calculate vectors pointing in the direction defined by the dipole
+		upVec2[0] = 2 * (Q2[1] * Q2[3] + Q2[0] * Q2[2]);
+		upVec2[1] = 2 * (Q2[2] * Q2[3] - Q2[0] * Q2[1]);
+		upVec2[2] = 1 - 2 * (Q2[1] * Q2[1] + Q2[2] * Q2[2]);
+
+		// calculate projection of the vectors onto plane perpendicular to the distance vector with cross
+		// product for calculation of the torque angle gamma
+		auxVec1[0] = upVec1[1] * r12[2] - upVec1[2] * r12[1];
+		auxVec1[1] = upVec1[2] * r12[0] - upVec1[0] * r12[2];
+		auxVec1[2] = upVec1[0] * r12[1] - upVec1[1] * r12[0];
+
+		projection1[0] = r12[1] * auxVec1[2] - r12[2] * auxVec1[1];
+		projection1[1] = r12[2] * auxVec1[0] - r12[0] * auxVec1[2];
+		projection1[2] = r12[0] * auxVec1[1] - r12[1] * auxVec1[0];
+
+		auxVec2[0] = upVec2[1] * r12[2] - upVec2[2] * r12[1];
+		auxVec2[1] = upVec2[2] * r12[0] - upVec2[0] * r12[2];
+		auxVec2[2] = upVec2[0] * r12[1] - upVec2[1] * r12[0];
+
+		projection2[0] = r12[1] * auxVec2[2] - r12[2] * auxVec2[1];
+		projection2[1] = r12[2] * auxVec2[0] - r12[0] * auxVec2[2];
+		projection2[2] = r12[0] * auxVec2[1] - r12[1] * auxVec2[0];
+
+		// calculate cos(phi) and norm of projection vector
+		for (unsigned i = 0; i < 3; i++) {
+			cosPhi1 += r12[i] * upVec1[i];
+			cosPhi2 -= r12[i] * upVec2[i];
+			norm1 += projection1[i] * projection1[i];
+			norm2 += projection2[i] * projection2[i];
+		}
+
+		norm1 = sqrt(norm1);
+		norm2 = sqrt(norm2);
+
+		// calculate cos(gamma) as dot product of projections
+		for (unsigned i = 0; i < 3; i++) {
+			projection1[i] /= norm1;
+			projection2[i] /= norm2;
+			cosGamma12 += projection1[i] * projection2[i];
+		}
+
+		// precaution to prevent numerically intractable values (e.g. VERY close to zero but not zero) and
+		// values just barely out of boundaries -1/1, by rounding to 0,-1 or 1 respectively
+
+		if (abs(cosPhi1) < roundingThreshold || abs(abs(cosPhi1) - 1) < roundingThreshold) {
+			cosPhi1 = round(cosPhi1);
+		}
+		if (abs(cosPhi2) < roundingThreshold || abs(abs(cosPhi2) - 1) < roundingThreshold) {
+			cosPhi2 = round(cosPhi2);
+		}
+		if (abs(cosGamma12) < roundingThreshold || abs(abs(cosGamma12) - 1) < roundingThreshold) {
+			cosGamma12 = round(cosGamma12);
+		}
+
+		Gamma12 = acos(cosGamma12);
+		// determine array element
+		// NOTE: element 0 of array ODF is unused
+
+		maximum = max(this->_phi1Increments, this->_phi2Increments);
+		maximum = max(maximum, this->_gammaIncrements);
+
+		for (unsigned i = 0; i < maximum; i++) {
+			if (1. - i * 2. / (double)this->_phi1Increments >= cosPhi1 &&
+				cosPhi1 > 1. - (i + 1) * 2. / (double)this->_phi1Increments) {
+				ind_phi1 = i;
+				bool1 = true;
 			}
 
-			if (this->_mixingRule == 1) {
-				shellcutoff = 1. / 3 * this->_shellCutOff[cid] + this->_shellCutOff[it->getComponentLookUpID()];
+			if (1. - i * 2. / (double)this->_phi2Increments >= cosPhi2 &&
+				cosPhi2 > 1. - (i + 1) * 2. / (double)this->_phi2Increments) {
+				ind_phi2 = i;
+				bool2 = true;
 			}
 
-			if (distanceSquared < shellcutoff * shellcutoff && mol1.getID() != it->getID()) {
-				normr12 = 0.;
-
-				// reading second molecule's quaternions
-
-				Q2[0] = it->q().qw();
-				Q2[1] = it->q().qx();
-				Q2[2] = it->q().qy();
-				Q2[3] = it->q().qz();
-
-				cosPhi1 = 0.;
-				cosPhi2 = 0.;
-				cosGamma12 = 0.;
-				norm1 = 0.;
-				norm2 = 0.;
-				ind_phi1 = 0;
-				ind_phi2 = 0;
-				ind_gamma = 0;
-				bool1 = false;
-				bool2 = false;
-				bool3 = false;
-
-				// calculate distance vector between molecules
-				for (unsigned i = 0; i < 3; i++) {
-					r12[i] = it->r(i) - r1[i];
-					if (r12[i] > 0.5 * domain->getGlobalLength(i)) {
-						r12[i] = -(domain->getGlobalLength(i) - r12[i]);
-					} else if (r12[i] < -0.5 * domain->getGlobalLength(i)) {
-						r12[i] = -(r12[i] - domain->getGlobalLength(i));
-					}
-					normr12 += r12[i] * r12[i];
-				}
-
-				normr12 = sqrt(normr12);
-
-				for (double& i : r12) {
-					i /= normr12;
-				}
-
-				// calculate vectors pointing in the direction defined by the dipole
-				upVec2[0] = 2 * (Q2[1] * Q2[3] + Q2[0] * Q2[2]);
-				upVec2[1] = 2 * (Q2[2] * Q2[3] - Q2[0] * Q2[1]);
-				upVec2[2] = 1 - 2 * (Q2[1] * Q2[1] + Q2[2] * Q2[2]);
-
-				// calculate projection of the vectors onto plane perpendicular to the distance vector with cross
-				// product for calculation of the torque angle gamma
-				auxVec1[0] = upVec1[1] * r12[2] - upVec1[2] * r12[1];
-				auxVec1[1] = upVec1[2] * r12[0] - upVec1[0] * r12[2];
-				auxVec1[2] = upVec1[0] * r12[1] - upVec1[1] * r12[0];
-
-				projection1[0] = r12[1] * auxVec1[2] - r12[2] * auxVec1[1];
-				projection1[1] = r12[2] * auxVec1[0] - r12[0] * auxVec1[2];
-				projection1[2] = r12[0] * auxVec1[1] - r12[1] * auxVec1[0];
-
-				auxVec2[0] = upVec2[1] * r12[2] - upVec2[2] * r12[1];
-				auxVec2[1] = upVec2[2] * r12[0] - upVec2[0] * r12[2];
-				auxVec2[2] = upVec2[0] * r12[1] - upVec2[1] * r12[0];
-
-				projection2[0] = r12[1] * auxVec2[2] - r12[2] * auxVec2[1];
-				projection2[1] = r12[2] * auxVec2[0] - r12[0] * auxVec2[2];
-				projection2[2] = r12[0] * auxVec2[1] - r12[1] * auxVec2[0];
-
-				// calculate cos(phi) and norm of projection vector
-				for (unsigned i = 0; i < 3; i++) {
-					cosPhi1 += r12[i] * upVec1[i];
-					cosPhi2 -= r12[i] * upVec2[i];
-					norm1 += projection1[i] * projection1[i];
-					norm2 += projection2[i] * projection2[i];
-				}
-
-				norm1 = sqrt(norm1);
-				norm2 = sqrt(norm2);
-
-				// calculate cos(gamma) as dot product of projections
-				for (unsigned i = 0; i < 3; i++) {
-					projection1[i] /= norm1;
-					projection2[i] /= norm2;
-					cosGamma12 += projection1[i] * projection2[i];
-				}
-
-				// precaution to prevent numerically intractable values (e.g. VERY close to zero but not zero) and
-				// values just barely out of boundaries -1/1, by rounding to 0,-1 or 1 respectively
-
-				if (abs(cosPhi1) < roundingThreshold || abs(abs(cosPhi1) - 1) < roundingThreshold) {
-					cosPhi1 = round(cosPhi1);
-				}
-				if (abs(cosPhi2) < roundingThreshold || abs(abs(cosPhi2) - 1) < roundingThreshold) {
-					cosPhi2 = round(cosPhi2);
-				}
-				if (abs(cosGamma12) < roundingThreshold || abs(abs(cosGamma12) - 1) < roundingThreshold) {
-					cosGamma12 = round(cosGamma12);
-				}
-
-				Gamma12 = acos(cosGamma12);
-				// determine array element
-				// NOTE: element 0 of array ODF is unused
-
-				maximum = max(this->_phi1Increments, this->_phi2Increments);
-				maximum = max(maximum, this->_gammaIncrements);
-
-				for (unsigned i = 0; i < maximum; i++) {
-					if (1. - i * 2. / (double)this->_phi1Increments >= cosPhi1 &&
-						cosPhi1 > 1. - (i + 1) * 2. / (double)this->_phi1Increments) {
-						ind_phi1 = i;
-						bool1 = true;
-					}
-
-					if (1. - i * 2. / (double)this->_phi2Increments >= cosPhi2 &&
-						cosPhi2 > 1. - (i + 1) * 2. / (double)this->_phi2Increments) {
-						ind_phi2 = i;
-						bool2 = true;
-					}
-
-					if (i * M_PI / (double)this->_gammaIncrements <= Gamma12 &&
-						Gamma12 < (i + 1) * M_PI / (double)this->_gammaIncrements) {
-						ind_gamma = i + 1;
-						bool3 = true;
-					}
-				}
-
-				if (ind_gamma == this->_gammaIncrements + 1) {
-					ind_gamma = this->_gammaIncrements;
-				}
-
-				// manually assign bin for cos(...) == M_PI/-1, because loop only includes values < pi
-				if (bool1 == 0 && cosPhi1 == -1.) {
-					ind_phi1 = this->_phi1Increments - 1;
-					bool1 = true;
-				}
-
-				if (bool2 == 0 && cosPhi2 == -1.) {
-					ind_phi2 = this->_phi2Increments - 1;
-					bool2 = true;
-				}
-
-				if (bool3 == 0 && Gamma12 == M_PI) {
-					ind_gamma = this->_gammaIncrements;
-					bool3 = true;
-				}
-
-				// notification if anything goes wrong during calculataion
-				if (bool1 == 0 || bool2 == 0 || bool3 == 0) {
-					global_log->warning() << "Array element in ODF calculation not properly assigned!" << endl;
-					global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << it->getID() << endl;
-					global_log->warning()
-						<< "upVec1=" << upVec1[0] << " " << upVec1[1] << " " << upVec1[2] << " " << endl;
-					global_log->warning()
-						<< "upVec2=" << upVec2[0] << " " << upVec2[1] << " " << upVec2[2] << " " << endl;
-					global_log->warning() << "r12=" << r12[0] << " " << r12[1] << " " << r12[2] << " " << endl;
-					global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
-										  << cosGamma12 << "]" << endl;
-					global_log->warning() << "indices are " << ind_phi1 << " " << ind_phi2 << " " << ind_gamma << endl;
-				}
-
-				elementID = ind_phi1 * this->_phi2Increments * this->_gammaIncrements +
-							(ind_phi2 * this->_gammaIncrements) + ind_gamma;
-
-				// determine component pairing
-
-				if (cid == 0 && it->getComponentLookUpID() == 0) {
-					this->_localODF11[elementID]++;
-				}
-
-				else if (cid == 0 && it->getComponentLookUpID() == 1) {
-					this->_localODF12[elementID]++;
-				}
-
-				else if (cid == 1 && it->getComponentLookUpID() == 1) {
-					this->_localODF22[elementID]++;
-				}
-
-				else {
-					this->_localODF21[elementID]++;
-				}
+			if (i * M_PI / (double)this->_gammaIncrements <= Gamma12 &&
+				Gamma12 < (i + 1) * M_PI / (double)this->_gammaIncrements) {
+				ind_gamma = i + 1;
+				bool3 = true;
 			}
+		}
+
+		if (ind_gamma == this->_gammaIncrements + 1) {
+			ind_gamma = this->_gammaIncrements;
+		}
+
+		// manually assign bin for cos(...) == M_PI/-1, because loop only includes values < pi
+		if (bool1 == 0 && cosPhi1 == -1.) {
+			ind_phi1 = this->_phi1Increments - 1;
+			bool1 = true;
+		}
+
+		if (bool2 == 0 && cosPhi2 == -1.) {
+			ind_phi2 = this->_phi2Increments - 1;
+			bool2 = true;
+		}
+
+		if (bool3 == 0 && Gamma12 == M_PI) {
+			ind_gamma = this->_gammaIncrements;
+			bool3 = true;
+		}
+
+		// notification if anything goes wrong during calculataion
+		if (bool1 == 0 || bool2 == 0 || bool3 == 0) {
+			global_log->warning() << "Array element in ODF calculation not properly assigned!" << endl;
+			global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << mol2.getID() << endl;
+			global_log->warning() << "upVec1=" << upVec1[0] << " " << upVec1[1] << " " << upVec1[2] << " " << endl;
+			global_log->warning() << "upVec2=" << upVec2[0] << " " << upVec2[1] << " " << upVec2[2] << " " << endl;
+			global_log->warning() << "r12=" << r12[0] << " " << r12[1] << " " << r12[2] << " " << endl;
+			global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
+								  << cosGamma12 << "]" << endl;
+			global_log->warning() << "indices are " << ind_phi1 << " " << ind_phi2 << " " << ind_gamma << endl;
+		}
+
+		elementID =
+			ind_phi1 * this->_phi2Increments * this->_gammaIncrements + (ind_phi2 * this->_gammaIncrements) + ind_gamma;
+
+		// determine component pairing
+
+		if (cid == 0 && mol2.getComponentLookUpID() == 0) {
+			this->_localODF11[elementID]++;
+		}
+
+		else if (cid == 0 && mol2.getComponentLookUpID() == 1) {
+			this->_localODF12[elementID]++;
+		}
+
+		else if (cid == 1 && mol2.getComponentLookUpID() == 1) {
+			this->_localODF22[elementID]++;
+		}
+
+		else {
+			this->_localODF21[elementID]++;
 		}
 	}
 }
