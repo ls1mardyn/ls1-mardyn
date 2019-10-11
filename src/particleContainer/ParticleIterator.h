@@ -60,10 +60,10 @@ public:
 	typedef size_t MolIndex_T;
 
 	ParticleIterator ();
-	ParticleIterator (Type t_arg, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const bool initialize=true);
+	ParticleIterator (Type t_arg, CellContainer_T_ptr cells_arg, CellIndex_T offset_arg, CellIndex_T stride_arg, bool initialize=true);
 	ParticleIterator& operator=(const ParticleIterator& other);
 
-	virtual ~ParticleIterator(){}
+	virtual ~ParticleIterator()= default;
 
 	Molecule& operator *  () const;
 	Molecule* operator -> () const;
