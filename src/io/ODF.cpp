@@ -59,11 +59,15 @@ void ODF::init(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*dom
 	this->reset();
 }
 
+void ODF::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+unsigned long simstep){
+	if (simstep > this->_initStatistics && simstep % this->_recordingTimesteps == 0) {
+		this->record(particleContainer, global_simulation->getDomain(), domainDecomp, simstep);
+	}
+}
+
 void ODF::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 				  unsigned long simstep) {
-	if (simstep > this->_initStatistics && simstep % this->_recordingTimesteps == 0) {
-		this->record(particleContainer, domain, domainDecomp, simstep);
-	}
 
 	if (simstep > this->_initStatistics && simstep % this->_writeFrequency == 0) {
 		this->output(domain, simstep);

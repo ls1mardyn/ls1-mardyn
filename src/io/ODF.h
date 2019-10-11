@@ -13,6 +13,8 @@ class ODF : public PluginBase {
 public:
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 	void readXML(XMLfileUnits& xmlconfig) override;
+	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+					 unsigned long simstep) override;
 	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 				 unsigned long simstep) override;
 	void reset();
