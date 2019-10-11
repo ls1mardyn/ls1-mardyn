@@ -163,7 +163,6 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 				cosPhi1 = 0.;
 				cosPhi2 = 0.;
 				cosGamma12 = 0.;
-				Gamma12 = 0.;
 				norm1 = 0.;
 				norm2 = 0.;
 				ind_phi1 = 0;
