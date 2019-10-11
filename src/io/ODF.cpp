@@ -29,7 +29,11 @@ void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "[ODF] Shell mixing rule: " << _mixingRule << endl;
 }
 
-void ODF::init(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
+void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainDecomp*/, Domain* domain) {
+	std::array<double, 3> simBoxSize = {domain->getGlobalLength(0), domain->getGlobalLength(1),
+										domain->getGlobalLength(2)};
+	_cellProcessor = std::make_unique<ODFCellProcessor>(particleContainer->getCutoff(), this, simBoxSize);
+
 	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	this->_numComponents = components->size();
 	std::vector<unsigned int> isDipole(this->_numComponents);
@@ -69,7 +73,7 @@ void ODF::init(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*dom
 
 void ODF::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep > this->_initStatistics && simstep % this->_recordingTimesteps == 0) {
-		this->record(particleContainer, global_simulation->getDomain(), domainDecomp, simstep);
+      particleContainer->traverseCells(*_cellProcessor);
 	}
 }
 

@@ -1,9 +1,9 @@
 // Created by Joshua Marx 08/2019
 // Only works for pure fluids and binary mixtures for now
 
-#ifndef SRC_PLUGINS_ODF_H_
-#define SRC_PLUGINS_ODF_H_
+#pragma once
 
+#include <particleContainer/adapter/ODFCellProcessor.h>
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
@@ -18,8 +18,6 @@ public:
 	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 				 unsigned long simstep) override;
 	void reset();
-	void record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp,
-				unsigned long simstep);
 	void collect(DomainDecompBase* domainDecomp);
 	void calculateOrientation(const array<double, 3> &simBoxSize,
                               const Molecule &mol1,
@@ -52,6 +50,6 @@ private:
 	std::vector<unsigned long> _localODF12;
 	std::vector<unsigned long> _localODF21;
 	std::vector<unsigned long> _localODF22;
-};
 
-#endif /* SRC_PLUGINS_ODF_H_ */
+	std::unique_ptr<ODFCellProcessor> _cellProcessor;
+};
