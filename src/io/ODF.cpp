@@ -67,8 +67,7 @@ void ODF::init(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*dom
 	this->reset();
 }
 
-void ODF::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-unsigned long simstep){
+void ODF::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep > this->_initStatistics && simstep % this->_recordingTimesteps == 0) {
 		this->record(particleContainer, global_simulation->getDomain(), domainDecomp, simstep);
 	}
@@ -76,7 +75,6 @@ unsigned long simstep){
 
 void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* domain,
 				  unsigned long simstep) {
-
 	if (simstep > this->_initStatistics && simstep % this->_writeFrequency == 0) {
 		this->collect(domainDecomp);
 		this->output(domain, simstep);
@@ -368,8 +366,6 @@ void ODF::collect(DomainDecompBase* domainDecomp) {
 	}
 }
 
-
-
 void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	global_log->info() << "[ODF] writing output" << std::endl;
 	// Setup outfile
@@ -447,10 +443,10 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
 			}
 
-			//			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
-			//			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
-			//			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
-			//			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
+			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
+			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
+			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
+			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
 		}
 		ODF11.close();
 		ODF12.close();
