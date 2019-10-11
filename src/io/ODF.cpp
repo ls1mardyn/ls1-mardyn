@@ -262,7 +262,7 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 				upVec2[1] = 2 * (Q2[2] * Q2[3] - Q2[0] * Q2[1]);
 				upVec2[2] = 1 - 2 * (Q2[1] * Q2[1] + Q2[2] * Q2[2]);
 
-				// calculate projection of the vectors onto plane perdendicular to the distance vector with cross
+				// calculate projection of the vectors onto plane perpendicular to the distance vector with cross
 				// product for calculation of the torque angle gamma
 				auxVec1[0] = upVec1[1] * r12[2] - upVec1[2] * r12[1];
 				auxVec1[1] = upVec1[2] * r12[0] - upVec1[0] * r12[2];
