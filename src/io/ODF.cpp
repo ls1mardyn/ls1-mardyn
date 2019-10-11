@@ -33,7 +33,7 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDec
 	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	this->_numMolecules = domain->getglobalNumMolecules();
 	this->_numComponents = components->size();
-	unsigned int* isDipole = new unsigned int[this->_numComponents];
+	std::vector<unsigned int> isDipole(this->_numComponents);
 	unsigned int numPairs = 0;
 
 	for (unsigned int i = 0; i < this->_numComponents; ++i) {
@@ -57,7 +57,6 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDec
 			<< "Number of pairings for ODF calculation too high. Current maximum number of ODF pairings is 4." << endl;
 	}
 
-	delete[] isDipole;
 	this->reset();
 }
 
@@ -68,7 +67,6 @@ void ODF::endStep(ParticleContainer* particleContainer, DomainDecompBase* domain
 	}
 
 	if (simstep > this->_initStatistics && simstep % this->_writeFrequency == 0) {
-		this->collect(domainDecomp);
 		this->output(domain, simstep);
 		this->reset();
 	}
@@ -78,10 +76,10 @@ void ODF::reset() {
 	global_log->info() << "[ODF] resetting data sets" << endl;
 
 	for (unsigned i = 0; i < this->_numElements; i++) {
-		this->_ODF11[i] = 0;
-		this->_ODF12[i] = 0;
-		this->_ODF21[i] = 0;
-		this->_ODF22[i] = 0;
+//		this->_ODF11[i] = 0;
+//		this->_ODF12[i] = 0;
+//		this->_ODF21[i] = 0;
+//		this->_ODF22[i] = 0;
 		this->_localODF11[i] = 0;
 		this->_localODF12[i] = 0;
 		this->_localODF21[i] = 0;
@@ -89,111 +87,44 @@ void ODF::reset() {
 	}
 }
 
-void ODF::resetTempParticles(Domain* domain) {
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		this->_cid[i] = 0;
-		this->_molID[i] = 0;
-		this->_r1[0][i] = 0.;
-		this->_r1[1][i] = 0.;
-		this->_r1[2][i] = 0.;
-		this->_Q1[0][i] = 0.;
-		this->_Q1[1][i] = 0.;
-		this->_Q1[2][i] = 0.;
-		this->_Q1[3][i] = 0.;
-		this->_doODF[i] = 0;
-		this->_upVec1[0][i] = 0.;
-		this->_upVec1[1][i] = 0.;
-		this->_upVec1[2][i] = 0.;
-	}
-}
-
-void ODF::collectTempParticles(Domain* domain, DomainDecompBase* domainDecomp) {
-	domainDecomp->collCommInit(domain->getglobalNumMolecules() * 10);
-
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		domainDecomp->collCommAppendUnsLong(this->_cid[i]);
-		domainDecomp->collCommAppendUnsLong(this->_molID[i]);
-		domainDecomp->collCommAppendUnsLong(this->_doODF[i]);
-		domainDecomp->collCommAppendDouble(this->_r1[0][i]);
-		domainDecomp->collCommAppendDouble(this->_r1[1][i]);
-		domainDecomp->collCommAppendDouble(this->_r1[2][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[0][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[1][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[2][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[3][i]);
-	}
-	domainDecomp->collCommAllreduceSum();
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		this->_cid[i] = domainDecomp->collCommGetUnsLong();
-		this->_molID[i] = domainDecomp->collCommGetUnsLong();
-		this->_doODF[i] = domainDecomp->collCommGetUnsLong();
-		this->_r1[0][i] = domainDecomp->collCommGetDouble();
-		this->_r1[1][i] = domainDecomp->collCommGetDouble();
-		this->_r1[2][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[0][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[1][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[2][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[3][i] = domainDecomp->collCommGetDouble();
-	}
-	domainDecomp->collCommFinalize();
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		this->_upVec1[0][i] = 2 * (this->_Q1[1][i] * this->_Q1[3][i] + this->_Q1[0][i] * this->_Q1[2][i]);
-		this->_upVec1[1][i] = 2 * (this->_Q1[2][i] * this->_Q1[3][i] - this->_Q1[0][i] * this->_Q1[1][i]);
-		this->_upVec1[2][i] = 1 - 2 * (this->_Q1[1][i] * this->_Q1[1][i] + this->_Q1[2][i] * this->_Q1[2][i]);
-	}
-}
-
 void ODF::record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp,
 				 unsigned long simstep) {
-	this->resetTempParticles(domain);
 
-	for (auto it = particleContainer->iterator(ParticleIterator::ALL_CELLS); it.isValid();
-		 ++it) {  // records and stores positions and quaternions of all particles. Inefficient method needs to be
-				  // improved
-
-		this->_cid[it->getID()] = it->getComponentLookUpID();
-		this->_molID[it->getID()] = it->getID();
-		this->_r1[0][it->getID()] = it->r(0);
-		this->_r1[1][it->getID()] = it->r(1);
-		this->_r1[2][it->getID()] = it->r(2);
+	for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid();
+		 ++it) {
 
 		if (it->numDipoles() == 1) {
-			this->_doODF[it->getID()] = it->getID();
-
-			this->_Q1[0][it->getID()] = it->q().qw();
-			this->_Q1[1][it->getID()] = it->q().qx();
-			this->_Q1[2][it->getID()] = it->q().qy();
-			this->_Q1[3][it->getID()] = it->q().qz();
-		}
-	}
-
-	this->collectTempParticles(domain, domainDecomp);  // parallelization for stored positions and quaternions
-
-	for (unsigned long i = 1; i < domain->getglobalNumMolecules() + 1; i++) {  // outer loop over all particles
-
-		if (i == this->_doODF[i]) {
-			this->calculateOrientation(particleContainer, domain, i);
+			this->calculateOrientation(particleContainer, domain, *it);
 		}
 	}
 }
 
-void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* domain,
-							   unsigned index) {  // records mutual orientation of particle pairs
+void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* domain, const Molecule& mol1) {
+	std::array<double, 3> r1{mol1.r(0), mol1.r(1), mol1.r(2)};
+
+	std::array<double, 3> upVec1{};
+	{
+		std::array<double, 4> q1{mol1.q().qw(), mol1.q().qx(), mol1.q().qy(), mol1.q().qz()};
+		upVec1[0] = 2 * (q1[1] * q1[3] + q1[0] * q1[2]);
+		upVec1[1] = 2 * (q1[2] * q1[3] - q1[0] * q1[1]);
+		upVec1[2] = 1 - 2 * (q1[1] * q1[1] + q1[2] * q1[2]);
+	}
+	// records mutual orientation of particle pairs
 
 	// TODO Implement rotation matrices to calculate orientations for dipole direction unit vectors other than [0 0 1];
-	double upVec1[3], r1[3], Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3],
-		projection2[3];
-	r1[0] = this->_r1[0][index];
-	r1[1] = this->_r1[1][index];
-	r1[2] = this->_r1[2][index];
-	upVec1[0] = this->_upVec1[0][index];
-	upVec1[1] = this->_upVec1[1][index];
-	upVec1[2] = this->_upVec1[2][index];
+	double Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3], projection2[3];
+	// r1[0] = this->_r1[0][index];
+	// r1[1] = this->_r1[1][index];
+	// r1[2] = this->_r1[2][index];
+	// upVec1[0] = this->_upVec1[0][index];
+	// upVec1[1] = this->_upVec1[1][index];
+	// upVec1[2] = this->_upVec1[2][index];
 	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff;
 	double roundingThreshold = 0.0001;
 	unsigned long ind_phi1, ind_phi2, ind_gamma, elementID;
 	unsigned maximum;
 	bool bool1, bool2, bool3;
+	auto cid = mol1.getComponentLookUpID();
 
 	for (auto it = particleContainer->iterator(ParticleIterator::ALL_CELLS); it.isValid();
 		 ++it) {  // inner loop over all particles. this should only loop over the neighbours of the particle from the
@@ -210,14 +141,13 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 				distanceSquared += dist1D[i] * dist1D[i];
 			}
 
-			shellcutoff = this->_shellCutOff[this->_cid[index]];
+			shellcutoff = this->_shellCutOff[cid];
 
 			if (this->_mixingRule == 1) {
-				shellcutoff =
-					1 / 3 * this->_shellCutOff[this->_cid[index]] + this->_shellCutOff[it->getComponentLookUpID()];
+				shellcutoff = 1 / 3 * this->_shellCutOff[cid] + this->_shellCutOff[it->getComponentLookUpID()];
 			}
 
-			if (distanceSquared < shellcutoff * shellcutoff && this->_molID[index] != it->getID()) {
+			if (distanceSquared < shellcutoff * shellcutoff && mol1.getID() != it->getID()) {
 				normr12 = 0.;
 
 				// reading second molecule's quaternions
@@ -236,9 +166,9 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 				ind_phi1 = 0;
 				ind_phi2 = 0;
 				ind_gamma = 0;
-				bool1 = 0;
-				bool2 = 0;
-				bool3 = 0;
+				bool1 = false;
+				bool2 = false;
+				bool3 = false;
 
 				// calculate distance vector between molecules
 				for (unsigned i = 0; i < 3; i++) {
@@ -253,8 +183,8 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 
 				normr12 = sqrt(normr12);
 
-				for (unsigned i = 0; i < 3; i++) {
-					r12[i] /= normr12;
+				for (double & i : r12) {
+					i /= normr12;
 				}
 
 				// calculate vectors pointing in the direction defined by the dipole
@@ -322,19 +252,19 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 					if (1. - i * 2. / (double)this->_phi1Increments >= cosPhi1 &&
 						cosPhi1 > 1. - (i + 1) * 2. / (double)this->_phi1Increments) {
 						ind_phi1 = i;
-						bool1 = 1;
+						bool1 = true;
 					}
 
 					if (1. - i * 2. / (double)this->_phi2Increments >= cosPhi2 &&
 						cosPhi2 > 1. - (i + 1) * 2. / (double)this->_phi2Increments) {
 						ind_phi2 = i;
-						bool2 = 1;
+						bool2 = true;
 					}
 
 					if (i * M_PI / (double)this->_gammaIncrements <= Gamma12 &&
 						Gamma12 < (i + 1) * M_PI / (double)this->_gammaIncrements) {
 						ind_gamma = i + 1;
-						bool3 = 1;
+						bool3 = true;
 					}
 				}
 
@@ -345,24 +275,23 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 				// manually assign bin for cos(...) == M_PI/-1, because loop only includes values < pi
 				if (bool1 == 0 && cosPhi1 == -1.) {
 					ind_phi1 = this->_phi1Increments - 1;
-					bool1 = 1;
+					bool1 = true;
 				}
 
 				if (bool2 == 0 && cosPhi2 == -1.) {
 					ind_phi2 = this->_phi2Increments - 1;
-					bool2 = 1;
+					bool2 = true;
 				}
 
 				if (bool3 == 0 && Gamma12 == M_PI) {
 					ind_gamma = this->_gammaIncrements;
-					bool3 = 1;
+					bool3 = true;
 				}
 
 				// notification if anything goes wrong during calculataion
 				if (bool1 == 0 || bool2 == 0 || bool3 == 0) {
 					global_log->warning() << "Array element in ODF calculation not properly assigned!" << endl;
-					global_log->warning()
-						<< "Mol-ID 1 = " << this->_molID[index] << "  Mol-ID 2 = " << it->getID() << endl;
+					global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << it->getID() << endl;
 					global_log->warning()
 						<< "upVec1=" << upVec1[0] << " " << upVec1[1] << " " << upVec1[2] << " " << endl;
 					global_log->warning()
@@ -378,15 +307,15 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 
 				// determine component pairing
 
-				if (this->_cid[index] == 0 && it->getComponentLookUpID() == 0) {
+				if (cid == 0 && it->getComponentLookUpID() == 0) {
 					this->_localODF11[elementID]++;
 				}
 
-				else if (this->_cid[index] == 0 && it->getComponentLookUpID() == 1) {
+				else if (cid == 0 && it->getComponentLookUpID() == 1) {
 					this->_localODF12[elementID]++;
 				}
 
-				else if (this->_cid[index] == 1 && it->getComponentLookUpID() == 1) {
+				else if (cid == 1 && it->getComponentLookUpID() == 1) {
 					this->_localODF22[elementID]++;
 				}
 
@@ -395,42 +324,6 @@ void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* dom
 				}
 			}
 		}
-	}
-}
-
-void ODF::collect(DomainDecompBase* domainDecomp) {
-	if (this->_numPairs == 1) {
-		domainDecomp->collCommInit(this->_numElements);
-
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
-		}
-		domainDecomp->collCommAllreduceSum();
-
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
-		}
-		domainDecomp->collCommFinalize();
-	}
-
-	else {
-		domainDecomp->collCommInit(this->_numElements * 4);
-
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF12[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF22[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF21[i]);
-		}
-		domainDecomp->collCommAllreduceSum();
-
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF12[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF22[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF21[i] = domainDecomp->collCommGetUnsLong();
-		}
-		domainDecomp->collCommFinalize();
 	}
 }
 
@@ -447,7 +340,7 @@ void ODF::output(Domain* domain, long unsigned timestep) {
 	osstrm.fill('0');
 	osstrm.width(7);
 	osstrm << right << timestep;
-	prefix = osstrm.str().c_str();
+	prefix = osstrm.str();
 	osstrm.str("");
 	osstrm.clear();
 
@@ -469,7 +362,7 @@ void ODF::output(Domain* domain, long unsigned timestep) {
 				cosPhi1 -= 2. / (double)this->_phi1Increments;
 				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
 			}
-			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
+			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_localODF11[i + 1] << "\n";
 		}
 		outfile.close();
 	} else {
@@ -511,10 +404,10 @@ void ODF::output(Domain* domain, long unsigned timestep) {
 				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
 			}
 
-			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
-			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
-			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
-			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
+//			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
+//			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
+//			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
+//			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
 		}
 		ODF11.close();
 		ODF12.close();

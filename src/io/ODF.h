@@ -16,12 +16,9 @@ public:
 	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 				 unsigned long simstep) override;
 	void reset();
-	void resetTempParticles(Domain* domain);
-	void collectTempParticles(Domain* domain, DomainDecompBase* domainDecomp);
 	void record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp,
 				unsigned long simstep);
-	void calculateOrientation(ParticleContainer* particleContainer, Domain* domain, unsigned index);
-	void collect(DomainDecompBase* domainDecomp);
+	void calculateOrientation(ParticleContainer* particleContainer, Domain* domain, const Molecule& mol1);
 	void output(Domain* domain, long unsigned timestep);
 	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
 	std::string getPluginName() override { return std::string("ODF"); }
@@ -43,16 +40,16 @@ private:
 	double _shellCutOff[2];
 	bool _mixingRule;
 	std::string _outputPrefix;
-	std::map<unsigned long, unsigned> _cid;
-	std::map<unsigned long, unsigned> _molID;
-	std::map<unsigned long, unsigned long> _doODF;
-	std::map<unsigned long, std::map<unsigned long, double>> _Q1;
-	std::map<unsigned long, std::map<unsigned long, double>> _upVec1;
-	std::map<unsigned long, std::map<unsigned long, double>> _r1;
-	std::map<unsigned long, unsigned long> _ODF11;
-	std::map<unsigned long, unsigned long> _ODF12;
-	std::map<unsigned long, unsigned long> _ODF21;
-	std::map<unsigned long, unsigned long> _ODF22;
+//	std::map<unsigned long, unsigned> _cid;
+//	std::map<unsigned long, unsigned> _molID;
+//	std::map<unsigned long, unsigned long> _doODF;
+//	std::map<unsigned long, std::map<unsigned long, double>> _Q1;
+//	std::map<unsigned long, std::map<unsigned long, double>> _upVec1;
+//	std::map<unsigned long, std::map<unsigned long, double>> _r1;
+//	std::map<unsigned long, unsigned long> _ODF11;
+//	std::map<unsigned long, unsigned long> _ODF12;
+//	std::map<unsigned long, unsigned long> _ODF21;
+//	std::map<unsigned long, unsigned long> _ODF22;
 	std::map<unsigned long, unsigned long> _localODF11;
 	std::map<unsigned long, unsigned long> _localODF12;
 	std::map<unsigned long, unsigned long> _localODF21;
