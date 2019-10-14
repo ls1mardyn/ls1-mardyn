@@ -104,7 +104,9 @@ public:
 	         <epsilon>DOUBLE</epsilon>
 	       </electrostatic>
 	       <datastructure type=STRING><!-- see ParticleContainer class documentation --></datastructure>
-	       <parallelisation type=STRING><!-- see DomainDecompBase class documentation --></parallelisation>
+	       <parallelisation type=STRING><!-- see DomainDecompBase class documentation -->
+	         <timerForCalculation>STRING</timerForCalculation><!-- Timer to use as load. requires valid timer name! -->
+	       </parallelisation>
 	       <thermostats>
 	         <thermostat type='VelocityScaling' componentId=STRING><!-- componentId can be component id or 'global' -->
 	           <temperature>DOUBLE</temperature>
@@ -458,6 +460,9 @@ public:
 	bool keepRunning();
 
 private:
+
+	/// the timer used for the load calculation.
+	Timer* _timerForLoad{nullptr};
 
 	Timer _timeFromStart;
 	double _maxWallTime = -1;
