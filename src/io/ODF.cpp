@@ -1,7 +1,7 @@
 // Created by Joshua Marx 08/2019
 
 #include "ODF.h"
-#include <numeric>
+#include "WrapOpenMP.h"
 
 void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->debug() << "[ODF] enabled. Dipole orientations must be set to [0 0 1]!" << std::endl;
