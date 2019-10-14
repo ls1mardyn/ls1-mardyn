@@ -46,10 +46,11 @@ private:
 	std::vector<unsigned long> _ODF12;
 	std::vector<unsigned long> _ODF21;
 	std::vector<unsigned long> _ODF22;
-	std::vector<unsigned long> _localODF11;
-	std::vector<unsigned long> _localODF12;
-	std::vector<unsigned long> _localODF21;
-	std::vector<unsigned long> _localODF22;
+	// thread buffers to avoid race conditions
+	std::vector<std::vector<unsigned long>> _threadLocalODF11;
+	std::vector<std::vector<unsigned long>> _threadLocalODF12;
+	std::vector<std::vector<unsigned long>> _threadLocalODF21;
+	std::vector<std::vector<unsigned long>> _threadLocalODF22;
 
 	std::unique_ptr<ODFCellProcessor> _cellProcessor;
 };

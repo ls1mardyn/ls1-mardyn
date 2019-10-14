@@ -1,6 +1,7 @@
 // Created by Joshua Marx 08/2019
 
 #include "ODF.h"
+#include <numeric>
 
 void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->debug() << "[ODF] enabled. Dipole orientations must be set to [0 0 1]!" << std::endl;
@@ -48,20 +49,28 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 		}
 	}
 
-	this->_numPairs = numPairs * numPairs;
-	this->_numElements = this->_phi1Increments * this->_phi2Increments * this->_gammaIncrements + 1;
-	global_log->info() << "ODF arrays contains " << this->_numElements << " elements each for " << this->_numPairs
-					   << "pairings" << endl;
-	this->_ODF11.resize(_numElements);
-	this->_ODF12.resize(_numElements);
-	this->_ODF21.resize(_numElements);
-	this->_ODF22.resize(_numElements);
-	this->_localODF11.resize(_numElements);
-	this->_localODF12.resize(_numElements);
-	this->_localODF21.resize(_numElements);
-	this->_localODF22.resize(_numElements);
+	_numPairs = numPairs * numPairs;
+	_numElements = _phi1Increments * _phi2Increments * _gammaIncrements + 1;
+	global_log->info() << "ODF arrays contains " << _numElements << " elements each for " << _numPairs << "pairings"
+					   << endl;
+	_ODF11.resize(_numElements);
+	_ODF12.resize(_numElements);
+	_ODF21.resize(_numElements);
+	_ODF22.resize(_numElements);
 
-	if (this->_numPairs < 1) {
+	using vecType2D = decltype(_threadLocalODF11);
+	auto resize2D = [](vecType2D vec, size_t newSizeOuter, size_t newSizeInner) {
+		vec.resize(newSizeOuter);
+		using vecType = decltype(vec[0]);
+		std::for_each(vec.begin(), vec.end(), [newSizeInner](vecType v) { v.resize(newSizeInner); });
+	};
+
+	resize2D(_threadLocalODF11, mardyn_get_max_threads(), _numElements);
+	resize2D(_threadLocalODF12, mardyn_get_max_threads(), _numElements);
+	resize2D(_threadLocalODF21, mardyn_get_max_threads(), _numElements);
+	resize2D(_threadLocalODF22, mardyn_get_max_threads(), _numElements);
+
+	if (_numPairs < 1) {
 		global_log->error() << "No components with dipoles. ODFs not being calculated!" << endl;
 	} else if (this->_numPairs > 4) {
 		global_log->error()
@@ -89,16 +98,20 @@ void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* do
 void ODF::reset() {
 	global_log->info() << "[ODF] resetting data sets" << endl;
 
-	for (unsigned long i = 0; i < this->_numElements; i++) {
-		this->_ODF11[i] = 0;
-		this->_ODF12[i] = 0;
-		this->_ODF21[i] = 0;
-		this->_ODF22[i] = 0;
-		this->_localODF11[i] = 0;
-		this->_localODF12[i] = 0;
-		this->_localODF21[i] = 0;
-		this->_localODF22[i] = 0;
-	}
+	//	// C++ 14:
+	//	auto fillZero = [](auto vec) {std::fill(vec.begin(), vec.end(), 0);};
+	using vecType = decltype(_ODF11);
+	auto fillZero = [](vecType vec) { std::fill(vec.begin(), vec.end(), 0); };
+
+	fillZero(_ODF11);
+	fillZero(_ODF12);
+	fillZero(_ODF21);
+	fillZero(_ODF22);
+
+	std::for_each(_threadLocalODF11.begin(), _threadLocalODF11.end(), fillZero);
+	std::for_each(_threadLocalODF12.begin(), _threadLocalODF12.end(), fillZero);
+	std::for_each(_threadLocalODF21.begin(), _threadLocalODF21.end(), fillZero);
+	std::for_each(_threadLocalODF22.begin(), _threadLocalODF22.end(), fillZero);
 }
 
 void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecule& mol1, const Molecule& mol2,
@@ -290,26 +303,39 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		// determine component pairing
 
 		if (cid == 0 && mol2.getComponentLookUpID() == 0) {
-			this->_localODF11[elementID]++;
+			_threadLocalODF11[mardyn_get_thread_num()][elementID]++;
 		}
 
 		else if (cid == 0 && mol2.getComponentLookUpID() == 1) {
-			this->_localODF12[elementID]++;
+			_threadLocalODF12[mardyn_get_thread_num()][elementID]++;
 		}
 
 		else if (cid == 1 && mol2.getComponentLookUpID() == 1) {
-			this->_localODF22[elementID]++;
+			_threadLocalODF22[mardyn_get_thread_num()][elementID]++;
 		}
 
 		else {
-			this->_localODF21[elementID]++;
+			_threadLocalODF21[mardyn_get_thread_num()][elementID]++;
 		}
 	}
 }
 
 void ODF::collect(DomainDecompBase* domainDecomp) {
-	if (this->_numPairs == 1) {
-		domainDecomp->collCommInit(this->_numElements);
+	// accumulate thread buffers
+	std::vector<unsigned long> localODF11(_threadLocalODF11.size());
+	std::vector<unsigned long> localODF12(_threadLocalODF12.size());
+	std::vector<unsigned long> localODF21(_threadLocalODF21.size());
+	std::vector<unsigned long> localODF22(_threadLocalODF22.size());
+	for (size_t t = 0; t < mardyn_get_max_threads(); ++t) {
+		std::transform(localODF11.begin(), localODF11.end(), _threadLocalODF11[t].begin(), _threadLocalODF11[t].begin(),
+					   std::plus<>());
+		std::transform(localODF12.begin(), localODF12.end(), _threadLocalODF12[t].begin(), _threadLocalODF12[t].begin(),
+					   std::plus<>());
+		std::transform(localODF21.begin(), localODF21.end(), _threadLocalODF21[t].begin(), _threadLocalODF21[t].begin(),
+					   std::plus<>());
+		std::transform(localODF22.begin(), localODF22.end(), _threadLocalODF22[t].begin(), _threadLocalODF22[t].begin(),
+					   std::plus<>());
+	}
 
 		for (unsigned long i = 0; i < this->_numElements; i++) {
 			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
