@@ -115,114 +115,114 @@ void ODF::reset() {
 }
 
 void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecule& mol1, const Molecule& mol2,
-							   const array<double, 3>& upVec1) {
+							   const array<double, 3>& orientationVector1) {
 	if (mol2.numDipoles() != 1) {
 		return;
 	}
 
 	// TODO Implement rotation matrices to calculate orientations for dipole direction unit vectors other than [0 0 1];
-
-	// FIXME: rename (almost all of) these to something more meaningful
-	double Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3], projection2[3];
+	
+	double Quaternion2[4], orientationVector2[3], distanceVector12[3], moleculeDistance1D[3], auxiliaryVector1[3], auxiliaryVector2[3], projectionVector1[3], projectionVector2[3]; 
 	auto cid = mol1.getComponentLookUpID();
-	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff = _shellCutOff[cid];
+	double cosPhi1, cosPhi2, cosGamma12, Gamma12, absoluteProjection1, absoluteProjection2, absoluteDistanceVector12, shellCutoff = _shellCutOff[cid];
 	double roundingThreshold = 0.0001;
-	unsigned long ind_phi1, ind_phi2, ind_gamma, elementID;
-	unsigned maximum;
-	bool bool1, bool2, bool3;  // FIXME: <- seriously? rename this....
+	unsigned long indexPhi1, indexPhi2, indexGamma12, elementID;
+	unsigned maximumIncrements;
+	bool assignPhi1, assignPhi2, assignGamma12;  
 
+	
 	double distanceSquared = 0.;
-	// minimum image convention
+	// Determine modular distance between molecules
 	for (int i = 0; i < 3; i++) {
-		dist1D[i] = mol1.r(i) - mol2.r(i);
-		if (abs(dist1D[i]) > 0.5 * simBoxSize[i]) {
-			dist1D[i] = simBoxSize[i] - abs(dist1D[i]);
+		moleculeDistance1D[i] = mol1.r(i) - mol2.r(i);
+		if (abs(moleculeDistance1D[i]) > 0.5 * simBoxSize[i]) {
+			moleculeDistance1D[i] = simBoxSize[i] - abs(moleculeDistance1D[i]);
 		}
-		distanceSquared += dist1D[i] * dist1D[i];
+		distanceSquared += moleculeDistance1D[i] * moleculeDistance1D[i];
 	}
-
+	
 	if (_mixingRule == 1) {
-		shellcutoff = 1. / 3 * _shellCutOff[cid] + _shellCutOff[mol2.getComponentLookUpID()];
+		shellCutoff = 1. / 2. * _shellCutOff[cid] + _shellCutOff[mol2.getComponentLookUpID()];
 	}
 
-	if (distanceSquared < shellcutoff * shellcutoff && mol1.getID() != mol2.getID()) {
-		normr12 = 0.;
+	if (distanceSquared < shellCutoff * shellCutoff && mol1.getID() != mol2.getID()) {
+		absoluteDistanceVector12 = 0.;
 
 		// reading second molecule's quaternions
 
-		Q2[0] = mol2.q().qw();
-		Q2[1] = mol2.q().qx();
-		Q2[2] = mol2.q().qy();
-		Q2[3] = mol2.q().qz();
+		Quaternion2[0] = mol2.q().qw();
+		Quaternion2[1] = mol2.q().qx();
+		Quaternion2[2] = mol2.q().qy();
+		Quaternion2[3] = mol2.q().qz();
 
 		cosPhi1 = 0.;
 		cosPhi2 = 0.;
 		cosGamma12 = 0.;
-		norm1 = 0.;
-		norm2 = 0.;
-		ind_phi1 = 0;
-		ind_phi2 = 0;
-		ind_gamma = 0;
-		bool1 = false;
-		bool2 = false;
-		bool3 = false;
+		absoluteProjection1 = 0.;
+		absoluteProjection2 = 0.;
+		indexPhi1 = 0;
+		indexPhi2 = 0;
+		indexGamma12 = 0;
+		assignPhi1 = false;
+		assignPhi2 = false;
+		assignGamma12 = false;
 
 		// calculate distance vector between molecules
 		for (unsigned i = 0; i < 3; i++) {
-			r12[i] = mol2.r(i) - mol1.r(i);
-			if (r12[i] > 0.5 * simBoxSize[i]) {
-				r12[i] = -(simBoxSize[i] - r12[i]);
-			} else if (r12[i] < -0.5 * simBoxSize[i]) {
-				r12[i] = -(r12[i] - simBoxSize[i]);
+			distanceVector12[i] = mol2.r(i) - mol1.r(i);
+			if (distanceVector12[i] > 0.5 * simBoxSize[i]) {
+				distanceVector12[i] = -(simBoxSize[i] - distanceVector12[i]);
+			} else if (distanceVector12[i] < -0.5 * simBoxSize[i]) {
+				distanceVector12[i] = -(distanceVector12[i] - simBoxSize[i]);
 			}
-			normr12 += r12[i] * r12[i];
+			absoluteDistanceVector12 += distanceVector12[i] * distanceVector12[i];
 		}
 
-		normr12 = sqrt(normr12);
-
-		for (double& i : r12) {
-			i /= normr12;
+		absoluteDistanceVector12 = sqrt(absoluteDistanceVector12);
+		// norm the distance vector
+		for (double& i : distanceVector12) {
+			i /= absoluteDistanceVector12;
 		}
 
-		// calculate vectors pointing in the direction defined by the dipole
-		upVec2[0] = 2 * (Q2[1] * Q2[3] + Q2[0] * Q2[2]);
-		upVec2[1] = 2 * (Q2[2] * Q2[3] - Q2[0] * Q2[1]);
-		upVec2[2] = 1 - 2 * (Q2[1] * Q2[1] + Q2[2] * Q2[2]);
+		// calculate dipolar orientation vector from quaternion
+		orientationVector2[0] = 2 * (Q2[1] * Q2[3] + Q2[0] * Q2[2]);
+		orientationVector2[1] = 2 * (Q2[2] * Q2[3] - Q2[0] * Q2[1]);
+		orientationVector2[2] = 1 - 2 * (Q2[1] * Q2[1] + Q2[2] * Q2[2]);
 
-		// calculate projection of the vectors onto plane perpendicular to the distance vector with cross
-		// product for calculation of the torque angle gamma
-		auxVec1[0] = upVec1[1] * r12[2] - upVec1[2] * r12[1];
-		auxVec1[1] = upVec1[2] * r12[0] - upVec1[0] * r12[2];
-		auxVec1[2] = upVec1[0] * r12[1] - upVec1[1] * r12[0];
+		// calculate projection of the vectors onto plane perpendicular to the distance vector with cross product for calculation of the torque angle gamma
+		
+		auxiliaryVector1[0] = orientationVector1[1] * distanceVector12[2] - orientationVector1[2] * distanceVector12[1];
+		auxiliaryVector1[1] = orientationVector1[2] * distanceVector12[0] - orientationVector1[0] * distanceVector12[2];
+		auxiliaryVector1[2] = orientationVector1[0] * distanceVector12[1] - orientationVector1[1] * distanceVector12[0];
 
-		projection1[0] = r12[1] * auxVec1[2] - r12[2] * auxVec1[1];
-		projection1[1] = r12[2] * auxVec1[0] - r12[0] * auxVec1[2];
-		projection1[2] = r12[0] * auxVec1[1] - r12[1] * auxVec1[0];
+		projectionVector1[0] = distanceVector12[1] * auxiliaryVector1[2] - distanceVector12[2] * auxiliaryVector1[1];
+		projectionVector1[1] = distanceVector12[2] * auxiliaryVector1[0] - distanceVector12[0] * auxiliaryVector1[2];
+		projectionVector1[2] = distanceVector12[0] * auxiliaryVector1[1] - distanceVector12[1] * auxiliaryVector1[0];
 
-		auxVec2[0] = upVec2[1] * r12[2] - upVec2[2] * r12[1];
-		auxVec2[1] = upVec2[2] * r12[0] - upVec2[0] * r12[2];
-		auxVec2[2] = upVec2[0] * r12[1] - upVec2[1] * r12[0];
+		auxiliaryVector2[0] = orientationVector2[1] * distanceVector12[2] - orientationVector2[2] * distanceVector12[1];
+		auxiliaryVector2[1] = orientationVector2[2] * distanceVector12[0] - orientationVector2[0] * distanceVector12[2];
+		auxiliaryVector2[2] = orientationVector2[0] * distanceVector12[1] - orientationVector2[1] * distanceVector12[0];
 
-		projection2[0] = r12[1] * auxVec2[2] - r12[2] * auxVec2[1];
-		projection2[1] = r12[2] * auxVec2[0] - r12[0] * auxVec2[2];
-		projection2[2] = r12[0] * auxVec2[1] - r12[1] * auxVec2[0];
+		projectionVector2[0] = distanceVector12[1] * auxiliaryVector2[2] - distanceVector12[2] * auxiliaryVector2[1];
+		projectionVector2[1] = distanceVector12[2] * auxiliaryVector2[0] - distanceVector12[0] * auxiliaryVector2[2];
+		projectionVector2[2] = distanceVector12[0] * auxiliaryVector2[1] - distanceVector12[1] * auxiliaryVector2[0];
 
 		// calculate cos(phi) and norm of projection vector
 		for (unsigned i = 0; i < 3; i++) {
-			cosPhi1 += r12[i] * upVec1[i];
-			cosPhi2 -= r12[i] * upVec2[i];
-			norm1 += projection1[i] * projection1[i];
-			norm2 += projection2[i] * projection2[i];
+			cosPhi1 += distanceVector12[i] * orientationVector1[i];
+			cosPhi2 -= distanceVector12[i] * orientationVector2[i];
+			absoluteProjection1 += projectionVector1[i] * projectionVector1[i];
+			absoluteProjection2 += projectionVector2[i] * projectionVector2[i];
 		}
 
-		norm1 = sqrt(norm1);
-		norm2 = sqrt(norm2);
+		absoluteProjection1 = sqrt(absoluteProjection1);
+		absoluteProjection2 = sqrt(absoluteProjection2);
 
 		// calculate cos(gamma) as dot product of projections
 		for (unsigned i = 0; i < 3; i++) {
-			projection1[i] /= norm1;
-			projection2[i] /= norm2;
-			cosGamma12 += projection1[i] * projection2[i];
+			projectionVector1[i] /= absoluteProjection1;
+			projectionVector2[i] /= absoluteProjection2;
+			cosGamma12 += projectionVector1[i] * projectionVector2[i];
 		}
 
 		// precaution to prevent numerically intractable values (e.g. VERY close to zero but not zero) and
@@ -239,66 +239,69 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		}
 
 		Gamma12 = acos(cosGamma12);
+		
 		// determine array element
 		// NOTE: element 0 of array ODF is unused
 
-		maximum = max(_phi1Increments, _phi2Increments);
-		maximum = max(maximum, _gammaIncrements);
-
-		for (unsigned i = 0; i < maximum; i++) {
+		maximumIncrements = max(_phi1Increments, _phi2Increments);
+		maximumIncrements = max(maximumIncrements, _gammaIncrements);
+		
+		// calculate indices for phi1, phi2 and gamma12 for bin assignment
+		for (unsigned i = 0; i < maximumIncrements; i++) {
 			if (1. - i * 2. / (double)_phi1Increments >= cosPhi1 &&
 				cosPhi1 > 1. - (i + 1) * 2. / (double)_phi1Increments) {
-				ind_phi1 = i;
-				bool1 = true;
+				indexPhi1 = i;
+				assignPhi1 = true;
 			}
 
 			if (1. - i * 2. / (double)_phi2Increments >= cosPhi2 &&
 				cosPhi2 > 1. - (i + 1) * 2. / (double)_phi2Increments) {
-				ind_phi2 = i;
-				bool2 = true;
+				indexPhi2 = i;
+				assignPhi2 = true;
 			}
 
 			if (i * M_PI / (double)_gammaIncrements <= Gamma12 && Gamma12 < (i + 1) * M_PI / (double)_gammaIncrements) {
-				ind_gamma = i + 1;
-				bool3 = true;
+				indexGamma12 = i + 1;
+				assignGamma12 = true;
 			}
 		}
 
-		if (ind_gamma == _gammaIncrements + 1) {
-			ind_gamma = _gammaIncrements;
+		if (indexGamma12 == _gammaIncrements + 1) {
+			indexGamma12 = _gammaIncrements;
 		}
 
 		// manually assign bin for cos(...) == M_PI/-1, because loop only includes values < pi
-		if (bool1 == 0 && cosPhi1 == -1.) {
-			ind_phi1 = _phi1Increments - 1;
-			bool1 = true;
+		if (assignPhi1 == 0 && cosPhi1 == -1.) {
+			indexPhi1 = _phi1Increments - 1;
+			assignPhi1 = true;
 		}
 
-		if (bool2 == 0 && cosPhi2 == -1.) {
-			ind_phi2 = _phi2Increments - 1;
-			bool2 = true;
+		if (assignPhi2 == 0 && cosPhi2 == -1.) {
+			indexPhi2 = _phi2Increments - 1;
+			assignPhi2 = true;
 		}
 
-		if (bool3 == 0 && Gamma12 == M_PI) {
-			ind_gamma = _gammaIncrements;
-			bool3 = true;
+		if (assignGamma12 == 0 && Gamma12 == M_PI) {
+			indexGamma12 = _gammaIncrements;
+			assignGamma12 = true;
 		}
 
 		// notification if anything goes wrong during calculataion
-		if (bool1 == 0 || bool2 == 0 || bool3 == 0) {
+		if (assignPhi1 == 0 || assignPhi2 == 0 || assignGamma12 == 0) {
 			global_log->warning() << "Array element in ODF calculation not properly assigned!" << endl;
 			global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << mol2.getID() << endl;
-			global_log->warning() << "upVec1=" << upVec1[0] << " " << upVec1[1] << " " << upVec1[2] << " " << endl;
-			global_log->warning() << "upVec2=" << upVec2[0] << " " << upVec2[1] << " " << upVec2[2] << " " << endl;
-			global_log->warning() << "r12=" << r12[0] << " " << r12[1] << " " << r12[2] << " " << endl;
+			global_log->warning() << "orientationVector1=" << orientationVector1[0] << " " << orientationVector1[1] << " " << orientationVector1[2] << " " << endl;
+			global_log->warning() << "orientationVector2=" << orientationVector2[0] << " " << orientationVector2[1] << " " << orientationVector2[2] << " " << endl;
+			global_log->warning() << "distanceVector12=" << distanceVector12[0] << " " << distanceVector12[1] << " " << distanceVector12[2] << " " << endl;
 			global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
 								  << cosGamma12 << "]" << endl;
-			global_log->warning() << "indices are " << ind_phi1 << " " << ind_phi2 << " " << ind_gamma << endl;
+			global_log->warning() << "indices are " << indexPhi1 << " " << indexPhi2 << " " << indexGamma12 << endl;
 		}
+		
+		// assignment of bin ID
+		elementID = indexPhi1 * _phi2Increments * _gammaIncrements + (indexPhi2 * _gammaIncrements) + indexGamma12;
 
-		elementID = ind_phi1 * _phi2Increments * _gammaIncrements + (ind_phi2 * _gammaIncrements) + ind_gamma;
-
-		// determine component pairing
+		// determine component pairing and add to bin
 
 		if (cid == 0 && mol2.getComponentLookUpID() == 0) {
 			_threadLocalODF11[mardyn_get_thread_num()][elementID]++;

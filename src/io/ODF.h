@@ -22,7 +22,7 @@ public:
 	void calculateOrientation(const array<double, 3> &simBoxSize,
                               const Molecule &mol1,
                               const Molecule &mol2,
-                              const array<double, 3> &upVec1);
+                              const array<double, 3> &orientationVector1);
 	void output(Domain* domain, long unsigned timestep);
 	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
 	std::string getPluginName() override { return std::string("ODF"); }
