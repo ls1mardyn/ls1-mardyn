@@ -36,11 +36,11 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 	_cellProcessor = std::make_unique<ODFCellProcessor>(particleContainer->getCutoff(), this, simBoxSize);
 
 	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
-	this->_numComponents = components->size();
-	std::vector<unsigned int> isDipole(this->_numComponents);
+	_numComponents = components->size();
+	std::vector<unsigned int> isDipole(_numComponents);
 	unsigned int numPairs = 0;
 
-	for (unsigned int i = 0; i < this->_numComponents; ++i) {
+	for (unsigned int i = 0; i < _numComponents; ++i) {
 		Component& ci = (*components)[i];
 		isDipole[i] = ci.numDipoles();
 
@@ -72,26 +72,26 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 
 	if (_numPairs < 1) {
 		global_log->error() << "No components with dipoles. ODFs not being calculated!" << endl;
-	} else if (this->_numPairs > 4) {
+	} else if (_numPairs > 4) {
 		global_log->error()
 			<< "Number of pairings for ODF calculation too high. Current maximum number of ODF pairings is 4." << endl;
 	}
 
-	this->reset();
+	reset();
 }
 
 void ODF::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
-	if (simstep > this->_initStatistics && simstep % this->_recordingTimesteps == 0) {
-      particleContainer->traverseCells(*_cellProcessor);
+	if (simstep > _initStatistics && simstep % _recordingTimesteps == 0) {
+		particleContainer->traverseCells(*_cellProcessor);
 	}
 }
 
 void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* domain,
 				  unsigned long simstep) {
-	if (simstep > this->_initStatistics && simstep % this->_writeFrequency == 0) {
-		this->collect(domainDecomp);
-		this->output(domain, simstep);
-		this->reset();
+	if (simstep > _initStatistics && simstep % _writeFrequency == 0) {
+		collect(domainDecomp);
+		output(domain, simstep);
+		reset();
 	}
 }
 
@@ -125,7 +125,7 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 	// FIXME: rename (almost all of) these to something more meaningful
 	double Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3], projection2[3];
 	auto cid = mol1.getComponentLookUpID();
-	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff = this->_shellCutOff[cid];
+	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff = _shellCutOff[cid];
 	double roundingThreshold = 0.0001;
 	unsigned long ind_phi1, ind_phi2, ind_gamma, elementID;
 	unsigned maximum;
@@ -141,8 +141,8 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		distanceSquared += dist1D[i] * dist1D[i];
 	}
 
-	if (this->_mixingRule == 1) {
-		shellcutoff = 1. / 3 * this->_shellCutOff[cid] + this->_shellCutOff[mol2.getComponentLookUpID()];
+	if (_mixingRule == 1) {
+		shellcutoff = 1. / 3 * _shellCutOff[cid] + _shellCutOff[mol2.getComponentLookUpID()];
 	}
 
 	if (distanceSquared < shellcutoff * shellcutoff && mol1.getID() != mol2.getID()) {
@@ -242,46 +242,45 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		// determine array element
 		// NOTE: element 0 of array ODF is unused
 
-		maximum = max(this->_phi1Increments, this->_phi2Increments);
-		maximum = max(maximum, this->_gammaIncrements);
+		maximum = max(_phi1Increments, _phi2Increments);
+		maximum = max(maximum, _gammaIncrements);
 
 		for (unsigned i = 0; i < maximum; i++) {
-			if (1. - i * 2. / (double)this->_phi1Increments >= cosPhi1 &&
-				cosPhi1 > 1. - (i + 1) * 2. / (double)this->_phi1Increments) {
+			if (1. - i * 2. / (double)_phi1Increments >= cosPhi1 &&
+				cosPhi1 > 1. - (i + 1) * 2. / (double)_phi1Increments) {
 				ind_phi1 = i;
 				bool1 = true;
 			}
 
-			if (1. - i * 2. / (double)this->_phi2Increments >= cosPhi2 &&
-				cosPhi2 > 1. - (i + 1) * 2. / (double)this->_phi2Increments) {
+			if (1. - i * 2. / (double)_phi2Increments >= cosPhi2 &&
+				cosPhi2 > 1. - (i + 1) * 2. / (double)_phi2Increments) {
 				ind_phi2 = i;
 				bool2 = true;
 			}
 
-			if (i * M_PI / (double)this->_gammaIncrements <= Gamma12 &&
-				Gamma12 < (i + 1) * M_PI / (double)this->_gammaIncrements) {
+			if (i * M_PI / (double)_gammaIncrements <= Gamma12 && Gamma12 < (i + 1) * M_PI / (double)_gammaIncrements) {
 				ind_gamma = i + 1;
 				bool3 = true;
 			}
 		}
 
-		if (ind_gamma == this->_gammaIncrements + 1) {
-			ind_gamma = this->_gammaIncrements;
+		if (ind_gamma == _gammaIncrements + 1) {
+			ind_gamma = _gammaIncrements;
 		}
 
 		// manually assign bin for cos(...) == M_PI/-1, because loop only includes values < pi
 		if (bool1 == 0 && cosPhi1 == -1.) {
-			ind_phi1 = this->_phi1Increments - 1;
+			ind_phi1 = _phi1Increments - 1;
 			bool1 = true;
 		}
 
 		if (bool2 == 0 && cosPhi2 == -1.) {
-			ind_phi2 = this->_phi2Increments - 1;
+			ind_phi2 = _phi2Increments - 1;
 			bool2 = true;
 		}
 
 		if (bool3 == 0 && Gamma12 == M_PI) {
-			ind_gamma = this->_gammaIncrements;
+			ind_gamma = _gammaIncrements;
 			bool3 = true;
 		}
 
@@ -297,8 +296,7 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 			global_log->warning() << "indices are " << ind_phi1 << " " << ind_phi2 << " " << ind_gamma << endl;
 		}
 
-		elementID =
-			ind_phi1 * this->_phi2Increments * this->_gammaIncrements + (ind_phi2 * this->_gammaIncrements) + ind_gamma;
+		elementID = ind_phi1 * _phi2Increments * _gammaIncrements + (ind_phi2 * _gammaIncrements) + ind_gamma;
 
 		// determine component pairing
 
@@ -337,33 +335,36 @@ void ODF::collect(DomainDecompBase* domainDecomp) {
 					   std::plus<>());
 	}
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
+	if (_numPairs == 1) {
+		domainDecomp->collCommInit(_numElements);
+
+		for (unsigned long i = 0; i < _numElements; i++) {
+			domainDecomp->collCommAppendUnsLong(localODF11[i]);
 		}
 		domainDecomp->collCommAllreduceSum();
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
+		for (unsigned long i = 0; i < _numElements; i++) {
+			_ODF11[i] = domainDecomp->collCommGetUnsLong();
 		}
 		domainDecomp->collCommFinalize();
 	}
 
 	else {
-		domainDecomp->collCommInit(this->_numElements * 4);
+		domainDecomp->collCommInit(_numElements * 4);
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF12[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF22[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF21[i]);
+		for (unsigned long i = 0; i < _numElements; i++) {
+			domainDecomp->collCommAppendUnsLong(localODF11[i]);
+			domainDecomp->collCommAppendUnsLong(localODF12[i]);
+			domainDecomp->collCommAppendUnsLong(localODF22[i]);
+			domainDecomp->collCommAppendUnsLong(localODF21[i]);
 		}
 		domainDecomp->collCommAllreduceSum();
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF12[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF22[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF21[i] = domainDecomp->collCommGetUnsLong();
+		for (unsigned long i = 0; i < _numElements; i++) {
+			_ODF11[i] = domainDecomp->collCommGetUnsLong();
+			_ODF12[i] = domainDecomp->collCommGetUnsLong();
+			_ODF22[i] = domainDecomp->collCommGetUnsLong();
+			_ODF21[i] = domainDecomp->collCommGetUnsLong();
 		}
 		domainDecomp->collCommFinalize();
 	}
@@ -374,11 +375,11 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	// Setup outfile
 
 	double cosPhi1 = 1.;
-	double cosPhi2 = 1. - 2. / this->_phi2Increments;
+	double cosPhi2 = 1. - 2. / _phi2Increments;
 	double Gamma12 = 0.;
 	string prefix;
 	ostringstream osstrm;
-	osstrm << this->_outputPrefix;
+	osstrm << _outputPrefix;
 	osstrm.fill('0');
 	osstrm.width(7);
 	osstrm << right << timestep;
@@ -386,7 +387,7 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	osstrm.str("");
 	osstrm.clear();
 
-	if (this->_numPairs == 1) {
+	if (_numPairs == 1) {
 		string ODF11name = prefix + ".ODF11";
 		ofstream outfile(ODF11name.c_str());
 		outfile.precision(6);
@@ -394,17 +395,17 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 		outfile << "//Output generated by ODF plugin\n"
 				<< "//Angular distribution at time step = " << timestep << " for component pairing pairing 11\n";
 		outfile << "cosPhi1\tcosPhi2\tGamma12\tcount\n";
-		for (unsigned long i = 0; i < this->_numElements - 1; i++) {
-			Gamma12 += M_PI / (double)this->_gammaIncrements;
-			if (i % this->_gammaIncrements == 0) {
-				cosPhi2 -= 2. / (double)this->_phi2Increments;
-				Gamma12 = M_PI / (double)this->_gammaIncrements;
+		for (unsigned long i = 0; i < _numElements - 1; i++) {
+			Gamma12 += M_PI / (double)_gammaIncrements;
+			if (i % _gammaIncrements == 0) {
+				cosPhi2 -= 2. / (double)_phi2Increments;
+				Gamma12 = M_PI / (double)_gammaIncrements;
 			}
-			if (i % (this->_gammaIncrements * this->_phi2Increments) == 0) {
-				cosPhi1 -= 2. / (double)this->_phi1Increments;
-				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
+			if (i % (_gammaIncrements * _phi2Increments) == 0) {
+				cosPhi1 -= 2. / (double)_phi1Increments;
+				cosPhi2 = 1. - 2. / (double)_phi2Increments;
 			}
-			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
+			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
 		}
 		outfile.close();
 	} else {
@@ -435,21 +436,21 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 			  << "//Angular distribution at time step = " << timestep << " for component pairing pairing 21\n";
 		ODF21 << "cosPhi1\tcosPhi2\tcosGamma12\tcount\n";
 
-		for (unsigned long i = 0; i < this->_numElements - 1; i++) {
-			Gamma12 += M_PI / (double)this->_gammaIncrements;
-			if (i % this->_gammaIncrements == 0) {
-				cosPhi2 -= 2. / (double)this->_phi2Increments;
-				Gamma12 = M_PI / (double)this->_gammaIncrements;
+		for (unsigned long i = 0; i < _numElements - 1; i++) {
+			Gamma12 += M_PI / (double)_gammaIncrements;
+			if (i % _gammaIncrements == 0) {
+				cosPhi2 -= 2. / (double)_phi2Increments;
+				Gamma12 = M_PI / (double)_gammaIncrements;
 			}
-			if (i % (this->_gammaIncrements * this->_phi2Increments) == 0) {
-				cosPhi1 -= 2. / (double)this->_phi1Increments;
-				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
+			if (i % (_gammaIncrements * _phi2Increments) == 0) {
+				cosPhi1 -= 2. / (double)_phi1Increments;
+				cosPhi2 = 1. - 2. / (double)_phi2Increments;
 			}
 
-			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
-			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
-			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
-			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
+			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
+			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF12[i + 1] << "\n";
+			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF22[i + 1] << "\n";
+			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF21[i + 1] << "\n";
 		}
 		ODF11.close();
 		ODF12.close();
