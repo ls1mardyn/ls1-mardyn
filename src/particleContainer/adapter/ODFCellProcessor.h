@@ -6,16 +6,17 @@
 
 #pragma once
 
-#include <io/ODF.h>
+class ODF;
+
+#include <array>
 #include "CellProcessor.h"
 
 class ODFCellProcessor : public CellProcessor {
 
  public:
-
-  ODFCellProcessor(const double cutoffRadius,
-                   ODF *const odf,
-                   const array<double, 3> &simBoxSize);
+  ODFCellProcessor(double cutoffRadius,
+                   ODF *odf,
+                   const std::array<double, 3> &simBoxSize);
 
   void initTraversal() override;
   void preprocessCell(ParticleCell &cell) override;
@@ -30,7 +31,7 @@ class ODFCellProcessor : public CellProcessor {
   std::array<double, 3> calcUpVec1(const Molecule & molecule1);
 
   ODF * const _odf;
-  const array<double, 3> _simBoxSize;
+  const std::array<double, 3> _simBoxSize;
 };
 
 

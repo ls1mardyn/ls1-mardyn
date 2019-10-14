@@ -5,7 +5,8 @@
  */
 
 #include "ODFCellProcessor.h"
-#include <Domain.h>
+#include "io/ODF.h"
+#include "Domain.h"
 
 ODFCellProcessor::ODFCellProcessor(const double cutoffRadius, ODF *const odf, const std::array<double, 3> &simBoxSize)
 	: CellProcessor(cutoffRadius, cutoffRadius), _odf(odf), _simBoxSize(simBoxSize) {}
@@ -16,8 +17,7 @@ void ODFCellProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2,
 	auto begin1 = cell1.iterator();
 	auto begin2 = cell2.iterator();
 
-	if (sumAll) {  // sumAll - moleculesAt is gone, use auto now ?
-
+	if (sumAll or not cell2.isHaloCell() or cell1.isInnerCell() or cell1.getCellIndex() < cell2.getCellIndex()) {
 		// loop over all particles in the cell
 		for (auto it1 = begin1; it1.isValid(); ++it1) {
 			Molecule &molecule1 = *it1;
@@ -34,8 +34,6 @@ void ODFCellProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2,
 				}
 			}
 		}
-	} else {
-		// TODO:
 	}
 }
 void ODFCellProcessor::processCell(ParticleCell &cell) {
@@ -53,10 +51,10 @@ void ODFCellProcessor::processCell(ParticleCell &cell) {
 			for (; it2.isValid(); ++it2) {
 				Molecule &molecule2 = *it2;
 
-                mardyn_assert(&molecule1 != &molecule2);
+				mardyn_assert(&molecule1 != &molecule2);
 
 				if (molecule2.numDipoles() != 1) {
-                  continue;
+					continue;
 				}
 
 				double dummy[3];
