@@ -337,7 +337,7 @@ void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, un
 	       << "\n# \n";
 
 	// new or alternative heading
-	rdfout << "#r\trdf\trdf_integral}\tacc_rdf acc_rdf_integral}\t\tdV\tNpair(curr.)\tNpair(accu.)\t\tnormalization(curr.)\tnormalization(accu.)";
+	rdfout << "#r\trdf\trdf_{integral}\tacc_rdf acc_rdf_{integral}\t\tdV\tNpair(curr.)\tNpair(accu.)\t\tnormalization(curr.)\tnormalization(accu.)";
 	if(ni+nj > 2) {
 		for(unsigned m=0; m < ni; m++) {
 			rdfout << "\t";
