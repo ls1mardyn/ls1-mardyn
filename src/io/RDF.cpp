@@ -392,9 +392,12 @@ void RDF::writeToFile(const Domain* domain, const std::string& filename, unsigne
 			for(unsigned m=0; m < ni; m++) {
 				rdfout << "\t";
 				for(unsigned n=0; n < nj; n++) {
-					double p = _siteDistribution.global[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
+					// the correctionFactor fixes a duplicated calculation of pairwise interactions when interacting particles with the same component id.
+					// see observeRDF(...).
+					double correctionFactor = (i == j and m != n) ? 0.5 : 1.;
+					double p = correctionFactor * _siteDistribution.global[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
 					Nsite_pair_int[m][n] += p;
-					double ap = _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;
+					double ap = correctionFactor * _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;
 					Nsite_Apair_int[m][n] += ap;
 					rdfout << "\t" << p/N_pair_norm << " " << Nsite_pair_int[m][n]/N_pair_int_norm
 					       << "   " << ap/N_Apair_norm << " " << Nsite_Apair_int[m][n]/N_Apair_int_norm;

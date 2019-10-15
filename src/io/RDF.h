@@ -97,6 +97,9 @@ public:
 			unsigned sj = mj.numSites();
 			if(si+sj > 2) {
 				for(unsigned m = 0; m < si; m++) {
+					// when interacting two molecules with the same component id, the interaction of site m with site n is calculated twice if m!=n.
+					// this duplication is corrected by correctionFactor in the writeToFile(...) function.
+					// fixing this here, by starting n at m will break the unit tests and some symmetry.
 					for(unsigned n = 0; n < sj; n++) {
 						const std::array<double,3> dii = mi.site_d_abs(m);
 						const std::array<double,3> djj = mj.site_d_abs(n);
