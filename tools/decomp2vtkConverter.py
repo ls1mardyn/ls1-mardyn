@@ -69,7 +69,7 @@ class Cell:
 numcells = 0
 l = f_in.readline()
 celllist = []
-while l.find('particleData') == -1:
+while l.find('particleData') == -1 and l != "":
     celllist.append(Cell(l.rstrip(), numcells))
     numcells += 1
     l = f_in.readline()
