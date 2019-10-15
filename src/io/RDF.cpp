@@ -293,7 +293,7 @@ void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *d
 }
 
 
-void RDF::writeToFile(const Domain* domain, std::string filename, unsigned i, unsigned j) const {
+void RDF::writeToFile(const Domain* domain, const std::string& filename, unsigned i, unsigned j) const {
 	ofstream rdfout(filename);
 	if( rdfout.fail() ) {
 		global_log->error() << "[RDF] Failed opening output file '" << filename << "'" << endl;
