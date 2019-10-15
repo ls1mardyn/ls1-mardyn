@@ -127,7 +127,10 @@ public:
 	 */
 	inline void observeRDFSite(double dd, unsigned i, unsigned j, unsigned m, unsigned n) {
 		if(dd > _maxDistanceSquare) { return; }
-		if(i > j) { std::swap(j, i); }
+		if (i > j) {
+			std::swap(j, i);
+			std::swap(m, n);
+		}
 
 		unsigned int binId = floor( sqrt(dd) / binwidth() );
 		#if defined _OPENMP
