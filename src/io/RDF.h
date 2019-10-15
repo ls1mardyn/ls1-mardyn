@@ -216,6 +216,12 @@ private:
 
 	bool _doCollectSiteRDF;
 
+	// vector indices:
+	// first: component i
+	// second: component j, but shifted by -i, so that we only have to save it once for each component interaction (i<->j is the same as j<->i)
+	// third: site m of first component
+	// fourth: site n of second component
+	// fifth: bin to sort the particles into to get the actual RDF.
 	CommVar<std::vector<std::vector<std::vector<std::vector<std::vector<unsigned long>>>>>> _siteDistribution;
 
 	std::vector<std::vector<std::vector<std::vector<std::vector<unsigned long>>>>> _globalAccumulatedSiteDistribution;
