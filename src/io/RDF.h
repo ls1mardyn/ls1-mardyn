@@ -97,6 +97,9 @@ public:
 			unsigned sj = mj.numSites();
 			if(si+sj > 2) {
 				for(unsigned m = 0; m < si; m++) {
+					// when interacting two molecules with the same component id, the interaction of site m with site n is calculated twice if m!=n.
+					// this duplication is corrected by correctionFactor in the writeToFile(...) function.
+					// fixing this here, by starting n at m will break the unit tests and some symmetry.
 					for(unsigned n = 0; n < sj; n++) {
 						const std::array<double,3> dii = mi.site_d_abs(m);
 						const std::array<double,3> djj = mj.site_d_abs(n);
@@ -127,7 +130,10 @@ public:
 	 */
 	inline void observeRDFSite(double dd, unsigned i, unsigned j, unsigned m, unsigned n) {
 		if(dd > _maxDistanceSquare) { return; }
-		if(i > j) { std::swap(j, i); }
+		if (i > j) {
+			std::swap(j, i);
+			std::swap(m, n);
+		}
 
 		unsigned int binId = floor( sqrt(dd) / binwidth() );
 		#if defined _OPENMP
@@ -163,7 +169,7 @@ private:
 	//! @note consequently, collectRDF should be called just before.
 	void accumulateRDF();
 
-	void writeToFile(const Domain* domain, std::string filename, unsigned int i, unsigned int j) const;
+	void writeToFile(const Domain* domain, const std::string& filename, unsigned int i, unsigned int j) const;
 
 	//! The length of an interval
 	//! Only used for the output to scale the "radius"-axis.
@@ -213,6 +219,12 @@ private:
 
 	bool _doCollectSiteRDF;
 
+	// vector indices:
+	// first: component i
+	// second: component j, but shifted by -i, so that we only have to save it once for each component interaction (i<->j is the same as j<->i)
+	// third: site m of first component
+	// fourth: site n of second component
+	// fifth: bin to sort the particles into to get the actual RDF.
 	CommVar<std::vector<std::vector<std::vector<std::vector<std::vector<unsigned long>>>>>> _siteDistribution;
 
 	std::vector<std::vector<std::vector<std::vector<std::vector<unsigned long>>>>> _globalAccumulatedSiteDistribution;
