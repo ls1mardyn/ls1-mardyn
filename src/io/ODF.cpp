@@ -33,7 +33,7 @@ void ODF::readXML(XMLfileUnits& xmlconfig) {
 void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainDecomp*/, Domain* domain) {
 	std::array<double, 3> simBoxSize = {domain->getGlobalLength(0), domain->getGlobalLength(1),
 										domain->getGlobalLength(2)};
-	_cellProcessor = std::make_unique<ODFCellProcessor>(particleContainer->getCutoff(), this, simBoxSize);
+	_cellProcessor.reset(new ODFCellProcessor(particleContainer->getCutoff(), this, simBoxSize));
 
 	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	_numComponents = components->size();
@@ -327,15 +327,16 @@ void ODF::collect(DomainDecompBase* domainDecomp) {
 	std::vector<unsigned long> localODF12(_threadLocalODF12.size());
 	std::vector<unsigned long> localODF21(_threadLocalODF21.size());
 	std::vector<unsigned long> localODF22(_threadLocalODF22.size());
-	for (size_t t = 0; t < mardyn_get_max_threads(); ++t) {
+	for (size_t t = 0; t < static_cast<size_t>(mardyn_get_max_threads()); ++t) {
+		using plusType = unsigned long;
 		std::transform(localODF11.begin(), localODF11.end(), _threadLocalODF11[t].begin(), _threadLocalODF11[t].begin(),
-					   std::plus<>());
+					   std::plus<plusType>());
 		std::transform(localODF12.begin(), localODF12.end(), _threadLocalODF12[t].begin(), _threadLocalODF12[t].begin(),
-					   std::plus<>());
+					   std::plus<plusType>());
 		std::transform(localODF21.begin(), localODF21.end(), _threadLocalODF21[t].begin(), _threadLocalODF21[t].begin(),
-					   std::plus<>());
+					   std::plus<plusType>());
 		std::transform(localODF22.begin(), localODF22.end(), _threadLocalODF22[t].begin(), _threadLocalODF22[t].begin(),
-					   std::plus<>());
+					   std::plus<plusType>());
 	}
 
 	if (_numPairs == 1) {
