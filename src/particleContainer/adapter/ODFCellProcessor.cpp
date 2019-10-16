@@ -22,7 +22,7 @@ void ODFCellProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2,
 		for (auto it1 = begin1; it1.isValid(); ++it1) {
 			Molecule &molecule1 = *it1;
 
-			auto upVec1 = calcUpVec1(molecule1);
+			auto orientationVector1 = calcOrientationVector(molecule1);
 
 			for (auto it2 = begin2; it2.isValid(); ++it2) {
 				Molecule &molecule2 = *it2;
@@ -34,7 +34,7 @@ void ODFCellProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2,
 				double dummy[3];
 				double dd = molecule2.dist2(molecule1, dummy);
 				if (dd < _cutoffRadiusSquare) {
-					_odf->calculateOrientation(_simBoxSize, molecule1, molecule2, upVec1);
+					_odf->calculateOrientation(_simBoxSize, molecule1, molecule2, orientationVector1);
 				}
 			}
 		}
@@ -47,7 +47,7 @@ void ODFCellProcessor::processCell(ParticleCell &cell) {
 		for (auto it1 = begin; it1.isValid(); ++it1) {
 			Molecule &molecule1 = *it1;
 
-			auto upVec1 = calcUpVec1(molecule1);
+			auto orientationVector1 = calcOrientationVector(molecule1);
 
 			// get second molecule
 			auto it2 = it1;
@@ -65,7 +65,7 @@ void ODFCellProcessor::processCell(ParticleCell &cell) {
 				double dd = molecule2.dist2(molecule1, dummy);
 
 				if (dd < _cutoffRadiusSquare) {
-					_odf->calculateOrientation(_simBoxSize, molecule1, molecule2, upVec1);
+					_odf->calculateOrientation(_simBoxSize, molecule1, molecule2, orientationVector1);
 				}
 			}
 		}
@@ -76,9 +76,9 @@ double ODFCellProcessor::processSingleMolecule(Molecule *m1, ParticleCell &cell2
 void ODFCellProcessor::postprocessCell(ParticleCell &cell) {}
 void ODFCellProcessor::endTraversal() {}
 
-std::array<double, 3> ODFCellProcessor::calcUpVec1(const Molecule &molecule1) {
-	std::array<double, 4> q1{molecule1.q().qw(), molecule1.q().qx(), molecule1.q().qy(), molecule1.q().qz()};
-	std::array<double, 3> upVec1 = {2 * (q1[1] * q1[3] + q1[0] * q1[2]), 2 * (q1[2] * q1[3] - q1[0] * q1[1]),
-									1 - 2 * (q1[1] * q1[1] + q1[2] * q1[2])};
-	return upVec1;
+std::array<double, 3> ODFCellProcessor::calcOrientationVector(const Molecule &molecule) {
+	std::array<double, 4> q1{molecule.q().qw(), molecule.q().qx(), molecule.q().qy(), molecule.q().qz()};
+	std::array<double, 3> orientationVector = {2 * (q1[1] * q1[3] + q1[0] * q1[2]), 2 * (q1[2] * q1[3] - q1[0] * q1[1]),
+											   1 - 2 * (q1[1] * q1[1] + q1[2] * q1[2])};
+	return orientationVector;
 }

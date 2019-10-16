@@ -28,7 +28,7 @@ class ODFCellProcessor : public CellProcessor {
 
  private:
 
-  std::array<double, 3> calcUpVec1(const Molecule & molecule1);
+  std::array<double, 3> calcOrientationVector(const Molecule & molecule);
 
   ODF * const _odf;
   const std::array<double, 3> _simBoxSize;
