@@ -22,6 +22,10 @@ void ODFCellProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2,
 		for (auto it1 = begin1; it1.isValid(); ++it1) {
 			Molecule &molecule1 = *it1;
 
+			if (molecule1.numDipoles() != 1) {
+				continue;
+			}
+
 			auto orientationVector1 = calcOrientationVector(molecule1);
 
 			for (auto it2 = begin2; it2.isValid(); ++it2) {
@@ -46,6 +50,10 @@ void ODFCellProcessor::processCell(ParticleCell &cell) {
 
 		for (auto it1 = begin; it1.isValid(); ++it1) {
 			Molecule &molecule1 = *it1;
+
+			if (molecule1.numDipoles() != 1) {
+				continue;
+			}
 
 			auto orientationVector1 = calcOrientationVector(molecule1);
 
