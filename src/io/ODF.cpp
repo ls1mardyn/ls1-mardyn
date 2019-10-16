@@ -185,9 +185,9 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		}
 
 		// calculate dipolar orientation vector from quaternion
-		orientationVector2[0] = 2 * (Q2[1] * Q2[3] + Q2[0] * Q2[2]);
-		orientationVector2[1] = 2 * (Q2[2] * Q2[3] - Q2[0] * Q2[1]);
-		orientationVector2[2] = 1 - 2 * (Q2[1] * Q2[1] + Q2[2] * Q2[2]);
+		orientationVector2[0] = 2 * (Quaternion2[1] * Quaternion2[3] + Quaternion2[0] * Quaternion2[2]);
+		orientationVector2[1] = 2 * (Quaternion2[2] * Quaternion2[3] - Quaternion2[0] * Quaternion2[1]);
+		orientationVector2[2] = 1 - 2 * (Quaternion2[1] * Quaternion2[1] + Quaternion2[2] * Quaternion2[2]);
 
 		// calculate projection of the vectors onto plane perpendicular to the distance vector with cross product for calculation of the torque angle gamma
 		
