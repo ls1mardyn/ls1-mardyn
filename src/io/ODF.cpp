@@ -71,7 +71,7 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 	resize2D(_threadLocalODF22, mardyn_get_max_threads(), _numElements);
 
 	if (_numPairs < 1) {
-		global_log->error() << "No components with dipoles. ODFs not being calculated!" << endl;
+		global_log->error() << "No components with dipoles. ODF's not being calculated!" << endl;
 	} else if (_numPairs > 4) {
 		global_log->error()
 			<< "Number of pairings for ODF calculation too high. Current maximum number of ODF pairings is 4." << endl;
