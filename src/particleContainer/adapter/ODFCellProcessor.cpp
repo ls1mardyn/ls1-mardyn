@@ -5,8 +5,8 @@
  */
 
 #include "ODFCellProcessor.h"
-#include "io/ODF.h"
 #include "Domain.h"
+#include "io/ODF.h"
 
 ODFCellProcessor::ODFCellProcessor(const double cutoffRadius, ODF *const odf, const std::array<double, 3> &simBoxSize)
 	: CellProcessor(cutoffRadius, cutoffRadius), _odf(odf), _simBoxSize(simBoxSize) {}
@@ -26,6 +26,10 @@ void ODFCellProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2,
 
 			for (auto it2 = begin2; it2.isValid(); ++it2) {
 				Molecule &molecule2 = *it2;
+
+				if (molecule2.numDipoles() != 1) {
+					continue;
+				}
 
 				double dummy[3];
 				double dd = molecule2.dist2(molecule1, dummy);

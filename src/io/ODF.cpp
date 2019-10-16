@@ -116,9 +116,6 @@ void ODF::reset() {
 
 void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecule& mol1, const Molecule& mol2,
 							   const array<double, 3>& orientationVector1) {
-	if (mol2.numDipoles() != 1) {
-		return;
-	}
 
 	// TODO Implement rotation matrices to calculate orientations for dipole direction unit vectors other than [0 0 1];
 	
