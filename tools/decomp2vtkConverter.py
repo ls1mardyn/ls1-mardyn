@@ -1,37 +1,38 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 import StringIO
-print ''
+print('')
 if len(sys.argv) < 3:
-    print 'ERROR: Not enough arguments given, need at least:'
-    print '[1] input file name'
-    print '[2] output file name'
+    print('ERROR: Not enough arguments given, need at least:')
+    print('[1] input file name')
+    print('[2] output file name')
     
 inputFileName = str(sys.argv[1])
 outputFileName = str(sys.argv[2])
 
-print 'Input file name:', inputFileName
-print 'Output file name:', outputFileName
+print('Input file name:', inputFileName)
+print('Output file name:', outputFileName)
 
 if inputFileName.find('.decomp') == -1:
-    print 'ERROR: wrong input file format, should be *.decomp' 
+    print('ERROR: wrong input file format, should be *.decomp')
     sys.exit()
 if outputFileName.find('.vtk') == -1:
-    print 'ERROR: wrong output file format, should be *.vtk' 
+    print('ERROR: wrong output file format, should be *.vtk')
     sys.exit()
 
 f_in = open(inputFileName, 'r')
 f_out = open(outputFileName, 'w')
 
-l = f_in.readline()
-while l.find('decompData Regions') != -1:
-    if l != '':
-        print 'ERROR: reached end of file, but require "decompData Regions"'
+currentLine = f_in.readline()
+while currentLine.find('decompData Regions') != -1:
+    if currentLine != '':
+        print('ERROR: reached end of file, but require "decompData Regions"')
         sys.exit()
-    print l
-    l = f_in.readline()
+    print(currentLine)
+    currentLine = f_in.readline()
 f_in.readline()  # skip decompData Regions
+
 
 class Cell:
     def __init__(self, minmaxline, cellid):
@@ -45,36 +46,37 @@ class Cell:
         self.cellid = cellid
     def getPointCoordinates(self):
         output = StringIO.StringIO()
-        print >> output, self.xmin, self.ymin, self.zmin
-        print >> output, self.xmin, self.ymin, self.zmax
-        print >> output, self.xmin, self.ymax, self.zmin
-        print >> output, self.xmin, self.ymax, self.zmax
-        print >> output, self.xmax, self.ymin, self.zmin
-        print >> output, self.xmax, self.ymin, self.zmax
-        print >> output, self.xmax, self.ymax, self.zmin
-        print >> output, self.xmax, self.ymax, self.zmax
+        print(self.xmin, self.ymin, self.zmin, file=output)
+        print(self.xmin, self.ymin, self.zmax, file=output)
+        print(self.xmin, self.ymax, self.zmin, file=output)
+        print(self.xmin, self.ymax, self.zmax, file=output)
+        print(self.xmax, self.ymin, self.zmin, file=output)
+        print(self.xmax, self.ymin, self.zmax, file=output)
+        print(self.xmax, self.ymax, self.zmin, file=output)
+        print(self.xmax, self.ymax, self.zmax, file=output)
         returnstring = output.getvalue()
         output.close()
         return returnstring
     def getCellPointIndices(self):
         output = StringIO.StringIO()
         for i in range(8):
-            print >> output, str(i + 8 * self.cellid),
-        print >> output, ''
+            print(str(i + 8 * self.cellid), file=output)
+        print('', file=output)
         
         returnstring = output.getvalue()
         output.close()
         return returnstring
-        
+
+
 numcells = 0
-l = f_in.readline()
+line = f_in.readline()
 celllist = []
-while l.find('particleData') == -1 and l != "":
+while line.find('particleData') == -1 and line != "":
     celllist.append(Cell(l.rstrip(), numcells))
     numcells += 1
-    l = f_in.readline()
+    line = f_in.readline()
 
-print 'Found', numcells, 'cells.'
+print('Found', numcells, 'cells.')
 f_out.write('# vtk DataFile Version 2.0\n\
 MarDyn decomposition output\n\
 ASCII\n\
@@ -84,7 +86,8 @@ f_out.write('POINTS ' + str(8 * numcells) + ' float\n')  # 8 points per cell
 for cell in celllist:
     f_out.write(cell.getPointCoordinates())
 
-f_out.write('CELLS ' + str(numcells) + ' ' + str(numcells * 9) + '\n')  # CELLS requires numcells and number of total list entries (=numcells + 8*numcells) 
+f_out.write('CELLS ' + str(numcells) + ' ' + str(numcells * 9) + '\n')
+# CELLS requires numcells and number of total list entries (=numcells + 8*numcells)
 for cell in celllist:
     f_out.write('8 ' + cell.getCellPointIndices())
 
