@@ -18,7 +18,7 @@
  * saved in partners01.
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
-	Domain *domain, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin) {
+	const std::array<double,3>& globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin) {
 
 	HaloRegion ownRegionEnlargedBySkin = *ownRegion;
 	for(unsigned int dim = 0; dim < 3; ++dim){
@@ -107,9 +107,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 			// msg format one region: rmin | rmax | offset | width | shift
 			std::array<double, 3> shift{};
-			double domainLength[3] = {domain->getGlobalLength(0), domain->getGlobalLength(1),
-									  domain->getGlobalLength(2)};  // better for testing
-			auto shiftedRegion = getPotentiallyShiftedRegion(domainLength, unshiftedRegion, shift.data(), skin);
+			auto shiftedRegion = getPotentiallyShiftedRegion(globalDomainLength, unshiftedRegion, shift.data(), skin);
 
 			std::vector<HaloRegion> regionsToTest;
 			std::vector<std::array<double, 3>> shifts;
@@ -351,7 +349,7 @@ void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
 }
 
-HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const double *domainLength, const HaloRegion &region,
+HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const std::array<double,3>& domainLength, const HaloRegion &region,
 														 double *shiftArray, double skin) {
 	for (int i = 0; i < 3; i++) {  // calculating shift
 		if (region.rmin[i] >= domainLength[i] - skin) {

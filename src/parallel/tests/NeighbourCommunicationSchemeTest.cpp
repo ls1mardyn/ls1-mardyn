@@ -25,7 +25,7 @@ NeighbourCommunicationSchemeTest::~NeighbourCommunicationSchemeTest() {
 
 void NeighbourCommunicationSchemeTest::testShiftIfNecessary() {
 	HaloRegion region; // rmin, rmax, offset, width
-	double domainLength[3] = {10.0, 10.0, 10.0};
+	std::array<double,3> domainLength = {10.0, 10.0, 10.0};
 	double shift[3] = {0.0};
 	
 	// region does not need to be shifted
