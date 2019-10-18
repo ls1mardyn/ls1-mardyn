@@ -1,12 +1,6 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
- * File:   NeighbourCommunicationSchemeTest.h
- * Author: bierth
+ * File:   NeighborAcquirerTest.h
+ * Author: bierth, seckler
  *
  * Created on February 27, 2018, 5:01 PM
  */
@@ -19,24 +13,24 @@
 #include "parallel/NeighbourCommunicationScheme.h"
 
 
-class NeighbourCommunicationSchemeTest : public utils::TestWithSimulationSetup {
+class NeighborAcquirerTest : public utils::TestWithSimulationSetup {
 	
-	TEST_SUITE(NeighbourCommunicationSchemeTest);
+	TEST_SUITE(NeighborAcquirerTest);
 	TEST_METHOD(testShiftIfNecessary);
 	TEST_METHOD(testOverlap);
 	TEST_METHOD(testIOwnThis);
+	TEST_METHOD(testCorrectNeighborAcquisition);
 	TEST_SUITE_END();
 	
 	public:
-		NeighbourCommunicationSchemeTest();
-		~NeighbourCommunicationSchemeTest();
+		NeighborAcquirerTest();
+		~NeighborAcquirerTest();
 		void testShiftIfNecessary();
 		void testOverlap();
-		void testIOwnThis();		
+		void testIOwnThis();
+		void testCorrectNeighborAcquisition();
 	private:
 		FullShell* _fullShell;
-		DirectNeighbourCommunicationScheme* _directScheme;
-	
 };
 
 

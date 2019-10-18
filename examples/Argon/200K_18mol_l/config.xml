@@ -30,7 +30,9 @@
       </phasespacepoint>
     </ensemble>
     <algorithm>
-      <parallelisation type="DomainDecomposition"/>
+      <parallelisation type="DomainDecomposition">
+	<timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+      </parallelisation>
       <datastructure type="LinkedCells">
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
