@@ -200,7 +200,7 @@ pipeline {
                   unstash 'autopas_mpi_exec'
                   dir ("build-mpi"){
                     sh """
-                      mpirun -n 3 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_lc_ALL.xml --steps=20 | tee autopas_run_log.txt
+                      mpirun -n 2 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_lc_ALL.xml --steps=20 | tee autopas_run_log.txt
                       grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
                       grep "T = 0.000633975" simstep20.txt
                       grep "U_pot = -2.14161" simstep20.txt
