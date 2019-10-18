@@ -155,14 +155,14 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 					for (int dimI = 0; dimI < 3; ++dimI) {
 						unshiftedOverlappedRegion.rmax[dimI] -= currentShift[dimI];
 						if (fabs(unshiftedOverlappedRegion.rmax[dimI]) < 1e-10 and currentShift[dimI] != 0.) {
-							std::cout << "shift corrected." << std::endl;
+							// std::cout << "shift corrected." << std::endl;
 							// we have to ensure that if we shifted, then the rmax, etc. are correct!
 							unshiftedOverlappedRegion.rmax[dimI] = 0.;
 						}
 						unshiftedOverlappedRegion.rmin[dimI] -= currentShift[dimI];
 						if (fabs(unshiftedOverlappedRegion.rmin[dimI] - globalDomainLength[dimI]) < 1e-10 and
 							currentShift[dimI] != 0.) {
-							std::cout << "shift corrected." << std::endl;
+							// std::cout << "shift corrected." << std::endl;
 							// we have to ensure that if we shifted, then the rmax, etc. are correct!
 							unshiftedOverlappedRegion.rmin[dimI] = globalDomainLength[dimI];
 						}
