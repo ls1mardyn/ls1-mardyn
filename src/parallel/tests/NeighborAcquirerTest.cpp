@@ -1,7 +1,8 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * File:   NeighborAcquirerTest.h
+ * Author: bierth, seckler
+ *
+ * Created on February 27, 2018, 5:01 PM
  */
 
 #include "NeighborAcquirerTest.h"
@@ -13,14 +14,9 @@ TEST_SUITE_REGISTRATION(NeighborAcquirerTest);
 
 NeighborAcquirerTest::NeighborAcquirerTest() {
 	_fullShell = new FullShell();
-	_directScheme = new DirectNeighbourCommunicationScheme(_fullShell, true);
 }
 
-NeighborAcquirerTest::~NeighborAcquirerTest() {
-	//delete _fullShell;
-	delete _directScheme;
-}
-
+NeighborAcquirerTest::~NeighborAcquirerTest() { delete _fullShell; }
 
 void NeighborAcquirerTest::testShiftIfNecessary() {
 	HaloRegion region; // rmin, rmax, offset, width

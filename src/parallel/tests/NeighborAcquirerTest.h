@@ -1,12 +1,6 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
  * File:   NeighborAcquirerTest.h
- * Author: bierth
+ * Author: bierth, seckler
  *
  * Created on February 27, 2018, 5:01 PM
  */
@@ -35,8 +29,6 @@ class NeighborAcquirerTest : public utils::TestWithSimulationSetup {
 		void testIOwnThis();		
 	private:
 		FullShell* _fullShell;
-		DirectNeighbourCommunicationScheme* _directScheme;
-	
 };
 
 
