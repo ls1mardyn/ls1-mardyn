@@ -4,26 +4,25 @@
  * and open the template in the editor.
  */
 
-#include "NeighbourCommunicationSchemeTest.h"
+#include "NeighborAcquirerTest.h"
 #include "parallel/NeighborAcquirer.h"
 
 using namespace std;
 
-TEST_SUITE_REGISTRATION(NeighbourCommunicationSchemeTest);
+TEST_SUITE_REGISTRATION(NeighborAcquirerTest);
 
-
-NeighbourCommunicationSchemeTest::NeighbourCommunicationSchemeTest() {
+NeighborAcquirerTest::NeighborAcquirerTest() {
 	_fullShell = new FullShell();
 	_directScheme = new DirectNeighbourCommunicationScheme(_fullShell, true);
 }
 
-NeighbourCommunicationSchemeTest::~NeighbourCommunicationSchemeTest() {
+NeighborAcquirerTest::~NeighborAcquirerTest() {
 	//delete _fullShell;
 	delete _directScheme;
 }
 
 
-void NeighbourCommunicationSchemeTest::testShiftIfNecessary() {
+void NeighborAcquirerTest::testShiftIfNecessary() {
 	HaloRegion region; // rmin, rmax, offset, width
 	std::array<double,3> domainLength = {10.0, 10.0, 10.0};
 	double shift[3] = {0.0};
@@ -53,7 +52,7 @@ void NeighbourCommunicationSchemeTest::testShiftIfNecessary() {
 	
 }
 
-void NeighbourCommunicationSchemeTest::testOverlap() { // assume this one works for now, because you thought about it long and hard.
+void NeighborAcquirerTest::testOverlap() { // assume this one works for now, because you thought about it long and hard.
 	HaloRegion region01;
 	HaloRegion region02;
 	
@@ -128,7 +127,7 @@ void NeighbourCommunicationSchemeTest::testOverlap() { // assume this one works 
 	}
 }
 
-void NeighbourCommunicationSchemeTest::testIOwnThis() { // i own a part of this
+void NeighborAcquirerTest::testIOwnThis() { // i own a part of this
 	HaloRegion region01;
 	HaloRegion region02;
 	

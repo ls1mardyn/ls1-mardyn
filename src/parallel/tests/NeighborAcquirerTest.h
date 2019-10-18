@@ -5,7 +5,7 @@
  */
 
 /* 
- * File:   NeighbourCommunicationSchemeTest.h
+ * File:   NeighborAcquirerTest.h
  * Author: bierth
  *
  * Created on February 27, 2018, 5:01 PM
@@ -19,17 +19,17 @@
 #include "parallel/NeighbourCommunicationScheme.h"
 
 
-class NeighbourCommunicationSchemeTest : public utils::TestWithSimulationSetup {
+class NeighborAcquirerTest : public utils::TestWithSimulationSetup {
 	
-	TEST_SUITE(NeighbourCommunicationSchemeTest);
+	TEST_SUITE(NeighborAcquirerTest);
 	TEST_METHOD(testShiftIfNecessary);
 	TEST_METHOD(testOverlap);
 	TEST_METHOD(testIOwnThis);
 	TEST_SUITE_END();
 	
 	public:
-		NeighbourCommunicationSchemeTest();
-		~NeighbourCommunicationSchemeTest();
+		NeighborAcquirerTest();
+		~NeighborAcquirerTest();
 		void testShiftIfNecessary();
 		void testOverlap();
 		void testIOwnThis();		

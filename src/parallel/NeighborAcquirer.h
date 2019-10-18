@@ -57,5 +57,5 @@ private:
 	getAllShiftedAndNonShiftedRegionsAndShifts(HaloRegion nonShiftedRegion, HaloRegion shiftedRegion,
 											  std::array<double, 3> shift);
 
-    friend class NeighbourCommunicationSchemeTest;
+    friend class NeighborAcquirerTest;
 };
