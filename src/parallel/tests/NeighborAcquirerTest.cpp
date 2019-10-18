@@ -4,6 +4,7 @@
  *
  * Created on February 27, 2018, 5:01 PM
  */
+#include <mpi.h>
 
 #include "NeighborAcquirerTest.h"
 #include "parallel/NeighborAcquirer.h"
@@ -188,4 +189,40 @@ void NeighborAcquirerTest::testIOwnThis() { // i own a part of this
 	ASSERT_EQUAL(NeighborAcquirer::isIncluded(&region01, &region02), false);
 	
 	
+}
+
+void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	int numRanks;
+	MPI_Comm_size(MPI_COMM_WORLD, &numRanks);
+
+	if (numRanks != 2) {
+		// test is only meant for two processes!
+		return;
+	}
+	double cutoff = 2.5;
+
+	HaloRegion ownRegionRank0 = {32.8465, 140.73, 66.3138, 66.2862, 296.984, 99.5571, 0, 0, 0, cutoff};
+	HaloRegion ownRegionRank1 = {65.9145, 0, 99.5571, 99.4885, 142.386, 132.6, 0, 0, 0, cutoff};
+	auto ownRegion = rank == 0 ? ownRegionRank0 : ownRegionRank1;
+
+	std::array<double, 3> globalDomainLength{132.6, 591.891, 132.6};
+
+	std::array<bool, 3> coversWholeDomain{false, false, false};
+
+	std::vector<HaloRegion> leavingRegions =
+		_fullShell->getLeavingExportRegions(ownRegion, cutoff, coversWholeDomain.data());
+
+	std::vector<CommunicationPartner> leavingExportNeighbours;
+	std::vector<CommunicationPartner> leavingImportNeighbours;
+	std::tie(leavingExportNeighbours, leavingImportNeighbours) =
+		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0.);
+	// p1 notes reply, p2 notes owned as leaving import
+
+	if (not rank) {
+		for (auto neighbor : leavingExportNeighbours) {
+			neighbor.print(std::cout);
+		}
+	}
 }
