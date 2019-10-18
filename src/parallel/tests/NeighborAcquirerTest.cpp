@@ -222,15 +222,23 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0.);
 	// p1 notes reply, p2 notes owned as leaving import
 
-	if (not rank) {
-		for (auto& neighbor : leavingExportNeighbours) {
-			for (auto& haloRegion : neighbor._haloInfo) {
-				for (auto i = 0; i < 3; ++i) {
-					std::stringstream ss;
-					neighbor.print(ss);
-					ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingLow[i] >= otherRegion.rmin[i]);
-					ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingHigh[i] >= otherRegion.rmax[i]);
-				}
+	for (auto& neighbor : leavingExportNeighbours) {
+		for (auto& haloRegion : neighbor._haloInfo) {
+			for (auto i = 0; i < 3; ++i) {
+				std::stringstream ss;
+				neighbor.print(ss);
+				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingLow[i] >= otherRegion.rmin[i]);
+				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingHigh[i] <= otherRegion.rmax[i]);
+			}
+		}
+	}
+	for (auto& neighbor : leavingImportNeighbours) {
+		for (auto& haloRegion : neighbor._haloInfo) {
+			for (auto i = 0; i < 3; ++i) {
+				std::stringstream ss;
+				neighbor.print(ss);
+				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingLow[i] >= ownRegion.rmin[i]);
+				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingHigh[i] <= ownRegion.rmax[i]);
 			}
 		}
 	}
