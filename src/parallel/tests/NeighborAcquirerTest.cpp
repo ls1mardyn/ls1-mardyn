@@ -198,6 +198,7 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 	MPI_Comm_size(MPI_COMM_WORLD, &numRanks);
 
 	if (numRanks != 2) {
+		std::cout << "SKIPPED: requires two processes, but run with "<< numRanks <<"." << std::endl;
 		// test is only meant for two processes!
 		return;
 	}
