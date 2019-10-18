@@ -149,17 +149,35 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
 
+					// Undo the shift. So it is again in the perspective of the rank we got this region from.
+					// We cannot use unshiftedRegion, as it is not overlapped and thus potentially too big.
+					HaloRegion unshiftedOverlappedRegion{overlappedRegion};
+					for (int dimI = 0; dimI < 3; ++dimI) {
+						unshiftedOverlappedRegion.rmax[dimI] -= currentShift[dimI];
+						if (fabs(unshiftedOverlappedRegion.rmax[dimI]) < 1e-10 and currentShift[dimI] != 0.) {
+							std::cout << "shift corrected." << std::endl;
+							// we have to ensure that if we shifted, then the rmax, etc. are correct!
+							unshiftedOverlappedRegion.rmax[dimI] = 0.;
+						}
+						unshiftedOverlappedRegion.rmin[dimI] -= currentShift[dimI];
+						if (fabs(unshiftedOverlappedRegion.rmin[dimI] - globalDomainLength[dimI]) < 1e-10 and
+							currentShift[dimI] != 0.) {
+							std::cout << "shift corrected." << std::endl;
+							// we have to ensure that if we shifted, then the rmax, etc. are correct!
+							unshiftedOverlappedRegion.rmin[dimI] = globalDomainLength[dimI];
+						}
+					}
+
 					std::vector<unsigned char> singleRegion(bytesOneRegion);
 
-					// use unshifted region here!
 					p = 0;
-					memcpy(&singleRegion[p], unshiftedRegion.rmin, sizeof(double) * 3);
+					memcpy(&singleRegion[p], unshiftedOverlappedRegion.rmin, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], unshiftedRegion.rmax, sizeof(double) * 3);
+					memcpy(&singleRegion[p], unshiftedOverlappedRegion.rmax, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], unshiftedRegion.offset, sizeof(int) * 3);
+					memcpy(&singleRegion[p], unshiftedOverlappedRegion.offset, sizeof(int) * 3);
 					p += sizeof(int) * 3;
-					memcpy(&singleRegion[p], &unshiftedRegion.width, sizeof(double));
+					memcpy(&singleRegion[p], &unshiftedOverlappedRegion.width, sizeof(double));
 					p += sizeof(double);
 					memcpy(&singleRegion[p], currentShift.data(), sizeof(double) * 3);
 					//p += sizeof(double) * 3;
