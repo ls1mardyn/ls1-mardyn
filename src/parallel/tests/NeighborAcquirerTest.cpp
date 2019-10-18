@@ -59,12 +59,12 @@ void NeighborAcquirerTest::testOverlap() { // assume this one works for now, bec
 		region02.rmax[i] = 6.0;
 		region02.rmin[i] = 3.0;
 	}
-	
-	NeighborAcquirer::overlap(&region01, &region02);
+
+	auto overlap = NeighborAcquirer::overlap(region01, region02);
 	
 	for(int i = 0; i < 3; i++) {
-		ASSERT_EQUAL(region02.rmax[i], 4.0);
-		ASSERT_EQUAL(region02.rmin[i], 3.0);
+		ASSERT_EQUAL(overlap.rmax[i], 4.0);
+		ASSERT_EQUAL(overlap.rmin[i], 3.0);
 	}
 	
 	for(int i = 0; i < 3; i++) {
@@ -73,12 +73,12 @@ void NeighborAcquirerTest::testOverlap() { // assume this one works for now, bec
 		region02.rmax[i] = 5.0;
 		region02.rmin[i] = 3.0;
 	}
-	
-	NeighborAcquirer::overlap(&region01, &region02);
+
+	overlap = NeighborAcquirer::overlap(region01, region02);
 	
 	for(int i = 0; i < 3; i++) {
-		ASSERT_EQUAL(region02.rmax[i], 5.0);
-		ASSERT_EQUAL(region02.rmin[i], 3.0);
+		ASSERT_EQUAL(overlap.rmax[i], 5.0);
+		ASSERT_EQUAL(overlap.rmin[i], 3.0);
 	}
 	
 	for(int i = 0; i < 3; i++) {
@@ -88,11 +88,11 @@ void NeighborAcquirerTest::testOverlap() { // assume this one works for now, bec
 		region02.rmin[i] = 1.0;
 	}
 	
-	NeighborAcquirer::overlap(&region01, &region02);
+	overlap = NeighborAcquirer::overlap(region01, region02);
 	
 	for(int i = 0; i < 3; i++) {
-		ASSERT_EQUAL(region02.rmax[i], 3.0);
-		ASSERT_EQUAL(region02.rmin[i], 2.0);
+		ASSERT_EQUAL(overlap.rmax[i], 3.0);
+		ASSERT_EQUAL(overlap.rmin[i], 2.0);
 	}
 	
 	for(int i = 0; i < 3; i++) {
@@ -102,11 +102,11 @@ void NeighborAcquirerTest::testOverlap() { // assume this one works for now, bec
 		region02.rmin[i] = 1.0;
 	}
 	
-	NeighborAcquirer::overlap(&region01, &region02);
+	overlap = NeighborAcquirer::overlap(region01, region02);
 	
 	for(int i = 0; i < 3; i++) {
-		ASSERT_EQUAL(region02.rmax[i], 4.0);
-		ASSERT_EQUAL(region02.rmin[i], 2.0);
+		ASSERT_EQUAL(overlap.rmax[i], 4.0);
+		ASSERT_EQUAL(overlap.rmin[i], 2.0);
 	}
 	
 	for(int i = 0; i < 3; i++) {
@@ -116,11 +116,11 @@ void NeighborAcquirerTest::testOverlap() { // assume this one works for now, bec
 		region02.rmin[i] = 2.0;
 	}
 	
-	NeighborAcquirer::overlap(&region01, &region02);
+	overlap = NeighborAcquirer::overlap(region01, region02);
 	
 	for(int i = 0; i < 3; i++) {
-		ASSERT_EQUAL(region02.rmax[i], 6.0);
-		ASSERT_EQUAL(region02.rmin[i], 2.0);
+		ASSERT_EQUAL(overlap.rmax[i], 6.0);
+		ASSERT_EQUAL(overlap.rmin[i], 2.0);
 	}
 }
 
@@ -226,6 +226,7 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 		for (auto& haloRegion : neighbor._haloInfo) {
 			for (auto i = 0; i < 3; ++i) {
 				std::stringstream ss;
+				ss << "in leavingExport: " << std::endl;
 				neighbor.print(ss);
 				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingLow[i] >= otherRegion.rmin[i]);
 				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingHigh[i] <= otherRegion.rmax[i]);
@@ -236,6 +237,7 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 		for (auto& haloRegion : neighbor._haloInfo) {
 			for (auto i = 0; i < 3; ++i) {
 				std::stringstream ss;
+				ss << "in leavingImport: " << std::endl;
 				neighbor.print(ss);
 				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingLow[i] >= ownRegion.rmin[i]);
 				ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingHigh[i] <= ownRegion.rmax[i]);

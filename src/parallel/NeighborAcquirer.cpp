@@ -128,7 +128,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
 
-					overlap(&ownRegionEnlargedBySkin, &regionToTest);  // different shift for the overlap?
+					auto overlappedRegion = overlap(ownRegionEnlargedBySkin, regionToTest);  // different shift for the overlap?
 
 					// make a note in partners02 - don't forget to squeeze partners02
 					bool enlarged[3][2] = {{false}};
@@ -136,16 +136,16 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					if (skin != 0.) {
 						for (size_t dim = 0; dim < 3; ++dim) {
-							if (regionToTest.offset[dim] == -1 and regionToTest.rmax[dim] == ownRegion->rmax[dim]) {
-								regionToTest.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
-							} else if (regionToTest.offset[dim] == 1 and regionToTest.rmin[dim] == ownRegion->rmin[dim]) {
-								regionToTest.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
+							if (overlappedRegion.offset[dim] == -1 and overlappedRegion.rmax[dim] == ownRegion->rmax[dim]) {
+								overlappedRegion.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
+							} else if (overlappedRegion.offset[dim] == 1 and overlappedRegion.rmin[dim] == ownRegion->rmin[dim]) {
+								overlappedRegion.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
 							}
 						}
 					}
 
-					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin,
-												 regionToTest.rmax, currentShift.data(), regionToTest.offset, enlarged);
+					comm_partners02.emplace_back(rank, overlappedRegion.rmin, overlappedRegion.rmax, overlappedRegion.rmin,
+												 overlappedRegion.rmax, currentShift.data(), overlappedRegion.offset, enlarged);
 
 					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
 
@@ -308,20 +308,18 @@ bool NeighborAcquirer::isIncluded(HaloRegion *myRegion, HaloRegion *inQuestion) 
 	// && myRegion->rmin < inQuestion->rmax
 }
 
-void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
+HaloRegion NeighborAcquirer::overlap(const HaloRegion& myRegion, const HaloRegion& inQuestion) {
 	/*
 	 * Choose the overlap of myRegion and inQuestion.
 	 */
-	HaloRegion overlap{};
+	HaloRegion overlap{inQuestion};
 
 	for (int i = 0; i < 3; i++) {
-		overlap.rmax[i] = std::min(myRegion->rmax[i], inQuestion->rmax[i]);
-		overlap.rmin[i] = std::max(myRegion->rmin[i], inQuestion->rmin[i]);
+		overlap.rmax[i] = std::min(myRegion.rmax[i], inQuestion.rmax[i]);
+		overlap.rmin[i] = std::max(myRegion.rmin[i], inQuestion.rmin[i]);
 	}
 
-	// adjust width and offset?
-	memcpy(inQuestion->rmax, overlap.rmax, sizeof(double) * 3);
-	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
+	return overlap;
 }
 
 HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const std::array<double,3>& domainLength, const HaloRegion &region,

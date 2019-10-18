@@ -33,7 +33,7 @@ public:
 private:
 	static bool isIncluded(HaloRegion* myRegion, HaloRegion* inQuestion);
 
-	static void overlap(HaloRegion* myRegion, HaloRegion* inQuestion);
+	static HaloRegion overlap(const HaloRegion& myRegion, const HaloRegion& inQuestion);
 
 	static HaloRegion getPotentiallyShiftedRegion(const std::array<double,3>& domainLength, const HaloRegion& region,
 												  double* shiftArray, double skin);
