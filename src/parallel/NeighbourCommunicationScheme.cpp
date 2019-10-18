@@ -238,6 +238,18 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		global_log->error_always_output() << "NeighbourCommunicationScheme: Invalid particles that should have been "
 											 "removed, are still existent. They would be lost. Aborting..."
 										  << std::endl;
+		global_log->error_always_output() << "The particles:" << std::endl;
+		for (auto& invalidParticle : invalidParticles) {
+			std::stringstream ss;
+			invalidParticle.write(ss);
+			global_log->error_always_output() << ss.str() << std::endl;
+		}
+		global_log->error_always_output() << "The leavingExportNeighbours:" << std::endl;
+		for (auto& neighbour : (*_leavingExportNeighbours)[0]) {
+			std::stringstream ss;
+			neighbour.print(ss);
+			global_log->error_always_output() << ss.str() << std::endl;
+		}
 		Simulation::exit(544);
 	}
 
