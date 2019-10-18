@@ -310,38 +310,13 @@ bool NeighborAcquirer::isIncluded(HaloRegion *myRegion, HaloRegion *inQuestion) 
 
 void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
 	/*
-	 * m = myRegion, q = inQuestion, o = overlap
-	 * i)  m.max < q.max ?
-	 * ii) m.min < q.min ?
-	 *
-	 * i) | ii) | Operation
-	 * -------------------------------------------
-	 *  0 |  0  | o.max = q.max and o.min = m.min
-	 *  0 |  1  | o.max = q.max and o.min = q.min
-	 *  1 |  0  | o.max = m.max and o.min = m.min
-	 *  1 |  1  | o.max = m.max and o.min = q.min
-	 *
+	 * Choose the overlap of myRegion and inQuestion.
 	 */
 	HaloRegion overlap{};
 
 	for (int i = 0; i < 3; i++) {
-		if (myRegion->rmax[i] < inQuestion->rmax[i]) {      // 1
-			if (myRegion->rmin[i] < inQuestion->rmin[i]) {  // 1 1
-				overlap.rmax[i] = myRegion->rmax[i];
-				overlap.rmin[i] = inQuestion->rmin[i];
-			} else {  // 1 0
-				overlap.rmax[i] = myRegion->rmax[i];
-				overlap.rmin[i] = myRegion->rmin[i];
-			}
-		} else {                                            // 0
-			if (myRegion->rmin[i] < inQuestion->rmin[i]) {  // 0 1
-				overlap.rmax[i] = inQuestion->rmax[i];
-				overlap.rmin[i] = inQuestion->rmin[i];
-			} else {  // 0 0
-				overlap.rmax[i] = inQuestion->rmax[i];
-				overlap.rmin[i] = myRegion->rmin[i];
-			}
-		}
+		overlap.rmax[i] = std::min(myRegion->rmax[i], inQuestion->rmax[i]);
+		overlap.rmin[i] = std::max(myRegion->rmin[i], inQuestion->rmin[i]);
 	}
 
 	// adjust width and offset?
