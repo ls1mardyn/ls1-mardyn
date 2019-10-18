@@ -203,9 +203,11 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 	}
 	double cutoff = 2.5;
 
-	HaloRegion ownRegionRank0 = {32.8465, 140.73, 66.3138, 66.2862, 296.984, 99.5571, 0, 0, 0, cutoff};
-	HaloRegion ownRegionRank1 = {65.9145, 0, 99.5571, 99.4885, 142.386, 132.6, 0, 0, 0, cutoff};
-	auto ownRegion = rank == 0 ? ownRegionRank0 : ownRegionRank1;
+	std::array<HaloRegion, 2> ownRegionArray{
+		HaloRegion{32.8465, 140.73, 66.3138, 66.2862, 296.984, 99.5571, 0, 0, 0, cutoff},
+		HaloRegion{65.9145, 0, 99.5571, 99.4885, 142.386, 132.6, 0, 0, 0, cutoff}};
+	auto ownRegion = ownRegionArray[rank];
+	auto otherRegion = ownRegionArray[1 - rank];
 
 	std::array<double, 3> globalDomainLength{132.6, 591.891, 132.6};
 
@@ -221,8 +223,15 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 	// p1 notes reply, p2 notes owned as leaving import
 
 	if (not rank) {
-		for (auto neighbor : leavingExportNeighbours) {
-			neighbor.print(std::cout);
+		for (auto& neighbor : leavingExportNeighbours) {
+			for (auto& haloRegion : neighbor._haloInfo) {
+				for (auto i = 0; i < 3; ++i) {
+					std::stringstream ss;
+					neighbor.print(ss);
+					ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingLow[i] >= otherRegion.rmin[i]);
+					ASSERT_TRUE_MSG(ss.str(),haloRegion._leavingHigh[i] >= otherRegion.rmax[i]);
+				}
+			}
 		}
 	}
 }
