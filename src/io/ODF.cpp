@@ -59,10 +59,10 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 	_ODF22.resize(_numElements);
 
 	using vecType2D = decltype(_threadLocalODF11);
-	auto resize2D = [](vecType2D vec, size_t newSizeOuter, size_t newSizeInner) {
+	auto resize2D = [](vecType2D& vec, size_t newSizeOuter, size_t newSizeInner) {
 		vec.resize(newSizeOuter);
 		using vecType = decltype(vec[0]);
-		std::for_each(vec.begin(), vec.end(), [newSizeInner](vecType v) { v.resize(newSizeInner); });
+		std::for_each(vec.begin(), vec.end(), [newSizeInner](vecType& v) { v.resize(newSizeInner); });
 	};
 
 	resize2D(_threadLocalODF11, mardyn_get_max_threads(), _numElements);
@@ -99,9 +99,9 @@ void ODF::reset() {
 	global_log->info() << "[ODF] resetting data sets" << endl;
 
 	//	// C++ 14:
-	//	auto fillZero = [](auto vec) {std::fill(vec.begin(), vec.end(), 0);};
+	//	auto fillZero = [](auto& vec) {std::fill(vec.begin(), vec.end(), 0);};
 	using vecType = decltype(_ODF11);
-	auto fillZero = [](vecType vec) { std::fill(vec.begin(), vec.end(), 0); };
+	auto fillZero = [](vecType& vec) { std::fill(vec.begin(), vec.end(), 0); };
 
 	fillZero(_ODF11);
 	fillZero(_ODF12);
