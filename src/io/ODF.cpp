@@ -320,10 +320,10 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 
 void ODF::collect(DomainDecompBase* domainDecomp) {
 	// accumulate thread buffers
-	std::vector<unsigned long> localODF11(_threadLocalODF11.size());
-	std::vector<unsigned long> localODF12(_threadLocalODF12.size());
-	std::vector<unsigned long> localODF21(_threadLocalODF21.size());
-	std::vector<unsigned long> localODF22(_threadLocalODF22.size());
+	std::vector<unsigned long> localODF11(_threadLocalODF11[0].size(), 0ul);
+	std::vector<unsigned long> localODF12(_threadLocalODF12[0].size(), 0ul);
+	std::vector<unsigned long> localODF21(_threadLocalODF21[0].size(), 0ul);
+	std::vector<unsigned long> localODF22(_threadLocalODF22[0].size(), 0ul);
 	for (size_t t = 0; t < static_cast<size_t>(mardyn_get_max_threads()); ++t) {
 		using plusType = unsigned long;
 		std::transform(localODF11.begin(), localODF11.end(), _threadLocalODF11[t].begin(), _threadLocalODF11[t].begin(),
