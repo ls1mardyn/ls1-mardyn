@@ -45,6 +45,10 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 		isDipole[i] = ci.numDipoles();
 
 		if (isDipole[i] == 1) {
+			bool orientationIsCorrect = ci.dipole(0).e() == std::array<double, 3>{0,0,1};
+			if(orientationIsCorrect == false){
+				global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the ODF plugin" << endl;
+			}
 			numPairs++;
 		}
 	}
