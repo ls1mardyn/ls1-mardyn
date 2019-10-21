@@ -330,13 +330,13 @@ void ODF::collect(DomainDecompBase* domainDecomp) {
 	std::vector<unsigned long> localODF22(_threadLocalODF22[0].size(), 0ul);
 	for (size_t t = 0; t < static_cast<size_t>(mardyn_get_max_threads()); ++t) {
 		using plusType = unsigned long;
-		std::transform(localODF11.begin(), localODF11.end(), _threadLocalODF11[t].begin(), _threadLocalODF11[t].begin(),
+		std::transform(localODF11.begin(), localODF11.end(), _threadLocalODF11[t].begin(), localODF11.begin(),
 					   std::plus<plusType>());
-		std::transform(localODF12.begin(), localODF12.end(), _threadLocalODF12[t].begin(), _threadLocalODF12[t].begin(),
+		std::transform(localODF12.begin(), localODF12.end(), _threadLocalODF12[t].begin(), localODF12.begin(),
 					   std::plus<plusType>());
-		std::transform(localODF21.begin(), localODF21.end(), _threadLocalODF21[t].begin(), _threadLocalODF21[t].begin(),
+		std::transform(localODF21.begin(), localODF21.end(), _threadLocalODF21[t].begin(), localODF21.begin(),
 					   std::plus<plusType>());
-		std::transform(localODF22.begin(), localODF22.end(), _threadLocalODF22[t].begin(), _threadLocalODF22[t].begin(),
+		std::transform(localODF22.begin(), localODF22.end(), _threadLocalODF22[t].begin(), localODF22.begin(),
 					   std::plus<plusType>());
 	}
 
