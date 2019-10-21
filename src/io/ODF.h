@@ -5,6 +5,7 @@
  Application to other rotating fluids is theoretically possible, but requires some minor adjustments and more testing
  For now, the plugin only works for molecules with exactly one dipole
  IMPORTANT: the standard dipole orientation in the input must be set to [0 0 1]!
+ IMPORTANT: a molecule consisting of a LJ center and a dipole site in the same location will NOT rotate. Add the site 'Stockmayer' to the molecule to enable rotation with Ixx = Iyy = Izz = 1
 */
 #pragma once
 
