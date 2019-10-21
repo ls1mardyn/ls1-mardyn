@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import sys
-import StringIO
+import io
 print('')
 if len(sys.argv) < 3:
     print('ERROR: Not enough arguments given, need at least:')
@@ -45,7 +45,7 @@ class Cell:
         self.zmax = parts[5]
         self.cellid = cellid
     def getPointCoordinates(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         print(self.xmin, self.ymin, self.zmin, file=output)
         print(self.xmin, self.ymin, self.zmax, file=output)
         print(self.xmin, self.ymax, self.zmin, file=output)
@@ -58,7 +58,7 @@ class Cell:
         output.close()
         return returnstring
     def getCellPointIndices(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         for i in range(8):
             print(str(i + 8 * self.cellid), file=output)
         print('', file=output)
@@ -72,7 +72,7 @@ numcells = 0
 line = f_in.readline()
 celllist = []
 while line.find('particleData') == -1 and line != "":
-    celllist.append(Cell(l.rstrip(), numcells))
+    celllist.append(Cell(line.rstrip(), numcells))
     numcells += 1
     line = f_in.readline()
 
