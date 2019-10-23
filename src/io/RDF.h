@@ -30,6 +30,9 @@ class RDFCellProcessor;
  * - for each bin: calculate the number density (i.e. number of particles per volume)
  *   of the corresponding shell
  * - divide the number density by the number density of the system.
+ 
+ *Update: Optionally, the RDF can be additionally resolved in angular direction, by chosing angularbins > 1 in the input. Phi is the angle between the central molecules orientation vector and the vector connecting the pair of molecules. 
+ *The angular coordinate is given and discretized in terms of the cosine of the angle cos(phi), to ensure equal control volume sizes for equal distance R
  */
 class RDF : public PluginBase {
 
@@ -86,6 +89,21 @@ public:
 	//! count the number of molecules per component
 	//! @todo: remove it and replace it by component.getNumMolecules()
 	void accumulateNumberOfMolecules(std::vector<Component>& components);
+	
+	void observeARDFMolecule(double dd, double cosPhi, double cosPhiReverse, unsigned cid1, unsigned cid2) {
+		
+		if(dd > _maxDistanceSquare) { return; }
+		size_t distanceBinID = floor( sqrt(dd) / binwidth() );
+		size_t angularBinID = floor( (-cosPhi + 1.)/ angularbinwidth() );
+		size_t angularBinIDReverse = floor((-cosPhiReverse + 1.)/ angularbinwidth() );
+		size_t binID = distanceBinID * _angularBins + angularBinID;
+		size_t binIDReverse = distanceBinID * _angularBins + angularBinIDReverse;
+		#if defined _OPENMP
+		#pragma omp atomic
+		#endif
+		_ARDFdistribution.local[cid1][cid2][binID]++;
+		_ARDFdistribution.local[cid2][cid1][binIDReverse]++;
+	}
 
 	void observeRDF(Molecule const& mi, Molecule const& mj, double dd) {
 		observeRDFMolecule(dd, mi.componentid(), mj.componentid());
@@ -149,6 +167,7 @@ public:
 	}
 
 	bool isEnabledSiteRDF() const { return _doCollectSiteRDF; }
+	bool doARDF() const { return _doARDF; }
 
 	void reset();  //!< reset all values to 0, except the accumulated ones.
 
@@ -162,7 +181,9 @@ private:
 
 	void init();
 	unsigned int numBins() const { return _bins; }
+	unsigned int numARDFBins() const { return _ARDFBins; }
 	double binwidth() const { return _intervalLength; }
+	double angularbinwidth() const { return _angularIntervalLength; }
 	void collectRDF(DomainDecompBase* domainDecomp);  //!< update global values from local once
 
 	//! Update the "accumulatedXXX"-fields from the "global"-variables.
@@ -170,14 +191,27 @@ private:
 	void accumulateRDF();
 
 	void writeToFile(const Domain* domain, const std::string& filename, unsigned int i, unsigned int j) const;
-
+	void writeToFileARDF(const Domain* domain, const std::string& filename, unsigned int i, unsigned int j) const;
 	//! The length of an interval
 	//! Only used for the output to scale the "radius"-axis.
 	double _intervalLength;
+	
+	//! The length of an angular interval
+	//! Only used for the output to scale the "phi"-axis.
+	double _angularIntervalLength;
 
 	//! The number of bins, i.e. the number of intervals in which the cutoff
 	//! radius will be subdivided.
 	unsigned int _bins;
+	
+	//! The number of bins in angular direction in case the angular RDF is
+	//! being calculated
+	unsigned int _angularBins;
+	
+	
+	//! The total number of bins for the ARDF is the product of the radial bins and
+	//! the angular bins
+	unsigned long _ARDFBins;
 
 	//! number of different components (i.e. molecule types).
 	unsigned int _numberOfComponents;
@@ -213,12 +247,13 @@ private:
 	//! holds the distribution of the neighbouring particles, locally for this process,
 	//! i.e. the number of particles of components m and n in bin b: _distribution.local[m][n][b] or _distribution.global[m][n][b];
 	CommVar<std::vector<std::vector<std::vector<unsigned long>>>> _distribution;
-
+	CommVar<std::vector<std::vector<std::vector<unsigned long>>>> _ARDFdistribution;
 	//! holds the distribution of the neighbouring particles, globally accumulated.
 	std::vector<std::vector<std::vector<unsigned long>>> _globalAccumulatedDistribution;
-
+	std::vector<std::vector<std::vector<unsigned long>>> _globalAccumulatedARDFDistribution;
+	
 	bool _doCollectSiteRDF;
-
+	bool _doARDF;
 	// vector indices:
 	// first: component i
 	// second: component j, but shifted by -i, so that we only have to save it once for each component interaction (i<->j is the same as j<->i)
