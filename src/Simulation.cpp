@@ -337,7 +337,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					global_log->error() << "Datastructure section missing" << endl;
 					Simulation::exit(1);
 				}
-				xmlconfig.changecurrentnode("parallelisation");
+				if(not xmlconfig.changecurrentnode("../parallelisation")){
+					global_log->error() << "Could not go back to parallelisation path. Aborting." << endl;
+					Simulation::exit(1);
+				}
 				delete _domainDecomposition;
 				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain);
 			} else {
