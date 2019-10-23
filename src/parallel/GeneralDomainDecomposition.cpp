@@ -227,11 +227,11 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;
 
 	xmlconfig.getNodeValue("initialPhaseTime", _initPhase);
-	global_log->info() << "GeneralDomainDecomposition time for initial rebalancing phase: " << _rebuildFrequency
+	global_log->info() << "GeneralDomainDecomposition time for initial rebalancing phase: " << _initPhase
 					   << endl;
 
 	xmlconfig.getNodeValue("initialPhaseFrequency", _initFrequency);
-	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _rebuildFrequency
+	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _initFrequency
 					   << endl;
 }
 
