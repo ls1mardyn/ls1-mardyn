@@ -1,12 +1,9 @@
-/* Created by Joshua Marx 08/2019
- Calculates the orientation distribution function (ODF) for pure fluids or binary mixtures 
- Orientation distribution function is calculated in regards to the centers of the molecules, site-wise ODFs are not implemented
- This plugin is designed for use with Stockmayer fluids (LJ center + dipole), mixtures of Stockmayer fluids with LJ fluids and Stockmayer fluid mixtures
- Application to other rotating fluids is theoretically possible, but requires some minor adjustments and more testing
- For now, the plugin only works for molecules with exactly one dipole
- IMPORTANT: the standard dipole orientation in the input must be set to [0 0 1]!
- IMPORTANT: a molecule consisting of a LJ center and a dipole site in the same location will NOT rotate. Add the site 'Stockmayer' to the molecule to enable rotation with Ixx = Iyy = Izz = 1
-*/
+/**
+ * @file ODF.h
+ * @author Joshua Marx
+ * @date 09/10/19
+ */
+
 #pragma once
 
 #include <particleContainer/adapter/ODFCellProcessor.h>
@@ -15,6 +12,18 @@
 #include "particleContainer/ParticleContainer.h"
 #include "plugins/PluginBase.h"
 
+/**
+ * Calculates the orientation distribution function (ODF) for pure fluids or binary mixtures
+ * Orientation distribution function is calculated in regards to the centers of the molecules,
+ * site-wise ODFs are not implemented
+ * This plugin is designed for use with Stockmayer fluids (LJ center + dipole), mixtures of Stockmayer
+ * fluids with LJ fluids and Stockmayer fluid mixtures. Application to other rotating fluids is theoretically
+ * possible, but requires some minor adjustments and more testing.
+ *
+ * For now, the plugin only works for molecules with exactly one dipole
+ * @note IMPORTANT: the standard dipole orientation in the input must be set to [0 0 1]!
+ * @note IMPORTANT: a molecule consisting of a LJ center and a dipole site in the same location will NOT rotate. Add the site 'Stockmayer' to the molecule to enable rotation with Ixx = Iyy = Izz = 1
+ */
 class ODF : public PluginBase {
 public:
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
