@@ -31,14 +31,22 @@
     </ensemble>
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
+      <!--<parallelisation type="GeneralDomainDecomposition">
+		  <updateFrequency>1000</updateFrequency><comment>updateFrequency specifies how often a rebalancing will occur.</comment>
+		  <initialPhaseTime>10000</initialPhaseTime>
+		  <comment>initialPhaseTime specifies for how many time steps the initial rebalancing phase should last, in which initialPhaseFrequency is applied instead of updateFrequency.</comment>
+          <initialPhaseFrequency>500</initialPhaseFrequency><comment>initialPhaseFrequency specifies how often a rebalancing will occur within the initial rebalancing phase.</comment>
+      </parallelisation>-->
       <datastructure type="AutoPas">
-        <allowedTraversals></allowedTraversals>
-        <allowedContainers>verletLists</allowedContainers>
-        <selectorStrategy>fastestMedian</selectorStrategy>
-        <dataLayouts>SoA</dataLayouts>
-        <newton3>enabled</newton3>
+        <allowedTraversals>c01, c08, c04, c18, sli, verlet-lists, slicedVerlet, v01, v18, directsum, varVerlet</allowedTraversals>
+        <allowedContainers>linkedCells, verletLists, directsum, verletListsCells, varVerletListsAsBuild</allowedContainers>
+        <selectorStrategy>fastestMean</selectorStrategy><!--fastestMedian,fastestAbs-->
+        <dataLayouts>AoS, SoA</dataLayouts>
+        <newton3>enabled, disabled</newton3>
         <tuningInterval>1000</tuningInterval>
-        <tuningSamples>3</tuningSamples>
+        <tuningSamples>10</tuningSamples>
+        <rebuildFrequency>10</rebuildFrequency>
+        <skin>0.5</skin>
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">33.0702</radiusLJ>
@@ -48,7 +56,7 @@
       </electrostatic>
     </algorithm>
     <output>
-      <outputplugin name="MmpldWriter" type="simple">
+      <!--<outputplugin name="MmpldWriter" type="simple">
         <include query="/spheres">../sphereparams_argon.xml</include>
         <writecontrol>
           <start>0</start>
@@ -57,12 +65,12 @@
           <framesperfile>0</framesperfile>
         </writecontrol>
         <outputprefix>megamol</outputprefix>
-      </outputplugin>
+      </outputplugin>-->
       <!-- <outputplugin name="ResultWriter"> -->
         <!-- <writefrequency>5</writefrequency> -->
         <!-- <outputprefix>Argon</outputprefix> -->
       <!-- </outputplugin> -->
-      <outputplugin name="SysMonOutput">
+      <!--<outputplugin name="SysMonOutput">
         <writefrequency>10000</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
@@ -70,10 +78,10 @@
       <outputplugin name="VTKMoleculeWriter">
         <outputprefix>vtkOutput</outputprefix>
         <writefrequency>1</writefrequency>
-      </outputplugin>
+      </outputplugin>-->
     </output>
-	<plugin name="TestPlugin">
+<!--	<plugin name="TestPlugin">
 		<writefrequency>1</writefrequency>
-	</plugin>
+	</plugin>-->
   </simulation>
 </mardyn>

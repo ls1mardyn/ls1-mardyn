@@ -29,9 +29,9 @@
 class LoadbalanceWriter : public PluginBase {
 public:
 	LoadbalanceWriter();
-	~LoadbalanceWriter() {}
+	~LoadbalanceWriter() override = default;
 
-	/** @brief Read in XML configuration for DecompWriter.
+	/** @brief Read in XML configuration for LoadbalanceWriter.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * parameters:
@@ -52,22 +52,22 @@ public:
 	   </outputplugin>
 	   \endcode
 	 */
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 
 	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain);
+              DomainDecompBase *domainDecomp, Domain *domain) override;
 
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
             unsigned long simstep
-    );
+    ) override;
 
-	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
+	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override {
 		/* nothing to do */
 	}
 
-	std::string getPluginName() {
+	std::string getPluginName() override {
 		return std::string("LoadbalanceWriter");
 	}
 	static PluginBase* createInstance() { return new LoadbalanceWriter(); }
@@ -78,7 +78,7 @@ private:
 	void writeOutputFileHeader();
 	void writeLBEntry(size_t id, std::ofstream &outputfile, int numRanks);
 	void flush(DomainDecompBase* domainDecomp);
-	void displayWarning(unsigned long simstep, std::string timername, double f_LB);
+	void displayWarning(unsigned long simstep, const std::string& timername, double f_LB);
 
 	unsigned long _writeFrequency;
 	std::string _outputFilename;

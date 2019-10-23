@@ -64,10 +64,10 @@ void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNa
 	}
 	_timers[timerName] = _Timer(timerName, timer);
 
-	if (parentTimerNames.size() == 0) {
+	if (parentTimerNames.empty()) {
 		parentTimerNames.push_back(_baseTimerName);
 	}
-	for (auto parentTimerName : parentTimerNames) {
+	for (const auto& parentTimerName : parentTimerNames) {
 		_timers[timerName]._parentTimerNames.push_back(parentTimerName);
 		_timers[parentTimerName]._childTimerNames.push_back(timerName);
 	}
@@ -93,8 +93,8 @@ void TimerProfiler::print(string timerName, string outputPrefix){
 		_debugMessage(timerName);
 		return;
 	}
-	if( (getDisplayMode() == Displaymode::ALL) |
-		(getDisplayMode() == Displaymode::ACTIVE && getTimer(timerName)->isActive()) |
+	if( (getDisplayMode() == Displaymode::ALL) ||
+		(getDisplayMode() == Displaymode::ACTIVE && getTimer(timerName)->isActive()) ||
 		(getDisplayMode() == Displaymode::NON_ZERO && getTimer(timerName)->get_etime() > 0)
 	) {
 		global_log->info() << outputPrefix << getOutputString(timerName) << getTime(timerName) << " sec" << endl;
@@ -107,7 +107,7 @@ void TimerProfiler::printTimers(string timerName, string outputPrefix){
 		print(timerName, outputPrefix);
 		outputPrefix += "\t";
 	}
-	for(auto childTimerName : _timers[timerName]._childTimerNames){
+	for(const auto& childTimerName : _timers[timerName]._childTimerNames){
 		printTimers(childTimerName, outputPrefix);
 	}
 }

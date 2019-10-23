@@ -138,6 +138,8 @@ private:
 	bool _msgSent, _countReceived, _msgReceived;
 
 	void collectLeavingMoleculesFromInvalidParticles(std::vector<Molecule>& invalidParticles, double lowCorner [3], double highCorner [3], double shift [3]);
+
+	friend class NeighborAcquirerTest;
 };
 
 #endif /* COMMUNICATIONPARTNER_H_ */

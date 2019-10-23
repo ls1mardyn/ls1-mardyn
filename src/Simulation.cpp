@@ -316,12 +316,34 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
-			}
-			else if(parallelisationtype == "GeneralDomainDecomposition") {
-              delete _domainDecomposition;
-              _domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius(), _domain);
-            }
-			else {
+			} else if (parallelisationtype == "GeneralDomainDecomposition") {
+				double skin = 0.;
+				// we need the skin here, so we extract it from the AutoPas container's xml,
+				// because the ParticleContainer needs to be instantiated later. :/
+				xmlconfig.changecurrentnode("..");
+				if (xmlconfig.changecurrentnode("datastructure")) {
+					string datastructuretype;
+					xmlconfig.getNodeValue("@type", datastructuretype);
+					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
+						xmlconfig.getNodeValue("skin", skin);
+						global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
+					} else {
+						global_log->error() << "Using the GeneralDomainDecomposition is only supported when using "
+											   "AutoPas, but the configuration file does not use it."
+											<< endl;
+						Simulation::exit(2);
+					}
+				} else {
+					global_log->error() << "Datastructure section missing" << endl;
+					Simulation::exit(1);
+				}
+				if(not xmlconfig.changecurrentnode("../parallelisation")){
+					global_log->error() << "Could not go back to parallelisation path. Aborting." << endl;
+					Simulation::exit(1);
+				}
+				delete _domainDecomposition;
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain);
+			} else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);
 			}
@@ -336,6 +358,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
 			_domainDecomposition->readXML(xmlconfig);
+
+			string loadTimerStr("SIMULATION_COMPUTATION");
+			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
+			global_log->info() << "Using timer " << loadTimerStr << " for the load calculation." << std::endl;
+			_timerForLoad = timers()->getTimer(loadTimerStr);
+			if (not _timerForLoad) {
+				global_log->error() << "'timerForLoad' set to a timer that does not exist('" << loadTimerStr
+									<< "')! Aborting!" << std::endl;
+				exit(1);
+			}
+
 			xmlconfig.changecurrentnode("..");
 		}
 		else {
@@ -343,6 +376,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->error() << "Parallelisation section missing." << endl;
 			Simulation::exit(1);
 		#else /* serial */
+			// set _timerForLoad, s.t. it always exists.
+			_timerForLoad = timers()->getTimer("SIMULATION_COMPUTATION");
 			//_domainDecomposition = new DomainDecompBase(); // already set in initialize()
 		#endif
 		}
@@ -885,11 +920,12 @@ void Simulation::simulate() {
 
 	pluginEndStepCall(_initSimulation);
 
-	Timer perStepTimer;
-	perStepTimer.reset();
 
 	// keepRunning() increments the simstep counter before the first iteration
 	_simstep = _initSimulation;
+
+	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
+	double previousTimeForLoad = 0.;
 
 	while (keepRunning()) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
@@ -897,7 +933,6 @@ void Simulation::simulate() {
 		global_simulation->timers()->incrementTimerTimestepCounter();
 
 		computationTimer->start();
-		perStepTimer.start();
 
         // beforeEventNewTimestep Plugin Call
         global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << endl;
@@ -917,7 +952,6 @@ void Simulation::simulate() {
             plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
         }
 
-		perStepTimer.stop();
 		computationTimer->stop();
 
 
@@ -930,20 +964,25 @@ void Simulation::simulate() {
 
 
 		if (overlapCommComp) {
-			performOverlappingDecompositionAndCellTraversalStep(perStepTimer.get_etime());
+			double currentTime = _timerForLoad->get_etime();
+			performOverlappingDecompositionAndCellTraversalStep(currentTime - previousTimeForLoad);
+			previousTimeForLoad = currentTime;
 		}
 		else {
 			decompositionTimer->start();
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition" << endl;
-			updateParticleContainerAndDecomposition(perStepTimer.get_etime());
+
+			double currentTime = _timerForLoad->get_etime();
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
+			previousTimeForLoad = currentTime;
+
 			decompositionTimer->stop();
-			perStepTimer.reset();
+
 			double startEtime = computationTimer->get_etime();
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer->start();
-			perStepTimer.start();
 			forceCalculationTimer->start();
 
 			_moleculeContainer->traverseCells(*_cellProcessor);
@@ -959,7 +998,6 @@ void Simulation::simulate() {
 			updateForces();
 
 			forceCalculationTimer->stop();
-			perStepTimer.stop();
 			computationTimer->stop();
 
 			decompositionTimer->start();
@@ -973,7 +1011,6 @@ void Simulation::simulate() {
 			_loopCompTimeSteps ++;
 		}
 		computationTimer->start();
-		perStepTimer.start();
 
 
 		if (_FMM != nullptr) {
@@ -1068,7 +1105,6 @@ void Simulation::simulate() {
 		/* END PHYSICAL SECTION */
 
 
-		perStepTimer.stop();
 		computationTimer->stop();
 		perStepIoTimer->start();
 

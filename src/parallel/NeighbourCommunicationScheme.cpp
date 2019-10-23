@@ -238,6 +238,18 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		global_log->error_always_output() << "NeighbourCommunicationScheme: Invalid particles that should have been "
 											 "removed, are still existent. They would be lost. Aborting..."
 										  << std::endl;
+		global_log->error_always_output() << "The particles:" << std::endl;
+		for (auto& invalidParticle : invalidParticles) {
+			std::stringstream ss;
+			invalidParticle.write(ss);
+			global_log->error_always_output() << ss.str() << std::endl;
+		}
+		global_log->error_always_output() << "The leavingExportNeighbours:" << std::endl;
+		for (auto& neighbour : (*_leavingExportNeighbours)[0]) {
+			std::stringstream ss;
+			neighbour.print(ss);
+			global_log->error_always_output() << ss.str() << std::endl;
+		}
 		Simulation::exit(544);
 	}
 
@@ -456,12 +468,13 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
 						_coversWholeDomain);
 
+		std::array<double, 3> globalDomainLength {domain->getGlobalLength(0),domain->getGlobalLength(1), domain->getGlobalLength(2)};
 		// assuming p1 sends regions to p2
 		std::tie((*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]) =
-			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, haloOrForceRegions, skin);
+			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, haloOrForceRegions, skin);
 		// p1 notes reply, p2 notes owned as haloExportForceImport
 		std::tie((*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]) =
-			NeighborAcquirer::acquireNeighbors(domain, &ownRegion, leavingRegions, 0.);
+			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0.);
 		// p1 notes reply, p2 notes owned as leaving import
 
 

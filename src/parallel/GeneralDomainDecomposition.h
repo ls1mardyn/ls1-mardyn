@@ -15,11 +15,11 @@
 class GeneralDomainDecomposition : public DomainDecompMPIBase {
 public:
 	/**
-	 * Constructor for the GeneralDomainDecomposition
-	 * @param cutoffRadius
+	 * Constructor for the GeneralDomainDecomposition.
+	 * @param interactionLength
 	 * @param domain
 	 */
-	GeneralDomainDecomposition(double cutoffRadius, Domain* domain);
+	GeneralDomainDecomposition(double interactionLength, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
 	~GeneralDomainDecomposition() override;
@@ -29,7 +29,9 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="GeneralDomainDecomposition">
-
+		  <updateFrequency>INTEGER</updateFrequency>
+		  <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
+		  <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
 	   </parallelisation>
 	   \endcode
 	 */
@@ -46,9 +48,7 @@ public:
 
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(const std::string& filename, Domain* domain) override {
-		throw std::runtime_error("GeneralDomainDecomposition::printDecomp() not yet implemented");
-	}
+	void printDecomp(const std::string& filename, Domain* domain) override;
 
 	// returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local
 	// area)
@@ -118,13 +118,17 @@ private:
 		const std::array<size_t, 3>& gridCoords);
 
 	/**
-	 * Check whether a rebalancing is necessary
+	 * Check whether a rebalancing is necessary.
 	 * @param step the step number
 	 * @param updateFrequency the frequency defining how often
 	 * @param lastTraversalTime the time of the last traversal for this node
+	 * @param initPhase Number of time steps in the initial rebalancing phase.
+	 * @param initUpdateFrequency Update frequency within the initial rebalancing phase, normally higher frequency,
+	 * i.e., lower value than updateFrequency.
 	 * @return true if a rebuild is necessary
 	 */
-	static bool queryRebalancing(size_t step, size_t updateFrequency, double lastTraversalTime);
+	static bool queryRebalancing(size_t step, size_t updateFrequency, size_t initPhase, size_t initUpdateFrequency,
+								 double lastTraversalTime);
 
 	/**
 	 * Initializes communication partners
@@ -147,11 +151,14 @@ private:
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
-	double _cutoffRadius;
+
 	std::array<bool, 3> _coversWholeDomain{};
 
 	size_t _steps{0};
 	size_t _rebuildFrequency{10000};
+
+	size_t _initPhase{0};
+	size_t _initFrequency{500};
 
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
 

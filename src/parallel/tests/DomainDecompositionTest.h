@@ -22,7 +22,7 @@ public:
 
 	DomainDecompositionTest();
 
-	virtual ~DomainDecompositionTest();
+	~DomainDecompositionTest() override;
 
 	void testNoDuplicatedParticles();
 	void testNoLostParticles();

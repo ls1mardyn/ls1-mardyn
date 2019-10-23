@@ -19,7 +19,7 @@
 class RegionParticleIterator : public ParticleIterator {
 public:
 	RegionParticleIterator() = default;
-	explicit RegionParticleIterator(const autopas::ParticleIteratorWrapper<AutoPasSimpleMolecule>& parent)
+	explicit RegionParticleIterator(const autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t& parent)
 		: ParticleIterator(parent){};
 };
 

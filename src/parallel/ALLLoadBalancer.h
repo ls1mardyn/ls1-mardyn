@@ -11,7 +11,9 @@
 
 class ALLLoadBalancer : public LoadBalancer {
 public:
-	ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma, MPI_Comm comm, std::array<size_t, 3> globalSize, std::array<size_t, 3> localCoordinates, double minimalPartitionSize);
+	ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma, MPI_Comm comm,
+					std::array<size_t, 3> globalSize, std::array<size_t, 3> localCoordinates,
+					double minimalPartitionSize);
 
 	~ALLLoadBalancer() override = default;
 	std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) override;

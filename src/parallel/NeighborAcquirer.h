@@ -26,14 +26,18 @@ public:
 	 * second vector will own the particles.
 	 */
 	static std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> acquireNeighbors(
-		Domain* domain, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions, double skin);
+		const std::array<double,3>& globalDomainLength, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions, double skin);
+
 	static std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners);
 
 private:
 	static bool isIncluded(HaloRegion* myRegion, HaloRegion* inQuestion);
-	static void overlap(HaloRegion* myRegion, HaloRegion* inQuestion);
-	static HaloRegion getPotentiallyShiftedRegion(const double* domainLength, const HaloRegion& region,
+
+	static HaloRegion overlap(const HaloRegion& myRegion, const HaloRegion& inQuestion);
+
+	static HaloRegion getPotentiallyShiftedRegion(const std::array<double,3>& domainLength, const HaloRegion& region,
 												  double* shiftArray, double skin);
+
 	/**
 	 * Get all possible combinations of halo regions and shifts, where the given halo region nonShiftedRegion can get
 	 * particles from.
@@ -52,6 +56,6 @@ private:
 	static std::tuple<std::vector<HaloRegion>, std::vector<std::array<double, 3>>>
 	getAllShiftedAndNonShiftedRegionsAndShifts(HaloRegion nonShiftedRegion, HaloRegion shiftedRegion,
 											  std::array<double, 3> shift);
-    friend class NeighbourCommunicationSchemeTest;
 
+    friend class NeighborAcquirerTest;
 };

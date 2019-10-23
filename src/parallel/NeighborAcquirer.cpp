@@ -18,7 +18,7 @@
  * saved in partners01.
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
-	Domain *domain, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin) {
+	const std::array<double,3>& globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin) {
 
 	HaloRegion ownRegionEnlargedBySkin = *ownRegion;
 	for(unsigned int dim = 0; dim < 3; ++dim){
@@ -107,9 +107,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 			// msg format one region: rmin | rmax | offset | width | shift
 			std::array<double, 3> shift{};
-			double domainLength[3] = {domain->getGlobalLength(0), domain->getGlobalLength(1),
-									  domain->getGlobalLength(2)};  // better for testing
-			auto shiftedRegion = getPotentiallyShiftedRegion(domainLength, unshiftedRegion, shift.data(), skin);
+			auto shiftedRegion = getPotentiallyShiftedRegion(globalDomainLength, unshiftedRegion, shift.data(), skin);
 
 			std::vector<HaloRegion> regionsToTest;
 			std::vector<std::array<double, 3>> shifts;
@@ -130,7 +128,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
 
-					overlap(&ownRegionEnlargedBySkin, &regionToTest);  // different shift for the overlap?
+					auto overlappedRegion = overlap(ownRegionEnlargedBySkin, regionToTest);  // different shift for the overlap?
 
 					// make a note in partners02 - don't forget to squeeze partners02
 					bool enlarged[3][2] = {{false}};
@@ -138,30 +136,46 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					if (skin != 0.) {
 						for (size_t dim = 0; dim < 3; ++dim) {
-							if (regionToTest.offset[dim] == -1 and regionToTest.rmax[dim] == ownRegion->rmax[dim]) {
-								regionToTest.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
-							} else if (regionToTest.offset[dim] == 1 and regionToTest.rmin[dim] == ownRegion->rmin[dim]) {
-								regionToTest.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
+							if (overlappedRegion.offset[dim] == -1 and overlappedRegion.rmax[dim] == ownRegion->rmax[dim]) {
+								overlappedRegion.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
+							} else if (overlappedRegion.offset[dim] == 1 and overlappedRegion.rmin[dim] == ownRegion->rmin[dim]) {
+								overlappedRegion.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
 							}
 						}
 					}
 
-					comm_partners02.emplace_back(rank, regionToTest.rmin, regionToTest.rmax, regionToTest.rmin,
-												 regionToTest.rmax, currentShift.data(), regionToTest.offset, enlarged);
+					comm_partners02.emplace_back(rank, overlappedRegion.rmin, overlappedRegion.rmax, overlappedRegion.rmin,
+												 overlappedRegion.rmax, currentShift.data(), overlappedRegion.offset, enlarged);
 
 					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
 
+					// Undo the shift. So it is again in the perspective of the rank we got this region from.
+					// We cannot use unshiftedRegion, as it is not overlapped and thus potentially too big.
+					HaloRegion unshiftedOverlappedRegion{overlappedRegion};
+					for (int dimI = 0; dimI < 3; ++dimI) {
+						unshiftedOverlappedRegion.rmax[dimI] -= currentShift[dimI];
+						if (fabs(unshiftedOverlappedRegion.rmax[dimI]) < 1e-10 and currentShift[dimI] != 0.) {
+							// we have to ensure that if we shifted, then the rmax, etc. are correct!
+							unshiftedOverlappedRegion.rmax[dimI] = 0.;
+						}
+						unshiftedOverlappedRegion.rmin[dimI] -= currentShift[dimI];
+						if (fabs(unshiftedOverlappedRegion.rmin[dimI] - globalDomainLength[dimI]) < 1e-10 and
+							currentShift[dimI] != 0.) {
+							// we have to ensure that if we shifted, then the rmax, etc. are correct!
+							unshiftedOverlappedRegion.rmin[dimI] = globalDomainLength[dimI];
+						}
+					}
+
 					std::vector<unsigned char> singleRegion(bytesOneRegion);
 
-					// use unshifted region here!
 					p = 0;
-					memcpy(&singleRegion[p], unshiftedRegion.rmin, sizeof(double) * 3);
+					memcpy(&singleRegion[p], unshiftedOverlappedRegion.rmin, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], unshiftedRegion.rmax, sizeof(double) * 3);
+					memcpy(&singleRegion[p], unshiftedOverlappedRegion.rmax, sizeof(double) * 3);
 					p += sizeof(double) * 3;
-					memcpy(&singleRegion[p], unshiftedRegion.offset, sizeof(int) * 3);
+					memcpy(&singleRegion[p], unshiftedOverlappedRegion.offset, sizeof(int) * 3);
 					p += sizeof(int) * 3;
-					memcpy(&singleRegion[p], &unshiftedRegion.width, sizeof(double));
+					memcpy(&singleRegion[p], &unshiftedOverlappedRegion.width, sizeof(double));
 					p += sizeof(double);
 					memcpy(&singleRegion[p], currentShift.data(), sizeof(double) * 3);
 					//p += sizeof(double) * 3;
@@ -310,48 +324,21 @@ bool NeighborAcquirer::isIncluded(HaloRegion *myRegion, HaloRegion *inQuestion) 
 	// && myRegion->rmin < inQuestion->rmax
 }
 
-void NeighborAcquirer::overlap(HaloRegion *myRegion, HaloRegion *inQuestion) {
+HaloRegion NeighborAcquirer::overlap(const HaloRegion& myRegion, const HaloRegion& inQuestion) {
 	/*
-	 * m = myRegion, q = inQuestion, o = overlap
-	 * i)  m.max < q.max ?
-	 * ii) m.min < q.min ?
-	 *
-	 * i) | ii) | Operation
-	 * -------------------------------------------
-	 *  0 |  0  | o.max = q.max and o.min = m.min
-	 *  0 |  1  | o.max = q.max and o.min = q.min
-	 *  1 |  0  | o.max = m.max and o.min = m.min
-	 *  1 |  1  | o.max = m.max and o.min = q.min
-	 *
+	 * Choose the overlap of myRegion and inQuestion.
 	 */
-	HaloRegion overlap{};
+	HaloRegion overlap{inQuestion};
 
 	for (int i = 0; i < 3; i++) {
-		if (myRegion->rmax[i] < inQuestion->rmax[i]) {      // 1
-			if (myRegion->rmin[i] < inQuestion->rmin[i]) {  // 1 1
-				overlap.rmax[i] = myRegion->rmax[i];
-				overlap.rmin[i] = inQuestion->rmin[i];
-			} else {  // 1 0
-				overlap.rmax[i] = myRegion->rmax[i];
-				overlap.rmin[i] = myRegion->rmin[i];
-			}
-		} else {                                            // 0
-			if (myRegion->rmin[i] < inQuestion->rmin[i]) {  // 0 1
-				overlap.rmax[i] = inQuestion->rmax[i];
-				overlap.rmin[i] = inQuestion->rmin[i];
-			} else {  // 0 0
-				overlap.rmax[i] = inQuestion->rmax[i];
-				overlap.rmin[i] = myRegion->rmin[i];
-			}
-		}
+		overlap.rmax[i] = std::min(myRegion.rmax[i], inQuestion.rmax[i]);
+		overlap.rmin[i] = std::max(myRegion.rmin[i], inQuestion.rmin[i]);
 	}
 
-	// adjust width and offset?
-	memcpy(inQuestion->rmax, overlap.rmax, sizeof(double) * 3);
-	memcpy(inQuestion->rmin, overlap.rmin, sizeof(double) * 3);
+	return overlap;
 }
 
-HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const double *domainLength, const HaloRegion &region,
+HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const std::array<double,3>& domainLength, const HaloRegion &region,
 														 double *shiftArray, double skin) {
 	for (int i = 0; i < 3; i++) {  // calculating shift
 		if (region.rmin[i] >= domainLength[i] - skin) {

@@ -15,34 +15,33 @@
 
 TEST_SUITE_REGISTRATION(DomainDecompositionTest);
 
-DomainDecompositionTest::DomainDecompositionTest() {
-}
+DomainDecompositionTest::DomainDecompositionTest() = default;
 
-DomainDecompositionTest::~DomainDecompositionTest() {
-}
+DomainDecompositionTest::~DomainDecompositionTest() = default;
 
 void DomainDecompositionTest::testNoDuplicatedParticlesFilename(const char * filename, double cutoff) {
 	// original pointer will be deleted by tearDown() (delete global_simulation)
 	_domainDecomposition = new DomainDecomposition();
 
-	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
-	int numMols = container->getNumberOfParticles();
+	std::unique_ptr<ParticleContainer> container{
+		initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff)};
+	auto numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(numMols);
+	_domainDecomposition->collCommAppendUnsLong(numMols);
 	_domainDecomposition->collCommAllreduceSum();
-	numMols = _domainDecomposition->collCommGetInt();
+	numMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container.get(), _domain);
 	container->deleteOuterParticles();
 
-	int newNumMols = container->getNumberOfParticles();
+	auto newNumMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(newNumMols);
+	_domainDecomposition->collCommAppendUnsLong(newNumMols);
 	_domainDecomposition->collCommAllreduceSum();
-	newNumMols = _domainDecomposition->collCommGetInt();
+	newNumMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
 	ASSERT_EQUAL(numMols, newNumMols);
@@ -55,16 +54,16 @@ void DomainDecompositionTest::testNoDuplicatedParticles() {
 }
 
 void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename, double cutoff) {
-	// original pointer will be deleted by tearDown() (delete global_simulation)
 	_domainDecomposition = new DomainDecomposition();
 
-	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff);
-	int numMols = container->getNumberOfParticles();
+	std::unique_ptr<ParticleContainer> container{
+		initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff)};
+	auto numMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(numMols);
+	_domainDecomposition->collCommAppendUnsLong(numMols);
 	_domainDecomposition->collCommAllreduceSum();
-	numMols = _domainDecomposition->collCommGetInt();
+	numMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
 
@@ -100,15 +99,15 @@ void DomainDecompositionTest::testNoLostParticlesFilename(const char * filename,
 
 	container->update();
 
-	_domainDecomposition->balanceAndExchange(0., true, container, _domain);
+	_domainDecomposition->balanceAndExchange(0., true, container.get(), _domain);
 	container->deleteOuterParticles();
 
-	int newNumMols = container->getNumberOfParticles();
+	auto newNumMols = container->getNumberOfParticles();
 
 	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendInt(newNumMols);
+	_domainDecomposition->collCommAppendUnsLong(newNumMols);
 	_domainDecomposition->collCommAllreduceSum();
-	newNumMols = _domainDecomposition->collCommGetInt();
+	newNumMols = _domainDecomposition->collCommGetUnsLong();
 	_domainDecomposition->collCommFinalize();
 
 	//_domain->writeCheckpoint("dump.txt", container, _domainDecomposition, false);

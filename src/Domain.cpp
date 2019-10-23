@@ -583,7 +583,7 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 	ofs << "\t\t</length>" << endl;
 	ofs.flags(f);  // restore default format flags
 	ofs << "\t\t<number>" << _globalNumMolecules << "</number>" << endl;
-	ofs << "\t\t<format type=\"ICRVQD\"/>" << endl;
+	ofs << "\t\t<format type=\"" << Molecule::getWriteFormat() << "\"/>" << endl;
 	ofs << "\t</headerinfo>" << endl;
 	ofs << "</mardyn>" << endl;
 }
