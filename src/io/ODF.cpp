@@ -19,15 +19,15 @@ void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "[ODF] Phi2 increments: " << _phi2Increments << endl;
 	xmlconfig.getNodeValue("gammaincrements", _gammaIncrements);
 	global_log->info() << "[ODF] Gamma increments: " << _gammaIncrements << endl;
-	xmlconfig.getNodeValue("shellcutoff1", _shellCutOff[0]);
-	global_log->info() << "[ODF] Shell cutoff component one: " << _shellCutOff[0] << endl;
-	xmlconfig.getNodeValue("shellcutoff2", _shellCutOff[1]);
+	xmlconfig.getNodeValue("shellcutoff", _shellCutOff);
+	global_log->info() << "[ODF] Shell cutoff: " << _shellCutOff << endl;
+/*	xmlconfig.getNodeValue("shellcutoff2", _shellCutOff[1]);
 	global_log->info() << "[ODF] Shell cutoff component two: " << _shellCutOff[1] << endl;
 	xmlconfig.getNodeValue(
 		"applyshellmixingrule",
 		_mixingRule);  // if mixingrule = 1 then the shell cutoff for heterogenous pairings is calculated as half the
 					   // diameter of the central atom plus a full diameter of the surrounding atom
-	global_log->info() << "[ODF] Shell mixing rule: " << _mixingRule << endl;
+	global_log->info() << "[ODF] Shell mixing rule: " << _mixingRule << endl;*/
 }
 
 void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainDecomp*/, Domain* domain) {
@@ -92,9 +92,12 @@ void ODF::afterForces(ParticleContainer* particleContainer, DomainDecompBase* do
 
 void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* domain,
 				  unsigned long simstep) {
+	int mpi_rank = domainDecomp->getRank();
 	if (simstep > _initStatistics && simstep % _writeFrequency == 0) {
 		collect(domainDecomp);
-		output(domain, simstep);
+		if (mpi_rank == 0){
+			output(domain, simstep);
+		}
 		reset();
 	}
 }
@@ -125,9 +128,9 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 	
 	double Quaternion2[4], orientationVector2[3], distanceVector12[3], moleculeDistance1D[3], auxiliaryVector1[3], auxiliaryVector2[3], projectionVector1[3], projectionVector2[3]; 
 	auto cid = mol1.getComponentLookUpID();
-	double cosPhi1, cosPhi2, cosGamma12, Gamma12, absoluteProjection1, absoluteProjection2, absoluteDistanceVector12, shellCutoff = _shellCutOff[cid];
+	double cosPhi1, cosPhi2, cosGamma12, Gamma12, absoluteProjection1, absoluteProjection2, absoluteDistanceVector12/*, shellCutoff = _shellCutOff[cid]*/;
 	double roundingThreshold = 0.0001;
-	unsigned long indexPhi1, indexPhi2, indexGamma12, elementID;
+	unsigned long indexPhi1, indexPhi2, indexGamma12, elementID, elementIDreversed;
 	unsigned maximumIncrements;
 	bool assignPhi1, assignPhi2, assignGamma12;  
 
@@ -142,11 +145,11 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		distanceSquared += moleculeDistance1D[i] * moleculeDistance1D[i];
 	}
 	
-	if (_mixingRule == 1) {
+	/*if (_mixingRule == 1) {
 		shellCutoff = 1. / 2. * _shellCutOff[cid] + _shellCutOff[mol2.getComponentLookUpID()];
-	}
+	}*/
 
-	if (distanceSquared < shellCutoff * shellCutoff && mol1.getID() != mol2.getID()) {
+	if (distanceSquared < _shellCutOff * _shellCutOff && mol1.getID() != mol2.getID()) {
 		absoluteDistanceVector12 = 0.;
 
 		// reading second molecule's quaternions
@@ -301,23 +304,29 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		
 		// assignment of bin ID
 		elementID = indexPhi1 * _phi2Increments * _gammaIncrements + (indexPhi2 * _gammaIncrements) + indexGamma12;
+		elementIDreversed = indexPhi2 * _phi2Increments * _gammaIncrements + (indexPhi1 * _gammaIncrements) + indexGamma12; 
+		//the ODFcellProcessor calculates every particle interaction only once. Therefore the reverse interaction is considered here as well
 
 		// determine component pairing and add to bin
 
 		if (cid == 0 && mol2.getComponentLookUpID() == 0) {
 			_threadLocalODF11[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF11[mardyn_get_thread_num()][elementIDreversed]++;
 		}
 
 		else if (cid == 0 && mol2.getComponentLookUpID() == 1) {
 			_threadLocalODF12[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF21[mardyn_get_thread_num()][elementIDreversed]++;
 		}
 
 		else if (cid == 1 && mol2.getComponentLookUpID() == 1) {
 			_threadLocalODF22[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF22[mardyn_get_thread_num()][elementIDreversed]++;
 		}
 
 		else {
 			_threadLocalODF21[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF12[mardyn_get_thread_num()][elementIDreversed]++;
 		}
 	}
 }
@@ -379,7 +388,7 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	global_log->info() << "[ODF] writing output" << std::endl;
 	// Setup outfile
 
-	double cosPhi1 = 1.;
+	double cosPhi1 = 1. + 1. / (double)_phi1Increments;
 	double cosPhi2 = 1. - 2. / _phi2Increments;
 	double Gamma12 = 0.;
 	string prefix;
@@ -404,11 +413,11 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 			Gamma12 += M_PI / (double)_gammaIncrements;
 			if (i % _gammaIncrements == 0) {
 				cosPhi2 -= 2. / (double)_phi2Increments;
-				Gamma12 = M_PI / (double)_gammaIncrements;
+				Gamma12 = 0.5 * M_PI / (double)_gammaIncrements;
 			}
 			if (i % (_gammaIncrements * _phi2Increments) == 0) {
 				cosPhi1 -= 2. / (double)_phi1Increments;
-				cosPhi2 = 1. - 2. / (double)_phi2Increments;
+				cosPhi2 = 1. - 1. / (double)_phi2Increments;
 			}
 			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
 		}
@@ -452,10 +461,10 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 				cosPhi2 = 1. - 2. / (double)_phi2Increments;
 			}
 
-			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
-			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF12[i + 1] << "\n";
-			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF22[i + 1] << "\n";
-			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF21[i + 1] << "\n";
+			ODF11 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
+			ODF12 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF12[i + 1] << "\n";
+			ODF22 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF22[i + 1] << "\n";
+			ODF21 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF21[i + 1] << "\n";
 		}
 		ODF11.close();
 		ODF12.close();

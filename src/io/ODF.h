@@ -44,8 +44,11 @@ private:
 	unsigned _numPairs;
 	unsigned _numComponents;
 	unsigned long _numElements;
-	double _shellCutOff[2];
-	bool _mixingRule;
+	double _shellCutOff;
+	/*double _shellCutOff[2]; 
+	bool _mixingRule */ 
+	//individual shells and mixing rule removed for now because it is no needed yet and there are potential conflicts with the consideration of the reverse interactions in ODF::calculateOrientation
+
 	std::string _outputPrefix;
 
 	std::vector<unsigned long> _ODF11;
