@@ -389,7 +389,7 @@ void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, uns
 	double rho_Ai = N_Ai / V;
 	double rho_j = N_j / V;
 	double rho_Aj = N_Aj / V;
-	unsigned int angularID = 0;
+	unsigned long angularID = 0;
 	unsigned int radialID = 0;
 	
 	ardfout << "\n";
@@ -417,9 +417,6 @@ void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, uns
 		double rmin = radialID * binwidth();
 		double rmid = (radialID+0.5) * binwidth();
 		double rmax = (radialID+1.0) * binwidth();
-		/*double phimin = acos(angularID * angularbinwidth() - 1.);
-		double phimid = phimin + 0.5 * angularbinwidth();
-		double phimax = phimin + 1.0 * angularbinwidth();*/
 		double cosPhiMin = 1. - angularID * angularbinwidth();
 		double cosPhiMid = 1. -(angularID + 0.5) * angularbinwidth();
 		double cosPhiMax = 1. -(angularID + 1.0) * angularbinwidth();

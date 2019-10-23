@@ -202,11 +202,11 @@ private:
 
 	//! The number of bins, i.e. the number of intervals in which the cutoff
 	//! radius will be subdivided.
-	unsigned int _bins;
+	unsigned long _bins;
 	
 	//! The number of bins in angular direction in case the angular RDF is
 	//! being calculated
-	unsigned int _angularBins;
+	unsigned long _angularBins;
 	
 	
 	//! The total number of bins for the ARDF is the product of the radial bins and
