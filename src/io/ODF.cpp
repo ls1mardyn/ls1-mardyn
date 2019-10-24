@@ -21,13 +21,6 @@ void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "[ODF] Gamma increments: " << _gammaIncrements << endl;
 	xmlconfig.getNodeValue("shellcutoff", _shellCutOff);
 	global_log->info() << "[ODF] Shell cutoff: " << _shellCutOff << endl;
-/*	xmlconfig.getNodeValue("shellcutoff2", _shellCutOff[1]);
-	global_log->info() << "[ODF] Shell cutoff component two: " << _shellCutOff[1] << endl;
-	xmlconfig.getNodeValue(
-		"applyshellmixingrule",
-		_mixingRule);  // if mixingrule = 1 then the shell cutoff for heterogenous pairings is calculated as half the
-					   // diameter of the central atom plus a full diameter of the surrounding atom
-	global_log->info() << "[ODF] Shell mixing rule: " << _mixingRule << endl;*/
 }
 
 void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainDecomp*/, Domain* domain) {
@@ -387,7 +380,7 @@ void ODF::collect(DomainDecompBase* domainDecomp) {
 void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	global_log->info() << "[ODF] writing output" << std::endl;
 	// Setup outfile
-
+	constexpr double piHalf = 0.5 * M_PI;
 	double cosPhi1 = 1. + 1. / (double)_phi1Increments;
 	double cosPhi2 = 1. - 2. / _phi2Increments;
 	double Gamma12 = 0.;
@@ -413,7 +406,7 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 			Gamma12 += M_PI / (double)_gammaIncrements;
 			if (i % _gammaIncrements == 0) {
 				cosPhi2 -= 2. / (double)_phi2Increments;
-				Gamma12 = 0.5 * M_PI / (double)_gammaIncrements;
+				Gamma12 = piHalf / (double)_gammaIncrements;
 			}
 			if (i % (_gammaIncrements * _phi2Increments) == 0) {
 				cosPhi1 -= 2. / (double)_phi1Increments;
@@ -454,17 +447,17 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 			Gamma12 += M_PI / (double)_gammaIncrements;
 			if (i % _gammaIncrements == 0) {
 				cosPhi2 -= 2. / (double)_phi2Increments;
-				Gamma12 = M_PI / (double)_gammaIncrements;
+				Gamma12 = piHalf / (double)_gammaIncrements;
 			}
 			if (i % (_gammaIncrements * _phi2Increments) == 0) {
 				cosPhi1 -= 2. / (double)_phi1Increments;
-				cosPhi2 = 1. - 2. / (double)_phi2Increments;
+				cosPhi2 = 1. - 1. / (double)_phi2Increments;
 			}
 
-			ODF11 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
-			ODF12 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF12[i + 1] << "\n";
-			ODF22 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF22[i + 1] << "\n";
-			ODF21 << cosPhi1  << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF21[i + 1] << "\n";
+			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
+			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF12[i + 1] << "\n";
+			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF22[i + 1] << "\n";
+			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF21[i + 1] << "\n";
 		}
 		ODF11.close();
 		ODF12.close();
