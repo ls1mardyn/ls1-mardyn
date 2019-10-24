@@ -1,6 +1,7 @@
 // Created by Joshua Marx 08/2019
 
 #include "ODF.h"
+#include "WrapOpenMP.h"
 
 void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->debug() << "[ODF] enabled. Dipole orientations must be set to [0 0 1]!" << std::endl;
@@ -18,440 +19,382 @@ void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "[ODF] Phi2 increments: " << _phi2Increments << endl;
 	xmlconfig.getNodeValue("gammaincrements", _gammaIncrements);
 	global_log->info() << "[ODF] Gamma increments: " << _gammaIncrements << endl;
-	xmlconfig.getNodeValue("shellcutoff1", _shellCutOff[0]);
-	global_log->info() << "[ODF] Shell cutoff component one: " << _shellCutOff[0] << endl;
-	xmlconfig.getNodeValue("shellcutoff2", _shellCutOff[1]);
-	global_log->info() << "[ODF] Shell cutoff component two: " << _shellCutOff[1] << endl;
-	xmlconfig.getNodeValue(
-		"applyshellmixingrule",
-		_mixingRule);  // if mixingrule = 1 then the shell cutoff for heterogenous pairings is calculated as half the
-					   // diameter of the central atom plus a full diameter of the surrounding atom
-	global_log->info() << "[ODF] Shell mixing rule: " << _mixingRule << endl;
+	xmlconfig.getNodeValue("shellcutoff", _shellCutOff);
+	global_log->info() << "[ODF] Shell cutoff: " << _shellCutOff << endl;
 }
 
-void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainDecomp*/, Domain* domain) {
+	std::array<double, 3> simBoxSize = {domain->getGlobalLength(0), domain->getGlobalLength(1),
+										domain->getGlobalLength(2)};
+	_cellProcessor.reset(new ODFCellProcessor(particleContainer->getCutoff(), this, simBoxSize));
+
 	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
-	this->_numMolecules = domain->getglobalNumMolecules();
-	this->_numComponents = components->size();
-	unsigned int* isDipole = new unsigned int[this->_numComponents];
+	_numComponents = components->size();
+	std::vector<unsigned int> isDipole(_numComponents);
 	unsigned int numPairs = 0;
 
-	for (unsigned int i = 0; i < this->_numComponents; ++i) {
+	for (unsigned int i = 0; i < _numComponents; ++i) {
 		Component& ci = (*components)[i];
 		isDipole[i] = ci.numDipoles();
 
 		if (isDipole[i] == 1) {
+			bool orientationIsCorrect = ci.dipole(0).e() == std::array<double, 3>{0,0,1};
+			if(orientationIsCorrect == false){
+				global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the ODF plugin" << endl;
+			}
 			numPairs++;
 		}
 	}
 
-	this->_numPairs = numPairs * numPairs;
-	this->_numElements = this->_phi1Increments * this->_phi2Increments * this->_gammaIncrements + 1;
-	global_log->info() << "ODF arrays contains " << this->_numElements << " elements each for " << this->_numPairs
-					   << "pairings" << endl;
+	_numPairs = numPairs * numPairs;
+	_numElements = _phi1Increments * _phi2Increments * _gammaIncrements + 1;
+	global_log->info() << "ODF arrays contains " << _numElements << " elements each for " << _numPairs << "pairings"
+					   << endl;
+	_ODF11.resize(_numElements);
+	_ODF12.resize(_numElements);
+	_ODF21.resize(_numElements);
+	_ODF22.resize(_numElements);
 
-	if (this->_numPairs < 1) {
-		global_log->error() << "No components with dipoles. ODFs not being calculated!" << endl;
-	} else if (this->_numPairs > 4) {
+	using vecType2D = decltype(_threadLocalODF11);
+	auto resize2D = [](vecType2D& vec, size_t newSizeOuter, size_t newSizeInner) {
+		vec.resize(newSizeOuter);
+		using vecType = decltype(vec[0]);
+		std::for_each(vec.begin(), vec.end(), [newSizeInner](vecType& v) { v.resize(newSizeInner); });
+	};
+
+	resize2D(_threadLocalODF11, mardyn_get_max_threads(), _numElements);
+	resize2D(_threadLocalODF12, mardyn_get_max_threads(), _numElements);
+	resize2D(_threadLocalODF21, mardyn_get_max_threads(), _numElements);
+	resize2D(_threadLocalODF22, mardyn_get_max_threads(), _numElements);
+
+	if (_numPairs < 1) {
+		global_log->error() << "No components with dipoles. ODF's not being calculated!" << endl;
+	} else if (_numPairs > 4) {
 		global_log->error()
 			<< "Number of pairings for ODF calculation too high. Current maximum number of ODF pairings is 4." << endl;
 	}
 
-	delete[] isDipole;
-	this->reset();
+	reset();
 }
 
-void ODF::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-				  unsigned long simstep) {
-	if (simstep > this->_initStatistics && simstep % this->_recordingTimesteps == 0) {
-		this->record(particleContainer, domain, domainDecomp, simstep);
+void ODF::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
+	if (simstep > _initStatistics && simstep % _recordingTimesteps == 0) {
+		particleContainer->traverseCells(*_cellProcessor);
 	}
+}
 
-	if (simstep > this->_initStatistics && simstep % this->_writeFrequency == 0) {
-		this->collect(domainDecomp);
-		this->output(domain, simstep);
-		this->reset();
+void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* domain,
+				  unsigned long simstep) {
+	int mpi_rank = domainDecomp->getRank();
+	if (simstep > _initStatistics && simstep % _writeFrequency == 0) {
+		collect(domainDecomp);
+		if (mpi_rank == 0){
+			output(domain, simstep);
+		}
+		reset();
 	}
 }
 
 void ODF::reset() {
 	global_log->info() << "[ODF] resetting data sets" << endl;
 
-	for (unsigned i = 0; i < this->_numElements; i++) {
-		this->_ODF11[i] = 0;
-		this->_ODF12[i] = 0;
-		this->_ODF21[i] = 0;
-		this->_ODF22[i] = 0;
-		this->_localODF11[i] = 0;
-		this->_localODF12[i] = 0;
-		this->_localODF21[i] = 0;
-		this->_localODF22[i] = 0;
-	}
+	//	// C++ 14:
+	//	auto fillZero = [](auto& vec) {std::fill(vec.begin(), vec.end(), 0);};
+	using vecType = decltype(_ODF11);
+	auto fillZero = [](vecType& vec) { std::fill(vec.begin(), vec.end(), 0); };
+
+	fillZero(_ODF11);
+	fillZero(_ODF12);
+	fillZero(_ODF21);
+	fillZero(_ODF22);
+
+	std::for_each(_threadLocalODF11.begin(), _threadLocalODF11.end(), fillZero);
+	std::for_each(_threadLocalODF12.begin(), _threadLocalODF12.end(), fillZero);
+	std::for_each(_threadLocalODF21.begin(), _threadLocalODF21.end(), fillZero);
+	std::for_each(_threadLocalODF22.begin(), _threadLocalODF22.end(), fillZero);
 }
 
-void ODF::resetTempParticles(Domain* domain) {
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		this->_cid[i] = 0;
-		this->_molID[i] = 0;
-		this->_r1[0][i] = 0.;
-		this->_r1[1][i] = 0.;
-		this->_r1[2][i] = 0.;
-		this->_Q1[0][i] = 0.;
-		this->_Q1[1][i] = 0.;
-		this->_Q1[2][i] = 0.;
-		this->_Q1[3][i] = 0.;
-		this->_doODF[i] = 0;
-		this->_upVec1[0][i] = 0.;
-		this->_upVec1[1][i] = 0.;
-		this->_upVec1[2][i] = 0.;
-	}
-}
-
-void ODF::collectTempParticles(Domain* domain, DomainDecompBase* domainDecomp) {
-	domainDecomp->collCommInit(domain->getglobalNumMolecules() * 10);
-
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		domainDecomp->collCommAppendUnsLong(this->_cid[i]);
-		domainDecomp->collCommAppendUnsLong(this->_molID[i]);
-		domainDecomp->collCommAppendUnsLong(this->_doODF[i]);
-		domainDecomp->collCommAppendDouble(this->_r1[0][i]);
-		domainDecomp->collCommAppendDouble(this->_r1[1][i]);
-		domainDecomp->collCommAppendDouble(this->_r1[2][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[0][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[1][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[2][i]);
-		domainDecomp->collCommAppendDouble(this->_Q1[3][i]);
-	}
-	domainDecomp->collCommAllreduceSum();
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		this->_cid[i] = domainDecomp->collCommGetUnsLong();
-		this->_molID[i] = domainDecomp->collCommGetUnsLong();
-		this->_doODF[i] = domainDecomp->collCommGetUnsLong();
-		this->_r1[0][i] = domainDecomp->collCommGetDouble();
-		this->_r1[1][i] = domainDecomp->collCommGetDouble();
-		this->_r1[2][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[0][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[1][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[2][i] = domainDecomp->collCommGetDouble();
-		this->_Q1[3][i] = domainDecomp->collCommGetDouble();
-	}
-	domainDecomp->collCommFinalize();
-	for (unsigned i = 1; i < domain->getglobalNumMolecules() + 1; i++) {
-		this->_upVec1[0][i] = 2 * (this->_Q1[1][i] * this->_Q1[3][i] + this->_Q1[0][i] * this->_Q1[2][i]);
-		this->_upVec1[1][i] = 2 * (this->_Q1[2][i] * this->_Q1[3][i] - this->_Q1[0][i] * this->_Q1[1][i]);
-		this->_upVec1[2][i] = 1 - 2 * (this->_Q1[1][i] * this->_Q1[1][i] + this->_Q1[2][i] * this->_Q1[2][i]);
-	}
-}
-
-void ODF::record(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp,
-				 unsigned long simstep) {
-	this->resetTempParticles(domain);
-
-	for (auto it = particleContainer->iterator(ParticleIterator::ALL_CELLS); it.isValid();
-		 ++it) {  // records and stores positions and quaternions of all particles. Inefficient method needs to be
-				  // improved
-
-		this->_cid[it->getID()] = it->getComponentLookUpID();
-		this->_molID[it->getID()] = it->getID();
-		this->_r1[0][it->getID()] = it->r(0);
-		this->_r1[1][it->getID()] = it->r(1);
-		this->_r1[2][it->getID()] = it->r(2);
-
-		if (it->numDipoles() == 1) {
-			this->_doODF[it->getID()] = it->getID();
-
-			this->_Q1[0][it->getID()] = it->q().qw();
-			this->_Q1[1][it->getID()] = it->q().qx();
-			this->_Q1[2][it->getID()] = it->q().qy();
-			this->_Q1[3][it->getID()] = it->q().qz();
-		}
-	}
-
-	this->collectTempParticles(domain, domainDecomp);  // parallelization for stored positions and quaternions
-
-	for (unsigned long i = 1; i < domain->getglobalNumMolecules() + 1; i++) {  // outer loop over all particles
-
-		if (i == this->_doODF[i]) {
-			this->calculateOrientation(particleContainer, domain, i);
-		}
-	}
-}
-
-void ODF::calculateOrientation(ParticleContainer* particleContainer, Domain* domain,
-							   unsigned index) {  // records mutual orientation of particle pairs
+void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecule& mol1, const Molecule& mol2,
+							   const array<double, 3>& orientationVector1) {
 
 	// TODO Implement rotation matrices to calculate orientations for dipole direction unit vectors other than [0 0 1];
-	double upVec1[3], r1[3], Q2[4], upVec2[3], r12[3], dist1D[3], auxVec1[3], auxVec2[3], projection1[3],
-		projection2[3];
-	r1[0] = this->_r1[0][index];
-	r1[1] = this->_r1[1][index];
-	r1[2] = this->_r1[2][index];
-	upVec1[0] = this->_upVec1[0][index];
-	upVec1[1] = this->_upVec1[1][index];
-	upVec1[2] = this->_upVec1[2][index];
-	double cosPhi1, cosPhi2, cosGamma12, Gamma12, norm1, norm2, normr12, shellcutoff;
+	
+	double Quaternion2[4], orientationVector2[3], distanceVector12[3], moleculeDistance1D[3], auxiliaryVector1[3], auxiliaryVector2[3], projectionVector1[3], projectionVector2[3]; 
+	auto cid = mol1.getComponentLookUpID();
+	double cosPhi1, cosPhi2, cosGamma12, Gamma12, absoluteProjection1, absoluteProjection2, absoluteDistanceVector12/*, shellCutoff = _shellCutOff[cid]*/;
 	double roundingThreshold = 0.0001;
-	unsigned long ind_phi1, ind_phi2, ind_gamma, elementID;
-	unsigned maximum;
-	bool bool1, bool2, bool3;
+	unsigned long indexPhi1, indexPhi2, indexGamma12, elementID, elementIDreversed;
+	unsigned maximumIncrements;
+	bool assignPhi1, assignPhi2, assignGamma12;  
 
-	for (auto it = particleContainer->iterator(ParticleIterator::ALL_CELLS); it.isValid();
-		 ++it) {  // inner loop over all particles. this should only loop over the neighbours of the particle from the
-				  // outer loop to improve efficiency
+	
+	double distanceSquared = 0.;
+	// Determine modular distance between molecules
+	for (int i = 0; i < 3; i++) {
+		moleculeDistance1D[i] = mol1.r(i) - mol2.r(i);
+		if (abs(moleculeDistance1D[i]) > 0.5 * simBoxSize[i]) {
+			moleculeDistance1D[i] = simBoxSize[i] - abs(moleculeDistance1D[i]);
+		}
+		distanceSquared += moleculeDistance1D[i] * moleculeDistance1D[i];
+	}
+	
+	/*if (_mixingRule == 1) {
+		shellCutoff = 1. / 2. * _shellCutOff[cid] + _shellCutOff[mol2.getComponentLookUpID()];
+	}*/
 
-		if (it->numDipoles() == 1) {
-			double distanceSquared = 0.;
-			// minimum image convention
-			for (int i = 0; i < 3; i++) {
-				dist1D[i] = r1[i] - it->r(i);
-				if (abs(dist1D[i]) > 0.5 * domain->getGlobalLength(i)) {
-					dist1D[i] = domain->getGlobalLength(i) - abs(dist1D[i]);
-				}
-				distanceSquared += dist1D[i] * dist1D[i];
+	if (distanceSquared < _shellCutOff * _shellCutOff && mol1.getID() != mol2.getID()) {
+		absoluteDistanceVector12 = 0.;
+
+		// reading second molecule's quaternions
+
+		Quaternion2[0] = mol2.q().qw();
+		Quaternion2[1] = mol2.q().qx();
+		Quaternion2[2] = mol2.q().qy();
+		Quaternion2[3] = mol2.q().qz();
+
+		cosPhi1 = 0.;
+		cosPhi2 = 0.;
+		cosGamma12 = 0.;
+		absoluteProjection1 = 0.;
+		absoluteProjection2 = 0.;
+		indexPhi1 = 0;
+		indexPhi2 = 0;
+		indexGamma12 = 0;
+		assignPhi1 = false;
+		assignPhi2 = false;
+		assignGamma12 = false;
+
+		// calculate distance vector between molecules
+		for (unsigned i = 0; i < 3; i++) {
+			distanceVector12[i] = mol2.r(i) - mol1.r(i);
+			if (distanceVector12[i] > 0.5 * simBoxSize[i]) {
+				distanceVector12[i] = -(simBoxSize[i] - distanceVector12[i]);
+			} else if (distanceVector12[i] < -0.5 * simBoxSize[i]) {
+				distanceVector12[i] = -(distanceVector12[i] - simBoxSize[i]);
+			}
+			absoluteDistanceVector12 += distanceVector12[i] * distanceVector12[i];
+		}
+
+		absoluteDistanceVector12 = sqrt(absoluteDistanceVector12);
+		// norm the distance vector
+		for (double& i : distanceVector12) {
+			i /= absoluteDistanceVector12;
+		}
+
+		// calculate dipolar orientation vector from quaternion
+		orientationVector2[0] = 2 * (Quaternion2[1] * Quaternion2[3] + Quaternion2[0] * Quaternion2[2]);
+		orientationVector2[1] = 2 * (Quaternion2[2] * Quaternion2[3] - Quaternion2[0] * Quaternion2[1]);
+		orientationVector2[2] = 1 - 2 * (Quaternion2[1] * Quaternion2[1] + Quaternion2[2] * Quaternion2[2]);
+
+		// calculate projection of the vectors onto plane perpendicular to the distance vector with cross product for calculation of the torque angle gamma
+		
+		auxiliaryVector1[0] = orientationVector1[1] * distanceVector12[2] - orientationVector1[2] * distanceVector12[1];
+		auxiliaryVector1[1] = orientationVector1[2] * distanceVector12[0] - orientationVector1[0] * distanceVector12[2];
+		auxiliaryVector1[2] = orientationVector1[0] * distanceVector12[1] - orientationVector1[1] * distanceVector12[0];
+
+		projectionVector1[0] = distanceVector12[1] * auxiliaryVector1[2] - distanceVector12[2] * auxiliaryVector1[1];
+		projectionVector1[1] = distanceVector12[2] * auxiliaryVector1[0] - distanceVector12[0] * auxiliaryVector1[2];
+		projectionVector1[2] = distanceVector12[0] * auxiliaryVector1[1] - distanceVector12[1] * auxiliaryVector1[0];
+
+		auxiliaryVector2[0] = orientationVector2[1] * distanceVector12[2] - orientationVector2[2] * distanceVector12[1];
+		auxiliaryVector2[1] = orientationVector2[2] * distanceVector12[0] - orientationVector2[0] * distanceVector12[2];
+		auxiliaryVector2[2] = orientationVector2[0] * distanceVector12[1] - orientationVector2[1] * distanceVector12[0];
+
+		projectionVector2[0] = distanceVector12[1] * auxiliaryVector2[2] - distanceVector12[2] * auxiliaryVector2[1];
+		projectionVector2[1] = distanceVector12[2] * auxiliaryVector2[0] - distanceVector12[0] * auxiliaryVector2[2];
+		projectionVector2[2] = distanceVector12[0] * auxiliaryVector2[1] - distanceVector12[1] * auxiliaryVector2[0];
+
+		// calculate cos(phi) and norm of projection vector
+		for (unsigned i = 0; i < 3; i++) {
+			cosPhi1 += distanceVector12[i] * orientationVector1[i];
+			cosPhi2 -= distanceVector12[i] * orientationVector2[i];
+			absoluteProjection1 += projectionVector1[i] * projectionVector1[i];
+			absoluteProjection2 += projectionVector2[i] * projectionVector2[i];
+		}
+
+		absoluteProjection1 = sqrt(absoluteProjection1);
+		absoluteProjection2 = sqrt(absoluteProjection2);
+
+		// calculate cos(gamma) as dot product of projections
+		for (unsigned i = 0; i < 3; i++) {
+			projectionVector1[i] /= absoluteProjection1;
+			projectionVector2[i] /= absoluteProjection2;
+			cosGamma12 += projectionVector1[i] * projectionVector2[i];
+		}
+
+		// precaution to prevent numerically intractable values (e.g. VERY close to zero but not zero) and
+		// values just barely out of boundaries -1/1, by rounding to 0,-1 or 1 respectively
+
+		if (abs(cosPhi1) < roundingThreshold || abs(abs(cosPhi1) - 1) < roundingThreshold) {
+			cosPhi1 = round(cosPhi1);
+		}
+		if (abs(cosPhi2) < roundingThreshold || abs(abs(cosPhi2) - 1) < roundingThreshold) {
+			cosPhi2 = round(cosPhi2);
+		}
+		if (abs(cosGamma12) < roundingThreshold || abs(abs(cosGamma12) - 1) < roundingThreshold) {
+			cosGamma12 = round(cosGamma12);
+		}
+
+		Gamma12 = acos(cosGamma12);
+		
+		// determine array element
+		// NOTE: element 0 of array ODF is unused
+
+		maximumIncrements = max(_phi1Increments, _phi2Increments);
+		maximumIncrements = max(maximumIncrements, _gammaIncrements);
+		
+		// calculate indices for phi1, phi2 and gamma12 for bin assignment
+		for (unsigned i = 0; i < maximumIncrements; i++) {
+			if (1. - i * 2. / (double)_phi1Increments >= cosPhi1 &&
+				cosPhi1 > 1. - (i + 1) * 2. / (double)_phi1Increments) {
+				indexPhi1 = i;
+				assignPhi1 = true;
 			}
 
-			shellcutoff = this->_shellCutOff[this->_cid[index]];
-
-			if (this->_mixingRule == 1) {
-				shellcutoff =
-					1 / 3 * this->_shellCutOff[this->_cid[index]] + this->_shellCutOff[it->getComponentLookUpID()];
+			if (1. - i * 2. / (double)_phi2Increments >= cosPhi2 &&
+				cosPhi2 > 1. - (i + 1) * 2. / (double)_phi2Increments) {
+				indexPhi2 = i;
+				assignPhi2 = true;
 			}
 
-			if (distanceSquared < shellcutoff * shellcutoff && this->_molID[index] != it->getID()) {
-				normr12 = 0.;
-
-				// reading second molecule's quaternions
-
-				Q2[0] = it->q().qw();
-				Q2[1] = it->q().qx();
-				Q2[2] = it->q().qy();
-				Q2[3] = it->q().qz();
-
-				cosPhi1 = 0.;
-				cosPhi2 = 0.;
-				cosGamma12 = 0.;
-				Gamma12 = 0.;
-				norm1 = 0.;
-				norm2 = 0.;
-				ind_phi1 = 0;
-				ind_phi2 = 0;
-				ind_gamma = 0;
-				bool1 = 0;
-				bool2 = 0;
-				bool3 = 0;
-
-				// calculate distance vector between molecules
-				for (unsigned i = 0; i < 3; i++) {
-					r12[i] = it->r(i) - r1[i];
-					if (r12[i] > 0.5 * domain->getGlobalLength(i)) {
-						r12[i] = -(domain->getGlobalLength(i) - r12[i]);
-					} else if (r12[i] < -0.5 * domain->getGlobalLength(i)) {
-						r12[i] = -(r12[i] - domain->getGlobalLength(i));
-					}
-					normr12 += r12[i] * r12[i];
-				}
-
-				normr12 = sqrt(normr12);
-
-				for (unsigned i = 0; i < 3; i++) {
-					r12[i] /= normr12;
-				}
-
-				// calculate vectors pointing in the direction defined by the dipole
-				upVec2[0] = 2 * (Q2[1] * Q2[3] + Q2[0] * Q2[2]);
-				upVec2[1] = 2 * (Q2[2] * Q2[3] - Q2[0] * Q2[1]);
-				upVec2[2] = 1 - 2 * (Q2[1] * Q2[1] + Q2[2] * Q2[2]);
-
-				// calculate projection of the vectors onto plane perpendicular to the distance vector with cross
-				// product for calculation of the torque angle gamma
-				auxVec1[0] = upVec1[1] * r12[2] - upVec1[2] * r12[1];
-				auxVec1[1] = upVec1[2] * r12[0] - upVec1[0] * r12[2];
-				auxVec1[2] = upVec1[0] * r12[1] - upVec1[1] * r12[0];
-
-				projection1[0] = r12[1] * auxVec1[2] - r12[2] * auxVec1[1];
-				projection1[1] = r12[2] * auxVec1[0] - r12[0] * auxVec1[2];
-				projection1[2] = r12[0] * auxVec1[1] - r12[1] * auxVec1[0];
-
-				auxVec2[0] = upVec2[1] * r12[2] - upVec2[2] * r12[1];
-				auxVec2[1] = upVec2[2] * r12[0] - upVec2[0] * r12[2];
-				auxVec2[2] = upVec2[0] * r12[1] - upVec2[1] * r12[0];
-
-				projection2[0] = r12[1] * auxVec2[2] - r12[2] * auxVec2[1];
-				projection2[1] = r12[2] * auxVec2[0] - r12[0] * auxVec2[2];
-				projection2[2] = r12[0] * auxVec2[1] - r12[1] * auxVec2[0];
-
-				// calculate cos(phi) and norm of projection vector
-				for (unsigned i = 0; i < 3; i++) {
-					cosPhi1 += r12[i] * upVec1[i];
-					cosPhi2 -= r12[i] * upVec2[i];
-					norm1 += projection1[i] * projection1[i];
-					norm2 += projection2[i] * projection2[i];
-				}
-
-				norm1 = sqrt(norm1);
-				norm2 = sqrt(norm2);
-
-				// calculate cos(gamma) as dot product of projections
-				for (unsigned i = 0; i < 3; i++) {
-					projection1[i] /= norm1;
-					projection2[i] /= norm2;
-					cosGamma12 += projection1[i] * projection2[i];
-				}
-
-				// precaution to prevent numerically intractable values (e.g. VERY close to zero but not zero) and
-				// values just barely out of boundaries -1/1, by rounding to 0,-1 or 1 respectively
-
-				if (abs(cosPhi1) < roundingThreshold || abs(abs(cosPhi1) - 1) < roundingThreshold) {
-					cosPhi1 = round(cosPhi1);
-				}
-				if (abs(cosPhi2) < roundingThreshold || abs(abs(cosPhi2) - 1) < roundingThreshold) {
-					cosPhi2 = round(cosPhi2);
-				}
-				if (abs(cosGamma12) < roundingThreshold || abs(abs(cosGamma12) - 1) < roundingThreshold) {
-					cosGamma12 = round(cosGamma12);
-				}
-
-				Gamma12 = acos(cosGamma12);
-				// determine array element
-				// NOTE: element 0 of array ODF is unused
-
-				maximum = max(this->_phi1Increments, this->_phi2Increments);
-				maximum = max(maximum, this->_gammaIncrements);
-
-				for (unsigned i = 0; i < maximum; i++) {
-					if (1. - i * 2. / (double)this->_phi1Increments >= cosPhi1 &&
-						cosPhi1 > 1. - (i + 1) * 2. / (double)this->_phi1Increments) {
-						ind_phi1 = i;
-						bool1 = 1;
-					}
-
-					if (1. - i * 2. / (double)this->_phi2Increments >= cosPhi2 &&
-						cosPhi2 > 1. - (i + 1) * 2. / (double)this->_phi2Increments) {
-						ind_phi2 = i;
-						bool2 = 1;
-					}
-
-					if (i * M_PI / (double)this->_gammaIncrements <= Gamma12 &&
-						Gamma12 < (i + 1) * M_PI / (double)this->_gammaIncrements) {
-						ind_gamma = i + 1;
-						bool3 = 1;
-					}
-				}
-
-				if (ind_gamma == this->_gammaIncrements + 1) {
-					ind_gamma = this->_gammaIncrements;
-				}
-
-				// manually assign bin for cos(...) == M_PI/-1, because loop only includes values < pi
-				if (bool1 == 0 && cosPhi1 == -1.) {
-					ind_phi1 = this->_phi1Increments - 1;
-					bool1 = 1;
-				}
-
-				if (bool2 == 0 && cosPhi2 == -1.) {
-					ind_phi2 = this->_phi2Increments - 1;
-					bool2 = 1;
-				}
-
-				if (bool3 == 0 && Gamma12 == M_PI) {
-					ind_gamma = this->_gammaIncrements;
-					bool3 = 1;
-				}
-
-				// notification if anything goes wrong during calculataion
-				if (bool1 == 0 || bool2 == 0 || bool3 == 0) {
-					global_log->warning() << "Array element in ODF calculation not properly assigned!" << endl;
-					global_log->warning()
-						<< "Mol-ID 1 = " << this->_molID[index] << "  Mol-ID 2 = " << it->getID() << endl;
-					global_log->warning()
-						<< "upVec1=" << upVec1[0] << " " << upVec1[1] << " " << upVec1[2] << " " << endl;
-					global_log->warning()
-						<< "upVec2=" << upVec2[0] << " " << upVec2[1] << " " << upVec2[2] << " " << endl;
-					global_log->warning() << "r12=" << r12[0] << " " << r12[1] << " " << r12[2] << " " << endl;
-					global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
-										  << cosGamma12 << "]" << endl;
-					global_log->warning() << "indices are " << ind_phi1 << " " << ind_phi2 << " " << ind_gamma << endl;
-				}
-
-				elementID = ind_phi1 * this->_phi2Increments * this->_gammaIncrements +
-							(ind_phi2 * this->_gammaIncrements) + ind_gamma;
-
-				// determine component pairing
-
-				if (this->_cid[index] == 0 && it->getComponentLookUpID() == 0) {
-					this->_localODF11[elementID]++;
-				}
-
-				else if (this->_cid[index] == 0 && it->getComponentLookUpID() == 1) {
-					this->_localODF12[elementID]++;
-				}
-
-				else if (this->_cid[index] == 1 && it->getComponentLookUpID() == 1) {
-					this->_localODF22[elementID]++;
-				}
-
-				else {
-					this->_localODF21[elementID]++;
-				}
+			if (i * M_PI / (double)_gammaIncrements <= Gamma12 && Gamma12 < (i + 1) * M_PI / (double)_gammaIncrements) {
+				indexGamma12 = i + 1;
+				assignGamma12 = true;
 			}
+		}
+
+		if (indexGamma12 == _gammaIncrements + 1) {
+			indexGamma12 = _gammaIncrements;
+		}
+
+		// manually assign bin for cos(...) == M_PI/-1, because loop only includes values < pi
+		if (assignPhi1 == 0 && cosPhi1 == -1.) {
+			indexPhi1 = _phi1Increments - 1;
+			assignPhi1 = true;
+		}
+
+		if (assignPhi2 == 0 && cosPhi2 == -1.) {
+			indexPhi2 = _phi2Increments - 1;
+			assignPhi2 = true;
+		}
+
+		if (assignGamma12 == 0 && Gamma12 == M_PI) {
+			indexGamma12 = _gammaIncrements;
+			assignGamma12 = true;
+		}
+
+		// notification if anything goes wrong during calculataion
+		if (assignPhi1 == 0 || assignPhi2 == 0 || assignGamma12 == 0) {
+			global_log->warning() << "Array element in ODF calculation not properly assigned!" << endl;
+			global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << mol2.getID() << endl;
+			global_log->warning() << "orientationVector1=" << orientationVector1[0] << " " << orientationVector1[1] << " " << orientationVector1[2] << " " << endl;
+			global_log->warning() << "orientationVector2=" << orientationVector2[0] << " " << orientationVector2[1] << " " << orientationVector2[2] << " " << endl;
+			global_log->warning() << "distanceVector12=" << distanceVector12[0] << " " << distanceVector12[1] << " " << distanceVector12[2] << " " << endl;
+			global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
+								  << cosGamma12 << "]" << endl;
+			global_log->warning() << "indices are " << indexPhi1 << " " << indexPhi2 << " " << indexGamma12 << endl;
+		}
+		
+		// assignment of bin ID
+		elementID = indexPhi1 * _phi2Increments * _gammaIncrements + (indexPhi2 * _gammaIncrements) + indexGamma12;
+		elementIDreversed = indexPhi2 * _phi2Increments * _gammaIncrements + (indexPhi1 * _gammaIncrements) + indexGamma12; 
+		//the ODFcellProcessor calculates every particle interaction only once. Therefore the reverse interaction is considered here as well
+
+		// determine component pairing and add to bin
+
+		if (cid == 0 && mol2.getComponentLookUpID() == 0) {
+			_threadLocalODF11[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF11[mardyn_get_thread_num()][elementIDreversed]++;
+		}
+
+		else if (cid == 0 && mol2.getComponentLookUpID() == 1) {
+			_threadLocalODF12[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF21[mardyn_get_thread_num()][elementIDreversed]++;
+		}
+
+		else if (cid == 1 && mol2.getComponentLookUpID() == 1) {
+			_threadLocalODF22[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF22[mardyn_get_thread_num()][elementIDreversed]++;
+		}
+
+		else {
+			_threadLocalODF21[mardyn_get_thread_num()][elementID]++;
+			_threadLocalODF12[mardyn_get_thread_num()][elementIDreversed]++;
 		}
 	}
 }
 
 void ODF::collect(DomainDecompBase* domainDecomp) {
-	if (this->_numPairs == 1) {
-		domainDecomp->collCommInit(this->_numElements);
+	// accumulate thread buffers
+	std::vector<unsigned long> localODF11(_threadLocalODF11[0].size(), 0ul);
+	std::vector<unsigned long> localODF12(_threadLocalODF12[0].size(), 0ul);
+	std::vector<unsigned long> localODF21(_threadLocalODF21[0].size(), 0ul);
+	std::vector<unsigned long> localODF22(_threadLocalODF22[0].size(), 0ul);
+	for (size_t t = 0; t < static_cast<size_t>(mardyn_get_max_threads()); ++t) {
+		using plusType = unsigned long;
+		std::transform(localODF11.begin(), localODF11.end(), _threadLocalODF11[t].begin(), localODF11.begin(),
+					   std::plus<plusType>());
+		std::transform(localODF12.begin(), localODF12.end(), _threadLocalODF12[t].begin(), localODF12.begin(),
+					   std::plus<plusType>());
+		std::transform(localODF21.begin(), localODF21.end(), _threadLocalODF21[t].begin(), localODF21.begin(),
+					   std::plus<plusType>());
+		std::transform(localODF22.begin(), localODF22.end(), _threadLocalODF22[t].begin(), localODF22.begin(),
+					   std::plus<plusType>());
+	}
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
+	if (_numPairs == 1) {
+		domainDecomp->collCommInit(_numElements);
+
+		for (unsigned long i = 0; i < _numElements; i++) {
+			domainDecomp->collCommAppendUnsLong(localODF11[i]);
 		}
 		domainDecomp->collCommAllreduceSum();
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
+		for (unsigned long i = 0; i < _numElements; i++) {
+			_ODF11[i] = domainDecomp->collCommGetUnsLong();
 		}
 		domainDecomp->collCommFinalize();
 	}
 
 	else {
-		domainDecomp->collCommInit(this->_numElements * 4);
+		domainDecomp->collCommInit(_numElements * 4);
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			domainDecomp->collCommAppendUnsLong(this->_localODF11[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF12[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF22[i]);
-			domainDecomp->collCommAppendUnsLong(this->_localODF21[i]);
+		for (unsigned long i = 0; i < _numElements; i++) {
+			domainDecomp->collCommAppendUnsLong(localODF11[i]);
+			domainDecomp->collCommAppendUnsLong(localODF12[i]);
+			domainDecomp->collCommAppendUnsLong(localODF22[i]);
+			domainDecomp->collCommAppendUnsLong(localODF21[i]);
 		}
 		domainDecomp->collCommAllreduceSum();
 
-		for (unsigned long i = 0; i < this->_numElements; i++) {
-			this->_ODF11[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF12[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF22[i] = domainDecomp->collCommGetUnsLong();
-			this->_ODF21[i] = domainDecomp->collCommGetUnsLong();
+		for (unsigned long i = 0; i < _numElements; i++) {
+			_ODF11[i] = domainDecomp->collCommGetUnsLong();
+			_ODF12[i] = domainDecomp->collCommGetUnsLong();
+			_ODF22[i] = domainDecomp->collCommGetUnsLong();
+			_ODF21[i] = domainDecomp->collCommGetUnsLong();
 		}
 		domainDecomp->collCommFinalize();
 	}
 }
 
-void ODF::output(Domain* domain, long unsigned timestep) {
+void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	global_log->info() << "[ODF] writing output" << std::endl;
 	// Setup outfile
-
-	double cosPhi1 = 1.;
-	double cosPhi2 = 1. - 2. / this->_phi2Increments;
+	constexpr double piHalf = 0.5 * M_PI;
+	double cosPhi1 = 1. + 1. / (double)_phi1Increments;
+	double cosPhi2 = 1. - 2. / _phi2Increments;
 	double Gamma12 = 0.;
 	string prefix;
 	ostringstream osstrm;
-	osstrm << this->_outputPrefix;
+	osstrm << _outputPrefix;
 	osstrm.fill('0');
 	osstrm.width(7);
 	osstrm << right << timestep;
-	prefix = osstrm.str().c_str();
+	prefix = osstrm.str();
 	osstrm.str("");
 	osstrm.clear();
 
-	if (this->_numPairs == 1) {
+	if (_numPairs == 1) {
 		string ODF11name = prefix + ".ODF11";
 		ofstream outfile(ODF11name.c_str());
 		outfile.precision(6);
@@ -459,17 +402,17 @@ void ODF::output(Domain* domain, long unsigned timestep) {
 		outfile << "//Output generated by ODF plugin\n"
 				<< "//Angular distribution at time step = " << timestep << " for component pairing pairing 11\n";
 		outfile << "cosPhi1\tcosPhi2\tGamma12\tcount\n";
-		for (unsigned long i = 0; i < this->_numElements - 1; i++) {
-			Gamma12 += M_PI / (double)this->_gammaIncrements;
-			if (i % this->_gammaIncrements == 0) {
-				cosPhi2 -= 2. / (double)this->_phi2Increments;
-				Gamma12 = M_PI / (double)this->_gammaIncrements;
+		for (unsigned long i = 0; i < _numElements - 1; i++) {
+			Gamma12 += M_PI / (double)_gammaIncrements;
+			if (i % _gammaIncrements == 0) {
+				cosPhi2 -= 2. / (double)_phi2Increments;
+				Gamma12 = piHalf / (double)_gammaIncrements;
 			}
-			if (i % (this->_gammaIncrements * this->_phi2Increments) == 0) {
-				cosPhi1 -= 2. / (double)this->_phi1Increments;
-				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
+			if (i % (_gammaIncrements * _phi2Increments) == 0) {
+				cosPhi1 -= 2. / (double)_phi1Increments;
+				cosPhi2 = 1. - 1. / (double)_phi2Increments;
 			}
-			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
+			outfile << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
 		}
 		outfile.close();
 	} else {
@@ -500,21 +443,21 @@ void ODF::output(Domain* domain, long unsigned timestep) {
 			  << "//Angular distribution at time step = " << timestep << " for component pairing pairing 21\n";
 		ODF21 << "cosPhi1\tcosPhi2\tcosGamma12\tcount\n";
 
-		for (unsigned long i = 0; i < this->_numElements - 1; i++) {
-			Gamma12 += M_PI / (double)this->_gammaIncrements;
-			if (i % this->_gammaIncrements == 0) {
-				cosPhi2 -= 2. / (double)this->_phi2Increments;
-				Gamma12 = M_PI / (double)this->_gammaIncrements;
+		for (unsigned long i = 0; i < _numElements - 1; i++) {
+			Gamma12 += M_PI / (double)_gammaIncrements;
+			if (i % _gammaIncrements == 0) {
+				cosPhi2 -= 2. / (double)_phi2Increments;
+				Gamma12 = piHalf / (double)_gammaIncrements;
 			}
-			if (i % (this->_gammaIncrements * this->_phi2Increments) == 0) {
-				cosPhi1 -= 2. / (double)this->_phi1Increments;
-				cosPhi2 = 1. - 2. / (double)this->_phi2Increments;
+			if (i % (_gammaIncrements * _phi2Increments) == 0) {
+				cosPhi1 -= 2. / (double)_phi1Increments;
+				cosPhi2 = 1. - 1. / (double)_phi2Increments;
 			}
 
-			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF11[i + 1] << "\n";
-			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF12[i + 1] << "\n";
-			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF22[i + 1] << "\n";
-			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << this->_ODF21[i + 1] << "\n";
+			ODF11 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF11[i + 1] << "\n";
+			ODF12 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF12[i + 1] << "\n";
+			ODF22 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF22[i + 1] << "\n";
+			ODF21 << cosPhi1 << "\t" << cosPhi2 << "\t" << Gamma12 << "\t" << _ODF21[i + 1] << "\n";
 		}
 		ODF11.close();
 		ODF12.close();
