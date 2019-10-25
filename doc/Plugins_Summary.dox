@@ -34,7 +34,7 @@ MmspdBinWriter  | visualization, todo | todo
 MPI_IOCheckpointWriter  | todo | todo
 MPICheckpointWriter | todo | todo
 PovWriter | visualization?, todo | todo
-RDF | radial distribution function | Calculate and write the radial distribution function to file. Slows down visibly, set sampling frequency > 1.
+RDF | radial distribution function | Calculate and write the radial distribution function to file. Slows down visibly, set sampling frequency > 1. Optional angular resolution of the RDF possible by choosing angular bins > 1
 ResultWriter | print, macroscopic thermodynamic quantities, file | Write macroscopic thermodynamic quantities to file, such as temperature, pressure, BetaTrans, BetaRot, cv, number of molecules and number of cavities (?).
 SysMonOutput | todo | todo
 TestPlugin  | test | Test correctness of plugin calls within Simulation. Simpler version without XML input of ExamplePlugin

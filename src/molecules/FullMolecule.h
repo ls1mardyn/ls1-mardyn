@@ -262,7 +262,6 @@ public:
 		return d2;
 	}
 	
-
 	/** set force acting on molecule
 	 * @param[out] F force vector (x,y,z)
 	 */
