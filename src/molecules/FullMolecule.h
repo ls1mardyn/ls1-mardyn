@@ -261,32 +261,6 @@ public:
 		}
 		return d2;
 	}
-	//calculates orientation angle for ARDF
-	double orientationAngle(const FullMolecule& molecule2, double dr[3], double d2) const {
-		
-		double cosPhi = 0.;
-		double orientationVector[3];
-		double orientationVectorSquared = 0.;
-		double roundingThreshold = 0.0001;
-		
-		orientationVector[0] = 2. * (q().qx() * q().qz() + q().qw() * q().qy());
-		orientationVector[1] = 2. * (q().qy() * q().qz() - q().qw() * q().qx());
-		orientationVector[2] = 1. - 2. * (q().qx() * q().qx() + q().qy() * q().qy());
-
-	
-		
-		for (unsigned short d = 0; d < 3; d++) {
-			dr[d] = molecule2._r[d] - _r[d];
-			orientationVectorSquared += orientationVector[d] * orientationVector[d];
-		}
-		
-		for (unsigned short d = 0; d < 3; d++) {
-			cosPhi += orientationVector[d] * dr[d] / sqrt(orientationVectorSquared) / sqrt(d2);
-		}
-		return cosPhi;
-		
-	}
-	
 	
 	/** set force acting on molecule
 	 * @param[out] F force vector (x,y,z)

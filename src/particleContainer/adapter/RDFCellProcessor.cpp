@@ -33,7 +33,7 @@ void RDFCellProcessor::processCell(ParticleCell& cell) {
 
 				if (dd < _cutoffRadiusSquare) {
 					_rdf->observeRDF(molecule1, molecule2, dd);
-					if (_rdf->doARDF() == true) {
+					if (_rdf->doARDF()) {
 						double dummy2[3], dummy3[3];
 						double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 						double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);
@@ -62,7 +62,7 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 				double dd = molecule2.dist2(molecule1, dummy);
 				if (dd < _cutoffRadiusSquare) {
                     _rdf->observeRDF(molecule1, molecule2, dd);
-					if (_rdf->doARDF() == true) {
+					if (_rdf->doARDF()) {
 						double dummy2[3], dummy3[3];
 						double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 						double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);
@@ -88,7 +88,7 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 					double dd = molecule2.dist2(molecule1, dummy);
 					if (dd < _cutoffRadiusSquare) {
 	                    _rdf->observeRDF(molecule1, molecule2, dd);
-						if (_rdf->doARDF() == true) {
+						if (_rdf->doARDF()) {
 							double dummy2[3], dummy3[3];
 							double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 							double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);
@@ -118,7 +118,7 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 
 					if (dd < _cutoffRadiusSquare) {
 	                    _rdf->observeRDF(molecule1, molecule2, dd);
-						if (_rdf->doARDF() == true) {
+						if (_rdf->doARDF()) {
 							double dummy2[3], dummy3[3];
 							double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 							double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);

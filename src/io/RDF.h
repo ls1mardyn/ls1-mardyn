@@ -102,6 +102,9 @@ public:
 		#pragma omp atomic
 		#endif
 		_ARDFdistribution.local[cid1][cid2][binID]++;
+		#if defined _OPENMP
+		#pragma omp atomic
+		#endif
 		_ARDFdistribution.local[cid2][cid1][binIDReverse]++;
 	}
 

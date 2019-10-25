@@ -64,7 +64,7 @@ void RDF::init() {
 		resizeExactly(_distribution.local, nC);
 		resizeExactly(_distribution.global, nC);
 		resizeExactly(_globalAccumulatedDistribution, nC);
-		if(_doARDF == true) {
+		if(_doARDF) {
 			resizeExactly(_ARDFdistribution.local, nC);
 			resizeExactly(_ARDFdistribution.global, nC);
 			resizeExactly(_globalAccumulatedARDFDistribution, nC);
@@ -85,7 +85,7 @@ void RDF::init() {
 			resizeExactly(_distribution.local[i], nCmi);
 			resizeExactly(_distribution.global[i], nCmi);
 			resizeExactly(_globalAccumulatedDistribution[i], nCmi);
-			if(_doARDF == true) {
+			if(_doARDF) {
 				resizeExactly(_ARDFdistribution.local[i], nCmi + i); //the ARDF is not symmetrical in the same way as the RDF (i.e. ARDF12 is not the same as ARDF21, therefore the size of the matrix is different
 				resizeExactly(_ARDFdistribution.global[i], nCmi + i);
 				resizeExactly(_globalAccumulatedARDFDistribution[i], nCmi + i);
@@ -134,7 +134,7 @@ void RDF::init() {
 				}
 			}
 		}
-		if(_doARDF == true) {
+		if(_doARDF) {
 			for (unsigned k = 0; k < _numberOfComponents; k++){
 				resizeExactly(_ARDFdistribution.local[i][k], _ARDFBins);
 				resizeExactly(_ARDFdistribution.global[i][k], _ARDFBins);
@@ -218,7 +218,7 @@ void RDF::accumulateRDF() {
 				}
 			}
 		}
-		if(_doARDF == true) {
+		if(_doARDF) {
 			for (unsigned k = 0; k < _numberOfComponents; k++){
 				for(unsigned long l=0; l < _ARDFBins; l++) {
 					_globalAccumulatedARDFDistribution[i][k][l] += _ARDFdistribution.global[i][k][l];
@@ -252,7 +252,7 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 
 	// communicate component-component ARDFs
 	
-	if(_doARDF == true) {
+	if(_doARDF) {
 		dode->collCommInit(_ARDFBins * _numberOfComponents * _numberOfComponents);
 	
 		for(unsigned i=0; i < _numberOfComponents; i++) {
@@ -328,7 +328,7 @@ void RDF::reset() {
 				}
 			}
 		}
-		if(_doARDF == true) {
+		if(_doARDF) {
 			for (unsigned k = 0; k < _numberOfComponents; k++){
 				for(unsigned long l=0; l < _ARDFBins; l++) {
 					_ARDFdistribution.local[i][k][l] = 0;
@@ -358,7 +358,7 @@ void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *d
 					osstrm << std::right << simStep << ".rdf";
 					writeToFile(domain, osstrm.str(), i, j);
 				}
-				if( _doARDF == true) {
+				if( _doARDF) {
 					for (unsigned j = 0; j < _numberOfComponents; j++){
 						ostringstream osstrm2;
 						osstrm2 << _outputPrefix << "_" << i << "-" << j << ".";
