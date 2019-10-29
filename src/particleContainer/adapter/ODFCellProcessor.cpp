@@ -5,7 +5,7 @@
  */
 
 #include "ODFCellProcessor.h"
-#include "Domain.h"
+#include "particleContainer/ParticleCell.h"
 #include "io/ODF.h"
 
 ODFCellProcessor::ODFCellProcessor(const double cutoffRadius, ODF *const odf, const std::array<double, 3> &simBoxSize)
