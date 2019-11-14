@@ -30,8 +30,7 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength,
 	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
 	Simulation::exit(24235);
 #endif
-	///@todo: change minimal domain size to include skin! -- this is not so trivial here!
-
+	
 	global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
 					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
 					   << std::endl;
