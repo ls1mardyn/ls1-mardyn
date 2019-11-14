@@ -57,13 +57,14 @@ endif()
 
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
-        ${BLAS_LIB}    # for armadillo
-        ${LAPACK_LIB}  # for armadillo
-        ${VTK_LIB}     # for VTK/xerces
-        ${CPPUNIT_LIB} # for unit tests
-        ${AUTOPAS_LIB} # for autopas
-        ${LZ4_LIB}     # for LZ4 compression
-        ${ALL_LIB}     # for ALL
+        ${BLAS_LIB}          # for armadillo
+        ${LAPACK_LIB}        # for armadillo
+        ${VTK_LIB}           # for VTK/xerces
+        ${CPPUNIT_LIB}       # for unit tests
+        ${AUTOPAS_LIB}       # for autopas
+        ${LZ4_LIB}           # for LZ4 compression
+        ${ALL_LIB}           # for ALL
+        ${Zoltan2_LIBRARIES} # for zoltan2
         )
 
 ADD_TEST(

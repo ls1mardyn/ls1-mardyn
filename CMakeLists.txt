@@ -54,6 +54,8 @@ include(cppunit)
 include(bhfmm)
 # include ALL load balanding library
 include(ALL)
+# include Zoltan2 library (used for load balancing)
+include(Zoltan2)
 
 # ----- third: include autopas
 include(autopas)

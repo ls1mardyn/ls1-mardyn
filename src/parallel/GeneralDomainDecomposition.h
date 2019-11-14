@@ -86,6 +86,17 @@ public:
 	}
 
 private:
+
+	/**
+	 * Method that initializes the ALLLoadBalancer
+	 */
+	void initializeALL();
+
+	/**
+	 * Method that initializes the Zontal2LoadBalancer
+	 */
+	void initializeZoltan2();
+
 	/**
 	 * Get the optimal grid for the given dimensions of the box and the number of processes.
 	 * The grid is produced, s.t., the number of grid[0] * grid[1] * grid[2] == numProcs
@@ -151,6 +162,9 @@ private:
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
+
+	std::array<double, 3> _domainLength;
+	double _interactionLength;
 
 	std::array<bool, 3> _coversWholeDomain{};
 
