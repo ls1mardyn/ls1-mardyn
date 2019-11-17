@@ -17,11 +17,8 @@ if(ENABLE_AUTOPAS)
     ExternalProject_Add(
             autopas
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG bayes-search-hyper
+            GIT_TAG f639d8b77eb62b84ffb3717ca4a3e25f1caaea86
             #GIT_TAG origin/feature/regionParticleIteratorIncrease
-            #URL https://github.com/AutoPas/AutoPas/archive/0c3d8b07a2e38940057fafd21b98645cb074e729.zip # zip option
-            #${CMAKE_SOURCE_DIR}/libs/googletest-master.zip # bundled option
-            #URL_HASH MD5=6e70656897167140c1221eecc6ad872d
             BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/autopas/build
             BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/build/src/autopas/libautopas.a
             PREFIX ${CMAKE_CURRENT_BINARY_DIR}/autopas

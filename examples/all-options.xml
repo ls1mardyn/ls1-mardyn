@@ -179,7 +179,7 @@
     <algorithm>
       <parallelisation type="DomainDecomposition">
           <CommunicationScheme>direct</CommunicationScheme>
-          <timerForCalculation>SIMULATION_FORCE_CALCULATION</timerForCalculation><!-- Timer to use as load. requires valid timer name! -->
+          <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad><!-- Timer to use as load. requires valid timer name! -->
       </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
