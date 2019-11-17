@@ -205,8 +205,8 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
 		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
-		                    moleculeContainer->getBoundingBoxMax(1) + cutoff,
-		                    moleculeContainer->getBoundingBoxMax(2) + cutoff};
+							moleculeContainer->getBoundingBoxMax(1) + cutoff,
+							moleculeContainer->getBoundingBoxMax(2) + cutoff};
 
 		if (direction < 0) {
 			endRegion[dim] = moleculeContainer->getBoundingBoxMin(dim);
@@ -237,7 +237,7 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 					}
 				}
 				moleculeContainer->addParticle(m);
-				i.deleteCurrentParticle();  // removeFromContainer = true;
+				autopas::internal::deleteParticle(i);  // removeFromContainer = true;
 			}
 		}
 	}
@@ -303,7 +303,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 			// traverse and gather all halo particles in the cells
 			for (auto i = begin; i.isValid(); ++i) {
 				shiftAndAdd(*i);
-				i.deleteCurrentParticle();  // removeFromContainer = true;
+				autopas::internal::deleteParticle(i);  // removeFromContainer = true;
 			}
 		}
 	}

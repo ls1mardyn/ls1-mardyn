@@ -14,8 +14,8 @@
 #include "parallel/DomainDecompBase.h"
 
 AutoPasContainer::AutoPasContainer()
-	: _traversalChoices(autopas::allTraversalOptions),
-	  _containerChoices(autopas::allContainerOptions),
+	: _traversalChoices(autopas::TraversalOption::getAllOptions()),
+	  _containerChoices(autopas::ContainerOption::getAllOptions()),
 	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
 	  _tuningStrategyOption(autopas::TuningStrategyOption::fullSearch),
 	  _tuningAcquisitionFunction(autopas::AcquisitionFunctionOption::upperConfidenceBound),
@@ -44,27 +44,27 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	// set default values here!
 
-	_traversalChoices = autopas::utils::StringUtils::parseTraversalOptions(
+	_traversalChoices = autopas::TraversalOption::parseOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08")));
-	_containerChoices = autopas::utils::StringUtils::parseContainerOptions(
+	_containerChoices = autopas::ContainerOption::parseOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell")));
 
-	_selectorStrategy = autopas::utils::StringUtils::parseSelectorStrategy(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median")));
+	_selectorStrategy = *autopas::SelectorStrategyOption::parseOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median"))).begin();
 
-	_tuningStrategyOption = autopas::utils::StringUtils::parseTuningStrategyOption(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningStrategy", "fullSearch")));
+	_tuningStrategyOption = *autopas::TuningStrategyOption::parseOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningStrategy", "fullSearch"))).begin();
 
-	_dataLayoutChoices = autopas::utils::StringUtils::parseDataLayout(
+	_dataLayoutChoices = autopas::DataLayoutOption::parseOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayouts", "soa")));
 
-	_newton3Choices = autopas::utils::StringUtils::parseNewton3Options(
+	_newton3Choices = autopas::Newton3Option::parseOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("newton3", "enabled")));
 
-    _tuningAcquisitionFunction = autopas::utils::StringUtils::parseAcquisitionFunctionOption(
-        string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningAcquisitionFunction", "ucb")));
+	_tuningAcquisitionFunction = *autopas::AcquisitionFunctionOption::parseOptions(
+		string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningAcquisitionFunction", "lower-confidence-bound"))).begin();
 
-    _maxEvidence = (unsigned int)xmlconfig.getNodeValue_int("maxEvidence", 20);
+	_maxEvidence = (unsigned int)xmlconfig.getNodeValue_int("maxEvidence", 20);
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
 	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
 
@@ -73,16 +73,16 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	std::stringstream dataLayoutChoicesStream;
 	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
-			 [&](auto &choice) { dataLayoutChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+			 [&](auto &choice) { dataLayoutChoicesStream << choice.to_string() << " "; });
 	std::stringstream containerChoicesStream;
 	for_each(_containerChoices.begin(), _containerChoices.end(),
-			 [&](auto &choice) { containerChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+			 [&](auto &choice) { containerChoicesStream << choice.to_string() << " "; });
 	std::stringstream traversalChoicesStream;
 	for_each(_traversalChoices.begin(), _traversalChoices.end(),
-			 [&](auto &choice) { traversalChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+			 [&](auto &choice) { traversalChoicesStream << choice.to_string() << " "; });
 	std::stringstream newton3ChoicesStream;
 	for_each(_newton3Choices.begin(), _newton3Choices.end(),
-			 [&](auto &choice) { newton3ChoicesStream << autopas::utils::StringUtils::to_string(choice) << " "; });
+			 [&](auto &choice) { newton3ChoicesStream << choice.to_string() << " "; });
 
 	int valueOffset = 20;
 	global_log->info() << "AutoPas configuration:" << endl
@@ -93,7 +93,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 					   << setw(valueOffset) << left << "Traversals "
 					   << ": " << traversalChoicesStream.str() << endl
 					   << setw(valueOffset) << left << "Selector strategy "
-					   << ": " << autopas::utils::StringUtils::to_string(_selectorStrategy) << endl
+					   << ": " << _selectorStrategy.to_string() << endl
 					   << setw(valueOffset) << left << "Tuning frequency"
 					   << ": " << _tuningFrequency << endl
 					   << setw(valueOffset) << left << "Number of samples "

@@ -168,7 +168,7 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 				}
 			} else if (MCM_DELETE_PARTICLES == mv.method) {
 				if ( (mv.F > 0. && absVals.F2 > mv.F2) || (mv.v > 0. && absVals.v2 > mv.v2) )
-					it.deleteCurrentParticle();
+					autopas::internal::deleteParticle(it);
 				//				_deletions.push_back(&(*it));
 			}
 		}

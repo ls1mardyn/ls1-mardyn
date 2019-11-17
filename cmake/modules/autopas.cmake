@@ -17,7 +17,7 @@ if(ENABLE_AUTOPAS)
     ExternalProject_Add(
             autopas
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG f639d8b77eb62b84ffb3717ca4a3e25f1caaea86
+            GIT_TAG origin/master
             #GIT_TAG origin/feature/regionParticleIteratorIncrease
             BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/autopas/build
             BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/build/src/autopas/libautopas.a
