@@ -36,8 +36,6 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> Zoltan2LoadBalancer::re
 		localCount = localCount + 2;  // min and max of domain, s.t., it will remain
 	}
 
-	std::vector<scalar_t> coords(dim * localCount);
-
 	std::vector<scalar_t> x(localCount);
 	std::vector<scalar_t> y(localCount);
 	std::vector<scalar_t> z(localCount);
