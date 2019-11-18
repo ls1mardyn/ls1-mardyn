@@ -30,7 +30,7 @@ typedef Zoltan2::BasicVectorAdapter<myTypes> inputAdapter_t;
 
 std::tuple<std::array<double, 3>, std::array<double, 3>> Zoltan2LoadBalancer::rebalance(double work) {
 	// Number of local samples.
-	size_t localCount = 10;
+	size_t localCount = 40;
 	if (_rank == 0) {
 		localCount = localCount + 2;  // min and max of domain, s.t., it will remain
 	}
