@@ -6,7 +6,8 @@ if(ENABLE_ZOLTAN2)
     FIND_PACKAGE(Zoltan2 REQUIRED)
     MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
     target_include_directories(trilinos_zoltan2 SYSTEM INTERFACE
-            "/usr/include/trilinos"
+            "/usr/include/trilinos/"
+            "/usr/include/scotch/"
             )
     message(STATUS "link with \${Zoltan2_LIBRARIES}: ${Zoltan2_LIBRARIES} ")
     message(STATUS "Zoltan2 support enabled")
