@@ -46,9 +46,9 @@ void Zoltan2NoMardynTest::multiJaggedTest() {
 	size_t localCount = 40;
 	int dim = 3;
 
-	scalar_t *coords = new scalar_t [dim * localCount];
+	std::vector<scalar_t> coords (dim * localCount);
 
-	scalar_t *x = coords;
+	scalar_t *x = coords.data();
 	scalar_t *y = x + localCount;
 	scalar_t *z = y + localCount;
 
@@ -65,9 +65,11 @@ void Zoltan2NoMardynTest::multiJaggedTest() {
 		x[1] = y[1] = z[1] = 10.;
 	}
 
+	printArray("x coords:", x, localCount, rank);
+
 	// Create global ids for the coordinates.
 
-	globalId_t *globalIds = new globalId_t [localCount];
+	std::vector<globalId_t> globalIds (localCount);
 	globalId_t offset = rank * localCount;
 
 	for (size_t i=0; i < localCount; i++)
@@ -99,61 +101,32 @@ void Zoltan2NoMardynTest::multiJaggedTest() {
 
 	// Create a Zoltan2 input adapter for this geometry. TODO explain
 
-	inputAdapter_t *ia1 = new inputAdapter_t(localCount,globalIds,x,y,z,1,1,1);
+	inputAdapter_t ia1 (localCount,globalIds.data(),x,y,z,1,1,1);
 
 	// Create a Zoltan2 partitioning problem
 
-	Zoltan2::PartitioningProblem<inputAdapter_t> *problem1 =
-		new Zoltan2::PartitioningProblem<inputAdapter_t>(ia1, &params);
+	Zoltan2::PartitioningProblem<inputAdapter_t> problem1(&ia1, &params);
 
 	// Solve the problem
 
-	problem1->solve();
+	problem1.solve();
 
-	auto view = problem1->getSolution().getPartBoxesView();
+	printDecomposition(rank, nprocs, dim, &problem1);
 
-	if(rank == 0) {
-		for (int rankid = 0; rankid< nprocs; ++rankid) {
-			auto lmins = view[rankid].getlmins();
-			auto lmaxs = view[rankid].getlmaxs();
-			std::cout << "rank " << rankid << ": ";
-			for (int i = 0; i < dim; ++i) {
-				std::cout << "[" << lmins[i] << ", " << lmaxs[i] << (i < dim - 1 ? "] x " : "]");
-			}
-			std::cout << std::endl;
-		}
-	}
-	// create metric object where communicator is Teuchos default
-
-	quality_t *metricObject1 = new quality_t(ia1, &params, //problem1->getComm(),
-	                                         &problem1->getSolution());
-	// Check the solution.
-
-	if (rank == 0) {
-		metricObject1->printMetrics(std::cout);
-	}
-
-	if (rank == 0){
-		scalar_t imb = metricObject1->getObjectCountImbalance();
-		if (imb <= tolerance)
-			std::cout << "pass: " << imb << std::endl;
-		else
-			std::cout << "fail: " << imb << std::endl;
-		std::cout << std::endl;
-	}
-	delete metricObject1;
+	checkMetric(rank, tolerance, params, ia1, problem1);
 
 	///////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////
-	// Try a problem with weights
+	// Try a problem with weights -- this only uses 2 dimensions (x,y) of the previous input.
 	///////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////
 
-	scalar_t *weights = new scalar_t [localCount];
+	std::vector<scalar_t> weights (localCount);
 	for (size_t i=0; i < localCount; i++){
 		weights[i] = 1.0 + scalar_t(rank) / scalar_t(nprocs);
 	}
-	weights[0] = 0;
+
+	printArray("weights:", weights.data(), localCount, rank);
 
 	// Create a Zoltan2 input adapter that includes weights.
 
@@ -166,50 +139,23 @@ void Zoltan2NoMardynTest::multiJaggedTest() {
 	std::vector<const scalar_t *>weightVec(1);
 	std::vector<int> weightStrides(1);
 
-	weightVec[0] = weights; weightStrides[0] = 1;
+	weightVec[0] = weights.data(); weightStrides[0] = 1;
 
-	inputAdapter_t *ia2=new inputAdapter_t(localCount, globalIds, coordVec,
+	inputAdapter_t ia2(localCount, globalIds.data(), coordVec,
 	                                       coordStrides,weightVec,weightStrides);
 
 	// Create a Zoltan2 partitioning problem
 
-	Zoltan2::PartitioningProblem<inputAdapter_t> *problem2 =
-		new Zoltan2::PartitioningProblem<inputAdapter_t>(ia2, &params);
+	Zoltan2::PartitioningProblem<inputAdapter_t> problem2(&ia2, &params);
 
 	// Solve the problem
 
-	problem2->solve();
+	problem2.solve();
+
+	printDecomposition(rank, nprocs, 2 /*only 2 dimensional*/, &problem2);
 
 	// create metric object for MPI builds
-
-#ifdef HAVE_ZOLTAN2_MPI
-	quality_t *metricObject2 = new quality_t(ia2, &params, //problem2->getComm()
-					   MPI_COMM_WORLD,
-					   &problem2->getSolution());
-#else
-	quality_t *metricObject2 = new quality_t(ia2, &params, problem2->getComm(),
-	                                         &problem2->getSolution());
-#endif
-	// Check the solution.
-
-	if (rank == 0) {
-		metricObject2->printMetrics(std::cout);
-	}
-
-	if (rank == 0){
-		scalar_t imb = metricObject2->getWeightImbalance(0);
-		if (imb <= tolerance)
-			std::cout << "pass: " << imb << std::endl;
-		else
-			std::cout << "fail: " << imb << std::endl;
-		std::cout << std::endl;
-	}
-	delete metricObject2;
-
-	if (localCount > 0){
-		delete [] weights;
-		weights = NULL;
-	}
+	checkMetric(rank, tolerance, params, ia2, problem2);
 
 	///////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////
@@ -223,13 +169,13 @@ void Zoltan2NoMardynTest::multiJaggedTest() {
 
 	// Create the new weights.
 
-	weights = new scalar_t [localCount*3];
+	std::vector<scalar_t>weights3 (localCount*3);
 	srand(rank);
 
 	for (size_t i=0; i < localCount*3; i+=3){
-		weights[i] = 1.0 + rank / nprocs;      // weight idx 1
-		weights[i+1] = rank<nprocs/2 ? 1 : 2;  // weight idx 2
-		weights[i+2] = rand()/RAND_MAX +.5;    // weight idx 3
+		weights3[i] = 1.0 + scalar_t(rank) / nprocs;      // weight idx 1
+		weights3[i+1] = rank<nprocs/2 ? 1 : 2;  // weight idx 2
+		weights3[i+2] = scalar_t(rand())/RAND_MAX +.5;    // weight idx 3
 	}
 
 	// Create a Zoltan2 input adapter with these weights.
@@ -237,41 +183,24 @@ void Zoltan2NoMardynTest::multiJaggedTest() {
 	weightVec.resize(3);
 	weightStrides.resize(3);
 
-	weightVec[0] = weights;   weightStrides[0] = 3;
-	weightVec[1] = weights+1; weightStrides[1] = 3;
-	weightVec[2] = weights+2; weightStrides[2] = 3;
+	weightVec[0] = weights3.data();   weightStrides[0] = 3;
+	weightVec[1] = weights3.data()+1; weightStrides[1] = 3;
+	weightVec[2] = weights3.data()+2; weightStrides[2] = 3;
 
-	inputAdapter_t *ia3=new inputAdapter_t(localCount, globalIds, coordVec,
+	inputAdapter_t ia3(localCount, globalIds.data(), coordVec,
 	                                       coordStrides,weightVec,weightStrides);
 
 	// Create a Zoltan2 partitioning problem.
 
-	Zoltan2::PartitioningProblem<inputAdapter_t> *problem3 =
-		new Zoltan2::PartitioningProblem<inputAdapter_t>(ia3, &params);
+	Zoltan2::PartitioningProblem<inputAdapter_t> problem3 (&ia3, &params);
 
 	// Solve the problem
 
-	problem3->solve();
+	problem3.solve();
 
-	// create metric object where Teuchos communicator is specified
+	// check solution
 
-	quality_t *metricObject3 = new quality_t(ia3, &params, problem3->getComm(),
-	                                         &problem3->getSolution());
-	// Check the solution.
-
-	if (rank == 0) {
-		metricObject3->printMetrics(std::cout);
-	}
-
-	if (rank == 0){
-		scalar_t imb = metricObject3->getWeightImbalance(0);
-		if (imb <= tolerance)
-			std::cout << "pass: " << imb << std::endl;
-		else
-			std::cout << "fail: " << imb << std::endl;
-		std::cout << std::endl;
-	}
-	delete metricObject3;
+	checkMetric(rank, tolerance, params, ia3, problem3);
 
 	///////////////////////////////////////////////////////////////////////
 	// Try the other multicriteria objectives.
@@ -279,58 +208,170 @@ void Zoltan2NoMardynTest::multiJaggedTest() {
 	bool dataHasChanged = false;    // default is true
 
 	params.set("partitioning_objective", "multicriteria_minimize_maximum_weight");
-	problem3->resetParameters(&params);
-	problem3->solve(dataHasChanged);
+	problem3.resetParameters(&params);
+	problem3.solve(dataHasChanged);
 
 	// Solution changed!
 
-	metricObject3 = new quality_t(ia3, &params, problem3->getComm(),
-	                              &problem3->getSolution());
-	if (rank == 0){
-		metricObject3->printMetrics(std::cout);
-		scalar_t imb = metricObject3->getWeightImbalance(0);
-		if (imb <= tolerance)
-			std::cout << "pass: " << imb << std::endl;
-		else
-			std::cout << "fail: " << imb << std::endl;
-		std::cout << std::endl;
-	}
-	delete metricObject3;
+	checkMetric(rank, tolerance, params, ia3, problem3);
 
 	params.set("partitioning_objective", "multicriteria_balance_total_maximum");
-	problem3->resetParameters(&params);
-	problem3->solve(dataHasChanged);
+	problem3.resetParameters(&params);
+	problem3.solve(dataHasChanged);
 
 	// Solution changed!
-
-	metricObject3 = new quality_t(ia3, &params, problem3->getComm(),
-	                              &problem3->getSolution());
-	if (rank == 0){
-		metricObject3->printMetrics(std::cout);
-		scalar_t imb = metricObject3->getWeightImbalance(0);
-		if (imb <= tolerance)
-			std::cout << "pass: " << imb << std::endl;
-		else
-			std::cout << "fail: " << imb << std::endl;
-		std::cout << std::endl;
-	}
-	delete metricObject3;
-
-	if (localCount > 0){
-		delete [] weights;
-		weights = nullptr;
-	}
-
-	delete [] coords;
-	delete [] globalIds;
-
-	delete problem1;
-	delete ia1;
-	delete problem2;
-	delete ia2;
-	delete problem3;
-	delete ia3;
+	checkMetric(rank, tolerance, params, ia3, problem3);
 
 	if (rank == 0)
 		std::cout << "PASS" << std::endl;
+}
+
+
+void Zoltan2NoMardynTest::multiJaggedTest2() {
+#ifdef HAVE_ZOLTAN2_MPI
+	int rank, nprocs;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#else
+	int rank=0, nprocs=1;
+#endif
+
+	// For convenience, we'll use the Tpetra defaults for local/global ID types
+	// Users can substitute their preferred local/global ID types
+	typedef Tpetra::Map<> Map_t;
+	typedef Map_t::local_ordinal_type localId_t;
+	typedef Map_t::global_ordinal_type globalId_t;
+
+	typedef double scalar_t;
+	typedef Zoltan2::BasicUserTypes<scalar_t, localId_t, globalId_t> myTypes;
+
+	// TODO explain
+	typedef Zoltan2::BasicVectorAdapter<myTypes> inputAdapter_t;
+	typedef Zoltan2::EvaluatePartition<inputAdapter_t> quality_t;
+	typedef inputAdapter_t::part_t part_t;
+
+	///////////////////////////////////////////////////////////////////////
+	// Create input data.
+
+	size_t localCount = 3;
+	int dim = 3;
+
+	std::vector<scalar_t> coords(dim * localCount);
+
+	scalar_t *x = coords.data();
+	scalar_t *y = x + localCount;
+	scalar_t *z = y + localCount;
+
+	// Create coordinates that range from 0 to 10.0
+
+	srand(rank);
+	scalar_t scalingFactor = 10.0 / RAND_MAX;
+
+	for (size_t i=0; i < localCount*dim; i++){
+		coords[i] = scalar_t(rand()) * scalingFactor;
+	}
+	std::vector<scalar_t> weights (localCount);
+	for (size_t i = 0; i < localCount; i++) {
+		weights[i] = 1.0 + scalar_t(rank) / scalar_t(nprocs);
+	}
+
+	if(rank==0) {
+		x[0] = y[0] = z[0] = 0;
+		x[1] = y[1] = z[1] = 10.;
+		//weights[0] = 0.;
+		//weights[1] = 0.;
+	}
+
+	printArray("x coords: ", x, localCount, rank);
+	printArray("weights: ", weights.data(), localCount, rank);
+
+	// Create global ids for the coordinates.
+
+	std::vector<globalId_t> globalIds (localCount);
+	globalId_t offset = rank * localCount;
+
+	for (size_t i=0; i < localCount; i++)
+		globalIds[i] = offset++;
+
+	///////////////////////////////////////////////////////////////////////
+	// Create parameters for an RCB problem
+
+	double tolerance = 1.1;
+
+	if (rank == 0) {
+		std::cout << "Imbalance tolerance is " << tolerance << std::endl;
+	}
+
+	Teuchos::ParameterList params("test params");
+	params.set("debug_level", "basic_status");
+	params.set("debug_procs", "0");
+	params.set("error_check_level", "debug_mode_assertions");
+
+	params.set("algorithm", "multijagged");
+	params.set("imbalance_tolerance", tolerance );
+	params.set("num_global_parts", nprocs);
+	params.set("mj_keep_part_boxes",true);
+	params.set("rectilinear",true);
+
+	///////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////
+	// A simple problem with one weight.
+	///////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////
+
+	// Create a Zoltan2 input adapter for this geometry. TODO explain
+
+	std::vector<const scalar_t *>coordVec(3);
+	std::vector<int> coordStrides(3);
+
+	coordVec[0] = x; coordStrides[0] = 1;
+	coordVec[1] = y; coordStrides[1] = 1;
+	coordVec[2] = z; coordStrides[2] = 1;
+
+	// 1-d array as multiple weights are supported
+	std::vector<const scalar_t *>weightVec(1);
+	// 1-d array as multiple weights are supported
+	std::vector<int> weightStrides(1);
+
+	// point to weights vector
+	weightVec[0] = weights.data(); weightStrides[0] = 1;
+
+	inputAdapter_t ia1 (localCount, globalIds.data(), coordVec,
+	                                       coordStrides,weightVec,weightStrides);
+
+	// Create a Zoltan2 partitioning problem
+
+	Zoltan2::PartitioningProblem<inputAdapter_t> problem1 (&ia1, &params);
+
+	// Solve the problem
+
+	problem1.solve();
+
+	printDecomposition(rank, nprocs, 3, &problem1);
+	// create metric object where communicator is Teuchos default
+
+	checkMetric(rank, tolerance, params, ia1, problem1);
+
+	if (rank == 0) {
+		std::cout << "PASS" << std::endl;
+	}
+}
+
+void Zoltan2NoMardynTest::printArray(const std::string &info, double *array, size_t count, int rank) {
+	if (rank == 0) {
+		std::cout << info << std::flush;
+	}
+#ifdef HAVE_ZOLTAN2_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
+	for (size_t i = 0; i < count; i++) {
+		std::cout << array[i] << ", ";
+	}
+	std::cout << std::flush;
+#ifdef HAVE_ZOLTAN2_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
+	if (rank == 0) {
+		std::cout << std::endl;
+	}
 }
