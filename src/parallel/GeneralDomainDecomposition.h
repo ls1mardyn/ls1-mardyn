@@ -32,6 +32,10 @@ public:
 		  <updateFrequency>INTEGER</updateFrequency>
 		  <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
 		  <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
+		  <loadBalancer type="STRING"> <!--STRING...type of the load balancer, currently supported: ALL, zoltan2-->
+		    <!--options for the load balancer-->
+			<!--for detailed information see the readXML functions from ALLLoadBalancer and Zoltan2LoadBalancer.-->
+		  </loadBalancer>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -86,7 +90,6 @@ public:
 	}
 
 private:
-
 	/**
 	 * Method that initializes the ALLLoadBalancer
 	 */
