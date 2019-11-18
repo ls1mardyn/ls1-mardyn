@@ -261,22 +261,28 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _initFrequency
 					   << endl;
 
-	std::string loadBalancerString = "ALL";
-	xmlconfig.getNodeValue("Load Balancer", loadBalancerString);
-	global_log->info() << "Chosen Load Balancer: " << loadBalancerString << std::endl;
+	if(xmlconfig.changecurrentnode("loadBalancer")) {
+		std::string loadBalancerString = "None";
+		xmlconfig.getNodeValue("@type", loadBalancerString);
+		global_log->info() << "Chosen Load Balancer: " << loadBalancerString << std::endl;
 
-	std::transform(loadBalancerString.begin(), loadBalancerString.end(), loadBalancerString.begin(), ::tolower);
+		std::transform(loadBalancerString.begin(), loadBalancerString.end(), loadBalancerString.begin(), ::tolower);
 
-	if (loadBalancerString.find("all") != std::string::npos) {
-		initializeALL();
-	} else if (loadBalancerString.find("zoltan") != std::string::npos) {
-		initializeZoltan2();
-	} else {
-		global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
-							<< ". Aborting!";
-		Simulation::exit(1);
+		if (loadBalancerString.find("all") != std::string::npos) {
+			initializeALL();
+		} else if (loadBalancerString.find("zoltan") != std::string::npos) {
+			initializeZoltan2();
+		} else {
+			global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
+			                    << ". Aborting!";
+			Simulation::exit(1);
+		}
+		_loadBalancer->readXML(xmlconfig);
+	} else{
+		global_log->error() << "loadBalancer section missing! Aborting!" << std::endl;
 	}
-	_loadBalancer->readXML(xmlconfig);
+	xmlconfig.changecurrentnode("..");
+
 }
 
 /**
