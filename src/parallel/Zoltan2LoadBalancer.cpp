@@ -30,8 +30,7 @@ typedef Zoltan2::BasicVectorAdapter<myTypes> inputAdapter_t;
 
 std::tuple<std::array<double, 3>, std::array<double, 3>> Zoltan2LoadBalancer::rebalance(double work) {
 	// Number of local samples.
-	size_t localCount = 3;
-	int dim = 3;
+	size_t localCount = 10;
 	if (_rank == 0) {
 		localCount = localCount + 2;  // min and max of domain, s.t., it will remain
 	}
@@ -107,8 +106,11 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> Zoltan2LoadBalancer::re
 	auto lmins = view[_rank].getlmins();
 	auto lmaxs = view[_rank].getlmaxs();
 
-	return {{lmins[0], lmins[1], lmins[2]}, {lmaxs[0], lmaxs[1], lmaxs[2]}};
+	_boxMin = {lmins[0], lmins[1], lmins[2]};
+	_boxMax = {lmaxs[0], lmaxs[1], lmaxs[2]};
+	return {_boxMin, _boxMax};
 }
+
 void Zoltan2LoadBalancer::readXML(XMLfileUnits &xmlconfig) {
 	// set the algorithm
 	_params.set("algorithm", "multijagged");

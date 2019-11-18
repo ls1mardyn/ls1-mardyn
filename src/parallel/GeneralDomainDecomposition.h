@@ -169,8 +169,6 @@ private:
 	std::array<double, 3> _domainLength;
 	double _interactionLength;
 
-	std::array<bool, 3> _coversWholeDomain{};
-
 	size_t _steps{0};
 	size_t _rebuildFrequency{10000};
 

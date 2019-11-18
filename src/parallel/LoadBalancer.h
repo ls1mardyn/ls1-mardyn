@@ -35,4 +35,11 @@ public:
 	 * @param xmlconfig
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
+
+	/**
+	 * Get the information in which direction this process covers the entire domain.
+	 * @return array of bools, for each dimension one value: true, iff the domain is filled only be the current process,
+	 * i.e, the process spans the entire domain.
+	 */
+	virtual std::array<bool, 3> getCoversWholeDomain() = 0;
 };

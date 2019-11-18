@@ -25,7 +25,6 @@ void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "initializing ALL load balancer..." << std::endl;
 	auto gridSize = getOptimalGrid(_domainLength, this->getNumProcs());
 	auto gridCoords = getCoordsFromRank(gridSize, _rank);
-	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
@@ -46,7 +45,6 @@ void GeneralDomainDecomposition::initializeZoltan2() {
 
 	auto gridSize = getOptimalGrid(_domainLength, this->getNumProcs());
 	auto gridCoords = getCoordsFromRank(gridSize, _rank);
-	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
@@ -236,9 +234,10 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeContainer,
 												  Domain* domain) {  // init communication partners
+	auto coversWholeDomain = _loadBalancer->getCoversWholeDomain();
 	for (int d = 0; d < DIMgeom; ++d) {
 		// this needs to be updated for proper initialization of the neighbours
-		_neighbourCommunicationScheme->setCoverWholeDomain(d, _coversWholeDomain[d]);
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, coversWholeDomain[d]);
 	}
 	_neighbourCommunicationScheme->initCommunicationPartners(moleculeContainer->getCutoff(), domain, this,
 															 moleculeContainer);

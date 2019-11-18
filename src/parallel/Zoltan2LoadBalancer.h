@@ -31,6 +31,14 @@ public:
 
 	void readXML(XMLfileUnits& xmlconfig) override;
 
+	std::array<bool, 3> getCoversWholeDomain() override {
+		std::array<bool, 3> coversWholeDomain{};
+		for(size_t dim = 0; dim < 3 ; ++dim){
+			coversWholeDomain[dim] = _boxMax[dim] == _domainLength[dim] and _boxMin[dim] == 0;
+		}
+		return coversWholeDomain;
+	}
+
 private:
 	Teuchos::ParameterList _params;
 
