@@ -3,6 +3,8 @@
  * @author seckler
  * @date 14.11.19
  */
+#include <mpi.h>
+#include <Teuchos_ParameterList.hpp>
 #include "LoadBalancer.h"
 
 #pragma once
@@ -16,7 +18,8 @@ public:
 	/**
 	 * Constructor
 	 */
-	Zoltan2LoadBalancer();
+	Zoltan2LoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, MPI_Comm comm,
+						double minimalDomainSize, std::array<double, 3> domainLength);
 
 	/**
 	 * default destructor.
@@ -25,4 +28,17 @@ public:
 
 	// doc see base class.
 	std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) override;
+
+	void readXML(XMLfileUnits& xmlconfig) override;
+
+private:
+	Teuchos::ParameterList _params;
+
+private:
+	MPI_Comm _comm;
+	std::array<double, 3> _boxMin;
+	std::array<double, 3> _boxMax;
+	std::array<double, 3> _domainLength;
+	int _numRanks{1};
+	int _rank{0};
 };

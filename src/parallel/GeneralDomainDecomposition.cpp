@@ -11,6 +11,9 @@
 #include "Domain.h"
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
+#ifdef ENABLE_ZOLTAN2
+#include "Zoltan2LoadBalancer.h"
+#endif
 
 GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain)
 	: _boxMin{0.},
@@ -41,23 +44,23 @@ void GeneralDomainDecomposition::initializeALL() {
 void GeneralDomainDecomposition::initializeZoltan2() {
 	global_log->info() << "initializing Zoltan load balancer..." << std::endl;
 
-//	auto gridSize = getOptimalGrid(_domainLength, this->getNumProcs());
-//	auto gridCoords = getCoordsFromRank(gridSize, _rank);
-//	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
-//	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
-//	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
-//	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
-//#ifdef ENABLE_ZOLTAN2
-//	_loadBalancer = std::make_unique<Zoltan2LoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
-//	                                                  gridCoords, _interactionLength /*minimal domain size*/);
-//#else
-//	global_log->error() << "Zoltan2 load balancer not enabled. Aborting." << std::endl;
-//	Simulation::exit(24235);
-//#endif
+	auto gridSize = getOptimalGrid(_domainLength, this->getNumProcs());
+	auto gridCoords = getCoordsFromRank(gridSize, _rank);
+	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
+	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
+	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
+	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
+#ifdef ENABLE_ZOLTAN2
+	_loadBalancer = std::make_unique<Zoltan2LoadBalancer>(_boxMin, _boxMax, this->getCommunicator(),
+														  _interactionLength /*minimal domain size*/, _domainLength);
+#else
+	global_log->error() << "Zoltan2 load balancer not enabled. Aborting." << std::endl;
+	Simulation::exit(24235);
+#endif
 
 	global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
-	                   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
-	                   << std::endl;
+					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
+					   << std::endl;
 }
 
 double GeneralDomainDecomposition::getBoundingBoxMin(int dimension, Domain* /*domain*/) { return _boxMin[dimension]; }
@@ -269,8 +272,11 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	} else if (loadBalancerString.find("zoltan") != std::string::npos) {
 		initializeZoltan2();
 	} else {
-		global_log->error() << "Unknown load balancer " << loadBalancerString;
+		global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
+							<< ". Aborting!";
+		Simulation::exit(1);
 	}
+	_loadBalancer->readXML(xmlconfig);
 }
 
 /**
