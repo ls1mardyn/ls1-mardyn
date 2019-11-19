@@ -23,6 +23,9 @@ else()
     if(NOT ENABLE_ALLLBL)
         list(FILTER MY_SRC EXCLUDE REGEX "ALLLoadBalancer")
     endif()
+    if(NOT ENABLE_ZOLTAN2)
+        list(FILTER MY_SRC EXCLUDE REGEX "Zoltan2")
+    endif()
 endif()
 
 # if fmm fft is disabled, remove everything in an fft directory
