@@ -6,6 +6,12 @@
 #    -D TPL_ENABLE_MPI:BOOL=ON \
 #    -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF \
 #    ..
+# on clusters you might also need the following options when using MKL:
+# -DBLAS_LIBRARY_NAMES="mkl_intel_lp64;mkl_sequential;mkl_core"
+# -DBLAS_LIBRARY_DIRS="$MKL_LIBDIR"
+# -DLAPACK_LIBRARY_NAMES=""
+# -DLAPACK_LIBRARY_DIRS="$MKL_LIBDIR"
+#
 # and potentially also add a hint for find_package, by specifying Zoltan2_DIR=/path/to/install/dir
 
 function(check_defined configFile name_of_define RESULT_NAME)
