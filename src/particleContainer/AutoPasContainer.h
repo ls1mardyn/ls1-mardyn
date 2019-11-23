@@ -110,7 +110,7 @@ private:
 	unsigned int _verletRebuildFrequency{1u};
 	unsigned int _tuningFrequency{1000u};
 	unsigned int _tuningSamples{3u};
-    unsigned int _maxEvidence{10};
+	unsigned int _maxEvidence{10};
 	using CellType = autopas::FullParticleCell<Molecule>;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 

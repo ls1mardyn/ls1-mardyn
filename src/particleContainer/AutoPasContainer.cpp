@@ -92,14 +92,21 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 					   << ": " << containerChoicesStream.str() << endl
 					   << setw(valueOffset) << left << "Traversals "
 					   << ": " << traversalChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Newton3"
+					   << ": " << newton3ChoicesStream.str() << endl
+					   << setw(valueOffset) << left << "Tuning strategy "
+					   << ": " << _tuningStrategyOption.to_string() << endl
 					   << setw(valueOffset) << left << "Selector strategy "
 					   << ": " << _selectorStrategy.to_string() << endl
 					   << setw(valueOffset) << left << "Tuning frequency"
 					   << ": " << _tuningFrequency << endl
 					   << setw(valueOffset) << left << "Number of samples "
 					   << ": " << _tuningSamples << endl
-					   << setw(valueOffset) << left << "Newton3"
-					   << ": " << newton3ChoicesStream.str() << endl;
+					   << setw(valueOffset) << left << "Tuning Acquisition Function"
+					   << ": " << _tuningAcquisitionFunction.to_string() << endl
+					   << setw(valueOffset) << left << "Number of evidence "
+					   << ": " << _maxEvidence << endl;
+
 	xmlconfig.changecurrentnode(oldPath);
 }
 
