@@ -50,10 +50,13 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell")));
 
 	_selectorStrategy = *autopas::SelectorStrategyOption::parseOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median"))).begin();
+							 string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median")))
+							 .begin();
 
-	_tuningStrategyOption = *autopas::TuningStrategyOption::parseOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningStrategy", "fullSearch"))).begin();
+	_tuningStrategyOption =
+		*autopas::TuningStrategyOption::parseOptions(
+			 string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningStrategy", "fullSearch")))
+			 .begin();
 
 	_dataLayoutChoices = autopas::DataLayoutOption::parseOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayouts", "soa")));
@@ -61,8 +64,10 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_newton3Choices = autopas::Newton3Option::parseOptions(
 		string_utils::toLowercase(xmlconfig.getNodeValue_string("newton3", "enabled")));
 
-	_tuningAcquisitionFunction = *autopas::AcquisitionFunctionOption::parseOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningAcquisitionFunction", "lower-confidence-bound"))).begin();
+	_tuningAcquisitionFunction =
+		*autopas::AcquisitionFunctionOption::parseOptions(string_utils::toLowercase(xmlconfig.getNodeValue_string(
+															  "tuningAcquisitionFunction", "lower-confidence-bound")))
+			 .begin();
 
 	_maxEvidence = (unsigned int)xmlconfig.getNodeValue_int("maxEvidence", 20);
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
@@ -140,7 +145,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 }
 
 void AutoPasContainer::update() {
-    // in case we update the container before handling the invalid particles, this might lead to lost particles.
+	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
 		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
 							   "exist. This would lead to lost particle => ERROR!"
@@ -152,7 +157,7 @@ void AutoPasContainer::update() {
 }
 
 void AutoPasContainer::forcedUpdate() {
-    // in case we update the container before handling the invalid particles, this might lead to lost particles.
+	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
 		global_log->error() << "AutoPasContainer: trying to force update container, even though invalidParticles still "
 							   "exist. This would lead to lost particle => ERROR!"
@@ -188,15 +193,22 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
-		
+		// only initialize ppl if it is empty
+		if (_particlePropertiesLibrary.getTypes().empty()) {
+			auto components = global_simulation->getEnsemble()->getComponents();
+			for (auto &c : *components) {
+				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
+												   c.ljcenter(0).m());
+			}
+		}
+
 		// we need to know the values of eps, sigma and the shift for the LJFunctor.
-		double epsilon=0., sigma=0., shift=0.;
+		// @TODO when shift is moved to ppl in autopas remove this horrible block...
+		double shift = 0.;
 		{
 			auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 			if (iter.isValid()) {
 				auto ljcenter = iter->component()->ljcenter(0);
-				epsilon = ljcenter.eps();
-				sigma = ljcenter.sigma();
 				shift = ljcenter.shift6() / 6.;
 			}
 		}
@@ -204,10 +216,10 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		std::array<double, 3> lowCorner = {_boundingBoxMin[0], _boundingBoxMin[1], _boundingBoxMin[2]};
 		std::array<double, 3> highCorner = {_boundingBoxMax[0], _boundingBoxMax[1], _boundingBoxMax[2]};
 
-		// generate the functor
-		autopas::LJFunctor<Molecule, CellType, autopas::FunctorN3Modes::Both,
+		// generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+		autopas::LJFunctor<Molecule, CellType, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						   /*calculateGlobals*/ true>
-			functor(_cutoff, epsilon, sigma, shift, /*duplicatedCalculation*/ true);
+			functor(_cutoff, shift, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -239,11 +251,11 @@ void AutoPasContainer::traversePartialInnermostCells(CellProcessor &cellProcesso
 
 unsigned long AutoPasContainer::getNumberOfParticles() {
 	unsigned long count = 0;
-	for(auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
+	for (auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
 		++count;
 	}
 	return count;
-	//return _autopasContainer.getNumberOfParticles(); // todo: this is currently buggy!, so we use iterators instead.
+	// return _autopasContainer.getNumberOfParticles(); // todo: this is currently buggy!, so we use iterators instead.
 }
 
 void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }

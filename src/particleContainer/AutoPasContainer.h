@@ -124,6 +124,9 @@ private:
 
 	std::vector<Molecule> _invalidParticles;
 	bool _hasInvalidParticles{false};
+
+	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;
+
 #ifdef ENABLE_MPI
 	std::ofstream _logFile;
 #endif
