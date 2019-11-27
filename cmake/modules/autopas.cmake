@@ -17,7 +17,7 @@ if(ENABLE_AUTOPAS)
     ExternalProject_Add(
             autopas
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG f8c4c25064bf1303a32bc838c9c26b2edbed0b62
+            GIT_TAG 0e03b5df209c417e209c03cd17dbdf294ccbac63
             #GIT_TAG origin/feature/regionParticleIteratorIncrease
             BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/autopas/build
             BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/build/src/autopas/libautopas.a
@@ -53,12 +53,12 @@ if(ENABLE_AUTOPAS)
 
     # workaround for INTERFACE_INCLUDE_DIRECTORIES requiring existent paths, so we create them here...
     file(MAKE_DIRECTORY ${source_dir}/src)
-    file(MAKE_DIRECTORY ${source_dir}/libs/spdlog-1.3.1/include)
+    file(MAKE_DIRECTORY ${binary_dir}/libs/spdlog/src/spdlog_bundled/include)
     file(MAKE_DIRECTORY ${binary_dir}/libs/eigen-3/include)
 
     target_include_directories(libautopas SYSTEM INTERFACE
             "${source_dir}/src"
-            "${source_dir}/libs/spdlog-1.3.1/include"
+            "${binary_dir}/libs/spdlog/src/spdlog_bundled/include"
             "${binary_dir}/libs/eigen-3/include"
             )
 
