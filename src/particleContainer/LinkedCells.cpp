@@ -966,8 +966,8 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
-void LinkedCells::deleteMolecule(Molecule &molecule, const bool& rebuildCaches) {
-	auto cellid = getCellIndexOfMolecule(&molecule);
+void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) {
+	auto cellid = getCellIndexOfMolecule(&*moleculeIter);
 
 	if (cellid >= _cells.size()) {
 		global_log->error_always_output()
@@ -976,10 +976,10 @@ void LinkedCells::deleteMolecule(Molecule &molecule, const bool& rebuildCaches) 
 		Simulation::exit(1);
 	}
 
-	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.getID());
+	bool found = this->_cells[cellid].deleteMoleculeByID(moleculeIter->getID());
 
 	if (!found) {
-		global_log->error_always_output() << "could not delete molecule " << molecule.getID() << "."
+		global_log->error_always_output() << "could not delete molecule " << moleculeIter->getID() << "."
 				<< endl;
 		Simulation::exit(1);
 	}

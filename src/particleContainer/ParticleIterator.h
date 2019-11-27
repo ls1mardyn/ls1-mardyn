@@ -188,7 +188,7 @@ inline Molecule* ParticleIterator:: operator -> () const {
 }
 
 inline void ParticleIterator :: deleteCurrentParticle () {
-	autopas::internal::deleteParticle(_cell_iterator);
+	_cell_iterator.deleteCurrentParticle();
 }
 
 inline void ParticleIterator :: updateCellIteratorCell() {

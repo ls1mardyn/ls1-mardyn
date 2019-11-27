@@ -501,7 +501,7 @@ void ChemicalPotential::grandcanonicalStep(
 
 					this->storeMolecule(*m);
 
-					moleculeContainer->deleteMolecule(*m, true/*rebuildCaches*/);
+					moleculeContainer->deleteMolecule(m, true/*rebuildCaches*/);
 					m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 					_localInsertionsMinusDeletions--;
 				}

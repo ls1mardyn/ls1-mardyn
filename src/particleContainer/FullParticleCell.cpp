@@ -103,7 +103,7 @@ void FullParticleCell::preUpdateLeavingMolecules() {
 			// don't do anything, just advance iterator
 		} else {
 			_leavingMolecules.push_back(*it);
-			autopas::internal::deleteParticle(it);
+			it.deleteCurrentParticle();
 		}
 	}
 
@@ -134,7 +134,7 @@ void FullParticleCell::getRegion(double lowCorner[3], double highCorner[3], std:
 				particlePtrs.push_back(&(*it));
 			} else {
 				particlePtrs.push_back(new Molecule(*it));
-				autopas::internal::deleteParticle(it);
+				it.deleteCurrentParticle();
 			}
 		}
 	}

@@ -237,7 +237,7 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 					}
 				}
 				moleculeContainer->addParticle(m);
-				autopas::internal::deleteParticle(i);  // removeFromContainer = true;
+				moleculeContainer->deleteMolecule(i, true); // removeFromContainer = true;
 			}
 		}
 	}
@@ -303,7 +303,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 			// traverse and gather all halo particles in the cells
 			for (auto i = begin; i.isValid(); ++i) {
 				shiftAndAdd(*i);
-				autopas::internal::deleteParticle(i);  // removeFromContainer = true;
+				moleculeContainer->deleteMolecule(i, true);  // removeFromContainer = true;
 			}
 		}
 	}

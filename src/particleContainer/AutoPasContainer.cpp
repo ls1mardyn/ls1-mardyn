@@ -278,8 +278,8 @@ double AutoPasContainer::getInteractionLength() const { return _cutoff + _verlet
 
 double AutoPasContainer::getSkin() const { return _verletSkin; }
 
-void AutoPasContainer::deleteMolecule(Molecule &molecule, const bool &rebuildCaches) {
-	throw std::runtime_error("AutoPasContainer::deleteMolecule() not yet implemented");
+void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool &/*rebuildCaches*/) {
+    _autopasContainer.deleteParticle(moleculeIter);
 }
 
 double AutoPasContainer::getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1,
