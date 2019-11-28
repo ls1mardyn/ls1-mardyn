@@ -45,6 +45,7 @@
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
 #include "plugins/NEMD/RegionSampling.h"
+#include "plugins/NEMD/MettDeamon.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
@@ -88,6 +89,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(PovWriter);
 	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(RegionSampling);
+	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(ResultWriter);
 	REGISTER_PLUGIN(SysMonOutput);
 	REGISTER_PLUGIN(TestPlugin);
