@@ -15,7 +15,7 @@
  */
 class AutoPasContainer : public ParticleContainer {
 public:
-	AutoPasContainer();
+	AutoPasContainer(double cutoff);
 
 	~AutoPasContainer() override {
 #ifdef ENABLE_MPI

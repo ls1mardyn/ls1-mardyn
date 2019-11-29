@@ -405,9 +405,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			} else if(datastructuretype == "AutoPas" || datastructuretype == "AutoPasContainer") {
 #ifdef MARDYN_AUTOPAS
 				global_log->info() << "Using AutoPas container." << std::endl;
-				_moleculeContainer = new AutoPasContainer();
+				_moleculeContainer = new AutoPasContainer(_cutoffRadius);
 				global_log->info() << "Setting cell cutoff radius for AutoPas container to " << _cutoffRadius << endl;
-				_moleculeContainer->setCutoff(_cutoffRadius);
 #else
 				global_log->fatal() << "AutoPas not compiled (use LinkedCells instead, or compile with enabled autopas mode)!" << std::endl;
 				Simulation::exit(33);

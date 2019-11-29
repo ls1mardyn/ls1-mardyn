@@ -13,14 +13,16 @@
 #include "autopas/utils/StringUtils.h"
 #include "parallel/DomainDecompBase.h"
 
-AutoPasContainer::AutoPasContainer()
-	: _traversalChoices(autopas::TraversalOption::getAllOptions()),
+AutoPasContainer::AutoPasContainer(double cutoff)
+	: _cutoff(cutoff),
+	  _traversalChoices(autopas::TraversalOption::getAllOptions()),
 	  _containerChoices(autopas::ContainerOption::getAllOptions()),
 	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
 	  _tuningStrategyOption(autopas::TuningStrategyOption::fullSearch),
 	  _tuningAcquisitionFunction(autopas::AcquisitionFunctionOption::upperConfidenceBound),
 	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
-	  _newton3Choices{autopas::Newton3Option::enabled} {
+	  _newton3Choices{autopas::Newton3Option::enabled},
+	  _particlePropertiesLibrary(cutoff) {
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
 
@@ -202,16 +204,6 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 			}
 		}
 
-		// we need to know the values of eps, sigma and the shift for the LJFunctor.
-		// @TODO when shift is moved to ppl in autopas remove this horrible block...
-		double shift = 0.;
-		{
-			auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-			if (iter.isValid()) {
-				auto ljcenter = iter->component()->ljcenter(0);
-				shift = ljcenter.shift6() / 6.;
-			}
-		}
 		// lower and upper corner of the local domain needed to correctly calculate the global values
 		std::array<double, 3> lowCorner = {_boundingBoxMin[0], _boundingBoxMin[1], _boundingBoxMin[2]};
 		std::array<double, 3> highCorner = {_boundingBoxMax[0], _boundingBoxMax[1], _boundingBoxMax[2]};
@@ -219,7 +211,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		// generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 		autopas::LJFunctor<Molecule, CellType, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						   /*calculateGlobals*/ true>
-			functor(_cutoff, shift, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
+			functor(_cutoff, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -278,8 +270,8 @@ double AutoPasContainer::getInteractionLength() const { return _cutoff + _verlet
 
 double AutoPasContainer::getSkin() const { return _verletSkin; }
 
-void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool &/*rebuildCaches*/) {
-    _autopasContainer.deleteParticle(moleculeIter);
+void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool & /*rebuildCaches*/) {
+	_autopasContainer.deleteParticle(moleculeIter);
 }
 
 double AutoPasContainer::getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1,
