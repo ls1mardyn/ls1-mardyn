@@ -35,8 +35,7 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type t
 #ifndef MARDYN_AUTOPAS
 		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoffRadius);
 #else
-		AutoPasContainer* container = new AutoPasContainer();
-		container->setCutoff(cutoffRadius);
+		AutoPasContainer* container = new AutoPasContainer(cutoffRadius);
 		container->rebuild(bBoxMin, bBoxMax);
 #endif
 		return container;
@@ -70,8 +69,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 #ifndef MARDYN_AUTOPAS
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff);
 #else
-		moleculeContainer = new AutoPasContainer();
-		moleculeContainer->setCutoff(cutoff);
+		moleculeContainer = new AutoPasContainer(cutoff);
 		moleculeContainer->rebuild(bBoxMin, bBoxMax);
 #endif
 		#ifdef ENABLE_MPI
