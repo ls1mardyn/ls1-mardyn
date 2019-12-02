@@ -1563,8 +1563,7 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 
 		for (auto i = begin; i.isValid(); ++i) {
 			threadData[threadNum].push_back(new Molecule(*i));
-            moleculeContainer->deleteMolecule(i, false);; //removeFromContainer = true;
-			i.deleteCurrentParticle(); //removeFromContainer = true;
+            moleculeContainer->deleteMolecule(i, false); //removeFromContainer = true;
 		}
 
 		prefixArray[threadNum + 1] = threadData[threadNum].size();
