@@ -476,7 +476,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			threadData[threadNum].push_back(*i);
 			mardyn_assert(i->inBox(lowCorner, highCorner));
 			if (removeFromContainer) {
-				i.deleteCurrentParticle();
+				moleculeContainer->deleteMolecule(i, false);
 			}
 		}
 
