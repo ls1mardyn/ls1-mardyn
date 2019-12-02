@@ -32,6 +32,8 @@ if(ENABLE_AUTOPAS)
             -DAUTOPAS_ENABLE_ADDRESS_SANITIZER=${ENABLE_ADDRESS_SANITIZER}
             -DAUTOPAS_OPENMP=${OPENMP}
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -Dspdlog_ForceBundled=ON
+            -DEigen3_ForceBundled=ON
     )
 
     # Get autopas source and binary directories from CMake project
