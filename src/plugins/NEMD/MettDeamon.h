@@ -17,6 +17,7 @@
 #include <map>
 #include <array>
 #include <fstream>
+#include <utility>
 #include <vector>
 #include <cstdint>
 #include <limits>
@@ -160,7 +161,7 @@ class MettDeamon : public PluginBase
 {
 public:
 	MettDeamon();
-	~MettDeamon();
+	~MettDeamon() override = default;
 
 	/** @brief Read in XML configuration for MettDeamon and all its included objects.
 	 *
@@ -208,14 +209,14 @@ public:
 	</plugin>
 	   \endcode
 	 */
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 	void siteWiseForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override {};
 	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override {};
-	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {};
+	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {};
 	std::string getPluginName() override {return std::string("MettDeamon");}
 	static PluginBase* createInstance() {return new MettDeamon();}
 
@@ -431,9 +432,9 @@ private:
 
 private:
 	MettDeamon* _parent;
-	MoleculeDataReader* _moleculeDataReader;
-//	std::unique_ptr<BinQueue> _binQueue; // <-- Segmentation fault when PluginFactory creates MettDeamon plugin.
-	BinQueue* _binQueue;
+	std::unique_ptr<MoleculeDataReader> _moleculeDataReader;
+	std::unique_ptr<BinQueue> _binQueue; // <-- Segmentation fault when PluginFactory creates MettDeamon plugin.
+//	BinQueue _binQueue;
 	uint64_t _numMoleculesRead;
 	uint64_t _nMaxMoleculeID;
 	uint32_t _nMoleculeFormat;
@@ -457,9 +458,9 @@ class BinQueue
 	{
 	friend class BinQueue;
 	public:
-		Bin(std::vector<Molecule> vec, uint32_t nIndex) : _next(nullptr), _nIndex(nIndex)
+		Bin(const std::vector<Molecule>& vec, uint32_t nIndex) : _next(nullptr), _nIndex(nIndex)
 		{
-			for(auto p:vec)
+			for(const auto& p:vec)
 				_particles.push_back(p);
 		}
 		Bin* _next;
@@ -495,13 +496,21 @@ public:
 		_numParticles(0),
 		_maxID(0)
 	{
-		enque(vec);
+		enque(std::move(vec));
 	}
 
 	~BinQueue() {
-		_last->_next = nullptr;
-		while (!isEmpty())
-			deque();
+		if(_last){
+			// break connection of last element to first element (established via connectTailToHead())
+			_last->_next = nullptr;
+		}
+		auto ptr = _first;
+		while (ptr) {
+			// as long as ptr isn't nullptr we continue to delete the next element.
+			auto ptr_next = ptr->_next;
+			delete ptr;
+			ptr = ptr_next;
+		}
 	}
 
 	bool isEmpty() {
@@ -524,7 +533,7 @@ public:
 		if(_numParticles > 0)
 		{
 			std::vector<Molecule>::iterator it;
-			if(vec.size() == 0)
+			if(vec.empty())
 				it = vec.end();
 			else if(vec.size() == 1)
 				it = vec.begin();
@@ -536,19 +545,6 @@ public:
 		}
 		else
 			_maxID = 0;
-	}
-
-	void deque()
-	{
-		if (!isEmpty()) {
-			Bin* ptr = _first;
-			_numParticles -= ptr->_particles.size();
-			_first = _first->_next;
-			delete ptr;
-			_numBins--;
-		}
-		// update max particle ID
-		this->determineMaxID();
 	}
 
 	std::vector<Molecule>& head() {
@@ -613,7 +609,7 @@ private:
 		while(ptr != nullptr)
 		{
 			std::vector<Molecule> vec = ptr->_particles;
-			std::vector<Molecule>::iterator it = max_element(vec.begin(), vec.end(), molecule_id_compare);
+			auto it = max_element(vec.begin(), vec.end(), molecule_id_compare);
 			_maxID = ( (*it).getID()>_maxID ? (*it).getID() : _maxID);
 			ptr = ptr->_next;
 			if(ptr == _first)

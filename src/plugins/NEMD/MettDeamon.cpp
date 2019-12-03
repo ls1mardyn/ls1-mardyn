@@ -101,7 +101,7 @@ void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::ve
 	std::shuffle(v.begin(), v.end(), g);
 }
 
-void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
+void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi)
 {
 	double stdDev = sqrt(T);
@@ -148,14 +148,14 @@ void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSa
 	cout << "vxd,vyd,vzd = " << vxd << "," << vyd << "," << vzd << endl;
 
 	// correct drift
-	for(std::vector<double>::iterator it = vxi.begin(); it != vxi.end(); ++it)
-		(*it) += (0.0 - vxd);
+	for(double & it : vxi)
+		it += (0.0 - vxd);
 
-	for(std::vector<double>::iterator it = vyi.begin(); it != vyi.end(); ++it)
-		(*it) += (v_neg - vyd);
+	for(double & it : vyi)
+		it += (v_neg - vyd);
 
-	for(std::vector<double>::iterator it = vzi.begin(); it != vzi.end(); ++it)
-		(*it) += (0.0 - vzd);
+	for(double & it : vzi)
+		it += (0.0 - vzd);
 
 	// calc drift again
 	sum_vxi = std::accumulate(vxi.begin(), vxi.end(), 0.0);
@@ -196,16 +196,16 @@ void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSa
 
 	// correct ekin
 	double scale_vx = sqrt(numSamples*T/sum_v2xi);
-	for(std::vector<double>::iterator it = vxi.begin(); it != vxi.end(); ++it)
-		(*it) *= scale_vx;
+	for(double & it : vxi)
+		it *= scale_vx;
 
 	double scale_vy = sqrt(numSamples*e_neg/sum_v2yi);
-	for(std::vector<double>::iterator it = vyi.begin(); it != vyi.end(); ++it)
-		(*it) *= scale_vy;
+	for(double & it : vyi)
+		it *= scale_vy;
 
 	double scale_vz = sqrt(numSamples*T/sum_v2zi);
-	for(std::vector<double>::iterator it = vzi.begin(); it != vzi.end(); ++it)
-		(*it) *= scale_vz;
+	for(double & it : vzi)
+		it *= scale_vz;
 
 	// update v2 vectors
 	for(uint64_t i=0; i<numSamples; i++)
@@ -326,10 +326,6 @@ MettDeamon::MettDeamon() :
 	_rnd.reset(new Random(8624+nRank));
 }
 
-MettDeamon::~MettDeamon()
-{
-}
-
 void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 {
 	// control
@@ -385,7 +381,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			bool bRet = true;
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/vxz", _norm.fname.vxz);
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/vy",  _norm.fname.vy);
-			if(true == bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
+			if(bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
 				global_log->info() << "MettDeamon release velocities uses MB from files." << std::endl;
 				this->readNormDistr();
 				shuffle(_norm.vxz);  // sequence should differ between processes
@@ -432,7 +428,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			std::vector<double>& vx = _feedrate.release_velo.vx;
 			std::vector<double>& vy = _feedrate.release_velo.vy;
 			std::vector<double>& vz = _feedrate.release_velo.vz;
-			update_velocity_vectors(_rnd, numSamples, T, D, v_neg, e_neg, vx, vy, vz);
+			update_velocity_vectors(_rnd.get(), numSamples, T, D, v_neg, e_neg, vx, vy, vz);
 		}
 	}
 
@@ -613,7 +609,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 //	cout << "["<<ownRank<<"]: _dInvDensityArea = " << _dInvDensityArea << endl;
 
 	// Activate reservoir bin with respect to restart information
-	if(true == _bIsRestart)
+	if(_bIsRestart)
 		this->initRestart();
 
 	this->InitTransitionPlane(global_simulation->getDomain() );
@@ -627,7 +623,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	particleContainer->deleteOuterParticles();
 	// fixed components
 
-	if(true == _bIsRestart)
+	if(_bIsRestart)
 		return;
 
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
@@ -643,7 +639,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 			continue;
 
 		bool IsBehindTransitionPlane = this->IsBehindTransitionPlane(dY);
-		if(false == IsBehindTransitionPlane)
+		if(not IsBehindTransitionPlane)
 		{
 			uint32_t cid = pit->componentid();
 			if(cid != _vecChangeCompIDsFreeze.at(cid))
@@ -693,7 +689,7 @@ void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 		uint32_t cid = pit->componentid();
 
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
-		if(true == bIsTrappedMolecule || cid==2)  // tube --> TODO: flexi this
+		if(bIsTrappedMolecule || cid==2)  // tube --> TODO: flexi this
 		{
 			//savevelo
 			std::array<double,10> pos;
@@ -728,7 +724,7 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 {
 	bDeleteParticle = false;
 	uint16_t cid_zb = mol->componentid();
-	if(this->IsTrappedMolecule(cid_zb) == false || this->IsBehindTransitionPlane(mol->r(1) ) == false)
+	if(not this->IsTrappedMolecule(cid_zb) || not this->IsBehindTransitionPlane(mol->r(1) ))
 		return;
 
 	// delete element from map to save memory
@@ -743,7 +739,7 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 //		if(r>_feedrate.release_velo.normMB.a_neg) {
 
 		// refill rand insertion vector to only release part of trapped particles, if no values left
-		if(_feedrate.vec_rand_ins.size() < 1)
+		if(_feedrate.vec_rand_ins.empty())
 			this->updateRandVecTrappedIns();
 
 //		if(r>0.5) {
@@ -794,8 +790,8 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 		std::vector<double>& vy = _feedrate.release_velo.vy;
 		std::vector<double>& vz = _feedrate.release_velo.vz;
 
-		if(vx.size() == 0)
-			update_velocity_vectors(_rnd, N, T, D, v_neg, e_neg, vx, vy, vz);
+		if(vx.empty())
+			update_velocity_vectors(_rnd.get(), N, T, D, v_neg, e_neg, vx, vy, vz);
 
 		std::array<double,3> v;
 		/*
@@ -834,7 +830,7 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 void MettDeamon::resetPositionAndOrientation(Molecule* mol, const double& dBoxY)
 {
 	uint16_t cid_zb = mol->componentid();
-	if(false == this->IsTrappedMolecule(cid_zb) && cid_zb != 2)  // tube --> TODO: flexi this
+	if(not this->IsTrappedMolecule(cid_zb) and cid_zb != 2)  // tube --> TODO: flexi this
 		return;
 
 	std::map<unsigned long, std::array<double,10> >::iterator it;
@@ -866,7 +862,7 @@ void MettDeamon::resetPositionAndOrientation(Molecule* mol, const double& dBoxY)
 void MettDeamon::resetVelocity(Molecule* mol)
 {
 	uint16_t cid_zb = mol->componentid();
-	if(false == this->IsTrappedMolecule(cid_zb) )
+	if(not this->IsTrappedMolecule(cid_zb) )
 		return;
 
 	std::map<unsigned long, std::array<double,10> >::iterator it;
@@ -905,10 +901,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		bool bDeleteParticle = false;
 
 		this->releaseTrappedMolecule( &(*pit), bDeleteParticle );
-		if (IsBehindTransitionPlane == false && cid_ub == 3)  // TODO: flexi this
+		if (not IsBehindTransitionPlane and cid_ub == 3)  // TODO: flexi this
 			bDeleteParticle = true;
 
-		if(true == bDeleteParticle)
+		if(bDeleteParticle)
 		{
 			pit.deleteCurrentParticle();
 			continue;
@@ -917,7 +913,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		// reset position and orientation of fixed molecules
 		this->resetPositionAndOrientation( &(*pit), dBoxY);
 
-		if(true == bIsTrappedMolecule)
+		if(bIsTrappedMolecule)
 		{
 			// limit velocity of trapped molecules
 /*			pit->setv(0, 0.);
@@ -932,7 +928,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		else
 		{
 			// stat. evap.
-			if(true == _vap_trans_plane.enabled)
+			if(_vap_trans_plane.enabled)
 			{
 				std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 				Component* compNew = nullptr;
@@ -978,13 +974,11 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	// DEBUG
 
 	_feedrate.feed.sum += _feedrate.feed.actual;
-	int ownRank = global_simulation->domainDecomposition().getRank();
 //	if(0 == ownRank)
 //		cout << "["<<ownRank<<"]: _feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
 
 	if (_feedrate.feed.sum >= _reservoir->getBinWidth())
 	{
-		int ownRank = global_simulation->domainDecomposition().getRank();
 //		if(0 <= ownRank) {
 //			cout << "Mett-" << (uint32_t)_nMovingDirection << ": _feedrate.feed.sum=" << _feedrate.feed.sum << ", _dSlabWidth=" << _reservoir->getBinWidth() << endl;
 //			cout << "_dSlabWidth=" << _reservoir->getBinWidth() << endl;
@@ -1024,7 +1018,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid_zb);
 
-		if(true == bIsTrappedMolecule)
+		if(bIsTrappedMolecule)
 		{
 			// limit velocity of trapped molecules
 /*			pit->setv(0, 0.);
@@ -1041,7 +1035,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			this->markPosNegFlux( &(*pit) );
 
 		// mirror, to simulate VLE
-		if(true == _mirror.enabled)
+		if(_mirror.enabled)
 		{
 			if(pit->r(1) >= _mirror.pos_y)
 				pit->setv(1, -1.*abs(pit->v(1) ) );
@@ -1164,7 +1158,7 @@ void MettDeamon::logFeedrate()
 		return;
 
 	// init feedrate log file
-	if(false == _bInitFeedrateLog)
+	if(not _bInitFeedrateLog)
 	{
 		std::stringstream fnamestream;
 		fnamestream << "MettDeamon_feedrate_movdir-" << (uint32_t)_nMovingDirection << ".dat";
@@ -1210,7 +1204,7 @@ void MettDeamon::logReleased()
 		return;
 
 	// init released count log file
-	if(false == _released.init_file)
+	if(not _released.init_file)
 	{
 		std::stringstream fnamestream;
 		fnamestream << "MettDeamon_released_movdir-" << (uint32_t)_nMovingDirection << ".dat";
@@ -1235,7 +1229,7 @@ void MettDeamon::logReleased()
 
 void MettDeamon::logReleasedVelocities()
 {
-	if(0 == _released.log_v.size() )
+	if(_released.log_v.empty() )
 		return;
 
 	uint64_t simstep = global_simulation->getSimulationStep();
@@ -1380,7 +1374,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 void MettDeamon::initRestart()
 {
 	bool bRet = _reservoir->activateBin(_restartInfo.nBindindex);
-	if(false == bRet)
+	if(not bRet)
 	{
 		global_log->info() << "Failed to activate reservoir bin after restart! Program exit ... " << endl;
 		Simulation::exit(-1);
@@ -1391,7 +1385,7 @@ void MettDeamon::initRestart()
 // stat. evap
 void MettDeamon::markPosNegFlux(Molecule* mol)
 {
-	if(false == _vap_trans_plane.enabled)
+	if(not _vap_trans_plane.enabled)
 		return;
 
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
@@ -1421,7 +1415,7 @@ void MettDeamon::readNormDistr()
 	struct {
 		std::ifstream vxz;
 		std::ifstream vy;
-	} ifs;
+	} ifs{};
 	ifs.vxz.open(_norm.fname.vxz, std::ios::in);
 	ifs.vy.open(_norm.fname.vy, std::ios::in);
 
@@ -1522,8 +1516,8 @@ Reservoir::Reservoir(MettDeamon* parent) :
 	_filepath.data = _filepath.header = "unknown";
 
 	// allocate BinQueue
-//	_binQueue.reset(new BinQueue());
-	_binQueue = new BinQueue();
+	_binQueue.reset(new BinQueue());
+	//_binQueue = new BinQueue();
 
 	// init identity change vector
 	uint16_t nNumComponents = global_simulation->getEnsemble()->getComponents()->size();
@@ -1534,11 +1528,7 @@ Reservoir::Reservoir(MettDeamon* parent) :
 	_density.resize(nNumComponents+1);  // 0: total density
 }
 
-Reservoir::~Reservoir()
-{
-	delete _moleculeDataReader;
-	delete _binQueue;
-}
+Reservoir::~Reservoir() = default;
 
 void Reservoir::readXML(XMLfileUnits& xmlconfig)
 {
@@ -1549,7 +1539,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 	_dInsPercent = 1.0;
 	xmlconfig.getNodeValue("ins_percent", _dInsPercent);
 	_nReadMethod = RRM_UNKNOWN;
-	if(true == bRet1 && false == bRet2)
+	if(bRet1 and not bRet2)
 	{
 		if("ASCII" == strType) {
 			_nReadMethod = RRM_READ_FROM_FILE;
@@ -1566,7 +1556,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 			Simulation::exit(-1);
 		}
 	}
-	else if(false == bRet1 && true == bRet2)
+	else if(not bRet1 and bRet2)
 		_nReadMethod = RRM_READ_FROM_MEMORY;
 	else
 		_nReadMethod = RRM_AMBIGUOUS;
@@ -1671,7 +1661,7 @@ void Reservoir::sortParticlesToBins()
 			break;
 		}
 		// check if molecule is in bounding box of the process domain
-		if (true == domainDecomp.procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain) )
+		if (domainDecomp.procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain) )
 			binVector.at(nBinIndex).push_back(mol);
 	}
 
@@ -1689,7 +1679,7 @@ void Reservoir::sortParticlesToBins()
 			break;
 
 		case MD_RIGHT_TO_LEFT:
-			for(auto bin:binVector)
+			for(const auto& bin:binVector)
 			{
 #ifndef NDEBUG
 				cout << "["<<ownRank<<"]: bin.size()=" << bin.size() << endl;
@@ -1864,7 +1854,7 @@ void Reservoir::readFromFileBinaryHeader()
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	XMLfileUnits inp(_filepath.header);
 
-	if(false == inp.changecurrentnode("/mardyn")) {
+	if(not inp.changecurrentnode("/mardyn")) {
 		global_log->error() << "Could not find root node /mardyn in XML input file." << endl;
 		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
 		Simulation::exit(1);
@@ -1892,7 +1882,7 @@ void Reservoir::readFromFileBinaryHeader()
 	this->setVolume(dVolume);
 	this->setDensity(0, nNumMols / dVolume);
 
-	if(false == bInputOk)
+	if(not bInputOk)
 	{
 		global_log->error() << "Content of file: '" << _filepath.header << "' corrupted! Program exit ..." << endl;
 		Simulation::exit(1);
@@ -1934,9 +1924,9 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp)
 
 	// Select appropriate reader
 	switch (_nMoleculeFormat) {
-		case ICRVQD: _moleculeDataReader = new MoleculeDataReaderICRVQD(); break;
-		case ICRV: _moleculeDataReader = new MoleculeDataReaderICRV(); break;
-		case IRV: _moleculeDataReader = new MoleculeDataReaderIRV(); break;
+		case ICRVQD: _moleculeDataReader.reset(new MoleculeDataReaderICRVQD()); break;
+		case ICRV: _moleculeDataReader.reset(new MoleculeDataReaderICRV()); break;
+		case IRV: _moleculeDataReader.reset(new MoleculeDataReaderIRV()); break;
 	}
 
 	for (uint64_t pi=0; pi<_numMoleculesRead; pi++) {
