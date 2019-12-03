@@ -604,7 +604,7 @@ void Domain::writeCheckpoint(string filename,
 	// update global number of particles
 	this->updateglobalNumMolecules(particleContainer, domainDecomp);
 
-	if (useBinaryFormat == true) {
+	if (useBinaryFormat) {
 		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
 	} else {
 		this->writeCheckpointHeader(filename, particleContainer, domainDecomp, currentTime);

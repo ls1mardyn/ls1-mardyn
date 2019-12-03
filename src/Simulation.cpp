@@ -526,16 +526,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Algorithm section missing." << endl;
 	}
 
-
+	global_log -> info() << "Registering default plugins..." << endl;
     // REGISTERING/ENABLING PLUGINS
 	PluginFactory<PluginBase> pluginFactory;
     pluginFactory.registerDefaultPlugins();
+	global_log -> info() << "Successfully registered plugins." << endl;
 
-    int numPlugs = 0;
+    long numPlugs = 0;
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
-    global_log -> info() << "Number of Total Plugins: " << numPlugs << endl;
-
+    global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
 
 
     string oldpath = xmlconfig.getcurrentnodepath();
