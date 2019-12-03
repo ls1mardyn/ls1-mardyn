@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <limits>
 #include <algorithm>
+#include <memory>
 
 // shuffle velocity list for each process before usage
 #include <random>
@@ -34,7 +35,7 @@ double generate_normMB_velocity_neg(const double& temperature, const double& dri
 double generate_normMB_velocity_pos(const double& temperature, const double& drift); 
 */
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v);
-void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
+void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi);
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
@@ -283,7 +284,7 @@ private:
 	double generate_normMB_velocity_pos(const double& temperature, const double& drift);
 
 private:
-	Reservoir* _reservoir;
+	std::unique_ptr<Reservoir> _reservoir;
 	bool _bIsRestart;  // simulation is a restart?
 	bool _bInitFeedrateLog;
 	double _dAreaXZ;
@@ -363,7 +364,7 @@ private:
 	// mediator
 	MediatorNEMD* _mediatorNEMD;
 
-	Random* _rnd;
+	std::unique_ptr<Random> _rnd;
 };
 
 struct FilepathStruct
@@ -390,7 +391,7 @@ class Reservoir
 {
 public:
 	Reservoir(MettDeamon* parent);
-	~Reservoir(){}
+	~Reservoir();
 
 	void readXML(XMLfileUnits& xmlconfig);
 
@@ -431,6 +432,7 @@ private:
 private:
 	MettDeamon* _parent;
 	MoleculeDataReader* _moleculeDataReader;
+//	std::unique_ptr<BinQueue> _binQueue; // <-- Segmentation fault when PluginFactory creates MettDeamon plugin.
 	BinQueue* _binQueue;
 	uint64_t _numMoleculesRead;
 	uint64_t _nMaxMoleculeID;

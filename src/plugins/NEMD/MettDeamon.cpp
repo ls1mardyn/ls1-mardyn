@@ -101,7 +101,7 @@ void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::ve
 	std::shuffle(v.begin(), v.end(), g);
 }
 
-void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
+void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi)
 {
 	double stdDev = sqrt(T);
@@ -245,7 +245,6 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 }
 
 MettDeamon::MettDeamon() :
-		_reservoir(nullptr),
 		_bIsRestart(false),
 		_bInitFeedrateLog(false),
 		_dAreaXZ(0.),
@@ -293,7 +292,7 @@ MettDeamon::MettDeamon() :
 	_vecDensityValues.clear();
 
 	// particle reservoir
-	_reservoir = new Reservoir(this);
+	_reservoir.reset(new Reservoir(this));
 
 	// init manipulation count for determination of the feed rate
 	_feedrate.numMolecules.inserted.local = 0;
@@ -324,7 +323,7 @@ MettDeamon::MettDeamon() :
 	// random numbers
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	int nRank = domainDecomp.getRank();
-	_rnd = new Random(8624+nRank);
+	_rnd.reset(new Random(8624+nRank));
 }
 
 MettDeamon::~MettDeamon()
@@ -1523,6 +1522,7 @@ Reservoir::Reservoir(MettDeamon* parent) :
 	_filepath.data = _filepath.header = "unknown";
 
 	// allocate BinQueue
+//	_binQueue.reset(new BinQueue());
 	_binQueue = new BinQueue();
 
 	// init identity change vector
@@ -1532,6 +1532,12 @@ Reservoir::Reservoir(MettDeamon* parent) :
 
 	// init density vector
 	_density.resize(nNumComponents+1);  // 0: total density
+}
+
+Reservoir::~Reservoir()
+{
+	delete _moleculeDataReader;
+	delete _binQueue;
 }
 
 void Reservoir::readXML(XMLfileUnits& xmlconfig)
