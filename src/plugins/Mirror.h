@@ -4,11 +4,17 @@
 #define MIRROR_H_
 
 #include "PluginBase.h"
+#include "utils/Random.h"
 
 #include <string>
 #include <map>
 #include <list>
 #include <cstdint>
+#include <vector>
+#include <memory>
+#include <utility>
+
+#include "utils/CommVar.h"
 
 enum MirrorDirection : uint16_t {
 	MD_LEFT_MIRROR = 0,
@@ -20,7 +26,8 @@ enum MirrorType : uint16_t {
     MT_REFLECT = 1,
     MT_FORCE_CONSTANT = 2,
 	MT_ZERO_GRADIENT = 3,
-	MT_NORMDISTR_MB = 4
+	MT_NORMDISTR_MB = 4,
+	MT_MELAND_2004 = 5,  // Algorithm proposed by Meland et al., Phys. Fluids, Vol. 16, No. 2 (2004)
 };
 
 class ParticleContainer;
@@ -32,7 +39,7 @@ class Mirror : public PluginBase
 public:
 	// constructor and destructor
 	Mirror();
-	~Mirror();
+	~Mirror() override = default;
 
 	/** @brief Read in XML configuration for Mirror and all its included objects.
 	 *
@@ -74,6 +81,10 @@ public:
 
 	std::string getPluginName() override {return std::string("Mirror");}
 	static PluginBase* createInstance() {return new Mirror();}
+
+	// Getters, Setters
+	uint64_t getReflectedParticlesCountLocal(const uint16_t& componentid){return _particleManipCount.reflected.local.at(componentid);}
+	uint64_t getDeletedParticlesCountLocal(const uint16_t& componentid) {return _particleManipCount.deleted.local.at(componentid);}
 
 private:
 		void VelocityChange(ParticleContainer* particleContainer);
@@ -119,6 +130,18 @@ private:
 		uint32_t numvals;
 		std::list<std::array<double, 3> > list;
 	} _veloList;
+
+	std::unique_ptr<Random> _rnd;
+
+	struct MelandParams {
+		bool use_probability_factor;
+		double velo_target;
+	} _melandParams;
+
+	struct ParticleManipCount {
+		CommVar<std::vector<uint64_t> > reflected;
+		CommVar<std::vector<uint64_t> > deleted;
+	} _particleManipCount;
 };
 
 #endif /*MIRROR_H_*/
