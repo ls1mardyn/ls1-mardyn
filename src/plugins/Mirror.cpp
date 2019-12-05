@@ -135,11 +135,12 @@ void Mirror::readXML(XMLfileUnits& xmlconfig) {
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("meland/use_probability", _melandParams.use_probability_factor);
 		bRet = bRet && xmlconfig.getNodeValue("meland/velo_target", _melandParams.velo_target);
-	}
-	else
-	{
-		global_log->error() << "Parameters for Meland2004 Mirror provided in config-file *.xml corrupted/incomplete. Prgram exit ..." << endl;
-		Simulation::exit(-2004);
+
+		if(not bRet)
+		{
+			global_log->error() << "Parameters for Meland2004 Mirror provided in config-file *.xml corrupted/incomplete. Prgram exit ..." << endl;
+			Simulation::exit(-2004);
+		}
 	}
 }
 
@@ -215,6 +216,12 @@ void Mirror::beforeForces(
 				// ensure that we do not iterate over things outside of the container.
 				regionHighCorner[1] = std::min(_yPos, regionHighCorner[1]);
 			}
+
+			// reset local values
+			for(auto& it:_particleManipCount.reflected.local)
+				it = 0;
+			for(auto& it:_particleManipCount.deleted.local)
+				it = 0;
 
 			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
 			for(auto it = begin; it.isValid(); ++it) {
