@@ -248,6 +248,11 @@ public:
 	void setParamsNormMB(const ParamsNormMB& params);
 	void getFpathNormMB(std::string& fpath) {fpath = _feedrate.release_velo.normMB.fpath;}
 
+	// connection to other general plugins
+	void setActualFeedrate(const double& feed_actual) {_feedrate.feed.actual = feed_actual;
+	global_log->info() << "Set new feedrate from MDFRD: vf=" << feed_actual << std::endl;}
+	double getInvDensityArea() {return _dInvDensityArea;}
+
 private:
 	void findMaxMoleculeID(DomainDecompBase* domainDecomp);
 	void writeRestartfile();

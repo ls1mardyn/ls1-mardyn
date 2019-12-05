@@ -13,7 +13,8 @@
 using namespace std;
 using Log::global_log;
 
-Mirror::Mirror()
+Mirror::Mirror() :
+	_pluginID(100)
 {
 	// random numbers
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
@@ -38,7 +39,12 @@ void Mirror::init(ParticleContainer* particleContainer, DomainDecompBase* domain
 	global_log->debug() << "Mirror enabled at position: " << _yPos << std::endl;
 }
 
-void Mirror::readXML(XMLfileUnits& xmlconfig) {
+void Mirror::readXML(XMLfileUnits& xmlconfig)
+{
+	_pluginID = 100;
+	xmlconfig.getNodeValue("pluginID", _pluginID);
+	global_log->info() << "Mirror: pluginID = " << _pluginID << endl;
+
 	_yPos = 0.;
 	xmlconfig.getNodeValue("yPos", _yPos);
 	global_log->info() << "Mirror: y position = " << _yPos << endl;

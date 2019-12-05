@@ -85,12 +85,15 @@ public:
 	// Getters, Setters
 	uint64_t getReflectedParticlesCountLocal(const uint16_t& componentid){return _particleManipCount.reflected.local.at(componentid);}
 	uint64_t getDeletedParticlesCountLocal(const uint16_t& componentid) {return _particleManipCount.deleted.local.at(componentid);}
+	uint32_t getPluginID() {return _pluginID;}
+	void setPluginID(const uint32_t& id) {_pluginID = id;}
 
 private:
 		void VelocityChange(ParticleContainer* particleContainer);
 		void readNormDistr();
 
 private:
+	uint32_t _pluginID;
 	double _yPos;
 	double _forceConstant;
 	MirrorDirection _direction;

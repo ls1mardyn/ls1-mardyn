@@ -1327,6 +1327,10 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	create_rand_vec_ones(numParticlesCurrentSlab.local, percent, v);
 	int64_t index = -1;
 
+	// assign particle IDs to reservoir slab that are not in use
+
+//	this->SetReservoirSlabParticleIDs()
+
 	for(auto mi : currentReservoirSlab)
 	{
 		// reduce reservoir density to percentage
