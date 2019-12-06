@@ -21,6 +21,7 @@ Component::Component(unsigned int id) {
 	_E_trans=0.;
 	_lookUpID = 0;
 	_E_rot=0.;
+	_isStockmayer = false;
 
 	_ljcenters = vector<LJcenter> ();
 	_charges = vector<Charge> ();
@@ -63,12 +64,17 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			dipoleSite.readXML(xmlconfig);
 			addDipole(dipoleSite);
 		} else
-		if ( siteType == "Stockmayer" ) {		
-			_rot_dof = 3;
-			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [1 1 1]" << endl;
-			for (unsigned short d = 0; d < 3; ++d) {
-				_Ipa[d] = 1.0;
-			}
+		if ( siteType == "Stockmayer" ) {	
+			
+			_isStockmayer = true;
+			_rot_dof = 2;
+			
+			_Ipa[0] = 1.0;
+			_Ipa[1] = 1.0;
+			_Ipa[2] = 0.0;
+
+			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = ["<< _Ipa[0]<< " " << _Ipa[1] << " " << _Ipa[2] << "]. Dipole direction vector of the Stockmayer fluid should be [0 0 1]." << endl;
+			
 		} else
 		if ( siteType == "Quadrupole" ) {
 			Quadrupole quadrupoleSite;
@@ -134,23 +140,28 @@ void Component::updateMassInertia(Site& site) {
 	_m += site.m();
 	// assume the input is already transformed to the principal axes system
 	// (and therefore the origin is the center of mass)
-//	_I[0] += m * (y * y + z * z);
-	_I[0] += site.m() * (site.ry() * site.ry() + site.rz() * site.rz());
-//	_I[1] += m * (x * x + z * z);
-	_I[1] += site.m() * (site.rx() * site.rx() + site.rz() * site.rz());
-//	_I[2] += m * (x * x + y * y);
-	_I[2] += site.m() * (site.rx() * site.rx() + site.ry() * site.ry());
-//	_I[3] -= m * x * y;
-	_I[3] -= site.m() * site.rx() * site.ry();
-//	_I[4] -= m * x * z;
-	_I[4] -= site.m() * site.rx() * site.rz();
-//	_I[5] -= m * y * z;
-	_I[5] -= site.m() * site.ry() * site.rz();
+	
+	if ( not _isStockmayer){ //if the component is a Stockmayer fluid, the moments of inertia are fixed at [1 1 0]
+	//	_I[0] += m * (y * y + z * z);
+		_I[0] += site.m() * (site.ry() * site.ry() + site.rz() * site.rz());
+	//	_I[1] += m * (x * x + z * z);
+		_I[1] += site.m() * (site.rx() * site.rx() + site.rz() * site.rz());
+	//	_I[2] += m * (x * x + y * y);
+		_I[2] += site.m() * (site.rx() * site.rx() + site.ry() * site.ry());
+	//	_I[3] -= m * x * y;
+		_I[3] -= site.m() * site.rx() * site.ry();
+	//	_I[4] -= m * x * z;
+		_I[4] -= site.m() * site.rx() * site.rz();
+	//	_I[5] -= m * y * z;
+		_I[5] -= site.m() * site.ry() * site.rz();
 
-	_rot_dof = 3;
-	for (unsigned short d = 0; d < 3; ++d) {
-		_Ipa[d] = _I[d];
-		if (_Ipa[d] == 0.) --_rot_dof;
+		_rot_dof = 3;
+	
+	
+		for (unsigned short d = 0; d < 3; ++d) {
+			_Ipa[d] = _I[d];
+			if (_Ipa[d] == 0.) --_rot_dof;
+		}
 	}
 }
 
