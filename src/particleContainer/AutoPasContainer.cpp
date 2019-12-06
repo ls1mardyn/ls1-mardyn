@@ -200,7 +200,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 			auto components = global_simulation->getEnsemble()->getComponents();
 			for (auto &c : *components) {
 				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
-												   c.ljcenter(0).m());
+												   c.ljcenter(0).m(), false);
 			}
 		}
 
