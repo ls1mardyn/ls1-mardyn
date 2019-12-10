@@ -204,7 +204,7 @@ public:
 	virtual double getSkin() const {return 0.;}
 
     /* TODO: Have a look on this */
-	virtual void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) = 0;
+	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
 
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;

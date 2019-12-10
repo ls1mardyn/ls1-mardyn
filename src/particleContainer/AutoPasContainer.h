@@ -15,7 +15,7 @@
  */
 class AutoPasContainer : public ParticleContainer {
 public:
-	AutoPasContainer();
+	AutoPasContainer(double cutoff);
 
 	~AutoPasContainer() override {
 #ifdef ENABLE_MPI
@@ -65,7 +65,7 @@ public:
 
 	double getSkin() const override;
 
-	void deleteMolecule(Molecule &molecule, const bool &rebuildCaches) override;
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool &rebuildCaches) override;
 
 	double getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1, CellProcessor &cellProcessor) override;
 
@@ -110,17 +110,23 @@ private:
 	unsigned int _verletRebuildFrequency{1u};
 	unsigned int _tuningFrequency{1000u};
 	unsigned int _tuningSamples{3u};
+	unsigned int _maxEvidence{10};
 	using CellType = autopas::FullParticleCell<Molecule>;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 
 	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
+	autopas::TuningStrategyOption _tuningStrategyOption;
+	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::set<autopas::Newton3Option> _newton3Choices;
 
 	std::vector<Molecule> _invalidParticles;
 	bool _hasInvalidParticles{false};
+
+	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;
+
 #ifdef ENABLE_MPI
 	std::ofstream _logFile;
 #endif
