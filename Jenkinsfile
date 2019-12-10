@@ -186,20 +186,6 @@ pipeline {
               notValues 'AVX2'
             }
             axis {
-              name 'PRECISION'
-              notValues 'DOUBLE'
-            }
-          }
-          exclude {
-            axis {
-              name 'VECTORIZE_CODE'
-              notValues 'AVX2'
-            }
-            axis {
-              name 'PRECISION'
-              notValues 'DOUBLE'
-            }
-            axis {
               name 'TARGET'
               notValues 'RELEASE'
             }
