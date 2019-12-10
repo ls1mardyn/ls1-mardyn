@@ -1303,33 +1303,129 @@ void MettDeamon::InitTransitionPlane(Domain* domain)
 		_dTransitionPlanePosY = dBoxY - 2*_reservoir->getBinWidth();
 }
 
+void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		CommVar<std::vector<uint64_t> >& particleIDs_available, const CommVar<uint64_t>& numParticleIDs)
+{
+	int nRank = domainDecomp->getRank();
+	int numProcs = domainDecomp->getNumProcs();
+	Domain* domain = global_simulation->getDomain();
+	CommVar<std::vector<uint32_t> > particleIDs_assigned;
+	CommVar<uint64_t> maxID;
+	CommVar<uint64_t> numMolecules;
+	domain->updateMaxMoleculeID(particleContainer, domainDecomp);
+	maxID = domain->getMaxMoleculeID();
+	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
+	numMolecules.global = domain->getglobalNumMolecules();
+	cout << "[" << nRank << "]: maxID.local, maxID.global=" << maxID.local << ", " << maxID.global << endl;
+
+	uint64_t numMoleculesAfterInsertion = numMolecules.global + numParticleIDs.global;
+	uint64_t numIDs;
+	if(maxID.global >= numMoleculesAfterInsertion)
+		numIDs = maxID.global + 1;
+	else
+		numIDs = numMoleculesAfterInsertion + 1;
+#ifndef NDEBUG
+	cout << "[" << nRank << "]: numMoleculesAfterInsertion, numMolecules.global=" << numMoleculesAfterInsertion << ", " << numMolecules.global << endl;
+#endif
+
+	std::vector<uint32_t>& vl = particleIDs_assigned.local;
+	vl.resize(numIDs); std::fill(vl.begin(), vl.end(), 0);
+	std::vector<uint32_t>& vg = particleIDs_assigned.global;
+	vg.resize(numIDs); std::fill(vg.begin(), vg.end(), 0);
+
+	// mark 0:available | 1:assigned particle IDs, 0:
+	for(auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
+		uint64_t pid = pit->getID();
+		vl.at(pid) = 1;
+	}
+#ifdef ENABLE_MPI
+	MPI_Allreduce(vl.data(), vg.data(), vg.size(), MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+#else
+	for(auto ii=0; ii<vg.size(); ++ii)
+		vg.at(ii) = vl.at(ii);
+#endif
+
+#ifndef NDEBUG
+	cout << "[" << nRank << "]: assigned.local, assigned.global=" << particleIDs_assigned.local.size() << ", " << particleIDs_assigned.global.size() << endl;
+#endif
+
+	// check for available particle IDs
+	for(uint64_t pid=1; pid<vg.size() && particleIDs_available.global.size()<numParticleIDs.global; ++pid) {
+		if(0 == vg.at(pid))
+			particleIDs_available.global.push_back(pid);
+	}
+	particleIDs_available.local.resize(numParticleIDs.local);
+#ifndef NDEBUG
+	cout << "[" << nRank << "]: avail.local, avail.global=" << particleIDs_available.local.size() << ", " << particleIDs_available.global.size() << endl;
+#endif
+
+#ifdef ENABLE_MPI
+	// gather displacement (displs)
+	std::vector<int32_t> counts, displs;
+	counts.resize(numProcs); displs.resize(numProcs);
+	{
+	int32_t sendbuf = (int32_t)(particleIDs_available.local.size() );
+	int32_t* recvbuf = NULL;
+	if(0 == nRank)
+		recvbuf = counts.data();
+	MPI_Gather(&sendbuf, 1, MPI_INT, recvbuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	}
+
+	// scatter available particle IDs
+	{
+	displs.at(0) = 0;
+	for (auto ri=1; ri<numProcs; ++ri)
+		displs.at(ri) = displs.at(ri-1) + counts.at(ri-1);
+
+	uint64_t* sendbuf = NULL;
+	if(0 == nRank)
+		sendbuf = particleIDs_available.global.data();
+	MPI_Scatterv(sendbuf,
+			counts.data(),
+			displs.data(),
+			MPI_UNSIGNED_LONG,
+			particleIDs_available.local.data(),
+			particleIDs_available.local.size(),
+			MPI_UNSIGNED_LONG,
+			0,
+			MPI_COMM_WORLD);
+	}
+#else
+	particleIDs_available.local = particleIDs_available.global;
+#endif
+}
+
 void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 {
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+	int nRank = domainDecomp.getRank();
+	int numProcs = domainDecomp.getNumProcs();
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
 #ifndef NDEBUG
-	cout << "[" << domainDecomp.getRank() << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
+	cout << "[" << nRank << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
 #endif
-
-	int ownRank = global_simulation->domainDecomposition().getRank();
-//	if(1 != ownRank)
-//		return;
-//	cout << "[" << ownRank << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
-
-	CommVar<uint64_t> numAdded;
-	numAdded.local = 0;
 
 	CommVar<uint64_t> numParticlesCurrentSlab;
 	numParticlesCurrentSlab.local = currentReservoirSlab.size();
+	// calc global values
+	domainDecomp.collCommInit(1);
+	domainDecomp.collCommAppendUnsLong(numParticlesCurrentSlab.local);
+	domainDecomp.collCommAllreduceSum();
+	numParticlesCurrentSlab.global = domainDecomp.collCommGetUnsLong();
+	domainDecomp.collCommFinalize();
+
+	// get available particle IDs
+	CommVar<std::vector<uint64_t> > particleIDs_available;
+	this->getAvailableParticleIDs(particleContainer, &domainDecomp, particleIDs_available, numParticlesCurrentSlab);
+
+	// reduce reservoir density to percentage
+	CommVar<uint64_t> numAdded;
+	numAdded.local = 0;
 	double percent = _reservoir->GetInsPercent();
 	std::vector<int> v;
 	create_rand_vec_ones(numParticlesCurrentSlab.local, percent, v);
 	int64_t index = -1;
-
-	// assign particle IDs to reservoir slab that are not in use
-
-//	this->SetReservoirSlabParticleIDs()
 
 	for(auto mi : currentReservoirSlab)
 	{
@@ -1352,7 +1448,8 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 		else
 			compNew = &(ptrComps->at(3));
 
-		mi.setid(_nMaxMoleculeID.global + id);
+//		mi.setid(_nMaxMoleculeID.global + id);
+		mi.setid(particleIDs_available.local.at(index) );
 		mi.setComponent(compNew);
 		mi.setr(1, mi.r(1) + _feedrate.feed.sum - _reservoir->getBinWidth() );
 		particleContainer->addParticle(mi);
@@ -1360,19 +1457,17 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	}
 	_feedrate.feed.sum -= _reservoir->getBinWidth();  // reset feed sum
 	_reservoir->nextBin(_nMaxMoleculeID.global);
-	// cout << "[" << ownRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << endl;
+	// cout << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << endl;
 
 	// calc global values
-	domainDecomp.collCommInit(2);
+	domainDecomp.collCommInit(1);
 	domainDecomp.collCommAppendUnsLong(numAdded.local);
-	domainDecomp.collCommAppendUnsLong(numParticlesCurrentSlab.local);
 	domainDecomp.collCommAllreduceSum();
 	numAdded.global = domainDecomp.collCommGetUnsLong();
-	numParticlesCurrentSlab.global = domainDecomp.collCommGetUnsLong();
 	domainDecomp.collCommFinalize();
 
-	if(0 == ownRank)
-		cout << "[" << ownRank << "]: ADDED " << numAdded.global << "/" << numParticlesCurrentSlab.global << " particles (" << numAdded.global/static_cast<float>(numParticlesCurrentSlab.global)*100 << ")%." << endl;
+	if(0 == nRank)
+		cout << "[" << nRank << "]: ADDED " << numAdded.global << "/" << numParticlesCurrentSlab.global << " particles (" << numAdded.global/static_cast<float>(numParticlesCurrentSlab.global)*100 << ")%." << endl;
 }
 
 void MettDeamon::initRestart()

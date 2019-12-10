@@ -274,6 +274,8 @@ private:
 	void resetVelocity(Molecule* mol);
 
 	void InitTransitionPlane(Domain* domain);
+	void getAvailableParticleIDs(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			CommVar<std::vector<uint64_t> >& particleIDs_available, const CommVar<uint64_t>& numParticleIDs);
 	void InsertReservoirSlab(ParticleContainer* particleContainer);
 	void initRestart();
 	
