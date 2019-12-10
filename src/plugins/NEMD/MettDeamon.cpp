@@ -689,7 +689,7 @@ void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 		uint32_t cid = pit->componentid();
 
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid);
-		if(bIsTrappedMolecule || cid==2)  // tube --> TODO: flexi this
+		if(bIsTrappedMolecule)
 		{
 			//savevelo
 			std::array<double,10> pos;
@@ -830,7 +830,7 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 void MettDeamon::resetPositionAndOrientation(Molecule* mol, const double& dBoxY)
 {
 	uint16_t cid_zb = mol->componentid();
-	if(not this->IsTrappedMolecule(cid_zb) and cid_zb != 2)  // tube --> TODO: flexi this
+	if(not this->IsTrappedMolecule(cid_zb) )
 		return;
 
 	std::map<unsigned long, std::array<double,10> >::iterator it;
@@ -899,10 +899,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 		// release trapped molecule
 		bool bDeleteParticle = false;
-
 		this->releaseTrappedMolecule( &(*pit), bDeleteParticle );
-		if (not IsBehindTransitionPlane and cid_ub == 3)  // TODO: flexi this
-			bDeleteParticle = true;
 
 		if(bDeleteParticle)
 		{
