@@ -178,10 +178,6 @@ pipeline {
             name 'PRECISION'
             values 'SINGLE', 'DOUBLE', 'MIXED'
           }
-          axis {
-            name 'REDUCED_MEMORY_MODE'
-            values '0', '1'
-          }
         }
         excludes {
           exclude {
