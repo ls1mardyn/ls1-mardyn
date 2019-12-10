@@ -160,59 +160,59 @@ pipeline {
         axes {
           axis {
             name 'VECTORIZE_CODE'
-            values "SSE", "NOVEC", "AVX", "AVX2", "KNL_MASK", "KNL_G_S"
+            values "SSE", "NOVEC", "AVX", "AVX2" //, "KNL_MASK", "KNL_G_S"
           }
           axis {
             name 'TARGET'
             values 'DEBUG', 'RELEASE'
           }
-          // axis {
-          //   name 'OPENMP'
-          //   values '0', '1'
-          // }
-          // axis {
-          //   name 'PARTYPE'
-          //   values 'PAR', 'SEQ'
-          // }
-          // axis {
-          //   name 'PRECISION'
-          //   values 'SINGLE', 'DOUBLE', 'MIXED'
-          // }
+          axis {
+            name 'OPENMP'
+            values '0', '1'
+          }
+          axis {
+            name 'PARTYPE'
+            values 'PAR', 'SEQ'
+          }
+          axis {
+            name 'PRECISION'
+            values 'SINGLE', 'DOUBLE', 'MIXED'
+          }
         }
-        // excludes {
-        //   exclude {
-        //     axis {
-        //       name 'VECTORIZE_CODE'
-        //       notValues 'AVX2'
-        //     }
-        //     axis {
-        //       name 'PRECISION'
-        //       notValues 'DOUBLE'
-        //     }
-        //   }
-        //   exclude {
-        //     axis {
-        //       name 'VECTORIZE_CODE'
-        //       notValues 'AVX2'
-        //     }
-        //     axis {
-        //       name 'PRECISION'
-        //       notValues 'DOUBLE'
-        //     }
-        //     axis {
-        //       name 'TARGET'
-        //       notValues 'RELEASE'
-        //     }
-        //     axis {
-        //       name 'OPENMP'
-        //       notValues '1'
-        //     }
-        //     axis {
-        //       name 'PARTYPE'
-        //       notValues 'PAR'
-        //     }
-        //   }
-        // }
+        excludes {
+          exclude {
+            axis {
+              name 'VECTORIZE_CODE'
+              notValues 'AVX2'
+            }
+            axis {
+              name 'PRECISION'
+              notValues 'DOUBLE'
+            }
+          }
+          exclude {
+            axis {
+              name 'VECTORIZE_CODE'
+              notValues 'AVX2'
+            }
+            axis {
+              name 'PRECISION'
+              notValues 'DOUBLE'
+            }
+            axis {
+              name 'TARGET'
+              notValues 'RELEASE'
+            }
+            axis {
+              name 'OPENMP'
+              notValues '1'
+            }
+            axis {
+              name 'PARTYPE'
+              notValues 'PAR'
+            }
+          }
+        }
         stages {
           stage('Build') {
             agent { label VECTORIZE_CODE }
