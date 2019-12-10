@@ -965,6 +965,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 	}  // loop over molecules
 
+	// Nothing more to do in case of empty reservoir
+	if(RRM_EMPTY == _reservoir->getReadMethod() )
+		return;
+
 	// DEBUG
 	if(FRM_CONSTANT == _nFeedRateMethod)
 		_feedrate.feed.actual = _feedrate.feed.target;
@@ -999,6 +1003,10 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 }
 void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition)
 {
+	// Nothing to do in case of empty reservoir
+	if(RRM_EMPTY == _reservoir->getReadMethod() )
+		return;
+
 	unsigned long nNumMoleculesLocal = 0;
 	unsigned long nNumMoleculesGlobal = 0;
 
@@ -1635,7 +1643,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 	_dInsPercent = 1.0;
 	xmlconfig.getNodeValue("ins_percent", _dInsPercent);
 	_nReadMethod = RRM_UNKNOWN;
-	if(bRet1 and not bRet2)
+	if(bRet1)
 	{
 		if("ASCII" == strType) {
 			_nReadMethod = RRM_READ_FROM_FILE;
@@ -1647,12 +1655,15 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 			xmlconfig.getNodeValue("file/header", _filepath.header);
 			xmlconfig.getNodeValue("file/data", _filepath.data);
 		}
+		else if("empty" == strType) {
+			_nReadMethod = RRM_EMPTY;
+		}
 		else {
 			global_log->error() << "Wrong file type='" << strType << "' specified. Programm exit ..." << endl;
 			Simulation::exit(-1);
 		}
 	}
-	else if(not bRet1 and bRet2)
+	else if(not bRet1 and (RRM_EMPTY != _nReadMethod) )
 		_nReadMethod = RRM_READ_FROM_MEMORY;
 	else
 		_nReadMethod = RRM_AMBIGUOUS;
@@ -1686,6 +1697,7 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
 	switch(_nReadMethod)
 	{
 	case RRM_READ_FROM_MEMORY:
+	case RRM_EMPTY:
 		this->readFromMemory(domainDecomp);
 		break;
 	case RRM_READ_FROM_FILE:
@@ -1795,6 +1807,9 @@ void Reservoir::readFromMemory(DomainDecompBase* domainDecomp)
 	_box.length.at(0) = domain->getGlobalLength(0);
 	_box.length.at(1) = _dReadWidthY;
 	_box.length.at(2) = domain->getGlobalLength(2);
+
+	if(RRM_EMPTY == _nReadMethod)
+		return;
 
 	for(auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{

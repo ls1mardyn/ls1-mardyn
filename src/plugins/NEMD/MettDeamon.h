@@ -48,6 +48,7 @@ enum ReadReservoirMethods : uint8_t
 	RRM_READ_FROM_FILE_BINARY = 2,
 	RRM_READ_FROM_MEMORY = 3,
 	RRM_AMBIGUOUS = 4,
+	RRM_EMPTY = 5,
 };
 
 enum MovingDirections : uint8_t
@@ -423,6 +424,7 @@ public:
 	double getBinWidth() {return _dBinWidth;}
 	double GetInsPercent() {return _dInsPercent;}
 	void setInsPercent(const double& dVal) {_dInsPercent = dVal;}
+	uint8_t getReadMethod() {return _nReadMethod;}
 
 	// queue methods
 	uint32_t getActualBinIndex();
