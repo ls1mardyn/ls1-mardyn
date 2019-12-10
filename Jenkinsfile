@@ -183,6 +183,40 @@ pipeline {
             values '0', '1'
           }
         }
+        excludes {
+          exclude {
+            axis {
+              name 'VECTORIZE_CODE'
+              notValues 'AVX2'
+            }
+            axis {
+              name 'PRECISION'
+              values 'DOUBLE'
+            }
+          }
+          exclude {
+            axis {
+              name 'VECTORIZE_CODE'
+              notValues 'AVX2'
+            }
+            axis {
+              name 'PRECISION'
+              notValues 'DOUBLE'
+            }
+            axis {
+              name 'TARGET'
+              notValues 'RELEASE'
+            }
+            axis {
+              name 'OPENMP'
+              notValues '1'
+            }
+            axis {
+              name 'PARTYPE'
+              notValues 'PAR'
+            }
+          }
+        }
         stages {
           stage('Build') {
             agent { label VECTORIZE_CODE }
