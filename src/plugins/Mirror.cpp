@@ -236,14 +236,12 @@ void Mirror::beforeForces(
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
 					continue;
 				double vy_reflected = 2*_melandParams.velo_target - vy;
-				cout << "id="<<it->getID()<<", vy="<<vy<<", vy_reflected="<<vy_reflected;
 				if ( (_direction == MD_RIGHT_MIRROR && vy_reflected < 0.) || (_direction == MD_LEFT_MIRROR && vy_reflected > 0.) ) {
 					float frnd = 0, pbf = 1.;  // pbf: probability factor, frnd (float): random number [0..1)
 					if (true == _melandParams.use_probability_factor) {
 						pbf = abs(vy_reflected) / abs(vy);
 						frnd = _rnd->rnd();
 					}
-					cout << ", pbf="<<pbf<<", frnd="<<frnd;
 					// reflect particles and delete all not reflected
 					if(frnd < pbf) {
 						it->setv(1, vy_reflected);
