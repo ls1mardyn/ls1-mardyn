@@ -34,6 +34,7 @@ MmspdBinWriter  | visualization, todo | todo
 MPI_IOCheckpointWriter  | todo | todo
 MPICheckpointWriter | todo | todo
 ODF | orientation distribution function | Calculates the distribution of mutual orientations between dipolar molecules and writes them into an output. Always use dipolar vector [0 0 1] in the input when using this plugin. Only tested for molecules with exactly one dipole site. Application to other molecules should be possible with minor adjustments and some testing.
+Permittivity | Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids
 PovWriter | visualization?, todo | todo
 RDF | radial distribution function | Calculate and write the radial distribution function to file. Slows down visibly, set sampling frequency > 1. Optional angular resolution of the RDF possible by choosing angular bins > 1
 ResultWriter | print, macroscopic thermodynamic quantities, file | Write macroscopic thermodynamic quantities to file, such as temperature, pressure, BetaTrans, BetaRot, cv, number of molecules and number of cavities (?).

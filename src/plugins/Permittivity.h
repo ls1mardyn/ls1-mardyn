@@ -5,7 +5,7 @@
  *      Author: Joshua Marx
  */
  
- // DESCRIPTION: Samples the relative permittivity for pure Stockmayer fluids or mixtures thereof
+ // DESCRIPTION: Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids
  
 #ifndef SRC_PLUGINS_PERMITTIVITY_H_
 #define SRC_PLUGINS_PERMITTIVITY_H_
