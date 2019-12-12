@@ -45,6 +45,7 @@
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
 #include "plugins/NEMD/RegionSampling.h"
+#include "plugins/Permittivity.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
@@ -85,6 +86,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MmspdBinWriter);
 	REGISTER_PLUGIN(MmspdWriter);
 	REGISTER_PLUGIN(ODF);
+	REGISTER_PLUGIN(Permittivity);
 	REGISTER_PLUGIN(PovWriter);
 	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(RegionSampling);
