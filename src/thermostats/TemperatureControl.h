@@ -75,8 +75,6 @@ private:
 	unsigned int _nTargetComponentID;
 	unsigned short _nNumThermostatedTransDirections;
 
-	unsigned short _nRegionID;
-
 	Accumulator* _accumulator;
 
 	std::string _strFilenamePrefixBetaLog;

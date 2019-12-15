@@ -39,7 +39,6 @@ ControlRegionT::ControlRegionT()
 		_dTemperatureExponent(0.0),
 		_nTargetComponentID(0),
 		_nNumThermostatedTransDirections(0),
-		_nRegionID(0),
 		_accumulator(nullptr),
 		_strFilenamePrefixBetaLog("beta_log"),
 		_nWriteFreqBeta(1000),
