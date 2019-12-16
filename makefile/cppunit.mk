@@ -4,6 +4,12 @@ $(info # Including cppunit.mk!)
 
 CXXFLAGS += -DUNIT_TESTS
 
+ifeq ($(CPPUNIT_DIR),)
+ifneq ($(CPPUNIT_BASE),)
+CPPUNIT_DIR=$(CPPUNIT_BASE)
+endif
+endif
+
 ifneq ($(CPPUNIT_DIR),)
 CPPUNIT_LIB_DIR=$(CPPUNIT_DIR)/lib
 CPPUNIT_INC_DIR=$(CPPUNIT_DIR)/include
