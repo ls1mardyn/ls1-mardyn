@@ -87,28 +87,23 @@ public:
 	void PrepareDataStructures();
 
 	// init
-	void InitPositions(double dInterfaceMidLeft, double dInterfaceMidRight);
+	void InitPositions(const double& dInterfaceMidLeft, const double& dInterfaceMidRight);
 
 	double GetInterfaceMidLeft() {return _dInterfaceMidLeft;}
 	double GetInterfaceMidRight() {return _dInterfaceMidRight;}
 	unsigned int GetUpdateFreq() {return _controlFreqs.update;}
 	unsigned int GetWriteFreqProfiles() {return _controlFreqs.write.profiles;}
 
-	// set update/init method
-	void SetUpdateMethod(const int& nMethod, const unsigned short& nVal1, const unsigned short& nVal2, const unsigned short& nVal3, const double& dVal);
-	void SetInitMethod(const int& nMethod, const double& dVal1, const double& dVal2, std::string strVal, const unsigned long& nVal);
-	int GetInitMethod() {return _nMethodInit;}
-
 	void Init(ParticleContainer* particleContainer);
 	void WriteHeader();
-	void WriteData(unsigned long simstep);
-	void WriteDataProfiles(unsigned long simstep);
+	void WriteData(const uint64_t& simstep);
+	void WriteDataProfiles(const uint64_t& simstep);
 
 	// place method inside loop over molecule container
 	void SampleProfiles(Molecule* mol);
 
 	void UpdatePositionsInit(ParticleContainer* particleContainer);  // call in Simulation::prepare_start()
-	void UpdatePositions(unsigned long simstep);
+	void UpdatePositions(const uint64_t& simstep);
 
 	// SubjectBase methods
 	void registerObserver(ObserverBase* observer) override;
@@ -123,46 +118,42 @@ private:
 	void ResetLocalValues();
 
 	// data structures
-	void InitDataStructurePointers();
-	void AllocateDataStructures();
 	void InitDataStructures();
 
 	// processing profiles
-	void SmoothProfile(double* dData, double* dSmoothData, const unsigned long& nNumVals, const unsigned int& nNeighbourVals);
-	void SmoothProfiles(const unsigned int& nNeighbourVals);
-	void DerivateProfile(double* dDataX, double* dDataY, double* dDerivDataY, const unsigned long& nNumVals, const unsigned int& nNeighbourVals);
-	void DerivateProfiles(const unsigned int& nNeighbourVals);
+	void SmoothProfile(double* dData, double* dSmoothData, const uint64_t& nNumVals, const uint32_t& nNeighbourVals);
+	void SmoothProfiles(const uint32_t& nNeighbourVals);
+	void DerivateProfile(double* dDataX, double* dDataY, double* dDerivDataY, const uint64_t& nNumVals, const uint32_t& nNeighbourVals);
+	void DerivateProfiles(const uint32_t& nNeighbourVals);
 
 
 private:
 	double _dInterfaceMidLeft;
 	double _dInterfaceMidRight;
 
-	unsigned short _nNumComponents;
-	unsigned short _nTargetCompID;
-	unsigned long _nNumValuesScalar;
-	unsigned long* _nOffsets;
+	uint16_t _nNumComponents;
+	uint16_t _nTargetCompID;
+	uint64_t _nNumValuesScalar;
+	std::vector<uint64_t> _nOffsets;
 
-	unsigned long* _nNumMoleculesLocal;
-	unsigned long* _nNumMoleculesGlobal;
-	double* _dMidpointPositions;
-	double* _dForceSumLocal;
-	double* _dForceSumGlobal;
-	double* _dDensityProfile;
-	double* _dDensityProfileSmoothed;
-	double* _dDensityProfileSmoothedDerivation;
-	double* _dForceProfile;
-	double* _dForceProfileSmoothed;
+	CommVar<std::vector<uint64_t> > _nNumMolecules;
+	CommVar<std::vector<uint64_t> > _dForceSum;
+	std::vector<double> _dMidpointPositions;
+	std::vector<double> _dDensityProfile;
+	std::vector<double> _dDensityProfileSmoothed;
+	std::vector<double> _dDensityProfileSmoothedDerivation;
+	std::vector<double> _dForceProfile;
+	std::vector<double> _dForceProfileSmoothed;
 
 	// update method
 	int _nMethod;
 	double _dVaporDensity;
-	unsigned short _nNeighbourValsSmooth;
-	unsigned short _nNeighbourValsDerivate;
+	uint16_t _nNeighbourValsSmooth;
+	uint16_t _nNeighbourValsDerivate;
 
 	int _nMethodInit;
 	std::string _strFilenameInit;
-	unsigned long _nRestartTimestep;
+	uint64_t _nRestartTimestep;
 
 	// write data
 	std::string _strFilename;
