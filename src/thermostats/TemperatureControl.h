@@ -32,21 +32,11 @@ public:
 	~ControlRegionT();
 
 	void readXML(XMLfileUnits& xmlconfig);
-
 	unsigned int GetID(){return _nID;}
 	void VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections);
-
-	double* GetLowerCorner() {return _dLowerCorner;}
-	double* GetUpperCorner() {return _dUpperCorner;}
-	void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal;}
-	void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal;}
-	double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
-	void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
 	void CalcGlobalValues(DomainDecompBase* domainDecomp);
 	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-
 	void ControlTemperature(Molecule* mol);
-
 	void ResetLocalValues();
 
 	// beta log file
@@ -64,7 +54,6 @@ public:
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
 	Accumulator* CreateAccumulatorInstance(std::string strTransDirections);
-
 
 	// observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
 	DistControl* getDistControl();
