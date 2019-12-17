@@ -19,6 +19,7 @@
 #include <fstream>
 #include <sstream>
 #include <limits>
+#include <numeric>
 #include <cmath>
 #include <cstdint>
 #include <algorithm>  // std::fill
@@ -128,6 +129,55 @@ void SampleRegion::showComponentSpecificParamsVDF()
 
 void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 {
+	Domain* domain = global_simulation->getDomain();
+	double lc[3];
+	double uc[3];
+	std::string strVal[3];
+	std::string strControlType;
+
+	// coordinates
+	xmlconfig.getNodeValue("coords/lcx", lc[0]);
+	xmlconfig.getNodeValue("coords/lcy", lc[1]);
+	xmlconfig.getNodeValue("coords/lcz", lc[2]);
+	xmlconfig.getNodeValue("coords/ucx", strVal[0]);
+	xmlconfig.getNodeValue("coords/ucy", strVal[1]);
+	xmlconfig.getNodeValue("coords/ucz", strVal[2]);
+	// read upper corner
+	for(uint8_t d=0; d<3; ++d)
+		uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str() );
+
+	global_log->info() << "RegionSampling->region["<<this->GetID()<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << std::endl;
+	global_log->info() << "RegionSampling->region["<<this->GetID()<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << std::endl;
+
+	for(uint8_t d=0; d<3; ++d) {
+		_dLowerCorner[d] = lc[d];
+		_dUpperCorner[d] = uc[d];
+	}
+
+	// observer mechanism
+	std::vector<uint32_t> refCoordsID(6, 0);
+	xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID.at(0) );
+	xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID.at(1) );
+	xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID.at(2) );
+	xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID.at(3) );
+	xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4) );
+	xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5) );
+
+	bool bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0) ) > 0;
+	if(true == bIsObserver)
+	{
+		this->PrepareAsObserver(refCoordsID);
+
+		DistControl* distControl = this->getDistControl();
+		if(distControl != nullptr)
+			distControl->registerObserver(this);
+		else
+		{
+			global_log->error() << "RegionSampling->region["<<this->GetID()<<"]: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+
 	// sampling modules
 	uint32_t nSamplingModuleID = 0;
 	uint32_t numSamplingModules = 0;
@@ -1881,6 +1931,19 @@ void SampleRegion::updateSlabParameters()
 	}
 }
 
+DistControl* SampleRegion::getDistControl()
+{
+	DistControl* distControl = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			distControl = dynamic_cast<DistControl*>(pit);
+		}
+	}
+	return distControl;
+}
+
 // class RegionSampling
 
 RegionSampling::RegionSampling()
@@ -1913,61 +1976,14 @@ void RegionSampling::readXML(XMLfileUnits& xmlconfig)
 	XMLfile::Query::const_iterator outputRegionIter;
 	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 	{
+		std::vector<double> lc(3, 0.);
+		std::vector<double> uc(3, 0.);
+
 		xmlconfig.changecurrentnode( outputRegionIter );
-		double lc[3];
-		double uc[3];
-		std::string strVal[3];
-		std::string strControlType;
-
-		// coordinates
-		xmlconfig.getNodeValue("coords/lcx", lc[0]);
-		xmlconfig.getNodeValue("coords/lcy", lc[1]);
-		xmlconfig.getNodeValue("coords/lcz", lc[2]);
-		xmlconfig.getNodeValue("coords/ucx", strVal[0]);
-		xmlconfig.getNodeValue("coords/ucy", strVal[1]);
-		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
-		// read upper corner
-		for(uint8_t d=0; d<3; ++d)
-			uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str() );
-
-		global_log->info() << "RegionSampling->region["<<nRegID<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << endl;
-		global_log->info() << "RegionSampling->region["<<nRegID<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
-
-		// add regions
-		SampleRegion* region = new SampleRegion(this, lc, uc);
-		this->addRegion(region);
-
-		// observer mechanism
-		uint32_t refCoordsID[6] = {0, 0, 0, 0, 0, 0};
-		xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID[0]);
-		xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID[1]);
-		xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID[2]);
-		xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID[3]);
-		xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID[4]);
-		xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID[5]);
-
-		bool bIsObserver = (refCoordsID[0]+refCoordsID[1]+refCoordsID[2]+refCoordsID[3]+refCoordsID[4]+refCoordsID[5]) > 0;
-
-		if(bIsObserver)
-		{
-			region->PrepareAsObserver(refCoordsID);
-			global_log->warning() << "Registration of Observer by plugin DistControl not possible yet." << endl;
-			/*
-			 * TODO: Find solution for registering Observer
-			 *
-			if(global_simulation->GetDistControl() != nullptr)
-				global_simulation->GetDistControl()->registerObserver(region);
-			else
-			{
-				global_log->error() << "RegionSampling->region["<<region->GetID()<<"]: Initialization of feature DistControl is needed before! Program exit..." << endl;
-				exit(-1);
-			}
-			*/
-		}
-
+		SampleRegion* region = new SampleRegion(this, lc.data(), uc.data() );
 		region->readXML(xmlconfig);
+		this->addRegion(region);
 		nRegID++;
-
 	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 }
 

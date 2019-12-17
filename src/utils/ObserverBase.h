@@ -8,11 +8,12 @@
 #ifndef OBSERVERBASE_H_
 #define OBSERVERBASE_H_
 
+class SubjectBase;
 class ObserverBase
 {
 public:
 	virtual ~ObserverBase() {}
-	virtual void set(double dInterfaceMidLeft, double dInterfaceMidRight) = 0;
+	virtual void update(SubjectBase* subject) = 0;
 };
 
 class SubjectBase
@@ -20,7 +21,7 @@ class SubjectBase
 public:
 	virtual ~SubjectBase() {}
 	virtual void registerObserver(ObserverBase* observer) = 0;
-	virtual void deregisterObserver(ObserverBase* observer) = 0;
+	virtual void unregisterObserver(ObserverBase* observer) = 0;
 	virtual void informObserver() = 0;
 };
 

@@ -42,6 +42,7 @@ struct ComponentSpecificParamsVDF
 	std::vector<double> dDiscreteVelocityValues;
 };
 
+class DistControl;
 class XMLfileUnits;
 class Domain;
 class DomainDecompBase;
@@ -121,6 +122,9 @@ private:
 	static void get_F2(double& q, Molecule* mol);
 	void(*_fptr)(double*, Molecule*);
 	void(*_f2ptr)(double&, Molecule*);
+
+	// observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
+	DistControl* getDistControl();
 
 private:
 	template<typename T>

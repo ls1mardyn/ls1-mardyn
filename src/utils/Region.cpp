@@ -9,6 +9,7 @@
 #include "utils/ObserverBase.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
+#include "plugins/NEMD/DistControl.h"
 
 // class Region
 
@@ -58,8 +59,12 @@ CuboidRegionObs::~CuboidRegionObs()
 }
 
 // ObserverBase methods
-void CuboidRegionObs::set(double dMidpointLeft, double dMidpointRight)
+void CuboidRegionObs::update(SubjectBase* subject)
 {
+	DistControl* distControl = dynamic_cast<DistControl*>(subject);
+	double dMidpointLeft = distControl->GetInterfaceMidLeft();
+	double dMidpointRight = distControl->GetInterfaceMidRight();
+
 	// update lower corner
 	_dLowerCorner[0] = _dDistToRefCoords[0] + _bMaskMidpointLeft[0] * dMidpointLeft + _bMaskMidpointRight[0] * dMidpointRight;
 	_dLowerCorner[1] = _dDistToRefCoords[1] + _bMaskMidpointLeft[1] * dMidpointLeft + _bMaskMidpointRight[1] * dMidpointRight;
@@ -71,7 +76,7 @@ void CuboidRegionObs::set(double dMidpointLeft, double dMidpointRight)
 	_dUpperCorner[2] = _dDistToRefCoords[5] + _bMaskMidpointLeft[5] * dMidpointLeft + _bMaskMidpointRight[5] * dMidpointRight;
 }
 
-void CuboidRegionObs::PrepareAsObserver(const uint32_t refCoords[6])
+void CuboidRegionObs::PrepareAsObserver(const std::vector<uint32_t>& refCoords)
 {
 	_dDistToRefCoords[0] = _dLowerCorner[0];
 	_dDistToRefCoords[1] = _dLowerCorner[1];
@@ -80,19 +85,19 @@ void CuboidRegionObs::PrepareAsObserver(const uint32_t refCoords[6])
 	_dDistToRefCoords[4] = _dUpperCorner[1];
 	_dDistToRefCoords[5] = _dUpperCorner[2];
 
-	_bMaskMidpointLeft[0] = refCoords[0] == 1;
-	_bMaskMidpointLeft[1] = refCoords[1] == 1;
-	_bMaskMidpointLeft[2] = refCoords[2] == 1;
-	_bMaskMidpointLeft[3] = refCoords[3] == 1;
-	_bMaskMidpointLeft[4] = refCoords[4] == 1;
-	_bMaskMidpointLeft[5] = refCoords[5] == 1;
+	_bMaskMidpointLeft[0] = refCoords.at(0) == 1;
+	_bMaskMidpointLeft[1] = refCoords.at(1) == 1;
+	_bMaskMidpointLeft[2] = refCoords.at(2) == 1;
+	_bMaskMidpointLeft[3] = refCoords.at(3) == 1;
+	_bMaskMidpointLeft[4] = refCoords.at(4) == 1;
+	_bMaskMidpointLeft[5] = refCoords.at(5) == 1;
 
-	_bMaskMidpointRight[0] = refCoords[0] == 2;
-	_bMaskMidpointRight[1] = refCoords[1] == 2;
-	_bMaskMidpointRight[2] = refCoords[2] == 2;
-	_bMaskMidpointRight[3] = refCoords[3] == 2;
-	_bMaskMidpointRight[4] = refCoords[4] == 2;
-	_bMaskMidpointRight[5] = refCoords[5] == 2;
+	_bMaskMidpointRight[0] = refCoords.at(0) == 2;
+	_bMaskMidpointRight[1] = refCoords.at(1) == 2;
+	_bMaskMidpointRight[2] = refCoords.at(2) == 2;
+	_bMaskMidpointRight[3] = refCoords.at(3) == 2;
+	_bMaskMidpointRight[4] = refCoords.at(4) == 2;
+	_bMaskMidpointRight[5] = refCoords.at(5) == 2;
 }
 
 std::ostream& operator<<( std::ostream& os, Region& region)

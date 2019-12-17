@@ -17,6 +17,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <numeric>
 #include <cmath>
 #include <cstdint>
 
@@ -27,11 +28,9 @@ unsigned short ControlRegionT::_nStaticID = 0;
 
 // class ControlRegionT
 
-ControlRegionT::ControlRegionT()
-		:
-		_nID(0),
-		_dLowerCorner{0.,0.,0.},
-		_dUpperCorner{0.,0.,0.},
+ControlRegionT::ControlRegionT(TemperatureControl* const parent)
+		: CuboidRegionObs(parent),
+		_localMethod(VelocityScaling),
 		_nNumSlabs(1),
 		_dSlabWidth(0.0),
 		_thermVars(),
@@ -44,7 +43,12 @@ ControlRegionT::ControlRegionT()
 		_nWriteFreqBeta(1000),
 		_numSampledConfigs(0),
 		_dBetaTransSumGlobal(0.0),
-		_dBetaRotSumGlobal(0.0)
+		_dBetaRotSumGlobal(0.0),
+		_nuAndersen(0.0),
+		_timestep(0.0),
+		_nuDt(0.0),
+		_rand(Random() ),
+		_bIsObserver(false)
 {
 	// ID
 	_nID = ++_nStaticID;
@@ -129,6 +133,24 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 		_dLowerCorner[d] = lc[d];
 		_dUpperCorner[d] = uc[d];
 	}
+
+	// observer mechanism
+	std::vector<uint32_t> refCoordsID(6, 0);
+	xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID.at(0) );
+	xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID.at(1) );
+	xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID.at(2) );
+	xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID.at(3) );
+	xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4) );
+	xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5) );
+
+	_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0) ) > 0;
+	if(true == _bIsObserver)
+		this->PrepareAsObserver(refCoordsID);
+	// Registration as observer has to be done later by method prepare_start() when DistControl plugin is present.
+
+	cout << "ControlRegionT::readXML(XMLfileUnits& xmlconfig)" << endl;
+	cout << "_dLowerCorner="<<_dLowerCorner[0]<<","<<_dLowerCorner[1]<<","<<_dLowerCorner[2] << endl;
+	cout << "_dUpperCorner="<<_dUpperCorner[0]<<","<<_dUpperCorner[1]<<","<<_dUpperCorner[2] << endl;
 
 	// target values
 	xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
@@ -444,6 +466,31 @@ void ControlRegionT::WriteBetaLogfile(unsigned long simstep)
 	_dBetaRotSumGlobal = 0.;
 }
 
+DistControl* ControlRegionT::getDistControl()
+{
+	DistControl* distControl = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			distControl = dynamic_cast<DistControl*>(pit);
+		}
+	}
+	return distControl;
+}
+void ControlRegionT::registerAsObserver()
+{
+	if(true == _bIsObserver) {
+		DistControl* distControl = this->getDistControl();
+		if(distControl != nullptr)
+			distControl->registerObserver(this);
+		else {
+			global_log->error() << "TemperatureControl->region["<<this->GetID()<<"]: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+}
+
 // class TemperatureControl
 TemperatureControl::TemperatureControl()
 {
@@ -482,7 +529,7 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 	{
 		xmlconfig.changecurrentnode(outputRegionIter);
-		ControlRegionT* region = new ControlRegionT();
+		ControlRegionT* region = new ControlRegionT(this);
 		region->readXML(xmlconfig);
 		this->AddRegion(region);
 	}
@@ -508,6 +555,14 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		_method = VelocityScaling;
 		global_log -> info() << "[TemperatureControl] VelocityControl in all regions\n";
 	}
+}
+
+void TemperatureControl::prepare_start()
+{
+	for(auto&& reg : _vecControlRegions) {
+		reg->registerAsObserver();
+	}
+	this->InitBetaLogfiles();
 }
 
 void TemperatureControl::AddRegion(ControlRegionT* region)

@@ -53,11 +53,6 @@ DistControl::~DistControl()
 	delete [] _dDensityProfileSmoothedDerivation;
 	delete [] _dForceProfile;
 	delete [] _dForceProfileSmoothed;
-	// align COM
-	delete [] _COM.numMolecules.local;
-	delete [] _COM.numMolecules.global;
-	delete [] _COM.posSum.local;
-	delete [] _COM.posSum.global;
 }
 
 void DistControl::readXML(XMLfileUnits& xmlconfig)
@@ -226,29 +221,31 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 				"expected: type=\"density|denderiv\"! Programm exit..." << endl;
 		exit(-1);
 	}
+}
 
-	// COM
-	Domain* domain = global_simulation->getDomain();
-	double dBoxWidth[3];
-	for(uint8_t d=0; d<3; ++d)
-		dBoxWidth[d] = domain->getGlobalLength(d);
-	std::string strRelation;
-	unsigned int cidTarget;
-	unsigned int methodCOM = DCCOM_UNKNOWN;
-	xmlconfig.getNodeValue("alignCOM/@type", methodCOM);
-	_COM.method = (uint16_t)(methodCOM);
-	_COM.isActive = false;
-	if(DCCOM_DEFAULT == _COM.method || DCCOM_INTERFACE_POSITIONS == _COM.method)
-		_COM.isActive = true;
-	xmlconfig.getNodeValue("alignCOM/componentID", cidTarget);
-	_COM.cidTarget = (uint16_t)(cidTarget);
-	xmlconfig.getNodeValue("alignCOM/coords@relation", strRelation);
-	xmlconfig.getNodeValue("alignCOM/coords/x", _COM.position.target[0]);
-	xmlconfig.getNodeValue("alignCOM/coords/y", _COM.position.target[1]);
-	xmlconfig.getNodeValue("alignCOM/coords/z", _COM.position.target[2]);
-	if("box" == strRelation)
-		for(uint8_t d=0; d<3; ++d)
-			_COM.position.target[d] *= dBoxWidth[d];
+void DistControl::init(ParticleContainer *particleContainer,
+		  DomainDecompBase *domainDecomp, Domain *domain)
+{
+	this->Init(particleContainer);
+	this->UpdatePositionsInit(particleContainer);
+	this->WriteHeader();
+	this->WriteData(0);
+}
+
+void DistControl::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep)
+{
+	for(auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
+		// sample density profile
+		this->SampleProfiles(&(*it));
+	}
+
+	// determine interface midpoints and update region positions
+	this->UpdatePositions(simstep);
+
+	// write data
+	this->WriteData(simstep);
+	this->WriteDataProfiles(simstep);
 }
 
 void DistControl::PrepareSubdivision()
@@ -296,12 +293,6 @@ void DistControl::InitDataStructurePointers()
 
 	// profile midpoint positions
 	_dMidpointPositions = NULL;
-
-	// align COM
-	_COM.numMolecules.local = NULL;
-	_COM.numMolecules.global = NULL;
-	_COM.posSum.local = NULL;
-	_COM.posSum.global = NULL;
 }
 
 void DistControl::AllocateDataStructures()
@@ -323,12 +314,6 @@ void DistControl::AllocateDataStructures()
 
 	// profile midpoint positions
 	AllocateDoubleArray(_dMidpointPositions, _binParams.count);
-
-	// align COM
-	AllocateUint64Array(_COM.numMolecules.local, _nNumComponents);
-	AllocateUint64Array(_COM.numMolecules.global, _nNumComponents);
-	AllocateDoubleArray(_COM.posSum.local, _nNumComponents*3);
-	AllocateDoubleArray(_COM.posSum.global, _nNumComponents*3);
 }
 
 void DistControl::InitDataStructures()
@@ -353,18 +338,6 @@ void DistControl::InitDataStructures()
 		_dForceSumGlobal[s] = 0.;
 		_dForceProfile[s] = 0.;
 		_dForceProfileSmoothed[s] = 0.;
-	}
-
-	// align COM
-	for(uint8_t c=0; c<_nNumComponents; ++c)
-	{
-		_COM.numMolecules.local[c] = 0;
-		_COM.numMolecules.global[c] = 0;
-		for(uint8_t d=0; d<3; ++d)
-		{
-			_COM.posSum.local[c+d] = 0.;
-			_COM.posSum.global[c+d] = 0.;
-		}
 	}
 }
 
@@ -860,16 +833,6 @@ void DistControl::ResetLocalValues()
 	}
 }
 
-void DistControl::ResetLocalValuesCOM()
-{
-	for(uint8_t c=0; c<_nNumComponents; ++c)
-	{
-		_COM.numMolecules.local[c] = 0;
-		for(uint8_t d=0; d<3; ++d)
-			_COM.posSum.local[c+d] = 0.;
-	}
-}
-
 void DistControl::WriteData(unsigned long simstep)
 {
 	// domain decomposition
@@ -1025,120 +988,23 @@ void DistControl::Init(ParticleContainer* particleContainer)
 	this->PrepareDataStructures();
 }
 
-
-void DistControl::AlignSystemCenterOfMass(Molecule* mol, unsigned long simstep)
-{
-	// domain
-	Domain* domain = global_simulation->getDomain();
-
-	// update with respect to update frequency
-	if(simstep % _controlFreqs.update != 0 || simstep == 0 || simstep == 1)  // TODO init timestep
-		return;
-
-	double dDeltaLeftY  = _dInterfaceMidLeft;  // (minus 0)
-	double dDeltaRightY = domain->getGlobalLength(1) - _dInterfaceMidRight;
-	double dDeltaY = 0.5 * (dDeltaRightY - dDeltaLeftY);
-
-	double dNewPosition = mol->r(1) + dDeltaY;
-
-/*
- * seems not to work: simulation crashes!!!
- *
-	double dBoxLengthY = domain->getGlobalLength(1);
-
-	if (dNewPosition > dBoxLengthY )
-		dNewPosition -= dBoxLengthY;
-	else if (dNewPosition < 0. )
-		dNewPosition += dBoxLengthY;
-*/
-
-	mol->setr(1, dNewPosition);
-
-#ifdef DEBUG
-	cout << "_dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
-	cout << "_dInterfaceMidRight = " << _dInterfaceMidRight << endl;
-	cout << "dDeltaLeftY = " << dDeltaLeftY << endl;
-	cout << "dDeltaRightY = " << dDeltaRightY << endl;
-	cout << "dDeltaY = " << dDeltaY << endl;
-#endif
-}
-
-void DistControl::SampleCOM(Molecule* mol, unsigned long simstep)
-{
-	uint8_t cid = mol->componentid() + 1;  // cid == 0: all components
-
-	_COM.numMolecules.local[cid]++;
-	for(uint8_t d=0; d<3; ++d)
-		_COM.posSum.local[cid+d] += mol->r(d);
-}
-
-void DistControl::CalcGlobalValuesCOM(unsigned long simstep)
-{
-#ifdef ENABLE_MPI
-
-	MPI_Allreduce( _COM.numMolecules.local, _COM.numMolecules.global, _nNumComponents, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce( _COM.posSum.local, _COM.posSum.global, (_nNumComponents*3), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-#else
-	for(uint8_t c=0; c<_nNumComponents; ++c)
-	{
-		_COM.numMolecules.global[c] = _COM.numMolecules.local[c];
-		for(uint8_t d=0; d<3; ++d)
-			_COM.posSum.global[c+d] = _COM.posSum.local[c+d];
-	}
-#endif
-	double dCuttOffQuarter = global_simulation->getcutoffRadius() * 0.25;
-	double dInvNumMolecules = 1. / (double)(_COM.numMolecules.global[_nTargetCompID]);
-	for(uint8_t d=0; d<3; ++d)
-	{
-		_COM.position.actual[d] = _COM.posSum.global[_nTargetCompID+d] * dInvNumMolecules;
-		double dDelta = _COM.position.target[d] - _COM.position.actual[d];
-		int nSign = (dDelta > 0.) ? 1 : -1;
-		dDelta = (abs(dDelta) < dCuttOffQuarter) ? dDelta : dCuttOffQuarter * nSign;
-		_COM.position.addVec[d] = dDelta;
-	}
-
-#ifndef NDEBUG
-	cout << "DistControl::_COM.position.actual = " << _COM.position.actual[0] << ", " << _COM.position.actual[1] << ", " << _COM.position.actual[2] << endl;
-	cout << "DistControl::_COM.position.target = " << _COM.position.target[0] << ", " << _COM.position.target[1] << ", " << _COM.position.target[2] << endl;
-	cout << "DistControl::_COM.position.addVec = " << _COM.position.addVec[0] << ", " << _COM.position.addVec[1] << ", " << _COM.position.addVec[2] << endl;
-#endif
-
-	this->ResetLocalValuesCOM();
-}
-
-void DistControl::AlignCOM(Molecule* mol, unsigned long simstep)
-{
-	for(uint8_t d=0; d<3; ++d)
-		mol->setr(d, mol->r(d)+_COM.position.addVec[d]);
-}
-
 void DistControl::registerObserver(ObserverBase* observer)
 {
 	_observer.push_back(observer);
 }
 
-void DistControl::deregisterObserver(ObserverBase* observer)
+void DistControl::unregisterObserver(ObserverBase* observer)
 {
 	std::vector<ObserverBase*>::iterator it;
-
-	for(it=_observer.begin(); it!=_observer.end(); it++)
-	{
-		if( (*it) == observer)
-		{
+	for(it=_observer.begin(); it!=_observer.end(); ++it)
+		if(*it == observer)
 			_observer.erase(it);
-		}
-	}
 }
 
 void DistControl::informObserver()
 {
-	std::vector<ObserverBase*>::iterator it;
-
-	for(it=_observer.begin(); it!=_observer.end(); it++)
-	{
-		(*it)->set(_dInterfaceMidLeft, _dInterfaceMidRight);
-	}
+	for(auto it:_observer)
+		it->update(this);
 }
 
 void DistControl::SmoothProfile(double* dData, double* dSmoothData, const unsigned long& nNumVals, const unsigned int& nNeighbourVals)

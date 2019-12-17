@@ -11,6 +11,7 @@
 #include "utils/ObserverBase.h"
 #include <string>
 #include <ostream>
+#include <vector>
 #include <cstdint>
 
 enum SubdivisionOption
@@ -118,8 +119,8 @@ public:
 	virtual ~CuboidRegionObs();
 
 	// ObserverBase methods
-	virtual void set(double dMidpointLeft, double dMidpointRight);
-	void PrepareAsObserver(const uint32_t refCoords[6]);
+	void update(SubjectBase* subject) override;
+	void PrepareAsObserver(const std::vector<uint32_t>& refCoords);
 
 private:
 	// observer

@@ -48,6 +48,7 @@
 #include "plugins/NEMD/MettDeamon.h"
 #include "plugins/NEMD/MettDeamonFeedrateDirector.h"
 #include "plugins/NEMD/PosNegComp.h"
+#include "plugins/NEMD/DistControl.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
@@ -94,6 +95,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
+	REGISTER_PLUGIN(DistControl);
 	REGISTER_PLUGIN(ResultWriter);
 	REGISTER_PLUGIN(SysMonOutput);
 	REGISTER_PLUGIN(TestPlugin);

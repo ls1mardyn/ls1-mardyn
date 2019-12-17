@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vector>
 #include <cstdint>
+#include "plugins/PluginBase.h"
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
 #include "utils/CommVar.h"
@@ -43,21 +44,39 @@ enum DistControlInitMethods
 	DCIM_READ_FROM_FILE = 3,
 };
 
-enum DistControlCOM : uint16_t
-{
-	DCCOM_UNKNOWN = 0,
-	DCCOM_DEFAULT = 1,
-	DCCOM_INTERFACE_POSITIONS = 2
-};
-
-class DistControl : public ControlInstance, public SubjectBase
+class DistControl : public PluginBase, public ControlInstance, public SubjectBase
 {
 public:
 	DistControl();
 	virtual ~DistControl();
 
-	std::string GetShortName() {return "DiC";}
-	void readXML(XMLfileUnits& xmlconfig);
+	std::string getShortName() override {return "DiC";}
+
+	void readXML(XMLfileUnits& xmlconfig) override;
+
+	void init(ParticleContainer *particleContainer,
+			DomainDecompBase *domainDecomp, Domain *domain) override;
+
+	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override {};
+
+	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override;
+
+	void siteWiseForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override {};
+	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override {}
+
+	void endStep(ParticleContainer *particleContainer,
+			DomainDecompBase *domainDecomp, Domain *domain,
+			unsigned long simstep) override {};
+
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain) override {}
+
+	std::string getPluginName() override {return std::string("DistControl");}
+	static PluginBase* createInstance() {return new DistControl();}
 
 	// set subdivision
 	void SetSubdivision(const uint32_t& numBins) {_binParams.count = numBins; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
@@ -90,19 +109,11 @@ public:
 
 	void UpdatePositionsInit(ParticleContainer* particleContainer);  // call in Simulation::prepare_start()
 	void UpdatePositions(unsigned long simstep);
-	void AlignSystemCenterOfMass(Molecule* mol, unsigned long simstep);
-	void SampleCOM(Molecule* mol, unsigned long simstep);
-	void AlignCOM(Molecule* mol, unsigned long simstep);
-	void CalcGlobalValuesCOM(unsigned long simstep);
 
 	// SubjectBase methods
-	virtual void registerObserver(ObserverBase* observer);
-	virtual void deregisterObserver(ObserverBase* observer);
-	virtual void informObserver();
-
-	// COM
-	bool AlignCOMactivated() {return _COM.isActive;}
-	uint16_t GetMethodCOM() {return _COM.method;}
+	void registerObserver(ObserverBase* observer) override;
+	void unregisterObserver(ObserverBase* observer) override;
+	void informObserver() override;
 
 private:
 	// place methods after the loop
@@ -110,7 +121,6 @@ private:
 	void EstimateInterfaceMidpoint();  // called by UpdatePositions
 	void EstimateInterfaceMidpointsByForce();
 	void ResetLocalValues();
-	void ResetLocalValuesCOM();
 
 	// data structures
 	void InitDataStructurePointers();
@@ -162,22 +172,6 @@ private:
 	std::vector<ObserverBase*> _observer;
 
 	int _nSubdivisionOpt;
-
-	// align COM
-	struct COM_type
-	{
-		uint16_t method;
-		bool isActive;
-		CommVar <uint64_t*> numMolecules;
-		CommVar <double*> posSum;
-		uint16_t cidTarget;
-		struct PositionType
-		{
-			double target[3];
-			double actual[3];
-			double addVec[3];
-		} position;
-	} _COM;
 
 	struct BinParamsType
 	{
