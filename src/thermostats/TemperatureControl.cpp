@@ -148,10 +148,6 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 		this->PrepareAsObserver(refCoordsID);
 	// Registration as observer has to be done later by method prepare_start() when DistControl plugin is present.
 
-	cout << "ControlRegionT::readXML(XMLfileUnits& xmlconfig)" << endl;
-	cout << "_dLowerCorner="<<_dLowerCorner[0]<<","<<_dLowerCorner[1]<<","<<_dLowerCorner[2] << endl;
-	cout << "_dUpperCorner="<<_dUpperCorner[0]<<","<<_dUpperCorner[1]<<","<<_dUpperCorner[2] << endl;
-
 	// target values
 	xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
 	xmlconfig.getNodeValue("target/component", _nTargetComponentID);
@@ -263,16 +259,6 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 	_dBetaTransSumGlobal += dBetaTransSumSlabs;
 	_dBetaRotSumGlobal   += dBetaRotSumSlabs;
 	_numSampledConfigs++;
-
-//    cout << "_nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
-//    cout << "_dBetaTransGlobal = " << _dBetaTransGlobal << endl;
-//    cout << "_dTargetTemperature = " << _dTargetTemperature << endl;
-//    cout << "_d2EkinRotGlobal = " << _d2EkinRotGlobal << endl;
-//
-//    cout << "_nRotDOFGlobal = " << _nRotDOFGlobal << endl;
-//    cout << "_dBetaRotGlobal = " << _dBetaRotGlobal << endl;
-//    cout << "_d2EkinRotGlobal = " << _d2EkinRotGlobal << endl;
-
 }
 
 void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*domainDecomp*/)
@@ -656,8 +642,6 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 	// respect start/stop
 	if(this->GetStart() <= simstep && this->GetStop() > simstep)
 	{
-//		global_log->info() << "Thermostat ON!" << endl;
-
 		// init temperature control
 		this->Init(simstep);
 
@@ -667,8 +651,6 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 		{
 			// measure kinetic energy
 			this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
-
-//          cout << "id = " << tM->getID() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
 		}
 
 		// calc global values

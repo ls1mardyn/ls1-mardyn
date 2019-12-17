@@ -78,10 +78,7 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	_vecMass.resize(_numComponents);
 	_vecMass.at(0) = 0.;
 	for(uint8_t cid=1; cid<_numComponents; ++cid)
-	{
 		_vecMass.at(cid) = global_simulation->getEnsemble()->getComponent(cid-1)->m();
-//		cout << "cid = " << cid << ": mass = " << _vecMass.at(cid) << endl;
-	}
 
 	// Init component specific parameters for VDF sampling
 	this->initComponentSpecificParamsVDF();
@@ -747,12 +744,6 @@ void SampleRegion::initSamplingVDF(int nDimension)
 
 	// init local values
 	this->resetLocalValuesVDF();
-/*
-	cout << "_initSamplingVDF = " << _initSamplingVDF << endl;
-	cout << "_writeFrequencyVDF = " << _writeFrequencyVDF << endl;
-	cout << "_numBinsVDF = " << _numBinsVDF << endl;
-	cout << "_numVelocityClassesVDF = " << _numVelocityClassesVDF << endl;
-*/
 
 	// discrete velocity values
 	this->doDiscretisationVDF(RS_DIMENSION_Y);
@@ -1385,9 +1376,6 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 			_dForce        [nDimOffset+i] = _dForceGlobal   [nDimOffset+i] * dInvertNumMolecules;
 			double d2EkinTrans = _d2EkinTransComp[nDimOffset+i];
 			double d2EkinDrift = _d2EkinDriftComp[nDimOffset+i];
-//			cout << "nDimOffset+i = " << nDimOffset+i << endl;
-//			cout << "dEkinTrans = " << dEkinTrans << endl;
-//			cout << "dEkinDrift = " << dEkinDrift << endl;
 			_dTemperatureComp[nDimOffset+i] = (d2EkinTrans - d2EkinDrift) * dInvertNumMolecules;
 		}
 	}
