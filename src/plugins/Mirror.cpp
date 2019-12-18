@@ -4,6 +4,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include "plugins/NEMD/DistControl.h"
 
 #include <fstream>
 #include <cmath>
@@ -36,7 +37,7 @@ Mirror::Mirror() :
 }
 
 void Mirror::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
-	global_log->debug() << "Mirror enabled at position: " << _yPos << std::endl;
+	global_log->debug() << "Mirror enabled at position: " << _position.coord << std::endl;
 }
 
 void Mirror::readXML(XMLfileUnits& xmlconfig)
@@ -45,9 +46,25 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("pluginID", _pluginID);
 	global_log->info() << "Mirror: pluginID = " << _pluginID << endl;
 
-	_yPos = 0.;
-	xmlconfig.getNodeValue("yPos", _yPos);
-	global_log->info() << "Mirror: y position = " << _yPos << endl;
+	// Mirror position
+	_position.axis = 1;  // only y-axis supported yet
+	_position.coord = 0.;
+	_position.ref.id = 0;  // 0:domain origin, 1:left interface, 2:right interface
+	_position.ref.origin = 0.;
+	_position.ref.coord = 0.;
+	int id; xmlconfig.getNodeValue("position/refID", id); _position.ref.id = (uint16_t)(id);
+	xmlconfig.getNodeValue("position/coord", _position.ref.coord);
+	SubjectBase* subject = getSubject();
+	this->update(subject);
+	if(_position.ref.id > 0) {
+		if(nullptr != subject)
+			subject->registerObserver(this);
+		else {
+			global_log->error() << "Mirror: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+	global_log->info() << "Mirror: y position = " << _position.coord << endl;
 
 	_forceConstant = 100.;
 	xmlconfig.getNodeValue("forceConstant", _forceConstant);
@@ -111,11 +128,11 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		{
 			// CV boundaries
 			if(MD_LEFT_MIRROR == _direction) {
-				_cv.left  = _yPos;
+				_cv.left  = _position.coord;
 				_cv.right = _cv.left + _cv.width;
 			}
 			else if(MD_RIGHT_MIRROR == _direction) {
-				_cv.right = _yPos;
+				_cv.right = _position.coord;
 				_cv.left  = _cv.right - _cv.width;
 			}
 			_cv.left_outer = _cv.left - _cv.margin;
@@ -202,13 +219,13 @@ void Mirror::beforeForces(
 
 		double regionLowCorner[3], regionHighCorner[3];
 
-		// a check only makes sense if the subdomain specified by _direction and _yPos is inside of the particleContainer.
-		// if we have an MD_RIGHT_MIRROR: _yPos defines the lower boundary of the mirror, thus we check if _yPos is at
+		// a check only makes sense if the subdomain specified by _direction and _position.coord is inside of the particleContainer.
+		// if we have an MD_RIGHT_MIRROR: _position.coord defines the lower boundary of the mirror, thus we check if _position.coord is at
 		// most boxmax.
-		// if the mirror is an MD_LEFT_MIRROR _yPos defines the upper boundary of the mirror, thus we check if _yPos is
+		// if the mirror is an MD_LEFT_MIRROR _position.coord defines the upper boundary of the mirror, thus we check if _position.coord is
 		// at lese boxmin.
-		if ((_direction == MD_RIGHT_MIRROR and _yPos < particleContainer->getBoundingBoxMax(1)) or
-			(_direction == MD_LEFT_MIRROR and _yPos > particleContainer->getBoundingBoxMin(1))) {
+		if ((_direction == MD_RIGHT_MIRROR and _position.coord < particleContainer->getBoundingBoxMax(1)) or
+			(_direction == MD_LEFT_MIRROR and _position.coord > particleContainer->getBoundingBoxMin(1))) {
 			// if linked cell in the region of the mirror boundary
 			for (unsigned d = 0; d < 3; d++) {
 				regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
@@ -217,10 +234,10 @@ void Mirror::beforeForces(
 
 			if (_direction == MD_RIGHT_MIRROR) {
 				// ensure that we do not iterate over things outside of the container.
-				regionLowCorner[1] = std::max(_yPos, regionLowCorner[1]);
+				regionLowCorner[1] = std::max(_position.coord, regionLowCorner[1]);
 			} else if (_direction == MD_LEFT_MIRROR) {
 				// ensure that we do not iterate over things outside of the container.
-				regionHighCorner[1] = std::min(_yPos, regionHighCorner[1]);
+				regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
 			}
 
 			// reset local values
@@ -272,16 +289,55 @@ void Mirror::afterForces(
 	this->VelocityChange(particleContainer);
 }
 
+SubjectBase* Mirror::getSubject()
+{
+	SubjectBase* subject = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			subject =dynamic_cast<SubjectBase*>(pit);
+		}
+	}
+	return subject;
+}
+
+void Mirror::update(SubjectBase* subject)
+{
+	DistControl* distControl = dynamic_cast<DistControl*>(subject);
+	double dMidpointLeft, dMidpointRight;
+	dMidpointLeft = dMidpointRight = 0.;
+	if(nullptr != distControl) {
+		dMidpointLeft = distControl->GetInterfaceMidLeft();
+		dMidpointRight = distControl->GetInterfaceMidRight();
+	}
+
+	switch(_position.ref.id) {
+	case 0:
+		_position.ref.origin = 0.;
+		break;
+	case 1:
+		_position.ref.origin = dMidpointLeft;
+		break;
+	case 2:
+		_position.ref.origin = dMidpointRight;
+		break;
+	default:
+		_position.ref.origin = 0.;
+	}
+	_position.coord = _position.ref.origin + _position.ref.coord;
+}
+
 void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 	double regionLowCorner[3], regionHighCorner[3];
 
-	// a check only makes sense if the subdomain specified by _direction and _yPos is inside of the particleContainer.
-	// if we have an MD_RIGHT_MIRROR: _yPos defines the lower boundary of the mirror, thus we check if _yPos is at
+	// a check only makes sense if the subdomain specified by _direction and _position.coord is inside of the particleContainer.
+	// if we have an MD_RIGHT_MIRROR: _position.coord defines the lower boundary of the mirror, thus we check if _position.coord is at
 	// most boxmax.
-	// if the mirror is an MD_LEFT_MIRROR _yPos defines the upper boundary of the mirror, thus we check if _yPos is
+	// if the mirror is an MD_LEFT_MIRROR _position.coord defines the upper boundary of the mirror, thus we check if _position.coord is
 	// at lese boxmin.
-	if ((_direction == MD_RIGHT_MIRROR and _yPos < particleContainer->getBoundingBoxMax(1)) or
-		(_direction == MD_LEFT_MIRROR and _yPos > particleContainer->getBoundingBoxMin(1))) {
+	if ((_direction == MD_RIGHT_MIRROR and _position.coord < particleContainer->getBoundingBoxMax(1)) or
+		(_direction == MD_LEFT_MIRROR and _position.coord > particleContainer->getBoundingBoxMin(1))) {
 		// if linked cell in the region of the mirror boundary
 		for (unsigned d = 0; d < 3; d++) {
 			regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
@@ -290,10 +346,10 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 
 		if (_direction == MD_RIGHT_MIRROR) {
 			// ensure that we do not iterate over things outside of the container.
-			regionLowCorner[1] = std::max(_yPos, regionLowCorner[1]);
+			regionLowCorner[1] = std::max(_position.coord, regionLowCorner[1]);
 		} else if (_direction == MD_LEFT_MIRROR) {
 			// ensure that we do not iterate over things outside of the container.
-			regionHighCorner[1] = std::min(_yPos, regionHighCorner[1]);
+			regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
 		}
 
 #if defined (_OPENMP)
@@ -368,7 +424,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 					}
 				}
 				else if(MT_FORCE_CONSTANT == _type){
-					double distance = _yPos - ry;
+					double distance = _position.coord - ry;
 					additionalForce[1] = _forceConstant * distance;
 //						cout << "additionalForce[1]=" << additionalForce[1] << endl;
 //						cout << "before: " << (*it) << endl;

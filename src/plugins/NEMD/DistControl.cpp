@@ -15,6 +15,7 @@
 #include "utils/DynAlloc.h"
 #include "utils/Math.h"
 #include "utils/xmlfileUnits.h"
+#include "plugins/Mirror.h"  // TODO: Not so nice that DistControl has to know Mirror plugin explicitly
 
 #include <iostream>
 #include <fstream>
@@ -788,11 +789,14 @@ void DistControl::WriteData(const uint64_t& simstep)
 
 		for(it=_observer.begin(); it!=_observer.end(); it++)
 		{
-			CuboidRegionObs* region = static_cast<CuboidRegionObs*>(*it);
-			if(NULL != region)
-			{
+			CuboidRegionObs* region = dynamic_cast<CuboidRegionObs*>(*it);
+			if(nullptr != region) {
 				outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << region->GetLowerCorner(1);
 				outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << region->GetUpperCorner(1);
+			}
+			Mirror* mirror = dynamic_cast<Mirror*>(*it);
+			if(nullptr != mirror) {
+				outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << mirror->getPosition();
 			}
 		}
 
@@ -831,14 +835,16 @@ void DistControl::WriteHeader()
 
 	for(it=_observer.begin(); it!=_observer.end(); it++)
 	{
-		CuboidRegionObs* region = static_cast<CuboidRegionObs*>(*it);
-		if(NULL != region)
-		{
-			outputstream << "                 " << region->GetParent()->getShortName() << "l" << "[" << region->GetID() << "]";
-			outputstream << "                 " << region->GetParent()->getShortName() << "r" << "[" << region->GetID() << "]";
+		CuboidRegionObs* region = dynamic_cast<CuboidRegionObs*>(*it);
+		if(nullptr != region) {
+			outputstream << std::setw(20) << region->GetParent()->getShortName() << "l" << "[" << region->GetID() << "]";
+			outputstream << std::setw(20) << region->GetParent()->getShortName() << "r" << "[" << region->GetID() << "]";
 		}
-	}
 
+		ControlInstance* ctrlInst = dynamic_cast<ControlInstance*>(*it);
+		if(nullptr != ctrlInst)
+			outputstream << std::setw (24) << ctrlInst->getShortName();
+	}
 	outputstream << endl;
 
 	ofstream fileout(_strFilename.c_str(), ios::out);

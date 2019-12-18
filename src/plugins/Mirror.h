@@ -5,6 +5,8 @@
 
 #include "PluginBase.h"
 #include "utils/Random.h"
+#include "utils/ObserverBase.h"
+#include "utils/Region.h"
 
 #include <string>
 #include <map>
@@ -34,7 +36,7 @@ class ParticleContainer;
 class DomainDecompBase;
 class Domain;
 
-class Mirror : public PluginBase
+class Mirror : public PluginBase, public ObserverBase, public ControlInstance
 {
 public:
 	// constructor and destructor
@@ -87,6 +89,12 @@ public:
 	uint64_t getDeletedParticlesCountLocal(const uint16_t& componentid) {return _particleManipCount.deleted.local.at(componentid);}
 	uint32_t getPluginID() {return _pluginID;}
 	void setPluginID(const uint32_t& id) {_pluginID = id;}
+	double getPosition() {return _position.coord;}
+
+	// Observer, ControlInstance
+	SubjectBase* getSubject();
+	void update(SubjectBase* subject) override;
+	std::string getShortName() override {return "Mirr";}
 
 private:
 		void VelocityChange(ParticleContainer* particleContainer);
@@ -94,7 +102,15 @@ private:
 
 private:
 	uint32_t _pluginID;
-	double _yPos;
+	struct MirrorPosition {
+		uint16_t axis;
+		double coord;
+		struct RefPoint {
+			uint16_t id;
+			double origin;
+			double coord;
+		} ref;
+	} _position;
 	double _forceConstant;
 	MirrorDirection _direction;
 	MirrorType _type;
