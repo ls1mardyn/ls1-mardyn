@@ -73,11 +73,11 @@ private:
 
 private:
 	uint32_t _mirror_id;
+	double _feedrate;
 	struct UpdateControl {
 		uint32_t updateFreq;
 		uint32_t sampledTimestepCount;
 	} _updateControl;
-	double _feedrate;
 	struct ParticleManipCount {
 		CommVar<std::vector<uint64_t> > reflected;
 		CommVar<std::vector<uint64_t> > deleted;

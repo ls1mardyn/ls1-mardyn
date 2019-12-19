@@ -15,6 +15,9 @@ using namespace std;
 using Log::global_log;
 
 MettDeamonFeedrateDirector::MettDeamonFeedrateDirector()
+	:
+	_mirror_id(100),
+	_feedrate(0.)
 {
 	uint32_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
 	_particleManipCount.deleted.local.resize(numComponents+1);
