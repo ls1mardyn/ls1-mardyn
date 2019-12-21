@@ -64,7 +64,8 @@ enum FeedRateMethod : uint8_t
 	FRM_DELETED_MOLECULES = 1,
 	FRM_CHANGED_MOLECULES = 2,
 	FRM_DENSITY = 3,
-	FRM_CONSTANT = 4
+	FRM_CONSTANT = 4,
+	FRM_DIRECTED = 5
 };
 
 enum Zone2Method : uint8_t

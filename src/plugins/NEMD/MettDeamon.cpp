@@ -1053,7 +1053,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
 
 	// delta y berechnen: alle x Zeitschritte
-	if(global_simulation->getSimulationStep() % _nUpdateFreq == 0)
+	if( (FRM_DIRECTED == _nFeedRateMethod) && (global_simulation->getSimulationStep() % _nUpdateFreq == 0) )
 	{
 		// update global number of particles / calc global number of deleted particles
 		domainDecomposition->collCommInit(5);
