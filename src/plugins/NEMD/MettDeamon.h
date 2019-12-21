@@ -251,7 +251,7 @@ public:
 
 	// connection to other general plugins
 	void setActualFeedrate(const double& feed_actual) {_feedrate.feed.actual = feed_actual;
-	global_log->info() << "Set new feedrate from MDFRD: vf=" << feed_actual << std::endl;}
+	global_log->info() << "[MettDeamon]: Set new feedrate by MDFRD to vf=" << feed_actual << std::endl;}
 	double getInvDensityArea() {return _dInvDensityArea;}
 
 private:

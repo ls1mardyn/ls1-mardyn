@@ -1321,8 +1321,9 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 	maxID = domain->getMaxMoleculeID();
 	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
 	numMolecules.global = domain->getglobalNumMolecules();
+#ifndef NDEBUG
 	cout << "[" << nRank << "]: maxID.local, maxID.global=" << maxID.local << ", " << maxID.global << endl;
-
+#endif
 	uint64_t numMoleculesAfterInsertion = numMolecules.global + numParticleIDs.global;
 	uint64_t numIDs;
 	if(maxID.global >= numMoleculesAfterInsertion)

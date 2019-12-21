@@ -123,9 +123,6 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	double dInvSampledTimestepCount = 1. / (double)(_updateControl.updateFreq);
 	double deletedParticlesPerTimestep = _particleManipCount.deleted.global.at(cid) * dInvSampledTimestepCount;
 	_feedrate = deletedParticlesPerTimestep * mettDeamon->getInvDensityArea();
-	cout << "MDFRD: No. deleted particles = " << _particleManipCount.deleted.global.at(cid) << endl;
-	cout << "dInvSampledTimestepCount = " << dInvSampledTimestepCount << endl;
-	cout << "mettDeamon->getInvDensityArea() = " << mettDeamon->getInvDensityArea() << endl;
 }
 
 void MettDeamonFeedrateDirector::resetLocalValues()
