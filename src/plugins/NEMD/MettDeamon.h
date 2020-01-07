@@ -170,33 +170,33 @@ public:
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
 	<plugin name="MettDeamon">
-		<colleague> <index>2</index> </colleague>
 		<control>
-			<updatefreq>100</updatefreq>
-			<logfreqfeed>1000</logfreqfeed>
-			<logfreqreleased>1000</logfreqreleased>
-			<writefreq>10000</writefreq>
-			<numvals>10</numvals>
+			<updatefreq>INT</updatefreq>                <!-- time span in which deleted particles are counted to determine feed rate -->
+			<logfreqfeed>INT</logfreqfeed>             <!-- frequency with that the feed rate is logged -->
+			<logfreqreleased>INT</logfreqreleased>     <!-- frequency with that velocity vectors of released particles are logged -->
+			<writefreq>INT</writefreq>                <!-- write frequency of restart info (checkpoint) -->
+			<numvals>INT</numvals>                       <!-- number of values collected to calculate an average feed rate -->
 			<feed>
-				<init>FLOAT</init>   <!-- initial feed rate  -->
+				<init>FLOAT</init>           <!-- initial feed rate  -->
 				<direction>INT</direction>   <!-- 0: left --> right | 1: left <-- right  -->
-				<method>INT</method>   <!-- feed rate method 1:count deleted particles | 4: fix rate -->
-				<targetID>INT</targetID>   <!-- component ID of particles feed rate determined from -->
-				<target>FLOAT</target>   <!-- target value for feed rate, if method==4 -->
+				<method>INT</method>         <!-- feed rate method 1:count deleted particles | 4: fix rate -->
+				<targetID>INT</targetID>     <!-- component ID of particles feed rate determined from -->
+				<target>FLOAT</target>       <!-- target value for feed rate, if method==4 -->
 				<release_velo>
-					<method>INT</method>
+					<method>INT</method>           <!-- choose method for release velocity -->
 					<fix_value>FLOAT</fix_value>   <!-- velocity with that particles are released from reservoir -->
 				</release_velo>
 			</feed>
-			<z2method>1</z2method>
-			<manipfree> <ymin>50</ymin> <ymax>100</ymax> </manipfree>
+			<z2method>1</z2method>                 <!-- choose zone2 method, 1:reset all i.e. also quaternion | 2:reset only y position od particles
+			<manipfree> <ymin>50</ymin> <ymax>100</ymax> </manipfree>   <!-- range that is not affected with any manipulations -->
 		</control>
 		<reservoir>
 			<file type="binary">
-				<header>../../liq/run12/cp_binary-0.restart.header.xml</header>
-				<data>../../liq/run12/cp_binary-0.restart.dat</data>
+				<header>../../liq/run12/cp_binary-0.restart.header.xml</header>   <!-- checkpoint header file used for reservoir -->
+				<data>../../liq/run12/cp_binary-0.restart.dat</data>              <!-- checkpoint data file used for reservoir -->
 			</file>
-			<binwidth>10</binwidth>
+			<binwidth>FLOAT</binwidth>         <!-- subdivision of reservoir phase into bins, overall reservoir width = 2*binwidth -->
+			<ins_percent>FLOAT</ins_percent>   <!-- only the fraction ins_percent=FLOAT of reservoir particles will be inserted -->
 		</reservoir>
 		<restart>
 			<binindex>INT</binindex>   <!-- index of last inserted (actual) reservoir bin  -->
@@ -204,10 +204,8 @@ public:
 		</restart>
 
 		<changes>
-			<change> <from>INT</from> <to>INT</to> </change>   <!-- change component ID of reservoir particles from INT to INT -->
+			<change> <from>INT</from> <to>INT</to> </change>   <!-- change component ID of reservoir particles from (freeze) INT to (moving) INT -->
 		</changes>
-		<diameter>FLOAT</diameter>
-
 	</plugin>
 	   \endcode
 	 */
