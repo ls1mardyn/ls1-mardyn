@@ -26,14 +26,15 @@ public:
 	MettDeamonFeedrateDirector();
 	~MettDeamonFeedrateDirector();
 
-	/** @brief Read in XML configuration for Mirror and all its included objects.
+	/** @brief Read in XML configuration for MettDeamonFeedrateDirector and all its included objects.
 	 *
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
 		<plugin name="MettDeamonFeedrateDirector">
-			<yPos> <float> </yPos>                     <!-- mirror position -->
-			<forceConstant> <float> </forceConstant>   <!-- strength of redirection -->
-			<direction> <int> </direction>             <!-- 0|1 , i.e. left |<-- or right -->| mirror -->
+			<mirror>
+				<pluginID>INT</pluginID>   <!-- Plugin ID of Mirror plugin that is relevant for counting deleted/reflected particles -->
+				<control> <update_freq>INT</update_freq> </control>   <!-- frequency of updating feed rate -->
+			</mirror>
 		</plugin>
 	   \endcode
 	 */
