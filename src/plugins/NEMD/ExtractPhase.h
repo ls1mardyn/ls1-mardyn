@@ -29,23 +29,23 @@ public:
 	 * \code{.xml}
 		<plugin name="ExtractPhase">
 			<change>
-				<enabled>1</enabled>
-				<cid_ub>2</cid_ub>
+				<enabled>INT</enabled>   <!-- 0:disable | 1:enable component change instead of particle deletion -->
+				<cid_ub>INT</cid_ub>       <!-- change component id of overlapping particles to cid_ub=INT, first component: cid_ub=1 (unity based)
 			</change>
 			<density>
-				<value>0.66318</value>
-				<percent>0.5</percent>
-				<cutoff>2.5</cutoff>
-				<range>
-					<left>250.0</left>
-					<right>350.0</right>
+				<value>FLOAT</value>       <!-- use this value as liquid density -->
+				<percent>FLOAT</percent>   <!--
+				<cutoff>FLOAT</cutoff>     <!-- cutoff radius for calculating local density -->
+				<range>					   <!-- range in which liquid density is calculated -->
+					<left>DOUBLE</left>
+					<right>DOUBLE</right>
 				</range>
 			</density>
 			<interface>
-				<type>vl</type>
-				<range>
-					<left>190.0</left>
-					<right>210.0</right>
+				<type>vl</type>   <!-- 1,vl,VL:vapor-liquid or 2,lv,LV:liquid-vapor interface -->
+				<range>			  <!-- searching for overlaps in specified range (y axis) -->
+					<left>FLOAT</left>
+					<right>FLOAT</right>
 				</range>
 			</interface>
 		</plugin>
