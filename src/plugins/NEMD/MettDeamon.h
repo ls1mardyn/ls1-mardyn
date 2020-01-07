@@ -139,12 +139,6 @@ struct FeedRateStruct
 	std::vector<int> vec_rand_ins;
 };
 
-struct MirrorStruct
-{
-	bool enabled;
-	double pos_y;
-};
-
 //struct ColleagueStruct
 //{
 //	uint16_t index;
@@ -156,7 +150,6 @@ class Ensemble;
 class DomainDecompBase;
 class ParticleContainer;
 class XMLfileUnits;
-class MediatorNEMD;
 
 class Reservoir;
 class MettDeamon : public PluginBase
@@ -238,15 +231,6 @@ public:
 	void IncrementChangedFromMoleculesLocal() {_feedrate.numMolecules.changed_from.local++;}
 	void StoreDensity(const double& dVal) {_vecDensityValues.push_back(dVal);}
 	void StoreValuesCV(const double& dDensity, const double& dVolume) {_dDensityTarget = dDensity; _dVolumeCV = dVolume;}
-	
-//	// colleagues
-//	void connectColleagues(const std::vector<MettDeamon*>& colleagues);
-//	void informColleagueAboutReleased();
-
-	// mediator
-	void registerMediatorNEMD(MediatorNEMD* mediator) {_mediatorNEMD = mediator;}
-	void setParamsNormMB(const ParamsNormMB& params);
-	void getFpathNormMB(std::string& fpath) {fpath = _feedrate.release_velo.normMB.fpath;}
 
 	// connection to other general plugins
 	void setActualFeedrate(const double& feed_actual) {_feedrate.feed.actual = feed_actual;
@@ -280,7 +264,6 @@ private:
 	void initRestart();
 	
 	// stat. evap
-	void markPosNegFlux(Molecule* mol);
 	void readNormDistr();
 
 	// rand vector for trapped particle insertion
@@ -299,7 +282,6 @@ private:
 	double _dInvDensityArea;
 	double _dDeletedMolsPerTimestep;
 	double _dInvNumTimestepsSummation;
-	double _dMoleculeDiameter;
 	double _dTransitionPlanePosY;
 	double _dDensityTarget;
 	double _dVolumeCV;
@@ -331,7 +313,6 @@ private:
 		uint32_t cid_ub;
 	} _manipfree;
 	FeedRateStruct _feedrate;
-	MirrorStruct _mirror;
 	
 	// stat. evap.
 	struct{
@@ -368,9 +349,6 @@ private:
 		bool init_file_vel;
 		std::vector<std::array<double,3> > log_v;
 	} _released;
-
-	// mediator
-	MediatorNEMD* _mediatorNEMD;
 
 	std::unique_ptr<Random> _rnd;
 };

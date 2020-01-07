@@ -18,7 +18,6 @@
 #include "utils/Random.h"
 #include "utils/FileUtils.h"
 #include "io/ReplicaGenerator.h"  // class MoleculeDataReader
-//#include "NEMD/MediatorNEMD.h"
 
 #include <map>
 #include <array>
@@ -251,7 +250,6 @@ MettDeamon::MettDeamon() :
 		_dInvDensityArea(0.),
 		_dDeletedMolsPerTimestep(0.),
 		_dInvNumTimestepsSummation(0.),
-		_dMoleculeDiameter(1.0),
 		_dTransitionPlanePosY(0.0),
 		_dDensityTarget(0.0),
 		_dVolumeCV(0.0),
@@ -469,10 +467,6 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/binindex", _restartInfo.nBindindex);
 	_bIsRestart = _bIsRestart && xmlconfig.getNodeValue("restart/deltaY", _restartInfo.dYsum);
 
-	// mirror
-	bool bRet = xmlconfig.getNodeValue("mirror/position", _mirror.pos_y);
-	_mirror.enabled = bRet;
-
 	// change identity of fixed (frozen) molecules by component ID
 	if(xmlconfig.changecurrentnode("changes")) {
 		uint8_t numChanges = 0;
@@ -514,32 +508,6 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		std::cout << i << ": " << _vecChangeCompIDsUnfreeze.at(i) << std::endl;
 	}
 #endif
-
-	// molecule diameter
-	xmlconfig.getNodeValue("diameter", _dMoleculeDiameter);
-
-	// stat. evap.
-	_vap_trans_plane.enabled = false;
-	double pos_y;
-	uint32_t type, cid_ub[4];
-	_vap_trans_plane.enabled = xmlconfig.getNodeValue("stat_evap/vap_trans_plane/type", type);
-	xmlconfig.getNodeValue("stat_evap/vap_trans_plane/pos_y", pos_y);
-	xmlconfig.getNodeValue("stat_evap/vap_trans_plane/cid/left/pos", cid_ub[0]);
-	xmlconfig.getNodeValue("stat_evap/vap_trans_plane/cid/left/neg", cid_ub[1]);
-	xmlconfig.getNodeValue("stat_evap/vap_trans_plane/cid/right/pos", cid_ub[2]);
-	xmlconfig.getNodeValue("stat_evap/vap_trans_plane/cid/right/neg", cid_ub[3]);
-	_vap_trans_plane.type = type;
-	_vap_trans_plane.pos_y = pos_y;
-	_vap_trans_plane.cid.left.pos = cid_ub[0];
-	_vap_trans_plane.cid.left.neg = cid_ub[1];
-	_vap_trans_plane.cid.right.pos = cid_ub[2];
-	_vap_trans_plane.cid.right.neg = cid_ub[3];
-
-//	// colleague
-//	uint32_t index = 0;
-//	xmlconfig.getNodeValue("colleague/index", index);
-//	if(index > 0)
-//		_colleague.index = (uint16_t)index;
 }
 
 void MettDeamon::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
@@ -617,8 +585,6 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	// find max molecule ID in particle container
 	this->findMaxMoleculeID(domainDecomp);
 
-	double dMoleculeRadius = _dMoleculeDiameter*0.5;
-
 	//ParticleContainer* _moleculeContainer;
 	particleContainer->deleteOuterParticles();
 	// fixed components
@@ -639,41 +605,13 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 			continue;
 
 		bool IsBehindTransitionPlane = this->IsBehindTransitionPlane(dY);
-		if(not IsBehindTransitionPlane)
-		{
+		if(not IsBehindTransitionPlane) {
 			uint32_t cid = pit->componentid();
-			if(cid != _vecChangeCompIDsFreeze.at(cid))
-			{
+			if(cid != _vecChangeCompIDsFreeze.at(cid)) {
 				Component* compNew = &(ptrComps->at(_vecChangeCompIDsFreeze.at(cid) ) );
 				pit->setComponent(compNew);
-//				cout << "cid(new) = " << pit->componentid() << endl;
 			}
 		}
-		/*
-		 * This is done by another plugin now
-		 *
-		else
-		{
-			// stat. evap.
-			this->markPosNegFlux( &(*pit) );
-		}
-		*/
-/*
-		else
-//		else if(dY < (_dTransitionPlanePosY+dMoleculeRadius) )
-		{
-			particleContainer->deleteMolecule(pit->getID(), pit->r(0), pit->r(1),pit->r(2), false);
-//			cout << "delete: dY = " << dY << endl;
-			particleContainer->update();
-			pit  = particleContainer->iteratorBegin();
-			this->IncrementDeletedMoleculesLocal();
-		}
-
-		else if(dY < (_dTransitionPlanePosY+_dMoleculeDiameter) )
-		{
-			pit->setv(1, pit->r(1)-1.);
-		}
-		*/
 	}
 	particleContainer->update();
 	particleContainer->updateMoleculeCaches();
@@ -910,8 +848,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		// reset position and orientation of fixed molecules
 		this->resetPositionAndOrientation( &(*pit), dBoxY);
 
-		if(bIsTrappedMolecule)
-		{
+		if(bIsTrappedMolecule) {
 			// limit velocity of trapped molecules
 /*			pit->setv(0, 0.);
 			pit->setv(1, 0.);
@@ -922,45 +859,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 			this->resetVelocity( &(*pit) );
 		}
-		else
-		{
-			// stat. evap.
-			if(_vap_trans_plane.enabled)
-			{
-				std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
-				Component* compNew = nullptr;
-				if(dY < _vap_trans_plane.pos_y)
-				{
-					if(cid_ub == _vap_trans_plane.cid.right.neg) {
-						compNew = &(ptrComps->at(_vap_trans_plane.cid.left.neg-1) );
-						//~ _feedrate.numMolecules.changed_from.local++;
-					}
-					if(pit->v(1) >= 0.)
-						compNew = &(ptrComps->at(_vap_trans_plane.cid.left.pos-1) );
-					else
-						compNew = &(ptrComps->at(_vap_trans_plane.cid.left.neg-1) );
-				}
-				else if(dY > _vap_trans_plane.pos_y)
-				{
-					if(cid_ub == _vap_trans_plane.cid.left.pos) {
-						compNew = &(ptrComps->at(_vap_trans_plane.cid.right.pos-1) );
-						//~ if(_vap_trans_plane.type == 1)
-							//~ _feedrate.numMolecules.changed_to.local++;
-					}
-					if(pit->v(1) >= 0.)
-						compNew = &(ptrComps->at(_vap_trans_plane.cid.right.pos-1) );
-					else
-						compNew = &(ptrComps->at(_vap_trans_plane.cid.right.neg-1) );
-				}
-				if(nullptr != compNew)
-					pit->setComponent(compNew);
-			}
-		}
-
-		// mirror molecules back that are on the way to pass fixed molecule region
-		if(dY <= _reservoir->getBinWidth() )
-			pit->setv(1, abs(pit->v(1) ) );
-
 		this->resetVelocity( &(*pit) );
 
 	}  // loop over molecules
@@ -1023,8 +921,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid_zb);
 
-		if(bIsTrappedMolecule)
-		{
+		if(bIsTrappedMolecule) {
 			// limit velocity of trapped molecules
 /*			pit->setv(0, 0.);
 			pit->setv(1, 0.);
@@ -1034,16 +931,6 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			pit->setD(2, 0.);
 
 			this->resetVelocity( &(*pit) );
-		}
-		else
-			// stat. evap.
-			this->markPosNegFlux( &(*pit) );
-
-		// mirror, to simulate VLE
-		if(_mirror.enabled)
-		{
-			if(pit->r(1) >= _mirror.pos_y)
-				pit->setv(1, -1.*abs(pit->v(1) ) );
 		}
 
 	}  // loop over molecules
@@ -1487,34 +1374,6 @@ void MettDeamon::initRestart()
 	_feedrate.feed.sum = _restartInfo.dYsum;
 }
 
-// stat. evap
-void MettDeamon::markPosNegFlux(Molecule* mol)
-{
-	if(not _vap_trans_plane.enabled)
-		return;
-
-	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
-	Component* compNew = nullptr;
-	double dY = mol->r(1);
-
-	if(dY < _vap_trans_plane.pos_y)
-	{
-		if(mol->v(1) >= 0.)
-			compNew = &(ptrComps->at(_vap_trans_plane.cid.left.pos-1) );
-		else
-			compNew = &(ptrComps->at(_vap_trans_plane.cid.left.neg-1) );
-	}
-	else if(dY >= _vap_trans_plane.pos_y)
-	{
-		if(mol->v(1) >= 0.)
-			compNew = &(ptrComps->at(_vap_trans_plane.cid.right.pos-1) );
-		else
-			compNew = &(ptrComps->at(_vap_trans_plane.cid.right.neg-1) );
-	}
-	if(nullptr != compNew)
-		mol->setComponent(compNew);
-}
-
 void MettDeamon::readNormDistr()
 {
 	struct {
@@ -1558,50 +1417,6 @@ void MettDeamon::updateRandVecTrappedIns()
 //		nSum += vi;
 //	}
 //	cout << "sum=" << nSum << endl;
-}
-
-//void MettDeamon::connectColleagues(const std::vector<MettDeamon*>& colleagues)
-//{
-//	if(_colleague.index < 1)
-//		return;
-//	if(_colleague.index-1 >= colleagues.size() )
-//		return;
-//	_colleague.ptr = colleagues.at(_colleague.index-1);
-//}
-
-//void MettDeamon::informColleagueAboutReleased()
-//{
-//	if(nullptr == _colleague.ptr)
-//		return;
-//	_colleague.ptr->IncrementInsertedMoleculesLocal();
-//}
-
-// mediator
-void MettDeamon::setParamsNormMB(const ParamsNormMB& params) {
-	_feedrate.release_velo.normMB.temperature = params.temperature;
-	_feedrate.release_velo.normMB.drift = params.drift;
-	_feedrate.release_velo.normMB.a_neg = params.a_neg;
-	_feedrate.release_velo.normMB.a_pos = params.a_pos;
-	_feedrate.release_velo.normMB.v_neg = params.v_neg;
-	_feedrate.release_velo.normMB.v_pos = params.v_pos;
-
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	int nRank = domainDecomp.getRank();
-	if(0 == nRank || 1 == nRank) {
-		cout << "[" << nRank << "] MettDeamon: received new values: (T,D,a_neg,a_pos,v_neg,v_pos) = ";
-		cout << params.temperature << "," << params.drift << "," << params.a_neg << "," << params.a_pos << "," << params.v_neg << "," << params.v_pos << endl;
-	}
-
-	// update target feed rate
-	if(RVM_NORM_DISTR_GENERATOR == _feedrate.release_velo.method && FRM_CONSTANT == _nFeedRateMethod) {
-		double dts = 0.00182367;  // timestep of 2 fs
-		_feedrate.feed.target = abs(params.v_neg) * dts;
-		if(0 == nRank || 1 == nRank)
-			cout << "[" << nRank << "] New _feedrate.feed.target=" << _feedrate.feed.target << endl;
-	}
-
-	// update rand insertion vector to only release part of trapped particles
-	create_rand_vec_ones(100, _feedrate.release_velo.normMB.a_neg, _feedrate.vec_rand_ins);
 }
 
 // class Reservoir
