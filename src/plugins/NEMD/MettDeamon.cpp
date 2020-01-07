@@ -856,8 +856,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 			pit->setD(0, 0.);
 			pit->setD(1, 0.);
 			pit->setD(2, 0.);
-
-			this->resetVelocity( &(*pit) );
 		}
 		this->resetVelocity( &(*pit) );
 
