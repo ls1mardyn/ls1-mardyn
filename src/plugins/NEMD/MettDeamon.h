@@ -197,7 +197,7 @@ public:
 		</restart>
 
 		<changes>
-			<change> <from>INT</from> <to>INT</to> </change>   <!-- change component ID of reservoir particles from (freeze) INT to (moving) INT -->
+			<change> <from>INT</from> <to>INT</to> </change>   <!-- change component ID of reservoir particles from (moving) INT to (freeze) INT -->
 		</changes>
 	</plugin>
 	   \endcode
