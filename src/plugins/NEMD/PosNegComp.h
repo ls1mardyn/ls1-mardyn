@@ -23,14 +23,13 @@ public:
 	PosNegComp();
 	~PosNegComp();
 
-	/** @brief Read in XML configuration for Mirror and all its included objects.
+	/** @brief Read in XML configuration for PosNegComp and all its included objects.
 	 *
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
-		<plugin name="Mirror">
-			<yPos> <float> </yPos>                     <!-- mirror position -->
-			<forceConstant> <float> </forceConstant>   <!-- strength of redirection -->
-			<direction> <int> </direction>             <!-- 0|1 , i.e. left |<-- or right -->| mirror -->
+		<plugin name="PosNegComp">                                                  <!-- component change according to moving direction of particles -->
+			<cid_ub> <pos>INT</pos> <neg>INT</neg> <ignore>INT</ignore> </cid_ub>   <!-- component id of particles moving in pos:positive | neg:negative y-direction, ignore: particles are not affected -->
+			<limit_y> <left>FLOAT</left> <right>FLOAT</right> </limit_y>            <!-- component change active in specified range -->
 		</plugin>
 	   \endcode
 	 */
