@@ -83,14 +83,14 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	_direction = static_cast<MirrorDirection>(dir);
 	std::string strDirection = "unknown";
 	xmlconfig.getNodeValue("@dir", strDirection);
-	if("|<--" == strDirection)
+	if("|-o" == strDirection)
 		_direction = MD_LEFT_MIRROR;
-	else if("-->|" == strDirection)
+	else if("o-|" == strDirection)
 		_direction = MD_RIGHT_MIRROR;
 	if(MD_LEFT_MIRROR == _direction)
-		global_log->info() << "Mirror: direction |<--" << endl;
+		global_log->info() << "Mirror: reflect particles to the right |-o" << endl;
 	else if(MD_RIGHT_MIRROR == _direction)
-		global_log->info() << "Mirror: direction -->|" << endl;
+		global_log->info() << "Mirror: reflect particles to the left o-|" << endl;
 
 	// ratio to reflect
 	_ratio = 1.;

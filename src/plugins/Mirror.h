@@ -47,10 +47,17 @@ public:
 	 *
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
-		<plugin name="Mirror">
-			<yPos> <float> </yPos>                     <!-- mirror position -->
-			<forceConstant> <float> </forceConstant>   <!-- strength of redirection -->
-			<direction> <int> </direction>             <!-- 0|1 , i.e. left |<-- or right -->| mirror -->
+		<plugin name="Mirror" type="5" dir="o-|">   <!-- Mirror type and direction, dir="o-|" or dir="|-o" reflecting particles to the left or right side -->
+			<pluginID>INT</pluginID>   <!-- plugin id to enable communication with other plugins -->
+			<position>
+				<refID>INT</refID>     <!-- coordinate relative to reference point, 1:left interface | 2:right interface
+				<coord>FLOAT</coord>   <!-- coordinate of Mirrot position -->
+			</position>
+			<forceConstant>0.</forceConstant>   <!-- force added to particles in order to reflect them from Mirror plane -->
+			<meland>
+				<use_probability>INT</use_probability>   <!-- 0:disable | 1:enable probability factor in case of Mirror type MT_MELAND_2004 -->
+				<velo_target>FLOAT</velo_target>         <!-- target hydrodynamic velocity -->
+			</meland>
 		</plugin>
 	   \endcode
 	 */
