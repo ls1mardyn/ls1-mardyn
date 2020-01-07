@@ -30,22 +30,22 @@ public:
 		<plugin name="ExtractPhase">
 			<change>
 				<enabled>INT</enabled>   <!-- 0:disable | 1:enable component change instead of particle deletion -->
-				<cid_ub>INT</cid_ub>       <!-- change component id of overlapping particles to cid_ub=INT, first component: cid_ub=1 (unity based)
+				<cid_ub>INT</cid_ub>     <!-- change component id of overlapping particles to cid_ub=INT, first component: cid_ub=1 (unity based)
 			</change>
 			<density>
-				<value>FLOAT</value>       <!-- use this value as liquid density -->
-				<percent>FLOAT</percent>   <!--
-				<cutoff>FLOAT</cutoff>     <!-- cutoff radius for calculating local density -->
-				<range>					   <!-- range in which liquid density is calculated -->
-					<left>DOUBLE</left>
-					<right>DOUBLE</right>
+				<value>FLOAT</value>        <!-- use this value as liquid density -->
+				<percent>FLOAT</percent>    <!-- percentage of liquid density identifies begin of vapor phase -->
+				<cutoff>FLOAT</cutoff>      <!-- cutoff radius for calculating local density -->
+				<range>					    <!-- range in which liquid density is calculated -->
+					<left>DOUBLE</left>     <!-- left boundary -->
+					<right>DOUBLE</right>   <!-- right boundary -->
 				</range>
 			</density>
 			<interface>
-				<type>vl</type>   <!-- 1,vl,VL:vapor-liquid or 2,lv,LV:liquid-vapor interface -->
-				<range>			  <!-- searching for overlaps in specified range (y axis) -->
-					<left>FLOAT</left>
-					<right>FLOAT</right>
+				<type>vl</type>            <!-- 1,vl,VL:vapor-liquid or 2,lv,LV:liquid-vapor interface -->
+				<range>			           <!-- searching for overlaps in specified range (y axis) -->
+					<left>FLOAT</left>     <!-- left boundary -->
+					<right>FLOAT</right>   <!-- right boundary -->
 				</range>
 			</interface>
 		</plugin>
