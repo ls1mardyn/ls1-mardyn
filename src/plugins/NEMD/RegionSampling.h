@@ -361,34 +361,5 @@ private:
 	unsigned long _writeFrequencyVDF;
 };
 
-
-//class RegionSamplingPlugin : public RegionSampling, public PluginBase
-//{
-//public:
-//	RegionSamplingPlugin() {}
-//	~RegionSamplingPlugin() {}
-//
-//	void readXML(XMLfileUnits& xmlconfig) override;
-//
-//	void init(ParticleContainer *particleContainer,
-//			  DomainDecompBase *domainDecomp, Domain *domain) override;
-//
-//	void afterForces(
-//			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-//			unsigned long simstep
-//	) override;
-//
-//	void endStep(
-//			ParticleContainer *particleContainer,
-//			DomainDecompBase *domainDecomp, Domain *domain,
-//			unsigned long simstep) override {}
-//
-//	void finish(ParticleContainer *particleContainer,
-//				DomainDecompBase *domainDecomp, Domain *domain) override {}
-//
-//	std::string getPluginName() override {return std::string("RegionSamplingPlugin");}
-//	static PluginBase* createInstance() {return new RegionSamplingPlugin();}
-//};
-
 #endif /* REGIONSAMPLING_H_ */
 
