@@ -52,6 +52,36 @@ public:
 
 	std::string getShortName() override {return "DiC";}
 
+	/** @brief Read in XML configuration for DistControl and all its included objects.
+	 *
+	 * The following XML object structure is handled by this method:
+	 * \code{.xml}
+		<plugin name="DistControl">
+			<control>
+				<update>5000</update>   <!-- update frequency -->
+			</control>
+			<filenames>
+				<control>DistControl.dat</control>         <!-- log file of updated positions -->
+				<profiles>DistControlProfiles</profiles>   <!-- file prefix for density profiles to determine interface position(s) -->
+			</filenames>
+			<subdivision type="width">   <!-- type="number|width" for subdivision of domain into bins for density profile sampling -->
+				<width>FLOAT</width>     <!-- bin width -->
+				<number>1</number>       <!-- number of bins -->
+			</subdivision>
+			<init type="startconfig">    <!-- type="startconfig|values|file" for init positions-->
+				<values> <left>FLOAT</left> <right>FLOAT</right> </values>   <!-- specify init values for left and right interface -->
+				<file>../path/to/file/DistControl.dat</file>                 <!-- read values from specified file -->
+				<simstep>INT</simstep>                                       <!-- read from file in line simstep=INT -->
+			</init>
+			<method type="denderiv">   <!-- type="density"|denderiv" method to determine interface positions-->
+				<componentID>INT</componentID>                            <!-- target component, 0:all components -->
+				<neighbourvals algorithm="smooth">INT</neighbourvals>     <!-- neighbour values used to smooth the profile -->
+				<neighbourvals algorithm="derivate">INT</neighbourvals>   <!-- neighbour values used to calculate derivation profile by linear regression -->
+				<density>FLOAT</density>                                  <!-- vapor density to identify vapor phase -->
+			</method>
+		</plugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
 	void init(ParticleContainer *particleContainer,
