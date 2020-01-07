@@ -31,7 +31,7 @@ public:
 	DriftCtrl();
 	~DriftCtrl();
 
-	/** @brief Read in XML configuration for Mirror and all its included objects.
+	/** @brief Read in XML configuration for DriftCtrl and all its included objects.
 	 *
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
@@ -44,7 +44,7 @@ public:
 				</freq>
 			</control>
 			<target>
-				<cid>3</cid>														<!-- target component id -->
+				<cid>INT</cid>														<!-- target component id -->
 				<drift> <vx>DOUBLE</vx> <vy>DOUBLE</vy> <vz>DOUBLE</vz> </drift>	<!-- target drift vector (vx,vy,vz) -->
 			</target>
 			<range>
