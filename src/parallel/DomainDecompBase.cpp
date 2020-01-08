@@ -490,11 +490,12 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 
 	MPI_Exscan(&numParticles_local, &numParticles_exscan, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
-	uint16_t particle_data_size;
+	uint16_t particle_data_size = 0;
+	// if no particle is found (begin is not valid) particle_data_size is zero and provides no problem.
+	if(begin.isValid())
 	{
-		Molecule dummy;
 		std::stringstream str;
-		dummy.writeBinary(str);
+		begin->writeBinary(str);
 		particle_data_size = str.str().size();
 	}
 	uint64_t buffer_size = 32768;
