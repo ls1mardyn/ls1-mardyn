@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vector>
 #include <cstdint>
+#include "plugins/PluginBase.h"
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
 #include "utils/CommVar.h"
@@ -43,21 +44,69 @@ enum DistControlInitMethods
 	DCIM_READ_FROM_FILE = 3,
 };
 
-enum DistControlCOM : uint16_t
-{
-	DCCOM_UNKNOWN = 0,
-	DCCOM_DEFAULT = 1,
-	DCCOM_INTERFACE_POSITIONS = 2
-};
-
-class DistControl : public ControlInstance, public SubjectBase
+class DistControl : public PluginBase, public ControlInstance, public SubjectBase
 {
 public:
 	DistControl();
 	virtual ~DistControl();
 
-	std::string GetShortName() {return "DiC";}
-	void readXML(XMLfileUnits& xmlconfig);
+	std::string getShortName() override {return "DiC";}
+
+	/** @brief Read in XML configuration for DistControl and all its included objects.
+	 *
+	 * The following XML object structure is handled by this method:
+	 * \code{.xml}
+		<plugin name="DistControl">
+			<control>
+				<update>5000</update>   <!-- update frequency -->
+			</control>
+			<filenames>
+				<control>DistControl.dat</control>         <!-- log file of updated positions -->
+				<profiles>DistControlProfiles</profiles>   <!-- file prefix for density profiles to determine interface position(s) -->
+			</filenames>
+			<subdivision type="width">   <!-- type="number|width" for subdivision of domain into bins for density profile sampling -->
+				<width>FLOAT</width>     <!-- bin width -->
+				<number>1</number>       <!-- number of bins -->
+			</subdivision>
+			<init type="startconfig">    <!-- type="startconfig|values|file" for init positions-->
+				<values> <left>FLOAT</left> <right>FLOAT</right> </values>   <!-- specify init values for left and right interface -->
+				<file>../path/to/file/DistControl.dat</file>                 <!-- read values from specified file -->
+				<simstep>INT</simstep>                                       <!-- read from file in line simstep=INT -->
+			</init>
+			<method type="denderiv">   <!-- type="density"|denderiv" method to determine interface positions-->
+				<componentID>INT</componentID>                            <!-- target component, 0:all components -->
+				<neighbourvals algorithm="smooth">INT</neighbourvals>     <!-- neighbour values used to smooth the profile -->
+				<neighbourvals algorithm="derivate">INT</neighbourvals>   <!-- neighbour values used to calculate derivation profile by linear regression -->
+				<density>FLOAT</density>                                  <!-- vapor density to identify vapor phase -->
+			</method>
+		</plugin>
+	   \endcode
+	 */
+	void readXML(XMLfileUnits& xmlconfig) override;
+
+	void init(ParticleContainer *particleContainer,
+			DomainDecompBase *domainDecomp, Domain *domain) override;
+
+	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override {};
+
+	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override;
+
+	void siteWiseForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override {};
+	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep) override {}
+
+	void endStep(ParticleContainer *particleContainer,
+			DomainDecompBase *domainDecomp, Domain *domain,
+			unsigned long simstep) override {};
+
+	void finish(ParticleContainer *particleContainer,
+				DomainDecompBase *domainDecomp, Domain *domain) override {}
+
+	std::string getPluginName() override {return std::string("DistControl");}
+	static PluginBase* createInstance() {return new DistControl();}
 
 	// set subdivision
 	void SetSubdivision(const uint32_t& numBins) {_binParams.count = numBins; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
@@ -68,41 +117,28 @@ public:
 	void PrepareDataStructures();
 
 	// init
-	void InitPositions(double dInterfaceMidLeft, double dInterfaceMidRight);
+	void InitPositions(const double& dInterfaceMidLeft, const double& dInterfaceMidRight);
 
 	double GetInterfaceMidLeft() {return _dInterfaceMidLeft;}
 	double GetInterfaceMidRight() {return _dInterfaceMidRight;}
 	unsigned int GetUpdateFreq() {return _controlFreqs.update;}
 	unsigned int GetWriteFreqProfiles() {return _controlFreqs.write.profiles;}
 
-	// set update/init method
-	void SetUpdateMethod(const int& nMethod, const unsigned short& nVal1, const unsigned short& nVal2, const unsigned short& nVal3, const double& dVal);
-	void SetInitMethod(const int& nMethod, const double& dVal1, const double& dVal2, std::string strVal, const unsigned long& nVal);
-	int GetInitMethod() {return _nMethodInit;}
-
 	void Init(ParticleContainer* particleContainer);
 	void WriteHeader();
-	void WriteData(unsigned long simstep);
-	void WriteDataProfiles(unsigned long simstep);
+	void WriteData(const uint64_t& simstep);
+	void WriteDataProfiles(const uint64_t& simstep);
 
 	// place method inside loop over molecule container
 	void SampleProfiles(Molecule* mol);
 
 	void UpdatePositionsInit(ParticleContainer* particleContainer);  // call in Simulation::prepare_start()
-	void UpdatePositions(unsigned long simstep);
-	void AlignSystemCenterOfMass(Molecule* mol, unsigned long simstep);
-	void SampleCOM(Molecule* mol, unsigned long simstep);
-	void AlignCOM(Molecule* mol, unsigned long simstep);
-	void CalcGlobalValuesCOM(unsigned long simstep);
+	void UpdatePositions(const uint64_t& simstep);
 
 	// SubjectBase methods
-	virtual void registerObserver(ObserverBase* observer);
-	virtual void deregisterObserver(ObserverBase* observer);
-	virtual void informObserver();
-
-	// COM
-	bool AlignCOMactivated() {return _COM.isActive;}
-	uint16_t GetMethodCOM() {return _COM.method;}
+	void registerObserver(ObserverBase* observer) override;
+	void unregisterObserver(ObserverBase* observer) override;
+	void informObserver() override;
 
 private:
 	// place methods after the loop
@@ -110,49 +146,44 @@ private:
 	void EstimateInterfaceMidpoint();  // called by UpdatePositions
 	void EstimateInterfaceMidpointsByForce();
 	void ResetLocalValues();
-	void ResetLocalValuesCOM();
 
 	// data structures
-	void InitDataStructurePointers();
-	void AllocateDataStructures();
 	void InitDataStructures();
 
 	// processing profiles
-	void SmoothProfile(double* dData, double* dSmoothData, const unsigned long& nNumVals, const unsigned int& nNeighbourVals);
-	void SmoothProfiles(const unsigned int& nNeighbourVals);
-	void DerivateProfile(double* dDataX, double* dDataY, double* dDerivDataY, const unsigned long& nNumVals, const unsigned int& nNeighbourVals);
-	void DerivateProfiles(const unsigned int& nNeighbourVals);
+	void SmoothProfile(double* dData, double* dSmoothData, const uint64_t& nNumVals, const uint32_t& nNeighbourVals);
+	void SmoothProfiles(const uint32_t& nNeighbourVals);
+	void DerivateProfile(double* dDataX, double* dDataY, double* dDerivDataY, const uint64_t& nNumVals, const uint32_t& nNeighbourVals);
+	void DerivateProfiles(const uint32_t& nNeighbourVals);
 
 
 private:
 	double _dInterfaceMidLeft;
 	double _dInterfaceMidRight;
 
-	unsigned short _nNumComponents;
-	unsigned short _nTargetCompID;
-	unsigned long _nNumValuesScalar;
-	unsigned long* _nOffsets;
+	uint16_t _nNumComponents;
+	uint16_t _nTargetCompID;
+	uint64_t _nNumValuesScalar;
+	std::vector<uint64_t> _nOffsets;
 
-	unsigned long* _nNumMoleculesLocal;
-	unsigned long* _nNumMoleculesGlobal;
-	double* _dMidpointPositions;
-	double* _dForceSumLocal;
-	double* _dForceSumGlobal;
-	double* _dDensityProfile;
-	double* _dDensityProfileSmoothed;
-	double* _dDensityProfileSmoothedDerivation;
-	double* _dForceProfile;
-	double* _dForceProfileSmoothed;
+	CommVar<std::vector<uint64_t> > _nNumMolecules;
+	CommVar<std::vector<uint64_t> > _dForceSum;
+	std::vector<double> _dMidpointPositions;
+	std::vector<double> _dDensityProfile;
+	std::vector<double> _dDensityProfileSmoothed;
+	std::vector<double> _dDensityProfileSmoothedDerivation;
+	std::vector<double> _dForceProfile;
+	std::vector<double> _dForceProfileSmoothed;
 
 	// update method
 	int _nMethod;
 	double _dVaporDensity;
-	unsigned short _nNeighbourValsSmooth;
-	unsigned short _nNeighbourValsDerivate;
+	uint16_t _nNeighbourValsSmooth;
+	uint16_t _nNeighbourValsDerivate;
 
 	int _nMethodInit;
 	std::string _strFilenameInit;
-	unsigned long _nRestartTimestep;
+	uint64_t _nRestartTimestep;
 
 	// write data
 	std::string _strFilename;
@@ -162,22 +193,6 @@ private:
 	std::vector<ObserverBase*> _observer;
 
 	int _nSubdivisionOpt;
-
-	// align COM
-	struct COM_type
-	{
-		uint16_t method;
-		bool isActive;
-		CommVar <uint64_t*> numMolecules;
-		CommVar <double*> posSum;
-		uint16_t cidTarget;
-		struct PositionType
-		{
-			double target[3];
-			double actual[3];
-			double addVec[3];
-		} position;
-	} _COM;
 
 	struct BinParamsType
 	{

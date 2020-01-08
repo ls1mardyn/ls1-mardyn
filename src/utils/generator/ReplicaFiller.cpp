@@ -210,7 +210,6 @@ int ReplicaFiller::getMolecule(Molecule* molecule) {
 	if(ret != 0) {
 		// change component if specified
 		if (molecule->componentid() != _componentid) {
-			cout << "Set componentid: " << _componentid << endl;
 			molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
 		}
 	}

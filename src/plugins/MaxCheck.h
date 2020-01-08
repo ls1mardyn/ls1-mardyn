@@ -57,9 +57,20 @@ public:
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
 		<plugin name="MaxCheck">
-			<Fmax> <DOUBLE> </Fmax>  <!-- max. allowed force -->
-			<method> <INT> <method>  1:inform | 2:limit to max value | 3:delete particle
-		</plugin>
+			<control>
+				<start>INT</start>           <!-- start time step -->
+				<frequency>INT</frequency>   <!-- frequency of checking -->
+				<stop>INT</stop>             <!-- stop time step -->
+			</control>
+			<yrange> <min>FLOAT</min> <max>FLOAT</max> </yrange>   <!-- range (y axis) within checking is active -->
+			<targets>
+				<target cid="INT" method="INT">   <!-- cid: component id of target particles
+												  <!-- method: handling particles failing the check, 1:limit to max value | 2:limit to max value if force is too high (overlaps) | 3:delete particle -->
+					<Fmax>FLOAT</Fmax>            <! force limit -->
+					<vmax>FLOAT</vmax>            <! velocity limit -->
+				</target>
+			</targets>
+		</plugin
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;

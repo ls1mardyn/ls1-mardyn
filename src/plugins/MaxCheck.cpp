@@ -95,7 +95,6 @@ void MaxCheck::afterForces(ParticleContainer* particleContainer,
 	if (simstep < _control.start || simstep > _control.stop
 			|| simstep % _control.freq != 0)
 		return;
-	global_log->info() << "MaxCheck::afterForces() CHECKING for maxvals" << endl;
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
 
@@ -105,7 +104,6 @@ void MaxCheck::endStep(ParticleContainer *particleContainer,
 	if (simstep < _control.start || simstep > _control.stop
 			|| simstep % _control.freq != 0)
 		return;
-	global_log->info() << "MaxCheck::endStep() CHECKING for maxvals" << endl;
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
 

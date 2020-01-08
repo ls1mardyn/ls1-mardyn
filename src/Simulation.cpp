@@ -525,16 +525,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Algorithm section missing." << endl;
 	}
 
-
+	global_log -> info() << "Registering default plugins..." << endl;
     // REGISTERING/ENABLING PLUGINS
 	PluginFactory<PluginBase> pluginFactory;
     pluginFactory.registerDefaultPlugins();
+	global_log -> info() << "Successfully registered plugins." << endl;
 
-    int numPlugs = 0;
+    long numPlugs = 0;
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
-    global_log -> info() << "Number of Total Plugins: " << numPlugs << endl;
-
+    global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
 
 
     string oldpath = xmlconfig.getcurrentnodepath();
@@ -809,6 +809,10 @@ void Simulation::prepare_start() {
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
+	/** Init TemperatureControl beta_trans, beta_rot log-files, register as observer if plugin DistControl is in use. */
+	if(nullptr != _temperatureControl)
+		_temperatureControl->prepare_start();  // Has to be called before plugin initialization (see below): plugin->init(...)
+
 	// initializing plugins and starting plugin timers
 	for (auto& plugin : _plugins) {
 		global_log->info() << "Initializing plugin " << plugin->getPluginName() << endl;
@@ -859,10 +863,6 @@ void Simulation::prepare_start() {
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
-
-	/** Init TemperatureControl beta_trans, beta_rot log-files*/
-	if(nullptr != _temperatureControl)
-		_temperatureControl->InitBetaLogfiles();
 
 	/** refresh particle IDs */
 	if(_prepare_start_opt.refreshIDs)

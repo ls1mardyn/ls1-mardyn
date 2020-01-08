@@ -248,3 +248,5 @@ private:
 	static Component* _component;
 	static Quaternion _quaternion;
 };
+
+std::ostream& operator<<( std::ostream& os, const AutoPasSimpleMolecule& m );
