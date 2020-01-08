@@ -79,12 +79,11 @@ void CheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecom
 			filenamestream << "-" << gettimestring();
 		}
 
-		if(_useBinaryFormat) {
-            filenamestream << ".restart";
-        }
-        else { /* ASCII mode */
-            filenamestream << ".restart.dat";
-        }
+		if (_useBinaryFormat) {
+			filenamestream << ".restart";
+		} else { /* ASCII mode */
+			filenamestream << ".restart.dat";
+		}
 
 		if(_useBinaryFormat) {
 #ifdef ENABLE_MPI
@@ -100,20 +99,13 @@ void CheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecom
 			MPI_Info_object mpiinfo;
 			MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, mpiinfo, &mpifh);
 
-			double regionLowCorner[3], regionHighCorner[3];
-			for (unsigned d = 0; d < 3; d++) {
-				regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
-				regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
-			}
-
 			uint64_t numParticles_local = 0;
 			uint64_t numParticles_exscan = 0;
-			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			auto begin = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 			for(auto it = begin; it.isValid(); ++it)
 				numParticles_local++;
 
 			MPI_Exscan(&numParticles_local, &numParticles_exscan, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
-//			cout << "[" << rank << "]: numParticles_local=" << numParticles_local << ", numParticles_exscan=" << numParticles_exscan << endl;
 
 			uint16_t particle_data_size = 116;
 			uint64_t buffer_size = 32768;
@@ -121,7 +113,7 @@ void CheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecom
 			uint64_t offset = numParticles_exscan * particle_data_size;
 			MPI_File_seek(mpifh, offset, MPI_SEEK_SET);
 			uint64_t buffer_pos = 0;
-//			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+
 			for(auto it = begin; it.isValid(); ++it) {
 				uint64_t pid = it->getID();
 				uint32_t cid_ub = it->componentid()+1;
