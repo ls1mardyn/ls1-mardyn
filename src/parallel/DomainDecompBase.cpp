@@ -490,73 +490,37 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 
 	MPI_Exscan(&numParticles_local, &numParticles_exscan, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
-	uint16_t particle_data_size = 116;
+	uint16_t particle_data_size;
+	{
+		Molecule dummy;
+		std::stringstream str;
+		dummy.writeBinary(str);
+		particle_data_size = str.str().size();
+	}
 	uint64_t buffer_size = 32768;
-	char* write_buffer = new char[buffer_size];
+	std::string __dummy(buffer_size, '\0');  // __dummy for preallocation of internal buffer with buffer_size.
+	std::ostringstream write_buffer(__dummy, ios_base::binary);
+	__dummy.clear();
+	__dummy.shrink_to_fit();
+	//char* write_buffer = new char[buffer_size];
 	uint64_t offset = numParticles_exscan * particle_data_size;
 	MPI_File_seek(mpifh, offset, MPI_SEEK_SET);
 	uint64_t buffer_pos = 0;
 
 	for (auto it = begin; it.isValid(); ++it) {
-		uint64_t pid = it->getID();
-		uint32_t cid_ub = it->componentid() + 1;
-		double r[3];
-		double v[3];
-		double D[3];
-		Quaternion Q = it->q();
-		double q[4];
-		for (auto d = 0; d < 3; ++d) {
-			r[d] = it->r(d);
-			v[d] = it->v(d);
-			D[d] = it->D(d);
-		}
-		q[0] = Q.qw();
-		q[1] = Q.qx();
-		q[2] = Q.qy();
-		q[3] = Q.qz();
-		memcpy(&write_buffer[buffer_pos], (char*)&pid, sizeof(uint64_t));
-		buffer_pos += sizeof(uint64_t);
-		memcpy(&write_buffer[buffer_pos], (char*)&cid_ub, sizeof(uint32_t));
-		buffer_pos += sizeof(uint32_t);
-		memcpy(&write_buffer[buffer_pos], (char*)&r[0], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&r[1], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&r[2], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&v[0], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&v[1], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&v[2], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&q[0], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&q[1], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&q[2], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&q[3], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&D[0], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&D[1], sizeof(double));
-		buffer_pos += sizeof(double);
-		memcpy(&write_buffer[buffer_pos], (char*)&D[2], sizeof(double));
-		buffer_pos += sizeof(double);
+		it->writeBinary(write_buffer);
+		buffer_pos += particle_data_size;
 
 		if (buffer_pos > buffer_size - particle_data_size) {
 			// we cannot add any more particles to this buffer, so we write the buffer.
-			MPI_Status status;
-			MPI_File_write(mpifh, write_buffer, buffer_pos, MPI_BYTE, &status);
-			// reset buffer position.
+			MPI_File_write(mpifh, write_buffer.str().c_str(), buffer_pos, MPI_BYTE, MPI_STATUS_IGNORE);
+			// reset buffer position and clear stream.
 			buffer_pos = 0;
+			write_buffer.str("");
 		}
 	}
-	MPI_Status status;
-	MPI_File_write(mpifh, write_buffer, buffer_pos, MPI_BYTE, &status);
+	MPI_File_write(mpifh, write_buffer.str().c_str(), buffer_pos, MPI_BYTE, MPI_STATUS_IGNORE);
 
-	delete[] write_buffer;
 	MPI_File_close(&mpifh);
 }
 #endif
