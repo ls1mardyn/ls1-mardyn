@@ -159,7 +159,9 @@ private:
 	double _E_trans; // translational energy
 	double _E_rot; // rotational energy
 	double _T; // temperature
-
+	
+	bool _isStockmayer; //Checks whether component is a Stockmayer fluid to determine moments of inertia
+	
 	std::string _name; /**< name of the component/molecule type */
 
 	/**

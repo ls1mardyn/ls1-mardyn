@@ -101,7 +101,7 @@ public:
 
 	double getCutoff() const override { return 0.0; }
 
-	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) override {}
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override {}
 
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
 		return 0.0;

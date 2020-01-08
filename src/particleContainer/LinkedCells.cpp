@@ -966,24 +966,18 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
-void LinkedCells::deleteMolecule(Molecule &molecule, const bool& rebuildCaches) {
-	auto cellid = getCellIndexOfMolecule(&molecule);
+void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) {
 
-	if (cellid >= _cells.size()) {
-		global_log->error_always_output()
-				<< "coordinates for atom deletion lie outside bounding box."
-				<< endl;
-		Simulation::exit(1);
-	}
+	moleculeIter.deleteCurrentParticle();
 
-	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.getID());
-
-	if (!found) {
-		global_log->error_always_output() << "could not delete molecule " << molecule.getID() << "."
-				<< endl;
-		Simulation::exit(1);
-	}
-	else if (rebuildCaches) {
+    if (rebuildCaches) {
+        auto cellid = getCellIndexOfMolecule(&*moleculeIter);
+        if (cellid >= _cells.size()) {
+          global_log->error_always_output()
+              << "coordinates for atom deletion lie outside bounding box."
+              << endl;
+          Simulation::exit(1);
+        }
 		_cells[cellid].buildSoACaches();
 	}
 }
