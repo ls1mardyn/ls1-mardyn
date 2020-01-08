@@ -473,7 +473,7 @@ int DomainDecompBase::getNumProcs() const {
 
 void DomainDecompBase::barrier() const {
 }
-
+#ifdef ENABLE_MPI
 void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename, ParticleContainer* moleculeContainer) const {
 	int rank = getRank();
 
@@ -559,7 +559,7 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 	delete[] write_buffer;
 	MPI_File_close(&mpifh);
 }
-
+#endif
 void DomainDecompBase::writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer,
                                             bool binary) const {
 #ifdef ENABLE_MPI
@@ -573,8 +573,9 @@ void DomainDecompBase::writeMoleculesToFile(const std::string& filename, Particl
 			if (getRank() == process) {
 				std::ofstream checkpointfilestream;
 				if (binary) {
-					checkpointfilestream.open((filename + ".dat").c_str(),
-					                          std::ios::binary | std::ios::out | std::ios::app);
+					checkpointfilestream.open(
+						(filename + ".dat").c_str(),
+						std::ios::binary | std::ios::out | (getRank() != 0 ? std::ios::app : std::ios::trunc));
 				} else {
 					checkpointfilestream.open(filename.c_str(), std::ios::app);
 					checkpointfilestream.precision(20);
