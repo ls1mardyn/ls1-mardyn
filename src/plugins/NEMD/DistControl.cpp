@@ -596,7 +596,7 @@ void DistControl::EstimateInterfaceMidpoint()
 		// 2. Slab mit gerade niedrigerer Anzahl finden --> von links angefangen ersten Slab größer numMax finden --> Index -1 rechnen
 		unsigned int nIndexSlabGreater = 0;
 
-		for(auto s=_binParams.count-1; s >= 0; --s)
+		for(int64_t s= static_cast<int64_t>(_binParams.count) - 1; s >= 0; --s)
 		{
 			if(_dDensityProfile.at(s) > ym)
 			{

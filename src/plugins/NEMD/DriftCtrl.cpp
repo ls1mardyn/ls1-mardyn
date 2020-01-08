@@ -166,7 +166,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 	if(simstep % _control.freq.control == 0)
 	{
 		uint32_t numComponents = _sampling.size();
-		uint64_t numVals = numComponents * 4 * _range.subdivision.numBins;
+		uint64_t numVals = static_cast<uint64_t>(numComponents) * 4 * _range.subdivision.numBins;
 		uint64_t numValsCheck = 0;
 		domainDecomp->collCommInit(numVals);
 		// append local values
