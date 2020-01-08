@@ -573,10 +573,12 @@ void DomainDecompBase::writeMoleculesToFile(const std::string& filename, Particl
 			if (getRank() == process) {
 				std::ofstream checkpointfilestream;
 				if (binary) {
-					checkpointfilestream.open(
-						(filename + ".dat").c_str(),
-						std::ios::binary | std::ios::out | (getRank() != 0 ? std::ios::app : std::ios::trunc));
+					auto appendOrTruncate = getRank() != 0 ? std::ios::app : std::ios::trunc;
+					// truncate if we are binary and in rank 0, otherwise append!
+					checkpointfilestream.open((filename + ".dat").c_str(),
+											  std::ios::binary | std::ios::out | appendOrTruncate);
 				} else {
+					// always append in ascii mode, as we have written the header already to the same file.
 					checkpointfilestream.open(filename.c_str(), std::ios::app);
 					checkpointfilestream.precision(20);
 				}
