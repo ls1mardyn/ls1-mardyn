@@ -23,6 +23,7 @@
 #include "particleContainer/AutoPasContainer.h"
 #endif
 
+#include <io/BinaryReader.h>
 #include <list>
 
 using namespace Log;
@@ -42,21 +43,30 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type t
 
 	} else {
 		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
-		return NULL;
+		return nullptr;
 	}
 }
 
 
 
 ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
-		Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName) {
+		Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName, bool binary) {
 	global_simulation->setcutoffRadius(cutoff);
 	global_simulation->setLJCutoff(cutoff);
 
-	   ASCIIReader inputReader;
-	inputReader.setPhaseSpaceHeaderFile(fileName.c_str());
-	inputReader.setPhaseSpaceFile(fileName.c_str());
-	inputReader.readPhaseSpaceHeader(domain, 1.0);
+	std::unique_ptr<InputBase> inputReader;
+	if (binary) {
+		inputReader.reset(new BinaryReader());
+		auto* binaryReader = dynamic_cast<BinaryReader*>(inputReader.get());
+		binaryReader->setPhaseSpaceHeaderFile(fileName + ".header.xml");
+		binaryReader->setPhaseSpaceFile(fileName);
+	} else {
+		inputReader.reset(new ASCIIReader());
+		auto* asciiReader = dynamic_cast<ASCIIReader*>(inputReader.get());
+		asciiReader->setPhaseSpaceHeaderFile(fileName);
+		asciiReader->setPhaseSpaceFile(fileName);
+	}
+	inputReader->readPhaseSpaceHeader(domain, 1.0);
 	double bBoxMin[3];
 	double bBoxMax[3];
 	for (int i = 0; i < 3; i++) {
@@ -82,7 +92,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		return nullptr;
 	}
 
-	inputReader.readPhaseSpace(moleculeContainer, domain, domainDecomposition);
+	inputReader->readPhaseSpace(moleculeContainer, domain, domainDecomposition);
 	moleculeContainer->deleteOuterParticles();
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();

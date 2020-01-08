@@ -52,10 +52,10 @@ void utils::TestWithSimulationSetup::tearDown() {
 
 
 ParticleContainer* utils::TestWithSimulationSetup::initializeFromFile(
-		ParticleContainerFactory::Type type, const char* fileName, double cutoff) {
+		ParticleContainerFactory::Type type, const char* fileName, double cutoff, bool binary) {
 
 	return ParticleContainerFactory::createInitializedParticleContainer(
-			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName));
+			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName), binary);
 }
 
 #endif /* UNIT_TESTS */

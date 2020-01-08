@@ -16,18 +16,25 @@ class CheckpointRestartTest : public utils::TestWithSimulationSetup {
 	TEST_SUITE(CheckpointRestartTest);
 
 	// add a method which perform test
-	TEST_METHOD(testCheckpointRestart);
+	TEST_METHOD(testCheckpointRestartASCII);
+
+	// add a method which perform test
+	TEST_METHOD(testCheckpointRestartBinary);
 
 	// end suite declaration
 	TEST_SUITE_END();
 
 public:
-	CheckpointRestartTest();
-	virtual ~CheckpointRestartTest();
-	/*
-	 * testRemoveMomentum tests if removeMomentum in MDGenerator works properly or not.
-	 */
-	void testCheckpointRestart();
+	CheckpointRestartTest() = default;
+	virtual ~CheckpointRestartTest() = default;
+
+	void testCheckpointRestartASCII();
+
+	void testCheckpointRestartBinary();
+private:
+
+	void testCheckpointRestart(bool binary);
+	unsigned long getGlobalParticleNumber(ParticleContainer* particleContainer);
 };
 
 #endif /* INPUTFILETEST_H_ */
