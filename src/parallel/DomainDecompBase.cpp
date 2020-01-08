@@ -479,7 +479,8 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 
 	MPI_File mpifh;
 	MPI_Info_object mpiinfo;
-	MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY | MPI_MODE_CREATE, mpiinfo,
+	auto extfilename = filename + ".dat";
+	MPI_File_open(MPI_COMM_WORLD, extfilename.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, mpiinfo,
 	              &mpifh);
 
 	uint64_t numParticles_local = 0;

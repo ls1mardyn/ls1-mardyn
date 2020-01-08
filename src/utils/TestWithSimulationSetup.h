@@ -68,14 +68,16 @@ protected:
 	 *
 	 * @param type the concrete implementation of the particleContainer to be created
 	 * @param fileName the name of the file (relative to the testDataDirectory) which
-	 *                 is used for initialization
+	 *                 is used for initialization, or the prefix of the filename for binary files.
 	 * @param cutoff the value used for all kinds of cutoff radii
 	 * @param binary specifies that the file pointed to is a binary file. If true the header of this file has to have the
-	 * additional extension .header.xml !
+	 * extension ".header.xml" and the data file ".dat".
+	 * @param checkExist specifies whether to check for existence of the file or not.
 	 * @note The caller is responsible for deleting the particle container.
 	 * @see ParticleContainerFactory::createInitializedParticleContainer()
 	 */
-	ParticleContainer* initializeFromFile(ParticleContainerFactory::Type type, const char* fileName, double cutoff, bool binary=false);
+	ParticleContainer* initializeFromFile(ParticleContainerFactory::Type type, const std::string& fileName,
+										  double cutoff, bool binary = false);
 
 	int _rank;
 

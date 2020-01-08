@@ -59,7 +59,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		inputReader.reset(new BinaryReader());
 		auto* binaryReader = dynamic_cast<BinaryReader*>(inputReader.get());
 		binaryReader->setPhaseSpaceHeaderFile(fileName + ".header.xml");
-		binaryReader->setPhaseSpaceFile(fileName);
+		binaryReader->setPhaseSpaceFile(fileName + ".dat");
 	} else {
 		inputReader.reset(new ASCIIReader());
 		auto* asciiReader = dynamic_cast<ASCIIReader*>(inputReader.get());
