@@ -102,7 +102,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("norm/vxz", _norm.fname.vxz);
 		bRet = bRet && xmlconfig.getNodeValue("norm/vy",  _norm.fname.vy);
-		if(true == bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
+		if(bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
 			global_log->info() << "Mirror uses MB from files." << std::endl;
 			this->readNormDistr();
 		}
@@ -124,7 +124,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/initvals/y", _veloList.initvals[1]);
 		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/initvals/z", _veloList.initvals[2]);
 
-		if(true == bRet)
+		if(bRet)
 		{
 			// CV boundaries
 			if(MD_LEFT_MIRROR == _direction) {
@@ -199,10 +199,7 @@ void Mirror::beforeForces(
 					comp = global_simulation->getEnsemble()->getComponent(_cids.backward-1);
 					it->setComponent(comp);
 					_veloList.list.pop_front();
-					std::array<double, 3> v;
-					v.at(0) = it->v(0);
-					v.at(1) = it->v(1);
-					v.at(2) = it->v(2);
+					std::array<double, 3> v{it->v(0), it->v(1), it->v(2)};
 					_veloList.list.push_back(v);
 				}
 			}
@@ -255,8 +252,8 @@ void Mirror::beforeForces(
 				double vy_reflected = 2*_melandParams.velo_target - vy;
 				if ( (_direction == MD_RIGHT_MIRROR && vy_reflected < 0.) || (_direction == MD_LEFT_MIRROR && vy_reflected > 0.) ) {
 					float frnd = 0, pbf = 1.;  // pbf: probability factor, frnd (float): random number [0..1)
-					if (true == _melandParams.use_probability_factor) {
-						pbf = abs(vy_reflected) / abs(vy);
+					if (_melandParams.use_probability_factor) {
+						pbf = std::abs(vy_reflected / vy);
 						frnd = _rnd->rnd();
 					}
 					// reflect particles and delete all not reflected
@@ -296,7 +293,7 @@ SubjectBase* Mirror::getSubject()
 	for (auto&& pit:plugins) {
 		std::string name = pit->getPluginName();
 		if(name == "DistControl") {
-			subject =dynamic_cast<SubjectBase*>(pit);
+			subject = dynamic_cast<SubjectBase*>(pit);
 		}
 	}
 	return subject;
@@ -304,7 +301,7 @@ SubjectBase* Mirror::getSubject()
 
 void Mirror::update(SubjectBase* subject)
 {
-	DistControl* distControl = dynamic_cast<DistControl*>(subject);
+	auto* distControl = dynamic_cast<DistControl*>(subject);
 	double dMidpointLeft, dMidpointRight;
 	dMidpointLeft = dMidpointRight = 0.;
 	if(nullptr != distControl) {
@@ -462,7 +459,7 @@ void Mirror::readNormDistr()
 	ifs.vy.open(_norm.fname.vy, std::ios::in);
 
 	//check to see that the file was opened correctly:
-	if (!ifs.vxz.is_open() || !ifs.vy.is_open() ) {
+	if (not ifs.vxz.is_open() or  not ifs.vy.is_open() ) {
 		std::cerr << "There was a problem opening the input file!\n";
 		Simulation::exit(-1);//exit or do additional error checking
 	}
