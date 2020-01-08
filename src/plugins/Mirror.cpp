@@ -263,13 +263,13 @@ void Mirror::beforeForces(
 						_particleManipCount.reflected.local.at(cid_ub)++;
 					}
 					else {
-						it.deleteCurrentParticle();
+						particleContainer->deleteMolecule(it, false);
 						_particleManipCount.deleted.local.at(0)++;
 						_particleManipCount.deleted.local.at(cid_ub)++;
 					}
 				}
 				else {
-					it.deleteCurrentParticle();
+					particleContainer->deleteMolecule(it, false);
 					_particleManipCount.deleted.local.at(0)++;
 					_particleManipCount.deleted.local.at(cid_ub)++;
 				}

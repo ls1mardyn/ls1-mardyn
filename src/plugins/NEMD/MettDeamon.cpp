@@ -841,7 +841,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 		if(bDeleteParticle)
 		{
-			pit.deleteCurrentParticle();
+			particleContainer->deleteMolecule(pit, false);
 			continue;
 		}
 

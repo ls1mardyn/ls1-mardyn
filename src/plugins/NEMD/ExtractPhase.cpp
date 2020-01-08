@@ -119,8 +119,9 @@ void ExtractPhase::afterForces(ParticleContainer* particleContainer, DomainDecom
 			regionHighCorner[1] = std::min(_interface.range.left, regionHighCorner[1]);
 
 		auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);  // over all cell types
-		for(auto it = begin; it.isValid(); ++it)
-			it.deleteCurrentParticle();
+		for(auto it = begin; it.isValid(); ++it) {
+			particleContainer->deleteMolecule(it, false);
+		}
 	}
 
 	// Delete/mark particles of vapor particles inside the interface range
@@ -192,8 +193,9 @@ void ExtractPhase::afterForces(ParticleContainer* particleContainer, DomainDecom
 			if(pid2 == pid1)
 				bFound = true;
 		}
-		if(bFound)
-			it.deleteCurrentParticle();
+		if(bFound) {
+			particleContainer->deleteMolecule(it, false);
+		}
 	}
 
 	// Perform action only once
