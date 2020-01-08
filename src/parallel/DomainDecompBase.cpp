@@ -10,6 +10,10 @@
 #include "utils/mardyn_assert.h"
 #include "ZonalMethods/FullShell.h"
 
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#include "utils/MPI_Info_object.h"
+#endif
 
 DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
 }
@@ -470,31 +474,123 @@ int DomainDecompBase::getNumProcs() const {
 void DomainDecompBase::barrier() const {
 }
 
-void DomainDecompBase::writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer, bool binary) const{
-	for (int process = 0; process < getNumProcs(); process++) {
-		if (getRank() == process) {
-			std::ofstream checkpointfilestream;
-			if(binary){
-//				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
-				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::app);
-			}
-			else {
-				checkpointfilestream.open(filename.c_str(), std::ios::app);
-				checkpointfilestream.precision(20);
-			}
+void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename, ParticleContainer* moleculeContainer) const {
+	int rank = getRank();
 
-			for (auto tempMolecule = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-				 tempMolecule.isValid(); ++tempMolecule) {
-				if(binary){
-					tempMolecule->writeBinary(checkpointfilestream);
-				}
-				else {
-					tempMolecule->write(checkpointfilestream);
-				}
-			}
-			checkpointfilestream.close();
+	MPI_File mpifh;
+	MPI_Info_object mpiinfo;
+	MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY | MPI_MODE_CREATE, mpiinfo,
+	              &mpifh);
+
+	uint64_t numParticles_local = 0;
+	uint64_t numParticles_exscan = 0;
+	auto begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	for (auto it = begin; it.isValid(); ++it) numParticles_local++;
+
+	MPI_Exscan(&numParticles_local, &numParticles_exscan, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+
+	uint16_t particle_data_size = 116;
+	uint64_t buffer_size = 32768;
+	char* write_buffer = new char[buffer_size];
+	uint64_t offset = numParticles_exscan * particle_data_size;
+	MPI_File_seek(mpifh, offset, MPI_SEEK_SET);
+	uint64_t buffer_pos = 0;
+
+	for (auto it = begin; it.isValid(); ++it) {
+		uint64_t pid = it->getID();
+		uint32_t cid_ub = it->componentid() + 1;
+		double r[3];
+		double v[3];
+		double D[3];
+		Quaternion Q = it->q();
+		double q[4];
+		for (auto d = 0; d < 3; ++d) {
+			r[d] = it->r(d);
+			v[d] = it->v(d);
+			D[d] = it->D(d);
 		}
-		barrier();
+		q[0] = Q.qw();
+		q[1] = Q.qx();
+		q[2] = Q.qy();
+		q[3] = Q.qz();
+		memcpy(&write_buffer[buffer_pos], (char*)&pid, sizeof(uint64_t));
+		buffer_pos += sizeof(uint64_t);
+		memcpy(&write_buffer[buffer_pos], (char*)&cid_ub, sizeof(uint32_t));
+		buffer_pos += sizeof(uint32_t);
+		memcpy(&write_buffer[buffer_pos], (char*)&r[0], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&r[1], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&r[2], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&v[0], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&v[1], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&v[2], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&q[0], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&q[1], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&q[2], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&q[3], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&D[0], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&D[1], sizeof(double));
+		buffer_pos += sizeof(double);
+		memcpy(&write_buffer[buffer_pos], (char*)&D[2], sizeof(double));
+		buffer_pos += sizeof(double);
+
+		if (buffer_pos > buffer_size - particle_data_size) {
+			// we cannot add any more particles to this buffer, so we write the buffer.
+			MPI_Status status;
+			MPI_File_write(mpifh, write_buffer, buffer_pos, MPI_BYTE, &status);
+			// reset buffer position.
+			buffer_pos = 0;
+		}
+	}
+	MPI_Status status;
+	MPI_File_write(mpifh, write_buffer, buffer_pos, MPI_BYTE, &status);
+
+	delete[] write_buffer;
+	MPI_File_close(&mpifh);
+}
+
+void DomainDecompBase::writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer,
+                                            bool binary) const {
+#ifdef ENABLE_MPI
+	if (binary) {
+		writeMoleculesToMPIFileBinary(filename, moleculeContainer);
+	} else {
+#else
+		{
+#endif
+		for (int process = 0; process < getNumProcs(); process++) {
+			if (getRank() == process) {
+				std::ofstream checkpointfilestream;
+				if (binary) {
+					checkpointfilestream.open((filename + ".dat").c_str(),
+					                          std::ios::binary | std::ios::out | std::ios::app);
+				} else {
+					checkpointfilestream.open(filename.c_str(), std::ios::app);
+					checkpointfilestream.precision(20);
+				}
+
+				for (auto tempMolecule = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				     tempMolecule.isValid(); ++tempMolecule) {
+					if (binary) {
+						tempMolecule->writeBinary(checkpointfilestream);
+					} else {
+						tempMolecule->write(checkpointfilestream);
+					}
+				}
+				checkpointfilestream.close();
+			}
+			barrier();
+		}
 	}
 }
 

@@ -172,6 +172,18 @@ public:
 	//! @param moleculeContainer e.g. needed for the cutoff radius
 	double getIOCutoffRadius(int dim, Domain* domain, ParticleContainer* moleculeContainer);
 
+
+#ifdef ENABLE_MPI
+	//! @brief appends molecule data to the file. The format is the same as that of the input file
+	//! @param filename name of the file into which the data will be written
+	//! @param moleculeContainer all Particles from this container will be written to the file
+	//!
+	//! This version uses, MPI IO.
+	//! @param filename name of the file into which the data will be written
+	//! @param moleculeContainer all Particles from this container will be written to the file
+	void writeMoleculesToMPIFileBinary(const std::string& filename, ParticleContainer* moleculeContainer) const;
+#endif // ENABLE_MPI
+
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
