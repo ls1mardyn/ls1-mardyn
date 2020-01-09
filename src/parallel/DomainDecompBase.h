@@ -175,9 +175,6 @@ public:
 
 #ifdef ENABLE_MPI
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
-	//! @param filename name of the file into which the data will be written
-	//! @param moleculeContainer all Particles from this container will be written to the file
-	//!
 	//! This version uses, MPI IO.
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
@@ -185,12 +182,9 @@ public:
 #endif // ENABLE_MPI
 
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
-	//! @param filename name of the file into which the data will be written
-	//! @param moleculeContainer all Particles from this container will be written to the file
-	//!
-	//! Currently, parallel IO isn't used.
-	//! To ensure that not more than one process writes to the file at any time,
-	//! there is a loop over all processes with a barrier in between
+	//! If MPI is enabled and binary files are supposed to be written this function will call writeMoleculesToMPIFileBinary().
+	//! Otherwise, to ensure that not more than one process writes to the file at any time,
+	//! there is a loop over all processes with a barrier in between.
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
 	//! @param binary flag, that is true if the output shall be binary

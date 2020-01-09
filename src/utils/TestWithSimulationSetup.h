@@ -72,7 +72,6 @@ protected:
 	 * @param cutoff the value used for all kinds of cutoff radii
 	 * @param binary specifies that the file pointed to is a binary file. If true the header of this file has to have the
 	 * extension ".header.xml" and the data file ".dat".
-	 * @param checkExist specifies whether to check for existence of the file or not.
 	 * @note The caller is responsible for deleting the particle container.
 	 * @see ParticleContainerFactory::createInitializedParticleContainer()
 	 */
