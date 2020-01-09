@@ -1,12 +1,12 @@
-
 /*
- * inputFileTest.h
+ * CheckpointRestartTest.h
  *
- *  Created on: 01.05.2012
- *      Author: yutaka
+ * Check whether a checkpoint can be successfully read again.
+ *
+ *  Created on: 11.08.2016
+ *      Author: seckler
  */
-#ifndef INPUTFILETEST_H_
-#define INPUTFILETEST_H_
+#pragma once
 
 #include "utils/TestWithSimulationSetup.h"
 
@@ -36,5 +36,3 @@ private:
 	void testCheckpointRestart(bool binary);
 	unsigned long getGlobalParticleNumber(ParticleContainer* particleContainer);
 };
-
-#endif /* INPUTFILETEST_H_ */
