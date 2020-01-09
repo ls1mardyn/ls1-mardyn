@@ -1,12 +1,12 @@
-
 /*
- * inputFileTest.h
+ * CheckpointRestartTest.h
  *
- *  Created on: 01.05.2012
- *      Author: yutaka
+ * Check whether a checkpoint can be successfully read again.
+ *
+ *  Created on: 11.08.2016
+ *      Author: seckler
  */
-#ifndef INPUTFILETEST_H_
-#define INPUTFILETEST_H_
+#pragma once
 
 #include "utils/TestWithSimulationSetup.h"
 
@@ -16,18 +16,23 @@ class CheckpointRestartTest : public utils::TestWithSimulationSetup {
 	TEST_SUITE(CheckpointRestartTest);
 
 	// add a method which perform test
-	TEST_METHOD(testCheckpointRestart);
+	TEST_METHOD(testCheckpointRestartASCII);
+
+	// add a method which perform test
+	TEST_METHOD(testCheckpointRestartBinary);
 
 	// end suite declaration
 	TEST_SUITE_END();
 
 public:
-	CheckpointRestartTest();
-	virtual ~CheckpointRestartTest();
-	/*
-	 * testRemoveMomentum tests if removeMomentum in MDGenerator works properly or not.
-	 */
-	void testCheckpointRestart();
-};
+	CheckpointRestartTest() = default;
+	virtual ~CheckpointRestartTest() = default;
 
-#endif /* INPUTFILETEST_H_ */
+	void testCheckpointRestartASCII();
+
+	void testCheckpointRestartBinary();
+private:
+
+	void testCheckpointRestart(bool binary);
+	unsigned long getGlobalParticleNumber(ParticleContainer* particleContainer);
+};
