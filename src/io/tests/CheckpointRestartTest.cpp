@@ -41,8 +41,9 @@ void CheckpointRestartTest::testCheckpointRestartBinary() {
  * Actual test if a written checkpoint can successfully be read again.
  */
 void CheckpointRestartTest::testCheckpointRestart(bool binary) {
+	constexpr double cutoff = 10.5;
 	ParticleContainer* particleContainer
-		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", 10.5);
+		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", cutoff);
 	auto initialParticleCount = getGlobalParticleNumber(particleContainer);
 
 	std::string filename = binary ? "restart.test" : "restart.test.dat";
@@ -52,7 +53,7 @@ void CheckpointRestartTest::testCheckpointRestart(bool binary) {
 	delete particleContainer;
 
 	ParticleContainer* particleContainer2
-		= initializeFromFile(ParticleContainerFactory::LinkedCell, filename, 10.5, binary);
+		= initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff, binary);
 
 	auto restartedParticleCount = getGlobalParticleNumber(particleContainer2);
 	ASSERT_EQUAL(initialParticleCount, restartedParticleCount);
