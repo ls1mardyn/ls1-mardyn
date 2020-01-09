@@ -38,7 +38,7 @@ void CheckpointRestartTest::testCheckpointRestartBinary() {
 }
 
 /*
- * This tests if a written checkpoint can successfully be read again using binary.
+ * Actual test if a written checkpoint can successfully be read again.
  */
 void CheckpointRestartTest::testCheckpointRestart(bool binary) {
 	ParticleContainer* particleContainer
