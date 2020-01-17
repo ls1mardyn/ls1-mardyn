@@ -57,6 +57,7 @@ public:
 			<meland>
 				<use_probability>INT</use_probability>   <!-- 0:disable | 1:enable probability factor in case of Mirror type MT_MELAND_2004 -->
 				<velo_target>FLOAT</velo_target>         <!-- target hydrodynamic velocity -->
+				<fixed_probability>FLOAT</fixed_probability>         <!-- (optional) fixed probability for reflection in Meland2004 mirror -->
 			</meland>
 		</plugin>
 	   \endcode
@@ -162,6 +163,7 @@ private:
 	struct MelandParams {
 		bool use_probability_factor;
 		double velo_target;
+		float fixed_probability_factor;
 	} _melandParams;
 
 	struct ParticleManipCount {

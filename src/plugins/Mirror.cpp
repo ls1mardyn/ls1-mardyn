@@ -154,17 +154,26 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	if(MT_MELAND_2004 == _type)
 	{
 		_melandParams.use_probability_factor = true;
-		_melandParams.velo_target = 0.4;
+		_melandParams.velo_target = 4.4;
+		_melandParams.fixed_probability_factor = -1;
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("meland/use_probability", _melandParams.use_probability_factor);
 		bRet = bRet && xmlconfig.getNodeValue("meland/velo_target", _melandParams.velo_target);
+		xmlconfig.getNodeValue("meland/fixed_probability", _melandParams.fixed_probability_factor);
 
 		if(not bRet)
 		{
 			global_log->error() << "Parameters for Meland2004 Mirror provided in config-file *.xml corrupted/incomplete. Prgram exit ..." << endl;
 			Simulation::exit(-2004);
 		}
+		else {
+			global_log->info() << "Mirror: [Meland] UseProb: " << _melandParams.use_probability_factor << " ; VeloTarget: " << _melandParams.velo_target << std::endl;
+			if (_melandParams.fixed_probability_factor > 0) {
+				global_log->info() << "Mirror: [Meland] FixedProb: " << _melandParams.fixed_probability_factor << std::endl;
+			}
+		}
 	}
+	
 }
 
 void Mirror::beforeForces(
@@ -254,15 +263,20 @@ void Mirror::beforeForces(
 					float frnd = 0, pbf = 1.;  // pbf: probability factor, frnd (float): random number [0..1)
 					if (_melandParams.use_probability_factor) {
 						pbf = std::abs(vy_reflected / vy);
+						if (_melandParams.fixed_probability_factor > 0) {
+							pbf = _melandParams.fixed_probability_factor;
+						}
 						frnd = _rnd->rnd();
 					}
 					// reflect particles and delete all not reflected
 					if(frnd < pbf) {
+						cout << "[Meland] Reflected: Prob: " << pbf << " > Rnd: " << frnd << endl;
 						it->setv(1, vy_reflected);
 						_particleManipCount.reflected.local.at(0)++;
 						_particleManipCount.reflected.local.at(cid_ub)++;
 					}
 					else {
+						cout << "[Meland] Deleted: Prob: " << pbf << " < Rnd: " << frnd << endl;
 						particleContainer->deleteMolecule(it, false);
 						_particleManipCount.deleted.local.at(0)++;
 						_particleManipCount.deleted.local.at(cid_ub)++;
