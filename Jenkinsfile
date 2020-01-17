@@ -87,7 +87,7 @@ pipeline {
                 dir ("build"){
                   sh """
                     cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
-                    make -j8
+                    make -j4
                   """
                 }
                 stash includes: "build/src/MarDyn", name: "autopas_exec"
@@ -101,7 +101,7 @@ pipeline {
                 dir ("build-mpi"){
                   sh """
                     CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
-                    make -j8
+                    make -j4
                   """
                 }
                 stash includes: "build-mpi/src/MarDyn", name: "autopas_mpi_exec"

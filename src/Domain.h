@@ -5,12 +5,13 @@
 #include <string>
 #include <map>
 #include <array>
+#include <cstdint>
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"
 #include "ensemble/EnsembleBase.h"
 #include "Simulation.h"
-
+#include "utils/CommVar.h"
 /* 
  * TODO add comments for variables 
  */
@@ -193,6 +194,12 @@ public:
 
 	//! @brief update globalNumMolecules
 	void updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
+
+	//! @brief get local/global max. moleculeID
+	CommVar<uint64_t> getMaxMoleculeID() const;
+
+	//! @brief update max. moleculeID
+	void updateMaxMoleculeID(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 	//! @brief get the global pressure
 	double getGlobalPressure();
@@ -405,6 +412,7 @@ private:
 	//! global Number of Molecules
 	//! @todo redundancy?
 	unsigned long _globalNumMolecules;
+	CommVar<uint64_t> _maxMoleculeID;
 	//! side length of the cubic simulation box
 	double _globalLength[3];
 

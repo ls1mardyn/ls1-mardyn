@@ -209,8 +209,7 @@ private:
 	
 	//! The number of bins in angular direction in case the angular RDF is
 	//! being calculated
-	unsigned long _angularBins;
-	
+	unsigned long _angularBins {1};
 	
 	//! The total number of bins for the ARDF is the product of the radial bins and
 	//! the angular bins

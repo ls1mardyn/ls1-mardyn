@@ -350,8 +350,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 #ifndef MARDYN_AUTOPAS
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff);
 #else
-		moleculeContainer = new AutoPasContainer();
-		moleculeContainer->setCutoff(cutOff);
+		moleculeContainer = new AutoPasContainer(cutOff);
 		moleculeContainer->rebuild(bBoxMin, bBoxMax);
 #endif
 		moleculeContainer->update();

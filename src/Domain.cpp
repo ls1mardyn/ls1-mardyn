@@ -604,7 +604,7 @@ void Domain::writeCheckpoint(string filename,
 	// update global number of particles
 	this->updateglobalNumMolecules(particleContainer, domainDecomp);
 
-	if (useBinaryFormat == true) {
+	if (useBinaryFormat) {
 		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
 	} else {
 		this->writeCheckpointHeader(filename, particleContainer, domainDecomp, currentTime);
@@ -731,6 +731,25 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	numMolecules.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 	this->setglobalNumMolecules(numMolecules.global);
+}
+
+CommVar<uint64_t> Domain::getMaxMoleculeID() const {
+	return _maxMoleculeID;
+}
+
+void Domain::updateMaxMoleculeID(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp)
+{
+	_maxMoleculeID.local = 0;
+	for(auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
+		uint64_t pid = pit->getID();
+		if(pid > _maxMoleculeID.local)
+			_maxMoleculeID.local = pid;
+	}
+#ifdef ENABLE_MPI
+	MPI_Allreduce(&_maxMoleculeID.local, &_maxMoleculeID.global, 1, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
+#else
+	_maxMoleculeID.global = _maxMoleculeID.local;
+#endif
 }
 
 double Domain::getglobalRho(){ return _globalRho;}

@@ -1,16 +1,18 @@
 #include "io/CheckpointWriter.h"
 
+
 #include <sstream>
 #include <string>
+#include <cstring>
 
 #include "Common.h"
 #include "Domain.h"
+#include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
 
 
 using Log::global_log;
 using namespace std;
-
 
 void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
@@ -73,12 +75,11 @@ void CheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecom
 			filenamestream << "-" << gettimestring();
 		}
 
-		if(_useBinaryFormat) {
-            filenamestream << ".restart";
-        }
-        else { /* ASCII mode */
-            filenamestream << ".restart.dat";
-        }
+		if (_useBinaryFormat) {
+			filenamestream << ".restart";
+		} else { /* ASCII mode */
+			filenamestream << ".restart.dat";
+		}
 
 		string filename = filenamestream.str();
 		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime(), _useBinaryFormat);

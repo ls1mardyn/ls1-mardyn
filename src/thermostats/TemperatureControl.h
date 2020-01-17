@@ -15,33 +15,28 @@
 #include "ThermostatVariables.h"
 #include "utils/Random.h"
 #include "integrators/Integrator.h"
+#include "plugins/NEMD/DistControl.h"
+#include "utils/ObserverBase.h"
+#include "utils/Region.h"
 
+class DistControl;
 class XMLfileUnits;
 class DomainDecompBase;
 class ParticleContainer;
 class Accumulator;
-class ControlRegionT
+class TemperatureControl;
+class ControlRegionT : public CuboidRegionObs
 {
 public:
-	ControlRegionT();
+	ControlRegionT(TemperatureControl* const parent);
 	~ControlRegionT();
 
 	void readXML(XMLfileUnits& xmlconfig);
-
 	unsigned int GetID(){return _nID;}
 	void VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections);
-
-	double* GetLowerCorner() {return _dLowerCorner;}
-	double* GetUpperCorner() {return _dUpperCorner;}
-	void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal;}
-	void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal;}
-	double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
-	void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
 	void CalcGlobalValues(DomainDecompBase* domainDecomp);
 	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-
 	void ControlTemperature(Molecule* mol);
-
 	void ResetLocalValues();
 
 	// beta log file
@@ -54,16 +49,17 @@ public:
 	};
 	LocalControlMethod _localMethod;
 
+	void registerAsObserver();
+
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
 	Accumulator* CreateAccumulatorInstance(std::string strTransDirections);
 
+	// observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
+	DistControl* getDistControl();
+
 	// instances / ID
 	static unsigned short _nStaticID;
-	unsigned short _nID;
-
-	double _dLowerCorner[3];
-	double _dUpperCorner[3];
 
 	unsigned int _nNumSlabs;
 	double _dSlabWidth;
@@ -74,8 +70,6 @@ private:
 	double _dTemperatureExponent;
 	unsigned int _nTargetComponentID;
 	unsigned short _nNumThermostatedTransDirections;
-
-	unsigned short _nRegionID;
 
 	Accumulator* _accumulator;
 
@@ -88,20 +82,24 @@ private:
 	double _timestep;
 	double _nuDt;
 	Random _rand;
+
+	bool _bIsObserver;
 };
 
 
 class Domain;
-class TemperatureControl
+class TemperatureControl : public ControlInstance
 {
 public:
 	TemperatureControl();
 	~TemperatureControl();
 
+	std::string getShortName() override {return "TeC";}
 	void readXML(XMLfileUnits& xmlconfig);
 	void AddRegion(ControlRegionT* region);
 	int GetNumRegions() {return _vecControlRegions.size();}
 	ControlRegionT* GetControlRegion(unsigned short nRegionID) {return _vecControlRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
+	void prepare_start();
 
 	void Init(unsigned long simstep);
 	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep);

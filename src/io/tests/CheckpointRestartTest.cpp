@@ -1,51 +1,71 @@
 /*
- * inputFileTest.cpp
+ * CheckpointRestartTest.cpp
  *
- * There are two problems
- * - How to derive components.
- * - error with the use of molecule
+ * Check whether a checkpoint can be successfully read again.
  *
- *  Created on: 01.05.2012
- *      Author: yutaka
+ *  Created on: 11.08.2016
+ *      Author: seckler
  */
 
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
+#include "parallel/DomainDecompBase.h"
 #include <iostream>
-#include <sstream>
 
 #include "io/tests/CheckpointRestartTest.h"
 
 using namespace std;
 
-class MDGenerator;
 
-#if !defined(ENABLE_REDUCED_MEMORY_MODE) && !defined(MARDYN_AUTOPAS)
+#if !defined(ENABLE_REDUCED_MEMORY_MODE)
 TEST_SUITE_REGISTRATION(CheckpointRestartTest);
 #else
-#pragma message "Compilation Info: CheckpointRestartTest disabled in reduced memory mode and autopas mode."
+#pragma message "Compilation Info: CheckpointRestartTest disabled in reduced memory mode."
 #endif
 
-
-CheckpointRestartTest::CheckpointRestartTest() {
-}
-
-CheckpointRestartTest::~CheckpointRestartTest() {
+/*
+ * This tests if a written checkpoint can successfully be read again using the ascii writer.
+ */
+void CheckpointRestartTest::testCheckpointRestartASCII() {
+	testCheckpointRestart(false);
 }
 
 /*
- * testRemoveMomentum tests if removeMomentum in MDGenerator works properly or not.
+ * This tests if a written checkpoint can successfully be read again using binary.
  */
-void CheckpointRestartTest::testCheckpointRestart() {
-	ParticleContainer* particleContainer
-		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", 10.5);
+void CheckpointRestartTest::testCheckpointRestartBinary() {
+	testCheckpointRestart(true);
+}
 
-	_domain->writeCheckpoint(getTestDataFilename("restart.test.dat", false), particleContainer, _domainDecomposition, 0.);
+/*
+ * Actual test if a written checkpoint can successfully be read again.
+ */
+void CheckpointRestartTest::testCheckpointRestart(bool binary) {
+	constexpr double cutoff = 10.5;
+	ParticleContainer* particleContainer
+		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", cutoff);
+	auto initialParticleCount = getGlobalParticleNumber(particleContainer);
+
+	std::string filename = binary ? "restart.test" : "restart.test.dat";
+	_domain->writeCheckpoint(getTestDataFilename(filename, false), particleContainer, _domainDecomposition,
+	                         0., binary);
 
 	delete particleContainer;
 
 	ParticleContainer* particleContainer2
-			= initializeFromFile(ParticleContainerFactory::LinkedCell, "restart.test.dat", 1.5);
+		= initializeFromFile(ParticleContainerFactory::LinkedCell, filename, cutoff, binary);
 
+	auto restartedParticleCount = getGlobalParticleNumber(particleContainer2);
+	ASSERT_EQUAL(initialParticleCount, restartedParticleCount);
 	delete particleContainer2;
+}
+
+unsigned long CheckpointRestartTest::getGlobalParticleNumber(ParticleContainer* particleContainer){
+	unsigned long localParticleCount = particleContainer->getNumberOfParticles();
+	_domainDecomposition->collCommInit(1);
+	_domainDecomposition->collCommAppendUnsLong(localParticleCount);
+	_domainDecomposition->collCommAllreduceSum();
+	auto globalNumParticles = _domainDecomposition->collCommGetUnsLong();
+	_domainDecomposition->collCommFinalize();
+	return globalNumParticles;
 }

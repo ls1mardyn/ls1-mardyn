@@ -14,7 +14,7 @@ Quaternion AutoPasSimpleMolecule::_quaternion = Quaternion(1.0, 0.0, 0.0, 0.0);
 AutoPasSimpleMolecule::AutoPasSimpleMolecule(unsigned long id, Component* component, double rx, double ry, double rz,
 											 double vx, double vy, double vz, double q0, double q1, double q2,
 											 double q3, double Dx, double Dy, double Dz)
-	: autopas::MoleculeLJ({rx, ry, rz}, {vx, vy, vz}, id) {
+	: autopas::MoleculeLJ<double>({rx, ry, rz}, {vx, vy, vz}, id) {
 	if (_component == nullptr) {
 		_component = component;
 	} else if (_component != component and component != nullptr) {
@@ -47,4 +47,15 @@ void AutoPasSimpleMolecule::upd_postF(double dt_halve, double& summv2, double& s
 	}
 	mardyn_assert(!isnan(v2));  // catches NaN
 	summv2 += mass * v2;
+}
+
+std::ostream& operator<<( std::ostream& os, const AutoPasSimpleMolecule& m ) {
+	os << "ID: " << m.getID() << "\n";
+	os << "r:  (" << m.r(0) << ", " << m.r(1) << ", " << m.r(2) << ")\n" ;
+	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
+	os << "F:  (" << m.F(0) << ", " << m.F(1) << ", " << m.F(2) << ")\n" ;
+	os << "q:  [[" << m.q().qw() << ", " << m.q().qx() << "], [" << m.q().qy() << ", " << m.q().qz()<< "]]\n" ;
+	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")\n";
+	os << "Vi:  (" << m.Vi(0) << ", " << m.Vi(1) << ", " << m.Vi(2) << ")" ;
+	return os;
 }
