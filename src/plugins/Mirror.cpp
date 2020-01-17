@@ -270,13 +270,13 @@ void Mirror::beforeForces(
 					}
 					// reflect particles and delete all not reflected
 					if(frnd < pbf) {
-						cout << "[Meland] Reflected: Prob: " << pbf << " > Rnd: " << frnd << endl;
+						//cout << "[Meland] Reflected: Prob: " << pbf << " > Rnd: " << frnd << endl;
 						it->setv(1, vy_reflected);
 						_particleManipCount.reflected.local.at(0)++;
 						_particleManipCount.reflected.local.at(cid_ub)++;
 					}
 					else {
-						cout << "[Meland] Deleted: Prob: " << pbf << " < Rnd: " << frnd << endl;
+						//cout << "[Meland] Deleted: Prob: " << pbf << " < Rnd: " << frnd << endl;
 						particleContainer->deleteMolecule(it, false);
 						_particleManipCount.deleted.local.at(0)++;
 						_particleManipCount.deleted.local.at(cid_ub)++;
