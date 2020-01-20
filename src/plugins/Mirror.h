@@ -167,15 +167,15 @@ private:
 	std::unique_ptr<Random> _rnd;
 
 	struct MelandParams {
-		bool use_probability_factor;
-		double velo_target;
-		float fixed_probability_factor;
+		bool use_probability_factor {true};
+		double velo_target {0.4};
+		float fixed_probability_factor {-1};
 	} _melandParams;
 	
 	struct RampingParams {
-		unsigned long startStep;
-		unsigned long stopStep;
-		int treatment;
+		unsigned long startStep {1000};
+		unsigned long stopStep {2000};
+		int treatment {1};
 	} _rampingParams;
 
 	struct ParticleManipCount {

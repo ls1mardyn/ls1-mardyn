@@ -154,7 +154,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	/** Meland2004 */
 	if(MT_MELAND_2004 == _type)
 	{
-		_melandParams.fixed_probability_factor = -1;
+		//_melandParams.fixed_probability_factor = -1;
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("meland/use_probability", _melandParams.use_probability_factor);
 		bRet = bRet && xmlconfig.getNodeValue("meland/velo_target", _melandParams.velo_target);
