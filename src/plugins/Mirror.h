@@ -30,6 +30,7 @@ enum MirrorType : uint16_t {
 	MT_ZERO_GRADIENT = 3,
 	MT_NORMDISTR_MB = 4,
 	MT_MELAND_2004 = 5,  // Algorithm proposed by Meland et al., Phys. Fluids, Vol. 16, No. 2 (2004)
+	MT_RAMPING = 6,
 };
 
 class ParticleContainer;
@@ -57,7 +58,13 @@ public:
 			<meland>
 				<use_probability>INT</use_probability>   <!-- 0:disable | 1:enable probability factor in case of Mirror type MT_MELAND_2004 -->
 				<velo_target>FLOAT</velo_target>         <!-- target hydrodynamic velocity -->
+				<fixed_probability>FLOAT</fixed_probability>         <!-- (optional) fixed probability for reflection in Meland2004 mirror -->
 			</meland>
+			<ramping>
+				<start>UNSIGNED_LONG</start>   <!-- Timestep until all particles are reflected -->
+				<stop>UNSIGNED_LONG</stop>         <!-- As from this timestep all particles are treated as set in "treatment" -->
+				<treatment>INT</treatment>         <!-- When not reflected, the particles are deleted (0) or transmitted (1) -->
+			</ramping> 
 		</plugin>
 	   \endcode
 	 */
@@ -160,9 +167,16 @@ private:
 	std::unique_ptr<Random> _rnd;
 
 	struct MelandParams {
-		bool use_probability_factor;
-		double velo_target;
+		bool use_probability_factor {true};
+		double velo_target {0.4};
+		float fixed_probability_factor {-1};
 	} _melandParams;
+	
+	struct RampingParams {
+		unsigned long startStep {1000};
+		unsigned long stopStep {2000};
+		int treatment {1};
+	} _rampingParams;
 
 	struct ParticleManipCount {
 		CommVar<std::vector<uint64_t> > reflected;
