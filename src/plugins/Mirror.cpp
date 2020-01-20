@@ -6,6 +6,7 @@
 #include "utils/Logger.h"
 #include "plugins/NEMD/DistControl.h"
 
+#include <string>
 #include <fstream>
 #include <cmath>
 #include <cstdlib>
@@ -28,7 +29,7 @@ Mirror::Mirror() :
 	_particleManipCount.reflected.local.resize(numComponents+1);
 	_particleManipCount.reflected.global.resize(numComponents+1);
 
-	for(auto i=0; i<numComponents; ++i) {
+	for(uint32_t i=0; i<numComponents; ++i) {
 		_particleManipCount.deleted.local.at(i)=0;
 		_particleManipCount.deleted.global.at(i)=0;
 		_particleManipCount.reflected.local.at(i)=0;
@@ -153,8 +154,6 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	/** Meland2004 */
 	if(MT_MELAND_2004 == _type)
 	{
-		_melandParams.use_probability_factor = true;
-		_melandParams.velo_target = 4.4;
 		_melandParams.fixed_probability_factor = -1;
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("meland/use_probability", _melandParams.use_probability_factor);
@@ -163,13 +162,46 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 
 		if(not bRet)
 		{
-			global_log->error() << "Parameters for Meland2004 Mirror provided in config-file *.xml corrupted/incomplete. Prgram exit ..." << endl;
+			global_log->error() << "Parameters for Meland2004 Mirror provided in config-file *.xml corrupted/incomplete. Program exit ..." << endl;
 			Simulation::exit(-2004);
 		}
 		else {
-			global_log->info() << "Mirror: [Meland] UseProb: " << _melandParams.use_probability_factor << " ; VeloTarget: " << _melandParams.velo_target << std::endl;
+			global_log->info() << "Mirror: [Meland] UseProb: " << _melandParams.use_probability_factor << " ; TargetVelo: " << _melandParams.velo_target << std::endl;
 			if (_melandParams.fixed_probability_factor > 0) {
 				global_log->info() << "Mirror: [Meland] FixedProb: " << _melandParams.fixed_probability_factor << std::endl;
+			}
+		}
+	}
+	
+	if(MT_RAMPING == _type)
+	{
+		bool bRet = true;
+		bRet = bRet && xmlconfig.getNodeValue("ramping/start", _rampingParams.startStep);
+		bRet = bRet && xmlconfig.getNodeValue("ramping/stop", _rampingParams.stopStep);
+		bRet = bRet && xmlconfig.getNodeValue("ramping/treatment", _rampingParams.treatment);
+		
+		if (not bRet) {
+			global_log->error() << "Mirror: [Ramping] Parameters for Mirror [Ramping] provided in config-file *.xml corrupted/incomplete. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+		else {
+			if(_rampingParams.startStep > _rampingParams.stopStep) {
+				global_log->error() << "Mirror: [Ramping] Start > Stop. Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			else {
+				global_log->info() << "Mirror: [Ramping] From " << _rampingParams.startStep << " to " << _rampingParams.stopStep << endl;
+				std::string treatmentStr = "";
+				switch(_rampingParams.treatment) {
+					case 0 : treatmentStr = "Deletion";
+						break;
+					case 1 : treatmentStr = "Transmission";
+						break;
+					default:
+						global_log->error() << "Mirror: [Ramping] No proper treatment was set. Program exit ..." << endl;
+						Simulation::exit(-1);
+				}
+				global_log->info() << "Mirror: [Ramping] Treatment for non-reflected particles: " << _rampingParams.treatment << " ( " << treatmentStr << " ) " << endl;
 			}
 		}
 	}
@@ -262,9 +294,11 @@ void Mirror::beforeForces(
 				if ( (_direction == MD_RIGHT_MIRROR && vy_reflected < 0.) || (_direction == MD_LEFT_MIRROR && vy_reflected > 0.) ) {
 					float frnd = 0, pbf = 1.;  // pbf: probability factor, frnd (float): random number [0..1)
 					if (_melandParams.use_probability_factor) {
-						pbf = std::abs(vy_reflected / vy);
 						if (_melandParams.fixed_probability_factor > 0) {
 							pbf = _melandParams.fixed_probability_factor;
+						}
+						else {
+							pbf = std::abs(vy_reflected / vy);
 						}
 						frnd = _rnd->rnd();
 					}
@@ -290,6 +324,83 @@ void Mirror::beforeForces(
 			}
 		}
 	}
+	else if(MT_RAMPING == _type){
+
+		double regionLowCorner[3], regionHighCorner[3];
+
+		// a check only makes sense if the subdomain specified by _direction and _position.coord is inside of the particleContainer.
+		// if we have an MD_RIGHT_MIRROR: _position.coord defines the lower boundary of the mirror, thus we check if _position.coord is at
+		// most boxmax.
+		// if the mirror is an MD_LEFT_MIRROR _position.coord defines the upper boundary of the mirror, thus we check if _position.coord is
+		// at lese boxmin.
+		if ((_direction == MD_RIGHT_MIRROR and _position.coord < particleContainer->getBoundingBoxMax(1)) or
+			(_direction == MD_LEFT_MIRROR and _position.coord > particleContainer->getBoundingBoxMin(1))) {
+			// if linked cell in the region of the mirror boundary
+			for (unsigned d = 0; d < 3; d++) {
+				regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
+				regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
+			}
+
+			if (_direction == MD_RIGHT_MIRROR) {
+				// ensure that we do not iterate over things outside of the container.
+				regionLowCorner[1] = std::max(_position.coord, regionLowCorner[1]);
+			} else if (_direction == MD_LEFT_MIRROR) {
+				// ensure that we do not iterate over things outside of the container.
+				regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
+			}
+			
+			// reset local values
+			for(auto& it:_particleManipCount.reflected.local)
+				it = 0;
+			for(auto& it:_particleManipCount.deleted.local)
+				it = 0;
+
+			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
+			for(auto it = begin; it.isValid(); ++it) {
+				
+				uint32_t cid_ub = it->componentid()+1;  // unity based componentid --> 0: arbitrary component, 1: first component
+				double vy = it->v(1);
+				
+				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
+					continue;
+				
+				float ratioRefl;
+				float frnd = _rnd->rnd();
+				uint64_t currentSimstep = global_simulation->getSimulationStep();
+				
+				if(currentSimstep <= _rampingParams.startStep) {
+					ratioRefl = 1;
+				}
+				else if ((currentSimstep > _rampingParams.startStep) && (currentSimstep < _rampingParams.stopStep)) {
+					ratioRefl = ((float)(_rampingParams.stopStep - currentSimstep) / (float)(_rampingParams.stopStep - _rampingParams.startStep));
+				}
+				else {
+					ratioRefl = 0;
+				}
+				
+				if(frnd <= ratioRefl) {
+					it->setv(1, -vy);
+					_particleManipCount.reflected.local.at(0)++;
+					_particleManipCount.reflected.local.at(cid_ub)++;
+					//cout << "Mirror: [Ramping] Velo. reversed at step " << currentSimstep << " , ReflRatio: " << ratioRefl << endl;
+				}
+				else {
+					if (_rampingParams.treatment == 0) {
+						particleContainer->deleteMolecule(it, false);
+						_particleManipCount.deleted.local.at(0)++;
+						_particleManipCount.deleted.local.at(cid_ub)++;
+						//cout << "Mirror: [Ramping] Particle deleted at step " << currentSimstep << " , ReflRatio: " << ratioRefl << endl;
+					}
+					else if (_rampingParams.treatment == 1) {
+						// Transmit particle
+						//cout << "Mirror: [Ramping] Particle transmitted at step " << currentSimstep << " , ReflRatio: " << ratioRefl << endl;
+					}
+				}
+				
+			}
+		}
+	}
+	
 }
 
 void Mirror::afterForces(
