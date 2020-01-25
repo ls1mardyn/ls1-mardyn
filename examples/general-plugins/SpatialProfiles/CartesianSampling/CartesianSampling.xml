@@ -111,14 +111,14 @@
       </component>
     </plugin>
 
-    <!-- MIRROR -->
+    <!-- MIRROR plugin disabled as new version seems to need DistControl as well
 
      <plugin name="Mirror">
       <yPos>55</yPos>
       <forceConstant>10</forceConstant>
       <direction>0</direction>
     </plugin>
-
+    -->
     <!-- SPATIAL PROFILE OUTPUT -->
 
      <plugin name="SpatialProfile">
@@ -132,6 +132,7 @@
         <recording>1</recording>
       </timesteps>
       <outputprefix>cartesian</outputprefix>
+      <profiledComponent>all</profiledComponent>
       <profiles>
         <density>1</density>
         <temperature>1</temperature>

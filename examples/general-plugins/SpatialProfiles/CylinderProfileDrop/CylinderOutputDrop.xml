@@ -153,12 +153,13 @@
 	      </component>
 	    </plugin>
 
-	    <!-- MIRROR ON TOP -->
+	    <!-- MIRROR ON TOP
 	    <plugin name="Mirror">
 	      <yPos>78</yPos>
 	      <forceConstant>10</forceConstant>
 	      <direction>0</direction>
 	    </plugin>
+	    -->
 
 	    <!-- CARTESIAN/CYLINDER PROFILE -->
 	    <plugin name="SpatialProfile">
@@ -176,7 +177,9 @@
 	        <recording>5</recording>
 	      </timesteps>
 	      <outputprefix>drop.cyl.</outputprefix>
-	      <profiles>
+          <profiledComponent>all</profiledComponent>
+
+            <profiles>
 	        <density>1</density>
 	        <temperature>0</temperature>
 	        <velocity>0</velocity>
