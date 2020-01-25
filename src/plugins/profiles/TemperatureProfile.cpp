@@ -13,7 +13,7 @@ void TemperatureProfile::output(string prefix, long unsigned accumulatedDatasets
 
     // Generate Outfile
     _accumulatedDatasets = accumulatedDatasets;
-    _profilePrefix = prefix + "_kartesian.Temppr";
+    _profilePrefix = prefix + ".Temppr";
     ofstream outfile(_profilePrefix.c_str());
     outfile.precision(6);
 

@@ -5,12 +5,12 @@
 
 #include "DensityProfile.h"
 
-void DensityProfile::output (string prefix, long unsigned accumulatedDatasets) {
+void DensityProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	global_log->info() << "[DensityProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
-	_profilePrefix = prefix + "_kartesian.NDpr";
+	_profilePrefix = prefix + ".NDpr";
 	ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 

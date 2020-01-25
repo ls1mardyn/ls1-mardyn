@@ -5,12 +5,12 @@
 #include "VelocityAbsProfile.h"
 #include "plugins/profiles/DensityProfile.h"
 
-void VelocityAbsProfile::output (string prefix, long unsigned accumulatedDatasets) {
+void VelocityAbsProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	global_log->info() << "[VelocityAbsProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
-	_profilePrefix = prefix + "_kartesian.VAbspr";
+	_profilePrefix = prefix + ".VAbspr";
 	ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 
