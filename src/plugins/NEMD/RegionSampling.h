@@ -309,6 +309,8 @@ private:
 	// output file
 	std::string _strFilePrefixFieldYR;
 	uint8_t _nFileTypeFieldYR;
+	
+	bool _boolSingleComp;
 };
 
 class XMLfileUnits;
@@ -343,7 +345,7 @@ public:
 				</subdivision>
 			</sampling>
 
-			<sampling type="VDF">                <!-- Sampling of velocity distribution functions (VDF) -->
+			<sampling type="VDF" single_component="1">                <!-- Sampling of velocity distribution functions (VDF); Do not differ between components, if single_component is 1-->
 				<control>
 					<start>INT</start>           <!-- start time step -->
 					<frequency>INT</frequency>   <!-- frequency of writing profiles -->
@@ -421,7 +423,7 @@ protected:
 
 private:
 	std::vector<SampleRegion*> _vecSampleRegions;
-
+	
 	unsigned long _initSamplingProfiles;
 	unsigned long _writeFrequencyProfiles;
 	unsigned long _initSamplingVDF;

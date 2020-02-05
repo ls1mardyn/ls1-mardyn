@@ -85,6 +85,7 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 
 	_fptr = get_v;
 	_f2ptr = get_v2;
+	_boolSingleComp = false;
 }
 
 SampleRegion::~SampleRegion() {}
@@ -268,6 +269,15 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			xmlconfig.getNodeValue("control/start", _initSamplingVDF);
 			xmlconfig.getNodeValue("control/frequency", _writeFrequencyVDF);
 			xmlconfig.getNodeValue("control/stop", _stopSamplingVDF);
+			
+			xmlconfig.getNodeValue("@single_component", _boolSingleComp);
+			if(_boolSingleComp)
+			{
+				global_log->info() << "RegionSampling->region[" << this->GetID()-1 << "]: Single component enabled ( " << _boolSingleComp << " ) " << endl;
+			} else
+			{
+				global_log->info() << "RegionSampling->region[" << this->GetID()-1 << "]: Single component disabled ( " << _boolSingleComp << " ) " << endl;
+			}
 
 			// velocity dicretization
 			{
@@ -286,9 +296,14 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				{
 					xmlconfig.changecurrentnode(nodeIter);
 					uint32_t cid = 0;
-					if(not (xmlconfig.getNodeValue("@cid", cid) && cid < _numComponents) )
+					if( (cid > _numComponents) || ((not xmlconfig.getNodeValue("@cid", cid)) && (not _boolSingleComp)) ){
 						global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << endl;
+						Simulation::exit(-1);
+					}
 
+					if(_boolSingleComp){
+						cid = 1;
+					}
 					ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
 					csp.bSamplingEnabled = true;
 					xmlconfig.getNodeValue("numclasses", csp.numVelocityClasses);
@@ -1062,9 +1077,14 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 		return;
 
 	uint32_t cid = molecule->componentid()+1;  // 0: all components
+	if(_boolSingleComp){
+		cid = 1;
+	}
 	const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
-	if(not csp.bSamplingEnabled)
+	if(not csp.bSamplingEnabled){
 		return;
+	}
+
 	uint32_t nComponentOffset = csp.nOffsetDataStructure;
 
 	// calc bin index / offset
