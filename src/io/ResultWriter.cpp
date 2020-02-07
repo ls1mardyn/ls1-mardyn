@@ -35,7 +35,8 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 		_resultStream.open(resultfile.c_str());
 		_resultStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
 		_resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< endl;
-		_resultStream << "#step\tt\t\tU_pot\tU_pot_avg\t\tp\tp_avg\t\tbeta_trans\tbeta_rot\t\tc_v\t\tN\n";
+		_resultStream << std::setw(10) << "#step" << std::setw(28) << "time" << std::setw(28) << "U_pot" << std::setw(28) << "U_pot_avg" << std::setw(28)
+			<< "p" << std::setw(28) << "p_avg" << std::setw(28) << "beta_trans" << std::setw(28) << "beta_rot" << std::setw(28) << "c_v" << std::setw(28) << "N" << "\n";
 	}
 }
 
@@ -47,11 +48,15 @@ void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
-		_resultStream << simstep << "\t" << _simulation.getSimulationTime()
-			<< "\t\t" << domain->getGlobalUpot() << "\t" << _U_pot_acc->getAverage()
-			<< "\t\t" << domain->getGlobalPressure() << "\t" << _p_acc->getAverage()
-			<< "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
-			<< "\t\t" << domain->cv() << "\t\t" << domain->getglobalNumMolecules();
+		_resultStream << std::setw(10) << simstep << std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _simulation.getSimulationTime()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << domain->getGlobalUpot()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _U_pot_acc->getAverage()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << domain->getGlobalPressure()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _p_acc->getAverage()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << domain->getGlobalBetaTrans()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << domain->getGlobalBetaRot()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << domain->cv()
+			<< std::setw(28) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << domain->getglobalNumMolecules();
 		_resultStream << "\n";
 	}
 }
