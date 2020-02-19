@@ -296,7 +296,8 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				{
 					xmlconfig.changecurrentnode(nodeIter);
 					uint32_t cid = 0;
-					if( (cid > _numComponents) || ((not xmlconfig.getNodeValue("@cid", cid)) && (not _boolSingleComp)) ){
+					bool bVal = xmlconfig.getNodeValue("@cid", cid);
+					if( (cid > _numComponents) || ((not bVal) && (not _boolSingleComp)) ){
 						global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << endl;
 						Simulation::exit(-1);
 					}
