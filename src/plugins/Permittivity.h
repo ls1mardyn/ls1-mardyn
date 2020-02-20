@@ -35,12 +35,14 @@ public:
 	
 	
 private:
+	bool _readStartingStep;             // Auxiliary bool variable to read the current time step during the first iteration of endStep
 	unsigned long _writeFrequency;      // Write frequency for all profiles -> Length of recording frame before output
 	unsigned long _initStatistics;      // Timesteps to skip at start of the simulation
 	unsigned long _recordingTimesteps;  // Record every Nth timestep during recording frame
 	unsigned long _accumulatedSteps;    // Number of steps in a block
 	unsigned long _runningAverageSteps; // Timesteps for running average output
 	unsigned long _totalNumTimeSteps;	// Total number of time steps
+	unsigned long _startingStep;        // current time step at the start of simulation
 	unsigned long _numParticlesLocal;   // Counts number of particles considered for each block locally
 	unsigned long _RAVCounter;
 	unsigned _numOutputs;               // Number of output values to be written

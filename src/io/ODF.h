@@ -44,6 +44,7 @@ public:
 	static PluginBase* createInstance() { return new ODF(); }
 
 private:
+	bool _readStartingStep;
 	unsigned long _writeFrequency;      // Write frequency for all profiles -> Length of recording frame before output
 	unsigned long _initStatistics;      // Timesteps to skip at start of the simulation
 	unsigned long _recordingTimesteps;  // Record every Nth timestep during recording frame
