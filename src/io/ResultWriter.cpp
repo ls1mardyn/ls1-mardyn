@@ -35,7 +35,7 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 		_resultStream.open(resultfile.c_str());
 		_resultStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
 		_resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< endl;
-		_resultStream << std::setw(10) << "#step" << std::setw(28) << "time" << std::setw(28) << "U_pot" << std::setw(28) << "U_pot_avg" << std::setw(28)
+		_resultStream << std::setw(10) << "# step" << std::setw(28) << "time" << std::setw(28) << "U_pot" << std::setw(28) << "U_pot_avg" << std::setw(28)
 			<< "p" << std::setw(28) << "p_avg" << std::setw(28) << "beta_trans" << std::setw(28) << "beta_rot" << std::setw(28) << "c_v" << std::setw(28) << "N" << "\n";
 	}
 }
