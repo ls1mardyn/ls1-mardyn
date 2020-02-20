@@ -39,14 +39,9 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 		_resultStream.open(_resultfile.c_str(), std::ios::out);
 		_resultStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
 		_resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< endl;
-<<<<<<< HEAD
 		_resultStream << std::setw(10) << "# step" << std::setw(_writePrecision+15) << "time" << std::setw(_writePrecision+15) << "U_pot" << std::setw(_writePrecision+15) << "U_pot_avg" << std::setw(_writePrecision+15)
 			<< "p" << std::setw(_writePrecision+15) << "p_avg" << std::setw(_writePrecision+15) << "beta_trans" << std::setw(_writePrecision+15) << "beta_rot" << std::setw(_writePrecision+15) << "c_v" << std::setw(_writePrecision+15) << "N" << endl;
 		_resultStream.close();
-=======
-		_resultStream << std::setw(10) << "# step" << std::setw(28) << "time" << std::setw(28) << "U_pot" << std::setw(28) << "U_pot_avg" << std::setw(28)
-			<< "p" << std::setw(28) << "p_avg" << std::setw(28) << "beta_trans" << std::setw(28) << "beta_rot" << std::setw(28) << "c_v" << std::setw(28) << "N" << "\n";
->>>>>>> 6c74513e45899715854cbfb39f11ff352c6f4c7e
 	}
 }
 
