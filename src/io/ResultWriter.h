@@ -32,12 +32,12 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <outputplugin name="ResultWriter">
-	     <writefrequency>INTEGER</writefrequency>
-	     <outputprefix>STRING</outputprefix>
-	     <accumulation_steps>INTEGER</accumulation_steps>
-	     <writeprecision>UINT</writeprecision>
-	   </outputplugin>
+		<outputplugin name="ResultWriter">
+			<writefrequency>INTEGER</writefrequency>				<!-- Frequency in which the output is written; Default: 1 -->
+			<outputprefix>STRING</outputprefix>					<!-- Prefix of the output file; Default: "results" -->
+			<accumulation_steps>INTEGER</accumulation_steps>		<!-- Result is accumulated over the specified steps; Default: 1000 -->
+			<writeprecision>UINTEGER</writeprecision>					<!-- Precision of output can be set here; Default: 5 -->
+		</outputplugin>
 	   \endcode
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
