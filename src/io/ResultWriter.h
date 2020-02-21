@@ -64,7 +64,6 @@ private:
 	unsigned long _writeFrequency;
 	unsigned int _writePrecision;
 	std::string _outputPrefix;
-	std::string _resultfile;
 	Accumulator<double> *_U_pot_acc;
 	Accumulator<double> *_p_acc;
 };
