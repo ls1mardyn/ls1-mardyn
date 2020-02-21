@@ -34,9 +34,9 @@ public:
 	 * \code{.xml}
 		<outputplugin name="ResultWriter">
 			<writefrequency>INTEGER</writefrequency>				<!-- Frequency in which the output is written; Default: 1 -->
-			<outputprefix>STRING</outputprefix>					<!-- Prefix of the output file; Default: "results" -->
+			<outputprefix>STRING</outputprefix>						<!-- Prefix of the output file; Default: "results" -->
 			<accumulation_steps>INTEGER</accumulation_steps>		<!-- Result is accumulated over the specified steps; Default: 1000 -->
-			<writeprecision>UINTEGER</writeprecision>					<!-- Precision of output can be set here; Default: 5 -->
+			<writeprecision>UINTEGER</writeprecision>				<!-- Precision of output can be set here; Default: 5 -->
 		</outputplugin>
 	   \endcode
 	 */
