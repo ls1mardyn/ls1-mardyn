@@ -14,7 +14,7 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << endl;
 
-	_outputPrefix = "results";
+	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	_resultfile= _outputPrefix+".res";
 	global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << endl;
