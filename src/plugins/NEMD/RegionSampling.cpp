@@ -85,6 +85,7 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 
 	_fptr = get_v;
 	_f2ptr = get_v2;
+	_boolSingleComp = false;
 }
 
 SampleRegion::~SampleRegion() {}
@@ -268,6 +269,15 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			xmlconfig.getNodeValue("control/start", _initSamplingVDF);
 			xmlconfig.getNodeValue("control/frequency", _writeFrequencyVDF);
 			xmlconfig.getNodeValue("control/stop", _stopSamplingVDF);
+			
+			xmlconfig.getNodeValue("@single_component", _boolSingleComp);
+			if(_boolSingleComp)
+			{
+				global_log->info() << "RegionSampling->region[" << this->GetID()-1 << "]: Single component enabled ( " << _boolSingleComp << " ) " << endl;
+			} else
+			{
+				global_log->info() << "RegionSampling->region[" << this->GetID()-1 << "]: Single component disabled ( " << _boolSingleComp << " ) " << endl;
+			}
 
 			// velocity dicretization
 			{
@@ -276,7 +286,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				uint32_t numDiscretizations = 0;
 				XMLfile::Query query_vd = xmlconfig.query("discretization");
 				numDiscretizations = query_vd.card();
-				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations (components for that VDF should be sampled): " << numDiscretizations << endl;
+				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations: " << numDiscretizations << endl;
 				if(numDiscretizations < 1) {
 					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No velocity discretizations specified for VDF sampling. Program exit ..." << endl;
 					Simulation::exit(-1);
@@ -286,13 +296,23 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				{
 					xmlconfig.changecurrentnode(nodeIter);
 					uint32_t cid = 0;
-					if(not (xmlconfig.getNodeValue("@cid", cid) && cid < _numComponents) )
+					bool bVal = xmlconfig.getNodeValue("@cid", cid);
+					if( (cid > _numComponents) || ((not bVal) && (not _boolSingleComp)) ){
 						global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << endl;
+						Simulation::exit(-1);
+					}
 
+					if(_boolSingleComp){
+						cid = 1;
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): All components treated as one. Fake-CID: " << cid << endl;
+					} else {
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): ID of component to be sampled: " << cid << endl;
+					}
 					ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
 					csp.bSamplingEnabled = true;
 					xmlconfig.getNodeValue("numclasses", csp.numVelocityClasses);
 					xmlconfig.getNodeValue("maxvalue", csp.dVeloMax);
+	
 				}
 				xmlconfig.changecurrentnode(oldpath);
 			}
@@ -1062,9 +1082,14 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 		return;
 
 	uint32_t cid = molecule->componentid()+1;  // 0: all components
+	if(_boolSingleComp){
+		cid = 1;
+	}
 	const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
-	if(not csp.bSamplingEnabled)
+	if(not csp.bSamplingEnabled){
 		return;
+	}
+
 	uint32_t nComponentOffset = csp.nOffsetDataStructure;
 
 	// calc bin index / offset
