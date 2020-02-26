@@ -220,24 +220,26 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
 		// only initialize ppl if it is empty
-		bool shifting = false;
+		bool hasShift = false;
+		bool hasNoShift = false;
 		if (_particlePropertiesLibrary.getTypes().empty()) {
 			auto components = global_simulation->getEnsemble()->getComponents();
 			for (auto &c : *components) {
 				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
 												   c.ljcenter(0).m());
 				if (c.ljcenter(0).shift6() != 0.) {
-					shifting = true;
+					hasShift = true;
 				} else {
-					if (shifting) {
-						// if some particles require shifting and some don't throw an error, as AutoPas does not support
-						// this, yet.
-						throw std::runtime_error("AutoPas does not support mixed shifting state!");
-					}
+					hasNoShift = true;
 				}
 			}
 		}
-		if (shifting) {
+		if (hasShift and hasNoShift) {
+			// if some particles require shifting and some don't:
+			// throw an error, as AutoPas does not support this, yet.
+			throw std::runtime_error("AutoPas does not support mixed shifting state!");
+		}
+		if (hasShift) {
 			traverseTemplateHelper</*shifting*/ true>();
 		} else {
 			traverseTemplateHelper</*shifting*/ false>();
