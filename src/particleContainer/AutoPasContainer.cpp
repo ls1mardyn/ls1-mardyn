@@ -192,42 +192,57 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 	}
 }
 
+template <bool shifting>
+void AutoPasContainer::traverseTemplateHelper() {
+	// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+	autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+					   /*calculateGlobals*/ true>
+		functor(_cutoff, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+	for (auto iter = iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
+		iter->clearFM();
+	}
+
+	// here we call the actual autopas' iteratePairwise method to compute the forces.
+	_autopasContainer.iteratePairwise(&functor);
+	double upot = functor.getUpot();
+	double virial = functor.getVirial();
+
+	// _myRF is always zero for lj only!
+	global_simulation->getDomain()->setLocalVirial(virial /*+ 3.0 * _myRF*/);
+	// _upotXpoles is zero as we do not have any dipoles or quadrupoles
+	global_simulation->getDomain()->setLocalUpot(upot /* _upotXpoles + _myRF*/);
+}
+
 void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 	if (dynamic_cast<VectorizedCellProcessor *>(&cellProcessor) or
 		dynamic_cast<LegacyCellProcessor *>(&cellProcessor)) {
 		// only initialize ppl if it is empty
+		bool shifting = false;
 		if (_particlePropertiesLibrary.getTypes().empty()) {
 			auto components = global_simulation->getEnsemble()->getComponents();
 			for (auto &c : *components) {
 				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
 												   c.ljcenter(0).m());
+				if (c.ljcenter(0).shift6() != 0.) {
+					shifting = true;
+				} else {
+					if (shifting) {
+						// if some particles require shifting and some don't throw an error, as AutoPas does not support
+						// this, yet.
+						throw std::runtime_error("AutoPas does not support mixed shifting state!");
+					}
+				}
 			}
 		}
-
-		// lower and upper corner of the local domain needed to correctly calculate the global values
-		std::array<double, 3> lowCorner = {_boundingBoxMin[0], _boundingBoxMin[1], _boundingBoxMin[2]};
-		std::array<double, 3> highCorner = {_boundingBoxMax[0], _boundingBoxMax[1], _boundingBoxMax[2]};
-
-		// generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctor<Molecule, CellType, /*applyShift*/ true, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-						   /*calculateGlobals*/ true>
-			functor(_cutoff, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
-#if defined(_OPENMP)
-#pragma omp parallel
-#endif
-		for (auto iter = iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
-			iter->clearFM();
+		if (shifting) {
+			traverseTemplateHelper</*shifting*/ true>();
+		} else {
+			traverseTemplateHelper</*shifting*/ false>();
 		}
 
-		// here we call the actual autopas' iteratePairwise method to compute the forces.
-		_autopasContainer.iteratePairwise(&functor);
-		double upot = functor.getUpot();
-		double virial = functor.getVirial();
-
-		// _myRF is always zero for lj only!
-		global_simulation->getDomain()->setLocalVirial(virial /*+ 3.0 * _myRF*/);
-		// _upotXpoles is zero as we do not have any dipoles or quadrupoles
-		global_simulation->getDomain()->setLocalUpot(upot /* _upotXpoles + _myRF*/);
 	} else {
 		global_log->warning() << "only lj functors are supported for traversals." << std::endl;
 	}
