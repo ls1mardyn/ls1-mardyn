@@ -200,7 +200,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 			auto components = global_simulation->getEnsemble()->getComponents();
 			for (auto &c : *components) {
 				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
-												   c.ljcenter(0).m(), false);
+												   c.ljcenter(0).m());
 			}
 		}
 
@@ -209,7 +209,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		std::array<double, 3> highCorner = {_boundingBoxMax[0], _boundingBoxMax[1], _boundingBoxMax[2]};
 
 		// generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctor<Molecule, CellType, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+		autopas::LJFunctor<Molecule, CellType, /*applyShift*/ true, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						   /*calculateGlobals*/ true>
 			functor(_cutoff, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
