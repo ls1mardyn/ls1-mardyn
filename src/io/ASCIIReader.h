@@ -49,7 +49,7 @@ public:
 	//!     Then the values describing the components have to follow, seperated by
 	//!     whitespace. For each component, the following values have to be provided:
 	//!     - Number of Lennard-Jones-Centers, Number of Dipoles, Number of Quadrupoles (all int)
-	//!     - For each LJ-Center: x-coord., y-coord., z-coord., mass, epsilon, sigma (all double)
+	//!     - For each LJ-Center: x-coord., y-coord., z-coord., mass, epsilon, sigma, tcutoff, do_shift (all double)
 	//!     - For each Dipole: x-coord., y-coord., z-coord., eMyx, eMyy, eMyz, absMy (all double)
 	//!     - For each Quadrupole: x-coord., y-coord., z-coord., eQx, eQy, eQz, absQ (all double)
 	//!     - moments of inertia for principal axes: I11, I22, I33 (all double)
