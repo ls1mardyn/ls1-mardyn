@@ -222,6 +222,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		// only initialize ppl if it is empty
 		bool hasShift = false;
 		bool hasNoShift = false;
+		size_t numComponentsAdded = 0;
 		if (_particlePropertiesLibrary.getTypes().empty()) {
 			auto components = global_simulation->getEnsemble()->getComponents();
 			for (auto &c : *components) {
@@ -229,6 +230,16 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 												   c.ljcenter(0).m());
 				if (c.ljcenter(0).shift6() != 0.) {
 					hasShift = true;
+					double autoPasShift6 =
+						_particlePropertiesLibrary.mixingShift6(numComponentsAdded, numComponentsAdded);
+					double ls1Shift6 = c.ljcenter(0).shift6();
+					if (std::fabs((autoPasShift6 - ls1Shift6) / ls1Shift6) > 1.e-10) {
+						// warn if shift differs relatively by more than 1.e-10
+						global_log->warning() << "Dangerous shift6 detected: AutoPas will use: " << autoPasShift6
+											  << ", while normal ls1 mode uses: " << ls1Shift6 << std::endl
+											  << "Please check that your shifts are calculated correctly." << std::endl;
+					}
+					++numComponentsAdded;
 				} else {
 					hasNoShift = true;
 				}
