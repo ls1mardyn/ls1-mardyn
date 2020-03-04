@@ -9,6 +9,7 @@
 #include "ParticleContainer.h"
 
 #include <autopas/AutoPas.h>
+#include <autopas/molecularDynamics/autopasmd.h>
 
 /**
  * A wrapper for the AutoPas library.
@@ -98,13 +99,18 @@ public:
 		return std::move(_invalidParticles);
 	}
 
-	bool hasInvalidParticles() override {
-		return _hasInvalidParticles;
-	}
+	bool hasInvalidParticles() override { return _hasInvalidParticles; }
 
 	bool isInvalidParticleReturner() override { return true; }
 
 private:
+	/**
+	 * Helper to get static value of shifting bool.
+	 * @tparam shifting
+	 */
+	template <bool shifting>
+	void traverseTemplateHelper();
+
 	double _cutoff{0.};
 	double _verletSkin{0.};
 	unsigned int _verletRebuildFrequency{1u};
