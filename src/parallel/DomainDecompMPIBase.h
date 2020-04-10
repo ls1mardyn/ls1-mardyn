@@ -17,6 +17,7 @@
 #include "CollectiveCommunicationInterface.h"
 #include "CommunicationPartner.h"
 #include "ParticleDataForwardDeclaration.h"
+#include "utils/Timer.h"
 
 #define LOWER  0
 #define HIGHER 1
@@ -106,7 +107,17 @@ public:
 	}
 
 	void collCommAllreduceSumAllowPrevious() override {
+	    // TODO: Write Timer in here; or in DomainDecompBase
+#if defined(ENABLE_MPI)
+        Timer mpi_ReductionAll_timer;
+	    mpi_ReductionAll_timer.start();
+#endif
 		_collCommunication->allreduceSumAllowPrevious();
+#if defined(ENABLE_MPI)
+	    mpi_ReductionAll_timer.stop();
+	    double runtime = mpi_ReductionAll_timer.get_etime();
+        //TODO: Output Writter + Getter
+#endif
 	}
 
 	void collCommAllreduceCustom(ReduceType type) override {
