@@ -14,8 +14,8 @@ CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debu
 CFG_TARGETS += "COVERAGE code coverage test version\n"
 CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
 
-CXX_SEQ = icpc
-CXX_PAR = mpiicpc
+CXX_SEQ = /opt/intel/compilers_and_libraries/linux/bin/intel64/icpc
+CXX_PAR = /opt/intel/compilers_and_libraries/linux/mpi/intel64/bin/mpiicpc
 DEPMODE = icc
 
 # SEQ
