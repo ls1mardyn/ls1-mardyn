@@ -17,7 +17,7 @@
 #include "CollectiveCommunicationInterface.h"
 #include "CommunicationPartner.h"
 #include "ParticleDataForwardDeclaration.h"
-#include "utils/Timer.h"
+#include "io/ProcessTimer.h"
 
 #define LOWER  0
 #define HIGHER 1
@@ -116,7 +116,23 @@ public:
 #if defined(ENABLE_MPI)
 	    mpi_ReductionAll_timer.stop();
 	    double runtime = mpi_ReductionAll_timer.get_etime();
-        //TODO: Output Writter + Getter
+
+	    MPI_Comm_size(_comm, &size );
+        MPI_Comm_rank(_comm, &rank );
+
+        _processTimer.insertTime(int(rank), double(runtime));
+        _processTimer.printTimeOnConsole();
+
+	    //MPI_File_open(_comm, "processRuntime.txt", MPI_MODE_WRONLY, MPI_INFO_NULL, &_logFH);
+	    //std::cout << "Rank: " << rank << " Size: " << size << " Runtime: " << runtime << " seconds" << std::endl;
+        //buf = (int *)malloc( size * sizeof(int) );
+        //buf[0] = rank;
+	    //MPI_File_write_ordered( _logFH, buf, 1, MPI_INT, &status );
+        //MPI_File_close(&_logFH);
+
+        //_processRuntime.open("processRuntime.txt");
+        //_processRuntime << runtime << " sec\n";
+        //_processRuntime.close();
 #endif
 	}
 
@@ -259,8 +275,16 @@ protected:
 	MPI_Comm _comm;
 
 	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
+
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
+
+	std::ofstream _processRuntime;
+    MPI_File _logFH;
+    MPI_Status status;
+    int size, rank, i, *buf, count;
+
+    ProcessTimer _processTimer;
 };
 
 #endif /* DOMAINDECOMPMPIBASE_H_ */
