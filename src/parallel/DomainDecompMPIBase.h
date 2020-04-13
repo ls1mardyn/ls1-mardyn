@@ -130,9 +130,7 @@ public:
 	    //MPI_File_write_ordered( _logFH, buf, 1, MPI_INT, &status );
         //MPI_File_close(&_logFH);
 
-        //_processRuntime.open("processRuntime.txt");
-        //_processRuntime << runtime << " sec\n";
-        //_processRuntime.close();
+
 #endif
 	}
 
@@ -279,7 +277,6 @@ protected:
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
 
-	std::ofstream _processRuntime;
     MPI_File _logFH;
     MPI_Status status;
     int size, rank, i, *buf, count;

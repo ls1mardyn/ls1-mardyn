@@ -45,6 +45,19 @@ public:
             }
         }
     }
+
+    //! @brief Writes whole map into "processRuntime.txt" in current directory
+    void writeProcessTimeLog(){
+        std::ofstream _processRuntime;
+        _processRuntime.open("processRuntime.txt");
+        for (auto const& iter : _processes)
+        {
+            for (auto innerIter = iter.second.begin() ; innerIter != iter.second.end(); ++innerIter){
+                _processRuntime  << "Rank: " << iter.first << " Runtime: " << *innerIter <<" seconds" << std::endl;
+            }
+        }
+        _processRuntime.close();
+    }
 protected:
 private:
     std::map<int, std::vector<double>> _processes;
