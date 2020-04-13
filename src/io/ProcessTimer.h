@@ -34,6 +34,7 @@ public:
             std::vector<double> tempVec ={time};
             _processes.insert(std::pair<int, std::vector<double>>(process, tempVec));
         }
+        writeProcessTimeLogSingle(process, time);
     }
 
     //! @brief Prints out whole map; Contains Ranks incl measured Times
@@ -58,6 +59,15 @@ public:
         }
         _processRuntime.close();
     }
+
+    //! @ brief Writes given Process and time into "processRuntime.txt"
+    void writeProcessTimeLogSingle(int process, double time){
+        std::ofstream _processRuntime;
+        _processRuntime.open("processRuntime.txt");
+        _processRuntime  << "Rank: " << process << " Runtime: " << time <<" seconds" << std::endl;
+        _processRuntime.close();
+    }
+    
 protected:
 private:
     std::map<int, std::vector<double>> _processes;
