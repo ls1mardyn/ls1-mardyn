@@ -31,10 +31,10 @@ public:
         if( _processes.count(process) > 0)
             _processes[process].push_back(time);
         else{
-            std::vector<double> tempVec ={time};
+            std::vector<double> tempVec = {time};
             _processes.insert(std::pair<int, std::vector<double>>(process, tempVec));
         }
-        writeProcessTimeLogSingle(process, time);
+        // writeProcessTimeLogSingle(process, time); FIXME: Needs to be adapted to MPI
     }
 
     //! @brief Prints out whole map; Contains Ranks incl measured Times
@@ -64,10 +64,10 @@ public:
     void writeProcessTimeLogSingle(int process, double time){
         std::ofstream _processRuntime;
         _processRuntime.open("processRuntime.txt");
-        _processRuntime  << "Rank: " << process << " Runtime: " << time <<" seconds" << std::endl;
+        _processRuntime  << "Rank: " << process << " Runtime: " << time <<" seconds\n";
         _processRuntime.close();
     }
-    
+
 protected:
 private:
     std::map<int, std::vector<double>> _processes;
