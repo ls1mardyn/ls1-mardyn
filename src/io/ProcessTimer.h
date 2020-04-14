@@ -28,12 +28,7 @@ public:
     //! @param process Rank of process
     //! @param time Time of given process
     void insertTime(int process, double time){
-        if( _processes.count(process) > 0)
-            _processes[process].push_back(time);
-        else{
-            std::vector<double> tempVec = {time};
-            _processes.insert(std::pair<int, std::vector<double>>(process, tempVec));
-        }
+        _processes[process].push_back(time);
         // writeProcessTimeLogSingle(process, time); FIXME: Needs to be adapted to MPI
     }
 
