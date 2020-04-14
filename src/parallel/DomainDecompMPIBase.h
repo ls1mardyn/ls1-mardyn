@@ -121,7 +121,6 @@ public:
         MPI_Comm_rank(_comm, &rank );
 
         _processTimer.insertTime(int(rank), double(runtime));
-        _processTimer.printTimeOnConsole();
 
 	    //MPI_File_open(_comm, "processRuntime.txt", MPI_MODE_WRONLY, MPI_INFO_NULL, &_logFH);
 	    //std::cout << "Rank: " << rank << " Size: " << size << " Runtime: " << runtime << " seconds" << std::endl;
