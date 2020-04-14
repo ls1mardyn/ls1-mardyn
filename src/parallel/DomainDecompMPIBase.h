@@ -107,7 +107,7 @@ public:
 	}
 
 	void collCommAllreduceSumAllowPrevious() override {
-	    // TODO: Write Timer in here; or in DomainDecompBase
+	    // TODO: Write Timer in here;
 #if defined(ENABLE_MPI)
         Timer mpi_ReductionAll_timer;
 	    mpi_ReductionAll_timer.start();
@@ -116,12 +116,7 @@ public:
 #if defined(ENABLE_MPI)
 	    mpi_ReductionAll_timer.stop();
 	    double runtime = mpi_ReductionAll_timer.get_etime();
-
-	    MPI_Comm_size(_comm, &size );
-        MPI_Comm_rank(_comm, &rank );
-
-        _processTimer.insertTime(static_cast<int>(rank), runtime);
-
+        _processTimer.insertTime(static_cast<int>(DomainDecompBase::_rank), runtime);
 	    //MPI_File_open(_comm, "processRuntime.txt", MPI_MODE_WRONLY, MPI_INFO_NULL, &_logFH);
 	    //std::cout << "Rank: " << rank << " Size: " << size << " Runtime: " << runtime << " seconds" << std::endl;
         //buf = (int *)malloc( size * sizeof(int) );
@@ -275,10 +270,6 @@ protected:
 
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
-
-    MPI_File _logFH;
-    MPI_Status status;
-    int size, rank, i, *buf, count;
 
     ProcessTimer _processTimer;
 };
