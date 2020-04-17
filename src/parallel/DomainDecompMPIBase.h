@@ -107,22 +107,22 @@ public:
 	}
 
 	void collCommAllreduceSumAllowPrevious() override {
-	    // TODO: Write Timer in here;
+		// TODO: Write Timer in here;
 #if defined(ENABLE_MPI)
-        Timer mpi_ReductionAll_timer;
-	    mpi_ReductionAll_timer.start();
+		Timer mpi_ReductionAll_timer;
+		mpi_ReductionAll_timer.start();
 #endif
 		_collCommunication->allreduceSumAllowPrevious();
 #if defined(ENABLE_MPI)
-	    mpi_ReductionAll_timer.stop();
-	    double runtime = mpi_ReductionAll_timer.get_etime();
-        _processTimer.insertTime(static_cast<int>(DomainDecompBase::_rank), runtime);
-	    //MPI_File_open(_comm, "processRuntime.txt", MPI_MODE_WRONLY, MPI_INFO_NULL, &_logFH);
-	    //std::cout << "Rank: " << rank << " Size: " << size << " Runtime: " << runtime << " seconds" << std::endl;
-        //buf = (int *)malloc( size * sizeof(int) );
-        //buf[0] = rank;
-	    //MPI_File_write_ordered( _logFH, buf, 1, MPI_INT, &status );
-        //MPI_File_close(&_logFH);
+		mpi_ReductionAll_timer.stop();
+		double runtime = mpi_ReductionAll_timer.get_etime();
+		_processTimer.insertTime(static_cast<int>(DomainDecompBase::_rank), runtime);
+		//MPI_File_open(_comm, "processRuntime.txt", MPI_MODE_WRONLY, MPI_INFO_NULL, &_logFH);
+		// std::cout << "Rank: " << rank << " Size: " << size << " Runtime: " << runtime << " seconds" << std::endl;
+		// buf = (int *)malloc( size * sizeof(int) );
+		// buf[0] = rank;
+		// MPI_File_write_ordered( _logFH, buf, 1, MPI_INT, &status );
+		// MPI_File_close(&_logFH);
 
 
 #endif
@@ -213,9 +213,9 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
-	   	 <CommunicationScheme>indirect OR direct</CommunicationScheme>
-	   	 <overlappingCollectives>yes OR no</overlappingCollectives>
-	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
+		 <CommunicationScheme>indirect OR direct</CommunicationScheme>
+		 <overlappingCollectives>yes OR no</overlappingCollectives>
+		 <!-- structure handled by DomainDecomposition or KDDecomposition -->
 	   </parallelisation>
 	   \endcode
 	 */
@@ -271,7 +271,7 @@ protected:
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
 
-    ProcessTimer _processTimer;
+	ProcessTimer _processTimer;
 };
 
 #endif /* DOMAINDECOMPMPIBASE_H_ */
