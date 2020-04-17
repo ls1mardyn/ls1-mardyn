@@ -28,7 +28,7 @@ TARGET ?= RELEASE
 # compile using depmode
 # create dependency information for faster recompilation in case of source file changes
 # 0: disbaled, 1: enabled
-DEPS ?= 0
+DEPS ?= 1
 
 # build unit tests
 # 0: disbaled, 1: enabled
