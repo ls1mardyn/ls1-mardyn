@@ -107,7 +107,6 @@ public:
 	}
 
 	void collCommAllreduceSumAllowPrevious() override {
-		// TODO: Write Timer in here;
 #if defined(ENABLE_MPI)
 		Timer mpi_ReductionAll_timer;
 		mpi_ReductionAll_timer.start();
