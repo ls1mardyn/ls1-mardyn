@@ -28,7 +28,7 @@ public:
 	//! @param time Time of given process
 	void insertTime(int process, double time) {
 		_processes[process].push_back(time);
-		writeProcessTimeLogSingle(process, time);
+		writeProcessTimeLogSingle(process, time, true);
 	}
 
 	//! @brief Prints out whole map; Contains Ranks incl measured Times
@@ -52,15 +52,22 @@ public:
 		_processRuntime.close();
 	}
 
-	//! @ brief Writes given Process and time into "processRuntime.txt"
-	void writeProcessTimeLogSingle(int process, double time) {
+	//! @brief Writes given Process and time into "processRuntime.txt"
+	//! @param csv Time are written ether to a csv or txt file
+	void writeProcessTimeLogSingle(int process, double time, bool csv) {
 		std::ofstream _processRuntime;
-        // For each Process one File
-		_processRuntime.open("process" + std::to_string(process) + "Runtime.txt", std::ios::app);
-        // All Runtimes in one File, this solution works with MPI as well
-		//_processRuntime.open("processRuntime.txt", std::ios::app);
-		_processRuntime << "Rank: " << process << " Runtime: " << time << " seconds\n";
-		_processRuntime.close();
+		if(csv){
+			_processRuntime.open("process" + std::to_string(process) + "Runtime.csv", std::ios::app);
+			_processRuntime << time << ", ";
+		}
+		else{
+			// For each Process one File
+			_processRuntime.open("process" + std::to_string(process) + "Runtime.txt", std::ios::app);
+			// All Runtimes in one File, this solution works with MPI as well
+			//_processRuntime.open("processRuntime.txt", std::ios::app);
+			_processRuntime << "Rank: " << process << " Runtime: " << time << " seconds\n";
+		}
+        _processRuntime.close();
 	}
 
 protected:

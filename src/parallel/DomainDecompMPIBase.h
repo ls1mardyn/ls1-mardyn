@@ -116,14 +116,6 @@ public:
 		mpi_ReductionAll_timer.stop();
 		double runtime = mpi_ReductionAll_timer.get_etime();
 		_processTimer.insertTime(static_cast<int>(DomainDecompBase::_rank), runtime);
-		//MPI_File_open(_comm, "processRuntime.txt", MPI_MODE_WRONLY, MPI_INFO_NULL, &_logFH);
-		// std::cout << "Rank: " << rank << " Size: " << size << " Runtime: " << runtime << " seconds" << std::endl;
-		// buf = (int *)malloc( size * sizeof(int) );
-		// buf[0] = rank;
-		// MPI_File_write_ordered( _logFH, buf, 1, MPI_INT, &status );
-		// MPI_File_close(&_logFH);
-
-
 #endif
 	}
 
@@ -269,7 +261,6 @@ protected:
 
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
-
 	ProcessTimer _processTimer;
 };
 
