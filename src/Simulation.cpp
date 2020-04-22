@@ -1202,7 +1202,7 @@ void Simulation::finalize() {
 		_domainDecomposition = nullptr;
 	}
 
-    _plugins.remove_if([](PluginBase * plugin) { delete plugin; return true; });
+	_plugins.remove_if([](PluginBase * plugin) { delete plugin; return true; });
 	global_simulation = nullptr;
 }
 
