@@ -32,6 +32,9 @@ public:
 		writeProcessTimeLogSingle(process, time, true);
 	}
 
+	//! @brief Starts Timer for MPI-Measurement
+	//!
+	//! @param process Rank of process
 	void startTimer(int process) {
 		this->process_numbr = process;
 #ifdef ENABLE_MPI
@@ -42,7 +45,7 @@ public:
 		measurement_time -= (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
 #endif
 	}
-
+//! @brief Stops Timer for MPI-Measurement
 	void stopTimer() {
 #ifdef ENABLE_MPI
 		measurement_time += MPI_Wtime();
@@ -85,10 +88,7 @@ public:
 			_processRuntime << time << ", ";
 		}
 		else{
-			// For each Process one File
 			_processRuntime.open("process" + std::to_string(process) + "Runtime.txt", std::ios::app);
-			// All Runtimes in one File, this solution works with MPI as well
-			//_processRuntime.open("processRuntime.txt", std::ios::app);
 			_processRuntime << "Rank: " << process << " Runtime: " << time << " seconds\n";
 		}
         _processRuntime.close();
