@@ -108,14 +108,11 @@ public:
 
 	void collCommAllreduceSumAllowPrevious() override {
 #if defined(ENABLE_MPI)
-		Timer mpi_ReductionAll_timer;
-		mpi_ReductionAll_timer.start();
+		_processTimer.startTimer(static_cast<int>(DomainDecompBase::_rank));
 #endif
 		_collCommunication->allreduceSumAllowPrevious();
 #if defined(ENABLE_MPI)
-		mpi_ReductionAll_timer.stop();
-		double runtime = mpi_ReductionAll_timer.get_etime();
-		_processTimer.insertTime(static_cast<int>(DomainDecompBase::_rank), runtime);
+		_processTimer.stopTimer();
 #endif
 	}
 

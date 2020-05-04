@@ -12,6 +12,7 @@
 #include <vector>
 #include <array>
 #include <map>
+#include <time.h>
 
 #include "utils/Timer.h"
 
@@ -29,6 +30,29 @@ public:
 	void insertTime(int process, double time) {
 		_processes[process].push_back(time);
 		writeProcessTimeLogSingle(process, time, true);
+	}
+
+	void startTimer(int process) {
+		this->process_numbr = process;
+#ifdef ENABLE_MPI
+		measurement_time -= MPI_Wtime();
+#else
+		struct timeval tmp_time;
+		gettimeofday(&tmp_time, NULL);
+		measurement_time -= (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
+#endif
+	}
+
+	void stopTimer() {
+#ifdef ENABLE_MPI
+		measurement_time += MPI_Wtime();
+#else
+		struct timeval tmp_time;
+		gettimeofday(&tmp_time, NULL);
+		measurement_time += (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
+#endif
+		this->insertTime(this->process_numbr, measurement_time);
+		measurement_time -= measurement_time;
 	}
 
 	//! @brief Prints out whole map; Contains Ranks incl measured Times
@@ -73,6 +97,8 @@ public:
 protected:
 private:
 	std::map<int, std::vector<double>> _processes;
+	double measurement_time;
+	int process_numbr;
 
 
 };

@@ -973,7 +973,7 @@ void Simulation::simulate() {
 			global_log->debug() << "Updating container and decomposition" << endl;
 
 			double currentTime = _timerForLoad->get_etime();
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad ); //TODO: Subtract time wasted in MPI
 			previousTimeForLoad = currentTime;
 
 			decompositionTimer->stop();
