@@ -36,6 +36,7 @@ public:
 	//!
 	//! @param process Rank of process
 	void startTimer(int process) {
+		measurement_time -= measurement_time;
 		this->process_numbr = process;
 #ifdef ENABLE_MPI
 		measurement_time -= MPI_Wtime();
@@ -55,7 +56,7 @@ public:
 		measurement_time += (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
 #endif
 		this->insertTime(this->process_numbr, measurement_time);
-		measurement_time -= measurement_time;
+		this->lastProcessTime = measurement_time;
 	}
 
 	//! @brief Prints out whole map; Contains Ranks incl measured Times
@@ -93,6 +94,8 @@ public:
 		}
         _processRuntime.close();
 	}
+
+	double lastProcessTime = 0.0;
 
 protected:
 private:

@@ -971,9 +971,12 @@ void Simulation::simulate() {
 			decompositionTimer->start();
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition" << endl;
-
 			double currentTime = _timerForLoad->get_etime();
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad ); //TODO: Subtract time wasted in MPI
+#if defined(ENABLE_MPI)
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad - *(_domainDecomposition->getProcessTimerPointer()));
+#else
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
+#endif
 			previousTimeForLoad = currentTime;
 
 			decompositionTimer->stop();

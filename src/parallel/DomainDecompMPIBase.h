@@ -226,6 +226,11 @@ public:
 	}
 
 	void printCommunicationPartners(std::string filename) const override;
+
+	virtual double* getProcessTimerPointer() override {
+		return &(_processTimer.lastProcessTime);;
+	}
+
 protected:
 
 	/**

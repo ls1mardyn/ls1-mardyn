@@ -286,6 +286,10 @@ public:
 
 	virtual void printCommunicationPartners(std::string filename) const {};
 
+	virtual double* getProcessTimerPointer(){
+		return nullptr;
+	}
+
 protected:
 	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
 
