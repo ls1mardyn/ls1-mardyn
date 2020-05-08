@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.1</length>
+    <mass unit="u">1</mass>
+    <energy unit="K">1</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.00182367</timestep>
+    </integrator>
+    <run>
+      <currenttime>0</currenttime>
+      <production>
+        <steps>1000000</steps>
+      </production>
+    </run>
+    <ensemble type="NVT">
+      <temperature unit="reduced">220</temperature>
+      <domain type="box">
+        <lx>400</lx>
+        <ly>900</ly>
+        <lz>400</lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">../../components_co2_merker.xml</include>
+      </components>
+      <phasespacepoint>
+        <generator name="ReplicaGenerator">
+          <type>heterogeneous_VLV</type>
+          <files>
+            <liquid>
+              <header>../../liq/run01/cp_binary-10.restart.header.xml</header>
+              <data>../../liq/run01/cp_binary-10.restart.xdr</data>
+            </liquid>
+            <vapor>
+              <header>../../vap/run01/cp_binary-10.restart.header.xml</header>
+              <data>../../vap/run01/cp_binary-10.restart.xdr</data>
+            </vapor>
+          </files>
+          <numblocks>
+            <xz>8</xz>
+            <liquid>6</liquid>
+            <vapor>6</vapor>
+          </numblocks>
+          <diameter>5.5493</diameter>
+        </generator>
+      </phasespacepoint>
+    </ensemble>
+    <algorithm>
+      <parallelisation type="KDDecomposition">
+        <updateFrequency>1</updateFrequency>
+        <fullSearchThreshold>4</fullSearchThreshold>
+        <heterogeneousSystems>false</heterogeneousSystems>
+        <useVectorizationTuner>false</useVectorizationTuner>
+        <splitBiggestDimension>true</splitBiggestDimension>
+        <forceRatio>false</forceRatio>
+        <splitThreshold>false</splitThreshold>
+        <generateNewFiles>false</generateNewFiles>
+        <useExistingFiles>false</useExistingFiles>
+        <doMeasureLoadCalc>false</doMeasureLoadCalc>
+      </parallelisation>
+      <datastructure type="AutoPas">
+	<allowedTraversals>c08</allowedTraversals>
+	<allowedContainers>linkedCells</allowedContainers>
+	<selectorStrategy>fastestMedian</selectorStrategy>
+	<dataLayouts>SoA</dataLayouts>
+	<newton3>enabled</newton3>
+	<tuningInterval>1000</tuningInterval>
+	<tuningSamples>10</tuningSamples>
+	<rebuildFrequency>10</rebuildFrequency>
+	<skin>0.4</skin>
+      </datastructure>      			
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">12.0</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+      <longrange type="planar">
+        <slabs>1200</slabs>
+        <smooth>0</smooth>
+        <frequency>10</frequency>
+        <writecontrol>
+          <start>10000</start>
+          <frequency>100</frequency>
+          <stop>11000</stop>
+        </writecontrol>
+      </longrange>
+            <thermostats>
+                <thermostat type="TemperatureControl">
+                    <control>
+                        <start>0</start>
+                        <frequency>1</frequency>
+                        <stop>1000000000</stop>
+                    </control>
+                    <regions>
+                        <region>
+                            <coords>
+                                <lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
+                                <ucx>box</ucx> <ucy>box</ucy> <ucz>box</ucz>
+                            </coords>
+                            <target>
+                                <temperature>220</temperature>
+                                <component>0</component>
+                            </target>
+                            <settings>
+                                <numslabs>33</numslabs>
+                                <exponent>0.4</exponent>
+                                <directions>xz</directions>
+                            </settings>
+                            <writefreq>1000</writefreq>
+                            <fileprefix>betalog</fileprefix>
+                        </region>
+                    </regions>
+                </thermostat>
+            </thermostats>
+    </algorithm>
+    <output>
+      <outputplugin name="CheckpointWriter">
+        <type>binary</type>
+        <writefrequency>100000</writefrequency>
+        <outputprefix>cp_binary</outputprefix>
+      </outputplugin>
+      <outputplugin name="MmpldWriter" type="multi">
+        <include query="/spheres">../../sphereparams_co2_merker.xml</include>
+        <writecontrol>
+          <start>0</start>
+          <writefrequency>100</writefrequency>
+          <stop>10000</stop>
+          <framesperfile>0</framesperfile>
+        </writecontrol>
+        <outputprefix>megamol</outputprefix>
+      </outputplugin>
+      <outputplugin name="DomainProfiles">
+        <units>
+          <x>1</x>
+          <y>2400</y>
+          <z>1</z>
+        </units>
+        <writefrequency>50000</writefrequency>
+        <timesteps>
+          <init>0</init>
+          <recording>1</recording>
+        </timesteps>
+        <outputprefix>profile</outputprefix>
+        <options>
+          <option keyword="profileVirial">1</option>
+        </options>
+        <components>
+          <component id="1"/>
+        </components>
+      </outputplugin>
+            <outputplugin name="GammaWriter">
+                <writefrequency>100000</writefrequency>
+                <outputprefix>gamma</outputprefix>
+            </outputplugin>
+    </output>
+  </simulation>
+</mardyn>
