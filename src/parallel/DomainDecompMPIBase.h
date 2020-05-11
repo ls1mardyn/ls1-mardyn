@@ -12,12 +12,12 @@
 #include <vector>
 #include <memory>
 
-#include "utils/Logger.h"
-#include "DomainDecompBase.h"
 #include "CollectiveCommunicationInterface.h"
 #include "CommunicationPartner.h"
+#include "DomainDecompBase.h"
 #include "ParticleDataForwardDeclaration.h"
-#include "io/ProcessTimer.h"
+#include "parallel/MPI_TIMED/ProcessTimer.h"
+#include "utils/Logger.h"
 
 #define LOWER  0
 #define HIGHER 1
@@ -263,7 +263,6 @@ protected:
 
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
-	ProcessTimer _processTimer;
 };
 
 #endif /* DOMAINDECOMPMPIBASE_H_ */

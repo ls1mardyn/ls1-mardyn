@@ -2,7 +2,7 @@
  * ProcessTimer.h
  *
  *  Created on: Apr 12, 2020
- *      Author: andal
+ *      Author: jeremyharisch
  */
 
 #ifndef MARDYN_PROCESSTIMER_H
@@ -46,6 +46,7 @@ public:
 		measurement_time -= (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
 #endif
 	}
+
 //! @brief Stops Timer for MPI-Measurement
 	void stopTimer() {
 #ifdef ENABLE_MPI
@@ -100,6 +101,7 @@ public:
 protected:
 private:
 	std::map<int, std::vector<double>> _processes;
+	std::map<int, double> _process_time;
 	double measurement_time;
 	int process_numbr;
 
