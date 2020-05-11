@@ -6,13 +6,13 @@
 #include "Velocity3dProfile.h"
 #include "DensityProfile.h"
 
-void Velocity3dProfile::output (string prefix, long unsigned accumulatedDatasets) {
+void Velocity3dProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	global_log->info() << "[Velocity3dProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
 	_profilePrefix = prefix;
-	_profilePrefix += "_kartesian.V3Dpr";
+	_profilePrefix += ".V3Dpr";
 	ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 
