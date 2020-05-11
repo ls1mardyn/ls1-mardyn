@@ -112,7 +112,7 @@ public:
 #endif
 		_collCommunication->allreduceSumAllowPrevious();
 #if defined(ENABLE_MPI)
-		_processTimer.stopTimer();
+		_processTimer.stopTimer(static_cast<int>(DomainDecompBase::_rank));
 #endif
 	}
 
@@ -228,7 +228,7 @@ public:
 	void printCommunicationPartners(std::string filename) const override;
 
 	virtual double* getProcessTimerPointer() override {
-		return &(_processTimer.lastProcessTime);;
+		return &(_processTimer.lastProcessTime);  // TODO: Adapt to new ProcessTimer.h
 	}
 
 protected:
