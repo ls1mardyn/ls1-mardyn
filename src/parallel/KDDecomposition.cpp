@@ -7,7 +7,7 @@
 #include <cmath>
 
 #ifdef ENABLE_MPI
-#include <mpi.h>
+#include <parallel/MPI_TIMED/mpi_timed.h>
 #endif
 
 #include "Domain.h"

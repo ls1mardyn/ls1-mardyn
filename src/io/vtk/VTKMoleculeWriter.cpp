@@ -19,7 +19,7 @@ using namespace std;
 using namespace Log;
 
 #ifdef ENABLE_MPI
-#include <mpi.h>
+#include <parallel/MPI_TIMED/mpi_timed.h>
 #include <parallel/DomainDecompBase.h>
 #endif
 

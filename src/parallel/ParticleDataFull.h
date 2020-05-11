@@ -1,7 +1,7 @@
 #ifndef ParticleDataFull_H_
 #define ParticleDataFull_H_
 
-#include <mpi.h>
+#include <parallel/MPI_TIMED/mpi_timed.h>
 
 #include "molecules/MoleculeForwardDeclaration.h"
 

@@ -20,7 +20,7 @@
 #ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
 #include "parallel/DomainDecompBase.h"
-#include <mpi.h>
+#include <parallel/MPI_TIMED/mpi_timed.h>
 #endif
 //#include <time.h>
 

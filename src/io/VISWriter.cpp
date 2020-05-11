@@ -12,7 +12,7 @@
 #include "utils/Logger.h"
 
 #ifdef ENABLE_MPI
-#include <mpi.h>
+#include <parallel/MPI_TIMED/mpi_timed.h>
 #endif
 
 using Log::global_log;

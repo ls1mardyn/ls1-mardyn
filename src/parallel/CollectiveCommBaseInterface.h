@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <mpi.h>
+#include <parallel/MPI_TIMED/mpi_timed.h>
 
 //! Reduce Types of the allreduceCustom operation
 enum ReduceType {

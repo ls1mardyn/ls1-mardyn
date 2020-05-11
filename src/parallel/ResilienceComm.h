@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 #include <stddef.h>
-#include <mpi.h>
+#include <parallel/MPI_TIMED/mpi_timed.h>
 
 // do not uncomment the if, it will break halo copies of the kddecomposition!
 //#if (not defined(NDEBUG))
