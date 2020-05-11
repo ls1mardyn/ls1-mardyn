@@ -973,7 +973,9 @@ void Simulation::simulate() {
 			global_log->debug() << "Updating container and decomposition" << endl;
 			double currentTime = _timerForLoad->get_etime();
 #if defined(ENABLE_MPI)
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad - *(_domainDecomposition->getProcessTimerPointer()));
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad); //  - *(_domainDecomposition->getProcessTimerPointer())
+			// FIXME: Time from new Timer needs to be subtracted incl. Reset
+
 #else
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
 #endif

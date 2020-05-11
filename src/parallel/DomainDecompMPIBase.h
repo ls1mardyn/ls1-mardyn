@@ -8,7 +8,6 @@
 #ifndef DOMAINDECOMPMPIBASE_H_
 #define DOMAINDECOMPMPIBASE_H_
 
-#include <mpi.h>
 #include <vector>
 #include <memory>
 
@@ -18,6 +17,7 @@
 #include "ParticleDataForwardDeclaration.h"
 #include "parallel/MPI_TIMED/ProcessTimer.h"
 #include "utils/Logger.h"
+#include "parallel/MPI_TIMED/mpi_timed.h"
 
 #define LOWER  0
 #define HIGHER 1
@@ -107,13 +107,7 @@ public:
 	}
 
 	void collCommAllreduceSumAllowPrevious() override {
-#if defined(ENABLE_MPI)
-		_processTimer.startTimer(static_cast<int>(DomainDecompBase::_rank));
-#endif
 		_collCommunication->allreduceSumAllowPrevious();
-#if defined(ENABLE_MPI)
-		_processTimer.stopTimer(static_cast<int>(DomainDecompBase::_rank));
-#endif
 	}
 
 	void collCommAllreduceCustom(ReduceType type) override {
@@ -227,9 +221,9 @@ public:
 
 	void printCommunicationPartners(std::string filename) const override;
 
-	virtual double* getProcessTimerPointer() override {
-		return &(_processTimer.lastProcessTime);  // TODO: Adapt to new ProcessTimer.h
-	}
+	//virtual double* getProcessTimerPointer() override {
+	//	return &(_processTimer.lastProcessTime);  // TODO: Adapt to new ProcessTimer.h
+	//}
 
 protected:
 

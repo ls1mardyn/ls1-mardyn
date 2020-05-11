@@ -9,13 +9,13 @@
 
 #include "parallel/MPI_TIMED/ProcessTimer.h"
 
-
+class timed_mpi{
 public:
 
-	extern "C"
-	int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm) {
+
+		int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm) {
 	  // Start the timer
-	  _processTimer.startTimer();
+		_processTimer.startTimer();
 	  // Call the original MPI function
 	  int result = PMPI_Send(buf, count, datatype, dest, tag, comm);
 	  // Stop the timer
@@ -23,8 +23,7 @@ public:
 	  return result;
 	}
 
-	extern "C"
-	int MPI_Recv (void *buf,int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status) {
+		int MPI_Recv (void *buf,int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status) {
 		// Start the timer
 		_processTimer.startTimer();
 		// Call the original MPI function
@@ -34,8 +33,7 @@ public:
 		return result;
 	}
 
-	extern "C"
-	int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info, MPI_File *fh) {
+		int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info, MPI_File *fh) {
 		// Start the timer
 		_processTimer.startTimer();
 		// Call the original MPI function
@@ -45,19 +43,17 @@ public:
 		return result;
 	}
 
-	extern "C"
-	int MPI_File_write(MPI_File mpi_fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status) {
+		int MPI_File_write(MPI_File mpi_fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status) {
 		// Start the timer
 		_processTimer.startTimer();
 		// Call the original MPI function
-		int result = PMPI_File_write(mpi_fh, *buf, count, datatype, status);
+		int result = PMPI_File_write(mpi_fh, buf, count, datatype, status);
 		// Stop the timer
 		_processTimer.stopTimer();
 		return result;
 	}
 
-	extern "C"
-	int MPI_File_close(MPI_File * fh){
+		int MPI_File_close(MPI_File * fh){
 		// Start the timer
 		_processTimer.startTimer();
 		// Call the original MPI function
@@ -67,8 +63,7 @@ public:
 		return result;
 	}
 
-	extern "C"
-	int MPI_Allreduce(void* send_data, void* recv_data, int count, MPI_Datatype datatype, MPI_Op op,
+		int MPI_Allreduce(void* send_data, void* recv_data, int count, MPI_Datatype datatype, MPI_Op op,
 					  MPI_Comm communicator) {
 		// Start the timer
 		_processTimer.startTimer();
@@ -79,8 +74,7 @@ public:
 		return result;
 	}
 
-	extern "C"
-	int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status * status) {
+		int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status * status) {
 		// Start the timer
 		_processTimer.startTimer();
 		// Call the original MPI function
@@ -90,8 +84,7 @@ public:
 		return result;
 	}
 
-	extern "C"
-	int MPI_Test(MPI_Request * request, int *flag, MPI_Status * status) {
+		int MPI_Test(MPI_Request * request, int *flag, MPI_Status * status) {
 		// Start the timer
 		_processTimer.startTimer();
 		// Call the original MPI function
@@ -103,6 +96,6 @@ public:
 
 private:
 	ProcessTimer _processTimer;
-
+};
 
 #endif // MARDYN_MPI_TIMED_H

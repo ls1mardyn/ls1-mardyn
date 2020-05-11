@@ -8,6 +8,7 @@
 #ifndef MARDYN_PROCESSTIMER_H
 #define MARDYN_PROCESSTIMER_H
 
+#include <mpi.h>
 #include <fstream>
 #include <vector>
 #include <array>
@@ -27,7 +28,9 @@ public:
 	//! @brief Starts Timer for MPI-Measurement
 	//!
 	//! @param process Rank of process
-	void startTimer(int process) {
+	void startTimer() {
+		int process;
+		MPI_Comm_rank(MPI_COMM_WORLD, &process);
 		_process_time[process] -= _process_time[process];
 #ifdef ENABLE_MPI
 		double measurement_time = MPI_Wtime(); // TODO: Entfernen; da alte Struktur_process_time[process] -= measurement_time;
@@ -41,7 +44,9 @@ public:
 	}
 
 	//! @brief Stops Timer for MPI-Measurement
-	void stopTimer(int process) {
+	void stopTimer() {
+		int process;
+		MPI_Comm_rank(MPI_COMM_WORLD, &process);
 #ifdef ENABLE_MPI
 		double measurement_time = MPI_Wtime();
 #else
