@@ -4,20 +4,24 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include "utils/FileUtils.h"
 #include "plugins/Mirror.h"
 #include "plugins/NEMD/MettDeamon.h"
 
 #include <cstdlib>
 #include <cstdint>
 #include <list>
+#include <numeric>
+#include <string>
+#include <sstream>
+#include <algorithm>
 
 using namespace std;
 using Log::global_log;
 
 MettDeamonFeedrateDirector::MettDeamonFeedrateDirector()
 	:
-	_mirror_id(100),
-	_feedrate(0.)
+	_mirror_id(100)
 {
 	uint32_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
 	_particleManipCount.deleted.local.resize(numComponents+1);
@@ -36,6 +40,22 @@ MettDeamonFeedrateDirector::~MettDeamonFeedrateDirector()
 void MettDeamonFeedrateDirector::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
 {
 	global_log->debug() << "MettDeamonFeedrateDirector enabled." << std::endl;
+
+	// set actual feedrate
+	MettDeamon* mettDeamon = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "MettDeamon")
+			mettDeamon = dynamic_cast<MettDeamon*>(pit);
+	}
+	if(nullptr != mettDeamon) {
+		mettDeamon->setActualFeedrate(_feedrate.actual);
+		// init _feedrate.sum
+		_feedrate.sum = 0;
+		for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
+			_feedrate.sum += *it;
+	}
 }
 
 void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
@@ -50,9 +70,41 @@ void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("mirror/control/update_freq", _updateControl.updateFreq);
 	global_log->info() << "MettDeamonFeedrateDirector: update frequency of Mirror = " << _updateControl.updateFreq << endl;
 
+	// feedrate
+	_feedrate.init = 0.;
+	_feedrate.actual = 0.;
+	_feedrate.sum = 0.;
+	_feedrate.list.clear();
+	_feedrate.numvals = 1;
+	_feedrate.avg = 0.;
+	xmlconfig.getNodeValue("mirror/feedrate/numvals", _feedrate.numvals);
+	_feedrate.list.resize(_feedrate.numvals);
+	bool bRet = false;
+	bRet = xmlconfig.getNodeValue("mirror/feedrate/init", _feedrate.init);
+	if(bRet) {
+		std::fill(_feedrate.list.begin(), _feedrate.list.end(), _feedrate.init);
+		_feedrate.actual = _feedrate.init;
+	}
+	// after restart
+	std::string strCSV = "0";
+	bRet = false;
+	bRet = xmlconfig.getNodeValue("mirror/feedrate/list", strCSV);
+	if(bRet) {
+		_feedrate.list.clear();
+		this->csv_str2list(strCSV, _feedrate.list);
+	}
+	for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
+		std::cout << ' ' << *it;
+	// init actual feed rate
+	_feedrate.actual = *_feedrate.list.end();
+
 //	_forceConstant = 100.;
 //	xmlconfig.getNodeValue("forceConstant", _forceConstant);
 //	global_log->info() << "MettDeamonFeedrateDirector: force constant = " << _forceConstant << endl;
+
+	// restart information
+	_restart.writefreq = 1000;
+	xmlconfig.getNodeValue("restart/writefreq", _restart.writefreq);
 }
 
 void MettDeamonFeedrateDirector::beforeForces(
@@ -93,11 +145,12 @@ void MettDeamonFeedrateDirector::beforeForces(
 	if(_updateControl.sampledTimestepCount == _updateControl.updateFreq)
 	{
 		_updateControl.sampledTimestepCount = 0;  // reset sampling control
-		double feedrate_old = _feedrate;
 		this->calcFeedrate(mettDeamon);
-		if(_feedrate != feedrate_old)
-			mettDeamon->setActualFeedrate(_feedrate);
+		mettDeamon->setActualFeedrate(_feedrate.avg);
 	}
+
+	// Write out restart information
+	this->writeRestartfile();
 }
 
 void MettDeamonFeedrateDirector::afterForces(
@@ -109,6 +162,7 @@ void MettDeamonFeedrateDirector::afterForces(
 
 void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 {
+	cout << "MettDeamonFeedrateDirector::calcFeedrate()" << endl;
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	uint32_t cid = 0;
 	domainDecomp.collCommInit(1);
@@ -122,7 +176,31 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 
 	double dInvSampledTimestepCount = 1. / (double)(_updateControl.updateFreq);
 	double deletedParticlesPerTimestep = _particleManipCount.deleted.global.at(cid) * dInvSampledTimestepCount;
-	_feedrate = deletedParticlesPerTimestep * mettDeamon->getInvDensityArea();
+	_feedrate.actual = deletedParticlesPerTimestep * mettDeamon->getInvDensityArea();
+
+	// calc avg over prior values in _feedrate.list
+	_feedrate.sum += _feedrate.actual;
+	_feedrate.sum -= _feedrate.list.front();
+	_feedrate.list.push_back(_feedrate.actual);
+	if(_feedrate.list.size() > _feedrate.numvals)
+		_feedrate.list.pop_front();
+	else
+		_feedrate.sum = std::accumulate(_feedrate.list.begin(), _feedrate.list.end(), 0.0);
+	double dInvNumvals = 1./(double)(_feedrate.list.size());
+	_feedrate.avg = _feedrate.sum * dInvNumvals;
+
+	// DEBUG output
+	cout << "feedrate.list:" << endl;
+	for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
+		std::cout << ' ' << *it;
+	cout << endl;
+	cout << "_particleManipCount.deleted.local.at(cid)=" << _particleManipCount.deleted.local.at(cid) << endl;
+	cout << "_particleManipCount.deleted.global.at(cid)=" << _particleManipCount.deleted.global.at(cid) << endl;
+	cout << "deletedParticlesPerTimestep=" << deletedParticlesPerTimestep << endl;
+	cout << "_feedrate.actual=" << _feedrate.actual << endl;
+	cout << "_feedrate.sum=" << _feedrate.sum << endl;
+	cout << "_feedrate.avg=" << _feedrate.avg << endl;
+	// DEBUG output
 }
 
 void MettDeamonFeedrateDirector::resetLocalValues()
@@ -132,4 +210,49 @@ void MettDeamonFeedrateDirector::resetLocalValues()
 
 	for(auto& it:_particleManipCount.reflected.local)
 		it = 0;
+}
+
+void MettDeamonFeedrateDirector::csv_str2list(const std::string& strCSV, std::list<double>& list)
+{
+    std::stringstream ss(strCSV);
+
+    for (double i; ss >> i;) {
+        list.push_back(i);
+        if (ss.peek() == ',')
+            ss.ignore();
+    }
+}
+
+void MettDeamonFeedrateDirector::writeRestartfile()
+{
+	uint64_t simstep = global_simulation->getSimulationStep();
+	if(0 != simstep % _restart.writefreq)
+		return;
+
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+
+	if(domainDecomp.getRank() != 0)
+		return;
+
+	// write restart info in XML format
+	{
+		std::stringstream fnamestream;
+		fnamestream << "MettDeamonFeedrateDirectorRestart" << "_TS" << fill_width('0', 9) << simstep << ".xml";
+		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
+		std::stringstream outputstream;
+		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
+		ofs << "<feedrate>" << endl;
+		ofs << "\t<numvals>" << _feedrate.numvals << "</numvals>" << endl;
+		ios::fmtflags f( ofs.flags() );
+		ofs << "\t<list>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _feedrate.list.front();
+		std::list<double>::iterator it=_feedrate.list.begin();
+		for(std::advance(it, 1); it!=_feedrate.list.end(); ++it)
+			ofs << "," << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << *it;
+		ofs << "</list>" << endl;
+		ofs.flags(f);  // restore default format flags
+		ofs << "</feedrate>" << endl;
+
+		ofs << outputstream.str();
+		ofs.close();
+	}
 }
