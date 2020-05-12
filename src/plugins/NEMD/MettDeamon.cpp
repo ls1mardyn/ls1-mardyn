@@ -1044,14 +1044,12 @@ void MettDeamon::writeRestartfile()
 		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
 		std::stringstream outputstream;
 		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
-		ofs << "<mardyn version=\"20100525\" >" << endl;
-		ofs << "\t<restart>" << endl;
-		ofs << "\t\t<binindex>" << _reservoir->getActualBinIndex() << "</binindex>" << endl;
+		ofs << "<restart>" << endl;
+		ofs << "\t<binindex>" << _reservoir->getActualBinIndex() << "</binindex>" << endl;
 		ios::fmtflags f( ofs.flags() );
-		ofs << "\t\t<deltaY>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _feedrate.feed.sum << "</deltaY>" << endl;
+		ofs << "\t<deltaY>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _feedrate.feed.sum << "</deltaY>" << endl;
 		ofs.flags(f);  // restore default format flags
-		ofs << "\t</restart>" << endl;
-		ofs << "</mardyn>" << endl;
+		ofs << "</restart>" << endl;
 
 		ofs << outputstream.str();
 		ofs.close();
