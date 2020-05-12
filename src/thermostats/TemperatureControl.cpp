@@ -498,6 +498,13 @@ void ControlRegionT::registerAsObserver()
 	}
 }
 
+void ControlRegionT::update(SubjectBase* subject)
+{
+	CuboidRegionObs::update(subject);
+	// update slab width
+	_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
+}
+
 void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep)
 {
 	if( simstep % _addedEkin.writeFreq != 0)

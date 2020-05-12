@@ -52,6 +52,7 @@ public:
 	LocalControlMethod _localMethod;
 
 	void registerAsObserver();
+	void update(SubjectBase* subject) override;
 
 	// measure added kin. energy
 	void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
