@@ -6,15 +6,15 @@
 #define MARDYN_MPI_TIMED_H
 
 #include <mpi.h>
-
 #include "parallel/MPI_TIMED/ProcessTimer.h"
-
-
 
 extern ProcessTimer _processTimer;
 
-extern "C"
-int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+inline int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
 						int tag, MPI_Comm comm) {
 	std::cout <<"##################send########################" << std::endl;
 	// Start the timer
@@ -26,8 +26,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
 	return result;
 }
 
-extern "C"
-inline int MPI_Recv (void *buf,int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status) {
+inline int MPI_Recv(void *buf,int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status) {
 	std::cout <<"##################recv########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
@@ -38,7 +37,7 @@ inline int MPI_Recv (void *buf,int count, MPI_Datatype datatype, int source, int
 	return result;
 }
 
-extern "C"
+
 inline int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info, MPI_File *fh) {
 	std::cout <<"##################open########################" << std::endl;
 	// Start the timer
@@ -50,7 +49,7 @@ inline int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Inf
 	return result;
 }
 
-extern "C"
+
 inline int MPI_File_close(MPI_File * fh){
 	std::cout <<"##################close########################" << std::endl;
 	// Start the timer
@@ -62,8 +61,8 @@ inline int MPI_File_close(MPI_File * fh){
 	return result;
 }
 
-extern "C"
-inline int MPI_File_write(MPI_File mpi_fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status) {
+
+inline int MPI_File_write(MPI_File mpi_fh, const void *buf, int count, MPI_Datatype datatype, MPI_Status *status) {
 	std::cout <<"##################write########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
@@ -74,8 +73,8 @@ inline int MPI_File_write(MPI_File mpi_fh, void *buf, int count, MPI_Datatype da
 	return result;
 }
 
-extern "C"
-int MPI_Allreduce(void* send_data, void* recv_data, int count, MPI_Datatype datatype, MPI_Op op,
+
+inline int MPI_Allreduce(const void* send_data, void* recv_data, int count, MPI_Datatype datatype, MPI_Op op,
 				  MPI_Comm communicator) {
 	std::cout <<"##################reduce########################" << std::endl;
 	// Start the timer
@@ -87,7 +86,9 @@ int MPI_Allreduce(void* send_data, void* recv_data, int count, MPI_Datatype data
 	return result;
 }
 
-extern "C"
+
+
+
 inline int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status * status) {
 	// Start the timer
 	_processTimer.startTimer();
@@ -98,7 +99,7 @@ inline int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status 
 	return result;
 }
 
-extern "C"
+
 inline int MPI_Test(MPI_Request * request, int *flag, MPI_Status * status) {
 	std::cout <<"##################test########################" << std::endl;
 	// Start the timer
@@ -109,6 +110,10 @@ inline int MPI_Test(MPI_Request * request, int *flag, MPI_Status * status) {
 	_processTimer.stopTimer();
 	return result;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif // MARDYN_MPI_TIMED_H

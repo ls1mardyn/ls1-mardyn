@@ -8,12 +8,14 @@
 #ifndef MARDYN_PROCESSTIMER_H
 #define MARDYN_PROCESSTIMER_H
 
-#include <mpi.h>
+
 #include <fstream>
 #include <vector>
 #include <array>
 #include <map>
 #include <time.h>
+
+#include <mpi.h>
 
 #include "utils/Timer.h"
 
