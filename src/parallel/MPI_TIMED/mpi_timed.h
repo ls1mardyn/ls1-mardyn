@@ -204,11 +204,8 @@ inline int MPI_Comm_free(MPI_Comm * comm) {
 /*
 // FIXME: Produces Seg-Fault
 inline int MPI_Comm_rank(MPI_Comm comm, int *rank) {
-
 	_processTimer.startTimer();
-
 	int result = PMPI_Comm_rank(comm, rank);
-
 	_processTimer.stopTimer();
 	return result;
 }
