@@ -977,8 +977,6 @@ void Simulation::simulate() {
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad
 													- _processTimer.getTime(process, true, true));
-			// FIXME: Time from new Timer needs to be subtracted incl. Reset
-
 #else
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
 #endif
