@@ -16,7 +16,6 @@ extern "C"{
 
 inline int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
 						int tag, MPI_Comm comm) {
-	std::cout <<"##################send########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
 	// Call the original MPI function
@@ -27,7 +26,6 @@ inline int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
 }
 
 inline int MPI_Recv(void *buf,int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status) {
-	std::cout <<"##################recv########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
 	// Call the original MPI function
@@ -39,7 +37,6 @@ inline int MPI_Recv(void *buf,int count, MPI_Datatype datatype, int source, int 
 
 
 inline int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info, MPI_File *fh) {
-	std::cout <<"##################open########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
 	// Call the original MPI function
@@ -51,7 +48,6 @@ inline int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Inf
 
 
 inline int MPI_File_close(MPI_File * fh){
-	std::cout <<"##################close########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
 	// Call the original MPI function
@@ -63,7 +59,6 @@ inline int MPI_File_close(MPI_File * fh){
 
 
 inline int MPI_File_write(MPI_File mpi_fh, const void *buf, int count, MPI_Datatype datatype, MPI_Status *status) {
-	std::cout <<"##################write########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
 	// Call the original MPI function
@@ -76,7 +71,6 @@ inline int MPI_File_write(MPI_File mpi_fh, const void *buf, int count, MPI_Datat
 
 inline int MPI_Allreduce(const void* send_data, void* recv_data, int count, MPI_Datatype datatype, MPI_Op op,
 				  MPI_Comm communicator) {
-	std::cout <<"##################reduce########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
 	// Call the original MPI function
@@ -101,13 +95,18 @@ inline int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status 
 
 
 inline int MPI_Test(MPI_Request * request, int *flag, MPI_Status * status) {
-	std::cout <<"##################test########################" << std::endl;
 	// Start the timer
 	_processTimer.startTimer();
 	// Call the original MPI function
 	int result = PMPI_Test(request, flag, status);
 	// Stop the timer
 	_processTimer.stopTimer();
+	return result;
+}
+
+inline int MPI_Finalize(void) {
+	int result = PMPI_Finalize();
+	// _processTimer.writeProcessTimeLog();
 	return result;
 }
 

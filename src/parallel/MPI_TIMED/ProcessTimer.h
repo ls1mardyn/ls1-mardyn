@@ -60,10 +60,17 @@ public:
 		_processes_debug[process][_processes_debug[process].size()-1] -= measurement_time;
 	}
 
-	//! @brief Resets the Timer for given Process and prints Time spent into csv
-	void resetTimer(int process){
-		writeProcessTimeLogSingle(process, _process_time[process], true);
-		_process_time[process] -= _process_time[process];
+	//! @brief Returns the Time saved with this Timer for given Process
+	//! @param process Process for return time
+	//! @param debug Prints time into csv
+	//! @param reset Determines if Timer should be reseted
+	int getTime(int process, bool reset = false, bool debug = false){
+		int time = _process_time[process];
+		if (debug)
+			writeProcessTimeLogSingle(process, _process_time[process], true);
+		if (reset)
+			_process_time[process] -= _process_time[process];
+		return time;
 	}
 
 	//! @brief Writes given Process and time spent in MPI-Calls into "processRuntime.txt"
@@ -81,13 +88,13 @@ public:
         _processRuntime.close();
 	}
 
-	//! @brief Writes whole deubg-map into "processRuntime.txt" in current directory
+	//! @brief Writes whole debug-map into "processRuntime.txt" in current directory
 	void writeProcessTimeLog() {
 		std::ofstream _processRuntime;
 		_processRuntime.open("processDebugRuntime.txt");
 		for (auto const &iter : _processes_debug) {
 			for (auto innerIter = iter.second.begin(); innerIter != iter.second.end(); ++innerIter) {
-				_processRuntime << "Rank: " << iter.first << " Runtime: " << *innerIter << " seconds" << std::endl;
+				_processRuntime << "Rank: " << iter.first << " Runtime: " << *innerIter << std::endl;
 			}
 		}
 		_processRuntime.close();
@@ -97,8 +104,8 @@ public:
 
 protected:
 private:
-	std::map<int, std::vector<double>> _processes_debug;
 	std::map<int, double> _process_time;
+	std::map<int, std::vector<double>> _processes_debug;
 };
 
 #endif //MARDYN_PROCESSTIMER_H
