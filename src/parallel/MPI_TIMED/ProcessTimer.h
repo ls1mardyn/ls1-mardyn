@@ -26,38 +26,53 @@ public:
 
 	~ProcessTimer() {}
 
+	/*! @brief Switches between the profiling Levels
+	 *  This Fnction should be called right before and after a corresponding MPI-Function-Call
+	 *  to exclude only this one
+	 *
+	 *  @param level ==1 Profiling is enabled(default); ==0 Profiling is disabled
+	 */
+	int switchProfiling(const int level = 1) {
+		_profiling_switch = level;
+		return _profiling_switch;
+	}
 
 	//! @brief Starts Timer for MPI-Measurement
 	//!
 	//! @param process Rank of process
 	void startTimer() {
-		int process;
-		MPI_Comm_rank(MPI_COMM_WORLD, &process);
-		_process_time[process] -= _process_time[process];
+		if (_profiling_switch == 1){
+			int process;
+			MPI_Comm_rank(MPI_COMM_WORLD, &process);
+			_process_time[process] -= _process_time[process];
 #ifdef ENABLE_MPI
-		double measurement_time = MPI_Wtime(); // TODO: Entfernen; da alte Struktur_process_time[process] -= measurement_time;
+			double measurement_time = MPI_Wtime();
 #else
-		struct timeval tmp_time;
-		gettimeofday(&tmp_time, NULL);
-		double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6; // TODO: Entfernen; da alte Struktur
+			struct timeval tmp_time;
+			gettimeofday(&tmp_time, NULL);
+			double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
 #endif
-		_process_time[process] -= measurement_time;
-		_processes_debug[process].push_back(-measurement_time);
+			_process_time[process] -= measurement_time;
+			_processes_debug[process].push_back(-measurement_time);
+		}
+
 	}
 
 	//! @brief Stops Timer for MPI-Measurement
 	void stopTimer() {
-		int process;
-		MPI_Comm_rank(MPI_COMM_WORLD, &process);
+		if (_profiling_switch ==1){
+			int process;
+			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 #ifdef ENABLE_MPI
-		double measurement_time = MPI_Wtime();
+			double measurement_time = MPI_Wtime();
 #else
-		struct timeval tmp_time;
-		gettimeofday(&tmp_time, NULL);
-		double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
+			struct timeval tmp_time;
+			gettimeofday(&tmp_time, NULL);
+			double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
 #endif
-		_process_time[process] += measurement_time;
-		_processes_debug[process][_processes_debug[process].size()-1] -= measurement_time;
+			_process_time[process] += measurement_time;
+			_processes_debug[process][_processes_debug[process].size()-1] -= measurement_time;
+		}
 	}
 
 	//! @brief Returns the Time saved with this Timer for given Process
@@ -106,6 +121,7 @@ protected:
 private:
 	std::map<int, double> _process_time;
 	std::map<int, std::vector<double>> _processes_debug;
+	int _profiling_switch = 1;
 };
 
 #endif //MARDYN_PROCESSTIMER_H
