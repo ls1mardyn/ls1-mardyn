@@ -16,12 +16,12 @@ extern ProcessTimer _processTimer;
 extern "C"{
 #endif
 
-int __attribute__((weak)) MPI_Pcontrol(const int level) {
+int __attribute__((weak)) MPI_Pcontrol(const int level, ...) {
 	return _processTimer.switchProfiling(level);
 }
 
 int __attribute__((weak)) MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
-						int tag, MPI_Comm comm) { 
+						int tag, MPI_Comm comm) {
 	_processTimer.startTimer();
 	int result = PMPI_Send(buf, count, datatype, dest, tag, comm);
 	_processTimer.stopTimer();
