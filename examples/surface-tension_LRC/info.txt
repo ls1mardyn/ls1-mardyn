@@ -2,7 +2,7 @@ C6H12
   |-- 330K
   |  |-- run01: Start VLE simulation from generated start configuration (ASCII format)
   |  |-- run02: Restart simulation from checkpoint (binary) of run01
-  |  |-- run03: Restart simulation from replicated checkpoint of run02 in xz-plane (enlarge vapor-liquid interface) to scale-up number of particles
+  |  |-- run03: Restart simulation from replicated checkpoint (binary) of run01 in xz-plane (enlarge vapor-liquid interface) to scale-up number of particles
   |  
   |-- 415K
   |  |-- run01: ...
@@ -18,7 +18,7 @@ CO2_Merker
   |-- 220K
   |  |-- run01: Start VLE simulation from generated start configuration (ASCII format)
   |  |-- run02: Restart simulation from checkpoint (binary) of run01
-  |  |-- run03: Restart simulation from replicated checkpoint of run02 in xz-plane (enlarge vapor-liquid interface) to scale-up number of particles
+  |  |-- run03: Restart simulation from replicated checkpoint (binary) of run01 in xz-plane (enlarge vapor-liquid interface) to scale-up number of particles
   |
   |-- 250K
   |  |-- run01: ...
