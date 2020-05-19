@@ -27,6 +27,8 @@ Prerequisites:
 Installation (make)
 ------------
 
+### Installing ls1-MarDyn using make
+
 ls1-MarDyn is build from source code using GNU make or alternatively using cmake (see below).
 
 A default build using the GNU compiler and a MPI library providing the mpicxx compiler wrapper is done with
@@ -53,6 +55,7 @@ To display further information about the available suboptions for a configuratio
 
 ### Installing ls1-MarDyn using cmake
 
+#### Configuration
 Initial support to build ls1-mardyn using cmake has been recently added.
 To build mardyn using cmake first create an additional directory on the root mardyn directory and change into that directory.
 ```bash
@@ -73,6 +76,12 @@ To configure the options within ls1-mardyn it is recommended to use `ccmake`:
 ccmake .
 ```
 That way you can easily edit the available options.
+
+Finally, build ls1-mardyn using:
+```bash
+make
+``` 
+For a parallel and faster build please use `make`'s `-j` parameter with an appropriate number of tasks.
 
 Running ls1-MarDyn
 ------------------
