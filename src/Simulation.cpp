@@ -1201,6 +1201,8 @@ void Simulation::finalize() {
 		delete _domainDecomposition;
 		_domainDecomposition = nullptr;
 	}
+
+	_plugins.remove_if([](PluginBase * plugin) { delete plugin; return true; });
 	global_simulation = nullptr;
 }
 

@@ -53,7 +53,9 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	_position.ref.id = 0;  // 0:domain origin, 1:left interface, 2:right interface
 	_position.ref.origin = 0.;
 	_position.ref.coord = 0.;
-	int id; xmlconfig.getNodeValue("position/refID", id); _position.ref.id = (uint16_t)(id);
+	int id = 0;
+	xmlconfig.getNodeValue("position/refID", id);
+	_position.ref.id = (uint16_t)(id);
 	xmlconfig.getNodeValue("position/coord", _position.ref.coord);
 	SubjectBase* subject = getSubject();
 	this->update(subject);

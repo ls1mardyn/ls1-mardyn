@@ -41,35 +41,48 @@ AutoPasContainer::AutoPasContainer(double cutoff)
 #endif
 }
 
+/**
+ * Safe method to handle autopas options.
+ * It checks for exceptions, prints the exceptions and all possible options.
+ */
+template <typename OptionType>
+auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString, const std::string &defaultValue) {
+	try {
+		return OptionType::parseOptions(
+			string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString, defaultValue)));
+	} catch (const std::exception &e) {
+		global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
+		global_log->error() << e.what() << std::endl;
+		global_log->error() << "Possible options: "
+							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
+		Simulation::exit(4432);
+		// dummy return
+		return decltype(OptionType::parseOptions(""))();
+	}
+}
+
 void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	string oldPath(xmlconfig.getcurrentnodepath());
 
 	// set default values here!
 
-	_traversalChoices = autopas::TraversalOption::parseOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedTraversals", "c08")));
-	_containerChoices = autopas::ContainerOption::parseOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("allowedContainers", "linked-cell")));
+	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals", "c08");
 
-	_selectorStrategy = *autopas::SelectorStrategyOption::parseOptions(
-							 string_utils::toLowercase(xmlconfig.getNodeValue_string("selectorStrategy", "median")))
-							 .begin();
+	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig, "allowedContainers", "linked-cell");
+
+	_selectorStrategy =
+		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", "median").begin();
 
 	_tuningStrategyOption =
-		*autopas::TuningStrategyOption::parseOptions(
-			 string_utils::toLowercase(xmlconfig.getNodeValue_string("tuningStrategy", "fullSearch")))
-			 .begin();
+		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", "fullSearch").begin();
 
-	_dataLayoutChoices = autopas::DataLayoutOption::parseOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("dataLayouts", "soa")));
+	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", "soa");
 
-	_newton3Choices = autopas::Newton3Option::parseOptions(
-		string_utils::toLowercase(xmlconfig.getNodeValue_string("newton3", "enabled")));
+	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", "enabled");
 
-	_tuningAcquisitionFunction =
-		*autopas::AcquisitionFunctionOption::parseOptions(string_utils::toLowercase(xmlconfig.getNodeValue_string(
-															  "tuningAcquisitionFunction", "lower-confidence-bound")))
-			 .begin();
+	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
+									  xmlconfig, "tuningAcquisitionFunction", "lower-confidence-bound")
+									  .begin();
 
 	_maxEvidence = (unsigned int)xmlconfig.getNodeValue_int("maxEvidence", 20);
 	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);

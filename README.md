@@ -24,10 +24,10 @@ Prerequisites:
 * QuickSched: <https://arxiv.org/abs/1601.05384>
 
 
-Installation
+Installation (make)
 ------------
 
-ls1-MarDyn is build from source code using GNU make.
+ls1-MarDyn is build from source code using GNU make or alternatively using cmake (see below).
 
 A default build using the GNU compiler and a MPI library providing the mpicxx compiler wrapper is done with
 ```sh
