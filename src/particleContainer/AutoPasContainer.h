@@ -24,7 +24,29 @@ public:
 #endif
 	};
 
-	// from ParticleContainer
+	/**
+	 * This function parses parameters for the AutoPas container.
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <datastructure type="AutoPas">
+		<allowedTraversals>STRINGLIST</allowedTraversals>
+		<allowedContainers>STRINGLIST</allowedContainers>
+		<selectorStrategy>STRING</selectorStrategy><!--fastestMedian,fastestAbs-->
+		<tuningStrategy>STRING</tuningStrategy><!--FullSearch, -->
+		<dataLayouts>STRINGLIST</dataLayouts>
+		<newton3>STRINGLIST</newton3>
+		<tuningAcquisitionFunction>STRING</tuningAcquisitionFunction>
+		<maxEvidence>INTEGER</maxEvidence>
+		<tuningSamples>INTEGER</tuningSamples>
+		<tuningInterval>INTEGER</tuningInterval>
+		<rebuildFrequency>INTEGER</rebuildFrequency>
+		<skin>DOUBLE</skin>
+	   </datastructure>
+	   \endcode
+	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency.
+	 *
+	 * @param xmlconfig
+	 */
 	void readXML(XMLfileUnits &xmlconfig) override;
 
 	bool rebuild(double bBoxMin[3], double bBoxMax[3]) override;

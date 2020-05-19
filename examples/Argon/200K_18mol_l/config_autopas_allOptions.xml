@@ -41,8 +41,11 @@
         <allowedTraversals>c01, c08, c04, c18, sli, verlet-lists, slicedVerlet, v01, v18, directsum, varVerlet</allowedTraversals>
         <allowedContainers>linkedCells, verletLists, directsum, verletListsCells, varVerletListsAsBuild</allowedContainers>
         <selectorStrategy>fastestMean</selectorStrategy><!--fastestMedian,fastestAbs-->
+        <tuningStrategy>FullSearch</tuningStrategy><!--FullSearch, -->
         <dataLayouts>AoS, SoA</dataLayouts>
         <newton3>enabled, disabled</newton3>
+        <tuningAcquisitionFunction>lower-confidence-bound</tuningAcquisitionFunction>
+        <maxEvidence>20</maxEvidence>
         <tuningInterval>1000</tuningInterval>
         <tuningSamples>10</tuningSamples>
         <rebuildFrequency>10</rebuildFrequency>
