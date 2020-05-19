@@ -116,12 +116,14 @@ To enable support for AutoPas (<https://github.com/AutoPas/AutoPas/>), you will 
 ### Running using AutoPas
 To use AutoPas a few modifications to the normal `xml` config files have to be performed:
 - The `datastructure` section has to be changed to type `AutoPas`.
-- If inside of the `datastructure` section no additional information is given, AutoPas will run without auto-tuning and a linked cells container (rebuild frequency = 1, skin = 0).
-- 
-
+- If inside of the `datastructure` section no additional information is given AutoPas will run without auto-tuning and a linked cells container (rebuild frequency = 1, skin = 0).
+- Multiple further options can be specified for AutoPas.
+  For a quick overview check config_autopas_allOptions.xml in the Argon example directory.
+  Additional information for the options can be found at: <https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html> 
+  and within the readXML method of <https://www5.in.tum.de/mardyn/doxygen_doc/html/classAutoPasContainer.html>
 
 ### Limitations
-- Using AutoPas, currently only single-centered Lennard-Jones interactions are possible.
+- Using AutoPas, currently, only single-centered Lennard-Jones interactions are possible.
 
 Additional resources
 ====================
