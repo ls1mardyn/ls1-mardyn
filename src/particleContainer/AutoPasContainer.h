@@ -44,7 +44,8 @@ public:
 	   </datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency.
-	 *
+	 * A list of the different Options can be found here:
+	 https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html
 	 * @param xmlconfig
 	 */
 	void readXML(XMLfileUnits &xmlconfig) override;
