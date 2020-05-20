@@ -211,13 +211,15 @@
         <!-- specify all allowed traversals as a comma separated list -->
         <allowedTraversals>c08, sli</allowedTraversals>
         <!-- specify all allowed containers as a comma separated list -->
-        <!-- possible values:
-          - directSum
-          - linkedCells
-          - verlet
-          - vcells
-          - vcluster
-          -->
+        <!-- possible values include:
+           - DirectSum
+           - LinkedCells
+           - VerletLists
+           - VerletListsCells
+           - VerletClusterLists
+           - VarVerletListsAsBuild
+           - VerletClusterCells
+        -->
         <allowedContainers>linkedCells, verletlists, verletclusterlists</allowedContainers>
         <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
