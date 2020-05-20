@@ -73,7 +73,7 @@
               <Izz>47.02459341</Izz>
             </momentsofinertia>
           </moleculetype>
-          
+
           <mixing>
             <rule type="LB" cid1="1" cid2="2">
               <eta>1.0</eta>
@@ -256,7 +256,7 @@
     <!-- output plugins
 	There are several output plugins which can be used to generate some output files while running simulations.
 	The following comments describe the provided output plugins. -->
-	
+
 	<!-- general information about properties of the output plugins:
     The attribute “name“ holds the name of the plugin user want to use performing an output. The names of the provided plugins are listed below:
       - CheckpointWriter
@@ -264,7 +264,7 @@
       - XyzWriter
       - VISWriter
       - MmspdWriter
-      - PovWriter	  
+      - PovWriter
       - StatisticsWriter
       - DecompWriter
     The element “writefrequency” contains a integer value which controls the frequency of writing out the data. For example the value “10” makes
@@ -273,7 +273,7 @@
     in a output file named “default.res”. -->
     <output>
 
-       <!-- CheckpointWriter plugin 
+       <!-- CheckpointWriter plugin
       This writer will create a restart file which format or structure is the same as used by input files *.inp.
       These files can be used to continue a simulation. -->
       <outputplugin name="CheckpointWriter">
@@ -298,7 +298,7 @@
         <writefrequency>10</writefrequency>
       </outputplugin>
 
-      <!-- ResultWriter plugin 
+      <!-- ResultWriter plugin
         Writes thermodynamic properties to a file. The following values will be written to a file:
         - Simulation time step
         - time since the simulation started
@@ -327,7 +327,7 @@
       <!-- visualization output plugins
       These writers are used to generate files which can be used for visualization purpose by different visualization software.
       Depending on the specific software different file formats are supported. -->
-  
+
       <!-- XyzWriter plugin
       The *.xyz-format contains x, y, z coordinates of the molecules. Such a file can be read by visualization software like vmd
       (for detail information visit: http://www.ks.uiuc.edu/Research/vmd/). -->
@@ -391,7 +391,7 @@
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>
-	  
+
     </output>
   </simulation>
 </mardyn>
