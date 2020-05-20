@@ -205,6 +205,9 @@
       </datastructure>
 
       <datastructure type="AutoPas">
+        <!-- for a list of possible options see the setter functions in https://www5.in.tum.de/AutoPas/doxygen_doc/master/classautopas_1_1AutoPas.html -->
+        <!-- for possible values see the respective options in https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html-->
+
         <!-- specify all allowed traversals as a comma separated list -->
         <allowedTraversals>c08, sli</allowedTraversals>
         <!-- specify all allowed containers as a comma separated list -->
@@ -215,13 +218,10 @@
           - vcells
           - vcluster
           -->
-        <allowedContainers>linkedCells, vcells, vcluster</allowedContainers>
+        <allowedContainers>linkedCells, verletlists, verletclusterlists</allowedContainers>
         <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
-        <selectorStrategy>fastestMedian</selectorStrategy>
-        <!-- specify which tuning algorithm should be used -->
-        <!-- possible values: fullSearch, bayesian -->
-        <selectorStrategy>fastestMedian</selectorStrategy>
+        <selectorStrategy>fastestAbsolute</selectorStrategy>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
