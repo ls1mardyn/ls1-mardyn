@@ -112,11 +112,11 @@ private:
 	void traverseTemplateHelper();
 
 	double _cutoff{0.};
-	double _verletSkin{0.};
-	unsigned int _verletRebuildFrequency{1u};
-	unsigned int _tuningFrequency{1000u};
-	unsigned int _tuningSamples{3u};
-	unsigned int _maxEvidence{10};
+	double _verletSkin;
+	unsigned int _verletRebuildFrequency;
+	unsigned int _tuningFrequency;
+	unsigned int _tuningSamples;
+	unsigned int _maxEvidence;
 	using CellType = autopas::FullParticleCell<Molecule>;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 

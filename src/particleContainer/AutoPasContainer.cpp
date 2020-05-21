@@ -15,13 +15,6 @@
 
 AutoPasContainer::AutoPasContainer(double cutoff)
 	: _cutoff(cutoff),
-	  _traversalChoices(autopas::TraversalOption::getAllOptions()),
-	  _containerChoices(autopas::ContainerOption::getAllOptions()),
-	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
-	  _tuningStrategyOption(autopas::TuningStrategyOption::fullSearch),
-	  _tuningAcquisitionFunction(autopas::AcquisitionFunctionOption::upperConfidenceBound),
-	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
-	  _newton3Choices{autopas::Newton3Option::enabled},
 	  _particlePropertiesLibrary(cutoff) {
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
@@ -42,14 +35,23 @@ AutoPasContainer::AutoPasContainer(double cutoff)
 }
 
 /**
- * Safe method to handle autopas options.
+ * Safe method to parse autopas options from the xml.
  * It checks for exceptions, prints the exceptions and all possible options.
+ * If the option does not exist in the xml the given default is returned
+ * @tparam OptionType Type of the option to parse
+ * @param xmlconfig
+ * @param xmlString XML whose content we like to parse.
+ * @param defaultValue Set of options that is returned if nothing was found in the xml
+ * @return
  */
-template <typename OptionType>
-auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString, const std::string &defaultValue) {
+template <class OptionType>
+auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString, const std::set<OptionType> &defaultValue) {
+    auto stringInXml = string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString));
+    if(stringInXml.empty()) {
+      return defaultValue;
+    }
 	try {
-		return OptionType::parseOptions(
-			string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString, defaultValue)));
+		return OptionType::parseOptions(stringInXml);
 	} catch (const std::exception &e) {
 		global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
 		global_log->error() << e.what() << std::endl;
@@ -64,33 +66,38 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString, c
 void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	string oldPath(xmlconfig.getcurrentnodepath());
 
-	// set default values here!
-
-	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals", "c08");
-
-	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig, "allowedContainers", "linked-cell");
-
+	// if any option is not specified in the XML use the autopas defaults
+	// get option values from xml
+	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig,
+	                                                                 "allowedTraversals",
+	                                                                 _autopasContainer.getAllowedTraversals());
+	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig,
+	                                                                 "allowedContainers",
+	                                                                 _autopasContainer.getAllowedContainers());
 	_selectorStrategy =
-		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", "median").begin();
-
+	    *parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy",
+	                                                         {_autopasContainer.getSelectorStrategy()}).begin();
 	_tuningStrategyOption =
-		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", "fullSearch").begin();
-
-	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", "soa");
-
-	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", "enabled");
-
+	    *parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig,
+	                                                       "tuningStrategy",
+	                                                       {_autopasContainer.getTuningStrategyOption()}).begin();
+	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig,
+	                                                                   "dataLayouts",
+	                                                                   _autopasContainer.getAllowedDataLayouts());
+	_newton3Choices =
+	    parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _autopasContainer.getAllowedNewton3Options());
 	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
-									  xmlconfig, "tuningAcquisitionFunction", "lower-confidence-bound")
-									  .begin();
+      xmlconfig, "tuningAcquisitionFunction",
+      {_autopasContainer.getAcquisitionFunction()})
+      .begin();
+	// get numeric options from xml
+	_maxEvidence = static_cast<unsigned int>(xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_autopasContainer.getMaxEvidence())));
+	_tuningSamples = static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_autopasContainer.getNumSamples())));
+	_tuningFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_autopasContainer.getTuningInterval())));
+	_verletRebuildFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int("rebuildFrequency", static_cast<int>(_autopasContainer.getVerletRebuildFrequency())));
+	_verletSkin = static_cast<unsigned int>(xmlconfig.getNodeValue_double("skin", static_cast<int>(_autopasContainer.getVerletSkin())));
 
-	_maxEvidence = (unsigned int)xmlconfig.getNodeValue_int("maxEvidence", 20);
-	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
-	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
-
-	xmlconfig.getNodeValue("rebuildFrequency", _verletRebuildFrequency);
-	xmlconfig.getNodeValue("skin", _verletSkin);
-
+	//generate string representation of parameters with multiple options
 	std::stringstream dataLayoutChoicesStream;
 	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
 			 [&](auto &choice) { dataLayoutChoicesStream << choice.to_string() << " "; });
@@ -104,6 +111,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	for_each(_newton3Choices.begin(), _newton3Choices.end(),
 			 [&](auto &choice) { newton3ChoicesStream << choice.to_string() << " "; });
 
+	// print full configuration to the command line
 	int valueOffset = 20;
 	global_log->info() << "AutoPas configuration:" << endl
 					   << setw(valueOffset) << left << "Data Layout "
