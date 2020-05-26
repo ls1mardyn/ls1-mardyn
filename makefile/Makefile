@@ -192,6 +192,8 @@ endif
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
 
+LDFLAGS +=  -Wl,--allow-multiple-definition
+
 ifeq ($(PRECISION), SINGLE)
 CXXFLAGS += -D MARDYN_SPSP
 endif
