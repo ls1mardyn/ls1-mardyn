@@ -8,8 +8,6 @@
 #include <mpi.h>
 #include "parallel/MPI_TIMED/ProcessTimer.h"
 
-
-
 extern ProcessTimer _processTimer;
 
 #ifdef __cplusplus
@@ -22,7 +20,6 @@ int MPI_Pcontrol(const int level, ...) {
 
 int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
 						int tag, MPI_Comm comm) {
-	std::cout << "##################SEND##########" <<std::endl;
 	_processTimer.startTimer();
 	int result = PMPI_Send(buf, count, datatype, dest, tag, comm);
 	_processTimer.stopTimer();

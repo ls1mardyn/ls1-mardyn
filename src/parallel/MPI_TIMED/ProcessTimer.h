@@ -7,17 +7,16 @@
 
 #ifndef MARDYN_PROCESSTIMER_H
 #define MARDYN_PROCESSTIMER_H
-
+#define _BSD_SOURCE
 
 #include <fstream>
 #include <vector>
 #include <array>
 #include <map>
-#include <time.h>
+#include <sys/time.h>
 
 #include <mpi.h>
 
-#include "utils/Timer.h"
 
 class ProcessTimer {
 
@@ -93,11 +92,11 @@ public:
 	void writeProcessTimeLogSingle(int process, double time, bool csv) {
 		std::ofstream _processRuntime;
 		if(csv){
-			_processRuntime.open("process" + std::to_string(process) + "Runtime.csv", std::ios::app);
+			_processRuntime.open("process" + std::to_string(process) + "MPI-Runtime.csv", std::ios::app);
 			_processRuntime << time << ", ";
 		}
 		else{
-			_processRuntime.open("process" + std::to_string(process) + "Runtime.txt", std::ios::app);
+			_processRuntime.open("process" + std::to_string(process) + "MPI-Runtime.txt", std::ios::app);
 			_processRuntime << "Rank: " << process << " Runtime: " << time << " seconds\n";
 		}
         _processRuntime.close();
@@ -106,7 +105,7 @@ public:
 	//! @brief Writes whole debug-map into "processRuntime.txt" in current directory
 	void writeProcessTimeLog() {
 		std::ofstream _processRuntime;
-		_processRuntime.open("processDebugRuntime.txt");
+		_processRuntime.open("processDebugMPI-Runtime.txt");
 		for (auto const &iter : _processes_debug) {
 			for (auto innerIter = iter.second.begin(); innerIter != iter.second.end(); ++innerIter) {
 				_processRuntime << "Rank: " << iter.first << " Runtime: " << *innerIter << std::endl;
@@ -114,8 +113,6 @@ public:
 		}
 		_processRuntime.close();
 	}
-
-	double lastProcessTime = 0.0;
 
 protected:
 private:

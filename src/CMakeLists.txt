@@ -63,6 +63,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${AUTOPAS_LIB} # for autopas
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
+        -Wl,--allow-multiple-definition # for MPI_TIMED linking
         )
 
 ADD_TEST(

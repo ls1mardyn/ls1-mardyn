@@ -977,6 +977,12 @@ void Simulation::simulate() {
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad
 													- _processTimer.getTime(process, true, true));
+
+// ###### Only for Measuremnts (BA Jeremy Harisch) ######
+			std::ofstream _processRuntime;
+			_processRuntime.open("process" + std::to_string(process) + "LastTraversalRuntime.csv", std::ios::app);
+			_processRuntime << currentTime - previousTimeForLoad << ", ";
+// #####################################################
 #else
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
 #endif
