@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<spheres>
+    <!-- CO2 -->
+    <site id="1">
+        <radius>1.40685000106002</radius>
+        <color>
+            <r>0</r>
+            <g>0</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+    <site id="2">
+        <radius>1.487750001371205</radius>
+        <color>
+            <r>255</r>
+            <g>0</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+    <site id="3">
+        <radius>1.487750001371205</radius>
+        <color>
+            <r>255</r>
+            <g>0</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+
+</spheres>
+
