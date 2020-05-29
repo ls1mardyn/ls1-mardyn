@@ -1017,7 +1017,8 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 void MettDeamon::writeRestartfile()
 {
-	if(0 != global_simulation->getSimulationStep() % _nWriteFreqRestart)
+	uint64_t simstep = global_simulation->getSimulationStep();
+	if(0 != simstep % _nWriteFreqRestart)
 		return;
 
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
@@ -1030,11 +1031,29 @@ void MettDeamon::writeRestartfile()
 	std::ofstream ofs(fnamestream.str().c_str(), std::ios::app);
 	std::stringstream outputstream;
 
-	outputstream << setw(12) << global_simulation->getSimulationStep() << setw(12) << _reservoir->getActualBinIndex();
+	outputstream << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
 	outputstream << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
 
 	ofs << outputstream.str();
 	ofs.close();
+
+	// write restart info in XML format
+	{
+		std::stringstream fnamestream;
+		fnamestream << "MettDeamonRestart_movdir-" << (uint32_t)_nMovingDirection << "_TS" << fill_width('0', 9) << simstep << ".xml";
+		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
+		std::stringstream outputstream;
+		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
+		ofs << "<restart>" << endl;
+		ofs << "\t<binindex>" << _reservoir->getActualBinIndex() << "</binindex>" << endl;
+		ios::fmtflags f( ofs.flags() );
+		ofs << "\t<deltaY>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _feedrate.feed.sum << "</deltaY>" << endl;
+		ofs.flags(f);  // restore default format flags
+		ofs << "</restart>" << endl;
+
+		ofs << outputstream.str();
+		ofs.close();
+	}
 }
 
 void MettDeamon::logFeedrate()

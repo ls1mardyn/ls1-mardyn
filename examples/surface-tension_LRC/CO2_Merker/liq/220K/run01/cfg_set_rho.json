@@ -1,0 +1,6 @@
+{
+"inp_fpath" : "/media/mheinen/data_ext4/sims/lrc/CO2_Merker/liq/220K/run01/cp_binary-0.restart.dat",
+"out_fpath" : "/media/mheinen/data_ext4/sims/lrc/CO2_Merker/liq/220K/run01/cp_binary-0.restart.rho_liq.dat",
+"num_particles_old" : 4000,
+"num_particles_new" : 3456
+}

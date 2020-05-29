@@ -71,10 +71,19 @@ public:
 private:
 	void calcFeedrate(MettDeamon* mettDeamon);
 	void resetLocalValues();
+	void csv_str2list(const std::string& strCSV, std::list<double>& list);
+	void writeRestartfile();
 
 private:
 	uint32_t _mirror_id;
-	double _feedrate;
+	struct Feedrate {
+		double init;
+		double actual;
+		double sum;
+		std::list<double> list;
+		uint32_t numvals;
+		double avg;
+	} _feedrate;
 	struct UpdateControl {
 		uint32_t updateFreq;
 		uint32_t sampledTimestepCount;
@@ -83,6 +92,9 @@ private:
 		CommVar<std::vector<uint64_t> > reflected;
 		CommVar<std::vector<uint64_t> > deleted;
 	} _particleManipCount;
+	struct Restart {
+		uint32_t writefreq;
+	} _restart;
 };
 
 #endif /*METTDEAMON_FEEDRATE_DIRECTOR_H_*/

@@ -1,0 +1,84 @@
+./
+├── 2CLJ
+│   ├── liq
+│   │   ├── T0-979
+│   │   │   ├── run01: Create liquid phase on fcc grid, remove particles to exactly match saturated density.
+│   │   │   ├── run02: Equilibrate liquid phase. Afterwards, copy checkpoint and remove particles to create saturated vapor phase.
+│   │   │   └── run03: Replicate last checkpoint of run02 to scale-up system size.
+│   │   ├── T1-508
+│   │   │   ├── run01
+│   │   │   ├── run02
+│   │   │   └── run03
+│   │   └── T1-691
+│   │       ├── run01
+│   │       ├── run02
+│   │       └── run03
+│   └── vle
+│       ├── T0-979
+│       │   ├── run01: Create VLE system: vapor-liquid-vapor from checkpoints of liq/run02.
+│       │   ├── run02: Equilibrate VLE system, restart from checkpoint of run01.
+│       │   └── run03: Replicate last checkpoint of run02 to scale-up system size.
+│       ├── T1-508
+│       │   ├── run01
+│       │   ├── run02
+│       │   └── run03
+│       └── T1-691
+│           ├── run01
+│           ├── run02
+│           └── run03
+├── C6H12
+│   ├── liq
+│   │   ├── 330K
+│   │   │   ├── run01: Create liquid phase on fcc grid, remove particles to exactly match saturated density.
+│   │   │   ├── run02: Equilibrate liquid phase. Afterwards, copy checkpoint and remove particles to create saturated vapor phase.
+│   │   │   └── run03: Replicate last checkpoint of run02 to scale-up system size.
+│   │   ├── 415K
+│   │   │   ├── run01
+│   │   │   ├── run02
+│   │   │   └── run03
+│   │   └── 500K
+│   │       ├── run01
+│   │       ├── run02
+│   │       └── run03
+│   └── vle
+│       ├── 330K
+│       │   ├── run01: Create VLE system: vapor-liquid-vapor from checkpoints of liq/run02.
+│       │   ├── run02: Equilibrate VLE system, restart from checkpoint of run01.
+│       │   └── run03: Replicate last checkpoint of run02 to scale-up system size.
+│       ├── 415K
+│       │   ├── run01
+│       │   ├── run02
+│       │   └── run03
+│       └── 500K
+│           ├── run01
+│           ├── run02
+│           └── run03
+└── CO2_Merker
+    ├── liq
+    │   ├── 220K
+│   │   │   ├── run01: Create liquid phase on fcc grid, remove particles to exactly match saturated density.
+│   │   │   ├── run02: Equilibrate liquid phase. Afterwards, copy checkpoint and remove particles to create saturated vapor phase.
+│   │   │   └── run03: Replicate last checkpoint of run02 to scale-up system size.
+    │   ├── 250K
+    │   │   ├── run01
+    │   │   ├── run02
+    │   │   └── run03
+    │   └── 280K
+    │       ├── run01
+    │       ├── run02
+    │       └── run03
+    └── vle
+        ├── 220K
+│       │   ├── run01: Create VLE system: vapor-liquid-vapor from checkpoints of liq/run02.
+│       │   ├── run02: Equilibrate VLE system, restart from checkpoint of run01.
+│       │   └── run03: Replicate last checkpoint of run02 to scale-up system size.
+        ├── 250K
+        │   ├── run01
+        │   ├── run02
+        │   └── run03
+        └── 280K
+            ├── run01
+            ├── run02
+            └── run03
+
+81 directories

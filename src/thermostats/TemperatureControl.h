@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 
 #include "molecules/Molecule.h"
 #include "ThermostatVariables.h"
@@ -18,6 +19,7 @@
 #include "plugins/NEMD/DistControl.h"
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
+#include "utils/CommVar.h"
 
 class DistControl;
 class XMLfileUnits;
@@ -50,6 +52,10 @@ public:
 	LocalControlMethod _localMethod;
 
 	void registerAsObserver();
+	void update(SubjectBase* subject) override;
+
+	// measure added kin. energy
+	void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
 
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
@@ -84,6 +90,11 @@ private:
 	Random _rand;
 
 	bool _bIsObserver;
+
+	struct AddedEkin {
+		uint32_t writeFreq;
+		CommVar<std::vector<double> > data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
+	} _addedEkin;
 };
 
 
@@ -116,6 +127,9 @@ public:
 	// loops over molecule container
 	void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
 	void VelocityScalingPreparation(DomainDecompBase *, ParticleContainer *, unsigned long simstep);
+
+	// measure added kin. energy
+	void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
 
 private:
 	std::vector<ControlRegionT*> _vecControlRegions;
