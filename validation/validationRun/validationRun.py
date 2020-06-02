@@ -296,9 +296,9 @@ def doRun(directory, MardynExe):
 
     if legacyCellProcessor and directory == "new":
         cmd.extend(
-            ['./' + MardynExe, "--legacy-cell-processor", "--final-checkpoint=0", xmlBase, "--steps", numIterations]);
+            ['./' + MardynExe, "--legacy-cell-processor", "--final-checkpoint=0", xmlBase, "--steps", numIterations])
     else:
-        cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations]);
+        cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations])
     # cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]);
     print(cmd)
     print("================")
