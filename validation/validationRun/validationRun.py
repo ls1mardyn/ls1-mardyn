@@ -31,7 +31,6 @@ mpi = '-1'
 newMarDyn = ''
 oldMarDyn = '-1'
 xmlFilename = ''
-inpFilename = ''
 additionalFilenames = []
 comparePlugins = ['ResultWriter', 'GammaWriter', 'RDF']
 disabledPlugins = []
@@ -40,13 +39,12 @@ baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 # shortopts: if they have an argument, then add : after shortcut
-options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:LB:a:AS',
+options, remainder = getopt(argv[1:], 'M:m:n:o:c:p:I:hbr:R:LB:AS',
                             ['mpicmd=',
                              'mpi=',
                              'newMarDyn=',
                              'oldMarDyn=',
                              'xmlFilename=',
-                             'inpFilename=',
                              'plugin=',
                              'numIterations=',
                              'help',
@@ -55,7 +53,6 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:LB:a:AS',
                              'remoteprefix=',
                              'baseIsLocal',
                              'baseRemote=',
-                             'additionalFile=',
                              'allMPI',
                              'legacy-cell-processor',
                              'srunFix',
@@ -76,8 +73,6 @@ for opt, arg in options:
         oldMarDyn = arg
     elif opt in ('-c', '--xmlFilename'):
         xmlFilename = arg
-    elif opt in ('-i', '--inpFilename'):
-        inpFilename = arg
     elif opt in ('-m', '--mpi'):
         mpi = arg
     elif opt in ('-M', '--mpicmd'):
@@ -95,7 +90,8 @@ for opt, arg in options:
         print("Make sure two versions of mardyn produce identical simulation results. Sample usage:")
         print(" multiple -p are possible. Currently ResultWriter, GammaWriter and RDF are supported.")
         print(
-            """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.xml -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """)
+            """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.xml -p GammaWriter -I 10 """)
+        print("All files in the same directory as the xml are automatically copied to the testing directories.")
         print(" -b specifies, that the base (old file) is assumed to be sequential")
         print(" -r specifies the remote host ")
         print(
@@ -112,8 +108,6 @@ for opt, arg in options:
         baseIsLocal = True
     elif opt in ('-B', '--baseRemote'):
         baseRemote = arg
-    elif opt in ('-a', '--additionalFile'):
-        additionalFilenames.append(arg)
     elif opt in ('-A', '--allMPI'):
         allMPI = True
     elif opt in ('', '--legacy-cell-processor'):
@@ -123,6 +117,10 @@ for opt, arg in options:
     else:
         print("unknown option: " + opt)
         exit(1)
+
+if xmlFilename == "":
+    print("xmlFilename is required, specify using -c or --xmlFilename")
+    exit(1)
 
 if baseIsLocal and baseRemote:
     print("defined baseIsLocal and defined a base remote host. this contradicts itself. exiting...")
@@ -159,40 +157,47 @@ if noReferenceRun:
 # JUMP to validationRuns - extract path to validationRuns from argv[0]!
 pathToValidationRuns = ntpath.dirname(os.path.realpath(__file__))
 pathToValidationRuns = os.path.realpath(pathToValidationRuns)
+pathToInput = pathToValidationRuns + '/input'
+pathToNew = pathToValidationRuns + '/new'
+pathToReference = pathToValidationRuns + '/reference'
 
 print(pathToValidationRuns)
 
 # first clean all the folders
-cleanUpCommand = ['rm']
-cleanUpCommand.extend(glob(pathToValidationRuns + '/*.xml'))
-cleanUpCommand.extend(glob(pathToValidationRuns + '/*.cfg'))  # remains for cleanup
-cleanUpCommand.extend(glob(pathToValidationRuns + '/*.inp'))
-cleanUpCommand.extend(glob(pathToValidationRuns + '/new/*'))
+cleanUpCommand = ['rm', "-rf", "--preserve-root"]
+cleanUpCommand.extend([pathToInput])
+cleanUpCommand.extend(glob(pathToNew + '/*'))
 if doReferenceRun:
-    cleanUpCommand.extend(glob(pathToValidationRuns + '/reference/*'))
-cleanUpCommand.extend(glob(pathToValidationRuns + '/MarDyn*'))
+    # this shouldn't be cleared if no reference run is done, as we will reuse previous results.
+    cleanUpCommand.extend(glob(pathToReference + '/*'))
+print(cleanUpCommand)
 p = Popen(cleanUpCommand, stdout=PIPE, stderr=PIPE)
 p.communicate()  # suppresses possible errors if nothing there yet, as we don't want them for rm
 
-# copy all there
-call(['cp', newMarDyn, xmlFilename, inpFilename] + additionalFilenames + [pathToValidationRuns])
+# get the basename and the directory of the xml file.
+originalInpDir = ntpath.dirname(xmlFilename)
+xmlBase = ntpath.basename(xmlFilename)
+
+# copy input
+call(['cp', '-r', originalInpDir, pathToInput])
+
+# copy executables!
+call(['mkdir', '-p', pathToNew])
+call(['cp', newMarDyn, pathToNew])
 if doReferenceRun:
-    call(['cp', oldMarDyn, pathToValidationRuns])
+    call(['mkdir', '-p', pathToReference])
+    call(['cp', oldMarDyn, pathToReference])
 
 # go there
 os.chdir(pathToValidationRuns)
 
-# get the basenames
-xmlBase = ntpath.basename(xmlFilename)
-inpBase = ntpath.basename(inpFilename)
-additionalFileBases = []
-additionalFileBases[:] = [ntpath.basename(fn) for fn in additionalFilenames]
+# gets the file names (after last '/')
 oldMarDynBase = ntpath.basename(oldMarDyn)
 newMarDynBase = ntpath.basename(newMarDyn)
 
 # print "append ComparisonWriter here"
 # print "append ComparisonWriter here"
-with open(xmlBase, "r") as prev_file:
+with open(pathToInput + "/" + xmlBase, "r") as prev_file:
     with open("tmp.xml", "w") as new_file:
         contents = prev_file.readlines()
         # Now contents is a list of strings and you may add the new line to this list at any position
@@ -226,25 +231,16 @@ with open(xmlBase, "r") as prev_file:
                         i += 1
                     # myfile.write("output " + comparePlugin + " 1 val.comparison\n")
         new_file.write("".join(contents))
-call(['mv', 'tmp.xml', xmlBase])
+call(['mv', 'tmp.xml', pathToInput + "/" + xmlBase])
+
+# copy files to new and reference
+
+call(['cp', '-r', pathToInput, pathToNew + "/input"])
+call(['cp', '-r', pathToInput, pathToReference + "/input"])
 
 comparisonFilenames = []
 for comparePostfix in comparePostfixes:
     comparisonFilenames.append('val.comparison' + comparePostfix)
-
-if doReferenceRun:
-    call(['mkdir', '-p', 'reference/'])
-    call(['cp', xmlBase, 'reference/'])
-    call(['cp', inpBase, 'reference/'])
-    if len(additionalFileBases):
-        call(['cp'] + additionalFileBases + ['reference/'])
-    call(['cp', oldMarDynBase, 'reference/'])
-call(['mkdir', '-p', 'new/'])
-call(['cp', xmlBase, 'new/'])
-call(['cp', inpBase, 'new/'])
-if len(additionalFileBases):
-    call(['cp'] + additionalFileBases + ['new/'])
-call(['cp', newMarDynBase, 'new/'])
 
 
 def doRun(directory, MardynExe):
@@ -296,9 +292,10 @@ def doRun(directory, MardynExe):
 
     if legacyCellProcessor and directory == "new":
         cmd.extend(
-            ['./' + MardynExe, "--legacy-cell-processor", "--final-checkpoint=0", xmlBase, "--steps", numIterations])
+            ['./' + MardynExe, "--legacy-cell-processor", "--final-checkpoint=0", "input/" + xmlBase, "--steps",
+             numIterations])
     else:
-        cmd.extend(['./' + MardynExe, "--final-checkpoint=0", xmlBase, "--steps", numIterations])
+        cmd.extend(['./' + MardynExe, "--final-checkpoint=0", "input/" + xmlBase, "--steps", numIterations])
     # cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", xmlBase, numIterations]);
     print(cmd)
     print("================")
