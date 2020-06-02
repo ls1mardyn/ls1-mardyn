@@ -1,0 +1,6 @@
+new/
+reference/
+*.pyc
+*.inp
+*.xml
+MarDyn
