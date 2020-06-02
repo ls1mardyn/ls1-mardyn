@@ -13,7 +13,7 @@
     </integrator>
 
     <run>
-      <currenttime>612.4</currenttime>
+      <currenttime>0.</currenttime>
       <production>
         <steps>20000</steps>
       </production>
