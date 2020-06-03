@@ -10,7 +10,7 @@ class CavityEnsemble;
 /**@brief IO-plugin: Used to create instances of CavityEnsemble
  * and output the corresponding files containing the detected Cavity coordinates.
  */
-class CavityWriter : public PluginBase {
+class CavityWriter final : public PluginBase {
 public:
     /** @brief Initialisation of all necessary field is done in readXML and init.*/
     CavityWriter() = default;

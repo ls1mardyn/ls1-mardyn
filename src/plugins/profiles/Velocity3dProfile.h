@@ -15,7 +15,7 @@ class DensityProfile;
 /**
  * @brief Outputs the XYZ velocity components per bin specified by Sampling grid in KartesianProfile.
  */
-class Velocity3dProfile : public ProfileBase {
+class Velocity3dProfile final : public ProfileBase {
 public:
 	Velocity3dProfile(DensityProfile * densProf) :
 			_densityProfile(densProf), _local3dProfile(), _global3dProfile() {
