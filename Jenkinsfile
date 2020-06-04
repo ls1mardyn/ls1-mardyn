@@ -409,7 +409,7 @@ pipeline {
                                               -n ./${it.join('-')} \
                                               $legacyCellProcessorOption \
                                               $allmpi \
-                                              -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name *.xml) )\" \
+                                              -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name config.xml) )\" \
                                               $plugins $icount $sameParTypeOption $mpicmd $mpiextra
                                           """
                                         }
