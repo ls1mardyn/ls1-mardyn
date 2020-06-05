@@ -13,23 +13,20 @@
 #include "autopas/utils/StringUtils.h"
 #include "parallel/DomainDecompBase.h"
 
-AutoPasContainer::AutoPasContainer(double cutoff)
-	: _cutoff(cutoff),
-	  _particlePropertiesLibrary(cutoff) {
-
-      // use autopas defaults. This block is important when we do not read from an XML like in the unit tests
-      _verletSkin = _autopasContainer.getVerletSkin();
-      _verletRebuildFrequency = _autopasContainer.getVerletRebuildFrequency();
-      _tuningFrequency = _autopasContainer.getTuningInterval();
-      _tuningSamples = _autopasContainer.getNumSamples();
-      _maxEvidence = _autopasContainer.getMaxEvidence();
-      _traversalChoices = _autopasContainer.getAllowedTraversals();
-      _containerChoices = _autopasContainer.getAllowedContainers();
-      _selectorStrategy = _autopasContainer.getSelectorStrategy();
-      _tuningStrategyOption = _autopasContainer.getTuningStrategyOption();
-      _tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
-      _dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
-      _newton3Choices=_autopasContainer.getAllowedNewton3Options();
+AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePropertiesLibrary(cutoff) {
+	// use autopas defaults. This block is important when we do not read from an XML like in the unit tests
+	_verletSkin = _autopasContainer.getVerletSkin();
+	_verletRebuildFrequency = _autopasContainer.getVerletRebuildFrequency();
+	_tuningFrequency = _autopasContainer.getTuningInterval();
+	_tuningSamples = _autopasContainer.getNumSamples();
+	_maxEvidence = _autopasContainer.getMaxEvidence();
+	_traversalChoices = _autopasContainer.getAllowedTraversals();
+	_containerChoices = _autopasContainer.getAllowedContainers();
+	_selectorStrategy = _autopasContainer.getSelectorStrategy();
+	_tuningStrategyOption = _autopasContainer.getTuningStrategyOption();
+	_tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
+	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
+	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
 
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
@@ -60,11 +57,12 @@ AutoPasContainer::AutoPasContainer(double cutoff)
  * @return
  */
 template <class OptionType>
-auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString, const std::set<OptionType> &defaultValue) {
-    auto stringInXml = string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString));
-    if(stringInXml.empty()) {
-      return defaultValue;
-    }
+auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
+						const std::set<OptionType> &defaultValue) {
+	auto stringInXml = string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString));
+	if (stringInXml.empty()) {
+		return defaultValue;
+	}
 	try {
 		return OptionType::parseOptions(stringInXml);
 	} catch (const std::exception &e) {
@@ -83,36 +81,32 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	// if any option is not specified in the XML use the autopas defaults
 	// get option values from xml
-	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig,
-	                                                                 "allowedTraversals",
-	                                                                 _autopasContainer.getAllowedTraversals());
-	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig,
-	                                                                 "allowedContainers",
-	                                                                 _autopasContainer.getAllowedContainers());
+	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals", _traversalChoices);
+	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig, "allowedContainers", _containerChoices);
 	_selectorStrategy =
-	    *parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy",
-	                                                         {_autopasContainer.getSelectorStrategy()}).begin();
+		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", {_selectorStrategy})
+			 .begin();
 	_tuningStrategyOption =
-	    *parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig,
-	                                                       "tuningStrategy",
-	                                                       {_autopasContainer.getTuningStrategyOption()}).begin();
-	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig,
-	                                                                   "dataLayouts",
-	                                                                   _autopasContainer.getAllowedDataLayouts());
-	_newton3Choices =
-	    parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _autopasContainer.getAllowedNewton3Options());
+		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", {_tuningStrategyOption})
+			 .begin();
+	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", _dataLayoutChoices);
+	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _newton3Choices);
 	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
-      xmlconfig, "tuningAcquisitionFunction",
-      {_autopasContainer.getAcquisitionFunction()})
-      .begin();
+									  xmlconfig, "tuningAcquisitionFunction", {_tuningAcquisitionFunction})
+									  .begin();
 	// get numeric options from xml
-	_maxEvidence = static_cast<unsigned int>(xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_autopasContainer.getMaxEvidence())));
-	_tuningSamples = static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_autopasContainer.getNumSamples())));
-	_tuningFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_autopasContainer.getTuningInterval())));
-	_verletRebuildFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int("rebuildFrequency", static_cast<int>(_autopasContainer.getVerletRebuildFrequency())));
-	_verletSkin = static_cast<unsigned int>(xmlconfig.getNodeValue_double("skin", static_cast<int>(_autopasContainer.getVerletSkin())));
+	_maxEvidence = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
+	_tuningSamples = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_tuningSamples)));
+	_tuningFrequency = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_tuningFrequency)));
+	_verletRebuildFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int(
+		"rebuildFrequency", static_cast<int>(_verletRebuildFrequency)));
+	_verletSkin = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_double("skin", static_cast<int>(_verletSkin)));
 
-	//generate string representation of parameters with multiple options
+	// generate string representation of parameters with multiple options
 	std::stringstream dataLayoutChoicesStream;
 	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
 			 [&](auto &choice) { dataLayoutChoicesStream << choice.to_string() << " "; });
