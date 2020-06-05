@@ -16,6 +16,21 @@
 AutoPasContainer::AutoPasContainer(double cutoff)
 	: _cutoff(cutoff),
 	  _particlePropertiesLibrary(cutoff) {
+
+      // use autopas defaults. This block is important when we do not read from an XML like in the unit tests
+      _verletSkin = _autopasContainer.getVerletSkin();
+      _verletRebuildFrequency = _autopasContainer.getVerletRebuildFrequency();
+      _tuningFrequency = _autopasContainer.getTuningInterval();
+      _tuningSamples = _autopasContainer.getNumSamples();
+      _maxEvidence = _autopasContainer.getMaxEvidence();
+      _traversalChoices = _autopasContainer.getAllowedTraversals();
+      _containerChoices = _autopasContainer.getAllowedContainers();
+      _selectorStrategy = _autopasContainer.getSelectorStrategy();
+      _tuningStrategyOption = _autopasContainer.getTuningStrategyOption();
+      _tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
+      _dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
+      _newton3Choices=_autopasContainer.getAllowedNewton3Options();
+
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
 
