@@ -114,6 +114,7 @@ private:
 	double _cutoff{0.};
 	double _verletSkin;
 	unsigned int _verletRebuildFrequency;
+	unsigned int _verletClusterSize;
 	unsigned int _tuningFrequency;
 	unsigned int _tuningSamples;
 	unsigned int _maxEvidence;

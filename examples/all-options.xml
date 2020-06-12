@@ -224,16 +224,24 @@
         <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
         <selectorStrategy>fastestAbsolute</selectorStrategy>
+        <!-- set the auto tuning algorithm -->
+        <tuningStrategy>fullSearch</tuningStrategy>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
         <newton3>enabled</newton3>
+        <!-- Only for Bayesian tuning strategies: sets the function that predicts knowledge gain from samples -->
+        <tuningAcquisitionFunction>upper-confidence-bound</tuningAcquisitionFunction>
         <!-- How many iterations before retuning -->
         <tuningInterval>1000</tuningInterval>
         <!-- How many samples should the tuner take for each tested combination (=1 Evidence) -->
         <tuningSamples>5</tuningSamples>
         <!-- How many evidences a tuning strategy should sample (not used by all strategies, i.e. fullSearch) -->
         <maxEvidence>20</maxEvidence>
+        <!-- Number of iterations after which autopas rebuilds it's containers -->
+        <rebuildFrequency>6</rebuildFrequency>
+        <!-- Verlet skin as absolute length added to the cutoff -->
+        <skin>0.2</skin>
       </datastructure>
 
       <!-- cutoff definitions -->

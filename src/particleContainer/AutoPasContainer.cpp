@@ -95,6 +95,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 									  xmlconfig, "tuningAcquisitionFunction", {_tuningAcquisitionFunction})
 									  .begin();
 	// get numeric options from xml
+	//int
 	_maxEvidence = static_cast<unsigned int>(
 		xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
 	_tuningSamples = static_cast<unsigned int>(
@@ -103,46 +104,43 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 		xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_tuningFrequency)));
 	_verletRebuildFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int(
 		"rebuildFrequency", static_cast<int>(_verletRebuildFrequency)));
+	_verletClusterSize = static_cast<unsigned int>(xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
+
+	// double
 	_verletSkin = static_cast<unsigned int>(
 		xmlconfig.getNodeValue_double("skin", static_cast<int>(_verletSkin)));
 
-	// generate string representation of parameters with multiple options
-	std::stringstream dataLayoutChoicesStream;
-	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
-			 [&](auto &choice) { dataLayoutChoicesStream << choice.to_string() << " "; });
-	std::stringstream containerChoicesStream;
-	for_each(_containerChoices.begin(), _containerChoices.end(),
-			 [&](auto &choice) { containerChoicesStream << choice.to_string() << " "; });
-	std::stringstream traversalChoicesStream;
-	for_each(_traversalChoices.begin(), _traversalChoices.end(),
-			 [&](auto &choice) { traversalChoicesStream << choice.to_string() << " "; });
-	std::stringstream newton3ChoicesStream;
-	for_each(_newton3Choices.begin(), _newton3Choices.end(),
-			 [&](auto &choice) { newton3ChoicesStream << choice.to_string() << " "; });
-
 	// print full configuration to the command line
-	int valueOffset = 20;
+	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << endl
 					   << setw(valueOffset) << left << "Data Layout "
-					   << ": " << dataLayoutChoicesStream.str() << endl
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
 					   << setw(valueOffset) << left << "Container "
-					   << ": " << containerChoicesStream.str() << endl
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
+					   << setw(valueOffset) << left << "Cell size Factor "
+					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
 					   << setw(valueOffset) << left << "Traversals "
-					   << ": " << traversalChoicesStream.str() << endl
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
 					   << setw(valueOffset) << left << "Newton3"
-					   << ": " << newton3ChoicesStream.str() << endl
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
 					   << setw(valueOffset) << left << "Tuning strategy "
-					   << ": " << _tuningStrategyOption.to_string() << endl
+					   << ": " << _autopasContainer.getTuningStrategyOption() << endl
 					   << setw(valueOffset) << left << "Selector strategy "
-					   << ": " << _selectorStrategy.to_string() << endl
+					   << ": " << _autopasContainer.getSelectorStrategy() << endl
 					   << setw(valueOffset) << left << "Tuning frequency"
-					   << ": " << _tuningFrequency << endl
+					   << ": " << _autopasContainer.getTuningInterval() << endl
 					   << setw(valueOffset) << left << "Number of samples "
-					   << ": " << _tuningSamples << endl
+					   << ": " << _autopasContainer.getNumSamples() << endl
 					   << setw(valueOffset) << left << "Tuning Acquisition Function"
-					   << ": " << _tuningAcquisitionFunction.to_string() << endl
+					   << ": " << _autopasContainer.getAcquisitionFunction() << endl
 					   << setw(valueOffset) << left << "Number of evidence "
-					   << ": " << _maxEvidence << endl;
+					   << ": " << _autopasContainer.getMaxEvidence() << endl
+					   << setw(valueOffset) << left << "Verlet Cluster size "
+					   << ": " << _autopasContainer.getVerletClusterSize() << endl
+					   << setw(valueOffset) << left << "Rebuild frequency "
+					   << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
+					   << setw(valueOffset) << left << "Verlet Skin "
+					   << ": " << _autopasContainer.getVerletSkin() << endl;
 
 	xmlconfig.changecurrentnode(oldPath);
 }
