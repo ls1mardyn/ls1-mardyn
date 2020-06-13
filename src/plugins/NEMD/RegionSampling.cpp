@@ -196,6 +196,14 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 
 		if("profiles" == strSamplingModuleType)
 		{
+			// pretend single component
+			bool bVal = false;
+			xmlconfig.getNodeValue("@single_component", bVal);
+			_boolSingleComp = bVal;
+			if(_boolSingleComp) {
+				_numComponents=2;
+				global_log->info() << "Pretend single component sampling: _numComponents=" << _numComponents << endl;
+			}
 			// enable profile sampling
 			_SamplingEnabledProfiles = true;
 			// control
@@ -972,6 +980,9 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 		return;
 
 	unsigned int cid = molecule->componentid() + 1;  // id starts internally with 0
+	if(_boolSingleComp){
+		cid = 1;
+	}
 	unsigned int nRotDOF = molecule->component()->getRotationalDegreesOfFreedom();
 	double d2EkinTrans = molecule->U_trans_2();
 	double d2EkinRot   = molecule->U_rot_2();
