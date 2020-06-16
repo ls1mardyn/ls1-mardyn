@@ -78,6 +78,15 @@ public:
 	void init(ParticleContainer *particleContainer,
 			  DomainDecompBase *domainDecomp, Domain *domain) override;
 
+    /** @brief Method siteWiseForces will be called before forcefields have been applied
+     *  alterations to sitewise forces and fullMolecule forces can be made here
+     */
+
+    void siteWiseForces(
+            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+            unsigned long simstep
+    ) override;
+
 	/** @brief Method afterForces will be called after forcefields have been applied
 	 *
 	 * make pure Virtual ?

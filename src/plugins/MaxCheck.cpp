@@ -90,6 +90,16 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 }
 
+void MaxCheck::siteWiseForces(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep)
+{
+	if (simstep < _control.start || simstep > _control.stop
+			|| simstep % _control.freq != 0)
+		return;
+	this->checkMaxVals(particleContainer, domainDecomp, simstep);
+}
+
 void MaxCheck::afterForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep < _control.start || simstep > _control.stop
