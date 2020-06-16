@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<spheres>
+
+    <!-- C6H12_dfg -->
+    <site id="1">
+        <radius>1.7485</radius>
+        <color>
+            <r>240</r>
+            <g>110</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+    <site id="2">
+        <radius>1.7485</radius>
+        <color>
+            <r>240</r>
+            <g>110</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+    <site id="3">
+        <radius>1.7485</radius>
+        <color>
+            <r>240</r>
+            <g>110</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+    <site id="4">
+        <radius>1.7485</radius>
+        <color>
+            <r>240</r>
+            <g>110</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+    <site id="5">
+        <radius>1.7485</radius>
+        <color>
+            <r>240</r>
+            <g>110</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+    <site id="6">
+        <radius>1.7485</radius>
+        <color>
+            <r>240</r>
+            <g>110</g>
+            <b>0</b>
+            <alpha>255</alpha>
+        </color>
+    </site>
+
+</spheres>
+

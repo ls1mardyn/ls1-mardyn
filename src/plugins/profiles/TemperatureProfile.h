@@ -14,12 +14,12 @@ class KineticProfile;
 /**
  * @brief Outputs the temperature of molecules per bin specified by Sampling grid in KartesianProfile.
  */
-class TemperatureProfile : public ProfileBase {
+class TemperatureProfile final : public ProfileBase {
 public:
 	TemperatureProfile(DOFProfile * dofProf, KineticProfile * kinProf) :
 			_dofProfile(dofProf), _kineticProfile(kinProf), _localProfile(), _globalProfile() {
 	}
-    ~TemperatureProfile() final {};
+    ~TemperatureProfile() final = default;
     void record(Molecule &mol, unsigned long uID) final  {
         _localProfile[uID] += 1;
     }

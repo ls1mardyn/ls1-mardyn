@@ -24,11 +24,6 @@ TimerProfiler::TimerProfiler(): _numElapsedIterations(0), _displayMode(Displaymo
 	readInitialTimersFromFile("");
 }
 
-TimerProfiler::~TimerProfiler() {
-	_clearTimers();
-	mardyn_assert(_timers.size() == 0);
-}
-
 void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
 	std::string displayMode;
 	if(xmlconfig.getNodeValue("displaymode", displayMode)) {
@@ -51,7 +46,7 @@ void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
 Timer* TimerProfiler::getTimer(string timerName){
 	auto timerProfiler = _timers.find(timerName);
 	if(timerProfiler != _timers.end()) {
-		return (timerProfiler->second)._timer;
+		return (timerProfiler->second)._timer.get();
 	}
 	return nullptr;
 }
@@ -278,20 +273,4 @@ void TimerProfiler::_debugMessage(string timerName){
 	else{
 		global_log->debug()<<"Timer "<<timerName<<" is not registered."<< endl;
 	}
-}
-
-void TimerProfiler::_clearTimers(string timerName){
-	//if the timer is not in the container it must have already been deleted -> return
-	if (!_timers.count(timerName)){
-		return;
-	}
-	for(auto childTimerName : _timers[timerName]._childTimerNames) {
-		_clearTimers(childTimerName);
-	}
-	if (_checkTimer(timerName, false)) {
-		delete _timers[timerName]._timer;
-	}
-	_timers[timerName]._childTimerNames.clear();
-	_timers[timerName]._parentTimerNames.clear();
-	_timers.erase(timerName);
 }

@@ -7,20 +7,20 @@
   </refunits>
   <simulation type="MD">
     <integrator type="Leapfrog">
-      <timestep unit="reduced">0.0005</timestep>
+      <timestep unit="reduced">0.0000000000001</timestep>
     </integrator>
     <run>
       <currenttime>0</currenttime>
       <production>
-        <steps>100</steps>
+        <steps>10</steps>
       </production>
     </run>
     <ensemble type="NVT">
       <temperature unit="reduced">0.86232</temperature>
       <domain type="box">
-        <lx>72.7626</lx>
-        <ly>62.9432</ly>
-        <lz>72.7626</lz>
+        <lx>50.0</lx>
+        <ly>50.0</ly>
+        <lz>50.0</lz>
       </domain>
       <components>
         <moleculetype id="1" name="Test">
@@ -39,7 +39,11 @@
         </moleculetype>
       </components>
       <phasespacepoint>
-        <file type="ASCII">Ads_LJ1043.inp</file>
+          <generator name="CubicGridGenerator">
+              <specification>density</specification>
+              <density>0.1</density>
+              <binaryMixture>false</binaryMixture>
+          </generator>
       </phasespacepoint>
     </ensemble>
     
@@ -69,9 +73,9 @@
                 <lcx>0.0</lcx>
                 <lcy>0.0</lcy>
                 <lcz>0.0</lcz>
-                <ucx>72.7626</ucx>
-                <ucy>62.9432</ucy>
-                <ucz>72.7626</ucz>
+                <ucx>50.0</ucx>
+                <ucy>50.0</ucy>
+                <ucz>50.0</ucz>
               </coords>
               <target>
                 <temperature>293.44</temperature>
@@ -91,7 +95,7 @@
 
       <outputplugin name="VTKMoleculeWriter">
         <outputprefix>vtkOutput</outputprefix>
-        <writefrequency>100</writefrequency>
+        <writefrequency>10</writefrequency>
       </outputplugin>
     </output>
 
@@ -111,27 +115,28 @@
       </component>
     </plugin>
 
-    <!-- MIRROR -->
+    <!-- MIRROR plugin disabled as new version seems to need DistControl as well
 
      <plugin name="Mirror">
       <yPos>55</yPos>
       <forceConstant>10</forceConstant>
       <direction>0</direction>
     </plugin>
-
+    -->
     <!-- SPATIAL PROFILE OUTPUT -->
 
      <plugin name="SpatialProfile">
       <mode>cartesian</mode>
       <x>1</x>
-      <y>20</y>
-      <z>20</z>
-      <writefrequency>100</writefrequency>
+      <y>5</y>
+      <z>5</z>
+      <writefrequency>10</writefrequency>
       <timesteps>
         <init>1</init>
         <recording>1</recording>
       </timesteps>
       <outputprefix>cartesian</outputprefix>
+      <profiledComponent>all</profiledComponent>
       <profiles>
         <density>1</density>
         <temperature>1</temperature>
@@ -140,5 +145,26 @@
         <virial>1</virial>
       </profiles>
     </plugin>
+
+      <plugin name="SpatialProfile">
+          <mode>cylinder</mode>
+          <r>5</r>
+          <h>5</h>
+          <phi>1</phi>
+          <writefrequency>10</writefrequency>
+          <timesteps>
+              <init>1</init>
+              <recording>1</recording>
+          </timesteps>
+          <outputprefix>cylinder</outputprefix>
+          <profiledComponent>all</profiledComponent>
+          <profiles>
+              <density>1</density>
+              <temperature>1</temperature>
+              <velocity>1</velocity>
+              <velocity3d>1</velocity3d>
+              <virial>1</virial>
+          </profiles>
+      </plugin>
    </simulation>
 </mardyn>

@@ -365,7 +365,8 @@ pipeline {
                                 "surface-tension_LRC_CO2_Merker_280",
                                 "simple-lj_kdd",
                                 "simple-lj-direct-mp",
-                                "simple-lj-direct"
+                                "simple-lj-direct",
+                                "LRC_planar_2020"
                               ]
                               def legacyCellProcessorOptions = ((VECTORIZE_CODE == "NOVEC") && (REDUCED_MEMORY_MODE == "0") ? [false, true] : [false])
                               for (legacyCellProcessor in legacyCellProcessorOptions) {
@@ -408,8 +409,7 @@ pipeline {
                                               -n ./${it.join('-')} \
                                               $legacyCellProcessorOption \
                                               $allmpi \
-                                              -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name *.xml) )\" \
-                                              -i \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f \\( -iname \\*.dat -o -iname \\*.inp -o -iname \\*.xdr \\)) )\" \
+                                              -c \"\$(realpath ../../validationInput/$configDirVar/config.xml)\" \
                                               $plugins $icount $sameParTypeOption $mpicmd $mpiextra
                                           """
                                         }

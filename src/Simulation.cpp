@@ -787,6 +787,12 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
+	if (_longRangeCorrection == nullptr) {
+		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, this);
+	}
+	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
+	_longRangeCorrection->calculateLongRange();
+
 	// Update forces in molecules so they can be exchanged - future
 	updateForces();
 
@@ -839,11 +845,6 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 #endif
 
-	if (_longRangeCorrection == nullptr){
-		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
-	}
-
-	_longRangeCorrection->calculateLongRange();
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
@@ -993,6 +994,9 @@ void Simulation::simulate() {
 				plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
 			}
 
+			// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
+			_longRangeCorrection->calculateLongRange();
+
 			// Update forces in molecules so they can be exchanged
 			updateForces();
 
@@ -1032,9 +1036,10 @@ void Simulation::simulate() {
 		_moleculeContainer->deleteOuterParticles();
 #endif
 
-		if (!(_simstep % _collectThermostatDirectedVelocity))
+		if (!(_simstep % _collectThermostatDirectedVelocity)) {
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-		_longRangeCorrection->calculateLongRange();
+		}
+
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 
 		_ensemble->beforeThermostat(_simstep, _initStatistics);
@@ -1201,6 +1206,8 @@ void Simulation::finalize() {
 		delete _domainDecomposition;
 		_domainDecomposition = nullptr;
 	}
+
+	_plugins.remove_if([](PluginBase * plugin) { delete plugin; return true; });
 	global_simulation = nullptr;
 }
 

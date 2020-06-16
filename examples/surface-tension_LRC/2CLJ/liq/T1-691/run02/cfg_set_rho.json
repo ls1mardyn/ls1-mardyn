@@ -1,0 +1,6 @@
+{
+"inp_fpath" : "/media/mheinen/data_ext4/sims/lrc/2CLJ/liq/T1-691/run02/cp_binary-1.restart.dat",
+"out_fpath" : "/media/mheinen/data_ext4/sims/lrc/2CLJ/liq/T1-691/run02/cp_binary-1.restart.rho_vap.dat",
+"num_particles_old" : 1969,
+"num_particles_new" : 349
+}

@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+
+	<simulation type="MD" >
+		<options> <option name="refreshIDs">1</option> </options>
+		
+		<integrator type="Leapfrog" >
+			<timestep unit="reduced" >0.00182367</timestep>
+		</integrator>
+
+		<run>
+			<currenttime>0</currenttime> 
+			<production>
+				<steps>0</steps>
+			</production>
+		</run>
+
+		<ensemble type="NVT">
+			<!-- Nparticles determined by the input file -->
+			<temperature unit="reduced" >280</temperature>
+			<domain type="box">
+				<lx>60</lx>
+				<ly>60</ly>
+				<lz>60</lz>
+			</domain>
+
+			<components>
+				<include query="/components/moleculetype" >../../../components_co2_merker.xml</include>
+			</components>
+
+			<phasespacepoint>
+				<generator name="MultiObjectGenerator">
+					<objectgenerator>
+						<filler type="GridFiller">
+							<lattice system="cubic" centering="face">
+								<vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+								<vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+								<vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+							</lattice>
+							<basis>
+								<site>
+									<componentid>0</componentid>
+									<coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+								</site>
+							</basis>
+							<latticeOccupancy>1</latticeOccupancy>
+							<!-- <density>0.0121303</density> exact target -->
+							<density>0.0122</density>
+						</filler>
+						<object type="Cuboid">
+							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+							<upper> <x>60</x> <y>60</y> <z>60</z> </upper>
+						</object>
+	<!--                <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>-->
+						<velocityAssigner type="EqualVelocityDistribution"></velocityAssigner>
+					</objectgenerator>
+				</generator>
+			</phasespacepoint>
+		</ensemble>
+
+		<algorithm>
+			<parallelisation type="DomainDecomposition">
+				 <!-- structure handled by DomainDecompMPIBase
+				<MPIGridDims> <x>4</x> <y>2</y> <z>5</z> </MPIGridDims> -->
+			</parallelisation>
+<!--
+			<parallelisation type="KDDecomposition">
+				<CommunicationScheme>direct</CommunicationScheme>
+				<updateFrequency>100000</updateFrequency>
+				<fullSearchThreshold>3</fullSearchThreshold>
+				<splitBiggestDimension>0</splitBiggestDimension>
+				<useVectorizationTuner>0</useVectorizationTuner>
+				<generateNewFiles>0</generateNewFiles>
+				<useExistingFiles>0</useExistingFiles>
+			</parallelisation>
+-->
+			<datastructure type="LinkedCells">
+				<cellsInCutoffRadius>1</cellsInCutoffRadius>
+			</datastructure>
+			<cutoffs type="CenterOfMass" >
+			<defaultCutoff unit="reduced" >11.902</defaultCutoff> <!-- \sigma=2.9755 => 3*\sigma=8.9265, 4*\sigma=11.902 -->
+				<radiusLJ unit="reduced" >11.902</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField" >
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+		</algorithm>
+
+		<output>
+			<outputplugin name="CheckpointWriter">
+				<type>binary</type>
+				<writefrequency>50000</writefrequency>
+				<outputprefix>cp_binary</outputprefix>
+			</outputplugin>
+			
+			<outputplugin name="MmpldWriter" type="multi">
+				<include query="/spheres" >../../../sphereparams_co2_merker.xml</include>
+				<writecontrol>
+					<start>0</start>
+					<writefrequency>50000</writefrequency>
+					<stop>50000</stop>
+					<framesperfile>0</framesperfile>
+				</writecontrol>
+				<outputprefix>megamol</outputprefix>  
+			</outputplugin>
+		</output>
+
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>5000</stop>
+			</control>
+			<yrange> <min>0.0</min> <max>60.0</max> </yrange>
+			<targets>
+				<target cid="1" method="1">
+					<Fmax>10000</Fmax>
+					<vmax>10.0</vmax>
+				</target>
+			</targets>
+		</plugin>
+
+	</simulation>
+</mardyn>
