@@ -39,6 +39,8 @@
         <newton3>enabled</newton3>
         <tuningInterval>1000</tuningInterval>
         <tuningSamples>3</tuningSamples>
+        <rebuildFrequency>10</rebuildFrequency>
+        <skin>0.4</skin>
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">33.0702</radiusLJ>

@@ -13,16 +13,22 @@
 #include "autopas/utils/StringUtils.h"
 #include "parallel/DomainDecompBase.h"
 
-AutoPasContainer::AutoPasContainer(double cutoff)
-	: _cutoff(cutoff),
-	  _traversalChoices(autopas::TraversalOption::getAllOptions()),
-	  _containerChoices(autopas::ContainerOption::getAllOptions()),
-	  _selectorStrategy(autopas::SelectorStrategyOption::fastestMedian),
-	  _tuningStrategyOption(autopas::TuningStrategyOption::fullSearch),
-	  _tuningAcquisitionFunction(autopas::AcquisitionFunctionOption::upperConfidenceBound),
-	  _dataLayoutChoices{autopas::DataLayoutOption::soa},
-	  _newton3Choices{autopas::Newton3Option::enabled},
-	  _particlePropertiesLibrary(cutoff) {
+AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePropertiesLibrary(cutoff) {
+	// use autopas defaults. This block is important when we do not read from an XML like in the unit tests
+	_verletSkin = _autopasContainer.getVerletSkin();
+	_verletRebuildFrequency = _autopasContainer.getVerletRebuildFrequency();
+	_tuningFrequency = _autopasContainer.getTuningInterval();
+	_tuningSamples = _autopasContainer.getNumSamples();
+	_maxEvidence = _autopasContainer.getMaxEvidence();
+	_traversalChoices = _autopasContainer.getAllowedTraversals();
+	_containerChoices = _autopasContainer.getAllowedContainers();
+	_selectorStrategy = _autopasContainer.getSelectorStrategy();
+	_tuningStrategyOption = _autopasContainer.getTuningStrategyOption();
+	_tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
+	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
+	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
+	_verletClusterSize = _autopasContainer.getVerletClusterSize();
+
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
 
@@ -42,14 +48,24 @@ AutoPasContainer::AutoPasContainer(double cutoff)
 }
 
 /**
- * Safe method to handle autopas options.
+ * Safe method to parse autopas options from the xml.
  * It checks for exceptions, prints the exceptions and all possible options.
+ * If the option does not exist in the xml the given default is returned
+ * @tparam OptionType Type of the option to parse
+ * @param xmlconfig
+ * @param xmlString XML whose content we like to parse.
+ * @param defaultValue Set of options that is returned if nothing was found in the xml
+ * @return
  */
-template <typename OptionType>
-auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString, const std::string &defaultValue) {
+template <class OptionType>
+auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
+						const std::set<OptionType> &defaultValue) {
+	auto stringInXml = string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString));
+	if (stringInXml.empty()) {
+		return defaultValue;
+	}
 	try {
-		return OptionType::parseOptions(
-			string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString, defaultValue)));
+		return OptionType::parseOptions(stringInXml);
 	} catch (const std::exception &e) {
 		global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
 		global_log->error() << e.what() << std::endl;
@@ -64,68 +80,36 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString, c
 void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	string oldPath(xmlconfig.getcurrentnodepath());
 
-	// set default values here!
-
-	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals", "c08");
-
-	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig, "allowedContainers", "linked-cell");
-
+	// if any option is not specified in the XML use the autopas defaults
+	// get option values from xml
+	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals", _traversalChoices);
+	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig, "allowedContainers", _containerChoices);
 	_selectorStrategy =
-		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", "median").begin();
-
+		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", {_selectorStrategy})
+			 .begin();
 	_tuningStrategyOption =
-		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", "fullSearch").begin();
-
-	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", "soa");
-
-	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", "enabled");
-
+		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", {_tuningStrategyOption})
+			 .begin();
+	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", _dataLayoutChoices);
+	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _newton3Choices);
 	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
-									  xmlconfig, "tuningAcquisitionFunction", "lower-confidence-bound")
+									  xmlconfig, "tuningAcquisitionFunction", {_tuningAcquisitionFunction})
 									  .begin();
+	// get numeric options from xml
+	//int
+	_maxEvidence = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
+	_tuningSamples = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_tuningSamples)));
+	_tuningFrequency = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_tuningFrequency)));
+	_verletRebuildFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int(
+		"rebuildFrequency", static_cast<int>(_verletRebuildFrequency)));
+	_verletClusterSize = static_cast<unsigned int>(xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
 
-	_maxEvidence = (unsigned int)xmlconfig.getNodeValue_int("maxEvidence", 20);
-	_tuningSamples = (unsigned int)xmlconfig.getNodeValue_int("tuningSamples", 3);
-	_tuningFrequency = (unsigned int)xmlconfig.getNodeValue_int("tuningInterval", 500);
-
-	xmlconfig.getNodeValue("rebuildFrequency", _verletRebuildFrequency);
-	xmlconfig.getNodeValue("skin", _verletSkin);
-
-	std::stringstream dataLayoutChoicesStream;
-	for_each(_dataLayoutChoices.begin(), _dataLayoutChoices.end(),
-			 [&](auto &choice) { dataLayoutChoicesStream << choice.to_string() << " "; });
-	std::stringstream containerChoicesStream;
-	for_each(_containerChoices.begin(), _containerChoices.end(),
-			 [&](auto &choice) { containerChoicesStream << choice.to_string() << " "; });
-	std::stringstream traversalChoicesStream;
-	for_each(_traversalChoices.begin(), _traversalChoices.end(),
-			 [&](auto &choice) { traversalChoicesStream << choice.to_string() << " "; });
-	std::stringstream newton3ChoicesStream;
-	for_each(_newton3Choices.begin(), _newton3Choices.end(),
-			 [&](auto &choice) { newton3ChoicesStream << choice.to_string() << " "; });
-
-	int valueOffset = 20;
-	global_log->info() << "AutoPas configuration:" << endl
-					   << setw(valueOffset) << left << "Data Layout "
-					   << ": " << dataLayoutChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Container "
-					   << ": " << containerChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Traversals "
-					   << ": " << traversalChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Newton3"
-					   << ": " << newton3ChoicesStream.str() << endl
-					   << setw(valueOffset) << left << "Tuning strategy "
-					   << ": " << _tuningStrategyOption.to_string() << endl
-					   << setw(valueOffset) << left << "Selector strategy "
-					   << ": " << _selectorStrategy.to_string() << endl
-					   << setw(valueOffset) << left << "Tuning frequency"
-					   << ": " << _tuningFrequency << endl
-					   << setw(valueOffset) << left << "Number of samples "
-					   << ": " << _tuningSamples << endl
-					   << setw(valueOffset) << left << "Tuning Acquisition Function"
-					   << ": " << _tuningAcquisitionFunction.to_string() << endl
-					   << setw(valueOffset) << left << "Number of evidence "
-					   << ": " << _maxEvidence << endl;
+	// double
+	_verletSkin = static_cast<double>(
+		xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
 
 	xmlconfig.changecurrentnode(oldPath);
 }
@@ -140,6 +124,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setCutoff(_cutoff);
 	_autopasContainer.setVerletSkin(_verletSkin);
 	_autopasContainer.setVerletRebuildFrequency(_verletRebuildFrequency);
+	_autopasContainer.setVerletClusterSize(_verletClusterSize);
 	_autopasContainer.setTuningInterval(_tuningFrequency);
 	_autopasContainer.setNumSamples(_tuningSamples);
 	_autopasContainer.setSelectorStrategy(_selectorStrategy);
@@ -152,6 +137,38 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
+
+  // print full configuration to the command line
+  int valueOffset = 28;
+  global_log->info() << "AutoPas configuration:" << endl
+                     << setw(valueOffset) << left << "Data Layout "
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
+                     << setw(valueOffset) << left << "Container "
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
+                     << setw(valueOffset) << left << "Cell size Factor "
+                     << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
+                     << setw(valueOffset) << left << "Traversals "
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
+                     << setw(valueOffset) << left << "Newton3"
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
+                     << setw(valueOffset) << left << "Tuning strategy "
+                     << ": " << _autopasContainer.getTuningStrategyOption() << endl
+                     << setw(valueOffset) << left << "Selector strategy "
+                     << ": " << _autopasContainer.getSelectorStrategy() << endl
+                     << setw(valueOffset) << left << "Tuning frequency"
+                     << ": " << _autopasContainer.getTuningInterval() << endl
+                     << setw(valueOffset) << left << "Number of samples "
+                     << ": " << _autopasContainer.getNumSamples() << endl
+                     << setw(valueOffset) << left << "Tuning Acquisition Function"
+                     << ": " << _autopasContainer.getAcquisitionFunction() << endl
+                     << setw(valueOffset) << left << "Number of evidence "
+                     << ": " << _autopasContainer.getMaxEvidence() << endl
+                     << setw(valueOffset) << left << "Verlet Cluster size "
+                     << ": " << _autopasContainer.getVerletClusterSize() << endl
+                     << setw(valueOffset) << left << "Rebuild frequency "
+                     << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
+                     << setw(valueOffset) << left << "Verlet Skin "
+                     << ": " << _autopasContainer.getVerletSkin() << endl;
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
