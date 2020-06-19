@@ -108,8 +108,8 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_verletClusterSize = static_cast<unsigned int>(xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
 
 	// double
-	_verletSkin = static_cast<unsigned int>(
-		xmlconfig.getNodeValue_double("skin", static_cast<int>(_verletSkin)));
+	_verletSkin = static_cast<double>(
+		xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
 
 	xmlconfig.changecurrentnode(oldPath);
 }
