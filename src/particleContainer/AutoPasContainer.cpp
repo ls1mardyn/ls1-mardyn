@@ -111,38 +111,6 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_verletSkin = static_cast<unsigned int>(
 		xmlconfig.getNodeValue_double("skin", static_cast<int>(_verletSkin)));
 
-	// print full configuration to the command line
-	int valueOffset = 28;
-	global_log->info() << "AutoPas configuration:" << endl
-					   << setw(valueOffset) << left << "Data Layout "
-					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
-					   << setw(valueOffset) << left << "Container "
-					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
-					   << setw(valueOffset) << left << "Cell size Factor "
-					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
-					   << setw(valueOffset) << left << "Traversals "
-					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
-					   << setw(valueOffset) << left << "Newton3"
-					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
-					   << setw(valueOffset) << left << "Tuning strategy "
-					   << ": " << _autopasContainer.getTuningStrategyOption() << endl
-					   << setw(valueOffset) << left << "Selector strategy "
-					   << ": " << _autopasContainer.getSelectorStrategy() << endl
-					   << setw(valueOffset) << left << "Tuning frequency"
-					   << ": " << _autopasContainer.getTuningInterval() << endl
-					   << setw(valueOffset) << left << "Number of samples "
-					   << ": " << _autopasContainer.getNumSamples() << endl
-					   << setw(valueOffset) << left << "Tuning Acquisition Function"
-					   << ": " << _autopasContainer.getAcquisitionFunction() << endl
-					   << setw(valueOffset) << left << "Number of evidence "
-					   << ": " << _autopasContainer.getMaxEvidence() << endl
-					   << setw(valueOffset) << left << "Verlet Cluster size "
-					   << ": " << _autopasContainer.getVerletClusterSize() << endl
-					   << setw(valueOffset) << left << "Rebuild frequency "
-					   << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
-					   << setw(valueOffset) << left << "Verlet Skin "
-					   << ": " << _autopasContainer.getVerletSkin() << endl;
-
 	xmlconfig.changecurrentnode(oldPath);
 }
 
@@ -169,6 +137,38 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
+
+  // print full configuration to the command line
+  int valueOffset = 28;
+  global_log->info() << "AutoPas configuration:" << endl
+                     << setw(valueOffset) << left << "Data Layout "
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
+                     << setw(valueOffset) << left << "Container "
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
+                     << setw(valueOffset) << left << "Cell size Factor "
+                     << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
+                     << setw(valueOffset) << left << "Traversals "
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
+                     << setw(valueOffset) << left << "Newton3"
+                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
+                     << setw(valueOffset) << left << "Tuning strategy "
+                     << ": " << _autopasContainer.getTuningStrategyOption() << endl
+                     << setw(valueOffset) << left << "Selector strategy "
+                     << ": " << _autopasContainer.getSelectorStrategy() << endl
+                     << setw(valueOffset) << left << "Tuning frequency"
+                     << ": " << _autopasContainer.getTuningInterval() << endl
+                     << setw(valueOffset) << left << "Number of samples "
+                     << ": " << _autopasContainer.getNumSamples() << endl
+                     << setw(valueOffset) << left << "Tuning Acquisition Function"
+                     << ": " << _autopasContainer.getAcquisitionFunction() << endl
+                     << setw(valueOffset) << left << "Number of evidence "
+                     << ": " << _autopasContainer.getMaxEvidence() << endl
+                     << setw(valueOffset) << left << "Verlet Cluster size "
+                     << ": " << _autopasContainer.getVerletClusterSize() << endl
+                     << setw(valueOffset) << left << "Rebuild frequency "
+                     << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
+                     << setw(valueOffset) << left << "Verlet Skin "
+                     << ": " << _autopasContainer.getVerletSkin() << endl;
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
