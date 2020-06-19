@@ -27,6 +27,7 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
+	_verletClusterSize = _autopasContainer.getVerletClusterSize();
 
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
@@ -155,6 +156,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setCutoff(_cutoff);
 	_autopasContainer.setVerletSkin(_verletSkin);
 	_autopasContainer.setVerletRebuildFrequency(_verletRebuildFrequency);
+	_autopasContainer.setVerletClusterSize(_verletClusterSize);
 	_autopasContainer.setTuningInterval(_tuningFrequency);
 	_autopasContainer.setNumSamples(_tuningSamples);
 	_autopasContainer.setSelectorStrategy(_selectorStrategy);
