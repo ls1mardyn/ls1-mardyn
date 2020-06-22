@@ -533,8 +533,6 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 
 	std::stringstream outputstream;
 	outputstream.write(reinterpret_cast<const char*>(_addedEkin.data.global.data()), 8*_addedEkin.data.global.size());
-//	std::vector<double> vec{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
-//	outputstream.write(reinterpret_cast<const char*>(vec.data()), 8*vec.size());
 
 	ofstream fileout(filenamestream.str().c_str(), std::ios::app | std::ios::binary);
 	fileout << outputstream.str();
