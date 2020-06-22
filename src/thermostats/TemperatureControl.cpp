@@ -501,6 +501,9 @@ void ControlRegionT::update(SubjectBase* subject)
 
 void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep)
 {
+	if(_localMethod != VelocityScaling)
+		return;
+	
 	if( simstep % _addedEkin.writeFreq != 0)
 		return;
 
