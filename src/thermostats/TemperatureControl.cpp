@@ -368,12 +368,6 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 		double vcorr = 2. - 1. / globalTV._betaTrans;
 		double Dcorr = 2. - 1. / globalTV._betaRot;
 
-/*
-	mol->setv(0, mol->v(0) * vcorr);
-//    mol->setv(1, mol->v(1) * vcorr);
-	mol->setv(2, mol->v(2) * vcorr);
-*/
-
 		// measure added kin. energy
 		double v2_old = mol->v2();
 
