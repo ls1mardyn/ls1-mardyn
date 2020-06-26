@@ -143,7 +143,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 											 domain->getGlobalLength(2)};
 	// 0. skin, as it is not needed for the migration of particles!
 	std::tie(recvNeighbors, sendNeighbors) =
-		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownDomain, desiredDomain, 0. /*skin*/);
+		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownDomain, desiredDomain, 0. /*skin*/, _comm);
 
 	std::vector<Molecule> dummy;
 	for (auto& sender : sendNeighbors) {
