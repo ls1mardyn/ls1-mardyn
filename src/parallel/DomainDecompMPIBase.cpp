@@ -35,9 +35,9 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 #endif
 	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell());
 
-	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &_rank));
+	MPI_CHECK(MPI_Comm_rank(_comm, &_rank));
 
-	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &_numProcs));
+	MPI_CHECK(MPI_Comm_size(_comm, &_numProcs));
 
 	ParticleData::getMPIType(_mpiParticleType);
 
@@ -183,7 +183,7 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 			MPI_CHECK(MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, _comm, &s));
 			if (recv != IX) {
 				global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
-				MPI_Abort(MPI_COMM_WORLD, 911);
+				MPI_Abort(_comm, 911);
 			}
 		}
 		global_log->info() << "IX = " << recv << " for all " << _numProcs << " ranks.\n";
@@ -212,7 +212,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 			if(check.find(m->getID()) != check.end()){
 				global_log->error() << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
-				MPI_Abort(MPI_COMM_WORLD, 1);
+				MPI_Abort(_comm, 1);
 			}
 			check[m->getID()] = 0;
 		}
@@ -228,7 +228,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 				if (check.find(recv[j]) != check.end()) {
 					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
 							<< recv[j] << endl;
-					MPI_Abort(MPI_COMM_WORLD, 1);
+					MPI_Abort(_comm, 1);
 				} else
 					check[recv[j]] = i;
 			}

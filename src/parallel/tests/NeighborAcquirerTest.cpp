@@ -220,7 +220,7 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 	std::vector<CommunicationPartner> leavingExportNeighbours;
 	std::vector<CommunicationPartner> leavingImportNeighbours;
 	std::tie(leavingExportNeighbours, leavingImportNeighbours) =
-		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0.);
+		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0., MPI_COMM_WORLD);
 	// p1 notes reply, p2 notes owned as leaving import
 
 	for (auto& neighbor : leavingExportNeighbours) {

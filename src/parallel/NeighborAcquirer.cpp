@@ -18,7 +18,7 @@
  * saved in partners01.
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
-	const std::array<double,3>& globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin) {
+	const std::array<double,3>& globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin, const MPI_Comm& comm) {
 
 	HaloRegion ownRegionEnlargedBySkin = *ownRegion;
 	for(unsigned int dim = 0; dim < 3; ++dim){
@@ -27,9 +27,9 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 	}
 
 	int my_rank;  // my rank
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-	int num_processes;  // the number of processes in MPI_COMM_WORLD
-	MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+	MPI_Comm_rank(comm, &my_rank);
+	int num_processes;  // the number of processes in comm
+	MPI_Comm_size(comm, &num_processes);
 
 	int num_regions = desiredRegions.size();  // the number of regions I would like to acquire from other processes
 
@@ -38,8 +38,8 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 		sizeof(int) * 2 + (sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) * 1) *
 							  num_regions;  // how many bytes am I going to send to all the other processes?
 	std::vector<int> num_bytes_receive_vec(num_processes, 0);  // vector of number of bytes I am going to receive
-	// MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, MPI_COMM_WORLD);
+	// MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, comm);
+	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, comm);
 
 	// create byte buffer
 	std::vector<unsigned char> outgoingDesiredRegionsVector(num_bytes_send);  // outgoing byte buffer
@@ -75,7 +75,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 	// send your regions
 	MPI_Allgatherv(outgoingDesiredRegionsVector.data(), num_bytes_send, MPI_BYTE, incomingDesiredRegionsVector.data(),
-				   num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
+				   num_bytes_receive_vec.data(), num_bytes_displacements.data(), MPI_BYTE, comm);
 
 	std::vector<int> numberOfRegionsToSendToRank(num_processes, 0);       // outgoing row
 
@@ -224,7 +224,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 	 * After the Allreduce step every process has the information how many regions it will receive.
 	 */
 	std::vector<int> numberOfRegionsToReceive(num_processes, 0);  // how many bytes does each process expect?
-	MPI_Allreduce(numberOfRegionsToSendToRank.data(), numberOfRegionsToReceive.data(), num_processes, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(numberOfRegionsToSendToRank.data(), numberOfRegionsToReceive.data(), num_processes, MPI_INT, MPI_SUM, comm);
 
 	// all the information for the final information exchange has been collected -> final exchange
 
@@ -235,7 +235,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 	// sending (non blocking)
 	for (int j = 0; j < num_processes; j++) {
 		if (numberOfRegionsToSendToRank[j] > 0) {
-			MPI_Isend(merged[j].data(), numberOfRegionsToSendToRank[j] * bytesOneRegion, MPI_BYTE, j, 1, MPI_COMM_WORLD,
+			MPI_Isend(merged[j].data(), numberOfRegionsToSendToRank[j] * bytesOneRegion, MPI_BYTE, j, 1, comm,
 					  &requests[j]);  // tag is one
 		}
 	}
@@ -252,7 +252,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 	 */
 	while (byte_counter < numberOfRegionsToReceive[my_rank] * bytesOneRegion) {
 		// MPI_PROBE
-		MPI_Probe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &probe_status);
+		MPI_Probe(MPI_ANY_SOURCE, 1, comm, &probe_status);
 		// interpret probe
 		int source = probe_status.MPI_SOURCE;
 		int bytes;
@@ -261,7 +261,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 		byte_counter += bytes;
 		// create buffer
 		std::vector<unsigned char> raw_neighbours(bytes);
-		MPI_Recv(raw_neighbours.data(), bytes, MPI_BYTE, source, 1, MPI_COMM_WORLD, &rec_status);
+		MPI_Recv(raw_neighbours.data(), bytes, MPI_BYTE, source, 1, comm, &rec_status);
 		// Interpret Buffer and add neighbours
 		for (int k = 0; k < (bytes / bytesOneRegion); k++) {  // number of regions from this process
 			HaloRegion region{};
@@ -293,7 +293,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 	}
 
 	// barrier for safety.
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(comm);
 
 	return std::make_tuple(squeezePartners(comm_partners01), squeezePartners(comm_partners02));
 }

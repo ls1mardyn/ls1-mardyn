@@ -468,10 +468,10 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		std::array<double, 3> globalDomainLength {domain->getGlobalLength(0),domain->getGlobalLength(1), domain->getGlobalLength(2)};
 		// assuming p1 sends regions to p2
 		std::tie((*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]) =
-			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, haloOrForceRegions, skin);
+			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, haloOrForceRegions, skin, domainDecomp->getCommunicator());
 		// p1 notes reply, p2 notes owned as haloExportForceImport
 		std::tie((*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]) =
-			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0.);
+			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0.,  domainDecomp->getCommunicator());
 		// p1 notes reply, p2 notes owned as leaving import
 
 
