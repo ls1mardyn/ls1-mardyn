@@ -24,13 +24,14 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength,
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
 #ifdef ENABLE_ALLLBL
+	// Increased slightly to prevent rounding errors.
+	double minimalDomainSize{interactionLength * (1. + 1.e-10)};
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
-													  gridCoords, interactionLength /*minimal domain size*/);
+													  gridCoords, minimalDomainSize);
 #else
 	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
 	Simulation::exit(24235);
 #endif
-	///@todo: change minimal domain size to include skin! -- this is not so trivial here!
 
 	global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
 					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
@@ -138,7 +139,8 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
 
-	std::array<double, 3> globalDomainLength {domain->getGlobalLength(0),domain->getGlobalLength(1), domain->getGlobalLength(2)};
+	std::array<double, 3> globalDomainLength{domain->getGlobalLength(0), domain->getGlobalLength(1),
+											 domain->getGlobalLength(2)};
 	// 0. skin, as it is not needed for the migration of particles!
 	std::tie(recvNeighbors, sendNeighbors) =
 		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownDomain, desiredDomain, 0. /*skin*/);
@@ -213,7 +215,8 @@ void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeCon
 		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, _coversWholeDomain[d]);
 	}
-	_neighbourCommunicationScheme->initCommunicationPartners(moleculeContainer->getCutoff(), domain, this, moleculeContainer);
+	_neighbourCommunicationScheme->initCommunicationPartners(moleculeContainer->getCutoff(), domain, this,
+															 moleculeContainer);
 }
 
 void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
@@ -227,8 +230,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;
 
 	xmlconfig.getNodeValue("initialPhaseTime", _initPhase);
-	global_log->info() << "GeneralDomainDecomposition time for initial rebalancing phase: " << _initPhase
-					   << endl;
+	global_log->info() << "GeneralDomainDecomposition time for initial rebalancing phase: " << _initPhase << endl;
 
 	xmlconfig.getNodeValue("initialPhaseFrequency", _initFrequency);
 	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _initFrequency
