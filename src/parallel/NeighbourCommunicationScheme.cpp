@@ -398,9 +398,6 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool import) {
-	int my_rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-	
 	switch(msgType) {
 		case LEAVING_ONLY:
 			// leavingImport / leavingExport
