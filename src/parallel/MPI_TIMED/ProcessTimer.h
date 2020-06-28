@@ -43,7 +43,6 @@ public:
 		if (_profiling_switch == 1){
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
-			_process_time[process] -= _process_time[process];
 #ifdef ENABLE_MPI
 			double measurement_time = MPI_Wtime();
 #else
@@ -112,6 +111,12 @@ public:
 			}
 		}
 		_processRuntime.close();
+	}
+
+	//! @brief Resets the time of given process
+	//! @param process ID of process
+	void resetTimer(int process) {
+        _process_time[process] -= _process_time[process];
 	}
 
 protected:
