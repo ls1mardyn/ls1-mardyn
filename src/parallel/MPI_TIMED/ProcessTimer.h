@@ -43,13 +43,7 @@ public:
 		if (_profiling_switch == 1){
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
-#ifdef ENABLE_MPI
 			double measurement_time = MPI_Wtime();
-#else
-			struct timeval tmp_time;
-			gettimeofday(&tmp_time, NULL);
-			double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
-#endif
 			_process_time[process] -= measurement_time;
 			_processes_debug[process].push_back(-measurement_time);
 		}
@@ -61,13 +55,7 @@ public:
 		if (_profiling_switch ==1){
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
-#ifdef ENABLE_MPI
 			double measurement_time = MPI_Wtime();
-#else
-			struct timeval tmp_time;
-			gettimeofday(&tmp_time, NULL);
-			double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
-#endif
 			_process_time[process] += measurement_time;
 			_processes_debug[process][_processes_debug[process].size()-1] -= measurement_time;
 		}
