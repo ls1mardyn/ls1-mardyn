@@ -24,9 +24,9 @@
 			<!-- Nparticles determined by the input file -->
 			<temperature unit="reduced" >0.95</temperature>
 			<domain type="box">
-				<lx>165.72</lx>
-				<ly>165.72</ly>
-				<lz>165.72</lz>
+				<lx>662.88</lx>
+				<ly>662.88</ly>
+				<lz>662.88</lz>
 			</domain>
 			
 			<components>
@@ -36,9 +36,9 @@
 			<phasespacepoint>
 				<generator name="mkesfera">
 					<droplet>
-						<radius>46.86</radius>
+						<radius>187.44</radius>
 						<density>0.06231</density>
-						<center> <x>82.86</x> <y>82.86</y> <z>82.86</z> </center>
+						<center> <x>331.44</x> <y>331.44</y> <z>331.44</z> </center>
 					</droplet>
 					<outer-density>0.006516</outer-density>
 				</generator>
@@ -62,7 +62,7 @@
 				<tuningInterval>1000</tuningInterval>
 				<tuningSamples>10</tuningSamples>
 				<rebuildFrequency>10</rebuildFrequency>
-				<skin>0.4</skin>
+				<skin>1.4</skin>
 			</datastructure>
 			<cutoffs type="CenterOfMass" >
 				<radiusLJ unit="reduced" >5.0</radiusLJ>
