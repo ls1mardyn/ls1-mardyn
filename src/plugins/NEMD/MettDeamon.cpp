@@ -318,6 +318,12 @@ MettDeamon::MettDeamon() :
 
 void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 {
+#ifdef MARDYN_AUTOPAS
+    global_log->error() << "MettDeamon: error the MettDeamon is not compatible with AutoPas mode (ENABLE_AUTOPAS)." << std::endl;
+	global_log->error() << "Please either disable AutoPas or the MettDeamon plugin." << std::endl;
+	global_log->error() << "For details see: https://github.com/ls1mardyn/ls1-mardyn/issues/138" << std::endl;
+	Simulation::exit(483);
+#endif
 	// control
 	xmlconfig.getNodeValue("control/updatefreq", _nUpdateFreq);
 	xmlconfig.getNodeValue("control/logfreqfeed", _feedrate.log_freq);
