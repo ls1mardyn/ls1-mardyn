@@ -24,6 +24,7 @@
 
 using Log::global_log;
 using std::endl;
+using optparse::Values;
 
 /**
  * @brief Initialize command line options.
@@ -199,7 +200,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* processing command line arguments */
-	if ( options.is_set_by_user("legacy-cell-processor") ) {
+	if ( (int) options.get("legacy-cell-processor") > 0 ) {
 		simulation.useLegacyCellProcessor();
 		global_log->info() << "--legacy-cell-processor specified, using legacyCellProcessor" << endl;
 	}
