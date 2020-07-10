@@ -1,0 +1,7 @@
+sim01: equilibrate liquid phase
+  |--run01: small liquid phase for system creation, liquid reservoir
+  |--run02: scale up (enlarge cross-sectional area) => reservoir for scale up systems
+  
+sim02: evaporation into vacuum
+  |--run01: start nemd sim. with const. feed rate to populate vapor phase, uses restarts of sim01
+

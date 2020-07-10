@@ -45,15 +45,9 @@
 			</phasespacepoint>
 		</ensemble>
 		<algorithm>
-			<!--
 			<parallelisation type="KDDecomposition">
 				<updateFrequency>10</updateFrequency>
 				<fullSearchThreshold>2</fullSearchThreshold>
-			</parallelisation>
-			-->
-			<parallelisation type="KDDecomposition">
-				<updateFrequency>1</updateFrequency>
-				<fullSearchThreshold>4</fullSearchThreshold>
 				<heterogeneousSystems>false</heterogeneousSystems>
 				<useVectorizationTuner>false</useVectorizationTuner>
 				<splitBiggestDimension>true</splitBiggestDimension>
@@ -81,13 +75,6 @@
 				<epsilon>1.0e+10</epsilon>
 			</electrostatic>
 			
-			<!--
-			<thermostats>
-				<thermostat type="VelocityScaling" componentName="Argon">
-					<temperature>1</temperature>
-				</thermostat>
-			</thermostats>
-			-->
 		</algorithm>
 		
 		<output>

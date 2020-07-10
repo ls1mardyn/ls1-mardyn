@@ -46,12 +46,6 @@
 		</ensemble>
 		
 		<algorithm>
-			<!--
-			<parallelisation type="KDDecomposition">
-				<updateFrequency>10</updateFrequency>
-				<fullSearchThreshold>2</fullSearchThreshold>
-			</parallelisation>
-			-->
 			<parallelisation type="DomainDecomposition"></parallelisation>
 			<datastructure type="AutoPas">
 				<allowedTraversals>c08</allowedTraversals>

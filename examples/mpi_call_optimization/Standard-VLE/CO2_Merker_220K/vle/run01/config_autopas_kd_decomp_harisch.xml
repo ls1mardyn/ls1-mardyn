@@ -49,7 +49,7 @@
     </ensemble>
     <algorithm>
       <parallelisation type="KDDecomposition">
-        <updateFrequency>1</updateFrequency>
+        <updateFrequency>10</updateFrequency>
         <fullSearchThreshold>4</fullSearchThreshold>
         <heterogeneousSystems>false</heterogeneousSystems>
         <useVectorizationTuner>false</useVectorizationTuner>

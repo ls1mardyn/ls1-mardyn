@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mixing>
+	<rule type="LB" cid1="1" cid2="2">
+		<eta>1.0</eta>
+		<xi>1.0</xi>
+	</rule>
+
+	<rule type="LB" cid1="1" cid2="3">
+		<eta>1.0</eta>
+		<xi>1.0</xi>
+	</rule>
+
+	<rule type="LB" cid1="2" cid2="3">
+		<eta>1.0</eta>
+		<xi>1.0</xi>
+	</rule>
+</mixing>
