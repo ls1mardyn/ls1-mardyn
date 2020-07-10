@@ -43,14 +43,7 @@ public:
 		if (_profiling_switch == 1){
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
-			_process_time[process] -= _process_time[process];
-#ifdef ENABLE_MPI
 			double measurement_time = MPI_Wtime();
-#else
-			struct timeval tmp_time;
-			gettimeofday(&tmp_time, NULL);
-			double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
-#endif
 			_process_time[process] -= measurement_time;
 			_processes_debug[process].push_back(-measurement_time);
 		}
@@ -60,15 +53,9 @@ public:
 	//! @brief Stops Timer for MPI-Measurement
 	void stopTimer() {
 		if (_profiling_switch ==1){
+            double measurement_time = MPI_Wtime();
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
-#ifdef ENABLE_MPI
-			double measurement_time = MPI_Wtime();
-#else
-			struct timeval tmp_time;
-			gettimeofday(&tmp_time, NULL);
-			double measurement_time = (1.0e6 * (double) tmp_time.tv_sec + (double) tmp_time.tv_usec) / 1.0e6;
-#endif
 			_process_time[process] += measurement_time;
 			_processes_debug[process][_processes_debug[process].size()-1] -= measurement_time;
 		}
@@ -83,7 +70,7 @@ public:
 		if (debug)
 			writeProcessTimeLogSingle(process, _process_time[process], true);
 		if (reset)
-			_process_time[process] -= _process_time[process];
+			resetTimer(process);
 		return time;
 	}
 
@@ -112,6 +99,12 @@ public:
 			}
 		}
 		_processRuntime.close();
+	}
+
+	//! @brief Resets the time of given process
+	//! @param process ID of process
+	void resetTimer(int process) {
+        _process_time[process] -= _process_time[process];
 	}
 
 protected:

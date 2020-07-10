@@ -205,16 +205,6 @@ int MPI_Comm_free(MPI_Comm * comm) {
 	return result;
 }
 
-/*
-// FIXME: Produces Seg-Fault
-int MPI_Comm_rank(MPI_Comm comm, int *rank) {
-	_processTimer.startTimer();
-	int result = PMPI_Comm_rank(comm, rank);
-	_processTimer.stopTimer();
-	return result;
-}
-*/
-
 int MPI_Get_address(const void *location, MPI_Aint * address) {
 	_processTimer.startTimer();
 	int result = PMPI_Get_address(location, address);
