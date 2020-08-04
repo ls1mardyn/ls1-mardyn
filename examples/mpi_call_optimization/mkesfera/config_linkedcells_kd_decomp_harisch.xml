@@ -1,0 +1,143 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+    
+    <refunits type="SI">
+        <length unit="nm">0.1</length>
+        <mass unit="u">1</mass>
+        <energy unit="K">1</energy>
+    </refunits>
+    
+    <simulation type="MD" >
+        <integrator type="Leapfrog" >
+            <!-- MD ODE integrator -->
+            <timestep unit="reduced" >0.002</timestep>
+        </integrator>
+    
+        <run>
+            <currenttime>0</currenttime>
+            <production>
+                <steps>1000</steps>
+            </production>
+        </run>
+        
+        <ensemble type="NVT">
+            <!-- Nparticles determined by the input file -->
+            <temperature unit="reduced" >0.95</temperature>
+            <domain type="box">
+                <lx>165.72</lx>
+                <ly>165.72</ly>
+                <lz>165.72</lz>
+            </domain>
+            
+            <components>
+                <include query="/components/moleculetype">./components.xml</include>
+            </components>
+            
+            <phasespacepoint>
+                <generator name="mkesfera">
+                    <droplet>
+                        <radius>46.86</radius>
+                        <density>0.06231</density>
+                        <center> <x>82.86</x> <y>82.86</y> <z>82.86</z> </center>
+                    </droplet>
+                    <outer-density>0.006516</outer-density>
+                </generator>
+            </phasespacepoint>
+        </ensemble>
+        
+        <algorithm>
+            <!--
+            <parallelisation type="KDDecomposition">
+                <updateFrequency>10</updateFrequency>
+                <fullSearchThreshold>2</fullSearchThreshold>
+            </parallelisation>
+            -->
+            <parallelisation type="KDDecomposition">
+                <updateFrequency>10</updateFrequency>
+                <fullSearchThreshold>2</fullSearchThreshold>
+                <heterogeneousSystems>false</heterogeneousSystems>
+                <useVectorizationTuner>false</useVectorizationTuner>
+                <splitBiggestDimension>true</splitBiggestDimension>
+                <forceRatio>false</forceRatio>
+                <splitThreshold>false</splitThreshold>
+                <generateNewFiles>false</generateNewFiles>
+                <useExistingFiles>false</useExistingFiles>
+                <doMeasureLoadCalc>false</doMeasureLoadCalc>
+            </parallelisation>
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+            </datastructure>
+            <cutoffs type="CenterOfMass" >
+                <radiusLJ unit="reduced" >5.0</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>1.0e+10</epsilon>
+            </electrostatic>
+            
+        </algorithm>
+        
+        <output>
+        
+            <outputplugin name="SysMonOutput">
+                <expression>procloadavg:loadavg1</expression>
+                <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
+                <expression>procselfstatm:size 1048576. /</expression>
+                <expression>procmeminfo:MemFree</expression>
+                <expression>procselfstatus:VmPeak</expression>
+                <writefrequency>10</writefrequency>
+            </outputplugin>
+            
+            <outputplugin name="ResultWriter">
+                <writefrequency>100</writefrequency>
+                <outputprefix>simple-lj</outputprefix>
+            </outputplugin>
+            <outputplugin name="CheckpointWriter">
+                <type>ASCII</type>
+                <writefrequency>500</writefrequency>
+                <outputprefix>simple-lj</outputprefix>
+            </outputplugin>
+            <outputplugin name="MmpldWriter" type="simple">
+                <include query="/spheres">./sphereparams_1clj.xml</include>
+                <writecontrol>
+                    <start>0</start>
+                    <writefrequency>100</writefrequency>
+                    <stop>1000000000</stop>
+                    <framesperfile>0</framesperfile>
+                </writecontrol>
+                <outputprefix>megamol</outputprefix>
+            </outputplugin>
+            
+<C> <!-- otherwise unused element name to comment out -->
+            <outputplugin name="MPICheckpointWriter">
+                <writefrequency>10</writefrequency>
+                <outputprefix>mkesfera</outputprefix>
+                <appendTimestamp>1</appendTimestamp>
+                <datarep>native</datarep>
+                <measureTime>1</measureTime>
+                <mpi_info>
+                    <hint> <key>striping_factor</key> <value>4</value> </hint>
+                    <hint> <key>striping_unit</key> <value>65536</value> </hint>
+                    <hint> <key>cb_buffer_size</key> <value>16777216</value> </hint>
+                </mpi_info>
+                <ParticlesBufferSizeMPI>0</ParticlesBufferSizeMPI>    <!-- only for testing - deprecated -->
+            </outputplugin>
+</C>
+            
+
+            <outputplugin name="VTKMoleculeWriter">
+                <outputprefix>vtkOutput</outputprefix>
+                <writefrequency>20</writefrequency>
+                  </outputplugin>
+        </output>
+        <!-- ALPHA: Center of Mass alignment plugin  -->
+        <plugin name="COMaligner">
+            <x>1</x>
+            <y>0</y>
+            <z>1</z>
+            <interval>1</interval>
+            <correctionFactor>.5</correctionFactor>
+        </plugin>
+        
+    </simulation>
+      
+</mardyn>

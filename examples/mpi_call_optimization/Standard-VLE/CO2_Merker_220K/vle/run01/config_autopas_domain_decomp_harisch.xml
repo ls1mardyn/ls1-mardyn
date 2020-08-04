@@ -48,7 +48,9 @@
       </phasespacepoint>
     </ensemble>
     <algorithm>
-      <parallelisation type="DomainDecomposition"/>
+      <parallelisation type="DomainDecomposition">
+     		<timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+	</parallelisation>
       <datastructure type="AutoPas">
 		<allowedTraversals>c08</allowedTraversals>
 		<allowedContainers>linkedCells</allowedContainers>
@@ -58,7 +60,7 @@
 		<tuningInterval>1000</tuningInterval>
 		<tuningSamples>10</tuningSamples>
 		<rebuildFrequency>10</rebuildFrequency>
-		<skin>0.4</skin>
+		<skin>1.4</skin>
       </datastructure>      			
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">12.0</radiusLJ>

@@ -24,9 +24,9 @@
 			<!-- Nparticles determined by the input file -->
 			<temperature unit="reduced" >0.95</temperature>
 			<domain type="box">
-				<lx>662.88</lx>
-				<ly>662.88</ly>
-				<lz>662.88</lz>
+                <lx>165.72</lx>
+				<ly>165.72</ly>
+				<lz>165.72</lz>
 			</domain>
 			
 			<components>
@@ -36,9 +36,9 @@
 			<phasespacepoint>
 				<generator name="mkesfera">
 					<droplet>
-						<radius>187.44</radius>
+                        <radius>46.86</radius>
 						<density>0.06231</density>
-						<center> <x>331.44</x> <y>331.44</y> <z>331.44</z> </center>
+                        <center> <x>82.86</x> <y>82.86</y> <z>82.86</z> </center>
 					</droplet>
 					<outer-density>0.006516</outer-density>
 				</generator>
@@ -46,18 +46,24 @@
 		</ensemble>
 		
 		<algorithm>
+			<!--
+			<parallelisation type="KDDecomposition">
+				<updateFrequency>10</updateFrequency>
+				<fullSearchThreshold>2</fullSearchThreshold>
+			</parallelisation>
+			-->
 			<parallelisation type="DomainDecomposition"></parallelisation>
 			<datastructure type="AutoPas">
-				<allowedTraversals>c08</allowedTraversals>
-				<allowedContainers>linkedCells</allowedContainers>
-				<selectorStrategy>fastestMedian</selectorStrategy>
-				<dataLayouts>SoA</dataLayouts>
-				<newton3>enabled</newton3>
-				<tuningInterval>1000</tuningInterval>
-				<tuningSamples>10</tuningSamples>
-				<rebuildFrequency>10</rebuildFrequency>
-				<skin>1.4</skin>
-			</datastructure>
+                                <allowedTraversals>c08</allowedTraversals>
+                                <allowedContainers>linkedCells</allowedContainers>
+                                <selectorStrategy>fastestMedian</selectorStrategy>
+                                <dataLayouts>SoA</dataLayouts>
+                                <newton3>enabled</newton3>
+                                <tuningInterval>1000</tuningInterval>
+                                <tuningSamples>10</tuningSamples>
+                                <rebuildFrequency>10</rebuildFrequency>
+                                <skin>1.4</skin>
+                        </datastructure>	
 			<cutoffs type="CenterOfMass" >
 				<radiusLJ unit="reduced" >5.0</radiusLJ>
 			</cutoffs>
