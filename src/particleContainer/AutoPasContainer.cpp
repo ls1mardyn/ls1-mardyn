@@ -28,6 +28,10 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
 	_verletClusterSize = _autopasContainer.getVerletClusterSize();
+    _relativeOptimumRange = _autopasContainer.getRelativeOptimumRange();
+    _maxTuningPhasesWithoutTest = _autopasContainer.getMaxTuningPhasesWithoutTest();
+    _evidenceForPrediction = _autopasContainer.getEvidenceFirstPrediction();
+    _extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
 
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
@@ -90,6 +94,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_tuningStrategyOption =
 		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", {_tuningStrategyOption})
 			 .begin();
+	_extrapolationMethod = *parseAutoPasOption<autopas::ExtrapolationMethodOption>(xmlconfig, "extrapolationMethod", {_extrapolationMethod}).begin();
 	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", _dataLayoutChoices);
 	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _newton3Choices);
 	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
@@ -99,6 +104,8 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	//int
 	_maxEvidence = static_cast<unsigned int>(
 		xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
+	_maxTuningPhasesWithoutTest = static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningPhasesWithoutTest", static_cast<int>(_maxTuningPhasesWithoutTest)));
+	_evidenceForPrediction = static_cast<unsigned int>(xmlconfig.getNodeValue_int("evidenceForPrediction", static_cast<int>(_evidenceForPrediction)));
 	_tuningSamples = static_cast<unsigned int>(
 		xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_tuningSamples)));
 	_tuningFrequency = static_cast<unsigned int>(
@@ -110,6 +117,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	// double
 	_verletSkin = static_cast<double>(
 		xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
+	_relativeOptimumRange = static_cast<double>(xmlconfig.getNodeValue_double("optimumRange", static_cast<double>(_relativeOptimumRange)));
 
 	xmlconfig.changecurrentnode(oldPath);
 }
@@ -135,6 +143,10 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setTuningStrategyOption(_tuningStrategyOption);
 	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
 	_autopasContainer.setMaxEvidence(_maxEvidence);
+	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
+	_autopasContainer.setMaxTuningPhasesWithoutTest(_maxTuningPhasesWithoutTest);
+	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
+	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
@@ -168,7 +180,16 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
                      << setw(valueOffset) << left << "Rebuild frequency "
                      << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
                      << setw(valueOffset) << left << "Verlet Skin "
-                     << ": " << _autopasContainer.getVerletSkin() << endl;
+                     << ": " << _autopasContainer.getVerletSkin() << endl
+                     << setw(valueOffset) << left << "Optimum Range "
+                     << ": " << _autopasContainer.getRelativeOptimumRange() << endl
+                     << setw(valueOffset) << left << "Tuning Phases without test "
+                     << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
+                     << setw(valueOffset) << left << "Evidence for prediction "
+                     << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
+                     << setw(valueOffset) << left << "Extrapolation method "
+                     << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
+
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));

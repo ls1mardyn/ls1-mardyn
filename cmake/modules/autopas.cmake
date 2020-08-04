@@ -24,7 +24,7 @@ if (ENABLE_AUTOPAS)
     FetchContent_Declare(
             autopasfetch
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG 918ce7c356250df60b9a1e217482a0c8d4f7bf0d
+            GIT_TAG 99a21fe1c96bc26dbc07dccf06a2870d17a28be6
     )
 
     # Get autopas source and binary directories from CMake project

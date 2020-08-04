@@ -33,14 +33,18 @@ public:
 		<allowedContainers>STRINGLIST</allowedContainers>
 		<selectorStrategy>STRING</selectorStrategy>
 		<tuningStrategy>STRING</tuningStrategy>
+	    <extrapolationMethod>STRING</extrapolationMethod>
 		<dataLayouts>STRINGLIST</dataLayouts>
 		<newton3>STRINGLIST</newton3>
 		<tuningAcquisitionFunction>STRING</tuningAcquisitionFunction>
 		<maxEvidence>INTEGER</maxEvidence>
+	    <tuningPhasesWithoutTest>INTEGER</tuningPhasesWithoutTest>
+	    <evidenceForPrediction>INTEGER</evidenceForPrediction>
 		<tuningSamples>INTEGER</tuningSamples>
 		<tuningInterval>INTEGER</tuningInterval>
 		<rebuildFrequency>INTEGER</rebuildFrequency>
 		<skin>DOUBLE</skin>
+	    <optimumRange>DOUBLE</optimumRange>
 	   </datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
@@ -138,11 +142,14 @@ private:
 
 	double _cutoff{0.};
 	double _verletSkin;
+    double _relativeOptimumRange;
 	unsigned int _verletRebuildFrequency;
 	unsigned int _verletClusterSize;
 	unsigned int _tuningFrequency;
 	unsigned int _tuningSamples;
 	unsigned int _maxEvidence;
+	unsigned int _maxTuningPhasesWithoutTest;
+	unsigned int _evidenceForPrediction;
 	using CellType = autopas::FullParticleCell<Molecule>;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 
@@ -150,6 +157,7 @@ private:
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
 	autopas::TuningStrategyOption _tuningStrategyOption;
+    autopas::ExtrapolationMethodOption _extrapolationMethod;
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::set<autopas::Newton3Option> _newton3Choices;
