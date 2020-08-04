@@ -976,10 +976,6 @@ void Simulation::simulate() {
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			double lastTraversalTime = currentTime - previousTimeForLoad;
-			double timeSpentInMPI = _processTimer.getTime(process, true, true);
-			if (timeSpentInMPI < lastTraversalTime) {
-			    lastTraversalTime -= timeSpentInMPI;
-			}
 
 			updateParticleContainerAndDecomposition(lastTraversalTime);
 
