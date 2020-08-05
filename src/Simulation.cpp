@@ -976,21 +976,34 @@ void Simulation::simulate() {
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			double lastTraversalTime = currentTime - previousTimeForLoad;
-			double timeSpentInMPI = _processTimer.getTime(process, true, true);
+			double timeSpentInMPI = _processTimer.getTime(process, true, false);
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
-
-			updateParticleContainerAndDecomposition(lastTraversalTime);
+            
 
 // ###### Only for Measuremnts (BA Jeremy Harisch) ######
+// Will be removed after measurements
+            else{
+                timeSpentInMPI -= timeSpentInMPI;
+            }
+
+
 			std::ofstream _processRuntime;
 			_processRuntime.open("process" + std::to_string(process) + "RawLastTraversalRuntime.csv", std::ios::app);
 			_processRuntime << currentTime - previousTimeForLoad << ", ";
 
-			_processRuntime.open("process" + std::to_string(process) + "FinalLastTraversalRuntime.csv", std::ios::app);
-			_processRuntime << lastTraversalTime << ", ";
+            std::ofstream _finalProcessRuntime;
+			_finalProcessRuntime.open("process" + std::to_string(process) + "FinalLastTraversalRuntime.csv", std::ios::app);
+			_finalProcessRuntime << lastTraversalTime << ", ";
+            
+            std::ofstream _mpiRuntime;
+            _mpiRuntime.open("process" + std::to_string(process) + "MPI-Runtime.csv", std::ios::app);
+            _mpiRuntime << timeSpentInMPI << ", ";
 // #####################################################
+            
+            updateParticleContainerAndDecomposition(lastTraversalTime);
+
 #else
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
 #endif
