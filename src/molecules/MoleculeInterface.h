@@ -83,6 +83,9 @@ public:
 	}
 	virtual double M(unsigned short d) const = 0;
 	virtual double Vi(unsigned short d) const = 0;
+	
+	virtual bool DROP() const = 0;
+	virtual void setDROP(bool t) = 0;
 
 	virtual void setD(unsigned short d, double D) = 0;
 

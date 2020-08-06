@@ -40,6 +40,7 @@
 // General plugins
 #include "plugins/COMaligner.h"
 #include "plugins/Dropaligner.h"
+#include "plugins/Dropaccelerator.h"
 #include "plugins/ExamplePlugin.h"
 #include "plugins/InMemoryCheckpointing.h"
 #include "plugins/MaxCheck.h"
@@ -73,6 +74,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(Dropaligner);
+	REGISTER_PLUGIN(Dropaccelerator);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);

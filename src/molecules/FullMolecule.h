@@ -74,7 +74,13 @@ public:
 
 	/** get coordinate of the current angular momentum  onto molecule */
 	double M(unsigned short d) const override { return _M[d]; }
+	
+	/** get Drop true or false**/
+	bool DROP() const override { return _DROP; }
 
+	/**set Drop true or false**/
+	void setDROP(bool t) override { _DROP = t; }
+	
 	/** get the virial **/
 	double Vi(unsigned short d) const override { return _Vi[d];}
 
@@ -346,7 +352,9 @@ protected:
 	double _L[3];  /**< angular momentum */
 	double _Vi[3]; /** Virial tensor **/
     unsigned long _id;  /**< IDentification number of that molecule */
-
+	
+	bool _DROP; /**<is the molecule part of the Drop */
+	
 	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
 
