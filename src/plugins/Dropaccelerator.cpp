@@ -20,14 +20,14 @@ void Dropaccelerator::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("xposition", _xPosition);
 	xmlconfig.getNodeValue("yposition", _yPosition);
 	xmlconfig.getNodeValue("zposition", _zPosition);
-	xmlconfig.getNodeValue("dropradius", _Dropradius);
-	xmlconfig.getNodeValue("velocity", _Veloc);
-	xmlconfig.getNodeValue("starttime", _StartSimstep);
-	xmlconfig.getNodeValue("steps", _Steps);
+	xmlconfig.getNodeValue("dropradius", _dropRadius);
+	xmlconfig.getNodeValue("velocity", _veloc);
+	xmlconfig.getNodeValue("starttime", _startSimStep);
+	xmlconfig.getNodeValue("steps", _steps);
 
 	// SANITY CHECK
-	if (_INTERVAL < 1 || _Steps <= 0 || _Veloc < 0 || _StartSimstep < 0 || _xPosition <= 0. || _yPosition <= 0. ||
-		_zPosition <= 0. || _Dropradius <= 0) {
+	if (_INTERVAL < 1 || _steps <= 0 || _veloc < 0 || _startSimStep < 0 || _xPosition <= 0. || _yPosition <= 0. ||
+		_zPosition <= 0. || _dropRadius <= 0) {
 		global_log->error() << "[Dropaccelerator] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
 		global_log->error() << "[Dropaccelerator] HALTING SIMULATION" << std::endl;
 		_enabled = false;
@@ -40,15 +40,15 @@ void Dropaccelerator::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "                  xposition: " << _xPosition << std::endl;
 	global_log->info() << "                  yposition: " << _yPosition << std::endl;
 	global_log->info() << "                  zposition: " << _zPosition << std::endl;
-	global_log->info() << "                  dropradius: " << _Dropradius << std::endl;
-	global_log->info() << "                  velocity: " << _Veloc << std::endl;
-	global_log->info() << "                  starttime: " << _StartSimstep << std::endl;
-	global_log->info() << "                  steps: " << _Steps << std::endl;
+	global_log->info() << "                  dropradius: " << _dropRadius << std::endl;
+	global_log->info() << "                  velocity: " << _veloc << std::endl;
+	global_log->info() << "                  starttime: " << _startSimStep << std::endl;
+	global_log->info() << "                  steps: " << _steps << std::endl;
 }
 
 void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 								   unsigned long simstep) {
-	double corrVeloc = -(_Veloc / _Steps);
+	double corrVeloc = _veloc / _steps;
 
 	if (_enabled) {
 		global_log->debug() << "[Dropaccelerator] before forces called" << std::endl;
@@ -57,10 +57,10 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 			return;
 		}
 
-		int numberparticles = 0;
+		int particlesInDrop = 0;
 
 		// ITERATE OVER PARTICLES AND CHOOSE AND MARK IF MOLECULE IN DROPLET OR NOT
-		if (simstep == _StartSimstep) {
+		if (simstep == _startSimStep) {
 			global_log->info() << "Startsimstep =" << simstep << endl;
 			global_log->info() << "corrVeloc = " << corrVeloc << endl;
 
@@ -68,18 +68,18 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 			_particleIsInDroplet.clear();
 			_particleIsInDroplet.resize(global_simulation->getDomain()->getglobalNumMolecules(), false);
 
-			for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
+			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
 				double distanceSquared[3];
 
-				_particleIsInDroplet[tm->getID()] = false;
-				distanceSquared[0] = (_xPosition - tm->r(0)) * (_xPosition - tm->r(0));
-				distanceSquared[1] = (_yPosition - tm->r(1)) * (_yPosition - tm->r(1));
-				distanceSquared[2] = (_zPosition - tm->r(2)) * (_zPosition - tm->r(2));
+				_particleIsInDroplet[temporaryMolecule->getID()] = false;
+				distanceSquared[0] = (_xPosition - temporaryMolecule->r(0)) * (_xPosition - temporaryMolecule->r(0));
+				distanceSquared[1] = (_yPosition - temporaryMolecule->r(1)) * (_yPosition - temporaryMolecule->r(1));
+				distanceSquared[2] = (_zPosition - temporaryMolecule->r(2)) * (_zPosition - temporaryMolecule->r(2));
 
-				if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _Dropradius * _Dropradius) {
-					_particleIsInDroplet[tm->getID()] = true;
-					tm->vadd(0, corrVeloc, 0);
-					numberparticles++;
+				if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _dropRadius * _dropRadius) {
+					_particleIsInDroplet[temporaryMolecule->getID()] = true;
+					temporaryMolecule->vadd(0, corrVeloc, 0);
+					particlesInDrop++;
 				}
 			}
 
@@ -88,87 +88,85 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 #endif
 
 			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(numberparticles);
+			domainDecomp->collCommAppendInt(particlesInDrop);
 			domainDecomp->collCommAllreduceSum();
-			numberparticles = domainDecomp->collCommGetInt();
+			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
 
-			global_log->info() << "Marked Particles (Start)=" << numberparticles << endl;
+			global_log->info() << "Marked Particles (Start)=" << particlesInDrop << endl;
 		}
 
 		// ITERATE OVER PARTICLES AND ACCELERATE ONLY DROPMOLECULES
 
-		if (simstep > _StartSimstep && simstep < (_StartSimstep + _Steps)) {
+		if (simstep > _startSimStep && simstep < (_startSimStep + _steps)) {
 			global_log->info() << "Accelerationsimstep = " << simstep << endl;
 
-			for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
-				if (_particleIsInDroplet[tm->getID()]) {
-					tm->vadd(0, corrVeloc, 0);
-					numberparticles++;
+			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
+				if (_particleIsInDroplet[temporaryMolecule->getID()]) {
+					temporaryMolecule->vadd(0, corrVeloc, 0);
+					particlesInDrop++;
 				}
 			}
 
 			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(numberparticles);
+			domainDecomp->collCommAppendInt(particlesInDrop);
 			domainDecomp->collCommAllreduceSum();
-			numberparticles = domainDecomp->collCommGetInt();
+			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
 
-			global_log->info() << "Marked Particles (Acceleration)=" << numberparticles << endl;
+			global_log->info() << "Marked Particles (Acceleration)=" << particlesInDrop << endl;
 		}
 
 		// CHECK IF VELOCITY HAS REACHED AND IF NOT ACCELERATE AGAIN
 
-		if (simstep >= (_StartSimstep + _Steps) && simstep < (_StartSimstep + 2 * _Steps)) {
-			_VelocNOW = 0;
-			int Particles = 0;
-			double deltavelocity;
+		if (simstep >= (_startSimStep + _steps) && simstep < (_startSimStep + 2 * _steps)) {
+			_velocNow = 0;
+			int particlesInDrop = 0;
 
 			global_log->info() << "Postaccelerationsimstep = " << simstep << endl;
 
 			// GET VELOCITY IN Y-DIRECTION FOR EVERY PARTICLE IN DROPLET
 
-			for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
-				double partVelocity = tm->v(1);
+			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
+				double partVelocity = temporaryMolecule->v(1);
 
-				if (_particleIsInDroplet[tm->getID()]) {
-					Particles += 1;
-					_VelocNOW += partVelocity;
+				if (_particleIsInDroplet[temporaryMolecule->getID()]) {
+					particlesInDrop += 1;
+					_velocNow += partVelocity;
 				}
 			}
 
 			// COMMUNICATION
 
 			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendDouble(_VelocNOW);
+			domainDecomp->collCommAppendDouble(_velocNow);
 			domainDecomp->collCommAllreduceSum();
-			_VelocNOW = domainDecomp->collCommGetDouble();
+			_velocNow = domainDecomp->collCommGetDouble();
 			domainDecomp->collCommFinalize();
 
 			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(Particles);
+			domainDecomp->collCommAppendInt(particlesInDrop);
 			domainDecomp->collCommAllreduceSum();
-			Particles = domainDecomp->collCommGetInt();
+			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
 
 			// CALCULATE AVERAGE SPEED
-			_VelocNOW = -(_VelocNOW / Particles);
+			_velocNow = _velocNow / particlesInDrop;
 
-			global_log->info() << "_VelocNOW = " << _VelocNOW << endl;
-			global_log->info() << "_VelocNOW-_Veloc = " << _VelocNOW - _Veloc << endl;
+			global_log->info() << "_velocNow = " << _velocNow << endl;
+			global_log->info() << "_velocNow-_veloc = " << _velocNow - _veloc << endl;
 			global_log->info() << "corrVeloc = " << corrVeloc << endl;
-			global_log->info() << "Marked Particles (Postacceleration)=" << Particles << endl;
+			global_log->info() << "Marked Particles (Postacceleration)=" << particlesInDrop << endl;
 
 			// ACCELERATE IF TOO SLOW
 
-			if (_VelocNOW < _Veloc) {
+			if (abs(_velocNow) < abs(_veloc)) {
 				global_log->info() << "ACCELERATION with DELTAvelocity" << endl;
-				deltavelocity = -(_Veloc - _VelocNOW);
 
-				for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid();
-					 ++tm) {
-					if (_particleIsInDroplet[tm->getID()]) {
-						tm->vadd(0, deltavelocity, 0);
+				for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid();
+					 ++temporaryMolecule) {
+					if (_particleIsInDroplet[temporaryMolecule->getID()]) {
+						temporaryMolecule->vadd(0, corrVeloc, 0);
 					}
 				}
 			}

@@ -36,20 +36,20 @@ private:
 
 	bool _enabled = true;
 
-	int _INTERVAL = 1;
+	int _interval = 1;
 
 	double _motion[3];
 	double _balance[3];
 	double _mass = 0.0;
 	double _boxLength[3];
-	double _Dropradius;
+	double _dropRadius;
 	double _xPosition;
 	double _yPosition;
 	double _zPosition;
-	double _Veloc;
-	double _Steps;
-	double _VelocNOW;
-	double _StartSimstep;
+	double _veloc;
+	double _steps;
+	double _velocNow;
+	double _startSimStep;
 
 	std::vector<char> _particleIsInDroplet;
 

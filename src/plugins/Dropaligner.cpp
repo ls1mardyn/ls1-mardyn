@@ -57,18 +57,18 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		_mass = 0.;
 
 		// ITERATE OVER PARTICLES
-		for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
-			double partMass = tm->mass();
+		for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
+			double partMass = temporaryMolecule->mass();
 			double distanceSquared[3];
 
-			distanceSquared[0] = (_xPos - tm->r(0)) * (_xPos - tm->r(0));
-			distanceSquared[1] = (_yPos - tm->r(1)) * (_yPos - tm->r(1));
-			distanceSquared[2] = (_zPos - tm->r(2)) * (_zPos - tm->r(2));
+			distanceSquared[0] = (_xPos - temporaryMolecule->r(0)) * (_xPos - temporaryMolecule->r(0));
+			distanceSquared[1] = (_yPos - temporaryMolecule->r(1)) * (_yPos - temporaryMolecule->r(1));
+			distanceSquared[2] = (_zPos - temporaryMolecule->r(2)) * (_zPos - temporaryMolecule->r(2));
 
 			if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _radius * _radius) {
 				_mass += partMass;
 				for (int d = 0; d < 3; d++) {
-					_balance[d] += tm->r(d) * partMass;
+					_balance[d] += temporaryMolecule->r(d) * partMass;
 				}
 			}
 		}
@@ -93,16 +93,16 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		_motion[2] = -_alignmentCorrection * ((_balance[2] / _mass) - _zPos);
 
 		// MOVE
-		for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
+		for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
 			double distanceSquared[3];
 
-			distanceSquared[0] = (_xPos - tm->r(0)) * (_xPos - tm->r(0));
-			distanceSquared[1] = (_yPos - tm->r(1)) * (_yPos - tm->r(1));
-			distanceSquared[2] = (_zPos - tm->r(2)) * (_zPos - tm->r(2));
+			distanceSquared[0] = (_xPos - temporaryMolecule->r(0)) * (_xPos - temporaryMolecule->r(0));
+			distanceSquared[1] = (_yPos - temporaryMolecule->r(1)) * (_yPos - temporaryMolecule->r(1));
+			distanceSquared[2] = (_zPos - temporaryMolecule->r(2)) * (_zPos - temporaryMolecule->r(2));
 
 			if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _radius * _radius) {
 				for (unsigned d = 0; d < 3; d++) {
-					tm->move(d, _motion[d]);
+					temporaryMolecule->move(d, _motion[d]);
 				}
 			}
 		}

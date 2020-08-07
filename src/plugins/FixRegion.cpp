@@ -49,11 +49,11 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	std::array<double, 3> min{_xMin, _yMin, _zMin};
 	std::array<double, 3> max{_xMax, _yMax, _zMax};
 	// ITERATE OVER PARTICLES
-	for (auto tm = particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		 tm.isValid(); ++tm) {
+	for (auto temporaryMolecule = particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		 temporaryMolecule.isValid(); ++temporaryMolecule) {
 		for (unsigned i = 0; i < 3; i++) {
-			tm->setv(i, 0.0);
-			tm->setF(i, 0.0);
+			temporaryMolecule->setv(i, 0.0);
+			temporaryMolecule->setF(i, 0.0);
 		}
 		_molCount++;
 	}
@@ -73,12 +73,12 @@ void FixRegion::afterForces(ParticleContainer* particleContainer, DomainDecompBa
 	std::array<double, 3> min{_xMin, _yMin, _zMin};
 	std::array<double, 3> max{_xMax, _yMax, _zMax};
 	// ITERATE OVER PARTICLES
-	for (auto tm = particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		 tm.isValid(); ++tm) {
+	for (auto temporaryMolecule = particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		 temporaryMolecule.isValid(); ++temporaryMolecule) {
 		for (unsigned i = 0; i < 3; i++) {
-			tm->setv(i, 0.0);
+			temporaryMolecule->setv(i, 0.0);
 		}
-		tm->clearFM();
+		temporaryMolecule->clearFM();
 	}
 }
 
