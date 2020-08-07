@@ -12,113 +12,102 @@
 //!
 //!
 //! \param xmlconfig  read from config.xml
-void Dropaligner::readXML(XMLfileUnits& xmlconfig){
-
-    xmlconfig.getNodeValue("xpos", _xPos);
-    xmlconfig.getNodeValue("ypos", _yPos);
-    xmlconfig.getNodeValue("zpos", _zPos);
+void Dropaligner::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("xpos", _xPos);
+	xmlconfig.getNodeValue("ypos", _yPos);
+	xmlconfig.getNodeValue("zpos", _zPos);
 	xmlconfig.getNodeValue("radius", _radius);
-    xmlconfig.getNodeValue("interval", _interval);
-    xmlconfig.getNodeValue("correctionFactor", _alignmentCorrection);
+	xmlconfig.getNodeValue("interval", _interval);
+	xmlconfig.getNodeValue("correctionFactor", _alignmentCorrection);
 
 	// SANITY CHECK
-    if(_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1 || _xPos <= 0. || _yPos <= 0. || _zPos <= 0. || _radius <= 0){
-        global_log -> error() << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-        global_log -> error() << "[Dropaligner] HALTING SIMULATION" << std::endl;
-        _enabled = false;
-        // HALT SIM
-        Simulation::exit(1);
-        return;
-    }
+	if (_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1 || _xPos <= 0. || _yPos <= 0. ||
+		_zPos <= 0. || _radius <= 0) {
+		global_log->error() << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+		global_log->error() << "[Dropaligner] HALTING SIMULATION" << std::endl;
+		_enabled = false;
+		// HALT SIM
+		Simulation::exit(1);
+		return;
+	}
 
-	global_log -> info() << "[Dropaligner] settings:" << std::endl;
-    global_log -> info() << "                  xpos: " << _xPos << std::endl;
-    global_log -> info() << "                  ypos: " << _yPos << std::endl;
-    global_log -> info() << "                  zpos: " << _zPos << std::endl;
-	global_log -> info() << "                  radius: " << _radius << std::endl;
-    global_log -> info() << "                  interval: " << _interval << std::endl;
-    global_log -> info() << "                  correctionFactor: " << _alignmentCorrection << std::endl;
-
-
+	global_log->info() << "[Dropaligner] settings:" << std::endl;
+	global_log->info() << "                  xpos: " << _xPos << std::endl;
+	global_log->info() << "                  ypos: " << _yPos << std::endl;
+	global_log->info() << "                  zpos: " << _zPos << std::endl;
+	global_log->info() << "                  radius: " << _radius << std::endl;
+	global_log->info() << "                  interval: " << _interval << std::endl;
+	global_log->info() << "                  correctionFactor: " << _alignmentCorrection << std::endl;
 }
 
-void Dropaligner::beforeForces(ParticleContainer* particleContainer,
-                              DomainDecompBase* domainDecomp,
-                              unsigned long simstep) {
+void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+							   unsigned long simstep) {
+	if (_enabled) {
+		global_log->debug() << "[Dropaligner] before forces called" << std::endl;
 
-    if(_enabled) {
+		if ((simstep - 1) % _interval != 0) {
+			return;
+		}
 
-        global_log->debug() << "[Dropaligner] before forces called" << std::endl;
+		// RESET
+		for (unsigned d = 0; d < 3; d++) {
+			_balance[d] = 0.0;
+			_motion[d] = 0.0;
+		}
+		_mass = 0.;
 
-        if ((simstep - 1) % _interval != 0) {
-            return;
-        }
-
-        // RESET
-        for (unsigned d = 0; d < 3; d++) {
-            _balance[d] = 0.0;
-            _motion[d] = 0.0;
-        }
-        _mass = 0.;
-
-        // ITERATE OVER PARTICLES
-        for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
-            double partMass = tm->mass();
+		// ITERATE OVER PARTICLES
+		for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
+			double partMass = tm->mass();
 			double distanceSquared[3];
 
-			distanceSquared[0] = (_xPos - tm->r(0)) *  (_xPos - tm->r(0));
-			distanceSquared[1] = (_yPos - tm->r(1)) *  (_yPos - tm->r(1));
-			distanceSquared[2] = (_zPos - tm->r(2)) *  (_zPos - tm->r(2));
+			distanceSquared[0] = (_xPos - tm->r(0)) * (_xPos - tm->r(0));
+			distanceSquared[1] = (_yPos - tm->r(1)) * (_yPos - tm->r(1));
+			distanceSquared[2] = (_zPos - tm->r(2)) * (_zPos - tm->r(2));
 
 			if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _radius * _radius) {
-				
-            	_mass += partMass;
-            	for (int d = 0; d < 3; d++) {
-                	_balance[d] += tm->r(d) * partMass;
-            	}
-        	}
+				_mass += partMass;
+				for (int d = 0; d < 3; d++) {
+					_balance[d] += tm->r(d) * partMass;
+				}
+			}
 		}
 
 		// COMMUNICATION
-        domainDecomp->collCommInit(4);
-        for (int d = 0; d < 3; d++) {
-            domainDecomp->collCommAppendDouble(_balance[d]);
-        }
-        domainDecomp->collCommAppendDouble(_mass);
-        domainDecomp->collCommAllreduceSum();
-        for (int d = 0; d < 3; d++) {
-            _balance[d] = domainDecomp->collCommGetDouble();
-        }
-        _mass = domainDecomp->collCommGetDouble();
-        domainDecomp->collCommFinalize();
+		domainDecomp->collCommInit(4);
+		for (int d = 0; d < 3; d++) {
+			domainDecomp->collCommAppendDouble(_balance[d]);
+		}
+		domainDecomp->collCommAppendDouble(_mass);
+		domainDecomp->collCommAllreduceSum();
+		for (int d = 0; d < 3; d++) {
+			_balance[d] = domainDecomp->collCommGetDouble();
+		}
+		_mass = domainDecomp->collCommGetDouble();
+		domainDecomp->collCommFinalize();
 
 		// CALCULATE MOTION
-        
-        _motion[0] = -_alignmentCorrection * ((_balance[0] / _mass) - _xPos);
+
+		_motion[0] = -_alignmentCorrection * ((_balance[0] / _mass) - _xPos);
 		_motion[1] = -_alignmentCorrection * ((_balance[1] / _mass) - _yPos);
 		_motion[2] = -_alignmentCorrection * ((_balance[2] / _mass) - _zPos);
 
 		// MOVE
-        for(auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm){
-		
+		for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
 			double distanceSquared[3];
-		
-			distanceSquared[0] = (_xPos - tm->r(0)) *  (_xPos - tm->r(0));
-			distanceSquared[1] = (_yPos - tm->r(1)) *  (_yPos - tm->r(1));
-			distanceSquared[2] = (_zPos - tm->r(2)) *  (_zPos - tm->r(2));
+
+			distanceSquared[0] = (_xPos - tm->r(0)) * (_xPos - tm->r(0));
+			distanceSquared[1] = (_yPos - tm->r(1)) * (_yPos - tm->r(1));
+			distanceSquared[2] = (_zPos - tm->r(2)) * (_zPos - tm->r(2));
 
 			if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _radius * _radius) {
-
-            	for (unsigned d = 0; d < 3; d++) {
-            	    tm->move(d, _motion[d]);
-            	}
-        	}
+				for (unsigned d = 0; d < 3; d++) {
+					tm->move(d, _motion[d]);
+				}
+			}
 		}
 	}
-}		
-
-void Dropaligner::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-                         unsigned long simstep) {
 }
 
-        
+void Dropaligner::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
+						  unsigned long simstep) {}

@@ -8,11 +8,11 @@
 #ifndef MARDYN_TRUNK_FIXREGION_H
 #define MARDYN_TRUNK_FIXREGION_H
 
-//class DropalignerTest;
-#include "PluginBase.h"
-#include "particleContainer/ParticleContainer.h"
+// class DropalignerTest;
 #include "Domain.h"
+#include "PluginBase.h"
 #include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
 
 //#include "parallel/DomainDecompBase.h"
 
@@ -33,10 +33,9 @@
 * \endcode
 */
 
-class FixRegion : public PluginBase{
-
+class FixRegion : public PluginBase {
 private:
-  	double _xMin;
+	double _xMin;
 	double _yMin;
 	double _zMin;
 	double _xMax;
@@ -46,42 +45,39 @@ private:
 	unsigned long _molCount;
 
 public:
- /*  Dropaligner(){
-	 // SETUP
-        for (unsigned d = 0; d < 3; d++) {
-            _balance[d] = 0.0;
-            _motion[d] = 0.0;
-        }
-    };
-    ~Dropaligner(){};*/
+	/*  Dropaligner(){
+		// SETUP
+		   for (unsigned d = 0; d < 3; d++) {
+			   _balance[d] = 0.0;
+			   _motion[d] = 0.0;
+		   }
+	   };
+	   ~Dropaligner(){};*/
 
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-//        global_log -> debug() << "DropletRealignment enabled" << std::endl;
+	//        global_log -> debug() << "DropletRealignment enabled" << std::endl;
 
-  //      for(unsigned d = 0; d < 3; d++){
- //           _boxLength[d] = domain->getGlobalLength(d);
-//        }
-//    }
+	//      for(unsigned d = 0; d < 3; d++){
+	//           _boxLength[d] = domain->getGlobalLength(d);
+	//        }
+	//    }
 
-	void readXML (XMLfileUnits& xmlconfig) override;
+	void readXML(XMLfileUnits& xmlconfig) override;
 
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+					  unsigned long simstep) override;
 
-	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+					 unsigned long simstep) override;
 
-    void endStep(
-            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep) override;
+	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
+				 unsigned long simstep) override;
 
+	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
 
-    void finish(ParticleContainer *particleContainer,
-                DomainDecompBase *domainDecomp, Domain *domain) override {};
+	std::string getPluginName() override { return std::string("FixRegion"); }
 
-    std::string getPluginName()override {return std::string("FixRegion");}
-
-    static PluginBase* createInstance(){return new FixRegion();}
-
+	static PluginBase* createInstance() { return new FixRegion(); }
 };
 
-
-#endif //MARDYN_TRUNK_FIXREGION_H
+#endif  // MARDYN_TRUNK_FIXREGION_H
