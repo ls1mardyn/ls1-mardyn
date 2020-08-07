@@ -253,7 +253,7 @@ void Domain::calculateGlobalValues(
 
 		// heuristic handling of the unfortunate special case of an explosion in the system
 		if( ( (_universalBTrans[thermit->first] < MIN_BETA) || (_universalBRot[thermit->first] < MIN_BETA) )
-				&& (0 >= _universalSelectiveThermostatError)  && _bDoExplosionHeuristics == true)
+				&& (0 >= _universalSelectiveThermostatError)  && _bDoExplosionHeuristics)
 		{
 			global_log->warning() << "Explosion!" << endl;
 			global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
@@ -342,7 +342,7 @@ void Domain::calculateGlobalValues(
 
 #ifndef NDEBUG
 		global_log->debug() << "* Th" << thermit->first << " N=" << numMolecules
-			<< " DOF=" << rotDOF + 3.0*numMolecules
+			<< " DOF=" << rotDOF + 3.0 * numMolecules
 			<< " Tcur=" << _globalTemperatureMap[thermit->first]
 			<< " Ttar=" << _universalTargetTemperature[thermit->first]
 			<< " Tfactor=" << Tfactor
@@ -363,12 +363,11 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 {
 	if(this->_componentwiseThermostat)
 	{
-		for( map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
-				thit != _universalUndirectedThermostat.end();
-				thit ++ )
+		for(auto & thit : _universalUndirectedThermostat)
 		{
-			if(thit->second)
-				_localThermostatDirectedVelocity[thit->first].fill(0.0);
+			if(thit.second) {
+				_localThermostatDirectedVelocity[thit.first].fill(0.0);
+			}
 		}
 
 		#if defined(_OPENMP)
@@ -389,8 +388,8 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 			#pragma omp critical(collectVelocities1111)
 			#endif
 			{
-				for (auto it = localThermostatDirectedVelocity_thread.begin(); it != localThermostatDirectedVelocity_thread.end(); ++it) {
-					arrayMath::accumulate(_localThermostatDirectedVelocity[it->first], it->second);
+				for (auto & it : localThermostatDirectedVelocity_thread) {
+					arrayMath::accumulate(_localThermostatDirectedVelocity[it.first], it.second);
 				}
 			}
 
@@ -476,7 +475,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 	}
 }
 
-void Domain::writeCheckpointHeader(string filename,
+void Domain::writeCheckpointHeader(const string& filename,
 		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime) {
 		/* Rank 0 writes file header */
 		if(0 == this->_localRank) {
@@ -489,20 +488,16 @@ void Domain::writeCheckpointHeader(string filename,
 			checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 			if(this->_componentwiseThermostat)
 			{
-				for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
-						thermit != this->_componentToThermostatIdMap.end();
-						thermit++ )
+				for(auto & thermit : this->_componentToThermostatIdMap)
 				{
-					if(0 >= thermit->second) continue;
-					checkpointfilestream << " CT\t" << 1+thermit->first
-						<< "\t" << thermit->second << "\n";
+					if(0 >= thermit.second) continue;
+					checkpointfilestream << " CT\t" << 1+thermit.first
+						<< "\t" << thermit.second << "\n";
 				}
-				for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
-						Tit != this->_universalTargetTemperature.end();
-						Tit++ )
+				for(auto & Tit : this->_universalTargetTemperature)
 				{
-					if((0 >= Tit->first) || (0 >= Tit->second)) continue;
-					checkpointfilestream << " ThT " << Tit->first << "\t" << Tit->second << "\n";
+					if((0 >= Tit.first) || (0 >= Tit.second)) continue;
+					checkpointfilestream << " ThT " << Tit.first << "\t" << Tit.second << "\n";
 				}
 			}
 			else
@@ -526,13 +521,13 @@ void Domain::writeCheckpointHeader(string filename,
 			*/
 			vector<Component>* components = _simulation.getEnsemble()->getComponents();
 			checkpointfilestream << " NumberOfComponents\t" << components->size() << endl;
-			for(vector<Component>::const_iterator pos=components->begin();pos!=components->end();++pos){
-				pos->write(checkpointfilestream);
+			for(const auto & component : *components){
+				component.write(checkpointfilestream);
 			}
 			unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
 			unsigned int iout=0;
-			for(vector<double>::const_iterator pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
-				checkpointfilestream << *pos;
+			for(double pos : _mixcoeff){
+				checkpointfilestream << pos;
 				iout++;
 				// 2 parameters (xi and eta)
 				if(iout/2>=numperline) {
@@ -548,12 +543,10 @@ void Domain::writeCheckpointHeader(string filename,
 				}
 			}
 			checkpointfilestream << _epsilonRF << endl;
-			for( map<int, bool>::iterator uutit = this->_universalUndirectedThermostat.begin();
-					uutit != this->_universalUndirectedThermostat.end();
-					uutit++ )
+			for(auto & thermostat : this->_universalUndirectedThermostat)
 			{
-				if(0 > uutit->first) continue;
-				if(uutit->second) checkpointfilestream << " U\t" << uutit->first << "\n";
+				if(0 > thermostat.first) continue;
+				if(thermostat.second) checkpointfilestream << " U\t" << thermostat.first << "\n";
 			}
 			checkpointfilestream << " NumberOfMolecules\t" << _globalNumMolecules << endl;
 
@@ -563,7 +556,7 @@ void Domain::writeCheckpointHeader(string filename,
 
 }
 
-void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* particleContainer,
+void Domain::writeCheckpointHeaderXML(const string& filename, ParticleContainer* particleContainer,
 		const DomainDecompBase* domainDecomp, double currentTime)
 {
 	if(0 != domainDecomp->getRank() )
@@ -588,7 +581,7 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 	ofs << "</mardyn>" << endl;
 }
 
-void Domain::writeCheckpoint(string filename,
+void Domain::writeCheckpoint(const string& filename,
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime,
 		bool useBinaryFormat) {
 	domainDecomp->assertDisjunctivity(particleContainer);
@@ -663,7 +656,7 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 	}
 
 	this->_universalTargetTemperature[thermostatID] = targetT;
-	if(!(this->_universalUndirectedThermostat[thermostatID] == true))
+	if(not this->_universalUndirectedThermostat[thermostatID])
 		this->_universalUndirectedThermostat[thermostatID] = false;
 
 	/* FIXME: Substantial change in program behavior! */
@@ -682,9 +675,9 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 			_universalUndirectedThermostat.erase(0);
 			this->_universalThermostatDirectedVelocity.erase(0);
 			vector<Component>* components = _simulation.getEnsemble()->getComponents();
-			for( vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
-				if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0)) {
-					this->_componentToThermostatIdMap[ tc->ID() ] = -1;
+			for (auto& component : *components) {
+				if (this->_componentToThermostatIdMap[component.ID()] <= 0) {
+					this->_componentToThermostatIdMap[component.ID()] = -1;
 				}
 			}
 		}

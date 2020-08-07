@@ -133,8 +133,9 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			domain->setTargetTemperature(thermostat_id, targetT);
 		} else if((token == "ComponentThermostat") || (token == "CT") || (token == "o")) {
 			// specify a thermostat for a component
-			if(!domain->severalThermostats())
+			if (not domain->severalThermostats()) {
 				domain->enableComponentwiseThermostat();
+			}
 			int component_id;
 			int thermostat_id;
 			_phaseSpaceHeaderFileStream >> component_id >> thermostat_id;
