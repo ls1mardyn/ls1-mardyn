@@ -60,20 +60,28 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 			global_log->info() << "Startsimstep =" << simstep << endl;
 			global_log->info() << "corrVeloc = " << corrVeloc << endl;
 
+			// resize first
+			_particleIsInDroplet.resize(global_simulation->getDomain()->getglobalNumMolecules(), false);
+
 			for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
 				double distanceSquared[3];
 
-				tm->setDROP(false);
+				_particleIsInDroplet[tm->getID()] = false;
 				distanceSquared[0] = (_xPosition - tm->r(0)) * (_xPosition - tm->r(0));
 				distanceSquared[1] = (_yPosition - tm->r(1)) * (_yPosition - tm->r(1));
 				distanceSquared[2] = (_zPosition - tm->r(2)) * (_zPosition - tm->r(2));
 
 				if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _Dropradius * _Dropradius) {
-					tm->setDROP(true);
+					_particleIsInDroplet[tm->getID()] = true;
 					tm->vadd(0, corrVeloc, 0);
 					numberparticles++;
 				}
 			}
+
+			// TODO: _particleIsInDroplet has to be communicated!
+
+
+			// END TODO
 
 			domainDecomp->collCommInit(1);
 			domainDecomp->collCommAppendInt(numberparticles);
@@ -90,7 +98,7 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 			global_log->info() << "Accelerationsimstep = " << simstep << endl;
 
 			for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
-				if (tm->DROP() == true) {
+				if (_particleIsInDroplet[tm->getID()]) {
 					tm->vadd(0, corrVeloc, 0);
 					numberparticles++;
 				}
@@ -119,7 +127,7 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 			for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
 				double partVelocity = tm->v(1);
 
-				if (tm->DROP() == true) {
+				if (_particleIsInDroplet[tm->getID()]) {
 					Particles += 1;
 					_VelocNOW += partVelocity;
 				}
@@ -155,7 +163,7 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 
 				for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid();
 					 ++tm) {
-					if (tm->DROP() == true) {
+					if (_particleIsInDroplet[tm->getID()]) {
 						tm->vadd(0, deltavelocity, 0);
 					}
 				}
