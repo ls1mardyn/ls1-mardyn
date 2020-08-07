@@ -51,7 +51,7 @@ private:
 	double _VelocNOW;
 	double _StartSimstep;
 
-	std::vector<bool> _particleIsInDroplet;
+	std::vector<char> _particleIsInDroplet;
 
 public:
 	/*  Dropaccelerator(){

@@ -7,6 +7,10 @@
 
 #include "Dropaccelerator.h"
 
+#ifdef ENABLE_MPI
+#include "mpi.h"
+#endif
+
 //! @brief will be called to read configuration
 //!
 //!
@@ -61,6 +65,7 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 			global_log->info() << "corrVeloc = " << corrVeloc << endl;
 
 			// resize first
+			_particleIsInDroplet.clear();
 			_particleIsInDroplet.resize(global_simulation->getDomain()->getglobalNumMolecules(), false);
 
 			for (auto tm = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tm.isValid(); ++tm) {
@@ -78,10 +83,9 @@ void Dropaccelerator::beforeForces(ParticleContainer* particleContainer, DomainD
 				}
 			}
 
-			// TODO: _particleIsInDroplet has to be communicated!
-
-
-			// END TODO
+#ifdef ENABLE_MPI
+			MPI_Allreduce(MPI_IN_PLACE, _particleIsInDroplet.data(), _particleIsInDroplet.size(), MPI_CHAR, MPI_LOR, domainDecomp->getCommunicator());
+#endif
 
 			domainDecomp->collCommInit(1);
 			domainDecomp->collCommAppendInt(numberparticles);
