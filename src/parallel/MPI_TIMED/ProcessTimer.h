@@ -67,6 +67,8 @@ public:
 	//! @param reset Determines if Timer should be reseted
 	int getTime(int process, bool reset = false, bool debug = false){
 		int time = _process_time[process];
+        std::cout << "ProcessTimer Time: " << time << std::endl;
+        std::cout << "ProcessTimer Array-Time: " << _process_time[process] << std::endl;
 		if (debug)
 			writeProcessTimeLogSingle(process, _process_time[process], true);
 		if (reset)
