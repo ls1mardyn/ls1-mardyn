@@ -67,7 +67,7 @@ public:
 	//! @param debug Prints time into csv
 	//! @param reset Determines if Timer should be reseted
 	int getTime(int process, bool reset = false, bool debug = false){
-		int time = _process_time[process];
+		double time = _process_time[process];
         std::cout << "ProcessTimer Time: " << time << std::endl;
         std::cout << "ProcessTimer Array-Time: " << _process_time[process] << std::endl;
 		if (debug)
