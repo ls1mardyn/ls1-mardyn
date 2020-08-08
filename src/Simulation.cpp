@@ -977,18 +977,17 @@ void Simulation::simulate() {
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			double lastTraversalTime = currentTime - previousTimeForLoad;
 			double timeSpentInMPI = _processTimer.getTime(process, true, false);
+			std::cout << "TimeSpentinMPI: " << timeSpentInMPI << std::endl;
+			std::cout << "LastTraversalTime: " << lastTraversalTime << std::endl;
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
-            
-
 // ###### Only for Measuremnts (BA Jeremy Harisch) ######
 // Will be removed after measurements
             else{
                 timeSpentInMPI -= timeSpentInMPI;
+                std::cout << "Reduction of timeSpentInMPI: " << timeSpentInMPI << std::endl;
             }
-
-
 			std::ofstream _processRuntime;
 			_processRuntime.open("process" + std::to_string(process) + "RawLastTraversalRuntime.csv", std::ios::app);
 			_processRuntime << currentTime - previousTimeForLoad << ", ";
