@@ -9,6 +9,7 @@
 #define MARDYN_PROCESSTIMER_H
 #define _BSD_SOURCE
 
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <array>
