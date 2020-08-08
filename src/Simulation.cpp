@@ -982,6 +982,7 @@ void Simulation::simulate() {
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
+			std::cout << "Final LastTraversalTime: " << lastTraversalTime << std::endl;
 // ###### Only for Measuremnts (BA Jeremy Harisch) ######
 // Will be removed after measurements
 
