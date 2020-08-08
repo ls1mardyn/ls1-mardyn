@@ -66,7 +66,7 @@ public:
 	//! @param debug Prints time into csv
 	//! @param reset Determines if Timer should be reseted
 	int getTime(int process, bool reset = false, bool debug = false){
-		int time = _process_time[process];
+		double time = _process_time[process];
 		if (debug)
 			writeProcessTimeLogSingle(process, _process_time[process], true);
 		if (reset)

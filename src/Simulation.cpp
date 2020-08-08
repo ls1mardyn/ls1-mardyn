@@ -980,15 +980,12 @@ void Simulation::simulate() {
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
-            
-
+			
 // ###### Only for Measuremnts (BA Jeremy Harisch) ######
 // Will be removed after measurements
             else{
                 timeSpentInMPI -= timeSpentInMPI;
             }
-
-
 			std::ofstream _processRuntime;
 			_processRuntime.open("process" + std::to_string(process) + "RawLastTraversalRuntime.csv", std::ios::app);
 			_processRuntime << currentTime - previousTimeForLoad << ", ";
