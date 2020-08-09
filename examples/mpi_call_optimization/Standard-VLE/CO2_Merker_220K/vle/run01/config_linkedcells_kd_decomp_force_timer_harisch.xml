@@ -50,7 +50,7 @@
     <algorithm>
       <parallelisation type="KDDecomposition">
         <updateFrequency>10</updateFrequency>
-        <fullSearchThreshold>4</fullSearchThreshold>
+        <fullSearchThreshold>2</fullSearchThreshold>
         <heterogeneousSystems>false</heterogeneousSystems>
         <useVectorizationTuner>false</useVectorizationTuner>
         <splitBiggestDimension>true</splitBiggestDimension>
