@@ -60,7 +60,7 @@
 	<tuningInterval>1000</tuningInterval>
 	<tuningSamples>10</tuningSamples>
 	<rebuildFrequency>10</rebuildFrequency>
-	<skin>1.4</skin>
+	<skin>2.4</skin>
       </datastructure>      			
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">12.0</radiusLJ>
