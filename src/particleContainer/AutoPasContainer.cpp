@@ -29,6 +29,7 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
 	_verletClusterSize = _autopasContainer.getVerletClusterSize();
     _relativeOptimumRange = _autopasContainer.getRelativeOptimumRange();
+    _relativeBlacklistRange = _autopasContainer.getRelativeRangeForBlacklist();
     _maxTuningPhasesWithoutTest = _autopasContainer.getMaxTuningPhasesWithoutTest();
     _evidenceForPrediction = _autopasContainer.getEvidenceFirstPrediction();
     _extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
@@ -118,6 +119,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_verletSkin = static_cast<double>(
 		xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
 	_relativeOptimumRange = static_cast<double>(xmlconfig.getNodeValue_double("optimumRange", static_cast<double>(_relativeOptimumRange)));
+	_relativeBlacklistRange = static_cast<double>(xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
 
 	xmlconfig.changecurrentnode(oldPath);
 }
@@ -145,6 +147,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
 	_autopasContainer.setMaxTuningPhasesWithoutTest(_maxTuningPhasesWithoutTest);
+	_autopasContainer.setRelativeRangeForBlacklist(_relativeBlacklistRange);
 	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
 	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
 	_autopasContainer.init();
@@ -185,6 +188,8 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
                      << ": " << _autopasContainer.getRelativeOptimumRange() << endl
                      << setw(valueOffset) << left << "Tuning Phases without test "
                      << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
+                     << setw(valueOffset) << left << "Blacklist Range "
+                     << ": " << _autopasContainer.getRelativeRangeForBlacklist() << endl
                      << setw(valueOffset) << left << "Evidence for prediction "
                      << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
                      << setw(valueOffset) << left << "Extrapolation method "
@@ -248,7 +253,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 	// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 	autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 					   /*calculateGlobals*/ true>
-		functor(_cutoff, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
+		functor(_cutoff, _particlePropertiesLibrary);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif

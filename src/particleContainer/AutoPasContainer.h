@@ -45,6 +45,7 @@ public:
 		<rebuildFrequency>INTEGER</rebuildFrequency>
 		<skin>DOUBLE</skin>
 	    <optimumRange>DOUBLE</optimumRange>
+	   <blacklistRange>DOUBLE</blacklistRange>
 	   </datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
@@ -143,6 +144,7 @@ private:
 	double _cutoff{0.};
 	double _verletSkin;
     double _relativeOptimumRange;
+    double _relativeBlacklistRange;
 	unsigned int _verletRebuildFrequency;
 	unsigned int _verletClusterSize;
 	unsigned int _tuningFrequency;
