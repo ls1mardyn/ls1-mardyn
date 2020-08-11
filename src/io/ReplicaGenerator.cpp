@@ -401,18 +401,12 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 	int nRank = domainDecomp->getRank();
 	double dVolumeSubdomain = bbLength[0] * bbLength[1] * bbLength[2];
 	double dDensityMax = 0;
-	for(auto sd : _vecSubDomains) {
+	for(const auto& sd : _vecSubDomains) {
 		if(sd.dDensity > dDensityMax)
 			dDensityMax = sd.dDensity;
 	}
-	uint64_t numParticlesPerSubdomainMax = (uint64_t) ceil(dDensityMax * 1.1 *
-														   dVolumeSubdomain);  //  safety factor 1.1 allows 10% higher density in sliced compared to whole subdomain
-	uint64_t nActID = numParticlesPerSubdomainMax * nRank;
-	uint64_t nMaxID = numParticlesPerSubdomainMax * (nRank + 1);
 
 #ifndef NDEBUG
-	cout << domainDecomp->getRank() << ": numParticlesPerSubdomainMax = " << numParticlesPerSubdomainMax << endl;
-	cout << domainDecomp->getRank() << ": nActID (init) = " << nActID << endl;
 	cout << domainDecomp->getRank() << ": bbMin = " << bbMin[0] << ", " << bbMin[1] << ", " << bbMin[2] << endl;
 	cout << domainDecomp->getRank() << ": bbMax = " << bbMax[0] << ", " << bbMax[1] << ", " << bbMax[2] << endl;
 	cout << domainDecomp->getRank() << ": bbLength = " << bbLength[0] << ", " << bbLength[1] << ", " << bbLength[2]
@@ -486,20 +480,33 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 							uint32_t cid = mol.componentid();
 							Component* comp = &ptrComponents->at(ptrChangeVec->at(cid));
 							mol.setComponent(comp);
-							mol.setid(++nActID);
+							mol.setid(numAddedParticlesLocal);
 							// inbox check already performed a few lines earlier.
-							particleContainer->addParticle(mol, true, false);
+							bool added = particleContainer->addParticle(mol, true, false);
+							mardyn_assert(added);
 							numAddedParticlesLocal++;
-						} else
+						} else {
 							numAddedParticlesFreespaceLocal++;
+						}
 					}
 				}
 			}
 		}
 	}
 
+
+	domainDecomp->collCommInit(1);
+	domainDecomp->collCommAppendUnsLong(numAddedParticlesLocal);//number of local molecules
+	domainDecomp->collCommScanSum();
+	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - numAddedParticlesLocal;
+	domainDecomp->collCommFinalize();
+	// fix ID's to be unique:
+	for (auto mol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
+		mol->setid(mol->getID() + idOffset);
+	}
+
+
 	// update global number of particles, perform number checks
-	mardyn_assert(nActID <= nMaxID);
 	uint64_t numParticlesLocal = particleContainer->getNumberOfParticles();
 	uint64_t numParticlesGlobal = 0;
 	uint64_t numAddedParticlesFreespaceGlobal = 0;
