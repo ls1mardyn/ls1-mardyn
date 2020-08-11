@@ -217,6 +217,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			check[m->getID()] = 0;
 		}
 		MPI_Status status;
+		bool isOk = true;
 		for (int i = 1; i < _numProcs; i++) {
 			int num_recv = 0;
 			MPI_CHECK(MPI_Probe(i, 2674 + i, _comm, &status));
@@ -228,11 +229,16 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 				if (check.find(recv[j]) != check.end()) {
 					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
 							<< recv[j] << endl;
-					MPI_Abort(_comm, 1);
+					isOk = false;
 				} else
 					check[recv[j]] = i;
 			}
 		}
+		if (not isOk) {
+			global_log->error() << "Aborting because of duplicated partices." << endl;
+			MPI_Abort(_comm, 1);
+		}
+
 		global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
 				<< " entries." << endl;
 	}
