@@ -50,6 +50,7 @@
     <algorithm>
       <parallelisation type="GeneralDomainDecomposition">
 	<timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+    <updateFrequency>10</updateFrequency>
       </parallelisation>
       <datastructure type="AutoPas">
 	<allowedTraversals>c08</allowedTraversals>
