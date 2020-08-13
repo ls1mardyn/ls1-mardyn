@@ -95,6 +95,15 @@ private:
 		uint32_t writeFreq;
 		CommVar<std::vector<double> > data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
 	} _addedEkin;
+	
+	struct Ramp {
+		bool enabled;
+		float start, end, delta, slope;
+		struct Update {
+			uint64_t start, stop, delta, elapsed;
+			uint32_t freq;
+		} update;
+	} _ramp;
 };
 
 
