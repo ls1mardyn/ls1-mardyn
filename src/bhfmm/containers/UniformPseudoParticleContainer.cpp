@@ -15,7 +15,9 @@
 #include <string>
 #include <algorithm>
 #include <array>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <bhfmm/FastMultipoleMethod.h>
 
 namespace bhfmm {
