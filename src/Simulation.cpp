@@ -121,6 +121,7 @@ Simulation::Simulation()
 	_timeFromStart.start();
 	_ensemble = new CanonicalEnsemble();
 	initialize();
+	_optionalParticleData = std::make_unique<OptionalParticleData>();
 }
 
 Simulation::~Simulation() {
