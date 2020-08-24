@@ -13,7 +13,7 @@
 
 #include "WrapOpenMP.h"
 
-template<class ParticleCellTemplate>
+template<class CellTemplate>
 class CellPairTraversals;
 template<class CellTemplate>
 class TraversalTuner;
