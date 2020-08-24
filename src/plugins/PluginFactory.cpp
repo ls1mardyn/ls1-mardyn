@@ -38,8 +38,12 @@
 #include "io/XyzWriter.h"
 
 // General plugins
+#include "plugins/Dropveloc.h"
 #include "plugins/COMaligner.h"
+#include "plugins/Dropaligner.h"
+#include "plugins/Dropaccelerator.h"
 #include "plugins/ExamplePlugin.h"
+#include "plugins/FixRegion.h"
 #include "plugins/InMemoryCheckpointing.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
@@ -70,13 +74,17 @@ template <>
 void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
+	REGISTER_PLUGIN(Dropveloc);
 	REGISTER_PLUGIN(COMaligner);
+	REGISTER_PLUGIN(Dropaligner);
+	REGISTER_PLUGIN(Dropaccelerator);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
 	REGISTER_PLUGIN(DecompWriter);
 	REGISTER_PLUGIN(EnergyLogWriter);
 	REGISTER_PLUGIN(ExamplePlugin);
+	REGISTER_PLUGIN(FixRegion);
 	REGISTER_PLUGIN(FlopRateWriter);
 	REGISTER_PLUGIN(GammaWriter);
 	REGISTER_PLUGIN(HaloParticleWriter);

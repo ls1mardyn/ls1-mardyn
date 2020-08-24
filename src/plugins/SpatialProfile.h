@@ -27,6 +27,8 @@ class TemperatureProfile;
 
 class VirialProfile;
 
+class Virial2DProfile;
+
 
 /** @brief SpatialProfile is a Plugin that is called like any other plugin derived from PluginBase. It handles all profiles in /plugins/profiles. <br>
  * New profiles must be added via the plugins/ ProfileBase to comply with this Plugin. <br>
@@ -98,7 +100,8 @@ private:
 	DOFProfile* _dofProfile;
 	KineticProfile* _kineticProfile;
 	VirialProfile* _virialProfile;
-
+	Virial2DProfile* _virial2DProfile;
+	
 	unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
 	unsigned long _initStatistics; // Timesteps to skip at start of the simulation
 	unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
@@ -121,6 +124,7 @@ private:
 	bool _VELOCITY3D = false;
 	bool _TEMPERATURE = false;
 	bool _VIRIAL = false;
+	bool _VIRIAL2D = false;
 
 	void addProfile(ProfileBase* profile);
 

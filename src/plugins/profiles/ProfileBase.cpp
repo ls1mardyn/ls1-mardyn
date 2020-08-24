@@ -52,7 +52,8 @@ void ProfileBase::writeCylMatrix (ofstream& outfile) {
 	// R2 - axis label
 	//outfile << "R2 labels\n";
 	for (unsigned r = 0; r < _samplInfo.universalProfileUnit[0]; r++) {
-		outfile << (r + 0.5) / _samplInfo.universalInvProfileUnit[0] << "  \t"; // Eintragen der R Koordinaten in Header
+		outfile << 0.5*(sqrt(r+1)+sqrt(r)) / sqrt(_samplInfo.universalInvProfileUnit[0]) << " \t"; // Eintragen der R-Koordinate in Header korrigiert
+		//outfile << (r + 0.5) / _samplInfo.universalInvProfileUnit[0] << "  \t"; // Eintragen der R Koordinaten in Header
 	}
 	//outfile << "END R2";
 	outfile << "\n";

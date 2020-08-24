@@ -191,6 +191,13 @@ public:
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);
+	
+	//! @brief set numMolecules in FixRegion 
+
+    void setNumFixRegion(unsigned long nf);
+        
+    //! @brief set numMolecules in FixRegion 
+    unsigned long getNumFixRegion();
 
 	//! @brief update globalNumMolecules
 	void updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
@@ -466,6 +473,9 @@ private:
 	//! multiplied with the squared  rotational velocity
 	std::map<int, double> _local2KERot; 
 
+	// number of molecules in FixRegion
+	unsigned long _numMoleculesFix;
+	
 	//! reaction field
 	//!
 	//! This is neither "local" nor "global" but a parameter of the reaction field method.
