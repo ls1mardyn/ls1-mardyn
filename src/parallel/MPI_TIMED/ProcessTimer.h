@@ -44,7 +44,7 @@ public:
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			double measurement_time = MPI_Wtime();
-			_process_time[process] -= measurement_time;
+			_process_time -= measurement_time;
 			_processes_debug[process].push_back(-measurement_time);
 		}
 
@@ -56,7 +56,7 @@ public:
             double measurement_time = MPI_Wtime();
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
-			_process_time[process] += measurement_time;
+			_process_time += measurement_time;
 			_processes_debug[process][_processes_debug[process].size()-1] -= measurement_time;
 		}
 	}
@@ -66,9 +66,9 @@ public:
 	//! @param debug Prints time into csv
 	//! @param reset Determines if Timer should be reseted
 	double getTime(int process, bool reset = false, bool debug = false){
-		double time = _process_time[process];
+		double time = _process_time;
 		if (debug)
-			writeProcessTimeLogSingle(process, _process_time[process], true);
+			writeProcessTimeLogSingle(process, _process_time, true);
 		if (reset)
 			resetTimer(process);
 		return time;
@@ -104,12 +104,12 @@ public:
 	//! @brief Resets the time of given process
 	//! @param process ID of process
 	void resetTimer(int process) {
-        _process_time[process] -= _process_time[process];
+        _process_time -= _process_time;
 	}
 
 protected:
 private:
-	std::map<int, double> _process_time;
+	double _process_time;
 	std::map<int, std::vector<double>> _processes_debug;
 	int _profiling_switch = 1;
 };
