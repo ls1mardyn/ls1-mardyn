@@ -973,10 +973,8 @@ void Simulation::simulate() {
 			global_log->debug() << "Updating container and decomposition" << endl;
 			double currentTime = _timerForLoad->get_etime();
 #if defined(ENABLE_MPI)
-			int process;
-			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			double lastTraversalTime = currentTime - previousTimeForLoad;
-			double timeSpentInMPI = _processTimer.getTime(process, true, false);
+			double timeSpentInMPI = _processTimer.getTime(true, false);
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
