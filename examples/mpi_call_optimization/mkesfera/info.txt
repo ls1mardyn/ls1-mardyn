@@ -1,0 +1,4 @@
+./:
+	|- Sphere of molecules surrounded by floating single molecules
+
+Was used for evaluation in BA: Optimizing MPI Load Balancing in ls1 mardyn; Jeremy Harisch.

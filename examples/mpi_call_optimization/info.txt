@@ -1,0 +1,34 @@
+Simulations:
+	|- Evaporation:
+		|- Simulation of a liquid into the vacuum
+	|- mkesfera:
+		|- Simulation of a sphere surrounded by single molecules
+	|- Standard-VLE:
+		|- Simulation of a standard vapor-liquid-equilibrium(CO2)
+
+Each simulation has different configuration-files to recreate scenarios of BA: Optimizing MPI Load Balancing in ls1 mardyn; Jeremy Harisch
+
+Config-Files:
+	|- config_autopas_domain_decomp_force_timer_harisch.xml
+		|- Simulation uses AutoPas as datastructure
+		|- Domain Decomposition is used as rebalancing strategy
+		|- SIMULATION_FORCE_CALCULATION is used as timer for load balancer
+	|- config_autopas_domain_decomp_harisch.xml
+		|- Simulation uses AutoPas as datastructure
+		|- Domain Decomposition is used as rebalancing strategy
+	|- config_autopas_general_domain_decomp_force_timer_harisch.xml
+		|- Simulation uses AutoPas as datastructure
+		|- General Domain Decomposition is used as rebalancing strategy
+		|- SIMULATION_FORCE_CALCULATION is used as timer for load balancer
+	|- config_autopas_general_domain_decomp_harisch.xml
+		|- Simulation uses AutoPas as datastructure
+		|- General Domain Decomposition is used as rebalancing strategy
+	|- config_linkedcells_kd_decomp_force_timer_harisch.xml
+		|- Simulation uses LinkedCells as datastructure
+		|- kd Decomposition is used as rebalancing strategy
+		|- SIMULATION_FORCE_CALCULATION is used as timer for load balancer
+	|- config_linkedcells_kd_decomp_harisch.xml
+		|- Simulation uses LinkedCells as datastructure
+		|- kd Decomposition is used as rebalancing strategy
+
+

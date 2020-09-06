@@ -1,0 +1,12 @@
+sim01/run01: 
+	|- equilibrate liquid phase
+  	|- small liquid phase for system creation, liquid reservoir
+  
+sim02/run01: 
+	|- Usage of sim01/run01
+	|- evaporation into vacuum
+  	|- Const. feed rate to populate vapor 
+	|- Simulates the evaporation of a liquid into the vacuum
+
+sim02 was used for evaluation in BA: Optimizing MPI Load Balancing in ls1 mardyn; Jeremy Harisch.
+
