@@ -67,10 +67,11 @@ public:
 	//! @param reset Determines if Timer should be reseted
 	double getTime(bool reset = false, bool debug = false){
 		double time = _process_time;
-		if (debug)
-            int process;
-            MPI_Comm_rank(MPI_COMM_WORLD, &process);
+		if (debug){
+            		int process;
+            		MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			writeProcessTimeLogSingle(process, _process_time, true);
+		}
 		if (reset)
 			resetTimer(process);
 		return time;
