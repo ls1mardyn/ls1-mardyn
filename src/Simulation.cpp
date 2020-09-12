@@ -978,24 +978,6 @@ void Simulation::simulate() {
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
-			
-// ###### Only for Measuremnts (BA Jeremy Harisch) ######
-// Will be removed after measurements
-            else{
-                timeSpentInMPI -= timeSpentInMPI;
-            }
-			std::ofstream _processRuntime;
-			_processRuntime.open("process" + std::to_string(process) + "RawLastTraversalRuntime.csv", std::ios::app);
-			_processRuntime << currentTime - previousTimeForLoad << ", ";
-
-            std::ofstream _finalProcessRuntime;
-			_finalProcessRuntime.open("process" + std::to_string(process) + "FinalLastTraversalRuntime.csv", std::ios::app);
-			_finalProcessRuntime << lastTraversalTime << ", ";
-            
-            std::ofstream _mpiRuntime;
-            _mpiRuntime.open("process" + std::to_string(process) + "MPI-Runtime.csv", std::ios::app);
-            _mpiRuntime << timeSpentInMPI << ", ";
-// #####################################################
             
             updateParticleContainerAndDecomposition(lastTraversalTime);
 
