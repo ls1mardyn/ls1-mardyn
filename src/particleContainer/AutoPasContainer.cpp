@@ -29,7 +29,7 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
 	_verletClusterSize = _autopasContainer.getVerletClusterSize();
     _relativeOptimumRange = _autopasContainer.getRelativeOptimumRange();
-    _relativeBlacklistRange = _autopasContainer.getRelativeRangeForBlacklist();
+    _relativeBlacklistRange = _autopasContainer.getRelativeBlacklistRange();
     _maxTuningPhasesWithoutTest = _autopasContainer.getMaxTuningPhasesWithoutTest();
     _evidenceForPrediction = _autopasContainer.getEvidenceFirstPrediction();
     _extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
@@ -147,7 +147,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
 	_autopasContainer.setMaxTuningPhasesWithoutTest(_maxTuningPhasesWithoutTest);
-	_autopasContainer.setRelativeRangeForBlacklist(_relativeBlacklistRange);
+	_autopasContainer.setRelativeBlacklistRange(_relativeBlacklistRange);
 	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
 	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
 	_autopasContainer.init();
@@ -189,7 +189,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
                      << setw(valueOffset) << left << "Tuning Phases without test "
                      << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
                      << setw(valueOffset) << left << "Blacklist Range "
-                     << ": " << _autopasContainer.getRelativeRangeForBlacklist() << endl
+                     << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
                      << setw(valueOffset) << left << "Evidence for prediction "
                      << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
                      << setw(valueOffset) << left << "Extrapolation method "
@@ -223,7 +223,7 @@ void AutoPasContainer::forcedUpdate() {
 		Simulation::exit(435);
 	}
 	_hasInvalidParticles = true;
-	_invalidParticles = _autopasContainer.updateContainerForced();
+	std::tie(_invalidParticles, std::ignore) = _autopasContainer.updateContainer();
 }
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
@@ -338,7 +338,7 @@ void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
 void AutoPasContainer::deleteOuterParticles() {
 	global_log->info() << "deleting outer particles by using forced update" << std::endl;
-	auto invalidParticles = _autopasContainer.updateContainerForced();
+	auto [invalidParticles, ignore] = _autopasContainer.updateContainer();
 	if (not invalidParticles.empty()) {
 		throw std::runtime_error(
 			"AutoPasContainer: Invalid particles ignored in deleteOuterParticles, check that your rebalance rate is a "
