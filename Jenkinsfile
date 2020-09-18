@@ -440,6 +440,8 @@ pipeline {
                     results[it.join('-')].put("unit-test", unit_test_result)
                     results[it.join('-')].put("validation-test", validation_test_result)
                     error err
+                  } finally {
+                    cleanWs(deleteDirs:true, disableDeferredWipeout: true)
                   }
                 }
               }
