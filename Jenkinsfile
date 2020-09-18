@@ -432,6 +432,7 @@ pipeline {
                     results[it.join('-')].put("build", build_result)
                     results[it.join('-')].put("unit-test", unit_test_result)
                     results[it.join('-')].put("validation-test", validation_test_result)
+                    cleanWs(deleteDirs:true, disableDeferredWipeout: true)
                   }
                   catch (err) {
                     results.put(it.join('-'), [:])
@@ -439,6 +440,7 @@ pipeline {
                     results[it.join('-')].put("build", build_result)
                     results[it.join('-')].put("unit-test", unit_test_result)
                     results[it.join('-')].put("validation-test", validation_test_result)
+                    cleanWs(deleteDirs:true, disableDeferredWipeout: true)
                     error err
                   }
                 }
