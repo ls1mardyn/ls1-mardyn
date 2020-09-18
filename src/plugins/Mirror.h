@@ -60,6 +60,9 @@ public:
 				<velo_target>FLOAT</velo_target>         <!-- target hydrodynamic velocity -->
 				<fixed_probability>FLOAT</fixed_probability>         <!-- (optional) fixed probability for reflection in Meland2004 mirror -->
 			</meland>
+			<diffuse>   <!-- particles will not sharply be reflected at mirror position x, but at x + dx, where dx is a random number between 0 and <width> -->
+				<width>FLOAT</width>   <!-- width of region behind mirror in which particles will be reflected -->
+			</diffuse>
 			<ramping>
 				<start>UNSIGNED_LONG</start>   <!-- Timestep until all particles are reflected -->
 				<stop>UNSIGNED_LONG</stop>         <!-- As from this timestep all particles are treated as set in "treatment" -->
@@ -182,6 +185,12 @@ private:
 		CommVar<std::vector<uint64_t> > reflected;
 		CommVar<std::vector<uint64_t> > deleted;
 	} _particleManipCount;
+	
+	struct DiffuseMirror {
+		bool enabled;
+		float width;
+		std::map<uint64_t,double> pos_map;
+	} _diffuse_mirror;
 };
 
 #endif /*MIRROR_H_*/

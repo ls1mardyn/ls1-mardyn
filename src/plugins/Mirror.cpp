@@ -15,6 +15,12 @@
 using namespace std;
 using Log::global_log;
 
+template<typename It>
+void printInsertionStatus(It it, bool success)
+{
+	std::cout << "Insertion of " << it->first << (success ? " succeeded\n" : " failed\n");
+}
+
 Mirror::Mirror() :
 	_pluginID(100)
 {
@@ -208,6 +214,12 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		}
 	}
 	
+	/** Diffuse mirror **/
+	_diffuse_mirror.enabled = false;
+	_diffuse_mirror.width = 0;
+	bool bRet = xmlconfig.getNodeValue("diffuse/width", _diffuse_mirror.width);
+	_diffuse_mirror.enabled = bRet;
+	global_log->info() << "Using diffuse Mirror width = " << _diffuse_mirror.width << endl;
 }
 
 void Mirror::beforeForces(
@@ -264,8 +276,8 @@ void Mirror::beforeForces(
 		// most boxmax.
 		// if the mirror is an MD_LEFT_MIRROR _position.coord defines the upper boundary of the mirror, thus we check if _position.coord is
 		// at lese boxmin.
-		if ((_direction == MD_RIGHT_MIRROR and _position.coord < particleContainer->getBoundingBoxMax(1)) or
-			(_direction == MD_LEFT_MIRROR and _position.coord > particleContainer->getBoundingBoxMin(1))) {
+		if ((_direction == MD_RIGHT_MIRROR and _position.coord-_diffuse_mirror.width < particleContainer->getBoundingBoxMax(1)) or
+			(_direction == MD_LEFT_MIRROR and _position.coord+_diffuse_mirror.width > particleContainer->getBoundingBoxMin(1))) {
 			// if linked cell in the region of the mirror boundary
 			for (unsigned d = 0; d < 3; d++) {
 				regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
@@ -274,10 +286,10 @@ void Mirror::beforeForces(
 
 			if (_direction == MD_RIGHT_MIRROR) {
 				// ensure that we do not iterate over things outside of the container.
-				regionLowCorner[1] = std::max(_position.coord, regionLowCorner[1]);
+				regionLowCorner[1] = std::max(_position.coord-_diffuse_mirror.width, regionLowCorner[1]);
 			} else if (_direction == MD_LEFT_MIRROR) {
 				// ensure that we do not iterate over things outside of the container.
-				regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
+				regionHighCorner[1] = std::min(_position.coord+_diffuse_mirror.width, regionHighCorner[1]);
 			}
 
 			// reset local values
@@ -292,6 +304,34 @@ void Mirror::beforeForces(
 				double vy = it->v(1);
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
 					continue;
+				/** Diffuse Mirror **/
+				if (_diffuse_mirror.enabled == true) {
+					uint64_t pid = it->getID();
+					double ry = it->r(1);
+					double mirror_pos;
+					auto search = _diffuse_mirror.pos_map.find(pid);
+					if (search != _diffuse_mirror.pos_map.end() ) {
+						mirror_pos = search->second;
+					}
+					else {
+						float frnd = _rnd->rnd();
+						if (_direction == MD_RIGHT_MIRROR)
+							mirror_pos = _position.coord - frnd * _diffuse_mirror.width;
+						else
+							mirror_pos = _position.coord + frnd * _diffuse_mirror.width;
+						const auto [it, success] = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
+#ifndef NDEBUG
+						printInsertionStatus(it, success);
+#endif
+					}
+					
+					if (ry <= mirror_pos)
+						continue;
+					else {
+						auto search = _diffuse_mirror.pos_map.find(pid);
+						_diffuse_mirror.pos_map.erase(search);
+					}
+				}
 				double vy_reflected = 2*_melandParams.velo_target - vy;
 				if ( (_direction == MD_RIGHT_MIRROR && vy_reflected < 0.) || (_direction == MD_LEFT_MIRROR && vy_reflected > 0.) ) {
 					float frnd = 0, pbf = 1.;  // pbf: probability factor, frnd (float): random number [0..1)
