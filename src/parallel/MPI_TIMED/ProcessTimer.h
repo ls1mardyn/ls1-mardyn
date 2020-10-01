@@ -72,8 +72,9 @@ public:
             		MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			writeProcessTimeLogSingle(process, _process_time, true);
 		}
-		if (reset)
+		if (reset) {
 			resetTimer(process);
+		}
 		return time;
 	}
 
@@ -110,7 +111,6 @@ public:
         _process_time -= _process_time;
 	}
 
-protected:
 private:
 	double _process_time;
 	std::map<int, std::vector<double>> _processes_debug;
