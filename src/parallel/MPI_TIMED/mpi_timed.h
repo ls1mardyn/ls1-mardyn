@@ -1,6 +1,3 @@
-//
-// Created by jeremyharisch on 11.05.20.
-//
 
 #ifndef MARDYN_MPI_TIMED_H
 #define MARDYN_MPI_TIMED_H

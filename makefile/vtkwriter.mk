@@ -2,8 +2,6 @@
 $(info included vtkwriter.mk!)
 
 VTK_SOURCES = $(shell find ./ -name "*.cpp" | grep -v "/tests/" | grep "/vtk/")
-VTK_INCDIR = /dss/dsshome1/lrz/sys/spack/release/19.2/opt/x86_avx2/xerces-c/3.2.1-gcc-jz3anmr/include/
-VTK_LIBDIR = /dss/dsshome1/lrz/sys/spack/release/19.2/opt/x86_avx2/xerces-c/3.2.1-gcc-jz3anmr/include/
 
 SOURCES += $(VTK_SOURCES)
 CXXFLAGS += -DVTK
