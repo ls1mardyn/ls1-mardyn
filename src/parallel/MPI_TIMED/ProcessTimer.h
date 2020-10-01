@@ -110,7 +110,6 @@ public:
         _process_time -= _process_time;
 	}
 
-protected:
 private:
 	double _process_time;
 	std::map<int, std::vector<double>> _processes_debug;
