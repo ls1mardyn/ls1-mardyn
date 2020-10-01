@@ -72,8 +72,9 @@ public:
             		MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			writeProcessTimeLogSingle(process, _process_time, true);
 		}
-		if (reset)
+		if (reset) {
 			resetTimer(process);
+		}
 		return time;
 	}
 
