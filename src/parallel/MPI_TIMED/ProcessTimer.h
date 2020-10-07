@@ -81,28 +81,33 @@ public:
 	//! @brief Writes given Process and time spent in MPI-Calls into "processRuntime.txt"
 	//! @param csv Time are written ether to a csv or txt file
 	void writeProcessTimeLogSingle(int process, double time, bool csv) {
-		std::ofstream _processRuntime;
+	    if (!_processRuntimeSingle.is_open()){
+            if(csv){
+                _processRuntimeSingle.open("process" + std::to_string(process) + "MPI-Runtime.csv", std::ios::app);
+            }
+            else{
+                _processRuntimeSingle.open("process" + std::to_string(process) + "MPI-Runtime.txt", std::ios::app);
+            }
+        }
 		if(csv){
-			_processRuntime.open("process" + std::to_string(process) + "MPI-Runtime.csv", std::ios::app);
-			_processRuntime << time << ", ";
+			_processRuntimeSingle << time << ", ";
 		}
 		else{
-			_processRuntime.open("process" + std::to_string(process) + "MPI-Runtime.txt", std::ios::app);
-			_processRuntime << "Rank: " << process << " Runtime: " << time << " seconds\n";
+			_processRuntimeSingle << "Rank: " << process << " Runtime: " << time << " seconds\n";
 		}
-        _processRuntime.close();
 	}
 
 	//! @brief Writes whole debug-map into "processRuntime.txt" in current directory
 	void writeProcessTimeLog() {
-		std::ofstream _processRuntime;
-		_processRuntime.open("processDebugMPI-Runtime.txt");
+	    if (!_processRuntime.is_open()){
+            _processRuntime.open("processDebugMPI-Runtime.txt");
+            _log_initialized = true
+	    }
 		for (auto const &iter : _processes_debug) {
 			for (auto innerIter = iter.second.begin(); innerIter != iter.second.end(); ++innerIter) {
 				_processRuntime << "Rank: " << iter.first << " Runtime: " << *innerIter << std::endl;
 			}
 		}
-		_processRuntime.close();
 	}
 
 	//! @brief Resets the time of given process
@@ -115,6 +120,9 @@ private:
 	double _process_time;
 	std::map<int, std::vector<double>> _processes_debug;
 	int _profiling_switch = 1;
+
+    std::ofstream _processRuntime;
+    std::ofstream _processRuntimeSingle;
 };
 
 #endif //MARDYN_PROCESSTIMER_H
