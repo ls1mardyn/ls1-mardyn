@@ -978,8 +978,8 @@ void Simulation::simulate() {
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
-            
-            updateParticleContainerAndDecomposition(lastTraversalTime);
+
+			updateParticleContainerAndDecomposition(lastTraversalTime);
 
 #else
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);

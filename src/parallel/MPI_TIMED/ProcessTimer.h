@@ -53,7 +53,7 @@ public:
 	//! @brief Stops Timer for MPI-Measurement
 	void stopTimer() {
 		if (_profiling_switch ==1){
-            double measurement_time = MPI_Wtime();
+			double measurement_time = MPI_Wtime();
 			int process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			_process_time += measurement_time;
@@ -68,8 +68,8 @@ public:
 	double getTime(bool reset = false, bool debug = false){
 		double time = _process_time;
 		if (debug){
-            		int process;
-            		MPI_Comm_rank(MPI_COMM_WORLD, &process);
+					int process;
+					MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			writeProcessTimeLogSingle(process, _process_time, true);
 		}
 		if (reset) {
@@ -81,14 +81,14 @@ public:
 	//! @brief Writes given Process and time spent in MPI-Calls into "processRuntime.txt"
 	//! @param csv Time are written ether to a csv or txt file
 	void writeProcessTimeLogSingle(int process, double time, bool csv) {
-	    if (!_processRuntimeSingle.is_open()){
-            if(csv){
-                _processRuntimeSingle.open("process" + std::to_string(process) + "MPI-Runtime.csv", std::ios::app);
-            }
-            else{
-                _processRuntimeSingle.open("process" + std::to_string(process) + "MPI-Runtime.txt", std::ios::app);
-            }
-        }
+		if (!_processRuntimeSingle.is_open()){
+			if(csv){
+				_processRuntimeSingle.open("process" + std::to_string(process) + "MPI-Runtime.csv", std::ios::app);
+			}
+			else{
+				_processRuntimeSingle.open("process" + std::to_string(process) + "MPI-Runtime.txt", std::ios::app);
+			}
+		}
 		if(csv){
 			_processRuntimeSingle << time << ", ";
 		}
@@ -99,10 +99,10 @@ public:
 
 	//! @brief Writes whole debug-map into "processRuntime.txt" in current directory
 	void writeProcessTimeLog() {
-	    if (!_processRuntime.is_open()){
-            _processRuntime.open("processDebugMPI-Runtime.txt");
-            _log_initialized = true
-	    }
+		if (!_processRuntime.is_open()){
+			_processRuntime.open("processDebugMPI-Runtime.txt");
+			_log_initialized = true
+		}
 		for (auto const &iter : _processes_debug) {
 			for (auto innerIter = iter.second.begin(); innerIter != iter.second.end(); ++innerIter) {
 				_processRuntime << "Rank: " << iter.first << " Runtime: " << *innerIter << std::endl;
@@ -113,16 +113,15 @@ public:
 	//! @brief Resets the time of given process
 	//! @param process ID of process
 	void resetTimer(int process) {
-        _process_time -= _process_time;
+		_process_time -= _process_time;
 	}
 
 private:
 	double _process_time;
 	std::map<int, std::vector<double>> _processes_debug;
 	int _profiling_switch = 1;
-
-    std::ofstream _processRuntime;
-    std::ofstream _processRuntimeSingle;
+	std::ofstream _processRuntime;
+	std::ofstream _processRuntimeSingle;
 };
 
 #endif //MARDYN_PROCESSTIMER_H
