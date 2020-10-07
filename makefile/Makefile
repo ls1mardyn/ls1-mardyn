@@ -52,6 +52,9 @@ ADDRESS_SANITIZER ?= 0
 # clang's thread sanitizer
 THREAD_SANITIZER ?= 0
 
+# allow multible definitions
+ALLOW_MULTIPLE_DEFINITIONS ?= 0
+
 # select vectorization mode:
 # see "make help_vect"
 VECTORIZE_CODE ?= SSE
@@ -192,7 +195,10 @@ endif
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
 
-LDFLAGS +=  -Wl,--allow-multiple-definition
+# allow multible definitions for MPI_Timed
+ifneq ($(ALLOW_MULTIPLE_DEFINITIONS),0)
+  LDFLAGS +=  -Wl,--allow-multiple-definition
+endif
 
 ifeq ($(PRECISION), SINGLE)
 CXXFLAGS += -D MARDYN_SPSP
