@@ -54,6 +54,9 @@ if (ENABLE_LZ4)
     add_dependencies(MarDyn liblz4)
 endif()
 
+# Allow multiple definitions for MPI_TIMED linking
+option(ALLOW_MULTIPLE_DEFINITIONS "Allow multiple definitions" OFF)
+
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
         ${BLAS_LIB}    # for armadillo
@@ -63,7 +66,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${AUTOPAS_LIB} # for autopas
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
-        -Wl,--allow-multiple-definition # for MPI_TIMED linking
+        $<$<ALLOW_MULTIPLE_DEFINITIONS>:-Wl,--allow-multiple-definition> # for MPI_TIMED linking
         )
 
 ADD_TEST(
