@@ -7,10 +7,6 @@
 
 extern ProcessTimer _processTimer;
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-
 int MPI_Pcontrol(const int level, ...) {
 	return _processTimer.switchProfiling(level);
 }
@@ -221,11 +217,6 @@ int MPI_Finalize(void) {
 	// _processTimer.writeProcessTimeLog();
 	return result;
 }
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 #endif // MARDYN_MPI_TIMED_H
