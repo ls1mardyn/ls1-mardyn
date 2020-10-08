@@ -45,7 +45,7 @@ public:
 			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			double measurement_time = MPI_Wtime();
 			_process_time -= measurement_time;
-			_processes_debug[process].push_back(-measurement_time);
+			_processes_debug.push_back(-measurement_time);
 		}
 
 	}
@@ -54,10 +54,8 @@ public:
 	void stopTimer() {
 		if (_profiling_switch ==1){
 			double measurement_time = MPI_Wtime();
-			int process;
-			MPI_Comm_rank(MPI_COMM_WORLD, &process);
 			_process_time += measurement_time;
-			_processes_debug[process][_processes_debug[process].size()-1] -= measurement_time;
+			_processes_debug[_processes_debug.size()-1] -= measurement_time;
 		}
 	}
 
@@ -104,9 +102,7 @@ public:
 			_log_initialized = true
 		}
 		for (auto const &iter : _processes_debug) {
-			for (auto innerIter = iter.second.begin(); innerIter != iter.second.end(); ++innerIter) {
-				_processRuntime << "Rank: " << iter.first << " Runtime: " << *innerIter << std::endl;
-			}
+			_processRuntime << " Runtime: " << iter << std::endl;
 		}
 	}
 
@@ -118,7 +114,7 @@ public:
 
 private:
 	double _process_time;
-	std::map<int, std::vector<double>> _processes_debug;
+	std::vector<double> _processes_debug;
 	int _profiling_switch = 1;
 	std::ofstream _processRuntime;
 	std::ofstream _processRuntimeSingle;
