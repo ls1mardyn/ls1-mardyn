@@ -144,7 +144,7 @@ void KDNodeTest::testGetMPIKDNode() {
 
 	bool coversAll[3] = {true};
 	KDNode node(1, lowerCorner, higherCorner, 7, 0, coversAll, 2);
-	node._expectedDeviation = 2.0;
+	node._deviationLowerBound = 2.0;
 	node._deviation = 3.0;
 	MPIKDNodePacked newMPINode = node.getMPIKDNode();
 	ASSERT_EQUAL(newMPINode.getOwningProc(), mpiNode.getOwningProc());
@@ -159,7 +159,7 @@ void KDNodeTest::testGetMPIKDNode() {
 	ASSERT_EQUAL(newMPINode.getHighCorner(1), mpiNode.getHighCorner(1));
 	ASSERT_EQUAL(newMPINode.getHighCorner(2), mpiNode.getHighCorner(2));
 
-	ASSERT_EQUAL(newMPINode.getExpectedDeviation(), mpiNode.getExpectedDeviation());
+	ASSERT_EQUAL(newMPINode.getDeviationLowerBound(), mpiNode.getDeviationLowerBound());
 	ASSERT_EQUAL(newMPINode.getDeviation(), mpiNode.getDeviation());
 	ASSERT_EQUAL(newMPINode.getLevel(), mpiNode.getLevel());
 }

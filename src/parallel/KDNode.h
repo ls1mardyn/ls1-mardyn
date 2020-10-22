@@ -38,7 +38,7 @@ public:
 
 	KDNode() :_numProcs(0), _nodeID(0), _owningProc(0),
 			  _child1(nullptr), _child2(nullptr), _load(0.0), _optimalLoadPerProcess(0.0),
-			  _expectedDeviation(0.0), _deviation(0.0), _level(0)
+		  _deviationLowerBound(0.0), _deviation(0.0), _level(0)
 	{
 	}
 
@@ -49,7 +49,7 @@ public:
 	KDNode(const KDNode& other) : _numProcs(other._numProcs), _nodeID(other._nodeID),
 			_owningProc(other._owningProc), _child1(nullptr), _child2(nullptr),
 			_load(other._load), _optimalLoadPerProcess(other._optimalLoadPerProcess),
-			_expectedDeviation(other._expectedDeviation), _deviation(other._deviation),
+		  _deviationLowerBound(other._deviationLowerBound), _deviation(other._deviation),
 			_level(other._level)
 	{
 		for (int dim = 0; dim < KDDIM; dim++) {
@@ -62,7 +62,7 @@ public:
 	KDNode(int numP, const int low[KDDIM], const int high[KDDIM], int id, int owner, bool coversAll[KDDIM], int level)
 	: _numProcs(numP), _nodeID(id), _owningProc(owner),
 	  _child1(nullptr), _child2(nullptr), _load(0.0), _optimalLoadPerProcess(0.0),
-	  _expectedDeviation(0.0), _deviation(0.0), _level(level)
+		  _deviationLowerBound(0.0), _deviation(0.0), _level(level)
 	{
 		for (int dim = 0; dim < KDDIM; dim++) {
 			_lowCorner[dim] = low[dim];
@@ -111,7 +111,11 @@ public:
 		return _load / ((double) _numProcs);
 	}
 
-	void calculateExpectedDeviation(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
+	/**
+	 * Calculates a lower bound for the expected deviation.
+	 * @param accumulatedProcessorSpeeds
+	 */
+	void calculateDeviationLowerBound(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
 		double meanProcessorSpeed[] = { 1., 1. };
 		double averagedMeanProcessorSpeed = 1.;
 		if (accumulatedProcessorSpeeds != nullptr && accumulatedProcessorSpeeds->size() != 0) {
@@ -127,7 +131,7 @@ public:
 		double child2Dev = _child2->calculateAvgLoadPerProc()
 				- _optimalLoadPerProcess * meanProcessorSpeed[1] / averagedMeanProcessorSpeed;
 		child2Dev = child2Dev * child2Dev;
-		_expectedDeviation = child1Dev * (double) _child1->_numProcs + child2Dev * (double) _child2->_numProcs;
+		_deviationLowerBound = child1Dev * (double) _child1->_numProcs + child2Dev * (double) _child2->_numProcs;
 	}
 
 	void calculateDeviation(std::vector<double>* processorSpeeds = nullptr, const double &totalMeanProcessorSpeed = 1.) {
@@ -230,7 +234,11 @@ public:
 
 	double _load;
 	double _optimalLoadPerProcess;
-	double _expectedDeviation;
+
+	/**
+	 * This is a lower bound for the deviation.
+	 */
+	double _deviationLowerBound;
 	double _deviation;
 
 	// level of this node (at root node, level = 0)

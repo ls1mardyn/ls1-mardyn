@@ -769,7 +769,7 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 				mpiKDNode.getHighCorner(), mpiKDNode.getNodeID(), mpiKDNode.getOwningProc(), coversAll, mpiKDNode.getLevel());
 		ptrToAllNodes[nodeID]->_load = mpiKDNode.getLoad();
 		ptrToAllNodes[nodeID]->_optimalLoadPerProcess = mpiKDNode.getOptimalLoadPerProcess();
-		ptrToAllNodes[nodeID]->_expectedDeviation = mpiKDNode.getExpectedDeviation();
+		ptrToAllNodes[nodeID]->_deviationLowerBound = mpiKDNode.getDeviationLowerBound();
 		ptrToAllNodes[nodeID]->_deviation = mpiKDNode.getDeviation();
 		child1[nodeID] = mpiKDNode.getFirstChildID();
 		child2[nodeID] = mpiKDNode.getSecondChildID();
@@ -792,7 +792,7 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 #ifdef DEBUG_DECOMP
 void printChildrenInfo(std::ofstream& filestream, KDNode* node, double minDev) {
 	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
-	filestream << " * " << "load=" << node->_load << " optLoad=" << node->_optimalLoadPerProcess << " expDev=" << node->_expectedDeviation << " minDev=" << minDev << endl;
+	filestream << " * " << "load=" << node->_load << " optLoad=" << node->_optimalLoadPerProcess << " expDev=" << node->_deviationLowerBound << " minDev=" << minDev << endl;
 	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
 	filestream << "   [" << node->_child1->_lowCorner[0] << "," << node->_child1->_lowCorner[1] << "," << node->_child1->_lowCorner[2] << "]"
 			<< "[" << node->_child1->_highCorner[0] << "," << node->_child1->_highCorner[1] << "," << node->_child1->_highCorner[2] << "]"
@@ -832,7 +832,8 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		log2proc++;
 	}
 	// if we are near the root of the tree, we just take the first best subdivision
-	// this is even valid for heterogeneous balancing, since the subdivisions are calculated accordingly.
+	// this is even valid for heterogeneous balancing, since the subdivisions are calculated accordingly, i.e., they are
+	// sorted by their expected deviation (lowest to biggest).
 	int maxIterations = 1;
 	if (fatherNode->_level > (log2proc - _fullSearchThreshold)) {//only do proper search, if this condition is fulfilled (numProcs < 2^(level + threshold))
 		maxIterations = INT_MAX;
@@ -850,7 +851,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
                "level=" << fatherNode->_level << " #divisions=" << subdivisions.size() << endl;
 #endif
 
-	while (iter !=  subdivisions.end() && (iterations < maxIterations) && (*iter)->_expectedDeviation < minimalDeviation) {
+	while (iter !=  subdivisions.end() && (iterations < maxIterations) && (*iter)->_deviationLowerBound < minimalDeviation) {
 		iterations++;
 #ifdef DEBUG_DECOMP
 		printChildrenInfo(filestream, *iter, minimalDeviation);
@@ -903,7 +904,10 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		(*iter)->_child1->_deviation = deviationChildren[0];
 		(*iter)->_child2->_deviation = deviationChildren[1];
 		(*iter)->calculateDeviation();
-
+		if((*iter)->_deviation < (*iter)->_deviationLowerBound){
+			global_log->warning() << "Calculated deviation " << (*iter)->_deviation << " lower than lower bound "
+					  << (*iter)->_deviationLowerBound << ". This should not happen. Please report a bug." << std::endl;
+		}
 #ifdef DEBUG_DECOMP
 		for (int i = 0; i < fatherNode->_level; i++) { filestream << "   ";}
 		filestream << "   deviation=" << (*iter)->_deviation << " (ch1:" << deviationChildren[0] << "ch2:" << deviationChildren[1] << endl;
@@ -1108,11 +1112,11 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 			clone->_child1->_load = costsLeft[dim][i];
 			clone->_child2->_load = costsRight[dim][i];
 			clone->_load = costsLeft[dim][i] + costsRight[dim][i];
-			clone->calculateExpectedDeviation(&_accumulatedProcessorSpeeds);
+			clone->calculateDeviationLowerBound(&_accumulatedProcessorSpeeds);
 
 			// sort node according to expected deviation
 			auto iter = subdividedNodes.begin();
-			while (iter != subdividedNodes.end() && ((*iter)->_expectedDeviation < clone->_expectedDeviation)) {
+			while (iter != subdividedNodes.end() && ((*iter)->_deviationLowerBound < clone->_deviationLowerBound)) {
 				iter++;
 			}
 			subdividedNodes.insert(iter, clone);
@@ -1861,7 +1865,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	optimalNode->_child1->_load = costsLeft[biggestDim][i];
 	optimalNode->_child2->_load = costsRight[biggestDim][i];
 	optimalNode->_load = costsLeft[biggestDim][i] + costsRight[biggestDim][i];
-	optimalNode->calculateExpectedDeviation();
+	optimalNode->calculateDeviationLowerBound();
 
 	return domainTooSmall;
 }

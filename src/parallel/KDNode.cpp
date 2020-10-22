@@ -132,8 +132,7 @@ KDNode::MPIKDNode KDNode::getMPIKDNode() {
 	// const int& nodeID, const int& owningProc, const int& firstChildID, const int& secondChildID,
 	// const int& nextSendingProcess, const double& load, const double& OptimalLoadPerProcess
 	return MPIKDNode(coversWholeDomain, _numProcs, _lowCorner, _highCorner,
-				_nodeID, _owningProc, leftChildID, rightChildID, nextSender, _load, _optimalLoadPerProcess,
-				_expectedDeviation, _deviation, _level);
+				_nodeID, _owningProc, leftChildID, rightChildID, nextSender, _load, _optimalLoadPerProcess, _deviationLowerBound, _deviation, _level);
 }
 
 bool KDNode::isResolvable() {
