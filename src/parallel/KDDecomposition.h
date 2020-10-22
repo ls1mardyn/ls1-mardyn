@@ -80,6 +80,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 		 <generateNewFiles>BOOL</generateNewFiles>
 		 <useExistingFiles>BOOL</useExistingFiles>
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
+		 <deviationReductionOperation>max OR sum</deviationReductionOperation>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -363,6 +364,13 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 
 	double _rebalanceLimit; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
+
+	/**
+	 * MPI reduction operation to reduce the deviation within the decompose step.
+	 * MPI_SUM will result in overestimated values for the deviation, but will result in more balanced trees.
+	 * MPI_MAX will calculate the correct deviation.
+	 */
+	MPI_Op _deviationReductionOperation{MPI_SUM};
 };
 
 

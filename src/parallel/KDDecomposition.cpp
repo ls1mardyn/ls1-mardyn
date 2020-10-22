@@ -58,7 +58,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 	int highCorner[KDDIM] = {0};
 	bool coversWholeDomain[KDDIM];
 	_globalNumCells = 1;
-	
+
 	for (int dim = 0; dim < KDDIM; dim++) {
 		_globalCellsPerDim[dim] = (int) floor(domain->getGlobalLength(dim) / cutoffRadius);
 		_globalNumCells *= _globalCellsPerDim[dim];
@@ -66,7 +66,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 		_cellSize[dim] = domain->getGlobalLength(dim) / ((double) _globalCellsPerDim[dim]);
 		coversWholeDomain[dim] = true;
 	}
-	
+
 	_numParticlesPerCell.resize(_numParticleTypes * _globalNumCells);
 
 	// create initial decomposition
@@ -114,6 +114,22 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition for heterogeneous computing systems (old version, not compatible with new "
 						  "VecTuner version)?: "
 					   << (_heterogeneousSystems ? "yes" : "no") << endl;
+
+	std::string deviationReductionOperation;
+	xmlconfig.getNodeValue("deviationReductionOperation", deviationReductionOperation);
+	if (not deviationReductionOperation.empty()) {
+		if (deviationReductionOperation == "sum") {
+			_deviationReductionOperation = MPI_SUM;
+		} else if (deviationReductionOperation == "max") {
+			_deviationReductionOperation = MPI_MAX;
+		} else {
+			global_log->fatal() << "Wrong deviationReductionOperation given: " << _deviationReductionOperation
+								<< ". Should be 'max' or 'sum'." << std::endl;
+			Simulation::exit(45681);
+		}
+	}
+	global_log->info() << "KDDecomposition uses " << deviationReductionOperation
+					   << " to reduce the deviation within the decompose step." << endl;
 
 	bool useVecTuner = false;
 	xmlconfig.getNodeValue("useVectorizationTuner", useVecTuner);
@@ -883,10 +899,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 
 		MPI_CHECK( MPI_Group_free(&newGroup));
 		MPI_CHECK( MPI_Comm_free(&newComm) );
-		MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, MPI_SUM, commGroup));  // reduce the deviations
-		// TODO hetero (Steffen): check whether there really has to be an allreduce (sum), since each of the processes should already possess the deviations of all its children.
-		//       with the allreduce (sum) implementation trees with a low maximal level are preferred (balanced trees).
-		//		 shouldn't this better be an average????
+		MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, _deviationReductionOperation, commGroup));  // reduce the deviations
 		(*iter)->_child1->_deviation = deviationChildren[0];
 		(*iter)->_child2->_deviation = deviationChildren[1];
 		(*iter)->calculateDeviation();
@@ -1252,7 +1265,7 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 				}
 			}
 		}
-		
+
 		// exchange intermediate calc costs
 		MPI_Status recvStat;
 		double tempRecvCosts, tempSendCosts;
@@ -1652,10 +1665,7 @@ bool KDDecomposition::heteroDecompose(KDNode* fatherNode, KDNode*& ownArea, MPI_
 
 	MPI_CHECK( MPI_Group_free(&newGroup));
 	MPI_CHECK( MPI_Comm_free(&newComm) );
-	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, MPI_SUM, commGroup));  // reduce the deviations
-		// TODO hetero (Steffen): check whether there really has to be an allreduce (sum), since each of the processes should already possess the deviations of all its children.
-		//       with the allreduce (sum) implementation trees with a low maximal level are preferred (balanced trees).
-		//		 shouldn't this better be an average????
+	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, _deviationReductionOperation, commGroup));  // reduce the deviations
 	bestSubdivision->_child1->_deviation = deviationChildren[0];
 	bestSubdivision->_child2->_deviation = deviationChildren[1];
 	bestSubdivision->calculateDeviation();
@@ -1785,7 +1795,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	for (size_t i = 1; i < costsLeft[biggestDim].size(); ++i) {
 		auto left = costsLeft[biggestDim][i];
 		auto right = costsRight[biggestDim][i];
-		
+
 		error = fabs(costsLeft[biggestDim][i] / costsRight[biggestDim][i] - leftRightLoadRatio);
 		if (error < minError) {
 			minError = error;
