@@ -87,20 +87,19 @@ void KDNode::buildKDTree() {
 	}
 }
 
-
 void KDNode::printTree(const std::string& prefix) {
-// use std::cout as I want to have all nodes at all processes printed
+	// use std::cout as I want to have all nodes at all processes printed
 	if (_numProcs == 1) {
-		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc
-				<< ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
-				<< _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << "), Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
-	}
-	else {
-		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc
-				<< "(" << _numProcs << " procs)" << ", Corners: (" << _lowCorner[0]
-				<< ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0]
-				<< ", " << _highCorner[1] << ", " << _highCorner[2] << ")"
-				" child1: " << _child1 << " child2: " << _child2 << ", Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
+		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc << ", Corners: (" << _lowCorner[0]
+				  << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0] << ", "
+				  << _highCorner[1] << ", " << _highCorner[2] << "), Load: " << _load << ", deviation: " << _deviation
+				  << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
+	} else {
+		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc << "(" << _numProcs << " procs)"
+				  << ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
+				  << _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << ") child1: " << _child1
+				  << " child2: " << _child2 << ", Load: " << _load << ", deviation: " << _deviation
+				  << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
 		std::stringstream childprefix;
 		childprefix << prefix << "  ";
 		if (_child1 != nullptr) {
