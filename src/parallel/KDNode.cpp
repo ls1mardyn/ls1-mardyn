@@ -19,7 +19,7 @@ KDNode* KDNode::findAreaForProcess(int rank) {
 		if (rank == _owningProc) {
 			return this;
 		} else {
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -44,7 +44,7 @@ bool KDNode::equals(KDNode& other) {
 		equal = equal && (_coversWholeDomain[i] == other._coversWholeDomain[i]);
 	}
 
-	if (_child1 != NULL && other._child1 != NULL) {
+	if (_child1 != nullptr && other._child1 != nullptr) {
 		bool childEqual = _child1->equals(*other._child1);
 		equal = equal && childEqual;
 	} else {
@@ -52,7 +52,7 @@ bool KDNode::equals(KDNode& other) {
 		equal = equal && childEqual;
 	}
 
-	if (_child2 != NULL && other._child2 != NULL) {
+	if (_child2 != nullptr && other._child2 != nullptr) {
 		bool childEqual = _child2->equals(*other._child2);
 		equal = equal && childEqual;
 	} else {
@@ -88,7 +88,7 @@ void KDNode::buildKDTree() {
 }
 
 
-void KDNode::printTree(std::string prefix) {
+void KDNode::printTree(const std::string& prefix) {
 // use std::cout as I want to have all nodes at all processes printed
 	if (_numProcs == 1) {
 		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc
@@ -103,10 +103,10 @@ void KDNode::printTree(std::string prefix) {
 				" child1: " << _child1 << " child2: " << _child2 << ", Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
 		std::stringstream childprefix;
 		childprefix << prefix << "  ";
-		if (_child1 != NULL) {
+		if (_child1 != nullptr) {
 			_child1->printTree(childprefix.str());
 		}
-		if (_child2 != NULL) {
+		if (_child2 != nullptr) {
 			_child2->printTree(childprefix.str());
 		}
 	}

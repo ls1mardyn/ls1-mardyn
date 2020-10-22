@@ -37,17 +37,17 @@ public:
 	typedef MPIKDNodePacked MPIKDNode;
 
 	KDNode() :_numProcs(0), _nodeID(0), _owningProc(0),
-			  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0),
+			  _child1(nullptr), _child2(nullptr), _load(0.0), _optimalLoadPerProcess(0.0),
 			  _expectedDeviation(0.0), _deviation(0.0), _level(0)
 	{
 	}
 
 
 	/**
-	 * Copy constructor copies everything except for the children (are set to NULL!)
+	 * Copy constructor copies everything except for the children (are set to nullptr!)
 	 */
 	KDNode(const KDNode& other) : _numProcs(other._numProcs), _nodeID(other._nodeID),
-			_owningProc(other._owningProc), _child1(NULL), _child2(NULL),
+			_owningProc(other._owningProc), _child1(nullptr), _child2(nullptr),
 			_load(other._load), _optimalLoadPerProcess(other._optimalLoadPerProcess),
 			_expectedDeviation(other._expectedDeviation), _deviation(other._deviation),
 			_level(other._level)
@@ -61,7 +61,7 @@ public:
 
 	KDNode(int numP, const int low[KDDIM], const int high[KDDIM], int id, int owner, bool coversAll[KDDIM], int level)
 	: _numProcs(numP), _nodeID(id), _owningProc(owner),
-	  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0),
+	  _child1(nullptr), _child2(nullptr), _load(0.0), _optimalLoadPerProcess(0.0),
 	  _expectedDeviation(0.0), _deviation(0.0), _level(level)
 	{
 		for (int dim = 0; dim < KDDIM; dim++) {
@@ -86,7 +86,7 @@ public:
 	 * @return the area for process rank, i.e. the leaf of this tree with
 	 *         (_owningProc == rank) and (_numProcs == 1).
 	 *
-	 *         If no corresponding node is found, this method returns NULL!
+	 *         If no corresponding node is found, this method returns nullptr!
 	 */
 	KDNode* findAreaForProcess(int rank);
 
@@ -107,7 +107,7 @@ public:
 	 */
 	unsigned int getNumMaxProcs();
 
-	double calculateAvgLoadPerProc() {
+	double calculateAvgLoadPerProc() const {
 		return _load / ((double) _numProcs);
 	}
 
@@ -156,7 +156,7 @@ public:
 
 	/**
 	 * Split this node, i.e. create two children (note, that its children must be
-	 * NULL before this call!).
+	 * nullptr before this call!).
 	 *
 	 * @param dimension the dimension \in [0;KDDIM-1] along which this node is split
 	 * @param splitIndex the index of the corner cell for the new left child
@@ -172,7 +172,7 @@ public:
 	//! The order of printing is a depth-first walk through the tree, children
 	//! are always indented two spaces more than there parents
 	//! @param prefix A string which is printed in front of each line
-	void printTree(std::string prefix = "");
+	void printTree(const std::string& prefix = "");
 
 	/**
 	 * Write the tree represented by this (root-)node to a (binary) file, in order

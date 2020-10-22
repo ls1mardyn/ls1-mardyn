@@ -60,7 +60,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	KDDecomposition();
 
-	~KDDecomposition();
+	~KDDecomposition() override;
 
 
 	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
@@ -98,7 +98,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain, double etime) override;
 
-	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain) override;
@@ -125,7 +125,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//! @param domain e.g. needed to get the bounding boxes
 	void printDecomp(const std::string& filename, Domain* domain) override;
 
-	int getUpdateFrequency() { return _frequency; }
+	int getUpdateFrequency() const { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
 	std::vector<int> getNeighbourRanks() override;
 	std::vector<int> getNeighbourRanksFullShell() override;
@@ -266,7 +266,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Determines the partition rank that is needed for the "cluster" heterogeneous decomposition
 	 */
 	int calculatePartitionRank();
-	bool checkNeedRebalance(double lastTraversalTime);
+	bool checkNeedRebalance(double lastTraversalTime) const;
 
 	//######################################
 	//###    private member variables    ###
