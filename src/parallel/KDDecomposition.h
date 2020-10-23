@@ -243,7 +243,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * @note: if this implementation is too slow for large domains, we could change
 	 *        it so that all division costs for
 	 */
-	bool calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup);
+	bool calculateAllPossibleSubdivisions(KDNode* node, std::list<KDNode*>& subdividedNodes, MPI_Comm commGroup);
 	
 	/**
 	 * Calculates the splitting plane for the "cluster" heterogeneous decomposition
@@ -322,7 +322,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	bool _doMeasureLoadCalc;  //
 
-	//The decomp. only searches in all direction, if _splitBiggest is false and the number of processors in a node is less then the _splitThreshold
+	/// The decomp. only searches in all direction, if _splitBiggest is false and the number of processors in a node is less then the _splitThreshold
 	int _splitThreshold;
 	int _numParticleTypes;
 

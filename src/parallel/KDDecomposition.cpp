@@ -819,20 +819,20 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		return domainTooSmall;
 	}
 
-	std::list<KDNode*> subdivisions;
-	domainTooSmall = calculateAllSubdivisions(fatherNode, subdivisions, commGroup);
-	mardyn_assert(not subdivisions.empty());
+	std::list<KDNode*> possibleSubdivisions;
+	domainTooSmall = calculateAllPossibleSubdivisions(fatherNode, possibleSubdivisions, commGroup);
+	mardyn_assert(not possibleSubdivisions.empty());
 
 	KDNode* bestSubdivision = nullptr;
 	double minimalDeviation = globalMinimalDeviation;
-	auto iter = subdivisions.begin();
+	auto iter = possibleSubdivisions.begin();
 	int iterations = 0;
 	int log2proc = 0;// calculates the logarithm of _numProcs (base 2)
 	while ((_numProcs >> log2proc) > 1) {
 		log2proc++;
 	}
 	// if we are near the root of the tree, we just take the first best subdivision
-	// this is even valid for heterogeneous balancing, since the subdivisions are calculated accordingly, i.e., they are
+	// this is even valid for heterogeneous balancing, since the possibleSubdivisions are calculated accordingly, i.e., they are
 	// sorted by their expected deviation (lowest to biggest).
 	int maxIterations = 1;
 	if (fatherNode->_level > (log2proc - _fullSearchThreshold)) {//only do proper search, if this condition is fulfilled (numProcs < 2^(level + threshold))
@@ -848,10 +848,10 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 	filestream << "Division at rank=" << _rank << " for [" << fatherNode->_lowCorner[0]
                << ","<< fatherNode->_lowCorner[1] << "," << fatherNode->_lowCorner[2] << "] [" << fatherNode->_highCorner[0]
                << ","<< fatherNode->_highCorner[1] << "," << fatherNode->_highCorner[2] << "] " <<
-               "level=" << fatherNode->_level << " #divisions=" << subdivisions.size() << endl;
+               "level=" << fatherNode->_level << " #divisions=" << possibleSubdivisions.size() << endl;
 #endif
 
-	while (iter !=  subdivisions.end() && (iterations < maxIterations) && (*iter)->_deviationLowerBound < minimalDeviation) {
+	while (iter != possibleSubdivisions.end() && (iterations < maxIterations) && (*iter)->_deviationLowerBound < minimalDeviation) {
 		iterations++;
 #ifdef DEBUG_DECOMP
 		printChildrenInfo(filestream, *iter, minimalDeviation);
@@ -923,7 +923,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		iter++;
 	}
 
-	while (iter !=  subdivisions.end()) {
+	while (iter != possibleSubdivisions.end()) {
 		delete *iter;
 		iter++;
 	}
@@ -945,12 +945,12 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 }
 
 
-bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdividedNodes, MPI_Comm commGroup) {
+bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<KDNode*>& subdividedNodes, MPI_Comm commGroup) {
 	bool domainTooSmall = false;
 	vector<vector<double> > costsLeft(3);
 	vector<vector<double> > costsRight(3);
 	calculateCostsPar(node, costsLeft, costsRight, commGroup);
-	global_log->debug() << "calculateAllSubdivisions: " << std::endl;
+	global_log->debug() << "calculateAllPossibleSubdivisions: " << std::endl;
 	double leftRightLoadRatio = 1.;  // divide load 50/50 -> this can be changed later on if the topology of the system should be taken into account.
 	// update leftRightRatio to something meaningful (that is representable by the compute power distribution of the processes:
 
@@ -1104,7 +1104,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 			if ((clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) ||
 					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
 				//continue;
-				global_log->error_always_output() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
+				global_log->error_always_output() << "ERROR in calculateAllPossibleSubdivisions(), part of the domain was not assigned to a proc" << endl;
 				Simulation::exit(1);
 			}
 			mardyn_assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
