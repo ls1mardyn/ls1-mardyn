@@ -71,7 +71,7 @@ public:
 			writeProcessTimeLogSingle(process, _process_time, true);
 		}
 		if (reset) {
-			resetTimer(process);
+			resetTimer();
 		}
 		return time;
 	}
@@ -99,7 +99,6 @@ public:
 	void writeProcessTimeLog() {
 		if (!_processRuntime.is_open()){
 			_processRuntime.open("processDebugMPI-Runtime.txt");
-			_log_initialized = true
 		}
 		for (auto const &iter : _processes_debug) {
 			_processRuntime << " Runtime: " << iter << std::endl;
@@ -107,8 +106,7 @@ public:
 	}
 
 	//! @brief Resets the time of given process
-	//! @param process ID of process
-	void resetTimer(int process) {
+	void resetTimer() {
 		_process_time -= _process_time;
 	}
 
