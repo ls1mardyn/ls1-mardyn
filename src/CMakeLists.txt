@@ -55,7 +55,7 @@ if (ENABLE_LZ4)
 endif()
 
 # Allow multiple definitions for MPI_TIMED linking
-option(ALLOW_MULTIPLE_DEFINITIONS "Allow multiple definitions" OFF)
+option(ALLOW_MULTIPLE_DEFINITIONS "Allow multiple definitions" ON)
 
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
