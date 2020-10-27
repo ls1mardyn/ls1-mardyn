@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525" >
+
+    <refunits type="SI" >
+        <length unit="nm">0.1</length>
+        <mass unit="u">1</mass>
+        <energy unit="K">1</energy>
+    </refunits>
+
+    <moleculetype id="1" name="2CLJ">
+        <site type="LJ126" id="1" >
+            <coords> <x>0.0</x> <y>0.0</y> <z>-0.5</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+            <shifted>0</shifted>
+        </site>
+        <site type="LJ126" id="2" >
+            <coords> <x>0.0</x> <y>0.0</y> <z>0.5</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+            <shifted>0</shifted>
+        </site>
+        <momentsofinertia rotaxes="xyz" >
+        <Ixx>0.5</Ixx>
+        <Iyy>0.5</Iyy>
+        <Izz>0.0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+
+</components>
+

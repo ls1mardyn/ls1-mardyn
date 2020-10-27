@@ -11,9 +11,9 @@
 /**
  * @brief Outputs the number density of molecules per bin specified by Sampling grid in KartesianProfile.
  */
-class DensityProfile : public ProfileBase {
+class DensityProfile final : public ProfileBase {
 public:
-	~DensityProfile() final {};
+	~DensityProfile() final = default;
     void record(Molecule &mol, unsigned long uID) final  {
         _localProfile[uID] += 1;
     }

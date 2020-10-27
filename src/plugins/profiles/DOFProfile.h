@@ -12,9 +12,9 @@
 /**
  * @brief Records (NO OUTPUT) the DOF of molecules per bin specified by Sampling grid in KartesianProfile.
  */
-class DOFProfile : public ProfileBase {
+class DOFProfile final : public ProfileBase {
 public:
-    ~DOFProfile() final {};
+    ~DOFProfile() final = default;
     void record(Molecule &mol, unsigned long uID) final  {
         _localProfile[uID] += 3.0 + (long double) (mol.component()->getRotationalDegreesOfFreedom());
     }

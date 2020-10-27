@@ -24,7 +24,32 @@ public:
 #endif
 	};
 
-	// from ParticleContainer
+	/**
+	 * This function parses parameters for the AutoPas container.
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <datastructure type="AutoPas">
+		<allowedTraversals>STRINGLIST</allowedTraversals>
+		<allowedContainers>STRINGLIST</allowedContainers>
+		<selectorStrategy>STRING</selectorStrategy>
+		<tuningStrategy>STRING</tuningStrategy>
+		<dataLayouts>STRINGLIST</dataLayouts>
+		<newton3>STRINGLIST</newton3>
+		<tuningAcquisitionFunction>STRING</tuningAcquisitionFunction>
+		<maxEvidence>INTEGER</maxEvidence>
+		<tuningSamples>INTEGER</tuningSamples>
+		<tuningInterval>INTEGER</tuningInterval>
+		<rebuildFrequency>INTEGER</rebuildFrequency>
+		<skin>DOUBLE</skin>
+	   </datastructure>
+	   \endcode
+	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
+	 * A list of the different Options can be found here:
+	 https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html
+	 * For multiple options, a comma separated list of strings is possible. Auto-Tuning is then performed on all
+	 possible combinations of those.
+	 * @param xmlconfig
+	 */
 	void readXML(XMLfileUnits &xmlconfig) override;
 
 	bool rebuild(double bBoxMin[3], double bBoxMax[3]) override;
@@ -112,11 +137,12 @@ private:
 	void traverseTemplateHelper();
 
 	double _cutoff{0.};
-	double _verletSkin{0.};
-	unsigned int _verletRebuildFrequency{1u};
-	unsigned int _tuningFrequency{1000u};
-	unsigned int _tuningSamples{3u};
-	unsigned int _maxEvidence{10};
+	double _verletSkin;
+	unsigned int _verletRebuildFrequency;
+	unsigned int _verletClusterSize;
+	unsigned int _tuningFrequency;
+	unsigned int _tuningSamples;
+	unsigned int _maxEvidence;
 	using CellType = autopas::FullParticleCell<Molecule>;
 	autopas::AutoPas<Molecule, CellType> _autopasContainer;
 

@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <vector>
 
 #include "utils/Timer.h"
@@ -42,13 +43,6 @@ public:
 	Also reads and initializes all timers in the timer config-file.
 	*/
 	TimerProfiler();
-
-	/**
-	@brief Destructor of TimerProfiler
-
-	Deallocates all instantiated timers and clears the content of the timer container.
-	*/
-	virtual ~TimerProfiler();
 
 	/** @brief Read in XML configuration for TimerProfiler.
 	 *
@@ -229,13 +223,6 @@ private:
 	void _debugMessage(std::string timerName);
 
 	/**
-	@fn void _clearTimers(std::string startingTimerName=_baseTimerName)
-	@brief Deallocated the memory of the timer pointers for timer "startingTimerName" and all of its descendants.
-	@param startingTimerName The name of the timer from where the deallocation should begin
-	*/
-	void _clearTimers(std::string startingTimerName=_baseTimerName);
-
-	/**
 	@class _Timer
 	@brief Private helper class containing a timer and its hierarchical information
 	*/
@@ -253,10 +240,10 @@ private:
 				_outputString(outputString), _timerName(timerName) {}
 
 			/**
-			@var Timer* _timer
+			@var std::unique_ptr<Timer> _timer
 			@brief Pointer to the timer or nullptr if it is a "virtual" timer
 			*/
-			Timer* _timer;
+			std::unique_ptr<Timer> _timer;
 
 			/**
 			@var std::vector<std::string> _childTimerNames

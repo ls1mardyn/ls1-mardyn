@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+	<headerinfo>
+		<time>0.000000000000000e+00</time>
+		<length>
+			<x>6.000000000000000e+01</x> <y>6.000000000000000e+01</y> <z>6.000000000000000e+01</z>
+		</length>
+		<number>2620</number>
+		<format type="ICRVQD"/>
+	</headerinfo>
+</mardyn>

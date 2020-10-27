@@ -34,11 +34,7 @@
 		    <updateFrequency>1000</updateFrequency>
 	    </parallelisation>
       <datastructure type="AutoPas">
-        <allowedTraversals>c01, c08, c18, sli</allowedTraversals>
         <allowedContainers>linkedCells</allowedContainers>
-        <selectorStrategy>fastestMedian</selectorStrategy>
-        <dataLayouts>AoS</dataLayouts>
-        <newton3>enabled</newton3>
         <tuningInterval>10000</tuningInterval>
         <tuningSamples>10</tuningSamples>
         <rebuildFrequency>10</rebuildFrequency>

@@ -11,6 +11,7 @@
 #include "molecules/Molecule.h"
 #include "Domain.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/FileUtils.h"
 
 #include <iostream>
 #include <fstream>
@@ -20,6 +21,7 @@
 #include <numeric>
 #include <cmath>
 #include <cstdint>
+#include <algorithm>
 
 using namespace std;
 
@@ -182,6 +184,10 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 		// init data structures
 		this->VelocityScalingInit(xmlconfig, strDirections);
 	}
+
+	// measure added kin. energy
+	_addedEkin.writeFreq = 1000;
+	xmlconfig.getNodeValue("added_ekin/writefreq", _addedEkin.writeFreq);
 }
 
 void ControlRegionT::VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections)
@@ -210,6 +216,12 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits &xmlconfig, std::string st
 	}
 	this->InitBetaLogfile();
 	_thermVars.resize(_nNumSlabs);
+
+	// init data structure for measure of added kin. energy
+	_addedEkin.data.local.resize(_nNumSlabs);
+	_addedEkin.data.global.resize(_nNumSlabs);
+   	std::vector<double>& v = _addedEkin.data.local;
+   	std::fill(v.begin(), v.end(), 0.);
 }
 
 void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
@@ -356,13 +368,16 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 		double vcorr = 2. - 1. / globalTV._betaTrans;
 		double Dcorr = 2. - 1. / globalTV._betaRot;
 
-/*
-	mol->setv(0, mol->v(0) * vcorr);
-//    mol->setv(1, mol->v(1) * vcorr);
-	mol->setv(2, mol->v(2) * vcorr);
-*/
+		// measure added kin. energy
+		double v2_old = mol->v2();
 
 		_accumulator->ScaleVelocityComponents(mol, vcorr);
+
+		// measure added kin. energy
+		double v2_new = mol->v2();
+//		if(_nTargetComponentID==0)
+//			cout << "nPosIndex=" << nPosIndex << ", dv2=" << (v2_new-v2_old) << endl;
+		_addedEkin.data.local.at(nPosIndex) += (v2_new-v2_old);
 
 		mol->scale_D(Dcorr);
 	}
@@ -475,6 +490,56 @@ void ControlRegionT::registerAsObserver()
 			Simulation::exit(-1);
 		}
 	}
+}
+
+void ControlRegionT::update(SubjectBase* subject)
+{
+	CuboidRegionObs::update(subject);
+	// update slab width
+	_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
+}
+
+void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep)
+{
+	if(_localMethod != VelocityScaling)
+		return;
+	
+	if( simstep % _addedEkin.writeFreq != 0)
+		return;
+
+	// calc global values
+#ifdef ENABLE_MPI
+	MPI_Reduce(_addedEkin.data.local.data(), _addedEkin.data.global.data(), _addedEkin.data.local.size(), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#else
+	std::memcpy(_addedEkin.data.global.data(), _addedEkin.data.local.data(), _addedEkin.data.local.size() );
+#endif
+
+	// reset local values
+   	std::vector<double>& vl = _addedEkin.data.local;
+   	std::fill(vl.begin(), vl.end(), 0.);
+
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	// dekin = d2ekin * 0.5
+	std::vector<double>& vg = _addedEkin.data.global;
+	for(auto it=vg.begin(); it!=vg.end(); ++it)
+		(*it) *= 0.5;
+
+	// writing .dat-files
+	std::stringstream filenamestream;
+	filenamestream << "addedEkin_reg" << this->GetID() << "_cid" << _nTargetComponentID << ".dat";
+
+	std::stringstream outputstream;
+	outputstream.write(reinterpret_cast<const char*>(_addedEkin.data.global.data()), 8*_addedEkin.data.global.size());
+
+	ofstream fileout(filenamestream.str().c_str(), std::ios::app | std::ios::binary);
+	fileout << outputstream.str();
+	fileout.close();
 }
 
 // class TemperatureControl
@@ -605,6 +670,12 @@ void TemperatureControl::WriteBetaLogfiles(unsigned long simstep)
 		reg->WriteBetaLogfile(simstep);
 }
 
+void TemperatureControl::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep)
+{
+	for(auto&& reg : _vecControlRegions)
+		reg->writeAddedEkin(domainDecomp, simstep);
+}
+
 /**
  * @brief Decide which ControlMethod to use
  *
@@ -628,6 +699,9 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 		// control temperature
 		this->ControlTemperature(&(*tM), simstep);
 	}
+
+	// measure added kin. energy
+	this->writeAddedEkin(domainDecomposition, simstep);
 }
 
 /**

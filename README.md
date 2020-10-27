@@ -27,6 +27,8 @@ Prerequisites:
 Installation (make)
 ------------
 
+### Installing ls1-MarDyn using make
+
 ls1-MarDyn is build from source code using GNU make or alternatively using cmake (see below).
 
 A default build using the GNU compiler and a MPI library providing the mpicxx compiler wrapper is done with
@@ -51,18 +53,35 @@ To display further information about the available suboptions for a configuratio
   make CFG=<cfg name> cfg_help
 ```
 
+### Installing ls1-MarDyn using cmake
 
-Installation (cmake, experimental)
-------------
-ls1-mardyn can be built from cmake:
-
-```sh
-  mkdir build && cd build
-  cmake ..
-  make
+#### Configuration
+Initial support to build ls1-mardyn using cmake has been recently added.
+To build mardyn using cmake first create an additional directory on the root mardyn directory and change into that directory.
+```bash
+mkdir build
+cd build
 ```
-Note: The migration to this method is currently ongoing, but not completed
+Next, cmake has to be executed. In most cases, you will have to specify the compiler with which mardyn should be built:
+```bash
+CC=clang CXX=clang++ cmake ..
+# or using mpi:
+CC=`which mpicc` CXX=`which mpicxx` cmake ..
+```
+Specifying the compiler is only possible at the first execution of cmake.
+If you want to change the compiler later on, either add another build directory, or first clear the existing build directory.
 
+To configure the options within ls1-mardyn it is recommended to use `ccmake`:
+```bash
+ccmake .
+```
+That way you can easily edit the available options.
+
+Finally, build ls1-mardyn using:
+```bash
+make
+``` 
+For a parallel and faster build please use `make`'s `-j` parameter with an appropriate number of tasks.
 
 Running ls1-MarDyn
 ------------------
@@ -86,6 +105,25 @@ optional: to make the simulation aware of time limits like on a compute node, wh
 ```sh
 mpirun -np 2 ../../../src/MarDyn config.xml  --steps 10 --loop-abort-time 3600
 ```
+
+AutoPas Support
+------------------
+ls1 mardyn supports AutoPas as a replacement for the used linked cells container and the built-in force calculation.
+
+### Building for AutoPas 
+To enable support for AutoPas (<https://github.com/AutoPas/AutoPas/>), you will have to enable the option `ENABLE_AUTOPAS`.
+
+### Running using AutoPas
+To use AutoPas a few modifications to the normal `xml` config files have to be performed:
+- The `datastructure` section has to be changed to type `AutoPas`.
+- If inside of the `datastructure` section no additional information is given AutoPas will run without auto-tuning and a linked cells container (rebuild frequency = 1, skin = 0).
+- Multiple further options can be specified for AutoPas.
+  For a quick overview check config_autopas_allOptions.xml in the Argon example directory.
+  Additional information for the options can be found at: <https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html> 
+  and within the readXML method of <https://www5.in.tum.de/mardyn/doxygen_doc/html/classAutoPasContainer.html>
+
+### Limitations
+- Using AutoPas, currently, only single-centered Lennard-Jones interactions are possible.
 
 Additional resources
 ====================
