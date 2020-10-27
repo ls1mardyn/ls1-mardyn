@@ -2,7 +2,6 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
-
 #endif
 
 #include <ctime>

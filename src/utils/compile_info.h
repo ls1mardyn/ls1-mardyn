@@ -87,7 +87,7 @@ int get_mpi_info(char *info_str) {
 		#endif
 
 	#else /* MPI_VERSION and MPI_SUBVERSION */
-			// I guess this can never happen, as it will fail on #include <mpi.h>?
+			// I guess this can never happen, as it will fail on #include "mpi.h"?
 	#endif /* MPI_VERSION and MPI_SUBVERSION */
 
 #else /* ENABLE_MPI */
