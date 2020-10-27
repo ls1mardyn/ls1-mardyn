@@ -1,6 +1,12 @@
-//
-// Created by jeremy on 11.05.20.
-//
+/**
+ * @file mpi_timed.cpp
+ * @date 11.05.2020
+ * @author JeremyHarisch
+ *
+ * In this file multiple MPI directives are overwritten to enable timing of these methods.
+ * This is possible, because in mpi these methods are using weak symbols.
+ * For more info, google: "MPI profiling interface".
+ */
 
 #include "ProcessTimer.h"
 
