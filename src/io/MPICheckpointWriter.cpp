@@ -19,7 +19,7 @@
 #include "parallel/DomainDecompBase.h"
 
 #ifdef ENABLE_MPI
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #include "parallel/ParticleData.h"
 #endif
 

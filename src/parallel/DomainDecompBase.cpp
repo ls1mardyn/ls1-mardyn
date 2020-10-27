@@ -11,7 +11,7 @@
 #include "ZonalMethods/FullShell.h"
 
 #ifdef ENABLE_MPI
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #include "utils/MPI_Info_object.h"
 #endif
 

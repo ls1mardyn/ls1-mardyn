@@ -1,6 +1,6 @@
 #include "ParticleDataFull.h"
 
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"

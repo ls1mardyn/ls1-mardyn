@@ -11,7 +11,7 @@
 #include <vector>
 #include <algorithm>
 #ifdef ENABLE_MPI
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #endif
 
 #include <utils/Logger.h>

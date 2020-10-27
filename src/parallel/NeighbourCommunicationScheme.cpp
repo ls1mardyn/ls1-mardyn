@@ -8,7 +8,7 @@ class NeighbourCommunicationScheme;
 class DirectNeighbourCommunicationScheme;
 class IndirectNeighbourCommunicationScheme;
 
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #include "NeighbourCommunicationScheme.h"
 #include "Domain.h"
 #include "DomainDecompMPIBase.h"

@@ -1,6 +1,6 @@
 #include "ParticleDataRMM.h"
 
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #include <typeinfo>
 
 #include "ensemble/EnsembleBase.h"

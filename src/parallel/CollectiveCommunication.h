@@ -1,7 +1,7 @@
 #ifndef COLLECTIVECOMMUNICATION_H_
 #define COLLECTIVECOMMUNICATION_H_
 
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 
 #include "Simulation.h"
 #include "utils/Logger.h"

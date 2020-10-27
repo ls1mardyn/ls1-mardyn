@@ -23,7 +23,7 @@
 #include "particleContainer/ParticleContainer.h"
 
 #ifdef ENABLE_MPI
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #include <steereoMPIIntraCommunicator.h>
 #endif //ENABLE_MPI
 

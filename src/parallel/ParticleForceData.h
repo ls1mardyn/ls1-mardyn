@@ -1,7 +1,7 @@
 #ifndef ParticleForceData_H_
 #define ParticleForceData_H_
 
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 
 #include "molecules/MoleculeForwardDeclaration.h"
 

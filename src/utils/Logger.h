@@ -17,7 +17,7 @@
 #endif
 
 #ifdef ENABLE_MPI
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 
 #ifndef NDEBUG
 /** When NDEBUG macro is undefined check the expression return value to be MPI_SUCCESS.

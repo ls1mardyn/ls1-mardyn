@@ -15,9 +15,8 @@
 #include "CommunicationPartner.h"
 #include "DomainDecompBase.h"
 #include "ParticleDataForwardDeclaration.h"
-#include "parallel/MPI_TIMED/ProcessTimer.h"
 #include "utils/Logger.h"
-#include "parallel/MPI_TIMED/mpi_timed.h"
+#include "mpi.h"
 
 #define LOWER  0
 #define HIGHER 1

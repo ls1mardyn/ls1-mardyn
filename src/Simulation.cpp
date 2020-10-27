@@ -30,6 +30,7 @@
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #include "parallel/GeneralDomainDecomposition.h"
+#include "parallel/MPI_TIMED/ProcessTimer.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -974,7 +975,7 @@ void Simulation::simulate() {
 			double currentTime = _timerForLoad->get_etime();
 #if defined(ENABLE_MPI)
 			double lastTraversalTime = currentTime - previousTimeForLoad;
-			double timeSpentInMPI = _processTimer.getTime(true, false);
+			double timeSpentInMPI = ProcessTimer::get().getTime(true, false);
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}

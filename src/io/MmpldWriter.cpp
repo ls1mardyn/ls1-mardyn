@@ -1,7 +1,7 @@
 #include "io/MmpldWriter.h"
 
 #ifdef ENABLE_MPI
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #endif
 
 #ifdef _SX

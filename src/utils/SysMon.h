@@ -35,7 +35,7 @@
 
 
 #ifdef ENABLE_MPI
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 #endif
 
 #ifdef SYSMON_ENABLE_SYSCONF

@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include <parallel/MPI_TIMED/mpi_timed.h>
+#include "mpi.h"
 
 #include "utils/xmlfile.h"
 
