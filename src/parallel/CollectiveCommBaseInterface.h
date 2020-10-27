@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <mpi.h>
 
 //! Reduce Types of the allreduceCustom operation
 enum ReduceType {
