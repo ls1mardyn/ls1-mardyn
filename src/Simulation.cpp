@@ -969,18 +969,15 @@ void Simulation::simulate() {
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition" << endl;
 			double currentTime = _timerForLoad->get_etime();
-#if defined(ENABLE_MPI)
 			double lastTraversalTime = currentTime - previousTimeForLoad;
+#if defined(ENABLE_TIMED_MPI)
 			double timeSpentInMPI = ProcessTimer::get().getTime(true, false);
 			if (timeSpentInMPI < lastTraversalTime) {
 			    lastTraversalTime -= timeSpentInMPI;
 			}
-
+#endif
 			updateParticleContainerAndDecomposition(lastTraversalTime);
 
-#else
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
-#endif
 			previousTimeForLoad = currentTime;
 
 			decompositionTimer->stop();

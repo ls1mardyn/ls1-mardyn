@@ -4,6 +4,8 @@
 
 #include "ProcessTimer.h"
 
+#ifdef ENABLE_TIMED_MPI
+
 int MPI_Pcontrol(const int level, ...) {
 	return ProcessTimer::get().switchProfiling(level);
 }
@@ -215,3 +217,4 @@ int MPI_Finalize(void) {
 	return result;
 }
 
+#endif
