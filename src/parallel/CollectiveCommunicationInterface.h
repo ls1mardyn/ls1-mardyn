@@ -8,6 +8,7 @@
 #pragma once
 
 #include "CollectiveCommBaseInterface.h"
+#include "parallel/MPI_TIMED/mpi_timed.h"
 
 //! @brief This class provides an interface for the collective communication classes.
 //! @details It provides all methods, that are NOT YET provided by CollectiveCommBaseInterface
