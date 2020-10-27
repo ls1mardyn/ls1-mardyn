@@ -4,7 +4,7 @@
  *
  * Created on February 27, 2018, 5:01 PM
  */
-#include "mpi.h"
+#include <mpi.h>
 
 #include "NeighborAcquirerTest.h"
 #include "parallel/NeighborAcquirer.h"

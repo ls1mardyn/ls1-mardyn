@@ -14,7 +14,7 @@
 #include <vector>
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 TEST_SUITE_REGISTRATION(VTKGridWriterImplementationTest);

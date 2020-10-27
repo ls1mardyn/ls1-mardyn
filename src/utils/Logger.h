@@ -17,7 +17,7 @@
 #endif
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 
 #ifndef NDEBUG
 /** When NDEBUG macro is undefined check the expression return value to be MPI_SUCCESS.

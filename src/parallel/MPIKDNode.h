@@ -1,7 +1,7 @@
 #ifndef MPIKDNODE_H_
 #define MPIKDNODE_H_
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include <bitset>
 #include <sstream>

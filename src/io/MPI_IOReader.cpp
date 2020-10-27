@@ -8,7 +8,7 @@
 #include "MPI_IOReader.h"
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include <string>

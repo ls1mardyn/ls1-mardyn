@@ -1,7 +1,7 @@
 #include "io/MmspdBinWriter.h"
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include <fstream>

@@ -6,7 +6,7 @@
 #include <string>
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include "Domain.h"

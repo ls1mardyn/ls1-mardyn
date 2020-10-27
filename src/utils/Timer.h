@@ -6,7 +6,7 @@
 
 /* We use MPIs Wtime in parallel application, else clock */
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #else
 #include <sys/time.h>
 #endif

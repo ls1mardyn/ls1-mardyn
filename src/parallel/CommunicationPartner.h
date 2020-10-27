@@ -8,7 +8,7 @@
 #ifndef COMMUNICATIONPARTNER_H_
 #define COMMUNICATIONPARTNER_H_
 
-#include "mpi.h"
+#include <mpi.h>
 #include <vector>
 #include <stddef.h>
 #include "CommunicationBuffer.h"

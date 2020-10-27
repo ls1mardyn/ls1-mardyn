@@ -1,7 +1,7 @@
 #include "io/ASCIIReader.h"
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include <climits>

@@ -1,6 +1,6 @@
 #include "ParticleDataFull.h"
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"

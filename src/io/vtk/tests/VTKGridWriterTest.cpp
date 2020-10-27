@@ -18,7 +18,7 @@
 #include "particleContainer/tests/ParticleContainerFactory.h"
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 typedef ParticleContainerFactory Factory;

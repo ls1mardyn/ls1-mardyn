@@ -16,7 +16,7 @@
 #include "DomainDecompBase.h"
 #include "ParticleDataForwardDeclaration.h"
 #include "utils/Logger.h"
-#include "mpi.h"
+#include <mpi.h>
 
 #define LOWER  0
 #define HIGHER 1

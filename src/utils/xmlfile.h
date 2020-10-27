@@ -33,7 +33,7 @@
 #include "rapidxml/rapidxml.hpp"
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 //+XMLfile======================================================================

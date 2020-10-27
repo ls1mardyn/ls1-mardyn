@@ -8,7 +8,7 @@
 #include "BinaryReader.h"
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include "Domain.h"

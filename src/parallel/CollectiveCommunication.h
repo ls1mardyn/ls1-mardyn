@@ -1,7 +1,7 @@
 #ifndef COLLECTIVECOMMUNICATION_H_
 #define COLLECTIVECOMMUNICATION_H_
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include "Simulation.h"
 #include "utils/Logger.h"

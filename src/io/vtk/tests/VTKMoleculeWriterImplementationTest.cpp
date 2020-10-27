@@ -11,7 +11,7 @@
 #include "molecules/Molecule.h"
 #include <vector>
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 TEST_SUITE_REGISTRATION(VTKMoleculeWriterImplementationTest);

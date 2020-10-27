@@ -1,6 +1,6 @@
 #include "ParticleForceData.h"
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include "molecules/Molecule.h"
 #include "Simulation.h"

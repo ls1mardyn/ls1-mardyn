@@ -35,7 +35,7 @@
 
 
 #ifdef ENABLE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #ifdef SYSMON_ENABLE_SYSCONF

@@ -1,7 +1,7 @@
 #ifndef ParticleDataRMM_H_
 #define ParticleDataRMM_H_
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"

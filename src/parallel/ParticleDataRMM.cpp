@@ -1,6 +1,6 @@
 #include "ParticleDataRMM.h"
 
-#include "mpi.h"
+#include <mpi.h>
 #include <typeinfo>
 
 #include "ensemble/EnsembleBase.h"
