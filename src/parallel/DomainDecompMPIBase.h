@@ -8,15 +8,15 @@
 #ifndef DOMAINDECOMPMPIBASE_H_
 #define DOMAINDECOMPMPIBASE_H_
 
+#include <mpi.h>
 #include <vector>
 #include <memory>
 
+#include "utils/Logger.h"
+#include "DomainDecompBase.h"
 #include "CollectiveCommunicationInterface.h"
 #include "CommunicationPartner.h"
-#include "DomainDecompBase.h"
 #include "ParticleDataForwardDeclaration.h"
-#include "utils/Logger.h"
-#include <mpi.h>
 
 #define LOWER  0
 #define HIGHER 1
@@ -194,9 +194,9 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
-		 <CommunicationScheme>indirect OR direct</CommunicationScheme>
-		 <overlappingCollectives>yes OR no</overlappingCollectives>
-		 <!-- structure handled by DomainDecomposition or KDDecomposition -->
+	   	 <CommunicationScheme>indirect OR direct</CommunicationScheme>
+	   	 <overlappingCollectives>yes OR no</overlappingCollectives>
+	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
 	   </parallelisation>
 	   \endcode
 	 */
@@ -219,7 +219,6 @@ public:
 	}
 
 	void printCommunicationPartners(std::string filename) const override;
-
 protected:
 
 	/**
@@ -249,7 +248,6 @@ protected:
 	MPI_Comm _comm;
 
 	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
-
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
 };
