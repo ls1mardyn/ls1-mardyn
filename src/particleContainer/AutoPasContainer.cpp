@@ -95,31 +95,36 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_tuningStrategyOption =
 		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", {_tuningStrategyOption})
 			 .begin();
-	_extrapolationMethod = *parseAutoPasOption<autopas::ExtrapolationMethodOption>(xmlconfig, "extrapolationMethod", {_extrapolationMethod}).begin();
+	_extrapolationMethod = *parseAutoPasOption<autopas::ExtrapolationMethodOption>(xmlconfig, "extrapolationMethod",
+																				   {_extrapolationMethod})
+								.begin();
 	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", _dataLayoutChoices);
 	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _newton3Choices);
 	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
 									  xmlconfig, "tuningAcquisitionFunction", {_tuningAcquisitionFunction})
 									  .begin();
 	// get numeric options from xml
-	//int
-	_maxEvidence = static_cast<unsigned int>(
-		xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
-	_maxTuningPhasesWithoutTest = static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningPhasesWithoutTest", static_cast<int>(_maxTuningPhasesWithoutTest)));
-	_evidenceForPrediction = static_cast<unsigned int>(xmlconfig.getNodeValue_int("evidenceForPrediction", static_cast<int>(_evidenceForPrediction)));
-	_tuningSamples = static_cast<unsigned int>(
-		xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_tuningSamples)));
-	_tuningFrequency = static_cast<unsigned int>(
-		xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_tuningFrequency)));
-	_verletRebuildFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int(
-		"rebuildFrequency", static_cast<int>(_verletRebuildFrequency)));
-	_verletClusterSize = static_cast<unsigned int>(xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
+	// int
+	_maxEvidence = static_cast<unsigned int>(xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
+	_maxTuningPhasesWithoutTest = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("tuningPhasesWithoutTest", static_cast<int>(_maxTuningPhasesWithoutTest)));
+	_evidenceForPrediction = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("evidenceForPrediction", static_cast<int>(_evidenceForPrediction)));
+	_tuningSamples =
+		static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_tuningSamples)));
+	_tuningFrequency =
+		static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_tuningFrequency)));
+	_verletRebuildFrequency = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("rebuildFrequency", static_cast<int>(_verletRebuildFrequency)));
+	_verletClusterSize = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
 
 	// double
-	_verletSkin = static_cast<double>(
-		xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
-	_relativeOptimumRange = static_cast<double>(xmlconfig.getNodeValue_double("optimumRange", static_cast<double>(_relativeOptimumRange)));
-	_relativeBlacklistRange = static_cast<double>(xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
+	_verletSkin = static_cast<double>(xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
+	_relativeOptimumRange =
+		static_cast<double>(xmlconfig.getNodeValue_double("optimumRange", static_cast<double>(_relativeOptimumRange)));
+	_relativeBlacklistRange = static_cast<double>(
+		xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
 
 	xmlconfig.changecurrentnode(oldPath);
 }
@@ -153,48 +158,51 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
-  // print full configuration to the command line
-  int valueOffset = 28;
-  global_log->info() << "AutoPas configuration:" << endl
-					 << setw(valueOffset) << left << "Data Layout "
-					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
-					 << setw(valueOffset) << left << "Container "
-					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
-					 << setw(valueOffset) << left << "Cell size Factor "
-					 << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
-					 << setw(valueOffset) << left << "Traversals "
-					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
-					 << setw(valueOffset) << left << "Newton3"
-					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
-					 << setw(valueOffset) << left << "Tuning strategy "
-					 << ": " << _autopasContainer.getTuningStrategyOption() << endl
-					 << setw(valueOffset) << left << "Selector strategy "
-					 << ": " << _autopasContainer.getSelectorStrategy() << endl
-					 << setw(valueOffset) << left << "Tuning frequency"
-					 << ": " << _autopasContainer.getTuningInterval() << endl
-					 << setw(valueOffset) << left << "Number of samples "
-					 << ": " << _autopasContainer.getNumSamples() << endl
-					 << setw(valueOffset) << left << "Tuning Acquisition Function"
-					 << ": " << _autopasContainer.getAcquisitionFunction() << endl
-					 << setw(valueOffset) << left << "Number of evidence "
-					 << ": " << _autopasContainer.getMaxEvidence() << endl
-					 << setw(valueOffset) << left << "Verlet Cluster size "
-					 << ": " << _autopasContainer.getVerletClusterSize() << endl
-					 << setw(valueOffset) << left << "Rebuild frequency "
-					 << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
-					 << setw(valueOffset) << left << "Verlet Skin "
-					 << ": " << _autopasContainer.getVerletSkin() << endl
-					 << setw(valueOffset) << left << "Optimum Range "
-					 << ": " << _autopasContainer.getRelativeOptimumRange() << endl
-					 << setw(valueOffset) << left << "Tuning Phases without test "
-					 << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
-					 << setw(valueOffset) << left << "Blacklist Range "
-					 << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
-					 << setw(valueOffset) << left << "Evidence for prediction "
-					 << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
-					 << setw(valueOffset) << left << "Extrapolation method "
-					 << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
-
+	// print full configuration to the command line
+	int valueOffset = 28;
+	global_log->info() << "AutoPas configuration:" << endl
+					   << setw(valueOffset) << left << "Data Layout "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts())
+					   << endl
+					   << setw(valueOffset) << left << "Container "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers())
+					   << endl
+					   << setw(valueOffset) << left << "Cell size Factor "
+					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
+					   << setw(valueOffset) << left << "Traversals "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals())
+					   << endl
+					   << setw(valueOffset) << left << "Newton3"
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
+					   << endl
+					   << setw(valueOffset) << left << "Tuning strategy "
+					   << ": " << _autopasContainer.getTuningStrategyOption() << endl
+					   << setw(valueOffset) << left << "Selector strategy "
+					   << ": " << _autopasContainer.getSelectorStrategy() << endl
+					   << setw(valueOffset) << left << "Tuning frequency"
+					   << ": " << _autopasContainer.getTuningInterval() << endl
+					   << setw(valueOffset) << left << "Number of samples "
+					   << ": " << _autopasContainer.getNumSamples() << endl
+					   << setw(valueOffset) << left << "Tuning Acquisition Function"
+					   << ": " << _autopasContainer.getAcquisitionFunction() << endl
+					   << setw(valueOffset) << left << "Number of evidence "
+					   << ": " << _autopasContainer.getMaxEvidence() << endl
+					   << setw(valueOffset) << left << "Verlet Cluster size "
+					   << ": " << _autopasContainer.getVerletClusterSize() << endl
+					   << setw(valueOffset) << left << "Rebuild frequency "
+					   << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
+					   << setw(valueOffset) << left << "Verlet Skin "
+					   << ": " << _autopasContainer.getVerletSkin() << endl
+					   << setw(valueOffset) << left << "Optimum Range "
+					   << ": " << _autopasContainer.getRelativeOptimumRange() << endl
+					   << setw(valueOffset) << left << "Tuning Phases without test "
+					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
+					   << setw(valueOffset) << left << "Blacklist Range "
+					   << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
+					   << setw(valueOffset) << left << "Evidence for prediction "
+					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
+					   << setw(valueOffset) << left << "Extrapolation method "
+					   << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
