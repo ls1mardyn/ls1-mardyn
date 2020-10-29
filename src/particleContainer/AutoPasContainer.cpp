@@ -28,11 +28,11 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
 	_verletClusterSize = _autopasContainer.getVerletClusterSize();
-    _relativeOptimumRange = _autopasContainer.getRelativeOptimumRange();
-    _relativeBlacklistRange = _autopasContainer.getRelativeBlacklistRange();
-    _maxTuningPhasesWithoutTest = _autopasContainer.getMaxTuningPhasesWithoutTest();
-    _evidenceForPrediction = _autopasContainer.getEvidenceFirstPrediction();
-    _extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
+	_relativeOptimumRange = _autopasContainer.getRelativeOptimumRange();
+	_relativeBlacklistRange = _autopasContainer.getRelativeBlacklistRange();
+	_maxTuningPhasesWithoutTest = _autopasContainer.getMaxTuningPhasesWithoutTest();
+	_evidenceForPrediction = _autopasContainer.getEvidenceFirstPrediction();
+	_extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
 
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
@@ -156,44 +156,44 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
   // print full configuration to the command line
   int valueOffset = 28;
   global_log->info() << "AutoPas configuration:" << endl
-                     << setw(valueOffset) << left << "Data Layout "
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
-                     << setw(valueOffset) << left << "Container "
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
-                     << setw(valueOffset) << left << "Cell size Factor "
-                     << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
-                     << setw(valueOffset) << left << "Traversals "
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
-                     << setw(valueOffset) << left << "Newton3"
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
-                     << setw(valueOffset) << left << "Tuning strategy "
-                     << ": " << _autopasContainer.getTuningStrategyOption() << endl
-                     << setw(valueOffset) << left << "Selector strategy "
-                     << ": " << _autopasContainer.getSelectorStrategy() << endl
-                     << setw(valueOffset) << left << "Tuning frequency"
-                     << ": " << _autopasContainer.getTuningInterval() << endl
-                     << setw(valueOffset) << left << "Number of samples "
-                     << ": " << _autopasContainer.getNumSamples() << endl
-                     << setw(valueOffset) << left << "Tuning Acquisition Function"
-                     << ": " << _autopasContainer.getAcquisitionFunction() << endl
-                     << setw(valueOffset) << left << "Number of evidence "
-                     << ": " << _autopasContainer.getMaxEvidence() << endl
-                     << setw(valueOffset) << left << "Verlet Cluster size "
-                     << ": " << _autopasContainer.getVerletClusterSize() << endl
-                     << setw(valueOffset) << left << "Rebuild frequency "
-                     << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
-                     << setw(valueOffset) << left << "Verlet Skin "
-                     << ": " << _autopasContainer.getVerletSkin() << endl
-                     << setw(valueOffset) << left << "Optimum Range "
-                     << ": " << _autopasContainer.getRelativeOptimumRange() << endl
-                     << setw(valueOffset) << left << "Tuning Phases without test "
-                     << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
-                     << setw(valueOffset) << left << "Blacklist Range "
-                     << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
-                     << setw(valueOffset) << left << "Evidence for prediction "
-                     << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
-                     << setw(valueOffset) << left << "Extrapolation method "
-                     << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
+					 << setw(valueOffset) << left << "Data Layout "
+					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
+					 << setw(valueOffset) << left << "Container "
+					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
+					 << setw(valueOffset) << left << "Cell size Factor "
+					 << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
+					 << setw(valueOffset) << left << "Traversals "
+					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
+					 << setw(valueOffset) << left << "Newton3"
+					 << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
+					 << setw(valueOffset) << left << "Tuning strategy "
+					 << ": " << _autopasContainer.getTuningStrategyOption() << endl
+					 << setw(valueOffset) << left << "Selector strategy "
+					 << ": " << _autopasContainer.getSelectorStrategy() << endl
+					 << setw(valueOffset) << left << "Tuning frequency"
+					 << ": " << _autopasContainer.getTuningInterval() << endl
+					 << setw(valueOffset) << left << "Number of samples "
+					 << ": " << _autopasContainer.getNumSamples() << endl
+					 << setw(valueOffset) << left << "Tuning Acquisition Function"
+					 << ": " << _autopasContainer.getAcquisitionFunction() << endl
+					 << setw(valueOffset) << left << "Number of evidence "
+					 << ": " << _autopasContainer.getMaxEvidence() << endl
+					 << setw(valueOffset) << left << "Verlet Cluster size "
+					 << ": " << _autopasContainer.getVerletClusterSize() << endl
+					 << setw(valueOffset) << left << "Rebuild frequency "
+					 << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
+					 << setw(valueOffset) << left << "Verlet Skin "
+					 << ": " << _autopasContainer.getVerletSkin() << endl
+					 << setw(valueOffset) << left << "Optimum Range "
+					 << ": " << _autopasContainer.getRelativeOptimumRange() << endl
+					 << setw(valueOffset) << left << "Tuning Phases without test "
+					 << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
+					 << setw(valueOffset) << left << "Blacklist Range "
+					 << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
+					 << setw(valueOffset) << left << "Evidence for prediction "
+					 << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
+					 << setw(valueOffset) << left << "Extrapolation method "
+					 << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
 
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
