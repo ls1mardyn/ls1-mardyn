@@ -338,7 +338,7 @@ void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
 void AutoPasContainer::deleteOuterParticles() {
 	global_log->info() << "deleting outer particles by using forced update" << std::endl;
-	auto [invalidParticles, ignore] = _autopasContainer.updateContainer();
+	auto [invalidParticles, ignore] = _autopasContainer.updateContainer(true /*Force an update!*/);
 	if (not invalidParticles.empty()) {
 		throw std::runtime_error(
 			"AutoPasContainer: Invalid particles ignored in deleteOuterParticles, check that your rebalance rate is a "
