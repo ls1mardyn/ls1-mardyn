@@ -36,8 +36,8 @@ MettDeamonFeedrateDirector | feed rate, director, reservoir, stationary, evapora
 Mirror | reflection, mirror plane, wall, boundary condition | Reflect particles at a mirror plane employing different algorithms. This can be used as a simple wall or even more complex boundary conditions.
 MmpldWriter  | visualization, particle configurations, MegaMol, mmpld, binary | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Particle List Data file format (MMPLD).
 MmspdBinWriter | visualization, particle configurations, MegaMol, mmspd, binary | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Simple Particle Data file format (MMSPD).
-MPI_IOCheckpointWriter  | todo | todo
-MPICheckpointWriter | todo | todo
+MPI_IOCheckpointWriter  | checkpointing | WIP, not functionable
+MPICheckpointWriter | checkpointing | WIP, not functionable (no proper reader existing)
 ODF | orientation distribution function | Calculates the distribution of mutual orientations between dipolar molecules and writes them into an output. Always use dipolar vector [0 0 1] in the input when using this plugin. Only tested for molecules with exactly one dipole site. Application to other molecules should be possible with minor adjustments and some testing.
 Permittivity | Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids. Requires long sampling times (i.e. several million steps). Using global thermostat is recommended.
 PovWriter | visualization?, todo | todo
