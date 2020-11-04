@@ -45,7 +45,8 @@ public:
 		<rebuildFrequency>INTEGER</rebuildFrequency>
 		<skin>DOUBLE</skin>
 		<optimumRange>DOUBLE</optimumRange>
-	   <blacklistRange>DOUBLE</blacklistRange>
+		<blacklistRange>DOUBLE</blacklistRange>
+		<useAVXFunctor>BOOL</useAVXFunctor>
 	   </datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
@@ -166,6 +167,7 @@ private:
 
 	std::vector<Molecule> _invalidParticles;
 	bool _hasInvalidParticles{false};
+	bool _useAVXFunctor{false};
 
 	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;
 

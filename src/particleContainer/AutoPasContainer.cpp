@@ -126,6 +126,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_relativeBlacklistRange = static_cast<double>(
 		xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
 
+	// use avx functor?
+	xmlconfig.getNodeValue("useAVXFunctor", _useAVXFunctor);
+
 	xmlconfig.changecurrentnode(oldPath);
 }
 
@@ -258,10 +261,6 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 
 template <bool shifting>
 void AutoPasContainer::traverseTemplateHelper() {
-	// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-	autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-					   /*calculateGlobals*/ true>
-		functor(_cutoff, _particlePropertiesLibrary);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -269,10 +268,28 @@ void AutoPasContainer::traverseTemplateHelper() {
 		iter->clearFM();
 	}
 
-	// here we call the actual autopas' iteratePairwise method to compute the forces.
-	_autopasContainer.iteratePairwise(&functor);
-	double upot = functor.getUpot();
-	double virial = functor.getVirial();
+	double upot, virial;
+	if (_useAVXFunctor) {
+		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+		autopas::LJFunctorAVX<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true,
+							  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
+			functor(_cutoff, _particlePropertiesLibrary);
+
+		// here we call the actual autopas' iteratePairwise method to compute the forces.
+		_autopasContainer.iteratePairwise(&functor);
+		upot = functor.getUpot();
+		virial = functor.getVirial();
+	} else {
+		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+		autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+						   /*calculateGlobals*/ true>
+			functor(_cutoff, _particlePropertiesLibrary);
+
+		// here we call the actual autopas' iteratePairwise method to compute the forces.
+		_autopasContainer.iteratePairwise(&functor);
+		upot = functor.getUpot();
+		virial = functor.getVirial();
+	}
 
 	// _myRF is always zero for lj only!
 	global_simulation->getDomain()->setLocalVirial(virial /*+ 3.0 * _myRF*/);
