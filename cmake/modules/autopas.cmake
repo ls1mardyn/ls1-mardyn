@@ -13,13 +13,12 @@ if (ENABLE_AUTOPAS)
         set(autopasRepoPath git@github.com:AutoPas/AutoPas.git)
     endif ()
 
-
-    option(AUTOPAS_BUILD_TESTS "" OFF)
-    option(AUTOPAS_BUILD_EXAMPLES "" OFF)
-    option(AUTOPAS_ENABLE_ADDRESS_SANITIZER "" ${ENABLE_ADDRESS_SANITIZER})
-    option(AUTOPAS_OPENMP "" ${OPENMP})
-    option(spdlog_ForceBundled "" ON)
-    option(Eigen3_ForceBundled "" ON)
+    set(AUTOPAS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(AUTOPAS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(AUTOPAS_ENABLE_ADDRESS_SANITIZER ${ENABLE_ADDRESS_SANITIZER} CACHE BOOL "" FORCE)
+    set(AUTOPAS_OPENMP ${OPENMP} CACHE BOOL "" FORCE)
+    set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
+    set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
 
     FetchContent_Declare(
             autopasfetch
