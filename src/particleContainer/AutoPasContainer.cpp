@@ -231,7 +231,7 @@ void AutoPasContainer::forcedUpdate() {
 		Simulation::exit(435);
 	}
 	_hasInvalidParticles = true;
-	std::tie(_invalidParticles, std::ignore) = _autopasContainer.updateContainer();
+	std::tie(_invalidParticles, std::ignore) = _autopasContainer.updateContainer(true /*forced update*/);
 }
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
