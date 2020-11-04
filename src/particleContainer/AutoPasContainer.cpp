@@ -286,12 +286,16 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		// only initialize ppl if it is empty
 		bool hasShift = false;
 		bool hasNoShift = false;
-		size_t numComponentsAdded = 0;
+
 		if (_particlePropertiesLibrary.getTypes().empty()) {
 			auto components = global_simulation->getEnsemble()->getComponents();
 			for (auto &c : *components) {
 				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
 												   c.ljcenter(0).m());
+			}
+			_particlePropertiesLibrary.calculateMixingCoefficients();
+			size_t numComponentsAdded = 0;
+			for (auto &c : *components) {
 				if (c.ljcenter(0).shift6() != 0.) {
 					hasShift = true;
 					double autoPasShift6 =
