@@ -124,7 +124,9 @@ private:
 
 	double _lambda;
 
-	bool _widom; // Widom method -> determine mu by test insertions which are all rejected
+	bool _widom;  // Widom method -> determine mu (the chemical potential) by test insertions which are all rejected.
+	// Using the widom method is just a way to determine the potential. This has nothing to do with actual insertions or
+	// deletions!
 
 	Molecule* _reservoir;
 
