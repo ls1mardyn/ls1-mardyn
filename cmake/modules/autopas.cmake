@@ -13,18 +13,17 @@ if (ENABLE_AUTOPAS)
         set(autopasRepoPath git@github.com:AutoPas/AutoPas.git)
     endif ()
 
-
-    option(AUTOPAS_BUILD_TESTS "" OFF)
-    option(AUTOPAS_BUILD_EXAMPLES "" OFF)
-    option(AUTOPAS_ENABLE_ADDRESS_SANITIZER "" ${ENABLE_ADDRESS_SANITIZER})
-    option(AUTOPAS_OPENMP "" ${OPENMP})
-    option(spdlog_ForceBundled "" ON)
-    option(Eigen3_ForceBundled "" ON)
+    set(AUTOPAS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(AUTOPAS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(AUTOPAS_ENABLE_ADDRESS_SANITIZER ${ENABLE_ADDRESS_SANITIZER} CACHE BOOL "" FORCE)
+    set(AUTOPAS_OPENMP ${OPENMP} CACHE BOOL "" FORCE)
+    set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
+    set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
 
     FetchContent_Declare(
             autopasfetch
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG 918ce7c356250df60b9a1e217482a0c8d4f7bf0d
+            GIT_TAG e673bc8b32bc39c6c0304663e2bf445d87bef68a
     )
 
     # Get autopas source and binary directories from CMake project
