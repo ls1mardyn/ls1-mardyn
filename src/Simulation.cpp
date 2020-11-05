@@ -65,7 +65,6 @@
 #include "thermostats/TemperatureControl.h"
 
 #include "utils/FileUtils.h"
-#include "utils/OptionParser.h"
 #include "utils/Logger.h"
 
 #include "longRange/LongRangeCorrection.h"
@@ -78,11 +77,7 @@
 #include "plugins/VectorizationTuner.h"
 
 using Log::global_log;
-using optparse::OptionParser;
-using optparse::OptionGroup;
-using optparse::Values;
 using namespace std;
-
 
 Simulation* global_simulation;
 

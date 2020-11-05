@@ -11,6 +11,10 @@ class ODF;
 #include <array>
 #include "CellProcessor.h"
 
+/**
+ * Class to calculate an orientation distribution function.
+ * It calculates the distribution of relative orientations of particles using the ODF class.
+ */
 class ODFCellProcessor : public CellProcessor {
 
  public:

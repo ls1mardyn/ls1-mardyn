@@ -5,14 +5,11 @@
 
 #include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
-#include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
 
 // plugins
 #include "plugins/PluginFactory.h"
-
-using optparse::Values;
 
 #if !defined (SIMULATION_SRC) or defined (IN_IDE_PARSER)
 class Simulation;
