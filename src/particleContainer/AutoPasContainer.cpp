@@ -28,6 +28,11 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
 	_verletClusterSize = _autopasContainer.getVerletClusterSize();
+	_relativeOptimumRange = _autopasContainer.getRelativeOptimumRange();
+	_relativeBlacklistRange = _autopasContainer.getRelativeBlacklistRange();
+	_maxTuningPhasesWithoutTest = _autopasContainer.getMaxTuningPhasesWithoutTest();
+	_evidenceForPrediction = _autopasContainer.getEvidenceFirstPrediction();
+	_extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
 
 #ifdef ENABLE_MPI
 	std::stringstream logFileName;
@@ -90,26 +95,39 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_tuningStrategyOption =
 		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", {_tuningStrategyOption})
 			 .begin();
+	_extrapolationMethod = *parseAutoPasOption<autopas::ExtrapolationMethodOption>(xmlconfig, "extrapolationMethod",
+																				   {_extrapolationMethod})
+								.begin();
 	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", _dataLayoutChoices);
 	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _newton3Choices);
 	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
 									  xmlconfig, "tuningAcquisitionFunction", {_tuningAcquisitionFunction})
 									  .begin();
 	// get numeric options from xml
-	//int
-	_maxEvidence = static_cast<unsigned int>(
-		xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
-	_tuningSamples = static_cast<unsigned int>(
-		xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_tuningSamples)));
-	_tuningFrequency = static_cast<unsigned int>(
-		xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_tuningFrequency)));
-	_verletRebuildFrequency = static_cast<unsigned int>(xmlconfig.getNodeValue_int(
-		"rebuildFrequency", static_cast<int>(_verletRebuildFrequency)));
-	_verletClusterSize = static_cast<unsigned int>(xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
+	// int
+	_maxEvidence = static_cast<unsigned int>(xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
+	_maxTuningPhasesWithoutTest = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("tuningPhasesWithoutTest", static_cast<int>(_maxTuningPhasesWithoutTest)));
+	_evidenceForPrediction = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("evidenceForPrediction", static_cast<int>(_evidenceForPrediction)));
+	_tuningSamples =
+		static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningSamples", static_cast<int>(_tuningSamples)));
+	_tuningFrequency =
+		static_cast<unsigned int>(xmlconfig.getNodeValue_int("tuningInterval", static_cast<int>(_tuningFrequency)));
+	_verletRebuildFrequency = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("rebuildFrequency", static_cast<int>(_verletRebuildFrequency)));
+	_verletClusterSize = static_cast<unsigned int>(
+		xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
 
 	// double
-	_verletSkin = static_cast<double>(
-		xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
+	_verletSkin = static_cast<double>(xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
+	_relativeOptimumRange =
+		static_cast<double>(xmlconfig.getNodeValue_double("optimumRange", static_cast<double>(_relativeOptimumRange)));
+	_relativeBlacklistRange = static_cast<double>(
+		xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
+
+	// use avx functor?
+	xmlconfig.getNodeValue("useAVXFunctor", _useAVXFunctor);
 
 	xmlconfig.changecurrentnode(oldPath);
 }
@@ -135,40 +153,59 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setTuningStrategyOption(_tuningStrategyOption);
 	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
 	_autopasContainer.setMaxEvidence(_maxEvidence);
+	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
+	_autopasContainer.setMaxTuningPhasesWithoutTest(_maxTuningPhasesWithoutTest);
+	_autopasContainer.setRelativeBlacklistRange(_relativeBlacklistRange);
+	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
+	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
 	_autopasContainer.init();
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
-  // print full configuration to the command line
-  int valueOffset = 28;
-  global_log->info() << "AutoPas configuration:" << endl
-                     << setw(valueOffset) << left << "Data Layout "
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts()) << endl
-                     << setw(valueOffset) << left << "Container "
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers()) << endl
-                     << setw(valueOffset) << left << "Cell size Factor "
-                     << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
-                     << setw(valueOffset) << left << "Traversals "
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals()) << endl
-                     << setw(valueOffset) << left << "Newton3"
-                     << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options()) << endl
-                     << setw(valueOffset) << left << "Tuning strategy "
-                     << ": " << _autopasContainer.getTuningStrategyOption() << endl
-                     << setw(valueOffset) << left << "Selector strategy "
-                     << ": " << _autopasContainer.getSelectorStrategy() << endl
-                     << setw(valueOffset) << left << "Tuning frequency"
-                     << ": " << _autopasContainer.getTuningInterval() << endl
-                     << setw(valueOffset) << left << "Number of samples "
-                     << ": " << _autopasContainer.getNumSamples() << endl
-                     << setw(valueOffset) << left << "Tuning Acquisition Function"
-                     << ": " << _autopasContainer.getAcquisitionFunction() << endl
-                     << setw(valueOffset) << left << "Number of evidence "
-                     << ": " << _autopasContainer.getMaxEvidence() << endl
-                     << setw(valueOffset) << left << "Verlet Cluster size "
-                     << ": " << _autopasContainer.getVerletClusterSize() << endl
-                     << setw(valueOffset) << left << "Rebuild frequency "
-                     << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
-                     << setw(valueOffset) << left << "Verlet Skin "
-                     << ": " << _autopasContainer.getVerletSkin() << endl;
+	// print full configuration to the command line
+	int valueOffset = 28;
+	global_log->info() << "AutoPas configuration:" << endl
+					   << setw(valueOffset) << left << "Data Layout "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts())
+					   << endl
+					   << setw(valueOffset) << left << "Container "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers())
+					   << endl
+					   << setw(valueOffset) << left << "Cell size Factor "
+					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
+					   << setw(valueOffset) << left << "Traversals "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals())
+					   << endl
+					   << setw(valueOffset) << left << "Newton3"
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
+					   << endl
+					   << setw(valueOffset) << left << "Tuning strategy "
+					   << ": " << _autopasContainer.getTuningStrategyOption() << endl
+					   << setw(valueOffset) << left << "Selector strategy "
+					   << ": " << _autopasContainer.getSelectorStrategy() << endl
+					   << setw(valueOffset) << left << "Tuning frequency"
+					   << ": " << _autopasContainer.getTuningInterval() << endl
+					   << setw(valueOffset) << left << "Number of samples "
+					   << ": " << _autopasContainer.getNumSamples() << endl
+					   << setw(valueOffset) << left << "Tuning Acquisition Function"
+					   << ": " << _autopasContainer.getAcquisitionFunction() << endl
+					   << setw(valueOffset) << left << "Number of evidence "
+					   << ": " << _autopasContainer.getMaxEvidence() << endl
+					   << setw(valueOffset) << left << "Verlet Cluster size "
+					   << ": " << _autopasContainer.getVerletClusterSize() << endl
+					   << setw(valueOffset) << left << "Rebuild frequency "
+					   << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
+					   << setw(valueOffset) << left << "Verlet Skin "
+					   << ": " << _autopasContainer.getVerletSkin() << endl
+					   << setw(valueOffset) << left << "Optimum Range "
+					   << ": " << _autopasContainer.getRelativeOptimumRange() << endl
+					   << setw(valueOffset) << left << "Tuning Phases without test "
+					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
+					   << setw(valueOffset) << left << "Blacklist Range "
+					   << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
+					   << setw(valueOffset) << left << "Evidence for prediction "
+					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
+					   << setw(valueOffset) << left << "Extrapolation method "
+					   << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
 
 	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
@@ -197,7 +234,7 @@ void AutoPasContainer::forcedUpdate() {
 		Simulation::exit(435);
 	}
 	_hasInvalidParticles = true;
-	_invalidParticles = _autopasContainer.updateContainerForced();
+	std::tie(_invalidParticles, std::ignore) = _autopasContainer.updateContainer(true /*forced update*/);
 }
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
@@ -224,10 +261,6 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 
 template <bool shifting>
 void AutoPasContainer::traverseTemplateHelper() {
-	// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-	autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-					   /*calculateGlobals*/ true>
-		functor(_cutoff, _particlePropertiesLibrary, /*duplicatedCalculation*/ true);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -235,10 +268,28 @@ void AutoPasContainer::traverseTemplateHelper() {
 		iter->clearFM();
 	}
 
-	// here we call the actual autopas' iteratePairwise method to compute the forces.
-	_autopasContainer.iteratePairwise(&functor);
-	double upot = functor.getUpot();
-	double virial = functor.getVirial();
+	double upot, virial;
+	if (_useAVXFunctor) {
+		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+		autopas::LJFunctorAVX<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true,
+							  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
+			functor(_cutoff, _particlePropertiesLibrary);
+
+		// here we call the actual autopas' iteratePairwise method to compute the forces.
+		_autopasContainer.iteratePairwise(&functor);
+		upot = functor.getUpot();
+		virial = functor.getVirial();
+	} else {
+		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+		autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+						   /*calculateGlobals*/ true>
+			functor(_cutoff, _particlePropertiesLibrary);
+
+		// here we call the actual autopas' iteratePairwise method to compute the forces.
+		_autopasContainer.iteratePairwise(&functor);
+		upot = functor.getUpot();
+		virial = functor.getVirial();
+	}
 
 	// _myRF is always zero for lj only!
 	global_simulation->getDomain()->setLocalVirial(virial /*+ 3.0 * _myRF*/);
@@ -252,12 +303,16 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		// only initialize ppl if it is empty
 		bool hasShift = false;
 		bool hasNoShift = false;
-		size_t numComponentsAdded = 0;
+
 		if (_particlePropertiesLibrary.getTypes().empty()) {
 			auto components = global_simulation->getEnsemble()->getComponents();
 			for (auto &c : *components) {
 				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
 												   c.ljcenter(0).m());
+			}
+			_particlePropertiesLibrary.calculateMixingCoefficients();
+			size_t numComponentsAdded = 0;
+			for (auto &c : *components) {
 				if (c.ljcenter(0).shift6() != 0.) {
 					hasShift = true;
 					double autoPasShift6 =
@@ -312,7 +367,7 @@ void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
 void AutoPasContainer::deleteOuterParticles() {
 	global_log->info() << "deleting outer particles by using forced update" << std::endl;
-	auto invalidParticles = _autopasContainer.updateContainerForced();
+	auto [invalidParticles, ignore] = _autopasContainer.updateContainer(true /*Force an update!*/);
 	if (not invalidParticles.empty()) {
 		throw std::runtime_error(
 			"AutoPasContainer: Invalid particles ignored in deleteOuterParticles, check that your rebalance rate is a "
