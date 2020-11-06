@@ -90,12 +90,15 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 		}
 	}
 
-	if(xmlconfig.changecurrentnode("momentsofinertia")){
+	if(xmlconfig.changecurrentnode("../momentsofinertia")){
 		double II[3];
 		if(xmlconfig.getNodeValueReduced("Ixx", II[0]) > 0) { setI11(II[0]); }
 		if(xmlconfig.getNodeValueReduced("Iyy", II[1]) > 0) { setI22(II[1]); }
 		if(xmlconfig.getNodeValueReduced("Izz", II[2]) > 0) { setI33(II[2]); }
+		global_log->info() << "Using moments of inertia set in xml config: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 		xmlconfig.changecurrentnode("..");
+	} else {
+		global_log->info() << "Using calculated moments of inertia: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 	}
 }
 
