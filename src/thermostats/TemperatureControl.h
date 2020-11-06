@@ -33,6 +33,52 @@ public:
 	ControlRegionT(TemperatureControl* const parent);
 	~ControlRegionT();
 
+	/** @brief Read in XML configuration for TemperatureControl and all its included objects.
+	 *
+	 * The following XML object structure is handled by this method:
+	 * \code{.xml}
+		<thermostats>
+			<thermostat type="TemperatureControl">
+				<control>
+					<start>UNSIGNED_LONG</start>           <!-- Timestep turning thermostat ON -->
+					<frequency>UNSIGNED_LONG</frequency>   <!-- Thermosatt is active every <frequency>-th time step -->
+					<stop>UNSIGNED_LONG</stop>             <!-- Timestep turning thermostat OFF -->
+				</control>
+				<regions>
+					<region>
+						<coords>
+							<lcx>DOUBLE</lcx> <lcy>DOUBLE</lcy> <lcz>DOUBLE</lcz>
+							<ucx>DOUBLE</ucx> <ucy>DOUBLE</ucy> <ucz>DOUBLE</ucz>
+						</coords>
+						<target>
+							<temperature>DOUBLE</temperature>   <!-- target temperature -->
+							<ramp>                    <!-- ramp temperature from <start> to <end> value -->
+								<start>0.70</start>   <!-- start temperature -->
+								<end>0.80</end>       <!-- end temperature -->
+								<update>
+									<start>UNSIGNED_LONG</start>   <!-- Timestep of ramping start -->
+									<stop>UNSIGNED_LONG</stop>     <!-- Timestep of ramping stop -->
+									<freq>UNSIGNED_LONG</freq>     <!-- adjust target temperature every <freq>-th time step -->
+								</update>
+							</ramp>
+							<component>1</component>   <!-- target component -->
+						</target>
+						<settings>
+							<numslabs>UNSIGNED_LONG</numslabs>   <!-- Divide region into <numslabs> slabs -->
+							<exponent>DOUBLE</exponent>          <!-- Damping exponent of thermostat -->
+							<directions>xyz</directions>         <!-- Translational degrees of freedom to be considered for thermostating: x|y|z|xy|xz|yz|xyz -->
+						</settings>
+						<writefreq>5000</writefreq>         <!-- Log thermostat scaling factors betaTrans and betaRot -->
+						<fileprefix>betalog</fileprefix>    <!-- Prefix of log file -->
+					</region>
+					</region>   <!-- Add as much regions as you want! -->
+						<!-- ...  -->
+					</region>
+				</regions>
+			</thermostat>
+		</thermostats>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 	unsigned int GetID(){return _nID;}
 	void VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections);
@@ -95,6 +141,15 @@ private:
 		uint32_t writeFreq;
 		CommVar<std::vector<double> > data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
 	} _addedEkin;
+	
+	struct Ramp {
+		bool enabled;
+		float start, end, delta, slope;
+		struct Update {
+			uint64_t start, stop, delta, elapsed;
+			uint32_t freq;
+		} update;
+	} _ramp;
 };
 
 

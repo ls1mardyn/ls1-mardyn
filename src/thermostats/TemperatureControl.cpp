@@ -154,6 +154,25 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
 	xmlconfig.getNodeValue("target/component", _nTargetComponentID);
 
+	// temperature ramp
+	_ramp.enabled = false;
+	_ramp.update.elapsed = 0;
+	bool bRet = true;
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/start", _ramp.start);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/end", _ramp.end);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/update/start", _ramp.update.start);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/update/stop", _ramp.update.stop);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/update/freq", _ramp.update.freq);
+	if(bRet) {
+		_ramp.enabled = true;
+		global_log->info() << "[TemperatureControl] REGION " << _nStaticID << ": Temperature ramp enabled with start="
+			<< _ramp.start << ", end=" << _ramp.end << ", update.start=" << _ramp.update.start << ", update.stop=" << _ramp.update.stop << ", update.freq=" << _ramp.update.freq << std::endl;
+		// calc remaining values
+		_ramp.delta = _ramp.end - _ramp.start;
+		_ramp.update.delta = _ramp.update.stop - _ramp.update.start;
+		_ramp.slope = _ramp.delta / _ramp.update.delta;
+	}
+
 	// ControlMethod "VelocityScaling/Andersen/Mixed"
 	std::string methods = "";
 	xmlconfig.getNodeValue("method", methods);
@@ -245,6 +264,19 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 		globalTV._ekinTrans = domainDecomp->collCommGetDouble();
 	}
 	domainDecomp->collCommFinalize();
+
+	// Adjust target temperature
+	uint64_t simstep = _simulation.getSimulationStep();
+	
+	if(_ramp.enabled && simstep > _ramp.update.start && simstep <= _ramp.update.stop) {
+		if(_ramp.update.elapsed == 0)
+			_dTargetTemperature = _ramp.start;
+		else if (_ramp.update.stop == simstep)
+			_dTargetTemperature = _ramp.end;
+		else if (_ramp.update.elapsed % _ramp.update.freq == 0)
+			_dTargetTemperature = _ramp.start + _ramp.update.elapsed * _ramp.slope;
+		_ramp.update.elapsed++;
+	}
 
 	// calc betaTrans, betaRot, and their sum
 	double dBetaTransSumSlabs = 0.;
