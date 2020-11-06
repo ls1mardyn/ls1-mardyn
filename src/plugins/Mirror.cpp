@@ -319,9 +319,9 @@ void Mirror::beforeForces(
 					else {
 						float frnd = _rnd->rnd();
 						if (_direction == MD_RIGHT_MIRROR)
-							mirror_pos = _position.coord - frnd * _diffuse_mirror.width;
+							mirror_pos = _position.coord - static_cast<double>(frnd) * _diffuse_mirror.width;
 						else
-							mirror_pos = _position.coord + frnd * _diffuse_mirror.width;
+							mirror_pos = _position.coord + static_cast<double>(frnd) * _diffuse_mirror.width;
 						std::pair<std::map<uint64_t,double>::iterator,bool> status;
 						status = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
 #ifndef NDEBUG
