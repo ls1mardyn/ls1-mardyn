@@ -15,10 +15,13 @@
 using namespace std;
 using Log::global_log;
 
-template<typename It>
-void printInsertionStatus(It it, bool success)
+void printInsertionStatus(std::pair<std::map<uint64_t,double>::iterator,bool> &status)
 {
-	std::cout << "Insertion of " << it->first << (success ? " succeeded\n" : " failed\n");
+	if (status.second == false)
+		std::cout << "Element already existed";
+	else
+		std::cout << "Element successfully inserted";
+	std::cout << " with a value of " << status.first->second << std::endl;
 }
 
 Mirror::Mirror() :
@@ -319,9 +322,10 @@ void Mirror::beforeForces(
 							mirror_pos = _position.coord - frnd * _diffuse_mirror.width;
 						else
 							mirror_pos = _position.coord + frnd * _diffuse_mirror.width;
-						const auto [it, success] = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
+						std::pair<std::map<uint64_t,double>::iterator,bool> status;
+						status = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
 #ifndef NDEBUG
-						printInsertionStatus(it, success);
+						printInsertionStatus(status);
 #endif
 					}
 					
