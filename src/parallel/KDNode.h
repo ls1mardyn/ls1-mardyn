@@ -117,19 +117,20 @@ public:
 	 */
 	void calculateDeviationLowerBound(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
 		double meanProcessorSpeed[] = { 1., 1. };
-		double averagedMeanProcessorSpeed = 1.;
-		if (accumulatedProcessorSpeeds != nullptr && accumulatedProcessorSpeeds->size() != 0) {
+        double totalMeanProcessorSpeed = 1.;
+		if (accumulatedProcessorSpeeds != nullptr and not accumulatedProcessorSpeeds->empty()) {
 			meanProcessorSpeed[0] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc]
 					- (*accumulatedProcessorSpeeds)[_owningProc]) / (_child1->_numProcs);
 			meanProcessorSpeed[1] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc + _child2->_numProcs]
 					- (*accumulatedProcessorSpeeds)[_child2->_owningProc]) / (_child2->_numProcs);
-			averagedMeanProcessorSpeed = (meanProcessorSpeed[0] + meanProcessorSpeed[1]) / 2;
+			size_t numProcs = accumulatedProcessorSpeeds->size();
+            totalMeanProcessorSpeed = (*accumulatedProcessorSpeeds)[numProcs-1] / numProcs;
 		}
 		double child1Dev = _child1->calculateAvgLoadPerProc()
-				- _optimalLoadPerProcess * meanProcessorSpeed[0] / averagedMeanProcessorSpeed;
+				- _optimalLoadPerProcess * meanProcessorSpeed[0] / totalMeanProcessorSpeed;
 		child1Dev = child1Dev * child1Dev;
 		double child2Dev = _child2->calculateAvgLoadPerProc()
-				- _optimalLoadPerProcess * meanProcessorSpeed[1] / averagedMeanProcessorSpeed;
+				- _optimalLoadPerProcess * meanProcessorSpeed[1] / totalMeanProcessorSpeed;
 		child2Dev = child2Dev * child2Dev;
 		_deviationLowerBound = child1Dev * (double) _child1->_numProcs + child2Dev * (double) _child2->_numProcs;
 	}
