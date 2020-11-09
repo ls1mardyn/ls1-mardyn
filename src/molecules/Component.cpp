@@ -43,54 +43,52 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query( "site" );
 	XMLfile::Query::const_iterator siteIter;
 	for( siteIter = query.begin(); siteIter; siteIter++ ) {
-		xmlconfig.changecurrentnode( siteIter );
-		
+		xmlconfig.changecurrentnode(siteIter);
+
 		std::string siteType;
-		xmlconfig.getNodeValue( "@type", siteType );
+		xmlconfig.getNodeValue("@type", siteType);
 		global_log->info() << "Adding site of type " << siteType << endl;
-		
-		if ( siteType == "LJ126" ) {
+
+		if (siteType == "LJ126") {
 			LJcenter ljSite;
 			ljSite.readXML(xmlconfig);
-			addLJcenter( ljSite );
-		} else
-		if ( siteType == "Charge" ) {
+			addLJcenter(ljSite);
+		} else if (siteType == "Charge") {
 			Charge chargeSite;
 			chargeSite.readXML(xmlconfig);
 			addCharge(chargeSite);
-		} else
-		if ( siteType == "Dipole" ) {
+		} else if (siteType == "Dipole") {
 			Dipole dipoleSite;
 			dipoleSite.readXML(xmlconfig);
 			addDipole(dipoleSite);
-		} else
-		if ( siteType == "Stockmayer" ) {	
-			
+		} else if (siteType == "Stockmayer") {
 			_isStockmayer = true;
 			_rot_dof = 2;
-			
+
 			_Ipa[0] = 1.0;
 			_Ipa[1] = 1.0;
 			_Ipa[2] = 0.0;
 
-			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = ["<< _Ipa[0]<< " " << _Ipa[1] << " " << _Ipa[2] << "]. Dipole direction vector of the Stockmayer fluid should be [0 0 1]." << endl;
-			
-		} else
-		if ( siteType == "Quadrupole" ) {
+			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [" << _Ipa[0] << " " << _Ipa[1] << " "
+							   << _Ipa[2] << "]. Dipole direction vector of the Stockmayer fluid should be [0 0 1]."
+							   << endl;
+
+		} else if (siteType == "Quadrupole") {
 			Quadrupole quadrupoleSite;
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
-		} else
-		if ( siteType == "Tersoff" ) {
+		} else if (siteType == "Tersoff") {
 			global_log->error() << "Tersoff no longer supported:" << siteType << endl;
 			Simulation::exit(-1);
-		}else {
+		} else {
 			global_log->error() << "Unknown site type:" << siteType << endl;
 			Simulation::exit(-1);
 		}
+		// go back to initial level, to be consistent, even if no site information is found.
+		xmlconfig.changecurrentnode("..");
 	}
 
-	if(xmlconfig.changecurrentnode("../momentsofinertia")){
+	if(xmlconfig.changecurrentnode("momentsofinertia")){
 		double II[3];
 		if(xmlconfig.getNodeValueReduced("Ixx", II[0]) > 0) { setI11(II[0]); }
 		if(xmlconfig.getNodeValueReduced("Iyy", II[1]) > 0) { setI22(II[1]); }
