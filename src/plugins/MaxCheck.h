@@ -43,6 +43,10 @@ private:
 		double F2;
 		double v;
 		double v2;
+		double M;
+		double M2;
+		double L;
+		double L2;
 		uint32_t method;
 	};
 	typedef std::unordered_map<uint32_t, MaxVals> maxvals_map;
