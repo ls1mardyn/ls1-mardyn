@@ -78,14 +78,20 @@ public:
 	void init(ParticleContainer *particleContainer,
 			  DomainDecompBase *domainDecomp, Domain *domain) override;
 
+    /** @brief Method will be called first thing in a new timestep. */
+	void beforeEventNewTimestep(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) override;
+
     /** @brief Method siteWiseForces will be called before forcefields have been applied
      *  alterations to sitewise forces and fullMolecule forces can be made here
      */
 
-    void siteWiseForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    ) override;
+	void siteWiseForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) override {}
 
 	/** @brief Method afterForces will be called after forcefields have been applied
 	 *
@@ -100,7 +106,7 @@ public:
 			ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, Domain *domain,
 			unsigned long simstep
-	) override;
+	) override {}
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override {}

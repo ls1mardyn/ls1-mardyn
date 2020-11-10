@@ -90,9 +90,10 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 }
 
-void MaxCheck::siteWiseForces(
+void MaxCheck::beforeEventNewTimestep(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-		unsigned long simstep)
+		unsigned long simstep
+	)
 {
 	if (simstep < _control.start || simstep > _control.stop
 			|| simstep % _control.freq != 0)
@@ -100,17 +101,11 @@ void MaxCheck::siteWiseForces(
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
 
-void MaxCheck::afterForces(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, unsigned long simstep) {
-	if (simstep < _control.start || simstep > _control.stop
-			|| simstep % _control.freq != 0)
-		return;
-	this->checkMaxVals(particleContainer, domainDecomp, simstep);
-}
-
-void MaxCheck::endStep(ParticleContainer *particleContainer,
-		DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep
-		) {
+void MaxCheck::afterForces(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
+)
+{
 	if (simstep < _control.start || simstep > _control.stop
 			|| simstep % _control.freq != 0)
 		return;
