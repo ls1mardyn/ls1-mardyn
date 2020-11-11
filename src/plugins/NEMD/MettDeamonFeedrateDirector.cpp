@@ -93,8 +93,12 @@ void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
 		_feedrate.list.clear();
 		this->csv_str2list(strCSV, _feedrate.list);
 	}
+#ifndef NDEBUG
+	cout << "feedrate.list:" << endl;
 	for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
 		std::cout << ' ' << *it;
+	cout << endl;
+#endif
 	// init actual feed rate
 	_feedrate.actual = *_feedrate.list.end();
 
@@ -162,7 +166,6 @@ void MettDeamonFeedrateDirector::afterForces(
 
 void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 {
-	cout << "MettDeamonFeedrateDirector::calcFeedrate()" << endl;
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	uint32_t cid = 0;
 	domainDecomp.collCommInit(1);
@@ -189,7 +192,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	double dInvNumvals = 1./(double)(_feedrate.list.size());
 	_feedrate.avg = _feedrate.sum * dInvNumvals;
 
-	// DEBUG output
+#ifndef NDEBUG
 	cout << "feedrate.list:" << endl;
 	for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
 		std::cout << ' ' << *it;
@@ -200,7 +203,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	cout << "_feedrate.actual=" << _feedrate.actual << endl;
 	cout << "_feedrate.sum=" << _feedrate.sum << endl;
 	cout << "_feedrate.avg=" << _feedrate.avg << endl;
-	// DEBUG output
+#endif
 }
 
 void MettDeamonFeedrateDirector::resetLocalValues()

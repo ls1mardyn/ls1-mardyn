@@ -69,6 +69,8 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 		mv.F = mv.F2 = 0.;
 		mv.v = mv.v2 = 0.;
+		mv.M = mv.M2 = 0.;
+		mv.L = mv.L2 = 0.;
 		mv.method = MCM_UNKNOWN;
 
 		xmlconfig.getNodeValue("@method", mv.method);
@@ -84,23 +86,38 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "MaxCheck: vmax(cid=" << cid_ub << "): " << mv.v
 				<< endl;
 		mv.v2 = mv.v * mv.v;
+		
+		xmlconfig.getNodeValue("Mmax", mv.M);
+		global_log->info() << "MaxCheck: Mmax(cid=" << cid_ub << "): " << mv.M
+				<< endl;
+		mv.M2 = mv.M * mv.M;
+		
+		xmlconfig.getNodeValue("Lmax", mv.L);
+		global_log->info() << "MaxCheck: Lmax(cid=" << cid_ub << "): " << mv.L
+				<< endl;
+		mv.L2 = mv.L * mv.L;
 
 		_maxVals[cid_ub] = mv;
 	}  // loop over 'targets/target' nodes
 
 }
 
-void MaxCheck::afterForces(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, unsigned long simstep) {
+void MaxCheck::beforeEventNewTimestep(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
+	)
+{
 	if (simstep < _control.start || simstep > _control.stop
 			|| simstep % _control.freq != 0)
 		return;
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
 
-void MaxCheck::endStep(ParticleContainer *particleContainer,
-		DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep
-		) {
+void MaxCheck::afterForces(
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
+)
+{
 	if (simstep < _control.start || simstep > _control.stop
 			|| simstep % _control.freq != 0)
 		return;
@@ -120,6 +137,8 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 		double r[3];
 		double F[3];
 		double v[3];
+		double M[3];
+		double L[3];
 		MaxVals absVals;
 
 		for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
@@ -129,6 +148,8 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 				r[d] = it->r(d);
 				F[d] = it->F(d);
 				v[d] = it->v(d);
+				M[d] = it->M(d);
+				L[d] = it->D(d);
 			}
 
 			if(r[1] < _yrange.min || r[1] > _yrange.max)
@@ -137,6 +158,8 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 			// calc abs vals
 			absVals.F2 = this->calcSquaredVectorLength(F);
 			absVals.v2 = this->calcSquaredVectorLength(v);
+			absVals.M2 = this->calcSquaredVectorLength(M);
+			absVals.L2 = this->calcSquaredVectorLength(L);
 
 			MaxVals &mv = _maxVals[cid_ub];
 
@@ -152,6 +175,18 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 					double scale = mv.v / vabs;
 					it->scale_v(scale);
 				}
+				
+				if (mv.M > 0. && absVals.M2 > mv.M2) {
+					double Mabs = sqrt(absVals.M2);
+					double scale = mv.M / Mabs;
+					it->scale_M(scale);
+				}
+
+				if (mv.L > 0. && absVals.L2 > mv.L2) {
+					double Labs = sqrt(absVals.L2);
+					double scale = mv.L / Labs;
+					it->scale_D(scale);
+				}
 			} else if (MCM_LIMIT_TO_MAX_VALUE_OVERLAPS == mv.method) {
 				if (mv.F > 0. && absVals.F2 > mv.F2) {
 					double Fabs = sqrt(absVals.F2);
@@ -164,8 +199,19 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 						it->scale_v(scale);
 					}
 				}
+				if (mv.M > 0. && absVals.M2 > mv.M2) {
+					double Mabs = sqrt(absVals.M2);
+					double scale = mv.M / Mabs;
+					it->scale_M(scale);
+
+					if (mv.L > 0. && absVals.L2 > mv.L2) {
+						double Labs = sqrt(absVals.L2);
+						scale = mv.L / Labs;
+						it->scale_D(scale);
+					}
+				}
 			} else if (MCM_DELETE_PARTICLES == mv.method) {
-				if ( (mv.F > 0. && absVals.F2 > mv.F2) || (mv.v > 0. && absVals.v2 > mv.v2) )
+				if ( (mv.F > 0. && absVals.F2 > mv.F2) || (mv.v > 0. && absVals.v2 > mv.v2) || (mv.M > 0. && absVals.M2 > mv.M2) || (mv.L > 0. && absVals.L2 > mv.L2) )
 				    particleContainer->deleteMolecule(it, false);
 				//				_deletions.push_back(&(*it));
 			}
