@@ -567,7 +567,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 
 	_feedrate.feed.actual = _feedrate.feed.init;
 
-	_reservoir->readParticleData(domainDecomp);
+	_reservoir->readParticleData(domainDecomp, particleContainer);
 	if(_reservoir->getDensity(0) < 0.000000001)
 		cout << "["<<ownRank<<"]: ERROR: Reservoir density too low, _reservoir->getDensity(0)=" << _reservoir->getDensity(0) << endl;
 
@@ -1316,15 +1316,23 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 #endif
 }
 
+void MettDeamon::updateReservoir(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
+{
+	_reservoir->updateParticleData(domainDecomp, particleContainer);
+}
+
 void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 {
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+	this->updateReservoir(&domainDecomp, particleContainer);
+	
 	int nRank = domainDecomp.getRank();
 	int numProcs = domainDecomp.getNumProcs();
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
 #ifndef NDEBUG
 	cout << "[" << nRank << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
+	//_reservoir->printBinQueueInfo();
 #endif
 
 	CommVar<uint64_t> numParticlesCurrentSlab;
@@ -1378,8 +1386,9 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	}
 	_feedrate.feed.sum -= _reservoir->getBinWidth();  // reset feed sum
 	_reservoir->nextBin(_nMaxMoleculeID.global);
-	// cout << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << endl;
-
+#ifndef NDEBUG
+	cout << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << endl;
+#endif
 	// calc global values
 	domainDecomp.collCommInit(1);
 	domainDecomp.collCommAppendUnsLong(numAdded.local);
@@ -1536,19 +1545,19 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 	}
 }
 
-void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
+void Reservoir::readParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
 {
 	switch(_nReadMethod)
 	{
 	case RRM_READ_FROM_MEMORY:
 	case RRM_EMPTY:
-		this->readFromMemory(domainDecomp);
+		this->readFromMemory(domainDecomp, particleContainer);
 		break;
 	case RRM_READ_FROM_FILE:
-		this->readFromFile(domainDecomp);
+		this->readFromFile(domainDecomp, particleContainer);
 		break;
 	case RRM_READ_FROM_FILE_BINARY:
-		this->readFromFileBinary(domainDecomp);
+		this->readFromFileBinary(domainDecomp, particleContainer);
 		break;
 	case RRM_UNKNOWN:
 	case RRM_AMBIGUOUS:
@@ -1558,7 +1567,7 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
 	}
 
 	// sort particles into bins
-	this->sortParticlesToBins();
+	this->sortParticlesToBins(domainDecomp, particleContainer);
 
 	// volume, densities
 	this->calcPartialDensities(domainDecomp);
@@ -1569,11 +1578,90 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp)
 #endif
 }
 
-void Reservoir::sortParticlesToBins()
+void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
 {
 	Domain* domain = global_simulation->getDomain();
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	int ownRank = domainDecomp.getRank();
+#ifndef ENABLE_MPI
+	return;
+#endif	
+
+#define PARTICLE_BUFFER_SIZE  (16*1024)
+	int ownRank = domainDecomp->getRank();
+
+	/* distribute molecules to other MPI processes */
+	for (int rank = 0; rank < domainDecomp->getNumProcs(); rank++) {
+		unsigned long num_particles = _particleVector.size();
+		MPI_CHECK( MPI_Bcast(&num_particles, 1, MPI_UNSIGNED_LONG, rank, domainDecomp->getCommunicator()) );
+
+		ParticleData particle_buff[PARTICLE_BUFFER_SIZE];
+		int particle_buff_pos = 0;
+		MPI_Datatype mpi_Particle;
+		ParticleData::getMPIType(mpi_Particle);
+
+		if (rank == ownRank) {
+			for(unsigned long i = 0; i < num_particles; ++i) {
+				ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], _particleVector[i]);
+				particle_buff_pos++;
+				if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == num_particles - 1)) {
+					global_log->debug() << "broadcasting(sending) particles" << endl;
+					MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, rank, domainDecomp->getCommunicator());
+					particle_buff_pos = 0;
+				}
+			}
+		} else {
+			uint64_t numParticlesAdd = 0;
+			for(unsigned long i = 0; i < num_particles; ++i) {
+				if(i % PARTICLE_BUFFER_SIZE == 0) {
+					global_log->debug() << "broadcasting(receiving) particles" << endl;
+					MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, rank, domainDecomp->getCommunicator());
+					particle_buff_pos = 0;
+				}
+				Molecule mol;
+				ParticleData::ParticleDataToMolecule(particle_buff[particle_buff_pos], mol);
+				particle_buff_pos++;
+				
+				bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
+				if (bIsRelevant) {
+					_particleVector.push_back(mol);
+					numParticlesAdd++;
+				}
+			}
+#ifndef NDEBUG
+			if(numParticlesAdd > 0) {
+				cout << "Rank " << ownRank << " received " << numParticlesAdd << " particles from rank " << rank << "." << endl;
+			}
+#endif
+		}
+		global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
+	}
+
+	// delete particles out of bounding box
+	uint64_t numParticlesOld = _particleVector.size();
+	std::vector<Molecule> particleVectorTmp;
+	for (auto mol : _particleVector) {
+		bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
+		if (bIsRelevant) {
+			particleVectorTmp.push_back(mol);
+		}
+	}
+	_particleVector.resize(particleVectorTmp.size());
+	_particleVector = particleVectorTmp;
+#ifndef NDEBUG
+	if(_particleVector.size() < numParticlesOld) {
+		cout << "Rank " << ownRank << " deleted " << numParticlesOld - _particleVector.size() << " particles from particle vector." << endl;
+	}
+#endif
+	// Refresh BinQueue
+	uint32_t actual = _binQueue->getActualBinIndex();
+	this->clearBinQueue();
+	this->sortParticlesToBins(domainDecomp, particleContainer);
+	_binQueue->activateBin(actual);
+}
+
+void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
+{
+	Domain* domain = global_simulation->getDomain();
+	int ownRank = domainDecomp->getRank();
 
 	uint32_t numBins = _box.length.at(1) / _dBinWidthInit;
 	_dBinWidth = _box.length.at(1) / (double)(numBins);
@@ -1584,17 +1672,17 @@ void Reservoir::sortParticlesToBins()
 	cout << "["<<ownRank<<"]: _particleVector.size()=" << _particleVector.size() << endl;
 
 	cout << "["<<ownRank<<"]: bbMin ="
-			<< domainDecomp.getBoundingBoxMin(0, domain) << ", "
-			<< domainDecomp.getBoundingBoxMin(1, domain) << ", "
-			<< domainDecomp.getBoundingBoxMin(2, domain) << "; bbMax = "
-			<< domainDecomp.getBoundingBoxMax(0, domain) << ", "
-			<< domainDecomp.getBoundingBoxMax(1, domain) << ", "
-			<< domainDecomp.getBoundingBoxMax(2, domain) << endl;
+			<< domainDecomp->getBoundingBoxMin(0, domain) << ", "
+			<< domainDecomp->getBoundingBoxMin(1, domain) << ", "
+			<< domainDecomp->getBoundingBoxMin(2, domain) << "; bbMax = "
+			<< domainDecomp->getBoundingBoxMax(0, domain) << ", "
+			<< domainDecomp->getBoundingBoxMax(1, domain) << ", "
+			<< domainDecomp->getBoundingBoxMax(2, domain) << endl;
 #endif
 	std::vector< std::vector<Molecule> > binVector;
 	binVector.resize(numBins);
 	uint32_t nBinIndex;
-	for(auto&& mol:_particleVector)
+	for(auto mol:_particleVector)  // auto&&
 	{
 		// possibly change component IDs
 		this->changeComponentID(mol, mol.componentid() );
@@ -1602,7 +1690,7 @@ void Reservoir::sortParticlesToBins()
 		nBinIndex = floor(y / _dBinWidth);
 //		cout << "["<<ownRank<<"]: y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
 		mardyn_assert(nBinIndex < binVector.size() );
-		mol.setr(1, y - nBinIndex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+//		mol.setr(1, y - nBinIndex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
 		switch(_parent->getMovingDirection() )
 		{
 		case MD_LEFT_TO_RIGHT:
@@ -1613,7 +1701,11 @@ void Reservoir::sortParticlesToBins()
 			break;
 		}
 		// check if molecule is in bounding box of the process domain
-		if (domainDecomp.procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain) )
+		bool bIsInsideBB = domainDecomp->procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain);
+		bool bIsInsidePC = particleContainer->isInBoundingBox(mol.r_arr().data());
+		if(bIsInsideBB != bIsInsidePC)
+			cout << "bIsInsideBB=" << bIsInsideBB << ", bIsInsidePC=" << bIsInsidePC << endl;
+		if (bIsInsideBB)
 			binVector.at(nBinIndex).push_back(mol);
 	}
 
@@ -1643,9 +1735,8 @@ void Reservoir::sortParticlesToBins()
 	_binQueue->connectTailToHead();
 }
 
-void Reservoir::readFromMemory(DomainDecompBase* domainDecomp)
+void Reservoir::readFromMemory(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
 {
-	ParticleContainer* particleContainer = global_simulation->getMoleculeContainer();
 	Domain* domain = global_simulation->getDomain();
 
 	_box.length.at(0) = domain->getGlobalLength(0);
@@ -1678,7 +1769,7 @@ void Reservoir::readFromMemory(DomainDecompBase* domainDecomp)
 	}
 }
 
-void Reservoir::readFromFile(DomainDecompBase* domainDecomp)
+void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
 {
 	Domain* domain = global_simulation->getDomain();
 	std::ifstream ifs;
@@ -1793,7 +1884,10 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp)
 		// TODO: The following should be done by the addPartice method.
 		dcomponents.at(componentid).incNumMolecules();
 */
-		_particleVector.push_back(mol);
+		bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
+		if (bIsRelevant) {
+			_particleVector.push_back(mol);
+		}
 
 		// Print status message
 		unsigned long iph = _numMoleculesRead / 100;
@@ -1856,8 +1950,9 @@ void Reservoir::readFromFileBinaryHeader()
 	}
 }
 
-void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp)
+void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
 {
+	Domain* domain = global_simulation->getDomain();
 	global_log->info() << "Reservoir::readFromFileBinary(...)" << endl;
 	// read header
 	this->readFromFileBinaryHeader();
@@ -1905,6 +2000,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp)
 	ParticleData::getMPIType(mpi_Particle);
 
 	if(domainDecomp->getRank() == 0) {
+		std::vector<Molecule> particleVectorTmp;
 		for(unsigned long i = 0; i < num_particles; ++i) {
 			ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], _particleVector[i]);
 			particle_buff_pos++;
@@ -1913,7 +2009,14 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp)
 				MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, domainDecomp->getCommunicator());
 				particle_buff_pos = 0;
 			}
+			Molecule& mol = _particleVector[i];
+			bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
+			if (bIsRelevant) {
+				particleVectorTmp.push_back(mol);
+			}
 		}
+		_particleVector.resize(particleVectorTmp.size());
+		_particleVector = particleVectorTmp;
 	} else {
 		for(unsigned long i = 0; i < num_particles; ++i) {
 			if(i % PARTICLE_BUFFER_SIZE == 0) {
@@ -1924,7 +2027,11 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp)
 			Molecule mol;
 			ParticleData::ParticleDataToMolecule(particle_buff[particle_buff_pos], mol);
 			particle_buff_pos++;
-			_particleVector.push_back(mol);
+			
+			bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
+			if (bIsRelevant) {
+				_particleVector.push_back(mol);
+			}
 		}
 	}
 	global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
@@ -1989,6 +2096,24 @@ void Reservoir::changeComponentID(Molecule& mol, const uint32_t& cid)
 	mol.setComponent(compNew);
 }
 
+bool Reservoir::isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molecule& mol)
+{
+	double y = mol.r(1);
+	uint32_t nBinIndex = floor(y / _dBinWidth);
+	mardyn_assert(nBinIndex < binVector.size() );
+	double dOffset;
+	switch(_parent->getMovingDirection() )
+	{
+	case MD_LEFT_TO_RIGHT:
+		dOffset = nBinIndex*_dBinWidth;
+		break;
+	case MD_RIGHT_TO_LEFT:
+		dOffset = nBinIndex*_dBinWidth + (domain->getGlobalLength(1) - _dBinWidth);
+		break;
+	}
+	return domainDecomp->procOwnsPos(mol.r(0), y-dOffset, mol.r(2), domain);
+}
+
 // queue methods
 uint32_t Reservoir::getActualBinIndex() {return _binQueue->getActualBinIndex();}
 uint64_t Reservoir::getNumMoleculesLocal() {return _binQueue->getNumParticles();}
@@ -1997,3 +2122,14 @@ std::vector<Molecule>& Reservoir::getParticlesActualBin() {return _binQueue->get
 void Reservoir::nextBin(uint64_t& nMaxID) {_binQueue->next(); nMaxID += _density.at(0).numMolecules.global;}
 uint64_t Reservoir::getMaxMoleculeID() {return _binQueue->getMaxID();}
 bool Reservoir::activateBin(uint32_t nBinIndex){return _binQueue->activateBin(nBinIndex);}
+void Reservoir::clearBinQueue() {_binQueue->clear();}
+void Reservoir::printBinQueueInfo()
+{
+	//~ cout << "_binQueue->getActualBinIndex()=" << _binQueue->getActualBinIndex() << endl;
+	//~ cout << "_binQueue->getNumBins()=" << _binQueue->getNumBins() << endl;
+	//~ cout << "_binQueue->getRoundCount()=" << _binQueue->getRoundCount() << endl;
+	//~ cout << "_binQueue->getNumParticles()=" << _binQueue->getNumParticles() << endl;
+	//~ cout << "_binQueue->getMaxID()=" << _binQueue->getMaxID() << endl;
+	_binQueue->printInfo();
+}
+

@@ -260,6 +260,7 @@ private:
 	void InitTransitionPlane(Domain* domain);
 	void getAvailableParticleIDs(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			CommVar<std::vector<uint64_t> >& particleIDs_available, const CommVar<uint64_t>& numParticleIDs);
+	void updateReservoir(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 	void InsertReservoirSlab(ParticleContainer* particleContainer);
 	void initRestart();
 	
@@ -383,13 +384,14 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 	// read particle data
-	void readParticleData(DomainDecompBase* domainDecomp);
+	void readParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
+	void updateParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 private:
-	void readFromMemory(DomainDecompBase* domainDecomp);
-	void readFromFile(DomainDecompBase* domainDecomp);
-	void readFromFileBinary(DomainDecompBase* domainDecomp);
+	void readFromMemory(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
+	void readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
+	void readFromFileBinary(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 	void readFromFileBinaryHeader();
-	void sortParticlesToBins();
+	void sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 
 public:
 	// Getters, Setters
@@ -412,10 +414,13 @@ public:
 	void nextBin(uint64_t& nMaxID);
 	uint64_t getMaxMoleculeID();
 	bool activateBin(uint32_t nBinIndex);
+	void clearBinQueue();
+	void printBinQueueInfo();
 
 private:
 	void calcPartialDensities(DomainDecompBase* domainDecomp);
 	void changeComponentID(Molecule& mol, const uint32_t& cid);
+	bool isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molecule& mol);
 
 private:
 	MettDeamon* _parent;
@@ -450,6 +455,8 @@ class BinQueue
 			for(const auto& p:vec)
 				_particles.push_back(p);
 		}
+		uint32_t getIndex() {return _nIndex;}
+		uint64_t getNumParticles() {return _particles.size();}
 		Bin* _next;
 		uint32_t _nIndex;
 		std::vector<Molecule> _particles;
@@ -510,6 +517,7 @@ public:
 		if (isEmpty()) {
 			_last = ptr;
 			_first = ptr;
+			_actual = ptr;
 		} else {
 			_last->_next = ptr;
 			_last = ptr;
@@ -532,6 +540,37 @@ public:
 		}
 		else
 			_maxID = 0;
+	}
+
+	void deque()
+	{
+		if (isEmpty()) {
+			return;
+		}
+		else if (_first == _last) {
+			_numParticles -= _first->getNumParticles();
+			delete _first;
+			_first = _last = nullptr;
+			_numBins--;
+		}
+		else {
+			Bin* ptr = _first;
+			while(ptr->_next != _last) {
+				ptr = ptr->_next;
+			}
+			_numParticles -= ptr->_next->getNumParticles();
+			delete ptr->_next;
+			ptr->_next = nullptr;
+			_last = ptr;
+			_numBins--;
+		}
+	}
+	
+	void clear()
+	{
+		while (!isEmpty()) {
+			deque();
+		}
 	}
 
 	std::vector<Molecule>& head() {
@@ -583,6 +622,28 @@ public:
 	uint32_t getRoundCount() {return _nRoundCount;}
 	uint64_t getNumParticles() {return _numParticles;}
 	uint64_t getMaxID() {return _maxID;}
+	void printInfo()
+	{
+		if(isEmpty()) {
+			cout << "Queue is empty." << endl;
+			return;
+		}
+		
+		cout << "_first=" << _first << endl;
+		cout << "_last=" << _last << endl;
+		cout << "_actual=" << _actual << endl;
+		
+		Bin* ptr = _first;
+		do
+		{
+			cout << "ptr=" << ptr << endl;
+			cout << "Bin address=" << ptr << endl;
+			cout << "Bin index=" << ptr->getIndex() << endl;
+			cout << "Bin numParticles=" << ptr->getNumParticles() << endl;
+			ptr = ptr->_next;
+		} while (ptr != _last->_next);
+		
+	}
 
 private:
 	static bool molecule_id_compare(Molecule a, Molecule b)
