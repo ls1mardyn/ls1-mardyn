@@ -1486,6 +1486,10 @@ Reservoir::~Reservoir() = default;
 
 void Reservoir::readXML(XMLfileUnits& xmlconfig)
 {
+	/* update BinQueue before inserting new Reservoir slab */
+	_bUpdateBinQueue = false;
+	xmlconfig.getNodeValue("@update", _bUpdateBinQueue);
+	
 	std::string strType = "unknown";
 	bool bRet1 = xmlconfig.getNodeValue("file@type", strType);
 	bool bRet2 = xmlconfig.getNodeValue("width", _dReadWidthY);
@@ -1577,6 +1581,9 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp, ParticleContain
 
 void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
 {
+	if (not _bUpdateBinQueue) {
+		return;
+	}
 	Domain* domain = global_simulation->getDomain();
 #ifndef ENABLE_MPI
 	return;
