@@ -1385,7 +1385,10 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 		numAdded.local++;
 	}
 	_feedrate.feed.sum -= _reservoir->getBinWidth();  // reset feed sum
-	_reservoir->nextBin(_nMaxMoleculeID.global);
+	if(not _reservoir->nextBin(_nMaxMoleculeID.global) ) {
+		global_log->error() << "Failed to activate new bin of particle Reservoir's BinQueue (plugin: MettDeamon) => Program exit." << endl;
+		Simulation::exit(-1);
+	}
 #ifndef NDEBUG
 	cout << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << endl;
 #endif
@@ -2118,7 +2121,7 @@ uint32_t Reservoir::getActualBinIndex() {return _binQueue->getActualBinIndex();}
 uint64_t Reservoir::getNumMoleculesLocal() {return _binQueue->getNumParticles();}
 uint32_t Reservoir::getNumBins() {return _binQueue->getNumBins();}
 std::vector<Molecule>& Reservoir::getParticlesActualBin() {return _binQueue->getParticlesActualBin();}
-void Reservoir::nextBin(uint64_t& nMaxID) {_binQueue->next(); nMaxID += _density.at(0).numMolecules.global;}
+bool Reservoir::nextBin(uint64_t& nMaxID) {bool bSuccess = _binQueue->next(); nMaxID += _density.at(0).numMolecules.global; return bSuccess;}
 uint64_t Reservoir::getMaxMoleculeID() {return _binQueue->getMaxID();}
 bool Reservoir::activateBin(uint32_t nBinIndex){return _binQueue->activateBin(nBinIndex);}
 void Reservoir::clearBinQueue() {_binQueue->clear();}

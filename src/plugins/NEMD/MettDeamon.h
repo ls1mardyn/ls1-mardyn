@@ -411,7 +411,7 @@ public:
 	uint64_t getNumMoleculesLocal();
 	uint32_t getNumBins();
 	std::vector<Molecule>& getParticlesActualBin();
-	void nextBin(uint64_t& nMaxID);
+	bool nextBin(uint64_t& nMaxID);
 	uint64_t getMaxMoleculeID();
 	bool activateBin(uint32_t nBinIndex);
 	void clearBinQueue();
@@ -595,11 +595,13 @@ public:
 		_actual = _first;
 	}
 
-	void next()
+	bool next()
 	{
 		_actual = _actual->_next;
 		if(_actual == _first)
 			_nRoundCount++;
+		bool bSuccess = dynamic_cast<Bin*>(_actual);
+		return bSuccess;
 	}
 
 	bool activateBin(uint32_t nBinIndex)
