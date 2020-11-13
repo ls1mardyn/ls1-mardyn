@@ -263,11 +263,11 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	if (not rebalance) {
 		if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
 			if (sendLeavingWithCopies()) {
-				global_log->info() << "kDD: Sending Leaving and Halos." << std::endl;
+				global_log->debug() << "kDD: Sending Leaving and Halos together." << std::endl;
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES,
 				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
 			} else {
-				global_log->info() << "kDD: Sending Leaving." << std::endl;
+				global_log->debug() << "kDD: Sending Leaving, then Halos." << std::endl;
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
 				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
 #ifndef MARDYN_AUTOPAS
@@ -277,7 +277,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
 			}
 		} else {
-			global_log->info() << "kDD: Sending Halos." << std::endl;
+			global_log->debug() << "kDD: Sending Halos." << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, false /*dohaloPositionCheck*/);
 		}
 	} else {
