@@ -522,6 +522,7 @@ public:
 			_last->_next = ptr;
 			_last = ptr;
 		}
+		_last->_next = _first;  // connect tail to head
 		_numBins++;
 		_numParticles += vec.size();
 		// update max particle ID
@@ -563,6 +564,7 @@ public:
 			ptr->_next = nullptr;
 			_last = ptr;
 			_numBins--;
+			_last->_next = _first;  // connect tail to head
 		}
 	}
 	

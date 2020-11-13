@@ -1732,7 +1732,6 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 			}
 			break;
 	}
-	_binQueue->connectTailToHead();
 }
 
 void Reservoir::readFromMemory(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
