@@ -124,7 +124,7 @@ public:
 			meanProcessorSpeed[1] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc + _child2->_numProcs]
 					- (*accumulatedProcessorSpeeds)[_child2->_owningProc]) / (_child2->_numProcs);
 			size_t numProcs = accumulatedProcessorSpeeds->size() - 1;
-            totalMeanProcessorSpeed = (*accumulatedProcessorSpeeds)[numProcs-1] / numProcs;
+            totalMeanProcessorSpeed = (*accumulatedProcessorSpeeds)[numProcs] / numProcs;
 		}
 		double child1Dev = _child1->calculateAvgLoadPerProc()
 				- _optimalLoadPerProcess * meanProcessorSpeed[0] / totalMeanProcessorSpeed;
