@@ -1065,7 +1065,7 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 
 			int numProcsLeft = max(1, optNumProcsLeft);
 
-			KDNode* clone = new KDNode(*node);
+			auto* clone = new KDNode(*node);
 			if (clone->_level == 0) {
 				clone->_optimalLoadPerProcess = optCostPerProc;
 			}
