@@ -611,8 +611,6 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 			}
 		}
 	}
-	particleContainer->update();
-	particleContainer->updateMoleculeCaches();
 }
 void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 {
@@ -886,8 +884,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		this->findMaxMoleculeID(&domainDecomp);
 		this->InsertReservoirSlab(particleContainer);
 	}
-	particleContainer->update();
-	particleContainer->updateMoleculeCaches();
 
 	// log count of released molecules
 	this->logReleased();
@@ -931,8 +927,6 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 	}  // loop over molecules
 
-//	particleContainer->update();
-//	particleContainer->updateMoleculeCaches();
 	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
 
 	// delta y berechnen: alle x Zeitschritte
