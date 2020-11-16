@@ -132,7 +132,7 @@ public:
 		double child2Dev = _child2->calculateAvgLoadPerProc()
 				- _optimalLoadPerProcess * meanProcessorSpeed[1] / totalMeanProcessorSpeed;
 		child2Dev = child2Dev * child2Dev;
-		_deviationLowerBound = child1Dev * (double) _child1->_numProcs + child2Dev * (double) _child2->_numProcs;
+		_deviationLowerBound = child1Dev * static_cast<double>( _child1->_numProcs) + child2Dev * static_cast<double>(_child2->_numProcs);
 	}
 
 	void calculateDeviation(std::vector<double>* processorSpeeds = nullptr, const double &totalMeanProcessorSpeed = 1.) {
