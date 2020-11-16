@@ -237,9 +237,12 @@ public:
 	double _optimalLoadPerProcess;
 
 	/**
-	 * This is a lower bound for the deviation.
+	 * This is a lower bound for the deviation of the load from the optimal load.
 	 */
 	double _deviationLowerBound;
+	/**
+	 * Deviation of the actual assigned load from the optimal load.
+	 */
 	double _deviation;
 
 	// level of this node (at root node, level = 0)
