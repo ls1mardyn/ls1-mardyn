@@ -21,7 +21,7 @@ _secondChildID(secondChildID),
 _nextSendingProcess(nextSendingProcess),
 _load(load),
 _OptimalLoadPerProcess(OptimalLoadPerProcess),
-_expectedDeviation(expectedDeviation),
+_deviationLowerBound(expectedDeviation),
 _deviation(deviation),
 _level(level) {
   setCoversWholeDomain(coversWholeDomain);
@@ -236,8 +236,8 @@ void MPIKDNodePacked::setOptimalLoadPerProcess(const double& OptimalLoadPerProce
 }
 
 
-double MPIKDNodePacked::getExpectedDeviation() const {
-	return _expectedDeviation;
+double MPIKDNodePacked::getDeviationLowerBound() const {
+	return _deviationLowerBound;
 }
 
 double MPIKDNodePacked::getDeviation() const {
@@ -351,7 +351,7 @@ void MPIKDNodePacked::initDatatype() {
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._nextSendingProcess))), 		&disp[6] );
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._load))), 		&disp[7] );
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._OptimalLoadPerProcess))), 		&disp[8] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._expectedDeviation))), 		&disp[9] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._deviationLowerBound))), 		&disp[9] );
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._deviation))), 		&disp[10] );
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._level))), 		&disp[11] );
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._packedRecords0))), 		&disp[12] );

@@ -130,7 +130,7 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 	numPlugins = query.card();
 	global_log->info() << "Number of plugins with tag " << category << ": " << numPlugins << endl;
 	if (numPlugins < 1) {
-		global_log->warning() << "No plugins specified for tag" << category << "." << endl;
+		global_log->warning() << "No plugins specified for tag " << category << "." << endl;
 	}
 
 	for (auto pluginIter = query.begin(); pluginIter; ++pluginIter) {

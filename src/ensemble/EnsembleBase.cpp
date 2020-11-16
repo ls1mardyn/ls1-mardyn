@@ -24,6 +24,10 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query("components/moleculetype");
 	numComponents = query.card();
 	global_log->info() << "Number of components: " << numComponents << endl;
+	if (numComponents == 0) {
+		global_log->fatal() << "No components found. Please verify that you have input them correctly." << std::endl;
+		Simulation::exit(96123);
+	}
 	_components.resize(numComponents);
 	XMLfile::Query::const_iterator componentIter;
 	string oldpath = xmlconfig.getcurrentnodepath();

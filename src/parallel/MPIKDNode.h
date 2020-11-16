@@ -28,7 +28,7 @@ private:
 	int _nextSendingProcess;
 	double _load;
 	double _OptimalLoadPerProcess;
-	double _expectedDeviation;
+	double _deviationLowerBound;
 	double _deviation;
 	int _level;
 
@@ -193,7 +193,7 @@ public:
 	 */
 	void setOptimalLoadPerProcess(const double& OptimalLoadPerProcess);
 
-	double getExpectedDeviation() const;
+	double getDeviationLowerBound() const;
 
 	double getDeviation() const;
 

@@ -60,7 +60,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	KDDecomposition();
 
-	~KDDecomposition();
+	~KDDecomposition() override;
 
 
 	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
@@ -80,6 +80,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 		 <generateNewFiles>BOOL</generateNewFiles>
 		 <useExistingFiles>BOOL</useExistingFiles>
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
+		 <deviationReductionOperation>max OR sum</deviationReductionOperation>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -98,7 +99,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain, double etime) override;
 
-	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain) override;
@@ -125,7 +126,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//! @param domain e.g. needed to get the bounding boxes
 	void printDecomp(const std::string& filename, Domain* domain) override;
 
-	int getUpdateFrequency() { return _frequency; }
+	int getUpdateFrequency() const { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
 	std::vector<int> getNeighbourRanks() override;
 	std::vector<int> getNeighbourRanksFullShell() override;
@@ -242,7 +243,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * @note: if this implementation is too slow for large domains, we could change
 	 *        it so that all division costs for
 	 */
-	bool calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup);
+	bool calculateAllPossibleSubdivisions(KDNode* node, std::list<KDNode*>& subdividedNodes, MPI_Comm commGroup);
 	
 	/**
 	 * Calculates the splitting plane for the "cluster" heterogeneous decomposition
@@ -266,7 +267,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Determines the partition rank that is needed for the "cluster" heterogeneous decomposition
 	 */
 	int calculatePartitionRank();
-	bool checkNeedRebalance(double lastTraversalTime);
+	bool checkNeedRebalance(double lastTraversalTime) const;
 
 	//######################################
 	//###    private member variables    ###
@@ -321,7 +322,9 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	bool _doMeasureLoadCalc;  //
 
-	//The decomp. only searches in all direction, if _splitBiggest is false and the number of processors in a node is less then the _splitThreshold
+	/**
+	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a node is less than the _splitThreshold.
+	 */
 	int _splitThreshold;
 	int _numParticleTypes;
 
@@ -363,6 +366,13 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 
 	double _rebalanceLimit; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
+
+	/**
+	 * MPI reduction operation to reduce the deviation within the decompose step.
+	 * MPI_SUM will result in overestimated values for the deviation, but will result in more balanced trees.
+	 * MPI_MAX will calculate the correct deviation.
+	 */
+	MPI_Op _deviationReductionOperation{MPI_SUM};
 };
 
 
