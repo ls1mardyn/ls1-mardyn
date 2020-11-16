@@ -115,21 +115,23 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 						  "VecTuner version)?: "
 					   << (_heterogeneousSystems ? "yes" : "no") << endl;
 
-	std::string deviationReductionOperation;
-	xmlconfig.getNodeValue("deviationReductionOperation", deviationReductionOperation);
-	if (not deviationReductionOperation.empty()) {
-		if (deviationReductionOperation == "sum") {
-			_deviationReductionOperation = MPI_SUM;
-		} else if (deviationReductionOperation == "max") {
-			_deviationReductionOperation = MPI_MAX;
-		} else {
-			global_log->fatal() << "Wrong deviationReductionOperation given: " << _deviationReductionOperation
-								<< ". Should be 'max' or 'sum'." << std::endl;
-			Simulation::exit(45681);
+   	{
+		std::string deviationReductionOperation;
+		xmlconfig.getNodeValue("deviationReductionOperation", deviationReductionOperation);
+		if (not deviationReductionOperation.empty()) {
+			if (deviationReductionOperation == "sum") {
+				_deviationReductionOperation = MPI_SUM;
+			} else if (deviationReductionOperation == "max") {
+				_deviationReductionOperation = MPI_MAX;
+			} else {
+				global_log->fatal() << "Wrong deviationReductionOperation given: " << _deviationReductionOperation
+									<< ". Should be 'max' or 'sum'." << std::endl;
+				Simulation::exit(45681);
+			}
 		}
-	}
-	global_log->info() << "KDDecomposition uses " << deviationReductionOperation
+		global_log->info() << "KDDecomposition uses " << deviationReductionOperation
 					   << " to reduce the deviation within the decompose step." << endl;
+	}				   
 
 	bool useVecTuner = false;
 	xmlconfig.getNodeValue("useVectorizationTuner", useVecTuner);
@@ -540,7 +542,7 @@ void KDDecomposition::fillTimeVecs(CellProcessor **cellProc){
 		Simulation::exit(1);
 	}
 	auto _tunerLoadCalc = dynamic_cast<TunerLoad*>(_loadCalc);
-	if(_tunerLoadCalc != nullptr){
+	if(_tunerLoadCalc){
 		VectorizationTuner tuner;
 		tuner.init(global_simulation->getMoleculeContainer(), &global_simulation->domainDecomposition(), global_simulation->getDomain());
 		mardyn_assert(cellProc && (*cellProc));

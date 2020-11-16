@@ -44,7 +44,7 @@ bool KDNode::equals(KDNode& other) {
 		equal = equal && (_coversWholeDomain[i] == other._coversWholeDomain[i]);
 	}
 
-	if (_child1 != nullptr && other._child1 != nullptr) {
+	if (_child1 && other._child1 ) {
 		bool childEqual = _child1->equals(*other._child1);
 		equal = equal && childEqual;
 	} else {
@@ -52,7 +52,7 @@ bool KDNode::equals(KDNode& other) {
 		equal = equal && childEqual;
 	}
 
-	if (_child2 != nullptr && other._child2 != nullptr) {
+	if (_child2 && other._child2) {
 		bool childEqual = _child2->equals(*other._child2);
 		equal = equal && childEqual;
 	} else {
@@ -102,10 +102,10 @@ void KDNode::printTree(const std::string& prefix) {
 				  << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
 		std::stringstream childprefix;
 		childprefix << prefix << "  ";
-		if (_child1 != nullptr) {
+		if (_child1) {
 			_child1->printTree(childprefix.str());
 		}
-		if (_child2 != nullptr) {
+		if (_child2) {
 			_child2->printTree(childprefix.str());
 		}
 	}

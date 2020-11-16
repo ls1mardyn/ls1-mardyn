@@ -322,7 +322,9 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	bool _doMeasureLoadCalc;  //
 
-	/// The decomp. only searches in all direction, if _splitBiggest is false and the number of processors in a node is less then the _splitThreshold
+	/**
+	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a node is less than the _splitThreshold.
+	 */
 	int _splitThreshold;
 	int _numParticleTypes;
 

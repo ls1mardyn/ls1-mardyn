@@ -118,7 +118,7 @@ public:
 	void calculateDeviationLowerBound(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
 		double meanProcessorSpeed[] = { 1., 1. };
         double totalMeanProcessorSpeed = 1.;
-		if (accumulatedProcessorSpeeds != nullptr and not accumulatedProcessorSpeeds->empty()) {
+		if (accumulatedProcessorSpeeds and not accumulatedProcessorSpeeds->empty()) {
 			meanProcessorSpeed[0] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc]
 					- (*accumulatedProcessorSpeeds)[_owningProc]) / (_child1->_numProcs);
 			meanProcessorSpeed[1] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc + _child2->_numProcs]
