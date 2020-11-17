@@ -526,12 +526,12 @@ void Domain::writeCheckpointHeader(string filename,
 			*/
 			vector<Component>* components = _simulation.getEnsemble()->getComponents();
 			checkpointfilestream << " NumberOfComponents\t" << components->size() << endl;
-			for(vector<Component>::const_iterator pos=components->begin();pos!=components->end();++pos){
+			for(auto pos=components->begin();pos!=components->end();++pos){
 				pos->write(checkpointfilestream);
 			}
 			unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
 			unsigned int iout=0;
-			for(vector<double>::const_iterator pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
+			for(auto pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
 				checkpointfilestream << *pos;
 				iout++;
 				// 2 parameters (xi and eta)
@@ -548,7 +548,7 @@ void Domain::writeCheckpointHeader(string filename,
 				}
 			}
 			checkpointfilestream << _epsilonRF << endl;
-			for( map<int, bool>::iterator uutit = this->_universalUndirectedThermostat.begin();
+			for( auto uutit = this->_universalUndirectedThermostat.begin();
 					uutit != this->_universalUndirectedThermostat.end();
 					uutit++ )
 			{
