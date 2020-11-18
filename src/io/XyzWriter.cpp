@@ -18,23 +18,23 @@ using namespace std;
 void XyzWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
-	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void XyzWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
@@ -65,8 +65,8 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 			for (unsigned i=0; i< components->size(); i++){
 				number += (*components)[i].getNumMolecules()*((*components)[i].numLJcenters() + (*components)[i].numDipoles() + (*components)[i].numCharges() + (*components)[i].numQuadrupoles());
 			}
-			xyzfilestream << number << endl;
-			xyzfilestream << "comment line" << endl;
+			xyzfilestream << number << "\n";
+			xyzfilestream << "comment line" << "\n";
 			xyzfilestream.close();
 		}
 		for( int process = 0; process < domainDecomp->getNumProcs(); process++ ){
@@ -80,7 +80,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 						else if( tempMol->componentid() == 2 ) { xyzfilestream << "C ";}
 						else if( tempMol->componentid() == 3 ) { xyzfilestream << "O ";}
 						else { xyzfilestream << "H ";}
-						xyzfilestream << tempMol->r(0) + tempMol->ljcenter_d(i)[0] << "\t" << tempMol->r(1) + tempMol->ljcenter_d(i)[1] << "\t" << tempMol->r(2) + tempMol->ljcenter_d(i)[2] << endl;
+						xyzfilestream << tempMol->r(0) + tempMol->ljcenter_d(i)[0] << "\t" << tempMol->r(1) + tempMol->ljcenter_d(i)[1] << "\t" << tempMol->r(2) + tempMol->ljcenter_d(i)[2] << "\n";
 					}
 					for (unsigned i=0; i< tempMol->numDipoles(); i++){
 						if( tempMol->componentid() == 0) { xyzfilestream << "O ";}
@@ -88,7 +88,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 						else if( tempMol->componentid() == 2 ) { xyzfilestream << "Xe ";}
 						else if( tempMol->componentid() == 3 ) { xyzfilestream << "Ar ";}
 						else { xyzfilestream << "C ";}
-						xyzfilestream << tempMol->r(0) + tempMol->dipole_d(i)[0] << "\t" << tempMol->r(1) + tempMol->dipole_d(i)[1] << "\t" << tempMol->r(2) + tempMol->dipole_d(i)[2] << endl;
+						xyzfilestream << tempMol->r(0) + tempMol->dipole_d(i)[0] << "\t" << tempMol->r(1) + tempMol->dipole_d(i)[1] << "\t" << tempMol->r(2) + tempMol->dipole_d(i)[2] << "\n";
 					}
 					for (unsigned i=0; i< tempMol->numQuadrupoles(); i++){
 						if( tempMol->componentid() == 0) { xyzfilestream << "C ";}
@@ -96,7 +96,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 						else if( tempMol->componentid() == 2 ) { xyzfilestream << "H ";}
 						else if( tempMol->componentid() == 3 ) { xyzfilestream << "Xe ";}
 						else { xyzfilestream << "O ";}
-						xyzfilestream << tempMol->r(0) + tempMol->quadrupole_d(i)[0] << "\t" << tempMol->r(1) + tempMol->quadrupole_d(i)[1] << "\t" << tempMol->r(2) + tempMol->quadrupole_d(i)[2] << endl;
+						xyzfilestream << tempMol->r(0) + tempMol->quadrupole_d(i)[0] << "\t" << tempMol->r(1) + tempMol->quadrupole_d(i)[1] << "\t" << tempMol->r(2) + tempMol->quadrupole_d(i)[2] << "\n";
 					}
 					for (unsigned i=0; i< tempMol->numCharges(); i++){
 						if( tempMol->componentid() == 0) { xyzfilestream << "H ";}
@@ -104,7 +104,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 						else if( tempMol->componentid() == 2 ) { xyzfilestream << "Xe ";}
 						else if( tempMol->componentid() == 3 ) { xyzfilestream << "Ar ";}
 						else { xyzfilestream << "C ";}
-						xyzfilestream << tempMol->r(0) + tempMol->charge_d(i)[0] << "\t" << tempMol->r(1) + tempMol->charge_d(i)[1] << "\t" << tempMol->r(2) + tempMol->charge_d(i)[2] << endl;
+						xyzfilestream << tempMol->r(0) + tempMol->charge_d(i)[0] << "\t" << tempMol->r(1) + tempMol->charge_d(i)[1] << "\t" << tempMol->r(2) + tempMol->charge_d(i)[2] << "\n";
 					}
 				}
 				xyzfilestream.close();

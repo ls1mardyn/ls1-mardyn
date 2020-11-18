@@ -208,19 +208,19 @@ void Component::write(std::ostream& ostrm) const {
 	ostrm << _ljcenters.size() << "\t" << _charges.size() << "\t"
 	      << _dipoles.size() << "\t" << _quadrupoles.size() << "\t"
 		  << 0 << "\n";  // the 0 indicates a zero amount of tersoff sites.
-	for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos) {
+	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
-	for (std::vector<Charge>::const_iterator pos = _charges.begin(); pos != _charges.end(); ++pos) {
+	for (auto pos = _charges.cbegin(); pos != _charges.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
-	for (std::vector<Dipole>::const_iterator pos = _dipoles.begin(); pos != _dipoles.end(); ++pos) {
+	for (auto pos = _dipoles.cbegin(); pos != _dipoles.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
-	for (std::vector<Quadrupole>::const_iterator pos = _quadrupoles.begin(); pos != _quadrupoles.end(); ++pos) {
+	for (auto pos = _quadrupoles.cbegin(); pos != _quadrupoles.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
@@ -228,7 +228,7 @@ void Component::write(std::ostream& ostrm) const {
 }
 
 void Component::writeVIM(std::ostream& ostrm) {
-	for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos) {
+	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
 		ostrm << "~ " << this->_id + 1 << " LJ " << setw(7) << pos->rx() << ' '
 		      << setw(7) << pos->ry() << ' ' << setw(7) << pos->rz() << ' '
 		      << setw(6) << pos->sigma() << ' ' << setw(2) << (1 + (this->_id % 9)) << "\n";

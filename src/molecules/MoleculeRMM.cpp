@@ -118,7 +118,7 @@ void MoleculeRMM::write(std::ostream& ostrm) const {
 	ostrm << getID() << "\t"
 		  << r(0) << " " << r(1) << " " << r(2) << "\t"
 		  << v(0) << " " << v(1) << " " << v(2) << "\t"
-		  << endl;
+		  << "\n";
 }
 
 std::ostream& operator<<( std::ostream& os, const MoleculeRMM& m ) {

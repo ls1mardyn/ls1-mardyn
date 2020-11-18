@@ -132,7 +132,7 @@ void PovWriter::endStep(ParticleContainer *particleContainer,
 			      << mrot[2][0] << "," << mrot[2][1] << "," << mrot[2][2] << ","
 			      << pos->r(0) << "," << pos->r(1) << "," << pos->r(2)
 			      << ">";
-			ostrm << "}" << endl;
+			ostrm << "}" << "\n";
 		}
 		ostrm.close();
 	}
