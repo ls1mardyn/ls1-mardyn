@@ -551,7 +551,7 @@ pipeline {
             stage('release documentation') {
               when { branch 'master' }
               steps {
-                sh "rm -rf /home/wwwsccs/html/mardyn/doc /home/wwwsccs/html/mardyn/doxys_docs"
+                sh "rm -rf /home/wwwsccs/html/mardyn/doc /home/wwwsccs/html/mardyn/doxygen_doc"
                 sh "cp -r doc /home/wwwsccs/html/mardyn"
                 sh "cp -r doxygen_doc /home/wwwsccs/html/mardyn"
                 sh "chmod -R 775 /home/wwwsccs/html/mardyn/doc"
