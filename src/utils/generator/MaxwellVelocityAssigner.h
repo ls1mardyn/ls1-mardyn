@@ -14,7 +14,7 @@ public:
 	~MaxwellVelocityAssigner() {}
 
 	void assignVelocity(Molecule *molecule) {
-		double v_abs = sqrt(/*kB=1*/ T() / molecule->component()->m());
+		double v_abs = sqrt(/*kB=1*/ (1+molecule->component()->getRotationalDegreesOfFreedom()/3.)*T() / molecule->component()->m());
 		double v[3];
 		v[0] = v_abs * _normalDistribution(_mt);
 		v[1] = v_abs * _normalDistribution(_mt);
