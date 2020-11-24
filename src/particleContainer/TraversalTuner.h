@@ -129,18 +129,18 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	_optimalTraversal = _traversals[selectedTraversal].first;
 
 	// log traversal
-    if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTraversal))
-    	global_log->info() << "Using HalfShellTraversal." << endl;
-    else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTraversal))
-        global_log->info() << "Using OriginalCellPairTraversal." << endl;
-    else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-        global_log->info() << "Using C08CellPairTraversal without eighthShell." << endl;
-    else if (dynamic_cast<C08CellPairTraversal<CellTemplate, true> *>(_optimalTraversal))
-	    global_log->info() << "Using C08CellPairTraversal with eighthShell." << endl;
-    else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-    	global_log->info() << "Using C04CellPairTraversal." << endl;
-    else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
-        global_log->info() << "Using MidpointTraversal." << endl;
+	if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTraversal))
+		global_log->info() << "Using HalfShellTraversal." << endl;
+	else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTraversal))
+		global_log->info() << "Using OriginalCellPairTraversal." << endl;
+	else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
+		global_log->info() << "Using C08CellPairTraversal without eighthShell." << endl;
+	else if (dynamic_cast<C08CellPairTraversal<CellTemplate, true> *>(_optimalTraversal))
+		global_log->info() << "Using C08CellPairTraversal with eighthShell." << endl;
+	else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTraversal))
+		global_log->info() << "Using C04CellPairTraversal." << endl;
+	else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
+		global_log->info() << "Using MidpointTraversal." << endl;
 	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTraversal)) {
 		global_log->info() << "Using QuickschedTraversal." << endl;
 #ifndef QUICKSCHED
@@ -151,7 +151,6 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 		global_log->info() << "Using SlicedCellPairTraversal." << endl;
 	else
 		global_log->warning() << "Using unknown traversal." << endl;
-
 
 	mardyn_assert(_optimalTraversal->maxCellsInCutoff() >= _cellsInCutoff);
 
@@ -174,22 +173,21 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 	else if (traversalType.find("c08") != string::npos)
 		selectedTraversal = C08;
 	else if (traversalType.find("c04") != string::npos)
-			selectedTraversal = C04;
+		selectedTraversal = C04;
 	else if (traversalType.find("qui") != string::npos)
 		selectedTraversal = QSCHED;
 	else if (traversalType.find("slice") != string::npos)
 		selectedTraversal = SLICED;
 	else if (traversalType.find("ori") != string::npos)
 		selectedTraversal = ORIGINAL;
-    else if (traversalType.find("hs") != string::npos)
-        selectedTraversal = HS;
-    else if (traversalType.find("mp") != string::npos)
-        selectedTraversal = MP;
-    else if (traversalType.find("nt") != string::npos){
-        global_log->error() << "nt method not yet properly implemented. please select a different method." << std::endl;
+	else if (traversalType.find("hs") != string::npos)
+		selectedTraversal = HS;
+	else if (traversalType.find("mp") != string::npos)
+		selectedTraversal = MP;
+	else if (traversalType.find("nt") != string::npos) {
+		global_log->error() << "nt method not yet properly implemented. please select a different method." << std::endl;
 		Simulation::exit(1);
-    }
-	else {
+	} else {
 		// selector already set in constructor, just print a warning here
 		if (mardyn_get_max_threads() > 1) {
 			global_log->warning() << "No traversal type selected. Defaulting to c08 traversal." << endl;
