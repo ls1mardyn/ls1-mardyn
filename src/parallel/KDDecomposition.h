@@ -55,8 +55,10 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * 	                  then it tests cuts in all Dimensions (not only the biggest) if a KDNode has less processors,
 	 * 	                  than the threshold
 	 */
-	KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency = 100,  int fullSearchThreshold = 2, bool hetero=false,
+	KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency = 100,  int fullSearchThreshold = 2, bool hetero=false,
 			bool cutsmaller=false, bool forceRatio=false, int splitThresh = std::numeric_limits<int>::max());
+
+	void init(Domain* domain);
 
 	KDDecomposition();
 
@@ -81,6 +83,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 		 <useExistingFiles>BOOL</useExistingFiles>
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
 		 <deviationReductionOperation>max OR sum</deviationReductionOperation>
+		 <minNumCellsPerDimension>UINT</minNumCellsPerDimension> <!--Has to be bigger than 0-->
 	   </parallelisation>
 	   \endcode
 	 */

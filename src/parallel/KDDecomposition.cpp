@@ -23,8 +23,9 @@
 #include "WrapOpenMP.h"
 #include "plugins/VectorizationTuner.h"
 
-#include "ParticleData.h"
+#include "KDDStaticValues.h"
 #include "KDNode.h"
+#include "ParticleData.h"
 
 using namespace std;
 using Log::global_log;
@@ -41,7 +42,7 @@ KDDecomposition::KDDecomposition() :
 	_measureLoadCalc = nullptr;
 }
 
-KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
+KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
 		bool cutsmaller, bool forceRatio, int splitThresh) :
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
 		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _clusteredHeterogeneouseSystems {false}, _splitBiggest(!cutsmaller),
@@ -54,39 +55,44 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int numPar
 
 	_cutoffRadius = cutoffRadius;
 
-	int lowCorner[KDDIM] = {0};
-	int highCorner[KDDIM] = {0};
-	bool coversWholeDomain[KDDIM];
-	_globalNumCells = 1;
+}
 
-	for (int dim = 0; dim < KDDIM; dim++) {
-		_globalCellsPerDim[dim] = (int) floor(domain->getGlobalLength(dim) / cutoffRadius);
-		_globalNumCells *= _globalCellsPerDim[dim];
-		highCorner[dim] = _globalCellsPerDim[dim] - 1;
-		_cellSize[dim] = domain->getGlobalLength(dim) / ((double) _globalCellsPerDim[dim]);
-		coversWholeDomain[dim] = true;
-	}
+void KDDecomposition::init(Domain* domain){
+    int lowCorner[KDDIM]{};
+    int highCorner[KDDIM]{};
+    bool coversWholeDomain[KDDIM];
+    _globalNumCells = 1;
 
-	_numParticlesPerCell.resize(_numParticleTypes * _globalNumCells);
+    for (int dim = 0; dim < KDDIM; dim++) {
+        _globalCellsPerDim[dim] = (int) floor(domain->getGlobalLength(dim) / _cutoffRadius);
+        _globalNumCells *= _globalCellsPerDim[dim];
+        highCorner[dim] = _globalCellsPerDim[dim] - 1;
+        _cellSize[dim] = domain->getGlobalLength(dim) / ((double) _globalCellsPerDim[dim]);
+        coversWholeDomain[dim] = true;
+    }
 
-	// create initial decomposition
-	// ensure that enough cells for the number of procs are available
-	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain, 0);
-	if (!_decompTree->isResolvable()) {
-		global_log->error() << "KDDecomposition not possible. Each process needs at least 8 cells." << endl;
-		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
-		Simulation::exit(-1);
-	}
-	_decompTree->buildKDTree();
-	_ownArea = _decompTree->findAreaForProcess(_rank);
+    _numParticlesPerCell.resize(_numParticleTypes * _globalNumCells);
 
-	// initialize the mpi data type for particles once in the beginning
-	KDNode::initMPIDataType();
+    // create initial decomposition
+    // ensure that enough cells for the number of procs are available
+    _decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain, 0);
+    if (!_decompTree->isResolvable()) {
+        auto minCellCountPerProc = std::pow(KDDStaticValues::minNumCellsPerDimension, 3);
+        global_log->error() << "KDDecomposition not possible. Each process needs at least " << minCellCountPerProc
+                            << " cells." << endl;
+        global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
+        Simulation::exit(-1);
+    }
+    _decompTree->buildKDTree();
+    _ownArea = _decompTree->findAreaForProcess(_rank);
 
-	global_log->info() << "Created KDDecomposition with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << endl;
+    // initialize the mpi data type for particles once in the beginning
+    KDNode::initMPIDataType();
+
+    global_log->info() << "Created KDDecomposition with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << endl;
 
 #ifdef DEBUG_DECOMP
-	global_log->info() << "Initial Decomposition: " << endl;
+    global_log->info() << "Initial Decomposition: " << endl;
 	if (_rank == 0) {
 		_decompTree->printTree("");
 	}
@@ -106,6 +112,13 @@ KDDecomposition::~KDDecomposition() {
 
 void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	/* TODO: Maybe add decomposition dimensions, default auto. */
+    xmlconfig.getNodeValue("minNumCellsPerDimension", KDDStaticValues::minNumCellsPerDimension);
+    global_log->info() << "KDDecomposition minNumCellsPerDimension: " << KDDStaticValues::minNumCellsPerDimension
+					   << endl;
+	if(KDDStaticValues::minNumCellsPerDimension==0u){
+		global_log->error() << "KDDecomposition minNumCellsPerDimension has to be bigger than zero!" << std::endl;
+		Simulation::exit(43);
+	}
 	xmlconfig.getNodeValue("updateFrequency", _frequency);
 	global_log->info() << "KDDecomposition update frequency: " << _frequency << endl;
 	xmlconfig.getNodeValue("fullSearchThreshold", _fullSearchThreshold);
@@ -131,7 +144,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		}
 		global_log->info() << "KDDecomposition uses " << deviationReductionOperation
 					   << " to reduce the deviation within the decompose step." << endl;
-	}				   
+	}
 
 	bool useVecTuner = false;
 	xmlconfig.getNodeValue("useVectorizationTuner", useVecTuner);
@@ -999,17 +1012,20 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 	}
 
 	for (size_t dim = dimInit; dim < dimEnd; dim++) {
-		// we need at least 4 cells in this direction (= 4 different splitting planes)
-		if (costsLeft[dim].size()<=3){
+		// we need at least 2*KDDStaticValues::minNumCellsPerDimension cells in this direction (= 2*KDDStaticValues::minNumCellsPerDimension different splitting planes)
+		if (costsLeft[dim].size() < 2 * KDDStaticValues::minNumCellsPerDimension) {
 			continue;
 		}
 		// if a node has some more processors, we probably don't have to find the
 		// "best" partitioning, but it's sufficient to divide the node in the middle
 		// and shift the processor count according to the load imbalance.
 
-		// loop only from 1 to max-1 (instead 0 to max) to avoid 1-cell-regions
-		int startIndex = 1;
-		int maxEndIndex = node->_highCorner[dim] - node->_lowCorner[dim] - 1;
+		// loop only from KDDStaticValues::minNumCellsPerDimension - 1 to max-
+		// (KDDStaticValues::minNumCellsPerDimension - 1) (instead 0 to max) to avoid cell-regions with size <
+		// KDDStaticValues::minNumCellsPerDimension
+		int startIndex = KDDStaticValues::minNumCellsPerDimension - 1;
+		int maxEndIndex =
+			node->_highCorner[dim] - node->_lowCorner[dim] - (KDDStaticValues::minNumCellsPerDimension - 1);
 		int endIndex = maxEndIndex;
 
 		if (node->_numProcs > _fullSearchThreshold or _forceRatio) {

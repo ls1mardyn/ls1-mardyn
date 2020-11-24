@@ -310,7 +310,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
-				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
+				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
 				// we need the skin here, so we extract it from the AutoPas container's xml,
@@ -353,6 +353,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
 			_domainDecomposition->readXML(xmlconfig);
+            if(auto kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition)) {
+                kdd->init(_domain);
+			}
 
 			string loadTimerStr("SIMULATION_COMPUTATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
