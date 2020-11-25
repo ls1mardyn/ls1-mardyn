@@ -29,9 +29,8 @@ public:
 	/**
      * Reset all necessary data without reallocation.
      */
-	virtual void rebuild(std::vector<CellTemplate> &cells,
-						 const std::array<unsigned long, 3> &dims,
-						 CellPairTraversalData *data) {
+	virtual void rebuild(std::vector<CellTemplate>& cells, const std::array<unsigned long, 3>& dims,
+						 double cellLength[3], double cutoff, CellPairTraversalData* data) {
 		_cells = &cells;
 		_dims = dims;
 	};

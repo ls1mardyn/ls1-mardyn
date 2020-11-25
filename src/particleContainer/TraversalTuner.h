@@ -14,6 +14,7 @@
 #include "LinkedCellTraversals/OriginalCellPairTraversal.h"
 #include "LinkedCellTraversals/HalfShellTraversal.h"
 #include "LinkedCellTraversals/MidpointTraversal.h"
+#include "LinkedCellTraversals/NeutralTerritoryTraversal.h"
 #include "LinkedCellTraversals/SlicedCellPairTraversal.h"
 
 using Log::global_log;
@@ -33,6 +34,7 @@ public:
 		MP       = 5,
 		C08ES    = 6,
 		QSCHED   = 7,
+		NT       = 8,
 	};
 
 	TraversalTuner();
@@ -47,9 +49,11 @@ public:
 	 * Rebuild the traversals.
 	 * @param cells The vector of cells.
 	 * @param dims The dimensions (cells per dimension, including halo!)
+	 * @param cellLength The length of the cells.
+	 * @param cutoff The cutoff radius.
 	 */
 	void rebuild(std::vector<CellTemplate> &cells,
-				 const std::array<unsigned long, 3> &dims);
+				 const std::array<unsigned long, 3> &dims, double cellLength[3], double cutoff);
 
 	void traverseCellPairs(CellProcessor &cellProcessor);
 
@@ -96,7 +100,8 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 	struct SlicedCellPairTraversalData   *slicedData = new SlicedCellPairTraversalData;
     struct HalfShellTraversalData    	 *hsData   	 = new HalfShellTraversalData;
     struct MidpointTraversalData    	 *mpData   	 = new MidpointTraversalData;
-	struct C08CellPairTraversalData    	 *c08esData  = new C08CellPairTraversalData;
+    struct NeutralTerritoryTraversalData *ntData     = new NeutralTerritoryTraversalData;
+    struct C08CellPairTraversalData    	 *c08esData  = new C08CellPairTraversalData;
 
 
 	_traversals = {
@@ -106,6 +111,7 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 			make_pair(nullptr, slicedData),
             make_pair(nullptr, hsData),
             make_pair(nullptr, mpData),
+            make_pair(nullptr, ntData),
 			make_pair(nullptr, c08esData)
 	};
 #ifdef QUICKSCHED
@@ -146,6 +152,8 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 		global_log->info() << "Using C04CellPairTraversal." << endl;
 	else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
 		global_log->info() << "Using MidpointTraversal." << endl;
+	else if (dynamic_cast<NeutralTerritoryTraversal<CellTemplate> *>(_optimalTraversal))
+		global_log->info() << "Using NeutralTerritoryTraversal." << endl;
 	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTraversal)) {
 		global_log->info() << "Using QuickschedTraversal." << endl;
 #ifndef QUICKSCHED
@@ -193,8 +201,7 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 	else if (traversalType.find("mp") != string::npos)
 		selectedTraversal = MP;
 	else if (traversalType.find("nt") != string::npos) {
-		global_log->error() << "nt method not yet properly implemented. please select a different method." << std::endl;
-		Simulation::exit(1);
+		selectedTraversal = NT;
 	} else {
 		// selector already set in constructor, just print a warning here
 		if (mardyn_get_max_threads() > 1) {
@@ -269,7 +276,7 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
-        const std::array<unsigned long, 3> &dims) {
+        const std::array<unsigned long, 3> &dims, double cellLength[3], double cutoff) {
 
 	_cells = &cells; // new - what for?
 	_dims = dims; // new - what for?
@@ -297,6 +304,9 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 				case traversalNames::MP:
 					tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
 					break;
+                case traversalNames::NT:
+                    tPair.first = new NeutralTerritoryTraversal<CellTemplate>(cells, dims, cellLength, cutoff);
+                    break;
 				case traversalNames::C08ES:
 					tPair.first = new C08CellPairTraversal<CellTemplate, true>(cells, dims);
 					break;
@@ -310,7 +320,7 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 					Simulation::exit(1);
 			}
 		}
-		tPair.first->rebuild(cells, dims, tPair.second);
+		tPair.first->rebuild(cells, dims, cellLength, cutoff, tPair.second);
 	}
 	_optimalTraversal = nullptr;
 }

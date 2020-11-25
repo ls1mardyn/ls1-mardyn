@@ -121,7 +121,7 @@ void LinkedCells::initializeTraversal() {
 	for (int d = 0; d < 3; ++d) {
 		dims[d] = _cellsPerDimension[d];
 	}
-	_traversalTuner->rebuild(_cells, dims);
+	_traversalTuner->rebuild(_cells, dims, _cellLength, _cutoffRadius);
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {

@@ -28,7 +28,7 @@ public:
 	virtual ~OriginalCellPairTraversal() {}
 
 	virtual void rebuild(std::vector<CellTemplate>& cells,
-						 const std::array<unsigned long, 3>& dims,
+						 const std::array<unsigned long, 3>& dims, double cellLength[3], double cutoff,
 						 struct CellPairTraversalData *data);
 
 	void traverseCellPairs(CellProcessor& cellProcessor);
@@ -56,10 +56,10 @@ protected:
 
 template<class CellTemplate>
 void OriginalCellPairTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
-													  const std::array<unsigned long, 3> &dims,
+													  const std::array<unsigned long, 3> &dims, double cellLength[3], double cutoff,
 													  struct CellPairTraversalData *data) {
 	if (dynamic_cast<OriginalCellPairTraversalData *>(data)) {
-		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
+		CellPairTraversals<CellTemplate>::rebuild(cells, dims, cellLength, cutoff, data);
 		computeNeighbourOffsets();
 
 		_innerMostCellIndices.clear();
