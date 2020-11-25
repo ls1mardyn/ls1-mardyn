@@ -152,7 +152,7 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	else
 		global_log->warning() << "Using unknown traversal." << endl;
 
-	if (_optimalTraversal->maxCellsInCutoff() < _cellsInCutoff) {
+	if (_cellsInCutoff > _optimalTraversal->maxCellsInCutoff()) {
 		global_log->error() << "Traversal supports up to " << _optimalTraversal->maxCellsInCutoff()
 							<< " cells in cutoff, but value is chosen as " << _cellsInCutoff << std::endl;
 		Simulation::exit(45);
