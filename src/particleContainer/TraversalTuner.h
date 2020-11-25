@@ -33,8 +33,9 @@ public:
 		HS       = 4,
 		MP       = 5,
 		C08ES    = 6,
-		QSCHED   = 7,
-		NT       = 8,
+        NT       = 7,
+		// quicksched has to be the last traversal!
+        QSCHED   = 8,
 	};
 
 	TraversalTuner();
