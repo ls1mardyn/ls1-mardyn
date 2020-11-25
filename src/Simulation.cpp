@@ -353,9 +353,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
 			_domainDecomposition->readXML(xmlconfig);
+        #ifdef ENABLE_MPI
             if(auto kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition)) {
                 kdd->init(_domain);
 			}
+        #endif
 
 			string loadTimerStr("SIMULATION_COMPUTATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
