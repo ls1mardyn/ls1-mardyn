@@ -32,7 +32,7 @@ public:
 	 */
 	virtual std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
-		// the midpoint traversal is cell based, so the halo region has to be maxcelllength wide.
+		// the midpoint traversal is cell based, so the halo region has to be cellLength wide.
 		return getLeavingExportRegions(initialRegion, cellLength, coversWholeDomain);
 	}
 
@@ -50,7 +50,7 @@ public:
 			// no condition for leaving particles.
 				return true;
 			};
-		// the midpoint traversal is cell based, so the halo region has to be maxcelllength wide.
+		// the midpoint traversal is cell based, so the halo region has to be cellLength wide.
 		return getHaloRegionsConditionalInside(initialRegion, cellLength, coversWholeDomain, condition);
 	}
 };
