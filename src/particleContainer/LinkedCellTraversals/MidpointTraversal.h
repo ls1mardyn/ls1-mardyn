@@ -338,8 +338,6 @@ void MidpointTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cell
 template<class CellTemplate>
 void MidpointTraversal<CellTemplate>::processBaseCell(CellProcessor& cellProcessor, unsigned long baseIndex) const{
 
-	unsigned long maxIndex = this->_cells->size() - 1;
-
 	CellTemplate& baseCell = this->_cells->at(baseIndex);
 
 	if(!baseCell.isHaloCell()) {
