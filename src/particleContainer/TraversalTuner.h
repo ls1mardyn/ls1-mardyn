@@ -43,6 +43,11 @@ public:
 
 	void readXML(XMLfileUnits &xmlconfig);
 
+	/**
+	 * Rebuild the traversals.
+	 * @param cells The vector of cells.
+	 * @param dims The dimensions (cells per dimension, including halo!)
+	 */
 	void rebuild(std::vector<CellTemplate> &cells,
 				 const std::array<unsigned long, 3> &dims);
 
@@ -61,11 +66,11 @@ public:
 	traversalNames getSelectedTraversal() const {
 		return selectedTraversal;
 	}
-        
+
     CellPairTraversals<ParticleCell>* getCurrentOptimalTraversal() {
             return _optimalTraversal;
     }
-        
+
 private:
 	std::vector<CellTemplate>* _cells;
 	std::array<unsigned long, 3> _dims;
@@ -262,9 +267,9 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 }
 
 template<class CellTemplate>
-void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells, 
+void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
         const std::array<unsigned long, 3> &dims) {
-    
+
 	_cells = &cells; // new - what for?
 	_dims = dims; // new - what for?
 
@@ -311,9 +316,10 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcessor) {
-	if (_optimalTraversal == nullptr)
+	if (_optimalTraversal == nullptr) {
 		findOptimalTraversal();
-        _optimalTraversal->traverseCellPairs(cellProcessor);
+	}
+	_optimalTraversal->traverseCellPairs(cellProcessor);
 }
 
 template<class CellTemplate>
