@@ -156,7 +156,7 @@ unsigned int KDNode::getNumMaxProcs() {
 
 void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 	mardyn_assert(_numProcs > 1);
-	mardyn_assert(splitIndex >= _lowCorner[divDimension] + (KDDStaticValues::minNumCellsPerDimension-1));
+	mardyn_assert(splitIndex >= _lowCorner[divDimension] + (KDDStaticValues::minNumCellsPerDimension - 1));
 	mardyn_assert(splitIndex < _highCorner[divDimension]);
 
 	bool coversAll[KDDIM];
