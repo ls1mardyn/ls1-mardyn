@@ -8,6 +8,7 @@
 #include "io/vtk/VTKGridVertex.h"
 #include "io/vtk/VTKGridCell.h"
 #endif
+#include "KDDStaticValues.h"
 #include "utils/Logger.h"
 
 #include <algorithm> /* for min and max ?*/
@@ -145,17 +146,17 @@ bool KDNode::isResolvable() {
 }
 
 unsigned int KDNode::getNumMaxProcs() {
-	// we need at least 2 cells in each dimension per process (
+	// we need at least KDDStaticValues::minNumCellsPerDimension cells in each dimension per process.
 	unsigned int maxProcs = 1;
 	for (int dim = 0; dim < 3; dim++) {
-		maxProcs *= (_highCorner[dim] - _lowCorner[dim] + 1) / 2;
+		maxProcs *= (_highCorner[dim] - _lowCorner[dim] + 1) / KDDStaticValues::minNumCellsPerDimension;
 	}
 	return maxProcs;
 }
 
 void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 	mardyn_assert(_numProcs > 1);
-	mardyn_assert(splitIndex > _lowCorner[divDimension]);
+	mardyn_assert(splitIndex >= _lowCorner[divDimension] + (KDDStaticValues::minNumCellsPerDimension - 1));
 	mardyn_assert(splitIndex < _highCorner[divDimension]);
 
 	bool coversAll[KDDIM];

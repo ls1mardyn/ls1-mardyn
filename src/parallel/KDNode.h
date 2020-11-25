@@ -165,7 +165,8 @@ public:
 	 *
 	 * @param dimension the dimension \in [0;KDDIM-1] along which this node is split
 	 * @param splitIndex the index of the corner cell for the new left child
-	 *        (note: must be in ] _lowCorner[dimension]; _highCorner[dimension] [.
+	 *        (note: must be in bigger or equal to _lowCorner[divDimension] + (KDDStaticValues::minNumCellsPerDimension-1)
+	 *        and smaller than _highCorner[dimension].
 	 * @param numProcsLeft the number of processors for the left child. The number
 	 *        of processors for the right child is calculated.
 	 */
@@ -245,7 +246,7 @@ public:
 	 */
 	double _deviation;
 
-	// level of this node (at root node, level = 0)
+	/// level of this node (at root node, level = 0)
 	int _level;
 
 private:
