@@ -157,7 +157,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	_domain->setGlobalLength(1, domainLength);
 	_domain->setGlobalLength(2, domainLength);
 	kdd = new KDDecomposition(cutoff, 3, 1, 4);
-    kdd->init(_domain);
+	kdd->init(_domain);
 	_domainDecomposition = kdd;
 	_rank = kdd->_rank;
 
@@ -316,7 +316,7 @@ void KDDecompositionTest::testCompleteTreeInfo() {
 		result.buildKDTree();
 
 		KDDecomposition decomposition(1.0, 1, 1.0, 10);
-        decomposition.init(_domain);
+		decomposition.init(_domain);
 		KDNode * toCleanUp = root;
 		decomposition.completeTreeInfo(root, ownArea);
 		delete toCleanUp;
@@ -344,7 +344,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		_domain->setGlobalLength(1, boxL);
 		_domain->setGlobalLength(2, boxL);
 		kdd = new KDDecomposition(cutOff, 1, 1, fullSearchThreshold);
-        kdd->init(_domain);
+		kdd->init(_domain);
 
 		double bBoxMin[3];
 		double bBoxMax[3];
