@@ -152,8 +152,11 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	else
 		global_log->warning() << "Using unknown traversal." << endl;
 
-	mardyn_assert(_optimalTraversal->maxCellsInCutoff() >= _cellsInCutoff);
-
+	if (_optimalTraversal->maxCellsInCutoff() < _cellsInCutoff) {
+		global_log->error() << "Traversal supports up to " << _optimalTraversal->maxCellsInCutoff()
+							<< " cells in cutoff, but value is chosen as " << _cellsInCutoff << std::endl;
+		Simulation::exit(45);
+	}
 }
 
 template<class CellTemplate>
