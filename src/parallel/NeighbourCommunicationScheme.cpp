@@ -199,7 +199,6 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	std::vector<Molecule> dummy{};
 	switch (msgType) {
 	case LEAVING_AND_HALO_COPIES:
-		// todo: we might need to adapt this? for proper skin considerations.
 		haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, moleculeContainer->getCutoff(), _coversWholeDomain);
 		doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer, invalidParticles, doHaloPositionCheck);
 		haloRegions = _zonalMethod->getHaloExportForceImportRegions(
