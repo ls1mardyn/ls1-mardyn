@@ -675,11 +675,11 @@ void LinkedCells::calculateNeighbourIndices(std::vector<long>& forwardNeighbourO
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
 
 	// 13 neighbors for _haloWidthInNumCells = 1 or 64 for =2
-	int nNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
+	int maxNNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
 
 	// Resize offset vector to number of neighbors and fill with 0
-	forwardNeighbourOffsets.resize(nNeighbours, 0);
-	backwardNeighbourOffsets.resize(nNeighbours, 0);
+	forwardNeighbourOffsets.reserve(maxNNeighbours);
+	backwardNeighbourOffsets.reserve(maxNNeighbours);
 
 	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
 
@@ -716,20 +716,24 @@ void LinkedCells::calculateNeighbourIndices(std::vector<long>& forwardNeighbourO
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex,
 							zIndex);
 					if (offset > 0) {
-						forwardNeighbourOffsets.at(forwardNeighbourIndex) = offset; // now vector
+						forwardNeighbourOffsets.emplace_back(offset); // now vector
 						++forwardNeighbourIndex;
 					}
 					if (offset < 0) {
-						backwardNeighbourOffsets.at(backwardNeighbourIndex) = abs(offset); // now vector
+						backwardNeighbourOffsets.emplace_back(abs(offset)); // now vector
 						++backwardNeighbourIndex;
 					}
 				}
 			}
 		}
 	}
-
-	mardyn_assert(forwardNeighbourIndex == nNeighbours);
-	mardyn_assert(backwardNeighbourIndex == nNeighbours);
+	if (_haloWidthInNumCells[0] == 1 and _haloWidthInNumCells[1] == 1 and _haloWidthInNumCells[2] == 1) {
+		mardyn_assert(forwardNeighbourIndex == maxNNeighbours);
+		mardyn_assert(backwardNeighbourIndex == maxNNeighbours);
+	} else {
+		mardyn_assert(forwardNeighbourIndex <= maxNNeighbours);
+		mardyn_assert(backwardNeighbourIndex <= maxNNeighbours);
+	}
 }
 std::array<std::pair<unsigned long, unsigned long>, 14> LinkedCells::calculateCellPairOffsets() const {
 	long int o   = cellIndexOf3DIndex(0,0,0); // origin
