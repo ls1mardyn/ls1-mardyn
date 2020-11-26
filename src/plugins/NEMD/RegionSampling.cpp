@@ -1513,7 +1513,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 	if(not _SamplingEnabledProfiles)
 		return;
 
-	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyProfiles)
+	// sampling starts after initial timestep (_initSamplingProfiles) and with respect to write frequency (_writeFrequencyProfiles)
 	if( simstep <= _initSamplingProfiles )
 		return;
 
@@ -1801,7 +1801,7 @@ void SampleRegion::writeDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 	if(not _SamplingEnabledFieldYR)
 		return;
 
-	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
+	// sampling starts after initial timestep (_initSamplingFieldYR) and with respect to write frequency (_writeFrequencyFieldYR)
 	if( simstep <= _initSamplingFieldYR )
 		return;
 
