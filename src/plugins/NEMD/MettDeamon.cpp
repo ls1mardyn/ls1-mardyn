@@ -565,7 +565,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 {
 	int ownRank = domainDecomp->getRank();
 
-	//_feedrate.feed.actual = _feedrate.feed.init; // already set before when connected to MD-Feedrate-Director
+	_feedrate.feed.actual = _feedrate.feed.init;
 
 	_reservoir->readParticleData(domainDecomp);
 	if(_reservoir->getDensity(0) < 0.000000001)
