@@ -100,7 +100,7 @@ void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
 	cout << endl;
 #endif
 	// init actual feed rate
-	_feedrate.actual = *_feedrate.list.end();
+	_feedrate.actual = _feedrate.list.back();
 
 //	_forceConstant = 100.;
 //	xmlconfig.getNodeValue("forceConstant", _forceConstant);
