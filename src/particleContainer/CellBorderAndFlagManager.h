@@ -139,14 +139,13 @@ private:
 		// why oh why don't we have switch statements on variables
 		if (index == 0) {
 			ret = _haloBoundingBoxMin[dimension];
-		} else if (index == 1) {
+		} else if (index == _haloWidthInNumCells[dimension]) {
 			ret = _boundingBoxMin[dimension];
-		} else if (index == _cellsPerDimension[dimension] - 1) {
+		} else if (index == _cellsPerDimension[dimension] - _haloWidthInNumCells[dimension]) {
 			ret = _boundingBoxMax[dimension];
 		} else if (index == _cellsPerDimension[dimension]) {
 			ret = _haloBoundingBoxMax[dimension];
 		} else {
-			mardyn_assert(index > 1 and index < _cellsPerDimension[dimension] - 1);
 			ret = index * _cellLength[dimension] + _haloBoundingBoxMin[dimension];
 		}
 		return ret;
