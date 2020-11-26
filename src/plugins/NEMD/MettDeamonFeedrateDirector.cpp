@@ -56,7 +56,7 @@ void MettDeamonFeedrateDirector::init(ParticleContainer* particleContainer, Doma
 			_feedrate.sum += *it;
 		}
 		_feedrate.avg = _feedrate.sum * 1./(double)(_feedrate.list.size());
-		mettDeamon->setActualFeedrate(_feedrate.avg);
+		mettDeamon->setInitFeedrate(_feedrate.avg);
 	}
 }
 

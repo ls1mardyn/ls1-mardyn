@@ -1517,7 +1517,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 	if( simstep <= _initSamplingProfiles )
 		return;
 
-	if ( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
+	if( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
 		return;
 
 	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
@@ -1680,7 +1680,7 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 	if( simstep <= _initSamplingVDF )
 		return;
 
-	if ( (simstep - _initSamplingVDF) % _writeFrequencyVDF != 0 )
+	if( (simstep - _initSamplingVDF) % _writeFrequencyVDF != 0 )
 		return;
 
 	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
@@ -1805,7 +1805,7 @@ void SampleRegion::writeDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 	if( simstep <= _initSamplingFieldYR )
 		return;
 
-	if ( (simstep - _initSamplingFieldYR) % _writeFrequencyFieldYR != 0 )
+	if( (simstep - _initSamplingFieldYR) % _writeFrequencyFieldYR != 0 )
 		return;
 
 	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
