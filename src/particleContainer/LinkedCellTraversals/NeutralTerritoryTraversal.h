@@ -73,8 +73,6 @@ void NeutralTerritoryTraversal<CellTemplate>::computeOffsets3D(const double cell
 				std::array<long, 3> plate{plate_x, plate_y, 0};
 				std::array<long, 3> tower{0, 0, tower_z};
 				_offsets3D.emplace_back(tower, plate);
-				std::cout << "plate: " << plate[0] << "," << plate[1] << "," << plate[2] << " tower: " << tower[0]
-						  << "," << tower[1] << "," << tower[2] << std::endl;
 			}
 		}
 	}
