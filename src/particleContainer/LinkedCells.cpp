@@ -647,7 +647,7 @@ void LinkedCells::initializeCells() {
 	ParticleCell::_cellBorderAndFlagManager.init(_cellsPerDimension,
 			_haloBoundingBoxMin, _haloBoundingBoxMax,
 			_boundingBoxMin, _boundingBoxMax,
-			_cellLength);
+			_cellLength, _haloWidthInNumCells);
 
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
