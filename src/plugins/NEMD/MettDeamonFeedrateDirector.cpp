@@ -50,11 +50,13 @@ void MettDeamonFeedrateDirector::init(ParticleContainer* particleContainer, Doma
 			mettDeamon = dynamic_cast<MettDeamon*>(pit);
 	}
 	if(nullptr != mettDeamon) {
-		mettDeamon->setActualFeedrate(_feedrate.actual);
 		// init _feedrate.sum
 		_feedrate.sum = 0;
-		for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
+		for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it) {
 			_feedrate.sum += *it;
+		}
+		_feedrate.avg = _feedrate.sum * 1./(double)(_feedrate.list.size());
+		mettDeamon->setActualFeedrate(_feedrate.avg);
 	}
 }
 
