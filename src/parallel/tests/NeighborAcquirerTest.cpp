@@ -24,8 +24,8 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 	std::array<double,3> domainLength = {10.0, 10.0, 10.0};
 
 	// region does not need to be shifted
-	for(int i = 0; i < 3; i++) region.rmax[i] = 5.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = 3.0;
+	for(int i = 0; i < 3; i++) region.rmax[i] = 5.0;
 
 	{
 		auto regionsShiftsPair =
@@ -40,8 +40,8 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 		for (int i = 0; i < 3; i++) ASSERT_EQUAL(shift[i], 0.0);
 	}
 
-	for(int i = 0; i < 3; i++) region.rmax[i] = 12.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = 11.0;
+	for(int i = 0; i < 3; i++) region.rmax[i] = 12.0;
 	{
 		auto regionsShiftsPair =
 			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
@@ -57,8 +57,8 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 		}
 	}
 	
-	for(int i = 0; i < 3; i++) region.rmax[i] = 0.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = -1.0;
+	for(int i = 0; i < 3; i++) region.rmax[i] = 0.0;
 
 	{
 		auto regionsShiftsPair =
@@ -72,8 +72,8 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 		for(int i = 0; i < 3; i++) { ASSERT_EQUAL(shift[i], 10.0); shift[i] = 0.0; }
 	}
 
-	for(int i = 0; i < 3; i++) region.rmax[i] = 11.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = 9.0;
+	for(int i = 0; i < 3; i++) region.rmax[i] = 11.0;
 
 	{
 		auto regionsShiftsPair =
@@ -83,7 +83,16 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 
 	}
 
+	for(int i = 0; i < 3; i++) region.rmin[i] = -1.0;
+	for(int i = 0; i < 3; i++) region.rmax[i] = 1.0;
 
+	{
+		auto regionsShiftsPair =
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+
+		ASSERT_EQUAL(regionsShiftsPair.first.size(), 8ul);
+
+	}
 	
 	
 }
