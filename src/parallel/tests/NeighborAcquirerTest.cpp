@@ -22,29 +22,57 @@ NeighborAcquirerTest::~NeighborAcquirerTest() { delete _fullShell; }
 void NeighborAcquirerTest::testShiftIfNecessary() {
 	HaloRegion region; // rmin, rmax, offset, width
 	std::array<double,3> domainLength = {10.0, 10.0, 10.0};
-	double shift[3] = {0.0};
-	
+
 	// region does not need to be shifted
 	for(int i = 0; i < 3; i++) region.rmax[i] = 5.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = 3.0;
 
-	region = NeighborAcquirer::getPotentiallyShiftedRegion(domainLength, region, shift, 0.); // region is within domain box
-	
-	for(int i = 0; i < 3; i++) ASSERT_EQUAL(shift[i], 0.0);
-	
+	{
+		auto regionsShiftsPair =
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+
+		ASSERT_EQUAL(regionsShiftsPair.first.size(), 1ul);
+
+		auto haloRegion = regionsShiftsPair.first[0];
+		auto shift = regionsShiftsPair.second[0];
+
+		// Sanity to check that shift is 0.
+		for (int i = 0; i < 3; i++) ASSERT_EQUAL(shift[i], 0.0);
+	}
+
 	for(int i = 0; i < 3; i++) region.rmax[i] = 12.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = 11.0;
+	{
+		auto regionsShiftsPair =
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
 
-	region = NeighborAcquirer::getPotentiallyShiftedRegion(domainLength, region, shift, 0.);
-	
-	for(int i = 0; i < 3; i++) { ASSERT_EQUAL(shift[i], -10.0); shift[i] = 0.0; }
+		ASSERT_EQUAL(regionsShiftsPair.first.size(), 1ul);
+
+		auto haloRegion = regionsShiftsPair.first[0];
+		auto shift = regionsShiftsPair.second[0];
+
+		for (int i = 0; i < 3; i++) {
+			ASSERT_EQUAL(shift[i], -10.0);
+			shift[i] = 0.0;
+		}
+	}
 	
 	for(int i = 0; i < 3; i++) region.rmax[i] = 0.0;
 	for(int i = 0; i < 3; i++) region.rmin[i] = -1.0;
 
-	region = NeighborAcquirer::getPotentiallyShiftedRegion(domainLength, region, shift, 0.);
-	
-	for(int i = 0; i < 3; i++) { ASSERT_EQUAL(shift[i], 10.0); shift[i] = 0.0; }
+	{
+		auto regionsShiftsPair =
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+
+		ASSERT_EQUAL(regionsShiftsPair.first.size(), 1ul);
+
+		auto haloRegion = regionsShiftsPair.first[0];
+		auto shift = regionsShiftsPair.second[0];
+
+		for(int i = 0; i < 3; i++) { ASSERT_EQUAL(shift[i], 10.0); shift[i] = 0.0; }
+	}
+
+
 	
 	
 }
