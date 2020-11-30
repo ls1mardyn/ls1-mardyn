@@ -606,11 +606,11 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 	}
 #endif /* NDEBUG */
 
-#ifdef DEBUG_DECOMP
+//#ifdef DEBUG_DECOMP
 	if (_rank == 0) {
 		newRoot->printTree("");
 	}
-#endif
+//#endif
 }
 
 void KDDecomposition::updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
