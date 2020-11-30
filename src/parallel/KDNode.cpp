@@ -93,8 +93,11 @@ void KDNode::printTree(const std::string& prefix) {
 	if (_numProcs == 1) {
 		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc << ", Corners: (" << _lowCorner[0]
 				  << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0] << ", "
-				  << _highCorner[1] << ", " << _highCorner[2] << "), Load: " << _load << ", deviation: " << _deviation
-				  << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
+				  << _highCorner[1] << ", " << _highCorner[2]
+				  << "), Length(cells): " << _highCorner[0] - _lowCorner[0] + 1 << "x"
+				  << _highCorner[1] - _lowCorner[1] + 1 << "x" << _highCorner[2] - _lowCorner[2] + 1
+				  << " Load: " << _load << ", deviation: " << _deviation << ", OptLoad:" << _optimalLoadPerProcess
+				  << " level=" << _level << std::endl;
 	} else {
 		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc << "(" << _numProcs << " procs)"
 				  << ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
