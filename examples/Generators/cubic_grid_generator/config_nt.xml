@@ -89,7 +89,7 @@
       </thermostats>
       -->
     </algorithm>
-	  <output>
+<c>	  <output>
 		  <outputplugin name="CommunicationPartnerWriter">
 			  <writefrequency>1</writefrequency>
 			  <outputprefix>partners</outputprefix>
@@ -108,6 +108,6 @@
 			  <incremental>1</incremental>
 			  <appendTimestamp>0</appendTimestamp>
 		  </outputplugin>
-    </output>
+    </output></c>
   </simulation>
 </mardyn>
