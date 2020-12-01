@@ -23,11 +23,13 @@ public:
 	 * @param partners01 Vector of communication partners that contain domains outside of ownRegion.
 	 * @param partners02 Vector of communication partners that contain domains inside of ownRegion.
 	 * @param comm the mpi communicator
+	 * @param excludeOwnRank Specifies to not include CommunicationPartners communicating with the own rank.
 	 * @return A tuple of 2 vectors: The first vector represents the partners NOT owning the haloDomain, while the
 	 * second vector will own the particles.
 	 */
 	static std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> acquireNeighbors(
-		const std::array<double,3>& globalDomainLength, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions, double skin, const MPI_Comm& comm);
+		const std::array<double, 3>& globalDomainLength, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions,
+		double skin, const MPI_Comm& comm, bool excludeOwnRank=true);
 
 	static std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners);
 

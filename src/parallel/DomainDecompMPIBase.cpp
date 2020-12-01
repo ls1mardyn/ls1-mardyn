@@ -92,10 +92,20 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 
 	
 	global_log->info() << "variable zonalMethod is: " << zonalMethod << std::endl;
-	setCommunicationScheme(neighbourCommunicationScheme, zonalMethod);
-
 	// reset path
 	xmlconfig.changecurrentnode(oldPath);
+
+	// Specifies if the sequential fallback shall be used.
+	bool useSequentialFallback = true;
+	xmlconfig.getNodeValue("useSequentialFallback", useSequentialFallback);
+	if(zonalMethod=="nt"){
+		global_log->info() << "Forcefully disabling sequential fallback, because Neutral Territory is used!" << std::endl;
+		useSequentialFallback = false;
+		global_log->info() << "Enforcing direct-pp neighborcommunicationscheme, because NT is used!" << std::endl;
+		neighbourCommunicationScheme = "direct-pp";
+	}
+	setCommunicationScheme(neighbourCommunicationScheme, zonalMethod);
+	_neighbourCommunicationScheme->setSequentialFallback(useSequentialFallback);
 
 	bool overlappingCollectives = false;
 	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);

@@ -18,7 +18,8 @@
  * saved in partners01.
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
-	const std::array<double,3>& globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin, const MPI_Comm& comm) {
+	const std::array<double, 3> &globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions,
+	double skin, const MPI_Comm &comm, bool excludeOwnRank) {
 
 	HaloRegion ownRegionEnlargedBySkin = *ownRegion;
 	for(unsigned int dim = 0; dim < 3; ++dim){
@@ -113,7 +114,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 			for(size_t regionIndex = 0; regionIndex < regionsToTest.size(); ++regionIndex){
 				auto regionToTest = regionsToTest[regionIndex];
-				if (rank != my_rank && isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
+				if ((not excludeOwnRank or rank != my_rank) and isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
 					auto currentShift = shifts[regionIndex];
 
 					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
