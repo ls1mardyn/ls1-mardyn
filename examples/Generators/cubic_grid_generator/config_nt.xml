@@ -55,7 +55,7 @@
  <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
  <updateFrequency>10000</updateFrequency>
  <fullSearchThreshold>3</fullSearchThreshold>
- <heterogeneousSystems>true</heterogeneousSystems>
+ <heterogeneousSystems>False</heterogeneousSystems>
  <useVectorizationTuner>False</useVectorizationTuner>
  <clusterHetSys>False</clusterHetSys>
  <splitBiggestDimension>False</splitBiggestDimension>
