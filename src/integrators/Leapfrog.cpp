@@ -3,7 +3,6 @@
 #include <map>
 
 #include "Domain.h"
-#include "parallel/DomainDecompBase.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
@@ -123,9 +122,6 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			double sumIw2gt_l = 0.0;
 
 			for (auto i = molCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); i.isValid(); ++i) {
-				std::stringstream s;
-				s << "id=" << i->getID() << " : rank="<<global_simulation->domainDecomposition().getRank() << ", cell="<<i.getCellIndex()<<" r=(" << i->r(0) << ", " << i->r(1) << ", " << i->r(2) << ") "<< " : F=(" << i->F(0) << ", " << i->F(1) << ", " << i->F(2) << ") ";
-				std::cout << s.str() << std::endl;
 				i->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
 				mardyn_assert(summv2gt_l >= 0.0);
 				Ngt_l++;
