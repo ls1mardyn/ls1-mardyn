@@ -328,7 +328,7 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcessor) {
-	if (_optimalTraversal == nullptr) {
+	if (not _optimalTraversal) {
 		findOptimalTraversal();
 	}
 	_optimalTraversal->traverseCellPairs(cellProcessor);
@@ -355,16 +355,18 @@ inline void TraversalTuner<CellTemplate>::traverseCellPairs(traversalNames name,
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairsOuter(CellProcessor &cellProcessor) {
-	if (_optimalTraversal == nullptr)
+	if (not _optimalTraversal) {
 		findOptimalTraversal();
+	}
 	_optimalTraversal->traverseCellPairsOuter(cellProcessor);
 }
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage,
 														  unsigned stageCount) {
-	if (_optimalTraversal == nullptr)
+	if (not _optimalTraversal) {
 		findOptimalTraversal();
+	}
 	_optimalTraversal->traverseCellPairsInner(cellProcessor, stage, stageCount);
 }
 
