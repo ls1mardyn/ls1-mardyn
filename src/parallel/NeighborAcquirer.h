@@ -6,6 +6,7 @@
 
 #pragma once
 #include <vector>
+#include <array>
 #include "CommunicationPartner.h"
 
 class Domain;
@@ -39,11 +40,14 @@ private:
 	static HaloRegion overlap(const HaloRegion& myRegion, const HaloRegion& inQuestion);
 
 	/**
-	 *
-	 * @param domainLength
-	 * @param region
-	 * @param skin
-	 * @return
+	 * Calculates all possible shifted regions from the given region.
+	 * The shifted regions correspond to the initial region, but wrapped around the periodic boundaries.
+	 * All mirror images, as well as, the orginal region are returned.
+	 * @param domainLength The total length of the domain.
+	 * @param region The initial region.
+	 * @param skin Skin.
+	 * @return A pair of two vectors of equal length. The first vector contains all shifted regions. The second vector
+	 * contains the according shifts.
 	 */
 	static std::pair<std::vector<HaloRegion>, std::vector<std::array<double, 3>>> getPotentiallyShiftedRegions(
 							 const std::array<double, 3>& domainLength, const HaloRegion& region, double skin);
