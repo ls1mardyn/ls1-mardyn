@@ -1,113 +1,117 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<mardyn version="20100525" >
+<mardyn version="20100525">
 
-	<refunits type="SI">
-		<length unit="nm">0.1</length>
-		<mass unit="u">1</mass>
-		<energy unit="K">1</energy>
-	</refunits>
+    <refunits type="SI">
+        <length unit="nm">0.1</length>
+        <mass unit="u">1</mass>
+        <energy unit="K">1</energy>
+    </refunits>
 
-  <simulation type="MD" >
-    <integrator type="Leapfrog" >
-      <!-- MD ODE integrator -->
-      <timestep unit="reduced" >0.01</timestep>
-    </integrator>
+    <simulation type="MD">
+        <integrator type="Leapfrog">
+            <!-- MD ODE integrator -->
+            <timestep unit="reduced">0.01</timestep>
+        </integrator>
 
-    <run>
-      <currenttime>0</currenttime>
-	  <equilibration> 
-	  	<!-- this value affects RDFwriter! -->
-	  	<steps>0</steps>
-	  </equilibration>
-      <production>
-        <steps>10</steps>
-      </production>
-    </run>
+        <run>
+            <currenttime>0</currenttime>
+            <equilibration>
+                <!-- this value affects RDFwriter! -->
+                <steps>0</steps>
+            </equilibration>
+            <production>
+                <steps>10</steps>
+            </production>
+        </run>
 
-    <ensemble type="NVT">
-      <!-- Nparticles determined by the input file -->
-      <temperature unit="reduced" >0.0003166816826564526</temperature>
-      <domain type="box">
-          <lx>8.5812225</lx>
-          <ly>8.5812225</ly>
-          <lz>8.5812225</lz>
-      </domain>
+        <ensemble type="NVT">
+            <!-- Nparticles determined by the input file -->
+            <temperature unit="reduced">0.0003166816826564526</temperature>
+            <domain type="box">
+                <lx>8.5812225</lx>
+                <ly>8.5812225</ly>
+                <lz>8.5812225</lz>
+            </domain>
 
-			<components>
-				<include query="/components/moleculetype">./components.xml</include>
-			</components>
+            <components>
+                <include query="/components/moleculetype">./components.xml</include>
+            </components>
 
-			<phasespacepoint>
-<file type="ASCII">restart.dat</file>
-<!--				<generator name="CubicGridGenerator">
-					<specification>density</specification>
-					<density>0.785302672</density>
-					<binaryMixture>false</binaryMixture>
-				</generator>-->
-			</phasespacepoint>
-    </ensemble>
+            <phasespacepoint>
+                <file type="ASCII">restart.dat</file>
+                <!--				<generator name="CubicGridGenerator">
+                                    <specification>density</specification>
+                                    <density>0.785302672</density>
+                                    <binaryMixture>false</binaryMixture>
+                                </generator>-->
+            </phasespacepoint>
+        </ensemble>
 
-    <algorithm>
-<c>    <parallelisation type="DomainDecomposition">
- <CommunicationScheme>direct-pp</CommunicationScheme>
-    </parallelisation></c>
-<parallelisation type="KDDecomposition">
- <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
- <updateFrequency>10000</updateFrequency>
- <fullSearchThreshold>3</fullSearchThreshold>
- <heterogeneousSystems>False</heterogeneousSystems>
- <useVectorizationTuner>False</useVectorizationTuner>
- <clusterHetSys>False</clusterHetSys>
- <splitBiggestDimension>False</splitBiggestDimension>
- <forceRatio>False</forceRatio>
- <rebalanceLimit>0</rebalanceLimit>
- <splitThreshold>10000000</splitThreshold>
- <generateNewFiles>False</generateNewFiles>
- <useExistingFiles>False</useExistingFiles>  
- <doMeasureLoadCalc>False</doMeasureLoadCalc>
- <deviationReductionOperation>max</deviationReductionOperation>
- <CommunicationScheme>direct-pp</CommunicationScheme>
-<minNumCellsPerDimension>1</minNumCellsPerDimension>
-</parallelisation>
+        <algorithm>
+            <c>
+                <parallelisation type="DomainDecomposition">
+                    <CommunicationScheme>direct-pp</CommunicationScheme>
+                </parallelisation>
+            </c>
+            <parallelisation type="KDDecomposition">
+                <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+                <updateFrequency>10000</updateFrequency>
+                <fullSearchThreshold>3</fullSearchThreshold>
+                <heterogeneousSystems>False</heterogeneousSystems>
+                <useVectorizationTuner>False</useVectorizationTuner>
+                <clusterHetSys>False</clusterHetSys>
+                <splitBiggestDimension>False</splitBiggestDimension>
+                <forceRatio>False</forceRatio>
+                <rebalanceLimit>0</rebalanceLimit>
+                <splitThreshold>10000000</splitThreshold>
+                <generateNewFiles>False</generateNewFiles>
+                <useExistingFiles>False</useExistingFiles>
+                <doMeasureLoadCalc>False</doMeasureLoadCalc>
+                <deviationReductionOperation>max</deviationReductionOperation>
+                <CommunicationScheme>direct-pp</CommunicationScheme>
+                <minNumCellsPerDimension>1</minNumCellsPerDimension>
+            </parallelisation>
 
-      <datastructure type="LinkedCells">
-	  <traversalSelector>nt</traversalSelector>
-          <cellsInCutoffRadius>2</cellsInCutoffRadius>
-      </datastructure>
-      <cutoffs type="CenterOfMass" >
-        <radiusLJ unit="reduced" >3.5</radiusLJ>
-      </cutoffs>
-      <electrostatic type="ReactionField" >
-        <epsilon>1.0e+10</epsilon>
-      </electrostatic>
+            <datastructure type="LinkedCells">
+                <traversalSelector>nt</traversalSelector>
+                <cellsInCutoffRadius>2</cellsInCutoffRadius>
+            </datastructure>
+            <cutoffs type="CenterOfMass">
+                <radiusLJ unit="reduced">3.5</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField">
+                <epsilon>1.0e+10</epsilon>
+            </electrostatic>
 
-      <!--
-      <thermostats>
-        <thermostat type="VelocityScaling" componentName="Argon">
-          <temperature>1</temperature>
-        </thermostat>
-      </thermostats>
-      -->
-    </algorithm>
-<c>	  <output>
-		  <outputplugin name="CommunicationPartnerWriter">
-			  <writefrequency>1</writefrequency>
-			  <outputprefix>partners</outputprefix>
-			  <incremental>1</incremental>
-			  <appendTimestamp>0</appendTimestamp>
-		  </outputplugin>
-		  <outputplugin name="DecompWriter">
-			  <writefrequency>1</writefrequency>
-			  <outputprefix>decomp</outputprefix>
-			  <incremental>1</incremental>
-			  <appendTimestamp>0</appendTimestamp>
-		  </outputplugin>
-		  <outputplugin name="HaloParticleWriter">
-			  <writefrequency>1</writefrequency>
-			  <outputprefix>halopart</outputprefix>
-			  <incremental>1</incremental>
-			  <appendTimestamp>0</appendTimestamp>
-		  </outputplugin>
-    </output></c>
-  </simulation>
+            <!--
+            <thermostats>
+              <thermostat type="VelocityScaling" componentName="Argon">
+                <temperature>1</temperature>
+              </thermostat>
+            </thermostats>
+            -->
+        </algorithm>
+        <c>
+            <output>
+                <outputplugin name="CommunicationPartnerWriter">
+                    <writefrequency>1</writefrequency>
+                    <outputprefix>partners</outputprefix>
+                    <incremental>1</incremental>
+                    <appendTimestamp>0</appendTimestamp>
+                </outputplugin>
+                <outputplugin name="DecompWriter">
+                    <writefrequency>1</writefrequency>
+                    <outputprefix>decomp</outputprefix>
+                    <incremental>1</incremental>
+                    <appendTimestamp>0</appendTimestamp>
+                </outputplugin>
+                <outputplugin name="HaloParticleWriter">
+                    <writefrequency>1</writefrequency>
+                    <outputprefix>halopart</outputprefix>
+                    <incremental>1</incremental>
+                    <appendTimestamp>0</appendTimestamp>
+                </outputplugin>
+            </output>
+        </c>
+    </simulation>
 </mardyn>
