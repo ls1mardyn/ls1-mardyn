@@ -100,9 +100,9 @@ void NeutralTerritoryTraversal<CellTemplate>::computeOffsets() {
 		dims[d] = static_cast<long>(this->_dims[d]);
 	}
 
-	for (unsigned int i = 0; i < _offsets3D.size(); ++i) {
-		auto a = _offsets3D[i].first;
-		auto b = _offsets3D[i].second;
+	for (const auto& i : _offsets3D) {
+		auto a = i.first;
+		auto b = i.second;
 
 		auto ax = std::get<0>(a);
 		auto ay = std::get<1>(a);
