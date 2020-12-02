@@ -39,11 +39,6 @@
 
             <phasespacepoint>
                 <file type="ASCII">restart.dat</file>
-                <!--				<generator name="CubicGridGenerator">
-                                    <specification>density</specification>
-                                    <density>0.785302672</density>
-                                    <binaryMixture>false</binaryMixture>
-                                </generator>-->
             </phasespacepoint>
         </ensemble>
 
@@ -68,7 +63,7 @@
                 <useExistingFiles>False</useExistingFiles>
                 <doMeasureLoadCalc>False</doMeasureLoadCalc>
                 <deviationReductionOperation>max</deviationReductionOperation>
-                <CommunicationScheme>indirect</CommunicationScheme>
+                <CommunicationScheme>direct-pp</CommunicationScheme>
                 <minNumCellsPerDimension>1</minNumCellsPerDimension>
             </parallelisation>
 
@@ -82,57 +77,6 @@
             <electrostatic type="ReactionField">
                 <epsilon>1.0e+10</epsilon>
             </electrostatic>
-
-            <!--
-            <thermostats>
-              <thermostat type="VelocityScaling" componentName="Argon">
-                <temperature>1</temperature>
-              </thermostat>
-            </thermostats>
-            -->
         </algorithm>
-        <c>
-            <output>
-                <outputplugin name="SysMonOutput">
-                    <expression>procloadavg:loadavg1</expression>
-                    <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float
-                        1048576 /
-                    </expression>
-                    <expression>procselfstatm:size 1048576. /</expression>
-                    <writefrequency>10</writefrequency>
-                </outputplugin>
-                <outputplugin name="FlopRateWriter">
-                    <mode>stdout</mode>
-                    <writefrequency>10</writefrequency>
-                </outputplugin>
-                <outputplugin name="ResultWriter">
-                    <writefrequency>10</writefrequency>
-                    <outputprefix>simple-lj</outputprefix>
-                </outputplugin>
-                <outputplugin name="CheckpointWriter">
-                    <type>binary</type>
-                    <writefrequency>500</writefrequency>
-                    <outputprefix>cp_binary</outputprefix>
-                </outputplugin>
-                <outputplugin name="MmpldWriter" type="simple">
-                    <include query="/spheres">./sphereparams_1clj.xml</include>
-                    <writecontrol>
-                        <start>0</start>
-                        <writefrequency>100</writefrequency>
-                        <stop>1000000000</stop>
-                        <framesperfile>0</framesperfile>
-                    </writecontrol>
-                    <outputprefix>megamol</outputprefix>
-                </outputplugin>
-                <outputplugin name="RDF">
-                    <!-- functionality affected by <equilibration> <steps> X </steps> </equilibration> -->
-                    <writefrequency>10</writefrequency>
-                    <samplingfrequency>5</samplingfrequency>
-                    <outputprefix>simple-lj</outputprefix>
-                    <intervallength>0.003</intervallength>
-                    <bins>1000</bins>
-                </outputplugin>
-            </output>
-        </c>
     </simulation>
 </mardyn>

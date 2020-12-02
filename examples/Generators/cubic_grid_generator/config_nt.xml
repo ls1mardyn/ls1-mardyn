@@ -39,11 +39,6 @@
 
             <phasespacepoint>
                 <file type="ASCII">restart.dat</file>
-                <!--				<generator name="CubicGridGenerator">
-                                    <specification>density</specification>
-                                    <density>0.785302672</density>
-                                    <binaryMixture>false</binaryMixture>
-                                </generator>-->
             </phasespacepoint>
         </ensemble>
 
@@ -82,36 +77,6 @@
             <electrostatic type="ReactionField">
                 <epsilon>1.0e+10</epsilon>
             </electrostatic>
-
-            <!--
-            <thermostats>
-              <thermostat type="VelocityScaling" componentName="Argon">
-                <temperature>1</temperature>
-              </thermostat>
-            </thermostats>
-            -->
         </algorithm>
-        <c>
-            <output>
-                <outputplugin name="CommunicationPartnerWriter">
-                    <writefrequency>1</writefrequency>
-                    <outputprefix>partners</outputprefix>
-                    <incremental>1</incremental>
-                    <appendTimestamp>0</appendTimestamp>
-                </outputplugin>
-                <outputplugin name="DecompWriter">
-                    <writefrequency>1</writefrequency>
-                    <outputprefix>decomp</outputprefix>
-                    <incremental>1</incremental>
-                    <appendTimestamp>0</appendTimestamp>
-                </outputplugin>
-                <outputplugin name="HaloParticleWriter">
-                    <writefrequency>1</writefrequency>
-                    <outputprefix>halopart</outputprefix>
-                    <incremental>1</incremental>
-                    <appendTimestamp>0</appendTimestamp>
-                </outputplugin>
-            </output>
-        </c>
     </simulation>
 </mardyn>
