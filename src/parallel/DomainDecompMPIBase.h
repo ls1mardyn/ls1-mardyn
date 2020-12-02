@@ -196,7 +196,7 @@ public:
 	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
 	   	 <CommunicationScheme>indirect OR direct</CommunicationScheme><!--default: indirect, unless in autopas mode-->
 	   	 <overlappingCollectives>yes OR no</overlappingCollectives><!--default: no-->
-	   	 <useSequentialFallback>yes or no</useSequentialFallback><!--default: yes-->
+	   	 <useSequentialFallback>yes OR no</useSequentialFallback><!--default: yes-->
 	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
 	   </parallelisation>
 	   \endcode
