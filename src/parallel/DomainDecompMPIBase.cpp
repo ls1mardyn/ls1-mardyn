@@ -78,7 +78,7 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	          traversal.begin(),
 	          ::tolower);
 	// currently only checks, if traversal is valid - should check, if zonal method/traversal is valid
-	if(traversal.find("hs") != string::npos || traversal.find("mp") != string::npos  || traversal == "nt" ) {
+	if(traversal.find("hs") != string::npos || traversal.find("mp") != string::npos  || traversal.find("nt") != string::npos ) {
 		zonalMethod = traversal;
 	} else if(traversal.find("es") != string::npos){
 		zonalMethod = "es";
