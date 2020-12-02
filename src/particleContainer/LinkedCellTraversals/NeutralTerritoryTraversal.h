@@ -12,6 +12,15 @@
 
 struct NeutralTerritoryTraversalData : CellPairTraversalData {};
 
+/**
+ * This is the traversal corresponding to the neutral territory zonal method scheme.
+ * Interactions occur between cells of the plate and cells of the tower.
+ * Algorithm description in:
+ * D. E. Shaw: A Fast, Scalable Method for the Parallel Evaluation of Distance-Limited Pairwise Particle Interactions.
+ * Description of implementation in:
+ * S. Seckler: Algorithm and Performance Engineering for HPC Particle Simulations
+ * @tparam CellTemplate
+ */
 template <class CellTemplate>
 class NeutralTerritoryTraversal : public CellPairTraversals<CellTemplate> {
 public:
@@ -141,7 +150,7 @@ void NeutralTerritoryTraversal<CellTemplate>::processBaseCell(CellProcessor& cel
 
 	if (not baseCell.isHaloCell()) {
 		// Process all cell pairs for this cell
-		for (auto& current_pair : _cellPairOffsets) {
+		for (const auto& current_pair : _cellPairOffsets) {
 			unsigned long offset1 = current_pair.first;
 			unsigned long cellIndex1 = baseIndex + offset1;
 
