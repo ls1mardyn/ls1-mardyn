@@ -64,8 +64,9 @@ void KDDecomposition::init(Domain* domain){
     _globalNumCells = 1;
 
     for (int dim = 0; dim < KDDIM; dim++) {
-        _globalCellsPerDim[dim] = (int) floor(domain->getGlobalLength(dim) / _cutoffRadius * _cellsInCutoffRadius);
-        _globalNumCells *= _globalCellsPerDim[dim];
+		_globalCellsPerDim[dim] =
+			static_cast<int>(floor(domain->getGlobalLength(dim) / _cutoffRadius * _cellsInCutoffRadius));
+		_globalNumCells *= _globalCellsPerDim[dim];
         highCorner[dim] = _globalCellsPerDim[dim] - 1;
         _cellSize[dim] = domain->getGlobalLength(dim) / ((double) _globalCellsPerDim[dim]);
         coversWholeDomain[dim] = true;
