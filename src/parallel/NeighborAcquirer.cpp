@@ -352,6 +352,9 @@ std::pair<std::vector<HaloRegion>, std::vector<std::array<double, 3>>> NeighborA
 		mardyn_assert(not doShiftsVector[dim].empty());
 	}
 
+	auto num_regions = doShiftsVector[0].size() * doShiftsVector[1].size() * doShiftsVector[2].size();
+	haloRegions.reserve(num_regions);
+
 	// Calculate and apply the shifts.
 	for (int x_index_shift : doShiftsVector[0]) {
 		for (int y_index_shift : doShiftsVector[1]) {
