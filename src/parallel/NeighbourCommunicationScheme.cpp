@@ -226,7 +226,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 				break;
 			case FORCES:
 				haloRegions = _zonalMethod->getHaloImportForceExportRegions(
-					ownRegion, moleculeContainer->getCutoff(), 0. /*skin*/, _coversWholeDomain, cellLength);
+					ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(), _coversWholeDomain, cellLength);
 				doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy,
 										 doHaloPositionCheck);
 				break;
