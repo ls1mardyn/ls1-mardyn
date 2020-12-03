@@ -95,15 +95,14 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 	selectedTraversal = {
 			mardyn_get_max_threads() > 1 ? C08 : SLICED
 	};
-	struct C08CellPairTraversalData      *c08Data    = new C08CellPairTraversalData;
-	struct C04CellPairTraversalData      *c04Data    = new C04CellPairTraversalData;
-	struct OriginalCellPairTraversalData *origData   = new OriginalCellPairTraversalData;
-	struct SlicedCellPairTraversalData   *slicedData = new SlicedCellPairTraversalData;
-    struct HalfShellTraversalData    	 *hsData   	 = new HalfShellTraversalData;
-    struct MidpointTraversalData    	 *mpData   	 = new MidpointTraversalData;
-    struct NeutralTerritoryTraversalData *ntData     = new NeutralTerritoryTraversalData;
-    struct C08CellPairTraversalData    	 *c08esData  = new C08CellPairTraversalData;
-
+	auto *c08Data = new C08CellPairTraversalData;
+	auto *c04Data = new C04CellPairTraversalData;
+	auto *origData = new OriginalCellPairTraversalData;
+	auto *slicedData = new SlicedCellPairTraversalData;
+	auto *hsData = new HalfShellTraversalData;
+	auto *mpData = new MidpointTraversalData;
+	auto *ntData = new NeutralTerritoryTraversalData;
+	auto *c08esData = new C08CellPairTraversalData;
 
 	_traversals = {
 			make_pair(nullptr, origData),
@@ -283,45 +282,45 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 	_dims = dims; // new - what for?
 
 	for (size_t i = 0ul; i < _traversals.size(); ++i) {
-		auto& tPair = _traversals[i];
+		auto& [traversalPointerReference, traversalData] = _traversals[i];
 		// decide whether to initialize or rebuild
-		if (tPair.first == nullptr) {
+		if (traversalPointerReference == nullptr) {
 			switch (i) {
 				case traversalNames ::ORIGINAL:
-					tPair.first = new OriginalCellPairTraversal<CellTemplate>(cells, dims);
+					traversalPointerReference = new OriginalCellPairTraversal<CellTemplate>(cells, dims);
 					break;
 				case traversalNames::C08:
-					tPair.first = new C08CellPairTraversal<CellTemplate>(cells, dims);
+					traversalPointerReference = new C08CellPairTraversal<CellTemplate>(cells, dims);
 					break;
 				case traversalNames::C04:
-					tPair.first = new C04CellPairTraversal<CellTemplate>(cells, dims);
+					traversalPointerReference = new C04CellPairTraversal<CellTemplate>(cells, dims);
 					break;
 				case traversalNames::SLICED:
-					tPair.first = new SlicedCellPairTraversal<CellTemplate>(cells, dims);
+					traversalPointerReference = new SlicedCellPairTraversal<CellTemplate>(cells, dims);
 					break;
 				case traversalNames::HS:
-					tPair.first = new HalfShellTraversal<CellTemplate>(cells, dims);
+					traversalPointerReference = new HalfShellTraversal<CellTemplate>(cells, dims);
 					break;
 				case traversalNames::MP:
-					tPair.first = new MidpointTraversal<CellTemplate>(cells, dims);
+					traversalPointerReference = new MidpointTraversal<CellTemplate>(cells, dims);
 					break;
                 case traversalNames::NT:
-                    tPair.first = new NeutralTerritoryTraversal<CellTemplate>(cells, dims, cellLength, cutoff);
+                    traversalPointerReference = new NeutralTerritoryTraversal<CellTemplate>(cells, dims, cellLength, cutoff);
                     break;
 				case traversalNames::C08ES:
-					tPair.first = new C08CellPairTraversal<CellTemplate, true>(cells, dims);
+					traversalPointerReference = new C08CellPairTraversal<CellTemplate, true>(cells, dims);
 					break;
 				case traversalNames::QSCHED: {
 					mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
-					QuickschedTraversalData *quiData = dynamic_cast<QuickschedTraversalData *>(tPair.second);
-					tPair.first = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
+					auto *quiData = dynamic_cast<QuickschedTraversalData *>(traversalData);
+					traversalPointerReference = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
 				} break;
 				default:
 					global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << endl;
 					Simulation::exit(1);
 			}
 		}
-		tPair.first->rebuild(cells, dims, cellLength, cutoff, tPair.second);
+		traversalPointerReference->rebuild(cells, dims, cellLength, cutoff, traversalData);
 	}
 	_optimalTraversal = nullptr;
 }
