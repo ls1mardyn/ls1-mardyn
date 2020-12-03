@@ -187,8 +187,8 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	auto invalidParticles = moleculeContainer->getInvalidParticles();
 
 	if(_useSequentialFallback) {
-		double rmin[DIMgeom];  // lower corner
-		double rmax[DIMgeom];  // higher corner
+		std::array<double, DIMgeom> rmin;  // lower corner
+		std::array<double, DIMgeom> rmax;  // higher corner
 
 		for (int d = 0; d < DIMgeom; d++) {
 			rmin[d] = domainDecomp->getBoundingBoxMin(d, domain);
