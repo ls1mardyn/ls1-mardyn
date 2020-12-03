@@ -100,21 +100,13 @@ void NeutralTerritoryTraversal<CellTemplate>::computeOffsets() {
 		dims[d] = static_cast<long>(this->_dims[d]);
 	}
 
-	for (const auto& i : _offsets3D) {
-		auto a = i.first;
-		auto b = i.second;
-
-		auto ax = std::get<0>(a);
-		auto ay = std::get<1>(a);
-		auto az = std::get<2>(a);
-
-		auto bx = std::get<0>(b);
-		auto by = std::get<1>(b);
-		auto bz = std::get<2>(b);
+	for (const auto& [firstOffset, secondOffset] : _offsets3D) {
+		auto [firstOffsetX, firstOffsetY, firstOffsetZ] = firstOffset;
+		auto [secondOffsetX, secondOffsetY, secondOffsetZ] = secondOffset;
 
 		// convert 3d index to 1d
-		auto aIndex = threeToOneD(ax, ay, az, dims);
-		auto bIndex = threeToOneD(bx, by, bz, dims);
+		auto aIndex = threeToOneD(firstOffsetX, firstOffsetY, firstOffsetZ, dims);
+		auto bIndex = threeToOneD(secondOffsetX, secondOffsetY, secondOffsetZ, dims);
 
 		// store offset pair
 		_cellPairOffsets.emplace_back(aIndex, bIndex);
@@ -150,11 +142,8 @@ void NeutralTerritoryTraversal<CellTemplate>::processBaseCell(CellProcessor& cel
 
 	if (not baseCell.isHaloCell()) {
 		// Process all cell pairs for this cell
-		for (const auto& current_pair : _cellPairOffsets) {
-			unsigned long offset1 = current_pair.first;
+		for (const auto& [offset1, offset2] : _cellPairOffsets) {
 			unsigned long cellIndex1 = baseIndex + offset1;
-
-			unsigned long offset2 = current_pair.second;
 			unsigned long cellIndex2 = baseIndex + offset2;
 
 			CellTemplate& cell1 = this->_cells->at(cellIndex1);
