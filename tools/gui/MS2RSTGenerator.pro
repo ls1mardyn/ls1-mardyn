@@ -3,9 +3,9 @@ TEMPLATE = lib
 #CONFIG += dll debug
 CONFIG += staticlib debug mardyn
 lessThan(QT_MAJOR_VERSION, 5) {
-	QMAKE_CXXFLAGS += -std=c++11
+	QMAKE_CXXFLAGS += -std=c++17
 } else {
-	CONFIG += c++11
+	CONFIG += c++17
 }
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
