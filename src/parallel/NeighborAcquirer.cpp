@@ -354,6 +354,7 @@ std::pair<std::vector<HaloRegion>, std::vector<std::array<double, 3>>> NeighborA
 
 	auto num_regions = doShiftsVector[0].size() * doShiftsVector[1].size() * doShiftsVector[2].size();
 	haloRegions.reserve(num_regions);
+	shifts.reserve(num_regions);
 
 	// Calculate and apply the shifts.
 	for (int x_index_shift : doShiftsVector[0]) {
