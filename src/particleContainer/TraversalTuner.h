@@ -72,9 +72,7 @@ public:
 		return selectedTraversal;
 	}
 
-    CellPairTraversals<ParticleCell>* getCurrentOptimalTraversal() {
-            return _optimalTraversal;
-    }
+	CellPairTraversals<ParticleCell> *getCurrentOptimalTraversal() { return _optimalTraversal; }
 
 private:
 	std::vector<CellTemplate>* _cells;
@@ -109,9 +107,9 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 			make_pair(nullptr, c08Data),
 			make_pair(nullptr, c04Data),
 			make_pair(nullptr, slicedData),
-            make_pair(nullptr, hsData),
-            make_pair(nullptr, mpData),
-            make_pair(nullptr, ntData),
+			make_pair(nullptr, hsData),
+			make_pair(nullptr, mpData),
+			make_pair(nullptr, ntData),
 			make_pair(nullptr, c08esData)
 	};
 #ifdef QUICKSCHED
@@ -179,10 +177,7 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 	string traversalType;
 
 	xmlconfig.getNodeValue("traversalSelector", traversalType);
-	transform(traversalType.begin(),
-			  traversalType.end(),
-			  traversalType.begin(),
-			  ::tolower);
+	transform(traversalType.begin(), traversalType.end(), traversalType.begin(), ::tolower);
 
 	if (traversalType.find("c08es") != string::npos)
 		selectedTraversal = C08ES;
@@ -227,10 +222,7 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 		xmlconfig.changecurrentnode(path);
 
 		traversalType = xmlconfig.getNodeValue_string("@type", "NOTHING FOUND");
-		transform(traversalType.begin(),
-				  traversalType.end(),
-				  traversalType.begin(),
-				  ::tolower);
+		transform(traversalType.begin(), traversalType.end(), traversalType.begin(), ::tolower);
 		if (traversalType == "c08") {
 			// nothing to do
 		} else if (traversalType.find("qui") != string::npos) {
@@ -263,8 +255,7 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 #else
 			global_log->warning() << "Found quicksched traversal data in config "
 								  << "but mardyn was compiled without quicksched support! "
-								  << "(make ENABLE_QUICKSCHED=1)"
-								  << endl;
+								  << "(make ENABLE_QUICKSCHED=1)" << endl;
 #endif
 		} else {
 			global_log->warning() << "Unknown traversal type: " << traversalType << endl;
@@ -275,9 +266,8 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 }
 
 template<class CellTemplate>
-void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
-        const std::array<unsigned long, 3> &dims, double cellLength[3], double cutoff) {
-
+void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells, const std::array<unsigned long, 3> &dims,
+										   double cellLength[3], double cutoff) {
 	_cells = &cells; // new - what for?
 	_dims = dims; // new - what for?
 
@@ -304,9 +294,10 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
 				case traversalNames::MP:
 					traversalPointerReference = new MidpointTraversal<CellTemplate>(cells, dims);
 					break;
-                case traversalNames::NT:
-                    traversalPointerReference = new NeutralTerritoryTraversal<CellTemplate>(cells, dims, cellLength, cutoff);
-                    break;
+				case traversalNames::NT:
+					traversalPointerReference =
+						new NeutralTerritoryTraversal<CellTemplate>(cells, dims, cellLength, cutoff);
+					break;
 				case traversalNames::C08ES:
 					traversalPointerReference = new C08CellPairTraversal<CellTemplate, true>(cells, dims);
 					break;
