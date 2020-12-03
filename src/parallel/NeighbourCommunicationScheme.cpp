@@ -268,7 +268,6 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 
 void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
-	
 	// msg type is fixed by the fuction call, but this needs to be done for both import and export
 	int numNeighbours = 0;
 
@@ -277,13 +276,12 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	if (_pushPull) {
 		selectNeighbours(msgType, false /* export */);
 		numExportNeighbours = (*_neighbours)[0].size();
-		selectNeighbours(msgType, true /* import */); // current _neighbours is import
+		selectNeighbours(msgType, true /* import */);  // current _neighbours is import
 		numImportNeighbours = (*_neighbours)[0].size();
 	} else {
 		numNeighbours = (*_neighbours)[0].size();
 	}
-	
-	
+
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
 	// messages with waiting for other messages to arrive
 	bool allDone = false;
@@ -292,24 +290,31 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		numNeighbours = numImportNeighbours;
 	}
 
-	// for 1-stage: if there is at least one neighbour with the same rank as the sending rank, make sure to remove received duplicates!
+	// for 1-stage: if there is at least one neighbour with the same rank as the sending rank, make sure to remove
+	// received duplicates!
 	for (int i = 0; i < numNeighbours; i++) {
 		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 	}
-	
-	for (int i = 0; i < numNeighbours; ++i) { // reset receive status
-		if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank()) {
-			(*_neighbours)[0][i].resetReceive();
+
+	auto forAllRealNeighbors = [&](auto&& f) {
+		for (auto& neighbor : (*_neighbours)[0]) {
+			if (not _useSequentialFallback or domainDecomp->getRank() != neighbor.getRank()) {
+				f(neighbor);
+			}
 		}
-	}
+	};
+
+	forAllRealNeighbors([](auto& neighbor) {
+		// reset receive status
+		neighbor.resetReceive();
+	});
 
 	if (_pushPull) {
-		selectNeighbours(msgType, false /* export */); // last selected is export
+		selectNeighbours(msgType, false /* export */);  // last selected is export
 		numNeighbours = numExportNeighbours;
 
 		for (int i = 0; i < numNeighbours; i++) {
-			removeRecvDuplicates |= (domainDecomp->getRank()
-					== (*_neighbours)[0][i].getRank());
+			removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 		}
 	}
 
@@ -319,92 +324,81 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	while (not allDone) {
 		allDone = true;
 		if (_pushPull) {
-			selectNeighbours(msgType, false /* export */); // last selected is export
+			selectNeighbours(msgType, false /* export */);  // last selected is export
 			numNeighbours = numExportNeighbours;
 		}
 		// "kickstart" processing of all Isend requests
-		for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-			if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
-				allDone &= (*_neighbours)[0][i].testSend(); // THIS CAUSES A SEG-FAULT
-			}
-		}
-		
+		forAllRealNeighbors([&](auto& neighbor) {
+			// export neighbors required (still selected)
+			allDone &= neighbor.testSend();  // THIS CAUSES A SEG-FAULT
+		});
+
 		if (_pushPull) {
 			selectNeighbours(msgType, true /* import */);
 			numNeighbours = numImportNeighbours;
 		}
 
 		// get the counts and issue the Irecv-s
-		for (int i = 0; i < numNeighbours; ++i) { // import required
-			if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
-				allDone &= (*_neighbours)[0][i].iprobeCount(domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType()); // hat Einfluss
-			}
-
-		}
-		
+		forAllRealNeighbors([&](auto& neighbor) {
+			// import neighbors required
+			allDone &= neighbor.iprobeCount(domainDecomp->getCommunicator(), domainDecomp->getMPIParticleType());
+			// hat Einfluss
+		});
 
 		// unpack molecules
-		for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
-			if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank()){
-					allDone &= (*_neighbours)[0][i].testRecv(moleculeContainer, removeRecvDuplicates, msgType==FORCES); 
-			}
-		}
-		
+		forAllRealNeighbors([&](auto& neighbor) {
+			// import neighbors required (still selected)
+			allDone &= neighbor.testRecv(moleculeContainer, removeRecvDuplicates, msgType == FORCES);
+		});
 
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
 			global_log->warning()
-					<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
-					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
-					<< std::endl;
+				<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
+				<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds" << std::endl;
 			waitCounter += 5.0;
-			for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
-				if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
-					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
-			}
+			forAllRealNeighbors([&](auto& neighbor) {
+				// import neighbors required (still selected)
+				neighbor.deadlockDiagnosticSendRecv();
+			});
 			if (_pushPull) {
 				selectNeighbours(msgType, false /* export */);
 				numNeighbours = numExportNeighbours;
-
-				for (int i = 0; i < numNeighbours; ++i) { // import required (still selected)
-					if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
-						(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
-				}
+				forAllRealNeighbors([&](auto& neighbor) {
+					// export neighbors required
+					neighbor.deadlockDiagnosticSendRecv();
+				});
 			}
 		}
-		
 
 		if (waitingTime > deadlockTimeOut) {
 			global_log->error()
-					<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
-					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
-					<< std::endl;
-			for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-				if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
-					(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
-			}
-			
+				<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
+				<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
+				<< std::endl;
+			forAllRealNeighbors([&](auto& neighbor) {
+				// export required (still selected)
+				neighbor.deadlockDiagnosticSendRecv();
+			});
+
 			if (_pushPull) {
 				selectNeighbours(msgType, true /* import */);
 				numNeighbours = numImportNeighbours;
 
-				for (int i = 0; i < numNeighbours; ++i) { // export required (still selected)
-					if (not _useSequentialFallback or domainDecomp->getRank() != (*_neighbours)[0][i].getRank())
-						(*_neighbours)[0][i].deadlockDiagnosticSendRecv();
-				}
+				forAllRealNeighbors([&](auto& neighbor) {
+					// export required (still selected)
+					neighbor.deadlockDiagnosticSendRecv();
+				});
 			}
-			
+
 			Simulation::exit(457);
 		}
-		
 
-	} // while not allDone
-	
+	}  // while not allDone
+
 	global_log->set_mpi_output_root(0);
 }
-
 
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool import) {
 	switch(msgType) {
