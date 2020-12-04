@@ -568,9 +568,10 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	_feedrate.feed.actual = _feedrate.feed.init;
 
 	_reservoir->readParticleData(domainDecomp, particleContainer);
+#ifndef NDEBUG
 	if(_reservoir->getDensity(0) < 0.000000001)
 		cout << "["<<ownRank<<"]: ERROR: Reservoir density too low, _reservoir->getDensity(0)=" << _reservoir->getDensity(0) << endl;
-
+#endif
 	_dInvDensityArea = 1. / (_dAreaXZ * _reservoir->getDensity(0) );
 //	cout << "["<<ownRank<<"]: _dInvDensityArea = " << _dInvDensityArea << endl;
 
@@ -2103,7 +2104,6 @@ bool Reservoir::isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molec
 {
 	double y = mol.r(1);
 	uint32_t nBinIndex = floor(y / _dBinWidth);
-	mardyn_assert(nBinIndex < binVector.size() );
 	double dOffset;
 	switch(_parent->getMovingDirection() )
 	{
