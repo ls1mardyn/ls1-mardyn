@@ -1,0 +1,6 @@
+{
+"inp_fpath" : "/media/mheinen/data_ext4/sims/evap2020_simon/liq/t0-800/run01/cp_binary-0.restart.dat",
+"out_fpath" : "/media/mheinen/data_ext4/sims/evap2020_simon/liq/t0-800/run01/cp_binary-0.restart.rhol.dat",
+"num_particles_old" : 6084,
+"num_particles_new" : 5842
+}
