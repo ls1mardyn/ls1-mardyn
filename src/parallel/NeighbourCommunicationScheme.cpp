@@ -330,7 +330,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// "kickstart" processing of all Isend requests
 		forAllRealNeighbors([&](auto& neighbor) {
 			// export neighbors required (still selected)
-			allDone &= neighbor.testSend();  // THIS CAUSES A SEG-FAULT
+			allDone &= neighbor.testSend();
 		});
 
 		if (_pushPull) {
@@ -342,7 +342,6 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		forAllRealNeighbors([&](auto& neighbor) {
 			// import neighbors required
 			allDone &= neighbor.iprobeCount(domainDecomp->getCommunicator(), domainDecomp->getMPIParticleType());
-			// hat Einfluss
 		});
 
 		// unpack molecules
