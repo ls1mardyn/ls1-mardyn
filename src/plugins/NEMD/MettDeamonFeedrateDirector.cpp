@@ -50,11 +50,13 @@ void MettDeamonFeedrateDirector::init(ParticleContainer* particleContainer, Doma
 			mettDeamon = dynamic_cast<MettDeamon*>(pit);
 	}
 	if(nullptr != mettDeamon) {
-		mettDeamon->setActualFeedrate(_feedrate.actual);
 		// init _feedrate.sum
 		_feedrate.sum = 0;
-		for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
+		for (auto it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it) {
 			_feedrate.sum += *it;
+		}
+		_feedrate.avg = _feedrate.sum * 1./(double)(_feedrate.list.size());
+		mettDeamon->setInitFeedrate(_feedrate.avg);
 	}
 }
 
@@ -100,7 +102,7 @@ void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
 	cout << endl;
 #endif
 	// init actual feed rate
-	_feedrate.actual = *_feedrate.list.end();
+	_feedrate.actual = _feedrate.list.back();
 
 //	_forceConstant = 100.;
 //	xmlconfig.getNodeValue("forceConstant", _forceConstant);

@@ -233,8 +233,14 @@ public:
 	void StoreValuesCV(const double& dDensity, const double& dVolume) {_dDensityTarget = dDensity; _dVolumeCV = dVolume;}
 
 	// connection to other general plugins
-	void setActualFeedrate(const double& feed_actual) {_feedrate.feed.actual = feed_actual;
-	global_log->info() << "[MettDeamon]: Set new feedrate by MDFRD to vf= " << feed_actual << std::endl;}
+	void setActualFeedrate(const double& feed_actual) {
+		_feedrate.feed.actual = feed_actual;
+		global_log->info() << "[MettDeamon]: Set new feedrate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+	}
+	void setInitFeedrate(const double& feed_init) {
+		_feedrate.feed.init = feed_init;
+		global_log->info() << "[MettDeamon]: Set init feedrate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+	}
 	double getInvDensityArea() {return _dInvDensityArea;}
 
 private:
