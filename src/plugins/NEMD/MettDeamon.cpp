@@ -1588,7 +1588,7 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 	Domain* domain = global_simulation->getDomain();
 #ifndef ENABLE_MPI
 	return;
-#endif	
+#else
 
 #define PARTICLE_BUFFER_SIZE  (16*1024)
 	int ownRank = domainDecomp->getRank();
@@ -1661,6 +1661,7 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 	this->clearBinQueue();
 	this->sortParticlesToBins(domainDecomp, particleContainer);
 	_binQueue->activateBin(actual);
+#endif  //ENABLE_MPI
 }
 
 void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
@@ -2135,4 +2136,3 @@ void Reservoir::printBinQueueInfo()
 	//~ cout << "_binQueue->getMaxID()=" << _binQueue->getMaxID() << endl;
 	_binQueue->printInfo();
 }
-
