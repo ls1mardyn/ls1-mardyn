@@ -28,7 +28,7 @@ public:
 	void init(int cellsPerDim[3],
 			double haloBoxMin[3], double haloBoxMax[3],
 			double boxMin[3], double boxMax[3],
-			double cellLength[3]) {
+			double cellLength[3], int haloWidthInNumCells[3]) {
 		int totalNumCells = 1;
 		for (int d = 0; d < 3; ++d) {
 			_cellsPerDimension[d] = cellsPerDim[d];
@@ -37,6 +37,7 @@ public:
 			_boundingBoxMin[d] = boxMin[d];
 			_boundingBoxMax[d] = boxMax[d];
 			_cellLength[d] = cellLength[d];
+			_haloWidthInNumCells[d] = haloWidthInNumCells[d];
 
 			totalNumCells *= cellsPerDim[d];
 		}
@@ -46,13 +47,14 @@ public:
 		int runningIndex = 0;
 
 		for (unsigned z = 0; z < _cellsPerDimension[2]; ++z) {
-			bool isHaloZ = (z == 0 or z == _cellsPerDimension[2]-1);
+			bool isHaloZ = (z < _haloWidthInNumCells[2] or z >= _cellsPerDimension[2] - _haloWidthInNumCells[2]);
 
 			for (unsigned y = 0; y < _cellsPerDimension[1]; ++y) {
-				bool isHaloY = (y == 0 or y == _cellsPerDimension[1]-1);
+				bool isHaloY = (y < _haloWidthInNumCells[1] or y >= _cellsPerDimension[1] - _haloWidthInNumCells[1]);
 
 				for (unsigned x = 0; x < _cellsPerDimension[0]; ++x) {
-					bool isHaloX = (x == 0 or x == _cellsPerDimension[0]-1);
+					bool isHaloX =
+						(x < _haloWidthInNumCells[0] or x >= _cellsPerDimension[0] - _haloWidthInNumCells[0]);
 
 					if (isHaloZ or isHaloY or isHaloX) {
 						_haloCellFlags.at(runningIndex) = true;
@@ -137,14 +139,13 @@ private:
 		// why oh why don't we have switch statements on variables
 		if (index == 0) {
 			ret = _haloBoundingBoxMin[dimension];
-		} else if (index == 1) {
+		} else if (index == _haloWidthInNumCells[dimension]) {
 			ret = _boundingBoxMin[dimension];
-		} else if (index == _cellsPerDimension[dimension] - 1) {
+		} else if (index == _cellsPerDimension[dimension] - _haloWidthInNumCells[dimension]) {
 			ret = _boundingBoxMax[dimension];
 		} else if (index == _cellsPerDimension[dimension]) {
 			ret = _haloBoundingBoxMax[dimension];
 		} else {
-			mardyn_assert(index > 1 and index < _cellsPerDimension[dimension] - 1);
 			ret = index * _cellLength[dimension] + _haloBoundingBoxMin[dimension];
 		}
 		return ret;
@@ -160,6 +161,7 @@ private:
 	std::array<double, 3> _boundingBoxMin, _boundingBoxMax;
 	std::array<double, 3> _haloBoundingBoxMin, _haloBoundingBoxMax;
 	std::array<double, 3> _cellLength;
+	std::array<int, 3> _haloWidthInNumCells;
 
 	// is (should be) space-optimised by compiler to store 1 bit per entry, instead of 1 byte.
 	std::vector<bool> _haloCellFlags;

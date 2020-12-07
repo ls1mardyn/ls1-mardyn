@@ -3,7 +3,7 @@
 # In that case, an error may occur here!
 
 # C++11
-CXXFLAGS += -std=c++11 -fp-model precise
+CXXFLAGS += -std=c++17 -fp-model precise
 
 
 # Vectorization settings:

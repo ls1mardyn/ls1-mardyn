@@ -18,7 +18,8 @@
  * saved in partners01.
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
-	const std::array<double,3>& globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions, double skin, const MPI_Comm& comm) {
+	const std::array<double, 3> &globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions,
+	double skin, const MPI_Comm &comm, bool excludeOwnRank) {
 
 	HaloRegion ownRegionEnlargedBySkin = *ownRegion;
 	for(unsigned int dim = 0; dim < 3; ++dim){
@@ -106,24 +107,14 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			i += sizeof(double);  // 4
 
 			// msg format one region: rmin | rmax | offset | width | shift
-			std::array<double, 3> shift{};
-			auto shiftedRegion = getPotentiallyShiftedRegion(globalDomainLength, unshiftedRegion, shift.data(), skin);
+			auto shiftedRegionShiftPair = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion, skin);
 
-			std::vector<HaloRegion> regionsToTest;
-			std::vector<std::array<double, 3>> shifts;
-			if(skin == 0.){
-				regionsToTest = {shiftedRegion};
-				shifts = {shift};
-			} else {
-				// if the skin is not zero, the neighbor which owns a particle is no longer uniquely defined.
-				// We thus have to check multiple different possible shifts.
-				std::tie(regionsToTest, shifts) =
-					getAllShiftedAndNonShiftedRegionsAndShifts(unshiftedRegion, shiftedRegion, shift);
-			}
+			std::vector<HaloRegion> regionsToTest = shiftedRegionShiftPair.first;
+			std::vector<std::array<double, 3>> shifts  = shiftedRegionShiftPair.second;
 
 			for(size_t regionIndex = 0; regionIndex < regionsToTest.size(); ++regionIndex){
 				auto regionToTest = regionsToTest[regionIndex];
-				if (rank != my_rank && isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
+				if ((not excludeOwnRank or rank != my_rank) and isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
 					auto currentShift = shifts[regionIndex];
 
 					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
@@ -338,61 +329,49 @@ HaloRegion NeighborAcquirer::overlap(const HaloRegion& myRegion, const HaloRegio
 	return overlap;
 }
 
-HaloRegion NeighborAcquirer::getPotentiallyShiftedRegion(const std::array<double,3>& domainLength, const HaloRegion &region,
-														 double *shiftArray, double skin) {
-	for (int i = 0; i < 3; i++) {  // calculating shift
-		if (region.rmin[i] >= domainLength[i] - skin) {
-			shiftArray[i] = -domainLength[i];
+std::pair<std::vector<HaloRegion>, std::vector<std::array<double, 3>>> NeighborAcquirer::getPotentiallyShiftedRegions(
+				  const std::array<double, 3> &domainLength, const HaloRegion &region, double skin) {
+	std::vector<HaloRegion> haloRegions;
+	std::vector<std::array<double, 3>> shifts;
+
+	std::array<std::vector<int>,3> doShiftsVector;
+	for (unsigned dim = 0; dim < 3; ++dim) {
+		//if rmin is small enough, include wrapping over bottom of domain -> positive shift
+		if(region.rmin[dim] < skin){
+			doShiftsVector[dim].emplace_back(1);
 		}
-	}
-
-	for (int i = 0; i < 3; i++) {  // calculating shift
-		if (region.rmax[i] <= skin) {
-			shiftArray[i] = domainLength[i];
+		//if rmax is big enough, include wrapping over top of domain -> negative shift
+		if(region.rmax[dim] > domainLength[dim] - skin){
+			doShiftsVector[dim].emplace_back(-1);
 		}
-	}
-
-	auto shiftedRegion = region;
-	for (int i = 0; i < 3; i++) {  // applying shift
-		shiftedRegion.rmax[i] += shiftArray[i];
-		shiftedRegion.rmin[i] += shiftArray[i];
-	}
-	return shiftedRegion;
-}
-
-std::tuple<std::vector<HaloRegion>, std::vector<std::array<double, 3>>>
-NeighborAcquirer::getAllShiftedAndNonShiftedRegionsAndShifts(HaloRegion nonShiftedRegion, HaloRegion shiftedRegion,
-															 std::array<double, 3> defaultShift) {
-	std::vector<HaloRegion> haloRegionVector;
-	std::vector<std::array<double, 3>> shiftVector;
-	std::array<std::vector<bool>, 3> doUnshiftVector;
-	for (int dim = 0; dim < 3; ++dim) {
-		bool isShifted = defaultShift[dim] != 0.;
-		if (isShifted) {
-			doUnshiftVector[dim] = {false, true};
-		} else {
-			doUnshiftVector[dim] = {false};
+		//if halo region is not completely outside, include non-wrapped halo -> zero shift
+		if(region.rmax[dim] > -skin and region.rmin[dim] < domainLength[dim] + skin){
+			doShiftsVector[dim].emplace_back(0);
 		}
+		// the shift vector should never be empty!
+		mardyn_assert(not doShiftsVector[dim].empty());
 	}
 
-	for (auto doUnShiftX : doUnshiftVector[0]) {
-		for (auto doUnShiftY : doUnshiftVector[1]) {
-			for (auto doUnShiftZ : doUnshiftVector[2]) {
-				std::array<bool, 3> doUnShift{doUnShiftX, doUnShiftY, doUnShiftZ};
-				HaloRegion region{shiftedRegion};
-				std::array<double, 3> shift{defaultShift};
+	auto num_regions = doShiftsVector[0].size() * doShiftsVector[1].size() * doShiftsVector[2].size();
+	haloRegions.reserve(num_regions);
+	shifts.reserve(num_regions);
 
-				for (int dim = 0; dim < 3; ++dim) {
-					if (doUnShift[dim]) {
-						region.rmin[dim] = nonShiftedRegion.rmin[dim];
-						region.rmax[dim] = nonShiftedRegion.rmax[dim];
-						shift[dim] = 0;
-					}
+	// Calculate and apply the shifts.
+	for (int x_index_shift : doShiftsVector[0]) {
+		for (int y_index_shift : doShiftsVector[1]) {
+			for (int z_index_shift : doShiftsVector[2]) {
+				std::array<int, 3> indexShifts{x_index_shift, y_index_shift, z_index_shift};
+				std::array<double, 3> shift{};
+				auto shiftedRegion = region;
+				for(unsigned dim = 0; dim < 3; ++dim){
+					shift[dim] = domainLength[dim] * indexShifts[dim];
+					shiftedRegion.rmin[dim] += shift[dim];
+					shiftedRegion.rmax[dim] += shift[dim];
 				}
-				haloRegionVector.push_back(region);
-				shiftVector.push_back(shift);
+				haloRegions.emplace_back(shiftedRegion);
+				shifts.emplace_back(shift);
 			}
 		}
 	}
-	return std::make_tuple(haloRegionVector, shiftVector);
+	return std::make_pair(haloRegions, shifts);
 }

@@ -64,8 +64,9 @@ void KDDecomposition::init(Domain* domain){
     _globalNumCells = 1;
 
     for (int dim = 0; dim < KDDIM; dim++) {
-        _globalCellsPerDim[dim] = (int) floor(domain->getGlobalLength(dim) / _cutoffRadius);
-        _globalNumCells *= _globalCellsPerDim[dim];
+		_globalCellsPerDim[dim] =
+			static_cast<int>(floor(domain->getGlobalLength(dim) / _cutoffRadius * _cellsInCutoffRadius));
+		_globalNumCells *= _globalCellsPerDim[dim];
         highCorner[dim] = _globalCellsPerDim[dim] - 1;
         _cellSize[dim] = domain->getGlobalLength(dim) / ((double) _globalCellsPerDim[dim]);
         coversWholeDomain[dim] = true;
@@ -194,6 +195,15 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
 	DomainDecompMPIBase::readXML(xmlconfig);
+
+	string oldPath(xmlconfig.getcurrentnodepath());
+
+	xmlconfig.changecurrentnode("../datastructure");
+	xmlconfig.getNodeValue("cellsInCutoffRadius", _cellsInCutoffRadius);
+	global_log->info() << "KDDecomposition using cellsInCutoffRadius: " << _cellsInCutoffRadius << endl;
+
+	// reset path
+	xmlconfig.changecurrentnode(oldPath);
 }
 
 void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,

@@ -304,6 +304,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	int _frequency;
 
 	double _cutoffRadius;
+	int _cellsInCutoffRadius{1};
 
 	/*
 	 * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,

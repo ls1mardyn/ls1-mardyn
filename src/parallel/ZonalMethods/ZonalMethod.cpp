@@ -116,9 +116,15 @@ std::vector<HaloRegion> ZonalMethod::getHaloRegionsConditionalInside(
 							tmp.rmax[dimension] = initialRegion.rmax[dimension];
 						} else if (d[dimension] == -1) { // LOWER
 							tmp.rmin[dimension] = initialRegion.rmin[dimension];
-							tmp.rmax[dimension] = initialRegion.rmin[dimension] + cutoffRadius[dimension];
+							// The std::min is only needed if the size of one region is smaller than the cutoff.
+							// This is possible for some zonal methods.
+							tmp.rmax[dimension] = std::min(initialRegion.rmin[dimension] + cutoffRadius[dimension],
+														   initialRegion.rmax[dimension]);
 						} else { //d[dimension==1 - UPPER
-							tmp.rmin[dimension] = initialRegion.rmax[dimension] - cutoffRadius[dimension];
+							// the std::max is only needed if the size of one region is smaller than the cutoff.
+							// This is possible for some zonal methods.
+							tmp.rmin[dimension] = std::max(initialRegion.rmax[dimension] - cutoffRadius[dimension],
+														   initialRegion.rmin[dimension]);
 							tmp.rmax[dimension] = initialRegion.rmax[dimension];
 						}
 					}
