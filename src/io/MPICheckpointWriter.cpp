@@ -26,16 +26,6 @@
 using Log::global_log;
 using namespace std;
 
-/*
-//         C++11: 201103L
-#if __cplusplus > 199711L
-// int32_t -> MPI_INT32_T
-#include<cstdint>
-#else
- typedef int int32_t;
-#endif
-*/
-
 extern Simulation* global_simulation;
 
 const char MPICheckpointWriter::_magicVersion[] = "MarDyn20150211trunk";

@@ -15,7 +15,7 @@ https://www5.in.tum.de/mardyn/doxygen_doc/html/
 Prerequisites:
 --------------
 ### mandatory requirements:
-* a C++11 compiler (GCC, Clang, Intel, PGI, Cray, NEC SX, IBM XL, ...)
+* a C++17 compiler (GCC, Clang, Intel, PGI, Cray, NEC SX, IBM XL, ...)
 * a working MPI installation compatible with the MPI 3.0 specification or later (Open MPI, MPICH, MVAPICH, Intel MPI, Cray MPI, NEC MPI, IBM Platform MPI, ...)
 
 ### optional requirements:

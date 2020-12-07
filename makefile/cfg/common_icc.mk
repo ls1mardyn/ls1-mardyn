@@ -2,7 +2,7 @@
 # NOTE: depending on the installation settings, mpicxx may not actually use icpc! 
 # In that case, an error may occur here!
 
-# C++11
+# C++17
 CXXFLAGS += -std=c++17 -fp-model precise
 
 
