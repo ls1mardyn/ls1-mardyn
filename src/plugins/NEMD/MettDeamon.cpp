@@ -564,16 +564,14 @@ uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposi
 void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer, double cutoffRadius)
 {
 	int ownRank = domainDecomp->getRank();
-
 	_feedrate.feed.actual = _feedrate.feed.init;
-
 	_reservoir->readParticleData(domainDecomp, particleContainer);
+	_dInvDensityArea = 1. / (_dAreaXZ * _reservoir->getDensity(0) );
 #ifndef NDEBUG
 	if(_reservoir->getDensity(0) < 0.000000001)
 		cout << "["<<ownRank<<"]: ERROR: Reservoir density too low, _reservoir->getDensity(0)=" << _reservoir->getDensity(0) << endl;
+	cout << "["<<ownRank<<"]: _dInvDensityArea = " << _dInvDensityArea << endl;
 #endif
-	_dInvDensityArea = 1. / (_dAreaXZ * _reservoir->getDensity(0) );
-//	cout << "["<<ownRank<<"]: _dInvDensityArea = " << _dInvDensityArea << endl;
 
 	// Activate reservoir bin with respect to restart information
 	if(_bIsRestart)
@@ -868,17 +866,20 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	// DEBUG
 
 	_feedrate.feed.sum += _feedrate.feed.actual;
-//	if(0 == ownRank)
-//		cout << "["<<ownRank<<"]: _feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
-
+#ifndef NDEBUG
+	if(0 == ownRank)
+		cout << "["<<ownRank<<"]: _feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
+#endif
 	if (_feedrate.feed.sum >= _reservoir->getBinWidth())
 	{
-//		if(0 <= ownRank) {
-//			cout << "Mett-" << (uint32_t)_nMovingDirection << ": _feedrate.feed.sum=" << _feedrate.feed.sum << ", _dSlabWidth=" << _reservoir->getBinWidth() << endl;
-//			cout << "_dSlabWidth=" << _reservoir->getBinWidth() << endl;
-//			cout << "_feedrate.feed.sum=" << _feedrate.feed.sum << endl;
-//			cout << "_reservoir->getActualBinIndex()=" << _reservoir->getActualBinIndex() << endl;
-//		}
+#ifndef NDEBUG
+		if(0 <= ownRank) {
+			cout << "Mett-" << (uint32_t)_nMovingDirection << ": _feedrate.feed.sum=" << _feedrate.feed.sum << ", _dSlabWidth=" << _reservoir->getBinWidth() << endl;
+			cout << "_dSlabWidth=" << _reservoir->getBinWidth() << endl;
+			cout << "_feedrate.feed.sum=" << _feedrate.feed.sum << endl;
+			cout << "_reservoir->getActualBinIndex()=" << _reservoir->getActualBinIndex() << endl;
+		}
+#endif
 
 		// insert actual reservoir slab / activate next reservoir slab
 		DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
@@ -984,11 +985,13 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		else if(FRM_DENSITY == _nFeedRateMethod)
 			this->calcDeltaYbyDensity();
 		int ownRank = global_simulation->domainDecomposition().getRank();
-		//~ if(0 <= ownRank) {
-			//~ cout << "["<<ownRank<<"]: _numDeletedMolsSum = " << _numDeletedMolsSum << endl;
-			//~ cout << "["<<ownRank<<"]: _dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
-			//~ cout << "["<<ownRank<<"]: _feedrate.feed.actual = " << _feedrate.feed.actual << endl;
-		//~ }
+#ifndef NDEBUG
+		if(0 <= ownRank) {
+			cout << "["<<ownRank<<"]: _numDeletedMolsSum = " << _numDeletedMolsSum << endl;
+			cout << "["<<ownRank<<"]: _dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
+			cout << "["<<ownRank<<"]: _feedrate.feed.actual = " << _feedrate.feed.actual << endl;
+		}
+#endif
 	}
 	else
 	{
@@ -1327,7 +1330,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
 #ifndef NDEBUG
 	cout << "[" << nRank << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
-	//_reservoir->printBinQueueInfo();
+	reservoir->printBinQueueInfo();
 #endif
 
 	CommVar<uint64_t> numParticlesCurrentSlab;
@@ -1372,7 +1375,6 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 		else
 			compNew = &(ptrComps->at(3));
 
-//		mi.setid(_nMaxMoleculeID.global + id);
 		mi.setid(particleIDs_available.local.at(index) );
 		mi.setComponent(compNew);
 		mi.setr(1, mi.r(1) + _feedrate.feed.sum - _reservoir->getBinWidth() );
@@ -1445,13 +1447,15 @@ void MettDeamon::readNormDistr()
 void MettDeamon::updateRandVecTrappedIns()
 {
 	create_rand_vec_ones(100, _feedrate.release_velo.normMB.a_neg, _feedrate.vec_rand_ins);
-//	cout << "_feedrate.vec_rand_ins: ";
-//	int nSum = 0;
-//	for(auto vi:_feedrate.vec_rand_ins) {
-//		cout << vi << ",";
-//		nSum += vi;
-//	}
-//	cout << "sum=" << nSum << endl;
+#ifndef NDEBUG
+	cout << "_feedrate.vec_rand_ins: ";
+	int nSum = 0;
+	for(auto vi:_feedrate.vec_rand_ins) {
+		cout << vi << ",";
+		nSum += vi;
+	}
+	cout << "sum=" << nSum << endl;
+#endif
 }
 
 // class Reservoir
@@ -1573,7 +1577,6 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp, ParticleContain
 
 	// volume, densities
 	this->calcPartialDensities(domainDecomp);
-//	mardyn_assert( (_numMoleculesGlobal == _numMoleculesRead) || (RRM_READ_FROM_MEMORY == _nReadMethod) );
 #ifndef NDEBUG
 	cout << "Volume of Mettdeamon Reservoir: " << _box.volume << endl;
 	cout << "Density of Mettdeamon Reservoir: " << _density.at(0).density << endl;
@@ -1694,9 +1697,10 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		this->changeComponentID(mol, mol.componentid() );
 		double y = mol.r(1);
 		nBinIndex = floor(y / _dBinWidth);
-//		cout << "["<<ownRank<<"]: y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
+#ifndef NDEBUG
+		cout << "["<<ownRank<<"]: y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
+#endif
 		mardyn_assert(nBinIndex < binVector.size() );
-//		mol.setr(1, y - nBinIndex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
 		switch(_parent->getMovingDirection() )
 		{
 		case MD_LEFT_TO_RIGHT:
@@ -2050,7 +2054,6 @@ void Reservoir::calcPartialDensities(DomainDecompBase* domainDecomp)
 	double dInvVolume = 1./_box.volume;
 
 	int ownRank = global_simulation->domainDecomposition().getRank();
-//	cout << "["<<ownRank<<"]: _particleVector.size() = " << _particleVector.size() << endl;
 
 	// count particles of each component
 	// TODO: not nice that in case of RRM_READ_FROM_MEMORY _particleVector includes only local particles, and in other case all (global) particles
@@ -2091,7 +2094,6 @@ void Reservoir::calcPartialDensities(DomainDecompBase* domainDecomp)
 		cid.density = cid.numMolecules.global * dInvVolume;
 	}
 	_density.at(0).density = _density.at(0).numMolecules.global * dInvVolume;
-//	cout << "["<<ownRank<<"]: _density.at(0).density = " << _density.at(0).density << endl;
 }
 
 void Reservoir::changeComponentID(Molecule& mol, const uint32_t& cid)
@@ -2129,10 +2131,9 @@ bool Reservoir::activateBin(uint32_t nBinIndex){return _binQueue->activateBin(nB
 void Reservoir::clearBinQueue() {_binQueue->clear();}
 void Reservoir::printBinQueueInfo()
 {
-	//~ cout << "_binQueue->getActualBinIndex()=" << _binQueue->getActualBinIndex() << endl;
-	//~ cout << "_binQueue->getNumBins()=" << _binQueue->getNumBins() << endl;
-	//~ cout << "_binQueue->getRoundCount()=" << _binQueue->getRoundCount() << endl;
-	//~ cout << "_binQueue->getNumParticles()=" << _binQueue->getNumParticles() << endl;
-	//~ cout << "_binQueue->getMaxID()=" << _binQueue->getMaxID() << endl;
-	_binQueue->printInfo();
+	cout << "_binQueue->getActualBinIndex()=" << _binQueue->getActualBinIndex() << endl;
+	cout << "_binQueue->getNumBins()=" << _binQueue->getNumBins() << endl;
+	cout << "_binQueue->getRoundCount()=" << _binQueue->getRoundCount() << endl;
+	cout << "_binQueue->getNumParticles()=" << _binQueue->getNumParticles() << endl;
+	cout << "_binQueue->getMaxID()=" << _binQueue->getMaxID() << endl;
 }

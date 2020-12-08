@@ -139,12 +139,6 @@ struct FeedRateStruct
 	std::vector<int> vec_rand_ins;
 };
 
-//struct ColleagueStruct
-//{
-//	uint16_t index;
-//	MettDeamon* ptr;
-//};
-
 class Domain;
 class Ensemble;
 class DomainDecompBase;
@@ -425,8 +419,7 @@ private:
 private:
 	MettDeamon* _parent;
 	std::unique_ptr<MoleculeDataReader> _moleculeDataReader;
-	std::unique_ptr<BinQueue> _binQueue; // <-- Segmentation fault when PluginFactory creates MettDeamon plugin.
-//	BinQueue _binQueue;
+	std::unique_ptr<BinQueue> _binQueue;
 	uint64_t _numMoleculesRead;
 	uint64_t _nMaxMoleculeID;
 	uint32_t _nMoleculeFormat;
@@ -610,7 +603,6 @@ public:
 		Bin* ptr = _first;
 		while(ptr != nullptr)
 		{
-//			cout << "ptr->_nIndex="<<ptr->_nIndex<<", nBinIndex="<<nBinIndex<<endl;
 			if(ptr->_nIndex == nBinIndex) {
 				_actual = ptr;
 				return true;
@@ -627,28 +619,6 @@ public:
 	uint32_t getRoundCount() {return _nRoundCount;}
 	uint64_t getNumParticles() {return _numParticles;}
 	uint64_t getMaxID() {return _maxID;}
-	void printInfo()
-	{
-		if(isEmpty()) {
-			cout << "Queue is empty." << endl;
-			return;
-		}
-		
-		cout << "_first=" << _first << endl;
-		cout << "_last=" << _last << endl;
-		cout << "_actual=" << _actual << endl;
-		
-		Bin* ptr = _first;
-		do
-		{
-			cout << "ptr=" << ptr << endl;
-			cout << "Bin address=" << ptr << endl;
-			cout << "Bin index=" << ptr->getIndex() << endl;
-			cout << "Bin numParticles=" << ptr->getNumParticles() << endl;
-			ptr = ptr->_next;
-		} while (ptr != _last->_next);
-		
-	}
 
 private:
 	static bool molecule_id_compare(Molecule a, Molecule b)
