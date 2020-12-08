@@ -248,9 +248,11 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	double v_sub2 = momentum_sum2 / mass_sum;
 	{
 		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		Log::global_log->info() << "v_sub: " << v_sub0 << " " << v_sub1 << " " << v_sub2 << std::endl;
-		Log::global_log->info() << "m1 v: " << std::setprecision(10) << iter->v(0) << " " << iter->v(1) << " "
-								<< iter->v(2) << std::endl;
+		if(iter.isValid()) {
+			Log::global_log->info() << "v_sub: " << v_sub0 << " " << v_sub1 << " " << v_sub2 << std::endl;
+			Log::global_log->info() << "m1 v: " << std::setprecision(10) << iter->v(0) << " " << iter->v(1) << " "
+									<< iter->v(2) << std::endl;
+		}
 	}
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -263,8 +265,10 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	}
 	{
 		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		Log::global_log->info() << "m1 v: " << iter->v(0) << " " << iter->v(1) << " " << iter->v(2)
-								<< std::setprecision(5) << std::endl;
+		if(iter.isValid()) {
+			Log::global_log->info() << "m1 v: " << iter->v(0) << " " << iter->v(1) << " " << iter->v(2)
+									<< std::setprecision(5) << std::endl;
+		}
 	}
 #ifndef NDEBUG
 	//test
