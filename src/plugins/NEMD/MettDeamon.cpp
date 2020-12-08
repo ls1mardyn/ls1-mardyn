@@ -1487,7 +1487,7 @@ Reservoir::~Reservoir() = default;
 
 void Reservoir::readXML(XMLfileUnits& xmlconfig)
 {
-	/* update BinQueue before inserting new Reservoir slab */
+	// update BinQueue before inserting new Reservoir slab
 	_bUpdateBinQueue = false;
 	xmlconfig.getNodeValue("@update", _bUpdateBinQueue);
 	
