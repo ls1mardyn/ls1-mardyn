@@ -228,13 +228,13 @@ public:
 	 * @param result Molecule will be returned by this pointer if found
 	 * @return Molecule was found?
 	 */
-	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0; // new
+	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0;
 
 	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	// or does this particle container calculate all forces.
-	virtual bool requiresForceExchange() const {return false;} // new
+	virtual bool requiresForceExchange() const {return false;}
         
-	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0; // new
+	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0;
 
 	virtual double* getCellLength() = 0;
 
