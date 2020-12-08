@@ -82,9 +82,8 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 		global_simulation->getEnsemble()->getComponents()->at(1).updateMassInertia();
 	}
 
-	unsigned long int id = 0;
-
-    id = particleContainer->initCubicGrid(numMoleculesPerDim, simBoxLength, domainDecomp->getRank()*mardyn_get_max_threads());
+	unsigned long int id = particleContainer->initCubicGrid(
+		numMoleculesPerDim, simBoxLength, static_cast<size_t>(domainDecomp->getRank()) * mardyn_get_max_threads());
 
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 
