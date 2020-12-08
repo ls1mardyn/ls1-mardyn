@@ -234,7 +234,7 @@ public:
 	// or does this particle container calculate all forces.
 	virtual bool requiresForceExchange() const {return false;} // new
         
-	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) = 0; // new
+	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0; // new
 
 	virtual double* getCellLength() = 0;
 

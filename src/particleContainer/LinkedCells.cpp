@@ -888,7 +888,7 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	endIndex = getCellIndexOfPoint(endRegion);
 }
 
-unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) {
+unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) {
 	const unsigned long numCells = _cells.size();
 
 	std::vector<unsigned long> numMoleculesPerThread;
@@ -902,10 +902,10 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 		const int myID = mardyn_get_thread_num();
 		const unsigned long myStart = numCells * myID / numThreads;
 		const unsigned long myEnd = numCells * (myID + 1) / numThreads;
-		const int seed = myID;
+		const int seed = seed_offset + myID;
 
 		unsigned long numMoleculesByThisThread = 0;
-		Random threadPrivateRNG = Random(seed);
+		Random threadPrivateRNG{seed};
 
 		// manual "static" scheduling important, because later this thread needs to traverse the same cells
 		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {

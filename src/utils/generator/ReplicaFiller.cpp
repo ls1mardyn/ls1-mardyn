@@ -117,7 +117,7 @@ public:
 							   Molecule** result) override { return false; } // pure virtual in particleContainer.h
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength) override { return 0; }
+								std::array<double, 3> simBoxLength, size_t seed_offset) override { return 0; }
 
 	size_t getTotalSize() override { return _basis.numMolecules() * sizeof(Molecule); }
 
