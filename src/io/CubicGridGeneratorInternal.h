@@ -52,7 +52,7 @@ private:
 	std::array<unsigned long, 3> determineMolsPerDimension(unsigned long targetTotalNumMols, std::array<double, 3> boxLength) const;
 
 //	bool addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
-	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components);
+	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components, DomainDecompBase* domainDecomp);
 	/**
 	 * create a random number between a and b (inclusive)
 	 */

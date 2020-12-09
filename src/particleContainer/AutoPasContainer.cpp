@@ -416,7 +416,7 @@ bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **resul
 }
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-											  std::array<double, 3> simBoxLength) {
+											  std::array<double, 3> simBoxLength, size_t seed_offset) {
 	throw std::runtime_error("AutoPasContainer::initCubicGrid() not yet implemented");
 }
 
