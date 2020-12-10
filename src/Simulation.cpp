@@ -70,6 +70,7 @@
 #include "longRange/LongRangeCorrection.h"
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
+#include "longRange/NoLRC.h"
 
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
@@ -495,7 +496,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				global_log->error() << "LongRangeCorrection: Missing type specification. Program exit ..." << endl;
 				Simulation::exit(-1);
 			}
-			if("planar" == type)
+			if("none" == type)
+			{
+				delete _longRangeCorrection;
+				_longRangeCorrection = new NoLRC(_cutoffRadius, _LJCutoffRadius, _domain, this);
+			}
+			else if("planar" == type)
 			{
 				unsigned int nSlabs = 10;
 				delete _longRangeCorrection;
@@ -513,7 +519,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else
 			{
-				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar. Program exit ..." << endl;
+				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == none|homogeneous|planar. Program exit ..." << endl;
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
