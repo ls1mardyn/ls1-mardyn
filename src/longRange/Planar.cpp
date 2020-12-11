@@ -416,7 +416,7 @@ void Planar::calculateLongRange(){
 			tempMol->Viadd(Via);
 //			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 		//	}
-		}				
+		}
 	}
 
 	// Summation of the correction terms

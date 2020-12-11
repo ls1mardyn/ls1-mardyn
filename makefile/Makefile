@@ -54,7 +54,7 @@ THREAD_SANITIZER ?= 0
 
 # select vectorization mode:
 # see "make help_vect"
-VECTORIZE_CODE ?= SSE
+VECTORIZE_CODE ?= AVX2
 vec_options := NOVEC SSE AVX AVX2 KNL_MASK KNL_G_S SKX_MASK SKX_G_S SSEAMD AVXAMD
 deprecated_vec_options := KNC_MASK KNC_G_S
 novec_options := AOS SOA

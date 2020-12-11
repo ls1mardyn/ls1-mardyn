@@ -83,6 +83,8 @@ public:
 	}
 	virtual double M(unsigned short d) const = 0;
 	virtual double Vi(unsigned short d) const = 0;
+	virtual double UpotConstCorr() const  = 0;
+	virtual double ViConstCorr() const  = 0;
 
 	virtual void setD(unsigned short d, double D) = 0;
 
@@ -102,6 +104,7 @@ public:
 	virtual double U_rot() = 0;
 	virtual double U_rot_2() = 0;
 	virtual double U_kin() { return U_trans() + U_rot(); }
+	virtual double U_pot() = 0;
 
 	virtual void updateMassInertia() = 0;
 
@@ -192,6 +195,7 @@ public:
 	virtual void setF(double F[3]) = 0;
 	virtual void setM(double M[3]) = 0;
 	virtual void setVi(double Vi[3]) = 0;
+
 	void scale_v(double s) {
 		for(int d = 0; d < 3; ++d) {
 			setv(d, v(d) * s);
@@ -220,6 +224,13 @@ public:
 	virtual void Viadd(const double a[]) = 0;
 	virtual void vadd(const double ax, const double ay, const double az) = 0;
 	virtual void vsub(const double ax, const double ay, const double az) = 0;
+
+	virtual void setUConstCorr(const double a) = 0;
+	virtual void setViConstCorr(const double a) = 0;
+
+	virtual void Uadd(const double upot) = 0;
+	virtual void setU(const double upot) = 0;
+
 	virtual void Fljcenteradd(unsigned int i, double a[]) = 0;
 	virtual void Fljcentersub(unsigned int i, double a[]) = 0;
 	virtual void Fchargeadd(unsigned int i, double a[]) = 0;

@@ -69,17 +69,25 @@ public:
 	/** set molecule's orientation */
 	void setq(Quaternion q) override{ _q = q; }
 
-	/** get coordinate of the rotatational speed */
+	/** get coordinate of the angular momentum */
 	double D(unsigned short d) const override { return _L[d]; }
 
-	/** get coordinate of the current angular momentum  onto molecule */
+	/** get coordinate of the torsional momentum onto molecule */
 	double M(unsigned short d) const override { return _M[d]; }
 
-	/** get the virial **/
-	double Vi(unsigned short d) const override { return _Vi[d];}
+	/** get the virial */
+	double Vi(unsigned short d) const override { return _Vi[d] + _ViConstCorr; }
 
+	/** get the constant correction of potential energy */
+	double UpotConstCorr() const override { return _upotConstCorr; }
+
+	/** get the constant correction of one virial element */
+	double ViConstCorr() const override { return _ViConstCorr; }
+
+	/** set coordinate of the angular momentum */
 	void setD(unsigned short d, double D) override { this->_L[d] = D; }
 
+	/** move particle position in specific direction */
 	inline void move(int d, double dr) override { _r[d] += dr; }
 
 	/** get the moment of inertia of a particle */
@@ -120,6 +128,8 @@ public:
 	double U_rot_2() override ;
 	/** return total kinetic energy of the molecule */
 	double U_kin() override { return U_trans() + U_rot(); }
+	/** return total potential energy of the molecule */
+	double U_pot() override { return _upot + _upotConstCorr; }
 	
 	void setupSoACache(CellDataSoABase * s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ) override;
 
@@ -276,12 +286,20 @@ public:
 	void Fadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
 	void Viadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
+
 	void vadd(const double ax, const double ay, const double az) override {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
 	}
 	void vsub(const double ax, const double ay, const double az) override {
 		_v[0] -= ax; _v[1] -= ay; _v[2] -= az;
 	}
+
+
+	void setUConstCorr(const double a) override { _upotConstCorr = a; }
+	void setViConstCorr(const double a) override { _ViConstCorr = a/3; } // Correction term assigned to the 3 diagonal elements
+
+	void Uadd(const double upot) override { _upot += upot; }
+	void setU(const double upot) override { _upot = upot; }
 
 	void Fljcenteradd(unsigned int i, double a[]) override;
 	void Fljcentersub(unsigned int i, double a[]) override;
@@ -344,8 +362,13 @@ protected:
 	Quaternion _q; /**< angular orientation */
 	double _M[3];  /**< torsional moment */
 	double _L[3];  /**< angular momentum */
-	double _Vi[3]; /** Virial tensor **/
+	double _Vi[3];  /**< Virial tensor all elements: rxfx, ryfy, rzfz */
     unsigned long _id;  /**< IDentification number of that molecule */
+
+	double _upot; /**< potential energy */
+
+	double _ViConstCorr; /** Correction of one virial element, not changing during simulation (homogeneous system) **/
+	double _upotConstCorr; /** Correction of potential energy, not changing during simulation (homogeneous system) **/
 
 	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse

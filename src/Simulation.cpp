@@ -70,6 +70,7 @@
 #include "longRange/LongRangeCorrection.h"
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
+#include "longRange/Spherical.h"
 #include "longRange/NoLRC.h"
 
 #include "bhfmm/FastMultipoleMethod.h"
@@ -508,6 +509,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
+			else if("spherical" == type)
+			{
+				delete _longRangeCorrection;
+				_longRangeCorrection = new Spherical(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, global_simulation);
+				_longRangeCorrection->readXML(xmlconfig);
+			}
 			else if("homogeneous" == type)
 			{
 				/*
@@ -519,7 +526,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else
 			{
-				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == none|homogeneous|planar. Program exit ..." << endl;
+				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == none|homogeneous|planar|spherical. Program exit ..." << endl;
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
@@ -794,7 +801,7 @@ void Simulation::prepare_start() {
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
 	if (_longRangeCorrection == nullptr) {
-		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, this);
+		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, _moleculeContainer, this);
 	}
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();

@@ -5,6 +5,8 @@
 #include "longRange/Homogeneous.h"
 #include "Simulation.h"
 //#include "LongRangeCorrection.h"
+#include "molecules/Molecule.h"
+#include "particleContainer/ParticleContainer.h"
 
 #include "utils/Logger.h"
 using Log::global_log;
@@ -15,8 +17,9 @@ using namespace std;
 //  
 //};
 
-Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, Simulation* simulation) {
+Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, ParticleContainer* particleContainer, Simulation* simulation) {
 	_domain = domain;
+	_particleContainer = particleContainer;
 	_components = simulation->getEnsemble()->getComponents();
 	_comp2params = _domain->getComp2Params();
 	global_log->info() << "Long range correction for homogeneous systems is used " << endl;
@@ -123,8 +126,13 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 }
 
 void Homogeneous::calculateLongRange(){
-      _domain->setUpotCorr(_UpotCorr);
-      _domain->setVirialCorr(_VirialCorr);  
+	double _globalNumMolecules = _domain->getglobalNumMolecules();
+	_domain->setUpotCorr(_UpotCorr);
+	_domain->setVirialCorr(_VirialCorr);
+	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
+		tempMol->setUConstCorr(_UpotCorr/_globalNumMolecules);
+		tempMol->setViConstCorr(_VirialCorr/_globalNumMolecules);
+	}
 }
 
 

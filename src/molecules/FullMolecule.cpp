@@ -32,6 +32,9 @@ FullMolecule::FullMolecule(unsigned long id, Component *component,
 	_Vi[0]= 0.;
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
+	_upot = 0;
+	_ViConstCorr = 0;
+	_upotConstCorr = 0;
 
 	_soa = nullptr;
 	_soa_index_lj = 0;
@@ -67,6 +70,9 @@ FullMolecule::FullMolecule(const FullMolecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
+	_upot = m._upot;
+	_ViConstCorr = m._ViConstCorr;
+	_upotConstCorr = m._upotConstCorr;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -105,6 +111,9 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
+	_upot = m._upot;
+	_ViConstCorr = m._ViConstCorr;
+	_upotConstCorr = m._upotConstCorr;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -481,6 +490,7 @@ void FullMolecule::clearFM() {
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
+	_upot = 0.;
 
 	std::array<vcp_real_accum, 3> clearance = {0.0, 0.0, 0.0};
 
@@ -546,6 +556,7 @@ void FullMolecule::calcFM_site(const std::array<double, 3>& dsite, const std::ar
 	_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
 	_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
 	_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
+	// if (getID() == 44) { std::cout << " McalcSite " << getID() << " : " << dsite[1] * Fsite[2] - dsite[2] * Fsite[1] << " " << dsite[2] * Fsite[0] - dsite[0] * Fsite[2] << " " << dsite[0] * Fsite[1] - dsite[1] * Fsite[0] << std::endl; }
 }
 
 void FullMolecule::calcFM() {
@@ -556,9 +567,12 @@ void FullMolecule::calcFM() {
 
 	// accumulate virial, dipoles_M and quadrupoles_M:
 	double temp_M[3] = { 0., 0., 0. };
-	double temp_Vi[3] = { 0., 0., 0. };
+	//double temp_Vi[3] = { 0., 0., 0. };
+	double temp_Vi[9] = { 0. };
 
 	std::array<vcp_real_accum, 3> interim;
+	std::array<vcp_real_accum, 3> interim2;
+	std::array<vcp_real_accum, 3> interim3;
 
 	ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
