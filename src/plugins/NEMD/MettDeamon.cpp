@@ -1330,7 +1330,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
 #ifndef NDEBUG
 	cout << "[" << nRank << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
-	reservoir->printBinQueueInfo();
+	_reservoir->printBinQueueInfo();
 #endif
 
 	CommVar<uint64_t> numParticlesCurrentSlab;
