@@ -1653,7 +1653,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 	std::vector< std::vector<Molecule> > binVector;
 	binVector.resize(numBins);
 	uint32_t nBinIndex;
-	for(auto mol:_particleVector)
+	for(auto mol:_particleVector)  // copy of the molecule is needed, as we modify it.
 	{
 		// possibly change component IDs
 		this->changeComponentID(mol, mol.componentid() );
