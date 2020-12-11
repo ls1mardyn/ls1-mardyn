@@ -980,9 +980,9 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			this->calcDeltaY();
 		else if(FRM_DENSITY == _nFeedRateMethod)
 			this->calcDeltaYbyDensity();
-		global_log->debug() << _numDeletedMolsSum = " << _numDeletedMolsSum << endl;
-		global_log->debug() << _dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
-		global_log->debug() << _feedrate.feed.actual = " << _feedrate.feed.actual << endl;
+		global_log->debug() << "_numDeletedMolsSum = " << _numDeletedMolsSum << endl;
+		global_log->debug() << "_dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
+		global_log->debug() << "_feedrate.feed.actual = " << _feedrate.feed.actual << endl;
 	}
 	else
 	{
