@@ -494,7 +494,6 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		Simulation::exit(-1);
 	}
 
-#ifndef NDEBUG
 	global_log->debug() << "_vecChangeCompIDsFreeze:" << endl;
 	for(uint32_t i=0; i<_vecChangeCompIDsFreeze.size(); ++i)
 	{
@@ -505,7 +504,6 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	{
 		global_log->debug() << i << ": " << _vecChangeCompIDsUnfreeze.at(i) << std::endl;
 	}
-#endif
 }
 
 void MettDeamon::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
@@ -865,17 +863,13 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	// DEBUG
 
 	_feedrate.feed.sum += _feedrate.feed.actual;
-#ifndef NDEBUG
 	global_log->debug() << "_feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
-#endif
 	if (_feedrate.feed.sum >= _reservoir->getBinWidth())
 	{
-#ifndef NDEBUG
 		global_log->debug() << "Mett-" << (uint32_t)_nMovingDirection << ": _feedrate.feed.sum=" << _feedrate.feed.sum << ", _dSlabWidth=" << _reservoir->getBinWidth() << endl;
 		global_log->debug() << "_dSlabWidth=" << _reservoir->getBinWidth() << endl;
 		global_log->debug() << "_feedrate.feed.sum=" << _feedrate.feed.sum << endl;
 		global_log->debug() << "_reservoir->getActualBinIndex()=" << _reservoir->getActualBinIndex() << endl;
-#endif
 
 		// insert actual reservoir slab / activate next reservoir slab
 		DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
@@ -1225,18 +1219,14 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 	maxID = domain->getMaxMoleculeID();
 	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
 	numMolecules.global = domain->getglobalNumMolecules();
-#ifndef NDEBUG
 	global_log->debug() << "[" << nRank << "]: maxID.local, maxID.global=" << maxID.local << ", " << maxID.global << endl;
-#endif
 	uint64_t numMoleculesAfterInsertion = numMolecules.global + numParticleIDs.global;
 	uint64_t numIDs;
 	if(maxID.global >= numMoleculesAfterInsertion)
 		numIDs = maxID.global + 1;
 	else
 		numIDs = numMoleculesAfterInsertion + 1;
-#ifndef NDEBUG
 	global_log->debug() << "[" << nRank << "]: numMoleculesAfterInsertion, numMolecules.global=" << numMoleculesAfterInsertion << ", " << numMolecules.global << endl;
-#endif
 
 	std::vector<uint32_t>& vl = particleIDs_assigned.local;
 	vl.resize(numIDs); std::fill(vl.begin(), vl.end(), 0);
@@ -1255,9 +1245,7 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 		vg.at(ii) = vl.at(ii);
 #endif
 
-#ifndef NDEBUG
 	global_log->debug() << "[" << nRank << "]: assigned.local, assigned.global=" << particleIDs_assigned.local.size() << ", " << particleIDs_assigned.global.size() << endl;
-#endif
 
 	// check for available particle IDs
 	for(uint64_t pid=1; pid<vg.size() && particleIDs_available.global.size()<numParticleIDs.global; ++pid) {
@@ -1265,9 +1253,7 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 			particleIDs_available.global.push_back(pid);
 	}
 	particleIDs_available.local.resize(numParticleIDs.local);
-#ifndef NDEBUG
 	global_log->debug() << "[" << nRank << "]: avail.local, avail.global=" << particleIDs_available.local.size() << ", " << particleIDs_available.global.size() << endl;
-#endif
 
 #ifdef ENABLE_MPI
 	// gather displacement (displs)
@@ -1319,10 +1305,8 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	int numProcs = domainDecomp.getNumProcs();
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
-#ifndef NDEBUG
 	global_log->debug() << "[" << nRank << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
 	_reservoir->printBinQueueInfo();
-#endif
 
 	CommVar<uint64_t> numParticlesCurrentSlab;
 	numParticlesCurrentSlab.local = currentReservoirSlab.size();
@@ -1377,9 +1361,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 		global_log->error() << "Failed to activate new bin of particle Reservoir's BinQueue (plugin: MettDeamon) => Program exit." << endl;
 		Simulation::exit(-1);
 	}
-#ifndef NDEBUG
 	global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << endl;
-#endif
 	// calc global values
 	domainDecomp.collCommInit(1);
 	domainDecomp.collCommAppendUnsLong(numAdded.local);
@@ -1438,7 +1420,6 @@ void MettDeamon::readNormDistr()
 void MettDeamon::updateRandVecTrappedIns()
 {
 	create_rand_vec_ones(100, _feedrate.release_velo.normMB.a_neg, _feedrate.vec_rand_ins);
-#ifndef NDEBUG
 	global_log->debug() << "_feedrate.vec_rand_ins: ";
 	int nSum = 0;
 	for(auto vi:_feedrate.vec_rand_ins) {
@@ -1446,7 +1427,6 @@ void MettDeamon::updateRandVecTrappedIns()
 		nSum += vi;
 	}
 	global_log->debug() << "sum=" << nSum << endl;
-#endif
 }
 
 // class Reservoir
@@ -1623,11 +1603,9 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 					numParticlesAdd++;
 				}
 			}
-#ifndef NDEBUG
 			if(numParticlesAdd > 0) {
 				global_log->debug() << "Rank " << ownRank << " received " << numParticlesAdd << " particles from rank " << rank << "." << endl;
 			}
-#endif
 		}
 		global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
 	}
@@ -1643,11 +1621,9 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 	}
 	_particleVector.resize(particleVectorTmp.size());
 	_particleVector = particleVectorTmp;
-#ifndef NDEBUG
 	if(_particleVector.size() < numParticlesOld) {
 		global_log->debug() << "Rank " << ownRank << " deleted " << numParticlesOld - _particleVector.size() << " particles from particle vector." << endl;
 	}
-#endif
 	// Refresh BinQueue
 	uint32_t actual = _binQueue->getActualBinIndex();
 	this->clearBinQueue();
@@ -1662,7 +1638,6 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 
 	uint32_t numBins = _box.length.at(1) / _dBinWidthInit;
 	_dBinWidth = _box.length.at(1) / (double)(numBins);
-#ifndef NDEBUG
 	global_log->debug() << "_arrBoxLength[1]="<<_box.length.at(1)<<endl;
 	global_log->debug() << "_dBinWidthInit="<<_dBinWidthInit<<endl;
 	global_log->debug() << "_numBins="<<numBins<<endl;
@@ -1675,7 +1650,6 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 			<< domainDecomp->getBoundingBoxMax(0, domain) << ", "
 			<< domainDecomp->getBoundingBoxMax(1, domain) << ", "
 			<< domainDecomp->getBoundingBoxMax(2, domain) << endl;
-#endif
 	std::vector< std::vector<Molecule> > binVector;
 	binVector.resize(numBins);
 	uint32_t nBinIndex;
@@ -1685,9 +1659,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		this->changeComponentID(mol, mol.componentid() );
 		double y = mol.r(1);
 		nBinIndex = floor(y / _dBinWidth);
-#ifndef NDEBUG
 		global_log->debug() << "y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
-#endif
 		mardyn_assert(nBinIndex < binVector.size() );
 		switch(_parent->getMovingDirection() )
 		{
@@ -1713,9 +1685,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		case MD_LEFT_TO_RIGHT:
 			for (auto bit = binVector.rbegin(); bit != binVector.rend(); ++bit)
 			{
-#ifndef NDEBUG
 				global_log->debug() << "(*bit).size()=" << (*bit).size() << endl;
-#endif
 				_binQueue->enque(*bit);
 			}
 			break;
@@ -1723,9 +1693,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		case MD_RIGHT_TO_LEFT:
 			for(const auto& bin:binVector)
 			{
-#ifndef NDEBUG
 				global_log->debug() << "bin.size()=" << bin.size() << endl;
-#endif
 				_binQueue->enque(bin);
 			}
 			break;
