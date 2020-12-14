@@ -42,42 +42,26 @@ Spherical::~Spherical() {
 
 void Spherical::init()
 {
-	global_log->info() << "[Spherical Long Range Correction] Initializing" << endl;
+	global_log->info() << "[Long Range Correction] Initializing" << endl;
 
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
-	numComp = components.size(); // Noch nicht unterstützt
+	numComp=components.size();
+	global_log->info() << "[Long Range Correction] Anzahl Comps: " << numComp << endl;
 	resizeExactly(numLJ, numComp);
-
-	numLJSum=0;
+	numLJSum = 0;
 	resizeExactly(numLJSum2, numComp);
-
-	for (unsigned i =0; i< numComp; i++){
-		numLJSum2[i]=0;
+	for (unsigned i=0; i<numComp; i++){
+		numLJSum2[i] = 0;
 	}
-	for (unsigned i =0; i< numComp; i++) {
-		numLJ[i]=components[i].numLJcenters();
-		numLJSum+=numLJ[i];
+	for (unsigned i=0; i<numComp; i++){
+		numLJ[i] = components[i].numLJcenters();
+		numLJSum += numLJ[i];
 		for (unsigned j=i+1; j< numComp; j++){
-			numLJSum2[j]+=numLJ[i];
+			numLJSum2[j] += numLJ[i];
 		}
 	}
 
-	// Determination of the elongation of the Lennard-Jones sites
-	unsigned counter=0;
-	for (unsigned i =0; i< numComp; i++){
-		for (unsigned j=0; j< components[i].numLJcenters(); j++){
-			const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[i].ljcenter(j));
-			double dX[3];
-			dX[0]=ljcenteri.rx();
-			dX[1]=ljcenteri.ry();
-			dX[2]=ljcenteri.rz();
-			for (unsigned d=0; d<3; d++){
-				dX[d]*=dX[d];
-			}
-			eLong[counter]=sqrt(dX[0]+dX[1]+dX[2]);
-			counter++;
-		}
-	}
+	resizeExactly(eLong, numLJSum);
 
 	resizeExactly(ksi, globalNumMols);
 	resizeExactly(FcorrX, globalNumMols); // requires refreshIDs=1 in simulation options
@@ -119,6 +103,23 @@ void Spherical::init()
 	std::fill(rhoShells.begin(), rhoShells.end(), 0.0);
 	std::fill(rhoShells_global.begin(), rhoShells_global.end(), 0.0);
 	std::fill(rhoShellsT.begin(), rhoShellsT.end(), 0.0);
+
+	// Determination of the elongation of the Lennard-Jones sites
+	unsigned int counter=0;
+	for (unsigned i =0; i< numComp; i++){
+		for (unsigned j=0; j< components[i].numLJcenters(); j++){
+			const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[i].ljcenter(j));
+			double dX[3];
+			dX[0]=ljcenteri.rx();
+			dX[1]=ljcenteri.ry();
+			dX[2]=ljcenteri.rz();
+			for (unsigned d=0; d<3; d++){
+				dX[d]*=dX[d];
+			}
+			eLong[counter]=sqrt(dX[0]+dX[1]+dX[2]);
+			counter++;
+		}
+	}
 
 	boxlength[0]=_domain->getGlobalLength(0);
 	boxlength[1]=_domain->getGlobalLength(1);
@@ -167,7 +168,7 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 {
 	xmlconfig.getNodeValue("shells", NShells);
 	//xmlconfig.getNodeValue("frequency", frequency);
-	global_log->info() << "Long Range Correction: using " << NShells << " slabs for profiles to calculate LRC." << endl;
+	global_log->info() << "[Long Range Correction] Using " << NShells << " slabs for profiles to calculate LRC." << endl;
 	
 	// init
 	this->init();
@@ -175,7 +176,7 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 
 void Spherical::calculateLongRange(){
 
-	global_log->info() << "[Spherical Long Range Correction] Correcting" << endl;
+	global_log->info() << "[Long Range Correction] Correcting" << endl;
 
 	int rank = _domainDecomposition->getRank();
 	uint64_t simstep = _simulation.getSimulationStep();
@@ -388,8 +389,8 @@ void Spherical::calculateLongRange(){
 		PNCorrShells = 0.0;
 		PTCorrShells = 0.0;
 		ksi2 = ksi[molID]*ksi[molID];
-		for (unsigned ci = 0; ci < numComp; ++ci){		
-			for (unsigned cj = 0; cj < numComp; ++cj){	
+		for (unsigned ci = 0; ci < numComp; ++ci){
+			for (unsigned cj = 0; cj < numComp; ++cj){
 				ParaStrm& params = _domain->getComp2Params()(ci,cj);
 				params.reset_read();
 				for (unsigned si = 0; si < numLJ[ci]; ++si) { // Long Range Correction for Lennard-Jones sites
@@ -507,173 +508,171 @@ void Spherical::calculateLongRange(){
 							}
 						}
 						if ( (tau1 == 0.0) || (tau2 == 0.0) ) { // Center-Site
-						double tau = max(tau1,tau2);   // Filtert den Wert Null raus
-						for (unsigned long j=1; j<(lowerS[molID]); j++) {
-							if (rhoShellsT[j] != 0.0) {
-							rlow = ksi[molID] - RShells[j];
-							UCorrTemp = SICSu(-6,RShells[j] + ksi[molID],tau) * sigma6
-										- SICSu(-6,rlow,tau) * sigma6
-										- SICSu(-3,RShells[j] + ksi[molID],tau)
-										+ SICSu(-3,rlow,tau);
-							if ( rlow < rcmax) {
-								rdash = min( rcmax,(RShells[j] + ksi[molID]) );
-								FCorrTemp = SICSu(-6,rdash,tau) * sigma6
-										- SICSu(-6,rlow,tau) * sigma6
-										- SICSu(-3,rdash,tau)
-										+ SICSu(-3,rlow,tau);
-								FCorrShells = FCorrShells - 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-								FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
-										* ( -11*sigma6*SICSf(-13,rdash,tau)
-											+ 5*SICSf(-7,rdash,tau) ) 
-										- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
-										* ( -11*sigma6*SICSf(-13,rlow,tau)
-											+ 5*SICSf(-7,rlow,tau) ) ;
-								FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+							double tau = max(tau1,tau2);   // Filtert den Wert Null raus
+							for (unsigned long j=1; j<(lowerS[molID]); j++) {
+								if (rhoShellsT[j] != 0.0) {
+								rlow = ksi[molID] - RShells[j];
+								UCorrTemp = SICSu(-6,RShells[j] + ksi[molID],tau) * sigma6
+											- SICSu(-6,rlow,tau) * sigma6
+											- SICSu(-3,RShells[j] + ksi[molID],tau)
+											+ SICSu(-3,rlow,tau);
+								if ( rlow < rcmax) {
+									rdash = min( rcmax,(RShells[j] + ksi[molID]) );
+									FCorrTemp = SICSu(-6,rdash,tau) * sigma6
+											- SICSu(-6,rlow,tau) * sigma6
+											- SICSu(-3,rdash,tau)
+											+ SICSu(-3,rlow,tau);
+									FCorrShells = FCorrShells - 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
+											* ( -11*sigma6*SICSf(-13,rdash,tau)
+												+ 5*SICSf(-7,rdash,tau) ) 
+											- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
+											* ( -11*sigma6*SICSf(-13,rlow,tau)
+												+ 5*SICSf(-7,rlow,tau) ) ;
+									FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
 
+								}
+								UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+								}
 							}
-							UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+							for (unsigned long j=upperS[molID]; j<NShells; j++) {
+								if (rhoShellsT[j] != 0.0) {
+									rlow = RShells[j] - ksi[molID];
+									UCorrTemp = SICSu(-6,RShells[j] + ksi[molID],tau) * sigma6
+												- SICSu(-6,rlow,tau) * sigma6
+												- SICSu(-3,RShells[j] + ksi[molID],tau)
+												+ SICSu(-3,rlow,tau);
+									if ( rlow < rcmax) {
+										rdash = min( rcmax,(RShells[j] + ksi[molID]) );
+										FCorrTemp = SICSu(-6,rdash,tau) * sigma6
+												- SICSu(-6,rlow,tau) * sigma6
+												- SICSu(-3,rdash,tau)
+												+ SICSu(-3,rlow,tau);
+										FCorrShells = FCorrShells - 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+										FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
+												* ( -11*sigma6*SICSf(-13,rdash,tau)
+													+ 5*SICSf(-7,rdash,tau) ) 
+												- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
+												* ( -11*sigma6*SICSf(-13,rlow,tau)
+													+ 5*SICSf(-7,rlow,tau) ) ;
+										FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									}
+									UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+								}
 							}
-						}
-						for (unsigned long j=upperS[molID]; j<NShells; j++) {
-							if (rhoShellsT[j] != 0.0) {
-							rlow = RShells[j] - ksi[molID];
-							UCorrTemp = SICSu(-6,RShells[j] + ksi[molID],tau) * sigma6
-										- SICSu(-6,rlow,tau) * sigma6
-										- SICSu(-3,RShells[j] + ksi[molID],tau)
-										+ SICSu(-3,rlow,tau);
-							if ( rlow < rcmax) {
-								rdash = min( rcmax,(RShells[j] + ksi[molID]) );
-								FCorrTemp = SICSu(-6,rdash,tau) * sigma6
-										- SICSu(-6,rlow,tau) * sigma6
-										- SICSu(-3,rdash,tau)
-										+ SICSu(-3,rlow,tau);
-								FCorrShells = FCorrShells - 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-								FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
-										* ( -11*sigma6*SICSf(-13,rdash,tau)
-											+ 5*SICSf(-7,rdash,tau) ) 
-										- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
-										* ( -11*sigma6*SICSf(-13,rlow,tau)
-											+ 5*SICSf(-7,rlow,tau) ) ;
-								FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+							for (unsigned long j=interS[molID]; j<upperS[molID]; j++) {
+								if (rhoShellsT[j] != 0.0) {
+									rlow = rc;
+									UCorrTemp = SICSu(-6,RShells[j] + ksi[molID],tau) * sigma6
+												- SICSu(-6,rlow,tau) * sigma6
+												- SICSu(-3,RShells[j] + ksi[molID],tau)
+												+ SICSu(-3,rlow,tau);
+									rdash = min( rcmax,(RShells[j] + ksi[molID]) );
+									FCorrTemp = SICSu(-6,rdash,tau) * sigma6
+												- SICSu(-6,rlow,tau) * sigma6
+												- SICSu(-3,rdash,tau)
+												+ SICSu(-3,rlow,tau);
+									FCorrShells = FCorrShells - 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
+												* ( -11*sigma6*SICSf(-13,rdash,tau)
+													+ 5*SICSf(-7,rdash,tau) ) 
+												- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
+												* ( -11*sigma6*SICSf(-13,rlow,tau)
+													+ 5*SICSf(-7,rlow,tau) ) ;
+									FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+								}
 							}
-							UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
-							}
-						}
-						for (unsigned long j=interS[molID]; j<upperS[molID]; j++) {
-							if (rhoShellsT[j] != 0.0) {
-							rlow = rc;
-							UCorrTemp = SICSu(-6,RShells[j] + ksi[molID],tau) * sigma6
-										- SICSu(-6,rlow,tau) * sigma6
-										- SICSu(-3,RShells[j] + ksi[molID],tau)
-										+ SICSu(-3,rlow,tau);
-							rdash = min( rcmax,(RShells[j] + ksi[molID]) );
-							FCorrTemp = SICSu(-6,rdash,tau) * sigma6
-										- SICSu(-6,rlow,tau) * sigma6
-										- SICSu(-3,rdash,tau)
-										+ SICSu(-3,rlow,tau);
-							FCorrShells = FCorrShells - 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-							FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
-										* ( -11*sigma6*SICSf(-13,rdash,tau)
-											+ 5*SICSf(-7,rdash,tau) ) 
-										- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
-										* ( -11*sigma6*SICSf(-13,rlow,tau)
-											+ 5*SICSf(-7,rlow,tau) ) ;
-							FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-							UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
-							}
-						}
 						}
 						if ( (tau1 == 0.0) && (tau2 == 0.0) ) { // Site-Site
-						for (unsigned long j=1; j<(lowerS[molID]); j++) {
-							if (rhoShellsT[j] != 0.0) {
-							rlow = ksi[molID] - RShells[j];
-							UCorrTemp = SISSu(-6,RShells[j] + ksi[molID],tau1,tau2) * sigma6
-										- SISSu(-6,rlow,tau1,tau2) * sigma6
-										- SISSu(-3,RShells[j] + ksi[molID],tau1,tau2)
-										+ SISSu(-3,rlow,tau1,tau2);
-							if ( rlow < rcmax) {
-								rdash = min( rcmax,(RShells[j] + ksi[molID]) );
-								FCorrTemp = SISSu(-6,rdash,tau1,tau2) * sigma6
-										- SISSu(-6,rlow,tau1,tau2) * sigma6
-										- SISSu(-3,rdash,tau1,tau2)
-										+ SISSu(-3,rlow,tau1,tau2);
-								FCorrShells = FCorrShells + 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-								FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
-										* ( -11*sigma6*SISSf(-13,rdash,tau1,tau2)
-											+ 5*SISSf(-7,rdash,tau1,tau2) ) 
-										- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
-										* ( -11*sigma6*SISSf(-13,rlow,tau1,tau2)
-											+ 5*SISSf(-7,rlow,tau1,tau2) ) ;
-								FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+							for (unsigned long j=1; j<(lowerS[molID]); j++) {
+								if (rhoShellsT[j] != 0.0) {
+									rlow = ksi[molID] - RShells[j];
+									UCorrTemp = SISSu(-6,RShells[j] + ksi[molID],tau1,tau2) * sigma6
+												- SISSu(-6,rlow,tau1,tau2) * sigma6
+												- SISSu(-3,RShells[j] + ksi[molID],tau1,tau2)
+												+ SISSu(-3,rlow,tau1,tau2);
+									if ( rlow < rcmax) {
+										rdash = min( rcmax,(RShells[j] + ksi[molID]) );
+										FCorrTemp = SISSu(-6,rdash,tau1,tau2) * sigma6
+												- SISSu(-6,rlow,tau1,tau2) * sigma6
+												- SISSu(-3,rdash,tau1,tau2)
+												+ SISSu(-3,rlow,tau1,tau2);
+										FCorrShells = FCorrShells + 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+										FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
+												* ( -11*sigma6*SISSf(-13,rdash,tau1,tau2)
+													+ 5*SISSf(-7,rdash,tau1,tau2) ) 
+												- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
+												* ( -11*sigma6*SISSf(-13,rlow,tau1,tau2)
+													+ 5*SISSf(-7,rlow,tau1,tau2) ) ;
+										FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									}
+									UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+								}
 							}
-							UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+							for (unsigned long j=upperS[molID]; j<NShells; j++) {
+								if (rhoShellsT[j] != 0.0) {
+									rlow = RShells[j] - ksi[molID];
+									UCorrTemp = SISSu(-6,RShells[j] + ksi[molID],tau1,tau2) * sigma6
+												- SISSu(-6,rlow,tau1,tau2) * sigma6
+												- SISSu(-3,RShells[j] + ksi[molID],tau1,tau2)
+												+ SISSu(-3,rlow,tau1,tau2);
+									if ( rlow < rcmax) {
+										rdash = min( rcmax,(RShells[j] + ksi[molID]) );
+										FCorrTemp = SISSu(-6,rdash,tau1,tau2) * sigma6
+												- SISSu(-6,rlow,tau1,tau2) * sigma6
+												- SISSu(-3,rdash,tau1,tau2)
+												+ SISSu(-3,rlow,tau1,tau2);
+										FCorrShells = FCorrShells + 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+										FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
+												* ( -11*sigma6*SISSf(-13,rdash,tau1,tau2)
+													+ 5*SISSf(-7,rdash,tau1,tau2) ) 
+												- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
+												* ( -11*sigma6*SISSf(-13,rlow,tau1,tau2)
+													+ 5*SISSf(-7,rlow,tau1,tau2) ) ;
+										FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									}
+									UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+								}
 							}
-						}
-						for (unsigned long j=upperS[molID]; j<NShells; j++) {
-							if (rhoShellsT[j] != 0.0) {
-							rlow = RShells[j] - ksi[molID];
-							UCorrTemp = SISSu(-6,RShells[j] + ksi[molID],tau1,tau2) * sigma6
-										- SISSu(-6,rlow,tau1,tau2) * sigma6
-										- SISSu(-3,RShells[j] + ksi[molID],tau1,tau2)
-										+ SISSu(-3,rlow,tau1,tau2);
-							if ( rlow < rcmax) {
-								rdash = min( rcmax,(RShells[j] + ksi[molID]) );
-								FCorrTemp = SISSu(-6,rdash,tau1,tau2) * sigma6
-										- SISSu(-6,rlow,tau1,tau2) * sigma6
-										- SISSu(-3,rdash,tau1,tau2)
-										+ SISSu(-3,rlow,tau1,tau2);
-								FCorrShells = FCorrShells + 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-								FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
-										* ( -11*sigma6*SISSf(-13,rdash,tau1,tau2)
-											+ 5*SISSf(-7,rdash,tau1,tau2) ) 
-										- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
-										* ( -11*sigma6*SISSf(-13,rlow,tau1,tau2)
-											+ 5*SISSf(-7,rlow,tau1,tau2) ) ;
-								FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+							for (unsigned long j=interS[molID]; j<upperS[molID]; j++) {
+								if (rhoShellsT[j] != 0.0) {
+									rlow = rc;
+									UCorrTemp = SISSu(-6,RShells[j] + ksi[molID],tau1,tau2) * sigma6
+												- SISSu(-6,rlow,tau1,tau2) * sigma6
+												- SISSu(-3,RShells[j] + ksi[molID],tau1,tau2)
+												+ SISSu(-3,rlow,tau1,tau2);
+									rdash = min( rcmax,(RShells[j] + ksi[molID]) );
+									FCorrTemp = SISSu(-6,rdash,tau1,tau2) * sigma6
+												- SISSu(-6,rlow,tau1,tau2) * sigma6
+												- SISSu(-3,rdash,tau1,tau2)
+												+ SISSu(-3,rlow,tau1,tau2);
+									FCorrShells = FCorrShells + 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
+												* ( -11*sigma6*SISSf(-13,rdash,tau1,tau2)
+													+ 5*SISSf(-7,rdash,tau1,tau2) ) 
+												- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
+												* ( -11*sigma6*SISSf(-13,rlow,tau1,tau2)
+													+ 5*SISSf(-7,rlow,tau1,tau2) ) ;
+									FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
+									UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
+								}
 							}
-							UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
-							}
-						}
-						for (unsigned long j=interS[molID]; j<upperS[molID]; j++) {
-							if (rhoShellsT[j] != 0.0) {
-							rlow = rc;
-							UCorrTemp = SISSu(-6,RShells[j] + ksi[molID],tau1,tau2) * sigma6
-										- SISSu(-6,rlow,tau1,tau2) * sigma6
-										- SISSu(-3,RShells[j] + ksi[molID],tau1,tau2)
-										+ SISSu(-3,rlow,tau1,tau2);
-							rdash = min( rcmax,(RShells[j] + ksi[molID]) );
-							FCorrTemp = SISSu(-6,rdash,tau1,tau2) * sigma6
-										- SISSu(-6,rlow,tau1,tau2) * sigma6
-										- SISSu(-3,rdash,tau1,tau2)
-										+ SISSu(-3,rlow,tau1,tau2);
-							FCorrShells = FCorrShells + 2*FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-							FCorrTemp = (rdash*rdash+ksi[molID]*ksi[molID]-RShells2[j])/rdash
-										* ( -11*sigma6*SISSf(-13,rdash,tau1,tau2)
-											+ 5*SISSf(-7,rdash,tau1,tau2) ) 
-										- (rlow*rlow+ksi[molID]*ksi[molID]-RShells2[j])/rlow
-										* ( -11*sigma6*SISSf(-13,rlow,tau1,tau2)
-											+ 5*SISSf(-7,rlow,tau1,tau2) ) ;
-							FCorrShells = FCorrShells + FCorrTemp*factorF*rhoShellsT[j]*RShells[j];
-							UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
-							}
-						}
 						}
 					}
 				}
-				}
-				UCorrSum = UCorrSum + UCorrShells;
-				for(unsigned short d=0;d<3;++d) {
-					FcorrX[molID] = FcorrX[molID]/ksi[molID]*FCorrShells;
-					FcorrY[molID] = FcorrY[molID]/ksi[molID]*FCorrShells;
-					FcorrZ[molID] = FcorrZ[molID]/ksi[molID]*FCorrShells;
-				}
-				PTCorrShells -= PNCorrShells;  // Was passiert hiermit? Wird bei nächstem Mol. wieder auf 0 gesetzt und ist kein Array. -- PT und PN sind die Korrekturen für den Irving-Kirkwood Tensor, den ich immer noch nicht implementiert habe ... 
-				if (molID == 1888) {
-					std::cout << "Local rank " << rank << " ---->" << PNCorrShells << " " << PTCorrShells << std::endl;
-				}
-
+			}
+			UCorrSum = UCorrSum + UCorrShells;
+			for(unsigned short d=0;d<3;++d) {
+				FcorrX[molID] = FcorrX[molID]/ksi[molID]*FCorrShells;
+				FcorrY[molID] = FcorrY[molID]/ksi[molID]*FCorrShells;
+				FcorrZ[molID] = FcorrZ[molID]/ksi[molID]*FCorrShells;
+			}
+			PTCorrShells -= PNCorrShells;  // Was passiert hiermit? Wird bei nächstem Mol. wieder auf 0 gesetzt und ist kein Array. -- PT und PN sind die Korrekturen für den Irving-Kirkwood Tensor, den ich immer noch nicht implementiert habe ... 
+			if (molID == 1888) {
 				std::cout << "Local rank " << rank << " MID " << molID << " UCorrSum & PTCorrShells: " << UCorrSum << " " << PTCorrShells << std::endl;
-		
+				std::cout << "Local rank " << rank << " ---->" << PNCorrShells << " " << PTCorrShells << std::endl;
+			}	
 		}
 	}
 
@@ -714,7 +713,7 @@ void Spherical::calculateLongRange(){
 		// tempMol->Uadd(??);
 	}
 
-	cout << "Adding UCorrSum_global " << UCorrSum_global << " and PTCorrShells_global " << PTCorrShells_global << endl;
+	cout << "Setting UCorrSum_global " << UCorrSum_global << " (and PTCorrShells_global) " << PTCorrShells_global << endl;
 	// Setting the Energy and Virial correction
 	_domain->setUpotCorr(UCorrSum_global);
 	//_domain->setVirialCorr(2*PTCorrShells_global+PNCorrShells_global); //????
@@ -741,7 +740,7 @@ void Spherical::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsign
 	// double sig2=sig*sig;
 	// double sig3=sig2*sig;
 	// double t = eLong[numLJSum2[ci]+si] + eLong[numLJSum2[cj]+sj]; // one of them is equal to zero.
-	global_log->error() << "LongRangeCorrection: Center-Site correction not yet supported. Program exit ..." << endl;
+	global_log->error() << "[LongRangeCorrection] Center-Site correction not yet supported. Program exit ..." << endl;
     Simulation::exit(-1);
 }
 
@@ -754,7 +753,7 @@ void Spherical::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned
 	// double tP = t1 + t2; // tau+ 
 	// double tM = t1 - t2; // tau-
 
-	global_log->error() << "LongRangeCorrection: Site-Site correction not yet supported. Program exit ..." << endl;
+	global_log->error() << "[LongRangeCorrection] Site-Site correction not yet supported. Program exit ..." << endl;
     Simulation::exit(-1);
 }
 
