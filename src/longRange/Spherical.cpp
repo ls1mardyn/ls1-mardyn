@@ -62,6 +62,23 @@ void Spherical::init()
 		}
 	}
 
+	// Determination of the elongation of the Lennard-Jones sites
+	unsigned counter=0;
+	for (unsigned i =0; i< numComp; i++){
+		for (unsigned j=0; j< components[i].numLJcenters(); j++){
+			const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[i].ljcenter(j));
+			double dX[3];
+			dX[0]=ljcenteri.rx();
+			dX[1]=ljcenteri.ry();
+			dX[2]=ljcenteri.rz();
+			for (unsigned d=0; d<3; d++){
+				dX[d]*=dX[d];
+			}
+			eLong[counter]=sqrt(dX[0]+dX[1]+dX[2]);
+			counter++;
+		}
+	}
+
 	resizeExactly(ksi, globalNumMols);
 	resizeExactly(FcorrX, globalNumMols); // requires refreshIDs=1 in simulation options
 	resizeExactly(FcorrY, globalNumMols); // requires refreshIDs=1 in simulation options
@@ -104,7 +121,7 @@ void Spherical::init()
 	std::fill(rhoShellsT.begin(), rhoShellsT.end(), 0.0);
 
 	boxlength[0]=_domain->getGlobalLength(0);
-	boxlength[1]=_domain->getGlobalLength(0);
+	boxlength[1]=_domain->getGlobalLength(1);
 	boxlength[2]=_domain->getGlobalLength(2);
 	for(unsigned short d=0;d<3;++d) { systemcenter[d] = 0.5*boxlength[d]; }
 	
@@ -123,6 +140,27 @@ void Spherical::init()
 	RShells[NShells-1] = NShells * _drShells;
 	RShells2[NShells-1] = RShells[NShells-1] * RShells[NShells-1];
 	VShells[NShells-1] = (boxlength[0]*boxlength[1]*boxlength[2]) - (4./3.)*M_PI * pow((RShells[NShells-1]-drShells05),3);
+
+	// Set names for output files and write header
+	if (_domainDecomposition->getRank() == 0) {
+		filenameTanhParams << "LRCspherical_tanh.dat";
+		ofstream outfilestreamTanhParams(filenameGlobalCorrs.str().c_str(), ios::out);
+		outfilestreamTanhParams << std::setw(24) << "simstep";
+		outfilestreamTanhParams << std::setw(24) << "rhov";
+		outfilestreamTanhParams << std::setw(24) << "rhol";
+		outfilestreamTanhParams << std::setw(24) << "D0";
+		outfilestreamTanhParams << std::setw(24) << "R0" << std::endl;
+		outfilestreamTanhParams.close();
+
+		filenameGlobalCorrs << "LRCspherical_globalCorrections.dat";
+		ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs.str().c_str(), ios::out);
+		outfilestreamGlobalCorrs << std::setw(24) << "simstep";
+		outfilestreamGlobalCorrs << std::setw(24) << "UCorrSum_global";
+		outfilestreamGlobalCorrs << std::setw(24) << "PTCorrShells_global" << std::endl;
+		outfilestreamGlobalCorrs << std::setw(24) << "PNCorrShells_global" << std::endl;
+		outfilestreamGlobalCorrs.close();
+	}
+
 }
 
 void Spherical::readXML(XMLfileUnits& xmlconfig)
@@ -139,6 +177,7 @@ void Spherical::calculateLongRange(){
 
 	global_log->info() << "[Spherical Long Range Correction] Correcting" << endl;
 
+	int rank = _domainDecomposition->getRank();
 	uint64_t simstep = _simulation.getSimulationStep();
 
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
@@ -151,21 +190,20 @@ void Spherical::calculateLongRange(){
 		ksi[molID] = std::sqrt((tempMol->r(0)-systemcenter[0])*(tempMol->r(0)-systemcenter[0]) 
 							+ (tempMol->r(1)-systemcenter[1])*(tempMol->r(1)-systemcenter[1]) 
 							+ (tempMol->r(2)-systemcenter[2])*(tempMol->r(2)-systemcenter[2]));
-		ksi[molID] = sqrt(ksi[molID]);
 		double realk = ksi[molID]/_drShells;
 		lowerS[molID] = std::min( static_cast<double>(std::floor((realk-_deltaShells))), static_cast<double>(NShells));
 		interS[molID] = std::max( static_cast<double>(std::ceil(abs(realk-_deltaShells))), 1.0 );
 		upperS[molID] = std::max( static_cast<double>(std::ceil(realk+_deltaShells)), static_cast<double>(NShells+1));
 		unsigned long k = std::round( realk );
-		if (k >= NShells) {
-			rhoShellsTemp[NShells] += 1.;
+		if (k >= NShells-1) {
+			rhoShellsTemp[NShells-1] += 1.; // sind die Indizes von rhoShellsTemp nicht 0 bis NShells-1 ?
 		} else {
 			rhoShellsTemp[k] += 1.;
 		}
 	}
 	for (unsigned int i=0; i< NShells; i++){
 		rhoShellsTemp[i] = rhoShellsTemp[i] / VShells[i];
-		rhoShellsAvg[i] = rhoShellsAvg[i] + rhoShellsTemp[i];
+		rhoShellsAvg[i] += rhoShellsTemp[i];
 	}
 
 	unsigned long MeanIndex = (static_cast<int>(std::floor( simstep/1000.0 ))) % NSMean;
@@ -198,11 +236,11 @@ void Spherical::calculateLongRange(){
 
 		// rhol and rhov 
 		double rhol = 0.0;
-		for (unsigned int i=4; i<14; i++) {  // Werte für alle Schleifen zur rhol rhov Berechnung überprüfen, habe ich geändert wegen *0.1!
+		for (unsigned int i=4; i<14; i++) {
 			rhol += 0.1*rhoShells[i];
 		}
 
-		for (unsigned int i=15; i<NShells; i++) {
+		for (unsigned int i=14; i<NShells; i++) {
 			if ( abs(rhol-rhoShells[i]) < 0.1*rhol ) {
 				rhol = ((i-1)*rhol + rhoShells[i])/i;
 			}
@@ -214,9 +252,9 @@ void Spherical::calculateLongRange(){
 		}
 
 		for (unsigned int i=1; i<(NShells-20); i++) {
-			unsigned int j = NShells-10-i;
+			unsigned int j = NShells-11-i;
 			if ( abs(rhov-rhoShells[j]) < 0.2*rhov ) {
-				rhov = ((10+i-1)*rhov + rhoShells[j])/(10+i);
+				rhov = ((11+i-1)*rhov + rhoShells[j])/(11+i);
 			}
 		}
 
@@ -225,13 +263,13 @@ void Spherical::calculateLongRange(){
 		double r90 = rhov + 0.9*(rhol-rhov);
 		double Dmin = 0.0;
 		double Dmax = 0.0;
-		for (unsigned int i=15; i<NShells; i++) {
+		for (unsigned int i=1; i<(NShells-10); i++) {
 			if ( rhoShells[i] > r90 ) {
 				Dmin = RShells[i];
 			}
 		}
-		for (unsigned int i=1; i<(NShells-20); i++) {
-			unsigned int j = NShells-10-i;
+		for (unsigned int i=1; i<(NShells-10); i++) {
+			unsigned int j = NShells-i;
 			if ( rhoShells[j] < r10 ) {
 				Dmax = RShells[j];
 			}
@@ -247,25 +285,30 @@ void Spherical::calculateLongRange(){
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
 
+		if (rank == 0) {
+			ofstream outfilestreamTanhParams(filenameTanhParams.str().c_str(), ios::app);
+			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
+			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhov;
+			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhol;
+			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << D0;
+			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << R0;
+			outfilestreamTanhParams << std::endl;
+			outfilestreamTanhParams.close();
+		}
 		// OPEN(30,FILE=TRIM(Dateiname)//"_tanh.csv",POSITION="APPEND",STATUS="OLD")
 		// WRITE(30,"(F12.8,";",F12.8,";",F12.8,";",F12.8)") rhov, rhol, D0, R0
 		// CLOSE(30)
 
 		// shift for Force Correction
+		double bnd = 0.0;
 		for (unsigned int i=0; i<NShells; i++) {
 			if ( rhoShellsT[i] >= 1.02*rhov) {
 				rhoShellsT[i] -= rhov;
-				double bnd = RShells[i];
+				bnd = RShells[i];
 			} else {
 				rhoShellsT[i] = 0.0;
 			}
 		}
-
-		// OPEN(39,FILE=TRIM(Dateiname)//"_T.csv",POSITION="APPEND",STATUS="OLD")
-		// DO i=1, NShells, 1  
-		// WRITE(39,"(F12.8,";",F12.8)") ksi(i), rhoShellsT(i,1) 
-		// } 
-		// CLOSE(39)
 
 		// U Correction of homogeneous system
 		// TODO: multi component
@@ -283,18 +326,13 @@ void Spherical::calculateLongRange(){
 						double eps24;
 						double sig2;
 						double shift6;
-						double eps;
 						params >> eps24;
 						params >> sig2;
 						params >> shift6;
-						sig2=sqrt(sig2);
-						eps=eps24/24;
-						//double tau1 = eLong[numLJSum2[ci]+si];  // ÜBERPRÜFEN
-						//double tau2 = eLong[numLJSum2[cj]+sj];
-						double tau1 = 0.0;
-						double tau2 = 0.0;
-						// double tau1 = SQRT(DOT_PRODUCT( rSiteBody(:,Si,i),rSiteBody(:,Si,i) ));   // ???? epsilon, sigma2, rsitebody, etc
-						// double tau2 = SQRT(DOT_PRODUCT( rSiteBody(:,Sj,j),rSiteBody(:,Sj,j) ));
+						double tau1 = eLong[numLJSum2[ci]+si];  // ÜBERPRÜFEN
+						double tau2 = eLong[numLJSum2[cj]+sj];
+						//double tau1 = 0.0;
+						//double tau2 = 0.0;
 						if ( (tau1 == 0.0) && (tau2 == 0.0) ) {
 						UpotKorrLJ = UpotKorrLJ
 							+ rhov * (eps24/6.0)
@@ -331,19 +369,25 @@ void Spherical::calculateLongRange(){
 				UpotKorrLJ *= 2.0*M_PI;
 			}
 		}
+		cout << "Homogen. LRC: " << UpotKorrLJ << endl;
 	}
 	
-	// Berechnung der Korrekturen in jedem Zeitschritt?
+	// Berechnung der Korrekturen in jedem Zeitschritt? -- ja.
 	double rlow, rlowInv, rlowInv2, rdashInv, UCorrTemp, rdash, rdashInv2, FCorrTemp, PNCorrTemp, PTCorrTemp;
 	double UCorrSum = 0.0;
+	double UCorrShells = 0.0;
+	double FCorrShells = 0.0;
+	double PNCorrShells = 0.0;
+	double PTCorrShells = 0.0;
+	double ksi2 = 0.0;
 
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
 		unsigned long molID = tempMol->getID();
-		double UCorrShells = 0.0;
-		double FCorrShells = 0.0;
-		double PNCorrShells = 0.0;
-		double PTCorrShells = 0.0;
-		double ksi2 = ksi[molID]*ksi[molID];
+		UCorrShells = 0.0;
+		FCorrShells = 0.0;
+		PNCorrShells = 0.0;
+		PTCorrShells = 0.0;
+		ksi2 = ksi[molID]*ksi[molID];
 		for (unsigned ci = 0; ci < numComp; ++ci){		
 			for (unsigned cj = 0; cj < numComp; ++cj){	
 				ParaStrm& params = _domain->getComp2Params()(ci,cj);
@@ -360,16 +404,16 @@ void Spherical::calculateLongRange(){
 						params >> shift6;
 						sigma=sqrt(sig2);
 						eps=eps24/24;
-						//double tau1 = eLong[numLJSum2[ci]+si];  // ÜBERPRÜFEN
-						//double tau2 = eLong[numLJSum2[cj]+sj];
-						double tau1 = 0.0;
-						double tau2 = 0.0;
+						double tau1 = eLong[numLJSum2[ci]+si];  // ÜBERPRÜFEN
+						double tau2 = eLong[numLJSum2[cj]+sj];
+						// double tau1 = 0.0;
+						// double tau2 = 0.0;
 						double sigma6 = sig2*sig2*sig2;
 						double factorU = -M_PI*_drShells*eps24*sigma6/(6*ksi[molID]);
 						double factorF = -factorU/ksi[molID];
 						double factorP = 0.5*factorF/ksi[molID];
 						if ( (tau1 == 0.0) && (tau2 == 0.0) ) { // Center-Center
-							for (unsigned long j=1; j<(lowerS[molID]); j++) { // Loop over Shells with smaller Radius
+							for (unsigned long j=1; j<(lowerS[molID]+1); j++) { // Loop over Shells with smaller Radius -- inklusive lowerS, darum +1
 								if (rhoShellsT[j] != 0.0) {
 									rlow = ksi[molID] - RShells[j];
 									rlowInv = 1/rlow;
@@ -623,49 +667,39 @@ void Spherical::calculateLongRange(){
 					FcorrY[molID] = FcorrY[molID]/ksi[molID]*FCorrShells;
 					FcorrZ[molID] = FcorrZ[molID]/ksi[molID]*FCorrShells;
 				}
-				PTCorrShells -= PNCorrShells;  // Was passiert hiermit? Wird bei nächstem Mol. wieder auf 0 gesetzt und ist kein Array.
+				PTCorrShells -= PNCorrShells;  // Was passiert hiermit? Wird bei nächstem Mol. wieder auf 0 gesetzt und ist kein Array. -- PT und PN sind die Korrekturen für den Irving-Kirkwood Tensor, den ich immer noch nicht implementiert habe ... 
 				if (molID == 1888) {
-					std::cout << "Local rank " << _domainDecomposition->getRank() << " ---->" << PNCorrShells << " " << PTCorrShells << std::endl;
+					std::cout << "Local rank " << rank << " ---->" << PNCorrShells << " " << PTCorrShells << std::endl;
 				}
 
-				// OPEN(29,FILE=TRIM(Dateiname)//"_U.csv",POSITION="APPEND",STATUS="OLD")
-				// WRITE(29,"(F12.8,";",F12.8)") ksi[molID], UCorrShells
-				// CLOSE(29)
-				// OPEN(49,FILE=TRIM(Dateiname)//"_PN.csv",POSITION="APPEND",STATUS="OLD")
-				// WRITE(49,"(F12.8,";",F12.8)") ksi[molID], PNCorrShells
-				// CLOSE(49)
-				// OPEN(59,FILE=TRIM(Dateiname)//"_PT.csv",POSITION="APPEND",STATUS="OLD")
-				// WRITE(59,"(F12.8,";",F12.8)") ksi[molID], PTCorrShells
-				// CLOSE(59)
-
-
+				std::cout << "Local rank " << rank << " MID " << molID << " UCorrSum & PTCorrShells: " << UCorrSum << " " << PTCorrShells << std::endl;
 		
 		}
 	}
 
-	double PTCorrShells=1.0; // DUMMY
-
 	// Distribution of the Force, Energy and Virial to every Node
-	_domainDecomposition->collCommInit(3*globalNumMols);
-	for (unsigned i=0; i<globalNumMols; i++){
-		_domainDecomposition->collCommAppendDouble(FcorrX[i]);
-		_domainDecomposition->collCommAppendDouble(FcorrY[i]);
-		_domainDecomposition->collCommAppendDouble(FcorrZ[i]);
-	}
-	_domainDecomposition->collCommAllreduceSum();
-	for (unsigned i=0; i<globalNumMols; i++){
-		FcorrX_global[i]=_domainDecomposition->collCommGetDouble();
-		FcorrY_global[i]=_domainDecomposition->collCommGetDouble();
-		FcorrZ_global[i]=_domainDecomposition->collCommGetDouble();
-	}
-	_domainDecomposition->collCommFinalize();
+	// _domainDecomposition->collCommInit(3*globalNumMols);
+	// for (unsigned i=0; i<globalNumMols; i++){
+	// 	_domainDecomposition->collCommAppendDouble(FcorrX[i]);
+	// 	_domainDecomposition->collCommAppendDouble(FcorrY[i]);
+	// 	_domainDecomposition->collCommAppendDouble(FcorrZ[i]);
+	// }
+	// _domainDecomposition->collCommAllreduceSum();
+	// for (unsigned i=0; i<globalNumMols; i++){
+	// 	FcorrX_global[i]=_domainDecomposition->collCommGetDouble();
+	// 	FcorrY_global[i]=_domainDecomposition->collCommGetDouble();
+	// 	FcorrZ_global[i]=_domainDecomposition->collCommGetDouble();
+	// }
+	// _domainDecomposition->collCommFinalize();
 
-	_domainDecomposition->collCommInit(2);
+	_domainDecomposition->collCommInit(3);
 	_domainDecomposition->collCommAppendDouble(UCorrSum);
 	_domainDecomposition->collCommAppendDouble(PTCorrShells);
+	_domainDecomposition->collCommAppendDouble(PNCorrShells);
 	_domainDecomposition->collCommAllreduceSum();
 	double UCorrSum_global = _domainDecomposition->collCommGetDouble();
 	double PTCorrShells_global = _domainDecomposition->collCommGetDouble();
+	double PNCorrShells_global = _domainDecomposition->collCommGetDouble();
 	_domainDecomposition->collCommFinalize();
 
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
@@ -674,14 +708,27 @@ void Spherical::calculateLongRange(){
 		Fa[0] = FcorrX_global[molID];
 		Fa[1] = FcorrY_global[molID];
 		Fa[2] = FcorrZ_global[molID];
-		//tempMol->Fljcenteradd(i, Fa);  // Ich weiß nicht, was i ist...
-		////tempMol->Viadd(??);
-		////tempMol->Uadd(??);
+		tempMol->Fadd(Fa);
+		// tempMol->Fljcenteradd(i, Fa);  // Ich weiß nicht, was i ist...
+		// tempMol->Viadd(??);
+		// tempMol->Uadd(??);
 	}
 
+	cout << "Adding UCorrSum_global " << UCorrSum_global << " and PTCorrShells_global " << PTCorrShells_global << endl;
 	// Setting the Energy and Virial correction
-	//_domain->setUpotCorr(UCorrSum_global);
-	//_domain->setVirialCorr(PTCorrShells_global); //????
+	_domain->setUpotCorr(UCorrSum_global);
+	//_domain->setVirialCorr(2*PTCorrShells_global+PNCorrShells_global); //????
+
+	// Only Root writes to files
+	if (rank == 0) {
+		ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs.str().c_str(), ios::app);
+		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
+		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << UCorrSum_global;
+		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PTCorrShells_global;
+		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PNCorrShells_global;
+		outfilestreamGlobalCorrs << std::endl;
+		outfilestreamGlobalCorrs.close();
+	}
 
 }
 

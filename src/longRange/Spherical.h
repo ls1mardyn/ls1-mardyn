@@ -88,6 +88,9 @@ private:
 	std::vector<double> eLong;
 	double boxlength[3];
 	double systemcenter[3];
+
+	std::stringstream filenameTanhParams;
+	std::stringstream filenameGlobalCorrs;
 	
 	ParticleContainer* _particleContainer;
 	Domain* _domain;
