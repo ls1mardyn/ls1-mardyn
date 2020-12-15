@@ -145,20 +145,22 @@ void Spherical::init()
 	// Set names for output files and write header
 	if (_domainDecomposition->getRank() == 0) {
 		filenameTanhParams << "LRCspherical_tanh.dat";
-		ofstream outfilestreamTanhParams(filenameGlobalCorrs.str().c_str(), ios::out);
+		ofstream outfilestreamTanhParams(filenameTanhParams.str().c_str(), ios::out);
 		outfilestreamTanhParams << std::setw(24) << "simstep";
 		outfilestreamTanhParams << std::setw(24) << "rhov";
 		outfilestreamTanhParams << std::setw(24) << "rhol";
 		outfilestreamTanhParams << std::setw(24) << "D0";
-		outfilestreamTanhParams << std::setw(24) << "R0" << std::endl;
+		outfilestreamTanhParams << std::setw(24) << "R0";
+		outfilestreamTanhParams << std::endl;
 		outfilestreamTanhParams.close();
 
 		filenameGlobalCorrs << "LRCspherical_globalCorrections.dat";
 		ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs.str().c_str(), ios::out);
 		outfilestreamGlobalCorrs << std::setw(24) << "simstep";
 		outfilestreamGlobalCorrs << std::setw(24) << "UCorrSum_global";
-		outfilestreamGlobalCorrs << std::setw(24) << "PTCorrShells_global" << std::endl;
-		outfilestreamGlobalCorrs << std::setw(24) << "PNCorrShells_global" << std::endl;
+		outfilestreamGlobalCorrs << std::setw(24) << "PTCorrShells_global";
+		outfilestreamGlobalCorrs << std::setw(24) << "PNCorrShells_global";
+		outfilestreamGlobalCorrs << std::endl;
 		outfilestreamGlobalCorrs.close();
 	}
 
@@ -288,7 +290,7 @@ void Spherical::calculateLongRange(){
 
 		if (rank == 0) {
 			ofstream outfilestreamTanhParams(filenameTanhParams.str().c_str(), ios::app);
-			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
+			outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
 			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhov;
 			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhol;
 			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << D0;
@@ -335,42 +337,43 @@ void Spherical::calculateLongRange(){
 						//double tau1 = 0.0;
 						//double tau2 = 0.0;
 						if ( (tau1 == 0.0) && (tau2 == 0.0) ) {
-						UpotKorrLJ = UpotKorrLJ
-							+ rhov * (eps24/6.0)
-							* (  TICCu(-6,rc,sig2)
-								- TICCu(-3,rc,sig2) );
-						// VirialKorrLJ = VirialKorrLJ&
-						//     * (eps24/6.0)&
-						//     * (  TICCp(-6,rc,sig2)&
-						//        - TICCp(-3,rc,sig2) )
-						}
-						if ( (tau1 == 0.0) || (tau2 == 0.0) ) {
-						double tau = max(tau1,tau2);   // Filtert den Wert Null raus
-						UpotKorrLJ = UpotKorrLJ
-							* (eps24/6.0)
-							* (  TICSu(-6,rc,sig2,tau)
-								- TICSu(-3,rc,sig2,tau) );
-						// VirialKorrLJ = VirialKorrLJ&
-						//     * (eps24/6.0)&
-						//     * (  TICSp(-6,rc,sig2,tau)&
-						//        - TICSp(-3,rc,sig2,tau) )
-						}
-						if ( (tau1 != 0.0) && (tau2 != 0.0) ) {
-						UpotKorrLJ = UpotKorrLJ
-							* (eps24/6.0)
-							* (  TISSu(-6,rc,sig2,tau1,tau2)
-								- TISSu(-3,rc,sig2,tau1,tau2) );
-						// VirialKorrLJ = VirialKorrLJ&
-						//     * (eps24/6.0)&
-						//     * (  TISSp(-6,rc,sig2,tau1,tau2)&
-						//        - TISSp(-3,rc,sig2,tau1,tau2) )
+							UpotKorrLJ = UpotKorrLJ
+								+ rhov * (eps24/6.0)
+								* (  TICCu(-6,rc,sig2)
+									- TICCu(-3,rc,sig2) );
+							// VirialKorrLJ = VirialKorrLJ&
+							//     * (eps24/6.0)&
+							//     * (  TICCp(-6,rc,sig2)&
+							//        - TICCp(-3,rc,sig2) )
+						} else if ( (tau1 == 0.0) || (tau2 == 0.0) ) {
+							double tau = max(tau1,tau2);   // Filtert den Wert Null raus
+							UpotKorrLJ = UpotKorrLJ
+								* (eps24/6.0)
+								* (  TICSu(-6,rc,sig2,tau)
+									- TICSu(-3,rc,sig2,tau) );
+							// VirialKorrLJ = VirialKorrLJ&
+							//     * (eps24/6.0)&
+							//     * (  TICSp(-6,rc,sig2,tau)&
+							//        - TICSp(-3,rc,sig2,tau) )
+						} else if ( (tau1 != 0.0) && (tau2 != 0.0) ) {
+							UpotKorrLJ = UpotKorrLJ
+								* (eps24/6.0)
+								* (  TISSu(-6,rc,sig2,tau1,tau2)
+									- TISSu(-3,rc,sig2,tau1,tau2) );
+							// VirialKorrLJ = VirialKorrLJ&
+							//     * (eps24/6.0)&
+							//     * (  TISSp(-6,rc,sig2,tau1,tau2)&
+							//        - TISSp(-3,rc,sig2,tau1,tau2) )
+							cout << "in 11 " << UpotKorrLJ << endl;
 						}
 					}
 				}
+				cout << UpotKorrLJ << endl;
 				UpotKorrLJ *= 2.0*M_PI;
+				cout << UpotKorrLJ << endl;
 			}
 		}
-		cout << "Homogen. LRC: " << UpotKorrLJ << endl;
+		cout << "[Long Range Correction] Homogeneous term: UpotKorrLJ = " << UpotKorrLJ << endl;
 	}
 	
 	// Berechnung der Korrekturen in jedem Zeitschritt? -- ja.
@@ -506,8 +509,7 @@ void Spherical::calculateLongRange(){
 									UCorrShells = UCorrShells + UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
 								}
 							}
-						}
-						if ( (tau1 == 0.0) || (tau2 == 0.0) ) { // Center-Site
+						} else if ( (tau1 == 0.0) || (tau2 == 0.0) ) { // Center-Site
 							double tau = max(tau1,tau2);   // Filtert den Wert Null raus
 							for (unsigned long j=1; j<(lowerS[molID]); j++) {
 								if (rhoShellsT[j] != 0.0) {
@@ -583,8 +585,7 @@ void Spherical::calculateLongRange(){
 									UCorrShells = UCorrShells - 2*UCorrTemp*factorU*rhoShellsT[j]*RShells[j];
 								}
 							}
-						}
-						if ( (tau1 == 0.0) && (tau2 == 0.0) ) { // Site-Site
+						} else if ( (tau1 == 0.0) && (tau2 == 0.0) ) { // Site-Site
 							for (unsigned long j=1; j<(lowerS[molID]); j++) {
 								if (rhoShellsT[j] != 0.0) {
 									rlow = ksi[molID] - RShells[j];
@@ -721,7 +722,7 @@ void Spherical::calculateLongRange(){
 	// Only Root writes to files
 	if (rank == 0) {
 		ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs.str().c_str(), ios::app);
-		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
+		outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
 		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << UCorrSum_global;
 		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PTCorrShells_global;
 		outfilestreamGlobalCorrs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PNCorrShells_global;
