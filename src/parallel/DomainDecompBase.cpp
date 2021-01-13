@@ -135,19 +135,21 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 				shiftedPosition[2] = molHalo.r(2);
 				shiftedPosition[dim] += shift;
 
-				Molecule* original;
+				auto originalIter = moleculeContainer->getMoleculeAtPosition(shiftedPosition);
 
-				if (!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)) {
-					// This should not happen
-					std::cout << "Original molecule not found";
-					mardyn_exit(1);
-				}
+				std::visit([&](auto originalIter) {
+					if (not originalIter.isValid()) {
+						// This should not happen
+						std::cout << "Original molecule not found";
+						mardyn_exit(1);
+					}
 
-				mardyn_assert(original->getID() == molHalo.getID());
+					mardyn_assert(originalIter->getID() == molHalo.getID());
 
-				original->Fadd(molHalo.F_arr().data());
-				original->Madd(molHalo.M_arr().data());
-				original->Viadd(molHalo.Vi_arr().data());
+					originalIter->Fadd(molHalo.F_arr().data());
+					originalIter->Madd(molHalo.M_arr().data());
+					originalIter->Viadd(molHalo.Vi_arr().data());
+				}, originalIter);
 			}
 		}
 	}
@@ -176,19 +178,21 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 			for (int dim = 0; dim < 3; dim++) {
 				shiftedPosition[dim] = molHalo.r(dim) + shift[dim];
 			}
-			Molecule* original;
+			auto originalIter = moleculeContainer->getMoleculeAtPosition(shiftedPosition);
 
-			if (!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)) {
-				// This should not happen
-				std::cout << "Original molecule not found";
-				mardyn_exit(1);
-			}
+			std::visit([&](auto originalIter) {
+				if (not originalIter.isValid()) {
+					// This should not happen
+					std::cout << "Original molecule not found";
+					mardyn_exit(1);
+				}
 
-			mardyn_assert(original->getID() == molHalo.getID());
+				mardyn_assert(originalIter->getID() == molHalo.getID());
 
-			original->Fadd(molHalo.F_arr().data());
-			original->Madd(molHalo.M_arr().data());
-			original->Viadd(molHalo.Vi_arr().data());
+				originalIter->Fadd(molHalo.F_arr().data());
+				originalIter->Madd(molHalo.M_arr().data());
+				originalIter->Viadd(molHalo.Vi_arr().data());
+			}, originalIter);
 		}
 	}
 

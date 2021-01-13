@@ -189,7 +189,7 @@ public:
 	 * @param result Molecule will be returned by this pointer if found
 	 * @return Molecule was found?
 	 */
-	bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override;
 
 	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!

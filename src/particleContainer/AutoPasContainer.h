@@ -107,7 +107,7 @@ public:
 
 	void updateMoleculeCaches() override;
 
-	bool getMoleculeAtPosition(const double pos[3], Molecule **result) override;
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override;
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 								std::array<double, 3> simBoxLength, size_t seed_offset) override;

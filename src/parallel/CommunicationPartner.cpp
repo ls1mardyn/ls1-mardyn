@@ -361,12 +361,13 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					Molecule m;
 					_recvBuf.readForceMolecule(i, m);
 					//mols[i] = m;
-					Molecule* m_target;
 					const double position[3] = { m.r(0), m.r(1), m.r(2) };
-					moleculeContainer->getMoleculeAtPosition(position, &m_target);
-					m_target->Fadd(m.F_arr().data());
-					m_target->Madd(m.M_arr().data());
-					m_target->Viadd(m.Vi_arr().data());
+					auto m_target_iter = moleculeContainer->getMoleculeAtPosition(position);
+					std::visit([&m](auto m_target_iter) {
+						m_target_iter->Fadd(m.F_arr().data());
+						m_target_iter->Madd(m.M_arr().data());
+						m_target_iter->Viadd(m.Vi_arr().data());
+					}, m_target_iter);
 				}
 
 				//moleculeContainer->addParticles(mols, removeRecvDuplicates);

@@ -113,8 +113,9 @@ public:
 
 	void updateMoleculeCaches() override {}
 
-	bool getMoleculeAtPosition(const double pos[3],
-							   Molecule** result) override { return false; } // pure virtual in particleContainer.h
+	// Pure virtual in ParticleContainer.h
+	// Returns invalid iterator.
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return ParticleIterator{}; }
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 								std::array<double, 3> simBoxLength, size_t seed_offset) override { return 0; }
