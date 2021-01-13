@@ -1126,7 +1126,7 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> LinkedCells::ge
 		}
 	}
 	// not found -> return default initialized iter.
-	return ParticleIterator{};
+	return {};
 }
 
 bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurrentOptimalTraversal()->requiresForceExchange();}

@@ -115,7 +115,7 @@ public:
 
 	// Pure virtual in ParticleContainer.h
 	// Returns invalid iterator.
-	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return ParticleIterator{}; }
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return {}; }
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 								std::array<double, 3> simBoxLength, size_t seed_offset) override { return 0; }
