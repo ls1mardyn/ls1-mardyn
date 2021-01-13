@@ -48,7 +48,7 @@ endif ()
 # add the executable
 ADD_EXECUTABLE(MarDyn
         ${MY_SRC}
-        )
+        parallel/ForceHelper.h)
 
 # dependencies for lz4
 if (ENABLE_LZ4)

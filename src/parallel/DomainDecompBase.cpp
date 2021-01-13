@@ -9,6 +9,7 @@
 #include "molecules/Molecule.h"
 #include "utils/mardyn_assert.h"
 #include "ZonalMethods/FullShell.h"
+#include "ForceHelper.h"
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
@@ -125,31 +126,18 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 
 			double shiftedPosition[3];
 
-			for (auto i = begin; i.isValid(); ++i) {
-				Molecule& molHalo = *i;
+			decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
+
+			for (auto haloIter = begin; haloIter.isValid(); ++haloIter) {
 
 				// Add force of halo particle to original particle (or other duplicates)
 				// that have a distance of -'shiftMagnitude' in the current direction
-				shiftedPosition[0] = molHalo.r(0);
-				shiftedPosition[1] = molHalo.r(1);
-				shiftedPosition[2] = molHalo.r(2);
+				shiftedPosition[0] = haloIter->r(0);
+				shiftedPosition[1] = haloIter->r(1);
+				shiftedPosition[2] = haloIter->r(2);
 				shiftedPosition[dim] += shift;
-
-				auto originalIter = moleculeContainer->getMoleculeAtPosition(shiftedPosition);
-
-				std::visit([&](auto originalIter) {
-					if (not originalIter.isValid()) {
-						// This should not happen
-						std::cout << "Original molecule not found";
-						mardyn_exit(1);
-					}
-
-					mardyn_assert(originalIter->getID() == molHalo.getID());
-
-					originalIter->Fadd(molHalo.F_arr().data());
-					originalIter->Madd(molHalo.M_arr().data());
-					originalIter->Viadd(molHalo.Vi_arr().data());
-				}, originalIter);
+				originalPreviousIter =
+					addValuesAndGetIterator(moleculeContainer, shiftedPosition, originalPreviousIter, *haloIter);
 			}
 		}
 	}
@@ -170,29 +158,17 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 
 		double shiftedPosition[3];
 
-		for (auto i = begin; i.isValid(); ++i) {
-			Molecule& molHalo = *i;
+		decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
+
+		for (auto haloIter = begin; haloIter.isValid(); ++haloIter) {
 
 			// Add force of halo particle to original particle (or other duplicates)
 			// that have a distance of -'shiftMagnitude' in the current direction
 			for (int dim = 0; dim < 3; dim++) {
-				shiftedPosition[dim] = molHalo.r(dim) + shift[dim];
+				shiftedPosition[dim] = haloIter->r(dim) + shift[dim];
 			}
-			auto originalIter = moleculeContainer->getMoleculeAtPosition(shiftedPosition);
-
-			std::visit([&](auto originalIter) {
-				if (not originalIter.isValid()) {
-					// This should not happen
-					std::cout << "Original molecule not found";
-					mardyn_exit(1);
-				}
-
-				mardyn_assert(originalIter->getID() == molHalo.getID());
-
-				originalIter->Fadd(molHalo.F_arr().data());
-				originalIter->Madd(molHalo.M_arr().data());
-				originalIter->Viadd(molHalo.Vi_arr().data());
-			}, originalIter);
+			originalPreviousIter =
+				addValuesAndGetIterator(moleculeContainer, shiftedPosition, originalPreviousIter, *haloIter);
 		}
 	}
 

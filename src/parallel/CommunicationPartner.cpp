@@ -6,15 +6,16 @@
  */
 
 #include "CommunicationPartner.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
 #include <cmath>
 #include <sstream>
-#include "WrapOpenMP.h"
-#include "Simulation.h"
-#include "ParticleData.h"
-#include "parallel/DomainDecompBase.h"
 #include "Domain.h"
+#include "ForceHelper.h"
+#include "ParticleData.h"
+#include "Simulation.h"
+#include "WrapOpenMP.h"
+#include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
 
 CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3],
 		const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
@@ -357,17 +358,17 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				#pragma omp parallel for schedule(static)
 				#endif*/
 
+				double pos[3];
+				decltype(moleculeContainer->getMoleculeAtPosition(pos)) originalPreviousIter{};
+
 				for(unsigned i = 0; i < numForces; ++i) {
 					Molecule m;
 					_recvBuf.readForceMolecule(i, m);
 					//mols[i] = m;
 					const double position[3] = { m.r(0), m.r(1), m.r(2) };
-					auto m_target_iter = moleculeContainer->getMoleculeAtPosition(position);
-					std::visit([&m](auto m_target_iter) {
-						m_target_iter->Fadd(m.F_arr().data());
-						m_target_iter->Madd(m.M_arr().data());
-						m_target_iter->Viadd(m.Vi_arr().data());
-					}, m_target_iter);
+
+					originalPreviousIter =
+						addValuesAndGetIterator(moleculeContainer, position, originalPreviousIter, m);
 				}
 
 				//moleculeContainer->addParticles(mols, removeRecvDuplicates);
