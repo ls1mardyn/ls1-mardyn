@@ -107,9 +107,8 @@ void CommunicationBuffer::resizeForAppendingForceMolecules(unsigned long numForc
 	// maybe some assert
 	size_t numBytes = sizeof(_numForces) + _numForces * _numBytesForces;
 	resizeForRawBytes(numBytes);
-	
-	size_t i_runningByte = 0;
-	i_runningByte = emplaceValue(i_runningByte, _numForces);
+
+	// Do NOT write the number of force molecules, here! It is assumed at other places, that they are NOT exchanged!
 }
 
 void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molecule& m) { 
@@ -386,8 +385,8 @@ size_t CommunicationBuffer::getStartPosition(ParticleType_t type, size_t indexOf
 	} else if(type == ParticleType_t::HALO) {
 		ret += _numLeaving * _numBytesLeaving + indexOfMolecule * _numBytesHalo;
 	} else if(type == ParticleType_t::FORCE) {
-		// ??? - does the force exchange happen on its own or with the other bytes?
-		ret = indexOfMolecule * _numBytesForces; // assumed on its own.
+		// the number of forces is NOT stored in the buffer, as they are sent on their own!
+		ret = indexOfMolecule * _numBytesForces;
 		//additionally no leaving or halo molecules are transmitted, thus _numLeaving, _numHalo are zero!
 	}
 
