@@ -57,7 +57,7 @@
       	<CommunicationScheme>indirect</CommunicationScheme>
       </parallelisation>
       <datastructure type="LinkedCells">
-      	  <traversalSelector>ori</traversalSelector>
+      	  <traversalSelector>c08</traversalSelector>
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
