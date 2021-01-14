@@ -57,8 +57,8 @@
       	<CommunicationScheme>indirect</CommunicationScheme>
       </parallelisation>
       <datastructure type="LinkedCells">
-      	  <traversalSelector>c08</traversalSelector>
-          <cellsInCutoffRadius>1</cellsInCutoffRadius>
+      	  <traversalSelector>nt</traversalSelector>
+          <cellsInCutoffRadius>2</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
         <radiusLJ unit="reduced" >5.0</radiusLJ>

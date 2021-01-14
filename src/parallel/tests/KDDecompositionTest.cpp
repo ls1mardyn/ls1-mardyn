@@ -128,9 +128,8 @@ void KDDecompositionTest::testHaloCorrect() {
 					// inside, so normal molecule
 					continue;
 				}
-				Molecule* m;
-				bool found = container->getMoleculeAtPosition(pos, &m);
-				ASSERT_TRUE_MSG("halo molecule not present", found);
+				auto iter = container->getMoleculeAtPosition(pos);
+				std::visit([](auto iter) { ASSERT_TRUE_MSG("halo molecule not present", iter.isValid()); }, iter);
 			}
 		}
 	}

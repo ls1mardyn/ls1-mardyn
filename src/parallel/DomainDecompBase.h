@@ -7,12 +7,14 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
+#include <particleContainer/RegionParticleIterator.h>
 #include <iostream>
+#include <variant>
 
-#include "molecules/MoleculeForwardDeclaration.h"
-#include "utils/Logger.h" // is this used?
-#include "io/MemoryProfiler.h"
 #include "HaloRegion.h"
+#include "io/MemoryProfiler.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/Logger.h"  // is this used?
 
 class Component;
 class Domain;

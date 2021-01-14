@@ -1,20 +1,20 @@
 #include <cmath>
 #include "particleContainer/LinkedCells.h"
 
-
+#include <algorithm>
+#include <array>
+#include <variant>
 #include "Domain.h"
-#include "parallel/DomainDecompBase.h"
-#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
-#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "particleContainer/adapter/CellProcessor.h"
-#include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/adapter/CellProcessor.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "utils/Logger.h"
-#include "utils/mardyn_assert.h"
 #include "utils/Random.h"
-#include <array>
-#include <algorithm>
+#include "utils/mardyn_assert.h"
 
 #include "particleContainer/TraversalTuner.h"
 
@@ -1108,26 +1108,25 @@ std::string LinkedCells::getName() {
 	return "LinkedCells";
 }
 
-bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
+std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> LinkedCells::getMoleculeAtPosition(const double pos[3]) {
 	const double epsi = this->_cutoffRadius * 1e-6;
 	auto index = getCellIndexOfPoint(pos);
 	auto& cell = _cells.at(index);
 
 	// iterate through cell and compare position of molecules with given position
 
-	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
 
-	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.isValid(); ++it1) {
-		auto& mol = *it1;
+	for (auto cellIterator = cell.iterator(); cellIterator.isValid(); ++cellIterator) {
+		auto& mol = *cellIterator;
 
-		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {
+		if (fabs(cellIterator->r(0) - pos[0]) <= epsi && fabs(cellIterator->r(1) - pos[1]) <= epsi &&
+			fabs(cellIterator->r(2) - pos[2]) <= epsi) {
 			// found
-			*result = &mol;
-			return true;
+			return cellIterator;
 		}
 	}
-	// not found
-	return false;
+	// not found -> return default initialized iter.
+	return {};
 }
 
 bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurrentOptimalTraversal()->requiresForceExchange();}

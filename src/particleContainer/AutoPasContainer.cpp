@@ -404,15 +404,14 @@ void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
 }
 
-bool AutoPasContainer::getMoleculeAtPosition(const double *pos, Molecule **result) {
+std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContainer::getMoleculeAtPosition(const double *pos) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
 	for (auto iter = this->iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
 		if (iter->getR() == pos_arr) {
-			*result = &(*iter);
-			return true;
+			return iter;
 		}
 	}
-	return false;
+	return {};  // default initialized iter is invalid.
 }
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
