@@ -137,6 +137,12 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
 
+	// check if autopas is already initialized
+	if(_autopasContainerIsInitialized) {
+	  _autopasContainer.resizeBox(boxMin, boxMax);
+	  return false;
+	}
+
 	_autopasContainer.setBoxMin(boxMin);
 	_autopasContainer.setBoxMax(boxMax);
 	_autopasContainer.setCutoff(_cutoff);
@@ -159,6 +165,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
 	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
 	_autopasContainer.init();
+    _autopasContainerIsInitialized = true;
 	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
 	// print full configuration to the command line
@@ -271,7 +278,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 	double upot, virial;
 	if (_useAVXFunctor) {
 		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctorAVX<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true,
+		autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true,
 							  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
 			functor(_cutoff, _particlePropertiesLibrary);
 
@@ -281,7 +288,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 		virial = functor.getVirial();
 	} else {
 		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+		autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						   /*calculateGlobals*/ true>
 			functor(_cutoff, _particlePropertiesLibrary);
 
