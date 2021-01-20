@@ -151,9 +151,11 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 						false /*don't use invalid particles*/, true /*do halo position change*/,
 						true /*removeFromContainer*/);
 	}
+	// TODO: copying own molecules out and reinserting them can be done within autopas more efficiently
 	std::vector<Molecule> ownMolecules{};
 	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
 		ownMolecules.push_back(*iter);
+		// TODO: This check should be in debug mode only
 		if (not iter->inBox(newMin.data(), newMax.data())) {
 			global_log->error_always_output()
 				<< "particle still in domain that should have been migrated." << std::endl;
