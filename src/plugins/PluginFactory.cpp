@@ -40,6 +40,7 @@
 // General plugins
 #include "plugins/COMaligner.h"
 #include "plugins/ExamplePlugin.h"
+#include "plugins/FixRegion.h"
 #include "plugins/InMemoryCheckpointing.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
@@ -77,6 +78,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(DecompWriter);
 	REGISTER_PLUGIN(EnergyLogWriter);
 	REGISTER_PLUGIN(ExamplePlugin);
+  REGISTER_PLUGIN(FixRegion);
 	REGISTER_PLUGIN(FlopRateWriter);
 	REGISTER_PLUGIN(GammaWriter);
 	REGISTER_PLUGIN(HaloParticleWriter);
