@@ -73,7 +73,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
 	REGISTER_PLUGIN(COMaligner);
-  REGISTER_PLUGINDropaligner);
+	REGISTER_PLUGIN(Dropaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
