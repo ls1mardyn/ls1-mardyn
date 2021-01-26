@@ -39,7 +39,6 @@
 
 // General plugins
 #include "plugins/COMaligner.h"
-#include "plugins/Dropaccelerator.h"
 #include "plugins/Dropaligner.h"
 #include "plugins/ExamplePlugin.h"
 #include "plugins/FixRegion.h"
@@ -74,15 +73,14 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
 	REGISTER_PLUGIN(COMaligner);
-  REGISTER_PLUGIN(Dropaccelerator);
-  REGISTER_PLUGIN(Dropaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
 	REGISTER_PLUGIN(DecompWriter);
+	REGISTER_PLUGIN(Dropaligner);
 	REGISTER_PLUGIN(EnergyLogWriter);
 	REGISTER_PLUGIN(ExamplePlugin);
-  REGISTER_PLUGIN(FixRegion);
+	REGISTER_PLUGIN(FixRegion);
 	REGISTER_PLUGIN(FlopRateWriter);
 	REGISTER_PLUGIN(GammaWriter);
 	REGISTER_PLUGIN(HaloParticleWriter);

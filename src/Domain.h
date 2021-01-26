@@ -186,13 +186,6 @@ public:
 	//! @brief set the epsilonRF
 	void setepsilonRF(double erf);
 
-	//! @brief set numMolecules in FixRegion 
-
-    void setNumFixRegion(unsigned long nf);
-        
-    //! @brief set numMolecules in FixRegion 
-    unsigned long getNumFixRegion();
-
 	//! @brief get globalNumMolecules
 	unsigned long getglobalNumMolecules() const;
 
@@ -472,9 +465,6 @@ private:
 	//! local sum (over all molecules) of the moment of inertia
 	//! multiplied with the squared  rotational velocity
 	std::map<int, double> _local2KERot; 
-
-	// number of molecules in FixRegion
-	unsigned long _numMoleculesFix;
 
 	//! reaction field
 	//!

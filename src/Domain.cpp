@@ -846,13 +846,3 @@ unsigned long Domain::getNumFluidMolecules(){
   return numFluidMolecules;
 }
 
-void Domain::setNumFixRegion(unsigned long nf){
-		_numMoleculesFix = nf;
-		global_log->info() << "setDomain called with Molecules in Fix Region: " << _numMoleculesFix<< endl;
-}
-
-unsigned long Domain::getNumFixRegion(){
-	global_log->info() << "getDomain called with Molecules in Fix Region: " << _numMoleculesFix<< endl;
-	return _numMoleculesFix;
-} 
-
