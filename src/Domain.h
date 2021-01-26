@@ -186,13 +186,6 @@ public:
 	//! @brief set the epsilonRF
 	void setepsilonRF(double erf);
 
-	//! @brief set numMolecules in FixRegion 
-
-    void setNumFixRegion(unsigned long nf);
-        
-    //! @brief set numMolecules in FixRegion 
-    unsigned long getNumFixRegion();
-
 	//! @brief get globalNumMolecules
 	unsigned long getglobalNumMolecules() const;
 
