@@ -39,6 +39,7 @@
 
 // General plugins
 #include "plugins/COMaligner.h"
+#include "plugins/Dropaligner.h"
 #include "plugins/ExamplePlugin.h"
 #include "plugins/FixRegion.h"
 #include "plugins/InMemoryCheckpointing.h"
@@ -72,6 +73,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
 	REGISTER_PLUGIN(COMaligner);
+  REGISTER_PLUGINDropaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
