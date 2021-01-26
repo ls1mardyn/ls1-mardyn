@@ -80,7 +80,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(DecompWriter);
 	REGISTER_PLUGIN(EnergyLogWriter);
 	REGISTER_PLUGIN(ExamplePlugin);
-  REGISTER_PLUGIN(FixRegion);
+	REGISTER_PLUGIN(FixRegion);
 	REGISTER_PLUGIN(FlopRateWriter);
 	REGISTER_PLUGIN(GammaWriter);
 	REGISTER_PLUGIN(HaloParticleWriter);
