@@ -79,8 +79,8 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
 	REGISTER_PLUGIN(DecompWriter);
-  REGISTER_PLUGIN(DirectedPM);
-  REGISTER_PLUGIN(Dropaccelerator);
+	REGISTER_PLUGIN(DirectedPM);
+	REGISTER_PLUGIN(Dropaccelerator);
 	REGISTER_PLUGIN(Dropaligner);
 	REGISTER_PLUGIN(EnergyLogWriter);
 	REGISTER_PLUGIN(ExamplePlugin);

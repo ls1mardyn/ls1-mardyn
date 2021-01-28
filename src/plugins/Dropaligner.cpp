@@ -57,7 +57,8 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		_mass = 0.;
 
 		// ITERATE OVER PARTICLES
-		for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
+		for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			 temporaryMolecule.isValid(); ++temporaryMolecule) {
 			double partMass = temporaryMolecule->mass();
 			double distanceSquared[3];
 
@@ -93,7 +94,8 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		_motion[2] = -_alignmentCorrection * ((_balance[2] / _mass) - _zPos);
 
 		// MOVE
-		for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
+		for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			 temporaryMolecule.isValid(); ++temporaryMolecule) {
 			double distanceSquared[3];
 
 			distanceSquared[0] = (_xPos - temporaryMolecule->r(0)) * (_xPos - temporaryMolecule->r(0));

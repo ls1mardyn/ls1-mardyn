@@ -46,19 +46,16 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 
 	_molCount = 0;
 
-	std::array<double, 3> min{
-		std::max(_xMin,particleContainer->getBoundingBoxMin(0)),
-		std::max(_yMin,particleContainer->getBoundingBoxMin(1)),
-		std::max(_zMin,particleContainer->getBoundingBoxMin(2))
-	};
-	std::array<double, 3> max{
-		std::min(_xMax,particleContainer->getBoundingBoxMax(0)),
-		std::min(_yMax,particleContainer->getBoundingBoxMax(1)),
-		std::min(_zMax,particleContainer->getBoundingBoxMax(2))
-	};
-	
+	std::array<double, 3> min{std::max(_xMin, particleContainer->getBoundingBoxMin(0)),
+							  std::max(_yMin, particleContainer->getBoundingBoxMin(1)),
+							  std::max(_zMin, particleContainer->getBoundingBoxMin(2))};
+	std::array<double, 3> max{std::min(_xMax, particleContainer->getBoundingBoxMax(0)),
+							  std::min(_yMax, particleContainer->getBoundingBoxMax(1)),
+							  std::min(_zMax, particleContainer->getBoundingBoxMax(2))};
+
 	// ITERATE OVER PARTICLES
-	for (auto temporaryMolecule = particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	for (auto temporaryMolecule =
+			 particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 		 temporaryMolecule.isValid(); ++temporaryMolecule) {
 		for (unsigned i = 0; i < 3; i++) {
 			temporaryMolecule->setv(i, 0.0);
@@ -73,9 +70,8 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	_molCount = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 	global_log->info() << _molCount << " molecules are inside a fixed region" << std::endl;
-	
+
 	domain->setNumFixRegion(_molCount);
-	
 }
 
 void FixRegion::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
@@ -83,19 +79,15 @@ void FixRegion::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 
 void FixRegion::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 							unsigned long simstep) {
+	std::array<double, 3> min{std::max(_xMin, particleContainer->getBoundingBoxMin(0)),
+							  std::max(_yMin, particleContainer->getBoundingBoxMin(1)),
+							  std::max(_zMin, particleContainer->getBoundingBoxMin(2))};
+	std::array<double, 3> max{std::min(_xMax, particleContainer->getBoundingBoxMax(0)),
+							  std::min(_yMax, particleContainer->getBoundingBoxMax(1)),
+							  std::min(_zMax, particleContainer->getBoundingBoxMax(2))};
 
-	std::array<double, 3> min{
-		std::max(_xMin,particleContainer->getBoundingBoxMin(0)),
-		std::max(_yMin,particleContainer->getBoundingBoxMin(1)),
-		std::max(_zMin,particleContainer->getBoundingBoxMin(2))
-	};
-	std::array<double, 3> max{
-		std::min(_xMax,particleContainer->getBoundingBoxMax(0)),
-		std::min(_yMax,particleContainer->getBoundingBoxMax(1)),
-		std::min(_zMax,particleContainer->getBoundingBoxMax(2))
-	};
-	
-	for (auto temporaryMolecule = particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	for (auto temporaryMolecule =
+			 particleContainer->regionIterator(min.data(), max.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 		 temporaryMolecule.isValid(); ++temporaryMolecule) {
 		for (unsigned i = 0; i < 3; i++) {
 			temporaryMolecule->setv(i, 0.0);
