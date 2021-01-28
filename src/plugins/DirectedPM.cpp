@@ -95,8 +95,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 					phiUN = floor(phi * _universalInvProfileUnit[2]);
 
 					// Check if R is inside cylinder
-					if (rUN >= _rIncrements) {
-					} else {
+					if (rUN < _rIncrements) {
 						if ((rUN >= 0) && (hUN >= 0) && (phiUN >= 0) && (rUN < _rIncrements) && (hUN < _hIncrements) &&
 							(phiUN < _phiIncrements)) {
 							unID = (hUN * _rIncrements * _phiIncrements) + (rUN * _phiIncrements) + phiUN;
