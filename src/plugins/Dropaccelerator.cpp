@@ -26,8 +26,8 @@ void Dropaccelerator::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("steps", _steps);
 
 	// SANITY CHECK
-	if (_interval < 1 || _steps <= 0 || _startSimStep < 0 || _xPosition <= 0. || _yPosition <= 0. ||
-		_zPosition <= 0. || _dropRadius <= 0) {
+	if (_interval < 1 || _steps <= 0 || _startSimStep < 0 || _xPosition <= 0. || _yPosition <= 0. || _zPosition <= 0. ||
+		_dropRadius <= 0) {
 		global_log->error() << "[Dropaccelerator] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
 		global_log->error() << "[Dropaccelerator] HALTING SIMULATION" << std::endl;
 		_enabled = false;
@@ -47,7 +47,7 @@ void Dropaccelerator::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-								   unsigned long simstep) {
+								  unsigned long simstep) {
 	double corrVeloc = _veloc / _steps;
 
 	if (_enabled) {
@@ -61,12 +61,12 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 
 		// ITERATE OVER PARTICLES AND CHOOSE AND MARK IF MOLECULE IN DROPLET OR NOT
 		if (simstep == _startSimStep) {
-
 			// resize first
 			_particleIsInDroplet.clear();
 			_particleIsInDroplet.resize(global_simulation->getDomain()->getglobalNumMolecules(), false);
 
-			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
+			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				 temporaryMolecule.isValid(); ++temporaryMolecule) {
 				double distanceSquared[3];
 
 				_particleIsInDroplet[temporaryMolecule->getID()] = false;
@@ -75,16 +75,15 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 				distanceSquared[2] = (_zPosition - temporaryMolecule->r(2)) * (_zPosition - temporaryMolecule->r(2));
 
 				if (distanceSquared[0] + distanceSquared[1] + distanceSquared[2] < _dropRadius * _dropRadius) {
-
 					_particleIsInDroplet[temporaryMolecule->getID()] = true;
 					temporaryMolecule->vadd(0, corrVeloc, 0);
 					particlesInDrop++;
-
 				}
 			}
 
 #ifdef ENABLE_MPI
-			MPI_Allreduce(MPI_IN_PLACE, _particleIsInDroplet.data(), _particleIsInDroplet.size(), MPI_CHAR, MPI_LOR, domainDecomp->getCommunicator());
+			MPI_Allreduce(MPI_IN_PLACE, _particleIsInDroplet.data(), _particleIsInDroplet.size(), MPI_CHAR, MPI_LOR,
+						  domainDecomp->getCommunicator());
 #endif
 
 			domainDecomp->collCommInit(1);
@@ -92,21 +91,16 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			domainDecomp->collCommAllreduceSum();
 			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
-
-
 		}
 
 		// ITERATE OVER PARTICLES AND ACCELERATE ONLY DROPMOLECULES
 
 		if (simstep > _startSimStep && simstep < (_startSimStep + _steps)) {
-
-			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
-
+			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				 temporaryMolecule.isValid(); ++temporaryMolecule) {
 				if (_particleIsInDroplet[temporaryMolecule->getID()]) {
-
 					temporaryMolecule->vadd(0, corrVeloc, 0);
 					particlesInDrop++;
-
 				}
 			}
 
@@ -115,20 +109,19 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			domainDecomp->collCommAllreduceSum();
 			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
-
 		}
 
 		// CHECK IF VELOCITY HAS REACHED AND IF NOT ACCELERATE AGAIN
 
 		if (simstep >= (_startSimStep + _steps) && simstep < (_startSimStep + 2 * _steps)) {
-
 			_velocNow = 0;
 			particlesInDrop = 0;
-			double deltavelocity=0;
+			double deltavelocity = 0;
 
 			// GET VELOCITY IN Y-DIRECTION FOR EVERY PARTICLE IN DROPLET
 
-			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid(); ++temporaryMolecule) {
+			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				 temporaryMolecule.isValid(); ++temporaryMolecule) {
 				double partVelocity = temporaryMolecule->v(1);
 
 				if (_particleIsInDroplet[temporaryMolecule->getID()]) {
@@ -155,28 +148,20 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			_velocNow = _velocNow / particlesInDrop;
 			deltavelocity = _veloc - _velocNow;
 
-
 			// ACCELERATE IF TOO SLOW
 
-			if ((abs(_velocNow) < abs(_veloc))&&(abs(deltavelocity)>abs(corrVeloc))) {
-
-				for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid();
-					 ++temporaryMolecule) {
+			if ((abs(_velocNow) < abs(_veloc)) && (abs(deltavelocity) > abs(corrVeloc))) {
+				for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+					 temporaryMolecule.isValid(); ++temporaryMolecule) {
 					if (_particleIsInDroplet[temporaryMolecule->getID()]) {
-
 						temporaryMolecule->vadd(0, corrVeloc, 0);
-
 					}
 				}
-			}
-			else if ((abs(_velocNow) < abs(_veloc)) && (abs(deltavelocity) < abs(corrVeloc))) {
-
-				for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); temporaryMolecule.isValid();
-					++temporaryMolecule) {
+			} else if ((abs(_velocNow) < abs(_veloc)) && (abs(deltavelocity) < abs(corrVeloc))) {
+				for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+					 temporaryMolecule.isValid(); ++temporaryMolecule) {
 					if (_particleIsInDroplet[temporaryMolecule->getID()]) {
-
 						temporaryMolecule->vadd(0, deltavelocity, 0);
-
 					}
 				}
 			}

@@ -5,8 +5,7 @@
  *      Author: Marx
  */
 
-#ifndef MARDYN_TRUNK_FIXREGION_H
-#define MARDYN_TRUNK_FIXREGION_H
+#pragma once
 
 // class DropalignerTest;
 #include "Domain.h"
@@ -45,10 +44,7 @@ private:
 	unsigned long _molCount;
 
 public:
-	
-
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-
 
 	void readXML(XMLfileUnits& xmlconfig) override;
 
@@ -66,7 +62,4 @@ public:
 	std::string getPluginName() override { return std::string("FixRegion"); }
 
 	static PluginBase* createInstance() { return new FixRegion(); }
-	
 };
-
-#endif  // MARDYN_TRUNK_FIXREGION_H

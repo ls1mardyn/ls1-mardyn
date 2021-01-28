@@ -5,8 +5,7 @@
  *      Author: Marx
  */
 
-#ifndef MARDYN_TRUNK_DROPALIGNER_H
-#define MARDYN_TRUNK_DROPALIGNER_H
+#pragma once
 
 // class DropalignerTest;
 #include "Domain.h"
@@ -74,5 +73,3 @@ public:
 
 	static PluginBase* createInstance() { return new Dropaligner(); }
 };
-
-#endif  // MARDYN_TRUNK_DROPALIGNER_H
