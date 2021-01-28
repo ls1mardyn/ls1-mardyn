@@ -13,11 +13,15 @@ COMaligner | alignment, particleContainer utility, visualization | Calculates Ce
 CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.
 DecompWriter | mpi, print | Writes information on the MPI Domain Decomposition. For each rank the boxmin and boxmax is printed.
 DensityProfileWriter | todo | todo
+DirectedPM | utility for droplet simulations, output writer | Generates output for droplet simulations. Temperature, pressure and denstiy are calculated locally for the droplet and the surrounding gas phase in cylindrical bins. Droplet velocity is calculated as well
 DistControl | distance, interface, density profile, quasi-stationary, reference coordinates | Determines vapor-liquid interface positions from density profile. The positions can be used as reference coordinates for e.g. sampling regions in quasi-stationary evaporation simulations.
 DriftCtrl | drift, hydrodynamic velocity, control, region | Control the drift or hydrodynamic velocity of particles within a specified region. 
+Dropaccelerator | utility for droplet simulations | Speeds up particles that are located within a specified spherical region at a given point in time to a desired veloctiy. The time frame for the acceleration may also be specified.
+Dropaligner | utility for droplet simulations | aligns the center of mass of particles within a spherical region with a specified center of mass in a similar fashion as the COMaligner. Used to hold a spherical droplet in position.
 EnergyLogWriter | print, file, thermodynamic macroscopic quantities | Write the global \f$N\f$, \f$U_\mathrm{pot}\f$, \f$U_\mathrm{kin}\f$, \f$U_\mathrm{kinTrans}\f$, \f$U_\mathrm{kinRot}\f$, \f$T\f$, \f$p\f$ to file. Duplication with ResultWriter?
 ExamplePlugin  | example, sample, illustrate, usage | Print user-specifed text at a user-specified position in the code.  
 ExtractPhase  | extract, phase, interface, vapor-liquid equilibrium (VLE), local density | Extracts the liquid phase from a vapor-liquid equilibrium (VLE) simulation by evaluating the local density surrounding individual particles.
+FixRegion | Fixes particles within a cuboid region to their respective positions. Fixed particles still exert forces onto other particles but they do not move.
 FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations per second at which the simulation runs. Only FLOPs in the force calculation are calculated.
 GammaWriter | todo | todo
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
