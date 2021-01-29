@@ -9,7 +9,7 @@
 #include <exception>
 #include "Domain.h"
 #include "Simulation.h"
-#include "autopas/utils/Logger.h"
+#include "autopas/utils/logging/Logger.h"
 #include "autopas/utils/StringUtils.h"
 #include "parallel/DomainDecompBase.h"
 
@@ -35,20 +35,23 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
 
 #ifdef ENABLE_MPI
-	std::stringstream logFileName;
+	std::stringstream logFileName, outputSuffix;
 
 	auto timeNow = chrono::system_clock::now();
 	auto time_tNow = std::chrono::system_clock::to_time_t(timeNow);
 
 	auto maxRank = global_simulation->domainDecomposition().getNumProcs();
 	auto numDigitsMaxRank = std::to_string(maxRank).length();
+	auto myRank = global_simulation->domainDecomposition().getRank();
 
-	logFileName << "AutoPas_Rank" << setfill('0') << setw(numDigitsMaxRank)
-				<< global_simulation->domainDecomposition().getRank() << "_"
+	logFileName << "AutoPas_Rank" << setfill('0') << setw(numDigitsMaxRank) << myRank << "_"
 				<< std::put_time(std::localtime(&time_tNow), "%Y-%m-%d_%H-%M-%S") << ".log";
 
 	_logFile.open(logFileName.str());
 	_autopasContainer = decltype(_autopasContainer)(_logFile);
+
+	outputSuffix << "Rank" << setfill('0') << setw(numDigitsMaxRank) << myRank << "_";
+	_autopasContainer.setOutputSuffix(outputSuffix.str());
 #endif
 }
 
