@@ -172,7 +172,8 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
 	_autopasContainer.init();
     _autopasContainerIsInitialized = true;
-	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
+    // if you want more AutoPas output enable this
+	//autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
 	// print full configuration to the command line
 	int valueOffset = 28;
