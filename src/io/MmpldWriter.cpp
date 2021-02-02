@@ -75,6 +75,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("writecontrol/start", _startTimestep);
 	xmlconfig.getNodeValue("writecontrol/writefrequency", _writeFrequency);
 	xmlconfig.getNodeValue("writecontrol/stop", _stopTimestep);
+	_stopTimestep = std::min(_stopTimestep, global_simulation->getNumTimesteps());
 	xmlconfig.getNodeValue("writecontrol/framesperfile", _numFramesPerFile);
 	xmlconfig.getNodeValue("writecontrol/writeBufferSize", _writeBufferSize);
 	global_log->info() << "[MMPLD Writer] Start sampling from simstep: " << _startTimestep << endl;
