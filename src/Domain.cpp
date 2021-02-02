@@ -845,4 +845,3 @@ unsigned long Domain::getNumFluidMolecules(){
   }
   return numFluidMolecules;
 }
-
