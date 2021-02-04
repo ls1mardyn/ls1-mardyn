@@ -6,7 +6,11 @@
  */
 
 #include "VTKMoleculeWriterTest.h"
+#ifndef MARDYN_AUTOPAS
 #include "particleContainer/LinkedCells.h"
+#else
+#include "particleContainer/AutoPasContainer.h"
+#endif
 #include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
@@ -34,7 +38,13 @@ VTKMoleculeWriterTest::~VTKMoleculeWriterTest() {
 void VTKMoleculeWriterTest::testDoOutput() {
 	double boundings_min[] = {-1., -1., -1. };
 	double boundings_max[] = {10.0, 10.0, 10.0 };
-	LinkedCells container(boundings_min, boundings_max, 1);
+	double cutoff = 1.;
+#ifndef MARDYN_AUTOPAS
+	LinkedCells container(boundings_min, boundings_max, cutoff);
+#else
+	AutoPasContainer container(cutoff);
+	container.rebuild(boundings_min, boundings_max);
+#endif
 
 	std::vector<Component> components;
 	Component dummyComponent(0);

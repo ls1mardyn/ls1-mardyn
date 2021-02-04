@@ -9,7 +9,12 @@
 #include "molecules/Molecule.h"
 #include "utils/mardyn_assert.h"
 #include "ZonalMethods/FullShell.h"
+#include "ForceHelper.h"
 
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#include "utils/MPI_Info_object.h"
+#endif
 
 DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
 }
@@ -121,29 +126,18 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 
 			double shiftedPosition[3];
 
-			for (auto i = begin; i.isValid(); ++i) {
-				Molecule& molHalo = *i;
+			decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
+
+			for (auto haloIter = begin; haloIter.isValid(); ++haloIter) {
 
 				// Add force of halo particle to original particle (or other duplicates)
 				// that have a distance of -'shiftMagnitude' in the current direction
-				shiftedPosition[0] = molHalo.r(0);
-				shiftedPosition[1] = molHalo.r(1);
-				shiftedPosition[2] = molHalo.r(2);
+				shiftedPosition[0] = haloIter->r(0);
+				shiftedPosition[1] = haloIter->r(1);
+				shiftedPosition[2] = haloIter->r(2);
 				shiftedPosition[dim] += shift;
-
-				Molecule* original;
-
-				if (!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)) {
-					// This should not happen
-					std::cout << "Original molecule not found";
-					mardyn_exit(1);
-				}
-
-				mardyn_assert(original->getID() == molHalo.getID());
-
-				original->Fadd(molHalo.F_arr().data());
-				original->Madd(molHalo.M_arr().data());
-				original->Viadd(molHalo.Vi_arr().data());
+				originalPreviousIter =
+					addValuesAndGetIterator(moleculeContainer, shiftedPosition, originalPreviousIter, *haloIter);
 			}
 		}
 	}
@@ -164,27 +158,17 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 
 		double shiftedPosition[3];
 
-		for (auto i = begin; i.isValid(); ++i) {
-			Molecule& molHalo = *i;
+		decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
+
+		for (auto haloIter = begin; haloIter.isValid(); ++haloIter) {
 
 			// Add force of halo particle to original particle (or other duplicates)
 			// that have a distance of -'shiftMagnitude' in the current direction
 			for (int dim = 0; dim < 3; dim++) {
-				shiftedPosition[dim] = molHalo.r(dim) + shift[dim];
+				shiftedPosition[dim] = haloIter->r(dim) + shift[dim];
 			}
-			Molecule* original;
-
-			if (!moleculeContainer->getMoleculeAtPosition(shiftedPosition, &original)) {
-				// This should not happen
-				std::cout << "Original molecule not found";
-				mardyn_exit(1);
-			}
-
-			mardyn_assert(original->getID() == molHalo.getID());
-
-			original->Fadd(molHalo.F_arr().data());
-			original->Madd(molHalo.M_arr().data());
-			original->Viadd(molHalo.Vi_arr().data());
+			originalPreviousIter =
+				addValuesAndGetIterator(moleculeContainer, shiftedPosition, originalPreviousIter, *haloIter);
 		}
 	}
 
@@ -205,8 +189,8 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
 		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
-		                    moleculeContainer->getBoundingBoxMax(1) + cutoff,
-		                    moleculeContainer->getBoundingBoxMax(2) + cutoff};
+							moleculeContainer->getBoundingBoxMax(1) + cutoff,
+							moleculeContainer->getBoundingBoxMax(2) + cutoff};
 
 		if (direction < 0) {
 			endRegion[dim] = moleculeContainer->getBoundingBoxMin(dim);
@@ -237,7 +221,7 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 					}
 				}
 				moleculeContainer->addParticle(m);
-				i.deleteCurrentParticle();  // removeFromContainer = true;
+				moleculeContainer->deleteMolecule(i, false); // removeFromContainer = true;
 			}
 		}
 	}
@@ -303,7 +287,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 			// traverse and gather all halo particles in the cells
 			for (auto i = begin; i.isValid(); ++i) {
 				shiftAndAdd(*i);
-				i.deleteCurrentParticle();  // removeFromContainer = true;
+				moleculeContainer->deleteMolecule(i, false);  // removeFromContainer = true;
 			}
 		}
 	}
@@ -469,32 +453,93 @@ int DomainDecompBase::getNumProcs() const {
 
 void DomainDecompBase::barrier() const {
 }
+#ifdef ENABLE_MPI
+void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename, ParticleContainer* moleculeContainer) const {
+	int rank = getRank();
 
-void DomainDecompBase::writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer, bool binary) const{
-	for (int process = 0; process < getNumProcs(); process++) {
-		if (getRank() == process) {
-			std::ofstream checkpointfilestream;
-			if(binary){
-//				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
-				checkpointfilestream.open((filename + ".dat").c_str(), std::ios::binary | std::ios::out | std::ios::app);
-			}
-			else {
-				checkpointfilestream.open(filename.c_str(), std::ios::app);
-				checkpointfilestream.precision(20);
-			}
+	MPI_File mpifh;
+	MPI_Info_object mpiinfo;
+	auto extfilename = filename + ".dat";
+	MPI_File_open(MPI_COMM_WORLD, extfilename.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, mpiinfo,
+	              &mpifh);
 
-			for (auto tempMolecule = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-				 tempMolecule.isValid(); ++tempMolecule) {
-				if(binary){
-					tempMolecule->writeBinary(checkpointfilestream);
-				}
-				else {
-					tempMolecule->write(checkpointfilestream);
-				}
-			}
-			checkpointfilestream.close();
+	uint64_t numParticles_local = 0;
+	uint64_t numParticles_exscan = 0;
+	auto begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	for (auto it = begin; it.isValid(); ++it) numParticles_local++;
+
+	MPI_Exscan(&numParticles_local, &numParticles_exscan, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+
+	uint16_t particle_data_size = 0;
+	// if no particle is found (begin is not valid) particle_data_size is zero and provides no problem.
+	if(begin.isValid())
+	{
+		std::stringstream str;
+		begin->writeBinary(str);
+		particle_data_size = str.str().size();
+	}
+	uint64_t buffer_size = 32768;
+	std::string __dummy(buffer_size, '\0');  // __dummy for preallocation of internal buffer with buffer_size.
+	std::ostringstream write_buffer(__dummy, ios_base::binary);
+	__dummy.clear();
+	__dummy.shrink_to_fit();
+	//char* write_buffer = new char[buffer_size];
+	uint64_t offset = numParticles_exscan * particle_data_size;
+	MPI_File_seek(mpifh, offset, MPI_SEEK_SET);
+	uint64_t buffer_pos = 0;
+
+	for (auto it = begin; it.isValid(); ++it) {
+		it->writeBinary(write_buffer);
+		buffer_pos += particle_data_size;
+
+		if (buffer_pos > buffer_size - particle_data_size) {
+			// we cannot add any more particles to this buffer, so we write the buffer.
+			MPI_File_write(mpifh, write_buffer.str().c_str(), buffer_pos, MPI_BYTE, MPI_STATUS_IGNORE);
+			// reset buffer position and clear stream.
+			buffer_pos = 0;
+			write_buffer.str("");
 		}
-		barrier();
+	}
+	MPI_File_write(mpifh, write_buffer.str().c_str(), buffer_pos, MPI_BYTE, MPI_STATUS_IGNORE);
+
+	MPI_File_close(&mpifh);
+}
+#endif
+void DomainDecompBase::writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer,
+                                            bool binary) const {
+#ifdef ENABLE_MPI
+	if (binary) {
+		writeMoleculesToMPIFileBinary(filename, moleculeContainer);
+	} else {
+#else
+		{
+#endif
+		for (int process = 0; process < getNumProcs(); process++) {
+			if (getRank() == process) {
+				std::ofstream checkpointfilestream;
+				if (binary) {
+					auto appendOrTruncate = getRank() != 0 ? std::ios::app : std::ios::trunc;
+					// truncate if we are binary and in rank 0, otherwise append!
+					checkpointfilestream.open((filename + ".dat").c_str(),
+											  std::ios::binary | std::ios::out | appendOrTruncate);
+				} else {
+					// always append in ascii mode, as we have written the header already to the same file.
+					checkpointfilestream.open(filename.c_str(), std::ios::app);
+					checkpointfilestream.precision(20);
+				}
+
+				for (auto tempMolecule = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				     tempMolecule.isValid(); ++tempMolecule) {
+					if (binary) {
+						tempMolecule->writeBinary(checkpointfilestream);
+					} else {
+						tempMolecule->write(checkpointfilestream);
+					}
+				}
+				checkpointfilestream.close();
+			}
+			barrier();
+		}
 	}
 }
 

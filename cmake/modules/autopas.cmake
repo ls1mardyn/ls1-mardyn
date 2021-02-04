@@ -1,69 +1,42 @@
 # autopas library
 option(ENABLE_AUTOPAS "Use autopas library" OFF)
-if(ENABLE_AUTOPAS)
+if (ENABLE_AUTOPAS)
     message(STATUS "Using AutoPas.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMARDYN_AUTOPAS")
 
     # Enable ExternalProject CMake module
-    include(ExternalProject)
+    include(FetchContent)
 
     # Select https (default) or ssh path.
     set(autopasRepoPath https://github.com/AutoPas/AutoPas.git)
-    if(GIT_SUBMODULES_SSH)
+    if (GIT_SUBMODULES_SSH)
         set(autopasRepoPath git@github.com:AutoPas/AutoPas.git)
-    endif()
+    endif ()
 
-    # Download and install autopas
-    ExternalProject_Add(
-            autopas
+    set(AUTOPAS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(AUTOPAS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(AUTOPAS_ENABLE_ADDRESS_SANITIZER ${ENABLE_ADDRESS_SANITIZER} CACHE BOOL "" FORCE)
+    set(AUTOPAS_OPENMP ${OPENMP} CACHE BOOL "" FORCE)
+    set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
+    set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(
+            autopasfetch
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG f639d8b77eb62b84ffb3717ca4a3e25f1caaea86
-            #GIT_TAG origin/feature/regionParticleIteratorIncrease
-            BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/autopas/build
-            BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/autopas/build/src/autopas/libautopas.a
-            PREFIX ${CMAKE_CURRENT_BINARY_DIR}/autopas
-            # Disable install step
-            INSTALL_COMMAND ""
-            CMAKE_ARGS
-            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DAUTOPAS_BUILD_TESTS=OFF
-            -DAUTOPAS_BUILD_EXAMPLES=OFF
-            -DAUTOPAS_ENABLE_ADDRESS_SANITIZER=${ENABLE_ADDRESS_SANITIZER}
-            -DAUTOPAS_OPENMP=${OPENMP}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            GIT_TAG e673bc8b32bc39c6c0304663e2bf445d87bef68a
     )
 
     # Get autopas source and binary directories from CMake project
-    ExternalProject_Get_Property(autopas source_dir binary_dir)
+    FetchContent_GetProperties(autopas)
 
-    # Create a libautopas target to be used as a dependency by the program
-    add_library(libautopas IMPORTED STATIC GLOBAL)
-    add_dependencies(libautopas autopas)
+    if (NOT autopasfetch_POPULATED)
+        FetchContent_Populate(autopasfetch)
 
-    # Using target_compile_definitions for imported targets is only possible starting with cmake 3.11, so we use add_definitions here.
-    if(OPENMP)
-        add_definitions(-DAUTOPAS_OPENMP)
-    endif(OPENMP)
+        add_subdirectory(${autopasfetch_SOURCE_DIR} ${autopasfetch_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif ()
 
-    set_target_properties(libautopas PROPERTIES
-            "IMPORTED_LOCATION" "${binary_dir}/src/autopas/libautopas.a"
-            "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-            )
-
-    # workaround for INTERFACE_INCLUDE_DIRECTORIES requiring existent paths, so we create them here...
-    file(MAKE_DIRECTORY ${source_dir}/src)
-    file(MAKE_DIRECTORY ${source_dir}/libs/spdlog-1.3.1/include)
-    file(MAKE_DIRECTORY ${binary_dir}/libs/eigen-3/include)
-
-    target_include_directories(libautopas SYSTEM INTERFACE
-            "${source_dir}/src"
-            "${source_dir}/libs/spdlog-1.3.1/include"
-            "${binary_dir}/libs/eigen-3/include"
-            )
-
-    set(AUTOPAS_LIB "libautopas")
-else()
+    set(AUTOPAS_LIB "autopas")
+else ()
     message(STATUS "Not using AutoPas.")
     set(AUTOPAS_LIB "")
-endif()
+endif ()

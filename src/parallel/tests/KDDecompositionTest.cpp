@@ -35,7 +35,8 @@ void KDDecompositionTest::testNoDuplicatedParticlesFilename(
 	_domain->setGlobalLength(0, domainLength);
 	_domain->setGlobalLength(1, domainLength);
 	_domain->setGlobalLength(2, domainLength);
-	kdd = new KDDecomposition(cutoff, _domain, 3, 1, 4);
+	kdd = new KDDecomposition(cutoff, 3, 1, 4);
+	kdd->init(_domain);
 	_domainDecomposition = kdd;
 	_rank = kdd->_rank;
 	ParticleContainer* container = initializeFromFile(
@@ -79,7 +80,8 @@ void KDDecompositionTest::testHaloCorrect() {
 	_domain->setGlobalLength(1, globalLength);
 	_domain->setGlobalLength(2, globalLength);
 	double cutoff = 2.5;
-	kdd = new KDDecomposition(cutoff, _domain, 1, 5, 4);
+	kdd = new KDDecomposition(cutoff, 1, 5, 4);
+	kdd->init(_domain);
 	_domainDecomposition = kdd;
 	_rank = kdd->_rank;
 
@@ -126,9 +128,8 @@ void KDDecompositionTest::testHaloCorrect() {
 					// inside, so normal molecule
 					continue;
 				}
-				Molecule* m;
-				bool found = container->getMoleculeAtPosition(pos, &m);
-				ASSERT_TRUE_MSG("halo molecule not present", found);
+				auto iter = container->getMoleculeAtPosition(pos);
+				std::visit([](auto iter) { ASSERT_TRUE_MSG("halo molecule not present", iter.isValid()); }, iter);
 			}
 		}
 	}
@@ -154,7 +155,8 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 	_domain->setGlobalLength(0, domainLength);
 	_domain->setGlobalLength(1, domainLength);
 	_domain->setGlobalLength(2, domainLength);
-	kdd = new KDDecomposition(cutoff, _domain, 3, 1, 4);
+	kdd = new KDDecomposition(cutoff, 3, 1, 4);
+	kdd->init(_domain);
 	_domainDecomposition = kdd;
 	_rank = kdd->_rank;
 
@@ -312,7 +314,8 @@ void KDDecompositionTest::testCompleteTreeInfo() {
 				0, 0, coversAll, 0);
 		result.buildKDTree();
 
-		KDDecomposition decomposition(1.0, _domain, 1, 1.0, 10);
+		KDDecomposition decomposition(1.0, 1, 1.0, 10);
+		decomposition.init(_domain);
 		KDNode * toCleanUp = root;
 		decomposition.completeTreeInfo(root, ownArea);
 		delete toCleanUp;
@@ -339,7 +342,8 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		_domain->setGlobalLength(0, boxL);
 		_domain->setGlobalLength(1, boxL);
 		_domain->setGlobalLength(2, boxL);
-		kdd = new KDDecomposition(cutOff, _domain, 1, 1, fullSearchThreshold);
+		kdd = new KDDecomposition(cutOff, 1, 1, fullSearchThreshold);
+		kdd->init(_domain);
 
 		double bBoxMin[3];
 		double bBoxMax[3];
@@ -350,8 +354,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 #ifndef MARDYN_AUTOPAS
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff);
 #else
-		moleculeContainer = new AutoPasContainer();
-		moleculeContainer->setCutoff(cutOff);
+		moleculeContainer = new AutoPasContainer(cutOff);
 		moleculeContainer->rebuild(bBoxMin, bBoxMax);
 #endif
 		moleculeContainer->update();
@@ -446,7 +449,8 @@ void KDDecompositionTest::testbalanceAndExchange() {
 	inputReader.setPhaseSpaceFile(fileName2.c_str());
 	inputReader.readPhaseSpaceHeader(_domain, 1.0);
 
-	kdd = new KDDecomposition(cutOff, _domain, 1, 1, fullSearchThreshold);
+	kdd = new KDDecomposition(cutOff, 1, 1, fullSearchThreshold);
+	kdd->init(_domain);
 	_domainDecomposition = kdd;
 
 	_rank = kdd->_rank;

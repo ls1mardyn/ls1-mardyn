@@ -37,19 +37,19 @@ public:
 	typedef MPIKDNodePacked MPIKDNode;
 
 	KDNode() :_numProcs(0), _nodeID(0), _owningProc(0),
-			  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0),
-			  _expectedDeviation(0.0), _deviation(0.0), _level(0)
+			  _child1(nullptr), _child2(nullptr), _load(0.0), _optimalLoadPerProcess(0.0),
+		  _deviationLowerBound(0.0), _deviation(0.0), _level(0)
 	{
 	}
 
 
 	/**
-	 * Copy constructor copies everything except for the children (are set to NULL!)
+	 * Copy constructor copies everything except for the children (are set to nullptr!)
 	 */
 	KDNode(const KDNode& other) : _numProcs(other._numProcs), _nodeID(other._nodeID),
-			_owningProc(other._owningProc), _child1(NULL), _child2(NULL),
+			_owningProc(other._owningProc), _child1(nullptr), _child2(nullptr),
 			_load(other._load), _optimalLoadPerProcess(other._optimalLoadPerProcess),
-			_expectedDeviation(other._expectedDeviation), _deviation(other._deviation),
+		  _deviationLowerBound(other._deviationLowerBound), _deviation(other._deviation),
 			_level(other._level)
 	{
 		for (int dim = 0; dim < KDDIM; dim++) {
@@ -61,8 +61,8 @@ public:
 
 	KDNode(int numP, const int low[KDDIM], const int high[KDDIM], int id, int owner, bool coversAll[KDDIM], int level)
 	: _numProcs(numP), _nodeID(id), _owningProc(owner),
-	  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0),
-	  _expectedDeviation(0.0), _deviation(0.0), _level(level)
+	  _child1(nullptr), _child2(nullptr), _load(0.0), _optimalLoadPerProcess(0.0),
+		  _deviationLowerBound(0.0), _deviation(0.0), _level(level)
 	{
 		for (int dim = 0; dim < KDDIM; dim++) {
 			_lowCorner[dim] = low[dim];
@@ -86,7 +86,7 @@ public:
 	 * @return the area for process rank, i.e. the leaf of this tree with
 	 *         (_owningProc == rank) and (_numProcs == 1).
 	 *
-	 *         If no corresponding node is found, this method returns NULL!
+	 *         If no corresponding node is found, this method returns nullptr!
 	 */
 	KDNode* findAreaForProcess(int rank);
 
@@ -107,27 +107,32 @@ public:
 	 */
 	unsigned int getNumMaxProcs();
 
-	double calculateAvgLoadPerProc() {
+	double calculateAvgLoadPerProc() const {
 		return _load / ((double) _numProcs);
 	}
 
-	void calculateExpectedDeviation(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
+	/**
+	 * Calculates a lower bound for the expected deviation.
+	 * @param accumulatedProcessorSpeeds
+	 */
+	void calculateDeviationLowerBound(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
 		double meanProcessorSpeed[] = { 1., 1. };
-		double averagedMeanProcessorSpeed = 1.;
-		if (accumulatedProcessorSpeeds != nullptr && accumulatedProcessorSpeeds->size() != 0) {
+        double totalMeanProcessorSpeed = 1.;
+		if (accumulatedProcessorSpeeds and not accumulatedProcessorSpeeds->empty()) {
 			meanProcessorSpeed[0] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc]
 					- (*accumulatedProcessorSpeeds)[_owningProc]) / (_child1->_numProcs);
 			meanProcessorSpeed[1] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc + _child2->_numProcs]
 					- (*accumulatedProcessorSpeeds)[_child2->_owningProc]) / (_child2->_numProcs);
-			averagedMeanProcessorSpeed = (meanProcessorSpeed[0] + meanProcessorSpeed[1]) / 2;
+			size_t numProcs = accumulatedProcessorSpeeds->size() - 1;
+            totalMeanProcessorSpeed = (*accumulatedProcessorSpeeds)[numProcs] / numProcs;
 		}
 		double child1Dev = _child1->calculateAvgLoadPerProc()
-				- _optimalLoadPerProcess * meanProcessorSpeed[0] / averagedMeanProcessorSpeed;
+				- _optimalLoadPerProcess * meanProcessorSpeed[0] / totalMeanProcessorSpeed;
 		child1Dev = child1Dev * child1Dev;
 		double child2Dev = _child2->calculateAvgLoadPerProc()
-				- _optimalLoadPerProcess * meanProcessorSpeed[1] / averagedMeanProcessorSpeed;
+				- _optimalLoadPerProcess * meanProcessorSpeed[1] / totalMeanProcessorSpeed;
 		child2Dev = child2Dev * child2Dev;
-		_expectedDeviation = child1Dev * (double) _child1->_numProcs + child2Dev * (double) _child2->_numProcs;
+		_deviationLowerBound = child1Dev * static_cast<double>( _child1->_numProcs) + child2Dev * static_cast<double>(_child2->_numProcs);
 	}
 
 	void calculateDeviation(std::vector<double>* processorSpeeds = nullptr, const double &totalMeanProcessorSpeed = 1.) {
@@ -156,11 +161,12 @@ public:
 
 	/**
 	 * Split this node, i.e. create two children (note, that its children must be
-	 * NULL before this call!).
+	 * nullptr before this call!).
 	 *
 	 * @param dimension the dimension \in [0;KDDIM-1] along which this node is split
 	 * @param splitIndex the index of the corner cell for the new left child
-	 *        (note: must be in ] _lowCorner[dimension]; _highCorner[dimension] [.
+	 *        (note: must be in bigger or equal to _lowCorner[divDimension] + (KDDStaticValues::minNumCellsPerDimension-1)
+	 *        and smaller than _highCorner[dimension].
 	 * @param numProcsLeft the number of processors for the left child. The number
 	 *        of processors for the right child is calculated.
 	 */
@@ -172,7 +178,7 @@ public:
 	//! The order of printing is a depth-first walk through the tree, children
 	//! are always indented two spaces more than there parents
 	//! @param prefix A string which is printed in front of each line
-	void printTree(std::string prefix = "");
+	void printTree(const std::string& prefix = "");
 
 	/**
 	 * Write the tree represented by this (root-)node to a (binary) file, in order
@@ -230,10 +236,17 @@ public:
 
 	double _load;
 	double _optimalLoadPerProcess;
-	double _expectedDeviation;
+
+	/**
+	 * This is a lower bound for the deviation of the load from the optimal load.
+	 */
+	double _deviationLowerBound;
+	/**
+	 * Deviation of the actual assigned load from the optimal load.
+	 */
 	double _deviation;
 
-	// level of this node (at root node, level = 0)
+	/// level of this node (at root node, level = 0)
 	int _level;
 
 private:

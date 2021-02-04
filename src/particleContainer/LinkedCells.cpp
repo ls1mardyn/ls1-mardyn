@@ -1,20 +1,20 @@
 #include <cmath>
 #include "particleContainer/LinkedCells.h"
 
-
+#include <algorithm>
+#include <array>
+#include <variant>
 #include "Domain.h"
-#include "parallel/DomainDecompBase.h"
-#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
-#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "particleContainer/adapter/CellProcessor.h"
-#include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/adapter/CellProcessor.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "utils/Logger.h"
-#include "utils/mardyn_assert.h"
 #include "utils/Random.h"
-#include <array>
-#include <algorithm>
+#include "utils/mardyn_assert.h"
 
 #include "particleContainer/TraversalTuner.h"
 
@@ -121,7 +121,7 @@ void LinkedCells::initializeTraversal() {
 	for (int d = 0; d < 3; ++d) {
 		dims[d] = _cellsPerDimension[d];
 	}
-	_traversalTuner->rebuild(_cells, dims);
+	_traversalTuner->rebuild(_cells, dims, _cellLength, _cutoffRadius);
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
@@ -647,7 +647,7 @@ void LinkedCells::initializeCells() {
 	ParticleCell::_cellBorderAndFlagManager.init(_cellsPerDimension,
 			_haloBoundingBoxMin, _haloBoundingBoxMax,
 			_boundingBoxMin, _boundingBoxMax,
-			_cellLength);
+			_cellLength, _haloWidthInNumCells);
 
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
@@ -675,11 +675,11 @@ void LinkedCells::calculateNeighbourIndices(std::vector<long>& forwardNeighbourO
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
 
 	// 13 neighbors for _haloWidthInNumCells = 1 or 64 for =2
-	int nNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
+	int maxNNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
 
 	// Resize offset vector to number of neighbors and fill with 0
-	forwardNeighbourOffsets.resize(nNeighbours, 0);
-	backwardNeighbourOffsets.resize(nNeighbours, 0);
+	forwardNeighbourOffsets.reserve(maxNNeighbours);
+	backwardNeighbourOffsets.reserve(maxNNeighbours);
 
 	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
 
@@ -716,20 +716,24 @@ void LinkedCells::calculateNeighbourIndices(std::vector<long>& forwardNeighbourO
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex,
 							zIndex);
 					if (offset > 0) {
-						forwardNeighbourOffsets.at(forwardNeighbourIndex) = offset; // now vector
+						forwardNeighbourOffsets.emplace_back(offset); // now vector
 						++forwardNeighbourIndex;
 					}
 					if (offset < 0) {
-						backwardNeighbourOffsets.at(backwardNeighbourIndex) = abs(offset); // now vector
+						backwardNeighbourOffsets.emplace_back(abs(offset)); // now vector
 						++backwardNeighbourIndex;
 					}
 				}
 			}
 		}
 	}
-
-	mardyn_assert(forwardNeighbourIndex == nNeighbours);
-	mardyn_assert(backwardNeighbourIndex == nNeighbours);
+	if (_haloWidthInNumCells[0] == 1 and _haloWidthInNumCells[1] == 1 and _haloWidthInNumCells[2] == 1) {
+		mardyn_assert(forwardNeighbourIndex == maxNNeighbours);
+		mardyn_assert(backwardNeighbourIndex == maxNNeighbours);
+	} else {
+		mardyn_assert(forwardNeighbourIndex <= maxNNeighbours);
+		mardyn_assert(backwardNeighbourIndex <= maxNNeighbours);
+	}
 }
 std::array<std::pair<unsigned long, unsigned long>, 14> LinkedCells::calculateCellPairOffsets() const {
 	long int o   = cellIndexOf3DIndex(0,0,0); // origin
@@ -884,7 +888,7 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	endIndex = getCellIndexOfPoint(endRegion);
 }
 
-unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) {
+unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) {
 	const unsigned long numCells = _cells.size();
 
 	std::vector<unsigned long> numMoleculesPerThread;
@@ -898,10 +902,10 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 		const int myID = mardyn_get_thread_num();
 		const unsigned long myStart = numCells * myID / numThreads;
 		const unsigned long myEnd = numCells * (myID + 1) / numThreads;
-		const int seed = myID;
+		const int seed = seed_offset + myID;
 
 		unsigned long numMoleculesByThisThread = 0;
-		Random threadPrivateRNG = Random(seed);
+		Random threadPrivateRNG{seed};
 
 		// manual "static" scheduling important, because later this thread needs to traverse the same cells
 		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {
@@ -966,24 +970,18 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
-void LinkedCells::deleteMolecule(Molecule &molecule, const bool& rebuildCaches) {
-	auto cellid = getCellIndexOfMolecule(&molecule);
+void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) {
 
-	if (cellid >= _cells.size()) {
-		global_log->error_always_output()
-				<< "coordinates for atom deletion lie outside bounding box."
-				<< endl;
-		Simulation::exit(1);
-	}
+	moleculeIter.deleteCurrentParticle();
 
-	bool found = this->_cells[cellid].deleteMoleculeByID(molecule.getID());
-
-	if (!found) {
-		global_log->error_always_output() << "could not delete molecule " << molecule.getID() << "."
-				<< endl;
-		Simulation::exit(1);
-	}
-	else if (rebuildCaches) {
+    if (rebuildCaches) {
+        auto cellid = getCellIndexOfMolecule(&*moleculeIter);
+        if (cellid >= _cells.size()) {
+          global_log->error_always_output()
+              << "coordinates for atom deletion lie outside bounding box."
+              << endl;
+          Simulation::exit(1);
+        }
 		_cells[cellid].buildSoACaches();
 	}
 }
@@ -1110,26 +1108,25 @@ std::string LinkedCells::getName() {
 	return "LinkedCells";
 }
 
-bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
+std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> LinkedCells::getMoleculeAtPosition(const double pos[3]) {
 	const double epsi = this->_cutoffRadius * 1e-6;
 	auto index = getCellIndexOfPoint(pos);
 	auto& cell = _cells.at(index);
 
 	// iterate through cell and compare position of molecules with given position
 
-	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
 
-	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.isValid(); ++it1) {
-		auto& mol = *it1;
+	for (auto cellIterator = cell.iterator(); cellIterator.isValid(); ++cellIterator) {
+		auto& mol = *cellIterator;
 
-		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {
+		if (fabs(cellIterator->r(0) - pos[0]) <= epsi && fabs(cellIterator->r(1) - pos[1]) <= epsi &&
+			fabs(cellIterator->r(2) - pos[2]) <= epsi) {
 			// found
-			*result = &mol;
-			return true;
+			return cellIterator;
 		}
 	}
-	// not found
-	return false;
+	// not found -> return default initialized iter.
+	return {};
 }
 
 bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurrentOptimalTraversal()->requiresForceExchange();}

@@ -21,11 +21,14 @@
 #define PARTICLECONTAINER_H_
 
 #include <list>
+#include <variant>
 #include <vector>
+#include "ParticleCell.h"
 #include "ParticleIterator.h"
 #include "RegionParticleIterator.h"
-#include "molecules/MoleculeForwardDeclaration.h"
 #include "io/MemoryProfiler.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+
 class CellProcessor;
 class ParticlePairsHandler;
 class XMLfileUnits;
@@ -204,7 +207,7 @@ public:
 	virtual double getSkin() const {return 0.;}
 
     /* TODO: Have a look on this */
-	virtual void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) = 0;
+	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
 
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
@@ -225,16 +228,15 @@ public:
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position
-	 * @param result Molecule will be returned by this pointer if found
-	 * @return Molecule was found?
+	 * @return Iterator to the molecule. The iterator is invalid if no molecule was found.
 	 */
-	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0; // new
+	virtual std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) = 0;
 
 	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	// or does this particle container calculate all forces.
-	virtual bool requiresForceExchange() const {return false;} // new
+	virtual bool requiresForceExchange() const {return false;}
         
-	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) = 0; // new
+	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0;
 
 	virtual double* getCellLength() = 0;
 

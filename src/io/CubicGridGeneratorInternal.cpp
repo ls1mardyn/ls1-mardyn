@@ -82,9 +82,8 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 		global_simulation->getEnsemble()->getComponents()->at(1).updateMassInertia();
 	}
 
-	unsigned long int id = 0;
-
-    id = particleContainer->initCubicGrid(numMoleculesPerDim, simBoxLength);
+	unsigned long int id = particleContainer->initCubicGrid(
+		numMoleculesPerDim, simBoxLength, static_cast<size_t>(domainDecomp->getRank()) * mardyn_get_max_threads());
 
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 
@@ -109,7 +108,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
 
 	Log::global_log->info() << "CGG: remove momentum" << std::endl;
-	removeMomentum(particleContainer, *(global_simulation->getEnsemble()->getComponents()));
+	removeMomentum(particleContainer, *(global_simulation->getEnsemble()->getComponents()), domainDecomp);
 	Log::global_log->info() << "CGG: momentum done" << std::endl;
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	Log::global_log->info() << "Calculated Rho=" << domain->getglobalRho() << std::endl;
@@ -220,7 +219,7 @@ std::array<unsigned long, 3> CubicGridGeneratorInternal::determineMolsPerDimensi
 //}
 
 void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleContainer,
-		const std::vector<Component>& components) {
+		const std::vector<Component>& components, DomainDecompBase* domainDecomp) {
 	double mass_sum = 0.;
 	//double momentum_sum[3] = { 0., 0., 0. };
 	double momentum_sum0 = 0.;
@@ -241,6 +240,19 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 			momentum_sum2 += mass * molecule->v(2);
 		}
 	}
+
+	domainDecomp->collCommInit(4);
+	domainDecomp->collCommAppendDouble(mass_sum);
+	domainDecomp->collCommAppendDouble(momentum_sum0);
+	domainDecomp->collCommAppendDouble(momentum_sum1);
+	domainDecomp->collCommAppendDouble(momentum_sum2);
+	domainDecomp->collCommAllreduceSum();
+	mass_sum = domainDecomp->collCommGetDouble();
+	momentum_sum0 = domainDecomp->collCommGetDouble();
+	momentum_sum1 = domainDecomp->collCommGetDouble();
+	momentum_sum2 = domainDecomp->collCommGetDouble();
+	domainDecomp->collCommFinalize();
+
 	Log::global_log->info() << "momentumsum: " << momentum_sum0 << " " << momentum_sum1<< " " << momentum_sum2 << std::endl;
 	Log::global_log->info() << "mass_sum: " << mass_sum << std::endl;
 	double v_sub0 = momentum_sum0 / mass_sum;
@@ -248,9 +260,11 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	double v_sub2 = momentum_sum2 / mass_sum;
 	{
 		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		Log::global_log->info() << "v_sub: " << v_sub0 << " " << v_sub1 << " " << v_sub2 << std::endl;
-		Log::global_log->info() << "m1 v: " << std::setprecision(10) << iter->v(0) << " " << iter->v(1) << " "
-								<< iter->v(2) << std::endl;
+		if(iter.isValid()) {
+			Log::global_log->info() << "v_sub: " << v_sub0 << " " << v_sub1 << " " << v_sub2 << std::endl;
+			Log::global_log->info() << "m1 v: " << std::setprecision(10) << iter->v(0) << " " << iter->v(1) << " "
+									<< iter->v(2) << std::endl;
+		}
 	}
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -263,8 +277,10 @@ void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleConta
 	}
 	{
 		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		Log::global_log->info() << "m1 v: " << iter->v(0) << " " << iter->v(1) << " " << iter->v(2)
-								<< std::setprecision(5) << std::endl;
+		if(iter.isValid()) {
+			Log::global_log->info() << "m1 v: " << iter->v(0) << " " << iter->v(1) << " " << iter->v(2)
+									<< std::setprecision(5) << std::endl;
+		}
 	}
 #ifndef NDEBUG
 	//test

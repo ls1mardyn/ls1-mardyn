@@ -87,7 +87,7 @@ pipeline {
                 dir ("build"){
                   sh """
                     cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
-                    make -j8
+                    make -j4
                   """
                 }
                 stash includes: "build/src/MarDyn", name: "autopas_exec"
@@ -101,7 +101,7 @@ pipeline {
                 dir ("build-mpi"){
                   sh """
                     CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
-                    make -j8
+                    make -j4
                   """
                 }
                 stash includes: "build-mpi/src/MarDyn", name: "autopas_mpi_exec"
@@ -239,10 +239,11 @@ pipeline {
                   def build_result = "not run"
                   def unit_test_result = "not run"
                   def validation_test_result = "not run"
-                  try {
-                    stage("${it.join('-')}") {
-                      sh "rm -rf ${it.join('-')} || echo ''"
-                      ws("${WORKSPACE}/${it.join('-')}") {
+
+                  stage("${it.join('-')}") {
+                    sh "rm -rf ${it.join('-')} || echo ''"
+                    ws("${WORKSPACE}/${it.join('-')}") {
+                      try {
                         unstash 'repo'
                         stage("build/${it.join('-')}") {
                           try {
@@ -365,7 +366,8 @@ pipeline {
                                 "surface-tension_LRC_CO2_Merker_280",
                                 "simple-lj_kdd",
                                 "simple-lj-direct-mp",
-                                "simple-lj-direct"
+                                "simple-lj-direct",
+                                "LRC_planar_2020"
                               ]
                               def legacyCellProcessorOptions = ((VECTORIZE_CODE == "NOVEC") && (REDUCED_MEMORY_MODE == "0") ? [false, true] : [false])
                               for (legacyCellProcessor in legacyCellProcessorOptions) {
@@ -408,8 +410,7 @@ pipeline {
                                               -n ./${it.join('-')} \
                                               $legacyCellProcessorOption \
                                               $allmpi \
-                                              -c \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f -name *.xml) )\" \
-                                              -i \"\$(realpath \$(find ../../validationInput/$configDirVar/ -type f \\( -iname \\*.dat -o -iname \\*.inp -o -iname \\*.xdr \\)) )\" \
+                                              -c \"\$(realpath ../../validationInput/$configDirVar/config.xml)\" \
                                               $plugins $icount $sameParTypeOption $mpicmd $mpiextra
                                           """
                                         }
@@ -425,21 +426,22 @@ pipeline {
                             }
                           }
                         }
+                        results.put(it.join('-'), [:])
+                        results[it.join('-')].put("runOn", ARCH)
+                        results[it.join('-')].put("build", build_result)
+                        results[it.join('-')].put("unit-test", unit_test_result)
+                        results[it.join('-')].put("validation-test", validation_test_result)
+                        cleanWs(deleteDirs:true, disableDeferredWipeout: true)
+                      } catch (err) {
+                        results.put(it.join('-'), [:])
+                        results[it.join('-')].put("runOn", ARCH)
+                        results[it.join('-')].put("build", build_result)
+                        results[it.join('-')].put("unit-test", unit_test_result)
+                        results[it.join('-')].put("validation-test", validation_test_result)
+                        cleanWs(deleteDirs:true, disableDeferredWipeout: true)
+                        error err
                       }
                     }
-                    results.put(it.join('-'), [:])
-                    results[it.join('-')].put("runOn", ARCH)
-                    results[it.join('-')].put("build", build_result)
-                    results[it.join('-')].put("unit-test", unit_test_result)
-                    results[it.join('-')].put("validation-test", validation_test_result)
-                  }
-                  catch (err) {
-                    results.put(it.join('-'), [:])
-                    results[it.join('-')].put("runOn", ARCH)
-                    results[it.join('-')].put("build", build_result)
-                    results[it.join('-')].put("unit-test", unit_test_result)
-                    results[it.join('-')].put("validation-test", validation_test_result)
-                    error err
                   }
                 }
               }
@@ -549,7 +551,7 @@ pipeline {
             stage('release documentation') {
               when { branch 'master' }
               steps {
-                sh "rm -rf /home/wwwsccs/html/mardyn/doc /home/wwwsccs/html/mardyn/doxys_docs"
+                sh "rm -rf /home/wwwsccs/html/mardyn/doc /home/wwwsccs/html/mardyn/doxygen_doc"
                 sh "cp -r doc /home/wwwsccs/html/mardyn"
                 sh "cp -r doxygen_doc /home/wwwsccs/html/mardyn"
                 sh "chmod -R 775 /home/wwwsccs/html/mardyn/doc"

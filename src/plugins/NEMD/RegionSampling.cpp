@@ -19,6 +19,7 @@
 #include <fstream>
 #include <sstream>
 #include <limits>
+#include <numeric>
 #include <cmath>
 #include <cstdint>
 #include <algorithm>  // std::fill
@@ -77,16 +78,14 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	_vecMass.resize(_numComponents);
 	_vecMass.at(0) = 0.;
 	for(uint8_t cid=1; cid<_numComponents; ++cid)
-	{
 		_vecMass.at(cid) = global_simulation->getEnsemble()->getComponent(cid-1)->m();
-//		cout << "cid = " << cid << ": mass = " << _vecMass.at(cid) << endl;
-	}
 
 	// Init component specific parameters for VDF sampling
 	this->initComponentSpecificParamsVDF();
 
 	_fptr = get_v;
 	_f2ptr = get_v2;
+	_boolSingleComp = false;
 }
 
 SampleRegion::~SampleRegion() {}
@@ -128,6 +127,55 @@ void SampleRegion::showComponentSpecificParamsVDF()
 
 void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 {
+	Domain* domain = global_simulation->getDomain();
+	double lc[3];
+	double uc[3];
+	std::string strVal[3];
+	std::string strControlType;
+
+	// coordinates
+	xmlconfig.getNodeValue("coords/lcx", lc[0]);
+	xmlconfig.getNodeValue("coords/lcy", lc[1]);
+	xmlconfig.getNodeValue("coords/lcz", lc[2]);
+	xmlconfig.getNodeValue("coords/ucx", strVal[0]);
+	xmlconfig.getNodeValue("coords/ucy", strVal[1]);
+	xmlconfig.getNodeValue("coords/ucz", strVal[2]);
+	// read upper corner
+	for(uint8_t d=0; d<3; ++d)
+		uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str() );
+
+	global_log->info() << "RegionSampling->region["<<this->GetID()<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << std::endl;
+	global_log->info() << "RegionSampling->region["<<this->GetID()<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << std::endl;
+
+	for(uint8_t d=0; d<3; ++d) {
+		_dLowerCorner[d] = lc[d];
+		_dUpperCorner[d] = uc[d];
+	}
+
+	// observer mechanism
+	std::vector<uint32_t> refCoordsID(6, 0);
+	xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID.at(0) );
+	xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID.at(1) );
+	xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID.at(2) );
+	xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID.at(3) );
+	xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4) );
+	xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5) );
+
+	bool bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0) ) > 0;
+	if(true == bIsObserver)
+	{
+		this->PrepareAsObserver(refCoordsID);
+
+		DistControl* distControl = this->getDistControl();
+		if(distControl != nullptr)
+			distControl->registerObserver(this);
+		else
+		{
+			global_log->error() << "RegionSampling->region["<<this->GetID()<<"]: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+
 	// sampling modules
 	uint32_t nSamplingModuleID = 0;
 	uint32_t numSamplingModules = 0;
@@ -148,6 +196,14 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 
 		if("profiles" == strSamplingModuleType)
 		{
+			// pretend single component
+			bool bVal = false;
+			xmlconfig.getNodeValue("@single_component", bVal);
+			_boolSingleComp = bVal;
+			if(_boolSingleComp) {
+				_numComponents=2;
+				global_log->info() << "Pretend single component sampling: _numComponents=" << _numComponents << endl;
+			}
 			// enable profile sampling
 			_SamplingEnabledProfiles = true;
 			// control
@@ -221,6 +277,15 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			xmlconfig.getNodeValue("control/start", _initSamplingVDF);
 			xmlconfig.getNodeValue("control/frequency", _writeFrequencyVDF);
 			xmlconfig.getNodeValue("control/stop", _stopSamplingVDF);
+			
+			xmlconfig.getNodeValue("@single_component", _boolSingleComp);
+			if(_boolSingleComp)
+			{
+				global_log->info() << "RegionSampling->region[" << this->GetID()-1 << "]: Single component enabled ( " << _boolSingleComp << " ) " << endl;
+			} else
+			{
+				global_log->info() << "RegionSampling->region[" << this->GetID()-1 << "]: Single component disabled ( " << _boolSingleComp << " ) " << endl;
+			}
 
 			// velocity dicretization
 			{
@@ -229,7 +294,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				uint32_t numDiscretizations = 0;
 				XMLfile::Query query_vd = xmlconfig.query("discretization");
 				numDiscretizations = query_vd.card();
-				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations (components for that VDF should be sampled): " << numDiscretizations << endl;
+				global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations: " << numDiscretizations << endl;
 				if(numDiscretizations < 1) {
 					global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No velocity discretizations specified for VDF sampling. Program exit ..." << endl;
 					Simulation::exit(-1);
@@ -239,13 +304,23 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				{
 					xmlconfig.changecurrentnode(nodeIter);
 					uint32_t cid = 0;
-					if(not (xmlconfig.getNodeValue("@cid", cid) && cid < _numComponents) )
+					bool bVal = xmlconfig.getNodeValue("@cid", cid);
+					if( (cid > _numComponents) || ((not bVal) && (not _boolSingleComp)) ){
 						global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << endl;
+						Simulation::exit(-1);
+					}
 
+					if(_boolSingleComp){
+						cid = 1;
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): All components treated as one. Fake-CID: " << cid << endl;
+					} else {
+						global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): ID of component to be sampled: " << cid << endl;
+					}
 					ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
 					csp.bSamplingEnabled = true;
 					xmlconfig.getNodeValue("numclasses", csp.numVelocityClasses);
 					xmlconfig.getNodeValue("maxvalue", csp.dVeloMax);
+	
 				}
 				xmlconfig.changecurrentnode(oldpath);
 			}
@@ -697,12 +772,6 @@ void SampleRegion::initSamplingVDF(int nDimension)
 
 	// init local values
 	this->resetLocalValuesVDF();
-/*
-	cout << "_initSamplingVDF = " << _initSamplingVDF << endl;
-	cout << "_writeFrequencyVDF = " << _writeFrequencyVDF << endl;
-	cout << "_numBinsVDF = " << _numBinsVDF << endl;
-	cout << "_numVelocityClassesVDF = " << _numVelocityClassesVDF << endl;
-*/
 
 	// discrete velocity values
 	this->doDiscretisationVDF(RS_DIMENSION_Y);
@@ -911,6 +980,9 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 		return;
 
 	unsigned int cid = molecule->componentid() + 1;  // id starts internally with 0
+	if(_boolSingleComp){
+		cid = 1;
+	}
 	unsigned int nRotDOF = molecule->component()->getRotationalDegreesOfFreedom();
 	double d2EkinTrans = molecule->U_trans_2();
 	double d2EkinRot   = molecule->U_rot_2();
@@ -1021,9 +1093,14 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 		return;
 
 	uint32_t cid = molecule->componentid()+1;  // 0: all components
+	if(_boolSingleComp){
+		cid = 1;
+	}
 	const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
-	if(not csp.bSamplingEnabled)
+	if(not csp.bSamplingEnabled){
 		return;
+	}
+
 	uint32_t nComponentOffset = csp.nOffsetDataStructure;
 
 	// calc bin index / offset
@@ -1335,9 +1412,6 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 			_dForce        [nDimOffset+i] = _dForceGlobal   [nDimOffset+i] * dInvertNumMolecules;
 			double d2EkinTrans = _d2EkinTransComp[nDimOffset+i];
 			double d2EkinDrift = _d2EkinDriftComp[nDimOffset+i];
-//			cout << "nDimOffset+i = " << nDimOffset+i << endl;
-//			cout << "dEkinTrans = " << dEkinTrans << endl;
-//			cout << "dEkinDrift = " << dEkinDrift << endl;
 			_dTemperatureComp[nDimOffset+i] = (d2EkinTrans - d2EkinDrift) * dInvertNumMolecules;
 		}
 	}
@@ -1439,11 +1513,14 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 	if(not _SamplingEnabledProfiles)
 		return;
 
-	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
+	// sampling starts after initial timestep (_initSamplingProfiles) and with respect to write frequency (_writeFrequencyProfiles)
 	if( simstep <= _initSamplingProfiles )
 		return;
 
-	if ( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
+	if( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
+		return;
+
+	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
 		return;
 
 	// calc global values
@@ -1603,7 +1680,10 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 	if( simstep <= _initSamplingVDF )
 		return;
 
-	if ( (simstep - _initSamplingVDF) % _writeFrequencyVDF != 0 )
+	if( (simstep - _initSamplingVDF) % _writeFrequencyVDF != 0 )
+		return;
+
+	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
 		return;
 
 	// calc global values
@@ -1721,11 +1801,14 @@ void SampleRegion::writeDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 	if(not _SamplingEnabledFieldYR)
 		return;
 
-	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
+	// sampling starts after initial timestep (_initSamplingFieldYR) and with respect to write frequency (_writeFrequencyFieldYR)
 	if( simstep <= _initSamplingFieldYR )
 		return;
 
-	if ( (simstep - _initSamplingFieldYR) % _writeFrequencyFieldYR != 0 )
+	if( (simstep - _initSamplingFieldYR) % _writeFrequencyFieldYR != 0 )
+		return;
+
+	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
 		return;
 
 	// calc global values
@@ -1881,6 +1964,19 @@ void SampleRegion::updateSlabParameters()
 	}
 }
 
+DistControl* SampleRegion::getDistControl()
+{
+	DistControl* distControl = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			distControl = dynamic_cast<DistControl*>(pit);
+		}
+	}
+	return distControl;
+}
+
 // class RegionSampling
 
 RegionSampling::RegionSampling()
@@ -1913,61 +2009,14 @@ void RegionSampling::readXML(XMLfileUnits& xmlconfig)
 	XMLfile::Query::const_iterator outputRegionIter;
 	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 	{
+		std::vector<double> lc(3, 0.);
+		std::vector<double> uc(3, 0.);
+
 		xmlconfig.changecurrentnode( outputRegionIter );
-		double lc[3];
-		double uc[3];
-		std::string strVal[3];
-		std::string strControlType;
-
-		// coordinates
-		xmlconfig.getNodeValue("coords/lcx", lc[0]);
-		xmlconfig.getNodeValue("coords/lcy", lc[1]);
-		xmlconfig.getNodeValue("coords/lcz", lc[2]);
-		xmlconfig.getNodeValue("coords/ucx", strVal[0]);
-		xmlconfig.getNodeValue("coords/ucy", strVal[1]);
-		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
-		// read upper corner
-		for(uint8_t d=0; d<3; ++d)
-			uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str() );
-
-		global_log->info() << "RegionSampling->region["<<nRegID<<"]: lower corner: " << lc[0] << ", " << lc[1] << ", " << lc[2] << endl;
-		global_log->info() << "RegionSampling->region["<<nRegID<<"]: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
-
-		// add regions
-		SampleRegion* region = new SampleRegion(this, lc, uc);
-		this->addRegion(region);
-
-		// observer mechanism
-		uint32_t refCoordsID[6] = {0, 0, 0, 0, 0, 0};
-		xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID[0]);
-		xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID[1]);
-		xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID[2]);
-		xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID[3]);
-		xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID[4]);
-		xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID[5]);
-
-		bool bIsObserver = (refCoordsID[0]+refCoordsID[1]+refCoordsID[2]+refCoordsID[3]+refCoordsID[4]+refCoordsID[5]) > 0;
-
-		if(bIsObserver)
-		{
-			region->PrepareAsObserver(refCoordsID);
-			global_log->warning() << "Registration of Observer by plugin DistControl not possible yet." << endl;
-			/*
-			 * TODO: Find solution for registering Observer
-			 *
-			if(global_simulation->GetDistControl() != nullptr)
-				global_simulation->GetDistControl()->registerObserver(region);
-			else
-			{
-				global_log->error() << "RegionSampling->region["<<region->GetID()<<"]: Initialization of feature DistControl is needed before! Program exit..." << endl;
-				exit(-1);
-			}
-			*/
-		}
-
+		SampleRegion* region = new SampleRegion(this, lc.data(), uc.data() );
 		region->readXML(xmlconfig);
+		this->addRegion(region);
 		nRegID++;
-
 	}  // for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 }
 

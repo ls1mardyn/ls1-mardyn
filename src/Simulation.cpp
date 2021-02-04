@@ -65,7 +65,6 @@
 #include "thermostats/TemperatureControl.h"
 
 #include "utils/FileUtils.h"
-#include "utils/OptionParser.h"
 #include "utils/Logger.h"
 
 #include "longRange/LongRangeCorrection.h"
@@ -78,11 +77,7 @@
 #include "plugins/VectorizationTuner.h"
 
 using Log::global_log;
-using optparse::OptionParser;
-using optparse::OptionGroup;
-using optparse::Values;
 using namespace std;
-
 
 Simulation* global_simulation;
 
@@ -315,7 +310,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
-				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain, _ensemble->getComponents()->size());
+				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
 				// we need the skin here, so we extract it from the AutoPas container's xml,
@@ -358,6 +353,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
 			_domainDecomposition->readXML(xmlconfig);
+        #ifdef ENABLE_MPI
+            if(auto kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition)) {
+                kdd->init(_domain);
+			}
+        #endif
 
 			string loadTimerStr("SIMULATION_COMPUTATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
@@ -405,9 +405,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			} else if(datastructuretype == "AutoPas" || datastructuretype == "AutoPasContainer") {
 #ifdef MARDYN_AUTOPAS
 				global_log->info() << "Using AutoPas container." << std::endl;
-				_moleculeContainer = new AutoPasContainer();
+				_moleculeContainer = new AutoPasContainer(_cutoffRadius);
 				global_log->info() << "Setting cell cutoff radius for AutoPas container to " << _cutoffRadius << endl;
-				_moleculeContainer->setCutoff(_cutoffRadius);
 #else
 				global_log->fatal() << "AutoPas not compiled (use LinkedCells instead, or compile with enabled autopas mode)!" << std::endl;
 				Simulation::exit(33);
@@ -526,16 +525,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Algorithm section missing." << endl;
 	}
 
-
+	global_log -> info() << "Registering default plugins..." << endl;
     // REGISTERING/ENABLING PLUGINS
 	PluginFactory<PluginBase> pluginFactory;
     pluginFactory.registerDefaultPlugins();
+	global_log -> info() << "Successfully registered plugins." << endl;
 
-    int numPlugs = 0;
+    long numPlugs = 0;
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
-    global_log -> info() << "Number of Total Plugins: " << numPlugs << endl;
-
+    global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
 
 
     string oldpath = xmlconfig.getcurrentnodepath();
@@ -788,6 +787,12 @@ void Simulation::prepare_start() {
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
+	if (_longRangeCorrection == nullptr) {
+		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, this);
+	}
+	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
+	_longRangeCorrection->calculateLongRange();
+
 	// Update forces in molecules so they can be exchanged - future
 	updateForces();
 
@@ -809,6 +814,10 @@ void Simulation::prepare_start() {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
+
+	/** Init TemperatureControl beta_trans, beta_rot log-files, register as observer if plugin DistControl is in use. */
+	if(nullptr != _temperatureControl)
+		_temperatureControl->prepare_start();  // Has to be called before plugin initialization (see below): plugin->init(...)
 
 	// initializing plugins and starting plugin timers
 	for (auto& plugin : _plugins) {
@@ -836,11 +845,6 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 #endif
 
-	if (_longRangeCorrection == nullptr){
-		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,this);
-	}
-
-	_longRangeCorrection->calculateLongRange();
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
@@ -860,10 +864,6 @@ void Simulation::prepare_start() {
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
-
-	/** Init TemperatureControl beta_trans, beta_rot log-files*/
-	if(nullptr != _temperatureControl)
-		_temperatureControl->InitBetaLogfiles();
 
 	/** refresh particle IDs */
 	if(_prepare_start_opt.refreshIDs)
@@ -994,6 +994,9 @@ void Simulation::simulate() {
 				plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
 			}
 
+			// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
+			_longRangeCorrection->calculateLongRange();
+
 			// Update forces in molecules so they can be exchanged
 			updateForces();
 
@@ -1033,9 +1036,10 @@ void Simulation::simulate() {
 		_moleculeContainer->deleteOuterParticles();
 #endif
 
-		if (!(_simstep % _collectThermostatDirectedVelocity))
+		if (!(_simstep % _collectThermostatDirectedVelocity)) {
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-		_longRangeCorrection->calculateLongRange();
+		}
+
 		_longRangeCorrection->writeProfiles(_domainDecomposition, _domain, _simstep);
 
 		_ensemble->beforeThermostat(_simstep, _initStatistics);
@@ -1202,6 +1206,8 @@ void Simulation::finalize() {
 		delete _domainDecomposition;
 		_domainDecomposition = nullptr;
 	}
+
+	_plugins.remove_if([](PluginBase * plugin) { delete plugin; return true; });
 	global_simulation = nullptr;
 }
 
@@ -1324,33 +1330,14 @@ CellProcessor *Simulation::getCellProcessor() const {
 
 void Simulation::refreshParticleIDs()
 {
-	uint64_t prevMaxID = 0;  // max ID of previous process
-	int ownRank = _domainDecomposition->getRank();
-
+    unsigned long start_ID = 0;
 #ifdef ENABLE_MPI
-	int numProcs = _domainDecomposition->getNumProcs();
-	if (ownRank != 0) {
-		MPI_Recv(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-#ifndef NDEBUG
-		cout << "Process " << ownRank << " received maxID=" << prevMaxID << " from process " << (ownRank-1) << "." << endl;
-#endif
-	}
+    unsigned long num_molecules_local = _moleculeContainer->getNumberOfParticles();
+    MPI_Exscan(&num_molecules_local, &start_ID, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
 #endif
 
-	uint64_t tmpID = prevMaxID;
-
-#ifdef ENABLE_MPI
-	if(ownRank < (numProcs-1) ) {
-		prevMaxID += _moleculeContainer->getNumberOfParticles();
-		MPI_Send(&prevMaxID, 1, MPI_UNSIGNED_LONG, (ownRank+1), 0, MPI_COMM_WORLD);
-	}
-#endif
-
-#ifndef NDEBUG
-	cout << "["<<ownRank<<"]tmpID=" << tmpID << endl;
-#endif
 	for (auto pit = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{
-		pit->setid(++tmpID);
+		pit->setid(++start_ID);
 	}
 }

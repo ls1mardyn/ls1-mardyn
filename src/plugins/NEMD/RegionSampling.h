@@ -42,6 +42,7 @@ struct ComponentSpecificParamsVDF
 	std::vector<double> dDiscreteVelocityValues;
 };
 
+class DistControl;
 class XMLfileUnits;
 class Domain;
 class DomainDecompBase;
@@ -121,6 +122,9 @@ private:
 	static void get_F2(double& q, Molecule* mol);
 	void(*_fptr)(double*, Molecule*);
 	void(*_f2ptr)(double&, Molecule*);
+
+	// observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
+	DistControl* getDistControl();
 
 private:
 	template<typename T>
@@ -305,6 +309,8 @@ private:
 	// output file
 	std::string _strFilePrefixFieldYR;
 	uint8_t _nFileTypeFieldYR;
+	
+	bool _boolSingleComp;
 };
 
 class XMLfileUnits;
@@ -316,6 +322,73 @@ public:
 
 	std::string getShortName() override {return "ReS";}
 
+	/** @brief Read in XML configuration for DistControl and all its included objects.
+	 *
+	 * The following XML object structure is handled by this method:
+	 * \code{.xml}
+	<plugin name="RegionSampling">
+		<region>
+			<coords>   <!-- lc and uc: lower and upper corner of cuboid sampling region -->
+				<lcx>FLOAT</lcx> <lcy refcoordsID="0">FLOAT</lcy> <lcz>FLOAT</lcz>
+				<ucx>FLOAT</ucx> <ucy refcoordsID="0">FLOAT</ucy> <ucz>FLOAT</ucz>
+			</coords>
+
+			<sampling type="profiles">   <!-- Sampling profiles of various scalar and vector quantities, e.g. temperature, density, force, hydrodynamic velocity -->
+				<control>
+					<start>INT</start>           <!-- start time step -->
+					<frequency>INT</frequency>   <!-- frequency of writing profiles -->
+					<stop>INT</stop>             <!-- stop time step -->
+				</control>
+				<subdivision type="width">       <!-- type="number | width" => subdivision of region into bins -->
+					<width>FLOAT</width>         <!-- bin width -->
+					<number>INT</number>         <!-- number of bins -->
+				</subdivision>
+			</sampling>
+
+			<sampling type="VDF" single_component="1">                <!-- Sampling of velocity distribution functions (VDF); Do not differ between components, if single_component is 1-->
+				<control>
+					<start>INT</start>           <!-- start time step -->
+					<frequency>INT</frequency>   <!-- frequency of writing profiles -->
+					<stop>INT</stop>             <!-- stop time step -->
+				</control>
+				<subdivision type="width">       <!-- type="number | width" => subdivision of region into bins -->
+					<width>FLOAT</width>         <!-- bin width -->
+					<number>INT</number>         <!-- number of bins -->
+				</subdivision>
+				<discretizations>
+					<discretization cid="INT">          <!-- discretization of the velocity into discrete classes, for component cid="INT" -->
+						<numclasses>INT</numclasses>    <!-- number of velocity classes -->
+						<maxvalue>FLOAT</maxvalue>      <!-- maximum velocity that will be sampled -->
+					</discretization>
+				</discretizations>
+			</sampling>
+
+			<sampling type="fieldYR">             <!-- Sampling of a density field \rho(y,r) in cylinder shells, depending on a Cartesian coordinate y and radius r -->
+				<outputfile type="binary">        <!-- type="ASCII | binary" of output files -->
+					<prefix>STRING</prefix>       <!-- file prefix of output files -->
+				</outputfile>
+				<control>
+					<start>INT</start>           <!-- start time step -->
+					<frequency>INT</frequency>   <!-- frequency of writing profiles -->
+					<stop>INT</stop>             <!-- stop time step -->
+				</control>
+				<subdivision dim="y" type="width">   <!-- dim="y": subdivision of region into bins (y axis), type="number | width" -->
+					<width>FLOAT</width>             <!-- bin width -->
+					<number>INT</number>             <!-- number of bins -->
+				</subdivision>
+				<subdivision dim="r" type="width">   <!-- dim="r": subdivision of region into cylinder shells around y axis, type="number | width" -->
+					<width>FLOAT</width>             <!-- width of the inner most shell, width of outer shells will be calculated such that the shell volume is const. -->
+					<number>INT</number>             <!-- number of shells -->
+				</subdivision>
+			</sampling>
+		</region>
+
+		<region>
+			...
+		</region>
+	</plugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
 	void init(ParticleContainer *particleContainer,
@@ -350,41 +423,12 @@ protected:
 
 private:
 	std::vector<SampleRegion*> _vecSampleRegions;
-
+	
 	unsigned long _initSamplingProfiles;
 	unsigned long _writeFrequencyProfiles;
 	unsigned long _initSamplingVDF;
 	unsigned long _writeFrequencyVDF;
 };
-
-
-//class RegionSamplingPlugin : public RegionSampling, public PluginBase
-//{
-//public:
-//	RegionSamplingPlugin() {}
-//	~RegionSamplingPlugin() {}
-//
-//	void readXML(XMLfileUnits& xmlconfig) override;
-//
-//	void init(ParticleContainer *particleContainer,
-//			  DomainDecompBase *domainDecomp, Domain *domain) override;
-//
-//	void afterForces(
-//			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-//			unsigned long simstep
-//	) override;
-//
-//	void endStep(
-//			ParticleContainer *particleContainer,
-//			DomainDecompBase *domainDecomp, Domain *domain,
-//			unsigned long simstep) override {}
-//
-//	void finish(ParticleContainer *particleContainer,
-//				DomainDecompBase *domainDecomp, Domain *domain) override {}
-//
-//	std::string getPluginName() override {return std::string("RegionSamplingPlugin");}
-//	static PluginBase* createInstance() {return new RegionSamplingPlugin();}
-//};
 
 #endif /* REGIONSAMPLING_H_ */
 

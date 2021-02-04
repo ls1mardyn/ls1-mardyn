@@ -10,38 +10,81 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 
 #include "molecules/Molecule.h"
 #include "ThermostatVariables.h"
 #include "utils/Random.h"
 #include "integrators/Integrator.h"
+#include "plugins/NEMD/DistControl.h"
+#include "utils/ObserverBase.h"
+#include "utils/Region.h"
+#include "utils/CommVar.h"
 
+class DistControl;
 class XMLfileUnits;
 class DomainDecompBase;
 class ParticleContainer;
 class Accumulator;
-class ControlRegionT
+class TemperatureControl;
+class ControlRegionT : public CuboidRegionObs
 {
 public:
-	ControlRegionT();
+	ControlRegionT(TemperatureControl* const parent);
 	~ControlRegionT();
 
+	/** @brief Read in XML configuration for TemperatureControl and all its included objects.
+	 *
+	 * The following XML object structure is handled by this method:
+	 * \code{.xml}
+		<thermostats>
+			<thermostat type="TemperatureControl">
+				<control>
+					<start>UNSIGNED_LONG</start>           <!-- Timestep turning thermostat ON -->
+					<frequency>UNSIGNED_LONG</frequency>   <!-- Thermosatt is active every <frequency>-th time step -->
+					<stop>UNSIGNED_LONG</stop>             <!-- Timestep turning thermostat OFF -->
+				</control>
+				<regions>
+					<region>
+						<coords>
+							<lcx>DOUBLE</lcx> <lcy>DOUBLE</lcy> <lcz>DOUBLE</lcz>
+							<ucx>DOUBLE</ucx> <ucy>DOUBLE</ucy> <ucz>DOUBLE</ucz>
+						</coords>
+						<target>
+							<temperature>DOUBLE</temperature>   <!-- target temperature -->
+							<ramp>                    <!-- ramp temperature from <start> to <end> value -->
+								<start>0.70</start>   <!-- start temperature -->
+								<end>0.80</end>       <!-- end temperature -->
+								<update>
+									<start>UNSIGNED_LONG</start>   <!-- Timestep of ramping start -->
+									<stop>UNSIGNED_LONG</stop>     <!-- Timestep of ramping stop -->
+									<freq>UNSIGNED_LONG</freq>     <!-- adjust target temperature every <freq>-th time step -->
+								</update>
+							</ramp>
+							<component>1</component>   <!-- target component -->
+						</target>
+						<settings>
+							<numslabs>UNSIGNED_LONG</numslabs>   <!-- Divide region into <numslabs> slabs -->
+							<exponent>DOUBLE</exponent>          <!-- Damping exponent of thermostat -->
+							<directions>xyz</directions>         <!-- Translational degrees of freedom to be considered for thermostating: x|y|z|xy|xz|yz|xyz -->
+						</settings>
+						<writefreq>5000</writefreq>         <!-- Log thermostat scaling factors betaTrans and betaRot -->
+						<fileprefix>betalog</fileprefix>    <!-- Prefix of log file -->
+					</region>
+					</region>   <!-- Add as much regions as you want! -->
+						<!-- ...  -->
+					</region>
+				</regions>
+			</thermostat>
+		</thermostats>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
-
 	unsigned int GetID(){return _nID;}
 	void VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections);
-
-	double* GetLowerCorner() {return _dLowerCorner;}
-	double* GetUpperCorner() {return _dUpperCorner;}
-	void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal;}
-	void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal;}
-	double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
-	void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
 	void CalcGlobalValues(DomainDecompBase* domainDecomp);
 	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-
 	void ControlTemperature(Molecule* mol);
-
 	void ResetLocalValues();
 
 	// beta log file
@@ -54,16 +97,21 @@ public:
 	};
 	LocalControlMethod _localMethod;
 
+	void registerAsObserver();
+	void update(SubjectBase* subject) override;
+
+	// measure added kin. energy
+	void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
+
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
 	Accumulator* CreateAccumulatorInstance(std::string strTransDirections);
 
+	// observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
+	DistControl* getDistControl();
+
 	// instances / ID
 	static unsigned short _nStaticID;
-	unsigned short _nID;
-
-	double _dLowerCorner[3];
-	double _dUpperCorner[3];
 
 	unsigned int _nNumSlabs;
 	double _dSlabWidth;
@@ -74,8 +122,6 @@ private:
 	double _dTemperatureExponent;
 	unsigned int _nTargetComponentID;
 	unsigned short _nNumThermostatedTransDirections;
-
-	unsigned short _nRegionID;
 
 	Accumulator* _accumulator;
 
@@ -88,20 +134,38 @@ private:
 	double _timestep;
 	double _nuDt;
 	Random _rand;
+
+	bool _bIsObserver;
+
+	struct AddedEkin {
+		uint32_t writeFreq;
+		CommVar<std::vector<double> > data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
+	} _addedEkin;
+	
+	struct Ramp {
+		bool enabled;
+		float start, end, delta, slope;
+		struct Update {
+			uint64_t start, stop, delta, elapsed;
+			uint32_t freq;
+		} update;
+	} _ramp;
 };
 
 
 class Domain;
-class TemperatureControl
+class TemperatureControl : public ControlInstance
 {
 public:
 	TemperatureControl();
 	~TemperatureControl();
 
+	std::string getShortName() override {return "TeC";}
 	void readXML(XMLfileUnits& xmlconfig);
 	void AddRegion(ControlRegionT* region);
 	int GetNumRegions() {return _vecControlRegions.size();}
 	ControlRegionT* GetControlRegion(unsigned short nRegionID) {return _vecControlRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
+	void prepare_start();
 
 	void Init(unsigned long simstep);
 	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep);
@@ -118,6 +182,9 @@ public:
 	// loops over molecule container
 	void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
 	void VelocityScalingPreparation(DomainDecompBase *, ParticleContainer *, unsigned long simstep);
+
+	// measure added kin. energy
+	void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
 
 private:
 	std::vector<ControlRegionT*> _vecControlRegions;

@@ -4,30 +4,79 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include "plugins/NEMD/DistControl.h"
 
+#include <string>
 #include <fstream>
 #include <cmath>
 #include <cstdlib>
+#include <cstdint>
 
 using namespace std;
 using Log::global_log;
 
-Mirror::Mirror()
+void printInsertionStatus(std::pair<std::map<uint64_t,double>::iterator,bool> &status)
 {
+	if (status.second == false)
+		std::cout << "Element already existed";
+	else
+		std::cout << "Element successfully inserted";
+	std::cout << " with a value of " << status.first->second << std::endl;
 }
 
-Mirror::~Mirror()
+Mirror::Mirror() :
+	_pluginID(100)
 {
+	// random numbers
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+	int nRank = domainDecomp.getRank();
+	_rnd.reset(new Random(8624+nRank));
+
+	uint32_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
+	_particleManipCount.deleted.local.resize(numComponents+1);
+	_particleManipCount.deleted.global.resize(numComponents+1);
+	_particleManipCount.reflected.local.resize(numComponents+1);
+	_particleManipCount.reflected.global.resize(numComponents+1);
+
+	for(uint32_t i=0; i<numComponents; ++i) {
+		_particleManipCount.deleted.local.at(i)=0;
+		_particleManipCount.deleted.global.at(i)=0;
+		_particleManipCount.reflected.local.at(i)=0;
+		_particleManipCount.reflected.global.at(i)=0;
+	}
 }
 
 void Mirror::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
-	global_log->debug() << "Mirror enabled at position: " << _yPos << std::endl;
+	global_log->debug() << "Mirror enabled at position: " << _position.coord << std::endl;
 }
 
-void Mirror::readXML(XMLfileUnits& xmlconfig) {
-	_yPos = 0.;
-	xmlconfig.getNodeValue("yPos", _yPos);
-	global_log->info() << "Mirror: y position = " << _yPos << endl;
+void Mirror::readXML(XMLfileUnits& xmlconfig)
+{
+	_pluginID = 100;
+	xmlconfig.getNodeValue("pluginID", _pluginID);
+	global_log->info() << "Mirror: pluginID = " << _pluginID << endl;
+
+	// Mirror position
+	_position.axis = 1;  // only y-axis supported yet
+	_position.coord = 0.;
+	_position.ref.id = 0;  // 0:domain origin, 1:left interface, 2:right interface
+	_position.ref.origin = 0.;
+	_position.ref.coord = 0.;
+	int id = 0;
+	xmlconfig.getNodeValue("position/refID", id);
+	_position.ref.id = (uint16_t)(id);
+	xmlconfig.getNodeValue("position/coord", _position.ref.coord);
+	SubjectBase* subject = getSubject();
+	this->update(subject);
+	if(_position.ref.id > 0) {
+		if(nullptr != subject)
+			subject->registerObserver(this);
+		else {
+			global_log->error() << "Mirror: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+	global_log->info() << "Mirror: y position = " << _position.coord << endl;
 
 	_forceConstant = 100.;
 	xmlconfig.getNodeValue("forceConstant", _forceConstant);
@@ -46,14 +95,14 @@ void Mirror::readXML(XMLfileUnits& xmlconfig) {
 	_direction = static_cast<MirrorDirection>(dir);
 	std::string strDirection = "unknown";
 	xmlconfig.getNodeValue("@dir", strDirection);
-	if("|<--" == strDirection)
+	if("|-o" == strDirection)
 		_direction = MD_LEFT_MIRROR;
-	else if("-->|" == strDirection)
+	else if("o-|" == strDirection)
 		_direction = MD_RIGHT_MIRROR;
 	if(MD_LEFT_MIRROR == _direction)
-		global_log->info() << "Mirror: direction |<--" << endl;
+		global_log->info() << "Mirror: reflect particles to the right |-o" << endl;
 	else if(MD_RIGHT_MIRROR == _direction)
-		global_log->info() << "Mirror: direction -->|" << endl;
+		global_log->info() << "Mirror: reflect particles to the left o-|" << endl;
 
 	// ratio to reflect
 	_ratio = 1.;
@@ -65,7 +114,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig) {
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("norm/vxz", _norm.fname.vxz);
 		bRet = bRet && xmlconfig.getNodeValue("norm/vy",  _norm.fname.vy);
-		if(true == bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
+		if(bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
 			global_log->info() << "Mirror uses MB from files." << std::endl;
 			this->readNormDistr();
 		}
@@ -87,15 +136,15 @@ void Mirror::readXML(XMLfileUnits& xmlconfig) {
 		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/initvals/y", _veloList.initvals[1]);
 		bRet = bRet && xmlconfig.getNodeValue("CV/veloList/initvals/z", _veloList.initvals[2]);
 
-		if(true == bRet)
+		if(bRet)
 		{
 			// CV boundaries
 			if(MD_LEFT_MIRROR == _direction) {
-				_cv.left  = _yPos;
+				_cv.left  = _position.coord;
 				_cv.right = _cv.left + _cv.width;
 			}
 			else if(MD_RIGHT_MIRROR == _direction) {
-				_cv.right = _yPos;
+				_cv.right = _position.coord;
 				_cv.left  = _cv.right - _cv.width;
 			}
 			_cv.left_outer = _cv.left - _cv.margin;
@@ -112,57 +161,292 @@ void Mirror::readXML(XMLfileUnits& xmlconfig) {
 				cout << "v=" << val.at(0) << "," << val.at(1) << "," << val.at(2) << endl; */
 		}
 	}
+
+	/** Meland2004 */
+	if(MT_MELAND_2004 == _type)
+	{
+		//_melandParams.fixed_probability_factor = -1;
+		bool bRet = true;
+		bRet = bRet && xmlconfig.getNodeValue("meland/use_probability", _melandParams.use_probability_factor);
+		bRet = bRet && xmlconfig.getNodeValue("meland/velo_target", _melandParams.velo_target);
+		xmlconfig.getNodeValue("meland/fixed_probability", _melandParams.fixed_probability_factor);
+
+		if(not bRet)
+		{
+			global_log->error() << "Parameters for Meland2004 Mirror provided in config-file *.xml corrupted/incomplete. Program exit ..." << endl;
+			Simulation::exit(-2004);
+		}
+		else {
+			global_log->info() << "Mirror: [Meland] UseProb: " << _melandParams.use_probability_factor << " ; TargetVelo: " << _melandParams.velo_target << std::endl;
+			if (_melandParams.fixed_probability_factor > 0) {
+				global_log->info() << "Mirror: [Meland] FixedProb: " << _melandParams.fixed_probability_factor << std::endl;
+			}
+		}
+	}
+	
+	if(MT_RAMPING == _type)
+	{
+		bool bRet = true;
+		bRet = bRet && xmlconfig.getNodeValue("ramping/start", _rampingParams.startStep);
+		bRet = bRet && xmlconfig.getNodeValue("ramping/stop", _rampingParams.stopStep);
+		bRet = bRet && xmlconfig.getNodeValue("ramping/treatment", _rampingParams.treatment);
+		
+		if (not bRet) {
+			global_log->error() << "Mirror: [Ramping] Parameters for Mirror [Ramping] provided in config-file *.xml corrupted/incomplete. Program exit ..." << endl;
+			Simulation::exit(-1);
+		}
+		else {
+			if(_rampingParams.startStep > _rampingParams.stopStep) {
+				global_log->error() << "Mirror: [Ramping] Start > Stop. Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			else {
+				global_log->info() << "Mirror: [Ramping] From " << _rampingParams.startStep << " to " << _rampingParams.stopStep << endl;
+				std::string treatmentStr = "";
+				switch(_rampingParams.treatment) {
+					case 0 : treatmentStr = "Deletion";
+						break;
+					case 1 : treatmentStr = "Transmission";
+						break;
+					default:
+						global_log->error() << "Mirror: [Ramping] No proper treatment was set. Program exit ..." << endl;
+						Simulation::exit(-1);
+				}
+				global_log->info() << "Mirror: [Ramping] Treatment for non-reflected particles: " << _rampingParams.treatment << " ( " << treatmentStr << " ) " << endl;
+			}
+		}
+	}
+	
+	/** Diffuse mirror **/
+	_diffuse_mirror.enabled = false;
+	_diffuse_mirror.width = 0;
+	bool bRet = xmlconfig.getNodeValue("diffuse/width", _diffuse_mirror.width);
+	_diffuse_mirror.enabled = bRet;
+	global_log->info() << "Using diffuse Mirror width = " << _diffuse_mirror.width << endl;
 }
 
 void Mirror::beforeForces(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 		unsigned long simstep
 ) {
-	if(MT_ZERO_GRADIENT != _type)
-		return;
+	if(MT_ZERO_GRADIENT == _type) {
+		for(auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
+			uint32_t cid_zb = it->componentid();
+			uint32_t cid_ub = cid_zb+1;
+			double ry = it->r(1);
+			double vy = it->v(1);
 
-	for(auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-		uint32_t cid_zb = it->componentid();
-		uint32_t cid_ub = cid_zb+1;
-		double ry = it->r(1);
-		double vy = it->v(1);
+			// no action
+			if(ry < _cv.left_outer || ry > _cv.right_outer)
+				continue;
 
-		// no action
-		if(ry < _cv.left_outer || ry > _cv.right_outer)
-			continue;
-
-		// change back to original component
-		if(ry > _cv.left_outer && ry < _cv.left) {
-			Component* comp = global_simulation->getEnsemble()->getComponent(_cids.original-1);
-			it->setComponent(comp);
-		}
-
-		// inside CV
-		if(ry > _cv.left && ry < _cv.right) {
-			Component* comp;
-			if(vy > 0.) {
-				comp = global_simulation->getEnsemble()->getComponent(_cids.forward-1);
+			// change back to original component
+			if(ry > _cv.left_outer && ry < _cv.left) {
+				Component* comp = global_simulation->getEnsemble()->getComponent(_cids.original-1);
 				it->setComponent(comp);
 			}
-			if(vy < 0. && cid_ub == _cids.forward) {
-				comp = global_simulation->getEnsemble()->getComponent(_cids.backward-1);
-				it->setComponent(comp);
-				_veloList.list.pop_front();
-				std::array<double, 3> v;
-				v.at(0) = it->v(0);
-				v.at(1) = it->v(1);
-				v.at(2) = it->v(2);
-				_veloList.list.push_back(v);
-			}
-		}
 
-		// permitted
-		if(cid_ub == _cids.permitted) {
-			it->setv(0, 0.);
-			it->setv(1, 3.);
-			it->setv(2, 0.);
+			// inside CV
+			if(ry > _cv.left && ry < _cv.right) {
+				Component* comp;
+				if(vy > 0.) {
+					comp = global_simulation->getEnsemble()->getComponent(_cids.forward-1);
+					it->setComponent(comp);
+				}
+				if(vy < 0. && cid_ub == _cids.forward) {
+					comp = global_simulation->getEnsemble()->getComponent(_cids.backward-1);
+					it->setComponent(comp);
+					_veloList.list.pop_front();
+					std::array<double, 3> v{it->v(0), it->v(1), it->v(2)};
+					_veloList.list.push_back(v);
+				}
+			}
+
+			// permitted
+			if(cid_ub == _cids.permitted) {
+				it->setv(0, 0.);
+				it->setv(1, 3.);
+				it->setv(2, 0.);
+			}
 		}
 	}
+	else if(MT_MELAND_2004 == _type){
+
+		double regionLowCorner[3], regionHighCorner[3];
+
+		// a check only makes sense if the subdomain specified by _direction and _position.coord is inside of the particleContainer.
+		// if we have an MD_RIGHT_MIRROR: _position.coord defines the lower boundary of the mirror, thus we check if _position.coord is at
+		// most boxmax.
+		// if the mirror is an MD_LEFT_MIRROR _position.coord defines the upper boundary of the mirror, thus we check if _position.coord is
+		// at lese boxmin.
+		if ((_direction == MD_RIGHT_MIRROR and _position.coord-_diffuse_mirror.width < particleContainer->getBoundingBoxMax(1)) or
+			(_direction == MD_LEFT_MIRROR and _position.coord+_diffuse_mirror.width > particleContainer->getBoundingBoxMin(1))) {
+			// if linked cell in the region of the mirror boundary
+			for (unsigned d = 0; d < 3; d++) {
+				regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
+				regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
+			}
+
+			if (_direction == MD_RIGHT_MIRROR) {
+				// ensure that we do not iterate over things outside of the container.
+				regionLowCorner[1] = std::max(_position.coord-_diffuse_mirror.width, regionLowCorner[1]);
+			} else if (_direction == MD_LEFT_MIRROR) {
+				// ensure that we do not iterate over things outside of the container.
+				regionHighCorner[1] = std::min(_position.coord+_diffuse_mirror.width, regionHighCorner[1]);
+			}
+
+			// reset local values
+			for(auto& it:_particleManipCount.reflected.local)
+				it = 0;
+			for(auto& it:_particleManipCount.deleted.local)
+				it = 0;
+
+			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
+			for(auto it = begin; it.isValid(); ++it) {
+				uint32_t cid_ub = it->componentid()+1;  // unity based componentid --> 0: arbitrary component, 1: first component
+				double vy = it->v(1);
+				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
+					continue;
+				/** Diffuse Mirror **/
+				if (_diffuse_mirror.enabled == true) {
+					uint64_t pid = it->getID();
+					double ry = it->r(1);
+					double mirror_pos;
+					auto search = _diffuse_mirror.pos_map.find(pid);
+					if (search != _diffuse_mirror.pos_map.end() ) {
+						mirror_pos = search->second;
+					}
+					else {
+						float frnd = _rnd->rnd();
+						if (_direction == MD_RIGHT_MIRROR)
+							mirror_pos = _position.coord - static_cast<double>(frnd) * _diffuse_mirror.width;
+						else
+							mirror_pos = _position.coord + static_cast<double>(frnd) * _diffuse_mirror.width;
+						std::pair<std::map<uint64_t,double>::iterator,bool> status;
+						status = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
+#ifndef NDEBUG
+						printInsertionStatus(status);
+#endif
+					}
+					
+					if (ry <= mirror_pos)
+						continue;
+					else {
+						auto search = _diffuse_mirror.pos_map.find(pid);
+						_diffuse_mirror.pos_map.erase(search);
+					}
+				}
+				double vy_reflected = 2*_melandParams.velo_target - vy;
+				if ( (_direction == MD_RIGHT_MIRROR && vy_reflected < 0.) || (_direction == MD_LEFT_MIRROR && vy_reflected > 0.) ) {
+					float frnd = 0, pbf = 1.;  // pbf: probability factor, frnd (float): random number [0..1)
+					if (_melandParams.use_probability_factor) {
+						if (_melandParams.fixed_probability_factor > 0) {
+							pbf = _melandParams.fixed_probability_factor;
+						}
+						else {
+							pbf = std::abs(vy_reflected / vy);
+						}
+						frnd = _rnd->rnd();
+					}
+					// reflect particles and delete all not reflected
+					if(frnd < pbf) {
+						//cout << "[Meland] Reflected: Prob: " << pbf << " > Rnd: " << frnd << endl;
+						it->setv(1, vy_reflected);
+						_particleManipCount.reflected.local.at(0)++;
+						_particleManipCount.reflected.local.at(cid_ub)++;
+					}
+					else {
+						//cout << "[Meland] Deleted: Prob: " << pbf << " < Rnd: " << frnd << endl;
+						particleContainer->deleteMolecule(it, false);
+						_particleManipCount.deleted.local.at(0)++;
+						_particleManipCount.deleted.local.at(cid_ub)++;
+					}
+				}
+				else {
+					particleContainer->deleteMolecule(it, false);
+					_particleManipCount.deleted.local.at(0)++;
+					_particleManipCount.deleted.local.at(cid_ub)++;
+				}
+			}
+		}
+	}
+	else if(MT_RAMPING == _type){
+
+		double regionLowCorner[3], regionHighCorner[3];
+
+		// a check only makes sense if the subdomain specified by _direction and _position.coord is inside of the particleContainer.
+		// if we have an MD_RIGHT_MIRROR: _position.coord defines the lower boundary of the mirror, thus we check if _position.coord is at
+		// most boxmax.
+		// if the mirror is an MD_LEFT_MIRROR _position.coord defines the upper boundary of the mirror, thus we check if _position.coord is
+		// at lese boxmin.
+		if ((_direction == MD_RIGHT_MIRROR and _position.coord < particleContainer->getBoundingBoxMax(1)) or
+			(_direction == MD_LEFT_MIRROR and _position.coord > particleContainer->getBoundingBoxMin(1))) {
+			// if linked cell in the region of the mirror boundary
+			for (unsigned d = 0; d < 3; d++) {
+				regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
+				regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
+			}
+
+			if (_direction == MD_RIGHT_MIRROR) {
+				// ensure that we do not iterate over things outside of the container.
+				regionLowCorner[1] = std::max(_position.coord, regionLowCorner[1]);
+			} else if (_direction == MD_LEFT_MIRROR) {
+				// ensure that we do not iterate over things outside of the container.
+				regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
+			}
+			
+			// reset local values
+			for(auto& it:_particleManipCount.reflected.local)
+				it = 0;
+			for(auto& it:_particleManipCount.deleted.local)
+				it = 0;
+
+			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
+			for(auto it = begin; it.isValid(); ++it) {
+				
+				uint32_t cid_ub = it->componentid()+1;  // unity based componentid --> 0: arbitrary component, 1: first component
+				double vy = it->v(1);
+				
+				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
+					continue;
+				
+				float ratioRefl;
+				float frnd = _rnd->rnd();
+				uint64_t currentSimstep = global_simulation->getSimulationStep();
+				
+				if(currentSimstep <= _rampingParams.startStep) {
+					ratioRefl = 1;
+				}
+				else if ((currentSimstep > _rampingParams.startStep) && (currentSimstep < _rampingParams.stopStep)) {
+					ratioRefl = ((float)(_rampingParams.stopStep - currentSimstep) / (float)(_rampingParams.stopStep - _rampingParams.startStep));
+				}
+				else {
+					ratioRefl = 0;
+				}
+				
+				if(frnd <= ratioRefl) {
+					it->setv(1, -vy);
+					_particleManipCount.reflected.local.at(0)++;
+					_particleManipCount.reflected.local.at(cid_ub)++;
+					//cout << "Mirror: [Ramping] Velo. reversed at step " << currentSimstep << " , ReflRatio: " << ratioRefl << endl;
+				}
+				else {
+					if (_rampingParams.treatment == 0) {
+						particleContainer->deleteMolecule(it, false);
+						_particleManipCount.deleted.local.at(0)++;
+						_particleManipCount.deleted.local.at(cid_ub)++;
+						//cout << "Mirror: [Ramping] Particle deleted at step " << currentSimstep << " , ReflRatio: " << ratioRefl << endl;
+					}
+					else if (_rampingParams.treatment == 1) {
+						// Transmit particle
+						//cout << "Mirror: [Ramping] Particle transmitted at step " << currentSimstep << " , ReflRatio: " << ratioRefl << endl;
+					}
+				}
+				
+			}
+		}
+	}
+	
 }
 
 void Mirror::afterForces(
@@ -173,16 +457,55 @@ void Mirror::afterForces(
 	this->VelocityChange(particleContainer);
 }
 
+SubjectBase* Mirror::getSubject()
+{
+	SubjectBase* subject = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			subject = dynamic_cast<SubjectBase*>(pit);
+		}
+	}
+	return subject;
+}
+
+void Mirror::update(SubjectBase* subject)
+{
+	auto* distControl = dynamic_cast<DistControl*>(subject);
+	double dMidpointLeft, dMidpointRight;
+	dMidpointLeft = dMidpointRight = 0.;
+	if(nullptr != distControl) {
+		dMidpointLeft = distControl->GetInterfaceMidLeft();
+		dMidpointRight = distControl->GetInterfaceMidRight();
+	}
+
+	switch(_position.ref.id) {
+	case 0:
+		_position.ref.origin = 0.;
+		break;
+	case 1:
+		_position.ref.origin = dMidpointLeft;
+		break;
+	case 2:
+		_position.ref.origin = dMidpointRight;
+		break;
+	default:
+		_position.ref.origin = 0.;
+	}
+	_position.coord = _position.ref.origin + _position.ref.coord;
+}
+
 void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 	double regionLowCorner[3], regionHighCorner[3];
 
-	// a check only makes sense if the subdomain specified by _direction and _yPos is inside of the particleContainer.
-	// if we have an MD_RIGHT_MIRROR: _yPos defines the lower boundary of the mirror, thus we check if _yPos is at
+	// a check only makes sense if the subdomain specified by _direction and _position.coord is inside of the particleContainer.
+	// if we have an MD_RIGHT_MIRROR: _position.coord defines the lower boundary of the mirror, thus we check if _position.coord is at
 	// most boxmax.
-	// if the mirror is an MD_LEFT_MIRROR _yPos defines the upper boundary of the mirror, thus we check if _yPos is
+	// if the mirror is an MD_LEFT_MIRROR _position.coord defines the upper boundary of the mirror, thus we check if _position.coord is
 	// at lese boxmin.
-	if ((_direction == MD_RIGHT_MIRROR and _yPos < particleContainer->getBoundingBoxMax(1)) or
-		(_direction == MD_LEFT_MIRROR and _yPos > particleContainer->getBoundingBoxMin(1))) {
+	if ((_direction == MD_RIGHT_MIRROR and _position.coord < particleContainer->getBoundingBoxMax(1)) or
+		(_direction == MD_LEFT_MIRROR and _position.coord > particleContainer->getBoundingBoxMin(1))) {
 		// if linked cell in the region of the mirror boundary
 		for (unsigned d = 0; d < 3; d++) {
 			regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
@@ -191,10 +514,10 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 
 		if (_direction == MD_RIGHT_MIRROR) {
 			// ensure that we do not iterate over things outside of the container.
-			regionLowCorner[1] = std::max(_yPos, regionLowCorner[1]);
+			regionLowCorner[1] = std::max(_position.coord, regionLowCorner[1]);
 		} else if (_direction == MD_LEFT_MIRROR) {
 			// ensure that we do not iterate over things outside of the container.
-			regionHighCorner[1] = std::min(_yPos, regionHighCorner[1]);
+			regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
 		}
 
 #if defined (_OPENMP)
@@ -269,7 +592,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 					}
 				}
 				else if(MT_FORCE_CONSTANT == _type){
-					double distance = _yPos - ry;
+					double distance = _position.coord - ry;
 					additionalForce[1] = _forceConstant * distance;
 //						cout << "additionalForce[1]=" << additionalForce[1] << endl;
 //						cout << "before: " << (*it) << endl;
@@ -307,7 +630,7 @@ void Mirror::readNormDistr()
 	ifs.vy.open(_norm.fname.vy, std::ios::in);
 
 	//check to see that the file was opened correctly:
-	if (!ifs.vxz.is_open() || !ifs.vy.is_open() ) {
+	if (not ifs.vxz.is_open() or  not ifs.vy.is_open() ) {
 		std::cerr << "There was a problem opening the input file!\n";
 		Simulation::exit(-1);//exit or do additional error checking
 	}

@@ -45,6 +45,13 @@
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
 #include "plugins/NEMD/RegionSampling.h"
+#include "plugins/Permittivity.h"
+#include "plugins/NEMD/MettDeamon.h"
+#include "plugins/NEMD/MettDeamonFeedrateDirector.h"
+#include "plugins/NEMD/PosNegComp.h"
+#include "plugins/NEMD/DistControl.h"
+#include "plugins/NEMD/DriftCtrl.h"
+#include "plugins/NEMD/ExtractPhase.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
@@ -85,9 +92,16 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MmspdBinWriter);
 	REGISTER_PLUGIN(MmspdWriter);
 	REGISTER_PLUGIN(ODF);
+	REGISTER_PLUGIN(Permittivity);
 	REGISTER_PLUGIN(PovWriter);
 	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(RegionSampling);
+	REGISTER_PLUGIN(MettDeamon);
+	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
+	REGISTER_PLUGIN(PosNegComp);
+	REGISTER_PLUGIN(DistControl);
+	REGISTER_PLUGIN(DriftCtrl);
+	REGISTER_PLUGIN(ExtractPhase);
 	REGISTER_PLUGIN(ResultWriter);
 	REGISTER_PLUGIN(SysMonOutput);
 	REGISTER_PLUGIN(TestPlugin);
@@ -116,7 +130,7 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 	numPlugins = query.card();
 	global_log->info() << "Number of plugins with tag " << category << ": " << numPlugins << endl;
 	if (numPlugins < 1) {
-		global_log->warning() << "No plugins specified for tag" << category << "." << endl;
+		global_log->warning() << "No plugins specified for tag " << category << "." << endl;
 	}
 
 	for (auto pluginIter = query.begin(); pluginIter; ++pluginIter) {

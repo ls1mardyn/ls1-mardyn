@@ -12,30 +12,43 @@ using namespace std;
 void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << endl;
 
 	size_t acc_steps = 1000;
 	xmlconfig.getNodeValue("accumulation_steps", acc_steps);
 	_U_pot_acc = new Accumulator<double>(acc_steps);
 	_p_acc = new Accumulator<double>(acc_steps);
-	global_log->info() << "Accumulation steps: " << acc_steps << endl;
+	global_log->info() << "[ResultWriter] Accumulation steps: " << acc_steps << endl;
+
+	_writePrecision = 5;
+	xmlconfig.getNodeValue("writeprecision", _writePrecision);
+	global_log->info() << "[ResultWriter] Write precision: " << _writePrecision << endl;
 }
 
 void ResultWriter::init(ParticleContainer * /*particleContainer*/,
                         DomainDecompBase *domainDecomp, Domain * /*domain*/) {
-	// initialize result file
-	string resultfile(_outputPrefix+".res");
-	time_t now;
-	time(&now);
+
 	if(domainDecomp->getRank() == 0) {
-		_resultStream.open(resultfile.c_str());
+		time_t now;
+		time(&now);
+		string resultfile(_outputPrefix+".res");
+		_resultStream.open(resultfile.c_str(), std::ios::out);
 		_resultStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
 		_resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< endl;
-		_resultStream << "#step\tt\t\tU_pot\tU_pot_avg\t\tp\tp_avg\t\tbeta_trans\tbeta_rot\t\tc_v\t\tN\n";
+		_resultStream << std::setw(10) << "# step" << std::setw(_writePrecision+15) << "time" 
+			<< std::setw(_writePrecision+15) << "U_pot"
+			<< std::setw(_writePrecision+15) << "U_pot_avg"
+			<< std::setw(_writePrecision+15) << "p"
+			<< std::setw(_writePrecision+15) << "p_avg"
+			<< std::setw(_writePrecision+15) << "beta_trans"
+			<< std::setw(_writePrecision+15) << "beta_rot"
+			<< std::setw(_writePrecision+15) << "c_v"
+			<< std::setw(_writePrecision+15) << "N"
+			<< endl;
 	}
 }
 
@@ -47,19 +60,26 @@ void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
-		_resultStream << simstep << "\t" << _simulation.getSimulationTime()
-			<< "\t\t" << domain->getGlobalUpot() << "\t" << _U_pot_acc->getAverage()
-			<< "\t\t" << domain->getGlobalPressure() << "\t" << _p_acc->getAverage()
-			<< "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
-			<< "\t\t" << domain->cv() << "\t\t" << domain->getglobalNumMolecules();
-		_resultStream << "\n";
+		_resultStream << std::setw(10) << simstep << std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << _simulation.getSimulationTime()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getGlobalUpot()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << _U_pot_acc->getAverage()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getGlobalPressure()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << _p_acc->getAverage()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getGlobalBetaTrans()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getGlobalBetaRot()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->cv()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getglobalNumMolecules()
+			<< endl;
 	}
 }
 
 void ResultWriter::finish(ParticleContainer * /*particleContainer*/,
-						  DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/){
-	time_t now;
-	time(&now);
-	_resultStream << "# ls1 mardyn simulation finished at " << ctime(&now) << endl;
-	_resultStream.close();
+						  DomainDecompBase *domainDecomp, Domain * /*domain*/){
+							  
+	if(domainDecomp->getRank() == 0) {
+		time_t now;
+		time(&now);
+		_resultStream << "# ls1 mardyn simulation finished at " << ctime(&now) << endl;
+		_resultStream.close();
+	}
 }

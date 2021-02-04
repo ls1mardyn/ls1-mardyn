@@ -348,7 +348,7 @@ protected:
     unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _m; /**< total mass */
-	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
+	double _I[3]{0.,0.,0.},_invI[3]{0.,0.,0.};  // moment of inertia for principal axes and it's inverse
 
 	/* absolute positions are stored in the soa. Work-arounds to get the relative ones*/
 	CellDataSoA * _soa;

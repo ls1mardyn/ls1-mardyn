@@ -31,7 +31,9 @@ void VirialProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	double layerHeight = _samplInfo.globalLength[1] / _samplInfo.universalProfileUnit[1];
 	if (_samplInfo.cylinder) {
 		// V = height * PI * R^2
-		layerVolume = layerHeight * M_PI * _samplInfo.globalLength[0] * _samplInfo.globalLength[0];
+		// Get max radius of the cylinder inside the box domain
+		double radius = _samplInfo.globalLength[0]/2;
+		layerVolume = layerHeight * M_PI * radius * radius;
 	} else {
 		// V = height * X * Z
 		layerVolume = layerHeight * _samplInfo.globalLength[0] * _samplInfo.globalLength[2];

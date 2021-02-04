@@ -13,7 +13,7 @@
 
 #include "WrapOpenMP.h"
 
-template<class ParticleCellTemplate>
+template<class CellTemplate>
 class CellPairTraversals;
 template<class CellTemplate>
 class TraversalTuner;
@@ -171,7 +171,7 @@ public:
 	double getCutoff() const override { return _cutoffRadius; }
 	void setCutoff(double rc) override { _cutoffRadius = rc; }
 
-	void deleteMolecule(Molecule &molecule, const bool& rebuildCaches) override;
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override;
 
@@ -189,7 +189,7 @@ public:
 	 * @param result Molecule will be returned by this pointer if found
 	 * @return Molecule was found?
 	 */
-	bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override;
 
 	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!
@@ -236,7 +236,7 @@ public:
 	bool requiresForceExchange() const override; // new
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength) override;
+								std::array<double, 3> simBoxLength, size_t seed_offset) override;
 
 	std::vector<unsigned long> getParticleCellStatistics() override;
 

@@ -29,8 +29,10 @@ void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
 #ifdef ENABLE_ALLLBL
+	// Increased slightly to prevent rounding errors.
+	double minimalDomainSize{_interactionLength * (1. + 1.e-10)};
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
-													  gridCoords, _interactionLength /*minimal domain size*/);
+													  gridCoords, minimalDomainSize);
 #else
 	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
 	Simulation::exit(24235);
@@ -166,7 +168,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 											 domain->getGlobalLength(2)};
 	// 0. skin, as it is not needed for the migration of particles!
 	std::tie(recvNeighbors, sendNeighbors) =
-		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownDomain, desiredDomain, 0. /*skin*/);
+		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownDomain, desiredDomain, 0. /*skin*/, _comm);
 
 	std::vector<Molecule> dummy;
 	for (auto& sender : sendNeighbors) {
@@ -273,7 +275,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 			initializeZoltan2();
 		} else {
 			global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
-			                    << ". Aborting!";
+			                    << ". Aborting! Please select either ALL or Zoltan load balancer.";
 			Simulation::exit(1);
 		}
 		_loadBalancer->readXML(xmlconfig);

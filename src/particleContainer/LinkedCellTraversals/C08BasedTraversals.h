@@ -26,9 +26,9 @@ public:
 	}
 
 	virtual void rebuild(std::vector<CellTemplate> &cells,
-						 const std::array<unsigned long, 3> &dims,
+						 const std::array<unsigned long, 3> &dims, double cellLength[3], double cutoff,
 						 CellPairTraversalData *data) {
-		CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
+		CellPairTraversals<CellTemplate>::rebuild(cells, dims, cellLength, cutoff, data);
 		computeOffsets();
 	};
 

@@ -89,6 +89,10 @@ public:
 
 	void printCommunicationPartners(std::string filename) const;
 
+	void setSequentialFallback(bool useSequentialFallback) {
+		_useSequentialFallback = useSequentialFallback;
+	}
+
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
@@ -117,6 +121,8 @@ protected:
 	std::vector<CommunicationPartner> _fullShellNeighbours;
 
 	bool _pushPull;
+
+	bool _useSequentialFallback{true};
 };
 
 class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {

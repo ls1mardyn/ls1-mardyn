@@ -2,8 +2,8 @@
 # NOTE: depending on the installation settings, mpicxx may not actually use icpc! 
 # In that case, an error may occur here!
 
-# C++11
-CXXFLAGS += -std=c++11 -fp-model precise
+# C++17
+CXXFLAGS += -std=c++17 -fp-model precise
 
 
 # Vectorization settings:

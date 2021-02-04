@@ -39,7 +39,7 @@ public:
 	 * The caller is responsible for deleting the pointer!
 	 */
 	static ParticleContainer* createInitializedParticleContainer(
-			Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName);
+			Type type, Domain* domain, DomainDecompBase* domainDecomposition, double cutoff, const std::string& fileName, bool binary);
 
 };
 

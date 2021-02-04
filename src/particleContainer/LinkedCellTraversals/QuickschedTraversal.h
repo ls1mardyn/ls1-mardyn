@@ -34,7 +34,7 @@ public:
 
 
     virtual void rebuild(std::vector<CellTemplate> &cells,
-                         const std::array<unsigned long, 3> &dims,
+                         const std::array<unsigned long, 3> &dims, double cellLength[3], double cutoff,
                          CellPairTraversalData *data);
 
     void traverseCellPairs(CellProcessor &cellProcessor);
@@ -79,11 +79,11 @@ QuickschedTraversal<CellTemplate>::QuickschedTraversal(std::vector<CellTemplate>
 
 template<class CellTemplate>
 void QuickschedTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> &cells,
-                                                const std::array<unsigned long, 3> &dims,
+                                                const std::array<unsigned long, 3> &dims, double cellLength[3], double cutoff,
                                                 CellPairTraversalData *data) {
 #ifdef QUICKSCHED
     if (QuickschedTraversalData *qui_data = dynamic_cast<QuickschedTraversalData *>(data)) {
-        CellPairTraversals<CellTemplate>::rebuild(cells, dims, data);
+        CellPairTraversals<CellTemplate>::rebuild(cells, dims, cellLength, cutoff, data);
         qsched_reset(_scheduler);
         _taskBlocksize = qui_data->taskBlockSize;
         init();

@@ -13,7 +13,7 @@
     </integrator>
 
     <run>
-      <currenttime>612.4</currenttime>
+      <currenttime>0.</currenttime>
       <production>
         <steps>20000</steps>
       </production>
@@ -83,8 +83,8 @@
         <smooth>0</smooth>
         <frequency>10</frequency>
         <writecontrol>
-          <start>10000</start>
-          <frequency>100</frequency>
+          <start>0</start>
+          <frequency>5</frequency>
           <stop>11000</stop>
         </writecontrol>
       </longrange>

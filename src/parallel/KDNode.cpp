@@ -8,6 +8,7 @@
 #include "io/vtk/VTKGridVertex.h"
 #include "io/vtk/VTKGridCell.h"
 #endif
+#include "KDDStaticValues.h"
 #include "utils/Logger.h"
 
 #include <algorithm> /* for min and max ?*/
@@ -19,7 +20,7 @@ KDNode* KDNode::findAreaForProcess(int rank) {
 		if (rank == _owningProc) {
 			return this;
 		} else {
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -44,7 +45,7 @@ bool KDNode::equals(KDNode& other) {
 		equal = equal && (_coversWholeDomain[i] == other._coversWholeDomain[i]);
 	}
 
-	if (_child1 != NULL && other._child1 != NULL) {
+	if (_child1 && other._child1 ) {
 		bool childEqual = _child1->equals(*other._child1);
 		equal = equal && childEqual;
 	} else {
@@ -52,7 +53,7 @@ bool KDNode::equals(KDNode& other) {
 		equal = equal && childEqual;
 	}
 
-	if (_child2 != NULL && other._child2 != NULL) {
+	if (_child2 && other._child2) {
 		bool childEqual = _child2->equals(*other._child2);
 		equal = equal && childEqual;
 	} else {
@@ -87,26 +88,28 @@ void KDNode::buildKDTree() {
 	}
 }
 
-
-void KDNode::printTree(std::string prefix) {
-// use std::cout as I want to have all nodes at all processes printed
+void KDNode::printTree(const std::string& prefix) {
+	// use std::cout as I want to have all nodes at all processes printed
 	if (_numProcs == 1) {
-		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc
-				<< ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
-				<< _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << "), Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
-	}
-	else {
-		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc
-				<< "(" << _numProcs << " procs)" << ", Corners: (" << _lowCorner[0]
-				<< ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0]
-				<< ", " << _highCorner[1] << ", " << _highCorner[2] << ")"
-				" child1: " << _child1 << " child2: " << _child2 << ", Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
+		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc << ", Corners: (" << _lowCorner[0]
+				  << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0] << ", "
+				  << _highCorner[1] << ", " << _highCorner[2]
+				  << "), Length(cells): " << _highCorner[0] - _lowCorner[0] + 1 << "x"
+				  << _highCorner[1] - _lowCorner[1] + 1 << "x" << _highCorner[2] - _lowCorner[2] + 1
+				  << " Load: " << _load << ", deviation: " << _deviation << ", OptLoad:" << _optimalLoadPerProcess
+				  << " level=" << _level << std::endl;
+	} else {
+		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc << "(" << _numProcs << " procs)"
+				  << ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
+				  << _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << ") child1: " << _child1
+				  << " child2: " << _child2 << ", Load: " << _load << ", deviation: " << _deviation
+				  << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
 		std::stringstream childprefix;
 		childprefix << prefix << "  ";
-		if (_child1 != NULL) {
+		if (_child1) {
 			_child1->printTree(childprefix.str());
 		}
-		if (_child2 != NULL) {
+		if (_child2) {
 			_child2->printTree(childprefix.str());
 		}
 	}
@@ -133,8 +136,7 @@ KDNode::MPIKDNode KDNode::getMPIKDNode() {
 	// const int& nodeID, const int& owningProc, const int& firstChildID, const int& secondChildID,
 	// const int& nextSendingProcess, const double& load, const double& OptimalLoadPerProcess
 	return MPIKDNode(coversWholeDomain, _numProcs, _lowCorner, _highCorner,
-				_nodeID, _owningProc, leftChildID, rightChildID, nextSender, _load, _optimalLoadPerProcess,
-				_expectedDeviation, _deviation, _level);
+				_nodeID, _owningProc, leftChildID, rightChildID, nextSender, _load, _optimalLoadPerProcess, _deviationLowerBound, _deviation, _level);
 }
 
 bool KDNode::isResolvable() {
@@ -147,17 +149,17 @@ bool KDNode::isResolvable() {
 }
 
 unsigned int KDNode::getNumMaxProcs() {
-	// we need at least 2 cells in each dimension per process (
+	// we need at least KDDStaticValues::minNumCellsPerDimension cells in each dimension per process.
 	unsigned int maxProcs = 1;
 	for (int dim = 0; dim < 3; dim++) {
-		maxProcs *= (_highCorner[dim] - _lowCorner[dim] + 1) / 2;
+		maxProcs *= (_highCorner[dim] - _lowCorner[dim] + 1) / KDDStaticValues::minNumCellsPerDimension;
 	}
 	return maxProcs;
 }
 
 void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 	mardyn_assert(_numProcs > 1);
-	mardyn_assert(splitIndex > _lowCorner[divDimension]);
+	mardyn_assert(splitIndex >= _lowCorner[divDimension] + (KDDStaticValues::minNumCellsPerDimension - 1));
 	mardyn_assert(splitIndex < _highCorner[divDimension]);
 
 	bool coversAll[KDDIM];

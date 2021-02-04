@@ -1,0 +1,7 @@
+new/
+reference/
+input/
+*.pyc
+*.inp
+*.xml
+MarDyn

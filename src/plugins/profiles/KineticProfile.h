@@ -11,9 +11,9 @@
 /**
  * @brief Records (NO OUTPUT) the 2xKinetic Profile of molecules per bin specified by Sampling grid in KartesianProfile.
  */
-class KineticProfile : public ProfileBase {
+class KineticProfile final : public ProfileBase {
 public:
-    ~KineticProfile() final {};
+    ~KineticProfile() final = default;
     void record(Molecule &mol, unsigned long uID) final  {
         double mv2 = 0.0;
         double Iw2 = 0.0;

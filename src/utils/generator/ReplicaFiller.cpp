@@ -101,7 +101,7 @@ public:
 
 	double getCutoff() const override { return 0.0; }
 
-	void deleteMolecule(Molecule& molecule, const bool& rebuildCaches) override {}
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override {}
 
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
 		return 0.0;
@@ -113,11 +113,12 @@ public:
 
 	void updateMoleculeCaches() override {}
 
-	bool getMoleculeAtPosition(const double pos[3],
-							   Molecule** result) override { return false; } // pure virtual in particleContainer.h
+	// Pure virtual in ParticleContainer.h
+	// Returns invalid iterator.
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return {}; }
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength) override { return 0; }
+								std::array<double, 3> simBoxLength, size_t seed_offset) override { return 0; }
 
 	size_t getTotalSize() override { return _basis.numMolecules() * sizeof(Molecule); }
 
@@ -210,7 +211,6 @@ int ReplicaFiller::getMolecule(Molecule* molecule) {
 	if(ret != 0) {
 		// change component if specified
 		if (molecule->componentid() != _componentid) {
-			cout << "Set componentid: " << _componentid << endl;
 			molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
 		}
 	}

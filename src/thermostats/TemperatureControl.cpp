@@ -11,14 +11,17 @@
 #include "molecules/Molecule.h"
 #include "Domain.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/FileUtils.h"
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <string>
+#include <numeric>
 #include <cmath>
 #include <cstdint>
+#include <algorithm>
 
 using namespace std;
 
@@ -27,11 +30,9 @@ unsigned short ControlRegionT::_nStaticID = 0;
 
 // class ControlRegionT
 
-ControlRegionT::ControlRegionT()
-		:
-		_nID(0),
-		_dLowerCorner{0.,0.,0.},
-		_dUpperCorner{0.,0.,0.},
+ControlRegionT::ControlRegionT(TemperatureControl* const parent)
+		: CuboidRegionObs(parent),
+		_localMethod(VelocityScaling),
 		_nNumSlabs(1),
 		_dSlabWidth(0.0),
 		_thermVars(),
@@ -39,13 +40,17 @@ ControlRegionT::ControlRegionT()
 		_dTemperatureExponent(0.0),
 		_nTargetComponentID(0),
 		_nNumThermostatedTransDirections(0),
-		_nRegionID(0),
 		_accumulator(nullptr),
 		_strFilenamePrefixBetaLog("beta_log"),
 		_nWriteFreqBeta(1000),
 		_numSampledConfigs(0),
 		_dBetaTransSumGlobal(0.0),
-		_dBetaRotSumGlobal(0.0)
+		_dBetaRotSumGlobal(0.0),
+		_nuAndersen(0.0),
+		_timestep(0.0),
+		_nuDt(0.0),
+		_rand(Random() ),
+		_bIsObserver(false)
 {
 	// ID
 	_nID = ++_nStaticID;
@@ -131,9 +136,42 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 		_dUpperCorner[d] = uc[d];
 	}
 
+	// observer mechanism
+	std::vector<uint32_t> refCoordsID(6, 0);
+	xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID.at(0) );
+	xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID.at(1) );
+	xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID.at(2) );
+	xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID.at(3) );
+	xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4) );
+	xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5) );
+
+	_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0) ) > 0;
+	if(true == _bIsObserver)
+		this->PrepareAsObserver(refCoordsID);
+	// Registration as observer has to be done later by method prepare_start() when DistControl plugin is present.
+
 	// target values
 	xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
 	xmlconfig.getNodeValue("target/component", _nTargetComponentID);
+
+	// temperature ramp
+	_ramp.enabled = false;
+	_ramp.update.elapsed = 0;
+	bool bRet = true;
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/start", _ramp.start);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/end", _ramp.end);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/update/start", _ramp.update.start);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/update/stop", _ramp.update.stop);
+	bRet = bRet && xmlconfig.getNodeValue("target/ramp/update/freq", _ramp.update.freq);
+	if(bRet) {
+		_ramp.enabled = true;
+		global_log->info() << "[TemperatureControl] REGION " << _nStaticID << ": Temperature ramp enabled with start="
+			<< _ramp.start << ", end=" << _ramp.end << ", update.start=" << _ramp.update.start << ", update.stop=" << _ramp.update.stop << ", update.freq=" << _ramp.update.freq << std::endl;
+		// calc remaining values
+		_ramp.delta = _ramp.end - _ramp.start;
+		_ramp.update.delta = _ramp.update.stop - _ramp.update.start;
+		_ramp.slope = _ramp.delta / _ramp.update.delta;
+	}
 
 	// ControlMethod "VelocityScaling/Andersen/Mixed"
 	std::string methods = "";
@@ -165,6 +203,10 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig)
 		// init data structures
 		this->VelocityScalingInit(xmlconfig, strDirections);
 	}
+
+	// measure added kin. energy
+	_addedEkin.writeFreq = 1000;
+	xmlconfig.getNodeValue("added_ekin/writefreq", _addedEkin.writeFreq);
 }
 
 void ControlRegionT::VelocityScalingInit(XMLfileUnits &xmlconfig, std::string strDirections)
@@ -193,6 +235,12 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits &xmlconfig, std::string st
 	}
 	this->InitBetaLogfile();
 	_thermVars.resize(_nNumSlabs);
+
+	// init data structure for measure of added kin. energy
+	_addedEkin.data.local.resize(_nNumSlabs);
+	_addedEkin.data.global.resize(_nNumSlabs);
+   	std::vector<double>& v = _addedEkin.data.local;
+   	std::fill(v.begin(), v.end(), 0.);
 }
 
 void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
@@ -216,6 +264,19 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 		globalTV._ekinTrans = domainDecomp->collCommGetDouble();
 	}
 	domainDecomp->collCommFinalize();
+
+	// Adjust target temperature
+	uint64_t simstep = _simulation.getSimulationStep();
+	
+	if(_ramp.enabled && simstep > _ramp.update.start && simstep <= _ramp.update.stop) {
+		if(_ramp.update.elapsed == 0)
+			_dTargetTemperature = _ramp.start;
+		else if (_ramp.update.stop == simstep)
+			_dTargetTemperature = _ramp.end;
+		else if (_ramp.update.elapsed % _ramp.update.freq == 0)
+			_dTargetTemperature = _ramp.start + _ramp.update.elapsed * _ramp.slope;
+		_ramp.update.elapsed++;
+	}
 
 	// calc betaTrans, betaRot, and their sum
 	double dBetaTransSumSlabs = 0.;
@@ -242,16 +303,6 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 	_dBetaTransSumGlobal += dBetaTransSumSlabs;
 	_dBetaRotSumGlobal   += dBetaRotSumSlabs;
 	_numSampledConfigs++;
-
-//    cout << "_nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
-//    cout << "_dBetaTransGlobal = " << _dBetaTransGlobal << endl;
-//    cout << "_dTargetTemperature = " << _dTargetTemperature << endl;
-//    cout << "_d2EkinRotGlobal = " << _d2EkinRotGlobal << endl;
-//
-//    cout << "_nRotDOFGlobal = " << _nRotDOFGlobal << endl;
-//    cout << "_dBetaRotGlobal = " << _dBetaRotGlobal << endl;
-//    cout << "_d2EkinRotGlobal = " << _d2EkinRotGlobal << endl;
-
 }
 
 void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*domainDecomp*/)
@@ -349,13 +400,16 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 		double vcorr = 2. - 1. / globalTV._betaTrans;
 		double Dcorr = 2. - 1. / globalTV._betaRot;
 
-/*
-	mol->setv(0, mol->v(0) * vcorr);
-//    mol->setv(1, mol->v(1) * vcorr);
-	mol->setv(2, mol->v(2) * vcorr);
-*/
+		// measure added kin. energy
+		double v2_old = mol->v2();
 
 		_accumulator->ScaleVelocityComponents(mol, vcorr);
+
+		// measure added kin. energy
+		double v2_new = mol->v2();
+//		if(_nTargetComponentID==0)
+//			cout << "nPosIndex=" << nPosIndex << ", dv2=" << (v2_new-v2_old) << endl;
+		_addedEkin.data.local.at(nPosIndex) += (v2_new-v2_old);
 
 		mol->scale_D(Dcorr);
 	}
@@ -445,6 +499,81 @@ void ControlRegionT::WriteBetaLogfile(unsigned long simstep)
 	_dBetaRotSumGlobal = 0.;
 }
 
+DistControl* ControlRegionT::getDistControl()
+{
+	DistControl* distControl = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			distControl = dynamic_cast<DistControl*>(pit);
+		}
+	}
+	return distControl;
+}
+void ControlRegionT::registerAsObserver()
+{
+	if(true == _bIsObserver) {
+		DistControl* distControl = this->getDistControl();
+		if(distControl != nullptr)
+			distControl->registerObserver(this);
+		else {
+			global_log->error() << "TemperatureControl->region["<<this->GetID()<<"]: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
+}
+
+void ControlRegionT::update(SubjectBase* subject)
+{
+	CuboidRegionObs::update(subject);
+	// update slab width
+	_dSlabWidth = this->GetWidth(1) / ( (double)(_nNumSlabs) );
+}
+
+void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep)
+{
+	if(_localMethod != VelocityScaling)
+		return;
+	
+	if( simstep % _addedEkin.writeFreq != 0)
+		return;
+
+	// calc global values
+#ifdef ENABLE_MPI
+	MPI_Reduce(_addedEkin.data.local.data(), _addedEkin.data.global.data(), _addedEkin.data.local.size(), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#else
+	std::memcpy(_addedEkin.data.global.data(), _addedEkin.data.local.data(), _addedEkin.data.local.size() );
+#endif
+
+	// reset local values
+   	std::vector<double>& vl = _addedEkin.data.local;
+   	std::fill(vl.begin(), vl.end(), 0.);
+
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	// dekin = d2ekin * 0.5
+	std::vector<double>& vg = _addedEkin.data.global;
+	for(auto it=vg.begin(); it!=vg.end(); ++it)
+		(*it) *= 0.5;
+
+	// writing .dat-files
+	std::stringstream filenamestream;
+	filenamestream << "addedEkin_reg" << this->GetID() << "_cid" << _nTargetComponentID << ".dat";
+
+	std::stringstream outputstream;
+	outputstream.write(reinterpret_cast<const char*>(_addedEkin.data.global.data()), 8*_addedEkin.data.global.size());
+
+	ofstream fileout(filenamestream.str().c_str(), std::ios::app | std::ios::binary);
+	fileout << outputstream.str();
+	fileout.close();
+}
+
 // class TemperatureControl
 TemperatureControl::TemperatureControl()
 {
@@ -483,7 +612,7 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 	for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
 	{
 		xmlconfig.changecurrentnode(outputRegionIter);
-		ControlRegionT* region = new ControlRegionT();
+		ControlRegionT* region = new ControlRegionT(this);
 		region->readXML(xmlconfig);
 		this->AddRegion(region);
 	}
@@ -509,6 +638,14 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
 		_method = VelocityScaling;
 		global_log -> info() << "[TemperatureControl] VelocityControl in all regions\n";
 	}
+}
+
+void TemperatureControl::prepare_start()
+{
+	for(auto&& reg : _vecControlRegions) {
+		reg->registerAsObserver();
+	}
+	this->InitBetaLogfiles();
 }
 
 void TemperatureControl::AddRegion(ControlRegionT* region)
@@ -565,6 +702,12 @@ void TemperatureControl::WriteBetaLogfiles(unsigned long simstep)
 		reg->WriteBetaLogfile(simstep);
 }
 
+void TemperatureControl::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep)
+{
+	for(auto&& reg : _vecControlRegions)
+		reg->writeAddedEkin(domainDecomp, simstep);
+}
+
 /**
  * @brief Decide which ControlMethod to use
  *
@@ -588,6 +731,9 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 		// control temperature
 		this->ControlTemperature(&(*tM), simstep);
 	}
+
+	// measure added kin. energy
+	this->writeAddedEkin(domainDecomposition, simstep);
 }
 
 /**
@@ -602,8 +748,6 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 	// respect start/stop
 	if(this->GetStart() <= simstep && this->GetStop() > simstep)
 	{
-//		global_log->info() << "Thermostat ON!" << endl;
-
 		// init temperature control
 		this->Init(simstep);
 
@@ -613,8 +757,6 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDeco
 		{
 			// measure kinetic energy
 			this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
-
-//          cout << "id = " << tM->getID() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
 		}
 
 		// calc global values

@@ -13,7 +13,7 @@ class DensityProfile;
 /**
  * @brief Outputs the magnitude of the velocity per bin specified by Sampling grid in KartesianProfile.
  */
-class VelocityAbsProfile : public ProfileBase {
+class VelocityAbsProfile final : public ProfileBase {
 public:
 	VelocityAbsProfile(DensityProfile * dens) :
 			_densityProfile(dens), _localProfile(), _globalProfile() {

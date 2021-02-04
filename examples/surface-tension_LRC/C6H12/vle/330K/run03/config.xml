@@ -1,0 +1,222 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+
+	<simulation type="MD" >
+		<integrator type="Leapfrog" >
+			<timestep unit="reduced" >0.00182367</timestep>
+		</integrator>
+
+		<run>
+			<currenttime>0.0</currenttime>	
+			<production>
+				<steps>100000</steps>
+			</production>
+		</run>
+
+		<ensemble type="NVT">
+			<!-- Nparticles determined by the input file -->
+			<temperature unit="reduced" >330</temperature>
+			<domain type="box">
+				<lx>160</lx>
+				<ly>320</ly>
+				<lz>160</lz>
+			</domain>
+
+			<components>
+				<include query="/components/moleculetype" >../../../components_C6H12_dfg.xml</include>
+			</components>
+
+			<phasespacepoint>
+				<generator name="MultiObjectGenerator">
+					<objectgenerator>
+						<filler type="ReplicaFiller">
+							<input type="BinaryReader">
+								<header>../run01/cp_binary-1.restart.header.xml</header>
+								<data>../run01/cp_binary-1.restart.dat</data>
+							</input>
+						</filler>
+						<object type="Cuboid">
+							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+							<upper> <x>160</x> <y>320</y> <z>160</z> </upper>
+						</object>
+					</objectgenerator>
+				</generator>
+			</phasespacepoint>
+		</ensemble>
+
+		<algorithm>
+			<parallelisation type="DomainDecomposition">
+				 <!-- structure handled by DomainDecompMPIBase -->
+				<MPIGridDims> <x>2</x> <y>2</y> <z>2</z> </MPIGridDims>
+			</parallelisation>
+<!--
+			<parallelisation type="KDDecomposition">
+				<CommunicationScheme>direct</CommunicationScheme>
+				<updateFrequency>100000</updateFrequency>
+				<fullSearchThreshold>3</fullSearchThreshold>
+				<splitBiggestDimension>0</splitBiggestDimension>
+				<useVectorizationTuner>0</useVectorizationTuner>
+				<generateNewFiles>0</generateNewFiles>
+				<useExistingFiles>0</useExistingFiles>
+			</parallelisation>
+-->
+			<datastructure type="LinkedCells">
+				<cellsInCutoffRadius>1</cellsInCutoffRadius>
+			</datastructure>
+			<cutoffs type="CenterOfMass" >
+				<defaultCutoff unit="reduced" >13.988</defaultCutoff> <!-- sigma=3.497 => 3*sigma=10.491, 4*sigma=13.988, 5*sigma=17.485 -->
+				<radiusLJ unit="reduced" >13.988</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField" >
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+			
+			<longrange type="planar">
+				<slabs>200</slabs>
+				<smooth>0</smooth>
+				<frequency>10</frequency>
+				<writecontrol>
+					<start>10000</start>
+					<frequency>1000</frequency>
+					<stop>20000</stop>
+				</writecontrol>
+			</longrange>
+			
+			<thermostats>
+				<thermostat type="TemperatureControl">
+					<control>
+						<start>0</start>
+						<frequency>1</frequency>
+						<stop>1000000000</stop>
+					</control>
+					<regions>
+						<region>
+							<coords>
+								<lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
+								<ucx>box</ucx> <ucy>box</ucy> <ucz>box</ucz>
+							</coords>
+							<target>
+								<temperature>330</temperature>
+								<component>0</component>
+							</target>
+							<settings>
+								<numslabs>20</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+					</regions>
+				</thermostat>
+			</thermostats>
+		</algorithm>
+
+		<output>
+			<outputplugin name="CheckpointWriter">
+				<type>binary</type>
+				<writefrequency>50000</writefrequency>
+				<outputprefix>cp_binary</outputprefix>
+			</outputplugin>
+			
+			<outputplugin name="ResultWriter">
+				<writefrequency>1000</writefrequency>
+				<outputprefix>result</outputprefix>
+			</outputplugin>
+			
+			<outputplugin name="GammaWriter">
+				<writefrequency>1000</writefrequency>
+				<outputprefix>gamma</outputprefix>
+			</outputplugin>
+					
+			<outputplugin name="MmpldWriter" type="multi">
+				<include query="/spheres" >../../../sphereparams_C6H12_dfg.xml</include>
+				<writecontrol>
+					<start>0</start>
+					<writefrequency>50000</writefrequency>
+					<stop>100000</stop>
+					<framesperfile>0</framesperfile>
+				</writecontrol>
+				<outputprefix>megamol</outputprefix>  
+			</outputplugin>
+			
+			<outputplugin name="SysMonOutput">
+				<expression label="LoadAvg1">procloadavg:loadavg1</expression>
+				<expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
+				<writefrequency>100000</writefrequency>
+			</outputplugin> 
+		</output>
+		
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>5000000000</stop>
+			</control>
+			<yrange> <min>0.0</min> <max>320.0</max> </yrange>
+			<targets>
+				<target cid="1" method="1">
+						<Fmax>10000</Fmax>
+						<vmax>10.0</vmax>
+				</target>
+			</targets>
+		</plugin>
+		
+		<plugin name="RegionSampling">
+			<region>
+				<coords>
+					<lcx>0.0</lcx> <lcy refcoordsID="0">0.0</lcy> <lcz>0.0</lcz>
+					<ucx>box</ucx> <ucy refcoordsID="0">box</ucy> <ucz>box</ucz>
+				</coords>
+
+				<sampling type="profiles" single_component="1">
+					<control>
+						<start>0</start>
+						<frequency>50000</frequency>
+						<stop>1000000000</stop>
+					</control>
+					<subdivision type="width">
+							<width>1.0</width>
+							<number>1</number>
+					</subdivision>
+				</sampling>
+			</region>
+		</plugin>
+		
+		<plugin name="DriftCtrl">
+			<control>
+				<freq>
+					<sample>500</sample>
+					<control>5000</control>
+					<write>5000</write>
+				</freq>
+			</control>
+			<target>
+				<cid>1</cid>
+				<drift> <vx>0</vx> <vy>0</vy> <vz>0</vz> </drift>
+			</target>
+			<range>
+				<yl>120</yl> <yr>160</yr>
+				<subdivision>
+					<binwidth>40.0</binwidth>
+				</subdivision>
+			</range>
+		</plugin>
+		
+		<plugin name="COMaligner">
+			<x>0</x>
+			<y>1</y>
+			<z>0</z>
+			<interval>1000</interval>
+			<correctionFactor>1.0</correctionFactor>
+		</plugin>
+		
+	</simulation>
+
+</mardyn>

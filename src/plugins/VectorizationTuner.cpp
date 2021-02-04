@@ -281,7 +281,9 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		double boxMin[3] = {0., 0., 0.};
 		double boxMax[3] = {2., 2., 2.};
 		double cellLength[3] = {1., 1., 1.};
-		ParticleCell::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
+		int haloWidthInNumCells[3] = {1, 1, 1};
+		ParticleCell::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength,
+													 haloWidthInNumCells);
 		ParticleCell mainCell;
 		ParticleCell faceCell;
 		ParticleCell edgeCell;
@@ -418,7 +420,9 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	double boxMin[3] = {0., 0., 0.};
 	double boxMax[3] = {2., 2., 2.};
 	double cellLength[3] = {1., 1., 1.};
-	ParticleCell::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength);
+	int haloWidthInNumCells[3] = {1, 1, 1};
+	ParticleCell::_cellBorderAndFlagManager.init(cellsPerDim, haloBoxMin, haloBoxMax, boxMin, boxMax, cellLength,
+												 haloWidthInNumCells);
 	ParticleCell firstCell;
 	ParticleCell secondCell;
 

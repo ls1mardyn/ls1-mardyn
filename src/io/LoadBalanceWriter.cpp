@@ -51,7 +51,10 @@ void LoadbalanceWriter::readXML(XMLfileUnits& xmlconfig) {
 void LoadbalanceWriter::init(ParticleContainer */*particleContainer*/,
                              DomainDecompBase *domainDecomp, Domain */*domain*/) {
 	std::string default_timer_name(LB_WRITER_DEFAULT_TIMER_NAME);
+
+	// memory of this timer is managed by TimerProfiler.
 	_defaultTimer = new Timer();
+
 	global_simulation->timers()->registerTimer(default_timer_name, vector<string>{"SIMULATION"}, _defaultTimer);
 	_timerNames.push_back(default_timer_name);
 

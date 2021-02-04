@@ -21,6 +21,7 @@ Component::Component(unsigned int id) {
 	_E_trans=0.;
 	_lookUpID = 0;
 	_E_rot=0.;
+	_isStockmayer = false;
 
 	_ljcenters = vector<LJcenter> ();
 	_charges = vector<Charge> ();
@@ -42,46 +43,49 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query( "site" );
 	XMLfile::Query::const_iterator siteIter;
 	for( siteIter = query.begin(); siteIter; siteIter++ ) {
-		xmlconfig.changecurrentnode( siteIter );
-		
+		xmlconfig.changecurrentnode(siteIter);
+
 		std::string siteType;
-		xmlconfig.getNodeValue( "@type", siteType );
+		xmlconfig.getNodeValue("@type", siteType);
 		global_log->info() << "Adding site of type " << siteType << endl;
-		
-		if ( siteType == "LJ126" ) {
+
+		if (siteType == "LJ126") {
 			LJcenter ljSite;
 			ljSite.readXML(xmlconfig);
-			addLJcenter( ljSite );
-		} else
-		if ( siteType == "Charge" ) {
+			addLJcenter(ljSite);
+		} else if (siteType == "Charge") {
 			Charge chargeSite;
 			chargeSite.readXML(xmlconfig);
 			addCharge(chargeSite);
-		} else
-		if ( siteType == "Dipole" ) {
+		} else if (siteType == "Dipole") {
 			Dipole dipoleSite;
 			dipoleSite.readXML(xmlconfig);
 			addDipole(dipoleSite);
-		} else
-		if ( siteType == "Stockmayer" ) {		
-			_rot_dof = 3;
-			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [1 1 1]" << endl;
-			for (unsigned short d = 0; d < 3; ++d) {
-				_Ipa[d] = 1.0;
-			}
-		} else
-		if ( siteType == "Quadrupole" ) {
+		} else if (siteType == "Stockmayer") {
+			_isStockmayer = true;
+			_rot_dof = 2;
+
+			_Ipa[0] = 1.0;
+			_Ipa[1] = 1.0;
+			_Ipa[2] = 0.0;
+
+			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [" << _Ipa[0] << " " << _Ipa[1] << " "
+							   << _Ipa[2] << "]. Dipole direction vector of the Stockmayer fluid should be [0 0 1]."
+							   << endl;
+
+		} else if (siteType == "Quadrupole") {
 			Quadrupole quadrupoleSite;
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
-		} else
-		if ( siteType == "Tersoff" ) {
+		} else if (siteType == "Tersoff") {
 			global_log->error() << "Tersoff no longer supported:" << siteType << endl;
 			Simulation::exit(-1);
-		}else {
+		} else {
 			global_log->error() << "Unknown site type:" << siteType << endl;
 			Simulation::exit(-1);
 		}
+		// go back to initial level, to be consistent, even if no site information is found.
+		xmlconfig.changecurrentnode("..");
 	}
 
 	if(xmlconfig.changecurrentnode("momentsofinertia")){
@@ -89,7 +93,10 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 		if(xmlconfig.getNodeValueReduced("Ixx", II[0]) > 0) { setI11(II[0]); }
 		if(xmlconfig.getNodeValueReduced("Iyy", II[1]) > 0) { setI22(II[1]); }
 		if(xmlconfig.getNodeValueReduced("Izz", II[2]) > 0) { setI33(II[2]); }
+		global_log->info() << "Using moments of inertia set in xml config: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 		xmlconfig.changecurrentnode("..");
+	} else {
+		global_log->info() << "Using calculated moments of inertia: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 	}
 }
 
@@ -134,23 +141,28 @@ void Component::updateMassInertia(Site& site) {
 	_m += site.m();
 	// assume the input is already transformed to the principal axes system
 	// (and therefore the origin is the center of mass)
-//	_I[0] += m * (y * y + z * z);
-	_I[0] += site.m() * (site.ry() * site.ry() + site.rz() * site.rz());
-//	_I[1] += m * (x * x + z * z);
-	_I[1] += site.m() * (site.rx() * site.rx() + site.rz() * site.rz());
-//	_I[2] += m * (x * x + y * y);
-	_I[2] += site.m() * (site.rx() * site.rx() + site.ry() * site.ry());
-//	_I[3] -= m * x * y;
-	_I[3] -= site.m() * site.rx() * site.ry();
-//	_I[4] -= m * x * z;
-	_I[4] -= site.m() * site.rx() * site.rz();
-//	_I[5] -= m * y * z;
-	_I[5] -= site.m() * site.ry() * site.rz();
+	
+	if ( not _isStockmayer){ //if the component is a Stockmayer fluid, the moments of inertia are fixed at [1 1 0]
+	//	_I[0] += m * (y * y + z * z);
+		_I[0] += site.m() * (site.ry() * site.ry() + site.rz() * site.rz());
+	//	_I[1] += m * (x * x + z * z);
+		_I[1] += site.m() * (site.rx() * site.rx() + site.rz() * site.rz());
+	//	_I[2] += m * (x * x + y * y);
+		_I[2] += site.m() * (site.rx() * site.rx() + site.ry() * site.ry());
+	//	_I[3] -= m * x * y;
+		_I[3] -= site.m() * site.rx() * site.ry();
+	//	_I[4] -= m * x * z;
+		_I[4] -= site.m() * site.rx() * site.rz();
+	//	_I[5] -= m * y * z;
+		_I[5] -= site.m() * site.ry() * site.rz();
 
-	_rot_dof = 3;
-	for (unsigned short d = 0; d < 3; ++d) {
-		_Ipa[d] = _I[d];
-		if (_Ipa[d] == 0.) --_rot_dof;
+		_rot_dof = 3;
+	
+	
+		for (unsigned short d = 0; d < 3; ++d) {
+			_Ipa[d] = _I[d];
+			if (_Ipa[d] == 0.) --_rot_dof;
+		}
 	}
 }
 
@@ -196,19 +208,19 @@ void Component::write(std::ostream& ostrm) const {
 	ostrm << _ljcenters.size() << "\t" << _charges.size() << "\t"
 	      << _dipoles.size() << "\t" << _quadrupoles.size() << "\t"
 		  << 0 << "\n";  // the 0 indicates a zero amount of tersoff sites.
-	for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos) {
+	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
-	for (std::vector<Charge>::const_iterator pos = _charges.begin(); pos != _charges.end(); ++pos) {
+	for (auto pos = _charges.cbegin(); pos != _charges.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
-	for (std::vector<Dipole>::const_iterator pos = _dipoles.begin(); pos != _dipoles.end(); ++pos) {
+	for (auto pos = _dipoles.cbegin(); pos != _dipoles.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
-	for (std::vector<Quadrupole>::const_iterator pos = _quadrupoles.begin(); pos != _quadrupoles.end(); ++pos) {
+	for (auto pos = _quadrupoles.cbegin(); pos != _quadrupoles.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}
@@ -216,7 +228,7 @@ void Component::write(std::ostream& ostrm) const {
 }
 
 void Component::writeVIM(std::ostream& ostrm) {
-	for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos) {
+	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
 		ostrm << "~ " << this->_id + 1 << " LJ " << setw(7) << pos->rx() << ' '
 		      << setw(7) << pos->ry() << ' ' << setw(7) << pos->rz() << ' '
 		      << setw(6) << pos->sigma() << ' ' << setw(2) << (1 + (this->_id % 9)) << "\n";

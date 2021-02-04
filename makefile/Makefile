@@ -157,7 +157,7 @@ else
 endif
 
 SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/|AutoPas)")
-SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase\|LoadCalc\|Zonal" | grep -E -v "/tests/")
+SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase\|LoadCalc\|Zonal\|ForceHelper" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/|ALLL)")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
 

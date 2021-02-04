@@ -360,8 +360,8 @@ void MeasureLoad::calcConstants() {
 		numElements = _times.size() - start;
 	}
 
-	std::array<double, 5> momentsX;  // stores the moments of x: sum{t^i}
-	std::array<double, 3> momentsYX;  // stores the following: sum{d* t^i}
+	std::array<double, 5> momentsX{};  // stores the moments of x: sum{t^i}
+	std::array<double, 3> momentsYX{};  // stores the following: sum{d* t^i}
 
 	momentsX[0] = numElements;
 

@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+
+	<simulation type="MD" >
+		<options> <option name="refreshIDs">1</option> </options>
+		
+		<integrator type="Leapfrog" >
+			<timestep unit="reduced" >0.00182367</timestep>
+		</integrator>
+
+		<run>
+			<currenttime>0</currenttime> 
+			<production>
+				<steps>50000</steps>
+			</production>
+		</run>
+
+		<ensemble type="NVT">
+			<!-- Nparticles determined by the input file -->
+			<temperature unit="reduced" >415</temperature>
+			<domain type="box">
+				<lx>160</lx>
+				<ly>160</ly>
+				<lz>160</lz>
+			</domain>
+
+			<components>
+				<include query="/components/moleculetype" >../../../components_C6H12_dfg.xml</include>
+			</components>
+
+			<phasespacepoint>
+				<generator name="MultiObjectGenerator">
+					<objectgenerator>
+						<filler type="ReplicaFiller">
+							<input type="BinaryReader">
+								<header>../run02/cp_binary-1.restart.header.rho_liq.xml</header>
+								<data>../run02/cp_binary-1.restart.rho_liq.dat</data>
+							</input>
+						</filler>
+						<object type="Cuboid">
+							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+							<upper> <x>160</x> <y>160</y> <z>160</z> </upper>
+						</object>
+					</objectgenerator>
+				</generator>
+			</phasespacepoint>
+		</ensemble>
+
+		<algorithm>
+			<parallelisation type="DomainDecomposition">
+				 <!-- structure handled by DomainDecompMPIBase
+				<MPIGridDims> <x>4</x> <y>2</y> <z>5</z> </MPIGridDims> -->
+			</parallelisation>
+<!--
+			<parallelisation type="KDDecomposition">
+				<CommunicationScheme>direct</CommunicationScheme>
+				<updateFrequency>100000</updateFrequency>
+				<fullSearchThreshold>3</fullSearchThreshold>
+				<splitBiggestDimension>0</splitBiggestDimension>
+				<useVectorizationTuner>0</useVectorizationTuner>
+				<generateNewFiles>0</generateNewFiles>
+				<useExistingFiles>0</useExistingFiles>
+			</parallelisation>
+-->
+			<datastructure type="LinkedCells">
+				<cellsInCutoffRadius>1</cellsInCutoffRadius>
+			</datastructure>
+			<cutoffs type="CenterOfMass" >
+				<defaultCutoff unit="reduced" >13.988</defaultCutoff> <!-- \sigma=3.497 => 3*\sigma=10.491, 4*\sigma=13.988 -->
+				<radiusLJ unit="reduced" >13.988</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField" >
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+		</algorithm>
+
+		<output>
+			<outputplugin name="CheckpointWriter">
+				<type>binary</type>
+				<writefrequency>50000</writefrequency>
+				<outputprefix>cp_binary</outputprefix>
+			</outputplugin>
+			
+			<outputplugin name="MmpldWriter" type="multi">
+				<include query="/spheres" >../../../sphereparams_C6H12_dfg.xml</include>
+				<writecontrol>
+					<start>0</start>
+					<writefrequency>50000</writefrequency>
+					<stop>50000</stop>
+					<framesperfile>0</framesperfile>
+				</writecontrol>
+				<outputprefix>megamol</outputprefix>  
+			</outputplugin>
+		</output>
+
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>5000</stop>
+			</control>
+			<yrange> <min>0.0</min> <max>160.0</max> </yrange>
+			<targets>
+				<target cid="1" method="1">
+					<Fmax>10000</Fmax>
+					<vmax>10.0</vmax>
+				</target>
+			</targets>
+		</plugin>
+
+	</simulation>
+</mardyn>

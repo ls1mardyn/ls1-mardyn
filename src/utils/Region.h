@@ -11,6 +11,8 @@
 #include "utils/ObserverBase.h"
 #include <string>
 #include <ostream>
+#include <vector>
+#include <array>
 #include <cstdint>
 
 enum SubdivisionOption
@@ -44,8 +46,8 @@ public:
 	virtual void Print(std::ostream& os) = 0;
 
 protected:
-	unsigned short _nID;
 	ControlInstance* _parent;
+	unsigned short _nID;
 private:
 	int _nType;
 
@@ -61,22 +63,21 @@ public:
 	CuboidRegion(ControlInstance* parent, double dLC[3], double dUC[3] );
 	virtual ~CuboidRegion();
 
-	double GetLowerCorner(unsigned short nDim) {return _dLowerCorner[nDim];}
-	double GetUpperCorner(unsigned short nDim) {return _dUpperCorner[nDim];}
-	void GetLowerCorner(double* dLC) {dLC[0]=_dLowerCorner[0]; dLC[1]=_dLowerCorner[1]; dLC[2]=_dLowerCorner[2];}
-	void GetUpperCorner(double* dUC) {dUC[0]=_dUpperCorner[0]; dUC[1]=_dUpperCorner[1]; dUC[2]=_dUpperCorner[2];}
-	double* GetLowerCorner() {return _dLowerCorner;}
-	double* GetUpperCorner() {return _dUpperCorner;}
-	void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal;}
-	void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal;}
-	double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
-	void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
-	bool PositionIsInside(unsigned short nDim, double dPos) {return dPos > _dLowerCorner[nDim] && dPos < _dUpperCorner[nDim];}
-	bool PositionIsInside(double* dPos)
-	{
-		if		( !(dPos[0] > _dLowerCorner[0] && dPos[0] < _dUpperCorner[0]) ) return false;
-		else if ( !(dPos[1] > _dLowerCorner[1] && dPos[1] < _dUpperCorner[1]) ) return false;
-		else if	( !(dPos[2] > _dLowerCorner[2] && dPos[2] < _dUpperCorner[2]) ) return false;
+	double GetLowerCorner(const uint16_t& nDim) {return _dLowerCorner.at(nDim);}
+	double GetUpperCorner(const uint16_t& nDim) {return _dUpperCorner.at(nDim);}
+	void GetLowerCorner(double* dLC) {dLC = _dLowerCorner.data();}
+	void GetUpperCorner(double* dUC) {dUC = _dUpperCorner.data();}
+	double* GetLowerCorner() {return _dLowerCorner.data();}
+	double* GetUpperCorner() {return _dUpperCorner.data();}
+	void SetLowerCorner(const uint16_t& nDim, const double& dVal) {_dLowerCorner.at(nDim) = dVal;}
+	void SetUpperCorner(const uint16_t& nDim, const double& dVal) {_dUpperCorner.at(nDim) = dVal;}
+	double GetWidth(const uint16_t& nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
+	void GetRange(const uint16_t& nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner.at(nDim); dRangeEnd = _dUpperCorner.at(nDim);}
+	bool PositionIsInside(const uint16_t& nDim, const double& dPos) {return (dPos > _dLowerCorner.at(nDim) ) && (dPos < _dUpperCorner.at(nDim) );}
+	bool PositionIsInside(double* dPos) {
+		if		( !(dPos[0] > _dLowerCorner.at(0) && dPos[0] < _dUpperCorner.at(0) ) ) return false;
+		else if ( !(dPos[1] > _dLowerCorner.at(1) && dPos[1] < _dUpperCorner.at(1) ) ) return false;
+		else if	( !(dPos[2] > _dLowerCorner.at(2) && dPos[2] < _dUpperCorner.at(2) ) ) return false;
 		else	return true;
 	}
 	virtual void Print(std::ostream& os)
@@ -84,10 +85,8 @@ public:
 		os << "----------------------------------------------------------------" << std::endl;
 		os << "ID: " << _nID << std::endl;
 		os << "width: " << this->GetWidth(0) << " " << this->GetWidth(1) << " " << this->GetWidth(2) << std::endl;
-		double lc[3];
-		double uc[3];
-		this->GetLowerCorner(lc);
-		this->GetUpperCorner(uc);
+		double* lc = this->GetLowerCorner();
+		double* uc = this->GetUpperCorner();
 		os << "lowerCorner: " << lc[0] << " " << lc[1] << " " << lc[2] << std::endl;
 		os << "upperCorner: " << uc[0] << " " << uc[1] << " " << uc[2] << std::endl;
 		os << "----------------------------------------------------------------" << std::endl;
@@ -101,8 +100,8 @@ public:
 	}
 
 protected:
-	double _dLowerCorner[3];
-	double _dUpperCorner[3];
+	std::array<double,3> _dLowerCorner;
+	std::array<double,3> _dUpperCorner;
 
 	int _nSubdivisionOpt;
 
@@ -118,14 +117,14 @@ public:
 	virtual ~CuboidRegionObs();
 
 	// ObserverBase methods
-	virtual void set(double dMidpointLeft, double dMidpointRight);
-	void PrepareAsObserver(const uint32_t refCoords[6]);
+	void update(SubjectBase* subject) override;
+	void PrepareAsObserver(const std::vector<uint32_t>& refCoords);
 
 private:
 	// observer
-	double _dDistToRefCoords[6];
-	bool _bMaskMidpointLeft[6];
-	bool _bMaskMidpointRight[6];
+	std::array<double,6> _dDistToRefCoords;
+	std::array<bool,6> _bMaskMidpointLeft;
+	std::array<bool,6> _bMaskMidpointRight;
 
 };  // class CuboidRegionObs
 

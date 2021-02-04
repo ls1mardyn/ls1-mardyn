@@ -52,10 +52,11 @@ void utils::TestWithSimulationSetup::tearDown() {
 
 
 ParticleContainer* utils::TestWithSimulationSetup::initializeFromFile(
-		ParticleContainerFactory::Type type, const char* fileName, double cutoff) {
+		ParticleContainerFactory::Type type, const std::string& fileName, double cutoff, bool binary) {
 
+	bool checkExist = not binary;  // for binary the prefix is given, so we cannot check the file for existence.
 	return ParticleContainerFactory::createInitializedParticleContainer(
-			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName));
+			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName, checkExist), binary);
 }
 
 #endif /* UNIT_TESTS */

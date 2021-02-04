@@ -7,12 +7,14 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
+#include <particleContainer/RegionParticleIterator.h>
 #include <iostream>
+#include <variant>
 
-#include "molecules/MoleculeForwardDeclaration.h"
-#include "utils/Logger.h" // is this used?
-#include "io/MemoryProfiler.h"
 #include "HaloRegion.h"
+#include "io/MemoryProfiler.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/Logger.h"  // is this used?
 
 class Component;
 class Domain;
@@ -172,13 +174,19 @@ public:
 	//! @param moleculeContainer e.g. needed for the cutoff radius
 	double getIOCutoffRadius(int dim, Domain* domain, ParticleContainer* moleculeContainer);
 
+
+#ifdef ENABLE_MPI
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
+	//! This version uses, MPI IO.
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
-	//!
-	//! Currently, parallel IO isn't used.
-	//! To ensure that not more than one process writes to the file at any time,
-	//! there is a loop over all processes with a barrier in between
+	void writeMoleculesToMPIFileBinary(const std::string& filename, ParticleContainer* moleculeContainer) const;
+#endif // ENABLE_MPI
+
+	//! @brief appends molecule data to the file. The format is the same as that of the input file
+	//! If MPI is enabled and binary files are supposed to be written this function will call writeMoleculesToMPIFileBinary().
+	//! Otherwise, to ensure that not more than one process writes to the file at any time,
+	//! there is a loop over all processes with a barrier in between.
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
 	//! @param binary flag, that is true if the output shall be binary

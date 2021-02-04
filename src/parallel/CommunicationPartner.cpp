@@ -6,17 +6,18 @@
  */
 
 #include "CommunicationPartner.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
 #include <cmath>
 #include <sstream>
-#include "WrapOpenMP.h"
-#include "Simulation.h"
-#include "ParticleData.h"
-#include "parallel/DomainDecompBase.h"
 #include "Domain.h"
+#include "ForceHelper.h"
+#include "ParticleData.h"
+#include "Simulation.h"
+#include "WrapOpenMP.h"
+#include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
 
-CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
+CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3],
 		const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
 	_rank = r;
 
@@ -40,7 +41,7 @@ CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], con
 	_recvRequest = new MPI_Request;
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
-	_msgSent = _countReceived = _msgReceived = false;
+	_isSending = _msgSent = _isReceiving = _countReceived = _msgReceived = false;
 	_countTested = 0;
 }
 
@@ -66,7 +67,7 @@ CommunicationPartner::CommunicationPartner(const int r) {
 	_recvRequest = new MPI_Request;
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
-	_msgSent = _countReceived = _msgReceived = false;
+	_isSending = _msgSent = _isReceiving = _countReceived = _msgReceived = false;
 	_countTested = 0;
 }
 
@@ -91,7 +92,7 @@ CommunicationPartner::CommunicationPartner(const int r, const double leavingLo[3
 	_recvRequest = new MPI_Request;
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
-	_msgSent = _countReceived = _msgReceived = false;
+	_isSending = _msgSent = _isReceiving = _countReceived = _msgReceived = false;
 	_countTested = 0;
 }
 
@@ -105,11 +106,11 @@ CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
 	_recvRequest = new MPI_Request;
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
-	_msgSent = _countReceived = _msgReceived = false;
+	_isSending = _msgSent = _isReceiving = _countReceived = _msgReceived = false;
 	_countTested = 0;
 }
 
-CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartner& o){
+CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartner& o) {
 // make sure, that the send requests are properly initialized. the delete and new operators are probably unimportant...
 	if (this != &o) {
 		_rank = o._rank;
@@ -122,7 +123,7 @@ CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartne
 		_recvRequest = new MPI_Request;
 		_sendStatus = new MPI_Status;
 		_recvStatus = new MPI_Status;
-		_msgSent = _countReceived = _msgReceived = false;
+		_isSending = _msgSent = _isReceiving = _countReceived = _msgReceived = false;
 		_countTested = 0;
 	}
 	return *this;
@@ -188,12 +189,12 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		case MessageType::FORCES: {
 			global_log->debug() << "sending forces" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
-				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, 
-					_haloInfo[p]._shift, false, FORCES); 
+				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
+					_haloInfo[p]._shift, false, FORCES);
 			}
 			break;
 		}
-                
+
 	}
 
 	#ifndef NDEBUG
@@ -222,6 +223,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 
 	MPI_CHECK(MPI_Isend(_sendBuf.getDataForSending(), (int ) _sendBuf.getNumElementsForSending(), _sendBuf.getMPIDataType(), _rank, 99, comm, _sendRequest));
 	_msgSent = false;
+	_isSending = true;
 }
 
 bool CommunicationPartner::testSend() {
@@ -230,19 +232,20 @@ bool CommunicationPartner::testSend() {
 		MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus)); // THIS CAUSES A SEG FAULT IN PUSH_PULL_NEIGHBOURS
 		if (flag == 1) {
 			_msgSent = true;
+			_isSending = false;
 			_sendBuf.clear();
 		}
 	}
 	return _msgSent;
 }
 
-void CommunicationPartner::resetReceive(){
-	_countReceived = _msgReceived = false;
-
+void CommunicationPartner::resetReceive() {
+	_countReceived = _msgReceived = _isReceiving = false;
 }
 
 bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype& /*type*/) {
 	if (not _countReceived) {
+		_isReceiving = true;
 		int flag = 0;
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
 		if (flag != 0) {
@@ -275,11 +278,12 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag != 0) {
 			_msgReceived = true;
-			
-			if(!force) { // Buffer is particle data 
+			_isReceiving = false;
+
+			if(!force) { // Buffer is particle data
 
 				unsigned long numHalo, numLeaving;
-				_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo); 
+				_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo);
 
 #ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
@@ -287,7 +291,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				std::ostringstream buf1;
 				for (unsigned long i = 0; i < numLeaving; ++i) {
 					Molecule m;
-					_recvBuf.readLeavingMolecule(i, m); 
+					_recvBuf.readLeavingMolecule(i, m);
 					buf1 << m.getID() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
@@ -322,59 +326,60 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					}
 				}
 			} else { // Buffer is force data
-				
+
 				/*
 				#if defined(_OPENMP)
 				#pragma omp for schedule(static)
 				#endif
-				*/ 
-				
+				*/
+
 				unsigned long numForces;
 				_recvBuf.resizeForReceivingMolecules(numForces);
-			
-				
-#ifndef NDEBUG	
+
+
+#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
 				global_log->debug() << "Buffer contains " << numForces << " force particles with IDs " << std::endl;
 				std::ostringstream buf1;
-				
+
 				for(unsigned long i = 0; i < numForces; ++i) {
 					Molecule m;
 					_recvBuf.readForceMolecule(i, m);
 					buf1 << m.getID() << " ";
 				}
 				global_log->debug() << buf1.str() << std::endl;
-				
-				
+
+
 #endif
 				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
 				//mols.resize(numForces);
-				
+
 				/*#if defined(_OPENMP) and not defined (ADVANCED_OVERLAPPING)
 				#pragma omp parallel for schedule(static)
 				#endif*/
-				
+
+				double pos[3];
+				decltype(moleculeContainer->getMoleculeAtPosition(pos)) originalPreviousIter{};
+
 				for(unsigned i = 0; i < numForces; ++i) {
 					Molecule m;
 					_recvBuf.readForceMolecule(i, m);
 					//mols[i] = m;
-					Molecule* m_target;
 					const double position[3] = { m.r(0), m.r(1), m.r(2) };
-					moleculeContainer->getMoleculeAtPosition(position, &m_target);
-					m_target->Fadd(m.F_arr().data());
-					m_target->Madd(m.M_arr().data());
-					m_target->Viadd(m.Vi_arr().data());
+
+					originalPreviousIter =
+						addValuesAndGetIterator(moleculeContainer, position, originalPreviousIter, m);
 				}
-				
+
 				//moleculeContainer->addParticles(mols, removeRecvDuplicates);
 
 			}
-			
+
 
 
 			_recvBuf.clear();
 			global_simulation->timers()->stop("COMMUNICATION_PARTNER_TEST_RECV");
-			
+
 
 		} else {
 			++_countTested;
@@ -387,6 +392,7 @@ void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, cons
 	// one single call from KDDecomposition::migrate particles.
 	// So all molecules, which arrive area leaving molecules.
 	_countReceived = true;
+	_isReceiving = true;
 
 	// hackaround - resizeForAppendingLeavingMolecules is intended for the send-buffer, not the recv one.
 	_recvBuf.resizeForAppendingLeavingMolecules(numParticles);
@@ -399,7 +405,7 @@ void CommunicationPartner::deadlockDiagnosticSendRecv() {
 
 	deadlockDiagnosticSend();
 
-	if (not _countReceived) {
+	if (not _countReceived and _isReceiving) {
 		global_log->warning() << "Probe request to " << _rank << " not yet completed" << std::endl;
 	}
 
@@ -408,13 +414,13 @@ void CommunicationPartner::deadlockDiagnosticSendRecv() {
 
 void CommunicationPartner::deadlockDiagnosticSend() {
 	// intentionally using std::cout instead of global_log, we want the messages from all processes
-	if (not _msgSent) {
+	if (not _msgSent and _isSending) {
 		Log::global_log->warning() << "Send request to " << _rank << " not yet completed" << std::endl;
 	}
 }
 
 void CommunicationPartner::deadlockDiagnosticRecv() {
-	if (not _msgReceived) {
+	if (not _msgReceived and _isReceiving) {
 		Log::global_log->warning() << "Recv request to " << _rank << " not yet completed" << std::endl;
 	}
 }
@@ -476,7 +482,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			threadData[threadNum].push_back(*i);
 			mardyn_assert(i->inBox(lowCorner, highCorner));
 			if (removeFromContainer) {
-				i.deleteCurrentParticle();
+				moleculeContainer->deleteMolecule(i, false);
 			}
 		}
 
@@ -555,7 +561,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 							//std::cout << std::endl << "shifting: molecule" << m.id << std::endl;
 						}
 					}
-				} 
+				}
 				/* else if(haloLeaveCorr == HaloOrLeavingCorrection::FORCES) { // using Leaving correction for now.
 					// THIS IS STILL MISSING!
 				} */

@@ -26,10 +26,9 @@ public:
 	std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
 		auto condition = [](const int d[3])->bool {
-			// TODO reenable this check and fix halfshelltraversal
-			//int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[0];
-			//return pseudoCellIndex > 0;
-			return true;
+			// Here, we cannot directly apply the stencil from the HS traversal, as for multiple cells also the
+			// other directions are needed. Visualize: Apply the stencil in the z-direction for the lowest cell.
+			return d[2] >= 0;
 		};
 		return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}
@@ -37,10 +36,9 @@ public:
 	std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius, double /*skin*/,
 			bool coversWholeDomain[3], double cellLength[3]) override {
 		auto condition = [](const int d[3])->bool {
-			// TODO reenable this check and fix halfshelltraversal
-			//int pseudoCellIndex = ((d[2] * 2) + d[1]) * 2 + d[0];
-			//return pseudoCellIndex < 0;
-			return true;
+			// Here, we cannot directly apply the stencil from the HS traversal, as for multiple cells also the
+			// other directions are needed. Visualize: Apply the stencil in the z-direction for the lowest cell.
+			return d[2] <= 0;
 		};
 		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
 	}

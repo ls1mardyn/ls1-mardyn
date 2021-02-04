@@ -60,7 +60,6 @@ public:
 
 
 protected:
-
 	/**
 	 * Initialize a particle container from the given phase specification file.
 	 * The domain class is setup as far as the input file is concerned, and for
@@ -69,13 +68,15 @@ protected:
 	 *
 	 * @param type the concrete implementation of the particleContainer to be created
 	 * @param fileName the name of the file (relative to the testDataDirectory) which
-	 *                 is used for initialization
+	 *                 is used for initialization, or the prefix of the filename for binary files.
 	 * @param cutoff the value used for all kinds of cutoff radii
-	 *
+	 * @param binary specifies that the file pointed to is a binary file. If true the header of this file has to have the
+	 * extension ".header.xml" and the data file ".dat".
 	 * @note The caller is responsible for deleting the particle container.
 	 * @see ParticleContainerFactory::createInitializedParticleContainer()
 	 */
-	ParticleContainer* initializeFromFile(ParticleContainerFactory::Type type, const char* fileName, double cutoff);
+	ParticleContainer* initializeFromFile(ParticleContainerFactory::Type type, const std::string& fileName,
+										  double cutoff, bool binary = false);
 
 	int _rank;
 

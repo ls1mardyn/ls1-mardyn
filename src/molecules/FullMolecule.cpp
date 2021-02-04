@@ -445,7 +445,7 @@ void FullMolecule::write(ostream& ostrm) const {
 	      << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
 	      << _q.qw() << " " << _q.qx() << " " << _q.qy() << " " << _q.qz() << "\t"
 	      << _L[0] << " " << _L[1] << " " << _L[2] << "\t"
-	      << endl;
+	      << "\n";
 }
 
 void FullMolecule::writeBinary(std::ostream& ostrm) const {
