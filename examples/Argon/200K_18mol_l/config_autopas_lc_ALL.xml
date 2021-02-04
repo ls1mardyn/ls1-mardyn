@@ -31,7 +31,9 @@
     </ensemble>
     <algorithm>
 	    <parallelisation type="GeneralDomainDecomposition">
-		    <updateFrequency>1000</updateFrequency>
+		  <updateFrequency>1000</updateFrequency>
+          <!--<loadBalancer type="ALL"></loadBalancer>-->
+            <loadBalancer type="ALL"></loadBalancer>
 	    </parallelisation>
       <datastructure type="AutoPas">
         <allowedContainers>linkedCells</allowedContainers>

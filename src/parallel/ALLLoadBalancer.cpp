@@ -20,6 +20,8 @@ ALLLoadBalancer::ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double
 	_all.set_proc_grid_params(coords.data(), global_size.data());
 	_all.set_communicator(comm);
 
+	_coversWholeDomain = {globalSize[0] == 1, global_size[1] == 1, global_size[2] == 1};
+
 	_minimalPartitionSize = minimalPartitionSize;
 }
 std::tuple<std::array<double, 3>, std::array<double, 3>> ALLLoadBalancer::rebalance(double work) {

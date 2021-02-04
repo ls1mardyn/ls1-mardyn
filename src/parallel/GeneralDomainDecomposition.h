@@ -32,6 +32,10 @@ public:
 		  <updateFrequency>INTEGER</updateFrequency>
 		  <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
 		  <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
+		  <loadBalancer type="STRING"> <!--STRING...type of the load balancer, currently supported: ALL-->
+		    <!--options for the load balancer-->
+			<!--for detailed information see the readXML functions from ALLLoadBalancer.-->
+		  </loadBalancer>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -86,6 +90,11 @@ public:
 	}
 
 private:
+	/**
+	 * Method that initializes the ALLLoadBalancer
+	 */
+	void initializeALL();
+
 	/**
 	 * Get the optimal grid for the given dimensions of the box and the number of processes.
 	 * The grid is produced, s.t., the number of grid[0] * grid[1] * grid[2] == numProcs
@@ -152,7 +161,8 @@ private:
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
 
-	std::array<bool, 3> _coversWholeDomain{};
+	std::array<double, 3> _domainLength;
+	double _interactionLength;
 
 	size_t _steps{0};
 	size_t _rebuildFrequency{10000};
