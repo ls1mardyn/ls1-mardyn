@@ -33,7 +33,7 @@
 	    <parallelisation type="GeneralDomainDecomposition">
 		  <updateFrequency>1000</updateFrequency>
           <!--<loadBalancer type="ALL"></loadBalancer>-->
-          <loadBalancer type="zoltan"></loadBalancer>
+            <loadBalancer type="ALL"></loadBalancer>
 	    </parallelisation>
       <datastructure type="AutoPas">
         <allowedContainers>linkedCells</allowedContainers>
