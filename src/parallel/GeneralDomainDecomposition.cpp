@@ -294,6 +294,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		_loadBalancer->readXML(xmlconfig);
 	} else {
 		global_log->error() << "loadBalancer section missing! Aborting!" << std::endl;
+		Simulation::exit(8466);
 	}
 	xmlconfig.changecurrentnode("..");
 }
