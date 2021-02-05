@@ -48,4 +48,16 @@ static std::string trim(const std::string& str, const std::string &whitespace = 
 	return str.substr(strBegin, strRange);
 }
 
+static std::vector<std::string> split(const std::string& input, const char delimiter ){
+	size_t last = 0;
+	size_t next = 0;
+	std::vector<std::string> output;
+	while ((next = input.find(delimiter, last)) != std::string::npos) {
+		output.emplace_back(input.substr(last, next - last));
+		last = next + 1;
+	}
+	output.emplace_back(input.substr(last));
+	return output;
+}
+
 }  // namespace string_utils
