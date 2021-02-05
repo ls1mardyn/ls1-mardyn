@@ -31,7 +31,7 @@
         </ensemble>
         <algorithm>
             <parallelisation type="GeneralDomainDecomposition">
-                <updateFrequency>5</updateFrequency>
+                <updateFrequency>10000</updateFrequency>
                 <!--<gridSize>7,5,9</gridSize>-->
                 <loadBalancer type="ALL">
 
@@ -45,7 +45,7 @@
                 <skin>1.</skin><!--roughly 10% of cutoff-->
             </datastructure>
             <cutoffs type="CenterOfMass">
-                <radiusLJ unit="reduced">3</radiusLJ>
+                <radiusLJ unit="reduced">33.0702</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField">
                 <epsilon>1.0e+10</epsilon>
