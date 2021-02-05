@@ -32,7 +32,7 @@
     <algorithm>
 	    <parallelisation type="GeneralDomainDecomposition">
 		  <updateFrequency>1000</updateFrequency>
-          <!--<loadBalancer type="ALL"></loadBalancer>-->
+          <gridSize>7,5,9</gridSize>
             <loadBalancer type="ALL"></loadBalancer>
 	    </parallelisation>
       <datastructure type="AutoPas">
