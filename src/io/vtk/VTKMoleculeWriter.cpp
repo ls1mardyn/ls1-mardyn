@@ -46,7 +46,7 @@ void VTKMoleculeWriter::endStep(
 
 	int rank = domainDecomp->getRank();
 
-        VTKMoleculeWriterImplementation impl(rank, true);
+	VTKMoleculeWriterImplementation impl(rank, true);
 
 	impl.initializeVTKFile();
 
