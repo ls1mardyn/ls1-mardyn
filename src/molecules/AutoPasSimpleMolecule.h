@@ -199,7 +199,7 @@ public:
 
 	std::array<double, 3> quadrupole_e(unsigned int i) const override { return emptyArray3(); }
 
-	std::array<double, 3> site_F(unsigned int i) const override { return emptyArray3(); }
+	std::array<double, 3> site_F(unsigned int i) const override { return getF(); }
 
 	std::array<double, 3> ljcenter_F(unsigned int i) const override { return emptyArray3(); }
 
