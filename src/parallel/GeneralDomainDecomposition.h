@@ -28,16 +28,16 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <parallelisation type="GeneralDomainDecomposition">
+		<parallelisation type="GeneralDomainDecomposition">
 		  <updateFrequency>INTEGER</updateFrequency>
 		  <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
 		  <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
 		  <loadBalancer type="STRING"> <!--STRING...type of the load balancer, currently supported: ALL-->
-		    <!--options for the load balancer-->
+			<!--options for the load balancer-->
 			<!--for detailed information see the readXML functions from ALLLoadBalancer.-->
 		  </loadBalancer>
-	   </parallelisation>
-	   \endcode
+		</parallelisation>
+		\endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
