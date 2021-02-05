@@ -32,7 +32,8 @@ public:
 		  <updateFrequency>INTEGER</updateFrequency>
 		  <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
 		  <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
-		  <loadBalancer type="STRING"> <!--STRING...type of the load balancer, currently supported: ALL-->
+		  <gridSize>DOUBLE</gridSize><!--default: 0; if non-zero, the process boundaries are fixed to multiples of gridSize.-->
+		  <loadBalancer type="STRING"><!--STRING...type of the load balancer, currently supported: ALL-->
 		    <!--options for the load balancer-->
 			<!--for detailed information see the readXML functions from ALLLoadBalancer.-->
 		  </loadBalancer>
@@ -169,6 +170,8 @@ private:
 
 	size_t _initPhase{0};
 	size_t _initFrequency{500};
+
+	double _gridSize{0.};
 
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
 

@@ -27,7 +27,11 @@ void GeneralDomainDecomposition::initializeALL() {
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
 #ifdef ENABLE_ALLLBL
 	// Increased slightly to prevent rounding errors.
-	double minimalDomainSize{_interactionLength * (1. + 1.e-10)};
+	double safetyFactor = 1.+1.e-10;
+	double minimalDomainSize = _interactionLength * safetyFactor;
+	if (_gridSize > 0.) {
+		minimalDomainSize = std::max(minimalDomainSize, _gridSize);
+	}
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, minimalDomainSize);
 #else
@@ -72,13 +76,23 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			moleculeContainer->deleteOuterParticles();
 
 			// rebalance
-			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
 			global_log->info() << "rebalancing..." << std::endl;
 
 			global_log->set_mpi_output_all();
 			global_log->debug() << "work:" << lastTraversalTime << std::endl;
 			global_log->set_mpi_output_root(0);
-			std::tie(newBoxMin, newBoxMax) = _loadBalancer->rebalance(lastTraversalTime);
+			auto [newBoxMin, newBoxMax] = _loadBalancer->rebalance(lastTraversalTime);
+			if(_gridSize > 0.) {
+				for (size_t ind = 0; ind < 3; ++ind) {
+					// For boxmin, the lower domain boundary is 0, so that's always fine!
+					newBoxMin[ind] = std::round(newBoxMin[ind] / _gridSize) * _gridSize;
+					// update boxmax only if it isn't at the very top of the domain!
+					if(newBoxMax[ind] != _domainLength[ind]) {
+						newBoxMax[ind] = std::round(newBoxMax[ind] / _gridSize) * _gridSize;
+					}
+				}
+			}
+
 
 			// migrate the particles, this will rebuild the moleculeContainer!
 			global_log->info() << "migrating particles" << std::endl;
@@ -237,6 +251,17 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("initialPhaseFrequency", _initFrequency);
 	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _initFrequency
 					   << endl;
+
+	xmlconfig.getNodeValue("gridSize", _gridSize);
+	global_log->info() << "GeneralDomainDecomposition grid size: " << _gridSize
+					   << endl;
+
+	if(_gridSize > 0. and _gridSize < _interactionLength){
+		global_log->error() << "GeneralDomainDecomposition's gridSize (" << _gridSize
+						   << ") is smaller than the interactionLength (" << _interactionLength
+						   << "). This is forbidden, as it leads to errors! " << endl;
+		Simulation::exit(8136);
+	}
 
 	if(xmlconfig.changecurrentnode("loadBalancer")) {
 		std::string loadBalancerString = "None";
