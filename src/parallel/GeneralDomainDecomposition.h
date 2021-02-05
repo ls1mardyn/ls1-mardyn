@@ -160,6 +160,13 @@ private:
 	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> newMin,
 						  std::array<double, 3> newMax);
 
+	/**
+	 * Latches domain boundaries (given as boxMin and boxMax) to a grid, which is defined by _gridSize.
+	 * If boxMax matches the top boundary, it is not changed.
+	 * @param boxMin
+	 * @param boxMax
+	 * @return The new boundaries.
+	 */
 	std::pair<std::array<double, 3>, std::array<double, 3>> latchToGridSize(std::array<double, 3> boxMin,
 																			std::array<double, 3> boxMax) {
 		for (size_t ind = 0; ind < 3; ++ind) {
