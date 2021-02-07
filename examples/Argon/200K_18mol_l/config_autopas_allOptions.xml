@@ -31,12 +31,16 @@
     </ensemble>
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
-      <!--<parallelisation type="GeneralDomainDecomposition">
+      <!--
+      <parallelisation type="GeneralDomainDecomposition">
 		  <updateFrequency>1000</updateFrequency><comment>updateFrequency specifies how often a rebalancing will occur.</comment>
 		  <initialPhaseTime>10000</initialPhaseTime>
 		  <comment>initialPhaseTime specifies for how many time steps the initial rebalancing phase should last, in which initialPhaseFrequency is applied instead of updateFrequency.</comment>
           <initialPhaseFrequency>500</initialPhaseFrequency><comment>initialPhaseFrequency specifies how often a rebalancing will occur within the initial rebalancing phase.</comment>
-      </parallelisation>-->
+          <comment>choose one of the following:</comment>
+          <loadBalancer type="ALL"></loadBalancer>
+      </parallelisation>
+      -->
       <datastructure type="AutoPas">
         <allowedTraversals>c01, c08, c04, c18, sliced, verlet-lists, verlet-sliced, verlet-c01, verlet-c18, c01-combined-SoA, verlet-clusters, var-verlet-lists-as-build,verlet-clusters-coloring, c04SoA, directSum, verlet-cluster-cells, verlet-clusters-static</allowedTraversals>
         <allowedContainers>DirectSum,LinkedCells, VerletLists, VerletListsCells, VerletClusterLists,VarVerletListsAsBuild,VerletClusterCells</allowedContainers>
