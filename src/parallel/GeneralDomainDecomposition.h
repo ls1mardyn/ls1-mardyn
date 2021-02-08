@@ -194,6 +194,10 @@ private:
 	size_t _initPhase{0};
 	size_t _initFrequency{500};
 
+	/**
+	 * Optionally safe a given grid size on which the process boundaries are bound/latched.
+	 * If no value is given, it is not used.
+	 */
 	std::optional<std::array<double, 3>> _gridSize{};
 
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};

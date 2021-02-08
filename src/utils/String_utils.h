@@ -48,6 +48,12 @@ static std::string trim(const std::string& str, const std::string &whitespace = 
 	return str.substr(strBegin, strRange);
 }
 
+/**
+ * Split a given input string using a delimiter into a vector of substrings.
+ * @param input The input string.
+ * @param delimiter The delimiter.
+ * @return Vector of substrings.
+ */
 static std::vector<std::string> split(const std::string& input, const char delimiter ){
 	size_t last = 0;
 	size_t next = 0;

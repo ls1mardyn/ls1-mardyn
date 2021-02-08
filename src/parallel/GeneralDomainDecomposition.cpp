@@ -25,19 +25,16 @@ void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
-	if (_gridSize) {
+	if (_gridSize.has_value()) {
 		std::tie(_boxMin, _boxMax) = latchToGridSize(_boxMin, _boxMax);
 	}
 #ifdef ENABLE_ALLLBL
 	// Increased slightly to prevent rounding errors.
 	double safetyFactor = 1. + 1.e-10;
-	std::array<double, 3> minimalDomainSize{_interactionLength * safetyFactor, _interactionLength * safetyFactor,
-											_interactionLength * safetyFactor};
-	if (_gridSize) {
-		for (size_t i = 0; i < 3; ++i) {
-			minimalDomainSize[i] = (*_gridSize)[i];
-		}
-	}
+	std::array<double, 3> minimalDomainSize =
+		_gridSize.has_value() ? *_gridSize
+							  : std::array{_interactionLength * safetyFactor, _interactionLength * safetyFactor,
+										   _interactionLength * safetyFactor};
 
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, minimalDomainSize);
@@ -89,7 +86,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			global_log->debug() << "work:" << lastTraversalTime << std::endl;
 			global_log->set_mpi_output_root(0);
 			auto [newBoxMin, newBoxMax] = _loadBalancer->rebalance(lastTraversalTime);
-			if (_gridSize) {
+			if (_gridSize.has_value()) {
 				std::tie(newBoxMin, newBoxMax) = latchToGridSize(newBoxMin, newBoxMax);
 			}
 			// migrate the particles, this will rebuild the moleculeContainer!
