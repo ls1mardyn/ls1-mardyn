@@ -66,7 +66,8 @@ void KDTreePrinter::endStep(ParticleContainer *particleContainer, DomainDecompBa
 		filenamestream << ".dat";
 
 		std::string filename = filenamestream.str();
-		std::ofstream filestream(filename.c_str());
+		std::ofstream filestream(filename.c_str(), std::ios_base::app);
+		filestream << "step " << simstep << ":" << std::endl;
 		kdd->printTree(filestream);
 #else
 		Log::global_log->warning() << "KDTreePrinter cannot print KDD, as MPI is disabled." << std::endl;
