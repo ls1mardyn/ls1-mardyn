@@ -17,10 +17,16 @@ public:
 
 	~ALLLoadBalancer() override = default;
 	std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) override;
+	void readXML(XMLfileUnits& xmlconfig) override {
+		// nothing yet.
+	}
+
+	std::array<bool, 3> getCoversWholeDomain() override { return _coversWholeDomain; }
 
 private:
 	ALL<double, double> _all;
 	using Point = ALL_Point<double>;
 	double _minimalPartitionSize{};
+	std::array<bool, 3> _coversWholeDomain{};
 };
 #endif

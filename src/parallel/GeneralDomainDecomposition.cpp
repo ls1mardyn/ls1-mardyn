@@ -13,26 +13,27 @@
 #include "NeighbourCommunicationScheme.h"
 
 GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain)
-	: _boxMin{0.}, _boxMax{0.} {
-	std::array<double, 3> domainLength = {domain->getGlobalLength(0), domain->getGlobalLength(1),
-										  domain->getGlobalLength(2)};
+	: _boxMin{0.},
+	  _boxMax{0.},
+	  _domainLength{domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)},
+	  _interactionLength{interactionLength} {}
 
-	auto gridSize = getOptimalGrid(domainLength, this->getNumProcs());
+void GeneralDomainDecomposition::initializeALL() {
+	global_log->info() << "initializing ALL load balancer..." << std::endl;
+	auto gridSize = getOptimalGrid(_domainLength, this->getNumProcs());
 	auto gridCoords = getCoordsFromRank(gridSize, _rank);
-	_coversWholeDomain = {gridSize[0] == 1, gridSize[1] == 1, gridSize[2] == 1};
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
-	std::tie(_boxMin, _boxMax) = initializeRegularGrid(domainLength, gridSize, gridCoords);
+	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
 #ifdef ENABLE_ALLLBL
 	// Increased slightly to prevent rounding errors.
-	double minimalDomainSize{interactionLength * (1. + 1.e-10)};
+	double minimalDomainSize{_interactionLength * (1. + 1.e-10)};
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, minimalDomainSize);
 #else
 	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
 	Simulation::exit(24235);
 #endif
-
 	global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
 					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
 					   << std::endl;
@@ -213,9 +214,10 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeContainer,
 												  Domain* domain) {  // init communication partners
+	auto coversWholeDomain = _loadBalancer->getCoversWholeDomain();
 	for (int d = 0; d < DIMgeom; ++d) {
 		// this needs to be updated for proper initialization of the neighbours
-		_neighbourCommunicationScheme->setCoverWholeDomain(d, _coversWholeDomain[d]);
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, coversWholeDomain[d]);
 	}
 	_neighbourCommunicationScheme->initCommunicationPartners(moleculeContainer->getCutoff(), domain, this,
 															 moleculeContainer);
@@ -237,6 +239,28 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("initialPhaseFrequency", _initFrequency);
 	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _initFrequency
 					   << endl;
+
+	if(xmlconfig.changecurrentnode("loadBalancer")) {
+		std::string loadBalancerString = "None";
+		xmlconfig.getNodeValue("@type", loadBalancerString);
+		global_log->info() << "Chosen Load Balancer: " << loadBalancerString << std::endl;
+
+		std::transform(loadBalancerString.begin(), loadBalancerString.end(), loadBalancerString.begin(), ::tolower);
+
+		if (loadBalancerString.find("all") != std::string::npos) {
+			initializeALL();
+		} else {
+			global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
+			                    << ". Aborting! Please select a valid option! Valid options: ALL";
+			Simulation::exit(1);
+		}
+		_loadBalancer->readXML(xmlconfig);
+	} else{
+		global_log->error() << "loadBalancer section missing! Aborting!" << std::endl;
+		Simulation::exit(8466);
+	}
+	xmlconfig.changecurrentnode("..");
+
 }
 
 /**
