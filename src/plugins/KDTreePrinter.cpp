@@ -4,7 +4,10 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
+#include "parallel/DomainDecompBase.h"
+#ifdef ENABLE_MPI
 #include "parallel/KDDecomposition.h"
+#endif
 
 void KDTreePrinter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {}
 
@@ -41,6 +44,7 @@ void KDTreePrinter::readXML(XMLfileUnits &xmlconfig) {
 void KDTreePrinter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
 							unsigned long simstep) {
 	if (simstep % _writeFrequency == 0 and domainDecomp->getRank() == 0) {
+#ifdef ENABLE_MPI
 		auto kdd = dynamic_cast<KDDecomposition*>(domainDecomp);
 		if(kdd == nullptr){
 			Log::global_log->warning() << "KDTreePrinter cannot print KDD, as the decomposition is not kdd." << std::endl;
@@ -64,6 +68,9 @@ void KDTreePrinter::endStep(ParticleContainer *particleContainer, DomainDecompBa
 		std::string filename = filenamestream.str();
 		std::ofstream filestream(filename.c_str());
 		kdd->printTree(filestream);
+#else
+		Log::global_log->warning() << "KDTreePrinter cannot print KDD, as MPI is disabled." << std::endl;
+#endif
 	}
 }
 
