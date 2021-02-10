@@ -8,6 +8,9 @@
 
 #include "LongRangeCorrection.h"
 
+#include "utils/ObserverBase.h"
+#include "utils/Region.h"
+
 #include <vector>
 #include <cmath>
 #include <string>
@@ -18,10 +21,31 @@
 class Domain;
 class ParticleContainer;
 
-class Planar:public LongRangeCorrection {
+class Planar : public LongRangeCorrection, public ObserverBase, public ControlInstance {
 public:
 	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation);
 	virtual ~Planar();
+
+	/** @brief Read in XML configuration for Planar and all its included objects.
+	 *
+	 * The following XML object structure is handled by this method:
+	 * \code{.xml}
+		<longrange type="planar">
+			<region> <!-- y coordinates of left and right boundaries within correction is applied to particles -->
+				<left refcoordsID="INT">FLOAT</left> <!-- Reference of coordinate can be set (see DistControl); 0: origin (default) | 1:left interface | 2:right interface -->
+				<right refcoordsID="INT">FLOAT</right>
+			</region>
+			<slabs>INT</slabs> <!-- Domain is divided into INT slabs -->
+			<smooth>0</smooth>
+			<frequency>10</frequency> <!-- Frequency at which LRC is recalculated -->
+			<writecontrol> <!-- Parameters to control output in file -->
+				<start>900000</start>
+				<frequency>100000</frequency>
+				<stop>5000000</stop>
+			</writecontrol>
+		</longrange>
+	   \endcode
+	 */
 
 	virtual void init();
 	virtual void readXML(XMLfileUnits& xmlconfig);
@@ -31,6 +55,11 @@ public:
 	void directDensityProfile();
 	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
 	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
+
+	// Observer, ControlInstance
+	SubjectBase* getSubject();
+	void update(SubjectBase* subject) override;
+	std::string getShortName() override {return "Planar";}
 
 private:
 	template<typename T>
@@ -74,6 +103,13 @@ private:
 	int frequency;
 	double ymax;
 	double boxlength[3];
+	struct RegionPos {
+		int refPosID[2];  // kind of reference position, see DistControl
+		double refPos[2]; // left and right boundary (y coord) set in config.xml
+		double actPos[2]; // left and right boundary (y coord) within the correction is applied
+	} _region;
+	SubjectBase* _subject;
+	bool _DCregistered;
 	double V;
 	int sint;
 	double temp;
