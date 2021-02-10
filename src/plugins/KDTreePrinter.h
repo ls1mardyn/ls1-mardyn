@@ -9,12 +9,12 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <outputplugin name="KDTreePrinter">
+	   <plugin name="KDTreePrinter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
 	     <appendTimestamp>INTEGER</appendTimestamp>
-	   </outputplugin>
+	   </plugin>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits &xmlconfig) override;
