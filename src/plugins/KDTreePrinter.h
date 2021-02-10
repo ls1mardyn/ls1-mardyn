@@ -1,12 +1,15 @@
 #include "PluginBase.h"
 
+/**
+ * Class to print the kd tree.
+ */
 class KDTreePrinter : public PluginBase {
 public:
-	/** @brief Read in XML configuration for CheckpointWriter.
+	/** @brief Read in XML configuration for KDTreePrinter.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <outputplugin name="CheckpointWriter">
+	   <outputplugin name="KDTreePrinter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
