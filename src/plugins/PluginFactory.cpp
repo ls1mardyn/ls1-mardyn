@@ -45,6 +45,7 @@
 #include "plugins/ExamplePlugin.h"
 #include "plugins/FixRegion.h"
 #include "plugins/InMemoryCheckpointing.h"
+#include "plugins/KDTreePrinter.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
@@ -90,6 +91,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(HaloParticleWriter);
 	REGISTER_PLUGIN(InMemoryCheckpointing);
 	REGISTER_PLUGIN(SpatialProfile);
+	REGISTER_PLUGIN(KDTreePrinter);
 	REGISTER_PLUGIN(LoadbalanceWriter);
 	REGISTER_PLUGIN(MPICheckpointWriter);
 	REGISTER_PLUGIN(MaxCheck);

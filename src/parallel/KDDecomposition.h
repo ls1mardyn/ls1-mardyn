@@ -142,7 +142,14 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Has to be an extra function since the CellProcessor is only created after the KDDecomposition was already constructed
 	 */
 	void fillTimeVecs(CellProcessor **cellProc);
- private:
+
+	/**
+	 * Prints the tree to the desired ostream.
+	 * @param ostream
+	 */
+	void printTree(std::ostream& ostream);
+
+private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
 	/**
 	 *

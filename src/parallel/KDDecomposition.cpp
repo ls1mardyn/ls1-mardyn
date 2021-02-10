@@ -95,7 +95,7 @@ void KDDecomposition::init(Domain* domain){
 #ifdef DEBUG_DECOMP
     global_log->info() << "Initial Decomposition: " << endl;
 	if (_rank == 0) {
-		_decompTree->printTree("");
+		_decompTree->printTree("", std::cout);
 	}
 #endif
 }
@@ -609,7 +609,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 
 #ifdef DEBUG_DECOMP
 	if (_rank == 0) {
-		newRoot->printTree("");
+		newRoot->printTree("", std::cout);
 	}
 #endif
 }
@@ -1896,4 +1896,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	optimalNode->calculateDeviationLowerBound();
 
 	return domainTooSmall;
+}
+void KDDecomposition::printTree(std::ostream& ostream) {
+	_decompTree->printTree("", ostream);
 }
