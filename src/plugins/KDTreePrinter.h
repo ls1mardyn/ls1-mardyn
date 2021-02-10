@@ -31,7 +31,6 @@ public:
 	static PluginBase* createInstance() { return new KDTreePrinter(); }
 
 private:
-private:
 	std::string _outputPrefix {"kd-tree"};
 	unsigned long _writeFrequency {1000};
 	bool	_incremental {true};
