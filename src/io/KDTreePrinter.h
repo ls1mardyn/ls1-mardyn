@@ -1,4 +1,4 @@
-#include "PluginBase.h"
+#include "plugins/PluginBase.h"
 
 /**
  * Class to print the kd tree.
