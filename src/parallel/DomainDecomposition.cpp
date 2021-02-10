@@ -121,7 +121,9 @@ double DomainDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	return (_coords[dimension] + 1) * domain->getGlobalLength(dimension) / _gridSize[dimension];
 }
 
-void DomainDecomposition::printDecomp(const string& filename, Domain* domain) {
+void DomainDecomposition::printDecomp(const std::string &filename,
+                                      Domain *domain,
+                                      ParticleContainer *particleContainer) {
 
 	if (_rank == 0) {
 		ofstream povcfgstrm(filename.c_str());

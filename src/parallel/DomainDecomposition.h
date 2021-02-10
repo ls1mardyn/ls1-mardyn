@@ -73,7 +73,7 @@ public:
 	//!  8 8
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(const std::string& filename, Domain* domain) override;
+	virtual void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer);
 
 	void initCommunicationPartners(double cutoffRadius, Domain * domain,ParticleContainer* moleculeContainer);
 

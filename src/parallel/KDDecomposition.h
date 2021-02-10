@@ -127,7 +127,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//!  20.0 30.0 25.0 62.0 62.0 62.0
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(const std::string& filename, Domain* domain) override;
+    void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) override;
 
 	int getUpdateFrequency() const { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }

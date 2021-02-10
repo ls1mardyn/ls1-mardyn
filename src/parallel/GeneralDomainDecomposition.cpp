@@ -301,20 +301,23 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> GeneralDomainDecomposit
 	return std::make_tuple(boxMin, boxMax);
 }
 
-void GeneralDomainDecomposition::printDecomp(const std::string& filename, Domain* domain) {
+void GeneralDomainDecomposition::printDecomp(const std::string &filename,
+                                             Domain *domain,
+                                             ParticleContainer *particleContainer) {
 	if (_rank == 0) {
 		ofstream povcfgstrm(filename.c_str());
 		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " "
 				   << domain->getGlobalLength(2) << endl;
-		povcfgstrm << "decompData Regions" << endl;
+		povcfgstrm << "decompData Regions Configuration" << endl;
 		povcfgstrm.close();
 	}
 
 	stringstream output;
 	output << getBoundingBoxMin(0, domain) << " " << getBoundingBoxMin(1, domain) << " " << getBoundingBoxMin(2, domain)
 		   << " " << getBoundingBoxMax(0, domain) << " " << getBoundingBoxMax(1, domain) << " "
-		   << getBoundingBoxMax(2, domain) << "\n";
+		   << getBoundingBoxMax(2, domain) << " " << particleContainer->getConfigurationAsString() << "\n";
 	string output_str = output.str();
+
 #ifdef ENABLE_MPI
 	MPI_File fh;
 	MPI_File_open(_comm, filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);

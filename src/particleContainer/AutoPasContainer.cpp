@@ -461,3 +461,6 @@ RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorne
 	return RegionParticleIterator{
 		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }
+std::string AutoPasContainer::getConfigurationAsString() {
+  return _autopasContainer.getCurrentConfig().toString();
+}

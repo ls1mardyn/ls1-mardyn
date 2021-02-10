@@ -266,6 +266,13 @@ public:
 
 	virtual bool hasInvalidParticles() { return false; }
 
+	/**
+	 * Return a string representation of the algorithmic configuration of the container.
+	 * Only used for logging / output.
+	 * @return
+	 */
+	virtual std::string getConfigurationAsString() {return "";};
+
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

@@ -134,6 +134,7 @@ public:
 
 	bool isInvalidParticleReturner() override { return true; }
 
+	std::string getConfigurationAsString() override;
 private:
 	/**
 	 * Helper to get static value of shifting bool.

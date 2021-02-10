@@ -140,7 +140,8 @@ public:
 	//!        The format is not strictly defined and depends on the decomposition
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	virtual void printDecomp(const std::string& filename, Domain* domain);
+	//! @param particleContainer needed to print information about the parts of the decomposition
+	virtual void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer);
 
 
 	//! @brief returns the own rank

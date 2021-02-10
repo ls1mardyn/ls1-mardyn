@@ -60,7 +60,7 @@ class Cell:
     def getCellPointIndices(self):
         output = io.StringIO()
         for i in range(8):
-            print(str(i + 8 * self.cellid), file=output)
+            print(str(i + 8 * self.cellid), file=output, end=' ')
         print('', file=output)
         
         returnstring = output.getvalue()
@@ -77,15 +77,18 @@ while line.find('particleData') == -1 and line != "":
     line = f_in.readline()
 
 print('Found', numcells, 'cells.')
+# Write VTK header and dataset information
 f_out.write('# vtk DataFile Version 2.0\n\
 MarDyn decomposition output\n\
 ASCII\n\
 DATASET UNSTRUCTURED_GRID\n')
 
+# write cell corner points as point list
 f_out.write('POINTS ' + str(8 * numcells) + ' float\n')  # 8 points per cell
 for cell in celllist:
     f_out.write(cell.getPointCoordinates())
 
+# write cells. Every line is a cell
 f_out.write('CELLS ' + str(numcells) + ' ' + str(numcells * 9) + '\n')
 # CELLS requires numcells and number of total list entries (=numcells + 8*numcells)
 for cell in celllist:
