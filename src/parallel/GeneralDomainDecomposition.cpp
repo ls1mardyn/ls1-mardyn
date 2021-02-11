@@ -25,9 +25,17 @@ void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
+	if (_gridSize.has_value()) {
+		std::tie(_boxMin, _boxMax) = latchToGridSize(_boxMin, _boxMax);
+	}
 #ifdef ENABLE_ALLLBL
 	// Increased slightly to prevent rounding errors.
-	double minimalDomainSize{_interactionLength * (1. + 1.e-10)};
+	double safetyFactor = 1. + 1.e-10;
+	std::array<double, 3> minimalDomainSize =
+		_gridSize.has_value() ? *_gridSize
+							  : std::array{_interactionLength * safetyFactor, _interactionLength * safetyFactor,
+										   _interactionLength * safetyFactor};
+
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, minimalDomainSize);
 #else
@@ -72,14 +80,15 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			moleculeContainer->deleteOuterParticles();
 
 			// rebalance
-			std::array<double, 3> newBoxMin{0.}, newBoxMax{0.};
 			global_log->info() << "rebalancing..." << std::endl;
 
 			global_log->set_mpi_output_all();
 			global_log->debug() << "work:" << lastTraversalTime << std::endl;
 			global_log->set_mpi_output_root(0);
-			std::tie(newBoxMin, newBoxMax) = _loadBalancer->rebalance(lastTraversalTime);
-
+			auto [newBoxMin, newBoxMax] = _loadBalancer->rebalance(lastTraversalTime);
+			if (_gridSize.has_value()) {
+				std::tie(newBoxMin, newBoxMax) = latchToGridSize(newBoxMin, newBoxMax);
+			}
 			// migrate the particles, this will rebuild the moleculeContainer!
 			global_log->info() << "migrating particles" << std::endl;
 			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
@@ -238,7 +247,34 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _initFrequency
 					   << endl;
 
-	if(xmlconfig.changecurrentnode("loadBalancer")) {
+	std::string gridSizeString;
+	if (xmlconfig.getNodeValue("gridSize", gridSizeString)) {
+		global_log->info() << "GeneralDomainDecomposition grid size: " << gridSizeString << endl;
+
+		if (gridSizeString.find(',') != std::string::npos) {
+			auto strings = string_utils::split(gridSizeString, ',');
+			if (strings.size() != 3) {
+				global_log->error()
+					<< "GeneralDomainDecomposition's gridSize should have three entries if a list is given, but has "
+					<< strings.size() << "!" << endl;
+				Simulation::exit(8134);
+			}
+			_gridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
+		} else {
+			double gridSize = std::stod(gridSizeString);
+			_gridSize = {gridSize, gridSize, gridSize};
+		}
+		for (auto gridSize : *_gridSize) {
+			if (gridSize < _interactionLength) {
+				global_log->error() << "GeneralDomainDecomposition's gridSize (" << gridSize
+									<< ") is smaller than the interactionLength (" << _interactionLength
+									<< "). This is forbidden, as it leads to errors! " << endl;
+				Simulation::exit(8136);
+			}
+		}
+	}
+
+	if (xmlconfig.changecurrentnode("loadBalancer")) {
 		std::string loadBalancerString = "None";
 		xmlconfig.getNodeValue("@type", loadBalancerString);
 		global_log->info() << "Chosen Load Balancer: " << loadBalancerString << std::endl;
@@ -249,16 +285,15 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 			initializeALL();
 		} else {
 			global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
-			                    << ". Aborting! Please select a valid option! Valid options: ALL";
+								<< ". Aborting! Please select a valid option! Valid options: ALL";
 			Simulation::exit(1);
 		}
 		_loadBalancer->readXML(xmlconfig);
-	} else{
+	} else {
 		global_log->error() << "loadBalancer section missing! Aborting!" << std::endl;
 		Simulation::exit(8466);
 	}
 	xmlconfig.changecurrentnode("..");
-
 }
 
 /**
