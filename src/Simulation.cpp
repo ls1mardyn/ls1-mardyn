@@ -536,6 +536,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
     global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
 
+	if (_longRangeCorrection != nullptr) {
+		global_log -> info() << "Initializing LongRangeCorrection" << endl;
+		_longRangeCorrection->init();
+	}
 
     string oldpath = xmlconfig.getcurrentnodepath();
 

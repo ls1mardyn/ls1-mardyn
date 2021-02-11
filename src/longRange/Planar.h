@@ -109,7 +109,6 @@ private:
 		double actPos[2]; // left and right boundary (y coord) within the correction is applied
 	} _region;
 	SubjectBase* _subject;
-	bool _DCregistered;
 	double V;
 	int sint;
 	double temp;

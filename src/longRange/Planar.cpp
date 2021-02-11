@@ -142,6 +142,18 @@ void Planar::init()
 	simstep = 0;
 	
 	temp=_domain->getTargetTemperature(0);
+
+	if (_region.refPosID[0]+_region.refPosID[1] > 0) {
+		_subject = getSubject();
+		if (nullptr != _subject) {
+			this->update(_subject);
+			_subject->registerObserver(this);
+			global_log->info() << "Long Range Correction: Subject registered" << endl;
+		} else {
+			global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
 }
 
 void Planar::readXML(XMLfileUnits& xmlconfig)
@@ -154,7 +166,6 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	
 	std::string strVal;
 	_region.refPosID[0] = 0; _region.refPosID[1] = 0;
-	_DCregistered = false;
 	
 	if (xmlconfig.getNodeValue("region/left", _region.refPos[0]) && xmlconfig.getNodeValue("region/right", strVal)) {
 		// accept "box" as input
@@ -162,12 +173,8 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 		_region.actPos[0] = _region.refPos[0];
 		_region.actPos[1] = _region.refPos[1];
 		// read reference coords IDs
-		std::string refcoordID = "0";
-		xmlconfig.getNodeValue("region/left@refcoordsID", refcoordID );
-		_region.refPosID[0] = atoi(refcoordID.c_str());
-		refcoordID = "0";
-		xmlconfig.getNodeValue("region/right@refcoordsID", refcoordID );
-		_region.refPosID[1] = atoi(refcoordID.c_str());
+		xmlconfig.getNodeValue("region/left@refcoordsID", _region.refPosID[0] );
+		xmlconfig.getNodeValue("region/right@refcoordsID", _region.refPosID[1] );
 	} else {
 		_region.refPos[0] = _region.actPos[0] = 0.0;
 		_region.refPos[1] = _region.actPos[1] = _domain->getGlobalLength(1);
@@ -204,34 +211,9 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << endl;
 		Simulation::exit(-1);
 	}
-
-	// init
-	this->init();
 }
 
 void Planar::calculateLongRange() {
-
-	if (_region.refPosID[0]+_region.refPosID[1] > 0) {
-		if (not _DCregistered) {
-			_subject = getSubject();
-			this->update(_subject);
-			if (nullptr != _subject) {
-				_subject->registerObserver(this);
-#ifndef NDEBUG
-				global_log->info() << "Long Range Correction: Subject registered" << endl;
-#endif
-			} else {
-				global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << endl;
-				Simulation::exit(-1);
-			}
-			_DCregistered = true;
-		} else {
-			this->update(_subject);
-#ifndef NDEBUG
-			global_log->info() << "Long Range Correction: Subject already registered" << endl;
-#endif
-		}
-	}
 
 	if (_smooth){
 		const double delta_inv = 1.0 / delta;
