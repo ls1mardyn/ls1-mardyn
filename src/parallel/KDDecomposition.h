@@ -142,7 +142,14 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Has to be an extra function since the CellProcessor is only created after the KDDecomposition was already constructed
 	 */
 	void fillTimeVecs(CellProcessor **cellProc);
- private:
+
+	/**
+	 * Prints the tree to the desired ostream.
+	 * @param ostream
+	 */
+	void printTree(std::ostream& ostream);
+
+private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
 	/**
 	 *
@@ -324,7 +331,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	bool _splitBiggest;  // indicates, whether a subdomain is to be split along its biggest size
 	bool _forceRatio;  // if you want to enable forcing the above ratio, enable this.
 
-	bool _doMeasureLoadCalc;  //
+	bool _doMeasureLoadCalc {false};  //
 
 	/**
 	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a node is less than the _splitThreshold.
