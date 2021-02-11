@@ -30,6 +30,7 @@
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #include "parallel/GeneralDomainDecomposition.h"
+#include "parallel/MPI_TIMED/ProcessTimer.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -972,9 +973,16 @@ void Simulation::simulate() {
 			decompositionTimer->start();
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition" << endl;
-
 			double currentTime = _timerForLoad->get_etime();
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
+			double lastTraversalTime = currentTime - previousTimeForLoad;
+#if defined(ENABLE_TIMED_MPI)
+			double timeSpentInMPI = ProcessTimer::get().getTime(true, false);
+			if (timeSpentInMPI < lastTraversalTime) {
+			    lastTraversalTime -= timeSpentInMPI;
+			}
+#endif
+			updateParticleContainerAndDecomposition(lastTraversalTime);
+
 			previousTimeForLoad = currentTime;
 
 			decompositionTimer->stop();

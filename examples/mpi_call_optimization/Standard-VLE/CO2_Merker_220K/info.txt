@@ -1,0 +1,10 @@
+liq/run01: 
+	|- Equilibration of liquid phase
+vap/run01: 
+	|- Equilibration of vapor phase
+vle/run01: 
+	|- Usage of ReplicaGenerator to create a standard vapor-liquid-equilibrium (VLE) 	scenario with CO2(carbondioxid)-molecules
+	|- Liquid cuboid in middle, surrounded by vapor on left and right side
+
+
+Used for evaluation in BA: Optimizing MPI Load Balancing in ls1 mardyn; Jeremy Harisch.

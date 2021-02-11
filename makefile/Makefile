@@ -20,6 +20,9 @@ CFG ?= gcc
 # Each config should at least provide the two parallelization types SEQ and PAR
 PARTYPE ?= PAR
 
+# enable timed MPI?
+ENABLE_TIMED_MPI ?= 0
+
 # choose target
 # Show list of all available targets for the current config with cfg_help
 # Each config should at least provide the two targets RELEASE and DEBUG.
@@ -181,6 +184,10 @@ endif
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -D MPICH_IGNORE_CXX_SEEK
 LDFLAGS += $(LINKFLAGS_$(PARTYPE)_$(TARGET))
+
+ifeq ($(ENABLE_TIMED_MPI),1)
+CXXFLAGS += -D ENABLE_TIMED_MPI=1
+endif
 
 # additional setup for unit tests
 ifneq ($(UNIT_TESTS),0)

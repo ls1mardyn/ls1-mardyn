@@ -1,0 +1,178 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+
+	<simulation type="MD" >
+		<options> <option name="refreshIDs">1</option> </options>
+		
+		<integrator type="Leapfrog" >
+			<timestep unit="reduced" >0.00182367</timestep>
+		</integrator>
+
+		<run>
+			<currenttime>0.0</currenttime> 
+			<production>
+				<steps>5000000</steps>
+			</production>
+		</run>
+
+		<ensemble type="NVT">
+			<!-- Nparticles determined by the input file -->
+			<temperature unit="reduced" >0.80</temperature>
+			<domain type="box">
+				<lx>40</lx>
+				<ly>160</ly>
+				<lz>40</lz>
+			</domain>
+
+			<components>
+				<include query="/components/moleculetype" >../../components_3c.xml</include>
+				<include query="/mixing">../../mixing_3c.xml</include>
+			</components>
+
+			<phasespacepoint>
+				<generator name="MultiObjectGenerator">
+					<objectgenerator>
+						<filler type="ReplicaFiller">
+							<input type="BinaryReader">
+								<header>../../sim01/run01/cp_binary-10.restart.header.xml</header>
+								<data>../../sim01/run01/cp_binary-10.restart.dat</data>
+							</input>
+							<componentid>1</componentid>
+						</filler>
+
+						<object type="Cuboid">
+							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+							<upper> <x>40</x> <y>50</y> <z>40</z> </upper>
+						</object>
+					</objectgenerator>
+				</generator>
+			</phasespacepoint>
+		</ensemble>
+
+		<algorithm>
+			<parallelisation type="GeneralDomainDecomposition">
+				<timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+                <updateFrequency>10</updateFrequency>
+			</parallelisation>
+			<datastructure type="AutoPas">
+				<allowedTraversals>c08</allowedTraversals>
+				<allowedContainers>linkedCells</allowedContainers>
+				<selectorStrategy>fastestMedian</selectorStrategy>
+				<dataLayouts>SoA</dataLayouts>
+				<newton3>enabled</newton3>
+				<tuningInterval>1000</tuningInterval>
+				<tuningSamples>1</tuningSamples>
+				<rebuildFrequency>1</rebuildFrequency>
+				<skin>5.4</skin>
+		      	</datastructure> 
+
+			<cutoffs type="CenterOfMass" >
+			<defaultCutoff unit="reduced" >2.5</defaultCutoff>
+				<radiusLJ unit="reduced" >2.5</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField" >
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+			
+			<thermostats>
+				<thermostat type="TemperatureControl">
+					<control>
+						<start>0</start>
+						<frequency>1</frequency>
+						<stop>1000000000</stop>
+					</control>
+					<regions>
+						<region>
+							<coords>
+								<lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
+								<ucx>40.0</ucx> <ucy>20.0</ucy> <ucz>40.0</ucz>
+							</coords>
+							<target>
+								<temperature>0.8</temperature>
+								<component>1</component>
+							</target>
+							<settings>
+								<numslabs>20</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xyz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+						<region>
+							<coords>
+								<lcx>0.0</lcx> <lcy refcoordsID="0">20.0</lcy> <lcz>0.0</lcz>
+								<ucx>40.0</ucx> <ucy refcoordsID="2">-10.0</ucy> <ucz>40.0</ucz>
+							</coords>
+							<target>
+								<temperature>0.8</temperature>
+								<component>0</component>
+							</target>
+							<settings>
+								<numslabs>20</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+					</regions>
+				</thermostat>
+			</thermostats>
+		</algorithm>
+
+		<output>
+			<outputplugin name="CheckpointWriter">
+				<type>binary</type>
+				<writefrequency>50000</writefrequency>
+				<outputprefix>cp_binary</outputprefix>
+			</outputplugin>
+			
+			<outputplugin name="MmpldWriter" type="simple">
+				<include query="/spheres" >../../sphereparams_3c.xml</include>
+				<writecontrol>
+					<start>0</start>
+					<writefrequency>500</writefrequency>
+					<stop>5000000</stop>
+					<framesperfile>0</framesperfile>
+				</writecontrol>
+				<outputprefix>megamol</outputprefix>  
+			</outputplugin>
+		</output>
+
+		<plugin name="DistControl">
+			<control>
+				<update>5000</update>
+			</control>
+			<filenames>
+				<control>DistControl.dat</control>
+				<profiles>DistControlProfiles</profiles>
+			</filenames>
+			<subdivision type="width">
+				<width>0.5</width>
+				<number>1</number>
+			</subdivision>
+			<init type="startconfig">   <!-- type="startconfig|values|file" -->
+				<values> <left>0</left> <right>50.0</right> </values>
+				<file>../run02/DistControl.dat</file>
+				<simstep>100000</simstep>
+			</init>
+			<method type="denderiv">   <!-- type="density|denderiv" -->
+				<componentID>0</componentID>
+				<neighbourvals algorithm="smooth">3</neighbourvals>
+				<neighbourvals algorithm="derivate">5</neighbourvals>
+				<density>0.005</density>
+			</method>
+		</plugin>
+
+		
+
+		
+	</simulation>
+</mardyn>
