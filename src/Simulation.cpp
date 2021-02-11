@@ -762,11 +762,7 @@ void Simulation::prepare_start() {
 		getMemoryProfiler()->doOutput("without halo copies");
 	}
 
-	// temporary addition until MPI communication is parallelized with OpenMP
-	// we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
-	global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
-	updateParticleContainerAndDecomposition(1.0);
-	global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+	updateParticleContainerAndDecomposition(1.0, false);
 
 	if(getMemoryProfiler()) {
 		getMemoryProfiler()->doOutput("with halo copies");
@@ -890,6 +886,8 @@ void Simulation::simulate() {
 	global_simulation->timers()->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
 	global_simulation->timers()->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
 	global_simulation->timers()->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
+	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CONTAINER", "Container update took:");
+	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CACHES", "Cache update took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
 
@@ -974,7 +972,7 @@ void Simulation::simulate() {
 			global_log->debug() << "Updating container and decomposition" << endl;
 
 			double currentTime = _timerForLoad->get_etime();
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad, true);
 			previousTimeForLoad = currentTime;
 
 			decompositionTimer->stop();
@@ -1211,18 +1209,34 @@ void Simulation::finalize() {
 	global_simulation = nullptr;
 }
 
-void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime) {
-	// The particles have moved, so the neighborhood relations have
-	// changed and have to be adjusted
+void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime, bool useTimers) {
+	// The particles have moved, so the leaving + halo particles have changed and have to be communicated.
+	if(not useTimers){
+		global_simulation->timers()->deactivateTimer("SIMULATION_UPDATE_CONTAINER");
+		global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+		global_simulation->timers()->deactivateTimer("SIMULATION_UPDATE_CACHES");
+	}
+
+	global_simulation->timers()->start("SIMULATION_UPDATE_CONTAINER");
 	_moleculeContainer->update();
-	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
+
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
 	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
+	global_simulation->timers()->start("SIMULATION_UPDATE_CACHES");
 	_moleculeContainer->updateMoleculeCaches();
+	global_simulation->timers()->stop("SIMULATION_UPDATE_CACHES");
+
+	if(not useTimers){
+		global_simulation->timers()->activateTimer("SIMULATION_UPDATE_CONTAINER");
+		global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+		global_simulation->timers()->activateTimer("SIMULATION_UPDATE_CACHES");
+	}
 }
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etime) {
