@@ -2,12 +2,61 @@
 
 import sys
 import io
+import re
+
+############################# classes and functions #############################
+class Cell:
+    def __init__(self, minMaxString, cellid, configString):
+        parts = minMaxString.split(' ')
+        self.extents = {
+                'xmin' : parts[0],
+                'ymin' : parts[1],
+                'zmin' : parts[2],
+                'xmax' : parts[3],
+                'ymax' : parts[4],
+                'zmax' : parts[5],
+                }
+        self.cellid = cellid
+        self.config = {} # init dict
+        configString = re.sub('[{}]', '', configString)
+        for elem in configString.split(' , ') :
+            [key, value] = elem.split(': ')
+            self.config[key] = value
+        print(self.config)
+        
+    def getPointCoordinates(self):
+        output = io.StringIO()
+        print(self.extents['xmin'], self.extents['ymin'], self.extents['zmin'], file=output)
+        print(self.extents['xmin'], self.extents['ymin'], self.extents['zmax'], file=output)
+        print(self.extents['xmin'], self.extents['ymax'], self.extents['zmin'], file=output)
+        print(self.extents['xmin'], self.extents['ymax'], self.extents['zmax'], file=output)
+        print(self.extents['xmax'], self.extents['ymin'], self.extents['zmin'], file=output)
+        print(self.extents['xmax'], self.extents['ymin'], self.extents['zmax'], file=output)
+        print(self.extents['xmax'], self.extents['ymax'], self.extents['zmin'], file=output)
+        print(self.extents['xmax'], self.extents['ymax'], self.extents['zmax'], file=output)
+        returnstring = output.getvalue()
+        output.close()
+        return returnstring
+
+    def getCellPointIndices(self):
+        output = io.StringIO()
+        for i in range(8):
+            print(str(i + 8 * self.cellid), file=output, end=' ')
+        print('', file=output)
+
+        returnstring = output.getvalue()
+        output.close()
+        return returnstring
+
+################################ start of script ################################
+
+#### input parsing
 print('')
 if len(sys.argv) < 3:
     print('ERROR: Not enough arguments given, need at least:')
     print('[1] input file name')
     print('[2] output file name')
-    
+
 inputFileName = str(sys.argv[1])
 outputFileName = str(sys.argv[2])
 
@@ -24,6 +73,7 @@ if outputFileName.find('.vtk') == -1:
 f_in = open(inputFileName, 'r')
 f_out = open(outputFileName, 'w')
 
+### data validation
 currentLine = f_in.readline()
 while currentLine.find('decompData Regions') != -1:
     if currentLine != '':
@@ -34,54 +84,28 @@ while currentLine.find('decompData Regions') != -1:
 f_in.readline()  # skip decompData Regions
 
 
-class Cell:
-    def __init__(self, minmaxline, cellid):
-        parts = minmaxline.split(' ')
-        self.xmin = parts[0]
-        self.ymin = parts[1]
-        self.zmin = parts[2]
-        self.xmax = parts[3]
-        self.ymax = parts[4]
-        self.zmax = parts[5]
-        self.cellid = cellid
-    def getPointCoordinates(self):
-        output = io.StringIO()
-        print(self.xmin, self.ymin, self.zmin, file=output)
-        print(self.xmin, self.ymin, self.zmax, file=output)
-        print(self.xmin, self.ymax, self.zmin, file=output)
-        print(self.xmin, self.ymax, self.zmax, file=output)
-        print(self.xmax, self.ymin, self.zmin, file=output)
-        print(self.xmax, self.ymin, self.zmax, file=output)
-        print(self.xmax, self.ymax, self.zmin, file=output)
-        print(self.xmax, self.ymax, self.zmax, file=output)
-        returnstring = output.getvalue()
-        output.close()
-        return returnstring
-    def getCellPointIndices(self):
-        output = io.StringIO()
-        for i in range(8):
-            print(str(i + 8 * self.cellid), file=output, end=' ')
-        print('', file=output)
-        
-        returnstring = output.getvalue()
-        output.close()
-        return returnstring
-
-
+### data parsing
 numcells = 0
 line = f_in.readline()
 celllist = []
+print('--------------------- START DEBUG OUTPUT ---------------------')
 while line.find('particleData') == -1 and line != "":
-    celllist.append(Cell(line.rstrip(), numcells))
+    match=re.search(r'([0-9. ]+)(.*)', line)
+    minMaxString=match.group(1).rstrip()
+    configString=match.group(2)
+
+    celllist.append(Cell(minMaxString, numcells, configString))
     numcells += 1
     line = f_in.readline()
+print('---------------------- END DEBUG OUTPUT ----------------------')
 
 print('Found', numcells, 'cells.')
 # Write VTK header and dataset information
-f_out.write('# vtk DataFile Version 2.0\n\
-MarDyn decomposition output\n\
-ASCII\n\
-DATASET UNSTRUCTURED_GRID\n')
+f_out.write('# vtk DataFile Version 2.0\n'
+        + 'MarDyn decomposition output\n'
+        + 'ASCII\n'
+        + 'DATASET UNSTRUCTURED_GRID\n'
+        )
 
 # write cell corner points as point list
 f_out.write('POINTS ' + str(8 * numcells) + ' float\n')  # 8 points per cell
@@ -94,18 +118,33 @@ f_out.write('CELLS ' + str(numcells) + ' ' + str(numcells * 9) + '\n')
 for cell in celllist:
     f_out.write('8 ' + cell.getCellPointIndices())
 
+# write vtk cell types
 f_out.write('CELL_TYPES ' + str(numcells) + '\n')
 for cell in celllist:
-    f_out.write('11\n')
+    f_out.write('11\n')  # type 11 = VTK_VOXEL = cuboid
 
-# add ids for every cell. They are not necessarily the same as the MPI Rank ID
-f_out.write('CELL_DATA ' + str(numcells) + '\n')
-f_out.write('SCALARS cell_scalars int 1\n')
-f_out.write('LOOKUP_TABLE default\n')
+# write ids for every cell. They are not necessarily the same as the MPI Rank ID
+f_out.write('CELL_DATA ' + str(numcells) + '\n'
+        + 'SCALARS cell_scalars int 1\n'
+        + 'LOOKUP_TABLE default\n'
+        )
 i=0
 for cell in celllist:
     f_out.write(str(i) + '\n')
     i = i + 1
 
+# write all configuration information as field data
+f_out.write('FIELD ConfigurationData '+ str(len(celllist[0].config.keys()) + 1) +'\n')
+# write one combined string
+f_out.write('FullConfiguration 1 ' + str(numcells) + ' string\n')
+for cell in celllist:
+    f_out.write('+'.join(cell.config.values()) + '\n')
+# write each config property individually
+for configKey in celllist[0].config.keys():
+    f_out.write('\n' + configKey.replace(' ', '') + ' 1 ' + str(numcells) + ' string\n')
+    for cell in celllist:
+        f_out.write(cell.config[configKey] + '\n')
+
+# finish
 f_in.close()
 f_out.close()
