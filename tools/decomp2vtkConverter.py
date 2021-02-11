@@ -4,10 +4,9 @@ import sys
 import io
 import re
 
-
 ################################# Documentation #################################
 
-# This script turns .decomp files into .vtk files.
+# This script turns a list of .decomp files into .vtk files.
 # The file format is expected to be like this:
 # xmin ymin zmin xmax ymax zmax {configKey1: configVal1 , configKeyN: configValN}
 #
@@ -28,6 +27,7 @@ class Cell:
                 }
         self.cellid = cellid
         self.config = {} # init dict
+        # extract configuration data which is quasi-json
         configString = re.sub('[{}]', '', configString)
         for elem in configString.split(' , ') :
             [key, value] = elem.split(': ')
