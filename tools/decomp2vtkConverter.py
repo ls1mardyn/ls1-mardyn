@@ -4,6 +4,16 @@ import sys
 import io
 import re
 
+
+################################# Documentation #################################
+
+# This script turns .decomp files into .vtk files.
+# The file format is expected to be like this:
+# xmin ymin zmin xmax ymax zmax {configKey1: configVal1 , configKeyN: configValN}
+#
+# Files like this can be generated via the DecompWriter when using the
+# general domain decomposiotion
+
 ############################# classes and functions #############################
 class Cell:
     def __init__(self, minMaxString, cellid, configString):
