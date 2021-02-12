@@ -749,8 +749,8 @@ void Simulation::prepare_start() {
 	}
 
 #ifdef ENABLE_MPI
-	if(dynamic_cast<KDDecomposition*>(_domainDecomposition) != nullptr){
-		static_cast<KDDecomposition*>(_domainDecomposition)->fillTimeVecs(&_cellProcessor);
+	if(auto *kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition); kdd != nullptr){
+		kdd->fillTimeVecs(&_cellProcessor);
 	}
 #endif
 
