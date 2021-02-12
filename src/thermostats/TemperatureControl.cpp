@@ -674,11 +674,13 @@ void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsign
 
 void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep)
 {
-	if(simstep % _nControlFreq != 0)
+	if (simstep % _nControlFreq != 0) {
 		return;
+	}
 
-	for(auto&& reg : _vecControlRegions)
+	for (auto&& reg : _vecControlRegions) {
 		reg->ControlTemperature(mol);
+	}
 }
 
 void TemperatureControl::Init(unsigned long simstep)
