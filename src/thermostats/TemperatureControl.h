@@ -116,7 +116,8 @@ private:
 	unsigned int _nNumSlabs;
 	double _dSlabWidth;
 
-	std::vector<LocalAndGlobalThermostatVariables> _thermVars;
+	std::vector<std::vector<LocalThermostatVariables>> _localThermVarsThreads;
+	std::vector<GlobalThermostatVariables> _globalThermVars;
 
 	double _dTargetTemperature;
 	double _dTemperatureExponent;
@@ -141,6 +142,8 @@ private:
 		uint32_t writeFreq;
 		CommVar<std::vector<double> > data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
 	} _addedEkin;
+
+	std::vector<std::vector<double>> _addedEkinLocalThreads;
 	
 	struct Ramp {
 		bool enabled;

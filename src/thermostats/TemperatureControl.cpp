@@ -35,7 +35,6 @@ ControlRegionT::ControlRegionT(TemperatureControl* const parent)
 		_localMethod(VelocityScaling),
 		_nNumSlabs(1),
 		_dSlabWidth(0.0),
-		_thermVars(),
 		_dTargetTemperature(0.0),
 		_dTemperatureExponent(0.0),
 		_nTargetComponentID(0),
@@ -234,13 +233,27 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits &xmlconfig, std::string st
 		_nWriteFreqBeta = 1000;
 	}
 	this->InitBetaLogfile();
-	_thermVars.resize(_nNumSlabs);
+	_localThermVarsThreads.resize(mardyn_get_max_threads());
+	for(auto& localThermVars : _localThermVarsThreads){
+		localThermVars.resize(_nNumSlabs);
+	}
+	_globalThermVars.resize(_nNumSlabs);
 
 	// init data structure for measure of added kin. energy
 	_addedEkin.data.local.resize(_nNumSlabs);
 	_addedEkin.data.global.resize(_nNumSlabs);
+
+	_addedEkinLocalThreads.resize(mardyn_get_max_threads());
+	for(auto& addedEkinLocal : _addedEkinLocalThreads){
+		addedEkinLocal.resize(_nNumSlabs);
+	}
+
    	std::vector<double>& v = _addedEkin.data.local;
    	std::fill(v.begin(), v.end(), 0.);
+
+	for(auto& addedEkinLocal : _addedEkinLocalThreads){
+		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
+	}
 }
 
 void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
@@ -249,15 +262,23 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 		return;
 	domainDecomp->collCommInit(_nNumSlabs * 4);
 	for (unsigned s = 0; s < _nNumSlabs; ++s) {
-		LocalThermostatVariables & localTV = _thermVars[s]._local; // do not forget &
-		domainDecomp->collCommAppendUnsLong(localTV._numMolecules);
-		domainDecomp->collCommAppendUnsLong(localTV._numRotationalDOF);
-		domainDecomp->collCommAppendDouble(localTV._ekinRot);
-		domainDecomp->collCommAppendDouble(localTV._ekinTrans);
+		unsigned long numMolecules{}, numRotationalDOF{};
+		double ekinTrans{}, ekinRot{};
+		for (const auto& threadBuffers : _localThermVarsThreads) {
+			const auto& localVar = threadBuffers[s];
+			numMolecules += localVar._numMolecules;
+			numRotationalDOF += localVar._numRotationalDOF;
+			ekinTrans += localVar._ekinTrans;
+			ekinRot += localVar._ekinRot;
+		}
+		domainDecomp->collCommAppendUnsLong(numMolecules);
+		domainDecomp->collCommAppendUnsLong(numRotationalDOF);
+		domainDecomp->collCommAppendDouble(ekinRot);
+		domainDecomp->collCommAppendDouble(ekinTrans);
 	}
 	domainDecomp->collCommAllreduceSum();
 	for (unsigned s = 0; s < _nNumSlabs; ++s) {
-		GlobalThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
+		GlobalThermostatVariables & globalTV = _globalThermVars[s];  // do not forget &
 		globalTV._numMolecules = domainDecomp->collCommGetUnsLong();
 		globalTV._numRotationalDOF = domainDecomp->collCommGetUnsLong();
 		globalTV._ekinRot = domainDecomp->collCommGetDouble();
@@ -284,7 +305,7 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp )
 
 	for(unsigned int s = 0; s<_nNumSlabs; ++s)
 	{
-		GlobalThermostatVariables & globalTV = _thermVars[s]._global;  // do not forget &
+		GlobalThermostatVariables & globalTV = _globalThermVars[s];  // do not forget &
 		if( globalTV._numMolecules < 1 )
 			globalTV._betaTrans = 1.;
 		else
@@ -346,10 +367,8 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 	_d2EkinTransLocal[nPosIndex] += m*(vx*vx + vz*vz);
 */
 
-	LocalThermostatVariables & localTV = _thermVars.at(nPosIndex)._local;  // do not forget &
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+	auto myThreadNum = mardyn_get_thread_num();
+	LocalThermostatVariables & localTV = _localThermVarsThreads[myThreadNum].at(nPosIndex);  // do not forget &
 	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
 
 	// sum up rot. kinetic energy (2x)
@@ -357,21 +376,12 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 	double ekinRot = 0.;
 
 	mol->calculate_mv2_Iw2(dDummy, ekinRot);
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
 	localTV._ekinRot += ekinRot;
 
 	// count num molecules
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
 	localTV._numMolecules++;
 
 	// count rotational DOF
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
 	localTV._numRotationalDOF += mol->component()->getRotationalDegreesOfFreedom();
 }
 
@@ -406,7 +416,7 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 		if (nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
 			return;
 
-		GlobalThermostatVariables &globalTV = _thermVars[nPosIndex]._global;  // do not forget &
+		GlobalThermostatVariables &globalTV = _globalThermVars[nPosIndex];  // do not forget &
 		if (globalTV._numMolecules < 1)
 			return;
 
@@ -423,10 +433,8 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 		double v2_new = mol->v2();
 //		if(_nTargetComponentID==0)
 //			cout << "nPosIndex=" << nPosIndex << ", dv2=" << (v2_new-v2_old) << endl;
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-		_addedEkin.data.local.at(nPosIndex) += (v2_new-v2_old);
+		int mythread = mardyn_get_thread_num();
+		_addedEkinLocalThreads[mythread].at(nPosIndex) += (v2_new-v2_old);
 
 		mol->scale_D(Dcorr);
 	}
@@ -450,9 +458,10 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 void ControlRegionT::ResetLocalValues()
 {
 	// reset local values
-	for(unsigned int s = 0; s<_nNumSlabs; ++s)
-	{
-		_thermVars[s]._local.clear();
+	for(int thread = 0 ; thread < mardyn_get_max_threads(); ++thread) {
+		for (unsigned int s = 0; s < _nNumSlabs; ++s) {
+			_localThermVarsThreads[thread][s].clear();
+		}
 	}
 }
 
@@ -556,6 +565,12 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	if( simstep % _addedEkin.writeFreq != 0)
 		return;
 
+	for(int thread = 0; thread < mardyn_get_max_threads(); ++thread){
+		mardyn_assert(_addedEkin.data.local.size() == _nNumSlabs);
+		for(size_t slabID = 0; slabID < _nNumSlabs; ++slabID){
+			_addedEkin.data.local[0] += _addedEkinLocalThreads[thread][slabID];
+		}
+	}
 	// calc global values
 #ifdef ENABLE_MPI
 	MPI_Reduce(_addedEkin.data.local.data(), _addedEkin.data.global.data(), _addedEkin.data.local.size(), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -566,6 +581,9 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	// reset local values
    	std::vector<double>& vl = _addedEkin.data.local;
    	std::fill(vl.begin(), vl.end(), 0.);
+	for(auto& addedEkinLocal : _addedEkinLocalThreads){
+		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
+	}
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -576,8 +594,9 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 
 	// dekin = d2ekin * 0.5
 	std::vector<double>& vg = _addedEkin.data.global;
-	for(auto it=vg.begin(); it!=vg.end(); ++it)
-		(*it) *= 0.5;
+	for(double & it : vg) {
+		it *= 0.5;
+	}
 
 	// writing .dat-files
 	std::stringstream filenamestream;
