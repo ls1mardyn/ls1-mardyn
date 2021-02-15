@@ -347,17 +347,31 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 */
 
 	LocalThermostatVariables & localTV = _thermVars.at(nPosIndex)._local;  // do not forget &
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
 	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
 
 	// sum up rot. kinetic energy (2x)
 	double dDummy = 0.;
+	double ekinRot = 0.;
 
-	mol->calculate_mv2_Iw2(dDummy, localTV._ekinRot );
+	mol->calculate_mv2_Iw2(dDummy, ekinRot);
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+	localTV._ekinRot += ekinRot;
 
 	// count num molecules
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
 	localTV._numMolecules++;
 
 	// count rotational DOF
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
 	localTV._numRotationalDOF += mol->component()->getRotationalDegreesOfFreedom();
 }
 
@@ -409,6 +423,9 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
 		double v2_new = mol->v2();
 //		if(_nTargetComponentID==0)
 //			cout << "nPosIndex=" << nPosIndex << ", dv2=" << (v2_new-v2_old) << endl;
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
 		_addedEkin.data.local.at(nPosIndex) += (v2_new-v2_old);
 
 		mol->scale_D(Dcorr);
@@ -442,9 +459,9 @@ void ControlRegionT::ResetLocalValues()
 void ControlRegionT::InitBetaLogfile()
 {
     if(_localMethod == VelocityScaling) {
-        DomainDecompBase *domainDecomp = &(global_simulation->domainDecomposition());
 
 #ifdef ENABLE_MPI
+		DomainDecompBase *domainDecomp = &(global_simulation->domainDecomposition());
         int rank = domainDecomp->getRank();
         // int numprocs = domainDecomp->getNumProcs();
         if (rank!= 0)
@@ -456,7 +473,7 @@ void ControlRegionT::InitBetaLogfile()
         std::stringstream outputstream;
         outputstream.write(reinterpret_cast<const char *>(&_nWriteFreqBeta), 8);
 
-        ofstream fileout(filenamestream.str().c_str(), std::ios::out | std::ios::binary);
+        std::ofstream fileout(filenamestream.str().c_str(), std::ios::out | std::ios::binary);
         fileout << outputstream.str();
         fileout.close();
     }
@@ -717,7 +734,7 @@ void TemperatureControl::writeAddedEkin(DomainDecompBase* domainDecomp, const ui
  * @param particleContainer
  * @param simstep
  */
-void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned long simstep)
+void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, const unsigned long simstep)
 {
 	if(_method == VelocityScaling || _method == Mixed){
 		this->VelocityScalingPreparation(domainDecomposition, particleContainer, simstep);
@@ -725,7 +742,9 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 	}
 
 	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in
-
+#if defined(_OPENMP)
+#pragma omp parallel default(none) shared(particleContainer, simstep)
+#endif
 	for( auto tM  = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 		 tM.isValid();
 		 ++tM)
@@ -746,13 +765,15 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
  * @param simstep
  */
 void TemperatureControl::VelocityScalingPreparation(DomainDecompBase *domainDecomposition,
-													ParticleContainer *particleContainer, unsigned long simstep) {
+													ParticleContainer *particleContainer, const unsigned long simstep) {
 	// respect start/stop
 	if(this->GetStart() <= simstep && this->GetStop() > simstep)
 	{
 		// init temperature control
 		this->Init(simstep);
-
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
 		for( auto tM  = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 			 tM.isValid();
 			 ++tM)
