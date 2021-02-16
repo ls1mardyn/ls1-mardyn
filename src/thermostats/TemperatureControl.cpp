@@ -12,6 +12,7 @@
 #include "Domain.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/FileUtils.h"
+#include "WrapOpenMP.h"
 
 #include <iostream>
 #include <fstream>
@@ -61,7 +62,7 @@ ControlRegionT::~ControlRegionT()
 	delete _accumulator;
 }
 
-Accumulator* ControlRegionT::CreateAccumulatorInstance(std::string strTransDirections)
+Accumulator* ControlRegionT::CreateAccumulatorInstance(const std::string& strTransDirections)
 {
 	Accumulator* accumulator;
 
@@ -101,7 +102,7 @@ Accumulator* ControlRegionT::CreateAccumulatorInstance(std::string strTransDirec
 		_nNumThermostatedTransDirections = 3;
 	}
 	else
-		accumulator = NULL;
+		accumulator = nullptr;
 
 	return accumulator;
 }

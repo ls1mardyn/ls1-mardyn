@@ -105,7 +105,7 @@ public:
 
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
-	Accumulator* CreateAccumulatorInstance(std::string strTransDirections);
+	Accumulator* CreateAccumulatorInstance(const std::string& strTransDirections);
 
 	// observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
 	DistControl* getDistControl();
