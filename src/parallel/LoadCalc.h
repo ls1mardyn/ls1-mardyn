@@ -246,7 +246,6 @@ public:
 #endif
 private:
 	double getValue(int numParticles) const;
-	void calcConstants();
 
 	std::vector<double> _times;  /// stores the times needed for the cells
 	std::array<double, 3> _extrapolationConst;  /// stores values of the extrapolation of the form y = a x^2 + b x + c
