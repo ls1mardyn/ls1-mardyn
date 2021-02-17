@@ -247,8 +247,14 @@ public:
 private:
 	double getValue(int numParticles) const;
 
-	std::vector<double> _times;  /// stores the times needed for the cells
-	std::array<double, 3> _extrapolationConst;  /// stores values of the extrapolation of the form y = a x^2 + b x + c
+	/// stores the times needed for the cells
+	std::vector<double> _times;
+
+	/**
+	 * Stores values of the extrapolation of the form y = a x^2 + b x + c.
+	 * Hereby, x is the number of particles and y the expected runtime of the simulation.
+	 */
+	std::array<double, 3> _interpolationConstants;
 
 	bool _preparedLoad;
 	double _previousTime;

@@ -192,7 +192,7 @@ std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
 MeasureLoad::MeasureLoad() :
 		_times() {
 	_previousTime = global_simulation->timers()->getTime(TIMER_NAME);
-	_extrapolationConst = {0., 0., 0.};
+	_interpolationConstants = {0., 0., 0.};
 	_preparedLoad = false;
 }
 
@@ -251,9 +251,9 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	int global_maxParticlesP1 = 0;  // maxParticle Count + 1 = degrees of freedom
 	MPI_Allreduce(&maxParticlesP1, &global_maxParticlesP1, 1, MPI_INT, MPI_MAX, comm);
 
-	if (numRanks < _extrapolationConst.size()) {
+	if (numRanks < _interpolationConstants.size()) {
 		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (needed _extrapolationConst.size(): "
-				<< _extrapolationConst.size() << ", numRanks: " << numRanks << ")." << std::endl;
+				<< _interpolationConstants.size() << ", numRanks: " << numRanks << ")." << std::endl;
 		return 1;
 	}
 
@@ -305,13 +305,13 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		mardyn_assert(coefficient_vec.size() == 3);
 		global_log->info() << "coefficient_vec: " << std::endl << coefficient_vec << std::endl;
 		for (int i = 0; i < 3; i++) {
-			_extrapolationConst[i] = coefficient_vec[i];
+			_interpolationConstants[i] = coefficient_vec[i];
 		}
-		MPI_Bcast(_extrapolationConst.data(), 3, MPI_DOUBLE, 0, comm);
+		MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
 	} else {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr, 0 /*here insignificant*/, MPI_UINT64_T,
 				0, comm);
-		MPI_Bcast(_extrapolationConst.data(), 3, MPI_DOUBLE, 0, comm);
+		MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
 	}
 
 	_preparedLoad = true;
@@ -324,5 +324,6 @@ double MeasureLoad::getValue(int numParticles) const {
 	mardyn_assert(numParticles >= 0);
 	mardyn_assert(_preparedLoad);
 
-	return _extrapolationConst[0] * numParticles * numParticles + _extrapolationConst[1] * numParticles + _extrapolationConst[2];
+	return _interpolationConstants[0] * numParticles * numParticles + _interpolationConstants[1] * numParticles +
+		   _interpolationConstants[2];
 }
