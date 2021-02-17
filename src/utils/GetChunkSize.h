@@ -10,7 +10,7 @@ namespace chunk_size {
  * @param max_chunk_size When iterating the specified number of work items, the overhead should be negligible. 
  *  Bigger numbers should not produce any better results.
  * @return The chunk size based on the given numbers.
- * @note max_chunk_size is the more dominant factor, i.e., if max_num_chunks would indicate bigger chunks,
+ * @note max_chunk_size This is the more dominant factor, i.e., if max_num_chunks would indicate bigger chunks,
  * max_chunk_size is restricting the chunk size.
  */
 constexpr int getChunkSize(size_t loop_size, size_t max_num_chunks, size_t max_chunk_size) {
