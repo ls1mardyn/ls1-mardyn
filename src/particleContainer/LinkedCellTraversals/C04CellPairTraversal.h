@@ -214,6 +214,7 @@ void C04CellPairTraversal<CellTemplate>::traverseSingleColor(CellProcessor& cell
 											   std::ceil(static_cast<double>(endY - startY) / 4) *
 											   std::ceil(static_cast<double>(endZ - startZ) / 4));
 
+	// magic numbers: empirically determined to be somewhat efficient.
 	// Here, we use a smaller max_chunk_size compared to C08, as c04 work items are bigger.
 	const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 20);
 

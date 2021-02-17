@@ -307,6 +307,7 @@ void LinkedCells::update_via_copies() {
 	vector<long> backwardNeighbourOffsets; // now vector
 	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
+	// magic numbers: empirically determined to be somewhat efficient.
 	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -369,6 +370,7 @@ void LinkedCells::update_via_coloring() {
 				std::ceil(static_cast<double>(_cellsPerDimension[0] - 1 - startIndices[0]) / strides[0]) *
 				std::ceil(static_cast<double>(_cellsPerDimension[1] - 1 - startIndices[1]) / strides[1]) *
 				std::ceil(static_cast<double>(_cellsPerDimension[2] - 1 - startIndices[2]) / strides[2]));
+			// magic numbers: empirically determined to be somewhat efficient.
 			const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 100);
 			#if defined (_OPENMP)
 			#pragma omp for schedule(dynamic, chunk_size) collapse(3)
@@ -1072,6 +1074,7 @@ void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 }
 
 void LinkedCells::updateMoleculeCaches() {
+	// magic numbers: empirically determined to be somewhat efficient.
 	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
 
 	#if defined(_OPENMP)

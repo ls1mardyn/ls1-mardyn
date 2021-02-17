@@ -210,6 +210,7 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsBackend(C
 											   std::ceil(static_cast<double>(end_y - start_y) / stride_y) *
 											   std::ceil(static_cast<double>(end_z - start_z) / stride_z));
 
+	// magic numbers: empirically determined to be somewhat efficient.
 	const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 100);
 
 #if defined(_OPENMP)
