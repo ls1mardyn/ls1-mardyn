@@ -8,10 +8,10 @@
 #ifndef SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_C08CELLPAIRTRAVERSAL_H_
 #define SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_C08CELLPAIRTRAVERSAL_H_
 
-#include "particleContainer/LinkedCellTraversals/C08BasedTraversals.h"
-#include "utils/threeDimensionalMapping.h"
-#include "utils/mardyn_assert.h"
 #include "C08BasedTraversals.h"
+#include "utils/GetChunkSize.h"
+#include "utils/mardyn_assert.h"
+#include "utils/threeDimensionalMapping.h"
 
 struct C08CellPairTraversalData : CellPairTraversalData {
 };
