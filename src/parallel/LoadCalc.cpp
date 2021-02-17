@@ -251,21 +251,26 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	int global_maxParticlesP1 = 0;  // maxParticle Count + 1 = degrees of freedom
 	MPI_Allreduce(&maxParticlesP1, &global_maxParticlesP1, 1, MPI_INT, MPI_MAX, comm);
 
-	if (numRanks < global_maxParticlesP1) {
-		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (maxParticlesP1: "
-				<< global_maxParticlesP1 << ", numRanks: " << numRanks << ")." << std::endl;
-
+#ifndef MARDYN_MEASURECALC_V1
+	if (numRanks < _extrapolationConst.size()) {
+		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (needed _extrapolationConst.size(): "
+				<< _extrapolationConst.size() << ", numRanks: " << numRanks << ")." << std::endl;
 		return 1;
 	}
+#else
+	// old version
+	if (numRanks < global_maxParticlesP1) {
+		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (needed=maxParticlesP1: "
+				<< global_maxParticlesP1 << ", numRanks: " << numRanks << ")." << std::endl;
+		return 1;
+	}
+#endif
 
 	statistics.resize(global_maxParticlesP1);
 	if (decomp->getRank() == 0) {
 		std::vector<unsigned long> global_statistics(global_maxParticlesP1 * numRanks);
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(), statistics.size(),
 				MPI_UINT64_T, 0, comm);
-
-
-
 
 		// right hand side = global_statistics ^ T \cdot neededTimes
 		std::vector<double> right_hand_side(global_maxParticlesP1, 0.);
