@@ -206,9 +206,9 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsBackend(C
 	const unsigned long stride_x = stride[0], stride_y = stride[1], stride_z = stride[2];
 
 	// number of iterations:
-	const unsigned long loop_size = std::ceil(static_cast<double>(end_x - start_x) / stride_x) *
-									std::ceil(static_cast<double>(end_y - start_y) / stride_y) *
-									std::ceil(static_cast<double>(end_z - start_z) / stride_z);
+	const auto loop_size = static_cast<size_t>(std::ceil(static_cast<double>(end_x - start_x) / stride_x) *
+											   std::ceil(static_cast<double>(end_y - start_y) / stride_y) *
+											   std::ceil(static_cast<double>(end_z - start_z) / stride_z));
 
 	const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 100);
 

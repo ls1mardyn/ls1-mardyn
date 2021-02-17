@@ -365,8 +365,13 @@ void LinkedCells::update_via_coloring() {
 			int startIndices[3];
 			threeDIndexOfCellIndex(col, startIndices, strides);
 
+			const auto loop_size = static_cast<size_t>(
+				std::ceil(static_cast<double>(_cellsPerDimension[0] - 1 - startIndices[0]) / strides[0]) *
+				std::ceil(static_cast<double>(_cellsPerDimension[1] - 1 - startIndices[1]) / strides[1]) *
+				std::ceil(static_cast<double>(_cellsPerDimension[2] - 1 - startIndices[2]) / strides[2]));
+			const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 100);
 			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3)
+			#pragma omp for schedule(dynamic, chunk_size) collapse(3)
 			#endif
 			for (int z = startIndices[2]; z < _cellsPerDimension[2]-1 ; z+= strides[2]) {
 				for (int y = startIndices[1]; y < _cellsPerDimension[1]-1; y += strides[1]) {

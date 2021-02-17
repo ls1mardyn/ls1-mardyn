@@ -209,9 +209,16 @@ void C04CellPairTraversal<CellTemplate>::traverseSingleColor(CellProcessor& cell
 	const long startY = startOfThisColor[1], endY = end[1];
 	const long startZ = startOfThisColor[2], endZ = end[2];
 
+	const auto loop_size = static_cast<size_t>(std::ceil(static_cast<double>(endX - startX) / 4) *
+											   std::ceil(static_cast<double>(endY - startY) / 4) *
+											   std::ceil(static_cast<double>(endZ - startZ) / 4));
+
+	// Here, we use a smaller max_chunk_size compared to C08, as c04 work items are bigger.
+	const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 20);
+
 	// first cartesian grid
 	#if defined(_OPENMP)
-	#pragma omp for schedule(dynamic, 1) collapse(3) nowait
+	#pragma omp for schedule(dynamic, chunk_size) collapse(3) nowait
 	#endif
 	for (long z = startZ; z < endZ; z += 4) {
 		for (long y = startY; y < endY; y += 4) {
