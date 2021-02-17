@@ -37,18 +37,4 @@ public:
 	double _betaTrans, _betaRot;
 };
 
-/**
- * @brief Stitches together GlobalThermostatVariables & LocalThermostatVariables
- */
-class LocalAndGlobalThermostatVariables {
-public:
-	LocalAndGlobalThermostatVariables() : _local(), _global() { }
-	virtual ~LocalAndGlobalThermostatVariables() {}
-
-	void clear() { _local.clear(); _global.clear(); }
-
-	LocalThermostatVariables _local;
-	GlobalThermostatVariables _global;
-};
-
 #endif /* SRC_THERMOSTATS_THERMOSTATVARIABLES_H_ */

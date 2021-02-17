@@ -212,8 +212,8 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig, std::string st
 		_nWriteFreqBeta = 1000;
 	}
 	this->InitBetaLogfile();
-	_localThermVarsThreads.resize(mardyn_get_max_threads());
-	for (auto& localThermVars : _localThermVarsThreads) {
+	_localThermVarsThreadBuffer.resize(mardyn_get_max_threads());
+	for (auto& localThermVars : _localThermVarsThreadBuffer) {
 		localThermVars.resize(_nNumSlabs);
 	}
 	_globalThermVars.resize(_nNumSlabs);
@@ -222,15 +222,15 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig, std::string st
 	_addedEkin.data.local.resize(_nNumSlabs);
 	_addedEkin.data.global.resize(_nNumSlabs);
 
-	_addedEkinLocalThreads.resize(mardyn_get_max_threads());
-	for (auto& addedEkinLocal : _addedEkinLocalThreads) {
+	_addedEkinLocalThreadBuffer.resize(mardyn_get_max_threads());
+	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
 		addedEkinLocal.resize(_nNumSlabs);
 	}
 
 	std::vector<double>& v = _addedEkin.data.local;
 	std::fill(v.begin(), v.end(), 0.);
 
-	for (auto& addedEkinLocal : _addedEkinLocalThreads) {
+	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
 		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
 	}
 }
@@ -241,7 +241,7 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp) {
 	for (unsigned s = 0; s < _nNumSlabs; ++s) {
 		unsigned long numMolecules{}, numRotationalDOF{};
 		double ekinTrans{}, ekinRot{};
-		for (const auto& threadBuffers : _localThermVarsThreads) {
+		for (const auto& threadBuffers : _localThermVarsThreadBuffer) {
 			const auto& localVar = threadBuffers[s];
 			numMolecules += localVar._numMolecules;
 			numRotationalDOF += localVar._numRotationalDOF;
@@ -344,7 +344,7 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 	*/
 
 	auto myThreadNum = mardyn_get_thread_num();
-	LocalThermostatVariables& localTV = _localThermVarsThreads[myThreadNum].at(nPosIndex);  // do not forget &
+	LocalThermostatVariables& localTV = _localThermVarsThreadBuffer[myThreadNum].at(nPosIndex);  // do not forget &
 	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
 
 	// sum up rot. kinetic energy (2x)
@@ -403,10 +403,8 @@ void ControlRegionT::ControlTemperature(Molecule* mol) {
 
 		// measure added kin. energy
 		double v2_new = mol->v2();
-		//		if(_nTargetComponentID==0)
-		//			cout << "nPosIndex=" << nPosIndex << ", dv2=" << (v2_new-v2_old) << endl;
 		int mythread = mardyn_get_thread_num();
-		_addedEkinLocalThreads[mythread].at(nPosIndex) += (v2_new - v2_old);
+		_addedEkinLocalThreadBuffer[mythread].at(nPosIndex) += (v2_new - v2_old);
 
 		mol->scale_D(Dcorr);
 	} else if (_localMethod == Andersen) {
@@ -429,7 +427,7 @@ void ControlRegionT::ResetLocalValues() {
 	// reset local values
 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
 		for (unsigned int s = 0; s < _nNumSlabs; ++s) {
-			_localThermVarsThreads[thread][s].clear();
+			_localThermVarsThreadBuffer[thread][s].clear();
 		}
 	}
 }
@@ -527,7 +525,7 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
 		mardyn_assert(_addedEkin.data.local.size() == _nNumSlabs);
 		for (size_t slabID = 0; slabID < _nNumSlabs; ++slabID) {
-			_addedEkin.data.local[0] += _addedEkinLocalThreads[thread][slabID];
+			_addedEkin.data.local[0] += _addedEkinLocalThreadBuffer[thread][slabID];
 		}
 	}
 	// calc global values
@@ -541,7 +539,7 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	// reset local values
 	std::vector<double>& vl = _addedEkin.data.local;
 	std::fill(vl.begin(), vl.end(), 0.);
-	for (auto& addedEkinLocal : _addedEkinLocalThreads) {
+	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
 		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
 	}
 

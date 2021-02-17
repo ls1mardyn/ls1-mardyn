@@ -117,7 +117,10 @@ private:
 	unsigned int _nNumSlabs;
 	double _dSlabWidth;
 
-	std::vector<std::vector<LocalThermostatVariables>> _localThermVarsThreads;
+	/**
+	 * Thread buffer for the local thermostat variables.
+	 */
+	std::vector<std::vector<LocalThermostatVariables>> _localThermVarsThreadBuffer;
 	std::vector<GlobalThermostatVariables> _globalThermVars;
 
 	double _dTargetTemperature;
@@ -144,7 +147,10 @@ private:
 		CommVar<std::vector<double>> data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
 	} _addedEkin;
 
-	std::vector<std::vector<double>> _addedEkinLocalThreads;
+	/**
+	 * Thread buffer for the local kinetic energy.
+	 */
+	std::vector<std::vector<double>> _addedEkinLocalThreadBuffer;
 
 	struct Ramp {
 		bool enabled;
