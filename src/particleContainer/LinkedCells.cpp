@@ -15,6 +15,7 @@
 #include "utils/Logger.h"
 #include "utils/Random.h"
 #include "utils/mardyn_assert.h"
+#include "utils/GetChunkSize.h"
 
 #include "particleContainer/TraversalTuner.h"
 
@@ -306,19 +307,20 @@ void LinkedCells::update_via_copies() {
 	vector<long> backwardNeighbourOffsets; // now vector
 	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
+	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			_cells[cellIndex].preUpdateLeavingMolecules();
 		}
 
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			ParticleCell& cell = _cells[cellIndex];
@@ -344,7 +346,7 @@ void LinkedCells::update_via_copies() {
 		}
 
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 			_cells[cellIndex].postUpdateLeavingMolecules();
@@ -1065,8 +1067,10 @@ void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 }
 
 void LinkedCells::updateMoleculeCaches() {
+	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
+
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(dynamic, chunk_size)
 	#endif
 	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		_cells[cellIndex].buildSoACaches();
