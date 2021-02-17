@@ -504,9 +504,9 @@ void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDup
 		const cell_index_t my_cells_start = (thread_id    ) * numCells / num_threads;
 		const cell_index_t my_cells_end   = (thread_id + 1) * numCells / num_threads;
 
-		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_begin = newPartsPerCell.begin();
+		auto thread_begin = newPartsPerCell.begin();
 		advance(thread_begin, my_cells_start);
-		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_end = newPartsPerCell.begin();
+		auto thread_end = newPartsPerCell.begin();
 		advance(thread_end, my_cells_end);
 
 		for(auto it = thread_begin; it != thread_end; ++it) {
@@ -607,12 +607,12 @@ void LinkedCells::deleteOuterParticles() {
 		Simulation::exit(1);
 	}*/
 
-	const int numHaloCells = _haloCellIndices.size();
+	const size_t numHaloCells = _haloCellIndices.size();
 
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (int i = 0; i < numHaloCells; i++) {
+	for (size_t i = 0; i < numHaloCells; i++) {
 		ParticleCell& currentCell = _cells[_haloCellIndices[i]];
 		currentCell.deallocateAllParticles();
 	}
@@ -1046,7 +1046,7 @@ void LinkedCells::updateInnerMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		if(_cells[cellIndex].isInnerCell()){
 			_cells[cellIndex].buildSoACaches();
 		}
@@ -1057,7 +1057,7 @@ void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		if (_cells[cellIndex].isHaloCell() or _cells[cellIndex].isBoundaryCell()) {
 			_cells[cellIndex].buildSoACaches();
 		}
@@ -1068,7 +1068,7 @@ void LinkedCells::updateMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		_cells[cellIndex].buildSoACaches();
 	}
 }
