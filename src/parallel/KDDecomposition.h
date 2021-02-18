@@ -331,7 +331,7 @@ private:
 	bool _splitBiggest;  // indicates, whether a subdomain is to be split along its biggest size
 	bool _forceRatio;  // if you want to enable forcing the above ratio, enable this.
 
-	bool _doMeasureLoadCalc {false};  //
+	bool _doMeasureLoadCalc {false};  // specifies if measureLoad should be used.
 
 	/**
 	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a node is less than the _splitThreshold.
