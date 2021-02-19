@@ -326,7 +326,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not widely "
 												 "tested and considered BETA."
 											  << endl;
-						// Force grid!
+						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
+						// of global values will be faulty without one!
 						global_log->warning() << "Forcing a grid for the GeneralDomainDecomposition!" << endl;
 						forceGrid = true;
 					}
