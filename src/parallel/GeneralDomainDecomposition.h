@@ -18,8 +18,9 @@ public:
 	 * Constructor for the GeneralDomainDecomposition.
 	 * @param interactionLength
 	 * @param domain
+	 * @param forceGrid
 	 */
-	GeneralDomainDecomposition(double interactionLength, Domain* domain);
+	GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid);
 
 	// documentation see father class (DomainDecompBase.h)
 	~GeneralDomainDecomposition() override;
@@ -199,6 +200,11 @@ private:
 	 * If no value is given, it is not used.
 	 */
 	std::optional<std::array<double, 3>> _gridSize{};
+
+	/**
+	 * Bool that indicates whether a grid should be forced even if no gridSize is set.
+	 */
+	bool _forceGrid{false};
 
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
 
