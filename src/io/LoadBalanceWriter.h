@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <deque>
 
 /** name of the LoadbalanceWriter's default timer */
 #define LB_WRITER_DEFAULT_TIMER_NAME "LoadbalanceWriter_default"
@@ -43,6 +44,7 @@ public:
 	 * \code{.xml}
 	   <outputplugin name="LoadbalanceWriter">
 	     <writefrequency>INTEGER</writefrequency>
+	     <averageLength>INTEGER</averageLength>
 	     <outputfilename>STRING</outputfilename>
 	     <timers> <!-- additional timers -->
 	        <timer> <name>LoadbalanceWriter_default</name> <warninglevel>DOUBLE</warninglevel> </timer>
@@ -81,10 +83,18 @@ private:
 	void displayWarning(unsigned long simstep, const std::string& timername, double f_LB);
 
 	unsigned long _writeFrequency;
+	unsigned long _averageLength{10};
 	std::string _outputFilename;
 	Timer *_defaultTimer;
 	std::vector<std::string> _timerNames;
 	std::vector<double> _times;
+
+	// Holds multiple time values (not flushed after write) to get averaged load values.
+	std::deque<double> _timesForAverage;
+	unsigned long _lastTimesOldValueCount{0};  // How many old values _lastTimes holds from before a flush.
+	std::vector<double> _global_sum_average_times;
+	std::vector<double> _global_max_average_times;
+
 	std::vector<double> _sum_times;
 	std::vector<double> _global_sum_times;
 	std::vector<double> _global_times;
@@ -92,6 +102,7 @@ private:
 	std::map<std::string, double> _warninglevels;
 	std::map<std::string, bool> _incremental;  // describes whether the timer will continuously increase and the difference between two calls should be used as timer value
 	std::map<std::string, double> _incremental_previous_times;  // previous times of the incremental timers
+	std::vector<double> getAveragedTimes();
 };
 
 #endif  // SRC_IO_LOADBALANCEWRITER_H_
