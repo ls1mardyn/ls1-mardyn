@@ -22,7 +22,7 @@
  * In each line the following values are stored for each LB timer:
  * - min, max times over all processes
  * - the factor max/min
- * - the imbalance 1 - average / max. This describes lost performance due to imbalances.
+ * - the imbalance 1 - average / max. This describes lost performance due to imbalances for the current time step.
  * - an averaged imbalance. Compared to the step-wise imbalance, the time-values are averaged for averageLength time
  * steps. In the first few steps, this averaging is not fully possible, thus only the average of the first steps is
  * taken. The averaged imbalance aims to reduce imbalances caused by noise and performance fluctuations and is thus a
@@ -30,8 +30,9 @@
  * addition, when comparing the step-wise imbalance and the averaged imbalance, information about the fluctuations can
  * be retrieved.
  *
- * @note Warning levels (for the factor max / min) for each timer can be set which will output a waring to the logfile.
- * This warning level should be bigger than 1.!
+ * @note Warning thresholds (level) (for the factor max / min) for each timer can be set (see documentation of
+ * readXML()) which will output a warning to the logfile if the factor max_time / min_time is above the threshold. This
+ * warning level should be bigger than 1.!
  *
  * @todo This plugin may be extended to threads
  */
@@ -98,7 +99,7 @@ private:
 	std::vector<double> _times;
 
 	// Holds multiple time values (not flushed after write) to get averaged load values.
-	std::deque<double> _timesForAverage;
+	std::deque<double> _timesForAverageBuffer;
 	unsigned long _lastTimesOldValueCount{0};  // How many old values _lastTimes holds from before a flush.
 	std::vector<double> _global_sum_average_times;
 	std::vector<double> _global_max_average_times;

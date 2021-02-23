@@ -51,27 +51,36 @@
 		</ensemble>
 
 		<algorithm>
-			<parallelisation type="DomainDecomposition">
+			<c><parallelisation type="DomainDecomposition">
 				 <!-- structure handled by DomainDecompMPIBase -->
 				<MPIGridDims> <x>2</x> <y>2</y> <z>2</z> </MPIGridDims>
-			</parallelisation>
-<!--
+			</parallelisation></c>
 			<parallelisation type="KDDecomposition">
-				<CommunicationScheme>direct</CommunicationScheme>
-				<updateFrequency>100000</updateFrequency>
-				<fullSearchThreshold>3</fullSearchThreshold>
-				<splitBiggestDimension>0</splitBiggestDimension>
-				<useVectorizationTuner>0</useVectorizationTuner>
-				<generateNewFiles>0</generateNewFiles>
-				<useExistingFiles>0</useExistingFiles>
-			</parallelisation>
--->
+                <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+                <updateFrequency>10000</updateFrequency>
+                <fullSearchThreshold>3</fullSearchThreshold>
+                <heterogeneousSystems>False</heterogeneousSystems>
+                <useVectorizationTuner>False</useVectorizationTuner>
+                <clusterHetSys>False</clusterHetSys>
+                <splitBiggestDimension>False</splitBiggestDimension>
+                <forceRatio>False</forceRatio>
+                <rebalanceLimit>0</rebalanceLimit>
+                <splitThreshold>10000000</splitThreshold>
+                <generateNewFiles>False</generateNewFiles>
+                <useExistingFiles>False</useExistingFiles>
+                <doMeasureLoadCalc>True</doMeasureLoadCalc>
+                <measureLoadAlwaysUseInterpolation>False</measureLoadAlwaysUseInterpolation>
+                <measureLoadIncreasingTimeValues>True</measureLoadIncreasingTimeValues>
+                <deviationReductionOperation>max</deviationReductionOperation>
+                <CommunicationScheme>direct-pp</CommunicationScheme>
+                <minNumCellsPerDimension>1</minNumCellsPerDimension>
+            </parallelisation>
 			<datastructure type="LinkedCells">
 				<cellsInCutoffRadius>1</cellsInCutoffRadius>
 			</datastructure>
 			<cutoffs type="CenterOfMass" >
-				<defaultCutoff unit="reduced" >4.0</defaultCutoff> <!-- sigma=1.0 => 3*sigma=3.0, 4*sigma=4.0, 5*sigma=5.0 -->
-				<radiusLJ unit="reduced" >4.0</radiusLJ>
+				<defaultCutoff unit="reduced" >2.0</defaultCutoff> <!-- sigma=1.0 => 3*sigma=3.0, 4*sigma=4.0, 5*sigma=5.0 -->
+				<radiusLJ unit="reduced" >2.0</radiusLJ>
 			</cutoffs>
 			<electrostatic type="ReactionField" >
 				<epsilon>1.0e+10</epsilon>

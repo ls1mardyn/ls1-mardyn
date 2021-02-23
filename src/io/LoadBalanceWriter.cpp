@@ -123,7 +123,7 @@ void LoadbalanceWriter::recordTimes(unsigned long simstep) {
 		}
 		_times.push_back(time);  // needed for maximum
 		_times.push_back(-time); // needed for minimum
-		_timesForAverage.emplace_back(time);  // needed for average
+		_timesForAverageBuffer.emplace_back(time);  // needed for average
 	}
 }
 
@@ -174,15 +174,15 @@ void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
 }
 
 std::vector<double> LoadbalanceWriter::getAveragedTimes() {
-	std::vector<double> averagedTimes(_timesForAverage.size(), 0.);
+	std::vector<double> averagedTimes(_timesForAverageBuffer.size(), 0.);
 	const auto numTimers = _timerNames.size();
-	mardyn_assert(_timesForAverage.size() % numTimers == 0);
+	mardyn_assert(_timesForAverageBuffer.size() % numTimers == 0);
 	std::vector<double> currentAverageSum(numTimers, 0.);
-	for (size_t ind = 0, averageIndex = 0; ind < _timesForAverage.size(); ind += numTimers, ++averageIndex) {
+	for (size_t ind = 0, averageIndex = 0; ind < _timesForAverageBuffer.size(); ind += numTimers, ++averageIndex) {
 		for (size_t timer_id = 0; timer_id < numTimers; ++timer_id) {
-			currentAverageSum[timer_id] += _timesForAverage[ind + timer_id];
+			currentAverageSum[timer_id] += _timesForAverageBuffer[ind + timer_id];
 			if (averageIndex >= _averageLength) {
-				currentAverageSum[timer_id] -= _timesForAverage[ind + timer_id - _averageLength];
+				currentAverageSum[timer_id] -= _timesForAverageBuffer[ind + timer_id - _averageLength];
 				averagedTimes[ind + timer_id] = currentAverageSum[timer_id] / static_cast<double>(_averageLength);
 			} else {
 				averagedTimes[ind + timer_id] = currentAverageSum[timer_id] / static_cast<double>(averageIndex + 1);
@@ -236,9 +236,10 @@ void LoadbalanceWriter::resetTimes() {
 
 	// Removes first few elements, s.t., only the last _averageLength - 1 elements remain.
 	auto numTimers = _timerNames.size();
-	if (_timesForAverage.size() > (_averageLength - 1) * numTimers) {
-		_timesForAverage.erase(_timesForAverage.begin(), _timesForAverage.end() - numTimers * (_averageLength - 1));
-		mardyn_assert(_timesForAverage.size() == (_averageLength - 1) * numTimers);
+	if (_timesForAverageBuffer.size() > (_averageLength - 1) * numTimers) {
+		_timesForAverageBuffer.erase(_timesForAverageBuffer.begin(),
+									 _timesForAverageBuffer.end() - numTimers * (_averageLength - 1));
+		mardyn_assert(_timesForAverageBuffer.size() == (_averageLength - 1) * numTimers);
 	}
-	_lastTimesOldValueCount = _timesForAverage.size();
+	_lastTimesOldValueCount = _timesForAverageBuffer.size();
 }

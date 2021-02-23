@@ -313,7 +313,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
-				bool forceGrid = false;
+				bool forceLatchingToRegularGrid = false;
 				// we need the skin here, so we extract it from the AutoPas container's xml,
 				// because the ParticleContainer needs to be instantiated later. :/
 				xmlconfig.changecurrentnode("..");
@@ -323,15 +323,15 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
 						xmlconfig.getNodeValue("skin", skin);
 					} else {
-						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not widely "
-												 "tested and considered BETA."
+						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
+												 "thoroughly tested and considered BETA."
 											  << endl;
 						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
 						// of global values will be faulty without one!
-						global_log->warning() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
+						global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
 												 "to get correct global values!"
 											  << endl;
-						forceGrid = true;
+						forceLatchingToRegularGrid = true;
 					}
 					global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 				} else {
@@ -343,7 +343,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Simulation::exit(1);
 				}
 				delete _domainDecomposition;
-				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceGrid);
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToRegularGrid);
 			} else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);
