@@ -328,7 +328,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 											  << endl;
 						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
 						// of global values will be faulty without one!
-						global_log->warning() << "Forcing a grid for the GeneralDomainDecomposition!" << endl;
+						global_log->warning() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
+												 "to get correct global values!"
+											  << endl;
 						forceGrid = true;
 					}
 					global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;

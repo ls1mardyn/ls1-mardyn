@@ -22,8 +22,16 @@
  * In each line the following values are stored for each LB timer:
  * - min, max times over all processes
  * - the factor max/min
+ * - the imbalance 1 - average / max. This describes lost performance due to imbalances.
+ * - an averaged imbalance. Compared to the step-wise imbalance, the time-values are averaged for averageLength time
+ * steps. In the first few steps, this averaging is not fully possible, thus only the average of the first steps is
+ * taken. The averaged imbalance aims to reduce imbalances caused by noise and performance fluctuations and is thus a
+ * more accurate measure for the quality of the partitioning. It is (in average) lower than the step-wise imbalance. In
+ * addition, when comparing the step-wise imbalance and the averaged imbalance, information about the fluctuations can
+ * be retrieved.
  *
- * Warning levels for each timer can be set which will output a waring to the logfile.
+ * @note Warning levels (for the factor max / min) for each timer can be set which will output a waring to the logfile.
+ * This warning level should be bigger than 1.!
  *
  * @todo This plugin may be extended to threads
  */
