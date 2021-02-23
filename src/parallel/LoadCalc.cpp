@@ -226,6 +226,15 @@ arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, doubl
 }
 #endif
 
+template<typename iterator1, typename iterator2>
+bool isFinite(iterator1 start, iterator2 end) {
+	bool isProper = true;
+	for(auto iter = start; iter != end; ++iter){
+		isProper &= std::isfinite(*iter);
+	}
+	return isProper;
+}
+
 #ifdef ENABLE_MPI
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
@@ -318,6 +327,8 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
 		} else {
 			arma::vec arma_rhs(right_hand_side);
+			std::cout << "system_matrix: " << arma_system_matrix << std::endl;
+			std::cout << "arma_rhs: " << arma_rhs << std::endl;
 			arma::vec cell_time_vec = nnls(arma_system_matrix, arma_rhs);
 
 			global_log->info() << "cell_time_vec: " << cell_time_vec << std::endl;
@@ -337,8 +348,20 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	}
 
 	// interpolation constants:
-	if(not _alwaysUseInterpolation) {
+	if (not _alwaysUseInterpolation) {
 		calcConstants();
+	}
+
+	// Check for NaN:
+	if (not _alwaysUseInterpolation) {
+		if (not isFinite(_times.begin(), _times.end())) {
+			global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
+			return 1;
+		}
+	}
+	if (not isFinite(_interpolationConstants.begin(), _interpolationConstants.end())) {
+		global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
+		return 1;
 	}
 	_preparedLoad = true;
 	return 0;
