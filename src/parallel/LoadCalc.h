@@ -224,7 +224,7 @@ class MeasureLoad: public LoadCalc {
 	static std::string TIMER_NAME;
 
 public:
-	MeasureLoad();
+	MeasureLoad(bool alwaysUseInterpolation);
 
 	double getOwn(int index1, int index2) const override {
 		return getValue(index1);
@@ -241,6 +241,7 @@ public:
 	double getCorner(int index1, int index2) const override {
 		return getValue(index1);
 	}
+
 #ifdef ENABLE_MPI
 	int prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm);
 #endif

@@ -189,7 +189,9 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 // MEASURELOAD
 std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
 
-MeasureLoad::MeasureLoad() { _previousTime = global_simulation->timers()->getTime(TIMER_NAME); }
+MeasureLoad::MeasureLoad(bool alwaysUseInterpolation) : _alwaysUseInterpolation{alwaysUseInterpolation} {
+	_previousTime = global_simulation->timers()->getTime(TIMER_NAME);
+}
 
 #ifdef MARDYN_ARMADILLO
 // this non-negative least-squares (nnls) algorithm is taken from:

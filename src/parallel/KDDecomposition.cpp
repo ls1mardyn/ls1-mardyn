@@ -194,6 +194,11 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
+
+	xmlconfig.getNodeValue("measureLoadAlwaysUseInterpolation", _measureLoadAlwaysUseInterpolation);
+	global_log->info() << "measureLoad: Always use interpolation? "
+					   << (_measureLoadAlwaysUseInterpolation ? "yes" : "no") << endl;
+
 	DomainDecompMPIBase::readXML(xmlconfig);
 
 	string oldPath(xmlconfig.getcurrentnodepath());
@@ -268,8 +273,8 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	const bool removeRecvDuplicates = true;
 
 	size_t measureLoadInitTimers = 2;
-	if(_steps == measureLoadInitTimers and _doMeasureLoadCalc){
-		_measureLoadCalc = new MeasureLoad();
+	if (_steps == measureLoadInitTimers and _doMeasureLoadCalc) {
+		_measureLoadCalc = new MeasureLoad(_measureLoadAlwaysUseInterpolation);
 	}
 	size_t measureLoadStart = 50;
 	if (_steps == measureLoadStart and _doMeasureLoadCalc) {

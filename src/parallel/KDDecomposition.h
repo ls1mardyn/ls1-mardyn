@@ -332,6 +332,7 @@ private:
 	bool _forceRatio;  // if you want to enable forcing the above ratio, enable this.
 
 	bool _doMeasureLoadCalc {false};  // specifies if measureLoad should be used.
+	bool _measureLoadAlwaysUseInterpolation {true};  // specifies if measureLoad should always use interpolation.
 
 	/**
 	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a node is less than the _splitThreshold.
