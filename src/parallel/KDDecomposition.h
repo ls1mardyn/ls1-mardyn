@@ -79,10 +79,13 @@ class KDDecomposition: public DomainDecompMPIBase {
 	     <forceRatio>BOOL</forceRatio>
 	     <rebalanceLimit>DOUBLE</rebalanceLimit>
 	     <splitThreshold>INTEGER</splitThreshold>
-		 <generateNewFiles>BOOL</generateNewFiles>
-		 <useExistingFiles>BOOL</useExistingFiles>
+		 <generateNewFiles>BOOL</generateNewFiles> <!--for vectorization tuner-->
+		 <useExistingFiles>BOOL</useExistingFiles> <!--for vectorization tuner-->
+		 <vecTunerAllowMPIReduce>BOOL</vecTunerAllowMPIReduce> <!--for vectorization tuner-->
+
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
 		 <measureLoadAlwaysUseInterpolation>BOOL</measureLoadAlwaysUseInterpolation> <!-- default: true -->
+		 <measureLoadIncreasingTimeValues>BOOL</measureLoadIncreasingTimeValues> <!-- default: true -->
 		 <deviationReductionOperation>max OR sum</deviationReductionOperation>
 		 <minNumCellsPerDimension>UINT</minNumCellsPerDimension> <!--Has to be bigger than 0-->
 	   </parallelisation>
