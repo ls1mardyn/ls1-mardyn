@@ -82,6 +82,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 		 <generateNewFiles>BOOL</generateNewFiles>
 		 <useExistingFiles>BOOL</useExistingFiles>
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
+		 <measureLoadAlwaysUseInterpolation>BOOL</measureLoadAlwaysUseInterpolation> <!-- default: true -->
 		 <deviationReductionOperation>max OR sum</deviationReductionOperation>
 		 <minNumCellsPerDimension>UINT</minNumCellsPerDimension> <!--Has to be bigger than 0-->
 	   </parallelisation>
