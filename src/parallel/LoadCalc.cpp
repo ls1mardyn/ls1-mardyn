@@ -315,9 +315,8 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 			}
 			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
 		} else {
-			// old version
 			arma::vec arma_rhs(right_hand_side);
-			arma::vec cell_time_vec = arma::solve(arma_system_matrix, arma_rhs);
+			arma::vec cell_time_vec = nnls(arma_system_matrix, arma_rhs);
 
 			global_log->info() << "cell_time_vec: " << cell_time_vec << std::endl;
 			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
@@ -330,7 +329,6 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		if (_alwaysUseInterpolation) {
 			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
 		} else {
-			// old version
 			_times.resize(global_maxParticlesP1);
 			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
 		}
@@ -345,63 +343,37 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 #endif
 }
 #endif  // ENABLE_MPI
+
 void MeasureLoad::calcConstants() {
 	// we do a least squares fit of: y = a x^2 + b x + c
 
 	// we need at least three entries for that!
 	mardyn_assert(_times.size() >= 3);
 
-	// we do a least square fit of the last 50% of the data:
-	size_t start, numElements;
-	{
-		size_t one = _times.size() - 3;
-		size_t two = _times.size() * 0.5;
-		start = std::min(one, two);
-		numElements = _times.size() - start;
-	}
+	// We do a least square fit of the last 50% of the data or at least three elements.
+	size_t start = std::min(_times.size() - 3, _times.size() / 2);
+	size_t numElements = _times.size() - start;
 
-	std::array<double, 5> momentsX{};  // stores the moments of x: sum{t^i}
-	std::array<double, 3> momentsYX{};  // stores the following: sum{d* t^i}
-
-	momentsX[0] = numElements;
-
-	for (size_t i = start; i < _times.size(); i++) {
-		double x = i;
-		double x2 = x * x;
-		double x3 = x2 * x;
-		double x4 = x2 * x2;
-		double y = _times[i];
-		double yx = y * x;
-		double yx2 = y * x2;
-
-		momentsX[1] += x;
-		momentsX[2] += x2;
-		momentsX[3] += x3;
-		momentsX[4] += x4;
-		momentsYX[0] += y;
-		momentsYX[1] += yx;
-		momentsYX[2] += yx2;
-	}
 #ifdef MARDYN_ARMADILLO
-	// 3x3 matrix:
-	arma::mat system_matrix(3, 3);
+	// Nx3 matrix:
+	arma::mat system_matrix(numElements, 3);
 
-	// 3x1 vector from moments:
-	arma::vec rhs(3);
+	// Nx1 vector from moments:
+	arma::vec rhs(numElements);
 
-	for (size_t row = 0; row < 3ul; ++row) {
-		rhs[row] = momentsYX[row];
-		for (size_t col = 0; col < 3ul; ++col) {
-			system_matrix.at(row, col) = momentsX[row + col];
-		}
+	for (size_t row = 0; row < numElements; ++row) {
+		rhs[row] = _times[start + row];
+		system_matrix.at(row, 0) = static_cast<double>(row * row);
+		system_matrix.at(row, 1) = static_cast<double>(row);
+		system_matrix.at(row, 2) = 1;
 	}
 
-	arma::vec solution = arma::solve(system_matrix, rhs);
+	arma::vec solution = nnls(system_matrix, rhs);
 
 	for (size_t row = 0; row < 3ul; row++) {
 		_interpolationConstants[row] = solution[2 - row];
 	}
-	global_log->info() << "extrapolationconst: " << solution << std::endl;
+	global_log->info() << "_interpolationConstants: " << solution << std::endl;
 #endif
 
 }
