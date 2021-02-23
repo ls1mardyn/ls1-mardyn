@@ -1146,12 +1146,16 @@ bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurr
 std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {
 	int maxParticles = 0;
 	for (auto& cell : _cells) {
-		maxParticles = std::max(maxParticles, cell.getMoleculeCount());
+		if(not cell.isHaloCell()) {
+			maxParticles = std::max(maxParticles, cell.getMoleculeCount());
+		}
 	}
 
 	std::vector<unsigned long> statistics(maxParticles + 1, 0ul);
 	for (auto& cell : _cells) {
-		statistics[cell.getMoleculeCount()]++;
+		if(not cell.isHaloCell()) {
+			statistics[cell.getMoleculeCount()]++;
+		}
 	}
 	return statistics;
 }
