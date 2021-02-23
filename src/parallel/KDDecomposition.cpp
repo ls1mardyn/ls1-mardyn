@@ -191,6 +191,8 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
 	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
+	xmlconfig.getNodeValue("vecTunerAllowMPIReduce", _vecTunerAllowMPIReduce);
+	global_log->info() << "Allow an MPI Reduce for the vectorization tuner?: " << (_vecTunerAllowMPIReduce?"yes":"no") << endl;
 
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
@@ -578,7 +580,7 @@ void KDDecomposition::fillTimeVecs(CellProcessor **cellProc){
 		VectorizationTuner tuner;
 		tuner.init(global_simulation->getMoleculeContainer(), &global_simulation->domainDecomposition(), global_simulation->getDomain());
 		mardyn_assert(cellProc && (*cellProc));
-		tuner.tune(*(_simulation.getEnsemble()->getComponents()), *_tunerLoadCalc, _vecTunParticleNums, _generateNewFiles, _useExistingFiles);
+		tuner.tune(*(_simulation.getEnsemble()->getComponents()), *_tunerLoadCalc, _vecTunParticleNums, _generateNewFiles, _useExistingFiles, _vecTunerAllowMPIReduce);
 	}
 
 

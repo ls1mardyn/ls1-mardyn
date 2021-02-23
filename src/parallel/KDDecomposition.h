@@ -377,6 +377,7 @@ private:
 	std::vector<int> _vecTunParticleNums;
 	bool _generateNewFiles;
 	bool _useExistingFiles;
+	bool _vecTunerAllowMPIReduce{true};
 
 
 	double _rebalanceLimit; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
