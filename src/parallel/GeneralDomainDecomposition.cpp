@@ -17,7 +17,7 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength,
 	  _boxMax{0.},
 	  _domainLength{domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)},
 	  _interactionLength{interactionLength},
-	  _forceGrid{forceGrid} {}
+	  _forceLatchingToLinkedCellsGrid{forceGrid} {}
 
 void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "initializing ALL load balancer..." << std::endl;
@@ -26,7 +26,7 @@ void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
-	if (_forceGrid and not _gridSize.has_value()) {
+	if (_forceLatchingToLinkedCellsGrid and not _gridSize.has_value()) {
 		std::array<double, 3> forcedGridSize{};
 		for(size_t dim = 0; dim<3; ++dim){
 			size_t numCells = _domainLength[dim] / _interactionLength;

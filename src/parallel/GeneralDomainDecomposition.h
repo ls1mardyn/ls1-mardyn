@@ -204,7 +204,7 @@ private:
 	/**
 	 * Bool that indicates whether a grid should be forced even if no gridSize is set.
 	 */
-	bool _forceGrid{false};
+	bool _forceLatchingToLinkedCellsGrid{false};
 
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
 

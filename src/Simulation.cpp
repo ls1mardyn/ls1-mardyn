@@ -313,7 +313,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
-				bool forceLatchingToRegularGrid = false;
+				bool forceLatchingToLinkedCellsGrid = false;
 				// we need the skin here, so we extract it from the AutoPas container's xml,
 				// because the ParticleContainer needs to be instantiated later. :/
 				xmlconfig.changecurrentnode("..");
@@ -331,7 +331,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
 												 "to get correct global values!"
 											  << endl;
-						forceLatchingToRegularGrid = true;
+						forceLatchingToLinkedCellsGrid = true;
 					}
 					global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 				} else {
@@ -343,7 +343,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Simulation::exit(1);
 				}
 				delete _domainDecomposition;
-				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToRegularGrid);
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
 			} else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);
