@@ -334,6 +334,7 @@ private:
 
 	bool _doMeasureLoadCalc {false};  // specifies if measureLoad should be used.
 	bool _measureLoadAlwaysUseInterpolation {true};  // specifies if measureLoad should always use interpolation.
+	bool _measureLoadIncreasingTimeValues{true};  // specifies if the time values should be increasing if the number of particles increases.
 
 	/**
 	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a node is less than the _splitThreshold.

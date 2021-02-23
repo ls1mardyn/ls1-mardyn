@@ -199,6 +199,10 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "measureLoad: Always use interpolation? "
 					   << (_measureLoadAlwaysUseInterpolation ? "yes" : "no") << endl;
 
+	xmlconfig.getNodeValue("measureLoadIncreasingTimeValues", _measureLoadIncreasingTimeValues);
+	global_log->info() << "measureLoad: Ensure that cells with more particles take longer ? "
+					   << (_measureLoadIncreasingTimeValues ? "yes" : "no") << endl;
+
 	DomainDecompMPIBase::readXML(xmlconfig);
 
 	string oldPath(xmlconfig.getcurrentnodepath());
@@ -274,7 +278,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 
 	size_t measureLoadInitTimers = 2;
 	if (_steps == measureLoadInitTimers and _doMeasureLoadCalc) {
-		_measureLoadCalc = new MeasureLoad(_measureLoadAlwaysUseInterpolation);
+		_measureLoadCalc = new MeasureLoad(_measureLoadAlwaysUseInterpolation, _measureLoadIncreasingTimeValues);
 	}
 	size_t measureLoadStart = 50;
 	if (_steps == measureLoadStart and _doMeasureLoadCalc) {

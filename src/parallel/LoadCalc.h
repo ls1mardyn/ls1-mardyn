@@ -228,7 +228,7 @@ class MeasureLoad: public LoadCalc {
 	static std::string TIMER_NAME;
 
 public:
-	MeasureLoad(bool alwaysUseInterpolation);
+	MeasureLoad(bool alwaysUseInterpolation, bool timeValuesShouldBeIncreasing);
 
 	double getOwn(int index1, int index2) const override {
 		return getValue(index1);
@@ -265,4 +265,5 @@ private:
 	bool _preparedLoad{false};
 	double _previousTime{0.};
 	bool _alwaysUseInterpolation{true};
+	bool _timeValuesShouldBeIncreasing{true};
 };

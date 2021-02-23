@@ -189,7 +189,8 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 // MEASURELOAD
 std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
 
-MeasureLoad::MeasureLoad(bool alwaysUseInterpolation) : _alwaysUseInterpolation{alwaysUseInterpolation} {
+MeasureLoad::MeasureLoad(bool alwaysUseInterpolation, bool timeValuesShouldBeIncreasing)
+	: _alwaysUseInterpolation{alwaysUseInterpolation}, _timeValuesShouldBeIncreasing{timeValuesShouldBeIncreasing} {
 	_previousTime = global_simulation->timers()->getTime(TIMER_NAME);
 }
 
@@ -279,33 +280,14 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(), statistics.size(),
 				MPI_UINT64_T, 0, comm);
 
-		// right hand side = global_statistics ^ T \cdot neededTimes
-		std::vector<double> right_hand_side(global_maxParticlesP1, 0.);
-		for (int particleCount = 0; particleCount < global_maxParticlesP1; particleCount++) {
-			for (int rank = 0; rank < numRanks; rank++) {
-				right_hand_side[particleCount] += global_statistics[global_maxParticlesP1 * rank + particleCount]
-						* neededTimes[rank];
-			}
-		}
+		// right hand side = neededTimes
+		arma::vec arma_rhs(neededTimes);
 
-		// system matrix is: global_statistics ^ T \cdot global_statistics
-		std::vector<unsigned long> system_matrix(global_maxParticlesP1 * global_maxParticlesP1, 0ul);
-		for (int particleCount1 = 0; particleCount1 < global_maxParticlesP1; particleCount1++) {
-			for (int rank = 0; rank < numRanks; rank++) {
-				for (int particleCount2 = 0; particleCount2 < global_maxParticlesP1; particleCount2++) {
-					system_matrix[particleCount1 * global_maxParticlesP1 + particleCount2] +=
-							global_statistics[global_maxParticlesP1 * rank + particleCount1]
-									* global_statistics[global_maxParticlesP1 * rank + particleCount2];
-				}
-			}
-		}
-
-		// now we have to solve: system_matrix \cdot cell_time_vector = right_hand_side
-		arma::mat arma_system_matrix(global_maxParticlesP1, global_maxParticlesP1);
-		for (int row = 0; row < global_maxParticlesP1; row++) {
-			for (int column = 0; column < global_maxParticlesP1; column++) {
-				arma_system_matrix[row * global_maxParticlesP1 + column] = system_matrix[row * global_maxParticlesP1
-						+ column];
+		// system matrix is = global_statistics
+		arma::mat arma_system_matrix(numRanks, global_maxParticlesP1);
+		for (int rank /*row*/ = 0; rank < numRanks; rank++) {
+			for (int particleCount /*column*/ = 0; particleCount < global_maxParticlesP1; particleCount++) {
+				arma_system_matrix(rank, particleCount) = global_statistics[global_maxParticlesP1 * rank + particleCount];
 			}
 		}
 		if(_alwaysUseInterpolation) {
@@ -315,9 +297,12 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 				quadratic_equation_fit_matrix.at(row, 1) = row;
 				quadratic_equation_fit_matrix.at(row, 2) = 1;
 			}
-			arma_system_matrix = quadratic_equation_fit_matrix.t() * arma_system_matrix * quadratic_equation_fit_matrix;
-			arma::vec arma_rhs(right_hand_side);
-			arma_rhs = quadratic_equation_fit_matrix.t() * arma_rhs;
+			// We multiply the system matrix with quadratic_equation_fit_matrix to be able to get the coefficients of a
+			// quadratic least squares fit (non-negative)
+			arma_system_matrix = arma_system_matrix * quadratic_equation_fit_matrix;
+			std::cout << "system_matrix: " << std::endl << arma_system_matrix << std::endl;
+			std::cout << "arma_rhs: " << std::endl << arma_rhs << std::endl;
+
 			arma::vec coefficient_vec = nnls(arma_system_matrix, arma_rhs);
 			mardyn_assert(coefficient_vec.size() == 3);
 			global_log->info() << "coefficient_vec: " << std::endl << coefficient_vec << std::endl;
@@ -325,13 +310,40 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 				_interpolationConstants[i] = coefficient_vec[i];
 			}
 			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
+		} else if (_timeValuesShouldBeIncreasing) {
+			// We multiply the matrix increasing_time_values_matrix (a lower-triangular matrix with only ones) to the
+			// system matrix, s.t., the solution vector is: [t_0, t_1-t_0, t_2-t_1, ..., t_n-t_n-1]
+			// (t_i is the time needed for a cell with i particles.)
+			// If we then solve this equation using a non-negative-least squares, we can guarantee that t_i+1 > t-i.
+			arma::mat increasing_time_values_matrix(global_maxParticlesP1,global_maxParticlesP1);
+			for (int row = 0; row < global_maxParticlesP1; row++) {
+				for(int column = 0; column <= row; ++column){
+					increasing_time_values_matrix(row, column) = 1.;
+				}
+				for(int column = row+1; column < global_maxParticlesP1; ++column){
+					increasing_time_values_matrix(row, column) = 0.;
+				}
+			}
+			std::cout << "original system_matrix: " << std::endl << arma_system_matrix << std::endl;
+			std::cout << "increasing_time_values_matrix: " << std::endl << increasing_time_values_matrix << std::endl;
+			arma_system_matrix = arma_system_matrix * increasing_time_values_matrix;
+			std::cout << "system_matrix: " << std::endl << arma_system_matrix << std::endl;
+			std::cout << "arma_rhs: " << std::endl << arma_rhs << std::endl;
+			arma::vec increasing_cell_time_vec = nnls(arma_system_matrix, arma_rhs);
+			// multiply increasing_time_values_matrix to increasing_cell_time_vec to obtain the original cell time
+			// values.
+			arma::vec cell_time_vec = increasing_time_values_matrix * increasing_cell_time_vec;
+
+			global_log->info() << "cell_time_vec:\n" << cell_time_vec << std::endl;
+			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
+			mardyn_assert(_times.size() == global_maxParticlesP1);
+			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
 		} else {
-			arma::vec arma_rhs(right_hand_side);
-			std::cout << "system_matrix: " << arma_system_matrix << std::endl;
-			std::cout << "arma_rhs: " << arma_rhs << std::endl;
+			std::cout << "system_matrix: " << std::endl << arma_system_matrix << std::endl;
+			std::cout << "arma_rhs: " << std::endl << arma_rhs << std::endl;
 			arma::vec cell_time_vec = nnls(arma_system_matrix, arma_rhs);
 
-			global_log->info() << "cell_time_vec: " << cell_time_vec << std::endl;
+			global_log->info() << "cell_time_vec:\n" << cell_time_vec << std::endl;
 			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
 			mardyn_assert(_times.size() == global_maxParticlesP1);
 			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
@@ -398,7 +410,7 @@ void MeasureLoad::calcConstants() {
 	for (size_t row = 0; row < 3ul; row++) {
 		_interpolationConstants[row] = solution[2 - row];
 	}
-	global_log->info() << "_interpolationConstants: " << solution << std::endl;
+	global_log->info() << "_interpolationConstants: " << std::endl << solution << std::endl;
 #endif
 
 }
