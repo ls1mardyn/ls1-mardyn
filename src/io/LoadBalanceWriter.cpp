@@ -103,7 +103,7 @@ void LoadbalanceWriter::writeOutputFileHeader() {
 	for(const auto& timername : _timerNames) {
 		outputfile << "\t#" << timername <<"#\t\t";
 	}
-	outputfile << "\n";
+	outputfile << "\nstep";
 	for(const auto& timername : _timerNames) {
 		outputfile << "\tmin\tmax\tf_LB\timbalance\timbalance_average";
 	}
