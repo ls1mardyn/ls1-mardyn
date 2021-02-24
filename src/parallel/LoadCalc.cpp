@@ -300,8 +300,6 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 			// We multiply the system matrix with quadratic_equation_fit_matrix to be able to get the coefficients of a
 			// quadratic least squares fit (non-negative)
 			arma_system_matrix = arma_system_matrix * quadratic_equation_fit_matrix;
-			std::cout << "system_matrix: " << std::endl << arma_system_matrix << std::endl;
-			std::cout << "arma_rhs: " << std::endl << arma_rhs << std::endl;
 
 			arma::vec coefficient_vec = nnls(arma_system_matrix, arma_rhs);
 			mardyn_assert(coefficient_vec.size() == 3);
@@ -324,11 +322,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 					increasing_time_values_matrix(row, column) = 0.;
 				}
 			}
-			std::cout << "original system_matrix: " << std::endl << arma_system_matrix << std::endl;
-			std::cout << "increasing_time_values_matrix: " << std::endl << increasing_time_values_matrix << std::endl;
 			arma_system_matrix = arma_system_matrix * increasing_time_values_matrix;
-			std::cout << "system_matrix: " << std::endl << arma_system_matrix << std::endl;
-			std::cout << "arma_rhs: " << std::endl << arma_rhs << std::endl;
 			arma::vec increasing_cell_time_vec = nnls(arma_system_matrix, arma_rhs);
 			// multiply increasing_time_values_matrix to increasing_cell_time_vec to obtain the original cell time
 			// values.
@@ -339,8 +333,6 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 			mardyn_assert(_times.size() == global_maxParticlesP1);
 			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
 		} else {
-			std::cout << "system_matrix: " << std::endl << arma_system_matrix << std::endl;
-			std::cout << "arma_rhs: " << std::endl << arma_rhs << std::endl;
 			arma::vec cell_time_vec = nnls(arma_system_matrix, arma_rhs);
 
 			global_log->info() << "cell_time_vec:\n" << cell_time_vec << std::endl;
