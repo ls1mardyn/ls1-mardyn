@@ -365,7 +365,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
         #endif
 
-			string loadTimerStr("SIMULATION_COMPUTATION");
+			string loadTimerStr("SIMULATION_FORCE_CALCULATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
 			global_log->info() << "Using timer " << loadTimerStr << " for the load calculation." << std::endl;
 			_timerForLoad = timers()->getTimer(loadTimerStr);
