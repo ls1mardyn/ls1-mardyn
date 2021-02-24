@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<components>
+	<moleculetype id="1" name="1CLJTS">
+	<site type="LJ126" id="1" >
+		<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+		<mass>1</mass>
+		<sigma>1</sigma>
+		<epsilon>1</epsilon>
+		<shifted>1</shifted>
+	</site>
+	<momentsofinertia rotaxes="xyz" >
+		<Ixx>0.0</Ixx>
+		<Iyy>0.0</Iyy>
+		<Izz>0.0</Izz>
+	</momentsofinertia>
+	</moleculetype>
+</components>
