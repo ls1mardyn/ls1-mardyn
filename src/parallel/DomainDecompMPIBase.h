@@ -255,7 +255,8 @@ protected:
 
 	/**
 	 * Indicates whether the direct-pp communication scheme should be forced.
-	 * This will only be effective prior to this classes' `readXML()` call, and can be set by a child class.
+	 * Flag to indicate necessity to use the direct-pp neighbour communication scheme. Can be overwritten by any child class.
+	 * @note Intended to be used in `readXML()`.
 	 */
 	bool _forceDirectPP{false};
 private:
