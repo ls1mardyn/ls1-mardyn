@@ -105,6 +105,28 @@ public:
 	   <datastructure type="LinkedCells">
 	     <cellsInCutoffRadius>INTEGER</cellsInCutoffRadius>
 	   </datastructure>
+	   <!-- from TraversalTuner: -->
+	   <!-- select traversal algorithm
+          possible values are:
+            - original
+            - c04
+            - c08        (default for >1 threads)
+            - c08es      (eight-shell)
+            - quicksched
+            - sliced     (default for <2 threads)
+            - hs         (half shell method)
+            - mp         (mid point method)
+            - nt         (neutral territory method)
+            -->
+          <traversalSelector>c08</traversalSelector>
+          <!-- override default block size (2x2x2) for quicksched tasks -->
+          <traversalData type="quicksched">
+            <taskBlockSize>
+              <lx>2</lx>
+              <ly>2</ly>
+              <lz>2</lz>
+            </taskBlockSize>
+          </traversalData>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
