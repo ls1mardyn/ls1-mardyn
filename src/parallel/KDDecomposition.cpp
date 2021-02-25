@@ -176,7 +176,6 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 	xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 	if(!_splitBiggest){
-		xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
 	}
 

@@ -64,30 +64,60 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	~KDDecomposition() override;
 
-
 	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="KDDecomposition">
-	     <updateFrequency>INTEGER</updateFrequency>
-	     <fullSearchThreshold>INTEGER</fullSearchThreshold>
-	     <heterogeneousSystems>BOOL</heterogeneousSystems>
-	     <useVectorizationTuner>BOOL</useVectorizationTuner>
-	     <clusterHetSys>BOOL</clusterHetSys>
-	     <splitBiggestDimension>BOOL</splitBiggestDimension>
-	     <forceRatio>BOOL</forceRatio>
-	     <rebalanceLimit>DOUBLE</rebalanceLimit>
-	     <splitThreshold>INTEGER</splitThreshold>
-		 <generateNewFiles>BOOL</generateNewFiles> <!--for vectorization tuner-->
-		 <useExistingFiles>BOOL</useExistingFiles> <!--for vectorization tuner-->
-		 <vecTunerAllowMPIReduce>BOOL</vecTunerAllowMPIReduce> <!--for vectorization tuner-->
-
+		 <!-- Indicates the frequency at which the KDD is checked for rebalancing.
+		      Rebalancing is then only performed if the imbalance is above the rebalanceLimit. -->
+		 <updateFrequency>INTEGER</updateFrequency>
+		 <!-- If the imbalance is smaller than the rebalanceLimit then a rebalancing will not be performed. -->
+		 <rebalanceLimit>DOUBLE</rebalanceLimit>
+		 <!-- Indicates for how many levels a full search of the possible decompositions shall be performed. High values
+		      increase the time to find a decomposition, but might lead to better decompositions. Above this threshold,
+		      the domain is simply split into two subdomains with equal load. -->
+		 <fullSearchThreshold>INTEGER</fullSearchThreshold>
+		 <!-- Enable the support for heterogeneous compute systems. If this value is true then the performance of the
+		      individual ranks are calculated. The performance measurement uses the FlopCounter and the timing values
+		      for the force calculation. -->
+		 <heterogeneousSystems>BOOL</heterogeneousSystems>
+		 <!-- Indicates whether the vectorization tuner should be used. If it is used, the load for cells is measured
+		      depending on the number of particles. Repeated measurements are performed using one or two cells. -->
+		 <useVectorizationTuner>BOOL</useVectorizationTuner>
+		 <!-- For vectorization tuner: Generates a file with the measured performance characteristics if enabled. -->
+		 <generateNewFiles>BOOL</generateNewFiles>
+		 <!-- For vectorization tuner: Tries to load the file generated via generateNewFiles if enabled. -->
+		 <useExistingFiles>BOOL</useExistingFiles>
+		 <!-- For vectorization tuner: Allows an allreduce for the measured performances. This should be disabled if the
+		      compute resources don't all have the same performance. -->
+		 <vecTunerAllowMPIReduce>BOOL</vecTunerAllowMPIReduce>
+		 <!-- A cluster version of load balancing. This option is useful if multiple clusters, where within each cluster
+		      identical devices are used, but the clusters itself use different compute resources. Currently only two
+		      clusters are supported. The clusters are identified based on the node names which are read via
+		      MPI_Get_processor_name(). -->
+		 <clusterHetSys>BOOL</clusterHetSys>
+		 <!-- Option to indicate to always split the domain along the biggest dimension. Splitting along the biggest
+		      dimension creates more cubic subdomains, but might lead to worse overall load balancing. -->
+		 <splitBiggestDimension>BOOL</splitBiggestDimension>
+		 <!-- Alternative threshold for splitBiggestDimension. If more than splitThreshold processes are assigned to a
+		      node it is split in only the biggest dimension. splitBiggestDimension overrides this threshold.-->
+		 <splitThreshold>INTEGER</splitThreshold>
+		 <!-- Option to ignore fullSearchThreshold. If true then the domain is always split into two pieces and less
+		      searching is performed. Searching among the 3 different dimensions still happens, unless
+		      splitBiggestDimension is true.-->
+		 <forceRatio>BOOL</forceRatio>
+		 <!-- Indicates whether the MeasureLoad load estimator should be used. See MeasureLoad -->
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
+		 <!-- Option for MeasureLoad: Uses a quadratic interpolation if enabled. -->
 		 <measureLoadAlwaysUseInterpolation>BOOL</measureLoadAlwaysUseInterpolation> <!-- default: true -->
+		 <!-- Option for MeasureLoad: Forces increasing values for the load estimation (more particles = more load).
+		      This option is ignored if measureLoadAlwaysUseInterpolation is true. -->
 		 <measureLoadIncreasingTimeValues>BOOL</measureLoadIncreasingTimeValues> <!-- default: true -->
+		 <!-- The reduction operation for the deviation calculation. -->
 		 <deviationReductionOperation>max OR sum</deviationReductionOperation>
-		 <minNumCellsPerDimension>UINT</minNumCellsPerDimension> <!--Has to be bigger than 0-->
+		 <!-- The minimal number of cells in each dimension for a partition. Has to be at least 1. -->
+		 <minNumCellsPerDimension>UINT</minNumCellsPerDimension>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -246,7 +276,7 @@ private:
 	 * Right now only supports two clusters, where one cluster is made up of all processors from mpi rank 0 to a certain value k, while the second is made
 	 * up of all processors with a rank k+1 or higher.
 	 *
-	 * It should be ensured that the performance difference between the clusters isn't to big, because otherwise the decomposition might
+	 * It should be ensured that the performance difference between the clusters isn't too big, because otherwise the decomposition might
 	 * degrade to a point where there will be errors in the program execution
 	 */
 	bool heteroDecompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
