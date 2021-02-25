@@ -245,11 +245,15 @@ void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeCon
 }
 
 void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
+	// Ensures that the readXML() call to DomainDecompMPIBase forces the direct-pp communication scheme.
+	_forceDirectPP = true;
+
 	DomainDecompMPIBase::readXML(xmlconfig);
-	global_log->info()
-		<< "The GeneralDomainDecomposition is enforcing the direct-pp neighbor scheme using fs, so setting it."
-		<< std::endl;
+
+#ifdef MARDYN_AUTOPAS
+	global_log->info() << "AutoPas only support FS, so setting it." << std::endl;
 	setCommunicationScheme("direct-pp", "fs");
+#endif
 
 	xmlconfig.getNodeValue("updateFrequency", _rebuildFrequency);
 	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;

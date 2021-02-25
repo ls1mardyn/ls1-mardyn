@@ -203,10 +203,13 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	//! Sets the communicationScheme.
-	//! If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
-	//! @param scheme
-	virtual void setCommunicationScheme(std::string scheme,std::string comScheme);
+	/**
+	 * Sets the communicationScheme.
+	 * @note If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
+	 * @param scheme
+	 * @param comScheme
+	 */
+	virtual void setCommunicationScheme(const std::string& scheme, const std::string& comScheme);
 
 	// documentation in base class
 	virtual int getNonBlockingStageCount() override;
@@ -249,6 +252,12 @@ protected:
 	MPI_Comm _comm;
 
 	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
+
+	/**
+	 * Indicates whether the direct-pp communication scheme should be forced.
+	 * This will only be effective prior to this classes' `readXML()` call, and can be set by a child class.
+	 */
+	bool _forceDirectPP{false};
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
 };
