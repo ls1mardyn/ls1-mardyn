@@ -109,8 +109,11 @@ private:
 	std::vector<double> _global_times;
 	std::vector<unsigned long> _simsteps;
 	std::map<std::string, double> _warninglevels;
-	std::map<std::string, bool> _incremental;  // describes whether the timer will continuously increase and the difference between two calls should be used as timer value
-	std::map<std::string, double> _incremental_previous_times;  // previous times of the incremental timers
+
+	/// describes whether the timer will continuously increase and the difference between two calls should be used as timer value
+	std::map<std::string, bool> _incremental;
+	/// previous times of the incremental timers
+	std::map<std::string, double> _incremental_previous_times;
 	std::vector<double> getAveragedTimes();
 };
 

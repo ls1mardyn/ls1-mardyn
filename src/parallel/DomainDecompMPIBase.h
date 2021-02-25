@@ -194,9 +194,12 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
-	   	 <CommunicationScheme>indirect OR direct</CommunicationScheme><!--default: indirect, unless in autopas mode-->
-	   	 <overlappingCollectives>yes OR no</overlappingCollectives><!--default: no-->
-	   	 <useSequentialFallback>yes OR no</useSequentialFallback><!--default: yes-->
+	   <!--default: indirect, unless in autopas mode-->
+	   	 <CommunicationScheme>indirect OR direct OR direct-pp</CommunicationScheme>
+	   	 <!--default: no-->
+	   	 <overlappingCollectives>yes OR no</overlappingCollectives>
+	   	 <!--default: yes-->
+	   	 <useSequentialFallback>yes OR no</useSequentialFallback>
 	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
 	   </parallelisation>
 	   \endcode
