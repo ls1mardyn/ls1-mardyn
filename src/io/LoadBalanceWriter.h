@@ -30,8 +30,8 @@
  * addition, when comparing the step-wise imbalance and the averaged imbalance, information about the fluctuations can
  * be retrieved.
  *
- * @note Warning thresholds (level) (for the factor max / min) for each timer can be set (see documentation of
- * readXML()) which will output a warning to the logfile if the factor max_time / min_time is above the threshold. This
+ * @note Warning thresholds (level) (for the ratio max / min) for each timer can be set (see documentation of
+ * readXML()) which will output a warning to the logfile if the ratio max_time / min_time is above the threshold. This
  * warning level should be bigger than 1.!
  *
  * @todo This plugin may be extended to threads
@@ -115,4 +115,3 @@ private:
 };
 
 #endif  // SRC_IO_LOADBALANCEWRITER_H_
-
