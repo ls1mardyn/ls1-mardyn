@@ -83,22 +83,28 @@ class KDDecomposition: public DomainDecompMPIBase {
 		      for the force calculation. -->
 		 <heterogeneousSystems>BOOL</heterogeneousSystems>
 		 <!-- Indicates whether the vectorization tuner should be used. If it is used, the load for cells is measured
-		      depending on the number of particles. Repeated measurements are performed using one or two cells. -->
+		      depending on the number of particles. Repeated measurements are performed using one or two cells.
+		      If deactivated a simple fall back using a quadratic model is used for the cost model (i.e., Cost =
+		      particle number * particle number). This quadratic model tends to underestimate the cost needed for low
+		      density regions.-->
 		 <useVectorizationTuner>BOOL</useVectorizationTuner>
 		 <!-- For vectorization tuner: Generates a file with the measured performance characteristics if enabled. -->
 		 <generateNewFiles>BOOL</generateNewFiles>
-		 <!-- For vectorization tuner: Tries to load the file generated via generateNewFiles if enabled. -->
+		 <!-- For vectorization tuner: Load the file generated via generateNewFiles in a previous run. If no file
+		 exists, the vectorization tuner is run. -->
 		 <useExistingFiles>BOOL</useExistingFiles>
 		 <!-- For vectorization tuner: Allows an allreduce for the measured performances. This should be disabled if the
-		      compute resources don't all have the same performance. -->
+		      compute resources don't all have the same performance. If disabled the performances are measured for each
+		      process separately, which is (mostly) not what you want.-->
 		 <vecTunerAllowMPIReduce>BOOL</vecTunerAllowMPIReduce>
-		 <!-- A cluster version of load balancing. This option is useful if multiple clusters, where within each cluster
-		      identical devices are used, but the clusters itself use different compute resources. Currently only two
-		      clusters are supported. The clusters are identified based on the node names which are read via
-		      MPI_Get_processor_name(). -->
+		 <!-- A cluster version of load balancing. This option is useful if multiple clusters/islands are used that use
+		      different hardware, e.g., one cluster/island using AMD and one cluster/island using Intel processors.
+		      Currently only two clusters are supported. The clusters are identified based on the node names which are
+		      read via MPI_Get_processor_name(). -->
 		 <clusterHetSys>BOOL</clusterHetSys>
 		 <!-- Option to indicate to always split the domain along the biggest dimension. Splitting along the biggest
-		      dimension creates more cubic subdomains, but might lead to worse overall load balancing. -->
+		      dimension creates more cubic subdomains, but might lead to worse overall load balancing. If this is false,
+		      all dimensions are tested and in the end, the one producing the lowest imbalance is chosen.-->
 		 <splitBiggestDimension>BOOL</splitBiggestDimension>
 		 <!-- Alternative threshold for splitBiggestDimension. If more than splitThreshold processes are assigned to a
 		      node it is split in only the biggest dimension. splitBiggestDimension overrides this threshold.-->
