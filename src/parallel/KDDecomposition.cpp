@@ -30,31 +30,17 @@
 using namespace std;
 using Log::global_log;
 
-
-KDDecomposition::KDDecomposition() :
-		_globalNumCells(1), _decompTree(nullptr), _ownArea(nullptr), _numParticlesPerCell(), _steps(0), _frequency(1.),
-		_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
-		_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _clusteredHeterogeneouseSystems {false}, _splitBiggest(true), _forceRatio(false),
-		_splitThreshold(std::numeric_limits<int>::max()), _numParticleTypes {}, _maxPars{std::numeric_limits<int>::min()},
-		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
-		_useExistingFiles {}, _rebalanceLimit(0) {
-	_loadCalc = new TradLoad();
-	_measureLoadCalc = nullptr;
-}
-
-KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
-		bool cutsmaller, bool forceRatio, int splitThresh) :
-		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
-		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _clusteredHeterogeneouseSystems {false}, _splitBiggest(!cutsmaller),
-		_forceRatio(forceRatio), _splitThreshold{splitThresh},
-		_numParticleTypes {numParticleTypes}, _maxPars{std::numeric_limits<int>::min()}, _maxPars2{std::numeric_limits<int>::min()},
-		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
-		_useExistingFiles {true}, _rebalanceLimit(0) {
+KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency,
+								 int fullSearchThreshold)
+	: _frequency(updateFrequency),
+	  _fullSearchThreshold(fullSearchThreshold),
+	  _numParticleTypes{numParticleTypes},
+	  _partitionRank{calculatePartitionRank()},
+	  _vecTunParticleNums(_numParticleTypes, 50) {
 	_loadCalc = new TradLoad();
 	_measureLoadCalc = nullptr;
 
 	_cutoffRadius = cutoffRadius;
-
 }
 
 void KDDecomposition::init(Domain* domain){
