@@ -28,7 +28,7 @@ void GeneralDomainDecomposition::initializeALL() {
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
 	if (_forceLatchingToLinkedCellsGrid and not _gridSize.has_value()) {
 		std::array<double, 3> forcedGridSize{};
-		for(size_t dim = 0; dim<3; ++dim){
+		for(size_t dim = 0; dim < 3; ++dim){
 			size_t numCells = _domainLength[dim] / _interactionLength;
 			forcedGridSize[dim] = _domainLength[dim] / numCells;
 		}
