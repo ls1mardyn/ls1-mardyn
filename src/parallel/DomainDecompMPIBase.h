@@ -194,19 +194,25 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
-	   	 <CommunicationScheme>indirect OR direct</CommunicationScheme><!--default: indirect, unless in autopas mode-->
-	   	 <overlappingCollectives>yes OR no</overlappingCollectives><!--default: no-->
-	   	 <useSequentialFallback>yes OR no</useSequentialFallback><!--default: yes-->
+	   <!--default: indirect, unless in autopas mode-->
+	   	 <CommunicationScheme>indirect OR direct OR direct-pp</CommunicationScheme>
+	   	 <!--default: no-->
+	   	 <overlappingCollectives>yes OR no</overlappingCollectives>
+	   	 <!--default: yes-->
+	   	 <useSequentialFallback>yes OR no</useSequentialFallback>
 	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
 	   </parallelisation>
 	   \endcode
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	//! Sets the communicationScheme.
-	//! If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
-	//! @param scheme
-	virtual void setCommunicationScheme(std::string scheme,std::string comScheme);
+	/**
+	 * Sets the communicationScheme.
+	 * @note If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
+	 * @param scheme
+	 * @param comScheme
+	 */
+	virtual void setCommunicationScheme(const std::string& scheme, const std::string& comScheme);
 
 	// documentation in base class
 	virtual int getNonBlockingStageCount() override;
@@ -249,6 +255,13 @@ protected:
 	MPI_Comm _comm;
 
 	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
+
+	/**
+	 * Indicates whether the direct-pp communication scheme should be forced.
+	 * Flag to indicate necessity to use the direct-pp neighbour communication scheme. Can be overwritten by any child class.
+	 * @note Intended to be used in `readXML()`.
+	 */
+	bool _forceDirectPP{false};
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
 };

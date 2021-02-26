@@ -252,7 +252,7 @@ void VectorizationTuner::initCells(ParticleCell& main, ParticleCell& face, Parti
 		corner.setBoxMax(BoxMaxCorner);
 }
 
-void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles){
+void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles, bool allowMPIReduce){
 
 		/*
 		 * MPI parallelization strategy:
@@ -261,7 +261,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		 *
 		 * This does not work when there are different processor types present, which is why this option is currently deactivated
 		 */
-		bool allowMpi = false;
+		bool allowMpi = allowMPIReduce;
 
 		if(useExistingFiles && readFile(times)){
 			global_log->info() << "Read tuner values from file" << std::endl;

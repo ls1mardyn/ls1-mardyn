@@ -12,11 +12,12 @@
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
-GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain)
+GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid)
 	: _boxMin{0.},
 	  _boxMax{0.},
 	  _domainLength{domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)},
-	  _interactionLength{interactionLength} {}
+	  _interactionLength{interactionLength},
+	  _forceLatchingToLinkedCellsGrid{forceGrid} {}
 
 void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "initializing ALL load balancer..." << std::endl;
@@ -25,6 +26,14 @@ void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
+	if (_forceLatchingToLinkedCellsGrid and not _gridSize.has_value()) {
+		std::array<double, 3> forcedGridSize{};
+		for(size_t dim = 0; dim < 3; ++dim){
+			size_t numCells = _domainLength[dim] / _interactionLength;
+			forcedGridSize[dim] = _domainLength[dim] / numCells;
+		}
+		_gridSize = forcedGridSize;
+	}
 	if (_gridSize.has_value()) {
 		std::tie(_boxMin, _boxMax) = latchToGridSize(_boxMin, _boxMax);
 	}
@@ -92,6 +101,11 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			// migrate the particles, this will rebuild the moleculeContainer!
 			global_log->info() << "migrating particles" << std::endl;
 			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
+
+#ifndef MARDYN_AUTOPAS
+			// The linked cells container needs this (I think just to set the cells to valid...)
+			moleculeContainer->update();
+#endif
 
 			// set new boxMin and boxMax
 			_boxMin = newBoxMin;
@@ -231,11 +245,15 @@ void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeCon
 }
 
 void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
+	// Ensures that the readXML() call to DomainDecompMPIBase forces the direct-pp communication scheme.
+	_forceDirectPP = true;
+
 	DomainDecompMPIBase::readXML(xmlconfig);
-	global_log->info()
-		<< "The GeneralDomainDecomposition is enforcing the direct-pp neighbor scheme using fs, so setting it."
-		<< std::endl;
+
+#ifdef MARDYN_AUTOPAS
+	global_log->info() << "AutoPas only support FS, so setting it." << std::endl;
 	setCommunicationScheme("direct-pp", "fs");
+#endif
 
 	xmlconfig.getNodeValue("updateFrequency", _rebuildFrequency);
 	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;

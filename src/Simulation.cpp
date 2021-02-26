@@ -313,6 +313,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
+				bool forceLatchingToLinkedCellsGrid = false;
 				// we need the skin here, so we extract it from the AutoPas container's xml,
 				// because the ParticleContainer needs to be instantiated later. :/
 				xmlconfig.changecurrentnode("..");
@@ -321,13 +322,18 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					xmlconfig.getNodeValue("@type", datastructuretype);
 					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
 						xmlconfig.getNodeValue("skin", skin);
-						global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 					} else {
-						global_log->error() << "Using the GeneralDomainDecomposition is only supported when using "
-											   "AutoPas, but the configuration file does not use it."
-											<< endl;
-						Simulation::exit(2);
+						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
+												 "thoroughly tested and considered BETA."
+											  << endl;
+						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
+						// of global values will be faulty without one!
+						global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
+												 "to get correct global values!"
+											  << endl;
+						forceLatchingToLinkedCellsGrid = true;
 					}
+					global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 				} else {
 					global_log->error() << "Datastructure section missing" << endl;
 					Simulation::exit(1);
@@ -337,7 +343,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Simulation::exit(1);
 				}
 				delete _domainDecomposition;
-				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain);
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
 			} else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);
@@ -359,7 +365,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
         #endif
 
-			string loadTimerStr("SIMULATION_COMPUTATION");
+			string loadTimerStr("SIMULATION_FORCE_CALCULATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
 			global_log->info() << "Using timer " << loadTimerStr << " for the load calculation." << std::endl;
 			_timerForLoad = timers()->getTimer(loadTimerStr);

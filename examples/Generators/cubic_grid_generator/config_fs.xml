@@ -61,7 +61,9 @@
                 <splitThreshold>10000000</splitThreshold>
                 <generateNewFiles>False</generateNewFiles>
                 <useExistingFiles>False</useExistingFiles>
-                <doMeasureLoadCalc>False</doMeasureLoadCalc>
+                <doMeasureLoadCalc>True</doMeasureLoadCalc>
+                <measureLoadAlwaysUseInterpolation>False</measureLoadAlwaysUseInterpolation>
+                <measureLoadIncreasingTimeValues>True</measureLoadIncreasingTimeValues>
                 <deviationReductionOperation>max</deviationReductionOperation>
                 <CommunicationScheme>direct-pp</CommunicationScheme>
                 <minNumCellsPerDimension>1</minNumCellsPerDimension>
@@ -72,7 +74,7 @@
                 <cellsInCutoffRadius>1</cellsInCutoffRadius>
             </datastructure>
             <cutoffs type="CenterOfMass">
-                <radiusLJ unit="reduced">3.5</radiusLJ>
+                <radiusLJ unit="reduced">1.5</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField">
                 <epsilon>1.0e+10</epsilon>
