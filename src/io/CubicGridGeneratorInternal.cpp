@@ -9,13 +9,14 @@
 #define _USE_MATH_DEFINES  1
 
 #include "CubicGridGeneratorInternal.h"
-#include "utils/Logger.h"
-#include "particleContainer/ParticleContainer.h"
-#include "Domain.h"
-#include "parallel/DomainDecompBase.h"
 
-#include "utils/Random.h"
+#include "Domain.h"
+#include "IOHelpers.h"
 #include "WrapOpenMP.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
+#include "utils/Logger.h"
+#include "utils/Random.h"
 
 #include <cmath>
 #include <algorithm>
@@ -108,7 +109,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
 
 	Log::global_log->info() << "CGG: remove momentum" << std::endl;
-	removeMomentum(particleContainer, *(global_simulation->getEnsemble()->getComponents()), domainDecomp);
+	IOHelpers::removeMomentum(particleContainer, *(global_simulation->getEnsemble()->getComponents()), domainDecomp);
 	Log::global_log->info() << "CGG: momentum done" << std::endl;
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	Log::global_log->info() << "Calculated Rho=" << domain->getglobalRho() << std::endl;
@@ -182,173 +183,3 @@ std::array<unsigned long, 3> CubicGridGeneratorInternal::determineMolsPerDimensi
 
 	return ret;
 }
-
-//bool CubicGridGeneratorInternal::addMolecule(double x, double y, double z, unsigned long id,
-//		ParticleContainer* particleContainer) {
-//	std::vector<double> velocity = getRandomVelocity(global_simulation->getEnsemble()->T());
-//
-//	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
-//	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
-//	// o = cos 30° + (1 1 0) * sin 15°
-//	double orientation[4];
-//	getOrientation(15, 10, orientation);
-//
-//	int componentType = 0;
-//	if (_binaryMixture) {
-//		componentType = randdouble(0, 1.999999);
-//	}
-//
-//	double I[3] = { 0., 0., 0. };
-//	I[0] = global_simulation->getEnsemble()->getComponents()->at(0).I11();
-//	I[1] = global_simulation->getEnsemble()->getComponents()->at(0).I22();
-//	I[2] = global_simulation->getEnsemble()->getComponents()->at(0).I33();
-//	/*****  Copied from animake - initialize anular velocity *****/
-//	double w[3];
-//	for (int d = 0; d < 3; d++) {
-//		w[d] = (I[d] == 0) ?
-//				0.0 : ((randdouble(0, 1) > 0.5) ? 1 : -1) * sqrt(2.0 * randdouble(0, 1) * global_simulation->getEnsemble()->T() / I[d]);
-//		double fs_2_mardyn = 0.030619994;
-//		w[d] = w[d] * fs_2_mardyn;
-//	}
-//	/************************** End Copy **************************/
-//
-//	Molecule m(id, &(global_simulation->getEnsemble()->getComponents()->at(componentType)), x, y, z, // position
-//			velocity[0], -velocity[1], velocity[2], // velocity
-//			orientation[0], orientation[1], orientation[2], orientation[3], w[0], w[1], w[2]);
-//	return particleContainer->addParticle(m);
-//}
-
-void CubicGridGeneratorInternal::removeMomentum(ParticleContainer* particleContainer,
-		const std::vector<Component>& components, DomainDecompBase* domainDecomp) {
-	double mass_sum = 0.;
-	//double momentum_sum[3] = { 0., 0., 0. };
-	double momentum_sum0 = 0.;
-	double momentum_sum1 = 0.;
-	double momentum_sum2 = 0.;
-
-
-	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:mass_sum,momentum_sum0,momentum_sum1,momentum_sum2)
-	#endif
-	{
-		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid();
-			 ++molecule) {
-			double mass = components[molecule->componentid()].m();
-			mass_sum += mass;
-			momentum_sum0 += mass * molecule->v(0);
-			momentum_sum1 += mass * molecule->v(1);
-			momentum_sum2 += mass * molecule->v(2);
-		}
-	}
-
-	domainDecomp->collCommInit(4);
-	domainDecomp->collCommAppendDouble(mass_sum);
-	domainDecomp->collCommAppendDouble(momentum_sum0);
-	domainDecomp->collCommAppendDouble(momentum_sum1);
-	domainDecomp->collCommAppendDouble(momentum_sum2);
-	domainDecomp->collCommAllreduceSum();
-	mass_sum = domainDecomp->collCommGetDouble();
-	momentum_sum0 = domainDecomp->collCommGetDouble();
-	momentum_sum1 = domainDecomp->collCommGetDouble();
-	momentum_sum2 = domainDecomp->collCommGetDouble();
-	domainDecomp->collCommFinalize();
-
-	Log::global_log->info() << "momentumsum: " << momentum_sum0 << " " << momentum_sum1<< " " << momentum_sum2 << std::endl;
-	Log::global_log->info() << "mass_sum: " << mass_sum << std::endl;
-	double v_sub0 = momentum_sum0 / mass_sum;
-	double v_sub1 = momentum_sum1 / mass_sum;
-	double v_sub2 = momentum_sum2 / mass_sum;
-	{
-		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		if(iter.isValid()) {
-			Log::global_log->info() << "v_sub: " << v_sub0 << " " << v_sub1 << " " << v_sub2 << std::endl;
-			Log::global_log->info() << "m1 v: " << std::setprecision(10) << iter->v(0) << " " << iter->v(1) << " "
-									<< iter->v(2) << std::endl;
-		}
-	}
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-
-		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid(); ++molecule) {
-			molecule->vsub(v_sub0, v_sub1, v_sub2);
-		}
-	}
-	{
-		auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		if(iter.isValid()) {
-			Log::global_log->info() << "m1 v: " << iter->v(0) << " " << iter->v(1) << " " << iter->v(2)
-									<< std::setprecision(5) << std::endl;
-		}
-	}
-#ifndef NDEBUG
-	//test
-	momentum_sum0 = 0.;
-	momentum_sum1 = 0.;
-	momentum_sum2 = 0.;
-
-	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:momentum_sum0,momentum_sum1,momentum_sum2)
-	#endif
-	{
-
-		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid(); ++molecule) {
-			double mass = components[molecule->componentid()].m();
-			momentum_sum0 += mass * molecule->v(0);
-			momentum_sum1 += mass * molecule->v(1);
-			momentum_sum2 += mass * molecule->v(2);
-		}
-	}
-	Log::global_log->info() << "momentumsum: " << momentum_sum0 << " " << momentum_sum1<< " " << momentum_sum2 << std::endl;
-	// Leave commented out - as there are many molecules, mass_sum is large, leading to small corrections to  the molecule velocities
-	// and since molecule velocities are stored in only single precision, this is likely not
-	// going to be easy to fix, across all ranges of magnitudes, which can appear here (1 to 10^9 molecules per process? to 10^13 molecules for total simulation?).
-
-	// should we try to MPI-this? range will be even laaarger.
-
-//	mardyn_assert(fabs(momentum_sum0)<1e-7);
-//	mardyn_assert(fabs(momentum_sum1)<1e-7);
-//	mardyn_assert(fabs(momentum_sum2)<1e-7);
-#endif
-	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);
-	//printf("momentum_sum[1] from removeMomentum is %lf\n", momentum_sum[1]);
-	//printf("momentum_sum[2] from removeMomentum is %lf\n", momentum_sum[2]);
-}
-
-
-//void CubicGridGeneratorInternal::getOrientation(int base, int delta, double orientation[4]) {
-//	double offset = randdouble(-delta / 2., delta / 2.) / 180. * M_PI;
-//	double rad = base / 180. * M_PI;
-//	double angle = rad + offset;
-//
-//	double cosinePart = cos(angle);
-//	double sinePart = sin(angle);
-//
-//	double length = sqrt(cosinePart * cosinePart + 2 * (sinePart * sinePart));
-//	orientation[0] = cosinePart / length;
-//	orientation[1] = sinePart / length;
-//	orientation[2] = sinePart / length;
-//	orientation[3] = 0;
-//}
-//
-//std::vector<double> CubicGridGeneratorInternal::getRandomVelocity(double temperature) {
-//	std::vector<double> v_;
-//	v_.resize(3);
-//
-//	// Velocity
-//	for (int dim = 0; dim < 3; dim++) {
-//		v_[dim] = randdouble(-0.5, 0.5);
-//	}
-//	double dotprod_v = 0;
-//	for (unsigned int i = 0; i < v_.size(); i++) {
-//		dotprod_v += v_[i] * v_[i];
-//	}
-//	// Velocity Correction
-//	double vCorr = sqrt(3.0 * temperature / dotprod_v);
-//	for (unsigned int i = 0; i < v_.size(); i++) {
-//		v_[i] *= vCorr;
-//	}
-//
-//	return v_;
-//}
