@@ -7,6 +7,7 @@ class Component;
 
 /**
  * Class that generates equally distributed particles with exactly the given number of particles per cell.
+ * @note: Currently only adds molecules with the first component.
  */
 class PerCellGenerator : public InputBase {
 public:
