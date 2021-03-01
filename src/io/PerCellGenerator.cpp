@@ -42,7 +42,7 @@ void PerCellGenerator::readXML(XMLfileUnits &xmlconfig) {
 	}
 
 	xmlconfig.getNodeValue("initTemperature", _initTemperature);
-	if (_numMoleculesPerCell > 0) {
+	if (_initTemperature > 0.) {
 		Log::global_log->info() << "initTemperature: " << _initTemperature << std::endl;
 	} else {
 		Log::global_log->error() << "Missing required field initTemperature. Aborting!" << std::endl;
