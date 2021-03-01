@@ -10,7 +10,7 @@
   <simulation type="MD" >
     <integrator type="Leapfrog" >
       <!-- MD ODE integrator -->
-      <timestep unit="reduced" >0.000001</timestep>
+      <timestep unit="reduced" >0.000000001</timestep>
     </integrator>
 
     <run>
