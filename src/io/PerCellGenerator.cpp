@@ -21,6 +21,10 @@ unsigned long PerCellGenerator::readPhaseSpace(ParticleContainer *particleContai
 	// decomposition!
 	bool fillHalo = false;
 	fillContainer(particleContainer, component, _numMoleculesPerCell, fillHalo);
+	if (_numMoleculesPerCell == 0 and _generateAtLeastTwoParticles) {
+		// There should always be at least two particles!
+		generateTwoParticles(particleContainer, component);
+	}
 	unsigned long totalNumParticles =
 		IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(particleContainer, domainDecomp);
 	IOHelpers::initializeVelocityAccordingToTemperature(particleContainer, domainDecomp, _initTemperature);
@@ -34,7 +38,7 @@ void PerCellGenerator::readXML(XMLfileUnits &xmlconfig) {
 	Log::global_log->info() << "PerCellGenerator" << std::endl;
 
 	xmlconfig.getNodeValue("numMoleculesPerCell", _numMoleculesPerCell);
-	if (_numMoleculesPerCell > 0) {
+	if (_numMoleculesPerCell != std::numeric_limits<unsigned int>::max()) {
 		Log::global_log->info() << "numMoleculesPerCell: " << _numMoleculesPerCell << std::endl;
 	} else {
 		Log::global_log->error() << "Missing required field numMoleculesPerCell. Aborting!" << std::endl;
@@ -48,6 +52,9 @@ void PerCellGenerator::readXML(XMLfileUnits &xmlconfig) {
 		Log::global_log->error() << "Missing required field initTemperature. Aborting!" << std::endl;
 		Simulation::exit(1949);
 	}
+
+	xmlconfig.getNodeValue("generateAtLeastTwoParticles", _generateAtLeastTwoParticles);
+	Log::global_log->info() << "generateAtLeastTwoParticles: " << _generateAtLeastTwoParticles << std::endl;
 }
 
 void PerCellGenerator::fillContainer(ParticleContainer *particleContainer, Component *component,
@@ -135,4 +142,25 @@ void PerCellGenerator::fillContainer(ParticleContainer *particleContainer, Compo
 		}
 	}
 #endif
+}
+
+void PerCellGenerator::generateTwoParticles(ParticleContainer *particleContainer, Component *component) {
+	const auto boxMin = std::array{particleContainer->getBoundingBoxMin(0), particleContainer->getBoundingBoxMin(1),
+								   particleContainer->getBoundingBoxMin(2)};
+	const auto boxMax = std::array{particleContainer->getBoundingBoxMax(0), particleContainer->getBoundingBoxMax(1),
+								   particleContainer->getBoundingBoxMax(2)};
+
+	std::random_device r;
+	std::default_random_engine randomEngine{r()};
+
+	std::array uniform_dists{std::uniform_real_distribution<double>{boxMin[0], boxMax[0]},
+							 std::uniform_real_distribution<double>{boxMin[1], boxMax[1]},
+							 std::uniform_real_distribution<double>{boxMin[2], boxMax[2]}};
+
+	for (auto id = 0; id < 2; ++id) {
+		std::array pos = {uniform_dists[0](randomEngine), uniform_dists[1](randomEngine),
+						  uniform_dists[2](randomEngine)};
+		Molecule m(id, component, pos[0], pos[1], pos[2], 0., 0., 0.);
+		particleContainer->addParticle(m, true);
+	}
 }

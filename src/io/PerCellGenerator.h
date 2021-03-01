@@ -27,13 +27,22 @@ public:
 
 	/**
 	 *
+	 * @param particleContainer
+	 * @param component
+	 */
+	static void generateTwoParticles(ParticleContainer *particleContainer, Component *component);
+
+	/**
+	 *
 	 * @param xmlconfig
 	 */
 	void readXML(XMLfileUnits &xmlconfig) override;
 
 private:
 
-	unsigned int _numMoleculesPerCell{0u};
+	unsigned int _numMoleculesPerCell{std::numeric_limits<unsigned int>::max()};
+
+	bool _generateAtLeastTwoParticles{true};
 
 	double _initTemperature{0.};
 };
