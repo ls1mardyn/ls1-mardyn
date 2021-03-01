@@ -116,7 +116,6 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - localNumParticles;
 	domainDecomp->collCommFinalize();
 	// fix ID's to be unique:
-	Log::global_log->info() << "CGG: ids" << std::endl;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
