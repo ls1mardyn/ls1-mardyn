@@ -10,7 +10,7 @@
   <simulation type="MD" >
     <integrator type="Leapfrog" >
       <!-- MD ODE integrator -->
-      <timestep unit="reduced" >0.000000001</timestep>
+      <timestep unit="reduced" >0.000000000001</timestep>
     </integrator>
 
     <run>
@@ -28,9 +28,9 @@
       <!-- Nparticles determined by the input file -->
       <temperature unit="reduced" >0.0003166816826564526</temperature>
       <domain type="box">
-          <lx>24.5812225</lx>
-          <ly>24.5812225</ly>
-          <lz>24.5812225</lz>
+          <lx>301</lx>
+          <ly>301</ly>
+          <lz>301</lz>
       </domain>
 
 			<components>
@@ -51,7 +51,7 @@
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
-        <radiusLJ unit="reduced" >3.5</radiusLJ>
+        <radiusLJ unit="reduced" >30</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField" >
         <epsilon>1.0e+10</epsilon>
