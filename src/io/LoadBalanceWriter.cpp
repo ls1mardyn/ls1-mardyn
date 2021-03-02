@@ -182,7 +182,7 @@ std::vector<double> LoadbalanceWriter::getAveragedTimes() {
 		for (size_t timer_id = 0; timer_id < numTimers; ++timer_id) {
 			currentAverageSum[timer_id] += _timesForAverageBuffer[ind + timer_id];
 			if (averageIndex >= _averageLength) {
-				currentAverageSum[timer_id] -= _timesForAverageBuffer[ind + timer_id - _averageLength];
+				currentAverageSum[timer_id] -= _timesForAverageBuffer[ind + timer_id - _averageLength * numTimers];
 				averagedTimes[ind + timer_id] = currentAverageSum[timer_id] / static_cast<double>(_averageLength);
 			} else {
 				averagedTimes[ind + timer_id] = currentAverageSum[timer_id] / static_cast<double>(averageIndex + 1);
