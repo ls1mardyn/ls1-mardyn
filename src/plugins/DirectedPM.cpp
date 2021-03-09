@@ -291,7 +291,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 
 			// COUNT ALL VALUES IF BOX IS IN THE GAS PHASE
 			for (unsigned unID = 1; unID <= (_rIncrements * _hIncrements * _phiIncrements); ++unID) {
-				if ((_permissibleRange[unID] == 1)) {
+				if (_permissibleRange[unID] == 1) {
 					particleDropletFalse += (_globalnumberOfParticles[unID]);
 					viGas[0] += _globalXyzVi[unID][0];
 					viGas[1] += _globalXyzVi[unID][1];
