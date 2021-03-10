@@ -182,9 +182,9 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
 
-	xmlconfig.getNodeValue("measureLoadAlwaysUseInterpolation", _measureLoadAlwaysUseInterpolation);
-	global_log->info() << "measureLoad: Always use interpolation? "
-					   << (_measureLoadAlwaysUseInterpolation ? "yes" : "no") << endl;
+	xmlconfig.getNodeValue("measureLoadInterpolationStartsAt", _measureLoadInterpolationStartsAt);
+	global_log->info() << "measureLoad: interpolation starts at "
+	                   << _measureLoadInterpolationStartsAt << endl;
 
 	xmlconfig.getNodeValue("measureLoadIncreasingTimeValues", _measureLoadIncreasingTimeValues);
 	global_log->info() << "measureLoad: Ensure that cells with more particles take longer ? "
@@ -265,7 +265,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 
 	size_t measureLoadInitTimers = 2;
 	if (_steps == measureLoadInitTimers and _doMeasureLoadCalc) {
-		_measureLoadCalc = new MeasureLoad(_measureLoadAlwaysUseInterpolation, _measureLoadIncreasingTimeValues);
+		_measureLoadCalc = new MeasureLoad(_measureLoadIncreasingTimeValues, _measureLoadInterpolationStartsAt);
 	}
 	size_t measureLoadStart = 50;
 	if (_steps == measureLoadStart and _doMeasureLoadCalc) {
