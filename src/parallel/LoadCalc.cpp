@@ -245,31 +245,61 @@ bool isFinite(iterator1 start, iterator2 end) {
  * - The first elements (up to notIncreasingStartAt) are increasing. The elements after that are not restricted.
  * @param arma_system_matrix The system matrix.
  * @param arma_rhs The right hand side.
- * @param notIncreasingStartAt The index starting at which non-increasing values are allowed. It is not allowed to be
- * bigger than arma_system_matrix.n_cols.
+ * @param quadraticInterpolationStartAt The index starting at which the quadratic interpolation starts. It is not
+ * allowed to be bigger than arma_system_matrix.n_cols.
  * @return The solution as described above.
  */
 inline arma::vec getIncreasingSolutionVec(arma::mat arma_system_matrix, const arma::vec& arma_rhs,
-								   const int notIncreasingStartAt) {
+								   const int quadraticInterpolationStartAt) {
 	// We multiply the matrix increasing_time_values_matrix (a lower-triangular matrix with only ones) to the
 	// system matrix, s.t., the solution vector is: [t_0, t_1-t_0, t_2-t_1, ..., t_n-t_n-1]
 	// (t_i is the time needed for a cell with i particles.)
 	// If we then solve this equation using a non-negative-least squares, we can guarantee that t_i+1 > t-i.
 	arma::mat increasing_time_values_matrix(arma_system_matrix.n_cols, arma_system_matrix.n_cols);
 
-	for (int row = 0; row < notIncreasingStartAt; row++) {
-		for(int column = 0; column <= row; ++column){
+	for (int row = 0; row < quadraticInterpolationStartAt; row++) {
+		for (int column = 0; column <= row; ++column) {
 			increasing_time_values_matrix(row, column) = 1.;
 		}
-		for(int column = row+1; column < arma_system_matrix.n_cols; ++column){
+		for (int column = row + 1; column < arma_system_matrix.n_cols; ++column) {
 			increasing_time_values_matrix(row, column) = 0.;
 		}
 	}
-	// after notIncreasingStartAt, we do not modify the solution, so we add a one vector!
-	for (int row = notIncreasingStartAt; row < arma_system_matrix.n_cols; row++) {
-		for(int column = 0; column < arma_system_matrix.n_cols; ++column){
-			increasing_time_values_matrix(row, column) = (row == column ? 1. : 0.);
+
+	int num_extra = arma_system_matrix.n_cols - quadraticInterpolationStartAt;
+	mardyn_assert(num_extra == 0 or num_extra == 3);
+	if(num_extra == 3){
+		// Starting with notIncreasingStartAt, we want, that the quadratic fit is bigger than the last tn. So we modify the
+		// solution vector further.
+		// The last three lines will look like this:
+		//
+		// 0 ... 0  1   0  0
+		// 0 ... 0 -2N  1  0
+		// 1 ... 1 N^2 -N  1
+		//
+		// N = quadraticInterpolationStartAt.
+		// This will shift the quadratic function to the right by N and upwards by t_{N-1}.
+		// If the last three values of the solution are positive, it can be guaranteed that the time values will further
+		// increase and are also bigger than t_{N-1}.
+		for (int last_rows_index = 0; last_rows_index < num_extra; last_rows_index++) {
+			for (int column = 0; column < quadraticInterpolationStartAt; ++column) {
+				increasing_time_values_matrix(quadraticInterpolationStartAt + last_rows_index, column) =
+					(last_rows_index == 2 ? 1. : 0.);
+			}
 		}
+		int N = quadraticInterpolationStartAt;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 0) = 1;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 1) = 0;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 2) = 0;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 0) = -2 * N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 1) = 1;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 2) = 0;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 0) = N * N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 1) = -N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 2) = 1;
 	}
 
 	arma_system_matrix = arma_system_matrix * increasing_time_values_matrix;
