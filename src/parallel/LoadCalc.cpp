@@ -269,16 +269,14 @@ inline arma::vec getIncreasingSolutionVec(arma::mat arma_system_matrix, const ar
 	int num_extra = arma_system_matrix.n_cols - quadraticInterpolationStartAt;
 	mardyn_assert(num_extra == 0 or num_extra == 3);
 	if(num_extra == 3){
-		// Starting with notIncreasingStartAt, we want, that the quadratic fit is bigger than the last tn. So we modify the
-		// solution vector further.
-		// The last three lines will look like this:
+		// Starting with notIncreasingStartAt, we want, that the quadratic fit is bigger than the last tn. So we modify
+		// the solution vector further. The last three lines will look like this:
 		//
-		// 0 ... 0  1   0  0
-		// 0 ... 0 -2N  1  0
-		// 1 ... 1 N^2 -N  1
+		// 0 ... 0   1   0  0
+		// 0 ... 0   0   1  0
+		// 1 ... 1 -N^2 -N  1
 		//
 		// N = quadraticInterpolationStartAt.
-		// This will shift the quadratic function to the right by N and upwards by t_{N-1}.
 		// If the last three values of the solution are positive, it can be guaranteed that the time values will further
 		// increase and are also bigger than t_{N-1}.
 		for (int last_rows_index = 0; last_rows_index < num_extra; last_rows_index++) {
@@ -293,11 +291,11 @@ inline arma::vec getIncreasingSolutionVec(arma::mat arma_system_matrix, const ar
 		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 1) = 0;
 		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 2) = 0;
 
-		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 0) = -2 * N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 0) = 0;
 		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 1) = 1;
 		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 2) = 0;
 
-		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 0) = N * N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 0) = -N * N;
 		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 1) = -N;
 		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 2) = 1;
 	}
