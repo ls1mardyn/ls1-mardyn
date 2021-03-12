@@ -268,7 +268,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		if(global_simulation->getEnsemble()->getComponents()->size() > 1){
 			global_log->warning() << "MeasureLoad is designed to work with one component. Using it with more than one "
 									 "component might produce bad results if their force calculation differs."
-								  << std::endl
+								  << std::endl;
 		}
 		_measureLoadCalc = new MeasureLoad(_measureLoadIncreasingTimeValues, _measureLoadInterpolationStartsAt);
 	}
