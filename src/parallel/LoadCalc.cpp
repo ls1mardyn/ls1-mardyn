@@ -237,6 +237,7 @@ bool isFinite(iterator1 start, iterator2 end) {
 	return isProper;
 }
 
+#ifdef MARDYN_ARMADILLO
 /**
  * Generate an approximate solution vector (using least-squares) based on the following equation:
  * arma_system_matrix * x = arma_rhs
@@ -307,7 +308,7 @@ inline arma::vec getIncreasingSolutionVec(arma::mat arma_system_matrix, const ar
 	// values.
 	return increasing_time_values_matrix * increasing_cell_time_vec;
 }
-
+#endif
 
 #ifdef ENABLE_MPI
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
