@@ -75,7 +75,7 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 }
 
 void IOHelpers::initializeVelocityAccordingToTemperature(ParticleContainer* particleContainer,
-														 DomainDecompBase* domainDecomp, double temperature) {
+														 DomainDecompBase* /*domainDecomp*/, double temperature) {
 	Random rng;
 	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
 		auto velocity = getRandomVelocityAccordingToTemperature(temperature, rng);
