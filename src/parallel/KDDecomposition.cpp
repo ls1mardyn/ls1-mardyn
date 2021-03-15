@@ -183,8 +183,8 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
 
 	xmlconfig.getNodeValue("measureLoadInterpolationStartsAt", _measureLoadInterpolationStartsAt);
-	global_log->info() << "measureLoad: interpolation starts at "
-	                   << _measureLoadInterpolationStartsAt << endl;
+	global_log->info() << "measureLoad: Interpolation is performed for cells with at least "
+	                   << _measureLoadInterpolationStartsAt << " particles." << endl;
 
 	xmlconfig.getNodeValue("measureLoadIncreasingTimeValues", _measureLoadIncreasingTimeValues);
 	global_log->info() << "measureLoad: Ensure that cells with more particles take longer ? "

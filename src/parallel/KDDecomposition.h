@@ -387,7 +387,7 @@ private:
 	bool _forceRatio{false};  // if you want to enable forcing the above ratio, enable this.
 
 	bool _doMeasureLoadCalc {false};  // specifies if measureLoad should be used.
-	int  _measureLoadInterpolationStartsAt{1};  // specifies at which measureLoad should start using an interpolation.
+	int  _measureLoadInterpolationStartsAt{1};  // specifies at which number of particles per cell measureLoad should start using interpolation.
 	bool _measureLoadIncreasingTimeValues{true};  // specifies if the time values should be increasing if the number of particles increases.
 
 	/**
