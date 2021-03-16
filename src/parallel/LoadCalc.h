@@ -228,22 +228,22 @@ class MeasureLoad: public LoadCalc {
 	static std::string TIMER_NAME;
 
 public:
-	MeasureLoad(bool alwaysUseInterpolation, bool timeValuesShouldBeIncreasing);
+	MeasureLoad(bool timeValuesShouldBeIncreasing, int interpolationStartsAt);
 
 	double getOwn(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
 
 	double getFace(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
 
 	double getEdge(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
 
 	double getCorner(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
 
 #ifdef ENABLE_MPI
@@ -264,6 +264,6 @@ private:
 
 	bool _preparedLoad{false};
 	double _previousTime{0.};
-	bool _alwaysUseInterpolation{true};
+	int _interpolationStartsAt{1};
 	bool _timeValuesShouldBeIncreasing{true};
 };

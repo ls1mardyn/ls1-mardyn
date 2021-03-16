@@ -124,11 +124,11 @@ class KDDecomposition: public DomainDecompMPIBase {
 		 <!-- Indicates whether the MeasureLoad load estimator should be used. See MeasureLoad.
 		      Default: False-->
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
-		 <!-- Option for MeasureLoad: Uses a quadratic interpolation if enabled.
-		      Default: True-->
-		 <measureLoadAlwaysUseInterpolation>BOOL</measureLoadAlwaysUseInterpolation>
+		 <!-- Defines at which index the quadratic interpolation of the measureLoad algorithm starts.
+		      -1 to disable, 0 to always use interpolation.
+		      Default: 1-->
+		 <measureLoadInterpolationStartsAt>INTEGER</measureLoadInterpolationStartsAt>
 		 <!-- Option for MeasureLoad: Forces increasing values for the load estimation (more particles = more load).
-		      This option is ignored if measureLoadAlwaysUseInterpolation is true.
 		      Default: True-->
 		 <measureLoadIncreasingTimeValues>BOOL</measureLoadIncreasingTimeValues>
 		 <!-- The reduction operation for the deviation calculation.
@@ -387,7 +387,7 @@ private:
 	bool _forceRatio{false};  // if you want to enable forcing the above ratio, enable this.
 
 	bool _doMeasureLoadCalc {false};  // specifies if measureLoad should be used.
-	bool _measureLoadAlwaysUseInterpolation {true};  // specifies if measureLoad should always use interpolation.
+	int  _measureLoadInterpolationStartsAt{1};  // specifies at which number of particles per cell measureLoad should start using interpolation.
 	bool _measureLoadIncreasingTimeValues{true};  // specifies if the time values should be increasing if the number of particles increases.
 
 	/**

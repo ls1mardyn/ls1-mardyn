@@ -182,9 +182,9 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
 
-	xmlconfig.getNodeValue("measureLoadAlwaysUseInterpolation", _measureLoadAlwaysUseInterpolation);
-	global_log->info() << "measureLoad: Always use interpolation? "
-					   << (_measureLoadAlwaysUseInterpolation ? "yes" : "no") << endl;
+	xmlconfig.getNodeValue("measureLoadInterpolationStartsAt", _measureLoadInterpolationStartsAt);
+	global_log->info() << "measureLoad: Interpolation is performed for cells with at least "
+	                   << _measureLoadInterpolationStartsAt << " particles." << endl;
 
 	xmlconfig.getNodeValue("measureLoadIncreasingTimeValues", _measureLoadIncreasingTimeValues);
 	global_log->info() << "measureLoad: Ensure that cells with more particles take longer ? "
@@ -265,7 +265,12 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 
 	size_t measureLoadInitTimers = 2;
 	if (_steps == measureLoadInitTimers and _doMeasureLoadCalc) {
-		_measureLoadCalc = new MeasureLoad(_measureLoadAlwaysUseInterpolation, _measureLoadIncreasingTimeValues);
+		if(global_simulation->getEnsemble()->getComponents()->size() > 1){
+			global_log->warning() << "MeasureLoad is designed to work with one component. Using it with more than one "
+									 "component might produce bad results if their force calculation differs."
+								  << std::endl;
+		}
+		_measureLoadCalc = new MeasureLoad(_measureLoadIncreasingTimeValues, _measureLoadInterpolationStartsAt);
 	}
 	size_t measureLoadStart = 50;
 	if (_steps == measureLoadStart and _doMeasureLoadCalc) {

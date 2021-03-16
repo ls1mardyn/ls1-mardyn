@@ -189,8 +189,9 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 // MEASURELOAD
 std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
 
-MeasureLoad::MeasureLoad(bool alwaysUseInterpolation, bool timeValuesShouldBeIncreasing)
-	: _alwaysUseInterpolation{alwaysUseInterpolation}, _timeValuesShouldBeIncreasing{timeValuesShouldBeIncreasing} {
+MeasureLoad::MeasureLoad(bool timeValuesShouldBeIncreasing, int interpolationStartsAt)
+	: _timeValuesShouldBeIncreasing{timeValuesShouldBeIncreasing},
+	  _interpolationStartsAt{interpolationStartsAt} {
 	_previousTime = global_simulation->timers()->getTime(TIMER_NAME);
 }
 
@@ -236,6 +237,79 @@ bool isFinite(iterator1 start, iterator2 end) {
 	return isProper;
 }
 
+#ifdef MARDYN_ARMADILLO
+/**
+ * Generate an approximate solution vector (using least-squares) based on the following equation:
+ * arma_system_matrix * x = arma_rhs
+ * The following restrictions are applied:
+ * - x has to be component-wise non-negative.
+ * - The first elements (up to notIncreasingStartAt) are increasing. The elements after that are not restricted.
+ * @param arma_system_matrix The system matrix.
+ * @param arma_rhs The right hand side.
+ * @param quadraticInterpolationStartAt The index starting at which the quadratic interpolation starts. It is not
+ * allowed to be bigger than arma_system_matrix.n_cols.
+ * @return The solution as described above.
+ */
+inline arma::vec getIncreasingSolutionVec(arma::mat arma_system_matrix, const arma::vec& arma_rhs,
+								   const int quadraticInterpolationStartAt) {
+	// We multiply the matrix increasing_time_values_matrix (a lower-triangular matrix with only ones) to the
+	// system matrix, s.t., the solution vector is: [t_0, t_1-t_0, t_2-t_1, ..., t_n-t_n-1]
+	// (t_i is the time needed for a cell with i particles.)
+	// If we then solve this equation using a non-negative-least squares, we can guarantee that t_i+1 > t-i.
+	arma::mat increasing_time_values_matrix(arma_system_matrix.n_cols, arma_system_matrix.n_cols);
+
+	for (int row = 0; row < quadraticInterpolationStartAt; row++) {
+		for (int column = 0; column <= row; ++column) {
+			increasing_time_values_matrix(row, column) = 1.;
+		}
+		for (int column = row + 1; column < arma_system_matrix.n_cols; ++column) {
+			increasing_time_values_matrix(row, column) = 0.;
+		}
+	}
+
+	int num_extra = arma_system_matrix.n_cols - quadraticInterpolationStartAt;
+	mardyn_assert(num_extra == 0 or num_extra == 3);
+	if(num_extra == 3){
+		// Starting with notIncreasingStartAt, we want, that the quadratic fit is bigger than the last tn. So we modify
+		// the solution vector further. The last three lines will look like this:
+		//
+		// 0 ... 0   1   0  0
+		// 0 ... 0   0   1  0
+		// 1 ... 1 -N^2 -N  1
+		//
+		// N = quadraticInterpolationStartAt.
+		// If the last three values of the solution are positive, it can be guaranteed that the time values will further
+		// increase and are also bigger than t_{N-1}.
+		for (int last_rows_index = 0; last_rows_index < num_extra; last_rows_index++) {
+			for (int column = 0; column < quadraticInterpolationStartAt; ++column) {
+				increasing_time_values_matrix(quadraticInterpolationStartAt + last_rows_index, column) =
+					(last_rows_index == 2 ? 1. : 0.);
+			}
+		}
+		int N = quadraticInterpolationStartAt;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 0) = 1;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 1) = 0;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 2) = 0;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 0) = 0;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 1) = 1;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 2) = 0;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 0) = -N * N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 1) = -N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 2) = 1;
+	}
+
+	arma_system_matrix = arma_system_matrix * increasing_time_values_matrix;
+
+	arma::vec increasing_cell_time_vec = nnls(arma_system_matrix, arma_rhs);
+	// multiply increasing_time_values_matrix to increasing_cell_time_vec to obtain the original cell time
+	// values.
+	return increasing_time_values_matrix * increasing_cell_time_vec;
+}
+#endif
+
 #ifdef ENABLE_MPI
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
@@ -258,11 +332,13 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	int global_maxParticlesP1 = 0;  // maxParticle Count + 1 = degrees of freedom
 	MPI_Allreduce(&maxParticlesP1, &global_maxParticlesP1, 1, MPI_INT, MPI_MAX, comm);
 
-	if (_alwaysUseInterpolation) {
-		if (numRanks < _interpolationConstants.size()) {
+	int interpolationStartsAt = std::min(_interpolationStartsAt, global_maxParticlesP1);
+
+	if (_interpolationStartsAt >= 0) {
+		if (numRanks < _interpolationConstants.size() + interpolationStartsAt) {
 			Log::global_log->warning()
-				<< "MeasureLoad: Not enough processes to sample from (needed _interpolationConstants.size(): "
-				<< _interpolationConstants.size() << ", numRanks: " << numRanks << ")." << std::endl;
+				<< "MeasureLoad: Not enough processes to sample from (needed _interpolationConstants.size() + interpolationStartsAt: "
+				<< _interpolationConstants.size() + interpolationStartsAt << ", numRanks: " << numRanks << ")." << std::endl;
 			return 1;
 		}
 	} else {
@@ -290,45 +366,64 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 				arma_system_matrix(rank, particleCount) = global_statistics[global_maxParticlesP1 * rank + particleCount];
 			}
 		}
-		if(_alwaysUseInterpolation) {
-			arma::mat quadratic_equation_fit_matrix(global_maxParticlesP1, 3);
-			for (int row = 0; row < global_maxParticlesP1; row++) {
-				quadratic_equation_fit_matrix.at(row, 0) = row * row;
-				quadratic_equation_fit_matrix.at(row, 1) = row;
-				quadratic_equation_fit_matrix.at(row, 2) = 1;
+		if (interpolationStartsAt >= 0) {
+			int num_dof = interpolationStartsAt + 3;
+			arma::mat quadratic_equation_fit_matrix(global_maxParticlesP1, num_dof);
+			/*
+			 * The matrix looks like this (example for interpolationStartsAt = 3):
+			 * 1 0 0 0   0   0
+			 * 0 1 0 0   0   0
+			 * 0 0 1 0   0   0
+			 * 0 0 0 3^2 3^1 3^0
+			 * 0 0 0 4^2 4^1 4^0
+			 * 0 0 0 5^2 5^1 5^0
+			 * 0 0 0 6^2 6^1 6^0
+			 * ...
+			 *
+			 * The solution vector thus first contains the time values for the cells with < interpolationStartsAt
+			 * particles and, afterwards, the interpolation constants a, b and c for which a^2 * N + b * N + c holds.
+			 */
+			for (int row = 0; row < interpolationStartsAt; ++row) {
+				for (int col = 0; col < num_dof; ++col) {
+					quadratic_equation_fit_matrix.at(row, col) = (row == col ? 1. : 0.);
+				}
+			}
+			for (int row = interpolationStartsAt; row < global_maxParticlesP1; ++row) {
+				for (int col = 0; col < interpolationStartsAt; ++col) {
+					quadratic_equation_fit_matrix.at(row, col) = 0.;
+				}
+				quadratic_equation_fit_matrix.at(row, interpolationStartsAt + 0) = row * row;
+				quadratic_equation_fit_matrix.at(row, interpolationStartsAt + 1) = row;
+				quadratic_equation_fit_matrix.at(row, interpolationStartsAt + 2) = 1.;
 			}
 			// We multiply the system matrix with quadratic_equation_fit_matrix to be able to get the coefficients of a
 			// quadratic least squares fit (non-negative)
 			arma_system_matrix = arma_system_matrix * quadratic_equation_fit_matrix;
 
-			arma::vec coefficient_vec = nnls(arma_system_matrix, arma_rhs);
-			mardyn_assert(coefficient_vec.size() == 3);
-			global_log->info() << "coefficient_vec: " << std::endl << coefficient_vec << std::endl;
+			arma::vec coefficient_vec;
+			if (_timeValuesShouldBeIncreasing) {
+				coefficient_vec = getIncreasingSolutionVec(arma_system_matrix, arma_rhs, interpolationStartsAt);
+			} else {
+				coefficient_vec = nnls(arma_system_matrix, arma_rhs);
+			}
+			mardyn_assert(coefficient_vec.size() == num_dof);
+			global_log->info() << "coefficient_vec: " << std::endl;
+			coefficient_vec.raw_print(std::cout);
+			std::cout << std::endl;
+			_times.resize(interpolationStartsAt);
+			for (int i = 0; i < interpolationStartsAt; ++i) {
+				_times[i] = coefficient_vec[i];
+			}
+			MPI_Bcast(_times.data(), interpolationStartsAt, MPI_DOUBLE, 0, comm);
 			for (int i = 0; i < 3; i++) {
-				_interpolationConstants[i] = coefficient_vec[i];
+				_interpolationConstants[i] = coefficient_vec[interpolationStartsAt + i];
 			}
 			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
 		} else if (_timeValuesShouldBeIncreasing) {
-			// We multiply the matrix increasing_time_values_matrix (a lower-triangular matrix with only ones) to the
-			// system matrix, s.t., the solution vector is: [t_0, t_1-t_0, t_2-t_1, ..., t_n-t_n-1]
-			// (t_i is the time needed for a cell with i particles.)
-			// If we then solve this equation using a non-negative-least squares, we can guarantee that t_i+1 > t-i.
-			arma::mat increasing_time_values_matrix(global_maxParticlesP1,global_maxParticlesP1);
-			for (int row = 0; row < global_maxParticlesP1; row++) {
-				for(int column = 0; column <= row; ++column){
-					increasing_time_values_matrix(row, column) = 1.;
-				}
-				for(int column = row+1; column < global_maxParticlesP1; ++column){
-					increasing_time_values_matrix(row, column) = 0.;
-				}
-			}
-			arma_system_matrix = arma_system_matrix * increasing_time_values_matrix;
-			arma::vec increasing_cell_time_vec = nnls(arma_system_matrix, arma_rhs);
-			// multiply increasing_time_values_matrix to increasing_cell_time_vec to obtain the original cell time
-			// values.
-			arma::vec cell_time_vec = increasing_time_values_matrix * increasing_cell_time_vec;
+			arma::vec cell_time_vec = getIncreasingSolutionVec(arma_system_matrix, arma_rhs, global_maxParticlesP1);
 
-			global_log->info() << "cell_time_vec:\n" << cell_time_vec << std::endl;
+			global_log->info() << "cell_time_vec:" << std::endl;
+			cell_time_vec.raw_print(std::cout);
 			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
 			mardyn_assert(_times.size() == global_maxParticlesP1);
 			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
@@ -343,7 +438,9 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	} else {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr, 0 /*here insignificant*/, MPI_UINT64_T,
 				0, comm);
-		if (_alwaysUseInterpolation) {
+		if (interpolationStartsAt >= 0) {
+			_times.resize(interpolationStartsAt);
+			MPI_Bcast(_times.data(), interpolationStartsAt, MPI_DOUBLE, 0, comm);
 			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
 		} else {
 			_times.resize(global_maxParticlesP1);
@@ -352,17 +449,15 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	}
 
 	// interpolation constants:
-	if (not _alwaysUseInterpolation) {
+	if (interpolationStartsAt < 0) {
 		calcConstants();
 	}
 
-	// Check for NaN:
-	if (not _alwaysUseInterpolation) {
-		if (not isFinite(_times.begin(), _times.end())) {
-			global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
-			return 1;
-		}
+	if (not isFinite(_times.begin(), _times.end())) {
+		global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
+		return 1;
 	}
+
 	if (not isFinite(_interpolationConstants.begin(), _interpolationConstants.end())) {
 		global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
 		return 1;
@@ -411,18 +506,13 @@ double MeasureLoad::getValue(int numParticles) const {
 	mardyn_assert(numParticles >= 0);
 	mardyn_assert(_preparedLoad);
 
-	if(_alwaysUseInterpolation) {
-		return _interpolationConstants[0] * numParticles * numParticles + _interpolationConstants[1] * numParticles +
-			   _interpolationConstants[2];
+	size_t numPart = numParticles;
+	if (numPart < _times.size()) {
+		// if we are within the known (i.e. measured) particle count, just use the known values
+		return _times[numPart];
 	} else {
-		size_t numPart = numParticles;
-		if (numPart < _times.size()) {
-			// if we are within the known (i.e. measured) particle count, just use the known values
-			return _times[numPart];
-		} else {
-			// otherwise we interpolate
-			return _interpolationConstants[0] * numPart * numPart + _interpolationConstants[1] * numPart +
-				_interpolationConstants[2];
-		}
+		// otherwise we interpolate
+		return _interpolationConstants[0] * numPart * numPart + _interpolationConstants[1] * numPart +
+			   _interpolationConstants[2];
 	}
 }
