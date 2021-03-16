@@ -10,8 +10,8 @@ namespace IOHelpers {
 
 /**
  * Removes the momentum from the simulation.
- * Will first sum up the overall momentum of the simulation and then apply a shift to all particles, s.t., there is no
- * more total momentum.
+ * Will first sum up the overall momentum (m*v) and mass of the simulation and then apply a velocity shift 
+ * `-(momentum_sum / mass_sum)` to all particles which removes the momentum from the simulation.
  * @param particleContainer
  * @param components
  * @param domainDecomp
@@ -31,6 +31,9 @@ void initializeVelocityAccordingToTemperature(ParticleContainer* particleContain
 
 /**
  * Makes the particle ids of a container unique (throughout all ranks).
+ * First an exclusive scan is used to get the number of particles of all processes with lower rank.
+ * Each rank then adds that number to the ids of its particles.
+ *
  * Assumptions that are made for the particles in particleContainer (for each rank independently, prior to the function
  * call):
  * - The ids of the particle range from 0 to particleContainer->getNumberOfParticles() - 1.
