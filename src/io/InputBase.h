@@ -17,9 +17,9 @@ class XMLfileUnits;
 //! @todo more comment
 class InputBase {
 public:
-	InputBase() {}
+	InputBase() = default;
 
-	virtual ~InputBase() {}
+	virtual ~InputBase() = default;
 
 	/** @brief read the phase space components and header information
 	 * @param domain  pointer to domain object

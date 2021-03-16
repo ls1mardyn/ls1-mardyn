@@ -49,13 +49,14 @@
 
 #include "io/ASCIIReader.h"
 #include "io/BinaryReader.h"
-#include "io/MultiObjectGenerator.h"
-#include "io/TcTS.h"
-#include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
-#include "io/ReplicaGenerator.h"
-#include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
+#include "io/Mkesfera.h"
+#include "io/MultiObjectGenerator.h"
+#include "io/PerCellGenerator.h"
+#include "io/ReplicaGenerator.h"
+#include "io/TcTS.h"
+#include "io/TimerProfiler.h"
 
 #include "ensemble/GrandCanonicalEnsemble.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -588,6 +589,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if (generatorName == "ReplicaGenerator") {
 			_inputReader = new ReplicaGenerator();
+		}
+		else if (generatorName == "PerCellGenerator") {
+			_inputReader = new PerCellGenerator();
 		}
 		else {
 			global_log->error() << "Unknown generator: " << generatorName << endl;
