@@ -8,42 +8,39 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 	Log::global_log->info() << "Removing momentum from Input Data." << std::endl;
 
 	double mass_sum = 0.;
-	double momentum_sum0 = 0.;
-	double momentum_sum1 = 0.;
-	double momentum_sum2 = 0.;
-
+	double momentum_sum[3] {0., 0., 0.};
 #if defined(_OPENMP)
-#pragma omp parallel reduction(+ : mass_sum, momentum_sum0, momentum_sum1, momentum_sum2)
+#pragma omp parallel reduction(+ : mass_sum, momentum_sum[:])
 #endif
 	{
 		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid();
 			 ++molecule) {
 			double mass = components[molecule->componentid()].m();
 			mass_sum += mass;
-			momentum_sum0 += mass * molecule->v(0);
-			momentum_sum1 += mass * molecule->v(1);
-			momentum_sum2 += mass * molecule->v(2);
+			momentum_sum[0] += mass * molecule->v(0);
+			momentum_sum[1] += mass * molecule->v(1);
+			momentum_sum[2] += mass * molecule->v(2);
 		}
 	}
 
 	domainDecomp->collCommInit(4);
 	domainDecomp->collCommAppendDouble(mass_sum);
-	domainDecomp->collCommAppendDouble(momentum_sum0);
-	domainDecomp->collCommAppendDouble(momentum_sum1);
-	domainDecomp->collCommAppendDouble(momentum_sum2);
+	domainDecomp->collCommAppendDouble(momentum_sum[0]);
+	domainDecomp->collCommAppendDouble(momentum_sum[1]);
+	domainDecomp->collCommAppendDouble(momentum_sum[2]);
 	domainDecomp->collCommAllreduceSum();
 	mass_sum = domainDecomp->collCommGetDouble();
-	momentum_sum0 = domainDecomp->collCommGetDouble();
-	momentum_sum1 = domainDecomp->collCommGetDouble();
-	momentum_sum2 = domainDecomp->collCommGetDouble();
+	momentum_sum[0] = domainDecomp->collCommGetDouble();
+	momentum_sum[1] = domainDecomp->collCommGetDouble();
+	momentum_sum[2] = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
 
-	Log::global_log->info() << "momentumsum prior to removal: " << momentum_sum0 << " " << momentum_sum1 << " "
-							<< momentum_sum2 << std::endl;
+	Log::global_log->info() << "momentumsum prior to removal: " << momentum_sum[0] << " " << momentum_sum[1] << " "
+							<< momentum_sum[2] << std::endl;
 	Log::global_log->info() << "mass_sum: " << mass_sum << std::endl;
-	double v_sub0 = momentum_sum0 / mass_sum;
-	double v_sub1 = momentum_sum1 / mass_sum;
-	double v_sub2 = momentum_sum2 / mass_sum;
+	double v_sub0 = momentum_sum[0] / mass_sum;
+	double v_sub1 = momentum_sum[1] / mass_sum;
+	double v_sub2 = momentum_sum[2] / mass_sum;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -54,24 +51,24 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 		}
 	}
 	// test
-	momentum_sum0 = 0.;
-	momentum_sum1 = 0.;
-	momentum_sum2 = 0.;
+	momentum_sum[0] = 0.;
+	momentum_sum[1] = 0.;
+	momentum_sum[2] = 0.;
 
 #if defined(_OPENMP)
-#pragma omp parallel reduction(+ : momentum_sum0, momentum_sum1, momentum_sum2)
+#pragma omp parallel reduction(+ : momentum_sum[:])
 #endif
 	{
 		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid();
 			 ++molecule) {
 			double mass = components[molecule->componentid()].m();
-			momentum_sum0 += mass * molecule->v(0);
-			momentum_sum1 += mass * molecule->v(1);
-			momentum_sum2 += mass * molecule->v(2);
+			momentum_sum[0] += mass * molecule->v(0);
+			momentum_sum[1] += mass * molecule->v(1);
+			momentum_sum[2] += mass * molecule->v(2);
 		}
 	}
-	Log::global_log->info() << "momentumsum after removal: " << momentum_sum0 << " " << momentum_sum1 << " "
-							<< momentum_sum2 << std::endl;
+	Log::global_log->info() << "momentumsum after removal: " << momentum_sum[0] << " " << momentum_sum[1] << " "
+							<< momentum_sum[2] << std::endl;
 }
 
 void IOHelpers::initializeVelocityAccordingToTemperature(ParticleContainer* particleContainer,
