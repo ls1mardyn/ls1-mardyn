@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <functional>
 
 class ParticleContainer;
 class DomainDecompBase;
@@ -140,6 +141,27 @@ public:
 
     /** @brief return the name of the plugin */
     virtual std::string getPluginName()  = 0;
+
+	/**
+	 * Register callbacks to callbackMap.
+	 * This allows to make functions of a plugin accessible to other plugins.
+	 * New callbacks should be added to callbackMap.
+	 *
+	 * @param callbackMap Add callbacks to this map.
+	 */
+	virtual void registerCallbacks(std::map<std::string, std::function<void(void)>>& callbackMap) {
+		// Empty by default.
+	}
+
+	/**
+	 * Save callbacks from the callbackMap locally.
+	 * This allows a plugin to call functions from other plugins.
+	 *
+	 * @param callbackMap Get callbacks from this map.
+	 */
+	virtual void saveCallbacksLocally(const std::map<std::string, std::function<void(void)>>& callbackMap) {
+		// Empty by default.
+	}
 };
 
 #endif /* PLUGINBASE_H */

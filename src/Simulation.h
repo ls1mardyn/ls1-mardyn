@@ -2,6 +2,7 @@
 #define SIMULATION_H_
 
 #include <memory>
+#include <functional>
 
 #include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
@@ -473,6 +474,13 @@ private:
 
 	/** List of plugins to use */
 	std::list<PluginBase*> _plugins;
+
+	/** Map of all call backs.
+	 * The key is the name of the callback.
+	 * Each element contains a function, whose signature is normally not void(void).
+	 * Please check the specific plugins for the actual signature!
+	 */
+	std::map<std::string, std::function<void(void)>> callbackMap;
 
 	VelocityScalingThermostat _velocityScalingThermostat;
 
