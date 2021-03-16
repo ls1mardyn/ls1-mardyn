@@ -7,12 +7,12 @@
 
 #include "ProfileBase.h"
 #include "plugins/SpatialProfile.h"
-//#include "../FixRegion.h"
+
 
 class DensityProfile;
 class DOFProfile;
 class KineticProfile;
-//class FixRegion;
+
 
 class Virial2DProfile : public ProfileBase {
 public:
@@ -57,7 +57,6 @@ private:
 	DensityProfile* _densityProfile;
 	DOFProfile* _dofProfile;
 	KineticProfile* _kineticProfile;
-	//FixRegion* _fixRegion;
 
 	// Local 3D Profile
 	std::map<unsigned, std::array<double, 3>> _local3dProfile;

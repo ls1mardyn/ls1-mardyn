@@ -34,28 +34,14 @@ void Virial2DProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	
 void Virial2DProfile::writeDataEntry(unsigned long uID, ofstream &outfile) const {
 	
-	// calculate local temperature
-//	double localTemperature;	
-//	
-//	int dofs = _dofProfile->getGlobalDOF(uID);
-//    if(dofs == 0){
-//        localTemperature = 0.0;
-//    }
-//    else{
-//        localTemperature = (_kineticProfile->getGlobalKineticEnergy(uID) / dofs);
-//    }
 	
 	// calculate global temperature
 	double globalTemperature = global_simulation->getDomain()->getCurrentTemperature(0);
 	
 	//calculate global temperature if fixedRegion is applied
-	//global_log->info() <<  _samplInfo.globalNumMolecules << endl;
 	unsigned long numMolFixRegion = _samplInfo.numMolFixRegion;
 	double globalTemperatureFixRegion = globalTemperature * _samplInfo.globalNumMolecules / (_samplInfo.globalNumMolecules - numMolFixRegion);
-	
-	//global_log->info() << _samplInfo.numMolFixRegion << endl;
-	//global_log->info() << globalTemperatureFixRegion << endl;
-	
+
 	long double virial2Dx = 0.0;
 	long double virial2Dy = 0.0;
 	long double virial2Dz = 0.0;
@@ -64,15 +50,6 @@ void Virial2DProfile::writeDataEntry(unsigned long uID, ofstream &outfile) const
 	long double Px = this->_global3dProfile.at(uID)[0];
 	long double Py = this->_global3dProfile.at(uID)[1];
 	long double Pz = this->_global3dProfile.at(uID)[2];
-		
-
-//	virial2Dx = (localTemperature* N + Px)/(_samplInfo.segmentVolume * _accumulatedDatasets);
-//	virial2Dy = (localTemperature* N + Py)/(_samplInfo.segmentVolume * _accumulatedDatasets);
-//	virial2Dz = (localTemperature* N + Pz)/(_samplInfo.segmentVolume * _accumulatedDatasets);		
-	
-//	virial2Dx = (globalTemperature* N + Px)/(_samplInfo.segmentVolume * _accumulatedDatasets);
-//	virial2Dy = (globalTemperature* N + Py)/(_samplInfo.segmentVolume * _accumulatedDatasets);
-//	virial2Dz = (globalTemperature* N + Pz)/(_samplInfo.segmentVolume * _accumulatedDatasets);
 
 	virial2Dx = (globalTemperatureFixRegion* N + Px)/(_samplInfo.segmentVolume * _accumulatedDatasets);
 	virial2Dy = (globalTemperatureFixRegion* N + Py)/(_samplInfo.segmentVolume * _accumulatedDatasets);
