@@ -62,4 +62,9 @@ public:
 	std::string getPluginName() override { return std::string("FixRegion"); }
 
 	static PluginBase* createInstance() { return new FixRegion(); }
+
+	void registerCallbacks(std::map<std::string, std::any>& callbackMap) override {
+		callbackMap["getNumFixRegion"] =
+			std::function<unsigned long(void)>([this]() -> unsigned long { return _molCount; });
+	}
 };

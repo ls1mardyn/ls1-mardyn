@@ -2,7 +2,7 @@
 #define SIMULATION_H_
 
 #include <memory>
-#include <functional>
+#include <any>
 
 #include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
@@ -477,10 +477,10 @@ private:
 
 	/** Map of all call backs.
 	 * The key is the name of the callback.
-	 * Each element contains a function, whose signature is normally not void(void).
-	 * Please check the specific plugins for the actual signature!
+	 * Each element contains a std::function object.
+	 * Please check the specific plugins for the actual signature of the function and use an appropriate any_cast!
 	 */
-	std::map<std::string, std::function<void(void)>> callbackMap;
+	std::map<std::string, std::any> _callbacks;
 
 	VelocityScalingThermostat _velocityScalingThermostat;
 

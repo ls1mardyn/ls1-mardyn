@@ -1,6 +1,7 @@
 #ifndef PLUGINBASE_H_
 #define PLUGINBASE_H_
 
+#include <any>
 #include <list>
 #include <map>
 #include <string>
@@ -149,7 +150,7 @@ public:
 	 *
 	 * @param callbackMap Add callbacks to this map.
 	 */
-	virtual void registerCallbacks(std::map<std::string, std::function<void(void)>>& callbackMap) {
+	virtual void registerCallbacks(std::map<std::string, std::any>& callbackMap) {
 		// Empty by default.
 	}
 
@@ -159,7 +160,7 @@ public:
 	 *
 	 * @param callbackMap Get callbacks from this map.
 	 */
-	virtual void saveCallbacksLocally(const std::map<std::string, std::function<void(void)>>& callbackMap) {
+	virtual void saveCallbacksLocally(const std::map<std::string, std::any>& callbackMap) {
 		// Empty by default.
 	}
 };

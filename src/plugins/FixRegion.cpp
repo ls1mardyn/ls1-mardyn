@@ -70,8 +70,6 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	_molCount = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 	global_log->info() << _molCount << " molecules are inside a fixed region" << std::endl;
-	
-	domain->setNumFixRegion(_molCount);
 }
 
 void FixRegion::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
