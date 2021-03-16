@@ -64,7 +64,6 @@ public:
 	static PluginBase* createInstance() { return new FixRegion(); }
 
 	void registerCallbacks(std::map<std::string, std::any>& callbackMap) override {
-		callbackMap["getNumFixRegion"] =
-			std::function<unsigned long(void)>([this]() -> unsigned long { return _molCount; });
+		callbackMap["getNumFixRegion"] = std::function<unsigned long(void)>([this] { return _molCount; });
 	}
 };
