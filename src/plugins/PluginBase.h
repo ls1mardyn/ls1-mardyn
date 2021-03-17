@@ -180,7 +180,7 @@ public:
 	 * \endcode
 	 * @param callbackMap Get callbacks from this map.
 	 */
-	virtual void saveCallbacksLocally(const std::map<std::string, FunctionWrapper>& callbackMap) {
+	virtual void accessAllCallbacks(const std::map<std::string, FunctionWrapper>& callbackMap) {
 		// Empty by default.
 	}
 };

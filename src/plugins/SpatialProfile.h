@@ -90,7 +90,8 @@ public:
 
 	SamplingInformation samplInfo;
 
-	void saveCallbacksLocally(const std::map<std::string, FunctionWrapper>& callbackMap) override {
+	void accessAllCallbacks(const std::map<std::string, FunctionWrapper>& callbackMap) override {
+		// Accesses a callback registered by FixRegion. It returns the number of molecules in the fixregion.
 		getNumFixRegion = callbackMap.at("FixRegion::getMoleculesInRegion").get<unsigned long>();
 	}
 
