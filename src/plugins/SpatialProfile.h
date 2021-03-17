@@ -90,8 +90,8 @@ public:
 
 	SamplingInformation samplInfo;
 
-	void saveCallbacksLocally(const std::map<std::string, std::any>& callbackMap) override {
-		getNumFixRegion = std::any_cast<decltype(getNumFixRegion)>(callbackMap.at("getNumFixRegion"));
+	void saveCallbacksLocally(const std::map<std::string, FunctionWrapper>& callbackMap) override {
+		getNumFixRegion = callbackMap.at("getNumFixRegion").get<unsigned long>();
 	}
 
 private:

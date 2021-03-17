@@ -7,6 +7,8 @@
 #include <string>
 #include <functional>
 
+#include "utils/FunctionWrapper.h"
+
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
@@ -150,7 +152,7 @@ public:
 	 *
 	 * @param callbackMap Add callbacks to this map.
 	 */
-	virtual void registerCallbacks(std::map<std::string, std::any>& callbackMap) {
+	virtual void registerCallbacks(std::map<std::string, FunctionWrapper>& callbackMap) {
 		// Empty by default.
 	}
 
@@ -160,7 +162,7 @@ public:
 	 *
 	 * @param callbackMap Get callbacks from this map.
 	 */
-	virtual void saveCallbacksLocally(const std::map<std::string, std::any>& callbackMap) {
+	virtual void saveCallbacksLocally(const std::map<std::string, FunctionWrapper>& callbackMap) {
 		// Empty by default.
 	}
 };
