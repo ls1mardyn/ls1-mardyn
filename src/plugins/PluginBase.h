@@ -149,7 +149,15 @@ public:
 	 * Register callbacks to callbackMap.
 	 * This allows to make functions of a plugin accessible to other plugins.
 	 * New callbacks should be added to callbackMap.
-	 *
+	 * Example syntax:
+	 * - register a function that returns a local value:
+	 * \code
+	 *   callbackMap["getMyLocalValue"] = [this] { return _myLocalValue; };
+	 * \endcode
+	 * - register a function that calls a local function and returns its return value:
+	 * \code
+	 *   callbackMap["callMyFunct"] = [this] { return myFunct(); };
+	 * \endcode
 	 * @param callbackMap Add callbacks to this map.
 	 */
 	virtual void registerCallbacks(std::map<std::string, FunctionWrapper>& callbackMap) {
@@ -159,7 +167,17 @@ public:
 	/**
 	 * Save callbacks from the callbackMap locally.
 	 * This allows a plugin to call functions from other plugins.
-	 *
+	 * Example syntax:
+	 * - store a function that returns an unsigned long:
+	 * \code
+	 *   std::function<unsigned long(void)> myFunction;
+	 *   myFunction = callbackMap.at("getSomeLocalValue").get<unsigned long>();
+	 * \endcode
+	 * - store a function that calls some function of another plugin with an input value (int):
+	 * \code
+	 *   std::function<void(int)> myFunction;
+	 *   myFunction = callbackMap.at("doSth").get<void, int>();
+	 * \endcode
 	 * @param callbackMap Get callbacks from this map.
 	 */
 	virtual void saveCallbacksLocally(const std::map<std::string, FunctionWrapper>& callbackMap) {
