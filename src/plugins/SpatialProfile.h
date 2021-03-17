@@ -91,7 +91,7 @@ public:
 	SamplingInformation samplInfo;
 
 	void saveCallbacksLocally(const std::map<std::string, FunctionWrapper>& callbackMap) override {
-		getNumFixRegion = callbackMap.at("getNumFixRegion").get<unsigned long>();
+		getNumFixRegion = callbackMap.at("FixRegion::getMoleculesInRegion").get<unsigned long>();
 	}
 
 private:
