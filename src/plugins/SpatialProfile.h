@@ -90,6 +90,10 @@ public:
 
 	SamplingInformation samplInfo;
 
+	void saveCallbacksLocally(const std::map<std::string, FunctionWrapper>& callbackMap) override {
+		getNumFixRegion = callbackMap.at("FixRegion::getMoleculesInRegion").get<unsigned long>();
+	}
+
 private:
 
 	// Profile pointers for data reuse
@@ -101,7 +105,7 @@ private:
 	KineticProfile* _kineticProfile;
 	VirialProfile* _virialProfile;
 	Virial2DProfile* _virial2DProfile;
-	
+
 	unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
 	unsigned long _initStatistics; // Timesteps to skip at start of the simulation
 	unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
@@ -110,7 +114,7 @@ private:
 	std::string _mode;
 	std::string _profiledCompString;
 	unsigned int _profiledComp;
-	
+
 
 	unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 
@@ -127,6 +131,8 @@ private:
 	bool _VIRIAL2D = false;
 
 	void addProfile(ProfileBase* profile);
+
+	std::function<unsigned long(void)> getNumFixRegion;
 
 };
 

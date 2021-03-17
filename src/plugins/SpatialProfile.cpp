@@ -152,7 +152,7 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 	// Get global number of molecules
 	samplInfo.globalNumMolecules = domain->getglobalNumMolecules();
 	// Get number of molecules in FixRegion
-	samplInfo.numMolFixRegion = domain->getNumFixRegion();
+	samplInfo.numMolFixRegion = getNumFixRegion();
 	global_log->info() << "getDomain was called with Molecules in Fix Region: " << samplInfo.numMolFixRegion << endl;
 
 	// Calculate sampling units
