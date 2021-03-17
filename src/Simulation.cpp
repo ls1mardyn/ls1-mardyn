@@ -550,7 +550,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	for(auto&& plugin : _plugins) {
 		plugin->saveCallbacksLocally(_callbacks);
 	}
-	global_log -> info() << " callbacks registered." << endl;
+	global_log -> info() << _callbacks.size() << " callbacks registered." << endl;
 
 
 
