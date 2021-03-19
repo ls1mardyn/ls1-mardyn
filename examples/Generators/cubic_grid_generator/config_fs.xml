@@ -20,7 +20,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>10</steps>
+                <steps>100</steps>
             </production>
         </run>
 
@@ -62,7 +62,7 @@
                 <generateNewFiles>False</generateNewFiles>
                 <useExistingFiles>False</useExistingFiles>
                 <doMeasureLoadCalc>True</doMeasureLoadCalc>
-                <measureLoadAlwaysUseInterpolation>False</measureLoadAlwaysUseInterpolation>
+                <measureLoadInterpolationStartsAt>2</measureLoadInterpolationStartsAt>
                 <measureLoadIncreasingTimeValues>True</measureLoadIncreasingTimeValues>
                 <deviationReductionOperation>max</deviationReductionOperation>
                 <CommunicationScheme>direct-pp</CommunicationScheme>
