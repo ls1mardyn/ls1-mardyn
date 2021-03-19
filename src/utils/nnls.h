@@ -36,11 +36,5 @@
  *                   either m .le. 0 or n .le. 0.
  *             3    iteration count exceeded.  more than 3*n iterations.
  */
-#ifdef __cplusplus
-extern "C" {
-#endif
 int nnls_c(double *A, const int *mda, const int *m, const int *n, double *b, double *x, double *rnorm, double *w,
 		   double *zz, int *index, int *mode);
-#ifdef __cplusplus
-};
-#endif
