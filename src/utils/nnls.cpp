@@ -23,6 +23,10 @@
 #include <math.h>
 #include <stdio.h>
 #include "nnls.h"
+
+// anonymous namespace to hide implementation details.
+namespace {
+
 #define nnls_max(a, b) ((a) >= (b) ? (a) : (b))
 #define nnls_abs(x) ((x) >= 0 ? (x) : -(x))
 typedef int integer;
@@ -740,6 +744,8 @@ doublereal diff_(doublereal *x, doublereal *y) {
 	ret_val = *x - *y;
 	return ret_val;
 } /* diff_ */
+
+}  // namespace
 
 /* The following subroutine was added after the f2c translation */
 int nnls_c(double *a, const int *mda, const int *m, const int *n, double *b, double *x, double *rnorm, double *w,
