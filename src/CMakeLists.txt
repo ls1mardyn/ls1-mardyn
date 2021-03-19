@@ -1,5 +1,4 @@
 file(GLOB_RECURSE MY_SRC
-        "*.c"
         "*.cpp"
         "*.h"
         )
