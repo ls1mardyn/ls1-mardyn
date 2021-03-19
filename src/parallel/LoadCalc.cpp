@@ -8,6 +8,7 @@
 #include <armadillo>
 #endif
 
+#include "utils/nnls.h"
 #include "LoadCalc.h"
 #include "DomainDecompBase.h"
 
@@ -198,7 +199,7 @@ MeasureLoad::MeasureLoad(bool timeValuesShouldBeIncreasing, int interpolationSta
 #ifdef MARDYN_ARMADILLO
 // this non-negative least-squares (nnls) algorithm is taken from:
 // https://github.com/linxihui/Misc/blob/master/Practice/NMF/nnls.cpp
-arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-8) {
+arma::vec nnls_coordinate_wise(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-8) {
 	/*
 	 * Description: sequential Coordinate-wise algorithm for non-negative least square regression A x = b, s.t. x >= 0
 	 * Reference: http://cmp.felk.cvut.cz/ftp/articles/franc/Franc-TR-2005-06.pdf
@@ -225,6 +226,42 @@ arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, doubl
 		++i;
 	}
 	return x;
+}
+
+arma::vec nnls_lawson_hanson(const arma::mat &A, const arma::vec &b) {
+	int m = static_cast<int>(A.n_rows);
+	int n = static_cast<int>(A.n_cols);
+	auto A_arr = arma::conv_to<std::vector<double>>::from(arma::vectorise(A));
+	auto b_vec = arma::conv_to<std::vector<double>>::from(b);
+	std::vector<double> w_vec(n);
+	std::vector<double> zz_vec(m);
+	std::vector<int> index_vec(n);
+	std::vector<double> x_vec(n);
+	int mode;
+	double rnorm;
+	nnls_c(A_arr.data(), &m, &m, &n, b_vec.data(), x_vec.data(), &rnorm, w_vec.data(), zz_vec.data(), index_vec.data(),
+		   &mode);
+	std::cout << "lawson_hanson: mode " << mode << std::endl;
+	std::cout << "lawson_hanson: rnorm " << rnorm << std::endl;
+	return x_vec;
+}
+
+arma::vec nnls(const arma::mat &A, const arma::vec &b){
+	auto coordinate_wise_solution = nnls_coordinate_wise(A, b);
+	auto coordinate_wise_residual = A * coordinate_wise_solution - b;
+	auto coordinate_wise_residual_norm = arma::norm(coordinate_wise_residual);
+	std::cout << "coordinate_wise_residual_norm = " << coordinate_wise_residual_norm << std::endl;
+	auto lawson_hanson_solution = nnls_lawson_hanson(A, b);
+	auto lawson_hanson_residual = A * lawson_hanson_solution - b;
+	auto lawson_hanson_residual_norm = arma::norm(lawson_hanson_residual);
+	std::cout << "lawson_hanson_residual_norm   = " << lawson_hanson_residual_norm << std::endl;
+	if (coordinate_wise_residual_norm < lawson_hanson_residual_norm) {
+		std::cout << "returning coordinate_wise_solution" << std::endl;
+		return coordinate_wise_solution;
+	} else {
+		std::cout << "returning lawson_hanson_residual_norm" << std::endl;
+		return lawson_hanson_solution;
+	}
 }
 #endif
 
