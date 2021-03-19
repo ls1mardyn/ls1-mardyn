@@ -9,14 +9,14 @@
  *
  * Given an m by n matrix, A, and an m-vector, b,  compute an n-vector, x, that solves the least squares problem
  *          A * x = b  subject to x >= 0
- * @param A m by n dimensional matrix. On entry a contains the m by n matrix, A. On exit A contains the product matrix,
- * Q*A , where Q is an m by m orthogonal matrix generated implicitly by this subroutine.
+ * @param An m by n dimensional matrix (column-major order). On entry a contains the m by n matrix, A. On exit, A
+ * contains the product matrix, Q*A , where Q is an m by m orthogonal matrix generated implicitly by this subroutine.
  *
  * @param mda The first dimensioning parameter for the ARRAY A. Should be the same as m.
  * @param m The first dimension of A.
  * @param n The second dimension of A.
- * @param b On entry b() contains the m-vector, b. On exit b contains Q*b.
- * @param x On entry x() need not be initialized. On exit x will contain the solution vector.
+ * @param b On entry b contains the m-vector, b. On exit b contains Q*b.
+ * @param x On entry x need not be initialized. On exit x will contain the solution vector.
  * @param rnorm On exit rnorm contains the euclidean norm of the residual vector.
  * @param w     An n-array of working space. On exit w() will contain the dual solution vector.
  * w will satisfy w(i) = 0. for all i in set p.

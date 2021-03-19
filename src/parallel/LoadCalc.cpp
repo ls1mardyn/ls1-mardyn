@@ -231,6 +231,8 @@ arma::vec nnls_coordinate_wise(const arma::mat &A, const arma::vec &b, int max_i
 arma::vec nnls_lawson_hanson(const arma::mat &A, const arma::vec &b) {
 	int m = static_cast<int>(A.n_rows);
 	int n = static_cast<int>(A.n_cols);
+	// A_arr has to be column-major. This is ensured by arma::vectorise, as it returns a column-major matrix by default.
+	// (arma stores matrices column-major)
 	auto A_arr = arma::conv_to<std::vector<double>>::from(arma::vectorise(A));
 	auto b_vec = arma::conv_to<std::vector<double>>::from(b);
 	std::vector<double> w_vec(n);
