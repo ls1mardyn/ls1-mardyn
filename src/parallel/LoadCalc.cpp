@@ -259,7 +259,7 @@ arma::vec nnls(const arma::mat &A, const arma::vec &b){
 		std::cout << "returning coordinate_wise_solution" << std::endl;
 		return coordinate_wise_solution;
 	} else {
-		std::cout << "returning lawson_hanson_residual_norm" << std::endl;
+		std::cout << "returning lawson_hanson_solution" << std::endl;
 		return lawson_hanson_solution;
 	}
 }
