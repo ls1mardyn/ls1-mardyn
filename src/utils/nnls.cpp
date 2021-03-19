@@ -1,3 +1,7 @@
+/**
+ * Taken from: https://github.com/hmatuschek/eigen3-nnls/blob/b61e12c43324b9a8c34aaff2795091187f21cba5/test/nnls.c
+ */
+
 /* The routines in this file have been translated from Fortran to C by
    f2c. Additional modifications have been made to remove the
    dependencies on the f2c header file and library. The original
