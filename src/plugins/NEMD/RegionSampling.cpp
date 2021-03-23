@@ -994,6 +994,7 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 	F[0] = molecule->F(0);
 	F[1] = molecule->F(1);
 	F[2] = molecule->F(2);
+	
 	double v2[3];
 	v2[0] = v[0]*v[0];
 	v2[1] = v[1]*v[1];

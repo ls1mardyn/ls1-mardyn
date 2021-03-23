@@ -36,6 +36,9 @@ FullMolecule::FullMolecule(unsigned long id, Component *component,
 	_ViConstCorr = 0;
 	_upotConstCorr = 0;
 
+	_VirN = 0.;
+	_VirT = 0.;
+
 	_soa = nullptr;
 	_soa_index_lj = 0;
 	_soa_index_c = 0;
@@ -73,6 +76,10 @@ FullMolecule::FullMolecule(const FullMolecule& m) {
 	_upot = m._upot;
 	_ViConstCorr = m._ViConstCorr;
 	_upotConstCorr = m._upotConstCorr;
+
+	_VirN = m._VirN;
+	_VirT = m._VirT;
+
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -114,6 +121,9 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 	_upot = m._upot;
 	_ViConstCorr = m._ViConstCorr;
 	_upotConstCorr = m._upotConstCorr;
+
+	_VirN = m._VirN;
+	_VirT = m._VirT;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -567,12 +577,9 @@ void FullMolecule::calcFM() {
 
 	// accumulate virial, dipoles_M and quadrupoles_M:
 	double temp_M[3] = { 0., 0., 0. };
-	//double temp_Vi[3] = { 0., 0., 0. };
-	double temp_Vi[9] = { 0. };
+	double temp_Vi[3] = { 0., 0., 0. };
 
 	std::array<vcp_real_accum, 3> interim;
-	std::array<vcp_real_accum, 3> interim2;
-	std::array<vcp_real_accum, 3> interim3;
 
 	ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {

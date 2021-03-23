@@ -78,6 +78,9 @@ public:
 	/** get the virial */
 	double Vi(unsigned short d) const override { return _Vi[d] + _ViConstCorr; }
 
+	double VirN() { return _VirN; }
+	double VirT() { return _VirT; }
+
 	/** get the constant correction of potential energy */
 	double UpotConstCorr() const override { return _upotConstCorr; }
 
@@ -283,9 +286,16 @@ public:
 	void setM(double M[3]) override { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
 	void setVi(double Vi[3]) override { for(int d = 0; d < 3; d++) { _Vi[d] = Vi[d]; } }
 
+	void setVirN(const double VirN) { _VirN = VirN; }
+	void setVirT(const double VirT) { _VirT = VirT; }
+
 	void Fadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
 	void Viadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
+
+	void VirNadd(const double VirN) { _VirN += VirN; }
+	void VirTadd(const double VirT) { _VirT += VirT; }
+
 
 	void vadd(const double ax, const double ay, const double az) override {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
@@ -364,6 +374,9 @@ protected:
 	double _L[3];  /**< angular momentum */
 	double _Vi[3];  /**< Virial tensor all elements: rxfx, ryfy, rzfz */
     unsigned long _id;  /**< IDentification number of that molecule */
+
+	double _VirN;  /**< for spherical interfaces */
+	double _VirT;  /**< for spherical interfaces */
 
 	double _upot; /**< potential energy */
 

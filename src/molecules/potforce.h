@@ -289,6 +289,11 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	Virial[0]=0.;
 	Virial[1]=0.;
 	Virial[2]=0.;
+	double VNi = 0.;
+	double VTi = 0.;
+	double VNj = 0.;
+	double VTj = 0.;
+
 	// LJ centers
 	// no LJ interaction between solid atoms of the same component
 
@@ -308,16 +313,61 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			if (calculateLJ) {
 				PotForceLJ(drs, dr2, eps24, sig2, f, u);
 				u += shift6;
-
 				mi.Fljcenteradd(si, f);
 				mj.Fljcentersub(sj, f);
 				Upot6LJ += u;
 				for (unsigned short d = 0; d < 3; ++d)
 					Virial[d] += 0.5*drm[d] * f[d];
+
+				// pN, pT
+				// double center = 25.50800404; // 1CLJ
+				// double center = 29.90901281; // 2CLJ
+				double center = 17.00533582; // Bubble 1CLJ
+
+				double ksi_i[3];
+				double ksi_j[3];
+				for (unsigned short d = 0; d < 3; ++d) {
+					ksi_i[d] = center - mi.r(d);
+					ksi_j[d] = center - mj.r(d);
+				}
+
+				double absi2 = pow(ksi_i[0],2)+pow(ksi_i[1],2)+pow(ksi_i[2],2);
+				double absj2 = pow(ksi_j[0],2)+pow(ksi_j[1],2)+pow(ksi_j[2],2);
+
+				double drm_ni = 0.;
+				double drm_nj = 0.;
+				double drs_ni = 0.;
+				double drs_nj = 0.;
+				for (unsigned short d = 0; d < 3; ++d) {
+					drm_ni += drm[d] * ksi_i[d];
+					drm_nj += drm[d] * ksi_j[d];
+					drs_ni += drs[d] * ksi_i[d];
+					drs_nj += drs[d] * ksi_j[d];
+
+				}
+				double fac = (f[0]+f[1]+f[2])/(drs[0]+drs[1]+drs[2]);
+
+				VNi += 0.5*fac*drm_ni*drs_ni/absi2;
+				VNj += 0.5*fac*drm_nj*drs_nj/absj2;
+
+				double drm_ti[3];
+				double drs_ti[3];
+				double drm_tj[3];
+				double drs_tj[3];
+				for (unsigned short d = 0; d < 3; ++d) {
+					drm_ti[d] = drm[d] - drm_ni*ksi_i[d]/absi2;
+					drs_ti[d] = drs[d] - drs_ni*ksi_i[d]/absi2;
+					drm_tj[d] = drm[d] - drm_nj*ksi_j[d]/absj2;
+					drs_tj[d] = drs[d] - drs_nj*ksi_j[d]/absj2;
+				}
+				for (unsigned short d = 0; d < 3; ++d) {
+					VTi += 0.25*fac*drm_ti[d]*drs_ti[d];
+					VTj += 0.25*fac*drm_tj[d]*drs_tj[d];
+				}
+				
 			}
 		}
 	}
-
 
 	double m1[3], m2[3]; // angular momenta
 
@@ -497,7 +547,11 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 	mi.Viadd(Virial);
 	mj.Viadd(Virial);
-	
+	mi.VirNadd(VNi);
+	mj.VirNadd(VNj);
+	mi.VirTadd(VTi);
+	mj.VirTadd(VTj);
+
 	// check whether all parameters were used
 	mardyn_assert(params.eos());
 }

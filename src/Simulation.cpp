@@ -1010,7 +1010,7 @@ void Simulation::simulate() {
 			// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 			_longRangeCorrection->calculateLongRange();
 
-			// Update forces in molecules so they can be exchanged
+			// // Update forces in molecules so they can be exchanged
 			updateForces();
 
 			forceCalculationTimer->stop();
