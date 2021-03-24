@@ -16,6 +16,8 @@ struct SamplingInformation {
 	double globalLength[3]; // Size of Domain
 	double segmentVolume; // Size of one Sampling grid bin
 	double universalCentre[3]; // Centre coords for cylinder system
+	unsigned long globalNumMolecules; // number of molecules in system
+	unsigned long numMolFixRegion; // number of molecules in Fix Region
 	bool cylinder; // Cartesian or Cylinder output
 };
 

@@ -543,6 +543,18 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
     global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
 
+	global_log -> info() << "Registering callbacks." << endl;
+	for(auto&& plugin : _plugins) {
+		plugin->registerCallbacks(_callbacks);
+	}
+	global_log -> info() << _callbacks.size() << " callbacks registered." << endl;
+
+	global_log -> info() << "Accessing callbacks." << endl;
+	for(auto&& plugin : _plugins) {
+		plugin->accessAllCallbacks(_callbacks);
+	}
+	global_log -> info() << "Accessed callbacks." << endl;
+
 
     string oldpath = xmlconfig.getcurrentnodepath();
 
