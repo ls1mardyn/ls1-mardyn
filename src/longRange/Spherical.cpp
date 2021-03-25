@@ -39,6 +39,7 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	VirialKorrLJ = 0.0;
 	droplet = true;
 	_outputPrefix = "mardyn";
+	_T = 0;
 
 }
 
@@ -210,6 +211,7 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("shells", NShells);
 	xmlconfig.getNodeValue("droplet", droplet);
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	xmlconfig.getNodeValue("temperature", _T);
 	//xmlconfig.getNodeValue("frequency", frequency);
 	global_log->info() << "[Long Range Correction] Using " << NShells << " shells for profiles to calculate LRC." << endl;
 	if (droplet){
@@ -223,8 +225,6 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 }
 
 void Spherical::calculateLongRange(){
-
-	// global_log->info() << "[Long Range Correction] Correcting" << endl;
 
 	int rank = _domainDecomposition->getRank();
 	uint64_t simstep = _simulation.getSimulationStep();
@@ -877,8 +877,8 @@ void Spherical::calculateLongRange(){
 			outfilestreamGlobalCorrs << std::setw(24) << "PTShells_Mean;";
 		//	outfilestreamGlobalCorrs << std::setw(24) << "Virial_Avg;";
 			outfilestreamGlobalCorrs << std::setw(24) << "Virial_Corr_Avg;";
-			outfilestreamGlobalCorrs << std::setw(24) << "Virial_N_Avg;";
-			outfilestreamGlobalCorrs << std::setw(24) << "Virial_T_Avg";
+			outfilestreamGlobalCorrs << std::setw(24) << "P_N_Avg;";
+			outfilestreamGlobalCorrs << std::setw(24) << "P_T_Avg";
 
 			outfilestreamGlobalCorrs << std::endl;
 			for (unsigned int i=0; i<NShells; i++){
@@ -890,8 +890,8 @@ void Spherical::calculateLongRange(){
 				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << PTShells_Mean_global[i] << ";";
 			//	outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << VirShells_Mean_global[i] << ";";
 				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << -VirShells_Corr_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << -VirShells_N_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << -VirShells_T_global[i] ;
+				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_N_global[i] << ";";
+				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_T_global[i] ;
 				outfilestreamGlobalCorrs << std::endl;
 
 			}

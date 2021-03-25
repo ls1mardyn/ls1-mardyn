@@ -64,6 +64,7 @@ private:
 	double TempRho;
 	bool droplet;
 	std::string _outputPrefix;
+	double _T;
 
 	unsigned int NShells;
 	unsigned int NSMean;
