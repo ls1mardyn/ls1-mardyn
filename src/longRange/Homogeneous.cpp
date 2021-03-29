@@ -130,13 +130,13 @@ void Homogeneous::calculateLongRange() {
 	double epsRFInvrc3 = 2. * (epsilonRF - 1.) / ((_cutoff * _cutoff * _cutoff) * (2. * epsilonRF + 1.));
 	double MySelbstTerm = -0.5 * epsRFInvrc3 * _mySelbstTerm_no_num_molecules;
 
-	_UpotCorr = UpotCorrLJ + MySelbstTerm;
-	_VirialCorr = VirialCorrLJ + 3. * MySelbstTerm;
+	double UpotCorr = UpotCorrLJ + MySelbstTerm;
+	double VirialCorr = VirialCorrLJ + 3. * MySelbstTerm;
 
-	global_log->info() << "Far field terms: U_pot_correction  = " << _UpotCorr << " virial_correction = " << _VirialCorr
+	global_log->info() << "Far field terms: U_pot_correction  = " << UpotCorr << " virial_correction = " << VirialCorr
 					   << endl;
-	_domain->setUpotCorr(_UpotCorr);
-	_domain->setVirialCorr(_VirialCorr);
+	_domain->setUpotCorr(UpotCorr);
+	_domain->setVirialCorr(VirialCorr);
 }
 
 double Homogeneous::_TICCu(int n, double rc, double sigma2) {

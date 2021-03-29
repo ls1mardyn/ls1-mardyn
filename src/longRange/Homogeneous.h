@@ -25,8 +25,6 @@ public:
 	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {}
 
 private:
-	double _UpotCorr;
-	double _VirialCorr;
 	/* TODO: Comments on all the functions */
 	// Long range correction for the Lennard-Jones interactions based on Lustig (1988)
 	double _TICCu(int n,double rc,double sigma2);
