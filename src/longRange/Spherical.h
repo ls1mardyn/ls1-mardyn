@@ -35,19 +35,19 @@ private:
 		v.resize(numElements);
 	}
 
-	void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj); 
-	void centerSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
-	void siteSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
+	// void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj); 
+	// void centerSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
+	// void siteSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
 
 	void calcDensityProfiles();
 
 	double RhoP(double r, double rhov, double rhol, double D0, double R0);
 	double SICCu(int n, double r);
 	double SICSu(int n, double r, double tau);
+	double CS(int n, double r, double tau);
 	double SISSu(int n, double r, double tau1, double tau2);
-	double SICSf(int n, double r, double tau);
-	double SSLN(double r, double tau1, double tau2);
 	double SS(int n, double r, double tau1, double tau2);
+	double SSLN(double r, double tau1, double tau2);
 	double TICCu(int n, double rc, double sigma2);
 	double TICSu(int n, double rc, double sigma2, double tau);
 	double TISSu(int n, double rc, double sigma2, double tau1, double tau2);
