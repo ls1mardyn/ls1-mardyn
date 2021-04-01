@@ -499,11 +499,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			{
 				unsigned int nSlabs = 10;
 				delete _longRangeCorrection;
+				global_log->info() << "Initializing planar LRC." << endl;
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
 			else if("homogeneous" == type)
 			{
+				global_log->info() << "Initializing homogeneous LRC." << endl;
 				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 			}
 			else
@@ -512,6 +514,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->info() << "Initializing default homogeneous LRC, as no LRC was defined." << endl;
+			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 		}
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
@@ -780,11 +785,13 @@ void Simulation::prepare_start() {
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
-	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
 	if (_longRangeCorrection != nullptr) {
-		global_log -> info() << "Initializing LongRangeCorrection" << endl;
+		global_log->info() << "Initializing LongRangeCorrection" << endl;
 		_longRangeCorrection->init();
+	} else {
+		global_log->fatal() << "No _longRangeCorrection set!" << endl;
+		Simulation::exit(93742);
 	}
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();
