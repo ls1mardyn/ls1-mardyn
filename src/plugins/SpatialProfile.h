@@ -92,7 +92,10 @@ public:
 
 	void accessAllCallbacks(const std::map<std::string, FunctionWrapper>& callbackMap) override {
 		// Accesses a callback registered by FixRegion. It returns the number of molecules in the fixregion.
-		getNumFixRegion = callbackMap.at("FixRegion::getMoleculesInRegion").get<unsigned long>();
+		std::string name{"FixRegion::getMoleculesInRegion"};
+		if(callbackMap.find(name) != callbackMap.end()) {
+			getNumFixRegion = callbackMap.at(name).get<unsigned long>();
+		}
 	}
 
 private:
@@ -133,7 +136,7 @@ private:
 
 	void addProfile(ProfileBase* profile);
 
-	std::function<unsigned long(void)> getNumFixRegion;
+	std::optional<std::function<unsigned long(void)>> getNumFixRegion;
 
 };
 
