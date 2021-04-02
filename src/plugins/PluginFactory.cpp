@@ -22,6 +22,7 @@
 #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
 #include "io/HaloParticleWriter.h"
+#include "io/KDTreePrinter.h"
 #include "io/LoadBalanceWriter.h"
 #include "io/MPICheckpointWriter.h"
 #include "io/MaxWriter.h"
@@ -90,6 +91,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(HaloParticleWriter);
 	REGISTER_PLUGIN(InMemoryCheckpointing);
 	REGISTER_PLUGIN(SpatialProfile);
+	REGISTER_PLUGIN(KDTreePrinter);
 	REGISTER_PLUGIN(LoadbalanceWriter);
 	REGISTER_PLUGIN(MPICheckpointWriter);
 	REGISTER_PLUGIN(MaxCheck);

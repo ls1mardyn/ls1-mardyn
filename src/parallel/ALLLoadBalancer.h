@@ -13,7 +13,7 @@ class ALLLoadBalancer : public LoadBalancer {
 public:
 	ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma, MPI_Comm comm,
 					std::array<size_t, 3> globalSize, std::array<size_t, 3> localCoordinates,
-					double minimalPartitionSize);
+					std::array<double, 3> minimalPartitionSize);
 
 	~ALLLoadBalancer() override = default;
 	std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) override;
@@ -26,7 +26,7 @@ public:
 private:
 	ALL<double, double> _all;
 	using Point = ALL_Point<double>;
-	double _minimalPartitionSize{};
+	std::array<double, 3> _minimalPartitionSize{};
 	std::array<bool, 3> _coversWholeDomain{};
 };
 #endif

@@ -37,6 +37,7 @@
 		  <initialPhaseTime>10000</initialPhaseTime>
 		  <comment>initialPhaseTime specifies for how many time steps the initial rebalancing phase should last, in which initialPhaseFrequency is applied instead of updateFrequency.</comment>
           <initialPhaseFrequency>500</initialPhaseFrequency><comment>initialPhaseFrequency specifies how often a rebalancing will occur within the initial rebalancing phase.</comment>
+          <gridSize>34</gridSize><comment>gridSize can be used to fix process boundaries to a grid. Either one value or three comma separated values (e.g., '34,34.5,34.6') are possible.</comment>
           <comment>choose one of the following:</comment>
           <loadBalancer type="ALL"></loadBalancer>
       </parallelisation>

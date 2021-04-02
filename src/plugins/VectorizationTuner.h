@@ -91,7 +91,7 @@ public:
 	 * generateNewFiles denotes whether the tuner should write his measured values to files, which also overwrites old files.
 	 * If both are true and tuner files are available then the values that were read are written again,
 	 */
-	void tune(std::vector<Component>& ComponentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles);
+	void tune(std::vector<Component>& ComponentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles, bool allowMPIReduce);
 
 private:
 	/// The output prefix, that should be prefixed before the output files.

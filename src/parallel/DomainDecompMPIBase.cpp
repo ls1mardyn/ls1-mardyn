@@ -67,6 +67,12 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 #else
 	std::string neighbourCommunicationScheme = "direct-pp";
 #endif
+	if(_forceDirectPP){
+		global_log->info()
+			<< "Forcing direct-pp communication scheme, as _forceDirectPP is set (probably by a child class)."
+			<< std::endl;
+		neighbourCommunicationScheme = "direct-pp";
+	}
 
 	std::string zonalMethod = "fs";
 	std::string traversal = "c08"; // currently useless, as traversal is set elsewhere
@@ -98,7 +104,7 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	// Specifies if the sequential fallback shall be used.
 	bool useSequentialFallback = true;
 	xmlconfig.getNodeValue("useSequentialFallback", useSequentialFallback);
-	if(zonalMethod=="nt"){
+	if (zonalMethod == "nt") {
 		global_log->info() << "Forcefully disabling sequential fallback, because Neutral Territory is used!" << std::endl;
 		useSequentialFallback = false;
 		global_log->info() << "Enforcing direct-pp neighborcommunicationscheme, because NT is used!" << std::endl;
@@ -125,7 +131,7 @@ int DomainDecompMPIBase::getNonBlockingStageCount() {
 	return _neighbourCommunicationScheme->getCommDims();
 }
 
-void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string zonalMethod) {
+void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, const std::string& zonalMethod) {
 	// delete if it exists already
 	delete _neighbourCommunicationScheme;
 	_neighbourCommunicationScheme = nullptr;
@@ -144,7 +150,7 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string
 	} else if(zonalMethod=="nt") {
 		zonalMethodP = new NeutralTerritory();
 	} else {
-		global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'hs', 'mp' and 'nt'"
+		global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
 				<< std::endl;
 		Simulation::exit(1);
 	}

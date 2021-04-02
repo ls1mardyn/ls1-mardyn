@@ -2750,6 +2750,12 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 
 	CellDataSoA& soa1 = full_c1.getCellDataSoA();
 	CellDataSoA& soa2 = full_c2.getCellDataSoA();
+
+	// if one cell is empty, skip
+	if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {
+		return;
+	}
+
 	const bool c1Halo = full_c1.isHaloCell();
 	const bool c2Halo = full_c2.isHaloCell();
 
@@ -2760,10 +2766,6 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 
 	
 	if(sumAll) {
-		// if one cell is empty, skip
-		if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {
-			return;
-		}
 
 		// Macroscopic conditions: Compute always
 
@@ -2778,7 +2780,7 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 		}
 	} else {
 		// if one cell is empty, or both cells are Halo, skip
-		if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0 or (c1Halo and c2Halo)) {
+		if (c1Halo and c2Halo) {
 			return;
 		}
 

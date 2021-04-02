@@ -15,6 +15,7 @@
 #include "utils/Logger.h"
 #include "utils/Random.h"
 #include "utils/mardyn_assert.h"
+#include "utils/GetChunkSize.h"
 
 #include "particleContainer/TraversalTuner.h"
 
@@ -306,19 +307,21 @@ void LinkedCells::update_via_copies() {
 	vector<long> backwardNeighbourOffsets; // now vector
 	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
+	// magic numbers: empirically determined to be somewhat efficient.
+	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			_cells[cellIndex].preUpdateLeavingMolecules();
 		}
 
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			ParticleCell& cell = _cells[cellIndex];
@@ -344,7 +347,7 @@ void LinkedCells::update_via_copies() {
 		}
 
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 			_cells[cellIndex].postUpdateLeavingMolecules();
@@ -363,8 +366,14 @@ void LinkedCells::update_via_coloring() {
 			int startIndices[3];
 			threeDIndexOfCellIndex(col, startIndices, strides);
 
+			const auto loop_size = static_cast<size_t>(
+				std::ceil(static_cast<double>(_cellsPerDimension[0] - 1 - startIndices[0]) / strides[0]) *
+				std::ceil(static_cast<double>(_cellsPerDimension[1] - 1 - startIndices[1]) / strides[1]) *
+				std::ceil(static_cast<double>(_cellsPerDimension[2] - 1 - startIndices[2]) / strides[2]));
+			// magic numbers: empirically determined to be somewhat efficient.
+			const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 100);
 			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3)
+			#pragma omp for schedule(dynamic, chunk_size) collapse(3)
 			#endif
 			for (int z = startIndices[2]; z < _cellsPerDimension[2]-1 ; z+= strides[2]) {
 				for (int y = startIndices[1]; y < _cellsPerDimension[1]-1; y += strides[1]) {
@@ -504,9 +513,9 @@ void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDup
 		const cell_index_t my_cells_start = (thread_id    ) * numCells / num_threads;
 		const cell_index_t my_cells_end   = (thread_id + 1) * numCells / num_threads;
 
-		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_begin = newPartsPerCell.begin();
+		auto thread_begin = newPartsPerCell.begin();
 		advance(thread_begin, my_cells_start);
-		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_end = newPartsPerCell.begin();
+		auto thread_end = newPartsPerCell.begin();
 		advance(thread_end, my_cells_end);
 
 		for(auto it = thread_begin; it != thread_end; ++it) {
@@ -607,12 +616,12 @@ void LinkedCells::deleteOuterParticles() {
 		Simulation::exit(1);
 	}*/
 
-	const int numHaloCells = _haloCellIndices.size();
+	const size_t numHaloCells = _haloCellIndices.size();
 
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (int i = 0; i < numHaloCells; i++) {
+	for (size_t i = 0; i < numHaloCells; i++) {
 		ParticleCell& currentCell = _cells[_haloCellIndices[i]];
 		currentCell.deallocateAllParticles();
 	}
@@ -1046,7 +1055,7 @@ void LinkedCells::updateInnerMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		if(_cells[cellIndex].isInnerCell()){
 			_cells[cellIndex].buildSoACaches();
 		}
@@ -1057,7 +1066,7 @@ void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		if (_cells[cellIndex].isHaloCell() or _cells[cellIndex].isBoundaryCell()) {
 			_cells[cellIndex].buildSoACaches();
 		}
@@ -1065,10 +1074,13 @@ void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 }
 
 void LinkedCells::updateMoleculeCaches() {
+	// magic numbers: empirically determined to be somewhat efficient.
+	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
+
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(dynamic, chunk_size)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		_cells[cellIndex].buildSoACaches();
 	}
 }
@@ -1134,12 +1146,16 @@ bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurr
 std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {
 	int maxParticles = 0;
 	for (auto& cell : _cells) {
-		maxParticles = std::max(maxParticles, cell.getMoleculeCount());
+		if(not cell.isHaloCell()) {
+			maxParticles = std::max(maxParticles, cell.getMoleculeCount());
+		}
 	}
 
 	std::vector<unsigned long> statistics(maxParticles + 1, 0ul);
 	for (auto& cell : _cells) {
-		statistics[cell.getMoleculeCount()]++;
+		if(not cell.isHaloCell()) {
+			statistics[cell.getMoleculeCount()]++;
+		}
 	}
 	return statistics;
 }

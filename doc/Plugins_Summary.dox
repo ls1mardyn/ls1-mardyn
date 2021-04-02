@@ -26,12 +26,13 @@ FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations
 GammaWriter | todo | todo
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
 InMemoryCheckpointing | resilience, checkpoint, fault tolerance, in-memory | In-memory Checkpointing. Save and restore the state of a simulation from a previous snapshot stored in RAM. Under development.
+KDTreePrinter | output, debugging, kdd | Prints the full tree information of the kd-tree decomposition.
 SpatialProfile (SP) | cartesian cylinder sampling profile output | Enables Profiles (via ProfileBase) to record and output quantities from a cartesian/cylinder sampling grid. Currently available profile outputs under plugins/profiles.
 SP / DensityProfile | number density profile output | Outputs number density per bin.
 SP / VelocityAbsProfile | velocity magnitude profile output | Outputs average magnitude per bin. Requires/auto enables DensityProfile.
 SP / Velocity3dProfile | velocity 3d vector profile output | Outputs average velocity 3d-components per bin. Requires/auto enables DensityProfile.
 SP / TemperatureProfile | temperature profile output | Outputs the average temperature per sampling bin. Requires/auto enables DOFProfile and KineticProfile which dont write to file (as of now).
-SP / VirialProfile | virial pressure profile output | Outputs the virial/partial pressures in a special 1D output in y-direction. Requires/auto enables DensityProfile.
+SP / VirialProfile | virial pressure profile output | Outputs the virial/partial pressures in a spatial 1D output in y-direction or 2D output (Virial2DProfile). Requires/auto enables DensityProfile.
 LoadbalanceWriter | print, mpi, load balance, timers | Writes load balance information. Averages, min, max and a load balance is written. For more detailed output use the TimerWriter.
 MaxCheck  | limit, maximum values, overlaps, explosion | Limit velocity and force of individual particles to maximum values to avoid overlaps and consequently exploding systems. 
 MaxWriter  | sampling, maximum values, force, velocity | Sampling maximum force and velocities values occuring in the system. 

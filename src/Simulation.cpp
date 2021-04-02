@@ -49,13 +49,14 @@
 
 #include "io/ASCIIReader.h"
 #include "io/BinaryReader.h"
-#include "io/MultiObjectGenerator.h"
-#include "io/TcTS.h"
-#include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
-#include "io/ReplicaGenerator.h"
-#include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
+#include "io/Mkesfera.h"
+#include "io/MultiObjectGenerator.h"
+#include "io/PerCellGenerator.h"
+#include "io/ReplicaGenerator.h"
+#include "io/TcTS.h"
+#include "io/TimerProfiler.h"
 
 #include "ensemble/GrandCanonicalEnsemble.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -313,6 +314,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
+				bool forceLatchingToLinkedCellsGrid = false;
 				// we need the skin here, so we extract it from the AutoPas container's xml,
 				// because the ParticleContainer needs to be instantiated later. :/
 				xmlconfig.changecurrentnode("..");
@@ -321,13 +323,18 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					xmlconfig.getNodeValue("@type", datastructuretype);
 					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
 						xmlconfig.getNodeValue("skin", skin);
-						global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 					} else {
-						global_log->error() << "Using the GeneralDomainDecomposition is only supported when using "
-											   "AutoPas, but the configuration file does not use it."
-											<< endl;
-						Simulation::exit(2);
+						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
+												 "thoroughly tested and considered BETA."
+											  << endl;
+						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
+						// of global values will be faulty without one!
+						global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
+												 "to get correct global values!"
+											  << endl;
+						forceLatchingToLinkedCellsGrid = true;
 					}
+					global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 				} else {
 					global_log->error() << "Datastructure section missing" << endl;
 					Simulation::exit(1);
@@ -337,7 +344,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Simulation::exit(1);
 				}
 				delete _domainDecomposition;
-				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain);
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
 			} else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);
@@ -359,7 +366,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
         #endif
 
-			string loadTimerStr("SIMULATION_COMPUTATION");
+			string loadTimerStr("SIMULATION_FORCE_CALCULATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
 			global_log->info() << "Using timer " << loadTimerStr << " for the load calculation." << std::endl;
 			_timerForLoad = timers()->getTimer(loadTimerStr);
@@ -531,12 +538,25 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
     pluginFactory.registerDefaultPlugins();
 	global_log -> info() << "Successfully registered plugins." << endl;
 
-    long numPlugs = 0;
+	long numPlugs = 0;
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
-    global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
+	global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
 
-    string oldpath = xmlconfig.getcurrentnodepath();
+	global_log -> info() << "Registering callbacks." << endl;
+	for(auto&& plugin : _plugins) {
+		plugin->registerCallbacks(_callbacks);
+	}
+	global_log -> info() << _callbacks.size() << " callbacks registered." << endl;
+
+	global_log -> info() << "Accessing callbacks." << endl;
+	for(auto&& plugin : _plugins) {
+		plugin->accessAllCallbacks(_callbacks);
+	}
+	global_log -> info() << "Accessed callbacks." << endl;
+
+
+	string oldpath = xmlconfig.getcurrentnodepath();
 
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
 		global_log->info() << "Reading phase space from file." << endl;
@@ -581,6 +601,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if (generatorName == "ReplicaGenerator") {
 			_inputReader = new ReplicaGenerator();
+		}
+		else if (generatorName == "PerCellGenerator") {
+			_inputReader = new PerCellGenerator();
 		}
 		else {
 			global_log->error() << "Unknown generator: " << generatorName << endl;
@@ -749,8 +772,8 @@ void Simulation::prepare_start() {
 	}
 
 #ifdef ENABLE_MPI
-	if(dynamic_cast<KDDecomposition*>(_domainDecomposition) != nullptr){
-		static_cast<KDDecomposition*>(_domainDecomposition)->fillTimeVecs(&_cellProcessor);
+	if(auto *kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition); kdd != nullptr){
+		kdd->fillTimeVecs(&_cellProcessor);
 	}
 #endif
 
@@ -762,11 +785,7 @@ void Simulation::prepare_start() {
 		getMemoryProfiler()->doOutput("without halo copies");
 	}
 
-	// temporary addition until MPI communication is parallelized with OpenMP
-	// we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
-	global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
-	updateParticleContainerAndDecomposition(1.0);
-	global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+	updateParticleContainerAndDecomposition(1.0, false);
 
 	if(getMemoryProfiler()) {
 		getMemoryProfiler()->doOutput("with halo copies");
@@ -893,6 +912,8 @@ void Simulation::simulate() {
 	global_simulation->timers()->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
 	global_simulation->timers()->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
 	global_simulation->timers()->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
+	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CONTAINER", "Container update took:");
+	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CACHES", "Cache update took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
 
@@ -977,7 +998,7 @@ void Simulation::simulate() {
 			global_log->debug() << "Updating container and decomposition" << endl;
 
 			double currentTime = _timerForLoad->get_etime();
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad, true);
 			previousTimeForLoad = currentTime;
 
 			decompositionTimer->stop();
@@ -1214,18 +1235,34 @@ void Simulation::finalize() {
 	global_simulation = nullptr;
 }
 
-void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime) {
-	// The particles have moved, so the neighborhood relations have
-	// changed and have to be adjusted
+void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime, bool useTimers) {
+	// The particles have moved, so the leaving + halo particles have changed and have to be communicated.
+	if(not useTimers){
+		global_simulation->timers()->deactivateTimer("SIMULATION_UPDATE_CONTAINER");
+		global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+		global_simulation->timers()->deactivateTimer("SIMULATION_UPDATE_CACHES");
+	}
+
+	global_simulation->timers()->start("SIMULATION_UPDATE_CONTAINER");
 	_moleculeContainer->update();
-	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
+
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
 	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
+	global_simulation->timers()->start("SIMULATION_UPDATE_CACHES");
 	_moleculeContainer->updateMoleculeCaches();
+	global_simulation->timers()->stop("SIMULATION_UPDATE_CACHES");
+
+	if(not useTimers){
+		global_simulation->timers()->activateTimer("SIMULATION_UPDATE_CONTAINER");
+		global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+		global_simulation->timers()->activateTimer("SIMULATION_UPDATE_CACHES");
+	}
 }
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etime) {

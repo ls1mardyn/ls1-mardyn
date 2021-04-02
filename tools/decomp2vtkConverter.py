@@ -97,7 +97,7 @@ for cell in celllist:
 
 # add ids for every cell. They are not necessarily the same as the MPI Rank ID
 f_out.write('CELL_DATA ' + str(numcells) + '\n')
-f_out.write('SCALARS cell_scalars int 1\n')
+f_out.write('SCALARS rank int 1\n')
 f_out.write('LOOKUP_TABLE default\n')
 i=0
 for cell in celllist:

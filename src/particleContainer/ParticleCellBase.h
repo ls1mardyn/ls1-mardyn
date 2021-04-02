@@ -97,16 +97,16 @@ public:
 
 
 	static CellBorderAndFlagManager _cellBorderAndFlagManager;
-	bool isHaloCell() const {
+	bool isHaloCell() const final {
 		return _cellBorderAndFlagManager.isHaloCell(_cellIndex);
 	}
-	bool isBoundaryCell() const {
+	bool isBoundaryCell() const final {
 		return _cellBorderAndFlagManager.isBoundaryCell(_cellIndex);
 	}
-	bool isInnerCell() const {
+	bool isInnerCell() const final {
 		return _cellBorderAndFlagManager.isInnerCell(_cellIndex);
 	}
-	bool isInnerMostCell() const {
+	bool isInnerMostCell() const final {
 		return _cellBorderAndFlagManager.isInnerMostCell(_cellIndex);
 	}
 

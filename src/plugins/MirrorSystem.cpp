@@ -241,7 +241,7 @@ void MirrorSystem::beforeEventNewTimestep(
 
 	}
 //	particleContainer->update();
-	global_simulation->updateParticleContainerAndDecomposition(1.0);
+	global_simulation->updateParticleContainerAndDecomposition(1.0, false);
 
 	// done
 	_bDone = true;

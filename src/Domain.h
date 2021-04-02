@@ -191,7 +191,7 @@ public:
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);
-
+	
 	//! @brief update globalNumMolecules
 	void updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
@@ -465,7 +465,7 @@ private:
 	//! local sum (over all molecules) of the moment of inertia
 	//! multiplied with the squared  rotational velocity
 	std::map<int, double> _local2KERot; 
-
+	
 	//! reaction field
 	//!
 	//! This is neither "local" nor "global" but a parameter of the reaction field method.
