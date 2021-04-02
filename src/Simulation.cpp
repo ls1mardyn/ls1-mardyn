@@ -499,17 +499,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			{
 				unsigned int nSlabs = 10;
 				delete _longRangeCorrection;
+				global_log->info() << "Initializing planar LRC." << endl;
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
 			else if("homogeneous" == type)
 			{
-				/*
-				 * Needs to be initialized later for some reason, done in Simulation::prepare_start()
-				 * TODO: perhaps work on this, to make it more robust
-				 *
-				 *_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
-                 */
+				global_log->info() << "Initializing homogeneous LRC." << endl;
+				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 			}
 			else
 			{
@@ -517,6 +514,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->info() << "Initializing default homogeneous LRC, as no LRC was defined." << endl;
+			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 		}
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
@@ -535,11 +535,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
     global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
-
-	if (_longRangeCorrection != nullptr) {
-		global_log -> info() << "Initializing LongRangeCorrection" << endl;
-		_longRangeCorrection->init();
-	}
 
     string oldpath = xmlconfig.getcurrentnodepath();
 
@@ -694,8 +689,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 	_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
 	unsigned long globalNumMolecules = _domain->getglobalNumMolecules();
-	double rho_global = globalNumMolecules/ _ensemble->V();
-	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << endl;
+	double rho_global = globalNumMolecules / _ensemble->V();
+	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules
+					   << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << endl;
 	_domain->setGlobalTemperature(_ensemble->T());
 	_domain->setglobalRho(rho_global);
 
@@ -789,10 +785,13 @@ void Simulation::prepare_start() {
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
-	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
-	if (_longRangeCorrection == nullptr) {
-		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, this);
+	if (_longRangeCorrection != nullptr) {
+		global_log->info() << "Initializing LongRangeCorrection" << endl;
+		_longRangeCorrection->init();
+	} else {
+		global_log->fatal() << "No _longRangeCorrection set!" << endl;
+		Simulation::exit(93742);
 	}
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();
