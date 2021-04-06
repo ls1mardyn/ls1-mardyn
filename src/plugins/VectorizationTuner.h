@@ -110,6 +110,8 @@ private:
 	/// The cutoff Radius for the LJ potential
 	double _LJCutoffRadius{};
 
+	/// Maximal number of repetitions for each measurement.
+	/// The actual number of repetitions is _numRepetitionsMax / numMols^2, but always at least 50.
 	unsigned int _numRepetitionsMax{4000000};
 
 	/// The cutoff radius
