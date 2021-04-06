@@ -13,8 +13,8 @@
 
 class XyzWriter : public PluginBase {
 public:
-	XyzWriter() {}
-	~XyzWriter() {}
+	XyzWriter() = default;
+	~XyzWriter() = default;
 
 	/** @brief Read in XML configuration for DecompWriter.
 	 *
@@ -48,9 +48,9 @@ public:
 	static PluginBase* createInstance() { return new XyzWriter(); }
 private:
 	std::string _outputPrefix;
-	unsigned long _writeFrequency;
-	bool _appendTimestamp;
-	bool _incremental;
+	unsigned long _writeFrequency {0ul};
+	bool _appendTimestamp {false};
+	bool _incremental {false};
 };
 
 #endif  // SRC_IO_XYZWRITER_H_
