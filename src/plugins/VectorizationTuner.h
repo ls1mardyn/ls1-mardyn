@@ -31,19 +31,15 @@ class Component;
 class VectorizationTuner: public PluginBase {
 
 public:
-	/** @brief Constructor of VectorizationTuner for the xml input mode.
-	 *
-	 * Here the parameter (outputPrefix) does not have to be passed, it is written from the xml file instead.
-	 * @param cutoffRadius
-	 * @param LJCutoffRadius
-	 * @param cellProcessor pointer to the pointer of the cellProcessor. This is needed, since the cell processor is not yet set, when this function is called.
+	/**
+	 * @brief Constructor of VectorizationTuner for the xml input mode.
 	 */
-    VectorizationTuner();
+    VectorizationTuner() = default;
 
 	/**
-	 * destructor of the VectorizationTuner class.
+	 * Destructor of the VectorizationTuner class.
 	 */
-	~VectorizationTuner() override;
+	~VectorizationTuner() override = default;
 
 	//documentation in PluginBase
 	void init(ParticleContainer *particleContainer,
@@ -53,20 +49,19 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <parallelisation type="VectorizationTuner">
-	     <outputfilename>STRING</outputfilename>
+	   <plugin type="VectorizationTuner">
+	     <outputprefix>STRING</outputprefix>
 	     <minmoleculecnt>INTEGER</minmoleculecnt>
 	     <maxmoleculecnt>INTEGER</maxmoleculecnt>
 	     <numRepetitionsMax>INTEGER</numRepetitionsMax>
-	     <moleculecntincreasetype>INTEGER</moleculecntincreasetype>
-	   </parallelisation>
+	     <moleculecntincreasetype>linear OR exponential OR both</moleculecntincreasetype> <!--default: both-->
+	     <mode>stdout OR file</mode> <!--print to stdout or file-->
+	   </plugin>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-  static PluginBase* createInstance() {
-	  return new VectorizationTuner();
-  }
+	static PluginBase* createInstance() { return new VectorizationTuner(); }
 
 	//documentation in PluginBase, does nothing.
 	void endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
@@ -95,33 +90,33 @@ public:
 
 private:
 	/// The output prefix, that should be prefixed before the output files.
-	std::string _outputPrefix;
+	std::string _outputPrefix{"MarDyn"};
 
 	/// The minimal amount of molecules
-	unsigned int _minMoleculeCnt;
+	unsigned int _minMoleculeCnt{2};
 
 	/// The maximal amount of molecules
-	unsigned int _maxMoleculeCnt;
+	unsigned int _maxMoleculeCnt{512};
 
 	/// An enum, that describes, whether the molecule count should be increased exponentially or linearly.
-	MoleculeCntIncreaseTypeEnum _moleculeCntIncreaseType;
+	MoleculeCntIncreaseTypeEnum _moleculeCntIncreaseType{both};
 
 	/// The CellProcessor, that should be used to iterate over the cells.
-	CellProcessor* _cellProcessor;
+	CellProcessor* _cellProcessor{nullptr};
 
 	/// The cutoff radius
-	double _cutoffRadius;
+	double _cutoffRadius{};
 
 	/// The cutoff Radius for the LJ potential
-	double _LJCutoffRadius;
+	double _LJCutoffRadius{};
 
-	unsigned long _numRepetitionsMax;
+	unsigned int _numRepetitionsMax{4000000};
 
 	/// The cutoff radius
-	static constexpr double _cutoffRadiusBig=5.;
+	static constexpr double _cutoffRadiusBig{5.};
 
 	/// The cutoff Radius for the LJ potential
-	static constexpr double _LJCutoffRadiusBig=5.;
+	static constexpr double _LJCutoffRadiusBig{5.};
 
 	/// FlopCounter that utilizes a big cutoff radius
 	std::unique_ptr<FlopCounter> _flopCounterBigRc;
@@ -164,12 +159,11 @@ private:
 	void iterate(std::vector<Component>& ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
 			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero);
 
-	void iteratePair (long long int numRepetitions,
+	void iteratePair (unsigned int numRepetitions,
 			ParticleCell& firstCell, ParticleCell& secondCell, double& time);
 
-	void iterateOwn (long long int numRepetitions,
+	void iterateOwn (unsigned int numRepetitions,
 			ParticleCell& cell, double& time);
-
 
 	/**
 	 * @brief Calculation of the molecule interactions within a single cell.
@@ -178,7 +172,7 @@ private:
 	 * @param cell1
 	 * @param numRepetitions
 	 */
-	void runOwn(CellProcessor& cp, ParticleCell& cell1, int numRepetitions);
+	void runOwn(CellProcessor& cp, ParticleCell& cell1, unsigned int numRepetitions);
 
 	/** @brief Calculation of the molecule interactions between two neighboring cells.
 	 * Initializes the Calculation and preprocesses both cells. Once they are preprocessed, multiple (numRepetitions) iterations are performed on the cells. Afterwards they are postprecessed.
@@ -187,7 +181,7 @@ private:
 	 * @param cell2
 	 * @param numRepetitions The amount of repetitions, that should be performed on the single cell.
 	 */
-	void runPair(CellProcessor& cp, ParticleCell& cell1, ParticleCell& cell2, int numRepetitions);
+	void runPair(CellProcessor& cp, ParticleCell& cell1, ParticleCell& cell2, unsigned int numRepetitions);
 
 	/**
 	 * @brief Initializes the Molecules in an equidistant mesh within the box.
@@ -198,7 +192,7 @@ private:
 	 * @param cell1
 	 * @param cell2
 	 */
-	void initMeshOfMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2);
+	void initMeshOfMolecules(const double boxMin[3], const double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2);
 
 	/**
 	 * @brief Initializes the molecules uniformly randomly distributed within the box. The box is set using boxMin and boxMax.
@@ -243,10 +237,10 @@ private:
 
 	void initCells(ParticleCell& main, ParticleCell& face, ParticleCell& edge, ParticleCell& corner);
 
-	void iterateOwn(long long int numRepetitions,
+	void iterateOwn(unsigned int numRepetitions,
 			ParticleCell& cell,
 			double& gflopsPair, FlopCounter& flopCounter);
-	void iteratePair(long long int numRepetitions,
+	void iteratePair(unsigned int numRepetitions,
 			ParticleCell& firstCell, ParticleCell& secondCell,
 			double& gflopsPair, FlopCounter& flopCounter);
 
@@ -266,13 +260,13 @@ private:
 
 	class VTWriter: public VTWriterI {
 	public:
-		virtual void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
+		void initWrite(const std::string& outputPrefix, double cutoffRadius, double LJCutoffRadius,
 				double cutoffRadiusBig, double LJCutoffRadiusBig) override;
-		virtual void writeHeader(const std::string& distributionTypeString) override;
-		virtual void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
+		void writeHeader(const std::string& distributionTypeString) override;
+		void write(unsigned int numMols, double gflopsOwnBig, double gflopsPairBig, double gflopsOwnNormal,
 				double gflopsPairNormalFace, double gflopsPairNormalEdge, double gflopsPairNormalCorner,
 				double gflopsOwnZero, double gflopsPairZero) override;
-		virtual void close() override;
+		void close() override;
 	private:
 		ofstream _myfile;
 	};
@@ -290,7 +284,7 @@ private:
 		void writeStatistics(double input, const std::string& name);
 	};
 
-	std::unique_ptr<VTWriterI> vtWriter;
+	std::unique_ptr<VTWriterI> vtWriter{new VTWriter()};
 };
 
 #endif  // SRC_IO_VECTORIZATIONTUNER_H_

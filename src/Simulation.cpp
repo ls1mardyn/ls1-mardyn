@@ -75,8 +75,6 @@
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
 
-#include "plugins/VectorizationTuner.h"
-
 using Log::global_log;
 using namespace std;
 
