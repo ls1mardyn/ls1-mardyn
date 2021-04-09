@@ -15,7 +15,7 @@
 /**
  * class that implements additional functions to make the molecule compatible with autopas
  */
-class AutoPasSimpleMolecule : public MoleculeInterface, public autopas::ParticleFP64 {
+class AutoPasSimpleMolecule final : public MoleculeInterface, public autopas::ParticleFP64 {
 public:
 	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component* component = nullptr, double rx = 0., double ry = 0.,
 								   double rz = 0., double vx = 0., double vy = 0., double vz = 0., double q0 = 1.,
