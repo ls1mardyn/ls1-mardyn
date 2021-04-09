@@ -443,9 +443,9 @@ double *AutoPasContainer::getHaloSize() {
 autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 	switch (t) {
 		case ParticleIterator::Type::ALL_CELLS:
-			return autopas::IteratorBehavior::haloAndOwned;
+			return autopas::IteratorBehavior::ownedOrHalo;
 		case ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY:
-			return autopas::IteratorBehavior::ownedOnly;
+			return autopas::IteratorBehavior::owned;
 	}
 	throw std::runtime_error("Unknown iterator type.");
 }
