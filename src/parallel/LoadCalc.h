@@ -45,11 +45,15 @@ class TunerLoad: public LoadCalc {
 public:
 
 	/**
-	 * The whole idea of this class is to take the ownership of the measured values of the tuner, so they are given by rvalue reference
+	 * The whole idea of this class is to take the ownership of the measured values of the tuner, so they are given by rvalue reference.
+	 * This constructor is used when tuning values are read from a file.
 	 */
 	TunerLoad(int count1, int count2, std::vector<double>&& ownTime, std::vector<double>&& faceTime,
 			std::vector<double>&& edgeTime, std::vector<double>&& cornerTime);
 
+	/**
+	 * This constructor is normally used when creating new files.
+	 */
 	TunerLoad() :
 			_count1 { 0 }, _count2 { 0 } {
 	}
@@ -187,10 +191,10 @@ private:
 	 * The first value is the constant for interactions between particles of type 1, the second between particles of type 2
 	 * and the the third for an interaction between particles of type 1 and 2
 	 */
-	std::array<double, 3> _ownConst;
-	std::array<double, 3> _faceConst;
-	std::array<double, 3> _edgeConst;
-	std::array<double, 3> _cornerConst;
+	std::array<double, 3> _ownConst{};
+	std::array<double, 3> _faceConst{};
+	std::array<double, 3> _edgeConst{};
+	std::array<double, 3> _cornerConst{};
 };
 
 /**
@@ -224,23 +228,24 @@ class MeasureLoad: public LoadCalc {
 	static std::string TIMER_NAME;
 
 public:
-	MeasureLoad();
+	MeasureLoad(bool timeValuesShouldBeIncreasing, int interpolationStartsAt);
 
 	double getOwn(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
 
 	double getFace(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
 
 	double getEdge(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
 
 	double getCorner(int index1, int index2) const override {
-		return getValue(index1);
+		return getValue(index1 + index2);
 	}
+
 #ifdef ENABLE_MPI
 	int prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm);
 #endif
@@ -248,9 +253,17 @@ private:
 	double getValue(int numParticles) const;
 	void calcConstants();
 
-	std::vector<double> _times;  /// stores the times needed for the cells
-	std::array<double, 3> _extrapolationConst;  /// stores values of the extrapolation of the form y = a x^2 + b x + c
+	/// stores the times needed for the cells
+	std::vector<double> _times;
 
-	bool _preparedLoad;
-	double _previousTime;
+	/**
+	 * Stores values of the extrapolation of the form y = a x^2 + b x + c.
+	 * Hereby, x is the number of particles and y the expected runtime of the simulation.
+	 */
+	std::array<double, 3> _interpolationConstants{};
+
+	bool _preparedLoad{false};
+	double _previousTime{0.};
+	int _interpolationStartsAt{1};
+	bool _timeValuesShouldBeIncreasing{true};
 };

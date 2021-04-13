@@ -32,7 +32,7 @@ class Cell:
         for elem in configString.split(' , ') :
             [key, value] = elem.split(': ')
             self.config[key] = value
-        
+
     def getPointCoordinates(self):
         output = io.StringIO()
         print(self.extents['xmin'], self.extents['ymin'], self.extents['zmin'], file=output)
@@ -122,7 +122,7 @@ for inputFileName in sys.argv[1:]:
 
     # write ids for every cell. They are not necessarily the same as the MPI Rank ID
     f_out.write('CELL_DATA ' + str(numcells) + '\n'
-            + 'SCALARS cell_scalars int 1\n'
+            + 'SCALARS rank int 1\n'
             + 'LOOKUP_TABLE default\n'
             )
     i=0

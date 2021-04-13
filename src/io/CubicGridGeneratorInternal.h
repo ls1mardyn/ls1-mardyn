@@ -51,20 +51,4 @@ private:
 	 */
 	std::array<unsigned long, 3> determineMolsPerDimension(unsigned long targetTotalNumMols, std::array<double, 3> boxLength) const;
 
-//	bool addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
-	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components, DomainDecompBase* domainDecomp);
-	/**
-	 * create a random number between a and b (inclusive)
-	 */
-//	double randdouble(double a, double b) {
-//		return _RNG.uniformRandInRange(a, b);
-//	}
-//	void getOrientation(int base, int delta, double orientation[4]);
-
-	/**
-	 * determine the velocity according to the temperature.
-	 */
-//	std::vector<double> getRandomVelocity(double temperature);
-
-//	Random _RNG;
 };

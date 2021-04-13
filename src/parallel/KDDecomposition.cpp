@@ -30,31 +30,17 @@
 using namespace std;
 using Log::global_log;
 
-
-KDDecomposition::KDDecomposition() :
-		_globalNumCells(1), _decompTree(nullptr), _ownArea(nullptr), _numParticlesPerCell(), _steps(0), _frequency(1.),
-		_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
-		_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _clusteredHeterogeneouseSystems {false}, _splitBiggest(true), _forceRatio(false),
-		_splitThreshold(std::numeric_limits<int>::max()), _numParticleTypes {}, _maxPars{std::numeric_limits<int>::min()},
-		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
-		_useExistingFiles {}, _rebalanceLimit(0) {
-	_loadCalc = new TradLoad();
-	_measureLoadCalc = nullptr;
-}
-
-KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
-		bool cutsmaller, bool forceRatio, int splitThresh) :
-		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
-		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _clusteredHeterogeneouseSystems {false}, _splitBiggest(!cutsmaller),
-		_forceRatio(forceRatio), _splitThreshold{splitThresh},
-		_numParticleTypes {numParticleTypes}, _maxPars{std::numeric_limits<int>::min()}, _maxPars2{std::numeric_limits<int>::min()},
-		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
-		_useExistingFiles {true}, _rebalanceLimit(0) {
+KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency,
+								 int fullSearchThreshold)
+	: _frequency(updateFrequency),
+	  _fullSearchThreshold(fullSearchThreshold),
+	  _numParticleTypes{numParticleTypes},
+	  _partitionRank{calculatePartitionRank()},
+	  _vecTunParticleNums(_numParticleTypes, 50) {
 	_loadCalc = new TradLoad();
 	_measureLoadCalc = nullptr;
 
 	_cutoffRadius = cutoffRadius;
-
 }
 
 void KDDecomposition::init(Domain* domain){
@@ -95,7 +81,7 @@ void KDDecomposition::init(Domain* domain){
 #ifdef DEBUG_DECOMP
     global_log->info() << "Initial Decomposition: " << endl;
 	if (_rank == 0) {
-		_decompTree->printTree("");
+		_decompTree->printTree("", std::cout);
 	}
 #endif
 }
@@ -176,7 +162,6 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 	xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 	if(!_splitBiggest){
-		xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
 	}
 
@@ -191,9 +176,20 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
 	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
+	xmlconfig.getNodeValue("vecTunerAllowMPIReduce", _vecTunerAllowMPIReduce);
+	global_log->info() << "Allow an MPI Reduce for the vectorization tuner?: " << (_vecTunerAllowMPIReduce?"yes":"no") << endl;
 
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
+
+	xmlconfig.getNodeValue("measureLoadInterpolationStartsAt", _measureLoadInterpolationStartsAt);
+	global_log->info() << "measureLoad: Interpolation is performed for cells with at least "
+	                   << _measureLoadInterpolationStartsAt << " particles." << endl;
+
+	xmlconfig.getNodeValue("measureLoadIncreasingTimeValues", _measureLoadIncreasingTimeValues);
+	global_log->info() << "measureLoad: Ensure that cells with more particles take longer ? "
+					   << (_measureLoadIncreasingTimeValues ? "yes" : "no") << endl;
+
 	DomainDecompMPIBase::readXML(xmlconfig);
 
 	string oldPath(xmlconfig.getcurrentnodepath());
@@ -268,16 +264,21 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	const bool removeRecvDuplicates = true;
 
 	size_t measureLoadInitTimers = 2;
-	if(_steps == measureLoadInitTimers and _doMeasureLoadCalc){
-		_measureLoadCalc = new MeasureLoad();
+	if (_steps == measureLoadInitTimers and _doMeasureLoadCalc) {
+		if(global_simulation->getEnsemble()->getComponents()->size() > 1){
+			global_log->warning() << "MeasureLoad is designed to work with one component. Using it with more than one "
+									 "component might produce bad results if their force calculation differs."
+								  << std::endl;
+		}
+		_measureLoadCalc = new MeasureLoad(_measureLoadIncreasingTimeValues, _measureLoadInterpolationStartsAt);
 	}
 	size_t measureLoadStart = 50;
 	if (_steps == measureLoadStart and _doMeasureLoadCalc) {
 		bool faulty = _measureLoadCalc->prepareLoads(this, _comm);
 		if (faulty) {
-			global_log->info() << "not using MeasureLoad as there are not enough processes. No rebalance forced." << std::endl;
+			global_log->info() << "Not using MeasureLoad as it failed. No rebalance forced." << std::endl;
 		} else {
-			global_log->info() << "start using MeasureLoad, will force rebalance." << std::endl;
+			global_log->info() << "Start using MeasureLoad, will force rebalance." << std::endl;
 			delete _loadCalc;
 			_loadCalc = _measureLoadCalc;
 			_measureLoadCalc = nullptr;
@@ -569,7 +570,7 @@ void KDDecomposition::fillTimeVecs(CellProcessor **cellProc){
 		VectorizationTuner tuner;
 		tuner.init(global_simulation->getMoleculeContainer(), &global_simulation->domainDecomposition(), global_simulation->getDomain());
 		mardyn_assert(cellProc && (*cellProc));
-		tuner.tune(*(_simulation.getEnsemble()->getComponents()), *_tunerLoadCalc, _vecTunParticleNums, _generateNewFiles, _useExistingFiles);
+		tuner.tune(*(_simulation.getEnsemble()->getComponents()), *_tunerLoadCalc, _vecTunParticleNums, _generateNewFiles, _useExistingFiles, _vecTunerAllowMPIReduce);
 	}
 
 
@@ -609,7 +610,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 
 #ifdef DEBUG_DECOMP
 	if (_rank == 0) {
-		newRoot->printTree("");
+		newRoot->printTree("", std::cout);
 	}
 #endif
 }
@@ -1896,4 +1897,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	optimalNode->calculateDeviationLowerBound();
 
 	return domainTooSmall;
+}
+void KDDecomposition::printTree(std::ostream& ostream) {
+	_decompTree->printTree("", ostream);
 }

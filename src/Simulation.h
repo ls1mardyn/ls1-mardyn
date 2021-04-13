@@ -2,10 +2,12 @@
 #define SIMULATION_H_
 
 #include <memory>
+#include <any>
 
 #include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
 #include "utils/SysMon.h"
+#include "utils/FunctionWrapper.h"
 #include "thermostats/VelocityScalingThermostat.h"
 
 // plugins
@@ -194,7 +196,7 @@ public:
 	 * - update the caches of the molecules
 	 * - update the ParticleContainer
 	 */
-	void updateParticleContainerAndDecomposition(double lastTraversalTime);
+	void updateParticleContainerAndDecomposition(double lastTraversalTime, bool useTimers);
 
 	/**
 	 * Performs both the decomposition and the cell traversal in an overlapping way.
@@ -473,6 +475,13 @@ private:
 
 	/** List of plugins to use */
 	std::list<PluginBase*> _plugins;
+
+	/** Map of all call backs.
+	 * The key is the name of the callback.
+	 * Each element contains a std::function object.
+	 * Please check the specific plugins for the actual signature of the function and use an appropriate any_cast!
+	 */
+	std::map<std::string, FunctionWrapper> _callbacks;
 
 	VelocityScalingThermostat _velocityScalingThermostat;
 

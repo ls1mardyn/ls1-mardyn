@@ -51,39 +51,94 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 *                            all possible decompositions will be investigated, so it
 	 *                            influences the quality of the load balancing. I recommend to
 	 *                            set it to 2 - 4.
-	 * @param splitThresh If the Decomposition is allowed to cut every dimension (not only the biggest one)
-	 * 	                  then it tests cuts in all Dimensions (not only the biggest) if a KDNode has less processors,
-	 * 	                  than the threshold
 	 */
-	KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency = 100,  int fullSearchThreshold = 2, bool hetero=false,
-			bool cutsmaller=false, bool forceRatio=false, int splitThresh = std::numeric_limits<int>::max());
+	KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency = 100,  int fullSearchThreshold = 2);
 
 	void init(Domain* domain);
 
-	KDDecomposition();
-
 	~KDDecomposition() override;
-
 
 	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="KDDecomposition">
-	     <updateFrequency>INTEGER</updateFrequency>
-	     <fullSearchThreshold>INTEGER</fullSearchThreshold>
-	     <heterogeneousSystems>BOOL</heterogeneousSystems>
-	     <useVectorizationTuner>BOOL</useVectorizationTuner>
-	     <clusterHetSys>BOOL</clusterHetSys>
-	     <splitBiggestDimension>BOOL</splitBiggestDimension>
-	     <forceRatio>BOOL</forceRatio>
-	     <rebalanceLimit>DOUBLE</rebalanceLimit>
-	     <splitThreshold>INTEGER</splitThreshold>
+		 <!-- Indicates the frequency at which the KDD is checked for rebalancing.
+		      Rebalancing is then only performed if the imbalance is above the rebalanceLimit.
+		      Default: 100-->
+		 <updateFrequency>INTEGER</updateFrequency>
+		 <!-- If the imbalance is smaller than the rebalanceLimit then a rebalancing will not be performed.
+		      Default: 0 (i.e., rebalancing will always be performed.-->
+		 <rebalanceLimit>DOUBLE</rebalanceLimit>
+		 <!-- Indicates for how many levels a full search of the possible decompositions shall be performed. High values
+		      increase the time to find a decomposition, but might lead to better decompositions. Above this threshold,
+		      the domain is simply split into two subdomains with equal load.
+		      Default: 2-->
+		 <fullSearchThreshold>INTEGER</fullSearchThreshold>
+		 <!-- Enable the support for heterogeneous compute systems. If this value is true then the performance of the
+		      individual ranks are calculated. The performance measurement uses the FlopCounter and the timing values
+		      for the force calculation.
+		      Default: False-->
+		 <heterogeneousSystems>BOOL</heterogeneousSystems>
+		 <!-- Indicates whether the vectorization tuner should be used. If it is used, the load for cells is measured
+		      depending on the number of particles. Repeated measurements are performed using one or two cells.
+		      If deactivated a simple fall back using a quadratic model is used for the cost model (i.e., Cost =
+		      particle number * particle number). This quadratic model tends to underestimate the cost needed for low
+		      density regions.
+		      Note: Does not work with more than 2 particle types.
+		      Default: False-->
+		 <useVectorizationTuner>BOOL</useVectorizationTuner>
+		 <!-- For vectorization tuner: Generates a file with the measured performance characteristics if enabled.
+		      Default: True-->
 		 <generateNewFiles>BOOL</generateNewFiles>
+		 <!-- For vectorization tuner: Load the file generated via generateNewFiles in a previous run. If no file
+		      exists, the vectorization tuner is run.
+		      Default: True-->
 		 <useExistingFiles>BOOL</useExistingFiles>
+		 <!-- For vectorization tuner: Allows an allreduce for the measured performances. This should be disabled if the
+		      compute resources don't all have the same performance. If disabled the performances are measured for each
+		      process separately, which is (mostly) not what you want. Only for heterogeneous systems, it makes sense to
+		      disable this option.
+		      Default: True-->
+		 <vecTunerAllowMPIReduce>BOOL</vecTunerAllowMPIReduce>
+		 <!-- A cluster version of load balancing. This option is useful if multiple clusters/islands are used that use
+		      different hardware, e.g., one cluster/island using AMD and one cluster/island using Intel processors.
+		      Currently only two clusters are supported. The clusters are identified based on the node names which are
+		      read via MPI_Get_processor_name().
+		      Default: False-->
+		 <clusterHetSys>BOOL</clusterHetSys>
+		 <!-- Option to indicate to always split the domain along the biggest dimension. Splitting along the biggest
+		      dimension creates more cubic subdomains, but might lead to worse overall load balancing. If this is false,
+		      all dimensions are tested and in the end, the one producing the lowest imbalance is chosen.
+		      Default: True-->
+		 <splitBiggestDimension>BOOL</splitBiggestDimension>
+		 <!-- Alternative threshold for splitBiggestDimension. If more than splitThreshold processes are assigned to a
+		      node it is split in only the biggest dimension. splitBiggestDimension overrides this threshold.
+		      Default: disabled(std::numeric_limits<int>::max())-->
+		 <splitThreshold>INTEGER</splitThreshold>
+		 <!-- Option to ignore fullSearchThreshold. If true then the domain is always split into two pieces and less
+		      searching is performed. Searching among the 3 different dimensions still happens, unless
+		      splitBiggestDimension is true.
+		      Default: False-->
+		 <forceRatio>BOOL</forceRatio>
+		 <!-- Indicates whether the MeasureLoad load estimator should be used. See MeasureLoad.
+		      Default: False-->
 		 <doMeasureLoadCalc>BOOL</doMeasureLoadCalc>
+		 <!-- Defines at which index the quadratic interpolation of the measureLoad algorithm starts.
+		      -1 to disable, 0 to always use interpolation.
+		      Default: 1-->
+		 <measureLoadInterpolationStartsAt>INTEGER</measureLoadInterpolationStartsAt>
+		 <!-- Option for MeasureLoad: Forces increasing values for the load estimation (more particles = more load).
+		      Default: True-->
+		 <measureLoadIncreasingTimeValues>BOOL</measureLoadIncreasingTimeValues>
+		 <!-- The reduction operation for the deviation calculation.
+		      Default: sum-->
 		 <deviationReductionOperation>max OR sum</deviationReductionOperation>
-		 <minNumCellsPerDimension>UINT</minNumCellsPerDimension> <!--Has to be bigger than 0-->
+		 <!-- The minimal number of cells in each dimension for a partition. Has to be at least 1.
+		      Increasing this value ensures bigger subdomains (and less overhead when using the full shell method, but
+		      might lead to worse load balance or can make a domain splitting impossible.
+		      Default: 1-->
+		 <minNumCellsPerDimension>UINT</minNumCellsPerDimension>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -142,7 +197,14 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Has to be an extra function since the CellProcessor is only created after the KDDecomposition was already constructed
 	 */
 	void fillTimeVecs(CellProcessor **cellProc);
- private:
+
+	/**
+	 * Prints the tree to the desired ostream.
+	 * @param ostream
+	 */
+	void printTree(std::ostream& ostream);
+
+private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
 	/**
 	 *
@@ -235,7 +297,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * Right now only supports two clusters, where one cluster is made up of all processors from mpi rank 0 to a certain value k, while the second is made
 	 * up of all processors with a rank k+1 or higher.
 	 *
-	 * It should be ensured that the performance difference between the clusters isn't to big, because otherwise the decomposition might
+	 * It should be ensured that the performance difference between the clusters isn't too big, because otherwise the decomposition might
 	 * degrade to a point where there will be errors in the program execution
 	 */
 	bool heteroDecompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
@@ -277,20 +339,20 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//######################################
 	//! Length of one cell. The length of the cells is the cutoff-radius, or a
 	//! little bit larger as there has to be a natural number of cells.
-	double _cellSize[KDDIM];
+	double _cellSize[KDDIM]{};
 
 	//! Number of cells in the global domain in each coordinate direction.
 	//!  _globalCellsPerDim does not include the halo region
-	int _globalCellsPerDim[KDDIM];
+	int _globalCellsPerDim[KDDIM]{};
 
 	//! global number of cells (without halo)
-	int _globalNumCells;
+	int _globalNumCells{};
 
 	// Pointer to the root element of the decomposition tree
-	KDNode* _decompTree;
+	KDNode* _decompTree{nullptr};
 
 	// each process owns an area in the decomposition
-	KDNode* _ownArea;
+	KDNode* _ownArea{nullptr};
 
 	//! Number of particles for each cell (including halo?)
 	std::vector<unsigned int> _numParticlesPerCell;
@@ -298,7 +360,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	/* TODO: This may not be equal to the number simulation steps if balanceAndExchange
 	 * is not called exactly once in every simulation step! */
 	//! number of simulation steps. Can be used to trigger load-balancing every _frequency steps
-	size_t _steps;
+	size_t _steps{0ul};
 
 	//! determines how often rebalancing is done
 	int _frequency;
@@ -316,20 +378,23 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	std::vector<double> _processorSpeeds;
 	std::vector<double> _accumulatedProcessorSpeeds;//length nprocs+1, first element is 0.
-	double _totalMeanProcessorSpeed;
-	double _totalProcessorSpeed;
-	int _processorSpeedUpdateCount;
-	bool _heterogeneousSystems;
-	bool _clusteredHeterogeneouseSystems;
-	bool _splitBiggest;  // indicates, whether a subdomain is to be split along its biggest size
-	bool _forceRatio;  // if you want to enable forcing the above ratio, enable this.
+	double _totalMeanProcessorSpeed{1.};
+	double _totalProcessorSpeed{1.};
+	int _processorSpeedUpdateCount{0};
+	bool _heterogeneousSystems{false};
+	bool _clusteredHeterogeneouseSystems{false};
+	bool _splitBiggest{true};  // indicates, whether a subdomain is to be split along its biggest size
+	bool _forceRatio{false};  // if you want to enable forcing the above ratio, enable this.
 
-	bool _doMeasureLoadCalc;  //
+	bool _doMeasureLoadCalc {false};  // specifies if measureLoad should be used.
+	int  _measureLoadInterpolationStartsAt{1};  // specifies at which number of particles per cell measureLoad should start using interpolation.
+	bool _measureLoadIncreasingTimeValues{true};  // specifies if the time values should be increasing if the number of particles increases.
 
 	/**
-	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a node is less than the _splitThreshold.
+	 * The decomposition only searches in all directions if _splitBiggest is false and the number of processors in a
+	 * node is less than the _splitThreshold.
 	 */
-	int _splitThreshold;
+	int _splitThreshold{std::numeric_limits<int>::max()};
 	int _numParticleTypes;
 
 	/*
@@ -339,8 +404,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * This is can be useful for the vectorization tuner to know how many values should be measured
 	 * and comes at the cost of only one additional conditional move per cell per load balancing.
 	 */
-	int _maxPars;
-	int _maxPars2;
+	int _maxPars{std::numeric_limits<int>::min()};
+	int _maxPars2{std::numeric_limits<int>::min()};
 
 	/*
 	 * The partition rank that is used in the "clustered" heterogeneous decomposition to determine
@@ -365,11 +430,12 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 * KDDecomposition (or both)
 	 */
 	std::vector<int> _vecTunParticleNums;
-	bool _generateNewFiles;
-	bool _useExistingFiles;
+	bool _generateNewFiles{true};
+	bool _useExistingFiles{true};
+	bool _vecTunerAllowMPIReduce{true};
 
 
-	double _rebalanceLimit; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
+	double _rebalanceLimit{0.}; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
 
 	/**
 	 * MPI reduction operation to reduce the deviation within the decompose step.

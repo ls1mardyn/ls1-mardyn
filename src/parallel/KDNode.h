@@ -178,7 +178,7 @@ public:
 	//! The order of printing is a depth-first walk through the tree, children
 	//! are always indented two spaces more than there parents
 	//! @param prefix A string which is printed in front of each line
-	void printTree(const std::string& prefix = "");
+	void printTree(const std::string& prefix, std::ostream& ostream);
 
 	/**
 	 * Write the tree represented by this (root-)node to a (binary) file, in order

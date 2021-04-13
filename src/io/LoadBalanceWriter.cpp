@@ -18,6 +18,8 @@ LoadbalanceWriter::LoadbalanceWriter::LoadbalanceWriter() :
 void LoadbalanceWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	xmlconfig.getNodeValue("averageLength", _averageLength);
+	global_log->info() << "Average length: " << _averageLength << endl;
 	xmlconfig.getNodeValue("outputfilename", _outputFilename);
 	global_log->info() << "Output filename: " << _outputFilename << endl;
 
@@ -68,6 +70,8 @@ void LoadbalanceWriter::init(ParticleContainer */*particleContainer*/,
 
 	if (domainDecomp->getRank() == 0) {
 		_global_sum_times.reserve(_timerNames.size() * _writeFrequency);
+		_global_max_average_times.reserve(_timerNames.size() * (_writeFrequency+_averageLength));
+		_global_sum_average_times.reserve(_timerNames.size() * (_writeFrequency+_averageLength));
 	}
 
 	_defaultTimer->reset();
@@ -99,9 +103,9 @@ void LoadbalanceWriter::writeOutputFileHeader() {
 	for(const auto& timername : _timerNames) {
 		outputfile << "\t#" << timername <<"#\t\t";
 	}
-	outputfile << "\n";
+	outputfile << "\nstep";
 	for(const auto& timername : _timerNames) {
-		outputfile << "\tmin\tmax\tf_LB\timbalance";
+		outputfile << "\tmin\tmax\tf_LB\timbalance\timbalance_average";
 	}
 	outputfile << std::endl;
 	outputfile.close();
@@ -119,6 +123,7 @@ void LoadbalanceWriter::recordTimes(unsigned long simstep) {
 		}
 		_times.push_back(time);  // needed for maximum
 		_times.push_back(-time); // needed for minimum
+		_timesForAverageBuffer.emplace_back(time);  // needed for average
 	}
 }
 
@@ -135,6 +140,15 @@ void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
 	}
 	MPI_CHECK(MPI_Reduce(_sum_times.data(), _global_sum_times.data(), _sum_times.size(), MPI_DOUBLE, MPI_SUM, 0,
 						 domainDecomp->getCommunicator()));
+
+	auto averagedTimes = getAveragedTimes();
+
+	_global_max_average_times.resize(averagedTimes.size(), 0);
+	MPI_CHECK(MPI_Reduce(averagedTimes.data(), _global_max_average_times.data(), averagedTimes.size(), MPI_DOUBLE, MPI_MAX, 0,
+						 domainDecomp->getCommunicator()));
+	_global_sum_average_times.resize(averagedTimes.size(), 0);
+	MPI_CHECK(MPI_Reduce(averagedTimes.data(), _global_sum_average_times.data(), averagedTimes.size(), MPI_DOUBLE, MPI_SUM, 0,
+						 domainDecomp->getCommunicator()));
 #else
 	//! @todo in case we do not reuse _times later on, we may use here  _global_times = std::move(_times);
 	_global_times = _times;
@@ -142,6 +156,12 @@ void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
 		_sum_times.push_back(_times[ind]);
 		_global_sum_times.push_back(_times[ind]);
 	}
+
+	auto averagedTimes = getAveragedTimes();
+
+	// sum and max are actually the same if only one process is used.
+	_global_max_average_times = averagedTimes;
+	_global_sum_average_times = averagedTimes;
 #endif
 	if(0 == domainDecomp->getRank()) {
 		std::ofstream outputfile(_outputFilename,  std::ofstream::app);
@@ -153,26 +173,47 @@ void LoadbalanceWriter::flush(DomainDecompBase* domainDecomp) {
 	resetTimes();
 }
 
+std::vector<double> LoadbalanceWriter::getAveragedTimes() {
+	std::vector<double> averagedTimes(_timesForAverageBuffer.size(), 0.);
+	const auto numTimers = _timerNames.size();
+	mardyn_assert(_timesForAverageBuffer.size() % numTimers == 0);
+	std::vector<double> currentAverageSum(numTimers, 0.);
+	for (size_t ind = 0, averageIndex = 0; ind < _timesForAverageBuffer.size(); ind += numTimers, ++averageIndex) {
+		for (size_t timer_id = 0; timer_id < numTimers; ++timer_id) {
+			currentAverageSum[timer_id] += _timesForAverageBuffer[ind + timer_id];
+			if (averageIndex >= _averageLength) {
+				currentAverageSum[timer_id] -= _timesForAverageBuffer[ind + timer_id - _averageLength * numTimers];
+				averagedTimes[ind + timer_id] = currentAverageSum[timer_id] / static_cast<double>(_averageLength);
+			} else {
+				averagedTimes[ind + timer_id] = currentAverageSum[timer_id] / static_cast<double>(averageIndex + 1);
+			}
+		}
+	}
+	return averagedTimes;
+}
+
 void LoadbalanceWriter::writeLBEntry(size_t id, std::ofstream &outputfile, int numRanks) {
 	outputfile << _simsteps[id];
 	size_t timestep_entry_offset = 2* _timerNames.size();
 	size_t base_offset = timestep_entry_offset * id;
 	size_t single_offset = _timerNames.size() * id;
+	size_t single_offset_average = _timerNames.size() * id + _lastTimesOldValueCount;
 	for(size_t timer_id = 0; timer_id < _timerNames.size(); ++timer_id) {
-		double min, max, f_LB, imbalance;
 		size_t timer_offset = 2 * timer_id;
 		size_t offset = base_offset + timer_offset;
-		max = _global_times[offset];
-		min = -_global_times[offset + 1];
+		double max = _global_times[offset];
+		double min = -_global_times[offset + 1];
 		// imbalance = 1 - (average of time) / maximal time -- fraction: time spent useless / really needed time
 		double optimaltime = (_global_sum_times[timer_id + single_offset] / numRanks);
-		imbalance = 1 - optimaltime / max;
-		f_LB = max / min;
+		double optimaltime_average = (_global_sum_average_times[timer_id + single_offset_average] / numRanks);
+		double imbalance = 1 - optimaltime / max;
+		double imbalance_average = 1 - optimaltime_average / _global_max_average_times[timer_id + single_offset_average];
+		double f_LB = max / min;
 		std::string timername = _timerNames[timer_id];
 		if(_warninglevels.count(timername) > 0 && _warninglevels[timername] < f_LB) {
 			displayWarning(_simsteps[id], timername, f_LB);
 		}
-		outputfile << "\t" << min << "\t" << max << "\t" << f_LB << "\t" << imbalance;
+		outputfile << "\t" << min << "\t" << max << "\t" << f_LB << "\t" << imbalance << "\t" << imbalance_average;
 	}
 	outputfile << std::endl;
 }
@@ -190,4 +231,15 @@ void LoadbalanceWriter::resetTimes() {
 	_simsteps.clear();
 	_sum_times.clear();
 	_global_sum_times.clear();
+	_global_max_average_times.clear();
+	_global_sum_average_times.clear();
+
+	// Removes first few elements, s.t., only the last _averageLength - 1 elements remain.
+	auto numTimers = _timerNames.size();
+	if (_timesForAverageBuffer.size() > (_averageLength - 1) * numTimers) {
+		_timesForAverageBuffer.erase(_timesForAverageBuffer.begin(),
+									 _timesForAverageBuffer.end() - numTimers * (_averageLength - 1));
+		mardyn_assert(_timesForAverageBuffer.size() == (_averageLength - 1) * numTimers);
+	}
+	_lastTimesOldValueCount = _timesForAverageBuffer.size();
 }

@@ -27,6 +27,8 @@ class TemperatureProfile;
 
 class VirialProfile;
 
+class Virial2DProfile;
+
 
 /** @brief SpatialProfile is a Plugin that is called like any other plugin derived from PluginBase. It handles all profiles in /plugins/profiles. <br>
  * New profiles must be added via the plugins/ ProfileBase to comply with this Plugin. <br>
@@ -88,6 +90,14 @@ public:
 
 	SamplingInformation samplInfo;
 
+	void accessAllCallbacks(const std::map<std::string, FunctionWrapper>& callbackMap) override {
+		// Accesses a callback registered by FixRegion. It returns the number of molecules in the fixregion.
+		std::string name{"FixRegion::getMoleculesInRegion"};
+		if(callbackMap.find(name) != callbackMap.end()) {
+			getNumFixRegion = callbackMap.at(name).get<unsigned long>();
+		}
+	}
+
 private:
 
 	// Profile pointers for data reuse
@@ -98,6 +108,7 @@ private:
 	DOFProfile* _dofProfile;
 	KineticProfile* _kineticProfile;
 	VirialProfile* _virialProfile;
+	Virial2DProfile* _virial2DProfile;
 
 	unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
 	unsigned long _initStatistics; // Timesteps to skip at start of the simulation
@@ -107,7 +118,7 @@ private:
 	std::string _mode;
 	std::string _profiledCompString;
 	unsigned int _profiledComp;
-	
+
 
 	unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 
@@ -121,8 +132,11 @@ private:
 	bool _VELOCITY3D = false;
 	bool _TEMPERATURE = false;
 	bool _VIRIAL = false;
+	bool _VIRIAL2D = false;
 
 	void addProfile(ProfileBase* profile);
+
+	std::optional<std::function<unsigned long(void)>> getNumFixRegion;
 
 };
 

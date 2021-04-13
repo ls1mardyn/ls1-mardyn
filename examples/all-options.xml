@@ -186,7 +186,9 @@
           <!-- select traversal algorithm
           possible values are:
             - original
+            - c04
             - c08        (default for >1 threads)
+            - c08es      (eight-shell)
             - quicksched
             - sliced     (default for <2 threads)
             - hs         (half shell method)

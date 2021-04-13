@@ -18,45 +18,22 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 #include <cmath>
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
-//#include <string.h>
-
-//preprocessing macros
-//#define MASKING
-
-VectorizationTuner::VectorizationTuner()
-	: _outputPrefix("Mardyn"),
-	  _minMoleculeCnt(2),
-	  _maxMoleculeCnt(512),
-	  _moleculeCntIncreaseType(both),
-	  _cellProcessor(nullptr),
-	  _cutoffRadius(0),
-	  _LJCutoffRadius(0),
-	  _numRepetitionsMax(4000000),
-	  _flopCounterBigRc(nullptr),
-	  _flopCounterNormalRc(nullptr),
-	  _flopCounterZeroRc(nullptr) {
-	vtWriter.reset(new VTWriter());
-}
-
-VectorizationTuner::~VectorizationTuner() {
-	// TODO Auto-generated destructor stub
-}
+#include <cstdio>
 
 void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 	std::string mode = "file";
 	xmlconfig.getNodeValue("mode", mode);
-	if (mode == "statistics") {
+	if (mode == "stdout") {
 		vtWriter.reset(new VTWriterStatistics());
 	} else if (mode == "file") {
 		vtWriter.reset(new VTWriter());
 	} else {
-		global_log->error() << R"(Unknown FlopRateOutputPlugin::mode. Choose "stdout", "file" or "both".)" << endl;
+		global_log->error() << R"(Unknown FlopRateOutputPlugin::mode. Choose "stdout" or "file".)" << endl;
 		Simulation::exit(1);
 	}
 
@@ -74,10 +51,21 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Maximal number of repetitions: " << _numRepetitionsMax << std::endl;
 
 	//! @todo This is a very improper way to do this - user does not know what the int values stand for
-	int type=2;
-	xmlconfig.getNodeValue("moleculecntincreasetype", type);
-	_moleculeCntIncreaseType = static_cast<MoleculeCntIncreaseTypeEnum>(type);
-	global_log->info() << "Molecule count increase type: " << _moleculeCntIncreaseType << std::endl;
+	std::string incTypeStr="both";
+	xmlconfig.getNodeValue("moleculecntincreasetype", incTypeStr);
+	if (incTypeStr == "linear") {
+		_moleculeCntIncreaseType = MoleculeCntIncreaseTypeEnum::linear;
+	} else if (incTypeStr == "exponential") {
+		_moleculeCntIncreaseType = MoleculeCntIncreaseTypeEnum::exponential;
+	} else if (incTypeStr == "both") {
+		_moleculeCntIncreaseType = MoleculeCntIncreaseTypeEnum::both;
+	} else {
+		global_log->error()
+			<< R"(Unknown FlopRateOutputPlugin::moleculecntincreasetype. Choose "linear" or "exponential" or "both".)"
+			<< endl;
+		Simulation::exit(798123);
+	}
+	global_log->info() << "Molecule count increase type: " << incTypeStr << std::endl;
 
 }
 
@@ -85,9 +73,9 @@ void VectorizationTuner::finish(ParticleContainer * /*particleContainer*/,
                                 DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {
 	// make a backup copy of CellBorderAndFlagManager
 	CellBorderAndFlagManager backup = ParticleCell::_cellBorderAndFlagManager;
-	_flopCounterNormalRc.reset(new FlopCounter(_cutoffRadius, _LJCutoffRadius));
-	_flopCounterBigRc.reset(new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig));
-	_flopCounterZeroRc.reset(new FlopCounter( 0., 0.));
+	_flopCounterNormalRc = std::make_unique<FlopCounter>(_cutoffRadius, _LJCutoffRadius);
+	_flopCounterBigRc = std::make_unique<FlopCounter>(_cutoffRadiusBig, _LJCutoffRadiusBig);
+	_flopCounterZeroRc = std::make_unique<FlopCounter>( 0., 0.);
 	tune(*(_simulation.getEnsemble()->getComponents()));
 
 	/*
@@ -165,7 +153,7 @@ void VectorizationTuner::tune(std::vector<Component>& ComponentList) {
 
 }
 
-void VectorizationTuner::iterateOwn(long long int numRepetitions,
+void VectorizationTuner::iterateOwn(unsigned int numRepetitions,
 		ParticleCell& cell, double& gflopsPair, FlopCounter& flopCounter) {
 	runOwn(flopCounter, cell, 1);
 	// run simulation for a pair of cells
@@ -184,7 +172,7 @@ void VectorizationTuner::iterateOwn(long long int numRepetitions,
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
 
-void VectorizationTuner::iterateOwn (long long int numRepetitions,
+void VectorizationTuner::iterateOwn (unsigned int numRepetitions,
 		ParticleCell& cell, double& time) {
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
@@ -198,7 +186,7 @@ void VectorizationTuner::iterateOwn (long long int numRepetitions,
 	global_simulation->timers()->reset("VECTORIZATION_TUNER_TUNER");
 }
 
-void VectorizationTuner::iteratePair (long long int numRepetitions,
+void VectorizationTuner::iteratePair (unsigned int numRepetitions,
 		ParticleCell& firstCell, ParticleCell& secondCell, double& time) {
 	// run simulation for a pair of cells
 	global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
@@ -252,7 +240,7 @@ void VectorizationTuner::initCells(ParticleCell& main, ParticleCell& face, Parti
 		corner.setBoxMax(BoxMaxCorner);
 }
 
-void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles){
+void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& times, std::vector<int> particleNums, bool generateNewFiles, bool useExistingFiles, bool allowMPIReduce){
 
 		/*
 		 * MPI parallelization strategy:
@@ -261,7 +249,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		 *
 		 * This does not work when there are different processor types present, which is why this option is currently deactivated
 		 */
-		bool allowMpi = false;
+		bool allowMpi = allowMPIReduce;
 
 		if(useExistingFiles && readFile(times)){
 			global_log->info() << "Read tuner values from file" << std::endl;
@@ -382,8 +370,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		ParticleCell::_cellBorderAndFlagManager = saveFlagManager;
 }
 
-
-void VectorizationTuner::iteratePair(long long int numRepetitions, ParticleCell& firstCell,
+void VectorizationTuner::iteratePair(unsigned int numRepetitions, ParticleCell& firstCell,
 		ParticleCell& secondCell, double& gflopsPair, FlopCounter& flopCounter) {
 	//count/calculate the needed flops
 	runPair(flopCounter, firstCell, secondCell, 1);
@@ -463,8 +450,7 @@ void VectorizationTuner::iterate(std::vector<Component>& ComponentList, unsigned
 	firstCell.buildSoACaches();
 	secondCell.buildSoACaches();
 
-	long long int numRepetitions = std::max(_numRepetitionsMax / (numMols*numMols), 50ul);
-
+	unsigned int numRepetitions = std::max(_numRepetitionsMax / (numMols*numMols), 50u);
 
 	//0a,0b: 0RC
 		_cellProcessor->setCutoffRadius(0.);
@@ -520,7 +506,7 @@ double normalRandom()
 
 
 // pass also second cell as argument, when it comes to that
-void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numRepetitions) {
+void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, unsigned int numRepetitions) {
 
 	cp.initTraversal();
 
@@ -551,7 +537,7 @@ void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numR
 	cp.endTraversal();
 }
 
-void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, ParticleCell& cell2, int numRepetitions) {
+void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, ParticleCell& cell2, unsigned int numRepetitions) {
 
 
 	cp.initTraversal();
@@ -591,8 +577,7 @@ void VectorizationTuner::clearMolecules(ParticleCell & cell) {
 }
 
 
-void VectorizationTuner::initMeshOfMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2) {
-	//TODO: Bmax, Bmin
+void VectorizationTuner::initMeshOfMolecules(const double boxMin[3], const double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2) {
 	int numMoleculesX = 3, numMoleculesY = 3, numMoleculesZ = 3;
 
 	unsigned long id = 0;
