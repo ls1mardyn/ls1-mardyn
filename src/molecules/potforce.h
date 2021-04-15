@@ -5,6 +5,8 @@
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Molecule.h"
+#include "Simulation.h"
+#include "Domain.h"
 
 /**
  * The formulas for dipole-dipole, dipole-quadrupole and quadrupole-quadrupole are from
@@ -320,9 +322,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 					Virial[d] += 0.5*drm[d] * f[d];
 
 				// pN, pT
-				// double center = 25.50800404; // 1CLJ
-				// double center = 29.90901281; // 2CLJ
-				double center = 17.00533582; // Bubble 1CLJ
+        double center = 0.5*global_simulation->getDomain()->getGlobalLength(0);
 
 				double ksi_i[3];
 				double ksi_j[3];

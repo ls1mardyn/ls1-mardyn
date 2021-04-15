@@ -33,7 +33,7 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	NShells = 70;
 	NSMean = 50;
 	numComp = 1;
-	globalNumMols = 29200;
+	globalNumMols = 31000;
 	rcmax = 8.0;
 	UpotKorrLJ = 0.0;
 	VirialKorrLJ = 0.0;
@@ -273,14 +273,14 @@ void Spherical::calculateLongRange(){
 	}
 	_domainDecomposition->collCommFinalize();
 
-	unsigned long MeanIndex = (static_cast<int>(std::floor( (simstep)/1000.0 ))) % NSMean;
-	if (((simstep-1) % 1000) == 0) {
+	unsigned long MeanIndex = (static_cast<int>(std::floor( (simstep)/100.0 ))) % NSMean; // 1000
+	if (((simstep-1) % 100) == 0) { // 1000
 		std::fill(rhoShellsMean.begin()+NShells*MeanIndex, rhoShellsMean.begin()+NShells*(MeanIndex+1), 0.0);
 	} 
 	if (simstep == 0){
 		 for (unsigned int j=0; j<NSMean; j++){
 			for (unsigned int i=0; i<NShells; i++){
-				rhoShellsMean[j*NShells+i] += 1000*rhoShellsTemp[i];
+				rhoShellsMean[j*NShells+i] += 100*rhoShellsTemp[i]; // 1000
 			}
 		}
 	}else{	
@@ -288,14 +288,14 @@ void Spherical::calculateLongRange(){
 	}
 
 	// mittlere Dichte
-	if ( (simstep) % 1000 == 0) { 
+	if ( (simstep) % 100 == 0) {  // 1000
 		std::fill(rhoShells.begin(), rhoShells.end(), 0.0);
 		std::fill(rhoShells_global.begin(), rhoShells_global.end(), 0.0);
 		std::fill(rhoShellsTemp_global.begin(), rhoShellsTemp_global.end(), 0.0);
 
 		for (unsigned int j=0; j<NShells; j++) {
 			for (unsigned int i=0; i<NSMean; i++) {
-				rhoShells[j] += 0.001/50*rhoShellsMean[i*NShells+j];
+				rhoShells[j] += 0.01/NSMean*rhoShellsMean[i*NShells+j]; // 1000 --- 0.001
 			}
 		}
 
@@ -390,17 +390,19 @@ void Spherical::calculateLongRange(){
 		for (unsigned int i=0; i<NShells; i++) {
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
-
-		if (rank == 0) {
-			ofstream outfilestreamTanhParams(filenameTanhParams.str().c_str(), ios::app);
-			outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
-			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhov;
-			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhol;
-			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << D0;
-			outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << R0;
-			outfilestreamTanhParams << std::endl;
-			outfilestreamTanhParams.close();
-		}
+        
+        if ( (simstep) % 1000 == 0) {
+            if (rank == 0) {
+                ofstream outfilestreamTanhParams(filenameTanhParams.str().c_str(), ios::app);
+                outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
+                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhov;
+                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhol;
+                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << D0;
+                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << R0;
+                outfilestreamTanhParams << std::endl;
+                outfilestreamTanhParams.close();
+            }
+        }
 
 		// shift for Force Correction
 		if (droplet){
@@ -524,7 +526,7 @@ void Spherical::calculateLongRange(){
 							params >> shift6;
 							sigma=sqrt(sig2);
 							eps=eps24/24;
-							double tau1 = eLong[numLJSum2[ci]+si];  // ÜBERPRÜFEN
+							double tau1 = eLong[numLJSum2[ci]+si];  
 							double tau2 = eLong[numLJSum2[cj]+sj];
 							// double tau1 = 0.5;
 							// double tau2 = 0;
@@ -887,34 +889,36 @@ void Spherical::calculateLongRange(){
 			}
 		}
 		// Only Root writes to files
-		if (rank == 0) {
-			ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs.str().c_str(), ios::out);
-			outfilestreamGlobalCorrs << std::setw(24) << "Radius;";
-			outfilestreamGlobalCorrs << std::setw(24) << "RhoShells_Avg;";
-			outfilestreamGlobalCorrs << std::setw(24) << "UShells_Mean;";
-			outfilestreamGlobalCorrs << std::setw(24) << "FShells_Mean;";
-			outfilestreamGlobalCorrs << std::setw(24) << "PNShells_Mean;";
-			outfilestreamGlobalCorrs << std::setw(24) << "PTShells_Mean;";
-			outfilestreamGlobalCorrs << std::setw(24) << "Virial_Corr_Avg;";
-			outfilestreamGlobalCorrs << std::setw(24) << "P_N_Avg;";
-			outfilestreamGlobalCorrs << std::setw(24) << "P_T_Avg";
+        if ( (simstep) % 100 == 0) {
+            if (rank == 0) {
+                ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs.str().c_str(), ios::out);
+                outfilestreamGlobalCorrs << std::setw(24) << "Radius;";
+                outfilestreamGlobalCorrs << std::setw(24) << "RhoShells_Avg;";
+                outfilestreamGlobalCorrs << std::setw(24) << "UShells_Mean;";
+                outfilestreamGlobalCorrs << std::setw(24) << "FShells_Mean;";
+                outfilestreamGlobalCorrs << std::setw(24) << "PNShells_Mean;";
+                outfilestreamGlobalCorrs << std::setw(24) << "PTShells_Mean;";
+                outfilestreamGlobalCorrs << std::setw(24) << "Virial_Corr_Avg;";
+                outfilestreamGlobalCorrs << std::setw(24) << "P_N_Avg;";
+                outfilestreamGlobalCorrs << std::setw(24) << "P_T_Avg";
 
-			outfilestreamGlobalCorrs << std::endl;
-			for (unsigned int i=0; i<NShells; i++){
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << RShells[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << rhoShellsAvg_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << UShells_Mean_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << FShells_Mean_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << PNShells_Mean_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << PTShells_Mean_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << -VirShells_Corr_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_N_global[i] << ";";
-				outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_T_global[i] ;
-				outfilestreamGlobalCorrs << std::endl;
+                outfilestreamGlobalCorrs << std::endl;
+                for (unsigned int i=0; i<NShells; i++){
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << RShells[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << rhoShellsAvg_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << UShells_Mean_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << FShells_Mean_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << PNShells_Mean_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << PTShells_Mean_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << -VirShells_Corr_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_N_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_T_global[i] ;
+                    outfilestreamGlobalCorrs << std::endl;
 
-			}
-			outfilestreamGlobalCorrs.close();
-		}
+                }
+                outfilestreamGlobalCorrs.close();
+            }
+        }
 	}
 
 	// Lesen der Korrekturen in jedem Zeitschritt

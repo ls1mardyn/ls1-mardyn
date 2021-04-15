@@ -11,11 +11,11 @@
 // plugins
 #include "plugins/PluginFactory.h"
 
-#if !defined (SIMULATION_SRC) or defined (IN_IDE_PARSER)
+// #if !defined (SIMULATION_SRC) or defined (IN_IDE_PARSER)
 class Simulation;
 /** Global pointer to the simulation object. Do not use directly. Instead use the reference. */
 extern Simulation* global_simulation;
-#endif
+// #endif
 
 class ParticleInsertion;
 class Ensemble;
