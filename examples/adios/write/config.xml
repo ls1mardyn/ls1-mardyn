@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+
+	<simulation type="MD" >
+		<integrator type="Leapfrog" >
+			<timestep unit="reduced" >0.00182367</timestep>
+		</integrator>
+
+		<run>
+			<currenttime>0.0</currenttime>	
+			<production>
+				<steps>100000</steps>
+			</production>
+		</run>
+
+		<ensemble type="NVT">
+			<!-- Nparticles determined by the input file -->
+			<temperature unit="reduced" >250</temperature>
+			<domain type="box">
+				<lx>60</lx>
+				<ly>240</ly>
+				<lz>60</lz>
+			</domain>
+
+			<components>
+				<include query="/components/moleculetype" >../../surface-tension_LRC/CO2_Merker/components_co2_merker.xml</include>
+			</components>
+
+			<phasespacepoint>
+				<file type="binary">
+					<header>../../surface-tension_LRC/CO2_Merker/vle/250K/run01/cp_binary-1.restart.header.xml</header>
+					<data>../../surface-tension_LRC/CO2_Merker/vle/250K/run01/cp_binary-1.restart.dat</data>
+				</file>
+			</phasespacepoint>
+		</ensemble>
+
+		<algorithm>
+			<parallelisation type="DomainDecomposition">
+			</parallelisation>
+
+			<datastructure type="LinkedCells">
+				<cellsInCutoffRadius>1</cellsInCutoffRadius>
+			</datastructure>
+			<cutoffs type="CenterOfMass" >
+				<defaultCutoff unit="reduced" >11.902</defaultCutoff> <!-- sigma=2.9755 => 3*sigma=8.9265, 4*sigma=11.902 5*sigma=14.8775-->
+				<radiusLJ unit="reduced" >11.902</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField" >
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+			
+			<longrange type="planar">
+				<slabs>300</slabs>
+				<smooth>0</smooth>
+				<frequency>10</frequency>
+				<writecontrol>
+					<start>10000</start>
+					<frequency>1000</frequency>
+					<stop>20000</stop>
+				</writecontrol>
+			</longrange>
+			
+			<thermostats>
+				<thermostat type="TemperatureControl">
+					<control>
+						<start>0</start>
+						<frequency>1</frequency>
+						<stop>1000000000</stop>
+					</control>
+					<regions>
+						<region>
+							<coords>
+								<lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
+								<ucx>box</ucx> <ucy>box</ucy> <ucz>box</ucz>
+							</coords>
+							<target>
+								<temperature>250</temperature>
+								<component>0</component>
+							</target>
+							<settings>
+								<numslabs>20</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+					</regions>
+				</thermostat>
+			</thermostats>
+		</algorithm>
+		<output>
+		<outputplugin name="AdiosWriter">
+		  <outputfile>test.bp</outputfile>
+		  <writefrequency>50</writefrequency>
+		</outputplugin>
+		</output>
+
+	</simulation>
+
+</mardyn>
