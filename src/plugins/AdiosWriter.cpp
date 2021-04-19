@@ -54,7 +54,7 @@ void AdiosWriter::initAdios() {
 
   try {
     //get adios instance
-	    inst = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
+	    inst = std::make_shared<adios2::ADIOS>((MPI_Comm) MPI_COMM_WORLD);
 
         // declare io as output
         io = std::make_shared<adios2::IO>(inst->DeclareIO("Output"));
