@@ -83,6 +83,7 @@ private:
     double current_time;
     // variables to write, see documentation
     std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> vars;
+    //std::map<std::string, std::vector<double>> vars;
     // main instance
     std::shared_ptr<adios2::ADIOS> inst;
     std::shared_ptr<adios2::Engine> engine;  

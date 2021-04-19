@@ -54,7 +54,7 @@ void AdiosWriter::initAdios() {
 
   try {
     //get adios instance
-        inst = std::make_shared<adios2::ADIOS>();
+	    inst = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
 
         // declare io as output
         io = std::make_shared<adios2::IO>(inst->DeclareIO("Output"));
@@ -173,24 +173,24 @@ void AdiosWriter::endStep(
     try {
 	    engine->BeginStep();
 	    io->RemoveAllVariables();
-	  //  for (auto& [variableName,variableContainer] : vars) {
-			//global_log->info() << "    AW: Defining Variables " << variableName << std::endl;
+	    for (auto& [variableName,variableContainer] : vars) {
+			global_log->info() << "    AW: Defining Variables " << variableName << std::endl;
 
-   //   		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-		 //       adios2::Variable<double> adiosVar = io->DefineVariable<double>(variableName, {globalNumParticles},
-		 //                   {offset},
-		 //                   {localNumParticles}, adios2::ConstantDims);
+      		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
+		        adios2::Variable<double> adiosVar = io->DefineVariable<double>(variableName, {globalNumParticles},
+		                    {offset},
+		                    {localNumParticles}, adios2::ConstantDims);
 
-			//	// ready for write; transfer data to adios
-			//	engine->Put<double>(adiosVar, std::get<std::vector<double>>(variableContainer).data());
-			//} else {
-			//	adios2::Variable<uint64_t> adiosVar =
-			//		io->DefineVariable<uint64_t>(variableName, {globalNumParticles}, {offset},
-			//																   {localNumParticles}, adios2::ConstantDims);
-			//	// ready for write; transfer data to adios
-			//	engine->Put<uint64_t>(adiosVar, std::get<std::vector<uint64_t>>(variableContainer).data());
-			//}
-	  //  }
+				// ready for write; transfer data to adios
+				engine->Put<double>(adiosVar, std::get<std::vector<double>>(variableContainer).data());
+			} else {
+				adios2::Variable<uint64_t> adiosVar =
+					io->DefineVariable<uint64_t>(variableName, {globalNumParticles}, {offset},
+																			   {localNumParticles}, adios2::ConstantDims);
+				// ready for write; transfer data to adios
+				engine->Put<uint64_t>(adiosVar, std::get<std::vector<uint64_t>>(variableContainer).data());
+			}
+	    }
 
 	    // global box
 	    if(domainDecomp->getRank() == 0) {
@@ -205,21 +205,21 @@ void AdiosWriter::endStep(
 	    engine->Put<double>(adios_global_box, global_box.data());
 	    }
 
-	 //   //local box
-	 //   adios2::Variable<double> adios_local_box =
-		//io->DefineVariable<double>("local_box", {},
-		//            {},
-		//            {6});
+	    //local box
+	    adios2::Variable<double> adios_local_box =
+		io->DefineVariable<double>("local_box", {},
+		            {},
+		            {6});
 
-		//if (!adios_local_box) {
-		//    global_log->error() << "    AW: Could not create variable: local_box" << std::endl;
-		//    return;
-		//}
-		//engine->Put<double>(adios_local_box, local_box.data());
+		if (!adios_local_box) {
+		    global_log->error() << "    AW: Could not create variable: local_box" << std::endl;
+		    return;
+		}
+		engine->Put<double>(adios_local_box, local_box.data());
 
         // offsets
 		adios2::Variable<uint64_t> adios_offset = io->DefineVariable<uint64_t>(
-			"offsets", {static_cast<size_t>(numProcs)}, {static_cast<size_t>(rank)}, {1}, false);
+			"offsets", {static_cast<size_t>(numProcs)}, {static_cast<size_t>(rank)}, {1}, adios2::ConstantDims);
 		engine->Put<uint64_t>(adios_offset, offset);
 
     	
