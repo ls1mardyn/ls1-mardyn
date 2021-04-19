@@ -62,6 +62,9 @@ include(autopas)
 # ----- resilience plugin dependencies are set here
 include(compression)
 
+# ----- add adios2 dependency
+include(adios2)
+
 # add mardyn
 ADD_SUBDIRECTORY(src)
 

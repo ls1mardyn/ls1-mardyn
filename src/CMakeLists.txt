@@ -55,6 +55,13 @@ if (ENABLE_LZ4)
     add_dependencies(MarDyn liblz4)
 endif()
 
+# find adios
+if (ENABLE_ADIOS2)
+    find_package(ADIOS2 REQUIRED)
+    TARGET_COMPILE_DEFINITIONS(MarDyn PUBLIC "ENABLE_ADIOS2")
+    TARGET_LINK_LIBRARIES(MarDyn adios2::adios2)
+endif()
+
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
         ${BLAS_LIB}    # for armadillo

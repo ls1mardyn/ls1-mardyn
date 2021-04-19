@@ -61,6 +61,9 @@
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
+#ifdef ENABLE_ADIOS2
+#include "plugins/AdiosWriter.h"
+#endif
 
 #ifdef VTK
 #include "io/vtk/VTKGridWriter.h"
@@ -75,6 +78,9 @@ template <>
 void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
+#ifdef ENABLE_ADIOS2
+	REGISTER_PLUGIN(AdiosWriter);
+#endif
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
