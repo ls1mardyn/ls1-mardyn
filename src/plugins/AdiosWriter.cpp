@@ -260,14 +260,6 @@ void AdiosWriter::endStep(
     global_log->info() << "    AW: endStep." << std::endl;
 };
 
-int AdiosWriter::getOffset(std::vector<int>& offsets, int const rank) {
-    int sum = 0;
-    for (auto i=0; i<rank; ++i) {
-        sum += offsets[i];
-    }
-    return sum;
-}
-
 void AdiosWriter::finish(ParticleContainer* particleContainer,
         DomainDecompBase* domainDecomp, Domain* domain
 ) {
