@@ -75,8 +75,7 @@ public:
 protected:
     // 
 private:
-  void initAdios();
-    int getOffset(std::vector<int>&, int const);
+    void initAdios();
     // output filename, from XML
     std::string fname;
     uint32_t _writefrequency;
