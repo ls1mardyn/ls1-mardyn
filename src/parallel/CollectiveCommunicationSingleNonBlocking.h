@@ -92,7 +92,7 @@ public:
 	}
 
 	// documentation in base class
-	virtual void init(MPI_Comm communicator, int numValues, int key = 0) override {
+	void init(MPI_Comm communicator, int numValues, int key = 0) override {
 		CollectiveCommunication::init(communicator, numValues);
 #ifndef NDEBUG
 		if (!_firstComm) {
@@ -102,7 +102,7 @@ public:
 	}
 
 	// documentation in base class
-	virtual void finalize() override {
+	void finalize() override {
 		// We intentionally use CollectiveCommBase::finalize(), as _agglomeratedType might not be MPI_DATATYPE_NULL.
 		CollectiveCommBase::finalize();
 		_types.clear();
