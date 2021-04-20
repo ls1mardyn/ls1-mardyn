@@ -56,7 +56,7 @@ public:
 
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-    void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) override;
+	void printDecomp(const std::string& filename, Domain* domain, ParticleContainer* particleContainer) override;
 
 	// returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local
 	// area)
@@ -209,5 +209,4 @@ private:
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
 
 	friend class GeneralDomainDecompositionTest;
-
 };
