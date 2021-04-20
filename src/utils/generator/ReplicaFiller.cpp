@@ -130,7 +130,7 @@ public:
 
 	string getConfigurationAsString() override {
 		// give some dummy value
-		return "ParticleContainerToBasisWrapper";
+		return "{ParticleContainerToBasisWrapper: dummy}";
 	}
 
 private:
