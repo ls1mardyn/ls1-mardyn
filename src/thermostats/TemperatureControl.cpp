@@ -691,7 +691,7 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 
 	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in
 #if defined(_OPENMP)
-#pragma omp parallel default(none) shared(particleContainer, simstep)
+#pragma omp parallel default(none) shared(particleContainer)
 #endif
 	for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 		// control temperature
