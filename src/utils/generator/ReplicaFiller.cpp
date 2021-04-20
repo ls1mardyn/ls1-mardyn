@@ -128,6 +128,11 @@ public:
 
 	double* getCellLength() override { return nullptr; }
 
+	string getConfigurationAsString() override {
+		// give some dummy value
+		return "ParticleContainerToBasisWrapper";
+	}
+
 private:
 	Basis _basis;
 	std::shared_ptr<Object> _object;
