@@ -271,7 +271,7 @@ public:
 	 * Only used for logging / output.
 	 * @return
 	 */
-	virtual std::string getConfigurationAsString() {return "";};
+	virtual std::string getConfigurationAsString() = 0;
 
 protected:
 

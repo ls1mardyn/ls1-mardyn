@@ -149,6 +149,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	  return false;
 	}
 
+	// The following code is only executed if _autopasContainer has not been initialized, yet.
 	_autopasContainer.setBoxMin(boxMin);
 	_autopasContainer.setBoxMax(boxMax);
 	_autopasContainer.setCutoff(_cutoff);
@@ -171,9 +172,9 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
 	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
 	_autopasContainer.init();
-    _autopasContainerIsInitialized = true;
-    // if you want more AutoPas output enable this
-	//autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
+	_autopasContainerIsInitialized = true;
+	// if you want more AutoPas output enable this
+	// autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
 	// print full configuration to the command line
 	int valueOffset = 28;
