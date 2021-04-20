@@ -31,7 +31,7 @@ public:
 	 * Destructor
 	 */
 	virtual ~CollectiveCommunicationNonBlocking() {
-		for (auto i : _comms){
+		for (auto&& i : _comms){
 			i.second.destroy();
 		}
 	}

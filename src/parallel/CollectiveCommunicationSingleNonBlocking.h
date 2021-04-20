@@ -19,15 +19,20 @@ class CollectiveCommunicationSingleNonBlocking: public CollectiveCommunication {
 public:
 	/**
 	 * Constructor
-	 * @param key the key of the collective operation
 	 */
-	CollectiveCommunicationSingleNonBlocking() {
-		_request = nullptr;
-		_communicationInitiated = false;
-		_valuesValid = false;
-		_firstComm = true;
-		_agglomeratedTypeAddOperator = MPI_OP_NULL;
-	}
+	CollectiveCommunicationSingleNonBlocking() = default;
+
+	/**
+	 * Copy constructor is deleted, as copying the vector _tempValues will change memory addresses used in the mpi
+	 * communication!
+	 */
+	CollectiveCommunicationSingleNonBlocking(const CollectiveCommunicationSingleNonBlocking&) = delete;
+
+	/**
+	 * Copy assignment operator is deleted, as copying the vector _tempValues will change memory addresses used in the
+	 * mpi communication!
+	 */
+	CollectiveCommunicationSingleNonBlocking& operator=(const CollectiveCommunicationSingleNonBlocking&) = delete;
 
 	void instantiate() {
 		_request = new MPI_Request();
@@ -51,7 +56,7 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~CollectiveCommunicationSingleNonBlocking() {
+	~CollectiveCommunicationSingleNonBlocking() override {
 		//mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
@@ -98,6 +103,7 @@ public:
 
 	// documentation in base class
 	virtual void finalize() override {
+		// We intentionally use CollectiveCommBase::finalize(), as _agglomeratedType might not be MPI_DATATYPE_NULL.
 		CollectiveCommBase::finalize();
 		_types.clear();
 	}
@@ -149,12 +155,13 @@ private:
 
 	}
 
-	MPI_Request* _request;
-	MPI_Op _agglomeratedTypeAddOperator;
-	bool _communicationInitiated;
-	bool _valuesValid;
+	MPI_Request* _request{nullptr};
+	MPI_Op _agglomeratedTypeAddOperator{MPI_OP_NULL};
+	bool _communicationInitiated{false};
+	bool _valuesValid{false};
+	/// tempValues is used for overlapped communications!
 	std::vector<valType> _tempValues;
-	bool _firstComm;
+	bool _firstComm{true};
 };
 
 #endif // MPI_VERSION >= 3
