@@ -1163,6 +1163,6 @@ std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {
 string LinkedCells::getConfigurationAsString() {
 	stringstream ss;
 	// TODO: propper string representation for ls1 traversal choices
-	ss <<  "{Container: ls1_linkedCells Traversal: " << _traversalTuner->getSelectedTraversal() << "}";
+	ss <<  "{Container: ls1_linkedCells , Traversal: " << _traversalTuner->getSelectedTraversal() << "}";
 	return ss.str();
 }
