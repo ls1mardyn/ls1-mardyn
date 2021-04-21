@@ -122,6 +122,9 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 #else
 		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << endl;
 #endif
+		xmlconfig.getNodeValue("overlappingStartAtStep", _overlappingStartAtStep);
+		global_log->info() << "DomainDecompMPIBase: Overlapping Collectives start at step " << _overlappingStartAtStep
+						   << endl;
 	} else {
 		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << endl;
 	}
@@ -319,4 +322,12 @@ void DomainDecompMPIBase::printSubInfo(int offset) {
 
 void DomainDecompMPIBase::printCommunicationPartners(std::string filename) const{
 	_neighbourCommunicationScheme->printCommunicationPartners(filename);
+}
+
+void DomainDecompMPIBase::collCommAllreduceSumAllowPrevious() {
+	if (global_simulation->getSimulationStep() >= _overlappingStartAtStep) {
+		_collCommunication->allreduceSumAllowPrevious();
+	} else {
+		_collCommunication->allreduceSum();
+	}
 }

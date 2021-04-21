@@ -12,11 +12,10 @@
 //! @brief This class provides an interface for the collective communication classes.
 //! @details It provides all methods, that are NOT YET provided by CollectiveCommBaseInterface
 //! @author Steffen Seckler
-class CollectiveCommunicationInterface : public virtual CollectiveCommBaseInterface{
+class CollectiveCommunicationInterface : public virtual CollectiveCommBaseInterface {
 public:
 	//! @brief virtual destructor
-	virtual ~CollectiveCommunicationInterface() {
-	}
+	~CollectiveCommunicationInterface() override = default;
 
 	//! @brief allocate memory for the values to be sent, initialize counters for specific
 	//! @param key The key of the collective communication, this key will be used

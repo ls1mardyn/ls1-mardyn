@@ -180,6 +180,8 @@
       <parallelisation type="DomainDecomposition">
           <CommunicationScheme>direct</CommunicationScheme>
           <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad><!-- Timer to use as load. requires valid timer name! -->
+          <overlappingCollectives>False</overlappingCollectives> <!-- true if overlapping collectives should be used, false otherwise. -->
+          <overlappingStartAtStep>5</overlappingStartAtStep> <!-- Start overlapping at given step (default: 5), only relevant if overlappingCollectives==True -->
       </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>

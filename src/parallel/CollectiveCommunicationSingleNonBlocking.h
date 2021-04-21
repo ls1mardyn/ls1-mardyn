@@ -34,17 +34,14 @@ public:
 	 */
 	CollectiveCommunicationSingleNonBlocking& operator=(const CollectiveCommunicationSingleNonBlocking&) = delete;
 
-	void instantiate() {
-		_request = new MPI_Request();
-	}
-
-	void destroy() {
+	/**
+	 * Destructor
+	 */
+	~CollectiveCommunicationSingleNonBlocking() override {
 		if (_request) {
 			if (_communicationInitiated) {
-				MPI_Wait(_request, MPI_STATUS_IGNORE);
+				MPI_Wait(_request.get(), MPI_STATUS_IGNORE);
 			}
-			delete _request;
-			_request = nullptr;
 		}
 		if (_agglomeratedTypeAddOperator != MPI_OP_NULL) {
 			MPI_CHECK(MPI_Op_free(&_agglomeratedTypeAddOperator));
@@ -52,12 +49,6 @@ public:
 		if (_agglomeratedType != MPI_DATATYPE_NULL) {
 			MPI_CHECK(MPI_Type_free(&_agglomeratedType));
 		}
-	}
-	/**
-	 * Destructor
-	 */
-	~CollectiveCommunicationSingleNonBlocking() override {
-		//mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
 	void allreduceSumAllowPrevious() override {
@@ -120,7 +111,7 @@ private:
 	 * Waits for communication to end and also sets the data in the correct place (values)
 	 */
 	void waitAndUpdateData() {
-		MPI_CHECK(MPI_Wait(_request, MPI_STATUS_IGNORE));
+		MPI_CHECK(MPI_Wait(_request.get(), MPI_STATUS_IGNORE));
 		// copy the temporary values to the real values!
 		_values = _tempValues;
 
@@ -145,7 +136,7 @@ private:
 							&_agglomeratedTypeAddOperator));
 		}
 		MPI_CHECK(
-				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, _agglomeratedTypeAddOperator, _communicator, _request));
+				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, _agglomeratedTypeAddOperator, _communicator, _request.get()));
 		_communicationInitiated = true;
 #else
 		for( unsigned int i = 0; i < _types.size(); i++ ) {
@@ -155,7 +146,7 @@ private:
 
 	}
 
-	MPI_Request* _request{nullptr};
+	std::unique_ptr<MPI_Request> _request{new MPI_Request()};
 	MPI_Op _agglomeratedTypeAddOperator{MPI_OP_NULL};
 	bool _communicationInitiated{false};
 	bool _valuesValid{false};
