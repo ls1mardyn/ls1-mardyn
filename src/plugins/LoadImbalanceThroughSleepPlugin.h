@@ -16,6 +16,7 @@ public:
 	 * \code{.xml}
 	 * <plugin name="LoadImbalanceThroughSleepPlugin">
 	 *   <varyingSteps>True/False</varyingSteps> <!-- Default: True -->
+	 *   <varyingStepsSleepTime>INT: sleep time in ms</varyingStepsSleepTime> <!-- Default: 200 -->
 	 * </plugin>
 	 * \endcode
 	 * @param xmlconfig
@@ -38,4 +39,5 @@ public:
 
 private:
 	bool _varyingSteps{true};
+	int _varyingStepsSleepTime{200};
 };

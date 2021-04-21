@@ -15,7 +15,7 @@ void LoadImbalanceThroughSleepPlugin::afterForces(ParticleContainer *particleCon
 												  unsigned long simstep) {
 	using namespace std::chrono_literals;
 	if (_varyingSteps and domainDecomp->getRank() % 2 == 0) {
-		std::this_thread::sleep_for(2000ms);
+		std::this_thread::sleep_for(std::chrono::milliseconds(_varyingStepsSleepTime));
 	}
 }
 
@@ -23,6 +23,6 @@ void LoadImbalanceThroughSleepPlugin::endStep(ParticleContainer *particleContain
 											  Domain *domain, unsigned long simstep) {
 	using namespace std::chrono_literals;
 	if (_varyingSteps and domainDecomp->getRank() % 2 != 0) {
-		std::this_thread::sleep_for(2000ms);
+		std::this_thread::sleep_for(std::chrono::milliseconds(_varyingStepsSleepTime));
 	}
 }
