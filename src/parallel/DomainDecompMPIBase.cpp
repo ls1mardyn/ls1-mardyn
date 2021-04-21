@@ -317,7 +317,7 @@ void DomainDecompMPIBase::printDecomp(const std::string &filename, Domain *domai
 	}
 
 	stringstream localCellInfo;
-	localCellInfo << _rank << getBoundingBoxMin(0, domain) << " " << getBoundingBoxMin(1, domain) << " "
+	localCellInfo << _rank << " " << getBoundingBoxMin(0, domain) << " " << getBoundingBoxMin(1, domain) << " "
 			<< getBoundingBoxMin(2, domain) << " " << getBoundingBoxMax(0, domain) << " "
 			<< getBoundingBoxMax(1, domain) << " " << getBoundingBoxMax(2, domain) << " "
 			<< particleContainer->getConfigurationAsString() << "\n";
@@ -347,7 +347,7 @@ void DomainDecompMPIBase::printDecomp(const std::string &filename, Domain *domai
 #endif
 }
 
-void DomainDecompMPIBase::printSubInfo(int offset) { 
+void DomainDecompMPIBase::printSubInfo(int offset) {
 	std::stringstream offsetstream;
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";

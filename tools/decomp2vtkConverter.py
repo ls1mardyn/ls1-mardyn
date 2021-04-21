@@ -76,23 +76,25 @@ for inputFileName in sys.argv[1:]:
     f_out = open(outputFileName, 'w')
     ### data validation
     currentLine = f_in.readline()
-    while currentLine.find('decompData Regions') != -1:
+    # look for start of header line
+    while currentLine.find('rank boxMin_x') != -1:
         if currentLine != '':
             print('ERROR: reached end of file, but require "decompData Regions"')
             sys.exit()
         currentLine = f_in.readline()
-    f_in.readline()  # skip decompData Regions
+    f_in.readline()  # skip header line
 
     ### data parsing
     numcells = 0
     line = f_in.readline()
     celllist = []
-    while line.find('particleData') == -1 and line != "":
-        match=re.search(r'([0-9. ]+)(.*)', line)
-        minMaxString=match.group(1).rstrip()
-        configString=match.group(2)
+    while line != "":
+        match = re.search(r'([0-9]+) ([0-9. ]+)(.*)', line)
+        rank = int(match.group(1).rstrip())
+        minMaxString = match.group(2).rstrip()
+        configString = match.group(3)
 
-        celllist.append(Cell(minMaxString, numcells, configString))
+        celllist.append(Cell(minMaxString, rank, configString))
         numcells += 1
         line = f_in.readline()
 
@@ -145,4 +147,3 @@ for inputFileName in sys.argv[1:]:
     # finish
     f_in.close()
     f_out.close()
-
