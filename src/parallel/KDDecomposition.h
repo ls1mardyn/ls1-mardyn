@@ -164,26 +164,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//! @todo comment and thing
 	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
-	//! @brief writes information about the current decomposition into the given file
-	//!
-	//! This decomposition first writes a very small header with the following lines:
-	//! - "size", followed by three double values for the size of the domain
-	//! - "decompData Regions": just this text to state that now the header is finished and data follows
-	//! - one line per proc, giving the bounding box (minx, miny, minz, maxx, maxy, maxz)
-	//!
-	//! An example file for 5 procs could look like this:
-	//!
-	//! |size 62.0 62.0 62.0 \n
-	//!  decompData Regions \n
-	//!  0.0 0.0 0.0 20.0 62.0 62.0 \n
-	//!  20.0 0.0 0.0 62.0 40.0 25.0 \n
-	//!  20.0 40.0 0.0 62.0 62.0 25.0 \n
-	//!  20.0 0.0 25.0 62.0 30.0 62.0 \n
-	//!  20.0 30.0 25.0 62.0 62.0 62.0
-	//! @param filename name of the file into which the data will be written
-	//! @param domain e.g. needed to get the bounding boxes
-    void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) override;
-
 	int getUpdateFrequency() const { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
 	std::vector<int> getNeighbourRanks() override;

@@ -709,44 +709,6 @@ double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	}
 }
 
-void KDDecomposition::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
-	if (_rank == 0) {
-		ofstream povcfgstrm(filename.c_str());
-		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " " << domain->getGlobalLength(2) << endl;
-		povcfgstrm << "decompData Regions" << endl;
-		povcfgstrm.close();
-	}
-
-	stringstream output;
-	output  << getBoundingBoxMin(0,domain) << " " << getBoundingBoxMin(1,domain) << " "
-			<< getBoundingBoxMin(2,domain) << " " << getBoundingBoxMax(0,domain) << " "
-			<< getBoundingBoxMax(1,domain) << " " << getBoundingBoxMax(2,domain) << "\n";
-	string output_str = output.str();
-#ifdef ENABLE_MPI
-	MPI_File fh;
-	MPI_File_open(_comm, filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
-	uint64_t write_size = output_str.size();
-	uint64_t offset = 0;
-	if(_rank == 0) {
-		MPI_Offset file_end_pos;
-		MPI_File_seek(fh, 0, MPI_SEEK_END);
-		MPI_File_get_position(fh, &file_end_pos);
-		write_size += file_end_pos;
-		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
-		offset += file_end_pos;
-	} else {
-		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
-	}
-	MPI_File_write_at(fh, offset, output_str.c_str(), output_str.size(), MPI_CHAR, MPI_STATUS_IGNORE);
-	MPI_File_close(&fh);
-#else
-	ofstream povcfgstrm(filename.c_str(), ios::app);
-	povcfgstrm << output_str;
-	povcfgstrm.close();
-#endif
-}
-
-
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 //$ private Methoden, die von exchangeMolecule benötigt werden $
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
