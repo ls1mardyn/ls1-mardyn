@@ -9,6 +9,7 @@
 
 void LoadImbalanceThroughSleepPlugin::readXML(XMLfileUnits &xmlconfig) {
 	xmlconfig.getNodeValue("varyingSteps", _varyingSteps);
+	xmlconfig.getNodeValue("varyingStepsSleepTime", _varyingStepsSleepTime);
 }
 
 void LoadImbalanceThroughSleepPlugin::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
