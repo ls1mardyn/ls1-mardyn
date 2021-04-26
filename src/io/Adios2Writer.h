@@ -41,7 +41,18 @@ public:
             DomainDecompBase* domainDecomp, Domain* domain
     );
 
-    void readXML(XMLfileUnits& xmlconfig);
+	/** @brief Read in XML configuration for Adios2Writer.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <outputplugin name="Adios2Writer">
+		 <outputfile>STRING</outputfile>
+		 <adios2enginetype><!-- For possible engines see the ADIOS2 doc --></adios2enginetype>
+		 <writefrequency>INTEGER</writefrequency>
+	   </outputplugin>
+	   \endcode
+	 */
+	void readXML(XMLfileUnits& xmlconfig) override;
 
     void beforeEventNewTimestep(
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
@@ -77,7 +88,8 @@ protected:
 private:
     void initAdios2();
     // output filename, from XML
-    std::string fname;
+    std::string _outputfile;
+    std::string _adios2enginetype;
     uint32_t _writefrequency;
     double current_time;
     // variables to write, see documentation
