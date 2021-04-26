@@ -271,7 +271,7 @@ void Adios2Reader::initAdios2() {
 
   try {
     //get adios2 instance
-        inst = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
+        inst = std::make_shared<adios2::ADIOS>((MPI_Comm) MPI_COMM_WORLD);
 
         // declare io as output
         io = std::make_shared<adios2::IO>(inst->DeclareIO("Input"));
