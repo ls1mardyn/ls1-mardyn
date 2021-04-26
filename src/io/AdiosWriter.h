@@ -7,7 +7,7 @@
 
 ///
 /// \file AdiosWriter.h
-/// Insitu Megamol Plugin Header. See the AdiosWriter class description for a manual on how to use the plugin
+/// Insitu Megamol Plugin Header. See the Adios2Writer class description for a manual on how to use the plugin
 ///
 
 #pragma once
@@ -32,10 +32,10 @@
 #include <adios2.h>
 #include <mpi.h>
 
-class AdiosWriter : public PluginBase {
+class Adios2Writer : public PluginBase {
 public:
-    AdiosWriter() {}; 
-    virtual ~AdiosWriter() {};
+    Adios2Writer() {};
+    virtual ~Adios2Writer() {};
 
     void init(ParticleContainer* particleContainer,
             DomainDecompBase* domainDecomp, Domain* domain
@@ -67,15 +67,15 @@ public:
             DomainDecompBase* domainDecomp, Domain* domain);
 
     std::string getPluginName() {
-        return std::string("AdiosWriter");
+        return std::string("Adios2Writer");
     }
 
-    static PluginBase* createInstance() { return new AdiosWriter(); }
+    static PluginBase* createInstance() { return new Adios2Writer(); }
 
 protected:
     // 
 private:
-    void initAdios();
+    void initAdios2();
     // output filename, from XML
     std::string fname;
     uint32_t _writefrequency;

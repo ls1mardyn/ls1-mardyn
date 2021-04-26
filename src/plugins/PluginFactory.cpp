@@ -79,7 +79,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
 #ifdef ENABLE_ADIOS2
-	REGISTER_PLUGIN(AdiosWriter);
+	REGISTER_PLUGIN(Adios2Writer);
 #endif
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(CavityWriter);
