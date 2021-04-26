@@ -5,7 +5,7 @@
 
 ///
 /// \file Adios2Reader.h
-/// Adios Reader
+/// Adios2 Reader
 ///
 
 #pragma once
@@ -52,7 +52,7 @@ public:
 protected:
     // 
 private:
-    void initAdios();
+    void initAdios2();
     void rootOnlyRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
     void equalRanksRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {};
     // output filename, from XML

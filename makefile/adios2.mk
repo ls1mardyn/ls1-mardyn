@@ -1,6 +1,6 @@
 $(info included adios2.mk!)
 
-ADIOS2_SOURCES = $(shell find ./ -name "*.cpp" | grep -v "/tests/" | grep "Adios")
+ADIOS2_SOURCES = $(shell find ./ -name "*.cpp" | grep -v "/tests/" | grep "Adios2")
 
 SOURCES += $(ADIOS2_SOURCES)
 CXXFLAGS += -DENABLE_ADIOS2

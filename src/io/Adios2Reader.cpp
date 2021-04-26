@@ -28,12 +28,12 @@ void Adios2Reader::readXML(XMLfileUnits& xmlconfig) {
   fname = "test.bp";
   xmlconfig.getNodeValue("filename", fname);
   xmlconfig.getNodeValue("mode", mode);
-  // Adios step (frame)
-  xmlconfig.getNodeValue("adiosStep", step);
+  // Adios2 step (frame)
+  xmlconfig.getNodeValue("adios2Step", step);
 
   global_log->info() << "    [Adios2Reader]: readXML." << std::endl;
 
-  if (!inst) initAdios();
+  if (!inst) initAdios2();
 };
 
 void Adios2Reader::readPhaseSpaceHeader(Domain* domain, double timestep) {
@@ -266,11 +266,11 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 
 };
 
-void Adios2Reader::initAdios() {
+void Adios2Reader::initAdios2() {
   auto& domainDecomp = _simulation.domainDecomposition();
 
   try {
-    //get adios instance
+    //get adios2 instance
         inst = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
 
         // declare io as output

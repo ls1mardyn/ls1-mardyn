@@ -1,7 +1,7 @@
 option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." ON)
-# if(ENABLE_ADIOS AND ENABLE_MPI)
+# if(ENABLE_ADIOS2 AND ENABLE_MPI)
 #     message(STATUS "Installing Adios2.")
-#     option(USE_INTERNAL_ADIOS "Download and build ADIOS2 in the ls1 build" OFF)
+#     option(USE_INTERNAL_ADIOS2 "Download and build ADIOS2 in the ls1 build" OFF)
 #     ## set linkage for hazelhen
 #     if($ENV{CRAYPE_LINK_TYPE})
 #         set(LINK_TYPE $ENV{CRAYPE_LINK_TYPE})
@@ -13,9 +13,9 @@ option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." ON)
 #         endif()
 #     endif()
 
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_ADIOS ${LINK_TYPE}")
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_ADIOS2 ${LINK_TYPE}")
 
-#     if(NOT USE_INTERNAL_ADIOS)
+#     if(NOT USE_INTERNAL_ADIOS2)
 #         find_package(ADIOS2 REQUIRED)
 #     else()
 #         # Enable ExternalProject CMake module

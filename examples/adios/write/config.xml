@@ -96,7 +96,7 @@
 			</thermostats>
 		</algorithm>
 		<output>
-		<outputplugin name="AdiosWriter">
+		<outputplugin name="Adios2Writer">
 		  <outputfile>test.bp</outputfile>
 		  <writefrequency>50</writefrequency>
 		</outputplugin>

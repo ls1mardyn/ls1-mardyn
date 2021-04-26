@@ -1,12 +1,12 @@
 /*
- * AdiosWriter.h
+ * Adios2Writer.h
  *
  *  Created on: 11 Jul 2018
  *      Author: Oliver Fernandes
  */
 
 ///
-/// \file AdiosWriter.h
+/// \file Adios2Writer.h
 /// Insitu Megamol Plugin Header. See the Adios2Writer class description for a manual on how to use the plugin
 ///
 

@@ -58,7 +58,7 @@
 #include "io/TcTS.h"
 #include "io/TimerProfiler.h"
 #ifdef ENABLE_ADIOS2
-#include "io/AdiosReader.h"
+#include "io/Adios2Reader.h"
 #endif
 
 #include "ensemble/GrandCanonicalEnsemble.h"
@@ -575,8 +575,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			//!@todo read header should be either part of readPhaseSpace or readXML.
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-		} else if (pspfiletype == "adios") {
-			_inputReader = new AdiosReader();
+		} else if (pspfiletype == "adios2") {
+			_inputReader = new Adios2Reader();
 			_inputReader->readXML(xmlconfig);
 		}
 		else {

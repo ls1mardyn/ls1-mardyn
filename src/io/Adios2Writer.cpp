@@ -1,11 +1,11 @@
 /*
- * AdiosWriter.cpp
+ * Adios2Writer.cpp
  *
  *  Created on: April 2019
  *      Author: Tobias Rau
  */
 
-#include "AdiosWriter2.h"
+#include "Adios2Writer.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "Simulation.h"

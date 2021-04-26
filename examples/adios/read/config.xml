@@ -33,9 +33,9 @@
 			</components>
 
 			<phasespacepoint>
-				<file type="adios">
+				<file type="adios2">
 					<mode>rootOnly</mode>
-					<adiosStep>0</adisoStep>
+					<adios2Step>0</adios2Step>
 					<filename>test.bp</filename>
 				</file>
 			</phasespacepoint>
