@@ -11,6 +11,7 @@
 #include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "utils/mardyn_assert.h"
+#include "utils/xmlfile.h"
 
 using Log::global_log;
 
@@ -37,16 +38,18 @@ void Adios2Writer::init(ParticleContainer* particleContainer,
 };
 
 void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
+	using std::endl;
+	_outputfile = "mardyn.bp";
+	xmlconfig.getNodeValue("outputfile", _outputfile);
+	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << endl;
+	_adios2enginetype = "BP4";
+	xmlconfig.getNodeValue("adios2enginetype", _adios2enginetype);
+	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << endl;
+	_writefrequency = 50000;
+	xmlconfig.getNodeValue("writefrequency", _writefrequency);
+	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
 
-
-  fname = "test.bp";
-  _writefrequency = 50000;
-  xmlconfig.getNodeValue("outputfile", fname);
-  xmlconfig.getNodeValue("writefrequency", _writefrequency);
-  global_log->info() << "    AW: readXML." << std::endl;
-
-  if (!inst) initAdios2();
-
+	if (!inst) initAdios2();
 };
 
 void Adios2Writer::initAdios2() {
@@ -60,11 +63,11 @@ void Adios2Writer::initAdios2() {
         io = std::make_shared<adios2::IO>(inst->DeclareIO("Output"));
 
         // use bp engine
-        io->SetEngine("BP4");
+        io->SetEngine(_adios2enginetype);
 
         if (!engine) {
-            global_log->info() << "    AW: Opening File for writing." << fname.c_str() << std::endl;
-            engine = std::make_shared<adios2::Engine>(io->Open(fname, adios2::Mode::Write));
+            global_log->info() << "[Adios2Writer]: Opening File for writing." << _outputfile.c_str() << std::endl;
+            engine = std::make_shared<adios2::Engine>(io->Open(_outputfile, adios2::Mode::Write));
         }
   }
     catch (std::invalid_argument& e) {
@@ -266,4 +269,3 @@ void Adios2Writer::finish(ParticleContainer* particleContainer,
     engine->Close();
     global_log->info() << "    AW: finish." << std::endl;
 }
-
