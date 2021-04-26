@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "PluginBase.h"
+#include "plugins/PluginBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 
 #include <chrono>
