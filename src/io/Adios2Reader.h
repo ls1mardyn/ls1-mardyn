@@ -83,6 +83,7 @@ private:
       adios2::Dims readsize({buffer});
       adios2::Dims offs({offset});
 
+      Log::global_log->info() << "[Adios2Reader]: Var name " << var_name << std::endl;
       auto advar = io->InquireVariable<T>(var_name);
       advar.SetStepSelection({step,1});
       Log::global_log->info() << "[Adios2Reader]: buffer " << buffer << " offset " << offset << std::endl;

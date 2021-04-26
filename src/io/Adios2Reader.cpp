@@ -79,8 +79,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 	inputTimer.start();
 
     std::vector<double> rx ,ry, rz, vx, vy, vz, qw, qx, qy, qz, Lx, Ly, Lz;
-    std::vector<uint32_t> comp_id;
-    std::vector<uint64_t> mol_id;
+	std::vector<uint64_t> mol_id, comp_id;
     double simtime;
     uint64_t buffer = 1000;
     MPI_Datatype mpi_Particle;
