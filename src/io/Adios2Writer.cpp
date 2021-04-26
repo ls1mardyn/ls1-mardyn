@@ -5,7 +5,7 @@
  *      Author: Tobias Rau
  */
 
-#include "AdiosWriter.h"
+#include "AdiosWriter2.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "Simulation.h"

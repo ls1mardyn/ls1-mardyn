@@ -62,7 +62,7 @@
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
 #ifdef ENABLE_ADIOS2
-#include "io/AdiosWriter.h"
+#include "io/Adios2Writer.h"
 #endif
 
 #ifdef VTK
