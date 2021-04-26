@@ -38,7 +38,19 @@ public:
             DomainDecompBase* domainDecomp, Domain* domain
     );
 
-    void readXML(XMLfileUnits& xmlconfig);
+	/** @brief Read in XML configuration for Adios2Reader.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <file type="adios2">
+		 <filename>STRING</filename>
+		 <adios2enginetype><!-- For possible engines see the ADIOS2 doc --></adios2enginetype>
+		 <adios2step><!-- INTEGER --> </adios2step>
+		 <mode><!-- currently only supports "rootOnly" --></mode>
+	   </outputplugin>
+	   \endcode
+	 */
+	void readXML(XMLfileUnits& xmlconfig);
 
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
 
@@ -56,9 +68,10 @@ private:
     void rootOnlyRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
     void equalRanksRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {};
     // output filename, from XML
-    std::string fname;
-    std::string mode;
-    int step;
+    std::string _inputfile;
+    std::string _adios2enginetype;
+    std::string _mode;
+    int _step;
     uint64_t particle_count;
     // main instance
     std::shared_ptr<adios2::ADIOS> inst;
@@ -69,7 +82,7 @@ private:
     void doTheRead(std::string var_name, std::vector<T>& container) {
       uint64_t num = 1;
       auto advar = io->InquireVariable<T>(var_name);
-      advar.SetStepSelection({step,1});
+      advar.SetStepSelection({_step,1});
       auto info = engine->BlocksInfo(advar, 0);
       auto shape = info[0].Count;
       std::for_each(shape.begin(), shape.end(), [&](decltype(num) n) { num *= n; });
@@ -85,7 +98,7 @@ private:
 
       Log::global_log->info() << "[Adios2Reader]: Var name " << var_name << std::endl;
       auto advar = io->InquireVariable<T>(var_name);
-      advar.SetStepSelection({step,1});
+      advar.SetStepSelection({_step,1});
       Log::global_log->info() << "[Adios2Reader]: buffer " << buffer << " offset " << offset << std::endl;
       for (auto entry: advar.Shape())
         Log::global_log->info() << "[Adios2Reader]: shape " << entry << std::endl;
@@ -97,7 +110,7 @@ private:
     template <typename T> 
     void doTheRead(std::string var_name, T& value) {
       auto advar = io->InquireVariable<T>(var_name);
-      advar.SetStepSelection({step,1});
+      advar.SetStepSelection({_step,1});
       engine->Get<T>(advar, value);
     }
 

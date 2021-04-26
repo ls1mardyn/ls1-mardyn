@@ -97,7 +97,8 @@
 		</algorithm>
 		<output>
 		<outputplugin name="Adios2Writer">
-		  <outputfile>test.bp</outputfile>
+		  <outputfile>mardyn.bp</outputfile>
+		  <adios2enginetype>BP4</adios2enginetype>
 		  <writefrequency>50</writefrequency>
 		</outputplugin>
 		</output>

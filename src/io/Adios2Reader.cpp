@@ -16,6 +16,7 @@
 #include "parallel/ParticleData.h"
 #include "parallel/DomainDecompBase.h"
 #endif
+#include "utils/xmlfile.h"
 
 using Log::global_log;
 
@@ -24,16 +25,20 @@ void Adios2Reader::init(ParticleContainer* particleContainer,
 };
 
 void Adios2Reader::readXML(XMLfileUnits& xmlconfig) {
-  mode = "rootOnly";
-  fname = "test.bp";
-  xmlconfig.getNodeValue("filename", fname);
-  xmlconfig.getNodeValue("mode", mode);
-  // Adios2 step (frame)
-  xmlconfig.getNodeValue("adios2Step", step);
+	_mode = "rootOnly";
+	xmlconfig.getNodeValue("mode", _mode);
+	global_log->info() << "[Adios2Reader] Input mode: " << _mode << endl;
+	_inputfile = "mardyn.bp";
+	xmlconfig.getNodeValue("filename", _inputfile);
+	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << endl;
+	_adios2enginetype = "BP4";
+	xmlconfig.getNodeValue("adios2enginetype", _adios2enginetype);
+	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << endl;
+	_step = -1;
+	xmlconfig.getNodeValue("adios2Step", _step);
+	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << endl;
 
-  global_log->info() << "    [Adios2Reader]: readXML." << std::endl;
-
-  if (!inst) initAdios2();
+	if (!inst) initAdios2();
 };
 
 void Adios2Reader::readPhaseSpaceHeader(Domain* domain, double timestep) {
@@ -48,23 +53,25 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
   auto total_steps = std::stoi(variables["simulationtime"]["AvailableStepsCount"]);
   global_log->info() << "[Adios2Reader]: TOTAL STEPS " << total_steps << std::endl;
 
-
-  if (step > total_steps) {
+  if (_step == -1 ) {
+      _step = total_steps - 1;
+  }
+  if (_step > total_steps) {
       global_log->error() << "[Adios2Reader]: Specified step is out of scope" << std::endl;
   } 
-  if (step < 0) {
-      step = total_steps + (step + 1);
+  if (_step < 0) {
+      _step = total_steps + (_step + 1);
   }
   particle_count = std::stoi(variables["rx"]["Shape"]);
   global_log->info() << "    [Adios2Reader]: Particle count: " << particle_count << std::endl;
 
-  if (mode == "rootOnly") {
+  if (_mode == "rootOnly") {
       rootOnlyRead(particleContainer, domain, domainDecomp);
-  } else if (mode == "equalRanks") {
+  } else if (_mode == "equalRanks") {
       // TODO: Implement
       equalRanksRead(particleContainer, domain, domainDecomp);
   } else {
-      global_log->error() << "[Adios2Reader]: Unkown Mode '" << mode << "'" << std::endl;
+      global_log->error() << "[Adios2Reader]: Unkown _mode '" << _mode << "'" << std::endl;
   }
 
     engine->Close();
@@ -272,15 +279,13 @@ void Adios2Reader::initAdios2() {
     //get adios2 instance
         inst = std::make_shared<adios2::ADIOS>((MPI_Comm) MPI_COMM_WORLD);
 
-        // declare io as output
         io = std::make_shared<adios2::IO>(inst->DeclareIO("Input"));
 
-        // use bp engine
-        io->SetEngine("BPFile");
+        io->SetEngine(_adios2enginetype);
 
         if (!engine) {
-            global_log->info() << "    [Adios2Reader]: Opening File for writing." << fname.c_str() << std::endl;
-            engine = std::make_shared<adios2::Engine>(io->Open(fname, adios2::Mode::Read));
+            global_log->info() << "    [Adios2Reader]: Opening File for writing." << _inputfile.c_str() << std::endl;
+            engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
         }
   }
     catch (std::invalid_argument& e) {
