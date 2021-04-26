@@ -34,9 +34,10 @@
 
 			<phasespacepoint>
 				<file type="adios2">
+					<filename>mardyn.bp</filename>
+					<adios2enginetype>BP4</adios2enginetype>
+					<adios2step>0</adios2step>
 					<mode>rootOnly</mode>
-					<adios2Step>0</adios2Step>
-					<filename>test.bp</filename>
 				</file>
 			</phasespacepoint>
 		</ensemble>
