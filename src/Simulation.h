@@ -473,6 +473,9 @@ private:
 	/** use legacyCellProcessor instead of vectorizedCellProcessor */
 	bool _legacyCellProcessor = false;
 
+	/** Specifies whether to use overlapping p2p communication or not */
+	bool _overlappingP2P {false};
+
 	/** List of plugins to use */
 	std::list<PluginBase*> _plugins;
 
