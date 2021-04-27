@@ -417,7 +417,9 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			else _neighbours = _haloImportForceExportNeighbours;
 			break;
 		case LEAVING_AND_HALO_COPIES:
-			global_log->error()<< "WRONG type in selectNeighbours - this should not be used for push-pull-partners selectNeighbours method";
+			global_log->error() << "WRONG type in selectNeighbours - this should not be used for push-pull-partners "
+								   "selectNeighbours method"
+								<< std::endl;
 			Simulation::exit(1);
 			break;
 	}
