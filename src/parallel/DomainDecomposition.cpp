@@ -53,22 +53,27 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	if(sendLeavingWithCopies()){
-		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
-	}
-	else {
-		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
-		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	if (sendLeavingWithCopies()) {
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber,
+														 LEAVING_AND_HALO_COPIES);
+	} else {
+		// Would first need to send leaving, then halo -> not good for overlapping!
+		global_log->error()
+			<< "nonblocking P2P using separate messages for leaving and halo is currently not supported." << std::endl;
+		Simulation::exit(235861);
 	}
 }
 
 void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	if(sendLeavingWithCopies()){
-		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
-	}else{
-		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
-		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	if (sendLeavingWithCopies()) {
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber,
+														LEAVING_AND_HALO_COPIES);
+	} else {
+		// Would first need to send leaving, then halo -> not good for overlapping!
+		global_log->error()
+			<< "nonblocking P2P using separate messages for leaving and halo is currently not supported." << std::endl;
+		Simulation::exit(235861);
 	}
 }
 
