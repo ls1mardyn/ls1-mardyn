@@ -5,7 +5,7 @@ import argparse
 
 import ppls1.imp.chp as chp
 
-flgArgs = 0
+flgArgs = 1
 
 if flgArgs == 1:
     ap = argparse.ArgumentParser()
@@ -15,7 +15,6 @@ if flgArgs == 1:
     ap.add_argument("-n", "--nbins", required=False, default=11, type=int, help="number of bins")
     args = vars(ap.parse_args())
 
-if flgArgs == 1:
     fullPathChp = args['path']
     expName = args['export']
     quantity = args['quantity']
@@ -26,7 +25,7 @@ if flgArgs == 1:
         numQuantities = 1
     nbins = args['nbins']
 else:
-    fullPathChp = '/home/pcfsuser/Simon/ls1/projects/heatflux/hyperbolWL/sim01/run02/cp_binary-0.restart.dat'
+    fullPathChp = 'PATHTOSIMULATION'
     expName = 'test.pdf'
     quantity = 'rho_all'
     if type(quantity) is list:
@@ -87,7 +86,7 @@ else:
         if idxQuant < numQuantities-1: axes[idxQuant].set_xlabel('')
     axes[-1].set_xlabel('z Coordinate')
 
-plt.show()
-#fig.savefig(expName, format='pdf')
+#plt.show()
+fig.savefig(expName, format='pdf')
 
 print('Done')

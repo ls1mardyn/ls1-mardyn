@@ -47,8 +47,6 @@ for key in arguments:
 
 if (len(input_int) > 2) or (len(input_val) > 2): print('WARNING: Too many arguments given!')
 
-var_z = -1.0
-
 integer_z = variables[output]
 
 var_z = petspy.petseos(input_int[0],input_val[0],input_int[1],input_val[1],integer_z)

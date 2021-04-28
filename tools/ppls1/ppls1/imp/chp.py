@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Sat Jun  9 23:33:39 2018
 Modified 2021
 
 @author: mheinen/homes
-"""
+'''
 
 import os
 import numpy as np
@@ -21,10 +21,6 @@ def imp_chp_bin_DL_legacy(fname, numParticles=99999999999, seek=0):
     :param int seek: Seek
     :return: chp: Dict of lists
     '''
-    
-    if seek >= numParticles:
-        print('Seek >= numParticles! Setting seek to 0')
-        seek = 0
     
     if numParticles == 99999999999:
         lengthInit = 0
@@ -48,7 +44,7 @@ def imp_chp_bin_DL_legacy(fname, numParticles=99999999999, seek=0):
     chp['Dy']=np.empty(lengthInit,dtype='<f8')
     chp['Dz']=np.empty(lengthInit,dtype='<f8')
     
-    with open(fname, "rb") as f:
+    with open(fname, 'rb') as f:
         f.seek(seek)  # seek=0: go to beginning
         pi = 0
         while pi<numParticles:
@@ -90,7 +86,7 @@ def imp_chp_bin_DL_legacy(fname, numParticles=99999999999, seek=0):
                     chp['Dy'][pi] = line[13]
                     chp['Dz'][pi] = line[14]
                 pi += 1
-            except:
+            except Exception:
                 break
         chp['pid'] = chp['pid'].astype('<u8', copy=False)
         chp['cid'] = chp['cid'].astype('<u4', copy=False)
@@ -125,10 +121,6 @@ def imp_chp_bin_DL(fname, numParticles=99999999999, seek=0):
     :param int seek: Seek
     :return: chp: Dict of lists
     '''
-    
-    if seek >= numParticles:
-        print('Seek >= numParticles! Setting seek to 0')
-        seek = 0
     
     dt = np.dtype([('pid', 'u8'), ('cid', 'u4'), ('rx', '<f8'), ('ry', '<f8'), ('rz', '<f8'), 
                    ('vx', '<f8'), ('vy', '<f8'), ('vz', '<f8'), ('q0', '<f8'), ('q1', '<f8'),
@@ -186,13 +178,9 @@ def imp_chp_bin_LD(fname, numParticles=99999999999, seek=0):
     :return: chp: List of dict
     '''
     
-    if seek >= numParticles:
-        print('Seek >= numParticles! Setting seek to 0')
-        seek = 0
-    
     chp=[]
     
-    with open(fname, "rb") as f:
+    with open(fname, 'rb') as f:
         f.seek(seek)  # seek=0: go to beginning
         pi = 0
         while pi<numParticles:
@@ -219,7 +207,7 @@ def imp_chp_bin_LD(fname, numParticles=99999999999, seek=0):
                 mol['Dz']=line[14]
                 chp.append(mol)
                 pi += 1
-            except:
+            except Exception:
                 break
         #print(f'Imported {pi} particles')
     return chp
@@ -234,10 +222,6 @@ def imp_chp_bin_DF(fname, numParticles=99999999999, seek=0):
     :param int seek: Seek
     :return: chp: List of dict
     '''
-    
-    if seek >= numParticles:
-        print('Seek >= numParticles! Setting seek to 0')
-        seek = 0
     
     dt = np.dtype([('pid', 'u8'), ('cid', 'u4'), ('rx', '<f8'), ('ry', '<f8'), ('rz', '<f8'), 
                    ('vx', '<f8'), ('vy', '<f8'), ('vz', '<f8'), ('q0', '<f8'), ('q1', '<f8'),
@@ -254,22 +238,17 @@ def imp_ms2_rst_df(infile):
     :return: df, meta: Data frame and meta data
     '''
     
-    if infile == "":
+    if infile == '':
         print('Filename empty!')
         return 0
     if os.path.exists(infile):
-        try:
-            fileHandler = open(infile, "r")
-            print('Opening '+infile)
-        except:
-            print('Error opening file!')
-            return 0
+        with open(infile, 'r') as fileHandler:
+            listOfLines = fileHandler.readlines()
     else:
         print('File does not exist!')
         return 0
-    listOfLines = fileHandler.readlines()
-    fileHandler.close()
-    if listOfLines == 0: quit()
+    
+    if listOfLines == 0: return 0
     meta = dict()
     meta['numPrtls'] = int(listOfLines[4])
     meta['boxlength'] = round((float(listOfLines[5]))**(1./3),8)

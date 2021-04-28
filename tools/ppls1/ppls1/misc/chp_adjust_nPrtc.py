@@ -51,7 +51,7 @@ if __name__ == '__main__':
     
     if flgInp==2:
         num_target = 700
-        work_folder = '/home/pcfsuser/Simon/tmp/test/'
+        work_folder = 'PATHTOSIMULATION'
         in_file_path = work_folder+'cp_binary-0.restart.dat'
         out_file_path = work_folder+'cp_binary_adjusted.restart.dat'
     

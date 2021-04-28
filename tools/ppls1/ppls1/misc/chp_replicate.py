@@ -25,7 +25,7 @@ def chp_replicate(num_reps, in_file_path, out_file_path, createHeader=True):
     num_new = num_reps*num_reps*num_old
     
     # Read in checkpoint
-    chp = imp.imp_chp_bin_LD(in_file_path,num_old)
+    chp = imp.imp_chp_bin_LD(in_file_path)
     chpNew = []
     
     # Get box lengths from xml header file
@@ -75,9 +75,9 @@ if __name__ == '__main__':
     
     if flgInp==2:
         num_reps = 2
-        work_folder = '/home/pcfsuser/Simon/tmp/test/'
+        work_folder = 'PATHTOSIMULATION'
         in_file_path = work_folder+'cp_binary-0.restart.dat'
-        out_file_path = work_folder+'cp_binary-test.restart.dat'
+        out_file_path = work_folder+'cp_binary_rep.restart.dat'
         
     if chp_replicate(num_reps,in_file_path,out_file_path, createHeader=True): print('Replication ('+str(num_reps)+'x) successful')
     

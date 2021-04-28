@@ -2,15 +2,7 @@ import ppls1.imp.chp as imp
 import ppls1.exp.chp as exp
 import numpy as np
 
-# Make it work for Python 2+3 and with Unicode
-import io
-try:
-    to_unicode = unicode
-except NameError:
-    to_unicode = str
-
-
-work_folder = '/home/pcfsuser/Simon/tmp/vis_SFB/'
+work_folder = 'PATHTOSIMULATION'
 in_file_path = work_folder+'cp_binary_half.restart.dat'
 out_file_path = work_folder+'cp_binary_full.restart.dat'
 

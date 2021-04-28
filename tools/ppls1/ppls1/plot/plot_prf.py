@@ -16,7 +16,6 @@ if flgArgs == 1:
     ap.add_argument("-t", "--timestep", type=int, help="quantity")
     args = vars(ap.parse_args())
 
-if flgArgs == 1:
     fullPathSim = args['path']
     expName = args['export']
     quantity = args['quantity']
@@ -28,7 +27,7 @@ if flgArgs == 1:
     flgAverage = args['avg']
     timestep = args['timestep']
 else:
-    fullPathSim = '/home/pcfsuser/Simon/ls1/projects/evap_2CLJQ/sims/prod/25_F05_T0.7_Vac/comb/'
+    fullPathSim = 'PATHTOSIMULATION'
     expName = 'test.pdf'
     quantity = 'rho_all'
     numQuantities = 1
@@ -42,12 +41,12 @@ print('Quantities to be plotted: '+str(quantity))
 print('flgAverage:               '+str(flgAverage))
 print('Timestep:                 '+str(timestep))
 
-if (timestep == None and not flgAverage):
+if (timestep is None and not flgAverage):
     print('Neither timestep nor averaging set. Defaulting to averaging...')
     flgAverage = True
     timestep = None
 
-if (timestep != None and flgAverage):
+if (timestep is not None and flgAverage):
     print('Both timestep and averaging set. Defaulting to averaging...')
     flgAverage = True
     timestep = None

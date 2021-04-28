@@ -1,6 +1,6 @@
 import glob
 import json
-import os
+#import os
 
 import numpy as np
 import pandas as pd
@@ -282,7 +282,7 @@ def json2df(infile):
 #%% Main program which can be called from the command line; Will convert profile data to dataframe including export
 if __name__ == '__main__':
     
-    flgMtdMain = 2 ## Decide on input: 1 for command line argument; 2 for hard coded values
+    flgMtdMain = 1 ## Decide on input: 1 for command line argument; 2 for hard coded values
     
     if flgMtdMain == 1:
         import argparse
@@ -302,7 +302,7 @@ if __name__ == '__main__':
             print('Saving to: '+expFile)
     elif flgMtdMain == 2:
         print('Input set manually in script')
-        simPath = '/home/pcfsuser/Simon/ls1/projects/heatflux/untersuchungDC_TT/parVar/supercritical/noDC_noTT_T1.98'
+        simPath = 'PATHTOSIMULATION'
         flgExport = False
         expFile = simPath+'/dataframe_simulation.json'
     else:
