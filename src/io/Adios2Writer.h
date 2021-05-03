@@ -92,6 +92,7 @@ private:
     std::string _adios2enginetype;
     uint32_t _writefrequency;
     double current_time;
+	std::stringstream _xmlstream;
     // variables to write, see documentation
     std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> vars;
     //std::map<std::string, std::vector<double>> vars;

@@ -63,7 +63,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
       _step = total_steps + (_step + 1);
   }
   particle_count = std::stoi(variables["rx"]["Shape"]);
-  global_log->info() << "    [Adios2Reader]: Particle count: " << particle_count << std::endl;
+  global_log->info() << "[Adios2Reader]: Particle count: " << particle_count << std::endl;
 
   if (_mode == "rootOnly") {
       rootOnlyRead(particleContainer, domain, domainDecomp);
@@ -75,7 +75,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
   }
 
     engine->Close();
-    global_log->info() << "    [Adios2Reader]: finish." << std::endl;
+    global_log->info() << "[Adios2Reader]: finish." << std::endl;
 
     return particle_count;
 };
@@ -107,105 +107,105 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, rx, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Positions should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Positions should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "ry") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, ry, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Positions should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Positions should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "rz") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, rz, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Positions should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Positions should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "vx") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, vx, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Velocities should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Velocities should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "vy") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, vy, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Velocities should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Velocities should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "vz") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, vz, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Velocities should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Velocities should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "qw") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, qw, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "qx") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, qx, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "qy") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, qy, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "qz") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, qz, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Quaternions should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "Lx") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, Lx, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Angular momentum should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Angular momentum should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "Ly") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, Ly, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Angular momentum should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Angular momentum should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "Lz") {
                     if (var.second["Type"] == "double") {
                         doTheRead(var.first, Lz, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Angular momentum should be doubles (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Angular momentum should be doubles (for now)." << std::endl;
                     }
                 }
                 if (var.first == "component_id") {
                     if (var.second["Type"] == "uint64_t") {
                         doTheRead(var.first, comp_id, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Component ids should be uint32_t (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Component ids should be uint32_t (for now)." << std::endl;
                     }
                 }
                 if (var.first == "molecule_id") {
                     if (var.second["Type"] == "uint64_t") {
                         doTheRead(var.first, mol_id, buffer, offset);
                     } else {
-                        global_log->error() << "    [Adios2Reader] Molecule ids should be uint64_t (for now)." << std::endl;
+                        global_log->error() << "[Adios2Reader] Molecule ids should be uint64_t (for now)." << std::endl;
                     }
                 }
             }
@@ -213,7 +213,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
                 if (var.second["Type"] == "double") {
                     doTheRead(var.first, simtime);
                 } else {
-                    global_log->error() << "    [Adios2Reader] Simulation time should be double (for now)." << std::endl;
+                    global_log->error() << "[Adios2Reader] Simulation time should be double (for now)." << std::endl;
                 }
             }
         }
@@ -268,7 +268,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 	}
 
     _simulation.setSimulationTime(simtime);
-    global_log->info() << "    [Adios2Reader] simulation time is: " << simtime << std::endl;
+    global_log->info() << "[Adios2Reader] simulation time is: " << simtime << std::endl;
 
 };
 
@@ -284,7 +284,7 @@ void Adios2Reader::initAdios2() {
         io->SetEngine(_adios2enginetype);
 
         if (!engine) {
-            global_log->info() << "    [Adios2Reader]: Opening File for writing." << _inputfile.c_str() << std::endl;
+            global_log->info() << "[Adios2Reader]: Opening File for writing." << _inputfile.c_str() << std::endl;
             engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
         }
   }
@@ -307,7 +307,7 @@ void Adios2Reader::initAdios2() {
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     }
-    global_log->info() << "    [Adios2Reader]: Init complete." << std::endl;
+    global_log->info() << "[Adios2Reader]: Init complete." << std::endl;
 };
 
 #endif // ENABLE_ADIOS2
