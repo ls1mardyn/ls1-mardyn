@@ -285,7 +285,7 @@ void Adios2Reader::initAdios2() {
 
         if (!engine) {
             global_log->info() << "    [Adios2Reader]: Opening File for writing." << _inputfile.c_str() << std::endl;
-            engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::mode::Read));
+            engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
         }
   }
     catch (std::invalid_argument& e) {
