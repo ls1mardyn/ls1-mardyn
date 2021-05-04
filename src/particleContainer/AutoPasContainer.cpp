@@ -145,8 +145,10 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 
 	// check if autopas is already initialized
 	if(_autopasContainerIsInitialized) {
-	  _autopasContainer.resizeBox(boxMin, boxMax);
-	  return false;
+		_autopasContainer.resizeBox(boxMin, boxMax);
+		// TODO: maybe only force this if the box and num particles changed too much?
+		_autopasContainer.forceRetune();
+		return false;
 	}
 
 	// The following code is only executed if _autopasContainer has not been initialized, yet.
