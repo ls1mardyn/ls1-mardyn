@@ -92,13 +92,13 @@ void Adios2Writer::initAdios2() {
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     }
-    global_log->info() << "[AdiosWriter]: Init complete." << std::endl;
+    global_log->info() << "[Adios2Writer]: Init complete." << std::endl;
 };
 
 void Adios2Writer::beforeEventNewTimestep(
         ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
         unsigned long simstep) {
-    global_log->info() << "[AdiosWriter]: beforeEventNewTimestep." << std::endl;
+    global_log->info() << "[Adios2Writer]: beforeEventNewTimestep." << std::endl;
 
 };
 
@@ -106,7 +106,7 @@ void Adios2Writer::beforeForces(
         ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
         unsigned long simstep
 ) {
-    global_log->info() << "[AdiosWriter]: beforeForces." << std::endl;
+    global_log->info() << "[Adios2Writer]: beforeForces." << std::endl;
 
 };
 
@@ -114,7 +114,7 @@ void Adios2Writer::afterForces(
         ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
         unsigned long simstep
 ) {
-    global_log->info() << "[AdiosWriter]: afterForces." << std::endl;
+    global_log->info() << "[Adios2Writer]: afterForces." << std::endl;
 
 };
 
@@ -168,8 +168,8 @@ void Adios2Writer::endStep(
     uint64_t offset = 0;
 	MPI_Exscan(&localNumParticles, &offset, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
-	global_log->info() << "[AdiosWriter]: localNumParticles " << localNumParticles << std::endl;
-	global_log->info() << "[AdiosWriter]: Offset " << offset << std::endl;
+	global_log->info() << "[Adios2Writer]: localNumParticles " << localNumParticles << std::endl;
+	global_log->info() << "[Adios2Writer]: Offset " << offset << std::endl;
 
     std::array<double,6> global_box{0, 0,0, domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)};
     std::array<double,6> local_box;
@@ -180,7 +180,7 @@ void Adios2Writer::endStep(
 	    engine->BeginStep();
 	    io->RemoveAllVariables();
 	    for (auto& [variableName,variableContainer] : vars) {
-			global_log->info() << "[AdiosWriter]: Defining Variables " << variableName << std::endl;
+			global_log->info() << "[Adios2Writer]: Defining Variables " << variableName << std::endl;
 
       		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
 		        adios2::Variable<double> adios2Var = io->DefineVariable<double>(variableName, {globalNumParticles},
@@ -203,9 +203,9 @@ void Adios2Writer::endStep(
 	    adios2::Variable<double> adios2_global_box =
 	        io->DefineVariable<double>("global_box", {6}, {0}, {6}, adios2::ConstantDims);
 
-	    global_log->info() << "[AdiosWriter]: Putting Variables" << std::endl;
+	    global_log->info() << "[Adios2Writer]: Putting Variables" << std::endl;
 	    if (!adios2_global_box) {
-	        global_log->error() << "[AdiosWriter]: Could not create variable: global_box" << std::endl;
+	        global_log->error() << "[Adios2Writer]: Could not create variable: global_box" << std::endl;
 	        return;
 	    }
 	    engine->Put<double>(adios2_global_box, global_box.data());
@@ -218,7 +218,7 @@ void Adios2Writer::endStep(
 		            {6});
 
 		if (!adios2_local_box) {
-		    global_log->error() << "[AdiosWriter]: Could not create variable: local_box" << std::endl;
+		    global_log->error() << "[Adios2Writer]: Could not create variable: local_box" << std::endl;
 		    return;
 		}
 		engine->Put<double>(adios2_local_box, local_box.data());
@@ -235,18 +235,21 @@ void Adios2Writer::endStep(
 	        adios2::Variable<double> adios2_simulationtime =
 	            io->DefineVariable<double>("simulationtime");
 	        if (!adios2_simulationtime) {
-	            global_log->error() << "[AdiosWriter]: Could not create variable: simulationtime" << std::endl;
+	            global_log->error() << "[Adios2Writer]: Could not create variable: simulationtime" << std::endl;
 	            return;
 	        }             
 	        engine->Put<double>(adios2_simulationtime, current_time);
-
-            // write number of procs
-			adios2::Variable<int> adios2_numprocs = io->DefineVariable<int>("numProcs");
-			engine->Put<int>(adios2_numprocs, numProcs);
+	    	
+            // write number of processes
+			adios2::Attribute<int> adios2_numprocs = io->DefineAttribute<int>("num_processes", numProcs);
 
 	    	// write config
 	    	adios2::Attribute<std::string> adios2_ls1config = io->DefineAttribute<std::string>("config", _xmlstream.str());
 
+			// write number of components
+			adios2::Attribute<int> adios2_numcomps =
+				io->DefineAttribute<int>("num_components", _simulation.getEnsemble()->getComponents()->size());
+	    	
 	    	auto const components= _simulation.getEnsemble()->getComponents();
 			for (auto& component : *components) {
 				std::string component_id = "component_" + std::to_string(component.ID());
@@ -293,12 +296,12 @@ void Adios2Writer::endStep(
 		global_log->error() <<"[ADIOS2] Exception, STOPPING PROGRAM";
 		global_log->error() <<e.what();
 	}
-    global_log->info() << "[AdiosWriter]: endStep." << std::endl;
+    global_log->info() << "[Adios2Writer]: endStep." << std::endl;
 };
 
 void Adios2Writer::finish(ParticleContainer* particleContainer,
         DomainDecompBase* domainDecomp, Domain* domain
 ) {
     engine->Close();
-    global_log->info() << "[AdiosWriter]: finish." << std::endl;
+    global_log->info() << "[Adios2Writer]: finish." << std::endl;
 }
