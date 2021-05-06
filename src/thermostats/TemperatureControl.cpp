@@ -692,7 +692,7 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in
 #if defined(_OPENMP)
 // gcc 7 and 8 implicitly declare const variables shared regardless of the default.
-// Additionally explicitly marking them as shared produces and error.
+// Additionally, explicitly marking them as shared produces an error.
 // All other compilers need the explicit declaration when default is none.
 // Therefore set default to shared here...
 #pragma omp parallel default(shared) shared(particleContainer)
