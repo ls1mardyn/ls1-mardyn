@@ -57,7 +57,7 @@
 #define VCP_VEC_W_512 3
 
 #if defined(__AVX2__) && not defined(__FMA__)//fma should always be existent alongside avx2!!!
-	#warn AVX2 enabled, but no FMA found. Please enable fma to use avx2.
+	#warning AVX2 enabled, but no FMA found. Please enable fma to use avx2.
 #endif
 
 // define symbols for vectorization

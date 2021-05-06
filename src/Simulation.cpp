@@ -1190,6 +1190,9 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
 		PluginBase* plugin = (*pluginIter);
 		global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << endl;
+		
+		// !@todo:Parallel execution of different plugins should be done here!!
+
 		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep);
 		global_simulation->timers()->stop(plugin->getPluginName());
