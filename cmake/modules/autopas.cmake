@@ -23,8 +23,7 @@ if (ENABLE_AUTOPAS)
     FetchContent_Declare(
             autopasfetch
             GIT_REPOSITORY ${autopasRepoPath}
-            # TODO currently this is the tag from PR599. Set this to the merged master.
-            GIT_TAG ff092dbae2a8edc5bf5f34c707061dfbcab58965
+            GIT_TAG cd228b34bb1dfd3aeae3d6d938fa90e5440ef991
     )
 
     # Get autopas source and binary directories from CMake project
