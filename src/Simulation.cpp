@@ -1186,17 +1186,40 @@ void Simulation::simulate() {
 
 void Simulation::pluginEndStepCall(unsigned long simstep) {
 
-	std::list<PluginBase*>::iterator pluginIter;
-	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
-		PluginBase* plugin = (*pluginIter);
-		global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << endl;
-		
-		// !@todo:Parallel execution of different plugins should be done here!!
+	//std::list<PluginBase*>::iterator pluginIter;
+	#if defined (_OPENMP)
+	#pragma omp parallel
+	{
+		std::list<PluginBase*>::iterator pluginIter;
+		#pragma omp master
+		{ 
+	#endif
+		for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
+			PluginBase* plugin = (*pluginIter);
+			global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << endl;
+			// !@todo:Parallel execution of different plugins should be done here!!
+			global_simulation->timers()->start(plugin->getPluginName());
+			{
+				#if defined (_OPENMP)
+				#pragma omp task 		
+				#endif
+				{
+					//The arguments of the functions are pointers to the classes
+					//It's okay to have a private value of the pointers!
+					// No need to share the pointers I suppose! 
+					plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep);
+				}
+					
+			}
 
-		global_simulation->timers()->start(plugin->getPluginName());
-		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep);
-		global_simulation->timers()->stop(plugin->getPluginName());
+			global_simulation->timers()->stop(plugin->getPluginName());
+		}
+		#if defined (_OPENMP)
+		}
+		#pragma omp taskwait
 	}
+		#endif
+	
 
 
 	if (_domain->thermostatWarning())

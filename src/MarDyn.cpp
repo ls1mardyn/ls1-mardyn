@@ -130,7 +130,10 @@ int run_unit_tests(const Values &options, const vector<string> &args) {
  */
 int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
-	MPI_Init(&argc, &argv);
+	int provided;
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+	cout<< "Mpi thread safety level- " << provided << endl<< endl<< endl;
+	//MPI_Init(&argc, &argv);
 #endif
 
 	/* Initialize the global log file */

@@ -514,6 +514,8 @@ void DomainDecompBase::writeMoleculesToFile(const std::string& filename, Particl
 #else
 		{
 #endif
+		//!! Perhaps this could be parallelized using openmp tasking! Not sure though! 
+		
 		for (int process = 0; process < getNumProcs(); process++) {
 			if (getRank() == process) {
 				std::ofstream checkpointfilestream;
