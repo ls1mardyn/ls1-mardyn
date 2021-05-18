@@ -43,7 +43,7 @@
       </parallelisation>
       -->
       <datastructure type="AutoPas">
-        <allowedTraversals>c01, c08, c04, c18, sliced, verlet-lists, verlet-sliced, verlet-c01, verlet-c18, c01-combined-SoA, verlet-clusters, var-verlet-lists-as-build,verlet-clusters-coloring, c04SoA, directSum, verlet-cluster-cells, verlet-clusters-static</allowedTraversals>
+        <allowedTraversals>ds_sequential, lc_sliced, lc_sliced_balanced, lc_sliced_c02, lc_c01, lc_c01_combined_SoA, lc_c01_cuda, lc_c04, lc_c04_HCP, lc_c04_combined_SoA, lc_c08, lc_c18, vcc_cluster_iteration_cuda, vcl_cluster_iteration, vcl_c06, vcl_c01_balanced, vl_list_iteration, vlc_c01, vlc_c18, vlc_sliced, vlc_sliced_balanced, vlc_sliced_c02, vvl_as_built</allowedTraversals>
         <allowedContainers>DirectSum,LinkedCells, VerletLists, VerletListsCells, VerletClusterLists,VarVerletListsAsBuild,VerletClusterCells</allowedContainers>
         <selectorStrategy>fastestMean</selectorStrategy><!--fastestMedian,fastestAbs-->
         <tuningStrategy>FullSearch</tuningStrategy><!--FullSearch, BayesianSearch, ...-->
