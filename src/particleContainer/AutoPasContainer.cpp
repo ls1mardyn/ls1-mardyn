@@ -269,26 +269,69 @@ void AutoPasContainer::traverseTemplateHelper() {
 	}
 
 	double upot, virial;
-	if (_useAVXFunctor) {
-		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctorAVX<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true,
-							  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
-			functor(_cutoff, _particlePropertiesLibrary);
 
-		// here we call the actual autopas' iteratePairwise method to compute the forces.
-		_autopasContainer.iteratePairwise(&functor);
-		upot = functor.getUpot();
-		virial = functor.getVirial();
+	// Check if all components have the same eps24 and sigma. If that is the case, we can skip the mixing rules, which
+	// is faster!
+	auto numComponents = _particlePropertiesLibrary.getTypes().size();
+	double epsilon24FirstComponent = _particlePropertiesLibrary.get24Epsilon(0);
+	double sigmasqFirstComponent = _particlePropertiesLibrary.getSigmaSquare(0);
+	bool allSame = true;
+	for(auto i = 1ul; i < numComponents; ++i ) {
+		allSame &= _particlePropertiesLibrary.get24Epsilon(i) == epsilon24FirstComponent;
+		allSame &= _particlePropertiesLibrary.getSigmaSquare(i) == sigmasqFirstComponent;
+	}
+	bool useMixing = not allSame;
+
+	if (useMixing) {
+		global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
+		if (_useAVXFunctor) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctorAVX<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true,
+								  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
+				functor(_cutoff, _particlePropertiesLibrary);
+
+			// here we call the actual autopas' iteratePairwise method to compute the forces.
+			_autopasContainer.iteratePairwise(&functor);
+			upot = functor.getUpot();
+			virial = functor.getVirial();
+		} else {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true,
+							   autopas::FunctorN3Modes::Both,
+							   /*calculateGlobals*/ true>
+				functor(_cutoff, _particlePropertiesLibrary);
+
+			// here we call the actual autopas' iteratePairwise method to compute the forces.
+			_autopasContainer.iteratePairwise(&functor);
+			upot = functor.getUpot();
+			virial = functor.getVirial();
+		}
 	} else {
-		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-						   /*calculateGlobals*/ true>
-			functor(_cutoff, _particlePropertiesLibrary);
+		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
+		if (_useAVXFunctor) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctorAVX<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ false,
+								  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
+				functor(_cutoff);
+			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 
-		// here we call the actual autopas' iteratePairwise method to compute the forces.
-		_autopasContainer.iteratePairwise(&functor);
-		upot = functor.getUpot();
-		virial = functor.getVirial();
+			// here we call the actual autopas' iteratePairwise method to compute the forces.
+			_autopasContainer.iteratePairwise(&functor);
+			upot = functor.getUpot();
+			virial = functor.getVirial();
+		} else {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ false,
+							   autopas::FunctorN3Modes::Both,
+							   /*calculateGlobals*/ true>
+				functor(_cutoff);
+			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+
+			// here we call the actual autopas' iteratePairwise method to compute the forces.
+			_autopasContainer.iteratePairwise(&functor);
+			upot = functor.getUpot();
+			virial = functor.getVirial();
+		}
 	}
 
 	// _myRF is always zero for lj only!
