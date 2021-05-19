@@ -291,14 +291,19 @@ void Domain::calculateGlobalValues(
 				}
 			} /*_OPENMP*/
 
-			/* FIXME: Unnamed constant 3960... */
-			if(3960 >= _universalSelectiveThermostatCounter)
-			{
+			int explosionReappearanceLimit = 4000;
+			int explosionVanishGracePeriod = 40;
+			int stepsSinceLastExplosion = explosionReappearanceLimit - _universalSelectiveThermostatCounter;
+			// We set warning to true if the explosion is not gone after 40 steps or if it reappears within 4000 steps.
+			// If it still persists after 80 steps or if it reappears twice with no more than 4000 steps between the
+			// occurrences, we set error to true.
+			// These counters are reduced in every step, s.t., the warning vanishes after 4000 steps without explosions.
+			if (stepsSinceLastExplosion >= explosionVanishGracePeriod) {
 				if( _universalSelectiveThermostatWarning > 0 )
 					_universalSelectiveThermostatError = _universalSelectiveThermostatWarning;
 				if( _universalSelectiveThermostatCounter > 0 )
 					_universalSelectiveThermostatWarning = _universalSelectiveThermostatCounter;
-				_universalSelectiveThermostatCounter = 4000;
+				_universalSelectiveThermostatCounter = explosionReappearanceLimit;
 			}
 			_universalBTrans[thermit->first] = 1.0;
 			_universalBRot[thermit->first] = pow(this->_universalBRot[thermit->first], 0.0091);
