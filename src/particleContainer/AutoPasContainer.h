@@ -134,6 +134,7 @@ public:
 
 	bool isInvalidParticleReturner() override { return true; }
 
+	std::string getConfigurationAsString() override;
 private:
 	/**
 	 * Helper to get static value of shifting bool.
@@ -153,8 +154,8 @@ private:
 	unsigned int _maxEvidence;
 	unsigned int _maxTuningPhasesWithoutTest;
 	unsigned int _evidenceForPrediction;
-	using CellType = autopas::FullParticleCell<Molecule>;
-	autopas::AutoPas<Molecule, CellType> _autopasContainer;
+	autopas::AutoPas<Molecule> _autopasContainer;
+	bool _autopasContainerIsInitialized{false};
 
 	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
@@ -167,7 +168,7 @@ private:
 
 	std::vector<Molecule> _invalidParticles;
 	bool _hasInvalidParticles{false};
-	bool _useAVXFunctor{false};
+	bool _useAVXFunctor{true};
 
 	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;
 

@@ -15,7 +15,7 @@
 /**
  * class that implements additional functions to make the molecule compatible with autopas
  */
-class AutoPasSimpleMolecule : public MoleculeInterface, public autopas::MoleculeLJ<double> {
+class AutoPasSimpleMolecule final : public MoleculeInterface, public autopas::ParticleFP64 {
 public:
 	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component* component = nullptr, double rx = 0., double ry = 0.,
 								   double rz = 0., double vx = 0., double vy = 0., double vz = 0., double q0 = 1.,
@@ -25,6 +25,88 @@ public:
 	AutoPasSimpleMolecule(const AutoPasSimpleMolecule& m) = default;
 
 	~AutoPasSimpleMolecule() override = default;
+
+    /**
+     * Enums used as ids for accessing and creating a dynamically sized SoA.
+     */
+    enum AttributeNames : int { ptr, id, posX, posY, posZ, forceX, forceY, forceZ, typeId, ownershipState };
+
+    /**
+     * The type for the SoA storage.
+     *
+     * @note The attribute owned is of type float but treated as a bool.
+     * This means it shall always only take values 0.0 (=false) or 1.0 (=true).
+     * The reason for this is the easier use of the value in calculations (See LJFunctor "energyFactor")
+     */
+    using SoAArraysType =
+        typename autopas::utils::SoAType<AutoPasSimpleMolecule *, size_t /*id*/, double /*x*/, double /*y*/,
+        double /*z*/, double /*fx*/, double /*fy*/, double /*fz*/,
+        size_t /*typeid*/, autopas::OwnershipState /*ownershipState*/>::Type;
+
+    /**
+     * Getter, which allows access to an attribute using the corresponding attribute name (defined in AttributeNames).
+     * @tparam attribute Attribute name.
+     * @return Value of the requested attribute.
+     * @note The value of owned is return as floating point number (true = 1.0, false = 0.0).
+     */
+    template <AttributeNames attribute>
+    constexpr typename std::tuple_element<static_cast<size_t>(attribute), SoAArraysType>::type::value_type get() {
+      if constexpr (attribute == AttributeNames::ptr) {
+        return this;
+      } else if constexpr (attribute == AttributeNames::id) {
+        return getID();
+      } else if constexpr (attribute == AttributeNames::posX) {
+        return getR()[0];
+      } else if constexpr (attribute == AttributeNames::posY) {
+        return getR()[1];
+      } else if constexpr (attribute == AttributeNames::posZ) {
+        return getR()[2];
+      } else if constexpr (attribute == AttributeNames::forceX) {
+        return getF()[0];
+      } else if constexpr (attribute == AttributeNames::forceY) {
+        return getF()[1];
+      } else if constexpr (attribute == AttributeNames::forceZ) {
+        return getF()[2];
+      } else if constexpr (attribute == AttributeNames::typeId) {
+        return getTypeId();
+      } else if constexpr (attribute == AttributeNames::ownershipState) {
+        return this->_ownershipState;
+      } else {
+        throw std::runtime_error("AutoPasSimpleMolecule::get() unknown attribute");
+      }
+    }
+
+    /**
+     * Setter, which allows set an attribute using the corresponding attribute name (defined in AttributeNames).
+     * @tparam attribute Attribute name.
+     * @param value New value of the requested attribute.
+     * @note The value of owned is extracted from a floating point number (true = 1.0, false = 0.0).
+     */
+    template <AttributeNames attribute>
+    constexpr void set(
+        typename std::tuple_element<static_cast<size_t>(attribute), SoAArraysType>::type::value_type value) {
+      if constexpr (attribute == AttributeNames::id) {
+        setID(value);
+      } else if constexpr (attribute == AttributeNames::posX) {
+        _r[0] = value;
+      } else if constexpr (attribute == AttributeNames::posY) {
+        _r[1] = value;
+      } else if constexpr (attribute == AttributeNames::posZ) {
+        _r[2] = value;
+      } else if constexpr (attribute == AttributeNames::forceX) {
+        _f[0] = value;
+      } else if constexpr (attribute == AttributeNames::forceY) {
+        _f[1] = value;
+      } else if constexpr (attribute == AttributeNames::forceZ) {
+        _f[2] = value;
+      } else if constexpr (attribute == AttributeNames::typeId) {
+        setTypeId(value);
+      } else if constexpr (attribute == AttributeNames::ownershipState) {
+        this->_ownershipState = value;
+      } else {
+        throw std::runtime_error("AutoPasSimpleMolecule::set() unknown attribute");
+      }
+    }
 
 	unsigned long getID() const override { return _id; }
 
@@ -117,7 +199,7 @@ public:
 
 	std::array<double, 3> quadrupole_e(unsigned int i) const override { return emptyArray3(); }
 
-	std::array<double, 3> site_F(unsigned int i) const override { return emptyArray3(); }
+	std::array<double, 3> site_F(unsigned int i) const override { return getF(); }
 
 	std::array<double, 3> ljcenter_F(unsigned int i) const override { return emptyArray3(); }
 
@@ -236,6 +318,11 @@ public:
 
 	bool inBox(const std::array<double, 3>& rmin, const std::array<double, 3>& rmax) const {
 		return autopas::utils::inBox(this->getR(), rmin, rmax);
+	}
+
+	size_t getTypeId() const {
+		mardyn_assert(_component != nullptr);
+		return _component->ID();
 	}
 
 private:

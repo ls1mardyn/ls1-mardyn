@@ -126,29 +126,6 @@ double DomainDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	return (_coords[dimension] + 1) * domain->getGlobalLength(dimension) / _gridSize[dimension];
 }
 
-void DomainDecomposition::printDecomp(const string& filename, Domain* domain) {
-
-	if (_rank == 0) {
-		ofstream povcfgstrm(filename.c_str());
-		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " "
-				<< domain->getGlobalLength(2) << endl;
-		povcfgstrm << "cells " << _gridSize[0] << " " << _gridSize[1] << " " << _gridSize[2] << endl;
-		povcfgstrm << "procs " << _numProcs << endl;
-		povcfgstrm << "data DomainDecomp" << endl;
-		povcfgstrm.close();
-	}
-
-	for (int process = 0; process < _numProcs; process++) {
-		if (_rank == process) {
-			ofstream povcfgstrm(filename.c_str(), ios::app);
-			povcfgstrm << _coords[2] * _gridSize[0] * _gridSize[1] + _coords[1] * _gridSize[0] + _coords[0] << " "
-					<< _rank << endl;
-			povcfgstrm.close();
-		}
-		barrier();
-	}
-}
-
 std::vector<int> DomainDecomposition::getNeighbourRanks() {
 #if defined(ENABLE_MPI)
 	std::vector<int> neighbours;

@@ -221,6 +221,8 @@ public:
 
 	virtual void printSubInfo(int offset) override;
 
+    virtual void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) override;
+
 	virtual std::string getName() override {
 		return "DomainDecompMPIBase";
 	}
