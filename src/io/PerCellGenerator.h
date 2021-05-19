@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "InputBase.h"
 #include "utils/xmlfileUnits.h"
 
