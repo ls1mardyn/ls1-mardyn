@@ -47,6 +47,7 @@ public:
 		<optimumRange>DOUBLE</optimumRange>
 		<blacklistRange>DOUBLE</blacklistRange>
 		<useAVXFunctor>BOOL</useAVXFunctor>
+	    <verletClusterSize>INTEGER</verletClusterSize>
 	   </datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
