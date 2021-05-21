@@ -165,6 +165,7 @@ private:
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::set<autopas::Newton3Option> _newton3Choices;
+	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
 	std::vector<Molecule> _invalidParticles;
 	bool _hasInvalidParticles{false};

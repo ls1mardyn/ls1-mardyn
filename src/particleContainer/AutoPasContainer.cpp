@@ -132,6 +132,14 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	// use avx functor?
 	xmlconfig.getNodeValue("useAVXFunctor", _useAVXFunctor);
 
+	// AutoPas log level
+	auto logLevelStr = xmlconfig.getNodeValue_string("logLevel", "");
+    // if anything was found try to parse it
+	if (not logLevelStr.empty()) {
+		// if this is not parsable it defaults to LogLevel::off
+		_logLevel = spdlog::level::from_str(logLevelStr);
+	}
+
 	xmlconfig.changecurrentnode(oldPath);
 }
 
@@ -173,10 +181,9 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setRelativeBlacklistRange(_relativeBlacklistRange);
 	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
 	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
+	autopas::Logger::get()->set_level(_logLevel);
 	_autopasContainer.init();
 	_autopasContainerIsInitialized = true;
-	// if you want more AutoPas output enable this
-	// autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
 
 	// print full configuration to the command line
 	int valueOffset = 28;
