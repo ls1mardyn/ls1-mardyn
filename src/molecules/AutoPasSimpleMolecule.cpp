@@ -14,7 +14,7 @@ Quaternion AutoPasSimpleMolecule::_quaternion = Quaternion(1.0, 0.0, 0.0, 0.0);
 AutoPasSimpleMolecule::AutoPasSimpleMolecule(unsigned long id, Component* component, double rx, double ry, double rz,
 											 double vx, double vy, double vz, double q0, double q1, double q2,
 											 double q3, double Dx, double Dy, double Dz)
-	: autopas::MoleculeLJ<double>({rx, ry, rz}, {vx, vy, vz}, id) {
+	: autopas::ParticleFP64({rx, ry, rz}, {vx, vy, vz}, id) {
 	if (_component == nullptr) {
 		_component = component;
 	} else if (_component != component and component != nullptr) {

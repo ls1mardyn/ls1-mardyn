@@ -46,35 +46,6 @@ public:
 
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
-	//! @brief writes information about the current decomposition into the given file
-	//!
-	//! This decomposition first writes a small header with the following lines:
-	//! - "size", followed by three double values for the size of the domain
-	//! - "cells", followed by three int values for the number of cells in each direction.
-	//!            Each cell here stands for the domain of one process, so the product of
-	//!            of those three int values is the number of processes
-	//! - "procs", follwed by one int value (number of processes)
-	//! - "data DomainDecomp": just this text to state that now the header is finished and data follows
-	//! - one line per proc, containing the "cellid" using a x-y-z-ordering and the rank of the proc
-	//!
-	//! An example file for 8 procs could look like this:
-	//!
-	//! |size 62.0 62.0 62.0 \n
-	//!  cells 2 2 2 \n
-	//!  procs 8 \n
-	//!  data DomainDecomp \n
-	//!  1 1 \n
-	//!  2 2 \n
-	//!  3 3 \n
-	//!  4 4 \n
-	//!  5 5 \n
-	//!  6 6 \n
-	//!  7 7 \n
-	//!  8 8
-	//! @param filename name of the file into which the data will be written
-	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(const std::string& filename, Domain* domain) override;
-
 	void initCommunicationPartners(double cutoffRadius, Domain * domain,ParticleContainer* moleculeContainer);
 
     //returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local area)

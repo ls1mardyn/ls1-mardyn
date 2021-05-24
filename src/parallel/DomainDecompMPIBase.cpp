@@ -13,14 +13,15 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
+#include "Domain.h"
 
 #include "parallel/ZonalMethods/FullShell.h"
 #include "parallel/ZonalMethods/EighthShell.h"
 #include "parallel/ZonalMethods/HalfShell.h"
 #include "parallel/ZonalMethods/Midpoint.h"
 #include "parallel/ZonalMethods/NeutralTerritory.h"
-#include "parallel/CollectiveCommunication.h" // new
-#include "parallel/CollectiveCommunicationNonBlocking.h" // new
+#include "parallel/CollectiveCommunication.h"
+#include "parallel/CollectiveCommunicationNonBlocking.h"
 
 using Log::global_log;
 using std::endl;
@@ -306,7 +307,47 @@ size_t DomainDecompMPIBase::getTotalSize() {
 			+ _collCommunication->getTotalSize();
 }
 
-void DomainDecompMPIBase::printSubInfo(int offset) { 
+void DomainDecompMPIBase::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
+	if (_rank == 0) {
+		ofstream povcfgstrm(filename);
+		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " "
+				   << domain->getGlobalLength(2) << endl;
+		povcfgstrm << "rank boxMin_x boxMin_y boxMin_z boxMax_x boxMax_y boxMax_z Configuration" << endl;
+		povcfgstrm.close();
+	}
+
+	stringstream localCellInfo;
+	localCellInfo << _rank << " " << getBoundingBoxMin(0, domain) << " " << getBoundingBoxMin(1, domain) << " "
+			<< getBoundingBoxMin(2, domain) << " " << getBoundingBoxMax(0, domain) << " "
+			<< getBoundingBoxMax(1, domain) << " " << getBoundingBoxMax(2, domain) << " "
+			<< particleContainer->getConfigurationAsString() << "\n";
+	string localCellInfoStr = localCellInfo.str();
+
+#ifdef ENABLE_MPI
+	MPI_File fh;
+	MPI_File_open(_comm, filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	uint64_t write_size = localCellInfoStr.size();
+	uint64_t offset = 0;
+	if (_rank == 0) {
+		MPI_Offset file_end_pos;
+		MPI_File_seek(fh, 0, MPI_SEEK_END);
+		MPI_File_get_position(fh, &file_end_pos);
+		write_size += file_end_pos;
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
+		offset += file_end_pos;
+	} else {
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
+	}
+	MPI_File_write_at(fh, static_cast<MPI_Offset>(offset), localCellInfoStr.c_str(), static_cast<int>(localCellInfoStr.size()), MPI_CHAR, MPI_STATUS_IGNORE);
+	MPI_File_close(&fh);
+#else
+	ofstream povcfgstrm(filename.c_str(), ios::app);
+	povcfgstrm << localCellInfoStr;
+	povcfgstrm.close();
+#endif
+}
+
+void DomainDecompMPIBase::printSubInfo(int offset) {
 	std::stringstream offsetstream;
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";
