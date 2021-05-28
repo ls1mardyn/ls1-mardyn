@@ -11,10 +11,13 @@ def printVariation(def it) {
 }
 
 def ciMatrix = [
-// START temporary disabled knl-cluster
-//  ["SSE","NOVEC","AVX","AVX2","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
-// END temporary disabled knl-cluster
-  ["SSE","NOVEC","AVX","AVX2"],                      // VECTORIZE_CODE
+  ["SSE",
+    "NOVEC",
+    "AVX",
+    "AVX2",
+    // "KNL_MASK",
+    // "KNL_G_S",
+  ], // VECTORIZE_CODE
   ["DEBUG","RELEASE"],                               // TARGET
   ["0","1"],                                         // OPENMP
   ["PAR","SEQ"],                                     // PARTYPE
