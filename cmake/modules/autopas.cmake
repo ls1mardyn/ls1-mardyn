@@ -27,7 +27,7 @@ if (ENABLE_AUTOPAS)
     )
 
     # Get autopas source and binary directories from CMake project
-    FetchContent_GetProperties(autopas)
+    FetchContent_GetProperties(autopasfetch)
 
     if (NOT autopasfetch_POPULATED)
         FetchContent_Populate(autopasfetch)
