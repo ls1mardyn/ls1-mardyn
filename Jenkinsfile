@@ -11,7 +11,10 @@ def printVariation(def it) {
 }
 
 def ciMatrix = [
-  ["SSE","NOVEC","AVX","AVX2","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
+// START temporary disabled knl-cluster
+//  ["SSE","NOVEC","AVX","AVX2","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
+// END temporary disabled knl-cluster
+  ["SSE","NOVEC","AVX","AVX2"],                      // VECTORIZE_CODE
   ["DEBUG","RELEASE"],                               // TARGET
   ["0","1"],                                         // OPENMP
   ["PAR","SEQ"],                                     // PARTYPE
@@ -455,6 +458,7 @@ pipeline {
             // Fail the entire pipeline if one step fails
             variations.failFast = false
             // HACK Jobs to manage resource allocation on the knl cluster
+            /*  // START temporary disabled knl-cluster
             variations["slurm"] = {
               try {
                 node("KNL_PRIO") { // Executor on the CoolMUC3 login node reserved for slurm allocation and management
@@ -509,7 +513,7 @@ pipeline {
               catch (err) {
                 println err
               }
-            }
+            }*/ // END temporary disabled knl-cluster
             // Assemble CI-Matrix in a map
             for ( entry in matrix[0] ) {
               matrixEntry[level] = entry
