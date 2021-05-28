@@ -99,8 +99,6 @@ pipeline {
             stage('build MPI') {
               steps {
                 unstash 'repo'
-                sh "rm -rf libs/ALL/ALL"
-                sh "cp -r /work/jenkins/ALL libs/ALL/ALL"
                 dir ("build-mpi"){
                   sh """
                     CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
