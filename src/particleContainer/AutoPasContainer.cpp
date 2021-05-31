@@ -281,6 +281,15 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 	}
 }
 
+template <typename F>
+std::pair<double, double> AutoPasContainer::iterateWithFunctor(F &&functor) {
+	// here we call the actual autopas' iteratePairwise method to compute the forces.
+	_autopasContainer.iteratePairwise(&functor);
+	double upot = functor.getUpot();
+	double virial = functor.getVirial();
+	return std::make_pair(upot, virial);
+}
+
 template <bool shifting>
 void AutoPasContainer::traverseTemplateHelper() {
 #if defined(_OPENMP)
@@ -312,20 +321,14 @@ void AutoPasContainer::traverseTemplateHelper() {
 								  /*calculateGlobals*/ true>
 				functor(_cutoff, _particlePropertiesLibrary);
 
-			// here we call the actual autopas' iteratePairwise method to compute the forces.
-			_autopasContainer.iteratePairwise(&functor);
-			upot = functor.getUpot();
-			virial = functor.getVirial();
+			std::tie(upot, virial) = iterateWithFunctor(functor);
 		} else {
 			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 							   /*calculateGlobals*/ true>
 				functor(_cutoff, _particlePropertiesLibrary);
 
-			// here we call the actual autopas' iteratePairwise method to compute the forces.
-			_autopasContainer.iteratePairwise(&functor);
-			upot = functor.getUpot();
-			virial = functor.getVirial();
+			std::tie(upot, virial) = iterateWithFunctor(functor);
 		}
 	} else {
 		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
@@ -336,10 +339,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 				functor(_cutoff);
 			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 
-			// here we call the actual autopas' iteratePairwise method to compute the forces.
-			_autopasContainer.iteratePairwise(&functor);
-			upot = functor.getUpot();
-			virial = functor.getVirial();
+			std::tie(upot, virial) = iterateWithFunctor(functor);
 		} else {
 			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
@@ -347,10 +347,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 				functor(_cutoff);
 			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 
-			// here we call the actual autopas' iteratePairwise method to compute the forces.
-			_autopasContainer.iteratePairwise(&functor);
-			upot = functor.getUpot();
-			virial = functor.getVirial();
+			std::tie(upot, virial) = iterateWithFunctor(functor);
 		}
 	}
 

@@ -144,6 +144,15 @@ private:
 	template <bool shifting>
 	void traverseTemplateHelper();
 
+	/**
+	 * Iterate with functor.
+	 * @tparam The functor type.
+	 * @param functor The functor.
+	 * @return Pair of upot, virial.
+	 */
+	template <typename F>
+	std::pair<double,double> iterateWithFunctor(F&& functor);
+
 	double _cutoff{0.};
 	double _verletSkin;
 	double _relativeOptimumRange;
