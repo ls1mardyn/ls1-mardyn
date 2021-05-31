@@ -256,7 +256,7 @@ protected:
 
 	MPI_Comm _comm;
 
-	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
+	std::unique_ptr<NeighbourCommunicationScheme> _neighbourCommunicationScheme;
 
 	/**
 	 * Indicates whether the direct-pp communication scheme should be forced.
