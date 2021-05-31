@@ -58,8 +58,9 @@ void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, Par
 														 LEAVING_AND_HALO_COPIES);
 	} else {
 		// Would first need to send leaving, then halo -> not good for overlapping!
-		global_log->error()
-			<< "nonblocking P2P using separate messages for leaving and halo is currently not supported." << std::endl;
+		global_log->error() << "nonblocking P2P using separate messages for leaving and halo is currently not "
+							   "supported. Please use the indirect neighbor communication scheme!"
+							<< std::endl;
 		Simulation::exit(235861);
 	}
 }
