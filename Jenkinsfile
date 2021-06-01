@@ -85,6 +85,7 @@ pipeline {
     stage('check AutoPas integration') {
       agent { label 'atsccs11' }
       stages {
+        // parallel build currently disabled, because of OOM errors on atsccs11, when compiling two builds in parallel.
         //stage('build with autopas') {
         //  parallel {
             stage('build with autopas sequential') {

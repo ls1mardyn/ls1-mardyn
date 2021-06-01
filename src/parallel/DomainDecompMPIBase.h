@@ -266,6 +266,10 @@ protected:
 	bool _forceDirectPP{false};
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
+	/// Defines when to start the overlapping collective communication.
+	/// In the very first steps, the thermostats heavily influence the simulation.
+	/// To prevent large deviations from a simulation without overlapping collectives, overlapping collectives can be disabled at the start.
+	/// Typically, around five steps are reasonable for this.
 	unsigned long _overlappingStartAtStep {5ul};
 };
 

@@ -291,6 +291,7 @@ void Domain::calculateGlobalValues(
 				}
 			} /*_OPENMP*/
 
+			// arbitrary values set by one of the thermodynamic guys (probs. Martin Horsch) :)
 			int explosionReappearanceLimit = 4000;
 			int explosionVanishGracePeriod = 40;
 			int stepsSinceLastExplosion = explosionReappearanceLimit - _universalSelectiveThermostatCounter;
