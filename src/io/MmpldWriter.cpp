@@ -105,7 +105,8 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	numSites = query.card();
 	global_log->info() << "[MMPLD Writer] Number of sites: " << numSites << endl;
 	if(numSites < 1) {
-		global_log->warning() << "[MMPLD Writer] No site parameters specified." << endl;
+		global_log->fatal() << "[MMPLD Writer] No site parameters specified." << endl;
+		Simulation::exit(48973);
 	}
 	string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputSiteIter;

@@ -94,12 +94,6 @@ public:
 	virtual void allreduceSum() override {
 	}
 
-	//! Performs an all-reduce (sum), however values of previous iterations are permitted.
-	//! By allowing values from previous iterations, overlapping communication is possible.
-	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
-	virtual void allreduceSumAllowPrevious() override {
-	}
-
 	// doku in base class
 	virtual void allreduceCustom(ReduceType type) override{
 	}

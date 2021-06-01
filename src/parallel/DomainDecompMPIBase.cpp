@@ -29,10 +29,10 @@ using std::endl;
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
 #ifndef MARDYN_AUTOPAS
-	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(new FullShell());
+	_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(new FullShell());
 #else
 	// direct push-pull
-	_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell(), true);
+	_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(new FullShell(), true);
 #endif
 	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell());
 
@@ -47,9 +47,6 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 }
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
-
-	delete _neighbourCommunicationScheme;
-	_neighbourCommunicationScheme = nullptr; // do you need both?
 
 	MPI_Type_free(&_mpiParticleType);
 
@@ -123,6 +120,9 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 #else
 		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << endl;
 #endif
+		xmlconfig.getNodeValue("overlappingStartAtStep", _overlappingStartAtStep);
+		global_log->info() << "DomainDecompMPIBase: Overlapping Collectives start at step " << _overlappingStartAtStep
+						   << endl;
 	} else {
 		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << endl;
 	}
@@ -133,9 +133,6 @@ int DomainDecompMPIBase::getNonBlockingStageCount() {
 }
 
 void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, const std::string& zonalMethod) {
-	// delete if it exists already
-	delete _neighbourCommunicationScheme;
-	_neighbourCommunicationScheme = nullptr;
 
 	ZonalMethod* zonalMethodP = nullptr;
 
@@ -159,13 +156,13 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 
 	if (scheme=="direct") {
 		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme without push-pull neighbors" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP, false);
+		_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(zonalMethodP, false);
 	} else if(scheme=="direct-pp") {
 		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme with push-pull neighbors" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP, true);
+		_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(zonalMethodP, true);
 	} else if(scheme=="indirect") {
 		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(zonalMethodP);
+		_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(zonalMethodP);
 	} else {
 		global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
@@ -174,8 +171,8 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 }
 
 unsigned DomainDecompMPIBase::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
-	unsigned* moldistribution = new unsigned[_numProcs];
-	MPI_CHECK(MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, _comm));
+	std::vector<unsigned> moldistribution(_numProcs);
+	MPI_CHECK(MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution.data(), 1, MPI_UNSIGNED, _comm));
 	unsigned globalN = 0;
 	for (int r = 0; r < _rank; r++)
 		globalN += moldistribution[r];
@@ -184,7 +181,6 @@ unsigned DomainDecompMPIBase::Ndistribution(unsigned localN, float* minrnd, floa
 	unsigned localNtop = globalN;
 	for (int r = _rank + 1; r < _numProcs; r++)
 		globalN += moldistribution[r];
-	delete[] moldistribution;
 	*minrnd = (float) localNbottom / globalN;
 	*maxrnd = (float) localNtop / globalN;
 	return globalN;
@@ -360,4 +356,12 @@ void DomainDecompMPIBase::printSubInfo(int offset) {
 
 void DomainDecompMPIBase::printCommunicationPartners(std::string filename) const{
 	_neighbourCommunicationScheme->printCommunicationPartners(filename);
+}
+
+void DomainDecompMPIBase::collCommAllreduceSumAllowPrevious() {
+	if (global_simulation->getSimulationStep() >= _overlappingStartAtStep) {
+		_collCommunication->allreduceSumAllowPrevious();
+	} else {
+		_collCommunication->allreduceSum();
+	}
 }

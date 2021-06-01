@@ -46,17 +46,18 @@
 #include "plugins/ExamplePlugin.h"
 #include "plugins/FixRegion.h"
 #include "plugins/InMemoryCheckpointing.h"
+#include "plugins/LoadImbalanceThroughSleepPlugin.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
-#include "plugins/NEMD/RegionSampling.h"
-#include "plugins/Permittivity.h"
-#include "plugins/NEMD/MettDeamon.h"
-#include "plugins/NEMD/MettDeamonFeedrateDirector.h"
-#include "plugins/NEMD/PosNegComp.h"
 #include "plugins/NEMD/DistControl.h"
 #include "plugins/NEMD/DriftCtrl.h"
 #include "plugins/NEMD/ExtractPhase.h"
+#include "plugins/NEMD/MettDeamon.h"
+#include "plugins/NEMD/MettDeamonFeedrateDirector.h"
+#include "plugins/NEMD/PosNegComp.h"
+#include "plugins/NEMD/RegionSampling.h"
+#include "plugins/Permittivity.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
@@ -93,6 +94,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(SpatialProfile);
 	REGISTER_PLUGIN(KDTreePrinter);
 	REGISTER_PLUGIN(LoadbalanceWriter);
+	REGISTER_PLUGIN(LoadImbalanceThroughSleepPlugin);
 	REGISTER_PLUGIN(MPICheckpointWriter);
 	REGISTER_PLUGIN(MaxCheck);
 	REGISTER_PLUGIN(MaxWriter);

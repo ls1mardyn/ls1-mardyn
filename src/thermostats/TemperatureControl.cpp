@@ -122,7 +122,7 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4));
 	xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5));
 
-	_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0)) > 0;
+	_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0u)) > 0;
 	if (true == _bIsObserver) this->PrepareAsObserver(refCoordsID);
 	// Registration as observer has to be done later by method prepare_start() when DistControl plugin is present.
 

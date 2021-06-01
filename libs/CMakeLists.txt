@@ -5,7 +5,3 @@ endif()
 
 # add rapidxml
 ADD_SUBDIRECTORY(rapidxml)
-
-if(ENABLE_ALLLBL)
-    ADD_SUBDIRECTORY(ALL)
-endif()

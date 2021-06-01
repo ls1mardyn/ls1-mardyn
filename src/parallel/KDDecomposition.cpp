@@ -480,7 +480,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	// the indirect neighborcommunicationscheme in combination with the kddecomposition is not allowed
 	// to send halo and leaving particles together, as long as halo particles are not send with all data (velocity, etc.)
 	bool neighborschemeAllowsDirect =
-		dynamic_cast<DirectNeighbourCommunicationScheme*>(_neighbourCommunicationScheme) != nullptr;
+		dynamic_cast<DirectNeighbourCommunicationScheme*>(_neighbourCommunicationScheme.get()) != nullptr;
 	sendTogether &= neighborschemeAllowsDirect;
 	updateSendLeavingWithCopies(sendTogether);
 

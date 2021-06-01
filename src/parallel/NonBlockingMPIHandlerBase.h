@@ -14,8 +14,8 @@ class CellProcessor;
 /**
  * Provides interface for generic implementations of an overlapping Communication and Computation
  * for the balance and exchange part, in conjunction with the cell traversal.
- * This class provides blocking implementations. Derived classes should both implement the doInitBalanceAndExchange method,
- * as well as the performComputation method.
+ * This class provides blocking implementations. Derived classes should both implement the doInitBalanceAndExchange
+ * method, as well as the performComputation method.
  */
 class NonBlockingMPIHandlerBase {
 public:
@@ -26,8 +26,8 @@ public:
 	 * @param domain the domain
 	 * @param cellProcessor the cell processor
 	 */
-	NonBlockingMPIHandlerBase(DomainDecompMPIBase* domainDecomposition,
-			ParticleContainer* moleculeContainer, Domain* domain, CellProcessor* cellProcessor);
+	NonBlockingMPIHandlerBase(DomainDecompMPIBase* domainDecomposition, ParticleContainer* moleculeContainer,
+							  Domain* domain, CellProcessor* cellProcessor);
 
 	/**
 	 * Virtual destructor of the class.
@@ -36,16 +36,15 @@ public:
 
 	/**
 	 * Call this method to perform the overlapping tasks.
-	 * This method will both do the balance and exchange step of the domain decomposition, as well as the cell traversal of the cell processor.
-	 * If a non-blocking version is forbidden, it falls back to a sequential version.
-	 * DO NOT OVERRIDE THIS METHOD!
+	 * This method will both do the balance and exchange step of the domain decomposition, as well as the cell traversal
+	 * of the cell processor. If a non-blocking version is forbidden, it falls back to a sequential version. DO NOT
+	 * OVERRIDE THIS METHOD!
 	 *
 	 * @param forceRebalancing Defines, whether a rebalancing should be forced.
 	 */
 	virtual void performOverlappingTasks(bool forceRebalancing, double etime) final;
 
 protected:
-
 	/**
 	 * The initialisation of the balance and exchange step is handled here.
 	 * This should normally include the sending of the molecules.
@@ -57,8 +56,8 @@ protected:
 
 	/**
 	 * Performs the cell traversal.
-	 * Derived methods should first calculate cells, that are independent of transferring molecules. O the necessary molecules arrived,
-	 * further computations should be performed.
+	 * Derived methods should first calculate cells, that are independent of transferring molecules. O the necessary
+	 * molecules arrived, further computations should be performed.
 	 */
 	virtual void performComputation();
 
@@ -67,4 +66,3 @@ protected:
 	Domain* _domain;
 	CellProcessor* _cellProcessor;
 };
-

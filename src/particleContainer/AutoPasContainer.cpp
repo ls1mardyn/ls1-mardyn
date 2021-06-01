@@ -9,8 +9,8 @@
 #include <exception>
 #include "Domain.h"
 #include "Simulation.h"
-#include "autopas/utils/logging/Logger.h"
 #include "autopas/utils/StringUtils.h"
+#include "autopas/utils/logging/Logger.h"
 #include "parallel/DomainDecompBase.h"
 
 AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePropertiesLibrary(cutoff) {
@@ -152,7 +152,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
 
 	// check if autopas is already initialized
-	if(_autopasContainerIsInitialized) {
+	if (_autopasContainerIsInitialized) {
 		_autopasContainer.resizeBox(boxMin, boxMax);
 		// TODO: maybe only force this if the box and num particles changed too much?
 		_autopasContainer.forceRetune();
@@ -281,6 +281,15 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 	}
 }
 
+template <typename F>
+std::pair<double, double> AutoPasContainer::iterateWithFunctor(F &&functor) {
+	// here we call the actual autopas' iteratePairwise method to compute the forces.
+	_autopasContainer.iteratePairwise(&functor);
+	double upot = functor.getUpot();
+	double virial = functor.getVirial();
+	return std::make_pair(upot, virial);
+}
+
 template <bool shifting>
 void AutoPasContainer::traverseTemplateHelper() {
 #if defined(_OPENMP)
@@ -291,26 +300,55 @@ void AutoPasContainer::traverseTemplateHelper() {
 	}
 
 	double upot, virial;
-	if (_useAVXFunctor) {
-		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true,
-							  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
-			functor(_cutoff, _particlePropertiesLibrary);
 
-		// here we call the actual autopas' iteratePairwise method to compute the forces.
-		_autopasContainer.iteratePairwise(&functor);
-		upot = functor.getUpot();
-		virial = functor.getVirial();
+	// Check if all components have the same eps24 and sigma. If that is the case, we can skip the mixing rules, which
+	// is faster!
+	auto numComponents = _particlePropertiesLibrary.getTypes().size();
+	double epsilon24FirstComponent = _particlePropertiesLibrary.get24Epsilon(0);
+	double sigmasqFirstComponent = _particlePropertiesLibrary.getSigmaSquare(0);
+	bool allSame = true;
+	for (auto i = 1ul; i < numComponents; ++i) {
+		allSame &= _particlePropertiesLibrary.get24Epsilon(i) == epsilon24FirstComponent;
+		allSame &= _particlePropertiesLibrary.getSigmaSquare(i) == sigmasqFirstComponent;
+	}
+	bool useMixing = not allSame;
+
+	if (useMixing) {
+		global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
+		if (_useAVXFunctor) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+								  /*calculateGlobals*/ true>
+				functor(_cutoff, _particlePropertiesLibrary);
+
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		} else {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+							   /*calculateGlobals*/ true>
+				functor(_cutoff, _particlePropertiesLibrary);
+
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		}
 	} else {
-		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-						   /*calculateGlobals*/ true>
-			functor(_cutoff, _particlePropertiesLibrary);
+		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
+		if (_useAVXFunctor) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+								  /*calculateGlobals*/ true>
+				functor(_cutoff);
+			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 
-		// here we call the actual autopas' iteratePairwise method to compute the forces.
-		_autopasContainer.iteratePairwise(&functor);
-		upot = functor.getUpot();
-		virial = functor.getVirial();
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		} else {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+							   /*calculateGlobals*/ true>
+				functor(_cutoff);
+			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		}
 	}
 
 	// _myRF is always zero for lj only!
@@ -426,7 +464,8 @@ void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
 }
 
-std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContainer::getMoleculeAtPosition(const double *pos) {
+std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContainer::getMoleculeAtPosition(
+	const double *pos) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
 	for (auto iter = this->iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
 		if (iter->getR() == pos_arr) {
@@ -471,6 +510,4 @@ RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorne
 	return RegionParticleIterator{
 		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }
-std::string AutoPasContainer::getConfigurationAsString() {
-  return _autopasContainer.getCurrentConfig().toString();
-}
+std::string AutoPasContainer::getConfigurationAsString() { return _autopasContainer.getCurrentConfig().toString(); }
