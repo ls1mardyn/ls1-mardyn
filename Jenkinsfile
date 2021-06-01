@@ -85,9 +85,9 @@ pipeline {
     stage('check AutoPas integration') {
       agent { label 'atsccs11' }
       stages {
-        stage('build with autopas') {
-          parallel {
-            stage('build sequential') {
+        //stage('build with autopas') {
+        //  parallel {
+            stage('build with autopas sequential') {
               steps {
                 unstash 'repo'
                 dir ("build"){
@@ -99,7 +99,7 @@ pipeline {
                 stash includes: "build/src/MarDyn", name: "autopas_exec"
               }
             }
-            stage('build MPI') {
+            stage('build with autopas MPI') {
               steps {
                 unstash 'repo'
                 dir ("build-mpi"){
@@ -111,8 +111,8 @@ pipeline {
                 stash includes: "build-mpi/src/MarDyn", name: "autopas_mpi_exec"
               }
             }
-          }
-        }
+        //  }
+        //}
         stage('unit test with autopas') {
           parallel {
             stage('test sequential') {
