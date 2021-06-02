@@ -226,7 +226,7 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 	string filename = getOutputFilename();
 
 	// calculate local number of spheres per component|siteType
-	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
+	std::vector<uint64_t> numSpheresPerType(_numSphereTypes); // C:create a vec 
 	this->CalcNumSpheresPerType(particleContainer, numSpheresPerType.data());
 
 #ifdef ENABLE_MPI
@@ -238,6 +238,11 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 	std::vector<uint64_t> globalNumCompSpheres(_numSphereTypes);
 	std::vector<uint64_t> exscanNumCompSpheres(_numSphereTypes);
 	MPI_Exscan(numSpheresPerType.data(), exscanNumCompSpheres.data(), _numSphereTypes, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+	/* Tasking could be done here with dependencies.
+	   Too fine granularity I suppose! Overheads may dominate
+	   till loop 3 */
+
+	// Potential location for Tasking: Loop 1
 	for(int i = 0; i < _numSphereTypes; ++i) {
 		globalNumCompSpheres[i] = exscanNumCompSpheres[i] + numSpheresPerType[i];
 	}
@@ -252,11 +257,15 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 	/* positions of data lists relative to frame begin */
 	std::vector<uint64_t> dataListBeginOffsets(_numSphereTypes);
 	dataListBeginOffsets[0] = get_data_frame_header_size();
+	
+	// Potential location for Tasking: Loop 2
 	for(int i = 1; i < _numSphereTypes; ++i) {
 		dataListBeginOffsets[i] = dataListBeginOffsets[i-1] + get_data_list_header_size() + get_data_list_size(globalNumCompSpheres[i-1]);
 	}
 	/* calculate write positions inside data lists for this process */
 	std::vector<uint64_t> dataListWriteOffsets(_numSphereTypes);
+	
+	// Potential location for Tasking: Loop 3
 	for(int i = 0; i < _numSphereTypes; ++i) {
 		dataListWriteOffsets[i] = get_data_list_header_size() + get_data_list_size(exscanNumCompSpheres[i]);
 	}
@@ -264,6 +273,8 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 	char* writeBuffer = new char[_writeBufferSize];
 	long buffer_pos = 0;
 	/* write particle list for each component|site (sphere type)`*/
+	
+	// Potential location for Tasking: Loop 4
 	for (uint8_t sphereTypeId = 0; sphereTypeId < _numSphereTypes; ++sphereTypeId){
 		//write particle list header
 		if(rank == 0) {
@@ -274,7 +285,11 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 		long offset = _seekTable.at(_frameCount) + dataListBeginOffsets[sphereTypeId] + dataListWriteOffsets[sphereTypeId];
 		MPI_File_seek(_mpifh, offset, MPI_SEEK_SET);
 		buffer_pos = 0;
+		
 		for (auto moleculeIter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); moleculeIter.isValid(); ++moleculeIter) {
+			// 1 task/ particle <->  too fine 
+			/* Not computationally computationally heavy.
+			So I see no point in OpenMP tasking here! */
 			if(true == GetSpherePos(reinterpret_cast<float*>(&writeBuffer[buffer_pos]), &(*moleculeIter), sphereTypeId)) {
 				buffer_pos += get_particle_data_size();
 				if(buffer_pos > _writeBufferSize - get_particle_data_size()) {

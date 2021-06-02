@@ -1186,22 +1186,23 @@ void Simulation::simulate() {
 
 void Simulation::pluginEndStepCall(unsigned long simstep) {
 
-	//std::list<PluginBase*>::iterator pluginIter;
+	std::list<PluginBase*>::iterator pluginIter;
+	cout << "Failing at simulation step: " << simstep << endl;
 	#if defined (_OPENMP)
-	#pragma omp parallel
+	#pragma omp parallel firstprivate(pluginIter, simstep, global_log)
 	{
-		std::list<PluginBase*>::iterator pluginIter;
-		#pragma omp master
+		//std::list<PluginBase*>::iterator pluginIter;
+		#pragma omp single
 		{ 
 	#endif
 		for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
 			PluginBase* plugin = (*pluginIter);
 			global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << endl;
 			// !@todo:Parallel execution of different plugins should be done here!!
-			global_simulation->timers()->start(plugin->getPluginName());
+			//global_simulation->timers()->start(plugin->getPluginName());
 			{
 				#if defined (_OPENMP)
-				#pragma omp task 		
+				#pragma omp task 	
 				#endif
 				{
 					//The arguments of the functions are pointers to the classes
@@ -1212,7 +1213,7 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 					
 			}
 
-			global_simulation->timers()->stop(plugin->getPluginName());
+			//global_simulation->timers()->stop(plugin->getPluginName());
 		}
 		#if defined (_OPENMP)
 		}

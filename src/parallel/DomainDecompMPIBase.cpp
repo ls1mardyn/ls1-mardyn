@@ -210,22 +210,54 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 	using std::map;
 	using std::endl;
 
+	/* Delete later */
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank); //get my process id
+	//std::cout << "Calling from within the DomainDecompMPIBase.cpp: assertdisjunctivity" << endl;
+	//std::cout << "Process Rank = " << rank << ", OpenMP thread = " << omp_get_thread_num()<< endl;
+	/* Delete later */
+	int s=0;
+
 	if (_rank) {
+
 		unsigned long num_molecules = moleculeContainer->getNumberOfParticles();
 		std::vector<unsigned long> tids(num_molecules);
-
 		int i = 0;
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
+			/*molecule id is being assigned to tids */ 
 			tids[i] = m->getID();
 			i++;
 		}
 		MPI_CHECK(MPI_Send(tids.data(), num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
+		
+		std::cout << "send counter: " << s << endl;
+		s++;
+		/* Delete later */
+		int rank;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank); //get my process id
+		std::cout << "Calling from within the DomainDecompMPIBase.cpp: assertdisjunctivity -> _Rank" << endl;
+		std::cout << "Process Rank = " << rank << ", OpenMP thread = " << omp_get_thread_num()<< endl;
+		std::cout << "_rank = " << rank << ", OpenMP thread = " << omp_get_thread_num()<< endl;		
+		/* Delete later */
+		/*				   starting id, count, data type, dest rank, tag, comm_world */
+		// Sending the particles on this processor with rank (_rank) to proc with rank 0 
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	} else {
 		/** @todo FIXME: This implementation does not scale. */
 		map<unsigned long, int> check;
+		// Map molecule ID -> process
+
+		/* Delete later 
+		int rank;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank); //get my process id
+		std::cout << "Calling from within the DomainDecompMPIBase.cpp: assertdisjunctivity -> else" << endl;
+		std::cout << "Process Rank = " << rank << ", OpenMP thread = " << omp_get_thread_num()<< endl;
+		std::cout << "_rank = " << rank << ", OpenMP thread = " << omp_get_thread_num()<< endl;		
+		 Delete later */
 
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
+			/* Setting 'check' as 0 -> @ particle ID locations 
+			to indicate this particle belongs to P0 */
 			if(check.find(m->getID()) != check.end()){
 				global_log->error() << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
 				MPI_Abort(_comm, 1);
@@ -233,21 +265,47 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			check[m->getID()] = 0;
 		}
 		MPI_Status status;
+		MPI_Message message;
 		bool isOk = true;
+		// Could be parallelized here further with OpenMP tasking!? 
 		for (int i = 1; i < _numProcs; i++) {
-			int num_recv = 0;
+			// Receiving the data from all procs 1@ a time
+			/*
 			MPI_CHECK(MPI_Probe(i, 2674 + i, _comm, &status));
 			MPI_CHECK(MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv));
 			std::vector<unsigned long> recv(num_recv);
-
 			MPI_CHECK(MPI_Recv(recv.data(), num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status));
+			*/
+		 
+			// Thread-safe implementation
+			// MProbe
+			int num_recv = 0;
+			MPI_CHECK(MPI_Mprobe(i, 2674 + i, _comm, &message, &status));
+			MPI_CHECK(MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv));
+			std::vector<unsigned long> recv(num_recv);
+			MPI_CHECK(MPI_Mrecv(recv.data(), num_recv, MPI_UNSIGNED_LONG, &message, &status));
+			
+			/*Delete later*/
+			int k = 0, l=0;
+			/*Delete later*/
 			for (int j = 0; j < num_recv; j++) {
 				if (check.find(recv[j]) != check.end()) {
 					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
-							<< recv[j] << endl;
+							<< recv[j] << "count: " << k << endl;
+					k++;
 					isOk = false;
-				} else
+				} else{
 					check[recv[j]] = i;
+					/* Delete later 
+					int rank;
+					MPI_Comm_rank(MPI_COMM_WORLD, &rank); //get my process id
+					std::cout << "Calling from within the DomainDecompMPIBase.cpp: assertdisjunctivity -> else -> else" << endl;
+					std::cout << "Process Rank = " << rank << ", OpenMP thread = " << omp_get_thread_num()<< endl;
+					//std::cout << "count: " << l <<endl;		
+					l++;					
+					 Delete later */
+					}	
+
 			}
 		}
 		if (not isOk) {

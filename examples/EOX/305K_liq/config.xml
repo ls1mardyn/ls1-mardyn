@@ -12,7 +12,7 @@
     <run>
       <currenttime>0</currenttime>
       <production>
-        <steps>10000</steps>
+        <steps>10</steps>
       </production>
     </run>
     <ensemble type="NVT">
@@ -47,7 +47,7 @@
         <writefrequency>1</writefrequency>
         <outputprefix>cp_binary</outputprefix>
       </outputplugin>
-      <outputplugin name="MmpldWriter" type="multi">
+      <outputplugin name="MmpldWriter" type="multi" enabled = "no">
         <include query="/spheres">../sphereparams_eox.xml</include>
         <writecontrol>
           <start>0</start>
@@ -57,12 +57,12 @@
         </writecontrol>
         <outputprefix>megamol</outputprefix>
       </outputplugin>
-      <outputplugin name="ResultWriter">
-        <writefrequency>100</writefrequency>
+      <outputplugin name="ResultWriter" enabled = "no">
+        <writefrequency>1</writefrequency>
         <outputprefix>result</outputprefix>
       </outputplugin>
-      <outputplugin name="SysMonOutput">
-        <writefrequency>1000</writefrequency>
+      <outputplugin name="SysMonOutput" enabled = "no">
+        <writefrequency>1</writefrequency>
         <expression label="procloadavg:loadavg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">Free+BufferRAM [MB]</expression>
         <expression label="procloadavg:loadavg1">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
