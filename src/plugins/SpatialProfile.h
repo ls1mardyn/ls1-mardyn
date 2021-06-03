@@ -5,11 +5,16 @@
 #ifndef MARDYN_TRUNK_SPATIALPROFILE_H
 #define MARDYN_TRUNK_SPATIALPROFILE_H
 
+#include <functional>
+#include <optional>
+#include <vector>
+
 #include <plugins/profiles/ProfileBase.h>
 #include "PluginBase.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+
 
 class ProfileBase;
 
@@ -122,7 +127,7 @@ private:
 
 	unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.
 
-	vector<ProfileBase*> _profiles; // vector holding all enabled profiles
+	std::vector<ProfileBase*> _profiles; // vector holding all enabled profiles
 	int _comms = 0; // total number of communications per bin needed by all profiles.
 
 	// Needed for XML check for enabled profiles.
