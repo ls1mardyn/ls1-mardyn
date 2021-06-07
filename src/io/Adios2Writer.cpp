@@ -6,6 +6,9 @@
  */
 
 #include "Adios2Writer.h"
+
+#include <numeric>
+
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "Simulation.h"
@@ -72,6 +75,62 @@ void Adios2Writer::initAdios2() {
             global_log->info() << "[Adios2Writer]: Opening File for writing." << _outputfile.c_str() << std::endl;
             engine = std::make_shared<adios2::Engine>(io->Open(_outputfile, adios2::Mode::Write));
         }
+  	
+		// write attributes
+		// write number of processes
+		adios2::Attribute<int> adios2_numprocs = io->DefineAttribute<int>("num_processes", domainDecomp.getNumProcs());
+
+		// write config
+		adios2::Attribute<std::string> adios2_ls1config = io->DefineAttribute<std::string>("config", _xmlstream.str());
+
+		// write number of components
+		adios2::Attribute<int> adios2_numcomps =
+			io->DefineAttribute<int>("num_components", _simulation.getEnsemble()->getComponents()->size());
+
+		auto const components = _simulation.getEnsemble()->getComponents();
+		for (auto& component : *components) {
+			// only write lj components (for now)
+			if (!component.ljcenters().empty()) {
+				auto sites = component.ljcenters();
+				std::vector<std::string> component_elements_vec;
+				component_elements_vec.reserve(sites.size());
+				for (auto& site : sites) {
+					component_elements_vec.emplace_back(site.getName());
+				}
+				string component_elements =
+					std::accumulate(component_elements_vec.begin(), component_elements_vec.end(), std::string(),
+									[](std::string& ss, std::string& s) { return ss.empty() ? s : ss + "," + s; });
+
+				std::string component_id = "component_" + std::to_string(component.ID());
+				std::vector<std::array<double, 3>> adios_lj_centers;
+				std::vector<double> adios_sigmas;
+				std::vector<double> adios_mass;
+				std::vector<double> adios_epsilon;
+				auto lj_centers = component.ljcenters();
+				for (auto& lj_center : lj_centers) {
+					adios_lj_centers.emplace_back(lj_center.r());
+					adios_sigmas.emplace_back(lj_center.sigma());
+					adios_mass.emplace_back(lj_center.m());
+					adios_epsilon.emplace_back(lj_center.eps());
+				}
+
+				adios2::Attribute<double> adios2_site_pos = io->DefineAttribute<double>(
+					component_id + "_centers", adios_lj_centers[0].data(), adios_lj_centers.size() * 3);
+				adios2::Attribute<double> adios2_site_sigma =
+					io->DefineAttribute<double>(component_id + "_sigma", adios_sigmas.data(), adios_sigmas.size());
+				adios2::Attribute<double> adios2_site_mass =
+					io->DefineAttribute<double>(component_id + "_mass", adios_mass.data(), adios_mass.size());
+				adios2::Attribute<double> adios2_site_epsilon =
+					io->DefineAttribute<double>(component_id + "_epsilon", adios_epsilon.data(), adios_epsilon.size());
+				adios2::Attribute<std::string> adios2_site_name =
+					io->DefineAttribute<std::string>(component_id + "_name", std::string(component.getName()));
+				adios2::Attribute<std::string> adios2_site_element_name =
+					io->DefineAttribute<std::string>(component_id + "_element_names", component_elements);
+			}
+		}
+
+
+  	
   }
     catch (std::invalid_argument& e) {
         global_log->fatal() 
@@ -98,7 +157,7 @@ void Adios2Writer::initAdios2() {
 void Adios2Writer::beforeEventNewTimestep(
         ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
         unsigned long simstep) {
-    global_log->info() << "[Adios2Writer]: beforeEventNewTimestep." << std::endl;
+    global_log->debug() << "[Adios2Writer]: beforeEventNewTimestep." << std::endl;
 
 };
 
@@ -106,7 +165,7 @@ void Adios2Writer::beforeForces(
         ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
         unsigned long simstep
 ) {
-    global_log->info() << "[Adios2Writer]: beforeForces." << std::endl;
+    global_log->debug() << "[Adios2Writer]: beforeForces." << std::endl;
 
 };
 
@@ -114,7 +173,7 @@ void Adios2Writer::afterForces(
         ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
         unsigned long simstep
 ) {
-    global_log->info() << "[Adios2Writer]: afterForces." << std::endl;
+    global_log->debug() << "[Adios2Writer]: afterForces." << std::endl;
 
 };
 
@@ -127,7 +186,7 @@ void Adios2Writer::endStep(
     // for all outputs
     size_t localNumParticles = particleContainer->getNumberOfParticles();
     size_t const globalNumParticles = domain->getglobalNumMolecules();
-    int const numProcs = domainDecomp->getNumProcs();
+	auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 
     std::vector<uint64_t> m_id;
@@ -158,24 +217,24 @@ void Adios2Writer::endStep(
         comp_id.emplace_back(m->componentid());
 	}
   
-    global_log->set_mpi_output_all();
+    //global_log->set_mpi_output_all();
 
     // gather offsets
-    global_log->info() << "numProcs: " << numProcs 
+    global_log->debug() << "[Adios2Writer]: numProcs: " << numProcs 
             << " localNumParticles: " << localNumParticles
             << " domainDecomp->getRank(): " << domainDecomp->getRank() << std::endl;
 
     uint64_t offset = 0;
 	MPI_Exscan(&localNumParticles, &offset, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
-	global_log->info() << "[Adios2Writer]: localNumParticles " << localNumParticles << std::endl;
-	global_log->info() << "[Adios2Writer]: Offset " << offset << std::endl;
+	global_log->debug() << "[Adios2Writer]: localNumParticles " << localNumParticles << std::endl;
+	global_log->debug() << "[Adios2Writer]: Offset " << offset << std::endl;
 
     std::array<double,6> global_box{0, 0,0, domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)};
     std::array<double,6> local_box;
     domainDecomp->getBoundingBoxMinMax(domain, &local_box[0], &local_box[3]);
     
-    global_log->info() << "Local Box: " << local_box[0] << " "<< local_box[1]<< " " << local_box[2] << " "<< local_box[3] << " "<< local_box[4]<< " " << local_box[5] <<  std::endl;
+    global_log->info() << "[Adios2Writer]: Local Box: " << local_box[0] << " "<< local_box[1]<< " " << local_box[2] << " "<< local_box[3] << " "<< local_box[4]<< " " << local_box[5] <<  std::endl;
     try {
 	    engine->BeginStep();
 	    io->RemoveAllVariables();
@@ -203,7 +262,7 @@ void Adios2Writer::endStep(
 	    adios2::Variable<double> adios2_global_box =
 	        io->DefineVariable<double>("global_box", {6}, {0}, {6}, adios2::ConstantDims);
 
-	    global_log->info() << "[Adios2Writer]: Putting Variables" << std::endl;
+	    global_log->debug() << "[Adios2Writer]: Putting Variables" << std::endl;
 	    if (!adios2_global_box) {
 	        global_log->error() << "[Adios2Writer]: Could not create variable: global_box" << std::endl;
 	        return;
@@ -239,43 +298,6 @@ void Adios2Writer::endStep(
 	            return;
 	        }             
 	        engine->Put<double>(adios2_simulationtime, current_time);
-	    	
-            // write number of processes
-			adios2::Attribute<int> adios2_numprocs = io->DefineAttribute<int>("num_processes", numProcs);
-
-	    	// write config
-	    	adios2::Attribute<std::string> adios2_ls1config = io->DefineAttribute<std::string>("config", _xmlstream.str());
-
-			// write number of components
-			adios2::Attribute<int> adios2_numcomps =
-				io->DefineAttribute<int>("num_components", _simulation.getEnsemble()->getComponents()->size());
-	    	
-	    	auto const components= _simulation.getEnsemble()->getComponents();
-			for (auto& component : *components) {
-				std::string component_id = "component_" + std::to_string(component.ID());
-				std::vector<std::array<double, 3>> adios_lj_centers;
-				std::vector<double> adios_sigmas;
-				std::vector<double> adios_mass;
-				std::vector<double> adios_epsilon;
-				auto lj_centers = component.ljcenters();
-				for (auto& lj_center : lj_centers) {
-					adios_lj_centers.emplace_back(lj_center.r());
-					adios_sigmas.emplace_back(lj_center.sigma());
-					adios_mass.emplace_back(lj_center.m());
-					adios_epsilon.emplace_back(lj_center.eps());
-				}
-				
-				adios2::Attribute<double> adios2_site_pos = io->DefineAttribute<double>(
-					component_id + "_centers", adios_lj_centers[0].data(), adios_lj_centers.size() * 3);
-				adios2::Attribute<double> adios2_site_sigma =
-					io->DefineAttribute<double>(component_id + "_sigma", adios_sigmas.data(), adios_sigmas.size());
-				adios2::Attribute<double> adios2_site_mass=
-					io->DefineAttribute<double>(component_id + "_mass", adios_mass.data(), adios_mass.size());
-				adios2::Attribute<double> adios2_site_epsilon= io->DefineAttribute<double>(component_id + "_epsilon", adios_epsilon.data(), adios_epsilon.size());
-				adios2::Attribute<std::string> adios2_site_name =
-					io->DefineAttribute<std::string>(component_id + "_name", std::string(component.getName()));
-				
-			}
 	    }
 
 
@@ -296,7 +318,7 @@ void Adios2Writer::endStep(
 		global_log->error() <<"[ADIOS2] Exception, STOPPING PROGRAM";
 		global_log->error() <<e.what();
 	}
-    global_log->info() << "[Adios2Writer]: endStep." << std::endl;
+    global_log->debug() << "[Adios2Writer]: endStep." << std::endl;
 };
 
 void Adios2Writer::finish(ParticleContainer* particleContainer,
