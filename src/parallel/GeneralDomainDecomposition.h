@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "DomainDecompMPIBase.h"
 #include "LoadBalancer.h"
 
