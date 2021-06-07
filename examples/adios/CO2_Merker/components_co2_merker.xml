@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525" >
+
+    <refunits type="SI" >
+        <length unit="nm">0.1</length>
+        <mass unit="u">1</mass>
+        <energy unit="K">1</energy>
+    </refunits>
+
+    <moleculetype id="1" name="CO2_Merker">
+        <site type="LJ126" id="1" name="C">
+            <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+            <mass>12.012</mass>
+            <sigma>2.8137</sigma>
+            <epsilon>12.3724</epsilon>
+            <shifted>0</shifted>
+        </site>
+        <site type="LJ126" id="2" name="O">
+            <coords> <x>0.0</x> <y>0.0</y> <z>-1.2869</z> </coords>
+            <mass>15.999</mass>
+            <sigma>2.9755</sigma>
+            <epsilon>100.493</epsilon>
+            <shifted>0</shifted>
+        </site>
+        <site type="LJ126" id="3" name="O">
+            <coords> <x>0.0</x> <y>0.0</y> <z>1.2869</z> </coords>
+            <mass>15.999</mass>
+            <sigma>2.9755</sigma>
+            <epsilon>100.493</epsilon>
+            <shifted>0</shifted>
+        </site>
+        <site type="Quadrupole" id="4" >
+            <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+            <quadrupolemoment> <x>0.0</x> <y>0.0</y> <z>1.0</z> <abs>346.7118</abs> </quadrupolemoment>
+        </site>
+        <momentsofinertia rotaxes="xyz" >
+        <Ixx>52.99557152</Ixx>
+        <Iyy>52.99557152</Iyy>
+        <Izz>0.0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+
+</components>
+
