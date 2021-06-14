@@ -64,15 +64,14 @@ private:
 	std::string _outputfile;
 	std::string _adios2enginetype;
 	uint32_t _writefrequency;
-	double current_time;
 	std::stringstream _xmlstream;
 	// variables to write, see documentation
-	std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> vars;
+	std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> _vars;
 	// std::map<std::string, std::vector<double>> vars;
 	// main instance
-	std::shared_ptr<adios2::ADIOS> inst;
-	std::shared_ptr<adios2::Engine> engine;
-	std::shared_ptr<adios2::IO> io;
+	std::shared_ptr<adios2::ADIOS> _inst;
+	std::shared_ptr<adios2::Engine> _engine;
+	std::shared_ptr<adios2::IO> _io;
 };
 
 #endif /* ADIOS2_WRITER_H_*/
