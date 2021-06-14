@@ -1,4 +1,4 @@
-option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." ON)
+option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." OFF)
 # if(ENABLE_ADIOS2 AND ENABLE_MPI)
 #     message(STATUS "Installing Adios2.")
 #     option(USE_INTERNAL_ADIOS2 "Download and build ADIOS2 in the ls1 build" OFF)
