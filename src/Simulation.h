@@ -473,6 +473,13 @@ private:
 	/** use legacyCellProcessor instead of vectorizedCellProcessor */
 	bool _legacyCellProcessor = false;
 
+	/**
+	 * Specifies whether to use overlapping p2p (peer-to-peer) communication or not.
+	 * If false: overlapping is only performed for unpacking and packing of particles.
+	 * If true: overlapping of the leaving and halo particle exchange with the actual force calculation is performed.
+	 */
+	bool _overlappingP2P {false};
+
 	/** List of plugins to use */
 	std::list<PluginBase*> _plugins;
 

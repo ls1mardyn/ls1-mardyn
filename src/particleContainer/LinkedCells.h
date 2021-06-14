@@ -262,6 +262,8 @@ public:
 
 	std::vector<unsigned long> getParticleCellStatistics() override;
 
+	std::string getConfigurationAsString() override;
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########

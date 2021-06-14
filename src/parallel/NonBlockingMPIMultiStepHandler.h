@@ -9,7 +9,7 @@
 
 #include "NonBlockingMPIHandlerBase.h"
 
-class NonBlockingMPIMultiStepHandler: public NonBlockingMPIHandlerBase {
+class NonBlockingMPIMultiStepHandler : public NonBlockingMPIHandlerBase {
 public:
 	/**
 	 * Constructor of the class
@@ -18,8 +18,8 @@ public:
 	 * @param domain the domain
 	 * @param cellProcessor the cell processor
 	 */
-	NonBlockingMPIMultiStepHandler(DomainDecompMPIBase* domainDecomposition,
-			ParticleContainer* moleculeContainer, Domain* domain, CellProcessor* cellProcessor);
+	NonBlockingMPIMultiStepHandler(DomainDecompMPIBase* domainDecomposition, ParticleContainer* moleculeContainer,
+								   Domain* domain, CellProcessor* cellProcessor);
 
 	/**
 	 * Virtual destructor of the class.
@@ -27,11 +27,9 @@ public:
 	virtual ~NonBlockingMPIMultiStepHandler();
 
 protected:
-
 	// documentation in base class
 	virtual void initBalanceAndExchange(bool forceRebalancing, double etime);
 
 	// documentation in base class
 	virtual void performComputation();
 };
-

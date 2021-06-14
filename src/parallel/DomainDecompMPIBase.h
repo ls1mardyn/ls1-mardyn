@@ -105,9 +105,7 @@ public:
 		_collCommunication->allreduceSum();
 	}
 
-	void collCommAllreduceSumAllowPrevious() override {
-		_collCommunication->allreduceSumAllowPrevious();
-	}
+	void collCommAllreduceSumAllowPrevious() override;
 
 	void collCommAllreduceCustom(ReduceType type) override {
 		_collCommunication->allreduceCustom(type);
@@ -194,10 +192,12 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
-	   <!--default: indirect, unless in autopas mode-->
+	     <!--default: indirect, unless in autopas mode-->
 	   	 <CommunicationScheme>indirect OR direct OR direct-pp</CommunicationScheme>
 	   	 <!--default: no-->
 	   	 <overlappingCollectives>yes OR no</overlappingCollectives>
+	   	 <!--default: 5-->
+	   	 <overlappingStartAtStep></overlappingStartAtStep>
 	   	 <!--default: yes-->
 	   	 <useSequentialFallback>yes OR no</useSequentialFallback>
 	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
@@ -220,6 +220,8 @@ public:
 	virtual size_t getTotalSize() override;
 
 	virtual void printSubInfo(int offset) override;
+
+    virtual void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) override;
 
 	virtual std::string getName() override {
 		return "DomainDecompMPIBase";
@@ -254,7 +256,7 @@ protected:
 
 	MPI_Comm _comm;
 
-	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
+	std::unique_ptr<NeighbourCommunicationScheme> _neighbourCommunicationScheme;
 
 	/**
 	 * Indicates whether the direct-pp communication scheme should be forced.
@@ -264,6 +266,11 @@ protected:
 	bool _forceDirectPP{false};
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
+	/// Defines when to start the overlapping collective communication.
+	/// In the very first steps, the thermostats heavily influence the simulation.
+	/// To prevent large deviations from a simulation without overlapping collectives, overlapping collectives can be disabled at the start.
+	/// Typically, around five steps are reasonable for this.
+	unsigned long _overlappingStartAtStep {5ul};
 };
 
 #endif /* DOMAINDECOMPMPIBASE_H_ */

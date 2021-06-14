@@ -301,6 +301,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			string parallelisationtype("DomainDecomposition");
 			xmlconfig.getNodeValue("@type", parallelisationtype);
 			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
+			xmlconfig.getNodeValue("overlappingP2P", _overlappingP2P);
+			global_log->info() << "Using overlapping p2p communication: " << _overlappingP2P << endl;
 		#ifdef ENABLE_MPI
 			/// @todo Dummy Decomposition now included in DecompBase - still keep this name?
 			if(parallelisationtype == "DummyDecomposition") {
@@ -513,6 +515,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if("homogeneous" == type)
 			{
+				delete _longRangeCorrection;
 				global_log->info() << "Initializing homogeneous LRC." << endl;
 				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 			}
@@ -523,6 +526,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			xmlconfig.changecurrentnode("..");
 		} else {
+			delete _longRangeCorrection;
 			global_log->info() << "Initializing default homogeneous LRC, as no LRC was defined." << endl;
 			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 		}
@@ -984,17 +988,18 @@ void Simulation::simulate() {
 
 
 
-#if defined(ENABLE_MPI) && defined(ENABLE_OVERLAPPING)
-		bool overlapCommComp = true;
+#if defined(ENABLE_MPI)
+		bool overlapCommComp = _overlappingP2P;
 #else
 		bool overlapCommComp = false;
 #endif
 
-
+		double startEtime = computationTimer->get_etime();
 		if (overlapCommComp) {
 			double currentTime = _timerForLoad->get_etime();
 			performOverlappingDecompositionAndCellTraversalStep(currentTime - previousTimeForLoad);
 			previousTimeForLoad = currentTime;
+			// Force timer and computation timer are running at this point!
 		}
 		else {
 			decompositionTimer->start();
@@ -1007,40 +1012,41 @@ void Simulation::simulate() {
 
 			decompositionTimer->stop();
 
-			double startEtime = computationTimer->get_etime();
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer->start();
 			forceCalculationTimer->start();
 
 			_moleculeContainer->traverseCells(*_cellProcessor);
-
-			// siteWiseForces Plugin Call
-			global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
-			for (auto plugin : _plugins) {
-				global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
-				plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
-			}
-
-			// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
-			_longRangeCorrection->calculateLongRange();
-
-			// Update forces in molecules so they can be exchanged
-			updateForces();
-
-			forceCalculationTimer->stop();
-			computationTimer->stop();
-
-			decompositionTimer->start();
-			// Exchange forces if it's required by the cell container.
-			if(_moleculeContainer->requiresForceExchange()){
-				global_log->debug() << "Exchanging Forces" << std::endl;
-				_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
-			}
-			decompositionTimer->stop();
-			_loopCompTime += computationTimer->get_etime() - startEtime;
-			_loopCompTimeSteps ++;
+			// Force timer and computation timer are running at this point!
 		}
+
+		// siteWiseForces Plugin Call
+		global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
+		for (auto plugin : _plugins) {
+			global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+			plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
+		}
+
+		// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
+		_longRangeCorrection->calculateLongRange();
+
+		// Update forces in molecules so they can be exchanged
+		updateForces();
+
+		forceCalculationTimer->stop();
+		computationTimer->stop();
+
+		decompositionTimer->start();
+		// Exchange forces if it's required by the cell container.
+		if(_moleculeContainer->requiresForceExchange()){
+			global_log->debug() << "Exchanging Forces" << std::endl;
+			_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+		}
+		decompositionTimer->stop();
+		_loopCompTime += computationTimer->get_etime() - startEtime;
+		_loopCompTimeSteps ++;
+
 		computationTimer->start();
 
 
@@ -1272,17 +1278,21 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etime) {
 	bool forceRebalancing = false;
 
-	#ifdef ENABLE_MPI
-		#ifdef ENABLE_OVERLAPPING
-			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
-					new NonBlockingMPIMultiStepHandler(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
-		#else
-			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
-					new NonBlockingMPIHandlerBase(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
-		#endif
+#ifdef ENABLE_MPI
+	auto* dd = dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition);
+	if (not dd) {
+		global_log->fatal() << "DomainDecompMPIBase* required for overlapping comm, but dynamic_cast failed." << std::endl;
+		Simulation::exit(873456);
+	}
+	NonBlockingMPIMultiStepHandler nonBlockingMPIHandler {dd, _moleculeContainer, _domain, _cellProcessor};
 
-		nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing, etime);
-	#endif
+	//NonBlockingMPIHandlerBase nonBlockingMPIHandler {dd, _moleculeContainer, _domain, _cellProcessor};
+
+	nonBlockingMPIHandler.performOverlappingTasks(forceRebalancing, etime);
+#else
+	global_log->fatal() << "performOverlappingDecompositionAndCellTraversalStep() called with disabled MPI." << std::endl;
+	Simulation::exit(873457);
+#endif
 }
 
 void Simulation::setDomainDecomposition(DomainDecompBase* domainDecomposition) {

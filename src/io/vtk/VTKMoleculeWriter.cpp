@@ -27,6 +27,13 @@ using namespace Log;
 void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "VTKMoleculeWriter: Write frequency: " << _writeFrequency << std::endl;
+	xmlconfig.getNodeValue("writefrequencyOffset", _writeFrequencyOffset);
+	global_log->info() << "VTKMoleculeWriter: Write frequency offset: " << _writeFrequencyOffset << std::endl;
+	// _writeInitialState is only relevant if the offset is != 0
+	if (_writeFrequencyOffset != 0) {
+		xmlconfig.getNodeValue("writeInitialState", _writeInitialState);
+		global_log->info() << "VTKMoleculeWriter: Write initial state: " << _writeInitialState << std::endl;
+	}
 	xmlconfig.getNodeValue("outputprefix", _fileName);
 	global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
 
@@ -38,15 +45,18 @@ void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
 
 void VTKMoleculeWriter::endStep(
         ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-        Domain * /*domain*/, unsigned long simstep
-) {
-	if (simstep % _writeFrequency != 0) {
+        Domain * /*domain*/, unsigned long simstep) {
+	// Do write only if any of these conditions is met:
+	//   - We are at the beginning of the simulation and want to write the initial step.
+	//   - We are beyond the offset and hit the frequency
+	if (not ((simstep == 0 and _writeInitialState)
+			or (simstep >= _writeFrequencyOffset and (simstep - _writeFrequencyOffset) % _writeFrequency == 0))) {
 		return;
 	}
 
 	int rank = domainDecomp->getRank();
 
-        VTKMoleculeWriterImplementation impl(rank, true);
+	VTKMoleculeWriterImplementation impl(rank, true);
 
 	impl.initializeVTKFile();
 

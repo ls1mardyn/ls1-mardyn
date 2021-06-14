@@ -439,7 +439,7 @@ void DomainDecompBase::assertIntIdentity(int /* IX */) {
 void DomainDecompBase::assertDisjunctivity(ParticleContainer* /* moleculeContainer */) const {
 }
 
-void DomainDecompBase::printDecomp(const std::string& /*filename*/, Domain* /* domain */) {
+void DomainDecompBase::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
 	global_log->warning() << "printDecomp useless in serial mode" << std::endl;
 }
 

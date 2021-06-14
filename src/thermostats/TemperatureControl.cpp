@@ -122,7 +122,7 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4));
 	xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5));
 
-	_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0)) > 0;
+	_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0u)) > 0;
 	if (true == _bIsObserver) this->PrepareAsObserver(refCoordsID);
 	// Registration as observer has to be done later by method prepare_start() when DistControl plugin is present.
 
@@ -691,7 +691,11 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 
 	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in
 #if defined(_OPENMP)
-#pragma omp parallel default(none) shared(particleContainer, simstep)
+// gcc 7 and 8 implicitly declare const variables shared regardless of the default.
+// Additionally, explicitly marking them as shared produces an error.
+// All other compilers need the explicit declaration when default is none.
+// Therefore set default to shared here...
+#pragma omp parallel default(shared) shared(particleContainer)
 #endif
 	for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 		// control temperature

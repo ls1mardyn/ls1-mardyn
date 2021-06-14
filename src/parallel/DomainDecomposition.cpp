@@ -53,22 +53,28 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	if(sendLeavingWithCopies()){
-		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
-	}
-	else {
-		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
-		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	if (sendLeavingWithCopies()) {
+		DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber,
+														 LEAVING_AND_HALO_COPIES);
+	} else {
+		// Would first need to send leaving, then halo -> not good for overlapping!
+		global_log->error() << "nonblocking P2P using separate messages for leaving and halo is currently not "
+							   "supported. Please use the indirect neighbor communication scheme!"
+							<< std::endl;
+		Simulation::exit(235861);
 	}
 }
 
 void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber) {
-	if(sendLeavingWithCopies()){
-		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
-	}else{
-		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_ONLY);
-		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, HALO_COPIES);
+	if (sendLeavingWithCopies()) {
+		DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber,
+														LEAVING_AND_HALO_COPIES);
+	} else {
+		// Would first need to send leaving, then halo -> not good for overlapping!
+		global_log->error()
+			<< "nonblocking P2P using separate messages for leaving and halo is currently not supported." << std::endl;
+		Simulation::exit(235861);
 	}
 }
 
@@ -119,29 +125,6 @@ double DomainDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 		return domain->getGlobalLength(dimension);
 	}
 	return (_coords[dimension] + 1) * domain->getGlobalLength(dimension) / _gridSize[dimension];
-}
-
-void DomainDecomposition::printDecomp(const string& filename, Domain* domain) {
-
-	if (_rank == 0) {
-		ofstream povcfgstrm(filename.c_str());
-		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " "
-				<< domain->getGlobalLength(2) << endl;
-		povcfgstrm << "cells " << _gridSize[0] << " " << _gridSize[1] << " " << _gridSize[2] << endl;
-		povcfgstrm << "procs " << _numProcs << endl;
-		povcfgstrm << "data DomainDecomp" << endl;
-		povcfgstrm.close();
-	}
-
-	for (int process = 0; process < _numProcs; process++) {
-		if (_rank == process) {
-			ofstream povcfgstrm(filename.c_str(), ios::app);
-			povcfgstrm << _coords[2] * _gridSize[0] * _gridSize[1] + _coords[1] * _gridSize[0] + _coords[0] << " "
-					<< _rank << endl;
-			povcfgstrm.close();
-		}
-		barrier();
-	}
 }
 
 std::vector<int> DomainDecomposition::getNeighbourRanks() {

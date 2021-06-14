@@ -266,6 +266,17 @@ public:
 
 	virtual bool hasInvalidParticles() { return false; }
 
+	/**
+	 * Return a string representation of the algorithmic configuration of the container.
+	 * Only used for logging / output.
+	 * @note: Formatting rules:
+	 *  - The whole configuration should be enclosed in curly brackets.
+	 *  - Different elements should be separated by a comma sourrounded by spaces: " , ".
+	 *  - Every element should be in the form "key: value"
+	 * @return
+	 */
+	virtual std::string getConfigurationAsString() = 0;
+
 protected:
 
 	//!  coordinates of the left, lower, front corner of the bounding box

@@ -31,7 +31,8 @@
     </ensemble>
     <algorithm>
       <parallelisation type="DomainDecomposition">
-	<timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+        <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+        <overlappingCollectives>False</overlappingCollectives>
       </parallelisation>
       <datastructure type="LinkedCells">
         <cellsInCutoffRadius>1</cellsInCutoffRadius>

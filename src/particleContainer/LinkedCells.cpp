@@ -181,7 +181,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	_cells.resize(numberOfCells);
 
 	bool sendParticlesTogether = true;
-	// If the with of the inner region is less than the width of the halo region
+	// If the width of the inner region is less than the width of the halo region
 	// leaving particles and halo copy must be sent separately.
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
@@ -1158,4 +1158,11 @@ std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {
 		}
 	}
 	return statistics;
+}
+
+string LinkedCells::getConfigurationAsString() {
+	stringstream ss;
+	// TODO: propper string representation for ls1 traversal choices
+	ss <<  "{Container: ls1_linkedCells , Traversal: " << _traversalTuner->getSelectedTraversal() << "}";
+	return ss.str();
 }

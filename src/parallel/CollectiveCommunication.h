@@ -65,7 +65,7 @@
 class CollectiveCommunication: public CollectiveCommBase, public CollectiveCommunicationInterface {
 public:
 	CollectiveCommunication() {
-		_communicator = 0;
+		_communicator = MPI_COMM_NULL;
 		_agglomeratedType = MPI_DATATYPE_NULL;
 	}
 

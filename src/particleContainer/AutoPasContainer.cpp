@@ -9,8 +9,8 @@
 #include <exception>
 #include "Domain.h"
 #include "Simulation.h"
-#include "autopas/utils/Logger.h"
 #include "autopas/utils/StringUtils.h"
+#include "autopas/utils/logging/Logger.h"
 #include "parallel/DomainDecompBase.h"
 
 AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePropertiesLibrary(cutoff) {
@@ -35,20 +35,23 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_extrapolationMethod = _autopasContainer.getExtrapolationMethodOption();
 
 #ifdef ENABLE_MPI
-	std::stringstream logFileName;
+	std::stringstream logFileName, outputSuffix;
 
 	auto timeNow = chrono::system_clock::now();
 	auto time_tNow = std::chrono::system_clock::to_time_t(timeNow);
 
 	auto maxRank = global_simulation->domainDecomposition().getNumProcs();
 	auto numDigitsMaxRank = std::to_string(maxRank).length();
+	auto myRank = global_simulation->domainDecomposition().getRank();
 
-	logFileName << "AutoPas_Rank" << setfill('0') << setw(numDigitsMaxRank)
-				<< global_simulation->domainDecomposition().getRank() << "_"
+	logFileName << "AutoPas_Rank" << setfill('0') << setw(numDigitsMaxRank) << myRank << "_"
 				<< std::put_time(std::localtime(&time_tNow), "%Y-%m-%d_%H-%M-%S") << ".log";
 
 	_logFile.open(logFileName.str());
 	_autopasContainer = decltype(_autopasContainer)(_logFile);
+
+	outputSuffix << "Rank" << setfill('0') << setw(numDigitsMaxRank) << myRank << "_";
+	_autopasContainer.setOutputSuffix(outputSuffix.str());
 #endif
 }
 
@@ -129,6 +132,14 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	// use avx functor?
 	xmlconfig.getNodeValue("useAVXFunctor", _useAVXFunctor);
 
+	// AutoPas log level
+	auto logLevelStr = xmlconfig.getNodeValue_string("logLevel", "");
+    // if anything was found try to parse it
+	if (not logLevelStr.empty()) {
+		// if this is not parsable it defaults to LogLevel::off
+		_logLevel = spdlog::level::from_str(logLevelStr);
+	}
+
 	xmlconfig.changecurrentnode(oldPath);
 }
 
@@ -137,6 +148,18 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
 	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
 
+	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
+	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
+
+	// check if autopas is already initialized
+	if (_autopasContainerIsInitialized) {
+		_autopasContainer.resizeBox(boxMin, boxMax);
+		// TODO: maybe only force this if the box and num particles changed too much?
+		_autopasContainer.forceRetune();
+		return false;
+	}
+
+	// The following code is only executed if _autopasContainer has not been initialized, yet.
 	_autopasContainer.setBoxMin(boxMin);
 	_autopasContainer.setBoxMax(boxMax);
 	_autopasContainer.setCutoff(_cutoff);
@@ -158,8 +181,9 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setRelativeBlacklistRange(_relativeBlacklistRange);
 	_autopasContainer.setEvidenceFirstPrediction(_evidenceForPrediction);
 	_autopasContainer.setExtrapolationMethodOption(_extrapolationMethod);
+	autopas::Logger::get()->set_level(_logLevel);
 	_autopasContainer.init();
-	autopas::Logger::get()->set_level(autopas::Logger::LogLevel::debug);
+	_autopasContainerIsInitialized = true;
 
 	// print full configuration to the command line
 	int valueOffset = 28;
@@ -207,8 +231,6 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 					   << setw(valueOffset) << left << "Extrapolation method "
 					   << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
 
-	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
-	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
 	return false;
 }
@@ -259,6 +281,15 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 	}
 }
 
+template <typename F>
+std::pair<double, double> AutoPasContainer::iterateWithFunctor(F &&functor) {
+	// here we call the actual autopas' iteratePairwise method to compute the forces.
+	_autopasContainer.iteratePairwise(&functor);
+	double upot = functor.getUpot();
+	double virial = functor.getVirial();
+	return std::make_pair(upot, virial);
+}
+
 template <bool shifting>
 void AutoPasContainer::traverseTemplateHelper() {
 #if defined(_OPENMP)
@@ -269,26 +300,55 @@ void AutoPasContainer::traverseTemplateHelper() {
 	}
 
 	double upot, virial;
-	if (_useAVXFunctor) {
-		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctorAVX<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true,
-							  autopas::FunctorN3Modes::Both, /*calculateGlobals*/ true>
-			functor(_cutoff, _particlePropertiesLibrary);
 
-		// here we call the actual autopas' iteratePairwise method to compute the forces.
-		_autopasContainer.iteratePairwise(&functor);
-		upot = functor.getUpot();
-		virial = functor.getVirial();
+	// Check if all components have the same eps24 and sigma. If that is the case, we can skip the mixing rules, which
+	// is faster!
+	auto numComponents = _particlePropertiesLibrary.getTypes().size();
+	double epsilon24FirstComponent = _particlePropertiesLibrary.get24Epsilon(0);
+	double sigmasqFirstComponent = _particlePropertiesLibrary.getSigmaSquare(0);
+	bool allSame = true;
+	for (auto i = 1ul; i < numComponents; ++i) {
+		allSame &= _particlePropertiesLibrary.get24Epsilon(i) == epsilon24FirstComponent;
+		allSame &= _particlePropertiesLibrary.getSigmaSquare(i) == sigmasqFirstComponent;
+	}
+	bool useMixing = not allSame;
+
+	if (useMixing) {
+		global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
+		if (_useAVXFunctor) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+								  /*calculateGlobals*/ true>
+				functor(_cutoff, _particlePropertiesLibrary);
+
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		} else {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+							   /*calculateGlobals*/ true>
+				functor(_cutoff, _particlePropertiesLibrary);
+
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		}
 	} else {
-		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		autopas::LJFunctor<Molecule, CellType, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-						   /*calculateGlobals*/ true>
-			functor(_cutoff, _particlePropertiesLibrary);
+		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
+		if (_useAVXFunctor) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+								  /*calculateGlobals*/ true>
+				functor(_cutoff);
+			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 
-		// here we call the actual autopas' iteratePairwise method to compute the forces.
-		_autopasContainer.iteratePairwise(&functor);
-		upot = functor.getUpot();
-		virial = functor.getVirial();
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		} else {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+							   /*calculateGlobals*/ true>
+				functor(_cutoff);
+			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+
+			std::tie(upot, virial) = iterateWithFunctor(functor);
+		}
 	}
 
 	// _myRF is always zero for lj only!
@@ -404,7 +464,8 @@ void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
 }
 
-std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContainer::getMoleculeAtPosition(const double *pos) {
+std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContainer::getMoleculeAtPosition(
+	const double *pos) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};
 	for (auto iter = this->iterator(ParticleIterator::ALL_CELLS); iter.isValid(); ++iter) {
 		if (iter->getR() == pos_arr) {
@@ -431,9 +492,9 @@ double *AutoPasContainer::getHaloSize() {
 autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 	switch (t) {
 		case ParticleIterator::Type::ALL_CELLS:
-			return autopas::IteratorBehavior::haloAndOwned;
+			return autopas::IteratorBehavior::ownedOrHalo;
 		case ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY:
-			return autopas::IteratorBehavior::ownedOnly;
+			return autopas::IteratorBehavior::owned;
 	}
 	throw std::runtime_error("Unknown iterator type.");
 }
@@ -449,3 +510,4 @@ RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorne
 	return RegionParticleIterator{
 		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }
+std::string AutoPasContainer::getConfigurationAsString() { return _autopasContainer.getCurrentConfig().toString(); }

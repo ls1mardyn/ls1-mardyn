@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.0529177</length>
+    <mass unit="u">1000</mass>
+    <energy unit="eV">27.2126</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.00000000667516</timestep>
+    </integrator>
+    <run>
+      <currenttime>0</currenttime>
+      <production>
+        <steps>100000</steps>
+      </production>
+    </run>
+    <ensemble type="NVT">
+      <temperature unit="reduced">0.000633363365</temperature>
+      <domain type="box">
+        <lx>100</lx>
+        <ly>100</ly>
+        <lz>100</lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">./components.xml</include>
+      </components>
+      <phasespacepoint>
+        <generator name="MultiObjectGenerator">
+          <objectgenerator>
+            <filler type="GridFiller">
+              <lattice system="cubic" centering="face">
+                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+              </lattice>
+              <basis>
+                <site>
+                  <componentid>0</componentid>
+                  <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                </site>
+              </basis>
+              <latticeOccupancy>1</latticeOccupancy>
+              <density>0.7</density>
+            </filler>
+            <object type="Cuboid">
+              <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+              <upper> <x>10</x> <y>100</y> <z>100</z> </upper>
+            </object>
+            <velocityAssigner type="EqualVelocityDistribution"/>
+          </objectgenerator>
+          <objectgenerator>
+            <filler type="GridFiller">
+              <lattice system="cubic" centering="face">
+                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+              </lattice>
+              <basis>
+                <site>
+                  <componentid>0</componentid>
+                  <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                </site>
+              </basis>
+              <latticeOccupancy>1</latticeOccupancy>
+              <density>0.35</density>
+            </filler>
+            <object type="Cuboid">
+              <lower> <x>10</x> <y>0</y> <z>0</z> </lower>
+              <upper> <x>100</x> <y>100</y> <z>100</z> </upper>
+            </object>
+            <velocityAssigner type="EqualVelocityDistribution"/>
+          </objectgenerator>
+        </generator>
+      </phasespacepoint>
+    </ensemble>
+    <algorithm>
+      <parallelisation type="KDDecomposition">
+        <updateFrequency>1000</updateFrequency>
+        <rebalanceLimit>0.</rebalanceLimit>
+        <fullSearchThreshold>4</fullSearchThreshold>
+        <heterogeneousSystems>0</heterogeneousSystems>
+        <useVectorizationTuner>1</useVectorizationTuner>
+        <generateNewFiles>1</generateNewFiles>
+        <useExistingFiles>0</useExistingFiles>
+        <vecTunerAllowMPIReduce>1</vecTunerAllowMPIReduce>
+        <clusterHetSys>0</clusterHetSys>
+        <splitBiggestDimension>1</splitBiggestDimension>
+        <!--<splitThreshold>INTEGER</splitThreshold>-->
+        <forceRatio>0</forceRatio>
+        <doMeasureLoadCalc>0</doMeasureLoadCalc>
+        <measureLoadInterpolationStartsAt>1</measureLoadInterpolationStartsAt>
+        <measureLoadIncreasingTimeValues>1</measureLoadIncreasingTimeValues>
+        <deviationReductionOperation>max</deviationReductionOperation>
+        <minNumCellsPerDimension>2</minNumCellsPerDimension>
+        <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+      </parallelisation>
+      <datastructure type="LinkedCells">
+        <cellsInCutoffRadius>1</cellsInCutoffRadius>
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">3.5</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+    </algorithm>
+    <output>
+      <outputplugin name="VTKMoleculeWriter">
+        <outputprefix>vtkOutput</outputprefix>
+        <writefrequency>1</writefrequency>
+      </outputplugin>
+    </output>
+  </simulation>
+</mardyn>

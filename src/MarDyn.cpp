@@ -21,6 +21,9 @@
 #include "utils/Testing.h"
 #include "utils/Timer.h"
 #include "utils/SigsegvHandler.h"
+#ifdef MARDYN_AUTOPAS
+#include "autopas/Version.h"
+#endif
 
 using Log::global_log;
 using std::endl;
@@ -146,6 +149,11 @@ int main(int argc, char** argv) {
 	vector<string> args = op.args();
 
 	global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << endl;
+
+#ifdef MARDYN_AUTOPAS
+	global_log->info() << "Built with AutoPas version " << AutoPas_VERSION << std::endl;
+#endif
+
 #ifndef NDEBUG
 	global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << endl;
 #endif

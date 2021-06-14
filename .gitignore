@@ -13,3 +13,4 @@ src/MarDyn_*.*
 *.so.1.0
 *.a
 *.so
+doxygen_doc/
