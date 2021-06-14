@@ -1,45 +1,31 @@
+#ifndef ADIOS2_WRITER_H_
+#define ADIOS2_WRITER_H_
 /*
- * Adios2Writer.h
+ * \file Adios2Writer.h
  *
- *  Created on: 11 Jul 2018
- *      Author: Oliver Fernandes
+ * Allows to write ADIOS2 phase space series files for visualization with Megamol.
  */
 
-///
-/// \file Adios2Writer.h
-/// Insitu Megamol Plugin Header. See the Adios2Writer class description for a manual on how to use the plugin
-///
-
-#pragma once
-
-#include "plugins/PluginBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "plugins/PluginBase.h"
 
-#include <chrono>
-#include <set>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <vector>
-#include <memory>
 #include <map>
-#include <errno.h>
-
+#include <memory>
+#include <sstream>
+#include <string>
 #include <variant>
-
-#ifdef ENABLE_ADIOS2
+#include <vector>
 
 #include <adios2.h>
 #include <mpi.h>
 
+
 class Adios2Writer : public PluginBase {
 public:
-    Adios2Writer() {};
-    virtual ~Adios2Writer() {};
+	Adios2Writer(){};
+	virtual ~Adios2Writer(){};
 
-    void init(ParticleContainer* particleContainer,
-            DomainDecompBase* domainDecomp, Domain* domain
-    );
+	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 
 	/** @brief Read in XML configuration for Adios2Writer.
 	 *
@@ -54,51 +40,39 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-    void beforeEventNewTimestep(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    );
+	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+								unsigned long simstep);
 
-    void beforeForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    );
+	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
 
-    void afterForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    );
+	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
 
-    void endStep(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain, unsigned long simstep
-    );
-    
-    void finish(ParticleContainer* particleContainer,
-            DomainDecompBase* domainDecomp, Domain* domain);
+	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
+				 unsigned long simstep);
 
-    std::string getPluginName() {
-        return std::string("Adios2Writer");
-    }
+	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 
-    static PluginBase* createInstance() { return new Adios2Writer(); }
+	std::string getPluginName() { return std::string("Adios2Writer"); }
+
+	static PluginBase* createInstance() { return new Adios2Writer(); }
 
 protected:
-    // 
+	//
 private:
-    void initAdios2();
-    // output filename, from XML
-    std::string _outputfile;
-    std::string _adios2enginetype;
-    uint32_t _writefrequency;
-    double current_time;
+	void initAdios2();
+	// output filename, from XML
+	std::string _outputfile;
+	std::string _adios2enginetype;
+	uint32_t _writefrequency;
+	double current_time;
 	std::stringstream _xmlstream;
-    // variables to write, see documentation
-    std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> vars;
-    //std::map<std::string, std::vector<double>> vars;
-    // main instance
-    std::shared_ptr<adios2::ADIOS> inst;
-    std::shared_ptr<adios2::Engine> engine;  
-    std::shared_ptr<adios2::IO> io;
+	// variables to write, see documentation
+	std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> vars;
+	// std::map<std::string, std::vector<double>> vars;
+	// main instance
+	std::shared_ptr<adios2::ADIOS> inst;
+	std::shared_ptr<adios2::Engine> engine;
+	std::shared_ptr<adios2::IO> io;
 };
-#endif // ENABLE_ADIOS2
+
+#endif /* ADIOS2_WRITER_H_*/
