@@ -56,6 +56,11 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("pluginID", _pluginID);
 	global_log->info() << "Mirror: pluginID = " << _pluginID << endl;
 
+	// Target component
+	_targetComp = 0;
+	xmlconfig.getNodeValue("cid", _targetComp);
+	global_log->info() << "Mirror: Target component: " << _targetComp << endl;
+
 	// Mirror position
 	_position.axis = 1;  // only y-axis supported yet
 	_position.coord = 0.;
@@ -304,6 +309,9 @@ void Mirror::beforeForces(
 			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
 			for(auto it = begin; it.isValid(); ++it) {
 				uint32_t cid_ub = it->componentid()+1;  // unity based componentid --> 0: arbitrary component, 1: first component
+				
+				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
+				
 				double vy = it->v(1);
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
 					continue;
@@ -405,6 +413,9 @@ void Mirror::beforeForces(
 			for(auto it = begin; it.isValid(); ++it) {
 				
 				uint32_t cid_ub = it->componentid()+1;  // unity based componentid --> 0: arbitrary component, 1: first component
+
+				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
+
 				double vy = it->v(1);
 				
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
@@ -533,14 +544,17 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 				additionalForce[2] = 0;
 				double ry = it->r(1);
 				double vy = it->v(1);
+				uint32_t cid_ub = it->componentid()+1;
+
 				if(MT_REFLECT == _type || MT_ZERO_GRADIENT == _type) {
 
 					if( (MD_RIGHT_MIRROR == _direction && vy > 0.) || (MD_LEFT_MIRROR == _direction && vy < 0.) ) {
 
-						if(MT_REFLECT == _type)
+						if(MT_REFLECT == _type) {
+							if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 							it->setv(1, -vy);
+						}
 						else if(MT_ZERO_GRADIENT == _type) {
-							uint32_t cid_ub = it->componentid()+1;
 							if(cid_ub != _cids.permitted) {
 								float frnd = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 								//cout << "frnd=" << frnd << endl;
@@ -573,6 +587,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 							}
 						}
 						else if(MT_NORMDISTR_MB == _type) {
+							if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 							double vx_norm = _norm.vxz.front();
 							_norm.vxz.pop_front();
 							_norm.vxz.push_back(vx_norm);
@@ -592,6 +607,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 					}
 				}
 				else if(MT_FORCE_CONSTANT == _type){
+					if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 					double distance = _position.coord - ry;
 					additionalForce[1] = _forceConstant * distance;
 //						cout << "additionalForce[1]=" << additionalForce[1] << endl;

@@ -50,9 +50,10 @@ public:
 	 * \code{.xml}
 		<plugin name="Mirror" type="5" dir="o-|">   <!-- Mirror type and direction, dir="o-|" or dir="|-o" reflecting particles to the left or right side -->
 			<pluginID>INT</pluginID>   <!-- plugin id to enable communication with other plugins -->
+			<cid>INT</cid>             <!-- only apply mirror to specified components; 0: all (Default); 1: component 1; etc. -->
 			<position>
 				<refID>INT</refID>     <!-- coordinate relative to reference point, 1:left interface | 2:right interface
-				<coord>FLOAT</coord>   <!-- coordinate of Mirrot position -->
+				<coord>FLOAT</coord>   <!-- coordinate of Mirror position -->
 			</position>
 			<forceConstant>0.</forceConstant>   <!-- force added to particles in order to reflect them from Mirror plane -->
 			<meland>
@@ -119,6 +120,7 @@ private:
 
 private:
 	uint32_t _pluginID;
+	uint32_t _targetComp;
 	struct MirrorPosition {
 		uint16_t axis;
 		double coord;
