@@ -5,9 +5,6 @@ Created on Sun May 31 12:32:59 2020
 @author: mheinen/homes
 """
 
-import numpy as np
-import pandas as pd
-
 #%% Get saturated densities by Vrabec et al., Molecular Physics 104 (2006).
 def rho_vrabec2006(T):
     '''

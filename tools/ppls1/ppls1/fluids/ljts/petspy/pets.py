@@ -16,7 +16,6 @@ var_y = 1.45
 
 n_z = 7 # number of quantities to calculate
 integer_z=np.zeros((n_z,1))
-var_z=np.zeros((n_z,1))
 
 integer_z[0] = 15  # pressure
 integer_z[1] = 21  # specific internal energy
