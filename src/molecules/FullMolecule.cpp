@@ -32,6 +32,15 @@ FullMolecule::FullMolecule(unsigned long id, Component *component,
 	_Vi[0]= 0.;
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
+	_Vi[3]= 0.;
+	_Vi[4]= 0.;
+	_Vi[5]= 0.;
+	_Vi[6]= 0.;
+	_Vi[7]= 0.;
+	_Vi[8]= 0.;
+	_upot = 0;
+	_ViConstCorr = 0;
+	_upotConstCorr = 0;
 
 	_soa = nullptr;
 	_soa_index_lj = 0;
@@ -67,6 +76,15 @@ FullMolecule::FullMolecule(const FullMolecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
+	_Vi[3]= m._Vi[3];
+	_Vi[4]= m._Vi[4];
+	_Vi[5]= m._Vi[5];
+	_Vi[6]= m._Vi[6];
+	_Vi[7]= m._Vi[7];
+	_Vi[8]= m._Vi[8];
+	_upot = m._upot;
+	_ViConstCorr = m._ViConstCorr;
+	_upotConstCorr = m._upotConstCorr;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -105,6 +123,15 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
+	_Vi[3]= m._Vi[3];
+	_Vi[4]= m._Vi[4];
+	_Vi[5]= m._Vi[5];
+	_Vi[6]= m._Vi[6];
+	_Vi[7]= m._Vi[7];
+	_Vi[8]= m._Vi[8];
+	_upot = m._upot;
+	_ViConstCorr = m._ViConstCorr;
+	_upotConstCorr = m._upotConstCorr;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -480,7 +507,8 @@ void FullMolecule::clearFM() {
 	mardyn_assert(_soa != nullptr);
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
-	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
+	_Vi[0]= _Vi[1]= _Vi[2]=_Vi[3]= _Vi[4]= _Vi[5]=_Vi[6]= _Vi[7]= _Vi[8]= 0.;
+	_upot = 0.;
 
 	std::array<vcp_real_accum, 3> clearance = {0.0, 0.0, 0.0};
 
@@ -650,12 +678,20 @@ void FullMolecule::check(unsigned long id) {
     mardyn_assert(isfinite(_invI[d]));
   }
   _q.check();
-  if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2])) {
+  if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2]) || !isfinite(_Vi[3]) || !isfinite(_Vi[4]) || !isfinite(_Vi[5]) || !isfinite(_Vi[6]) || !isfinite(_Vi[7]) || !isfinite(_Vi[8])) {
     cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
-         << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")" << endl;
+         << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ", " 
+         << _Vi[3] << ", " << _Vi[4] << ", " << _Vi[5] << ", " 
+         << _Vi[6] << ", " << _Vi[7] << ", " << _Vi[8] << ")" << endl;
     _Vi[0] = 0.0;
     _Vi[1] = 0.0;
     _Vi[2] = 0.0;
+	_Vi[3] = 0.0;
+    _Vi[4] = 0.0;
+    _Vi[5] = 0.0;
+	_Vi[6] = 0.0;
+    _Vi[7] = 0.0;
+    _Vi[8] = 0.0;
     mardyn_assert(false);
   }
 }
@@ -670,7 +706,9 @@ std::ostream& operator<<( std::ostream& os, const FullMolecule& m ) {
 	os << "F:  (" << m.F(0) << ", " << m.F(1) << ", " << m.F(2) << ")\n" ;
 	os << "q:  [[" << m.q().qw() << ", " << m.q().qx() << "], [" << m.q().qy() << ", " << m.q().qz()<< "]]\n" ;
 	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")\n";
-	os << "Vi:  (" << m.Vi(0) << ", " << m.Vi(1) << ", " << m.Vi(2) << ")" ;
+	os << "Vi:  (" << m.Vi(0) << ", " << m.Vi(3) << ", " << m.Vi(4) << ")" ;
+	os << "Vi:  (" << m.Vi(6) << ", " << m.Vi(1) << ", " << m.Vi(5) << ")" ;
+	os << "Vi:  (" << m.Vi(7) << ", " << m.Vi(8) << ", " << m.Vi(2) << ")" ;
 	return os;
 }
 

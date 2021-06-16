@@ -22,7 +22,7 @@ public:
 	double r[3];  //< position
 	double F[3]; //< force
 	double M[3]; //< torsional moment
-	double Vi[3]; //< virial tensor
+	double Vi[9]; //< virial tensor
 };
 
 #endif /* ParticleForceData_H_ */

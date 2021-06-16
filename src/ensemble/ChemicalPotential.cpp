@@ -494,9 +494,10 @@ void ChemicalPotential::grandcanonicalStep(
 					// reset forces and momenta to zero
 					{
 						double zeroVec[3] = {0.0, 0.0, 0.0};
+						double zeroVec9[9] = { 0.0 };
 						m->setF(zeroVec);
 						m->setM(zeroVec);
-						m->setVi(zeroVec);
+						m->setVi(zeroVec9);
 					}
 
 					this->storeMolecule(*m);
@@ -539,9 +540,10 @@ void ChemicalPotential::grandcanonicalStep(
 			// reset forces and torques to zero
 			if (!this->isWidom()) {
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
+				double zeroVec9[9] = { 0.0 };
 				mit->setF(zeroVec);
 				mit->setM(zeroVec);
-				mit->setVi(zeroVec);
+				mit->setVi(zeroVec9);
 			}
 			mit->check(nextid);
 #ifndef NDEBUG
@@ -573,17 +575,18 @@ void ChemicalPotential::grandcanonicalStep(
 #endif
 			if (accept) {
 				this->_localInsertionsMinusDeletions++;
-				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				tmp.setVi(zeroVec);
+				double zeroVec9[9] = { 0.0 };
+				tmp.setVi(zeroVec9);
 				bool inBoxCheckedAlready = false, checkWhetherDuplicate = false, rebuildCaches = true;
 				moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
 			} else {
 				// moleculeContainer->deleteMolecule(m->getID(), m->r(0), m->r(1), m->r(2));
 //				moleculeContainer->_cells[cellid].deleteMolecule(m->getID());
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
+				double zeroVec9[9] = { 0.0 };
 				mit->setF(zeroVec);
 				mit->setM(zeroVec);
-				mit->setVi(zeroVec);
+				mit->setVi(zeroVec9);
 				mit->check(mit->getID());
 //				moleculeContainer->_particles.erase(mit);
 			}

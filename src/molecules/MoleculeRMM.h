@@ -222,6 +222,7 @@ public:
 	void Fadd(const double /*a*/[]) override {}
 	void Madd(const double /*a*/[]) override {}
 	void Viadd(const double /*a*/[]) override {}
+	void ViaddAll(const double /*a*/[]) override {}
 	void vadd(const double ax, const double ay, const double az) override {
 		setv(0, v(0) + ax); setv(1, v(1) + ay); setv(2, v(2) + az);
 	}

@@ -5,7 +5,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
-#include "plugins/NEMD/DistControl.h"
 
 #include <vector>
 #include <cmath>
@@ -41,6 +40,7 @@ void Planar::init()
 {
 	//_smooth=true; // Deactivate this for transient simulations!
 	_smooth=false;  //true; <-- only applicable to static density profiles
+	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
@@ -72,6 +72,7 @@ void Planar::init()
 	resizeExactly(uLJ, _slabs*numLJSum);
 	resizeExactly(vNLJ, _slabs*numLJSum);
 	resizeExactly(vTLJ, _slabs*numLJSum);
+	resizeExactly(vNDLJ, _slabs*numLJSum);
 	resizeExactly(fLJ, _slabs*numLJSum);
 	resizeExactly(rho_g, _slabs*numLJSum);
 	resizeExactly(rho_l, _slabs*numLJSum);
@@ -142,18 +143,6 @@ void Planar::init()
 	simstep = 0;
 	
 	temp=_domain->getTargetTemperature(0);
-
-	if (_region.refPosID[0]+_region.refPosID[1] > 0) {
-		_subject = getSubject();
-		if (nullptr != _subject) {
-			this->update(_subject);
-			_subject->registerObserver(this);
-			global_log->info() << "Long Range Correction: Subject registered" << endl;
-		} else {
-			global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << endl;
-			Simulation::exit(-1);
-		}
-	}
 }
 
 void Planar::readXML(XMLfileUnits& xmlconfig)
@@ -163,27 +152,9 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("slabs", _slabs);
 	xmlconfig.getNodeValue("smooth", _smooth);
 	xmlconfig.getNodeValue("frequency", frequency);
-	
-	std::string strVal;
-	_region.refPosID[0] = 0; _region.refPosID[1] = 0;
-	
-	if (xmlconfig.getNodeValue("region/left", _region.refPos[0]) && xmlconfig.getNodeValue("region/right", strVal)) {
-		// accept "box" as input
-		_region.refPos[1] = (strVal == "box") ? _domain->getGlobalLength(1) : atof(strVal.c_str() );
-		_region.actPos[0] = _region.refPos[0];
-		_region.actPos[1] = _region.refPos[1];
-		// read reference coords IDs
-		xmlconfig.getNodeValue("region/left@refcoordsID", _region.refPosID[0] );
-		xmlconfig.getNodeValue("region/right@refcoordsID", _region.refPosID[1] );
-	} else {
-		_region.refPos[0] = _region.actPos[0] = 0.0;
-		_region.refPos[1] = _region.actPos[1] = _domain->getGlobalLength(1);
-	}
-
 	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << endl;
 	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
 	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
-	global_log->info() << "Long Range Correction: corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << endl;
 
 	// write control
 	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
@@ -211,10 +182,12 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << endl;
 		Simulation::exit(-1);
 	}
+
+	// init
+	this->init();
 }
 
-void Planar::calculateLongRange() {
-
+void Planar::calculateLongRange(){
 	if (_smooth){
 		const double delta_inv = 1.0 / delta;
 		const double slabsPerV = _slabs / V;
@@ -258,6 +231,7 @@ void Planar::calculateLongRange() {
 		std::fill(uLJ.begin(), uLJ.end(), 0.0);
 		std::fill(vNLJ.begin(), vNLJ.end(), 0.0);
 		std::fill(vTLJ.begin(), vTLJ.end(), 0.0);
+		std::fill(vNDLJ.begin(), vNDLJ.end(), 0.0);
 		std::fill(fLJ.begin(), fLJ.end(), 0.0);
 		
 		std::fill(fDipole.begin(), fDipole.end(), 0.0);
@@ -367,11 +341,12 @@ void Planar::calculateLongRange() {
 	 	} 
 	     
 		// Distribution of the Force, Energy and Virial to every Node
-		_domainDecomposition->collCommInit(_slabs*(4*numLJSum+4*numDipoleSum));
+		_domainDecomposition->collCommInit(_slabs*(5*numLJSum+4*numDipoleSum));
 		for (unsigned i=0; i<_slabs*numLJSum; i++){
 			_domainDecomposition->collCommAppendDouble(uLJ[i]);
 			_domainDecomposition->collCommAppendDouble(vNLJ[i]);
 			_domainDecomposition->collCommAppendDouble(vTLJ[i]);
+			_domainDecomposition->collCommAppendDouble(vNDLJ[i]);
 			_domainDecomposition->collCommAppendDouble(fLJ[i]);
 		}
 		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
@@ -385,6 +360,7 @@ void Planar::calculateLongRange() {
 			uLJ[i]=_domainDecomposition->collCommGetDouble();
 			vNLJ[i]=_domainDecomposition->collCommGetDouble();
 			vTLJ[i]=_domainDecomposition->collCommGetDouble();
+			vNDLJ[i]=_domainDecomposition->collCommGetDouble();
 			fLJ[i]=_domainDecomposition->collCommGetDouble();
 		}
 		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
@@ -402,18 +378,10 @@ void Planar::calculateLongRange() {
 	double Upot_c=0.0;
 	double Virial_c=0.0; // Correction used for the Pressure Calculation
 
-#ifndef NDEBUG
-	std::cout << "Long Range Correction: Using region boundaries: " << _region.actPos[0] << " and " << _region.actPos[1] << std::endl;
-#endif
-
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:Upot_c, Virial_c)
 	#endif
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
-
-		if (tempMol->r(1) < _region.actPos[0] || tempMol->r(1) > _region.actPos[1]) {
-			continue;
-		}
 
 		unsigned cid = tempMol->componentid();
 
@@ -430,14 +398,20 @@ void Planar::calculateLongRange() {
 			Fa[1] = fLJ[index];
 			Upot_c += uLJ[index];
 			Virial_c += 2 * vTLJ[index] + vNLJ[index];
-			double Via[3];
+			double Via[9] = {0.0}; /**< Virial tensor all elements: rxfx, ryfy, rzfz, rxfy, rxfz, ryfz, ryfx, rzfx, rzfy */
 			Via[0] = vTLJ[index];
 			Via[1] = vNLJ[index];
 			Via[2] = vTLJ[index];
+			Via[3] = vNDLJ[index];
+			Via[4] = vTLJ[index];
+			Via[5] = vNDLJ[index];
+			Via[6] = vNDLJ[index];
+			Via[7] = vTLJ[index];
+			Via[8] = vNDLJ[index];
 			tempMol->Fljcenteradd(i, Fa);
 //			Virial_c=Via[1]; TODO: I, tchipevn, think that this line is a bug, so I'm commenting it out. Virial_c is a summation variable, it should not be overwritten by a value, dependent on the last molecule in the system.
 			tempMol->Viadd(Via);
-//			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
+			tempMol->Uadd(uLJ[index]);
 		}
 		if (numDipole[cid] != 0){
 			int loc = tempMol->r(1) * delta_inv;
@@ -446,14 +420,15 @@ void Planar::calculateLongRange() {
 			Fa[1] = fDipole[index];
 			Upot_c += uDipole[index];
 			Virial_c += 2 * vTDipole[index] + vNDipole[index];
-			double Via[3];
+			double Via[9] = {0.0}; /**< Virial tensor all elements: rxfx, ryfy, rzfz, rxfy, rxfz, ryfz, ryfx, rzfx, rzfy */
 			Via[0] = vTDipole[index];
 			Via[1] = vNDipole[index];
 			Via[2] = vTDipole[index];
+			Via[4] = vTDipole[index];
+			Via[7] = vTDipole[index];
 			tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
 			tempMol->Viadd(Via);
-//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
-		//	}
+			tempMol->Uadd(uDipole[index]);
 		}				
 	}
 
@@ -468,7 +443,7 @@ void Planar::calculateLongRange() {
 
 	// Setting the Energy and Virial correction
 	_domain->setUpotCorr(Upot_c);
-	_domain->setVirialCorr(Virial_c);	
+	_domain->setVirialCorr(Virial_c);
 	
 	simstep++;
 }
@@ -486,6 +461,7 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 	double termF = 8*3.1416*delta*eps*sig;
 	double termVN = 4*3.1416*delta*eps*sig*sig;
 	double termVT = 2*3.1416*delta*eps*sig*sig;
+	double termVND = 48*3.1416*delta*eps*sig;
 	const unsigned slabsHalf = _slabs / 2;
 	for (unsigned i=_domainDecomposition->getRank(); i<slabsHalf; i+=_domainDecomposition->getNumProcs()){
 		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
@@ -516,6 +492,8 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			vNDLJ[index_i] += termVND*rhoJ*(0.2*r12-(2/11)*r6)/r;
+			vNDLJ[index_j] += termVND*rhoI*(0.2*r12-(2/11)*r6)/r;
 			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
@@ -543,6 +521,8 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			vNDLJ[index_i] += termVND*rhoJ*(0.2*r12-(2/11)*r6)/r;
+			vNDLJ[index_j] += termVND*rhoI*(0.2*r12-(2/11)*r6)/r;
 			fLJ[index_i] += termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += -termF*rhoI*(r12-r6)/r;
 		}
@@ -579,6 +559,8 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			vNDLJ[index_i] += termVND*rhoJ*(0.2*r12-(2/11)*r6)/r;
+			vNDLJ[index_j] += termVND*rhoI*(0.2*r12-(2/11)*r6)/r;
 			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
@@ -606,6 +588,7 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 	double termVNRC=termFRC/2;
 	double termVTRC1=-3.1416*eps*delta*sig2/(2*t*rc)*((rcPt10-rcMt10)/5-(rcPt4-rcMt4)/2);
 	double termVTRC2=termURC/2;
+	double termVNDRC=-3.1416*eps*delta*(sig2/t)*(0.44*(rcPt10-rcMt10)-1.25*(rcPt4-rcMt4));
 	double r,r2;
 	double rhoI,rhoJ;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
@@ -621,7 +604,7 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
-			r=(j-i)*delta;
+			r=(j-i)*delta; // xi in Werth2014
 			r2=r*r;
 			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
@@ -639,10 +622,13 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=-3.1416*eps*delta*(sig2/t)*(0.44*(rPt10-rMt10)-1.25*(rPt4-rMt4));
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -653,6 +639,8 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
@@ -681,12 +669,15 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=-3.1416*eps*delta*(sig2/t)*(0.44*(rPt10-rMt10)-1.25*(rPt4-rMt4));
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
-				vTLJ[index_j]+=rhoI*termVT2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_i]+=rhoJ*termVT2;
+				vTLJ[index_j]+=rhoI*termVT2;
 				fLJ[index_i]+=rhoJ*termF*r;
 				fLJ[index_j]+=-rhoI*termF*r;
 			}
@@ -695,8 +686,10 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
-				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=rhoJ*termFRC*r;
 				fLJ[index_j]+=-rhoI*termFRC*r;
 			}
@@ -735,10 +728,13 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=-3.1416*eps*delta*(sig2/t)*(0.44*(rPt10-rMt10)-1.25*(rPt4-rMt4));
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -749,6 +745,8 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
@@ -793,6 +791,7 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 	double termVNRC=termFRC/2;
 	double termVTRC1=3.1416*eps*delta*sig3/(4*t1*t2*rc)*((rcPtP9-rcPtM9-rcMtM9+rcMtP9)/45-(rcPtP3-rcPtM3-rcMtM3+rcMtP3)/6);
 	double termVTRC2=termURC/2;
+	double termVNDRC=2*3.1416*eps*delta*sig3/(t1*t2)*((rcPtP9-rcPtM9-rcMtM9+rcMtP9)/81-(rcPtP3-rcPtM3-rcMtM3+rcMtP3)/9);
 	double r,r2;
 	double rhoI,rhoJ;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()) {
@@ -836,10 +835,13 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=2*3.1416*eps*delta*sig3/(t1*t2)*((rPtP9-rPtM9-rMtM9+rMtP9)/81-(rPtP3-rPtM3-rMtM3+rMtP3)/9);
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -850,6 +852,8 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
@@ -888,10 +892,13 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=2*3.1416*eps*delta*sig3/(t1*t2)*((rPtP9-rPtM9-rMtM9+rMtP9)/81-(rPtP3-rPtM3-rMtM3+rMtP3)/9);
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=rhoJ*termF*r;
@@ -902,6 +909,8 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=rhoJ*termFRC*r;
@@ -952,10 +961,13 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=2*3.1416*eps*delta*sig3/(t1*t2)*((rPtP9-rPtM9-rMtM9+rMtP9)/81-(rPtP3-rPtM3-rMtM3+rMtP3)/9);
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -966,6 +978,8 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
@@ -1156,48 +1170,4 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 	ofstream fileout(filenamestream.str().c_str(), ios::out);
 	fileout << outputstream.str();
 	fileout.close();
-}
-
-SubjectBase* Planar::getSubject() {
-	SubjectBase* subject = nullptr;
-	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
-	for (auto&& pit:plugins) {
-		std::string name = pit->getPluginName();
-		if(name == "DistControl") {
-			subject = dynamic_cast<SubjectBase*>(pit);
-		}
-	}
-	return subject;
-}
-
-void Planar::update(SubjectBase* subject) {
-	auto* distControl = dynamic_cast<DistControl*>(subject);
-	double dMidpointLeft, dMidpointRight, origin;
-	dMidpointLeft = dMidpointRight = 0.;
-	if(nullptr != distControl) {
-		dMidpointLeft = distControl->GetInterfaceMidLeft();
-		dMidpointRight = distControl->GetInterfaceMidRight();
-#ifndef NDEBUG
-		std::cout << "Long Range Correction: Received value for left interface position:  " << dMidpointLeft << std::endl;
-		std::cout << "Long Range Correction: Received value for right interface position: " << dMidpointRight << std::endl;
-#endif
-	}
-
-	for (unsigned short i=0; i<2; i++) {
-
-		switch(_region.refPosID[i]) {
-		case 0:
-			origin = 0.;
-			break;
-		case 1:
-			origin = dMidpointLeft;
-			break;
-		case 2:
-			origin = dMidpointRight;
-			break;
-		default:
-			origin = 0.;
-		}
-		_region.actPos[i] = origin + _region.refPos[i];
-	}
 }

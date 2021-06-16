@@ -233,7 +233,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			m.Fchargeadd(j, f);
 
 			// Store the resulting virial in the molecule.
-			double V[3];
+			double V[3] = {0.};
 			V[0] = static_cast<double>(soa_charges_V_x[iCharges]*0.5);
 			V[1] = static_cast<double>(soa_charges_V_y[iCharges]*0.5);
 			V[2] = static_cast<double>(soa_charges_V_z[iCharges]*0.5);

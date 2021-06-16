@@ -47,10 +47,16 @@ void ParticleForceData::MoleculeToParticleData(ParticleForceData &particleStruct
 	particleStruct.Vi[0] = molecule.Vi(0);
 	particleStruct.Vi[1] = molecule.Vi(1);
 	particleStruct.Vi[2] = molecule.Vi(2);
+	particleStruct.Vi[3] = molecule.Vi(3);
+	particleStruct.Vi[4] = molecule.Vi(4);
+	particleStruct.Vi[5] = molecule.Vi(5);
+	particleStruct.Vi[6] = molecule.Vi(6);
+	particleStruct.Vi[7] = molecule.Vi(7);
+	particleStruct.Vi[8] = molecule.Vi(8);
 }
 
 void ParticleForceData::AddParticleForceDataToMolecule(ParticleForceData &particleStruct, Molecule &molecule) {
 		molecule.Fadd(particleStruct.F);
 		molecule.Madd(particleStruct.M);
-		molecule.Viadd(particleStruct.Vi);
+		molecule.ViaddAll(particleStruct.Vi);
 }

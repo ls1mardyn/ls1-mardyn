@@ -90,9 +90,9 @@ public:
 	void doDiscretisationFieldYR(int nDimension);
 
 	// molecule container loop methods
-	void sampleProfiles(Molecule* molecule, int nDimension);
-	void sampleVDF(Molecule* molecule, int nDimension);
-	void sampleFieldYR(Molecule* molecule);
+	void sampleProfiles(Molecule* molecule, int nDimension, unsigned long simstep);
+	void sampleVDF(Molecule* molecule, int nDimension, unsigned long simstep);
+	void sampleFieldYR(Molecule* molecule, unsigned long simstep);
 
 	// calc global values
 	void calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Domain* domain);
@@ -181,6 +181,8 @@ private:
 	std::vector<unsigned long> _nRotDOFGlobal;
 	std::vector<double> _d2EkinRotLocal;
 	std::vector<double> _d2EkinRotGlobal;
+	std::vector<double> _dEpotLocal;
+	std::vector<double> _dEpotGlobal;
 
 	// output profiles
 	std::vector<double> _dDensity;
@@ -189,6 +191,7 @@ private:
 	std::vector<double> _d2EkinDrift;
 	std::vector<double> _d2EkinRot;
 	std::vector<double> _d2EkinT;
+	std::vector<double> _dEpot;
 	std::vector<double> _dTemperature;
 	std::vector<double> _dTemperatureTrans;
 	std::vector<double> _dTemperatureRot;
@@ -201,13 +204,19 @@ private:
 	std::vector<double> _dSquaredVelocityGlobal;
 	std::vector<double> _dForceLocal;
 	std::vector<double> _dForceGlobal;
+	std::vector<double> _dHeatfluxLocal;
+	std::vector<double> _dHeatfluxGlobal;
+	std::vector<double> _dVirialLocal;
+	std::vector<double> _dVirialGlobal;
 
 	// output profiles
 	std::vector<double> _dForce;
+	std::vector<double> _dHeatflux;
 	std::vector<double> _dDriftVelocity;
 	std::vector<double> _d2EkinTransComp;
 	std::vector<double> _d2EkinDriftComp;
 	std::vector<double> _dTemperatureComp;
+	std::vector<double> _dVirial;
 
 	// --- VDF ---
 
