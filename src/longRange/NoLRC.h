@@ -11,6 +11,9 @@ class Simulation;
 class Domain;
 class LongRangeCorrection;
 
+/**
+ * Dummy long-range correction class which provides no correction.
+ */
 class NoLRC: public LongRangeCorrection{
 
 public:
