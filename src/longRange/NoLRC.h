@@ -15,12 +15,11 @@ class NoLRC: public LongRangeCorrection{
 
 public:
 	NoLRC(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation* simulation) {
-        global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl;
         _domain = domain;
     };
 	virtual ~NoLRC() {}
 
-	virtual void init() {}
+	virtual void init() { global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl; }
 	virtual void readXML(XMLfileUnits& xmlconfig) {}
 	virtual void calculateLongRange() {
         _domain->setUpotCorr(0.);

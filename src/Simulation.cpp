@@ -520,7 +520,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else if("none" == type)
 			{
 				delete _longRangeCorrection;
-				_longRangeCorrection = new nolrc(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
+				_longRangeCorrection = new NoLRC(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 			}
 			else
 			{
