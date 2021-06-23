@@ -289,6 +289,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 
 		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
+#ifdef MARDYN_AUTOPAS
+			global_log->fatal()
+				<< "The fast multipole method is not compatible with AutoPas. Please disable the AutoPas mode (ENABLE_AUTOPAS)!"
+				<< std::endl;
+			Simulation::exit(1);
+#endif
 			_FMM = new bhfmm::FastMultipoleMethod();
 			_FMM->readXML(xmlconfig);
 			xmlconfig.changecurrentnode("..");
