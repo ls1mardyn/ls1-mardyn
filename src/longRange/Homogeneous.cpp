@@ -133,7 +133,7 @@ void Homogeneous::calculateLongRange() {
 	double UpotCorr = UpotCorrLJ + MySelbstTerm;
 	double VirialCorr = VirialCorrLJ + 3. * MySelbstTerm;
 
-	global_log->debug() << "Far field terms: U_pot_correction  = " << UpotCorr << " virial_correction = " << VirialCorr
+	global_log->debug() << "Far field terms: U_pot_correction = " << UpotCorr << " virial_correction = " << VirialCorr
 					   << endl;
 	_domain->setUpotCorr(UpotCorr);
 	_domain->setVirialCorr(VirialCorr);

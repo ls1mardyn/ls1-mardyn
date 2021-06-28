@@ -158,7 +158,7 @@ void Planar::init()
 
 void Planar::readXML(XMLfileUnits& xmlconfig)
 {
-	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
+	global_log->info() << "[Long Range Correction] Reading xml config" << endl;
 
 	xmlconfig.getNodeValue("slabs", _slabs);
 	xmlconfig.getNodeValue("smooth", _smooth);
@@ -1122,9 +1122,10 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 #endif
 
 	std::stringstream outputstream;
+	double lengthPerSlab = _domain->getGlobalLength(1)/_slabs;
 
 	// header
-//		outputstream << "                     pos";
+	outputstream << "                     pos";
 	for(uint32_t si=0; si<numLJSum; ++si)
 	{
 		outputstream << "            rho_l_LRC[" << si << "]";
@@ -1135,10 +1136,17 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 	// data
 	for(uint32_t pi=0; pi<_slabs; ++pi)
 	{
+		double pos = lengthPerSlab*(pi+0.5);
+		outputstream << std::setw(24) << pos;
 		for(uint32_t si=0; si<numLJSum; ++si)
 		{
-			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
-			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+			if (pos < _region.actPos[0] || pos > _region.actPos[1]) {
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
+			} else {
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+			}
 		}
 		outputstream << std::endl;
 	} // loop: pos

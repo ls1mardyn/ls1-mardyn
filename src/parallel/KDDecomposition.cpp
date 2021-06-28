@@ -5,6 +5,7 @@
 #include <fstream>
 #include <climits>
 #include <cmath>
+#include <limits>
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
@@ -793,7 +794,7 @@ void printChildrenInfo(std::ofstream& filestream, KDNode* node, double minDev) {
 #endif
 
 bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup) {
-	return decompose(fatherNode, ownArea, commGroup, FLT_MAX);
+	return decompose(fatherNode, ownArea, commGroup, std::numeric_limits<double>::max());
 }
 
 bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup, const double globalMinimalDeviation) {
@@ -919,7 +920,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 	// reassign children and delete cloned node, if a solution
 	// was found in this subtree.
 	if (bestSubdivision == nullptr) {
-		fatherNode->_deviation = FLT_MAX;
+		fatherNode->_deviation = std::numeric_limits<double>::max();
 	} else {
 		*fatherNode = *bestSubdivision;  // assignment operator (NOT copy operator) -> also assigns children to fatherNode
 		bestSubdivision->_child1 = nullptr;  // remove children from bestSubdivision, otherwise they will be deleted
@@ -1614,7 +1615,7 @@ bool KDDecomposition::heteroDecompose(KDNode* fatherNode, KDNode*& ownArea, MPI_
 
 	KDNode *bestSubdivision = nullptr;
 	domainTooSmall = calculateHeteroSubdivision(fatherNode, bestSubdivision, commGroup);
-	double minimalDeviation = FLT_MAX;
+	double minimalDeviation = std::numeric_limits<double>::max();
 
 	// compute the next subdivision depending on the current rank (either first or second subdivision)
 	vector<int> origRanks;
