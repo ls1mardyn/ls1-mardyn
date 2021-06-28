@@ -74,6 +74,7 @@
 #include "longRange/LongRangeCorrection.h"
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
+#include "longRange/NoLRC.h"
 
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
@@ -291,6 +292,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 
 		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
+#ifdef MARDYN_AUTOPAS
+			global_log->fatal()
+				<< "The fast multipole method is not compatible with AutoPas. Please disable the AutoPas mode (ENABLE_AUTOPAS)!"
+				<< std::endl;
+			Simulation::exit(1);
+#endif
 			_FMM = new bhfmm::FastMultipoleMethod();
 			_FMM->readXML(xmlconfig);
 			xmlconfig.changecurrentnode("..");
@@ -519,9 +526,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				global_log->info() << "Initializing homogeneous LRC." << endl;
 				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 			}
+			else if("none" == type)
+			{
+				delete _longRangeCorrection;
+				_longRangeCorrection = new NoLRC(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
+			}
 			else
 			{
-				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar. Program exit ..." << endl;
+				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar|none. Program exit ..." << endl;
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
@@ -579,10 +591,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			//!@todo read header should be either part of readPhaseSpace or readXML.
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-		} else if (pspfiletype == "adios2") {
+		}
+#ifdef ENABLE_ADIOS
+        else if (pspfiletype == "adios2") {
 			_inputReader = new Adios2Reader();
 			_inputReader->readXML(xmlconfig);
 		}
+#endif
 		else {
 			global_log->error() << "Unknown phase space file type" << endl;
 			Simulation::exit(-1);
