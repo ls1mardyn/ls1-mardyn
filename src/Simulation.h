@@ -105,8 +105,8 @@ public:
 	       </electrostatic>
 	       <datastructure type=STRING><!-- see ParticleContainer class documentation --></datastructure>
 	       <parallelisation type=STRING><!-- see DomainDecompBase class documentation -->
-	         <timerForLoad>STRING</timerForLoad><!-- Timer to use as load. requires valid timer name! -->
-	         <timerForLoadAveragingLength>UINT</timerForLoadAveragingLength><!-- Defines how many entries should be used to average the last traversal time.-->
+	         <timerForLoad>STRING</timerForLoad><!-- Timer to use as load. Requires valid timer name! -->
+	         <timerForLoad_AveragingLength>UINT</timerForLoad_AveragingLength><!-- Defines how many time measurements should be averaged as input for the load balancing.-->
 	       </parallelisation>
 	       <thermostats>
 	         <thermostat type='VelocityScaling' componentId=STRING><!-- componentId can be component id or 'global' -->

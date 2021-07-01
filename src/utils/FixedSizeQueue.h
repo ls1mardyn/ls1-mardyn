@@ -71,6 +71,9 @@ public:
 	 */
 	auto end() const { return _storage.cend(); }
 
+	[[nodiscard]] size_t size() const {
+		return _storage.size();
+	}
 private:
 	/**
 	 * The capacity of the history.

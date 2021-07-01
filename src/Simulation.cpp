@@ -385,7 +385,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 
 			std::size_t timerForLoadAveragingLength{1ul};
-			xmlconfig.getNodeValue("timerForLoadAveragingLength", timerForLoadAveragingLength);
+			xmlconfig.getNodeValue("timerForLoad_AveragingLength", timerForLoadAveragingLength);
 			global_log->info() << "Using averaging length of " << timerForLoadAveragingLength
 							   << " for the load calculation." << std::endl;
 			if(timerForLoadAveragingLength < 1ul) {
@@ -1275,8 +1275,9 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
 
 	_lastTraversalTimeHistory.insert(lastTraversalTime);
-	double accumulatedLastTraversalTime =
-		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.);
+	double averageLastTraversalTime =
+		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
+		_lastTraversalTimeHistory.size();
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
